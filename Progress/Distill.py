@@ -44,7 +44,7 @@ def _to_string(List):
     return string.join(List)
 
 
-def remove_tags(text, postags=['NOUN', 'ADJ', 'VERB', 'ADV']):
+def remove_tags(text, postags=['PROPN', 'NOUN', 'ADJ', 'VERB', 'ADV']):
     """
     Takes in Tags which are allowed by the user and then elimnates the rest of the words
     based on their Part of Speech (POS) Tags.
