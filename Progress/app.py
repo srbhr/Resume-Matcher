@@ -2,11 +2,7 @@ from wordcloud import STOPWORDS
 from operator import index
 from wordcloud import WordCloud
 from pandas._config.config import options
-import Cleaner
-import Similar
-import textract as tx
 import pandas as pd
-import os
 import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
@@ -29,34 +25,8 @@ Algorihms used:-
 Total Score calculate is the overall average of the 4 mentioned token based algorithms and string based.
 """)
 
-resume_dir = "Data/Resumes/"
-job_desc_dir = "Data/JobDesc/"
-resume_names = os.listdir(resume_dir)
-job_description_names = os.listdir(job_desc_dir)
-
-document = []
-
-st.write("Total Resumes found : ", len(resume_names))
-st.write("Total Job Descriptions found : ", len(job_description_names))
 
 # to read all the resumes in the directory as provided by the user
-
-
-def read_resumes(list_of_resumes, resume_directory):
-    placeholder = []
-    for res in list_of_resumes:
-        temp = []
-        temp.append(res)
-        text = tx.process(resume_directory+res, encoding='ascii')
-        text = str(text, 'utf-8')
-        temp.append(text)
-        placeholder.append(temp)
-    return placeholder
-
-
-document = read_resumes(resume_names, resume_dir)
-
-df = pd.DataFrame(document, columns=['Name', 'Context'])
 
 if len(job_description_names) <= 1:
     st.write("There is only ", len(job_description_names),
@@ -73,15 +43,6 @@ if len(job_description_names) > 1:
 
 index = st.slider("Which JD to select ? : ", 0,
                   len(job_description_names)-1, 1)
-
-
-def read_job_description(n, list_of_job_files, job_description_directory):
-    job_desc = tx.process(
-        job_description_directory+list_of_job_files[n], extension='docx', encoding='ascii')
-
-    job_desc = str(job_desc, 'utf-8')
-    job_description = Cleaner.Cleaner(job_desc)
-    return [job_desc, job_description]
 
 
 job = read_job_description(index, job_description_names, job_desc_dir)
@@ -148,12 +109,6 @@ def get_text_from_df(df_iter):
         output += str(_)
         return output
 
-
-text_wc = get_text_from_df(cleaned_df['Selective'])
-
-wordcloud = WordCloud(width=3000, height=2000, random_state=1, background_color='salmon',
-                      colormap='Pastel1', collocations=False, stopwords=STOPWORDS).generate(text_wc)
-st.write(plt.imshow(wordcloud))
 
 option_2 = st.selectbox("Show the Best Matching Resumes?", options=[
     'NO', 'YES'])
