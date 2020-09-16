@@ -13,3 +13,4 @@ def generate_wordcloud(text):
     plt.tight_layout(pad=0)
 
     plt.show()
+    return plt

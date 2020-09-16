@@ -4,21 +4,29 @@ import gensim.corpora as corpora
 
 def get_list_of_words(document):
     Document = []
+
     for a in document:
         raw = a.split(" ")
         Document.append(raw)
-    return Document
 
-
-def LDA(document):
     id2word = corpora.Dictionary(document)
     corpus = [id2word.doc2bow(text) for text in document]
+
     lda_model = gensim.models.ldamodel.LdaModel(corpus=corpus, id2word=id2word, num_topics=5, random_state=100,
                                                 update_every=1, chunksize=100, passes=50, alpha='auto', per_word_topics=True)
-    return lda_model[corpus]
+
+    return lda_model
 
 
-def format_topics_sentences(ldamodel=None, corpus=corpus, texts=Document):
+# def LDA(document):
+#     id2word = corpora.Dictionary(document)
+#     corpus = [id2word.doc2bow(text) for text in document]
+#     lda_model = gensim.models.ldamodel.LdaModel(corpus=corpus, id2word=id2word, num_topics=5, random_state=100,
+#                                                 update_every=1, chunksize=100, passes=50, alpha='auto', per_word_topics=True)
+#     return lda_model
+
+
+def format_topics_sentences(ldamodel, corpus, texts):
     sent_topics_df = []
     for i, row_list in enumerate(ldamodel[corpus]):
         row = row_list[0] if ldamodel.per_word_topics else row_list
@@ -33,3 +41,7 @@ def format_topics_sentences(ldamodel=None, corpus=corpus, texts=Document):
                 break
 
     return(sent_topics_df)
+
+
+def if __name__ == "__main__":
+    pass
