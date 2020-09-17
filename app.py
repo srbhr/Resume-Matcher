@@ -118,7 +118,7 @@ Ranked_resumes = Resumes.sort_values(
 Ranked_resumes['Rank'] = pd.DataFrame(
     [i for i in range(1, len(Ranked_resumes['Scores'])+1)])
 
-########################### SCORE TABLE PLOT ##############################
+###################################### SCORE TABLE PLOT ####################################
 
 fig1 = go.Figure(data=[go.Table(
     header=dict(values=["Rank", "Name", "Scores"],
@@ -221,7 +221,9 @@ plt.tight_layout()
 st.pyplot()
 
 st.markdown("---")
+
 ####################### SETTING UP THE DATAFRAME FOR SUNBURST-GRAPH ############################
+
 df_topic_sents_keywords = format_topics_sentences(
     ldamodel=lda_model, corpus=corpus)
 df_some = pd.DataFrame(df_topic_sents_keywords, columns=[
@@ -239,11 +241,6 @@ st.write(fig3)
 
 
 ############################## RESUME PRINTING #############################
-
-# my_bar = st.progress(0)
-# for percent_complete in range(100):
-#     time.sleep(0.1)
-#     my_bar.progress(percent_complete + 1)
 
 option_2 = st.selectbox("Show the Best Matching Resumes?", options=[
     'NO', 'YES'])
