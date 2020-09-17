@@ -7,7 +7,7 @@
 
 3. Then the two CSV files will be updated with the new resumes and job desciptions.
 
-   _Note:- Incase the textract fails to read the data (May happen in Windows users, users need to Use the Demo files saved in the Demo Folder, to run the `app.1py`. Just Replace them with the respective CSVs and you'll be good to go. If textract fails then manually code needs to be run to extract documents from their specific file extensions.)_
+   _Note:- Incase the textract fails to read the data (May happen in Windows users, users need to Use the Demo files saved in the Demo Folder, to run the `app.1py`. Just Replace them with the respective CSVs and you'll be good to go. If textract fails then a new code needs to be created to extract documents from their specific file extensions.)_
 
 4. Run ` streamlit run app.py` to run the streamlit server.
 
