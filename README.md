@@ -69,6 +69,7 @@ Popular Packages used are:-
 - [Scipy](https://pypi.org/project/scipy/)
 - [NLTK](https://pypi.org/project/nltk/)
 - [Textract](https://pypi.org/project/textract/)
+- [Textdistance](https://pypi.org/project/textdistance/)
 
 Furthermore the packages like NLTK and Spacy requires additional data to be downloaded.
 After installing them please perform:-
