@@ -1,4 +1,4 @@
-![](Images/NAIVE RESUME MATCHER.png)
+![Naive Resume Matcher Logo](Images/logo.png)
 
 # Naive-Resume-Matcher
 

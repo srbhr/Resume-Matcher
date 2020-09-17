@@ -14,7 +14,7 @@ from PIL import Image
 import time
 
 
-image = Image.open('Images//NAIVE RESUME MATCHER.png')
+image = Image.open('Images//logo.png')
 st.image(image, use_column_width=True)
 
 st.title("Naive Resume Matcher")
