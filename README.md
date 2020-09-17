@@ -50,6 +50,8 @@ But for the Job Description it needs to be in Docx format, it can be changed as 
 
 ## Installation Instructions
 
+A python virtual environment is required for this. Please read this [page](https://www.geeksforgeeks.org/creating-python-virtual-environment-windows-linux/) for more information.
+
 A pip [requirements.txt](requirements.txt) file is provided. It is advised to install the packages listed below, manually by doing `pip install <package_name>`.
 As the requirements.txt file may have some unecessary additional dependencies.
 
