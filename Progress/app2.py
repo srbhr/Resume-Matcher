@@ -1,3 +1,4 @@
+import matplotlib.colors as mcolors
 import gensim
 import gensim.corpora as corpora
 from operator import index
@@ -9,10 +10,139 @@ import plotly.express as px
 import plotly.graph_objects as go
 import matplotlib.pyplot as plt
 import Similar
+from PIL import Image
+import time
+
+
+image = Image.open('NAIVE RESUME MATCHER.png')
+st.image(image, use_column_width=True)
+
+st.title("Naive Resume Matcher")
+st.markdown("""
+A Machine Learning Based Resume Matcher, to compare Resumes with Job Descriptions.
+Create a score based on how good/similar a resume is to the particular Job Description.\n
+Documents are sorted based on Their TF-IDF Scores (Term Frequency-Inverse Document Frequency)
+
+Matching Algorihms used are :-
+- **String Matching**
+    - Monge Elkan
+
+- **Token Based**
+    - Jaccard
+    - Cosine
+    - Sorensen-Dice
+    - Overlap Coefficient
+
+Topic Modelling of Resumes is done to provide additional information about the resumes and what clusters/topics,
+the belong to. 
+For this :-
+
+1. LSA (Latenet Semantic Analysis) (aka TruncatedSVD in sklearn) is done after TF-IDF.
+2. id2word, and doc2word algorithms are used on the Documents.
+3. LDA or Latent Dirichlet Allocation is done to extract the Topics from the Document set.(In this case Resumes)
+4. Additional Plots are done to gain more insights about the document.
+
+Total Score calculate is the overall average of the 4 mentioned token based algorithms and string based.
+""")
+
 
 # Reading the CSV files prepared by the fileReader.py
 Resumes = pd.read_csv('Resume_data.csv')
 Jobs = pd.read_csv('Job_Data.csv')
+
+
+############################### JOB DESCRIPTION CODE ######################################
+# Checking for Multiple Job Descriptions
+# If more than one Job Descriptions are available, it asks user to select one as well.
+if len(Jobs['Name']) <= 1:
+    st.write(
+        "There is only 1 Job Description present. It will be used to create scores.")
+else:
+    st.write("There are ", len(Jobs['Name']),
+             "Job Descriptions available. Please select one.")
+
+
+# Asking to Print the Job Desciption Names
+if len(Jobs['Name']) > 1:
+    option_yn = st.selectbox(
+        "Show the Job Description Names?", options=['YES', 'NO'])
+    if option_yn == 'YES':
+        index = [a for a in range(len(Jobs['Name']))]
+        fig = go.Figure(data=[go.Table(header=dict(values=["Job No.", "Job Desc. Name"], line_color='darkslategray',
+                                                   fill_color='lightskyblue'),
+                                       cells=dict(values=[index, Jobs['Name']], line_color='darkslategray',
+                                                  fill_color='cyan'))
+                              ])
+        fig.update_layout(width=700, height=400)
+        st.write(fig)
+
+
+# Asking to chose the Job Description
+index = st.slider("Which JD to select ? : ", 0,
+                  len(Jobs['Name'])-1, 1)
+
+
+option_yn = st.selectbox("Show the Job Description ?", options=['YES', 'NO'])
+if option_yn == 'YES':
+    st.markdown("---")
+    st.markdown("### Job Description :")
+    fig = go.Figure(data=[go.Table(
+        header=dict(values=["Job Description"],
+                    fill_color='#f0a500',
+                    align='center', font=dict(color='white', size=16)),
+        cells=dict(values=[Jobs['Context'][index]],
+                   fill_color='#f4f4f4',
+                   align='left'))])
+
+    fig.update_layout(width=800, height=500)
+    st.write(fig)
+    st.markdown("---")
+
+
+#################################### SCORE CALCUATION ################################
+
+def calculate_scores(resumes, job_description):
+    scores = []
+    for x in range(resumes.shape[0]):
+        score = Similar.match(
+            resumes['TF_Based'][x], job_description['Cleaned'][index])
+        scores.append(score)
+    return scores
+
+
+Resumes['Scores'] = calculate_scores(Resumes, Jobs)
+
+Ranked_resumes = Resumes.sort_values(
+    by=['Scores'], ascending=False).reset_index(drop=True)
+
+Ranked_resumes['Rank'] = pd.DataFrame(
+    [i for i in range(1, len(Ranked_resumes['Scores'])+1)])
+
+########################### SCORE TABLE PLOT ##############################
+
+fig1 = go.Figure(data=[go.Table(
+    header=dict(values=["Rank", "Name", "Scores"],
+                fill_color='#00416d',
+                align='center', font=dict(color='white', size=16)),
+    cells=dict(values=[Ranked_resumes.Rank, Ranked_resumes.Name, Ranked_resumes.Scores],
+               fill_color='#d6e0f0',
+               align='left'))])
+
+fig1.update_layout(title="Top Ranked Resumes", width=700, height=1100)
+st.write(fig1)
+
+st.markdown("---")
+
+fig2 = px.bar(Ranked_resumes,
+              x=Ranked_resumes['Name'], y=Ranked_resumes['Scores'], color='Scores',
+              color_continuous_scale='haline', title="Score and Rank Distribution")
+# fig.update_layout(width=700, height=700)
+st.write(fig2)
+
+
+st.markdown("---")
+
+############################################ TF-IDF Code ###################################
 
 
 def get_list_of_words(document):
@@ -33,6 +163,8 @@ corpus = [id2word.doc2bow(text) for text in document]
 lda_model = gensim.models.ldamodel.LdaModel(corpus=corpus, id2word=id2word, num_topics=5, random_state=100,
                                             update_every=1, chunksize=100, passes=50, alpha='auto', per_word_topics=True)
 
+################################### LDA CODE ##############################################
+
 
 def format_topics_sentences(ldamodel, corpus):
     sent_topics_df = []
@@ -51,6 +183,45 @@ def format_topics_sentences(ldamodel, corpus):
     return(sent_topics_df)
 
 
+################################# Topic Word Cloud Code #####################################
+
+st.markdown("## Topics and Topic Related Keywords ")
+st.markdown(
+    """This Wordcloud representation shows the Topic Number and the Top Keywords that contstitute a Topic.
+    This further is used to cluster the resumes.      """)
+
+cols = [color for name, color in mcolors.TABLEAU_COLORS.items()]
+
+cloud = WordCloud(background_color='white',
+                  width=2500,
+                  height=1800,
+                  max_words=10,
+                  colormap='tab10',
+                  collocations=False,
+                  color_func=lambda *args, **kwargs: cols[i],
+                  prefer_horizontal=1.0)
+
+topics = lda_model.show_topics(formatted=False)
+
+fig, axes = plt.subplots(2, 2, figsize=(10, 10), sharex=True, sharey=True)
+
+for i, ax in enumerate(axes.flatten()):
+    fig.add_subplot(ax)
+    topic_words = dict(topics[i][1])
+    cloud.generate_from_frequencies(topic_words, max_font_size=300)
+    plt.gca().imshow(cloud)
+    plt.gca().set_title('Topic ' + str(i), fontdict=dict(size=16))
+    plt.gca().axis('off')
+
+
+plt.subplots_adjust(wspace=0, hspace=0)
+plt.axis('off')
+plt.margins(x=0, y=0)
+plt.tight_layout()
+st.pyplot()
+
+st.markdown("---")
+####################### SETTING UP THE DATAFRAME FOR SUNBURST-GRAPH ############################
 df_topic_sents_keywords = format_topics_sentences(
     ldamodel=lda_model, corpus=corpus)
 df_some = pd.DataFrame(df_topic_sents_keywords, columns=[
@@ -58,104 +229,28 @@ df_some = pd.DataFrame(df_topic_sents_keywords, columns=[
 df_some['Names'] = Resumes['Name']
 
 df = df_some
-fig = px.sunburst(df, path=['Dominant Topic', 'Names'], values='Topic % Contribution',
-                  color='Dominant Topic', color_continuous_scale='viridis', width=800, height=800, title="LOL XD")
-st.write(fig)
-# Checking for Multiple Job Descriptions
-# If more than one Job Descriptions are available, it asks user to select one as well.
-if len(Jobs['Name']) <= 1:
-    st.write(
-        "There is only 1 Job Description present. It will be used to create scores.")
-else:
-    st.write("There are ", len(Jobs['Name']),
-             "Job Descriptions available. Please select one.")
+
+st.markdown("## Topic Modelling of Resumes ")
+st.markdown(
+    "Using LDA to divide the topics into a number of usefull topics and creating a Cluster of matching topic resumes.  ")
+fig3 = px.sunburst(df, path=['Dominant Topic', 'Names'], values='Topic % Contribution',
+                   color='Dominant Topic', color_continuous_scale='viridis', width=800, height=800, title="Topic Distribution Graph")
+st.write(fig3)
 
 
-# Asking to Print the Job Desciption Names
-if len(Jobs['Name']) > 1:
-    option_yn = st.selectbox(
-        "Show the Job Description Names?", options=['NO', 'YES'])
-    if option_yn == 'YES':
-        index = [a for a in range(len(Jobs['Name']))]
-        fig = go.Figure(data=[go.Table(header=dict(values=["Job No.", "Job Desc. Name"], line_color='darkslategray',
-                                                   fill_color='lightskyblue'),
-                                       cells=dict(values=[index, Jobs['Name']], line_color='darkslategray',
-                                                  fill_color='cyan'))
-                              ])
-        st.write(fig)
+############################## RESUME PRINTING #############################
 
-
-# Asking to chose the Job Description
-index = st.slider("Which JD to select ? : ", 0,
-                  len(Jobs['Name'])-1, 1)
-
-
-option_yn = st.selectbox("Show the Job Description ?", options=['NO', 'YES'])
-if option_yn == 'YES':
-    st.markdown("---")
-    st.markdown("### Job Description :")
-    st.text(Jobs['Context'][index])
-    st.markdown("---")
-
-
-def calculate_scores(resumes, job_description):
-    scores = []
-    for x in range(resumes.shape[0]):
-        score = Similar.match(
-            resumes['TF_Based'][x], job_description['Cleaned'][index])
-        scores.append(score)
-    return scores
-
-
-Resumes['Scores'] = calculate_scores(Resumes, Jobs)
-
-Ranked_resumes = Resumes.sort_values(
-    by=['Scores'], ascending=False).reset_index(drop=True)
-
-Ranked_resumes['Rank'] = pd.DataFrame(
-    [i for i in range(1, len(Ranked_resumes['Scores'])+1)])
-
-fig = go.Figure(data=[go.Table(
-    header=dict(values=["Rank", "Name", "Scores"],
-                fill_color='#00416d',
-                align='center', font=dict(color='white', size=16)),
-    cells=dict(values=[Ranked_resumes.Rank, Ranked_resumes.Name, Ranked_resumes.Scores],
-               fill_color='#d6e0f0',
-               align='left'))])
-
-fig.update_layout(title="Top Ranked Resumes", width=700, height=1100)
-st.write(fig)
-
-st.markdown("---")
-
-fig = px.bar(Ranked_resumes,
-             x=Ranked_resumes['Name'], y=Ranked_resumes['Scores'], color='Scores',
-             color_continuous_scale='haline', title="Score and Rank Distribution")
-# fig.update_layout(width=700, height=700)
-st.write(fig)
-
-
-st.markdown("---")
-
-
-def generate_wordcloud(text):
-    wordcloud = WordCloud(width=800, height=800,
-                          background_color='white',
-                          colormap='viridis', collocations=False,
-                          min_font_size=10).generate(text)
-    plt.figure(figsize=(8, 8), facecolor=None)
-    plt.imshow(wordcloud)
-    plt.axis("off")
-    plt.tight_layout(pad=0)
-
-    plt.show()
-
+# my_bar = st.progress(0)
+# for percent_complete in range(100):
+#     time.sleep(0.1)
+#     my_bar.progress(percent_complete + 1)
 
 option_2 = st.selectbox("Show the Best Matching Resumes?", options=[
     'NO', 'YES'])
 if option_2 == 'YES':
     indx = st.slider("Which resume to display ?:",
                      1, Ranked_resumes.shape[0], 1)
+
     st.write("Displaying Resume with Rank: ", indx)
     st.markdown("---")
     st.markdown("## **Resume** ")

@@ -43,5 +43,5 @@ def format_topics_sentences(ldamodel, corpus, texts):
     return(sent_topics_df)
 
 
-def if __name__ == "__main__":
-    pass
+# def if __name__ == "__main__":
+#     pass
