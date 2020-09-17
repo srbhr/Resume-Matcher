@@ -14,7 +14,7 @@ from PIL import Image
 import time
 
 
-image = Image.open('NAIVE RESUME MATCHER.png')
+image = Image.open('Images//NAIVE RESUME MATCHER.png')
 st.image(image, use_column_width=True)
 
 st.title("Naive Resume Matcher")
@@ -47,7 +47,7 @@ Total Score calculate is the overall average of the 4 mentioned token based algo
 
 
 # Reading the CSV files prepared by the fileReader.py
-Resumes = pd.read_csv('Resume_data.csv')
+Resumes = pd.read_csv('Resume_Data.csv')
 Jobs = pd.read_csv('Job_Data.csv')
 
 

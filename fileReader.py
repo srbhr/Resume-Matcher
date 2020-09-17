@@ -14,6 +14,7 @@ job_description_names = os.listdir(job_desc_dir)
 
 document = []
 
+
 def read_resumes(list_of_resumes, resume_directory):
     placeholder = []
     for res in list_of_resumes:
@@ -25,7 +26,9 @@ def read_resumes(list_of_resumes, resume_directory):
         placeholder.append(temp)
     return placeholder
 
+
 document = read_resumes(resume_names, resume_dir)
+
 
 def get_cleaned_words(document):
     for i in range(len(document)):
@@ -37,11 +40,14 @@ def get_cleaned_words(document):
         document[i].append(sentence)
     return document
 
-Doc=get_cleaned_words(document)
 
-Database = pd.DataFrame(document,columns=["Name","Context","Cleaned","Selective","Selective_Reduced","TF_Based"])
+Doc = get_cleaned_words(document)
 
-Database.to_csv("Resume_data.csv", index=False)
+Database = pd.DataFrame(document, columns=[
+                        "Name", "Context", "Cleaned", "Selective", "Selective_Reduced", "TF_Based"])
+
+Database.to_csv("Resume_Data.csv", index=False)
+
 
 def read_jobdescriptions(job_description_names, job_desc_dir):
     placeholder = []
@@ -54,10 +60,12 @@ def read_jobdescriptions(job_description_names, job_desc_dir):
         placeholder.append(temp)
     return placeholder
 
+
 job_document = read_jobdescriptions(job_description_names, job_desc_dir)
 
-Jd=get_cleaned_words(job_document)
+Jd = get_cleaned_words(job_document)
 
-jd_database = pd.DataFrame(Jd,columns=["Name","Context","Cleaned","Selective","Selective_Reduced","TF_Based"])
+jd_database = pd.DataFrame(Jd, columns=[
+                           "Name", "Context", "Cleaned", "Selective", "Selective_Reduced", "TF_Based"])
 
-jd_database.to_csv("Job_Data.csv",index=False)
+jd_database.to_csv("Job_Data.csv", index=False)
