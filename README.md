@@ -44,6 +44,42 @@ For this :-
 The Data folder contains two folders that are used to read and provide data from.
 Incase of allowing the option to upload documents, `Data\Resumes` and `Data\JobDesc` should be the target for Resumes and Job Description respectively.
 
-Due the flexibility of Tesseract we need not to provide the type of document it needs to scan, it does so automatically.
+Due the flexibility of Textract we need not to provide the type of document it needs to scan, it does so automatically.
 
 But for the Job Description it needs to be in Docx format, it can be changed as well.
+
+## Installation Instructions
+
+A pip [requirements.txt](requirements.txt) file is provided. It is advised to install the packages listed below, manually by doing `pip install <package_name>`.
+As the requirements.txt file may have some unecessary additional dependencies.
+
+Popular Packages used are:-
+
+- [Spacy](https://pypi.org/project/spacy/)
+- [Plotly](https://pypi.org/project/plotly/)
+- [Streamlit](https://pypi.org/project/streamlit/)
+- [Gensim](https://pypi.org/project/gensim/)
+- [Scikit Learn](https://pypi.org/project/scikit-learn/)
+- [Pandas](https://pypi.org/project/pandas/)
+- [Wordcloud](https://pypi.org/project/wordcloud/)
+- [Matplotlib](https://pypi.org/project/matplotlib/)
+- [Numpy](https://pypi.org/project/numpy/)
+- [Scipy](https://pypi.org/project/scipy/)
+- [NLTK](https://pypi.org/project/nltk/)
+- [Textract](https://pypi.org/project/textract/)
+
+Furthermore the packages like NLTK and Spacy requires additional data to be downloaded.
+After installing them please perform:-
+
+```python
+## For Spacy's English Package
+python -m spacy download en_core_web_sm
+
+## For NLTK Data
+import nltk
+nltk.download('popular')  # this downloads the popular packages from NLTK_DATA
+```
+
+## Execution Instructions
+
+Please check the [How To](howtorunthis.md) file for execution instructions.
