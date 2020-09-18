@@ -105,7 +105,7 @@ def calculate_scores(resumes, job_description):
     scores = []
     for x in range(resumes.shape[0]):
         score = Similar.match(
-            resumes['TF_Based'][x], job_description['Cleaned'][index])
+            resumes['TF_Based'][x], job_description['Selective_Reduced'][index])
         scores.append(score)
     return scores
 

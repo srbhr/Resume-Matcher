@@ -36,7 +36,7 @@ def get_cleaned_words(document):
         document[i].append(" ".join(raw[0]))
         document[i].append(" ".join(raw[1]))
         document[i].append(" ".join(raw[2]))
-        sentence = tf_idf.do_tfidf(document[i][2].split(" "))
+        sentence = tf_idf.do_tfidf(document[i][3].split(" "))
         document[i].append(sentence)
     return document
 
