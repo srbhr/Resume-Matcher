@@ -1,5 +1,4 @@
 import textdistance as td
-import Cleaner
 
 
 def match(resume, job_des):
@@ -8,6 +7,5 @@ def match(resume, job_des):
     c = td.cosine.similarity(resume, job_des)
     o = td.overlap.normalized_similarity(resume, job_des)
     total = (j+s+c+o)/4
+    # total = (s+o)/2
     return total*100
-
-

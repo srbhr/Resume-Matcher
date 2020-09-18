@@ -1,7 +1,6 @@
 from operator import index
 from pandas._config.config import options
 import Cleaner
-import Similar
 import textract as tx
 import pandas as pd
 import os

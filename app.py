@@ -105,7 +105,7 @@ def calculate_scores(resumes, job_description):
     scores = []
     for x in range(resumes.shape[0]):
         score = Similar.match(
-            resumes['TF_Based'][x], job_description['Selective_Reduced'][index])
+            resumes['TF_Based'][x], job_description['TF_Based'][index])
         scores.append(score)
     return scores
 
@@ -160,7 +160,7 @@ document = get_list_of_words(Resumes['Cleaned'])
 id2word = corpora.Dictionary(document)
 corpus = [id2word.doc2bow(text) for text in document]
 
-lda_model = gensim.models.ldamodel.LdaModel(corpus=corpus, id2word=id2word, num_topics=5, random_state=100,
+lda_model = gensim.models.ldamodel.LdaModel(corpus=corpus, id2word=id2word, num_topics=6, random_state=100,
                                             update_every=1, chunksize=100, passes=50, alpha='auto', per_word_topics=True)
 
 ################################### LDA CODE ##############################################
@@ -203,7 +203,7 @@ cloud = WordCloud(background_color='white',
 
 topics = lda_model.show_topics(formatted=False)
 
-fig, axes = plt.subplots(2, 2, figsize=(10, 10), sharex=True, sharey=True)
+fig, axes = plt.subplots(2, 3, figsize=(10, 10), sharex=True, sharey=True)
 
 for i, ax in enumerate(axes.flatten()):
     fig.add_subplot(ax)
@@ -243,7 +243,7 @@ st.write(fig3)
 ############################## RESUME PRINTING #############################
 
 option_2 = st.selectbox("Show the Best Matching Resumes?", options=[
-    'NO', 'YES'])
+    'YES', 'NO'])
 if option_2 == 'YES':
     indx = st.slider("Which resume to display ?:",
                      1, Ranked_resumes.shape[0], 1)
