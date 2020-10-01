@@ -47,6 +47,8 @@ Database = pd.DataFrame(document, columns=[
 
 Database.to_csv("Resume_Data.csv", index=False)
 
+# Database.to_json("Resume_Data.json", index=False)
+
 
 def read_jobdescriptions(job_description_names, job_desc_dir):
     placeholder = []
