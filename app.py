@@ -74,7 +74,7 @@ if option_yn == 'YES':
 
 
 #################################### SCORE CALCUATION ################################
-
+@st.cache()
 def calculate_scores(resumes, job_description):
     scores = []
     for x in range(resumes.shape[0]):
@@ -119,6 +119,7 @@ st.markdown("---")
 ############################################ TF-IDF Code ###################################
 
 
+@st.cache()
 def get_list_of_words(document):
     Document = []
 
@@ -134,12 +135,14 @@ document = get_list_of_words(Resumes['Cleaned'])
 id2word = corpora.Dictionary(document)
 corpus = [id2word.doc2bow(text) for text in document]
 
+
 lda_model = gensim.models.ldamodel.LdaModel(corpus=corpus, id2word=id2word, num_topics=6, random_state=100,
                                             update_every=1, chunksize=100, passes=50, alpha='auto', per_word_topics=True)
 
 ################################### LDA CODE ##############################################
 
 
+@st.cache  # Trying to improve performance by reducing the rerun computations
 def format_topics_sentences(ldamodel, corpus):
     sent_topics_df = []
     for i, row_list in enumerate(ldamodel[corpus]):
@@ -158,7 +161,7 @@ def format_topics_sentences(ldamodel, corpus):
 
 
 ################################# Topic Word Cloud Code #####################################
-
+st.sidebar.button('Hit Me')
 st.markdown("## Topics and Topic Related Keywords ")
 st.markdown(
     """This Wordcloud representation shows the Topic Number and the Top Keywords that contstitute a Topic.
