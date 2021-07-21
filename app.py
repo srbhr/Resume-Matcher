@@ -195,7 +195,7 @@ plt.subplots_adjust(wspace=0, hspace=0)
 plt.axis('off')
 plt.margins(x=0, y=0)
 plt.tight_layout()
-st.pyplot()
+st.pyplot(plt)
 
 st.markdown("---")
 
