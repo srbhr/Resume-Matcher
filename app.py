@@ -137,7 +137,7 @@ corpus = [id2word.doc2bow(text) for text in document]
 
 
 lda_model = gensim.models.ldamodel.LdaModel(corpus=corpus, id2word=id2word, num_topics=6, random_state=100,
-                                            update_every=1, chunksize=100, passes=50, alpha='auto', per_word_topics=True)
+                                            update_every=3, chunksize=100, passes=50, alpha='auto', per_word_topics=True)
 
 ################################### LDA CODE ##############################################
 
@@ -157,7 +157,7 @@ def format_topics_sentences(ldamodel, corpus):
             else:
                 break
 
-    return(sent_topics_df)
+    return sent_topics_df
 
 
 ################################# Topic Word Cloud Code #####################################
@@ -238,7 +238,7 @@ if option_2 == 'YES':
     plt.imshow(wordcloud)
     plt.axis("off")
     plt.tight_layout(pad=0)
-    st.pyplot()
+    st.pyplot(plt)
 
     st.write("With a Match Score of :", Ranked_resumes.iloc[indx-1, 6])
     fig = go.Figure(data=[go.Table(
