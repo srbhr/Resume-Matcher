@@ -28,6 +28,33 @@ For this :-
 4. Additional Plots are done to gain more insights about the document.
 
 ---
+## Images
+
+1. List of Job Descriptions to Choose from.
+![List of Job Descriptions to choose from](Screenshots/1.png)
+
+2. Preview of your Chosen Job Description
+![The Job Description](Screenshots/2.png)
+
+3. Your Resumes are ranked now! Check the top Ones!! 
+![Ranked Resumes as per Job Description](Screenshots/3.png)
+
+4. Score distribution of different candidates incase you want to check some more.
+![Score distribution of different candidates](Screenshots/4.png)
+
+5. Topic Disctribution of Various Resumes
+![Topic Disctribution of Various Resumes](Screenshots/5.png)
+
+
+6. Topic Distribution Sunburst Chart
+![Topic Distribution Sunburst Chart](Screenshots/6.png)
+
+7. Word Cloud of your resume for a quick glance! 
+![Word Cloud of your resume for a quick glance! ](Screenshots/7.png)
+
+## Preview
+![Working Video](Screenshots/Gif_View.gif)
+---
 
 ## Progress Flow
 
