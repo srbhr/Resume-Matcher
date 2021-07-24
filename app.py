@@ -161,7 +161,7 @@ def format_topics_sentences(ldamodel, corpus):
 
 
 ################################# Topic Word Cloud Code #####################################
-st.sidebar.button('Hit Me')
+# st.sidebar.button('Hit Me')
 st.markdown("## Topics and Topic Related Keywords ")
 st.markdown(
     """This Wordcloud representation shows the Topic Number and the Top Keywords that contstitute a Topic.
