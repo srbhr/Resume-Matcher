@@ -1,6 +1,19 @@
 ![Naive Resume Matcher Logo](Images/logo.png)
 
 # Naive-Resume-Matcher
+<p align="centre">
+<a href="https://img.shields.io/badge/Tested%20on-WSL%202.0-brightgreen"><img src="https://img.shields.io/badge/Tested%20on-WSL%202.0-brightgreen"/> </a>
+<a href="https://img.shields.io/github/issues/srbhr/Naive-Resume-Matching?color=blueviolet">
+<img src = "https://img.shields.io/github/issues/srbhr/Naive-Resume-Matching?color=blueviolet"/> </a>
+<a href="https://img.shields.io/github/forks/srbhr/Naive-Resume-Matching">
+<img src = "https://img.shields.io/github/forks/srbhr/Naive-Resume-Matching"/> </a>
+<a href="https://img.shields.io/github/stars/srbhr/Naive-Resume-Matching?color=yellow">
+<img src = "https://img.shields.io/github/stars/srbhr/Naive-Resume-Matching?color=yellow"/> </a>
+<a href="https://img.shields.io/github/license/srbhr/Naive-Resume-Matching">
+<img src = "https://img.shields.io/github/license/srbhr/Naive-Resume-Matching"/> </a>
+<a href="https://img.shields.io/twitter/url?url=https%3A%2F%2Fgithub.com%2Fsrbhr%2FNaive-Resume-Matching"><img src="https://img.shields.io/twitter/url?url=https%3A%2F%2Fgithub.com%2Fsrbhr%2FNaive-Resume-Matching"></a>
+</p>
+
 
 A Machine Learning Based Resume Matcher, to compare Resumes with Job Descriptions.
 Create a score based on how good/similar a resume is to the particular Job Description.\n
