@@ -59,7 +59,7 @@ nbconvert==6.1.0
 nbformat==5.1.3
 nest-asyncio==1.5.1
 nltk==3.6.2
-notebook==6.4.0
+notebook==6.4.1
 numpy==1.21.1
 olefile==0.46
 packaging==21.0
