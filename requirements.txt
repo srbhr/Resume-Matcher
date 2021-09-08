@@ -70,7 +70,7 @@ pathy==0.6.0
 pdfminer.six==20181108
 pexpect==4.8.0
 pickleshare==0.7.5
-Pillow==8.3.1
+Pillow==8.3.2
 plotly==5.1.0
 preshed==3.0.5
 prometheus-client==0.11.0
