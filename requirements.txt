@@ -105,7 +105,7 @@ spacy-legacy==3.0.8
 SpeechRecognition==3.8.1
 sqlparse==0.4.2
 srsly==2.4.1
-streamlit==0.84.2
+streamlit==1.11.1
 tenacity==8.0.1
 terminado==0.10.1
 testpath==0.5.0
