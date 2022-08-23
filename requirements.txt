@@ -55,7 +55,7 @@ matplotlib-inline==0.1.2
 mistune==2.0.3
 murmurhash==1.0.5
 nbclient==0.5.3
-nbconvert==6.3.0
+nbconvert==6.5.1
 nbformat==5.1.3
 nest-asyncio==1.5.1
 nltk==3.6.6
