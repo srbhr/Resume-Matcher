@@ -41,7 +41,7 @@ ipython-genutils==0.2.0
 ipywidgets==7.6.3
 jedi==0.18.0
 Jinja2==3.0.1
-joblib==1.0.1
+joblib==1.2.0
 jsonschema==3.2.0
 jupyter-client==6.1.12
 jupyter-core==4.7.1
