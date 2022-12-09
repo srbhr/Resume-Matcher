@@ -14,7 +14,7 @@ blinker==1.4
 blis==0.7.4
 cachetools==4.2.2
 catalogue==2.0.4
-certifi==2021.5.30
+certifi==2022.12.7
 cffi==1.14.6
 chardet==3.0.4
 charset-normalizer==2.0.3
