@@ -36,7 +36,7 @@ GitPython==3.1.18
 idna==3.2
 IMAPClient==2.1.0
 ipykernel==6.0.3
-ipython==7.31.1
+ipython==8.10.0
 ipython-genutils==0.2.0
 ipywidgets==7.6.3
 jedi==0.18.0
