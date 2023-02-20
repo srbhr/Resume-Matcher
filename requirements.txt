@@ -32,7 +32,7 @@ entrypoints==0.3
 extract-msg==0.23.1
 gensim==4.0.1
 gitdb==4.0.7
-GitPython==3.1.18
+GitPython==3.1.30
 idna==3.2
 IMAPClient==2.1.0
 ipykernel==6.0.3
