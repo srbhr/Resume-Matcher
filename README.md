@@ -18,6 +18,17 @@
 <a href="https://img.shields.io/twitter/url?url=https%3A%2F%2Fgithub.com%2Fsrbhr%2FNaive-Resume-Matching"><img src="https://img.shields.io/twitter/url?url=https%3A%2F%2Fgithub.com%2Fsrbhr%2FNaive-Resume-Matching"></a>
 </p>
 
+<br/>
+
+<div align="center">
+
+### ![v2.0 coming soon](https://custom-icon-badges.demolab.com/badge/-v2.0%20Coming%20Soon-263159?style=for-the-badge&logo=rocket&logoColor=white)    ![Work in Progress](https://custom-icon-badges.demolab.com/badge/-Work%20in%20Progress-gold?style=for-the-badge&logo=clock&logoColor=black) 
+
+</div>
+
+
+<br/>
+
 
 A Machine Learning Based Resume Matcher, to compare Resumes with Job Descriptions.
 Create a score based on how good/similar a resume is to the particular Job Description.\n
