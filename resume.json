@@ -1,0 +1,67 @@
+{
+         "clean_data": "John Smith  \nSenior Python Developer and Machine Learning Engineer  \n \nEmail:   \nLinkedIn: linkedin.com/in/johnsmith  \n \nSummary  \nExperienced Python developer with a passion for solving complex problems and building scalable and \nefficient systems. Proven ability to deliver high -quality software on time and on budget. Skilled in a \nvariety of technologies, including machine learning, d ata analysis, and cloud computing. Seeking a \nchallenging position as a Machine Learning Engineer.  \n \nProfessional Experience  \nABC Company  \nSenior Python Developer, 2021 - Present  \n \nDeveloped and maintained a scalable and secure API for a leading e -commerce platf orm using Python, \nDjango, and AWS.  \nDesigned and implemented a real -time recommendation system using collaborative filtering and matrix \nfactorization.  \nImproved the accuracy of a fraud detection system by 20% using machine learning algorithms such as \nXGBoos t and Random Forest.  \nXYZ Corporation  \nPython Developer, 2019 - 2021  \n \nBuilt and deployed a machine learning pipeline for a customer retention model using Python, Scikit -\nLearn, and AWS.  \nAutomated the deployment of data science models into production using Kub ernetes and Docker.  \nLed a team of 3 developers to develop a real -time chatbot using natural language processing techniques.  \nDEF Inc.  \nSoftware Engineer, 2017 - 2019  ",
+         "emails": [
+                  "john.smith@email.com"
+         ],
+         "entities": [
+                  "Machine Learning Engineer",
+                  "ABC Company  \nSenior Python Developer",
+                  "API",
+                  "AWS",
+                  "Random Forest",
+                  "XYZ Corporation  \nPython Developer",
+                  "AWS",
+                  "Kub",
+                  "Docker",
+                  "DEF Inc.",
+                  "Software Engineer"
+         ],
+         "experience": "Experience  \n ABC Company  \n Senior Python Developer , 2021 - Present  \n \n Developed and maintained a scalable and secure API for a leading e -commerce platf orm using Python , \n Django , and AWS .  \n Designed and implemented a real -time recommendation system using collaborative filtering and matrix \n factorization .  \n Improved the accuracy of a fraud detection system by 20 % using machine learning algorithms such as \n XGBoos t and Random Forest .  \n XYZ Corporation  \n Python Developer , 2019 - 2021  \n \n Built and deployed a machine learning pipeline for a customer retention model using Python , Scikit - \n Learn , and AWS .  \n Automated the deployment of data science models into production using Kub ernetes and Docker .  \n Led a team of 3 developers to develop a real -time chatbot using natural language processing techniques .  \n DEF Inc.  \n Software Engineer , 2017 - 2019  ",
+         "keyterms": [
+                  [
+                           "Senior Python Developer",
+                           0.36162654547705625
+                  ],
+                  [
+                           "Machine Learning Engineer",
+                           0.3416857945338747
+                  ],
+                  [
+                           "machine learning",
+                           0.018785341518291757
+                  ],
+                  [
+                           "John Smith",
+                           0.014458612525635272
+                  ],
+                  [
+                           "-quality software",
+                           0.01264018196368771
+                  ],
+                  [
+                           "Python developer",
+                           0.011351070811834132
+                  ],
+                  [
+                           "efficient system",
+                           0.011272347993315954
+                  ]
+         ],
+         "name": [
+                  "John Smith"
+         ],
+         "phones": [],
+         "resume_data": "John Smith  \nSenior Python Developer and Machine Learning Engineer  \n \nEmail: john.smith@email.com  \nLinkedIn: linkedin.com/in/johnsmith  \n \nSummary  \nExperienced Python developer with a passion for solving complex problems and building scalable and \nefficient systems. Proven ability to deliver high -quality software on time and on budget. Skilled in a \nvariety of technologies, including machine learning, d ata analysis, and cloud computing. Seeking a \nchallenging position as a Machine Learning Engineer.  \n \nProfessional Experience  \nABC Company  \nSenior Python Developer, 2021 - Present  \n \nDeveloped and maintained a scalable and secure API for a leading e -commerce platf orm using Python, \nDjango, and AWS.  \nDesigned and implemented a real -time recommendation system using collaborative filtering and matrix \nfactorization.  \nImproved the accuracy of a fraud detection system by 20% using machine learning algorithms such as \nXGBoos t and Random Forest.  \nXYZ Corporation  \nPython Developer, 2019 - 2021  \n \nBuilt and deployed a machine learning pipeline for a customer retention model using Python, Scikit -\nLearn, and AWS.  \nAutomated the deployment of data science models into production using Kub ernetes and Docker.  \nLed a team of 3 developers to develop a real -time chatbot using natural language processing techniques.  \nDEF Inc.  \nSoftware Engineer, 2017 - 2019  ",
+         "years": [
+                  [
+                           "Python Developer",
+                           "2019",
+                           "2021"
+                  ],
+                  [
+                           "Software Engineer",
+                           "2017",
+                           "2019"
+                  ]
+         ]
+}

@@ -30,7 +30,7 @@ class TextCleaner:
     A class for cleaning a text by removing specific patterns.
     """
 
-    def clean_string(self, text):
+    def clean_string(text):
         """
         Clean the input text by removing specific patterns.
 
@@ -71,7 +71,7 @@ class EntityExtractor:
     A class for extracting entities from a given text.
     """
 
-    def extract_entities(self, text):
+    def extract_entities(text):
         """
         Extract named entities of types 'GPE' (geopolitical entity) and 'ORG' (organization) from the given text.
 

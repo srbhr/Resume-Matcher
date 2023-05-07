@@ -21,8 +21,8 @@ def read_multiple_pdf(file_path: str) -> list:
                 pdf_reader = PdfReader(f)
                 count = len(pdf_reader.pages)
                 for i in range(count):
-                    page = pdf_reader.getPage(i)
-                    output.append(page.extractText())
+                    page = pdf_reader.pages[i]
+                    output.append(page.extract_text())
         except Exception as e:
             print(f"Error reading file '{file}': {str(e)}")
     return output
@@ -44,8 +44,8 @@ def read_single_pdf(file_path: str) -> list:
             pdf_reader = PdfReader(f)
             count = len(pdf_reader.pages)
             for i in range(count):
-                page = pdf_reader.getPage(i)
-                output.append(page.extractText())
+                page = pdf_reader.pages[i]
+                output.append(page.extract_text())
     except Exception as e:
         print(f"Error reading file '{file_path}': {str(e)}")
     return output
