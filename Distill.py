@@ -40,8 +40,7 @@ def lemmatize(text):
 
 def _to_string(List):
     # the input parameter must be a list
-    string = " "
-    return string.join(List)
+    return " ".join(List)
 
 
 def remove_tags(text, postags=['PROPN', 'NOUN', 'ADJ', 'VERB', 'ADV']):
