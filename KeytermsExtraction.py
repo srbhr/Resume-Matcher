@@ -7,7 +7,7 @@ class KeytermExtractor:
     A class for extracting keyterms from a given text using various algorithms.
     """
 
-    def __init__(self, raw_text: str, top_n_values: int = 7):
+    def __init__(self, raw_text: str, top_n_values: int = 20):
         """
         Initialize the KeytermExtractor object.
 
@@ -59,3 +59,23 @@ class KeytermExtractor:
         """
         return list(extract.keyterms.yake(self.text_doc, normalize="lemma",
                                           topn=self.top_n_values))
+
+    def bi_gramchunker(self):
+        """
+        Chunk the text into bigrams.
+
+        Returns:
+            List[str]: A list of bigrams.
+        """
+        return list(textacy.extract.basics.ngrams(self.text_doc, n=2, filter_stops=True,
+                                                  filter_nums=True, filter_punct=True))
+
+    def tri_gramchunker(self):
+        """
+        Chunk the text into trigrams.
+
+        Returns:
+            List[str]: A list of trigrams.
+        """
+        return list(textacy.extract.basics.ngrams(self.text_doc, n=3, filter_stops=True,
+                                                  filter_nums=True, filter_punct=True))

@@ -30,7 +30,7 @@ class TextCleaner:
     A class for cleaning a text by removing specific patterns.
     """
 
-    def clean_string(text):
+    def remove_emails_links(text):
         """
         Clean the input text by removing specific patterns.
 
@@ -44,45 +44,57 @@ class TextCleaner:
             text = re.sub(REGEX_PATTERNS[pattern], '', text)
         return text
 
-
-class NounExtractor:
-    """
-    A class for extracting nouns from a given text.
-    """
-
-    def extract_nouns(self, text):
+    def clean_text(text):
         """
-        Extract nouns and proper nouns from the given text.
+        Clean the input text by removing specific patterns.
 
         Args:
-            text (str): The input text to extract nouns from.
+            text (str): The input text to clean.
 
         Returns:
-            list: A list of extracted nouns.
+            str: The cleaned text.
         """
+        text = TextCleaner.remove_emails_links(text)
         doc = nlp(text)
-        pos_tags = ['NOUN', 'PROPN']
-        nouns = [token.text for token in doc if token.pos_ in pos_tags]
-        return nouns
+        for token in doc:
+            if token.pos_ == 'PUNCT':
+                text = text.replace(token.text, '')
+        return str(text)
 
-
-class EntityExtractor:
-    """
-    A class for extracting entities from a given text.
-    """
-
-    def extract_entities(text):
+    def remove_stopwords(text):
         """
-        Extract named entities of types 'GPE' (geopolitical entity) and 'ORG' (organization) from the given text.
+        Clean the input text by removing stopwords.
 
         Args:
-            text (str): The input text to extract entities from.
+            text (str): The input text to clean.
 
         Returns:
-            list: A list of extracted entities.
+            str: The cleaned text.
         """
         doc = nlp(text)
-        entity_labels = ['GPE', 'ORG']
-        entities = [
-            token.text for token in doc.ents if token.label_ in entity_labels]
-        return entities
+        for token in doc:
+            if token.is_stop:
+                text = text.replace(token.text, '')
+        return text
+
+
+class CountFrequency:
+
+    def __init__(self, text):
+        self.text = text
+        self.doc = nlp(text)
+
+    def count_frequency(self):
+        """
+        Count the frequency of words in the input text.
+
+        Returns:
+            dict: A dictionary with the words as keys and the frequency as values.
+        """
+        pos_freq = {}
+        for token in self.doc:
+            if token.pos_ in pos_freq:
+                pos_freq[token.pos_] += 1
+            else:
+                pos_freq[token.pos_] = 1
+        return pos_freq

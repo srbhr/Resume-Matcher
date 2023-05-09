@@ -1,67 +1,263 @@
 {
-         "clean_data": "John Smith  \nSenior Python Developer and Machine Learning Engineer  \n \nEmail:   \nLinkedIn: linkedin.com/in/johnsmith  \n \nSummary  \nExperienced Python developer with a passion for solving complex problems and building scalable and \nefficient systems. Proven ability to deliver high -quality software on time and on budget. Skilled in a \nvariety of technologies, including machine learning, d ata analysis, and cloud computing. Seeking a \nchallenging position as a Machine Learning Engineer.  \n \nProfessional Experience  \nABC Company  \nSenior Python Developer, 2021 - Present  \n \nDeveloped and maintained a scalable and secure API for a leading e -commerce platf orm using Python, \nDjango, and AWS.  \nDesigned and implemented a real -time recommendation system using collaborative filtering and matrix \nfactorization.  \nImproved the accuracy of a fraud detection system by 20% using machine learning algorithms such as \nXGBoos t and Random Forest.  \nXYZ Corporation  \nPython Developer, 2019 - 2021  \n \nBuilt and deployed a machine learning pipeline for a customer retention model using Python, Scikit -\nLearn, and AWS.  \nAutomated the deployment of data science models into production using Kub ernetes and Docker.  \nLed a team of 3 developers to develop a real -time chatbot using natural language processing techniques.  \nDEF Inc.  \nSoftware Engineer, 2017 - 2019  ",
-         "emails": [
-                  "john.smith@email.com"
-         ],
-         "entities": [
-                  "Machine Learning Engineer",
-                  "ABC Company  \nSenior Python Developer",
-                  "API",
-                  "AWS",
-                  "Random Forest",
-                  "XYZ Corporation  \nPython Developer",
-                  "AWS",
-                  "Kub",
-                  "Docker",
-                  "DEF Inc.",
-                  "Software Engineer"
-         ],
-         "experience": "Experience  \n ABC Company  \n Senior Python Developer , 2021 - Present  \n \n Developed and maintained a scalable and secure API for a leading e -commerce platf orm using Python , \n Django , and AWS .  \n Designed and implemented a real -time recommendation system using collaborative filtering and matrix \n factorization .  \n Improved the accuracy of a fraud detection system by 20 % using machine learning algorithms such as \n XGBoos t and Random Forest .  \n XYZ Corporation  \n Python Developer , 2019 - 2021  \n \n Built and deployed a machine learning pipeline for a customer retention model using Python , Scikit - \n Learn , and AWS .  \n Automated the deployment of data science models into production using Kub ernetes and Docker .  \n Led a team of 3 developers to develop a real -time chatbot using natural language processing techniques .  \n DEF Inc.  \n Software Engineer , 2017 - 2019  ",
-         "keyterms": [
-                  [
-                           "Senior Python Developer",
-                           0.36162654547705625
-                  ],
-                  [
-                           "Machine Learning Engineer",
-                           0.3416857945338747
-                  ],
-                  [
-                           "machine learning",
-                           0.018785341518291757
-                  ],
-                  [
-                           "John Smith",
-                           0.014458612525635272
-                  ],
-                  [
-                           "-quality software",
-                           0.01264018196368771
-                  ],
-                  [
-                           "Python developer",
-                           0.011351070811834132
-                  ],
-                  [
-                           "efficient system",
-                           0.011272347993315954
-                  ]
-         ],
-         "name": [
-                  "John Smith"
-         ],
-         "phones": [],
-         "resume_data": "John Smith  \nSenior Python Developer and Machine Learning Engineer  \n \nEmail: john.smith@email.com  \nLinkedIn: linkedin.com/in/johnsmith  \n \nSummary  \nExperienced Python developer with a passion for solving complex problems and building scalable and \nefficient systems. Proven ability to deliver high -quality software on time and on budget. Skilled in a \nvariety of technologies, including machine learning, d ata analysis, and cloud computing. Seeking a \nchallenging position as a Machine Learning Engineer.  \n \nProfessional Experience  \nABC Company  \nSenior Python Developer, 2021 - Present  \n \nDeveloped and maintained a scalable and secure API for a leading e -commerce platf orm using Python, \nDjango, and AWS.  \nDesigned and implemented a real -time recommendation system using collaborative filtering and matrix \nfactorization.  \nImproved the accuracy of a fraud detection system by 20% using machine learning algorithms such as \nXGBoos t and Random Forest.  \nXYZ Corporation  \nPython Developer, 2019 - 2021  \n \nBuilt and deployed a machine learning pipeline for a customer retention model using Python, Scikit -\nLearn, and AWS.  \nAutomated the deployment of data science models into production using Kub ernetes and Docker.  \nLed a team of 3 developers to develop a real -time chatbot using natural language processing techniques.  \nDEF Inc.  \nSoftware Engineer, 2017 - 2019  ",
-         "years": [
-                  [
-                           "Python Developer",
-                           "2019",
-                           "2021"
-                  ],
-                  [
-                           "Software Engineer",
-                           "2017",
-                           "2019"
-                  ]
-         ]
+              "bi_grams": "[John Smith, Senior Python, Python Developer, Machine Learning, Learning Engineer, LinkedIn linkedincom, Experienced Python, Python developer, solving complex, complex problems, building scalable, efficient systems, systems Proven, Proven ability, deliver high, high quality, quality software, budget Skilled, technologies including, including machine, machine learning, learning d, d ata, ata analysis, cloud computing, computing Seeking, challenging position, Machine Learning, Learning Engineer, Professional Experience, ABC Company, Senior Python, Python Developer, secure API, leading e, e commerce, commerce platf, platf orm, real time, time recommendation, recommendation system, collaborative filtering, fraud detection, detection system, machine learning, learning algorithms, XGBoos t, Random Forest, XYZ Corporation, Python Developer, machine learning, learning pipeline, customer retention, retention model, Python Scikit, data science, science models, Kub ernetes, real time, time chatbot, natural language, language processing, processing techniques, DEF Inc, Software Engineer]",
+              "clean_data": "John Smith  \nSenior Python Developer and Machine Learning Engineer  \n \nEmail   \nLinkedIn linkedincom/in/johnsmith  \n \nSummary  \nExperienced Python developer with a passion for solving complex problems and building scalable and \nefficient systems Proven ability to deliver high quality software on time and on budget Skilled in a \nvariety of technologies including machine learning d ata analysis and cloud computing Seeking a \nchallenging position as a Machine Learning Engineer  \n \nProfessional Experience  \nABC Company  \nSenior Python Developer 2021  Present  \n \nDeveloped and maintained a scalable and secure API for a leading e commerce platf orm using Python \nDjango and AWS  \nDesigned and implemented a real time recommendation system using collaborative filtering and matrix \nfactorization  \nImproved the accuracy of a fraud detection system by 20% using machine learning algorithms such as \nXGBoos t and Random Forest  \nXYZ Corporation  \nPython Developer 2019  2021  \n \nBuilt and deployed a machine learning pipeline for a customer retention model using Python Scikit \nLearn and AWS  \nAutomated the deployment of data science models into production using Kub ernetes and Docker  \nLed a team of 3 developers to develop a real time chatbot using natural language processing techniques  \nDEF Inc  \nSoftware Engineer 2017  2019  ",
+              "emails": [
+                            "john.smith@email.com"
+              ],
+              "entities": [
+                            "LinkedIn",
+                            "Machine Learning Engineer",
+                            "ABC Company  \nSenior Python Developer",
+                            "API",
+                            "Random Forest",
+                            "AWS",
+                            "Kub",
+                            "DEF Inc  \nSoftware"
+              ],
+              "experience": "Summary  \n Experienced Python developer with a passion for solving complex problems and building scalable and \n efficient systems Proven ability to deliver high quality software on time and on budget Skilled in a \n variety of technologies including machine learning d ata analysis and cloud computing Seeking a \n challenging position as a Machine Learning Engineer  \n \n Professional Experience  \n ABC Company  \n Senior Python Developer 2021   Present  \n \n Developed and maintained a scalable and secure API for a leading e commerce platf orm using Python \n Django and AWS  \n Designed and implemented a real time recommendation system using collaborative filtering and matrix \n factorization  \n Improved the accuracy of a fraud detection system by 20 % using machine learning algorithms such as \n XGBoos t and Random Forest  \n XYZ Corporation  \n Python Developer 2019   2021  \n \n Built and deployed a machine learning pipeline for a customer retention model using Python Scikit \n Learn and AWS  \n Automated the deployment of data science models into production using Kub ernetes and Docker  \n Led a team of 3 developers to develop a real time chatbot using natural language processing techniques  \n DEF Inc  \n Software Engineer 2017   2019  ",
+              "extracted_keywords": [
+                            "John",
+                            "Smith",
+                            "Senior",
+                            "Python",
+                            "Developer",
+                            "Machine",
+                            "Learning",
+                            "Engineer",
+                            "Email",
+                            "LinkedIn",
+                            "linkedincom",
+                            "johnsmith",
+                            "Summary",
+                            "Experienced",
+                            "Python",
+                            "developer",
+                            "passion",
+                            "solving",
+                            "complex",
+                            "problems",
+                            "building",
+                            "scalable",
+                            "efficient",
+                            "systems",
+                            "Proven",
+                            "ability",
+                            "deliver",
+                            "high",
+                            "quality",
+                            "software",
+                            "time",
+                            "budget",
+                            "Skilled",
+                            "variety",
+                            "technologies",
+                            "including",
+                            "machine",
+                            "learning",
+                            "ata",
+                            "analysis",
+                            "cloud",
+                            "computing",
+                            "Seeking",
+                            "challenging",
+                            "position",
+                            "Machine",
+                            "Learning",
+                            "Engineer",
+                            "Professional",
+                            "Experience",
+                            "ABC",
+                            "Company",
+                            "Senior",
+                            "Python",
+                            "Developer",
+                            "Present",
+                            "Developed",
+                            "maintained",
+                            "scalable",
+                            "secure",
+                            "API",
+                            "leading",
+                            "e",
+                            "commerce",
+                            "platf",
+                            "orm",
+                            "using",
+                            "Python",
+                            "Django",
+                            "AWS",
+                            "Designed",
+                            "implemented",
+                            "real",
+                            "time",
+                            "recommendation",
+                            "system",
+                            "using",
+                            "collaborative",
+                            "filtering",
+                            "matrix",
+                            "factorization",
+                            "Improved",
+                            "accuracy",
+                            "fraud",
+                            "detection",
+                            "system",
+                            "%",
+                            "using",
+                            "machine",
+                            "learning",
+                            "algorithms",
+                            "such",
+                            "XGBoos",
+                            "t",
+                            "Random",
+                            "Forest",
+                            "XYZ",
+                            "Corporation",
+                            "Python",
+                            "Developer",
+                            "Built",
+                            "deployed",
+                            "machine",
+                            "learning",
+                            "pipeline",
+                            "customer",
+                            "retention",
+                            "model",
+                            "using",
+                            "Python",
+                            "Scikit",
+                            "Learn",
+                            "AWS",
+                            "Automated",
+                            "deployment",
+                            "data",
+                            "science",
+                            "models",
+                            "production",
+                            "using",
+                            "Kub",
+                            "ernetes",
+                            "Docker",
+                            "Led",
+                            "team",
+                            "developers",
+                            "develop",
+                            "real",
+                            "time",
+                            "chatbot",
+                            "using",
+                            "natural",
+                            "language",
+                            "processing",
+                            "techniques",
+                            "DEF",
+                            "Inc",
+                            "Software",
+                            "Engineer"
+              ],
+              "keyterms": [
+                            [
+                                          "Machine Learning Engineer",
+                                          0.5335097455348873
+                            ],
+                            [
+                                          "Senior Python",
+                                          0.07630503987890255
+                            ],
+                            [
+                                          "Python developer",
+                                          0.05873499396464859
+                            ],
+                            [
+                                          "quality software",
+                                          0.01990980007696967
+                            ],
+                            [
+                                          "complex problem",
+                                          0.019703048817505984
+                            ],
+                            [
+                                          "budget skilled",
+                                          0.01913837609720131
+                            ],
+                            [
+                                          "efficient system",
+                                          0.018581718435828593
+                            ],
+                            [
+                                          "high quality",
+                                          0.0180594642212853
+                            ],
+                            [
+                                          "John Smith",
+                                          0.013905415715885792
+                            ],
+                            [
+                                          "real time",
+                                          0.01149314646193105
+                            ],
+                            [
+                                          "machine",
+                                          0.006960115529773619
+                            ],
+                            [
+                                          "scalable",
+                                          0.004996462903332193
+                            ],
+                            [
+                                          "AWS",
+                                          0.004328224257667386
+                            ],
+                            [
+                                          "model",
+                                          0.00287489326728256
+                            ],
+                            [
+                                          "computing",
+                                          0.0028240462859907504
+                            ],
+                            [
+                                          "position",
+                                          0.0028079647089921905
+                            ],
+                            [
+                                          "cloud",
+                                          0.002781530860197175
+                            ],
+                            [
+                                          "analysis",
+                                          0.0027801963076884476
+                            ],
+                            [
+                                          "Company",
+                                          0.002773700113337694
+                            ],
+                            [
+                                          "challenging",
+                                          0.0027638705911412808
+                            ]
+              ],
+              "name": [
+                            "John Smith"
+              ],
+              "phones": [],
+              "pos_frequencies": {
+                            "ADJ": 14,
+                            "ADP": 16,
+                            "CCONJ": 14,
+                            "DET": 14,
+                            "NOUN": 50,
+                            "NUM": 7,
+                            "PART": 2,
+                            "PROPN": 51,
+                            "SPACE": 29,
+                            "SYM": 2,
+                            "VERB": 24,
+                            "X": 1
+              },
+              "resume_data": "John Smith  \nSenior Python Developer and Machine Learning Engineer  \n \nEmail: john.smith@email.com  \nLinkedIn: linkedin.com/in/johnsmith  \n \nSummary  \nExperienced Python developer with a passion for solving complex problems and building scalable and \nefficient systems. Proven ability to deliver high -quality software on time and on budget. Skilled in a \nvariety of technologies, including machine learning, d ata analysis, and cloud computing. Seeking a \nchallenging position as a Machine Learning Engineer.  \n \nProfessional Experience  \nABC Company  \nSenior Python Developer, 2021 - Present  \n \nDeveloped and maintained a scalable and secure API for a leading e -commerce platf orm using Python, \nDjango, and AWS.  \nDesigned and implemented a real -time recommendation system using collaborative filtering and matrix \nfactorization.  \nImproved the accuracy of a fraud detection system by 20% using machine learning algorithms such as \nXGBoos t and Random Forest.  \nXYZ Corporation  \nPython Developer, 2019 - 2021  \n \nBuilt and deployed a machine learning pipeline for a customer retention model using Python, Scikit -\nLearn, and AWS.  \nAutomated the deployment of data science models into production using Kub ernetes and Docker.  \nLed a team of 3 developers to develop a real -time chatbot using natural language processing techniques.  \nDEF Inc.  \nSoftware Engineer, 2017 - 2019  ",
+              "tri_grams": "[Senior Python Developer, Developer and Machine, Machine Learning Engineer, Experienced Python developer, passion for solving, solving complex problems, problems and building, efficient systems Proven, systems Proven ability, ability to deliver, deliver high quality, high quality software, software on time, variety of technologies, technologies including machine, including machine learning, machine learning d, learning d ata, d ata analysis, analysis and cloud, cloud computing Seeking, Machine Learning Engineer, Senior Python Developer, Developed and maintained, maintained a scalable, scalable and secure, leading e commerce, e commerce platf, commerce platf orm, orm using Python, Django and AWS, Designed and implemented, implemented a real, real time recommendation, time recommendation system, system using collaborative, filtering and matrix, Improved the accuracy, fraud detection system, machine learning algorithms, t and Random, Built and deployed, deployed a machine, machine learning pipeline, customer retention model, model using Python, Learn and AWS, Automated the deployment, deployment of data, data science models, models into production, production using Kub, ernetes and Docker, Led a team, developers to develop, develop a real, real time chatbot, chatbot using natural, natural language processing, language processing techniques]",
+              "unique_id": "eb54e496-2268-4d85-9ea1-809b023e8d01",
+              "years": []
 }

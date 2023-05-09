@@ -55,7 +55,7 @@ class DataExtractor:
         """
 
         self.text = raw_text
-        self.clean_text = TextCleaner.clean_string(self.text)
+        self.clean_text = TextCleaner.clean_text(self.text)
         self.doc = nlp(self.clean_text)
 
     def extract_links(self):
@@ -153,7 +153,7 @@ class DataExtractor:
 
         for token in self.doc:
             if token.text in RESUME_SECTIONS:
-                if token.text == 'Experience':
+                if token.text == 'Experience' or 'EXPERIENCE' or 'experience':
                     in_experience_section = True
                 else:
                     in_experience_section = False
@@ -177,3 +177,32 @@ class DataExtractor:
         position_year = re.findall(
             position_year_search_pattern, self.text)
         return position_year
+
+    def extract_particular_words(self):
+        """
+        Extract nouns and proper nouns from the given text.
+
+        Args:
+            text (str): The input text to extract nouns from.
+
+        Returns:
+            list: A list of extracted nouns.
+        """
+        pos_tags = ['NOUN', 'PROPN', 'VERB', 'ADJ']
+        nouns = [token.text for token in self.doc if token.pos_ in pos_tags]
+        return nouns
+
+    def extract_entities(self):
+        """
+        Extract named entities of types 'GPE' (geopolitical entity) and 'ORG' (organization) from the given text.
+
+        Args:
+            text (str): The input text to extract entities from.
+
+        Returns:
+            list: A list of extracted entities.
+        """
+        entity_labels = ['GPE', 'ORG']
+        entities = [
+            token.text for token in self.doc.ents if token.label_ in entity_labels]
+        return entities
