@@ -4,18 +4,13 @@ from Utils import TextCleaner, CountFrequency, generate_unique_id
 from KeytermsExtraction import KeytermExtractor
 
 
-class ParseResume:
+class ParseJobDesc:
 
-    def __init__(self, resume: str):
-        self.resume_data = resume
+    def __init__(self, job_desc: str):
+        self.job_desc_data = job_desc
         self.clean_data = TextCleaner.clean_text(
-            self.resume_data)
+            self.job_desc_data)
         self.entities = DataExtractor(self.clean_data).extract_entities()
-        self.name = DataExtractor(self.clean_data[:30]).extract_names()
-        self.experience = DataExtractor(self.clean_data).extract_experience()
-        self.emails = DataExtractor(self.resume_data).extract_emails()
-        self.phones = DataExtractor(self.resume_data).extract_phone_numbers()
-        self.years = DataExtractor(self.clean_data).extract_position_year()
         self.key_words = DataExtractor(
             self.clean_data).extract_particular_words()
         self.pos_frequencies = CountFrequency(
@@ -27,30 +22,27 @@ class ParseResume:
 
     def get_JSON(self) -> dict:
         """
-        Returns a dictionary of resume data.
+        Returns a dictionary of job description data.
         """
-        resume_dictionary = {
+        job_desc_dictionary = {
             "unique_id": generate_unique_id(),
-            "resume_data": self.resume_data,
+            "job_desc_data": self.job_desc_data,
             "clean_data": self.clean_data,
             "entities": self.entities,
             "extracted_keywords": self.key_words,
             "keyterms": self.keyterms,
-            "name": self.name,
-            "experience": self.experience,
-            "emails": self.emails,
-            "phones": self.phones,
-            "years": self.years,
             "bi_grams": str(self.bi_grams),
             "tri_grams": str(self.tri_grams),
             "pos_frequencies": self.pos_frequencies
         }
 
-        file_name = str("Resume-" + resume_dictionary["unique_id"] + ".json")
+        file_name = str(
+            "Job-Desc-" + job_desc_dictionary["unique_id"] + ".json")
 
-        json_object = json.dumps(resume_dictionary, sort_keys=True, indent=14)
+        json_object = json.dumps(
+            job_desc_dictionary, sort_keys=True, indent=14)
 
         with open(file_name, "w") as outfile:
             outfile.write(json_object)
 
-        return resume_dictionary
+        return job_desc_dictionary
