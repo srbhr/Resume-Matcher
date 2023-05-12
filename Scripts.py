@@ -1,3 +1,4 @@
+import re
 def clean_string(text):
     # Remove emails
     text = re.sub(r'\S+@\S+', '', text)

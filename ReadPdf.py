@@ -28,7 +28,7 @@ def read_multiple_pdf(file_path: str) -> list:
     return output
 
 
-def read_single_pdf(file_path: str) -> list:
+def read_single_pdf(file_path: str) -> str:
     """
     Read a single PDF file and extract the text from each page.
 

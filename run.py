@@ -1,6 +1,6 @@
 from ParseResumeToJson import ParseResume
 from ParseJobDescToJson import ParseJobDesc
-from readpdf import read_single_pdf
+from ReadPdf import read_single_pdf
 
 
 def read_resumes(input_file: str) -> dict:

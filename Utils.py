@@ -22,9 +22,6 @@ def generate_unique_id():
     return str(uuid4())
 
 
-nlp = spacy.load("en_core_web_sm")
-
-
 class TextCleaner:
     """
     A class for cleaning a text by removing specific patterns.
