@@ -1,10 +1,11 @@
 import json
+import pathlib
 from scripts.Extractor import DataExtractor
 from scripts.utils.Utils import TextCleaner, CountFrequency, generate_unique_id
 from scripts.KeytermsExtraction import KeytermExtractor
-import os.path
+import os
 
-SAVE_JOB_DESCRIPTION_TO_THIS_DIRECTORY = '../../Data/Processed/'
+SAVE_DIRECTORY = "Data/Processed/"
 
 
 class ParseJobDesc:
@@ -39,11 +40,4 @@ class ParseJobDesc:
             "pos_frequencies": self.pos_frequencies
         }
 
-        file_name = str(
-            "Job-Desc-" + job_desc_dictionary["unique_id"] + ".json")
-        save_directory_name = os.path.join(SAVE_JOB_DESCRIPTION_TO_THIS_DIRECTORY+file_name)
-        json_object = json.dumps(
-            job_desc_dictionary, sort_keys=True, indent=14)
-        with open(save_directory_name, "w") as outfile:
-            outfile.write(json_object)
         return job_desc_dictionary

@@ -3,8 +3,10 @@ from scripts.Extractor import DataExtractor
 from scripts.utils.Utils import TextCleaner, CountFrequency, generate_unique_id
 from scripts.KeytermsExtraction import KeytermExtractor
 import os.path
+import os
+import pathlib
 
-SAVE_RESUME_TO_THIS_DIRECTORY = '../../Data/Processed/'
+SAVE_DIRECTORY = '../../Data/Processed/'
 
 
 class ParseResume:
@@ -49,9 +51,4 @@ class ParseResume:
             "pos_frequencies": self.pos_frequencies
         }
 
-        file_name = str("Resume-" + resume_dictionary["unique_id"] + ".json")
-        save_directory_name = os.path.join(SAVE_RESUME_TO_THIS_DIRECTORY + file_name)
-        json_object = json.dumps(resume_dictionary, sort_keys=True, indent=14)
-        with open(save_directory_name, "w") as outfile:
-            outfile.write(json_object)
         return resume_dictionary
