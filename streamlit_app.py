@@ -156,7 +156,7 @@ def preprocess_text(text):
 
 # read the json file
 resume = read_json('resume.json')
-job_desc = read_json('Job-Desc-a4f06ccb-8d5a-4d0b-9f02-3ba6d686472e.json')
+job_desc = read_json('Data/Processed/Job-Desc-a4f06ccb-8d5a-4d0b-9f02-3ba6d686472e.json')
 st.json(resume)
 
 st.json(job_desc)

@@ -1,7 +1,7 @@
 import re
 import urllib.request
 import spacy
-from Utils import TextCleaner
+from scripts.utils.Utils import TextCleaner
 
 
 # Load the English model

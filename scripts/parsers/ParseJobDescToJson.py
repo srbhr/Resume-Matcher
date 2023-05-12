@@ -1,7 +1,7 @@
 import json
-from Extractor import DataExtractor
-from Utils import TextCleaner, CountFrequency, generate_unique_id
-from KeytermsExtraction import KeytermExtractor
+from scripts.Extractor import DataExtractor
+from scripts.utils.Utils import TextCleaner, CountFrequency, generate_unique_id
+from scripts.KeytermsExtraction import KeytermExtractor
 
 
 class ParseJobDesc:
