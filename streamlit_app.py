@@ -261,7 +261,6 @@ data_length = dirty_intersection(resume_list, job_desc_list)
 
 st.write(df_data)
 
-
 st.write(data_length)
 
 st.write(px.data.tips())
