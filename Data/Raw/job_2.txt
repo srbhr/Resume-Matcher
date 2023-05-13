@@ -1,0 +1,25 @@
+Job Description: Java Developer
+
+We are seeking an experienced Java developer to join our team. The ideal candidate should have at least 5 years of experience in Java development, with a focus on developing and maintaining enterprise-level applications. The candidate should also possess excellent communication skills and a collaborative mindset, with an ability to work in a fast-paced, dynamic team environment.
+
+Responsibilities:
+
+Develop, test, and maintain Java-based applications using industry-standard frameworks and technologies.
+Collaborate with cross-functional teams to identify and address business requirements and technical issues.
+Participate in design and architecture discussions to ensure the development of scalable, efficient, and secure applications.
+Write clean, efficient, and well-documented code that adheres to industry best practices and standards.
+Participate in code reviews, testing, and deployment activities as required.
+Continuously improve your knowledge and skills in Java development, including emerging technologies and frameworks.
+Communicate with team members and stakeholders to understand business requirements and deliver solutions that meet or exceed expectations.
+Requirements:
+
+Bachelor's or Master's degree in Computer Science, Engineering, or related field.
+At least 5 years of experience in Java development, with strong proficiency in Java, Spring, and Hibernate frameworks.
+Experience with web development technologies such as HTML, CSS, and JavaScript.
+Knowledge of database technologies such as Oracle, MySQL, or SQL Server.
+Experience with Agile development methodologies.
+Strong understanding of software development best practices, including object-oriented design principles, testing, and version control systems such as Git.
+Excellent written and verbal communication skills.
+Strong problem-solving and critical-thinking skills.
+Ability to work independently and collaboratively in a team environment.
+If you are passionate about Java development and have a desire to work with cutting-edge technologies and frameworks, we encourage you to apply. We offer a competitive salary, comprehensive benefits package, and a dynamic work environment with opportunities for growth and advancement.
