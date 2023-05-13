@@ -1,5 +1,12 @@
-# ResumeRank - _An AI Based Resume Matcher_ 
+![Resume Matcher](Assets/img/header_image.jpg)
 
-AI Based Resume Matcher, Analyzer to Evaluate Resume-Job Description Fit. Created Using NLP, Vector Search.
+# Resume Matcher
 
-WIP for v.2.0 Alpha Phase - 1.
+#### AI Based Resume Matcher to tailor your resume to a job description. Find the bestkewords, and gain deep insights into your resume.
+
+<br>
+
+![](https://img.shields.io/badge/Version-0.0.1--canary-FFD93D?style=for-the-badge)
+
+![Apache 2.0](https://img.shields.io/github/license/saurabhraidev/naive-resume-matching?style=for-the-badge)
+
