@@ -143,14 +143,14 @@ lda_model = gensim.models.ldamodel.LdaModel(corpus=corpus, id2word=id2word, num_
 
 
 @st.cache_data 
-def format_topics_sentences(ldamodel, corpus):
+def format_topics_sentences(_ldamodel, corpus):
     sent_topics_df = []
-    for i, row_list in enumerate(ldamodel[corpus]):
-        row = row_list[0] if ldamodel.per_word_topics else row_list
+    for i, row_list in enumerate(_ldamodel[corpus]):
+        row = row_list[0] if _ldamodel.per_word_topics else row_list
         row = sorted(row, key=lambda x: (x[1]), reverse=True)
         for j, (topic_num, prop_topic) in enumerate(row):
             if j == 0:
-                wp = ldamodel.show_topic(topic_num)
+                wp = _ldamodel.show_topic(topic_num)
                 topic_keywords = ", ".join([word for word, prop in wp])
                 sent_topics_df.append(
                     [i, int(topic_num), round(prop_topic, 4)*100, topic_keywords])
@@ -202,7 +202,7 @@ st.markdown("---")
 ####################### SETTING UP THE DATAFRAME FOR SUNBURST-GRAPH ############################
 
 df_topic_sents_keywords = format_topics_sentences(
-    ldamodel=lda_model, corpus=corpus)
+    _ldamodel=lda_model, corpus=corpus)
 df_some = pd.DataFrame(df_topic_sents_keywords, columns=[
                        'Document No', 'Dominant Topic', 'Topic % Contribution', 'Keywords'])
 df_some['Names'] = Resumes['Name']
