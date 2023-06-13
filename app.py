@@ -74,7 +74,7 @@ if option_yn == 'YES':
 
 
 #################################### SCORE CALCUATION ################################
-@st.cache()
+@st.cache_data
 def calculate_scores(resumes, job_description):
     scores = []
     for x in range(resumes.shape[0]):
@@ -119,7 +119,7 @@ st.markdown("---")
 ############################################ TF-IDF Code ###################################
 
 
-@st.cache()
+@st.cache_data
 def get_list_of_words(document):
     Document = []
 
@@ -142,7 +142,7 @@ lda_model = gensim.models.ldamodel.LdaModel(corpus=corpus, id2word=id2word, num_
 ################################### LDA CODE ##############################################
 
 
-@st.cache  # Trying to improve performance by reducing the rerun computations
+@st.cache_data 
 def format_topics_sentences(ldamodel, corpus):
     sent_topics_df = []
     for i, row_list in enumerate(ldamodel[corpus]):
