@@ -3,6 +3,22 @@ import glob
 from pypdf import PdfReader
 
 
+def get_pdf_files(file_path):
+    """
+    Get all PDF files from the specified file path.
+
+    Args:
+        file_path (str): The directory path containing the PDF files.
+
+    Returns:
+        list: A list containing the paths of all the PDF files in the directory.
+    """
+    if os.path.exists(file_path):
+        return glob.glob(os.path.join(file_path, '*.pdf'))
+    else:
+        return []
+
+
 def read_multiple_pdf(file_path: str) -> list:
     """
     Read multiple PDF files from the specified file path and extract the text from each page.
@@ -19,10 +35,10 @@ def read_multiple_pdf(file_path: str) -> list:
         try:
             with open(file, 'rb') as f:
                 pdf_reader = PdfReader(f)
-                count = len(pdf_reader.pages)
+                count = pdf_reader.getNumPages()
                 for i in range(count):
-                    page = pdf_reader.pages[i]
-                    output.append(page.extract_text())
+                    page = pdf_reader.getPage(i)
+                    output.append(page.extractText())
         except Exception as e:
             print(f"Error reading file '{file}': {str(e)}")
     return output

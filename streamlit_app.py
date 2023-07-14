@@ -9,7 +9,7 @@ import plotly.graph_objects as go
 import matplotlib.pyplot as plt
 import squarify
 
-st.title('Resume :blue[Ranker]')
+st.title('Resume :blue[Matcher]')
 st.subheader('_AI Based Resume Analyzer & Ranker_')
 
 
@@ -155,8 +155,10 @@ def preprocess_text(text):
 
 
 # read the json file
-resume = read_json('resume.json')
-job_desc = read_json('Data/Processed/Job-Desc-a4f06ccb-8d5a-4d0b-9f02-3ba6d686472e.json')
+resume = read_json(
+    'Data/Processed/Resume-d531571e-e4fa-45eb-ab6a-267cdeb6647e.json')
+job_desc = read_json(
+    'Data/Processed/Job-Desc-a4f06ccb-8d5a-4d0b-9f02-3ba6d686472e.json')
 st.json(resume)
 
 st.json(job_desc)
@@ -212,7 +214,7 @@ fig = px.treemap(df2, path=['keyword'], values='value',
                  title='Resume POS')
 st.write(fig)
 
-st.text(resume['resume_data'])
+st.text(resume['clean_data'])
 
 
 fig = go.Figure(data=[go.Table(
@@ -249,9 +251,9 @@ fig = go.Figure(data=[go.Table(
 
 st.plotly_chart(figure_or_data=fig)
 
-resume_list = preprocess_text(resume['resume_data'])
+resume_list = preprocess_text(resume['clean_data'])
 
-job_desc_list = preprocess_text(job_desc['job_desc_data'])
+job_desc_list = preprocess_text(job_desc['clean_data'])
 
 df_data = find_intersection_of_lists(resume_list, job_desc_list)
 
@@ -263,7 +265,7 @@ st.write(df_data)
 
 st.write(data_length)
 
-st.write(px.data.tips())
+# st.write(px.data.tips())
 
 fig = px.pie(data_length, values='values', names='elements')
 st.write(fig)
