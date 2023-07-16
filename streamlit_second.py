@@ -35,8 +35,7 @@ resume_names = get_filenames_from_dir("Data/Processed/Resumes")
 
 st.write("There are", len(file_names),
          " resumes present. Please select one from the menu below:")
-output = st.radio("Select from the resumes below:",
-                  resume_names)
+output = st.slider('Select Resume Number', 0, 5, 2)
 st.write("You have selected ", output, " printing the resume")
 selected_file = read_json("Data/Processed/Resumes/"+output)
 st.json(selected_file)
