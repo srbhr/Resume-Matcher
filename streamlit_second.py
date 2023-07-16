@@ -31,11 +31,15 @@ for file in file_names:
     success = processor.process()
 st.success('All the resumes have been parsed', icon="✅")
 
+resume_names = get_filenames_from_dir("Data/Processed/Resumes")
+
 st.write("There are", len(file_names),
          " resumes present. Please select one from the menu below:")
 output = st.radio("Select from the resumes below:",
-                  (file for file in file_names))
+                  resume_names)
 st.write("You have selected ", output, " printing the resume")
+selected_file = read_json("Data/Processed/Resumes/"+output)
+st.json(selected_file)
 
 
 # # read the json file
