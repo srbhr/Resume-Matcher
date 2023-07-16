@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import squarify
 
 st.title('Resume :blue[Matcher]')
+st.image('Assets/img/header_image.jpg')
 st.subheader('_AI Based Resume Analyzer & Ranker_')
 
 

@@ -6,7 +6,7 @@ import os.path
 import os
 import pathlib
 
-SAVE_DIRECTORY = '../../Data/Processed/'
+SAVE_DIRECTORY = '../../Data/Processed/Resumes'
 
 
 class ParseResume:

@@ -5,7 +5,7 @@ from scripts.utils.Utils import TextCleaner, CountFrequency, generate_unique_id
 from scripts.KeytermsExtraction import KeytermExtractor
 import os
 
-SAVE_DIRECTORY = "../../Data/Processed/"
+SAVE_DIRECTORY = "../../Data/Processed/JobDescription"
 
 
 class ParseJobDesc:
