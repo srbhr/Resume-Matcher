@@ -17,27 +17,14 @@ def read_json(filename):
 
 st.image('Assets/img/header_image.jpg')
 
-st.markdown("#### 🟧 Please put your resumes in the `Data/Resumes` folder.")
-st.markdown("##### There are some sample resumes in the `Data/Resumes` folder. The app automatically starts using the files present there.")
-
-
-file_names = get_filenames_from_dir("Data/Resumes")
-st.write("There are", len(file_names), " resumes present.")
-
-st.info('Resumes are getting parsed, please wait.', icon="ℹ️")
-
-for file in file_names:
-    processor = ResumeProcessor(file)
-    success = processor.process()
-st.success('All the resumes have been parsed', icon="✅")
 
 resume_names = get_filenames_from_dir("Data/Processed/Resumes")
 
-st.write("There are", len(file_names),
+st.write("There are", len(resume_names),
          " resumes present. Please select one from the menu below:")
 output = st.slider('Select Resume Number', 0, 5, 2)
-st.write("You have selected ", output, " printing the resume")
-selected_file = read_json("Data/Processed/Resumes/"+output)
+st.write("You have selected ", resume_names[output], " printing the resume")
+selected_file = read_json("Data/Processed/Resumes/"+resume_names[output])
 st.json(selected_file)
 
 

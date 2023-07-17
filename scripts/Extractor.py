@@ -188,7 +188,7 @@ class DataExtractor:
         Returns:
             list: A list of extracted nouns.
         """
-        pos_tags = ['NOUN', 'PROPN', 'VERB', 'ADJ']
+        pos_tags = ['NOUN', 'PROPN']
         nouns = [token.text for token in self.doc if token.pos_ in pos_tags]
         return nouns
 
