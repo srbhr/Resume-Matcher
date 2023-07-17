@@ -103,7 +103,7 @@ pywaffle==1.1.0
 PyYAML==6.0
 pyzmq==25.0.2
 regex==2023.5.5
-requests==2.30.0
+requests==2.31.0
 rich==13.3.5
 scikit-learn==1.2.2
 scipy==1.10.1
