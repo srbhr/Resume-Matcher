@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from scripts.utils.ReadFiles import get_filenames_from_dir
 from scripts.ResumeProcessor import ResumeProcessor
 import time
+from streamlit_extras import add_vertical_space as avs
 
 
 def read_json(filename):
@@ -17,14 +18,20 @@ def read_json(filename):
 
 st.image('Assets/img/header_image.jpg')
 
+avs.add_vertical_space(5)
 
 resume_names = get_filenames_from_dir("Data/Processed/Resumes")
 
 st.write("There are", len(resume_names),
          " resumes present. Please select one from the menu below:")
-output = st.slider('Select Resume Number', 0, 5, 2)
+output = st.slider('Select Resume Number', 0, 4, 2)
+
+avs.add_vertical_space(5)
+
 st.write("You have selected ", resume_names[output], " printing the resume")
 selected_file = read_json("Data/Processed/Resumes/"+resume_names[output])
+
+avs.add_vertical_space(5)
 st.json(selected_file)
 
 
