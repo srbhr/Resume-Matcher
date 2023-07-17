@@ -205,4 +205,4 @@ class DataExtractor:
         entity_labels = ['GPE', 'ORG']
         entities = [
             token.text for token in self.doc.ents if token.label_ in entity_labels]
-        return entities
+        return list(set(entities))
