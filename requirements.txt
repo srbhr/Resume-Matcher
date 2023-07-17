@@ -80,7 +80,7 @@ plotly==5.14.1
 portalocker==2.7.0
 preshed==3.0.8
 prompt-toolkit==3.0.38
-protobuf==3.20.0
+protobuf==3.20.2
 psutil==5.9.5
 ptyprocess==0.7.0
 pure-eval==0.2.2
