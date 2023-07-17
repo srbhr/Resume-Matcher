@@ -91,7 +91,7 @@ Pygments==2.15.1
 pymdown-extensions==10.1
 Pympler==1.0.1
 pyparsing==3.0.9
-pypdf==3.8.1
+pypdf==3.9.0
 PyPDF2==3.0.1
 pyphen==0.14.0
 pyrsistent==0.19.3
