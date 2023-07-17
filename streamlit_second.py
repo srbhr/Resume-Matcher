@@ -9,6 +9,7 @@ from scripts.utils.ReadFiles import get_filenames_from_dir
 from streamlit_extras import add_vertical_space as avs
 from annotated_text import annotated_text, parameters
 import nltk
+nltk.download('punkt')
 
 parameters.SHOW_LABEL_SEPARATOR = False
 parameters.BORDER_RADIUS = 3
