@@ -1,0 +1,6 @@
+# paste your qdrant api key here
+# note this is sensitive data
+# handle with care
+# DO NOT COMMIT THIS FILE WITH YOUR API KEY
+api_keys:
+    qdrant: YOUR_API_KEY
