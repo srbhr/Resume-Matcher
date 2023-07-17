@@ -22,85 +22,7 @@ parameters.BORDER_RADIUS = 3
 parameters.PADDING = "0.5 0.25rem"
 
 
-def create_annotated_text(input_string: str, word_list: List[str], annotation: str, color_code: str):
-    # Tokenize the input string
-    tokens = nltk.word_tokenize(input_string)
-
-    # Convert the list to a set for quick lookups
-    word_set = set(word_list)
-
-    # Initialize an empty list to hold the annotated text
-    annotated_text = []
-
-    for token in tokens:
-        # Check if the token is in the set
-        if token in word_set:
-            # If it is, append a tuple with the token, annotation, and color code
-            annotated_text.append((token, annotation, color_code))
-        else:
-            # If it's not, just append the token as a string
-            annotated_text.append(token)
-
-    return annotated_text
-
-
-# # Test the function
-# input_string = "Alfred Pennyworth is a seasoned Product Manager in Silicon Valley, CA, USA."
-# word_list = ["Alfred", "Pennyworth", "Product",
-#              "Manager", "Silicon", "Valley", "CA", "USA"]
-# annotation = "Adj"
-# color_code = "#faa"
-
-# print(annotate_text(input_string, word_list, annotation, color_code))
-
-
-def read_json(filename):
-    with open(filename) as f:
-        data = json.load(f)
-    return data
-
-
-def tokenize_string(input_string):
-    tokens = nltk.word_tokenize(input_string)
-    return tokens
-
-
-st.image('Assets/img/header_image.jpg')
-
-avs.add_vertical_space(5)
-
-resume_names = get_filenames_from_dir("Data/Processed/Resumes")
-
-st.write("There are", len(resume_names),
-         " resumes present. Please select one from the menu below:")
-output = st.slider('Select Resume Number', 0, len(resume_names)-1, 2)
-
-avs.add_vertical_space(5)
-
-st.write("You have selected ", resume_names[output], " printing the resume")
-selected_file = read_json("Data/Processed/Resumes/"+resume_names[output])
-
-avs.add_vertical_space(2)
-st.markdown("#### Parsed Resume Data")
-st.caption(
-    "This text is parsed from your resume. This is how it'll look like after getting parsed by an ATS.")
-st.caption("Utilize this to understand how to make your resume ATS friendly.")
-avs.add_vertical_space(3)
-# st.json(selected_file)
-st.write(selected_file["clean_data"])
-
-avs.add_vertical_space(3)
-st.write("Now let's take a look at the extracted keywords from the resume.")
-
-annotated_text(create_annotated_text(
-    selected_file["clean_data"], selected_file["extracted_keywords"],
-    "KW", "#0B666A"))
-
-avs.add_vertical_space(5)
-st.write("Now let's take a look at the extracted entities from the resume.")
-
-
-def create_star_graph(nodes_and_weights):
+def create_star_graph(nodes_and_weights, title):
     # Create an empty graph
     G = nx.Graph()
 
@@ -154,7 +76,7 @@ def create_star_graph(nodes_and_weights):
 
     # Create the figure
     fig = go.Figure(data=[edge_trace, node_trace],
-                    layout=go.Layout(title='Entities Linked to your Resume', titlefont_size=16, showlegend=False,
+                    layout=go.Layout(title=title, titlefont_size=16, showlegend=False,
                                      hovermode='closest', margin=dict(b=20, l=5, r=5, t=40),
                                      xaxis=dict(
                                          showgrid=False, zeroline=False, showticklabels=False),
@@ -164,32 +86,75 @@ def create_star_graph(nodes_and_weights):
     st.plotly_chart(fig)
 
 
-# Your list of nodes and weights
-nodes_and_weights = [
-    ["Software Development Engineer", 0.2532879474096427],
-    ["USA", 0.0908144765704578],
-    ["product", 0.06002611145320178],
-    ["software", 0.022530132055106372],
-    ["experience", 0.02143816867647363],
-    ["management", 0.02074385569284429],
-    ["development", 0.01766344418212818],
-    ["user experience", 0.017386580372690356],
-    ["Manager", 0.011915797594707535],
-    ["Python", 0.011856462684933523],
-    ["SQL", 0.011767339129786123],
-    ["Project", 0.011743798464230066],
-    ["team", 0.011515715597603877],
-    ["application", 0.0100341792709379],
-    ["scalable", 0.00737109583375892],
-    ["Java", 0.006971290228384053],
-    ["AWS", 0.006933520895706676],
-    ["Apple", 0.006866594203670648],
-    ["leadership", 0.006827491537536502],
-    ["exceptional", 0.0067843320435271096]
-]
+def create_annotated_text(input_string: str, word_list: List[str], annotation: str, color_code: str):
+    # Tokenize the input string
+    tokens = nltk.word_tokenize(input_string)
+
+    # Convert the list to a set for quick lookups
+    word_set = set(word_list)
+
+    # Initialize an empty list to hold the annotated text
+    annotated_text = []
+
+    for token in tokens:
+        # Check if the token is in the set
+        if token in word_set:
+            # If it is, append a tuple with the token, annotation, and color code
+            annotated_text.append((token, annotation, color_code))
+        else:
+            # If it's not, just append the token as a string
+            annotated_text.append(token)
+
+    return annotated_text
+
+
+def read_json(filename):
+    with open(filename) as f:
+        data = json.load(f)
+    return data
+
+
+def tokenize_string(input_string):
+    tokens = nltk.word_tokenize(input_string)
+    return tokens
+
+
+st.image('Assets/img/header_image.jpg')
+
+avs.add_vertical_space(5)
+
+resume_names = get_filenames_from_dir("Data/Processed/Resumes")
+
+st.write("There are", len(resume_names),
+         " resumes present. Please select one from the menu below:")
+output = st.slider('Select Resume Number', 0, len(resume_names)-1, 2)
+
+avs.add_vertical_space(5)
+
+st.write("You have selected ", resume_names[output], " printing the resume")
+selected_file = read_json("Data/Processed/Resumes/"+resume_names[output])
+
+avs.add_vertical_space(2)
+st.markdown("#### Parsed Resume Data")
+st.caption(
+    "This text is parsed from your resume. This is how it'll look like after getting parsed by an ATS.")
+st.caption("Utilize this to understand how to make your resume ATS friendly.")
+avs.add_vertical_space(3)
+# st.json(selected_file)
+st.write(selected_file["clean_data"])
+
+avs.add_vertical_space(3)
+st.write("Now let's take a look at the extracted keywords from the resume.")
+
+annotated_text(create_annotated_text(
+    selected_file["clean_data"], selected_file["extracted_keywords"],
+    "KW", "#0B666A"))
+
+avs.add_vertical_space(5)
+st.write("Now let's take a look at the extracted entities from the resume.")
 
 # Call the function with your data
-create_star_graph(nodes_and_weights)
+create_star_graph(selected_file['keyterms'], "Entities from Resume")
 
 df2 = pd.DataFrame(selected_file['keyterms'], columns=["keyword", "value"])
 
@@ -213,4 +178,63 @@ st.divider()
 fig = px.treemap(df2, path=['keyword'], values='value',
                  color_continuous_scale='Rainbow',
                  title='Key Terms/Topics Extracted from your Resume')
+st.write(fig)
+
+avs.add_vertical_space(5)
+
+job_descriptions = get_filenames_from_dir("Data/Processed/JobDescription")
+
+st.write("There are", len(job_descriptions),
+         " resumes present. Please select one from the menu below:")
+output = st.slider('Select Job Description Number',
+                   0, len(job_descriptions)-1, 2)
+
+avs.add_vertical_space(5)
+
+st.write("You have selected ",
+         job_descriptions[output], " printing the job description")
+selected_jd = read_json(
+    "Data/Processed/JobDescription/"+job_descriptions[output])
+
+avs.add_vertical_space(2)
+st.markdown("#### Job Description")
+st.caption(
+    "Currently in the pipeline I'm parsing this from PDF but it'll be from txt or copy paste.")
+avs.add_vertical_space(3)
+# st.json(selected_file)
+st.write(selected_jd["clean_data"])
+
+st.markdown("#### Common Words between Job Description and Resumes Highlighted.")
+
+annotated_text(create_annotated_text(
+    selected_file["clean_data"], selected_jd["extracted_keywords"],
+    "JD", "#F24C3D"))
+
+st.write("Now let's take a look at the extracted entities from the job description.")
+
+# Call the function with your data
+create_star_graph(selected_jd['keyterms'], "Entities from Job Description")
+
+df2 = pd.DataFrame(selected_jd['keyterms'], columns=["keyword", "value"])
+
+# Create the dictionary
+keyword_dict = {}
+for keyword, value in selected_jd['keyterms']:
+    keyword_dict[keyword] = value*100
+
+fig = go.Figure(data=[go.Table(header=dict(values=["Keyword", "Value"],
+                                           font=dict(size=12),
+                                           fill_color='#070A52'),
+                               cells=dict(values=[list(keyword_dict.keys()),
+                                                  list(keyword_dict.values())],
+                                          line_color='darkslategray',
+                                          fill_color='#6DA9E4'))
+                      ])
+st.plotly_chart(fig)
+
+st.divider()
+
+fig = px.treemap(df2, path=['keyword'], values='value',
+                 color_continuous_scale='Rainbow',
+                 title='Key Terms/Topics Extracted from the selected Job Description')
 st.write(fig)
