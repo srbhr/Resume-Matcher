@@ -237,3 +237,92 @@ fig = px.treemap(df2, path=['keyword'], values='value',
                  color_continuous_scale='Rainbow',
                  title='Key Terms/Topics Extracted from the selected Job Description')
 st.write(fig)
+
+avs.add_vertical_space(5)
+
+st.divider()
+
+st.markdown("## Vector Similarity Scores")
+st.caption("Powered by Qdrant Vector Search")
+st.info("These are pre-computed queries", icon="ℹ")
+st.warning(
+    "Running Qdrant or Sentence Transformers without having capacity is not recommended", icon="⚠")
+
+
+# Your data
+data = [
+    {'text': "{'resume': 'Alfred Pennyworth",
+        'query': 'Job Description Product Manager', 'score': 0.62658},
+    {'text': "{'resume': 'Barry Allen",
+        'query': 'Job Description Product Manager', 'score': 0.43777737},
+    {'text': "{'resume': 'Bruce Wayne ",
+        'query': 'Job Description Product Manager', 'score': 0.39835533},
+    {'text': "{'resume': 'JOHN DOE",
+        'query': 'Job Description Product Manager', 'score': 0.3915512},
+    {'text': "{'resume': 'Harvey Dent",
+        'query': 'Job Description Product Manager', 'score': 0.3519544},
+    {'text': "{'resume': 'Barry Allen",
+        'query': 'Job Description Senior Full Stack Engineer', 'score': 0.6541866},
+    {'text': "{'resume': 'Alfred Pennyworth",
+        'query': 'Job Description Senior Full Stack Engineer', 'score': 0.59806436},
+    {'text': "{'resume': 'JOHN DOE",
+        'query': 'Job Description Senior Full Stack Engineer', 'score': 0.5951386},
+    {'text': "{'resume': 'Bruce Wayne ",
+        'query': 'Job Description Senior Full Stack Engineer', 'score': 0.57700855},
+    {'text': "{'resume': 'Harvey Dent",
+        'query': 'Job Description Senior Full Stack Engineer', 'score': 0.38489106},
+    {'text': "{'resume': 'Barry Allen",
+        'query': 'Job Description Front End Engineer', 'score': 0.76813436},
+    {'text': "{'resume': 'Bruce Wayne'",
+        'query': 'Job Description Front End Engineer', 'score': 0.60440844},
+    {'text': "{'resume': 'JOHN DOE",
+        'query': 'Job Description Front End Engineer', 'score': 0.56080043},
+    {'text': "{'resume': 'Alfred Pennyworth",
+        'query': 'Job Description Front End Engineer', 'score': 0.5395049},
+    {'text': "{'resume': 'Harvey Dent",
+        'query': 'Job Description Front End Engineer', 'score': 0.3859515},
+    {'text': "{'resume': 'JOHN DOE",
+        'query': 'Job Description Java Developer', 'score': 0.5449441},
+    {'text': "{'resume': 'Alfred Pennyworth",
+        'query': 'Job Description Java Developer', 'score': 0.53476423},
+    {'text': "{'resume': 'Barry Allen",
+        'query': 'Job Description Java Developer', 'score': 0.5313871},
+    {'text': "{'resume': 'Bruce Wayne ",
+        'query': 'Job Description Java Developer', 'score': 0.44446343},
+    {'text': "{'resume': 'Harvey Dent",
+        'query': 'Job Description Java Developer', 'score': 0.3616274}
+]
+
+# Create a DataFrame
+df = pd.DataFrame(data)
+
+# Create different DataFrames based on the query and sort by score
+df1 = df[df['query'] ==
+         'Job Description Product Manager'].sort_values(by='score', ascending=False)
+df2 = df[df['query'] ==
+         'Job Description Senior Full Stack Engineer'].sort_values(by='score', ascending=False)
+df3 = df[df['query'] == 'Job Description Front End Engineer'].sort_values(
+    by='score', ascending=False)
+df4 = df[df['query'] == 'Job Description Java Developer'].sort_values(
+    by='score', ascending=False)
+
+
+def plot_df(df, title):
+    fig = px.bar(df, x='text', y=df['score']*100, title=title)
+    st.plotly_chart(fig)
+
+
+st.markdown("### Bar plots of scores based on similarity to Job Description.")
+
+st.subheader(":blue[Legend]")
+st.text("Alfred Pennyworth :  Product Manager")
+st.text("Barry Allen :  Front End Developer")
+st.text("Harvey Dent :  Machine Learning Engineer")
+st.text("Bruce Wayne :  Fullstack Developer (MERN)")
+st.text("John Doe :  Fullstack Developer (Java)")
+
+
+plot_df(df1, 'Job Description Product Manager 10+ Years of Exper')
+plot_df(df2, 'Job Description Senior Full Stack Engineer 5+ Year')
+plot_df(df3, 'Job Description Front End Engineer 2 Years of Expe')
+plot_df(df4, 'Job Description Java Developer 3 Years of Experien')

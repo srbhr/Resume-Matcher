@@ -1,5 +1,12 @@
+import yaml
 from qdrant_client import QdrantClient, models
 from sentence_transformers import SentenceTransformer
+
+# NOTE: DO NOT RUN THIS FILE IN YOUR LOCAL SYSTEM UNLESS
+# YOU HAVE RAM > 16GB + NVIDIA GPU
+# SENTENCE_TRANSFORMERS HAVE DEPENDECY ON PYTORCH GPU
+# DON'T RUN UNLESS YOU HAVE THE CAPACITY
+# I'M WORKING ON A WAY TO USE THIS FILE IN COLAB
 
 
 class QdrantSearch:
@@ -48,16 +55,38 @@ class QdrantSearch:
         hits = self.qdrant.search(
             collection_name="resume_matcher",
             query_vector=self.encoder.encode(self.query_string).tolist(),
-            limit=10
+            limit=20
         )
 
         results = []
         for hit in hits:
             result = {
-                'text': hit.payload,
-                'query': self.query_string,
+                'text': str(hit.payload)[:30],
+                'query': self.query_string[:50],
                 'score': hit.score,
             }
             results.append(result)
 
         return results
+
+
+# Get the API key stored in config.yml
+def read_api_key(filepath):
+    with open(filepath, 'r') as file:
+        try:
+            data = yaml.safe_load(file)
+            return data['api_keys']['qdrant']
+        except yaml.YAMLError as exc:
+            print(exc)
+
+
+api_key = read_api_key('qdrant-api-key.yml')
+
+
+# ### MAIN ###
+
+# output = QdrantSearch(api_key, resumes, job["job_desc"])
+# output.init_qdrant_client()
+# results = output.search_documents()
+# for result in results:
+#     print(result)

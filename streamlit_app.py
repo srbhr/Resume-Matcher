@@ -97,3 +97,5 @@ fig = go.Figure(data=[go.Table(
                align='left'))])
 
 st.plotly_chart(figure_or_data=fig)
+
+
