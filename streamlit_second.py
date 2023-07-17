@@ -1,5 +1,3 @@
-from plotly.offline import plot
-from pyvis.network import Network
 import networkx as nx
 from typing import List
 import streamlit as st
@@ -7,11 +5,7 @@ import pandas as pd
 import json
 import plotly.express as px
 import plotly.graph_objects as go
-import matplotlib
-import matplotlib.pyplot as plt
 from scripts.utils.ReadFiles import get_filenames_from_dir
-from scripts.ResumeProcessor import ResumeProcessor
-import time
 from streamlit_extras import add_vertical_space as avs
 from annotated_text import annotated_text, parameters
 import nltk
