@@ -21,7 +21,21 @@ def build_resume_list(resume_names, path):
     return resumes
 
 
+def build_jobdesc_list(jobdesc_names, path):
+    resumes = []
+    for resume in resume_names:
+        selected_file = read_json(path + '/' + resume)
+        resumes.append({
+            "resume": selected_file["clean_data"]
+        })
+    return resumes
+
+
 resume_names = get_filenames_from_dir(resume_path)
 resumes = build_resume_list(resume_names, resume_path)
 
-print(resumes)  # To see the output.
+jobdesc_names = get_filenames_from_dir(job_path)
+jobdescs = build_jobdesc_list(jobdesc_names, job_path)
+
+print(resumes)
+print(jobdescs)

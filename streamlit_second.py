@@ -8,6 +8,7 @@ import plotly.graph_objects as go
 from scripts.utils.ReadFiles import get_filenames_from_dir
 from streamlit_extras import add_vertical_space as avs
 from annotated_text import annotated_text, parameters
+from streamlit_extras.badges import badge
 import nltk
 nltk.download('punkt')
 
@@ -114,6 +115,22 @@ def tokenize_string(input_string):
 
 
 st.image('Assets/img/header_image.jpg')
+
+st.title(':blue[Resume Matcher]')
+st.subheader(
+    'Free and Open Source ATS to help your resume pass the screening stage.')
+st.markdown(
+    "Check the website [www.resumematcher.fyi](https://www.resumematcher.fyi/)")
+st.markdown(
+    '⭐ Give Resume Matcher a Star on [GitHub](https://github.com/srbhr/Naive-Resume-Matching/)')
+badge(type="github", name="srbhr/Naive-Resume-Matching")
+
+st.text('For updates follow me on Twitter.')
+badge(type="twitter", name="_srbhr_")
+
+st.markdown(
+    'If you like the project and would like to further help in development please consider 👇')
+badge(type="buymeacoffee", name="srbhr")
 
 avs.add_vertical_space(5)
 
@@ -321,3 +338,17 @@ plot_df(df1, 'Job Description Product Manager 10+ Years of Exper')
 plot_df(df2, 'Job Description Senior Full Stack Engineer 5+ Year')
 plot_df(df3, 'Job Description Front End Engineer 2 Years of Expe')
 plot_df(df4, 'Job Description Java Developer 3 Years of Experien')
+
+
+avs.add_vertical_space(3)
+
+st.markdown(
+    '⭐ Give Resume Matcher a Star on [GitHub](https://github.com/srbhr/Naive-Resume-Matching/)')
+badge(type="github", name="srbhr/Naive-Resume-Matching")
+
+st.text('For updates follow me on Twitter.')
+badge(type="twitter", name="_srbhr_")
+
+st.markdown(
+    'If you like the project and would like to further help in development please consider 👇')
+badge(type="buymeacoffee", name="srbhr")
