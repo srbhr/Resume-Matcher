@@ -19,7 +19,7 @@
 
 [![Resume Matcher](https://custom-icon-badges.demolab.com/badge/www.resumematcher.fyi-gold?style=for-the-badge&logo=globe&logoColor=black)](https://www.resumematcher.fyi)
 
-[![Live Demo](https://custom-icon-badges.demolab.com/badge/live-demo-red?style=for-the-badge&logo=globe&logoColor=black)](https://resume-matcher.streamlit.app/)
+#### Check the 🌐 **[LIVE DEMO on Streamlit Cloud](https://resume-matcher.streamlit.app/)**
 
 </div>
 
@@ -40,6 +40,8 @@ The process is as follows:
 On top of that, there are various data visualizations that I've added to help you get started.
 
 #### PRs Welcomed 🤗
+
+🧪 Please check the [Landing Page](https://github.com/srbhr/website-for-resume-matcher). PRs are also welcomed over there.
 
 <br/>
 
@@ -77,3 +79,4 @@ Thanks for the support 💙 this is an ongoing project that I want to build with
 -   Add a docker image for easy usage.
 -   Contribute to better parsing algorithm.
 -   Contribute to on a blog to how to make this work.
+-   Contribute to the [landing page](https://github.com/srbhr/website-for-resume-matcher) maybe re-create in React/Vue/etc.
