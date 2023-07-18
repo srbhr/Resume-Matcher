@@ -4,7 +4,7 @@
 
 # Resume Matcher
 
-## AI Based Resume Matcher to tailor your resume to a job description. Find the bestkewords, and gain deep insights into your resume.
+## AI Based Free & Open Source ATS, Resume Matcher to tailor your resume to a job description. Find the best keywords, and gain deep insights into your resume.
 
 </div>
 
@@ -19,37 +19,61 @@
 
 [![Resume Matcher](https://custom-icon-badges.demolab.com/badge/www.resumematcher.fyi-gold?style=for-the-badge&logo=globe&logoColor=black)](https://www.resumematcher.fyi)
 
+[![Live Demo](https://custom-icon-badges.demolab.com/badge/live-demo-red?style=for-the-badge&logo=globe&logoColor=black)](https://resume-matcher.streamlit.app/)
+
 </div>
 
-A Machine Learning Based Resume Matcher, to compare Resumes with Job Descriptions.
-Create a score based on how good/similar a resume is to the particular Job Description.\n
-Documents are sorted based on Their TF-IDF Scores (Term Frequency-Inverse Document Frequency)
+### How does It work?
 
-Matching Algorihms used are :-
+The Resume Matcher takes your resume and job descriptions as input, parses them using Python, and mimics the functionalities of an ATS, providing you with insights and suggestions to make your resume ATS-friendly.
 
--   **String Matching**
+The process is as follows:
 
-    -   Monge Elkan
+1. **Parsing**: The system uses Python to parse both your resume and the provided job description, just like an ATS would. Parsing is critical as it transforms your documents into a format the system can readily analyze.
 
--   **Token Based**
-    -   Jaccard
-    -   Cosine
-    -   Sorensen-Dice
-    -   Overlap Coefficient
+2. **Keyword Extraction**: The tool uses advanced machine learning algorithms to extract the most relevant keywords from the job description. These keywords represent the skills, qualifications, and experiences the employer seeks.
 
-Topic Modelling of Resumes is done to provide additional information about the resumes and what clusters/topics,
-the belong to.
-For this :-
+3. **Key Terms Extraction**: Beyond keyword extraction, the tool uses textacy to identify the main key terms or themes in the job description. This step helps in understanding the broader context of what the resume is about.
 
-1. [TF-IDF](https://en.wikipedia.org/wiki/Tf%E2%80%93idf) of resumes is done to improve the sentence similarities. As it helps reduce the redundant terms and brings out the important ones.
-2. id2word, and doc2word algorithms are used on the Documents (from Gensim Library).
-3. [LDA](https://en.wikipedia.org/wiki/Latent_Dirichlet_allocation) (Latent Dirichlet Allocation) is done to extract the Topics from the Document set.(In this case Resumes)
-4. Additional Plots are done to gain more insights about the document.
+4. **Vector Similarity Using Qdrant**: The tool uses Qdrant, a highly efficient vector similarity search tool, to measure how closely your resume matches the job description. This process is done by representing your resume and job description as vectors in a high-dimensional space and calculating their cosine similarity. The more similar they are, the higher the likelihood that your resume will pass the ATS screening.
+
+On top of that, there are various data visualizations that I've added to help you get started.
+
+#### PRs Welcomed 🤗
 
 <br/>
 
 ---
 
-### Older Version
+<div align="center">
 
-Check the older version of the project [**here**](https://github.com/srbhr/Naive-Resume-Matching/blob/master/README.md).
+## How to install
+
+</div>
+
+1. Clone the project.
+2. Create a python virtual environment.
+3. Activate the virtual environment.
+4. Do `pip install -r requirements.txt` to install all dependencies.
+5. Put your resumes in PDF Format in the `Data/Resumes` folder. (Delete the existing contents)
+6. Put your Job Descriptions in PDF Format in `Data/JobDescription` folder. (Delete the existing contents)
+7. Run `python run_first.py` this will parse all the resumes to JSON.
+8. Run `streamlit run streamlit_app.py`.
+
+**Note**: For local versions don't run the streamlit_second.app it's for deploying to streamlit.
+
+Note: The Vector Similarity Part is precomputed here. As sentence encoders require heavy GPU and Memory (RAM). I am working on a blog that will show how you can leverage that in a google colab environment for free.
+
+<br/>
+
+---
+
+### Note 📝
+
+Thanks for the support 💙 this is an ongoing project that I want to build with open source community. There are many ways in which this tool can be upgraded. This includes (not limited to):
+
+-   Create a better dashboard instead of Streamlit.
+-   Add more features like upploading of resumes and parsing.
+-   Add a docker image for easy usage.
+-   Contribute to better parsing algorithm.
+-   Contribute to on a blog to how to make this work.
