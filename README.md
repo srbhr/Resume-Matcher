@@ -55,7 +55,7 @@ On top of that, there are various data visualizations that I've added to help yo
 
 [![BuyMeACoffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/srbhr)
 
-[![Sponsor on GitHub](https://custom-icon-badges.demolab.com/badge/Sponsor_on_GitHub-pink?style=for-the-badge&logo=heart&logoColor=black)](https://resume-matcher.streamlit.app/)
+[![Sponsor on GitHub](https://custom-icon-badges.demolab.com/badge/Sponsor_on_GitHub-pink?style=for-the-badge&logo=heart&logoColor=black)](https://github.com/sponsors/srbhr)
 
 </div>
 
