@@ -122,8 +122,8 @@ st.subheader(
 st.markdown(
     "Check the website [www.resumematcher.fyi](https://www.resumematcher.fyi/)")
 st.markdown(
-    '⭐ Give Resume Matcher a Star on [GitHub](https://github.com/srbhr/Naive-Resume-Matching/)')
-badge(type="github", name="srbhr/Naive-Resume-Matching")
+    '⭐ Give Resume Matcher a Star on [GitHub](https://github.com/srbhr/Resume-Matcher/)')
+badge(type="github", name="srbhr/Resume-Matcher")
 
 st.text('For updates follow me on Twitter.')
 badge(type="twitter", name="_srbhr_")
@@ -343,8 +343,8 @@ plot_df(df4, 'Job Description Java Developer 3 Years of Experien')
 avs.add_vertical_space(3)
 
 st.markdown(
-    '⭐ Give Resume Matcher a Star on [GitHub](https://github.com/srbhr/Naive-Resume-Matching/)')
-badge(type="github", name="srbhr/Naive-Resume-Matching")
+    '⭐ Give Resume Matcher a Star on [GitHub](https://github.com/srbhr/Resume-Matcher/)')
+badge(type="github", name="srbhr/Resume-Matcher")
 
 st.text('For updates follow me on Twitter.')
 badge(type="twitter", name="_srbhr_")

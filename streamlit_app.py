@@ -122,8 +122,8 @@ st.subheader(
 st.markdown(
     "Check the website [www.resumematcher.fyi](https://www.resumematcher.fyi/)")
 st.markdown(
-    '⭐ Give Resume Matcher a Star on [GitHub](https://github.com/srbhr/Naive-Resume-Matching/)')
-badge(type="github", name="srbhr/Naive-Resume-Matching")
+    '⭐ Give Resume Matcher a Star on [GitHub](https://github.com/srbhr/resume-matcher)')
+badge(type="github", name="srbhr/Resume-Matcher")
 
 st.text('For updates follow me on Twitter.')
 badge(type="twitter", name="_srbhr_")
@@ -256,8 +256,8 @@ st.title(':blue[Resume Matcher]')
 st.subheader(
     'Free and Open Source ATS to help your resume pass the screening stage.')
 st.markdown(
-    '⭐ Give Resume Matcher a Star on [GitHub](https://github.com/srbhr/Naive-Resume-Matching/)')
-badge(type="github", name="srbhr/Naive-Resume-Matching")
+    '⭐ Give Resume Matcher a Star on [GitHub](https://github.com/srbhr/Resume-Matcher/)')
+badge(type="github", name="srbhr/Resume-Matcher")
 
 st.text('For updates follow me on Twitter.')
 badge(type="twitter", name="_srbhr_")

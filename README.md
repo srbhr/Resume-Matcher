@@ -12,14 +12,16 @@
 
 <div align="center">
 
-![Stars](https://img.shields.io/github/stars/srbhr/Naive-Resume-Matching?style=for-the-badge)
-![](https://img.shields.io/badge/Version-0.0.1--canary-FFD93D?style=for-the-badge) ![Apache 2.0](https://img.shields.io/github/license/srbhr/naive-resume-matching?style=for-the-badge) ![Issues](https://img.shields.io/github/issues/srbhr/Naive-Resume-Matching?style=for-the-badge) ![Forks](https://img.shields.io/github/forks/srbhr/Naive-Resume-Matching?style=for-the-badge)
+![Stars](https://img.shields.io/github/stars/srbhr/Resume-Matcher?style=for-the-badge)
+![Version 0.0.1-Alpha](https://img.shields.io/badge/Version-0.0.1--Alpha-FFD93D?style=for-the-badge) ![Apache 2.0](https://img.shields.io/github/license/srbhr/Resume-Matcher?style=for-the-badge) ![Issues](https://img.shields.io/github/issues/srbhr/Resume-Matcher?style=for-the-badge) ![Forks](https://img.shields.io/github/forks/srbhr/Resume-Matcher?style=for-the-badge)
 
 [![Discord](https://custom-icon-badges.demolab.com/badge/Join%20Discord-blue?style=for-the-badge&logo=discord&logoColor=black)](https://discord.gg/t3Y9HEuV34)
 
 [![Resume Matcher](https://custom-icon-badges.demolab.com/badge/www.resumematcher.fyi-gold?style=for-the-badge&logo=globe&logoColor=black)](https://www.resumematcher.fyi)
 
-#### Check the 🌐 **[LIVE DEMO on Streamlit Cloud](https://resume-matcher.streamlit.app/)**
+#### Check the 🌐 **[LIVE DEMO on Streamlit Cloud 👇](https://resume-matcher.streamlit.app/)**
+
+[![Resume Matcher](https://custom-icon-badges.demolab.com/badge/Live_Demo_on_Streamlit-green?style=for-the-badge&logo=live&logoColor=black)](https://resume-matcher.streamlit.app/)
 
 </div>
 
@@ -45,7 +47,17 @@ On top of that, there are various data visualizations that I've added to help yo
 
 <br/>
 
----
+<div align="center">
+
+## Support the development by Donating
+
+[![BuyMeACoffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/srbhr)
+
+[![Sponsor on GitHub](https://custom-icon-badges.demolab.com/badge/Sponsor_on_GitHub-pink?style=for-the-badge&logo=heart&logoColor=black)](https://resume-matcher.streamlit.app/)
+
+</div>
+
+<br/>
 
 <div align="center">
 
@@ -80,3 +92,5 @@ Thanks for the support 💙 this is an ongoing project that I want to build with
 -   Contribute to better parsing algorithm.
 -   Contribute to on a blog to how to make this work.
 -   Contribute to the [landing page](https://github.com/srbhr/website-for-resume-matcher) maybe re-create in React/Vue/etc.
+
+---
