@@ -67,18 +67,50 @@ On top of that, there are various data visualizations that I've added to help yo
 
 </div>
 
-1. Clone the project.
-2. Create a python virtual environment.
-3. Activate the virtual environment.
-4. Do `pip install -r requirements.txt` to install all dependencies.
-5. Put your resumes in PDF Format in the `Data/Resumes` folder. (Delete the existing contents)
-6. Put your Job Descriptions in PDF Format in `Data/JobDescription` folder. (Delete the existing contents)
-7. Run `python run_first.py` this will parse all the resumes to JSON.
-8. Run `streamlit run streamlit_app.py`.
+Follow these steps to set up the environment and run the application:
 
-**Note**: For local versions don't run the streamlit_second.app it's for deploying to streamlit.
+1) Clone the Repository:
+```bash
+git clone https://github.com/srbhr/Resume-Matcher.git
+cd Resume-Matcher
+```
 
-Note: The Vector Similarity Part is precomputed here. As sentence encoders require heavy GPU and Memory (RAM). I am working on a blog that will show how you can leverage that in a google colab environment for free.
+2) Create a Python Virtual Environment:
+```bash
+python -m venv env
+```
+
+3) Activate the Virtual Environment:
+- On Windows:
+    ```bash
+    env\Scripts\activate
+    ```
+
+- On macOS and Linux:
+    ```bash
+    source env/bin/activate
+    ```
+4) Install Dependencies:
+```bash
+pip install -r requirements.txt
+```
+5) Prepare Data:
+- Resumes: Place your resumes in PDF format in the `Data/Resumes` folder. Remove any existing contents in this folder.
+- Job Descriptions: Place your job descriptions in PDF format in the `Data/JobDescription` folder. Remove any existing contents in this folder.
+6) Parse Resumes to JSON:
+```python
+python run_first.py
+```
+
+7) Run the Application:
+```python
+streamlit run streamlit_app.py
+```
+
+**Note**: For local versions, you do not need to run "streamlit_second.py" as it is specifically for deploying to Streamlit servers.
+
+**Additional Note**: The Vector Similarity part is precomputed to optimize performance due to the resource-intensive nature of sentence encoders that require significant GPU and RAM resources. If you are interested in leveraging this feature in a Google Colab environment for free, refer to the upcoming blog (link to be provided) for further guidance.
+
 
 <br/>
 
