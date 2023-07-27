@@ -13,7 +13,7 @@
 <div align="center">
 
 ![Stars](https://img.shields.io/github/stars/srbhr/Resume-Matcher?style=for-the-badge)
-![Version 0.0.1-Alpha](https://img.shields.io/badge/Version-0.0.1--Alpha-FFD93D?style=for-the-badge) ![Apache 2.0](https://img.shields.io/github/license/srbhr/Resume-Matcher?style=for-the-badge) ![Issues](https://img.shields.io/github/issues/srbhr/Resume-Matcher?style=for-the-badge) ![Forks](https://img.shields.io/github/forks/srbhr/Resume-Matcher?style=for-the-badge)
+![Version 0.0.1-Alpha](https://img.shields.io/badge/Version-0.0.1--Alpha-FFD93D?style=for-the-badge) ![Apache 2.0](https://img.shields.io/github/license/srbhr/Resume-Matcher?style=for-the-badge) ![Issues](https://img.shields.io/github/issues/srbhr/Resume-Matcher?style=for-the-badge) ![Forks](https://img.shields.io/github/forks/srbhr/Resume-Matcher?style=for-the-badge) [![Powered by Qdrant](https://img.shields.io/badge/Vector_search_by-Qdrant-982176?style=for-the-badge)](https://github.com/qdrant/qdrant)
 
 [![Discord](https://custom-icon-badges.demolab.com/badge/Join%20Discord-blue?style=for-the-badge&logo=discord&logoColor=black)](https://discord.gg/t3Y9HEuV34)
 
@@ -39,11 +39,19 @@ The process is as follows:
 
 3. **Key Terms Extraction**: Beyond keyword extraction, the tool uses textacy to identify the main key terms or themes in the job description. This step helps in understanding the broader context of what the resume is about.
 
-4. **Vector Similarity Using Qdrant**: The tool uses Qdrant, a highly efficient vector similarity search tool, to measure how closely your resume matches the job description. This process is done by representing your resume and job description as vectors in a high-dimensional space and calculating their cosine similarity. The more similar they are, the higher the likelihood that your resume will pass the ATS screening.
+4. **Vector Similarity Using Qdrant**: The tool uses [Qdrant](https://github.com/qdrant/qdrant), a highly efficient vector similarity search tool, to measure how closely your resume matches the job description. This process is done by representing your resume and job description as vectors in a high-dimensional space and calculating their cosine similarity. The more similar they are, the higher the likelihood that your resume will pass the ATS screening.
 
 On top of that, there are various data visualizations that I've added to help you get started.
 
-#### PRs Welcomed 🤗
+### PRs Welcomed 🤗
+
+💬 Feel free to join in the Discord to discuss anything.
+
+💻 Create an issue.
+
+👩‍💻 Contribute.
+
+🔉Participate in the Discussions/Announcements.
 
 🧪 Please check the [Landing Page](https://github.com/srbhr/website-for-resume-matcher). PRs are also welcomed over there.
 
@@ -69,40 +77,51 @@ On top of that, there are various data visualizations that I've added to help yo
 
 Follow these steps to set up the environment and run the application:
 
-1) Clone the Repository:
+1. Clone the Repository:
+
 ```bash
 git clone https://github.com/srbhr/Resume-Matcher.git
 cd Resume-Matcher
 ```
 
-2) Create a Python Virtual Environment:
+2. Create a Python Virtual Environment:
+
 ```bash
 python -m venv env
 ```
 
-3) Activate the Virtual Environment:
-- On Windows:
+3. Activate the Virtual Environment:
+
+-   On Windows:
+
     ```bash
     env\Scripts\activate
     ```
 
-- On macOS and Linux:
+-   On macOS and Linux:
     ```bash
     source env/bin/activate
     ```
-4) Install Dependencies:
+
+4. Install Dependencies:
+
 ```bash
 pip install -r requirements.txt
 ```
-5) Prepare Data:
-- Resumes: Place your resumes in PDF format in the `Data/Resumes` folder. Remove any existing contents in this folder.
-- Job Descriptions: Place your job descriptions in PDF format in the `Data/JobDescription` folder. Remove any existing contents in this folder.
-6) Parse Resumes to JSON:
+
+5. Prepare Data:
+
+-   Resumes: Place your resumes in PDF format in the `Data/Resumes` folder. Remove any existing contents in this folder.
+-   Job Descriptions: Place your job descriptions in PDF format in the `Data/JobDescription` folder. Remove any existing contents in this folder.
+
+6. Parse Resumes to JSON:
+
 ```python
 python run_first.py
 ```
 
-7) Run the Application:
+7. Run the Application:
+
 ```python
 streamlit run streamlit_app.py
 ```
@@ -110,7 +129,6 @@ streamlit run streamlit_app.py
 **Note**: For local versions, you do not need to run "streamlit_second.py" as it is specifically for deploying to Streamlit servers.
 
 **Additional Note**: The Vector Similarity part is precomputed to optimize performance due to the resource-intensive nature of sentence encoders that require significant GPU and RAM resources. If you are interested in leveraging this feature in a Google Colab environment for free, refer to the upcoming blog (link to be provided) for further guidance.
-
 
 <br/>
 
