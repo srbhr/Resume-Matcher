@@ -35,6 +35,8 @@ class JobDescriptionProcessor:
         return output
 
     def _write_json_file(self, resume_dictionary: dict):
+        for f in os.listdir(SAVE_DIRECTORY):
+            os.remove(os.path.join(SAVE_DIRECTORY, f))
         file_name = str("JobDescription-" + self.input_file +
                         resume_dictionary["unique_id"] + ".json")
         save_directory_name = pathlib.Path(SAVE_DIRECTORY) / file_name
