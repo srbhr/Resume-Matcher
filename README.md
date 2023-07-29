@@ -132,6 +132,18 @@ streamlit run streamlit_app.py
 
 <br/>
 
+### Docker
+
+1. Build image and start application
+   ```bash
+    docker-compose up
+   ```
+2. Open ```localhost:80``` on your browser
+   
+
+
+<br/>
+
 ---
 
 ### Note 📝
