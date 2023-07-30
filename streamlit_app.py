@@ -136,9 +136,14 @@ avs.add_vertical_space(5)
 
 resume_names = get_filenames_from_dir("Data/Processed/Resumes")
 
-st.write("There are", len(resume_names),
+output = 0
+
+if len(resume_names) > 1:
+    st.write("There are", len(resume_names),
          " resumes present. Please select one from the menu below:")
-output = st.slider('Select Resume Number', 0, len(resume_names)-1, 2)
+    output = st.slider('Select Resume Number', 0, len(resume_names)-1, 0)
+else:
+    st.write("There is 1 resume present")
 
 avs.add_vertical_space(5)
 
@@ -195,10 +200,14 @@ avs.add_vertical_space(5)
 
 job_descriptions = get_filenames_from_dir("Data/Processed/JobDescription")
 
-st.write("There are", len(job_descriptions),
+output = 0
+if len(job_descriptions) > 1:
+    st.write("There are", len(job_descriptions),
          " resumes present. Please select one from the menu below:")
-output = st.slider('Select Job Description Number',
-                   0, len(job_descriptions)-1, 2)
+    output = st.slider('Select Job Description Number',
+                    0, len(job_descriptions)-1, 0)
+else:
+    st.write("There is 1 job description present")
 
 avs.add_vertical_space(5)
 
