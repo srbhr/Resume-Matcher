@@ -3,22 +3,39 @@ from scripts.utils.ReadFiles import get_filenames_from_dir
 from scripts.ResumeProcessor import ResumeProcessor
 from scripts.JobDescriptionProcessor import JobDescriptionProcessor
 import logging
-
+import os
 logging.basicConfig(filename='app.log', filemode='w',
                     level=logging.DEBUG,
                     format='%(name)s - %(levelname)s - %(message)s')
 
+PROCESSED_RESUMES_PATH = "Data/Processed/Resumes"
+PROCESSED_JOB_DESCRIPTIONS_PATH = "Data/Processed/JobDescription"
 
 def read_json(filename):
     with open(filename) as f:
         data = json.load(f)
     return data
 
+def remove_old_files(files_path):
+
+    for filename in os.listdir(files_path):
+        try:
+            file_path = os.path.join(files_path, filename)
+
+            if os.path.isfile(file_path):
+                os.remove(file_path)
+        except Exception as e:  
+            logging.error(f"Error deleting {file_path}:\n{e}")
+
+    logging.info("Deleted old files from "+files_path)
+
 
 logging.info('Started to read from Data/Resumes')
 try:
     # Check if there are resumes present or not.
     # If present then parse it.
+    remove_old_files(PROCESSED_RESUMES_PATH)
+
     file_names = get_filenames_from_dir("Data/Resumes")
     logging.info('Reading from Data/Resumes is now complete.')
 except:
@@ -40,6 +57,8 @@ logging.info('Started to read from Data/JobDescription')
 try:
     # Check if there are resumes present or not.
     # If present then parse it.
+    remove_old_files(PROCESSED_JOB_DESCRIPTIONS_PATH)
+
     file_names = get_filenames_from_dir("Data/JobDescription")
     logging.info('Reading from Data/JobDescription is now complete.')
 except:
