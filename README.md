@@ -146,6 +146,13 @@ streamlit run streamlit_app.py
 
 ---
 
+### Our Contributors ✨
+
+<a href="https://github.com/srbhr/Resume-Matcher/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=srbhr/Resume-Matcher" />
+</a>
+
+
 ### Note 📝
 
 Thanks for the support 💙 this is an ongoing project that I want to build with open source community. There are many ways in which this tool can be upgraded. This includes (not limited to):
