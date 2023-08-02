@@ -1,60 +1,38 @@
 import json
+import logging
 from scripts.utils.ReadFiles import get_filenames_from_dir
 from scripts.ResumeProcessor import ResumeProcessor
 from scripts.JobDescriptionProcessor import JobDescriptionProcessor
-import logging
 
-logging.basicConfig(filename='app.log', filemode='w',
-                    level=logging.DEBUG,
+logging.basicConfig(filename='app.log', filemode='w', level=logging.DEBUG,
                     format='%(name)s - %(levelname)s - %(message)s')
-
 
 def read_json(filename):
     with open(filename) as f:
         data = json.load(f)
     return data
 
+def process_files(directory_path, processor_class):
+    try:
+        file_names = get_filenames_from_dir(directory_path)
+        logging.info(f'Reading from {directory_path} is now complete.')
+    except:
+        logging.error(f'There are no files present in {directory_path}.')
+        logging.error('Exiting from the program.')
+        logging.error(f'Please add files in the {directory_path} folder and try again.')
+        exit(1)
 
-logging.info('Started to read from Data/Resumes')
-try:
-    # Check if there are resumes present or not.
-    # If present then parse it.
-    file_names = get_filenames_from_dir("Data/Resumes")
-    logging.info('Reading from Data/Resumes is now complete.')
-except:
-    # Exit the program if there are no resumes.
-    logging.error('There are no resumes present in the specified folder.')
-    logging.error('Exiting from the program.')
-    logging.error(
-        'Please add resumes in the Data/Resumes folder and try again.')
-    exit(1)
+    logging.info(f'Started processing files in {directory_path}.')
+    for file in file_names:
+        processor = processor_class(file)
+        success = processor.process()
+    logging.info(f'Processing of files in {directory_path} is now complete.')
 
-# Now after getting the file_names parse the resumes into a JSON Format.
-logging.info('Started parsing the resumes.')
-for file in file_names:
-    processor = ResumeProcessor(file)
-    success = processor.process()
-logging.info('Parsing of the resumes is now complete.')
+if __name__ == "__main__":
+    try:
+        process_files("Data/Resumes", ResumeProcessor)
+        process_files("Data/JobDescription", JobDescriptionProcessor)
+        logging.info('Success! Run `streamlit run streamlit_second.py`')
+    except Exception as e:
+        logging.error(f'An error occurred: {str(e)}')
 
-logging.info('Started to read from Data/JobDescription')
-try:
-    # Check if there are resumes present or not.
-    # If present then parse it.
-    file_names = get_filenames_from_dir("Data/JobDescription")
-    logging.info('Reading from Data/JobDescription is now complete.')
-except:
-    # Exit the program if there are no resumes.
-    logging.error(
-        'There are no job-description present in the specified folder.')
-    logging.error('Exiting from the program.')
-    logging.error(
-        'Please add resumes in the Data/JobDescription folder and try again.')
-    exit(1)
-
-# Now after getting the file_names parse the resumes into a JSON Format.
-logging.info('Started parsing the Job Descriptions.')
-for file in file_names:
-    processor = JobDescriptionProcessor(file)
-    success = processor.process()
-logging.info('Parsing of the Job Descriptions is now complete.')
-logging.info('Success now run `streamlit run streamlit_second.py`')
