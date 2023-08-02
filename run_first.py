@@ -35,4 +35,3 @@ if __name__ == "__main__":
         logging.info('Success! Run `streamlit run streamlit_second.py`')
     except Exception as e:
         logging.error(f'An error occurred: {str(e)}')
-
