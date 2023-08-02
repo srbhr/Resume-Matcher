@@ -45,21 +45,21 @@ On top of that, there are various data visualizations that I've added to help yo
 
 ### PRs Welcomed 🤗
 
-💬 Feel free to join in the Discord to discuss anything.
+💬 Feel free to join in the [Discord](https://dsc.gg/resume-matcher) to discuss anything.
 
 💻 Create an issue.
 
 👩‍💻 Contribute.
 
-🔉Participate in the Discussions/Announcements.
+🔉 Participate in the Discussions/Announcements.
 
 🧪 Please check the [Landing Page](https://github.com/srbhr/website-for-resume-matcher). PRs are also welcomed over there.
 
 <br/>
 
-<div align="center">
+## Support the development by Donating 🙏
 
-## Support the development by Donating
+<div align="center">
 
 [![BuyMeACoffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/srbhr)
 
@@ -69,11 +69,9 @@ On top of that, there are various data visualizations that I've added to help yo
 
 <br/>
 
-<div align="center">
+## How to install 💻
 
-## How to install
-
-</div>
+### Using Python Virtual Environment
 
 Follow these steps to set up the environment and run the application:
 
@@ -84,63 +82,74 @@ git clone https://github.com/srbhr/Resume-Matcher.git
 cd Resume-Matcher
 ```
 
-2. Create a Python Virtual Environment:
+2.  Create a Python Virtual Environment:
 
-```bash
-python -m venv env
-```
+    -   Using [virtualenv](https://learnpython.com/blog/how-to-use-virtualenv-python/):
 
-3. Activate the Virtual Environment:
+        _Note_: Check how to install virtualenv on your system here [link](https://learnpython.com/blog/how-to-use-virtualenv-python/).
 
--   On Windows:
+        ```bash
+        virtualenv env
+        ```
+
+    **OR**
+
+    -   Create a Python Virtual Environment:
+
+        ```bash
+        python -m venv env
+        ```
+
+3.  Activate the Virtual Environment:
+
+    -   On Windows:
 
     ```bash
     env\Scripts\activate
     ```
 
--   On macOS and Linux:
+    -   On macOS and Linux:
+
     ```bash
     source env/bin/activate
     ```
 
-4. Install Dependencies:
+4.  Install Dependencies (only after activating the venv):
 
-```bash
-pip install -r requirements.txt
-```
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-5. Prepare Data:
+5.  Prepare Data:
 
--   Resumes: Place your resumes in PDF format in the `Data/Resumes` folder. Remove any existing contents in this folder.
--   Job Descriptions: Place your job descriptions in PDF format in the `Data/JobDescription` folder. Remove any existing contents in this folder.
+    -   Resumes: Place your resumes in PDF format in the `Data/Resumes` folder. Remove any existing contents in this folder.
+    -   Job Descriptions: Place your job descriptions in PDF format in the `Data/JobDescription` folder. Remove any existing contents in this folder.
 
-6. Parse Resumes to JSON:
+6.  Parse Resumes to JSON:
 
-```python
-python run_first.py
-```
+    ```python
+    python run_first.py
+    ```
 
-7. Run the Application:
+7.  Run the Application:
 
-```python
-streamlit run streamlit_app.py
-```
+    ```python
+    streamlit run streamlit_app.py
+    ```
 
-**Note**: For local versions, you do not need to run "streamlit_second.py" as it is specifically for deploying to Streamlit servers.
+    **Note**: For local versions, you do not need to run "streamlit_second.py" as it is specifically for deploying to Streamlit servers.
 
-**Additional Note**: The Vector Similarity part is precomputed to optimize performance due to the resource-intensive nature of sentence encoders that require significant GPU and RAM resources. If you are interested in leveraging this feature in a Google Colab environment for free, refer to the upcoming blog (link to be provided) for further guidance.
+    **Additional Note**: The Vector Similarity part is precomputed to optimize performance due to the resource-intensive nature of sentence encoders that require significant GPU and RAM resources. If you are interested in leveraging this feature in a Google Colab environment for free, refer to the upcoming blog (link to be provided) for further guidance.
 
 <br/>
 
-### Docker
+### Using Docker
 
 1. Build image and start application
-   ```bash
-    docker-compose up
-   ```
-2. Open ```localhost:80``` on your browser
-   
-
+    ```bash
+     docker-compose up
+    ```
+2. Open `localhost:80` on your browser
 
 <br/>
 
@@ -148,10 +157,9 @@ streamlit run streamlit_app.py
 
 ### Our Contributors ✨
 
-<a href="https://github.com/srbhr/Resume-Matcher/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=srbhr/Resume-Matcher" />
-</a>
+[![Contributors](https://contrib.rocks/image?repo=srbhr/Resume-Matcher)](https://github.com/srbhr/Resume-Matcher/graphs/contributors)
 
+---
 
 ### Note 📝
 
