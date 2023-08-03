@@ -45,7 +45,7 @@ On top of that, there are various data visualizations that I've added to help yo
 
 ### PRs Welcomed 🤗
 
-💬 Feel free to join in the Discord to discuss anything.
+💬 Feel free to join the Discord community to discuss anything.
 
 💻 Create an issue.
 
@@ -75,12 +75,13 @@ On top of that, there are various data visualizations that I've added to help yo
 
 </div>
 
-Follow these steps to set up the environment and run the application:
+Follow these steps to set up the environment and run the application.
 
-1. Clone the Repository:
+1. Fork the repository [here](https://github.com/srbhr/Resume-Matcher).
+2. Clone the forked repository.
 
 ```bash
-git clone https://github.com/srbhr/Resume-Matcher.git
+git clone https://github.com/<YOUR-USERNAME>/Resume-Matcher.git
 cd Resume-Matcher
 ```
 
@@ -90,18 +91,19 @@ cd Resume-Matcher
 python -m venv env
 ```
 
-3. Activate the Virtual Environment:
+3. Activate the Virtual Environment.
 
--   On Windows:
+- On Windows.
 
-    ```bash
-    env\Scripts\activate
-    ```
+```bash
+env\Scripts\activate
+```
 
--   On macOS and Linux:
-    ```bash
-    source env/bin/activate
-    ```
+- On macOS and Linux.
+
+```bash
+source env/bin/activate
+```
 
 4. Install Dependencies:
 
@@ -134,13 +136,13 @@ streamlit run streamlit_app.py
 
 ### Docker
 
-1. Build image and start application
-   ```bash
-    docker-compose up
-   ```
-2. Open ```localhost:80``` on your browser
-   
+1. Build the image and start application
 
+```bash
+    docker-compose up
+```
+
+2. Open ```localhost:80``` on your browser
 
 <br/>
 
@@ -155,13 +157,13 @@ streamlit run streamlit_app.py
 
 ### Note 📝
 
-Thanks for the support 💙 this is an ongoing project that I want to build with open source community. There are many ways in which this tool can be upgraded. This includes (not limited to):
+Thanks for the support 💙 this is an ongoing project that I want to build with an open source community. There are many ways in which this tool can be upgraded. This includes (not limited to):
 
 -   Create a better dashboard instead of Streamlit.
--   Add more features like uploading of resumes and parsing.
+-   Add more features like uploading resumes and parsing.
 -   Add a docker image for easy usage.
--   Contribute to better parsing algorithm.
--   Contribute to on a blog to how to make this work.
+-   Contribute to a better parsing algorithm.
+-   Contribute to a blog on how to make this work.
 -   Contribute to the [landing page](https://github.com/srbhr/website-for-resume-matcher) maybe re-create in React/Vue/etc.
 
 ---
