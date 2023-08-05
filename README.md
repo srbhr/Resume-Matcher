@@ -172,21 +172,15 @@ Follow these steps to set up the environment and run the application.
 
 1. Build the image and start application
 
-```bash
-    docker-compose up
-```
+    ```bash
+        docker-compose up
+    ```
 
 2. Open `localhost:80` on your browser
 
 <br/>
 
 ---
-
-### Our Contributors ✨
-
-<a href="https://github.com/srbhr/Resume-Matcher/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=srbhr/Resume-Matcher" />
-</a>
 
 ### Note 📝
 
@@ -200,3 +194,9 @@ Thanks for the support 💙 this is an ongoing project that I want to build with
 -   Contribute to the [landing page](https://github.com/srbhr/website-for-resume-matcher) maybe re-create in React/Vue/etc.
 
 ---
+
+### Our Contributors ✨
+
+<a href="https://github.com/srbhr/Resume-Matcher/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=srbhr/Resume-Matcher" />
+</a>
