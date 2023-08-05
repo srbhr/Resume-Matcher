@@ -135,3 +135,5 @@ dmypy.json
 # Vscode's Files
 .vscode
 .vscode/*
+
+scripts/similarity/config.yml
