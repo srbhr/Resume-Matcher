@@ -165,7 +165,7 @@ Upcoming:
 
 <div align="center">
 
-## Enhance Open-Source Development: Donate and Be Part of Our Journey! 🌐
+## Enhance Open-Source Development: Donate and Be Part of Our Journey!
 
 [![BuyMeACoffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/srbhr)
 [![Sponsor on GitHub](https://img.shields.io/badge/sponsor-30363D?style=for-the-badge&logo=GitHub-Sponsors&logoColor=#white)](https://github.com/sponsors/srbhr)
