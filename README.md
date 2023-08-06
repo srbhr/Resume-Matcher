@@ -43,6 +43,8 @@ The process is as follows:
 
 On top of that, there are various data visualizations that I've added to help you get started.
 
+<br/>
+
 <div align="center">
 
 ## How to install
@@ -135,7 +137,7 @@ Follow these steps to set up the environment and run the application.
 
 <div align="center">
 
-## Join Us, Contribute! 💡
+## Join Us, Contribute!
 
 </div>
 
@@ -159,7 +161,7 @@ Current:
 
 Upcoming:
 
-![](https://img.shields.io/badge/Python-14354C?style=flat-square&logo=python&logoColor=white) ![](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white) ![](https://img.shields.io/badge/React-20232A?style=flat-square&logo=react&logoColor=61DAFB) ![](https://custom-icon-badges.demolab.com/badge/Fast_API-F11A7B?style=flat-square&logo=python&logoColor=22A699)
+![](https://img.shields.io/badge/Python-14354C?style=flat-square&logo=python&logoColor=white) ![](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white) ![](https://img.shields.io/badge/React-20232A?style=flat-square&logo=react&logoColor=61DAFB) ![](https://custom-icon-badges.demolab.com/badge/Fast_API-F11A7B?style=flat-square&logo=python&logoColor=22A699) ![](https://img.shields.io/badge/JavaScript-F7DF1E?style=flat-square&logo=javascript&logoColor=black) ![](https://img.shields.io/badge/HTML5-E34F26?style=flat-square&logo=html5&logoColor=white) ![](https://img.shields.io/badge/CSS3-1572B6?style=flat-square&logo=css3&logoColor=white)
 
 <br/>
 
