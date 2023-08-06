@@ -10,7 +10,11 @@ from streamlit_extras import add_vertical_space as avs
 from annotated_text import annotated_text, parameters
 from streamlit_extras.badges import badge
 import nltk
-nltk.download('punkt')
+
+try:
+    nltk.data.find('tokenizers/punkt')
+except LookupError:
+    nltk.download('punkt')
 
 parameters.SHOW_LABEL_SEPARATOR = False
 parameters.BORDER_RADIUS = 3
