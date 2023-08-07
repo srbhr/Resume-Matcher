@@ -6,7 +6,21 @@ import yaml
 from qdrant_client import QdrantClient, models
 from qdrant_client.http.models import Batch
 
-cwd = os.path.join("/home", "subramanyam24", "projects", "Resume-Matcher")
+
+def find_path(folder_name):
+    curr_dir = os.getcwd()
+    while True:
+        if folder_name in os.listdir(curr_dir):
+            return os.path.join(curr_dir, folder_name)
+        else:
+            parent_dir = os.path.dirname(curr_dir)
+            if parent_dir == '/':
+                break
+            curr_dir = parent_dir
+    raise ValueError(f"Folder '{folder_name}' not found.")
+
+
+cwd = find_path('Resume-Matcher')
 READ_RESUME_FROM = os.path.join(cwd, 'Data', 'Processed', 'Resumes')
 READ_JOB_DESCRIPTION_FROM = os.path.join(cwd, 'Data', 'Processed', 'JobDescription')
 config_path = os.path.join(cwd, "scripts", "similarity")
@@ -99,6 +113,5 @@ def get_similarity_score(resume_string, jd_string):
     qdrant_search.update_qdrant()
     results = qdrant_search.search()
     return results
-
 
 
