@@ -1,15 +1,19 @@
-import networkx as nx
-from typing import List
-import streamlit as st
-import pandas as pd
 import json
+from typing import List
+
+import networkx as nx
+import nltk
+import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-from scripts.utils.ReadFiles import get_filenames_from_dir
-from streamlit_extras import add_vertical_space as avs
+import streamlit as st
 from annotated_text import annotated_text, parameters
+from streamlit_extras import add_vertical_space as avs
 from streamlit_extras.badges import badge
-import nltk
+
+from scripts.similarity.get_similarity_score import get_similarity_score
+from scripts.utils.ReadFiles import get_filenames_from_dir
+
 
 try:
     nltk.data.find('tokenizers/punkt')
@@ -32,7 +36,7 @@ def create_star_graph(nodes_and_weights, title):
     # Add nodes and edges with weights to the graph
     for node, weight in nodes_and_weights:
         G.add_node(node)
-        G.add_edge(central_node, node, weight=weight*100)
+        G.add_edge(central_node, node, weight=weight * 100)
 
     # Get position layout for nodes
     pos = nx.spring_layout(G)
@@ -142,12 +146,12 @@ resume_names = get_filenames_from_dir("Data/Processed/Resumes")
 
 st.write("There are", len(resume_names),
          " resumes present. Please select one from the menu below:")
-output = st.slider('Select Resume Number', 0, len(resume_names)-1, 2)
+output = st.slider('Select Resume Number', 0, len(resume_names) - 1, 2)
 
 avs.add_vertical_space(5)
 
 st.write("You have selected ", resume_names[output], " printing the resume")
-selected_file = read_json("Data/Processed/Resumes/"+resume_names[output])
+selected_file = read_json("Data/Processed/Resumes/" + resume_names[output])
 
 avs.add_vertical_space(2)
 st.markdown("#### Parsed Resume Data")
@@ -165,6 +169,8 @@ annotated_text(create_annotated_text(
     selected_file["clean_data"], selected_file["extracted_keywords"],
     "KW", "#0B666A"))
 
+resume_string = ' '.join(selected_file["extracted_keywords"])
+
 avs.add_vertical_space(5)
 st.write("Now let's take a look at the extracted entities from the resume.")
 
@@ -176,7 +182,7 @@ df2 = pd.DataFrame(selected_file['keyterms'], columns=["keyword", "value"])
 # Create the dictionary
 keyword_dict = {}
 for keyword, value in selected_file['keyterms']:
-    keyword_dict[keyword] = value*100
+    keyword_dict[keyword] = value * 100
 
 fig = go.Figure(data=[go.Table(header=dict(values=["Keyword", "Value"],
                                            font=dict(size=12),
@@ -202,14 +208,14 @@ job_descriptions = get_filenames_from_dir("Data/Processed/JobDescription")
 st.write("There are", len(job_descriptions),
          " resumes present. Please select one from the menu below:")
 output = st.slider('Select Job Description Number',
-                   0, len(job_descriptions)-1, 2)
+                   0, len(job_descriptions) - 1, 2)
 
 avs.add_vertical_space(5)
 
 st.write("You have selected ",
          job_descriptions[output], " printing the job description")
 selected_jd = read_json(
-    "Data/Processed/JobDescription/"+job_descriptions[output])
+    "Data/Processed/JobDescription/" + job_descriptions[output])
 
 avs.add_vertical_space(2)
 st.markdown("#### Job Description")
@@ -224,6 +230,7 @@ st.markdown("#### Common Words between Job Description and Resumes Highlighted."
 annotated_text(create_annotated_text(
     selected_file["clean_data"], selected_jd["extracted_keywords"],
     "JD", "#F24C3D"))
+jd_string = ' '.join(selected_jd["extracted_keywords"])
 
 st.write("Now let's take a look at the extracted entities from the job description.")
 
@@ -235,7 +242,7 @@ df2 = pd.DataFrame(selected_jd['keyterms'], columns=["keyword", "value"])
 # Create the dictionary
 keyword_dict = {}
 for keyword, value in selected_jd['keyterms']:
-    keyword_dict[keyword] = value*100
+    keyword_dict[keyword] = value * 100
 
 fig = go.Figure(data=[go.Table(header=dict(values=["Keyword", "Value"],
                                            font=dict(size=12),
@@ -255,6 +262,10 @@ fig = px.treemap(df2, path=['keyword'], values='value',
 st.write(fig)
 
 avs.add_vertical_space(3)
+
+result = get_similarity_score(resume_string, jd_string)
+similarity_score=result[0]["score"]
+st.write("Similarity Score obtained for the resume and job description is:", similarity_score)
 
 st.title(':blue[Resume Matcher]')
 st.subheader(
