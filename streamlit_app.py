@@ -1,4 +1,5 @@
 import json
+import os
 from typing import List
 
 import networkx as nx
@@ -11,9 +12,11 @@ from annotated_text import annotated_text, parameters
 from streamlit_extras import add_vertical_space as avs
 from streamlit_extras.badges import badge
 
-from scripts.similarity.get_similarity_score import get_similarity_score
+from scripts.similarity.get_similarity_score import get_similarity_score, find_path, read_config
 from scripts.utils.ReadFiles import get_filenames_from_dir
 
+cwd = find_path('Resume-Matcher')
+config_path = os.path.join(cwd, "scripts", "similarity")
 
 try:
     nltk.data.find('tokenizers/punkt')
@@ -148,8 +151,8 @@ output = 0
 
 if len(resume_names) > 1:
     st.write("There are", len(resume_names),
-         " resumes present. Please select one from the menu below:")
-    output = st.slider('Select Resume Number', 0, len(resume_names)-1, 0)
+             " resumes present. Please select one from the menu below:")
+    output = st.slider('Select Resume Number', 0, len(resume_names) - 1, 0)
 else:
     st.write("There is 1 resume present")
 
@@ -173,8 +176,6 @@ st.write("Now let's take a look at the extracted keywords from the resume.")
 annotated_text(create_annotated_text(
     selected_file["clean_data"], selected_file["extracted_keywords"],
     "KW", "#0B666A"))
-
-resume_string = ' '.join(selected_file["extracted_keywords"])
 
 avs.add_vertical_space(5)
 st.write("Now let's take a look at the extracted entities from the resume.")
@@ -213,9 +214,9 @@ job_descriptions = get_filenames_from_dir("Data/Processed/JobDescription")
 output = 0
 if len(job_descriptions) > 1:
     st.write("There are", len(job_descriptions),
-         " resumes present. Please select one from the menu below:")
+             " resumes present. Please select one from the menu below:")
     output = st.slider('Select Job Description Number',
-                    0, len(job_descriptions)-1, 0)
+                       0, len(job_descriptions) - 1, 0)
 else:
     st.write("There is 1 job description present")
 
@@ -239,7 +240,6 @@ st.markdown("#### Common Words between Job Description and Resumes Highlighted."
 annotated_text(create_annotated_text(
     selected_file["clean_data"], selected_jd["extracted_keywords"],
     "JD", "#F24C3D"))
-jd_string = ' '.join(selected_jd["extracted_keywords"])
 
 st.write("Now let's take a look at the extracted entities from the job description.")
 
@@ -272,9 +272,19 @@ st.write(fig)
 
 avs.add_vertical_space(3)
 
-result = get_similarity_score(resume_string, jd_string)
-similarity_score=result[0]["score"]
-st.write("Similarity Score obtained for the resume and job description is:", similarity_score)
+config_file_path = config_path + "/config.yml"
+if os.path.exists(config_file_path):
+    config_data = read_config(config_file_path)
+    if config_data:
+        print("Config file parsed successfully:")
+        resume_string = ' '.join(selected_file["extracted_keywords"])
+        jd_string = ' '.join(selected_jd["extracted_keywords"])
+        result = get_similarity_score(resume_string, jd_string)
+        similarity_score = result[0]["score"]
+        st.write("Similarity Score obtained for the resume and job description is:", similarity_score)
+else:
+    print("Config file does not exist.")
+
 
 st.title(':blue[Resume Matcher]')
 st.subheader(
