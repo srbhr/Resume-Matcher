@@ -57,65 +57,65 @@ Follow these steps to set up the environment and run the application.
 
 2. Clone the forked repository.
 
-    ```bash
-    git clone https://github.com/<YOUR-USERNAME>/Resume-Matcher.git
-    cd Resume-Matcher
-    ```
+   ```bash
+   git clone https://github.com/<YOUR-USERNAME>/Resume-Matcher.git
+   cd Resume-Matcher
+   ```
 
 3. Create a Python Virtual Environment:
 
-    - Using [virtualenv](https://learnpython.com/blog/how-to-use-virtualenv-python/):
+   - Using [virtualenv](https://learnpython.com/blog/how-to-use-virtualenv-python/):
 
-        _Note_: Check how to install virtualenv on your system here [link](https://learnpython.com/blog/how-to-use-virtualenv-python/).
+     _Note_: Check how to install virtualenv on your system here [link](https://learnpython.com/blog/how-to-use-virtualenv-python/).
 
-        ```bash
-        virtualenv env
-        ```
+     ```bash
+     virtualenv env
+     ```
 
-    **OR**
+   **OR**
 
-    - Create a Python Virtual Environment:
+   - Create a Python Virtual Environment:
 
-        ```bash
-        python -m venv env
-        ```
+     ```bash
+     python -m venv env
+     ```
 
 4. Activate the Virtual Environment.
 
-    - On Windows.
+   - On Windows.
 
-        ```bash
-        env\Scripts\activate
-        ```
+     ```bash
+     env\Scripts\activate
+     ```
 
-    - On macOS and Linux.
+   - On macOS and Linux.
 
-        ```bash
-        source env/bin/activate
-        ```
+     ```bash
+     source env/bin/activate
+     ```
 
 5. Install Dependencies:
 
-    ```bash
-    pip install -r requirements.txt
-    ```
+   ```bash
+   poetry install
+   ```
 
 6. Prepare Data:
 
-    - Resumes: Place your resumes in PDF format in the `Data/Resumes` folder. Remove any existing contents in this folder.
-    - Job Descriptions: Place your job descriptions in PDF format in the `Data/JobDescription` folder. Remove any existing contents in this folder.
+   - Resumes: Place your resumes in PDF format in the `Data/Resumes` folder. Remove any existing contents in this folder.
+   - Job Descriptions: Place your job descriptions in PDF format in the `Data/JobDescription` folder. Remove any existing contents in this folder.
 
 7. Parse Resumes to JSON:
 
-    ```python
-    python run_first.py
-    ```
+   ```python
+   python run_first.py
+   ```
 
 8. Run the Application:
 
-    ```python
-    streamlit run streamlit_app.py
-    ```
+   ```python
+   streamlit run streamlit_app.py
+   ```
 
 **Note**: For local versions, you do not need to run "streamlit_second.py" as it is specifically for deploying to Streamlit servers.
 
@@ -127,9 +127,9 @@ Follow these steps to set up the environment and run the application.
 
 1. Build the image and start application
 
-    ```bash
-        docker-compose up
-    ```
+   ```bash
+       docker-compose up
+   ```
 
 2. Open `localhost:80` on your browser
 
