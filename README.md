@@ -1,4 +1,4 @@
-[![Resume Matcher](Assets/img/header.png)](https://www.resumematcher.fyi)
+[![Resume Matcher](Assets/img/banner.png)](https://www.resumematcher.fyi)
 
 <div align="center">
 
