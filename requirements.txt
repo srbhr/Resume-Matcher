@@ -5,7 +5,7 @@ blinker==1.6.2
 blis==0.7.9
 cachetools==5.3.1
 catalogue==2.0.8
-certifi==2023.5.7
+certifi==2023.7.22
 charset-normalizer==3.2.0
 click==8.1.5
 confection==0.1.0
