@@ -27,7 +27,8 @@ module.exports = {
         '@typescript-eslint/explicit-function-return-type': 'off',
         '@typescript-eslint/no-confusing-void-expression': 'off',
         '@typescript-eslint/semi': 'off',
-        '@typescript-eslint/member-delimiter-style': 'off'
+        '@typescript-eslint/member-delimiter-style': 'off',
+        '@typescript-eslint/space-before-function-paren': 'off'
       }
     }
   ],
