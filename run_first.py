@@ -2,11 +2,11 @@ import json
 from scripts.utils.ReadFiles import get_filenames_from_dir
 from scripts.ResumeProcessor import ResumeProcessor
 from scripts.JobDescriptionProcessor import JobDescriptionProcessor
+from scripts.utils.logger import init_logging_config
 import logging
 import os
-logging.basicConfig(filename='app.log', filemode='w',
-                    level=logging.DEBUG,
-                    format='%(name)s - %(levelname)s - %(message)s')
+
+init_logging_config()
 
 PROCESSED_RESUMES_PATH = "Data/Processed/Resumes"
 PROCESSED_JOB_DESCRIPTIONS_PATH = "Data/Processed/JobDescription"
