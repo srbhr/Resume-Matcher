@@ -35,4 +35,8 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# negate parent gitignore
+!/lib
+!.vscode
+!.vscode/*
 

@@ -1,0 +1,16 @@
+{
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "editor.tabSize": 2,
+  "prettier.configPath": ".prettierrc.js",
+  "editor.fontLigatures": false,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true,
+  "editor.formatOnPaste": true,
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": true
+  },
+  // "recommendations": ["esbenp.prettier-vscode", "dbaeumer.vscode-eslint"],
+  "eslint.workingDirectories": [{ "pattern": "ui/*/" }]
+}
