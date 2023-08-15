@@ -21,6 +21,13 @@ module.exports = {
         babelOptions: {
           presets: [require.resolve('next/babel')]
         }
+      },
+      rules: {
+        '@typescript-eslint/no-unused-vars': ['error'],
+        '@typescript-eslint/explicit-function-return-type': 'off',
+        '@typescript-eslint/no-confusing-void-expression': 'off',
+        '@typescript-eslint/semi': 'off',
+        '@typescript-eslint/member-delimiter-style': 'off'
       }
     }
   ],
@@ -43,9 +50,7 @@ module.exports = {
       { max: 500, skipBlankLines: false, skipComments: false }
     ],
     'react/jsx-uses-react': 'off',
-    'react/react-in-jsx-scope': 'off',
-    '@typescript-eslint/no-unused-vars': ['error'],
-    '@typescript-eslint/explicit-function-return-type': 'off'
+    'react/react-in-jsx-scope': 'off'
     // "react-hooks/exhaustive-deps": "off"
   },
   settings: {
