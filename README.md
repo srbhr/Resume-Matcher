@@ -53,7 +53,7 @@ On top of that, there are various data visualizations that I've added to help yo
 
 Follow these steps to set up the environment and run the application.
 
-1. Fork the repository [here](https://github.com/srbhr/Resume-Matcher).
+1. Fork the repository [here](https://github.com/srbhr/Resume-Matcher/fork).
 
 2. Clone the forked repository.
 
