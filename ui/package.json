@@ -6,14 +6,21 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "check-type": "tsc --pretty --noEmit",
+    "check-format": "prettier --check .",
+    "check-lint": "eslint --ignore-path .gitignore --ext ts --ext tsx --ext js .",
+    "format": "prettier --ignore-path .gitignore --write './**/*.{js,jsx,ts,tsx}' --config ./.prettierrc.js",
+    "lint:fix": "yarn check-lint --fix",
+    "typecheck:watch": "tsc -w",
+    "test-all": "yarn run check-format && yarn run check-lint && yarn run check-type && yarn run build",
+    "turbo": "next dev --turbo"
   },
   "dependencies": {
     "@types/node": "20.5.0",
     "@types/react": "18.2.20",
     "@types/react-dom": "18.2.7",
     "autoprefixer": "10.4.15",
-    "eslint": "8.47.0",
+    "eslint": "^8.0.1",
     "eslint-config-next": "13.4.16",
     "next": "13.4.16",
     "postcss": "8.4.27",
@@ -21,5 +28,19 @@
     "react-dom": "18.2.0",
     "tailwindcss": "3.3.3",
     "typescript": "5.1.6"
+  },
+  "devDependencies": {
+    "@next/eslint-plugin-next": "^13.4.16",
+    "@typescript-eslint/eslint-plugin": "^5.52.0",
+    "@typescript-eslint/parser": "^6.4.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-config-standard-with-typescript": "^37.0.0",
+    "eslint-plugin-import": "^2.25.2",
+    "eslint-plugin-n": "^15.0.0 || ^16.0.0 ",
+    "eslint-plugin-prettier": "^5.0.0",
+    "eslint-plugin-promise": "^6.0.0",
+    "eslint-plugin-react": "^7.33.1",
+    "eslint-plugin-tailwindcss": "^3.13.0",
+    "prettier": "^3.0.1"
   }
 }

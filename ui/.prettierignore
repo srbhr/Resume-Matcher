@@ -1,0 +1,6 @@
+dist
+node_modules
+.next
+build
+yarn.lock
+.env
