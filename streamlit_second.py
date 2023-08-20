@@ -138,6 +138,7 @@ resume_names = get_filenames_from_dir("Data/Processed/Resumes")
 
 if len(resume_names) > 1:
     default_value = min(2, len(resume_names) - 1)
+    st.write("There are", len(resume_names), "resumes present. Please select one from the slider below:")
     output = st.slider('Select Resume Number:', 0, len(resume_names) - 1, default_value)
 elif len(resume_names) == 1:
     st.write("There is :green[1] resume present.")
