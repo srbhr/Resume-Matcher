@@ -94,6 +94,45 @@ Follow these steps to set up the environment and run the application.
      source env/bin/activate
      ```
 
+    **OPTIONAL (if anybody is using pyenv)**
+
+   Run application with pyenv (Refer this link - https://realpython.com/intro-to-pyenv/#installing-pyenv)
+
+   - Build dependencies (on ubuntu)
+      ```
+      sudo apt-get install -y make build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev libncursesw5-dev xz-utils tk-dev libffi-dev liblzma-dev python openssl
+      ```
+      ```
+
+      sudo apt-get install build-essential zlib1g-dev libffi-dev libssl-dev libbz2-dev libreadline-dev libsqlite3-dev liblzma-dev libncurses-dev
+
+      sudo apt-get install python-tk python3-tk tk-dev
+
+      sudo apt-get install build-essential zlib1g-dev libffi-dev libssl-dev libbz2-dev libreadline-dev libsqlite3-dev liblzma-dev
+      
+      ```
+   - pyenv installer
+     ```
+        curl https://pyenv.run | bash
+     ```
+   - Install desired python version
+     ```
+       pyenv install -v 3.11.0
+     ```
+     
+   - pyenv with vurtual enviroment 
+     ```
+        pyenv virtualenv 3.11.0 myenv_name
+     ```
+     
+   - Activate virtualenv with pyenv
+     ```
+        pyenv activate myenv_name
+     ```
+
+
+
+
 5. Install Dependencies:
 
    ```bash
