@@ -109,4 +109,4 @@ watchdog==3.0.0
 zipp==3.16.2
 
 cohere~=4.19.2
-qdrant-client
+qdrant-client>=1.1.1
