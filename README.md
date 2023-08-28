@@ -122,16 +122,13 @@ Follow these steps to set up the environment and run the application.
      
    - pyenv with vurtual enviroment 
      ```
-        pyenv virtualenv 3.11.0 myenv_name
+        pyenv virtualenv 3.11.0 venv
      ```
      
    - Activate virtualenv with pyenv
      ```
-        pyenv activate myenv_name
+        pyenv activate venv
      ```
-
-
-
 
 5. Install Dependencies:
 
