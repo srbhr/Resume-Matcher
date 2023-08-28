@@ -18,6 +18,7 @@
 [![Discord](https://custom-icon-badges.demolab.com/badge/Join%20Discord-blue?style=flat-square&logo=discord&color=F0FF42&logoColor=293462)](https://discord.gg/t3Y9HEuV34)
 [![Resume Matcher](https://custom-icon-badges.demolab.com/badge/www.resumematcher.fyi-gold?style=flat-square&logo=globe&logoColor=black)](https://www.resumematcher.fyi)
 [![Resume Matcher](https://custom-icon-badges.demolab.com/badge/Live_Demo_on_Streamlit-green?style=flat-square&logo=live&color=F55353)](https://resume-matcher.streamlit.app/)
+
 [![Resume Matcher Docs](https://img.shields.io/badge/Checkout%20Resume%20Matcher%20Docs-%230288D1.svg?style=flat-square&logo=bookstack&logoColor=white&color=red)](https://github.com/srbhr/Resume-Matcher-Docs)
 
 <a href="https://www.producthunt.com/posts/resume-matcher?utm_source=badge-featured&utm_medium=badge&utm_souce=badge-resume&#0045;matcher" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=401261&theme=light" alt="Resume&#0032;Matcher - Free&#0032;and&#0032;Open&#0045;Source&#0032;ATS&#0032;Tool&#0032;to&#0032;Match&#0032;Resumes&#0032;to&#0032;Job&#0032;Desc&#0046; | Product Hunt" style="width: 180px; height: 50px;" width="200" height="54"/></a>
@@ -95,9 +96,9 @@ Follow these steps to set up the environment and run the application.
      source env/bin/activate
      ```
 
-    **OPTIONAL (if anybody is using pyenv)**
+    **OPTIONAL (For pyenv users)**
 
-   Run application with pyenv (Refer this link - https://realpython.com/intro-to-pyenv/#installing-pyenv)
+   Run the application with pyenv (Refer this [article](https://realpython.com/intro-to-pyenv/#installing-pyenv))
 
    - Build dependencies (on ubuntu)
       ```
@@ -121,7 +122,7 @@ Follow these steps to set up the environment and run the application.
        pyenv install -v 3.11.0
      ```
      
-   - pyenv with vurtual enviroment 
+   - pyenv with virtual enviroment 
      ```
         pyenv virtualenv 3.11.0 venv
      ```
@@ -175,7 +176,7 @@ Follow these steps to set up the environment and run the application.
 1.  Visit [Cohere website registration](https://dashboard.cohere.ai/welcome/register) and create an account.
 2.  Go to API keys and copy your cohere api key.
 3.  Visit [Qdrant website](https://cloud.qdrant.io/) and create an account.
-4.  Get your api key and cluster url as well
+4.  Get your api key and cluster url.
 5.  Now create a yaml file named config.yml in Scripts/Similarity/ folder.
 6.  The format for the conifg file should be as below:
     ```yaml
@@ -186,6 +187,8 @@ Follow these steps to set up the environment and run the application.
       url: qdrant_cluster_url
     ```
 7.  Please replace your values without any quotes.
+
+*Note: Please make sure that Qdrant_client's version is higher than v1.1*
 
 <br/>
 
@@ -207,6 +210,8 @@ Pull Requests & Issues are not just welcomed, they're celebrated! Let's create t
 
 🚀 Explore and improve our [Landing Page](https://github.com/srbhr/website-for-resume-matcher). PRs always welcome!
 
+📚 Contribute to the [Resume Matcher Docs](https://github.com/srbhr/Resume-Matcher-Docs) and help people get started with using the software. 
+
 #### Tech Stack
 
 Current:
@@ -215,7 +220,7 @@ Current:
 
 Upcoming:
 
-![Python](https://img.shields.io/badge/Python-14354C?style=flat-square&logo=python&logoColor=white) ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white) ![React](https://img.shields.io/badge/React-20232A?style=flat-square&logo=react&logoColor=61DAFB) ![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=flat-square&logo=fastapi) ![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=flat-square&logo=javascript&logoColor=black) ![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=flat-square&logo=html5&logoColor=white) ![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=flat-square&logo=css3&logoColor=white) ![& More](https://custom-icon-badges.demolab.com/badge/And_More-white?style=flat-square&logo=plus&logoColor=black)
+![Python](https://img.shields.io/badge/Python-FFD43B?style=flat-square&logo=python&logoColor=blue) ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white) ![Next JS](https://img.shields.io/badge/Next-black?style=flat-square&logo=next.js&logoColor=white) ![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=flat-square&logo=fastapi) ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=flat-square&logo=typescript&logoColor=white) ![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=flat-square&logo=html5&logoColor=white) ![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=flat-square&logo=css3&logoColor=white) ![& More](https://custom-icon-badges.demolab.com/badge/And_More-white?style=flat-square&logo=plus&logoColor=black)
 
 <br/>
 
