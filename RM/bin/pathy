@@ -1,8 +1,0 @@
-#!/Users/sriram.ranganathan99/Hepta/new_rp/Resume-Matcher/RM/bin/python3
-# -*- coding: utf-8 -*-
-import re
-import sys
-from pathy.cli import app
-if __name__ == '__main__':
-    sys.argv[0] = re.sub(r'(-script\.pyw|\.exe)?$', '', sys.argv[0])
-    sys.exit(app())
