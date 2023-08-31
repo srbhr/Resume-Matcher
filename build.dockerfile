@@ -1,5 +1,5 @@
 FROM python:3.11.0-slim
-WORKDIR /data
+WORKDIR /data/Resume-Matcher
 COPY . .
 RUN apt-get update
 RUN apt-get install -y build-essential python-dev git
