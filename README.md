@@ -198,12 +198,8 @@ To run the full stack web application (frontend client and backend api servers),
 2.  Go to API keys and copy your cohere api key.
 3.  Visit [Qdrant website](https://cloud.qdrant.io/) and create an account.
 4.  Get your api key and cluster url.
-5.  Go to open dashboard in qdrant and enter your api key **for only the first time**
-
-<img src="Assets/img/quadrant_cloud.png" height="60%" width="60%"/>
-
-6.  Now create a yaml file named config.yml in Scripts/Similarity/ folder.
-7.  The format for the conifg file should be as below:
+5.  Now create a yaml file named config.yml in Scripts/Similarity/ folder.
+6.  The format for the conifg file should be as below:
     ```yaml
     cohere:
       api_key: cohere_key
