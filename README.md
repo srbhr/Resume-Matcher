@@ -177,8 +177,10 @@ Follow these steps to set up the environment and run the application.
 2.  Go to API keys and copy your cohere api key.
 3.  Visit [Qdrant website](https://cloud.qdrant.io/) and create an account.
 4.  Get your api key and cluster url.
-5.  Now create a yaml file named config.yml in Scripts/Similarity/ folder.
-6.  The format for the conifg file should be as below:
+5.  Go to open dashboard in qdrant and enter your api key **for only the first time**
+![img.png](img.png)
+6.  Now create a yaml file named config.yml in Scripts/Similarity/ folder. 
+7.  The format for the conifg file should be as below:
     ```yaml
     cohere:
       api_key: cohere_key
@@ -186,7 +188,7 @@ Follow these steps to set up the environment and run the application.
       api_key: qdrant_api_key
       url: qdrant_cluster_url
     ```
-7.  Please replace your values without any quotes.
+8.  Please replace your values without any quotes.
 
 *Note: Please make sure that Qdrant_client's version is higher than v1.1*
 
