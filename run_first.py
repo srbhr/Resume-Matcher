@@ -64,7 +64,7 @@ try:
 except:
     # Exit the program if there are no job-descriptions.
     logging.error(
-        'There are no job-description present in the specified folder.')
+        'There are no job-descriptions present in the specified folder.')
     logging.error('Exiting from the program.')
     logging.error(
         'Please add job-descriptions in the Data/JobDescription folder and try again.')
