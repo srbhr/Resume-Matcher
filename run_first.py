@@ -55,22 +55,22 @@ logging.info('Parsing of the resumes is now complete.')
 
 logging.info('Started to read from Data/JobDescription')
 try:
-    # Check if there are resumes present or not.
+    # Check if there are job-descriptions present or not.
     # If present then parse it.
     remove_old_files(PROCESSED_JOB_DESCRIPTIONS_PATH)
 
     file_names = get_filenames_from_dir("Data/JobDescription")
     logging.info('Reading from Data/JobDescription is now complete.')
 except:
-    # Exit the program if there are no resumes.
+    # Exit the program if there are no job-descriptions.
     logging.error(
         'There are no job-description present in the specified folder.')
     logging.error('Exiting from the program.')
     logging.error(
-        'Please add resumes in the Data/JobDescription folder and try again.')
+        'Please add job-descriptions in the Data/JobDescription folder and try again.')
     exit(1)
 
-# Now after getting the file_names parse the resumes into a JSON Format.
+# Now after getting the file_names parse the job-descriptions into a JSON Format.
 logging.info('Started parsing the Job Descriptions.')
 for file in file_names:
     processor = JobDescriptionProcessor(file)
