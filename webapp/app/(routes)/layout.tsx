@@ -9,6 +9,11 @@ export const metadata: Metadata = {
   title: "Resume Matcher",
   description:
     "An AI Based Free & Open Source ATS, Resume Matcher to tailor your resume to a job description. Find the best keywords, and gain deep insights into your resume.",
+  keywords: ["Resume", "Matcher", "ATS", "Score"],
+  authors: [
+    { name: "Samurize", url: "https://github.com/srbhr" },
+    { name: "Sayvai", url: "https://github.com/Sayvai" },
+  ],
   icons: {
     icon: "/favicon-32x32.png",
   },
