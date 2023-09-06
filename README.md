@@ -136,9 +136,6 @@ Follow these steps to set up the environment and run the application.
 5. Install Dependencies:
 
    ```bash
-   - if you want to use poetry, run below command
-   poetry install
-   - if you want to use pip, use below command
    pip install -r requirements.txt
    ```
 
