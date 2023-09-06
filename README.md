@@ -96,26 +96,23 @@ Follow these steps to set up the environment and run the application.
      source env/bin/activate
      ```
 
-     **OPTIONAL (For pyenv users)**
+    **OPTIONAL (For pyenv users)**
 
    Run the application with pyenv (Refer this [article](https://realpython.com/intro-to-pyenv/#installing-pyenv))
 
    - Build dependencies (on ubuntu)
+      ```
+      sudo apt-get install -y make build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev libncursesw5-dev xz-utils tk-dev libffi-dev liblzma-dev python openssl
+      ```
+      ```
 
-     ```
-     sudo apt-get install -y make build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev libncursesw5-dev xz-utils tk-dev libffi-dev liblzma-dev python openssl
-     ```
+      sudo apt-get install build-essential zlib1g-dev libffi-dev libssl-dev libbz2-dev libreadline-dev libsqlite3-dev liblzma-dev libncurses-dev
 
-     ```
+      sudo apt-get install python-tk python3-tk tk-dev
 
-     sudo apt-get install build-essential zlib1g-dev libffi-dev libssl-dev libbz2-dev libreadline-dev libsqlite3-dev liblzma-dev libncurses-dev
-
-     sudo apt-get install python-tk python3-tk tk-dev
-
-     sudo apt-get install build-essential zlib1g-dev libffi-dev libssl-dev libbz2-dev libreadline-dev libsqlite3-dev liblzma-dev
-
-     ```
-
+      sudo apt-get install build-essential zlib1g-dev libffi-dev libssl-dev libbz2-dev libreadline-dev libsqlite3-dev liblzma-dev
+      
+      ```
    - pyenv installer
      ```
         curl https://pyenv.run | bash
@@ -124,10 +121,12 @@ Follow these steps to set up the environment and run the application.
      ```
        pyenv install -v 3.11.0
      ```
-   - pyenv with virtual enviroment
+     
+   - pyenv with virtual enviroment 
      ```
         pyenv virtualenv 3.11.0 venv
      ```
+     
    - Activate virtualenv with pyenv
      ```
         pyenv activate venv
@@ -189,7 +188,7 @@ Follow these steps to set up the environment and run the application.
     ```
 7.  Please replace your values without any quotes.
 
-_Note: Please make sure that Qdrant_client's version is higher than v1.1_
+*Note: Please make sure that Qdrant_client's version is higher than v1.1*
 
 <br/>
 
@@ -211,7 +210,7 @@ Pull Requests & Issues are not just welcomed, they're celebrated! Let's create t
 
 🚀 Explore and improve our [Landing Page](https://github.com/srbhr/website-for-resume-matcher). PRs always welcome!
 
-📚 Contribute to the [Resume Matcher Docs](https://github.com/srbhr/Resume-Matcher-Docs) and help people get started with using the software.
+📚 Contribute to the [Resume Matcher Docs](https://github.com/srbhr/Resume-Matcher-Docs) and help people get started with using the software. 
 
 #### Tech Stack
 
