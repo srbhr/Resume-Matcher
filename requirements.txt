@@ -109,5 +109,5 @@ watchdog==3.0.0
 zipp==3.16.2
 reportlab==4.0.4
 easygui==0.98.3
-cohere~=4.19.2
+cohere==4.19.3
 qdrant-client
