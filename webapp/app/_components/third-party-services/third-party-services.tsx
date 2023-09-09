@@ -1,4 +1,5 @@
 import SavedKeys from "@/app/_components/third-party-services/saved-keys";
+import { getErrorMessage } from "@/utils/error";
 import { GetServiceKeysResponse } from "@/types/service-keys";
 import {
   getProtocolAndHost,
@@ -14,17 +15,28 @@ async function getServiceKeys(): Promise<GetServiceKeysResponse> {
     url = `${protocolHost}${url}`;
   }
 
-  const response = await fetch(url, { cache: "no-store" });
+  try {
+    const response = await fetch(url, { cache: "no-store" });
 
-  const data = (await response.json()) as Promise<GetServiceKeysResponse>;
+    const data = (await response.json()) as Promise<GetServiceKeysResponse>;
 
-  return data;
+    return data;
+  } catch (error) {
+    console.error(error);
+    return {
+      error: getErrorMessage(error),
+    };
+  }
 }
 
 const ThirdPartyServicesKeys = async () => {
   const data = await getServiceKeys();
 
-  if (!data?.config_keys || Object.keys(data.config_keys).length === 0) {
+  if (
+    data.error ||
+    !data?.config_keys ||
+    Object.keys(data.config_keys).length === 0
+  ) {
     // implies that no requieed user service keps are to be set for the app to work, so no need to render service keys component
     console.warn(
       "No configurable service keys found. If this is unexpected, please check the GET API response to '/api/service-keys'."

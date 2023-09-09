@@ -1,4 +1,5 @@
-interface FastAPIError {
+"use client";
+export interface FastAPIError {
   detail: string;
 }
 

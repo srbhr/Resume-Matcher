@@ -78,6 +78,13 @@ async def get_service_keys() -> dict[str, dict[str, str]]:
     )  # saved secrets - config can be programmatically created / updated with actual secrets. Ignored from version control (.gitignore)
 
     try:
+        # if master config definition file does not exist, raise a 404 not found error
+        if not exists(file_path_config_definition):
+            raise HTTPException(
+                status_code=404,
+                detail=f"Config definition file not found at path: {file_path_config_definition}",
+            )
+
         # variable to hold an updated reference of stored (git ignored) secrets
         config_secrets_keys = {}
 
