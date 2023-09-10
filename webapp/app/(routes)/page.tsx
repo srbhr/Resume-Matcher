@@ -5,7 +5,7 @@ import Suggestions from "@/components/suggestions/suggestions";
 import ThirdPartyServicesKeys from "@/components/third-party-services/third-party-services";
 import FileUpload from "@/components/resume/file-upload/file-upload";
 import ResumeGlance from "@/components/resume/resume-glance/resume-glance";
-import Hero from "@/components/resume/resume";
+import Hero from "@/components/hero/hero";
 
 export default function Home() {
   return (
