@@ -14,7 +14,7 @@ View a brief GIF demo of the web apps' design functionality below:
 
 - install [Node.js](https://nodejs.org/en/download/). The version used for this project is v18.17.0
 
-- install [Python](https://www.python.org/downloads/). The version used for this project is v3.9.6
+- install [Python](https://www.python.org/downloads/). The version used for this project is v3.11.5
 
 ### Setup
 
