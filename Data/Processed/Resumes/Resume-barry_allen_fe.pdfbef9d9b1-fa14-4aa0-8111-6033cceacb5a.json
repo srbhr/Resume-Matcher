@@ -5,23 +5,23 @@
                             "peallthe.stars@google.com"
               ],
               "entities": [
-                            "Firestore Utilized",
-                            "React Redux",
-                            "New Delhi India",
-                            "Platform Firebase",
                             "React",
-                            "Skills",
+                            "Firestore Utilized",
+                            "Delhi",
+                            "React Redux",
+                            "UI",
                             "Firebase Auth",
-                            "Redux Working",
+                            "FrontEnd",
                             "BTech Computer Science and Engineering Indian Institute of Technology",
                             "FrontEnd Developer",
-                            "Projects",
-                            "PresentSoftware Engineer FrontEnd Google  Mountain View CA USA",
+                            "New Delhi India",
+                            "Skills",
+                            "Platform Firebase",
                             "Agile Development TestDriven\nDevelopment Responsive Design UI/UX",
-                            "Delhi",
-                            "FrontEnd",
-                            "Education",
-                            "UI"
+                            "PresentSoftware Engineer FrontEnd Google  Mountain View CA USA",
+                            "Projects",
+                            "Redux Working",
+                            "Education"
               ],
               "experience": "Objective \n Seeking a challenging role as a FrontEnd Developer where I can leverage my knowledge of UI / UX \n design and modern web technologies to create intuitive and engaging user interfaces \n Education \n 2018   2022 BTech Computer Science and Engineering Indian Institute of Technology \n Delhi   New Delhi India \n Overall GPA 95/10 \n Skills \n JavaScript ES6 + TypeScript HTML5 CSS3 Python React Redux Angular \n Vuejs Nodejs Expressjs D3js Git Docker Webpack Babel Google Cloud \n Platform Firebase RESTful APIs GraphQL Agile Development TestDriven \n Development Responsive Design UI / UX \n Experience \n June 2022 \n PresentSoftware Engineer FrontEnd Google   Mountain View CA USA \n Developing intuitive and engaging user interfaces using React and Redux Working closely \n with UX designers to implement responsive and accessible web design Participating in \n agile development processes including sprint planning and code reviews Collaborating with \n backend developers to integrate RESTful APIs and ensure seamless data flow \n Projects \n 2022 Personal Expense Tracker \n Developed a personal expense tracker application using React Redux and Firebase Imple \n mented user authentication using Firebase Auth and data storage using Firestore Utilized \n D3js for data visualization to provide users with insights into their spending patterns",
               "extracted_keywords": [
@@ -255,6 +255,6 @@
               },
               "resume_data": "Barry Allen\nFront-End DeveloperGoogle HQ, Mountain View, CA, USA\n\u2642\u00b6obile-alt(123) 456-7890\n/envel\u2322peallthe.stars@google.com\n/linkedin-inbwayne\n/githubbwayne\nObjective\nSeeking a challenging role as a Front-End Developer where I can leverage my knowledge of UI/UX\ndesign and modern web technologies to create intuitive and engaging user interfaces.\nEducation\n2018 \u2013 2022 B.Tech, Computer Science and Engineering ,Indian Institute of Technology\nDelhi , New Delhi, India\nOverall GPA: 9.5/10\nSkills\nJavaScript (ES6+), TypeScript, HTML5, CSS3, Python, React, Redux, Angular,\nVue.js, Node.js, Express.js, D3.js, Git, Docker, Webpack, Babel, Google Cloud\nPlatform, Firebase, RESTful APIs, GraphQL, Agile Development, Test-Driven\nDevelopment, Responsive Design, UI/UX\nExperience\nJune 2022 \u2013\nPresentSoftware Engineer (Front-End) ,Google , Mountain View, CA, USA\nDeveloping intuitive and engaging user interfaces using React and Redux. Working closely\nwith UX designers to implement responsive and accessible web design. Participating in\nagile development processes, including sprint planning and code reviews. Collaborating with\nback-end developers to integrate RESTful APIs and ensure seamless data flow.\nProjects\n2022 Personal Expense Tracker\nDeveloped a personal expense tracker application using React, Redux, and Firebase. Imple-\nmented user authentication using Firebase Auth and data storage using Firestore. Utilized\nD3.js for data visualization to provide users with insights into their spending patterns.",
               "tri_grams": "[FrontEnd DeveloperGoogle HQ, DeveloperGoogle HQ Mountain, HQ Mountain View, View CA USA, Seeking a challenging, leverage my knowledge, knowledge of UI, design and modern, modern web technologies, technologies to create, intuitive and engaging, engaging user interfaces, BTech Computer Science, Science and Engineering, Engineering Indian Institute, Institute of Technology, New Delhi India, JavaScript ES6+, ES6+ TypeScript, + TypeScript HTML5, TypeScript HTML5 CSS3, HTML5 CSS3 Python, CSS3 Python React, Python React Redux, React Redux Angular, Vuejs Nodejs Expressjs, Nodejs Expressjs D3js, Expressjs D3js Git, D3js Git Docker, Git Docker Webpack, Docker Webpack Babel, Webpack Babel Google, Babel Google Cloud, Platform Firebase RESTful, Firebase RESTful APIs, RESTful APIs GraphQL, APIs GraphQL Agile, GraphQL Agile Development, Agile Development TestDriven, Development Responsive Design, Responsive Design UI, PresentSoftware Engineer FrontEnd, Engineer FrontEnd Google, View CA USA, intuitive and engaging, engaging user interfaces, interfaces using React, React and Redux, Redux Working closely, designers to implement, responsive and accessible, accessible web design, web design Participating, agile development processes, development processes including, processes including sprint, including sprint planning, planning and code, code reviews Collaborating, developers to integrate, integrate RESTful APIs, APIs and ensure, ensure seamless data, seamless data flow, Personal Expense Tracker, Developed a personal, personal expense tracker, expense tracker application, application using React, Redux and Firebase, mented user authentication, authentication using Firebase, Auth and data, storage using Firestore, D3js for data, visualization to provide, users with insights]",
-              "unique_id": "49161dcd-93cc-471e-93ad-5baa6b38a90d",
+              "unique_id": "bef9d9b1-fa14-4aa0-8111-6033cceacb5a",
               "years": []
 }

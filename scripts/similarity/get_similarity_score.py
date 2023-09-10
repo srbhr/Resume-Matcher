@@ -82,15 +82,16 @@ class QdrantSearch:
         self.resumes = resumes
         self.jd = jd
         self.cohere = cohere.Client(self.cohere_key)
-
+        self.collection_name = "resume_collection_name"
         self.qdrant = QdrantClient(
             url=self.qdrant_url,
             api_key=self.qdrant_key,
         )
 
         vector_size = 4096
+        print(f"collection name={self.collection_name}")
         self.qdrant.recreate_collection(
-            collection_name="collection_resume_matcher",
+            collection_name=self.collection_name,
             vectors_config=models.VectorParams(
                 size=vector_size,
                 distance=models.Distance.COSINE
@@ -118,7 +119,7 @@ class QdrantSearch:
             ids.append(i)
         try:
             self.qdrant.upsert(
-                collection_name="collection_resume_matcher",
+                collection_name=self.collection_name,
                 points=Batch(
                     ids=ids,
                     vectors=vectors,
@@ -133,7 +134,7 @@ class QdrantSearch:
         vector, _ = self.get_embedding(self.jd)
 
         hits = self.qdrant.search(
-            collection_name="collection_resume_matcher",
+            collection_name=self.collection_name,
             query_vector=vector,
             limit=30
         )
