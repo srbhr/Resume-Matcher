@@ -1,8 +1,6 @@
 import json
-from scripts.utils.ReadFiles import get_filenames_from_dir
-from scripts.ResumeProcessor import ResumeProcessor
-from scripts.JobDescriptionProcessor import JobDescriptionProcessor
-from scripts.utils.logger import init_logging_config
+from scripts import ResumeProcessor, JobDescriptionProcessor
+from scripts.utils import init_logging_config, get_filenames_from_dir
 import logging
 import os
 
