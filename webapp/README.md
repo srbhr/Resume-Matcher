@@ -30,11 +30,115 @@ View a brief GIF demo of the web apps' design functionality below:
 
 - 💡 You may also decide to run the frontend and backend servers in separate terminal processes independently of one another. To run the frontend server in isolation, run `npm run next-dev`. To run the backend FastAPI server in isolation, run `npm run fastapi-dev`.
 
+## Debugging
+
+### VS Code Debugger - FastAPI Backend
+
+When working with the backend web application files, you may like to debug the backend server during runtime and have the ability to set breakpoints to pause execution on certain line(s), inspect variable values, and other runtime data using the VS Code debugger. To do so, follow the steps below:
+
+#### Setup VS Code Launch Configuration
+
+- Open the VS Code debugger tab (i.e. the bug icon on the left sidebar)
+
+- Click on the gear icon to open the launch.json file
+
+- Add the following configuration to the launch.json file, and save:
+
+```json
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug FastAPI Backend",
+      "type": "python",
+      "request": "launch",
+      "module": "uvicorn",
+      "args": ["webapp.backend.api.index:app", "--reload"],
+      "jinja": true,
+      "justMyCode": true
+    }
+  ]
+}
+```
+
+#### Start the Backend Server in Debug Mode
+
+- ⚠️ IMPORTANT: Before proceeding along this set of steps, ensure the frontend server is NOT running. It will need to be running in isolation of the backend server, after the backend server has succesfully completed its starup process.
+
+- Open the VS Code debugger tab (i.e. the bug icon on the left sidebar)
+
+- Select the "Debug FastAPI Backend" configuration from the dropdown
+
+- Click on the play button to start the backend server in debug mode
+
+- A new terminal window will open and the backend server will start running in debug mode
+
+- You may optionally set breakpoints in the backend python files to pause execution on certain line(s), inspect variable values, and other runtime data, as you interact with the app or make requests to the backend server.
+
+- Esnure the frontend server is running in isolation of the backend server, after the backend server has succesfully completed its starup process. By running the following command in a separate terminal window:
+
+```bash
+npm run next-dev
+```
+
+- Once the backend server (and frontend server) is ready, open [http://localhost:3000](http://localhost:3000) on your browser to view and interact with the app.
+
+### Visual demonstration of running the FastAPI backend server in VS Code Debugger
+
+![Resume-Matcher-vs-code-debug-backend-fastapi-demo](https://github.com/srbhr/Resume-Matcher/assets/7581546/04b3b8e2-98c4-40ff-964f-8075c55091c9)
+
+## Troubleshooting Common Issues
+
+### Error: connect ECONNREFUSED 127.0.0.1:8000
+
+<details>
+<summary>You may encounter the following <code>Error: connect ECONNREFUSED 127.0.0.1:8000</code> error in the terminal (and browser ui throws an exception) when running the frontend server in isolation of the backend server via npm run next-dev (👉 👀 click to reveal error snippet):</summary>
+
+```bash
+[0] Failed to proxy http://127.0.0.1:8000/api/service-keys Error: connect ECONNREFUSED 127.0.0.1:8000
+[0]     at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1495:16) {
+[0]   errno: -61,
+[0]   code: 'ECONNREFUSED',
+[0]   syscall: 'connect',
+[0]   address: '127.0.0.1',
+[0]   port: 8000
+[0] }
+[0] Error: connect ECONNREFUSED 127.0.0.1:8000
+[0]     at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1495:16) {
+[0]   errno: -61,
+[0]   code: 'ECONNREFUSED',
+[0]   syscall: 'connect',
+[0]   address: '127.0.0.1',
+[0]   port: 8000
+[0] }
+[0] SyntaxError: Unexpected token I in JSON at position 0
+[0]     at JSON.parse (<anonymous>)
+[0]     at parseJSONFromBytes (node:internal/deps/undici/undici:6662:19)
+[0]     at successSteps (node:internal/deps/undici/undici:6636:27)
+[0]     at node:internal/deps/undici/undici:1236:60
+[0]     at node:internal/process/task_queues:140:7
+[0]     at AsyncResource.runInAsyncScope (node:async_hooks:203:9)
+[0]     at AsyncResource.runMicrotask (node:internal/process/task_queues:137:8)
+[0]     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+[0] - error node_modules/next/dist/compiled/react-server-dom-webpack/cjs/react-server-dom-webpack-server.edge.development.js (340:14) @ getErrorMessage
+```
+
+</details>
+<br/>
+
+💡 This is most likely because the backend server has not yet started in isolation. To resolve this, ensure the backend server is running in isolation of the frontend server, by running the following command in a separate terminal window, and wait for the backend server to complete its startup process, then refresh the browser window to view the app:
+
+```bash
+npm run fastapi-dev
+```
+
+💡 Or, you may alternatively run the backend server using the VS Code debugger, as described in the [VS Code Debugger - FastAPI Backend](#vs-code-debugger---fastapi-backend) section above.
+
 ## Future Improvements
 
 Below are some of the improvements that can be made to the web app for future consideration:
 
-- 👉 Replace mock response data with real data from the backend. View file; [scripts/resume_processor.py](/webapp/api/scripts/resume_processor.py), where the `build_response()` function can be modified to hook up to other python scripts to process and return the real data from the backend. The initial python response model classes are defined in the [schemas/resume_processor.py](/webapp/api/schemas/resume_processor.py) file, and so that should help to get started with thinking about how to structure the data to be returned from the backend.
+- 👉 Replace mock response data with real data from the backend. View file; [scripts/resume_processor.py](/webapp/backend/scripts/resume_processor.py), where the `build_response()` function can be modified to hook up to other python scripts to process and return the real data from the backend. The initial python response model classes are defined in the [schemas/resume_processor.py](/webapp/backend/schemas/resume_processor.py) file, and so that should help to get started with thinking about how to structure the data to be returned from the backend.
 - Add unit tests (frontend and backend)
 - Add end-to-end functional tests (frontend)
 - Improve the UI/UX of loading and error states as requests are made to the backend
