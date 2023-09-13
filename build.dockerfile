@@ -1,4 +1,5 @@
-FROM python:3.11.0-slim
+FROM python:3.11-slim-bullseye
+
 WORKDIR /data/Resume-Matcher
 COPY . .
 RUN apt-get update
