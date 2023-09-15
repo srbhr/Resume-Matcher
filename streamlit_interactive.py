@@ -1,3 +1,4 @@
+# Import necessary libraries
 import json
 import os
 from typing import List
@@ -15,20 +16,33 @@ from streamlit_extras.badges import badge
 from scripts.similarity import get_similarity_score, find_path, read_config
 from scripts.utils import get_filenames_from_dir
 
+# Find the current working directory and configuration path
 cwd = find_path('Resume-Matcher')
 config_path = os.path.join(cwd, "scripts", "similarity")
 
+# Check if NLTK punkt data is available, if not, download it
 try:
     nltk.data.find('tokenizers/punkt')
 except LookupError:
     nltk.download('punkt')
 
+# Set some visualization parameters using the annotated_text library
 parameters.SHOW_LABEL_SEPARATOR = False
 parameters.BORDER_RADIUS = 3
 parameters.PADDING = "0.5 0.25rem"
 
-
+# Function to create a star-shaped graph visualization
 def create_star_graph(nodes_and_weights, title):
+    """
+    Create a star-shaped graph visualization.
+
+    Args:
+        nodes_and_weights (list): List of tuples containing nodes and their weights.
+        title (str): Title for the graph.
+
+    Returns:
+        None
+    """
     # Create an empty graph
     G = nx.Graph()
 
@@ -73,7 +87,7 @@ def create_star_graph(nodes_and_weights, title):
     node_adjacencies = []
     node_text = []
     for node in G.nodes():
-        adjacencies = list(G.adj[node])  # changes here
+        adjacencies = list(G.adj[node])  # Changes here
         node_adjacencies.append(len(adjacencies))
         node_text.append(f'{node}<br># of connections: {len(adjacencies)}')
 
@@ -91,8 +105,20 @@ def create_star_graph(nodes_and_weights, title):
     # Show the figure
     st.plotly_chart(fig)
 
-
+# Function to create annotated text with highlighting
 def create_annotated_text(input_string: str, word_list: List[str], annotation: str, color_code: str):
+    """
+    Create annotated text with highlighted keywords.
+
+    Args:
+        input_string (str): The input text.
+        word_list (List[str]): List of keywords to be highlighted.
+        annotation (str): Annotation label for highlighted keywords.
+        color_code (str): Color code for highlighting.
+
+    Returns:
+        List: Annotated text with highlighted keywords.
+    """
     # Tokenize the input string
     tokens = nltk.word_tokenize(input_string)
 
@@ -113,20 +139,39 @@ def create_annotated_text(input_string: str, word_list: List[str], annotation: s
 
     return annotated_text
 
-
+# Function to read JSON data from a file
 def read_json(filename):
+    """
+    Read JSON data from a file.
+
+    Args:
+        filename (str): The path to the JSON file.
+
+    Returns:
+        dict: The JSON data.
+    """
     with open(filename) as f:
         data = json.load(f)
     return data
 
-
+# Function to tokenize a string
 def tokenize_string(input_string):
+    """
+    Tokenize a string into words.
+
+    Args:
+        input_string (str): The input string.
+
+    Returns:
+        List[str]: List of tokens.
+    """
     tokens = nltk.word_tokenize(input_string)
     return tokens
 
-
+# Display an image
 st.image('Assets/img/header_image.jpg')
 
+# Display the main title and subheaders
 st.title(':blue[Resume Matcher]')
 st.subheader(
     'Free and Open Source ATS to help your resume pass the screening stage.')
@@ -145,6 +190,7 @@ badge(type="buymeacoffee", name="srbhr")
 
 avs.add_vertical_space(5)
 
+# Get a list of resume names from a directory
 resume_names = get_filenames_from_dir("Data/Processed/Resumes")
 
 output = 0
@@ -167,12 +213,12 @@ st.caption(
     "This text is parsed from your resume. This is how it'll look like after getting parsed by an ATS.")
 st.caption("Utilize this to understand how to make your resume ATS friendly.")
 avs.add_vertical_space(3)
-# st.json(selected_file)
 st.write(selected_file["clean_data"])
 
 avs.add_vertical_space(3)
 st.write("Now let's take a look at the extracted keywords from the resume.")
 
+# Call the create_annotated_text function to highlight keywords in the resume
 annotated_text(create_annotated_text(
     selected_file["clean_data"], selected_file["extracted_keywords"],
     "KW", "#0B666A"))
@@ -180,7 +226,7 @@ annotated_text(create_annotated_text(
 avs.add_vertical_space(5)
 st.write("Now let's take a look at the extracted entities from the resume.")
 
-# Call the function with your data
+# Call the create_star_graph function to create a visualization of entities from the resume
 create_star_graph(selected_file['keyterms'], "Entities from Resume")
 
 df2 = pd.DataFrame(selected_file['keyterms'], columns=["keyword", "value"])
@@ -209,6 +255,7 @@ st.write(fig)
 
 avs.add_vertical_space(5)
 
+# Get a list of job descriptions from a directory
 job_descriptions = get_filenames_from_dir("Data/Processed/JobDescription")
 
 output = 0
@@ -232,18 +279,18 @@ st.markdown("#### Job Description")
 st.caption(
     "Currently in the pipeline I'm parsing this from PDF but it'll be from txt or copy paste.")
 avs.add_vertical_space(3)
-# st.json(selected_file)
 st.write(selected_jd["clean_data"])
 
 st.markdown("#### Common Words between Job Description and Resumes Highlighted.")
 
+# Highlight common keywords between the job description and resume
 annotated_text(create_annotated_text(
     selected_file["clean_data"], selected_jd["extracted_keywords"],
     "JD", "#F24C3D"))
 
 st.write("Now let's take a look at the extracted entities from the job description.")
 
-# Call the function with your data
+# Call the create_star_graph function to create a visualization of entities from the job description
 create_star_graph(selected_jd['keyterms'], "Entities from Job Description")
 
 df2 = pd.DataFrame(selected_jd['keyterms'], columns=["keyword", "value"])
@@ -272,6 +319,7 @@ st.write(fig)
 
 avs.add_vertical_space(3)
 
+# Read the configuration file and calculate a similarity score
 config_file_path = config_path + "/config.yml"
 if os.path.exists(config_file_path):
     config_data = read_config(config_file_path)
@@ -285,7 +333,7 @@ if os.path.exists(config_file_path):
 else:
     print("Config file does not exist.")
 
-
+# Display the main title and subheaders again
 st.title(':blue[Resume Matcher]')
 st.subheader(
     'Free and Open Source ATS to help your resume pass the screening stage.')
