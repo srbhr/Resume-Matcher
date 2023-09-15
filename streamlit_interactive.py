@@ -31,6 +31,7 @@ parameters.SHOW_LABEL_SEPARATOR = False
 parameters.BORDER_RADIUS = 3
 parameters.PADDING = "0.5 0.25rem"
 
+
 # Function to create a star-shaped graph visualization
 def create_star_graph(nodes_and_weights, title):
     """
@@ -44,24 +45,24 @@ def create_star_graph(nodes_and_weights, title):
         None
     """
     # Create an empty graph
-    G = nx.Graph()
+    graph = nx.Graph()
 
     # Add the central node
     central_node = "resume"
-    G.add_node(central_node)
+    graph.add_node(central_node)
 
     # Add nodes and edges with weights to the graph
     for node, weight in nodes_and_weights:
-        G.add_node(node)
-        G.add_edge(central_node, node, weight=weight * 100)
+        graph.add_node(node)
+        graph.add_edge(central_node, node, weight=weight * 100)
 
     # Get position layout for nodes
-    pos = nx.spring_layout(G)
+    pos = nx.spring_layout(graph)
 
     # Create edge trace
     edge_x = []
     edge_y = []
-    for edge in G.edges():
+    for edge in graph.edges():
         x0, y0 = pos[edge[0]]
         x1, y1 = pos[edge[1]]
         edge_x.extend([x0, x1, None])
@@ -73,7 +74,7 @@ def create_star_graph(nodes_and_weights, title):
     # Create node trace
     node_x = []
     node_y = []
-    for node in G.nodes():
+    for node in graph.nodes():
         x, y = pos[node]
         node_x.append(x)
         node_y.append(y)
@@ -86,8 +87,8 @@ def create_star_graph(nodes_and_weights, title):
     # Color node points by number of connections
     node_adjacencies = []
     node_text = []
-    for node in G.nodes():
-        adjacencies = list(G.adj[node])  # Changes here
+    for node in graph.nodes():
+        adjacencies = list(graph.adj[node])  # Changes here
         node_adjacencies.append(len(adjacencies))
         node_text.append(f'{node}<br># of connections: {len(adjacencies)}')
 
@@ -95,15 +96,16 @@ def create_star_graph(nodes_and_weights, title):
     node_trace.text = node_text
 
     # Create the figure
-    fig = go.Figure(data=[edge_trace, node_trace],
-                    layout=go.Layout(title=title, titlefont=dict(size=16), showlegend=False,
-                                     hovermode='closest', margin=dict(b=20, l=5, r=5, t=40),
-                                     xaxis=dict(
-                                         showgrid=False, zeroline=False, showticklabels=False),
-                                     yaxis=dict(showgrid=False, zeroline=False, showticklabels=False)))
+    figure = go.Figure(data=[edge_trace, node_trace],
+                       layout=go.Layout(title=title, titlefont=dict(size=16), showlegend=False,
+                                        hovermode='closest', margin=dict(b=20, l=5, r=5, t=40),
+                                        xaxis=dict(
+                                            showgrid=False, zeroline=False, showticklabels=False),
+                                        yaxis=dict(showgrid=False, zeroline=False, showticklabels=False)))
 
     # Show the figure
-    st.plotly_chart(fig)
+    st.plotly_chart(figure)
+
 
 # Function to create annotated text with highlighting
 def create_annotated_text(input_string: str, word_list: List[str], annotation: str, color_code: str):
@@ -126,18 +128,19 @@ def create_annotated_text(input_string: str, word_list: List[str], annotation: s
     word_set = set(word_list)
 
     # Initialize an empty list to hold the annotated text
-    annotated_text = []
+    ret_annotated_text = []
 
     for token in tokens:
         # Check if the token is in the set
         if token in word_set:
             # If it is, append a tuple with the token, annotation, and color code
-            annotated_text.append((token, annotation, color_code))
+            ret_annotated_text.append((token, annotation, color_code))
         else:
             # If it's not, just append the token as a string
-            annotated_text.append(token)
+            ret_annotated_text.append(token)
 
-    return annotated_text
+    return ret_annotated_text
+
 
 # Function to read JSON data from a file
 def read_json(filename):
@@ -154,6 +157,7 @@ def read_json(filename):
         data = json.load(f)
     return data
 
+
 # Function to tokenize a string
 def tokenize_string(input_string):
     """
@@ -167,6 +171,7 @@ def tokenize_string(input_string):
     """
     tokens = nltk.word_tokenize(input_string)
     return tokens
+
 
 # Display an image
 st.image('Assets/img/header_image.jpg')
