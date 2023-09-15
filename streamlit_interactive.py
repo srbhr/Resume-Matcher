@@ -96,7 +96,7 @@ def create_star_graph(nodes_and_weights, title):
 
     # Create the figure
     fig = go.Figure(data=[edge_trace, node_trace],
-                    layout=go.Layout(title=title, titlefont_size=16, showlegend=False,
+                    layout=go.Layout(title=title, titlefont=dict(size=16), showlegend=False,
                                      hovermode='closest', margin=dict(b=20, l=5, r=5, t=40),
                                      xaxis=dict(
                                          showgrid=False, zeroline=False, showticklabels=False),
