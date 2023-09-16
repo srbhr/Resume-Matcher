@@ -171,6 +171,16 @@ Follow these steps to set up the environment and run the application.
 
 2. Open `localhost:80` on your browser
 
+<br/>
+
+### Running the Web Application
+
+The full stack Next.js (React and FastAPI) web application allows users to interact with the Resume Matcher tool interactively via a web browser.
+
+To run the full stack web application (frontend client and backend api servers), follow the instructions over on the [webapp README](/webapp/README.md) file.
+
+<br/>
+
 ### Cohere and Qdrant
 
 1.  Visit [Cohere website registration](https://dashboard.cohere.ai/welcome/register) and create an account.

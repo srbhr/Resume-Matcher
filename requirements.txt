@@ -17,6 +17,7 @@ decorator==5.1.1
 en-core-web-md @ https://github.com/explosion/spacy-models/releases/download/en_core_web_md-3.6.0/en_core_web_md-3.6.0-py3-none-any.whl#sha256=1618fc62e7aedc2b778caa3ea6e9c8280beac3b83fe7b93316cbb9e8f3abe7c5
 en-core-web-sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.6.0/en_core_web_sm-3.6.0-py3-none-any.whl#sha256=83276fc78a70045627144786b52e1f2728ad5e29e5e43916ec37ea9c26a11212
 Faker==19.1.0
+fastapi==0.101.1
 favicon==0.7.0
 floret==0.10.3
 fonttools==4.41.0
@@ -61,6 +62,7 @@ pyparsing==3.0.9
 pypdf==3.12.2
 pyphen==0.14.0
 python-dateutil==2.8.2
+python-multipart==0.0.6
 pytz==2023.3
 pytz-deprecation-shim==0.1.0.post0
 PyYAML==6.0
@@ -102,6 +104,7 @@ typer==0.9.0
 typing_extensions==4.7.1
 tzdata==2023.3
 tzlocal==4.3.1
+uvicorn==0.23.2
 urllib3>=1.26.14
 validators==0.20.0
 wasabi==1.1.2
