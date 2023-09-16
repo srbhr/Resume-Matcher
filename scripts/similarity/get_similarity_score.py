@@ -1,3 +1,4 @@
+import fnmatch
 import json
 import logging
 import os
@@ -43,12 +44,6 @@ def find_path(folder_name):
     raise ValueError(f"Folder '{folder_name}' not found.")
 
 
-cwd = find_path('Resume-Matcher')
-READ_RESUME_FROM = os.path.join(cwd, 'Data', 'Processed', 'Resumes')
-READ_JOB_DESCRIPTION_FROM = os.path.join(cwd, 'Data', 'Processed', 'JobDescription')
-config_path = os.path.join(cwd, "scripts", "similarity")
-
-
 def read_config(filepath):
     try:
         with open(filepath) as f:
@@ -74,7 +69,7 @@ def read_doc(path):
 
 
 class QdrantSearch:
-    def __init__(self, resumes, jd):
+    def __init__(self, resumes, jd, config_path=os.path.join(os.getcwd(), 'scripts', 'similarity')):
         config = read_config(config_path + "/config.yml")
         self.cohere_key = config['cohere']['api_key']
         self.qdrant_key = config['qdrant']['api_key']
@@ -149,9 +144,10 @@ class QdrantSearch:
         return results
 
 
-def get_similarity_score(resume_string, job_description_string):
+def get_similarity_score(resume_string, job_description_string,
+                         config_path=os.path.join(os.getcwd(), 'scripts', 'similarity')):
     logger.info("Started getting similarity score")
-    qdrant_search = QdrantSearch([resume_string], job_description_string)
+    qdrant_search = QdrantSearch([resume_string], job_description_string, config_path)
     qdrant_search.update_qdrant()
     search_result = qdrant_search.search()
     logger.info("Finished getting similarity score")
@@ -160,16 +156,28 @@ def get_similarity_score(resume_string, job_description_string):
 
 if __name__ == "__main__":
     # To give your custom resume use this code
-    resume_dict = read_config(
-        READ_RESUME_FROM + "/Resume-bruce_wayne_fullstack.pdf4783d115-e6fc-462e-ae4d-479152884b28.json")
-    job_dict = read_config(
-        READ_JOB_DESCRIPTION_FROM + "/JobDescription-job_desc_full_stack_engineer_pdf4de00846-a4fe-4fe5-a4d7"
-                                    "-2a8a1b9ad020.json")
-    resume_keywords = resume_dict["extracted_keywords"]
-    job_description_keywords = job_dict["extracted_keywords"]
+    resume_dict = None
+    job_dict = None
+    resume_dir = os.path.join(os.getcwd(), '..', '..', 'Data', 'Processed', 'Resumes')
+    job_description_dir = os.path.join(os.getcwd(), '..', '..', 'Data', 'Processed', 'JobDescription')
+    for resume in os.listdir(resume_dir):
+        if fnmatch.fnmatch(resume, 'Resume-bruce_wayne_fullstack.pdf*'):
+            print(f"Found {resume}")
+            resume_dict = read_config(os.path.join(resume_dir,resume))
 
-    resume_string = ' '.join(resume_keywords)
-    jd_string = ' '.join(job_description_keywords)
-    final_result = get_similarity_score(resume_string, jd_string)
-    for r in final_result:
-        print(r)
+    for job_desc_file in os.listdir(job_description_dir):
+        if fnmatch.fnmatch(job_desc_file, 'JobDescription-job_desc_full_stack_engineer.pdf*'):
+            print(f"Found {job_desc_file}")
+            job_dict = read_config(os.path.join(job_description_dir,job_desc_file))
+
+    if resume_dict is not None and job_dict is not None:
+        resume_keywords = resume_dict["extracted_keywords"]
+        job_description_keywords = job_dict["extracted_keywords"]
+
+        resume_string = ' '.join(resume_keywords)
+        jd_string = ' '.join(job_description_keywords)
+        final_result = get_similarity_score(resume_string, jd_string, os.getcwd())
+        for r in final_result:
+            print(r)
+    else:
+        print("Unable to find resume or job description")
