@@ -1,6 +1,6 @@
-from scripts.parsers.ParseResumeToJson import ParseResume
-from scripts.parsers.ParseJobDescToJson import ParseJobDesc
-from scripts.ReadPdf import read_single_pdf
+from .parsers import ParseResume
+from .parsers import ParseJobDesc
+from .ReadPdf import read_single_pdf
 import os.path
 import pathlib
 import json

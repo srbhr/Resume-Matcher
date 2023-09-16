@@ -12,8 +12,8 @@ from annotated_text import annotated_text, parameters
 from streamlit_extras import add_vertical_space as avs
 from streamlit_extras.badges import badge
 
-from scripts.similarity.get_similarity_score import get_similarity_score, find_path, read_config
-from scripts.utils.ReadFiles import get_filenames_from_dir
+from scripts.similarity import get_similarity_score, find_path, read_config
+from scripts.utils import get_filenames_from_dir
 
 cwd = find_path('Resume-Matcher')
 config_path = os.path.join(cwd, "scripts", "similarity")
@@ -214,7 +214,7 @@ job_descriptions = get_filenames_from_dir("Data/Processed/JobDescription")
 output = 0
 if len(job_descriptions) > 1:
     st.write("There are", len(job_descriptions),
-             " resumes present. Please select one from the menu below:")
+             " job descriptions present. Please select one from the menu below:")
     output = st.slider('Select Job Description Number',
                        0, len(job_descriptions) - 1, 0)
 else:
