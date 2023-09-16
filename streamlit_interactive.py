@@ -186,7 +186,36 @@ with st.sidebar:
     st.markdown('If you like the project and would like to further help in development please consider 👇')
     badge(type="buymeacoffee", name="srbhr")
 
-avs.add_vertical_space(5)
+st.divider()
+avs.add_vertical_space(1)
+
+resumeCol, jobDescriptionCol = st.columns(2)
+
+with resumeCol:
+    uploaded_Resume = st.file_uploader("Choose a Resume", type="pdf")
+    if uploaded_Resume is not None:
+        # To read file as bytes:
+        bytes_data = uploaded_Resume.getvalue()
+        save_path_resume = os.path.join(cwd, "Data", "Resumes",uploaded_Resume.name)
+
+        with open(save_path_resume, mode='wb') as w:
+            w.write(uploaded_Resume.getvalue())
+
+        if os.path.exists(save_path_resume):
+            st.success(f'File {uploaded_Resume.name} is successfully saved!')
+
+with jobDescriptionCol:
+    uploaded_JobDescription = st.file_uploader("Choose a Job Description", type="pdf")
+    if uploaded_JobDescription is not None:
+        # To read file as bytes:
+        bytes_data = uploaded_JobDescription.getvalue()
+        save_path_jobDescription = os.path.join(cwd, "Data", "JobDescription",uploaded_JobDescription.name)
+
+        with open(save_path_jobDescription, mode='wb') as w:
+            w.write(uploaded_JobDescription.getvalue())
+
+        if os.path.exists(save_path_jobDescription):
+            st.success(f'File {uploaded_JobDescription.name} is successfully saved!')
 
 # Get a list of resume names from a directory
 resume_names = get_filenames_from_dir("Data/Processed/Resumes")
