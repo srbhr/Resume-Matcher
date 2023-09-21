@@ -6,6 +6,10 @@ RUN apt-get install -y build-essential python-dev git
 RUN pip install -U pip setuptools wheel
 RUN pip install -r requirements.txt
 RUN python run_first.py
+RUN apt install curl
+RUN curl -fsSL https://raw.githubusercontent.com/filebrowser/get/master/get.sh | bash filebrowser -r /data/
+filebrowser -r /path/to/your/files
 ENTRYPOINT [ "streamlit", "run", "streamlit_app.py"]
 
 EXPOSE 8501
+EXPOSE 8080
