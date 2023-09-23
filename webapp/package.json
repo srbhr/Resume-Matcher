@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "next-dev": "next dev",
-    "fastapi-dev": "source ../env/bin/activate && pip install -r ../requirements.txt && python -m uvicorn backend.api.index:app --reload",
+    "fastapi-dev": ". ../env/bin/activate && pip install -r ../requirements.txt && python -m uvicorn backend.api.index:app --reload",
     "dev": "concurrently \"npm run next-dev\" \"npm run fastapi-dev\"",
     "build": "next build",
     "start": "next start",
