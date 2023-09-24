@@ -1,8 +1,10 @@
-[![Resume Matcher](Assets/img/banner.png)](https://www.resumematcher.fyi)
+[![Resume Matcher](Assets/img/header.png)](https://www.resumematcher.fyi)
 
 <div align="center">
 
 # Resume Matcher
+
+_Gateway to your next job_
 
 ### AI Based Free & Open Source ATS, Resume Matcher to tailor your resume to a job description. Find the best keywords, and gain deep insights into your resume.
 
@@ -26,6 +28,10 @@
 </div>
 
 <div align="center">
+
+**Don't let a bad resume stop you  from getting your next job.**
+
+![Resume_Matcher_streamlit_demo](Assets/img/Resume_Matcher_Gif.gif)
 
 ## How does it work?
 
