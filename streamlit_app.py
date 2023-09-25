@@ -125,7 +125,7 @@ def tokenize_string(input_string):
     return tokens
 
 
-st.image('Assets/img/header_image.jpg')
+st.image('Assets/img/header_image.png')
 
 st.title(':blue[Resume Matcher]')
 st.subheader(
