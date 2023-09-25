@@ -18,13 +18,13 @@ View a brief GIF demo of the web apps' design functionality below:
 
 ### Setup
 
-- clone the repository
-- navigate to the project directory (e.g. `cd Resume-Matcher`)
-- Follow the [README](../README.md) instructions set out in the root of the repository to setup the Python environment and run the Python scripts.
-- navigate to the `webapp` directory (e.g. `cd webapp`)
-- run `npm install` to install the frontend client app dependencies
-- run `npm run dev` to start the web app (i.e. this script will start the frontend client and backend FastAPI servers concurrently within one terminal process inside `webapp` directory`)
-- once both servers are ready, open [http://localhost:3000](http://localhost:3000) on your browser to view and interact with the app.
+1. clone the repository
+2. navigate to the project directory (e.g. `cd Resume-Matcher`)
+3. Follow the [README](../README.md) instructions set out in the root of the repository to setup the Python environment and run the Python scripts.
+4. navigate to the `webapp` directory (e.g. `cd webapp`)
+5. run `npm install` to install the frontend client app dependencies
+6. run `npm run dev` to start the web app (i.e. this script will start the frontend client and backend FastAPI servers concurrently within one terminal process inside `webapp` directory`)
+7. once both servers are ready, open [http://localhost:3000](http://localhost:3000) on your browser to view and interact with the app.
 
 ### Extra Setup Hints
 
@@ -63,25 +63,25 @@ When working with the backend web application files, you may like to debug the b
 
 #### Start the Backend Server in Debug Mode
 
-- ⚠️ IMPORTANT: Before proceeding along this set of steps, ensure the frontend server is NOT running. It will need to be running in isolation of the backend server, after the backend server has succesfully completed its starup process.
+1. ⚠️ IMPORTANT: Before proceeding along this set of steps, ensure the frontend server is NOT running. It will need to be running in isolation of the backend server, after the backend server has succesfully completed its starup process.
 
-- Open the VS Code debugger tab (i.e. the bug icon on the left sidebar)
+2. Open the VS Code debugger tab (i.e. the bug icon on the left sidebar)
 
-- Select the "Debug FastAPI Backend" configuration from the dropdown
+3. Select the "Debug FastAPI Backend" configuration from the dropdown
 
-- Click on the play button to start the backend server in debug mode
+4. Click on the play button to start the backend server in debug mode
 
-- A new terminal window will open and the backend server will start running in debug mode
+5. A new terminal window will open and the backend server will start running in debug mode
 
-- You may optionally set breakpoints in the backend python files to pause execution on certain line(s), inspect variable values, and other runtime data, as you interact with the app or make requests to the backend server.
+6. You may optionally set breakpoints in the backend python files to pause execution on certain line(s), inspect variable values, and other runtime data, as you interact with the app or make requests to the backend server.
 
-- Esnure the frontend server is running in isolation of the backend server, after the backend server has succesfully completed its starup process. By running the following command in a separate terminal window:
+7. Esnure the frontend server is running in isolation of the backend server, after the backend server has succesfully completed its starup process. By running the following command in a separate terminal window:
 
 ```bash
 npm run next-dev
 ```
 
-- Once the backend server (and frontend server) is ready, open [http://localhost:3000](http://localhost:3000) on your browser to view and interact with the app.
+8. Once the backend server (and frontend server) is ready, open [http://localhost:3000](http://localhost:3000) on your browser to view and interact with the app.
 
 ### Visual demonstration of running the FastAPI backend server in VS Code Debugger
 
