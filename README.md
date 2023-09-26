@@ -1,12 +1,17 @@
-[![Resume Matcher](Assets/img/header.png)](https://www.resumematcher.fyi)
+[![Resume Matcher + Hacktoberfest](Assets/img/Hacktoberfest_banner.png)](https://github.com/srbhr/Resume-Matcher/issues)
+
+[![Resume Matcher](Assets/img/header_image.png)](https://www.resumematcher.fyi)
 
 <div align="center">
 
 # Resume Matcher
 
-_Gateway to your next job_
+[𝙹𝚘𝚒𝚗 𝙳𝚒𝚜𝚌𝚘𝚛𝚍](https://dsc.gg/resume-matcher) ✦ [𝚆𝚎𝚋𝚜𝚒𝚝𝚎](https://resumematcher.fyi) ✦ [𝙳𝚎𝚖𝚘](https://resume-matcher.streamlit.app/) ✦ [𝙷𝚘𝚠 𝚝𝚘 𝙸𝚗𝚜𝚝𝚊𝚕𝚕 ](#how-to-install) ✦ [𝙲𝚘𝚗𝚝𝚛𝚒𝚋𝚞𝚝𝚎](#join-us-contribute) ✦ [𝙳𝚘𝚗𝚊𝚝𝚎](#please-support-the-development-by-donating) ✦ [𝚃𝚠𝚒𝚝𝚝𝚎𝚛](https://twitter.com/_srbhr_)
 
-### AI Based Free & Open Source ATS, Resume Matcher to tailor your resume to a job description. Find the best keywords, and gain deep insights into your resume.
+---
+
+
+### Resume Matcher is an AI Based Free & Open Source Tool. To tailor your resume to a job description. Find the matching keywords, improve the readability  and gain deep insights into your resume.
 
 </div>
 
@@ -15,13 +20,12 @@ _Gateway to your next job_
 <div align="center">
 
 ![Stars](https://img.shields.io/github/stars/srbhr/Resume-Matcher?style=flat-square&color=EA1179)
-![Apache 2.0](https://img.shields.io/github/license/srbhr/Resume-Matcher?style=flat-square&color=525FE1) ![Issues](https://img.shields.io/github/issues/srbhr/Resume-Matcher?style=flat-square&color=F86F03) ![Forks](https://img.shields.io/github/forks/srbhr/Resume-Matcher?style=flat-square&color=0079FF) [![Powered by Qdrant](https://img.shields.io/badge/Vector_search_by-Qdrant-982176?style=flat-square)](https://github.com/qdrant/qdrant)
+![Apache 2.0](https://img.shields.io/github/license/srbhr/Resume-Matcher?style=flat-square&color=525FE1) ![Issues](https://img.shields.io/github/issues/srbhr/Resume-Matcher?style=flat-square&color=F86F03) ![Forks](https://img.shields.io/github/forks/srbhr/Resume-Matcher?style=flat-square&color=0079FF)
 
-[![Discord](https://custom-icon-badges.demolab.com/badge/Join%20Discord-blue?style=flat-square&logo=discord&color=F0FF42&logoColor=293462)](https://discord.gg/t3Y9HEuV34)
+[![Discord](https://custom-icon-badges.demolab.com/badge/Discord-blue?style=flat-square&logo=discord&color=F0FF42&logoColor=293462)](https://discord.gg/t3Y9HEuV34) [![Twitter](https://img.shields.io/badge/@__srbhr__-000000?style=flat-square&logo=x&logoColor=white)](https://twitter.com/_srbhr_)
 [![Resume Matcher](https://custom-icon-badges.demolab.com/badge/www.resumematcher.fyi-gold?style=flat-square&logo=globe&logoColor=black)](https://www.resumematcher.fyi)
-[![Resume Matcher](https://custom-icon-badges.demolab.com/badge/Live_Demo_on_Streamlit-green?style=flat-square&logo=live&color=F55353)](https://resume-matcher.streamlit.app/)
 
-[![Resume Matcher Docs](https://img.shields.io/badge/Checkout%20Resume%20Matcher%20Docs-%230288D1.svg?style=flat-square&logo=bookstack&logoColor=white&color=red)](https://github.com/srbhr/Resume-Matcher-Docs)
+Upvote us on [ProductHunt 🚀](https://www.producthunt.com/products/resume-matcher).
 
 <a href="https://www.producthunt.com/posts/resume-matcher?utm_source=badge-featured&utm_medium=badge&utm_souce=badge-resume&#0045;matcher" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=401261&theme=light" alt="Resume&#0032;Matcher - Free&#0032;and&#0032;Open&#0045;Source&#0032;ATS&#0032;Tool&#0032;to&#0032;Match&#0032;Resumes&#0032;to&#0032;Job&#0032;Desc&#0046; | Product Hunt" style="width: 180px; height: 50px;" width="200" height="54"/></a>
 
@@ -29,7 +33,7 @@ _Gateway to your next job_
 
 <div align="center">
 
-**Don't let a bad resume stop you  from getting your next job.**
+**Don't let your resume be a roadblock from getting your next job. Use Resume Matcher!**
 
 ![Resume_Matcher_streamlit_demo](Assets/img/Resume_Matcher_Gif.gif)
 
@@ -41,15 +45,13 @@ The Resume Matcher takes your resume and job descriptions as input, parses them 
 
 The process is as follows:
 
-1. **Parsing**: The system uses Python to parse both your resume and the provided job description, just like an ATS would. Parsing is critical as it transforms your documents into a format the system can readily analyze.
+1. **Parsing**: The system uses Python to parse both your resume and the provided job description, just like an ATS would.
 
 2. **Keyword Extraction**: The tool uses advanced machine learning algorithms to extract the most relevant keywords from the job description. These keywords represent the skills, qualifications, and experiences the employer seeks.
 
 3. **Key Terms Extraction**: Beyond keyword extraction, the tool uses textacy to identify the main key terms or themes in the job description. This step helps in understanding the broader context of what the resume is about.
 
-4. **Vector Similarity Using Qdrant**: The tool uses [Qdrant](https://github.com/qdrant/qdrant), a highly efficient vector similarity search tool, to measure how closely your resume matches the job description. This process is done by representing your resume and job description as vectors in a high-dimensional space and calculating their cosine similarity. The more similar they are, the higher the likelihood that your resume will pass the ATS screening.
-
-On top of that, there are various data visualizations that I've added to help you get started.
+4. **Vector Similarity Using Qdrant**: The tool uses [Qdrant](https://github.com/qdrant/qdrant), a highly efficient vector similarity search tool, to measure how closely your resume matches the job description. The more similar they are, the higher the likelihood that your resume will pass the ATS screening.
 
 <br/>
 
@@ -194,7 +196,9 @@ To run the full stack web application (frontend client and backend api servers),
 3.  Visit [Qdrant website](https://cloud.qdrant.io/) and create an account.
 4.  Get your api key and cluster url.
 5.  Go to open dashboard in qdrant and enter your api key **for only the first time**
-![img.png](img.png)
+
+<img src="Assets/img/quadrant_cloud.png" height="60%" width="60%"/>
+
 6.  Now create a yaml file named config.yml in Scripts/Similarity/ folder. 
 7.  The format for the conifg file should be as below:
     ```yaml
@@ -234,9 +238,15 @@ Pull Requests & Issues are not just welcomed, they're celebrated! Let's create t
 
 Current:
 
-![](https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&color=blue&logoColor=green)
+- Python webapp in Streamlit.
 
-Upcoming:
+![Python](https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&color=blue&logoColor=green)
+
+
+
+In Development:
+
+- Check the [webapp](/webapp/) folder for a Next JS app in development. (In Development)
 
 ![Python](https://img.shields.io/badge/Python-FFD43B?style=flat-square&logo=python&logoColor=blue) ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white) ![Next JS](https://img.shields.io/badge/Next-black?style=flat-square&logo=next.js&logoColor=white) ![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=flat-square&logo=fastapi) ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=flat-square&logo=typescript&logoColor=white) ![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=flat-square&logo=html5&logoColor=white) ![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=flat-square&logo=css3&logoColor=white) ![& More](https://custom-icon-badges.demolab.com/badge/And_More-white?style=flat-square&logo=plus&logoColor=black)
 
@@ -244,7 +254,7 @@ Upcoming:
 
 <div align="center">
 
-## Enhance Open-Source Development: Donate and Be Part of Our Journey!
+## Please support the development by donating.
 
 [![BuyMeACoffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/srbhr)
 [![Sponsor on GitHub](https://img.shields.io/badge/sponsor-30363D?style=for-the-badge&logo=GitHub-Sponsors&logoColor=#white)](https://github.com/sponsors/srbhr)
@@ -259,15 +269,9 @@ Your support means the world to us 💙. We're nurturing this project with an op
 
 ✨ Transform our Streamlit dashboard into something more robust.
 
-📚 Enhance our functionality by enabling resume upload and parsing.
-
-🐳 Simplify usage by adding a Docker image.
-
 💡 Improve our parsing algorithm, making data more accessible.
 
 🖋 Share your insights and experiences in a blog post to help others.
-
-🎨 Give our [landing page](https://github.com/srbhr/website-for-resume-matcher) a fresh look using React, Vue, or your preferred framework.
 
 Take the leap, contribute, and let's grow together! 🚀
 
