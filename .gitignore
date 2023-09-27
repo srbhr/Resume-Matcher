@@ -137,3 +137,6 @@ dmypy.json
 .vscode/*
 
 scripts/similarity/config.yml
+
+# Secrets
+*.local.yml

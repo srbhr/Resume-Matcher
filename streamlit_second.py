@@ -5,7 +5,7 @@ import pandas as pd
 import json
 import plotly.express as px
 import plotly.graph_objects as go
-from scripts.utils.ReadFiles import get_filenames_from_dir
+from scripts.utils import get_filenames_from_dir
 from streamlit_extras import add_vertical_space as avs
 from annotated_text import annotated_text, parameters
 from streamlit_extras.badges import badge
@@ -114,7 +114,7 @@ def tokenize_string(input_string):
     return tokens
 
 
-st.image('Assets/img/header_image.jpg')
+st.image('Assets/img/header_image.png')
 
 st.title(':blue[Resume Matcher]')
 st.subheader(
