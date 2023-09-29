@@ -140,3 +140,5 @@ scripts/similarity/config.yml
 
 # Secrets
 *.local.yml
+
+.DS_Store
