@@ -5,8 +5,10 @@ import os.path
 import pathlib
 import json
 
-READ_RESUME_FROM = 'Data/Resumes/'
-SAVE_DIRECTORY = 'Data/Processed/Resumes'
+from resume_parser import client
+
+READ_RESUME_FROM = os.path.join(client.SUBMODULE_PARENT_DIR, 'Data/Resumes/') # TODO Make this relative to submodule
+SAVE_DIRECTORY = os.path.join(client.SUBMODULE_PARENT_DIR, 'Data/Processed/Resumes') # TODO Make this relative to submodule
 
 
 class ResumeProcessor:
