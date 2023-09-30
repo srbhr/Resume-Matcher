@@ -10,6 +10,12 @@ def print_submodule_path() -> None:
     print("file path:", FILE_PATH)
     print("submodule parent dir:", SUBMODULE_PARENT_DIR)
 
+def list_unhidden_files(dir_):
+    def is_hidden(file_) -> bool:
+        return file_.startswith('.')
+    res = [f for f in os.listdir(dir_) if not is_hidden(f)]
+    print(res)
+    return res
 
 import json
 from scripts import ResumeProcessor
@@ -29,8 +35,10 @@ def parser() -> None:
         return data
 
     def remove_old_files(files_path):
+        logging.info("Unhidden files:")
+        logging.info(list_unhidden_files(files_path))
 
-        for filename in os.listdir(files_path):
+        for filename in list_unhidden_files(files_path):
             try:
                 file_path = os.path.join(files_path, filename)
 
