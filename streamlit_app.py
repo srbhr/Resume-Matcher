@@ -147,14 +147,11 @@ avs.add_vertical_space(5)
 
 resume_names = get_filenames_from_dir("Data/Processed/Resumes")
 
-output = 0
 
-if len(resume_names) > 1:
-    st.markdown(f"##### There are {len(resume_names)} resumes present. Please select one from the menu below:")
-    output  = st.selectbox(f"", resume_names)
+st.markdown(f"##### There are {len(resume_names)} resumes present. Please select one from the menu below:")
+output  = st.selectbox(f"", resume_names)
     
-else:
-    st.write("There is 1 resume present")
+
 
 avs.add_vertical_space(5)
 
@@ -211,12 +208,10 @@ avs.add_vertical_space(5)
 
 job_descriptions = get_filenames_from_dir("Data/Processed/JobDescription")
 
-output = 0
-if len(job_descriptions) > 1:
-    st.markdown(f"##### There are {len(job_descriptions)} job descriptions present. Please select one from the menu below:")
-    output = st.selectbox("", job_descriptions)
-else:
-    st.write("There is 1 job description present")
+
+st.markdown(f"##### There are {len(job_descriptions)} job descriptions present. Please select one from the menu below:")
+output = st.selectbox("", job_descriptions)
+
 
 avs.add_vertical_space(5)
 
