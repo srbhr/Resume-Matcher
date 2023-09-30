@@ -26,6 +26,8 @@ import os
 init_logging_config()
 
 PROCESSED_RESUMES_PATH = os.path.join(SUBMODULE_PARENT_DIR, "Data/Processed/Resumes")
+RESUME_INPUT_DIR = os.path.join(SUBMODULE_PARENT_DIR, "Data/Resumes")
+
 
 
 def parser() -> None:
@@ -55,8 +57,10 @@ def parser() -> None:
         # If present then parse it.
         remove_old_files(PROCESSED_RESUMES_PATH)
 
-        file_names = get_filenames_from_dir("Data/Resumes")
+        file_names = get_filenames_from_dir(RESUME_INPUT_DIR)
         logging.info("Reading from Data/Resumes is now complete.")
+        logging.info("Unhidden files:")
+        logging.info(list_unhidden_files(RESUME_INPUT_DIR))
     except:
         # Exit the program if there are no resumes.
         logging.error("There are no resumes present in the specified folder.")
