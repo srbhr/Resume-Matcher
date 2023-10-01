@@ -11,6 +11,8 @@ from ..schemas.resume_processor import (
     ResumeProcessorRequest,
 )
 
+from ..scripts.files import save_file_upload, save_job_uploads_to_pdfs
+
 app = FastAPI(
     title="Resume Matcher",
     description="APIs for Resume Matcher",
@@ -45,6 +47,12 @@ async def resume_processor(
 
     # Convert the jobs data to a list of Job objects
     jobs_list = [Job(**job) for job in jobs_data]
+
+    # Save the resume file (PDF) to local file system
+    save_file_upload(resume_file)
+
+    # Save the job descriptions (PDFs) to local file system
+    save_job_uploads_to_pdfs(jobs_list)
 
     # Build the response
     response = build_response(resume_file, jobs_list)
