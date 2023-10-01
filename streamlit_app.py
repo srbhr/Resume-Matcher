@@ -15,6 +15,9 @@ from streamlit_extras.badges import badge
 from scripts.similarity import get_similarity_score, find_path, read_config
 from scripts.utils import get_filenames_from_dir
 
+# Set page configuration
+st.set_page_config(page_title='Resume Matcher', page_icon="Assets/img/favicon.ico", initial_sidebar_state='auto')
+
 cwd = find_path('Resume-Matcher')
 config_path = os.path.join(cwd, "scripts", "similarity")
 
