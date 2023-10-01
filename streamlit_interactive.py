@@ -176,7 +176,7 @@ def tokenize_string(input_string):
 # Display the main title and subheaders
 st.title(':blue[Resume Matcher]')
 with st.sidebar:
-    st.image('Assets/img/header_image.jpg')
+    st.image('Assets/img/header_image.png')
     st.subheader('Free and Open Source ATS to help your resume pass the screening stage.')
     st.markdown('Check the website [www.resumematcher.fyi](https://www.resumematcher.fyi/)')
     st.markdown('Give Resume Matcher a ⭐ on [GitHub](https://github.com/srbhr/resume-matcher)')
