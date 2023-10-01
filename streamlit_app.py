@@ -125,25 +125,23 @@ def tokenize_string(input_string):
     return tokens
 
 
-st.image('Assets/img/header_image.png')
-
+# Display the main title and subheaders
 st.title(':blue[Resume Matcher]')
-st.subheader(
-    'Free and Open Source ATS to help your resume pass the screening stage.')
-st.markdown(
-    "Check the website [www.resumematcher.fyi](https://www.resumematcher.fyi/)")
-st.markdown(
-    '⭐ Give Resume Matcher a Star on [GitHub](https://github.com/srbhr/resume-matcher)')
-badge(type="github", name="srbhr/Resume-Matcher")
+with st.sidebar:
+    st.image('Assets/img/header_image.png')
+    st.subheader('Free and Open Source ATS to help your resume pass the screening stage.')
+    st.markdown('Check the website [www.resumematcher.fyi](https://www.resumematcher.fyi/)')
 
-st.text('For updates follow me on Twitter.')
-badge(type="twitter", name="_srbhr_")
+    st.markdown('Give Resume Matcher a ⭐ on [GitHub](https://github.com/srbhr/resume-matcher)')
 
-st.markdown(
-    'If you like the project and would like to further help in development please consider 👇')
-badge(type="buymeacoffee", name="srbhr")
+    badge(type="github", name="srbhr/Resume-Matcher")
+    st.markdown('For updates follow me on Twitter.')
+    badge(type="twitter", name="_srbhr_")
+    st.markdown('If you like the project and would like to further help in development please consider 👇')
+    badge(type="buymeacoffee", name="srbhr")
 
-avs.add_vertical_space(5)
+st.divider()
+avs.add_vertical_space(1)
 
 resume_names = get_filenames_from_dir("Data/Processed/Resumes")
 
