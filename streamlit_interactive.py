@@ -16,6 +16,9 @@ from streamlit_extras.badges import badge
 from scripts.similarity import get_similarity_score, find_path, read_config
 from scripts.utils import get_filenames_from_dir
 
+# Set page configuration
+st.set_page_config(page_title='Resume Matcher', page_icon="Assets/img/favicon.ico", initial_sidebar_state='auto')
+
 # Find the current working directory and configuration path
 cwd = find_path('Resume-Matcher')
 config_path = os.path.join(cwd, "scripts", "similarity")
@@ -173,7 +176,7 @@ def tokenize_string(input_string):
     return tokens
 
 
-# Display the main title and subheaders
+# Display the main title and sub-headers
 st.title(':blue[Resume Matcher]')
 with st.sidebar:
     st.image('Assets/img/header_image.png')
@@ -194,28 +197,26 @@ resumeCol, jobDescriptionCol = st.columns(2)
 with resumeCol:
     uploaded_Resume = st.file_uploader("Choose a Resume", type="pdf")
     if uploaded_Resume is not None:
-        # To read file as bytes:
-        bytes_data = uploaded_Resume.getvalue()
-        save_path_resume = os.path.join(cwd, "Data", "Resumes",uploaded_Resume.name)
+        save_path_resume = os.path.join(cwd, "Data", "Resumes", uploaded_Resume.name)
 
         with open(save_path_resume, mode='wb') as w:
             w.write(uploaded_Resume.getvalue())
 
         if os.path.exists(save_path_resume):
-            st.success(f'File {uploaded_Resume.name} is successfully saved!')
+            st.toast(f':heavy_check_mark: File {uploaded_Resume.name} is successfully saved!')
 
 with jobDescriptionCol:
     uploaded_JobDescription = st.file_uploader("Choose a Job Description", type="pdf")
     if uploaded_JobDescription is not None:
-        # To read file as bytes:
-        bytes_data = uploaded_JobDescription.getvalue()
-        save_path_jobDescription = os.path.join(cwd, "Data", "JobDescription",uploaded_JobDescription.name)
+        save_path_jobDescription = os.path.join(cwd, "Data", "JobDescription", uploaded_JobDescription.name)
 
         with open(save_path_jobDescription, mode='wb') as w:
             w.write(uploaded_JobDescription.getvalue())
 
         if os.path.exists(save_path_jobDescription):
-            st.success(f'File {uploaded_JobDescription.name} is successfully saved!')
+            st.toast(f':heavy_check_mark: File {uploaded_JobDescription.name} is successfully saved!')
+
+avs.add_vertical_space(10)
 
 # Get a list of resume names from a directory
 resume_names = get_filenames_from_dir("Data/Processed/Resumes")
