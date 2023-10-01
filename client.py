@@ -32,17 +32,31 @@ RESUME_INPUT_DIR = os.path.join(SUBMODULE_PARENT_DIR, "Data/Resumes")
 
 class Resume:
     def __init__(self, file_location: Union[str, os.PathLike]):
+        """
+        Parameters
+        ----------
+        file_location : Union[str, os.PathLike]
+            takes in the absolute path of the input resume relative to
+            the main cs-senior-project input directory
+
+        Examples
+        --------
+        Resume(os.path("Path/To/CS-Senior-Project/Uploads/input-resume.pdf"))
+
+        """
         self.file_location = file_location
         self.file_name = os.path.basename(self.file_location)
         self.parsed_data = dict
 
     def send_to_parser_dir(self) -> None:
+        """Moves file from original location (cs-senior-project/input/) to resume parser directory"""
         logging.info(f"original file location: {self.file_location}")
         shutil.move(self.file_location, RESUME_INPUT_DIR) # moving file to input dir
         self.file_location = os.path.join(RESUME_INPUT_DIR, self.file_name) # reflecting that file was moved to new location
         logging.info(f"new file location: {self.file_location}")
 
     def parser(self) -> dict:
+        """returns parsed data dict"""
         def read_json(filename):
             with open(filename) as f:
                 data = json.load(f)
