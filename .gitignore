@@ -140,3 +140,6 @@ scripts/similarity/config.yml
 
 # Secrets
 *.local.yml
+
+# Processed files
+/Data/Processed/*
