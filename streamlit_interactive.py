@@ -21,7 +21,7 @@ from scripts.parsers import ParseJobDesc
 from scripts.utils import get_filenames_from_dir
 
 # Set page configuration
-st.set_page_config(page_title='Resume Matcher', page_icon="Assets/img/favicon.ico", initial_sidebar_state='auto')
+st.set_page_config(page_title='Resume Matcher', page_icon="Assets/img/favicon.ico", initial_sidebar_state='auto', layout='wide')
 
 # Find the current working directory and configuration path
 cwd = find_path('Resume-Matcher')
@@ -327,7 +327,7 @@ with st.spinner('Please wait...'):
             resumeCol, jobDescriptionCol = st.columns(2)
             with resumeCol:
                 with st.expander("Keywords & Values"):
-                    df2 = pd.DataFrame(selected_file['keyterms'], columns=["keyword", "value"])
+                    df1 = pd.DataFrame(selected_file['keyterms'], columns=["keyword", "value"])
 
                     # Create the dictionary
                     keyword_dict = {}
@@ -366,7 +366,7 @@ with st.spinner('Please wait...'):
             resumeCol, jobDescriptionCol = st.columns(2)
             with resumeCol:
                 with st.expander("Key Topics"):
-                    fig = px.treemap(df2, path=['keyword'], values='value',
+                    fig = px.treemap(df1, path=['keyword'], values='value',
                                      color_continuous_scale='Rainbow',
                                      title='Key Terms/Topics Extracted from your Resume')
                     st.plotly_chart(fig, use_container_width=True)
