@@ -219,7 +219,7 @@ resumeCol, jobDescriptionCol = st.columns(2)
 with resumeCol:
     uploaded_Resume = st.file_uploader("Choose a Resume", type="pdf")
     if uploaded_Resume is not None:
-        if st.session_state["resumeUploaded"] is "Pending":
+        if st.session_state["resumeUploaded"] == "Pending":
             save_path_resume = os.path.join(cwd, "Data", "Resumes", uploaded_Resume.name)
 
             with open(save_path_resume, mode='wb') as w:
@@ -236,7 +236,7 @@ with resumeCol:
 with jobDescriptionCol:
     uploaded_JobDescription = st.file_uploader("Choose a Job Description", type="pdf")
     if uploaded_JobDescription is not None:
-        if st.session_state["jobDescriptionUploaded"] is "Pending":
+        if st.session_state["jobDescriptionUploaded"] == "Pending":
             save_path_jobDescription = os.path.join(cwd, "Data", "JobDescription", uploaded_JobDescription.name)
 
             with open(save_path_jobDescription, mode='wb') as w:
@@ -252,9 +252,9 @@ with jobDescriptionCol:
 
 with st.spinner('Please wait...'):
     if (uploaded_Resume is not None and
-            st.session_state["jobDescriptionUploaded"] is "Uploaded" and
+            st.session_state["jobDescriptionUploaded"] == "Uploaded" and
             uploaded_JobDescription is not None and
-            st.session_state["jobDescriptionUploaded"] is "Uploaded"):
+            st.session_state["jobDescriptionUploaded"] == "Uploaded"):
 
         resumeProcessor = ParseResume(read_single_pdf(st.session_state["resumePath"]))
         jobDescriptionProcessor = ParseJobDesc(read_single_pdf(st.session_state["jobDescriptionPath"]))
