@@ -225,41 +225,41 @@ with st.sidebar:
 st.divider()
 avs.add_vertical_space(1)
 
-resumeCol, jobDescriptionCol = st.columns(2)
+with st.container():
+    resumeCol, jobDescriptionCol = st.columns(2)
+    with resumeCol:
+        uploaded_Resume = st.file_uploader("Choose a Resume", type="pdf")
+        if uploaded_Resume is not None:
+            if st.session_state["resumeUploaded"] == "Pending":
+                save_path_resume = os.path.join(cwd, "Data", "Resumes", uploaded_Resume.name)
 
-with resumeCol:
-    uploaded_Resume = st.file_uploader("Choose a Resume", type="pdf")
-    if uploaded_Resume is not None:
-        if st.session_state["resumeUploaded"] == "Pending":
-            save_path_resume = os.path.join(cwd, "Data", "Resumes", uploaded_Resume.name)
+                with open(save_path_resume, mode='wb') as w:
+                    w.write(uploaded_Resume.getvalue())
 
-            with open(save_path_resume, mode='wb') as w:
-                w.write(uploaded_Resume.getvalue())
+                if os.path.exists(save_path_resume):
+                    st.toast(f'File {uploaded_Resume.name} is successfully saved!', icon="✔️")
+                    update_session_state("resumeUploaded", "Uploaded")
+                    update_session_state("resumePath", save_path_resume)
+        else:
+            update_session_state("resumeUploaded", "Pending")
+            update_session_state("resumePath", "")
 
-            if os.path.exists(save_path_resume):
-                st.toast(f'File {uploaded_Resume.name} is successfully saved!', icon="✔️")
-                update_session_state("resumeUploaded", "Uploaded")
-                update_session_state("resumePath", save_path_resume)
-    else:
-        update_session_state("resumeUploaded", "Pending")
-        update_session_state("resumePath", "")
+    with jobDescriptionCol:
+        uploaded_JobDescription = st.file_uploader("Choose a Job Description", type="pdf")
+        if uploaded_JobDescription is not None:
+            if st.session_state["jobDescriptionUploaded"] == "Pending":
+                save_path_jobDescription = os.path.join(cwd, "Data", "JobDescription", uploaded_JobDescription.name)
 
-with jobDescriptionCol:
-    uploaded_JobDescription = st.file_uploader("Choose a Job Description", type="pdf")
-    if uploaded_JobDescription is not None:
-        if st.session_state["jobDescriptionUploaded"] == "Pending":
-            save_path_jobDescription = os.path.join(cwd, "Data", "JobDescription", uploaded_JobDescription.name)
+                with open(save_path_jobDescription, mode='wb') as w:
+                    w.write(uploaded_JobDescription.getvalue())
 
-            with open(save_path_jobDescription, mode='wb') as w:
-                w.write(uploaded_JobDescription.getvalue())
-
-            if os.path.exists(save_path_jobDescription):
-                st.toast(f'File {uploaded_JobDescription.name} is successfully saved!', icon="✔️")
-                update_session_state("jobDescriptionUploaded", "Uploaded")
-                update_session_state("jobDescriptionPath", save_path_jobDescription)
-    else:
-        update_session_state("jobDescriptionUploaded", "Pending")
-        update_session_state("jobDescriptionPath", "")
+                if os.path.exists(save_path_jobDescription):
+                    st.toast(f'File {uploaded_JobDescription.name} is successfully saved!', icon="✔️")
+                    update_session_state("jobDescriptionUploaded", "Uploaded")
+                    update_session_state("jobDescriptionPath", save_path_jobDescription)
+        else:
+            update_session_state("jobDescriptionUploaded", "Pending")
+            update_session_state("jobDescriptionPath", "")
 
 with st.spinner('Please wait...'):
     if (uploaded_Resume is not None and
@@ -272,96 +272,111 @@ with st.spinner('Please wait...'):
 
         # Resume / JD output
         selected_file = resumeProcessor.get_JSON()
-
-        with resumeCol:
-            with st.expander("Parsed Resume Data"):
-                st.caption(
-                    "This text is parsed from your resume. This is how it'll look like after getting parsed by an "
-                    "ATS.")
-                st.caption("Utilize this to understand how to make your resume ATS friendly.")
-                avs.add_vertical_space(3)
-                st.write(selected_file["clean_data"])
-
-            with st.expander("Extracted Keywords"):
-                st.write("Now let's take a look at the extracted keywords from the resume.")
-                annotated_text(create_annotated_text(
-                    selected_file["clean_data"], selected_file["extracted_keywords"],
-                    "KW", "#0B666A"))
-
-            with st.expander("Extracted Entities"):
-                st.write("Now let's take a look at the extracted entities from the resume.")
-
-                # Call the function with your data
-                create_star_graph(selected_file['keyterms'], "Entities from Resume")
-
-            with st.expander("Keywords & Values"):
-                df2 = pd.DataFrame(selected_file['keyterms'], columns=["keyword", "value"])
-
-                # Create the dictionary
-                keyword_dict = {}
-                for keyword, value in selected_file['keyterms']:
-                    keyword_dict[keyword] = value * 100
-
-                fig = go.Figure(data=[go.Table(header=dict(values=["Keyword", "Value"],
-                                                           font=dict(size=12, color="white"),
-                                                           fill_color='#1d2078'),
-                                               cells=dict(values=[list(keyword_dict.keys()),
-                                                                  list(keyword_dict.values())],
-                                                          line_color='darkslategray',
-                                                          fill_color='#6DA9E4'))
-                                      ])
-                st.plotly_chart(fig, use_container_width=True)
-
-            with st.expander("Key Topics"):
-                fig = px.treemap(df2, path=['keyword'], values='value',
-                                 color_continuous_scale='Rainbow',
-                                 title='Key Terms/Topics Extracted from your Resume')
-                st.plotly_chart(fig, use_container_width=True)
-
         selected_jd = jobDescriptionProcessor.get_JSON()
 
-        with jobDescriptionCol:
-            with st.expander("Parsed Job Description"):
-                st.caption(
-                    "Currently in the pipeline I'm parsing this from PDF but it'll be from txt or copy paste.")
-                avs.add_vertical_space(3)
-                st.write(selected_jd["clean_data"])
+        # Add containers for each row to avoid overlap
+        with st.container():
+            resumeCol, jobDescriptionCol = st.columns(2)
+            with resumeCol:
+                with st.expander("Parsed Resume Data"):
+                    st.caption(
+                        "This text is parsed from your resume. This is how it'll look like after getting parsed by an "
+                        "ATS.")
+                    st.caption("Utilize this to understand how to make your resume ATS friendly.")
+                    avs.add_vertical_space(3)
+                    st.write(selected_file["clean_data"])
 
-            with st.expander("Extracted Keywords"):
-                st.write("Now let's take a look at the extracted keywords from the job description.")
-                annotated_text(create_annotated_text(
-                    selected_jd["clean_data"], selected_jd["extracted_keywords"],
-                    "KW", "#0B666A"))
+            with jobDescriptionCol:
+                with st.expander("Parsed Job Description"):
+                    st.caption(
+                        "Currently in the pipeline I'm parsing this from PDF but it'll be from txt or copy paste.")
+                    avs.add_vertical_space(3)
+                    st.write(selected_jd["clean_data"])
 
-            with st.expander("Extracted Entities"):
-                st.write("Now let's take a look at the extracted entities from the job description.")
+        with st.container():
+            resumeCol, jobDescriptionCol = st.columns(2)
+            with resumeCol:
+                with st.expander("Extracted Keywords"):
+                    st.write("Now let's take a look at the extracted keywords from the resume.")
+                    annotated_text(create_annotated_text(
+                        selected_file["clean_data"], selected_file["extracted_keywords"],
+                        "KW", "#0B666A"))
+            with jobDescriptionCol:
+                with st.expander("Extracted Keywords"):
+                    st.write("Now let's take a look at the extracted keywords from the job description.")
+                    annotated_text(create_annotated_text(
+                        selected_jd["clean_data"], selected_jd["extracted_keywords"],
+                        "KW", "#0B666A"))
 
-                # Call the function with your data
-                create_star_graph(selected_jd['keyterms'], "Entities from Job Description")
+        with st.container():
+            resumeCol, jobDescriptionCol = st.columns(2)
+            with resumeCol:
+                with st.expander("Extracted Entities"):
+                    st.write("Now let's take a look at the extracted entities from the resume.")
 
-            with st.expander("Keywords & Values"):
-                df2 = pd.DataFrame(selected_jd['keyterms'], columns=["keyword", "value"])
+                    # Call the function with your data
+                    create_star_graph(selected_file['keyterms'], "Entities from Resume")
+            with jobDescriptionCol:
+                with st.expander("Extracted Entities"):
+                    st.write("Now let's take a look at the extracted entities from the job description.")
 
-                # Create the dictionary
-                keyword_dict = {}
-                for keyword, value in selected_jd['keyterms']:
-                    keyword_dict[keyword] = value * 100
+                    # Call the function with your data
+                    create_star_graph(selected_jd['keyterms'], "Entities from Job Description")
 
-                fig = go.Figure(data=[go.Table(header=dict(values=["Keyword", "Value"],
-                                                           font=dict(size=12, color="white"),
-                                                           fill_color='#1d2078'),
-                                               cells=dict(values=[list(keyword_dict.keys()),
-                                                                  list(keyword_dict.values())],
-                                                          line_color='darkslategray',
-                                                          fill_color='#6DA9E4'))
-                                      ])
-                st.plotly_chart(fig, use_container_width=True)
+        with st.container():
+            resumeCol, jobDescriptionCol = st.columns(2)
+            with resumeCol:
+                with st.expander("Keywords & Values"):
+                    df2 = pd.DataFrame(selected_file['keyterms'], columns=["keyword", "value"])
 
-            with st.expander("Key Topics"):
-                fig = px.treemap(df2, path=['keyword'], values='value',
-                                 color_continuous_scale='Rainbow',
-                                 title='Key Terms/Topics Extracted from Job Description')
-                st.plotly_chart(fig, use_container_width=True)
+                    # Create the dictionary
+                    keyword_dict = {}
+                    for keyword, value in selected_file['keyterms']:
+                        keyword_dict[keyword] = value * 100
+
+                    fig = go.Figure(data=[go.Table(header=dict(values=["Keyword", "Value"],
+                                                               font=dict(size=12, color="white"),
+                                                               fill_color='#1d2078'),
+                                                   cells=dict(values=[list(keyword_dict.keys()),
+                                                                      list(keyword_dict.values())],
+                                                              line_color='darkslategray',
+                                                              fill_color='#6DA9E4'))
+                                          ])
+                    st.plotly_chart(fig, use_container_width=True)
+            with jobDescriptionCol:
+                with st.expander("Keywords & Values"):
+                    df2 = pd.DataFrame(selected_jd['keyterms'], columns=["keyword", "value"])
+
+                    # Create the dictionary
+                    keyword_dict = {}
+                    for keyword, value in selected_jd['keyterms']:
+                        keyword_dict[keyword] = value * 100
+
+                    fig = go.Figure(data=[go.Table(header=dict(values=["Keyword", "Value"],
+                                                               font=dict(size=12, color="white"),
+                                                               fill_color='#1d2078'),
+                                                   cells=dict(values=[list(keyword_dict.keys()),
+                                                                      list(keyword_dict.values())],
+                                                              line_color='darkslategray',
+                                                              fill_color='#6DA9E4'))
+                                          ])
+                    st.plotly_chart(fig, use_container_width=True)
+
+        with st.container():
+            resumeCol, jobDescriptionCol = st.columns(2)
+            with resumeCol:
+                with st.expander("Key Topics"):
+                    fig = px.treemap(df2, path=['keyword'], values='value',
+                                     color_continuous_scale='Rainbow',
+                                     title='Key Terms/Topics Extracted from your Resume')
+                    st.plotly_chart(fig, use_container_width=True)
+
+            with jobDescriptionCol:
+                with st.expander("Key Topics"):
+                    fig = px.treemap(df2, path=['keyword'], values='value',
+                                     color_continuous_scale='Rainbow',
+                                     title='Key Terms/Topics Extracted from Job Description')
+                    st.plotly_chart(fig, use_container_width=True)
 
         avs.add_vertical_space(2)
         config_file_path = config_path + "/config.yml"
