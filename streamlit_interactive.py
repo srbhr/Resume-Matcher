@@ -14,7 +14,6 @@ from streamlit_extras import add_vertical_space as avs
 from streamlit_extras.badges import badge
 
 from scripts import ResumeProcessor, JobDescriptionProcessor
-from run_first import remove_old_files
 from scripts.ReadPdf import read_single_pdf
 from scripts.similarity import get_similarity_score, find_path, read_config
 from scripts.parsers import ParseResume
@@ -43,6 +42,18 @@ parameters.PADDING = "0.5 0.25rem"
 # Function to set session state variables
 def update_session_state(key, val):
     st.session_state[key] = val
+
+
+# Function to delete all files in a directory
+def delete_from_dir(filepath: str) -> bool:
+    try:
+        for file in os.scandir(filepath):
+            os.remove(file.path)
+
+        return True
+    except OSError as error:
+        print(f"Exception: {error}")
+        return False
 
 
 # Function to create a star-shaped graph visualization
@@ -187,8 +198,8 @@ def tokenize_string(input_string):
 
 
 # Cleanup processed resume / job descriptions
-remove_old_files(os.path.join(cwd, "Data", "Processed", "Resumes"))
-remove_old_files(os.path.join(cwd, "Data", "Processed", "JobDescription"))
+delete_from_dir(os.path.join(cwd, "Data", "Processed", "Resumes"))
+delete_from_dir(os.path.join(cwd, "Data", "Processed", "JobDescription"))
 
 # Set default session states for first run
 if "resumeUploaded" not in st.session_state.keys():
@@ -226,7 +237,7 @@ with resumeCol:
                 w.write(uploaded_Resume.getvalue())
 
             if os.path.exists(save_path_resume):
-                st.toast(f':heavy_check_mark: File {uploaded_Resume.name} is successfully saved!')
+                st.toast(f'File {uploaded_Resume.name} is successfully saved!', icon="✔️")
                 update_session_state("resumeUploaded", "Uploaded")
                 update_session_state("resumePath", save_path_resume)
     else:
@@ -243,7 +254,7 @@ with jobDescriptionCol:
                 w.write(uploaded_JobDescription.getvalue())
 
             if os.path.exists(save_path_jobDescription):
-                st.toast(f':heavy_check_mark: File {uploaded_JobDescription.name} is successfully saved!')
+                st.toast(f'File {uploaded_JobDescription.name} is successfully saved!', icon="✔️")
                 update_session_state("jobDescriptionUploaded", "Uploaded")
                 update_session_state("jobDescriptionPath", save_path_jobDescription)
     else:
