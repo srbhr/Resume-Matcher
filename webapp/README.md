@@ -29,7 +29,7 @@ View a brief GIF demo of the web apps' design functionality below:
 
 ### Extra Setup Hints
 
-- 💡 You may also decide to run the frontend and backend servers in separate terminal processes independently of one another. To run the frontend server in isolation, run `npm run next-dev`. To run the backend FastAPI server in isolation, run `npm run fastapi-dev` (For Linux / WSL) or `npm run fastapi-dev-win` (For Windows non-WSL).
+- 💡 You may also decide to run the frontend and backend servers in separate terminal processes independently of one another. To run the frontend server in isolation, run `npm run next-dev`. To run the backend FastAPI server in isolation, run `npm run fastapi-dev` (For Mac OS / Linux / WSL) or `npm run fastapi-dev-win` (For Windows non-WSL).
 
 ## Debugging
 
