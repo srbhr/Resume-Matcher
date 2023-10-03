@@ -23,7 +23,7 @@ View a brief GIF demo of the web apps' design functionality below:
 3. Follow the [README](../README.md) instructions set out in the root of the repository to setup the Python environment and run the Python scripts.
 4. navigate to the `webapp` directory (e.g. `cd webapp`)
 5. run `npm install` to install the frontend client app dependencies
-6. For Linux / WSL users: run `npm run dev` to start the web app (i.e. this script will start the frontend client and backend FastAPI servers concurrently within one terminal process inside `webapp` directory`)
+6. For Mac OS / Linux / WSL users: run `npm run dev` to start the web app (i.e. this script will start the frontend client and backend FastAPI servers concurrently within one terminal process inside `webapp` directory`)
 7. For Windows (non-WSL) users: run `npm run dev-win` to start the web app (i.e. this script will start the frontend client and backend FastAPI servers concurrently within one terminal process inside `webapp` directory`)
 8. once both servers are ready, open [http://localhost:3000](http://localhost:3000) on your browser to view and interact with the app.
 
