@@ -46,9 +46,7 @@ const ThirdPartyServicesKeys = async () => {
 
 	return (
 		<section className="flex flex-col gap-4 w-full px-32 py-10">
-			<h2 className="text-3xl font-normal leading-normal">
-				Service Keys
-			</h2>
+			<h2 className="text-3xl font-normal leading-normal">Service Keys</h2>
 			<div className="flex flex-col gap-4 text-black p-4 bg-transparent border-2 border-[#2C203E]">
 				<SavedKeys keys={data.config_keys} />
 			</div>
