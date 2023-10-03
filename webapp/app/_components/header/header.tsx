@@ -17,14 +17,14 @@ const Header = () => {
 				>
 					<li className="hover:text-[#94a3b8]">
 						<a href="https://github.com/srbhr/Resume-Matcher/graphs/contributors">
-							Contributions
+							contributions
 						</a>
 					</li>
 					<li className="hover:text-[#94a3b8]">
-						<a href="https://github.com/srbhr/Resume-Matcher#readme">Docs</a>
+						<a href="https://github.com/srbhr/Resume-Matcher#readme">docs</a>
 					</li>
 					<li className="hover:text-[#94a3b8]">
-						<a href="https://www.resumematcher.fyi/">Main Site</a>
+						<a href="https://www.resumematcher.fyi/">main Site</a>
 					</li>
 				</ul>
 			</nav>
