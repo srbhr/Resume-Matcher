@@ -17,7 +17,7 @@ const Header = () => {
 				>
 					<li className="hover:text-[#94a3b8]">
 						<a href="https://github.com/srbhr/Resume-Matcher/graphs/contributors">
-							contributions
+							Contributions
 						</a>
 					</li>
 					<li className="hover:text-[#94a3b8]">
