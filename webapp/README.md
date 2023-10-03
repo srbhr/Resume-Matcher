@@ -23,12 +23,13 @@ View a brief GIF demo of the web apps' design functionality below:
 3. Follow the [README](../README.md) instructions set out in the root of the repository to setup the Python environment and run the Python scripts.
 4. navigate to the `webapp` directory (e.g. `cd webapp`)
 5. run `npm install` to install the frontend client app dependencies
-6. run `npm run dev` to start the web app (i.e. this script will start the frontend client and backend FastAPI servers concurrently within one terminal process inside `webapp` directory`)
-7. once both servers are ready, open [http://localhost:3000](http://localhost:3000) on your browser to view and interact with the app.
+6. For Linux / WSL users: run `npm run dev` to start the web app (i.e. this script will start the frontend client and backend FastAPI servers concurrently within one terminal process inside `webapp` directory`)
+7. For Windows (non-WSL) users: run `npm run dev-win` to start the web app (i.e. this script will start the frontend client and backend FastAPI servers concurrently within one terminal process inside `webapp` directory`)
+8. once both servers are ready, open [http://localhost:3000](http://localhost:3000) on your browser to view and interact with the app.
 
 ### Extra Setup Hints
 
-- 💡 You may also decide to run the frontend and backend servers in separate terminal processes independently of one another. To run the frontend server in isolation, run `npm run next-dev`. To run the backend FastAPI server in isolation, run `npm run fastapi-dev`.
+- 💡 You may also decide to run the frontend and backend servers in separate terminal processes independently of one another. To run the frontend server in isolation, run `npm run next-dev`. To run the backend FastAPI server in isolation, run `npm run fastapi-dev` (For Linux / WSL) or `npm run fastapi-dev-win` (For Windows non-WSL).
 
 ## Debugging
 
@@ -63,7 +64,7 @@ When working with the backend web application files, you may like to debug the b
 
 #### Start the Backend Server in Debug Mode
 
-1. ⚠️ IMPORTANT: Before proceeding along this set of steps, ensure the frontend server is NOT running. It will need to be running in isolation of the backend server, after the backend server has succesfully completed its starup process.
+1. ⚠️ IMPORTANT: Before proceeding along this set of steps, ensure the frontend server is NOT running. It will need to be running in isolation of the backend server, after the backend server has successfully completed its startup process.
 
 2. Open the VS Code debugger tab (i.e. the bug icon on the left sidebar)
 
@@ -75,7 +76,7 @@ When working with the backend web application files, you may like to debug the b
 
 6. You may optionally set breakpoints in the backend python files to pause execution on certain line(s), inspect variable values, and other runtime data, as you interact with the app or make requests to the backend server.
 
-7. Esnure the frontend server is running in isolation of the backend server, after the backend server has succesfully completed its starup process. By running the following command in a separate terminal window:
+7. Ensure the frontend server is running in isolation of the backend server, after the backend server has successfully completed its starup process. By running the following command in a separate terminal window:
 
 ```bash
 npm run next-dev
