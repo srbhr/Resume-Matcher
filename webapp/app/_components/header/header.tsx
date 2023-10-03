@@ -21,10 +21,10 @@ const Header = () => {
 						</a>
 					</li>
 					<li className="hover:text-[#94a3b8]">
-						<a href="https://github.com/srbhr/Resume-Matcher#readme">docs</a>
+						<a href="https://github.com/srbhr/Resume-Matcher#readme">Docs</a>
 					</li>
 					<li className="hover:text-[#94a3b8]">
-						<a href="https://www.resumematcher.fyi/">main Site</a>
+						<a href="https://www.resumematcher.fyi/">Main Site</a>
 					</li>
 				</ul>
 			</nav>
