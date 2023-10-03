@@ -75,7 +75,6 @@ const FileUpload = ({
 				htmlFor="upload-btn"
 				className="block text-white text-3xl p-8 rounded-2xl font-semibold cursor-pointer shadow-2xl bg-gradient-to-bl from-[#1B2450] to-[#232334] hover:bg-gradient-to-bl hover:from-[#151E4B] hover:to-[#242430]"
 			>
-				{/* hover: bg-gradient-to-bl from-[#0F142C] to-[#0C0C0F] */}
 				{buttonLabel}
 			</label>
 			<small className="text-center text-gray-300">
