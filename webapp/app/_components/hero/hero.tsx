@@ -5,7 +5,7 @@ type HeroProps = {
 const Hero = ({ children }: HeroProps) => {
     return (
         <>
-            <section className="flex flex-col gap-12 px-32 py-10 h-screen items-center bg-gradient-to-r from-[#2C203E] to-[#030205]">
+            <section className="flex flex-col gap-12 px-32 py-10 h-screen items-center bg-gradient-to-br from-[#2C203E] to-[#030205]">
                 <h1 className="text-5xl text-center leading-normal mx-2 mt-10">
                     Free and Open Source ATS to help your resume pass the
                     screening stage.

@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { Fira_Sans } from 'next/font/google';
 import '@/app/globals.css';
 import Header from '@/components/header/header';
-const firsSans = Fira_Sans({
+const firaSans = Fira_Sans({
     weight: ['100', '200', '300', '400', '500', '600', '700', '800', '900'],
     subsets: ['latin'],
 });
@@ -28,7 +28,7 @@ export default function RootLayout({
 }) {
     return (
         <html lang="en">
-            <body className={firsSans.className}>
+            <body className={firaSans.className}>
                 <div className="flex flex-col w-full 2xl:w-2/3 m-auto bg-[#2A203B]">
                     <Header />
                     {children}
