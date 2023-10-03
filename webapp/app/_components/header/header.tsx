@@ -11,7 +11,6 @@ const Header = () => {
 				height={60}
 			/>
 			<nav className="grow">
-				sss
 				<ul
 					className="flex justify-center gap-6 text-[#e2e8f0] text-sm "
 					role="list"
@@ -22,9 +21,7 @@ const Header = () => {
 						</a>
 					</li>
 					<li className="hover:text-[#94a3b8]">
-						<a href="https://github.com/srbhr/Resume-Matcher#readme">
-							Docs
-						</a>
+						<a href="https://github.com/srbhr/Resume-Matcher#readme">Docs</a>
 					</li>
 					<li className="hover:text-[#94a3b8]">
 						<a href="https://www.resumematcher.fyi/">Main Site</a>
