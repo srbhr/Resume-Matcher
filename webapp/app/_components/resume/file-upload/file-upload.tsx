@@ -55,7 +55,7 @@ const FileUpload = ({
     return (
         <div
             className={clsx(
-                'flex flex-col gap-4 p-6 border-2 border-solid border-gray-700 rounded-lg',
+                'flex flex-col gap-4 mt-4 p-6 border-2 border-solid border-gray-700 rounded-lg',
                 { 'border-purple-100 opacity-50': isDragging }
             )}
             onDragOver={handleDragOver}
@@ -72,8 +72,9 @@ const FileUpload = ({
             />
             <label
                 htmlFor="upload-btn"
-                className="block text-white text-3xl p-8 rounded-2xl cursor-pointer bg-gradient-to-r from-[#212234] to-[#1A2350]"
+                className="block text-white text-3xl p-8 rounded-2xl font-semibold cursor-pointer shadow-2xl bg-gradient-to-bl from-[#1B2450] to-[#232334] hover:bg-gradient-to-bl hover:from-[#151E4B] hover:to-[#242430]"
             >
+                {/* hover: bg-gradient-to-bl from-[#0F142C] to-[#0C0C0F] */}
                 {buttonLabel}
             </label>
             <small className="text-center text-gray-300">
