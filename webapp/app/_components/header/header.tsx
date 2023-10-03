@@ -5,7 +5,7 @@ const Header = () => {
     return (
         <header
             className="flex justify-between items-center px-24 py-4 bg-[#24202A
-        ] shadow-md"
+		] shadow-md"
         >
             <Image
                 src="/resume_matcher_logo.png"

@@ -25,6 +25,7 @@ const FileUpload = ({
     function saveSelectedFileToState(file: File) {
         setFileName(file.name);
         setFile(file);
+
         clearResumeProcessorResponse();
     }
 
