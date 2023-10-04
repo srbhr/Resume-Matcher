@@ -1,26 +1,26 @@
-'use client';
+"use client";
 
-import clsx from 'clsx';
-import { useState } from 'react';
-import { useGlobalStore } from '@/stores/useGlobalStore';
+import clsx from "clsx";
+import { useState } from "react";
+import { useGlobalStore } from "@/stores/useGlobalStore";
 
 type FileUploadProps = {
   buttonLabel?: string;
   dropZoneLabel?: string;
 };
 
-const FILE_TYPES = ['application/pdf'];
+const FILE_TYPES = ["application/pdf"];
 
 const FileUpload = ({
-  buttonLabel = 'Select File',
-  dropZoneLabel = 'Or Drop File Here',
+  buttonLabel = "Select File",
+  dropZoneLabel = "Or Drop File Here",
 }: FileUploadProps) => {
   const { setFile, clearResumeProcessorResponse } = useGlobalStore();
 
   const [fileName, setFileName] = useState<string>();
   const [isDragging, setIsDragging] = useState(false);
 
-  const acceptedFileTypes = FILE_TYPES.join(', ');
+  const acceptedFileTypes = FILE_TYPES.join(", ");
 
   function saveSelectedFileToState(file: File) {
     setFileName(file.name);
@@ -56,8 +56,8 @@ const FileUpload = ({
   return (
     <div
       className={clsx(
-        'flex flex-col gap-4 mt-4 p-6 border-2 border-solid border-gray-700 rounded-lg',
-        { 'border-purple-100 opacity-50': isDragging }
+        "flex flex-col gap-4 mt-4 p-6 border-2 border-solid border-gray-700 rounded-lg",
+        { "border-purple-100 opacity-50": isDragging }
       )}
       onDragOver={handleDragOver}
       onDragLeave={() => setIsDragging(false)}

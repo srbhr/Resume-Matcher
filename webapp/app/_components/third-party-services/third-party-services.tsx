@@ -1,14 +1,14 @@
-import SavedKeys from '@/app/_components/third-party-services/saved-keys';
-import { getErrorMessage } from '@/utils/error';
-import { GetServiceKeysResponse } from '@/types/service-keys';
+import SavedKeys from "@/app/_components/third-party-services/saved-keys";
+import { getErrorMessage } from "@/utils/error";
+import { GetServiceKeysResponse } from "@/types/service-keys";
 import {
   getProtocolAndHost,
   isRunningInDevEnvironment,
-} from '@/utils/environment';
+} from "@/utils/environment";
 
 async function getServiceKeys(): Promise<GetServiceKeysResponse> {
   const isDevEnvironment = isRunningInDevEnvironment();
-  let url = '/api/service-keys';
+  let url = "/api/service-keys";
 
   if (isDevEnvironment) {
     const protocolHost = getProtocolAndHost();
@@ -16,7 +16,7 @@ async function getServiceKeys(): Promise<GetServiceKeysResponse> {
   }
 
   try {
-    const response = await fetch(url, { cache: 'no-store' });
+    const response = await fetch(url, { cache: "no-store" });
 
     const data = (await response.json()) as Promise<GetServiceKeysResponse>;
 
