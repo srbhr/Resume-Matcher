@@ -8,17 +8,17 @@ import ResumeGlance from '@/components/resume/resume-glance/resume-glance';
 import Hero from '@/components/hero/hero';
 
 export default function Home() {
-	return (
-		<main>
-			<Hero>
-				<ThirdPartyServicesKeys />
-				<FileUpload buttonLabel="Upload Your Resume" />
-			</Hero>
-			<ResumeGlance />
-			<JobDescriptions />
-			<VectorScore />
-			<CommonWords />
-			<Suggestions />
-		</main>
-	);
+  return (
+    <main>
+      <Hero>
+        <ThirdPartyServicesKeys />
+        <FileUpload buttonLabel="Upload Your Resume" />
+      </Hero>
+      <ResumeGlance />
+      <JobDescriptions />
+      <VectorScore />
+      <CommonWords />
+      <Suggestions />
+    </main>
+  );
 }
