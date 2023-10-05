@@ -1,4 +1,4 @@
-import { ServiceKeys } from '@/types/service-keys';
+import { ServiceKeys } from "@/types/service-keys";
 
 export type ReducerState = {
   serviceKeys: ServiceKeys;
@@ -6,12 +6,12 @@ export type ReducerState = {
 };
 
 type AddServiceKeyAction = {
-  type: 'ADD_SERVICE_KEY';
+  type: "ADD_SERVICE_KEY";
   payload: Record<string, string>;
 };
 
 type UpdateButtonStateAction = {
-  type: 'UPDATE_BUTTON_STATE';
+  type: "UPDATE_BUTTON_STATE";
   payload: boolean;
 };
 
@@ -19,7 +19,7 @@ export type ReducerAction = AddServiceKeyAction | UpdateButtonStateAction;
 
 export function reducer(state: ReducerState, action: ReducerAction) {
   switch (action.type) {
-    case 'ADD_SERVICE_KEY': {
+    case "ADD_SERVICE_KEY": {
       return {
         ...state,
         serviceKeys: {
@@ -28,7 +28,7 @@ export function reducer(state: ReducerState, action: ReducerAction) {
         },
       };
     }
-    case 'UPDATE_BUTTON_STATE': {
+    case "UPDATE_BUTTON_STATE": {
       return {
         ...state,
         shouldDisableButtons: action.payload,
