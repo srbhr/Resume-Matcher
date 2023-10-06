@@ -142,7 +142,8 @@ const AddJobs = ({ numMaxJobs = 1 }: AddJobsProps) => {
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       {renderJobs()}
       <div className="flex gap-4">
-        <Button
+        {/** TODO - Uncomment button to provide "links" to job descriptions when backend is implemented to handle dynamic parsing of job descriptions via provided links. The backend will need to scrape the web page links of job descriptions, and save to PDF (Data/JobDescription/XXXX-XXXX.local.pdf) */}
+        {/* <Button
           className="text-white bg-[#302442] disabled:opacity-50"
           data-job-detail-type={JOB_DETAIL_TYPE.LINK}
           disabled={jobs.length >= numMaxJobs}
@@ -156,7 +157,7 @@ const AddJobs = ({ numMaxJobs = 1 }: AddJobsProps) => {
             height={24}
             alt="Link Icon"
           />
-        </Button>
+        </Button> */}
         <Button
           className="text-white bg-[#302442] disabled:opacity-50"
           data-job-detail-type={JOB_DETAIL_TYPE.DESCRIPTION}
