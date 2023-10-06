@@ -138,5 +138,6 @@ dmypy.json
 
 scripts/similarity/config.yml
 
-# Secrets
+# Personal Data / Secrets
 *.local.yml
+*.local.pdf
