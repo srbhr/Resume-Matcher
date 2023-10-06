@@ -2,6 +2,9 @@
 
 The Resume Matcher takes your resume and job descriptions as input, parses them using Python, and mimics the functionalities of an ATS, providing you with insights and suggestions to make your resume ATS-friendly.
 
+> [!WARNING]
+> The results returned from through the web app are currently entirely mocked / faked. This means that the results returned are not real and are just for demonstration purposes. This will be implemented with real data results in a future release.
+
 ## Demo
 
 View a brief GIF demo of the web apps' design functionality below:
