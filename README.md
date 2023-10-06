@@ -119,7 +119,7 @@ Follow these steps to set up the environment and run the application.
       sudo apt-get install python-tk python3-tk tk-dev
 
       sudo apt-get install build-essential zlib1g-dev libffi-dev libssl-dev libbz2-dev libreadline-dev libsqlite3-dev liblzma-dev
-      
+
       ```
    - pyenv installer
      ```
@@ -129,12 +129,12 @@ Follow these steps to set up the environment and run the application.
      ```
        pyenv install -v 3.11.0
      ```
-     
-   - pyenv with virtual enviroment 
+
+   - pyenv with virtual enviroment
      ```
         pyenv virtualenv 3.11.0 venv
      ```
-     
+
    - Activate virtualenv with pyenv
      ```
         pyenv activate venv
@@ -185,6 +185,9 @@ Follow these steps to set up the environment and run the application.
 
 The full stack Next.js (React and FastAPI) web application allows users to interact with the Resume Matcher tool interactively via a web browser.
 
+> [!WARNING]
+> The results returned from through the web app are currently entirely mocked / faked. This means that the results returned are not real and are just for demonstration purposes. This will be implemented with real data results in a future release.
+
 To run the full stack web application (frontend client and backend api servers), follow the instructions over on the [webapp README](/webapp/README.md) file.
 
 <br/>
@@ -199,7 +202,7 @@ To run the full stack web application (frontend client and backend api servers),
 
 <img src="Assets/img/quadrant_cloud.png" height="60%" width="60%"/>
 
-6.  Now create a yaml file named config.yml in Scripts/Similarity/ folder. 
+6.  Now create a yaml file named config.yml in Scripts/Similarity/ folder.
 7.  The format for the conifg file should be as below:
     ```yaml
     cohere:
@@ -232,7 +235,7 @@ Pull Requests & Issues are not just welcomed, they're celebrated! Let's create t
 
 🚀 Explore and improve our [Landing Page](https://github.com/srbhr/website-for-resume-matcher). PRs always welcome!
 
-📚 Contribute to the [Resume Matcher Docs](https://github.com/srbhr/Resume-Matcher-Docs) and help people get started with using the software. 
+📚 Contribute to the [Resume Matcher Docs](https://github.com/srbhr/Resume-Matcher-Docs) and help people get started with using the software.
 
 #### Tech Stack
 
