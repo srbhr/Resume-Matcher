@@ -136,9 +136,16 @@ avs.add_vertical_space(5)
 
 resume_names = get_filenames_from_dir("Data/Processed/Resumes")
 
-st.write("There are", len(resume_names),
-         " resumes present. Please select one from the menu below:")
-output = st.slider('Select Resume Number', 0, len(resume_names)-1, 2)
+if len(resume_names) > 1:
+    default_value = min(2, len(resume_names) - 1)
+    st.write("There are", len(resume_names), "resumes present. Please select one from the slider below:")
+    output = st.slider('Select Resume Number:', 0, len(resume_names) - 1, default_value)
+elif len(resume_names) == 1:
+    st.write("There is :green[1] resume present.")
+    output = 0
+else:
+    st.write(':red[**WARNING: No resumes are present. Please add at least 1 resume then refresh your browser tab!**]')
+    output = None
 
 avs.add_vertical_space(5)
 
