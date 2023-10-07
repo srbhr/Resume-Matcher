@@ -23,7 +23,7 @@ floret==0.10.3
 fonttools==4.41.0
 gitdb==4.0.10
 GitPython==3.1.32
-htbuilder==0.6.1
+htbuilder==0.6.2
 idna==3.4
 importlib-metadata==6.8.0
 jellyfish==1.0.0
@@ -47,6 +47,7 @@ nltk==3.8.1
 numpy==1.25.1
 packaging==23.1
 pandas==2.0.3
+pathvalidate==3.2.0
 pathy==0.10.2
 Pillow==9.5.0
 plotly==5.15.0
@@ -82,11 +83,11 @@ spacy-legacy==3.0.12
 spacy-loggers==1.0.4
 srsly==2.4.6
 st-annotated-text==4.0.0
-streamlit==1.24.1
+streamlit==1.27.0
 streamlit-camera-input-live==0.2.0
 streamlit-card==0.0.61
 streamlit-embedcode==0.1.2
-streamlit-extras==0.2.7
+streamlit-extras==0.3.2
 streamlit-faker==0.0.2
 streamlit-image-coordinates==0.1.5
 streamlit-keyup==0.2.0
@@ -110,7 +111,8 @@ validators==0.20.0
 wasabi==1.1.2
 watchdog==3.0.0
 zipp==3.16.2
-reportlab==4.0.4
+reportlab==3.6.13
 easygui==0.98.3
 cohere~=4.19.2
 qdrant-client>=1.2
+xhtml2pdf==0.2.11
