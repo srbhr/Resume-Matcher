@@ -138,14 +138,11 @@ avs.add_vertical_space(1)
 
 resume_names = get_filenames_from_dir("Data/Processed/Resumes")
 
-st.write("There are", len(resume_names),
-         " resumes present. Please select one from the menu below:")
-output = st.slider('Select Resume Number', 0, len(resume_names)-1, 2)
+output = st.selectbox(f"There are {len(resume_names)} resumes present. Please select one from the menu below:", resume_names)
 
 avs.add_vertical_space(5)
 
-st.write("You have selected ", resume_names[output], " printing the resume")
-selected_file = read_json("Data/Processed/Resumes/"+resume_names[output])
+selected_file = read_json("Data/Processed/Resumes/"+output)
 
 avs.add_vertical_space(2)
 st.markdown("#### Parsed Resume Data")
@@ -197,17 +194,12 @@ avs.add_vertical_space(5)
 
 job_descriptions = get_filenames_from_dir("Data/Processed/JobDescription")
 
-st.write("There are", len(job_descriptions),
-         " resumes present. Please select one from the menu below:")
-output = st.slider('Select Job Description Number',
-                   0, len(job_descriptions)-1, 2)
+output = st.selectbox(f"There are {len(job_descriptions)} job descriptions present. Please select one from the menu below:", job_descriptions)
 
 avs.add_vertical_space(5)
 
-st.write("You have selected ",
-         job_descriptions[output], " printing the job description")
 selected_jd = read_json(
-    "Data/Processed/JobDescription/"+job_descriptions[output])
+    "Data/Processed/JobDescription/"+output)
 
 avs.add_vertical_space(2)
 st.markdown("#### Job Description")
