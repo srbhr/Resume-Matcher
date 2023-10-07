@@ -192,6 +192,13 @@ To run the full stack web application (frontend client and backend api servers),
 
 <br/>
 
+### Google Colab
+1. Create an account in ngrok and get you token
+2. ![img_1.png](img_1.png)
+3. Go to archive/resume_matcher_colab.ipynb and run the notebook.
+4. Enter your ngrok token and run the notebook.
+5. Copy the url and open it in your browser.
+6. ![img_2.png](img_2.png)
 ### Cohere and Qdrant
 
 1.  Visit [Cohere website registration](https://dashboard.cohere.ai/welcome/register) and create an account.
