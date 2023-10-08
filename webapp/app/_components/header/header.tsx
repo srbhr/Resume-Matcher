@@ -16,15 +16,25 @@ const Header = () => {
           role="list"
         >
           <li className="hover:text-[#94a3b8]">
-            <a href="https://github.com/srbhr/Resume-Matcher/graphs/contributors">
+            <a
+              href="https://github.com/srbhr/Resume-Matcher/graphs/contributors"
+              target="_blank"
+            >
               Contributions
             </a>
           </li>
           <li className="hover:text-[#94a3b8]">
-            <a href="https://github.com/srbhr/Resume-Matcher#readme">Docs</a>
+            <a
+              href="https://github.com/srbhr/Resume-Matcher#readme"
+              target="_blank"
+            >
+              Docs
+            </a>
           </li>
           <li className="hover:text-[#94a3b8]">
-            <a href="https://www.resumematcher.fyi/">Main Site</a>
+            <a href="https://www.resumematcher.fyi/" target="_blank">
+              Main Site
+            </a>
           </li>
         </ul>
       </nav>
