@@ -19,6 +19,7 @@ const Header = () => {
             <a
               href="https://github.com/srbhr/Resume-Matcher/graphs/contributors"
               target="_blank"
+              rel="noopener noreferrer"
             >
               Contributions
             </a>
@@ -27,12 +28,17 @@ const Header = () => {
             <a
               href="https://github.com/srbhr/Resume-Matcher#readme"
               target="_blank"
+              rel="noopener noreferrer"
             >
               Docs
             </a>
           </li>
           <li className="hover:text-[#94a3b8]">
-            <a href="https://www.resumematcher.fyi/" target="_blank">
+            <a
+              href="https://www.resumematcher.fyi/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               Main Site
             </a>
           </li>
