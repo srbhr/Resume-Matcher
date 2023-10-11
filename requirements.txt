@@ -47,6 +47,7 @@ nltk==3.8.1
 numpy==1.25.1
 packaging==23.1
 pandas==2.0.3
+pathvalidate==3.2.0
 pathy==0.10.2
 Pillow==10.0.1
 plotly==5.15.0
@@ -110,7 +111,8 @@ validators==0.20.0
 wasabi==1.1.2
 watchdog==3.0.0
 zipp==3.16.2
-reportlab==4.0.4
+reportlab==3.6.13
 easygui==0.98.3
 cohere~=4.19.2
 qdrant-client>=1.2
+xhtml2pdf==0.2.11
