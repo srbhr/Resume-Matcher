@@ -49,7 +49,7 @@ packaging==23.1
 pandas==2.0.3
 pathvalidate==3.2.0
 pathy==0.10.2
-Pillow==9.5.0
+Pillow==10.0.1
 plotly==5.15.0
 preshed==3.0.8
 protobuf==4.23.4
@@ -83,7 +83,7 @@ spacy-legacy==3.0.12
 spacy-loggers==1.0.4
 srsly==2.4.6
 st-annotated-text==4.0.0
-streamlit==1.27.0
+streamlit==1.27.1
 streamlit-camera-input-live==0.2.0
 streamlit-card==0.0.61
 streamlit-embedcode==0.1.2
