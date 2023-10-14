@@ -149,7 +149,7 @@ def AfterSubmit() -> rx.Component:
 
 def main_content() -> rx.Component:
     return rx.box(
-        rx.image(src="/img/header_image.png"),
+        rx.image(src="/header_image.png"),
         rx.heading("Resume Matcher"),
         rx.markdown("Free and Open Source ATS to help your resume pass the screening stage."),
         rx.markdown("Check the website [www.resumematcher.fyi](https://www.resumematcher.fyi/)"),
