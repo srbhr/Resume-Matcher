@@ -32,13 +32,16 @@ filename = f"{config.app_name}/{config.app_name}.py"
 #     pass
 
 def read_json(filename):
-    print(filename)
+    # print(filename)
     with open(filename) as f:
         data = json.load(f)
     return data
 
-def create_annotated_text(input_string: str, word_list: List[str], annotation: str, color_code: str):
+def create_annotated_text(selected_file: dict, annotation: str, color_code: str):
     # Tokenize the input string
+    input_string = str(selected_file["clean_data"])
+    word_list = selected_file["extracted_keywords"]
+    # print(input_string, word_list)
     tokens = nltk.word_tokenize(input_string)
 
     # Convert the list to a set for quick lookups
@@ -133,18 +136,32 @@ resume_names = get_filenames_from_dir("../Data/Processed/Resumes")
 class ResumeState(rx.State):
     path: str = ""
     show: bool = False
+    selected_file: dict = {}
+    extracted_keywords: List[str] = []
     def set_option(self):
-        self.option = self.path
-        self.show = not self.show
-        self.selected_file = read_json("../Data/Processed/Resumes/" + self.option)
-        return self.option
+        if self.path != "":
+            self.show = True
+            self.selected_file = read_json("../Data/Processed/Resumes/" + self.path)
+            self.extracted_keywords = self.selected_file["extracted_keywords"]
+            # print(type(self.selected_file), self.selected_file)
 
 
 def AfterSubmit() -> rx.Component:
     return rx.vstack(
     rx.markdown("#### Parsed Resume Data"),
     rx.text("This text is parsed from your resume. This is how it'll look like after getting parsed by an ATS."),
-    rx.text("Utilize this to understand how to make your resume ATS friendly."),)
+    rx.text("Utilize this to understand how to make your resume ATS friendly."),
+    rx.markdown("##### Resume Text"),
+    rx.markdown(ResumeState.selected_file["clean_data"]),
+    # add 3 vertical spaces
+    rx.text(""),
+    rx.text(""),
+    rx.text(""),
+    rx.text("Now let's take a look at the keywords that are present in your resume."),
+    rx.text(""),
+    annotated_text(create_annotated_text(ResumeState.selected_file, "KW", "#0B666A")),
+    
+    )
     
 
 def main_content() -> rx.Component:
@@ -175,9 +192,9 @@ def main_content() -> rx.Component:
         rx.button("Submit", on_click=ResumeState.set_option),
         rx.cond(
             ResumeState.show,
-            # AfterSubmit(),
-            rx.text("selected"),
-            rx.text("not selected"),
+            AfterSubmit(),
+            # rx.text("selected"),
+            rx.text(""),
             
             ),
         width="80%",
