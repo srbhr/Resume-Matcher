@@ -33,19 +33,33 @@ filename = f"{config.app_name}/{config.app_name}.py"
 
 def read_json(filename):
     # print(filename)
-    with open(filename) as f:
-        data = json.load(f)
+    try:
+        with open(filename) as f:
+            data = json.load(f)
+    except:
+        data = {}
     return data
+    
 
 def create_annotated_text(selected_file: dict, annotation: str, color_code: str):
     # Tokenize the input string
-    input_string = str(selected_file["clean_data"])
-    word_list = selected_file["extracted_keywords"]
+    try:
+        input_string = str(selected_file["clean_data"])
+        word_list = selected_file["extracted_keywords"]
+    except:
+        return ["No data found"]
+    # input_string = str(selected_file["clean_data"])
+    # word_list = selected_file["extracted_keywords"]
     # print(input_string, word_list)
     tokens = nltk.word_tokenize(input_string)
 
     # Convert the list to a set for quick lookups
     word_set = set(word_list)
+    # word_set = set()
+    # print('debug', word_list)
+    # rx.foreach(word_list, lambda word: word_set.add(word.lower()))
+    # print("debug done")
+        
 
     # Initialize an empty list to hold the annotated text
     annotated_text = []
@@ -138,10 +152,14 @@ class ResumeState(rx.State):
     show: bool = False
     selected_file: dict = {}
     extracted_keywords: List[str] = []
+    annotated_text: List[str] = []
     def set_option(self):
         if self.path != "":
             self.show = True
+            print(self.path)
             self.selected_file = read_json("../Data/Processed/Resumes/" + self.path)
+            self.annotated_text = create_annotated_text(self.selected_file, "KW", "#0B666A")
+            print(self.annotated_text)
             self.extracted_keywords = self.selected_file["extracted_keywords"]
             # print(type(self.selected_file), self.selected_file)
 
@@ -159,7 +177,10 @@ def AfterSubmit() -> rx.Component:
     rx.text(""),
     rx.text("Now let's take a look at the keywords that are present in your resume."),
     rx.text(""),
-    annotated_text(create_annotated_text(ResumeState.selected_file, "KW", "#0B666A")),
+    # print(ResumeState.extracted_keywords),
+    # annotated_text(create_annotated_text(read_json("../Data/Processed/Resumes/" + ResumeState.path), "KW", "#0B666A")),
+    # rx.markdown(annotated_text(create_annotated_text(read_json("../Data/Processed/Resumes/" + ResumeState.path), "KW", "#0B666A"))),
+    # annotated_text(create_annotated_text(ResumeState.selected_file, "KW", "#0B666A")),
     
     )
     
