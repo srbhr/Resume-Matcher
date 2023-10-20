@@ -71,7 +71,7 @@ const AddJobs = ({ numMaxJobs = 1 }: AddJobsProps) => {
               Job {`#${jobNumber}`} - [{jobDetailType}]
             </label>
             <Button
-              className="inline-block bg-red-600 px-2 py-1 text-white text-xs"
+              className="inline-block bg-red-500 px-3 py-2 text-white text-xs"
               aria-label={`Remove job ${jobNumber}`}
               onClick={() => removeJobDetail(job.id)}
             >
