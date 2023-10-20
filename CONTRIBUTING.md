@@ -1,6 +1,6 @@
-# Contributing to Reseme-Matcher on GitHub
+# Contributing to Resume-Matcher on GitHub
 
-Thank you for taking the time to contribute to [Reseme-Matcher](https://github.com/srbhr/Resume-Matcher).
+Thank you for taking the time to contribute to [Resume-Matcher](https://github.com/srbhr/Resume-Matcher).
 
 We want you to have a great experience making your first contribution.
 
