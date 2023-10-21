@@ -25,7 +25,7 @@ const CommonWords = () => {
               <article className="flex flex-col rounded-md gap-2 p-4 border-2 border-dashed border-blue-400 bg-[#f9f2f2]">
                 <h3 className="text-lg text-center text-gray-500">
                   Common Words for Job ID:{" "}
-                  <span className="px-2 bg-gray-500 text-white  rounded-md ">
+                  <span className="px-2 bg-gray-500 text-white rounded-md">
                     {commonWord.jobId}
                   </span>
                 </h3>
