@@ -67,7 +67,7 @@ const AddJobs = ({ numMaxJobs = 1 }: AddJobsProps) => {
       return (
         <div
           key={job.id}
-          className="flex flex-col gap-2 p-4 mt-5 rounded-md bg-[#ededed]"
+          className="flex flex-col gap-2 p-4 mt-2 rounded-md bg-[#ededed]"
         >
           <div className="flex justify-between">
             <label htmlFor={job.id}>
@@ -81,7 +81,7 @@ const AddJobs = ({ numMaxJobs = 1 }: AddJobsProps) => {
               Remove
             </Button>
           </div>
-          <small className="text-gray-500 ">
+          <small className="text-gray-500">
             (id:{" "}
             <span className="bg-gray-500 text-white rounded-md">{job.id}</span>)
           </small>
