@@ -141,4 +141,7 @@ scripts/similarity/config.yml
 
 # Personal Data / Secrets
 *.local.yml
+
+# Processed or local files
+/Data/Processed/*
 *.local.pdf
