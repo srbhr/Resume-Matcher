@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { JobDescription } from "@/types/job-descriptions";
 import { ResumeProcessorResponse } from "@/types/resume-processor";
-import { getErrorMessage } from "@/utils/error";
+import { getErrorMessage } from "@/utils/errors";
 
 type GlobalStoreState = {
   file: File | null;
