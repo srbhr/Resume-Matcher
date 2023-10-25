@@ -155,32 +155,35 @@ class ResumeState(rx.State):
             self.show = True
             # print(self.path)
             self.selected_file = read_json("../Data/Processed/Resumes/" + self.path)
-            self.annotated_text = create_annotated_text(self.selected_file, "KW", "#0B666A")
-            print("printing annotated text ", self.annotated_text)
+            self.annotated_text = annotated_text(create_annotated_text(self.selected_file, "KW", "#0B666A"))
+            # print("printing annotated text ", self.annotated_text)
+            # write the annotated text to a file
+            with open("xyz.txt", "w") as f:
+                f.write(self.annotated_text[0])
+            
             self.extracted_keywords = self.selected_file["extracted_keywords"]
             # print(type(self.selected_file), self.selected_file)
 
-
+def display_keywords() -> rx.Component:
+    with open("xyz.txt", "r") as f:
+        print("here")
+        annotated_text = f.read()
+    return rx.markdown(annotated_text)
+    
 def AfterSubmit() -> rx.Component:
     return rx.vstack(
-    rx.markdown("#### Parsed Resume Data"),
-    rx.text("This text is parsed from your resume. This is how it'll look like after getting parsed by an ATS."),
-    rx.text("Utilize this to understand how to make your resume ATS friendly."),
-    rx.markdown("##### Resume Text"),
-    rx.markdown(ResumeState.selected_file["clean_data"]),
-    # add 3 vertical spaces
-    rx.text(""),
-    rx.text(""),
-    rx.text(""),
-    rx.text("Now let's take a look at the keywords that are present in your resume."),
-    rx.text(""),
-    # print(ResumeState.extracted_keywords),
-    # annotated_text(create_annotated_text(read_json("../Data/Processed/Resumes/" + ResumeState.path), "KW", "#0B666A")),
-    rx.markdown(annotated_text(create_annotated_text(read_json("../Data/Processed/Resumes/" + ResumeState.path), "KW", "#0B666A"))),
-    # rx.markdown(annotated_text(ResumeState.annotated_text)),
-    # rx.button("Show Keywords", on_click=ResumeState.show_annotation),
-    # annotated_text(create_annotated_text(ResumeState.selected_file, "KW", "#0B666A")),
-    
+        rx.markdown("# Parsed Resume Data"),
+        rx.text("This text is parsed from your resume. This is how it'll look like after getting parsed by an ATS."),
+        rx.text("Utilize this to understand how to make your resume ATS friendly."),
+        rx.markdown("## Resume Text"),
+        rx.markdown(ResumeState.selected_file["clean_data"]),
+        rx.text(""),
+        rx.text(""),
+        rx.text(""),
+        rx.text("Now let's take a look at the keywords that are present in your resume."),
+        rx.text(""),
+        display_keywords(),
+        # rx.markdown(annotated_text(create_annotated_text(read_json("../Data/Processed/Resumes/" + ResumeState.path), "KW", "#0B666A"))[0]),
     )
     
 
