@@ -1,5 +1,5 @@
 import SavedKeys from "@/app/_components/third-party-services/saved-keys";
-import { getErrorMessage } from "@/utils/error";
+import { getErrorMessage } from "@/utils/errors";
 import { GetServiceKeysResponse } from "@/types/service-keys";
 import {
   getProtocolAndHost,
