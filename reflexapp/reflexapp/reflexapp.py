@@ -73,10 +73,19 @@ def tokenize_string(input_string):
     tokens = nltk.word_tokenize(input_string)
     return tokens
 
-def create_star_graph(nodes_and_weights, title):
+def create_star_graph(title)-> rx.Component:
     # Create an empty graph
+    
     G = nx.Graph()
-
+    try:
+        with open("keyterms.csv") as f:
+            data = f.readlines()
+        nodes_and_weights = [line.strip().split(",") for line in data]
+        for i in range(len(nodes_and_weights)):
+            nodes_and_weights[i][1] = float(nodes_and_weights[i][1])
+        
+    except KeyError:
+        return rx.markdown("No data found")
     # Add the central node
     central_node = "resume"
     G.add_node(central_node)
@@ -134,7 +143,7 @@ def create_star_graph(nodes_and_weights, title):
                                      yaxis=dict(showgrid=False, zeroline=False, showticklabels=False)))
 
     # Show the figure
-    rx.plotly_chart(fig)
+    return rx.plotly(data=fig, height="400px")
 
 
 resume_names = get_filenames_from_dir("../Data/Processed/Resumes")
@@ -147,6 +156,8 @@ class ResumeState(rx.State):
     selected_file: dict = {}
     extracted_keywords: List[str] = []
     annotated_text: List[str] = []
+    # define list of list called keyterms
+    keyterms: List[List[str]] = []
     def show_annotation(self):
         if self.path != "":
             return rx.markdown(annotated_text(create_annotated_text(read_json("../Data/Processed/Resumes/" + self.path), "KW", "#0B666A")))
@@ -160,7 +171,11 @@ class ResumeState(rx.State):
             # write the annotated text to a file
             with open("xyz.txt", "w") as f:
                 f.write(self.annotated_text[0])
-            
+            # write keyterms to a csv file
+            with open("keyterms.csv", "w+") as f:
+                for keyterm in self.selected_file["keyterms"]:
+                    f.write(keyterm[0] + "," + str(keyterm[1]) + "\n")
+            self.keyterms = self.selected_file["keyterms"]
             self.extracted_keywords = self.selected_file["extracted_keywords"]
             # print(type(self.selected_file), self.selected_file)
 
@@ -183,6 +198,10 @@ def AfterSubmit() -> rx.Component:
         rx.text("Now let's take a look at the keywords that are present in your resume."),
         rx.text(""),
         display_keywords(),
+        rx.text(""),
+        rx.text(""),
+        rx.text("Now let's take a look at the extracted entities from the resume."),
+        create_star_graph("Extracted Entities"),
         # rx.markdown(annotated_text(create_annotated_text(read_json("../Data/Processed/Resumes/" + ResumeState.path), "KW", "#0B666A"))[0]),
     )
     
