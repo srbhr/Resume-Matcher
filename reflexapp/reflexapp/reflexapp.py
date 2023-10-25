@@ -7,7 +7,6 @@ import plotly.express as px
 import plotly.graph_objects as go
 from rxconfig import config
 import reflex as rx
-
 from annotated_text import annotated_text, parameters
 from typing import List
 import sys
@@ -32,17 +31,29 @@ filename = f"{config.app_name}/{config.app_name}.py"
 #     pass
 
 def read_json(filename):
-    print(filename)
-    with open(filename) as f:
-        data = json.load(f)
+    # print(filename)
+    try:
+        with open(filename) as f:
+            data = json.load(f)
+    except:
+        data = {}
     return data
+    
 
-def create_annotated_text(input_string: str, word_list: List[str], annotation: str, color_code: str):
+def create_annotated_text(selected_file: dict, annotation: str, color_code: str):
     # Tokenize the input string
+    try:
+        input_string = str(selected_file["clean_data"])
+        word_list = selected_file["extracted_keywords"]
+    except Exception as e:
+        print(e)
+        return [("No data found", "KW", "#0B666A")]
     tokens = nltk.word_tokenize(input_string)
 
     # Convert the list to a set for quick lookups
     word_set = set(word_list)
+
+        
 
     # Initialize an empty list to hold the annotated text
     annotated_text = []
@@ -133,18 +144,44 @@ resume_names = get_filenames_from_dir("../Data/Processed/Resumes")
 class ResumeState(rx.State):
     path: str = ""
     show: bool = False
+    selected_file: dict = {}
+    extracted_keywords: List[str] = []
+    annotated_text: List[str] = []
+    def show_annotation(self):
+        if self.path != "":
+            return rx.markdown(annotated_text(create_annotated_text(read_json("../Data/Processed/Resumes/" + self.path), "KW", "#0B666A")))
     def set_option(self):
-        self.option = self.path
-        self.show = not self.show
-        self.selected_file = read_json("../Data/Processed/Resumes/" + self.option)
-        return self.option
+        if self.path != "":
+            self.show = True
+            # print(self.path)
+            self.selected_file = read_json("../Data/Processed/Resumes/" + self.path)
+            self.annotated_text = create_annotated_text(self.selected_file, "KW", "#0B666A")
+            print("printing annotated text ", self.annotated_text)
+            self.extracted_keywords = self.selected_file["extracted_keywords"]
+            # print(type(self.selected_file), self.selected_file)
 
 
 def AfterSubmit() -> rx.Component:
     return rx.vstack(
     rx.markdown("#### Parsed Resume Data"),
     rx.text("This text is parsed from your resume. This is how it'll look like after getting parsed by an ATS."),
-    rx.text("Utilize this to understand how to make your resume ATS friendly."),)
+    rx.text("Utilize this to understand how to make your resume ATS friendly."),
+    rx.markdown("##### Resume Text"),
+    rx.markdown(ResumeState.selected_file["clean_data"]),
+    # add 3 vertical spaces
+    rx.text(""),
+    rx.text(""),
+    rx.text(""),
+    rx.text("Now let's take a look at the keywords that are present in your resume."),
+    rx.text(""),
+    # print(ResumeState.extracted_keywords),
+    # annotated_text(create_annotated_text(read_json("../Data/Processed/Resumes/" + ResumeState.path), "KW", "#0B666A")),
+    rx.markdown(annotated_text(create_annotated_text(read_json("../Data/Processed/Resumes/" + ResumeState.path), "KW", "#0B666A"))),
+    # rx.markdown(annotated_text(ResumeState.annotated_text)),
+    # rx.button("Show Keywords", on_click=ResumeState.show_annotation),
+    # annotated_text(create_annotated_text(ResumeState.selected_file, "KW", "#0B666A")),
+    
+    )
     
 
 def main_content() -> rx.Component:
@@ -175,9 +212,9 @@ def main_content() -> rx.Component:
         rx.button("Submit", on_click=ResumeState.set_option),
         rx.cond(
             ResumeState.show,
-            # AfterSubmit(),
-            rx.text("selected"),
-            rx.text("not selected"),
+            AfterSubmit(),
+            # rx.text("selected"),
+            rx.text(""),
             
             ),
         width="80%",
