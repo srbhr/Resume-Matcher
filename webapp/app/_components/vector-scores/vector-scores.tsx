@@ -28,7 +28,7 @@ const VectorScore = () => {
         {vectorScoresSet.map((vectorScore) => {
           return (
             <li
-              className="flex flex-col gap-2 p-4 border-2 border-dotted border-blue-400 bg-[#f9f2f2]"
+              className="flex flex-col gap-2 p-4 rounded-md border-2 border-dashed border-blue-400 bg-[#f9f2f2]"
               key={vectorScore.jobId}
             >
               <h3 className="text-lg text-center text-gray-500">
@@ -37,7 +37,7 @@ const VectorScore = () => {
                   {vectorScore.jobId}
                 </span>
               </h3>
-              <p className="text-7xl text-center font-bold text-blue-500">
+              <p className="text-7xl pt-4 text-center font-bold text-blue-900">
                 {vectorScore.score}
               </p>
             </li>
@@ -48,18 +48,21 @@ const VectorScore = () => {
   }
 
   return (
-    <section ref={componentRef} className="flex flex-col gap-12 px-32 py-10">
+    <section ref={componentRef} className="flex flex-col gap-12 px-32 py-16">
       <h2 className="text-4xl font-normal leading-normal">
         Vector Similarity Score
       </h2>
       {isBackendProcessing && <p>Processing vector scores...</p>}
       <ProcessingError />
-      <div className="flex flex-col gap-8 text-black p-8 bg-[#FFF5F5]">
-        <p>
-          The Vector Similarity Score is a measure of how similar your resume is
-          to the job description. The higher the score, the more similar your
-          resume is to the job description.
-        </p>
+      <div className="flex flex-col rounded-md gap-8 text-black p-8 bg-[#FFF5F5]">
+        <div>
+          <p>
+            The Vector Similarity Score is a measure of how similar your resume
+            is to the job description. The higher the score, the more similar
+            your resume is to the job description.
+          </p>
+          <p className="text-slate-500 pt-4">**Maximum vector score is 100</p>
+        </div>
         {renderVectorScores()}
       </div>
     </section>
