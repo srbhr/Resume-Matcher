@@ -10,7 +10,7 @@ import Footer from "../_components/footer/footer";
 
 export default function Home() {
   return (
-    <main className="text-[white]">
+    <main className="text-white">
       <Hero>
         <ThirdPartyServicesKeys />
         <FileUpload buttonLabel="Upload Your Resume" />
