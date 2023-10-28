@@ -65,7 +65,10 @@ const AddJobs = ({ numMaxJobs = 1 }: AddJobsProps) => {
         "link" in job ? JOB_DETAIL_TYPE.LINK : JOB_DETAIL_TYPE.DESCRIPTION;
 
       return (
-        <div key={job.id} className="flex flex-col gap-2 p-4 bg-[#ededed]">
+        <div
+          key={job.id}
+          className="flex flex-col rounded-md gap-2 p-4 bg-[#ededed]"
+        >
           <div className="flex justify-between">
             <label htmlFor={job.id}>
               Job {`#${jobNumber}`} - [{jobDetailType}]
