@@ -12,12 +12,16 @@ const Footer = () => {
               <a
                 className="text-base pr-4 hover:text-[#A49DA2]"
                 href="https://github.com/srbhr/Resume-Matcher"
+                target="_blank"
+                rel="noopener noreferrer"
               >
                 Github
               </a>
               <a
                 className="text-base hover:text-[#A49DA2]"
                 href="https://github.com/srbhr/Resume-Matcher/blob/master/LICENSE"
+                target="_blank"
+                rel="noopener noreferrer"
               >
                 Apache 2.0
               </a>
