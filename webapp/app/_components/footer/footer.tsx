@@ -53,21 +53,15 @@ const Footer = () => {
             </div>
           ))}
         </div>
-      </div>
-      <div className="flex justify-between pt-16">
-        <p className="flex py-2">
-          Apache 2.0 ©{" "}
+      </div>{" "}
+      <div className="flex pt-16">
+        <div className="flex gap-5">
           <a
-            className="text-[#B3A8C3] hover:text-[#9385A8]"
+            href="https://discord.com/invite/t3Y9HEuV34"
+            title="Github"
             target="_blank"
             rel="noopener noreferrer"
-            href="https://github.com/srbhr/Resume-Matcher/graphs/contributors"
           >
-            Resume Matcher Contributers
-          </a>{" "}
-        </p>
-        <div className="flex gap-5">
-          <a href="https://github.com/srbhr/Resume-Matcher">
             <div className="p-2 rounded-xl hover:p-2 hover:bg-[#44365F] transition duration-300">
               <Image
                 className="hover:bg-[#44365F]"
@@ -79,7 +73,12 @@ const Footer = () => {
             </div>
           </a>
 
-          <a href="https://www.producthunt.com/posts/resume-matcher">
+          <a
+            href="https://www.producthunt.com/posts/resume-matcher"
+            title="Discord"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             <div className="p-2 rounded-xl hover:p-2 hover:bg-[#44365F] transition duration-300">
               <Image
                 className="hover:bg-[#44365F]"
@@ -90,7 +89,12 @@ const Footer = () => {
               />{" "}
             </div>
           </a>
-          <a href="https://discord.com/invite/t3Y9HEuV34">
+          <a
+            href="https://github.com/srbhr/Resume-Matcher"
+            title="Github"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             <div className="p-2 rounded-xl hover:p-2 hover:bg-[#44365F] transition duration-300">
               <Image
                 className="hover:bg-[#44365F]"
