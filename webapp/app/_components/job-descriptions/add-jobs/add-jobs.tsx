@@ -71,7 +71,7 @@ const AddJobs = ({ numMaxJobs = 1 }: AddJobsProps) => {
               Job {`#${jobNumber}`} - [{jobDetailType}]
             </label>
             <Button
-              className="inline-block bg-red-600 px-2 py-1 text-white text-xs"
+              className="inline-block bg-red-500 px-3 py-2 text-white text-xs hover:bg-red-700 shadow-lg"
               aria-label={`Remove job ${jobNumber}`}
               onClick={() => removeJobDetail(job.id)}
             >
@@ -96,6 +96,7 @@ const AddJobs = ({ numMaxJobs = 1 }: AddJobsProps) => {
           )}
           {"description" in job && (
             <textarea
+              className="px-3 py-4 rounded-md mt-6"
               required
               name={inputName}
               onChange={handleClearOutdatedResults}
@@ -159,12 +160,12 @@ const AddJobs = ({ numMaxJobs = 1 }: AddJobsProps) => {
           />
         </Button> */}
         <Button
-          className="text-white bg-[#302442] disabled:opacity-50"
+          className="text-white bg-[#302442]  disabled:opacity-50 mt-6 hover:shadow-lg bg-[#2D213F]"
           data-job-detail-type={JOB_DETAIL_TYPE.DESCRIPTION}
           disabled={jobs.length >= numMaxJobs}
           onClick={handleAddJobDetail}
         >
-          Add Job Descripton
+          Add Job Description
           <Image
             className="invert"
             src="/icons/file-description.svg"
@@ -174,9 +175,14 @@ const AddJobs = ({ numMaxJobs = 1 }: AddJobsProps) => {
           />
         </Button>
       </div>
-      <p>** Maximum of {numMaxJobs} job(s) allowed</p>
+      <p className="text-slate-500">
+        ** Maximum of {numMaxJobs} job(s) allowed
+      </p>
       {jobs.length ? (
-        <Button type="submit" className="text-white mt-8 bg-[#4c72f9]">
+        <Button
+          type="submit"
+          className="text-white mt-8 bg-[#4c72f9] hover:bg-[#476AE9] shadow-xl"
+        >
           Continue
         </Button>
       ) : null}
