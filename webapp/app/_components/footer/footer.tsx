@@ -81,7 +81,7 @@ const Footer = () => {
             src="/icons/productHunt-light.svg"
             width={20}
             height={20}
-            alt="Producthunt Logo"
+            alt="Product Hunt Logo"
           />
         </a>
         <a
