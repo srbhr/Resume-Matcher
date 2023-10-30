@@ -58,7 +58,7 @@ const Footer = () => {
         <a
           className="p-2 rounded-xl hover:p-2 hover:bg-[#44365F] transition duration-300"
           href="https://discord.com/invite/t3Y9HEuV34"
-          title="Discord Logo"
+          title="Discord"
           target="_blank"
           rel="noopener noreferrer"
         >
@@ -73,8 +73,7 @@ const Footer = () => {
         <a
           className="p-2 rounded-xl hover:p-2 hover:bg-[#44365F] transition duration-300"
           href="https://www.producthunt.com/posts/resume-matcher"
-          title="Producthunt Logo"
-          target="_blank"
+          title="Product Hunt"
           rel="noopener noreferrer"
         >
           <Image
@@ -88,7 +87,7 @@ const Footer = () => {
         <a
           className="p-2 rounded-xl hover:p-2 hover:bg-[#44365F] transition duration-300"
           href="https://github.com/srbhr/Resume-Matcher"
-          title="Github Logo"
+          title="GitHub"
           target="_blank"
           rel="noopener noreferrer"
         >
