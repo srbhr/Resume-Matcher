@@ -53,59 +53,53 @@ const Footer = () => {
             </div>
           ))}
         </div>
-      </div>{" "}
-      <div className="flex pt-16">
-        <div className="flex gap-5">
-          <a
-            href="https://discord.com/invite/t3Y9HEuV34"
-            title="Github"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <div className="p-2 rounded-xl hover:p-2 hover:bg-[#44365F] transition duration-300">
-              <Image
-                className="hover:bg-[#44365F]"
-                src="/icons/discord-light.svg"
-                width={20}
-                height={20}
-                alt="GitHub Octocat Logo"
-              />{" "}
-            </div>
-          </a>
-
-          <a
-            href="https://www.producthunt.com/posts/resume-matcher"
-            title="Discord"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <div className="p-2 rounded-xl hover:p-2 hover:bg-[#44365F] transition duration-300">
-              <Image
-                className="hover:bg-[#44365F]"
-                src="/icons/productHunt-light.svg"
-                width={20}
-                height={20}
-                alt="GitHub Octocat Logo"
-              />{" "}
-            </div>
-          </a>
-          <a
-            href="https://github.com/srbhr/Resume-Matcher"
-            title="Github"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <div className="p-2 rounded-xl hover:p-2 hover:bg-[#44365F] transition duration-300">
-              <Image
-                className="hover:bg-[#44365F]"
-                src="/icons/github-light.svg"
-                width={20}
-                height={20}
-                alt="GitHub Octocat Logo"
-              />
-            </div>
-          </a>
-        </div>
+      </div>
+      <div className="flex gap-5 pt-12">
+        <a
+          className="p-2 rounded-xl hover:p-2 hover:bg-[#44365F] transition duration-300"
+          href="https://discord.com/invite/t3Y9HEuV34"
+          title="Discord Logo"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Image
+            className="hover:bg-[#44365F]"
+            src="/icons/discord-light.svg"
+            width={20}
+            height={20}
+            alt="Discord Logo"
+          />
+        </a>
+        <a
+          className="p-2 rounded-xl hover:p-2 hover:bg-[#44365F] transition duration-300"
+          href="https://www.producthunt.com/posts/resume-matcher"
+          title="Producthunt Logo"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Image
+            className="hover:bg-[#44365F]"
+            src="/icons/productHunt-light.svg"
+            width={20}
+            height={20}
+            alt="Producthunt Logo"
+          />
+        </a>
+        <a
+          className="p-2 rounded-xl hover:p-2 hover:bg-[#44365F] transition duration-300"
+          href="https://github.com/srbhr/Resume-Matcher"
+          title="Github Logo"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Image
+            className="hover:bg-[#44365F]"
+            src="/icons/github-light.svg"
+            width={20}
+            height={20}
+            alt="GitHub Logo"
+          />
+        </a>
       </div>
     </section>
   );
