@@ -106,7 +106,7 @@ Follow these steps to set up the environment and run the application.
 
     **OPTIONAL (For pyenv users)**
 
-   Run the application with pyenv (Refer this [article](https://realpython.com/intro-to-pyenv/#installing-pyenv))
+   Run the application with pyenv (Refer this [article](https://realpython.com/intro-to-pyenv/#installing-pyenv)).
 
    - Build dependencies (on ubuntu)
       ```
@@ -130,7 +130,7 @@ Follow these steps to set up the environment and run the application.
        pyenv install -v 3.11.0
      ```
 
-   - pyenv with virtual enviroment
+   - pyenv with virtual environment
      ```
         pyenv virtualenv 3.11.0 venv
      ```
@@ -171,13 +171,13 @@ Follow these steps to set up the environment and run the application.
 
 ### Docker
 
-1. Build the image and start application
+1. Build the image and start the application
 
    ```bash
        docker-compose up
    ```
 
-2. Open `localhost:80` on your browser
+2. Open `localhost:80` in your browser
 
 <br/>
 
@@ -186,14 +186,14 @@ Follow these steps to set up the environment and run the application.
 The full stack Next.js (React and FastAPI) web application allows users to interact with the Resume Matcher tool interactively via a web browser.
 
 > [!WARNING]
-> The results returned from through the web app are currently entirely mocked / faked. This means that the results returned are not real and are just for demonstration purposes. This will be implemented with real data results in a future release.
+> The results returned from the web app are currently entirely mocked / faked. This means that the results returned are not real and are just for demonstration purposes. This will be implemented with real data results in a future release.
 
-To run the full stack web application (frontend client and backend api servers), follow the instructions over on the [webapp README](/webapp/README.md) file.
+To run the full stack web application (frontend client and backend api servers), follow the instructions in the [webapp README](/webapp/README.md) file.
 
 <br/>
 
 ### Google Colab
-1. Create an account in ngrok and get you token
+1. Create an account in ngrok and get your token
 2. ![img_1.png](img_1.png)
 3. Go to archive/resume_matcher_colab.ipynb and run the notebook.
 4. Enter your ngrok token and run the notebook.
@@ -201,11 +201,11 @@ To run the full stack web application (frontend client and backend api servers),
 6. ![img_2.png](img_2.png)
 ### Cohere and Qdrant
 
-1.  Visit [Cohere website registration](https://dashboard.cohere.ai/welcome/register) and create an account.
+1.  Visit the [Cohere website to register](https://dashboard.cohere.ai/welcome/register) and create an account.
 2.  Go to API keys and copy your cohere api key.
-3.  Visit [Qdrant website](https://cloud.qdrant.io/) and create an account.
+3.  Visit the [Qdrant website](https://cloud.qdrant.io/) and create an account.
 4.  Get your api key and cluster url.
-5.  Go to open dashboard in qdrant and enter your api key **for only the first time**
+5.  Go to the open dashboard in qdrant and enter your api key **for only the first time**
 <img src="Assets/img/quadrant_cloud.png" height="60%" width="60%"/>
 6.  Now create a yaml file named config.yml in Scripts/Similarity/ folder.
 7.  The format for the conifg file should be as below:
