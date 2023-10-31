@@ -192,6 +192,13 @@ To run the full stack web application (frontend client and backend api servers),
 
 <br/>
 
+### Google Colab
+1. Create an account in ngrok and get you token
+2. ![img_1.png](img_1.png)
+3. Go to archive/resume_matcher_colab.ipynb and run the notebook.
+4. Enter your ngrok token and run the notebook.
+5. Copy the url and open it in your browser.
+6. ![img_2.png](img_2.png)
 ### Cohere and Qdrant
 
 1.  Visit [Cohere website registration](https://dashboard.cohere.ai/welcome/register) and create an account.
@@ -199,9 +206,7 @@ To run the full stack web application (frontend client and backend api servers),
 3.  Visit [Qdrant website](https://cloud.qdrant.io/) and create an account.
 4.  Get your api key and cluster url.
 5.  Go to open dashboard in qdrant and enter your api key **for only the first time**
-
 <img src="Assets/img/quadrant_cloud.png" height="60%" width="60%"/>
-
 6.  Now create a yaml file named config.yml in Scripts/Similarity/ folder.
 7.  The format for the conifg file should be as below:
     ```yaml
