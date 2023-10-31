@@ -1,3 +1,4 @@
+<div id="top"></div>
 [![Resume Matcher + Hacktoberfest](Assets/img/Hacktoberfest_banner.png)](https://github.com/srbhr/Resume-Matcher/issues)
 
 [![Resume Matcher](Assets/img/header_image.png)](https://www.resumematcher.fyi)
@@ -290,3 +291,5 @@ Take the leap, contribute, and let's grow together! 🚀
 <a href="https://github.com/srbhr/Resume-Matcher/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=srbhr/Resume-Matcher" />
 </a>
+
+<p align="right"><a href="#top">🔼 Back to top</a></p>
