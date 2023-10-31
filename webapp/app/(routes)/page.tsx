@@ -6,10 +6,11 @@ import ThirdPartyServicesKeys from "@/components/third-party-services/third-part
 import FileUpload from "@/components/resume/file-upload/file-upload";
 import ResumeGlance from "@/components/resume/resume-glance/resume-glance";
 import Hero from "@/components/hero/hero";
+import Footer from "../_components/footer/footer";
 
 export default function Home() {
   return (
-    <main>
+    <main className="text-white">
       <Hero>
         <ThirdPartyServicesKeys />
         <FileUpload buttonLabel="Upload Your Resume" />
@@ -19,6 +20,7 @@ export default function Home() {
       <VectorScore />
       <CommonWords />
       <Suggestions />
+      <Footer />
     </main>
   );
 }
