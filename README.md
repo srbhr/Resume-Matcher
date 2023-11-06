@@ -1,5 +1,3 @@
-[![Resume Matcher + Hacktoberfest](Assets/img/Hacktoberfest_banner.png)](https://github.com/srbhr/Resume-Matcher/issues)
-
 [![Resume Matcher](Assets/img/header_image.png)](https://www.resumematcher.fyi)
 
 <div align="center">
