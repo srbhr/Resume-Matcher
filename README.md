@@ -1,15 +1,14 @@
-[![Resume Matcher](Assets/img/header_image.png)](https://www.resumematcher.fyi)
+[![PerfectCV Insight Student](Assets/img/header_image.png)](https://www.resumematcher.fyi)
 
 <div align="center">
 
-# Resume Matcher
+# PerfectCV Insight Student
 
 [𝙹𝚘𝚒𝚗 𝙳𝚒𝚜𝚌𝚘𝚛𝚍](https://dsc.gg/resume-matcher) ✦ [𝚆𝚎𝚋𝚜𝚒𝚝𝚎](https://resumematcher.fyi) ✦ [𝙳𝚎𝚖𝚘](https://resume-matcher.streamlit.app/) ✦ [𝙷𝚘𝚠 𝚝𝚘 𝙸𝚗𝚜𝚝𝚊𝚕𝚕 ](#how-to-install) ✦ [𝙲𝚘𝚗𝚝𝚛𝚒𝚋𝚞𝚝𝚎](#join-us-contribute) ✦ [𝙳𝚘𝚗𝚊𝚝𝚎](#please-support-the-development-by-donating) ✦ [𝚃𝚠𝚒𝚝𝚝𝚎𝚛](https://twitter.com/_srbhr_)
 
 ---
 
-
-### Resume Matcher is an AI Based Free & Open Source Tool. To tailor your resume to a job description. Find the matching keywords, improve the readability  and gain deep insights into your resume.
+### PerfectCV Insight Student is an AI-Based Free & Open Source Tool. To tailor your resume to a job description. Find the matching keywords, improve the readability, and gain deep insights into your resume.
 
 </div>
 
@@ -21,7 +20,7 @@
 ![Apache 2.0](https://img.shields.io/github/license/srbhr/Resume-Matcher?style=flat-square&color=525FE1) ![Issues](https://img.shields.io/github/issues/srbhr/Resume-Matcher?style=flat-square&color=F86F03) ![Forks](https://img.shields.io/github/forks/srbhr/Resume-Matcher?style=flat-square&color=0079FF)
 
 [![Discord](https://custom-icon-badges.demolab.com/badge/Discord-blue?style=flat-square&logo=discord&color=F0FF42&logoColor=293462)](https://discord.gg/t3Y9HEuV34) [![Twitter](https://img.shields.io/badge/@__srbhr__-000000?style=flat-square&logo=x&logoColor=white)](https://twitter.com/_srbhr_)
-[![Resume Matcher](https://custom-icon-badges.demolab.com/badge/www.resumematcher.fyi-gold?style=flat-square&logo=globe&logoColor=black)](https://www.resumematcher.fyi)
+[![PerfectCV Insight Student](https://custom-icon-badges.demolab.com/badge/www.resumematcher.fyi-gold?style=flat-square&logo=globe&logoColor=black)](https://www.resumematcher.fyi)
 
 Upvote us on [ProductHunt 🚀](https://www.producthunt.com/products/resume-matcher).
 
@@ -31,13 +30,15 @@ Upvote us on [ProductHunt 🚀](https://www.producthunt.com/products/resume-matc
 
 <div align="center">
 
-**Don't let your resume be a roadblock from getting your next job. Use Resume Matcher!**
+**Don't let your resume be a roadblock from getting your next job. Use PerfectCV Insight Student!**
 
 ![Resume_Matcher_streamlit_demo](Assets/img/Resume_Matcher_Gif.gif)
 
 ## How does it work?
 
 </div>
+
+El resto del contenido sigue igual. Si necesitas más ajustes, ¡avísame!
 
 The Resume Matcher takes your resume and job descriptions as input, parses them using Python, and mimics the functionalities of an ATS, providing you with insights and suggestions to make your resume ATS-friendly.
 
