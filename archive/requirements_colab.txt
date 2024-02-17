@@ -48,7 +48,7 @@ numpy
 packaging==23.1
 pandas
 pathy==0.10.2
-Pillow==9.5.0
+Pillow==10.2.0
 plotly==5.15.0
 preshed==3.0.8
 protobuf==4.23.4
