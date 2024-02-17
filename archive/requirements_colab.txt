@@ -82,7 +82,7 @@ spacy-legacy==3.0.12
 spacy-loggers==1.0.4
 srsly==2.4.6
 st-annotated-text==4.0.0
-streamlit==1.24.1
+streamlit==1.30.0
 streamlit-camera-input-live==0.2.0
 streamlit-card==0.0.61
 streamlit-embedcode==0.1.2
