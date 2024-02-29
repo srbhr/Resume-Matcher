@@ -43,7 +43,7 @@ def find_path(folder_name):
     raise ValueError(f"Folder '{folder_name}' not found.")
 
 
-cwd = find_path('../archive/Resume-Matcher')
+cwd = find_path('../Resume-Matcher')
 READ_RESUME_FROM = os.path.join(cwd, 'Data', 'Processed', 'Resumes')
 READ_JOB_DESCRIPTION_FROM = os.path.join(cwd, 'Data', 'Processed', 'JobDescription')
 config_path = os.path.join(cwd, "scripts", "similarity")
