@@ -12,8 +12,8 @@ type FileUploadProps = {
 const FILE_TYPES = ["application/pdf"];
 
 const FileUpload = ({
-  buttonLabel = "Select File",
-  dropZoneLabel = "Or Drop File Here",
+  buttonLabel = "Seleccione Archivo",
+  dropZoneLabel = "O suelte el archivo aquí",
 }: FileUploadProps) => {
   const { setFile, clearResumeProcessorResponse } = useGlobalStore();
 
@@ -78,7 +78,7 @@ const FileUpload = ({
         {buttonLabel}
       </label>
       <small className="text-center text-gray-300">
-        Accepted file type(s): {acceptedFileTypes}
+      Tipo de archivo aceptado(s): {acceptedFileTypes}
       </small>
       {fileName ? (
         <span className="block text-2xl text-center text-emerald-500">

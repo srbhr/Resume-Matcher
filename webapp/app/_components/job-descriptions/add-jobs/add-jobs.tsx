@@ -12,7 +12,7 @@ type AddJobsProps = {
 
 const JOB_DETAIL_TYPE = {
   LINK: "link",
-  DESCRIPTION: "description",
+  DESCRIPTION: "descripción",
 };
 
 const AddJobs = ({ numMaxJobs = 1 }: AddJobsProps) => {
@@ -71,14 +71,14 @@ const AddJobs = ({ numMaxJobs = 1 }: AddJobsProps) => {
         >
           <div className="flex justify-between">
             <label htmlFor={job.id}>
-              Job {`#${jobNumber}`} - [{jobDetailType}]
+            Trabajo {`#${jobNumber}`} - [{jobDetailType}]
             </label>
             <Button
               className="inline-block bg-red-500 px-3 py-2 text-white text-xs hover:bg-red-700 shadow-lg"
               aria-label={`Remove job ${jobNumber}`}
               onClick={() => removeJobDetail(job.id)}
-            >
-              Remove
+            >  
+            Eliminar
             </Button>
           </div>
           <small className="text-gray-500">
@@ -168,7 +168,7 @@ const AddJobs = ({ numMaxJobs = 1 }: AddJobsProps) => {
           disabled={jobs.length >= numMaxJobs}
           onClick={handleAddJobDetail}
         >
-          Add Job Description
+            Agregar descripción del trabajo
           <Image
             className="invert"
             src="/icons/file-description.svg"
@@ -179,14 +179,14 @@ const AddJobs = ({ numMaxJobs = 1 }: AddJobsProps) => {
         </Button>
       </div>
       <p className="text-slate-500">
-        ** Maximum of {numMaxJobs} job(s) allowed
+        ** Máximo de {numMaxJobs} trabajo(s) permitido
       </p>
       {jobs.length ? (
         <Button
           type="submit"
           className="text-white mt-8 bg-[#4c72f9] hover:bg-[#476AE9] shadow-xl"
         >
-          Continue
+          Continuar
         </Button>
       ) : null}
     </form>

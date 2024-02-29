@@ -23,7 +23,7 @@ const Suggestions = () => {
               className="flex flex-col rounded-md gap-2 p-4 pl-8 border-2 border-dashed border-blue-400 bg-[#f9f2f2]"
             >
               <h3 className="text-lg text-center text-gray-500 pt-4">
-                Suggestions for Job ID:{" "}
+              Sugerencias para la identificación del trabajo:{" "}
                 <span className="px-2 bg-gray-500 text-white rounded-md">
                   {suggestions.jobId}
                 </span>

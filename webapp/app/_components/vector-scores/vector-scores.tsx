@@ -32,7 +32,7 @@ const VectorScore = () => {
               key={vectorScore.jobId}
             >
               <h3 className="text-lg text-center text-gray-500">
-                Score for Job ID:{" "}
+              Puntuación para la identificación del trabajo:{" "}
                 <span className="px-2 bg-gray-500 text-white rounded-md">
                   {vectorScore.jobId}
                 </span>
@@ -50,18 +50,19 @@ const VectorScore = () => {
   return (
     <section ref={componentRef} className="flex flex-col gap-12 px-32 py-16">
       <h2 className="text-4xl font-normal leading-normal">
-        Vector Similarity Score
+        
+Puntuación de similitud vectorial
       </h2>
-      {isBackendProcessing && <p>Processing vector scores...</p>}
+      {isBackendProcessing && <p>Procesando puntuaciones vectoriales...</p>}
       <ProcessingError />
       <div className="flex flex-col rounded-md gap-8 text-black p-8 bg-[#FFF5F5]">
         <div>
           <p>
-            The Vector Similarity Score is a measure of how similar your resume
-            is to the job description. The higher the score, the more similar
-            your resume is to the job description.
+          La puntuación de similitud vectorial es una medida de cuán similar es su currículum.
+            es a la descripción del trabajo. Cuanto mayor sea la puntuación, más similares
+            Su currículum se ajusta a la descripción del puesto.
           </p>
-          <p className="text-slate-500 pt-4">**Maximum vector score is 100</p>
+          <p className="text-slate-500 pt-4">**La puntuación máxima del vector es 100</p>
         </div>
         {renderVectorScores()}
       </div>

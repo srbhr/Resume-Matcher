@@ -13,7 +13,7 @@ export default function Home() {
     <main className="text-white">
       <Hero>
         <ThirdPartyServicesKeys />
-        <FileUpload buttonLabel="Upload Your Resume" />
+        <FileUpload buttonLabel="Sube tu resumen" />
       </Hero>
       <ResumeGlance />
       <JobDescriptions />

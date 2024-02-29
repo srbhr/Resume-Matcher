@@ -47,7 +47,7 @@ const SavedKeys = ({ keys: savedKeys }: SavedKeysProps) => {
         updateButtonState();
       } else {
         throw new Error(
-          `There was a problem updating the keys. Please refer to console / network output. Error: ${response.statusText}`
+          `Hubo un problema al actualizar las claves. Consulte la salida de consola/red. Error ${response.statusText}`
         );
       }
     } catch (error) {
@@ -119,7 +119,7 @@ const SavedKeys = ({ keys: savedKeys }: SavedKeysProps) => {
         className="text-white bg-orange-700 disabled:opacity-50 self-end"
         disabled={state.shouldDisableButtons}
       >
-        Update Keys
+        Actualizar claves
       </Button>
     </form>
   );

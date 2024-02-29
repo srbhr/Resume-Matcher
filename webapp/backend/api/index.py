@@ -14,7 +14,7 @@ from ..schemas.resume_processor import (
 from ..scripts.files import save_file_upload, save_job_uploads_to_pdfs
 
 app = FastAPI(
-    title="Resume Matcher",
+    title="Insigth cv student",
     description="APIs for Resume Matcher",
     version="0.1.0",
 )

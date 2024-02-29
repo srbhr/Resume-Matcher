@@ -10,9 +10,10 @@ const ProcessingError = () => {
   return (
     <div role="alert">
       <p className="text-red-500">
-        There was an error processing / retrieving the data. Please try again.
+        
+Hubo un error al procesar/recuperar los datos. Inténtalo de nuevo.
       </p>
-      <pre>Error details: {processingError}</pre>
+      <pre>Error de detalles: {processingError}</pre>
     </div>
   );
 };

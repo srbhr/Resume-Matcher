@@ -6,7 +6,7 @@ const Footer = () => {
     <section className="text-[#CFCDD2] bg-[#221932] px-24 py-16">
       <div className="flex justify-between">
         <div className="text-3xl w-2/5">
-          <p className="pb-4 font-semibold">Resume Matcher</p>
+          <p className="pb-4 font-semibold">Insigth cv student</p>
           <ul className="flex">
             <a
               className="text-base pr-4 hover:text-[#A49DA2]"

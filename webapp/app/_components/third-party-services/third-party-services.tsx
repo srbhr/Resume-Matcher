@@ -39,7 +39,7 @@ const ThirdPartyServicesKeys = async () => {
   ) {
     // implies that no requieed user service keps are to be set for the app to work, so no need to render service keys component
     console.warn(
-      "No configurable service keys found. If this is unexpected, please check the GET API response to '/api/service-keys'."
+      "No se encontraron claves de servicio configurables. Si esto es inesperado, verifique la respuesta GET API en '/api/service-keys'."
     );
     return null;
   }

@@ -24,7 +24,7 @@ const CommonWords = () => {
             <li key={commonWord.jobId}>
               <article className="flex flex-col rounded-md gap-2 p-4 border-2 border-dashed border-blue-400 bg-[#f9f2f2]">
                 <h3 className="text-lg text-center text-gray-500">
-                  Common Words for Job ID:{" "}
+                Palabras comunes para identificación de trabajo:{" "}
                   <span className="px-2 bg-gray-500 text-white rounded-md">
                     {commonWord.jobId}
                   </span>
@@ -44,9 +44,9 @@ const CommonWords = () => {
   return (
     <section className="flex flex-col  gap-12 px-32 py-12">
       <h2 className="text-4xl font-normal leading-normal">
-        Common Words between Job Descriptions and Resumes Highlighted
+      Palabras comunes entre descripciones de puestos y currículums resaltadas
       </h2>
-      {isBackendProcessing && <p>Processing common words...</p>}
+      {isBackendProcessing && <p>Procesamiento de palabras comunes...</p>}
       <ProcessingError />
       <div className="flex flex-col rounded-md gap-8 text-black p-8 bg-[#FFF5F5]">
         {renderCommonWords()}

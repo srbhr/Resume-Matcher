@@ -21,7 +21,7 @@ const Header = () => {
               target="_blank"
               rel="noopener noreferrer"
             >
-              Contributions
+              Contribuciones
             </a>
           </li>
           <li className="hover:text-[#94a3b8]">
@@ -30,7 +30,7 @@ const Header = () => {
               target="_blank"
               rel="noopener noreferrer"
             >
-              Docs
+              Documentos
             </a>
           </li>
           <li className="hover:text-[#94a3b8]">
@@ -38,8 +38,8 @@ const Header = () => {
               href="https://www.resumematcher.fyi/"
               target="_blank"
               rel="noopener noreferrer"
-            >
-              Main Site
+            >           
+              Sitio principal
             </a>
           </li>
         </ul>
@@ -53,7 +53,7 @@ const Header = () => {
               rel="noopener noreferrer"
             >
               <Button className="bg-white text-black py-3 shadow-xl hover:bg-[#e5e7eb]">
-                Star Us
+                Nosotros
                 <Image
                   src="/icons/github.svg"
                   width={16}
@@ -70,7 +70,7 @@ const Header = () => {
               rel="noopener noreferrer"
             >
               <Button className="bg-[#302442] text-white py-3 drop-shadow-xl hover:bg-[#2A2137]">
-                Join our Discord
+              Únase a nuestra discord
               </Button>
             </a>
           </li>

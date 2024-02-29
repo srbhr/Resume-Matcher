@@ -8,9 +8,9 @@ const firaSans = Fira_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Resume Matcher",
+  title: "Insigth cv student",
   description:
-    "An AI Based Free & Open Source ATS, Resume Matcher to tailor your resume to a job description. Find the best keywords, and gain deep insights into your resume.",
+    "Un ATS de código abierto y gratuito basado en IA, Insigth cv student para adaptar su currículum a la descripción del trabajo. Encuentre las mejores palabras clave y obtenga información detallada sobre su currículum.",
   keywords: ["Resume", "Matcher", "ATS", "Score"],
   authors: [
     { name: "Samurize", url: "https://github.com/srbhr" },
