@@ -298,7 +298,107 @@ data = [
     {'text': "{'resume': 'Harvey Dent",
         'query': 'Job Description Java Developer', 'score': 0.3616274}
 ]
+import yaml
+from qdrant_client import QdrantClient, models
+from qdrant_client.http.models import Batch
+import cohere
 
+def read_config(filepath):
+    try:
+        with open(filepath) as f:
+            config = yaml.safe_load(f)
+        return config
+    except FileNotFoundError as e:
+        print(f"Configuration file {filepath} not found: {e}")
+    except yaml.YAMLError as e:
+        print(f"Error parsing YAML in configuration file {filepath}: {e}")
+    except Exception as e:
+        print(f"Error reading configuration file {filepath}: {e}")
+    return None
+
+
+class QdrantSearch:
+    def __init__(self, resumes, jd):
+        config = read_config("../scripts/similarity/config.yml")
+
+
+
+        self.cohere_key = config['cohere']['api_key']
+        self.qdrant_key = config['qdrant']['api_key']
+        self.qdrant_url = config['qdrant']['url']
+        self.resumes = resumes
+        self.jd = jd
+
+        self.cohere = cohere.Client(self.cohere_key)
+
+        self.qdrant = QdrantClient(
+            url=self.qdrant_url,
+            api_key=self.qdrant_key,
+        )
+
+        vector_size = 4096
+        self.qdrant.recreate_collection(
+            collection_name="resume_matcher",
+            vectors_config=models.VectorParams(
+                size=vector_size,
+                distance=models.Distance.COSINE
+            )
+        )
+
+    def get_embedding(self, text):
+        embeddings = self.cohere.embed([text], "large").embeddings
+        return list(map(float, embeddings[0])), len(embeddings[0])
+
+    def update_qdrant(self):
+        vectors = []
+        ids = []
+        for i, resume in enumerate(self.resumes):
+            vector, size = self.get_embedding(resume)
+            vectors.append(vector)
+            ids.append(i)
+
+        self.qdrant.upsert(
+            collection_name="resume_matcher",
+            points=Batch(
+                ids=ids,
+                vectors=vectors,
+                payloads=[{"text": resume} for resume in self.resumes]
+
+            )
+        )
+
+    def search(self):
+        vector, _ = self.get_embedding(self.jd)
+
+        hits = self.qdrant.search(
+            collection_name="resume_matcher",
+            query_vector=vector,
+            limit=30
+        )
+        results = []
+        for hit in hits:
+            result = {
+                'text': str(hit.payload)[:30],
+                'score': hit.score
+            }
+            results.append(result)
+
+        return results
+import logging
+
+resumes =selected_file
+job_descriptions=selected_jd
+config = read_config("../scripts/similarity/config.yml")
+if not config:
+  print("Cannot process this as there is no config.yml")
+else:
+  qdrant_search = QdrantSearch(resumes, job_descriptions)
+
+  qdrant_search.update_qdrant()
+
+  results = qdrant_search.search()
+  for r in results:
+        print(r)
 # Create a DataFrame
 df = pd.DataFrame(data)
 
