@@ -1,5 +1,3 @@
-[![Resume Matcher + Hacktoberfest](Assets/img/Hacktoberfest_banner.png)](https://github.com/srbhr/Resume-Matcher/issues)
-
 [![Resume Matcher](Assets/img/header_image.png)](https://www.resumematcher.fyi)
 
 <div align="center">
@@ -206,9 +204,7 @@ To run the full stack web application (frontend client and backend api servers),
 3.  Visit [Qdrant website](https://cloud.qdrant.io/) and create an account.
 4.  Get your api key and cluster url.
 5.  Go to open dashboard in qdrant and enter your api key **for only the first time**
-
 <img src="Assets/img/quadrant_cloud.png" height="60%" width="60%"/>
-
 6.  Now create a yaml file named config.yml in Scripts/Similarity/ folder.
 7.  The format for the conifg file should be as below:
     ```yaml
@@ -245,18 +241,6 @@ Pull Requests & Issues are not just welcomed, they're celebrated! Let's create t
 📚 Contribute to the [Resume Matcher Docs](https://github.com/srbhr/Resume-Matcher-Docs) and help people get started with using the software.
 
 #### Tech Stack
-
-Current:
-
-- Python webapp in Streamlit.
-
-![Python](https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&color=blue&logoColor=green)
-
-
-
-In Development:
-
-- Check the [webapp](/webapp/) folder for a Next JS app in development. (In Development)
 
 ![Python](https://img.shields.io/badge/Python-FFD43B?style=flat-square&logo=python&logoColor=blue) ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white) ![Next JS](https://img.shields.io/badge/Next-black?style=flat-square&logo=next.js&logoColor=white) ![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=flat-square&logo=fastapi) ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=flat-square&logo=typescript&logoColor=white) ![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=flat-square&logo=html5&logoColor=white) ![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=flat-square&logo=css3&logoColor=white) ![& More](https://custom-icon-badges.demolab.com/badge/And_More-white?style=flat-square&logo=plus&logoColor=black)
 

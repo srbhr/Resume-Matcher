@@ -10,6 +10,10 @@ from streamlit_extras import add_vertical_space as avs
 from annotated_text import annotated_text, parameters
 from streamlit_extras.badges import badge
 import nltk
+
+# Set page configuration
+st.set_page_config(page_title='Resume Matcher', page_icon="Assets/img/favicon.ico", initial_sidebar_state='auto')
+
 nltk.download('punkt')
 
 parameters.SHOW_LABEL_SEPARATOR = False
@@ -114,36 +118,31 @@ def tokenize_string(input_string):
     return tokens
 
 
-st.image('Assets/img/header_image.png')
-
+# Display the main title and subheaders
 st.title(':blue[Resume Matcher]')
-st.subheader(
-    'Free and Open Source ATS to help your resume pass the screening stage.')
-st.markdown(
-    "Check the website [www.resumematcher.fyi](https://www.resumematcher.fyi/)")
-st.markdown(
-    '⭐ Give Resume Matcher a Star on [GitHub](https://github.com/srbhr/Resume-Matcher/)')
-badge(type="github", name="srbhr/Resume-Matcher")
+with st.sidebar:
+    st.image('Assets/img/header_image.png')
+    st.subheader('Free and Open Source ATS to help your resume pass the screening stage.')
+    st.markdown('Check the website [www.resumematcher.fyi](https://www.resumematcher.fyi/)')
 
-st.text('For updates follow me on Twitter.')
-badge(type="twitter", name="_srbhr_")
+    st.markdown('Give Resume Matcher a ⭐ on [GitHub](https://github.com/srbhr/resume-matcher)')
 
-st.markdown(
-    'If you like the project and would like to further help in development please consider 👇')
-badge(type="buymeacoffee", name="srbhr")
+    badge(type="github", name="srbhr/Resume-Matcher")
+    st.markdown('For updates follow me on Twitter.')
+    badge(type="twitter", name="_srbhr_")
+    st.markdown('If you like the project and would like to further help in development please consider 👇')
+    badge(type="buymeacoffee", name="srbhr")
 
-avs.add_vertical_space(5)
+st.divider()
+avs.add_vertical_space(1)
 
 resume_names = get_filenames_from_dir("Data/Processed/Resumes")
 
-st.write("There are", len(resume_names),
-         " resumes present. Please select one from the menu below:")
-output = st.slider('Select Resume Number', 0, len(resume_names)-1, 2)
+output = st.selectbox(f"There are {len(resume_names)} resumes present. Please select one from the menu below:", resume_names)
 
 avs.add_vertical_space(5)
 
-st.write("You have selected ", resume_names[output], " printing the resume")
-selected_file = read_json("Data/Processed/Resumes/"+resume_names[output])
+selected_file = read_json("Data/Processed/Resumes/"+output)
 
 avs.add_vertical_space(2)
 st.markdown("#### Parsed Resume Data")
@@ -195,17 +194,12 @@ avs.add_vertical_space(5)
 
 job_descriptions = get_filenames_from_dir("Data/Processed/JobDescription")
 
-st.write("There are", len(job_descriptions),
-         " resumes present. Please select one from the menu below:")
-output = st.slider('Select Job Description Number',
-                   0, len(job_descriptions)-1, 2)
+output = st.selectbox(f"There are {len(job_descriptions)} job descriptions present. Please select one from the menu below:", job_descriptions)
 
 avs.add_vertical_space(5)
 
-st.write("You have selected ",
-         job_descriptions[output], " printing the job description")
 selected_jd = read_json(
-    "Data/Processed/JobDescription/"+job_descriptions[output])
+    "Data/Processed/JobDescription/"+output)
 
 avs.add_vertical_space(2)
 st.markdown("#### Job Description")
@@ -342,13 +336,5 @@ plot_df(df4, 'Job Description Java Developer 3 Years of Experien')
 
 avs.add_vertical_space(3)
 
-st.markdown(
-    '⭐ Give Resume Matcher a Star on [GitHub](https://github.com/srbhr/Resume-Matcher/)')
-badge(type="github", name="srbhr/Resume-Matcher")
-
-st.text('For updates follow me on Twitter.')
-badge(type="twitter", name="_srbhr_")
-
-st.markdown(
-    'If you like the project and would like to further help in development please consider 👇')
-badge(type="buymeacoffee", name="srbhr")
+# Go back to top
+st.markdown('[:arrow_up: Back to Top](#resume-matcher)')
