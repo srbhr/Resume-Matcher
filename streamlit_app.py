@@ -12,9 +12,8 @@ from annotated_text import annotated_text, parameters
 from streamlit_extras import add_vertical_space as avs
 from streamlit_extras.badges import badge
 
-from scripts.similarity import get_similarity_score, find_path, read_config
 from scripts.utils import get_filenames_from_dir
-
+from scripts.similarity.get_score import *
 # Set page configuration
 st.set_page_config(page_title='Resume Matcher', page_icon="Assets/img/favicon.ico", initial_sidebar_state='auto')
 
@@ -264,19 +263,11 @@ st.write(fig)
 
 avs.add_vertical_space(3)
 
-config_file_path = config_path + "/config.yml"
-if os.path.exists(config_file_path):
-    config_data = read_config(config_file_path)
-    if config_data:
-        print("Config file parsed successfully:")
-        resume_string = ' '.join(selected_file["extracted_keywords"])
-        jd_string = ' '.join(selected_jd["extracted_keywords"])
-        result = get_similarity_score(resume_string, jd_string)
-        similarity_score = result[0]["score"]
-        st.write("Similarity Score obtained for the resume and job description is:", similarity_score)
-else:
-    print("Config file does not exist.")
-
+resume_string = ' '.join(selected_file["extracted_keywords"])
+jd_string = ' '.join(selected_jd["extracted_keywords"])
+result = get_score(resume_string, jd_string)
+similarity_score = result[0].score
+st.write("Similarity Score obtained for the resume and job description is:", similarity_score)
 
 # Go back to top
 st.markdown('[:arrow_up: Back to Top](#resume-matcher)')
