@@ -6,31 +6,32 @@ import cohere
 import yaml
 from qdrant_client import QdrantClient, models
 from qdrant_client.http.models import Batch
+from scripts.utils.logger import init_logging_config, get_handlers
 
-logging.basicConfig(
-    filename='app_similarity_score.log',
-    filemode='w',
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
-
+init_logging_config(basic_log_level=logging.INFO)
+# Get the logger
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
 
-console_handler = logging.StreamHandler()
-formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-console_handler.setFormatter(formatter)
-console_handler.setLevel(logging.DEBUG)
+# Set the logging level
+logger.setLevel(logging.INFO)
 
-file_handler = logging.FileHandler("app_similarity_score.log")
-file_handler.setLevel(logging.DEBUG)
-file_handler.setFormatter(formatter)
+stderr_handler, file_handler = get_handlers()
 
-logger.addHandler(file_handler)
-logger.addHandler(console_handler)
 
 
 def find_path(folder_name):
+    """
+    Find the path of a folder with the given name in the current directory or its parent directories.
+
+    Args:
+        folder_name (str): The name of the folder to search for.
+
+    Returns:
+        str: The path of the folder if found.
+
+    Raises:
+        ValueError: If the folder with the given name is not found in the current directory or its parent directories.
+    """
     curr_dir = os.getcwd()
     while True:
         if folder_name in os.listdir(curr_dir):
@@ -50,6 +51,21 @@ config_path = os.path.join(cwd, "scripts", "similarity")
 
 
 def read_config(filepath):
+    """
+    Reads a configuration file in YAML format and returns the parsed configuration.
+
+    Args:
+        filepath (str): The path to the configuration file.
+
+    Returns:
+        dict: The parsed configuration as a dictionary.
+
+    Raises:
+        FileNotFoundError: If the configuration file is not found.
+        yaml.YAMLError: If there is an error parsing the YAML in the configuration file.
+        Exception: If there is an error reading the configuration file.
+
+    """
     try:
         with open(filepath) as f:
             config = yaml.safe_load(f)
@@ -64,6 +80,18 @@ def read_config(filepath):
 
 
 def read_doc(path):
+    """
+    Read a JSON file and return its contents as a dictionary.
+
+    Args:
+        path (str): The path to the JSON file.
+
+    Returns:
+        dict: The contents of the JSON file as a dictionary.
+
+    Raises:
+        Exception: If there is an error reading the JSON file.
+    """
     with open(path) as f:
         try:
             data = json.load(f)
@@ -73,8 +101,22 @@ def read_doc(path):
     return data
 
 
+# This class likely performs searches based on quadrants.
 class QdrantSearch:
     def __init__(self, resumes, jd):
+        """
+        The function initializes various parameters and clients for processing resumes and job
+        descriptions.
+        
+        Args:
+          resumes: The `resumes` parameter in the `__init__` method seems to be a list of resumes that
+        is passed to the class constructor. It is likely used within the class for some processing or
+        analysis related to resumes. If you have any specific questions or need further assistance with
+        this parameter or any
+          jd: The `jd` parameter in the `__init__` method seems to represent a job description. It is
+        likely used as input to compare against the resumes provided in the `resumes` parameter. The job
+        description is probably used for matching and analyzing against the resumes in the system.
+        """
         config = read_config(config_path + "/config.yml")
         self.cohere_key = config['cohere']['api_key']
         self.qdrant_key = config['qdrant']['api_key']
@@ -100,10 +142,24 @@ class QdrantSearch:
 
         self.logger = logging.getLogger(self.__class__.__name__)
 
-        self.logger.addHandler(console_handler)
+        self.logger.addHandler(stderr_handler)
         self.logger.addHandler(file_handler)
 
     def get_embedding(self, text):
+        """
+        The function `get_embedding` takes a text input, generates embeddings using the Cohere API, and
+        returns the embeddings as a list of floats along with the length of the embeddings.
+        
+        Args:
+          text: The `text` parameter in the `get_embedding` function is a string that represents the
+        text for which you want to generate embeddings. This text will be passed to the Cohere API to
+        retrieve the embeddings for further processing.
+        
+        Returns:
+          The `get_embedding` function returns a tuple containing two elements:
+        1. A list of floating-point numbers representing the embeddings of the input text.
+        2. The length of the embeddings list.
+        """
         try:
             embeddings = self.cohere.embed([text], "large").embeddings
             return list(map(float, embeddings[0])), len(embeddings[0])
@@ -111,6 +167,10 @@ class QdrantSearch:
             self.logger.error(f"Error getting embeddings: {e}", exc_info=True)
 
     def update_qdrant(self):
+        """
+        This Python function updates vectors and corresponding metadata in a Qdrant collection based on
+        resumes.
+        """
         vectors = []
         ids = []
         for i, resume in enumerate(self.resumes):
@@ -131,6 +191,13 @@ class QdrantSearch:
             self.logger.error(f"Error upserting the vectors to the qdrant collection: {e}", exc_info=True)
 
     def search(self):
+        """
+        The `search` function retrieves search results based on a query vector using a specified
+        collection in a search engine.
+        
+        Returns:
+          A list of dictionaries containing the text and score of the search results.
+        """
         vector, _ = self.get_embedding(self.jd)
 
         hits = self.qdrant.search(
@@ -150,6 +217,24 @@ class QdrantSearch:
 
 
 def get_similarity_score(resume_string, job_description_string):
+    """
+    This Python function `get_similarity_score` calculates the similarity score between a resume and a
+    job description using QdrantSearch.
+    
+    Args:
+      resume_string: The `get_similarity_score` function seems to be using a `QdrantSearch` class to
+    calculate the similarity score between a resume and a job description. The `resume_string` parameter
+    likely contains the text content of a resume, while the `job_description_string` parameter contains
+    the text content of
+      job_description_string: The `job_description_string` parameter is a string containing the job
+    description for which you want to calculate the similarity score with a given resume. This
+    description typically includes details about the job requirements, responsibilities, qualifications,
+    and skills needed for the position. The function `get_similarity_score` takes this job description
+    
+    Returns:
+      The function `get_similarity_score` returns the search result obtained from comparing a resume
+    string with a job description string using a QdrantSearch object.
+    """
     logger.info("Started getting similarity score")
     qdrant_search = QdrantSearch([resume_string], job_description_string)
     qdrant_search.update_qdrant()

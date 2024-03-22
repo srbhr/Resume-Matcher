@@ -2,34 +2,34 @@ import json
 import logging
 import os
 from typing import List
-
+from scripts.utils.logger import init_logging_config
 import yaml
 from qdrant_client import QdrantClient
 
-logging.basicConfig(
-    filename='app_similarity_score.log',
-    filemode='w',
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
-
+init_logging_config(basic_log_level=logging.INFO)
+# Get the logger
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
 
-console_handler = logging.StreamHandler()
-formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-console_handler.setFormatter(formatter)
-console_handler.setLevel(logging.DEBUG)
-
-file_handler = logging.FileHandler("app_similarity_score.log")
-file_handler.setLevel(logging.DEBUG)
-file_handler.setFormatter(formatter)
-
-logger.addHandler(file_handler)
-logger.addHandler(console_handler)
+# Set the logging level
+logger.setLevel(logging.INFO)
 
 
 def find_path(folder_name):
+    """
+    The function `find_path` searches for a folder by name starting from the current directory and
+    traversing up the directory tree until the folder is found or the root directory is reached.
+    
+    Args:
+      folder_name: The `find_path` function you provided is designed to search for a folder by name
+    starting from the current working directory and moving up the directory tree until it finds the
+    folder or reaches the root directory.
+    
+    Returns:
+      The `find_path` function is designed to search for a folder with the given `folder_name` starting
+    from the current working directory (`os.getcwd()`). It iterates through the directory structure,
+    checking if the folder exists in the current directory or any of its parent directories. If the
+    folder is found, it returns the full path to that folder using `os.path.join(curr_dir, folder_name)`
+    """
     curr_dir = os.getcwd()
     while True:
         if folder_name in os.listdir(curr_dir):
@@ -49,6 +49,20 @@ config_path = os.path.join(cwd, "scripts", "similarity")
 
 
 def read_config(filepath):
+    """
+    The `read_config` function reads a configuration file in YAML format and handles exceptions related
+    to file not found or parsing errors.
+    
+    Args:
+      filepath: The `filepath` parameter in the `read_config` function is a string that represents the
+    path to the configuration file that you want to read and parse. This function attempts to open the
+    file specified by `filepath`, load its contents as YAML, and return the parsed configuration. If any
+    errors occur during
+    
+    Returns:
+      The function `read_config` will return the configuration loaded from the file if successful, or
+    `None` if there was an error during the process.
+    """
     try:
         with open(filepath) as f:
             config = yaml.safe_load(f)
@@ -63,6 +77,20 @@ def read_config(filepath):
 
 
 def read_doc(path):
+    """
+    The `read_doc` function reads a JSON file from the specified path and returns its contents, handling
+    any exceptions that may occur during the process.
+    
+    Args:
+      path: The `path` parameter in the `read_doc` function is a string that represents the file path to
+    the JSON document that you want to read and load. This function reads the JSON data from the file
+    located at the specified path.
+    
+    Returns:
+      The function `read_doc(path)` reads a JSON file located at the specified `path`, and returns the
+    data loaded from the file. If there is an error reading the JSON file, it logs the error message and
+    returns an empty dictionary `{}`.
+    """
     with open(path) as f:
         try:
             data = json.load(f)
@@ -73,6 +101,22 @@ def read_doc(path):
 
 
 def get_score(resume_string, job_description_string):
+    """
+    The function `get_score` uses QdrantClient to calculate the similarity score between a resume and a
+    job description.
+    
+    Args:
+      resume_string: The `resume_string` parameter is a string containing the text of a resume. It
+    represents the content of a resume that you want to compare with a job description.
+      job_description_string: The `get_score` function you provided seems to be using a QdrantClient to
+    calculate the similarity score between a resume and a job description. The function takes in two
+    parameters: `resume_string` and `job_description_string`, where `resume_string` is the text content
+    of the resume and
+    
+    Returns:
+      The function `get_score` returns the search result obtained by querying a QdrantClient with the
+    job description string against the resume string provided.
+    """
     logger.info("Started getting similarity score")
 
     documents: List[str] = [resume_string]

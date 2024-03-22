@@ -13,10 +13,12 @@ from streamlit_extras import add_vertical_space as avs
 from streamlit_extras.badges import badge
 
 from scripts.utils import get_filenames_from_dir
+from scripts.utils.logger import init_logging_config
 from scripts.similarity.get_score import *
 # Set page configuration
 st.set_page_config(page_title='Resume Matcher', page_icon="Assets/img/favicon.ico", initial_sidebar_state='auto')
 
+init_logging_config()
 cwd = find_path('Resume-Matcher')
 config_path = os.path.join(cwd, "scripts", "similarity")
 
@@ -266,8 +268,15 @@ avs.add_vertical_space(3)
 resume_string = ' '.join(selected_file["extracted_keywords"])
 jd_string = ' '.join(selected_jd["extracted_keywords"])
 result = get_score(resume_string, jd_string)
-similarity_score = result[0].score
-st.write("Similarity Score obtained for the resume and job description is:", similarity_score)
+similarity_score = round(result[0].score*100, 2)
+score_color = "green"
+if similarity_score < 60:
+    score_color = "red"
+elif 60 <= similarity_score < 75:
+    score_color = "orange"
+st.markdown(f'Similarity Score obtained for the resume and job description is '
+                    f'<span style="color:{score_color};font-size:24px; font-weight:Bold">{similarity_score}</span>',
+                    unsafe_allow_html=True)
 
 # Go back to top
 st.markdown('[:arrow_up: Back to Top](#resume-matcher)')

@@ -13,9 +13,9 @@ from annotated_text import annotated_text, parameters
 from streamlit_extras import add_vertical_space as avs
 from streamlit_extras.badges import badge
 
+from scripts.similarity.get_score import *
 from scripts import ResumeProcessor, JobDescriptionProcessor
 from scripts.ReadPdf import read_single_pdf
-from scripts.similarity import get_similarity_score, find_path, read_config
 from scripts.parsers import ParseResume
 from scripts.parsers import ParseJobDesc
 from scripts.utils import get_filenames_from_dir
@@ -275,6 +275,8 @@ with st.spinner('Please wait...'):
         selected_jd = jobDescriptionProcessor.get_JSON()
 
         # Add containers for each row to avoid overlap
+        
+        # Parsed data
         with st.container():
             resumeCol, jobDescriptionCol = st.columns(2)
             with resumeCol:
@@ -293,6 +295,7 @@ with st.spinner('Please wait...'):
                     avs.add_vertical_space(3)
                     st.write(selected_jd["clean_data"])
 
+        # Extracted keywords
         with st.container():
             resumeCol, jobDescriptionCol = st.columns(2)
             with resumeCol:
@@ -308,6 +311,7 @@ with st.spinner('Please wait...'):
                         selected_jd["clean_data"], selected_jd["extracted_keywords"],
                         "KW", "#0B666A"))
 
+        # Star graph visualization
         with st.container():
             resumeCol, jobDescriptionCol = st.columns(2)
             with resumeCol:
@@ -323,6 +327,7 @@ with st.spinner('Please wait...'):
                     # Call the function with your data
                     create_star_graph(selected_jd['keyterms'], "Entities from Job Description")
 
+        # Keywords and values
         with st.container():
             resumeCol, jobDescriptionCol = st.columns(2)
             with resumeCol:
@@ -362,6 +367,7 @@ with st.spinner('Please wait...'):
                                           ])
                     st.plotly_chart(fig, use_container_width=True)
 
+        # Treemaps
         with st.container():
             resumeCol, jobDescriptionCol = st.columns(2)
             with resumeCol:
@@ -379,28 +385,23 @@ with st.spinner('Please wait...'):
                     st.plotly_chart(fig, use_container_width=True)
 
         avs.add_vertical_space(2)
-        config_file_path = config_path + "/config.yml"
-        if os.path.exists(config_file_path):
-            config_data = read_config(config_file_path)
-            if config_data:
-                print("Config file parsed successfully:")
-                resume_string = ' '.join(selected_file["extracted_keywords"])
-                jd_string = ' '.join(selected_jd["extracted_keywords"])
-                result = get_similarity_score(resume_string, jd_string)
-                similarity_score = round(result[0]["score"] * 100, 2)
+        st.markdown("#### Similarity Score")
+        print("Config file parsed successfully:")
+        resume_string = ' '.join(selected_file["extracted_keywords"])
+        jd_string = ' '.join(selected_jd["extracted_keywords"])
+        result = get_score(resume_string, jd_string)
+        similarity_score = round(result[0].score*100, 2)
 
-                # Default color to green
-                score_color = "green"
-                if similarity_score < 60:
-                    score_color = "red"
-                elif 60 <= similarity_score < 75:
-                    score_color = "orange"
+        # Default color to green
+        score_color = "green"
+        if similarity_score < 60:
+            score_color = "red"
+        elif 60 <= similarity_score < 75:
+            score_color = "orange"
 
-                st.markdown(f'Similarity Score obtained for the resume and job description is '
-                            f'<span style="color:{score_color};font-size:24px; font-weight:Bold">{similarity_score}</span>',
-                            unsafe_allow_html=True)
-        else:
-            print("Config file does not exist.")
+        st.markdown(f'Similarity Score obtained for the resume and job description is '
+                    f'<span style="color:{score_color};font-size:24px; font-weight:Bold">{similarity_score}</span>',
+                    unsafe_allow_html=True)
 
         avs.add_vertical_space(2)
         with st.expander("Common words between Resume and Job Description:"):
