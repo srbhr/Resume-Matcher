@@ -116,3 +116,4 @@ easygui==0.98.3
 cohere~=4.19.2
 qdrant-client>=1.2
 xhtml2pdf==0.2.11
+fastembed~=0.2.2
