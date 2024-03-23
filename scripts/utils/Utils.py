@@ -1,14 +1,15 @@
-from uuid import uuid4
 import re
+from uuid import uuid4
+
 import spacy
 
 # Load the English model
-nlp = spacy.load('en_core_web_md')
+nlp = spacy.load("en_core_web_md")
 
 REGEX_PATTERNS = {
-    'email_pattern': r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b',
-    'phone_pattern': r"\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}",
-    'link_pattern': r'\b(?:https?://|www\.)\S+\b'
+    "email_pattern": r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b",
+    "phone_pattern": r"\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}",
+    "link_pattern": r"\b(?:https?://|www\.)\S+\b",
 }
 
 
@@ -38,7 +39,7 @@ class TextCleaner:
             str: The cleaned text.
         """
         for pattern in REGEX_PATTERNS:
-            text = re.sub(REGEX_PATTERNS[pattern], '', text)
+            text = re.sub(REGEX_PATTERNS[pattern], "", text)
         return text
 
     def clean_text(text):
@@ -54,8 +55,8 @@ class TextCleaner:
         text = TextCleaner.remove_emails_links(text)
         doc = nlp(text)
         for token in doc:
-            if token.pos_ == 'PUNCT':
-                text = text.replace(token.text, '')
+            if token.pos_ == "PUNCT":
+                text = text.replace(token.text, "")
         return str(text)
 
     def remove_stopwords(text):
@@ -71,7 +72,7 @@ class TextCleaner:
         doc = nlp(text)
         for token in doc:
             if token.is_stop:
-                text = text.replace(token.text, '')
+                text = text.replace(token.text, "")
         return text
 
 

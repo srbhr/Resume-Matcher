@@ -11,10 +11,10 @@ def list_to_matrix(list_to_convert, num_columns):
 
     matrix = []
     for i in range(len(list_to_convert) // num_columns):
-        matrix.append(list_to_convert[i * num_columns:(i + 1) * num_columns])
+        matrix.append(list_to_convert[i * num_columns : (i + 1) * num_columns])
 
     if len(list_to_convert) % num_columns > 0:
-        matrix.append(list_to_convert[-(len(list_to_convert) % num_columns):])
+        matrix.append(list_to_convert[-(len(list_to_convert) % num_columns) :])
 
     for i in range(len(matrix)):
         for j in range(len(matrix[i])):
@@ -40,10 +40,10 @@ def split_list(list_to_split, chunk_size):
 
     chunks = []
     for i in range(num_chunks):
-        chunks.append(list_to_split[i * chunk_size:(i + 1) * chunk_size])
+        chunks.append(list_to_split[i * chunk_size : (i + 1) * chunk_size])
 
     if remainder > 0:
-        chunks.append(list_to_split[num_chunks * chunk_size:])
+        chunks.append(list_to_split[num_chunks * chunk_size :])
 
     return chunks
 
@@ -53,10 +53,17 @@ def dirty_intersection(list1, list2):
     remainder_1 = [x for x in list1 if x not in intersection]
     remainder_2 = [x for x in list2 if x not in intersection]
 
-    output = pd.DataFrame({
-        'elements': ["Common words", "Words unique to Resume", "Words unique to Job Description"],
-        'values': [len(intersection), len(remainder_1), len(remainder_2)]
-    }, index=[1, 2, 3])
+    output = pd.DataFrame(
+        {
+            "elements": [
+                "Common words",
+                "Words unique to Resume",
+                "Words unique to Job Description",
+            ],
+            "values": [len(intersection), len(remainder_1), len(remainder_2)],
+        },
+        index=[1, 2, 3],
+    )
 
     return output
 
@@ -82,26 +89,27 @@ def find_intersection_of_lists(list1, list2):
         return max_value
 
     def fill_by_complements(num: int, list_to_fill: list):
-        if (num > len(list_to_fill)):
-            for i in range(num-len(list_to_fill)):
+        if num > len(list_to_fill):
+            for i in range(num - len(list_to_fill)):
                 list_to_fill.append(" ")
 
     intersection = list(set(list1) & set(list2))
     remainder_1 = [x for x in list1 if x not in intersection]
     remainder_2 = [x for x in list2 if x not in intersection]
 
-    max_count = max_of_three(
-        len(intersection), len(remainder_1), len(remainder_2))
+    max_count = max_of_three(len(intersection), len(remainder_1), len(remainder_2))
 
     fill_by_complements(max_count, intersection)
     fill_by_complements(max_count, remainder_1)
     fill_by_complements(max_count, remainder_2)
 
-    df = pd.DataFrame({
-        'intersection': intersection,
-        'remainder_1': remainder_1,
-        'remainder_2': remainder_2
-    })
+    df = pd.DataFrame(
+        {
+            "intersection": intersection,
+            "remainder_1": remainder_1,
+            "remainder_2": remainder_2,
+        }
+    )
 
     return df
 

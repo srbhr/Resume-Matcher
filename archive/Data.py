@@ -1,4 +1,5 @@
 import json
+
 from scripts.utils.ReadFiles import get_filenames_from_dir
 
 resume_path = "Data/Processed/Resumes"
@@ -14,20 +15,16 @@ def read_json(filename):
 def build_resume_list(resume_names, path):
     resumes = []
     for resume in resume_names:
-        selected_file = read_json(path + '/' + resume)
-        resumes.append({
-            "resume": selected_file["clean_data"]
-        })
+        selected_file = read_json(path + "/" + resume)
+        resumes.append({"resume": selected_file["clean_data"]})
     return resumes
 
 
 def build_jobdesc_list(jobdesc_names, path):
     resumes = []
     for resume in resume_names:
-        selected_file = read_json(path + '/' + resume)
-        resumes.append({
-            "resume": selected_file["clean_data"]
-        })
+        selected_file = read_json(path + "/" + resume)
+        resumes.append({"resume": selected_file["clean_data"]})
     return resumes
 
 

@@ -1,11 +1,13 @@
 import logging
 
 
-def get_handlers(filename="app.log", mode="w", file_level=logging.DEBUG, stderr_level=logging.DEBUG):
+def get_handlers(
+    filename="app.log", mode="w", file_level=logging.DEBUG, stderr_level=logging.DEBUG
+):
     """
     The function `get_handlers` returns a stream handler and a file handler with specified logging
     levels and formatters.
-    
+
     Args:
       filename: The `filename` parameter is the name of the log file where the log messages will be
     written. In this case, the default filename is "app.log". Defaults to app.log
@@ -18,7 +20,7 @@ def get_handlers(filename="app.log", mode="w", file_level=logging.DEBUG, stderr_
       stderr_level: The `stderr_level` parameter in the `get_handlers` function is used to specify the
     logging level for the StreamHandler that outputs log messages to the standard error stream (stderr).
     This level determines which log messages will be processed and output by the StreamHandler.
-    
+
     Returns:
       The `get_handlers` function returns two logging handlers: `stderr_handler` which is a
     StreamHandler for logging to stderr, and `file_handler` which is a FileHandler for logging to a file
@@ -30,13 +32,14 @@ def get_handlers(filename="app.log", mode="w", file_level=logging.DEBUG, stderr_
     stderr_handler.setFormatter(CustomFormatter())
 
     # File handler
-    file_handler = logging.FileHandler(filename,  mode=mode)
+    file_handler = logging.FileHandler(filename, mode=mode)
     file_handler.setLevel(file_level)
     file_handler.setFormatter(CustomFormatter(True))
-    
-    #TODO: Add RotatingFileHandler
+
+    # TODO: Add RotatingFileHandler
 
     return stderr_handler, file_handler
+
 
 class CustomFormatter(logging.Formatter):
     """
@@ -57,7 +60,7 @@ class CustomFormatter(logging.Formatter):
         """
         This function initializes logging formats with different colors and styles based on the log
         level.
-        
+
         Args:
           file: The `file` parameter in the `__init__` method is a boolean flag that determines whether
         the logging output should be colored or not. If `file` is `True`, the colors will not be applied
@@ -96,11 +99,18 @@ class CustomFormatter(logging.Formatter):
         formatter = logging.Formatter(log_fmt)
         return formatter.format(record)
 
-def init_logging_config(basic_log_level = logging.INFO, filename="app.log", mode="w", file_level=logging.DEBUG, stderr_level=logging.DEBUG):
+
+def init_logging_config(
+    basic_log_level=logging.INFO,
+    filename="app.log",
+    mode="w",
+    file_level=logging.DEBUG,
+    stderr_level=logging.DEBUG,
+):
     """
     The function `init_logging_config` initializes logging configuration in Python by setting basic log
     level, configuring handlers, and adding them to the logger.
-    
+
     Args:
       basic_log_level: The `basic_log_level` parameter is used to set the logging level for the root
     logger. In this function, it is set to `logging.INFO` by default, which means that log messages with
@@ -126,8 +136,10 @@ def init_logging_config(basic_log_level = logging.INFO, filename="app.log", mode
     logger.setLevel(basic_log_level)
 
     # Get the handlers
-    stderr_handler, file_handler = get_handlers(file_level=file_level, stderr_level=stderr_level, filename=filename, mode=mode)
-    
+    stderr_handler, file_handler = get_handlers(
+        file_level=file_level, stderr_level=stderr_level, filename=filename, mode=mode
+    )
+
     # Add the handlers
     logger.addHandler(stderr_handler)
     logger.addHandler(file_handler)

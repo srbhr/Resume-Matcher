@@ -1,12 +1,12 @@
-from .parsers import ParseResume
-from .parsers import ParseJobDesc
-from .ReadPdf import read_single_pdf
+import json
 import os.path
 import pathlib
-import json
 
-READ_RESUME_FROM = 'Data/Resumes/'
-SAVE_DIRECTORY = 'Data/Processed/Resumes'
+from .parsers import ParseJobDesc, ParseResume
+from .ReadPdf import read_single_pdf
+
+READ_RESUME_FROM = "Data/Resumes/"
+SAVE_DIRECTORY = "Data/Processed/Resumes"
 
 
 class ResumeProcessor:
@@ -34,8 +34,9 @@ class ResumeProcessor:
         return output
 
     def _write_json_file(self, resume_dictionary: dict):
-        file_name = str("Resume-" + self.input_file +
-                        resume_dictionary["unique_id"] + ".json")
+        file_name = str(
+            "Resume-" + self.input_file + resume_dictionary["unique_id"] + ".json"
+        )
         save_directory_name = pathlib.Path(SAVE_DIRECTORY) / file_name
         json_object = json.dumps(resume_dictionary, sort_keys=True, indent=14)
         with open(save_directory_name, "w+") as outfile:
