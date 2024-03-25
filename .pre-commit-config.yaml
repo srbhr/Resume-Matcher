@@ -1,11 +1,14 @@
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v2.3.0
+    rev: v4.5.0
     hooks:
+    -   id: trailing-whitespace
+    -   id: end-of-file-fixer
     -   id: check-yaml
     -   id: debug-statements
-    -   id: end-of-file-fixer
-    -   id: trailing-whitespace
+    -   id: double-quote-string-fixer
+    -   id: name-tests-test
+    -   id: requirements-txt-fixer
 -   repo: https://github.com/psf/black
     rev: 22.10.0
     hooks:
@@ -44,9 +47,7 @@ repos:
     hooks:
     - id: eradicate
       args: []
--   repo: https://github.com/rstcheck/rstcheck
-    rev: 'v6.1.2'
+-   repo: https://github.com/hhatto/autopep8
+    rev: v2.1.0
     hooks:
-    - id: rstcheck
-      additional_dependencies: [tomli]
-      args: [-r, --config, ./pyproject.toml]
+    -   id: autopep8
