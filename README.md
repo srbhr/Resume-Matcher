@@ -240,6 +240,7 @@ We also use [pre-commit](https://pre-commit.com/) to automatically check for com
 If you haven't already, please install the pre-commit hooks by running the following command in your terminal:
 
 ```sh
+pip install pre-commit
 pre-commit install
 ```
 
