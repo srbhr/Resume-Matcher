@@ -9,6 +9,10 @@ repos:
     -   id: double-quote-string-fixer
     -   id: name-tests-test
     -   id: requirements-txt-fixer
+-   repo: https://github.com/asottile/setup-cfg-fmt
+    rev: v2.5.0
+    hooks:
+    -   id: setup-cfg-fmt
 -   repo: https://github.com/psf/black
     rev: 22.10.0
     hooks:
