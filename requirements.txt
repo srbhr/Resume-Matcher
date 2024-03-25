@@ -17,7 +17,6 @@ decorator==5.1.1
 en-core-web-md @ https://github.com/explosion/spacy-models/releases/download/en_core_web_md-3.6.0/en_core_web_md-3.6.0-py3-none-any.whl#sha256=1618fc62e7aedc2b778caa3ea6e9c8280beac3b83fe7b93316cbb9e8f3abe7c5
 en-core-web-sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.6.0/en_core_web_sm-3.6.0-py3-none-any.whl#sha256=83276fc78a70045627144786b52e1f2728ad5e29e5e43916ec37ea9c26a11212
 Faker==19.1.0
-fastapi==0.109.1
 favicon==0.7.0
 floret==0.10.3
 fonttools==4.43.0
@@ -54,7 +53,6 @@ plotly==5.15.0
 preshed==3.0.8
 protobuf==4.23.4
 pyarrow==14.0.1
-pydantic==1.10.11
 pydeck==0.8.1b0
 Pygments==2.15.1
 pymdown-extensions==10.1
@@ -100,7 +98,7 @@ threadpoolctl==3.2.0
 toml==0.10.2
 toolz==0.12.0
 tornado==6.3.3
-tqdm==4.65.0
+tqdm
 typer==0.9.0
 typing_extensions==4.7.1
 tzdata==2023.3
@@ -113,7 +111,5 @@ watchdog==3.0.0
 zipp==3.16.2
 reportlab==3.6.13
 easygui==0.98.3
-cohere~=4.19.2
-qdrant-client>=1.2
 xhtml2pdf==0.2.11
 fastembed~=0.2.2
