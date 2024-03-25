@@ -222,6 +222,31 @@ To run the full stack web application (frontend client and backend api servers),
 
 <div align="center">
 
+
+## Code Formatting
+
+This project uses [Black](https://black.readthedocs.io/en/stable/) for code formatting. We believe this helps to keep the code base consistent and reduces the cognitive load when reading code.
+
+Before submitting your pull request, please make sure your changes are in accordance with the Black style guide. You can format your code by running the following command in your terminal:
+
+```sh
+black .
+```
+
+## Pre-commit Hooks
+
+We also use [pre-commit](https://pre-commit.com/) to automatically check for common issues before commits are submitted. This includes checks for code formatting with Black.
+
+If you haven't already, please install the pre-commit hooks by running the following command in your terminal:
+
+```sh
+pip install pre-commit
+pre-commit install
+```
+
+Now, the pre-commit hooks will automatically run every time you commit your changes. If any of the hooks fail, the commit will be aborted.
+
+
 ## Join Us, Contribute!
 
 </div>
