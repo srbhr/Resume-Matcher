@@ -98,7 +98,7 @@ Follow these steps to set up the environment and run the application.
       sudo apt-get install python-tk python3-tk tk-dev
 
       sudo apt-get install build-essential zlib1g-dev libffi-dev libssl-dev libbz2-dev libreadline-dev libsqlite3-dev liblzma-dev
-      
+
       ```
 
         - pyenv installer
@@ -109,12 +109,12 @@ Follow these steps to set up the environment and run the application.
      ```
        pyenv install -v 3.11.0
      ```
-     
-   - pyenv with virtual enviroment 
+
+   - pyenv with virtual enviroment
      ```
         pyenv virtualenv 3.11.0 venv
      ```
-     
+
    - Activate virtualenv with pyenv
      ```
         pyenv activate venv
@@ -195,6 +195,28 @@ To run the full stack web application (frontend client and backend api servers),
 
 <br/>
 
+## Code Formatting
+
+This project uses [Black](https://black.readthedocs.io/en/stable/) for code formatting. We believe this helps to keep the code base consistent and reduces the cognitive load when reading code.
+
+Before submitting your pull request, please make sure your changes are in accordance with the Black style guide. You can format your code by running the following command in your terminal:
+
+```sh
+black .
+```
+
+## Pre-commit Hooks
+
+We also use [pre-commit](https://pre-commit.com/) to automatically check for common issues before commits are submitted. This includes checks for code formatting with Black.
+
+If you haven't already, please install the pre-commit hooks by running the following command in your terminal:
+
+```sh
+pre-commit install
+```
+
+Now, the pre-commit hooks will automatically run every time you commit your changes. If any of the hooks fail, the commit will be aborted.
+
 ## Join Us, Contribute!
 
 Pull Requests & Issues are not just welcomed, they're celebrated! Let's create together.
@@ -209,5 +231,4 @@ Pull Requests & Issues are not just welcomed, they're celebrated! Let's create t
 
 🚀 Explore and improve our [Landing Page](https://github.com/srbhr/website-for-resume-matcher). PRs always welcome!
 
-📚 Contribute to the [Resume Matcher Docs](https://github.com/srbhr/Resume-Matcher-Docs) and help people get started with using the software. 
-
+📚 Contribute to the [Resume Matcher Docs](https://github.com/srbhr/Resume-Matcher-Docs) and help people get started with using the software.
