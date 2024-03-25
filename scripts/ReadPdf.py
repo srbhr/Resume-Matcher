@@ -1,5 +1,6 @@
-import os
 import glob
+import os
+
 from pypdf import PdfReader
 
 
@@ -14,7 +15,7 @@ def get_pdf_files(file_path):
         list: A list containing the paths of all the PDF files in the directory.
     """
     if os.path.exists(file_path):
-        return glob.glob(os.path.join(file_path, '*.pdf'))
+        return glob.glob(os.path.join(file_path, "*.pdf"))
     else:
         return []
 
@@ -33,7 +34,7 @@ def read_multiple_pdf(file_path: str) -> list:
     output = []
     for file in pdf_files:
         try:
-            with open(file, 'rb') as f:
+            with open(file, "rb") as f:
                 pdf_reader = PdfReader(f)
                 count = pdf_reader.getNumPages()
                 for i in range(count):
@@ -56,7 +57,7 @@ def read_single_pdf(file_path: str) -> str:
     """
     output = []
     try:
-        with open(file_path, 'rb') as f:
+        with open(file_path, "rb") as f:
             pdf_reader = PdfReader(f)
             count = len(pdf_reader.pages)
             for i in range(count):
@@ -79,7 +80,7 @@ def get_pdf_files(file_path: str) -> list:
     """
     pdf_files = []
     try:
-        pdf_files = glob.glob(os.path.join(file_path, '*.pdf'))
+        pdf_files = glob.glob(os.path.join(file_path, "*.pdf"))
     except Exception as e:
         print(f"Error getting PDF files from '{file_path}': {str(e)}")
     return pdf_files
