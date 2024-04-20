@@ -48,7 +48,7 @@ packaging==23.1
 pandas==2.0.3
 pathvalidate==3.2.0
 pathy==0.10.2
-Pillow==10.2.0
+Pillow==10.3.0
 plotly==5.15.0
 preshed==3.0.8
 protobuf==4.23.4
