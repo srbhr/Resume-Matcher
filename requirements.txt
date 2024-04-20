@@ -23,7 +23,7 @@ fonttools==4.43.0
 gitdb==4.0.10
 GitPython==3.1.41
 htbuilder==0.6.2
-idna==3.4
+idna==3.7
 importlib-metadata==6.8.0
 jellyfish==1.0.0
 Jinja2==3.1.3
