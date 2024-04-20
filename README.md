@@ -1,4 +1,4 @@
-[![Resume Matcher](Assets/img/header_image.png)](https://www.resumematcher.fyi)
+[![Resume Matcher](Assets/img/Resume_Matcher_GitHub_Banner.jpg)](https://www.resumematcher.fyi)
 
 <div align="center">
 
@@ -18,7 +18,7 @@
 <div align="center">
 
 ![Stars](https://img.shields.io/github/stars/srbhr/Resume-Matcher?style=flat-square&color=EA1179)
-![Apache 2.0](https://img.shields.io/github/license/srbhr/Resume-Matcher?style=flat-square&color=525FE1) ![Issues](https://img.shields.io/github/issues/srbhr/Resume-Matcher?style=flat-square&color=F86F03) ![Forks](https://img.shields.io/github/forks/srbhr/Resume-Matcher?style=flat-square&color=0079FF)
+![Apache 2.0](https://img.shields.io/github/license/srbhr/Resume-Matcher?style=flat-square&color=525FE1) ![Issues](https://img.shields.io/github/issues/srbhr/Resume-Matcher?style=flat-square&color=F86F03) ![Forks](https://img.shields.io/github/forks/srbhr/Resume-Matcher?style=flat-square&color=0079FF) ![Python](https://img.shields.io/badge/Python-3.10+-FFD43B?style=flat-square&logo=python&logoColor=blue)
 
 [![Discord](https://custom-icon-badges.demolab.com/badge/Discord-blue?style=flat-square&logo=discord&color=F0FF42&logoColor=293462)](https://discord.gg/t3Y9HEuV34) [![Twitter](https://img.shields.io/badge/@__srbhr__-000000?style=flat-square&logo=x&logoColor=white)](https://twitter.com/_srbhr_)
 [![Resume Matcher](https://custom-icon-badges.demolab.com/badge/www.resumematcher.fyi-gold?style=flat-square&logo=globe&logoColor=black)](https://www.resumematcher.fyi)
@@ -49,7 +49,7 @@ The process is as follows:
 
 3. **Key Terms Extraction**: Beyond keyword extraction, the tool uses textacy to identify the main key terms or themes in the job description. This step helps in understanding the broader context of what the resume is about.
 
-4. **Vector Similarity Using Qdrant**: The tool uses [Qdrant](https://github.com/qdrant/qdrant), a highly efficient vector similarity search tool, to measure how closely your resume matches the job description. The more similar they are, the higher the likelihood that your resume will pass the ATS screening.
+4. **Vector Similarity Using FastEmbedd**: The tool uses [FastEmbedd](https://github.com/qdrant/fastembed), a highly efficient embedding system, to measure how closely your resume matches the job description. The more similar they are, the higher the likelihood that your resume will pass the ATS screening.
 
 <br/>
 
@@ -197,6 +197,7 @@ To run the full stack web application (frontend client and backend api servers),
 4. Enter your ngrok token and run the notebook.
 5. Copy the url and open it in your browser.
 6. ![img_2.png](img_2.png)
+
 ### Cohere and Qdrant
 
 1.  Visit [Cohere website registration](https://dashboard.cohere.ai/welcome/register) and create an account.
@@ -205,8 +206,8 @@ To run the full stack web application (frontend client and backend api servers),
 4.  Get your api key and cluster url.
 5.  Go to open dashboard in qdrant and enter your api key **for only the first time**
 <img src="Assets/img/quadrant_cloud.png" height="60%" width="60%"/>
-6.  Now create a yaml file named config.yml in Scripts/Similarity/ folder.
-7.  The format for the conifg file should be as below:
+1.  Now create a yaml file named config.yml in Scripts/Similarity/ folder.
+2.  The format for the conifg file should be as below:
     ```yaml
     cohere:
       api_key: cohere_key
@@ -214,9 +215,12 @@ To run the full stack web application (frontend client and backend api servers),
       api_key: qdrant_api_key
       url: qdrant_cluster_url
     ```
-8.  Please replace your values without any quotes.
+3.  Please replace your values without any quotes.
 
 *Note: Please make sure that Qdrant_client's version is higher than v1.1*
+
+*Note: This part needs updating w.r.t to the new FastEmbed changes.*
+
 
 <br/>
 
