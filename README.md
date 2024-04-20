@@ -1,6 +1,6 @@
-[![Resume Matcher](Assets/img/Resume_Matcher_GitHub_Banner.jpg)](https://www.resumematcher.fyi)
-
 <div align="center">
+
+[![Resume Matcher](Assets/img/Resume_Matcher_GitHub_Banner.png)](https://www.resumematcher.fyi)
 
 # Resume Matcher
 
