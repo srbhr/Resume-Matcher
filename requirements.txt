@@ -113,3 +113,5 @@ reportlab==3.6.13
 easygui==0.98.3
 xhtml2pdf==0.2.11
 fastembed~=0.2.2
+cohere==5.3.2
+qdrant-client==1.8.2
