@@ -198,35 +198,6 @@ To run the full stack web application (frontend client and backend api servers),
 5. Copy the url and open it in your browser.
 6. ![img_2.png](img_2.png)
 
-### Cohere and Qdrant
-
-1.  Visit [Cohere website registration](https://dashboard.cohere.ai/welcome/register) and create an account.
-2.  Go to API keys and copy your cohere api key.
-3.  Visit [Qdrant website](https://cloud.qdrant.io/) and create an account.
-4.  Get your api key and cluster url.
-5.  Go to open dashboard in qdrant and enter your api key **for only the first time**
-<img src="Assets/img/quadrant_cloud.png" height="60%" width="60%"/>
-1.  Now create a yaml file named config.yml in Scripts/Similarity/ folder.
-2.  The format for the conifg file should be as below:
-    ```yaml
-    cohere:
-      api_key: cohere_key
-    qdrant:
-      api_key: qdrant_api_key
-      url: qdrant_cluster_url
-    ```
-3.  Please replace your values without any quotes.
-
-*Note: Please make sure that Qdrant_client's version is higher than v1.1*
-
-*Note: This part needs updating w.r.t to the new FastEmbed changes.*
-
-
-<br/>
-
-<div align="center">
-
-
 ## Code Formatting
 
 This project uses [Black](https://black.readthedocs.io/en/stable/) for code formatting. We believe this helps to keep the code base consistent and reduces the cognitive load when reading code.
@@ -253,7 +224,6 @@ Now, the pre-commit hooks will automatically run every time you commit your chan
 
 ## Join Us, Contribute!
 
-</div>
 
 Pull Requests & Issues are not just welcomed, they're celebrated! Let's create together.
 
