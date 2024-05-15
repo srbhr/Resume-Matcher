@@ -158,7 +158,7 @@ Follow these steps to set up the environment and run the application.
 8. Run the Application:
 
    ```python
-   streamlit run streamlit_app.py
+   streamlit run starter.py
    ```
 
 **Note**: For local versions, you do not need to run "streamlit_second.py" as it is specifically for deploying to Streamlit servers.

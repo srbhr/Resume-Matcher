@@ -250,19 +250,9 @@ with st.sidebar:
         "Free and Open Source ATS to help your resume pass the screening stage."
     )
     st.markdown(
-        "Check the website [www.resumematcher.fyi](https://www.resumematcher.fyi/)"
+         "Create your ATS Resume [www.atsresume.com](https://atsresume.vercel.app/)"
     )
-    st.markdown(
-        "Give Resume Matcher a ⭐ on [GitHub](https://github.com/srbhr/resume-matcher)"
-    )
-    badge(type="github", name="srbhr/Resume-Matcher")
-    st.markdown("For updates follow me on Twitter.")
-    badge(type="twitter", name="_srbhr_")
-    st.markdown(
-        "If you like the project and would like to further help in development please consider 👇"
-    )
-    badge(type="buymeacoffee", name="srbhr")
-
+    
 st.divider()
 avs.add_vertical_space(1)
 
