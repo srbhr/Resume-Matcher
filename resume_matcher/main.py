@@ -18,7 +18,9 @@ PROCESSED_JOB_DESCRIPTIONS_PATH = os.path.join(
 
 
 def get_filenames_from_dir(directory):
-    return [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))]
+    return [
+        f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))
+    ]
 
 
 def process_files(resume, job_description):
@@ -34,6 +36,3 @@ def process_files(resume, job_description):
         print(r.score)
     print(f"Processing resume: {resume}")
     print(f"Processing job description: {job_description}")
-
-
-

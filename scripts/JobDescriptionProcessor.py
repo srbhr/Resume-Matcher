@@ -4,6 +4,7 @@ import pathlib
 
 from .parsers import ParseJobDesc, ParseResume
 from .ReadPdf import read_single_pdf
+from .utils import make_sure_path_exists
 
 READ_JOB_DESCRIPTION_FROM = "Data/JobDescription/"
 SAVE_DIRECTORY = "Data/Processed/JobDescription"
@@ -41,6 +42,7 @@ class JobDescriptionProcessor:
             + ".json"
         )
         save_directory_name = pathlib.Path(SAVE_DIRECTORY) / file_name
+        make_sure_path_exists(SAVE_DIRECTORY)
         json_object = json.dumps(resume_dictionary, sort_keys=True, indent=14)
         with open(save_directory_name, "w+") as outfile:
             outfile.write(json_object)

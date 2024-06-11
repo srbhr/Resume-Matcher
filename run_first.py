@@ -18,8 +18,13 @@ def read_json(filename):
 
 
 def remove_old_files(files_path):
+    try:
+        filenames = os.listdir(files_path)
+    except FileNotFoundError:
+        logging.info(f"Directory {files_path} does not exist. No files to remove")
+        return
 
-    for filename in os.listdir(files_path):
+    for filename in filenames:
         try:
             file_path = os.path.join(files_path, filename)
 

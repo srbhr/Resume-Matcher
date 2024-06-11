@@ -145,3 +145,6 @@ scripts/similarity/config.yml
 # Processed or local files
 /Data/Processed/*
 *.local.pdf
+
+# ASDF version manager
+.tool-versions
