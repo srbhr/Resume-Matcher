@@ -7,8 +7,8 @@ from scripts.utils import get_filenames_from_dir, init_logging_config
 
 init_logging_config()
 
-PROCESSED_RESUMES_PATH = "Data/Processed/Resumes"
-PROCESSED_JOB_DESCRIPTIONS_PATH = "Data/Processed/JobDescription"
+PROCESSED_RESUMES_PATH = "Data/Resumes"
+PROCESSED_JOB_DESCRIPTIONS_PATH = "Data/JobDescription"
 
 
 def read_json(filename):
