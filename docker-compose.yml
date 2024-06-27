@@ -6,3 +6,7 @@ services:
         dockerfile : build.dockerfile
       ports:
         - 80:8501
+      
+      volumes:
+        - ./Data/Resumes:/data/Resume-Matcher/Data/Resumes
+        - ./Data/Processed:/data/Resume-Matcher/Data/Processed
