@@ -1,14 +1,16 @@
 import json
 import logging
 import os
+import traceback
+
 
 from scripts import JobDescriptionProcessor, ResumeProcessor
 from scripts.utils import get_filenames_from_dir, init_logging_config
 
 init_logging_config()
 
-PROCESSED_RESUMES_PATH = "Data/Processed/Resumes"
-PROCESSED_JOB_DESCRIPTIONS_PATH = "Data/Processed/JobDescription"
+PROCESSED_RESUMES_PATH = os.path.join(os.getcwd(), "Data", "Processed", "Resumes")
+PROCESSED_JOB_DESCRIPTIONS_PATH = os.path.join(os.getcwd(), "Data", "Processed", "JobDescription")
 
 
 def read_json(filename):
@@ -44,6 +46,7 @@ except:
     logging.error("There are no resumes present in the specified folder.")
     logging.error("Exiting from the program.")
     logging.error("Please add resumes in the Data/Resumes folder and try again.")
+    logging.error(str(traceback.format_exc()))
     exit(1)
 
 # Now after getting the file_names parse the resumes into a JSON Format.
@@ -66,6 +69,7 @@ except:
     logging.error("There are no job-description present in the specified folder.")
     logging.error("Exiting from the program.")
     logging.error("Please add resumes in the Data/JobDescription folder and try again.")
+    logging.error(str(traceback.format_exc())) 
     exit(1)
 
 # Now after getting the file_names parse the resumes into a JSON Format.
