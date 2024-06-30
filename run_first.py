@@ -9,6 +9,14 @@ from scripts.utils import get_filenames_from_dir, init_logging_config
 
 init_logging_config()
 
+processed_Path = os.path.join(os.getcwd(), "Data", "Processed")
+if not os.path.exists(os.path.join(processed_Path)):
+    logging.info('"/Processed/" directory structure is missing, setting up a new one.\n')
+    os.mkdir(processed_Path)
+    os.mkdir(os.path.join(processed_Path, "Resumes"))
+    os.mkdir(os.path.join(processed_Path, "Data"))
+
+
 PROCESSED_RESUMES_PATH = os.path.join(os.getcwd(), "Data", "Processed", "Resumes")
 PROCESSED_JOB_DESCRIPTIONS_PATH = os.path.join(os.getcwd(), "Data", "Processed", "JobDescription")
 
