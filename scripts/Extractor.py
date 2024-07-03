@@ -6,7 +6,7 @@ import spacy
 from .utils import TextCleaner
 
 # Load the English model
-nlp = spacy.load("en_core_web_sm")
+nlp = spacy.load('en_core_web_sm')
 
 
 RESUME_SECTIONS = [

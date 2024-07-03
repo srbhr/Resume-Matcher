@@ -1,9 +1,9 @@
-import logging
-from os import listdir
-from os.path import isfile, join
+import logging #logging module for logging messages
+from os import listdir #listdir function from o module for lostong directory contents
+from os.path import isfile, join #isfile and join functions from os.path module
 
-import easygui
-import requests
+import easygui #used for creating GUI dialogs
+import requests #requests library for making HTTP requests
 from bs4 import BeautifulSoup
 from pathvalidate import sanitize_filename
 from xhtml2pdf import pisa
