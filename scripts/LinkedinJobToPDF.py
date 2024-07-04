@@ -4,9 +4,9 @@ from os.path import isfile, join #isfile and join functions from os.path module
 
 import easygui #used for creating GUI dialogs
 import requests #requests library for making HTTP requests
-from bs4 import BeautifulSoup
-from pathvalidate import sanitize_filename
-from xhtml2pdf import pisa
+from bs4 import BeautifulSoup #used for HTML parsing
+from pathvalidate import sanitize_filename #import sanitize_filename from pathvalidate
+from xhtml2pdf import pisa #import pisa from xhtml2pdf for converting HTML to pdf
 
 """
 This script takes a LinkedIn job posting URL
@@ -21,14 +21,20 @@ and not the job search page.
 
 def linkedin_to_pdf(job_url: str):
 
-    job_path = "Data/JobDescription/"
-    job_description = ""
-    files_number = len([f for f in listdir(job_path) if isfile(join(job_path, f))])
+    job_path = "Data/JobDescription/" #define directory path where PDF files will be saved
+    job_description = "" #initialize an empty string to store the job description
+    files_number = len([f for f in listdir(job_path) if isfile(join(job_path, f))])  #count the number of files in the job_path directory
+    """
+    what does the isfile function do?
+        it is used to check whether a given path refers to a refular file.
+        it returns True if the path refers to a regular file and points to it, False otherwise.
+
+    """
 
     try:
-        page = requests.get(job_url)
+        page = requests.get(job_url) #send a GET request to retrieve the job posting page
 
-        if page.status_code != 200:
+        if page.status_code != 200:#check if the request was successful (status code 200)
             print(
                 f"Failed to retrieve the job posting at {job_url}. Status code: {page.status_code}"
             )
@@ -75,5 +81,6 @@ def linkedin_to_pdf(job_url: str):
 
 
 if __name__ == "__main__":
+    #prompt the user to enter the URL of the LinkedIn job posting 
     url = easygui.enterbox("Enter the URL of the LinkedIn Job Posting:").strip()
-    linkedin_to_pdf(url)
+    linkedin_to_pdf(url) #call linkedin_to_pdf function with the entered URL

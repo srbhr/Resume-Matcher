@@ -1,5 +1,5 @@
-import textacy
-from textacy import extract
+import textacy #used for text processing and analysis
+from textacy import extract #used for keytzrm extraction
 
 
 class KeytermExtractor:
@@ -15,9 +15,10 @@ class KeytermExtractor:
             raw_text (str): The raw input text.
             top_n_values (int): The number of top keyterms to extract.
         """
-        self.raw_text = raw_text
+        self.raw_text = raw_text #storing the raw input text
         self.text_doc = textacy.make_spacy_doc(self.raw_text, lang="en_core_web_md")
-        self.top_n_values = top_n_values
+        #convert raw text into a spaC document using a specified language medel (en_core_web_md)
+        self.top_n_values = top_n_values # store the number of top keyterms to extract
 
     def get_keyterms_based_on_textrank(self):
         """
@@ -29,6 +30,7 @@ class KeytermExtractor:
         return list(
             extract.keyterms.textrank(
                 self.text_doc, normalize="lemma", topn=self.top_n_values
+                #extract keyterms using the TextRank algorithm, normalizing by lemma and limiting by top_n_values
             )
         )
 
@@ -104,3 +106,18 @@ class KeytermExtractor:
                 filter_punct=True,
             )
         )
+"""
+    algorithms explanantion:
+
+    TextRank:
+    it's an unsupervised graph-based algorithm inspired by PageRank,
+    which is used for web search. it is used to extract keyphrases  or summarize text.
+
+    SGRank:
+    (Salient Grammar Ranking) is a statistical, graph-based rankin algorithm
+    for keyphrase extraction that uses features and statitical measures.
+
+    sCake:
+    (Simple Cake) is a light-weight unsupervised keyphrase extraction algorithm. it is 
+    designed to be simple and fast while maintaining good performance.
+"""
