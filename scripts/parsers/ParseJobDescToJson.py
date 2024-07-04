@@ -12,6 +12,11 @@ SAVE_DIRECTORY = "../../Data/Processed/JobDescription"
 class ParseJobDesc:
 
     def __init__(self, job_desc: str):
+        """
+        __init(self, job_desc:str) is the constructor that initializes the ParseJobDescToJson
+        object with the provided job decription text.
+
+        """
         self.job_desc_data = job_desc
         self.clean_data = TextCleaner.clean_text(self.job_desc_data)
         self.entities = DataExtractor(self.clean_data).extract_entities()
@@ -38,3 +43,7 @@ class ParseJobDesc:
         }
 
         return job_desc_dictionary
+""" 
+    this code allows to extract the data from the passed job_desc parameter store it in variables
+    and creates a dictionary of the important data to help easen the lecture and manipulation of this data
+"""
