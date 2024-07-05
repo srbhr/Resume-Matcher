@@ -13,7 +13,7 @@ from annotated_text import annotated_text, parameters
 from streamlit_extras import add_vertical_space as avs
 from streamlit_extras.badges import badge
 
-from scripts import ResumeProcessor
+from scripts import JobDescriptionProcessor, ResumeProcessor
 from scripts.similarity.get_score import *
 from scripts.utils import get_filenames_from_dir
 from scripts.utils.logger import init_logging_config
@@ -185,15 +185,33 @@ def process_ResumeToProcess(ResumeToProcess):
     # Process the file using the ResumeProcessor class
     processor = ResumeProcessor(temp_file_path)
     processed_file_path = processor.process()
-
+    
     if processed_file_path:
         st.success("File processed successfully!")
     else:
         st.error("Error processing the file.")
 
-    # Construct processed file path
-    processed_file_path = pathlib.Path(PROCESSED_RESUMES_DIR) / f"{ResumeToProcess.name}.json"
     return processed_file_path  # Return the processed file path as a string
+
+def process_JobDescriptionToProcess(JobDescriptionToProcess):
+    # Save uploaded file temporarily
+    temp_file_path = pathlib.Path(TEMP_DIR_RESUME) / JobDescriptionToProcess.name
+    temp_file_path.parent.mkdir(parents=True, exist_ok=True)
+    
+    with open(temp_file_path, "wb") as f:
+        f.write(JobDescriptionToProcess.getbuffer())
+
+    # Process the file using the JobDescriptionProcessor class
+    processor = JobDescriptionProcessor(temp_file_path)
+    jd_processed_file_path = processor.process()
+    
+    print(jd_processed_file_path)
+    if jd_processed_file_path:
+        st.success("File processed successfully!")
+    else:
+        st.error("Error processing the file.")
+
+    return jd_processed_file_path
 
 # Display the main title and subheaders
 st.title(":blue[Resume Matcher]")
@@ -209,10 +227,10 @@ with st.sidebar:
 st.divider()
 avs.add_vertical_space(1)
 
-resume_names = get_filenames_from_dir("Data/Processed/Resumes")
-
 # Upload resume
 ResumeToProcess = st.file_uploader("Upload a resume file")
+
+resume_string =""
 
 if ResumeToProcess is not None:
     processed_file_path = process_ResumeToProcess(ResumeToProcess)
@@ -224,16 +242,13 @@ if ResumeToProcess is not None:
             if os.path.exists(processed_file_path):
                 selected_file = read_json(processed_file_path)
 
-                st.write("Now let's take a look at the extracted keywords from the resume.")
-
                 annotated_text_content = annotated_text(
                         selected_file["clean_data"],
                         selected_file["extracted_keywords"],
                         "KW",
                         "#0B666A",
                 )
-
-                create_star_graph(selected_file["keyterms"], "Entities from Resume")
+                resume_string = " ".join(selected_file["extracted_keywords"])
 
                 df2 = pd.DataFrame(selected_file["keyterms"], columns=["keyword", "value"])
                 keyword_dict = {keyword: value * 100 for keyword, value in selected_file["keyterms"]}
@@ -242,7 +257,7 @@ if ResumeToProcess is not None:
                         header=dict(values=["Keyword", "Value"], font=dict(size=12), fill_color="#070A52"),
                         cells=dict(values=[list(keyword_dict.keys()), list(keyword_dict.values())],
                                    line_color="darkslategray", fill_color="#6DA9E4"))])
-                st.plotly_chart(fig_table)
+                
 
                 fig_treemap = px.treemap(
                         df2,
@@ -260,5 +275,80 @@ if ResumeToProcess is not None:
             st.error(f"Error loading the processed resume file: {e}")
 
 
-avs.add_vertical_space(5)
+st.divider()
+avs.add_vertical_space(1)
 
+# Upload JobDescription
+JobDescriptionToProcess = st.file_uploader("Upload a job description file")
+
+jd_string =""
+
+if JobDescriptionToProcess is not None:
+    processed_file_path = process_ResumeToProcess(JobDescriptionToProcess)
+
+    if processed_file_path:
+        st.write(f"Uploaded file: {JobDescriptionToProcess.name}")
+
+        try:
+            if os.path.exists(processed_file_path):
+                jd_string = read_json(processed_file_path)
+
+                annotated_text_content = annotated_text(
+                        jd_string["clean_data"],
+                        jd_string["extracted_keywords"],
+                        "KW",
+                        "#0B666A",
+                )
+                jd_string = " ".join(jd_string["extracted_keywords"])
+
+                df2 = pd.DataFrame(selected_file["keyterms"], columns=["keyword", "value"])
+                keyword_dict = {keyword: value * 100 for keyword, value in selected_file["keyterms"]}
+                    
+                fig_table = go.Figure(data=[go.Table(
+                        header=dict(values=["Keyword", "Value"], font=dict(size=12), fill_color="#070A52"),
+                        cells=dict(values=[list(keyword_dict.keys()), list(keyword_dict.values())],
+                                   line_color="darkslategray", fill_color="#6DA9E4"))])
+                
+
+                fig_treemap = px.treemap(
+                        df2,
+                        path=["keyword"],
+                        values="value",
+                        color_continuous_scale="Rainbow",
+                        title="Key Terms/Topics Extracted from your Resume",
+                    )
+                st.plotly_chart(fig_treemap)
+
+        except json.JSONDecodeError as e:
+            st.error(f"JSON Decode Error: {e}")
+
+        except Exception as e:
+            st.error(f"Error loading the processed resume file: {e}")
+
+avs.add_vertical_space(3)
+if resume_string!="" and jd_string!="":
+    result = get_score(resume_string, jd_string)
+    similarity_score = round(result[0].score * 100, 2)
+    score_color = "green"
+    if similarity_score < 60:
+        score_color = "red"
+    elif 60 <= similarity_score < 75:
+        score_color = "orange"
+    st.markdown(
+        f"Similarity Score obtained for the resume and job description is "
+        f'<span style="color:{score_color};font-size:24px; font-weight:Bold">{similarity_score}</span>',
+        unsafe_allow_html=True,
+    )
+else:
+    similarity_scor=0.0
+    st.markdown(
+        f"Similarity Score obtained for the resume and job description is "
+        f'<span style="color:{"red"};font-size:24px; font-weight:Bold">{similarity_score}</span>',
+        unsafe_allow_html=True,
+    )
+resume_string = " ".join(selected_file["extracted_keywords"])
+jd_string = " ".join(selected_jd["extracted_keywords"])
+
+
+# Go back to top
+st.markdown("[:arrow_up: Back to Top](#resume-matcher)")

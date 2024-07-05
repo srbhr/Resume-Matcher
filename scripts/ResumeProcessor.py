@@ -16,14 +16,14 @@ class ResumeProcessor:
         self.input_file_name=self.input_file
 
 
-    def process(self):
+    def process(self)-> bool:
         try:
             resume_dict = self._read_resumes()
             saved_file_name = self._write_json_file(resume_dict)
             return saved_file_name
         except Exception as e:
             print(f"An error occurred: {str(e)}")
-            return None, None
+            return False
 
     def _read_resumes(self) -> dict:
         data = read_single_pdf(self.input_file_name) #read Pdf file specificated by input _file_name
