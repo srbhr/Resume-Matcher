@@ -236,7 +236,7 @@ if ResumeToProcess is not None:
     processed_file_path = process_ResumeToProcess(ResumeToProcess)
 
     if processed_file_path:
-        st.write(f"Uploaded file: {ResumeToProcess.name}")
+        #st.write(f"Uploaded file: {ResumeToProcess.name}")
 
         try:
             if os.path.exists(processed_file_path):
@@ -288,7 +288,7 @@ if JobDescriptionToProcess is not None:
     processed_file_path = process_ResumeToProcess(JobDescriptionToProcess)
 
     if processed_file_path:
-        st.write(f"Uploaded file: {JobDescriptionToProcess.name}")
+        #st.write(f"Uploaded file: {JobDescriptionToProcess.name}")
 
         try:
             if os.path.exists(processed_file_path):
