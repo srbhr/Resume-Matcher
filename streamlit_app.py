@@ -240,6 +240,7 @@ if ResumeToProcess is not None:
 
         try:
             if os.path.exists(processed_file_path):
+                st.write("processed resume: ")
                 selected_file = read_json(processed_file_path)
 
                 annotated_text_content = annotated_text(
@@ -291,6 +292,7 @@ if JobDescriptionToProcess is not None:
 
         try:
             if os.path.exists(processed_file_path):
+                st.write("Processed Job description :")
                 jd_string = read_json(processed_file_path)
 
                 annotated_text_content = annotated_text(
@@ -315,7 +317,7 @@ if JobDescriptionToProcess is not None:
                         path=["keyword"],
                         values="value",
                         color_continuous_scale="Rainbow",
-                        title="Key Terms/Topics Extracted from your Resume",
+                        title="Key Terms/Topics Extracted from your Job Description",
                     )
                 st.plotly_chart(fig_treemap)
 
@@ -340,7 +342,7 @@ if resume_string!="" and jd_string!="":
         unsafe_allow_html=True,
     )
 else:
-    similarity_scor=0.0
+    similarity_score=0.0
     st.markdown(
         f"Similarity Score obtained for the resume and job description is "
         f'<span style="color:{"red"};font-size:24px; font-weight:Bold">{similarity_score}</span>',
