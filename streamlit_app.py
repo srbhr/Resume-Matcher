@@ -16,6 +16,27 @@ from scripts.similarity.get_score import *
 from scripts.utils import get_filenames_from_dir
 from scripts.utils.logger import init_logging_config
 
+# Define a temporary directory for uploaded files
+TEMP_DIR = "temp_uploaded_files"
+
+def process_uploaded_file(uploaded_file):
+    # Save uploaded file temporarily
+    temp_file_path = pathlib.Path(TEMP_DIR) / uploaded_file.name
+    temp_file_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(temp_file_path, "wb") as f:
+        f.write(uploaded_file.getbuffer())
+
+    # Process the file using the ResumeProcessor class
+    processor = ResumeProcessor(str(temp_file_path))
+    success = processor.process()
+
+    if success:
+        st.success("File processed successfully!")
+    else:
+        st.error("Error processing the file.")
+    
+    return str(temp_file_path)
+
 # Set page configuration
 st.set_page_config(
     page_title="Resume Matcher",
@@ -110,7 +131,7 @@ def create_star_graph(nodes_and_weights, title):
     node_trace.marker.color = node_adjacencies
     node_trace.text = node_text
 
-    # Create the figure
+    """# Create the figure
     fig = go.Figure(
         data=[edge_trace, node_trace],
         layout=go.Layout(
@@ -125,7 +146,7 @@ def create_star_graph(nodes_and_weights, title):
     )
 
     # Show the figure
-    st.plotly_chart(fig)
+    st.plotly_chart(fig)"""
 
 
 def create_annotated_text(
@@ -162,7 +183,7 @@ def tokenize_string(input_string):
     tokens = nltk.word_tokenize(input_string)
     return tokens
 
-
+"""To remove what ever is on hte side bar"""
 # Display the main title and subheaders
 st.title(":blue[Resume Matcher]")
 with st.sidebar:
@@ -188,7 +209,7 @@ with st.sidebar:
 
 st.divider()
 avs.add_vertical_space(1)
-
+#here for the files
 resume_names = get_filenames_from_dir("Data/Processed/Resumes")
 
 
