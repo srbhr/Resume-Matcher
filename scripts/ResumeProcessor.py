@@ -16,14 +16,14 @@ class ResumeProcessor:
         self.input_file_name=self.input_file
 
 
-    def process(self) -> bool:
+    def process(self):
         try:
-            resume_dict = self._read_resumes() #call _read_resumes methode to read and parse resume data
-            self._write_json_file(resume_dict) #call _write_jason_file methode to save parsed resume data as JSON
-            return True
+            resume_dict = self._read_resumes()
+            saved_file_name = self._write_json_file(resume_dict)
+            return saved_file_name
         except Exception as e:
             print(f"An error occurred: {str(e)}")
-            return False
+            return None, None
 
     def _read_resumes(self) -> dict:
         data = read_single_pdf(self.input_file_name) #read Pdf file specificated by input _file_name
@@ -46,3 +46,4 @@ class ResumeProcessor:
         json_object = json.dumps(resume_dictionary, sort_keys=True, indent=14) #convert resume_dictionary to JSON format with sortingand indentation 
         with open(save_directory_name, "w+") as outfile: #open file for writing
             outfile.write(json_object) #write JSON data to the file
+        return save_directory_name  # Return the file path as a string

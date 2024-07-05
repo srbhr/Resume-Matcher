@@ -53,7 +53,7 @@ try:
     # If present then parse it.
     remove_old_files(PROCESSED_RESUMES_PATH) #removing the old processed resumes
 
-    file_names = get_filenames_from_dir("Data/Resumes")
+    file_names = get_filenames_from_dir("temp_uploaded_files")
     logging.info("Reading from Data/Resumes is now complete.")
 except:
     # Exit the program if there are no resumes.

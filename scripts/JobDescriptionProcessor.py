@@ -32,8 +32,8 @@ class JobDescriptionProcessor:
         """
         try:
             resume_dict = self._read_resumes() #call _read_resumes() method to read and parse resume data
-            self._write_json_file(resume_dict) #call _write_json_file() method to save parsed resume data as JSON
-            return True
+            saved_file_name =self._write_json_file(resume_dict) #call _write_json_file() method to save parsed resume data as JSON
+            return saved_file_name
         except Exception as e:
             print(f"An error occurred: {str(e)}")
             return False
@@ -73,3 +73,4 @@ class JobDescriptionProcessor:
         json_object = json.dumps(resume_dictionary, sort_keys=True, indent=14) #convert resume_dictionnary to JSON with sorting and indentation
         with open(save_directory_name, "w+") as outfile: #open file for writing
             outfile.write(json_object) #Write JSON data to the file
+        return save_directory_name
