@@ -346,9 +346,6 @@ else:
         f'<span style="color:{"red"};font-size:24px; font-weight:Bold">{similarity_score}</span>',
         unsafe_allow_html=True,
     )
-resume_string = " ".join(selected_file["extracted_keywords"])
-jd_string = " ".join(selected_jd["extracted_keywords"])
-
 
 # Go back to top
 st.markdown("[:arrow_up: Back to Top](#resume-matcher)")
