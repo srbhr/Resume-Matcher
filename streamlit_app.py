@@ -1,5 +1,6 @@
 import json
 import os
+import pathlib
 from typing import List
 
 import networkx as nx
@@ -12,9 +13,18 @@ from annotated_text import annotated_text, parameters
 from streamlit_extras import add_vertical_space as avs
 from streamlit_extras.badges import badge
 
+from scripts import ResumeProcessor
 from scripts.similarity.get_score import *
 from scripts.utils import get_filenames_from_dir
 from scripts.utils.logger import init_logging_config
+
+# Define a temporary directory for uploaded files
+TEMP_DIR_RESUME = "temp_ResumeToProcesss"
+PROCESSED_RESUMES_DIR = "Data/Processed/Resumes"
+
+# Define a temporary directory for uploaded files
+TEMP_DIR_JOBDECRIPTION = "temp_JobDescriptionToProcesss"
+PROCESSED_JOBDESCRIPTION_DIR = "Data/Processed/JobDescription"
 
 # Set page configuration
 st.set_page_config(
@@ -35,6 +45,8 @@ except LookupError:
 parameters.SHOW_LABEL_SEPARATOR = False
 parameters.BORDER_RADIUS = 3
 parameters.PADDING = "0.5 0.25rem"
+
+
 
 
 def create_star_graph(nodes_and_weights, title):
@@ -162,6 +174,26 @@ def tokenize_string(input_string):
     tokens = nltk.word_tokenize(input_string)
     return tokens
 
+def process_ResumeToProcess(ResumeToProcess):
+    # Save uploaded file temporarily
+    temp_file_path = pathlib.Path(TEMP_DIR_RESUME) / ResumeToProcess.name
+    temp_file_path.parent.mkdir(parents=True, exist_ok=True)
+    
+    with open(temp_file_path, "wb") as f:
+        f.write(ResumeToProcess.getbuffer())
+
+    # Process the file using the ResumeProcessor class
+    processor = ResumeProcessor(temp_file_path)
+    processed_file_path = processor.process()
+
+    if processed_file_path:
+        st.success("File processed successfully!")
+    else:
+        st.error("Error processing the file.")
+
+    # Construct processed file path
+    processed_file_path = pathlib.Path(PROCESSED_RESUMES_DIR) / f"{ResumeToProcess.name}.json"
+    return processed_file_path  # Return the processed file path as a string
 
 # Display the main title and subheaders
 st.title(":blue[Resume Matcher]")
@@ -174,184 +206,59 @@ with st.sidebar:
         "Check the website [www.resumematcher.fyi](https://www.resumematcher.fyi/)"
     )
 
-    st.markdown(
-        "Give Resume Matcher a ⭐ on [GitHub](https://github.com/srbhr/resume-matcher)"
-    )
-
-    badge(type="github", name="srbhr/Resume-Matcher")
-    st.markdown("For updates follow me on Twitter.")
-    badge(type="twitter", name="_srbhr_")
-    st.markdown(
-        "If you like the project and would like to further help in development please consider 👇"
-    )
-    badge(type="buymeacoffee", name="srbhr")
-
 st.divider()
 avs.add_vertical_space(1)
 
 resume_names = get_filenames_from_dir("Data/Processed/Resumes")
 
+# Upload resume
+ResumeToProcess = st.file_uploader("Upload a resume file")
 
-st.markdown(
-    f"##### There are {len(resume_names)} resumes present. Please select one from the menu below:"
-)
-output = st.selectbox(f"", resume_names)
+if ResumeToProcess is not None:
+    processed_file_path = process_ResumeToProcess(ResumeToProcess)
 
+    if processed_file_path:
+        st.write(f"Uploaded file: {ResumeToProcess.name}")
 
-avs.add_vertical_space(5)
+        try:
+            if os.path.exists(processed_file_path):
+                selected_file = read_json(processed_file_path)
 
-# st.write("You have selected ", output, " printing the resume")
-selected_file = read_json("Data/Processed/Resumes/" + output)
+                st.write("Now let's take a look at the extracted keywords from the resume.")
 
-avs.add_vertical_space(2)
-st.markdown("#### Parsed Resume Data")
-st.caption(
-    "This text is parsed from your resume. This is how it'll look like after getting parsed by an ATS."
-)
-st.caption("Utilize this to understand how to make your resume ATS friendly.")
-avs.add_vertical_space(3)
-# st.json(selected_file)
-st.write(selected_file["clean_data"])
+                annotated_text_content = annotated_text(
+                        selected_file["clean_data"],
+                        selected_file["extracted_keywords"],
+                        "KW",
+                        "#0B666A",
+                )
 
-avs.add_vertical_space(3)
-st.write("Now let's take a look at the extracted keywords from the resume.")
+                create_star_graph(selected_file["keyterms"], "Entities from Resume")
 
-annotated_text(
-    create_annotated_text(
-        selected_file["clean_data"],
-        selected_file["extracted_keywords"],
-        "KW",
-        "#0B666A",
-    )
-)
+                df2 = pd.DataFrame(selected_file["keyterms"], columns=["keyword", "value"])
+                keyword_dict = {keyword: value * 100 for keyword, value in selected_file["keyterms"]}
+                    
+                fig_table = go.Figure(data=[go.Table(
+                        header=dict(values=["Keyword", "Value"], font=dict(size=12), fill_color="#070A52"),
+                        cells=dict(values=[list(keyword_dict.keys()), list(keyword_dict.values())],
+                                   line_color="darkslategray", fill_color="#6DA9E4"))])
+                st.plotly_chart(fig_table)
 
-avs.add_vertical_space(5)
-st.write("Now let's take a look at the extracted entities from the resume.")
+                fig_treemap = px.treemap(
+                        df2,
+                        path=["keyword"],
+                        values="value",
+                        color_continuous_scale="Rainbow",
+                        title="Key Terms/Topics Extracted from your Resume",
+                    )
+                st.plotly_chart(fig_treemap)
 
-# Call the function with your data
-create_star_graph(selected_file["keyterms"], "Entities from Resume")
+        except json.JSONDecodeError as e:
+            st.error(f"JSON Decode Error: {e}")
 
-df2 = pd.DataFrame(selected_file["keyterms"], columns=["keyword", "value"])
-
-# Create the dictionary
-keyword_dict = {}
-for keyword, value in selected_file["keyterms"]:
-    keyword_dict[keyword] = value * 100
-
-fig = go.Figure(
-    data=[
-        go.Table(
-            header=dict(
-                values=["Keyword", "Value"], font=dict(size=12), fill_color="#070A52"
-            ),
-            cells=dict(
-                values=[list(keyword_dict.keys()), list(keyword_dict.values())],
-                line_color="darkslategray",
-                fill_color="#6DA9E4",
-            ),
-        )
-    ]
-)
-st.plotly_chart(fig)
-
-st.divider()
-
-fig = px.treemap(
-    df2,
-    path=["keyword"],
-    values="value",
-    color_continuous_scale="Rainbow",
-    title="Key Terms/Topics Extracted from your Resume",
-)
-st.write(fig)
-
-avs.add_vertical_space(5)
-
-job_descriptions = get_filenames_from_dir("Data/Processed/JobDescription")
-
-
-st.markdown(
-    f"##### There are {len(job_descriptions)} job descriptions present. Please select one from the menu below:"
-)
-output = st.selectbox("", job_descriptions)
+        except Exception as e:
+            st.error(f"Error loading the processed resume file: {e}")
 
 
 avs.add_vertical_space(5)
 
-selected_jd = read_json("Data/Processed/JobDescription/" + output)
-
-avs.add_vertical_space(2)
-st.markdown("#### Job Description")
-st.caption(
-    "Currently in the pipeline I'm parsing this from PDF but it'll be from txt or copy paste."
-)
-avs.add_vertical_space(3)
-# st.json(selected_file)
-st.write(selected_jd["clean_data"])
-
-st.markdown("#### Common Words between Job Description and Resumes Highlighted.")
-
-annotated_text(
-    create_annotated_text(
-        selected_file["clean_data"], selected_jd["extracted_keywords"], "JD", "#F24C3D"
-    )
-)
-
-st.write("Now let's take a look at the extracted entities from the job description.")
-
-# Call the function with your data
-create_star_graph(selected_jd["keyterms"], "Entities from Job Description")
-
-df2 = pd.DataFrame(selected_jd["keyterms"], columns=["keyword", "value"])
-
-# Create the dictionary
-keyword_dict = {}
-for keyword, value in selected_jd["keyterms"]:
-    keyword_dict[keyword] = value * 100
-
-fig = go.Figure(
-    data=[
-        go.Table(
-            header=dict(
-                values=["Keyword", "Value"], font=dict(size=12), fill_color="#070A52"
-            ),
-            cells=dict(
-                values=[list(keyword_dict.keys()), list(keyword_dict.values())],
-                line_color="darkslategray",
-                fill_color="#6DA9E4",
-            ),
-        )
-    ]
-)
-st.plotly_chart(fig)
-
-st.divider()
-
-fig = px.treemap(
-    df2,
-    path=["keyword"],
-    values="value",
-    color_continuous_scale="Rainbow",
-    title="Key Terms/Topics Extracted from the selected Job Description",
-)
-st.write(fig)
-
-avs.add_vertical_space(3)
-
-resume_string = " ".join(selected_file["extracted_keywords"])
-jd_string = " ".join(selected_jd["extracted_keywords"])
-result = get_score(resume_string, jd_string)
-similarity_score = round(result[0].score * 100, 2)
-score_color = "green"
-if similarity_score < 60:
-    score_color = "red"
-elif 60 <= similarity_score < 75:
-    score_color = "orange"
-st.markdown(
-    f"Similarity Score obtained for the resume and job description is "
-    f'<span style="color:{score_color};font-size:24px; font-weight:Bold">{similarity_score}</span>',
-    unsafe_allow_html=True,
-)
-
-# Go back to top
-st.markdown("[:arrow_up: Back to Top](#resume-matcher)")
