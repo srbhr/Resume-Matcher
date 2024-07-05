@@ -5,14 +5,16 @@ import pathlib
 from .parsers import ParseJobDesc, ParseResume #import ParsejobDEsc and ParseResume clzsses from .parsers module
 from .ReadPdf import read_single_pdf #import read_singme_pdf function from .ReadPdf module
 
-READ_RESUME_FROM = "Data/Resumes/" #define a constant for the directory path to read resume from
+#READ_RESUME_FROM = "Data/Resumes/" #define a constant for the directory path to read resume from
 SAVE_DIRECTORY = "Data/Processed/Resumes" #define a constant for the directory path to save processed resumes
 
 
 class ResumeProcessor:
     def __init__(self, input_file):
         self.input_file = input_file #initialize instance variable input_file with the input parametre
-        self.input_file_name = os.path.join(READ_RESUME_FROM + self.input_file) #construct full path to input file using os.path.join
+        #self.input_file_name = os.path.join(READ_RESUME_FROM + self.input_file) #construct full path to input file using os.path.join
+        self.input_file_name=self.input_file
+
 
     def process(self) -> bool:
         try:
@@ -36,7 +38,7 @@ class ResumeProcessor:
     def _write_json_file(self, resume_dictionary: dict):
         file_name = str(
             "Resume-" #prefix for the JSON file
-            + self.input_file #add input file name to the file nmae
+            + pathlib.Path(self.input_file).stem #add input file name to the file nmae
             + resume_dictionary["unique_id"] #add unique_id from resume_dictonnary
             + ".json" #file extention
         )
