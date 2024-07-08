@@ -240,7 +240,7 @@ if ResumeToProcess is not None:
 
         try:
             if os.path.exists(processed_file_path):
-                st.write("processed resume: ")
+                #st.write("processed resume: ")
                 selected_file = read_json(processed_file_path)
 
                 annotated_text_content = annotated_text(
@@ -282,44 +282,43 @@ avs.add_vertical_space(1)
 # Upload JobDescription
 JobDescriptionToProcess = st.file_uploader("Upload a job description file")
 
-jd_string =""
+jd_strings =""
 
 if JobDescriptionToProcess is not None:
-    processed_file_path = process_ResumeToProcess(JobDescriptionToProcess)
+    processed_file_path = process_JobDescriptionToProcess(JobDescriptionToProcess)
 
     if processed_file_path:
         #st.write(f"Uploaded file: {JobDescriptionToProcess.name}")
 
         try:
             if os.path.exists(processed_file_path):
-                st.write("Processed Job description :")
+                #st.write("Processed Job description :")
                 jd_string = read_json(processed_file_path)
 
-                annotated_text_content = annotated_text(
+                jd_annotated_text_content = annotated_text(
                         jd_string["clean_data"],
                         jd_string["extracted_keywords"],
-                        "KW",
-                        "#0B666A",
+                        "JD", "#F24C3D"
                 )
-                jd_string = " ".join(jd_string["extracted_keywords"])
+                jd_strings = " ".join(jd_string["extracted_keywords"])
 
-                df2 = pd.DataFrame(selected_file["keyterms"], columns=["keyword", "value"])
-                keyword_dict = {keyword: value * 100 for keyword, value in selected_file["keyterms"]}
+                df_resume = pd.DataFrame(jd_string["keyterms"], columns=["keyword", "value"])
+                keyword_dict = {keyword: value * 100 for keyword, value in jd_string["keyterms"]}
                     
-                fig_table = go.Figure(data=[go.Table(
+                fig = go.Figure(data=[go.Table(
                         header=dict(values=["Keyword", "Value"], font=dict(size=12), fill_color="#070A52"),
                         cells=dict(values=[list(keyword_dict.keys()), list(keyword_dict.values())],
                                    line_color="darkslategray", fill_color="#6DA9E4"))])
                 
 
-                fig_treemap = px.treemap(
-                        df2,
+                jd_fig_treemap = px.treemap(
+                        df_resume,
                         path=["keyword"],
                         values="value",
                         color_continuous_scale="Rainbow",
                         title="Key Terms/Topics Extracted from your Job Description",
                     )
-                st.plotly_chart(fig_treemap)
+                st.plotly_chart(jd_fig_treemap)
 
         except json.JSONDecodeError as e:
             st.error(f"JSON Decode Error: {e}")
@@ -328,7 +327,7 @@ if JobDescriptionToProcess is not None:
             st.error(f"Error loading the processed resume file: {e}")
 
 avs.add_vertical_space(3)
-if resume_string!="" and jd_string!="":
+if resume_string!="" and jd_strings!="":
     result = get_score(resume_string, jd_string)
     similarity_score = round(result[0].score * 100, 2)
     score_color = "green"

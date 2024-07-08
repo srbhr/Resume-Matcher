@@ -21,7 +21,8 @@ class JobDescriptionProcessor:
 
         """
         self.input_file = input_file #initialize instance variable input_file with the input parameter
-        self.input_file_name = os.path.join(READ_JOB_DESCRIPTION_FROM + self.input_file) #construct full path to input file using os.path.join
+        #self.input_file_name = os.path.join(READ_JOB_DESCRIPTION_FROM + self.input_file) #construct full path to input file using os.path.join
+        self.input_file_name=self.input_file
 
     def process(self) -> bool:
         """
@@ -65,7 +66,7 @@ class JobDescriptionProcessor:
         """
         file_name = str(
             "JobDescription-" #prefix for the JSON file name
-            + self.input_file #add input file name to the file name
+            + pathlib.Path(self.input_file).stem #add input file name to the file name
             + resume_dictionary["unique_id"] #add unique_id from resume_dictionnary to the file name
             + ".json" #file extension for JSON file
         )
