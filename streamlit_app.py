@@ -196,9 +196,11 @@ def process_ResumeToProcess(ResumeToProcess):
 
 def process_JobDescriptionToProcess(JobDescriptionToProcess):
     # Save uploaded file temporarily
-    temp_file_path = pathlib.Path(TEMP_DIR_RESUME) / JobDescriptionToProcess.name
+    #print(JobDescriptionToProcess)
+    temp_file_path = pathlib.Path(TEMP_DIR_JOBDECRIPTION) / JobDescriptionToProcess.name
+    #print(temp_file_path)
     temp_file_path.parent.mkdir(parents=True, exist_ok=True)
-    
+    #print(temp_file_path)
     with open(temp_file_path, "wb") as f:
         f.write(JobDescriptionToProcess.getbuffer())
 
@@ -206,7 +208,7 @@ def process_JobDescriptionToProcess(JobDescriptionToProcess):
     processor = JobDescriptionProcessor(temp_file_path)
     jd_processed_file_path = processor.process()
     
-    print(jd_processed_file_path)
+    #print(jd_processed_file_path)
     if jd_processed_file_path:
         st.success("File processed successfully!")
     else:
@@ -235,6 +237,19 @@ with st.sidebar:
 st.divider()
 avs.add_vertical_space(1)
 
+def upload_resume_to_api(file):
+    if file.type != "application/pdf":
+        st.error("Invalid file type. Only PDF files are allowed.")
+        #print(file.name)
+        return {"detail": "Invalid file type. Only PDF files are allowed."}
+    
+    response = requests.post(
+        "http://127.0.0.1:8000/upload_resume/",
+        files={"resume_file": file}
+    )
+    #print(file.name)
+    return response.json()
+
 # Upload resume
 ResumeToProcess = st.file_uploader("Upload a resume file", type=["pdf"])
 
@@ -243,18 +258,15 @@ resume_string =""
 if ResumeToProcess is not None:
     st.markdown("### Resume Uploaded Successfully!")
 
-    #Process and upload resume via FASTAPI endpoint
-    files={"resume":ResumeToProcess}
-    url="http://127.0.0.1:8000"
+    # Process and upload resume via FASTAPI endpoint
+    response = upload_resume_to_api(ResumeToProcess)
 
-    #send file to FastAPi for processing
-    response = requests.post(url, files=files)
-
-    if response.status_code==200:
-        st.success("Resume uploaded and procesed successfully!")
-        
+    if response.get("message") == "Resume processed and saved successfully.":
+        st.success("Resume uploaded and processed successfully!")
+    elif response.get("message") == "Resume already exists in the database.":
+        st.warning("Resume already exists in the database.")
     else:
-        st.error(f"Error uploading/resuming file: {response.status_code}")
+        st.error(f"Error uploading/resuming file: {response.get('detail', 'Unknown error')}")
 
 
 st.divider()

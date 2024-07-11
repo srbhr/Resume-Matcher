@@ -38,8 +38,9 @@ class ResumeProcessor:
     def _write_json_file(self, resume_dictionary: dict):
         file_name = str(
             "Resume-" #prefix for the JSON file
-            + pathlib.Path(self.input_file).stem #add input file name to the file nmae
-            + resume_dictionary["unique_id"] #add unique_id from resume_dictonnary
+            +os.path.splitext(os.path.basename(self.input_file))[0]
+            #+ pathlib.Path(self.input_file).stem #add input file name to the file nmae
+            #+ resume_dictionary["unique_id"] #add unique_id from resume_dictonnary
             + ".json" #file extention
         )
         save_directory_name = pathlib.Path(SAVE_DIRECTORY) / file_name #contruct full path to save directory and file name

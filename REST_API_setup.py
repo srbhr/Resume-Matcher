@@ -21,17 +21,12 @@ app = FastAPI()
 
 # Replace with your actual MongoDB Atlas connection string
 MONGODB_ATLAS_URI = "mongodb+srv://chourouk:hello@resumes.jpisuxt.mongodb.net/"
-MONGODB_ATLAS_URI = os.environ["MONGODB_ATLAS_URI"]
-client = MongoClient(MONGODB_ATLAS_URI)
+MONGODB_LOCAL_URI = "mongodb://localhost:27017/"
+client = MongoClient(MONGODB_LOCAL_URI)
 db = client["resumes"] 
 
-TEMP_DIR_RESUME = "temp_ResumeToProcesss"
+TEMP_DIR_RESUME = "Data/temp_ResumeToProcesss"
 SAVE_DIRECTORY = "Data/Processed/Resumes"
-
-def validate_resume_file(resume_file: UploadFile):
-    allowed_mime_types = ["application/pdf"]
-    if resume_file.content_type not in allowed_mime_types:
-        raise HTTPException(status_code=400, detail="Invalid file type. Only PDF files are allowed.")
 
 def check_resume_existence(file_name):
     try:
@@ -49,15 +44,9 @@ def save_resume_to_db(file_path, file_name):
     
 def process_ResumeToProcess(ResumeToProcess):
     with lock:
-        with tempfile.NamedTemporaryFile() as temp_file:
-            temp_file.write(ResumeToProcess.getbuffer())
+        with tempfile.NamedTemporaryFile(delete=False,dir=TEMP_DIR_RESUME) as temp_file:
+            temp_file.write(ResumeToProcess.read())
             temp_file.seek(0)
-        """ # Save uploaded file temporarily
-        temp_file_path = pathlib.Path(TEMP_DIR_RESUME) / ResumeToProcess.name
-        temp_file_path.parent.mkdir(parents=True, exist_ok=True)
-        
-        with open(temp_file_path, "wb") as f:
-            f.write(ResumeToProcess.getbuffer())"""
 
         # Process the file using the ResumeProcessor class
         processor = ResumeProcessor(temp_file.name)
@@ -68,8 +57,6 @@ def process_ResumeToProcess(ResumeToProcess):
 @app.post("/upload_resume/")
 async def upload_resume(resume_file: UploadFile = File(...)):
     try:
-        # Validate the uploaded file
-        validate_resume_file(resume_file)
         processed_file_path = process_ResumeToProcess(resume_file)
 
 
