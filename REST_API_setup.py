@@ -4,14 +4,13 @@ from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import pathlib
 import json
-from fastapi import FastAPI, File, UploadFile, HTTPException
 from pydantic import BaseModel
 from typing import List
 import pymongo
 from pymongo import MongoClient
 from bson.json_util import dumps
 from scripts import ResumeProcessor  # Import ResumeProcessor class
-from gridfs import GridFS
+
 
 app = FastAPI()
 
@@ -19,19 +18,18 @@ app = FastAPI()
 MONGODB_ATLAS_URI = "mongodb+srv://chourouk:hello@resumes.jpisuxt.mongodb.net/"
 client = MongoClient(MONGODB_ATLAS_URI)
 db = client["resumes"] 
-# Initialize GridFS
-fs = GridFS(db)
+
 TEMP_DIR_RESUME = "temp_ResumeToProcesss"
 SAVE_DIRECTORY = "Data/Processed/Resumes"
 
 def check_resume_existence(file_name):
-    return fs.exists({"filename": file_name})
+    return db.resumes.find_one({"filename": file_name}) is not None
 
 def save_resume_to_db(file_path, file_name):
     with open(file_path, "r") as f:
         json_data = json.load(f)
         db.resumes.insert_one({"filename": file_name, "content": json_data})
-
+        
 def process_ResumeToProcess(ResumeToProcess):
     # Save uploaded file temporarily
     temp_file_path = pathlib.Path(TEMP_DIR_RESUME) / ResumeToProcess.name
