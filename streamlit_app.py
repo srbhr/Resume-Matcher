@@ -9,6 +9,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
+import requests
 from annotated_text import annotated_text, parameters
 from streamlit_extras import add_vertical_space as avs
 from streamlit_extras.badges import badge
@@ -213,6 +214,13 @@ def process_JobDescriptionToProcess(JobDescriptionToProcess):
 
     return jd_processed_file_path
 
+def upload_resume_to_api(file):
+    response = requests.post(
+        "http://localhost:8000/upload_resume/",
+        files={"file": file}
+    )
+    return response.json()
+
 # Display the main title and subheaders
 st.title(":blue[Resume Matcher]")
 with st.sidebar:
@@ -228,52 +236,25 @@ st.divider()
 avs.add_vertical_space(1)
 
 # Upload resume
-ResumeToProcess = st.file_uploader("Upload a resume file")
+ResumeToProcess = st.file_uploader("Upload a resume file", type=["pdf"])
 
 resume_string =""
 
 if ResumeToProcess is not None:
-    processed_file_path = process_ResumeToProcess(ResumeToProcess)
+    st.markdown("### Resume Uploaded Successfully!")
 
-    if processed_file_path:
-        #st.write(f"Uploaded file: {ResumeToProcess.name}")
+    #Process and upload resume via FASTAPI endpoint
+    files={"resume":ResumeToProcess}
+    url="http://127.0.0.1:8000"
 
-        try:
-            if os.path.exists(processed_file_path):
-                #st.write("processed resume: ")
-                selected_file = read_json(processed_file_path)
+    #send file to FastAPi for processing
+    response = requests.post(url, files=files)
 
-                annotated_text_content = annotated_text(
-                        selected_file["clean_data"],
-                        selected_file["extracted_keywords"],
-                        "KW",
-                        "#0B666A",
-                )
-                resume_string = " ".join(selected_file["extracted_keywords"])
-
-                df2 = pd.DataFrame(selected_file["keyterms"], columns=["keyword", "value"])
-                keyword_dict = {keyword: value * 100 for keyword, value in selected_file["keyterms"]}
-                    
-                fig_table = go.Figure(data=[go.Table(
-                        header=dict(values=["Keyword", "Value"], font=dict(size=12), fill_color="#070A52"),
-                        cells=dict(values=[list(keyword_dict.keys()), list(keyword_dict.values())],
-                                   line_color="darkslategray", fill_color="#6DA9E4"))])
-                
-
-                fig_treemap = px.treemap(
-                        df2,
-                        path=["keyword"],
-                        values="value",
-                        color_continuous_scale="Rainbow",
-                        title="Key Terms/Topics Extracted from your Resume",
-                    )
-                st.plotly_chart(fig_treemap)
-
-        except json.JSONDecodeError as e:
-            st.error(f"JSON Decode Error: {e}")
-
-        except Exception as e:
-            st.error(f"Error loading the processed resume file: {e}")
+    if response.status_code==200:
+        st.success("Resume uploaded and procesed successfully!")
+        
+    else:
+        st.error(f"Error uploading/resuming file: {response.status_code}")
 
 
 st.divider()
