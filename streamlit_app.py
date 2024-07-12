@@ -20,7 +20,7 @@ from scripts.utils import get_filenames_from_dir
 from scripts.utils.logger import init_logging_config
 
 # Define a temporary directory for uploaded files
-TEMP_DIR_JOBDECRIPTION = "temp_JobDescriptionToProcesss"
+TEMP_DIR_JOBDECRIPTION = "Data/temp_JobDescriptionToProcesss"
 PROCESSED_JOBDESCRIPTION_DIR = "Data/Processed/JobDescription"
 
 # Set page configuration
@@ -168,27 +168,21 @@ def tokenize_string(input_string):
     tokens = nltk.word_tokenize(input_string)
     return tokens
 
-def process_JobDescriptionToProcess(JobDescriptionToProcess):
-    # Save uploaded file temporarily
-    #print(JobDescriptionToProcess)
-    temp_file_path = pathlib.Path(TEMP_DIR_JOBDECRIPTION) / JobDescriptionToProcess.name
-    #print(temp_file_path)
-    temp_file_path.parent.mkdir(parents=True, exist_ok=True)
-    #print(temp_file_path)
-    with open(temp_file_path, "wb") as f:
-        f.write(JobDescriptionToProcess.getbuffer())
-
-    # Process the file using the JobDescriptionProcessor class
-    processor = JobDescriptionProcessor(temp_file_path)
-    jd_processed_file_path = processor.process()
-    
-    #print(jd_processed_file_path)
-    if jd_processed_file_path:
-        st.success("File processed successfully!")
-    else:
-        st.error("Error processing the file.")
-
-    return jd_processed_file_path
+def process_JobDescriptionToProcess(job_description_text):
+    try:
+        # Process the text using the JobDescriptionProcessor class
+        processor = JobDescriptionProcessor(job_description_text)
+        jd_processed_file_path = processor.process()
+        
+        if jd_processed_file_path:
+            st.success("Job Description processed successfully!")
+        else:
+            st.error("Error processing the Job Description.")
+        
+        return jd_processed_file_path
+    except Exception as e:
+        st.error(f"An error occurred: {str(e)}")
+        return None
 
 # Display the main title and subheaders
 st.title(":blue[Resume Matcher]")
@@ -289,52 +283,56 @@ if ResumeToProcess is not None:
 st.divider()
 avs.add_vertical_space(1)
 
-# Upload JobDescription
-JobDescriptionToProcess = st.file_uploader("Upload a job description file")
+st.title("Job Description Analyzer")
 
-jd_strings =""
+# Upload Job Description as text input
+job_description_text = st.text_area("Enter Job Description", height=200)
 
-if JobDescriptionToProcess is not None:
-    processed_file_path = process_JobDescriptionToProcess(JobDescriptionToProcess)
+jd_strings = ""
+if st.button("Get similarity Score"):
+        if job_description_text:
+            processed_file_path = process_JobDescriptionToProcess(job_description_text)
 
-    if processed_file_path:
-        #st.write(f"Uploaded file: {JobDescriptionToProcess.name}")
+            if processed_file_path:
+                try:
+                    if os.path.exists(processed_file_path):
+                        jd_string = read_json(processed_file_path)
 
-        try:
-            if os.path.exists(processed_file_path):
-                #st.write("Processed Job description :")
-                jd_string = read_json(processed_file_path)
+                        jd_annotated_text_content = f"Clean Data: {jd_string['clean_data']}, Extracted Keywords: {jd_string['extracted_keywords']}"
+                        jd_strings = " ".join(jd_string["extracted_keywords"])
 
-                jd_annotated_text_content = annotated_text(
-                        jd_string["clean_data"],
-                        jd_string["extracted_keywords"],
-                        "JD", "#F24C3D"
-                )
-                jd_strings = " ".join(jd_string["extracted_keywords"])
+                        df_resume = pd.DataFrame(jd_string["keyterms"], columns=["keyword", "value"])
+                        keyword_dict = {keyword: value * 100 for keyword, value in jd_string["keyterms"]}
 
-                df_resume = pd.DataFrame(jd_string["keyterms"], columns=["keyword", "value"])
-                keyword_dict = {keyword: value * 100 for keyword, value in jd_string["keyterms"]}
-                    
-                fig = go.Figure(data=[go.Table(
-                        header=dict(values=["Keyword", "Value"], font=dict(size=12), fill_color="#070A52"),
-                        cells=dict(values=[list(keyword_dict.keys()), list(keyword_dict.values())],
-                                   line_color="darkslategray", fill_color="#6DA9E4"))])
-                
+                        fig = go.Figure(data=[go.Table(
+                            header=dict(values=["Keyword", "Value"], font=dict(size=12), fill_color="#070A52"),
+                            cells=dict(values=[list(keyword_dict.keys()), list(keyword_dict.values())],
+                                       line_color="darkslategray", fill_color="#6DA9E4"))])
 
-                jd_fig_treemap = px.treemap(
-                        df_resume,
-                        path=["keyword"],
-                        values="value",
-                        color_continuous_scale="Rainbow",
-                        title="Key Terms/Topics Extracted from your Job Description",
-                    )
-                st.plotly_chart(jd_fig_treemap)
+                        jd_fig_treemap = px.treemap(
+                            df_resume,
+                            path=["keyword"],
+                            values="value",
+                            color_continuous_scale="Rainbow",
+                            title="Key Terms/Topics Extracted from your Job Description",
+                        )
+                        st.plotly_chart(jd_fig_treemap)
+                        os.remove(processed_file_path)
 
-        except json.JSONDecodeError as e:
-            st.error(f"JSON Decode Error: {e}")
+                    else:
+                        st.error("Processed job description file does not exist.")
 
-        except Exception as e:
-            st.error(f"Error loading the processed resume file: {e}")
+                except json.JSONDecodeError as e:
+                    st.error(f"JSON Decode Error: {e}")
+
+                except Exception as e:
+                    st.error(f"Error loading the processed job description file: {e}")
+
+            else:
+                st.error("Error processing the job description.")
+
+        else:
+            st.warning("Please enter a job description to process.")
 
 avs.add_vertical_space(3)
 if resume_string!="" and jd_strings!="":

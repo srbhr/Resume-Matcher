@@ -71,11 +71,14 @@ async def upload_resume(resume_file: UploadFile = File(...)):
                 
                 # If not exists, save it to MongoDB
                 save_resume_to_db(processed_file_path, processed_file_name,keyword_dict)
+                print(processed_file_path)
                 os.remove(processed_file_path)  # Remove the processed file
                 
                 return {"filename": processed_file_name}
             
             else:
+                print(processed_file_path)
+                os.remove(processed_file_path)
                 return {"filename": processed_file_name}
         else:
             raise HTTPException(status_code=500, detail="Error processing the resume file.")
