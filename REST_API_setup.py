@@ -32,10 +32,7 @@ SAVE_DIRECTORY = "Data/Processed/Resumes"
 """   
 
 def check_resume_existence(file_name):
-    try:
-        return db.resumes.find_one({"filename": file_name}) is not None
-    except pymongo.errors.PyMongoError as e:
-        raise HTTPException(status_code=500,detail=f"Error checking resume existence: {str(e)}")
+    return db.resumes.find_one({"filename": file_name}) is not None
 
 def save_resume_to_db(file_path, file_name):
     try:
@@ -58,15 +55,15 @@ def process_ResumeToProcess(ResumeToProcess):
         # Process the file using the ResumeProcessor class
         processor = ResumeProcessor(temp_file_path)
         processed_file_path = processor.process()
-        
-        return processed_file_path  # Return the processed file path as a string
+        print(type(processed_file_path))
+        return processed_file_path , pathlib.Path(processed_file_path).name  # Return the processed file path and file name
 
 @app.post("/upload_resume/")
 async def upload_resume(resume_file: UploadFile = File(...)):
     try:
         # Validate the uploaded file
         #validate_resume_file(resume_file)
-        processed_file_path = process_ResumeToProcess(resume_file)
+        processed_file_path, processed_file_name = process_ResumeToProcess(resume_file)
         print(processed_file_path)
         
         if processed_file_path:
@@ -74,10 +71,10 @@ async def upload_resume(resume_file: UploadFile = File(...)):
                 processed_resume_json = json.load(file)
             
             # Check if the processed resume already exists in MongoDB
-            if not check_resume_existence(processed_file_path):
+            if not check_resume_existence(processed_file_name):
                 
                 # If not exists, save it to MongoDB
-                save_resume_to_db(processed_file_path, resume_file.filename)
+                save_resume_to_db(processed_file_path, processed_file_name)
                 #os.remove(processed_file_path)  # Remove the processed file
                 return {"message": "Resume processed and saved successfully."}
             
