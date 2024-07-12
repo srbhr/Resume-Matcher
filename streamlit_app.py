@@ -20,10 +20,6 @@ from scripts.utils import get_filenames_from_dir
 from scripts.utils.logger import init_logging_config
 
 # Define a temporary directory for uploaded files
-TEMP_DIR_RESUME = "temp_ResumeToProcesss"
-PROCESSED_RESUMES_DIR = "Data/Processed/Resumes"
-
-# Define a temporary directory for uploaded files
 TEMP_DIR_JOBDECRIPTION = "temp_JobDescriptionToProcesss"
 PROCESSED_JOBDESCRIPTION_DIR = "Data/Processed/JobDescription"
 
@@ -46,9 +42,6 @@ except LookupError:
 parameters.SHOW_LABEL_SEPARATOR = False
 parameters.BORDER_RADIUS = 3
 parameters.PADDING = "0.5 0.25rem"
-
-
-
 
 def create_star_graph(nodes_and_weights, title):
     # Create an empty graph
@@ -225,23 +218,72 @@ def upload_resume_to_api(file):
     #response.raise_for_status()  # Raise an error for bad responses
         
     return response.json()
+
+
 # Upload resume
 ResumeToProcess = st.file_uploader("Upload a resume file", type=["pdf"])
 
 resume_string =""
 
-if ResumeToProcess is not None:
-    st.markdown("### Resume Uploaded Successfully!")
+# Function to retrieve resume content from FastAPI endpoint
+def retrieve_resume_from_api(filename):
+    try:
+        response = requests.get(f"http://127.0.0.1:8000/retrieve_resume/{filename}")
+        if response.status_code == 200:
+            return response.json()
+        elif response.status_code == 404:
+            raise Exception("Resume not found in the database.")
+        else:
+            raise Exception(f"Error retrieving resume: {response.text}")
+    except Exception as e:
+        st.error(f"Error: {str(e)}")
 
+def read_resume_from_db(filename):
+    try:
+        # Retrieve resume content from FastAPI endpoint
+        resume_content = retrieve_resume_from_api(filename)
+        if resume_content:
+            # Simulate saving to MongoDB or use directly if needed
+            return resume_content
+        else:
+            raise Exception("Resume not found or empty content.")
+    except Exception as e:
+        raise Exception(f"Error reading resume from MongoDB: {str(e)}")
+
+if ResumeToProcess is not None:
+    st.markdown("### Resume successfully uploaded!")
     # Process and upload resume via FASTAPI endpoint
     response = upload_resume_to_api(ResumeToProcess)
 
-    if response.get("message") == "Resume processed and saved successfully.":
-        st.success("Resume uploaded and processed successfully!")
-    elif response.get("message") == "Resume already exists in the database.":
-        st.warning("Resume already exists in the database.")
+    if "filename" in response:
+        file_name = response["filename"]
+        Resume=read_resume_from_db(file_name)
+        #st.write(Resume)
+        #print(type(Resume))
+        annotated_text_content = annotated_text(
+                        Resume["clean_data"],
+                        Resume["extracted_keywords"],
+                        "KW",
+                        "#0B666A",
+                )
+        resume_string = " ".join(Resume["extracted_keywords"])
+
+        df2 = pd.DataFrame(Resume["keyterms"], columns=["keyword", "value"])
+        #st.write(resume_string)
+
+        fig_treemap = px.treemap(
+                        df2,
+                        path=["keyword"],
+                        values="value",
+                        color_continuous_scale="Rainbow",
+                        title="Key Terms/Topics Extracted from your Resume",
+                    )
+        st.plotly_chart(fig_treemap)
+
+
     else:
         st.error(f"Error uploading/resuming file: {response.get('detail', 'Unknown error')}")
+    
 
 
 st.divider()
