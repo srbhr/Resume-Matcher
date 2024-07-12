@@ -9,7 +9,7 @@ from bson.json_util import dumps
 import pymongo.errors
 from scripts import ResumeProcessor  # Import ResumeProcessor class
 import threading
-
+from typing import Dict
 
 lock = threading.Lock()
 app = FastAPI()
@@ -100,6 +100,74 @@ async def retrieve_resume(filename: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving resume: {str(e)}")
 
+
+def process_ResumeToProcess2(file_path_str,file_name):
+    try:
+        # Open the file in binary read mode
+        with open(file_path_str, "rb") as f:
+            file_content = f.read()
+        # Save uploaded file temporarily
+        print(file_name)
+        temp_file_path = pathlib.Path(TEMP_DIR_RESUME) / file_name
+        temp_file_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        with open(temp_file_path, "wb") as f:
+            f.write(file_content)
+
+        # Process the file using the ResumeProcessor class
+        processor = ResumeProcessor(temp_file_path)
+        processed_file_path = processor.process()
+        # Extract the file name from the Path object
+        file_name2 =pathlib.Path(processed_file_path).name
+
+        # Return processed file path and name
+        return processed_file_path, file_name2
+    except UnicodeDecodeError as e:
+        raise HTTPException(status_code=500, detail=f"Error processing resume (encoding issue): {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error processing resume: {str(e)}")
+
+
+# Endpoint to process resume file from absolute path
+@app.post("/process_resume_from_path/")
+async def process_resume_from_path(data: Dict[str, str]):
+    try:
+        file_path_str = data.get("file_path")
+        if not file_path_str:
+            raise HTTPException(status_code=400, detail="No file path provided.")
+
+        # Convert string to Path object
+        file_path = pathlib.Path(file_path_str)
+        if not file_path.exists() or not file_path.is_file():
+            raise HTTPException(status_code=400, detail="Invalid file path provided.")
+        file_name = os.path.basename(file_path_str)
+        processed_resume_path, processed_resume_name = process_ResumeToProcess2(file_path,file_name)
+        
+        if processed_resume_path:
+            with open(processed_resume_path, "r") as file:
+                processed_resume_json = json.load(file)
+                keyword_dict = {keyword: value * 100 for keyword, value in processed_resume_json["keyterms"]}
+
+            
+            # Check if the processed resume already exists in MongoDB
+            if not check_resume_existence(processed_resume_name):
+                
+                # If not exists, save it to MongoDB
+                save_resume_to_db(processed_resume_path, processed_resume_name,keyword_dict)
+                print(processed_resume_path)
+                #os.remove(processed_resume_path)  # Remove the processed file
+                # Read the processed resume file content
+            with open(processed_resume_path, "r", encoding="utf-8") as f:
+                processed_resume_content = json.load(f)
+        return {"filename": processed_resume_name, "content": processed_resume_content}
+
+    except HTTPException as http_exc:
+        print(f"HTTPException: {http_exc.detail}")
+        raise
+    except Exception as e:
+        print(f"Exception: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error processing resume file: {str(e)}")
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="127.0.0.1", port=8000)
