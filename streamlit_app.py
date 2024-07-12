@@ -175,25 +175,6 @@ def tokenize_string(input_string):
     tokens = nltk.word_tokenize(input_string)
     return tokens
 
-def process_ResumeToProcess(ResumeToProcess):
-    # Save uploaded file temporarily
-    temp_file_path = pathlib.Path(TEMP_DIR_RESUME) / ResumeToProcess.name
-    temp_file_path.parent.mkdir(parents=True, exist_ok=True)
-    
-    with open(temp_file_path, "wb") as f:
-        f.write(ResumeToProcess.getbuffer())
-
-    # Process the file using the ResumeProcessor class
-    processor = ResumeProcessor(temp_file_path)
-    processed_file_path = processor.process()
-    
-    if processed_file_path:
-        st.success("File processed successfully!")
-    else:
-        st.error("Error processing the file.")
-
-    return processed_file_path  # Return the processed file path as a string
-
 def process_JobDescriptionToProcess(JobDescriptionToProcess):
     # Save uploaded file temporarily
     #print(JobDescriptionToProcess)

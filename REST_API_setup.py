@@ -55,7 +55,8 @@ def process_ResumeToProcess(ResumeToProcess):
         # Process the file using the ResumeProcessor class
         processor = ResumeProcessor(temp_file_path)
         processed_file_path = processor.process()
-        print(type(processed_file_path))
+        # Delete the original PDF file after processing
+        os.remove(temp_file_path)
         return processed_file_path , pathlib.Path(processed_file_path).name  # Return the processed file path and file name
 
 @app.post("/upload_resume/")
@@ -75,7 +76,8 @@ async def upload_resume(resume_file: UploadFile = File(...)):
                 
                 # If not exists, save it to MongoDB
                 save_resume_to_db(processed_file_path, processed_file_name)
-                #os.remove(processed_file_path)  # Remove the processed file
+                os.remove(processed_file_path)  # Remove the processed file
+                
                 return {"message": "Resume processed and saved successfully."}
             
             else:
