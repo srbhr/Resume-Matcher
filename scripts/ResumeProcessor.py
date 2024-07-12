@@ -47,4 +47,4 @@ class ResumeProcessor:
         json_object = json.dumps(resume_dictionary, sort_keys=True, indent=14) #convert resume_dictionary to JSON format with sortingand indentation 
         with open(save_directory_name, "w+") as outfile: #open file for writing
             outfile.write(json_object) #write JSON data to the file
-        return save_directory_name  # Return the file path as a string
+        return str(save_directory_name)  # Return the file path as a string

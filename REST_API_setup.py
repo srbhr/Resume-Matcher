@@ -15,18 +15,21 @@ import tempfile
 import threading
 
 lock = threading.Lock()
-
-
 app = FastAPI()
 
-# Replace with your actual MongoDB Atlas connection string
-MONGODB_ATLAS_URI = "mongodb+srv://chourouk:hello@resumes.jpisuxt.mongodb.net/"
-MONGODB_LOCAL_URI = "mongodb://localhost:27017/"
+# Connect to MongoDB
+MONGODB_LOCAL_URI = "mongodb://localhost:27017"
 client = MongoClient(MONGODB_LOCAL_URI)
 db = client["resumes"] 
 
 TEMP_DIR_RESUME = "Data/temp_ResumeToProcesss"
 SAVE_DIRECTORY = "Data/Processed/Resumes"
+
+"""def validate_resume_file(resume_file: UploadFile):
+    allowed_mime_types = ["application/pdf"]
+    if resume_file.content_type not in allowed_mime_types:
+        raise HTTPException(status_code=400, detail="Invalid file type. Only PDF files are allowed.")
+"""   
 
 def check_resume_existence(file_name):
     try:
@@ -44,38 +47,48 @@ def save_resume_to_db(file_path, file_name):
     
 def process_ResumeToProcess(ResumeToProcess):
     with lock:
-        with tempfile.NamedTemporaryFile(delete=False,dir=TEMP_DIR_RESUME) as temp_file:
-            temp_file.write(ResumeToProcess.read())
-            temp_file.seek(0)
+        # Save uploaded file to a temporary location
+        temp_file_path = pathlib.Path(TEMP_DIR_RESUME)/ResumeToProcess.filename
+        temp_file_path.parent.mkdir(parents=True, exist_ok=True)
+
+        with open(temp_file_path, "wb") as temp_file:
+            temp_file.write(ResumeToProcess.file.read())
+
 
         # Process the file using the ResumeProcessor class
-        processor = ResumeProcessor(temp_file.name)
+        processor = ResumeProcessor(temp_file_path)
         processed_file_path = processor.process()
-
+        
         return processed_file_path  # Return the processed file path as a string
 
 @app.post("/upload_resume/")
 async def upload_resume(resume_file: UploadFile = File(...)):
     try:
+        # Validate the uploaded file
+        #validate_resume_file(resume_file)
         processed_file_path = process_ResumeToProcess(resume_file)
-
-
+        print(processed_file_path)
+        
         if processed_file_path:
             with open(processed_file_path, "r") as file:
                 processed_resume_json = json.load(file)
             
             # Check if the processed resume already exists in MongoDB
             if not check_resume_existence(processed_file_path):
+                
                 # If not exists, save it to MongoDB
                 save_resume_to_db(processed_file_path, resume_file.filename)
-                os.remove(processed_file_path)  # Remove the processed file
+                #os.remove(processed_file_path)  # Remove the processed file
                 return {"message": "Resume processed and saved successfully."}
+            
             else:
                 return {"message": "Resume already exists in the database."}
         else:
             raise HTTPException(status_code=500, detail="Error processing the resume file.")
 
     except Exception as e:
+        import traceback
+        traceback.print_exc()  # print the exception traceback
         raise HTTPException(status_code=500, detail=f"Error uploading resume: {str(e)}")
     
 @app.get("/retrieve_resume/{filename}")

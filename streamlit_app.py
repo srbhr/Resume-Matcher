@@ -216,13 +216,6 @@ def process_JobDescriptionToProcess(JobDescriptionToProcess):
 
     return jd_processed_file_path
 
-def upload_resume_to_api(file):
-    response = requests.post(
-        "http://localhost:8000/upload_resume/",
-        files={"file": file}
-    )
-    return response.json()
-
 # Display the main title and subheaders
 st.title(":blue[Resume Matcher]")
 with st.sidebar:
@@ -238,18 +231,19 @@ st.divider()
 avs.add_vertical_space(1)
 
 def upload_resume_to_api(file):
-    if file.type != "application/pdf":
-        st.error("Invalid file type. Only PDF files are allowed.")
-        #print(file.name)
-        return {"detail": "Invalid file type. Only PDF files are allowed."}
-    
-    response = requests.post(
-        "http://127.0.0.1:8000/upload_resume/",
-        files={"resume_file": file}
-    )
+    #Check file extension
     #print(file.name)
-    return response.json()
+    if not file.name.endswith(".pdf"):
+        st.error("Invalid file type. Only PDF files are allowed.")
+        return {"detail": "Invalid file type. Only PDF files are allowed."}
 
+
+    # Ensure 'file' is a file-like object and post it
+    files = {"resume_file": (file.name, file, "application/pdf")}
+    response = requests.post("http://127.0.0.1:8000/upload_resume/", files=files)
+    #response.raise_for_status()  # Raise an error for bad responses
+        
+    return response.json()
 # Upload resume
 ResumeToProcess = st.file_uploader("Upload a resume file", type=["pdf"])
 
