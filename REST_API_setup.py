@@ -245,19 +245,15 @@ async def upload_job_descriptions(job_descriptions: List[JobDescription]):
         collection = jd_db.jobDescriptions
         processed_job_descriptions = []
 
-        print("1")
-
         # Iterate through each job description in the list
         for job_desc in job_descriptions:
-            print("2")
+            filename = job_desc.filename
             input_text = " ".join(job_desc.text_array)
             processor = JobDescriptionProcessor(input_text)
             processed_file_path = processor.process()
-            print(processed_file_path)
-
-            print(processed_file_path)
+            
             if processed_file_path:
-                print("3")
+                
                 with open(processed_file_path, "r") as file:
                     processed_job_description = json.load(file)
                     # Read additional data from processed job description JSON
@@ -267,10 +263,15 @@ async def upload_job_descriptions(job_descriptions: List[JobDescription]):
                     # Add additional fields to processed_job_description
                     processed_job_description["jd_annotated_text_content"] = jd_annotated_text_content
                     processed_job_description["jd_strings"] = jd_strings
+                    processed_job_description["filename"] = filename
                 processed_job_descriptions.append(processed_job_description)
 
 
         collection.insert_one({"job_descriptions": processed_job_descriptions})
+
+         # Remove the processed JSON file if it exists
+        if os.path.exists(processed_file_path):
+            os.remove(processed_file_path)
 
         return {"message": f"Successfully uploaded {len(processed_job_descriptions)} job descriptions."}
 
