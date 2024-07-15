@@ -56,7 +56,7 @@ async def process_resume_from_path(data: Dict[str, str]):
 
         # Convert string to Path object
         #file_path = pathlib.Path(file_path_str)
-        file_path = file_path_str[1:-1]
+        file_path = file_path_str[1]
         print(file_path)
         if not file_path.exists() or not file_path.is_file():
             raise HTTPException(status_code=400, detail="Invalid file path provided.")

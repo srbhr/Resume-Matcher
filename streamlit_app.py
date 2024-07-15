@@ -182,7 +182,7 @@ def process_JobDescriptionToProcess(job_description_text):
         return jd_processed_file_path
     except Exception as e:
         st.error(f"An error occurred: {str(e)}")
-        return None
+
 
 # Display the main title and subheaders
 st.title(":blue[Resume Matcher]")
