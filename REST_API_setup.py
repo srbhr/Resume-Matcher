@@ -1,3 +1,4 @@
+import tracemalloc
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.responses import JSONResponse
 import os
@@ -12,11 +13,10 @@ import threading
 from typing import Dict
 from pydantic import BaseModel
 from typing import List,Any
-import logging
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+from scripts.similarity.get_score import *
 
+# Initialize tracemalloc with an optional size limit (e.g., 10 MB)
+tracemalloc.start()  # Limit size to 10 MB, adjust as needed
 lock = threading.Lock()
 app = FastAPI()
 
@@ -27,9 +27,10 @@ class JobDescription(BaseModel):
 # Connect to MongoDB
 MONGODB_LOCAL_URI = "mongodb://localhost:27017"
 client = MongoClient(MONGODB_LOCAL_URI)
-db = client["resumes"] 
 
+db = client["resumes"] 
 jd_db=client.JobDescriptions
+ss_db=client.SimilarityScores
 
 TEMP_DIR_RESUME = "Data/temp_ResumeToProcesss"
 SAVE_DIRECTORY = "Data/Processed/Resumes"
@@ -40,13 +41,14 @@ PROCESSED_JOBDESCRIPTION_DIR = "Data/Processed/JobDescription"
 def check_resume_existence(file_name):
     return db.resumes.find_one({"filename": file_name}) is not None
 
-def save_resume_to_db(file_path, file_name, keyword_dict):
+def save_resume_to_db(file_path, file_name, keyword_dict,resume_string):
     try:
         with open(file_path, "r") as f:
             json_data = json.load(f)
 
         # Add additional data to the JSON object
         json_data["keyword_dict"] = keyword_dict
+        json_data["resume_string"] = resume_string
 
         db.resumes.insert_one({"filename": file_name, "content": json_data})
     except pymongo.errors.PyMongoError as e:
@@ -88,14 +90,12 @@ async def upload_resume(resume_file: UploadFile = File(...)):
             if not check_resume_existence(processed_file_name):
                 
                 # If not exists, save it to MongoDB
-                save_resume_to_db(processed_file_path, processed_file_name,keyword_dict)
-                print(processed_file_path)
+                save_resume_to_db(processed_file_path, processed_file_name,keyword_dict,resume_string)
                 os.remove(processed_file_path)  # Remove the processed file
                 
                 return {"filename": processed_file_name}
             
             else:
-                print(processed_file_path)
                 os.remove(processed_file_path)
                 return {"filename": processed_file_name}
         else:
@@ -125,7 +125,6 @@ def process_ResumeToProcess2(file_path_str,file_name):
         with open(file_path_str, "rb") as f:
             file_content = f.read()
         # Save uploaded file temporarily
-        print(file_name)
         temp_file_path = pathlib.Path(TEMP_DIR_RESUME) / file_name
         temp_file_path.parent.mkdir(parents=True, exist_ok=True)
         
@@ -167,19 +166,17 @@ async def process_resume_from_path(data: Dict[str, str]):
                 keyword_dict = {keyword: value * 100 for keyword, value in processed_resume_json["keyterms"]}
                 # Add the line to join extracted_keywords into resume_string
                 resume_string = " ".join(processed_resume_json["extracted_keywords"])
-                processed_resume_json["resume_string"] = resume_string
 
             # Check if the processed resume already exists in MongoDB
             if not check_resume_existence(processed_resume_name):
                 
                 # If not exists, save it to MongoDB
-                save_resume_to_db(processed_resume_path, processed_resume_name,keyword_dict)
-                print(processed_resume_path)
+                save_resume_to_db(processed_resume_path, processed_resume_name,keyword_dict,resume_string)
                 #os.remove(processed_resume_path)  # Remove the processed file
                 # Read the processed resume file content
             with open(processed_resume_path, "r", encoding="utf-8") as f:
                 processed_resume_content = json.load(f)
-            return {"filename": processed_resume_name, "content": processed_resume_content}
+            return {"filename": processed_resume_name, "resume_string": resume_string}
 
     except HTTPException as http_exc:
         print(f"HTTPException: {http_exc.detail}")
@@ -210,28 +207,6 @@ def process_JobDescriptionToProcess(job_description_text):
                 json.dump(processed_job_description, file, indent=4)
             
     return jd_processed_file_path
-    
-
-def read_json(filename):
-    with open(filename) as f:
-        data = json.load(f)
-    return data
-
-def check_JobDescription_existence(file_name):
-    return jd_db.resumes.find_one({"filename": file_name}) is not None
-
-def save_JobDescriptions_to_db(file_path, file_name):
-    try:
-        with open(file_path, "r") as f:
-            json_data = json.load(f)
-
-        # Add additional data to the JSON object
-        #json_data["keyword_dict"] = keyword_dict
-
-        jd_db.resumes.insert_one({"filename": file_name, "content": json_data})
-    except pymongo.errors.PyMongoError as e:
-        raise HTTPException(status_code=500, detail=f"Error saving resume to db: {str(e)}")
-
 
 # Endpoint to process jobDescription files from array of text
 @app.post("/upload_job_descriptions/")
@@ -266,14 +241,13 @@ async def upload_job_descriptions(job_descriptions: List[JobDescription]):
                     processed_job_description["filename"] = filename
                 processed_job_descriptions.append(processed_job_description)
 
-
         collection.insert_one({"job_descriptions": processed_job_descriptions})
 
          # Remove the processed JSON file if it exists
         if os.path.exists(processed_file_path):
             os.remove(processed_file_path)
 
-        return {"message": f"Successfully uploaded {len(processed_job_descriptions)} job descriptions."}
+        return {"job_descriptions": processed_job_descriptions}
 
         #return {"message": f"Successfully uploaded {len(result.inserted_ids)} job descriptions."}
 
@@ -282,6 +256,81 @@ async def upload_job_descriptions(job_descriptions: List[JobDescription]):
         traceback.print_exc()  # print the exception traceback
         raise HTTPException(status_code=500, detail=f"Error uploading job descriptions: {str(e)}")
     
+@app.get("/job_descriptions", response_model=List[Dict[str, str]])
+async def get_job_descriptions_filenames_and_jd_string():
+    try:
+        job_descriptions = list(jd_db.jobDescriptions.find({}))  # Fetch all documents from collection
+        response_data = []
+
+        for job_desc in job_descriptions:
+            job_desc["_id"] = str(job_desc["_id"])
+            filename = job_desc["filename"]
+            jd_string = " ".join(job_desc.get("extracted_keywords", []))
+            response_data.append({
+                "filename": filename,
+                "jd_strings": jd_string
+            })
+        print(response_data)
+        return response_data
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching job descriptions: {str(e)}")
+    
+# Function to ensure similarityscores collection exists
+def ensure_similarityscores_collection():
+    if "similarityscores" not in ss_db.list_collection_names():
+        ss_db.create_collection("similarityscores")
+
+@app.post("/calculate_similarity_score/")
+async def calculate_similarity_score(data: Dict[str, str]):
+    try:
+        ensure_similarityscores_collection()
+
+        # Insert job descriptions into MongoDB collection
+        collection = ss_db.similarityscores
+        
+        # Process resume from path
+        resume_data =await process_resume_from_path(data)
+        resume_filename = resume_data["filename"]
+        resume_strings = resume_data["resume_string"]
+        
+        # Get job descriptions from MongoDB
+        job_descriptions =await get_job_descriptions_filenames_and_jd_string()
+
+        # Ensure job_descriptions is a list containing filenames and jd_strings
+        if len(job_descriptions) != 2:
+            raise HTTPException(status_code=500, detail="Invalid response from get_job_descriptions_filenames_and_jd_string")
+
+        filenames = job_descriptions[0]
+        jd_strings = job_descriptions[1]
+        print(filenames)
+
+        # Calculate similarity scores
+        similarity_scores = []
+        for i in range(len(filenames)):  # Iterate over the length of filenames or jd_strings, assuming they are the same length
+            job_filename = filenames[i]
+            jd_string = jd_strings[i]
+            score = get_score(resume_strings, jd_string)
+            similarity_scores.append({
+                "job_description_filename": job_filename,
+                "similarity_score": round(score * 100, 2)  # Round to two decimal places
+            })
+
+        collection.insert_one({
+            "resume_filename": resume_filename,
+            "similarity_scores": similarity_scores
+        })
+        return {
+            "resume_filename": resume_filename,
+            "similarity_scores": similarity_scores
+        }
+    
+    except HTTPException as http_exc:
+        print(f"HTTPException: {http_exc.detail}")
+        raise
+    except Exception as e:
+        print(f"Exception: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error calculating similarity score: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn
