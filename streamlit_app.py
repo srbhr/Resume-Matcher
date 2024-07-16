@@ -15,7 +15,7 @@ from streamlit_extras import add_vertical_space as avs
 from streamlit_extras.badges import badge
 
 from scripts import JobDescriptionProcessor, ResumeProcessor
-from scripts.similarity.get_score import *
+from similarity.get_score import *
 from scripts.utils import get_filenames_from_dir
 from scripts.utils.logger import init_logging_config
 
@@ -252,15 +252,8 @@ if ResumeToProcess is not None:
     if "filename" in response:
         file_name = response["filename"]
         Resume=read_resume_from_db(file_name)
-        #st.write(Resume)
-        #print(type(Resume))
-        annotated_text_content = annotated_text(
-                        Resume["clean_data"],
-                        Resume["extracted_keywords"],
-                        "KW",
-                        "#0B666A",
-                )
-        resume_string = " ".join(Resume["extracted_keywords"])
+
+        resume_string = Resume["resume_string"]
 
         df2 = pd.DataFrame(Resume["keyterms"], columns=["keyword", "value"])
         #st.write(resume_string)

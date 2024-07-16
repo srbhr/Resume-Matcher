@@ -256,22 +256,37 @@ async def upload_job_descriptions(job_descriptions: List[JobDescription]):
         traceback.print_exc()  # print the exception traceback
         raise HTTPException(status_code=500, detail=f"Error uploading job descriptions: {str(e)}")
     
-@app.get("/job_descriptions", response_model=List[Dict[str, str]])
+@app.get("/job_descriptions", response_model=List[List[str]])
 async def get_job_descriptions_filenames_and_jd_string():
     try:
-        job_descriptions = list(jd_db.jobDescriptions.find({}))  # Fetch all documents from collection
-        response_data = []
+        job_descriptions_docs = list(jd_db.jobDescriptions.find({}))  # Fetch all documents from collection
 
-        for job_desc in job_descriptions:
-            job_desc["_id"] = str(job_desc["_id"])
-            filename = job_desc["filename"]
-            jd_string = " ".join(job_desc.get("extracted_keywords", []))
-            response_data.append({
-                "filename": filename,
-                "jd_strings": jd_string
-            })
-        print(response_data)
-        return response_data
+        filenames = []
+        jd_strings = []
+
+        # Iterate over each document
+        for job_desc_doc in job_descriptions_docs:
+            job_descriptions = job_desc_doc.get('job_descriptions', [])
+            # Iterate over each job description object in the array
+            for job_description in job_descriptions:
+                filename = job_description.get('filename')
+                jd_strings_item = job_description.get('jd_strings')
+
+                # Append filename and jd_strings_item to their respective lists
+                if filename:
+                    filenames.append(filename)
+                else:
+                    filenames.append('No filename found')
+                
+                if jd_strings_item:
+                    jd_strings.append(jd_strings_item)
+                else:
+                    jd_strings.append('No jd_strings found')
+
+        # Combine filenames and jd_strings into a list of lists
+        combined_list = [filenames, jd_strings]
+        
+        return combined_list
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching job descriptions: {str(e)}")
@@ -303,18 +318,19 @@ async def calculate_similarity_score(data: Dict[str, str]):
 
         filenames = job_descriptions[0]
         jd_strings = job_descriptions[1]
-        print(filenames)
 
         # Calculate similarity scores
         similarity_scores = []
         for i in range(len(filenames)):  # Iterate over the length of filenames or jd_strings, assuming they are the same length
             job_filename = filenames[i]
             jd_string = jd_strings[i]
-            score = get_score(resume_strings, jd_string)
+            result = get_score(resume_strings, jd_string)
+            similarity_score = round(result[0].score * 100, 2)
+            print(similarity_score)
             similarity_scores.append({
-                "job_description_filename": job_filename,
-                "similarity_score": round(score * 100, 2)  # Round to two decimal places
-            })
+                    "job_description_filename": job_filename,
+                    "similarity_score": similarity_score  # Round to two decimal places
+                })
 
         collection.insert_one({
             "resume_filename": resume_filename,
