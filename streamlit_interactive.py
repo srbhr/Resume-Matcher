@@ -16,7 +16,7 @@ from streamlit_extras.badges import badge
 from scripts import JobDescriptionProcessor, ResumeProcessor
 from scripts.parsers import ParseJobDesc, ParseResume
 from scripts.ReadPdf import read_single_pdf
-from scripts.similarity.get_score import *
+from similarity.get_score import *
 from scripts.utils import get_filenames_from_dir
 
 # Set page configuration
