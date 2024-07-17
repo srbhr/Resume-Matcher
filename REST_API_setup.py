@@ -14,11 +14,28 @@ from typing import Dict
 from pydantic import BaseModel
 from typing import List,Any
 from scripts.similarity.get_score import *
+from fastapi.openapi.utils import get_openapi
 
 # Initialize tracemalloc with an optional size limit (e.g., 10 MB)
 tracemalloc.start()  # Limit size to 10 MB, adjust as needed
 lock = threading.Lock()
 app = FastAPI()
+
+# Optionally, generate custom OpenAPI schema
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+    openapi_schema = get_openapi(
+        title="Resume Matcher API",
+        version="1.0.0",
+        description="An API for processing resumes and job descriptions, calculating similarity scores, and managing job data.",
+        routes=app.routes,
+    )
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+app.openapi = custom_openapi
+
 
 class JobDescription(BaseModel):
     filename: str
@@ -347,7 +364,12 @@ async def calculate_similarity_score(data: Dict[str, str]):
     except Exception as e:
         print(f"Exception: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error calculating similarity score: {str(e)}")
-
+"""
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    uvicorn.run(app, host="127.0.0.1", port=8000)"""
+
+# Run the FastAPI application with Swagger UI
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="localhost", port=8000, log_level="info", reload=True)
