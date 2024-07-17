@@ -15,7 +15,7 @@ from streamlit_extras import add_vertical_space as avs
 from streamlit_extras.badges import badge
 
 from scripts import JobDescriptionProcessor, ResumeProcessor
-from similarity.get_score import *
+from scripts.similarity.get_score import *
 from scripts.utils import get_filenames_from_dir
 from scripts.utils.logger import init_logging_config
 
