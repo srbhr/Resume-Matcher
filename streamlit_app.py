@@ -275,7 +275,7 @@ def get_similarity_scores(resume_filename):
 
 #get similarity score button to lunch the app
 if st.button("Get similarity Score"):
-    if ResumeToProcess is not None and job_description_text!="":
+    if ResumeToProcess is not None and job_description_text is not None:
         # Process and upload resume via FASTAPI endpoint
  
         upload_job_descriptions_to_api(job_description_text)
