@@ -1,6 +1,5 @@
 import json
 import os
-import pathlib
 from typing import List
 
 import networkx as nx
@@ -18,10 +17,6 @@ from scripts import JobDescriptionProcessor, ResumeProcessor
 from scripts.similarity.get_score import *
 from scripts.utils import get_filenames_from_dir
 from scripts.utils.logger import init_logging_config
-
-# Define a temporary directory for uploaded files
-TEMP_DIR_JOBDECRIPTION = "Data/temp_JobDescriptionToProcesss"
-PROCESSED_JOBDESCRIPTION_DIR = "Data/Processed/JobDescription"
 
 # Set page configuration
 st.set_page_config(
@@ -133,57 +128,6 @@ def create_star_graph(nodes_and_weights, title):
     # Show the figure
     st.plotly_chart(fig)
 
-
-def create_annotated_text(
-    input_string: str, word_list: List[str], annotation: str, color_code: str
-):
-    # Tokenize the input string
-    tokens = nltk.word_tokenize(input_string)
-
-    # Convert the list to a set for quick lookups
-    word_set = set(word_list)
-
-    # Initialize an empty list to hold the annotated text
-    annotated_text = []
-
-    for token in tokens:
-        # Check if the token is in the set
-        if token in word_set:
-            # If it is, append a tuple with the token, annotation, and color code
-            annotated_text.append((token, annotation, color_code))
-        else:
-            # If it's not, just append the token as a string
-            annotated_text.append(token)
-
-    return annotated_text
-
-
-def read_json(filename):
-    with open(filename) as f:
-        data = json.load(f)
-    return data
-
-
-def tokenize_string(input_string):
-    tokens = nltk.word_tokenize(input_string)
-    return tokens
-
-def process_JobDescriptionToProcess(job_description_text):
-    try:
-        # Process the text using the JobDescriptionProcessor class
-        processor = JobDescriptionProcessor(job_description_text)
-        jd_processed_file_path = processor.process()
-        
-        if jd_processed_file_path:
-            st.success("Job Description processed successfully!")
-        else:
-            st.error("Error processing the Job Description.")
-        
-        return jd_processed_file_path
-    except Exception as e:
-        st.error(f"An error occurred: {str(e)}")
-
-
 # Display the main title and subheaders
 st.title(":blue[Resume Matcher]")
 with st.sidebar:
@@ -199,26 +143,22 @@ st.divider()
 avs.add_vertical_space(1)
 
 def upload_resume_to_api(file):
-    #Check file extension
-    #print(file.name)
     if not file.name.endswith(".pdf"):
         st.error("Invalid file type. Only PDF files are allowed.")
         return {"detail": "Invalid file type. Only PDF files are allowed."}
 
-
     # Ensure 'file' is a file-like object and post it
     files = {"resume_file": (file.name, file, "application/pdf")}
     response = requests.post("http://127.0.0.1:8000/upload_resume/", files=files)
-    #response.raise_for_status()  # Raise an error for bad responses
-        
+
     return response.json()
 
 
 # Upload resume
-ResumeToProcess = st.file_uploader("Upload a resume file", type=["pdf"])
-
-resume_string =""
-
+ResumeToProcess = st.file_uploader("Upload a Resume file (PDF only)", type=["pdf"])
+if ResumeToProcess is not None:
+    st.markdown("### Resume successfully uploaded!")
+    #st.write(upload_resume_to_api(ResumeToProcess))
 # Function to retrieve resume content from FastAPI endpoint
 def retrieve_resume_from_api(filename):
     try:
@@ -244,110 +184,121 @@ def read_resume_from_db(filename):
     except Exception as e:
         raise Exception(f"Error reading resume from MongoDB: {str(e)}")
 
-if ResumeToProcess is not None:
-    st.markdown("### Resume successfully uploaded!")
-    # Process and upload resume via FASTAPI endpoint
-    response = upload_resume_to_api(ResumeToProcess)
-
-    if "filename" in response:
-        file_name = response["filename"]
-        Resume=read_resume_from_db(file_name)
-
-        resume_string = Resume["resume_string"]
-
-        df2 = pd.DataFrame(Resume["keyterms"], columns=["keyword", "value"])
-        #st.write(resume_string)
-
-        fig_treemap = px.treemap(
-                        df2,
-                        path=["keyword"],
-                        values="value",
-                        color_continuous_scale="Rainbow",
-                        title="Key Terms/Topics Extracted from your Resume",
-                    )
-        st.plotly_chart(fig_treemap)
-
-
-    else:
-        st.error(f"Error uploading/resuming file: {response.get('detail', 'Unknown error')}")
-    
-
 
 st.divider()
 avs.add_vertical_space(1)
 
-st.title("Job Description Analyzer")
 
+st.title("Job Descriptions Analyzer")
 # Upload Job Description as text input
 job_description_text = st.text_area("Enter Job Description", height=200)
+if job_description_text is not None:
+    st.markdown("### Job descriptions successfully uploaded!")
 
-jd_strings = ""
-if st.button("Get similarity Score"):
-        if job_description_text:
-            processed_file_path = process_JobDescriptionToProcess(job_description_text)
 
-            if processed_file_path:
-                try:
-                    if os.path.exists(processed_file_path):
-                        jd_string = read_json(processed_file_path)
-
-                        jd_annotated_text_content = f"Clean Data: {jd_string['clean_data']}, Extracted Keywords: {jd_string['extracted_keywords']}"
-                        jd_strings = " ".join(jd_string["extracted_keywords"])
-
-                        df_resume = pd.DataFrame(jd_string["keyterms"], columns=["keyword", "value"])
-                        keyword_dict = {keyword: value * 100 for keyword, value in jd_string["keyterms"]}
-
-                        fig = go.Figure(data=[go.Table(
-                            header=dict(values=["Keyword", "Value"], font=dict(size=12), fill_color="#070A52"),
-                            cells=dict(values=[list(keyword_dict.keys()), list(keyword_dict.values())],
-                                       line_color="darkslategray", fill_color="#6DA9E4"))])
-
-                        jd_fig_treemap = px.treemap(
-                            df_resume,
-                            path=["keyword"],
-                            values="value",
-                            color_continuous_scale="Rainbow",
-                            title="Key Terms/Topics Extracted from your Job Description",
-                        )
-                        st.plotly_chart(jd_fig_treemap)
-                        os.remove(processed_file_path)
-
-                    else:
-                        st.error("Processed job description file does not exist.")
-
-                except json.JSONDecodeError as e:
-                    st.error(f"JSON Decode Error: {e}")
-
-                except Exception as e:
-                    st.error(f"Error loading the processed job description file: {e}")
-
-            else:
-                st.error("Error processing the job description.")
-
+def calculate_similarity_score_from_api(file):
+    if not file.name.endswith(".pdf"):
+        st.error("Invalid file type. Only PDF files are allowed.")
+        return {"detail": "Invalid file type. Only PDF files are allowed."}
+    # Ensure 'file' is a file-like object and post it
+    files = {"resume_file": (file.name, file, "application/pdf")}
+    try:
+        response = requests.post(
+            "http://127.0.0.1:8000/calculate_similarity_score/",
+            files=files)
+        
+        if response.status_code == 200:
+            data = response.json()
+            return data
         else:
-            st.warning("Please enter a job description to process.")
+            raise Exception(f"Error : {response.text}")
+    except Exception as e:
+        st.error(f"An error occurred: {str(e)}")
+
+
+def upload_job_descriptions_to_api(job_descriptions):
+    """formatted_data = []
+
+    # Iterate through each job description and split it
+    for job_desc in job_descriptions:
+        job_data = convert_str_to_json(job_desc)
+        formatted_data.append(job_data)
+
+    print(formatted_data)"""
+
+    url = "http://127.0.0.1:8000/upload_job_descriptions/"    
+    try:
+        response = requests.post(url, json=job_descriptions)
+        #response.raise_for_status()  # Raise HTTPError for bad responses (4xx or 5xx)
+        
+        if response.status_code == 200:
+            return response.json()
+        else:
+            st.error(f"Unexpected status code: {response.status_code}\n{response.text}")
+            
+        
+    except requests.exceptions.RequestException as e:
+        st.error(f"Request failed: {e}")
+        return None
+
+
+
+def create_treemap(keyterms, title):
+    df2 = pd.DataFrame(keyterms, columns=["term", "score"])
+    fig = px.treemap(
+        df2,
+        path=["keyword"],
+        values="value",
+        color_continuous_scale="Rainbow",
+        title=title)
+    return fig
+
+
+def get_similarity_scores(resume_filename):
+    url = "http://localhost:8000/similarity_scores/"
+    params = {"resume_filename": resume_filename}
+    
+    try:
+        response = requests.get(url, params=params)
+        if response.status_code == 200:
+            similarity_scores = response.json()
+            return similarity_scores
+        elif response.status_code == 404:
+            st.error(f"Resume filename '{resume_filename}' not found.")
+        else:
+            st.error(f"Error fetching similarity scores: {response.text}")
+    except requests.exceptions.RequestException as e:
+        st.error(f"Error fetching similarity scores: {str(e)}")
+
+
+
+
+#get similarity score button to lunch the app
+if st.button("Get similarity Score"):
+    if ResumeToProcess is not None and job_description_text!="":
+        # Process and upload resume via FASTAPI endpoint
+ 
+        upload_job_descriptions_to_api(job_description_text)
+        #resume_keyterms,resume_filename = calculate_similarity_score_from_api(ResumeToProcess)
+        #similarity_data=get_similarity_scores(resume_filename)
+        #result = calculate_similarity_score_from_api(ResumeToProcess)
+        print( upload_job_descriptions_to_api([job_description_text]))
+
+        """similarity_data=get_similarity_scores(resume_filename)
+        if resume_keyterms:
+            st.plotly_chart(create_treemap(resume_keyterms,"Key Terms/Topics Extracted from your Resume"))
+        
+        if similarity_data:
+            st.subheader("Similarity scores: ")
+            similarity_scores=similarity_data['similarity_scores']
+            if similarity_scores:
+                score_table=[]
+                for score in similarity_scores:
+                    score_table.append([score['job_description_filename'],score['similarity_score']])
+                st.table(score_table)
+    
 
 avs.add_vertical_space(3)
-if resume_string!="" and jd_strings!="":
-    result = get_score(resume_string, jd_string)
-    similarity_score = round(result[0].score * 100, 2)
-    score_color = "green"
-    if similarity_score < 60:
-        score_color = "red"
-    elif 60 <= similarity_score < 75:
-        score_color = "orange"
-    st.markdown(
-        f"Similarity Score obtained for the resume and job description is "
-        f'<span style="color:{score_color};font-size:24px; font-weight:Bold">{similarity_score}</span>',
-        unsafe_allow_html=True,
-    )
-else:
-    similarity_score=0.0
-    st.markdown(
-        f"Similarity Score obtained for the resume and job description is "
-        f'<span style="color:{"red"};font-size:24px; font-weight:Bold">{similarity_score}</span>',
-        unsafe_allow_html=True,
-    )
 
 # Go back to top
-st.markdown("[:arrow_up: Back to Top](#resume-matcher)")
+st.markdown("[:arrow_up: Back to Top](#resume-matcher)")"""
