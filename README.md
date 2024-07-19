@@ -41,7 +41,7 @@ Upvote us on [ProductHunt 🚀](https://www.producthunt.com/products/resume-matc
 
 TThe Resume Matcher tool allows you to upload a single resume and multiple job descriptions in JSON format. It processes these files to provide insights on how well your resume matches the job descriptions.
 
-<h1>Process Overview<\h1>
+<h1>Process Overview</h1>
 
 1. **Resume and Job Description Upload**: Upload one resume and a JSON file containing multiple job descriptions. Each job description is represented as a dictionary with "filename" (str) and "text_array" (List[str]).
 
