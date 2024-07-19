@@ -1,3 +1,4 @@
+from bson import ObjectId
 from dotenv import load_dotenv
 from fastapi import FastAPI, UploadFile, File, HTTPException,Body
 import os
@@ -13,6 +14,9 @@ from pydantic import BaseModel
 from typing import Dict,List,Any
 from scripts.similarity.get_score import *
 from fastapi.openapi.utils import get_openapi
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
 
 lock = threading.Lock()
 app = FastAPI()
@@ -36,11 +40,6 @@ def custom_openapi():
 
 app.openapi = custom_openapi
 
-
-class JobDescription(BaseModel):
-    filename: str
-    text_array: List[str]
-
 # Connect to MongoDB
 MONGODB_LOCAL_URI = os.getenv("MONGODB_LOCAL_URI")
 client = MongoClient(MONGODB_LOCAL_URI)
@@ -59,14 +58,10 @@ PROCESSED_JOBDESCRIPTION_DIR = os.getenv("PROCESSED_JOBDESCRIPTION_DIR")
 def check_resume_existence(file_name):
     return db.resumes.find_one({"filename": file_name}) is not None
 
-def save_resume_to_db(file_path, file_name, keyword_dict,resume_string):
+def save_resume_to_db(file_path, file_name):
     try:
         with open(file_path, "r") as f:
             json_data = json.load(f)
-
-        # Add additional data to the JSON object
-        json_data["keyword_dict"] = keyword_dict
-        json_data["resume_string"] = resume_string
 
         db.resumes.insert_one({"filename": file_name, "content": json_data})
     except pymongo.errors.PyMongoError as e:
@@ -97,23 +92,19 @@ async def upload_resume(resume_file: UploadFile = File(...)):
         if processed_file_path:
             with open(processed_file_path, "r") as file:
                 processed_resume_json = json.load(file)
-                keyword_dict = {keyword: value * 100 for keyword, value in processed_resume_json["keyterms"]}
-                 # Add the line to join extracted_keywords into resume_string
-                resume_string = " ".join(processed_resume_json["extracted_keywords"])
-
             
             # Check if the processed resume already exists in MongoDB
             if not check_resume_existence(processed_file_name):
                 
                 # If not exists, save it to MongoDB
-                save_resume_to_db(processed_file_path, processed_file_name,keyword_dict,resume_string)
+                save_resume_to_db(processed_file_path, processed_file_name)
                 os.remove(processed_file_path)  # Remove the processed file
                 
-                return processed_resume_json
+                return processed_file_name,processed_resume_json
             
             else:
                 os.remove(processed_file_path)
-                return processed_resume_json
+                return processed_file_name,processed_resume_json
         else:
             raise HTTPException(status_code=500, detail="Error processing the resume file.")
 
@@ -190,20 +181,18 @@ async def process_resume_from_path(data: Dict[str, str]):
         if processed_resume_path:
             with open(processed_resume_path, "r") as file:
                 processed_resume_json = json.load(file)
-                keyword_dict = {keyword: value * 100 for keyword, value in processed_resume_json["keyterms"]}
-                # Add the line to join extracted_keywords into resume_string
-                resume_string = " ".join(processed_resume_json["extracted_keywords"])
 
             # Check if the processed resume already exists in MongoDB
             if not check_resume_existence(processed_resume_name):
                 
                 # If not exists, save it to MongoDB
-                save_resume_to_db(processed_resume_path, processed_resume_name,keyword_dict,resume_string)
-                os.remove(processed_resume_path)  # Remove the processed file
+                save_resume_to_db(processed_resume_path, processed_resume_name)
+                
                 # Read the processed resume file content
             with open(processed_resume_path, "r", encoding="utf-8") as f:
                 processed_resume_content = json.load(f)
-            return {"filename": processed_resume_name, "resume_string": resume_string}
+            #return {"filename": processed_resume_name, "resume_string": resume_string}
+            return processed_resume_json
 
     except HTTPException as http_exc:
         print(f"HTTPException: {http_exc.detail}")
@@ -214,26 +203,18 @@ async def process_resume_from_path(data: Dict[str, str]):
 
 
 def process_JobDescriptionToProcess(job_description_text):
+
     pathlib.Path(PROCESSED_JOBDESCRIPTION_DIR).mkdir(parents=True, exist_ok=True)
     # Process the text using the JobDescriptionProcessor class
     processor = JobDescriptionProcessor(job_description_text)
     jd_processed_file_path = processor.process()
-    if jd_processed_file_path:
-            # Load the processed job description from the saved JSON file
-            with open(jd_processed_file_path, "r") as file:
-                processed_job_description = json.load(file)
-            
-            # Calculate keyword_dict from processed_job_description
-            keyword_dict = {keyword: value * 100 for keyword, value in processed_job_description["keyterms"]}
-            
-            # Add keyword_dict to processed_job_description
-            processed_job_description["keyword_dict"] = keyword_dict
-            
-            # Save the updated job description back to the JSON file
-            with open(jd_processed_file_path, "w") as file:
-                json.dump(processed_job_description, file, indent=4)
             
     return jd_processed_file_path
+
+
+class JobDescription(BaseModel):
+    filename: str
+    text_array: List[str]
 
 # Endpoint to process jobDescription files from array of text
 @app.post("/upload_job_descriptions/")
@@ -255,41 +236,32 @@ async def upload_job_descriptions(job_descriptions: List[JobDescription]):
             processed_file_path = processor.process()
             
             if processed_file_path:
-                
                 with open(processed_file_path, "r") as file:
                     processed_job_description = json.load(file)
-                    # Read additional data from processed job description JSON
-                    jd_annotated_text_content = f"Clean Data: {processed_job_description.get('clean_data', '')}, Extracted Keywords: {processed_job_description.get('extracted_keywords', [])}"
-                    jd_strings = " ".join(processed_job_description.get("extracted_keywords", []))
-                    
-                    # Add additional fields to processed_job_description
-                    processed_job_description["jd_annotated_text_content"] = jd_annotated_text_content
-                    processed_job_description["jd_strings"] = jd_strings
                     processed_job_description["filename"] = filename
                 processed_job_descriptions.append(processed_job_description)
-
-        collection.insert_one({"job_descriptions": processed_job_descriptions})
+        
+        result =collection.insert_one({"job_descriptions": processed_job_descriptions})
 
          # Remove the processed JSON file if it exists
         if os.path.exists(processed_file_path):
             os.remove(processed_file_path)
 
-        return {"job_descriptions": processed_job_descriptions}
-
-        #return {"message": f"Successfully uploaded {len(result.inserted_ids)} job descriptions."}
-
+        return {"_id": str(result.inserted_id),"job_descriptions": processed_job_descriptions}
     except Exception as e:
         import traceback
         traceback.print_exc()  # print the exception traceback
         raise HTTPException(status_code=500, detail=f"Error uploading job descriptions: {str(e)}")
 
+
 @app.get("/job_descriptions", response_model=List[List[str]])
-async def get_job_descriptions_filenames_and_jd_string():
+async def get_job_descriptions_filenames_and_jd_string(id: str):
     try:
-        job_descriptions_docs = list(jd_db.jobDescriptions.find({}))  # Fetch all documents from collection
+        job_descriptions_docs = list(jd_db.jobDescriptions.find({"_id": ObjectId(id)}))  # Fetch all documents from collection
 
         filenames = []
         jd_strings = []
+        unique_ids = []
 
         # Iterate over each document
         for job_desc_doc in job_descriptions_docs:
@@ -298,20 +270,16 @@ async def get_job_descriptions_filenames_and_jd_string():
             for job_description in job_descriptions:
                 filename = job_description.get('filename')
                 jd_strings_item = job_description.get('jd_strings')
+                unique_id = job_description.get('unique_id')
 
-                # Append filename and jd_strings_item to their respective lists
-                if filename:
-                    filenames.append(filename)
-                else:
-                    filenames.append('No filename found')
-                
-                if jd_strings_item:
-                    jd_strings.append(jd_strings_item)
-                else:
-                    jd_strings.append('No jd_strings found')
+                # Append filename, jd_strings_item, and unique_id to their respective lists
+                filenames.append(filename if filename else 'No filename found')
+                jd_strings.append(jd_strings_item if jd_strings_item else 'No jd_strings found')
+                unique_ids.append(unique_id if unique_id else 'No unique_id found')
+
 
         # Combine filenames and jd_strings into a list of lists
-        combined_list = [filenames, jd_strings]
+        combined_list = [filenames, jd_strings, unique_ids]
         
         return combined_list
 
@@ -345,8 +313,8 @@ def ensure_similarityscores_collection():
     if "similarityscores" not in ss_db.list_collection_names():
         ss_db.create_collection("similarityscores")
 
-@app.post("/calculate_similarity_score_2/")
-async def calculate_similarity_score_2(data: Dict[str, str]):
+@app.post("/calculate_similarity_score_With_absolute_path/")
+async def calculate_similarity_score_with_absolute_path(data: Dict[str, str]):
     try:
         ensure_similarityscores_collection()
 
@@ -398,40 +366,48 @@ async def calculate_similarity_score_2(data: Dict[str, str]):
         raise HTTPException(status_code=500, detail=f"Error calculating similarity score: {str(e)}")
 
 @app.post("/calculate_similarity_score/")
-async def calculate_similarity_score(resume_file: UploadFile = File(...)):
+async def calculate_similarity_score( id: str,resume_file: UploadFile = File(...)):
     try:
+        
         ensure_similarityscores_collection()
 
         # Insert job descriptions into MongoDB collection
         collection = ss_db.similarityscores
         
         # Process resume from path
-        resume_data =process_ResumeToProcess(resume_file)
-        resume_filename=resume_data["filename"]
+        resume_filename,resume_data =await upload_resume(resume_file)
+        print('hi')
+        print(resume_filename)
+        print(resume_data)
+
         resume_keyterms = resume_data["keyterms"]
         resume_strings = resume_data["resume_string"]
-        
+        print(resume_keyterms)
+        print(resume_strings)
         # Get job descriptions from MongoDB
-        job_descriptions =await get_job_descriptions_filenames_and_jd_string()
+        job_descriptions =await get_job_descriptions_filenames_and_jd_string(id)
 
         # Ensure job_descriptions is a list containing filenames and jd_strings
-        if len(job_descriptions) != 2:
+        if len(job_descriptions) != 3:
             raise HTTPException(status_code=500, detail="Invalid response from get_job_descriptions_filenames_and_jd_string")
 
         filenames = job_descriptions[0]
         jd_strings = job_descriptions[1]
+        unique_ids = job_descriptions[2]
 
         # Calculate similarity scores
         similarity_scores = []
         for i in range(len(filenames)):  # Iterate over the length of filenames or jd_strings, assuming they are the same length
             job_filename = filenames[i]
             jd_string = jd_strings[i]
+            unique_id = unique_ids[i]
             result = get_score(resume_strings, jd_string)
             similarity_score = round(result[0].score * 100, 2)
             print(similarity_score)
             similarity_scores.append({
                     "job_description_filename": job_filename,
-                    "similarity_score": similarity_score  # Round to two decimal places
+                    "similarity_score": similarity_score, # Round to two decimal places
+                    "unique_id": unique_id  
                 })
 
         collection.insert_one({
@@ -461,55 +437,7 @@ async def get_similarity_scores(resume_filename: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching similarity scores: {str(e)}")
 
-
-@app.post("/upload_job_descriptionsss/")
-async def upload_job_descriptionsss(job_descriptions_str: str = Body(...)):
-    try:
-        # Ensure the jobDescriptions collection exists, create it if not
-        if "jobDescriptions" not in jd_db.list_collection_names():
-            jd_db.create_collection("jobDescriptions")
-
-        # Parse the input string into a list of job descriptions
-        job_descriptions = json.loads(job_descriptions_str)
-        
-        # Insert job descriptions into MongoDB collection
-        collection = jd_db.jobDescriptions
-        processed_job_descriptions = []
-
-        # Iterate through each job description in the list
-        for job_desc in job_descriptions:
-            filename = job_desc["filename"]
-            input_text = " ".join(job_desc["text_array"])
-            processor = JobDescriptionProcessor(input_text)
-            processed_file_path = processor.process()
-            
-            if processed_file_path:
-                with open(processed_file_path, "r") as file:
-                    processed_job_description = json.load(file)
-                    # Read additional data from processed job description JSON
-                    jd_annotated_text_content = f"Clean Data: {processed_job_description.get('clean_data', '')}, Extracted Keywords: {processed_job_description.get('extracted_keywords', [])}"
-                    jd_strings = " ".join(processed_job_description.get("extracted_keywords", []))
-                    
-                    # Add additional fields to processed_job_description
-                    processed_job_description["jd_annotated_text_content"] = jd_annotated_text_content
-                    processed_job_description["jd_strings"] = jd_strings
-                    processed_job_description["filename"] = filename
-                processed_job_descriptions.append(processed_job_description)
-
-        collection.insert_one({"job_descriptions": processed_job_descriptions})
-
-        # Remove the processed JSON file if it exists
-        if os.path.exists(processed_file_path):
-            os.remove(processed_file_path)
-
-        return {"job_descriptions": processed_job_descriptions}
-
-    except Exception as e:
-        import traceback
-        traceback.print_exc()  # print the exception traceback
-        raise HTTPException(status_code=500, detail=f"Error uploading job descriptions: {str(e)}")
-
 # Run the FastAPI application with Swagger UI
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="localhost", port=8000, log_level="info", reload=True)
+    uvicorn.run(app, host="localhost", port=8000, log_level="debug", reload=True)

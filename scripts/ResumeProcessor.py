@@ -45,6 +45,17 @@ class ResumeProcessor:
         )
         save_directory_name = pathlib.Path(SAVE_DIRECTORY) / file_name #contruct full path to save directory and file name
         json_object = json.dumps(resume_dictionary, sort_keys=True, indent=14) #convert resume_dictionary to JSON format with sortingand indentation 
+        
+        # Add the lines to process the resume json
+        keyword_dict = {keyword: value * 100 for keyword, value in resume_dictionary["keyterms"]}
+        resume_string = " ".join(resume_dictionary["extracted_keywords"])
+        resume_dictionary["resume_string"]=resume_string
+        resume_dictionary["keyword_dict"]=keyword_dict
+
+        # Update the json_object with the new resume_dictionary
+        json_object = json.dumps(resume_dictionary, sort_keys=True, indent=14)
+        
+        
         with open(save_directory_name, "w+") as outfile: #open file for writing
             outfile.write(json_object) #write JSON data to the file
         return str(save_directory_name)  # Return the file path as a string

@@ -50,7 +50,17 @@ class JobDescriptionProcessor:
         """
         file_name = f"JobDescription-{hash(self.input_text)}.json"
         save_directory_name = pathlib.Path(SAVE_DIRECTORY) / file_name
+        # Read additional data from processed job description JSON
+        jd_annotated_text_content = f"Clean Data: {data_dictionary.get('clean_data', '')}, Extracted Keywords: {data_dictionary.get('extracted_keywords', [])}"
+        jd_strings = " ".join(data_dictionary.get("extracted_keywords", []))
+
+        # Add additional fields to data_dictionary
+        data_dictionary["jd_annotated_text_content"] = jd_annotated_text_content
+        data_dictionary["jd_strings"] = jd_strings
+
+        # Update the json_object with the new data_dictionary
         json_object = json.dumps(data_dictionary, sort_keys=True, indent=4)
+
         with open(save_directory_name, "w+") as outfile:
             outfile.write(json_object)
         return save_directory_name

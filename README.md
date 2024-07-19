@@ -39,17 +39,23 @@ Upvote us on [ProductHunt 🚀](https://www.producthunt.com/products/resume-matc
 
 </div>
 
-The Resume Matcher takes your resume and job descriptions as input, parses them using Python, and mimics the functionalities of an ATS, providing you with insights and suggestions to make your resume ATS-friendly.
+TThe Resume Matcher tool allows you to upload a single resume and multiple job descriptions in JSON format. It processes these files to provide insights on how well your resume matches the job descriptions.
 
-The process is as follows:
+<h1>Process Overview<\h1>
 
-1. **Parsing**: The system uses Python to parse both your resume and the provided job description, just like an ATS would.
+1. **Resume and Job Description Upload**: Upload one resume and a JSON file containing multiple job descriptions. Each job description is represented as a dictionary with "filename" (str) and "text_array" (List[str]).
 
-2. **Keyword Extraction**: The tool uses advanced machine learning algorithms to extract the most relevant keywords from the job description. These keywords represent the skills, qualifications, and experiences the employer seeks.
+2. **Parsing and Extraction**: 
+* Resume Parsing: The resume is parsed to extract key terms and topics.
+* Job Description Parsing: Each job description is processed to extract relevant keywords and key terms.
 
-3. **Key Terms Extraction**: Beyond keyword extraction, the tool uses textacy to identify the main key terms or themes in the job description. This step helps in understanding the broader context of what the resume is about.
+3. **Key Terms Extraction**: The tool uses text analysis to identify the main key terms or themes in the resume and job descriptions.
 
-4. **Vector Similarity Using FastEmbedd**: The tool uses [FastEmbedd](https://github.com/qdrant/fastembed), a highly efficient embedding system, to measure how closely your resume matches the job description. The more similar they are, the higher the likelihood that your resume will pass the ATS screening.
+4. **Similarity Scoring**: Using advanced algorithms, the tool calculates the similarity score between your resume and each job description. Higher scores indicate a closer match.
+
+5. **Visualization and Reporting**:
+* Key Terms Visualization: The extracted key terms from the resume are displayed in a visual figure.
+* Similarity Scores Table: A table shows each job description's filename and the corresponding similarity score.
 
 <br/>
 
