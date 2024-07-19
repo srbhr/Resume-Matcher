@@ -33,7 +33,7 @@ Upvote us on [ProductHunt 🚀](https://www.producthunt.com/products/resume-matc
 
 **Don't let your resume be a roadblock from getting your next job. Use Resume Matcher!**
 
-![Resume_Matcher_streamlit_demo](Assets/img/Resume_Matcher_Gif.gif)
+![Resume_Matcher_streamlit_demo](Assets/img/resume_matcher_giff.gif)
 
 ## How does it work?
 

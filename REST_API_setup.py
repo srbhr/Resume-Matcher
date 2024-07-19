@@ -19,8 +19,7 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 
 lock = threading.Lock()
-app = FastAPI()
-
+app = FastAPI(swagger_ui_parameters={"syntaxHighlight": False})
 
 # Load environment variables from the .env file
 load_dotenv()
@@ -343,7 +342,6 @@ async def calculate_similarity_score_with_absolute_path(data: Dict[str, str]):
             jd_string = jd_strings[i]
             result = get_score(resume_strings, jd_string)
             similarity_score = round(result[0].score * 100, 2)
-            print(similarity_score)
             similarity_scores.append({
                     "job_description_filename": job_filename,
                     "similarity_score": similarity_score  # Round to two decimal places
@@ -376,14 +374,8 @@ async def calculate_similarity_score( id: str,resume_file: UploadFile = File(...
         
         # Process resume from path
         resume_filename,resume_data =await upload_resume(resume_file)
-        print('hi')
-        print(resume_filename)
-        print(resume_data)
-
         resume_keyterms = resume_data["keyterms"]
         resume_strings = resume_data["resume_string"]
-        print(resume_keyterms)
-        print(resume_strings)
         # Get job descriptions from MongoDB
         job_descriptions =await get_job_descriptions_filenames_and_jd_string(id)
 
@@ -403,7 +395,6 @@ async def calculate_similarity_score( id: str,resume_file: UploadFile = File(...
             unique_id = unique_ids[i]
             result = get_score(resume_strings, jd_string)
             similarity_score = round(result[0].score * 100, 2)
-            print(similarity_score)
             similarity_scores.append({
                     "job_description_filename": job_filename,
                     "similarity_score": similarity_score, # Round to two decimal places
