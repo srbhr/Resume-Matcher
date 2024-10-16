@@ -18,6 +18,9 @@ def read_json(filename):
 
 
 def remove_old_files(files_path):
+    if not os.path.exists(files_path): # Check if the folder exists or not.
+        # Create the folder if it doesn't exist to avoid error in the next step.
+        os.makedirs(files_path)
 
     for filename in os.listdir(files_path):
         try:
