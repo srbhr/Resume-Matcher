@@ -37,8 +37,12 @@ def remove_old_files(files_path):
 logging.info("Started to read from Data/Resumes")
 try:
     # Check if there are resumes present or not.
-    # If present then parse it.
-    remove_old_files(PROCESSED_RESUMES_PATH)
+    if not os.path.exists(PROCESSED_RESUMES_PATH):
+        # If not present then create one.
+        os.makedirs(PROCESSED_RESUMES_PATH)
+    else:
+        # If present then parse it.
+        remove_old_files(PROCESSED_RESUMES_PATH)
 
     file_names = get_filenames_from_dir("Data/Resumes")
     logging.info("Reading from Data/Resumes is now complete.")
@@ -59,8 +63,12 @@ logging.info("Parsing of the resumes is now complete.")
 logging.info("Started to read from Data/JobDescription")
 try:
     # Check if there are resumes present or not.
+    if not os.path.exists(PROCESSED_JOB_DESCRIPTIONS_PATH):
+        # If not present then create one.
+        os.makedirs(PROCESSED_JOB_DESCRIPTIONS_PATH)
+    else:  
     # If present then parse it.
-    remove_old_files(PROCESSED_JOB_DESCRIPTIONS_PATH)
+        remove_old_files(PROCESSED_JOB_DESCRIPTIONS_PATH)
 
     file_names = get_filenames_from_dir("Data/JobDescription")
     logging.info("Reading from Data/JobDescription is now complete.")
