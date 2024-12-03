@@ -108,7 +108,7 @@ urllib3>=1.26.14
 validators==0.20.0
 wasabi==1.1.2
 watchdog==3.0.0
-zipp==3.16.2
+zipp==3.19.1
 reportlab==3.6.13
 easygui==0.98.3
 xhtml2pdf==0.2.11
