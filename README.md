@@ -275,3 +275,23 @@ Take the leap, contribute, and let's grow together! 🚀
 <a href="https://github.com/srbhr/Resume-Matcher/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=srbhr/Resume-Matcher" />
 </a>
+
+## Current System Analysis Report
+
+The Current System Analysis Report provides a detailed overview of the existing system, including core business logic, data flow, system interactions, dependencies, critical paths, and bottlenecks. This report helps in understanding the current state of the system and identifying areas for improvement.
+
+## Code Quality Assessment Report
+
+The Code Quality Assessment Report evaluates the quality of the codebase, identifying violations of SOLID principles, instances of code duplication, naming conventions, documentation quality, security vulnerabilities, resource management, and performance bottlenecks. This report helps in maintaining a high standard of code quality and ensuring the system's reliability and maintainability.
+
+## Architectural Design Document
+
+The Architectural Design Document outlines the system's architecture, including system boundaries, components, data model, database schema, API endpoints, authentication and authorization strategy, caching, and performance optimization strategies. This document serves as a blueprint for the system's design and helps in ensuring a scalable and efficient architecture.
+
+## Migration Strategy Document
+
+The Migration Strategy Document provides a detailed plan for migrating the system to a new architecture, including frontend architecture (React), backend architecture (FastAPI), integration strategy, and development operations. This document helps in ensuring a smooth and efficient migration process.
+
+## Risk Assessment and Mitigation Plan
+
+The Risk Assessment and Mitigation Plan identifies potential risks in the migration process and proposes mitigation strategies for these risks. This document also includes scalability requirements, security considerations, and maintenance and support strategy. This plan helps in minimizing risks and ensuring a successful migration.
