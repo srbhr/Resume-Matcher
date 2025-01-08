@@ -20,7 +20,11 @@ st.set_page_config(
     initial_sidebar_state="auto",
 )
 
-nltk.download("punkt")
+# Check if NLTK punkt_tab data is available, if not, download it
+try:
+    nltk.data.find("tokenizers/punkt_tab")
+except LookupError:
+    nltk.download("punkt_tab")
 
 parameters.SHOW_LABEL_SEPARATOR = False
 parameters.BORDER_RADIUS = 3
