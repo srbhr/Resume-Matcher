@@ -28,9 +28,9 @@ cwd = find_path("Resume-Matcher")
 config_path = os.path.join(cwd, "scripts", "similarity")
 
 try:
-    nltk.data.find("tokenizers/punkt")
+    nltk.data.find("tokenizers/punkt_tab")
 except LookupError:
-    nltk.download("punkt")
+    nltk.download("punkt_tab")
 
 parameters.SHOW_LABEL_SEPARATOR = False
 parameters.BORDER_RADIUS = 3
