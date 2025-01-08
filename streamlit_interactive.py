@@ -31,11 +31,11 @@ st.set_page_config(
 cwd = find_path("Resume-Matcher")
 config_path = os.path.join(cwd, "scripts", "similarity")
 
-# Check if NLTK punkt data is available, if not, download it
+# Check if NLTK punkt_tab data is available, if not, download it
 try:
-    nltk.data.find("tokenizers/punkt")
+    nltk.data.find("tokenizers/punkt_tab")
 except LookupError:
-    nltk.download("punkt")
+    nltk.download("punkt_tab")
 
 # Set some visualization parameters using the annotated_text library
 parameters.SHOW_LABEL_SEPARATOR = False
