@@ -128,7 +128,7 @@ Follow these steps to set up the environment and run the application.
        pyenv install -v 3.11.0
      ```
 
-   - pyenv with virtual enviroment
+   - pyenv with virtual environment
      ```
         pyenv virtualenv 3.11.0 venv
      ```
