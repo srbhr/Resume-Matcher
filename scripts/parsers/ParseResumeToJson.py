@@ -2,6 +2,8 @@ import json
 import os
 import os.path
 import pathlib
+import re
+from collections import defaultdict
 
 from scripts.Extractor import DataExtractor
 from scripts.KeytermsExtraction import KeytermExtractor
@@ -17,7 +19,7 @@ class ParseResume:
         self.clean_data = TextCleaner.clean_text(self.resume_data)
         self.entities = DataExtractor(self.clean_data).extract_entities()
         self.name = DataExtractor(self.clean_data[:30]).extract_names()
-        self.experience = DataExtractor(self.clean_data).extract_experience()
+        self.experience = self.extract_experience_sections()
         self.emails = DataExtractor(self.resume_data).extract_emails()
         self.phones = DataExtractor(self.resume_data).extract_phone_numbers()
         self.years = DataExtractor(self.clean_data).extract_position_year()
@@ -27,9 +29,50 @@ class ParseResume:
         self.bi_grams = KeytermExtractor(self.clean_data).bi_gramchunker()
         self.tri_grams = KeytermExtractor(self.clean_data).tri_gramchunker()
 
+    def extract_experience_sections(self):
+        """
+        Extract and group job experience sections from the resume.
+        """
+        experience_dict = defaultdict(list)
+
+        # Common phrases indicating job roles
+        experience_patterns = [
+            r"(?P<role>.*) at (?P<company>[A-Za-z\s]+) \((?P<years>[0-9]{4}-[0-9]{4})\)",
+            r"(?P<role>.*) - (?P<company>[A-Za-z\s]+), (?P<years>[0-9]{4}-[0-9]{4})",
+            r"Worked at (?P<company>[A-Za-z\s]+)",
+        ]
+
+        lines = self.clean_data.split("\n")
+        current_company = None
+
+        for line in lines:
+            for pattern in experience_patterns:
+                match = re.search(pattern, line)
+                if match:
+                    company = match.group("company").strip()
+                    role = match.group("role").strip() if "role" in match.groupdict() else "Unknown Role"
+                    years = match.group("years").strip() if "years" in match.groupdict() else "N/A"
+                    current_company = company
+                    experience_dict[company] = {
+                        "role": role,
+                        "years": years,
+                        "details": [],
+                    }
+            if current_company:
+                experience_dict[current_company]["details"].append(line)
+
+        return {
+            company: {
+                "role": details["role"],
+                "years": details["years"],
+                "details": " ".join(details["details"]),
+            }
+            for company, details in experience_dict.items()
+        }
+
     def get_JSON(self) -> dict:
         """
-        Returns a dictionary of resume data.
+        Returns a dictionary of resume data with improved experience parsing.
         """
         resume_dictionary = {
             "unique_id": generate_unique_id(),
