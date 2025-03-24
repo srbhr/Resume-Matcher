@@ -8,7 +8,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
-from annotated_text import annotated_text, parameters
+from components.annotated_text import annotated_text
 from streamlit_extras import add_vertical_space as avs
 from streamlit_extras.badges import badge
 
@@ -32,9 +32,9 @@ try:
 except LookupError:
     nltk.download("punkt_tab")
 
-parameters.SHOW_LABEL_SEPARATOR = False
-parameters.BORDER_RADIUS = 3
-parameters.PADDING = "0.5 0.25rem"
+# parameters.SHOW_LABEL_SEPARATOR = False
+# parameters.BORDER_RADIUS = 3
+# parameters.PADDING = "0.5 0.25rem"
 
 
 def create_star_graph(nodes_and_weights, title):
@@ -91,9 +91,8 @@ def create_star_graph(nodes_and_weights, title):
             size=10,
             colorbar=dict(
                 thickness=15,
-                title="Node Connections",
+                title=dict(text="Node Connections"),
                 xanchor="left",
-                titleside="right",
             ),
             line_width=2,
         ),
@@ -114,8 +113,7 @@ def create_star_graph(nodes_and_weights, title):
     fig = go.Figure(
         data=[edge_trace, node_trace],
         layout=go.Layout(
-            title=title,
-            titlefont_size=16,
+            title=dict(text=title, font=dict(size=16)),
             showlegend=False,
             hovermode="closest",
             margin=dict(b=20, l=5, r=5, t=40),
