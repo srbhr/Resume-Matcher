@@ -91,12 +91,12 @@ def create_star_graph(nodes_and_weights, title):
             size=10,
             colorbar=dict(
                 thickness=15,
-                title="Node Connections",
-                xanchor="left",
-                titleside="right",
+                title=dict(text="Node Connections", side="right"),  # ✅ FIXED
+                xanchor="left"
             ),
             line_width=2,
         ),
+
     )
 
     # Color node points by number of connections
@@ -114,8 +114,7 @@ def create_star_graph(nodes_and_weights, title):
     fig = go.Figure(
         data=[edge_trace, node_trace],
         layout=go.Layout(
-            title=title,
-            titlefont_size=16,
+            title=dict(text=title, font=dict(size=16)),
             showlegend=False,
             hovermode="closest",
             margin=dict(b=20, l=5, r=5, t=40),
