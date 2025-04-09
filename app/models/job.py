@@ -24,7 +24,7 @@ class Job(Base):
 
     # one-to-many relation between user and jobs
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    owner = relationship("User", back_populates="resumes")
+    owner = relationship("User", back_populates="jobs")
 
     # many-to-many relationship in job and resume
-    jobs = relationship("Resume", secondary=job_resume_association, back_populates="resumes")
+    resumes = relationship("Resume", secondary=job_resume_association, back_populates="jobs")

@@ -21,4 +21,4 @@ class Resume(Base):
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     owner = relationship("User", back_populates="resumes")
 
-    jobs = relationship("JobDescription", secondary=job_resume_association, back_populates="jobs")
+    jobs = relationship("Job", secondary=job_resume_association, back_populates="resumes")
