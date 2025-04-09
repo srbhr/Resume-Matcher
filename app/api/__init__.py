@@ -1,1 +1,1 @@
-# __init__ api
+from .router.health import health_check

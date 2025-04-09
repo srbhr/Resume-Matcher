@@ -6,7 +6,7 @@ from typing import Optional
 
 class DatabaseConnectionSingleton:
     _instance_lock = threading.Lock()
-    _instance = Optional["DatabaseConnectionSingleton"] = None
+    _instance: Optional["DatabaseConnectionSingleton"] = None
 
     def __new__(cls, *args, **kwargs):
         if not cls._instance:
