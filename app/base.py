@@ -3,10 +3,10 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
-from app.api.v1 import api_router
+from app.api import health_check
 from app.core.config import settings
-from models.base import Base
-from core.database import DatabaseConnectionSingleton
+from app.models import Base
+from app.core.database import DatabaseConnectionSingleton
 
 def create_app() -> FastAPI:
     app = FastAPI(
@@ -30,6 +30,6 @@ def create_app() -> FastAPI:
     if os.path.exists(settings.FRONTEND_PATH): 
         app.mount("/app", StaticFiles(directory=settings.FRONTEND_PATH, html=True), name=settings.PROJECT_NAME)
 
-    app.include_router(api_router, prefix="/api/v1")
+    app.include_router(health_check)
 
     return app
