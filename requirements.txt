@@ -1,11 +1,16 @@
 annotated-types==0.7.0
 anyio==4.9.0
+certifi==2025.1.31
 click==8.1.8
 dotenv==0.9.9
 fastapi==0.115.12
 greenlet==3.1.1
 h11==0.14.0
+httpcore==1.0.8
+httpx==0.28.1
 idna==3.10
+itsdangerous==2.2.0
+ollama==0.4.7
 pydantic==2.11.3
 pydantic-settings==2.8.1
 pydantic_core==2.33.1
