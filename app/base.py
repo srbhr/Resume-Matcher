@@ -1,12 +1,12 @@
 import os
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
+from fastapi.exceptions import RequestValidationError
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
-from app.api import health_check
-from app.core.config import settings
+from app.api import health_check, v1_router, RequestIDMiddleware
+from app.core import settings, db_singleton, custom_http_exception_handler, validation_exception_handler, unhandled_exception_handler
 from app.models import Base
-from app.core.database import DatabaseConnectionSingleton
 
 def create_app() -> FastAPI:
     app = FastAPI(
@@ -23,13 +23,18 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+    app.add_middleware(RequestIDMiddleware)
+    
+    app.add_exception_handler(HTTPException, custom_http_exception_handler)
+    app.add_exception_handler(RequestValidationError, validation_exception_handler)
+    app.add_exception_handler(Exception, unhandled_exception_handler)
 
-    db_singleton = DatabaseConnectionSingleton(settings.DATABASE_URL)
     Base.metadata.create_all(bind=db_singleton.engine)
     
     if os.path.exists(settings.FRONTEND_PATH): 
         app.mount("/app", StaticFiles(directory=settings.FRONTEND_PATH, html=True), name=settings.PROJECT_NAME)
 
     app.include_router(health_check)
+    app.include_router(v1_router)
 
     return app

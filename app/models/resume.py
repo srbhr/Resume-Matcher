@@ -1,11 +1,11 @@
 from .base import Base 
-from sqlalchemy import Column, String, Integer, ForeignKey
+from sqlalchemy import Column, String, Integer, ForeignKey, Text
 from sqlalchemy.types import JSON
 from sqlalchemy.orm import relationship
 from .association import job_resume_association
 
-class Resume(Base):
-    __tablename__ = "resumes"
+class ProcessedResume(Base):
+    __tablename__ = "processed_resumes"
 
     resume_id = Column(String, primary_key = True, index=True) # uuid field
 
@@ -19,6 +19,15 @@ class Resume(Base):
     extracted_keywords = Column(JSON, nullable=True)
 
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    owner = relationship("User", back_populates="resumes")
+    owner = relationship("User", back_populates="processed_resumes")
 
-    jobs = relationship("Job", secondary=job_resume_association, back_populates="resumes")
+    jobs = relationship("Job", secondary=job_resume_association, back_populates="processed_resumes")
+
+
+class Resume(Base):
+    __tablename__ = "resumes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    resume_id = Column(String, unique=True, nullable=False)
+    content = Column(Text, nullable=False)
+    content_type = Column(String, nullable=False)
