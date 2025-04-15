@@ -137,11 +137,12 @@ dmypy.json
 .vscode
 .vscode/*
 
-scripts/similarity/config.yml
+# Cursor's Files
+.cursorrules
 
 # Personal Data / Secrets
 *.local.yml
 
 # Processed or local files
-/Data/Processed/*
-*.local.pdf
+__pycache__/
+__pypackages__
