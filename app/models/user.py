@@ -10,5 +10,5 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     name = Column(String, nullable=False)
 
-    resumes = relationship("Resume", back_populates="owner")
+    resumes = relationship("ProcessedResume", back_populates="owner")
     jobs = relationship("Job", back_populates="owner")
