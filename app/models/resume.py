@@ -1,14 +1,14 @@
-from .base import Base 
+from .base import Base
 from sqlalchemy import Column, String, Integer, ForeignKey, Text
 from sqlalchemy.types import JSON
 from sqlalchemy.orm import relationship
 from .association import job_resume_association
 
+
 class ProcessedResume(Base):
     __tablename__ = "processed_resumes"
 
-    resume_id = Column(String, primary_key = True, index=True) # uuid field
-
+    resume_id = Column(String, primary_key=True, index=True)  # uuid field
     personal_data = Column(JSON, nullable=False)
     experiences = Column(JSON, nullable=True)
     projects = Column(JSON, nullable=True)
@@ -21,7 +21,9 @@ class ProcessedResume(Base):
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     owner = relationship("User", back_populates="processed_resumes")
 
-    jobs = relationship("Job", secondary=job_resume_association, back_populates="processed_resumes")
+    jobs = relationship(
+        "Job", secondary=job_resume_association, back_populates="processed_resumes"
+    )
 
 
 class Resume(Base):
