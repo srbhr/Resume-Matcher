@@ -111,6 +111,6 @@ watchdog==3.0.0
 zipp==3.19.1
 reportlab==3.6.13
 easygui==0.98.3
-xhtml2pdf==0.2.11
+xhtml2pdf==0.2.17
 fastembed~=0.2.2
 qdrant-client==1.9.0
