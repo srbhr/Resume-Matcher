@@ -83,7 +83,7 @@ srsly==2.4.6
 st-annotated-text==4.0.0
 streamlit==1.37.0
 streamlit-camera-input-live==0.2.0
-streamlit-card==0.0.61
+streamlit-card==1.0.2
 streamlit-embedcode==0.1.2
 streamlit-extras==0.3.2
 streamlit-faker==0.0.2
