@@ -5,6 +5,7 @@ from app.utils.utils import get_db_session
 
 health_check = APIRouter()
 
+
 @health_check.get("/ping", tags=["health_check"], status_code=status.HTTP_200_OK)
 def ping(db: Session = Depends(get_db_session)):
     """

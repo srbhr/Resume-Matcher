@@ -3,6 +3,7 @@ from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from starlette.status import HTTP_500_INTERNAL_SERVER_ERROR
 
+
 async def custom_http_exception_handler(request: Request, exc: HTTPException):
     request_id = getattr(request.state, "request_id", "")
     return JSONResponse(
@@ -10,12 +11,14 @@ async def custom_http_exception_handler(request: Request, exc: HTTPException):
         content={"detail": exc.detail, "request_id": request_id},
     )
 
+
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     request_id = getattr(request.state, "request_id", "")
     return JSONResponse(
         status_code=422,
         content={"detail": exc.errors(), "request_id": request_id},
     )
+
 
 async def unhandled_exception_handler(request: Request, exc: Exception):
     request_id = getattr(request.state, "request_id", "")
