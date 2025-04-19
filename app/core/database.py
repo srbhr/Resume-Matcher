@@ -14,10 +14,12 @@ class DatabaseConnectionSingleton:
                 if not cls._instance:
                     cls._instance = super(DatabaseConnectionSingleton, cls).__new__(cls)
         return cls._instance
-    
+
     def __init__(self, db_url: str):
         if not hasattr(self, "engine"):
-            self.engine = create_engine(db_url, connect_args={"check_same_thread": False})
+            self.engine = create_engine(
+                db_url, connect_args={"check_same_thread": False}
+            )
             self.session = sessionmaker(autoflush=False, bind=self.engine)
 
     def get_session(self):
