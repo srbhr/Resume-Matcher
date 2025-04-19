@@ -1,4 +1,4 @@
-from fastapi import APIRouter, File, UploadFile, HTTPException, Depends, Request
+from fastapi import APIRouter, File, UploadFile, HTTPException, Depends, Request, status
 from sqlalchemy.orm import Session
 from uuid import uuid4
 from app.services.resume_service import ResumeService
@@ -28,16 +28,18 @@ async def upload_resume(
         "application/pdf",
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     ]
+
     if file.content_type not in allowed_content_types:
         raise HTTPException(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid file type. Only PDF and DOCX files are allowed.",
         )
 
     file_bytes = await file.read()
     if not file_bytes:
         raise HTTPException(
-            status_code=400, detail="Empty file. Please upload a valid file."
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Empty file. Please upload a valid file.",
         )
 
     try:
@@ -48,7 +50,10 @@ async def upload_resume(
             content_type="md",
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error processing file: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error processing file: {str(e)}",
+        )
 
     return {
         "message": f"File {file.filename} successfully processed as MD and stored in the DB",

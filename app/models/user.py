@@ -12,4 +12,4 @@ class User(Base):
     name = Column(String, nullable=False)
 
     resumes = relationship("ProcessedResume", back_populates="owner")
-    jobs = relationship("Job", back_populates="owner")
+    jobs = relationship("ProcessedJob", back_populates="owner")
