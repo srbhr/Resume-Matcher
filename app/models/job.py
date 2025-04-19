@@ -1,4 +1,4 @@
-from .base import Base 
+from .base import Base
 from sqlalchemy import Column, String, Text, Date, Integer, ForeignKey
 from sqlalchemy.types import JSON
 from sqlalchemy.orm import relationship
@@ -9,7 +9,6 @@ class Job(Base):
     __tablename__ = "jobs"
 
     job_id = Column(String, primary_key=True, index=True)  # uuid field
-
     job_title = Column(String, nullable=False)
     company_profile = Column(Text, nullable=True)
     location = Column(String, nullable=True)
@@ -27,4 +26,6 @@ class Job(Base):
     owner = relationship("User", back_populates="jobs")
 
     # many-to-many relationship in job and resume
-    resumes = relationship("ProcessedResume", secondary=job_resume_association, back_populates="jobs")
+    resumes = relationship(
+        "ProcessedResume", secondary=job_resume_association, back_populates="jobs"
+    )
