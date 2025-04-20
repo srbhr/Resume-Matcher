@@ -26,16 +26,16 @@ class ProcessedJob(Base):
     )
 
     # one-to-many relation between user and jobs
-    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    owner = relationship("User", back_populates="processed_jobs")
-    raw_job = relationship("Job", back_populates="processed_job")
+    # owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    # owner = relationship("User", back_populates="processed_jobs")
+    # raw_job = relationship("Job", back_populates="processed_job")
 
     # many-to-many relationship in job and resume
-    resumes = relationship(
-        "ProcessedResume",
-        secondary=job_resume_association,
-        back_populates="jobs",
-    )
+    # resumes = relationship(
+    #     "ProcessedResume",
+    #     secondary=job_resume_association,
+    #     back_populates="jobs",
+    # )
 
 
 class Job(Base):
@@ -43,10 +43,12 @@ class Job(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     job_id = Column(String, unique=True, nullable=False)
+    resume_id = Column(String, ForeignKey("resumes.resume_id"), nullable=False)
     content = Column(Text, nullable=False)
-    content_type = Column(String, nullable=False)
     created_at = Column(DateTime, default=datetime.datetime.now(datetime.timezone.utc))
 
-    processed_job = relationship(
-        "ProcessedJob", back_populates="raw_job", uselist=False
-    )
+    # processed_job = relationship(
+    #     "ProcessedJob", back_populates="raw_job", uselist=False
+    # )
+
+    resumes = relationship("Resume", back_populates="jobs")

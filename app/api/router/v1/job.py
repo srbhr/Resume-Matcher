@@ -2,7 +2,8 @@ from fastapi import APIRouter, HTTPException, Depends, Request, status
 from sqlalchemy.orm import Session
 from uuid import uuid4
 from app.core import get_db_session
-from schemas.job import JobUploadRequest
+from app.schemas.job import JobUploadRequest
+from app.services import JobService
 
 job_router = APIRouter()
 
@@ -39,7 +40,8 @@ async def upload_job(
         )
 
     try:
-        pass
+        job_service = JobService(db)
+        job_ids = job_service.create_and_store_job(payload)
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -48,6 +50,7 @@ async def upload_job(
 
     return {
         "message": "data successfully processed",
+        "job_id": job_ids,
         "request": {
             "request_id": request_id,
             "payload": payload,

@@ -18,15 +18,15 @@ class ProcessedResume(Base):
     education = Column(JSON, nullable=True)
     extracted_keywords = Column(JSON, nullable=True)
 
-    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    owner = relationship("User", back_populates="processed_resumes")
-    raw_resume = relationship("Resume", back_populates="processed_resume")
+    # owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    # owner = relationship("User", back_populates="processed_resumes")
+    # raw_resume = relationship("Resume", back_populates="processed_resume")
 
-    jobs = relationship(
-        "ProcessedJob",
-        secondary=job_resume_association,
-        back_populates="processed_resumes",
-    )
+    # jobs = relationship(
+    #     "ProcessedJob",
+    #     secondary=job_resume_association,
+    #     back_populates="processed_resumes",
+    # )
 
 
 class Resume(Base):
@@ -37,6 +37,8 @@ class Resume(Base):
     content = Column(Text, nullable=False)
     content_type = Column(String, nullable=False)
 
-    processed_resume = relationship(
-        "ProcessedResume", back_populates="raw_resume", uselist=False
-    )
+    # processed_resume = relationship(
+    #     "ProcessedResume", back_populates="raw_resume", uselist=False
+    # )
+
+    jobs = relationship("Job", back_populates="resumes")
