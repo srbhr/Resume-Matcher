@@ -9,7 +9,12 @@ import datetime
 class ProcessedJob(Base):
     __tablename__ = "processed_jobs"
 
-    job_id = Column(String, primary_key=True, index=True)  # uuid field
+    job_id = Column(
+        String,
+        ForeignKey("jobs.job_id", ondelete="CASCADE"),
+        primary_key=True,
+        index=True,
+    )
     job_title = Column(String, nullable=False)
     company_profile = Column(Text, nullable=True)
     location = Column(String, nullable=True)
@@ -26,16 +31,16 @@ class ProcessedJob(Base):
     )
 
     # one-to-many relation between user and jobs
-    # owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    # owner = relationship("User", back_populates="processed_jobs")
-    # raw_job = relationship("Job", back_populates="processed_job")
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    owner = relationship("User", back_populates="processed_jobs")
+    raw_job = relationship("Job", back_populates="raw_job_association")
 
     # many-to-many relationship in job and resume
-    # resumes = relationship(
-    #     "ProcessedResume",
-    #     secondary=job_resume_association,
-    #     back_populates="jobs",
-    # )
+    processed_resumes = relationship(
+        "ProcessedResume",
+        secondary=job_resume_association,
+        back_populates="processed_jobs",
+    )
 
 
 class Job(Base):
@@ -47,8 +52,8 @@ class Job(Base):
     content = Column(Text, nullable=False)
     created_at = Column(DateTime, default=datetime.datetime.now(datetime.timezone.utc))
 
-    # processed_job = relationship(
-    #     "ProcessedJob", back_populates="raw_job", uselist=False
-    # )
+    raw_job_association = relationship(
+        "ProcessedJob", back_populates="raw_job", uselist=False
+    )
 
     resumes = relationship("Resume", back_populates="jobs")

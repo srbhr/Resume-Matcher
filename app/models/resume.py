@@ -8,7 +8,12 @@ from .association import job_resume_association
 class ProcessedResume(Base):
     __tablename__ = "processed_resumes"
 
-    resume_id = Column(String, primary_key=True, index=True)  # uuid field
+    resume_id = Column(
+        String,
+        ForeignKey("resumes.resume_id", ondelete="CASCADE"),
+        primary_key=True,
+        index=True,
+    )
     personal_data = Column(JSON, nullable=False)
     experiences = Column(JSON, nullable=True)
     projects = Column(JSON, nullable=True)
@@ -18,15 +23,15 @@ class ProcessedResume(Base):
     education = Column(JSON, nullable=True)
     extracted_keywords = Column(JSON, nullable=True)
 
-    # owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    # owner = relationship("User", back_populates="processed_resumes")
-    # raw_resume = relationship("Resume", back_populates="processed_resume")
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    owner = relationship("User", back_populates="processed_resumes")
+    raw_resume = relationship("Resume", back_populates="raw_resume_association")
 
-    # jobs = relationship(
-    #     "ProcessedJob",
-    #     secondary=job_resume_association,
-    #     back_populates="processed_resumes",
-    # )
+    processed_jobs = relationship(
+        "ProcessedJob",
+        secondary=job_resume_association,
+        back_populates="processed_resumes",
+    )
 
 
 class Resume(Base):
@@ -37,8 +42,8 @@ class Resume(Base):
     content = Column(Text, nullable=False)
     content_type = Column(String, nullable=False)
 
-    # processed_resume = relationship(
-    #     "ProcessedResume", back_populates="raw_resume", uselist=False
-    # )
+    raw_resume_association = relationship(
+        "ProcessedResume", back_populates="raw_resume", uselist=False
+    )
 
     jobs = relationship("Job", back_populates="resumes")

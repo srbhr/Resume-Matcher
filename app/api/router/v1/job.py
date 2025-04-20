@@ -41,11 +41,18 @@ async def upload_job(
 
     try:
         job_service = JobService(db)
-        job_ids = job_service.create_and_store_job(payload)
+        job_ids = job_service.create_and_store_job(payload.model_dump())
+
+    except AssertionError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error processing file: {str(e)}",
+            detail=f"{str(e)}",
         )
 
     return {
