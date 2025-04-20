@@ -18,8 +18,8 @@ class JobService:
         Returns:
             List of job IDs.
         """
-        resume_id = job_data.get("resume_id")
-        print(f"resume available? {self._is_resume_available(resume_id)}")
+        resume_id = str(job_data.get("resume_id"))
+
         if not self._is_resume_available(resume_id):
             raise AssertionError(
                 f"resume corresponding to resume_id: {resume_id} not found"
