@@ -11,5 +11,9 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     name = Column(String, nullable=False)
 
-    resumes = relationship("ProcessedResume", back_populates="owner")
-    jobs = relationship("Job", back_populates="owner")
+    processed_resumes = relationship(
+        "ProcessedResume", back_populates="owner", cascade="all, delete-orphan"
+    )
+    processed_jobs = relationship(
+        "ProcessedJob", back_populates="owner", cascade="all, delete-orphan"
+    )

@@ -8,7 +8,12 @@ from .association import job_resume_association
 class ProcessedResume(Base):
     __tablename__ = "processed_resumes"
 
-    resume_id = Column(String, primary_key=True, index=True)  # uuid field
+    resume_id = Column(
+        String,
+        ForeignKey("resumes.resume_id", ondelete="CASCADE"),
+        primary_key=True,
+        index=True,
+    )
     personal_data = Column(JSON, nullable=False)
     experiences = Column(JSON, nullable=True)
     projects = Column(JSON, nullable=True)
@@ -20,9 +25,12 @@ class ProcessedResume(Base):
 
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     owner = relationship("User", back_populates="processed_resumes")
+    raw_resume = relationship("Resume", back_populates="raw_resume_association")
 
-    jobs = relationship(
-        "Job", secondary=job_resume_association, back_populates="processed_resumes"
+    processed_jobs = relationship(
+        "ProcessedJob",
+        secondary=job_resume_association,
+        back_populates="processed_resumes",
     )
 
 
@@ -33,3 +41,9 @@ class Resume(Base):
     resume_id = Column(String, unique=True, nullable=False)
     content = Column(Text, nullable=False)
     content_type = Column(String, nullable=False)
+
+    raw_resume_association = relationship(
+        "ProcessedResume", back_populates="raw_resume", uselist=False
+    )
+
+    jobs = relationship("Job", back_populates="resumes")

@@ -3,7 +3,7 @@ import os
 import uuid
 from markitdown import MarkItDown
 from sqlalchemy.orm import Session
-from app.models.resume import Resume
+from app.models import Resume
 
 
 class ResumeService:
