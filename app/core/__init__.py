@@ -1,5 +1,5 @@
 from .database import DatabaseConnectionSingleton
-from .config import settings
+from .config import settings, setup_logging
 from .exceptions import (
     custom_http_exception_handler,
     validation_exception_handler,
@@ -28,6 +28,7 @@ def get_db_session():
 __all__ = [
     "settings",
     "db_singleton",
+    "setup_logging",
     "get_db_session",
     "custom_http_exception_handler",
     "validation_exception_handler",

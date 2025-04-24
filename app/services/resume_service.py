@@ -1,15 +1,23 @@
-import tempfile
 import os
 import uuid
+import json
+import tempfile
+
+from typing import Dict, Any
 from markitdown import MarkItDown
 from sqlalchemy.orm import Session
+
 from app.models import Resume
+from app.agent import AgentManager
+from app.prompt import prompt_factory
+from app.schemas.json import json_schema_factory
 
 
 class ResumeService:
     def __init__(self, db: Session):
         self.db = db
         self.md = MarkItDown(enable_plugins=False)
+        self.json_agent_manager = AgentManager(model="gemma3:12b")
 
     def convert_and_store_resume(
         self, file_bytes: bytes, file_type: str, filename: str, content_type: str = "md"
@@ -69,3 +77,16 @@ class ResumeService:
         self.db.commit()
 
         return resume
+
+    async def _extract_structured_json(self, resume_text: str) -> Dict[str, Any]:
+        """
+        Uses the AgentManager+JSONWrapper to ask the LLM to
+        return the data in exact JSON schema we need.
+        """
+        prompt_template = prompt_factory.get("structured_resume")
+        prompt = prompt_template.format(
+            schema=json.dumps(json_schema_factory.get("structured_resume"), indent=2),
+            resume_text=resume_text,
+        )
+
+        return await self.json_agent_manager.run(prompt=prompt)
