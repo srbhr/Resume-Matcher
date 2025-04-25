@@ -23,8 +23,8 @@ class ProcessedResume(Base):
     education = Column(JSON, nullable=True)
     extracted_keywords = Column(JSON, nullable=True)
 
-    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    owner = relationship("User", back_populates="processed_resumes")
+    # owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    # owner = relationship("User", back_populates="processed_resumes")
     raw_resume = relationship("Resume", back_populates="raw_resume_association")
 
     processed_jobs = relationship(

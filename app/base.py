@@ -8,6 +8,7 @@ from app.api import health_check, v1_router, RequestIDMiddleware
 from app.core import (
     settings,
     db_singleton,
+    setup_logging,
     custom_http_exception_handler,
     validation_exception_handler,
     unhandled_exception_handler,
@@ -16,6 +17,11 @@ from app.models import Base
 
 
 def create_app() -> FastAPI:
+    """
+    configure and create the FastAPI application instance.
+    """
+    setup_logging()
+
     app = FastAPI(
         title=settings.PROJECT_NAME,
         docs_url="/api/docs",

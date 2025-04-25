@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends, Request, status
 from sqlalchemy.orm import Session
 from uuid import uuid4
 from app.core import get_db_session
-from app.schemas.job import JobUploadRequest
+from app.schemas.pydantic.job import JobUploadRequest
 from app.services import JobService
 
 job_router = APIRouter()

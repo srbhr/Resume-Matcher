@@ -1,17 +1,29 @@
-import tempfile
 import os
 import uuid
+import json
+import tempfile
+import logging
+
 from markitdown import MarkItDown
 from sqlalchemy.orm import Session
-from app.models import Resume
+from pydantic import ValidationError
+
+from app.models import Resume, ProcessedResume
+from app.agent import AgentManager
+from app.prompt import prompt_factory
+from app.schemas.json import json_schema_factory
+from app.schemas.pydantic import StructuredResumeModel
+
+logger = logging.getLogger(__name__)
 
 
 class ResumeService:
     def __init__(self, db: Session):
         self.db = db
         self.md = MarkItDown(enable_plugins=False)
+        self.json_agent_manager = AgentManager(model="gemma3:4b")
 
-    def convert_and_store_resume(
+    async def convert_and_store_resume(
         self, file_bytes: bytes, file_type: str, filename: str, content_type: str = "md"
     ):
         """
@@ -37,7 +49,7 @@ class ResumeService:
             text_content = result.text_content
             resume_id = str(uuid.uuid4())
             self._store_resume_in_db(resume_id, filename, text_content, content_type)
-
+            await self._extract_and_store_structured_resume(resume_text=text_content)
             return resume_id
 
         finally:
@@ -69,3 +81,85 @@ class ResumeService:
         self.db.commit()
 
         return resume
+
+    async def _extract_and_store_structured_resume(self, resume_text: str):
+        """
+        extract and store structured resume data in the database
+        """
+        structured_resume = await self._extract_structured_json(resume_text)
+        if not structured_resume:
+            logger.info("Structured resume extraction failed.")
+            return None
+
+        resume_id = str(uuid.uuid4())
+
+        self.db.add(
+            ProcessedResume(
+                resume_id=resume_id,
+                personal_data=json.dumps(structured_resume.get("personal_data", {}))
+                if structured_resume.get("personal_data")
+                else None,
+                experiences=json.dumps(
+                    {"experiences": structured_resume.get("experiences", [])}
+                )
+                if structured_resume.get("experiences")
+                else None,
+                projects=json.dumps({"projects": structured_resume.get("projects", [])})
+                if structured_resume.get("projects")
+                else None,
+                skills=json.dumps({"skills": structured_resume.get("skills", [])})
+                if structured_resume.get("skills")
+                else None,
+                research_work=json.dumps(
+                    {"research_work": structured_resume.get("research_work", [])}
+                )
+                if structured_resume.get("research_work")
+                else None,
+                achievements=json.dumps(
+                    {"achievements": structured_resume.get("achievements", [])}
+                )
+                if structured_resume.get("achievements")
+                else None,
+                education=json.dumps(
+                    {"education": structured_resume.get("education", [])}
+                )
+                if structured_resume.get("education")
+                else None,
+                extracted_keywords=json.dumps(
+                    {
+                        "extracted_keywords": structured_resume.get(
+                            "extracted_keywords", []
+                        )
+                    }
+                    if structured_resume.get("extracted_keywords")
+                    else None
+                ),
+            )
+        )
+        self.db.commit()
+
+        return resume_id
+
+    async def _extract_structured_json(
+        self, resume_text: str
+    ) -> StructuredResumeModel | None:
+        """
+        Uses the AgentManager+JSONWrapper to ask the LLM to
+        return the data in exact JSON schema we need.
+        """
+        prompt_template = prompt_factory.get("structured_resume")
+        prompt = prompt_template.format(
+            json.dumps(json_schema_factory.get("structured_resume"), indent=2),
+            resume_text,
+        )
+        logger.info(f"Structured Resume Prompt: {prompt}")
+        raw_output = await self.json_agent_manager.run(prompt=prompt)
+
+        try:
+            structured_resume: StructuredResumeModel = (
+                StructuredResumeModel.model_validate(raw_output)
+            )
+        except ValidationError as e:
+            logger.info(f"Validation error: {e}")
+            return None
+        return structured_resume.model_dump()
