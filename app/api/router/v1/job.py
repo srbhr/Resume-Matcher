@@ -41,7 +41,7 @@ async def upload_job(
 
     try:
         job_service = JobService(db)
-        job_ids = job_service.create_and_store_job(payload.model_dump())
+        job_ids = await job_service.create_and_store_job(payload.model_dump())
 
     except AssertionError as e:
         raise HTTPException(
