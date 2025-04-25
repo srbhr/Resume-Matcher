@@ -1,22 +1,28 @@
 import uuid
-from sqlalchemy.orm import Session
-from app.models import Job, Resume
+import json
+import logging
+
 from typing import List
+from sqlalchemy.orm import Session
+from pydantic import ValidationError
+
+from app.agent import AgentManager
+from app.prompt import prompt_factory
+from app.schemas.json import json_schema_factory
+from app.models import Job, Resume, ProcessedJob
+from app.schemas.pydantic import StructuredJobModel
+
+logger = logging.getLogger(__name__)
 
 
 class JobService:
     def __init__(self, db: Session):
         self.db = db
+        self.json_agent_manager = AgentManager(model="gemma3:4b")
 
-    def create_and_store_job(self, job_data: dict) -> List[str]:
+    async def create_and_store_job(self, job_data: dict) -> List[str]:
         """
         Stores job data in the database and returns a list of job IDs.
-
-        Args:
-            job_data: JobUploadRequest containing job details.
-
-        Returns:
-            List of job IDs.
         """
         resume_id = str(job_data.get("resume_id"))
 
@@ -33,6 +39,11 @@ class JobService:
                 resume_id=str(resume_id),
                 content=job_description,
             )
+
+            jb_id = await self._extract_and_store_structured_resume(
+                job_id=job_id, job_description_text=job_description
+            )
+            logger.info(f"Job ID: {jb_id}")
             self.db.add(job)
             job_ids.append(job_id)
 
@@ -42,14 +53,91 @@ class JobService:
     def _is_resume_available(self, resume_id: str) -> bool:
         """
         Checks if a resume exists in the database.
-
-        Args:
-            resume_id: ID of the resume to check.
-
-        Returns:
-            True if the resume exists, False otherwise.
         """
         return (
             self.db.query(Resume).filter(Resume.resume_id == resume_id).first()
             is not None
         )
+
+    async def _extract_and_store_structured_resume(
+        self, job_id, job_description_text: str
+    ):
+        """
+        extract and store structured job data in the database
+        """
+        structured_job = await self._extract_structured_json(job_description_text)
+        if not structured_job:
+            logger.info("Structured job extraction failed.")
+            return None
+
+        self.db.add(
+            ProcessedJob(
+                job_id=job_id,
+                job_title=structured_job.get("job_title"),
+                company_profile=structured_job.get("company_profile"),
+                location=structured_job.get("location"),
+                date_posted=structured_job.get("date_posted"),
+                employment_type=structured_job.get("employment_type"),
+                job_summary=structured_job.get("job_summary"),
+                key_responsibilities=json.dumps(
+                    {
+                        "key_responsibilities": structured_job.get(
+                            "key_responsibilities", []
+                        )
+                    }
+                )
+                if structured_job.get("key_responsibilities")
+                else None,
+                qualifications=json.dumps(
+                    {"qualifications": structured_job.get("qualifications", [])}
+                )
+                if structured_job.get("qualifications")
+                else None,
+                compensation_and_benfits=json.dumps(
+                    {
+                        "compensation_and_benfits": structured_job.get(
+                            "compensation_and_benfits", []
+                        )
+                    }
+                )
+                if structured_job.get("compensation_and_benfits")
+                else None,
+                application_info=json.dumps(
+                    {"application_info": structured_job.get("application_info", [])}
+                )
+                if structured_job.get("application_info")
+                else None,
+                extracted_keywords=json.dumps(
+                    {"extracted_keywords": structured_job.get("extracted_keywords", [])}
+                )
+                if structured_job.get("extracted_keywords")
+                else None,
+            )
+        )
+        self.db.commit()
+
+        return job_id
+
+    async def _extract_structured_json(
+        self, job_description_text: str
+    ) -> StructuredJobModel | None:
+        """
+        Uses the AgentManager+JSONWrapper to ask the LLM to
+        return the data in exact JSON schema we need.
+        """
+        prompt_template = prompt_factory.get("structured_job")
+        prompt = prompt_template.format(
+            json.dumps(json_schema_factory.get("structured_job"), indent=2),
+            job_description_text,
+        )
+        logger.info(f"Structured Job Prompt: {prompt}")
+        raw_output = await self.json_agent_manager.run(prompt=prompt)
+
+        try:
+            structured_job: StructuredJobModel = StructuredJobModel.model_validate(
+                raw_output
+            )
+        except ValidationError as e:
+            logger.info(f"Validation error: {e}")
+            return None
+        return structured_job.model_dump()

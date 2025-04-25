@@ -1,5 +1,5 @@
 from .base import Base
-from sqlalchemy import Column, String, Text, Date, Integer, ForeignKey, DateTime
+from sqlalchemy import Column, String, Text, Integer, ForeignKey, DateTime
 from sqlalchemy.types import JSON
 from sqlalchemy.orm import relationship
 from .association import job_resume_association
@@ -18,7 +18,7 @@ class ProcessedJob(Base):
     job_title = Column(String, nullable=False)
     company_profile = Column(Text, nullable=True)
     location = Column(String, nullable=True)
-    date_posted = Column(Date, nullable=True)
+    date_posted = Column(String, nullable=True)
     employment_type = Column(String, nullable=True)
     job_summary = Column(Text, nullable=False)
     key_responsibilities = Column(JSON, nullable=True)
