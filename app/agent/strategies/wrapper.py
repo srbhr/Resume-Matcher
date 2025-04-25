@@ -17,6 +17,8 @@ class JSONWrapper(Strategy):
         Wrapper strategy to format the prompt as JSON with the help of LLM.
         """
         response = await provider(prompt, **generation_args)
+        response = response.replace("```", "").replace("json", "").strip()
+        logger.info(f"provider response: {response}")
         try:
             return json.loads(response)
         except json.JSONDecodeError as e:

@@ -31,8 +31,8 @@ class ProcessedJob(Base):
     )
 
     # one-to-many relation between user and jobs
-    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    owner = relationship("User", back_populates="processed_jobs")
+    # owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    # owner = relationship("User", back_populates="processed_jobs")
     raw_job = relationship("Job", back_populates="raw_job_association")
 
     # many-to-many relationship in job and resume

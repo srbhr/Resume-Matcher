@@ -22,7 +22,7 @@ class OllamaProvider(Provider):
 
         def _list_sync() -> List[str]:
             client = ollama.Client(host=host) if host else ollama.Client()
-            return [model["name"] for model in client.list()]
+            return [model_class.model for model_class in client.list().models]
 
         return await asyncio.to_thread(_list_sync)
 

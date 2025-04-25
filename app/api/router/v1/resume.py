@@ -1,10 +1,13 @@
 from fastapi import APIRouter, File, UploadFile, HTTPException, Depends, Request, status
 from sqlalchemy.orm import Session
+import logging
+import traceback
 from uuid import uuid4
 from app.services.resume_service import ResumeService
 from app.core import get_db_session
 
 resume_router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 @resume_router.post(
@@ -43,13 +46,17 @@ async def upload_resume(
         )
 
     try:
-        resume_id = ResumeService(db).convert_and_store_resume(
+        resume_service = ResumeService(db)
+        resume_id = await resume_service.convert_and_store_resume(
             file_bytes=file_bytes,
             file_type=file.content_type,
             filename=file.filename,
             content_type="md",
         )
     except Exception as e:
+        logger.error(
+            f"Error processing file: {str(e)} - traceback: {traceback.format_exc()}"
+        )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error processing file: {str(e)}",

@@ -15,9 +15,9 @@ class JSONSchemaFactory:
             if module_name.startswith("_") or module_name == "base":
                 continue
 
-            module = importlib.import_module(f"app.prompt.{module_name}")
-            if hasattr(module, "PROMPT"):
-                self._schema[module_name] = getattr(module, "PROMPT")
+            module = importlib.import_module(f"app.schemas.json.{module_name}")
+            if hasattr(module, "SCHEMA"):
+                self._schema[module_name] = getattr(module, "SCHEMA")
 
     def list_prompts(self) -> Dict[str, str]:
         return self._schema
@@ -27,5 +27,5 @@ class JSONSchemaFactory:
             return self._schema[name]
         except KeyError:
             raise KeyError(
-                f"Prompt '{name}' not found. Available prompts: {list(self._schema.keys())}"
+                f"SCHEMA '{name}' not found. Available schemas: {list(self._schema.keys())}"
             )
