@@ -1,9 +1,9 @@
-from .base import Base
-from sqlalchemy import Column, String, Text, Integer, ForeignKey, DateTime
 from sqlalchemy.types import JSON
 from sqlalchemy.orm import relationship
+from sqlalchemy import Column, String, Text, Integer, ForeignKey, DateTime, text
+
+from .base import Base
 from .association import job_resume_association
-import datetime
 
 
 class ProcessedJob(Base):
@@ -27,7 +27,10 @@ class ProcessedJob(Base):
     application_info = Column(JSON, nullable=True)
     extracted_keywords = Column(JSON, nullable=True)
     processed_at = Column(
-        DateTime, default=datetime.datetime.now(datetime.timezone.utc)
+        DateTime(timezone=True),
+        server_default=text("CURRENT_TIMESTAMP"),
+        nullable=False,
+        index=True,
     )
 
     # one-to-many relation between user and jobs
@@ -50,7 +53,12 @@ class Job(Base):
     job_id = Column(String, unique=True, nullable=False)
     resume_id = Column(String, ForeignKey("resumes.resume_id"), nullable=False)
     content = Column(Text, nullable=False)
-    created_at = Column(DateTime, default=datetime.datetime.now(datetime.timezone.utc))
+    created_at = Column(
+        DateTime(timezone=True),
+        server_default=text("CURRENT_TIMESTAMP"),
+        nullable=False,
+        index=True,
+    )
 
     raw_job_association = relationship(
         "ProcessedJob", back_populates="raw_job", uselist=False

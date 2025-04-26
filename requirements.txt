@@ -1,3 +1,4 @@
+aiosqlite==0.21.0
 annotated-types==0.7.0
 anyio==4.9.0
 beautifulsoup4==4.13.4
@@ -8,7 +9,9 @@ click==8.1.8
 coloredlogs==15.0.1
 cryptography==44.0.2
 distro==1.9.0
+dnspython==2.7.0
 dotenv==0.9.9
+email_validator==2.2.0
 fastapi==0.115.12
 flatbuffers==25.2.10
 greenlet==3.1.1

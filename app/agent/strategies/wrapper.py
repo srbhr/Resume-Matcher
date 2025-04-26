@@ -2,9 +2,10 @@ import json
 import logging
 from typing import Any, Dict
 
+from .base import Strategy
 from ..providers.base import Provider
 from ..exceptions import StrategyError
-from .base import Strategy
+
 
 logger = logging.getLogger(__name__)
 

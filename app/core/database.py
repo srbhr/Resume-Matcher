@@ -1,26 +1,132 @@
-import threading
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from typing import Optional
+from __future__ import annotations
+
+from functools import lru_cache
+from typing import AsyncGenerator, Generator, Optional
+
+from sqlalchemy import event, create_engine
+from sqlalchemy.engine import Engine
+from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
+
+from .config import settings
+from ..models.base import Base
 
 
-class DatabaseConnectionSingleton:
-    _instance_lock = threading.Lock()
-    _instance: Optional["DatabaseConnectionSingleton"] = None
+class _DatabaseSettings:
+    """Pulled from environment once at import-time."""
 
-    def __new__(cls, *args, **kwargs):
-        if not cls._instance:
-            with cls._instance_lock:
-                if not cls._instance:
-                    cls._instance = super(DatabaseConnectionSingleton, cls).__new__(cls)
-        return cls._instance
+    SYNC_DATABASE_URL: str = settings.SYNC_DATABASE_URL
+    ASYNC_DATABASE_URL: str = settings.ASYNC_DATABASE_URL
+    DB_ECHO: bool = settings.DB_ECHO
 
-    def __init__(self, db_url: str):
-        if not hasattr(self, "engine"):
-            self.engine = create_engine(
-                db_url, connect_args={"check_same_thread": False}
-            )
-            self.session = sessionmaker(autoflush=False, bind=self.engine)
+    DB_CONNECT_ARGS = (
+        {"check_same_thread": False} if SYNC_DATABASE_URL.startswith("sqlite") else {}
+    )
 
-    def get_session(self):
-        return self.session()
+
+settings = _DatabaseSettings()
+
+
+def _configure_sqlite(engine: Engine) -> None:
+    """
+    For SQLite:
+
+    * Enable WAL mode (better concurrent writes).
+    * Enforce foreign-key constraints.
+    * Safe noop for non-SQLite engines.
+    """
+    if engine.dialect.name != "sqlite":
+        return
+
+    @event.listens_for(engine, "connect", once=True)
+    def _set_sqlite_pragma(dbapi_conn, _):
+        cursor = dbapi_conn.cursor()
+        cursor.execute("PRAGMA journal_mode=WAL;")
+        cursor.execute("PRAGMA foreign_keys=ON;")
+        cursor.close()
+
+
+@lru_cache(maxsize=1)
+def _make_sync_engine() -> Engine:
+    """Create (or return) the global synchronous Engine."""
+    engine = create_engine(
+        settings.SYNC_DATABASE_URL,
+        echo=settings.DB_ECHO,
+        pool_pre_ping=True,
+        connect_args=settings.DB_CONNECT_ARGS,
+        future=True,
+    )
+    _configure_sqlite(engine)
+    return engine
+
+
+@lru_cache(maxsize=1)
+def _make_async_engine() -> AsyncEngine:
+    """Create (or return) the global asynchronous Engine."""
+    engine = create_async_engine(
+        settings.ASYNC_DATABASE_URL,
+        echo=settings.DB_ECHO,
+        pool_pre_ping=True,
+        connect_args=settings.DB_CONNECT_ARGS,
+        future=True,
+    )
+    _configure_sqlite(engine.sync_engine)
+    return engine
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Session factories
+# ──────────────────────────────────────────────────────────────────────────────
+
+sync_engine: Engine = _make_sync_engine()
+async_engine: AsyncEngine = _make_async_engine()
+
+SessionLocal: sessionmaker[Session] = sessionmaker(
+    bind=sync_engine,
+    autoflush=False,
+    autocommit=False,
+    expire_on_commit=False,
+)
+
+AsyncSessionLocal: async_sessionmaker[AsyncSession] = async_sessionmaker(
+    bind=async_engine,
+    expire_on_commit=False,
+)
+
+
+def get_sync_db_session() -> Generator[Session, None, None]:
+    """
+    Yield a *transactional* synchronous ``Session``.
+
+    Commits if no exception was raised, otherwise rolls back. Always closes.
+    Useful for CLI scripts or rare sync paths.
+    """
+    db = SessionLocal()
+    try:
+        yield db
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+    finally:
+        db.close()
+
+
+async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
+    async with AsyncSessionLocal() as session:
+        try:
+            yield session
+            await session.commit()
+        except Exception:
+            await session.rollback()
+            raise
+
+
+async def init_models(Base: Base) -> None:
+    async with async_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)

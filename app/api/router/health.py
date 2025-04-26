@@ -1,13 +1,14 @@
-from fastapi import APIRouter, status, Depends
-from sqlalchemy.orm import Session
 from sqlalchemy import text
-from app.utils.utils import get_db_session
+from sqlalchemy.orm import Session
+from fastapi import APIRouter, status, Depends
+
+from app.core import get_sync_db_session
 
 health_check = APIRouter()
 
 
 @health_check.get("/ping", tags=["health_check"], status_code=status.HTTP_200_OK)
-def ping(db: Session = Depends(get_db_session)):
+def ping(db: Session = Depends(get_sync_db_session)):
     """
     health check endpoint
     """

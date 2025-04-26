@@ -5,7 +5,7 @@ import tempfile
 import logging
 
 from markitdown import MarkItDown
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import ValidationError
 
 from app.models import Resume, ProcessedResume
@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 class ResumeService:
-    def __init__(self, db: Session):
+    def __init__(self, db: AsyncSession):
         self.db = db
         self.md = MarkItDown(enable_plugins=False)
         self.json_agent_manager = AgentManager(model="gemma3:4b")
@@ -47,11 +47,13 @@ class ResumeService:
         try:
             result = self.md.convert(temp_path)
             text_content = result.text_content
-            resume_id = str(uuid.uuid4())
-            self._store_resume_in_db(resume_id, filename, text_content, content_type)
-            await self._extract_and_store_structured_resume(resume_text=text_content)
-            return resume_id
+            resume_id = await self._store_resume_in_db(text_content, content_type)
 
+            await self._extract_and_store_structured_resume(
+                resume_id=resume_id, resume_text=text_content
+            )
+
+            return resume_id
         finally:
             if os.path.exists(temp_path):
                 os.remove(temp_path)
@@ -67,22 +69,24 @@ class ResumeService:
             return ".docx"
         return ""
 
-    def _store_resume_in_db(
-        self, resume_id: str, filename: str, text_content: str, content_type: str
-    ):
+    async def _store_resume_in_db(self, text_content: str, content_type: str):
         """
         Stores the parsed resume content in the database.
         """
+        resume_id = str(uuid.uuid4())
         resume = Resume(
             resume_id=resume_id, content=text_content, content_type=content_type
         )
 
         self.db.add(resume)
-        self.db.commit()
+        await self.db.flush()
+        await self.db.commit()
 
-        return resume
+        return resume_id
 
-    async def _extract_and_store_structured_resume(self, resume_text: str):
+    async def _extract_and_store_structured_resume(
+        self, resume_id, resume_text: str
+    ) -> None:
         """
         extract and store structured resume data in the database
         """
@@ -91,54 +95,44 @@ class ResumeService:
             logger.info("Structured resume extraction failed.")
             return None
 
-        resume_id = str(uuid.uuid4())
-
-        self.db.add(
-            ProcessedResume(
-                resume_id=resume_id,
-                personal_data=json.dumps(structured_resume.get("personal_data", {}))
-                if structured_resume.get("personal_data")
-                else None,
-                experiences=json.dumps(
-                    {"experiences": structured_resume.get("experiences", [])}
-                )
-                if structured_resume.get("experiences")
-                else None,
-                projects=json.dumps({"projects": structured_resume.get("projects", [])})
-                if structured_resume.get("projects")
-                else None,
-                skills=json.dumps({"skills": structured_resume.get("skills", [])})
-                if structured_resume.get("skills")
-                else None,
-                research_work=json.dumps(
-                    {"research_work": structured_resume.get("research_work", [])}
-                )
-                if structured_resume.get("research_work")
-                else None,
-                achievements=json.dumps(
-                    {"achievements": structured_resume.get("achievements", [])}
-                )
-                if structured_resume.get("achievements")
-                else None,
-                education=json.dumps(
-                    {"education": structured_resume.get("education", [])}
-                )
-                if structured_resume.get("education")
-                else None,
-                extracted_keywords=json.dumps(
-                    {
-                        "extracted_keywords": structured_resume.get(
-                            "extracted_keywords", []
-                        )
-                    }
-                    if structured_resume.get("extracted_keywords")
-                    else None
-                ),
+        processed_resume = ProcessedResume(
+            resume_id=resume_id,
+            personal_data=json.dumps(structured_resume.get("personal_data", {}))
+            if structured_resume.get("personal_data")
+            else None,
+            experiences=json.dumps(
+                {"experiences": structured_resume.get("experiences", [])}
             )
+            if structured_resume.get("experiences")
+            else None,
+            projects=json.dumps({"projects": structured_resume.get("projects", [])})
+            if structured_resume.get("projects")
+            else None,
+            skills=json.dumps({"skills": structured_resume.get("skills", [])})
+            if structured_resume.get("skills")
+            else None,
+            research_work=json.dumps(
+                {"research_work": structured_resume.get("research_work", [])}
+            )
+            if structured_resume.get("research_work")
+            else None,
+            achievements=json.dumps(
+                {"achievements": structured_resume.get("achievements", [])}
+            )
+            if structured_resume.get("achievements")
+            else None,
+            education=json.dumps({"education": structured_resume.get("education", [])})
+            if structured_resume.get("education")
+            else None,
+            extracted_keywords=json.dumps(
+                {"extracted_keywords": structured_resume.get("extracted_keywords", [])}
+                if structured_resume.get("extracted_keywords")
+                else None
+            ),
         )
-        self.db.commit()
 
-        return resume_id
+        self.db.add(processed_resume)
+        await self.db.commit()
 
     async def _extract_structured_json(
         self, resume_text: str
