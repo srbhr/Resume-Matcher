@@ -9,8 +9,10 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "Resume Matcher"
     FRONTEND_PATH: str = os.path.join(os.path.dirname(__file__), "frontend", "assets")
     ALLOWED_ORIGINS: List[str] = ["https://www.resumematcher.fyi"]
-    DATABASE_URL: Optional[str]
+    SYNC_DATABASE_URL: Optional[str]
+    ASYNC_DATABASE_URL: Optional[str]
     SESSION_SECRET_KEY: Optional[str]
+    DB_ECHO: bool = False
     PYTHONDONTWRITEBYTECODE: int = 1
 
     class Config:

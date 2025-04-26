@@ -3,8 +3,9 @@ import json
 import logging
 
 from typing import List
-from sqlalchemy.orm import Session
 from pydantic import ValidationError
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.agent import AgentManager
 from app.prompt import prompt_factory
@@ -16,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 class JobService:
-    def __init__(self, db: Session):
+    def __init__(self, db: AsyncSession):
         self.db = db
         self.json_agent_manager = AgentManager(model="gemma3:4b")
 
@@ -26,7 +27,7 @@ class JobService:
         """
         resume_id = str(job_data.get("resume_id"))
 
-        if not self._is_resume_available(resume_id):
+        if not await self._is_resume_available(resume_id):
             raise AssertionError(
                 f"resume corresponding to resume_id: {resume_id} not found"
             )
@@ -50,14 +51,13 @@ class JobService:
         self.db.commit()
         return job_ids
 
-    def _is_resume_available(self, resume_id: str) -> bool:
+    async def _is_resume_available(self, resume_id: str) -> bool:
         """
         Checks if a resume exists in the database.
         """
-        return (
-            self.db.query(Resume).filter(Resume.resume_id == resume_id).first()
-            is not None
-        )
+        query = select(Resume).where(Resume.resume_id == resume_id)
+        result = await self.db.scalar(query)
+        return result is not None
 
     async def _extract_and_store_structured_resume(
         self, job_id, job_description_text: str
@@ -70,51 +70,48 @@ class JobService:
             logger.info("Structured job extraction failed.")
             return None
 
-        self.db.add(
-            ProcessedJob(
-                job_id=job_id,
-                job_title=structured_job.get("job_title"),
-                company_profile=structured_job.get("company_profile"),
-                location=structured_job.get("location"),
-                date_posted=structured_job.get("date_posted"),
-                employment_type=structured_job.get("employment_type"),
-                job_summary=structured_job.get("job_summary"),
-                key_responsibilities=json.dumps(
-                    {
-                        "key_responsibilities": structured_job.get(
-                            "key_responsibilities", []
-                        )
-                    }
-                )
-                if structured_job.get("key_responsibilities")
-                else None,
-                qualifications=json.dumps(
-                    {"qualifications": structured_job.get("qualifications", [])}
-                )
-                if structured_job.get("qualifications")
-                else None,
-                compensation_and_benfits=json.dumps(
-                    {
-                        "compensation_and_benfits": structured_job.get(
-                            "compensation_and_benfits", []
-                        )
-                    }
-                )
-                if structured_job.get("compensation_and_benfits")
-                else None,
-                application_info=json.dumps(
-                    {"application_info": structured_job.get("application_info", [])}
-                )
-                if structured_job.get("application_info")
-                else None,
-                extracted_keywords=json.dumps(
-                    {"extracted_keywords": structured_job.get("extracted_keywords", [])}
-                )
-                if structured_job.get("extracted_keywords")
-                else None,
+        processed_job = ProcessedJob(
+            job_id=job_id,
+            job_title=structured_job.get("job_title"),
+            company_profile=structured_job.get("company_profile"),
+            location=structured_job.get("location"),
+            date_posted=structured_job.get("date_posted"),
+            employment_type=structured_job.get("employment_type"),
+            job_summary=structured_job.get("job_summary"),
+            key_responsibilities=json.dumps(
+                {"key_responsibilities": structured_job.get("key_responsibilities", [])}
             )
+            if structured_job.get("key_responsibilities")
+            else None,
+            qualifications=json.dumps(
+                {"qualifications": structured_job.get("qualifications", [])}
+            )
+            if structured_job.get("qualifications")
+            else None,
+            compensation_and_benfits=json.dumps(
+                {
+                    "compensation_and_benfits": structured_job.get(
+                        "compensation_and_benfits", []
+                    )
+                }
+            )
+            if structured_job.get("compensation_and_benfits")
+            else None,
+            application_info=json.dumps(
+                {"application_info": structured_job.get("application_info", [])}
+            )
+            if structured_job.get("application_info")
+            else None,
+            extracted_keywords=json.dumps(
+                {"extracted_keywords": structured_job.get("extracted_keywords", [])}
+            )
+            if structured_job.get("extracted_keywords")
+            else None,
         )
-        self.db.commit()
+
+        self.db.add(processed_job)
+        await self.db.flush()
+        await self.db.commit()
 
         return job_id
 

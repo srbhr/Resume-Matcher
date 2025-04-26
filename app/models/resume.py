@@ -1,7 +1,8 @@
-from .base import Base
-from sqlalchemy import Column, String, Integer, ForeignKey, Text
 from sqlalchemy.types import JSON
 from sqlalchemy.orm import relationship
+from sqlalchemy import Column, String, Integer, ForeignKey, Text, DateTime, text
+
+from .base import Base
 from .association import job_resume_association
 
 
@@ -22,6 +23,12 @@ class ProcessedResume(Base):
     achievements = Column(JSON, nullable=True)
     education = Column(JSON, nullable=True)
     extracted_keywords = Column(JSON, nullable=True)
+    processed_at = Column(
+        DateTime(timezone=True),
+        server_default=text("CURRENT_TIMESTAMP"),
+        nullable=False,
+        index=True,
+    )
 
     # owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     # owner = relationship("User", back_populates="processed_resumes")
@@ -41,6 +48,12 @@ class Resume(Base):
     resume_id = Column(String, unique=True, nullable=False)
     content = Column(Text, nullable=False)
     content_type = Column(String, nullable=False)
+    created_at = Column(
+        DateTime(timezone=True),
+        server_default=text("CURRENT_TIMESTAMP"),
+        nullable=False,
+        index=True,
+    )
 
     raw_resume_association = relationship(
         "ProcessedResume", back_populates="raw_resume", uselist=False

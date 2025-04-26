@@ -1,9 +1,11 @@
-from fastapi import APIRouter, HTTPException, Depends, Request, status
-from sqlalchemy.orm import Session
 from uuid import uuid4
+
+from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter, HTTPException, Depends, Request, status
+
 from app.core import get_db_session
-from app.schemas.pydantic.job import JobUploadRequest
 from app.services import JobService
+from app.schemas.pydantic.job import JobUploadRequest
 
 job_router = APIRouter()
 
@@ -15,7 +17,7 @@ job_router = APIRouter()
 async def upload_job(
     payload: JobUploadRequest,
     request: Request,
-    db: Session = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session),
 ):
     """
     Accepts a job description as a MarkDown text and stores it in the database.

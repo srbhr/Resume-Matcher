@@ -1,6 +1,6 @@
 from typing import Optional, List
-from pydantic import BaseModel, Field, HttpUrl, EmailStr, field_validator
 from typing_extensions import Literal
+from pydantic import BaseModel, Field, HttpUrl, EmailStr, field_validator
 
 
 class CompanyProfile(BaseModel):

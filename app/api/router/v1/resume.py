@@ -1,10 +1,12 @@
-from fastapi import APIRouter, File, UploadFile, HTTPException, Depends, Request, status
-from sqlalchemy.orm import Session
 import logging
 import traceback
+
 from uuid import uuid4
-from app.services.resume_service import ResumeService
+from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter, File, UploadFile, HTTPException, Depends, Request, status
+
 from app.core import get_db_session
+from app.services.resume_service import ResumeService
 
 resume_router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -17,7 +19,7 @@ logger = logging.getLogger(__name__)
 async def upload_resume(
     request: Request,
     file: UploadFile = File(...),
-    db: Session = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session),
 ):
     """
     Accepts a PDF or DOCX file, converts it to HTML/Markdown, and stores it in the database.
