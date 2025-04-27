@@ -27,3 +27,22 @@ class JSONWrapper(Strategy):
                 f"provider returned non-JSON. parsing error: {e} - response: {response}"
             )
             raise StrategyError(f"JSON parsing error: {e}") from e
+
+
+class MDWrapper(Strategy):
+    async def __call__(
+        self, prompt: str, provider: Provider, **generation_args: Any
+    ) -> Dict[str, Any]:
+        """
+        Wrapper strategy to format the prompt as Markdown with the help of LLM.
+        """
+        response = await provider(prompt, **generation_args)
+        response = response.replace("```md", "").replace("```", "").strip()
+        logger.info(f"provider response: {response}")
+        try:
+            return json.loads(response)
+        except json.JSONDecodeError as e:
+            logger.error(
+                f"provider returned non-JSON. parsing error: {e} - response: {response}"
+            )
+            raise StrategyError(f"JSON parsing error: {e}") from e

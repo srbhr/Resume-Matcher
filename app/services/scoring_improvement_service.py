@@ -5,8 +5,8 @@ import numpy as np
 from sqlalchemy.future import select
 from typing import Dict, Optional, Tuple
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi.concurrency import run_in_threadpool
 
+from app.prompt import prompt_factory
 from app.agent import EmbeddingManager, AgentManager
 from app.models import Resume, Job, ProcessedResume, ProcessedJob
 from .exceptions import (
@@ -18,7 +18,7 @@ from .exceptions import (
 logger = logging.getLogger(__name__)
 
 
-class ScoringService:
+class ScoreImprovementService:
     """
     Service to handle scoring of resumes and jobs using embeddings.
     Fetches Resume and Job data from the database, computes embeddings,
@@ -26,14 +26,10 @@ class ScoringService:
     the scoring process.
     """
 
-    def __init__(
-        self, resume_id: str, job_id: str, db: AsyncSession, max_retries: int = 5
-    ):
+    def __init__(self, db: AsyncSession, max_retries: int = 5):
         self.db = db
-        self.job_id = job_id
-        self.resume_id = resume_id
         self.max_retries = max_retries
-        self.agent_manager = AgentManager()
+        self.agent_manager = AgentManager(strategy="md")
         self.embedding_manager = EmbeddingManager()
 
     async def _get_resume(
@@ -94,39 +90,79 @@ class ScoringService:
         )
 
     async def improve_score_with_llm(
-        self, resume: Resume, job: Job, cosine_similarity_score: float
+        self,
+        resume: str,
+        extracted_resume_keywords: str,
+        job: str,
+        extracted_job_keywords: str,
+        previous_cosine_similarity_score: float,
+        attempt: Optional[int] = 1,
     ) -> str:
         """
         Uses LLM to improve the score based on resume and job description.
         """
-        prompt = f"Resume: {resume.content}\nJob Description: {job.content}\nCurrent Score: Improve the score."
-        response = await self.agent_manager(prompt)
-        return response
+        prompt_template = prompt_factory.get("resume_improvement")
+        init_prompt = prompt_template.format(
+            raw_job_description=job,
+            extracted_job_keywords=extracted_job_keywords,
+            raw_resume=resume,
+            extracted_resume_keywords=extracted_resume_keywords,
+            cosine_similarity_score=previous_cosine_similarity_score,
+        )
+        improved_resume = await self.agent_manager(init_prompt)
 
-    async def run(self) -> Dict:
+        new_score = self.calculate_cosine_similarity(
+            improved_resume, extracted_job_keywords
+        )
+        if new_score > previous_cosine_similarity_score or attempt >= self.max_retries:
+            return improved_resume, new_score
+
+        return await self.improve_score_with_llm(
+            resume=improved_resume,
+            extracted_resume_keywords=extracted_resume_keywords,
+            job=job,
+            extracted_job_keywords=extracted_job_keywords,
+            previous_cosine_similarity_score=new_score,
+            attempt=attempt + 1,
+        )
+
+    async def run(self, resume_id: str, job_id: str) -> Dict:
         """
         Main method to run the scoring process.
         """
-        resume, processed_resume = await self._get_resume(self.resume_id)
-        job, processed_job = await self._get_job(self.job_id)
+        resume, processed_resume = await self._get_resume(resume_id)
+        job, processed_job = await self._get_job(job_id)
 
-        extracted_job_keywords = json.loads(processed_job.extracted_keywords)
+        extracted_job_keywords = ", ".join(
+            json.loads(processed_job.extracted_keywords).get("extracted_keywords", [])
+        )
+
+        extracted_resume_keywords = ", ".join(
+            json.loads(processed_resume.extracted_keywords).get(
+                "extracted_keywords", []
+            )
+        )
 
         resume_embedding = await self.embedding_manager(text=resume.content)
         extracted_job_keywords_embedding = await self.embedding_manager(
-            text=", ".join(extracted_job_keywords.get("extracted_keywords", []))
+            text=extracted_job_keywords
         )
 
         cosine_similarity_score = self.calculate_cosine_similarity(
             extracted_job_keywords_embedding, resume_embedding
         )
-        improved_score = await self.improve_score_with_llm(
-            resume, job, cosine_similarity_score
+        updated_resume, updated_score = await self.improve_score_with_llm(
+            resume=resume.content,
+            extracted_resume_keywords=extracted_resume_keywords,
+            job=job.content,
+            extracted_job_keywords=extracted_job_keywords,
+            cosine_similarity_score=cosine_similarity_score,
         )
 
         return {
-            "resume_id": self.resume_id,
-            "job_id": self.job_id,
-            "score": cosine_similarity_score,
-            "improved_score": improved_score,
+            "resume_id": resume_id,
+            "job_id": job_id,
+            "original_score": cosine_similarity_score,
+            "new_score": updated_score,
+            "updated_resume": updated_resume,
         }

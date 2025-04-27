@@ -2,17 +2,20 @@ import os
 from typing import Dict, Any
 
 from .exceptions import ProviderError
-from .strategies.base import Strategy
-from .strategies.wrapper import JSONWrapper
+from .strategies.wrapper import JSONWrapper, MDWrapper
 from .providers.ollama import OllamaProvider, OllamaEmbeddingProvider
 from .providers.openai import OpenAIProvider, OpenAIEmbeddingProvider
 
 
 class AgentManager:
-    def __init__(
-        self, strategy: Strategy | None = None, model: str = "gemma3:4b"
-    ) -> None:
-        self.strategy = strategy or JSONWrapper()
+    def __init__(self, strategy: str | None = None, model: str = "gemma3:4b") -> None:
+        match strategy:
+            case "md":
+                self.strategy = MDWrapper()
+            case "json":
+                self.strategy = JSONWrapper()
+            case _:
+                self.strategy = JSONWrapper()
         self.model = model
 
     async def _get_provider(self, **kwargs: Any) -> OllamaProvider | OpenAIProvider:
