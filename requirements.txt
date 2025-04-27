@@ -24,6 +24,7 @@ idna==3.10
 itsdangerous==2.2.0
 jiter==0.9.0
 magika==0.6.1
+Markdown==3.8
 markdownify==1.1.0
 markitdown==0.1.1
 mpmath==1.3.0
