@@ -1,11 +1,12 @@
 import os
-import asyncio
 import logging
+
 from openai import OpenAI
 from typing import Any, Dict
+from fastapi.concurrency import run_in_threadpool
 
-from .base import Provider
 from ..exceptions import ProviderError
+from .base import Provider, EmbeddingProvider
 
 logger = logging.getLogger(__name__)
 
@@ -38,4 +39,26 @@ class OpenAIProvider(Provider):
             "top_k": generation_args.get("top_k", 40),
             "max_tokens": generation_args.get("max_length", 20000),
         }
-        return await asyncio.to_thread(self._generate_sync, prompt, opts)
+        return await run_in_threadpool(self._generate_sync, prompt, opts)
+
+
+class OpenAIEmbeddingProvider(EmbeddingProvider):
+    def __init__(
+        self,
+        api_key: str | None = None,
+        embedding_model: str = "text-embedding-ada-002",
+    ):
+        api_key = api_key or os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            raise ProviderError("OpenAI API key is missing")
+        self._client = OpenAI(api_key=api_key)
+        self._model = embedding_model
+
+    async def embed(self, text: str) -> list[float]:
+        try:
+            response = await run_in_threadpool(
+                self._client.embeddings.create, input=text, model=self._model
+            )
+            return response["data"][0]["embedding"]
+        except Exception as e:
+            raise ProviderError(f"OpenAI - error generating embedding: {e}") from e
