@@ -36,13 +36,16 @@ class MDWrapper(Strategy):
         """
         Wrapper strategy to format the prompt as Markdown with the help of LLM.
         """
+        logger.info(f"prompt given to provider: \n{prompt}")
         response = await provider(prompt, **generation_args)
-        response = response.replace("```md", "").replace("```", "").strip()
         logger.info(f"provider response: {response}")
         try:
-            return json.loads(response)
-        except json.JSONDecodeError as e:
-            logger.error(
-                f"provider returned non-JSON. parsing error: {e} - response: {response}"
+            response = (
+                "```md\n" + response + "```" if "```md" not in response else response
             )
-            raise StrategyError(f"JSON parsing error: {e}") from e
+            return response
+        except Exception as e:
+            logger.error(
+                f"provider returned non-md. parsing error: {e} - response: {response}"
+            )
+            raise StrategyError(f"Markdown parsing error: {e}") from e

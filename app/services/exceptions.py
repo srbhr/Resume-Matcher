@@ -51,3 +51,17 @@ class ResumeParsingError(Exception):
             message = "Parsed resume not found."
         super().__init__(message)
         self.resume_id = resume_id
+
+
+class JobParsingError(Exception):
+    """
+    Exception raised when a resume processing and storing in the database failed.
+    """
+
+    def __init__(self, job_id: Optional[str] = None, message: Optional[str] = None):
+        if job_id and not message:
+            message = f"Parsing of job with ID {job_id} failed."
+        elif not message:
+            message = "Parsed job not found."
+        super().__init__(message)
+        self.resume_id = job_id

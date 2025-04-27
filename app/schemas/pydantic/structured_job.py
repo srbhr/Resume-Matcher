@@ -1,12 +1,12 @@
 from typing import Optional, List
 from typing_extensions import Literal
-from pydantic import BaseModel, Field, HttpUrl, EmailStr, field_validator
+from pydantic import BaseModel, Field, EmailStr, field_validator
 
 
 class CompanyProfile(BaseModel):
     company_name: str = Field(..., alias="companyName")
     industry: Optional[str] = None
-    website: Optional[HttpUrl] = None
+    website: Optional[str] = None
     description: Optional[str] = None
 
 

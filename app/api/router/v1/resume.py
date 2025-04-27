@@ -13,6 +13,7 @@ from app.services import (
     ResumeParsingError,
     JobNotFoundError,
 )
+from app.schemas.pydantic import ResumeImprovementRequest
 
 resume_router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -83,8 +84,7 @@ async def upload_resume(
 )
 async def score_and_improve(
     request: Request,
-    resume_id: str,
-    job_id: str,
+    payload: ResumeImprovementRequest,
     db: AsyncSession = Depends(get_db_session),
 ):
     """
@@ -94,11 +94,23 @@ async def score_and_improve(
         HTTPException: If the resume or job is not found.
     """
     request_id = getattr(request.state, "request_id", str(uuid4()))
+    request_payload = payload.model_dump()
 
     try:
+        resume_id = str(request_payload.get("resume_id", ""))
+        if not resume_id:
+            raise ResumeNotFoundError(
+                message="invalid value passed in `resume_id` field, please try again with valid resume_id."
+            )
+        job_id = str(request_payload.get("job_id", ""))
+        if not job_id:
+            raise JobNotFoundError(
+                message="invalid value passed in `job_id` field, please try again with valid job_id."
+            )
         score_improvement_service = ScoreImprovementService(db=db)
         improvements = await score_improvement_service.run(
-            resume_id=resume_id, job_id=job_id
+            resume_id=resume_id,
+            job_id=job_id,
         )
     except ResumeNotFoundError as e:
         logger.error(str(e))

@@ -55,7 +55,7 @@ class EmbeddingManager:
             raise ProviderError(
                 f"Ollama Model '{model}' is not found. Run `ollama pull {model} or pick from any available models {installed_ollama_models}"
             )
-        return OllamaEmbeddingProvider(model_name=model)
+        return OllamaEmbeddingProvider(embedding_model=model)
 
     async def embed(self, text: str, **kwargs: Any) -> list[float]:
         """

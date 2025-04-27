@@ -40,12 +40,12 @@ class JobService:
                 resume_id=str(resume_id),
                 content=job_description,
             )
+            self.db.add(job)
 
-            jb_id = await self._extract_and_store_structured_resume(
+            await self._extract_and_store_structured_resume(
                 job_id=job_id, job_description_text=job_description
             )
-            logger.info(f"Job ID: {jb_id}")
-            self.db.add(job)
+            logger.info(f"Job ID: {job_id}")
             job_ids.append(job_id)
 
         self.db.commit()
@@ -73,8 +73,12 @@ class JobService:
         processed_job = ProcessedJob(
             job_id=job_id,
             job_title=structured_job.get("job_title"),
-            company_profile=structured_job.get("company_profile"),
-            location=structured_job.get("location"),
+            company_profile=json.dumps(structured_job.get("company_profile"))
+            if structured_job.get("company_profile")
+            else None,
+            location=json.dumps(structured_job.get("location"))
+            if structured_job.get("location")
+            else None,
             date_posted=structured_job.get("date_posted"),
             employment_type=structured_job.get("employment_type"),
             job_summary=structured_job.get("job_summary"),
@@ -83,23 +87,15 @@ class JobService:
             )
             if structured_job.get("key_responsibilities")
             else None,
-            qualifications=json.dumps(
-                {"qualifications": structured_job.get("qualifications", [])}
-            )
+            qualifications=json.dumps(structured_job.get("qualifications", []))
             if structured_job.get("qualifications")
             else None,
             compensation_and_benfits=json.dumps(
-                {
-                    "compensation_and_benfits": structured_job.get(
-                        "compensation_and_benfits", []
-                    )
-                }
+                structured_job.get("compensation_and_benfits", [])
             )
             if structured_job.get("compensation_and_benfits")
             else None,
-            application_info=json.dumps(
-                {"application_info": structured_job.get("application_info", [])}
-            )
+            application_info=json.dumps(structured_job.get("application_info", []))
             if structured_job.get("application_info")
             else None,
             extracted_keywords=json.dumps(

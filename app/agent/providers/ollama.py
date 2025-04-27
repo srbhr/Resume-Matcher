@@ -66,12 +66,12 @@ class OllamaEmbeddingProvider(EmbeddingProvider):
         Generate an embedding for the given text.
         """
         try:
-            response = run_in_threadpool(
+            response = await run_in_threadpool(
                 self._client.embed,
                 input=text,
                 model=self._model,
             )
-            return response["embedding"]
+            return response.embeddings
         except Exception as e:
             logger.error(f"ollama embedding error: {e}")
             raise ProviderError(f"Ollama - Error generating embedding: {e}")

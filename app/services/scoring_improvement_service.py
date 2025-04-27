@@ -1,5 +1,6 @@
 import json
 import logging
+import markdown
 import numpy as np
 
 from sqlalchemy.future import select
@@ -13,6 +14,7 @@ from .exceptions import (
     ResumeNotFoundError,
     JobNotFoundError,
     ResumeParsingError,
+    JobParsingError,
 )
 
 logger = logging.getLogger(__name__)
@@ -43,14 +45,14 @@ class ScoreImprovementService:
         resume = result.scalars().first()
 
         if not resume:
-            raise ResumeNotFoundError(self.resume_id)
+            raise ResumeNotFoundError(resume_id=resume_id)
 
         query = select(ProcessedResume).where(ProcessedResume.resume_id == resume_id)
         result = await self.db.execute(query)
         processed_resume = result.scalars().first()
 
         if not processed_resume:
-            ResumeParsingError(self.resume_id)
+            ResumeParsingError(resume_id=resume_id)
 
         return resume, processed_resume
 
@@ -63,14 +65,14 @@ class ScoreImprovementService:
         job = result.scalars().first()
 
         if not job:
-            raise JobNotFoundError(self.job_id)
+            raise JobNotFoundError(job_id=job_id)
 
         query = select(ProcessedJob).where(ProcessedJob.job_id == job_id)
         result = await self.db.execute(query)
         processed_job = result.scalars().first()
 
         if not processed_job:
-            ResumeParsingError(self.resume_id)
+            JobParsingError(job_id=job_id)
 
         return job, processed_job
 
@@ -84,10 +86,11 @@ class ScoreImprovementService:
         """
         if resume_embedding is None or extracted_job_keywords_embedding is None:
             return 0.0
-        return np.dot(extracted_job_keywords_embedding, resume_embedding) / (
-            np.linalg.norm(extracted_job_keywords_embedding)
-            * np.linalg.norm(resume_embedding)
-        )
+
+        ejk = np.asarray(extracted_job_keywords_embedding).squeeze()
+        re = np.asarray(resume_embedding).squeeze()
+
+        return float(np.dot(ejk, re) / (np.linalg.norm(ejk) * np.linalg.norm(re)))
 
     async def improve_score_with_llm(
         self,
@@ -96,6 +99,7 @@ class ScoreImprovementService:
         job: str,
         extracted_job_keywords: str,
         previous_cosine_similarity_score: float,
+        extracted_job_keywords_embedding: float,
         attempt: Optional[int] = 1,
     ) -> str:
         """
@@ -107,12 +111,16 @@ class ScoreImprovementService:
             extracted_job_keywords=extracted_job_keywords,
             raw_resume=resume,
             extracted_resume_keywords=extracted_resume_keywords,
-            cosine_similarity_score=previous_cosine_similarity_score,
+            current_cosine_similarity=previous_cosine_similarity_score,
         )
-        improved_resume = await self.agent_manager(init_prompt)
+        improved_resume = await self.agent_manager.run(init_prompt)
+
+        improved_resume_embedding = await self.embedding_manager.embed(
+            text=improved_resume
+        )
 
         new_score = self.calculate_cosine_similarity(
-            improved_resume, extracted_job_keywords
+            improved_resume_embedding, extracted_job_keywords_embedding
         )
         if new_score > previous_cosine_similarity_score or attempt >= self.max_retries:
             return improved_resume, new_score
@@ -143,8 +151,8 @@ class ScoreImprovementService:
             )
         )
 
-        resume_embedding = await self.embedding_manager(text=resume.content)
-        extracted_job_keywords_embedding = await self.embedding_manager(
+        resume_embedding = await self.embedding_manager.embed(text=resume.content)
+        extracted_job_keywords_embedding = await self.embedding_manager.embed(
             text=extracted_job_keywords
         )
 
@@ -156,7 +164,8 @@ class ScoreImprovementService:
             extracted_resume_keywords=extracted_resume_keywords,
             job=job.content,
             extracted_job_keywords=extracted_job_keywords,
-            cosine_similarity_score=cosine_similarity_score,
+            previous_cosine_similarity_score=cosine_similarity_score,
+            extracted_job_keywords_embedding=extracted_job_keywords_embedding,
         )
 
         return {
@@ -164,5 +173,5 @@ class ScoreImprovementService:
             "job_id": job_id,
             "original_score": cosine_similarity_score,
             "new_score": updated_score,
-            "updated_resume": updated_resume,
+            "updated_resume": markdown.markdown(text=updated_resume),
         }
