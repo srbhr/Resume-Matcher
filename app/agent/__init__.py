@@ -4,6 +4,6 @@
 # * Else we fallback to a local Ollama model.
 # * If neither is available, we raise -> ProviderError.
 
-from .manager import AgentManager
+from .manager import AgentManager, EmbeddingManager
 
-__all__ = ["AgentManager"]
+__all__ = ["AgentManager", "EmbeddingManager"]

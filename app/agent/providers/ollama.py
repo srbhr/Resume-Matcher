@@ -1,10 +1,11 @@
-import asyncio
 import logging
 import ollama
-from typing import Any, Dict, List, Optional
 
-from .base import Provider
+from typing import Any, Dict, List, Optional
+from fastapi.concurrency import run_in_threadpool
+
 from ..exceptions import ProviderError
+from .base import Provider, EmbeddingProvider
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +25,7 @@ class OllamaProvider(Provider):
             client = ollama.Client(host=host) if host else ollama.Client()
             return [model_class.model for model_class in client.list().models]
 
-        return await asyncio.to_thread(_list_sync)
+        return await run_in_threadpool(_list_sync)
 
     def _generate_sync(self, prompt: str, options: Dict[str, Any]) -> str:
         """
@@ -48,4 +49,29 @@ class OllamaProvider(Provider):
             "top_k": generation_args.get("top_k", 40),
             "num_ctx": generation_args.get("max_length", 20000),
         }
-        return await asyncio.to_thread(self._generate_sync, prompt, opts)
+        return await run_in_threadpool(self._generate_sync, prompt, opts)
+
+
+class OllamaEmbeddingProvider(EmbeddingProvider):
+    def __init__(
+        self,
+        embedding_model: str = "nomic-embed-text:137m-v1.5-fp16",
+        host: Optional[str] = None,
+    ):
+        self._model = embedding_model
+        self._client = ollama.Client(host=host) if host else ollama.Client()
+
+    async def embed(self, text: str) -> List[float]:
+        """
+        Generate an embedding for the given text.
+        """
+        try:
+            response = await run_in_threadpool(
+                self._client.embed,
+                input=text,
+                model=self._model,
+            )
+            return response.embeddings
+        except Exception as e:
+            logger.error(f"ollama embedding error: {e}")
+            raise ProviderError(f"Ollama - Error generating embedding: {e}")
