@@ -42,13 +42,13 @@ class JobService:
             )
             self.db.add(job)
 
-            await self._extract_and_store_structured_resume(
+            await self._extract_and_store_structured_job(
                 job_id=job_id, job_description_text=job_description
             )
             logger.info(f"Job ID: {job_id}")
             job_ids.append(job_id)
 
-        self.db.commit()
+        await self.db.commit()
         return job_ids
 
     async def _is_resume_available(self, resume_id: str) -> bool:
@@ -59,7 +59,7 @@ class JobService:
         result = await self.db.scalar(query)
         return result is not None
 
-    async def _extract_and_store_structured_resume(
+    async def _extract_and_store_structured_job(
         self, job_id, job_description_text: str
     ):
         """
