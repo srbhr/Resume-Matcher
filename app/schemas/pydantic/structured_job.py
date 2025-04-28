@@ -1,6 +1,54 @@
+import enum
+
 from typing import Optional, List
-from typing_extensions import Literal
-from pydantic import BaseModel, Field, EmailStr, field_validator
+from pydantic import BaseModel, Field, EmailStr
+
+
+class EmploymentTypeEnum(str, enum.Enum):
+    """Case-insensitive Enum for employment types."""
+
+    FULL_TIME = "Full-time"
+    PART_TIME = "Part-time"
+    CONTRACT = "Contract"
+    INTERNSHIP = "Internship"
+    TEMPORARY = "Temporary"
+    NOT_SPECIFIED = "Not Specified"
+
+    @classmethod
+    def _missing_(cls, value: object):
+        """Handles case-insensitive lookup."""
+        if isinstance(value, str):
+            value_lower = value.lower()
+            mapping = {member.value.lower(): member for member in cls}
+            if value_lower in mapping:
+                return mapping[value_lower]
+
+        raise ValueError(
+            "employment type must be one of: Full-time, Part-time, Contract, Internship, Temporary, Not Specified (case insensitive)"
+        )
+
+
+class RemoteStatusEnum(str, enum.Enum):
+    """Case-insensitive Enum for remote work status."""
+
+    FULLY_REMOTE = "Fully Remote"
+    HYBRID = "Hybrid"
+    ON_SITE = "On-site"
+    REMOTE = "Remote"
+    NOT_SPECIFIED = "Not Specified"
+
+    @classmethod
+    def _missing_(cls, value: object):
+        """Handles case-insensitive lookup."""
+        if isinstance(value, str):
+            value_lower = value.lower()
+            mapping = {member.value.lower(): member for member in cls}
+            if value_lower in mapping:
+                return mapping[value_lower]
+
+        raise ValueError(
+            "remote_status must be one of: Fully Remote, Hybrid, On-site, Remote, Not Specified (case insensitive)"
+        )
 
 
 class CompanyProfile(BaseModel):
@@ -14,25 +62,7 @@ class Location(BaseModel):
     city: str
     state: Optional[str] = None
     country: Optional[str] = None
-    remote_status: Literal["Fully Remote", "Hybrid", "On-site", "Remote"] = Field(
-        ..., alias="remoteStatus"
-    )
-
-    @field_validator("remote_status", mode="before")
-    def validate_remote_status(cls, value):
-        if isinstance(value, str):
-            v_lower = value.lower()
-            mapping = {
-                "fully remote": "Fully Remote",
-                "hybrid": "Hybrid",
-                "on-site": "On-site",
-                "remote": "Remote",
-            }
-            if v_lower in mapping:
-                return mapping[v_lower]
-        raise ValueError(
-            "remote_status must be one of: Fully Remote, Hybrid, On-site, Remote (case insensitive)"
-        )
+    remote_status: RemoteStatusEnum = Field(..., alias="remoteStatus")
 
 
 class Qualifications(BaseModel):
@@ -56,9 +86,7 @@ class StructuredJobModel(BaseModel):
     company_profile: CompanyProfile = Field(..., alias="companyProfile")
     location: Location
     date_posted: str = Field(..., alias="datePosted")
-    employment_type: Literal[
-        "Full-time", "Part-time", "Contract", "Internship", "Temporary"
-    ] = Field(..., alias="employmentType")
+    employment_type: EmploymentTypeEnum = Field(..., alias="employmentType")
     job_summary: str = Field(..., alias="jobSummary")
     key_responsibilities: List[str] = Field(..., alias="keyResponsibilities")
     qualifications: Qualifications
