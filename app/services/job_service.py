@@ -2,7 +2,7 @@ import uuid
 import json
 import logging
 
-from typing import List
+from typing import List, Dict, Any
 from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -113,7 +113,7 @@ class JobService:
 
     async def _extract_structured_json(
         self, job_description_text: str
-    ) -> StructuredJobModel | None:
+    ) -> Dict[str, Any] | None:
         """
         Uses the AgentManager+JSONWrapper to ask the LLM to
         return the data in exact JSON schema we need.
@@ -133,4 +133,4 @@ class JobService:
         except ValidationError as e:
             logger.info(f"Validation error: {e}")
             return None
-        return structured_job.model_dump()
+        return structured_job.model_dump(mode="json")
