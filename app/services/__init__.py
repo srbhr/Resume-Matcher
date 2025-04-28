@@ -1,6 +1,6 @@
 from .job_service import JobService
 from .resume_service import ResumeService
-from .scoring_improvement_service import ScoreImprovementService
+from .score_improvement_service import ScoreImprovementService
 from .exceptions import (
     ResumeNotFoundError,
     ResumeParsingError,
