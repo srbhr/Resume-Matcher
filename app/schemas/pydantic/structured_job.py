@@ -1,7 +1,7 @@
 import enum
 
 from typing import Optional, List
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, Field
 
 
 class EmploymentTypeEnum(str, enum.Enum):
@@ -78,7 +78,7 @@ class CompensationAndBenefits(BaseModel):
 class ApplicationInfo(BaseModel):
     how_to_apply: Optional[str] = Field(..., alias="howToApply")
     apply_link: Optional[str] = Field(..., alias="applyLink")
-    contact_email: Optional[EmailStr] = Field(..., alias="contactEmail")
+    contact_email: Optional[str] = Field(..., alias="contactEmail")
 
 
 class StructuredJobModel(BaseModel):
