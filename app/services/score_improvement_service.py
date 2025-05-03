@@ -1,11 +1,12 @@
 import json
+import asyncio
 import logging
 import markdown
 import numpy as np
 
 from sqlalchemy.future import select
-from typing import Dict, Optional, Tuple
 from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Dict, Optional, Tuple, AsyncGenerator
 
 from app.prompt import prompt_factory
 from app.agent import EmbeddingManager, AgentManager
@@ -101,7 +102,7 @@ class ScoreImprovementService:
         previous_cosine_similarity_score: float,
         extracted_job_keywords_embedding: float,
         attempt: Optional[int] = 1,
-    ) -> str:
+    ) -> Tuple[str, float]:
         """
         Uses LLM to improve the score based on resume and job description.
         """
@@ -136,8 +137,9 @@ class ScoreImprovementService:
 
     async def run(self, resume_id: str, job_id: str) -> Dict:
         """
-        Main method to run the scoring process.
+        Main method to run the scoring and improving process and return dict.
         """
+
         resume, processed_resume = await self._get_resume(resume_id)
         job, processed_job = await self._get_job(job_id)
 
@@ -175,3 +177,67 @@ class ScoreImprovementService:
             "new_score": updated_score,
             "updated_resume": markdown.markdown(text=updated_resume),
         }
+
+    async def run_and_stream(self, resume_id: str, job_id: str) -> AsyncGenerator:
+        """
+        Main method to run the scoring and improving process and return dict.
+        """
+
+        yield f"data: {json.dumps({'status': 'starting', 'message': 'Analyzing resume and job description...'})}\n\n"
+        await asyncio.sleep(2)
+
+        resume, processed_resume = await self._get_resume(resume_id)
+        job, processed_job = await self._get_job(job_id)
+
+        yield f"data: {json.dumps({'status': 'parsing', 'message': 'Parsing resume content...'})}\n\n"
+        await asyncio.sleep(2)
+
+        extracted_job_keywords = ", ".join(
+            json.loads(processed_job.extracted_keywords).get("extracted_keywords", [])
+        )
+
+        extracted_resume_keywords = ", ".join(
+            json.loads(processed_resume.extracted_keywords).get(
+                "extracted_keywords", []
+            )
+        )
+
+        resume_embedding = await self.embedding_manager.embed(text=resume.content)
+        extracted_job_keywords_embedding = await self.embedding_manager.embed(
+            text=extracted_job_keywords
+        )
+
+        yield f"data: {json.dumps({'status': 'scoring', 'message': 'Calculating compatibility score...'})}\n\n"
+        await asyncio.sleep(3)
+
+        cosine_similarity_score = self.calculate_cosine_similarity(
+            extracted_job_keywords_embedding, resume_embedding
+        )
+
+        yield f"data: {json.dumps({'status': 'scored', 'score': cosine_similarity_score})}\n\n"
+
+        yield f"data: {json.dumps({'status': 'improving', 'message': 'Generating improvement suggestions...'})}\n\n"
+        await asyncio.sleep(3)
+
+        updated_resume, updated_score = await self.improve_score_with_llm(
+            resume=resume.content,
+            extracted_resume_keywords=extracted_resume_keywords,
+            job=job.content,
+            extracted_job_keywords=extracted_job_keywords,
+            previous_cosine_similarity_score=cosine_similarity_score,
+            extracted_job_keywords_embedding=extracted_job_keywords_embedding,
+        )
+
+        for i, suggestion in enumerate(updated_resume):
+            yield f"data: {json.dumps({'status': 'suggestion', 'index': i, 'text': suggestion})}\n\n"
+            await asyncio.sleep(0.2)
+
+        final_result = {
+            "resume_id": resume_id,
+            "job_id": job_id,
+            "original_score": cosine_similarity_score,
+            "new_score": updated_score,
+            "updated_resume": markdown.markdown(text=updated_resume),
+        }
+
+        yield f"data: {json.dumps({'status': 'completed', 'result': final_result})}\n\n"

@@ -3,7 +3,17 @@ import traceback
 
 from uuid import uuid4
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import APIRouter, File, UploadFile, HTTPException, Depends, Request, status
+from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi import (
+    APIRouter,
+    File,
+    UploadFile,
+    HTTPException,
+    Depends,
+    Request,
+    status,
+    Query,
+)
 
 from app.core import get_db_session
 from app.services import (
@@ -79,13 +89,16 @@ async def upload_resume(
 
 
 @resume_router.post(
-    "/improvements",
+    "/improve",
     summary="Score and improve a resume against a job description",
 )
 async def score_and_improve(
     request: Request,
     payload: ResumeImprovementRequest,
     db: AsyncSession = Depends(get_db_session),
+    stream: bool = Query(
+        False, description="Enable streaming response using Server-Sent Events"
+    ),
 ):
     """
     Scores and improves a resume against a job description.
@@ -94,6 +107,8 @@ async def score_and_improve(
         HTTPException: If the resume or job is not found.
     """
     request_id = getattr(request.state, "request_id", str(uuid4()))
+    headers = {"X-Request-ID": request_id}
+
     request_payload = payload.model_dump()
 
     try:
@@ -108,10 +123,28 @@ async def score_and_improve(
                 message="invalid value passed in `job_id` field, please try again with valid job_id."
             )
         score_improvement_service = ScoreImprovementService(db=db)
-        improvements = await score_improvement_service.run(
-            resume_id=resume_id,
-            job_id=job_id,
-        )
+
+        if stream:
+            return StreamingResponse(
+                content=score_improvement_service.run_and_stream(
+                    resume_id=resume_id,
+                    job_id=job_id,
+                ),
+                media_type="text/event-stream",
+                headers=headers,
+            )
+        else:
+            improvements = await score_improvement_service.run(
+                resume_id=resume_id,
+                job_id=job_id,
+            )
+            return JSONResponse(
+                content={
+                    "request_id": request_id,
+                    "data": improvements,
+                },
+                headers=headers,
+            )
     except ResumeNotFoundError as e:
         logger.error(str(e))
         raise HTTPException(
@@ -136,8 +169,3 @@ async def score_and_improve(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="sorry, something went wrong!",
         )
-
-    return {
-        "request_id": request_id,
-        "data": improvements,
-    }
