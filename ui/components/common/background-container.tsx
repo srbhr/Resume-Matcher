@@ -61,25 +61,4 @@ const BackgroundContainer = ({
 	);
 };
 
-// Example Usage (replace with your actual content)
-// Assuming you have the necessary imports for DotPattern and cn
-// You would use it in another component like this:
-
-/*
-import BackgroundContainer from './BackgroundContainer'; // Adjust import path
-
-export default function MyPage() {
-    return (
-        <BackgroundContainer>
-            {/* Add your specific content here *}
-            <h1 className="text-4xl text-white mb-4">My Content Title</h1>
-            <p className="text-lg text-gray-300 mb-8">This content is inside the reusable container.</p>
-            <button className="bg-lime-500 text-black px-6 py-2 rounded-full hover:bg-lime-600 transition-colors">
-                Click Me
-            </button>
-        </BackgroundContainer>
-    );
-}
-*/
-
 export default BackgroundContainer;

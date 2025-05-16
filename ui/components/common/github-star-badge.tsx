@@ -10,7 +10,7 @@ const GitHubStarBadge = () => {
 			rel="noopener noreferrer"
 			className="inline-block group"
 		>
-			<div className="p-[1px] rounded-xl bg-gradient-to-br from-amber-400 to-yellow-400">
+			<div className="p-[1px] rounded-xl bg-gradient-to-br from-sky-400 to-blue-600">
 				<span
 					className={`
             inline-flex items-center gap-x-1.5
@@ -18,7 +18,7 @@ const GitHubStarBadge = () => {
             rounded-xl
             text-md
             bg-black text-white
-            group-hover:bg-gradient-to-r group-hover:from-amber-400 group-hover:to-yellow-400
+            group-hover:bg-gradient-to-r group-hover:from-sky-400 group-hover:to-blue-500
             group-hover:text-black
             transition-colors duration-300 ease-in-out
           `}
