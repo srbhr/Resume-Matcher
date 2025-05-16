@@ -1,6 +1,5 @@
 import React from 'react';
 
-// Mock Resume Data (Replace with data fetched from your backend)
 const mockResumeData = {
 	personalInfo: {
 		name: 'Ada Lovelace',
@@ -10,7 +9,7 @@ const mockResumeData = {
 		location: 'London, UK',
 		website: 'analyticalengine.dev',
 		linkedin: 'linkedin.com/in/adalovelace',
-		github: 'github.com/adalovelace', // Example of a potentially missing field
+		github: 'github.com/adalovelace',
 	},
 	summary:
 		'Pioneering computer programmer with a strong foundation in mathematics and analytical thinking. Known for writing the first algorithm intended to be carried out by a machine. Seeking challenging opportunities to apply analytical skills to modern computing problems.',
@@ -27,7 +26,6 @@ const mockResumeData = {
 				'Foresaw the potential for computers to go beyond mere calculation, envisioning applications in music and art.',
 			],
 		},
-		// Add more experience objects here if needed
 	],
 	education: [
 		{
@@ -47,11 +45,9 @@ const mockResumeData = {
 		'Computational Theory',
 		'Technical Writing',
 		'French (Translation)',
-		'Symbolic Logic', // Another potentially missing skill
+		'Symbolic Logic',
 	],
 };
-
-// --- Resume Component ---
 
 interface PersonalInfo {
 	name?: string;
@@ -135,23 +131,19 @@ const Resume: React.FC<ResumeProps> = ({ resumeData }) => {
 
 	return (
 		// Main container with dark background and base text color
-		<div className="font-mono bg-gray-900 text-gray-300 p-6 md:p-10 shadow-lg rounded-lg max-w-4xl mx-auto border border-gray-700">
+		<div className="font-mono bg-gray-950 text-gray-300 p-4 shadow-lg rounded-lg max-w-4xl mx-auto border border-gray-600">
 			{/* --- Personal Info Section --- */}
 			{personalInfo && (
-				<div className="text-center mb-8 border-b pb-6 border-gray-700">
+				<div className="text-center mb-4 text-md pb-6 border-gray-700">
 					{/* Lighter text for main headings */}
 					{personalInfo.name && (
-						<h1 className="text-3xl md:text-4xl font-bold mb-1 text-white">
-							{personalInfo.name}
-						</h1>
+						<h1 className="text-3xl font-bold mb-2 text-white">{personalInfo.name}</h1>
 					)}
 					{/* Slightly lighter text for subtitle */}
 					{personalInfo.title && (
-						<h2 className="text-xl md:text-2xl text-gray-400 mb-4">
-							{personalInfo.title}
-						</h2>
+						<h2 className="text-xl text-gray-400 mb-4">{personalInfo.title}</h2>
 					)}
-					<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 text-left px-4">
+					<div className="grid grid-cols-3 gap-1 text-left px-2">
 						{renderContactDetail('Email', personalInfo.email, 'mailto:')}
 						{renderContactDetail('Phone', personalInfo.phone, 'tel:')}
 						{renderContactDetail('Location', personalInfo.location)}
@@ -260,18 +252,11 @@ const Resume: React.FC<ResumeProps> = ({ resumeData }) => {
 	);
 };
 
-// --- Main App Component (Example Usage) ---
-// In a real Next.js app, you would fetch data in a server component
-// or use hooks like useEffect/useState in a client component.
 export default function App() {
-	// In a real app, resumeData would likely come from props or state
-	// after being fetched from an API.
 	const resumeData = mockResumeData;
 
 	return (
-		// Darker background for the overall page
-		<div className="bg-gray-950 min-h-screen p-4 md:p-8">
-			{/* You can wrap the Resume component and pass the fetched data */}
+		<div className="bg-zinc-950 min-h-screen">
 			<Resume resumeData={resumeData} />
 		</div>
 	);

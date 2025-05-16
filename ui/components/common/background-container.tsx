@@ -39,7 +39,7 @@ const BackgroundContainer = ({
 			{/* Inner container with dark background, padding, and rounded corners */}
 			<div
 				className={cn(
-					'relative z-10 flex h-full w-full flex-col items-center justify-center bg-slate-950 p-8 rounded-2xl',
+					'relative z-10 flex h-full w-full flex-col items-center justify-center bg-zinc-950 p-8 rounded-2xl',
 					innerClassName, // Allow overriding or extending inner div styles
 				)}
 			>
