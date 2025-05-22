@@ -1,4 +1,4 @@
-import JobDescriptionUploadTextArea from '@/components/job-description-upload/text-area';
+import JobDescriptionUploadTextArea from '@/components/jd-upload/text-area';
 import BackgroundContainer from '@/components/common/background-container';
 
 const ProvideJobDescriptionsPage = () => {

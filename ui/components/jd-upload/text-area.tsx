@@ -54,16 +54,36 @@ export function JobDescriptionUploadTextArea() {
 
 			setSubmissionStatus('submitting'); // Indicate loading state
 
-			// --- API Call Simulation ---
+			// --- API Call ---
 			try {
 				const dataToSubmit = {
-					jobDescription1: trimmedJd1, // Send the trimmed description
+					job_descriptions: [trimmedJd1], // Send the trimmed description as an array
+					resume_id: '3fa85f64-5717-4562-b3fc-2c963f66afa6', // Placeholder resume_id
 				};
 
 				console.log('Submitting data:', dataToSubmit);
 
-				// Replace with your actual API call
-				await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate network delay
+				const response = await fetch('/api/v1/jobs/upload', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify(dataToSubmit),
+				});
+
+				if (!response.ok) {
+					// Handle HTTP errors
+					const errorData = await response.json().catch(() => ({
+						message:
+							'Failed to submit job description and could not parse error response.',
+					}));
+					console.error('API error:', response.status, errorData);
+					throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+				}
+
+				// Assuming the API returns JSON, you might want to process it
+				// const result = await response.json();
+				// console.log('API success:', result);
 
 				setSubmissionStatus('success'); // Set success status
 				console.log('Submission successful!');
