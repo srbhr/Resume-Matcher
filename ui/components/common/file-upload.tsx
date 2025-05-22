@@ -1,28 +1,37 @@
 'use client';
 
-import React from 'react'; // Import React
-import { AlertCircleIcon, PaperclipIcon, UploadIcon, XIcon } from 'lucide-react';
-// Assuming useFileUpload hook and Button component are correctly imported from these paths
-import { formatBytes, useFileUpload } from '@/hooks/use-file-upload';
+import React, { useState } from 'react';
+import {
+	AlertCircleIcon,
+	CheckCircle2Icon,
+	Loader2Icon,
+	PaperclipIcon,
+	UploadIcon,
+	XIcon,
+} from 'lucide-react';
+// Ensure FileMetadata is imported if you cast to it, or rely on structural typing.
+// For this refinement, direct property access after casting to FileMetadata is used.
+import { formatBytes, useFileUpload, FileMetadata } from '@/hooks/use-file-upload';
 import { Button } from '@/components/ui/button';
 
-// Define the accepted file types
 const acceptedFileTypes = [
 	'application/pdf', // .pdf
 	'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
 ];
 
-// Define the accepted file types as a comma-separated string for the input element
 const acceptString = acceptedFileTypes.join(',');
+const API_RESUME_UPLOAD_URL = '/api/v1/resumes/upload'; // API endpoint
 
 export default function FileUpload() {
-	// Define the maximum file size (e.g., 2MB)
-	const maxSize = 2 * 1024 * 1024;
+	const maxSize = 2 * 1024 * 1024; // 2MB
 
-	// Use the file upload hook
-	// Removed initialFiles and added the accept option
+	const [uploadFeedback, setUploadFeedback] = useState<{
+		type: 'success' | 'error';
+		message: string;
+	} | null>(null);
+
 	const [
-		{ files, isDragging, errors },
+		{ files, isDragging, errors: validationOrUploadErrors, isUploadingGlobal },
 		{
 			handleDragEnter,
 			handleDragLeave,
@@ -31,114 +40,182 @@ export default function FileUpload() {
 			openFileDialog,
 			removeFile,
 			getInputProps,
+			clearErrors,
 		},
 	] = useFileUpload({
 		maxSize,
-		accept: acceptString, // Pass the accepted file types string here
-		// initialFiles removed
+		accept: acceptString,
+		multiple: false,
+		uploadUrl: API_RESUME_UPLOAD_URL,
+		onUploadSuccess: (uploadedFile, response) => {
+			console.log('Upload successful:', uploadedFile, response);
+			// uploadedFile.file is FileMetadata here, as transformed by the hook
+			setUploadFeedback({
+				type: 'success',
+				message: `${(uploadedFile.file as FileMetadata).name} uploaded successfully!`,
+			});
+			clearErrors();
+		},
+		onUploadError: (file, errorMsg) => {
+			console.error('Upload error:', file, errorMsg);
+			setUploadFeedback({
+				type: 'error',
+				message: errorMsg || 'An unknown error occurred during upload.',
+			});
+		},
+		onFilesChange: (currentFiles) => {
+			if (currentFiles.length === 0) {
+				setUploadFeedback(null);
+			}
+		},
 	});
 
-	// Get the first (and only allowed) file
-	const file = files[0];
+	const currentFile = files[0];
+
+	const handleRemoveFile = (id: string) => {
+		removeFile(id);
+		setUploadFeedback(null);
+	};
+
+	const displayErrors =
+		uploadFeedback?.type === 'error' ? [uploadFeedback.message] : validationOrUploadErrors;
 
 	return (
-		<div className="flex flex-col gap-2 rounded-lg ">
-			{/* Drop area - Outer div for styling */}
+		<div className="flex w-full flex-col gap-4 rounded-lg">
 			<div
 				role="button"
-				// Only allow opening file dialog if no file is selected
-				onClick={!file ? openFileDialog : undefined}
-				onDragEnter={handleDragEnter}
-				onDragLeave={handleDragLeave}
-				onDragOver={handleDragOver}
-				onDrop={handleDrop}
-				// Apply dragging styles
+				tabIndex={!currentFile && !isUploadingGlobal ? 0 : -1}
+				onClick={!currentFile && !isUploadingGlobal ? openFileDialog : undefined}
+				onKeyDown={(e) => {
+					if ((e.key === 'Enter' || e.key === ' ') && !currentFile && !isUploadingGlobal)
+						openFileDialog();
+				}}
+				onDragEnter={!isUploadingGlobal ? handleDragEnter : undefined}
+				onDragLeave={!isUploadingGlobal ? handleDragLeave : undefined}
+				onDragOver={!isUploadingGlobal ? handleDragOver : undefined}
+				onDrop={!isUploadingGlobal ? handleDrop : undefined}
 				data-dragging={isDragging || undefined}
-				// Disable pointer events and reduce opacity if a file is already present
-				className={`rounded-xl transition-colors ${
-					file
-						? 'pointer-events-none opacity-50'
-						: 'has-[input:focus]:ring-ring/50 has-[input:focus]:ring-[3px]'
-				}`}
-				// Add aria-disabled attribute for accessibility
-				aria-disabled={Boolean(file)}
-			>
-				{/* Inner div for background and content */}
-				<div
-					className={`flex min-h-48 w-full flex-col items-center justify-center rounded-[10px] bg-gray-900/50 p-6 transition-colors ${
-						!file ? 'hover:bg-gray-800/50' : '' // Only apply hover effect if no file
-					} ${
-						isDragging ? 'bg-neutral-900/95' : '' // Apply dragging background
+				className={`relative rounded-xl border-2 border-dashed transition-all duration-300 ease-in-out
+                    ${
+						currentFile || isUploadingGlobal
+							? 'cursor-not-allowed opacity-70 border-gray-700'
+							: 'cursor-pointer border-gray-600 hover:border-primary hover:bg-gray-900/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background'
+					}
+                    ${
+						isDragging && !isUploadingGlobal
+							? 'border-primary bg-primary/10'
+							: 'bg-gray-900/50'
 					}`}
-				>
-					{/* Hidden file input */}
-					<input
-						{...getInputProps()}
-						// Pass the accept string to the input element
-						accept={acceptString}
-						className="sr-only"
-						aria-label="Upload file"
-						// Disable input if a file is already selected
-						disabled={Boolean(file)}
-					/>
-
-					{/* Upload UI */}
-					<div className="flex flex-col items-center justify-center text-center">
-						<div
-							className="bg-white mb-3 flex size-12 shrink-0 items-center justify-center rounded-full border"
-							aria-hidden="true"
-						>
-							<UploadIcon className="size-5 opacity-60" />
-						</div>
-						<p className="mb-2 text-lg font-semibold text-white">Upload file</p>
-						<p className="text-muted-foreground text-sm">
-							{/* Updated description to reflect accepted types */}
-							Drag & drop or click to browse (PDF, DOCX only, max.{' '}
-							{formatBytes(maxSize)})
-						</p>
-					</div>
+				aria-disabled={Boolean(currentFile) || isUploadingGlobal}
+				aria-label={
+					currentFile
+						? 'File selected. Remove to upload another.'
+						: 'File upload dropzone. Drag & drop or click to browse.'
+				}
+			>
+				<div className="flex min-h-48 w-full flex-col items-center justify-center p-6 text-center">
+					<input {...getInputProps()} />
+					{isUploadingGlobal ? (
+						<>
+							<Loader2Icon className="mb-4 size-10 animate-spin text-primary" />
+							<p className="text-lg font-semibold text-white">Uploading...</p>
+							<p className="text-sm text-muted-foreground">
+								Your file is being processed.
+							</p>
+						</>
+					) : (
+						<>
+							<div className="mb-4 flex size-12 items-center justify-center rounded-full border border-gray-700 bg-gray-800 text-gray-400">
+								<UploadIcon className="size-6" />
+							</div>
+							<p className="mb-1 text-lg font-semibold text-white">
+								{currentFile ? 'File Ready' : 'Upload Your Resume'}
+							</p>
+							<p className="text-sm text-muted-foreground">
+								{currentFile
+									? currentFile.file.name // name is on both File and FileMetadata
+									: `Drag & drop or click (PDF, DOCX up to ${formatBytes(
+											maxSize,
+									  )})`}
+							</p>
+						</>
+					)}
 				</div>
 			</div>
 
-			{/* Display errors if any */}
-			{errors.length > 0 && (
-				<div className="text-destructive flex items-center gap-1 text-xs" role="alert">
-					<AlertCircleIcon className="size-3 shrink-0" />
-					<span>{errors[0]}</span> {/* Display the first error */}
+			{displayErrors.length > 0 &&
+				!isUploadingGlobal &&
+				(!uploadFeedback || uploadFeedback.type === 'error') && (
+					<div
+						className="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive"
+						role="alert"
+					>
+						<div className="flex items-start gap-2">
+							<AlertCircleIcon className="mt-0.5 size-5 shrink-0" />
+							<div>
+								<p className="font-semibold">Error</p>
+								{displayErrors.map((error, index) => (
+									<p key={index}>{error}</p>
+								))}
+							</div>
+						</div>
+					</div>
+				)}
+
+			{uploadFeedback?.type === 'success' && !isUploadingGlobal && (
+				<div
+					className="rounded-md border border-green-500/50 bg-green-500/10 p-3 text-sm text-green-600"
+					role="status"
+				>
+					<div className="flex items-start gap-2">
+						<CheckCircle2Icon className="mt-0.5 size-5 shrink-0" />
+						<div>
+							<p className="font-semibold">Success</p>
+							<p>{uploadFeedback.message}</p>
+						</div>
+					</div>
 				</div>
 			)}
 
-			{/* Display the selected file if present */}
-			{file && (
-				<div className="space-y-2">
-					<div
-						key={file.id}
-						className="flex items-center justify-between gap-2 rounded-xl border bg-background/50 px-4 py-3"
-					>
-						{/* File details */}
-						<div className="flex items-center gap-3 overflow-hidden">
-							<PaperclipIcon
-								className="size-5 shrink-0 opacity-60"
-								aria-hidden="true"
-							/>
-							<div className="min-w-0">
-								<p className="truncate text-sm font-medium">{file.file.name}</p>
-								{/* Optionally display file size */}
-								{/* <p className="text-xs text-muted-foreground">{formatBytes(file.file.size)}</p> */}
+			{currentFile && !isUploadingGlobal && (
+				<div className="rounded-xl border border-gray-700 bg-background/60 p-4">
+					<div className="flex items-center justify-between gap-3">
+						<div className="flex min-w-0 items-center gap-3">
+							<PaperclipIcon className="size-5 shrink-0 text-muted-foreground" />
+							<div className="min-w-0 flex-1">
+								<p className="truncate text-sm font-medium text-white">
+									{currentFile.file.name}{' '}
+									{/* name is on both File and FileMetadata */}
+								</p>
+								<p className="text-xs text-muted-foreground">
+									{formatBytes(currentFile.file.size)} -{' '}
+									{/* size is on both File and FileMetadata */}
+									{/* After upload attempt, .file is FileMetadata */}
+									{(currentFile.file as FileMetadata).uploaded === true
+										? 'Uploaded'
+										: (currentFile.file as FileMetadata).uploadError
+										? 'Upload failed'
+										: 'Pending upload'}
+								</p>
 							</div>
 						</div>
-
-						{/* Remove file button */}
 						<Button
 							size="icon"
 							variant="ghost"
-							className="text-muted-foreground/80 hover:text-foreground -me-2 size-9 hover:bg-transparent"
-							onClick={() => removeFile(file.id)} // Use file.id
+							className="size-8 shrink-0 text-muted-foreground hover:text-white"
+							onClick={() => handleRemoveFile(currentFile.id)}
 							aria-label="Remove file"
+							disabled={isUploadingGlobal}
 						>
-							<XIcon className="size-5" aria-hidden="true" />
+							<XIcon className="size-5" />
 						</Button>
 					</div>
+					{/* Display uploadError if it exists on FileMetadata */}
+					{(currentFile.file as FileMetadata).uploadError && (
+						<p className="mt-2 text-xs text-destructive">
+							Error: {(currentFile.file as FileMetadata).uploadError}
+						</p>
+					)}
 				</div>
 			)}
 		</div>
