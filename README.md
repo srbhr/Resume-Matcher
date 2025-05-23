@@ -30,7 +30,7 @@ Resume Matcher is designed to help you optimize your resume with the aim to high
 ![Discord](assets/resume_matcher_discord.png)
 
 > Follow us on LinkedIn ✨
-![LinkedIn](assets/resume_matcher_linkedIn.png)
+![LinkedIn](assets/resume_matcher_linkedin.png)
 
 
 > **⭐** Star Resume Matcher to support the development and get updates on GitHub.
