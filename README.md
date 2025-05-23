@@ -16,7 +16,9 @@
 
 ![Stars](https://img.shields.io/github/stars/srbhr/Resume-Matcher?labelColor=black&style=flat-square&color=FFF)
 ![Apache 2.0](https://img.shields.io/github/license/srbhr/Resume-Matcher?labelColor=black&style=flat-square&color=FFF) ![Forks](https://img.shields.io/github/forks/srbhr/Resume-Matcher?labelColor=black&style=flat-square&color=FFF) ![Contributors](https://img.shields.io/github/contributors/srbhr/Resume-Matcher?labelColor=black&style=flat-square&color=FFF) ![Issues](https://img.shields.io/github/issues-raw/srbhr/Resume-Matcher?labelColor=black&style=flat-square&color=FFF)
-![Discord](https://img.shields.io/discord/1122069176962531400?labelColor=black&logo=discord&logoColor=FFF&style=flat-square&color=FFF) ![Website](https://img.shields.io/badge/website-Resume%20Matcher-FFF?labelColor=black&style=flat-square&color=FFF) ![LinkedIn](https://img.shields.io/badge/LinkedIn-Resume%20Matcher-FFF?labelColor=black&logo=LinkedIn&style=flat-square&color=FFF)
+
+
+[![Discord](https://img.shields.io/discord/1122069176962531400?labelColor=black&logo=discord&logoColor=FFF&style=flat-square&color=FFF)](https://dsc.gg/resume-matcher) [![Website](https://img.shields.io/badge/website-Resume%20Matcher-FFF?labelColor=black&style=flat-square&color=FFF)](https://resumematcher.fyi) [![LinkedIn](https://img.shields.io/badge/LinkedIn-Resume%20Matcher-FFF?labelColor=black&logo=LinkedIn&style=flat-square&color=FFF)](https://www.linkedin.com/company/resume-matcher/)
 
 <a href="https://trendshift.io/repositories/565" target="_blank"><img src="https://trendshift.io/api/badge/repositories/565" alt="srbhr%2FResume-Matcher | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
 
@@ -26,11 +28,24 @@
 
 Resume Matcher is designed to help you optimize your resume with the aim to highlight your skills and experience in a way that resonates with potential employers. We're working on actively improving the platform and adding new features. The best way to stay updated is to join the discord discussion and be part of the active development community.
 
-> Join our Discord community 👇
+> Join our [Discord](https://dsc.gg/resume-matcher) community 👇
 [![Discord](assets/resume_matcher_discord.png)](https://dsc.gg/resume-matcher)
 
-> Follow us on LinkedIn ✨
+> Follow us on [LinkedIn](https://www.linkedin.com/company/resume-matcher/) ✨
 [![LinkedIn](assets/resume_matcher_linkedin.png)](https://www.linkedin.com/company/resume-matcher/)
 
-> **⭐** Star Resume Matcher to support the development and get updates on GitHub.
+> ⭐ Star Resume Matcher to support the development and get updates on GitHub.
 ![Star Resume Matcher](assets/star_resume_matcher.png)
+
+## Key Features
+
+- **ATS Compatibility**: Get a detailed analysis of your resume's compatibility with ATS systems.
+- **Instant Match Score**: Upload resume & job description for a quick match score and key improvement areas.
+- **Keyword Optimizer**: Align your resume with job keywords and identify critical content gaps.
+- **Guided Improvements**: Get clear suggestions to make your resume stand out.
+
+### Roadmap 
+
+- Visual keyword highlighting.
+- AI Canvas, which can help to craft impactful, metric-driven resume content.
+- Multi-job description optimization.
