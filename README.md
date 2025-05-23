@@ -26,8 +26,13 @@
 
 Resume Matcher is designed to help you optimize your resume with the aim to highlight your skills and experience in a way that resonates with potential employers. We're working on actively improving the platform and adding new features. The best way to stay updated is to join the discord discussion and be part of the active development community.
 
-|Join Discord| Follow us on LinkedIn |
+|Check out| Discord, LinkedIn, Website |
 | ------- | ----------- |
-| ![Discord](https://img.shields.io/discord/1122069176962531400?labelColor=black&logo=discord&logoColor=FFF&style=flat-square&color=FFF) | Join our discord community for discussions, development feedback, and support. And also gain access to job postings, networking opportunities, and more. |
-| ![LinkedIn](https://img.shields.io/badge/LinkedIn-Resume%20Matcher-FFF?labelColor=black&logo=LinkedIn&style=flat-square&color=FFF) | Official LinkedIn page for Resume Matcher. Follow it for product updates, job postings, and more. |
-| ![Website](https://img.shields.io/badge/website-Resume%20Matcher-FFF?labelColor=black&style=flat-square&color=FFF) | Visit our website for more information about the product, features, and updates. |
+| ![Discord](https://custom-icon-badges.demolab.com/badge/Discord-black?style=for-the-badge) | Join our discord community for discussions, development feedback, and support. And also gain access to job postings, networking opportunities, and more. |
+| ![LinkedIn](https://custom-icon-badges.demolab.com/badge/LinkedIn-black?style=for-the-badge) | Official LinkedIn page for Resume Matcher. Follow it for product updates, job postings, and more. |
+| [![resumematcher.fyi](https://custom-icon-badges.demolab.com/badge/resumematcher-black?style=for-the-badge)](https://github.com/srbhr/Resume-Matcher)  | Visit our website for more information about the product, features, and updates. |
+
+
+> **Note:** Star Resume Matcher to support the development and get updates on new features and improvements. 😁
+
+![Star Resume Matcher](assets/Star%20Resume%20Matcher.png)
