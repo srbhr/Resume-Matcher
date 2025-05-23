@@ -49,6 +49,18 @@ Resume Matcher is designed to help you optimize your resume with the aim to high
 
 ### Roadmap 
 
+If you have any suggestions or feature requests, please feel free to open an issue on GitHub. And discuss it on our [Discord](https://dsc.gg/resume-matcher) server.
+
 - Visual keyword highlighting.
 - AI Canvas, which can help to craft impactful, metric-driven resume content.
 - Multi-job description optimization.
+
+## How to Install
+![Installation](assets/installing_resume_matcher.png)
+
+## Contributors
+![Contributors](assets/contributors.png)
+
+<a href="https://github.com/srbhr/Resume-Matcher/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=srbhr/Resume-Matcher" />
+</a>
