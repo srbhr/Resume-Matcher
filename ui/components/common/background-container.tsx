@@ -32,7 +32,7 @@ const BackgroundContainer = ({
 	return (
 		<section
 			className={cn(
-				'relative flex h-screen items-center justify-center overflow-hidden p-2 bg-gradient-to-br from-sky-400 to-via-blue-500 to-blue-700',
+				'relative flex h-screen items-center justify-center overflow-hidden p-2 bg-gradient-to-br from-pink-600 via-orange-400 to-purple-700',
 				className,
 			)}
 		>
@@ -48,8 +48,8 @@ const BackgroundContainer = ({
 					cr={2} // Circle radius for dots
 					glow={true} // Enable glow effect
 					className={cn(
-						'absolute inset-0 -z-10 text-blue-400 [mask-image:radial-gradient(400px_circle_at_center,white,transparent)]',
-						dotClassName, // Allow overriding or extending dot pattern styles
+						'absolute inset-0 -z-10 text-violet-400 [mask-image:radial-gradient(400px_circle_at_center,white,transparent)]',
+						dotClassName,
 					)}
 				/>
 				{/* Render children content above the dot pattern */}

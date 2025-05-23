@@ -57,12 +57,8 @@ const JobListings: React.FC<JobListingsProps> = ({ onUploadJob }) => {
 	// truncateText function removed as it's no longer used
 
 	return (
-		<div className="bg-gray-800 p-6 rounded-lg shadow-xl">
-			{' '}
-			{/* Removed h-full, flex flex-col */}
-			<h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-blue-600 mb-1">
-				Job Analyzer {/* Changed title */}
-			</h2>
+		<div className="bg-gray-900/80 backdrop-blur-sm p-6 rounded-lg shadow-xl border border-gray-800/50">
+			<h2 className="text-2xl font-bold text-white mb-1">Job Analyzer</h2>
 			<p className="text-gray-400 mb-6 text-sm">
 				{analyzedJob
 					? 'Analyzed job details below.'

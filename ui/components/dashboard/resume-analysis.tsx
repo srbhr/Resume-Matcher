@@ -50,9 +50,9 @@ const ResumeAnalysis: React.FC = () => {
 	const { score, details, commentary, improvements } = sampleAnalysisData; // Using sample data for now
 
 	const getScoreColor = (scoreValue: number) => {
-		if (scoreValue >= 80) return 'text-green-400';
-		if (scoreValue >= 60) return 'text-yellow-400';
-		return 'text-red-400';
+		if (scoreValue >= 80) return 'text-green-500';
+		if (scoreValue >= 60) return 'text-yellow-500';
+		return 'text-red-500';
 	};
 
 	const truncatedCommentary =
@@ -60,14 +60,12 @@ const ResumeAnalysis: React.FC = () => {
 	const truncatedDetails = details.length > 100 ? details.substring(0, 97) + '...' : details;
 
 	return (
-		<div className="bg-gray-800 p-6 rounded-lg shadow-xl text-gray-100">
+		<div className="bg-gray-900/80 p-6 rounded-lg shadow-xl text-gray-100">
 			<Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
 				<DialogTrigger asChild>
 					<div className="cursor-pointer">
 						<div className="flex justify-between items-center mb-4">
-							<h3 className="text-xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">
-								Resume Analysis
-							</h3>
+							<h3 className="text-xl font-semibold text-gray-100">Resume Analysis</h3>
 							<div className={`text-3xl font-bold ${getScoreColor(score)}`}>
 								{score}
 								<span className="text-sm">/100</span>
