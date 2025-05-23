@@ -33,6 +33,5 @@ Resume Matcher is designed to help you optimize your resume with the aim to high
 | [![resumematcher.fyi](https://custom-icon-badges.demolab.com/badge/resumematcher-black?style=for-the-badge)](https://github.com/srbhr/Resume-Matcher)  | Visit our website for more information about the product, features, and updates. |
 
 
-> **Note:** Star Resume Matcher to support the development and get updates on new features and improvements. 😁
-
+> **⭐** Star Resume Matcher to support the development and get updates on GitHub.
 ![Star Resume Matcher](assets/Star%20Resume%20Matcher.png)
