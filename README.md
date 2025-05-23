@@ -26,8 +26,11 @@
 
 Resume Matcher is designed to help you optimize your resume with the aim to highlight your skills and experience in a way that resonates with potential employers. We're working on actively improving the platform and adding new features. The best way to stay updated is to join the discord discussion and be part of the active development community.
 
-![](assets/resume_matcher_discord.png)
-![](assets/resume_matcher_linkedIn.png)
+> Join our Discord community 👇
+![Discord](assets/resume_matcher_discord.png)
+
+> Follow us on LinkedIn ✨
+![LinkedIn](assets/resume_matcher_linkedIn.png)
 
 
 > **⭐** Star Resume Matcher to support the development and get updates on GitHub.
