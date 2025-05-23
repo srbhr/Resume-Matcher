@@ -15,11 +15,11 @@
 
 <div align="center">
 
-![Stars](https://img.shields.io/github/stars/srbhr/Resume-Matcher?labelColor=black&style=for-the-badge&color=ff0993)
-![Apache 2.0](https://img.shields.io/github/license/srbhr/Resume-Matcher?labelColor=black&style=for-the-badge&color=ff0993) ![Forks](https://img.shields.io/github/forks/srbhr/Resume-Matcher?labelColor=black&style=for-the-badge&color=ff0993) ![version](https://img.shields.io/badge/Version-0.1%20Veridis%20Quo-FFF?labelColor=black&logo=LinkedIn&style=for-the-badge&color=ff0993)
+![Stars](https://img.shields.io/github/stars/srbhr/Resume-Matcher?labelColor=black&style=for-the-badge&color=c20a71)
+![Apache 2.0](https://img.shields.io/github/license/srbhr/Resume-Matcher?labelColor=black&style=for-the-badge&color=c20a71) ![Forks](https://img.shields.io/github/forks/srbhr/Resume-Matcher?labelColor=black&style=for-the-badge&color=c20a71) ![version](https://img.shields.io/badge/Version-0.1%20Veridis%20Quo-FFF?labelColor=black&logo=LinkedIn&style=for-the-badge&color=c20a71)
 
 
-[![Discord](https://img.shields.io/discord/1122069176962531400?labelColor=black&logo=discord&logoColor=ff0993&style=for-the-badge&color=ff0993)](https://dsc.gg/resume-matcher) [![Website](https://img.shields.io/badge/website-Resume%20Matcher-FFF?labelColor=black&style=for-the-badge&color=ff0993)](https://resumematcher.fyi) [![LinkedIn](https://img.shields.io/badge/LinkedIn-Resume%20Matcher-FFF?labelColor=black&logo=LinkedIn&style=for-the-badge&color=ff0993)](https://www.linkedin.com/company/resume-matcher/)
+[![Discord](https://img.shields.io/discord/1122069176962531400?labelColor=black&logo=discord&logoColor=c20a71&style=for-the-badge&color=c20a71)](https://dsc.gg/resume-matcher) [![Website](https://img.shields.io/badge/website-Resume%20Matcher-FFF?labelColor=black&style=for-the-badge&color=c20a71)](https://resumematcher.fyi) [![LinkedIn](https://img.shields.io/badge/LinkedIn-Resume%20Matcher-FFF?labelColor=black&logo=LinkedIn&style=for-the-badge&color=c20a71)](https://www.linkedin.com/company/resume-matcher/)
 
 <a href="https://trendshift.io/repositories/565" target="_blank"><img src="https://trendshift.io/api/badge/repositories/565" alt="srbhr%2FResume-Matcher | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
 
