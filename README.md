@@ -39,6 +39,9 @@ Resume Matcher is designed to help you optimize your resume with the aim to high
 
 ## Key Features
 
+![resume_matcher_features](assets/resume_matcher_features.png)
+
+- **Works locally**: No need to upload your resume to a server. Everything runs on your machine with open source AI models by Ollama.
 - **ATS Compatibility**: Get a detailed analysis of your resume's compatibility with ATS systems.
 - **Instant Match Score**: Upload resume & job description for a quick match score and key improvement areas.
 - **Keyword Optimizer**: Align your resume with job keywords and identify critical content gaps.
