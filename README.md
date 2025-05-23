@@ -21,3 +21,13 @@
 <a href="https://trendshift.io/repositories/565" target="_blank"><img src="https://trendshift.io/api/badge/repositories/565" alt="srbhr%2FResume-Matcher | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
 
 </div>
+
+## Getting started with Resume Matcher
+
+Resume Matcher is designed to help you optimize your resume with the aim to highlight your skills and experience in a way that resonates with potential employers. We're working on actively improving the platform and adding new features. The best way to stay updated is to join the discord discussion and be part of the active development community.
+
+|Join Discord| Follow us on LinkedIn |
+| ------- | ----------- |
+| ![Discord](https://img.shields.io/discord/1122069176962531400?labelColor=black&logo=discord&logoColor=FFF&style=flat-square&color=FFF) | Join our discord community for discussions, development feedback, and support. And also gain access to job postings, networking opportunities, and more. |
+| ![LinkedIn](https://img.shields.io/badge/LinkedIn-Resume%20Matcher-FFF?labelColor=black&logo=LinkedIn&style=flat-square&color=FFF) | Official LinkedIn page for Resume Matcher. Follow it for product updates, job postings, and more. |
+| ![Website](https://img.shields.io/badge/website-Resume%20Matcher-FFF?labelColor=black&style=flat-square&color=FFF) | Visit our website for more information about the product, features, and updates. |
