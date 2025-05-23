@@ -14,11 +14,11 @@
 
 <div align="center">
 
-![Stars](https://img.shields.io/github/stars/srbhr/Resume-Matcher?labelColor=black&style=flat-square&color=FFF)
-![Apache 2.0](https://img.shields.io/github/license/srbhr/Resume-Matcher?labelColor=black&style=flat-square&color=FFF) ![Forks](https://img.shields.io/github/forks/srbhr/Resume-Matcher?labelColor=black&style=flat-square&color=FFF) ![Contributors](https://img.shields.io/github/contributors/srbhr/Resume-Matcher?labelColor=black&style=flat-square&color=FFF) ![Issues](https://img.shields.io/github/issues-raw/srbhr/Resume-Matcher?labelColor=black&style=flat-square&color=FFF)
+![Stars](https://img.shields.io/github/stars/srbhr/Resume-Matcher?labelColor=black&style=flat-square&color=ff0993)
+![Apache 2.0](https://img.shields.io/github/license/srbhr/Resume-Matcher?labelColor=black&style=flat-square&color=ff0993) ![Forks](https://img.shields.io/github/forks/srbhr/Resume-Matcher?labelColor=black&style=flat-square&color=ff0993) ![Contributors](https://img.shields.io/github/contributors/srbhr/Resume-Matcher?labelColor=black&style=flat-square&color=ff0993) ![Issues](https://img.shields.io/github/issues-raw/srbhr/Resume-Matcher?labelColor=black&style=flat-square&color=ff0993)
 
 
-[![Discord](https://img.shields.io/discord/1122069176962531400?labelColor=black&logo=discord&logoColor=FFF&style=flat-square&color=FFF)](https://dsc.gg/resume-matcher) [![Website](https://img.shields.io/badge/website-Resume%20Matcher-FFF?labelColor=black&style=flat-square&color=FFF)](https://resumematcher.fyi) [![LinkedIn](https://img.shields.io/badge/LinkedIn-Resume%20Matcher-FFF?labelColor=black&logo=LinkedIn&style=flat-square&color=FFF)](https://www.linkedin.com/company/resume-matcher/)
+[![Discord](https://img.shields.io/discord/1122069176962531400?labelColor=black&logo=discord&logoColor=ff0993&style=flat-square&color=ff0993)](https://dsc.gg/resume-matcher) [![Website](https://img.shields.io/badge/website-Resume%20Matcher-FFF?labelColor=black&style=flat-square&color=ff0993)](https://resumematcher.fyi) [![LinkedIn](https://img.shields.io/badge/LinkedIn-Resume%20Matcher-FFF?labelColor=black&logo=LinkedIn&style=flat-square&color=ff0993)](https://www.linkedin.com/company/resume-matcher/)
 
 <a href="https://trendshift.io/repositories/565" target="_blank"><img src="https://trendshift.io/api/badge/repositories/565" alt="srbhr%2FResume-Matcher | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
 
