@@ -1,0 +1,11 @@
+{
+    "name": "resume-matcher",
+    "version": "0.0.1",
+    "description": "Veridis Quo.",
+    "private": true,
+    "scripts": {
+        "dev:backend": "cd apps/backend && . venv/bin/activate && uvicorn app.main:app --reload --port 8000",
+        "dev:frontend": "cd apps/frontend && npm run dev",
+        "dev": "concurrently \"npm:dev:backend\" \"npm:dev:frontend\""
+    }
+}
