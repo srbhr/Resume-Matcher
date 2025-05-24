@@ -1,86 +1,79 @@
-from bs4 import BeautifulSoup
-import requests
-import easygui
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import letter
+import logging
 from os import listdir
 from os.path import isfile, join
-import logging
 
+import easygui
+import requests
+from bs4 import BeautifulSoup
+from pathvalidate import sanitize_filename
+from xhtml2pdf import pisa
 
-'''
+"""
 This script takes a LinkedIn job posting URL
 and converts the description to a PDF file.
 The PDF file is saved in the Data/JobDescription folder.
-The name will be outputX.pdf, where X is the number of files in the folder.
+The name will be OrgName__Job Title_X.pdf, where X is the number of files in the folder.
 
-IMPORTANT: Make sure the URL is to the actuall job description,
+IMPORTANT: Make sure the URL is to the actual job description,
 and not the job search page.
-'''
+"""
 
 
-def split_string(s: str, max_len: int = 82) -> list[str]:
-    words = s.split()
-    lines = []
-    current_line = ""
+def linkedin_to_pdf(job_url: str):
 
-    for word in words:
-        if len(current_line) + len(word) + 1 > max_len:
-            lines.append(current_line.strip())
-            current_line = ""
-        current_line += word + " "
+    job_path = "Data/JobDescription/"
+    job_description = ""
+    files_number = len([f for f in listdir(job_path) if isfile(join(job_path, f))])
 
-    if current_line:
-        lines.append(current_line.strip())
-
-    return lines
-
-
-def linkedin_to_pdf():
-    url = easygui.enterbox("Enter the URL of the LinkedIn Job Posting:")
     try:
-        page = requests.get(url)
-        content = page.text
+        page = requests.get(job_url)
 
-        soup = BeautifulSoup(content, "lxml")
+        if page.status_code != 200:
+            print(
+                f"Failed to retrieve the job posting at {job_url}. Status code: {page.status_code}"
+            )
+            return
 
-        description = (
-            soup.find("div", class_="show-more-less-html__markup")
-            .get_text(strip=True, separator="\n")
-            .split("Primary Location")[0]
-            .strip()
+        # Parse the HTML content of the job posting using BeautifulSoup
+        soup = BeautifulSoup(page.text, "html.parser")
+
+        # Find the job title element and get the text
+        job_title = soup.find("h1", {"class": "topcard__title"}).text.strip()
+
+        # Find the organization name element (try both selectors)
+        organization_element = soup.find("span", {"class": "topcard__flavor"})
+
+        if not organization_element:
+            organization_element = soup.find("a", {"class": "topcard__org-name-link"})
+
+        # Extract the organization name
+        organization = organization_element.text.strip()
+
+        # Find the job description element
+        job_description_element = soup.find(
+            "div", {"class": "show-more-less-html__markup"}
         )
-        logging.info("Description: \n" + description)
 
-        return save_to_pdf(description)
+        # Extract the job description and concatenate its elements
+        if job_description_element:
+            for element in job_description_element.contents:
+                job_description += str(element)
+
+        # Set file_path and sanitize organization name and job title
+        file_path = f"{job_path}{sanitize_filename(organization + '__' + job_title)}_{files_number}.pdf"
+
+        # Create a PDF file and write the job description to it
+        with open(file_path, "wb") as pdf_file:
+            pisa.CreatePDF(job_description, dest=pdf_file, encoding="utf-8")
+
+        logging.info("PDF saved to " + file_path)
+
     except Exception as e:
-        logging.error(f"Could not get the description from the URL:\n{url}")
+        logging.error(f"Could not get the description from the URL: {job_url}")
         logging.error(e)
         exit()
 
 
-def save_to_pdf(description: str):
-    job_path = "Data/JobDescription/"
-    description = description.split("\n")
-    files_number = len([f for f in listdir(job_path) if isfile(join(job_path, f))])
-    file_name = f"output{files_number}.pdf"
-
-    c = canvas.Canvas(job_path+file_name, pagesize=letter)
-
-    y = 780
-    for value in description:
-        value = split_string(value)
-        for v in value:
-            if y < 20:
-                c.showPage()
-                y = 780
-            c.drawString(72, y, v)
-            y -= 20
-
-    c.save()
-    logging.info("PDF saved to Data/JobDescription/"+file_name)
-
-    return file_name[:-4]
-
-
-linkedin_to_pdf()
+if __name__ == "__main__":
+    url = easygui.enterbox("Enter the URL of the LinkedIn Job Posting:").strip()
+    linkedin_to_pdf(url)

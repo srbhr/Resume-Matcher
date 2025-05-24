@@ -26,6 +26,7 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+.DS_store
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -138,5 +139,9 @@ dmypy.json
 
 scripts/similarity/config.yml
 
-# Secrets
+# Personal Data / Secrets
 *.local.yml
+
+# Processed or local files
+/Data/Processed/*
+*.local.pdf

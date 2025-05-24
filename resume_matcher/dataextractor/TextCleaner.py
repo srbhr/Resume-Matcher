@@ -1,10 +1,41 @@
 import re
-from uuid import uuid4
 
 import spacy
 
 # Load the English model
 nlp = spacy.load("en_core_web_md")
+
+RESUME_SECTIONS = [
+    "Contact Information",
+    "Objective",
+    "Summary",
+    "Education",
+    "Experience",
+    "Skills",
+    "Projects",
+    "Certifications",
+    "Licenses",
+    "Awards",
+    "Honors",
+    "Publications",
+    "References",
+    "Technical Skills",
+    "Computer Skills",
+    "Programming Languages",
+    "Software Skills",
+    "Soft Skills",
+    "Language Skills",
+    "Professional Skills",
+    "Transferable Skills",
+    "Work Experience",
+    "Professional Experience",
+    "Employment History",
+    "Internship Experience",
+    "Volunteer Experience",
+    "Leadership Experience",
+    "Research Experience",
+    "Teaching Experience",
+]
 
 REGEX_PATTERNS = {
     "email_pattern": r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b",
@@ -12,15 +43,11 @@ REGEX_PATTERNS = {
     "link_pattern": r"\b(?:https?://|www\.)\S+\b",
 }
 
+READ_RESUME_FROM = "Data/Resumes/"
+SAVE_DIRECTORY_RESUME = "Data/Processed/Resumes"
 
-def generate_unique_id():
-    """
-    Generate a unique ID and return it as a string.
-
-    Returns:
-        str: A string with a unique ID.
-    """
-    return str(uuid4())
+READ_JOB_DESCRIPTION_FROM = "Data/JobDescription/"
+SAVE_DIRECTORY_JOB_DESCRIPTION = "Data/Processed/JobDescription"
 
 
 class TextCleaner:
@@ -77,7 +104,6 @@ class TextCleaner:
 
 
 class CountFrequency:
-
     def __init__(self, text):
         self.text = text
         self.doc = nlp(text)

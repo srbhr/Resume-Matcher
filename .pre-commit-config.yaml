@@ -1,0 +1,57 @@
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+    -   id: trailing-whitespace
+    -   id: end-of-file-fixer
+    -   id: check-yaml
+    -   id: debug-statements
+    -   id: double-quote-string-fixer
+    -   id: name-tests-test
+    -   id: requirements-txt-fixer
+-   repo: https://github.com/asottile/setup-cfg-fmt
+    rev: v2.5.0
+    hooks:
+    -   id: setup-cfg-fmt
+-   repo: https://github.com/psf/black
+    rev: 22.10.0
+    hooks:
+    -   id: black
+-   repo: https://github.com/pre-commit/mirrors-isort
+    rev: v5.9.2
+    hooks:
+    -   id: isort
+        args: ["--profile", "black"]
+-   repo: https://github.com/PyCQA/flake8
+    rev: 7.0.0
+    hooks:
+    -   id: flake8
+-   repo: https://github.com/PyCQA/docformatter
+    rev: v1.7.1
+    hooks:
+    - id: docformatter
+      additional_dependencies: [tomli]
+      args: [--in-place, --config, ./pyproject.toml]
+-   repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.8.0
+    hooks:
+    -   id: mypy
+        exclude: ^(docs/|example-plugin/)
+-   repo: https://github.com/asottile/pyupgrade
+    rev: v3.15.0
+    hooks:
+    -   id: pyupgrade
+        args: [--py38-plus]
+-   repo: https://github.com/pycqa/pydocstyle
+    rev: 6.3.0
+    hooks:
+    - id: pydocstyle
+-   repo: https://github.com/myint/eradicate
+    rev: '2.2.0'
+    hooks:
+    - id: eradicate
+      args: []
+-   repo: https://github.com/hhatto/autopep8
+    rev: v2.1.0
+    hooks:
+    -   id: autopep8

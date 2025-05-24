@@ -1,1 +1,1 @@
-from .get_similarity_score import get_similarity_score, find_path, read_config
+from .get_similarity_score import find_path, get_similarity_score, read_config

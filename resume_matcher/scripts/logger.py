@@ -9,6 +9,9 @@ def get_handlers(
     levels and formatters.
 
     Args:
+      stderr_level:
+      file_level:
+      mode:
       filename: The `filename` parameter is the name of the log file where the log messages will be
     written. In this case, the default filename is "app.log". Defaults to app.log
       mode: The `mode` parameter in the `get_handlers` function specifies the mode in which the file

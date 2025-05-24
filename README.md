@@ -1,8 +1,6 @@
-[![Resume Matcher + Hacktoberfest](Assets/img/Hacktoberfest_banner.png)](https://github.com/srbhr/Resume-Matcher/issues)
-
-[![Resume Matcher](Assets/img/header_image.png)](https://www.resumematcher.fyi)
-
 <div align="center">
+
+[![Resume Matcher](Assets/img/Resume_Matcher_GitHub_Banner.png)](https://www.resumematcher.fyi)
 
 # Resume Matcher
 
@@ -20,7 +18,7 @@
 <div align="center">
 
 ![Stars](https://img.shields.io/github/stars/srbhr/Resume-Matcher?style=flat-square&color=EA1179)
-![Apache 2.0](https://img.shields.io/github/license/srbhr/Resume-Matcher?style=flat-square&color=525FE1) ![Issues](https://img.shields.io/github/issues/srbhr/Resume-Matcher?style=flat-square&color=F86F03) ![Forks](https://img.shields.io/github/forks/srbhr/Resume-Matcher?style=flat-square&color=0079FF)
+![Apache 2.0](https://img.shields.io/github/license/srbhr/Resume-Matcher?style=flat-square&color=525FE1) ![Issues](https://img.shields.io/github/issues/srbhr/Resume-Matcher?style=flat-square&color=F86F03) ![Forks](https://img.shields.io/github/forks/srbhr/Resume-Matcher?style=flat-square&color=0079FF) ![Python](https://img.shields.io/badge/Python-3.10+-FFD43B?style=flat-square&logo=python&logoColor=blue)
 
 [![Discord](https://custom-icon-badges.demolab.com/badge/Discord-blue?style=flat-square&logo=discord&color=F0FF42&logoColor=293462)](https://discord.gg/t3Y9HEuV34) [![Twitter](https://img.shields.io/badge/@__srbhr__-000000?style=flat-square&logo=x&logoColor=white)](https://twitter.com/_srbhr_)
 [![Resume Matcher](https://custom-icon-badges.demolab.com/badge/www.resumematcher.fyi-gold?style=flat-square&logo=globe&logoColor=black)](https://www.resumematcher.fyi)
@@ -51,7 +49,7 @@ The process is as follows:
 
 3. **Key Terms Extraction**: Beyond keyword extraction, the tool uses textacy to identify the main key terms or themes in the job description. This step helps in understanding the broader context of what the resume is about.
 
-4. **Vector Similarity Using Qdrant**: The tool uses [Qdrant](https://github.com/qdrant/qdrant), a highly efficient vector similarity search tool, to measure how closely your resume matches the job description. The more similar they are, the higher the likelihood that your resume will pass the ATS screening.
+4. **Vector Similarity Using FastEmbed**: The tool uses [FastEmbed](https://github.com/qdrant/fastembed), a highly efficient embedding system, to measure how closely your resume matches the job description. The more similar they are, the higher the likelihood that your resume will pass the ATS screening.
 
 <br/>
 
@@ -119,7 +117,7 @@ Follow these steps to set up the environment and run the application.
       sudo apt-get install python-tk python3-tk tk-dev
 
       sudo apt-get install build-essential zlib1g-dev libffi-dev libssl-dev libbz2-dev libreadline-dev libsqlite3-dev liblzma-dev
-      
+
       ```
    - pyenv installer
      ```
@@ -129,12 +127,12 @@ Follow these steps to set up the environment and run the application.
      ```
        pyenv install -v 3.11.0
      ```
-     
-   - pyenv with virtual enviroment 
+
+   - pyenv with virtual environment
      ```
         pyenv virtualenv 3.11.0 venv
      ```
-     
+
    - Activate virtualenv with pyenv
      ```
         pyenv activate venv
@@ -185,40 +183,47 @@ Follow these steps to set up the environment and run the application.
 
 The full stack Next.js (React and FastAPI) web application allows users to interact with the Resume Matcher tool interactively via a web browser.
 
+> [!WARNING]
+> The results returned from through the web app are currently entirely mocked / faked. This means that the results returned are not real and are just for demonstration purposes. This will be implemented with real data results in a future release.
+
 To run the full stack web application (frontend client and backend api servers), follow the instructions over on the [webapp README](/webapp/README.md) file.
 
 <br/>
 
-### Cohere and Qdrant
+### Google Colab
+1. Create an account in ngrok and get you token
+2. ![img_1.png](img_1.png)
+3. Go to archive/resume_matcher_colab.ipynb and run the notebook.
+4. Enter your ngrok token and run the notebook.
+5. Copy the url and open it in your browser.
+6. ![img_2.png](img_2.png)
 
-1.  Visit [Cohere website registration](https://dashboard.cohere.ai/welcome/register) and create an account.
-2.  Go to API keys and copy your cohere api key.
-3.  Visit [Qdrant website](https://cloud.qdrant.io/) and create an account.
-4.  Get your api key and cluster url.
-5.  Go to open dashboard in qdrant and enter your api key **for only the first time**
+## Code Formatting
 
-<img src="Assets/img/quadrant_cloud.png" height="60%" width="60%"/>
+This project uses [Black](https://black.readthedocs.io/en/stable/) for code formatting. We believe this helps to keep the code base consistent and reduces the cognitive load when reading code.
 
-6.  Now create a yaml file named config.yml in Scripts/Similarity/ folder. 
-7.  The format for the conifg file should be as below:
-    ```yaml
-    cohere:
-      api_key: cohere_key
-    qdrant:
-      api_key: qdrant_api_key
-      url: qdrant_cluster_url
-    ```
-8.  Please replace your values without any quotes.
+Before submitting your pull request, please make sure your changes are in accordance with the Black style guide. You can format your code by running the following command in your terminal:
 
-*Note: Please make sure that Qdrant_client's version is higher than v1.1*
+```sh
+black .
+```
 
-<br/>
+## Pre-commit Hooks
 
-<div align="center">
+We also use [pre-commit](https://pre-commit.com/) to automatically check for common issues before commits are submitted. This includes checks for code formatting with Black.
+
+If you haven't already, please install the pre-commit hooks by running the following command in your terminal:
+
+```sh
+pip install pre-commit
+pre-commit install
+```
+
+Now, the pre-commit hooks will automatically run every time you commit your changes. If any of the hooks fail, the commit will be aborted.
+
 
 ## Join Us, Contribute!
 
-</div>
 
 Pull Requests & Issues are not just welcomed, they're celebrated! Let's create together.
 
@@ -232,21 +237,9 @@ Pull Requests & Issues are not just welcomed, they're celebrated! Let's create t
 
 🚀 Explore and improve our [Landing Page](https://github.com/srbhr/website-for-resume-matcher). PRs always welcome!
 
-📚 Contribute to the [Resume Matcher Docs](https://github.com/srbhr/Resume-Matcher-Docs) and help people get started with using the software. 
+📚 Contribute to the [Resume Matcher Docs](https://github.com/srbhr/Resume-Matcher-Docs) and help people get started with using the software.
 
 #### Tech Stack
-
-Current:
-
-- Python webapp in Streamlit.
-
-![Python](https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&color=blue&logoColor=green)
-
-
-
-In Development:
-
-- Check the [webapp](/webapp/) folder for a Next JS app in development. (In Development)
 
 ![Python](https://img.shields.io/badge/Python-FFD43B?style=flat-square&logo=python&logoColor=blue) ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white) ![Next JS](https://img.shields.io/badge/Next-black?style=flat-square&logo=next.js&logoColor=white) ![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=flat-square&logo=fastapi) ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=flat-square&logo=typescript&logoColor=white) ![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=flat-square&logo=html5&logoColor=white) ![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=flat-square&logo=css3&logoColor=white) ![& More](https://custom-icon-badges.demolab.com/badge/And_More-white?style=flat-square&logo=plus&logoColor=black)
 

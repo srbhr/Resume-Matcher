@@ -1,13 +1,12 @@
 import re
-import urllib.request
+import urllib
 
 import spacy
 
-from .utils import TextCleaner
+from resume_matcher.dataextractor.TextCleaner import TextCleaner
 
 # Load the English model
-nlp = spacy.load("en_core_web_sm")
-
+nlp = spacy.load("en_core_web_md")
 
 RESUME_SECTIONS = [
     "Contact Information",
