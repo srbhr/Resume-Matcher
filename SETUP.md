@@ -4,10 +4,16 @@
 
 - Node.js (v18 or higher)
 - Python (v3.8 or higher)
+- uv (for fast Python package management)
 - npm or yarn
-- pip
 
 ## Installation Steps
+
+### 0. Install uv (if not already installed)
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
 
 ### 1. Install Root Dependencies
 
@@ -38,9 +44,7 @@ npm run install:backend
 Or manually:
 ```bash
 cd apps/backend
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-pip install -r requirements.txt
+uv sync
 ```
 
 ## Development
@@ -97,13 +101,10 @@ npm run start:backend
    npm cache clean --force
    ```
 
-2. **Python virtual environment issues**: Make sure you have Python 3.8+ installed and try creating the virtual environment manually:
+2. **Python virtual environment issues**: Make sure you have uv and Python 3.8+ installed and try syncing manually:
    ```bash
    cd apps/backend
-   python3 -m venv venv
-   source venv/bin/activate
-   pip install --upgrade pip
-   pip install -r requirements.txt
+   uv sync
    ```
 
 3. **Port conflicts**: The backend runs on port 8000 and frontend on port 3000 by default. Make sure these ports are available.

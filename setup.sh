@@ -12,9 +12,10 @@ if ! command -v node &> /dev/null; then
     exit 1
 fi
 
-# Check if Python is installed
-if ! command -v python3 &> /dev/null; then
-    echo "❌ Python 3 is not installed. Please install Python 3.8 or higher."
+# Check if uv is installed
+if ! command -v uv &> /dev/null; then
+    echo "❌ uv is not installed. Please install uv for faster Python package management."
+    echo "Install via: curl -LsSf https://astral.sh/uv/install.sh | sh"
     exit 1
 fi
 
@@ -28,17 +29,9 @@ npm install
 echo "🐍 Setting up backend..."
 cd apps/backend
 
-# Create virtual environment if it doesn't exist
-if [ ! -d "venv" ]; then
-    echo "Creating Python virtual environment..."
-    python3 -m venv venv
-fi
-
-# Activate virtual environment and install dependencies
-echo "Installing Python dependencies..."
-source venv/bin/activate
-pip install --upgrade pip
-pip install -r requirements.txt
+# Sync dependencies with uv (creates venv and installs dependencies)
+echo "Syncing Python dependencies with uv..."
+uv sync
 
 # Go back to root
 cd ../..
