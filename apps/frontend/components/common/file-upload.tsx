@@ -20,7 +20,7 @@ const acceptedFileTypes = [
 ];
 
 const acceptString = acceptedFileTypes.join(',');
-const API_RESUME_UPLOAD_URL = '/api/v1/resumes/upload'; // API endpoint
+const API_RESUME_UPLOAD_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/v1/resumes/upload`; // API endpoint
 
 export default function FileUpload() {
 	const maxSize = 2 * 1024 * 1024; // 2MB

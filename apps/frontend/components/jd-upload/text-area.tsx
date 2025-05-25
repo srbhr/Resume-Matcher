@@ -63,7 +63,7 @@ export function JobDescriptionUploadTextArea() {
 
 				console.log('Submitting data:', dataToSubmit);
 
-				const response = await fetch('/api/v1/jobs/upload', {
+				const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/jobs/upload`, {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json',
@@ -151,7 +151,7 @@ export function JobDescriptionUploadTextArea() {
 							// Optional: Add visual feedback for empty state if desired, though button disabling is primary
 							// jobDescription1.trim() === '' ? 'border-gray-300' : 'border-green-500'
 							'border-gray-300' // Default border
-						}`}
+							}`}
 					/>
 				</div>
 			</div>
@@ -166,7 +166,7 @@ export function JobDescriptionUploadTextArea() {
 						isNextDisabled
 							? 'bg-gray-400 dark:bg-gray-600 text-gray-600 dark:text-gray-400 cursor-not-allowed'
 							: 'bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-500 dark:hover:bg-blue-600'
-					}`}
+						}`}
 				>
 					{/* --- Button Content based on Status --- */}
 					{submissionStatus === 'submitting' ? (
