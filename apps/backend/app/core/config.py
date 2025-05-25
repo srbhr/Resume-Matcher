@@ -1,7 +1,7 @@
 import os
 import sys
 import logging
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import List, Optional, Literal
 
 
@@ -15,8 +15,10 @@ class Settings(BaseSettings):
     DB_ECHO: bool = False
     PYTHONDONTWRITEBYTECODE: int = 1
 
-    class Config:
-        env_file = "app/backend/.env"
+    model_config = SettingsConfigDict(
+        env_file=os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, ".env"),
+        env_file_encoding="utf-8",
+    )
 
 
 settings = Settings()

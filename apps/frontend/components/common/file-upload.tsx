@@ -69,7 +69,7 @@ export default function FileUpload() {
 			});
 			clearErrors();
 
-			window.location.href = "/jobs/upload?resume_id=${encodeURIComponent(resumeId)}"
+			window.location.href = `/jobs/upload?resume_id=${encodeURIComponent(resumeId)}`
 		},
 		onUploadError: (file, errorMsg) => {
 			console.error('Upload error:', file, errorMsg);
