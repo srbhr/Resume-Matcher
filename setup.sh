@@ -83,12 +83,20 @@ check_node_version
 check_cmd npm
 check_cmd python3
 
-# ensure pip3
 if ! command -v pip3 &> /dev/null; then
-  info "pip3 not found; bootstrapping via ensurepip…"
-  python3 -m ensurepip --upgrade
+  if [[ "$OS_TYPE" == "Linux" && -x "$(command -v apt-get)" ]]; then
+    info "pip3 not found; installing via apt-get…"
+    sudo apt-get update && sudo apt-get install -y python3-pip || error "Failed to install python3-pip"
+  elif [[ "$OS_TYPE" == "Linux" && -x "$(command -v yum)" ]]; then
+    info "pip3 not found; installing via yum…"
+    sudo yum install -y python3-pip || error "Failed to install python3-pip"
+  else
+    info "pip3 not found; bootstrapping via ensurepip…"
+    python3 -m ensurepip --upgrade || error "ensurepip failed"
+  fi
 fi
 check_cmd pip3
+success "pip3 is available"
 
 # ensure uv
 if ! command -v uv &> /dev/null; then
@@ -159,6 +167,15 @@ info "Setting up backend (apps/backend)…"
 info "Setting up frontend (apps/frontend)…"
 (
   cd apps/frontend
+  # bootstrap frontend .env
+  if [[ -f .env.sample && ! -f .env ]]; then
+    info "Bootstrapping frontend .env from .env.sample"
+    cp .env.sample .env
+    success "frontend .env created"
+  else
+    info "frontend .env exists or .env.sample missing—skipping"
+  fi
+
   info "Installing frontend deps with npm ci…"
   npm ci
   success "Frontend dependencies ready."
