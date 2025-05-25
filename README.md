@@ -9,6 +9,8 @@
 
 **Stop getting auto-rejected by ATS bots.** Resume Matcher is the AI-powered platform that reverse-engineers hiring algorithms to show you exactly how to tailor your resume. Get the keywords, formatting, and insights that actually get you past the first screen and into human hands.
 
+Hoping to make this, **VS Code for making resumes**.
+
 </div>
 
 <br>
@@ -27,7 +29,9 @@
 
 ## Getting started with Resume Matcher
 
-Resume Matcher is designed to help you optimize your resume with the aim to highlight your skills and experience in a way that resonates with potential employers. We're working on actively improving the platform and adding new features. The best way to stay updated is to join the discord discussion and be part of the active development community.
+Resume Matcher is designed to help you optimize your resume with the aim to highlight your skills and experience in a way that resonates with potential employers.
+
+We're working on actively improving the platform, towards building a **VS Code for making resumes**, and adding new features. The best way to stay updated is to join the discord discussion and be part of the active development community.
 
 > Join our [Discord](https://dsc.gg/resume-matcher) community 👇
 [![Discord](assets/resume_matcher_discord.png)](https://dsc.gg/resume-matcher)
@@ -58,6 +62,16 @@ If you have any suggestions or feature requests, please feel free to open an iss
 
 ## How to Install
 ![Installation](assets/installing_resume_matcher.png)
+
+
+
+## Join Us & Contribute
+
+![how to contribute](assets/how_to_contribute.png)
+
+We welcome contributions from everyone! Whether you're a developer, designer, or just someone who wants to help out. All the contriburtors are listed in the [about page](https://resumematcher.fyi/about) on our website and on the GitHub Readme here.
+
+Checkout the roadmap if you would like to work on the features that are planned for the future. If you have any suggestions or feature requests, please feel free to open an issue on GitHub. And discuss it on our [Discord](https://dsc.gg/resume-matcher) server.
 
 ## Contributors
 ![Contributors](assets/contributors.png)
