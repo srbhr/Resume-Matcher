@@ -16,7 +16,7 @@ setup:
 	@echo "🔧 Running setup.sh…"
 	@bash setup.sh
 
-run-dev: setup
+run-dev:
 	@echo "🚀 Starting development server…"
 	@bash -c 'trap "echo "\n🛑 Development server stopped"; exit 0" SIGINT; npm run dev'
 

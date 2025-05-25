@@ -68,8 +68,8 @@ export default function FileUpload() {
 				message: `${(uploadedFile.file as FileMetadata).name} uploaded successfully!`,
 			});
 			clearErrors();
-
-			window.location.href = `/jobs/upload?resume_id=${encodeURIComponent(resumeId)}`
+			const encodedResumeId = encodeURIComponent(resumeId);
+			window.location.href = `/jobs/upload?resume_id=${encodedResumeId}`;
 		},
 		onUploadError: (file, errorMsg) => {
 			console.error('Upload error:', file, errorMsg);
