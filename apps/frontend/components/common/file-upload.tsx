@@ -50,11 +50,26 @@ export default function FileUpload() {
 		onUploadSuccess: (uploadedFile, response) => {
 			console.log('Upload successful:', uploadedFile, response);
 			// uploadedFile.file is FileMetadata here, as transformed by the hook
+			const data = response as Record<string, unknown> & { resume_id?: string }
+			const resumeId =
+				typeof data.resume_id === 'string' ? data.resume_id : undefined
+
+			if (!resumeId) {
+				console.error('Missing resume_id in upload response', response)
+				setUploadFeedback({
+					type: 'error',
+					message: 'Upload succeeded but no resume ID received.',
+				})
+				return
+			}
+
 			setUploadFeedback({
 				type: 'success',
 				message: `${(uploadedFile.file as FileMetadata).name} uploaded successfully!`,
 			});
 			clearErrors();
+
+			window.location.href = "/jobs/upload?resume_id=${encodeURIComponent(resumeId)}"
 		},
 		onUploadError: (file, errorMsg) => {
 			console.error('Upload error:', file, errorMsg);
@@ -96,15 +111,13 @@ export default function FileUpload() {
 				onDrop={!isUploadingGlobal ? handleDrop : undefined}
 				data-dragging={isDragging || undefined}
 				className={`relative rounded-xl border-2 border-dashed transition-all duration-300 ease-in-out
-                    ${
-						currentFile || isUploadingGlobal
-							? 'cursor-not-allowed opacity-70 border-gray-700'
-							: 'cursor-pointer border-gray-600 hover:border-primary hover:bg-gray-900/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background'
+                    ${currentFile || isUploadingGlobal
+						? 'cursor-not-allowed opacity-70 border-gray-700'
+						: 'cursor-pointer border-gray-600 hover:border-primary hover:bg-gray-900/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background'
 					}
-                    ${
-						isDragging && !isUploadingGlobal
-							? 'border-primary bg-primary/10'
-							: 'bg-gray-900/50'
+                    ${isDragging && !isUploadingGlobal
+						? 'border-primary bg-primary/10'
+						: 'bg-gray-900/50'
 					}`}
 				aria-disabled={Boolean(currentFile) || isUploadingGlobal}
 				aria-label={
@@ -135,8 +148,8 @@ export default function FileUpload() {
 								{currentFile
 									? currentFile.file.name // name is on both File and FileMetadata
 									: `Drag & drop or click (PDF, DOCX up to ${formatBytes(
-											maxSize,
-									  )})`}
+										maxSize,
+									)})`}
 							</p>
 						</>
 					)}
@@ -194,8 +207,8 @@ export default function FileUpload() {
 									{(currentFile.file as FileMetadata).uploaded === true
 										? 'Uploaded'
 										: (currentFile.file as FileMetadata).uploadError
-										? 'Upload failed'
-										: 'Pending upload'}
+											? 'Upload failed'
+											: 'Pending upload'}
 								</p>
 							</div>
 						</div>

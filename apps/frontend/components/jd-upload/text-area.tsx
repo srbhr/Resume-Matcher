@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react'; // Use useCallback for optimization
+import { useSearchParams } from 'next/navigation';
 import { Textarea } from '@/components/ui/textarea'; // Assuming these are ShadCN/UI components
 import { Button } from '@/components/ui/button';
 
@@ -17,6 +18,8 @@ export function JobDescriptionUploadTextArea() {
 	const [jobDescription1, setJobDescription1] = useState<string>('');
 	// State to track the submission process
 	const [submissionStatus, setSubmissionStatus] = useState<SubmissionStatus>('idle');
+	const searchParams = useSearchParams();
+	const resumeId = searchParams.get('resume_id');
 
 	/**
 	 * Handles changes to the textarea input.
@@ -58,8 +61,14 @@ export function JobDescriptionUploadTextArea() {
 			try {
 				const dataToSubmit = {
 					job_descriptions: [trimmedJd1], // Send the trimmed description as an array
-					resume_id: '3fa85f64-5717-4562-b3fc-2c963f66afa6', // Placeholder resume_id
+					resume_id: resumeId
 				};
+
+				if (!resumeId) {
+					setSubmissionStatus('error');
+					console.error('Failed to submit job description: resume_id retrieval failed.');
+					return;
+				}
 
 				console.log('Submitting data:', dataToSubmit);
 
