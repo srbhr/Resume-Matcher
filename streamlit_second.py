@@ -32,6 +32,19 @@ parameters.PADDING = "0.5 0.25rem"
 
 
 def create_star_graph(nodes_and_weights, title):
+    """Generates and displays a star graph visualization.
+
+    This function creates a star graph with a central node labeled 'resume'
+    and additional nodes connected to it. Each connection is weighted according 
+    to the provided list of node-weight pairs. The graph is visualized using Plotly.
+
+    Args:
+        nodes_and_weights (list of tuple): A list where each tuple contains a node 
+            name (str) and its corresponding weight (float).
+        title (str): The title of the graph.
+
+    Returns:
+        None: The function displays the graph using Streamlit and Plotly."""
     # Create an empty graph
     G = nx.Graph()
 
@@ -125,6 +138,24 @@ def create_star_graph(nodes_and_weights, title):
 def create_annotated_text(
     input_string: str, word_list: List[str], annotation: str, color_code: str
 ):
+    """Annotates specified words in the input string with additional information.
+
+    This function tokenizes the input string and checks each token against a list
+    of specified words. If a token is found in the list, it is annotated with
+    additional information including an annotation label and a color code. The
+    result is a list where each word is either a string (if unannotated) or a 
+    tuple consisting of the word, its annotation, and the color code.
+
+    Args:
+        input_string (str): The string to be processed and annotated.
+        word_list (List[str]): A list of words to be annotated.
+        annotation (str): The annotation label to attach to words found in the word list.
+        color_code (str): The color code to attach to the annotated words.
+
+    Returns:
+        List[Union[str, Tuple[str, str, str]]]: A list of tokens from the input string,
+        where tokens that match words in the word list are tuples containing the
+        token, annotation, and color code; other tokens remain as strings."""
     # Tokenize the input string
     tokens = nltk.word_tokenize(input_string)
 
@@ -147,12 +178,26 @@ def create_annotated_text(
 
 
 def read_json(filename):
+    """Reads a JSON file and returns its content as a Python object.
+
+    Args:
+        filename (str): The path to the JSON file to be read.
+
+    Returns:
+        dict or list: The JSON content parsed into a Python dictionary or list."""
     with open(filename) as f:
         data = json.load(f)
     return data
 
 
 def tokenize_string(input_string):
+    """Tokenizes a given string into individual words.
+
+    Args:
+        input_string (str): The string to be tokenized.
+
+    Returns:
+        list: A list of word tokens extracted from the input string."""
     tokens = nltk.word_tokenize(input_string)
     return tokens
 
@@ -461,6 +506,18 @@ df4 = df[df["query"] == "Job Description Java Developer"].sort_values(
 
 
 def plot_df(df, title):
+    """Generates and displays a bar chart of scores using Plotly.
+
+    This function takes a DataFrame containing 'text' and 'score' columns,
+    creates a bar chart with 'text' as the x-axis and 'score' multiplied by 100
+    as the y-axis, and displays it with Streamlit.
+
+    Args:
+        df (pandas.DataFrame): A DataFrame containing at least 'text' and 'score' columns.
+        title (str): The title of the bar chart.
+
+    Returns:
+        None"""
     fig = px.bar(df, x="text", y=df["score"] * 100, title=title)
     st.plotly_chart(fig)
 

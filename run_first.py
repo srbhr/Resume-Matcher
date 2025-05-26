@@ -23,6 +23,13 @@ if not os.path.exists(PROCESSED_DATA_PATH):
 
 
 def read_json(filename):
+    """Reads a JSON file and returns its contents as a dictionary.
+
+    Args:
+        filename (str): The path to the JSON file to be read.
+
+    Returns:
+        dict: The contents of the JSON file."""
     with open(filename) as f:
         data = json.load(f)
     return data

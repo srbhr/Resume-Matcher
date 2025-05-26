@@ -38,6 +38,23 @@ parameters.PADDING = "0.5 0.25rem"
 
 
 def create_star_graph(nodes_and_weights, title):
+    """Generates and displays a star graph visualization using Plotly.
+
+    This function creates a star-shaped graph with a central node labeled
+    "resume" connected to various nodes specified in the `nodes_and_weights`
+    list. Each connection (edge) is assigned a weight that influences the
+    layout and appearance of the graph. Nodes are color-coded based on the
+    number of connections they have.
+
+    Args:
+        nodes_and_weights (list of tuples): A list where each tuple contains
+            a node label (str) and a corresponding weight (float or int). The
+            weight affects the graph layout.
+        title (str): The title of the graph to be displayed.
+
+    Returns:
+        None: The function displays the graph using Streamlit's Plotly chart
+        feature but does not return any value."""
     # Create an empty graph
     G = nx.Graph()
 
@@ -131,6 +148,23 @@ def create_star_graph(nodes_and_weights, title):
 def create_annotated_text(
     input_string: str, word_list: List[str], annotation: str, color_code: str
 ):
+    """Annotates specific words within a given text with additional information.
+
+    This function takes an input string and searches for occurrences of words
+    from a specified list. When a match is found, it annotates the word with
+    the provided annotation and color code. The result is a list where each
+    word is either a plain string or a tuple containing the word, its annotation,
+    and its color code.
+
+    Args:
+        input_string (str): The text to search and annotate.
+        word_list (List[str]): A list of words to be annotated.
+        annotation (str): The annotation to associate with each word in the word list.
+        color_code (str): The color code to associate with each word in the word list.
+
+    Returns:
+        List[Union[str, Tuple[str, str, str]]]: A list where each element is either a
+        plain string or a tuple containing a word, its annotation, and its color code."""
     # Tokenize the input string
     tokens = nltk.word_tokenize(input_string)
 
@@ -153,12 +187,26 @@ def create_annotated_text(
 
 
 def read_json(filename):
+    """Reads a JSON file and returns the parsed data.
+
+    Args:
+        filename (str): The path to the JSON file to be read.
+
+    Returns:
+        dict: The data parsed from the JSON file."""
     with open(filename) as f:
         data = json.load(f)
     return data
 
 
 def tokenize_string(input_string):
+    """Tokenizes the input string into individual words.
+
+    Args:
+        input_string (str): The string to be tokenized.
+
+    Returns:
+        list of str: A list of tokens (words) extracted from the input string."""
     tokens = nltk.word_tokenize(input_string)
     return tokens
 
