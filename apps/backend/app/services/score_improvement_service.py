@@ -5,10 +5,13 @@ import markdown
 import numpy as np
 
 from sqlalchemy.future import select
+from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Dict, Optional, Tuple, AsyncGenerator
 
 from app.prompt import prompt_factory
+from app.schemas.json import json_schema_factory
+from app.schemas.pydantic import ResumePreviewerModel
 from app.agent import EmbeddingManager, AgentManager
 from app.models import Resume, Job, ProcessedResume, ProcessedJob
 from .exceptions import (
@@ -32,7 +35,8 @@ class ScoreImprovementService:
     def __init__(self, db: AsyncSession, max_retries: int = 5):
         self.db = db
         self.max_retries = max_retries
-        self.agent_manager = AgentManager(strategy="md")
+        self.md_agent_manager = AgentManager(strategy="md")
+        self.json_agent_manager = AgentManager()
         self.embedding_manager = EmbeddingManager()
 
     async def _get_resume(
@@ -114,7 +118,7 @@ class ScoreImprovementService:
             extracted_resume_keywords=extracted_resume_keywords,
             current_cosine_similarity=previous_cosine_similarity_score,
         )
-        improved_resume = await self.agent_manager.run(init_prompt)
+        improved_resume = await self.md_agent_manager.run(init_prompt)
 
         improved_resume_embedding = await self.embedding_manager.embed(
             text=improved_resume
@@ -134,6 +138,27 @@ class ScoreImprovementService:
             previous_cosine_similarity_score=new_score,
             attempt=attempt + 1,
         )
+
+    async def get_resume_for_previewer(self, updated_resume: str) -> Dict:
+        """
+        Returns the updated resume in a format suitable for the dashboard.
+        """
+        prompt_template = prompt_factory.get("structured_resume")
+        prompt = prompt_template.format(
+            json.dumps(json_schema_factory.get("structured_resume"), indent=2),
+            updated_resume,
+        )
+        logger.info(f"Structured Resume Prompt: {prompt}")
+        raw_output = await self.json_agent_manager.run(prompt=prompt)
+
+        try:
+            resume_preview: ResumePreviewerModel = ResumePreviewerModel.model_validate(
+                raw_output
+            )
+        except ValidationError as e:
+            logger.info(f"Validation error: {e}")
+            return None
+        return resume_preview.model_dump()
 
     async def run(self, resume_id: str, job_id: str) -> Dict:
         """
@@ -170,12 +195,17 @@ class ScoreImprovementService:
             extracted_job_keywords_embedding=extracted_job_keywords_embedding,
         )
 
+        resume_preview = await self.get_resume_for_previewer(
+            updated_resume=updated_resume
+        )
+
         return {
             "resume_id": resume_id,
             "job_id": job_id,
             "original_score": cosine_similarity_score,
             "new_score": updated_score,
             "updated_resume": markdown.markdown(text=updated_resume),
+            "resume_preview": resume_preview,
         }
 
     async def run_and_stream(self, resume_id: str, job_id: str) -> AsyncGenerator:
