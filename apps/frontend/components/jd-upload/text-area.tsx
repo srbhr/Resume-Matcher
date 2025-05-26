@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react'; // Use useCallback for optimization
+import { useSearchParams } from 'next/navigation';
 import { Textarea } from '@/components/ui/textarea'; // Assuming these are ShadCN/UI components
 import { Button } from '@/components/ui/button';
 
@@ -17,6 +18,8 @@ export function JobDescriptionUploadTextArea() {
 	const [jobDescription1, setJobDescription1] = useState<string>('');
 	// State to track the submission process
 	const [submissionStatus, setSubmissionStatus] = useState<SubmissionStatus>('idle');
+	const searchParams = useSearchParams();
+	const resumeId = searchParams.get('resume_id');
 
 	/**
 	 * Handles changes to the textarea input.
@@ -58,12 +61,18 @@ export function JobDescriptionUploadTextArea() {
 			try {
 				const dataToSubmit = {
 					job_descriptions: [trimmedJd1], // Send the trimmed description as an array
-					resume_id: '3fa85f64-5717-4562-b3fc-2c963f66afa6', // Placeholder resume_id
+					resume_id: resumeId
 				};
+
+				if (!resumeId) {
+					setSubmissionStatus('error');
+					console.error('Failed to submit job description: resume_id retrieval failed.');
+					return;
+				}
 
 				console.log('Submitting data:', dataToSubmit);
 
-				const response = await fetch('/api/v1/jobs/upload', {
+				const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/jobs/upload`, {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json',
@@ -81,53 +90,38 @@ export function JobDescriptionUploadTextArea() {
 					throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
 				}
 
-				// Assuming the API returns JSON, you might want to process it
-				// const result = await response.json();
-				// console.log('API success:', result);
-
-				setSubmissionStatus('success'); // Set success status
+				setSubmissionStatus('success');
 				console.log('Submission successful!');
 
-				// Optional: Clear the form on success
-				// setJobDescription1('');
 			} catch (error) {
 				console.error('Error submitting job description:', error);
-				setSubmissionStatus('error'); // Set error status
+				setSubmissionStatus('error');
 			}
 		},
 		[jobDescription1],
-	); // Depend on jobDescription1 for the submission logic
+	);
 
-	// --- Derived State ---
-	// Determine if the button should be disabled.
-	// Checks if input is empty (after trimming) or if submission is in progress.
 	const isNextDisabled = jobDescription1.trim() === '' || submissionStatus === 'submitting';
 
-	// --- Rendering ---
 	return (
 		<form onSubmit={handleSubmit} className="p-4 mx-auto w-full max-w-xl">
 			{' '}
-			{/* Added max-width */}
-			{/* --- Status Messages --- */}
-			{/* Show error message */}
 			{submissionStatus === 'error' && (
 				<div
 					className="p-3 mb-4 text-sm rounded-md bg-red-50 border border-red-200 text-red-800 dark:bg-red-900/20 dark:border-red-800/30 dark:text-red-300"
-					role="alert" // Accessibility: Indicate this is an alert
+					role="alert"
 				>
 					<p>Submission failed. Please try again.</p>
 				</div>
 			)}
-			{/* Show success message */}
 			{submissionStatus === 'success' && (
 				<div
 					className="p-3 mb-4 text-sm rounded-md bg-green-50 border border-green-200 text-green-800 dark:bg-green-900/20 dark:border-green-800/30 dark:text-green-300"
-					role="alert" // Accessibility: Indicate this is an alert
+					role="alert"
 				>
 					<p>Job Description submitted successfully!</p>
 				</div>
 			)}
-			{/* --- Input Area --- */}
 			<div className="mb-6">
 				<div className="group relative flex flex-col space-y-1">
 					{/* Label for the textarea */}
@@ -151,7 +145,7 @@ export function JobDescriptionUploadTextArea() {
 							// Optional: Add visual feedback for empty state if desired, though button disabling is primary
 							// jobDescription1.trim() === '' ? 'border-gray-300' : 'border-green-500'
 							'border-gray-300' // Default border
-						}`}
+							}`}
 					/>
 				</div>
 			</div>
@@ -166,7 +160,7 @@ export function JobDescriptionUploadTextArea() {
 						isNextDisabled
 							? 'bg-gray-400 dark:bg-gray-600 text-gray-600 dark:text-gray-400 cursor-not-allowed'
 							: 'bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-500 dark:hover:bg-blue-600'
-					}`}
+						}`}
 				>
 					{/* --- Button Content based on Status --- */}
 					{submissionStatus === 'submitting' ? (

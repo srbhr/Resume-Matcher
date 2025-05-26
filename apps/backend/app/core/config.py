@@ -1,22 +1,24 @@
 import os
 import sys
 import logging
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import List, Optional, Literal
 
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Resume Matcher"
     FRONTEND_PATH: str = os.path.join(os.path.dirname(__file__), "frontend", "assets")
-    ALLOWED_ORIGINS: List[str] = ["https://www.resumematcher.fyi"]
+    ALLOWED_ORIGINS: List[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
     SYNC_DATABASE_URL: Optional[str]
     ASYNC_DATABASE_URL: Optional[str]
     SESSION_SECRET_KEY: Optional[str]
     DB_ECHO: bool = False
     PYTHONDONTWRITEBYTECODE: int = 1
 
-    class Config:
-        env_file = ".env"
+    model_config = SettingsConfigDict(
+        env_file=os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, ".env"),
+        env_file_encoding="utf-8",
+    )
 
 
 settings = Settings()
