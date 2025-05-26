@@ -1,4 +1,6 @@
-# Local Setup Guide
+# Local Setup Guide for Resume-Matcher
+
+![installing_resume_matcher](assets/how_to_install_resumematcher.png)
 
 This document provides cross-platform instructions to get the project up and running locally.
 
