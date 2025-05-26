@@ -61,8 +61,26 @@ If you have any suggestions or feature requests, please feel free to open an iss
 - Multi-job description optimization.
 
 ## How to Install
-![Installation](assets/installing_resume_matcher.png)
 
+![Installation](assets/how_to_install_resumematcher.png)
+
+Follow the instructions in the [SETUP.md](SETUP.md) file to set up the project locally. The setup script will install all the necessary dependencies and configure your environment.
+
+The project is built using:
+
+- FastAPI for the backend.
+- Next.js for the frontend.
+- Ollama for local AI model serving.
+- Tailwind CSS for styling.
+- SQLite for the database.
+
+create a markdown table
+
+| Technology   | Info/Version                               |
+|--------------|---------------------------------------|
+| Python      | 3.12+                   |
+| Next.js      | 15+                   |
+| Ollama       |        0.6.7        |
 
 
 ## Join Us & Contribute
@@ -79,3 +97,21 @@ Checkout the roadmap if you would like to work on the features that are planned 
 <a href="https://github.com/srbhr/Resume-Matcher/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=srbhr/Resume-Matcher" />
 </a>
+
+## Support the Development by Donating
+![donate](assets/supporting_resume_matcher.png)
+
+If you would like to support the development of Resume Matcher, you can do so by donating. Your contributions will help us keep the project alive and continue adding new features.
+
+| Platform  | Link                                   |
+|-----------|----------------------------------------|
+| GitHub    | [![GitHub Sponsors](https://img.shields.io/github/sponsors/srbhr?style=for-the-badge&color=c20a71&labelColor=black&logo=github)](https://github.com/sponsors/srbhr) |
+| Buy Me a Coffee | [![BuyMeACoffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&color=c20a72&logoColor=white)](https://www.buymeacoffee.com/srbhr) |
+
+<details>
+  <summary><kbd>Star History</kbd></summary>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=srbhr/resume-matcher&theme=dark&type=Date">
+    <img width="100%" src="https://api.star-history.com/svg?repos=srbhr/resume-matcher&theme=dark&type=Date">
+  </picture>
+</details>
