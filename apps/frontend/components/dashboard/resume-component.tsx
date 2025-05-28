@@ -1,54 +1,5 @@
 import React from 'react';
 
-const mockResumeData = {
-	personalInfo: {
-		name: 'Ada Lovelace',
-		title: 'Software Engineer & Visionary',
-		email: 'ada.lovelace@example.com',
-		phone: '+1-234-567-8900',
-		location: 'London, UK',
-		website: 'analyticalengine.dev',
-		linkedin: 'linkedin.com/in/adalovelace',
-		github: 'github.com/adalovelace',
-	},
-	summary:
-		'Pioneering computer programmer with a strong foundation in mathematics and analytical thinking. Known for writing the first algorithm intended to be carried out by a machine. Seeking challenging opportunities to apply analytical skills to modern computing problems.',
-	experience: [
-		{
-			id: 1,
-			title: 'Collaborator & Algorithm Designer',
-			company: "Charles Babbage's Analytical Engine Project",
-			location: 'London, UK',
-			years: '1842 - 1843',
-			description: [
-				"Developed the first published algorithm intended for implementation on a computer, Charles Babbage's Analytical Engine.",
-				"Translated Luigi Menabrea's memoir on the Analytical Engine, adding extensive notes (Notes G) which included the algorithm.",
-				'Foresaw the potential for computers to go beyond mere calculation, envisioning applications in music and art.',
-			],
-		},
-	],
-	education: [
-		{
-			id: 1,
-			institution: 'Self-Taught & Private Tutoring',
-			degree: 'Mathematics and Science',
-			years: 'Early 19th Century',
-			description:
-				'Studied mathematics and science extensively under tutors like Augustus De Morgan, a prominent mathematician.',
-		},
-		// Add more education objects here if needed
-	],
-	skills: [
-		'Algorithm Design',
-		'Analytical Thinking',
-		'Mathematical Modeling',
-		'Computational Theory',
-		'Technical Writing',
-		'French (Translation)',
-		'Symbolic Logic',
-	],
-};
-
 interface PersonalInfo {
 	name?: string;
 	title?: string;
@@ -90,6 +41,7 @@ interface ResumeProps {
 }
 
 const Resume: React.FC<ResumeProps> = ({ resumeData }) => {
+	console.log('Rendering Resume Component with data:', resumeData);
 	const { personalInfo, summary, experience, education, skills } = resumeData;
 
 	// Helper function to render contact details only if they exist
@@ -252,12 +204,4 @@ const Resume: React.FC<ResumeProps> = ({ resumeData }) => {
 	);
 };
 
-export default function App() {
-	const resumeData = mockResumeData;
-
-	return (
-		<div className="bg-zinc-950 min-h-screen">
-			<Resume resumeData={resumeData} />
-		</div>
-	);
-}
+export default Resume;
