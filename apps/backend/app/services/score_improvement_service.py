@@ -1,3 +1,4 @@
+import gc
 import json
 import asyncio
 import logging
@@ -104,40 +105,36 @@ class ScoreImprovementService:
         job: str,
         extracted_job_keywords: str,
         previous_cosine_similarity_score: float,
-        extracted_job_keywords_embedding: float,
-        attempt: Optional[int] = 1,
+        extracted_job_keywords_embedding: np.ndarray,
     ) -> Tuple[str, float]:
-        """
-        Uses LLM to improve the score based on resume and job description.
-        """
         prompt_template = prompt_factory.get("resume_improvement")
-        init_prompt = prompt_template.format(
-            raw_job_description=job,
-            extracted_job_keywords=extracted_job_keywords,
-            raw_resume=resume,
-            extracted_resume_keywords=extracted_resume_keywords,
-            current_cosine_similarity=previous_cosine_similarity_score,
-        )
-        improved_resume = await self.md_agent_manager.run(init_prompt)
+        best_resume, best_score = resume, previous_cosine_similarity_score
 
-        improved_resume_embedding = await self.embedding_manager.embed(
-            text=improved_resume
-        )
+        for attempt in range(1, self.max_retries + 1):
+            logger.info(
+                f"Attempt {attempt}/{self.max_retries} to improve resume score."
+            )
+            prompt = prompt_template.format(
+                raw_job_description=job,
+                extracted_job_keywords=extracted_job_keywords,
+                raw_resume=best_resume,
+                extracted_resume_keywords=extracted_resume_keywords,
+                current_cosine_similarity=best_score,
+            )
+            improved = await self.md_agent_manager.run(prompt)
+            emb = await self.embedding_manager.embed(text=improved)
+            score = self.calculate_cosine_similarity(
+                emb, extracted_job_keywords_embedding
+            )
 
-        new_score = self.calculate_cosine_similarity(
-            improved_resume_embedding, extracted_job_keywords_embedding
-        )
-        if new_score > previous_cosine_similarity_score or attempt >= self.max_retries:
-            return improved_resume, new_score
+            if score > best_score:
+                return improved, score
 
-        return await self.improve_score_with_llm(
-            resume=improved_resume,
-            extracted_resume_keywords=extracted_resume_keywords,
-            job=job,
-            extracted_job_keywords=extracted_job_keywords,
-            previous_cosine_similarity_score=new_score,
-            attempt=attempt + 1,
-        )
+            logger.info(
+                f"Attempt {attempt} resulted in score: {score}, best score so far: {best_score}"
+            )
+
+        return best_resume, best_score
 
     async def get_resume_for_previewer(self, updated_resume: str) -> Dict:
         """
@@ -145,7 +142,7 @@ class ScoreImprovementService:
         """
         prompt_template = prompt_factory.get("structured_resume")
         prompt = prompt_template.format(
-            json.dumps(json_schema_factory.get("structured_resume"), indent=2),
+            json.dumps(json_schema_factory.get("resume_preview"), indent=2),
             updated_resume,
         )
         logger.info(f"Structured Resume Prompt: {prompt}")
@@ -178,9 +175,14 @@ class ScoreImprovementService:
             )
         )
 
-        resume_embedding = await self.embedding_manager.embed(text=resume.content)
-        extracted_job_keywords_embedding = await self.embedding_manager.embed(
-            text=extracted_job_keywords
+        resume_embedding_task = asyncio.create_task(
+            self.embedding_manager.embed(resume.content)
+        )
+        job_kw_embedding_task = asyncio.create_task(
+            self.embedding_manager.embed(extracted_job_keywords)
+        )
+        resume_embedding, extracted_job_keywords_embedding = await asyncio.gather(
+            resume_embedding_task, job_kw_embedding_task
         )
 
         cosine_similarity_score = self.calculate_cosine_similarity(
@@ -199,7 +201,9 @@ class ScoreImprovementService:
             updated_resume=updated_resume
         )
 
-        return {
+        logger.info(f"Resume Preview: {resume_preview}")
+
+        execution = {
             "resume_id": resume_id,
             "job_id": job_id,
             "original_score": cosine_similarity_score,
@@ -207,6 +211,10 @@ class ScoreImprovementService:
             "updated_resume": markdown.markdown(text=updated_resume),
             "resume_preview": resume_preview,
         }
+
+        gc.collect()
+
+        return execution
 
     async def run_and_stream(self, resume_id: str, job_id: str) -> AsyncGenerator:
         """

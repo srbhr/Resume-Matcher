@@ -59,7 +59,7 @@ class CompanyProfile(BaseModel):
 
 
 class Location(BaseModel):
-    city: str
+    city: Optional[str] = None
     state: Optional[str] = None
     country: Optional[str] = None
     remote_status: RemoteStatusEnum = Field(..., alias="remoteStatus")
