@@ -60,13 +60,13 @@ You can customize any variables in these files before or after bootstrapping.
 
 ### Common Variables
 
-| Name                       | Description                       | Default                         |
-| -------------------------- | --------------------------------- | ------------------------------- |
-| `SYNC_DATABASE_URL`        | Backend database connection URI   | `sqlite:///db.sqlite3`          |
-| `SESSION_SECRET_KEY`       | fastAPI session secret key        | `a-secret-key`                  |
-| `PYTHONDONTWRITEBYTECODE`  | Disable Python bytecode files     | `1`                             |
-| `ASYNC_DATABASE_URL`       | Backend async db connection URI   | `sqlite+aiosqlite:///./app.db`  |
-| `NEXT_PUBLIC_API_URL`      | Frontend proxy to backend URI     | `http://localhost:8000`         |
+| Name                      | Description                     | Default                        |
+| ------------------------- | ------------------------------- | ------------------------------ |
+| `SYNC_DATABASE_URL`       | Backend database connection URI | `sqlite:///db.sqlite3`         |
+| `SESSION_SECRET_KEY`      | fastAPI session secret key      | `a-secret-key`                 |
+| `PYTHONDONTWRITEBYTECODE` | Disable Python bytecode files   | `1`                            |
+| `ASYNC_DATABASE_URL`      | Backend async db connection URI | `sqlite+aiosqlite:///./app.db` |
+| `NEXT_PUBLIC_API_URL`     | Frontend proxy to backend URI   | `http://localhost:8000`        |
 
 > **Note:** `PYTHONDONTWRITEBYTECODE=1` is exported by `setup.sh` to prevent `.pyc` files.
 
@@ -75,21 +75,26 @@ You can customize any variables in these files before or after bootstrapping.
 ## 📦 Installation Steps
 
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/srbhr/Resume-Matcher.git
    cd Resume-Matcher
    ```
 
 2. **Make setup executable**
+
    ```bash
    chmod +x setup.sh
    ```
 
 3. **Run setup**
+
    ```bash
    ./setup.sh
    ```
+
    This will:
+
    - Verify/install prerequisites (`node`, `npm`, `python3`, `pip3`, `uv`, `ollama`)
    - Pull the `gemma3:4b` model via Ollama
    - Bootstrap root & backend `.env` files
@@ -97,12 +102,14 @@ You can customize any variables in these files before or after bootstrapping.
    - Sync Python deps in `apps/backend` via `uv sync`
 
 4. **(Optional) Start development**
+
    ```bash
    ./setup.sh --start-dev
    # or
    make setup
    make run-dev
    ```
+
    Press `Ctrl+C` to gracefully shut down.
 
 5. **Build for production**
@@ -127,17 +134,24 @@ You can customize any variables in these files before or after bootstrapping.
 ## 🐞 Troubleshooting
 
 - **`permission denied`** on `setup.sh`:
+
   - Run `chmod +x setup.sh`.
 
 - **`uv: command not found`** despite install:
+
   - Ensure `~/.local/bin` is in your `$PATH`.
 
 - **`ollama: command not found`** on Linux:
+
   - Verify the installer script ran, or install manually via package manager.
 
 - **`npm ci` errors**:
   - Check your `package-lock.json` is in sync with `package.json`.
 
 ---
+
+## 🖋️ Frontend
+
+- Please make sure to have format on save option enabled on your editor (or) run npm format to format all the staged changes.
 
 _Last updated: May 25, 2025_
