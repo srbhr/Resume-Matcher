@@ -189,3 +189,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# db
+app.db-shm
+app.db-wal
+
