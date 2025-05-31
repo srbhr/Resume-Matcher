@@ -243,7 +243,7 @@ class OptimizedScoreImprovementService:
             if score > best_score * 1.05:  # Only accept 5%+ improvements
                 best_resume = improved
                 best_score = score
-                logger.info(f"Score improved from {current_score:.3f} to {score:.3f}")
+                logger.debug(f"Score improved from {current_score:.3f} to {score:.3f}")
             else:
                 logger.info(f"No significant improvement (score: {score:.3f})")
                 break  # Stop if no improvement
@@ -450,7 +450,6 @@ class OptimizedScoreImprovementService:
                     yield f"data: {json.dumps({'status': 'section', 'index': i, 'content': section[:chunk_size]})}\n\n"
                     await asyncio.sleep(0.05)  # Small delay for streaming effect
             
-            # Final result
             final_result = {
                 "resume_id": resume_id,
                 "job_id": job_id,
