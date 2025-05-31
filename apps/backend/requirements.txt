@@ -53,3 +53,21 @@ typing-inspection==0.4.0
 typing_extensions==4.13.1
 urllib3==2.4.0
 uvicorn==0.34.0
+
+# Production dependencies
+redis[hiredis]==5.0.1  # Redis with C extensions for performance
+python-jose[cryptography]==3.3.0  # JWT support
+passlib[bcrypt]==1.7.4  # Password hashing
+celery[redis]==5.3.4  # Background tasks
+sentry-sdk[fastapi]==2.0.0  # Error tracking
+prometheus-client==0.19.0  # Metrics
+orjson==3.10.0  # Fast JSON serialization
+asyncpg==0.29.0  # PostgreSQL async driver
+aiomysql==0.2.0  # MySQL async driver
+gunicorn==22.0.0  # Production WSGI server
+uvloop==0.19.0  # Fast event loop
+httptools==0.6.1  # Fast HTTP parsing
+
+# Algorithm optimization dependencies
+scipy==1.11.4  # Sparse matrices and scientific computing
+aiofiles==23.2.1  # Async file operations
