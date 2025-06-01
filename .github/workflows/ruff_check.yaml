@@ -1,11 +1,13 @@
 name: Backend Linter
-
+run-name: Running Backend Linter🔎
+on: [push]
 jobs:
-  backend-linter:
-    name: python
+  Backend-Linter:
     runs-on: ubuntu-latest
 
     steps:
+      - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
+
       - uses: actions/checkout@v4
 
       - name: Install uv
@@ -21,3 +23,5 @@ jobs:
 
       - name: Run linter check
         run: uv run ruff check
+
+      - run: echo "This job's status is ${{ job.status }}."
