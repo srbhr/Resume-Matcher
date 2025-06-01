@@ -1,7 +1,7 @@
-name: Example
+name: Backend Linter
 
 jobs:
-  uv-example:
+  backend-linter:
      name: python
      runs-on: ubuntu-latest
 
