@@ -1,6 +1,7 @@
 name: Backend Linter
 run-name: Running Backend Linter🔎
 on:
+  push:
   pull_request:
     branches:
       - main
