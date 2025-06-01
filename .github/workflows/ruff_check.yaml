@@ -22,7 +22,7 @@ jobs:
         run: |
           cd apps/backend
           echo "⏳ Installing dependencies ⏳"
-          uv sync --locked --all-extras --dev
+          uv sync --all-extras --dev
           echo "⏳ Starting linter and formatter check ⏳"
           uv run ruff check
 
