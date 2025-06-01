@@ -18,10 +18,12 @@ jobs:
         with:
           python-version-file: "apps/backend/pyproject.toml"
 
-      - name: Install the project
-        run: uv sync --locked --all-extras --dev
-
-      - name: Run linter check
-        run: uv run ruff check
+      - name: Install dependencies and run lint check
+        run: |
+          cd apps/backend
+          echo "⏳ Installing dependencies ⏳"
+          uv sync --locked --all-extras --dev
+          echo "⏳ Starting linter and formatter check ⏳"
+          uv run ruff check
 
       - run: echo "This job's status is ${{ job.status }}."
