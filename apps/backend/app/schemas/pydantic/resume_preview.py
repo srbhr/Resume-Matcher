@@ -16,10 +16,10 @@ class PersonalInfo(BaseModel):
 class ExperienceItem(BaseModel):
     id: int
     title: str
-    company: str
+    company: Optional[str] = None
     location: Optional[str] = None
-    years: str
-    description: List[str]
+    years: Optional[str] = None
+    description: List[Optional[str]] = []
 
 
 class EducationItem(BaseModel):
@@ -27,7 +27,7 @@ class EducationItem(BaseModel):
     institution: str
     degree: str
     years: str
-    description: str
+    description: Optional[str] = None
 
 
 class ResumePreviewerModel(BaseModel):
