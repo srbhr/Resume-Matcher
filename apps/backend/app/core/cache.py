@@ -84,11 +84,12 @@ class RedisCache:
         self.pool_config = {
             "max_connections": max_connections,
             "socket_keepalive": True,
-            "socket_keepalive_options": {
-                1: 1,  # TCP_KEEPIDLE
-                2: 1,  # TCP_KEEPINTVL
-                3: 3,  # TCP_KEEPCNT
-            },
+            # Removed socket_keepalive_options - they cause "Invalid argument" error on some systems
+            # "socket_keepalive_options": {
+            #     1: 1,  # TCP_KEEPIDLE
+            #     2: 1,  # TCP_KEEPINTVL
+            #     3: 3,  # TCP_KEEPCNT
+            # },
             "health_check_interval": 30,
             "retry_on_timeout": True,
             "socket_connect_timeout": 5,
