@@ -29,8 +29,9 @@ class DatabaseConfig:
     """Database configuration with production-ready defaults."""
     
     def __init__(self):
-        self.SYNC_DATABASE_URL: str = settings.SYNC_DATABASE_URL
-        self.ASYNC_DATABASE_URL: str = settings.ASYNC_DATABASE_URL
+        # Set default SQLite URLs if not provided
+        self.SYNC_DATABASE_URL: str = settings.SYNC_DATABASE_URL or "sqlite:///./resume_matcher.db"
+        self.ASYNC_DATABASE_URL: str = settings.ASYNC_DATABASE_URL or "sqlite+aiosqlite:///./resume_matcher.db"
         self.DB_ECHO: bool = settings.DB_ECHO
         
         # Determine if we're using SQLite
@@ -107,21 +108,28 @@ def _configure_postgresql(engine: Engine) -> None:
 @lru_cache(maxsize=1)
 def _make_sync_engine() -> Engine:
     """Create the global synchronous Engine with production settings."""
-    engine = create_engine(
-        db_config.SYNC_DATABASE_URL,
-        echo=db_config.DB_ECHO,
-        pool_pre_ping=settings.DB_POOL_PRE_PING,
-        poolclass=db_config.pool_class,
-        pool_size=db_config.pool_size,
-        max_overflow=db_config.max_overflow,
-        pool_recycle=db_config.pool_recycle,
-        connect_args=db_config.connect_args,
-        future=True,
-        query_cache_size=1200,  # Cache parsed SQL statements
-        execution_options={
-            "isolation_level": "READ COMMITTED",
-        },
-    )
+    # Build engine kwargs, excluding None values for SQLite
+    engine_kwargs = {
+        "echo": db_config.DB_ECHO,
+        "poolclass": db_config.pool_class,
+        "connect_args": db_config.connect_args,
+        "future": True,
+        "query_cache_size": 1200,  # Cache parsed SQL statements
+    }
+    
+    # Only add pool settings for non-SQLite databases
+    if not db_config.is_sqlite:
+        engine_kwargs.update({
+            "pool_pre_ping": settings.DB_POOL_PRE_PING,
+            "pool_size": db_config.pool_size,
+            "max_overflow": db_config.max_overflow,
+            "pool_recycle": db_config.pool_recycle,
+            "execution_options": {
+                "isolation_level": "READ COMMITTED",
+            },
+        })
+    
+    engine = create_engine(db_config.SYNC_DATABASE_URL, **engine_kwargs)
     
     _configure_sqlite(engine)
     _configure_postgresql(engine)
@@ -144,18 +152,25 @@ def _make_sync_engine() -> Engine:
 @lru_cache(maxsize=1)
 def _make_async_engine() -> AsyncEngine:
     """Create the global asynchronous Engine with production settings."""
-    engine = create_async_engine(
-        db_config.ASYNC_DATABASE_URL,
-        echo=db_config.DB_ECHO,
-        pool_pre_ping=settings.DB_POOL_PRE_PING,
-        poolclass=db_config.pool_class,
-        pool_size=db_config.pool_size,
-        max_overflow=db_config.max_overflow,
-        pool_recycle=db_config.pool_recycle,
-        connect_args=db_config.connect_args,
-        future=True,
-        query_cache_size=1200,
-    )
+    # Build engine kwargs, excluding None values for SQLite
+    engine_kwargs = {
+        "echo": db_config.DB_ECHO,
+        "poolclass": db_config.pool_class,
+        "connect_args": db_config.connect_args,
+        "future": True,
+        "query_cache_size": 1200,
+    }
+    
+    # Only add pool settings for non-SQLite databases
+    if not db_config.is_sqlite:
+        engine_kwargs.update({
+            "pool_pre_ping": settings.DB_POOL_PRE_PING,
+            "pool_size": db_config.pool_size,
+            "max_overflow": db_config.max_overflow,
+            "pool_recycle": db_config.pool_recycle,
+        })
+    
+    engine = create_async_engine(db_config.ASYNC_DATABASE_URL, **engine_kwargs)
     
     # Apply SQLite pragmas to the sync engine within async engine
     if db_config.is_sqlite:

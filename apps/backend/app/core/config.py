@@ -19,9 +19,9 @@ class Settings(BaseSettings):
     ALLOWED_ORIGINS: List[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
     CORS_MAX_AGE: int = 86400  # 24 hours
     
-    # Database
-    SYNC_DATABASE_URL: Optional[str]
-    ASYNC_DATABASE_URL: Optional[str]
+    # Database  
+    SYNC_DATABASE_URL: Optional[str] = None
+    ASYNC_DATABASE_URL: Optional[str] = None
     DB_ECHO: bool = False
     DB_POOL_SIZE: int = 20
     DB_MAX_OVERFLOW: int = 40
@@ -35,8 +35,8 @@ class Settings(BaseSettings):
     CACHE_KEY_PREFIX: str = "resume_matcher:"
     
     # Security
-    SESSION_SECRET_KEY: Optional[str]
-    JWT_SECRET_KEY: Optional[str]
+    SESSION_SECRET_KEY: Optional[str] = None
+    JWT_SECRET_KEY: Optional[str] = None
     JWT_ALGORITHM: str = "HS256"
     JWT_EXPIRATION_MINUTES: int = 30
     BCRYPT_ROUNDS: int = 12
@@ -57,7 +57,7 @@ class Settings(BaseSettings):
     TASK_TIMEOUT: int = 300  # 5 minutes
     
     # Monitoring
-    SENTRY_DSN: Optional[str]
+    SENTRY_DSN: Optional[str] = None
     APM_ENABLED: bool = False
     METRICS_ENABLED: bool = True
     
