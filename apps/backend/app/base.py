@@ -107,11 +107,26 @@ def create_app() -> FastAPI:
     # Security middleware (order matters - security first)
     app.add_middleware(SecurityHeadersMiddleware)
     
-    # Trusted host middleware for production
+    # Trusted host middleware with environment-specific hosts
     if settings.ENV == "production":
         app.add_middleware(
             TrustedHostMiddleware,
             allowed_hosts=["*.resume-matcher.com", "resume-matcher.com"]
+        )
+    elif settings.ENV in ["staging", "local"]:
+        # Allow localhost and common development hosts
+        app.add_middleware(
+            TrustedHostMiddleware,
+            allowed_hosts=[
+                "localhost",
+                "127.0.0.1", 
+                "0.0.0.0",
+                "*.localhost",
+                "*.127.0.0.1",
+                "localhost:*",
+                "127.0.0.1:*",
+                "0.0.0.0:*"
+            ]
         )
     
     # Session middleware

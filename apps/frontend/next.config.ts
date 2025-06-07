@@ -6,9 +6,6 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   compress: true,
 
-  // Fix for Invalid host header issue in development
-  // Note: This is handled via CLI flags in package.json instead
-
   // Image optimization
   images: {
     domains: ['localhost', 'resume-matcher.com'],

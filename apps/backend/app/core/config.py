@@ -8,7 +8,7 @@ from typing import List, Optional, Literal
 class Settings(BaseSettings):
     # Project
     PROJECT_NAME: str = "Resume Matcher"
-    ENV: Literal["production", "staging", "local"] = "production"
+    ENV: Literal["production", "staging", "local"] = "local"
     DEBUG: bool = False
     API_VERSION: str = "v1"
     

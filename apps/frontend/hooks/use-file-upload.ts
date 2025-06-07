@@ -247,7 +247,6 @@ export const useFileUpload = (
           body: formData,
           signal: abortController.signal,
           headers: {
-            // Remove host header that might cause issues
             'Cache-Control': 'no-cache',
           },
         })
