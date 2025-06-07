@@ -3,11 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "next dev --turbopack --hostname 0.0.0.0",
+    "dev:analyze": "ANALYZE=true next dev --turbopack --hostname 0.0.0.0",
     "build": "next build",
+    "build:analyze": "ANALYZE=true next build",
     "start": "next start",
     "lint": "eslint --ext .js,.jsx,.ts,.tsx .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "perf": "next build && next start"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.13",
@@ -35,6 +38,7 @@
     "eslint-plugin-prettier": "^5.4.0",
     "prettier": "^3.5.3",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "webpack-bundle-analyzer": "^4.10.2"
   }
 }

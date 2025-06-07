@@ -8,6 +8,8 @@ import {
   type ChangeEvent,
   type DragEvent,
   type InputHTMLAttributes,
+  useEffect,
+  useMemo,
 } from "react"
 
 export type FileMetadata = {
@@ -78,9 +80,9 @@ export const useFileUpload = (
 ): [FileUploadState, FileUploadActions] => {
   const {
     maxFiles = Infinity,
-    maxSize = Infinity,
-    accept = "*/*", // More common default
-    multiple = false,
+    maxSize = 10 * 1024 * 1024, // 10MB default
+    accept = "*/*",
+    multiple = true,
     initialFiles = [],
     onFilesChange,
     onFilesAdded,
@@ -90,10 +92,10 @@ export const useFileUpload = (
   } = options
 
   const [state, setState] = useState<FileUploadState>({
-    files: initialFiles.map((fileMeta) => ({ // initialFiles are FileMetadata
-      file: fileMeta,
-      id: fileMeta.id, // Ensure initialFiles have an id
-      preview: fileMeta.url, // Use url from FileMetadata as preview
+    files: initialFiles.map(fileMetadata => ({
+      file: fileMetadata,
+      id: fileMetadata.id,
+      preview: fileMetadata.url,
     })),
     isDragging: false,
     errors: [],
@@ -101,70 +103,99 @@ export const useFileUpload = (
   })
 
   const inputRef = useRef<HTMLInputElement>(null)
+  // Track active upload requests for cancellation
+  const activeUploadsRef = useRef<Map<string, AbortController>>(new Map())
+  // Track created object URLs for cleanup
+  const objectUrlsRef = useRef<Set<string>>(new Set())
 
-  const validateFile = useCallback(
-    (file: File): string | null => { // Simplified: always validates a File object
-      if (file.size > maxSize) {
-        return `File "${file.name}" exceeds the maximum size of ${formatBytes(maxSize)}.`
-      }
+  // Cleanup function to prevent memory leaks
+  const cleanup = useCallback(() => {
+    // Cancel all active uploads
+    activeUploadsRef.current.forEach((controller) => {
+      controller.abort()
+    })
+    activeUploadsRef.current.clear()
 
-      if (accept !== "*/*" && accept !== "*") {
-        const acceptedTypes = accept.split(",").map((type) => type.trim().toLowerCase())
-        const fileType = file.type.toLowerCase()
-        const fileName = file.name.toLowerCase()
-        const fileExtension = `.${fileName.split(".").pop()}`
+    // Revoke all object URLs
+    objectUrlsRef.current.forEach((url) => {
+      URL.revokeObjectURL(url)
+    })
+    objectUrlsRef.current.clear()
+  }, [])
 
-        const isAccepted = acceptedTypes.some((type) => {
-          if (type.startsWith(".")) { // e.g., .pdf
-            return fileExtension === type
-          }
-          if (type.endsWith("/*")) { // e.g., image/*
-            const baseType = type.slice(0, -2) // image
-            return fileType.startsWith(`${baseType}/`)
-          }
-          return fileType === type // e.g., application/pdf
-        })
+  // Cleanup on unmount
+  useEffect(() => {
+    return cleanup
+  }, [cleanup])
 
-        if (!isAccepted) {
-          return `File "${file.name}" type not accepted. Accepted types: ${accept}`
+  // Optimized validation function with memoization
+  const validateFile = useCallback((file: File): string | null => {
+    if (file.size > maxSize) {
+      return `File "${file.name}" is too large. Maximum size is ${formatBytes(maxSize)}.`
+    }
+
+    if (accept !== "*/*") {
+      const acceptedTypes = accept.split(",").map((type) => type.trim())
+      const isAccepted = acceptedTypes.some((type) => {
+        if (type.startsWith(".")) {
+          return file.name.toLowerCase().endsWith(type.toLowerCase())
+        } else if (type.includes("*")) {
+          const regex = new RegExp(type.replace("*", ".*"))
+          return regex.test(file.type)
+        } else {
+          return file.type === type
         }
-      }
-      return null
-    },
-    [accept, maxSize]
-  )
+      })
 
+      if (!isAccepted) {
+        return `File "${file.name}" is not an accepted file type. Accepted types: ${accept}.`
+      }
+    }
+
+    return null
+  }, [maxSize, accept])
+
+  // Optimized unique ID generation with better entropy
+  const generateUniqueId = useCallback((file: File): string => {
+    const timestamp = Date.now()
+    const random = Math.random().toString(36).substring(2)
+    const fileInfo = `${file.name}-${file.size}-${file.lastModified}`
+    return `${timestamp}-${random}-${btoa(fileInfo).replace(/[^a-zA-Z0-9]/g, '').substring(0, 8)}`
+  }, [])
+
+  // Memory-efficient preview creation
   const createPreview = useCallback((file: File): string | undefined => {
-    if (file.type.startsWith("image/")) {
-      return URL.createObjectURL(file)
+    if (file.type.startsWith("image/") && file.size < 5 * 1024 * 1024) { // Only for images under 5MB
+      const url = URL.createObjectURL(file)
+      objectUrlsRef.current.add(url)
+      return url
     }
     return undefined
   }, [])
 
-  const generateUniqueId = useCallback((file: File): string => {
-    return `${file.name}-${file.size}-${file.lastModified}-${Math.random().toString(36).substring(2, 9)}`
-  }, [])
-
+  // Enhanced upload function with retry mechanism and better error handling
   const _uploadFileInternal = async (fileToUpload: FileWithPreview) => {
     // Ensure fileToUpload.file is a File instance for upload
     if (!(fileToUpload.file instanceof File)) {
       const errorMsg = `Cannot upload "${(fileToUpload.file as FileMetadata).name}"; it's not a valid file object for direct upload.`;
       console.error(errorMsg, fileToUpload);
-      // Update this specific file's metadata with an error
+
       const updatedFileWithMetaError: FileWithPreview = {
         ...fileToUpload,
         file: {
-            ...(fileToUpload.file as FileMetadata), // Keep existing metadata
-            uploadError: errorMsg,
-            uploaded: false,
+          ...(fileToUpload.file as FileMetadata),
+          uploadError: errorMsg,
+          uploaded: false,
         }
       };
+
       setState(prev => ({
         ...prev,
         files: prev.files.map(f => f.id === updatedFileWithMetaError.id ? updatedFileWithMetaError : f),
-        errors: [...prev.errors, errorMsg], // Add to general errors too
-        isUploadingGlobal: false // Assuming this path means no actual network upload starts
+        errors: [...prev.errors, errorMsg],
+        isUploadingGlobal: false
       }));
+
       onUploadError?.(updatedFileWithMetaError, errorMsg);
       return;
     }
@@ -172,111 +203,152 @@ export const useFileUpload = (
     if (!uploadUrl) {
       const errorMsg = "Upload URL is not configured."
       console.warn(errorMsg, "File not uploaded:", fileToUpload.file.name)
-      // Update file metadata to reflect it wasn't uploaded due to config
-       const fileWithConfigError: FileWithPreview = {
+
+      const fileWithConfigError: FileWithPreview = {
         ...fileToUpload,
-        file: { // Convert to FileMetadata with error
-            name: fileToUpload.file.name,
-            size: fileToUpload.file.size,
-            type: fileToUpload.file.type,
-            id: fileToUpload.id,
-            url: fileToUpload.preview || '',
-            uploaded: false,
-            uploadError: errorMsg,
+        file: {
+          name: fileToUpload.file.name,
+          size: fileToUpload.file.size,
+          type: fileToUpload.file.type,
+          id: fileToUpload.id,
+          url: fileToUpload.preview || '',
+          uploaded: false,
+          uploadError: errorMsg,
         }
       };
+
       setState(prev => ({
-          ...prev,
-          files: prev.files.map(f => f.id === fileWithConfigError.id ? fileWithConfigError : f),
-          errors: [...prev.errors, errorMsg],
-          isUploadingGlobal: false
+        ...prev,
+        files: prev.files.map(f => f.id === fileWithConfigError.id ? fileWithConfigError : f),
+        errors: [...prev.errors, errorMsg],
+        isUploadingGlobal: false
       }));
+
       onUploadError?.(fileWithConfigError, errorMsg);
       return;
     }
 
+    // Create abort controller for this upload
+    const abortController = new AbortController()
+    activeUploadsRef.current.set(fileToUpload.id, abortController)
+
     const formData = new FormData()
-    formData.append("file", fileToUpload.file) // FastAPI expects 'file' field
+    formData.append("file", fileToUpload.file)
 
     setState(prev => ({ ...prev, isUploadingGlobal: true, errors: [] }))
 
-    try {
-      const response = await fetch(uploadUrl, {
-        method: "POST",
-        body: formData,
-      })
+    const maxRetries = 2
+    let attempt = 0
 
-      let responseData: Record<string, unknown> = {}; // Initialize for broader scope
-      const contentType = response.headers.get("content-type");
+    while (attempt <= maxRetries) {
+      try {
+        const response = await fetch(uploadUrl, {
+          method: "POST",
+          body: formData,
+          signal: abortController.signal,
+          headers: {
+            // Remove host header that might cause issues
+            'Cache-Control': 'no-cache',
+          },
+        })
 
-      if (!response.ok) {
-        let errorDetail = `Upload failed for ${fileToUpload.file.name}. Status: ${response.status} ${response.statusText}`;
-        try {
-          const errorText = await response.text();
-          errorDetail += ` - Server response: ${errorText.substring(0, 200)}${errorText.length > 200 ? '...' : ''}`;
-        } catch (textError: unknown) {
-          console.warn("Could not read error response text:", textError);
+        let responseData: Record<string, unknown> = {}
+        const contentType = response.headers.get("content-type")
+
+        if (!response.ok) {
+          let errorDetail = `Upload failed for ${fileToUpload.file.name}. Status: ${response.status} ${response.statusText}`
+
+          try {
+            const errorText = await response.text()
+            // Check for specific host header error
+            if (errorText.includes('Invalid host header') || errorText.includes('Host header')) {
+              errorDetail = `Upload failed: Invalid host header. Please ensure the development server is configured correctly.`
+            } else {
+              errorDetail += ` - Server response: ${errorText.substring(0, 200)}${errorText.length > 200 ? '...' : ''}`
+            }
+          } catch (textError: unknown) {
+            console.warn("Could not read error response text:", textError)
+          }
+
+          throw new Error(errorDetail)
         }
-        throw new Error(errorDetail);
-      }
-      
-      if (contentType && contentType.includes("application/json")) {
-        responseData = await response.json() as Record<string, unknown>;
-      } else {
-         // Handle non-JSON or missing Content-Type response if necessary,
-         // or assume success if response.ok and no JSON is expected for some cases.
-         // For now, we'll assume JSON is expected on success.
-        console.warn(`Response for ${fileToUpload.file.name} was not JSON. Content-Type: ${contentType}`);
-        // If JSON is strictly required, this could be an error condition:
-        // throw new Error(`Unexpected response type: ${contentType}. Expected JSON.`);
-      }
 
-      const successfullyUploadedFile: FileWithPreview = {
-        ...fileToUpload,
-        file: { // This is FileMetadata
+        if (contentType && contentType.includes("application/json")) {
+          responseData = await response.json() as Record<string, unknown>
+        } else {
+          console.warn(`Response for ${fileToUpload.file.name} was not JSON. Content-Type: ${contentType}`)
+        }
+
+        const successfullyUploadedFile: FileWithPreview = {
+          ...fileToUpload,
+          file: {
             name: fileToUpload.file.name,
             size: fileToUpload.file.size,
             type: fileToUpload.file.type,
-            id: fileToUpload.id, // Use existing FileWithPreview ID as FileMetadata ID
-            url: typeof responseData.file_url === 'string' ? responseData.file_url : // Assuming server returns 'file_url'
-                 (typeof responseData.url === 'string' ? responseData.url : fileToUpload.preview || ''),
-            uploaded: true,
-        }
-      };
-
-      setState(prev => {
-        const updatedFiles = prev.files.map(f =>
-          f.id === successfullyUploadedFile.id ? successfullyUploadedFile : f
-        )
-        onUploadSuccess?.(successfullyUploadedFile, responseData)
-        return { ...prev, files: updatedFiles, isUploadingGlobal: false }
-      })
-
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : `Error uploading ${ (fileToUpload.file as File).name}.`;
-      const fileWithError: FileWithPreview = {
-        ...fileToUpload,
-        file: { // This is FileMetadata
-            name: (fileToUpload.file as File).name,
-            size: (fileToUpload.file as File).size,
-            type: (fileToUpload.file as File).type,
             id: fileToUpload.id,
-            url: fileToUpload.preview || '',
-            uploaded: false,
-            uploadError: errorMessage,
+            url: typeof responseData.file_url === 'string' ? responseData.file_url :
+              (typeof responseData.url === 'string' ? responseData.url : fileToUpload.preview || ''),
+            uploaded: true,
+          }
         }
-      };
-      setState(prev => {
-        const updatedFiles = prev.files.map(f =>
-          f.id === fileWithError.id ? fileWithError : f
-        )
-        // Add to general errors in addition to specific file error
-        const newErrors = prev.errors.filter(e => !e.includes(fileWithError.file.name)); // Avoid duplicate general messages for the same file
-        newErrors.push(errorMessage);
 
-        onUploadError?.(fileWithError, errorMessage)
-        return { ...prev, files: updatedFiles, errors: newErrors, isUploadingGlobal: false }
-      })
+        setState(prev => {
+          const updatedFiles = prev.files.map(f =>
+            f.id === successfullyUploadedFile.id ? successfullyUploadedFile : f
+          )
+          onUploadSuccess?.(successfullyUploadedFile, responseData)
+          return { ...prev, files: updatedFiles, isUploadingGlobal: false }
+        })
+
+        // Clean up on success
+        activeUploadsRef.current.delete(fileToUpload.id)
+        return
+
+      } catch (error: unknown) {
+        attempt++
+
+        // If aborted, don't retry
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          console.log(`Upload cancelled for ${fileToUpload.file.name}`)
+          return
+        }
+
+        // If max retries reached, handle error
+        if (attempt > maxRetries) {
+          const errorMessage = error instanceof Error ? error.message : `Error uploading ${fileToUpload.file.name}.`
+
+          const fileWithError: FileWithPreview = {
+            ...fileToUpload,
+            file: {
+              name: (fileToUpload.file as File).name,
+              size: (fileToUpload.file as File).size,
+              type: (fileToUpload.file as File).type,
+              id: fileToUpload.id,
+              url: fileToUpload.preview || '',
+              uploaded: false,
+              uploadError: errorMessage,
+            }
+          }
+
+          setState(prev => {
+            const updatedFiles = prev.files.map(f =>
+              f.id === fileWithError.id ? fileWithError : f
+            )
+            const newErrors = prev.errors.filter(e => !e.includes(fileWithError.file.name))
+            newErrors.push(errorMessage)
+
+            onUploadError?.(fileWithError, errorMessage)
+            return { ...prev, files: updatedFiles, errors: newErrors, isUploadingGlobal: false }
+          })
+
+          // Clean up on final failure
+          activeUploadsRef.current.delete(fileToUpload.id)
+          return
+        }
+
+        // Wait before retry (exponential backoff)
+        await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000))
+      }
     }
   }
 
@@ -290,7 +362,7 @@ export const useFileUpload = (
 
       // For single file mode, if a file already exists (even if being uploaded or failed), replace it.
       if (!multiple && state.files.length > 0) {
-         state.files.forEach((fwp) => { // Revoke old preview
+        state.files.forEach((fwp) => { // Revoke old preview
           if (fwp.preview && fwp.file instanceof File && fwp.file.type.startsWith("image/")) {
             URL.revokeObjectURL(fwp.preview)
           }
@@ -322,11 +394,11 @@ export const useFileUpload = (
 
         // Duplicate check (more robust for multiple additions)
         const isDuplicate = (!multiple && state.files.length > 0) ? false : // In single mode, we already cleared
-                             state.files.some(existingFwp =>
-                                existingFwp.file.name === file.name &&
-                                existingFwp.file.size === file.size &&
-                                (existingFwp.file instanceof File ? existingFwp.file.lastModified === file.lastModified : true)
-                             );
+          state.files.some(existingFwp =>
+            existingFwp.file.name === file.name &&
+            existingFwp.file.size === file.size &&
+            (existingFwp.file instanceof File ? existingFwp.file.lastModified === file.lastModified : true)
+          );
         if (isDuplicate) continue;
 
 
@@ -365,8 +437,8 @@ export const useFileUpload = (
           filesToAddUpdate.forEach(fileToUpload => _uploadFileInternal(fileToUpload))
         } else {
           console.warn("uploadUrl not provided. Files added locally but not uploaded.")
-           // If no uploadUrl, mark files as 'pending' or similar if needed, or convert to FileMetadata locally
-           const filesAsMetadataLocally = filesToAddUpdate.map(fwp => ({
+          // If no uploadUrl, mark files as 'pending' or similar if needed, or convert to FileMetadata locally
+          const filesAsMetadataLocally = filesToAddUpdate.map(fwp => ({
             ...fwp,
             file: { // Convert to FileMetadata to indicate they are processed by the hook
               name: (fwp.file as File).name,
@@ -403,50 +475,77 @@ export const useFileUpload = (
     ]
   )
 
+  // Cancel upload function
+  const cancelUpload = useCallback((fileId: string) => {
+    const controller = activeUploadsRef.current.get(fileId)
+    if (controller) {
+      controller.abort()
+      activeUploadsRef.current.delete(fileId)
+    }
+  }, [])
+
+  // Enhanced removeFile with proper cleanup
   const removeFile = useCallback(
     (id: string) => {
+      // Cancel upload if in progress
+      cancelUpload(id)
+
       setState((prev) => {
         const fileToRemove = prev.files.find((file) => file.id === id)
+
+        // Clean up preview URL
         if (fileToRemove?.preview && fileToRemove.file instanceof File && fileToRemove.file.type.startsWith("image/")) {
           URL.revokeObjectURL(fileToRemove.preview)
+          objectUrlsRef.current.delete(fileToRemove.preview)
         }
+
         const newFiles = prev.files.filter((file) => file.id !== id)
         onFilesChange?.(newFiles)
-        
-        let updatedErrors = prev.errors;
+
+        let updatedErrors = prev.errors
         if (fileToRemove?.file?.name) {
-            // Remove errors specifically mentioning this file by name
-            updatedErrors = prev.errors.filter(err => !err.includes(fileToRemove.file.name));
+          updatedErrors = prev.errors.filter(err => !err.includes(fileToRemove.file.name))
         }
-        // If all files are removed, clear all errors
         if (newFiles.length === 0) {
-            updatedErrors = [];
+          updatedErrors = []
         }
 
         if (inputRef.current && newFiles.length === 0) {
-            inputRef.current.value = "";
+          inputRef.current.value = ""
         }
-        return { ...prev, files: newFiles, errors: updatedErrors, isUploadingGlobal: newFiles.length > 0 ? prev.isUploadingGlobal : false }
+
+        return {
+          ...prev,
+          files: newFiles,
+          errors: updatedErrors,
+          isUploadingGlobal: newFiles.length > 0 ? prev.isUploadingGlobal : false
+        }
       })
     },
-    [onFilesChange] // setState is stable
+    [onFilesChange, cancelUpload]
   )
 
+  // Enhanced clearFiles with proper cleanup
   const clearFiles = useCallback(() => {
+    // Cancel all uploads
+    cleanup()
+
     setState((prev) => {
       prev.files.forEach((fwp) => {
         if (fwp.preview && fwp.file instanceof File && fwp.file.type.startsWith("image/")) {
           URL.revokeObjectURL(fwp.preview)
         }
       })
+
       if (inputRef.current) {
         inputRef.current.value = ""
       }
+
       const newState = { ...prev, files: [], errors: [], isUploadingGlobal: false }
       onFilesChange?.(newState.files)
       return newState
     })
-  }, [onFilesChange]) // setState is stable
+  }, [onFilesChange, cleanup])
 
   const clearErrors = useCallback(() => {
     setState((prev) => ({ ...prev, errors: [] }))
@@ -465,7 +564,7 @@ export const useFileUpload = (
     e.stopPropagation()
     if (state.isUploadingGlobal && !multiple) return;
     if (e.currentTarget.contains(e.relatedTarget as Node)) {
-        return;
+      return;
     }
     setState((prev) => ({ ...prev, isDragging: false }))
   }, [state.isUploadingGlobal, multiple])

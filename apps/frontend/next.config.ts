@@ -6,6 +6,9 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   compress: true,
 
+  // Fix for Invalid host header issue in development
+  // Note: This is handled via CLI flags in package.json instead
+
   // Image optimization
   images: {
     domains: ['localhost', 'resume-matcher.com'],
@@ -13,6 +16,14 @@ const nextConfig: NextConfig = {
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     minimumCacheTTL: 60 * 60 * 24 * 30, // 30 days
+    dangerouslyAllowSVG: false,
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
+    ],
   },
 
   // API rewrites for backend proxy
@@ -53,7 +64,15 @@ const nextConfig: NextConfig = {
           },
           {
             key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=()'
+            value: 'camera=(), microphone=(), geolocation=(), payment=()'
+          },
+          {
+            key: 'Strict-Transport-Security',
+            value: 'max-age=63072000; includeSubDomains; preload'
+          },
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable'
           }
         ]
       }
@@ -66,52 +85,63 @@ const nextConfig: NextConfig = {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
   },
 
-  // Webpack optimizations
-  webpack: (config, { isServer }) => {
-    // Optimize bundle size
-    if (!isServer) {
-      config.optimization = {
-        ...config.optimization,
-        splitChunks: {
-          chunks: 'all',
-          cacheGroups: {
-            default: false,
-            vendors: false,
-            // Vendor chunk
-            vendor: {
-              name: 'vendor',
-              chunks: 'all',
-              test: /node_modules/,
-              priority: 20,
-            },
-            // Common chunk
-            common: {
-              name: 'common',
-              minChunks: 2,
-              chunks: 'all',
-              priority: 10,
-              reuseExistingChunk: true,
-              enforce: true,
-            },
-          },
-        },
-      };
-    }
-
-    return config;
+  // Turbopack-specific optimizations (replacing Webpack config)
+  turbo: {
+    rules: {
+      '*.svg': {
+        loaders: ['@svgr/webpack'],
+        as: '*.js',
+      },
+    },
+    resolveAlias: {
+      '@': './',
+      '@/components': './components',
+      '@/hooks': './hooks',
+      '@/lib': './lib',
+      '@/app': './app',
+    },
+    resolveExtensions: [
+      '.mdx',
+      '.tsx',
+      '.ts',
+      '.jsx',
+      '.js',
+      '.mjs',
+      '.json',
+    ],
   },
 
   // Production build optimizations
   productionBrowserSourceMaps: false,
-  optimizeFonts: true,
-  swcMinify: true,
+  generateEtags: false,
+
+  // Performance optimizations
+  onDemandEntries: {
+    // Memory optimization - keep pages in memory for shorter time
+    maxInactiveAge: 25 * 1000,
+    pagesBufferLength: 2,
+  },
 
   // Experimental features for better performance
   experimental: {
-    optimizePackageImports: ['lucide-react', '@radix-ui/react-*'],
+    optimizePackageImports: [
+      'lucide-react',
+      '@radix-ui/react-dialog',
+      '@radix-ui/react-label',
+      '@radix-ui/react-slot'
+    ],
     serverActions: {
-      bodySizeLimit: '2mb',
+      bodySizeLimit: '10mb', // Increased for file uploads
     },
+    // Turbopack optimizations
+    turbo: {
+      memoryLimit: 4096, // 4GB memory limit for builds
+      rules: {
+        '*.svg': ['@svgr/webpack'],
+      },
+    },
+    // CSS optimization
+    optimizeCss: true,
   },
 
   // Output configuration
@@ -126,6 +156,25 @@ const nextConfig: NextConfig = {
   // ESLint configuration
   eslint: {
     ignoreDuringBuilds: false,
+  },
+
+  // Compiler optimizations (replaces swcMinify)
+  compiler: {
+    // Remove console logs in production
+    removeConsole: process.env.NODE_ENV === 'production' ? {
+      exclude: ['error', 'warn'],
+    } : false,
+    // React optimizations
+    reactRemoveProperties: process.env.NODE_ENV === 'production' ? {
+      properties: ['^data-testid$'],
+    } : false,
+  },
+
+  // Logging for performance monitoring
+  logging: {
+    fetches: {
+      fullUrl: process.env.NODE_ENV === 'development',
+    },
   },
 };
 

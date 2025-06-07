@@ -1,12 +1,9 @@
-# Core FastAPI dependencies
 fastapi==0.115.12
 uvicorn==0.34.0
 starlette==0.46.1
 pydantic==2.11.3
 pydantic-settings==2.8.1
 pydantic_core==2.33.1
-
-# HTTP and networking
 httpx==0.28.1
 httpcore==1.0.8
 h11==0.14.0
@@ -15,8 +12,6 @@ sniffio==1.3.1
 certifi==2025.1.31
 idna==3.10
 urllib3==2.4.0
-
-# File processing and document parsing
 markitdown==0.1.1
 pdfminer.six==20250327
 beautifulsoup4==4.13.4
@@ -26,31 +21,23 @@ Markdown==3.8
 soupsieve==2.6
 magika==0.6.1
 python-multipart==0.0.20
-
-# AI and ML
 ollama==0.4.7
 openai==1.75.0
-numpy==1.26.4  # Downgraded from 2.2.4 due to scipy compatibility
-scipy==1.11.4
+numpy==2.1.0
+scipy==1.13.0
 onnxruntime==1.21.1
 flatbuffers==25.2.10
 protobuf==6.30.2
 sympy==1.13.3
 mpmath==1.3.0
-
-# Database
 SQLAlchemy==2.0.40
 aiosqlite==0.21.0
-asyncpg==0.29.0  # PostgreSQL async driver
-aiomysql==0.2.0  # MySQL async driver
+asyncpg==0.29.0
+aiomysql==0.2.0
 pymysql==1.1.1
 greenlet==3.1.1
-
-# Email and validation
 email_validator==2.2.0
 dnspython==2.7.0
-
-# Utilities
 click==8.1.8
 coloredlogs==15.0.1
 humanfriendly==10.0
@@ -67,22 +54,18 @@ itsdangerous==2.2.0
 jiter==0.9.0
 tqdm==4.67.1
 distro==1.9.0
-
-# Cryptography and security
 cryptography==44.0.2
 cffi==1.17.1
 pycparser==2.22
-
-# Production dependencies
-redis==4.6.0  # Downgraded from 5.0.1 for compatibility
-hiredis==3.2.1  # Redis C extensions for performance
-python-jose==3.3.0  # JWT support
+redis==4.6.0
+hiredis==3.2.1
+python-jose==3.3.0
 ecdsa==0.19.1
 pyasn1==0.6.1
 rsa==4.9.1
-passlib==1.7.4  # Password hashing
+passlib==1.7.4
 bcrypt==4.3.0
-celery==5.3.4  # Background tasks
+celery==5.3.4
 amqp==5.3.1
 billiard==4.2.1
 click-didyoumean==0.3.1
@@ -94,12 +77,10 @@ python-dateutil==2.9.0.post0
 tzdata==2025.2
 prompt-toolkit==3.0.51
 wcwidth==0.2.13
-sentry-sdk==2.0.0  # Error tracking
-prometheus-client==0.19.0  # Metrics
-orjson==3.10.0  # Fast JSON serialization
-gunicorn==22.0.0  # Production WSGI server
-uvloop==0.19.0  # Fast event loop
-httptools==0.6.1  # Fast HTTP parsing
-
-# Algorithm optimization dependencies
-aiofiles==23.2.1  # Async file operations
+sentry-sdk==2.0.0
+prometheus-client==0.19.0
+orjson==3.10.0
+gunicorn==22.0.0
+uvloop==0.19.0
+httptools==0.6.1
+aiofiles==23.2.1
