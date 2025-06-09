@@ -37,8 +37,9 @@ class HuggingFaceProvider(Provider):
                     "max_tokens": options.get("max_tokens", 20000),
                 }
             }
+            # Send the request to the Hugging Face Inference API
             response = requests.post(
-                f"https://router.huggingface.co/hf-inference/models/{self._model_name}",
+                f"{os.getenv('HF_INFERENCE_URL')}{self._model_name}",
                 headers=headers,
                 json=payload
             )

@@ -17,6 +17,7 @@ class Settings(BaseSettings):
 
     use_huggingface: bool = False 
     hf_api_key: Optional[str]
+    hf_inference_url: str = "https://router.huggingface.co/hf-inference/models/"
 
     model_config = SettingsConfigDict(
         env_file=os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, ".env"),
