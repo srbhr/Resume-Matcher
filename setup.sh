@@ -37,6 +37,7 @@ Options:
 
 This script will:
   • Verify required tools: node, npm, python3, pip3, uv
+  • Install Redis server (for caching)
   • Install Ollama & pull gemma3:4b model
   • Install root dependencies via npm ci
   • Bootstrap both root and backend .env files
@@ -106,6 +107,44 @@ if ! command -v uv &> /dev/null; then
 fi
 check_cmd uv
 success "All prerequisites satisfied."
+
+#–– Install Redis if on Linux ––#
+if [[ "$OS_TYPE" == "Linux" ]]; then
+  if ! command -v redis-server &> /dev/null; then
+    info "Redis not found; installing Redis server…"
+    if [[ -x "$(command -v apt-get)" ]]; then
+      sudo apt-get update && sudo apt-get install -y redis-server || error "Failed to install Redis"
+      sudo systemctl enable redis-server
+      sudo systemctl start redis-server
+    elif [[ -x "$(command -v yum)" ]]; then
+      sudo yum install -y redis || error "Failed to install Redis"
+      sudo systemctl enable redis
+      sudo systemctl start redis
+    else
+      info "Cannot auto-install Redis on this Linux distribution. Please install Redis manually."
+    fi
+    success "Redis installed and started"
+  else
+    info "Redis already installed—checking if running…"
+    if ! sudo systemctl is-active --quiet redis-server; then
+      sudo systemctl start redis-server
+      info "Started Redis service"
+    fi
+  fi
+elif [[ "$OS_TYPE" == "macOS" ]]; then
+  if ! command -v redis-server &> /dev/null; then
+    info "Redis not found; installing via Homebrew…"
+    brew install redis || error "Failed to install Redis via Homebrew"
+    brew services start redis
+    success "Redis installed and started"
+  else
+    info "Redis already installed—checking if running…"
+    if ! brew services list | grep redis | grep -q started; then
+      brew services start redis
+      info "Started Redis service"
+    fi
+  fi
+fi
 
 #–– 2. Ollama & model setup ––#
 info "Checking Ollama installation…"
