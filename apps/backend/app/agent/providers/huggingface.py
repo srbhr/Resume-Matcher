@@ -10,7 +10,7 @@ from sentence_transformers import SentenceTransformer
 
 
 class HuggingFaceProvider(Provider):  
-    def __init__(self, model_name: str = "mistralai/Mistral-7B-Instruct-v0.3"):
+    def __init__(self, model_name: str = "microsoft/Phi-3-mini-4k-instruct"):
         self._model_name = model_name
         self._api_key = os.getenv("HF_API_KEY")
         if not self._api_key:
