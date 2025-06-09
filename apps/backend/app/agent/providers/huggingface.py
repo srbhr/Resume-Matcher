@@ -15,11 +15,7 @@ class HuggingFaceProvider(Provider):
         self._api_key = os.getenv("HF_API_KEY")
         if not self._api_key:
             raise ProviderError("Hugging Face API key is missing")
-        # Initialize the OpenAI client with Hugging Face API endpoint
-        self._client = OpenAI(
-            base_url="https://api-inference.huggingface.co/models",
-            api_key=self._api_key,
-        )
+        
  
     async def __call__(self, prompt: str, **generation_args: Any) -> str:
         opts = {
@@ -38,7 +34,7 @@ class HuggingFaceProvider(Provider):
                 "parameters": {
                     "temperature": options.get("temperature", 0.7),
                     "top_p": options.get("top_p", 0.9),
-                    "max_new_tokens": options.get("max_tokens", 20000),
+                    "max_tokens": options.get("max_tokens", 20000),
                 }
             }
             response = requests.post(
@@ -47,13 +43,20 @@ class HuggingFaceProvider(Provider):
                 json=payload
             )
             response.raise_for_status()  # Raise an exception for 4XX/5XX responses
-            return response.json()[0]["generated_text"]
+            response_data = response.json()
+            if not response_data or not isinstance(response_data, list) or len(response_data) == 0:
+                raise ProviderError("Invalid response format from Hugging Face API")
+            if "generated_text" not in response_data[0]:
+                raise ProviderError("Missing 'generated_text' in Hugging Face API response")
+            return response_data[0]["generated_text"]
         except Exception as e:
             raise ProviderError(f"Hugging Face - error generating response: {e}") from e
 
 class HuggingFaceEmbeddingProvider(EmbeddingProvider):
     def __init__(self, api_key: str | None = None, embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"):
         self._api_key = api_key or os.getenv("HF_API_KEY")
+        if not self._api_key:
+            raise ProviderError("Hugging Face API key is missing")
         self._model = SentenceTransformer(embedding_model)
     
     async def embed(self, text: str) -> list[float]:

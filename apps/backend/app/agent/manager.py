@@ -38,7 +38,7 @@ class AgentManager:
             raise ProviderError(
                 f"Ollama Model '{model}' is not found. Run `ollama pull {model} or pick from any available models {installed_ollama_models}"
             )
-        return OllamaProvider(model_name=model, host="http://localhost:11434")
+        return OllamaProvider(model_name=model)
 
     async def run(self, prompt: str, **kwargs: Any) -> Dict[str, Any]:
         """
