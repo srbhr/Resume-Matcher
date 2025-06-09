@@ -15,6 +15,9 @@ class Settings(BaseSettings):
     DB_ECHO: bool = False
     PYTHONDONTWRITEBYTECODE: int = 1
 
+    use_huggingface: bool = False 
+    hf_api_key: Optional[str]
+
     model_config = SettingsConfigDict(
         env_file=os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, ".env"),
         env_file_encoding="utf-8",
