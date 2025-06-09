@@ -23,13 +23,32 @@ export async function improveResume(
     resumeId: string,
     jobId: string
 ): Promise<ImprovedResult> {
-    const res = await fetch(`${API_URL}/api/v1/resumes/improve`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resume_id: resumeId, job_id: jobId }),
-    });
-    if (!res.ok) throw new Error(`Improve failed with status ${res.status}`);
-    const data = await res.json();
+    let response: Response;
+    try {
+        response = await fetch(`${API_URL}/api/v1/resumes/improve`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ resume_id: resumeId, job_id: jobId }),
+        });
+    } catch (networkError) {
+        console.error('Network error during improveResume:', networkError);
+        throw networkError;
+    }
+
+    const text = await response.text();
+    if (!response.ok) {
+        console.error('Improve failed response body:', text);
+        throw new Error(`Improve failed with status ${response.status}: ${text}`);
+    }
+
+    let data: ImprovedResult;
+    try {
+        data = JSON.parse(text) as ImprovedResult;
+    } catch (parseError) {
+        console.error('Failed to parse improveResume response:', parseError, 'Raw response:', text);
+        throw parseError;
+    }
+
     console.log('Resume improvement response:', data);
-    return data as ImprovedResult;
+    return data;
 }
