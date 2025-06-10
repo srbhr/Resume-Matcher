@@ -74,7 +74,7 @@ scikit-learn==1.5.0
 scipy==1.11.1
 six==1.16.0
 smart-open==6.3.0
-smmap==5.0.0
+smmap==5.0.2
 soupsieve==2.4.1
 spacy==3.6.0
 spacy-legacy==3.0.12
