@@ -45,7 +45,7 @@ networkx==3.1
 nltk==3.9.1
 numpy==1.25.1
 packaging==23.1
-pandas==2.0.3
+pandas==2.3.0
 pathvalidate==3.2.0
 pathy==0.10.2
 Pillow==10.3.0
