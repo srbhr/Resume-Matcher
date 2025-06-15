@@ -2,7 +2,7 @@ import uuid
 import json
 import logging
 
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,6 +12,7 @@ from app.prompt import prompt_factory
 from app.schemas.json import json_schema_factory
 from app.models import Job, Resume, ProcessedJob
 from app.schemas.pydantic import StructuredJobModel
+from .exceptions import JobNotFoundError
 
 logger = logging.getLogger(__name__)
 
@@ -134,3 +135,56 @@ class JobService:
             logger.info(f"Validation error: {e}")
             return None
         return structured_job.model_dump(mode="json")
+
+    async def get_job_with_processed_data(self, job_id: str) -> Optional[Dict]:
+        """
+        Fetches both job and processed job data from the database and combines them.
+
+        Args:
+            job_id: The ID of the job to retrieve
+
+        Returns:
+            Combined data from both job and processed_job models
+
+        Raises:
+            JobNotFoundError: If the job is not found
+        """
+        job_query = select(Job).where(Job.job_id == job_id)
+        job_result = await self.db.execute(job_query)
+        job = job_result.scalars().first()
+
+        if not job:
+            raise JobNotFoundError(job_id=job_id)
+
+        processed_query = select(ProcessedJob).where(ProcessedJob.job_id == job_id)
+        processed_result = await self.db.execute(processed_query)
+        processed_job = processed_result.scalars().first()
+
+        combined_data = {
+            "job_id": job.job_id,
+            "raw_job": {
+                "id": job.id,
+                "resume_id": job.resume_id,
+                "content": job.content,
+                "created_at": job.created_at.isoformat() if job.created_at else None,
+            },
+            "processed_job": None
+        }
+
+        if processed_job:
+            combined_data["processed_job"] = {
+                "job_title": processed_job.job_title,
+                "company_profile": json.loads(processed_job.company_profile) if processed_job.company_profile else None,
+                "location": json.loads(processed_job.location) if processed_job.location else None,
+                "date_posted": processed_job.date_posted,
+                "employment_type": processed_job.employment_type,
+                "job_summary": processed_job.job_summary,
+                "key_responsibilities": json.loads(processed_job.key_responsibilities) if processed_job.key_responsibilities else None,
+                "qualifications": json.loads(processed_job.qualifications) if processed_job.qualifications else None,
+                "compensation_and_benfits": json.loads(processed_job.compensation_and_benfits) if processed_job.compensation_and_benfits else None,
+                "application_info": json.loads(processed_job.application_info) if processed_job.application_info else None,
+                "extracted_keywords": json.loads(processed_job.extracted_keywords) if processed_job.extracted_keywords else None,
+                "processed_at": processed_job.processed_at.isoformat() if processed_job.processed_at else None,
+            }
+
+        return combined_data
