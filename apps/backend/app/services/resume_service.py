@@ -174,7 +174,6 @@ class ResumeService:
         Raises:
             ResumeNotFoundError: If the resume is not found
         """
-        # Fetch resume data
         resume_query = select(Resume).where(Resume.resume_id == resume_id)
         resume_result = await self.db.execute(resume_query)
         resume = resume_result.scalars().first()
@@ -182,12 +181,10 @@ class ResumeService:
         if not resume:
             raise ResumeNotFoundError(resume_id=resume_id)
 
-        # Fetch processed resume data
         processed_query = select(ProcessedResume).where(ProcessedResume.resume_id == resume_id)
         processed_result = await self.db.execute(processed_query)
         processed_resume = processed_result.scalars().first()
 
-        # Combine the data
         combined_data = {
             "resume_id": resume.resume_id,
             "raw_resume": {
@@ -200,7 +197,6 @@ class ResumeService:
         }
 
         if processed_resume:
-            # Parse JSON fields back to dictionaries
             combined_data["processed_resume"] = {
                 "personal_data": json.loads(processed_resume.personal_data) if processed_resume.personal_data else None,
                 "experiences": json.loads(processed_resume.experiences) if processed_resume.experiences else None,
