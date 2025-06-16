@@ -6,13 +6,16 @@ import logging
 
 from markitdown import MarkItDown
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
 from pydantic import ValidationError
+from typing import Dict, Optional
 
 from app.models import Resume, ProcessedResume
 from app.agent import AgentManager
 from app.prompt import prompt_factory
 from app.schemas.json import json_schema_factory
 from app.schemas.pydantic import StructuredResumeModel
+from .exceptions import ResumeNotFoundError
 
 logger = logging.getLogger(__name__)
 
@@ -157,3 +160,53 @@ class ResumeService:
             logger.info(f"Validation error: {e}")
             return None
         return structured_resume.model_dump()
+
+    async def get_resume_with_processed_data(self, resume_id: str) -> Optional[Dict]:
+        """
+        Fetches both resume and processed resume data from the database and combines them.
+
+        Args:
+            resume_id: The ID of the resume to retrieve
+
+        Returns:
+            Combined data from both resume and processed_resume models
+
+        Raises:
+            ResumeNotFoundError: If the resume is not found
+        """
+        resume_query = select(Resume).where(Resume.resume_id == resume_id)
+        resume_result = await self.db.execute(resume_query)
+        resume = resume_result.scalars().first()
+
+        if not resume:
+            raise ResumeNotFoundError(resume_id=resume_id)
+
+        processed_query = select(ProcessedResume).where(ProcessedResume.resume_id == resume_id)
+        processed_result = await self.db.execute(processed_query)
+        processed_resume = processed_result.scalars().first()
+
+        combined_data = {
+            "resume_id": resume.resume_id,
+            "raw_resume": {
+                "id": resume.id,
+                "content": resume.content,
+                "content_type": resume.content_type,
+                "created_at": resume.created_at.isoformat() if resume.created_at else None,
+            },
+            "processed_resume": None
+        }
+
+        if processed_resume:
+            combined_data["processed_resume"] = {
+                "personal_data": json.loads(processed_resume.personal_data) if processed_resume.personal_data else None,
+                "experiences": json.loads(processed_resume.experiences).get("experiences", []) if processed_resume.experiences else None,
+                "projects": json.loads(processed_resume.projects).get("projects", []) if processed_resume.projects else None,
+                "skills": json.loads(processed_resume.skills).get("skills", []) if processed_resume.skills else None,
+                "research_work": json.loads(processed_resume.research_work).get("research_work", []) if processed_resume.research_work else None,
+                "achievements": json.loads(processed_resume.achievements).get("achievements", []) if processed_resume.achievements else None,
+                "education": json.loads(processed_resume.education).get("education", []) if processed_resume.education else None,
+                "extracted_keywords": json.loads(processed_resume.extracted_keywords).get("extracted_keywords", []) if processed_resume.extracted_keywords else None,
+                "processed_at": processed_resume.processed_at.isoformat() if processed_resume.processed_at else None,
+            }
+
+        return combined_data
