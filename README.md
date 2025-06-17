@@ -27,6 +27,11 @@ Hoping to make this, **VS Code for making resumes**.
 
 </div>
 
+> \[!IMPORTANT]
+>
+> This project is in active development. New features are being added continuously, and we welcome contributions from the community. There are some breaking changes on the `main` branch. If you have any suggestions or feature requests, please feel free to open an issue on GitHub or discuss it on our [Discord](https://dsc.gg/resume-matcher) server.
+
+
 ## Getting started with Resume Matcher
 
 Resume Matcher is designed to help you optimize your resume with the aim to highlight your skills and experience in a way that resonates with potential employers.
