@@ -1,5 +1,6 @@
 import JobDescriptionUploadTextArea from '@/components/jd-upload/text-area';
 import BackgroundContainer from '@/components/common/background-container';
+import { Suspense } from 'react';
 
 const ProvideJobDescriptionsPage = () => {
 	return (
@@ -12,7 +13,9 @@ const ProvideJobDescriptionsPage = () => {
 					Paste up to three job descriptions below. We&apos;ll use these to compare
 					against your resume and find the best matches.
 				</p>
-				<JobDescriptionUploadTextArea />
+				<Suspense fallback={<div>Loading input...</div>}>
+					<JobDescriptionUploadTextArea />
+				</Suspense>
 			</div>
 		</BackgroundContainer>
 	);
