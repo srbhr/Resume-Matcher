@@ -1,0 +1,41 @@
+services:
+  backend:
+    build:
+      context: ./apps/backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./apps/backend:/app
+    environment:
+      - ASYNC_DATABASE_URL=sqlite+aiosqlite:///app.db
+      - SYNC_DATABASE_URL=sqlite:///db.sqlite3
+      - SESSION_SECRET_KEY=a-secret-key
+      - PYTHONDONTWRITEBYTECODE=1
+      - OPENAI_API_KEY=OPENAI_API_KEY
+    networks:
+      - resume-matcher-network
+
+  frontend:
+    build:
+      context: ./apps/frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./apps/frontend:/app
+      - /app/node_modules
+      - /app/.next
+    environment:
+      - NEXT_PUBLIC_API_URL=http://backend:8000
+    depends_on:
+      - backend
+    networks:
+      - resume-matcher-network
+
+volumes:
+  ollama_data:
+
+networks:
+  resume-matcher-network:
+    driver: bridge 

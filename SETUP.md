@@ -131,6 +131,35 @@ You can customize any variables in these files before or after bootstrapping.
 
 ---
 
+## 🐳 Docker Setup
+
+For a containerized setup, you can use the provided Docker Compose configuration.
+
+### Prerequisites
+
+- **Docker**
+- **Docker Compose**
+
+### Running with Docker
+
+1. **Build and start the containers:**
+
+   ```bash
+   docker-compose up --build
+   ```
+
+2. **Accessing the services:**
+   - **Frontend:** [http://localhost:3000](http://localhost:3000)
+   - **Backend API:** [http://localhost:8000/api/docs](http://localhost:8000/api/docs)
+
+3. **Stopping the containers:**
+
+   ```bash
+   docker-compose down
+   ```
+
+---
+
 ## 🐞 Troubleshooting
 
 - **`permission denied`** on `setup.sh`:
