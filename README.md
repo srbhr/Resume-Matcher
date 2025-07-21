@@ -79,8 +79,6 @@ The project is built using:
 - Tailwind CSS for styling.
 - SQLite for the database.
 
-create a markdown table
-
 | Technology   | Info/Version                               |
 |--------------|---------------------------------------|
 | Python      | 3.12+                   |
