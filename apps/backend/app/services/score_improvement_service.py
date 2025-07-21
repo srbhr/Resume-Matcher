@@ -26,6 +26,27 @@ logger = logging.getLogger(__name__)
 
 
 class ScoreImprovementService:
+    async def get_resume_analysis(self, resume: str, job: str, extracted_job_keywords: str) -> Dict:
+
+        from app.prompt import resume_analysis
+        prompt_template = resume_analysis.PROMPT
+        prompt = prompt_template.format(
+            job_description=job,
+            extracted_job_keywords=extracted_job_keywords,
+            resume=resume,
+        )
+        logger.info(f"Resume Analysis Prompt: {prompt}")
+        raw_output = await self.json_agent_manager.run(prompt=prompt)
+        logger.info(f"Resume analysis LLM raw output: {raw_output}")
+        try:
+            if isinstance(raw_output, dict):
+                analysis = raw_output
+            else:
+                analysis = json.loads(raw_output)
+        except Exception as e:
+            logger.info(f"Resume analysis LLM output parse error: {e}")
+            analysis = {"details": "", "commentary": "", "improvements": []}
+        return analysis
     """
     Service to handle scoring of resumes and jobs using embeddings.
     Fetches Resume and Job data from the database, computes embeddings,
@@ -58,7 +79,7 @@ class ScoreImprovementService:
         processed_resume = result.scalars().first()
 
         if not processed_resume:
-            ResumeParsingError(resume_id=resume_id)
+            raise ResumeParsingError(resume_id=resume_id)
 
         return resume, processed_resume
 
@@ -78,7 +99,7 @@ class ScoreImprovementService:
         processed_job = result.scalars().first()
 
         if not processed_job:
-            JobParsingError(job_id=job_id)
+            raise JobParsingError(job_id=job_id)
 
         return job, processed_job
 
@@ -201,7 +222,16 @@ class ScoreImprovementService:
             updated_resume=updated_resume
         )
 
+        analysis = await self.get_resume_analysis(
+            resume=updated_resume,
+            job=job.content,
+            extracted_job_keywords=extracted_job_keywords,
+        )
+
         logger.info(f"Resume Preview: {resume_preview}")
+        logger.info(f"Resume Analysis Details: {analysis.get('details', '')}")
+        logger.info(f"Resume Analysis Commentary: {analysis.get('commentary', '')}")
+        logger.info(f"Resume Analysis Improvements: {analysis.get('improvements', [])}")
 
         execution = {
             "resume_id": resume_id,
@@ -210,6 +240,9 @@ class ScoreImprovementService:
             "new_score": updated_score,
             "updated_resume": markdown.markdown(text=updated_resume),
             "resume_preview": resume_preview,
+            "details": analysis.get("details", ""),
+            "commentary": analysis.get("commentary", ""),
+            "improvements": analysis.get("improvements", []),
         }
 
         gc.collect()
