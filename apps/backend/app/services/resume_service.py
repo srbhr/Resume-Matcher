@@ -129,8 +129,6 @@ class ResumeService:
             else None,
             extracted_keywords=json.dumps(
                 {"extracted_keywords": structured_resume.get("extracted_keywords", [])}
-                if structured_resume.get("extracted_keywords")
-                else None
             ),
         )
 

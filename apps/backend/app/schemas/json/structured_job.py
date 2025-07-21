@@ -42,7 +42,7 @@ SCHEMA = {
         "applyLink": "string",
         "contactEmail": "Optional[string]",
     },
-    "extractedKeywords": [
+    "extracted_keywords": [
         "string",
         "...",
     ],

@@ -94,7 +94,7 @@ class StructuredJobModel(BaseModel):
         None, alias="compensationAndBenefits"
     )
     application_info: Optional[ApplicationInfo] = Field(None, alias="applicationInfo")
-    extracted_keywords: List[str] = Field(..., alias="extractedKeywords")
+    extracted_keywords: List[str] = Field(...)
 
     class ConfigDict:
         validate_by_name = True
