@@ -8,6 +8,18 @@ This document provides cross-platform instructions to get the project up and run
 
 ## 🚀 Quickstart
 
+### For Windows (PowerShell)
+
+```powershell
+# 1. Run the PowerShell setup script
+.\setup.ps1
+
+# 2. (Optional) Start the development server
+.\setup.ps1 -StartDev
+```
+
+### For Linux/macOS (Bash)
+
 ```bash
 # 1. Make the scripts executable
 chmod +x setup.sh
@@ -26,22 +38,46 @@ make run-dev
 
 ## 🛠️ Prerequisites
 
-Before running `setup.sh`, ensure you have:
+### Windows
+- **PowerShell** 5.1 or later
+- **Node.js** ≥ v18 (includes `npm`)
+- **Python** ≥ 3.8 (`python3`, `pip3`)
+- **winget** (recommended for Ollama installation)
+- **uv** (will be auto-installed by setup.ps1 if missing)
 
+### Linux/macOS
 - **Bash** 4.4 or higher
 - **Node.js** ≥ v18 (includes `npm`)
 - **Python** ≥ 3.8 (`python3`, `pip3`)
 - **curl** (for installing uv & Ollama)
 - **make** (for Makefile integration)
 
-On **macOS**, you can install missing tools via Homebrew:
+### Installing Prerequisites
+
+**On Windows:**
+You can install missing tools via Windows Package Manager (winget) or manual downloads:
+
+```powershell
+# Install Node.js via winget
+winget install OpenJS.NodeJS
+
+# Install Python via winget
+winget install Python.Python.3.12
+```
+
+**Or download manually from official sites:**
+- **Node.js**: Download from [https://nodejs.org/](https://nodejs.org/) (LTS version recommended)
+- **Python**: Download from [https://www.python.org/downloads/](https://www.python.org/downloads/) (v3.8+ required)
+- **Ollama**: Script will try to automatically install Ollama if it failed, Download from [https://ollama.com/download/windows](https://ollama.com/download/windows)
+
+**On macOS**, you can install missing tools via Homebrew:
 
 ```bash
 brew update
 brew install node python3 curl make
 ```
 
-On **Linux** (Debian/Ubuntu):
+**On Linux** (Debian/Ubuntu):
 
 ```bash
 sudo apt update && sudo apt install -y bash nodejs npm python3 python3-pip curl make
@@ -73,6 +109,45 @@ You can customize any variables in these files before or after bootstrapping.
 ---
 
 ## 📦 Installation Steps
+
+### Windows Installation
+
+1. **Clone the repository**
+
+   ```powershell
+   git clone https://github.com/srbhr/Resume-Matcher.git
+   cd Resume-Matcher
+   ```
+
+2. **Run PowerShell setup**
+
+   ```powershell
+   .\setup.ps1
+   ```
+
+   This will:
+
+   - Verify/install prerequisites (`node`, `npm`, `python3`, `pip3`, `uv`)
+   - Install Ollama via winget (if not present)
+   - Pull the `gemma3:4b` model via Ollama
+   - Bootstrap root & backend `.env` files
+   - Install Node.js deps (`npm ci`) at root and frontend
+   - Sync Python deps in `apps/backend` via `uv sync`
+
+3. **(Optional) Start development**
+
+   ```powershell
+   .\setup.ps1 -StartDev
+   ```
+
+   Press `Ctrl+C` to gracefully shut down.
+
+4. **Build for production**
+   ```powershell
+   npm run build
+   ```
+
+### Linux/macOS Installation
 
 1. **Clone the repository**
 
@@ -121,7 +196,17 @@ You can customize any variables in these files before or after bootstrapping.
 
 ---
 
-## 🔨 Makefile Targets
+## 🔨 Available Commands
+
+### PowerShell Commands (Windows)
+
+- **`.\setup.ps1`** — Run complete setup process
+- **`.\setup.ps1 -StartDev`** — Setup and start development server
+- **`.\setup.ps1 -Help`** — Show PowerShell script help
+- **`npm run dev`** — Start development server
+- **`npm run build`** — Build for production
+
+### Makefile Targets (Linux/macOS)
 
 - **`make help`** — Show available targets
 - **`make setup`** — Run `setup.sh`
@@ -132,6 +217,26 @@ You can customize any variables in these files before or after bootstrapping.
 ---
 
 ## 🐞 Troubleshooting
+
+### Windows-specific Issues
+
+- **`Execution of scripts is disabled on this system`**:
+
+  - Run `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser` in PowerShell as Administrator.
+
+- **`winget: command not found`**:
+
+  - Install App Installer from Microsoft Store or update Windows 10/11.
+
+- **`Ollama installation failed`**:
+
+  - Download and install manually from [https://ollama.com/download/windows](https://ollama.com/download/windows).
+
+- **`uv: command not found`** after installation:
+
+  - Restart your PowerShell terminal and try again.
+
+### Cross-platform Issues
 
 - **`permission denied`** on `setup.sh`:
 
