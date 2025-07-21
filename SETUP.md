@@ -110,6 +110,17 @@ You can customize any variables in these files before or after bootstrapping.
 
 ## 📦 Installation Steps
 
+ Note: Before You Run `setup.sh`
+ 
+ Make sure that [Ollama](https://ollama.com/) is not only installed but also running.
+ You can start the Ollama server manually by running:
+
+ ```bash
+ ollama serve
+ ```
+
+ If Ollama is not running, the script may fail to pull the required model (`gemma3:4b`).
+ 
 ### Windows Installation
 
 1. **Clone the repository**
