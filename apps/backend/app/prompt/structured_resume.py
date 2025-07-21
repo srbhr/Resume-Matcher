@@ -5,6 +5,7 @@ You are a JSON extraction engine. Convert the following resume text into precise
 - User "Present" if an end date is ongoing.
 - Make sure dates are in YYYY-MM-DD.
 - Do not format the response in Markdown or any other format. Just output raw JSON.
+- Extract keywords from the resume and include them in the "Extracted Keywords" field.
 
 Schema:
 ```json
