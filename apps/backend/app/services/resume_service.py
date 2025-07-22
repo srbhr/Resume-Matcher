@@ -25,6 +25,29 @@ class ResumeService:
         self.db = db
         self.md = MarkItDown(enable_plugins=False)
         self.json_agent_manager = AgentManager(model="gemma3:4b")
+        
+        # Validate dependencies for DOCX processing
+        self._validate_docx_dependencies()
+
+    def _validate_docx_dependencies(self):
+        """Validate that required dependencies for DOCX processing are available"""
+        missing_deps = []
+        
+        try:
+            import docx
+        except ImportError:
+            missing_deps.append("python-docx==1.1.2")
+            
+        try:
+            import lxml
+        except ImportError:
+            missing_deps.append("lxml==5.4.0")
+        
+        if missing_deps:
+            logger.warning(
+                f"Missing dependencies for DOCX processing: {', '.join(missing_deps)}. "
+                f"DOCX file processing may fail. Install with: pip install {' '.join(missing_deps)}"
+            )
 
     async def convert_and_store_resume(
         self, file_bytes: bytes, file_type: str, filename: str, content_type: str = "md"
@@ -48,8 +71,25 @@ class ResumeService:
             temp_path = temp_file.name
 
         try:
-            result = self.md.convert(temp_path)
-            text_content = result.text_content
+            try:
+                result = self.md.convert(temp_path)
+                text_content = result.text_content
+            except Exception as e:
+                # Handle specific markitdown conversion errors
+                error_msg = str(e)
+                if "MissingDependencyException" in error_msg or "DocxConverter" in error_msg:
+                    raise Exception(
+                        "File conversion failed: Missing dependencies for DOCX processing. "
+                        "Please install python-docx package or contact system administrator."
+                    )
+                elif "docx" in error_msg.lower():
+                    raise Exception(
+                        f"DOCX file processing failed: {error_msg}. "
+                        "Please ensure the file is a valid DOCX document."
+                    )
+                else:
+                    raise Exception(f"File conversion failed: {error_msg}")
+            
             resume_id = await self._store_resume_in_db(text_content, content_type)
 
             await self._extract_and_store_structured_resume(
