@@ -36,7 +36,7 @@ class ResumeService:
         try:
             import docx
         except ImportError:
-            missing_deps.append("python-docx==1.1.2")
+            missing_deps.append("python-docx==1.2.0")
             
         try:
             import lxml
@@ -81,14 +81,14 @@ class ResumeService:
                     raise Exception(
                         "File conversion failed: Missing dependencies for DOCX processing. "
                         "Please install python-docx package or contact system administrator."
-                    )
+                    ) from e
                 elif "docx" in error_msg.lower():
                     raise Exception(
                         f"DOCX file processing failed: {error_msg}. "
                         "Please ensure the file is a valid DOCX document."
-                    )
+                    ) from e
                 else:
-                    raise Exception(f"File conversion failed: {error_msg}")
+                    raise Exception(f"File conversion failed: {error_msg}") from e
             
             resume_id = await self._store_resume_in_db(text_content, content_type)
 

@@ -13,7 +13,7 @@ The issue was caused by missing dependencies required for DOCX file processing. 
 ## Solution
 Added the missing dependencies to both `requirements.txt` and `pyproject.toml`:
 
-1. **python-docx==1.1.2** - Library for reading and writing DOCX files
+1. **python-docx==1.2.0** - Library for reading and writing DOCX files
 2. **lxml==5.4.0** - XML processing library required by python-docx
 
 ## Changes Made
@@ -21,7 +21,7 @@ Added the missing dependencies to both `requirements.txt` and `pyproject.toml`:
 ### 1. Updated requirements.txt
 Added the following dependencies:
 ```
-python-docx==1.1.2
+python-docx==1.2.0
 lxml==5.4.0
 ```
 

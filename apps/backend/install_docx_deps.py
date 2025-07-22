@@ -13,7 +13,7 @@ def install_dependencies():
     print("Installing missing dependencies for DOCX processing...")
     
     dependencies = [
-        "python-docx==1.1.2",
+        "python-docx==1.2.0",
         "lxml==5.4.0"
     ]
     
@@ -49,7 +49,7 @@ def main():
     else:
         print("\nSome dependencies failed to install.")
         print("Please check the error messages above and try installing manually:")
-        print("  pip install python-docx==1.1.2 lxml==5.4.0")
+        print("  pip install python-docx==1.2.0 lxml==5.4.0")
         sys.exit(1)
 
 if __name__ == "__main__":
