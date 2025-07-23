@@ -127,9 +127,35 @@ class JobService:
         logger.info(f"Structured Job Prompt: {prompt}")
         raw_output = await self.json_agent_manager.run(prompt=prompt)
 
+        patched_output = dict(raw_output)
+        
+        # Handle location.remoteStatus
+        try:
+            loc = patched_output.get("location", {})
+            remote_status = loc.get("remoteStatus")
+            valid_remote = [
+                "Fully Remote", "Hybrid", "On-site", "Remote", "Not Specified"
+            ]
+            if not remote_status or str(remote_status).strip() not in valid_remote:
+                loc["remoteStatus"] = "On-site"
+            patched_output["location"] = loc
+        except Exception as e:
+            logger.warning(f"Failed to patch remoteStatus: {e}")
+            if "location" in patched_output:
+                patched_output["location"]["remoteStatus"] = "On-site"
+            else:
+                patched_output["location"] = {"remoteStatus": "On-site"}
+
+        employment_type = patched_output.get("employmentType")
+        valid_employment = [
+            "Full-time", "Part-time", "Contract", "Internship", "Temporary", "Not Specified"
+        ]
+        if not employment_type or str(employment_type).strip() not in valid_employment:
+            patched_output["employmentType"] = "Not Specified"
+
         try:
             structured_job: StructuredJobModel = StructuredJobModel.model_validate(
-                raw_output
+                patched_output
             )
         except ValidationError as e:
             logger.info(f"Validation error: {e}")
