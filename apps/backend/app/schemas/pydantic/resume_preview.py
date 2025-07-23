@@ -26,13 +26,13 @@ class EducationItem(BaseModel):
     id: int
     institution: str
     degree: str
-    years: str
+    years: Optional[str] = None
     description: Optional[str] = None
 
 
 class ResumePreviewerModel(BaseModel):
     personalInfo: PersonalInfo
-    summary: str
+    summary: Optional[str] = None
     experience: List[ExperienceItem]
     education: List[EducationItem]
     skills: List[str]

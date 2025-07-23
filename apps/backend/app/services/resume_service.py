@@ -181,7 +181,9 @@ class ResumeService:
         if not resume:
             raise ResumeNotFoundError(resume_id=resume_id)
 
-        processed_query = select(ProcessedResume).where(ProcessedResume.resume_id == resume_id)
+        processed_query = select(ProcessedResume).where(
+            ProcessedResume.resume_id == resume_id
+        )
         processed_result = await self.db.execute(processed_query)
         processed_resume = processed_result.scalars().first()
 
@@ -191,22 +193,50 @@ class ResumeService:
                 "id": resume.id,
                 "content": resume.content,
                 "content_type": resume.content_type,
-                "created_at": resume.created_at.isoformat() if resume.created_at else None,
+                "created_at": resume.created_at.isoformat()
+                if resume.created_at
+                else None,
             },
-            "processed_resume": None
+            "processed_resume": None,
         }
 
         if processed_resume:
             combined_data["processed_resume"] = {
-                "personal_data": json.loads(processed_resume.personal_data) if processed_resume.personal_data else None,
-                "experiences": json.loads(processed_resume.experiences).get("experiences", []) if processed_resume.experiences else None,
-                "projects": json.loads(processed_resume.projects).get("projects", []) if processed_resume.projects else None,
-                "skills": json.loads(processed_resume.skills).get("skills", []) if processed_resume.skills else None,
-                "research_work": json.loads(processed_resume.research_work).get("research_work", []) if processed_resume.research_work else None,
-                "achievements": json.loads(processed_resume.achievements).get("achievements", []) if processed_resume.achievements else None,
-                "education": json.loads(processed_resume.education).get("education", []) if processed_resume.education else None,
-                "extracted_keywords": json.loads(processed_resume.extracted_keywords).get("extracted_keywords", []) if processed_resume.extracted_keywords else None,
-                "processed_at": processed_resume.processed_at.isoformat() if processed_resume.processed_at else None,
+                "personal_data": json.loads(processed_resume.personal_data)
+                if processed_resume.personal_data
+                else None,
+                "experiences": json.loads(processed_resume.experiences).get(
+                    "experiences", []
+                )
+                if processed_resume.experiences
+                else None,
+                "projects": json.loads(processed_resume.projects).get("projects", [])
+                if processed_resume.projects
+                else [],
+                "skills": json.loads(processed_resume.skills).get("skills", [])
+                if processed_resume.skills
+                else [],
+                "research_work": json.loads(processed_resume.research_work).get(
+                    "research_work", []
+                )
+                if processed_resume.research_work
+                else [],
+                "achievements": json.loads(processed_resume.achievements).get(
+                    "achievements", []
+                )
+                if processed_resume.achievements
+                else [],
+                "education": json.loads(processed_resume.education).get("education", [])
+                if processed_resume.education
+                else [],
+                "extracted_keywords": json.loads(
+                    processed_resume.extracted_keywords
+                ).get("extracted_keywords", [])
+                if processed_resume.extracted_keywords
+                else [],
+                "processed_at": processed_resume.processed_at.isoformat()
+                if processed_resume.processed_at
+                else None,
             }
 
         return combined_data

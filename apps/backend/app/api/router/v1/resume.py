@@ -22,6 +22,9 @@ from app.services import (
     ResumeNotFoundError,
     ResumeParsingError,
     JobNotFoundError,
+    JobParsingError,
+    ResumeKeywordExtractionError,
+    JobKeywordExtractionError,
 )
 from app.schemas.pydantic import ResumeImprovementRequest
 
@@ -161,6 +164,24 @@ async def score_and_improve(
         logger.error(str(e))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e),
+        )
+    except JobParsingError as e:
+        logger.error(str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e),
+        )
+    except ResumeKeywordExtractionError as e:
+        logger.warning(str(e))
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(e),
+        )
+    except JobKeywordExtractionError as e:
+        logger.warning(str(e))
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=str(e),
         )
     except Exception as e:

@@ -18,7 +18,7 @@ export interface ExperienceEntry {
     title: string;
     company: string;
     location?: string;
-    years: string;
+    years?: string;
     description: string[];
 }
 
@@ -26,13 +26,13 @@ export interface EducationEntry {
     id: number;
     institution: string;
     degree: string;
-    years: string;
+    years?: string;
     description?: string;
 }
 
 export interface ResumePreview {
     personalInfo: PersonalInfo;
-    summary: string;
+    summary?: string;
     experience: ExperienceEntry[];
     education: EducationEntry[];
     skills: string[];

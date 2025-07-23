@@ -44,9 +44,9 @@ class Skill(BaseModel):
 
 
 class ResearchWork(BaseModel):
-    title: str
-    publication: str
-    date: str
+    title: Optional[str] = None
+    publication: Optional[str] = None
+    date: Optional[str] = None
     link: Optional[str] = None
     description: Optional[str] = None
 

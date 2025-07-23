@@ -64,4 +64,32 @@ class JobParsingError(Exception):
         elif not message:
             message = "Parsed job not found."
         super().__init__(message)
-        self.resume_id = job_id
+        self.job_id = job_id
+
+
+class ResumeKeywordExtractionError(Exception):
+    """
+    Exception raised when keyword extraction from resume failed or no keywords were extracted.
+    """
+
+    def __init__(self, resume_id: Optional[str] = None, message: Optional[str] = None):
+        if resume_id and not message:
+            message = f"Keyword extraction failed for resume with ID {resume_id}. Cannot proceed with resume improvement without extracted keywords."
+        elif not message:
+            message = "Resume keyword extraction failed. Cannot improve resume without keywords."
+        super().__init__(message)
+        self.resume_id = resume_id
+
+
+class JobKeywordExtractionError(Exception):
+    """
+    Exception raised when keyword extraction from job failed or no keywords were extracted.
+    """
+
+    def __init__(self, job_id: Optional[str] = None, message: Optional[str] = None):
+        if job_id and not message:
+            message = f"Keyword extraction failed for job with ID {job_id}. Cannot proceed with resume improvement without job keywords."
+        elif not message:
+            message = "Job keyword extraction failed. Cannot improve resume without job requirements."
+        super().__init__(message)
+        self.job_id = job_id

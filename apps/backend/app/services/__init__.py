@@ -6,6 +6,8 @@ from .exceptions import (
     ResumeParsingError,
     JobNotFoundError,
     JobParsingError,
+    ResumeKeywordExtractionError,
+    JobKeywordExtractionError,
 )
 
 __all__ = [
@@ -15,5 +17,7 @@ __all__ = [
     "JobNotFoundError",
     "ResumeParsingError",
     "ResumeNotFoundError",
+    "ResumeKeywordExtractionError",
+    "JobKeywordExtractionError",
     "ScoreImprovementService",
 ]
