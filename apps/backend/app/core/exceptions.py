@@ -27,9 +27,19 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 async def unhandled_exception_handler(request: Request, exc: Exception):
     request_id = getattr(request.state, "request_id", "")
+    
+    # Log the full exception details for debugging
+    logger.error(
+        f"Unhandled exception for request {request_id} to {request.url}: {exc.__class__.__name__}: {str(exc)}",
+        exc_info=True
+    )
+    
     return JSONResponse(
         status_code=HTTP_500_INTERNAL_SERVER_ERROR,
-        content={"detail": "Internal Server Error", "request_id": request_id},
+        content={
+            "detail": "An internal error occurred. Please try again later.", 
+            "request_id": request_id
+        },
     )
 
 

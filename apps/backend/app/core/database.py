@@ -20,13 +20,14 @@ from ..models.base import Base
 class _DatabaseSettings:
     """Pulled from environment once at import-time."""
 
-    SYNC_DATABASE_URL: str = settings.SYNC_DATABASE_URL
-    ASYNC_DATABASE_URL: str = settings.ASYNC_DATABASE_URL
-    DB_ECHO: bool = settings.DB_ECHO
-
-    DB_CONNECT_ARGS = (
-        {"check_same_thread": False} if SYNC_DATABASE_URL.startswith("sqlite") else {}
-    )
+    def __init__(self):
+        self.SYNC_DATABASE_URL: str = settings.SYNC_DATABASE_URL
+        self.ASYNC_DATABASE_URL: str = settings.ASYNC_DATABASE_URL
+        self.DB_ECHO: bool = settings.DB_ECHO
+        
+        self.DB_CONNECT_ARGS = (
+            {"check_same_thread": False} if self.SYNC_DATABASE_URL.startswith("sqlite") else {}
+        )
 
 
 settings = _DatabaseSettings()

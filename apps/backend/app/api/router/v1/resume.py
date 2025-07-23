@@ -156,27 +156,27 @@ async def score_and_improve(
                 headers=headers,
             )
     except ResumeNotFoundError as e:
-        logger.error(str(e))
+        logger.warning(f"Resume not found: {str(e)}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
     except JobNotFoundError as e:
-        logger.error(str(e))
+        logger.warning(f"Job not found: {str(e)}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
     except ResumeParsingError as e:
-        logger.error(str(e))
+        logger.error(f"Resume parsing error: {str(e)}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=str(e),
         )
     except JobParsingError as e:
-        logger.error(str(e))
+        logger.error(f"Job parsing error: {str(e)}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=str(e),
         )
     except ResumeKeywordExtractionError as e:
