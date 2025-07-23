@@ -29,14 +29,29 @@ class JobNotFoundError(Exception):
         self.job_id = job_id
 
 
-class EmbeddingError(Exception):
+class ResumeValidationError(Exception):
     """
-    Exception raised when there is an error in embedding.
+    Exception raised when structured resume validation fails.
     """
 
-    def __init__(self, message: str = None):
+    def __init__(
+        self,
+        resume_id: Optional[str] = None,
+        validation_error: Optional[str] = None,
+        message: Optional[str] = None,
+    ):
+        if message:
+            # we can use custom message if provided
+            pass
+        elif validation_error:
+            message = f"Resume parsing failed: {validation_error}. Please ensure your resume contains all required information with proper formatting."
+        elif resume_id:
+            message = f"Resume with ID {resume_id} failed validation during structured parsing."
+        else:
+            message = "Resume validation failed during structured parsing."
         super().__init__(message)
-        self.message = message
+        self.resume_id = resume_id
+        self.validation_error = validation_error
 
 
 class ResumeParsingError(Exception):

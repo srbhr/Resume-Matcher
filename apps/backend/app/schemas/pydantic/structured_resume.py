@@ -54,7 +54,7 @@ class ResearchWork(BaseModel):
 class Education(BaseModel):
     institution: str
     degree: str
-    field_of_study: str = Field(..., alias="fieldOfStudy")
+    field_of_study: Optional[str] = Field(None, alias="fieldOfStudy")
     start_date: str = Field(..., alias="startDate")
     end_date: str = Field(..., alias="endDate")
     grade: Optional[str] = None

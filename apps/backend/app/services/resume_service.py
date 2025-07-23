@@ -15,7 +15,7 @@ from app.agent import AgentManager
 from app.prompt import prompt_factory
 from app.schemas.json import json_schema_factory
 from app.schemas.pydantic import StructuredResumeModel
-from .exceptions import ResumeNotFoundError
+from .exceptions import ResumeNotFoundError, ResumeValidationError
 
 logger = logging.getLogger(__name__)
 
@@ -93,49 +93,68 @@ class ResumeService:
         """
         extract and store structured resume data in the database
         """
-        structured_resume = await self._extract_structured_json(resume_text)
-        if not structured_resume:
-            logger.info("Structured resume extraction failed.")
-            return None
+        try:
+            structured_resume = await self._extract_structured_json(resume_text)
+            if not structured_resume:
+                logger.error("Structured resume extraction returned None.")
+                raise ResumeValidationError(
+                    resume_id=resume_id,
+                    message="Failed to extract structured data from resume. Please ensure your resume contains all required sections.",
+                )
 
-        processed_resume = ProcessedResume(
-            resume_id=resume_id,
-            personal_data=json.dumps(structured_resume.get("personal_data", {}))
-            if structured_resume.get("personal_data")
-            else None,
-            experiences=json.dumps(
-                {"experiences": structured_resume.get("experiences", [])}
+            processed_resume = ProcessedResume(
+                resume_id=resume_id,
+                personal_data=json.dumps(structured_resume.get("personal_data", {}))
+                if structured_resume.get("personal_data")
+                else None,
+                experiences=json.dumps(
+                    {"experiences": structured_resume.get("experiences", [])}
+                )
+                if structured_resume.get("experiences")
+                else None,
+                projects=json.dumps({"projects": structured_resume.get("projects", [])})
+                if structured_resume.get("projects")
+                else None,
+                skills=json.dumps({"skills": structured_resume.get("skills", [])})
+                if structured_resume.get("skills")
+                else None,
+                research_work=json.dumps(
+                    {"research_work": structured_resume.get("research_work", [])}
+                )
+                if structured_resume.get("research_work")
+                else None,
+                achievements=json.dumps(
+                    {"achievements": structured_resume.get("achievements", [])}
+                )
+                if structured_resume.get("achievements")
+                else None,
+                education=json.dumps(
+                    {"education": structured_resume.get("education", [])}
+                )
+                if structured_resume.get("education")
+                else None,
+                extracted_keywords=json.dumps(
+                    {
+                        "extracted_keywords": structured_resume.get(
+                            "extracted_keywords", []
+                        )
+                    }
+                    if structured_resume.get("extracted_keywords")
+                    else None
+                ),
             )
-            if structured_resume.get("experiences")
-            else None,
-            projects=json.dumps({"projects": structured_resume.get("projects", [])})
-            if structured_resume.get("projects")
-            else None,
-            skills=json.dumps({"skills": structured_resume.get("skills", [])})
-            if structured_resume.get("skills")
-            else None,
-            research_work=json.dumps(
-                {"research_work": structured_resume.get("research_work", [])}
-            )
-            if structured_resume.get("research_work")
-            else None,
-            achievements=json.dumps(
-                {"achievements": structured_resume.get("achievements", [])}
-            )
-            if structured_resume.get("achievements")
-            else None,
-            education=json.dumps({"education": structured_resume.get("education", [])})
-            if structured_resume.get("education")
-            else None,
-            extracted_keywords=json.dumps(
-                {"extracted_keywords": structured_resume.get("extracted_keywords", [])}
-                if structured_resume.get("extracted_keywords")
-                else None
-            ),
-        )
 
-        self.db.add(processed_resume)
-        await self.db.commit()
+            self.db.add(processed_resume)
+            await self.db.commit()
+        except ResumeValidationError:
+            # Re-raise validation errors to propagate to the upload endpoint
+            raise
+        except Exception as e:
+            logger.error(f"Error storing structured resume: {str(e)}")
+            raise ResumeValidationError(
+                resume_id=resume_id,
+                message=f"Failed to store structured resume data: {str(e)}",
+            )
 
     async def _extract_structured_json(
         self, resume_text: str
@@ -158,7 +177,18 @@ class ResumeService:
             )
         except ValidationError as e:
             logger.info(f"Validation error: {e}")
-            return None
+            error_details = []
+            for error in e.errors():
+                field = " -> ".join(str(loc) for loc in error["loc"])
+                error_details.append(f"{field}: {error['msg']}")
+
+            user_friendly_message = "Resume validation failed. " + "; ".join(
+                error_details
+            )
+            raise ResumeValidationError(
+                validation_error=user_friendly_message,
+                message=f"Resume structure validation failed: {user_friendly_message}",
+            )
         return structured_resume.model_dump()
 
     async def get_resume_with_processed_data(self, resume_id: str) -> Optional[Dict]:

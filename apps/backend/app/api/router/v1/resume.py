@@ -21,6 +21,7 @@ from app.services import (
     ScoreImprovementService,
     ResumeNotFoundError,
     ResumeParsingError,
+    ResumeValidationError,
     JobNotFoundError,
     JobParsingError,
     ResumeKeywordExtractionError,
@@ -74,6 +75,12 @@ async def upload_resume(
             file_type=file.content_type,
             filename=file.filename,
             content_type="md",
+        )
+    except ResumeValidationError as e:
+        logger.warning(f"Resume validation failed: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(e),
         )
     except Exception as e:
         logger.error(
