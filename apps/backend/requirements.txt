@@ -34,7 +34,7 @@ onnxruntime==1.21.1
 openai==1.75.0
 packaging==25.0
 pdfminer.six==20250327
-protobuf==6.30.2
+protobuf==6.31.1
 pycparser==2.22
 pydantic==2.11.3
 pydantic-settings==2.8.1
