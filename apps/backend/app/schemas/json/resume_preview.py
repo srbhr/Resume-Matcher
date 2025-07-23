@@ -9,7 +9,7 @@ SCHEMA = {
         "linkedin": "string | null",
         "github": "string | null",
     },
-    "summary": "string",
+    "summary": "string | null",
     "experience": [
         {
             "id": 0,
@@ -25,8 +25,8 @@ SCHEMA = {
             "id": 0,
             "institution": "string",
             "degree": "string",
-            "years": "string",
-            "description": "string",
+            "years": "string | null",
+            "description": "string | null",
         }
     ],
     "skills": ["string"],

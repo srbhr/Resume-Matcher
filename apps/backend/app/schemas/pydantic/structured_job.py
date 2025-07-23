@@ -36,6 +36,7 @@ class RemoteStatusEnum(str, enum.Enum):
     ON_SITE = "On-site"
     REMOTE = "Remote"
     NOT_SPECIFIED = "Not Specified"
+    MULTIPLE_LOCATIONS = "Multiple Locations"
 
     @classmethod
     def _missing_(cls, value: object):

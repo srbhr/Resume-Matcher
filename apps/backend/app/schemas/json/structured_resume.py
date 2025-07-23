@@ -33,11 +33,11 @@ SCHEMA = {
     "Skills": [{"category": "string", "skillName": "string"}],
     "Research Work": [
         {
-            "title": "string",
-            "publication": "string",
-            "date": "YYYY-MM-DD",
-            "link": "string",
-            "description": "string",
+            "title": "string | null",
+            "publication": "string | null",
+            "date": "YYYY-MM-DD | null",
+            "link": "string | null",
+            "description": "string | null",
         }
     ],
     "Achievements": ["string", "..."],
@@ -45,7 +45,7 @@ SCHEMA = {
         {
             "institution": "string",
             "degree": "string",
-            "fieldOfStudy": "string",
+            "fieldOfStudy": "string | null",
             "startDate": "YYYY-MM-DD",
             "endDate": "YYYY-MM-DD",
             "grade": "string",
