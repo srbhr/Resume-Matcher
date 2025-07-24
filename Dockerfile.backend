@@ -22,7 +22,7 @@ WORKDIR /app
 COPY apps/backend/ .
 
 # Install Python dependencies
-RUN uv sync --frozen
+RUN uv sync
 
 # Create .env file from sample if it doesn't exist
 RUN if [ ! -f .env ]; then cp .env.sample .env; fi
