@@ -8,6 +8,16 @@ This document provides cross-platform instructions to get the project up and run
 
 ## 🚀 Quickstart
 
+### ⭐ New Quick Setup Script (Recommended)
+
+For the best setup experience with automatic troubleshooting:
+
+```bash
+python quick-setup.py
+```
+
+This script addresses common issues from [#312](https://github.com/srbhr/Resume-Matcher/issues/312) and [#315](https://github.com/srbhr/Resume-Matcher/issues/315).
+
 ### For Windows (PowerShell)
 
 ```powershell
@@ -229,6 +239,65 @@ You can customize any variables in these files before or after bootstrapping.
 
 ## 🐞 Troubleshooting
 
+### Common Setup Issues
+
+#### 🔴 Issue #312: pip install not working (Python 3.12+ compatibility)
+
+**Problem**: cytoolz compilation errors, Cython build failures
+```
+Error compiling Cython file:
+cytoolz/functoolz.pxd:18:23: '__module__' redeclared
+```
+
+**Solutions**:
+1. **Use Python 3.11 instead of 3.12+** (Recommended)
+   ```bash
+   # Install Python 3.11 and create new environment
+   pyenv install 3.11.7
+   pyenv local 3.11.7
+   python -m venv venv
+   ```
+
+2. **Install build dependencies**:
+   - Linux: `sudo apt-get install python3-dev build-essential`
+   - macOS: `xcode-select --install`
+   - Windows: Install Visual Studio Build Tools
+
+3. **Use conda instead of pip**:
+   ```bash
+   conda create -n resume-matcher python=3.11
+   conda activate resume-matcher
+   conda install -c conda-forge cytoolz
+   pip install -r requirements.txt
+   ```
+
+4. **Install pre-compiled wheels**:
+   ```bash
+   pip install --only-binary=all cytoolz
+   ```
+
+#### 🔴 Issue #315: NLTK WordNet error
+
+**Problem**: 
+```
+LookupError: Resource wordnet not found.
+```
+
+**Solutions**:
+1. **Use the quick-setup script** (automatically downloads NLTK data)
+2. **Manual download**:
+   ```python
+   import nltk
+   nltk.download('wordnet')
+   nltk.download('punkt')
+   nltk.download('stopwords')
+   ```
+
+3. **Set NLTK data path**:
+   ```bash
+   export NLTK_DATA=$HOME/nltk_data
+   ```
+
 ### Windows-specific Issues
 
 - **`Execution of scripts is disabled on this system`**:
@@ -263,6 +332,61 @@ You can customize any variables in these files before or after bootstrapping.
 
 - **`npm ci` errors**:
   - Check your `package-lock.json` is in sync with `package.json`.
+
+### Python Version Compatibility Matrix
+
+| Python Version | Status | Notes |
+|----------------|--------|-------|
+| 3.8 | ✅ Supported | Minimum required version |
+| 3.9 | ✅ Supported | Recommended |
+| 3.10 | ✅ Supported | Recommended |
+| 3.11 | ✅ Supported | **Best choice** |
+| 3.12+ | ⚠️ Issues | cytoolz compilation problems |
+
+### Alternative Installation Methods
+
+#### Method 1: Docker (Coming Soon)
+```bash
+# Will be available soon
+docker-compose up
+```
+
+#### Method 2: Conda Environment
+```bash
+# Create conda environment
+conda create -n resume-matcher python=3.11
+conda activate resume-matcher
+
+# Install problematic packages via conda
+conda install -c conda-forge cytoolz numpy pandas
+
+# Install remaining packages via pip
+pip install -r requirements.txt
+```
+
+#### Method 3: Virtual Environment with UV
+```bash
+# Install uv (fastest Python package installer)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Create and setup environment
+uv venv --python 3.11
+source .venv/bin/activate  # or .venv\Scripts\activate on Windows
+uv sync
+```
+
+### Getting Help
+
+If you're still having issues:
+
+1. **Check the GitHub Issues**: [Resume-Matcher Issues](https://github.com/srbhr/Resume-Matcher/issues)
+2. **Join our Discord**: [Discord Community](https://dsc.gg/resume-matcher)
+3. **Run the quick-setup script**: `python quick-setup.py` (includes diagnostics)
+4. **Create a new issue** with:
+   - Your operating system and version
+   - Python version (`python --version`)
+   - Error message (full traceback)
+   - Steps you've tried
 
 ---
 

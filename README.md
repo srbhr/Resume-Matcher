@@ -69,21 +69,68 @@ If you have any suggestions or feature requests, please feel free to open an iss
 
 ![Installation](assets/how_to_install_resumematcher.png)
 
-Follow the instructions in the [SETUP.md](SETUP.md) file to set up the project locally. The setup script will install all the necessary dependencies and configure your environment.
+### 🚀 Quick Setup (Recommended)
 
-The project is built using:
+For the fastest setup experience, use our new quick setup script:
 
-- FastAPI for the backend.
-- Next.js for the frontend.
-- Ollama for local AI model serving.
-- Tailwind CSS for styling.
-- SQLite for the database.
+```bash
+# Download and run the quick setup script
+python quick-setup.py
+```
 
-| Technology   | Info/Version                               |
-|--------------|---------------------------------------|
-| Python      | 3.12+                   |
-| Next.js      | 15+                   |
-| Ollama       |        0.6.7        |
+This script will:
+- ✅ Check Python version compatibility (fixes [#312](https://github.com/srbhr/Resume-Matcher/issues/312))
+- ✅ Create a virtual environment
+- ✅ Install all dependencies with error handling
+- ✅ Download required NLTK data (fixes [#315](https://github.com/srbhr/Resume-Matcher/issues/315))
+- ✅ Setup environment files
+- ✅ Provide troubleshooting guidance
+
+### 🛠️ Platform-Specific Setup
+
+#### Windows
+```powershell
+# Run PowerShell as Administrator
+.\setup.ps1
+# OR use the quick setup
+python quick-setup.py
+```
+
+#### Linux/macOS
+```bash
+# Make script executable
+chmod +x setup.sh
+./setup.sh
+# OR use the quick setup  
+python quick-setup.py
+```
+
+### ⚠️ Common Issues & Solutions
+
+**Python 3.12+ Compatibility Issues** ([#312](https://github.com/srbhr/Resume-Matcher/issues/312)):
+- **Solution**: Use Python 3.11 instead of 3.12+
+- **Why**: cytoolz and other packages have compilation issues with Python 3.12
+
+**NLTK WordNet Error** ([#315](https://github.com/srbhr/Resume-Matcher/issues/315)):
+- **Solution**: The quick-setup script automatically downloads required NLTK data
+- **Manual fix**: Run `python -c "import nltk; nltk.download('wordnet')"`
+
+**pip install failures**:
+- Try: `pip install --upgrade pip setuptools wheel`
+- Use conda: `conda install -c conda-forge cytoolz`
+- Clear cache: `pip cache purge`
+
+For detailed setup instructions and troubleshooting, see [SETUP.md](SETUP.md).
+
+### 🏗️ Technology Stack
+
+| Technology   | Version | Purpose |
+|--------------|---------|---------|
+| Python      | 3.8-3.11 (⚠️ avoid 3.12+) | Backend API |
+| Next.js      | 15+ | Frontend UI |
+| Ollama       | 0.6.7+ | Local AI models |
+| FastAPI     | Latest | REST API |
+| SQLite      | Latest | Database |
 
 
 ## Join Us and Contribute
