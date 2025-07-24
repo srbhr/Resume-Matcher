@@ -1,4 +1,6 @@
-PROMPT = """
+import textwrap
+
+PROMPT = textwrap.dedent("""\
 You are a JSON extraction engine. Your task is to convert the raw job posting text below into valid JSON that matches the exact schema provided.
 
 Instructions:
@@ -15,4 +17,4 @@ Job Posting:
 {1}
 
 Reminder: Your response must be valid JSON matching the exact schema above, with no additional text or formatting.
-"""
+""")
