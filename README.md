@@ -93,7 +93,7 @@ docker compose -f docker-compose.dev.yml up -d
 - `npm run docker:logs` - View logs
 - `npm run docker:down` - Stop services
 
-See [DOCKER.m  d](DOCKER.md) for detailed Docker setup and troubleshooting.
+See [DOCKER.md](DOCKER.md) for detailed Docker setup and troubleshooting.
 
 ### 🛠️ Local Setup
 
