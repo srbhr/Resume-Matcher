@@ -17,7 +17,13 @@
         "start:frontend": "cd apps/frontend && npm start",
         "start": "concurrently \"npm:start:backend\" \"npm:start:frontend\"",
         "lint:frontend": "cd apps/frontend && npm run lint",
-        "lint": "npm run lint:frontend"
+        "lint": "npm run lint:frontend",
+        "docker:build": "docker compose build",
+        "docker:up": "docker compose up -d",
+        "docker:down": "docker compose down",
+        "docker:dev": "docker compose -f docker-compose.dev.yml up -d",
+        "docker:logs": "docker compose logs -f",
+        "docker:clean": "docker compose down -v --remove-orphans && docker system prune -f"
     },
     "devDependencies": {
         "concurrently": "^9.1.2"

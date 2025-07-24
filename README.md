@@ -57,7 +57,7 @@ We're working on actively improving the platform, towards building a **VS Code f
 - **Keyword Optimizer**: Align your resume with job keywords and identify critical content gaps.
 - **Guided Improvements**: Get clear suggestions to make your resume stand out.
 
-### Roadmap 
+### Roadmap
 
 If you have any suggestions or feature requests, please feel free to open an issue on GitHub. And discuss it on our [Discord](https://dsc.gg/resume-matcher) server.
 
@@ -69,7 +69,45 @@ If you have any suggestions or feature requests, please feel free to open an iss
 
 ![Installation](assets/how_to_install_resumematcher.png)
 
+Resume Matcher can be set up in multiple ways depending on your preference:
+
+### 🐳 Docker (Recommended)
+
+The easiest way to get started. Works on Windows, macOS, and Linux.
+
+```bash
+# Clone the repository
+git clone https://github.com/srbhr/Resume-Matcher.git
+cd Resume-Matcher
+
+# Start with Docker (takes 5-10 minutes on first run)
+docker compose up -d
+
+# Or for development with hot-reload
+docker compose -f docker-compose.dev.yml up -d
+```
+
+**Quick Commands:**
+- `npm run docker:up` - Start production environment
+- `npm run docker:dev` - Start development environment
+- `npm run docker:logs` - View logs
+- `npm run docker:down` - Stop services
+
+See [DOCKER.m  d](DOCKER.md) for detailed Docker setup and troubleshooting.
+
+### 🛠️ Local Setup
+
 Follow the instructions in the [SETUP.md](SETUP.md) file to set up the project locally. The setup script will install all the necessary dependencies and configure your environment.
+
+```bash
+# For Linux/macOS
+./setup.sh
+
+# For Windows
+.\setup.ps1
+```
+
+### Technology Stack
 
 The project is built using:
 

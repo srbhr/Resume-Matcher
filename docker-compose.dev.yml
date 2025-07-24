@@ -1,0 +1,124 @@
+version: '3.8'
+
+services:
+  # Ollama service for AI functionality
+  ollama:
+    image: ollama/ollama:latest
+    container_name: resume-matcher-ollama-dev
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+      - ./ollama-models:/models
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+    networks:
+      - resume-matcher-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # Initialize Ollama and pull required models
+  ollama-init:
+    image: ollama/ollama:latest
+    container_name: resume-matcher-ollama-init-dev
+    depends_on:
+      ollama:
+        condition: service_healthy
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=ollama:11434
+    networks:
+      - resume-matcher-network
+    command: >
+      sh -c "
+        echo 'Waiting for Ollama to be ready...' &&
+        sleep 10 &&
+        echo 'Pulling gemma3:4b model...' &&
+        ollama pull gemma3:4b &&
+        echo 'Model pull completed'
+      "
+    restart: "no"
+
+  # Backend service (development)
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+      target: base
+    container_name: resume-matcher-backend-dev
+    ports:
+      - "8000:8000"
+    environment:
+      - SESSION_SECRET_KEY=dev-secret-key
+      - SYNC_DATABASE_URL=sqlite:///./app.db
+      - ASYNC_DATABASE_URL=sqlite+aiosqlite:///./app.db
+      - PYTHONDONTWRITEBYTECODE=1
+      - OLLAMA_HOST=http://ollama:11434
+    volumes:
+      - ./apps/backend:/app
+      - backend_data:/app/data
+    depends_on:
+      ollama:
+        condition: service_healthy
+      ollama-init:
+        condition: service_completed_successfully
+    networks:
+      - resume-matcher-network
+    restart: unless-stopped
+    command: ["uv", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--timeout-keep-alive", "300", "--timeout-graceful-shutdown", "300"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # Frontend service (development)
+  frontend:
+    image: node:18-alpine
+    container_name: resume-matcher-frontend-dev
+    working_dir: /app
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - CHOKIDAR_USEPOLLING=true
+    volumes:
+      - ./apps/frontend:/app
+      - frontend_node_modules:/app/node_modules
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - resume-matcher-network
+    restart: unless-stopped
+    command: >
+      sh -c "
+        npm install &&
+        npm run dev
+      "
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+networks:
+  resume-matcher-network:
+    driver: bridge
+
+volumes:
+  ollama_data:
+    driver: local
+  backend_data:
+    driver: local
+  frontend_node_modules:
+    driver: local
