@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 """
-Install script for         print("Some dependencies failed to install.")
-        print("Please check the error messages above and try installing manually:")
-        print("  pip install 'markitdown[all]==0.1.2'")sing DOCX dependencies.
+Install script for missing DOCX dependencies.
 Fixes issue #409: Error processing file conversion DocxConverter
 """
 
@@ -50,7 +48,7 @@ def main():
     else:
         print("\nSome dependencies failed to install.")
         print("Please check the error messages above and try installing manually:")
-        print("  pip install python-docx==1.2.0 lxml==5.4.0")
+        print("  pip install 'markitdown[all]==0.1.2'")
         sys.exit(1)
 
 if __name__ == "__main__":
