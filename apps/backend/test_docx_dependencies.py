@@ -11,22 +11,31 @@ import os
 
 def test_docx_dependencies():
     """Test if all dependencies for DOCX processing are available"""
-    print("Testing DOCX processing dependencies...")
+    print("Testing markitdown DOCX processing dependencies...")
     
-    # Test 1: Check if python-docx is available
-    try:
-        import docx
-        print("✓ python-docx is available")
-    except ImportError as e:
-        print(f"✗ python-docx is missing: {e}")
-        return False
-    
-    # Test 2: Check if markitdown is available
+    # Test 1: Check if markitdown is available
     try:
         from markitdown import MarkItDown
         print("✓ markitdown is available")
     except ImportError as e:
         print(f"✗ markitdown is missing: {e}")
+        return False
+    
+    # Test 2: Check if markitdown has DOCX support
+    try:
+        from markitdown.converters import DocxConverter
+        DocxConverter()
+        print("✓ markitdown DOCX support is available")
+    except ImportError as e:
+        print(f"✗ markitdown DOCX converter is missing: {e}")
+        print("  Install with: pip install 'markitdown[all]==0.1.2'")
+        return False
+    except Exception as e:
+        if "MissingDependencyException" in str(e) or "dependencies needed to read .docx files" in str(e):
+            print(f"✗ markitdown DOCX dependencies missing: {e}")
+            print("  Install with: pip install 'markitdown[all]==0.1.2'")
+            return False
+        print(f"✗ Unexpected error with DOCX converter: {e}")
         return False
     
     # Test 3: Test markitdown initialization
@@ -40,6 +49,13 @@ def test_docx_dependencies():
     # Test 4: Create a minimal DOCX file and test conversion
     try:
         # Create a simple DOCX file for testing
+        try:
+            import docx
+        except ImportError:
+            print("✗ python-docx not available for creating test file")
+            print("  Note: markitdown[all] should include this dependency")
+            return False
+            
         doc = docx.Document()
         doc.add_paragraph("Test resume content")
         
@@ -69,6 +85,7 @@ def test_docx_dependencies():
         print(f"  Error type: {type(e).__name__}")
         if "MissingDependencyException" in str(e):
             print("  This is the DocxConverter MissingDependencyException mentioned in issue #409")
+            print("  Install with: pip install 'markitdown[all]==0.1.2'")
         return False
 
 if __name__ == "__main__":

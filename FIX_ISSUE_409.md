@@ -8,33 +8,31 @@ Status: 500 Internal Server Error - Server response: {"detail":"Error processing
 ```
 
 ## Root Cause
-The issue was caused by missing dependencies required for DOCX file processing. The `markitdown` library, which is used to convert DOCX files to text, depends on the `python-docx` package for handling DOCX files. Additionally, `python-docx` requires `lxml` for XML processing.
+The issue was caused by markitdown being installed without the DOCX extras. The `markitdown` library requires the `[docx]` or `[all]` extras to be installed for DOCX file processing support. Without these extras, the DocxConverter throws a MissingDependencyException.
 
 ## Solution
-Added the missing dependencies to both `requirements.txt` and `pyproject.toml`:
+Updated markitdown installation to include all extras:
 
-1. **python-docx==1.2.0** - Library for reading and writing DOCX files
-2. **lxml==5.4.0** - XML processing library required by python-docx
+1. **markitdown[all]==0.1.2** - MarkItDown with all format support including DOCX
 
 ## Changes Made
 
 ### 1. Updated requirements.txt
-Added the following dependencies:
+Updated markitdown installation:
 ```
-python-docx==1.2.0
-lxml==5.4.0
+markitdown[all]==0.1.2
 ```
 
 ### 2. Updated pyproject.toml
-Added the same dependencies to the project configuration.
+Added the same dependency to the project configuration.
 
 ### 3. Enhanced error handling in ResumeService
-- Added dependency validation during service initialization
+- Added dependency validation to check for markitdown DOCX support
 - Improved error messages for DOCX conversion failures
-- Added specific handling for MissingDependencyException
+- Added specific handling for MissingDependencyException with proper installation instructions
 
-### 4. Created diagnostic test script
-Added `test_docx_dependencies.py` to help diagnose DOCX processing issues.
+### 4. Updated diagnostic and installation scripts
+Updated `test_docx_dependencies.py` and `install_docx_deps.py` to check for and install markitdown with proper extras.
 
 ## Installation Instructions
 After pulling these changes, users need to install the new dependencies:
@@ -46,8 +44,8 @@ cd apps/backend
 # Install dependencies
 pip install -r requirements.txt
 
-# Or if using uv
-uv pip install -r requirements.txt
+# Or install markitdown with DOCX support directly
+pip install 'markitdown[all]==0.1.2'
 ```
 
 ## Testing

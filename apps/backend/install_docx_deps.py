@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """
-Install script for missing DOCX dependencies.
+Install script for         print("Some dependencies failed to install.")
+        print("Please check the error messages above and try installing manually:")
+        print("  pip install 'markitdown[all]==0.1.2'")sing DOCX dependencies.
 Fixes issue #409: Error processing file conversion DocxConverter
 """
 
@@ -10,11 +12,10 @@ import os
 
 def install_dependencies():
     """Install the missing dependencies for DOCX processing"""
-    print("Installing missing dependencies for DOCX processing...")
+    print("Installing markitdown with DOCX support...")
     
     dependencies = [
-        "python-docx==1.2.0",
-        "lxml==5.4.0"
+        "markitdown[all]==0.1.2"
     ]
     
     for dep in dependencies:
@@ -26,7 +27,7 @@ def install_dependencies():
             print(f"✗ Failed to install {dep}: {e}")
             return False
     
-    print("\n✓ All dependencies installed successfully!")
+    print("\n✓ markitdown with DOCX support installed successfully!")
     print("You can now test DOCX upload functionality.")
     return True
 

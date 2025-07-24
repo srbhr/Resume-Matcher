@@ -34,14 +34,15 @@ class ResumeService:
         missing_deps = []
         
         try:
-            import docx
+            # Check if markitdown can handle docx files
+            from markitdown.converters import DocxConverter
+            # Try to instantiate the converter to check if dependencies are available
+            DocxConverter()
         except ImportError:
-            missing_deps.append("python-docx==1.2.0")
-            
-        try:
-            import lxml
-        except ImportError:
-            missing_deps.append("lxml==5.4.0")
+            missing_deps.append("markitdown[all]==0.1.2")
+        except Exception as e:
+            if "MissingDependencyException" in str(e) or "dependencies needed to read .docx files" in str(e):
+                missing_deps.append("markitdown[all]==0.1.2 (current installation missing DOCX extras)")
         
         if missing_deps:
             logger.warning(
@@ -79,8 +80,8 @@ class ResumeService:
                 error_msg = str(e)
                 if "MissingDependencyException" in error_msg or "DocxConverter" in error_msg:
                     raise Exception(
-                        "File conversion failed: Missing dependencies for DOCX processing. "
-                        "Please install python-docx package or contact system administrator."
+                        "File conversion failed: markitdown is missing DOCX support. "
+                        "Please install with: pip install 'markitdown[all]==0.1.2' or contact system administrator."
                     ) from e
                 elif "docx" in error_msg.lower():
                     raise Exception(

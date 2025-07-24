@@ -32,7 +32,7 @@ dependencies = [
     "magika==0.6.1",
     "Markdown==3.8",
     "markdownify==1.1.0",
-    "markitdown==0.1.1",
+    "markitdown[all]==0.1.2",
     "mpmath==1.3.0",
     "numpy==2.2.4",
     "ollama==0.4.7",
@@ -59,8 +59,6 @@ dependencies = [
     "typing_extensions==4.13.1",
     "urllib3==2.4.0",
     "uvicorn==0.34.0",
-    "python-docx==1.2.0",
-    "lxml==5.4.0",
 ]
 
 [build-system]
