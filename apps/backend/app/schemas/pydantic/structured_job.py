@@ -13,6 +13,7 @@ class EmploymentTypeEnum(str, enum.Enum):
     INTERNSHIP = "Internship"
     TEMPORARY = "Temporary"
     NOT_SPECIFIED = "Not Specified"
+    NOT_AVAILABLE = "N/A"
 
     @classmethod
     def _missing_(cls, value: object):
@@ -37,6 +38,7 @@ class RemoteStatusEnum(str, enum.Enum):
     REMOTE = "Remote"
     NOT_SPECIFIED = "Not Specified"
     MULTIPLE_LOCATIONS = "Multiple Locations"
+    NOT_AVAILABLE = "N/A"
 
     @classmethod
     def _missing_(cls, value: object):
@@ -63,7 +65,7 @@ class Location(BaseModel):
     city: Optional[str] = None
     state: Optional[str] = None
     country: Optional[str] = None
-    remote_status: RemoteStatusEnum = Field(..., alias="remoteStatus")
+    remote_status: Optional[RemoteStatusEnum] = Field(None, alias="remoteStatus")
 
 
 class Qualifications(BaseModel):
