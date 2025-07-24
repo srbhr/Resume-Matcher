@@ -60,7 +60,7 @@ services:
       - OLLAMA_HOST=http://ollama:11434
     volumes:
       - backend_data:/app/data
-      - backend_db:/app
+      - backend_db:/app/app.db
     depends_on:
       ollama:
         condition: service_healthy
