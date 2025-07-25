@@ -20,8 +20,8 @@ from ..models.base import Base
 class _DatabaseSettings:
     """Pulled from environment once at import-time."""
 
-    SYNC_DATABASE_URL: str = settings.SYNC_DATABASE_URL
-    ASYNC_DATABASE_URL: str = settings.ASYNC_DATABASE_URL
+    SYNC_DATABASE_URL: str = settings.SYNC_DATABASE_URL or "sqlite:///./app.db"
+    ASYNC_DATABASE_URL: str = settings.ASYNC_DATABASE_URL or "sqlite+aiosqlite:///./app.db"
     DB_ECHO: bool = settings.DB_ECHO
 
     DB_CONNECT_ARGS = (
