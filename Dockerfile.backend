@@ -1,5 +1,5 @@
 # Backend Dockerfile
-FROM python:3.12-slim
+FROM python:3.12-slim AS base
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -23,6 +23,15 @@ COPY apps/backend/ .
 
 # Install Python dependencies
 RUN uv sync
+
+# Development stage - stops here for dev compose
+FROM base AS development
+
+# Create .env file from sample if it doesn't exist
+RUN if [ ! -f .env ]; then cp .env.sample .env; fi
+
+# Production stage
+FROM base AS production
 
 # Create .env file from sample if it doesn't exist
 RUN if [ ! -f .env ]; then cp .env.sample .env; fi

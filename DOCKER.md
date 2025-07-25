@@ -29,24 +29,34 @@ The project includes several Docker-related files:
    cd Resume-Matcher
    ```
 
-2. **Start all services**
+2. **Configure environment variables (optional)**
+   ```bash
+   # Copy the example environment file
+   cp .env.example .env
+   
+   # Edit the .env file to customize your setup
+   # For example, to use an external Ollama instance:
+   # OLLAMA_HOST=http://your-ollama-server:11434
+   ```
+
+3. **Start all services**
    ```bash
    docker compose up -d
    ```
 
-3. **Wait for initialization** (first run takes 5-10 minutes)
+4. **Wait for initialization** (first run takes 5-10 minutes)
    ```bash
    # Monitor the logs
    docker compose logs -f
 
    # Check service status
-   docdocker compose ps
+   docker compose ps
    ```
 
-4. **Access the application**
+5. **Access the application**
    - Frontend: http://localhost:3000
    - Backend API: http://localhost:8000
-   - Ollama API: http://localhost:11434
+   - Ollama API: http://localhost:11434 (if using containerized Ollama)
 
 ### Development Environment
 
@@ -69,11 +79,16 @@ docker compose -f docker-compose.dev.yml down
 
 The Docker setup uses the following key environment variables:
 
+#### Ollama Configuration
+- `OLLAMA_HOST` - Ollama service endpoint (default: `http://ollama:11434`)
+  - For external Ollama: `http://host.docker.internal:11434` or `http://your-server:11434`
+  - For containerized Ollama: `http://ollama:11434`
+- `OLLAMA_PORT` - Port to expose Ollama on (default: `11434`)
+
 #### Backend
 - `SESSION_SECRET_KEY` - FastAPI session secret (change in production)
 - `SYNC_DATABASE_URL` - Synchronous database connection string
 - `ASYNC_DATABASE_URL` - Asynchronous database connection string
-- `OLLAMA_HOST` - Ollama service endpoint
 - `PYTHONDONTWRITEBYTECODE` - Disable Python bytecode generation
 
 #### Frontend
@@ -82,7 +97,19 @@ The Docker setup uses the following key environment variables:
 
 ### Customizing Configuration
 
-1. **Create environment override file**
+1. **Using external Ollama instance**
+   ```bash
+   # Create .env file
+   echo "OLLAMA_HOST=http://host.docker.internal:11434" > .env
+   
+   # Or for a remote Ollama server
+   echo "OLLAMA_HOST=http://your-ollama-server:11434" > .env
+   
+   # Start only backend and frontend (skip Ollama containers)
+   docker compose up -d backend frontend
+   ```
+
+2. **Create environment override file**
    ```bash
    # Create docker-compose.override.yml for local customizations
    cat > docker-compose.override.yml << EOF
@@ -97,7 +124,7 @@ The Docker setup uses the following key environment variables:
    EOF
    ```
 
-2. **Custom ports**
+3. **Custom ports**
    ```yaml
    # In docker-compose.override.yml
    services:
@@ -172,7 +199,7 @@ docker compose ps
 # Manual health check
 curl http://localhost:8000/health  # Backend
 curl http://localhost:3000         # Frontend
-curl http://localhost:11434/api/tags  # Ollama
+ollama list                        # Ollama (if containerized)
 ```
 
 ### Access Container Shells
@@ -189,6 +216,27 @@ docker compose exec ollama bash
 ```
 
 ## 🛠️ Troubleshooting
+
+### Recent Fixes Applied
+
+The Docker configuration has been updated to address several common issues:
+
+1. **Fixed curl missing in Ollama container**
+   - Changed health check from `curl` to `ollama list` command
+   - This uses Ollama's built-in command instead of external dependencies
+
+2. **Fixed shell command issues in ollama-init**
+   - Changed from `command` to `entrypoint: ["/bin/bash", "-c"]`
+   - This ensures bash is used instead of potentially missing sh
+
+3. **Added support for external Ollama instances**
+   - Added `OLLAMA_HOST` environment variable with default fallback
+   - Users can now point to existing Ollama installations
+   - Set `OLLAMA_HOST=http://host.docker.internal:11434` for local Ollama
+
+4. **Made Ollama port configurable**
+   - Added `OLLAMA_PORT` environment variable
+   - Allows users to change the exposed port if needed
 
 ### Common Issues
 

@@ -6,7 +6,7 @@ services:
     image: ollama/ollama:latest
     container_name: resume-matcher-ollama
     ports:
-      - "11434:11434"
+      - "${OLLAMA_PORT:-11434}:11434"
     volumes:
       - ollama_data:/root/.ollama
     environment:
@@ -15,7 +15,7 @@ services:
       - resume-matcher-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      test: ["CMD", "ollama", "list"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -31,17 +31,16 @@ services:
     volumes:
       - ollama_data:/root/.ollama
     environment:
-      - OLLAMA_HOST=ollama:11434
+      - OLLAMA_HOST=${OLLAMA_HOST:-ollama:11434}
     networks:
       - resume-matcher-network
+    entrypoint: ["/bin/bash", "-c"]
     command: >
-      sh -c "
-        echo 'Waiting for Ollama to be ready...' &&
-        sleep 10 &&
-        echo 'Pulling gemma3:4b model...' &&
-        ollama pull gemma3:4b &&
-        echo 'Model pull completed'
-      "
+      "echo 'Waiting for Ollama to be ready...' &&
+       sleep 10 &&
+       echo 'Pulling gemma3:4b model...' &&
+       ollama pull gemma3:4b &&
+       echo 'Model pull completed'"
     restart: "no"
 
   # Backend service
@@ -49,6 +48,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.backend
+      target: production
     container_name: resume-matcher-backend
     ports:
       - "8000:8000"
@@ -57,7 +57,7 @@ services:
       - SYNC_DATABASE_URL=sqlite:///./app.db
       - ASYNC_DATABASE_URL=sqlite+aiosqlite:///./app.db
       - PYTHONDONTWRITEBYTECODE=1
-      - OLLAMA_HOST=http://ollama:11434
+      - OLLAMA_HOST=${OLLAMA_HOST:-http://ollama:11434}
     volumes:
       - backend_data:/app/data
       - backend_db:/app/app.db
