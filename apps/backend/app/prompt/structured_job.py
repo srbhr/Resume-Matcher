@@ -1,20 +1,15 @@
-import textwrap
-
-PROMPT = textwrap.dedent("""\
-You are a JSON extraction engine. Your task is to convert the raw job posting text below into valid JSON that matches the exact schema provided.
-
-Instructions:
-1. Extract only the information required by the schema.
-2. Use the exact structure and key names from the schema—do not modify them.
-3. Format all dates using "YYYY-MM-DD".
-4. Ensure all URLs (e.g., website, applyLink) are valid URI strings.
-5. Output only raw JSON—no prose, no Markdown, no commentary, and no extra fields.
-
+PROMPT = """
+You are a JSON-extraction engine. Convert the following raw job posting text into exactly the JSON schema below:
+— Do not add any extra fields or prose.
+— Use “YYYY-MM-DD” for all dates.
+— Ensure any URLs (website, applyLink) conform to URI format.
+— Do not change the structure or key names; output only valid JSON matching the schema.
+- Do not format the response in Markdown or any other format. Just output raw JSON.
 Schema:
+```json
 {0}
-
+```
 Job Posting:
 {1}
-
-Reminder: Your response must be valid JSON matching the exact schema above, with no additional text or formatting.
-""")
+Note: Please output only a valid JSON matching the EXACT schema with no surrounding commentary.
+"""
