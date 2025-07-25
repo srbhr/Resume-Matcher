@@ -27,6 +27,18 @@ Hoping to make this, **VS Code for making resumes**.
 
 </div>
 
+<div align="center">
+  <!-- Keep these links. Translations will automatically update with the README. -->
+  <a href="https://readme-i18n.com/de/srbhr/Resume-Matcher">Deutsch</a> | 
+  <a href="https://readme-i18n.com/es/srbhr/Resume-Matcher">Español</a> | 
+  <a href="https://readme-i18n.com/fr/srbhr/Resume-Matcher">français</a> | 
+  <a href="https://readme-i18n.com/ja/srbhr/Resume-Matcher">日本語</a> | 
+  <a href="https://readme-i18n.com/ko/srbhr/Resume-Matcher">한국어</a> | 
+  <a href="https://readme-i18n.com/pt/srbhr/Resume-Matcher">Português</a> | 
+  <a href="https://readme-i18n.com/ru/srbhr/Resume-Matcher">Русский</a> | 
+  <a href="https://readme-i18n.com/zh/srbhr/Resume-Matcher">中文</a>
+</div>
+
 > \[!IMPORTANT]
 >
 > This project is in active development. New features are being added continuously, and we welcome contributions from the community. There are some breaking changes on the `main` branch. If you have any suggestions or feature requests, please feel free to open an issue on GitHub or discuss it on our [Discord](https://dsc.gg/resume-matcher) server.
