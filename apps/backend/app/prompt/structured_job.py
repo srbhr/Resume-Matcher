@@ -12,7 +12,7 @@ Schema:
 ```
 
 Job Posting:
-
 {1}
+
 Note: Please output only a valid JSON matching the EXACT schema with no surrounding commentary.
 """
