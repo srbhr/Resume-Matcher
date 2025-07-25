@@ -12,7 +12,6 @@ class EmploymentTypeEnum(str, enum.Enum):
     CONTRACT = "Contract"
     INTERNSHIP = "Internship"
     TEMPORARY = "Temporary"
-    NOT_SPECIFIED = "Not Specified"
     NOT_AVAILABLE = "N/A"
 
     @classmethod
@@ -25,7 +24,7 @@ class EmploymentTypeEnum(str, enum.Enum):
                 return mapping[value_lower]
 
         raise ValueError(
-            "employment type must be one of: Full-time, Part-time, Contract, Internship, Temporary, Not Specified (case insensitive)"
+            "employment type must be one of: Full-time, Part-time, Contract, Internship, Temporary, N/A (case insensitive)"
         )
 
 
@@ -36,7 +35,6 @@ class RemoteStatusEnum(str, enum.Enum):
     HYBRID = "Hybrid"
     ON_SITE = "On-site"
     REMOTE = "Remote"
-    NOT_SPECIFIED = "Not Specified"
     MULTIPLE_LOCATIONS = "Multiple Locations"
     NOT_AVAILABLE = "N/A"
 
@@ -50,7 +48,7 @@ class RemoteStatusEnum(str, enum.Enum):
                 return mapping[value_lower]
 
         raise ValueError(
-            "remote_status must be one of: Fully Remote, Hybrid, On-site, Remote, Not Specified (case insensitive)"
+            "remote_status must be one of: Fully Remote, Hybrid, On-site, Remote, N/A (case insensitive)"
         )
 
 
