@@ -14,6 +14,7 @@ Hoping to make this, **VS Code for making resumes**.
 </div>
 
 <br>
+<br>
 
 <div align="center">
 
