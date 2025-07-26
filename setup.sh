@@ -77,11 +77,38 @@ check_node_version() {
   fi
 }
 
+check_python_version() {
+  local python_version
+  python_version=$(python3 -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')" 2>/dev/null)
+  
+  if [[ -z "$python_version" ]]; then
+    error "Failed to detect Python version"
+  fi
+  
+  # Check for Python 3.12+ compatibility issues
+  if [[ "$python_version" =~ ^3\.1[2-9]|^[4-9]\. ]]; then
+    echo "⚠️  WARNING: Python $python_version detected!"
+    echo "   Known compatibility issues with cytoolz and other packages."
+    echo "   See: https://github.com/srbhr/Resume-Matcher/issues/312"
+    echo ""
+    echo "   Recommended actions:"
+    echo "   1. Use Python 3.11 instead (recommended)"
+    echo "   2. Or continue and install build dependencies if issues occur"
+    echo ""
+    read -p "   Continue with Python $python_version? (y/N): " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+      error "Setup cancelled. Please install Python 3.11 and retry."
+    fi
+  fi
+}
+
 info "Checking prerequisites…"
 check_cmd node
 check_node_version
 check_cmd npm
 check_cmd python3
+check_python_version
 
 if ! command -v pip3 &> /dev/null; then
   if [[ "$OS_TYPE" == "Linux" && -x "$(command -v apt-get)" ]]; then
@@ -160,6 +187,15 @@ info "Setting up backend (apps/backend)…"
 
   info "Syncing Python deps via uv…"
   uv sync
+  
+  # Install NLTK data to prevent issue #315
+  info "Installing required NLTK data…"
+  if uv run python -c "import nltk; nltk.download('wordnet'); nltk.download('punkt'); nltk.download('stopwords')" 2>/dev/null; then
+    success "NLTK data installed"
+  else
+    info "NLTK data installation failed - will try during runtime"
+  fi
+  
   success "Backend dependencies ready."
 )
 
