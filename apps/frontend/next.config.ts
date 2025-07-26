@@ -5,8 +5,8 @@ const nextConfig: NextConfig = {
     async rewrites() {
     return [
       {
-        source: '/api_be/:path*',
-        destination: 'http://localhost:8000/:path*',
+        source: '/api/:path*',
+        destination: `${process.env.NEXT_PUBLIC_API_URL}/api/:path*`,
       },
     ];
   },

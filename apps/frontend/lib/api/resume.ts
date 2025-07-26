@@ -1,13 +1,13 @@
 import { ImprovedResult } from '@/components/common/resume_previewer_context';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL!;
+const API_URL = "/api";
 
 /** Uploads job descriptions and returns a job_id */
 export async function uploadJobDescriptions(
     descriptions: string[],
     resumeId: string
 ): Promise<string> {
-    const res = await fetch(`${API_URL}/api/v1/jobs/upload`, {
+    const res = await fetch(`${API_URL}/v1/jobs/upload`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ job_descriptions: descriptions, resume_id: resumeId }),
@@ -25,7 +25,7 @@ export async function improveResume(
 ): Promise<ImprovedResult> {
     let response: Response;
     try {
-        response = await fetch(`${API_URL}/api/v1/resumes/improve`, {
+        response = await fetch(`${API_URL}/v1/resumes/improve`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ resume_id: resumeId, job_id: jobId }),
