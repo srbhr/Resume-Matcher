@@ -205,10 +205,18 @@ class ScoreImprovementService:
         resume, processed_resume = await self._get_resume(resume_id)
         job, processed_job = await self._get_job(job_id)
 
+        # Add null check to prevent AttributeError when processed_job is None
+        if not processed_job or not processed_job.extracted_keywords:
+            raise JobKeywordExtractionError(job_id=job_id)
+            
         extracted_job_keywords = ", ".join(
             json.loads(processed_job.extracted_keywords).get("extracted_keywords", [])
         )
 
+        # Add null check to prevent AttributeError when processed_resume is None
+        if not processed_resume or not processed_resume.extracted_keywords:
+            raise ResumeKeywordExtractionError(resume_id=resume_id)
+            
         extracted_resume_keywords = ", ".join(
             json.loads(processed_resume.extracted_keywords).get(
                 "extracted_keywords", []
@@ -270,10 +278,18 @@ class ScoreImprovementService:
         yield f"data: {json.dumps({'status': 'parsing', 'message': 'Parsing resume content...'})}\n\n"
         await asyncio.sleep(2)
 
+        # Add null check to prevent AttributeError when processed_job is None
+        if not processed_job or not processed_job.extracted_keywords:
+            raise JobKeywordExtractionError(job_id=job_id)
+            
         extracted_job_keywords = ", ".join(
             json.loads(processed_job.extracted_keywords).get("extracted_keywords", [])
         )
 
+        # Add null check to prevent AttributeError when processed_resume is None
+        if not processed_resume or not processed_resume.extracted_keywords:
+            raise ResumeKeywordExtractionError(resume_id=resume_id)
+            
         extracted_resume_keywords = ", ".join(
             json.loads(processed_resume.extracted_keywords).get(
                 "extracted_keywords", []
