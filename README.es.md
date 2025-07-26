@@ -27,7 +27,7 @@ Esperamos convertir esto en **el VS Code para crear currículums**.
 
 </div>
 
-> \[!IMPORTANTE]
+> \[!IMPORTANT]
 >
 > Este proyecto está en desarrollo activo. Se están añadiendo nuevas características continuamente y agradecemos las contribuciones de la comunidad. Hay algunos cambios importantes en la rama `main`. Si tienes alguna sugerencia o solicitud de características, no dudes en abrir un *issue* en GitHub o discutirlo en nuestro servidor de [Discord](https://dsc.gg/resume-matcher).
 
