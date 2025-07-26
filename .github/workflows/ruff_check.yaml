@@ -1,0 +1,33 @@
+name: Backend Linter
+run-name: Running Backend Linter🔎
+on:
+  push:
+  pull_request:
+    branches:
+      - main
+jobs:
+  Backend-Linter:
+    runs-on: ubuntu-latest
+
+    steps:
+      - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
+
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: "Set up Python"
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: "apps/backend/pyproject.toml"
+
+      - name: Install dependencies and run lint check
+        run: |
+          cd apps/backend
+          echo "⏳ Installing dependencies ⏳"
+          uv sync --all-extras --dev
+          echo "⏳ Starting linter and formatter check ⏳"
+          uv run ruff check
+
+      - run: echo "This job's status is ${{ job.status }}."
