@@ -1,5 +1,11 @@
 
 #!/usr/bin/env bash
+
+# Re-execute with bash if we are not running in bash
+if [ -z "$BASH_VERSION" ]; then
+  exec bash "$0" "$@"
+fi
+
 #
 # setup.sh - cross-platform setup for Resume Matcher
 #
