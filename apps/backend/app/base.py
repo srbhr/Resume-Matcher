@@ -6,6 +6,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
+from sqlalchemy.exc import SQLAlchemyError
 
 from .api import health_check, v1_router, RequestIDMiddleware
 from .core import (
@@ -15,6 +16,7 @@ from .core import (
     custom_http_exception_handler,
     validation_exception_handler,
     unhandled_exception_handler,
+    sqlalchemy_exception_handler,
 )
 from .models import Base
 
@@ -54,6 +56,7 @@ def create_app() -> FastAPI:
 
     app.add_exception_handler(HTTPException, custom_http_exception_handler)
     app.add_exception_handler(RequestValidationError, validation_exception_handler)
+    app.add_exception_handler(SQLAlchemyError, sqlalchemy_exception_handler)
     app.add_exception_handler(Exception, unhandled_exception_handler)
 
     if os.path.exists(settings.FRONTEND_PATH):
