@@ -13,35 +13,32 @@
 # After setup:
 #   npm run dev       # start development server
 #   npm run build     # build for production
-
+#!/usr/bin/env bash
 set -euo pipefail
 export PYTHONDONTWRITEBYTECODE=1
 IFS=$'\n\t'
 
-#–– Detect OS for compatibility ––#
 OS="$(uname -s)"
 case "$OS" in
   Linux*)   OS_TYPE="Linux" ;;
   Darwin*)  OS_TYPE="macOS" ;;
+  MINGW*|MSYS*|CYGWIN*) OS_TYPE="GitBash" ;;
   *)        OS_TYPE="$OS" ;;
 esac
 
-#–– CLI help ––#
 usage() {
   cat <<EOF
 Usage: $0 [--help] [--start-dev]
 
 Options:
   --help       Show this help message and exit
-  --start-dev  After setup completes, start the dev server (with graceful SIGINT handling)
+  --start-dev  After setup completes, start the dev server
 
 This script will:
   • Verify required tools: node, npm, python3, pip3, uv
   • Install Ollama & pull gemma3:4b model
-  • Install root dependencies via npm ci
-  • Bootstrap both root and backend .env files
-  • Bootstrap backend venv and install Python deps via uv
-  • Install frontend dependencies via npm ci
+  • Install dependencies via npm and uv
+  • Create .env files if missing
 EOF
 }
 
@@ -53,14 +50,23 @@ elif [[ "${1:-}" == "--start-dev" ]]; then
   START_DEV=true
 fi
 
-#–– Logging helpers ––#
 info()    { echo -e "ℹ  $*"; }
 success() { echo -e "✅ $*"; }
 error()   { echo -e "❌ $*" >&2; exit 1; }
 
 info "Detected operating system: $OS_TYPE"
 
-#–– 1. Prerequisite checks ––#
+if [[ "$OS_TYPE" == "GitBash" ]]; then
+  echo "⚠️  Warning: You are using Git Bash on Windows."
+  echo "   This setup script may fail due to file permission issues."
+  echo "   👉 For best results, we recommend running it in WSL."
+  read -p "Do you want to continue anyway? [y/N] " response
+  if [[ ! "$response" =~ ^[Yy]$ ]]; then
+    echo "Aborting setup."
+    exit 1
+  fi
+fi
+
 check_cmd() {
   local cmd=$1
   if ! command -v "$cmd" &> /dev/null; then
@@ -84,39 +90,25 @@ check_cmd npm
 check_cmd python3
 
 if ! command -v pip3 &> /dev/null; then
-  if [[ "$OS_TYPE" == "Linux" && -x "$(command -v apt-get)" ]]; then
-    info "pip3 not found; installing via apt-get…"
-    sudo apt-get update && sudo apt-get install -y python3-pip || error "Failed to install python3-pip"
-  elif [[ "$OS_TYPE" == "Linux" && -x "$(command -v yum)" ]]; then
-    info "pip3 not found; installing via yum…"
-    sudo yum install -y python3-pip || error "Failed to install python3-pip"
-  else
-    info "pip3 not found; bootstrapping via ensurepip…"
-    python3 -m ensurepip --upgrade || error "ensurepip failed"
-  fi
+  info "pip3 not found; trying to install…"
+  python3 -m ensurepip --upgrade || error "ensurepip failed"
 fi
 check_cmd pip3
 success "pip3 is available"
 
-# ensure uv
 if ! command -v uv &> /dev/null; then
-  info "uv not found; installing via Astral.sh…"
+  info "Installing uv from Astral.sh…"
   curl -LsSf https://astral.sh/uv/install.sh | sh
   export PATH="$HOME/.local/bin:$PATH"
 fi
 check_cmd uv
 success "All prerequisites satisfied."
 
-#–– 2. Ollama & model setup ––#
 info "Checking Ollama installation…"
 if ! command -v ollama &> /dev/null; then
-  info "ollama not found; installing…"
-  if [[ "$OS_TYPE" == "macOS" ]]; then
-    brew install ollama || error "Failed to install Ollama via Homebrew"
-  else
-    curl -LsSf https://ollama.com/install.sh | sh || error "Failed to install Ollama"
-    export PATH="$HOME/.local/bin:$PATH"
-  fi
+  info "Installing Ollama…"
+  curl -LsSf https://ollama.com/install.sh | sh || error "Failed to install Ollama"
+  export PATH="$HOME/.local/bin:$PATH"
   success "Ollama installed"
 fi
 
@@ -128,9 +120,8 @@ else
   info "gemma3:4b model already present—skipping"
 fi
 
-#–– 3. Bootstrap root .env ––#
 if [[ -f .env.example && ! -f .env ]]; then
-  info "Bootstrapping root .env from .env.example"
+  info "Creating root .env from .env.example"
   cp .env.example .env
   success "Root .env created"
 elif [[ -f .env ]]; then
@@ -139,59 +130,58 @@ else
   info "No .env.example at root—skipping"
 fi
 
-#–– 4. Install root dependencies ––#
 info "Installing root dependencies with npm ci…"
 npm ci
 success "Root dependencies installed."
 
-#–– 5. Setup backend ––#
 info "Setting up backend (apps/backend)…"
 (
   cd apps/backend
 
-  # bootstrap backend .env
   if [[ -f .env.sample && ! -f .env ]]; then
-    info "Bootstrapping backend .env from .env.sample"
+    info "Creating backend .env from .env.sample"
     cp .env.sample .env
     success "Backend .env created"
   else
-    info "Backend .env exists or .env.sample missing—skipping"
+    info "Backend .env exists or missing sample—skipping"
   fi
 
-  info "Syncing Python deps via uv…"
+  if [[ -d .venv ]]; then
+    info "Removing existing backend virtual environment…"
+    if ! rm -rf .venv; then
+      error "Failed to delete .venv. Please close any app using it and retry."
+    fi
+  fi
+
+  info "Installing Python dependencies with uv (this may take a few seconds)…"
   uv sync
-  success "Backend dependencies ready."
+  success "Backend dependencies installed."
 )
 
-#–– 6. Setup frontend ––#
 info "Setting up frontend (apps/frontend)…"
 (
   cd apps/frontend
-  # bootstrap frontend .env
   if [[ -f .env.sample && ! -f .env ]]; then
-    info "Bootstrapping frontend .env from .env.sample"
+    info "Creating frontend .env from .env.sample"
     cp .env.sample .env
-    success "frontend .env created"
+    success "Frontend .env created"
   else
-    info "frontend .env exists or .env.sample missing—skipping"
+    info "Frontend .env exists or missing sample—skipping"
   fi
 
-  info "Installing frontend deps with npm ci…"
+  info "Installing frontend dependencies with npm ci…"
   npm ci
-  success "Frontend dependencies ready."
+  success "Frontend dependencies installed."
 )
 
-#–– 7. Finish or start dev ––#
 if [[ "$START_DEV" == true ]]; then
   info "Starting development server…"
-  # trap SIGINT for graceful shutdown
-  trap 'info "Gracefully shutting down development server."; exit 0' SIGINT
+  trap 'info "Shutting down dev server."; exit 0' SIGINT
   npm run dev
 else
   success "🎉 Setup complete!
 
 Next steps:
-  • Run \`npm run dev\` to start in development mode.
-  • Run \`npm run build\` for production.
-  • See SETUP.md for more details."
+  • Run \`npm run dev\` to start development mode.
+  • Run \`npm run build\` for production."
 fi
