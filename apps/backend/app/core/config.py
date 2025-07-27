@@ -12,6 +12,10 @@ class Settings(BaseSettings):
     SYNC_DATABASE_URL: Optional[str]
     ASYNC_DATABASE_URL: Optional[str]
     SESSION_SECRET_KEY: Optional[str]
+    OPENAI_API_KEY: Optional[str]
+    MODEL_PROVIDER: Optional[str]
+    LL_MODEL: Optional[str]
+    EMBEDDING_MODEL: Optional[str]
     DB_ECHO: bool = False
     PYTHONDONTWRITEBYTECODE: int = 1
 

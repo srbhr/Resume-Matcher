@@ -6,12 +6,13 @@ from fastapi.concurrency import run_in_threadpool
 
 from ..exceptions import ProviderError
 from .base import Provider, EmbeddingProvider
+from ...core import settings
 
 logger = logging.getLogger(__name__)
 
 
 class OllamaProvider(Provider):
-    def __init__(self, model_name: str = "gemma3:4b", host: Optional[str] = None):
+    def __init__(self, model_name: str = settings.LL_MODEL, host: Optional[str] = None):
         self.model = model_name
         self._client = ollama.Client(host=host) if host else ollama.Client()
 
@@ -55,7 +56,7 @@ class OllamaProvider(Provider):
 class OllamaEmbeddingProvider(EmbeddingProvider):
     def __init__(
         self,
-        embedding_model: str = "nomic-embed-text:137m-v1.5-fp16",
+        embedding_model: str = settings.EMBEDDING_MODEL,
         host: Optional[str] = None,
     ):
         self._model = embedding_model
