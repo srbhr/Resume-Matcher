@@ -37,9 +37,9 @@ Options:
 
 This script will:
   • Verify required tools: node, npm, python3, pip3, uv
-  • Install Ollama & pull gemma3:4b model
+  • Install Ollama & pull relevant models
   • Install root dependencies via npm ci
-  • Bootstrap both root and backend .env files
+  • Bootstrap both frontend and backend .env files
   • Bootstrap backend venv and install Python deps via uv
   • Install frontend dependencies via npm ci
 EOF
@@ -120,13 +120,21 @@ if ! command -v ollama &> /dev/null; then
   success "Ollama installed"
 fi
 
-if ! ollama list | grep -q 'gemma3:4b'; then
-  info "Pulling gemma3:4b model…"
-  ollama pull gemma3:4b || error "Failed to pull gemma3:4b"
-  success "gemma3:4b model ready"
-else
-  info "gemma3:4b model already present—skipping"
-fi
+MODEL_PROVIDER=ollama
+# Slightly better than gemma3:4b at most benchmarks...
+# https://www.reddit.com/r/LocalLLaMA/comments/1ll88pe/gemma_3n_vs_gemma_3_4b12b_benchmarks/
+LL_MODEL="gemma3n:e4b"
+# High up on the HF MTEB leaderboard, and relatively lightweight
+EMBEDDING_MODEL="dengcao/Qwen3-Embedding-0.6B:Q8_0"
+for I in $LL_MODEL $EMBEDDING_MODEL; do
+	if ! ollama list | grep -q "$I"; then
+	  info "Pulling $I model…"
+	  ollama pull "$I" || error "Failed to pull $I model"
+	  success "$I model ready"
+	else
+	  info "$I model already present—skipping"
+	fi
+done
 
 #–– 3. Bootstrap root .env ––#
 if [[ -f .env.example && ! -f .env ]]; then
@@ -153,6 +161,9 @@ info "Setting up backend (apps/backend)…"
   if [[ -f .env.sample && ! -f .env ]]; then
     info "Bootstrapping backend .env from .env.sample"
     cp .env.sample .env
+    echo "MODEL_PROVIDER=\"${MODEL_PROVIDER}\"" >> .env
+    echo "LL_MODEL=\"${LL_MODEL}\"" >> .env
+    echo "EMBEDDING_MODEL=\"${LL_MODEL}\"" >> .env
     success "Backend .env created"
   else
     info "Backend .env exists or .env.sample missing—skipping"
