@@ -157,6 +157,11 @@ You can customize any variables in these files before or after bootstrapping.
    ```powershell
    npm run build
    ```
+   
+5. **Start the Build
+    ```powershell
+   npm run start
+   ```
 
 ### Linux/macOS Installation
 
