@@ -1,4 +1,3 @@
-
 #!/usr/bin/env bash
 #
 # setup.sh - cross-platform setup for Resume Matcher
@@ -122,10 +121,15 @@ ollama_check_or_pull() {
 info "Checking Ollama installation…"
 if ! command -v ollama &> /dev/null; then
   info "ollama not found; installing…"
+
   if [[ "$OS_TYPE" == "macOS" ]]; then
     brew install ollama || error "Failed to install Ollama via Homebrew"
   else
-    curl -LsSf https://ollama.com/install.sh | sh || error "Failed to install Ollama"
+    # Download Ollama installer securely without using curl | sh
+    curl -Lo ollama-install.sh https://ollama.com/install.sh || error "Failed to download Ollama installer"
+    chmod +x ollama-install.sh
+    ./ollama-install.sh || error "Failed to execute Ollama installer"
+    rm ollama-install.sh
     export PATH="$HOME/.local/bin:$PATH"
   fi
   success "Ollama installed"
