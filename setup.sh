@@ -108,13 +108,13 @@ success "All prerequisites satisfied."
 
 #–– 2. Ollama & model setup ––#
 ollama_check_or_pull() {
-      I="$1"
-      if ! ollama list | grep -q "$I"; then
-	  info "Pulling $I model…"
-	  ollama pull "$I" || error "Failed to pull $I model"
-	  success "$I model ready"
+      model_name="$1"
+      if ! ollama list | grep -q "$model_name"; then
+	  info "Pulling $model_name model…"
+	  ollama pull "$model_name" || error "Failed to pull $model_name model"
+	  success "$model_name model ready"
       else
-	  info "$I model already present—skipping"
+	  info "$model_name model already present—skipping"
       fi
 }
 

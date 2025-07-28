@@ -2,7 +2,6 @@ import os
 from typing import Dict, Any
 
 from ..core import settings
-from .exceptions import ProviderError
 from .strategies.wrapper import JSONWrapper, MDWrapper
 from .providers.base import Provider, EmbeddingProvider
 
@@ -37,7 +36,8 @@ class AgentManager:
             case 'openai':
                 from .providers.openai import OpenAIProvider
                 api_key = opts.get("llm_api_key", settings.LLM_API_KEY)
-                return OpenAIProvider(api_key=api_key,
+                return OpenAIProvider(model_name=self.model,
+                                      api_key=api_key,
                                       opts=opts)
             case 'ollama':
                 from .providers.ollama import OllamaProvider
@@ -49,6 +49,7 @@ class AgentManager:
                 llm_api_key = opts.get("llm_api_key", settings.LLM_API_KEY)
                 llm_api_base_url = opts.get("llm_base_url", settings.LLM_BASE_URL)
                 return LlamaIndexProvider(api_key=llm_api_key,
+                                          model_name=self.model,
                                           api_base_url=llm_api_base_url,
                                           provider=self.model_provider,
                                           opts=opts)
@@ -74,7 +75,7 @@ class EmbeddingManager:
             case 'openai':
                 from .providers.openai import OpenAIEmbeddingProvider
                 api_key = kwargs.get("openai_api_key", settings.EMBEDDING_API_KEY)
-                return OpenAIEmbeddingProvider(api_key=api_key)
+                return OpenAIEmbeddingProvider(api_key=api_key, embedding_model=self._model)
             case 'ollama':
                 from .providers.ollama import OllamaEmbeddingProvider
                 model = kwargs.get("embedding_model", self._model)
@@ -82,7 +83,9 @@ class EmbeddingManager:
             case _:
                 from .providers.llama_index import LlamaIndexEmbeddingProvider
                 embed_api_key = kwargs.get("embedding_api_key", settings.EMBEDDING_API_KEY)
-                return LlamaIndexEmbeddingProvider(api_key=embed_api_key, provider=self._model_provider)
+                return LlamaIndexEmbeddingProvider(api_key=embed_api_key,
+                                                   provider=self._model_provider,
+                                                   embedding_model=self._model)
 
     async def embed(self, text: str, **kwargs: Any) -> list[float]:
         """

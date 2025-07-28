@@ -22,10 +22,10 @@ class OllamaProvider(Provider):
         if model_name not in installed_ollama_models:
             try:
                 self._client.pull(model_name)
-            except Exception:
+            except Exception as e:
                 raise ProviderError(
                     f"Ollama Model '{model_name}' could not be pulled. Please update your apps/backend/.env file or select from the installed models."
-                )
+                ) from e
 
     @staticmethod
     async def _get_installed_models(host: Optional[str] = None) -> List[str]:
@@ -52,7 +52,7 @@ class OllamaProvider(Provider):
             return response["response"].strip()
         except Exception as e:
             logger.error(f"ollama sync error: {e}")
-            raise ProviderError(f"Ollama - Error generating response: {e}")
+            raise ProviderError(f"Ollama - Error generating response: {e}") from e
 
     async def __call__(self, prompt: str, **generation_args: Any) -> str:
         if generation_args:
@@ -83,4 +83,4 @@ class OllamaEmbeddingProvider(EmbeddingProvider):
             return response.embeddings
         except Exception as e:
             logger.error(f"ollama embedding error: {e}")
-            raise ProviderError(f"Ollama - Error generating embedding: {e}")
+            raise ProviderError(f"Ollama - Error generating embedding: {e}") from e

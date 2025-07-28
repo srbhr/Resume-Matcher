@@ -1,6 +1,6 @@
 import logging
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 from fastapi.concurrency import run_in_threadpool
 from llama_index.core.base.embeddings.base import BaseEmbedding
 from llama_index.core.base.llms.base import BaseLLM
@@ -71,7 +71,7 @@ class LlamaIndexProvider(Provider):
             return cr.text
         except Exception as e:
             logger.error(f"llama_index sync error: {e}")
-            raise ProviderError(f"llama_index - Error generating response: {e}")
+            raise ProviderError(f"llama_index - Error generating response: {e}") from e
 
     async def __call__(self, prompt: str, **generation_args: Any) -> str:
         if generation_args:
@@ -115,7 +115,7 @@ class LlamaIndexEmbeddingProvider(EmbeddingProvider):
         Generate an embedding for the given text.
         """
         try:
-            return await self._client.get_text_embedding(text)
+            return await run_in_threadpool(self._client.get_text_embedding, text)
         except Exception as e:
             logger.error(f"llama_index embedding error: {e}")
-            raise ProviderError(f"llama_index - Error generating embedding: {e}")
+            raise ProviderError(f"llama_index - Error generating embedding: {e}") from e

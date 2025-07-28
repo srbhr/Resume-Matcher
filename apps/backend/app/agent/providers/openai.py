@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class OpenAIProvider(Provider):
-    def __init__(self, api_key: str | None = None, model: str = settings.LL_MODEL,
+    def __init__(self, api_key: str | None = None, model_name: str = settings.LL_MODEL,
                  opts: Dict[str, Any] = None):
         if opts is None:
             opts = {}
@@ -21,7 +21,7 @@ class OpenAIProvider(Provider):
         if not api_key:
             raise ProviderError("OpenAI API key is missing")
         self._client = OpenAI(api_key=api_key)
-        self.model = model
+        self.model = model_name
         self.opts = opts
         self.instructions = ""
 
