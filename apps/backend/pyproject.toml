@@ -29,8 +29,6 @@ dependencies = [
     "idna==3.10",
     "itsdangerous==2.2.0",
     "jiter==0.9.0",
-    "llama-index-llms-openrouter>=0.3.2",
-    "llama-index-embeddings-google-genai>=0.2.1",
     "magika==0.6.1",
     "Markdown==3.8",
     "markdownify==1.1.0",

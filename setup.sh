@@ -166,7 +166,6 @@ info "Setting up backend (apps/backend)…"
   fi
 
   # The Ollama provider automatically pulls models on demand, but it's preferable to do it at setup time.
-  OLLAMA_MODELS=""
   eval `grep ^LLM_PROVIDER= .env`
   if [ "$LLM_PROVIDER" = "ollama" ]; then
       eval `grep ^LL_MODEL .env`
