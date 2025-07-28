@@ -17,7 +17,7 @@ class OpenAIProvider(Provider):
                  opts: Dict[str, Any] = None):
         if opts is None:
             opts = {}
-        api_key = api_key or settings.LLM_API_KEY
+        api_key = api_key or settings.LLM_API_KEY or os.getenv("OPENAI_API_KEY")
         if not api_key:
             raise ProviderError("OpenAI API key is missing")
         self._client = OpenAI(api_key=api_key)
@@ -57,7 +57,7 @@ class OpenAIEmbeddingProvider(EmbeddingProvider):
         api_key: str | None = None,
         embedding_model: str = settings.EMBEDDING_MODEL,
     ):
-        api_key = api_key or settings.EMBEDDING_API_KEY
+        api_key = api_key or settings.EMBEDDING_API_KEY or os.getenv("OPENAI_API_KEY")
         if not api_key:
             raise ProviderError("OpenAI API key is missing")
         self._client = OpenAI(api_key=api_key)
