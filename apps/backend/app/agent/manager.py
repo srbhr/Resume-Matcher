@@ -82,7 +82,7 @@ class EmbeddingManager:
             case _:
                 from .providers.llama_index import LlamaIndexEmbeddingProvider
                 embed_api_key = kwargs.get("embedding_api_key", settings.EMBEDDING_API_KEY)
-                return LLamaIndexEmbeddingProvider(api_key=embed_api_key, provider=self._model_provider)
+                return LlamaIndexEmbeddingProvider(api_key=embed_api_key, provider=self._model_provider)
 
     async def embed(self, text: str, **kwargs: Any) -> list[float]:
         """
