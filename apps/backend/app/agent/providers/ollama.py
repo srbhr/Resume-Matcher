@@ -10,20 +10,21 @@ from ...core import settings
 
 logger = logging.getLogger(__name__)
 
-
 class OllamaProvider(Provider):
     def __init__(self, model_name: str = settings.LL_MODEL, host: Optional[str] = None,
-                 opts: Dict[str, Any] = {}):
+                 opts: Dict[str, Any] = None):
+        if opts is None:
+            opts = {}
         self.opts = opts
         self.model = model_name
         self._client = ollama.Client(host=host) if host else ollama.Client()
         installed_ollama_models = [model_class.model for model_class in self._client.list().models]
         if model_name not in installed_ollama_models:
             try:
-                self._client.pull(model)
-            except Exception as e:
+                self._client.pull(model_name)
+            except Exception:
                 raise ProviderError(
-                    f"Ollama Model '{model}' could not be pulled. Please update your apps/backend/.env file or select from the installed models."
+                    f"Ollama Model '{model_name}' could not be pulled. Please update your apps/backend/.env file or select from the installed models."
                 )
 
     @staticmethod
@@ -54,7 +55,8 @@ class OllamaProvider(Provider):
             raise ProviderError(f"Ollama - Error generating response: {e}")
 
     async def __call__(self, prompt: str, **generation_args: Any) -> str:
-        assert not generation_args
+        if generation_args:
+            logger.warning(f"OllamaProvider ignoring generation_args {generation_args}")
         myopts = self.opts # Ollama can handle all the options manager.py passes in.
         return await run_in_threadpool(self._generate_sync, prompt, myopts)
 
