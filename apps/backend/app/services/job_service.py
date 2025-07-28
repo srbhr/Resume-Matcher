@@ -13,7 +13,6 @@ from app.schemas.json import json_schema_factory
 from app.models import Job, Resume, ProcessedJob
 from app.schemas.pydantic import StructuredJobModel
 from .exceptions import JobNotFoundError
-from ..core import settings
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +20,7 @@ logger = logging.getLogger(__name__)
 class JobService:
     def __init__(self, db: AsyncSession):
         self.db = db
-        self.json_agent_manager = AgentManager(model=settings.LL_MODEL)
+        self.json_agent_manager = AgentManager()
 
     async def create_and_store_job(self, job_data: dict) -> List[str]:
         """

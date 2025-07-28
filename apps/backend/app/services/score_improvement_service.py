@@ -73,7 +73,7 @@ class ScoreImprovementService:
             keywords = keywords_data.get("extracted_keywords", [])
             if not keywords or len(keywords) == 0:
                 raise JobKeywordExtractionError(job_id=job_id)
-        except json.JSONDecodeError:
+        except json.JSONDecodeError as e:
             raise JobKeywordExtractionError(job_id=job_id)
 
     async def _get_resume(

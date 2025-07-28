@@ -9,13 +9,17 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "Resume Matcher"
     FRONTEND_PATH: str = os.path.join(os.path.dirname(__file__), "frontend", "assets")
     ALLOWED_ORIGINS: List[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
-    SYNC_DATABASE_URL: Optional[str]
-    ASYNC_DATABASE_URL: Optional[str]
-    SESSION_SECRET_KEY: Optional[str]
-    OPENAI_API_KEY: Optional[str]
-    MODEL_PROVIDER: Optional[str]
-    LL_MODEL: Optional[str]
-    EMBEDDING_MODEL: Optional[str]
+    SYNC_DATABASE_URL: Optional[str] = ""
+    ASYNC_DATABASE_URL: Optional[str] = ""
+    SESSION_SECRET_KEY: Optional[str] = ""
+    LLM_PROVIDER: Optional[str] = "ollama"
+    LLM_API_KEY: Optional[str] = ""
+    LLM_BASE_URL: Optional[str] = ""
+    LL_MODEL: Optional[str] = "gemma3:4b"
+    EMBEDDING_PROVIDER: Optional[str] = "ollama"
+    EMBEDDING_API_KEY: Optional[str] = ""
+    EMBEDDING_BASE_URL: Optional[str] = ""
+    EMBEDDING_MODEL: Optional[str] = "dengcao/Qwen3-Embedding-0.6B:Q8_0"
     DB_ECHO: bool = False
     PYTHONDONTWRITEBYTECODE: int = 1
 

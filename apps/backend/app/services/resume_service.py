@@ -16,7 +16,6 @@ from app.prompt import prompt_factory
 from app.schemas.json import json_schema_factory
 from app.schemas.pydantic import StructuredResumeModel
 from .exceptions import ResumeNotFoundError, ResumeValidationError
-from ..core import settings
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +24,7 @@ class ResumeService:
     def __init__(self, db: AsyncSession):
         self.db = db
         self.md = MarkItDown(enable_plugins=False)
-        self.json_agent_manager = AgentManager(model=settings.LL_MODEL)
+        self.json_agent_manager = AgentManager()
 
     async def convert_and_store_resume(
         self, file_bytes: bytes, file_type: str, filename: str, content_type: str = "md"

@@ -12,12 +12,22 @@ logger = logging.getLogger(__name__)
 
 
 class OllamaProvider(Provider):
-    def __init__(self, model_name: str = settings.LL_MODEL, host: Optional[str] = None):
+    def __init__(self, model_name: str = settings.LL_MODEL, host: Optional[str] = None,
+                 opts: Dict[str, Any] = {}):
+        self.opts = opts
         self.model = model_name
         self._client = ollama.Client(host=host) if host else ollama.Client()
+        installed_ollama_models = [model_class.model for model_class in self._client.list().models]
+        if model_name not in installed_ollama_models:
+            try:
+                self._client.pull(model)
+            except Exception as e:
+                raise ProviderError(
+                    f"Ollama Model '{model}' could not be pulled. Please update your apps/backend/.env file or select from the installed models."
+                )
 
     @staticmethod
-    async def get_installed_models(host: Optional[str] = None) -> List[str]:
+    async def _get_installed_models(host: Optional[str] = None) -> List[str]:
         """
         List all installed models.
         """
@@ -44,13 +54,9 @@ class OllamaProvider(Provider):
             raise ProviderError(f"Ollama - Error generating response: {e}")
 
     async def __call__(self, prompt: str, **generation_args: Any) -> str:
-        opts = {
-            "temperature": generation_args.get("temperature", 0),
-            "top_p": generation_args.get("top_p", 0.9),
-            "top_k": generation_args.get("top_k", 40),
-            "num_ctx": generation_args.get("max_length", 20000),
-        }
-        return await run_in_threadpool(self._generate_sync, prompt, opts)
+        assert not generation_args
+        myopts = self.opts # Ollama can handle all the options manager.py passes in.
+        return await run_in_threadpool(self._generate_sync, prompt, myopts)
 
 
 class OllamaEmbeddingProvider(EmbeddingProvider):

@@ -13,12 +13,14 @@ logger = logging.getLogger(__name__)
 
 
 class OpenAIProvider(Provider):
-    def __init__(self, api_key: str | None = None, model: str = settings.LL_MODEL):
+    def __init__(self, api_key: str | None = None, model: str = settings.LL_MODEL,
+                 opts: Dict[str, Any] = {}):
         api_key = api_key or settings.OPENAI_API_KEY
         if not api_key:
             raise ProviderError("OpenAI API key is missing")
         self._client = OpenAI(api_key=api_key)
         self.model = model
+        self.opts = opts
         self.instructions = ""
 
     def _generate_sync(self, prompt: str, options: Dict[str, Any]) -> str:
@@ -34,15 +36,16 @@ class OpenAIProvider(Provider):
             raise ProviderError(f"OpenAI - error generating response: {e}") from e
 
     async def __call__(self, prompt: str, **generation_args: Any) -> str:
-        opts = {
-            "temperature": generation_args.get("temperature", 0),
-            "top_p": generation_args.get("top_p", 0.9),
+        assert not generation_args
+        myopts = {
+            "temperature": self.opts.get("temperature", 0),
+            "top_p": self.opts.get("top_p", 0.9),
 # top_k not currently supported by any OpenAI model - https://community.openai.com/t/does-openai-have-a-top-k-parameter/612410
 #            "top_k": generation_args.get("top_k", 40),
 # neither max_tokens
 #            "max_tokens": generation_args.get("max_length", 20000),
         }
-        return await run_in_threadpool(self._generate_sync, prompt, opts)
+        return await run_in_threadpool(self._generate_sync, prompt, myopts)
 
 
 class OpenAIEmbeddingProvider(EmbeddingProvider):

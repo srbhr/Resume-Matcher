@@ -108,6 +108,17 @@ check_cmd uv
 success "All prerequisites satisfied."
 
 #–– 2. Ollama & model setup ––#
+ollama_check_or_pull() {
+      I="$1"
+      if ! ollama list | grep -q "$I"; then
+	  info "Pulling $I model…"
+	  ollama pull "$I" || error "Failed to pull $I model"
+	  success "$I model ready"
+      else
+	  info "$I model already present—skipping"
+      fi
+}
+
 info "Checking Ollama installation…"
 if ! command -v ollama &> /dev/null; then
   info "ollama not found; installing…"
@@ -119,22 +130,6 @@ if ! command -v ollama &> /dev/null; then
   fi
   success "Ollama installed"
 fi
-
-MODEL_PROVIDER=ollama
-# Slightly better than gemma3:4b at most benchmarks...
-# https://www.reddit.com/r/LocalLLaMA/comments/1ll88pe/gemma_3n_vs_gemma_3_4b12b_benchmarks/
-LL_MODEL="gemma3n:e4b"
-# High up on the HF MTEB leaderboard, and relatively lightweight
-EMBEDDING_MODEL="dengcao/Qwen3-Embedding-0.6B:Q8_0"
-for I in $LL_MODEL $EMBEDDING_MODEL; do
-	if ! ollama list | grep -q "$I"; then
-	  info "Pulling $I model…"
-	  ollama pull "$I" || error "Failed to pull $I model"
-	  success "$I model ready"
-	else
-	  info "$I model already present—skipping"
-	fi
-done
 
 #–– 3. Bootstrap root .env ––#
 if [[ -f .env.example && ! -f .env ]]; then
@@ -161,12 +156,22 @@ info "Setting up backend (apps/backend)…"
   if [[ -f .env.sample && ! -f .env ]]; then
     info "Bootstrapping backend .env from .env.sample"
     cp .env.sample .env
-    echo "MODEL_PROVIDER=\"${MODEL_PROVIDER}\"" >> .env
-    echo "LL_MODEL=\"${LL_MODEL}\"" >> .env
-    echo "EMBEDDING_MODEL=\"${LL_MODEL}\"" >> .env
     success "Backend .env created"
   else
     info "Backend .env exists or .env.sample missing—skipping"
+  fi
+
+  # The Ollama provider automatically pulls models on demand, but it's preferable to do it at setup time.
+  OLLAMA_MODELS=""
+  eval `grep ^LLM_PROVIDER= .env`
+  if [ "$LLM_PROVIDER" = "ollama" ]; then
+      eval `grep ^LL_MODEL .env`
+      ollama_check_or_pull $LL_MODEL
+  fi
+  eval `grep ^EMBEDDING_PROVIDER= .env`
+  if [ "$EMBEDDING_PROVIDER" = "ollama" ]; then
+      eval `grep ^EMBEDDING_MODEL .env`
+      ollama_check_or_pull $EMBEDDING_MODEL
   fi
 
   info "Syncing Python deps via uv…"
