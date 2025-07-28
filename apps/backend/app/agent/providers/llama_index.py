@@ -15,7 +15,8 @@ def _get_real_provider(provider_name):
     # The format this method expects is something like:
     # llama_index.llms.openai_like.OpenAILike
     # llama_index.embeddings.openai_like.OpenAILikeEmbedding
-    isinstance(provider_name, str) or raise ValueError("provider_name must be a string denoting a fully-qualified Python class name")
+    if not isinstance(provider_name, str):
+        raise ValueError("provider_name must be a string denoting a fully-qualified Python class name")
     dotpos = provider_name.rfind('.')
     if dotpos < 0:
         raise ValueError("provider_name not correctly formatted")
