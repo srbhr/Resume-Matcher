@@ -1,14 +1,49 @@
 # Resume Matcher - Project Context Documentation
 
 ## Table of Contents
-1. [Business Requirements](#business-requirements)
-2. [Resume Parsing and Matching Algorithms](#resume-parsing-and-matching-algorithms)
-3. [Data Models and Schemas](#data-models-and-schemas)
-4. [API Specification and Endpoints](#api-specification-and-endpoints)
-5. [External Integrations and Dependencies](#external-integrations-and-dependencies)
-6. [Performance Requirements and Constraints](#performance-requirements-and-constraints)
-7. [Security and Privacy Considerations](#security-and-privacy-considerations)
-8. [Development Architecture](#development-architecture)
+1. [Architecture Overview](#architecture-overview)
+2. [Business Requirements](#business-requirements)
+3. [Resume Parsing and Matching Algorithms](#resume-parsing-and-matching-algorithms)
+4. [Data Models and Schemas](#data-models-and-schemas)
+5. [API Specification and Endpoints](#api-specification-and-endpoints)
+6. [External Integrations and Dependencies](#external-integrations-and-dependencies)
+7. [Performance Requirements and Constraints](#performance-requirements-and-constraints)
+8. [Security and Privacy Considerations](#security-and-privacy-considerations)
+9. [Development Architecture](#development-architecture)
+
+---
+
+## Architecture Overview
+
+### Technology Stack
+- **Backend**: FastAPI with Python 3.12+, uvicorn server
+- **Frontend**: Next.js 15 with React 19, TypeScript 5
+- **Database**: SQLite with aiosqlite async driver and SQLAlchemy 2.0.40 ORM
+- **AI Processing**: Ollama (gemma3:4b) for local inference, OpenAI as fallback
+- **Document Processing**: MarkItDown v0.1.1 library for PDF/DOCX parsing
+- **Vector Embeddings**: nomic-embed-text:137m-v1.5-fp16 via Ollama
+- **Package Management**: uv for Python dependencies, npm for frontend
+- **Process Management**: concurrently for running backend/frontend simultaneously
+
+### Monorepo Structure
+```
+/
+├── package.json           # Root monorepo configuration
+├── apps/
+│   ├── backend/          # FastAPI Python backend
+│   │   ├── pyproject.toml # uv package management
+│   │   └── app/          # Application source
+│   └── frontend/         # Next.js React frontend
+│       └── package.json  # Frontend dependencies
+└── docs/                 # Project documentation
+```
+
+### Application Architecture
+The system follows a service-oriented architecture with clear separation:
+- **API Layer**: FastAPI routers with middleware for CORS, sessions, and request ID tracking
+- **Service Layer**: ResumeService, JobService, ScoreImprovementService for business logic
+- **Agent System**: AgentManager with strategy patterns (JSONWrapper, MDWrapper) and provider abstraction (OllamaProvider, OpenAIProvider)
+- **Data Layer**: SQLAlchemy async models with JSON field types for structured data
 
 ---
 
@@ -67,14 +102,16 @@ Resume Matcher aims to become **"the VS Code for making resumes"** - an AI-power
 #### 1. Document Ingestion
 ```python
 # File formats supported: PDF, DOCX
-# Processing library: MarkItDown
-markitdown = MarkItDown()
-result = markitdown.convert(file_path)
+# Processing library: MarkItDown v0.1.1
+from markitdown import MarkItDown
+
+md = MarkItDown(enable_plugins=False)
+result = md.convert(file_path)
 text_content = result.text_content
 ```
 
 #### 2. Structured Data Extraction
-Uses AI-powered JSON extraction with predefined schema:
+Uses AI-powered JSON extraction with predefined schema from `apps/backend/app/schemas/json/structured_resume.py`:
 
 **Resume Schema Structure:**
 ```json
@@ -89,39 +126,93 @@ Uses AI-powered JSON extraction with predefined schema:
     "portfolio": "string",
     "location": {"city": "string", "country": "string"}
   },
-  "Experiences": [...],
-  "Projects": [...], 
-  "Skills": [...],
-  "Education": [...],
-  "Research Work": [...],
-  "Achievements": [...],
-  "Extracted Keywords": [...]
+  "Experiences": [{
+    "jobTitle": "string",
+    "company": "string",
+    "location": "string",
+    "startDate": "YYYY-MM-DD",
+    "endDate": "YYYY-MM-DD or Present",
+    "description": ["string"],
+    "technologiesUsed": ["string"]
+  }],
+  "Projects": [{
+    "projectName": "string",
+    "description": "string",
+    "technologiesUsed": ["string"],
+    "link": "string",
+    "startDate": "YYYY-MM-DD",
+    "endDate": "YYYY-MM-DD"
+  }],
+  "Skills": [{"category": "string", "skillName": "string"}],
+  "Research Work": [{
+    "title": "string | null",
+    "publication": "string | null",
+    "date": "YYYY-MM-DD | null",
+    "link": "string | null",
+    "description": "string | null"
+  }],
+  "Achievements": ["string"],
+  "Education": [{
+    "institution": "string",
+    "degree": "string",
+    "fieldOfStudy": "string | null",
+    "startDate": "YYYY-MM-DD",
+    "endDate": "YYYY-MM-DD",
+    "grade": "string",
+    "description": "string"
+  }],
+  "Extracted Keywords": ["string"]
 }
 ```
 
 #### 3. Keyword Extraction
-- **Method**: LLM-based extraction using structured prompts
+- **Method**: LLM-based extraction using structured prompts from `apps/backend/app/prompt/structured_resume.py`
 - **Focus Areas**: Technical skills, soft skills, industry terms, certifications
-- **Validation**: JSON schema validation with error handling
+- **Validation**: JSON schema validation with Pydantic models and error handling
 
 ### Job Description Processing
 
 #### 1. Structured Job Analysis
+Uses schema from `apps/backend/app/schemas/json/structured_job.py`:
 ```json
 {
-  "job_title": "string",
-  "company_profile": "text", 
-  "location": "string",
-  "job_summary": "text",
-  "key_responsibilities": ["string"],
-  "qualifications": ["string"],
-  "compensation_and_benefits": ["string"],
-  "extracted_keywords": ["string"]
+  "jobId": "string",
+  "jobTitle": "string",
+  "companyProfile": {
+    "companyName": "string",
+    "industry": "Optional[string]",
+    "website": "Optional[string]",
+    "description": "Optional[string]"
+  },
+  "location": {
+    "city": "string",
+    "state": "string",
+    "country": "string",
+    "remoteStatus": "string"
+  },
+  "datePosted": "YYYY-MM-DD",
+  "employmentType": "string",
+  "jobSummary": "string",
+  "keyResponsibilities": ["string"],
+  "qualifications": {
+    "required": ["string"],
+    "preferred": ["string"]
+  },
+  "compensationAndBenefits": {
+    "salaryRange": "string",
+    "benefits": ["string"]
+  },
+  "applicationInfo": {
+    "howToApply": "string",
+    "applyLink": "string",
+    "contactEmail": "Optional[string]"
+  },
+  "extractedKeywords": ["string"]
 }
 ```
 
 #### 2. Keyword Extraction Algorithm
-- **Primary Method**: LLM prompt-based extraction
+- **Primary Method**: LLM prompt-based extraction using `apps/backend/app/prompt/structured_job.py`
 - **Categories**: Required skills, preferred skills, technologies, qualifications
 - **Weighting**: Different importance levels for different keyword types
 

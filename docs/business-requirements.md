@@ -29,16 +29,16 @@ We're building the **VS Code for making resumes** - an AI-powered platform that 
 
 ### Core Value Proposition
 Resume Matcher provides **transparent, AI-powered resume optimization** that:
-- Runs entirely on your local machine (no data uploads)
-- Gives precise match scores with detailed explanations
-- Suggests specific improvements with before/after comparisons
-- Uses real ATS algorithms to test compatibility
+- Runs entirely on your local machine using Ollama (no data uploads to external servers)
+- Gives precise match scores with detailed explanations using vector embeddings (nomic-embed-text model)
+- Suggests specific improvements with before/after comparisons using AI content enhancement (gemma3:4b model)
+- Uses real ATS algorithms to test compatibility through structured data extraction with MarkItDown library
 
 ### Key Differentiators
-- **100% Local Processing**: Your resume never leaves your computer
-- **Real ATS Testing**: We reverse-engineer actual ATS behavior
-- **Actionable Insights**: Not just scores, but specific improvement steps
-- **Open Source**: Transparent algorithms you can inspect and trust
+- **100% Local Processing**: Your resume never leaves your computer - uses Ollama with local AI models
+- **Real ATS Testing**: We reverse-engineer actual ATS behavior through structured data parsing and JSON extraction
+- **Actionable Insights**: Not just scores, but specific improvement steps via AI-generated content enhancement
+- **Open Source**: Transparent algorithms you can inspect and trust (FastAPI backend, Next.js frontend)
 
 ## Target Audience
 

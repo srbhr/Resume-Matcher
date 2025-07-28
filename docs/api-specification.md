@@ -2,101 +2,64 @@
 
 ## Overview
 
-Resume Matcher's REST API provides comprehensive endpoints for resume processing, job description analysis, and AI-powered matching. This document details all API endpoints with examples, error handling, and integration patterns.
+Resume Matcher's REST API provides comprehensive endpoints for resume processing, job description analysis, and AI-powered matching. This document details all API endpoints based on the actual FastAPI implementation with examples, error handling, and integration patterns.
 
 ## API Architecture
 
-### Design Principles
-
-- **RESTful Design**: Clear resource-based URLs with appropriate HTTP methods
-- **Async Processing**: Long-running AI operations return immediately with status tracking
-- **Privacy First**: All data processing happens locally, no external API calls for sensitive data
-- **Idempotent Operations**: Safe to retry requests without side effects
-- **Consistent Error Format**: Standardized error responses across all endpoints
-
 ### Base Configuration
-
 ```python
-# API Base Settings
+# Actual API configuration from apps/backend/app/base.py
 API_BASE_URL = "http://localhost:8000"
 API_VERSION = "v1"
 FULL_API_URL = f"{API_BASE_URL}/api/{API_VERSION}"
 
-# Headers for all requests
-STANDARD_HEADERS = {
-    "Content-Type": "application/json",
-    "Accept": "application/json",
-    "User-Agent": "Resume-Matcher/1.0"
-}
+# FastAPI App Configuration
+app = FastAPI(
+    title="Resume Matcher",
+    docs_url="/api/docs",
+    openapi_url="/api/openapi.json",
+)
 ```
 
-## Authentication & Authorization
-
-Currently, Resume Matcher operates as a local-first application without authentication. Future versions may include:
-
+### Middleware Stack
+Based on `apps/backend/app/base.py`:
 ```python
-# Future authentication structure
-class AuthenticationScheme:
-    """
-    Planned authentication for multi-user deployments
-    """
-    def __init__(self):
-        self.scheme = "Bearer"
-        self.header_name = "Authorization"
-    
-    def get_headers(self, token: str) -> dict:
-        return {
-            "Authorization": f"Bearer {token}",
-            **STANDARD_HEADERS
-        }
+# CORS Middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Session Middleware
+app.add_middleware(
+    SessionMiddleware, 
+    secret_key=settings.SESSION_SECRET_KEY, 
+    same_site="lax"
+)
+
+# Request ID Middleware for tracking
+app.add_middleware(RequestIDMiddleware)
 ```
 
 ## Health Check Endpoints
 
 ### GET /health
 
-Basic health check for service availability.
+Basic health check endpoint as implemented in `apps/backend/app/api/router/health.py`.
 
-```python
-# Endpoint implementation
-@router.get("/health", response_model=HealthResponse)
-async def health_check():
-    """
-    Returns basic health information about the service
-    """
-    return HealthResponse(
-        status="healthy",
-        timestamp=datetime.utcnow(),
-        version="1.0.0",
-        services={
-            "database": "connected",
-            "ai_processor": "ready"
-        }
-    )
+```http
+GET /health HTTP/1.1
+Host: localhost:8000
+Accept: application/json
 
-# Response model
-class HealthResponse(BaseModel):
-    status: str = Field(..., description="Overall service status")
-    timestamp: datetime = Field(..., description="Current server timestamp")
-    version: str = Field(..., description="API version")
-    services: dict = Field(..., description="Status of dependent services")
-
-# Example response
+Response:
 {
     "status": "healthy",
-    "timestamp": "2024-01-15T10:30:00Z",
-    "version": "1.0.0",
-    "services": {
-        "database": "connected",
-        "ai_processor": "ready"
-    }
+    "timestamp": "2024-01-15T10:30:00Z"
 }
-```
-
-**Usage Example:**
-```bash
-curl -X GET "http://localhost:8000/health" \
-  -H "Accept: application/json"
 ```
 
 ### GET /health/detailed
@@ -172,69 +135,116 @@ async def detailed_health_check():
 
 ### POST /api/v1/resumes/upload
 
-Upload and process a resume file (PDF or DOCX).
+Upload and process a resume file (PDF or DOCX) as implemented in `apps/backend/app/api/router/v1/resume.py`.
 
+```http
+POST /api/v1/resumes/upload HTTP/1.1
+Host: localhost:8000
+Content-Type: multipart/form-data
+
+Request Body:
+- file: UploadFile (PDF or DOCX, max 10MB)
+- Supported content types: 
+  - "application/pdf"
+  - "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+
+Response:
+{
+    "message": "File example.pdf successfully processed as MD and stored in the DB",
+    "request_id": "12345678-1234-1234-1234-123456789012",
+    "resume_id": "resume_abc123def456"
+}
+```
+
+**Implementation Details:**
 ```python
-# Endpoint implementation
-@router.post("/resumes/upload", response_model=ResumeUploadResponse)
+# From apps/backend/app/api/router/v1/resume.py
+@resume_router.post("/upload")
 async def upload_resume(
-    file: UploadFile = File(..., description="Resume file (PDF or DOCX)"),
-    background_tasks: BackgroundTasks = BackgroundTasks()
+    request: Request,
+    file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db_session),
 ):
-    """
-    Uploads and processes a resume file
+    # File validation
+    allowed_content_types = [
+        "application/pdf",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ]
     
-    Process:
-    1. Validate file type and size
-    2. Extract text using MarkItDown
-    3. Store raw content in database
-    4. Queue AI processing job
-    5. Return processing ID for status tracking
-    """
-    # Validate file
-    if not file.filename.endswith(('.pdf', '.docx')):
-        raise HTTPException(
-            status_code=400,
-            detail="Only PDF and DOCX files are supported"
-        )
-    
-    if file.size > 10 * 1024 * 1024:  # 10MB limit
-        raise HTTPException(
-            status_code=413,
-            detail="File size must be less than 10MB"
-        )
-    
-    # Generate unique ID
-    resume_id = f"resume_{uuid4().hex[:8]}"
-    
-    # Extract text content
-    try:
-        file_content = await file.read()
-        extracted_text = await document_processor.extract_text(file_content, file.filename)
-    except Exception as e:
-        raise HTTPException(
-            status_code=422,
-            detail=f"Failed to extract text from file: {str(e)}"
-        )
-    
-    # Store raw resume
-    raw_resume = await resume_service.create_raw_resume(
-        resume_id=resume_id,
-        content=extracted_text,
-        content_type="md"
+    # File processing with MarkItDown
+    resume_service = ResumeService(db)
+    resume_id = await resume_service.convert_and_store_resume(
+        file_bytes=file_bytes,
+        file_type=file.content_type,
+        filename=file.filename,
+        content_type="md",
     )
-    
-    # Queue AI processing
-    background_tasks.add_task(
-        process_resume_async,
-        resume_id=resume_id,
-        content=extracted_text
-    )
-    
-    return ResumeUploadResponse(
-        resume_id=resume_id,
-        status="processing",
-        message="Resume uploaded successfully. Processing in background.",
+```
+
+**Error Responses:**
+- `400 Bad Request`: Invalid file type or empty file
+- `422 Unprocessable Entity`: Resume validation failed during AI processing
+- `500 Internal Server Error`: Processing error
+
+### GET /api/v1/resumes
+
+Retrieve resume data by resume_id as implemented in `apps/backend/app/api/router/v1/resume.py`.
+
+```http
+GET /api/v1/resumes?resume_id=resume_abc123def456 HTTP/1.1
+Host: localhost:8000
+Accept: application/json
+
+Response:
+{
+    "request_id": "12345678-1234-1234-1234-123456789012",
+    "data": {
+        "raw_resume": {
+            "resume_id": "resume_abc123def456",
+            "content": "# John Smith\n## Experience\n...",
+            "content_type": "md",
+            "created_at": "2024-01-15T10:30:00Z"
+        },
+        "processed_resume": {
+            "resume_id": "resume_abc123def456",
+            "personal_data": {...},
+            "experiences": {...},
+            "skills": {...},
+            "extracted_keywords": {...},
+            "processed_at": "2024-01-15T10:31:00Z"
+        }
+    }
+}
+```
+
+### POST /api/v1/resumes/improve
+
+Generate improved resume version as implemented in `apps/backend/app/api/router/v1/resume.py`.
+
+```http
+POST /api/v1/resumes/improve HTTP/1.1
+Host: localhost:8000
+Content-Type: application/json
+
+Request Body:
+{
+    "resume_id": "resume_abc123def456",
+    "job_id": "job_xyz789ghi012"
+}
+
+Response (Streaming):
+{
+    "original_score": 65.2,
+    "improved_score": 78.9,
+    "score_improvement": 13.7,
+    "improved_resume_content": "# John Smith\n## Senior Software Engineer\n...",
+    "resume_preview": {
+        "personal_data": {...},
+        "experiences": [...],
+        "skills": [...]
+    }
+}
+```
         processing_eta_seconds=30
     )
 

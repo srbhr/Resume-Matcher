@@ -2,102 +2,87 @@
 
 ## Overview
 
-Resume Matcher leverages several external services and libraries to provide comprehensive resume analysis capabilities. This document details all external integrations, their purposes, configuration requirements, and fallback strategies.
+Resume Matcher leverages local AI models and external libraries to provide comprehensive resume analysis capabilities. This document details all external integrations based on the actual implementation in `apps/backend/pyproject.toml`, their purposes, configuration requirements, and fallback strategies.
 
 ## AI Processing Integrations
 
 ### Ollama Integration (Primary)
 
-Ollama serves as our primary AI provider for local, privacy-preserving inference.
+Ollama serves as our primary AI provider for local, privacy-preserving inference using the implementation in `apps/backend/app/agent/providers/ollama.py`.
 
-#### Why Ollama?
+#### Current Configuration
+```python
+# From apps/backend/app/agent/manager.py
+class AgentManager:
+    def __init__(self, strategy: str | None = None, model: str = "gemma3:4b"):
+        # Default model: gemma3:4b
+        # Embedding model: nomic-embed-text:137m-v1.5-fp16 (EmbeddingManager)
 
-- **Privacy First**: All AI processing happens locally on user's machine
-- **Cost Effective**: No per-request API charges
-- **Reliable**: Not dependent on external service availability
-- **Customizable**: Can run different models based on hardware capabilities
-- **Open Source**: Full control over AI processing pipeline
+# From apps/backend/pyproject.toml
+dependencies = ["ollama==0.4.7"]
+```
+
+#### Implementation Details
+```python
+# apps/backend/app/agent/providers/ollama.py
+class OllamaProvider:
+    """Ollama AI provider for local inference"""
+    
+    def __init__(self, model_name: str = "gemma3:4b"):
+        self.model_name = model_name
+    
+    @staticmethod
+    async def get_installed_models():
+        """Get list of available Ollama models"""
+        # Implementation checks locally installed models
+    
+    async def generate(self, prompt: str, **kwargs):
+        """Generate text using Ollama API"""
+        # Actual implementation for text generation
+
+class OllamaEmbeddingProvider:
+    """Ollama embedding provider for vector generation"""
+    
+    def __init__(self, model_name: str = "nomic-embed-text:137m-v1.5-fp16"):
+        self.model_name = model_name
+    
+    async def embed(self, text: str) -> List[float]:
+        """Generate embeddings using Ollama"""
+        # Implementation for vector embeddings
+```
+
+### OpenAI Integration (Fallback)
+
+OpenAI serves as a fallback provider when local models are not available, implemented in `apps/backend/app/agent/providers/openai.py`.
 
 #### Configuration
-
 ```python
-# core/config.py
-class OllamaConfig:
-    def __init__(self):
-        self.base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-        self.model_name = os.getenv("OLLAMA_MODEL", "gemma2:4b")
-        self.timeout = int(os.getenv("OLLAMA_TIMEOUT", "60"))
-        self.max_retries = int(os.getenv("OLLAMA_MAX_RETRIES", "3"))
-        self.temperature = float(os.getenv("OLLAMA_TEMPERATURE", "0.1"))
-        self.context_length = int(os.getenv("OLLAMA_CONTEXT_LENGTH", "4096"))
+# From apps/backend/pyproject.toml
+dependencies = ["openai==1.75.0"]
 
-# agent/providers/ollama.py
-class OllamaProvider(BaseAIProvider):
-    """
-    Ollama AI provider for local inference
-    """
+# From apps/backend/app/agent/manager.py
+async def _get_provider(self, **kwargs):
+    api_key = kwargs.get("openai_api_key", os.getenv("OPENAI_API_KEY"))
+    if api_key:
+        return OpenAIProvider(api_key=api_key)
+    # Falls back to Ollama if no API key provided
+
+# apps/backend/app/agent/providers/openai.py
+class OpenAIProvider:
+    """OpenAI provider for fallback AI operations"""
     
-    def __init__(self, config: OllamaConfig):
-        self.config = config
-        self.client = httpx.AsyncClient(
-            base_url=config.base_url,
-            timeout=config.timeout
-        )
-        self.model_name = config.model_name
+    def __init__(self, api_key: str):
+        self.client = openai.AsyncOpenAI(api_key=api_key)
     
-    async def health_check(self) -> bool:
-        """
-        Verifies Ollama service is available and model is loaded
-        """
-        try:
-            response = await self.client.get("/api/tags")
-            if response.status_code != 200:
-                return False
-            
-            # Check if our model is available
-            tags = response.json()
-            available_models = [model["name"] for model in tags.get("models", [])]
-            
-            return self.model_name in available_models
-            
-        except Exception as e:
-            logger.error(f"Ollama health check failed: {e}")
-            return False
+    async def generate(self, prompt: str, **kwargs):
+        """Generate text using OpenAI API"""
+
+class OpenAIEmbeddingProvider:
+    """OpenAI embedding provider for vector generation"""
     
-    async def generate_structured_response(self, prompt: str, schema: dict) -> dict:
-        """
-        Generates structured response using Ollama with JSON schema validation
-        """
-        system_prompt = self._build_system_prompt(schema)
-        full_prompt = f"{system_prompt}\n\nUser Input:\n{prompt}"
-        
-        for attempt in range(self.config.max_retries):
-            try:
-                request_data = {
-                    "model": self.model_name,
-                    "prompt": full_prompt,
-                    "stream": False,
-                    "options": {
-                        "temperature": self.config.temperature,
-                        "num_ctx": self.config.context_length
-                    }
-                }
-                
-                response = await self.client.post("/api/generate", json=request_data)
-                response.raise_for_status()
-                
-                result = response.json()
-                raw_response = result.get("response", "")
-                
-                # Extract and validate JSON
-                structured_data = self._extract_json_from_response(raw_response)
-                self._validate_against_schema(structured_data, schema)
-                
-                return structured_data
-                
-            except json.JSONDecodeError as e:
-                logger.warning(f"JSON decode error on attempt {attempt + 1}: {e}")
-                if attempt == self.config.max_retries - 1:
+    async def embed(self, text: str) -> List[float]:
+        """Generate embeddings using OpenAI API"""
+```
                     raise AIProcessingError("Failed to generate valid JSON response")
                 
             except httpx.RequestError as e:
