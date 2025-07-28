@@ -158,7 +158,7 @@ You can customize any variables in these files before or after bootstrapping.
    npm run build
    ```
    
-5. **Start the Build
+5. **Start the Build**
     ```powershell
    npm run start
    ```
