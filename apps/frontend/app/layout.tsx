@@ -23,11 +23,15 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en-US" suppressHydrationWarning>
+    <html lang="en-US">
+      <head>
+        <meta name="format-detection" content="telephone=no, date=no, email=no, address=no" />
+      </head>
       <body
+        suppressHydrationWarning
         className={`${geist.variable} ${spaceGrotesk.variable} antialiased bg-white text-gray-900`}
       >
-        <div className="contents">{children}</div>
+        {children}
       </body>
     </html>
   );
