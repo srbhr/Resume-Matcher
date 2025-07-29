@@ -55,23 +55,31 @@ export const GlowingStarsTitle = ({
 };
 
 export const Illustration = ({ mouseEnter }: { mouseEnter: boolean }) => {
-	const stars = 108;
-	const columns = 18;
+const stars = 108;
+const columns = 18;
 
-	const [glowingStars, setGlowingStars] = useState<number[]>([]);
+const [isMounted, setIsMounted] = useState(false);
+const [glowingStars, setGlowingStars] = useState<number[]>([]);
+const highlightedStars = useRef<number[]>([]);
 
-	const highlightedStars = useRef<number[]>([]);
+// Control client-side mounting
+useEffect(() => {
+  setIsMounted(true);
+}, []);
 
-	useEffect(() => {
-		const interval = setInterval(() => {
-			highlightedStars.current = Array.from({ length: 5 }, () =>
-				Math.floor(Math.random() * stars),
-			);
-			setGlowingStars([...highlightedStars.current]);
-		}, 3000);
+// Generate random stars only after mounting
+useEffect(() => {
+  if (!isMounted) return;
 
-		return () => clearInterval(interval);
-	}, []);
+  const interval = setInterval(() => {
+    highlightedStars.current = Array.from({ length: 5 }, () =>
+      Math.floor(Math.random() * stars),
+    );
+    setGlowingStars([...highlightedStars.current]);
+  }, 3000);
+
+  return () => clearInterval(interval);
+}, [isMounted, stars]);
 
 	return (
 		<div
@@ -128,13 +136,17 @@ const Star = ({ isGlowing, delay }: { isGlowing: boolean; delay: number }) => {
 };
 
 const Glow = ({ delay }: { delay: number }) => {
-	const colors = [
-		'bg-green-500 shadow-green-400',
-		'bg-yellow-300 shadow-yellow-200',
-		'bg-blue-400 shadow-blue-300',
-	];
+const colors = [
+'bg-green-500 shadow-green-400',
+'bg-yellow-300 shadow-yellow-200',
+'bg-blue-400 shadow-blue-300',
+];
 
-	const randomColor = colors[Math.floor(Math.random() * colors.length)];
+const [randomColor, setRandomColor] = useState(colors[0]);
+
+useEffect(() => {
+  setRandomColor(colors[Math.floor(Math.random() * colors.length)]);
+}, []);
 
 	return (
 		<motion.div

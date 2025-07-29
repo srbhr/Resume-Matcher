@@ -89,21 +89,39 @@ export function DotPattern({
 		return () => window.removeEventListener('resize', updateDimensions);
 	}, []);
 
-	const dots = Array.from(
-		{
-			length: Math.ceil(dimensions.width / width) * Math.ceil(dimensions.height / height),
-		},
-		(_, i) => {
-			const col = i % Math.ceil(dimensions.width / width);
-			const row = Math.floor(i / Math.ceil(dimensions.width / width));
-			return {
-				x: col * width + cx,
-				y: row * height + cy,
-				delay: Math.random() * 5,
-				duration: Math.random() * 3 + 2,
-			};
-		},
-	);
+const [isMounted, setIsMounted] = useState(false);
+const [dots, setDots] = useState<Array<{x: number; y: number; delay: number; duration: number}>>([]);
+
+// Solo montar en el cliente
+useEffect(() => {
+  setIsMounted(true);
+}, []);
+
+// Generar dots solo después del montaje
+useEffect(() => {
+  if (isMounted && dimensions.width && dimensions.height) {
+    setDots(Array.from(
+      {
+        length: Math.ceil(dimensions.width / width) * Math.ceil(dimensions.height / height),
+      },
+      (_, i) => {
+        const col = i % Math.ceil(dimensions.width / width);
+        const row = Math.floor(i / Math.ceil(dimensions.width / width));
+        return {
+          x: col * width + cx,
+          y: row * height + cy,
+          delay: Math.random() * 5,
+          duration: Math.random() * 3 + 2,
+        };
+      },
+    ));
+  }
+}, [isMounted, dimensions, width, height, cx, cy]);
+
+// No renderizar nada en el servidor o antes del montaje
+if (!isMounted) {
+  return null;
+}
 
 	return (
 		<svg
