@@ -1,10 +1,22 @@
-import React from 'react';
+'use client';
+
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import BackgroundContainer from '@/components/common/background-container';
 import GitHubStarBadge from '@/components/common/github-star-badge';
 
 export default function Hero() {
-	return (
+const [mounted, setMounted] = useState(false);
+
+useEffect(() => {
+  setMounted(true);
+}, []);
+
+if (!mounted) {
+  return null;
+}
+
+return (
 		<BackgroundContainer>
 			<div className="relative mb-4 h-[30vh] w-full ">
 				<div className="flex items-center justify-center mb-20">
