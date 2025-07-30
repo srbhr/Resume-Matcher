@@ -4,27 +4,28 @@ The settings for Resume-Matcher are mainly stored in two files:
 which correspond to the settings for the backend (API provider) and frontend (UI provider), respectively.
 
 # apps/backend/.env:
-	SESSION_SECRET_KEY="string"
-	SYNC_DATABASE_URL="URL"
-	ASYNC_DATABASE_URL="URL"
-	PYTHONDONTWRITEBYTECODE=1
+```env
+SESSION_SECRET_KEY="string"
+SYNC_DATABASE_URL="URL"
+ASYNC_DATABASE_URL="URL"
+PYTHONDONTWRITEBYTECODE=1
 
-	LLM_PROVIDER="providerstring"
-	LLM_API_KEY="key"
-	LLM_BASE_URL="url"
-	LL_MODEL="modelID"
-	EMBEDDING_PROVIDER="providerstring"
-	EMBEDDING_API_KEY="key"
-	EMBEDDING_BASE_URL=""
-	EMBEDDING_MODEL="modelID"
+LLM_PROVIDER="providerstring"
+LLM_API_KEY="key"
+LLM_BASE_URL="url"
+LL_MODEL="modelID"
+EMBEDDING_PROVIDER="providerstring"
+EMBEDDING_API_KEY="key"
+EMBEDDING_BASE_URL=""
+EMBEDDING_MODEL="modelID"
+```
 
 These last 8 settings all relate to the LLM & embedding inference
-providers that Resume-Matcher uses. LLM's are AI models like GPT-4.1
-or Claude 4.0 Sonnet that do text completion/prediction and so
-on. Embedding models are models that turn text into a series of
-numbers that can be compared by Resume-Matcher to find
-similarities. Both types of models are needed for Resume-Matcher to
-work.
+providers that Resume-Matcher uses. LLMs are AI models like GPT-4.1
+or Claude 4.0 Sonnet that do text completion/prediction. Embedding
+models are models that turn text into a series of numbers that can be
+compared by Resume-Matcher to find similarities. Both types of models
+are needed for Resume-Matcher to work.
 
 ## "ollama" provider
 By default, Resume-Matcher uses an LLM_PROVIDER and EMBEDDING_PROVIDER
@@ -37,8 +38,10 @@ of doing completions.
 
 To find a full list of models available in Ollama, go to
 www.ollama.com. To download one of those models to your local computer
-for use, run "ollama pull <Ollama name>". For example, if you want to
-use bge-m3, you could run "ollama pull bge-m3:latest" and then set
+for use, run ```bash
+ollama pull <Ollama name>```. For example, if you want to
+use bge-m3, you could run ```bash
+ollama pull bge-m3:latest``` and then set
 EMBEDDING_MODEL="bge-m3:latest".
 
 ## "openai" provider
@@ -62,23 +65,24 @@ provider or embeddings provider and put it into LLM_PROVIDER or
 EMBEDDING_PROVIDER. This opens up 90+ LLM providers and 60+ embedding
 providers for use in Resume-Matcher.  In general, LLM_PROVIDER values
 will begin with "llama_index.llms." and EMBEDDING_PROVIDER values will
-begin with "llama_index.embeddings.".
+begin with "llama_index.embeddings."
 
-The full list of LlamaIndex LLM providers is available at
-https://docs.llamaindex.ai/en/stable/module_guides/models/llms/modules/#available-llm-integrations
-and the full list of of embedding providers is available at
-https://docs.llamaindex.ai/en/stable/module_guides/models/embeddings/#list-of-supported-embeddings
-.
+[The full list of available LlamaIndex LLM providers](https://docs.llamaindex.ai/en/stable/module_guides/models/llms/modules/#available-llm-integrations)
+and [the full list of available LlamaIndex embedding providers](https://docs.llamaindex.ai/en/stable/module_guides/models/embeddings/#list-of-supported-embeddings).
 
 As an example, let's say you wanted to set up OpenRouter as your
 LLM_PROVIDER. To make this work, you will first need to install the
 LlamaIndex OpenRouter provider in the backend environment:
-    cd apps/backend
-    uv pip install llama-index-llms-openrouter
+```bash
+cd apps/backend
+uv pip install llama-index-llms-openrouter
+```
 Then in apps/backend/.env set:
-    LLM_PROVIDER="llama_index.llms.openrouter.OpenRouter"
-    LL_MODEL="meta-llama/llama-4-scout"
-    LLM_API_KEY="<your openrouter API key>"
+```env
+LLM_PROVIDER="llama_index.llms.openrouter.OpenRouter"
+LL_MODEL="meta-llama/llama-4-scout"
+LLM_API_KEY="<your openrouter API key>"
+```
 
 N.B. OpenRouter in particular does not facilitate any embedding
 models, so you will need to have another provider for the embedding
