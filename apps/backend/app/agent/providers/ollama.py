@@ -1,4 +1,5 @@
 import logging
+import os
 import ollama
 
 from typing import Any, Dict, List, Optional
@@ -13,7 +14,7 @@ logger = logging.getLogger(__name__)
 class OllamaProvider(Provider):
     def __init__(self, model_name: str = "gemma3:4b", host: Optional[str] = None):
         self.model = model_name
-        self._client = ollama.Client(host=host) if host else ollama.Client()
+        self._client = ollama.Client(host=host or os.getenv("OLLAMA_HOST"))
 
     @staticmethod
     async def get_installed_models(host: Optional[str] = None) -> List[str]:
@@ -22,7 +23,7 @@ class OllamaProvider(Provider):
         """
 
         def _list_sync() -> List[str]:
-            client = ollama.Client(host=host) if host else ollama.Client()
+            client = ollama.Client(host=host or os.getenv("OLLAMA_HOST"))
             return [model_class.model for model_class in client.list().models]
 
         return await run_in_threadpool(_list_sync)
@@ -59,7 +60,7 @@ class OllamaEmbeddingProvider(EmbeddingProvider):
         host: Optional[str] = None,
     ):
         self._model = embedding_model
-        self._client = ollama.Client(host=host) if host else ollama.Client()
+        self._client = ollama.Client(host=host or os.getenv("OLLAMA_HOST"))
 
     async def embed(self, text: str) -> List[float]:
         """

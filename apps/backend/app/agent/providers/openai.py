@@ -22,13 +22,17 @@ class OpenAIProvider(Provider):
 
     def _generate_sync(self, prompt: str, options: Dict[str, Any]) -> str:
         try:
-            response = self._client.responses.create(
+            messages = [{"role": "user", "content": prompt}]
+
+            if self.instructions:
+                messages.insert(0, {"role": "system", "content": self.instructions})
+
+            response = self._client.chat.completions.create(
                 model=self.model,
-                instructions=self.instructions,
-                input=prompt,
+                messages=messages,
                 **options,
             )
-            return response.output_text
+            return response.choices[0].message.content or ""
         except Exception as e:
             raise ProviderError(f"OpenAI - error generating response: {e}") from e
 
@@ -36,8 +40,7 @@ class OpenAIProvider(Provider):
         opts = {
             "temperature": generation_args.get("temperature", 0),
             "top_p": generation_args.get("top_p", 0.9),
-            "top_k": generation_args.get("top_k", 40),
-            "max_tokens": generation_args.get("max_length", 20000),
+            "max_tokens": generation_args.get("max_length", 4096),
         }
         return await run_in_threadpool(self._generate_sync, prompt, opts)
 
@@ -59,6 +62,6 @@ class OpenAIEmbeddingProvider(EmbeddingProvider):
             response = await run_in_threadpool(
                 self._client.embeddings.create, input=text, model=self._model
             )
-            return response["data"][0]["embedding"]
+            return response.data[0].embedding
         except Exception as e:
             raise ProviderError(f"OpenAI - error generating embedding: {e}") from e
