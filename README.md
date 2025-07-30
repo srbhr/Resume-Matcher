@@ -48,6 +48,7 @@ We're working on actively improving the platform, towards building a **VS Code f
 ![Star Resume Matcher](assets/star_resume_matcher.png)
 
 > Resume Matcher is a part of [Vercel Open Source Program](https://vercel.com/oss)
+> 
 ![Vercel OSS Program](https://vercel.com/oss/program-badge.svg)
 
 
