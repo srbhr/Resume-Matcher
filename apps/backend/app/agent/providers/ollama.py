@@ -10,23 +10,7 @@ from ...core import settings
 
 logger = logging.getLogger(__name__)
 
-class OllamaProvider(Provider):
-    def __init__(self, model_name: str = settings.LL_MODEL, host: Optional[str] = None,
-                 opts: Dict[str, Any] = None):
-        if opts is None:
-            opts = {}
-        self.opts = opts
-        self.model = model_name
-        self._client = ollama.Client(host=host) if host else ollama.Client()
-        installed_ollama_models = [model_class.model for model_class in self._client.list().models]
-        if model_name not in installed_ollama_models:
-            try:
-                self._client.pull(model_name)
-            except Exception as e:
-                raise ProviderError(
-                    f"Ollama Model '{model_name}' could not be pulled. Please update your apps/backend/.env file or select from the installed models."
-                ) from e
-
+class OllamaBaseProvider:
     @staticmethod
     async def _get_installed_models(host: Optional[str] = None) -> List[str]:
         """
@@ -38,6 +22,28 @@ class OllamaProvider(Provider):
             return [model_class.model for model_class in client.list().models]
 
         return await run_in_threadpool(_list_sync)
+
+    def _ensure_model_pulled(self, model_name):
+        installed_ollama_models = [model_class.model for model_class in self._client.list().models]
+        if model_name not in installed_ollama_models:
+            try:
+                self._client.pull(model_name)
+            except Exception as e:
+                raise ProviderError(
+                    f"Ollama Model '{model_name}' could not be pulled. Please update your apps/backend/.env file or select from the installed models."
+                ) from e
+
+class OllamaProvider(Provider, OllamaBaseProvider):
+    def __init__(self,
+                 model_name: str = settings.LL_MODEL,
+                 api_base_url: Optional[str] = settings.LLM_BASE_URL,
+                 opts: Dict[str, Any] = None):
+        if opts is None:
+            opts = {}
+        self.opts = opts
+        self.model = model_name
+        self._client = ollama.Client(host=api_base_url) if api_base_url else ollama.Client()
+        self._ensure_model_pulled(model_name)
 
     def _generate_sync(self, prompt: str, options: Dict[str, Any]) -> str:
         """
@@ -60,15 +66,15 @@ class OllamaProvider(Provider):
         myopts = self.opts # Ollama can handle all the options manager.py passes in.
         return await run_in_threadpool(self._generate_sync, prompt, myopts)
 
-
-class OllamaEmbeddingProvider(EmbeddingProvider):
+class OllamaEmbeddingProvider(EmbeddingProvider, OllamaBaseProvider):
     def __init__(
         self,
         embedding_model: str = settings.EMBEDDING_MODEL,
-        host: Optional[str] = None,
+        api_base_url: Optional[str] = settings.EMBEDDING_BASE_URL,
     ):
         self._model = embedding_model
-        self._client = ollama.Client(host=host) if host else ollama.Client()
+        self._client = ollama.Client(host=api_base_url) if api_base_url else ollama.Client()
+        self._ensure_model_pulled(embedding_model)
 
     async def embed(self, text: str) -> List[float]:
         """
