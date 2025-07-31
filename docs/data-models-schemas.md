@@ -162,11 +162,11 @@ class ProcessedResume(Base):
 
 **JSON Field Examples**:
 ```python
-# Example personal_data JSON structure
-personal_data_example = {
+# Example personalData JSON structure
+personalDataExample = {
     "firstName": "John",
     "lastName": "Smith",
-    "email": "john.smith@email.com",
+    "emailAddress": "john.smith@email.com",
     "phone": "(555) 123-4567",
     "linkedin": "linkedin.com/in/johnsmith",
     "portfolio": "johnsmith.dev",
@@ -177,7 +177,7 @@ personal_data_example = {
 }
 
 # Example experiences JSON structure
-experiences_example = {
+experiencesExample = {
     "experiences": [
         {
             "jobTitle": "Senior Software Developer",
@@ -202,22 +202,22 @@ experiences_example = {
                 "Built responsive web applications using React and Node.js",
                 "Implemented CI/CD pipelines reducing deployment time by 60%"
             ],
-            "technologiesUsed": ["React", "Node.js", "CI/CD", "JavaScript"]
+            "technologiesUsed": ["React", "Node.js", "ciCd", "JavaScript"]
         }
     ]
 }
 
 # Example skills JSON structure
-skills_example = {
+skillsExample = {
     "skills": [
-        {"category": "Programming Languages", "skillName": "Python"},
-        {"category": "Programming Languages", "skillName": "JavaScript"},
-        {"category": "Frameworks", "skillName": "React"},
-        {"category": "Frameworks", "skillName": "Django"},
-        {"category": "DevOps", "skillName": "Docker"},
-        {"category": "Cloud", "skillName": "AWS"},
-        {"category": "Databases", "skillName": "PostgreSQL"},
-        {"category": "Soft Skills", "skillName": "Team Leadership"}
+        {"category": "programmingLanguages", "skillName": "Python"},
+        {"category": "programmingLanguages", "skillName": "JavaScript"},
+        {"category": "frameworks", "skillName": "React"},
+        {"category": "frameworks", "skillName": "Django"},
+        {"category": "devOps", "skillName": "Docker"},
+        {"category": "cloud", "skillName": "AWS"},
+        {"category": "databases", "skillName": "PostgreSQL"},
+        {"category": "softSkills", "skillName": "Team Leadership"}
     ]
 }
 ```
@@ -323,13 +323,13 @@ class ProcessedJob(Base):
 
 **Processed Job Example**:
 ```python
-processed_job_example = {
-    "job_title": "Senior Python Developer",
-    "company_profile": "Fast-growing tech company focused on ML applications",
+processedJobExample = {
+    "jobTitle": "Senior Python Developer",
+    "companyProfile": "Fast-growing tech company focused on ML applications",
     "location": "San Francisco, CA (Remote OK)",
-    "employment_type": "Full-time",
-    "job_summary": "We're seeking an experienced Python developer to lead our backend development team and build scalable applications.",
-    "key_responsibilities": [
+    "employmentType": "Full-time",
+    "jobSummary": "We're seeking an experienced Python developer to lead our backend development team and build scalable applications.",
+    "keyResponsibilities": [
         "Lead development of web applications using Python and Django",
         "Mentor junior developers and conduct code reviews", 
         "Collaborate with product team on feature requirements",
@@ -348,7 +348,7 @@ processed_job_example = {
             "Previous team lead experience"
         ]
     },
-    "extracted_keywords": [
+    "extractedKeywords": [
         "Python", "Django", "Flask", "AWS", "Docker", "Kubernetes",
         "Leadership", "Mentoring", "Backend", "Scalable", "Senior"
     ]
