@@ -133,8 +133,8 @@ async def extract_structured_data(resume_text: str) -> dict:
 **Example Structured Output**:
 ```json
 {
-  "UUID": "resume_12345",
-  "Personal Data": {
+  "uuid": "resume_12345",
+  "personalData": {
     "firstName": "John",
     "lastName": "Smith", 
     "email": "john.smith@email.com",
@@ -145,7 +145,7 @@ async def extract_structured_data(resume_text: str) -> dict:
       "country": "USA"
     }
   },
-  "Experiences": [
+  "experiences": [
     {
       "jobTitle": "Senior Software Developer",
       "company": "Tech Corp",
@@ -160,13 +160,13 @@ async def extract_structured_data(resume_text: str) -> dict:
       "technologiesUsed": ["Python", "Docker", "Microservices", "Leadership"]
     }
   ],
-  "Skills": [
+  "skills": [
     {"category": "Programming Languages", "skillName": "Python"},
     {"category": "Programming Languages", "skillName": "JavaScript"},
     {"category": "DevOps", "skillName": "Docker"},
     {"category": "Cloud", "skillName": "AWS"}
   ],
-  "Extracted Keywords": [
+  "extractedKeywords": [
     "Python", "JavaScript", "Docker", "AWS", "React", 
     "Microservices", "Leadership", "Performance Optimization"
   ]
