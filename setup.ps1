@@ -118,12 +118,16 @@ try {
 
 # Check Python - CORE DEPENDENCY
 $PythonCmd = $null
+$PythonVersion = $null
+
 if (Get-Command "python3" -ErrorAction SilentlyContinue) {
     $PythonCmd = "python3"
+    $PythonVersion = python3 -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')" 2>$null
 } elseif (Get-Command "python" -ErrorAction SilentlyContinue) {
-    $PythonVersion = python --version 2>&1
-    if ($PythonVersion -match "Python 3\.") {
+    $PythonVersionFull = python --version 2>&1
+    if ($PythonVersionFull -match "Python 3\.") {
         $PythonCmd = "python"
+        $PythonVersion = python -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')" 2>$null
     }
 }
 
@@ -131,7 +135,24 @@ if (-not $PythonCmd) {
     Write-CustomError "CORE DEPENDENCY MISSING: Python 3 is not installed. Please install Python 3 and retry."
 }
 
-Write-Success "Python is available as $PythonCmd"
+# Check for Python 3.12+ compatibility issues
+if ($PythonVersion -match "^3\.(1[2-9]|[2-9][0-9])$|^[4-9]\.") {
+    Write-Host ""
+    Write-Host "⚠️  WARNING: Python $PythonVersion detected!" -ForegroundColor Yellow
+    Write-Host "   Known compatibility issues with cytoolz and other packages." -ForegroundColor Yellow
+    Write-Host "   See: https://github.com/srbhr/Resume-Matcher/issues/312" -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "   Recommended actions:" -ForegroundColor Cyan
+    Write-Host "   1. Use Python 3.11 instead (recommended)" -ForegroundColor Cyan
+    Write-Host "   2. Or continue and install build dependencies if issues occur" -ForegroundColor Cyan
+    Write-Host ""
+    $Continue = Read-Host "   Continue with Python $PythonVersion? (y/N)"
+    if ($Continue -notmatch "^[Yy]$") {
+        Write-CustomError "Setup cancelled. Please install Python 3.11 and retry."
+    }
+}
+
+Write-Success "Python is available as $PythonCmd (version $PythonVersion)"
 
 # Check pip - CORE DEPENDENCY
 $PipCmd = $null
@@ -258,6 +279,16 @@ if (Test-Path "apps/backend") {
             # Install dependencies using uv sync (which handles venv activation automatically)
             Write-Info "Syncing Python deps via uv..."
             uv sync
+            
+            # Install NLTK data to prevent issue #315
+            Write-Info "Installing required NLTK data..."
+            try {
+                uv run python -c "import nltk; nltk.download('wordnet'); nltk.download('punkt'); nltk.download('stopwords')" 2>$null
+                Write-Success "NLTK data installed"
+            } catch {
+                Write-Info "NLTK data installation failed - will try during runtime"
+            }
+            
             Write-Success "Backend dependencies ready."
         } catch {
             Write-Info "uv sync failed, trying alternative installation..."
