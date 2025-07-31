@@ -570,7 +570,7 @@ class DatabaseQueryOptimizer:
         query = text("""
             WITH skill_data AS (
                 SELECT 
-                    json_extract(value, '$.skillName') as skill_name,
+                    json_extract(value, '$.skillName') as skillName,
                     json_extract(value, '$.category') as category
                 FROM processed_resumes,
                      json_each(skills, '$.skills')
@@ -700,7 +700,7 @@ class DatabaseIndexOptimizer:
         ("job_resume_association", ["job_id", "resume_id"], True),  # Composite unique
         
         # JSON field indexes (SQLite 3.45+)
-        ("processed_resumes", ["json_extract(personal_data, '$.email')"], False),
+        ("processed_resumes", ["json_extract(personal_data, '$.emailAddress')"], False),
     ]
     
     async def create_performance_indexes(self, session):
