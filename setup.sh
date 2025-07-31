@@ -99,9 +99,14 @@ success "pip3 is available"
 
 # ensure uv
 if ! command -v uv &> /dev/null; then
-  info "uv not found; installing via Astral.sh…"
-  curl -LsSf https://astral.sh/uv/install.sh | sh
-  export PATH="$HOME/.local/bin:$PATH"
+  info "uv not found; installing…"
+  if [[ "$OS_TYPE" == "macOS" ]]; then
+    brew install uv || error "Failed to install uv via Homebrew"
+  else
+    curl -LsSf https://astral.sh/uv/install.sh | sh || error "Failed to install uv"
+    export PATH="$HOME/.local/bin:$PATH"
+  fi
+  success "uv installed"
 fi
 check_cmd uv
 success "All prerequisites satisfied."
