@@ -73,7 +73,7 @@ class OllamaEmbeddingProvider(EmbeddingProvider, OllamaBaseProvider):
         api_base_url: Optional[str] = settings.EMBEDDING_BASE_URL,
     ):
         self._model = embedding_model
-        self._client = ollama.Client(host=api_base_Url) if api_base_url else ollama.Client()
+        self._client = ollama.Client(host=api_base_url) if api_base_url else ollama.Client()
         self._ensure_model_pulled(embedding_model)
 
     async def embed(self, text: str) -> List[float]:
