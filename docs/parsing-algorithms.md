@@ -27,8 +27,10 @@ async def validate_resume_upload(file: UploadFile) -> bool:
     
     # Check file size (max 10MB)
     max_size = 10 * 1024 * 1024
-    if file.size > max_size:
+    contents = await file.read()
+    if len(contents) > max_size:
         raise ValidationError("File too large (max 10MB)")
+    await file.seek(0)  # Reset file pointer after reading
     
     # Verify file has content
     content_preview = await file.read(1024)
