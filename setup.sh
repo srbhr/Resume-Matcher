@@ -36,9 +36,9 @@ Options:
 
 This script will:
   • Verify required tools: node, npm, python3, pip3, uv
-  • Install Ollama & pull gemma3:4b model
+  • Install Ollama & pull relevant models
   • Install root dependencies via npm ci
-  • Bootstrap both root and backend .env files
+  • Bootstrap both frontend and backend .env files
   • Bootstrap backend venv and install Python deps via uv
   • Install frontend dependencies via npm ci
 EOF
@@ -107,6 +107,17 @@ check_cmd uv
 success "All prerequisites satisfied."
 
 #–– 2. Ollama & model setup ––#
+ollama_check_or_pull() {
+      model_name="$1"
+      if ! ollama list | grep -q "$model_name"; then
+	  info "Pulling $model_name model…"
+	  ollama pull "$model_name" || error "Failed to pull $model_name model"
+	  success "$model_name model ready"
+      else
+	  info "$model_name model already present—skipping"
+      fi
+}
+
 info "Checking Ollama installation…"
 if ! command -v ollama &> /dev/null; then
   info "ollama not found; installing…"
@@ -122,14 +133,6 @@ if ! command -v ollama &> /dev/null; then
     export PATH="$HOME/.local/bin:$PATH"
   fi
   success "Ollama installed"
-fi
-
-if ! ollama list | grep -q 'gemma3:4b'; then
-  info "Pulling gemma3:4b model…"
-  ollama pull gemma3:4b || error "Failed to pull gemma3:4b"
-  success "gemma3:4b model ready"
-else
-  info "gemma3:4b model already present—skipping"
 fi
 
 #–– 3. Bootstrap root .env ––#
@@ -160,6 +163,18 @@ info "Setting up backend (apps/backend)…"
     success "Backend .env created"
   else
     info "Backend .env exists or .env.sample missing—skipping"
+  fi
+
+  # The Ollama provider automatically pulls models on demand, but it's preferable to do it at setup time.
+  eval `grep ^LLM_PROVIDER= .env`
+  if [ "$LLM_PROVIDER" = "ollama" ]; then
+      eval `grep ^LL_MODEL .env`
+      ollama_check_or_pull $LL_MODEL
+  fi
+  eval `grep ^EMBEDDING_PROVIDER= .env`
+  if [ "$EMBEDDING_PROVIDER" = "ollama" ]; then
+      eval `grep ^EMBEDDING_MODEL .env`
+      ollama_check_or_pull $EMBEDDING_MODEL
   fi
 
   info "Syncing Python deps via uv…"
