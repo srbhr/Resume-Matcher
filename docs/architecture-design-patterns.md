@@ -1102,31 +1102,20 @@ class ServiceFactory(ComponentFactory):
         
         # Create dependencies based on service type
         if service_type == "resume":
-            ai_provider = self.ai_factory.create_component(
-                config.get("ai_provider", "ollama"),
-                config.get("ai_config", {})
-            )
+            # ai_provider is always set by factory, not config
+            ai_provider = self.ai_factory.create_component("ollama", {})
             resume_repo = self.repo_factory.create_component("resume", {})
-            
             return service_class(ai_provider, resume_repo)
         
         elif service_type == "job":
-            ai_provider = self.ai_factory.create_component(
-                config.get("ai_provider", "ollama"),
-                config.get("ai_config", {})
-            )
+            ai_provider = self.ai_factory.create_component("ollama", {})
             job_repo = self.repo_factory.create_component("job", {})
-            
             return service_class(ai_provider, job_repo)
         
         elif service_type == "matching":
             resume_repo = self.repo_factory.create_component("resume", {})
             job_repo = self.repo_factory.create_component("job", {})
-            ai_provider = self.ai_factory.create_component(
-                config.get("ai_provider", "ollama"),
-                config.get("ai_config", {})
-            )
-            
+            ai_provider = self.ai_factory.create_component("ollama", {})
             return service_class(resume_repo, job_repo, ai_provider)
         
         else:
