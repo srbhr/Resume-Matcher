@@ -39,6 +39,12 @@ class AgentManager:
                 return OpenAIProvider(model_name=self.model,
                                       api_key=api_key,
                                       opts=opts)
+            case 'gemini':
+                from .providers.gemini import GeminiProvider
+                api_key = opts.get("llm_api_key", settings.LLM_API_KEY)
+                return GeminiProvider(model_name=self.model,
+                                      api_key=api_key,
+                                      opts=opts)
             case 'ollama':
                 from .providers.ollama import OllamaProvider
                 model = opts.get("model", self.model)
@@ -76,6 +82,10 @@ class EmbeddingManager:
                 from .providers.openai import OpenAIEmbeddingProvider
                 api_key = kwargs.get("openai_api_key", settings.EMBEDDING_API_KEY)
                 return OpenAIEmbeddingProvider(api_key=api_key, embedding_model=self._model)
+            case 'gemini':
+                from .providers.gemini import GeminiEmbeddingProvider
+                api_key = kwargs.get("gemini_api_key", settings.EMBEDDING_API_KEY)
+                return GeminiEmbeddingProvider(api_key=api_key, embedding_model=self._model)
             case 'ollama':
                 from .providers.ollama import OllamaEmbeddingProvider
                 model = kwargs.get("embedding_model", self._model)

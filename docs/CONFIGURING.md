@@ -57,6 +57,33 @@ EMBEDDING_API_KEY. Then set
 (or whatever other OpenAI model ID's you want to use). You will need
 money in your OpenAI account
 
+## "gemini" provider
+
+Want to use Google's powerful Gemini models for Resume-Matcher? Here's how to set it up:
+
+1.  **Choose Gemini as your Provider:**
+    In your `apps/backend/.env` file, set 
+    ```env
+    LLM_PROVIDER = "gemini"
+    EMBEDDING_PROVIDER = "gemini"
+    ```
+    This tells Resume-Matcher to use Google's AI services.
+
+2.  **Get Your Gemini API Key:**
+    Create an api key from [Google AI Studio](https://aistudio.google.com/apikey). Once you have it, set api-keys for both LLM and embedding models: 
+    ```env
+    LLM_API_KEY = "your_gemini_api_key"
+    EMBEDDING_API_KEY = "your_gemini_api_key"
+    ```.
+
+3.  **Select Your Gemini Models:**
+    After setting your API key, specify which Gemini models you want to use. For example:
+    ```env
+    LL_MODEL = "gemini-2.5-flash"
+    EMBEDDING_MODEL = "gemini-embedding-001"
+    ```
+
+
 ## LlamaIndex providers
 
 The third option for LLM_PROVIDER is really a bunch of options. You
