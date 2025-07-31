@@ -170,6 +170,7 @@ class ResumeService:
         )
         logger.info(f"Structured Resume Prompt: {prompt}")
         raw_output = await self.json_agent_manager.run(prompt=prompt)
+        raw_output['UUID'] = str(uuid.uuid4())
 
         try:
             structured_resume: StructuredResumeModel = (
