@@ -104,7 +104,7 @@ class Resume(Base):
     )
     
     # Many-to-many with jobs through association table
-    jobs = relationship("Job", back_populates="resumes")
+    jobs = relationship("Job", back_populates="resumes", secondary=job_resume_association)
 
 # Example usage:
 resume = Resume(
@@ -864,8 +864,8 @@ class SchemaVersionManager:
     CURRENT_VERSION = "1.2.0"
     
     VERSION_MIGRATIONS = {
-        "1.0.0": "1.1.0": migrate_1_0_to_1_1,
-        "1.1.0": "1.2.0": migrate_1_1_to_1_2,
+        "1.0.0:1.1.0": migrate_1_0_to_1_1,
+        "1.1.0:1.2.0": migrate_1_1_to_1_2,
     }
     
     async def migrate_resume_data(self, data: dict, from_version: str) -> dict:
