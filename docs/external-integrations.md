@@ -744,7 +744,7 @@ class DatabaseMigration:
         self.session = session
         self.current_version = "1.0.0"
         self.migrations = {
-            "0.0.0": "1.0.0": self._migrate_0_to_1,
+            "0.0.0:1.0.0": self._migrate_0_to_1,
             # Future migrations would be added here
         }
     
