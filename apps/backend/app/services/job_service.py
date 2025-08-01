@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 class JobService:
     def __init__(self, db: AsyncSession):
         self.db = db
-        self.json_agent_manager = AgentManager(model="gemma3:4b")
+        self.json_agent_manager = AgentManager()
 
     async def create_and_store_job(self, job_data: dict) -> List[str]:
         """
