@@ -133,6 +133,12 @@ class JobService:
             )
         except ValidationError as e:
             logger.info(f"Validation error: {e}")
+            error_details = []
+            for error in e.errors():
+                field = " -> ".join(str(loc) for loc in error["loc"])
+                error_details.append(f"{field}: {error['msg']}")
+            
+            logger.info(f"Validation error details: {'; '.join(error_details)}")
             return None
         return structured_job.model_dump(mode="json")
 

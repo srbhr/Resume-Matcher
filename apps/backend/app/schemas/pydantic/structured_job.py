@@ -8,7 +8,9 @@ class EmploymentTypeEnum(str, enum.Enum):
     """Case-insensitive Enum for employment types."""
 
     FULL_TIME = "Full-time"
+    FULL_TIME_NO_DASH = "Full time"
     PART_TIME = "Part-time"
+    PART_TIME_NO_DASH = "Part time"
     CONTRACT = "Contract"
     INTERNSHIP = "Internship"
     TEMPORARY = "Temporary"
@@ -18,13 +20,17 @@ class EmploymentTypeEnum(str, enum.Enum):
     def _missing_(cls, value: object):
         """Handles case-insensitive lookup."""
         if isinstance(value, str):
+            # Handle the case where the AI returns "string" as a literal value
+            if value.lower() == "string":
+                return cls.NOT_SPECIFIED
+            
             value_lower = value.lower()
             mapping = {member.value.lower(): member for member in cls}
             if value_lower in mapping:
                 return mapping[value_lower]
 
         raise ValueError(
-            "employment type must be one of: Full-time, Part-time, Contract, Internship, Temporary, Not Specified (case insensitive)"
+            "employment type must be one of: Full-time, Full time, Part-time, Part time, Contract, Internship, Temporary, Not Specified (case insensitive)"
         )
 
 
@@ -42,13 +48,17 @@ class RemoteStatusEnum(str, enum.Enum):
     def _missing_(cls, value: object):
         """Handles case-insensitive lookup."""
         if isinstance(value, str):
+            # Handle the case where the AI returns "string" as a literal value
+            if value.lower() == "string":
+                return cls.NOT_SPECIFIED
+            
             value_lower = value.lower()
             mapping = {member.value.lower(): member for member in cls}
             if value_lower in mapping:
                 return mapping[value_lower]
 
         raise ValueError(
-            "remote_status must be one of: Fully Remote, Hybrid, On-site, Remote, Not Specified (case insensitive)"
+            "remote_status must be one of: Fully Remote, Hybrid, On-site, Remote, Not Specified, Multiple Locations (case insensitive)"
         )
 
 
