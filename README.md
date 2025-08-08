@@ -90,7 +90,7 @@ The project is built using:
 
 ![how to contribute](assets/how_to_contribute.png)
 
-We welcome contributions from everyone! Whether you're a developer, designer, or just someone who wants to help out. All the contriburtors are listed in the [about page](https://resumematcher.fyi/about) on our website and on the GitHub Readme here.
+We welcome contributions from everyone! Whether you're a developer, designer, or just someone who wants to help out. All the contributors are listed in the [about page](https://resumematcher.fyi/about) on our website and on the GitHub Readme here.
 
 Checkout the roadmap if you would like to work on the features that are planned for the future. If you have any suggestions or feature requests, please feel free to open an issue on GitHub. And discuss it on our [Discord](https://dsc.gg/resume-matcher) server.
 
@@ -118,3 +118,9 @@ If you would like to support the development of Resume Matcher, you can do so by
     <img width="100%" src="https://api.star-history.com/svg?repos=srbhr/resume-matcher&theme=dark&type=Date">
   </picture>
 </details>
+
+## Resume Matcher is a part of [Vercel Open Source Program](https://vercel.com/oss)
+
+
+![Vercel OSS Program](https://vercel.com/oss/program-badge.svg)
+

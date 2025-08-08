@@ -24,7 +24,7 @@ class ResumeService:
     def __init__(self, db: AsyncSession):
         self.db = db
         self.md = MarkItDown(enable_plugins=False)
-        self.json_agent_manager = AgentManager(model="gemma3:4b")
+        self.json_agent_manager = AgentManager()
         
         # Validate dependencies for DOCX processing
         self._validate_docx_dependencies()
@@ -49,6 +49,7 @@ class ResumeService:
                 f"Missing dependencies for DOCX processing: {', '.join(missing_deps)}. "
                 f"DOCX file processing may fail. Install with: pip install {' '.join(missing_deps)}"
             )
+
 
     async def convert_and_store_resume(
         self, file_bytes: bytes, file_type: str, filename: str, content_type: str = "md"
