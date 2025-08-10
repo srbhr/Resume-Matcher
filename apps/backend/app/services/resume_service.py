@@ -25,6 +25,31 @@ class ResumeService:
         self.db = db
         self.md = MarkItDown(enable_plugins=False)
         self.json_agent_manager = AgentManager()
+        
+        # Validate dependencies for DOCX processing
+        self._validate_docx_dependencies()
+
+    def _validate_docx_dependencies(self):
+        """Validate that required dependencies for DOCX processing are available"""
+        missing_deps = []
+        
+        try:
+            # Check if markitdown can handle docx files
+            from markitdown.converters import DocxConverter
+            # Try to instantiate the converter to check if dependencies are available
+            DocxConverter()
+        except ImportError:
+            missing_deps.append("markitdown[all]==0.1.2")
+        except Exception as e:
+            if "MissingDependencyException" in str(e) or "dependencies needed to read .docx files" in str(e):
+                missing_deps.append("markitdown[all]==0.1.2 (current installation missing DOCX extras)")
+        
+        if missing_deps:
+            logger.warning(
+                f"Missing dependencies for DOCX processing: {', '.join(missing_deps)}. "
+                f"DOCX file processing may fail. Install with: pip install {' '.join(missing_deps)}"
+            )
+
 
     async def convert_and_store_resume(
         self, file_bytes: bytes, file_type: str, filename: str, content_type: str = "md"
@@ -48,8 +73,25 @@ class ResumeService:
             temp_path = temp_file.name
 
         try:
-            result = self.md.convert(temp_path)
-            text_content = result.text_content
+            try:
+                result = self.md.convert(temp_path)
+                text_content = result.text_content
+            except Exception as e:
+                # Handle specific markitdown conversion errors
+                error_msg = str(e)
+                if "MissingDependencyException" in error_msg or "DocxConverter" in error_msg:
+                    raise Exception(
+                        "File conversion failed: markitdown is missing DOCX support. "
+                        "Please install with: pip install 'markitdown[all]==0.1.2' or contact system administrator."
+                    ) from e
+                elif "docx" in error_msg.lower():
+                    raise Exception(
+                        f"DOCX file processing failed: {error_msg}. "
+                        "Please ensure the file is a valid DOCX document."
+                    ) from e
+                else:
+                    raise Exception(f"File conversion failed: {error_msg}") from e
+            
             resume_id = await self._store_resume_in_db(text_content, content_type)
 
             await self._extract_and_store_structured_resume(
