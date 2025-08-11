@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 from typing import Any, Dict
 
 from .base import Strategy
@@ -21,14 +22,24 @@ class JSONWrapper(Strategy):
         response = response.strip()
         logger.info(f"provider response: {response}")
 
-        # First attempt: direct JSON load after removing common wrappers
-        cleaned = response.replace("```", "").replace("json", "").strip()
+        # 1) Try direct parse first
         try:
-            return json.loads(cleaned)
+            return json.loads(response)
         except json.JSONDecodeError:
             pass
 
-        # Fallback: extract the largest JSON-looking block between first '{' and last '}'
+        # 2) If wrapped in a fenced code block, extract inner content
+        #    Matches ```json\n...``` or ```\n...``` variants
+        fence_match = re.search(r"```(?:json)?\s*([\s\S]*?)```", response, re.IGNORECASE)
+        if fence_match:
+            fenced = fence_match.group(1).strip()
+            try:
+                return json.loads(fenced)
+            except json.JSONDecodeError:
+                # continue to next fallback
+                pass
+
+        # 3) Fallback: extract the largest JSON-looking block between first '{' and last '}'
         start = response.find("{")
         end = response.rfind("}")
         if start != -1 and end != -1 and end > start:
@@ -36,7 +47,7 @@ class JSONWrapper(Strategy):
             try:
                 return json.loads(candidate)
             except json.JSONDecodeError:
-                # Try again after stripping backticks/newlines around the candidate
+                # Try again after removing any stray backticks/newlines around candidate
                 candidate2 = candidate.replace("```", "").strip()
                 try:
                     return json.loads(candidate2)
@@ -48,7 +59,7 @@ class JSONWrapper(Strategy):
                     )
                     raise StrategyError(f"JSON parsing error: {e}") from e
 
-        # If no braces found, fail clearly
+        # 4) No braces found: fail clearly
         logger.error(
             "provider response contained no JSON object braces: %s", response
         )
@@ -75,3 +86,4 @@ class MDWrapper(Strategy):
                 f"provider returned non-md. parsing error: {e} - response: {response}"
             )
             raise StrategyError(f"Markdown parsing error: {e}") from e
+
