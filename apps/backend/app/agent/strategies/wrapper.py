@@ -31,28 +31,21 @@ class JSONWrapper(Strategy):
         except json.JSONDecodeError:
             pass
 
-        # 2) If wrapped in a fenced code block, extract inner content
+        # 2) If wrapped in fenced code blocks, try all and return the first valid JSON
         #    Matches ```json\n...``` or ```\n...``` variants
-        fence_match = FENCE_PATTERN.search(response)
-        if fence_match:
+        for fence_match in FENCE_PATTERN.finditer(response):
             fenced = fence_match.group(1).strip()
             try:
                 return json.loads(fenced)
             except json.JSONDecodeError:
-                # continue to next fallback
-                pass
+                continue
 
-        # 3) Fallback: extract the largest JSON-looking block (object or array)
+        # 3) Fallback: extract the largest JSON-looking object block { ... }
         obj_start, obj_end = response.find("{"), response.rfind("}")
-        arr_start, arr_end = response.find("["), response.rfind("]")
 
         candidates: List[Tuple[int, str]] = []
         if obj_start != -1 and obj_end != -1 and obj_end > obj_start:
             candidates.append((obj_start, response[obj_start : obj_end + 1]))
-        if arr_start != -1 and arr_end != -1 and arr_end > arr_start:
-            candidates.append((arr_start, response[arr_start : arr_end + 1]))
-
-        candidates.sort(key=lambda x: x[0])
 
         for _, candidate in candidates:
             try:
@@ -66,9 +59,10 @@ class JSONWrapper(Strategy):
 
         if candidates:
             # If we had candidates but none parsed, log the last error contextfully
+            _err_preview = response if len(response) <= 2000 else response[:2000] + "... (truncated)"
             logger.error(
                 "provider returned non-JSON. failed to parse candidate blocks - response: %s",
-                response,
+                _err_preview,
             )
             raise StrategyError("JSON parsing error: failed to parse candidate JSON blocks")
 
