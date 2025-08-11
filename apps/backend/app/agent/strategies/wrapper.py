@@ -1,7 +1,7 @@
 import json
 import logging
 import re
-from typing import Any, Dict
+from typing import Any, Dict, List, Tuple
 
 from .base import Strategy
 from ..providers.base import Provider
@@ -9,6 +9,9 @@ from ..exceptions import StrategyError
 
 
 logger = logging.getLogger(__name__)
+
+# Precompiled for performance; matches ```json ... ``` or ``` ... ``` fenced blocks
+FENCE_PATTERN = re.compile(r"```(?:json)?\s*([\s\S]*?)```", re.IGNORECASE)
 
 
 class JSONWrapper(Strategy):
@@ -30,7 +33,7 @@ class JSONWrapper(Strategy):
 
         # 2) If wrapped in a fenced code block, extract inner content
         #    Matches ```json\n...``` or ```\n...``` variants
-        fence_match = re.search(r"```(?:json)?\s*([\s\S]*?)```", response, re.IGNORECASE)
+        fence_match = FENCE_PATTERN.search(response)
         if fence_match:
             fenced = fence_match.group(1).strip()
             try:
@@ -43,7 +46,7 @@ class JSONWrapper(Strategy):
         obj_start, obj_end = response.find("{"), response.rfind("}")
         arr_start, arr_end = response.find("["), response.rfind("]")
 
-        candidates: list[tuple[int, str]] = []
+        candidates: List[Tuple[int, str]] = []
         if obj_start != -1 and obj_end != -1 and obj_end > obj_start:
             candidates.append((obj_start, response[obj_start : obj_end + 1]))
         if arr_start != -1 and arr_end != -1 and arr_end > arr_start:
