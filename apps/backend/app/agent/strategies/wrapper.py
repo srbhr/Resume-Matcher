@@ -39,25 +39,35 @@ class JSONWrapper(Strategy):
                 # continue to next fallback
                 pass
 
-        # 3) Fallback: extract the largest JSON-looking block between first '{' and last '}'
-        start = response.find("{")
-        end = response.rfind("}")
-        if start != -1 and end != -1 and end > start:
-            candidate = response[start : end + 1]
+        # 3) Fallback: extract the largest JSON-looking block (object or array)
+        obj_start, obj_end = response.find("{"), response.rfind("}")
+        arr_start, arr_end = response.find("["), response.rfind("]")
+
+        candidates: list[tuple[int, str]] = []
+        if obj_start != -1 and obj_end != -1 and obj_end > obj_start:
+            candidates.append((obj_start, response[obj_start : obj_end + 1]))
+        if arr_start != -1 and arr_end != -1 and arr_end > arr_start:
+            candidates.append((arr_start, response[arr_start : arr_end + 1]))
+
+        candidates.sort(key=lambda x: x[0])
+
+        for _, candidate in candidates:
             try:
                 return json.loads(candidate)
             except json.JSONDecodeError:
-                # Try again after removing any stray backticks/newlines around candidate
                 candidate2 = candidate.replace("```", "").strip()
                 try:
                     return json.loads(candidate2)
-                except json.JSONDecodeError as e:
-                    logger.error(
-                        "provider returned non-JSON. parsing error after fallback: %s - response: %s",
-                        e,
-                        response,
-                    )
-                    raise StrategyError(f"JSON parsing error: {e}") from e
+                except json.JSONDecodeError:
+                    continue
+
+        if candidates:
+            # If we had candidates but none parsed, log the last error contextfully
+            logger.error(
+                "provider returned non-JSON. failed to parse candidate blocks - response: %s",
+                response,
+            )
+            raise StrategyError("JSON parsing error: failed to parse candidate JSON blocks")
 
         # 4) No braces found: fail clearly
         logger.error(
