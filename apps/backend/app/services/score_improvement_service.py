@@ -20,6 +20,8 @@ from .exceptions import (
     JobNotFoundError,
     ResumeParsingError,
     JobParsingError,
+    ResumeKeywordExtractionError,
+    JobKeywordExtractionError,
 )
 
 logger = logging.getLogger(__name__)
@@ -40,6 +42,40 @@ class ScoreImprovementService:
         self.json_agent_manager = AgentManager()
         self.embedding_manager = EmbeddingManager()
 
+    def _validate_resume_keywords(
+        self, processed_resume: ProcessedResume, resume_id: str
+    ) -> None:
+        """
+        Validates that keyword extraction was successful for a resume.
+        Raises ResumeKeywordExtractionError if keywords are missing or empty.
+        """
+        if not processed_resume.extracted_keywords:
+            raise ResumeKeywordExtractionError(resume_id=resume_id)
+
+        try:
+            keywords_data = json.loads(processed_resume.extracted_keywords)
+            keywords = keywords_data.get("extracted_keywords", [])
+            if not keywords or len(keywords) == 0:
+                raise ResumeKeywordExtractionError(resume_id=resume_id)
+        except json.JSONDecodeError:
+            raise ResumeKeywordExtractionError(resume_id=resume_id)
+
+    def _validate_job_keywords(self, processed_job: ProcessedJob, job_id: str) -> None:
+        """
+        Validates that keyword extraction was successful for a job.
+        Raises JobKeywordExtractionError if keywords are missing or empty.
+        """
+        if not processed_job.extracted_keywords:
+            raise JobKeywordExtractionError(job_id=job_id)
+
+        try:
+            keywords_data = json.loads(processed_job.extracted_keywords)
+            keywords = keywords_data.get("extracted_keywords", [])
+            if not keywords or len(keywords) == 0:
+                raise JobKeywordExtractionError(job_id=job_id)
+        except json.JSONDecodeError:
+            raise JobKeywordExtractionError(job_id=job_id)
+
     async def _get_resume(
         self, resume_id: str
     ) -> Tuple[Resume | None, ProcessedResume | None]:
@@ -58,7 +94,9 @@ class ScoreImprovementService:
         processed_resume = result.scalars().first()
 
         if not processed_resume:
-            ResumeParsingError(resume_id=resume_id)
+            raise ResumeParsingError(resume_id=resume_id)
+
+        self._validate_resume_keywords(processed_resume, resume_id)
 
         return resume, processed_resume
 
@@ -78,7 +116,9 @@ class ScoreImprovementService:
         processed_job = result.scalars().first()
 
         if not processed_job:
-            JobParsingError(job_id=job_id)
+            raise JobParsingError(job_id=job_id)
+
+        self._validate_job_keywords(processed_job, job_id)
 
         return job, processed_job
 

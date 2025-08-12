@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 class JobService:
     def __init__(self, db: AsyncSession):
         self.db = db
-        self.json_agent_manager = AgentManager(model="gemma3:4b")
+        self.json_agent_manager = AgentManager()
 
     async def create_and_store_job(self, job_data: dict) -> List[str]:
         """
@@ -133,6 +133,12 @@ class JobService:
             )
         except ValidationError as e:
             logger.info(f"Validation error: {e}")
+            error_details = []
+            for error in e.errors():
+                field = " -> ".join(str(loc) for loc in error["loc"])
+                error_details.append(f"{field}: {error['msg']}")
+            
+            logger.info(f"Validation error details: {'; '.join(error_details)}")
             return None
         return structured_job.model_dump(mode="json")
 
