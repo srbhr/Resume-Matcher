@@ -25,6 +25,8 @@ Hoping to make this, **VS Code for making resumes**.
 
 <a href="https://trendshift.io/repositories/565" target="_blank"><img src="https://trendshift.io/api/badge/repositories/565" alt="srbhr%2FResume-Matcher | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
 
+![Vercel OSS Program](https://vercel.com/oss/program-badge.svg)
+
 </div>
 
 > \[!IMPORTANT]
