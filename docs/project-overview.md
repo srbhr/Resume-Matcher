@@ -55,4 +55,4 @@ Resume Matcher is a web-based application that leverages AI to match candidate r
 
 ---
 
-> For more details, see `project-context.md` and `coding-
+> For more details, see `project-context.md` and `coding-standards.md`.
