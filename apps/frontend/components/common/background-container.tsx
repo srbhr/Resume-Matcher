@@ -1,3 +1,5 @@
+'use client';
+
 import { DotPattern } from '@/components/common/dot-pattern-glow';
 import { cn } from '@/lib/utils';
 

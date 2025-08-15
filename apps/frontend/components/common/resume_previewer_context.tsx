@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 export interface PersonalInfo {
     name: string;
@@ -65,10 +65,16 @@ interface ContextValue {
 const ResumePreviewContext = createContext<ContextValue | undefined>(undefined);
 
 export function ResumePreviewProvider({ children }: { children: ReactNode }) {
+    const [mounted, setMounted] = useState(false);
     const [improvedData, setImprovedData] = useState<ImprovedResult | null>(null);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
     return (
         <ResumePreviewContext.Provider value={{ improvedData, setImprovedData }}>
-            {children}
+            <div suppressHydrationWarning>{mounted ? children : null}</div>
         </ResumePreviewContext.Provider>
     );
 }
