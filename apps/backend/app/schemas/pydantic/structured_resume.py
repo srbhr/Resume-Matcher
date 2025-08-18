@@ -55,8 +55,8 @@ class Education(BaseModel):
     institution: str
     degree: str
     field_of_study: Optional[str] = Field(None, alias="fieldOfStudy")
-    start_date: str = Field(..., alias="startDate")
-    end_date: str = Field(..., alias="endDate")
+    start_date: Optional[str] = Field(None, alias="startDate")
+    end_date: Optional[str] = Field(None, alias="endDate")
     grade: Optional[str] = None
     description: Optional[str] = None
 
@@ -70,7 +70,7 @@ class StructuredResumeModel(BaseModel):
         default_factory=list, alias="Research Work"
     )
     achievements: List[str] = Field(default_factory=list, alias="Achievements")
-    education: List[Education] = Field(..., alias="Education")
+    education: List[Education] = Field(default_factory=list, alias="Education")
     extracted_keywords: List[str] = Field(
         default_factory=list, alias="Extracted Keywords"
     )
