@@ -1,0 +1,37 @@
+name: CI - Backend
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'apps/backend/**'
+      - '.github/workflows/ci-backend.yml'
+  push:
+    branches: [ security-hardening-neon ]
+    paths:
+      - 'apps/backend/**'
+      - '.github/workflows/ci-backend.yml'
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: apps/backend/requirements.txt
+      - name: Install deps
+        run: pip install -r requirements.txt
+      - name: Lint (ruff if available) / basic check
+        run: |
+          python -m pip show ruff >/dev/null 2>&1 && ruff check . || echo "ruff not configured"
+      - name: Type check (mypy if configured)
+        run: |
+          python -m pip show mypy >/dev/null 2>&1 && mypy . || echo "mypy not configured"
+      - name: Unit tests (pytest)
+        run: pytest -q

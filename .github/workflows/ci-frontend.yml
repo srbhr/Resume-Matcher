@@ -1,0 +1,37 @@
+name: CI - Frontend
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'apps/frontend/**'
+      - '.github/workflows/ci-frontend.yml'
+  push:
+    branches: [ security-hardening-neon ]
+    paths:
+      - 'apps/frontend/**'
+      - '.github/workflows/ci-frontend.yml'
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: apps/frontend/package-lock.json
+      - name: Install deps
+        run: npm ci --no-audit --no-fund
+      - name: Lint
+        run: npm run lint --workspaces=false
+      - name: Type check
+        run: npx tsc --noEmit
+      - name: Unit tests
+        run: npm test --workspaces=false -- --ci
+      - name: Build
+        run: npm run build --workspaces=false
