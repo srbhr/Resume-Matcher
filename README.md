@@ -87,6 +87,36 @@ The project is built using:
 | Next.js      | 15+                   |
 | Ollama       |        0.6.7        |
 
+### Backend Runtime Flags
+
+The backend exposes an environment flag to aid deterministic testing and CI:
+
+`DISABLE_BACKGROUND_TASKS=true` – runs tasks that would normally be scheduled (e.g. deferred structured resume extraction) inline inside the request/operation. This eliminates event-loop shutdown races and makes test timing deterministic. In production you should leave this unset/false to preserve non-blocking behavior.
+
+### Caching & Invalidation
+
+Structured LLM outputs are cached (keyed by model + strategy + prompt hash) and linked to domain entities (e.g. resumes, jobs) for precise invalidation via API endpoints. The cache layer:
+
+- Enforces TTL per entry
+- Records token usage (prompt/completion) for metrics
+- Provides entity-based invalidation endpoints
+- Handles duplicate insert races safely (unique constraint + graceful fallback)
+- Performs periodic cleanup of expired rows (background loop)
+
+To reduce noisy DELETE rowcount warnings in logs/tests we disable row delete confirmation on the cache model mapper (harmless optimization that avoids misleading warnings for limited batch deletes on SQLite).
+
+
+## Security & Secrets
+
+Keeping credentials and PII safe is a core project goal. Please follow these practices:
+
+- Never commit real secrets. Use `apps/backend/.env` for local only and keep it untracked. Mirror placeholders in `.env.sample`.
+- Use GitHub Actions secrets in CI/CD (Settings → Secrets and variables → Actions). Typical keys: `OPENAI_API_KEY`, `SYNC_DATABASE_URL`, `ASYNC_DATABASE_URL`.
+- Enable GitHub’s built-in protections (repo admins): Settings → Code security and analysis → enable Secret scanning and Push protection.
+- Secret rotation: if a key is leaked, revoke it at the provider, create a new key, update environment variables and CI secrets, then re-run the pipeline.
+- Neon Postgres DSNs: for sync (psycopg) include `?sslmode=require`; for async (asyncpg) omit `sslmode` and `channel_binding`. Prefer the Neon pooler endpoint host.
+- This repo includes automated secret scanning via Gitleaks in CI: see `.github/workflows/secret-scan-gitleaks.yml`. Findings appear under the repo Security tab.
+
 
 ## Join Us and Contribute
 
