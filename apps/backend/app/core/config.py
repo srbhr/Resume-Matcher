@@ -31,15 +31,22 @@ class Settings(BaseSettings):
         else:
             SYNC_DATABASE_URL = _DB_URL  # leave as-is for other engines
         # Async (asyncpg)
-        if _DB_URL.startswith("postgresql+asyncpg://"):
-            ASYNC_DATABASE_URL: str = _DB_URL
-        elif _DB_URL.startswith("postgresql+psycopg://"):
-            ASYNC_DATABASE_URL = _DB_URL.replace("postgresql+psycopg://", "postgresql+asyncpg://", 1)
-        elif _DB_URL.startswith("postgresql://"):
-            ASYNC_DATABASE_URL = _DB_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
-        else:
-            # Fallback to async form mirroring sync for non-pg engines
-            ASYNC_DATABASE_URL = _DB_URL
+        def _to_asyncpg(url: str) -> str:
+            # swap driver prefix
+            if url.startswith("postgresql+asyncpg://"):
+                out = url
+            elif url.startswith("postgresql+psycopg://"):
+                out = url.replace("postgresql+psycopg://", "postgresql+asyncpg://", 1)
+            elif url.startswith("postgresql://"):
+                out = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+            else:
+                out = url
+            # asyncpg expects 'ssl=require' instead of libpq's 'sslmode=require'
+            if "sslmode=require" in out and "ssl=" not in out:
+                out = out.replace("?sslmode=require", "?ssl=require").replace("&sslmode=require", "&ssl=require")
+            return out
+
+        ASYNC_DATABASE_URL = _to_asyncpg(_DB_URL)
     else:
         # Default to SQLite for local dev if not provided; override with Neon Postgres URLs in env
         SYNC_DATABASE_URL: str = os.getenv("SYNC_DATABASE_URL", "sqlite:///./app.db") or "sqlite:///./app.db"

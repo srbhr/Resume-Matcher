@@ -34,6 +34,8 @@ services:
         sync: false  # Provide Neon connection URL with sslmode=require in dashboard when prompted
       - key: DATABASE_URL_ASYNC
         sync: false  # Provide Neon async URL (postgresql+asyncpg://...&ssl=require) or leave empty; app derives it from DATABASE_URL if omitted
+      - key: SESSION_SECRET_KEY
+        sync: false  # Required by SessionMiddleware; set a long random string in the dashboard
       - key: OPENAI_API_KEY
         sync: false  # Optional
       - key: ENV
