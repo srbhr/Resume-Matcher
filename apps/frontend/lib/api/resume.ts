@@ -1,6 +1,9 @@
 import { ImprovedResult } from '@/components/common/resume_previewer_context';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL!;
+interface JobUploadResponse { job_id: string[] | string }
+interface ImproveEnvelope { data?: ImprovedResult }
+
+const API_URL = process.env.NEXT_PUBLIC_API_BASE || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 /** Uploads job descriptions and returns a job_id */
 export async function uploadJobDescriptions(
@@ -13,19 +16,22 @@ export async function uploadJobDescriptions(
         body: JSON.stringify({ job_descriptions: descriptions, resume_id: resumeId }),
     });
     if (!res.ok) throw new Error(`Upload failed with status ${res.status}`);
-    const data = await res.json();
+    const data: JobUploadResponse = await res.json();
+    const idArray = Array.isArray(data.job_id) ? data.job_id : [data.job_id];
     console.log('Job upload response:', data);
-    return data.job_id[0];
+    return idArray[0];
 }
 
 /** Improves the resume and returns the full preview object */
 export async function improveResume(
     resumeId: string,
-    jobId: string
+    jobId: string,
+    options?: { useLlm?: boolean }
 ): Promise<ImprovedResult> {
     let response: Response;
     try {
-        response = await fetch(`${API_URL}/api/v1/resumes/improve`, {
+    const qp = options?.useLlm === false ? '?use_llm=false' : '';
+    response = await fetch(`${API_URL}/api/v1/resumes/improve${qp}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ resume_id: resumeId, job_id: jobId }),
@@ -41,14 +47,15 @@ export async function improveResume(
         throw new Error(`Improve failed with status ${response.status}: ${text}`);
     }
 
-    let data: ImprovedResult;
+    let data: ImproveEnvelope | ImprovedResult;
     try {
-        data = JSON.parse(text) as ImprovedResult;
+        data = JSON.parse(text);
     } catch (parseError) {
         console.error('Failed to parse improveResume response:', parseError, 'Raw response:', text);
         throw parseError;
     }
 
-    console.log('Resume improvement response:', data);
-    return data;
+    const payload: ImprovedResult = (data as ImproveEnvelope).data ?? (data as ImprovedResult);
+    console.log('Resume improvement response:', payload);
+    return payload;
 }

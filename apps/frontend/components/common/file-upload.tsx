@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
 	AlertCircleIcon,
 	CheckCircle2Icon,
@@ -20,9 +21,13 @@ const acceptedFileTypes = [
 ];
 
 const acceptString = acceptedFileTypes.join(',');
-const API_RESUME_UPLOAD_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/v1/resumes/upload`; // API endpoint
+// Resolve API base consistently (prefer NEXT_PUBLIC_API_BASE, fallback to legacy NEXT_PUBLIC_API_URL, then localhost)
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_RESUME_UPLOAD_URL = `${API_BASE}/api/v1/resumes/upload`;
 
 export default function FileUpload() {
+	const tUpload = useTranslations('Upload');
+	const tErr = useTranslations('Errors');
 	const maxSize = 2 * 1024 * 1024; // 2MB
 
 	const [uploadFeedback, setUploadFeedback] = useState<{
@@ -58,7 +63,7 @@ export default function FileUpload() {
 				console.error('Missing resume_id in upload response', response)
 				setUploadFeedback({
 					type: 'error',
-					message: 'Upload succeeded but no resume ID received.',
+					message: tErr('uploadMissingId'),
 				})
 				return
 			}
@@ -69,13 +74,15 @@ export default function FileUpload() {
 			});
 			clearErrors();
 			const encodedResumeId = encodeURIComponent(resumeId);
-			window.location.href = `/jobs?resume_id=${encodedResumeId}`;
+			try { localStorage.setItem('last_resume_id', resumeId); } catch {}
+			// Redirect to dynamic detail route /resume/<id>
+			window.location.href = `/resume/${encodedResumeId}`;
 		},
-		onUploadError: (file, errorMsg) => {
+			onUploadError: (file, errorMsg) => {
 			console.error('Upload error:', file, errorMsg);
 			setUploadFeedback({
 				type: 'error',
-				message: errorMsg || 'An unknown error occurred during upload.',
+				message: errorMsg || tErr('uploadUnknown'),
 			});
 		},
 		onFilesChange: (currentFiles) => {
@@ -131,9 +138,9 @@ export default function FileUpload() {
 					{isUploadingGlobal ? (
 						<>
 							<Loader2Icon className="mb-4 size-10 animate-spin text-primary" />
-							<p className="text-lg font-semibold text-white">Uploading...</p>
+							<p className="text-lg font-semibold text-white">{tUpload('uploadingTitle')}</p>
 							<p className="text-sm text-muted-foreground">
-								Your file is being processed.
+								{tUpload('uploadingSubtitle')}
 							</p>
 						</>
 					) : (
@@ -142,14 +149,12 @@ export default function FileUpload() {
 								<UploadIcon className="size-6" />
 							</div>
 							<p className="mb-1 text-lg font-semibold text-white">
-								{currentFile ? 'File Ready' : 'Upload Your Resume'}
+								{currentFile ? tUpload('promptReady') : tUpload('promptTitle')}
 							</p>
 							<p className="text-sm text-muted-foreground">
 								{currentFile
 									? currentFile.file.name // name is on both File and FileMetadata
-									: `Drag & drop or click (PDF, DOCX up to ${formatBytes(
-										maxSize,
-									)})`}
+									: tUpload('promptDrag', { size: formatBytes(maxSize) })}
 							</p>
 						</>
 					)}
@@ -166,7 +171,7 @@ export default function FileUpload() {
 						<div className="flex items-start gap-2">
 							<AlertCircleIcon className="mt-0.5 size-5 shrink-0" />
 							<div>
-								<p className="font-semibold">Error</p>
+								<p className="font-semibold">{tUpload('errorTitle')}</p>
 								{displayErrors.map((error, index) => (
 									<p key={index}>{error}</p>
 								))}
@@ -183,7 +188,7 @@ export default function FileUpload() {
 					<div className="flex items-start gap-2">
 						<CheckCircle2Icon className="mt-0.5 size-5 shrink-0" />
 						<div>
-							<p className="font-semibold">Success</p>
+							<p className="font-semibold">{tUpload('successTitle')}</p>
 							<p>{uploadFeedback.message}</p>
 						</div>
 					</div>
@@ -205,10 +210,10 @@ export default function FileUpload() {
 									{/* size is on both File and FileMetadata */}
 									{/* After upload attempt, .file is FileMetadata */}
 									{(currentFile.file as FileMetadata).uploaded === true
-										? 'Uploaded'
+										? tUpload('statusUploaded')
 										: (currentFile.file as FileMetadata).uploadError
-											? 'Upload failed'
-											: 'Pending upload'}
+											? tUpload('statusFailed')
+											: tUpload('statusPending')}
 								</p>
 							</div>
 						</div>

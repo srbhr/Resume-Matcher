@@ -1,0 +1,68 @@
+import createIntlMiddleware from 'next-intl/middleware';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
+import { locales, defaultLocale } from './i18n';
+
+// Base i18n middleware instance
+const intlMiddleware = createIntlMiddleware({
+  locales: [...locales],
+  defaultLocale,
+  localePrefix: 'always'
+});
+
+// Security headers (CSP hardened: no unsafe-inline/eval; support hashed/nonce scripts via runtime)
+// A random nonce will be injected per response for inline scripts if ever needed.
+function buildCsp(nonce: string) {
+  const apiOrigin = process.env.NEXT_PUBLIC_API_BASE || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+  const connectExtra = [apiOrigin].filter(Boolean);
+  // Allow Next.js internal websocket endpoints for dev (/_next/) with wss: fallback
+  const connectSrc = ["'self'", 'ws:', 'wss:', ...connectExtra];
+  return [
+    "default-src 'self'",
+    // Allow scripts from self + nonce + Next.js dynamic chunks; no eval
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
+    // Styles may still need inline for Tailwind critical injection; keep 'unsafe-inline' until extracted CSS available
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "font-src 'self' https://fonts.gstatic.com data:",
+    "img-src 'self' blob: data: https://raw.githubusercontent.com",
+    `connect-src ${connectSrc.join(' ')}`,
+    "media-src 'self'",
+    "object-src 'none'",
+    "frame-ancestors 'self'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "manifest-src 'self'",
+    // Optional reporting endpoint placeholder
+    // "report-uri /api/csp-report"
+  ].join('; ');
+}
+
+const permissionsPolicy: Record<string,string> = {
+  'camera': '()',
+  'microphone': '()',
+  'geolocation': '()'
+};
+
+export function middleware(request: NextRequest) {
+  // Run intl middleware first
+  const response = intlMiddleware(request);
+
+  // Generate a nonce per response (8 bytes base64)
+  const nonce = Buffer.from(crypto.getRandomValues(new Uint8Array(8))).toString('base64');
+
+  // Apply security headers only to HTML/document requests
+  const pathname = request.nextUrl.pathname;
+  if (!pathname.startsWith('/_next')) {
+    response.headers.set('Content-Security-Policy', buildCsp(nonce));
+    response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+    response.headers.set('X-Frame-Options', 'SAMEORIGIN');
+    response.headers.set('X-Content-Type-Options', 'nosniff');
+    response.headers.set('X-DNS-Prefetch-Control', 'off');
+    response.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
+    response.headers.set('Permissions-Policy', Object.entries(permissionsPolicy).map(([k,v]) => `${k}=${v}`).join(', '));
+    response.headers.set('X-Nonce', nonce); // expose for potential inline script components (can be removed later)
+  }
+  return response;
+}
+
+export const config = { matcher: ['/((?!_next|api|.*\\..*).*)'] };
