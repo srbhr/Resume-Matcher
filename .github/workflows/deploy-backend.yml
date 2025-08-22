@@ -19,7 +19,7 @@ jobs:
       RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
       RAILWAY_PROJECT_ID: d230e3a7-2d35-4a99-9a59-7b43d5b9c1cf
       RAILWAY_ENVIRONMENT: production
-      SERVICE_NAME: backend
+      SERVICE_NAME: "Resume-Matcher"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -39,7 +39,9 @@ jobs:
 
       - name: Deploy snapshot (Dockerfile, preDeploy + start from railway.toml)
         run: |
-          railway up --detach --ci --service "$SERVICE_NAME" || railway up --detach --ci
+          # Try to deploy to the named service; if it doesn't exist, create it and retry
+          railway up --detach --ci --service "$SERVICE_NAME" \
+            || (railway service create --name "$SERVICE_NAME" && railway up --detach --ci --service "$SERVICE_NAME")
 
-      - name: Show last 200 log lines
-        run: railway logs --lines 200 || true
+      - name: Show last 200 log lines (backend service)
+        run: railway logs --service "$SERVICE_NAME" --lines 200 || true
