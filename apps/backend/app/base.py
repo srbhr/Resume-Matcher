@@ -47,7 +47,10 @@ from sqlalchemy import delete, text as sql_text
 from sqlalchemy.ext.asyncio import AsyncSession
 import asyncio
 import logging
-from .models import LLMCache
+try:
+    from .models import LLMCache  # noqa: F401
+except Exception:
+    LLMCache = None  # type: ignore
 from .core.database import AsyncSessionLocal
 
 logger = logging.getLogger(__name__)
