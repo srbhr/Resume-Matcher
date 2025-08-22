@@ -1,0 +1,44 @@
+# Render Blueprint for Resume Matcher backend
+# Docs: https://render.com/docs/blueprint-spec
+
+services:
+  - name: resume-matcher-backend
+    type: web
+    runtime: docker
+
+    # Build from the repo's Dockerfile at the root
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+
+    # Run Alembic migrations before each deploy
+    preDeployCommand: >-
+      /bin/sh -c "cd apps/backend && alembic upgrade head"
+
+    # Start FastAPI via Uvicorn, binding to Render's $PORT
+    dockerCommand: >-
+      /bin/sh -c "cd apps/backend && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"
+
+    # Health check for zero-downtime deploys
+    healthCheckPath: /healthz
+
+    # Auto-deploy on commits to the linked branch
+    autoDeployTrigger: commit
+
+    # Instance size and count (starter ~0.5 vCPU, ~512 MiB RAM)
+    plan: starter
+    numInstances: 1
+
+    # Environment variables (secrets prompted at first sync; not stored in repo)
+    envVars:
+      - key: DATABASE_URL
+        sync: false  # Provide Neon connection URL with sslmode=require in dashboard when prompted
+      - key: OPENAI_API_KEY
+        sync: false  # Optional
+      - key: ENV
+        value: production
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      # Render provides PORT automatically for web services; no need to set explicitly.
+
+# Note on health checks timing: Render currently allows setting only the path via Blueprint.
+# Intervals/timeouts are managed by the platform.
