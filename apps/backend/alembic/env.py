@@ -1,11 +1,13 @@
 import asyncio
 import os
+import logging
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config, pool
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import AsyncEngine
+from sqlalchemy.engine.url import make_url
 
 from alembic import context
 
@@ -41,6 +43,17 @@ elif settings.SYNC_DATABASE_URL:
     config.set_main_option('sqlalchemy.url', settings.SYNC_DATABASE_URL)
 
 target_metadata = Base.metadata
+
+# Emit a redacted URL for verification without leaking secrets
+try:
+    _url_val = config.get_main_option("sqlalchemy.url")
+    if _url_val:
+        # str(make_url()) masks passwords as '***'
+        logging.getLogger("alembic").info(
+            "Resolved sqlalchemy.url for migrations: %s", str(make_url(_url_val))
+        )
+except Exception:
+    pass
 
 def run_migrations_offline() -> None:
     url = config.get_main_option("sqlalchemy.url")
