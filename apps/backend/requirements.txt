@@ -53,3 +53,6 @@ typing-inspection==0.4.0
 typing_extensions==4.13.1
 urllib3==2.4.0
 uvicorn==0.34.0
+alembic==1.14.0
+asyncpg==0.30.0
+psycopg-binary==3.2.3
