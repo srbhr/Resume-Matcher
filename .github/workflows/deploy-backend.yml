@@ -36,8 +36,14 @@ jobs:
       - name: Auth sanity check (token-based, no linking)
         run: |
           railway --version
+          # Safe debug: verify token is injected (do not print the token)
+          if [ -z "$RAILWAY_TOKEN" ]; then
+            echo "RAILWAY_TOKEN is missing in this run. Add it as a repository secret named RAILWAY_TOKEN." && exit 1
+          else
+            echo "RAILWAY_TOKEN present. length=${#RAILWAY_TOKEN}"
+          fi
           # Verify token works; fail fast with a clear hint if not
-          railway whoami || (echo "Railway auth failed. Ensure RAILWAY_TOKEN is a Personal (account) token in GitHub Secrets." && exit 1)
+          railway whoami || (echo "Railway auth failed. Ensure RAILWAY_TOKEN is a Personal (account) token in GitHub Secrets (not a project token)." && exit 1)
 
       - name: Sync Railway variables from GitHub Secrets (no placeholders)
         env:
@@ -58,7 +64,8 @@ jobs:
         run: |
           # Ensure service exists, then deploy (no linking; scoped by env/service)
           railway add --service "$SERVICE_NAME" || true
-          railway up --detach --ci -e "$RAILWAY_ENVIRONMENT" -s "$SERVICE_NAME"
+          railway up --detach --ci -e "$RAILWAY_ENVIRONMENT" -s "$SERVICE_NAME" \
+            || railway redeploy -e "$RAILWAY_ENVIRONMENT" -s "$SERVICE_NAME"
 
       - name: Show last 200 log lines (backend service)
         run: |
