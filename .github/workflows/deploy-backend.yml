@@ -35,8 +35,8 @@ jobs:
 
       - name: Link project/environment (non-interactive)
         run: |
-          # Link by project ID; then select environment explicitly. Ignore errors to keep going in CI.
-          railway link "$RAILWAY_PROJECT_ID" || true
+          # Link to Railway (token-based) and select environment explicitly. Ignore errors to keep going in CI.
+          railway link || true
           railway environment "$RAILWAY_ENVIRONMENT" || true
           railway list || true
 
