@@ -39,6 +39,22 @@ jobs:
           railway environment "$RAILWAY_ENVIRONMENT" || true
           railway list || true
 
+      - name: Sync Railway variables from GitHub Secrets (no placeholders)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          # Ensure service exists and is selected
+          railway add --service "$SERVICE_NAME" || true
+          railway service "$SERVICE_NAME" || true
+          # Set variables only if provided in Secrets; skip deploy triggers here
+          if [ -n "$DATABASE_URL" ]; then
+            railway variables --service "$SERVICE_NAME" --set "DATABASE_URL=$DATABASE_URL" --skip-deploys
+          fi
+          if [ -n "$OPENAI_API_KEY" ]; then
+            railway variables --service "$SERVICE_NAME" --set "OPENAI_API_KEY=$OPENAI_API_KEY" --skip-deploys
+          fi
+
       - name: Deploy snapshot (Dockerfile, preDeploy + start from railway.toml)
         run: |
           # Try to deploy to the named service; if it doesn't exist, create it and retry
