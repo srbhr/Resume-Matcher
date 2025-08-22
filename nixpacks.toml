@@ -7,8 +7,11 @@ PIP_NO_CACHE_DIR = "1"
 
 [phases.install]
 cmds = [
-  "python -m pip install --upgrade pip",
-  "pip install -r apps/backend/requirements.txt"
+  # Ensure pip exists in nix python and upgrade it
+  "python3 -m ensurepip --upgrade || true",
+  "python3 -m pip install --upgrade pip",
+  # Install backend requirements
+  "python3 -m pip install -r apps/backend/requirements.txt"
 ]
 
 # Optional: no build phase needed; backend is Python-only
