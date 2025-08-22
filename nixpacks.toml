@@ -1,0 +1,19 @@
+# Force Python-only build to avoid Node/npm steps during install
+providers = ["python"]
+
+[variables]
+PYTHONUNBUFFERED = "1"
+PIP_NO_CACHE_DIR = "1"
+
+[phases.install]
+cmds = [
+  "python -m pip install --upgrade pip",
+  "pip install -r apps/backend/requirements.txt"
+]
+
+# Optional: no build phase needed; backend is Python-only
+#[phases.build]
+#cmds = ["echo 'No frontend build required'"]
+
+[start]
+cmd = "cd apps/backend && uvicorn app.main:app --host 0.0.0.0 --port ${PORT}"
