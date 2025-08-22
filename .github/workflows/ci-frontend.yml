@@ -7,10 +7,11 @@ on:
       - 'apps/frontend/**'
       - '.github/workflows/ci-frontend.yml'
   push:
-    branches: [ security-hardening-neon ]
+    branches: [ '**' ]
     paths:
       - 'apps/frontend/**'
       - '.github/workflows/ci-frontend.yml'
+  workflow_dispatch:
 
 jobs:
   frontend:
