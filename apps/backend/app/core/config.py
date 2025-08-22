@@ -2,7 +2,48 @@ import os
 import sys
 import logging
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from typing import List, Optional, Literal, cast
+from typing import List, Optional, Literal, cast, Tuple
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Helper: derive sync/async DB URLs from unified DATABASE_URL
+# Ensures drivers and asyncpg SSL param are correct for Neon/Render
+# ──────────────────────────────────────────────────────────────────────────────
+def _derive_db_urls(db_url: str) -> Tuple[str, str]:
+    url = db_url.strip()
+    if not url:
+        return ("", "")
+    # Normalize common postgres prefixes
+    if url.startswith("postgres://"):
+        url = url.replace("postgres://", "postgresql://", 1)
+    # Sync (psycopg)
+    if url.startswith("postgresql+psycopg://"):
+        sync_url = url
+    elif url.startswith("postgresql://"):
+        sync_url = url.replace("postgresql://", "postgresql+psycopg://", 1)
+    else:
+        sync_url = url  # allow other engines if present
+    # Async (asyncpg)
+    if url.startswith("postgresql+asyncpg://"):
+        async_url = url
+    elif url.startswith("postgresql+psycopg://"):
+        async_url = url.replace("postgresql+psycopg://", "postgresql+asyncpg://", 1)
+    elif url.startswith("postgresql://"):
+        async_url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+    else:
+        async_url = url
+    # asyncpg expects 'ssl=require' instead of 'sslmode=require'
+    if "sslmode=require" in async_url and "ssl=" not in async_url:
+        async_url = async_url.replace("?sslmode=require", "?ssl=require").replace("&sslmode=require", "&ssl=require")
+    return (sync_url, async_url)
+
+
+_UNIFIED_DB = os.getenv("DATABASE_URL", "").strip()
+if _UNIFIED_DB:
+    _SYNC_DEFAULT, _ASYNC_DEFAULT = _derive_db_urls(_UNIFIED_DB)
+else:
+    _SYNC_DEFAULT = os.getenv("SYNC_DATABASE_URL", "sqlite:///./app.db") or "sqlite:///./app.db"
+    _ASYNC_DEFAULT = os.getenv("ASYNC_DATABASE_URL", "sqlite+aiosqlite:///./app.db") or "sqlite+aiosqlite:///./app.db"
 
 
 class Settings(BaseSettings):
@@ -17,40 +58,9 @@ class Settings(BaseSettings):
     DB_MAX_OVERFLOW: Optional[int] = None
     DB_POOL_TIMEOUT: Optional[int] = None
     PYTHONDONTWRITEBYTECODE: int = 1
-    # Database URLs: prefer unified DATABASE_URL when present (Railway), map to required drivers
-    _DB_URL: str = os.getenv("DATABASE_URL", "").strip()
-    if _DB_URL:
-        # Normalize common postgres prefixes
-        if _DB_URL.startswith("postgres://"):
-            _DB_URL = _DB_URL.replace("postgres://", "postgresql://", 1)
-        # Sync (psycopg)
-        if _DB_URL.startswith("postgresql+psycopg://"):
-            SYNC_DATABASE_URL: str = _DB_URL
-        elif _DB_URL.startswith("postgresql://"):
-            SYNC_DATABASE_URL = _DB_URL.replace("postgresql://", "postgresql+psycopg://", 1)
-        else:
-            SYNC_DATABASE_URL = _DB_URL  # leave as-is for other engines
-        # Async (asyncpg)
-        def _to_asyncpg(url: str) -> str:
-            # swap driver prefix
-            if url.startswith("postgresql+asyncpg://"):
-                out = url
-            elif url.startswith("postgresql+psycopg://"):
-                out = url.replace("postgresql+psycopg://", "postgresql+asyncpg://", 1)
-            elif url.startswith("postgresql://"):
-                out = url.replace("postgresql://", "postgresql+asyncpg://", 1)
-            else:
-                out = url
-            # asyncpg expects 'ssl=require' instead of libpq's 'sslmode=require'
-            if "sslmode=require" in out and "ssl=" not in out:
-                out = out.replace("?sslmode=require", "?ssl=require").replace("&sslmode=require", "&ssl=require")
-            return out
-
-        ASYNC_DATABASE_URL = _to_asyncpg(_DB_URL)
-    else:
-        # Default to SQLite for local dev if not provided; override with Neon Postgres URLs in env
-        SYNC_DATABASE_URL: str = os.getenv("SYNC_DATABASE_URL", "sqlite:///./app.db") or "sqlite:///./app.db"
-        ASYNC_DATABASE_URL: str = os.getenv("ASYNC_DATABASE_URL", "sqlite+aiosqlite:///./app.db") or "sqlite+aiosqlite:///./app.db"
+    # Database URLs (annotated defaults satisfy Pydantic v2)
+    SYNC_DATABASE_URL: str = _SYNC_DEFAULT
+    ASYNC_DATABASE_URL: str = _ASYNC_DEFAULT
     SESSION_SECRET_KEY: Optional[str] = None
     LLM_PROVIDER: Optional[str] = "ollama"
     LLM_API_KEY: Optional[str] = None
