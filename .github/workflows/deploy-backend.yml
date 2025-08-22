@@ -33,38 +33,34 @@ jobs:
       - name: Install Railway CLI
         run: npm i -g @railway/cli
 
-      - name: Link project/environment (non-interactive)
+      - name: Auth sanity check (token-based, no linking)
         run: |
-          # Link to Railway (token-based) and select environment explicitly. Ignore errors to keep going in CI.
-          railway link || true
-          railway environment "$RAILWAY_ENVIRONMENT" || true
-          railway list || true
+          railway --version
+          # Verify token works; fail fast with a clear hint if not
+          railway whoami || (echo "Railway auth failed. Ensure RAILWAY_TOKEN is a Personal (account) token in GitHub Secrets." && exit 1)
 
       - name: Sync Railway variables from GitHub Secrets (no placeholders)
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
-          # Ensure service exists and is selected
+          # Ensure service exists (idempotent)
           railway add --service "$SERVICE_NAME" || true
-          railway service "$SERVICE_NAME" || true
           # Set variables only if provided in Secrets; skip deploy triggers here
           if [ -n "$DATABASE_URL" ]; then
-            railway variables --service "$SERVICE_NAME" --set "DATABASE_URL=$DATABASE_URL" --skip-deploys
+            railway variables -e "$RAILWAY_ENVIRONMENT" -s "$SERVICE_NAME" --set "DATABASE_URL=$DATABASE_URL" --skip-deploys
           fi
           if [ -n "$OPENAI_API_KEY" ]; then
-            railway variables --service "$SERVICE_NAME" --set "OPENAI_API_KEY=$OPENAI_API_KEY" --skip-deploys
+            railway variables -e "$RAILWAY_ENVIRONMENT" -s "$SERVICE_NAME" --set "OPENAI_API_KEY=$OPENAI_API_KEY" --skip-deploys
           fi
 
       - name: Deploy snapshot (Dockerfile, preDeploy + start from railway.toml)
         run: |
-          # Try to deploy to the named service; if it doesn't exist, create it and retry
-          # Ensure service exists, set it as linked, then deploy
+          # Ensure service exists, then deploy (no linking; scoped by env/service)
           railway add --service "$SERVICE_NAME" || true
-          railway service "$SERVICE_NAME" || true
-          railway up --detach --ci --service "$SERVICE_NAME"
+          railway up --detach --ci -e "$RAILWAY_ENVIRONMENT" -s "$SERVICE_NAME"
 
       - name: Show last 200 log lines (backend service)
         run: |
           # Some CLI versions require the separator before extra flags
-          railway logs --service "$SERVICE_NAME" -- --lines 200 || railway logs --service "$SERVICE_NAME" || true
+          railway logs -e "$RAILWAY_ENVIRONMENT" -s "$SERVICE_NAME" -- --lines 200 || railway logs -e "$RAILWAY_ENVIRONMENT" -s "$SERVICE_NAME" || true
