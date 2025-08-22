@@ -1,0 +1,7 @@
+[build]
+builder = "nixpacks"
+buildCommand = "cd apps/backend && pip install -r requirements.txt"
+
+[deploy]
+preDeploy = "cd apps/backend && alembic upgrade head"
+startCommand = "cd apps/backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT"

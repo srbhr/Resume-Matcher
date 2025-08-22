@@ -2,7 +2,7 @@ import os
 import sys
 import logging
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from typing import List, Optional, Literal
+from typing import List, Optional, Literal, cast
 
 
 class Settings(BaseSettings):
@@ -12,9 +12,38 @@ class Settings(BaseSettings):
     FRONTEND_PATH: str = os.path.join(os.path.dirname(__file__), "frontend", "assets")
     ALLOWED_ORIGINS: List[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
     DB_ECHO: bool = False
+    # Optional pool tuning for managed Postgres (e.g., Neon). Leave unset for defaults.
+    DB_POOL_SIZE: Optional[int] = None
+    DB_MAX_OVERFLOW: Optional[int] = None
+    DB_POOL_TIMEOUT: Optional[int] = None
     PYTHONDONTWRITEBYTECODE: int = 1
-    SYNC_DATABASE_URL: Optional[str] = None
-    ASYNC_DATABASE_URL: Optional[str] = None
+    # Database URLs: prefer unified DATABASE_URL when present (Railway), map to required drivers
+    _DB_URL: str = os.getenv("DATABASE_URL", "").strip()
+    if _DB_URL:
+        # Normalize common postgres prefixes
+        if _DB_URL.startswith("postgres://"):
+            _DB_URL = _DB_URL.replace("postgres://", "postgresql://", 1)
+        # Sync (psycopg)
+        if _DB_URL.startswith("postgresql+psycopg://"):
+            SYNC_DATABASE_URL: str = _DB_URL
+        elif _DB_URL.startswith("postgresql://"):
+            SYNC_DATABASE_URL = _DB_URL.replace("postgresql://", "postgresql+psycopg://", 1)
+        else:
+            SYNC_DATABASE_URL = _DB_URL  # leave as-is for other engines
+        # Async (asyncpg)
+        if _DB_URL.startswith("postgresql+asyncpg://"):
+            ASYNC_DATABASE_URL: str = _DB_URL
+        elif _DB_URL.startswith("postgresql+psycopg://"):
+            ASYNC_DATABASE_URL = _DB_URL.replace("postgresql+psycopg://", "postgresql+asyncpg://", 1)
+        elif _DB_URL.startswith("postgresql://"):
+            ASYNC_DATABASE_URL = _DB_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
+        else:
+            # Fallback to async form mirroring sync for non-pg engines
+            ASYNC_DATABASE_URL = _DB_URL
+    else:
+        # Default to SQLite for local dev if not provided; override with Neon Postgres URLs in env
+        SYNC_DATABASE_URL: str = os.getenv("SYNC_DATABASE_URL", "sqlite:///./app.db") or "sqlite:///./app.db"
+        ASYNC_DATABASE_URL: str = os.getenv("ASYNC_DATABASE_URL", "sqlite+aiosqlite:///./app.db") or "sqlite+aiosqlite:///./app.db"
     SESSION_SECRET_KEY: Optional[str] = None
     LLM_PROVIDER: Optional[str] = "ollama"
     LLM_API_KEY: Optional[str] = None
@@ -24,6 +53,17 @@ class Settings(BaseSettings):
     EMBEDDING_API_KEY: Optional[str] = None
     EMBEDDING_BASE_URL: Optional[str] = None
     EMBEDDING_MODEL: Optional[str] = "dengcao/Qwen3-Embedding-0.6B:Q8_0"
+    # Rate limiting & security
+    RATE_LIMIT_ENABLED: bool = True
+    RATE_LIMIT_REQUESTS: int = 60  # requests per window
+    RATE_LIMIT_WINDOW_SECONDS: int = 60
+    MAX_UPLOAD_SIZE_MB: int = 5  # Max resume upload size
+    MAX_JSON_BODY_SIZE_KB: int = 256  # For JSON endpoints (job upload etc.)
+    # Cache maintenance
+    LLM_CACHE_CLEAN_INTERVAL_SECONDS: int = 600  # 10 min default
+    LLM_CACHE_MAX_DELETE_BATCH: int = 500
+    # Testing / deterministic execution
+    DISABLE_BACKGROUND_TASKS: bool = False  # If True, run normally deferred tasks inline (helps tests / prevents loop-close races)
 
     model_config = SettingsConfigDict(
         env_file=os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, ".env"),
@@ -54,8 +94,16 @@ def setup_logging() -> None:
     if root.handlers:
         return
 
-    env = settings.ENV.lower() if hasattr(settings, "ENV") else "production"
-    level = _LEVEL_BY_ENV.get(env, logging.INFO)
+    raw_env = getattr(settings, "ENV", "production")
+    env_norm = str(raw_env).lower()
+    # Fallback to production if unexpected value
+    if env_norm == "staging":
+        env_key: Literal["staging"] = "staging"
+    elif env_norm == "local":
+        env_key = "local"  # type: ignore[assignment]
+    else:
+        env_key = "production"  # type: ignore[assignment]
+    level = _LEVEL_BY_ENV[cast(Literal["production", "staging", "local"], env_key)]
 
     formatter = logging.Formatter(
         fmt="[%(asctime)s - %(name)s - %(levelname)s] %(message)s",
