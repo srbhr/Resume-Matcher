@@ -1,6 +1,5 @@
 [build]
-builder = "nixpacks"
-buildCommand = "python3 -m ensurepip --upgrade || true && python3 -m pip install -r apps/backend/requirements.txt"
+builder = "docker"
 
 [deploy]
 preDeploy = "cd apps/backend && alembic upgrade head"
