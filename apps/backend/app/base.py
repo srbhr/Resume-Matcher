@@ -28,7 +28,21 @@ from .core import (
     validation_exception_handler,
     unhandled_exception_handler,
 )
-from .core.redaction import redact
+# Prefer the shared redaction utility; if unavailable at runtime, fall back to a local minimal implementation
+try:  # pragma: no cover - exercised in deployment environments
+    from .core.redaction import redact  # type: ignore
+except Exception:  # pragma: no cover - defensive fallback
+    import re
+
+    _EMAIL_RE = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
+    _PHONE_RE = re.compile(r"(?:(?:\+|00)\d{1,3}[- ]?)?(?:\d[ -]?){6,14}\d")
+
+    def redact(value: str) -> str:
+        if not value:
+            return value
+        out = _EMAIL_RE.sub("<email:redacted>", value)
+        out = _PHONE_RE.sub("<phone:redacted>", out)
+        return out
 from sqlalchemy import delete, text as sql_text
 from sqlalchemy.ext.asyncio import AsyncSession
 import asyncio
