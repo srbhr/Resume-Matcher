@@ -28,7 +28,7 @@ from .core import (
     validation_exception_handler,
     unhandled_exception_handler,
 )
-from app.core.redaction import redact
+from .core.redaction import redact
 from sqlalchemy import delete, text as sql_text
 from sqlalchemy.ext.asyncio import AsyncSession
 import asyncio

@@ -16,7 +16,7 @@ services:
 
     # Start FastAPI via Uvicorn, binding to Render's $PORT
     dockerCommand: >-
-      python -m uvicorn --app-dir /app/apps/backend app.main:app --host 0.0.0.0 --port ${PORT}
+      python -m uvicorn --app-dir /app/apps/backend/app app.main:app --host 0.0.0.0 --port ${PORT}
 
     # Health check for zero-downtime deploys
     healthCheckPath: /healthz
