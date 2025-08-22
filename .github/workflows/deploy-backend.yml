@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - security-hardening-neon
+  workflow_dispatch:
 
 concurrency:
   group: deploy-backend-${{ github.ref }}
