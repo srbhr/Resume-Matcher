@@ -1,0 +1,45 @@
+name: Deploy Backend to Railway
+
+on:
+  push:
+    branches:
+      - security-hardening-neon
+
+concurrency:
+  group: deploy-backend-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      RAILWAY_PROJECT_ID: d230e3a7-2d35-4a99-9a59-7b43d5b9c1cf
+      RAILWAY_ENVIRONMENT: production
+      SERVICE_NAME: backend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Railway CLI
+        run: npm i -g @railway/cli
+
+      - name: Link project/environment (non-interactive)
+        run: |
+          railway link --project "$RAILWAY_PROJECT_ID" --environment "$RAILWAY_ENVIRONMENT" || true
+          railway list || true
+
+      - name: Deploy snapshot (Dockerfile, preDeploy + start from railway.toml)
+        run: |
+          railway up --detach --ci --service "$SERVICE_NAME" || railway up --detach --ci
+
+      - name: Show last 200 log lines
+        run: railway logs --lines 200 || true
