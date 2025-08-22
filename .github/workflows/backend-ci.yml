@@ -1,0 +1,98 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [ main, security-hardening-neon ]
+    paths:
+      - 'apps/backend/**'
+      - '.github/workflows/backend-ci.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'apps/backend/**'
+      - '.github/workflows/backend-ci.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: resumematcher_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres" --health-interval=10s --health-timeout=5s --health-retries=5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('apps/backend/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          cd apps/backend
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          # Linters/typecheckers (dev)
+          pip install ruff mypy
+
+      - name: Wait for Postgres
+        run: |
+          for i in {1..20}; do
+            pg_isready -h 127.0.0.1 -p 5432 -U postgres && break
+            sleep 2
+          done
+
+      - name: Set env and run migrations
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/resumematcher_test
+          SYNC_DATABASE_URL: postgresql+psycopg://postgres:postgres@127.0.0.1:5432/resumematcher_test
+          ASYNC_DATABASE_URL: postgresql+asyncpg://postgres:postgres@127.0.0.1:5432/resumematcher_test
+          SESSION_SECRET_KEY: ci_secret
+        run: |
+          cd apps/backend
+          alembic -c ./alembic.ini upgrade head
+
+      - name: Lint (ruff)
+        run: |
+          cd apps/backend
+          python -m ruff check app
+
+      - name: Type check (mypy)
+        run: |
+          cd apps/backend
+          python -m mypy app || true
+
+      - name: Schema drift check
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/resumematcher_test
+          SYNC_DATABASE_URL: postgresql+psycopg://postgres:postgres@127.0.0.1:5432/resumematcher_test
+        run: |
+          cd apps/backend
+          python -m scripts.detect_schema_drift || true
+
+      - name: Run tests
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/resumematcher_test
+          SYNC_DATABASE_URL: postgresql+psycopg://postgres:postgres@127.0.0.1:5432/resumematcher_test
+          ASYNC_DATABASE_URL: postgresql+asyncpg://postgres:postgres@127.0.0.1:5432/resumematcher_test
+          SESSION_SECRET_KEY: ci_secret
+        run: |
+          cd apps/backend
+          pytest -q
