@@ -12,11 +12,11 @@ services:
 
     # Run Alembic migrations before each deploy
     preDeployCommand: >-
-      /bin/sh -c "cd apps/backend && alembic upgrade head"
+      python -c "import sys; from alembic.config import main; sys.argv=['alembic','-c','/app/apps/backend/alembic.ini','upgrade','head']; raise SystemExit(main())"
 
     # Start FastAPI via Uvicorn, binding to Render's $PORT
     dockerCommand: >-
-      /bin/sh -c "cd apps/backend && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"
+      python -c "import os, uvicorn; uvicorn.run('app.main:app', host='0.0.0.0', port=int(os.environ.get('PORT','8000')))"
 
     # Health check for zero-downtime deploys
     healthCheckPath: /healthz
@@ -32,12 +32,18 @@ services:
     envVars:
       - key: DATABASE_URL
         sync: false  # Provide Neon connection URL with sslmode=require in dashboard when prompted
+      - key: DATABASE_URL_ASYNC
+        sync: false  # Provide Neon async URL (postgresql+asyncpg://...&ssl=require) or leave empty; app derives it from DATABASE_URL if omitted
       - key: OPENAI_API_KEY
         sync: false  # Optional
       - key: ENV
         value: production
       - key: PYTHONUNBUFFERED
         value: "1"
+      - key: PYTHONPATH
+        value: /app/apps/backend
+      - key: ALEMBIC_CONFIG
+        value: /app/apps/backend/alembic.ini
       # Render provides PORT automatically for web services; no need to set explicitly.
 
 # Note on health checks timing: Render currently allows setting only the path via Blueprint.
