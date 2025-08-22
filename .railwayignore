@@ -1,0 +1,42 @@
+# Reduce snapshot size for Railway
+# Ignore local dev, caches, and heavy artifacts
+
+# Python
+*.pyc
+__pycache__/
+.venv/
+venv/
+ENV/
+env/
+apps/**/.venv/
+apps/**/venv/
+
+# Node
+node_modules/
+apps/frontend/node_modules/
+apps/frontend/.next/
+**/.next/
+
+# Databases and binaries
+*.db
+*.db-*
+app.db*
+apps/backend/app.db*
+
+# VCS and CI
+.git/
+.gitignore
+.github/
+
+# Docs and tests (not needed to build runtime image)
+**/*.md
+**/*.MD
+**/*.markdown
+apps/**/tests/
+apps/**/__tests__/
+patches/
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/

@@ -1,0 +1,50 @@
+# Exclude local environments and caches
+.env
+.env.*
+*.pyc
+__pycache__/
+.cache/
+
+# Python virtualenvs
+.venv/
+venv/
+ENV/
+env/
+apps/**/.venv/
+apps/**/venv/
+
+# Node artifacts
+node_modules/
+apps/frontend/node_modules/
+
+# OS / editor junk
+.DS_Store
+.vscode/
+.idea/
+
+# Local databases and large artifacts
+*.db
+*.db-*
+app.db*
+apps/backend/app.db*
+
+# Git / CI / docs not needed for runtime
+.git/
+.gitignore
+.github/
+.github/*
+**/*.md
+**/*.MD
+**/*.markdown
+
+# Tests and local scripts
+apps/**/tests/
+apps/**/__tests__/
+apps/**/scripts/
+patches/
+
+# Build outputs
+**/dist/
+**/build/
+**/.next/
+apps/frontend/.next/
