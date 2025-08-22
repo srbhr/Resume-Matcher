@@ -34,14 +34,20 @@ jobs:
 
       - name: Link project/environment (non-interactive)
         run: |
-          railway link --project "$RAILWAY_PROJECT_ID" --environment "$RAILWAY_ENVIRONMENT" || true
+          # Link by project ID; then select environment explicitly. Ignore errors to keep going in CI.
+          railway link "$RAILWAY_PROJECT_ID" || true
+          railway environment "$RAILWAY_ENVIRONMENT" || true
           railway list || true
 
       - name: Deploy snapshot (Dockerfile, preDeploy + start from railway.toml)
         run: |
           # Try to deploy to the named service; if it doesn't exist, create it and retry
-          railway up --detach --ci --service "$SERVICE_NAME" \
-            || (railway service create --name "$SERVICE_NAME" && railway up --detach --ci --service "$SERVICE_NAME")
+          # Ensure service exists, set it as linked, then deploy
+          railway add --service "$SERVICE_NAME" || true
+          railway service "$SERVICE_NAME" || true
+          railway up --detach --ci --service "$SERVICE_NAME"
 
       - name: Show last 200 log lines (backend service)
-        run: railway logs --service "$SERVICE_NAME" --lines 200 || true
+        run: |
+          # Some CLI versions require the separator before extra flags
+          railway logs --service "$SERVICE_NAME" -- --lines 200 || railway logs --service "$SERVICE_NAME" || true
