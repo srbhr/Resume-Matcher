@@ -16,8 +16,7 @@ RUN apt-get update \
 # Pre-copy requirements to leverage Docker layer caching
 COPY apps/backend/requirements.txt /app/apps/backend/requirements.txt
 RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir -r /app/apps/backend/requirements.txt \
-    && pip install --no-cache-dir psycopg-binary==3.2.3
+    && pip install --no-cache-dir -r /app/apps/backend/requirements.txt
 
 # Copy the full repo
 COPY . /app
