@@ -4,6 +4,7 @@
     "description": "Veridis Quo.",
     "private": true,
     "scripts": {
+    "prebuild": "cd apps/frontend && npm ci",
         "install:frontend": "cd apps/frontend && npm install",
         "install:backend": "cd apps/backend && uv venv && uv pip install .",
         "install": "npm run install:frontend && npm run install:backend",
@@ -17,9 +18,11 @@
         "start:frontend": "cd apps/frontend && npm start",
         "start": "concurrently \"npm:start:backend\" \"npm:start:frontend\"",
         "lint:frontend": "cd apps/frontend && npm run lint",
-        "lint": "npm run lint:frontend"
+        "lint": "npm run lint:frontend",
+        "generate:api": "node scripts/generate-openapi.mjs"
     },
     "devDependencies": {
-        "concurrently": "^9.1.2"
+        "concurrently": "^9.1.2",
+        "openapi-typescript": "^7.4.4"
     }
 }
