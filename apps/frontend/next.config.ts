@@ -6,11 +6,6 @@ import createNextIntlPlugin from 'next-intl/plugin';
 const withNextIntl = createNextIntlPlugin('./i18n.ts');
 
 const nextConfig: NextConfig = {
-	experimental: {
-		// Ensure Next/SWC honors tsconfig "paths" (@/*) during transforms
-		// @ts-expect-error: property supported at runtime but missing in types
-		tsconfigPaths: true,
-	},
 	webpack: (config) => {
 		config.resolve.alias = {
 			...(config.resolve.alias ?? {}),

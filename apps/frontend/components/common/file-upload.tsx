@@ -15,6 +15,12 @@ import {
 import { formatBytes, useFileUpload, FileMetadata } from '@/hooks/use-file-upload';
 import { Button } from '@/components/ui/button';
 
+// Narrow type for backend upload response envelope
+type UploadResponseEnvelope = {
+	data?: { resume_id?: unknown }
+	resume_id?: unknown // legacy fallback
+}
+
 const acceptedFileTypes = [
 	'application/pdf', // .pdf
 	'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
@@ -55,9 +61,11 @@ export default function FileUpload() {
 		onUploadSuccess: (uploadedFile, response) => {
 			console.log('Upload successful:', uploadedFile, response);
 			// uploadedFile.file is FileMetadata here, as transformed by the hook
-			const data = response as Record<string, unknown> & { resume_id?: string }
-			const resumeId =
-				typeof data.resume_id === 'string' ? data.resume_id : undefined
+			// Backend responds with an envelope: { request_id, data: { resume_id, ... } }
+			// Support both nested and legacy top-level shapes without any-casts.
+			const env = response as UploadResponseEnvelope;
+			const maybeId = env.data?.resume_id ?? env.resume_id;
+			const resumeId = typeof maybeId === 'string' ? maybeId : undefined;
 
 			if (!resumeId) {
 				console.error('Missing resume_id in upload response', response)
