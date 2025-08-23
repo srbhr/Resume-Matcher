@@ -2,6 +2,11 @@ import type { NextConfig } from 'next';
 import path from 'path';
 
 const nextConfig: NextConfig = {
+	experimental: {
+		// Ensure Next/SWC honors tsconfig "paths" (@/*) during transforms
+		// @ts-expect-error: property supported at runtime but missing in types
+		tsconfigPaths: true,
+	},
 	webpack: (config) => {
 		config.resolve.alias = {
 			...(config.resolve.alias ?? {}),

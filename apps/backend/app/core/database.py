@@ -13,19 +13,24 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
-from .config import settings
+from .config import settings as app_settings
 from ..models.base import Base
 
 
 class _DatabaseSettings:
     """Pulled from environment once at import-time."""
 
-    SYNC_DATABASE_URL: str = settings.SYNC_DATABASE_URL
-    ASYNC_DATABASE_URL: str = settings.ASYNC_DATABASE_URL
-    DB_ECHO: bool = settings.DB_ECHO
+    SYNC_DATABASE_URL: str = app_settings.SYNC_DATABASE_URL
+    ASYNC_DATABASE_URL: str = app_settings.ASYNC_DATABASE_URL
+    DB_ECHO: bool = app_settings.DB_ECHO
+    DB_POOL_SIZE: Optional[int] = app_settings.DB_POOL_SIZE
+    DB_MAX_OVERFLOW: Optional[int] = app_settings.DB_MAX_OVERFLOW
+    DB_POOL_TIMEOUT: Optional[int] = app_settings.DB_POOL_TIMEOUT
 
     DB_CONNECT_ARGS = (
-        {"check_same_thread": False} if SYNC_DATABASE_URL.startswith("sqlite") else {}
+        {"check_same_thread": False}
+        if SYNC_DATABASE_URL.startswith("sqlite")
+        else {}
     )
 
 
@@ -44,7 +49,7 @@ def _configure_sqlite(engine: Engine) -> None:
         return
 
     @event.listens_for(engine, "connect", once=True)
-    def _set_sqlite_pragma(dbapi_conn, _):
+    def _set_sqlite_pragma(dbapi_conn, _) -> None:  # type: ignore[no-untyped-def]
         cursor = dbapi_conn.cursor()
         cursor.execute("PRAGMA journal_mode=WAL;")
         cursor.execute("PRAGMA foreign_keys=ON;")
@@ -53,28 +58,61 @@ def _configure_sqlite(engine: Engine) -> None:
 
 @lru_cache(maxsize=1)
 def _make_sync_engine() -> Engine:
-    """Create (or return) the global synchronous Engine."""
-    engine = create_engine(
-        settings.SYNC_DATABASE_URL,
-        echo=settings.DB_ECHO,
-        pool_pre_ping=True,
-        connect_args=settings.DB_CONNECT_ARGS,
-        future=True,
-    )
+    """Create (or return) the global synchronous Engine.
+
+    Neon/Postgres is the only supported backend. SQLite fallbacks have been
+    removed to ensure consistent behavior across environments.
+    """
+    sync_url: str = settings.SYNC_DATABASE_URL
+    # Enforce psycopg driver for sync Postgres
+    if not sync_url.startswith('postgresql+psycopg://'):
+        raise RuntimeError(
+            "Only Postgres/Neon is supported for SYNC_DATABASE_URL and it must use the 'postgresql+psycopg://' scheme."
+        )
+    create_kwargs = {
+        "echo": settings.DB_ECHO,
+        "pool_pre_ping": True,
+        "connect_args": {},
+        "future": True,
+    }
+    # Pool tuning for Postgres
+    if settings.DB_POOL_SIZE is not None:
+        create_kwargs["pool_size"] = settings.DB_POOL_SIZE
+    if settings.DB_MAX_OVERFLOW is not None:
+        create_kwargs["max_overflow"] = settings.DB_MAX_OVERFLOW
+    if settings.DB_POOL_TIMEOUT is not None:
+        create_kwargs["pool_timeout"] = settings.DB_POOL_TIMEOUT
+    engine = create_engine(sync_url, **create_kwargs)
     _configure_sqlite(engine)
     return engine
 
 
 @lru_cache(maxsize=1)
 def _make_async_engine() -> AsyncEngine:
-    """Create (or return) the global asynchronous Engine."""
-    engine = create_async_engine(
-        settings.ASYNC_DATABASE_URL,
-        echo=settings.DB_ECHO,
-        pool_pre_ping=True,
-        connect_args=settings.DB_CONNECT_ARGS,
-        future=True,
-    )
+    """Create (or return) the global asynchronous Engine.
+
+    Neon/Postgres is the only supported backend. SQLite fallbacks have been
+    removed to ensure consistent behavior across environments.
+    """
+    async_url: str = settings.ASYNC_DATABASE_URL
+    # Enforce asyncpg driver for async Postgres
+    if not async_url.startswith('postgresql+asyncpg://'):
+        raise RuntimeError(
+            "Only Postgres/Neon is supported for ASYNC_DATABASE_URL and it must use the 'postgresql+asyncpg://' scheme."
+        )
+    create_kwargs = {
+        "echo": settings.DB_ECHO,
+        "pool_pre_ping": True,
+        "connect_args": {},
+        "future": True,
+    }
+    if settings.DB_POOL_SIZE is not None:
+        create_kwargs["pool_size"] = settings.DB_POOL_SIZE
+    if settings.DB_MAX_OVERFLOW is not None:
+        create_kwargs["max_overflow"] = settings.DB_MAX_OVERFLOW
+    if settings.DB_POOL_TIMEOUT is not None:
+        create_kwargs["pool_timeout"] = settings.DB_POOL_TIMEOUT
+    engine = create_async_engine(async_url, **create_kwargs)
     _configure_sqlite(engine.sync_engine)
     return engine
 
@@ -128,5 +166,15 @@ async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
 
 
 async def init_models(Base: Base) -> None:
-    async with async_engine.begin() as conn:
+    """Create tables for provided Base metadata (primarily test harness)."""
+    async with async_engine.begin() as conn:  # pragma: no cover - simple delegation
         await conn.run_sync(Base.metadata.create_all)
+
+
+def get_engine_sync() -> Engine:
+    """Return the configured synchronous engine.
+
+    Provided for auxiliary scripts (schema drift detection) that need a bound
+    Engine without importing the async stack or constructing duplicate engines.
+    """
+    return sync_engine

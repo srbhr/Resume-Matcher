@@ -1,0 +1,106 @@
+{
+  "Hero": {
+    "tagline": "Increase your interview chances with a perfectly tailored resume.",
+    "cta": "Get Started",
+    "title": "Resume Matcher"
+  },
+  "Language": {
+    "switch": "Language",
+    "en": "English",
+    "de": "German"
+  },
+  "Errors": {
+    "network": "Network error. Please check your connection.",
+    "timeout": "Request timed out. Try again.",
+    "server": "Server error. Please retry later.",
+    "validation": "Validation failed. Check your input.",
+    "unknown": "Unexpected error occurred.",
+    "uploadMissingId": "Upload succeeded but no resume ID received.",
+    "uploadUnknown": "An unknown error occurred during upload.",
+    "fileTooLarge": "File is too large.",
+    "fileType": "Unsupported file type."
+  },
+  "Upload": {
+    "uploadingTitle": "Uploading...",
+    "uploadingSubtitle": "Your file is being processed.",
+    "promptTitle": "Upload Your Resume",
+    "promptReady": "File Ready",
+    "promptDrag": "Drag & drop or click (PDF, DOCX up to {size})",
+    "statusUploaded": "Uploaded",
+    "statusFailed": "Upload failed",
+    "statusPending": "Pending upload",
+    "successTitle": "Success",
+    "errorTitle": "Error"
+  },
+  "ResumeUploadPage": {
+    "title": "Upload Your Resume",
+    "description": "Upload a PDF or DOCX. The file is processed locally and used only for analysis.",
+    "note": "Formats: PDF, DOCX • Max 2MB • No permanent storage.",
+    "home": "Home",
+    "dashboard": "Dashboard"
+  },
+  "MatchPage": {
+    "title": "Match & Improve",
+    "resumeIdLabel": "Resume ID",
+    "resumeIdHelp": "Last upload is auto-filled if available.",
+    "jobDescLabel": "Job description (Markdown or text)",
+    "jobDescPlaceholder": "Paste the job description here...",
+    "analyzeButton": "Analyze & Improve",
+    "analyzing": "Analyzing...",
+    "noResult": "No result yet – provide a Resume ID & job description.",
+    "originalScore": "Original Score",
+    "newScore": "New Score",
+    "delta": "Delta",
+    "atsHeuristic": "ATS Heuristic",
+    "keywordCoverage": "Keyword Coverage",
+    "sections": "Sections (Heuristic)",
+    "atsScore": "ATS Score",
+    "keywordDiff": "Keyword Diff",
+    "present": "Present",
+    "missing": "Missing",
+    "extra": "Extra",
+    "improvedResumeSnippet": "Improved Resume Snippet"
+  },
+  "DashboardPage": {
+    "title": "Your Resume Matcher Dashboard",
+    "subtitle": "Manage your resume and analyze its match with job descriptions.",
+    "yourResume": "Your Resume",
+    "resumeDescription": "This is your resume. Update it via the resume upload page."
+  },
+  "ResumeDetail": {
+    "title": "Resume Detail",
+    "uploadNew": "Upload New",
+    "meta": "Meta",
+    "personalData": "Personal Data",
+    "skills": "Skills",
+    "experiences": "Experiences",
+    "projects": "Projects",
+    "education": "Education",
+    "extractedKeywords": "Extracted Keywords",
+    "rawExcerpt": "Raw Text (Excerpt)",
+    "jobMatchTitle": "Job Match & Improvement",
+    "jobDescLabel": "Job description (Markdown/Text)",
+    "startButton": "Start Match & Improve",
+    "parsingWait": "Parsing structured content... (auto refreshing)",
+    "analyzing": "Analyzing...",
+    "originalScore": "Original Score",
+    "newScore": "New Score",
+    "delta": "Delta",
+    "atsHeuristic": "ATS Heuristic",
+    "keywordCoverage": "Keyword Coverage",
+    "sections": "Sections",
+    "atsScore": "ATS Score",
+    "keywordDiff": "Keyword Diff",
+    "present": "Present",
+    "missing": "Missing",
+    "extra": "Extra",
+    "improvedResumeSnippet": "Improved Resume Snippet"
+  }
+  ,
+  "Meta": {
+    "title": "Resume Matcher",
+    "description": "Optimize and improve your resume against job descriptions with ATS-aware keyword matching.",
+    "titleDashboard": "Dashboard | Resume Matcher",
+    "titleMatch": "Match & Improve | Resume Matcher"
+  }
+}

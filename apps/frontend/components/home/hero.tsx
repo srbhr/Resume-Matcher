@@ -1,9 +1,17 @@
+"use client";
+
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import BackgroundContainer from '@/components/common/background-container';
 import GitHubStarBadge from '@/components/common/github-star-badge';
 
 export default function Hero() {
+	const t = useTranslations('Hero');
+	const pathname = usePathname();
+	const parts = pathname.split('/').filter(Boolean);
+	const locale = parts[0] || 'en';
 	return (
 		<BackgroundContainer>
 			<div className="relative mb-4 h-[30vh] w-full ">
@@ -12,19 +20,19 @@ export default function Hero() {
 				</div>
 
 				<h1 className="text-center text-8xl font-semibold bg-clip-text text-transparent bg-[linear-gradient(to_right,theme(colors.sky.500),theme(colors.pink.400),theme(colors.violet.600),theme(colors.blue.300),theme(colors.purple.400),theme(colors.pink.300),theme(colors.sky.500))] bg-[length:200%_auto] animate-[gradient_8s_linear_infinite]">
-					Resume Matcher
+					{t('title')}
 				</h1>
 			</div>
 			<p className="mb-12 --font-space-grotesk text-center text-lg bg-gradient-to-br from-pink-400 via-blue-400 to-violet-600 bg-clip-text text-transparent md:text-xl">
-				Increase your interview chances with a perfectly tailored resume.
+				{t('tagline')}
 			</p>
 			<Link
-				href="/resume"
+				href={`/${locale}/resume`}
 				className="group relative inline-flex h-10 overflow-hidden rounded-full p-[1px]"
 			>
 				<span className="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#3A59D1_0%,#7AC6D2_50%,#3A59D1_100%)]" />
 				<span className="inline-flex h-full w-full cursor-pointer items-center justify-center rounded-full bg-slate-950 px-3 py-1 text-sm font-medium text-gray-100 backdrop-blur-3xl">
-					Get Started
+					{t('cta')}
 					<svg
 						width="16"
 						height="16"

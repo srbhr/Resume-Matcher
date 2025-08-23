@@ -1,0 +1,26 @@
+How to publish this change without upstream push rights
+
+Option A: Use the git bundle (offline-safe)
+1. Upload the file patches/security-hardening-neon.bundle somewhere accessible or copy to another machine.
+2. On a clean clone (your fork), run:
+   git clone https://github.com/<your-user>/Resume-Matcher.git
+   cd Resume-Matcher
+   git fetch ../path/to/security-hardening-neon.bundle security-hardening-neon:security-hardening-neon
+   git checkout security-hardening-neon
+   git push origin security-hardening-neon
+3. Open a PR from your fork:security-hardening-neon to srbhr:main.
+
+Option B: Apply the patch (simple)
+1. Fork the repo on GitHub (https://github.com/srbhr/Resume-Matcher -> Fork).
+2. Add your fork as a remote and push a new branch:
+   git remote add myfork https://github.com/<your-user>/Resume-Matcher.git
+   git fetch myfork
+   git checkout -b security-hardening-neon
+   git am < patches/security-hardening-neon.patch
+   git push myfork security-hardening-neon
+3. Open a PR from your fork.
+
+Notes
+- Replace <your-user> with your GitHub username.
+- If git am reports conflicts, run: git am --abort, then consider using the bundle approach or cherry-pick.
+- The branch includes: README security section + Gitleaks CI workflow + Neon DSN tuning in settings/engines.

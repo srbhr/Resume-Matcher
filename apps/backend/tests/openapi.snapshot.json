@@ -1,0 +1,985 @@
+{
+  "components": {
+    "schemas": {
+      "Body_upload_resume_api_v1_resume_upload_post": {
+        "properties": {
+          "file": {
+            "format": "binary",
+            "title": "File",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_resume_api_v1_resume_upload_post",
+        "type": "object"
+      },
+      "Body_upload_resume_api_v1_resumes_upload_post": {
+        "properties": {
+          "file": {
+            "format": "binary",
+            "title": "File",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_resume_api_v1_resumes_upload_post",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "JobUploadRequest": {
+        "properties": {
+          "job_descriptions": {
+            "description": "List of job descriptions in markdown format",
+            "items": {
+              "type": "string"
+            },
+            "title": "Job Descriptions",
+            "type": "array"
+          },
+          "resume_id": {
+            "description": "UUID reference to the resume",
+            "format": "uuid",
+            "title": "Resume Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "job_descriptions",
+          "resume_id"
+        ],
+        "title": "JobUploadRequest",
+        "type": "object"
+      },
+      "MatchBreakdown": {
+        "properties": {
+          "education_bonus": {
+            "title": "Education Bonus",
+            "type": "number"
+          },
+          "experience_relevance": {
+            "title": "Experience Relevance",
+            "type": "number"
+          },
+          "final_score": {
+            "title": "Final Score",
+            "type": "integer"
+          },
+          "keyword_coverage": {
+            "title": "Keyword Coverage",
+            "type": "number"
+          },
+          "normalized_score": {
+            "title": "Normalized Score",
+            "type": "number"
+          },
+          "penalty_missing_critical": {
+            "title": "Penalty Missing Critical",
+            "type": "number"
+          },
+          "project_relevance": {
+            "title": "Project Relevance",
+            "type": "number"
+          },
+          "raw_weighted_score": {
+            "title": "Raw Weighted Score",
+            "type": "number"
+          },
+          "skill_overlap": {
+            "title": "Skill Overlap",
+            "type": "number"
+          },
+          "weighted_penalty": {
+            "title": "Weighted Penalty",
+            "type": "number"
+          },
+          "weighted_positive": {
+            "title": "Weighted Positive",
+            "type": "number"
+          }
+        },
+        "required": [
+          "skill_overlap",
+          "keyword_coverage",
+          "experience_relevance",
+          "project_relevance",
+          "education_bonus",
+          "penalty_missing_critical",
+          "raw_weighted_score",
+          "normalized_score",
+          "final_score",
+          "weighted_positive",
+          "weighted_penalty"
+        ],
+        "title": "MatchBreakdown",
+        "type": "object"
+      },
+      "MatchCounts": {
+        "properties": {
+          "experience_titles": {
+            "title": "Experience Titles",
+            "type": "integer"
+          },
+          "job_keywords": {
+            "title": "Job Keywords",
+            "type": "integer"
+          },
+          "project_names": {
+            "title": "Project Names",
+            "type": "integer"
+          },
+          "required_qualifications": {
+            "title": "Required Qualifications",
+            "type": "integer"
+          },
+          "resume_skills": {
+            "title": "Resume Skills",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "resume_skills",
+          "job_keywords",
+          "experience_titles",
+          "project_names",
+          "required_qualifications"
+        ],
+        "title": "MatchCounts",
+        "type": "object"
+      },
+      "MatchData": {
+        "properties": {
+          "breakdown": {
+            "$ref": "#/components/schemas/MatchBreakdown"
+          },
+          "counts": {
+            "$ref": "#/components/schemas/MatchCounts"
+          },
+          "job_id": {
+            "title": "Job Id",
+            "type": "string"
+          },
+          "resume_id": {
+            "title": "Resume Id",
+            "type": "string"
+          },
+          "score": {
+            "title": "Score",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "resume_id",
+          "job_id",
+          "score",
+          "breakdown",
+          "counts"
+        ],
+        "title": "MatchData",
+        "type": "object"
+      },
+      "MatchRequest": {
+        "properties": {
+          "job_id": {
+            "description": "Job UUID",
+            "format": "uuid",
+            "title": "Job Id",
+            "type": "string"
+          },
+          "resume_id": {
+            "description": "Resume UUID",
+            "format": "uuid",
+            "title": "Resume Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "resume_id",
+          "job_id"
+        ],
+        "title": "MatchRequest",
+        "type": "object"
+      },
+      "MatchResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/MatchData"
+          },
+          "request_id": {
+            "title": "Request Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "data"
+        ],
+        "title": "MatchResponse",
+        "type": "object"
+      },
+      "ResumeImprovementRequest": {
+        "properties": {
+          "job_id": {
+            "description": "DB UUID reference to the job",
+            "format": "uuid",
+            "title": "Job Id",
+            "type": "string"
+          },
+          "resume_id": {
+            "description": "DB UUID reference to the resume",
+            "format": "uuid",
+            "title": "Resume Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "job_id",
+          "resume_id"
+        ],
+        "title": "ResumeImprovementRequest",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "title": "Resume Matcher",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/v1/cache/entity/{entity_type}/{entity_id}": {
+      "delete": {
+        "operationId": "invalidate_entity_cache_api_v1_cache_entity__entity_type___entity_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "entity_type",
+            "required": true,
+            "schema": {
+              "title": "Entity Type",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "entity_id",
+            "required": true,
+            "schema": {
+              "title": "Entity Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Invalidate cache entries linked to an entity",
+        "tags": [
+          "v1",
+          "cache"
+        ]
+      }
+    },
+    "/api/v1/cache/key/{cache_key}": {
+      "delete": {
+        "operationId": "invalidate_cache_key_api_v1_cache_key__cache_key__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "cache_key",
+            "required": true,
+            "schema": {
+              "title": "Cache Key",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Invalidate explicit cache key",
+        "tags": [
+          "v1",
+          "cache"
+        ]
+      }
+    },
+    "/api/v1/health/ping": {
+      "get": {
+        "description": "health check endpoint",
+        "operationId": "ping_api_v1_health_ping_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Ping",
+        "tags": [
+          "v1",
+          "Health check"
+        ]
+      }
+    },
+    "/api/v1/job": {
+      "get": {
+        "description": "Retrieves job data from both job_model and processed_job model by job_id.\n\nArgs:\n    job_id: The ID of the job to retrieve\n\nReturns:\n    Combined data from both job and processed_job models\n\nRaises:\n    HTTPException: If the job is not found or if there's an error fetching data.",
+        "operationId": "get_job_api_v1_job_get",
+        "parameters": [
+          {
+            "description": "Job ID to fetch data for",
+            "in": "query",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "description": "Job ID to fetch data for",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get job data from both job and processed_job models",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/job/upload": {
+      "post": {
+        "description": "Accepts a job description as a MarkDown text and stores it in the database.",
+        "operationId": "upload_job_api_v1_job_upload_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JobUploadRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "stores the job posting in the database by parsing the JD into a structured format JSON",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/jobs": {
+      "get": {
+        "description": "Retrieves job data from both job_model and processed_job model by job_id.\n\nArgs:\n    job_id: The ID of the job to retrieve\n\nReturns:\n    Combined data from both job and processed_job models\n\nRaises:\n    HTTPException: If the job is not found or if there's an error fetching data.",
+        "operationId": "get_job_api_v1_jobs_get",
+        "parameters": [
+          {
+            "description": "Job ID to fetch data for",
+            "in": "query",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "description": "Job ID to fetch data for",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get job data from both job and processed_job models",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/jobs/upload": {
+      "post": {
+        "description": "Accepts a job description as a MarkDown text and stores it in the database.",
+        "operationId": "upload_job_api_v1_jobs_upload_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JobUploadRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "stores the job posting in the database by parsing the JD into a structured format JSON",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/match": {
+      "post": {
+        "operationId": "match_resume_job_api_v1_match_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MatchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MatchResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Compute heuristic match score and breakdown between a resume and a job",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/metrics/llm": {
+      "get": {
+        "description": "Return basic aggregated metrics about LLM usage & cache.\n\nThis is a lightweight JSON (not Prometheus text) endpoint intended for\ninternal dashboards or quick health checks. Prometheus exposition can be\nlayered later if needed.",
+        "operationId": "get_llm_metrics_api_v1_metrics_llm_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "LLM cache & token metrics",
+        "tags": [
+          "v1",
+          "metrics"
+        ]
+      }
+    },
+    "/api/v1/resume": {
+      "get": {
+        "description": "Retrieves resume data from both resume_model and processed_resume model by resume_id.\n\nArgs:\n    resume_id: The ID of the resume to retrieve\n\nReturns:\n    Combined data from both resume and processed_resume models\n\nRaises:\n    HTTPException: If the resume is not found or if there's an error fetching data.",
+        "operationId": "get_resume_api_v1_resume_get",
+        "parameters": [
+          {
+            "description": "Resume ID to fetch data for",
+            "in": "query",
+            "name": "resume_id",
+            "required": true,
+            "schema": {
+              "description": "Resume ID to fetch data for",
+              "title": "Resume Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get resume data from both resume and processed_resume models",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/resume/improve": {
+      "post": {
+        "description": "Scores and improves a resume against a job description.\n\nRaises:\n    HTTPException: If the resume or job is not found.",
+        "operationId": "score_and_improve_api_v1_resume_improve_post",
+        "parameters": [
+          {
+            "description": "Enable streaming response using Server-Sent Events",
+            "in": "query",
+            "name": "stream",
+            "required": false,
+            "schema": {
+              "default": false,
+              "description": "Enable streaming response using Server-Sent Events",
+              "title": "Stream",
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "If false, only deterministic baseline improvement is applied (no LLM call)",
+            "in": "query",
+            "name": "use_llm",
+            "required": false,
+            "schema": {
+              "default": true,
+              "description": "If false, only deterministic baseline improvement is applied (no LLM call)",
+              "title": "Use Llm",
+              "type": "boolean"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResumeImprovementRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Score and improve a resume against a job description",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/resume/upload": {
+      "post": {
+        "description": "Accepts a PDF or DOCX file, converts it to HTML/Markdown, and stores it in the database.\n\nRaises:\n    HTTPException: If the file type is not supported or if the file is empty.",
+        "operationId": "upload_resume_api_v1_resume_upload_post",
+        "parameters": [
+          {
+            "description": "Defer structured extraction (faster response, background processing)",
+            "in": "query",
+            "name": "defer",
+            "required": false,
+            "schema": {
+              "default": false,
+              "description": "Defer structured extraction (faster response, background processing)",
+              "title": "Defer",
+              "type": "boolean"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_resume_api_v1_resume_upload_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Upload a resume in PDF or DOCX format and store it into DB in HTML/Markdown format",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/resumes": {
+      "get": {
+        "description": "Retrieves resume data from both resume_model and processed_resume model by resume_id.\n\nArgs:\n    resume_id: The ID of the resume to retrieve\n\nReturns:\n    Combined data from both resume and processed_resume models\n\nRaises:\n    HTTPException: If the resume is not found or if there's an error fetching data.",
+        "operationId": "get_resume_api_v1_resumes_get",
+        "parameters": [
+          {
+            "description": "Resume ID to fetch data for",
+            "in": "query",
+            "name": "resume_id",
+            "required": true,
+            "schema": {
+              "description": "Resume ID to fetch data for",
+              "title": "Resume Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get resume data from both resume and processed_resume models",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/resumes/improve": {
+      "post": {
+        "description": "Scores and improves a resume against a job description.\n\nRaises:\n    HTTPException: If the resume or job is not found.",
+        "operationId": "score_and_improve_api_v1_resumes_improve_post",
+        "parameters": [
+          {
+            "description": "Enable streaming response using Server-Sent Events",
+            "in": "query",
+            "name": "stream",
+            "required": false,
+            "schema": {
+              "default": false,
+              "description": "Enable streaming response using Server-Sent Events",
+              "title": "Stream",
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "If false, only deterministic baseline improvement is applied (no LLM call)",
+            "in": "query",
+            "name": "use_llm",
+            "required": false,
+            "schema": {
+              "default": true,
+              "description": "If false, only deterministic baseline improvement is applied (no LLM call)",
+              "title": "Use Llm",
+              "type": "boolean"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResumeImprovementRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Score and improve a resume against a job description",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/resumes/upload": {
+      "post": {
+        "description": "Accepts a PDF or DOCX file, converts it to HTML/Markdown, and stores it in the database.\n\nRaises:\n    HTTPException: If the file type is not supported or if the file is empty.",
+        "operationId": "upload_resume_api_v1_resumes_upload_post",
+        "parameters": [
+          {
+            "description": "Defer structured extraction (faster response, background processing)",
+            "in": "query",
+            "name": "defer",
+            "required": false,
+            "schema": {
+              "default": false,
+              "description": "Defer structured extraction (faster response, background processing)",
+              "title": "Defer",
+              "type": "boolean"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_resume_api_v1_resumes_upload_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Upload a resume in PDF or DOCX format and store it into DB in HTML/Markdown format",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/ping": {
+      "get": {
+        "description": "health check endpoint",
+        "operationId": "ping_ping_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Ping",
+        "tags": [
+          "Health check"
+        ]
+      }
+    }
+  }
+}

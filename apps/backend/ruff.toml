@@ -1,0 +1,7 @@
+# Ruff configuration
+line-length = 100
+select = ["E", "F", "I", "UP", "B", "SIM", "ASYNC"]
+ignore = ["E501"]
+
+[lint.per-file-ignores]
+"tests/*" = ["S101"]

@@ -1,9 +1,12 @@
 import os
+import logging
 from typing import Dict, Any
 
 from ..core import settings
 from .strategies.wrapper import JSONWrapper, MDWrapper
 from .providers.base import Provider, EmbeddingProvider
+
+logger = logging.getLogger(__name__)
 
 class AgentManager:
     def __init__(self,
@@ -29,30 +32,41 @@ class AgentManager:
             "temperature": 0,
             "top_p": 0.9,
             "top_k": 40,
-            "num_ctx": 20000
+            "num_ctx": 20000,
         }
         opts.update(kwargs)
+        logger.debug(
+            f"AgentManager selecting LLM provider='{self.model_provider}' model='{self.model}' opts={opts}"
+        )
         match self.model_provider:
             case 'openai':
                 from .providers.openai import OpenAIProvider
                 api_key = opts.get("llm_api_key", settings.LLM_API_KEY)
-                return OpenAIProvider(model_name=self.model,
-                                      api_key=api_key,
-                                      opts=opts)
+                logger.debug("Using OpenAIProvider for generation")
+                return OpenAIProvider(
+                    model_name=self.model,
+                    api_key=api_key,
+                    opts=opts,
+                )
             case 'ollama':
                 from .providers.ollama import OllamaProvider
                 model = opts.get("model", self.model)
-                return OllamaProvider(model_name=model,
-                                      opts=opts)
+                logger.debug("Using OllamaProvider for generation")
+                return OllamaProvider(model_name=model, opts=opts)
             case _:
                 from .providers.llama_index import LlamaIndexProvider
                 llm_api_key = opts.get("llm_api_key", settings.LLM_API_KEY)
                 llm_api_base_url = opts.get("llm_base_url", settings.LLM_BASE_URL)
-                return LlamaIndexProvider(api_key=llm_api_key,
-                                          model_name=self.model,
-                                          api_base_url=llm_api_base_url,
-                                          provider=self.model_provider,
-                                          opts=opts)
+                logger.debug(
+                    f"Using LlamaIndexProvider provider='{self.model_provider}'"
+                )
+                return LlamaIndexProvider(
+                    api_key=llm_api_key,
+                    model_name=self.model,
+                    api_base_url=llm_api_base_url,
+                    provider=self.model_provider,
+                    opts=opts,
+                )
 
     async def run(self, prompt: str, **kwargs: Any) -> Dict[str, Any]:
         """
@@ -71,21 +85,35 @@ class EmbeddingManager:
     async def _get_embedding_provider(
         self, **kwargs: Any
     ) -> EmbeddingProvider:
+        logger.debug(
+            f"EmbeddingManager selecting embedding provider='{self._model_provider}' model='{self._model}'"
+        )
         match self._model_provider:
             case 'openai':
                 from .providers.openai import OpenAIEmbeddingProvider
                 api_key = kwargs.get("openai_api_key", settings.EMBEDDING_API_KEY)
-                return OpenAIEmbeddingProvider(api_key=api_key, embedding_model=self._model)
+                logger.debug("Using OpenAIEmbeddingProvider")
+                return OpenAIEmbeddingProvider(
+                    api_key=api_key, embedding_model=self._model
+                )
             case 'ollama':
                 from .providers.ollama import OllamaEmbeddingProvider
                 model = kwargs.get("embedding_model", self._model)
+                logger.debug("Using OllamaEmbeddingProvider")
                 return OllamaEmbeddingProvider(embedding_model=model)
             case _:
                 from .providers.llama_index import LlamaIndexEmbeddingProvider
-                embed_api_key = kwargs.get("embedding_api_key", settings.EMBEDDING_API_KEY)
-                return LlamaIndexEmbeddingProvider(api_key=embed_api_key,
-                                                   provider=self._model_provider,
-                                                   embedding_model=self._model)
+                embed_api_key = kwargs.get(
+                    "embedding_api_key", settings.EMBEDDING_API_KEY
+                )
+                logger.debug(
+                    f"Using LlamaIndexEmbeddingProvider provider='{self._model_provider}'"
+                )
+                return LlamaIndexEmbeddingProvider(
+                    api_key=embed_api_key,
+                    provider=self._model_provider,
+                    embedding_model=self._model,
+                )
 
     async def embed(self, text: str, **kwargs: Any) -> list[float]:
         """

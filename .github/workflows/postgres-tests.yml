@@ -1,0 +1,69 @@
+name: Postgres Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  postgres-tests:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: resumematcher
+          POSTGRES_PASSWORD: resumematcher
+          POSTGRES_DB: resumematcher
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U resumematcher" \
+          --health-interval 5s \
+          --health-timeout 5s \
+          --health-retries 5
+    env:
+      ASYNC_DATABASE_URL: postgresql+asyncpg://resumematcher:resumematcher@localhost:5432/resumematcher
+      SYNC_DATABASE_URL: postgresql://resumematcher:resumematcher@localhost:5432/resumematcher
+      FORCE_SQLITE_FOR_TESTS: "false"
+      DISABLE_BACKGROUND_TASKS: "true"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install uv
+        run: pip install uv
+
+      - name: Install backend deps
+        working-directory: apps/backend
+        run: uv pip install -r requirements.txt
+
+      - name: Lint (Ruff)
+        working-directory: apps/backend
+        run: |
+          python -m ruff check .
+
+      - name: Type check (mypy)
+        working-directory: apps/backend
+        run: |
+          python -m mypy app || true  # non-blocking for now
+
+      - name: Schema drift check
+        working-directory: apps/backend
+        run: |
+          python -m scripts.detect_schema_drift || (echo "Drift detected" && exit 1)
+
+      - name: Run Alembic migrations
+        working-directory: apps/backend
+        run: |
+          python -c "import os,sys; from app.core import database; from alembic.config import Config; from alembic import command; cfg=Config('alembic.ini'); command.upgrade(cfg, 'head')"
+
+      - name: Run tests (Postgres subset)
+        working-directory: apps/backend
+        run: |
+          pytest -q -k "llm_cache or match_endpoint or migration or cache_invalidation" --maxfail=1

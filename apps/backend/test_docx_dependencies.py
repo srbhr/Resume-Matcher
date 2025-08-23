@@ -10,83 +10,53 @@ import logging
 import os
 
 def test_docx_dependencies():
-    """Test if all dependencies for DOCX processing are available"""
+    """Assert DOCX processing toolchain is functional; emit informative prints but fail via assertions."""
     print("Testing markitdown DOCX processing dependencies...")
-    
-    # Test 1: Check if markitdown is available
+
+    from importlib import import_module
+
+    # markitdown presence
     try:
-        from markitdown import MarkItDown
+        MarkItDown = import_module("markitdown").MarkItDown  # type: ignore[attr-defined]
         print("✓ markitdown is available")
-    except ImportError as e:
-        print(f"✗ markitdown is missing: {e}")
-        return False
-    
-    # Test 2: Check if markitdown has DOCX support
+    except ImportError as e:  # pragma: no cover - explicit early fail path
+        raise AssertionError(f"markitdown missing: {e}")
+
+    # DOCX converter
     try:
-        from markitdown.converters import DocxConverter
+        DocxConverter = import_module("markitdown.converters").DocxConverter  # type: ignore[attr-defined]
         DocxConverter()
         print("✓ markitdown DOCX support is available")
-    except ImportError as e:
-        print(f"✗ markitdown DOCX converter is missing: {e}")
-        print("  Install with: pip install 'markitdown[all]==0.1.2'")
-        return False
-    except Exception as e:
-        if "MissingDependencyException" in str(e) or "dependencies needed to read .docx files" in str(e):
-            print(f"✗ markitdown DOCX dependencies missing: {e}")
-            print("  Install with: pip install 'markitdown[all]==0.1.2'")
-            return False
-        print(f"✗ Unexpected error with DOCX converter: {e}")
-        return False
-    
-    # Test 3: Test markitdown initialization
+    except Exception as e:  # pragma: no cover
+        raise AssertionError(
+            "DOCX converter unavailable or its dependencies missing. Install with: pip install 'markitdown[all]==0.1.2'"
+        ) from e
+
+    # Initialization
+    md = MarkItDown(enable_plugins=False)
+    print("✓ MarkItDown initialized successfully")
+
+    # Create temp docx and convert
     try:
-        md = MarkItDown(enable_plugins=False)
-        print("✓ MarkItDown initialized successfully")
-    except Exception as e:
-        print(f"✗ MarkItDown initialization failed: {e}")
-        return False
-    
-    # Test 4: Create a minimal DOCX file and test conversion
+        import docx  # type: ignore
+    except ImportError:  # pragma: no cover
+        import pytest
+        pytest.skip("python-docx not installed; skipping DOCX roundtrip test")
+
+    doc = docx.Document()
+    doc.add_paragraph("Test resume content")
+    with tempfile.NamedTemporaryFile(suffix=".docx", delete=False) as tmp_file:
+        doc.save(tmp_file.name)
+        tmp_path = tmp_file.name
     try:
-        # Create a simple DOCX file for testing
+        result = md.convert(tmp_path)
+        assert result and result.text_content, "DOCX conversion returned empty result"
+        print(f"✓ DOCX conversion test successful -> {result.text_content[:50]}...")
+    finally:
         try:
-            import docx
-        except ImportError:
-            print("✗ python-docx not available for creating test file")
-            print("  Note: markitdown[all] should include this dependency")
-            return False
-            
-        doc = docx.Document()
-        doc.add_paragraph("Test resume content")
-        
-        with tempfile.NamedTemporaryFile(suffix=".docx", delete=False) as tmp_file:
-            doc.save(tmp_file.name)
-            tmp_path = tmp_file.name
-            
-        try:
-            # Test conversion
-            result = md.convert(tmp_path)
-            if result and result.text_content:
-                print("✓ DOCX conversion test successful")
-                print(f"  Converted text: {result.text_content[:50]}...")
-                return True
-            else:
-                print("✗ DOCX conversion returned empty result")
-                return False
-        finally:
-            # Cleanup temporary file
-            try:
-                os.unlink(tmp_path)
-            except OSError:
-                pass
-                
-    except Exception as e:
-        print(f"✗ DOCX conversion test failed: {e}")
-        print(f"  Error type: {type(e).__name__}")
-        if "MissingDependencyException" in str(e):
-            print("  This is the DocxConverter MissingDependencyException mentioned in issue #409")
-            print("  Install with: pip install 'markitdown[all]==0.1.2'")
-        return False
+            os.unlink(tmp_path)
+        except OSError:
+            pass
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)

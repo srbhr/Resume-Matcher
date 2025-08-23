@@ -1,0 +1,106 @@
+{
+  "Hero": {
+    "tagline": "Steigere deine Interview-Chancen mit einem perfekt zugeschnittenen Lebenslauf.",
+    "cta": "Jetzt starten",
+    "title": "Resume Matcher"
+  },
+  "Language": {
+    "switch": "Sprache",
+    "en": "Englisch",
+    "de": "Deutsch"
+  },
+  "Errors": {
+    "network": "Netzwerkfehler. Bitte Verbindung prüfen.",
+    "timeout": "Zeitüberschreitung. Bitte erneut versuchen.",
+    "server": "Serverfehler. Bitte später erneut versuchen.",
+    "validation": "Validierung fehlgeschlagen. Eingaben prüfen.",
+    "unknown": "Unerwarteter Fehler ist aufgetreten.",
+    "uploadMissingId": "Upload erfolgreich aber keine Resume-ID erhalten.",
+    "uploadUnknown": "Unbekannter Fehler beim Upload.",
+    "fileTooLarge": "Datei ist zu groß.",
+    "fileType": "Nicht unterstützter Dateityp."
+  },
+  "Upload": {
+    "uploadingTitle": "Lade hoch...",
+    "uploadingSubtitle": "Deine Datei wird verarbeitet.",
+    "promptTitle": "Lebenslauf hochladen",
+    "promptReady": "Datei bereit",
+    "promptDrag": "Ziehen oder klicken (PDF, DOCX bis {size})",
+    "statusUploaded": "Hochgeladen",
+    "statusFailed": "Upload fehlgeschlagen",
+    "statusPending": "Wartet auf Upload",
+    "successTitle": "Erfolg",
+    "errorTitle": "Fehler"
+  },
+  "ResumeUploadPage": {
+    "title": "Lebenslauf hochladen",
+    "description": "Lade ein PDF oder DOCX hoch. Die Datei wird lokal verarbeitet und nur zur Analyse verwendet.",
+    "note": "Formate: PDF, DOCX • Max 2MB • Keine dauerhafte Speicherung.",
+    "home": "Startseite",
+    "dashboard": "Dashboard"
+  },
+  "MatchPage": {
+    "title": "Match & Improve",
+    "resumeIdLabel": "Resume ID",
+    "resumeIdHelp": "Letztes Upload wird automatisch vorausgefüllt.",
+    "jobDescLabel": "Jobbeschreibung (Markdown oder Text)",
+    "jobDescPlaceholder": "Füge hier die Jobbeschreibung ein...",
+    "analyzeButton": "Analysieren & Verbessern",
+    "analyzing": "Analysiere...",
+    "noResult": "Noch kein Ergebnis – gib eine Resume ID & Jobbeschreibung ein.",
+    "originalScore": "Original Score",
+    "newScore": "Neuer Score",
+    "delta": "Delta",
+    "atsHeuristic": "ATS Heuristik",
+    "keywordCoverage": "Keyword Coverage",
+    "sections": "Sektionen (Heuristik)",
+    "atsScore": "ATS Score",
+    "keywordDiff": "Keyword Diff",
+    "present": "Vorhanden",
+    "missing": "Fehlend",
+    "extra": "Extra",
+    "improvedResumeSnippet": "Verbesserter Resume Ausschnitt"
+  },
+  "DashboardPage": {
+    "title": "Dein Resume Matcher Dashboard",
+    "subtitle": "Verwalte deinen Lebenslauf und analysiere sein Matching mit Jobbeschreibungen.",
+    "yourResume": "Dein Lebenslauf",
+    "resumeDescription": "Dies ist dein Lebenslauf. Aktualisiere ihn über die Upload-Seite."
+  },
+  "ResumeDetail": {
+    "title": "Resume Detail",
+    "uploadNew": "Neues hochladen",
+    "meta": "Meta",
+    "personalData": "Personenbezogene Daten",
+    "skills": "Fähigkeiten",
+    "experiences": "Erfahrungen",
+    "projects": "Projekte",
+    "education": "Ausbildung",
+    "extractedKeywords": "Extrahierte Keywords",
+    "rawExcerpt": "Rohtext (Auszug)",
+    "jobMatchTitle": "Job Match & Verbesserung",
+    "jobDescLabel": "Jobbeschreibung (Markdown/Text)",
+    "startButton": "Match & Improve starten",
+    "parsingWait": "Strukturierter Inhalt wird verarbeitet... (automatische Aktualisierung)",
+    "analyzing": "Analyse läuft...",
+    "originalScore": "Original Score",
+    "newScore": "Neuer Score",
+    "delta": "Delta",
+    "atsHeuristic": "ATS Heuristik",
+    "keywordCoverage": "Keyword Coverage",
+    "sections": "Sektionen",
+    "atsScore": "ATS Score",
+    "keywordDiff": "Keyword Diff",
+    "present": "Vorhanden",
+    "missing": "Fehlend",
+    "extra": "Extra",
+    "improvedResumeSnippet": "Verbesserter Resume Ausschnitt"
+  }
+  ,
+  "Meta": {
+    "title": "Resume Matcher",
+    "description": "Optimiere und verbessere deinen Lebenslauf für Stellenanzeigen mit ATS-bewusster Keyword-Analyse.",
+    "titleDashboard": "Dashboard | Resume Matcher",
+    "titleMatch": "Match & Improve | Resume Matcher"
+  }
+}

@@ -9,7 +9,11 @@ from starlette.status import HTTP_500_INTERNAL_SERVER_ERROR
 logger = logging.getLogger(__name__)
 
 
-async def custom_http_exception_handler(request: Request, exc: HTTPException):
+from typing import Any
+from starlette.responses import Response
+
+
+async def custom_http_exception_handler(request: Request, exc: HTTPException) -> Response:
     request_id = getattr(request.state, "request_id", "")
     return JSONResponse(
         status_code=exc.status_code,
@@ -17,7 +21,7 @@ async def custom_http_exception_handler(request: Request, exc: HTTPException):
     )
 
 
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
+async def validation_exception_handler(request: Request, exc: RequestValidationError) -> Response:
     request_id = getattr(request.state, "request_id", "")
     return JSONResponse(
         status_code=422,
@@ -25,7 +29,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     )
 
 
-async def unhandled_exception_handler(request: Request, exc: Exception):
+async def unhandled_exception_handler(request: Request, exc: Exception) -> Response:
     request_id = getattr(request.state, "request_id", "")
     return JSONResponse(
         status_code=HTTP_500_INTERNAL_SERVER_ERROR,
@@ -33,8 +37,8 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
     )
 
 
-async def sqlalchemy_exception_handler(request: Request, exc: SQLAlchemyError):
-    logger.error(f"DB error on {request.url}: {exc} - {exc.with_traceback()}")
+async def sqlalchemy_exception_handler(request: Request, exc: SQLAlchemyError) -> Response:
+    logger.error("DB error on %s: %s", request.url, exc, exc_info=True)
     return JSONResponse(
         status_code=500,
         content={

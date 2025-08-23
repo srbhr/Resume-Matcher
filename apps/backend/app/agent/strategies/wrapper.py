@@ -21,13 +21,22 @@ class JSONWrapper(Strategy):
         """
         Wrapper strategy to format the prompt as JSON with the help of LLM.
         """
-        response = await provider(prompt, **generation_args)
-        response = response.strip()
+        provider_output = await provider(prompt, **generation_args)
+        # Expect dict {text, usage}
+        if isinstance(provider_output, dict) and "text" in provider_output:
+            usage = provider_output.get("usage")
+            response = str(provider_output.get("text", "")).strip()
+        else:
+            usage = None
+            response = str(provider_output).strip()
         logger.info(f"provider response: {response}")
 
         # 1) Try direct parse first
         try:
-            return json.loads(response)
+            parsed = json.loads(response)
+            if usage:
+                parsed["_usage"] = usage
+            return parsed
         except json.JSONDecodeError:
             pass
 
@@ -36,7 +45,10 @@ class JSONWrapper(Strategy):
         for fence_match in FENCE_PATTERN.finditer(response):
             fenced = fence_match.group(1).strip()
             try:
-                return json.loads(fenced)
+                parsed = json.loads(fenced)
+                if usage:
+                    parsed["_usage"] = usage
+                return parsed
             except json.JSONDecodeError:
                 continue
 
@@ -49,11 +61,17 @@ class JSONWrapper(Strategy):
 
         for _, candidate in candidates:
             try:
-                return json.loads(candidate)
+                parsed = json.loads(candidate)
+                if usage:
+                    parsed["_usage"] = usage
+                return parsed
             except json.JSONDecodeError:
                 candidate2 = candidate.replace("```", "").strip()
                 try:
-                    return json.loads(candidate2)
+                    parsed2 = json.loads(candidate2)
+                    if usage:
+                        parsed2["_usage"] = usage
+                    return parsed2
                 except json.JSONDecodeError:
                     continue
 
@@ -81,13 +99,19 @@ class MDWrapper(Strategy):
         Wrapper strategy to format the prompt as Markdown with the help of LLM.
         """
         logger.info(f"prompt given to provider: \n{prompt}")
-        response = await provider(prompt, **generation_args)
+        provider_output = await provider(prompt, **generation_args)
+        if isinstance(provider_output, dict) and "text" in provider_output:
+            usage = provider_output.get("usage")
+            response = str(provider_output.get("text", ""))
+        else:
+            usage = None
+            response = str(provider_output)
         logger.info(f"provider response: {response}")
         try:
-            response = (
+            wrapped = (
                 "```md\n" + response + "```" if "```md" not in response else response
             )
-            return response
+            return {"markdown": wrapped, "_usage": usage} if usage else {"markdown": wrapped}
         except Exception as e:
             logger.error(
                 f"provider returned non-md. parsing error: {e} - response: {response}"

@@ -3,14 +3,11 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* In your global CSS file (e.g., globals.css) */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@keyframes gradient {
-  to { background-position: 200% center; }
-}
+@keyframes gradient { to { background-position: 200% center; } }
 
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
@@ -35,11 +32,11 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
+  --chart-1: var(--chart-1);
+  --chart-2: var(--chart-2);
+  --chart-3: var(--chart-3);
+  --chart-4: var(--chart-4);
+  --chart-5: var(--chart-5);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -122,11 +119,6 @@
 }
 
 @layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
+  * { @apply border-border outline-ring/50; }
+  body { @apply bg-background text-foreground; }
 }
-

@@ -1,0 +1,49 @@
+{
+  "name": "Resume Matcher",
+  "short_name": "Matcher",
+  "description": "Optimize your resume against job descriptions (ATS & keyword matching).",
+  "lang": "en",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0a0a0f",
+  "theme_color": "#0f172a",
+  "categories": ["productivity", "business", "education"],
+  "prefer_related_applications": false,
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icons/maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "screenshots": [
+    { "src": "/icons/screenshot-desktop.png", "sizes": "1280x800", "type": "image/png", "form_factor": "wide" },
+    { "src": "/icons/screenshot-mobile.png", "sizes": "390x844", "type": "image/png", "form_factor": "narrow" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Upload Resume",
+      "short_name": "Upload",
+      "description": "Upload a new resume for processing",
+      "url": "/en/resume?shortcut=upload",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Match Resume",
+      "short_name": "Match",
+      "description": "Open last resume to match with a job description",
+      "url": "/en/resume?shortcut=match"
+    }
+  ],
+  "share_target": {
+    "action": "/share",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "files": [{ "name": "files", "accept": ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"] }]
+    }
+  }
+}

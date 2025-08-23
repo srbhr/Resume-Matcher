@@ -8,6 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.agent import AgentManager
+from app.agent.cache_utils import fetch_or_cache
 from app.prompt import prompt_factory
 from app.schemas.json import json_schema_factory
 from app.models import Job, Resume, ProcessedJob
@@ -61,12 +62,18 @@ class JobService:
         return result is not None
 
     async def _extract_and_store_structured_job(
-        self, job_id, job_description_text: str
+        self, job_id: str, job_description_text: str
     ):
         """
         extract and store structured job data in the database
         """
-        structured_job = await self._extract_structured_json(job_description_text)
+        # Idempotency: if a processed job already exists, skip re-processing
+        existing = await self.db.execute(select(ProcessedJob).where(ProcessedJob.job_id == job_id))
+        if existing.scalars().first():
+            logger.info(f"ProcessedJob already exists for job_id={job_id}; skipping re-insert")
+            return job_id
+
+        structured_job = await self._extract_structured_json(job_id, job_description_text)
         if not structured_job:
             logger.info("Structured job extraction failed.")
             return None
@@ -113,7 +120,7 @@ class JobService:
         return job_id
 
     async def _extract_structured_json(
-        self, job_description_text: str
+        self, job_id: str, job_description_text: str
     ) -> Dict[str, Any] | None:
         """
         Uses the AgentManager+JSONWrapper to ask the LLM to
@@ -125,11 +132,22 @@ class JobService:
             job_description_text,
         )
         logger.info(f"Structured Job Prompt: {prompt}")
-        raw_output = await self.json_agent_manager.run(prompt=prompt)
+        async def _runner():
+            return await self.json_agent_manager.run(prompt=prompt)
+        raw_output = await fetch_or_cache(
+            db=self.db,
+            model=self.json_agent_manager.model,
+            strategy=self.json_agent_manager.strategy,
+            prompt=prompt,
+            runner=_runner,
+            index_entities={"job": job_id},
+        )
 
         try:
+            candidate = dict(raw_output)
+            candidate.pop("_usage", None)
             structured_job: StructuredJobModel = StructuredJobModel.model_validate(
-                raw_output
+                candidate
             )
         except ValidationError as e:
             logger.info(f"Validation error: {e}")

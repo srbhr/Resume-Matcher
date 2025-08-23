@@ -59,6 +59,11 @@ dependencies = [
     "typing_extensions==4.13.1",
     "urllib3==2.4.0",
     "uvicorn==0.34.0",
+    "pytest==8.2.2",
+    "pytest-asyncio==0.23.7",
+    # Dev / lint (optional install in CI or local):
+    "ruff==0.5.7",
+    "mypy==1.13.0",
 ]
 
 [build-system]

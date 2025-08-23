@@ -1,17 +1,26 @@
 import os
 import uuid
+import hashlib
 import json
 import tempfile
 import logging
+import time
+import asyncio
 
 from markitdown import MarkItDown
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from sqlalchemy.exc import OperationalError
 from pydantic import ValidationError
 from typing import Dict, Optional
+from sqlalchemy import text
 
 from app.models import Resume, ProcessedResume
+from app.metrics.counters import DUPLICATE_RESUME_REUSES
+from app.core.database import AsyncSessionLocal
+from app.core import settings as core_settings
 from app.agent import AgentManager
+from app.agent.cache_utils import fetch_or_cache
 from app.prompt import prompt_factory
 from app.schemas.json import json_schema_factory
 from app.schemas.pydantic import StructuredResumeModel
@@ -25,6 +34,10 @@ class ResumeService:
         self.db = db
         self.md = MarkItDown(enable_plugins=False)
         self.json_agent_manager = AgentManager()
+        logger.debug(
+            f"ResumeService initialized with LLM_PROVIDER={self.json_agent_manager.model_provider} "
+            f"LL_MODEL={self.json_agent_manager.model}"
+        )
         
         # Validate dependencies for DOCX processing
         self._validate_docx_dependencies()
@@ -52,7 +65,12 @@ class ResumeService:
 
 
     async def convert_and_store_resume(
-        self, file_bytes: bytes, file_type: str, filename: str, content_type: str = "md"
+        self,
+        file_bytes: bytes,
+        file_type: str,
+        filename: str,
+        content_type: str = "md",
+        defer_structured: bool = False,
     ):
         """
         Converts resume file (PDF/DOCX) to text using MarkItDown and stores it in the database.
@@ -64,8 +82,9 @@ class ResumeService:
             content_type: Output format ("md" for markdown or "html")
 
         Returns:
-            None
+            resume_id
         """
+        t_start = time.perf_counter()
         with tempfile.NamedTemporaryFile(
             delete=False, suffix=self._get_file_extension(file_type)
         ) as temp_file:
@@ -73,6 +92,7 @@ class ResumeService:
             temp_path = temp_file.name
 
         try:
+            conv_start = time.perf_counter()
             try:
                 result = self.md.convert(temp_path)
                 text_content = result.text_content
@@ -91,12 +111,67 @@ class ResumeService:
                     ) from e
                 else:
                     raise Exception(f"File conversion failed: {error_msg}") from e
-            
-            resume_id = await self._store_resume_in_db(text_content, content_type)
 
-            await self._extract_and_store_structured_resume(
-                resume_id=resume_id, resume_text=text_content
-            )
+            conv_end = time.perf_counter()
+            db_start = time.perf_counter()
+            resume_id = await self._store_resume_in_db(text_content, content_type)
+            db_end = time.perf_counter()
+
+            if defer_structured:
+                # Schedule background extraction with a fresh session.
+                # Use asyncio.shield to reduce cancellation surprises during test teardown.
+                async def _bg_extract(resume_id: str, resume_text: str):
+                    bg_session = None
+                    try:
+                        bg_session = AsyncSessionLocal()
+                        async with bg_session:  # ensures proper close even on exceptions
+                            svc = ResumeService(bg_session)
+                            await svc._extract_and_store_structured_resume(
+                                resume_id=resume_id, resume_text=resume_text
+                            )
+                            logger.info(
+                                f"Deferred structured extraction completed resume_id={resume_id}"
+                            )
+                    except Exception as e:  # pragma: no cover - defensive
+                        logger.error(
+                            f"Deferred extraction failed resume_id={resume_id}: {e}"
+                        )
+                    # Context manager ensures closure; no manual close needed to avoid un-awaited warnings.
+
+                if core_settings.DISABLE_BACKGROUND_TASKS:
+                    logger.debug(
+                        "DISABLE_BACKGROUND_TASKS enabled; skipping deferred extraction scheduling"
+                    )
+                else:
+                    # If event loop is closing (e.g., test teardown), skip scheduling to avoid warnings
+                    loop = asyncio.get_running_loop()
+                    if loop.is_closed():
+                        logger.debug("Event loop closed; skipping deferred extraction schedule")
+                    else:
+                        task = asyncio.create_task(_bg_extract(resume_id, text_content))
+                        def _done(t: asyncio.Task):  # pragma: no cover - logging only
+                            if t.cancelled():
+                                return
+                            exc = t.exception()
+                            if exc:
+                                logger.error(f"Deferred extraction task error resume_id={resume_id}: {exc}")
+                        task.add_done_callback(_done)
+                t_total = time.perf_counter() - t_start
+                logger.info(
+                    f"Resume processing timings (deferred) resume_id={resume_id} convert={conv_end-conv_start:.2f}s "
+                    f"db_store={db_end-db_start:.2f}s struct_extract=DEFERRED total={t_total:.2f}s"
+                )
+            else:
+                struct_start = time.perf_counter()
+                await self._extract_and_store_structured_resume(
+                    resume_id=resume_id, resume_text=text_content
+                )
+                struct_end = time.perf_counter()
+                t_total = time.perf_counter() - t_start
+                logger.info(
+                    f"Resume processing timings resume_id={resume_id} convert={conv_end-conv_start:.2f}s "
+                    f"db_store={db_end-db_start:.2f}s struct_extract={struct_end-struct_start:.2f}s total={t_total:.2f}s"
+                )
 
             return resume_id
         finally:
@@ -116,27 +191,86 @@ class ResumeService:
 
     async def _store_resume_in_db(self, text_content: str, content_type: str):
         """
-        Stores the parsed resume content in the database.
+        Stores the parsed resume content in the database. If an identical
+        resume content (hash) already exists, re-use that resume_id instead
+        of inserting a duplicate.
         """
+        content_hash = hashlib.sha256(text_content.encode("utf-8")).hexdigest()
+        # Attempt to query by content_hash; if column missing (legacy DB), perform
+        # a lightweight in-place migration: add the column and backfill hashes.
+        try:
+            existing = await self.db.execute(
+                select(Resume).where(Resume.content_hash == content_hash)
+            )
+        except OperationalError as e:  # pragma: no cover - exercised in migration scenario
+            if "no such column" in str(e).lower():
+                logger.warning("content_hash column missing; performing automatic migration")
+                await self._ensure_content_hash_column()
+                existing = await self.db.execute(
+                    select(Resume).where(Resume.content_hash == content_hash)
+                )
+            else:
+                raise
+        found = existing.scalars().first()
+        if found:
+            logger.info(f"Duplicate resume detected; reusing resume_id={found.resume_id}")
+            # Increment in-process counter
+            try:
+                from app.metrics import counters as _mc  # local import to avoid circulars
+                _mc.DUPLICATE_RESUME_REUSES += 1  # type: ignore[attr-defined]
+            except Exception:  # pragma: no cover - defensive
+                pass
+            return found.resume_id
         resume_id = str(uuid.uuid4())
         resume = Resume(
-            resume_id=resume_id, content=text_content, content_type=content_type
+            resume_id=resume_id,
+            content=text_content,
+            content_type=content_type,
+            content_hash=content_hash,
         )
-
         self.db.add(resume)
         await self.db.flush()
         await self.db.commit()
-
         return resume_id
 
+    async def _ensure_content_hash_column(self):  # pragma: no cover - simple migration utility
+        """Ensure the resumes.content_hash column exists; if not, add and backfill.
+
+        SQLite can't DROP constraints easily; we perform a minimal ALTER ADD COLUMN
+        then backfill hashes for existing rows with NULL content_hash.
+        """
+        # 1. Check if column exists
+        try:
+            res = await self.db.execute(text("PRAGMA table_info(resumes)"))  # type: ignore[name-defined]
+            cols = [r[1] for r in res.fetchall()]
+        except Exception:
+            return
+        if "content_hash" not in cols:
+            await self.db.execute(text("ALTER TABLE resumes ADD COLUMN content_hash TEXT"))  # type: ignore[name-defined]
+            await self.db.commit()
+        # 2. Backfill NULLs
+        # Fetch rows with NULL or empty hash
+        from sqlalchemy import update
+        existing_rows = await self.db.execute(select(Resume).where((Resume.content_hash == None) | (Resume.content_hash == "")))  # noqa: E711
+        to_update = existing_rows.scalars().all()
+        for row in to_update:
+            row.content_hash = hashlib.sha256(row.content.encode("utf-8")).hexdigest()
+        if to_update:
+            await self.db.commit()
+
     async def _extract_and_store_structured_resume(
-        self, resume_id, resume_text: str
+        self, resume_id: str, resume_text: str
     ) -> None:
         """
         extract and store structured resume data in the database
         """
         try:
-            structured_resume = await self._extract_structured_json(resume_text)
+            # Idempotency: if structured data already exists, skip re-processing
+            existing = await self.db.execute(select(ProcessedResume).where(ProcessedResume.resume_id == resume_id))
+            if existing.scalars().first():
+                logger.info(f"ProcessedResume already exists for resume_id={resume_id}; skipping re-insert")
+                return
+            structured_resume = await self._extract_structured_json(resume_id, resume_text)
             if not structured_resume:
                 logger.error("Structured resume extraction returned None.")
                 raise ResumeValidationError(
@@ -199,7 +333,7 @@ class ResumeService:
             )
 
     async def _extract_structured_json(
-        self, resume_text: str
+        self, resume_id: str, resume_text: str
     ) -> StructuredResumeModel | None:
         """
         Uses the AgentManager+JSONWrapper to ask the LLM to
@@ -210,12 +344,31 @@ class ResumeService:
             json.dumps(json_schema_factory.get("structured_resume"), indent=2),
             resume_text,
         )
-        logger.info(f"Structured Resume Prompt: {prompt}")
-        raw_output = await self.json_agent_manager.run(prompt=prompt)
+        # Avoid logging entire prompt if very large; log sizes & first 300 chars only
+        logger.info(
+            f"Structured Resume Prompt start len_resume={len(resume_text)} len_prompt={len(prompt)} preview={prompt[:300].replace('\n',' ') + ('...' if len(prompt)>300 else '')}"
+        )
+        llm_start = time.perf_counter()
+        # Caching layer: structured_resume extraction deterministic by prompt content
+        async def _runner():
+            return await self.json_agent_manager.run(prompt=prompt)
+        raw_output = await fetch_or_cache(
+            db=self.db,
+            model=self.json_agent_manager.model,
+            strategy=self.json_agent_manager.strategy,
+            prompt=prompt,
+            runner=_runner,
+            index_entities={"resume": resume_id},
+        )
+        llm_dur = time.perf_counter() - llm_start
+        logger.info(f"Structured Resume LLM call took {llm_dur:.2f}s")
 
         try:
+            # If wrapper added usage key, remove internal metadata before validation
+            candidate = dict(raw_output)
+            candidate.pop("_usage", None)
             structured_resume: StructuredResumeModel = (
-                StructuredResumeModel.model_validate(raw_output)
+                StructuredResumeModel.model_validate(candidate)
             )
         except ValidationError as e:
             logger.info(f"Validation error: {e}")
@@ -272,43 +425,35 @@ class ResumeService:
             "processed_resume": None,
         }
 
+        def _maybe_load(val):
+            if val is None:
+                return None
+            if isinstance(val, (dict, list)):
+                return val
+            try:
+                return json.loads(val)
+            except Exception:
+                return val
+
         if processed_resume:
+            personal = _maybe_load(processed_resume.personal_data)
+            experiences = _maybe_load(processed_resume.experiences) or {}
+            projects = _maybe_load(processed_resume.projects) or {}
+            skills = _maybe_load(processed_resume.skills) or {}
+            research_work = _maybe_load(processed_resume.research_work) or {}
+            achievements = _maybe_load(processed_resume.achievements) or {}
+            education = _maybe_load(processed_resume.education) or {}
+            extracted = _maybe_load(processed_resume.extracted_keywords) or {}
             combined_data["processed_resume"] = {
-                "personal_data": json.loads(processed_resume.personal_data)
-                if processed_resume.personal_data
-                else None,
-                "experiences": json.loads(processed_resume.experiences).get(
-                    "experiences", []
-                )
-                if processed_resume.experiences
-                else None,
-                "projects": json.loads(processed_resume.projects).get("projects", [])
-                if processed_resume.projects
-                else [],
-                "skills": json.loads(processed_resume.skills).get("skills", [])
-                if processed_resume.skills
-                else [],
-                "research_work": json.loads(processed_resume.research_work).get(
-                    "research_work", []
-                )
-                if processed_resume.research_work
-                else [],
-                "achievements": json.loads(processed_resume.achievements).get(
-                    "achievements", []
-                )
-                if processed_resume.achievements
-                else [],
-                "education": json.loads(processed_resume.education).get("education", [])
-                if processed_resume.education
-                else [],
-                "extracted_keywords": json.loads(
-                    processed_resume.extracted_keywords
-                ).get("extracted_keywords", [])
-                if processed_resume.extracted_keywords
-                else [],
-                "processed_at": processed_resume.processed_at.isoformat()
-                if processed_resume.processed_at
-                else None,
+                "personal_data": personal,
+                "experiences": experiences.get("experiences", []) if isinstance(experiences, dict) else experiences,
+                "projects": projects.get("projects", []) if isinstance(projects, dict) else projects,
+                "skills": skills.get("skills", []) if isinstance(skills, dict) else skills,
+                "research_work": research_work.get("research_work", []) if isinstance(research_work, dict) else research_work,
+                "achievements": achievements.get("achievements", []) if isinstance(achievements, dict) else achievements,
+                "education": education.get("education", []) if isinstance(education, dict) else education,
+                "extracted_keywords": extracted.get("extracted_keywords", []) if isinstance(extracted, dict) else extracted,
+                "processed_at": processed_resume.processed_at.isoformat() if processed_resume.processed_at else None,
             }
 
         return combined_data

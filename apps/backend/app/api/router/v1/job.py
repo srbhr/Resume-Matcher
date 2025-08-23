@@ -8,7 +8,9 @@ from fastapi.responses import JSONResponse
 
 from app.core import get_db_session
 from app.services import JobService, JobNotFoundError
+from app.core.error_codes import to_error_payload
 from app.schemas.pydantic.job import JobUploadRequest
+from app.core import settings
 
 job_router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -34,41 +36,53 @@ async def upload_job(
 
     content_type = request.headers.get("content-type")
     if not content_type:
-        raise HTTPException(
+        return JSONResponse(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Content-Type header is missing",
+            content={
+                "request_id": request_id,
+                "error": {"code": "MISSING_CONTENT_TYPE", "message": "Content-Type header is missing"},
+            },
         )
 
     if content_type not in allowed_content_types:
-        raise HTTPException(
+        return JSONResponse(
             status_code=400,
-            detail=f"Invalid Content-Type. Only {', '.join(allowed_content_types)} is/are allowed.",
+            content={
+                "request_id": request_id,
+                "error": {
+                    "code": "UNSUPPORTED_CONTENT_TYPE",
+                    "message": f"Invalid Content-Type. Only {', '.join(allowed_content_types)} is/are allowed.",
+                },
+            },
+        )
+
+    # Approximate size check (re-serialize payload)
+    raw_len = len(payload.model_dump_json().encode('utf-8'))
+    if raw_len > settings.MAX_JSON_BODY_SIZE_KB * 1024:
+        return JSONResponse(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            content={
+                "request_id": request_id,
+                "error": {
+                    "code": "JSON_TOO_LARGE",
+                    "message": f"JSON body exceeds {settings.MAX_JSON_BODY_SIZE_KB}KB limit",
+                },
+            },
         )
 
     try:
         job_service = JobService(db)
         job_ids = await job_service.create_and_store_job(payload.model_dump())
-
-    except AssertionError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
-        )
-
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"{str(e)}",
-        )
-
-    return {
-        "message": "data successfully processed",
-        "job_id": job_ids,
-        "request": {
+        return {
             "request_id": request_id,
-            "payload": payload,
-        },
-    }
+            "data": {"job_id": job_ids},
+        }
+    except (AssertionError, JobNotFoundError) as e:
+        code, body = to_error_payload(e, request_id)
+        return JSONResponse(status_code=code, content=body)
+    except Exception as e:
+        code, body = to_error_payload(e, request_id)
+        return JSONResponse(status_code=code, content=body)
 
 
 @job_router.get(
@@ -97,9 +111,13 @@ async def get_job(
 
     try:
         if not job_id:
-            raise HTTPException(
+            return JSONResponse(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="job_id is required",
+                content={
+                    "request_id": request_id,
+                    "error": {"code": "MISSING_JOB_ID", "message": "job_id is required"},
+                },
+                headers=headers,
             )
 
         job_service = JobService(db)
@@ -121,14 +139,9 @@ async def get_job(
         )
     
     except JobNotFoundError as e:
-        logger.error(str(e))
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(e),
-        )
+        code, body = to_error_payload(e, request_id)
+        return JSONResponse(status_code=code, content=body, headers=headers)
     except Exception as e:
         logger.error(f"Error fetching job: {str(e)} - traceback: {traceback.format_exc()}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error fetching job data",
-        )
+        code, body = to_error_payload(e, request_id)
+        return JSONResponse(status_code=code, content=body, headers=headers)

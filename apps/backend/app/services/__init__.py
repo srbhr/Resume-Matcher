@@ -1,6 +1,7 @@
 from .job_service import JobService
 from .resume_service import ResumeService
 from .score_improvement_service import ScoreImprovementService
+from .matching_service import MatchingService
 from .exceptions import (
     ResumeNotFoundError,
     ResumeParsingError,
@@ -22,4 +23,5 @@ __all__ = [
     "ResumeKeywordExtractionError",
     "JobKeywordExtractionError",
     "ScoreImprovementService",
+    "MatchingService",
 ]

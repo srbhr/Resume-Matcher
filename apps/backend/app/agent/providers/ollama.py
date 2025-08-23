@@ -45,7 +45,7 @@ class OllamaProvider(Provider, OllamaBaseProvider):
         self._client = ollama.Client(host=api_base_url) if api_base_url else ollama.Client()
         self._ensure_model_pulled(model_name)
 
-    def _generate_sync(self, prompt: str, options: Dict[str, Any]) -> str:
+    def _generate_sync(self, prompt: str, options: Dict[str, Any]) -> Dict[str, Any]:
         """
         Generate a response from the model.
         """
@@ -55,16 +55,22 @@ class OllamaProvider(Provider, OllamaBaseProvider):
                 model=self.model,
                 options=options,
             )
-            return response["response"].strip()
+            return {
+                "text": response["response"].strip(),
+                "usage": {
+                    "prompt_tokens": None,
+                    "completion_tokens": None,
+                },
+            }
         except Exception as e:
             logger.error(f"ollama sync error: {e}")
             raise ProviderError(f"Ollama - Error generating response: {e}") from e
 
-    async def __call__(self, prompt: str, **generation_args: Any) -> str:
+    async def __call__(self, prompt: str, **generation_args: Any) -> Dict[str, Any]:
         if generation_args:
             logger.warning(f"OllamaProvider ignoring generation_args {generation_args}")
         myopts = self.opts # Ollama can handle all the options manager.py passes in.
-        return await run_in_threadpool(self._generate_sync, prompt, myopts)
+    return await run_in_threadpool(self._generate_sync, prompt, myopts)
 
 class OllamaEmbeddingProvider(EmbeddingProvider, OllamaBaseProvider):
     def __init__(

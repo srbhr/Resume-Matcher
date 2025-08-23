@@ -14,6 +14,7 @@ from fastapi import (
     status,
     Query,
 )
+from pydantic import ValidationError
 
 from app.core import get_db_session
 from app.services import (
@@ -28,6 +29,8 @@ from app.services import (
     JobKeywordExtractionError,
 )
 from app.schemas.pydantic import ResumeImprovementRequest
+from app.core.error_codes import to_error_payload
+from app.core import settings
 
 resume_router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -41,6 +44,7 @@ async def upload_resume(
     request: Request,
     file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db_session),
+    defer: bool = Query(False, description="Defer structured extraction (faster response, background processing)"),
 ):
     """
     Accepts a PDF or DOCX file, converts it to HTML/Markdown, and stores it in the database.
@@ -56,16 +60,41 @@ async def upload_resume(
     ]
 
     if file.content_type not in allowed_content_types:
-        raise HTTPException(
+        # unify envelope (400)
+        return JSONResponse(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid file type. Only PDF and DOCX files are allowed.",
+            content={
+                "request_id": request_id,
+                "error": {
+                    "code": "UNSUPPORTED_FILE_TYPE",
+                    "message": "Invalid file type. Only PDF and DOCX files are allowed.",
+                },
+            },
         )
 
     file_bytes = await file.read()
+    max_bytes = settings.MAX_UPLOAD_SIZE_MB * 1024 * 1024
+    if len(file_bytes) > max_bytes:
+        return JSONResponse(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            content={
+                "request_id": request_id,
+                "error": {
+                    "code": "FILE_TOO_LARGE",
+                    "message": f"File exceeds max size of {settings.MAX_UPLOAD_SIZE_MB}MB",
+                },
+            },
+        )
     if not file_bytes:
-        raise HTTPException(
+        return JSONResponse(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Empty file. Please upload a valid file.",
+            content={
+                "request_id": request_id,
+                "error": {
+                    "code": "EMPTY_FILE",
+                    "message": "Empty file. Please upload a valid file.",
+                },
+            },
         )
 
     try:
@@ -75,27 +104,18 @@ async def upload_resume(
             file_type=file.content_type,
             filename=file.filename,
             content_type="md",
+            defer_structured=defer,
         )
-    except ResumeValidationError as e:
-        logger.warning(f"Resume validation failed: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=str(e),
-        )
+        return {
+            "request_id": request_id,
+            "data": {
+                "resume_id": resume_id,
+                "processing": "deferred" if defer else "complete",
+            },
+        }
     except Exception as e:
-        logger.error(
-            f"Error processing file: {str(e)} - traceback: {traceback.format_exc()}"
-        )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error processing file: {str(e)}",
-        )
-
-    return {
-        "message": f"File {file.filename} successfully processed as MD and stored in the DB",
-        "request_id": request_id,
-        "resume_id": resume_id,
-    }
+        code, body = to_error_payload(e, request_id)
+        return JSONResponse(status_code=code, content=body)
 
 
 @resume_router.post(
@@ -104,11 +124,10 @@ async def upload_resume(
 )
 async def score_and_improve(
     request: Request,
-    payload: ResumeImprovementRequest,
+    payload: ResumeImprovementRequest,  # rely on pydantic model but catch ValidationError below
     db: AsyncSession = Depends(get_db_session),
-    stream: bool = Query(
-        False, description="Enable streaming response using Server-Sent Events"
-    ),
+    stream: bool = Query(False, description="Enable streaming response using Server-Sent Events"),
+    use_llm: bool = Query(True, description="If false, only deterministic baseline improvement is applied (no LLM call)"),
 ):
     """
     Scores and improves a resume against a job description.
@@ -147,6 +166,7 @@ async def score_and_improve(
             improvements = await score_improvement_service.run(
                 resume_id=resume_id,
                 job_id=job_id,
+                use_llm=use_llm,
             )
             return JSONResponse(
                 content={
@@ -155,48 +175,23 @@ async def score_and_improve(
                 },
                 headers=headers,
             )
-    except ResumeNotFoundError as e:
-        logger.error(str(e))
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e),
-        )
-    except JobNotFoundError as e:
-        logger.error(str(e))
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e),
-        )
-    except ResumeParsingError as e:
-        logger.error(str(e))
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e),
-        )
-    except JobParsingError as e:
-        logger.error(str(e))
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e),
-        )
-    except ResumeKeywordExtractionError as e:
-        logger.warning(str(e))
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=str(e),
-        )
-    except JobKeywordExtractionError as e:
-        logger.warning(str(e))
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=str(e),
-        )
+    except ValidationError as ve:
+        # Convert pydantic validation into unified 422 envelope
+        code = status.HTTP_422_UNPROCESSABLE_ENTITY
+        payload_err = {
+            "request_id": request_id,
+            "error": {
+                "code": "VALIDATION_ERROR",
+                "message": "Invalid request body",
+                "detail": ve.errors(),
+            },
+        }
+        return JSONResponse(status_code=code, content=payload_err, headers=headers)
     except Exception as e:
-        logger.error(f"Error: {str(e)} - traceback: {traceback.format_exc()}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="sorry, something went wrong!",
-        )
+        code, payload = to_error_payload(e, request_id)
+        level = logger.warning if code == 422 else logger.error
+        level(str(e))
+        return JSONResponse(status_code=code, content=payload, headers=headers)
 
 
 @resume_router.get(
@@ -225,9 +220,13 @@ async def get_resume(
 
     try:
         if not resume_id:
-            raise HTTPException(
+            return JSONResponse(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="resume_id is required",
+                content={
+                    "request_id": request_id,
+                    "error": {"code": "MISSING_RESUME_ID", "message": "resume_id is required"},
+                },
+                headers=headers,
             )
 
         resume_service = ResumeService(db)
@@ -248,15 +247,6 @@ async def get_resume(
             headers=headers,
         )
     
-    except ResumeNotFoundError as e:
-        logger.error(str(e))
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(e),
-        )
     except Exception as e:
-        logger.error(f"Error fetching resume: {str(e)} - traceback: {traceback.format_exc()}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error fetching resume data",
-        )
+        code, body = to_error_payload(e, request_id)
+        return JSONResponse(status_code=code, content=body, headers=headers)

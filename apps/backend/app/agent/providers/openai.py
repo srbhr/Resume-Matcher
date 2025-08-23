@@ -25,7 +25,7 @@ class OpenAIProvider(Provider):
         self.opts = opts
         self.instructions = ""
 
-    def _generate_sync(self, prompt: str, options: Dict[str, Any]) -> str:
+    def _generate_sync(self, prompt: str, options: Dict[str, Any]) -> Dict[str, Any]:
         try:
             response = self._client.responses.create(
                 model=self.model,
@@ -33,20 +33,32 @@ class OpenAIProvider(Provider):
                 input=prompt,
                 **options,
             )
-            return response.output_text
+            # OpenAI responses API aggregates usage at top-level
+            usage = getattr(response, "usage", None)
+            if usage:
+                prompt_tokens = getattr(usage, "input_tokens", None)
+                completion_tokens = getattr(usage, "output_tokens", None)
+            else:
+                prompt_tokens = completion_tokens = None
+            return {
+                "text": response.output_text,
+                "usage": {
+                    "prompt_tokens": prompt_tokens,
+                    "completion_tokens": completion_tokens,
+                },
+            }
         except Exception as e:
             raise ProviderError(f"OpenAI - error generating response: {e}") from e
 
-    async def __call__(self, prompt: str, **generation_args: Any) -> str:
+    async def __call__(self, prompt: str, **generation_args: Any) -> Dict[str, Any]:
         if generation_args:
             logger.warning(f"OpenAIProvider - generation_args not used {generation_args}")
         myopts = {
             "temperature": self.opts.get("temperature", 0),
             "top_p": self.opts.get("top_p", 0.9),
-# top_k not currently supported by any OpenAI model - https://community.openai.com/t/does-openai-have-a-top-k-parameter/612410
-#            "top_k": generation_args.get("top_k", 40),
-# neither max_tokens
-#            "max_tokens": generation_args.get("max_length", 20000),
+            # top_k not currently supported by OpenAI API
+            # "top_k": generation_args.get("top_k", 40),
+            # "max_tokens": generation_args.get("max_length", 20000),
         }
         return await run_in_threadpool(self._generate_sync, prompt, myopts)
 

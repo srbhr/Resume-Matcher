@@ -1,0 +1,24 @@
+name: Render Deploy (Backend)
+
+on:
+  push:
+    branches:
+      - security-hardening-neon
+    paths-ignore:
+      - '**/*.md'
+      - 'assets/**'
+
+jobs:
+  trigger-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render Deploy Hook
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -z "$RENDER_DEPLOY_HOOK_URL" ]; then
+            echo "RENDER_DEPLOY_HOOK_URL secret not set" >&2
+            exit 1
+          fi
+          curl -fsSL -X POST "$RENDER_DEPLOY_HOOK_URL" -o /dev/null
+          echo "Deploy triggered via Render Deploy Hook"

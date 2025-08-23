@@ -135,16 +135,27 @@ We include a `Procfile` that Railway will detect:
 web: uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}
 ```
 
-Alternatively, use a repo-root `railway.toml` (preferred) to run migrations before start:
+Alternatively, use a repo-root `railway.toml` (preferred) to run migrations before start. We rely on Nixpacks with Python-only provider and dependency resolution via `nixpacks.toml`:
 
 ```
 [build]
 builder = "nixpacks"
-buildCommand = "cd apps/backend && pip install -r requirements.txt"
+buildCommand = ""  # let Nixpacks handle Python automatically
 
 [deploy]
 preDeploy = "cd apps/backend && alembic upgrade head"
 startCommand = "cd apps/backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+```
+
+Ensure these two files exist at the repository root to force a Python-only build and install backend deps:
+
+```
+# .nixpacks.toml
+providers = ["python"]
+
+# nixpacks.toml
+[python]
+requirements = ["apps/backend/requirements.txt"]
 ```
 
 ### 3) Deploy from GitHub
@@ -156,7 +167,7 @@ startCommand = "cd apps/backend && uvicorn app.main:app --host 0.0.0.0 --port $P
 
 ### 4) Health check & CORS
 
-- Health: `GET /healthz` returns `{ "status": "ok" }` and lightly checks DB.
+- Health: `GET /healthz` returns `{ "status": "ok" }` and lightly checks DB (also returns database status).
 	Legacy: `GET /api/v1/health/ping` returns `{ "message": "pong" }`.
 - CORS: verify your Vercel domain is present in `ALLOWED_ORIGINS`.
 
@@ -168,4 +179,5 @@ startCommand = "cd apps/backend && uvicorn app.main:app --host 0.0.0.0 --port $P
 ### 6) Notes
 
 - Background cleanup loop runs under Railway. If you later move to serverless, set `DISABLE_BACKGROUND_TASKS=true` and schedule a cron call to a cleanup endpoint.
+- Nixpacks logs should show only Python detection/steps. If `node`/`npm` appears, verify both `.nixpacks.toml` and `nixpacks.toml` are present at the repo root and that the Railway service source is the repo root.
 - Keep DB pools small to respect Neon connection limits.
