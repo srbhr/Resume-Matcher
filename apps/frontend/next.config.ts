@@ -1,5 +1,9 @@
 import type { NextConfig } from 'next';
 import path from 'path';
+import createNextIntlPlugin from 'next-intl/plugin';
+
+// Register next-intl config so the runtime can resolve it in lambdas/edge
+const withNextIntl = createNextIntlPlugin('./i18n.ts');
 
 const nextConfig: NextConfig = {
 	experimental: {
@@ -25,5 +29,5 @@ const nextConfig: NextConfig = {
 	},
 };
 
-export default nextConfig;
+export default withNextIntl(nextConfig);
 
