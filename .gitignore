@@ -97,3 +97,8 @@ logs/
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Prevent committing local DB/WAL and patch bundles
+app.db*
+apps/backend/app.db*
+patches/*.bundle
