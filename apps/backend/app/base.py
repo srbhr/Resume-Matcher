@@ -74,10 +74,12 @@ async def lifespan(app: FastAPI):
             logger.error(f"Database check FAILED during startup: {e}")
     stop_event = asyncio.Event()
 
-    async def _cache_cleanup_loop():
-        interval = settings.LLM_CACHE_CLEAN_INTERVAL_SECONDS
-        max_batch = settings.LLM_CACHE_MAX_DELETE_BATCH
-    while not stop_event.is_set():
+    async def _cache_cleanup_loop() -> None:
+        """Periodically delete expired LLM cache entries until stop_event is set."""
+        interval = max(1, int(getattr(settings, "LLM_CACHE_CLEAN_INTERVAL_SECONDS", 600) or 600))
+        max_batch = max(1, int(getattr(settings, "LLM_CACHE_MAX_DELETE_BATCH", 500) or 500))
+
+        while not stop_event.is_set():
             try:
                 async with AsyncSessionLocal() as session:  # type: ignore
                     dialect = async_engine.dialect.name
@@ -132,13 +134,16 @@ async def lifespan(app: FastAPI):
             except asyncio.CancelledError:  # pragma: no cover
                 break
 
-    task = asyncio.create_task(_cache_cleanup_loop())
+    task = None
+    if not getattr(settings, "DISABLE_BACKGROUND_TASKS", False):
+        task = asyncio.create_task(_cache_cleanup_loop())
     yield
     stop_event.set()
     # Do not cancel; let the loop observe the event and exit cleanly to avoid
     # CancelledError bubbling through lifespan shutdown on some platforms.
-    with contextlib.suppress(Exception):  # pragma: no cover
-        await task
+    if task is not None:
+        with contextlib.suppress(Exception):  # pragma: no cover
+            await task
     # Under pytest we avoid disposing the global engine to prevent asyncpg tasks
     # scheduling on a closed loop; the test process teardown will clean resources.
     import os
