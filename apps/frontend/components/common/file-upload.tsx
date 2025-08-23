@@ -14,12 +14,10 @@ import {
 // For this refinement, direct property access after casting to FileMetadata is used.
 import { formatBytes, useFileUpload, FileMetadata } from '@/hooks/use-file-upload';
 import { Button } from '@/components/ui/button';
+import { getResumeIdFromUpload } from '@/lib/api/envelope';
+import { usePathname } from 'next/navigation';
 
-// Narrow type for backend upload response envelope
-type UploadResponseEnvelope = {
-	data?: { resume_id?: unknown }
-	resume_id?: unknown // legacy fallback
-}
+// ...
 
 const acceptedFileTypes = [
 	'application/pdf', // .pdf
@@ -35,6 +33,9 @@ export default function FileUpload() {
 	const tUpload = useTranslations('Upload');
 	const tErr = useTranslations('Errors');
 	const maxSize = 2 * 1024 * 1024; // 2MB
+	const pathname = usePathname();
+	const parts = pathname.split('/').filter(Boolean);
+	const locale = parts[0] || 'en';
 
 	const [uploadFeedback, setUploadFeedback] = useState<{
 		type: 'success' | 'error';
@@ -58,14 +59,10 @@ export default function FileUpload() {
 		accept: acceptString,
 		multiple: false,
 		uploadUrl: API_RESUME_UPLOAD_URL,
-		onUploadSuccess: (uploadedFile, response) => {
+			onUploadSuccess: (uploadedFile, response) => {
 			console.log('Upload successful:', uploadedFile, response);
-			// uploadedFile.file is FileMetadata here, as transformed by the hook
-			// Backend responds with an envelope: { request_id, data: { resume_id, ... } }
-			// Support both nested and legacy top-level shapes without any-casts.
-			const env = response as UploadResponseEnvelope;
-			const maybeId = env.data?.resume_id ?? env.resume_id;
-			const resumeId = typeof maybeId === 'string' ? maybeId : undefined;
+			// Resolve resume_id via shared helper (supports envelope and legacy)
+			const resumeId = getResumeIdFromUpload(response);
 
 			if (!resumeId) {
 				console.error('Missing resume_id in upload response', response)
@@ -83,8 +80,8 @@ export default function FileUpload() {
 			clearErrors();
 			const encodedResumeId = encodeURIComponent(resumeId);
 			try { localStorage.setItem('last_resume_id', resumeId); } catch {}
-			// Redirect to dynamic detail route /resume/<id>
-			window.location.href = `/resume/${encodedResumeId}`;
+			// Redirect to localized dynamic route /:locale/resume/<id>
+			window.location.href = `/${locale}/resume/${encodedResumeId}`;
 		},
 			onUploadError: (file, errorMsg) => {
 			console.error('Upload error:', file, errorMsg);
