@@ -11,7 +11,14 @@ const intlMiddleware = createIntlMiddleware({
 });
 
 // Security headers (CSP hardened: no unsafe-inline/eval; support hashed/nonce scripts via runtime)
-// A random nonce will be injected per response for inline scripts if ever needed.
+// Generate nonce using Web Crypto only (Edge runtime compatible)
+function generateNonce(): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  let out = '';
+  for (let i = 0; i < bytes.length; i++) out += bytes[i].toString(16).padStart(2, '0');
+  return out;
+}
+
 function buildCsp(nonce: string) {
   const apiOrigin = process.env.NEXT_PUBLIC_API_BASE || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
   const connectExtra = [apiOrigin].filter(Boolean);
@@ -47,8 +54,8 @@ export function middleware(request: NextRequest) {
   // Run intl middleware first
   const response = intlMiddleware(request);
 
-  // Generate a nonce per response (8 bytes base64)
-  const nonce = Buffer.from(crypto.getRandomValues(new Uint8Array(8))).toString('base64');
+  // Generate a nonce per response (hex)
+  const nonce = generateNonce();
 
   // Apply security headers only to HTML/document requests
   const pathname = request.nextUrl.pathname;
