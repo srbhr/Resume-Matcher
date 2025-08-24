@@ -6,6 +6,10 @@ import Link from 'next/link';
 import {useTranslations} from 'next-intl';
 import { usePathname } from 'next/navigation';
 
+// Ensure this page always reflects current auth/session. Avoid static optimization.
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default function ResumeUploadPage() {
   const t = useTranslations('ResumeUploadPage');
   const pathname = usePathname();

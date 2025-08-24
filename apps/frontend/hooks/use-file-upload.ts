@@ -204,10 +204,17 @@ export const useFileUpload = (
       const response = await fetch(uploadUrl, {
         method: "POST",
         body: formData,
-      })
+        headers: {
+          // Let the browser set the multipart boundary automatically
+        },
+        // Ensure cookies (Clerk session) are sent to our same-origin BFF
+        credentials: 'include',
+        // Avoid any caching for uploads
+        cache: 'no-store'
+      });
 
-      let responseData: Record<string, unknown> = {}; // Initialize for broader scope
       const contentType = response.headers.get("content-type");
+      let responseData: Record<string, unknown> = {};
 
       if (!response.ok) {
         if (response.status === 401) {

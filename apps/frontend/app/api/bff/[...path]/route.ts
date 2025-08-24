@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 
+// This route depends on per-request auth cookies. Disable static optimization/caching.
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const fetchCache = 'force-no-store';
+
 // Whitelist the backend origin to avoid open proxy
 const defaultBackend = process.env.NODE_ENV === 'development'
   ? 'http://localhost:8000'
