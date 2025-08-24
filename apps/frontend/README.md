@@ -1,3 +1,12 @@
+## Auth tokens for backend (BFF)
+
+If your backend verifies Clerk JWTs, ensure the BFF requests a verifiable token by setting a Clerk JWT template:
+
+- Set `CLERK_JWT_TEMPLATE` (e.g., `backend`) in your environment.
+- Configure the matching JWT Template in Clerk Dashboard to include claims needed by your API.
+
+The BFF uses `auth().getToken({ template: process.env.CLERK_JWT_TEMPLATE || 'default' })`.
+
 # UI
 
 ## Getting Started

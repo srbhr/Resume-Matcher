@@ -33,7 +33,10 @@ async function proxy(req: NextRequest, params: { path: string[] } | undefined) {
   if (!joined.startsWith('api/v1/')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   const a = await auth();
-  const token = await a.getToken();
+  // Prefer a Clerk JWT Template for backend verification. Configure CLERK_JWT_TEMPLATE in env (e.g., "backend").
+  // Fall back to 'default' template if not provided.
+  const template = process.env.CLERK_JWT_TEMPLATE || 'default';
+  const token = await a.getToken({ template }).catch(() => null);
   const url = `${BACKEND_BASE}/${joined}` + (req.nextUrl.search || '');
   // If this is a protected POST endpoint and there is no token, return 401 directly
   const isProtectedPost = req.method !== 'GET' && (
@@ -44,7 +47,7 @@ async function proxy(req: NextRequest, params: { path: string[] } | undefined) {
     joined.startsWith('api/v1/auth')
   );
   if (isProtectedPost && !token) {
-    return NextResponse.json({ detail: 'Missing bearer token' }, { status: 401 });
+  return NextResponse.json({ detail: 'Missing bearer token' }, { status: 401 });
   }
 
   const headers = new Headers(req.headers);
