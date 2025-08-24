@@ -1,6 +1,7 @@
 import createIntlMiddleware from 'next-intl/middleware';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { clerkMiddleware } from '@clerk/nextjs/server';
 import { locales, defaultLocale } from './i18n';
 
 // Base i18n middleware instance
@@ -57,7 +58,7 @@ const permissionsPolicy: Record<string,string> = {
   'geolocation': '()'
 };
 
-export function middleware(request: NextRequest) {
+export default clerkMiddleware((auth, request) => {
   const pathname = request.nextUrl.pathname;
   // Skip i18n rewriting for Clerk auth routes
   const isAuthRoute = pathname.startsWith('/sign-in') || pathname.startsWith('/sign-up');
@@ -78,6 +79,13 @@ export function middleware(request: NextRequest) {
     response.headers.set('X-Nonce', nonce); // expose for potential inline script components (can be removed later)
   }
   return response;
-}
+});
 
-export const config = { matcher: ['/((?!_next|api|.*\\..*).*)'] };
+export const config = {
+  matcher: [
+    // Skip Next.js internals and static files, unless found in search params
+    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
+    // Always run for API routes (needed for BFF that calls auth())
+    '/(api|trpc)(.*)'
+  ]
+};
