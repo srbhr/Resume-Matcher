@@ -35,6 +35,17 @@ async function proxy(req: NextRequest, params: { path: string[] } | undefined) {
   const a = await auth();
   const token = await a.getToken();
   const url = `${BACKEND_BASE}/${joined}` + (req.nextUrl.search || '');
+  // If this is a protected POST endpoint and there is no token, return 401 directly
+  const isProtectedPost = req.method !== 'GET' && (
+    joined.startsWith('api/v1/resumes/upload') ||
+    joined.startsWith('api/v1/resumes/improve') ||
+    joined.startsWith('api/v1/jobs/upload') ||
+    joined.startsWith('api/v1/match') ||
+    joined.startsWith('api/v1/auth')
+  );
+  if (isProtectedPost && !token) {
+    return NextResponse.json({ detail: 'Missing bearer token' }, { status: 401 });
+  }
 
   const headers = new Headers(req.headers);
   headers.delete('host');
