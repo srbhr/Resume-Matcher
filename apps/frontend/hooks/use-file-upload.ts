@@ -201,7 +201,7 @@ export const useFileUpload = (
     setState(prev => ({ ...prev, isUploadingGlobal: true, errors: [] }))
 
     try {
-      const response = await fetch(uploadUrl, {
+  const response = await fetch(uploadUrl, {
         method: "POST",
         body: formData,
         headers: {
@@ -263,7 +263,10 @@ export const useFileUpload = (
       })
 
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : `Error uploading ${ (fileToUpload.file as File).name}.`;
+      const isNetwork = error instanceof TypeError && /fetch|network/i.test(error.message || '');
+      const errorMessage = isNetwork
+        ? `Failed to connect to the server. Please check your connection and try again.`
+        : (error instanceof Error ? error.message : `Error uploading ${(fileToUpload.file as File).name}.`);
       const fileWithError: FileWithPreview = {
         ...fileToUpload,
         file: { // This is FileMetadata

@@ -5,6 +5,7 @@ import { auth } from '@clerk/nextjs/server';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 export const fetchCache = 'force-no-store';
+export const runtime = 'nodejs';
 
 // Whitelist the backend origin to avoid open proxy
 const defaultBackend = process.env.NODE_ENV === 'development'
@@ -59,14 +60,18 @@ async function proxy(req: NextRequest, params: { path: string[] } | undefined) {
   headers.delete('host');
   headers.delete('x-forwarded-host');
   headers.delete('x-forwarded-proto');
+  headers.delete('content-length'); // Let node-fetch compute length for streamed body
   headers.set('accept', 'application/json');
   if (token) headers.set('authorization', `Bearer ${token}`);
 
-  const init: RequestInit = {
+  const body = req.method === 'GET' || req.method === 'HEAD' ? undefined : (req.body as any);
+  const init: RequestInit & { duplex?: 'half' } = {
     method: req.method,
     headers,
-    body: req.method === 'GET' || req.method === 'HEAD' ? undefined : await req.arrayBuffer(),
-    // Do not pass through the Next.js internal duplex/body locking; arrayBuffer above is fine
+    body,
+    // Required by Node 18+ when streaming a request body
+    ...(body ? { duplex: 'half' as const } : {}),
+    cache: 'no-store',
     redirect: 'manual',
   };
 
