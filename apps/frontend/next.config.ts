@@ -14,7 +14,11 @@ const nextConfig: NextConfig = {
 		return config;
 	},
 	async rewrites() {
-		const backend = process.env.NEXT_PUBLIC_API_BASE || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+		// Default to Render backend URL in production if no env is set; keep localhost in dev
+		const defaultBackend = process.env.NODE_ENV === 'development'
+			? 'http://localhost:8000'
+			: 'https://resume-matcher-backend-j06k.onrender.com';
+		const backend = process.env.NEXT_PUBLIC_API_BASE || process.env.NEXT_PUBLIC_API_URL || defaultBackend;
 		return [
 			{
 				source: '/api_be/:path*',

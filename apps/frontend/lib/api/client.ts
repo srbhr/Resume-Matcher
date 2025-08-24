@@ -14,8 +14,13 @@ export async function apiFetch<P extends keyof paths, M extends keyof paths[P] &
   params: ApiFetchParams = {}
 ): Promise<R> {
   const { timeoutMs = 30000, query, ...init } = params;
-  const base = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8000';
-  let url = base + path;
+  // Prefer proxy path in app (rewritten to backend) when no explicit base is set
+  const isRelativeApi = !process.env.NEXT_PUBLIC_API_BASE && !String(path).startsWith('/api/v1/') ? false : true;
+  const backendDefault = process.env.NODE_ENV === 'development' ? 'http://localhost:8000' : 'https://resume-matcher-backend-j06k.onrender.com';
+  const base = process.env.NEXT_PUBLIC_API_BASE || backendDefault;
+  let url = (process.env.NEXT_PUBLIC_API_BASE || process.env.NEXT_PUBLIC_API_URL)
+    ? base + path
+    : (String(path).startsWith('/api/v1/') ? '/api_be' + path.replace(/^\/api\/v1\//, '/api/v1/') : base + path);
   if (query) {
     const qs = Object.entries(query)
       .filter(([, v]) => v !== undefined)
