@@ -25,9 +25,8 @@ const acceptedFileTypes = [
 ];
 
 const acceptString = acceptedFileTypes.join(',');
-// Resolve API base consistently (prefer NEXT_PUBLIC_API_BASE, fallback to legacy NEXT_PUBLIC_API_URL, then localhost)
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-const API_RESUME_UPLOAD_URL = `${API_BASE}/api/v1/resumes/upload`;
+// Route uploads through the BFF so Authorization is attached from Clerk session
+const API_RESUME_UPLOAD_URL = `/api/bff/api/v1/resumes/upload`;
 
 export default function FileUpload() {
 	const tUpload = useTranslations('Upload');
