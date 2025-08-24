@@ -2,6 +2,7 @@ import asyncio
 import gc
 import json
 import logging
+import re
 from typing import AsyncGenerator, Dict, Tuple
 
 import markdown
@@ -128,7 +129,12 @@ class ScoreImprovementService:
                 extracted_resume_keywords=extracted_resume_keywords,
                 current_cosine_similarity=best_score,
             )
-            improved = await self.md_agent_manager.run(prompt)
+            improved_obj = await self.md_agent_manager.run(prompt)
+            # MDWrapper returns {"markdown": "```md\n...\n```"}; extract plain text for embedding/scoring
+            if isinstance(improved_obj, dict) and "markdown" in improved_obj:
+                improved = self._unwrap_fenced_markdown(str(improved_obj["markdown"]))
+            else:
+                improved = self._unwrap_fenced_markdown(str(improved_obj))
             emb = await self.embedding_manager.embed(text=improved)
             score = self.calculate_cosine_similarity(emb, extracted_job_keywords_embedding)
             if score > best_score:
@@ -191,6 +197,16 @@ class ScoreImprovementService:
         else:
             vals = []
         return [str(v) for v in vals if isinstance(v, str)]
+
+    @staticmethod
+    def _unwrap_fenced_markdown(md_text: str) -> str:
+        # Return inner content from ```md ... ``` / ```markdown ... ``` / ``` ... ```
+        fence_pattern = re.compile(r"```(?:md|markdown)?\s*([\s\S]*?)\s*```", re.IGNORECASE)
+        m = fence_pattern.search(md_text)
+        if m:
+            return m.group(1).strip()
+        return md_text
+
     @staticmethod
     def _tokenize_lower(text: str) -> set[str]:
         return {token for token in [w.strip(".,;:()[]{}<>!?").lower() for w in text.split()] if token}
@@ -242,22 +258,34 @@ class ScoreImprovementService:
             resume_embedding, extracted_job_keywords_embedding = await asyncio.gather(
                 resume_embedding_task, job_kw_embedding_task
             )
-            original_score = self.calculate_cosine_similarity(extracted_job_keywords_embedding, resume_embedding)
+            original_score = self.calculate_cosine_similarity(
+                extracted_job_keywords_embedding, resume_embedding
+            )
         except ProviderError as e:
             if require_llm:
                 # Caller demands LLM/embeddings; propagate error
                 raise
-            logger.warning(f"Embedding provider unavailable; falling back to coverage scoring. reason={e}")
+            logger.warning(
+                f"Embedding provider unavailable; falling back to coverage scoring. reason={e}"
+            )
             embeddings_ok = False
             # Coverage-based deterministic score in [0,1]
-            original_score = self._coverage_score(resume_markdown=resume.content, extracted_job_keywords=extracted_job_keywords)
+            original_score = self._coverage_score(
+                resume_markdown=resume.content, extracted_job_keywords=extracted_job_keywords
+            )
 
         # Baseline deterministic improvement
-        baseline = self._baseline_improve(resume_markdown=resume.content, extracted_job_keywords=extracted_job_keywords)
+        baseline = self._baseline_improve(
+            resume_markdown=resume.content, extracted_job_keywords=extracted_job_keywords
+        )
         if embeddings_ok:
             if baseline["added_section"]:
-                baseline_embedding = await self.embedding_manager.embed(baseline["updated_resume"])  # type: ignore[arg-type]
-                raw_baseline_score = self.calculate_cosine_similarity(extracted_job_keywords_embedding, baseline_embedding)
+                baseline_embedding = await self.embedding_manager.embed(
+                    baseline["updated_resume"]
+                )  # type: ignore[arg-type]
+                raw_baseline_score = self.calculate_cosine_similarity(
+                    extracted_job_keywords_embedding, baseline_embedding
+                )
                 # Guarantee non-decrease: choose max
                 baseline_score = max(original_score, raw_baseline_score)
             else:
@@ -265,7 +293,9 @@ class ScoreImprovementService:
         else:
             # Recompute coverage on updated text; still guarantee non-decrease
             if baseline["added_section"]:
-                raw_baseline_score = self._coverage_score(baseline["updated_resume"], extracted_job_keywords)  # type: ignore[arg-type]
+                raw_baseline_score = self._coverage_score(  # type: ignore[arg-type]
+                    baseline["updated_resume"], extracted_job_keywords
+                )
                 baseline_score = max(original_score, raw_baseline_score)
             else:
                 baseline_score = original_score
@@ -327,7 +357,9 @@ class ScoreImprovementService:
             resume_embedding = await self.embedding_manager.embed(text=resume.content)
             extracted_job_keywords_embedding = await self.embedding_manager.embed(text=extracted_job_keywords)
             yield f"data: {json.dumps({'status': 'scoring', 'message': 'Calculating compatibility score...'})}\n\n"
-            cosine_similarity_score = self.calculate_cosine_similarity(extracted_job_keywords_embedding, resume_embedding)
+            cosine_similarity_score = self.calculate_cosine_similarity(
+                extracted_job_keywords_embedding, resume_embedding
+            )
             yield f"data: {json.dumps({'status': 'scored', 'score': cosine_similarity_score})}\n\n"
             yield f"data: {json.dumps({'status': 'improving', 'message': 'Generating improvement suggestions...'})}\n\n"
             improved_text, improved_score = await self.improve_score_with_llm(
