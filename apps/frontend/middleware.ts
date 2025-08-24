@@ -68,8 +68,8 @@ export default clerkMiddleware((auth, request) => {
   // Generate a nonce per response (hex)
   const nonce = generateNonce();
 
-  // Apply security headers only to HTML/document requests
-  if (!pathname.startsWith('/_next')) {
+  // Apply security headers only to HTML/document requests and not on auth routes
+  if (!isAuthRoute && !pathname.startsWith('/_next')) {
     response.headers.set('Content-Security-Policy', buildCsp(nonce));
     response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
     response.headers.set('X-Frame-Options', 'SAMEORIGIN');
