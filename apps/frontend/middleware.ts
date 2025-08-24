@@ -20,8 +20,12 @@ function generateNonce(): string {
 }
 
 function buildCsp(nonce: string) {
-  const apiOrigin = process.env.NEXT_PUBLIC_API_BASE || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-  const connectExtra = [apiOrigin].filter(Boolean);
+  const defaultBackend = process.env.NODE_ENV === 'development'
+    ? 'http://localhost:8000'
+    : 'https://resume-matcher-backend-j06k.onrender.com';
+  const apiOrigin = process.env.NEXT_PUBLIC_API_BASE || process.env.NEXT_PUBLIC_API_URL || defaultBackend;
+  // Always include the Render fallback to be safe if envs are missing
+  const connectExtra = Array.from(new Set([apiOrigin, 'https://resume-matcher-backend-j06k.onrender.com'])).filter(Boolean);
   // Allow Next.js internal websocket endpoints for dev (/_next/) with wss: fallback
   const connectSrc = ["'self'", 'ws:', 'wss:', ...connectExtra];
   return [

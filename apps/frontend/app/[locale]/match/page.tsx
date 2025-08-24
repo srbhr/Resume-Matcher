@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { parseKeywords, diffKeywords, computeAtsScore } from '@/lib/keywords';
-import { getResume, improveResume as apiImproveResume, matchResumeJob } from '@/lib/api/client';
+import { getResume, improveResume as apiImproveResume, matchResumeJob, uploadJobJson, getJobCombined } from '@/lib/api/client';
 import { sanitizeHtml } from '@/lib/sanitize';
 import type { ResumeDataResp, JobDataResp, ImprovementResult } from '@/lib/types/domain';
 
@@ -16,7 +16,7 @@ export default function MatchAndImprovePage({ params }: PageParams) {
   const [locale, setLocale] = useState<string>('en');
   useEffect(() => { (async () => { const p = await params; if (p?.locale) setLocale(p.locale); })(); }, [params]);
   const t = useTranslations('MatchPage');
-  const api = process.env.NEXT_PUBLIC_API_BASE || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'; // still used for direct job fetch after upload (processed data)
+  // All calls go through proxy-aware client wrappers
   const [resumeIdInput, setResumeIdInput] = useState('');
   const [jobDescription, setJobDescription] = useState('');
   const [improving, setImproving] = useState(false);
@@ -37,18 +37,15 @@ export default function MatchAndImprovePage({ params }: PageParams) {
     setImproving(true);
     try {
       // Upload job description
-      const jobUploadRes = await fetch(`${api}/api/v1/jobs/upload`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ job_descriptions: [jobDescription], resume_id: resumeIdInput }) });
-      if (!jobUploadRes.ok) throw new Error(`Job upload failed (${jobUploadRes.status})`);
-  const uploadJson = await jobUploadRes.json() as { data?: { job_id: string | string[] } };
+  const uploadJson = await uploadJobJson(jobDescription, resumeIdInput);
   const jid = uploadJson?.data?.job_id;
   const jobId: string = Array.isArray(jid) ? jid[0] : (jid as string);
   if (!jobId) throw new Error('No job_id returned');
-      if (!jobId) throw new Error('No job_id returned');
 
       // Resume, Job, Match parallel holen
       const [resumeRes, jobRes, matchRes] = await Promise.all([
         getResume(resumeIdInput) as Promise<{ data?: ResumeDataResp }>,
-        fetch(`${api}/api/v1/jobs?job_id=${jobId}`).then(r => r.ok ? r.json() as Promise<{ data?: JobDataResp }> : null),
+  getJobCombined(jobId) as unknown as Promise<{ data?: JobDataResp }>,
         matchResumeJob({ resume_id: resumeIdInput, job_id: jobId })
       ]);
 
@@ -79,7 +76,7 @@ export default function MatchAndImprovePage({ params }: PageParams) {
   const improveJson = await apiImproveResume({ resume_id: resumeIdInput, job_id: jobId, require_llm: true }) as unknown as { data?: ImprovementResult };
       if (improveJson?.data) setResult(improveJson.data);
     } catch (e) { setError(e instanceof Error ? e.message : String(e)); } finally { setImproving(false); }
-  }, [api, resumeIdInput, jobDescription, t]);
+  }, [resumeIdInput, jobDescription, t]);
 
   const keywordDiff = useMemo(() => diffKeywords(resumeKeywords, jobKeywords), [resumeKeywords, jobKeywords]);
   const atsScore = useMemo(() => { if (!result) return null; return computeAtsScore(keywordDiff, jobKeywords, result.resume_preview ? 100 : 50); }, [result, jobKeywords, keywordDiff]);

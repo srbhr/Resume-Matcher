@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { parseKeywords, diffKeywords, computeAtsScore } from '@/lib/keywords';
 import { sanitizeHtml } from '@/lib/sanitize';
-import { getResume, improveResume as apiImproveResume } from '@/lib/api/client';
+import { getResume, improveResume as apiImproveResume, uploadJobJson } from '@/lib/api/client';
 import type { ResumeDataResp as ResumeData, ImprovementResult, JobDataResp } from '@/lib/types/domain';
 
 interface PageParams { params?: Promise<{ locale?: string; resume_id?: string }> }
@@ -34,7 +34,7 @@ export default function ResumeDetailPage({ params }: PageParams) {
   const [improveResult, setImproveResult] = useState<ImprovementResult | null>(null);
   const [resumeKeywords, setResumeKeywords] = useState<string[]>([]);
   const [jobKeywords, setJobKeywords] = useState<string[]>([]);
-  const api = process.env.NEXT_PUBLIC_API_BASE || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+  // Proxy-aware API wrappers handle base/proxy
 
   useEffect(() => { if (!resume_id) return; setLoading(true); getResume(resume_id).then(json => { if (json?.data) setData(json.data as ResumeData); else throw new Error('Invalid server response'); }).catch(e => setError((e as Error).message)).finally(() => setLoading(false)); }, [resume_id]);
   useEffect(() => { if (!resume_id || loading || error) return; if (data?.processed_resume) { if (pollRef.current) clearTimeout(pollRef.current); return; } pollRef.current = setTimeout(() => { getResume(resume_id).then(json => { if (json?.data) setData(json.data as ResumeData); }).catch(() => {}); }, 2000); return () => { if (pollRef.current) clearTimeout(pollRef.current); }; }, [resume_id, data, loading, error]);
@@ -48,18 +48,12 @@ export default function ResumeDetailPage({ params }: PageParams) {
     if (!jobDescription.trim()) { setImproveError(t('jobDescLabel') + ' ?'); return; }
     setImproving(true);
     try {
-      const uploadResp = await fetch(`${api}/api/v1/jobs/upload`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ job_descriptions: [jobDescription], resume_id })
-      });
-      if (!uploadResp.ok) throw new Error(`Job upload failed (${uploadResp.status})`);
-  const uploadJson = await uploadResp.json() as { data?: { job_id: string | string[] } };
+      const uploadJson = await uploadJobJson(jobDescription, resume_id);
   const jobIdPayload = uploadJson?.data?.job_id;
   const newJobId = Array.isArray(jobIdPayload) ? jobIdPayload[0] : jobIdPayload;
   if (!newJobId) throw new Error('No job_id returned');
       try {
-        const jr = await fetch(`${api}/api/v1/jobs?job_id=${newJobId}`);
+        const jr = await fetch(`/api_be/api/v1/jobs?job_id=${newJobId}`);
         if (jr.ok) {
           const jjson = await jr.json() as { data?: JobDataResp };
           const proc = jjson?.data?.processed_job;
@@ -73,7 +67,7 @@ export default function ResumeDetailPage({ params }: PageParams) {
     } finally {
       setImproving(false);
     }
-  }, [jobDescription, resume_id, t, api]);
+  }, [jobDescription, resume_id, t]);
 
   const keywordDiff = useMemo(() => diffKeywords(resumeKeywords, jobKeywords), [resumeKeywords, jobKeywords]);
   const atsScore = useMemo(() => { if (!improveResult) return null; return computeAtsScore(keywordDiff, jobKeywords, data?.processed_resume ? 100 : 50); }, [improveResult, jobKeywords, keywordDiff, data?.processed_resume]);

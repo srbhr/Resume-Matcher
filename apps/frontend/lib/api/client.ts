@@ -109,3 +109,16 @@ export async function matchResumeJob(payload: MatchResumeRequest): Promise<Match
     body: JSON.stringify(payload)
   });
 }
+
+// Proxy-aware JSON upload for job descriptions (preferred on web)
+export async function uploadJobJson(job_description: string, resume_id: string): Promise<{ request_id?: string; data?: { job_id: string | string[] } }> {
+  return apiFetch('/api/v1/jobs/upload', 'post', {
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ job_descriptions: [job_description], resume_id })
+  });
+}
+
+// Proxy-aware job fetch (combined job + processed_job)
+export async function getJobCombined(job_id: string): Promise<{ request_id?: string; data?: JobApiResponse } > {
+  return apiFetch('/api/v1/jobs', 'get', { query: { job_id } });
+}
