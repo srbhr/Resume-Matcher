@@ -1,0 +1,60 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@clerk/nextjs/server';
+
+// Whitelist the backend origin to avoid open proxy
+const defaultBackend = process.env.NODE_ENV === 'development'
+  ? 'http://localhost:8000'
+  : 'https://resume-matcher-backend-j06k.onrender.com';
+const BACKEND_BASE = (process.env.NEXT_PUBLIC_API_BASE || process.env.NEXT_PUBLIC_API_URL || defaultBackend).replace(/\/$/, '');
+
+export async function GET(req: NextRequest, ctx: any) {
+  return proxy(req, ctx?.params);
+}
+
+export async function POST(req: NextRequest, ctx: any) {
+  return proxy(req, ctx?.params);
+}
+
+export async function PUT(req: NextRequest, ctx: any) {
+  return proxy(req, ctx?.params);
+}
+
+export async function PATCH(req: NextRequest, ctx: any) {
+  return proxy(req, ctx?.params);
+}
+
+export async function DELETE(req: NextRequest, ctx: any) {
+  return proxy(req, ctx?.params);
+}
+
+async function proxy(req: NextRequest, params: { path: string[] } | undefined) {
+  // Only allow forwarding to /api/v1/*
+  const joined = (params?.path ?? []).join('/');
+  if (!joined.startsWith('api/v1/')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
+  const a = await auth();
+  const token = await a.getToken();
+  const url = `${BACKEND_BASE}/${joined}` + (req.nextUrl.search || '');
+
+  const headers = new Headers(req.headers);
+  headers.delete('host');
+  headers.delete('x-forwarded-host');
+  headers.delete('x-forwarded-proto');
+  headers.set('accept', 'application/json');
+  if (token) headers.set('authorization', `Bearer ${token}`);
+
+  const init: RequestInit = {
+    method: req.method,
+    headers,
+    body: req.method === 'GET' || req.method === 'HEAD' ? undefined : await req.arrayBuffer(),
+    // Do not pass through the Next.js internal duplex/body locking; arrayBuffer above is fine
+    redirect: 'manual',
+  };
+
+  const res = await fetch(url, init);
+  const resHeaders = new Headers(res.headers);
+  // Remove hop-by-hop headers
+  resHeaders.delete('transfer-encoding');
+  resHeaders.delete('connection');
+  return new NextResponse(res.body, { status: res.status, headers: resHeaders });
+}

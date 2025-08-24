@@ -3,6 +3,7 @@ import { headers } from 'next/headers';
 import { Geist, Space_Grotesk } from 'next/font/google';
 import './globals.css';
 import { locales, defaultLocale } from '../i18n';
+import { ClerkProvider } from '@clerk/nextjs';
 
 const _spaceGrotesk = Space_Grotesk({
   variable: '--font-space-grotesk',
@@ -39,7 +40,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     }
   }
   if (!activeLocale) activeLocale = defaultLocale;
-  return (
+  const pk = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+  const app = (
     <html lang={activeLocale} className="dark h-full" suppressHydrationWarning>
       <head>
         <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -52,5 +54,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="h-full antialiased bg-zinc-950 text-white font-sans">{children}</body>
     </html>
+  );
+  if (!pk) return app;
+  return (
+    <ClerkProvider publishableKey={pk}>{app}</ClerkProvider>
   );
 }

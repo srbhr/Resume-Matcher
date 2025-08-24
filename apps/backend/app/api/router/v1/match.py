@@ -17,6 +17,7 @@ from app.services import (
 from app.core.error_codes import to_error_payload
 from app.schemas.pydantic.match import MatchRequest, MatchResponse
 from app.core import settings
+from app.core.auth import require_auth, Principal
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +28,7 @@ match_router = APIRouter()
     "", summary="Compute heuristic match score and breakdown between a resume and a job", response_model=MatchResponse
 )
 async def match_resume_job(
-    payload: MatchRequest, request: Request, db: AsyncSession = Depends(get_db_session)
+    payload: MatchRequest, request: Request, db: AsyncSession = Depends(get_db_session), _principal: Principal = Depends(require_auth)
 ):
     request_id = getattr(request.state, "request_id", str(uuid4()))
     headers = {"X-Request-ID": request_id}

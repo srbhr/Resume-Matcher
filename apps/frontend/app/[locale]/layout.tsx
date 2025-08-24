@@ -7,6 +7,7 @@ import { ResumePreviewProvider } from '@/components/common/resume_previewer_cont
 import ServiceWorkerRegistrar from '@/components/common/sw-registrar';
 const locales = ['en', 'de'];
 import type { Metadata } from 'next';
+import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from '@clerk/nextjs';
 
 interface LayoutParams { params: { locale: string } }
 
@@ -50,7 +51,22 @@ export default function LocaleLayout({ children, params }: { children: ReactNode
     <NextIntlClientProvider messages={messages} locale={loc} timeZone="UTC">
       <ResumePreviewProvider>
         <ServiceWorkerRegistrar />
-        <div className="p-4 flex justify-end"><LanguageSwitcher /></div>
+        <div className="p-4 flex gap-3 justify-end items-center">
+          <LanguageSwitcher />
+          {process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ? (
+            <>
+              <SignedOut>
+                <SignInButton />
+                <SignUpButton>
+                  <button className="rounded-md px-3 py-1.5 bg-indigo-600 text-white text-sm">Sign up</button>
+                </SignUpButton>
+              </SignedOut>
+              <SignedIn>
+                <UserButton />
+              </SignedIn>
+            </>
+          ) : null}
+        </div>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify({

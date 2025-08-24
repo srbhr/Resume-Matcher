@@ -36,10 +36,13 @@ function buildCsp(nonce: string) {
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com data:",
     "img-src 'self' blob: data: https://raw.githubusercontent.com",
-    `connect-src ${connectSrc.join(' ')}`,
+  // Allow Clerk APIs
+  `connect-src ${connectSrc.join(' ')} https://*.clerk.com https://*.clerk.services`,
     "media-src 'self'",
     "object-src 'none'",
-    "frame-ancestors 'self'",
+  "frame-ancestors 'self'",
+  // Clerk embeds
+  "frame-src 'self' https://*.clerk.com https://*.clerk.services",
     "base-uri 'self'",
     "form-action 'self'",
     "manifest-src 'self'",
@@ -55,14 +58,15 @@ const permissionsPolicy: Record<string,string> = {
 };
 
 export function middleware(request: NextRequest) {
-  // Run intl middleware first
-  const response = intlMiddleware(request);
+  const pathname = request.nextUrl.pathname;
+  // Skip i18n rewriting for Clerk auth routes
+  const isAuthRoute = pathname.startsWith('/sign-in') || pathname.startsWith('/sign-up');
+  const response = isAuthRoute ? NextResponse.next() : intlMiddleware(request);
 
   // Generate a nonce per response (hex)
   const nonce = generateNonce();
 
   // Apply security headers only to HTML/document requests
-  const pathname = request.nextUrl.pathname;
   if (!pathname.startsWith('/_next')) {
     response.headers.set('Content-Security-Policy', buildCsp(nonce));
     response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');

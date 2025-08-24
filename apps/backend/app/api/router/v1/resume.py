@@ -31,6 +31,7 @@ from app.services import (
 from app.schemas.pydantic import ResumeImprovementRequest
 from app.core.error_codes import to_error_payload
 from app.core import settings
+from app.core.auth import require_auth, Principal
 
 resume_router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -44,6 +45,7 @@ async def upload_resume(
     request: Request,
     file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db_session),
+    _principal: Principal = Depends(require_auth),
     defer: bool = Query(False, description="Defer structured extraction (faster response, background processing)"),
 ):
     """
@@ -126,6 +128,7 @@ async def score_and_improve(
     request: Request,
     payload: ResumeImprovementRequest,  # rely on pydantic model but catch ValidationError below
     db: AsyncSession = Depends(get_db_session),
+    _principal: Principal = Depends(require_auth),
     stream: bool = Query(False, description="Enable streaming response using Server-Sent Events"),
     use_llm: bool = Query(True, description="If false, only deterministic baseline improvement is applied (no LLM call)"),
     require_llm: bool = Query(False, description="If true, fail instead of falling back when LLM/embeddings are unavailable"),

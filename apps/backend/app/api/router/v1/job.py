@@ -11,6 +11,7 @@ from app.services import JobService, JobNotFoundError
 from app.core.error_codes import to_error_payload
 from app.schemas.pydantic.job import JobUploadRequest
 from app.core import settings
+from app.core.auth import require_auth, Principal
 
 job_router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -24,6 +25,7 @@ async def upload_job(
     payload: JobUploadRequest,
     request: Request,
     db: AsyncSession = Depends(get_db_session),
+    _principal: Principal = Depends(require_auth),
 ):
     """
     Accepts a job description as a MarkDown text and stores it in the database.

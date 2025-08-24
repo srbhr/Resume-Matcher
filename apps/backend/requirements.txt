@@ -56,3 +56,4 @@ uvicorn==0.34.0
 alembic==1.14.0
 asyncpg==0.30.0
 psycopg[binary]==3.2.3
+python-jose[cryptography]==3.3.0
