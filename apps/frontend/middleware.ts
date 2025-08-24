@@ -32,19 +32,19 @@ function buildCsp(nonce: string) {
   return [
     "default-src 'self'",
     // Scripts: allow self, Clerk domains, and inline to avoid nonce mismatches in App Router
-    "script-src 'self' 'unsafe-inline' https://*.clerk.com https://*.clerk.services https://*.clerk.accounts.dev",
+  "script-src 'self' 'unsafe-inline' https://*.clerk.com https://*.clerk.services https://*.clerk.accounts.dev https://clerk.cvita.pro https://accounts.cvita.pro",
     // Styles: allow self, inline, Google Fonts, and Clerk assets
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.clerk.com https://*.clerk.services https://*.clerk.accounts.dev",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.clerk.com https://*.clerk.services https://*.clerk.accounts.dev https://clerk.cvita.pro https://accounts.cvita.pro",
     "font-src 'self' https://fonts.gstatic.com data:",
     // Images: include Clerk image CDNs
-    "img-src 'self' blob: data: https://raw.githubusercontent.com https://img.clerk.com https://*.clerk.com https://*.clerk.accounts.dev",
+  "img-src 'self' blob: data: https://raw.githubusercontent.com https://img.clerk.com https://*.clerk.com https://*.clerk.accounts.dev https://clerk.cvita.pro https://accounts.cvita.pro",
     // Connect: backend + Clerk APIs (include accounts.dev)
-    `connect-src ${connectSrc.join(' ')} https://*.clerk.com https://*.clerk.services https://*.clerk.accounts.dev`,
+  `connect-src ${connectSrc.join(' ')} https://*.clerk.com https://*.clerk.services https://*.clerk.accounts.dev https://clerk.cvita.pro https://accounts.cvita.pro`,
     "media-src 'self'",
     "object-src 'none'",
     "frame-ancestors 'self'",
     // Clerk embeds
-    "frame-src 'self' https://*.clerk.com https://*.clerk.services https://*.clerk.accounts.dev",
+  "frame-src 'self' https://*.clerk.com https://*.clerk.services https://*.clerk.accounts.dev https://clerk.cvita.pro https://accounts.cvita.pro",
     "base-uri 'self'",
     "form-action 'self'",
     "manifest-src 'self'",
