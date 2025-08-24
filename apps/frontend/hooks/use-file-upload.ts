@@ -210,6 +210,9 @@ export const useFileUpload = (
       const contentType = response.headers.get("content-type");
 
       if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error(`Unauthorized: Please sign in and try again.`);
+        }
         let errorDetail = `Upload failed for ${fileToUpload.file.name}. Status: ${response.status} ${response.statusText}`;
         try {
           const errorText = await response.text();

@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
+import { SignedIn, SignedOut } from '@clerk/nextjs';
+import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import {
 	AlertCircleIcon,
@@ -106,8 +108,34 @@ export default function FileUpload() {
 	const displayErrors =
 		uploadFeedback?.type === 'error' ? [uploadFeedback.message] : validationOrUploadErrors;
 
-	return (
-		<div className="flex w-full flex-col gap-4 rounded-lg">
+		const hasClerk = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
+
+		return (
+			<div className="flex w-full flex-col gap-4 rounded-lg">
+				{hasClerk && (
+					<>
+						<SignedOut>
+							<div className="rounded-md border border-amber-600/40 bg-amber-900/20 p-3 text-sm text-amber-200">
+								<p className="mb-1 font-medium">Bitte zuerst anmelden</p>
+								<p>
+									Du musst eingeloggt sein, um deinen Lebenslauf hochzuladen.{' '}
+									<Link href="/sign-in" className="underline text-amber-100 hover:text-white">Jetzt anmelden</Link>
+								</p>
+							</div>
+						</SignedOut>
+						<SignedIn>
+							{/* Upload UI for signed-in users */}
+						</SignedIn>
+					</>
+				)}
+				{!hasClerk && (
+					<div className="rounded-md border border-sky-600/40 bg-sky-900/20 p-3 text-sm text-sky-200">
+						<p className="mb-1 font-medium">Upload verfügbar</p>
+						<p>Clerk ist nicht konfiguriert; Upload ist ohne Login möglich (nur lokal/Dev).</p>
+					</div>
+				)}
+
+				{/* The actual upload UI (always rendered, but SignedOut users are guided above) */}
 			<div
 				role="button"
 				tabIndex={!currentFile && !isUploadingGlobal ? 0 : -1}
@@ -165,7 +193,7 @@ export default function FileUpload() {
 				</div>
 			</div>
 
-			{displayErrors.length > 0 &&
+					{displayErrors.length > 0 &&
 				!isUploadingGlobal &&
 				(!uploadFeedback || uploadFeedback.type === 'error') && (
 					<div
@@ -176,9 +204,15 @@ export default function FileUpload() {
 							<AlertCircleIcon className="mt-0.5 size-5 shrink-0" />
 							<div>
 								<p className="font-semibold">{tUpload('errorTitle')}</p>
-								{displayErrors.map((error, index) => (
-									<p key={index}>{error}</p>
-								))}
+									{displayErrors.map((error, index) => (
+										<p key={index}>{error}</p>
+									))}
+									{/* Helpful hint when unauthorized */}
+									{displayErrors.some(e => /Unauthorized/i.test(e)) && (
+										<p className="mt-1 text-xs">
+											Bitte melde dich an: <Link href="/sign-in" className="underline">Sign in</Link>
+										</p>
+									)}
 							</div>
 						</div>
 					</div>
