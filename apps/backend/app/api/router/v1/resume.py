@@ -128,6 +128,7 @@ async def score_and_improve(
     db: AsyncSession = Depends(get_db_session),
     stream: bool = Query(False, description="Enable streaming response using Server-Sent Events"),
     use_llm: bool = Query(True, description="If false, only deterministic baseline improvement is applied (no LLM call)"),
+    require_llm: bool = Query(False, description="If true, fail instead of falling back when LLM/embeddings are unavailable"),
 ):
     """
     Scores and improves a resume against a job description.
@@ -158,6 +159,7 @@ async def score_and_improve(
                 content=score_improvement_service.run_and_stream(
                     resume_id=resume_id,
                     job_id=job_id,
+                    require_llm=require_llm,
                 ),
                 media_type="text/event-stream",
                 headers=headers,
@@ -167,6 +169,7 @@ async def score_and_improve(
                 resume_id=resume_id,
                 job_id=job_id,
                 use_llm=use_llm,
+                require_llm=require_llm,
             )
             return JSONResponse(
                 content={

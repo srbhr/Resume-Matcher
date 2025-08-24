@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from app.agent import AgentManager, EmbeddingManager
+from app.agent.exceptions import ProviderError
 from app.agent.cache_utils import fetch_or_cache
 from app.models import Job, ProcessedJob, ProcessedResume, Resume
 from app.prompt import prompt_factory
@@ -141,16 +142,23 @@ class ScoreImprovementService:
             json.dumps(json_schema_factory.get("resume_preview"), indent=2),
             updated_resume,
         )
+
         async def _runner():
             return await self.json_agent_manager.run(prompt=prompt)
-        raw_output = await fetch_or_cache(
-            db=self.db,
-            model=self.json_agent_manager.model,
-            strategy=self.json_agent_manager.strategy,
-            prompt=prompt,
-            runner=_runner,
-            ttl_seconds=3600,  # preview can be shorter TTL
-        )
+
+        try:
+            raw_output = await fetch_or_cache(
+                db=self.db,
+                model=self.json_agent_manager.model,
+                strategy=self.json_agent_manager.strategy,
+                prompt=prompt,
+                runner=_runner,
+                ttl_seconds=3600,  # preview can be shorter TTL
+            )
+        except Exception as e:  # Provider or cache execution failure should not blow up the endpoint
+            logger.info(f"Preview generation failed; returning None. reason={e}")
+            return None
+
         try:
             candidate = dict(raw_output)
             candidate.pop("_usage", None)
@@ -182,33 +190,68 @@ class ScoreImprovementService:
         improved = resume_markdown.rstrip() + addition
         return {"updated_resume": improved, "missing_keywords": missing, "added_section": True}
 
+    def _coverage_score(self, resume_markdown: str, extracted_job_keywords: str) -> float:
+        """Deterministic coverage score when embeddings are unavailable.
+
+        Computes ratio of job keywords present in resume tokens.
+        """
+        resume_tokens = self._tokenize_lower(resume_markdown)
+        job_kw_list = [k.strip().lower() for k in extracted_job_keywords.split(",") if k.strip()]
+        if not job_kw_list:
+            return 0.0
+        present = 0
+        for k in job_kw_list:
+            if any(k in t for t in resume_tokens):
+                present += 1
+        return present / max(1, len(job_kw_list))
+
     # -------------------- Public API --------------------
-    async def run(self, resume_id: str, job_id: str, use_llm: bool = True) -> Dict:
+    async def run(self, resume_id: str, job_id: str, use_llm: bool = True, require_llm: bool = False) -> Dict:
         resume, processed_resume = await self._get_resume(resume_id)
         job, processed_job = await self._get_job(job_id)
         extracted_job_keywords = ", ".join(json.loads(processed_job.extracted_keywords).get("extracted_keywords", []))
         extracted_resume_keywords = ", ".join(json.loads(processed_resume.extracted_keywords).get("extracted_keywords", []))
 
-        # Original embeddings
-        resume_embedding_task = asyncio.create_task(self.embedding_manager.embed(resume.content))
-        job_kw_embedding_task = asyncio.create_task(self.embedding_manager.embed(extracted_job_keywords))
-        resume_embedding, extracted_job_keywords_embedding = await asyncio.gather(resume_embedding_task, job_kw_embedding_task)
-        original_score = self.calculate_cosine_similarity(extracted_job_keywords_embedding, resume_embedding)
+        # Embeddings (with fallback)
+        embeddings_ok = True
+        try:
+            resume_embedding_task = asyncio.create_task(self.embedding_manager.embed(resume.content))
+            job_kw_embedding_task = asyncio.create_task(self.embedding_manager.embed(extracted_job_keywords))
+            resume_embedding, extracted_job_keywords_embedding = await asyncio.gather(
+                resume_embedding_task, job_kw_embedding_task
+            )
+            original_score = self.calculate_cosine_similarity(extracted_job_keywords_embedding, resume_embedding)
+        except ProviderError as e:
+            if require_llm:
+                # Caller demands LLM/embeddings; propagate error
+                raise
+            logger.warning(f"Embedding provider unavailable; falling back to coverage scoring. reason={e}")
+            embeddings_ok = False
+            # Coverage-based deterministic score in [0,1]
+            original_score = self._coverage_score(resume_markdown=resume.content, extracted_job_keywords=extracted_job_keywords)
 
         # Baseline deterministic improvement
         baseline = self._baseline_improve(resume_markdown=resume.content, extracted_job_keywords=extracted_job_keywords)
-        if baseline["added_section"]:
-            baseline_embedding = await self.embedding_manager.embed(baseline["updated_resume"])  # type: ignore[arg-type]
-            raw_baseline_score = self.calculate_cosine_similarity(extracted_job_keywords_embedding, baseline_embedding)
-            # Guarantee non-decrease: choose max
-            baseline_score = max(original_score, raw_baseline_score)
+        if embeddings_ok:
+            if baseline["added_section"]:
+                baseline_embedding = await self.embedding_manager.embed(baseline["updated_resume"])  # type: ignore[arg-type]
+                raw_baseline_score = self.calculate_cosine_similarity(extracted_job_keywords_embedding, baseline_embedding)
+                # Guarantee non-decrease: choose max
+                baseline_score = max(original_score, raw_baseline_score)
+            else:
+                baseline_score = original_score
         else:
-            baseline_score = original_score
+            # Recompute coverage on updated text; still guarantee non-decrease
+            if baseline["added_section"]:
+                raw_baseline_score = self._coverage_score(baseline["updated_resume"], extracted_job_keywords)  # type: ignore[arg-type]
+                baseline_score = max(original_score, raw_baseline_score)
+            else:
+                baseline_score = original_score
 
         updated_resume = baseline["updated_resume"]  # type: ignore[assignment]
         updated_score = baseline_score
         llm_used = False
-        if use_llm:
+        if use_llm and embeddings_ok:
             try:
                 llm_used = True
                 improved_text, llm_score = await self.improve_score_with_llm(
@@ -223,8 +266,11 @@ class ScoreImprovementService:
                     updated_resume = improved_text
                     updated_score = llm_score
             except Exception as e:  # pragma: no cover - defensive
+                if require_llm:
+                    raise
                 logger.warning(f"LLM improvement failed, using baseline: {e}")
 
+        # Preview generation is best-effort; return None on any failure inside
         resume_preview = await self.get_resume_for_previewer(updated_resume=updated_resume)
 
         execution = {
@@ -245,7 +291,7 @@ class ScoreImprovementService:
         gc.collect()
         return execution
 
-    async def run_and_stream(self, resume_id: str, job_id: str) -> AsyncGenerator:
+    async def run_and_stream(self, resume_id: str, job_id: str, require_llm: bool = False) -> AsyncGenerator:
         # Streaming still uses original iterative LLM approach without baseline section (kept minimal)
         yield f"data: {json.dumps({'status': 'starting', 'message': 'Analyzing resume and job description...'})}\n\n"
         await asyncio.sleep(1)
@@ -255,25 +301,42 @@ class ScoreImprovementService:
         await asyncio.sleep(1)
         extracted_job_keywords = ", ".join(json.loads(processed_job.extracted_keywords).get("extracted_keywords", []))
         extracted_resume_keywords = ", ".join(json.loads(processed_resume.extracted_keywords).get("extracted_keywords", []))
-        resume_embedding = await self.embedding_manager.embed(text=resume.content)
-        extracted_job_keywords_embedding = await self.embedding_manager.embed(text=extracted_job_keywords)
-        yield f"data: {json.dumps({'status': 'scoring', 'message': 'Calculating compatibility score...'})}\n\n"
-        cosine_similarity_score = self.calculate_cosine_similarity(extracted_job_keywords_embedding, resume_embedding)
-        yield f"data: {json.dumps({'status': 'scored', 'score': cosine_similarity_score})}\n\n"
-        yield f"data: {json.dumps({'status': 'improving', 'message': 'Generating improvement suggestions...'})}\n\n"
-        improved_text, improved_score = await self.improve_score_with_llm(
-            resume=resume.content,
-            extracted_resume_keywords=extracted_resume_keywords,
-            job=job.content,
-            extracted_job_keywords=extracted_job_keywords,
-            previous_cosine_similarity_score=cosine_similarity_score,
-            extracted_job_keywords_embedding=extracted_job_keywords_embedding,
-        )
-        final_result = {
-            "resume_id": resume_id,
-            "job_id": job_id,
-            "original_score": cosine_similarity_score,
-            "new_score": improved_score,
-            "updated_resume": markdown.markdown(text=improved_text),
-        }
-        yield f"data: {json.dumps({'status': 'completed', 'result': final_result})}\n\n"
+        try:
+            resume_embedding = await self.embedding_manager.embed(text=resume.content)
+            extracted_job_keywords_embedding = await self.embedding_manager.embed(text=extracted_job_keywords)
+            yield f"data: {json.dumps({'status': 'scoring', 'message': 'Calculating compatibility score...'})}\n\n"
+            cosine_similarity_score = self.calculate_cosine_similarity(extracted_job_keywords_embedding, resume_embedding)
+            yield f"data: {json.dumps({'status': 'scored', 'score': cosine_similarity_score})}\n\n"
+            yield f"data: {json.dumps({'status': 'improving', 'message': 'Generating improvement suggestions...'})}\n\n"
+            improved_text, improved_score = await self.improve_score_with_llm(
+                resume=resume.content,
+                extracted_resume_keywords=extracted_resume_keywords,
+                job=job.content,
+                extracted_job_keywords=extracted_job_keywords,
+                previous_cosine_similarity_score=cosine_similarity_score,
+                extracted_job_keywords_embedding=extracted_job_keywords_embedding,
+            )
+            final_result = {
+                "resume_id": resume_id,
+                "job_id": job_id,
+                "original_score": cosine_similarity_score,
+                "new_score": improved_score,
+                "updated_resume": markdown.markdown(text=improved_text),
+            }
+            yield f"data: {json.dumps({'status': 'completed', 'result': final_result})}\n\n"
+        except ProviderError as e:
+            if require_llm:
+                # Emit an error event and terminate stream
+                yield f"data: {json.dumps({'status': 'error', 'message': 'LLM/Embedding provider unavailable'})}\n\n"
+                return
+            # Fallback streaming path without embeddings/LLM
+            logger.warning(f"Streaming fallback without embeddings; reason={e}")
+            coverage = self._coverage_score(resume.content, extracted_job_keywords)
+            final_result = {
+                "resume_id": resume_id,
+                "job_id": job_id,
+                "original_score": coverage,
+                "new_score": coverage,
+                "updated_resume": markdown.markdown(text=resume.content),
+            }
+            yield f"data: {json.dumps({'status': 'completed', 'result': final_result})}\n\n"

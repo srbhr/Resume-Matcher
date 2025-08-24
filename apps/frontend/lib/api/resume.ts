@@ -1,7 +1,8 @@
 import { ImprovedResult } from '@/components/common/resume_previewer_context';
 
-interface JobUploadResponse { job_id: string[] | string }
-interface ImproveEnvelope { data?: ImprovedResult }
+// New unified envelopes (backend wraps all responses as { request_id, data })
+interface JobUploadEnvelope { request_id?: string; data?: { job_id: string[] | string } }
+interface ImproveEnvelope { request_id?: string; data?: ImprovedResult }
 
 const API_URL = process.env.NEXT_PUBLIC_API_BASE || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -16,9 +17,13 @@ export async function uploadJobDescriptions(
         body: JSON.stringify({ job_descriptions: descriptions, resume_id: resumeId }),
     });
     if (!res.ok) throw new Error(`Upload failed with status ${res.status}`);
-    const data: JobUploadResponse = await res.json();
-    const idArray = Array.isArray(data.job_id) ? data.job_id : [data.job_id];
-    console.log('Job upload response:', data);
+    const json: JobUploadEnvelope | (JobUploadEnvelope['data']) = await res.json();
+    // unwrap envelope or fallback compat if server ever returns flat payload
+    const payload = (json as JobUploadEnvelope)?.data ?? (json as JobUploadEnvelope['data']);
+    const jobIdField = payload?.job_id as string | string[] | undefined;
+    const idArray = Array.isArray(jobIdField) ? jobIdField : jobIdField ? [jobIdField] : [];
+    if (!idArray[0]) throw new Error('No job_id returned from server');
+    console.log('Job upload response:', json);
     return idArray[0];
 }
 
@@ -26,11 +31,15 @@ export async function uploadJobDescriptions(
 export async function improveResume(
     resumeId: string,
     jobId: string,
-    options?: { useLlm?: boolean }
+    options?: { useLlm?: boolean; requireLlm?: boolean }
 ): Promise<ImprovedResult> {
     let response: Response;
     try {
-    const qp = options?.useLlm === false ? '?use_llm=false' : '';
+    // Enforce LLM by default; allow opt-out via options
+    const params = new URLSearchParams();
+    if (options?.useLlm === false) params.set('use_llm', 'false');
+    if (options?.requireLlm !== false) params.set('require_llm', 'true');
+    const qp = params.toString() ? `?${params.toString()}` : '';
     response = await fetch(`${API_URL}/api/v1/resumes/improve${qp}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

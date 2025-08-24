@@ -39,8 +39,10 @@ export default function MatchAndImprovePage({ params }: PageParams) {
       // Upload job description
       const jobUploadRes = await fetch(`${api}/api/v1/jobs/upload`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ job_descriptions: [jobDescription], resume_id: resumeIdInput }) });
       if (!jobUploadRes.ok) throw new Error(`Job upload failed (${jobUploadRes.status})`);
-      const uploadJson = await jobUploadRes.json();
-      const jobId: string = Array.isArray(uploadJson.job_id) ? uploadJson.job_id[0] : uploadJson.job_id;
+  const uploadJson = await jobUploadRes.json() as { data?: { job_id: string | string[] } };
+  const jid = uploadJson?.data?.job_id;
+  const jobId: string = Array.isArray(jid) ? jid[0] : (jid as string);
+  if (!jobId) throw new Error('No job_id returned');
       if (!jobId) throw new Error('No job_id returned');
 
       // Resume, Job, Match parallel holen
@@ -74,7 +76,7 @@ export default function MatchAndImprovePage({ params }: PageParams) {
       } catch {}
 
       // LLM Improvement
-      const improveJson = await apiImproveResume({ resume_id: resumeIdInput, job_id: jobId }) as unknown as { data?: ImprovementResult };
+  const improveJson = await apiImproveResume({ resume_id: resumeIdInput, job_id: jobId, require_llm: true }) as unknown as { data?: ImprovementResult };
       if (improveJson?.data) setResult(improveJson.data);
     } catch (e) { setError(e instanceof Error ? e.message : String(e)); } finally { setImproving(false); }
   }, [api, resumeIdInput, jobDescription, t]);

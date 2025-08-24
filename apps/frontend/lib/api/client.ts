@@ -46,7 +46,7 @@ export async function apiFetch<P extends keyof paths, M extends keyof paths[P] &
 // Minimal response type shapes (extend later with precise OpenAPI types as needed)
 export interface ResumeApiResponse { resume_id?: string; processed_resume?: Record<string, unknown>; [k: string]: unknown }
 export interface JobApiResponse { job_id?: string; processed_job?: Record<string, unknown>; [k: string]: unknown }
-export interface ImproveResumePayload { resume_id: string; job_id: string; stream?: boolean }
+export interface ImproveResumePayload { resume_id: string; job_id: string; stream?: boolean; require_llm?: boolean }
 export interface ImproveResumeResponse { improved_resume?: string; scores?: Record<string, unknown>; [k: string]: unknown }
 export interface UploadResumeResponse { resume_id: string }
 export interface UploadJobResponse { job_id: string | string[] }
@@ -69,9 +69,14 @@ export async function getJob(job_id: string): Promise<JobApiResponse> {
 }
 
 export async function improveResume(payload: ImproveResumePayload): Promise<ImproveResumeResponse> {
+  const query: Record<string, string | number | boolean | undefined> = {};
+  if (payload.stream) query.stream = true;
+  // default to require_llm=true unless explicitly set false
+  if (payload.require_llm !== false) query.require_llm = true;
   return apiFetch('/api/v1/resumes/improve', 'post', {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
+    query,
     timeoutMs: 60000,
   });
 }

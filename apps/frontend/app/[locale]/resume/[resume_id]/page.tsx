@@ -54,8 +54,10 @@ export default function ResumeDetailPage({ params }: PageParams) {
         body: JSON.stringify({ job_descriptions: [jobDescription], resume_id })
       });
       if (!uploadResp.ok) throw new Error(`Job upload failed (${uploadResp.status})`);
-      const uploadJson = await uploadResp.json() as { job_id: string | string[] };
-      const newJobId = Array.isArray(uploadJson.job_id) ? uploadJson.job_id[0] : uploadJson.job_id;
+  const uploadJson = await uploadResp.json() as { data?: { job_id: string | string[] } };
+  const jobIdPayload = uploadJson?.data?.job_id;
+  const newJobId = Array.isArray(jobIdPayload) ? jobIdPayload[0] : jobIdPayload;
+  if (!newJobId) throw new Error('No job_id returned');
       try {
         const jr = await fetch(`${api}/api/v1/jobs?job_id=${newJobId}`);
         if (jr.ok) {
@@ -64,7 +66,7 @@ export default function ResumeDetailPage({ params }: PageParams) {
           if (proc?.extracted_keywords) setJobKeywords(safeParseKeywords(proc.extracted_keywords));
         }
       } catch { /* ignore job keyword errors */ }
-      const improveJson = await apiImproveResume({ resume_id, job_id: newJobId }) as unknown as { data?: ImprovementResult };
+  const improveJson = await apiImproveResume({ resume_id, job_id: newJobId, require_llm: true }) as unknown as { data?: ImprovementResult };
       if (improveJson?.data) setImproveResult(improveJson.data);
     } catch (e) {
       setImproveError(e instanceof Error ? e.message : String(e));
