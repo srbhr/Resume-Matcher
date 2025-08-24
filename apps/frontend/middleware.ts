@@ -63,7 +63,9 @@ export default clerkMiddleware((auth, request) => {
   const pathname = request.nextUrl.pathname;
   // Skip i18n rewriting for Clerk auth routes
   const isAuthRoute = pathname.startsWith('/sign-in') || pathname.startsWith('/sign-up');
-  const response = isAuthRoute ? NextResponse.next() : intlMiddleware(request);
+  // Also skip i18n rewriting for API/TRPC routes so /api/* stays intact
+  const isApiRoute = pathname.startsWith('/api') || pathname.startsWith('/trpc');
+  const response = (isAuthRoute || isApiRoute) ? NextResponse.next() : intlMiddleware(request);
 
   // Generate a nonce per response (hex)
   const nonce = generateNonce();
@@ -85,8 +87,8 @@ export default clerkMiddleware((auth, request) => {
 export const config = {
   matcher: [
     // Skip Next.js internals and static files, unless found in search params
-    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
-    // Always run for API routes (needed for BFF that calls auth())
-    '/(api|trpc)(.*)'
+  '/((?!_next|api|trpc|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
+  // Still run for API/TRPC to apply Clerk auth headers but we won’t i18n-rewrite them above
+  '/(api|trpc)(.*)'
   ]
 };

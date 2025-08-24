@@ -62,7 +62,7 @@ export default function LocaleLayout({ children, params }: { children: ReactNode
               </SignedOut>
               <SignedIn>
                 <UserButton />
-                <Link href="/api/bff/api/v1/auth/whoami" className="rounded-md px-2 py-1 text-xs text-zinc-300 hover:text-white underline">
+                <Link href="/api/bff/api/v1/auth/whoami" target="_blank" className="rounded-md px-2 py-1 text-xs text-zinc-300 hover:text-white underline">
                   WhoAmI
                 </Link>
               </SignedIn>
