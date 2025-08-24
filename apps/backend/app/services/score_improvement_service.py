@@ -170,6 +170,28 @@ class ScoreImprovementService:
 
     # -------------------- Baseline helpers --------------------
     @staticmethod
+    def _extract_keywords(raw: str | None) -> list[str]:
+        """Safely parse keywords from a JSON column that may be:
+        - a dict with key "extracted_keywords"
+        - a plain list of strings
+        - the literal JSON null ("null")
+        - invalid JSON
+        Returns a list of strings in all cases.
+        """
+        if not raw:
+            return []
+        try:
+            data = json.loads(raw)
+        except Exception:
+            return []
+        if isinstance(data, dict):
+            vals = data.get("extracted_keywords", [])
+        elif isinstance(data, list):
+            vals = data
+        else:
+            vals = []
+        return [str(v) for v in vals if isinstance(v, str)]
+    @staticmethod
     def _tokenize_lower(text: str) -> set[str]:
         return {token for token in [w.strip(".,;:()[]{}<>!?").lower() for w in text.split()] if token}
 
@@ -209,8 +231,8 @@ class ScoreImprovementService:
     async def run(self, resume_id: str, job_id: str, use_llm: bool = True, require_llm: bool = False) -> Dict:
         resume, processed_resume = await self._get_resume(resume_id)
         job, processed_job = await self._get_job(job_id)
-        extracted_job_keywords = ", ".join(json.loads(processed_job.extracted_keywords).get("extracted_keywords", []))
-        extracted_resume_keywords = ", ".join(json.loads(processed_resume.extracted_keywords).get("extracted_keywords", []))
+        extracted_job_keywords = ", ".join(self._extract_keywords(processed_job.extracted_keywords))
+        extracted_resume_keywords = ", ".join(self._extract_keywords(processed_resume.extracted_keywords))
 
         # Embeddings (with fallback)
         embeddings_ok = True
@@ -299,8 +321,8 @@ class ScoreImprovementService:
         job, processed_job = await self._get_job(job_id)
         yield f"data: {json.dumps({'status': 'parsing', 'message': 'Parsing resume content...'})}\n\n"
         await asyncio.sleep(1)
-        extracted_job_keywords = ", ".join(json.loads(processed_job.extracted_keywords).get("extracted_keywords", []))
-        extracted_resume_keywords = ", ".join(json.loads(processed_resume.extracted_keywords).get("extracted_keywords", []))
+        extracted_job_keywords = ", ".join(self._extract_keywords(processed_job.extracted_keywords))
+        extracted_resume_keywords = ", ".join(self._extract_keywords(processed_resume.extracted_keywords))
         try:
             resume_embedding = await self.embedding_manager.embed(text=resume.content)
             extracted_job_keywords_embedding = await self.embedding_manager.embed(text=extracted_job_keywords)
