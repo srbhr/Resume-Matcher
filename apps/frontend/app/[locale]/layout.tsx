@@ -52,7 +52,7 @@ export default function LocaleLayout({ children, params }: { children: ReactNode
     <NextIntlClientProvider messages={messages} locale={loc} timeZone="UTC">
       <ResumePreviewProvider>
         <ServiceWorkerRegistrar />
-        <div className="p-4 flex gap-3 justify-end items-center">
+  <div className="sticky top-0 z-50 p-4 flex gap-3 justify-end items-center bg-zinc-950/80 backdrop-blur border-b border-zinc-800">
           <LanguageSwitcher />
       {process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ? (
             <>
@@ -83,7 +83,7 @@ export default function LocaleLayout({ children, params }: { children: ReactNode
             offers: { "@type": "Offer", price: "0", priceCurrency: "USD" }
           }) }}
         />
-        {children}
+  <div className="w-full pt-2">{children}</div>
       </ResumePreviewProvider>
     </NextIntlClientProvider>
   );
