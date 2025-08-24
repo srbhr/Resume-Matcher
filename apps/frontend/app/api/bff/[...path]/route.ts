@@ -80,5 +80,20 @@ async function proxy(req: NextRequest, params: { path: string[] } | undefined) {
   // Remove hop-by-hop headers
   resHeaders.delete('transfer-encoding');
   resHeaders.delete('connection');
+  // Normalize JSON responses to avoid streaming quirks
+  const respContentType = resHeaders.get('content-type') || '';
+  if (respContentType.includes('application/json')) {
+    // Read and re-send as JSON to ensure proper headers/body
+    const data = await res.json().catch(async () => {
+      // Fallback: try text and parse
+      const text = await res.text().catch(() => '');
+      try { return JSON.parse(text); } catch { return { raw: text }; }
+    });
+    // Preserve useful headers except content-length/content-encoding since body is re-serialized
+    resHeaders.delete('content-length');
+    resHeaders.delete('content-encoding');
+    return NextResponse.json(data, { status: res.status, headers: resHeaders });
+  }
+  // For non-JSON (should be rare), pass-through the body stream
   return new NextResponse(res.body, { status: res.status, headers: resHeaders });
 }

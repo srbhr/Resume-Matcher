@@ -220,25 +220,37 @@ export const useFileUpload = (
         if (response.status === 401) {
           throw new Error(`Unauthorized: Please sign in and try again.`);
         }
-        let errorDetail = `Upload failed for ${fileToUpload.file.name}. Status: ${response.status} ${response.statusText}`;
+        // Try to parse structured error first
+        let serverText = "";
         try {
-          const errorText = await response.text();
-          errorDetail += ` - Server response: ${errorText.substring(0, 200)}${errorText.length > 200 ? '...' : ''}`;
-        } catch (textError: unknown) {
-          console.warn("Could not read error response text:", textError);
-        }
-        throw new Error(errorDetail);
+          serverText = await response.text();
+          try {
+            const maybeJson = JSON.parse(serverText);
+            const errObj = (maybeJson && typeof maybeJson === 'object' ? (maybeJson as any).error : undefined);
+            const errMsg = errObj?.message || errObj?.detail || (maybeJson as any).detail;
+            if (typeof errMsg === 'string' && errMsg.trim().length > 0) {
+              throw new Error(errMsg);
+            }
+          } catch { /* not JSON, fall through */ }
+        } catch { /* ignore */ }
+        const snippet = serverText ? ` - Server response: ${serverText.substring(0, 200)}${serverText.length > 200 ? '...' : ''}` : '';
+        throw new Error(`Upload failed for ${fileToUpload.file.name}. Status: ${response.status} ${response.statusText}${snippet}`);
       }
       
       if (contentType && contentType.includes("application/json")) {
         responseData = await response.json() as Record<string, unknown>;
       } else {
-         // Handle non-JSON or missing Content-Type response if necessary,
-         // or assume success if response.ok and no JSON is expected for some cases.
-         // For now, we'll assume JSON is expected on success.
-        console.warn(`Response for ${fileToUpload.file.name} was not JSON. Content-Type: ${contentType}`);
-        // If JSON is strictly required, this could be an error condition:
-        // throw new Error(`Unexpected response type: ${contentType}. Expected JSON.`);
+        // Some proxies may omit content-type but still return JSON. Try to parse text->JSON.
+        try {
+          const text = await response.text();
+          try {
+            responseData = JSON.parse(text);
+          } catch {
+            console.warn(`Response for ${fileToUpload.file.name} was not JSON. Content-Type: ${contentType}`);
+          }
+        } catch (e) {
+          console.warn("Could not read success response text:", e);
+        }
       }
 
       const successfullyUploadedFile: FileWithPreview = {
