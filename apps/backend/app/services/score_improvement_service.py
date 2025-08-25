@@ -54,6 +54,8 @@ class ScoreImprovementService:
 
         try:
             keywords_data = json.loads(processed_resume.extracted_keywords)
+            if keywords_data is None:
+                raise ResumeKeywordExtractionError(resume_id=resume_id)
             keywords = keywords_data.get("extracted_keywords", [])
             if not keywords or len(keywords) == 0:
                 raise ResumeKeywordExtractionError(resume_id=resume_id)
