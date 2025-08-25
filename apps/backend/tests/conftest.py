@@ -56,6 +56,9 @@ os.environ.setdefault("DISABLE_BACKGROUND_TASKS", "true")
 @pytest.fixture(scope="session", autouse=True)
 def _bg_tasks_disabled_flag():
     os.environ["DISABLE_BACKGROUND_TASKS"] = "true"
+    # Ensure auth bypass is NOT globally enabled; specific app factory handles test-time override
+    if os.environ.get("DISABLE_AUTH_FOR_TESTS") == "1":
+        os.environ.pop("DISABLE_AUTH_FOR_TESTS", None)
     yield
 
 
@@ -87,6 +90,8 @@ def _apply_alembic_migrations_once():
     cfg = AlembicConfig(ini_path)
     # Force URL directly (avoids relying on env interpolation)
     cfg.set_main_option("sqlalchemy.url", SYNC_DB_URL)
+    # Ensure script_location resolves to the backend's alembic folder even when CWD is repo root
+    cfg.set_main_option("script_location", os.path.abspath(os.path.join(_APP_PARENT, 'alembic')))
     command.upgrade(cfg, "head")
 
 

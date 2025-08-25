@@ -12,7 +12,9 @@ from app.services import (
     ResumeValidationError,
     ResumeKeywordExtractionError,
     JobKeywordExtractionError,
+    AIProcessingError,
 )
+from app.agent.exceptions import ProviderError
 
 
 @dataclass(frozen=True)
@@ -29,6 +31,8 @@ ERROR_MAP: Dict[Type[BaseException], ErrorMeta] = {
     JobParsingError: ErrorMeta("JOB_PARSING_FAILED", status.HTTP_422_UNPROCESSABLE_ENTITY),
     ResumeKeywordExtractionError: ErrorMeta("RESUME_KEYWORD_EXTRACTION_FAILED", status.HTTP_422_UNPROCESSABLE_ENTITY),
     JobKeywordExtractionError: ErrorMeta("JOB_KEYWORD_EXTRACTION_FAILED", status.HTTP_422_UNPROCESSABLE_ENTITY),
+    AIProcessingError: ErrorMeta("AI_PROVIDER_UNAVAILABLE", status.HTTP_503_SERVICE_UNAVAILABLE),
+    ProviderError: ErrorMeta("AI_PROVIDER_UNAVAILABLE", status.HTTP_503_SERVICE_UNAVAILABLE),
 }
 
 

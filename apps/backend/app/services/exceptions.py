@@ -108,3 +108,13 @@ class JobKeywordExtractionError(Exception):
             message = "Job keyword extraction failed. Cannot improve resume without job requirements."
         super().__init__(message)
         self.job_id = job_id
+
+
+class AIProcessingError(Exception):
+    """
+    Raised when LLM/Embedding processing is required but the provider is unavailable
+    or returns an error.
+    """
+
+    def __init__(self, message: Optional[str] = None):
+        super().__init__(message or "AI provider unavailable or failed to process the request.")

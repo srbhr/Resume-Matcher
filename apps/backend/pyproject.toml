@@ -35,7 +35,6 @@ dependencies = [
     "markitdown[all]==0.1.2",
     "mpmath==1.3.0",
     "numpy==2.2.4",
-    "ollama==0.4.7",
     "onnxruntime==1.21.1",
     "openai==1.75.0",
     "packaging==25.0",

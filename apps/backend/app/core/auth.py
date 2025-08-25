@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import time
+import os
 from dataclasses import dataclass
 from functools import lru_cache
 from typing import Any, Dict, Optional
@@ -87,6 +88,9 @@ async def verify_clerk_token(token: str) -> Principal:
 
 
 async def require_auth(request: Request) -> Principal:
+    # Testing hook: allow disabling auth via explicit environment variable only
+    if os.getenv("DISABLE_AUTH_FOR_TESTS") == "1":
+        return Principal(user_id="test-user")
     authz = request.headers.get("authorization") or request.headers.get("Authorization")
     if not authz or not authz.lower().startswith("bearer "):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing bearer token")

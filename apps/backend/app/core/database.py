@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
 )
+from sqlalchemy.pool import NullPool
 
 from .config import settings as app_settings
 from ..models.base import Base
@@ -102,6 +103,9 @@ def _make_async_engine() -> AsyncEngine:
         )
     create_kwargs = {
         "echo": settings.DB_ECHO,
+        # Use NullPool to avoid cross-event-loop reuse in tests and TestClient.
+        # This prevents asyncpg connections from being attached to a different loop.
+        "poolclass": NullPool,
         "pool_pre_ping": True,
         "connect_args": {},
         "future": True,
@@ -159,9 +163,20 @@ async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
     async with AsyncSessionLocal() as session:
         try:
             yield session
-            await session.commit()
+            try:
+                await session.commit()
+            except Exception:
+                # Ensure the transaction is not left in a broken state
+                try:
+                    await session.rollback()
+                except Exception:
+                    pass
+                raise
         except Exception:
-            await session.rollback()
+            try:
+                await session.rollback()
+            except Exception:
+                pass
             raise
 
 

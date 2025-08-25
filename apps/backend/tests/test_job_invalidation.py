@@ -31,7 +31,7 @@ async def test_job_cache_invalidation():
             return {"ok": True}
         await fetch_or_cache(
             db=session,
-            model="gemma3:4b",
+            model="gpt-4o-mini",
             strategy="json",
             prompt=f"job prompt {job_id}",
             runner=runner,

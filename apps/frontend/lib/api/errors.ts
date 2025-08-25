@@ -6,6 +6,7 @@ export type DomainErrorCode =
   | 'job.not_found'
   | 'upload.invalid_type'
   | 'validation.failed'
+  | 'ai.unavailable'
   | 'server.error';
 
 export class DomainError extends Error {
@@ -23,7 +24,7 @@ export class DomainError extends Error {
   }
 }
 
-interface BackendErrorShape { detail?: string | { message?: string }; }
+interface BackendErrorShape { detail?: string | { message?: string }; request_id?: string; error?: { code?: string; message?: string } }
 
 function hasProp<T extends string>(o: unknown, prop: T): o is Record<T, unknown> {
   return typeof o === 'object' && o !== null && prop in o;
@@ -42,7 +43,11 @@ export function mapFetchError(e: unknown, context?: { status?: number; path?: st
   const data: BackendErrorShape | undefined = (typeof container === 'object' && container !== null) ? (container as BackendErrorShape) : undefined;
   const detailVal = data?.detail;
   const detail = typeof detailVal === 'string' ? detailVal : detailVal?.message;
-  const message = detail || (hasProp(e, 'message') && typeof e.message === 'string' ? e.message : 'Error');
+  const backendErrCode = data?.error?.code;
+  const message = data?.error?.message || detail || (hasProp(e, 'message') && typeof e.message === 'string' ? e.message : 'Error');
+  if (status === 503 || backendErrCode === 'AI_PROVIDER_UNAVAILABLE') {
+    return new DomainError('ai.unavailable', message || 'AI provider unavailable', { status });
+  }
   if (status === 404 && /resume/i.test(message)) return new DomainError('resume.not_found', message, { status });
   if (status === 404 && /job/i.test(message)) return new DomainError('job.not_found', message, { status });
   if (status === 400 && /file type/i.test(message)) return new DomainError('upload.invalid_type', message, { status });

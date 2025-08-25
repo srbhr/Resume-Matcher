@@ -51,7 +51,7 @@ Estamos trabajando para mejorar activamente la plataforma, con el objetivo de co
 
 ![Características de Resume Matcher](assets/resume_matcher_features.png)
 
-- **Funciona localmente**: No es necesario subir tu currículum a un servidor. Todo se ejecuta en tu máquina con modelos de IA de código abierto de Ollama.
+- **Compatibilidad con la nube**: Procesamiento mediante modelos de OpenAI de forma predeterminada; configurable para otros proveedores.
 - **Compatibilidad con ATS**: Obtén un análisis detallado de la compatibilidad de tu currículum con los sistemas ATS.
 - **Puntuación de Coincidencia Instantánea**: Sube tu currículum y la descripción del trabajo para obtener una puntuación de coincidencia rápida y áreas clave de mejora.
 - **Optimizador de Palabras Clave**: Alinea tu currículum con las palabras clave del trabajo e identifica potenciales mejoras.
@@ -75,7 +75,7 @@ El proyecto está construido usando:
 
 - FastAPI para el backend.
 - Next.js para el frontend.
-- Ollama para modelos de IA locales.
+- OpenAI para capacidades de IA predeterminadas.
 - Tailwind CSS para los estilos.
 - SQLite para la base de datos.
 
@@ -83,7 +83,7 @@ El proyecto está construido usando:
 |--------------|-----------------------------------------------|
 | Python       | 3.12+                                         |
 | Next.js      | 15+                                           |
-| Ollama       | 0.6.7                                         |
+| OpenAI       | API                                           |
 
 
 ## Únete y Contribuye

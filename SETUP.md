@@ -42,14 +42,13 @@ make run-dev
 - **PowerShell** 5.1 or later
 - **Node.js** ≥ v18 (includes `npm`)
 - **Python** ≥ 3.8 (`python3`, `pip3`)
-- **winget** (recommended for Ollama installation)
 - **uv** (will be auto-installed by setup.ps1 if missing)
 
 ### Linux/macOS
 - **Bash** 4.4 or higher
 - **Node.js** ≥ v18 (includes `npm`)
 - **Python** ≥ 3.8 (`python3`, `pip3`)
-- **curl** (for installing uv & Ollama)
+- **curl** (for installing uv)
 - **make** (for Makefile integration)
 
 ### Installing Prerequisites
@@ -68,7 +67,6 @@ winget install Python.Python.3.12
 **Or download manually from official sites:**
 - **Node.js**: Download from [https://nodejs.org/](https://nodejs.org/) (LTS version recommended)
 - **Python**: Download from [https://www.python.org/downloads/](https://www.python.org/downloads/) (v3.8+ required)
-- **Ollama**: Script will try to automatically install Ollama if it failed, Download from [https://ollama.com/download/windows](https://ollama.com/download/windows)
 
 **On macOS**, you can install missing tools via Homebrew:
 
@@ -109,17 +107,6 @@ You can customize any variables in these files before or after bootstrapping.
 ---
 
 ## 📦 Installation Steps
-
- Note: Before You Run `setup.sh`
- 
- Make sure that [Ollama](https://ollama.com/) is not only installed but also running.
- You can start the Ollama server manually by running:
-
- ```bash
- ollama serve
- ```
-
- If Ollama is not running, the script may fail to pull the required model (`gemma3:4b`).
  
 ### Windows Installation
 
@@ -139,8 +126,6 @@ You can customize any variables in these files before or after bootstrapping.
    This will:
 
    - Verify/install prerequisites (`node`, `npm`, `python3`, `pip3`, `uv`)
-   - Install Ollama via winget (if not present)
-   - Pull the `gemma3:4b` model via Ollama
    - Bootstrap root & backend `.env` files
    - Install Node.js deps (`npm ci`) at root and frontend
    - Sync Python deps in `apps/backend` via `uv sync`
@@ -181,8 +166,7 @@ You can customize any variables in these files before or after bootstrapping.
 
    This will:
 
-   - Verify/install prerequisites (`node`, `npm`, `python3`, `pip3`, `uv`, `ollama`)
-   - Pull the `gemma3:4b` model via Ollama
+   - Verify/install prerequisites (`node`, `npm`, `python3`, `pip3`, `uv`)
    - Bootstrap root & backend `.env` files
    - Install Node.js deps (`npm ci`) at root and frontend
    - Sync Python deps in `apps/backend` via `uv sync`
@@ -239,9 +223,7 @@ You can customize any variables in these files before or after bootstrapping.
 
   - Install App Installer from Microsoft Store or update Windows 10/11.
 
-- **`Ollama installation failed`**:
-
-  - Download and install manually from [https://ollama.com/download/windows](https://ollama.com/download/windows).
+ 
 
 - **`uv: command not found`** after installation:
 
@@ -256,10 +238,6 @@ You can customize any variables in these files before or after bootstrapping.
 - **`uv: command not found`** despite install:
 
   - Ensure `~/.local/bin` is in your `$PATH`.
-
-- **`ollama: command not found`** on Linux:
-
-  - Verify the installer script ran, or install manually via package manager.
 
 - **`npm ci` errors**:
   - Check your `package-lock.json` is in sync with `package.json`.

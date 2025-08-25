@@ -132,6 +132,10 @@ async def score_and_improve(
     stream: bool = Query(False, description="Enable streaming response using Server-Sent Events"),
     use_llm: bool = Query(True, description="If false, only deterministic baseline improvement is applied (no LLM call)"),
     require_llm: bool = Query(False, description="If true, fail instead of falling back when LLM/embeddings are unavailable"),
+    equivalence_threshold: float | None = Query(None, ge=0.0, le=1.0, description="Cosine threshold for semantic keyword equivalence when weaving baseline"),
+    always_core_tech: bool | None = Query(None, description="Always include 'Core Technologies' line even if nothing is missing"),
+    min_uplift: float | None = Query(None, ge=0.0, le=1.0, description="Target relative uplift (e.g., 0.2 for +20%) to try to reach with extra rounds"),
+    max_rounds: int | None = Query(None, ge=0, le=5, description="Extra LLM rounds if target not reached; safeguards runtime and cost"),
 ):
     """
     Scores and improves a resume against a job description.
@@ -173,6 +177,10 @@ async def score_and_improve(
                 job_id=job_id,
                 use_llm=use_llm,
                 require_llm=require_llm,
+                equivalence_threshold=equivalence_threshold,
+                always_core_tech=always_core_tech,
+                min_uplift=min_uplift,
+                max_rounds=max_rounds,
             )
             return JSONResponse(
                 content={

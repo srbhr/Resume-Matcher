@@ -38,7 +38,7 @@ services:
         sync: false  # Required by SessionMiddleware; set a long random string in the dashboard
       # AI configuration (set according to your provider)
       - key: LLM_PROVIDER
-        value: openai  # or ollama for fully local
+  value: openai
       - key: LL_MODEL
         value: gpt-4o-mini
       - key: LLM_API_KEY

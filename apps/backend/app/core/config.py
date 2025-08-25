@@ -62,14 +62,37 @@ class Settings(BaseSettings):
     SYNC_DATABASE_URL: str = _SYNC_DEFAULT
     ASYNC_DATABASE_URL: str = _ASYNC_DEFAULT
     SESSION_SECRET_KEY: Optional[str] = None
-    LLM_PROVIDER: Optional[str] = "ollama"
+    LLM_PROVIDER: Optional[str] = "openai"
     LLM_API_KEY: Optional[str] = None
     LLM_BASE_URL: Optional[str] = None
-    LL_MODEL: Optional[str] = "gemma3:4b"
-    EMBEDDING_PROVIDER: Optional[str] = "ollama"
+    LL_MODEL: Optional[str] = "gpt-5-mini"
+    EMBEDDING_PROVIDER: Optional[str] = "openai"
     EMBEDDING_API_KEY: Optional[str] = None
     EMBEDDING_BASE_URL: Optional[str] = None
-    EMBEDDING_MODEL: Optional[str] = "dengcao/Qwen3-Embedding-0.6B:Q8_0"
+    EMBEDDING_MODEL: Optional[str] = "text-embedding-3-large"
+    # Pricing (USD per 1K tokens)
+    LLM_PRICE_IN_PER_1K: float = 0.00015
+    LLM_PRICE_OUT_PER_1K: float = 0.00060
+    EMBEDDING_PRICE_PER_1K: float = 0.00013
+    # LLM generation tuning
+    LLM_TEMPERATURE: float = 0.4
+    LLM_MAX_OUTPUT_TOKENS: int = 1200
+    # Matching feature flags and tuning
+    MATCH_ENABLE_COVERAGE_MATRIX: bool = True
+    MATCH_ENABLE_CHUNK_RETRIEVAL: bool = True
+    MATCH_CHUNK_SIZE_TOKENS: int = 600
+    MATCH_CHUNK_OVERLAP_TOKENS: int = 64
+    MATCH_TOP_K_CHUNK_PAIRS: int = 3
+    # Improvement tuning
+    IMPROVE_EQUIVALENCE_THRESHOLD: float = 0.82  # cosine threshold for dynamic equivalence in baseline weave
+    IMPROVE_ALWAYS_CORE_TECH: bool = False       # if true, always include a Core Technologies line even when no missing keywords
+    IMPROVE_LLM_ATTEMPTS: int = 3                # number of best-of attempts for LLM improvement
+    # Target uplift enforcement (optional)
+    IMPROVE_ENFORCE_MIN_UPLIFT: bool = False     # if true, attempt to reach at least IMPROVE_TARGET_UPLIFT_PERCENT relative uplift
+    IMPROVE_TARGET_UPLIFT_PERCENT: float = 0.20  # 20% relative uplift target (0.20 == +20%)
+    IMPROVE_MAX_ROUNDS: int = 2                  # number of extra LLM rounds if target not reached
+    IMPROVE_TEMPERATURE_SWEEP: List[float] = [0.2, 0.4, 0.7]  # diversify generations
+    IMPROVE_MAX_OUTPUT_TOKENS_BOOST: int = 1600  # allow a bit longer output when targeting uplift
     # Rate limiting & security
     RATE_LIMIT_ENABLED: bool = True
     RATE_LIMIT_REQUESTS: int = 60  # requests per window

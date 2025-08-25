@@ -31,7 +31,7 @@ You are an expert coding assistant for the **Resume Matcher** platform - an AI-p
 - **Language**: Python 3.12+ with type hints
 - **Framework**: `FastAPI` with async/await patterns
 - **Database**: `SQLite` with `SQLAlchemy` ORM (async sessions)
-- **AI Integration**: `Ollama` serving `gemma3:4b` model locally
+- **AI Integration**: OpenAI (default) via API; optional providers via LlamaIndex abstraction
 - **Document Processing**: `MarkItDown` for PDF/DOCX conversion
 - **Validation**: `Pydantic` models for request/response schemas
 
@@ -144,7 +144,7 @@ ProcessedJob: {
 3. **AI Processing**
    ```python
    # Use AgentManager for structured responses
-   agent_manager = AgentManager(model="gemma3:4b")
+    agent_manager = AgentManager(model="gpt-4o-mini")
    structured_data = await agent_manager.generate_structured_response(
        prompt=prompt_template.format(content=content),
        schema=json_schema,
@@ -209,7 +209,7 @@ with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_file:
 ### AI Agent Patterns
 ```python
 # Use AgentManager for AI operations
-agent_manager = AgentManager(model="gemma3:4b")
+agent_manager = AgentManager(model="gpt-4o-mini")
 response = await agent_manager.generate_structured_response(
     prompt=prompt_template.format(data),
     schema=json_schema,
@@ -255,7 +255,7 @@ class JobKeywordExtractionError(ResumeMatcherException):
 
 ### Backend Testing
 - **Use pytest** with async test patterns
-- **Mock external dependencies** (Ollama AI, file system operations)
+- **Mock external dependencies** (AI clients, file system operations)
 - **Test service layer** logic independently from API endpoints
 - **Implement database transaction rollback** for test isolation
 - **Use factory patterns** for test data creation
@@ -330,8 +330,8 @@ export function ResumeAnalysis({ resumeId, onAnalysisComplete }: ResumeAnalysisP
 - **Implement retry logic** for AI failures
 
 ### Model Management
-- **Use Ollama** for local AI model serving
-- **Default to lightweight models** (gemma3:4b) for development
+- **Use OpenAI** as the default AI model provider
+- **Default to lightweight models** (gpt-4o-mini) for development
 - **Implement model switching** capabilities for different tasks
 - **Monitor AI response quality** and processing times
 

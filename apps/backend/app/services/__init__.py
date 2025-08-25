@@ -10,6 +10,7 @@ from .exceptions import (
     JobParsingError,
     ResumeKeywordExtractionError,
     JobKeywordExtractionError,
+    AIProcessingError,
 )
 
 __all__ = [
@@ -22,6 +23,7 @@ __all__ = [
     "ResumeValidationError",
     "ResumeKeywordExtractionError",
     "JobKeywordExtractionError",
+    "AIProcessingError",
     "ScoreImprovementService",
     "MatchingService",
 ]

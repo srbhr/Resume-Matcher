@@ -7,7 +7,7 @@
 #
 # Requirements:
 #   • Bash 4.4+ (for associative arrays)
-#   • curl (for uv & ollama installers, if needed)
+#   • curl (for uv installer)
 #
 # After setup:
 #   npm run dev       # start development server
@@ -36,7 +36,7 @@ Options:
 
 This script will:
   • Verify required tools: node, npm, python3, pip3, uv
-  • Install Ollama & pull relevant models
+  • Install root dependencies via npm ci
   • Install root dependencies via npm ci
   • Bootstrap both frontend and backend .env files
   • Bootstrap backend venv and install Python deps via uv
@@ -106,34 +106,7 @@ fi
 check_cmd uv
 success "All prerequisites satisfied."
 
-#–– 2. Ollama & model setup ––#
-ollama_check_or_pull() {
-      model_name="$1"
-      if ! ollama list | grep -q "$model_name"; then
-	  info "Pulling $model_name model…"
-	  ollama pull "$model_name" || error "Failed to pull $model_name model"
-	  success "$model_name model ready"
-      else
-	  info "$model_name model already present—skipping"
-      fi
-}
-
-info "Checking Ollama installation…"
-if ! command -v ollama &> /dev/null; then
-  info "ollama not found; installing…"
-
-  if [[ "$OS_TYPE" == "macOS" ]]; then
-    brew install ollama || error "Failed to install Ollama via Homebrew"
-  else
-    # Download Ollama installer securely without using curl | sh
-    curl -Lo ollama-install.sh https://ollama.com/install.sh || error "Failed to download Ollama installer"
-    chmod +x ollama-install.sh
-    ./ollama-install.sh || error "Failed to execute Ollama installer"
-    rm ollama-install.sh
-    export PATH="$HOME/.local/bin:$PATH"
-  fi
-  success "Ollama installed"
-fi
+:# (Ollama setup removed; default provider is OpenAI via API)
 
 #–– 3. Bootstrap root .env ––#
 if [[ -f .env.example && ! -f .env ]]; then
@@ -165,17 +138,7 @@ info "Setting up backend (apps/backend)…"
     info "Backend .env exists or .env.sample missing—skipping"
   fi
 
-  # The Ollama provider automatically pulls models on demand, but it's preferable to do it at setup time.
-  eval `grep ^LLM_PROVIDER= .env`
-  if [ "$LLM_PROVIDER" = "ollama" ]; then
-      eval `grep ^LL_MODEL .env`
-      ollama_check_or_pull $LL_MODEL
-  fi
-  eval `grep ^EMBEDDING_PROVIDER= .env`
-  if [ "$EMBEDDING_PROVIDER" = "ollama" ]; then
-      eval `grep ^EMBEDDING_MODEL .env`
-      ollama_check_or_pull $EMBEDDING_MODEL
-  fi
+  # No local model setup by default; configure OpenAI keys in apps/backend/.env
 
   info "Syncing Python deps via uv…"
   uv sync

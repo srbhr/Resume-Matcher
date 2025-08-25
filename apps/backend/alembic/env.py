@@ -6,7 +6,7 @@ from logging.config import fileConfig
 from sqlalchemy import engine_from_config, pool
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Connection
-from sqlalchemy.ext.asyncio import AsyncEngine
+from sqlalchemy.ext.asyncio import AsyncEngine, async_engine_from_config
 from sqlalchemy.engine.url import make_url
 
 from alembic import context
@@ -30,17 +30,19 @@ if BACKEND_ROOT not in sys.path:
 from app.models import Base  # type: ignore
 from app.core.config import settings  # type: ignore
 
-# Replace alembic.ini sqlalchemy.url dynamically from env
-env_db_url = os.getenv("DATABASE_URL", "").strip()
-if env_db_url:
-    # Normalize postgres prefix and ensure psycopg driver for sync migrations
-    if env_db_url.startswith("postgres://"):
-        env_db_url = env_db_url.replace("postgres://", "postgresql://", 1)
-    if env_db_url.startswith("postgresql://"):
-        env_db_url = env_db_url.replace("postgresql://", "postgresql+psycopg://", 1)
-    config.set_main_option('sqlalchemy.url', env_db_url)
-elif settings.SYNC_DATABASE_URL:
-    config.set_main_option('sqlalchemy.url', settings.SYNC_DATABASE_URL)
+# Replace alembic.ini sqlalchemy.url dynamically from env only if not already set
+existing_url = (config.get_main_option('sqlalchemy.url') or "").strip()
+if not existing_url:
+    env_db_url = os.getenv("DATABASE_URL", "").strip()
+    if env_db_url:
+        # Normalize postgres prefix and ensure psycopg driver for sync migrations
+        if env_db_url.startswith("postgres://"):
+            env_db_url = env_db_url.replace("postgres://", "postgresql://", 1)
+        if env_db_url.startswith("postgresql://"):
+            env_db_url = env_db_url.replace("postgresql://", "postgresql+psycopg://", 1)
+        config.set_main_option('sqlalchemy.url', env_db_url)
+    elif settings.SYNC_DATABASE_URL:
+        config.set_main_option('sqlalchemy.url', settings.SYNC_DATABASE_URL)
 
 target_metadata = Base.metadata
 
@@ -81,21 +83,19 @@ def do_run_migrations(connection: Connection) -> None:
 
 async def run_migrations_online() -> None:
     url = config.get_main_option("sqlalchemy.url")
-    # If using a synchronous driver (e.g., psycopg) just run sync migrations path.
-    if url.startswith('sqlite') or url.startswith('postgresql+psycopg://') or url.startswith('postgres://'):
+    # If using a synchronous driver (e.g., psycopg or sqlite sync), run sync migrations.
+    if url.startswith('sqlite://') or url.startswith('postgresql+psycopg://') or url.startswith('postgres://') or url.startswith('postgresql://'):
         connectable = create_engine(url, poolclass=pool.NullPool, future=True)
         with connectable.connect() as connection:
             do_run_migrations(connection)
         return
 
-    # Otherwise assume async driver (asyncpg) is in use
-    connectable = AsyncEngine(
-        engine_from_config(
-            config.get_section(config.config_ini_section),
-            prefix="sqlalchemy.",
-            poolclass=pool.NullPool,
-            future=True,
-        )
+    # Otherwise assume async driver (e.g., asyncpg or sqlite+aiosqlite) is in use
+    connectable = async_engine_from_config(
+        config.get_section(config.config_ini_section),
+        prefix="sqlalchemy.",
+        poolclass=pool.NullPool,
+        future=True,
     )
     async with connectable.connect() as connection:  # type: ignore
         await connection.run_sync(do_run_migrations)

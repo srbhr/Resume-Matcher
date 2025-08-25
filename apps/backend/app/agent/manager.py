@@ -5,6 +5,7 @@ from typing import Dict, Any
 from ..core import settings
 from .strategies.wrapper import JSONWrapper, MDWrapper
 from .providers.base import Provider, EmbeddingProvider
+from .embedding_cache import embedding_cache
 
 logger = logging.getLogger(__name__)
 
@@ -29,9 +30,8 @@ class AgentManager:
         # (e.g. OpenAI doesn't take top_k) but each provider can make
         # best effort.
         opts = {
-            "temperature": 0,
-            "top_p": 0.9,
-            "top_k": 40,
+            "temperature": settings.LLM_TEMPERATURE,
+            # leave top_p/top_k unset for OpenAI by default; providers can ignore extra keys
             "num_ctx": 20000,
         }
         opts.update(kwargs)
@@ -120,4 +120,14 @@ class EmbeddingManager:
         Get the embedding for the given text.
         """
         provider = await self._get_embedding_provider(**kwargs)
-        return await provider.embed(text)
+        # Try in-memory cache first
+        cached = embedding_cache.get(self._model_provider, self._model, text)
+        if cached is not None:
+            return cached
+        vec = await provider.embed(text)
+        # Best-effort cache set (no exceptions propagated)
+        try:
+            embedding_cache.set(self._model_provider, self._model, text, vec)
+        except Exception:
+            pass
+        return vec

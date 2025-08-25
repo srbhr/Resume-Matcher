@@ -4,10 +4,25 @@ import math
 import pytest
 
 from app.services.matching_service import MatchingService
-from app.models import ProcessedResume, ProcessedJob
+from app.models import ProcessedResume, ProcessedJob, Resume, Job
 
 
 def _make_processed_resume(resume_id: str, skills: list[str], experiences: list[str], projects: list[str], qualifications: list[str]):
+    # Ensure FK to raw resume exists for Postgres
+    pr = ProcessedResume(
+        resume_id=resume_id,
+        personal_data=json.dumps({"firstName": "A", "lastName": "B", "email": "a@b.c", "phone": "123", "location": {"city": "X", "country": "Y"}}),
+        experiences=json.dumps({"experiences": [{"job_title": e, "company": "C", "location": "L", "start_date": "2020-01-01", "end_date": "2021-01-01", "description": ["Did X"], "technologies_used": []} for e in experiences]}),
+        projects=json.dumps({"projects": [{"project_name": p, "description": "D", "technologies_used": [], "start_date": "2020-01-01", "end_date": "2020-06-01"} for p in projects]}),
+        skills=json.dumps({"skills": [{"category": "General", "skill_name": s} for s in skills]}),
+        research_work=json.dumps({"research_work": []}),
+        achievements=json.dumps({"achievements": []}),
+        education=json.dumps({"education": []}),
+        extracted_keywords=json.dumps({"extracted_keywords": skills + experiences + projects + qualifications}),
+    )
+    raw = Resume(resume_id=resume_id, content="raw", content_type="text/plain")
+    pr.raw_resume = raw
+    return pr
     return ProcessedResume(
         resume_id=resume_id,
         personal_data=json.dumps({"firstName": "A", "lastName": "B", "email": "a@b.c", "phone": "123", "location": {"city": "X", "country": "Y"}}),
@@ -21,8 +36,8 @@ def _make_processed_resume(resume_id: str, skills: list[str], experiences: list[
     )
 
 
-def _make_processed_job(job_id: str, keywords: list[str], required_quals: list[str]):
-    return ProcessedJob(
+def _make_processed_job(job_id: str, resume_id: str, keywords: list[str], required_quals: list[str]):
+    pj = ProcessedJob(
         job_id=job_id,
         job_title="Engineer",
         company_profile=json.dumps({"company_name": "Co", "industry": "Tech"}),
@@ -36,6 +51,9 @@ def _make_processed_job(job_id: str, keywords: list[str], required_quals: list[s
         application_info=json.dumps({"application_info": []}),
         extracted_keywords=json.dumps({"extracted_keywords": keywords}),
     )
+    raw = Job(job_id=job_id, resume_id=resume_id, content="job raw")
+    pj.raw_job = raw
+    return pj
 
 
 @pytest.mark.asyncio
@@ -49,7 +67,7 @@ async def test_matching_full_overlap(db_session):
     job_keywords = ["python", "docker", "kubernetes", "engineer"]
 
     db_session.add(_make_processed_resume(resume_id, skills, experiences, projects, required))
-    db_session.add(_make_processed_job(job_id, job_keywords, required))
+    db_session.add(_make_processed_job(job_id, resume_id, job_keywords, required))
     await db_session.commit()
 
     svc = MatchingService(db_session)
@@ -73,7 +91,7 @@ async def test_matching_penalty_for_missing_quals(db_session):
     job_keywords = ["python", "golang"]
 
     db_session.add(_make_processed_resume(resume_id, skills, experiences, projects, required))
-    db_session.add(_make_processed_job(job_id, job_keywords, required))
+    db_session.add(_make_processed_job(job_id, resume_id, job_keywords, required))
     await db_session.commit()
 
     svc = MatchingService(db_session)
@@ -95,7 +113,7 @@ async def test_matching_no_keywords_edge(db_session):
     job_keywords: list[str] = []
 
     db_session.add(_make_processed_resume(resume_id, skills, experiences, projects, required))
-    db_session.add(_make_processed_job(job_id, job_keywords, required))
+    db_session.add(_make_processed_job(job_id, resume_id, job_keywords, required))
     await db_session.commit()
 
     svc = MatchingService(db_session)

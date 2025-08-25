@@ -100,6 +100,17 @@
             "title": "Raw Weighted Score",
             "type": "number"
           },
+          "semantic_similarity": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Semantic Similarity"
+          },
           "skill_overlap": {
             "title": "Skill Overlap",
             "type": "number"
@@ -169,6 +180,21 @@
           },
           "counts": {
             "$ref": "#/components/schemas/MatchCounts"
+          },
+          "coverage": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coverage"
           },
           "job_id": {
             "title": "Job Id",
@@ -295,6 +321,49 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/ai": {
+      "get": {
+        "description": "Deep health check for AI providers (LLM & Embeddings).\n\n- Does a minimal LLM call (non-PII, tiny prompt)\n- Does a minimal Embedding call\nReturns provider, model and ok/error for each.",
+        "operationId": "ai_health_ai_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Ai Health Ai Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Ai Health",
+        "tags": [
+          "Health check"
+        ]
+      }
+    },
+    "/api/v1/auth/whoami": {
+      "get": {
+        "operationId": "whoami_api_v1_auth_whoami_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Whoami",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
     "/api/v1/cache/entity/{entity_type}/{entity_id}": {
       "delete": {
         "operationId": "invalidate_entity_cache_api_v1_cache_entity__entity_type___entity_id__delete",
@@ -383,6 +452,52 @@
         "tags": [
           "v1",
           "cache"
+        ]
+      }
+    },
+    "/api/v1/health/ai": {
+      "get": {
+        "description": "Deep health check for AI providers (LLM & Embeddings).\n\n- Does a minimal LLM call (non-PII, tiny prompt)\n- Does a minimal Embedding call\nReturns provider, model and ok/error for each.",
+        "operationId": "ai_health_api_v1_health_ai_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Ai Health Api V1 Health Ai Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Ai Health",
+        "tags": [
+          "v1",
+          "Health check"
+        ]
+      }
+    },
+    "/api/v1/health/healthz": {
+      "get": {
+        "description": "K8s/Railway style liveness endpoint.\nReturns minimal JSON and verifies DB connectivity.",
+        "operationId": "healthz_api_v1_health_healthz_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Healthz",
+        "tags": [
+          "v1",
+          "Health check"
         ]
       }
     },
@@ -706,6 +821,96 @@
               "title": "Use Llm",
               "type": "boolean"
             }
+          },
+          {
+            "description": "If true, fail instead of falling back when LLM/embeddings are unavailable",
+            "in": "query",
+            "name": "require_llm",
+            "required": false,
+            "schema": {
+              "default": false,
+              "description": "If true, fail instead of falling back when LLM/embeddings are unavailable",
+              "title": "Require Llm",
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "Cosine threshold for semantic keyword equivalence when weaving baseline",
+            "in": "query",
+            "name": "equivalence_threshold",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 1.0,
+                  "minimum": 0.0,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Cosine threshold for semantic keyword equivalence when weaving baseline",
+              "title": "Equivalence Threshold"
+            }
+          },
+          {
+            "description": "Always include 'Core Technologies' line even if nothing is missing",
+            "in": "query",
+            "name": "always_core_tech",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Always include 'Core Technologies' line even if nothing is missing",
+              "title": "Always Core Tech"
+            }
+          },
+          {
+            "description": "Target relative uplift (e.g., 0.2 for +20%) to try to reach with extra rounds",
+            "in": "query",
+            "name": "min_uplift",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 1.0,
+                  "minimum": 0.0,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Target relative uplift (e.g., 0.2 for +20%) to try to reach with extra rounds",
+              "title": "Min Uplift"
+            }
+          },
+          {
+            "description": "Extra LLM rounds if target not reached; safeguards runtime and cost",
+            "in": "query",
+            "name": "max_rounds",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 5,
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Extra LLM rounds if target not reached; safeguards runtime and cost",
+              "title": "Max Rounds"
+            }
           }
         ],
         "requestBody": {
@@ -869,6 +1074,96 @@
               "title": "Use Llm",
               "type": "boolean"
             }
+          },
+          {
+            "description": "If true, fail instead of falling back when LLM/embeddings are unavailable",
+            "in": "query",
+            "name": "require_llm",
+            "required": false,
+            "schema": {
+              "default": false,
+              "description": "If true, fail instead of falling back when LLM/embeddings are unavailable",
+              "title": "Require Llm",
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "Cosine threshold for semantic keyword equivalence when weaving baseline",
+            "in": "query",
+            "name": "equivalence_threshold",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 1.0,
+                  "minimum": 0.0,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Cosine threshold for semantic keyword equivalence when weaving baseline",
+              "title": "Equivalence Threshold"
+            }
+          },
+          {
+            "description": "Always include 'Core Technologies' line even if nothing is missing",
+            "in": "query",
+            "name": "always_core_tech",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Always include 'Core Technologies' line even if nothing is missing",
+              "title": "Always Core Tech"
+            }
+          },
+          {
+            "description": "Target relative uplift (e.g., 0.2 for +20%) to try to reach with extra rounds",
+            "in": "query",
+            "name": "min_uplift",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 1.0,
+                  "minimum": 0.0,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Target relative uplift (e.g., 0.2 for +20%) to try to reach with extra rounds",
+              "title": "Min Uplift"
+            }
+          },
+          {
+            "description": "Extra LLM rounds if target not reached; safeguards runtime and cost",
+            "in": "query",
+            "name": "max_rounds",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 5,
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Extra LLM rounds if target not reached; safeguards runtime and cost",
+              "title": "Max Rounds"
+            }
           }
         ],
         "requestBody": {
@@ -958,6 +1253,26 @@
         "summary": "Upload a resume in PDF or DOCX format and store it into DB in HTML/Markdown format",
         "tags": [
           "v1"
+        ]
+      }
+    },
+    "/healthz": {
+      "get": {
+        "description": "K8s/Railway style liveness endpoint.\nReturns minimal JSON and verifies DB connectivity.",
+        "operationId": "healthz_healthz_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Healthz",
+        "tags": [
+          "Health check"
         ]
       }
     },

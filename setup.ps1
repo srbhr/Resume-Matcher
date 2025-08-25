@@ -18,8 +18,7 @@ Options:
 
 This Windows-only PowerShell script will:
   - Verify required tools: node, npm, python3, pip3, uv (CORE DEPENDENCIES)
-  - Install Ollama via winget
-  - Pull gemma3:4b model
+    - Configure backend and frontend env files
   - Install root dependencies via npm
   - Bootstrap both root and backend .env files
   - Bootstrap backend venv and install Python deps via uv
@@ -34,7 +33,7 @@ CORE DEPENDENCIES (script will fail if missing):
 
 Windows Requirements:
   - PowerShell 5.1 or later
-  - winget (recommended for Ollama installation)
+    - winget
 
 For Linux/macOS systems:
   - Use ./setup.sh instead of this script
@@ -85,8 +84,7 @@ if ($OS_TYPE -ne "Windows") {
     Write-Host "  1. Install Node.js v18+" -ForegroundColor Cyan
     Write-Host "  2. Install Python 3" -ForegroundColor Cyan
     Write-Host "  3. Install uv from https://astral.sh/uv/" -ForegroundColor Cyan
-    Write-Host "  4. Install Ollama from https://ollama.com" -ForegroundColor Cyan
-    Write-Host "  5. Run: npm install && npm run dev" -ForegroundColor Cyan
+    Write-Host "  4. Run: npm install && npm run dev" -ForegroundColor Cyan
     Write-Host ""
     exit 1
 }
@@ -169,42 +167,7 @@ if (-not (Get-Command "uv" -ErrorAction SilentlyContinue)) {
 
 Write-Success "All core prerequisites satisfied."
 
-# Install Ollama if not present
-Write-Info "Checking Ollama installation..."
-if (-not (Get-Command "ollama" -ErrorAction SilentlyContinue)) {
-    Write-Info "ollama not found; installing..."
-    # Check if winget is available
-    if (Get-Command "winget" -ErrorAction SilentlyContinue) {
-        try {
-            Write-Info "Installing Ollama using winget..."
-            winget install --id=Ollama.Ollama -e
-            Write-Success "Ollama installed via winget"
-            Write-Info "Please restart your terminal and run setup.ps1 again to complete the setup"
-        } catch {
-            Write-CustomError "Failed to install Ollama via winget. Please install manually from https://ollama.com/download/windows"
-        }
-    } else {
-        Write-CustomError "winget is not available. Please install Ollama manually from https://ollama.com/download/windows"
-    }
-} else {
-    Write-Success "Ollama is already installed"
-}
-
-# Pull Ollama model
-if (Get-Command "ollama" -ErrorAction SilentlyContinue) {
-    try {
-        $OllamaList = ollama list 2>&1
-        if ($OllamaList -notmatch "gemma3:4b") {
-            Write-Info "Pulling gemma3:4b model... (this may take a while)"
-            ollama pull gemma3:4b
-            Write-Success "gemma3:4b model ready"
-        } else {
-            Write-Info "gemma3:4b model already present—skipping"
-        }
-    } catch {
-        Write-Info "Warning: Failed to pull gemma3:4b model. You may need to install it manually later."
-    }
-}
+# Note: This project defaults to OpenAI for LLM/embeddings. Ensure you have an API key set in apps/backend/.env.
 
 # Bootstrap root .env
 if ((Test-Path ".env.example") -and (-not (Test-Path ".env"))) {
@@ -333,7 +296,6 @@ Next steps:
    Run 'npm run build' for production.
    See SETUP.md for more details.
 
-Note: If Ollama was not installed automatically, please install it manually from:
-https://ollama.com/download/windows
+Note: Configure OpenAI in apps/backend/.env (LLM_PROVIDER, LL_MODEL, EMBEDDING_PROVIDER, EMBEDDING_MODEL, and API keys).
 "@
 }

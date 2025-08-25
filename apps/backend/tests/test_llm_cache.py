@@ -32,7 +32,7 @@ async def test_fetch_or_cache_inserts_and_hits(monkeypatch):
         # Record starting row count to allow for prior test residue when running partial suites
         start_rows = await _count_cache_rows(session)
         payload = {"foo": "bar"}
-        model = "gemma3:4b"
+        model = "gpt-4o-mini"
         strategy = "json"
         prompt = "TEST PROMPT"
 
@@ -69,7 +69,7 @@ async def test_ttl_expiry(monkeypatch):
     async with async_engine.begin() as conn:  # pragma: no cover - setup
         await conn.run_sync(Base.metadata.create_all)
     async with AsyncSessionLocal() as session:
-        model = "gemma3:4b"
+        model = "gpt-4o-mini"
         strategy = "json"
         prompt = "TTL TEST PROMPT"
         call_counter = {"n": 0}
@@ -99,7 +99,7 @@ async def test_token_usage_persisted():
     async with async_engine.begin() as conn:  # pragma: no cover - setup
         await conn.run_sync(Base.metadata.create_all)
     async with AsyncSessionLocal() as session:
-        model = "gemma3:4b"
+        model = "gpt-4o-mini"
         strategy = "json"
         prompt = "USAGE TEST PROMPT"
         call_counter = {"n": 0}
@@ -138,7 +138,7 @@ async def test_hit_miss_counters():
     async with async_engine.begin() as conn:  # pragma: no cover - setup
         await conn.run_sync(Base.metadata.create_all)
     async with AsyncSessionLocal() as session:
-        model = "gemma3:4b"
+        model = "gpt-4o-mini"
         strategy = "json"
         prompt = "COUNTER TEST PROMPT UNIQUE"
         async def runner():
@@ -164,7 +164,7 @@ async def test_cleanup_deletes_expired():
     async with async_engine.begin() as conn:  # pragma: no cover - setup
         await conn.run_sync(Base.metadata.create_all)
     async with AsyncSessionLocal() as session:
-        model = "gemma3:4b"; strategy = "json"; prompt = "CLEANUP TEST"
+        model = "gpt-4o-mini"; strategy = "json"; prompt = "CLEANUP TEST"
         async def runner(): return {"value": 1}
         await fetch_or_cache(db=session, model=model, strategy=strategy, prompt=prompt, runner=runner, ttl_seconds=1)
         # Age row artificially
@@ -233,7 +233,7 @@ async def test_invalidation_endpoint_resume(monkeypatch):
             return {"ok": True}
         await fetch_or_cache(
             db=session,
-            model="gemma3:4b",
+            model="gpt-4o-mini",
             strategy="json",
             prompt=f"dummy prompt {rid}",
             runner=runner,

@@ -14,6 +14,8 @@ class MatchBreakdown(BaseModel):
     project_relevance: float
     education_bonus: float
     penalty_missing_critical: float
+    # Optional: semantic component (0..1). Present when embeddings available.
+    semantic_similarity: float | None = None
     raw_weighted_score: float
     normalized_score: float
     final_score: int
@@ -35,6 +37,7 @@ class MatchData(BaseModel):
     score: int
     breakdown: MatchBreakdown
     counts: MatchCounts
+    coverage: list[dict] | None = None
 
 
 class MatchResponse(BaseModel):

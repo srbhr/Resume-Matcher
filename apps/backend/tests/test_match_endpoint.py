@@ -7,7 +7,7 @@ from fastapi import FastAPI
 from app.base import create_app
 from app.models import ProcessedResume, ProcessedJob, Resume, Job
 from app.services.matching_service import MatchingService  # ensure import path works
-from app.core.database import AsyncSessionLocal
+from app.core.database import get_db_session
 
 # Reuse in-memory sqlite by overriding settings could be more elaborate; here we rely on default (file) DB.
 # For isolation, we create temporary resume/job records directly as processed rows.
@@ -36,42 +36,46 @@ async def test_match_endpoint_404_on_missing_records():
 
 
 @pytest.mark.asyncio
-async def test_match_endpoint_happy_path():
+async def test_match_endpoint_happy_path(db_session):
     app: FastAPI = create_app()
-    # Insert minimal processed resume + job sharing some keywords
-    async with AsyncSessionLocal() as session:
-        resume_id = str(uuid.uuid4())
-        job_id = str(uuid.uuid4())
-        # raw rows to satisfy FK constraints
-        raw_resume = Resume(resume_id=resume_id, content="raw", content_type="text/plain")
-        raw_job = Job(job_id=job_id, resume_id=resume_id, content="job raw")
-        pr = ProcessedResume(
-            resume_id=resume_id,
-            personal_data=json.dumps({"firstName": "A", "lastName": "B", "email": "a@b.c", "phone": "1", "location": {"city": "X", "country": "Y"}}),
-            experiences=json.dumps({"experiences": [{"job_title": "python engineer", "company": "C", "location": "L", "start_date": "2020-01-01", "end_date": "2021-01-01", "description": ["Did X"], "technologies_used": []}]}),
-            projects=json.dumps({"projects": [{"project_name": "docker tool", "description": "D", "technologies_used": [], "start_date": "2020-01-01", "end_date": "2020-06-01"}]}),
-            skills=json.dumps({"skills": [{"category": "General", "skill_name": s} for s in ["python", "docker"]]}),
-            research_work=json.dumps({"research_work": []}),
-            achievements=json.dumps({"achievements": []}),
-            education=json.dumps({"education": []}),
-            extracted_keywords=json.dumps({"extracted_keywords": ["python", "docker", "engineer"]}),
-        )
-        pj = ProcessedJob(
-            job_id=job_id,
-            job_title="Engineer",
-            company_profile=json.dumps({"company_name": "Co", "industry": "Tech"}),
-            location=json.dumps({"city": "", "state": "", "country": "", "remote_status": "Remote"}),
-            date_posted="2025-01-01",
-            employment_type="Full-time",
-            job_summary="Build stuff",
-            key_responsibilities=json.dumps({"key_responsibilities": ["Do things"]}),
-            qualifications=json.dumps({"required": ["python"], "preferred": []}),
-            compensation_and_benfits=json.dumps({"compensation_and_benfits": []}),
-            application_info=json.dumps({"application_info": []}),
-            extracted_keywords=json.dumps({"extracted_keywords": ["python", "docker", "engineer"]}),
-        )
-        session.add_all([raw_resume, raw_job, pr, pj])
-        await session.commit()
+    # Override DB dependency to use the shared test session (same engine/loop)
+    async def _override_get_db_session():
+        yield db_session
+    app.dependency_overrides[get_db_session] = _override_get_db_session
+
+    # Insert minimal processed resume + job sharing some keywords using the same session
+    resume_id = str(uuid.uuid4())
+    job_id = str(uuid.uuid4())
+    raw_resume = Resume(resume_id=resume_id, content="raw", content_type="text/plain")
+    raw_job = Job(job_id=job_id, resume_id=resume_id, content="job raw")
+    pr = ProcessedResume(
+        resume_id=resume_id,
+        personal_data=json.dumps({"firstName": "A", "lastName": "B", "email": "a@b.c", "phone": "1", "location": {"city": "X", "country": "Y"}}),
+        experiences=json.dumps({"experiences": [{"job_title": "python engineer", "company": "C", "location": "L", "start_date": "2020-01-01", "end_date": "2021-01-01", "description": ["Did X"], "technologies_used": []}]}),
+        projects=json.dumps({"projects": [{"project_name": "docker tool", "description": "D", "technologies_used": [], "start_date": "2020-01-01", "end_date": "2020-06-01"}]}),
+        skills=json.dumps({"skills": [{"category": "General", "skill_name": s} for s in ["python", "docker"]]}),
+        research_work=json.dumps({"research_work": []}),
+        achievements=json.dumps({"achievements": []}),
+        education=json.dumps({"education": []}),
+        extracted_keywords=json.dumps({"extracted_keywords": ["python", "docker", "engineer"]}),
+    )
+    pj = ProcessedJob(
+        job_id=job_id,
+        job_title="Engineer",
+        company_profile=json.dumps({"company_name": "Co", "industry": "Tech"}),
+        location=json.dumps({"city": "", "state": "", "country": "", "remote_status": "Remote"}),
+        date_posted="2025-01-01",
+        employment_type="Full-time",
+        job_summary="Build stuff",
+        key_responsibilities=json.dumps({"key_responsibilities": ["Do things"]}),
+        qualifications=json.dumps({"required": ["python"], "preferred": []}),
+        compensation_and_benfits=json.dumps({"compensation_and_benfits": []}),
+        application_info=json.dumps({"application_info": []}),
+        extracted_keywords=json.dumps({"extracted_keywords": ["python", "docker", "engineer"]}),
+    )
+    db_session.add_all([raw_resume, raw_job, pr, pj])
+    await db_session.commit()
+
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         resp = await client.post("/api/v1/match", json={"resume_id": resume_id, "job_id": job_id})
