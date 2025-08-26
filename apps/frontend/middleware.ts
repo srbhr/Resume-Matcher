@@ -33,12 +33,16 @@ function buildCsp(nonce: string) {
   const clerkCustom = process.env.NEXT_PUBLIC_CLERK_DOMAIN ? [`https://${process.env.NEXT_PUBLIC_CLERK_DOMAIN}`] : [];
   const clerkHosts = [
     // Primary Clerk domains
-    'https://clerk.com',
-    'https://*.clerk.com',
-    'https://clerk.dev',
-    'https://*.clerk.dev',
-    'https://clerk.services',
-    'https://*.clerk.services',
+  'https://clerk.com',
+  'https://*.clerk.com',
+  'https://clerk.dev',
+  'https://*.clerk.dev',
+  'https://clerk.services',
+  'https://*.clerk.services',
+  // Clerk default dev/staging frontend domains
+  'https://*.clerk.accounts.dev',
+  // Clerk public API host (used by SDK flows)
+  'https://api.clerk.com',
   // Clerk JS CDN (required for Clerk to load scripts)
   'https://cdn.jsdelivr.net',
     // Clerk images/CDNs
