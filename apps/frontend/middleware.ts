@@ -31,6 +31,15 @@ function buildCsp(nonce: string) {
   const connectSrc = ["'self'", 'ws:', 'wss:', ...connectExtra];
   // Clerk host allowlist (optionally include a custom Clerk domain via env)
   const clerkCustom = process.env.NEXT_PUBLIC_CLERK_DOMAIN ? [`https://${process.env.NEXT_PUBLIC_CLERK_DOMAIN}`] : [];
+  // If sign-in/up are hosted on a different origin (Account Portal), include their origins for CSP
+  const extraAuthOrigins: string[] = [];
+  const safeOrigin = (u?: string) => {
+    try { return u ? new URL(u).origin : undefined; } catch { return undefined; }
+  };
+  const signInOrigin = safeOrigin(process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL);
+  const signUpOrigin = safeOrigin(process.env.NEXT_PUBLIC_CLERK_SIGN_UP_URL);
+  if (signInOrigin) extraAuthOrigins.push(signInOrigin);
+  if (signUpOrigin) extraAuthOrigins.push(signUpOrigin);
   const clerkHosts = [
     // Primary Clerk domains
   'https://clerk.com',
@@ -48,8 +57,10 @@ function buildCsp(nonce: string) {
     // Clerk images/CDNs
     'https://images.clerk.dev',
     'https://img.clerk.com',
-    // Optional custom domain
-    ...clerkCustom,
+  // Optional custom domain
+  ...clerkCustom,
+  // Optional account portal origins from env
+  ...Array.from(new Set(extraAuthOrigins)),
   ];
   return [
     "default-src 'self'",
@@ -112,8 +123,12 @@ function baseMiddleware(request: NextRequest) {
 // Only enable Clerk middleware when BOTH keys are present.
 // This avoids activating Clerk with just the publishable key (which would throw for missing secret).
 const hasClerkEnv = Boolean(process.env.CLERK_SECRET_KEY && process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
+// Configure Clerk routes via env as recommended (dashboard config will be deprecated)
+const signInUrl = process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL || undefined;
+const signUpUrl = process.env.NEXT_PUBLIC_CLERK_SIGN_UP_URL || undefined;
+
 export default (hasClerkEnv
-  ? clerkMiddleware((auth, request) => baseMiddleware(request))
+  ? clerkMiddleware((auth, request) => baseMiddleware(request), { signInUrl, signUpUrl })
   : ((request: NextRequest) => baseMiddleware(request))
 );
 
