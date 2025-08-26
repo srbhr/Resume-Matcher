@@ -31,55 +31,28 @@ function buildCsp(nonce: string) {
   const connectSrc = ["'self'", 'ws:', 'wss:', ...connectExtra];
   // Clerk host allowlist (optionally include a custom Clerk domain via env)
   const clerkCustom = process.env.NEXT_PUBLIC_CLERK_DOMAIN ? [`https://${process.env.NEXT_PUBLIC_CLERK_DOMAIN}`] : [];
-  // If sign-in/up are hosted on a different origin (Account Portal), include their origins for CSP
-  const extraAuthOrigins: string[] = [];
-  const safeOrigin = (u?: string) => {
-    try { return u ? new URL(u).origin : undefined; } catch { return undefined; }
-  };
-  const signInOrigin = safeOrigin(process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL);
-  const signUpOrigin = safeOrigin(process.env.NEXT_PUBLIC_CLERK_SIGN_UP_URL);
-  if (signInOrigin) extraAuthOrigins.push(signInOrigin);
-  if (signUpOrigin) extraAuthOrigins.push(signUpOrigin);
   const clerkHosts = [
-    // Primary Clerk domains
-  'https://clerk.com',
-  'https://*.clerk.com',
-  'https://clerk.dev',
-  'https://*.clerk.dev',
-  'https://clerk.services',
-  'https://*.clerk.services',
-  // Clerk default dev/staging frontend domains
-  'https://*.clerk.accounts.dev',
-  // Clerk public API host (used by SDK flows)
-  'https://api.clerk.com',
-  // Clerk JS CDN (required for Clerk to load scripts)
-  'https://cdn.jsdelivr.net',
-    // Clerk images/CDNs
-    'https://images.clerk.dev',
-    'https://img.clerk.com',
-  // Optional custom domain
-  ...clerkCustom,
-  // Optional account portal origins from env
-  ...Array.from(new Set(extraAuthOrigins)),
+    'https://*.clerk.com',
+    'https://*.clerk.services',
+    'https://*.clerk.accounts.dev',
+    ...clerkCustom,
   ];
   return [
     "default-src 'self'",
-  // Scripts: allow self, Clerk and its CDN, and inline to avoid nonce mismatches in App Router
-  `script-src 'self' 'unsafe-inline' ${clerkHosts.join(' ')}`,
+    // Scripts: allow self, Clerk domains, and inline to avoid nonce mismatches in App Router
+    `script-src 'self' 'unsafe-inline' ${clerkHosts.join(' ')}`,
     // Styles: allow self, inline, Google Fonts, and Clerk assets
     `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com ${clerkHosts.join(' ')}`,
     "font-src 'self' https://fonts.gstatic.com data:",
     // Images: include Clerk image CDNs
-    `img-src 'self' blob: data: https://raw.githubusercontent.com ${clerkHosts.join(' ')}`,
+    `img-src 'self' blob: data: https://raw.githubusercontent.com https://img.clerk.com ${clerkHosts.join(' ')}`,
     // Connect: backend + Clerk APIs (include accounts.dev)
     `connect-src ${connectSrc.join(' ')} ${clerkHosts.join(' ')}`,
-  // Workers: allow self and blob for Clerk internals if needed
-  "worker-src 'self' blob:",
     "media-src 'self'",
     "object-src 'none'",
     "frame-ancestors 'self'",
     // Clerk embeds
-    `frame-src 'self' ${clerkHosts.join(' ')} https://accounts.google.com https://*.google.com https://*.facebook.com https://*.github.com https://*.apple.com https://login.microsoftonline.com`,
+    `frame-src 'self' ${clerkHosts.join(' ')}`,
     "base-uri 'self'",
     "form-action 'self'",
     "manifest-src 'self'",
@@ -96,9 +69,8 @@ const permissionsPolicy: Record<string,string> = {
 
 function baseMiddleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
-  // Skip i18n rewriting for Clerk auth routes (locale-aware: e.g., /de/sign-in)
-  const segments = pathname.split('/').filter(Boolean);
-  const isAuthRoute = segments.includes('sign-in') || segments.includes('sign-up');
+  // Skip i18n rewriting for Clerk auth routes
+  const isAuthRoute = pathname.startsWith('/sign-in') || pathname.startsWith('/sign-up');
   // Also skip i18n rewriting for API/TRPC routes so /api/* stays intact
   const isApiRoute = pathname.startsWith('/api') || pathname.startsWith('/trpc');
   const response = (isAuthRoute || isApiRoute) ? NextResponse.next() : intlMiddleware(request);
@@ -120,15 +92,10 @@ function baseMiddleware(request: NextRequest) {
   return response;
 }
 
-// Only enable Clerk middleware when BOTH keys are present.
-// This avoids activating Clerk with just the publishable key (which would throw for missing secret).
-const hasClerkEnv = Boolean(process.env.CLERK_SECRET_KEY && process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
-// Configure Clerk routes via env as recommended (dashboard config will be deprecated)
-const signInUrl = process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL || undefined;
-const signUpUrl = process.env.NEXT_PUBLIC_CLERK_SIGN_UP_URL || undefined;
-
+// If Clerk env vars are missing, fall back to a plain middleware to avoid crashes in Vercel
+const hasClerkEnv = Boolean(process.env.CLERK_SECRET_KEY || process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
 export default (hasClerkEnv
-  ? clerkMiddleware((auth, request) => baseMiddleware(request), { signInUrl, signUpUrl })
+  ? clerkMiddleware((auth, request) => baseMiddleware(request))
   : ((request: NextRequest) => baseMiddleware(request))
 );
 

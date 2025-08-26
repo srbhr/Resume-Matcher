@@ -313,6 +313,33 @@
         "title": "ValidationError",
         "type": "object"
       }
+      ,
+      "DebitRequest": {
+        "properties": {
+          "delta": {
+            "exclusiveMinimum": 0,
+            "title": "Delta",
+            "type": "integer"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Reason for debit entry",
+            "title": "Reason"
+          }
+        },
+        "required": [
+          "delta"
+        ],
+        "title": "DebitRequest",
+        "type": "object"
+      }
     }
   },
   "info": {
@@ -1251,6 +1278,83 @@
           }
         },
         "summary": "Upload a resume in PDF or DOCX format and store it into DB in HTML/Markdown format",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/me/credits": {
+      "get": {
+        "operationId": "get_my_credits_api_v1_me_credits_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get current user's credit balance",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/credits/debit": {
+      "post": {
+        "operationId": "debit_credits_api_v1_credits_debit_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DebitRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Debit credits for usage",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/stripe/webhook": {
+      "post": {
+        "operationId": "stripe_webhook_api_v1_stripe_webhook_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Stripe webhook (stub)",
         "tags": [
           "v1"
         ]

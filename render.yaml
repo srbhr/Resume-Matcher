@@ -32,15 +32,15 @@ services:
     envVars:
       - key: DATABASE_URL
         sync: false  # Provide Neon connection URL with sslmode=require in dashboard when prompted
-      - key: ASYNC_DATABASE_URL
-        sync: false  # Provide Neon async URL (postgresql+asyncpg://...&ssl=require) or omit; app derives it from DATABASE_URL if unset
+      - key: DATABASE_URL_ASYNC
+        sync: false  # Provide Neon async URL (postgresql+asyncpg://...&ssl=require) or leave empty; app derives it from DATABASE_URL if omitted
       - key: SESSION_SECRET_KEY
         sync: false  # Required by SessionMiddleware; set a long random string in the dashboard
       # AI configuration (set according to your provider)
       - key: LLM_PROVIDER
-        value: openai
+  value: openai
       - key: LL_MODEL
-        value: gpt-5-mini
+        value: gpt-4o-mini
       - key: LLM_API_KEY
         sync: false  # If using OpenAI (preferred key)
       - key: OPENAI_API_KEY
