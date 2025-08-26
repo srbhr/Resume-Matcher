@@ -101,8 +101,9 @@ function baseMiddleware(request: NextRequest) {
   return response;
 }
 
-// If Clerk env vars are missing, fall back to a plain middleware to avoid crashes in Vercel
-const hasClerkEnv = Boolean(process.env.CLERK_SECRET_KEY || process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
+// Only enable Clerk middleware when BOTH keys are present.
+// This avoids activating Clerk with just the publishable key (which would throw for missing secret).
+const hasClerkEnv = Boolean(process.env.CLERK_SECRET_KEY && process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
 export default (hasClerkEnv
   ? clerkMiddleware((auth, request) => baseMiddleware(request))
   : ((request: NextRequest) => baseMiddleware(request))
