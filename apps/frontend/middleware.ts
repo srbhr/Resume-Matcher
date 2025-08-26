@@ -39,6 +39,8 @@ function buildCsp(nonce: string) {
     'https://*.clerk.dev',
     'https://clerk.services',
     'https://*.clerk.services',
+  // Clerk JS CDN (required for Clerk to load scripts)
+  'https://cdn.jsdelivr.net',
     // Clerk images/CDNs
     'https://images.clerk.dev',
     'https://img.clerk.com',
@@ -47,8 +49,8 @@ function buildCsp(nonce: string) {
   ];
   return [
     "default-src 'self'",
-    // Scripts: allow self, Clerk domains, and inline to avoid nonce mismatches in App Router
-    `script-src 'self' 'unsafe-inline' ${clerkHosts.join(' ')}`,
+  // Scripts: allow self, Clerk and its CDN, and inline to avoid nonce mismatches in App Router
+  `script-src 'self' 'unsafe-inline' ${clerkHosts.join(' ')}`,
     // Styles: allow self, inline, Google Fonts, and Clerk assets
     `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com ${clerkHosts.join(' ')}`,
     "font-src 'self' https://fonts.gstatic.com data:",
@@ -56,6 +58,8 @@ function buildCsp(nonce: string) {
     `img-src 'self' blob: data: https://raw.githubusercontent.com ${clerkHosts.join(' ')}`,
     // Connect: backend + Clerk APIs (include accounts.dev)
     `connect-src ${connectSrc.join(' ')} ${clerkHosts.join(' ')}`,
+  // Workers: allow self and blob for Clerk internals if needed
+  "worker-src 'self' blob:",
     "media-src 'self'",
     "object-src 'none'",
     "frame-ancestors 'self'",
