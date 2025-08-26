@@ -152,7 +152,8 @@ class ScoreImprovementService:
         self,
         *,
         base_text: str,
-        base_score: float,
+    base_score: float,
+    baseline_reference: float,
         job_text: str,
         extracted_job_keywords: str,
         extracted_resume_keywords: str,
@@ -169,13 +170,23 @@ class ScoreImprovementService:
         hit = False
         # Sweep temperatures and optionally slightly increase max tokens to allow richer edits
         temps = list(getattr(settings, "IMPROVE_TEMPERATURE_SWEEP", [settings.LLM_TEMPERATURE]))
-        max_tokens = max(settings.LLM_MAX_OUTPUT_TOKENS, getattr(settings, "IMPROVE_MAX_OUTPUT_TOKENS_BOOST", settings.LLM_MAX_OUTPUT_TOKENS))
+        max_tokens = max(
+            settings.LLM_MAX_OUTPUT_TOKENS,
+            getattr(settings, "IMPROVE_MAX_OUTPUT_TOKENS_BOOST", settings.LLM_MAX_OUTPUT_TOKENS),
+        )
         prompt_template = prompt_factory.get("resume_improvement")
         attempts = 0
+    # Early-stop controls (relative uplift delta w.r.t. baseline reference)
+        delta_min = float(getattr(settings, "IMPROVE_EARLY_STOP_DELTA", 0.0))
+        patience = int(getattr(settings, "IMPROVE_EARLY_STOP_PATIENCE_ROUNDS", 0))
+        stale_rounds = 0
         for round_idx in range(max(0, extra_rounds)):
+            round_improved = False
             for t in temps:
                 attempts += 1
-                logger.info(f"Target uplift round {round_idx+1}/{extra_rounds}, temp={t}, attempt={attempts}")
+                logger.info(
+                    f"Target uplift round {round_idx+1}/{extra_rounds}, temp={t}, attempt={attempts}"
+                )
                 prompt = prompt_template.format(
                     raw_job_description=job_text,
                     extracted_job_keywords=extracted_job_keywords,
@@ -192,16 +203,48 @@ class ScoreImprovementService:
                 except Exception as e:
                     logger.info(f"improve_until_target generation failed: {e}")
                     continue
-                cand = self._unwrap_fenced_markdown(improved_obj["markdown"]) if isinstance(improved_obj, dict) and "markdown" in improved_obj else self._unwrap_fenced_markdown(str(improved_obj))
+                cand = (
+                    self._unwrap_fenced_markdown(improved_obj["markdown"])
+                    if isinstance(improved_obj, dict) and "markdown" in improved_obj
+                    else self._unwrap_fenced_markdown(str(improved_obj))
+                )
                 emb = await self.embedding_manager.embed(text=cand)
                 score = self.calculate_cosine_similarity(job_kw_embedding, emb)
                 if score > best_score:
+                    # Relative uplift vs the original baseline reference (constant across rounds)
+                    prev_rel = (
+                        (best_score - baseline_reference) / max(1e-8, baseline_reference)
+                        if baseline_reference > 0
+                        else (1.0 if best_score > 0 else 0.0)
+                    )
                     best_text, best_score = cand, score
-                    rel = (best_score - base_score) / max(1e-8, base_score) if base_score > 0 else (1.0 if best_score > 0 else 0.0)
+                    rel = (
+                        (best_score - baseline_reference) / max(1e-8, baseline_reference)
+                        if baseline_reference > 0
+                        else (1.0 if best_score > 0 else 0.0)
+                    )
                     hit = rel >= target_uplift
-                    logger.info(f"New best score {best_score:.6f}; uplift={(rel*100):.2f}% (target={(target_uplift*100):.1f}%)")
+                    logger.info(
+                        f"New best score {best_score:.6f}; uplift={(rel*100):.2f}% (target={(target_uplift*100):.1f}%)"
+                    )
+                    round_improved = True
+                    # Early-stop gain tracking per round
+                    gain = rel - prev_rel
+                    if delta_min > 0 and gain < delta_min:
+                        # negligible improvement during this round
+                        pass
+                    else:
+                        stale_rounds = 0
                     if hit:
                         return best_text, best_score, True
+            # After a full round across temps, update early-stop counters
+            if not round_improved and delta_min > 0:
+                stale_rounds += 1
+            if patience > 0 and stale_rounds >= patience:
+                logger.info(
+                    f"Early-stop: negligible gains for {stale_rounds} rounds (<{delta_min*100:.1f}% uplift)."
+                )
+                break
         return best_text, best_score, hit
 
     async def get_resume_for_previewer(self, updated_resume: str) -> Dict | None:
@@ -352,7 +395,9 @@ class ScoreImprovementService:
             if to_add or always_core_tech:
                 # 1a) Locate a Skills section in German or English and append
                 import re as _re
-                skills_hdr = _re.compile(r"(?im)^(##\s*(Fähigkeiten|Skills)\s*)$")
+                # Build skills header regex from settings
+                _skills_alt = "|".join([_re.escape(h) for h in settings.RESUME_HEADERS_SKILLS])
+                skills_hdr = _re.compile(rf"(?im)^(##\s*({_skills_alt})\s*)$")
                 next_hdr = _re.compile(r"(?im)^##\s+")
                 m_hdr = skills_hdr.search(improved)
                 if m_hdr:
@@ -418,14 +463,16 @@ class ScoreImprovementService:
                     improved = improved[:start] + new_section + improved[section_end:]
 
                 # 1b) Add a short "Core Technologies" line under the top heading / Profile section
-                profile_hdr = _re.compile(r"(?im)^(##\s*(Profil|Profile)\s*)$")
+                _profile_alt = "|".join([_re.escape(h) for h in settings.RESUME_HEADERS_PROFILE])
+                profile_hdr = _re.compile(rf"(?im)^(##\s*({_profile_alt})\s*)$")
                 m_prof = profile_hdr.search(improved)
                 if m_prof:
                     insert_pos = m_prof.end()
                     # Avoid duplicate Core Technologies lines
                     after_slice = improved[insert_pos:insert_pos + 200]
-                    if "Core Technologies:" not in after_slice:
-                        core_line = f"\nCore Technologies: {', '.join(all_job_display)}\n"
+                    label = settings.RESUME_CORE_TECH_LABEL
+                    if f"{label}:" not in after_slice:
+                        core_line = f"\n{label}: {', '.join(all_job_display)}\n"
                         improved = improved[:insert_pos] + core_line + improved[insert_pos:]
                 else:
                     # If there's a top-level title (# ...) add a Core Technologies line below it; else at top
@@ -433,18 +480,22 @@ class ScoreImprovementService:
                     m_h1 = h1_hdr.search(improved)
                     insert_pos = m_h1.end() if m_h1 else 0
                     preview = improved[insert_pos:insert_pos + 200]
-                    if "Core Technologies:" not in preview:
-                        core_line = f"\n\nCore Technologies: {', '.join(all_job_display)}\n"
+                    label = settings.RESUME_CORE_TECH_LABEL
+                    if f"{label}:" not in preview:
+                        core_line = f"\n\n{label}: {', '.join(all_job_display)}\n"
                         improved = improved[:insert_pos] + core_line + improved[insert_pos:]
 
                 # If no Skills section exists at all, create one near the end
                 m_hdr_after = skills_hdr.search(improved)
                 if not m_hdr_after:
-                    new_skills_block = "\n\n## Fähigkeiten\n" + ", ".join(all_job_display) + "\n"
+                    # Create skills block using the first configured skills header label
+                    skills_label = settings.RESUME_HEADERS_SKILLS[0] if settings.RESUME_HEADERS_SKILLS else "Skills"
+                    new_skills_block = f"\n\n## {skills_label}\n" + ", ".join(all_job_display) + "\n"
                     improved = improved.rstrip() + new_skills_block
 
                 # 1c) First bullet under the most recent experience: weave one concise sentence
-                exp_hdr = _re.compile(r"(?im)^(##\s*(Berufserfahrung|Experience)\s*)$")
+                _exp_alt = "|".join([_re.escape(h) for h in settings.RESUME_HEADERS_EXPERIENCE])
+                exp_hdr = _re.compile(rf"(?im)^(##\s*({_exp_alt})\s*)$")
                 m_exp = exp_hdr.search(improved)
                 if m_exp:
                     exp_start = m_exp.end()
@@ -452,15 +503,16 @@ class ScoreImprovementService:
                     exp_end = m_next.start() if m_next else len(improved)
                     exp_block = improved[exp_start:exp_end]
                     exp_lines = exp_block.splitlines()
+                    weave_prefix = settings.RESUME_EXPERIENCE_WEAVE_PREFIX
                     already_weaved = any(
-                        ("Arbeit mit" in ln) and any(canonical(x) in canonical(ln) for x in to_add)
+                        (weave_prefix in ln) and any(canonical(x) in canonical(ln) for x in to_add)
                         for ln in exp_lines
                     )
                     if not already_weaved:
                         for i, line in enumerate(exp_lines):
                             if line.strip().startswith("-"):
                                 insert_i = i + 1
-                                sub_bullet = f"  - Arbeit mit {', '.join([x.strip() for x in to_add])}"
+                                sub_bullet = f"  - {weave_prefix} {', '.join([x.strip() for x in to_add])}"
                                 exp_lines.insert(insert_i, sub_bullet)
                                 break
                     new_exp_block = "\n".join(exp_lines)
@@ -472,7 +524,9 @@ class ScoreImprovementService:
             return {"updated_resume": improved, "missing_keywords": [], "added_section": False}
 
         keyword_line = ", ".join(missing)
-        addition = f"\n\n## Suggested Additions (Baseline)\nMissing keywords: {keyword_line}\n"
+        add_hdr = settings.RESUME_SUGGESTED_ADDITIONS_HEADER
+        miss_lbl = settings.RESUME_MISSING_KEYWORDS_LABEL
+        addition = f"\n\n## {add_hdr}\n{miss_lbl}: {keyword_line}\n"
         improved = improved.rstrip() + addition
         return {"updated_resume": improved, "missing_keywords": missing, "added_section": True}
     @staticmethod
@@ -506,6 +560,113 @@ class ScoreImprovementService:
         if m:
             return m.group(1).strip()
         return md_text
+
+    @staticmethod
+    def _cleanup_and_normalize(md_text: str) -> str:
+        """Normalize labels to German, remove placeholders/watermarks/dupes, and fix section basics.
+
+        - Replace English labels with configured German ones
+        - Drop typical placeholders like TODO, Lorem ipsum, <Wasserzeichen>, etc.
+        - Collapse consecutive duplicate headings/lines
+        - Ensure Kompetenzen is a one-line block if present
+        - Trim whitespace
+        """
+        text = md_text or ""
+        # Remove common placeholders/watermarks
+        placeholder_patterns = [
+            r"(?im)^\s*\[?todo\]?\s*$",
+            r"(?im)lorem ipsum[\s\S]{0,200}",
+            r"(?im)^\s*wasserzeichen:.*$",
+            r"(?im)^\s*draft\s*$",
+            r"(?im)^\s*dummy\s*$",
+        ]
+        for pat in placeholder_patterns:
+            text = re.sub(pat, "", text)
+
+        # Normalize labels for additions/missing keywords if they slipped in English
+        add_hdr_en = r"(?im)^##\s*Suggested Additions \(Baseline\)\s*$"
+        text = re.sub(add_hdr_en, f"## {settings.RESUME_SUGGESTED_ADDITIONS_HEADER}", text)
+        missing_en = r"(?im)^Missing keywords:\s*"
+        text = re.sub(missing_en, f"{settings.RESUME_MISSING_KEYWORDS_LABEL}: ", text)
+
+        # Remove 'Anschreiben'/'Cover Letter' section entirely (keep resume separate)
+        def _drop_section(txt: str, header_regex: str) -> str:
+            hdr = re.compile(header_regex, re.IGNORECASE | re.MULTILINE)
+            start_m = hdr.search(txt)
+            if not start_m:
+                return txt
+            start = start_m.start()
+            next_hdr = re.compile(r"(?im)^##\s+")
+            next_m = next_hdr.search(txt, pos=start_m.end())
+            end = next_m.start() if next_m else len(txt)
+            return txt[:start] + txt[end:]
+        text = _drop_section(text, r"^##\s*(Anschreiben|Cover\s+Letter)\s*$")
+
+        # Expand MS-Office into concrete tools if not already detailed
+        def _expand_ms_office(s: str) -> str:
+            # Only expand if Excel/Outlook/Word not already near mention
+            if re.search(r"Excel\s*\(", s):
+                return s
+            s = re.sub(r"MS[\-\s]?Office", "MS‑Office (Excel, Outlook, Word)", s)
+            return s
+        text = _expand_ms_office(text)
+
+        # Ensure Kompetenzen is single line (merge multiple lines to one comma-separated line)
+        skills_labels = [re.escape(h) for h in settings.RESUME_HEADERS_SKILLS]
+        skills_hdr = re.compile(rf"(?im)^(##\s*({'|'.join(skills_labels)})\s*)$")
+        m = skills_hdr.search(text)
+        if m:
+            start = m.end()
+            next_hdr = re.compile(r"(?im)^##\s+")
+            m_next = next_hdr.search(text, pos=start)
+            end = m_next.start() if m_next else len(text)
+            section = text[start:end]
+            # Collect non-empty lines and join with comma
+            items = []
+            for ln in section.splitlines():
+                s = ln.strip().strip(',;')
+                if s:
+                    items.extend([p.strip() for p in s.split(',') if p.strip()])
+            if items:
+                unified = f"\n{', '.join(dict.fromkeys(items))}\n"
+                text = text[:start] + unified + text[end:]
+
+        # Collapse duplicate blank lines and duplicate identical consecutive lines
+        lines = [ln.rstrip() for ln in text.splitlines()]
+        deduped = []
+        prev = None
+        blank = 0
+        for ln in lines:
+            if ln.strip() == "":
+                blank += 1
+                if blank > 1:
+                    continue
+            else:
+                blank = 0
+            if prev is not None and ln == prev:
+                continue
+            deduped.append(ln)
+            prev = ln
+        text = "\n".join(deduped).strip() + "\n"
+        return text
+
+    @staticmethod
+    def _strip_baseline_additions(md_text: str) -> str:
+        """Remove the baseline "Suggested Additions" section while keeping other edits (skills/core tech).
+
+        Uses the configured header label to locate and drop the whole section.
+        """
+        if not md_text:
+            return md_text
+        hdr = re.compile(rf"(?im)^##\s*{re.escape(settings.RESUME_SUGGESTED_ADDITIONS_HEADER)}\s*$")
+        m = hdr.search(md_text)
+        if not m:
+            return md_text
+        start = m.start()
+        next_hdr = re.compile(r"(?im)^##\s+")
+        m_next = next_hdr.search(md_text, pos=m.end())
+        end = m_next.start() if m_next else len(md_text)
+        return (md_text[:start] + md_text[end:]).rstrip() + "\n"
 
     @staticmethod
     def _tokenize_lower(text: str) -> set[str]:
@@ -569,7 +730,8 @@ class ScoreImprovementService:
             if to_add:
                 # 1a) Locate a Skills section in German or English and append
                 import re as _re
-                skills_hdr = _re.compile(r"(?im)^(##\s*(Fähigkeiten|Skills)\s*)$")
+                _skills_alt = "|".join([_re.escape(h) for h in settings.RESUME_HEADERS_SKILLS])
+                skills_hdr = _re.compile(rf"(?im)^(##\s*({_skills_alt})\s*)$")
                 next_hdr = _re.compile(r"(?im)^##\s+")
                 m_hdr = skills_hdr.search(improved)
                 if m_hdr:
@@ -635,15 +797,17 @@ class ScoreImprovementService:
                     improved = improved[:start] + new_section + improved[section_end:]
 
                 # 1b) Add a short "Core Technologies" line under the top heading / Profile section
-                profile_hdr = _re.compile(r"(?im)^(##\s*(Profil|Profile)\s*)$")
+                _profile_alt = "|".join([_re.escape(h) for h in settings.RESUME_HEADERS_PROFILE])
+                profile_hdr = _re.compile(rf"(?im)^(##\s*({_profile_alt})\s*)$")
                 m_prof = profile_hdr.search(improved)
                 if m_prof:
                     insert_pos = m_prof.end()
                     # Insert right after profile header, keep concise
                     # Avoid duplicate Core Technologies lines
                     after_slice = improved[insert_pos:insert_pos + 200]
-                    if "Core Technologies:" not in after_slice:
-                        core_line = f"\nCore Technologies: {', '.join(all_job_display)}\n"
+                    label = settings.RESUME_CORE_TECH_LABEL
+                    if f"{label}:" not in after_slice:
+                        core_line = f"\n{label}: {', '.join(all_job_display)}\n"
                         improved = improved[:insert_pos] + core_line + improved[insert_pos:]
                 else:
                     # If there's a top-level title (# ...) add a Core Technologies line below it; else at top
@@ -651,18 +815,21 @@ class ScoreImprovementService:
                     m_h1 = h1_hdr.search(improved)
                     insert_pos = m_h1.end() if m_h1 else 0
                     preview = improved[insert_pos:insert_pos + 200]
-                    if "Core Technologies:" not in preview:
-                        core_line = f"\n\nCore Technologies: {', '.join(all_job_display)}\n"
+                    label = settings.RESUME_CORE_TECH_LABEL
+                    if f"{label}:" not in preview:
+                        core_line = f"\n\n{label}: {', '.join(all_job_display)}\n"
                         improved = improved[:insert_pos] + core_line + improved[insert_pos:]
 
                 # If no Skills section exists at all, create one near the end
                 m_hdr_after = skills_hdr.search(improved)
                 if not m_hdr_after:
-                    new_skills_block = "\n\n## Fähigkeiten\n" + ", ".join(all_job_display) + "\n"
+                    skills_label = settings.RESUME_HEADERS_SKILLS[0] if settings.RESUME_HEADERS_SKILLS else "Skills"
+                    new_skills_block = f"\n\n## {skills_label}\n" + ", ".join(all_job_display) + "\n"
                     improved = improved.rstrip() + new_skills_block
 
                 # 1c) First bullet under the most recent experience: weave one concise sentence
-                exp_hdr = _re.compile(r"(?im)^(##\s*(Berufserfahrung|Experience)\s*)$")
+                _exp_alt = "|".join([_re.escape(h) for h in settings.RESUME_HEADERS_EXPERIENCE])
+                exp_hdr = _re.compile(rf"(?im)^(##\s*({_exp_alt})\s*)$")
                 m_exp = exp_hdr.search(improved)
                 if m_exp:
                     exp_start = m_exp.end()
@@ -672,15 +839,16 @@ class ScoreImprovementService:
                     exp_lines = exp_block.splitlines()
                     # Find insertion point after the first non-empty list line
                     # Avoid duplicate insertion if a similar sub-bullet already exists
+                    weave_prefix = settings.RESUME_EXPERIENCE_WEAVE_PREFIX
                     already_weaved = any(
-                        ("Arbeit mit" in ln) and any(normalize_kw(x) in normalize_kw(ln) for x in to_add)
+                        (weave_prefix in ln) and any(normalize_kw(x) in normalize_kw(ln) for x in to_add)
                         for ln in exp_lines
                     )
                     if not already_weaved:
                         for i, line in enumerate(exp_lines):
                             if line.strip().startswith("-"):
                                 insert_i = i + 1
-                                sub_bullet = f"  - Arbeit mit {', '.join([display_kw(x) for x in to_add])}"
+                                sub_bullet = f"  - {weave_prefix} {', '.join([display_kw(x) for x in to_add])}"
                                 exp_lines.insert(insert_i, sub_bullet)
                                 break
                     new_exp_block = "\n".join(exp_lines)
@@ -691,7 +859,9 @@ class ScoreImprovementService:
 
         # 2) Keep a concise baseline summary so the UI can show what's been added
         keyword_line = ", ".join(missing)
-        addition = f"\n\n## Suggested Additions (Baseline)\nMissing keywords: {keyword_line}\n"
+        add_hdr = settings.RESUME_SUGGESTED_ADDITIONS_HEADER
+        miss_lbl = settings.RESUME_MISSING_KEYWORDS_LABEL
+        addition = f"\n\n## {add_hdr}\n{miss_lbl}: {keyword_line}\n"
         improved = improved.rstrip() + addition
         return {"updated_resume": improved, "missing_keywords": missing, "added_section": True}
 
@@ -729,8 +899,8 @@ class ScoreImprovementService:
                 extracted_job_keywords_embedding, resume_embedding
             )
         except ProviderError as e:
-            if require_llm:
-                # Caller demands LLM/embeddings; surface a domain error
+            if require_llm or getattr(settings, "REQUIRE_LLM_STRICT", False):
+                # Strict mode: surface a domain error, no fallback
                 raise AIProcessingError(str(e))
             logger.warning(
                 f"Embedding provider unavailable; falling back to coverage scoring. reason={e}"
@@ -792,11 +962,12 @@ class ScoreImprovementService:
         llm_used = False
         if use_llm and embeddings_ok:
             try:
+                # Use baseline-improved text as seed, but drop the visible baseline additions block
+                llm_seed_text = self._strip_baseline_additions(updated_resume)
                 # Give the LLM the original resume (without the appended baseline section)
-                # so it can naturally weave keywords into core sections and potentially
-                # exceed the baseline score.
+                # so it can naturally weave keywords into core sections and potentially exceed the baseline score.
                 improved_text, llm_score = await self.improve_score_with_llm(
-                    resume=resume.content,
+                    resume=llm_seed_text,
                     extracted_resume_keywords=extracted_resume_keywords,
                     job=job.content,
                     extracted_job_keywords=extracted_job_keywords,
@@ -817,6 +988,7 @@ class ScoreImprovementService:
                         best_text, best_score, hit = await self.improve_until_target(
                             base_text=updated_resume,
                             base_score=updated_score,
+                            baseline_reference=baseline_score,
                             job_text=job.content,
                             extracted_job_keywords=extracted_job_keywords,
                             extracted_resume_keywords=extracted_resume_keywords,
@@ -827,12 +999,26 @@ class ScoreImprovementService:
                         if best_score > updated_score:
                             updated_resume, updated_score = best_text, best_score
                             llm_used = True
+                        if not hit:
+                            # Guard log: target not met to aid tuning (PII-safe fields only)
+                            logger.info(
+                                json.dumps({
+                                    "event": "uplift_target_miss",
+                                    "target": target,
+                                    "baseline_score": round(float(baseline_score), 6),
+                                    "final_score": round(float(updated_score), 6),
+                                    "rounds": rounds,
+                                    "temps": list(getattr(settings, "IMPROVE_TEMPERATURE_SWEEP", [settings.LLM_TEMPERATURE])),
+                                })
+                            )
             except Exception as e:  # pragma: no cover - defensive
                 if require_llm:
                     raise AIProcessingError(str(e))
                 logger.warning(f"LLM improvement failed, using baseline: {e}")
 
         # Preview generation is best-effort; return None on any failure inside
+        # Final cleanup/normalization before preview/render
+        updated_resume = self._cleanup_and_normalize(updated_resume)
         resume_preview = await self.get_resume_for_previewer(updated_resume=updated_resume)
 
         execution = {
@@ -889,7 +1075,7 @@ class ScoreImprovementService:
             }
             yield f"data: {json.dumps({'status': 'completed', 'result': final_result})}\n\n"
         except ProviderError as e:
-            if require_llm:
+            if require_llm or getattr(settings, "REQUIRE_LLM_STRICT", False):
                 # Emit an error event and terminate stream
                 yield f"data: {json.dumps({'status': 'error', 'message': 'LLM/Embedding provider unavailable'})}\n\n"
                 raise AIProcessingError(str(e))

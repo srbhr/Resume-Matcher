@@ -86,13 +86,26 @@ class Settings(BaseSettings):
     # Improvement tuning
     IMPROVE_EQUIVALENCE_THRESHOLD: float = 0.82  # cosine threshold for dynamic equivalence in baseline weave
     IMPROVE_ALWAYS_CORE_TECH: bool = False       # if true, always include a Core Technologies line even when no missing keywords
-    IMPROVE_LLM_ATTEMPTS: int = 3                # number of best-of attempts for LLM improvement
+    IMPROVE_LLM_ATTEMPTS: int = 4                # number of best-of attempts for LLM improvement (allow more exploration)
     # Target uplift enforcement (optional)
     IMPROVE_ENFORCE_MIN_UPLIFT: bool = False     # if true, attempt to reach at least IMPROVE_TARGET_UPLIFT_PERCENT relative uplift
     IMPROVE_TARGET_UPLIFT_PERCENT: float = 0.20  # 20% relative uplift target (0.20 == +20%)
-    IMPROVE_MAX_ROUNDS: int = 2                  # number of extra LLM rounds if target not reached
-    IMPROVE_TEMPERATURE_SWEEP: List[float] = [0.2, 0.4, 0.7]  # diversify generations
-    IMPROVE_MAX_OUTPUT_TOKENS_BOOST: int = 1600  # allow a bit longer output when targeting uplift
+    IMPROVE_MAX_ROUNDS: int = 8                  # allow more rounds when chasing target uplift
+    IMPROVE_TEMPERATURE_SWEEP: List[float] = [0.2, 0.4, 0.6, 0.8, 0.9]  # broaden exploration for better candidates
+    IMPROVE_MAX_OUTPUT_TOKENS_BOOST: int = 2200  # permit longer edits to integrate context and results
+    # Early-stop when recent rounds yield negligible uplift relative to base
+    IMPROVE_EARLY_STOP_DELTA: float = 0.01       # be less aggressive; stop if <1% relative uplift gain over recent rounds
+    IMPROVE_EARLY_STOP_PATIENCE_ROUNDS: int = 3  # wait longer before stopping to allow exploration
+    # Strict mode: require LLM + Embeddings; if unavailable, fail (no fallback)
+    REQUIRE_LLM_STRICT: bool = True
+    # Resume section labels (to avoid hardcoded language in weaving)
+    RESUME_HEADERS_SKILLS: List[str] = ["Fähigkeiten", "Skills", "Kompetenzen"]
+    RESUME_HEADERS_PROFILE: List[str] = ["Profil", "Profile", "Kurzprofil", "Summary"]
+    RESUME_HEADERS_EXPERIENCE: List[str] = ["Berufserfahrung", "Experience", "Erfahrung", "Professional Experience"]
+    RESUME_CORE_TECH_LABEL: str = "Kompetenzen"
+    RESUME_EXPERIENCE_WEAVE_PREFIX: str = "Arbeit mit"
+    RESUME_SUGGESTED_ADDITIONS_HEADER: str = "Vorgeschlagene Ergänzungen (Baseline)"
+    RESUME_MISSING_KEYWORDS_LABEL: str = "Fehlende Schlüsselbegriffe"
     # Rate limiting & security
     RATE_LIMIT_ENABLED: bool = True
     RATE_LIMIT_REQUESTS: int = 60  # requests per window

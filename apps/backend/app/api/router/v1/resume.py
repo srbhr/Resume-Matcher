@@ -134,8 +134,13 @@ async def score_and_improve(
     require_llm: bool = Query(False, description="If true, fail instead of falling back when LLM/embeddings are unavailable"),
     equivalence_threshold: float | None = Query(None, ge=0.0, le=1.0, description="Cosine threshold for semantic keyword equivalence when weaving baseline"),
     always_core_tech: bool | None = Query(None, description="Always include 'Core Technologies' line even if nothing is missing"),
-    min_uplift: float | None = Query(None, ge=0.0, le=1.0, description="Target relative uplift (e.g., 0.2 for +20%) to try to reach with extra rounds"),
-    max_rounds: int | None = Query(None, ge=0, le=5, description="Extra LLM rounds if target not reached; safeguards runtime and cost"),
+    min_uplift: float | None = Query(
+        None,
+        ge=0.0,
+        le=100.0,
+        description="Target relative uplift as fraction or percent (e.g., 0.2 or 20 for +20%) to try to reach with extra rounds",
+    ),
+    max_rounds: int | None = Query(None, ge=0, le=10, description="Extra LLM rounds if target not reached; safeguards runtime and cost"),
 ):
     """
     Scores and improves a resume against a job description.
@@ -160,6 +165,24 @@ async def score_and_improve(
                 message="invalid value passed in `job_id` field, please try again with valid job_id."
             )
         score_improvement_service = ScoreImprovementService(db=db)
+
+        # Enforce strict mode globally if enabled
+        if settings.REQUIRE_LLM_STRICT:
+            use_llm = True
+            require_llm = True
+
+        # Normalize min_uplift to a fraction in [0,1] even if provided as percentage (e.g., 20 => 0.20)
+        if min_uplift is not None:
+            try:
+                # Accept values like 0.2 (fraction) or 20 (percent)
+                min_uplift = float(min_uplift)
+                if min_uplift > 1.0:
+                    min_uplift = min_uplift / 100.0
+                # Clamp to [0, 1]
+                min_uplift = max(0.0, min(1.0, min_uplift))
+            except Exception:
+                # If parsing fails for any reason, ignore and let service defaults apply
+                min_uplift = None
 
         if stream:
             return StreamingResponse(

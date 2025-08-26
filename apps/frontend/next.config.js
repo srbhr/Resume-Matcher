@@ -1,5 +1,9 @@
 /** @type {import('next').NextConfig} */
 const path = require('path');
+const createNextIntlPlugin = require('next-intl/plugin');
+// Auto-detects next-intl.config.(ts|js) in the same directory
+const withNextIntl = createNextIntlPlugin();
+
 const nextConfig = {
   webpack: (config) => {
     config.resolve.alias = {
@@ -18,5 +22,4 @@ const nextConfig = {
     ];
   },
 };
-
-module.exports = nextConfig;
+module.exports = withNextIntl(nextConfig);

@@ -1,9 +1,8 @@
 import type { NextConfig } from 'next';
 import path from 'path';
 import createNextIntlPlugin from 'next-intl/plugin';
-
-// Register next-intl config so the runtime can resolve it in lambdas/edge
-const withNextIntl = createNextIntlPlugin('./i18n.ts');
+// Auto-detects next-intl.config.(ts|js)
+const withNextIntl = createNextIntlPlugin();
 
 const nextConfig: NextConfig = {
 	webpack: (config) => {

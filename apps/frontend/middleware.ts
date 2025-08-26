@@ -29,22 +29,30 @@ function buildCsp(nonce: string) {
   const connectExtra = Array.from(new Set([apiOrigin, 'https://resume-matcher-backend-j06k.onrender.com'])).filter(Boolean);
   // Allow Next.js internal websocket endpoints for dev (/_next/) with wss: fallback
   const connectSrc = ["'self'", 'ws:', 'wss:', ...connectExtra];
+  // Clerk host allowlist (optionally include a custom Clerk domain via env)
+  const clerkCustom = process.env.NEXT_PUBLIC_CLERK_DOMAIN ? [`https://${process.env.NEXT_PUBLIC_CLERK_DOMAIN}`] : [];
+  const clerkHosts = [
+    'https://*.clerk.com',
+    'https://*.clerk.services',
+    'https://*.clerk.accounts.dev',
+    ...clerkCustom,
+  ];
   return [
     "default-src 'self'",
     // Scripts: allow self, Clerk domains, and inline to avoid nonce mismatches in App Router
-  "script-src 'self' 'unsafe-inline' https://*.clerk.com https://*.clerk.services https://*.clerk.accounts.dev https://clerk.cvita.pro https://accounts.cvita.pro",
+    `script-src 'self' 'unsafe-inline' ${clerkHosts.join(' ')}`,
     // Styles: allow self, inline, Google Fonts, and Clerk assets
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.clerk.com https://*.clerk.services https://*.clerk.accounts.dev https://clerk.cvita.pro https://accounts.cvita.pro",
+    `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com ${clerkHosts.join(' ')}`,
     "font-src 'self' https://fonts.gstatic.com data:",
     // Images: include Clerk image CDNs
-  "img-src 'self' blob: data: https://raw.githubusercontent.com https://img.clerk.com https://*.clerk.com https://*.clerk.accounts.dev https://clerk.cvita.pro https://accounts.cvita.pro",
+    `img-src 'self' blob: data: https://raw.githubusercontent.com https://img.clerk.com ${clerkHosts.join(' ')}`,
     // Connect: backend + Clerk APIs (include accounts.dev)
-  `connect-src ${connectSrc.join(' ')} https://*.clerk.com https://*.clerk.services https://*.clerk.accounts.dev https://clerk.cvita.pro https://accounts.cvita.pro`,
+    `connect-src ${connectSrc.join(' ')} ${clerkHosts.join(' ')}`,
     "media-src 'self'",
     "object-src 'none'",
     "frame-ancestors 'self'",
     // Clerk embeds
-  "frame-src 'self' https://*.clerk.com https://*.clerk.services https://*.clerk.accounts.dev https://clerk.cvita.pro https://accounts.cvita.pro",
+    `frame-src 'self' ${clerkHosts.join(' ')}`,
     "base-uri 'self'",
     "form-action 'self'",
     "manifest-src 'self'",
@@ -59,7 +67,7 @@ const permissionsPolicy: Record<string,string> = {
   'geolocation': '()'
 };
 
-export default clerkMiddleware((auth, request) => {
+function baseMiddleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   // Skip i18n rewriting for Clerk auth routes
   const isAuthRoute = pathname.startsWith('/sign-in') || pathname.startsWith('/sign-up');
@@ -82,7 +90,14 @@ export default clerkMiddleware((auth, request) => {
     response.headers.set('X-Nonce', nonce); // expose for potential inline script components (can be removed later)
   }
   return response;
-});
+}
+
+// If Clerk env vars are missing, fall back to a plain middleware to avoid crashes in Vercel
+const hasClerkEnv = Boolean(process.env.CLERK_SECRET_KEY || process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
+export default (hasClerkEnv
+  ? clerkMiddleware((auth, request) => baseMiddleware(request))
+  : ((request: NextRequest) => baseMiddleware(request))
+);
 
 export const config = {
   matcher: [

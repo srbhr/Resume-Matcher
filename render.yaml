@@ -62,7 +62,7 @@ services:
       - key: ALEMBIC_CONFIG
         value: /app/apps/backend/alembic.ini
       - key: ALLOWED_ORIGINS
-        value: '["https://cvita.pro","http://localhost:3000"]'
+        value: '["https://gojob.ing","https://www.gojob.ing","http://localhost:3000"]'
       # Render provides PORT automatically for web services; no need to set explicitly.
 
 # Note on health checks timing: Render currently allows setting only the path via Blueprint.
