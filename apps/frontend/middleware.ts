@@ -32,9 +32,17 @@ function buildCsp(nonce: string) {
   // Clerk host allowlist (optionally include a custom Clerk domain via env)
   const clerkCustom = process.env.NEXT_PUBLIC_CLERK_DOMAIN ? [`https://${process.env.NEXT_PUBLIC_CLERK_DOMAIN}`] : [];
   const clerkHosts = [
+    // Primary Clerk domains
+    'https://clerk.com',
     'https://*.clerk.com',
+    'https://clerk.dev',
+    'https://*.clerk.dev',
+    'https://clerk.services',
     'https://*.clerk.services',
-    'https://*.clerk.accounts.dev',
+    // Clerk images/CDNs
+    'https://images.clerk.dev',
+    'https://img.clerk.com',
+    // Optional custom domain
     ...clerkCustom,
   ];
   return [
@@ -45,14 +53,14 @@ function buildCsp(nonce: string) {
     `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com ${clerkHosts.join(' ')}`,
     "font-src 'self' https://fonts.gstatic.com data:",
     // Images: include Clerk image CDNs
-    `img-src 'self' blob: data: https://raw.githubusercontent.com https://img.clerk.com ${clerkHosts.join(' ')}`,
+    `img-src 'self' blob: data: https://raw.githubusercontent.com ${clerkHosts.join(' ')}`,
     // Connect: backend + Clerk APIs (include accounts.dev)
     `connect-src ${connectSrc.join(' ')} ${clerkHosts.join(' ')}`,
     "media-src 'self'",
     "object-src 'none'",
     "frame-ancestors 'self'",
     // Clerk embeds
-    `frame-src 'self' ${clerkHosts.join(' ')}`,
+    `frame-src 'self' ${clerkHosts.join(' ')} https://accounts.google.com https://*.google.com https://*.facebook.com https://*.github.com https://*.apple.com https://login.microsoftonline.com`,
     "base-uri 'self'",
     "form-action 'self'",
     "manifest-src 'self'",
@@ -69,8 +77,9 @@ const permissionsPolicy: Record<string,string> = {
 
 function baseMiddleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
-  // Skip i18n rewriting for Clerk auth routes
-  const isAuthRoute = pathname.startsWith('/sign-in') || pathname.startsWith('/sign-up');
+  // Skip i18n rewriting for Clerk auth routes (locale-aware: e.g., /de/sign-in)
+  const segments = pathname.split('/').filter(Boolean);
+  const isAuthRoute = segments.includes('sign-in') || segments.includes('sign-up');
   // Also skip i18n rewriting for API/TRPC routes so /api/* stays intact
   const isApiRoute = pathname.startsWith('/api') || pathname.startsWith('/trpc');
   const response = (isAuthRoute || isApiRoute) ? NextResponse.next() : intlMiddleware(request);
