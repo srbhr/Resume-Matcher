@@ -39,20 +39,22 @@ function buildCsp(nonce: string) {
   ];
   return [
     "default-src 'self'",
-    // Scripts: allow self, Clerk domains, and inline to avoid nonce mismatches in App Router
-    `script-src 'self' 'unsafe-inline' ${clerkHosts.join(' ')}`,
+  // Scripts: allow self, Clerk domains, and inline to avoid nonce mismatches in App Router; include Clerk CDN
+  `script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net ${clerkHosts.join(' ')}`,
     // Styles: allow self, inline, Google Fonts, and Clerk assets
     `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com ${clerkHosts.join(' ')}`,
     "font-src 'self' https://fonts.gstatic.com data:",
-    // Images: include Clerk image CDNs
-    `img-src 'self' blob: data: https://raw.githubusercontent.com https://img.clerk.com ${clerkHosts.join(' ')}`,
+  // Images: include Clerk image CDNs
+  `img-src 'self' blob: data: https://raw.githubusercontent.com https://img.clerk.com ${clerkHosts.join(' ')}`,
     // Connect: backend + Clerk APIs (include accounts.dev)
     `connect-src ${connectSrc.join(' ')} ${clerkHosts.join(' ')}`,
+  // Workers: allow self and blob for Clerk internals if needed
+  "worker-src 'self' blob:",
     "media-src 'self'",
     "object-src 'none'",
     "frame-ancestors 'self'",
-    // Clerk embeds
-    `frame-src 'self' ${clerkHosts.join(' ')}`,
+  // Clerk embeds and OAuth provider frames (Google, etc.)
+  `frame-src 'self' ${clerkHosts.join(' ')} https://accounts.google.com https://*.google.com https://*.facebook.com https://*.github.com https://*.apple.com https://login.microsoftonline.com`,
     "base-uri 'self'",
     "form-action 'self'",
     "manifest-src 'self'",
