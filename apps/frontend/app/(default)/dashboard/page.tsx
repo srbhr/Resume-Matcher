@@ -44,6 +44,16 @@ const mockResumeData = {
 			],
 		},
 	],
+	projects: [
+		{
+			id: 1,
+			title: 'Analytical Engine',
+			description: ['Developed the first published algorithm intended for implementation on a computer, Charles Babbage\'s Analytical Engine.'],
+			tech: ['Mathematics', 'Computational Theory'],
+			link: 'https://en.wikipedia.org/wiki/Analytical_Engine',
+			years: '1842 - 1843',
+		},
+	],
 	education: [
 		{
 			id: 1,
