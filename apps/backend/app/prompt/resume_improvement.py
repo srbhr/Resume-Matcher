@@ -7,6 +7,7 @@ Instructions:
   - Emphasizing and naturally incorporating relevant skills, experiences, and keywords from the job description and keyword list.
   - Where appropriate, naturally weave the extracted job keywords into the resume content.
   - Rewriting, adding, or removing resume content as needed to better match the job requirements.
+  - Preserve major sections present in the original (Summary, Experience, Projects, Education, Skills). If the original has a Projects section, include it in the updated resume. Do not drop Projects unless it is empty; keep the 1–3 most relevant projects with concise bullets and tech stack.
   - Maintaining a natural, professional tone and avoiding keyword stuffing.
   - Where possible, use quantifiable achievements and action verbs.
   - The current cosine similarity score is {current_cosine_similarity:.4f}. Revise the resume to further increase this score.
