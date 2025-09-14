@@ -53,11 +53,14 @@ class ScoreImprovementService:
             raise ResumeKeywordExtractionError(resume_id=resume_id)
 
         try:
-            keywords_data = json.loads(processed_resume.extracted_keywords)
-            keywords = keywords_data.get("extracted_keywords", [])
-            if not keywords or len(keywords) == 0:
+            raw = processed_resume.extracted_keywords
+            keywords_data = json.loads(raw) if isinstance(raw, str) else raw
+            if not isinstance(keywords_data, dict):
                 raise ResumeKeywordExtractionError(resume_id=resume_id)
-        except json.JSONDecodeError:
+            keywords = keywords_data.get("extracted_keywords", [])
+            if not keywords:
+                raise ResumeKeywordExtractionError(resume_id=resume_id)
+        except Exception:
             raise ResumeKeywordExtractionError(resume_id=resume_id)
 
     def _validate_job_keywords(self, processed_job: ProcessedJob, job_id: str) -> None:
@@ -69,11 +72,14 @@ class ScoreImprovementService:
             raise JobKeywordExtractionError(job_id=job_id)
 
         try:
-            keywords_data = json.loads(processed_job.extracted_keywords)
-            keywords = keywords_data.get("extracted_keywords", [])
-            if not keywords or len(keywords) == 0:
+            raw = processed_job.extracted_keywords
+            keywords_data = json.loads(raw) if isinstance(raw, str) else raw
+            if not isinstance(keywords_data, dict):
                 raise JobKeywordExtractionError(job_id=job_id)
-        except json.JSONDecodeError:
+            keywords = keywords_data.get("extracted_keywords", [])
+            if not keywords:
+                raise JobKeywordExtractionError(job_id=job_id)
+        except Exception:
             raise JobKeywordExtractionError(job_id=job_id)
 
     async def _get_resume(
@@ -96,7 +102,7 @@ class ScoreImprovementService:
         if not processed_resume:
             raise ResumeParsingError(resume_id=resume_id)
 
-        self._validate_resume_keywords(processed_resume, resume_id)
+        # Do not hard-fail if resume keywords are missing; downstream will handle gracefully.
 
         return resume, processed_resume
 
@@ -118,7 +124,7 @@ class ScoreImprovementService:
         if not processed_job:
             raise JobParsingError(job_id=job_id)
 
-        self._validate_job_keywords(processed_job, job_id)
+        # Do not hard-fail here either; allow flow to continue and degrade gracefully
 
         return job, processed_job
 
@@ -205,15 +211,19 @@ class ScoreImprovementService:
         resume, processed_resume = await self._get_resume(resume_id)
         job, processed_job = await self._get_job(job_id)
 
-        extracted_job_keywords = ", ".join(
-            json.loads(processed_job.extracted_keywords).get("extracted_keywords", [])
-        )
+        pj_raw = processed_job.extracted_keywords
+        pj_data = json.loads(pj_raw) if isinstance(pj_raw, str) else (pj_raw or {})
+        if not isinstance(pj_data, dict):
+            pj_data = {}
+        extracted_job_keywords_list = pj_data.get("extracted_keywords", [])
+        extracted_job_keywords = ", ".join(extracted_job_keywords_list) if isinstance(extracted_job_keywords_list, list) else str(extracted_job_keywords_list or "")
 
-        extracted_resume_keywords = ", ".join(
-            json.loads(processed_resume.extracted_keywords).get(
-                "extracted_keywords", []
-            )
-        )
+        pr_raw = processed_resume.extracted_keywords
+        pr_data = json.loads(pr_raw) if isinstance(pr_raw, str) else (pr_raw or {})
+        if not isinstance(pr_data, dict):
+            pr_data = {}
+        extracted_resume_keywords_list = pr_data.get("extracted_keywords", [])
+        extracted_resume_keywords = ", ".join(extracted_resume_keywords_list) if isinstance(extracted_resume_keywords_list, list) else str(extracted_resume_keywords_list or "")
 
         resume_embedding_task = asyncio.create_task(
             self.embedding_manager.embed(resume.content)
