@@ -146,41 +146,45 @@ class ResumeService:
 
             processed_resume = ProcessedResume(
                 resume_id=resume_id,
-                personal_data=json.dumps(structured_resume.get("personal_data", {}))
-                if structured_resume.get("personal_data")
-                else None,
-                experiences=json.dumps(
-                    {"experiences": structured_resume.get("experiences", [])}
-                )
-                if structured_resume.get("experiences")
-                else None,
-                projects=json.dumps({"projects": structured_resume.get("projects", [])})
-                if structured_resume.get("projects")
-                else None,
-                skills=json.dumps({"skills": structured_resume.get("skills", [])})
-                if structured_resume.get("skills")
-                else None,
-                research_work=json.dumps(
-                    {"research_work": structured_resume.get("research_work", [])}
-                )
-                if structured_resume.get("research_work")
-                else None,
-                achievements=json.dumps(
-                    {"achievements": structured_resume.get("achievements", [])}
-                )
-                if structured_resume.get("achievements")
-                else None,
-                education=json.dumps(
-                    {"education": structured_resume.get("education", [])}
-                )
-                if structured_resume.get("education")
-                else None,
-                extracted_keywords=json.dumps(
-                    {
-                        "extracted_keywords": structured_resume.get(
-                            "extracted_keywords", []
-                        )
-                    }
+                personal_data=(
+                    json.dumps(structured_resume.get("personal_data", {}))
+                    if structured_resume.get("personal_data")
+                    else None
+                ),
+                experiences=(
+                    json.dumps({"experiences": structured_resume.get("experiences", [])})
+                    if structured_resume.get("experiences")
+                    else None
+                ),
+                projects=(
+                    json.dumps({"projects": structured_resume.get("projects", [])})
+                    if structured_resume.get("projects")
+                    else None
+                ),
+                skills=(
+                    json.dumps({"skills": structured_resume.get("skills", [])})
+                    if structured_resume.get("skills")
+                    else None
+                ),
+                research_work=(
+                    json.dumps({"research_work": structured_resume.get("research_work", [])})
+                    if structured_resume.get("research_work")
+                    else None
+                ),
+                achievements=(
+                    json.dumps({"achievements": structured_resume.get("achievements", [])})
+                    if structured_resume.get("achievements")
+                    else None
+                ),
+                education=(
+                    json.dumps({"education": structured_resume.get("education", [])})
+                    if structured_resume.get("education")
+                    else None
+                ),
+                extracted_keywords=(
+                    json.dumps({
+                        "extracted_keywords": structured_resume.get("extracted_keywords", [])
+                    })
                     if structured_resume.get("extracted_keywords")
                     else None
                 ),
