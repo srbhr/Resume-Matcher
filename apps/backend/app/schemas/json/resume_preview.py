@@ -20,6 +20,16 @@ SCHEMA = {
             "description": ["string"],
         }
     ],
+    "projects": [
+        {
+            "id": 0,
+        "title": "string",
+      "description": ["string"],
+      "tech": ["string"],
+      "link": "string | null",
+      "years": "string | null"
+    }
+  ],
     "education": [
         {
             "id": 0,
