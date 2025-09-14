@@ -147,45 +147,44 @@ class ResumeService:
             processed_resume = ProcessedResume(
                 resume_id=resume_id,
                 personal_data=(
-                    json.dumps(structured_resume.get("personal_data", {}))
-                    if structured_resume.get("personal_data")
-                    else None
+                    # Persist empty object instead of NULL to satisfy non-nullable JSON column
+                    json.dumps(structured_resume.get("personal_data") if structured_resume.get("personal_data") is not None else {})
                 ),
                 experiences=(
                     json.dumps({"experiences": structured_resume.get("experiences", [])})
-                    if structured_resume.get("experiences")
+                    if structured_resume.get("experiences") is not None
                     else None
                 ),
                 projects=(
                     json.dumps({"projects": structured_resume.get("projects", [])})
-                    if structured_resume.get("projects")
+                    if structured_resume.get("projects") is not None
                     else None
                 ),
                 skills=(
                     json.dumps({"skills": structured_resume.get("skills", [])})
-                    if structured_resume.get("skills")
+                    if structured_resume.get("skills") is not None
                     else None
                 ),
                 research_work=(
                     json.dumps({"research_work": structured_resume.get("research_work", [])})
-                    if structured_resume.get("research_work")
+                    if structured_resume.get("research_work") is not None
                     else None
                 ),
                 achievements=(
                     json.dumps({"achievements": structured_resume.get("achievements", [])})
-                    if structured_resume.get("achievements")
+                    if structured_resume.get("achievements") is not None
                     else None
                 ),
                 education=(
                     json.dumps({"education": structured_resume.get("education", [])})
-                    if structured_resume.get("education")
+                    if structured_resume.get("education") is not None
                     else None
                 ),
                 extracted_keywords=(
                     json.dumps({
                         "extracted_keywords": structured_resume.get("extracted_keywords", [])
                     })
-                    if structured_resume.get("extracted_keywords")
+                    if structured_resume.get("extracted_keywords") is not None
                     else None
                 ),
             )
