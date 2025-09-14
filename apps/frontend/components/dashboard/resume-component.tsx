@@ -190,9 +190,17 @@ const Resume: React.FC<ResumeProps> = ({ resumeData }) => {
 							)}
 							{project.link && (
 								<p className="text-sm text-gray-500 mb-2">
-									<a href={project.link} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline break-all">
-										{project.link}
-									</a>
+									{(() => {
+										const url = project.link?.trim();
+										const safe = url && /^https?:\/\//i.test(url) ? url : null;
+										return safe ? (
+											<a href={safe} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline break-all">
+												{safe}
+											</a>
+										) : (
+											<span className="break-all">{project.link}</span>
+										);
+									})()}
 								</p>
 							)}
 							{project.years && <p className="text-sm text-gray-500 mb-2">{project.years}</p>}
