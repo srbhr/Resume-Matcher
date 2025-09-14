@@ -34,5 +34,16 @@ class ResumePreviewerModel(BaseModel):
     personalInfo: PersonalInfo
     summary: Optional[str] = None
     experience: List[ExperienceItem]
+    # New: include projects in the preview
+    projects: Optional[List["ProjectItem"]] = None
     education: List[EducationItem]
     skills: List[str]
+
+
+class ProjectItem(BaseModel):
+    id: int
+    title: Optional[str] = None
+    description: Optional[List[Optional[str]]] = None
+    tech: Optional[List[Optional[str]]] = None
+    link: Optional[str] = None
+    years: Optional[str] = None
