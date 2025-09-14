@@ -47,3 +47,6 @@ class ProjectItem(BaseModel):
     tech: Optional[List[Optional[str]]] = None
     link: Optional[str] = None
     years: Optional[str] = None
+
+# Resolve forward references for Pydantic
+ResumePreviewerModel.model_rebuild()
