@@ -1,0 +1,108 @@
+'use client';
+
+import useResumeStore from '@/lib/stores/resume-store';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+
+export default function ResumePreview() {
+	const { resumeData } = useResumeStore();
+
+	return (
+		<div className="h-full w-full bg-background flex flex-col">
+			{/* Resume Content */}
+			<div className="flex-1 flex items-start justify-center overflow-auto">
+				<div className="bg-card shadow-2xl w-full max-w-[8.5in] min-h-[11in] max-h-full">
+					<div className="p-6 md:p-8">
+						{/* Header Section */}
+						<div className="mb-6">
+							<h2 className="text-2xl md:text-3xl font-bold mb-2 text-card-foreground">
+								{resumeData.personal.name || 'Your Name'}
+							</h2>
+							<p className="text-lg text-muted-foreground mb-1">
+								{resumeData.personal.title || 'Your Title'}
+							</p>
+							<p className="text-sm text-muted-foreground">
+								{resumeData.personal.email && `${resumeData.personal.email} • `}
+								{resumeData.personal.phone}
+							</p>
+						</div>
+
+						<Separator className="mb-6" />
+
+						{/* Experience Section */}
+						<div className="mb-6">
+							<h3 className="text-xl font-semibold mb-3 text-card-foreground border-b border-border pb-1">
+								Experience
+							</h3>
+							{resumeData.experience.length > 0 ? (
+								<div className="space-y-4">
+									{resumeData.experience.map((exp, index) => (
+										<div key={index} className="pl-4">
+											<p className="font-semibold text-card-foreground">
+												{exp.company || 'Company'}
+											</p>
+											<p className="text-muted-foreground">
+												{exp.position || 'Position'}
+											</p>
+										</div>
+									))}
+								</div>
+							) : (
+								<p className="text-muted-foreground italic">
+									No experience added yet.
+								</p>
+							)}
+						</div>
+
+						<Separator className="mb-6" />
+
+						{/* Education Section */}
+						<div className="mb-6">
+							<h3 className="text-xl font-semibold mb-3 text-card-foreground border-b border-border pb-1">
+								Education
+							</h3>
+							{resumeData.education.length > 0 ? (
+								<div className="space-y-4">
+									{resumeData.education.map((edu, index) => (
+										<div key={index} className="pl-4">
+											<p className="font-semibold text-card-foreground">
+												{edu.institution || 'Institution'}
+											</p>
+											<p className="text-muted-foreground">
+												{edu.degree || 'Degree'}
+											</p>
+										</div>
+									))}
+								</div>
+							) : (
+								<p className="text-muted-foreground italic">
+									No education added yet.
+								</p>
+							)}
+						</div>
+
+						<Separator className="mb-6" />
+
+						{/* Skills Section */}
+						<div>
+							<h3 className="text-xl font-semibold mb-3 text-card-foreground border-b border-border pb-1">
+								Skills
+							</h3>
+							{resumeData.skills.length > 0 ? (
+								<div className="flex flex-wrap gap-2">
+									{resumeData.skills.map((skill, index) => (
+										<Badge key={index} variant="outline">
+											{skill}
+										</Badge>
+									))}
+								</div>
+							) : (
+								<p className="text-muted-foreground italic">No skills added yet.</p>
+							)}
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	);
+}

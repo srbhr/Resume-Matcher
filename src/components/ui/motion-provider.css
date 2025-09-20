@@ -1,0 +1,22 @@
+:root{
+  --gradient-primary: linear-gradient(135deg, oklch(0.7 0.15 250) 0%, oklch(0.6 0.2 280) 100%);
+  --gradient-card: linear-gradient(145deg, oklch(1 0 0) 0%, oklch(0.98 0.005 220) 100%);
+  --gradient-card-dark: linear-gradient(145deg, oklch(0.22 0.01 250) 0%, oklch(0.18 0.02 280) 100%);
+  --shadow-sm: 0 1px 2px 0 oklch(0.145 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px oklch(0.145 0 0 / 0.1), 0 2px 4px -2px oklch(0.145 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px oklch(0.145 0 0 / 0.1), 0 4px 6px -4px oklch(0.145 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px oklch(0.145 0 0 / 0.1), 0 8px 10px -6px oklch(0.145 0 0 / 0.1);
+  --glass-bg: oklch(1 0 0 / 0.7);
+  --glass-border: oklch(1 0 0 / 0.2);
+  --glass-bg-dark: oklch(0.1 0 0 / 0.7);
+  --glass-border-dark: oklch(1 0 0 / 0.1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
