@@ -20,6 +20,7 @@ import {
 import { toast } from "sonner";
 import { useState } from "react";
 import { motion } from "motion/react";
+import BulletPointEditor from "./bullet-point-editor";
 
 export default function ResumeForm() {
   const {
@@ -263,28 +264,17 @@ export default function ResumeForm() {
                           </div>
                         </div>
                         <div className="mt-4">
-                          <Label htmlFor={`responsibilities-${index}`}>
-                            Key Responsibilities & Achievements
-                          </Label>
-                          <Textarea
-                            id={`responsibilities-${index}`}
-                            placeholder="• Led development of key features&#10;• Improved performance by 40%&#10;• Mentored junior developers&#10;• Collaborated with cross-functional teams"
-                            value={exp.responsibilities?.join("\n") || ""}
-                            onChange={(e) =>
+                          <BulletPointEditor
+                            label="Key Responsibilities & Achievements"
+                            placeholder="e.g., Led development of key features"
+                            value={exp.responsibilities || []}
+                            onChange={(responsibilities) =>
                               updateExperienceResponsibilities(
                                 index,
-                                e.target.value
-                                  .split("\n")
-                                  .filter((r) => r.trim() !== "")
+                                responsibilities
                               )
                             }
-                            className="mt-1 min-h-[100px]"
-                            rows={4}
                           />
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Enter each responsibility on a new line (use • for
-                            bullet points)
-                          </p>
                         </div>
                       </CardContent>
                     </Card>
@@ -388,7 +378,7 @@ export default function ResumeForm() {
                               id={`start-date-${index}`}
                               type="text"
                               placeholder="e.g., Sep 2020"
-                              value={edu["start-date"] || ""}
+                              value={(edu as any)["start-date"] || ""}
                               onChange={(e) =>
                                 updateEducation(
                                   index,
