@@ -266,6 +266,34 @@ You can customize any variables in these files before or after bootstrapping.
 
 ---
 
+## 🤖 OpenAI Integration
+
+### Prerequisites
+- OpenAI API key [create new key from here](https://platform.openai.com/api-keys)
+- LLM model name you'd like to use e.g [gpt-4.1-2025-04-14](https://platform.openai.com/docs/models/gpt-4.1)
+- embedding model name you'd like to use e.g. [text-embedding-3-large](https://platform.openai.com/docs/guides/embeddings#embedding-models)
+
+### Update environment keys at `./apps/backend/.env` 
+For example if you want to use gpt4.1 with text embedding 3 large append below at the end of `.env` file
+```env
+LLM_API_KEY="YOUR_OPEN_AI_API_KEY"
+EMBEDDING_API_KEY="YOUR_OPEN_AI_API_KEY"
+LLM_PROVIDER="openai"
+EMBEDDING_PROVIDER="openai"
+LL_MODEL="gpt-4.1-2025-04-14"
+EMBEDDING_MODEL="text-embedding-3-large"
+```
+
+### re-run the server
+```bash
+make run-dev
+```
+
++Now you don't need to run Ollama locally, it will communicate with OpenAI's API server.
+
+
+---
+
 ## 🖋️ Frontend
 
 - Please make sure to have format on save option enabled on your editor (or) run `npm run format` to format all the staged changes.
