@@ -1,0 +1,161 @@
+# This is the complete, final configuration file for the Claude-Code AI assistant.
+# It combines deep project context with actionable commands and workflow rules.
+
+project_name: "Resume Matcher"
+description: "An AI-powered system that helps users optimize resumes for ATS compatibility. The backend is built with FastAPI and the frontend with Next.js."
+
+# --- Contextual Knowledge (Provides the AI with deep project understanding) ---
+
+prerequisites:
+  - "Node.js (>= v18)"
+  - "Python (>= 3.8)"
+  - "Ollama (must be running for the default provider)"
+  - "uv (Python package installer)"
+
+ai_providers:
+  description: "The application uses configurable providers for LLM and embedding models, set in the apps/backend/.env file."
+  provider_options:
+    - name: "ollama"
+      description: "Default provider. Runs models locally."
+    - name: "openai"
+      description: "Uses the OpenAI API. Requires API keys."
+    - name: "LlamaIndex"
+      description: "Supports 90+ providers via Python class names."
+
+environment_variables:
+  backend:
+    file: "apps/backend/.env"
+    description: "Configuration for the FastAPI backend, especially AI providers."
+    variables:
+      - name: "LLM_PROVIDER"
+        description: "Defines the LLM provider ('ollama', 'openai', etc.)."
+      - name: "EMBEDDING_PROVIDER"
+        description: "Defines the embedding provider."
+      - name: "LL_MODEL"
+        description: "The specific model ID for the LLM provider."
+      - name: "EMBEDDING_MODEL"
+        description: "The specific model ID for the embedding provider."
+      - name: "LLM_API_KEY"
+        description: "The API key for commercial providers."
+      - name: "ASYNC_DATABASE_URL"
+        description: "The connection string for the database."
+  frontend:
+    file: "apps/frontend/.env"
+    description: "Configuration for the Next.js frontend."
+    variables:
+      - name: "NEXT_PUBLIC_API_URL"
+        description: "The URL the frontend uses to communicate with the backend."
+
+key_directories:
+  - path: "apps/backend/app/services/"
+    description: "Contains the core business logic."
+  - path: "apps/backend/app/models/"
+    description: "Contains all SQLAlchemy database models."
+  - path: "apps/frontend/components/"
+    description: "Contains reusable React UI components."
+  - path: "apps/backend/app/schemas/"
+    description: "Pydantic & JSON schemas for data validation."
+  - path: "apps/backend/app/api/router/v1/"
+    description: "Crucial for telling the AI where API endpoints are defined."
+  - path: "apps/frontend/lib/"
+    description: "Important for frontend utilities and API client functions."
+  - path: "apps/frontend/app/"
+    description: "The main entry point for the Next.js frontend application."
+
+key_files:
+  - path: ".github/CONTRIBUTING.md"
+    description: "The primary source for contribution workflow and formatting rules."
+  - path: ".github/copilot-instructions.md"
+    description: "Source of truth for project conventions and patterns."
+  - path: "SETUP.md"
+    description: "Canonical guide for the automated local development setup."
+  - path: "docs/CONFIGURING.md"
+    description: "Primary source for understanding AI provider configuration."
+  - path: "apps/backend/.env.sample"
+    description: "The template for the backend environment file."
+  - path: "apps/frontend/.env.sample"
+    description: "The template for the frontend environment file."
+
+# --- Actionable Commands (Allows the AI to run common development tasks) ---
+
+runnable_tasks:
+  setup:
+    command: "./setup.sh"
+    description: "Runs the complete setup script (Linux/macOS)."
+  run-dev:
+    command: "./setup.sh --start-dev"
+    description: "Starts the development servers."
+  start-ollama:
+    command: "ollama serve"
+    description: "Starts the Ollama AI model server."
+  test-backend:
+    command: "pytest apps/backend"
+    description: "Runs all backend tests."
+  format-code:
+    command: "black ."
+    description: "Formats all Python code using the Black code formatter."
+  run-frontend-only:
+    command: "npm run dev --prefix apps/frontend"
+    description: "Starts the Next.js frontend development server only."
+
+# --- Logical Workflows & Code Generation Guidelines ---
+
+# NEW section for contribution rules
+contribution_workflow:
+  - "All pull requests must be made to the `main` branch."
+  - "To find work, look for issues labeled `good first issue` or `help wanted`."
+  - "Before submitting a PR, ensure all tests pass and code is formatted with Black."
+
+task_templates:
+  - name: "add_new_resume_feature"
+    description: "A step-by-step guide for adding a new resume processing feature."
+    steps:
+      - "1. Modify a model in `apps/backend/app/models/` and create a database migration."
+      - "2. Add business logic to the relevant service in `apps/backend/app/services/`."
+      - "3. Expose the logic via a new endpoint in `apps/backend/app/api/router/v1/`."
+  - name: "add_new_llamaindex_provider"
+    description: "A step-by-step guide for configuring a new LlamaIndex provider."
+    steps:
+      - "1. Navigate to `apps/backend` and install the package: `uv pip install <package-name>`."
+      - "2. In `apps/backend/.env`, set `LLM_PROVIDER` to the full Python class name."
+      - "3. Set the `LL_MODEL` and `LLM_API_KEY` as required by the provider."
+  - name: "core_resume_improvement_workflow"
+    description: "Describes the main data flow for improving a resume based on a job description."
+    steps:
+      - "1. The frontend client first calls the `uploadJobDescriptions` function with job text and a `resume_id`."
+      - "2. This function sends a POST request to the backend endpoint: `/api/v1/jobs/upload`."
+      - "3. The backend processes the job descriptions and returns a new `job_id`."
+      - "4. The client then calls the `improveResume` function, passing the original `resume_id` and the new `job_id`."
+      - "5. This function sends a POST request to the backend endpoint: `/api/v1/resumes/improve`."
+      - "6. The backend's AI service analyzes both documents and returns the `ImprovedResult` object to the frontend."
+
+workflows:
+  review:
+    steps:
+      - "black --check ."
+      - "pytest apps/backend"
+      - "npm test --prefix apps/frontend"
+
+  deploy-prod:
+    steps:
+      - "npm run build --prefix apps/frontend"
+      - "uvicorn app.main:app --host 0.0.0.0 --port 8000 --app-dir apps/backend/app"
+      - "Ensure environment variables are set for production."
+
+
+guidelines:
+  general:
+    - "Prioritize code quality, maintainability, and security."
+  code_formatting:
+    - "Use Black for Python code."
+    - "Pre-commit hooks enforce formatting."
+  testing:
+    - "Backend: pytest. Frontend: Jest + React Testing Library."
+  debugging:
+    - "Set ENV=development in backend .env for debug mode."
+    - "Use logging in `apps/backend/app/core/exceptions.py`."
+    - "Check Ollama logs with `ollama logs` if AI fails."
+  documentation:
+    - "Run `pdoc apps/backend/app` to generate API docs."
+    - "Keep `docs/CONFIGURING.md` updated when adding AI providers."
+    - "Document new endpoints in `apps/backend/app/api/router/v1/`."
