@@ -21,6 +21,9 @@ import { toast } from "sonner";
 import { useState } from "react";
 import { motion } from "motion/react";
 import BulletPointEditor from "./bullet-point-editor";
+import { useAutoSave } from "@/lib/stores/resume-store";
+import { Download } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 
 export default function ResumeForm() {
   const {
@@ -29,8 +32,56 @@ export default function ResumeForm() {
     updateExperience,
     updateExperienceResponsibilities,
     updateEducation,
+    updateProjects,
+    updateProjectTechnologies,
+    updateProjectAchievements,
     updateSkills,
   } = useResumeStore();
+
+  // Enable auto-save
+  useAutoSave();
+
+  // Validation helpers
+  const isPersonalComplete =
+    resumeData.personal.name &&
+    resumeData.personal.email &&
+    resumeData.personal.title;
+  const isExperienceComplete =
+    resumeData.experience.length > 0 &&
+    resumeData.experience.some((exp) => exp.company && exp.position);
+  const isEducationComplete =
+    resumeData.education.length > 0 &&
+    resumeData.education.some((edu) => edu.institution && edu.degree);
+  const isProjectsComplete = resumeData.projects.length > 0;
+  const isSkillsComplete = resumeData.skills.length > 0;
+
+  // Calculate completion percentage
+  const completedSections = [
+    isPersonalComplete,
+    isExperienceComplete,
+    isEducationComplete,
+    isProjectsComplete,
+    isSkillsComplete,
+  ].filter(Boolean).length;
+  const completionPercentage = Math.round((completedSections / 5) * 100);
+
+  // Export functionality
+  const handleExport = () => {
+    const dataStr = JSON.stringify(resumeData, null, 2);
+    const dataUri =
+      "data:application/json;charset=utf-8," + encodeURIComponent(dataStr);
+
+    const exportFileDefaultName = `resume-${
+      resumeData.personal.name || "unnamed"
+    }.json`;
+
+    const linkElement = document.createElement("a");
+    linkElement.setAttribute("href", dataUri);
+    linkElement.setAttribute("download", exportFileDefaultName);
+    linkElement.click();
+
+    toast.success("Resume exported successfully!");
+  };
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
   const [deleteType, setDeleteType] = useState<
@@ -79,18 +130,36 @@ export default function ResumeForm() {
       <div className="bg-card/80 backdrop-blur-md border border-border/50 rounded-2xl p-6 w-full">
         {/* Header */}
         <div className="mb-6">
-          <div>
-            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-              Edit Resume
-            </h2>
-            <p className="text-muted-foreground">
-              Fill in your information and see the preview update in real-time
-            </p>
+          <div className="flex justify-between items-start mb-4">
+            <div>
+              <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
+                Edit Resume
+              </h2>
+              <p className="text-muted-foreground">
+                Fill in your information and see the preview update in real-time
+              </p>
+            </div>
+            <Button
+              onClick={handleExport}
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2"
+            >
+              <Download className="h-4 w-4" />
+              Export JSON
+            </Button>
           </div>
-        </div>
 
+          {/* Progress Indicator */}
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Resume Completion</span>
+              <span className="font-medium">{completionPercentage}%</span>
+            </div>
+            <Progress value={completionPercentage} className="h-2" />
+          </div>
+        </div>{" "}
         <Separator className="mb-6" />
-
         <div className="space-y-6">
           {/* Personal Information Section */}
           <motion.div
@@ -105,14 +174,11 @@ export default function ResumeForm() {
                     1
                   </span>
                   Personal Information
-                  {resumeData.personal.name &&
-                    resumeData.personal.email &&
-                    resumeData.personal.phone &&
-                    resumeData.personal.title && (
-                      <Badge variant="outline" className="ml-auto">
-                        Complete
-                      </Badge>
-                    )}
+                  {isPersonalComplete && (
+                    <Badge variant="outline" className="ml-auto">
+                      Complete
+                    </Badge>
+                  )}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -175,18 +241,11 @@ export default function ResumeForm() {
                     2
                   </span>
                   Experience
-                  {resumeData.experience.length > 0 &&
-                    resumeData.experience.some(
-                      (exp) =>
-                        exp.company &&
-                        exp.position &&
-                        exp.duration &&
-                        (exp.responsibilities?.length ?? 0) > 0
-                    ) && (
-                      <Badge variant="outline" className="ml-auto">
-                        Complete
-                      </Badge>
-                    )}
+                  {isExperienceComplete && (
+                    <Badge variant="outline" className="ml-auto">
+                      Complete
+                    </Badge>
+                  )}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -311,14 +370,11 @@ export default function ResumeForm() {
                     3
                   </span>
                   Education
-                  {resumeData.education.length > 0 &&
-                    resumeData.education.some(
-                      (edu) => edu.institution && edu.degree
-                    ) && (
-                      <Badge variant="outline" className="ml-auto">
-                        Complete
-                      </Badge>
-                    )}
+                  {isEducationComplete && (
+                    <Badge variant="outline" className="ml-auto">
+                      Complete
+                    </Badge>
+                  )}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -429,6 +485,150 @@ export default function ResumeForm() {
             </Card>
           </motion.div>
 
+          {/* Projects Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.35 }}
+          >
+            <Card className="border-0 bg-card/80 backdrop-blur-sm grainy">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <span className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-primary-foreground text-sm font-bold mr-3">
+                    4
+                  </span>
+                  Projects
+                  {isProjectsComplete && (
+                    <Badge variant="outline" className="ml-auto">
+                      Complete
+                    </Badge>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {resumeData.projects.map((project, index) => (
+                    <Card key={index} className="relative">
+                      <CardContent className="pt-4">
+                        <div className="flex justify-between items-start mb-4">
+                          <h4 className="font-medium">Project #{index + 1}</h4>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              const newProjects = [...resumeData.projects];
+                              newProjects.splice(index, 1);
+                              // Update the store
+                              const updatedStore = useResumeStore.getState();
+                              updatedStore.resumeData.projects = newProjects;
+                              useResumeStore.setState({
+                                resumeData: updatedStore.resumeData,
+                              });
+                              toast.success(
+                                "Project entry removed successfully"
+                              );
+                            }}
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          >
+                            Remove
+                          </Button>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="md:col-span-2">
+                            <Label htmlFor={`project-name-${index}`}>
+                              Project Name *
+                            </Label>
+                            <Input
+                              id={`project-name-${index}`}
+                              type="text"
+                              placeholder="e.g., E-commerce Platform"
+                              value={project.name || ""}
+                              onChange={(e) =>
+                                updateProjects(index, "name", e.target.value)
+                              }
+                            />
+                          </div>
+                          <div className="md:col-span-2">
+                            <Label htmlFor={`project-description-${index}`}>
+                              Description
+                            </Label>
+                            <Textarea
+                              id={`project-description-${index}`}
+                              placeholder="Brief description of the project..."
+                              value={project.description || ""}
+                              onChange={(e) =>
+                                updateProjects(
+                                  index,
+                                  "description",
+                                  e.target.value
+                                )
+                              }
+                              className="mt-1"
+                              rows={3}
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor={`project-technologies-${index}`}>
+                              Technologies Used
+                            </Label>
+                            <Input
+                              id={`project-technologies-${index}`}
+                              type="text"
+                              placeholder="React, Node.js, MongoDB"
+                              value={project.technologies?.join(", ") || ""}
+                              onChange={(e) =>
+                                updateProjectTechnologies(
+                                  index,
+                                  e.target.value
+                                    .split(", ")
+                                    .filter((t) => t.trim() !== "")
+                                )
+                              }
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor={`project-url-${index}`}>
+                              Project URL
+                            </Label>
+                            <Input
+                              id={`project-url-${index}`}
+                              type="url"
+                              placeholder="https://github.com/username/project"
+                              value={project.url || ""}
+                              onChange={(e) =>
+                                updateProjects(index, "url", e.target.value)
+                              }
+                            />
+                          </div>
+                        </div>
+                        <div className="mt-4">
+                          <BulletPointEditor
+                            label="Key Achievements & Features"
+                            placeholder="e.g., Increased performance by 40%"
+                            value={project.achievements || []}
+                            onChange={(achievements) =>
+                              updateProjectAchievements(index, achievements)
+                            }
+                          />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                  <Button
+                    onClick={() => {
+                      updateProjects(resumeData.projects.length, "name", "");
+                      toast.success("New project entry added");
+                    }}
+                    className="w-full md:w-auto"
+                    variant="outline"
+                  >
+                    + Add Project
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
           {/* Skills Section */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -439,7 +639,7 @@ export default function ResumeForm() {
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <span className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-primary-foreground text-sm font-bold mr-3">
-                    4
+                    5
                   </span>
                   Skills
                   {resumeData.skills.length > 0 && (
@@ -473,7 +673,6 @@ export default function ResumeForm() {
             </Card>
           </motion.div>
         </div>
-
         {/* Delete Confirmation Dialog */}
         <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
           <DialogContent>

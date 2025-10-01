@@ -109,6 +109,76 @@ export default function ResumePreview() {
 
             <Separator className="mb-6" />
 
+            {/* Projects Section */}
+            <div className="mb-6">
+              <h3 className="text-xl font-semibold mb-3 text-card-foreground border-b border-border pb-1">
+                Projects
+              </h3>
+              {resumeData.projects.length > 0 ? (
+                <div className="space-y-4">
+                  {resumeData.projects.map((project, index) => (
+                    <div key={index} className="pl-4">
+                      <div className="flex justify-between items-start mb-1">
+                        <p className="font-semibold text-card-foreground">
+                          {project.name || "Project Name"}
+                        </p>
+                        {project.url && (
+                          <a
+                            href={project.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-primary hover:underline"
+                          >
+                            View Project
+                          </a>
+                        )}
+                      </div>
+                      {project.description && (
+                        <p className="text-muted-foreground mb-2">
+                          {project.description}
+                        </p>
+                      )}
+                      {project.technologies &&
+                        project.technologies.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mb-2">
+                            {project.technologies.map((tech, techIndex) => (
+                              <Badge
+                                key={techIndex}
+                                variant="outline"
+                                className="text-xs"
+                              >
+                                {tech}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+                      {project.achievements &&
+                        project.achievements.length > 0 && (
+                          <ul className="list-disc list-inside text-sm text-card-foreground space-y-1">
+                            {project.achievements.map(
+                              (achievement, achievementIndex) => (
+                                <li
+                                  key={achievementIndex}
+                                  className="leading-relaxed"
+                                >
+                                  {achievement}
+                                </li>
+                              )
+                            )}
+                          </ul>
+                        )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-muted-foreground italic">
+                  No projects added yet.
+                </p>
+              )}
+            </div>
+
+            <Separator className="mb-6" />
+
             {/* Skills Section */}
             <div>
               <h3 className="text-xl font-semibold mb-3 text-card-foreground border-b border-border pb-1">
