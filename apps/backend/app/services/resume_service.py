@@ -47,7 +47,7 @@ class ResumeService:
         if missing_deps:
             logger.warning(
                 f"Missing dependencies for DOCX processing: {', '.join(missing_deps)}. "
-                f"DOCX file processing may fail. Install with: pip install {' '.join(missing_deps)}"
+                f"DOCX file processing may fail. Install with: uv add {' '.join(missing_deps)}"
             )
 
 
@@ -82,7 +82,7 @@ class ResumeService:
                 if "MissingDependencyException" in error_msg or "DocxConverter" in error_msg:
                     raise Exception(
                         "File conversion failed: markitdown is missing DOCX support. "
-                        "Please install with: pip install 'markitdown[all]==0.1.2' or contact system administrator."
+                        "Please install with: uv add 'markitdown[all]>=0.1.2' or contact system administrator."
                     ) from e
                 elif "docx" in error_msg.lower():
                     raise Exception(

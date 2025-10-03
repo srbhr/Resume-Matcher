@@ -1,6 +1,9 @@
 # Local Setup Guide for Resume-Matcher
 
-![installing_resume_matcher](assets/how_to_install_resumematcher.png)
+![insta- **Python** ≥ 3.12 (`python3`, `pip3` for uv bootstrap only)
+- **uv** ≥ 0.6.0 (fast Python package manager) 
+- **curl** (for installing uv & Ollama)
+- **make** (for Makefile integration)g_resume_matcher](assets/how_to_install_resumematcher.png)
 
 This document provides cross-platform instructions to get the project up and running locally.
 
@@ -41,14 +44,15 @@ make run-dev
 ### Windows
 - **PowerShell** 5.1 or later
 - **Node.js** ≥ v18 (includes `npm`)
-- **Python** ≥ 3.8 (`python3`, `pip3`)
+- **Python** ≥ 3.12 (`python3`, `pip3` for uv bootstrap only)
+- **uv** ≥ 0.6.0 (will be auto-installed by setup.ps1 if missing)
 - **winget** (recommended for Ollama installation)
-- **uv** (will be auto-installed by setup.ps1 if missing)
 
 ### Linux/macOS
 - **Bash** 4.4 or higher
 - **Node.js** ≥ v18 (includes `npm`)
-- **Python** ≥ 3.8 (`python3`, `pip3`)
+- **Python** ≥ 3.12 (`python3`, `pip3` for uv bootstrap only)
+- **uv** ≥ 0.6.0 (fast Python package manager)
 - **curl** (for installing uv & Ollama)
 - **make** (for Makefile integration)
 
@@ -143,7 +147,7 @@ You can customize any variables in these files before or after bootstrapping.
    - Pull the `gemma3:4b` model via Ollama
    - Bootstrap root & backend `.env` files
    - Install Node.js deps (`npm ci`) at root and frontend
-   - Sync Python deps in `apps/backend` via `uv sync`
+   - Create Python virtual environment and sync deps via `uv sync`
 
 3. **(Optional) Start development**
 

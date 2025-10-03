@@ -28,12 +28,12 @@ def test_docx_dependencies():
         print("✓ markitdown DOCX support is available")
     except ImportError as e:
         print(f"✗ markitdown DOCX converter is missing: {e}")
-        print("  Install with: pip install 'markitdown[all]==0.1.2'")
+        print("  Install with: uv add 'markitdown[all]>=0.1.2'")
         return False
     except Exception as e:
         if "MissingDependencyException" in str(e) or "dependencies needed to read .docx files" in str(e):
             print(f"✗ markitdown DOCX dependencies missing: {e}")
-            print("  Install with: pip install 'markitdown[all]==0.1.2'")
+            print("  Install with: uv add 'markitdown[all]>=0.1.2'")
             return False
         print(f"✗ Unexpected error with DOCX converter: {e}")
         return False
@@ -85,7 +85,7 @@ def test_docx_dependencies():
         print(f"  Error type: {type(e).__name__}")
         if "MissingDependencyException" in str(e):
             print("  This is the DocxConverter MissingDependencyException mentioned in issue #409")
-            print("  Install with: pip install 'markitdown[all]==0.1.2'")
+            print("  Install with: uv add 'markitdown[all]>=0.1.2'")
         return False
 
 if __name__ == "__main__":

@@ -51,121 +51,139 @@ Follow these steps to set up the environment and run the application.
    cd Resume-Matcher
    ```
 
-3. Create a Python Virtual Environment:
-
-   - Using [virtualenv](https://learnpython.com/blog/how-to-use-virtualenv-python/):
-
-     _Note_: Check how to install virtualenv on your system here [link](https://learnpython.com/blog/how-to-use-virtualenv-python/).
-
-     ```bash
-     virtualenv env
-     ```
-
-   **OR**
-
-   - Create a Python Virtual Environment:
-
-     ```bash
-     python -m venv env
-     ```
-
-4. Activate the Virtual Environment.
-
-   - On Windows.
-
-     ```bash
-     env\Scripts\activate
-     ```
-
-   - On macOS and Linux.
-
-     ```bash
-     source env/bin/activate
-     ```
-
-    **OPTIONAL (For pyenv users)**
-
-   Run the application with pyenv (Refer to this [article](https://realpython.com/intro-to-pyenv/#installing-pyenv))
-
-   - Build dependencies (on ubuntu)
-      ```
-      sudo apt-get install -y make build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev libncursesw5-dev xz-utils tk-dev libffi-dev liblzma-dev python openssl
-      ```
-      ```
-
-      sudo apt-get install build-essential zlib1g-dev libffi-dev libssl-dev libbz2-dev libreadline-dev libsqlite3-dev liblzma-dev libncurses-dev
-
-      sudo apt-get install python-tk python3-tk tk-dev
-
-      sudo apt-get install build-essential zlib1g-dev libffi-dev libssl-dev libbz2-dev libreadline-dev libsqlite3-dev liblzma-dev
-
-      ```
-
-        - pyenv installer
-     ```
-        curl https://pyenv.run | bash
-     ```
-   - Install desired python version
-     ```
-       pyenv install -v 3.11.0
-     ```
-
-   - pyenv with virtual enviroment
-     ```
-        pyenv virtualenv 3.11.0 venv
-     ```
-
-   - Activate virtualenv with pyenv
-     ```
-        pyenv activate venv
-     ```
-
-     5. Install Dependencies:
+3. **Install Dependencies (Quick Setup):**
 
    ```bash
-   pip install -r requirements.txt
+   # Install all dependencies (frontend + backend)
+   npm install
+   ```
+   
+   This will automatically:
+   - Install frontend dependencies via npm
+   - Install backend Python dependencies via uv (creates virtual environment automatically)
+
+4. **Set up Environment Files:**
+
+   **Backend (.env):**
+   ```bash
+   # Create backend environment file
+   echo 'SYNC_DATABASE_URL=sqlite:///./resume_matcher.db' > apps/backend/.env
+   echo 'ASYNC_DATABASE_URL=sqlite+aiosqlite:///./resume_matcher.db' >> apps/backend/.env
+   echo 'SESSION_SECRET_KEY=your-secret-key-here-change-in-production' >> apps/backend/.env
+   echo 'LLM_PROVIDER=ollama' >> apps/backend/.env
+   echo 'LLM_BASE_URL=http://localhost:11434' >> apps/backend/.env
+   echo 'LL_MODEL=gemma3:4b' >> apps/backend/.env
    ```
 
-6. Prepare Data:
-
-   - Resumes: Place your resumes in PDF format in the `Data/Resumes` folder. Remove any existing contents in this folder.
-   - Job Descriptions: Place your job descriptions in PDF format in the `Data/JobDescription` folder. Remove any existing contents in this folder.
-
-7. Parse Resumes to JSON:
-
-   ```python
-   python run_first.py
+   **Frontend (.env.local):**
+   ```bash
+   # Create frontend environment file
+   echo 'NEXT_PUBLIC_API_URL=http://localhost:8000' > apps/frontend/.env.local
    ```
 
-   8. Run the Application:
-
-   ```python
-   streamlit run streamlit_app.py
-   ```
-
-**Note**: For local versions, you do not need to run "streamlit_second.py" as it is specifically for deploying to Streamlit servers.
-
-**Additional Note**: The Vector Similarity part is precomputed to optimize performance due to the resource-intensive nature of sentence encoders that require significant GPU and RAM resources. If you are interested in leveraging this feature in a Google Colab environment for free, refer to the upcoming blog (link to be provided) for further guidance.
-
-<br/>
-
-### Docker
-
-1. Build the image and start application
+5. **Start Development:**
 
    ```bash
-       docker-compose up
+   # Start both frontend and backend
+   npm run dev
+   
+   # OR start individually:
+   npm run dev:frontend  # Next.js frontend on http://localhost:3000
+   npm run dev:backend   # FastAPI backend on http://localhost:8000
    ```
 
-2. Open `localhost:80` on your browser
+6. **Alternative Setup Methods:**
 
-<br/>
+   **Quick Setup (Recommended for first-time setup):**
+   
+   **Windows (PowerShell):**
+   ```powershell
+   .\setup.ps1
+   ```
+   
+   **Linux/macOS (Bash):**
+   ```bash
+   chmod +x setup.sh
+   ./setup.sh
+   ```
 
-### Running the Web Application
+   **Manual Setup (For advanced users):**
+   
+   - Install frontend dependencies:
+     ```bash
+     cd apps/frontend
+     npm ci
+     ```
+   
+   - Install backend dependencies:
+     ```bash
+     cd apps/backend
+     uv sync
+     ```
 
-The full stack Next.js (React and FastAPI) web application allows users to interact with the Resume Matcher tool interactively via a web browser.
+7. **Prerequisites:**
 
-To run the full stack web application (frontend client and backend api servers), follow the instructions over on the [webapp README](/webapp/README.md) file.
+   Make sure you have these installed:
+   - **Node.js** ≥ v18 (includes npm)
+   - **Python** ≥ 3.12 
+   - **uv** ≥ 0.6.0 (Python package manager) - will be auto-installed by setup scripts
+   - **Ollama** (for AI model serving) - install from [ollama.com](https://ollama.com)
+
+8. **Troubleshooting:**
+
+   If you encounter issues:
+   
+   - **Missing dependencies**: Run `npm install` to ensure all packages are installed
+   - **Backend won't start**: Check that `.env` files are created in both `apps/backend/` and `apps/frontend/`
+   - **Database errors**: Ensure `SYNC_DATABASE_URL` and `ASYNC_DATABASE_URL` are set in `apps/backend/.env`
+   - **API 404 errors**: Verify `NEXT_PUBLIC_API_URL=http://localhost:8000` in `apps/frontend/.env.local`
+
+## 🚀 Development Workflow (uv + npm)
+
+Resume Matcher now uses **uv** for fast Python dependency management alongside npm for frontend dependencies.
+
+### Common Development Commands:
+
+```bash
+# Install all dependencies
+npm install
+
+# Start development servers (both frontend + backend)
+npm run dev
+
+# Start individual services
+npm run dev:frontend    # Frontend only (port 3000)
+npm run dev:backend     # Backend only (port 8000)
+
+# Add new Python dependency
+cd apps/backend
+uv add package-name
+
+# Add development dependency
+cd apps/backend
+uv add --dev package-name
+
+# Install frontend package
+cd apps/frontend
+npm install package-name
+```
+
+### Environment Variables:
+
+**Required for backend** (`apps/backend/.env`):
+```env
+SYNC_DATABASE_URL=sqlite:///./resume_matcher.db
+ASYNC_DATABASE_URL=sqlite+aiosqlite:///./resume_matcher.db
+SESSION_SECRET_KEY=your-secret-key-here
+LLM_PROVIDER=ollama
+LLM_BASE_URL=http://localhost:11434
+LL_MODEL=gemma3:4b
+```
+
+**Required for frontend** (`apps/frontend/.env.local`):
+```env
+NEXT_PUBLIC_API_URL=http://localhost:8000
+```
 
 ## Code Formatting
 
@@ -184,7 +202,11 @@ We also use [pre-commit](https://pre-commit.com/) to automatically check for com
 If you haven't already, please install the pre-commit hooks by running the following command in your terminal:
 
 ```sh
+# Install pre-commit using uv
+uv tool install pre-commit
+# OR if you prefer system-wide installation
 pip install pre-commit
+
 pre-commit install
 ```
 

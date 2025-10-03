@@ -75,7 +75,7 @@ LLM_PROVIDER. To make this work, you will first need to install the
 LlamaIndex OpenRouter provider in the backend environment:
 ```bash
 cd apps/backend
-uv pip install llama-index-llms-openrouter
+uv add llama-index-llms-openrouter
 ```
 Then in apps/backend/.env set:
 ```env
