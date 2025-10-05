@@ -77,13 +77,6 @@ async def upload_resume(
             detail=f"File size exceeds the 2 MB limit. Current size: {len(file_bytes) / 1024 / 1024:.2f} MB",
         )
     
-     # check for empty file
-    if not file_bytes:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Empty file. Please upload a valid file.",
-        )
-
     try:
         resume_service = ResumeService(db)
         resume_id = await resume_service.convert_and_store_resume(
