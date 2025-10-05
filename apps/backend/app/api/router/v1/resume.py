@@ -68,6 +68,12 @@ async def upload_resume(
             detail="Empty file. Please upload a valid file.",
         )
 
+    if len(file_bytes) > 2 * 1024 * 1024:  # 2MB limit
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail="File size exceeds maximum allowed size of 2.0MB.",
+        )
+
     try:
         resume_service = ResumeService(db)
         resume_id = await resume_service.convert_and_store_resume(
