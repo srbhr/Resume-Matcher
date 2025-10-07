@@ -88,6 +88,25 @@ The project is built using:
 | Ollama       |        0.6.7        |
 
 
+## Troubleshooting
+
+### Common Issues
+
+**"Failed to fetch" error when uploading resume:**
+- **Cause**: The application servers are not running or not properly configured.
+- **Solution**: 
+  1. Make sure you've run the setup script first: `./setup.sh` (Linux/macOS) or `.\setup.ps1` (Windows)
+  2. Start the development servers: `npm run dev`
+  3. Ensure both backend (port 8000) and frontend (port 3000) are running
+  4. Check that Ollama is installed and running: `ollama serve`
+
+**Upload still not working after setup:**
+- Verify the backend API is accessible: `curl http://localhost:8000/api/docs`
+- Check the browser console for detailed error messages
+- Ensure your resume file is in PDF or DOCX format and under 2MB
+
+For more detailed troubleshooting, see [SETUP.md](SETUP.md).
+
 ## Join Us and Contribute
 
 ![how to contribute](assets/how_to_contribute.png)
