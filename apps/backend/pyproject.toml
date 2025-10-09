@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Resume Matcher Backend API"
 requires-python = ">=3.12"
 dependencies = [
+    "alembic==1.14.0",
     "aiosqlite==0.21.0",
     "annotated-types==0.7.0",
     "anyio==4.9.0",
