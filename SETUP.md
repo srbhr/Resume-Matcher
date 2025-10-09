@@ -68,7 +68,7 @@ winget install Python.Python.3.12
 **Or download manually from official sites:**
 - **Node.js**: Download from [https://nodejs.org/](https://nodejs.org/) (LTS version recommended)
 - **Python**: Download from [https://www.python.org/downloads/](https://www.python.org/downloads/) (v3.8+ required)
-- **Ollama**: Script will try to automatically install Ollama if it failed, Download from [https://ollama.com/download/windows](https://ollama.com/download/windows)
+- **Ollama**: Script will attempt to automatically install Ollama if it fails. Download from [https://ollama.com/download/windows](https://ollama.com/download/windows)
 
 **On macOS**, you can install missing tools via Homebrew:
 
@@ -221,7 +221,7 @@ You can customize any variables in these files before or after bootstrapping.
 
 - **`make help`** — Show available targets
 - **`make setup`** — Run `setup.sh`
-- **`make run-dev`** — start dev server (SIGINT-safe)
+- **`make run-dev`** — Start dev server (SIGINT-safe)
 - **`make run-prod`** — Build for production
 - **`make clean`** — Remove build artifacts (customize as needed)
 
@@ -268,6 +268,6 @@ You can customize any variables in these files before or after bootstrapping.
 
 ## 🖋️ Frontend
 
-- Please make sure to have format on save option enabled on your editor (or) run `npm run format` to format all the staged changes.
+- Please make sure to have the format on save option enabled in your editor or run `npm run format` to format all staged changes.
 
 _Last updated: May 25, 2025_
