@@ -9,11 +9,13 @@ from typing import Any, AsyncGenerator, Dict, Tuple
 from sqlalchemy.future import select
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
+from httpx import TimeoutException, ConnectError, HTTPStatusError
 
 from app.prompt import prompt_factory
 from app.schemas.json import json_schema_factory
 from app.schemas.pydantic import ResumePreviewerModel
 from app.agent import EmbeddingManager, AgentManager
+from app.agent.exceptions import ProviderError, StrategyError
 from app.models import Resume, Job, ProcessedResume, ProcessedJob
 from .exceptions import (
     ResumeNotFoundError,
@@ -187,7 +189,7 @@ class ScoreImprovementService:
             
             try:
                 improved = await self._call_llm_for_improvement(prompt)
-            except Exception as e:
+            except (TimeoutException, ConnectError, HTTPStatusError, ConnectionError, OSError, ProviderError, StrategyError) as e:
                 logger.warning(
                     f"LLM call failed for improvement attempt {attempt}: {str(e)}. "
                     "Continuing with original resume."
@@ -244,8 +246,8 @@ class ScoreImprovementService:
         
         try:
             raw_output = await self._call_llm_for_preview(prompt)
-        except Exception as e:
-            logger.error(f"LLM call failed for preview after all retries: {str(e)}")
+        except (TimeoutException, ConnectError, HTTPStatusError, ConnectionError, OSError, ProviderError, StrategyError) as e:
+            logger.exception("LLM call failed for preview after all retries")
             return None
 
         try:

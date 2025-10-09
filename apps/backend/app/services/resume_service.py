@@ -9,9 +9,11 @@ from markitdown import MarkItDown
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from pydantic import ValidationError
+from httpx import TimeoutException, ConnectError, HTTPStatusError
 
 from app.models import Resume, ProcessedResume
 from app.agent import AgentManager
+from app.agent.exceptions import ProviderError, StrategyError
 from app.prompt import prompt_factory
 from app.schemas.json import json_schema_factory
 from app.schemas.pydantic import StructuredResumeModel
@@ -252,8 +254,8 @@ class ResumeService:
         # Call LLM with retry logic
         try:
             raw_output = await self._call_llm_for_resume_extraction(prompt)
-        except Exception as e:
-            logger.error(f"LLM call failed after all retries: {str(e)}")
+        except (TimeoutException, ConnectError, HTTPStatusError, ConnectionError, OSError, ProviderError, StrategyError) as e:
+            logger.exception("LLM call failed after all retries")
             raise ResumeValidationError(
                 message=f"Failed to extract structured resume data after multiple attempts: {str(e)}"
             )

@@ -6,8 +6,10 @@ from typing import List, Dict, Any, Optional
 from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from httpx import TimeoutException, ConnectError, HTTPStatusError
 
 from app.agent import AgentManager
+from app.agent.exceptions import ProviderError, StrategyError
 from app.prompt import prompt_factory
 from app.schemas.json import json_schema_factory
 from app.models import Job, Resume, ProcessedJob
@@ -172,8 +174,8 @@ class JobService:
         # Call LLM with retry logic
         try:
             raw_output = await self._call_llm_for_job_extraction(prompt)
-        except Exception as e:
-            logger.error(f"LLM call failed after all retries: {str(e)}")
+        except (TimeoutException, ConnectError, HTTPStatusError, ConnectionError, OSError, ProviderError, StrategyError) as e:
+            logger.exception("LLM call failed after all retries")
             # Return None to maintain backward compatibility with existing error handling
             return None
 

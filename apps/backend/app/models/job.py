@@ -23,7 +23,7 @@ class ProcessedJob(Base):
     job_summary = Column(Text, nullable=False)
     key_responsibilities = Column(JSON, nullable=True)
     qualifications = Column(JSON, nullable=True)
-    compensation_and_benfits = Column(JSON, nullable=True)
+    compensation_and_benefits = Column(JSON, nullable=True)
     application_info = Column(JSON, nullable=True)
     extracted_keywords = Column(JSON, nullable=True)
     processed_at = Column(
