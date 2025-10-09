@@ -37,8 +37,8 @@ def main():
     print()
     
     # Check if we're in the right directory
-    if not os.path.exists("requirements.txt"):
-        print("Error: requirements.txt not found.")
+    if not os.path.exists("pyproject.toml"):
+        print("Error: pyproject.toml not found.")
         print("Please run this script from the apps/backend directory.")
         sys.exit(1)
     
@@ -48,7 +48,7 @@ def main():
     else:
         print("\nSome dependencies failed to install.")
         print("Please check the error messages above and try installing manually:")
-        print("  pip install 'markitdown[all]==0.1.2'")
+        print("  uv add 'markitdown[all]>=0.1.2'")
         sys.exit(1)
 
 if __name__ == "__main__":

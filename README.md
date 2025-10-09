@@ -71,6 +71,10 @@ If you have any suggestions or feature requests, please feel free to open an iss
 
 ![Installation](assets/how_to_install_resumematcher.png)
 
+> **🚀 Now using uv for fast Python dependency management!**
+> 
+> Resume Matcher has migrated from pip to [uv](https://docs.astral.sh/uv/) for faster, more reliable Python package management. The setup scripts will automatically install uv if it's not present.
+
 Follow the instructions in the [SETUP.md](SETUP.md) file to set up the project locally. The setup script will install all the necessary dependencies and configure your environment.
 
 The project is built using:
@@ -80,12 +84,14 @@ The project is built using:
 - Ollama for local AI model serving.
 - Tailwind CSS for styling.
 - SQLite for the database.
+- uv for Python dependency management.
 
 | Technology   | Info/Version                               |
 |--------------|---------------------------------------|
-| Python      | 3.12+                   |
+| Python      | 3.12+ (with uv package manager)                   |
 | Next.js      | 15+                   |
 | Ollama       |        0.6.7        |
+| uv          | 0.6.0+ (Python package manager)        |
 
 
 ## Join Us and Contribute

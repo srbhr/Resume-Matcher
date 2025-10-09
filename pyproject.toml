@@ -1,0 +1,5 @@
+[tool.uv.workspace]
+members = ["apps/backend"]
+
+# Note: concurrently is a Node.js package, not Python  
+# Frontend dependencies are managed via npm in apps/frontend/package.json
