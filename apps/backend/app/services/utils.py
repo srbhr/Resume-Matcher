@@ -7,6 +7,7 @@ from functools import wraps
 from typing import Callable, Any
 
 from httpx import TimeoutException, ConnectError, HTTPStatusError
+from app.agent.exceptions import ProviderError, StrategyError
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +17,15 @@ def retry_with_exponential_backoff(
     initial_delay: float = 1.0,
     max_delay: float = 60.0,
     exponential_base: float = 2.0,
-    exceptions: tuple = (TimeoutException, ConnectError, ConnectionError, OSError)
+    exceptions: tuple = (
+        TimeoutException,
+        ConnectError,
+        HTTPStatusError,
+        ConnectionError,
+        OSError,
+        ProviderError,
+        StrategyError,
+    )
 ):
     """
     Decorator that implements retry logic with exponential backoff for async functions.
@@ -26,6 +35,8 @@ def retry_with_exponential_backoff(
     - Connection errors
     - Rate limiting (HTTP 429)
     - Temporary service unavailability
+    - LLM provider errors
+    - Strategy/parsing errors
     
     Args:
         max_retries: Maximum number of retry attempts (default: 3)
@@ -33,7 +44,8 @@ def retry_with_exponential_backoff(
         max_delay: Maximum delay between retries in seconds (default: 60.0)
         exponential_base: Base for exponential backoff calculation (default: 2.0)
         exceptions: Tuple of exception types to catch and retry
-                   (default: TimeoutException, ConnectError, ConnectionError, OSError)
+                   (default: TimeoutException, ConnectError, HTTPStatusError, 
+                    ConnectionError, OSError, ProviderError, StrategyError)
     
     Returns:
         Decorated function with retry logic

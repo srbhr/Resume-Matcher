@@ -109,13 +109,16 @@ class JobService:
                 wrap_in_key="key_responsibilities"
             ),
             qualifications=self._serialize_to_json(
-                structured_job.get("qualifications")
+                structured_job.get("qualifications"),
+                wrap_in_key="qualifications"
             ),
             compensation_and_benefits=self._serialize_to_json(
-                structured_job.get("compensation_and_benefits")
+                structured_job.get("compensation_and_benefits"),
+                wrap_in_key="compensation_and_benefits"
             ),
             application_info=self._serialize_to_json(
-                structured_job.get("application_info")
+                structured_job.get("application_info"),
+                wrap_in_key="application_info"
             ),
             extracted_keywords=self._serialize_to_json(
                 structured_job.get("extracted_keywords"),
@@ -234,7 +237,7 @@ class JobService:
                 "job_summary": processed_job.job_summary,
                 "key_responsibilities": json.loads(processed_job.key_responsibilities).get("key_responsibilities", []) if processed_job.key_responsibilities else None,
                 "qualifications": json.loads(processed_job.qualifications).get("qualifications", []) if processed_job.qualifications else None,
-                "compensation_and_benefits": json.loads(processed_job.compensation_and_benefits).get("compensation_and_benefits", []) if processed_job.compensation_and_benefits else None,
+                "compensation_and_benefits": json.loads(processed_job.compensation_and_benfits).get("compensation_and_benefits", []) if processed_job.compensation_and_benfits else None,
                 "application_info": json.loads(processed_job.application_info).get("application_info", []) if processed_job.application_info else None,
                 "extracted_keywords": json.loads(processed_job.extracted_keywords).get("extracted_keywords", []) if processed_job.extracted_keywords else None,
                 "processed_at": processed_job.processed_at.isoformat() if processed_job.processed_at else None,
