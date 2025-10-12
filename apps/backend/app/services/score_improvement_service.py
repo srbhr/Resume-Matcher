@@ -4,16 +4,18 @@ import asyncio
 import logging
 import markdown
 import numpy as np
+from typing import Any, AsyncGenerator, Dict, Tuple 
 
 from sqlalchemy.future import select
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Dict, Optional, Tuple, AsyncGenerator
+from httpx import TimeoutException, ConnectError, HTTPStatusError
 
 from app.prompt import prompt_factory
 from app.schemas.json import json_schema_factory
 from app.schemas.pydantic import ResumePreviewerModel
 from app.agent import EmbeddingManager, AgentManager
+from app.agent.exceptions import ProviderError, StrategyError
 from app.models import Resume, Job, ProcessedResume, ProcessedJob
 from .exceptions import (
     ResumeNotFoundError,
@@ -23,6 +25,7 @@ from .exceptions import (
     ResumeKeywordExtractionError,
     JobKeywordExtractionError,
 )
+from .utils import retry_with_exponential_backoff
 
 logger = logging.getLogger(__name__)
 
@@ -138,6 +141,28 @@ class ScoreImprovementService:
 
         return float(np.dot(ejk, re) / (np.linalg.norm(ejk) * np.linalg.norm(re)))
 
+    @retry_with_exponential_backoff(
+        max_retries=3,
+        initial_delay=1.0,
+        max_delay=30.0,
+        exponential_base=2.0
+    )
+    async def _call_llm_for_improvement(self, prompt: str) -> str:
+        """
+        Calls the LLM to improve resume with retry logic.
+        
+        Args:
+            prompt: The prompt to send to the LLM
+            
+        Returns:
+            Improved resume text from the LLM
+            
+        Raises:
+            Various network/timeout exceptions that trigger retries
+        """
+        logger.debug("Calling LLM for resume improvement")
+        return await self.md_agent_manager.run(prompt)
+
     async def improve_score_with_llm(
         self,
         resume: str,
@@ -161,7 +186,16 @@ class ScoreImprovementService:
                 extracted_resume_keywords=extracted_resume_keywords,
                 current_cosine_similarity=best_score,
             )
-            improved = await self.md_agent_manager.run(prompt)
+            
+            try:
+                improved = await self._call_llm_for_improvement(prompt)
+            except (TimeoutException, ConnectError, HTTPStatusError, ConnectionError, OSError, ProviderError, StrategyError) as e:
+                logger.warning(
+                    f"LLM call failed for improvement attempt {attempt}: {str(e)}. "
+                    "Continuing with original resume."
+                )
+                continue
+            
             emb = await self.embedding_manager.embed(text=improved)
             score = self.calculate_cosine_similarity(
                 emb, extracted_job_keywords_embedding
@@ -176,9 +210,32 @@ class ScoreImprovementService:
 
         return best_resume, best_score
 
+    @retry_with_exponential_backoff(
+        max_retries=3,
+        initial_delay=1.0,
+        max_delay=30.0,
+        exponential_base=2.0
+    )
+    async def _call_llm_for_preview(self, prompt: str) -> Dict[str, Any]:
+        """
+        Calls the LLM to get resume preview data with retry logic.
+        
+        Args:
+            prompt: The prompt to send to the LLM
+            
+        Returns:
+            Raw output from the LLM
+            
+        Raises:
+            Various network/timeout exceptions that trigger retries
+        """
+        logger.debug("Calling LLM for resume preview")
+        return await self.json_agent_manager.run(prompt=prompt)
+
     async def get_resume_for_previewer(self, updated_resume: str) -> Dict:
         """
         Returns the updated resume in a format suitable for the dashboard.
+        Includes retry logic for transient failures.
         """
         prompt_template = prompt_factory.get("structured_resume")
         prompt = prompt_template.format(
@@ -186,7 +243,12 @@ class ScoreImprovementService:
             updated_resume,
         )
         logger.info(f"Structured Resume Prompt: {prompt}")
-        raw_output = await self.json_agent_manager.run(prompt=prompt)
+        
+        try:
+            raw_output = await self._call_llm_for_preview(prompt)
+        except (TimeoutException, ConnectError, HTTPStatusError, ConnectionError, OSError, ProviderError, StrategyError) as e:
+            logger.exception("LLM call failed for preview after all retries")
+            return None
 
         try:
             resume_preview: ResumePreviewerModel = ResumePreviewerModel.model_validate(
