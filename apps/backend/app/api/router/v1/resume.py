@@ -1,8 +1,8 @@
 import logging
 import traceback
-
 from uuid import uuid4
 from sqlalchemy.ext.asyncio import AsyncSession
+from app.services.resume_service import parse_llm_json_response, validate_and_sanitize_resume_data
 from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi import (
     APIRouter,
@@ -80,6 +80,7 @@ async def upload_resume(
         )
 
     file_bytes = await file.read()
+    logger.info(f"Received file upload: {file.filename}, type: {file.content_type}, size: {len(file_bytes)} bytes")
     if not file_bytes:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
