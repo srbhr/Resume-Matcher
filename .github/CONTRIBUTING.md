@@ -137,7 +137,7 @@ Follow these steps to set up the environment and run the application.
    python run_first.py
    ```
 
-   8. Run the Application:
+8. Run the Application:
 
    ```python
    streamlit run streamlit_app.py
