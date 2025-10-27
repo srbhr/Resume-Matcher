@@ -1,6 +1,6 @@
 import { ImprovedResult } from '@/components/common/resume_previewer_context';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL!;
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 interface ResumeResponse {
 	request_id: string;
