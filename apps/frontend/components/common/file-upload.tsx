@@ -68,8 +68,18 @@ export default function FileUpload() {
 				message: `${(uploadedFile.file as FileMetadata).name} uploaded successfully!`,
 			});
 			clearErrors();
-			const encodedResumeId = encodeURIComponent(resumeId);
-			window.location.href = `/jobs?resume_id=${encodedResumeId}`;
+			try {
+				if (typeof window !== 'undefined') {
+					localStorage.setItem('resumeMatcher:lastResumeId', resumeId);
+					localStorage.setItem(
+						'resumeMatcher:lastResumeName',
+						(uploadedFile.file as FileMetadata).name ?? '',
+					);
+				}
+			} catch (storageError) {
+				console.warn('Unable to persist resume ID to localStorage', storageError);
+			}
+			window.location.href = `/jobs`;
 		},
 		onUploadError: (file, errorMsg) => {
 			console.error('Upload error:', file, errorMsg);

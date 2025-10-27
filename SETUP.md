@@ -68,7 +68,7 @@ winget install Python.Python.3.12
 **Or download manually from official sites:**
 - **Node.js**: Download from [https://nodejs.org/](https://nodejs.org/) (LTS version recommended)
 - **Python**: Download from [https://www.python.org/downloads/](https://www.python.org/downloads/) (v3.8+ required)
-- **Ollama**: Script will try to automatically install Ollama if it failed, Download from [https://ollama.com/download/windows](https://ollama.com/download/windows)
+- **Ollama**: Only required if you switch the backend providers to `ollama`. Otherwise you can skip installing it. If you do need it, download from [https://ollama.com/download/windows](https://ollama.com/download/windows)
 
 **On macOS**, you can install missing tools via Homebrew:
 
@@ -111,15 +111,15 @@ You can customize any variables in these files before or after bootstrapping.
 ## 📦 Installation Steps
 
  Note: Before You Run `setup.sh`
- 
- Make sure that [Ollama](https://ollama.com/) is not only installed but also running.
- You can start the Ollama server manually by running:
+
+ If you leave the default OpenAI configuration in place, no local model server is required.
+ When switching `LLM_PROVIDER` or `EMBEDDING_PROVIDER` to `ollama`, ensure that [Ollama](https://ollama.com/) is installed and running. Start it manually via:
 
  ```bash
  ollama serve
  ```
 
- If Ollama is not running, the script may fail to pull the required model (`gemma3:4b`).
+ Without the Ollama daemon running the setup script cannot pull local models.
  
 ### Windows Installation
 

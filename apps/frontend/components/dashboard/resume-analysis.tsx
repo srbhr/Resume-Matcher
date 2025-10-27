@@ -18,6 +18,7 @@ interface ImprovementSuggestion {
 }
 
 export interface ResumeAnalysisProps {
+	originalScore: number;
 	score: number;
 	details: string;
 	commentary: string;
@@ -25,6 +26,7 @@ export interface ResumeAnalysisProps {
 }
 
 const ResumeAnalysis: React.FC<ResumeAnalysisProps> = ({
+	originalScore,
 	score,
 	details,
 	commentary,
@@ -40,6 +42,9 @@ const ResumeAnalysis: React.FC<ResumeAnalysisProps> = ({
 
 	const truncatedDetails = details.length > 100 ? details.slice(0, 97) + '...' : details;
 	const truncatedCommentary = commentary.length > 100 ? commentary.slice(0, 97) + '...' : commentary;
+	const delta = score - originalScore;
+	const sign = delta === 0 ? '' : delta > 0 ? '+' : '−';
+	const deltaAbs = Math.abs(delta);
 
 	return (
 		<div className="bg-gray-900/80 p-6 rounded-lg shadow-xl text-gray-100">
@@ -48,13 +53,18 @@ const ResumeAnalysis: React.FC<ResumeAnalysisProps> = ({
 					<div className="cursor-pointer">
 						<div className="flex justify-between items-center mb-4">
 							<h3 className="text-xl font-semibold text-gray-100">Resume Analysis</h3>
-							<div className={`text-3xl font-bold ${getScoreColor(score)}`}>
-								{score}
-								<span className="text-sm">/100</span>
+							<div className="text-right">
+								<div className={`text-3xl font-bold ${getScoreColor(score)}`}>{score}<span className="text-sm">/100</span></div>
+								<p className="text-xs text-gray-400">Baseline: {originalScore}/100</p>
 							</div>
 						</div>
 						<p className="text-sm text-gray-400 mb-2">{truncatedDetails}</p>
 						<p className="text-sm text-gray-400">{truncatedCommentary}</p>
+						{delta !== 0 && (
+							<p className={`text-xs mt-2 ${delta > 0 ? 'text-green-400' : 'text-red-400'}`}>
+								{sign}{deltaAbs} point{deltaAbs === 1 ? '' : 's'} vs original
+							</p>
+						)}
 						<Button variant="link" className="text-blue-400 hover:text-blue-300 p-0 h-auto mt-2 text-sm">
 							View Full Analysis
 						</Button>
@@ -70,19 +80,37 @@ const ResumeAnalysis: React.FC<ResumeAnalysisProps> = ({
 
 					<div className="p-6 max-h-[70vh] overflow-y-auto">
 						<div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-							<div className="md:col-span-1 bg-gray-800 p-4 rounded-lg">
-								<h4 className="text-lg font-semibold text-blue-400 mb-2">Overall Score</h4>
-								<div className="flex items-center justify-center">
-									<div className={`text-6xl font-bold ${getScoreColor(score)}`}>{score}</div>
-									<div className="text-2xl text-gray-400">/100</div>
+							<div className="md:col-span-1 bg-gray-800 p-4 rounded-lg space-y-4">
+								<h4 className="text-lg font-semibold text-blue-400 mb-2">Compatibility Scores</h4>
+								<div className="space-y-3">
+									<div>
+										<p className="text-xs uppercase tracking-wide text-gray-500">Before</p>
+										<div className="flex items-center justify-between">
+											<div className="text-4xl font-semibold text-gray-200">{originalScore}</div>
+											<span className="text-xs text-gray-400">/100</span>
+										</div>
+										<div className="w-full bg-gray-700 rounded-full h-2 mt-1">
+											<div className="bg-gray-500 h-2 rounded-full" style={{ width: `${Math.min(100, Math.max(0, originalScore))}%` }} />
+										</div>
+									</div>
+									<div>
+										<p className="text-xs uppercase tracking-wide text-gray-500">After</p>
+										<div className="flex items-center justify-between">
+											<div className={`text-4xl font-semibold ${getScoreColor(score)}`}>{score}</div>
+											<span className="text-xs text-gray-400">/100</span>
+										</div>
+										<div className="w-full bg-gray-700 rounded-full h-2 mt-1">
+											<div className={`${score >= 80 ? 'bg-green-500' : score >= 60 ? 'bg-yellow-500' : 'bg-red-500'} h-2 rounded-full`}
+												style={{ width: `${Math.min(100, Math.max(0, score))}%` }}
+											/>
+										</div>
+									</div>
 								</div>
-								<div className="w-full bg-gray-700 rounded-full h-2.5 mt-3">
-									<div
-										className={`h-2.5 rounded-full ${score >= 80 ? 'bg-green-500' : score >= 60 ? 'bg-yellow-500' : 'bg-red-500'
-											}`}
-										style={{ width: `${score}%` }}
-									/>
-								</div>
+								{delta !== 0 && (
+									<p className={`text-xs text-center ${delta > 0 ? 'text-green-400' : 'text-red-400'}`}>
+										Change: {sign}{deltaAbs} point{deltaAbs === 1 ? '' : 's'}
+									</p>
+								)}
 							</div>
 
 							<div className="md:col-span-2 bg-gray-800 p-4 rounded-lg">
