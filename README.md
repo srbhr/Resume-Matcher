@@ -73,6 +73,8 @@ If you have any suggestions or feature requests, please feel free to open an iss
 
 Follow the instructions in the [SETUP.md](SETUP.md) file to set up the project locally. The setup script will install all the necessary dependencies and configure your environment.
 
+> **📝 Note for Legacy Users**: If you're looking for `run_first.py` or `streamlit_app.py`, these files now exist as compatibility stubs that will guide you through the migration to our new FastAPI + Next.js architecture. Simply run `python run_first.py` or `python streamlit_app.py` for migration instructions and automatic setup assistance.
+
 The project is built using:
 
 - FastAPI for the backend.
