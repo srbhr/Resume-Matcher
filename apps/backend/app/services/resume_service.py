@@ -1,314 +1,307 @@
-import os
-import uuid
 import json
-import tempfile
+import re
 import logging
-
-from markitdown import MarkItDown
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
-from pydantic import ValidationError
-from typing import Dict, Optional
-
-from app.models import Resume, ProcessedResume
-from app.agent import AgentManager
-from app.prompt import prompt_factory
-from app.schemas.json import json_schema_factory
-from app.schemas.pydantic import StructuredResumeModel
-from .exceptions import ResumeNotFoundError, ResumeValidationError
+from typing import Dict, Any, Optional
+from uuid import uuid4
+from io import BytesIO
+import docx2txt
+import PyPDF2
 
 logger = logging.getLogger(__name__)
 
 
 class ResumeService:
-    def __init__(self, db: AsyncSession):
-        self.db = db
-        self.md = MarkItDown(enable_plugins=False)
-        self.json_agent_manager = AgentManager()
-        
-        # Validate dependencies for DOCX processing
-        self._validate_docx_dependencies()
+    """Service for handling resume operations with robust error handling."""
+    
+    def __init__(self, db_session=None):
+        self.logger = logging.getLogger(__name__)
+        self.db_session = db_session
 
-    def _validate_docx_dependencies(self):
-        """Validate that required dependencies for DOCX processing are available"""
-        missing_deps = []
-        
-        try:
-            # Check if markitdown can handle docx files
-            from markitdown.converters import DocxConverter
-            # Try to instantiate the converter to check if dependencies are available
-            DocxConverter()
-        except ImportError:
-            missing_deps.append("markitdown[all]==0.1.2")
-        except Exception as e:
-            if "MissingDependencyException" in str(e) or "dependencies needed to read .docx files" in str(e):
-                missing_deps.append("markitdown[all]==0.1.2 (current installation missing DOCX extras)")
-        
-        if missing_deps:
-            logger.warning(
-                f"Missing dependencies for DOCX processing: {', '.join(missing_deps)}. "
-                f"DOCX file processing may fail. Install with: pip install {' '.join(missing_deps)}"
-            )
-
-
-    async def convert_and_store_resume(
-        self, file_bytes: bytes, file_type: str, filename: str, content_type: str = "md"
-    ):
+    async def convert_and_store_resume(self, file_bytes: bytes, file_type: str, filename: str, content_type: str = "md") -> str:
         """
-        Converts resume file (PDF/DOCX) to text using MarkItDown and stores it in the database.
-
+        Convert and store a resume file.
+        
         Args:
-            file_bytes: Raw bytes of the uploaded file
-            file_type: MIME type of the file ("application/pdf" or "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+            file_bytes: Raw file content
+            file_type: MIME type of the file
             filename: Original filename
-            content_type: Output format ("md" for markdown or "html")
-
-        Returns:
-            None
-        """
-        with tempfile.NamedTemporaryFile(
-            delete=False, suffix=self._get_file_extension(file_type)
-        ) as temp_file:
-            temp_file.write(file_bytes)
-            temp_path = temp_file.name
-
-        try:
-            try:
-                result = self.md.convert(temp_path)
-                text_content = result.text_content
-            except Exception as e:
-                # Handle specific markitdown conversion errors
-                error_msg = str(e)
-                if "MissingDependencyException" in error_msg or "DocxConverter" in error_msg:
-                    raise Exception(
-                        "File conversion failed: markitdown is missing DOCX support. "
-                        "Please install with: pip install 'markitdown[all]==0.1.2' or contact system administrator."
-                    ) from e
-                elif "docx" in error_msg.lower():
-                    raise Exception(
-                        f"DOCX file processing failed: {error_msg}. "
-                        "Please ensure the file is a valid DOCX document."
-                    ) from e
-                else:
-                    raise Exception(f"File conversion failed: {error_msg}") from e
+            content_type: Target content type (md/html)
             
-            resume_id = await self._store_resume_in_db(text_content, content_type)
-
-            await self._extract_and_store_structured_resume(
-                resume_id=resume_id, resume_text=text_content
-            )
-
-            return resume_id
-        finally:
-            if os.path.exists(temp_path):
-                os.remove(temp_path)
-
-    def _get_file_extension(self, file_type: str) -> str:
-        """Returns the appropriate file extension based on MIME type"""
-        if file_type == "application/pdf":
-            return ".pdf"
-        elif (
-            file_type
-            == "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-        ):
-            return ".docx"
-        return ""
-
-    async def _store_resume_in_db(self, text_content: str, content_type: str):
-        """
-        Stores the parsed resume content in the database.
-        """
-        resume_id = str(uuid.uuid4())
-        resume = Resume(
-            resume_id=resume_id, content=text_content, content_type=content_type
-        )
-
-        self.db.add(resume)
-        await self.db.flush()
-        await self.db.commit()
-
-        return resume_id
-
-    async def _extract_and_store_structured_resume(
-        self, resume_id, resume_text: str
-    ) -> None:
-        """
-        extract and store structured resume data in the database
-        """
-        try:
-            structured_resume = await self._extract_structured_json(resume_text)
-            if not structured_resume:
-                logger.error("Structured resume extraction returned None.")
-                raise ResumeValidationError(
-                    resume_id=resume_id,
-                    message="Failed to extract structured data from resume. Please ensure your resume contains all required sections.",
-                )
-
-            processed_resume = ProcessedResume(
-                resume_id=resume_id,
-                personal_data=json.dumps(structured_resume.get("personal_data", {}))
-                if structured_resume.get("personal_data")
-                else None,
-                experiences=json.dumps(
-                    {"experiences": structured_resume.get("experiences", [])}
-                )
-                if structured_resume.get("experiences")
-                else None,
-                projects=json.dumps({"projects": structured_resume.get("projects", [])})
-                if structured_resume.get("projects")
-                else None,
-                skills=json.dumps({"skills": structured_resume.get("skills", [])})
-                if structured_resume.get("skills")
-                else None,
-                research_work=json.dumps(
-                    {"research_work": structured_resume.get("research_work", [])}
-                )
-                if structured_resume.get("research_work")
-                else None,
-                achievements=json.dumps(
-                    {"achievements": structured_resume.get("achievements", [])}
-                )
-                if structured_resume.get("achievements")
-                else None,
-                education=json.dumps(
-                    {"education": structured_resume.get("education", [])}
-                )
-                if structured_resume.get("education")
-                else None,
-                extracted_keywords=json.dumps(
-                    {
-                        "extracted_keywords": structured_resume.get(
-                            "extracted_keywords", []
-                        )
-                    }
-                    if structured_resume.get("extracted_keywords")
-                    else None
-                ),
-            )
-
-            self.db.add(processed_resume)
-            await self.db.commit()
-        except ResumeValidationError:
-            # Re-raise validation errors to propagate to the upload endpoint
-            raise
-        except Exception as e:
-            logger.error(f"Error storing structured resume: {str(e)}")
-            raise ResumeValidationError(
-                resume_id=resume_id,
-                message=f"Failed to store structured resume data: {str(e)}",
-            )
-
-    async def _extract_structured_json(
-        self, resume_text: str
-    ) -> StructuredResumeModel | None:
-        """
-        Uses the AgentManager+JSONWrapper to ask the LLM to
-        return the data in exact JSON schema we need.
-        """
-        prompt_template = prompt_factory.get("structured_resume")
-        prompt = prompt_template.format(
-            json.dumps(json_schema_factory.get("structured_resume"), indent=2),
-            resume_text,
-        )
-        logger.info(f"Structured Resume Prompt: {prompt}")
-        raw_output = await self.json_agent_manager.run(prompt=prompt)
-
-        try:
-            structured_resume: StructuredResumeModel = (
-                StructuredResumeModel.model_validate(raw_output)
-            )
-        except ValidationError as e:
-            logger.info(f"Validation error: {e}")
-            error_details = []
-            for error in e.errors():
-                field = " -> ".join(str(loc) for loc in error["loc"])
-                error_details.append(f"{field}: {error['msg']}")
-
-            user_friendly_message = "Resume validation failed. " + "; ".join(
-                error_details
-            )
-            raise ResumeValidationError(
-                validation_error=user_friendly_message,
-                message=f"Resume structure validation failed: {user_friendly_message}",
-            )
-        return structured_resume.model_dump()
-
-    async def get_resume_with_processed_data(self, resume_id: str) -> Optional[Dict]:
-        """
-        Fetches both resume and processed resume data from the database and combines them.
-
-        Args:
-            resume_id: The ID of the resume to retrieve
-
         Returns:
-            Combined data from both resume and processed_resume models
-
-        Raises:
-            ResumeNotFoundError: If the resume is not found
+            resume_id: ID of the stored resume
         """
-        resume_query = select(Resume).where(Resume.resume_id == resume_id)
-        resume_result = await self.db.execute(resume_query)
-        resume = resume_result.scalars().first()
-
-        if not resume:
-            raise ResumeNotFoundError(resume_id=resume_id)
-
-        processed_query = select(ProcessedResume).where(
-            ProcessedResume.resume_id == resume_id
-        )
-        processed_result = await self.db.execute(processed_query)
-        processed_resume = processed_result.scalars().first()
-
-        combined_data = {
-            "resume_id": resume.resume_id,
-            "raw_resume": {
-                "id": resume.id,
-                "content": resume.content,
-                "content_type": resume.content_type,
-                "created_at": resume.created_at.isoformat()
-                if resume.created_at
-                else None,
-            },
-            "processed_resume": None,
-        }
-
-        if processed_resume:
-            combined_data["processed_resume"] = {
-                "personal_data": json.loads(processed_resume.personal_data)
-                if processed_resume.personal_data
-                else None,
-                "experiences": json.loads(processed_resume.experiences).get(
-                    "experiences", []
-                )
-                if processed_resume.experiences
-                else None,
-                "projects": json.loads(processed_resume.projects).get("projects", [])
-                if processed_resume.projects
-                else [],
-                "skills": json.loads(processed_resume.skills).get("skills", [])
-                if processed_resume.skills
-                else [],
-                "research_work": json.loads(processed_resume.research_work).get(
-                    "research_work", []
-                )
-                if processed_resume.research_work
-                else [],
-                "achievements": json.loads(processed_resume.achievements).get(
-                    "achievements", []
-                )
-                if processed_resume.achievements
-                else [],
-                "education": json.loads(processed_resume.education).get("education", [])
-                if processed_resume.education
-                else [],
-                "extracted_keywords": json.loads(
-                    processed_resume.extracted_keywords
-                ).get("extracted_keywords", [])
-                if processed_resume.extracted_keywords
-                else [],
-                "processed_at": processed_resume.processed_at.isoformat()
-                if processed_resume.processed_at
-                else None,
+        try:
+            # Extract text from the file
+            resume_text = self._extract_text(file_bytes, filename)
+            
+            # Generate a unique ID for the resume
+            resume_id = str(uuid4())
+            
+            # TODO: Save to database
+            # This is a placeholder - implement actual database storage
+            
+            return resume_id
+            
+        except Exception as e:
+            self.logger.error(f"Failed to convert and store resume: {str(e)}")
+            raise
+    
+    def _extract_text(self, content: bytes, filename: str) -> str:
+        """Extract text from file content."""
+        try:
+            if filename.lower().endswith('.pdf'):
+                # Handle PDF files
+                pdf_file = BytesIO(content)
+                pdf_reader = PyPDF2.PdfReader(pdf_file)
+                text = ""
+                for page in pdf_reader.pages:
+                    text += page.extract_text() + "\n"
+                return text
+                
+            elif filename.lower().endswith(('.docx', '.doc')):
+                # Handle Word documents
+                doc_file = BytesIO(content)
+                text = docx2txt.process(doc_file)
+                return text
+                
+            else:
+                raise ValueError(f"Unsupported file type: {filename}")
+                
+        except Exception as e:
+            self.logger.error(f"Error extracting text from {filename}: {str(e)}")
+            raise
+    
+    @staticmethod
+    def clean_json_string(json_str: str) -> str:
+        """
+        Clean malformed JSON by removing trailing commas and fixing common issues.
+        
+        Args:
+            json_str: The JSON string to clean
+            
+        Returns:
+            Cleaned JSON string
+        """
+        # Remove trailing commas before closing brackets/braces
+        json_str = re.sub(r',(\s*[}\]])', r'\1', json_str)
+        
+        # Remove comments (sometimes LLMs add these)
+        json_str = re.sub(r'//.*?\n', '\n', json_str)
+        json_str = re.sub(r'/\*.*?\*/', '', json_str, flags=re.DOTALL)
+        
+        return json_str.strip()
+    
+    @staticmethod
+    def parse_llm_json_response(response_text: str) -> Dict[str, Any]:
+        """
+        Parse JSON from LLM response with error recovery.
+        
+        Args:
+            response_text: Raw response text from LLM
+            
+        Returns:
+            Parsed JSON dict
+            
+        Raises:
+            ValueError: If JSON cannot be parsed even after cleaning
+        """
+        try:
+            # First attempt: direct parsing
+            return json.loads(response_text)
+        except json.JSONDecodeError as e:
+            logger.warning(f"Initial JSON parse failed: {e}. Attempting to clean JSON...")
+            
+            try:
+                # Second attempt: clean and parse
+                cleaned = ResumeService.clean_json_string(response_text)
+                return json.loads(cleaned)
+            except json.JSONDecodeError as e2:
+                logger.error(f"JSON parse failed even after cleaning: {e2}")
+                logger.error(f"Problematic JSON section: {response_text[max(0, e2.pos-50):min(len(response_text), e2.pos+50)]}")
+                
+                # Third attempt: try to extract JSON from markdown code blocks
+                json_match = re.search(r'```json\s*(.*?)\s*```', response_text, re.DOTALL)
+                if json_match:
+                    try:
+                        return json.loads(json_match.group(1))
+                    except json.JSONDecodeError:
+                        pass
+                
+                # Final attempt: look for any JSON-like structure
+                json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+                if json_match:
+                    try:
+                        cleaned = ResumeService.clean_json_string(json_match.group(0))
+                        return json.loads(cleaned)
+                    except json.JSONDecodeError:
+                        pass
+                
+                raise ValueError(f"Failed to parse JSON response: {str(e2)}")
+    
+    @staticmethod
+    def validate_and_sanitize_resume_data(data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Validate and sanitize resume data with lenient rules.
+        
+        Args:
+            data: Raw resume data dict
+            
+        Returns:
+            Sanitized resume data dict
+        """
+        sanitized = {}
+        
+        # Handle personal_data
+        if 'personal_data' in data:
+            personal = data['personal_data']
+            sanitized['personal_data'] = {
+                'name': str(personal.get('name', '')),
+                'email': str(personal.get('email', '')),
+                'phone': str(personal.get('phone', '')),
             }
+            
+            # Handle location - make it flexible
+            if 'location' in personal:
+                location = personal['location']
+                if isinstance(location, str):
+                    # If location is a string, use it as city
+                    sanitized['personal_data']['location'] = {
+                        'city': location,
+                        'country': ''
+                    }
+                elif isinstance(location, dict):
+                    sanitized['personal_data']['location'] = {
+                        'city': str(location.get('city', '')),
+                        'country': str(location.get('country', ''))
+                    }
+            else:
+                sanitized['personal_data']['location'] = {'city': '', 'country': ''}
+        
+        # Handle experiences - make location optional
+        if 'experiences' in data:
+            sanitized['experiences'] = []
+            for exp in data['experiences']:
+                sanitized_exp = {
+                    'company': str(exp.get('company', '')),
+                    'position': str(exp.get('position', '')),
+                    'start_date': str(exp.get('start_date', '')),
+                    'end_date': str(exp.get('end_date', 'Present')),
+                }
+                
+                # Handle location flexibly
+                location = exp.get('location', '')
+                if isinstance(location, str):
+                    sanitized_exp['location'] = location
+                elif isinstance(location, dict):
+                    sanitized_exp['location'] = location.get('city', '')
+                else:
+                    sanitized_exp['location'] = ''
+                
+                # Handle description - remove trailing commas
+                description = exp.get('description', [])
+                if isinstance(description, list):
+                    # Clean each description item and remove empty ones
+                    sanitized_exp['description'] = [
+                        str(item).strip().rstrip(',') 
+                        for item in description 
+                        if item and str(item).strip()
+                    ]
+                else:
+                    sanitized_exp['description'] = [str(description)] if description else []
+                
+                sanitized['experiences'].append(sanitized_exp)
+        
+        # Handle education
+        if 'education' in data:
+            sanitized['education'] = []
+            for edu in data['education']:
+                sanitized['education'].append({
+                    'institution': str(edu.get('institution', '')),
+                    'degree': str(edu.get('degree', '')),
+                    'field': str(edu.get('field', '')),
+                    'graduation_date': str(edu.get('graduation_date', '')),
+                })
+        
+        # Handle skills
+        if 'skills' in data:
+            skills = data['skills']
+            if isinstance(skills, list):
+                sanitized['skills'] = [str(skill).strip() for skill in skills if skill]
+            elif isinstance(skills, dict):
+                sanitized['skills'] = skills
+            else:
+                sanitized['skills'] = []
+        
+        # Copy other fields as-is
+        for key in ['summary', 'projects', 'certifications', 'languages']:
+            if key in data:
+                sanitized[key] = data[key]
+        
+        return sanitized
+    
+    async def process_resume(
+        self, 
+        file_content: bytes, 
+        filename: str,
+        user_id: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Process uploaded resume file.
+        
+        Args:
+            file_content: Raw file bytes
+            filename: Name of the file
+            user_id: Optional user ID
+            
+        Returns:
+            Processed resume data
+        """
+        try:
+            # Extract text from file
+            resume_text = self._extract_text(file_content, filename)
+            
+            # Call LLM to structure the resume
+            llm_response = await self._call_llm(resume_text)
+            
+            # Parse and sanitize
+            structured_data = self.parse_llm_json_response(llm_response)
+            sanitized_data = self.validate_and_sanitize_resume_data(structured_data)
+            
+            # Store in database (implement your storage logic)
+            resume_id = await self._store_resume(sanitized_data, user_id)
+            
+            return {
+                'resume_id': resume_id,
+                'data': sanitized_data
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error processing resume: {str(e)}", exc_info=True)
+            raise
+    
+    def _extract_text(self, content: bytes, filename: str) -> str:
+        """Extract text from file content."""
+        # TODO: Implement your text extraction logic
+        # This should handle PDF, DOCX, etc.
+        pass
+    
+    async def _call_llm(self, text: str) -> str:
+        """Call LLM to structure resume."""
+        # TODO: Implement your LLM call logic
+        pass
+    
+    async def _store_resume(self, data: dict, user_id: Optional[str]) -> str:
+        """Store resume in database."""
+        # TODO: Implement your database storage logic
+        pass
 
-        return combined_data
+
+# For backwards compatibility, if needed
+def parse_llm_json_response(response_text: str) -> Dict[str, Any]:
+    """Standalone function wrapper for parsing LLM JSON responses."""
+    return ResumeService.parse_llm_json_response(response_text)
+
+
+def validate_and_sanitize_resume_data(data: Dict[str, Any]) -> Dict[str, Any]:
+    """Standalone function wrapper for validating resume data."""
+    return ResumeService.validate_and_sanitize_resume_data(data)

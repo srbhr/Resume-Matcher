@@ -1,54 +1,63 @@
-import { ImprovedResult } from '@/components/common/resume_previewer_context';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL!;
+export interface ResumeUploadResponse {
+  message: string;
+  request_id: string;
+  resume_id: string;
+}
 
-/** Uploads job descriptions and returns a job_id */
-export async function uploadJobDescriptions(
-    descriptions: string[],
-    resumeId: string
-): Promise<string> {
-    const res = await fetch(`${API_URL}/api/v1/jobs/upload`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ job_descriptions: descriptions, resume_id: resumeId }),
+export const uploadResume = async (file: File): Promise<ResumeUploadResponse> => {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    console.log('Sending file upload request to:', `${API_URL}/upload`);
+    const response = await fetch(`${API_URL}/upload`, {
+      method: 'POST',
+      body: formData,
     });
-    if (!res.ok) throw new Error(`Upload failed with status ${res.status}`);
-    const data = await res.json();
-    console.log('Job upload response:', data);
-    return data.job_id[0];
-}
 
-/** Improves the resume and returns the full preview object */
-export async function improveResume(
-    resumeId: string,
-    jobId: string
-): Promise<ImprovedResult> {
-    let response: Response;
-    try {
-        response = await fetch(`${API_URL}/api/v1/resumes/improve`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ resume_id: resumeId, job_id: jobId }),
-        });
-    } catch (networkError) {
-        console.error('Network error during improveResume:', networkError);
-        throw networkError;
-    }
-
-    const text = await response.text();
     if (!response.ok) {
-        console.error('Improve failed response body:', text);
-        throw new Error(`Improve failed with status ${response.status}: ${text}`);
+      const errorData = await response.json();
+      console.error('Upload failed:', errorData);
+      throw new Error(errorData.detail || 'Upload failed');
     }
 
-    let data: ImprovedResult;
-    try {
-        data = JSON.parse(text) as ImprovedResult;
-    } catch (parseError) {
-        console.error('Failed to parse improveResume response:', parseError, 'Raw response:', text);
-        throw parseError;
-    }
+    const data = await response.json();
+    console.log('Upload successful, response:', data);
+    return data as ResumeUploadResponse;
+  } catch (error: any) {
+    console.error('Upload error:', error);
+    throw new Error(error.message || 'Failed to upload resume');
+  }
+};
 
-    console.log('Resume improvement response:', data);
-    return data;
+export interface ResumeImprovement {
+  resume_id: string;
+  job_id: string;
+  stream?: boolean;
 }
+
+export const improveResume = async ({ resume_id, job_id, stream = false }: ResumeImprovement) => {
+  try {
+    const response = await fetch(`${API_URL}/improve`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        resume_id,
+        job_id,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || 'Improvement request failed');
+    }
+
+    return response;
+  } catch (error: any) {
+    throw new Error(error.message || 'Failed to request resume improvement');
+  }
+};
