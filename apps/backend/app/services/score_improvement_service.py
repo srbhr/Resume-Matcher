@@ -53,11 +53,14 @@ class ScoreImprovementService:
             raise ResumeKeywordExtractionError(resume_id=resume_id)
 
         try:
-            keywords_data = json.loads(processed_resume.extracted_keywords)
-            keywords = keywords_data.get("extracted_keywords", [])
-            if not keywords or len(keywords) == 0:
+            raw = processed_resume.extracted_keywords
+            keywords_data = json.loads(raw) if isinstance(raw, str) else raw
+            if not isinstance(keywords_data, dict):
                 raise ResumeKeywordExtractionError(resume_id=resume_id)
-        except json.JSONDecodeError:
+            keywords = keywords_data.get("extracted_keywords", [])
+            if not keywords:
+                raise ResumeKeywordExtractionError(resume_id=resume_id)
+        except (json.JSONDecodeError, TypeError, AttributeError, ValueError):
             raise ResumeKeywordExtractionError(resume_id=resume_id)
 
     def _validate_job_keywords(self, processed_job: ProcessedJob, job_id: str) -> None:
@@ -69,11 +72,14 @@ class ScoreImprovementService:
             raise JobKeywordExtractionError(job_id=job_id)
 
         try:
-            keywords_data = json.loads(processed_job.extracted_keywords)
-            keywords = keywords_data.get("extracted_keywords", [])
-            if not keywords or len(keywords) == 0:
+            raw = processed_job.extracted_keywords
+            keywords_data = json.loads(raw) if isinstance(raw, str) else raw
+            if not isinstance(keywords_data, dict):
                 raise JobKeywordExtractionError(job_id=job_id)
-        except json.JSONDecodeError:
+            keywords = keywords_data.get("extracted_keywords", [])
+            if not keywords:
+                raise JobKeywordExtractionError(job_id=job_id)
+        except (json.JSONDecodeError, TypeError, AttributeError, ValueError):
             raise JobKeywordExtractionError(job_id=job_id)
 
     async def _get_resume(
@@ -96,7 +102,14 @@ class ScoreImprovementService:
         if not processed_resume:
             raise ResumeParsingError(resume_id=resume_id)
 
-        self._validate_resume_keywords(processed_resume, resume_id)
+        # Soft-validate resume keywords here to keep invariants consistent across callers
+        try:
+            self._validate_resume_keywords(processed_resume, resume_id)
+        except ResumeKeywordExtractionError:
+            logger.warning(
+                "Resume keywords missing/invalid for resume_id=%s; continuing with empty keywords",
+                resume_id,
+            )
 
         return resume, processed_resume
 
@@ -118,7 +131,14 @@ class ScoreImprovementService:
         if not processed_job:
             raise JobParsingError(job_id=job_id)
 
-        self._validate_job_keywords(processed_job, job_id)
+        # Soft-validate keywords: warn and continue so callers can degrade gracefully
+        try:
+            self._validate_job_keywords(processed_job, job_id)
+        except JobKeywordExtractionError:
+            logger.warning(
+                "Job keywords missing/invalid for job_id=%s; continuing with empty keywords",
+                job_id,
+            )
 
         return job, processed_job
 
@@ -137,6 +157,37 @@ class ScoreImprovementService:
         re = np.asarray(resume_embedding).squeeze()
 
         return float(np.dot(ejk, re) / (np.linalg.norm(ejk) * np.linalg.norm(re)))
+
+    # --- centralized helpers for keyword parsing/validation ---
+    def _safe_keywords_list(self, raw_keywords_blob) -> list[str]:
+        """
+        Normalize a keywords blob (may be dict/string/list/None) to a list[str].
+        Tolerates malformed JSON and unexpected shapes, returning an empty list
+        on failure. Items are cast to strings.
+        """
+        data = None
+        if isinstance(raw_keywords_blob, str):
+            try:
+                data = json.loads(raw_keywords_blob)
+            except json.JSONDecodeError:
+                data = None
+        elif isinstance(raw_keywords_blob, (dict, list)):
+            data = raw_keywords_blob
+
+        # If dict, pull the field; if list, assume it is already the list
+        if isinstance(data, dict):
+            items = data.get("extracted_keywords", [])
+        elif isinstance(data, list):
+            items = data
+        else:
+            items = []
+
+        if not isinstance(items, list):
+            return []
+        return [str(item) for item in items if item is not None]
+
+    def _keywords_csv(self, raw_keywords_blob) -> str:
+        return ", ".join(self._safe_keywords_list(raw_keywords_blob))
 
     async def improve_score_with_llm(
         self,
@@ -205,15 +256,31 @@ class ScoreImprovementService:
         resume, processed_resume = await self._get_resume(resume_id)
         job, processed_job = await self._get_job(job_id)
 
-        extracted_job_keywords = ", ".join(
-            json.loads(processed_job.extracted_keywords).get("extracted_keywords", [])
-        )
+        pj_raw = processed_job.extracted_keywords
+        if isinstance(pj_raw, str):
+            try:
+                pj_data = json.loads(pj_raw)
+            except json.JSONDecodeError:
+                pj_data = {}
+        else:
+            pj_data = pj_raw or {}
+        if not isinstance(pj_data, dict):
+            pj_data = {}
+        extracted_job_keywords_list = pj_data.get("extracted_keywords", [])
+        extracted_job_keywords = ", ".join(str(item) for item in extracted_job_keywords_list) if isinstance(extracted_job_keywords_list, list) else str(extracted_job_keywords_list or "")
 
-        extracted_resume_keywords = ", ".join(
-            json.loads(processed_resume.extracted_keywords).get(
-                "extracted_keywords", []
-            )
-        )
+        pr_raw = processed_resume.extracted_keywords
+        if isinstance(pr_raw, str):
+            try:
+                pr_data = json.loads(pr_raw)
+            except json.JSONDecodeError:
+                pr_data = {}
+        else:
+            pr_data = pr_raw or {}
+        if not isinstance(pr_data, dict):
+            pr_data = {}
+        extracted_resume_keywords_list = pr_data.get("extracted_keywords", [])
+        extracted_resume_keywords = ", ".join(str(item) for item in extracted_resume_keywords_list) if isinstance(extracted_resume_keywords_list, list) else str(extracted_resume_keywords_list or "")
 
         resume_embedding_task = asyncio.create_task(
             self.embedding_manager.embed(resume.content)
@@ -270,15 +337,9 @@ class ScoreImprovementService:
         yield f"data: {json.dumps({'status': 'parsing', 'message': 'Parsing resume content...'})}\n\n"
         await asyncio.sleep(2)
 
-        extracted_job_keywords = ", ".join(
-            json.loads(processed_job.extracted_keywords).get("extracted_keywords", [])
-        )
-
-        extracted_resume_keywords = ", ".join(
-            json.loads(processed_resume.extracted_keywords).get(
-                "extracted_keywords", []
-            )
-        )
+        # Harden parsing of keyword blobs (malformed JSON or wrong shapes)
+        extracted_job_keywords = self._keywords_csv(processed_job.extracted_keywords)
+        extracted_resume_keywords = self._keywords_csv(processed_resume.extracted_keywords)
 
         resume_embedding = await self.embedding_manager.embed(text=resume.content)
         extracted_job_keywords_embedding = await self.embedding_manager.embed(

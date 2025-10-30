@@ -96,7 +96,7 @@ class StructuredJobModel(BaseModel):
     job_title: str = Field(..., alias="jobTitle")
     company_profile: CompanyProfile = Field(..., alias="companyProfile")
     location: Location
-    date_posted: str = Field(..., alias="datePosted")
+    date_posted: Optional[str] = Field(None, alias="datePosted")
     employment_type: EmploymentTypeEnum = Field(..., alias="employmentType")
     job_summary: str = Field(..., alias="jobSummary")
     key_responsibilities: List[str] = Field(..., alias="keyResponsibilities")

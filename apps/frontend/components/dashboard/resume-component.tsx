@@ -20,6 +20,15 @@ interface Experience {
 	description?: string[];
 }
 
+interface Project {
+	id: number;
+	title?: string;
+	description?: string[];
+	tech?: string[];
+	link?: string;
+	years?: string;
+}
+
 interface Education {
 	id: number;
 	institution?: string;
@@ -32,6 +41,7 @@ interface ResumeData {
 	personalInfo?: PersonalInfo;
 	summary?: string;
 	experience?: Experience[];
+	projects?: Project[];
 	education?: Education[];
 	skills?: string[];
 }
@@ -42,7 +52,7 @@ interface ResumeProps {
 
 const Resume: React.FC<ResumeProps> = ({ resumeData }) => {
 	console.log('Rendering Resume Component with data:', resumeData);
-	const { personalInfo, summary, experience, education, skills } = resumeData;
+	const { personalInfo, summary, experience, projects, education, skills } = resumeData;
 
 	// Helper function to render contact details only if they exist
 	const renderContactDetail = (label: string, value?: string, hrefPrefix: string = '') => {
@@ -150,6 +160,55 @@ const Resume: React.FC<ResumeProps> = ({ resumeData }) => {
 					))}
 				</div>
 			)}
+			
+			{/* --- Projects Section --- */}
+
+			{projects && projects.length > 0 && (
+				<div className="mb-8">
+					<h3 className="text-xl font-semibold border-b border-gray-700 pb-2 mb-4 text-gray-100">
+						Projects
+					</h3>
+					{projects.map((project) => (
+						<div key={project.id} className="mb-5 pl-4 border-l-2 border-yellow-500">
+							{(() => {
+								const techInline = project.tech && project.tech.length > 0 ? project.tech.join(', ') : '';
+								return (
+									<h4 className="text-lg font-semibold text-gray-100">
+										{project.title}
+										{techInline ? (
+											<span className="font-normal italic text-gray-400 text-sm">{' '}| {techInline}</span>
+										) : null}
+									</h4>
+								);
+							})()}
+							{project.description && project.description.length > 0 && (
+								<ul className="list-disc list-outside ml-5 text-sm space-y-1">
+									{project.description.map((desc, index) => (
+										<li key={index}>{desc}</li>
+									))}
+								</ul>
+							)}
+							{project.link && (
+								<p className="text-sm text-gray-500 mb-2">
+									{(() => {
+										const url = project.link?.trim();
+										const safe = url && /^https?:\/\//i.test(url) ? url : null;
+										return safe ? (
+											<a href={safe} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline break-all">
+												{safe}
+											</a>
+										) : (
+											<span className="break-all">{project.link}</span>
+										);
+									})()}
+								</p>
+							)}
+							{project.years && <p className="text-sm text-gray-500 mb-2">{project.years}</p>}
+						</div>
+					))}
+				</div>
+			)}
+			
 
 			{/* --- Education Section --- */}
 			{education && education.length > 0 && (

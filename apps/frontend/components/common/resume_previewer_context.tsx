@@ -30,10 +30,22 @@ export interface EducationEntry {
     description?: string;
 }
 
+// New: Project type used by the previewer UI
+export interface ProjectEntry {
+    id: number;
+    title?: string;
+    description?: string[];
+    tech?: string[];
+    link?: string;
+    years?: string;
+}
+
 export interface ResumePreview {
     personalInfo: PersonalInfo;
     summary?: string;
     experience: ExperienceEntry[];
+    // Optional projects array, type-safe with ProjectEntry
+    projects?: ProjectEntry[];
     education: EducationEntry[];
     skills: string[];
 }

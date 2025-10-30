@@ -3,8 +3,8 @@ from pydantic import BaseModel, Field
 
 
 class Location(BaseModel):
-    city: str
-    country: str
+    city: Optional[str] = None
+    country: Optional[str] = None
 
 
 class PersonalData(BaseModel):
