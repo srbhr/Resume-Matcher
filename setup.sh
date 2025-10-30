@@ -28,10 +28,11 @@ esac
 #–– CLI help ––#
 usage() {
   cat <<EOF
-Usage: $0 [--help] [--start-dev]
+Usage: $0 [--help] [--clear] [--start-dev]
 
 Options:
   --help       Show this help message and exit
+  --clear      Remove cached environments (like apps/backend/.venv) before syncing deps
   --start-dev  After setup completes, start the dev server (with graceful SIGINT handling)
 
 This script will:
@@ -45,12 +46,26 @@ EOF
 }
 
 START_DEV=false
-if [[ "${1:-}" == "--help" ]]; then
-  usage
-  exit 0
-elif [[ "${1:-}" == "--start-dev" ]]; then
-  START_DEV=true
-fi
+CLEAR_ENV=false
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --help)
+      usage
+      exit 0
+      ;;
+    --start-dev)
+      START_DEV=true
+      ;;
+    --clear)
+      CLEAR_ENV=true
+      ;;
+    *)
+      error "Unknown option: $1"
+      ;;
+  esac
+  shift
+done
 
 #–– Logging helpers ––#
 info()    { echo -e "ℹ  $*"; }
@@ -163,6 +178,12 @@ info "Setting up backend (apps/backend)…"
     success "Backend .env created"
   else
     info "Backend .env exists or .env.sample missing—skipping"
+  fi
+
+  if [[ "$CLEAR_ENV" == true && -d .venv ]]; then
+    info "--clear flag detected; removing existing backend virtual environment (.venv)…"
+    rm -rf .venv
+    success "Previous backend virtual environment removed"
   fi
 
   # The Ollama provider automatically pulls models on demand, but it's preferable to do it at setup time.
