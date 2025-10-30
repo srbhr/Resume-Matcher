@@ -12,6 +12,18 @@ Instructions:
   - The current cosine similarity score is {current_cosine_similarity:.4f}. Revise the resume to further increase this score.
 - ONLY output the improved updated resume. Do not include any explanations, commentary, or formatting outside of the resume itself.
 
+Grounding constraints:
+- Use only information already present in the Original Resume. Never invent employers, roles, responsibilities, metrics, dates, technologies, or education details.
+- If a detail is unclear or missing from the Original Resume, leave it unchanged or generalize without adding specifics.
+- You may rephrase, reorder, or emphasize existing accomplishments so they align with the Job Description and Extracted Job Keywords while staying truthful to the resume.
+- Preserve the timeline of roles and keep date ranges as-is unless you are reformatting the same values for clarity.
+- Do not introduce external knowledge, company facts, or industry data that was not in the provided materials.
+
+Output rules:
+- Return only the revised resume body in Markdown without any headings such as "Improved Resume" or explanatory text.
+- Do not wrap the output in code fences and do not echo the job description, keywords, or instructions.
+- Maintain conventional section headings (e.g., Summary, Experience, Skills, Education) only if they existed or can be derived from the Original Resume.
+
 Job Description:
 ```md
 {raw_job_description}
@@ -32,5 +44,5 @@ Extracted Resume Keywords:
 {extracted_resume_keywords}
 ```
 
-NOTE: ONLY OUTPUT THE IMPROVED UPDATED RESUME IN MARKDOWN FORMAT.
+NOTE: Output ONLY the revised resume body in Markdown with no additional commentary before or after it.
 """
