@@ -135,6 +135,24 @@ if ! command -v ollama &> /dev/null; then
   success "Ollama installed"
 fi
 
+
+if ! ollama list | grep -q 'gemma3:4b'; then
+  info "Pulling gemma3:4b model…"
+  ollama pull gemma3:4b || error "Failed to pull gemma3:4b"
+  success "gemma3:4b model ready"
+else
+  info "gemma3:4b model already present—skipping"
+fi
+
+if ! ollama list | grep -q 'nomic-embed-text:137m-v1.5-fp16'; then
+  info "Pulling nomic-embed-text:137m-v1.5-fp16 model…"
+  ollama pull nomic-embed-text:137m-v1.5-fp16 || error "Failed to pull nomic-embed-text:137m-v1.5-fp16"
+  success "nomic-embed-text:137m-v1.5-fp16 model ready"
+else
+  info "nomic-embed-text:137m-v1.5-fp16 model already present—skipping"
+fi
+
+
 #–– 3. Bootstrap root .env ––#
 if [[ -f .env.example && ! -f .env ]]; then
   info "Bootstrapping root .env from .env.example"
