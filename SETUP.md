@@ -4,11 +4,14 @@
 
 This document provides cross-platform instructions to get the project up and running locally.
 
+- <i>Resume Matcher - AI-powered tool to match resumes against job descriptions—locally & privately.</i>
+
 ---
 
 ## 🚀 Quickstart
 
-### For Windows (PowerShell)
+<details>
+<summary><b> For Windows (PowerShell) </b></summary>
 
 ```powershell
 # 1. Run the PowerShell setup script
@@ -18,7 +21,11 @@ This document provides cross-platform instructions to get the project up and run
 .\setup.ps1 -StartDev
 ```
 
-### For Linux/macOS (Bash)
+</details>
+
+<details>
+<summary><b> For Linux/macOS (Bash) </b></summary>
+
 
 ```bash
 # 1. Make the scripts executable
@@ -34,27 +41,38 @@ make setup
 make run-dev
 ```
 
+</details>
+
 ---
 
 ## 🛠️ Prerequisites
 
-### Windows
+<details>
+<summary><b> For Windows </b></summary>
+
 - **PowerShell** 5.1 or later
 - **Node.js** ≥ v18 (includes `npm`)
 - **Python** ≥ 3.8 (`python3`, `pip3`)
 - **winget** (recommended for Ollama installation)
 - **uv** (will be auto-installed by setup.ps1 if missing)
 
-### Linux/macOS
+</details>
+
+<details>
+<summary><b> For Linux/macOS </b></summary>
+
 - **Bash** 4.4 or higher
 - **Node.js** ≥ v18 (includes `npm`)
 - **Python** ≥ 3.8 (`python3`, `pip3`)
 - **curl** (for installing uv & Ollama)
 - **make** (for Makefile integration)
+</details>
 
 ### Installing Prerequisites
 
-**On Windows:**
+<details>
+<summary><b>On Windows</b></summary>
+
 You can install missing tools via Windows Package Manager (winget) or manual downloads:
 
 ```powershell
@@ -70,7 +88,13 @@ winget install Python.Python.3.12
 - **Python**: Download from [https://www.python.org/downloads/](https://www.python.org/downloads/) (v3.8+ required)
 - **Ollama**: Only required if you switch the backend providers to `ollama`. Otherwise you can skip installing it. If you do need it, download from [https://ollama.com/download/windows](https://ollama.com/download/windows)
 
-**On macOS**, you can install missing tools via Homebrew:
+</details>
+
+
+<details>
+<summary><b>On Linux/macOS </b> </summary>
+
+** you can install missing tools via Homebrew:
 
 ```bash
 brew update
@@ -83,9 +107,13 @@ brew install node python3 curl make
 sudo apt update && sudo apt install -y bash nodejs npm python3 python3-pip curl make
 ```
 
+</details>
+
 ---
 
 ## 🔧 Environment Configuration
+
+<details></summary>
 
 The project uses `.env` files at two levels:
 
@@ -106,6 +134,8 @@ You can customize any variables in these files before or after bootstrapping.
 
 > **Note:** `PYTHONDONTWRITEBYTECODE=1` is exported by `setup.sh` to prevent `.pyc` files.
 
+</details>
+
 ---
 
 ## 📦 Installation Steps
@@ -121,7 +151,8 @@ You can customize any variables in these files before or after bootstrapping.
 
  Without the Ollama daemon running the setup script cannot pull local models.
  
-### Windows Installation
+ <details>
+ <summary> <b> Windows Installation </b> </summary>
 
 1. **Clone the repository**
 
@@ -158,7 +189,10 @@ You can customize any variables in these files before or after bootstrapping.
    npm run build
    ```
 
-### Linux/macOS Installation
+</details>
+
+<details>
+<summary><b>Linux/macOS Installation</b></summary>
 
 1. **Clone the repository**
 
@@ -205,19 +239,24 @@ You can customize any variables in these files before or after bootstrapping.
    make run-prod
    ```
 
+</details>
+
 ---
 
 ## 🔨 Available Commands
 
-### PowerShell Commands (Windows)
+<details> 
+<summary><b> Windows Commands (PowerShell) </b></summary>
 
 - **`.\setup.ps1`** — Run complete setup process
 - **`.\setup.ps1 -StartDev`** — Setup and start development server
 - **`.\setup.ps1 -Help`** — Show PowerShell script help
 - **`npm run dev`** — Start development server
 - **`npm run build`** — Build for production
+</details>
 
-### Makefile Targets (Linux/macOS)
+<details> 
+<summary> <b> Linux/macOS or Makefile Targets </b></summary>
 
 - **`make help`** — Show available targets
 - **`make setup`** — Run `setup.sh`
@@ -225,11 +264,14 @@ You can customize any variables in these files before or after bootstrapping.
 - **`make run-prod`** — Build for production
 - **`make clean`** — Remove build artifacts (customize as needed)
 
+</details>
+
 ---
 
 ## 🐞 Troubleshooting
 
-### Windows-specific Issues
+<details> 
+<summary> <b> Windows-specific Issues </b> </summary>
 
 - **`Execution of scripts is disabled on this system`**:
 
@@ -247,7 +289,10 @@ You can customize any variables in these files before or after bootstrapping.
 
   - Restart your PowerShell terminal and try again.
 
-### Cross-platform Issues
+</details>
+
+<details> 
+<summary> <b> Cross-platform Issues </b> </summary>
 
 - **`permission denied`** on `setup.sh`:
 
@@ -263,6 +308,8 @@ You can customize any variables in these files before or after bootstrapping.
 
 - **`npm ci` errors**:
   - Check your `package-lock.json` is in sync with `package.json`.
+
+</details>
 
 ---
 
