@@ -127,7 +127,7 @@ elif [[ -f apps/backend/.env.sample ]]; then
 fi
 
 if [[ -n "$ENV_SOURCE" ]]; then
-  if grep -Eq '^LLM_PROVIDER="?ollama' "$ENV_SOURCE" || grep -Eq '^EMBEDDING_PROVIDER="?ollama' "$ENV_SOURCE"; then
+  if grep -Eq "^LLM_PROVIDER=[\"']?ollama" "$ENV_SOURCE" || grep -Eq "^EMBEDDING_PROVIDER=[\"']?ollama" "$ENV_SOURCE"; then
     NEEDS_OLLAMA=true
   fi
 fi
