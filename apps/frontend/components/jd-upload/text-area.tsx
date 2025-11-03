@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useResumePreview } from '@/components/common/resume_previewer_context';
-import { uploadJobDescriptions, improveResume } from '@/lib/api/resume';
+import { uploadJobDescriptions, improveResume, fetchResume } from '@/lib/api/resume';
 
 type SubmissionStatus = 'idle' | 'submitting' | 'success' | 'error';
 type ImprovementStatus = 'idle' | 'improving' | 'error';
@@ -16,10 +16,41 @@ export default function JobDescriptionUploadTextArea() {
 	const [submissionStatus, setSubmissionStatus] = useState<SubmissionStatus>('idle');
 	const [improvementStatus, setImprovementStatus] = useState<ImprovementStatus>('idle');
 	const [jobId, setJobId] = useState<string | null>(null);
+	const [resumeName, setResumeName] = useState<string | null>(null);
+	const [isViewingResume, setIsViewingResume] = useState(false);
 
 	const { setImprovedData } = useResumePreview();
-	const resumeId = useSearchParams().get('resume_id')!;
+	const searchParams = useSearchParams();
+	const resumeIdFromQuery = searchParams.get('resume_id');
+	const [resumeId, setResumeId] = useState<string | null>(null);
+	const [resumeReady, setResumeReady] = useState(false);
 	const router = useRouter();
+
+	useEffect(() => {
+		if (typeof window === 'undefined') return;
+		let resolvedId: string | null = null;
+		let resolvedName: string | null = null;
+
+		if (resumeIdFromQuery) {
+			resolvedId = resumeIdFromQuery;
+			try {
+				localStorage.setItem('resumeMatcher:lastResumeId', resumeIdFromQuery);
+				resolvedName = localStorage.getItem('resumeMatcher:lastResumeName');
+			} catch (error) {
+				console.warn('Unable to persist resume ID in job upload view', error);
+			}
+		} else {
+			try {
+				resolvedId = localStorage.getItem('resumeMatcher:lastResumeId');
+				resolvedName = localStorage.getItem('resumeMatcher:lastResumeName');
+			} catch (error) {
+				console.warn('Unable to load resume ID from localStorage', error);
+			}
+		}
+		setResumeId(resolvedId);
+		setResumeName(resolvedName);
+		setResumeReady(true);
+	}, [resumeIdFromQuery]);
 
 	const handleChange = useCallback(
 		(e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -59,7 +90,7 @@ export default function JobDescriptionUploadTextArea() {
 	);
 
 	const handleImprove = useCallback(async () => {
-		if (!jobId) return;
+		if (!jobId || !resumeId) return;
 
 		setImprovementStatus('improving');
 		try {
@@ -73,10 +104,70 @@ export default function JobDescriptionUploadTextArea() {
 		}
 	}, [resumeId, jobId, setImprovedData, router]);
 
-	const isNextDisabled = text.trim() === '' || submissionStatus === 'submitting';
+	const handleViewResume = useCallback(async () => {
+		if (!resumeId) return;
+		setIsViewingResume(true);
+		try {
+			const { raw_resume } = await fetchResume(resumeId);
+			const resumeContent = raw_resume?.content ?? '';
+			if (!resumeContent) {
+				throw new Error('Resume content is unavailable.');
+			}
+			const contentType = raw_resume?.content_type?.toLowerCase() ?? 'md';
+			const blobType = contentType === 'html' ? 'text/html' : 'text/plain';
+			const blob = new Blob([resumeContent], {
+				type: `${blobType};charset=utf-8`,
+			});
+			const url = URL.createObjectURL(blob);
+			const newWindow = window.open(url, '_blank', 'noopener,noreferrer');
+			if (!newWindow) {
+				const anchor = document.createElement('a');
+				anchor.href = url;
+				anchor.target = '_blank';
+				anchor.rel = 'noopener noreferrer';
+				anchor.click();
+			}
+			window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+		} catch (err) {
+			console.error('Unable to open resume', err);
+			setFlash({
+				type: 'error',
+				message: (err as Error)?.message || 'Unable to open resume.',
+			});
+		} finally {
+			setIsViewingResume(false);
+		}
+	}, [resumeId, setFlash]);
+
+	const handleSwitchResume = useCallback(() => {
+		try {
+			if (typeof window !== 'undefined') {
+				localStorage.removeItem('resumeMatcher:lastResumeId');
+				localStorage.removeItem('resumeMatcher:lastResumeName');
+			}
+		} catch (error) {
+			console.warn('Unable to clear stored resume ID', error);
+		}
+		router.push('/resume?replace=1');
+	}, [router]);
+
+	const isNextDisabled =
+		text.trim() === '' || submissionStatus === 'submitting' || !resumeId || !resumeReady;
 
 	return (
 		<form onSubmit={handleUpload} className="p-4 mx-auto w-full max-w-xl">
+			{resumeReady && !resumeId && (
+				<div className="p-3 mb-4 text-sm rounded-md bg-red-900/20 border border-red-800/40 text-red-300">
+					<p>No resume is currently stored. Please upload a resume first.</p>
+					<button
+						type="button"
+						onClick={handleSwitchResume}
+						className="mt-2 inline-flex items-center gap-1 text-red-200 underline hover:text-red-100"
+					>
+						Upload resume
+					</button>
+				</div>
+			)}
 			{flash && (
 				<div
 					className={`p-3 mb-4 text-sm rounded-md ${flash.type === 'error'
@@ -88,6 +179,37 @@ export default function JobDescriptionUploadTextArea() {
 					<p>{flash.message}</p>
 				</div>
 			)}
+
+			<div className="mb-2 flex justify-between text-xs text-gray-400">
+				{resumeId ? (
+					<div className="text-left leading-tight">
+						<p className="text-gray-200 font-semibold">
+							Current resume:{' '}
+							<button
+								type="button"
+								onClick={handleViewResume}
+								disabled={isViewingResume}
+								className={`underline ${isViewingResume
+									? 'text-gray-400 cursor-wait'
+									: 'text-blue-300 hover:text-blue-200'
+									}`}
+							>
+								{isViewingResume ? 'Opening…' : resumeName || 'Unnamed file'}
+							</button>
+						</p>
+						<p className="text-[11px] text-gray-500">ID: {resumeId}</p>
+					</div>
+				) : (
+					<p>Resume information not available.</p>
+				)}
+				<button
+					type="button"
+					onClick={handleSwitchResume}
+					className="text-blue-300 hover:text-blue-200 underline"
+				>
+					Use a different resume
+				</button>
+			</div>
 
 			<div className="mb-6 relative">
 				<label

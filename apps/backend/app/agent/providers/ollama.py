@@ -23,15 +23,36 @@ class OllamaBaseProvider:
 
         return await run_in_threadpool(_list_sync)
 
-    def _ensure_model_pulled(self, model_name):
-        installed_ollama_models = [model_class.model for model_class in self._client.list().models]
-        if model_name not in installed_ollama_models:
+    def _ensure_model_pulled(self, model_name: str) -> None:
+        """
+        Ensure model is available locally.
+        - If it's already in /api/tags, skip pulling.
+        - If pull fails but model is actually present, continue.
+        """
+        try:
+            installed = [m.model for m in self._client.list().models]
+            if model_name in installed:
+                return  # already present
+        except Exception:
+            # If listing fails, we'll try pulling below.
+            pass
+
+        try:
+            self._client.pull(model_name)
+            return
+        except Exception as e:
+            # If pull failed (e.g., offline), check again—maybe it actually exists locally.
             try:
-                self._client.pull(model_name)
-            except Exception as e:
-                raise ProviderError(
-                    f"Ollama Model '{model_name}' could not be pulled. Please update your apps/backend/.env file or select from the installed models."
-                ) from e
+                installed = [m.model for m in self._client.list().models]
+                if model_name in installed:
+                    return
+            except Exception:
+                pass
+            raise ProviderError(
+                f"Ollama Model '{model_name}' could not be pulled. "
+                f"Either connect to the internet or install it manually with "
+                f"`ollama pull {model_name}`, then retry."
+            ) from e
 
 class OllamaProvider(Provider, OllamaBaseProvider):
     def __init__(self,
@@ -86,7 +107,12 @@ class OllamaEmbeddingProvider(EmbeddingProvider, OllamaBaseProvider):
                 input=text,
                 model=self._model,
             )
-            return response.embeddings
+            # Handle both shapes: {"embedding":[...]} or {"embeddings":[[...]]}
+            if hasattr(response, "embedding") and response.embedding:
+                return response.embedding  # type: ignore[return-value]
+            if hasattr(response, "embeddings") and response.embeddings:
+                return response.embeddings[0]  # type: ignore[index]
+            raise ProviderError("Ollama - Empty embedding response")
         except Exception as e:
             logger.error(f"ollama embedding error: {e}")
             raise ProviderError(f"Ollama - Error generating embedding: {e}") from e

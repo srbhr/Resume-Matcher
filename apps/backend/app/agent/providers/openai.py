@@ -40,14 +40,21 @@ class OpenAIProvider(Provider):
     async def __call__(self, prompt: str, **generation_args: Any) -> str:
         if generation_args:
             logger.warning(f"OpenAIProvider - generation_args not used {generation_args}")
-        myopts = {
-            "temperature": self.opts.get("temperature", 0),
-            "top_p": self.opts.get("top_p", 0.9),
-# top_k not currently supported by any OpenAI model - https://community.openai.com/t/does-openai-have-a-top-k-parameter/612410
-#            "top_k": generation_args.get("top_k", 40),
-# neither max_tokens
-#            "max_tokens": generation_args.get("max_length", 20000),
+        allowed = {
+            "temperature",
+            "top_p",
+            "max_output_tokens",
+            "verbosity",
+            "reasoning_effort",
+            "grammar",
+            "extra_headers",
         }
+        myopts = {}
+        for key in allowed:
+            value = self.opts.get(key)
+            if value is not None:
+                myopts[key] = value
+        myopts.update({k: v for k, v in generation_args.items() if k in allowed and v is not None})
         return await run_in_threadpool(self._generate_sync, prompt, myopts)
 
 

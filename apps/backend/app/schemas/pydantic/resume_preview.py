@@ -30,9 +30,25 @@ class EducationItem(BaseModel):
     description: Optional[str] = None
 
 
+class ProjectItem(BaseModel):
+    id: int
+    name: str
+    role: Optional[str] = None
+    years: Optional[str] = None
+    description: List[str] = []
+
+
+class AdditionalInfo(BaseModel):
+    technicalSkills: List[str] = []
+    languages: List[str] = []
+    certificationsTraining: List[str] = []
+    awards: List[str] = []
+
+
 class ResumePreviewerModel(BaseModel):
     personalInfo: PersonalInfo
     summary: Optional[str] = None
-    experience: List[ExperienceItem]
-    education: List[EducationItem]
-    skills: List[str]
+    workExperience: List[ExperienceItem] = []
+    education: List[EducationItem] = []
+    personalProjects: List[ProjectItem] = []
+    additional: AdditionalInfo = AdditionalInfo()

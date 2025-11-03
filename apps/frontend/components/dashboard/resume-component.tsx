@@ -12,28 +12,44 @@ interface PersonalInfo {
 }
 
 interface Experience {
-	id: number;
-	title?: string;
-	company?: string;
-	location?: string;
-	years?: string;
-	description?: string[];
+    id: number;
+    title?: string;
+    company?: string;
+    location?: string;
+    years?: string;
+    description?: string[];
 }
 
 interface Education {
-	id: number;
-	institution?: string;
-	degree?: string;
-	years?: string;
-	description?: string;
+    id: number;
+    institution?: string;
+    degree?: string;
+    years?: string;
+    description?: string;
+}
+
+interface Project {
+    id: number;
+    name?: string;
+    role?: string;
+    years?: string;
+    description?: string[];
+}
+
+interface AdditionalInfo {
+    technicalSkills?: string[];
+    languages?: string[];
+    certificationsTraining?: string[];
+    awards?: string[];
 }
 
 interface ResumeData {
-	personalInfo?: PersonalInfo;
-	summary?: string;
-	experience?: Experience[];
-	education?: Education[];
-	skills?: string[];
+    personalInfo?: PersonalInfo;
+    summary?: string;
+    workExperience?: Experience[];
+    education?: Education[];
+    personalProjects?: Project[];
+    additional?: AdditionalInfo;
 }
 
 interface ResumeProps {
@@ -41,8 +57,8 @@ interface ResumeProps {
 }
 
 const Resume: React.FC<ResumeProps> = ({ resumeData }) => {
-	console.log('Rendering Resume Component with data:', resumeData);
-	const { personalInfo, summary, experience, education, skills } = resumeData;
+    console.log('Rendering Resume Component with data:', resumeData);
+    const { personalInfo, summary, workExperience, education, personalProjects, additional } = resumeData;
 
 	// Helper function to render contact details only if they exist
 	const renderContactDetail = (label: string, value?: string, hrefPrefix: string = '') => {
@@ -118,13 +134,13 @@ const Resume: React.FC<ResumeProps> = ({ resumeData }) => {
 				</div>
 			)}
 
-			{/* --- Experience Section --- */}
-			{experience && experience.length > 0 && (
+			{/* --- Work Experience Section --- */}
+			{workExperience && workExperience.length > 0 && (
 				<div className="mb-8">
 					<h3 className="text-xl font-semibold border-b border-gray-700 pb-2 mb-4 text-gray-100">
-						Experience
+						Work Experience
 					</h3>
-					{experience.map((exp) => (
+					{workExperience.map((exp) => (
 						<div key={exp.id} className="mb-5 pl-4 border-l-2 border-blue-500">
 							{/* Lighter text for job titles */}
 							{exp.title && (
@@ -178,27 +194,102 @@ const Resume: React.FC<ResumeProps> = ({ resumeData }) => {
 				</div>
 			)}
 
-			{/* --- Skills Section --- */}
-			{skills && skills.length > 0 && (
-				<div>
-					<h3 className="text-xl font-semibold border-b border-gray-700 pb-2 mb-3 text-gray-100">
-						Skills
+			{/* --- Personal Projects Section --- */}
+			{personalProjects && personalProjects.length > 0 && (
+				<div className="mb-8">
+					<h3 className="text-xl font-semibold border-b border-gray-700 pb-2 mb-4 text-gray-100">
+						Personal Projects
 					</h3>
-					<div className="flex flex-wrap gap-2">
-						{skills.map(
-							(skill, index) =>
-								// Adjusted background and text for skill tags
-								skill && (
-									<span
-										key={index}
-										className="bg-gray-700 text-gray-200 text-xs font-medium px-3 py-1 rounded-full"
-									>
-										{skill}
-									</span>
-								),
-						)}
-					</div>
+					{personalProjects.map((project) => (
+						<div key={project.id} className="mb-5 pl-4 border-l-2 border-purple-500">
+							{project.name && (
+								<h4 className="text-lg font-semibold text-gray-100">{project.name}</h4>
+							)}
+							{project.role && (
+								<p className="text-md font-medium text-gray-400">{project.role}</p>
+							)}
+							{project.years && <p className="text-sm text-gray-500 mb-2">{project.years}</p>}
+							{project.description && project.description.length > 0 && (
+								<ul className="list-disc list-outside ml-5 text-sm space-y-1">
+									{project.description.map((desc, index) => (
+										<li key={index}>{desc}</li>
+									))}
+								</ul>
+							)}
+						</div>
+					))}
 				</div>
+			)}
+
+			{/* --- Additional Section --- */}
+			{additional && (
+				(() => {
+					if (!additional) return null;
+					const { technicalSkills = [], languages = [], certificationsTraining = [], awards = [] } = additional;
+					const hasContent =
+						technicalSkills.length > 0 ||
+						languages.length > 0 ||
+						certificationsTraining.length > 0 ||
+						awards.length > 0;
+					if (!hasContent) return null;
+					return (
+						<div>
+							<h3 className="text-xl font-semibold border-b border-gray-700 pb-2 mb-3 text-gray-100">
+								Additional
+							</h3>
+							<div className="grid gap-4 md:grid-cols-2">
+								{technicalSkills.length > 0 && (
+									<div>
+										<h4 className="text-sm font-semibold text-gray-300 uppercase tracking-wide mb-1">
+											Technical Skills
+										</h4>
+										<ul className="text-sm text-gray-300 list-disc ml-5 space-y-1">
+											{technicalSkills.map((skill, index) => (
+												<li key={index}>{skill}</li>
+											))}
+										</ul>
+									</div>
+								)}
+								{languages.length > 0 && (
+									<div>
+										<h4 className="text-sm font-semibold text-gray-300 uppercase tracking-wide mb-1">
+											Languages
+										</h4>
+										<ul className="text-sm text-gray-300 list-disc ml-5 space-y-1">
+											{languages.map((language, index) => (
+												<li key={index}>{language}</li>
+											))}
+										</ul>
+									</div>
+								)}
+								{certificationsTraining.length > 0 && (
+									<div>
+										<h4 className="text-sm font-semibold text-gray-300 uppercase tracking-wide mb-1">
+											Certifications & Training
+										</h4>
+										<ul className="text-sm text-gray-300 list-disc ml-5 space-y-1">
+											{certificationsTraining.map((item, index) => (
+												<li key={index}>{item}</li>
+											))}
+										</ul>
+									</div>
+								)}
+								{awards.length > 0 && (
+									<div>
+										<h4 className="text-sm font-semibold text-gray-300 uppercase tracking-wide mb-1">
+											Awards
+										</h4>
+										<ul className="text-sm text-gray-300 list-disc ml-5 space-y-1">
+											{awards.map((award, index) => (
+												<li key={index}>{award}</li>
+											))}
+										</ul>
+									</div>
+								)}
+							</div>
+						</div>
+					);
+				})()
 			)}
 		</div>
 	);

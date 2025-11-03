@@ -4,15 +4,16 @@ import asyncio
 import logging
 import markdown
 import numpy as np
+import re
 
 from sqlalchemy.future import select
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Dict, Optional, Tuple, AsyncGenerator
+from typing import Dict, Optional, Tuple, AsyncGenerator, List
 
 from app.prompt import prompt_factory
 from app.schemas.json import json_schema_factory
-from app.schemas.pydantic import ResumePreviewerModel
+from app.schemas.pydantic import ResumePreviewerModel, ResumeAnalysisModel
 from app.agent import EmbeddingManager, AgentManager
 from app.models import Resume, Job, ProcessedResume, ProcessedJob
 from .exceptions import (
@@ -41,6 +42,118 @@ class ScoreImprovementService:
         self.md_agent_manager = AgentManager(strategy="md")
         self.json_agent_manager = AgentManager()
         self.embedding_manager = EmbeddingManager()
+
+    @staticmethod
+    def _normalize_keyword_list(raw_keywords: List[str]) -> List[str]:
+        normalized: List[str] = []
+        seen = set()
+        for keyword in raw_keywords:
+            if not isinstance(keyword, str):
+                continue
+            kw = keyword.strip()
+            if not kw:
+                continue
+            if kw.lower() in seen:
+                continue
+            seen.add(kw.lower())
+            normalized.append(kw)
+        return normalized
+
+    @staticmethod
+    def _prepare_text_for_matching(text: str) -> str:
+        lowered = text.lower()
+        lowered = re.sub(r"[`*_>#\-]", " ", lowered)
+        lowered = re.sub(r"\s+", " ", lowered)
+        return lowered
+
+    @classmethod
+    def _build_skill_comparison(
+        cls, keywords: List[str], resume_text: str, job_text: str
+    ) -> List[Dict[str, int | str]]:
+        if not keywords:
+            return []
+        resume_norm = cls._prepare_text_for_matching(resume_text)
+        job_norm = cls._prepare_text_for_matching(job_text)
+        stats: List[Dict[str, int | str]] = []
+        for keyword in keywords:
+            kw_lower = keyword.lower()
+            pattern = re.compile(rf"(?<!\w){re.escape(kw_lower)}(?!\w)")
+            resume_mentions = len(pattern.findall(resume_norm))
+            job_mentions = len(pattern.findall(job_norm))
+            stats.append(
+                {
+                    "skill": keyword,
+                    "resume_mentions": resume_mentions,
+                    "job_mentions": job_mentions,
+                }
+            )
+        return stats
+
+    @staticmethod
+    def _has_summary_section(resume_text: str) -> bool:
+        heading_pattern = re.compile(
+            r"^\s{0,3}(?:#{1,3}|\*\*|__)?\s*(professional\s+)?(summary|profile|overview)\b",
+            re.IGNORECASE,
+        )
+        for line in resume_text.splitlines():
+            if heading_pattern.search(line.strip()):
+                return True
+        return False
+
+    @staticmethod
+    def _build_skill_priority_text(
+        stats: List[Dict[str, int | str]], top_n: int = 12
+    ) -> str:
+        if not stats:
+            return "    - No keyword statistics available."
+        ordered = sorted(
+            stats,
+            key=lambda item: (
+                int(item.get("job_mentions", 0)),
+                int(item.get("resume_mentions", 0)),
+            ),
+            reverse=True,
+        )
+        lines: List[str] = []
+        for record in ordered[:top_n]:
+            skill = record.get("skill", "")
+            job_mentions = int(record.get("job_mentions", 0))
+            resume_mentions = int(record.get("resume_mentions", 0))
+            lines.append(
+                f"    - {skill} (job mentions: {job_mentions}, resume mentions: {resume_mentions})"
+            )
+        return "\n".join(lines)
+
+    @classmethod
+    def _build_ats_recommendations(
+        cls, stats: List[Dict[str, int | str]], resume_text: str
+    ) -> str:
+        recommendations: List[str] = []
+        if not cls._has_summary_section(resume_text):
+            recommendations.append(
+                "Create a concise 2-3 sentence summary section at the top that reflects the most relevant accomplishments and weaves in the priority keywords."
+            )
+
+        missing_keywords = [
+            record
+            for record in stats
+            if int(record.get("job_mentions", 0)) > 0
+            and int(record.get("resume_mentions", 0)) == 0
+        ]
+
+        if missing_keywords:
+            highlighted = ", ".join(record.get("skill", "") for record in missing_keywords[:10])
+            recommendations.append(
+                "Emphasize factual experience that aligns with these uncovered keywords: "
+                f"{highlighted}. Rephrase existing bullets so they explicitly mention the relevant tools, domains, or methodologies without inventing new work."
+            )
+
+        if not recommendations:
+            recommendations.append(
+                "Tighten each section so that high-priority keywords appear in strong action-driven bullets supported by concrete outcomes."
+            )
+
+        return "\n".join(f"    - {rec}" for rec in recommendations)
 
     def _validate_resume_keywords(
         self, processed_resume: ProcessedResume, resume_id: str
@@ -146,6 +259,8 @@ class ScoreImprovementService:
         extracted_job_keywords: str,
         previous_cosine_similarity_score: float,
         extracted_job_keywords_embedding: np.ndarray,
+        ats_recommendations: str,
+        skill_priority_text: str,
     ) -> Tuple[str, float]:
         prompt_template = prompt_factory.get("resume_improvement")
         best_resume, best_score = resume, previous_cosine_similarity_score
@@ -160,6 +275,8 @@ class ScoreImprovementService:
                 raw_resume=best_resume,
                 extracted_resume_keywords=extracted_resume_keywords,
                 current_cosine_similarity=best_score,
+                ats_recommendations=ats_recommendations,
+                skill_priority_text=skill_priority_text,
             )
             improved = await self.md_agent_manager.run(prompt)
             emb = await self.embedding_manager.embed(text=improved)
@@ -197,6 +314,41 @@ class ScoreImprovementService:
             return None
         return resume_preview.model_dump()
 
+    async def get_resume_analysis(
+        self,
+        original_resume: str,
+        improved_resume: str,
+        job_description: str,
+        extracted_job_keywords: str,
+        extracted_resume_keywords: str,
+        original_score: float,
+        new_score: float,
+    ) -> Dict | None:
+        """Generate a structured summary comparing resume versions against the job."""
+
+        prompt_template = prompt_factory.get("resume_analysis")
+        schema = json.dumps(json_schema_factory.get("resume_analysis"), indent=2)
+        prompt = prompt_template.format(
+            schema,
+            job_description,
+            extracted_job_keywords,
+            original_resume,
+            extracted_resume_keywords,
+            improved_resume,
+            original_score,
+            new_score,
+        )
+
+        raw_output = await self.json_agent_manager.run(prompt=prompt)
+
+        try:
+            analysis = ResumeAnalysisModel.model_validate(raw_output)
+        except ValidationError as e:
+            logger.info(f"Resume analysis validation error: {e}")
+            return None
+
+        return analysis.model_dump()
+
     async def run(self, resume_id: str, job_id: str) -> Dict:
         """
         Main method to run the scoring and improving process and return dict.
@@ -205,15 +357,30 @@ class ScoreImprovementService:
         resume, processed_resume = await self._get_resume(resume_id)
         job, processed_job = await self._get_job(job_id)
 
-        extracted_job_keywords = ", ".join(
-            json.loads(processed_job.extracted_keywords).get("extracted_keywords", [])
+        job_keywords_raw = json.loads(processed_job.extracted_keywords).get(
+            "extracted_keywords", []
+        )
+        resume_keywords_raw = json.loads(processed_resume.extracted_keywords).get(
+            "extracted_keywords", []
         )
 
-        extracted_resume_keywords = ", ".join(
-            json.loads(processed_resume.extracted_keywords).get(
-                "extracted_keywords", []
-            )
+        job_keywords_list = self._normalize_keyword_list(job_keywords_raw)
+        resume_keywords_list = self._normalize_keyword_list(resume_keywords_raw)
+
+        extracted_job_keywords = ", ".join(job_keywords_list)
+
+        extracted_resume_keywords = ", ".join(resume_keywords_list)
+
+        skill_stats_for_prompt = self._build_skill_comparison(
+            keywords=job_keywords_list,
+            resume_text=resume.content,
+            job_text=job.content,
         )
+        ats_recommendations = self._build_ats_recommendations(
+            stats=skill_stats_for_prompt,
+            resume_text=resume.content,
+        )
+        skill_priority_text = self._build_skill_priority_text(skill_stats_for_prompt)
 
         resume_embedding_task = asyncio.create_task(
             self.embedding_manager.embed(resume.content)
@@ -235,10 +402,28 @@ class ScoreImprovementService:
             extracted_job_keywords=extracted_job_keywords,
             previous_cosine_similarity_score=cosine_similarity_score,
             extracted_job_keywords_embedding=extracted_job_keywords_embedding,
+            ats_recommendations=ats_recommendations,
+            skill_priority_text=skill_priority_text,
         )
 
         resume_preview = await self.get_resume_for_previewer(
             updated_resume=updated_resume
+        )
+
+        resume_analysis = await self.get_resume_analysis(
+            original_resume=resume.content,
+            improved_resume=updated_resume,
+            job_description=job.content,
+            extracted_job_keywords=extracted_job_keywords,
+            extracted_resume_keywords=extracted_resume_keywords,
+            original_score=cosine_similarity_score,
+            new_score=updated_score,
+        )
+
+        skill_comparison = self._build_skill_comparison(
+            keywords=job_keywords_list,
+            resume_text=updated_resume,
+            job_text=job.content,
         )
 
         logger.info(f"Resume Preview: {resume_preview}")
@@ -250,6 +435,14 @@ class ScoreImprovementService:
             "new_score": updated_score,
             "updated_resume": markdown.markdown(text=updated_resume),
             "resume_preview": resume_preview,
+            "details": resume_analysis.get("details") if resume_analysis else "",
+            "commentary": resume_analysis.get("commentary") if resume_analysis else "",
+            "improvements": resume_analysis.get("improvements") if resume_analysis else [],
+            "original_resume_markdown": resume.content,
+            "updated_resume_markdown": updated_resume,
+            "job_description": job.content,
+            "job_keywords": extracted_job_keywords,
+            "skill_comparison": skill_comparison,
         }
 
         gc.collect()
@@ -270,15 +463,30 @@ class ScoreImprovementService:
         yield f"data: {json.dumps({'status': 'parsing', 'message': 'Parsing resume content...'})}\n\n"
         await asyncio.sleep(2)
 
-        extracted_job_keywords = ", ".join(
-            json.loads(processed_job.extracted_keywords).get("extracted_keywords", [])
+        job_keywords_raw = json.loads(processed_job.extracted_keywords).get(
+            "extracted_keywords", []
+        )
+        resume_keywords_raw = json.loads(processed_resume.extracted_keywords).get(
+            "extracted_keywords", []
         )
 
-        extracted_resume_keywords = ", ".join(
-            json.loads(processed_resume.extracted_keywords).get(
-                "extracted_keywords", []
-            )
+        job_keywords_list = self._normalize_keyword_list(job_keywords_raw)
+        resume_keywords_list = self._normalize_keyword_list(resume_keywords_raw)
+
+        extracted_job_keywords = ", ".join(job_keywords_list)
+
+        extracted_resume_keywords = ", ".join(resume_keywords_list)
+
+        skill_stats_for_prompt = self._build_skill_comparison(
+            keywords=job_keywords_list,
+            resume_text=resume.content,
+            job_text=job.content,
         )
+        ats_recommendations = self._build_ats_recommendations(
+            stats=skill_stats_for_prompt,
+            resume_text=resume.content,
+        )
+        skill_priority_text = self._build_skill_priority_text(skill_stats_for_prompt)
 
         resume_embedding = await self.embedding_manager.embed(text=resume.content)
         extracted_job_keywords_embedding = await self.embedding_manager.embed(
@@ -304,11 +512,40 @@ class ScoreImprovementService:
             extracted_job_keywords=extracted_job_keywords,
             previous_cosine_similarity_score=cosine_similarity_score,
             extracted_job_keywords_embedding=extracted_job_keywords_embedding,
+            ats_recommendations=ats_recommendations,
+            skill_priority_text=skill_priority_text,
         )
 
-        for i, suggestion in enumerate(updated_resume):
-            yield f"data: {json.dumps({'status': 'suggestion', 'index': i, 'text': suggestion})}\n\n"
-            await asyncio.sleep(0.2)
+        resume_preview = await self.get_resume_for_previewer(
+            updated_resume=updated_resume
+        )
+
+        resume_analysis = await self.get_resume_analysis(
+            original_resume=resume.content,
+            improved_resume=updated_resume,
+            job_description=job.content,
+            extracted_job_keywords=extracted_job_keywords,
+            extracted_resume_keywords=extracted_resume_keywords,
+            original_score=cosine_similarity_score,
+            new_score=updated_score,
+        )
+
+        skill_comparison = self._build_skill_comparison(
+            keywords=job_keywords_list,
+            resume_text=updated_resume,
+            job_text=job.content,
+        )
+
+        if resume_analysis and resume_analysis.get("improvements"):
+            for i, suggestion in enumerate(resume_analysis["improvements"]):
+                payload = {
+                    "status": "suggestion",
+                    "index": i,
+                    "text": suggestion.get("suggestion", ""),
+                    "reference": suggestion.get("lineNumber"),
+                }
+                yield f"data: {json.dumps(payload)}\n\n"
+                await asyncio.sleep(0.2)
 
         final_result = {
             "resume_id": resume_id,
@@ -316,6 +553,15 @@ class ScoreImprovementService:
             "original_score": cosine_similarity_score,
             "new_score": updated_score,
             "updated_resume": markdown.markdown(text=updated_resume),
+            "resume_preview": resume_preview,
+            "details": resume_analysis.get("details") if resume_analysis else "",
+            "commentary": resume_analysis.get("commentary") if resume_analysis else "",
+            "improvements": resume_analysis.get("improvements") if resume_analysis else [],
+            "original_resume_markdown": resume.content,
+            "updated_resume_markdown": updated_resume,
+            "job_description": job.content,
+            "job_keywords": extracted_job_keywords,
+            "skill_comparison": skill_comparison,
         }
 
         yield f"data: {json.dumps({'status': 'completed', 'result': final_result})}\n\n"

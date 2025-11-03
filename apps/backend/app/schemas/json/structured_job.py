@@ -11,7 +11,9 @@ SCHEMA = {
         "city": "string",
         "state": "string",
         "country": "string",
-        "remoteStatus": "Fully Remote | Hybrid | On-site | Remote | Not Specified | Multiple Locations",
+        "remoteStatus": "Not Specified",  # IMPORTANT: choose EXACTLY ONE of:
+                                  # "Fully Remote", "Hybrid", "On-site",
+                                  # "Remote", "Not Specified", "Multiple Locations"
     },
     "datePosted": "YYYY-MM-DD",
     "employmentType": "Full-time | Full time | Part-time | Part time | Contract | Internship | Temporary | Not Specified",
