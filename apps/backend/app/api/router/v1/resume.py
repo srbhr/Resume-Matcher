@@ -43,10 +43,10 @@ async def upload_resume(
     db: AsyncSession = Depends(get_db_session),
 ):
     """
-    Accepts a PDF or DOCX file, converts it to HTML/Markdown, and stores it in the database.
+    Accepts a PDF or DOCX file (max 2MB), converts it to HTML/Markdown, and stores it in the database.
 
     Raises:
-        HTTPException: If the file type is not supported or if the file is empty.
+        HTTPException: If the file type is not supported, file is empty, or file exceeds 2MB limit.
     """
     request_id = getattr(request.state, "request_id", str(uuid4()))
 
@@ -61,13 +61,40 @@ async def upload_resume(
             detail="Invalid file type. Only PDF and DOCX files are allowed.",
         )
 
+    MAX_FILE_SIZE = 2 * 1024 * 1024
+    
+    # Try to get size from file object or Content-Length header
+    file_size = getattr(file, 'size', None)
+    if file_size is None and hasattr(request, 'headers'):
+        content_length = request.headers.get('content-length')
+        if content_length:
+            try:
+                file_size = int(content_length)
+            except ValueError:
+                pass  # Invalid content-length header
+    
+    if file_size and file_size > MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail="File size exceeds maximum allowed size of 2.0MB.",
+        )
+
     file_bytes = await file.read()
     if not file_bytes:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Empty file. Please upload a valid file.",
         )
+    
+    MAX_FILE_SIZE = 2 * 1024 * 1024 # File size validation (2 MB limit only)
 
+     # Check file size 
+    if len(file_bytes) > MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=f"File size exceeds the 2 MB limit. Current size: {len(file_bytes) / 1024 / 1024:.2f} MB",
+        )
+    
     try:
         resume_service = ResumeService(db)
         resume_id = await resume_service.convert_and_store_resume(

@@ -221,7 +221,7 @@ You can customize any variables in these files before or after bootstrapping.
 
 - **`make help`** — Show available targets
 - **`make setup`** — Run `setup.sh`
-- **`make run-dev`** — start dev server (SIGINT-safe)
+- **`make run-dev`** — Start dev server (SIGINT-safe)
 - **`make run-prod`** — Build for production
 - **`make clean`** — Remove build artifacts (customize as needed)
 
@@ -268,6 +268,6 @@ You can customize any variables in these files before or after bootstrapping.
 
 ## 🖋️ Frontend
 
-- Please make sure to have format on save option enabled on your editor (or) run `npm run format` to format all the staged changes.
+- Please make sure to have the format on save option enabled in your editor or run `npm run format` to format all staged changes.
 
 _Last updated: May 25, 2025_
