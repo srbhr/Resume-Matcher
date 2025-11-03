@@ -356,6 +356,10 @@ class ScoreImprovementService:
 
         resume, processed_resume = await self._get_resume(resume_id)
         job, processed_job = await self._get_job(job_id)
+        if processed_job is None:
+            raise JobParsingError(f"Processed job not found for job_id: {job_id}")
+        if processed_resume is None:
+            raise ResumeParsingError(f"Processed resume not found for resume_id: {resume_id}")
 
         job_keywords_raw = json.loads(processed_job.extracted_keywords).get(
             "extracted_keywords", []
@@ -459,6 +463,12 @@ class ScoreImprovementService:
 
         resume, processed_resume = await self._get_resume(resume_id)
         job, processed_job = await self._get_job(job_id)
+        if processed_job is None:
+            yield f"data: {json.dumps({'status': 'error', 'message': f'Processed job not found for job_id: {job_id}'})}\n\n"
+            return
+        if processed_resume is None:
+            yield f"data: {json.dumps({'status': 'error', 'message': f'Processed resume not found for resume_id: {resume_id}'})}\n\n"
+            return
 
         yield f"data: {json.dumps({'status': 'parsing', 'message': 'Parsing resume content...'})}\n\n"
         await asyncio.sleep(2)
