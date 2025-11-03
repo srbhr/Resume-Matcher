@@ -4,8 +4,7 @@
 
 # Resume Matcher
 
-
-[𝙹𝚘𝚒𝚗 𝙳𝚒𝚜𝚌𝚘𝚛𝚍](https://dsc.gg/resume-matcher) ✦ [𝚆𝚎𝚋𝚜𝚒𝚝𝚎](https://resumematcher.fyi) ✦ [𝙷𝚘𝚠 𝚝𝚘 𝙸𝚗𝚜𝚝𝚊𝚕𝚕 ](#how-to-install) ✦ [𝙲𝚘𝚗𝚝𝚛𝚒𝚋𝚞𝚝𝚘𝚛𝚜](#contributors) ✦ [𝙳𝚘𝚗𝚊𝚝𝚎](#support-the-development-by-donating) ✦ [𝚃𝚠𝚒𝚝𝚝𝚎𝚛/𝚇](https://twitter.com/_srbhr_) ✦ [𝙻𝚒𝚗𝚔𝚎𝚍𝙸𝚗](https://www.linkedin.com/company/resume-matcher/)
+[𝙹𝚘𝚒𝚗 𝙳𝚒𝚜𝚌𝚘𝚛𝚍](https://dsc.gg/resume-matcher) ✦ [𝚆𝚎𝚋𝚜𝚒𝚝𝚎](https://resumematcher.fyi) ✦ [𝙷𝚘𝚠 𝚝𝚘 𝙸𝚗𝚜𝚝𝚊𝚕𝚕](#how-to-install) ✦ [𝙲𝚘𝚗𝚝𝚛𝚒𝚋𝚞𝚝𝚘𝚛𝚜](#contributors) ✦ [𝙳𝚘𝚗𝚊𝚝𝚎](#support-the-development-by-donating) ✦ [𝚃𝚠𝚒𝚝𝚝𝚎𝚛/𝚇](https://twitter.com/ssrbhr) ✦ [𝙻𝚒𝚗𝚔𝚎𝚍𝙸𝚗](https://www.linkedin.com/company/resume-matcher/)
 
 **Stop getting auto-rejected by ATS bots.** Resume Matcher is the AI-powered platform that reverse-engineers hiring algorithms to show you exactly how to tailor your resume. Get the keywords, formatting, and insights that actually get you past the first screen and into human hands.
 
@@ -20,7 +19,6 @@ Hoping to make this, **VS Code for making resumes**.
 ![Stars](https://img.shields.io/github/stars/srbhr/Resume-Matcher?labelColor=black&style=for-the-badge&color=c20a71)
 ![Apache 2.0](https://img.shields.io/github/license/srbhr/Resume-Matcher?labelColor=black&style=for-the-badge&color=c20a71) ![Forks](https://img.shields.io/github/forks/srbhr/Resume-Matcher?labelColor=black&style=for-the-badge&color=c20a71) ![version](https://img.shields.io/badge/Version-0.1%20Veridis%20Quo-FFF?labelColor=black&logo=LinkedIn&style=for-the-badge&color=c20a71)
 
-
 [![Discord](https://img.shields.io/discord/1122069176962531400?labelColor=black&logo=discord&logoColor=c20a71&style=for-the-badge&color=c20a71)](https://dsc.gg/resume-matcher) [![Website](https://img.shields.io/badge/website-Resume%20Matcher-FFF?labelColor=black&style=for-the-badge&color=c20a71)](https://resumematcher.fyi) [![LinkedIn](https://img.shields.io/badge/LinkedIn-Resume%20Matcher-FFF?labelColor=black&logo=LinkedIn&style=for-the-badge&color=c20a71)](https://www.linkedin.com/company/resume-matcher/)
 
 <a href="https://trendshift.io/repositories/565" target="_blank"><img src="https://trendshift.io/api/badge/repositories/565" alt="srbhr%2FResume-Matcher | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
@@ -32,7 +30,6 @@ Hoping to make this, **VS Code for making resumes**.
 > \[!IMPORTANT]
 >
 > This project is in active development. New features are being added continuously, and we welcome contributions from the community. There are some breaking changes on the `main` branch. If you have any suggestions or feature requests, please feel free to open an issue on GitHub or discuss it on our [Discord](https://dsc.gg/resume-matcher) server.
-
 
 ## Getting started with Resume Matcher
 
@@ -59,7 +56,7 @@ We're actively working on improving the platform, building towards a **VS Code f
 - **Keyword Optimizer**: Align your resume with job keywords and identify critical content gaps.
 - **Guided Improvements**: Get clear suggestions to make your resume stand out.
 
-### Roadmap 
+### Roadmap
 
 If you have any suggestions or feature requests, please feel free to open an issue on GitHub. And discuss it on our [Discord](https://dsc.gg/resume-matcher) server.
 
@@ -87,7 +84,6 @@ The project is built using:
 | Next.js      | 15+                   |
 | Ollama       |        0.6.7        |
 
-
 ## Join Us and Contribute
 
 ![how to contribute](assets/how_to_contribute.png)
@@ -97,6 +93,7 @@ We welcome contributions from everyone! Whether you're a developer, designer, or
 Check out the roadmap if you would like to work on the features that are planned for the future. If you have any suggestions or feature requests, please feel free to open an issue on GitHub and discuss it on our [Discord](https://dsc.gg/resume-matcher) server.
 
 ## Contributors
+
 ![Contributors](assets/contributors.png)
 
 <a href="https://github.com/srbhr/Resume-Matcher/graphs/contributors">
@@ -104,6 +101,7 @@ Check out the roadmap if you would like to work on the features that are planned
 </a>
 
 ## Support the Development by Donating
+
 ![donate](assets/supporting_resume_matcher.png)
 
 If you would like to support the development of Resume Matcher, you can do so by donating. Your contributions will help us keep the project alive and continue adding new features.
@@ -123,6 +121,4 @@ If you would like to support the development of Resume Matcher, you can do so by
 
 ## Resume Matcher is a part of [Vercel Open Source Program](https://vercel.com/oss)
 
-
 ![Vercel OSS Program](https://vercel.com/oss/program-badge.svg)
-
