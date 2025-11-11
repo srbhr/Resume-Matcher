@@ -264,10 +264,245 @@ You can customize any variables in these files before or after bootstrapping.
 - **`npm ci` errors**:
   - Check your `package-lock.json` is in sync with `package.json`.
 
+- **Port `3000` or `8000` already in use**:
+  - Kill the process: `lsof -ti:3000 | xargs kill -9` (macOS/Linux) or `netstat -ano | findstr :3000` (Windows)
+  - Or change the port in `.env.local` or start the server with a different port
+
+- **`DOCX file processing fails`**:
+  - Install missing dependencies: `pip install markitdown[all]==0.1.2`
+  - Run: `python apps/backend/test_docx_dependencies.py` to verify
+
+- **Database errors on fresh install**:
+  - Delete `app.db` and `db.sqlite3` files, then restart the backend
+  - Ensure `ASYNC_DATABASE_URL` and `SYNC_DATABASE_URL` are correctly set in `.env`
+
+---
+
+## ❓ Frequently Asked Questions (FAQ)
+
+### General Questions
+
+**Q: Do I need Ollama installed to use Resume Matcher?**
+
+A: No, it's optional. By default, the project uses OpenAI APIs (configured in `.env`). Ollama is only required if you change `LLM_PROVIDER` and `EMBEDDING_PROVIDER` to `"ollama"` for running models locally.
+
+**Q: Can I use Resume Matcher offline?**
+
+A: Yes, if you set up Ollama as your provider. Ensure Ollama is running (`ollama serve`) before starting Resume Matcher.
+
+**Q: What are the minimum system requirements?**
+
+A: 
+- **CPU**: 2+ cores (4+ cores recommended for Ollama)
+- **RAM**: 4GB minimum (8GB+ recommended for local models)
+- **Storage**: 10GB for local LLM models (if using Ollama)
+- **Python**: 3.12+
+- **Node.js**: 18+
+
+**Q: How do I switch from OpenAI to Ollama?**
+
+A: Update your `apps/backend/.env`:
+```env
+LLM_PROVIDER="ollama"
+LLM_BASE_URL="http://localhost:11434"
+LL_MODEL="llama2"  # or another available model
+
+EMBEDDING_PROVIDER="ollama"
+EMBEDDING_BASE_URL="http://localhost:11434"
+EMBEDDING_MODEL="nomic-embed-text"
+```
+
+Then restart the backend and ensure Ollama is running.
+
+### Installation & Setup
+
+**Q: Setup failed with `npm ERR! code ERESOLVE`**
+
+A: Try clearing npm cache and reinstalling:
+```bash
+npm cache clean --force
+npm ci
+```
+
+**Q: Python virtual environment not created**
+
+A: Ensure `uv` is installed properly. On Linux/macOS:
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+**Q: How do I use Python from a specific version?**
+
+A: Set PYTHON environment variable before running setup:
+```bash
+# On Windows
+$env:PYTHON = "C:\Python312\python.exe"
+.\setup.ps1
+
+# On macOS/Linux
+export PYTHON=/usr/bin/python3.12
+./setup.sh
+```
+
+**Q: Can I use a different database instead of SQLite?**
+
+A: Yes, update `SYNC_DATABASE_URL` and `ASYNC_DATABASE_URL` in `.env`. Examples:
+```env
+# PostgreSQL
+ASYNC_DATABASE_URL="postgresql+asyncpg://user:password@localhost/resume_matcher"
+SYNC_DATABASE_URL="postgresql://user:password@localhost/resume_matcher"
+
+# MySQL
+ASYNC_DATABASE_URL="mysql+aiomysql://user:password@localhost/resume_matcher"
+SYNC_DATABASE_URL="mysql://user:password@localhost/resume_matcher"
+```
+
+### Development
+
+**Q: How do I run only the frontend or backend?**
+
+A: Use individual commands:
+```bash
+npm run dev:frontend  # Frontend only (port 3000)
+npm run dev:backend   # Backend only (port 8000)
+```
+
+**Q: How do I debug the backend?**
+
+A: The backend runs with `--reload` by default in development mode. Add breakpoints in your IDE or use print statements. For detailed logging, set in `.env`:
+```env
+LOG_LEVEL="DEBUG"
+```
+
+**Q: Frontend changes not reflecting in the browser?**
+
+A: 
+- Check if dev server is running: `npm run dev:frontend`
+- Clear browser cache (Ctrl+Shift+Delete)
+- Restart the dev server if changes don't appear after 5 seconds
+
+**Q: How do I test API endpoints manually?**
+
+A: Use `curl`, Postman, or VS Code REST Client:
+```bash
+# Upload resume
+curl -X POST http://localhost:8000/api/v1/resumes/upload \
+  -F "file=@/path/to/resume.pdf"
+
+# Validate resume content
+curl -X POST http://localhost:8000/api/v1/validation/validate \
+  -H "Content-Type: application/json" \
+  -d '{"content":"Your resume text here"}'
+```
+
+### Production
+
+**Q: How do I build for production?**
+
+A: Run:
+```bash
+npm run build
+```
+
+This creates optimized builds for both frontend and backend.
+
+**Q: Should I set `DEBUG=True` in production?**
+
+A: **No**, always set `DEBUG=False` in production for security reasons.
+
+**Q: How do I deploy Resume Matcher?**
+
+A: 
+1. Build the project: `npm run build`
+2. Set appropriate environment variables for production
+3. Use a production ASGI server for the backend (e.g., Gunicorn, Uvicorn)
+4. Use a production Node.js server for the frontend (e.g., PM2, Docker)
+5. (Optional) Containerize with Docker and deploy to your platform
+
+Example Docker deployment is available in the repository root.
+
+### File Upload
+
+**Q: What file formats are supported?**
+
+A: Currently supported:
+- **PDF** (`.pdf`)
+- **DOCX** (`.docx`)
+
+Maximum file size: **2 MB**
+
+**Q: I get "DOCX file processing may fail" error**
+
+A: Install the required dependencies:
+```bash
+pip install markitdown[all]==0.1.2
+```
+
+Then restart the backend.
+
+**Q: Why is my file upload failing?**
+
+A: Check these common issues:
+- File size exceeds 2MB
+- File format is not PDF or DOCX
+- Backend server is not running
+- Check browser console for detailed error messages
+
+### Performance
+
+**Q: Resume analysis is slow**
+
+A: 
+- If using Ollama, ensure the LLM model is fully loaded: `ollama list`
+- Check system RAM usage; increase if consistently above 90%
+- For production, consider using cloud APIs (OpenAI, Claude) for faster responses
+- Check network latency to API provider
+
+**Q: How can I optimize the frontend?**
+
+A: 
+- Run `npm run build` to create production build
+- Enable browser caching and compression
+- Use a CDN for static assets
+- Monitor performance with browser DevTools
+
+### API & Integration
+
+**Q: How do I get my OpenAI API key?**
+
+A: 
+1. Visit [https://platform.openai.com/api-keys](https://platform.openai.com/api-keys)
+2. Create a new secret key
+3. Add it to `.env`: `LLM_API_KEY="sk-..."`
+
+**Q: Can I use other LLM providers?**
+
+A: Currently supported:
+- OpenAI (default)
+- Ollama (local)
+
+To add more providers, extend `apps/backend/app/agent/providers/`.
+
+**Q: How do I integrate Resume Matcher into my application?**
+
+A: Use the REST API endpoints. See API documentation at `/api/docs` when running the backend.
+
 ---
 
 ## 🖋️ Frontend
 
 - Please make sure to have the format on save option enabled in your editor or run `npm run format` to format all staged changes.
 
-_Last updated: May 25, 2025_
+---
+
+## 📚 Additional Resources
+
+- **Documentation**: [docs/CONFIGURING.md](docs/CONFIGURING.md)
+- **Repository Guidelines**: [AGENTS.md](AGENTS.md)
+- **Contributing**: See CONTRIBUTING.md (coming soon)
+- **Discord Community**: [https://dsc.gg/resume-matcher](https://dsc.gg/resume-matcher)
+
+---
+
+_Last updated: November 11, 2025_
+
