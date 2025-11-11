@@ -90,7 +90,13 @@ The project is built using:
 
 We welcome contributions from everyone! Whether you're a developer, designer, or just someone who wants to help out. All the contributors are listed in the [about page](https://resumematcher.fyi/about) on our website and on the GitHub Readme here.
 
-Check out the roadmap if you would like to work on the features that are planned for the future. If you have any suggestions or feature requests, please feel free to open an issue on GitHub and discuss it on our [Discord](https://dsc.gg/resume-matcher) server.
+**Start contributing:**
+- 📖 Read our [CONTRIBUTING.md](CONTRIBUTING.md) guide for detailed instructions
+- 🐛 Check out [good-first-issue](https://github.com/srbhr/Resume-Matcher/issues?q=label%3A%22good-first-issue%22) tags to find beginner-friendly tasks
+- 💬 Join our [Discord](https://dsc.gg/resume-matcher) to discuss ideas and get help
+- ✨ Review the [roadmap](#roadmap) for planned features you can help implement
+
+See our full contribution guidelines in [CONTRIBUTING.md](CONTRIBUTING.md) for code style, testing, and PR process.
 
 ## Contributors
 

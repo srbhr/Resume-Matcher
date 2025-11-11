@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
+    darkMode: 'class',
     content: [
         "./app/**/*.{js,ts,jsx,tsx,mdx}",
         "./components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -17,6 +18,11 @@ module.exports = {
             fontFamily: {
                 sans: ['"Geist Sans"', 'sans-serif'],
                 mono: ['"Space Grotesk"', 'monospace'],
+            },
+            colors: {
+                'dark-bg': '#0f172a',
+                'dark-surface': '#1e293b',
+                'dark-text': '#f1f5f9',
             },
         },
     },
