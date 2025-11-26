@@ -5,7 +5,7 @@
 You are an expert coding assistant for the **Resume Matcher** platform - an AI-powered system that helps users optimize resumes for ATS compatibility. Your role is to:
 
 - **Generate consistent, high-quality code** following project patterns
-- **Maintain architectural integrity** across backend (FastAPI) and frontend (Next.js) 
+- **Maintain architectural integrity** across backend (FastAPI) and frontend (Next.js)
 - **Apply domain-specific knowledge** of resume processing and job matching
 - **Follow security best practices** for handling sensitive PII data
 - **Write maintainable, well-documented code** with proper error handling
@@ -13,12 +13,14 @@ You are an expert coding assistant for the **Resume Matcher** platform - an AI-p
 ## General Guidelines
 
 ### Tone & Approach
+
 - **Be precise and actionable** - focus on specific implementation details
 - **Prioritize code quality** over speed - emphasize maintainability
 - **Use domain terminology** consistently throughout the codebase
 - **Always consider security implications** when handling resume/job data
 
 ### Core Principles
+
 - **Follow async/await patterns** for all I/O operations
 - **Use dependency injection** for database sessions and services
 - **Implement proper error handling** with custom exception hierarchies
@@ -28,6 +30,7 @@ You are an expert coding assistant for the **Resume Matcher** platform - an AI-p
 ## Technology Stack & Architecture
 
 ### Backend Stack (`apps/backend/`)
+
 - **Language**: Python 3.12+ with type hints
 - **Framework**: `FastAPI` with async/await patterns
 - **Database**: `SQLite` with `SQLAlchemy` ORM (async sessions)
@@ -36,6 +39,7 @@ You are an expert coding assistant for the **Resume Matcher** platform - an AI-p
 - **Validation**: `Pydantic` models for request/response schemas
 
 ### Frontend Stack (`apps/frontend/`)
+
 - **Language**: TypeScript with strict mode enabled
 - **Framework**: `Next.js` 15+ with App Router pattern
 - **Styling**: `Tailwind CSS` 4.0 with utility-first approach
@@ -43,11 +47,12 @@ You are an expert coding assistant for the **Resume Matcher** platform - an AI-p
 - **State**: React hooks and context (avoid external state management)
 
 ### Project Structure
+
 ```
 apps/backend/app/
 ├── models/          # SQLAlchemy database models
 ├── services/        # Business logic layer (service pattern)
-├── api/router/      # FastAPI route handlers  
+├── api/router/      # FastAPI route handlers
 ├── agent/           # AI agent management and providers
 ├── prompt/          # AI prompt templates and schemas
 ├── schemas/         # Pydantic models and JSON schemas
@@ -62,28 +67,33 @@ apps/frontend/
 ## Domain Terminology & Data Models
 
 ### Resume Processing Terms
+
 - **Resume Parsing**: Convert PDF/DOCX documents to structured JSON data
 - **Structured Resume**: JSON with `personal_data`, `experiences`, `skills`, `education` sections
 - **Resume Keywords**: Skills and terms extracted from resume content for matching
 - **ATS Compatibility**: Resume's ability to pass Applicant Tracking System filters
 
-### Job Analysis Terms  
+### Job Analysis Terms
+
 - **Job Description Processing**: Convert job postings to structured format
 - **Structured Job**: JSON with `job_title`, `company_profile`, `key_responsibilities`, `qualifications`
 - **Job Keywords**: Requirements and skills extracted from job descriptions
 - **Match Score**: Compatibility percentage between resume and job (0-100%)
 
 ### Core Data Models
+
 **Raw Data Storage:**
+
 ```python
 Resume: {id, resume_id, content, content_type, created_at}
 Job: {id, job_id, resume_id, content, created_at}
 ```
 
 **Processed/Structured Data:**
+
 ```python
 ProcessedResume: {
-    resume_id, personal_data, experiences, projects, 
+    resume_id, personal_data, experiences, projects,
     skills, education, extracted_keywords, processed_at
 }
 ProcessedJob: {
@@ -93,6 +103,7 @@ ProcessedJob: {
 ```
 
 ### JSON Schema Conventions
+
 - **Dates**: Use `YYYY-MM-DD` format consistently
 - **Ongoing positions**: Use string `"Present"` for end dates
 - **Foreign keys**: Maintain relationships between raw and processed data
@@ -126,6 +137,7 @@ ProcessedJob: {
 ### File Processing Workflow
 
 1. **Upload Validation**
+
    ```python
    # Validate file type and size
    if file.content_type not in ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]:
@@ -133,6 +145,7 @@ ProcessedJob: {
    ```
 
 2. **Document Processing**
+
    ```python
    # Use temporary files for security
    with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_file:
@@ -181,6 +194,7 @@ except Exception as e:
 ## Coding Standards & Patterns
 
 ### Backend (Python/FastAPI)
+
 - **Always use async/await** for database operations and external API calls
 - **Follow service layer pattern**: Controllers → Services → Models
 - **Use Pydantic models** for all request/response validation
@@ -190,6 +204,7 @@ except Exception as e:
 - **Write docstrings** for all public methods explaining purpose and parameters
 
 ### Frontend (TypeScript/Next.js)
+
 - **Use TypeScript strict mode** with proper interface definitions
 - **Implement App Router patterns** with proper layout hierarchy
 - **Create custom hooks** for state management and API interactions
@@ -198,6 +213,7 @@ except Exception as e:
 - **Implement error boundaries** and loading states for better UX
 
 ### File Processing Patterns
+
 ```python
 # Always use temporary files for document processing
 with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_file:
@@ -207,6 +223,7 @@ with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_file:
 ```
 
 ### AI Agent Patterns
+
 ```python
 # Use AgentManager for AI operations
 agent_manager = AgentManager(model="gemma3:4b")
@@ -220,18 +237,21 @@ response = await agent_manager.generate_structured_response(
 ## API Design Principles
 
 ### RESTful Endpoints
+
 - **Use descriptive resource names**: `/api/v1/resumes`, `/api/v1/jobs`
 - **Implement proper HTTP status codes** and error responses
 - **Use consistent response formats** with proper typing
 - **Version APIs** with `/v1/` prefix for future compatibility
 
 ### Request/Response Patterns
+
 - **Accept multipart/form-data** for file uploads
 - **Return structured JSON** responses with consistent schemas
 - **Implement streaming responses** for long-running operations
 - **Use proper pagination** for list endpoints
 
 ### Error Handling
+
 ```python
 # Custom exception hierarchy
 class ResumeMatcherException(Exception):
@@ -254,6 +274,7 @@ class JobKeywordExtractionError(ResumeMatcherException):
 ## Testing Conventions
 
 ### Backend Testing
+
 - **Use pytest** with async test patterns
 - **Mock external dependencies** (Ollama AI, file system operations)
 - **Test service layer** logic independently from API endpoints
@@ -261,12 +282,14 @@ class JobKeywordExtractionError(ResumeMatcherException):
 - **Use factory patterns** for test data creation
 
 ### Frontend Testing
+
 - **Use Jest and React Testing Library** for component testing
 - **Test user interactions** and form submissions
 - **Mock API calls** and external dependencies
 - **Test responsive design** and accessibility features
 
 ### Integration Testing
+
 - **Test file upload and processing workflows** end-to-end
 - **Verify AI prompt generation** and response parsing
 - **Test database relationships** and data consistency
@@ -275,18 +298,21 @@ class JobKeywordExtractionError(ResumeMatcherException):
 ## Security Considerations
 
 ### Data Protection
+
 - **Resume Data**: Contains PII (names, emails, addresses, work history)
 - **Sanitization**: Remove or mask sensitive information in logs
 - **Storage**: Use secure file handling, avoid storing files permanently
 - **Processing**: Process documents in memory when possible, clean up temp files
 
 ### Input Validation
+
 - **Validate file types and sizes** for uploads (PDF/DOCX only)
 - **Sanitize user inputs** to prevent injection attacks
 - **Validate JSON schemas strictly** for AI-generated content
 - **Implement rate limiting** for API endpoints
 
 ### AI Safety
+
 - **Validate AI model responses** against expected schemas
 - **Implement fallback mechanisms** for AI failures
 - **Log AI interactions** for debugging without exposing sensitive data
@@ -295,6 +321,7 @@ class JobKeywordExtractionError(ResumeMatcherException):
 ## Development Patterns
 
 ### Database Operations
+
 ```python
 # Always use async patterns
 async def get_resume_by_id(db: AsyncSession, resume_id: str) -> Optional[Resume]:
@@ -303,6 +330,7 @@ async def get_resume_by_id(db: AsyncSession, resume_id: str) -> Optional[Resume]
 ```
 
 ### Component Structure (Frontend)
+
 ```typescript
 // Use composition patterns with proper typing
 interface ResumeAnalysisProps {
@@ -310,12 +338,16 @@ interface ResumeAnalysisProps {
   onAnalysisComplete: (score: number) => void;
 }
 
-export function ResumeAnalysis({ resumeId, onAnalysisComplete }: ResumeAnalysisProps) {
+export function ResumeAnalysis({
+  resumeId,
+  onAnalysisComplete,
+}: ResumeAnalysisProps) {
   // Component implementation
 }
 ```
 
 ### Environment Configuration
+
 - **Use environment variables** for sensitive configuration
 - **Provide defaults** for development environments
 - **Document all required environment variables**
@@ -324,12 +356,14 @@ export function ResumeAnalysis({ resumeId, onAnalysisComplete }: ResumeAnalysisP
 ## AI Integration Guidelines
 
 ### Prompt Engineering
+
 - **Use structured prompts** with clear instructions
 - **Include examples** in prompts when possible
 - **Validate AI responses** against Pydantic models
 - **Implement retry logic** for AI failures
 
 ### Model Management
+
 - **Use Ollama** for local AI model serving
 - **Default to lightweight models** (gemma3:4b) for development
 - **Implement model switching** capabilities for different tasks

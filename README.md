@@ -38,13 +38,13 @@ Resume Matcher is designed to help you optimize your resume with the aim to high
 We're actively working on improving the platform, building towards a **VS Code for making resumes**, and adding new features. The best way to stay updated is to join the Discord discussion and be part of the active development community.
 
 > Join our [Discord](https://dsc.gg/resume-matcher) community 👇
-[![Discord](assets/resume_matcher_discord.png)](https://dsc.gg/resume-matcher)
+> [![Discord](assets/resume_matcher_discord.png)](https://dsc.gg/resume-matcher)
 
 > Follow us on [LinkedIn](https://www.linkedin.com/company/resume-matcher/) ✨
-[![LinkedIn](assets/resume_matcher_linkedin.png)](https://www.linkedin.com/company/resume-matcher/)
+> [![LinkedIn](assets/resume_matcher_linkedin.png)](https://www.linkedin.com/company/resume-matcher/)
 
 > ⭐ Star Resume Matcher to support the development and get updates on GitHub.
-![Star Resume Matcher](assets/star_resume_matcher.png)
+> ![Star Resume Matcher](assets/star_resume_matcher.png)
 
 ## Key Features
 
@@ -78,11 +78,11 @@ The project is built using:
 - Tailwind CSS for styling.
 - SQLite for the database.
 
-| Technology   | Info/Version                               |
-|--------------|---------------------------------------|
-| Python      | 3.12+                   |
-| Next.js      | 15+                   |
-| Ollama       |        0.6.7        |
+| Technology | Info/Version |
+| ---------- | ------------ |
+| Python     | 3.12+        |
+| Next.js    | 15+          |
+| Ollama     | 0.6.7        |
 
 ## Join Us and Contribute
 
@@ -106,9 +106,9 @@ Check out the roadmap if you would like to work on the features that are planned
 
 If you would like to support the development of Resume Matcher, you can do so by donating. Your contributions will help us keep the project alive and continue adding new features.
 
-| Platform  | Link                                   |
-|-----------|----------------------------------------|
-| GitHub    | [![GitHub Sponsors](https://img.shields.io/github/sponsors/srbhr?style=for-the-badge&color=c20a71&labelColor=black&logo=github)](https://github.com/sponsors/srbhr) |
+| Platform        | Link                                                                                                                                                                                   |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GitHub          | [![GitHub Sponsors](https://img.shields.io/github/sponsors/srbhr?style=for-the-badge&color=c20a71&labelColor=black&logo=github)](https://github.com/sponsors/srbhr)                    |
 | Buy Me a Coffee | [![BuyMeACoffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&color=c20a72&logoColor=white)](https://www.buymeacoffee.com/srbhr) |
 
 <details>

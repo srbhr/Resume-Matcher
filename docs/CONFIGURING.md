@@ -1,9 +1,10 @@
 The settings for Resume-Matcher are mainly stored in two files:
-    apps/backend/.env
-    apps/frontend/.env
+apps/backend/.env
+apps/frontend/.env
 which correspond to the settings for the backend (API provider) and frontend (UI provider), respectively.
 
 # apps/backend/.env:
+
 ```env
 SESSION_SECRET_KEY="string"
 SYNC_DATABASE_URL="URL"
@@ -28,6 +29,7 @@ compared by Resume-Matcher to find similarities. Both types of models
 are needed for Resume-Matcher to work.
 
 ## "ollama" provider
+
 The provided `.env.sample` now defaults to the OpenAI APIs. If you
 prefer to run everything locally, set both `LLM_PROVIDER` and
 `EMBEDDING_PROVIDER` to `"ollama"`. In that case you will just need to
@@ -39,13 +41,17 @@ of a model capable of doing completions.
 To find a full list of models available in Ollama, go to
 www.ollama.com. To download one of those models to your local computer
 for use, run
+
 ```bash
 ollama pull <Ollama name>
 ```
+
 For example, if you want to use bge-m3, you could run
+
 ```bash
 ollama pull bge-m3:latest
 ```
+
 and then set EMBEDDING_MODEL="bge-m3:latest".
 
 ## "openai" provider
@@ -77,11 +83,14 @@ and [the full list of available LlamaIndex embedding providers](https://docs.lla
 As an example, let's say you wanted to set up OpenRouter as your
 LLM_PROVIDER. To make this work, you will first need to install the
 LlamaIndex OpenRouter provider in the backend environment:
+
 ```bash
 cd apps/backend
 uv pip install llama-index-llms-openrouter
 ```
+
 Then in apps/backend/.env set:
+
 ```env
 LLM_PROVIDER="llama_index.llms.openrouter.OpenRouter"
 LL_MODEL="meta-llama/llama-4-scout"
