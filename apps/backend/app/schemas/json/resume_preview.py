@@ -1,7 +1,7 @@
 SCHEMA = {
     "personalInfo": {
         "name": "string",
-        "title": "string",
+        "title": "string | null",
         "email": "string",
         "phone": "string",
         "location": "string | null",
@@ -10,13 +10,13 @@ SCHEMA = {
         "github": "string | null",
     },
     "summary": "string | null",
-    "experience": [
+    "workExperience": [
         {
             "id": 0,
             "title": "string",
-            "company": "string",
-            "location": "string",
-            "years": "string",
+            "company": "string | null",
+            "location": "string | null",
+            "years": "string | null",
             "description": ["string"],
         }
     ],
@@ -29,5 +29,19 @@ SCHEMA = {
             "description": "string | null",
         }
     ],
-    "skills": ["string"],
+    "personalProjects": [
+        {
+            "id": 0,
+            "name": "string",
+            "role": "string | null",
+            "years": "string | null",
+            "description": ["string"],
+        }
+    ],
+    "additional": {
+        "technicalSkills": ["string"],
+        "languages": ["string"],
+        "certificationsTraining": ["string"],
+        "awards": ["string"],
+    },
 }

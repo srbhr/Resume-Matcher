@@ -5,7 +5,7 @@
     "private": true,
     "scripts": {
         "install:frontend": "cd apps/frontend && npm install",
-        "install:backend": "cd apps/backend && uv venv && uv pip install .",
+        "install:backend": "cd apps/backend && uv venv --python 3.13 && uv pip install .",
         "install": "npm run install:frontend && npm run install:backend",
         "dev:backend": "cd apps/backend && uv run uvicorn app.main:app --reload --port 8000 --timeout-keep-alive 300 --timeout-graceful-shutdown 300",
         "dev:frontend": "cd apps/frontend && npm run dev",
@@ -20,6 +20,9 @@
         "lint": "npm run lint:frontend"
     },
     "devDependencies": {
-        "concurrently": "^9.1.2"
+        "concurrently": "^9.1.2",
+        "eslint-config-prettier": "^10.1.8",
+        "eslint-plugin-prettier": "^5.5.4",
+        "prettier": "^3.6.2"
     }
 }

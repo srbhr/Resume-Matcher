@@ -28,13 +28,13 @@ compared by Resume-Matcher to find similarities. Both types of models
 are needed for Resume-Matcher to work.
 
 ## "ollama" provider
-By default, Resume-Matcher uses an LLM_PROVIDER and EMBEDDING_PROVIDER
-of "ollama", which runs the LLM and embedding model on your local
-computer. In that case you will just need to set LL_MODEL and
-EMBEDDING_MODEL to a "NAME" shown in the output of the "ollama list"
-command. EMBEDDING_MODEL must be the Ollama name of a model capable of
-doing embeddings. LL_MODEL must be the Ollama name of a model capable
-of doing completions.
+The provided `.env.sample` now defaults to the OpenAI APIs. If you
+prefer to run everything locally, set both `LLM_PROVIDER` and
+`EMBEDDING_PROVIDER` to `"ollama"`. In that case you will just need to
+set `LL_MODEL` and `EMBEDDING_MODEL` to a name shown in the output of
+the `ollama list` command. `EMBEDDING_MODEL` must be the Ollama name of
+a model capable of doing embeddings. `LL_MODEL` must be the Ollama name
+of a model capable of doing completions.
 
 To find a full list of models available in Ollama, go to
 www.ollama.com. To download one of those models to your local computer
@@ -50,16 +50,16 @@ and then set EMBEDDING_MODEL="bge-m3:latest".
 
 ## "openai" provider
 
-Another possible value for LLM_PROVIDER and/or EMBEDDING_PROVIDER is
-"openai". This uses the OpenAI API to talk to OpenAI's servers, which
-are really fast at running AI models. In the .env file, you will need
-an OpenAI API key set in LLM_API_KEY, and the same key in
-EMBEDDING_API_KEY. Then set
+Setting `LLM_PROVIDER="openai"` (the value already present in
+`.env.sample`) uses the OpenAI API. Supply your key through either the
+shared `OPENAI_API_KEY` environment variable or by populating
+`LLM_API_KEY` and `EMBEDDING_API_KEY`. Then pick the desired models, for
+example:
 
-    LL_MODEL="gpt-4.1"
+    LL_MODEL="gpt-4.1-mini"
     EMBEDDING_MODEL="text-embedding-3-large"
-(or whatever other OpenAI model ID's you want to use). You will need
-money in your OpenAI account
+
+You will need credit in your OpenAI account for inference charges.
 
 ## LlamaIndex providers
 
@@ -103,9 +103,9 @@ can get these from your inference provider.
 
     NEXT_PUBLIC_API_URL="URL"
 
-This setting is used to tell the frontend the URL to the
-backend. It's especially important if running Resume-Matcher
-behind a reverse proxy (such as nginx). For example, if your
-reverse proxy is serving clients at
-https://resumematcher.mydomain.com then you would set
-NEXT_PUBLIC_API_URL to that.
+    This setting is used to tell the frontend the URL to the
+    backend. It's especially important if running Resume-Matcher
+    behind a reverse proxy (such as nginx). For example, if your
+    reverse proxy is serving clients at
+    https://resumematcher.mydomain.com then you would set
+    NEXT_PUBLIC_API_URL to that.

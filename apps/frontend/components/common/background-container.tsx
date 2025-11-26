@@ -1,3 +1,6 @@
+"use client";
+
+import type { ReactNode } from 'react';
 import { DotPattern } from '@/components/common/dot-pattern-glow';
 import { cn } from '@/lib/utils';
 
@@ -17,7 +20,7 @@ import { cn } from '@/lib/utils';
  */
 
 interface BackgroundContainerProps {
-	children: React.ReactNode;
+	children: ReactNode;
 	className?: string;
 	innerClassName?: string;
 	dotClassName?: string;

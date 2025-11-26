@@ -30,12 +30,34 @@ export interface EducationEntry {
     description?: string;
 }
 
+export interface ProjectEntry {
+    id: number;
+    name: string;
+    role?: string;
+    years?: string;
+    description: string[];
+}
+
+export interface AdditionalInfo {
+    technicalSkills: string[];
+    languages: string[];
+    certificationsTraining: string[];
+    awards: string[];
+}
+
+export interface SkillComparisonEntry {
+    skill: string;
+    resume_mentions: number;
+    job_mentions: number;
+}
+
 export interface ResumePreview {
     personalInfo: PersonalInfo;
     summary?: string;
-    experience: ExperienceEntry[];
+    workExperience: ExperienceEntry[];
     education: EducationEntry[];
-    skills: string[];
+    personalProjects: ProjectEntry[];
+    additional: AdditionalInfo;
 }
 
 export interface Data {
@@ -51,6 +73,11 @@ export interface Data {
         suggestion: string;
         lineNumber?: string | number;
     }[];
+    original_resume_markdown?: string;
+    updated_resume_markdown?: string;
+    job_description?: string;
+    job_keywords?: string;
+    skill_comparison?: SkillComparisonEntry[];
 }
 
 export interface ImprovedResult {

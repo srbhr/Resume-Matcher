@@ -1,6 +1,32 @@
 import { ImprovedResult } from '@/components/common/resume_previewer_context';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL!;
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+interface ResumeResponse {
+	request_id: string;
+	data: {
+		resume_id: string;
+		raw_resume: {
+			id: number;
+			content: string;
+			content_type: string;
+			created_at: string | null;
+		};
+		processed_resume:
+			| {
+				personal_data: unknown;
+				experiences: unknown;
+				projects: unknown;
+				skills: unknown;
+				research_work: unknown;
+				achievements: unknown;
+				education: unknown;
+				extracted_keywords: unknown;
+				processed_at: string | null;
+			}
+			| null;
+	};
+}
 
 /** Uploads job descriptions and returns a job_id */
 export async function uploadJobDescriptions(
@@ -51,4 +77,17 @@ export async function improveResume(
 
     console.log('Resume improvement response:', data);
     return data;
+}
+
+/** Fetches a raw resume record for previewing the original upload */
+export async function fetchResume(resumeId: string): Promise<ResumeResponse['data']> {
+	const res = await fetch(`${API_URL}/api/v1/resumes?resume_id=${encodeURIComponent(resumeId)}`);
+	if (!res.ok) {
+		throw new Error(`Failed to load resume (status ${res.status}).`);
+	}
+	const payload = (await res.json()) as ResumeResponse;
+	if (!payload?.data?.raw_resume?.content) {
+		throw new Error('Resume content is unavailable.');
+	}
+	return payload.data;
 }

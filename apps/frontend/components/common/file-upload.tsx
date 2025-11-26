@@ -20,7 +20,8 @@ const acceptedFileTypes = [
 ];
 
 const acceptString = acceptedFileTypes.join(',');
-const API_RESUME_UPLOAD_URL = `${process.env.NEXT_PUBLIC_API_URL}/api/v1/resumes/upload`; // API endpoint
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_RESUME_UPLOAD_URL = `${API_BASE_URL}/api/v1/resumes/upload`; // API endpoint
 
 export default function FileUpload() {
 	const maxSize = 2 * 1024 * 1024; // 2MB
@@ -68,8 +69,18 @@ export default function FileUpload() {
 				message: `${(uploadedFile.file as FileMetadata).name} uploaded successfully!`,
 			});
 			clearErrors();
-			const encodedResumeId = encodeURIComponent(resumeId);
-			window.location.href = `/jobs?resume_id=${encodedResumeId}`;
+			try {
+				if (typeof window !== 'undefined') {
+					localStorage.setItem('resumeMatcher:lastResumeId', resumeId);
+					localStorage.setItem(
+						'resumeMatcher:lastResumeName',
+						(uploadedFile.file as FileMetadata).name ?? '',
+					);
+				}
+			} catch (storageError) {
+				console.warn('Unable to persist resume ID to localStorage', storageError);
+			}
+			window.location.href = `/jobs`;
 		},
 		onUploadError: (file, errorMsg) => {
 			console.error('Upload error:', file, errorMsg);
