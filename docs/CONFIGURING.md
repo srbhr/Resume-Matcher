@@ -61,6 +61,49 @@ example:
 
 You will need credit in your OpenAI account for inference charges.
 
+### API Key Configuration
+
+Resume-Matcher uses two types of AI models that both require API access:
+- **LLM** (e.g., GPT-4): For parsing resumes, generating improvements
+- **Embedding model** (e.g., text-embedding-3-small): For calculating similarity scores
+
+**Simplified setup (recommended):** When you set your OpenAI API key via the
+frontend settings page, Resume-Matcher automatically configures the complete
+pipeline:
+
+- `LLM_PROVIDER` → set to `"openai"`
+- `LLM_API_KEY` → your provided key
+- `EMBEDDING_PROVIDER` → set to `"openai"`
+- `EMBEDDING_API_KEY` → synced to the same key
+- `EMBEDDING_MODEL` → set to `"text-embedding-3-small"` (if not already configured)
+
+This ensures all features work out of the box with zero manual configuration.
+
+**Manual .env setup:** If configuring manually, you have three options:
+
+1. **Single key for everything** (simplest):
+   ```env
+   OPENAI_API_KEY="sk-your-key-here"
+   ```
+
+2. **Explicit keys** (recommended for clarity):
+   ```env
+   LLM_PROVIDER="openai"
+   LLM_API_KEY="sk-your-key-here"
+   EMBEDDING_PROVIDER="openai"
+   EMBEDDING_API_KEY="sk-your-key-here"
+   EMBEDDING_MODEL="text-embedding-3-small"
+   ```
+
+3. **Different keys** (advanced - e.g., separate billing):
+   ```env
+   LLM_API_KEY="sk-key-for-llm"
+   EMBEDDING_API_KEY="sk-key-for-embeddings"
+   ```
+
+The fallback order for API keys is: `EMBEDDING_API_KEY` → `LLM_API_KEY` → `OPENAI_API_KEY`.
+If you only set `LLM_API_KEY`, embeddings will automatically use the same key.
+
 ## LlamaIndex providers
 
 The third option for LLM_PROVIDER is really a collection of options. You

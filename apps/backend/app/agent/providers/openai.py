@@ -64,9 +64,19 @@ class OpenAIEmbeddingProvider(EmbeddingProvider):
         api_key: str | None = None,
         embedding_model: str = settings.EMBEDDING_MODEL,
     ):
-        api_key = api_key or settings.EMBEDDING_API_KEY or os.getenv("OPENAI_API_KEY")
+        # Fallback chain: explicit arg → EMBEDDING_API_KEY → LLM_API_KEY → OPENAI_API_KEY
+        # This ensures embeddings work when user only sets LLM_API_KEY via the frontend
+        api_key = (
+            api_key
+            or settings.EMBEDDING_API_KEY
+            or settings.LLM_API_KEY
+            or os.getenv("OPENAI_API_KEY")
+        )
         if not api_key:
-            raise ProviderError("OpenAI API key is missing")
+            raise ProviderError(
+                "OpenAI API key is missing. Set EMBEDDING_API_KEY, LLM_API_KEY, "
+                "or OPENAI_API_KEY in your environment or .env file."
+            )
         self._client = OpenAI(api_key=api_key)
         self._model = embedding_model
 

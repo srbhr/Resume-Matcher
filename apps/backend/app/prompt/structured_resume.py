@@ -5,6 +5,7 @@ You are a JSON extraction engine. Convert the following resume text into precise
 - Preserve bullet points in the `description` arrays using short factual sentences.
 - Use "Present" if an end date is ongoing and prefer YYYY-MM-DD where dates are available.
 - Keep the `additional` section organised: list technical skills, languages, certifications/training, and awards exactly as they appear.
+- For "Extracted Keywords": identify and list ALL relevant technical skills, programming languages, frameworks, tools, technologies, platforms, methodologies, certifications, soft skills, and domain-specific terms found anywhere in the resume. This field is REQUIRED and must contain at least 5-10 keywords.
 - Do not compose any extra fields or commentary and output raw JSON only (no Markdown, no prose).
 
 Schema:
@@ -17,5 +18,5 @@ Resume:
 {1}
 ```
 
-NOTE: Please output only a valid JSON matching the EXACT schema.
+NOTE: Please output only a valid JSON matching the EXACT schema. Ensure "Extracted Keywords" is populated with relevant terms from the resume.
 """
