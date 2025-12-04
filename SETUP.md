@@ -39,6 +39,7 @@ make run-dev
 ## 🛠️ Prerequisites
 
 ### Windows
+
 - **PowerShell** 5.1 or later
 - **Node.js** ≥ v18 (includes `npm`)
 - **Python** ≥ 3.8 (`python3`, `pip3`)
@@ -46,6 +47,7 @@ make run-dev
 - **uv** (will be auto-installed by setup.ps1 if missing)
 
 ### Linux/macOS
+
 - **Bash** 4.4 or higher
 - **Node.js** ≥ v18 (includes `npm`)
 - **Python** ≥ 3.8 (`python3`, `pip3`)
@@ -66,6 +68,7 @@ winget install Python.Python.3.12
 ```
 
 **Or download manually from official sites:**
+
 - **Node.js**: Download from [https://nodejs.org/](https://nodejs.org/) (LTS version recommended)
 - **Python**: Download from [https://www.python.org/downloads/](https://www.python.org/downloads/) (v3.8+ required)
 - **Ollama**: Only required if you switch the backend providers to `ollama`. Otherwise you can skip installing it. If you do need it, download from [https://ollama.com/download/windows](https://ollama.com/download/windows)
@@ -110,17 +113,17 @@ You can customize any variables in these files before or after bootstrapping.
 
 ## 📦 Installation Steps
 
- Note: Before You Run `setup.sh`
+Note: Before You Run `setup.sh`
 
- If you leave the default OpenAI configuration in place, no local model server is required.
- When switching `LLM_PROVIDER` or `EMBEDDING_PROVIDER` to `ollama`, ensure that [Ollama](https://ollama.com/) is installed and running. Start it manually via:
+If you leave the default OpenAI configuration in place, no local model server is required.
+When switching `LLM_PROVIDER` or `EMBEDDING_PROVIDER` to `ollama`, ensure that [Ollama](https://ollama.com/) is installed and running. Start it manually via:
 
- ```bash
- ollama serve
- ```
+```bash
+ollama serve
+```
 
- Without the Ollama daemon running the setup script cannot pull local models.
- 
+Without the Ollama daemon running the setup script cannot pull local models.
+
 ### Windows Installation
 
 1. **Clone the repository**
@@ -137,7 +140,6 @@ You can customize any variables in these files before or after bootstrapping.
    ```
 
    This will:
-
    - Verify/install prerequisites (`node`, `npm`, `python3`, `pip3`, `uv`)
    - Install Ollama via winget (if not present)
    - Pull the `gemma3:4b` model via Ollama
@@ -180,7 +182,6 @@ You can customize any variables in these files before or after bootstrapping.
    ```
 
    This will:
-
    - Verify/install prerequisites (`node`, `npm`, `python3`, `pip3`, `uv`, `ollama`)
    - Pull the `gemma3:4b` model via Ollama
    - Bootstrap root & backend `.env` files
@@ -232,33 +233,26 @@ You can customize any variables in these files before or after bootstrapping.
 ### Windows-specific Issues
 
 - **`Execution of scripts is disabled on this system`**:
-
   - Run `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser` in PowerShell as Administrator.
 
 - **`winget: command not found`**:
-
   - Install App Installer from Microsoft Store or update Windows 10/11.
 
 - **`Ollama installation failed`**:
-
   - Download and install manually from [https://ollama.com/download/windows](https://ollama.com/download/windows).
 
 - **`uv: command not found`** after installation:
-
   - Restart your PowerShell terminal and try again.
 
 ### Cross-platform Issues
 
 - **`permission denied`** on `setup.sh`:
-
   - Run `chmod +x setup.sh`.
 
 - **`uv: command not found`** despite install:
-
   - Ensure `~/.local/bin` is in your `$PATH`.
 
 - **`ollama: command not found`** on Linux:
-
   - Verify the installer script ran, or install manually via package manager.
 
 - **`npm ci` errors**:
