@@ -167,10 +167,14 @@ class ScoreImprovementService:
 
         try:
             keywords_data = json.loads(processed_resume.extracted_keywords)
-            keywords = keywords_data.get("extracted_keywords", [])
-            if not keywords or len(keywords) == 0:
-                raise ResumeKeywordExtractionError(resume_id=resume_id)
         except json.JSONDecodeError:
+            raise ResumeKeywordExtractionError(resume_id=resume_id)
+
+        if not isinstance(keywords_data, dict):
+            raise ResumeKeywordExtractionError(resume_id=resume_id)
+
+        keywords = keywords_data.get("extracted_keywords")
+        if not isinstance(keywords, list) or len(keywords) == 0:
             raise ResumeKeywordExtractionError(resume_id=resume_id)
 
     def _validate_job_keywords(self, processed_job: ProcessedJob, job_id: str) -> None:
@@ -183,10 +187,14 @@ class ScoreImprovementService:
 
         try:
             keywords_data = json.loads(processed_job.extracted_keywords)
-            keywords = keywords_data.get("extracted_keywords", [])
-            if not keywords or len(keywords) == 0:
-                raise JobKeywordExtractionError(job_id=job_id)
         except json.JSONDecodeError:
+            raise JobKeywordExtractionError(job_id=job_id)
+
+        if not isinstance(keywords_data, dict):
+            raise JobKeywordExtractionError(job_id=job_id)
+
+        keywords = keywords_data.get("extracted_keywords")
+        if not isinstance(keywords, list) or len(keywords) == 0:
             raise JobKeywordExtractionError(job_id=job_id)
 
     async def _get_resume(

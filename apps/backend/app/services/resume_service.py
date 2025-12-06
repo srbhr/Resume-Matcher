@@ -181,9 +181,9 @@ class ResumeService:
                             "extracted_keywords", []
                         )
                     }
-                    if structured_resume.get("extracted_keywords")
-                    else None
-                ),
+                )
+                if structured_resume.get("extracted_keywords")
+                else None,
             )
 
             self.db.add(processed_resume)
