@@ -61,18 +61,18 @@ async def upload_resume(
             detail="Invalid file type. Only PDF and DOCX files are allowed.",
         )
 
-    MAX_FILE_SIZE = 2 * 1024 * 1024
-    
+    MAX_FILE_SIZE = 2 * 1024 * 1024  # 2MB limit
+
     # Try to get size from file object or Content-Length header
-    file_size = getattr(file, 'size', None)
-    if file_size is None and hasattr(request, 'headers'):
-        content_length = request.headers.get('content-length')
+    file_size = getattr(file, "size", None)
+    if file_size is None and hasattr(request, "headers"):
+        content_length = request.headers.get("content-length")
         if content_length:
             try:
                 file_size = int(content_length)
             except ValueError:
                 pass  # Invalid content-length header
-    
+
     if file_size and file_size > MAX_FILE_SIZE:
         raise HTTPException(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
@@ -85,16 +85,14 @@ async def upload_resume(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Empty file. Please upload a valid file.",
         )
-    
-    MAX_FILE_SIZE = 2 * 1024 * 1024 # File size validation (2 MB limit only)
 
-     # Check file size 
+    # Check file size
     if len(file_bytes) > MAX_FILE_SIZE:
         raise HTTPException(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
             detail=f"File size exceeds the 2 MB limit. Current size: {len(file_bytes) / 1024 / 1024:.2f} MB",
         )
-    
+
     try:
         resume_service = ResumeService(db)
         resume_id = await resume_service.convert_and_store_resume(
@@ -261,11 +259,9 @@ async def get_resume(
         resume_data = await resume_service.get_resume_with_processed_data(
             resume_id=resume_id
         )
-        
+
         if not resume_data:
-            raise ResumeNotFoundError(
-                message=f"Resume with id {resume_id} not found"
-            )
+            raise ResumeNotFoundError(message=f"Resume with id {resume_id} not found")
 
         return JSONResponse(
             content={
@@ -274,7 +270,7 @@ async def get_resume(
             },
             headers=headers,
         )
-    
+
     except ResumeNotFoundError as e:
         logger.error(str(e))
         raise HTTPException(
@@ -282,7 +278,9 @@ async def get_resume(
             detail=str(e),
         )
     except Exception as e:
-        logger.error(f"Error fetching resume: {str(e)} - traceback: {traceback.format_exc()}")
+        logger.error(
+            f"Error fetching resume: {str(e)} - traceback: {traceback.format_exc()}"
+        )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error fetching resume data",
