@@ -25,7 +25,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en-US">
       <body
-        className={`${geist.variable} ${spaceGrotesk.variable} antialiased bg-white text-gray-900`}
+        className={`${geist.variable} ${spaceGrotesk.variable} antialiased bg-[#F0F0E8] text-gray-900`}
       >
         <div>{children}</div>
       </body>
