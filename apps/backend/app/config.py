@@ -27,6 +27,12 @@ class Settings(BaseSettings):
     host: str = "0.0.0.0"
     port: int = 8000
 
+    # CORS Configuration
+    cors_origins: list[str] = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ]
+
     # Paths
     data_dir: Path = Path(__file__).parent.parent / "data"
 

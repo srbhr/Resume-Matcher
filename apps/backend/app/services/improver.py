@@ -113,10 +113,10 @@ async def generate_improvements(
     new_matched = set(new_score.get("matched_skills", []))
     added_skills = new_matched - original_matched
 
-    for i, skill in enumerate(added_skills, 1):
+    for skill in added_skills:
         improvements.append({
             "suggestion": f"Added emphasis on '{skill}' to match job requirements",
-            "lineNumber": i * 5,  # Approximate line numbers
+            "lineNumber": None,  # Line numbers removed - not accurate
         })
 
     # Add gap closures
@@ -130,12 +130,26 @@ async def generate_improvements(
             "lineNumber": None,
         })
 
+    # Add strengths from new score
+    new_strengths = new_score.get("strengths", [])
+    for strength in new_strengths[:3]:  # Limit to top 3
+        improvements.append({
+            "suggestion": f"Highlighted strength: {strength}",
+            "lineNumber": None,
+        })
+
     # Default improvement if none detected
     if not improvements:
         score_diff = new_score.get("score", 0) - original_score.get("score", 0)
-        improvements.append({
-            "suggestion": f"Optimized resume content for +{score_diff} points improvement",
-            "lineNumber": None,
-        })
+        if score_diff > 0:
+            improvements.append({
+                "suggestion": f"Optimized resume content for +{score_diff} points improvement",
+                "lineNumber": None,
+            })
+        else:
+            improvements.append({
+                "suggestion": "Resume content reorganized for better keyword alignment",
+                "lineNumber": None,
+            })
 
     return improvements

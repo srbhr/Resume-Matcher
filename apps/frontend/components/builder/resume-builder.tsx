@@ -1,13 +1,15 @@
 'use client';
 
-import React, { useState, useRef, useEffect, Suspense } from 'react';
+import React, { useState, useRef, useEffect, Suspense, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Resume, { ResumeData } from '@/components/dashboard/resume-component';
 import { ResumeForm } from './resume-form';
 import { Button } from '@/components/ui/button';
-import { Download, Save, Upload } from 'lucide-react';
+import { Download, Save, Upload, AlertTriangle } from 'lucide-react';
 import { useResumePreview } from '@/components/common/resume_previewer_context';
 import { fetchResume } from '@/lib/api/resume';
+
+const STORAGE_KEY = 'resume_builder_draft';
 
 const INITIAL_DATA: ResumeData = {
     personalInfo: {
@@ -34,46 +36,103 @@ const INITIAL_DATA: ResumeData = {
 
 const ResumeBuilderContent = () => {
     const [resumeData, setResumeData] = useState<ResumeData>(INITIAL_DATA);
+    const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+    const [loadingState, setLoadingState] = useState<'idle' | 'loading' | 'loaded' | 'error'>('idle');
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { improvedData } = useResumePreview();
     const searchParams = useSearchParams();
     const resumeId = searchParams.get('id');
 
+    // Warn user before leaving with unsaved changes
     useEffect(() => {
-        // Priority 1: Improved Data from Context (Tailor Flow)
-        if (improvedData?.data?.resume_preview) {
-            console.log('Applying improved resume data:', improvedData.data.resume_preview);
-            setResumeData(improvedData.data.resume_preview);
-            return;
-        }
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+            if (hasUnsavedChanges) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        };
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }, [hasUnsavedChanges]);
 
-        // Priority 2: Fetch from API if ID is in URL (Edit Mode)
-        if (resumeId) {
-            const loadResume = async () => {
+    useEffect(() => {
+        const loadResumeData = async () => {
+            setLoadingState('loading');
+
+            // Priority 1: Fetch from API if ID is in URL (most reliable)
+            if (resumeId) {
                 try {
                     const data = await fetchResume(resumeId);
-                    let parsedContent: ResumeData;
-                    if (typeof data.raw_resume.content === 'string') {
-                        parsedContent = JSON.parse(data.raw_resume.content);
-                    } else {
-                        parsedContent = data.raw_resume.content;
+                    // Prefer processed_resume if available
+                    if (data.processed_resume) {
+                        setResumeData(data.processed_resume as ResumeData);
+                        setLoadingState('loaded');
+                        return;
                     }
-                    setResumeData(parsedContent);
+                    // Fallback to parsing raw content
+                    if (data.raw_resume?.content) {
+                        try {
+                            const parsed = JSON.parse(data.raw_resume.content);
+                            setResumeData(parsed);
+                            setLoadingState('loaded');
+                            return;
+                        } catch {
+                            // Raw content is markdown, not JSON
+                        }
+                    }
                 } catch (err) {
-                    console.error('Failed to load resume:', err);
+                    console.error('Failed to load resume from API:', err);
                 }
-            };
-            loadResume();
-        }
+            }
+
+            // Priority 2: Improved Data from Context (Tailor Flow)
+            if (improvedData?.data?.resume_preview) {
+                setResumeData(improvedData.data.resume_preview);
+                // Persist to localStorage as backup
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(improvedData.data.resume_preview));
+                setLoadingState('loaded');
+                return;
+            }
+
+            // Priority 3: Restore from localStorage (browser refresh recovery)
+            const savedDraft = localStorage.getItem(STORAGE_KEY);
+            if (savedDraft) {
+                try {
+                    const parsed = JSON.parse(savedDraft);
+                    setResumeData(parsed);
+                    setHasUnsavedChanges(true); // Mark as unsaved since it's a draft
+                    setLoadingState('loaded');
+                    return;
+                } catch {
+                    localStorage.removeItem(STORAGE_KEY);
+                }
+            }
+
+            // Fallback: Use initial data
+            setLoadingState('loaded');
+        };
+
+        loadResumeData();
     }, [improvedData, resumeId]);
 
-    const handleUpdate = (newData: ResumeData) => {
+    const handleUpdate = useCallback((newData: ResumeData) => {
         setResumeData(newData);
-    };
+        setHasUnsavedChanges(true);
+        // Auto-save draft to localStorage
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(newData));
+    }, []);
 
     const handleSave = () => {
-        console.log('Saving resume data:', resumeData);
-        alert('Save functionality coming soon!');
+        // TODO: Implement save to backend
+        // For now, clear unsaved changes flag since draft is auto-saved to localStorage
+        setHasUnsavedChanges(false);
+        alert('Resume saved to local draft. Full save functionality coming soon!');
+    };
+
+    const handleClearDraft = () => {
+        localStorage.removeItem(STORAGE_KEY);
+        setResumeData(INITIAL_DATA);
+        setHasUnsavedChanges(false);
     };
 
     const handleExport = () => {
@@ -128,9 +187,17 @@ const ResumeBuilderContent = () => {
                         <h1 className="font-serif text-4xl md:text-6xl text-black tracking-tight leading-[0.95] uppercase">
                             Resume Builder
                         </h1>
-                        <p className="mt-4 text-sm font-mono text-blue-700 uppercase tracking-wide font-bold">
-                            // {resumeId ? 'EDIT MODE' : 'CREATE & PREVIEW'}
-                        </p>
+                        <div className="mt-4 flex items-center gap-3">
+                            <p className="text-sm font-mono text-blue-700 uppercase tracking-wide font-bold">
+                                // {resumeId ? 'EDIT MODE' : 'CREATE & PREVIEW'}
+                            </p>
+                            {hasUnsavedChanges && (
+                                <span className="flex items-center gap-1 text-xs font-mono text-amber-600 bg-amber-50 px-2 py-1 border border-amber-200">
+                                    <AlertTriangle className="w-3 h-3" />
+                                    UNSAVED DRAFT
+                                </span>
+                            )}
+                        </div>
                     </div>
                     
                     <div className="flex gap-3 mt-6 md:mt-0">

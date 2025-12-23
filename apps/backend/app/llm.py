@@ -9,6 +9,11 @@ from pydantic import BaseModel
 
 from app.config import settings
 
+# LLM timeout configuration (seconds)
+LLM_TIMEOUT_HEALTH_CHECK = 30
+LLM_TIMEOUT_COMPLETION = 120
+LLM_TIMEOUT_JSON = 180  # JSON completions may take longer
+
 
 class LLMConfig(BaseModel):
     """LLM configuration model."""
@@ -86,12 +91,13 @@ async def check_llm_health(config: LLMConfig | None = None) -> dict[str, Any]:
     model_name = get_model_name(config)
 
     try:
-        # Make a minimal test call
+        # Make a minimal test call with timeout
         response = await litellm.acompletion(
             model=model_name,
             messages=[{"role": "user", "content": "Hi"}],
             max_tokens=5,
             api_base=config.api_base,
+            timeout=LLM_TIMEOUT_HEALTH_CHECK,
         )
 
         return {
@@ -134,6 +140,7 @@ async def complete(
         max_tokens=max_tokens,
         temperature=temperature,
         api_base=config.api_base,
+        timeout=LLM_TIMEOUT_COMPLETION,
     )
 
     return response.choices[0].message.content
@@ -166,6 +173,7 @@ async def complete_json(
         max_tokens=max_tokens,
         temperature=0.3,  # Lower temperature for structured output
         api_base=config.api_base,
+        timeout=LLM_TIMEOUT_JSON,
     )
 
     content = response.choices[0].message.content

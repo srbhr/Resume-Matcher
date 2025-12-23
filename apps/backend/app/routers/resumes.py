@@ -1,11 +1,14 @@
 """Resume management endpoints."""
 
 import json
+import logging
 from uuid import uuid4
 
 from fastapi import APIRouter, File, HTTPException, Query, UploadFile
 
 from app.database import db
+
+logger = logging.getLogger(__name__)
 from app.schemas import (
     ImproveResumeRequest,
     ImproveResumeResponse,
@@ -72,9 +75,9 @@ async def upload_resume(file: UploadFile = File(...)) -> ResumeUploadResponse:
     processed_data = None
     try:
         processed_data = await parse_resume_to_json(markdown_content)
-    except Exception:
-        # LLM parsing failed, store raw markdown only
-        pass
+    except Exception as e:
+        # LLM parsing failed, store raw markdown only but log for monitoring
+        logger.warning(f"Resume parsing to JSON failed for {file.filename}: {e}")
 
     # Check if this is the first resume (make it master)
     is_master = db.get_master_resume() is None
@@ -124,7 +127,8 @@ async def get_resume(resume_id: str = Query(...)) -> ResumeFetchResponse:
             processed_data = await parse_resume_to_json(resume["content"])
             db.update_resume(resume_id, {"processed_data": processed_data})
             processed_resume = ResumeData.model_validate(processed_data)
-        except Exception:
+        except Exception as e:
+            logger.warning(f"On-demand resume parsing failed for {resume_id}: {e}")
             processed_resume = None
 
     return ResumeFetchResponse(
@@ -179,11 +183,17 @@ async def improve_resume_endpoint(
 
         # Score improved resume
         new_score_result = await score_resume(improved_text, job_keywords)
-        new_score = new_score_result.get("score", original_score + 10)
+        new_score = new_score_result.get("score", original_score)
 
-        # Ensure improvement (at minimum +5 points)
+        # Validate score is in valid range
+        new_score = max(0, min(100, new_score))
+
+        # Log if no improvement detected (for monitoring)
         if new_score <= original_score:
-            new_score = min(original_score + 15, 100)
+            logger.info(
+                f"Resume improvement did not increase score: "
+                f"{original_score} -> {new_score} for resume {request.resume_id}"
+            )
 
         # Generate improvement suggestions
         improvements = await generate_improvements(
