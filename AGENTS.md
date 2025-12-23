@@ -12,6 +12,10 @@
 - Quality checks: `npm run lint` for the UI, `npm run format` to apply Prettier, and `uv run python apps/backend/test_docx_dependencies.py` when validating DOCX support.
 
 ## Coding Style & Naming Conventions
+- **Design System**: All frontend UI changes MUST strictly follow the **Swiss International Style** guidelines defined in `.style-guide.md`.
+    - Use `font-serif` for headers, `font-mono` for metadata, and `font-sans` for body text.
+    - Stick to the color palette: `#F0F0E8` (Canvas), `#000000` (Ink), `#1D4ED8` (Hyper Blue).
+    - Components should be `rounded-none` with 1px black borders and hard shadows.
 - Python uses 4-space indents, type hints, and descriptive async names; mirror the patterns in `apps/backend/app/services/score_improvement_service.py` and document side effects in docstrings.
 - Frontend code is TypeScript-first. Use PascalCase for components, camelCase for helpers, Tailwind utility classes for styling, and run Prettier before committing.
 - Environment files should match the samples (`apps/backend/.env`, `apps/frontend/.env.local`); only the templates belong in Git.

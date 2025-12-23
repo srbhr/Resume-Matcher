@@ -28,6 +28,12 @@ export default function TailorPage() {
 
     const handleGenerate = async () => {
         if (!jobDescription.trim() || !masterResumeId) return;
+        
+        // Validation: Check for minimum length (e.g. 50 chars) to ensure it's a valid JD
+        if (jobDescription.trim().length < 50) {
+            setError('Job description is too short. Please provide more details.');
+            return;
+        }
 
         setIsLoading(true);
         setError(null);
@@ -43,8 +49,14 @@ export default function TailorPage() {
             // 3. Store in Context
             setImprovedData(result);
 
-            // 4. Redirect to Builder
-            router.push('/builder');
+            // 4. Redirect to the NEW Viewer page with the new resume ID
+            // Assuming the result contains the new resume ID in data.resume_id
+            if (result?.data?.resume_id) {
+                router.push(`/resumes/${result.data.resume_id}`);
+            } else {
+                 // Fallback if ID is missing for some reason
+                router.push('/builder');
+            }
 
         } catch (err) {
             console.error(err);

@@ -1,11 +1,13 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Resume, { ResumeData } from '@/components/dashboard/resume-component';
 import { ResumeForm } from './resume-form';
 import { Button } from '@/components/ui/button';
 import { Download, Save, Upload } from 'lucide-react';
 import { useResumePreview } from '@/components/common/resume_previewer_context';
+import { fetchResume } from '@/lib/api/resume';
 
 const INITIAL_DATA: ResumeData = {
     personalInfo: {
@@ -30,17 +32,40 @@ const INITIAL_DATA: ResumeData = {
     },
 };
 
-export const ResumeBuilder = () => {
+const ResumeBuilderContent = () => {
     const [resumeData, setResumeData] = useState<ResumeData>(INITIAL_DATA);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { improvedData } = useResumePreview();
+    const searchParams = useSearchParams();
+    const resumeId = searchParams.get('id');
 
     useEffect(() => {
+        // Priority 1: Improved Data from Context (Tailor Flow)
         if (improvedData?.data?.resume_preview) {
             console.log('Applying improved resume data:', improvedData.data.resume_preview);
             setResumeData(improvedData.data.resume_preview);
+            return;
         }
-    }, [improvedData]);
+
+        // Priority 2: Fetch from API if ID is in URL (Edit Mode)
+        if (resumeId) {
+            const loadResume = async () => {
+                try {
+                    const data = await fetchResume(resumeId);
+                    let parsedContent: ResumeData;
+                    if (typeof data.raw_resume.content === 'string') {
+                        parsedContent = JSON.parse(data.raw_resume.content);
+                    } else {
+                        parsedContent = data.raw_resume.content;
+                    }
+                    setResumeData(parsedContent);
+                } catch (err) {
+                    console.error('Failed to load resume:', err);
+                }
+            };
+            loadResume();
+        }
+    }, [improvedData, resumeId]);
 
     const handleUpdate = (newData: ResumeData) => {
         setResumeData(newData);
@@ -104,7 +129,7 @@ export const ResumeBuilder = () => {
                             Resume Builder
                         </h1>
                         <p className="mt-4 text-sm font-mono text-blue-700 uppercase tracking-wide font-bold">
-                            // CREATE & PREVIEW
+                            // {resumeId ? 'EDIT MODE' : 'CREATE & PREVIEW'}
                         </p>
                     </div>
                     
@@ -168,5 +193,13 @@ export const ResumeBuilder = () => {
                 </div>
             </div>
         </div>
+    );
+};
+
+export const ResumeBuilder = () => {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <ResumeBuilderContent />
+        </Suspense>
     );
 };

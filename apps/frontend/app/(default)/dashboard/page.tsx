@@ -46,7 +46,7 @@ export default function DashboardPage() {
                                     <span className="text-2xl leading-none relative top-[-2px]">+</span>
                                 </div>
                                 <div>
-                                    <h3 className="font-mono text-xl font-bold uppercase">Upload Master Resume</h3>
+                                    <h3 className="font-mono text-xl font-bold uppercase">Initialize Master Resume</h3>
                                     <p className="font-mono text-xs mt-2 opacity-60 group-hover:opacity-100">// Initialize Sequence</p>
                                 </div>
                             </div>
@@ -54,9 +54,9 @@ export default function DashboardPage() {
                     }
                 />
             ) : (
-                // Master Resume Exists - Click to Tailor
+                // Master Resume Exists - Click to View
                 <div 
-                    onClick={() => router.push(`/tailor`)}
+                    onClick={() => router.push(`/resumes/${masterResumeId}`)}
                     className={cardWrapperClass}
                 >
                     <div className="flex-1 flex flex-col h-full">
@@ -78,7 +78,7 @@ export default function DashboardPage() {
                             Master Resume
                         </h3>
                         <p className="text-xs font-mono text-gray-500 mt-auto pt-4 group-hover:text-black">
-                            STATUS: READY TO TAILOR
+                            STATUS: READY
                         </p>
                     </div>
                 </div>
