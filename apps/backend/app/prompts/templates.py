@@ -1,110 +1,125 @@
 """LLM prompt templates for resume processing."""
 
-RESUME_SCHEMA = """{
+# Schema with example values - used for prompts to show LLM expected format
+RESUME_SCHEMA_EXAMPLE = """{
   "personalInfo": {
-    "name": "string",
-    "title": "string",
-    "email": "string",
-    "phone": "string",
-    "location": "string",
-    "website": "string or null",
-    "linkedin": "string or null",
-    "github": "string or null"
+    "name": "John Doe",
+    "title": "Software Engineer",
+    "email": "john@example.com",
+    "phone": "+1-555-0100",
+    "location": "San Francisco, CA",
+    "website": "https://johndoe.dev",
+    "linkedin": "linkedin.com/in/johndoe",
+    "github": "github.com/johndoe"
   },
-  "summary": "string",
+  "summary": "Experienced software engineer with 5+ years...",
   "workExperience": [
     {
-      "id": "integer (auto-increment starting from 1)",
-      "title": "string (job title/role)",
-      "company": "string",
-      "location": "string or null",
-      "years": "string (e.g., '2020 - Present' or '2018 - 2020')",
-      "description": ["string (bullet point)"]
+      "id": 1,
+      "title": "Senior Software Engineer",
+      "company": "Tech Corp",
+      "location": "San Francisco, CA",
+      "years": "2020 - Present",
+      "description": [
+        "Led development of microservices architecture",
+        "Improved system performance by 40%"
+      ]
     }
   ],
   "education": [
     {
-      "id": "integer (auto-increment starting from 1)",
-      "institution": "string",
-      "degree": "string",
-      "years": "string (e.g., '2014 - 2018')",
-      "description": "string or null"
+      "id": 1,
+      "institution": "University of California",
+      "degree": "B.S. Computer Science",
+      "years": "2014 - 2018",
+      "description": "Graduated with honors"
     }
   ],
   "personalProjects": [
     {
-      "id": "integer (auto-increment starting from 1)",
-      "name": "string",
-      "role": "string",
-      "years": "string (e.g., '2021 - Present')",
-      "description": ["string"]
+      "id": 1,
+      "name": "Open Source Tool",
+      "role": "Creator & Maintainer",
+      "years": "2021 - Present",
+      "description": [
+        "Built CLI tool with 1000+ GitHub stars",
+        "Used by 50+ companies worldwide"
+      ]
     }
   ],
   "additional": {
-    "technicalSkills": ["string"],
-    "languages": ["string"],
-    "certificationsTraining": ["string"],
-    "awards": ["string"]
+    "technicalSkills": ["Python", "JavaScript", "AWS", "Docker"],
+    "languages": ["English (Native)", "Spanish (Conversational)"],
+    "certificationsTraining": ["AWS Solutions Architect"],
+    "awards": ["Employee of the Year 2022"]
   }
 }"""
 
-PARSE_RESUME_PROMPT = f"""You are a JSON extraction engine. Convert the following resume text into precisely the JSON schema specified below.
+PARSE_RESUME_PROMPT = """Extract resume information into JSON format.
 
-Instructions:
-- Map each resume section to the schema without inventing information.
-- If a field is missing in the source text, use an empty string or empty array as appropriate.
-- Preserve bullet points in the description arrays using short factual sentences.
-- Use "Present" if an end date is ongoing.
-- Keep years in format YYYY or YYYY-MM where available.
-- Do not add any extra fields or commentary.
-- Output ONLY valid JSON matching the schema.
+CRITICAL: Your response must be ONLY valid JSON starting with {{ and ending with }}.
+Do not include any text, explanation, or markdown - just the JSON object.
 
-Schema:
+Rules:
+- Extract only information present in the resume text
+- Use empty string "" for missing text fields
+- Use empty array [] for missing list fields
+- Use null for optional fields (website, linkedin, github, location in experience, description in education)
+- Keep years in format "YYYY - YYYY" or "YYYY - Present"
+- Number IDs starting from 1
+
+JSON Structure:
 ```json
-{RESUME_SCHEMA}
+{schema}
 ```
 
-Resume:
-```text
+Resume Text:
+```
 {{resume_text}}
-```"""
+```
 
-EXTRACT_KEYWORDS_PROMPT = """Extract the key requirements, skills, and qualifications from this job description.
+Respond with ONLY the JSON object. Start with {{ immediately.""".format(schema=RESUME_SCHEMA_EXAMPLE)
 
-Return a JSON object with:
+EXTRACT_KEYWORDS_PROMPT = """Extract key requirements from this job description.
+
+CRITICAL: Respond with ONLY valid JSON starting with {{ and ending with }}.
+No explanations, no markdown code blocks - just the JSON object.
+
+JSON Structure:
 {{
-  "required_skills": ["skill1", "skill2", ...],
-  "preferred_skills": ["skill1", "skill2", ...],
-  "experience_requirements": ["requirement1", ...],
-  "education_requirements": ["requirement1", ...],
-  "key_responsibilities": ["responsibility1", ...],
-  "keywords": ["keyword1", "keyword2", ...]
+  "required_skills": ["skill1", "skill2"],
+  "preferred_skills": ["skill1", "skill2"],
+  "experience_requirements": ["5+ years experience", "team leadership"],
+  "education_requirements": ["Bachelor's degree in CS"],
+  "key_responsibilities": ["Design systems", "Lead team"],
+  "keywords": ["python", "aws", "microservices"]
 }}
 
 Job Description:
 ```
 {job_description}
-```"""
+```
 
-IMPROVE_RESUME_PROMPT = """You are an expert resume editor and talent acquisition specialist. Your task is to revise the following resume so that it aligns as closely as possible with the provided job description and extracted job keywords.
+Respond with ONLY the JSON object. Start with {{ immediately."""
 
-Instructions:
-- Carefully review the job description and the list of extracted job keywords.
-- Update the candidate's resume by rephrasing and reordering existing content to highlight the most relevant evidence.
-- Emphasize and naturally weave job-aligned keywords by rewriting existing bullets, sentences, and headings.
-- Do NOT invent new jobs, projects, technologies, certifications, or accomplishments not present in the original resume.
-- Preserve the core section structure: Personal Info, Summary, Work Experience, Education, Projects, Additional (Skills, Languages, Certifications, Awards).
-- Add or improve a concise "Summary" section at the top if missing.
-- Maintain a natural, professional tone and avoid keyword stuffing.
-- Use quantifiable achievements already present and action verbs to make impact clear.
-- When a requirement is missing, highlight adjacent or transferable elements and frame them with the job's terminology.
+IMPROVE_RESUME_PROMPT = """Revise this resume to align with the job description.
+
+CRITICAL: Respond with ONLY valid JSON starting with {{ and ending with }}.
+No explanations, no markdown code blocks - just the JSON object.
+
+Rules:
+- Rephrase and reorder content to highlight relevant experience
+- Weave job-aligned keywords naturally into existing content
+- Do NOT invent new jobs, projects, or skills not in the original
+- Maintain professional tone without keyword stuffing
+- Use quantifiable achievements and action verbs
 
 Job Description:
 ```
 {job_description}
 ```
 
-Extracted Job Keywords:
+Job Keywords:
 {job_keywords}
 
 Original Resume:
@@ -112,7 +127,12 @@ Original Resume:
 {original_resume}
 ```
 
-Output ONLY the improved resume in the exact JSON format matching this schema:
+Output JSON Structure:
 ```json
 {schema}
-```"""
+```
+
+Respond with ONLY the JSON object. Start with {{ immediately."""
+
+# Alias for backward compatibility - used by improver.py
+RESUME_SCHEMA = RESUME_SCHEMA_EXAMPLE

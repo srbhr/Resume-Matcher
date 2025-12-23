@@ -70,25 +70,33 @@ async def upload_resume(file: UploadFile = File(...)) -> ResumeUploadResponse:
             detail=f"Failed to parse document: {str(e)}",
         )
 
-    # Try to parse to structured JSON (optional, may fail if LLM not configured)
-    processed_data = None
-    try:
-        processed_data = await parse_resume_to_json(markdown_content)
-    except Exception as e:
-        # LLM parsing failed, store raw markdown only but log for monitoring
-        logger.warning(f"Resume parsing to JSON failed for {file.filename}: {e}")
-
     # Check if this is the first resume (make it master)
     is_master = db.get_master_resume() is None
 
-    # Store in database
+    # Store in database first with "processing" status
     resume = db.create_resume(
         content=markdown_content,
         content_type="md",
         filename=file.filename,
         is_master=is_master,
-        processed_data=processed_data,
+        processed_data=None,
+        processing_status="processing",
     )
+
+    # Try to parse to structured JSON (optional, may fail if LLM not configured)
+    try:
+        processed_data = await parse_resume_to_json(markdown_content)
+        db.update_resume(resume["resume_id"], {
+            "processed_data": processed_data,
+            "processing_status": "ready",
+        })
+        resume["processed_data"] = processed_data
+        resume["processing_status"] = "ready"
+    except Exception as e:
+        # LLM parsing failed, update status to failed
+        logger.warning(f"Resume parsing to JSON failed for {file.filename}: {e}")
+        db.update_resume(resume["resume_id"], {"processing_status": "failed"})
+        resume["processing_status"] = "failed"
 
     return ResumeUploadResponse(
         message=f"File {file.filename} successfully processed as MD and stored in the DB",
@@ -108,27 +116,21 @@ async def get_resume(resume_id: str = Query(...)) -> ResumeFetchResponse:
     if not resume:
         raise HTTPException(status_code=404, detail="Resume not found")
 
+    # Get processing status (default to "pending" for old records)
+    processing_status = resume.get("processing_status", "pending")
+
     # Build response
     raw_resume = RawResume(
         id=None,  # TinyDB doesn't have numeric IDs like SQL
         content=resume["content"],
         content_type=resume["content_type"],
         created_at=resume["created_at"],
+        processing_status=processing_status,
     )
 
-    # Get processed data or try to parse if missing
+    # Get processed data if available (no more on-demand parsing)
     processed_data = resume.get("processed_data")
-    if processed_data:
-        processed_resume = ResumeData.model_validate(processed_data)
-    else:
-        # Try to parse on demand
-        try:
-            processed_data = await parse_resume_to_json(resume["content"])
-            db.update_resume(resume_id, {"processed_data": processed_data})
-            processed_resume = ResumeData.model_validate(processed_data)
-        except Exception as e:
-            logger.warning(f"On-demand resume parsing failed for {resume_id}: {e}")
-            processed_resume = None
+    processed_resume = ResumeData.model_validate(processed_data) if processed_data else None
 
     return ResumeFetchResponse(
         request_id=str(uuid4()),

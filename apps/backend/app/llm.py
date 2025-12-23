@@ -1,7 +1,9 @@
 """LiteLLM wrapper for multi-provider AI support."""
 
 import json
+import logging
 import os
+import re
 from typing import Any
 
 import litellm
@@ -47,10 +49,12 @@ def get_model_name(config: LLMConfig) -> str:
 
     prefix = provider_prefixes.get(config.provider, "")
 
-    # Don't add prefix if model already has one
-    if "/" in config.model:
+    # Don't add prefix if model already starts with a known provider prefix
+    known_prefixes = ["openrouter/", "anthropic/", "gemini/", "deepseek/", "ollama/"]
+    if any(config.model.startswith(p) for p in known_prefixes):
         return config.model
 
+    # Add provider prefix for models that need it
     return f"{prefix}{config.model}" if prefix else config.model
 
 
@@ -178,10 +182,52 @@ async def complete_json(
 
     content = response.choices[0].message.content
 
+    if not content:
+        raise ValueError("Empty response from LLM")
+
+    # Debug: log raw response (first 500 chars)
+    logging.debug(f"LLM raw response: {content[:500]}")
+
     # Extract JSON from response (handle markdown code blocks)
     if "```json" in content:
         content = content.split("```json")[1].split("```")[0]
     elif "```" in content:
-        content = content.split("```")[1].split("```")[0]
+        parts = content.split("```")
+        if len(parts) >= 2:
+            content = parts[1]
 
-    return json.loads(content.strip())
+    content = content.strip()
+
+    # Check if content looks like JSON properties without outer braces
+    # Pattern: starts with optional whitespace then a quoted key
+    looks_like_json_properties = bool(re.match(r'^\s*"[a-zA-Z]', content))
+
+    if looks_like_json_properties and not content.startswith("{"):
+        # LLM returned JSON without outer braces - wrap it
+        logging.debug("Wrapping braceless JSON response")
+        # Find the last property's closing brace/bracket
+        content = "{" + content
+        if not content.rstrip().endswith("}"):
+            content = content.rstrip().rstrip(",") + "}"
+    elif not content.startswith("{"):
+        # Try to find a JSON object starting with {
+        start_idx = content.find("{")
+        if start_idx == -1:
+            raise ValueError(f"No JSON object found in response: {content[:300]}")
+        content = content[start_idx:]
+
+    # Ensure content ends with }
+    if not content.rstrip().endswith("}"):
+        # Find the last } and truncate there
+        end_idx = content.rfind("}")
+        if end_idx == -1:
+            content = content.rstrip().rstrip(",") + "}"
+        else:
+            content = content[: end_idx + 1]
+
+    try:
+        return json.loads(content)
+    except json.JSONDecodeError as e:
+        # Log the problematic content for debugging
+        logging.warning(f"JSON parse failed. Raw content: {content[:1000]}")
+        raise ValueError(f"Invalid JSON: {e}. First 300 chars: {content[:300]}")

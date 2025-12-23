@@ -54,6 +54,7 @@ interface ResumeResponse {
       content: string;
       content_type: string;
       created_at: string;
+      processing_status: 'pending' | 'processing' | 'ready' | 'failed';
     };
     processed_resume: ProcessedResume | null;
   };

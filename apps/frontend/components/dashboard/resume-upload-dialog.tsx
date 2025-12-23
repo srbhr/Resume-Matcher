@@ -67,7 +67,11 @@ export function ResumeUploadDialog({ trigger, onUploadComplete }: ResumeUploadDi
           type: 'success',
           message: 'Resume uploaded successfully.',
         });
-        onUploadComplete?.(data.resume_id);
+        // Defer parent state update to avoid setState during render
+        const resumeId = data.resume_id;
+        setTimeout(() => {
+          onUploadComplete?.(resumeId);
+        }, 0);
         // Close dialog after a short delay to show success state
         setTimeout(() => {
           setIsOpen(false);

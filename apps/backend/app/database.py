@@ -56,8 +56,12 @@ class Database:
         is_master: bool = False,
         parent_id: str | None = None,
         processed_data: dict[str, Any] | None = None,
+        processing_status: str = "pending",
     ) -> dict[str, Any]:
-        """Create a new resume entry."""
+        """Create a new resume entry.
+
+        processing_status: "pending", "processing", "ready", "failed"
+        """
         resume_id = str(uuid4())
         now = datetime.now(timezone.utc).isoformat()
 
@@ -69,6 +73,7 @@ class Database:
             "is_master": is_master,
             "parent_id": parent_id,
             "processed_data": processed_data,
+            "processing_status": processing_status,
             "created_at": now,
             "updated_at": now,
         }

@@ -10,10 +10,12 @@
     "format": "prettier --write ."
   },
   "dependencies": {
+    "clsx": "^2.1.1",
     "lucide-react": "^0.501.0",
-    "next": "15.4.8",
+    "next": "^16.1.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "tailwind-merge": "^3.4.0",
     "tw-animate-css": "^1.2.5"
   },
   "devDependencies": {

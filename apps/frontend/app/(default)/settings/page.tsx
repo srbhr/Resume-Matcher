@@ -170,7 +170,7 @@ export default function SettingsPage() {
 
   return (
     <div
-      className="flex flex-col items-center justify-start p-6 md:p-12 min-h-[calc(100vh-60px)]"
+      className="flex flex-col items-center justify-start p-6 md:p-12 min-h-screen overflow-y-auto"
       style={{
         backgroundImage:
           'linear-gradient(rgba(29, 78, 216, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(29, 78, 216, 0.05) 1px, transparent 1px)',

@@ -86,6 +86,7 @@ class RawResume(BaseModel):
     content: str
     content_type: str = "md"
     created_at: str
+    processing_status: str = "pending"  # pending, processing, ready, failed
 
 
 class ResumeFetchData(BaseModel):
