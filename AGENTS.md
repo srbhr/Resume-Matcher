@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 - `apps/backend/app` contains the FastAPI stack: `agent/` for wrappers, `services/` for orchestration (see `score_improvement_service.py`), `prompt/` for LLM prompts, and `schemas/` for JSON/Pydantic contracts.
-- `apps/frontend` hosts the Next.js dashboard (`app/` routes, shared `components/`, utility `lib/`); keep reusable UI logic in `lib/` and scope feature code to the route directory.
+- `apps/frontend` hosts the Next.js dashboard (`app/` routes, shared `components/`, utility `lib/`); keep reusable UI logic in `lib/` and scope feature code to the route directory. Refer to `.frontend-workflow.md` for the detailed user flow and `.front-end-apis.md` for the API contract.
 - Root tooling sits beside this file: `Makefile`, `setup.sh`, and `package.json` coordinate workflows; `docs/CONFIGURING.md` and `assets/` hold configuration notes.
 
 ## Build, Test, and Development Commands

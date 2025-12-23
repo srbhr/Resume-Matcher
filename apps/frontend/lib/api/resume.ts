@@ -82,12 +82,11 @@ export async function improveResume(
 /** Fetches a raw resume record for previewing the original upload */
 export async function fetchResume(resumeId: string): Promise<ResumeResponse['data']> {
 	const res = await fetch(`${API_URL}/api/v1/resumes?resume_id=${encodeURIComponent(resumeId)}`);
-	if (!res.ok) {
+    if (!res.ok) {
 		throw new Error(`Failed to load resume (status ${res.status}).`);
 	}
 	const payload = (await res.json()) as ResumeResponse;
-	if (!payload?.data?.raw_resume?.content) {
-		throw new Error('Resume content is unavailable.');
-	}
+	// Support both raw_resume content (initial) and processed_resume (if available)
+    // The viewer/builder logic should prioritize processed data if present
 	return payload.data;
 }
