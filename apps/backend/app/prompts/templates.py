@@ -2,7 +2,7 @@
 
 RESUME_SCHEMA = """{
   "personalInfo": {
-    "fullName": "string",
+    "name": "string",
     "title": "string",
     "email": "string",
     "phone": "string",
@@ -14,35 +14,36 @@ RESUME_SCHEMA = """{
   "summary": "string",
   "workExperience": [
     {
+      "id": "integer (auto-increment starting from 1)",
+      "title": "string (job title/role)",
       "company": "string",
-      "role": "string",
-      "startYear": "string (YYYY or YYYY-MM)",
-      "endYear": "string (YYYY, YYYY-MM, or Present)",
-      "descriptions": ["string (bullet point)"]
+      "location": "string or null",
+      "years": "string (e.g., '2020 - Present' or '2018 - 2020')",
+      "description": ["string (bullet point)"]
     }
   ],
   "education": [
     {
+      "id": "integer (auto-increment starting from 1)",
       "institution": "string",
       "degree": "string",
-      "startYear": "string",
-      "endYear": "string",
+      "years": "string (e.g., '2014 - 2018')",
       "description": "string or null"
     }
   ],
   "personalProjects": [
     {
+      "id": "integer (auto-increment starting from 1)",
       "name": "string",
       "role": "string",
-      "startYear": "string",
-      "endYear": "string",
-      "descriptions": ["string"]
+      "years": "string (e.g., '2021 - Present')",
+      "description": ["string"]
     }
   ],
   "additional": {
-    "skills": ["string"],
+    "technicalSkills": ["string"],
     "languages": ["string"],
-    "certifications": ["string"],
+    "certificationsTraining": ["string"],
     "awards": ["string"]
   }
 }"""

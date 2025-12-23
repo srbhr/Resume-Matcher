@@ -2,29 +2,60 @@ import { ImprovedResult } from '@/components/common/resume_previewer_context';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
+// Matches backend schemas/models.py ResumeData
+interface ProcessedResume {
+	personalInfo?: {
+		name?: string;
+		title?: string;
+		email?: string;
+		phone?: string;
+		location?: string;
+		website?: string | null;
+		linkedin?: string | null;
+		github?: string | null;
+	};
+	summary?: string;
+	workExperience?: Array<{
+		id: number;
+		title?: string;
+		company?: string;
+		location?: string | null;
+		years?: string;
+		description?: string[];
+	}>;
+	education?: Array<{
+		id: number;
+		institution?: string;
+		degree?: string;
+		years?: string;
+		description?: string | null;
+	}>;
+	personalProjects?: Array<{
+		id: number;
+		name?: string;
+		role?: string;
+		years?: string;
+		description?: string[];
+	}>;
+	additional?: {
+		technicalSkills?: string[];
+		languages?: string[];
+		certificationsTraining?: string[];
+		awards?: string[];
+	};
+}
+
 interface ResumeResponse {
 	request_id: string;
 	data: {
 		resume_id: string;
 		raw_resume: {
-			id: number;
+			id: number | null;
 			content: string;
 			content_type: string;
-			created_at: string | null;
+			created_at: string;
 		};
-		processed_resume:
-			| {
-				personal_data: unknown;
-				experiences: unknown;
-				projects: unknown;
-				skills: unknown;
-				research_work: unknown;
-				achievements: unknown;
-				education: unknown;
-				extracted_keywords: unknown;
-				processed_at: string | null;
-			}
-			| null;
+		processed_resume: ProcessedResume | null;
 	};
 }
 

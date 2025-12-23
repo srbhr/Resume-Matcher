@@ -23,17 +23,25 @@ export default function ResumeViewerPage() {
             try {
                 setLoading(true);
                 const data = await fetchResume(resumeId);
-                
-                // Parse the content if it's a string, otherwise use as is if it's already an object
-                // The API type suggests content is string, but let's be safe
-                let parsedContent: ResumeData;
-                if (typeof data.raw_resume.content === 'string') {
-                    parsedContent = JSON.parse(data.raw_resume.content);
+
+                // Prioritize processed_resume if available (structured JSON)
+                // Fall back to raw_resume only if it's JSON (not markdown)
+                if (data.processed_resume) {
+                    setResumeData(data.processed_resume as ResumeData);
+                } else if (data.raw_resume?.content) {
+                    // Try to parse raw_resume content as JSON
+                    // If it's markdown (starts with # or plain text), it won't parse
+                    try {
+                        const parsed = JSON.parse(data.raw_resume.content);
+                        setResumeData(parsed as ResumeData);
+                    } catch {
+                        // raw_resume is likely markdown, not structured data yet
+                        // The resume needs to be processed first
+                        setError('Resume has not been processed yet. Please use the Tailor feature to generate a structured resume.');
+                    }
                 } else {
-                    parsedContent = data.raw_resume.content;
+                    setError('No resume data available.');
                 }
-                
-                setResumeData(parsedContent);
             } catch (err) {
                 console.error('Failed to load resume:', err);
                 setError('Failed to load resume data.');

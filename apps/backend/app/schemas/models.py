@@ -5,11 +5,11 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 
-# Resume Data Models (matching frontend types)
+# Resume Data Models (matching frontend types in resume-component.tsx)
 class PersonalInfo(BaseModel):
     """Personal information section."""
 
-    fullName: str = ""
+    name: str = ""
     title: str = ""
     email: str = ""
     phone: str = ""
@@ -22,39 +22,40 @@ class PersonalInfo(BaseModel):
 class Experience(BaseModel):
     """Work experience entry."""
 
+    id: int = 0
+    title: str = ""
     company: str = ""
-    role: str = ""
-    startYear: str = ""
-    endYear: str = ""
-    descriptions: list[str] = Field(default_factory=list)
+    location: str | None = None
+    years: str = ""
+    description: list[str] = Field(default_factory=list)
 
 
 class Education(BaseModel):
     """Education entry."""
 
+    id: int = 0
     institution: str = ""
     degree: str = ""
-    startYear: str = ""
-    endYear: str = ""
+    years: str = ""
     description: str | None = None
 
 
 class Project(BaseModel):
     """Personal project entry."""
 
+    id: int = 0
     name: str = ""
     role: str = ""
-    startYear: str = ""
-    endYear: str = ""
-    descriptions: list[str] = Field(default_factory=list)
+    years: str = ""
+    description: list[str] = Field(default_factory=list)
 
 
 class AdditionalInfo(BaseModel):
     """Additional information section."""
 
-    skills: list[str] = Field(default_factory=list)
+    technicalSkills: list[str] = Field(default_factory=list)
     languages: list[str] = Field(default_factory=list)
-    certifications: list[str] = Field(default_factory=list)
+    certificationsTraining: list[str] = Field(default_factory=list)
     awards: list[str] = Field(default_factory=list)
 
 
