@@ -141,7 +141,7 @@ export default function ResumeViewerPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F0F0E8] py-12 px-4 md:px-8">
+    <div className="min-h-screen bg-[#F0F0E8] py-12 px-4 md:px-8 overflow-y-auto">
       <div className="max-w-7xl mx-auto">
         {/* Header Actions */}
         <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -174,11 +174,9 @@ export default function ResumeViewerPage() {
         </div>
 
         {/* Resume Viewer */}
-        <div className="flex justify-center">
-          <div className="w-full max-w-[210mm] shadow-[8px_8px_0px_0px_rgba(0,0,0,0.1)] border border-black bg-white">
-            <div className="p-8 md:p-12">
-              <Resume resumeData={resumeData} />
-            </div>
+        <div className="flex justify-center pb-4">
+          <div className="w-full max-w-[250mm] shadow-[8px_8px_0px_0px_#000000] border-2 border-black bg-white">
+            <Resume resumeData={resumeData} />
           </div>
         </div>
       </div>

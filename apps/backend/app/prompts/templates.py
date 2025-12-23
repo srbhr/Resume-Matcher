@@ -55,84 +55,52 @@ RESUME_SCHEMA_EXAMPLE = """{
   }
 }"""
 
-PARSE_RESUME_PROMPT = """Extract resume information into JSON format.
+PARSE_RESUME_PROMPT = """Parse this resume into JSON. Output ONLY the JSON object, no other text.
 
-CRITICAL: Your response must be ONLY valid JSON starting with {{ and ending with }}.
-Do not include any text, explanation, or markdown - just the JSON object.
+Example output format:
+{schema}
 
 Rules:
-- Extract only information present in the resume text
-- Use empty string "" for missing text fields
-- Use empty array [] for missing list fields
-- Use null for optional fields (website, linkedin, github, location in experience, description in education)
-- Keep years in format "YYYY - YYYY" or "YYYY - Present"
+- Use "" for missing text fields, [] for missing arrays, null for optional fields
 - Number IDs starting from 1
+- Format years as "YYYY - YYYY" or "YYYY - Present"
 
-JSON Structure:
-```json
-{schema}
-```
+Resume to parse:
+{resume_text}"""
 
-Resume Text:
-```
-{{resume_text}}
-```
+EXTRACT_KEYWORDS_PROMPT = """Extract job requirements as JSON. Output ONLY the JSON object, no other text.
 
-Respond with ONLY the JSON object. Start with {{ immediately.""".format(schema=RESUME_SCHEMA_EXAMPLE)
-
-EXTRACT_KEYWORDS_PROMPT = """Extract key requirements from this job description.
-
-CRITICAL: Respond with ONLY valid JSON starting with {{ and ending with }}.
-No explanations, no markdown code blocks - just the JSON object.
-
-JSON Structure:
+Example format:
 {{
-  "required_skills": ["skill1", "skill2"],
-  "preferred_skills": ["skill1", "skill2"],
-  "experience_requirements": ["5+ years experience", "team leadership"],
-  "education_requirements": ["Bachelor's degree in CS"],
-  "key_responsibilities": ["Design systems", "Lead team"],
-  "keywords": ["python", "aws", "microservices"]
+  "required_skills": ["Python", "AWS"],
+  "preferred_skills": ["Kubernetes"],
+  "experience_requirements": ["5+ years"],
+  "education_requirements": ["Bachelor's in CS"],
+  "key_responsibilities": ["Lead team"],
+  "keywords": ["microservices", "agile"]
 }}
 
-Job Description:
-```
-{job_description}
-```
+Job description:
+{job_description}"""
 
-Respond with ONLY the JSON object. Start with {{ immediately."""
-
-IMPROVE_RESUME_PROMPT = """Revise this resume to align with the job description.
-
-CRITICAL: Respond with ONLY valid JSON starting with {{ and ending with }}.
-No explanations, no markdown code blocks - just the JSON object.
+IMPROVE_RESUME_PROMPT = """Tailor this resume for the job. Output ONLY the JSON object, no other text.
 
 Rules:
-- Rephrase and reorder content to highlight relevant experience
-- Weave job-aligned keywords naturally into existing content
-- Do NOT invent new jobs, projects, or skills not in the original
-- Maintain professional tone without keyword stuffing
-- Use quantifiable achievements and action verbs
+- Rephrase content to highlight relevant experience
+- DO NOT invent new information
+- Use action verbs and quantifiable achievements
 
 Job Description:
-```
 {job_description}
-```
 
-Job Keywords:
+Keywords to emphasize:
 {job_keywords}
 
 Original Resume:
-```
 {original_resume}
-```
 
-Output JSON Structure:
-```json
-{schema}
-```
+Output in this JSON format:
+{schema}"""
 
-Respond with ONLY the JSON object. Start with {{ immediately."""
-
-# Alias for backward compatibility - used by improver.py
+# Alias for backward compatibility
 RESUME_SCHEMA = RESUME_SCHEMA_EXAMPLE

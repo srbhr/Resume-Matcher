@@ -105,9 +105,9 @@ const Resume: React.FC<ResumeProps> = ({ resumeData }) => {
   };
 
   return (
-    // A4 Ratio Container (approx width 210mm)
-    // Using min-h-[297mm] to simulate A4 height if needed, but let's stick to auto for web
-    <div className="font-serif bg-white text-black p-8 md:p-12 shadow-2xl max-w-[210mm] mx-auto min-h-[297mm] text-sm leading-normal">
+    // Resume container - wider than A4 for better web display
+    // No shadow here - wrapper component provides Swiss-style shadow
+    <div className="font-serif bg-white text-black p-10 md:p-16 w-full mx-auto text-sm leading-relaxed">
       {/* --- Header Section --- */}
       {personalInfo && (
         <div className="mb-6 border-b-2 border-black pb-6">

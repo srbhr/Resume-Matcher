@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useState, useRef, useEffect, Suspense, useCallback } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Resume, { ResumeData } from '@/components/dashboard/resume-component';
 import { ResumeForm } from './resume-form';
 import { Button } from '@/components/ui/button';
-import { Download, Save, Upload, AlertTriangle } from 'lucide-react';
+import { Download, Save, Upload, AlertTriangle, ArrowLeft } from 'lucide-react';
 import { useResumePreview } from '@/components/common/resume_previewer_context';
 import { fetchResume } from '@/lib/api/resume';
 
@@ -41,6 +41,7 @@ const ResumeBuilderContent = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { improvedData } = useResumePreview();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const resumeId = searchParams.get('id');
 
   // Warn user before leaving with unsaved changes
@@ -178,6 +179,15 @@ const ResumeBuilderContent = () => {
         {/* Header Section */}
         <div className="border-b border-black p-8 md:p-12 flex flex-col md:flex-row justify-between items-start md:items-center bg-[#F0F0E8]">
           <div>
+            {/* Back Button */}
+            <Button
+              variant="ghost"
+              onClick={() => router.push('/dashboard')}
+              className="pl-0 hover:bg-transparent hover:text-blue-700 gap-2 mb-4 -ml-1"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to Dashboard
+            </Button>
             <h1 className="font-serif text-4xl md:text-6xl text-black tracking-tight leading-[0.95] uppercase">
               Resume Builder
             </h1>
@@ -235,7 +245,7 @@ const ResumeBuilderContent = () => {
         {/* Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 bg-black gap-[1px]">
           {/* Left Panel: Editor */}
-          <div className="bg-[#F0F0E8] p-6 md:p-8 h-[calc(100vh-250px)] overflow-y-auto">
+          <div className="bg-[#F0F0E8] p-6 md:p-8 h-[calc(100vh-300px)] overflow-y-auto">
             <div className="max-w-3xl mx-auto space-y-8">
               <div className="flex items-center gap-2 border-b-2 border-black pb-2 mb-6">
                 <div className="w-3 h-3 bg-blue-700"></div>
@@ -248,16 +258,16 @@ const ResumeBuilderContent = () => {
           </div>
 
           {/* Right Panel: Preview */}
-          <div className="bg-[#E5E5E0] p-6 md:p-8 h-[calc(100vh-250px)] overflow-y-auto relative flex flex-col items-center">
+          <div className="bg-[#E5E5E0] p-6 md:p-8 pb-10 h-[calc(100vh-300px)] overflow-y-auto relative flex flex-col items-center">
             <div className="w-full max-w-3xl mb-6 flex items-center gap-2 border-b-2 border-gray-400 pb-2">
               <div className="w-3 h-3 bg-gray-600"></div>
               <h2 className="font-mono text-lg font-bold text-gray-600 uppercase tracking-wider">
                 Live Preview
               </h2>
             </div>
-            <div className="w-full max-w-[210mm] shadow-2xl">
+            <div className="w-full max-w-[250mm] mb-4 shadow-[6px_6px_0px_0px_#000000] border-2 border-black bg-white">
               {/* Resume component scale wrapper */}
-              <div className="origin-top scale-[0.8] md:scale-100">
+              <div className="origin-top scale-[0.75] md:scale-90 lg:scale-100">
                 <Resume resumeData={resumeData} />
               </div>
             </div>
