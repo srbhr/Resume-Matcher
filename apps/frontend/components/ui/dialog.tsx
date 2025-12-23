@@ -1,135 +1,125 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import * as DialogPrimitive from "@radix-ui/react-dialog"
-import { XIcon } from "lucide-react"
+import * as React from 'react';
+import { cn } from '@/lib/utils';
+import { XIcon } from 'lucide-react';
 
-import { cn } from "@/lib/utils"
+const DialogContext = React.createContext<{
+    isOpen: boolean;
+    setIsOpen: (isOpen: boolean) => void;
+} | null>(null);
 
-function Dialog({
-  ...props
-}: React.ComponentProps<typeof DialogPrimitive.Root>) {
-  return <DialogPrimitive.Root data-slot="dialog" {...props} />
+function useDialog() {
+    const context = React.useContext(DialogContext);
+    if (!context) {
+        throw new Error('useDialog must be used within a Dialog');
+    }
+    return context;
 }
 
-function DialogTrigger({
-  ...props
-}: React.ComponentProps<typeof DialogPrimitive.Trigger>) {
-  return <DialogPrimitive.Trigger data-slot="dialog-trigger" {...props} />
+export function Dialog({ open, onOpenChange, children }: { open?: boolean; onOpenChange?: (open: boolean) => void; children: React.ReactNode }) {
+    const [isOpenState, setIsOpenState] = React.useState(false);
+    const isOpen = open !== undefined ? open : isOpenState;
+    const setIsOpen = onOpenChange || setIsOpenState;
+
+    return (
+        <DialogContext.Provider value={{ isOpen, setIsOpen }}>
+            {children}
+        </DialogContext.Provider>
+    );
 }
 
-function DialogPortal({
-  ...props
-}: React.ComponentProps<typeof DialogPrimitive.Portal>) {
-  return <DialogPrimitive.Portal data-slot="dialog-portal" {...props} />
+export function DialogTrigger({ asChild, children }: { asChild?: boolean; children: React.ReactNode }) {
+    const { setIsOpen } = useDialog();
+    
+    const handleClick = () => {
+        setIsOpen(true);
+    };
+
+    if (asChild && React.isValidElement(children)) {
+        return React.cloneElement(children as React.ReactElement, { onClick: handleClick });
+    }
+
+    return <button onClick={handleClick}>{children}</button>;
 }
 
-function DialogClose({
-  ...props
-}: React.ComponentProps<typeof DialogPrimitive.Close>) {
-  return <DialogPrimitive.Close data-slot="dialog-close" {...props} />
+export function DialogContent({ className, children }: { className?: string; children: React.ReactNode }) {
+    const { isOpen, setIsOpen } = useDialog();
+    const dialogRef = React.useRef<HTMLDialogElement>(null);
+
+    React.useEffect(() => {
+        if (isOpen) {
+            dialogRef.current?.showModal();
+            document.body.style.overflow = 'hidden';
+        } else {
+            dialogRef.current?.close();
+            document.body.style.overflow = 'auto';
+        }
+    }, [isOpen]);
+
+    const handleClose = () => {
+        setIsOpen(false);
+    };
+
+    // Handle click outside
+    const handleBackdropClick = (e: React.MouseEvent) => {
+        if (e.target === dialogRef.current) {
+            handleClose();
+        }
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <dialog
+            ref={dialogRef}
+            className={cn(
+                "fixed inset-0 z-50 w-full max-w-lg p-0 backdrop:bg-black/50 open:animate-in open:fade-in-0 open:zoom-in-95 backdrop:backdrop-blur-sm bg-transparent border-none shadow-none m-auto",
+                // Native dialog styling resets
+                "block",
+            )}
+            onClick={handleBackdropClick}
+            onCancel={handleClose}
+        >
+            <div className={cn(
+                "relative bg-white border border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,0.2)] flex flex-col w-full",
+                className
+            )}>
+                {children}
+                <button
+                    onClick={handleClose}
+                    className="absolute right-4 top-4 opacity-70 transition-opacity hover:opacity-100 focus:outline-none"
+                >
+                    <XIcon className="h-4 w-4" />
+                    <span className="sr-only">Close</span>
+                </button>
+            </div>
+        </dialog>
+    );
 }
 
-function DialogOverlay({
-  className,
-  ...props
-}: React.ComponentProps<typeof DialogPrimitive.Overlay>) {
-  return (
-    <DialogPrimitive.Overlay
-      data-slot="dialog-overlay"
-      className={cn(
-        "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/50",
-        className
-      )}
-      {...props}
-    />
-  )
+export function DialogHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+    return <div className={cn("flex flex-col space-y-1.5 text-center sm:text-left", className)} {...props} />;
 }
 
-function DialogContent({
-  className,
-  children,
-  ...props
-}: React.ComponentProps<typeof DialogPrimitive.Content>) {
-  return (
-    <DialogPortal data-slot="dialog-portal">
-      <DialogOverlay />
-      <DialogPrimitive.Content
-        data-slot="dialog-content"
-        className={cn(
-          "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 shadow-lg duration-200 sm:max-w-lg",
-          className
-        )}
-        {...props}
-      >
-        {children}
-        <DialogPrimitive.Close className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4">
-          <XIcon />
-          <span className="sr-only">Close</span>
-        </DialogPrimitive.Close>
-      </DialogPrimitive.Content>
-    </DialogPortal>
-  )
+export function DialogFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+    return <div className={cn("flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2", className)} {...props} />;
 }
 
-function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
-  return (
-    <div
-      data-slot="dialog-header"
-      className={cn("flex flex-col gap-2 text-center sm:text-left", className)}
-      {...props}
-    />
-  )
+export function DialogTitle({ className, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
+    return <h2 className={cn("text-lg font-semibold leading-none tracking-tight", className)} {...props} />;
 }
 
-function DialogFooter({ className, ...props }: React.ComponentProps<"div">) {
-  return (
-    <div
-      data-slot="dialog-footer"
-      className={cn(
-        "flex flex-col-reverse gap-2 sm:flex-row sm:justify-end",
-        className
-      )}
-      {...props}
-    />
-  )
+export function DialogDescription({ className, ...props }: React.HTMLAttributes<HTMLParagraphElement>) {
+    return <p className={cn("text-sm text-muted-foreground", className)} {...props} />;
 }
 
-function DialogTitle({
-  className,
-  ...props
-}: React.ComponentProps<typeof DialogPrimitive.Title>) {
-  return (
-    <DialogPrimitive.Title
-      data-slot="dialog-title"
-      className={cn("text-lg leading-none font-semibold", className)}
-      {...props}
-    />
-  )
-}
+export function DialogClose({ asChild, children }: { asChild?: boolean; children: React.ReactNode }) {
+    const { setIsOpen } = useDialog();
+    const handleClick = () => setIsOpen(false);
 
-function DialogDescription({
-  className,
-  ...props
-}: React.ComponentProps<typeof DialogPrimitive.Description>) {
-  return (
-    <DialogPrimitive.Description
-      data-slot="dialog-description"
-      className={cn("text-muted-foreground text-sm", className)}
-      {...props}
-    />
-  )
-}
-
-export {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogOverlay,
-  DialogPortal,
-  DialogTitle,
-  DialogTrigger,
+    if (asChild && React.isValidElement(children)) {
+        return React.cloneElement(children as React.ReactElement, { onClick: handleClick });
+    }
+    return <button onClick={handleClick}>{children}</button>;
 }
