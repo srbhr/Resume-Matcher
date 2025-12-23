@@ -4,7 +4,7 @@
 > **Last Updated:** December 24, 2024
 > **Reviewer:** Deep code analysis focusing on data flow, extensibility, and production readiness
 > **Scope:** Full-stack (Frontend + Backend)
-> **Status:** Critical & High Priority Issues FIXED in commit df6274e
+> **Status:** Critical & High Priority Issues FIXED in commits df6274e, a5d7661
 
 ---
 
@@ -16,12 +16,13 @@ The Resume Matcher application is **functionally complete** but requires attenti
 
 | Category | Frontend | Backend | Priority | Status |
 |----------|----------|---------|----------|--------|
-| Data Flow | B | B- | High | Improved |
+| Data Flow | B | B+ | High | Improved |
 | Type Safety | C+ | B- | High | Pending |
-| Error Handling | B | B | Critical | **FIXED** |
+| Error Handling | B | B+ | Critical | **FIXED** |
 | Performance | C | C- | Medium | Pending |
 | Extensibility | B+ | B | Medium | Pending |
 | Security | B | B | High | **FIXED** |
+| LLM Reliability | - | A- | Critical | **FIXED** |
 
 ---
 
@@ -126,16 +127,39 @@ response = await litellm.acompletion(
 
 ---
 
+### 6. ~~Fragile JSON Parsing~~ ✅ FIXED (commit a5d7661)
+**File:** `apps/backend/app/llm.py`
+
+**Problem:** LLM would sometimes return malformed JSON, echo prompt instructions, or wrap JSON in markdown blocks, causing parsing failures.
+
+**Fix (comprehensive):**
+1. **JSON Mode**: Added `_supports_json_mode()` to auto-enable `response_format={"type": "json_object"}` for supported providers (OpenAI, Anthropic, Gemini, DeepSeek, major OpenRouter models)
+2. **Retry Logic**: `complete_json()` now retries up to 2 times with progressively lower temperature (0.1 → 0.0)
+3. **Robust Extraction**: New `_extract_json()` with bracket-matching algorithm handles:
+   - Markdown code blocks (```json ... ```)
+   - Trailing text after JSON
+   - Malformed responses with extra content
+4. **Simplified Prompts**: Removed confusing `{{` escaping in `templates.py`, using cleaner single-brace `{variable}` substitution
+
+```python
+def _extract_json(content: str) -> str:
+    """Extract JSON with bracket matching, handles malformed responses."""
+    # Removes markdown blocks, finds matching braces
+    # Falls back to wrapping braceless JSON properties
+```
+
+---
+
 ## HIGH PRIORITY (Fix Soon)
 
-### 6. ~~Fake Improvement Scores~~ ✅ REMOVED
+### 7. ~~Fake Improvement Scores~~ ✅ REMOVED
 **File:** `apps/backend/app/routers/resumes.py`
 
 **Resolution:** Scoring feature completely removed from v1 release. Resume improvement now focuses on keyword alignment without numeric scores.
 
 ---
 
-### 7. ~~Fake Line Numbers in Suggestions~~ ✅ FIXED
+### 8. ~~Fake Line Numbers in Suggestions~~ ✅ FIXED
 **File:** `apps/backend/app/services/improver.py:119`
 
 **Problem:** Line numbers are fake approximations
@@ -149,7 +173,30 @@ response = await litellm.acompletion(
 
 ---
 
-### 8. Type Unsafe JSON Parsing (Frontend)
+### 9. ~~UI Inconsistencies~~ ✅ FIXED (commit a5d7661)
+**Files:**
+- `apps/frontend/app/(default)/resumes/[id]/page.tsx`
+- `apps/frontend/components/builder/resume-builder.tsx`
+- `apps/frontend/components/dashboard/resume-component.tsx`
+
+**Problems:**
+1. Missing back button in Resume Builder
+2. Resume too narrow (210mm A4 width caused excessive whitespace)
+3. Inconsistent shadow styles (blur shadows vs Swiss-style hard shadows)
+4. Shadow clipping at bottom of resume containers
+5. Resume viewer not scrollable
+
+**Fixes:**
+- Added "Back to Dashboard" button to Resume Builder header
+- Increased resume width from 210mm to 250mm (~20% wider)
+- Applied consistent Swiss-style shadows: `shadow-[8px_8px_0px_0px_#000000]`
+- Added bottom padding (`pb-4`) to prevent shadow clipping
+- Added `overflow-y-auto` to scrollable containers
+- Removed internal shadow from Resume component (parent provides shadow)
+
+---
+
+### 10. Type Unsafe JSON Parsing (Frontend)
 **File:** `apps/frontend/app/(default)/resumes/[id]/page.tsx:34-36`
 
 **Problem:** `JSON.parse()` can throw, parsed data not validated
@@ -172,7 +219,7 @@ try {
 
 ---
 
-### 9. Excessive `any` Types
+### 11. Excessive `any` Types
 **Files:**
 - `apps/frontend/components/builder/forms/experience-form.tsx:34`
 - `apps/frontend/components/builder/forms/education-form.tsx:33`
@@ -185,7 +232,7 @@ try {
 
 ---
 
-### 10. No API Response Validation
+### 12. No API Response Validation
 **File:** `apps/frontend/lib/api/resume.ts:43-44`
 
 **Problem:** Assumes response structure without validation
@@ -205,7 +252,7 @@ return data.job_id[0];
 
 ## MEDIUM PRIORITY (Address for Scale)
 
-### 11. O(n) Database Operations
+### 13. O(n) Database Operations
 **File:** `apps/backend/app/database.py:169-176`
 
 **Problem:** Status endpoint scans entire database 4 times
@@ -234,7 +281,7 @@ def get_stats(self):
 
 ---
 
-### 12. Console.log in Production Code
+### 14. Console.log in Production Code
 **Files:**
 - `apps/frontend/components/builder/resume-builder.tsx:45, 75`
 - `apps/frontend/lib/api/resume.ts:43, 78`
@@ -243,7 +290,7 @@ def get_stats(self):
 
 ---
 
-### 13. Duplicate Form Array Logic
+### 15. Duplicate Form Array Logic
 **Files:**
 - `apps/frontend/components/builder/forms/experience-form.tsx`
 - `apps/frontend/components/builder/forms/projects-form.tsx`
@@ -268,7 +315,7 @@ function useArrayFieldManager<T extends { id: number }>(
 
 ---
 
-### 14. Missing Memoization
+### 16. Missing Memoization
 **Files:**
 - `apps/frontend/components/dashboard/resume-component.tsx` (main renderer)
 - `apps/frontend/components/builder/resume-form.tsx:17-57` (8 handlers)
@@ -290,7 +337,7 @@ const handlePersonalInfoChange = useCallback((newInfo: PersonalInfo) => {
 
 ---
 
-### 15. Duplicate API URL Construction
+### 17. Duplicate API URL Construction
 **Files:**
 - `apps/frontend/lib/api/resume.ts:3`
 - `apps/frontend/lib/api/config.ts:1`
@@ -308,7 +355,7 @@ export function apiUrl(path: string): string {
 
 ---
 
-### 16. Race Condition in Master Resume
+### 18. Race Condition in Master Resume
 **File:** `apps/backend/app/database.py:105-114`
 
 **Problem:** Two non-atomic operations to switch master resume
@@ -324,7 +371,7 @@ self.resumes.update({"is_master": True}, Resume.resume_id == resume_id)
 
 ---
 
-### 17. No Input Length Validation
+### 19. No Input Length Validation
 **Files:**
 - `apps/backend/app/routers/jobs.py` (job description)
 - `apps/backend/app/routers/resumes.py` (resume content)
@@ -344,7 +391,7 @@ if len(content) > MAX_JOB_DESC_LENGTH:
 
 ## LOW PRIORITY (Nice to Have)
 
-### 18. Missing Debounce on Form Inputs
+### 20. Missing Debounce on Form Inputs
 **File:** `apps/frontend/components/builder/resume-builder.tsx`
 
 **Problem:** State updates on every keystroke
@@ -353,7 +400,7 @@ if len(content) > MAX_JOB_DESC_LENGTH:
 
 ---
 
-### 19. Hardcoded Tailwind Values
+### 21. Hardcoded Tailwind Values
 **Multiple files:** Shadow utilities repeated
 - `shadow-[8px_8px_0px_0px_rgba(0,0,0,0.1)]`
 - `shadow-[4px_4px_0px_0px_#000000]`
@@ -372,7 +419,7 @@ extend: {
 
 ---
 
-### 20. Inconsistent Response Formats
+### 22. Inconsistent Response Formats
 **Files:** Backend routers
 
 **Problem:** Some endpoints return `{ data: {...} }`, others return flat objects

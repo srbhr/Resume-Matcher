@@ -8,11 +8,11 @@ A lean FastAPI application with multi-provider AI support. See **[.backend-guide
 - `app/main.py` - FastAPI entry point with CORS and router setup
 - `app/config.py` - Pydantic settings loaded from environment
 - `app/database.py` - TinyDB wrapper for JSON storage
-- `app/llm.py` - LiteLLM wrapper supporting OpenAI, Anthropic, OpenRouter, Gemini, DeepSeek, Ollama
+- `app/llm.py` - LiteLLM wrapper with JSON mode support, retry logic, and robust JSON extraction
 - `app/routers/` - API endpoints (health, config, resumes, jobs)
 - `app/services/` - Business logic (parser, improver)
 - `app/schemas/` - Pydantic models matching frontend contracts
-- `app/prompts/` - LLM prompt templates
+- `app/prompts/` - Simplified LLM prompt templates
 
 ### Frontend (`apps/frontend/`)
 Next.js dashboard with Swiss International Style design. See **[.frontend-workflow.md](.frontend-workflow.md)** for user flow and **[.front-end-apis.md](.front-end-apis.md)** for API contracts.
@@ -66,7 +66,14 @@ Next.js dashboard with Swiss International Style design. See **[.frontend-workfl
 
 ## LLM & AI Workflow Notes
 - **Multi-Provider Support**: Backend uses LiteLLM to support OpenAI, Anthropic, OpenRouter, Gemini, DeepSeek, and Ollama through a unified API.
-- **Adding Prompts**: Add new prompt templates to `apps/backend/app/prompts/templates.py`.
-- **Prompt Changes**: After modifying prompts, test the improvement flow end-to-end to verify score calculations and resume output quality.
+- **JSON Mode**: The `complete_json()` function automatically enables `response_format={"type": "json_object"}` for providers that support it (OpenAI, Anthropic, Gemini, DeepSeek, and major OpenRouter models).
+- **Retry Logic**: JSON completions include 2 automatic retries with progressively lower temperature (0.1 → 0.0) to improve reliability.
+- **JSON Extraction**: Robust bracket-matching algorithm in `_extract_json()` handles malformed responses, markdown code blocks, and edge cases.
+- **Adding Prompts**: Add new prompt templates to `apps/backend/app/prompts/templates.py`. Keep prompts simple and direct—avoid complex escaping.
+- **Prompt Guidelines**:
+  - Use `{variable}` for substitution (single braces)
+  - Include example JSON schemas for structured outputs
+  - Keep instructions concise: "Output ONLY the JSON object, no other text"
 - **Provider Configuration**: Users configure their preferred AI provider via the Settings page (`/settings`) or `PUT /api/v1/config/llm-api-key`.
 - **Health Checks**: The `/api/v1/status` endpoint validates LLM connectivity on app startup.
+- **Timeouts**: All LLM calls have configurable timeouts (30s for health checks, 120s for completions, 180s for JSON operations).
