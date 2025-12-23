@@ -1,0 +1,113 @@
+"""LLM configuration endpoints."""
+
+import json
+from pathlib import Path
+
+from fastapi import APIRouter, HTTPException
+
+from app.config import settings
+from app.llm import check_llm_health, LLMConfig
+from app.schemas import LLMConfigRequest, LLMConfigResponse
+
+router = APIRouter(prefix="/config", tags=["Configuration"])
+
+
+def _get_config_path() -> Path:
+    """Get path to config storage file."""
+    return settings.config_path
+
+
+def _load_config() -> dict:
+    """Load config from file."""
+    path = _get_config_path()
+    if path.exists():
+        return json.loads(path.read_text())
+    return {}
+
+
+def _save_config(config: dict) -> None:
+    """Save config to file."""
+    path = _get_config_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(config, indent=2))
+
+
+def _mask_api_key(key: str) -> str:
+    """Mask API key for display."""
+    if not key:
+        return ""
+    if len(key) <= 8:
+        return "*" * len(key)
+    return key[:4] + "*" * (len(key) - 8) + key[-4:]
+
+
+@router.get("/llm-api-key", response_model=LLMConfigResponse)
+async def get_llm_config_endpoint() -> LLMConfigResponse:
+    """Get current LLM configuration (API key masked)."""
+    stored = _load_config()
+
+    return LLMConfigResponse(
+        provider=stored.get("provider", settings.llm_provider),
+        model=stored.get("model", settings.llm_model),
+        api_key=_mask_api_key(stored.get("api_key", settings.llm_api_key)),
+        api_base=stored.get("api_base", settings.llm_api_base),
+    )
+
+
+@router.put("/llm-api-key", response_model=LLMConfigResponse)
+async def update_llm_config(request: LLMConfigRequest) -> LLMConfigResponse:
+    """Update LLM configuration.
+
+    Validates the new configuration before saving.
+    """
+    stored = _load_config()
+
+    # Update only provided fields
+    if request.provider is not None:
+        stored["provider"] = request.provider
+    if request.model is not None:
+        stored["model"] = request.model
+    if request.api_key is not None:
+        stored["api_key"] = request.api_key
+    if request.api_base is not None:
+        stored["api_base"] = request.api_base
+
+    # Validate the new configuration
+    test_config = LLMConfig(
+        provider=stored.get("provider", settings.llm_provider),
+        model=stored.get("model", settings.llm_model),
+        api_key=stored.get("api_key", settings.llm_api_key),
+        api_base=stored.get("api_base", settings.llm_api_base),
+    )
+
+    health = await check_llm_health(test_config)
+    if not health["healthy"]:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid LLM configuration: {health.get('error', 'Unknown error')}",
+        )
+
+    # Save validated config
+    _save_config(stored)
+
+    return LLMConfigResponse(
+        provider=test_config.provider,
+        model=test_config.model,
+        api_key=_mask_api_key(test_config.api_key),
+        api_base=test_config.api_base,
+    )
+
+
+@router.post("/llm-test")
+async def test_llm_connection() -> dict:
+    """Test current LLM connection."""
+    stored = _load_config()
+
+    config = LLMConfig(
+        provider=stored.get("provider", settings.llm_provider),
+        model=stored.get("model", settings.llm_model),
+        api_key=stored.get("api_key", settings.llm_api_key),
+        api_base=stored.get("api_base", settings.llm_api_base),
+    )
+
+    return await check_llm_health(config)
