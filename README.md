@@ -3,6 +3,21 @@
 [![Resume Matcher](assets/page_2.png)](https://www.resumematcher.fyi)
 
 # Resume Matcher
+ 
+ > [!WARNING]
+ > **EXE Packaging Branch**
+ >
+ > This branch (`fix/exe-packaging`) is dedicated to packaging Resume Matcher into a standalone EXE application.
+ >
+ > **Key Changes:**
+ > - Integrated PyInstaller for single-executable generation.
+ > - Modified Backend/Frontend for frozen path resolution.
+ > - Added `ResumeMatcher.spec` build configuration.
+ > - See [DEVELOPMENT_STATUS.md](DEVELOPMENT_STATUS.md) for detailed build instructions and current status.
+ > 
+ > **Current Status:**
+ > - The EXE builds successfully but has a known `NetworkError` on resume upload (Magika model path issue).
+ > - Contributions to fix this are welcome!
 
 [𝙹𝚘𝚒𝚗 𝙳𝚒𝚜𝚌𝚘𝚛𝚍](https://dsc.gg/resume-matcher) ✦ [𝚆𝚎𝚋𝚜𝚒𝚝𝚎](https://resumematcher.fyi) ✦ [𝙷𝚘𝚠 𝚝𝚘 𝙸𝚗𝚜𝚝𝚊𝚕𝚕](#how-to-install) ✦ [𝙲𝚘𝚗𝚝𝚛𝚒𝚋𝚞𝚝𝚘𝚛𝚜](#contributors) ✦ [𝙳𝚘𝚗𝚊𝚝𝚎](#support-the-development-by-donating) ✦ [𝚃𝚠𝚒𝚝𝚝𝚎𝚛/𝚇](https://twitter.com/ssrbhr) ✦ [𝙻𝚒𝚗𝚔𝚎𝚍𝙸𝚗](https://www.linkedin.com/company/resume-matcher/)
 
