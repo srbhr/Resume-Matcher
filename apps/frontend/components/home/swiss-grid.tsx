@@ -1,5 +1,6 @@
 import React from 'react';
 import { Settings } from 'lucide-react';
+import Link from 'next/link';
 
 export const SwissGrid = ({ children }: { children: React.ReactNode }) => {
     return (
@@ -28,14 +29,14 @@ export const SwissGrid = ({ children }: { children: React.ReactNode }) => {
                     </div>
 
                     {/* Status Corner */}
-                    <div className="col-span-1 p-6 flex flex-col justify-end border-black bg-blue-700 text-[#F0F0E8] hover:bg-blue-800 transition-colors cursor-pointer group">
+                    <Link href="/settings" className="col-span-1 p-6 flex flex-col justify-end border-black bg-blue-700 text-[#F0F0E8] hover:bg-blue-800 transition-colors cursor-pointer group">
                         <div className="flex justify-between items-end w-full">
                             <Settings className="w-6 h-6 group-hover:rotate-90 transition-transform duration-500" />
                             <div className="text-right">
                                 <span className="block font-mono text-sm font-bold uppercase">Settings</span>
                             </div>
                         </div>
-                    </div>
+                    </Link>
                 </div>
 
                 {/* Content Grid - Background set to black to create lines between cells */}

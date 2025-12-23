@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Resume, { ResumeData } from '@/components/dashboard/resume-component';
 import { ResumeForm } from './resume-form';
 import { Button } from '@/components/ui/button';
-import { Download, Save, Upload, FileJson } from 'lucide-react';
+import { Download, Save, Upload } from 'lucide-react';
+import { useResumePreview } from '@/components/common/resume_previewer_context';
 
 const INITIAL_DATA: ResumeData = {
     personalInfo: {
@@ -32,6 +33,14 @@ const INITIAL_DATA: ResumeData = {
 export const ResumeBuilder = () => {
     const [resumeData, setResumeData] = useState<ResumeData>(INITIAL_DATA);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const { improvedData } = useResumePreview();
+
+    useEffect(() => {
+        if (improvedData?.data?.resume_preview) {
+            console.log('Applying improved resume data:', improvedData.data.resume_preview);
+            setResumeData(improvedData.data.resume_preview);
+        }
+    }, [improvedData]);
 
     const handleUpdate = (newData: ResumeData) => {
         setResumeData(newData);
@@ -85,8 +94,8 @@ export const ResumeBuilder = () => {
                 backgroundSize: '40px 40px',
             }}
         >
-             {/* Main Container */}
-             <div className="w-full max-w-7xl border border-black bg-[#F0F0E8] shadow-[8px_8px_0px_0px_rgba(0,0,0,0.1)] flex flex-col">
+            {/* Main Container */}
+            <div className="w-full max-w-[90%] md:max-w-[95%] xl:max-w-[1800px] border border-black bg-[#F0F0E8] shadow-[8px_8px_0px_0px_rgba(0,0,0,0.1)] flex flex-col">
                 
                 {/* Header Section */}
                 <div className="border-b border-black p-8 md:p-12 flex flex-col md:flex-row justify-between items-start md:items-center bg-[#F0F0E8]">
