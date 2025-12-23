@@ -1,5 +1,5 @@
-@import "tailwindcss";
-@import "tw-animate-css";
+@import 'tailwindcss';
+@import 'tw-animate-css';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -9,7 +9,9 @@
 @tailwind utilities;
 
 @keyframes gradient {
-  to { background-position: 200% center; }
+  to {
+    background-position: 200% center;
+  }
 }
 
 @theme inline {
@@ -51,8 +53,8 @@
 }
 
 :root {
-  --font-mono: "Geist Mono", monospace;
-  --font-sans: "Geist", sans-serif;
+  --font-mono: 'Geist Mono', monospace;
+  --font-sans: 'Geist', sans-serif;
   --radius: 0.625rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.141 0.005 285.823);
@@ -129,4 +131,3 @@
     @apply bg-background text-foreground;
   }
 }
-

@@ -50,11 +50,11 @@ We're actively working on improving the platform, building towards a **VS Code f
 
 ![resume_matcher_features](assets/resume_matcher_features.png)
 
-- **Works locally**: No need to upload your resume to a server. Everything runs on your machine with open source AI models by Ollama.
-- **ATS Compatibility**: Get a detailed analysis of your resume's compatibility with ATS systems.
-- **Instant Match Score**: Upload resume & job description for a quick match score and key improvement areas.
-- **Keyword Optimizer**: Align your resume with job keywords and identify critical content gaps.
-- **Guided Improvements**: Get clear suggestions to make your resume stand out.
+- **Works locally**: Run everything on your machine with local AI models via Ollama, or use cloud providers.
+- **Multi-provider LLM support**: Works with OpenAI, Anthropic, Gemini, OpenRouter, DeepSeek, and Ollama.
+- **Resume Tailoring**: Automatically optimize your resume for specific job descriptions.
+- **Keyword Optimization**: Align your resume with job keywords and highlight relevant experience.
+- **Guided Improvements**: Get actionable suggestions to make your resume stand out.
 
 ### Roadmap
 
@@ -68,21 +68,28 @@ If you have any suggestions or feature requests, please feel free to open an iss
 
 ![Installation](assets/how_to_install_resumematcher.png)
 
-Follow the instructions in the [SETUP.md](SETUP.md) file to set up the project locally. The setup script will install all the necessary dependencies and configure your environment.
+Follow the instructions in the [INSTALL.md](INSTALL.md) file to set up the project locally.
 
-The project is built using:
+**Quick Start:**
 
-- FastAPI for the backend.
-- Next.js for the frontend.
-- Ollama for local AI model serving.
-- Tailwind CSS for styling.
-- SQLite for the database.
+```bash
+# Backend
+cd apps/backend && cp .env.sample .env && uv sync
+uv run uvicorn app.main:app --reload --port 8000
 
-| Technology   | Info/Version                               |
-|--------------|---------------------------------------|
-| Python      | 3.12+                   |
-| Next.js      | 15+                   |
-| Ollama       |        0.6.7        |
+# Frontend (new terminal)
+cd apps/frontend && npm install && npm run dev
+```
+
+### Tech Stack
+
+| Component | Technology |
+|-----------|------------|
+| Backend | FastAPI, Python 3.11+ |
+| Frontend | Next.js 15, React 19 |
+| Database | TinyDB |
+| LLM | LiteLLM (OpenAI, Anthropic, Ollama, etc.) |
+| Styling | Tailwind CSS 4 |
 
 ## Join Us and Contribute
 

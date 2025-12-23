@@ -34,7 +34,14 @@ import {
 
 type Status = 'idle' | 'loading' | 'saving' | 'saved' | 'error' | 'testing';
 
-const PROVIDERS: LLMProvider[] = ['openai', 'anthropic', 'openrouter', 'gemini', 'deepseek', 'ollama'];
+const PROVIDERS: LLMProvider[] = [
+  'openai',
+  'anthropic',
+  'openrouter',
+  'gemini',
+  'deepseek',
+  'ollama',
+];
 
 export default function SettingsPage() {
   const [status, setStatus] = useState<Status>('loading');
@@ -85,7 +92,9 @@ export default function SettingsPage() {
     }
 
     loadData();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Handle provider change
@@ -174,7 +183,7 @@ export default function SettingsPage() {
           <div>
             <h1 className="font-serif text-3xl font-bold tracking-tight">SETTINGS</h1>
             <p className="font-mono text-xs text-gray-500 mt-2 uppercase tracking-wider">
-              // SYSTEM CONFIGURATION
+              {'// SYSTEM CONFIGURATION'}
             </p>
           </div>
           <Link href="/dashboard">
@@ -191,7 +200,9 @@ export default function SettingsPage() {
             <div className="flex items-center justify-between border-b border-black/10 pb-2">
               <div className="flex items-center gap-2">
                 <Activity className="w-4 h-4" />
-                <h2 className="font-mono text-sm font-bold uppercase tracking-wider">System Status</h2>
+                <h2 className="font-mono text-sm font-bold uppercase tracking-wider">
+                  System Status
+                </h2>
               </div>
               <Button
                 variant="ghost"
@@ -310,7 +321,9 @@ export default function SettingsPage() {
           <section className="space-y-6">
             <div className="flex items-center gap-2 border-b border-black/10 pb-2">
               <Key className="w-4 h-4" />
-              <h2 className="font-mono text-sm font-bold uppercase tracking-wider">LLM Configuration</h2>
+              <h2 className="font-mono text-sm font-bold uppercase tracking-wider">
+                LLM Configuration
+              </h2>
             </div>
 
             <div className="grid gap-6">
@@ -355,7 +368,8 @@ export default function SettingsPage() {
               {/* API Key Input */}
               <div className="space-y-2">
                 <Label htmlFor="apiKey">
-                  API Key {!requiresApiKey && <span className="text-gray-400">(Optional for Ollama)</span>}
+                  API Key{' '}
+                  {!requiresApiKey && <span className="text-gray-400">(Optional for Ollama)</span>}
                 </Label>
                 <Input
                   id="apiKey"

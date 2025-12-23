@@ -1,5 +1,12 @@
 import React from 'react';
-import { ResumeData, PersonalInfo, Experience, Education, Project, AdditionalInfo } from '@/components/dashboard/resume-component';
+import {
+  ResumeData,
+  PersonalInfo,
+  Experience,
+  Education,
+  Project,
+  AdditionalInfo,
+} from '@/components/dashboard/resume-component';
 import { PersonalInfoForm } from './forms/personal-info-form';
 import { SummaryForm } from './forms/summary-form';
 import { ExperienceForm } from './forms/experience-form';
@@ -8,90 +15,76 @@ import { ProjectsForm } from './forms/projects-form';
 import { AdditionalForm } from './forms/additional-form';
 
 interface ResumeFormProps {
-    resumeData: ResumeData;
-    onUpdate: (data: ResumeData) => void;
+  resumeData: ResumeData;
+  onUpdate: (data: ResumeData) => void;
 }
 
 export const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, onUpdate }) => {
-    
-    const handlePersonalInfoChange = (newPersonalInfo: PersonalInfo) => {
-        onUpdate({
-            ...resumeData,
-            personalInfo: newPersonalInfo,
-        });
-    };
+  const handlePersonalInfoChange = (newPersonalInfo: PersonalInfo) => {
+    onUpdate({
+      ...resumeData,
+      personalInfo: newPersonalInfo,
+    });
+  };
 
-    const handleSummaryChange = (newSummary: string) => {
-        onUpdate({
-            ...resumeData,
-            summary: newSummary,
-        });
-    };
+  const handleSummaryChange = (newSummary: string) => {
+    onUpdate({
+      ...resumeData,
+      summary: newSummary,
+    });
+  };
 
-    const handleExperienceChange = (newExperience: Experience[]) => {
-        onUpdate({
-            ...resumeData,
-            workExperience: newExperience,
-        });
-    };
+  const handleExperienceChange = (newExperience: Experience[]) => {
+    onUpdate({
+      ...resumeData,
+      workExperience: newExperience,
+    });
+  };
 
-    const handleEducationChange = (newEducation: Education[]) => {
-        onUpdate({
-            ...resumeData,
-            education: newEducation,
-        });
-    };
+  const handleEducationChange = (newEducation: Education[]) => {
+    onUpdate({
+      ...resumeData,
+      education: newEducation,
+    });
+  };
 
-    const handleProjectsChange = (newProjects: Project[]) => {
-        onUpdate({
-            ...resumeData,
-            personalProjects: newProjects,
-        });
-    };
+  const handleProjectsChange = (newProjects: Project[]) => {
+    onUpdate({
+      ...resumeData,
+      personalProjects: newProjects,
+    });
+  };
 
-    const handleAdditionalChange = (newAdditional: AdditionalInfo) => {
-        onUpdate({
-            ...resumeData,
-            additional: newAdditional,
-        });
-    };
+  const handleAdditionalChange = (newAdditional: AdditionalInfo) => {
+    onUpdate({
+      ...resumeData,
+      additional: newAdditional,
+    });
+  };
 
-    return (
-        <div className="space-y-6 pb-20">
-            <PersonalInfoForm 
-                data={resumeData.personalInfo || {}} 
-                onChange={handlePersonalInfoChange} 
-            />
-            
-            <SummaryForm 
-                value={resumeData.summary || ''} 
-                onChange={handleSummaryChange} 
-            />
+  return (
+    <div className="space-y-6 pb-20">
+      <PersonalInfoForm data={resumeData.personalInfo || {}} onChange={handlePersonalInfoChange} />
 
-            <ExperienceForm 
-                data={resumeData.workExperience || []} 
-                onChange={handleExperienceChange} 
-            />
+      <SummaryForm value={resumeData.summary || ''} onChange={handleSummaryChange} />
 
-            <EducationForm 
-                data={resumeData.education || []} 
-                onChange={handleEducationChange} 
-            />
+      <ExperienceForm data={resumeData.workExperience || []} onChange={handleExperienceChange} />
 
-            <ProjectsForm 
-                data={resumeData.personalProjects || []} 
-                onChange={handleProjectsChange} 
-            />
+      <EducationForm data={resumeData.education || []} onChange={handleEducationChange} />
 
-            <AdditionalForm 
-                data={resumeData.additional || { 
-                    technicalSkills: [], 
-                    languages: [], 
-                    certificationsTraining: [], 
-                    awards: [] 
-                }} 
-                onChange={handleAdditionalChange} 
-            />
-        </div>
-    );
+      <ProjectsForm data={resumeData.personalProjects || []} onChange={handleProjectsChange} />
+
+      <AdditionalForm
+        data={
+          resumeData.additional || {
+            technicalSkills: [],
+            languages: [],
+            certificationsTraining: [],
+            awards: [],
+          }
+        }
+        onChange={handleAdditionalChange}
+      />
+    </div>
+  );
 };
