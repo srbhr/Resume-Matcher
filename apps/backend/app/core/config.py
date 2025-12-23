@@ -6,14 +6,27 @@ from typing import List, Optional, Literal
 
 
 _BACKEND_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir))
-_DEFAULT_DB_PATH = os.path.join(_BACKEND_ROOT, "app.db")
+
+def get_base_path():
+    if getattr(sys, 'frozen', False):
+        return os.path.dirname(sys.executable)
+    return _BACKEND_ROOT
+
+_BASE_PATH = get_base_path()
+_DEFAULT_DB_PATH = os.path.join(_BASE_PATH, "app.db")
+
+
+def get_frontend_path():
+    if getattr(sys, 'frozen', False):
+        return os.path.join(sys._MEIPASS, "static_ui")
+    return os.path.join(_BACKEND_ROOT, "static_ui")
 
 
 class Settings(BaseSettings):
     # The defaults here provide a fully working local configuration so new
     # contributors can run the stack without editing environment variables.
     PROJECT_NAME: str = "Resume Matcher"
-    FRONTEND_PATH: str = os.path.join(os.path.dirname(__file__), "frontend", "assets")
+    FRONTEND_PATH: str = get_frontend_path()
     ALLOWED_ORIGINS: List[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
     DB_ECHO: bool = False
     PYTHONDONTWRITEBYTECODE: int = 1
@@ -30,8 +43,9 @@ class Settings(BaseSettings):
     EMBEDDING_MODEL: Optional[str] = "dengcao/Qwen3-Embedding-0.6B:Q8_0"
 
     model_config = SettingsConfigDict(
-        env_file=os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, ".env"),
+        env_file=os.path.join(_BASE_PATH, ".env"),
         env_file_encoding="utf-8",
+        extra="ignore"
     )
 
 

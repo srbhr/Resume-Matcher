@@ -32,7 +32,7 @@ MANIFEST
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
 *.manifest
-*.spec
+# *.spec
 
 # Installer logs
 pip-log.txt
@@ -193,4 +193,14 @@ next-env.d.ts
 # db
 app.db-shm
 app.db-wal
+
+# Build artifacts and temporary files
+venv_light/
+build_temp*/
+static_ui/
+build_debug.txt
+build_log.txt
+debug_log.txt
+test_docx_dependencies.py
+install_docx_deps.py
 

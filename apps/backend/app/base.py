@@ -56,14 +56,14 @@ def create_app() -> FastAPI:
     app.add_exception_handler(RequestValidationError, validation_exception_handler)
     app.add_exception_handler(Exception, unhandled_exception_handler)
 
-    if os.path.exists(settings.FRONTEND_PATH):
-        app.mount(
-            "/app",
-            StaticFiles(directory=settings.FRONTEND_PATH, html=True),
-            name=settings.PROJECT_NAME,
-        )
-
     app.include_router(health_check)
     app.include_router(v1_router)
+
+    if os.path.exists(settings.FRONTEND_PATH):
+        app.mount(
+            "/",
+            StaticFiles(directory=settings.FRONTEND_PATH, html=True),
+            name="static_ui",
+        )
 
     return app
