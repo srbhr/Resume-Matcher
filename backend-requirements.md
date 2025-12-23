@@ -109,7 +109,7 @@ GET /api/v1/resumes?resume_id=<uuid>
     },
     "processed_resume": {
       "personalInfo": {
-        "fullName": "John Doe",
+        "name": "John Doe",
         "title": "Senior Software Engineer",
         "email": "john@example.com",
         "phone": "+1-555-0100",
@@ -121,11 +121,12 @@ GET /api/v1/resumes?resume_id=<uuid>
       "summary": "Experienced software engineer with 10+ years...",
       "workExperience": [
         {
+          "id": 1,
+          "title": "Senior Engineer",
           "company": "Tech Corp",
-          "role": "Senior Engineer",
-          "startYear": "2020",
-          "endYear": "Present",
-          "descriptions": [
+          "location": "San Francisco, CA",
+          "years": "2020 - Present",
+          "description": [
             "Led team of 5 engineers",
             "Increased performance by 40%"
           ]
@@ -133,28 +134,28 @@ GET /api/v1/resumes?resume_id=<uuid>
       ],
       "education": [
         {
+          "id": 1,
           "institution": "MIT",
           "degree": "BS Computer Science",
-          "startYear": "2010",
-          "endYear": "2014",
+          "years": "2010 - 2014",
           "description": "Magna Cum Laude"
         }
       ],
       "personalProjects": [
         {
+          "id": 1,
           "name": "Open Source Tool",
           "role": "Creator",
-          "startYear": "2022",
-          "endYear": "Present",
-          "descriptions": [
+          "years": "2022 - Present",
+          "description": [
             "Built CLI tool with 1000+ stars"
           ]
         }
       ],
       "additional": {
-        "skills": ["Python", "TypeScript", "React"],
+        "technicalSkills": ["Python", "TypeScript", "React"],
         "languages": ["English", "Spanish"],
-        "certifications": ["AWS Solutions Architect"],
+        "certificationsTraining": ["AWS Solutions Architect"],
         "awards": ["Best Engineer 2023"]
       },
       "processed_at": "2025-01-15T10:35:00Z"
@@ -297,7 +298,7 @@ Content-Type: application/json
     "new_score": 95,
     "resume_preview": {
       "personalInfo": {
-        "fullName": "John Doe",
+        "name": "John Doe",
         "title": "Senior Software Engineer",
         "email": "john@example.com",
         "phone": "+1-555-0100",
@@ -311,9 +312,9 @@ Content-Type: application/json
       "education": [...],
       "personalProjects": [...],
       "additional": {
-        "skills": [...],
+        "technicalSkills": [...],
         "languages": [...],
-        "certifications": [...],
+        "certificationsTraining": [...],
         "awards": [...]
       }
     },
@@ -456,7 +457,7 @@ Content-Type: application/json
 ### PersonalInfo
 ```typescript
 interface PersonalInfo {
-  fullName: string
+  name: string
   title: string
   email: string
   phone: string
@@ -470,21 +471,22 @@ interface PersonalInfo {
 ### Experience
 ```typescript
 interface Experience {
+  id: number
+  title: string           // Job title/role
   company: string
-  role: string
-  startYear: string
-  endYear: string
-  descriptions: string[]
+  location?: string
+  years: string           // e.g., "2020 - Present"
+  description: string[]   // Bullet points
 }
 ```
 
 ### Education
 ```typescript
 interface Education {
+  id: number
   institution: string
   degree: string
-  startYear: string
-  endYear: string
+  years: string           // e.g., "2014 - 2018"
   description?: string
 }
 ```
@@ -492,20 +494,20 @@ interface Education {
 ### Project
 ```typescript
 interface Project {
+  id: number
   name: string
   role: string
-  startYear: string
-  endYear: string
-  descriptions: string[]
+  years: string           // e.g., "2022 - Present"
+  description: string[]   // Bullet points
 }
 ```
 
 ### AdditionalInfo
 ```typescript
 interface AdditionalInfo {
-  skills: string[]
+  technicalSkills: string[]
   languages: string[]
-  certifications: string[]
+  certificationsTraining: string[]
   awards: string[]
 }
 ```
