@@ -1,24 +1,59 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-- `apps/backend/app` contains the FastAPI stack: `agent/` for wrappers, `services/` for orchestration (see `score_improvement_service.py`), `prompt/` for LLM prompts, and `schemas/` for JSON/Pydantic contracts.
-- `apps/frontend` hosts the Next.js dashboard (`app/` routes, shared `components/`, utility `lib/`); keep reusable UI logic in `lib/` and scope feature code to the route directory. Refer to `.frontend-workflow.md` for the detailed user flow and `.front-end-apis.md` for the API contract.
-- Root tooling sits beside this file: `Makefile`, `setup.sh`, and `package.json` coordinate workflows; `docs/CONFIGURING.md` and `assets/` hold configuration notes.
+
+### Backend (`apps/backend/`)
+A lean FastAPI application with multi-provider AI support. See **[.backend-guide.md](.backend-guide.md)** for detailed architecture documentation.
+
+- `app/main.py` - FastAPI entry point with CORS and router setup
+- `app/config.py` - Pydantic settings loaded from environment
+- `app/database.py` - TinyDB wrapper for JSON storage
+- `app/llm.py` - LiteLLM wrapper supporting OpenAI, Anthropic, OpenRouter, Gemini, DeepSeek, Ollama
+- `app/routers/` - API endpoints (health, config, resumes, jobs)
+- `app/services/` - Business logic (parser, improver)
+- `app/schemas/` - Pydantic models matching frontend contracts
+- `app/prompts/` - LLM prompt templates
+
+### Frontend (`apps/frontend/`)
+Next.js dashboard with Swiss International Style design. See **[.frontend-workflow.md](.frontend-workflow.md)** for user flow and **[.front-end-apis.md](.front-end-apis.md)** for API contracts.
+
+- `app/` - Next.js routes (dashboard, builder, tailor, resumes, settings)
+- `components/` - Reusable UI components
+- `lib/` - API clients and utilities
+- `hooks/` - Custom React hooks
+
+### Root Tooling
+- `Makefile`, `setup.sh`, `package.json` - Workflow coordination
+- `backend-requirements.md` - API contract specifications
+- `.style-guide.md` - Swiss International Style design system
 
 ## Build, Test, and Development Commands
 - `npm run install` provisions the frontend and, via `uv`, the backend virtual environment.
 - `make run-dev` (or `npm run dev`) launches FastAPI on `:8000` and the UI on `:3000`; use `npm run dev:backend` or `npm run dev:frontend` to focus on a single tier.
 - Production builds: `npm run build` for both stacks, `npm run build:frontend` for UI-only, and `make build-prod` for a Makefile-driven bundle.
-- Quality checks: `npm run lint` for the UI, `npm run format` to apply Prettier, and `uv run python apps/backend/test_docx_dependencies.py` when validating DOCX support.
+- Quality checks: `npm run lint` for the UI, `npm run format` to apply Prettier.
 
 ## Coding Style & Naming Conventions
-- **Design System**: All frontend UI changes MUST strictly follow the **Swiss International Style** guidelines defined in `.style-guide.md`.
-    - Use `font-serif` for headers, `font-mono` for metadata, and `font-sans` for body text.
-    - Stick to the color palette: `#F0F0E8` (Canvas), `#000000` (Ink), `#1D4ED8` (Hyper Blue).
-    - Components should be `rounded-none` with 1px black borders and hard shadows.
-- Python uses 4-space indents, type hints, and descriptive async names; mirror the patterns in `apps/backend/app/services/score_improvement_service.py` and document side effects in docstrings.
-- Frontend code is TypeScript-first. Use PascalCase for components, camelCase for helpers, Tailwind utility classes for styling, and run Prettier before committing.
-- Environment files should match the samples (`apps/backend/.env`, `apps/frontend/.env.local`); only the templates belong in Git.
+
+### Frontend (TypeScript/React)
+- **Design System**: All UI changes MUST follow the **Swiss International Style** in `.style-guide.md`.
+    - Use `font-serif` for headers, `font-mono` for metadata, `font-sans` for body text.
+    - Color palette: `#F0F0E8` (Canvas), `#000000` (Ink), `#1D4ED8` (Hyper Blue).
+    - Components: `rounded-none` with 1px black borders and hard shadows.
+- Use PascalCase for components, camelCase for helpers.
+- Tailwind utility classes for styling; run Prettier before committing.
+
+### Backend (Python/FastAPI)
+- Python 3.11+, 4-space indents, type hints on all functions.
+- Async functions for I/O operations (database, LLM calls).
+- Mirror patterns in `app/services/improver.py` for new services.
+- Pydantic models for all request/response schemas.
+- Prompts go in `app/prompts/templates.py`.
+
+### Environment Files
+- Backend: Copy `apps/backend/.env.example` to `.env`
+- Frontend: Copy to `apps/frontend/.env.local`
+- Only templates (`.example`, `.env.local.example`) belong in Git.
 
 ## Testing Guidelines
 - UI contributions must pass `npm run lint`; add Jest or Playwright suites beneath `apps/frontend/__tests__/` named `*.test.tsx` as functionality expands.
@@ -29,6 +64,9 @@
 - Reference issues (`Fixes #123`) and call out schema or prompt changes in the PR description so reviewers can smoke-test downstream agents.
 - List local verification commands and attach screenshots for UI or API changes.
 
-## Agent Workflow Notes
-- Register new agents in `apps/backend/app/agent/manager.py`, pair prompts under `apps/backend/app/prompt/`, and update both JSON and Pydantic schemas in `apps/backend/app/schemas/`.
-- After prompt or embedding tweaks, rerun `ScoreImprovementService.run` locally to confirm score deltas and preview rendering remain stable.
+## LLM & AI Workflow Notes
+- **Multi-Provider Support**: Backend uses LiteLLM to support OpenAI, Anthropic, OpenRouter, Gemini, DeepSeek, and Ollama through a unified API.
+- **Adding Prompts**: Add new prompt templates to `apps/backend/app/prompts/templates.py`.
+- **Prompt Changes**: After modifying prompts, test the improvement flow end-to-end to verify score calculations and resume output quality.
+- **Provider Configuration**: Users configure their preferred AI provider via the Settings page (`/settings`) or `PUT /api/v1/config/llm-api-key`.
+- **Health Checks**: The `/api/v1/status` endpoint validates LLM connectivity on app startup.
