@@ -2,10 +2,6 @@ import React from 'react';
 import Link from 'next/link';
 
 export default function Hero() {
-	// 1. Define the shared button class so we don't repeat this mess 3 times.
-	// Added: hover:-translate-y-1 (lifts up)
-	// Added: hover:shadow-[4px_4px_0px_0px_#1d4ed8] (hard blue shadow)
-	// Added: active:translate-y-0 active:shadow-none (press effect)
 	const buttonClass = "group relative border border-blue-700 bg-transparent px-8 py-3 font-mono text-sm font-bold uppercase text-blue-700 transition-all duration-200 ease-in-out hover:bg-blue-700 hover:text-[#F0F0E8] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[4px_4px_0px_0px_#000000] active:translate-x-0 active:translate-y-0 active:shadow-none cursor-pointer";
 
 	return (
@@ -17,7 +13,7 @@ export default function Hero() {
 				backgroundSize: '40px 40px',
 			}}
 		>
-			{/* Added: shadow-[16px_16px_0px_0px_rgba(29,78,216,0.2)] to the main container for depth */}
+
 			<div className="flex h-full w-full flex-col items-center justify-center border border-blue-700 text-blue-700 bg-[#F0F0E8] shadow-[12px_12px_0px_0px_rgba(29,78,216,0.2)]">
 				<h1 className="mb-12 text-center font-mono text-6xl font-bold uppercase leading-none tracking-tighter md:text-8xl lg:text-9xl selection:bg-blue-700 selection:text-white">
 					Resume

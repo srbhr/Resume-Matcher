@@ -1,9 +1,16 @@
 import React from 'react';
+import { Settings } from 'lucide-react';
 
 export const SwissGrid = ({ children }: { children: React.ReactNode }) => {
     return (
         // 1. Outer Wrapper: Matches your Layout background #F0F0E8
-        <div className="min-h-screen w-full bg-[#F0F0E8] flex justify-center items-start py-12 px-4 md:px-8">
+        <div 
+            className="min-h-screen w-full bg-[#F0F0E8] flex justify-center items-start py-12 px-4 md:px-8"
+            style={{
+                backgroundImage: 'linear-gradient(rgba(29, 78, 216, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(29, 78, 216, 0.1) 1px, transparent 1px)',
+                backgroundSize: '40px 40px',
+            }}
+        >
 
             {/* 2. The Main Container: Sharp black borders, creating the "Canvas" */}
             <div className="w-full max-w-6xl border border-black bg-[#F0F0E8] shadow-[8px_8px_0px_0px_rgba(0,0,0,0.1)]">
@@ -21,11 +28,12 @@ export const SwissGrid = ({ children }: { children: React.ReactNode }) => {
                     </div>
 
                     {/* Status Corner */}
-                    <div className="col-span-1 p-6 flex flex-col justify-between border-black bg-blue-700 text-[#F0F0E8]">
-                        <div className="w-4 h-4 bg-[#F0F0E8] rounded-full animate-pulse"></div>
-                        <div className="text-right">
-                            <span className="block font-mono text-xs opacity-80 uppercase">User</span>
-                            <span className="block font-mono text-sm font-bold">Saurabh</span>
+                    <div className="col-span-1 p-6 flex flex-col justify-end border-black bg-blue-700 text-[#F0F0E8] hover:bg-blue-800 transition-colors cursor-pointer group">
+                        <div className="flex justify-between items-end w-full">
+                            <Settings className="w-6 h-6 group-hover:rotate-90 transition-transform duration-500" />
+                            <div className="text-right">
+                                <span className="block font-mono text-sm font-bold uppercase">Settings</span>
+                            </div>
                         </div>
                     </div>
                 </div>
