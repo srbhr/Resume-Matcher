@@ -128,18 +128,10 @@ response = await litellm.acompletion(
 
 ## HIGH PRIORITY (Fix Soon)
 
-### 6. ~~Fake Improvement Scores~~ ✅ FIXED
-**File:** `apps/backend/app/routers/resumes.py:184-187`
+### 6. ~~Fake Improvement Scores~~ ✅ REMOVED
+**File:** `apps/backend/app/routers/resumes.py`
 
-**Problem:** Forces score improvement even when LLM didn't improve resume
-```python
-if new_score <= original_score:
-    new_score = min(original_score + 15, 100)  # Always +15!
-```
-
-**Impact:** Dishonest scoring undermines user trust
-
-**Fix:** Return honest scores, add explanation when no improvement detected
+**Resolution:** Scoring feature completely removed from v1 release. Resume improvement now focuses on keyword alignment without numeric scores.
 
 ---
 

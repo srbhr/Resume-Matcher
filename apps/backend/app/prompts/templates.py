@@ -86,41 +86,6 @@ Job Description:
 {job_description}
 ```"""
 
-SCORE_RESUME_PROMPT = """You are an ATS (Applicant Tracking System) expert. Score how well this resume matches the job requirements.
-
-Consider:
-1. Keyword matches (exact and semantic)
-2. Experience alignment
-3. Skills coverage
-4. Education fit
-
-Return a JSON object:
-{{
-  "score": <integer 0-100>,
-  "matched_skills": ["skill1", "skill2"],
-  "missing_skills": ["skill1", "skill2"],
-  "strengths": ["strength1", "strength2"],
-  "gaps": ["gap1", "gap2"],
-  "skill_comparison": [
-    {{
-      "skill": "skill name",
-      "requiredLevel": "Expert/Advanced/Intermediate/Basic",
-      "currentLevel": "Expert/Advanced/Intermediate/Basic/None",
-      "gap": "description of gap or 'No gap'"
-    }}
-  ]
-}}
-
-Job Keywords:
-```
-{job_keywords}
-```
-
-Resume:
-```
-{resume_text}
-```"""
-
 IMPROVE_RESUME_PROMPT = """You are an expert resume editor and talent acquisition specialist. Your task is to revise the following resume so that it aligns as closely as possible with the provided job description and extracted job keywords.
 
 Instructions:
@@ -133,9 +98,6 @@ Instructions:
 - Maintain a natural, professional tone and avoid keyword stuffing.
 - Use quantifiable achievements already present and action verbs to make impact clear.
 - When a requirement is missing, highlight adjacent or transferable elements and frame them with the job's terminology.
-
-Current Match Score: {current_score}/100
-Target: Improve the score by addressing gaps while staying truthful to the original content.
 
 Job Description:
 ```

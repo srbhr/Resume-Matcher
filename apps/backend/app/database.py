@@ -142,10 +142,7 @@ class Database:
         original_resume_id: str,
         tailored_resume_id: str,
         job_id: str,
-        original_score: int,
-        new_score: int,
         improvements: list[dict[str, Any]],
-        skill_comparison: list[dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
         """Create an improvement result entry."""
         request_id = str(uuid4())
@@ -156,10 +153,7 @@ class Database:
             "original_resume_id": original_resume_id,
             "tailored_resume_id": tailored_resume_id,
             "job_id": job_id,
-            "original_score": original_score,
-            "new_score": new_score,
             "improvements": improvements,
-            "skill_comparison": skill_comparison or [],
             "created_at": now,
         }
         self.improvements.insert(doc)

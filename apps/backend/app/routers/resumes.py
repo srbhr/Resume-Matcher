@@ -24,7 +24,6 @@ from app.services.improver import (
     extract_job_keywords,
     generate_improvements,
     improve_resume,
-    score_resume,
 )
 
 router = APIRouter(prefix="/resumes", tags=["Resumes"])
@@ -147,8 +146,8 @@ async def improve_resume_endpoint(
 ) -> ImproveResumeResponse:
     """Improve/tailor a resume for a specific job description.
 
-    Uses LLM to analyze the job, score the resume, and generate
-    an optimized version with improvement suggestions.
+    Uses LLM to analyze the job and generate an optimized resume version
+    with improvement suggestions.
     """
     # Fetch resume
     resume = db.get_resume(request.resume_id)
@@ -164,41 +163,18 @@ async def improve_resume_endpoint(
         # Extract keywords from job description
         job_keywords = await extract_job_keywords(job["content"])
 
-        # Score original resume
-        original_score_result = await score_resume(
-            resume["content"], job_keywords
-        )
-        original_score = original_score_result.get("score", 50)
-
         # Generate improved resume
         improved_data = await improve_resume(
             original_resume=resume["content"],
             job_description=job["content"],
-            current_score=original_score,
             job_keywords=job_keywords,
         )
 
-        # Convert improved data to markdown for re-scoring
+        # Convert improved data to JSON string for storage
         improved_text = json.dumps(improved_data, indent=2)
 
-        # Score improved resume
-        new_score_result = await score_resume(improved_text, job_keywords)
-        new_score = new_score_result.get("score", original_score)
-
-        # Validate score is in valid range
-        new_score = max(0, min(100, new_score))
-
-        # Log if no improvement detected (for monitoring)
-        if new_score <= original_score:
-            logger.info(
-                f"Resume improvement did not increase score: "
-                f"{original_score} -> {new_score} for resume {request.resume_id}"
-            )
-
         # Generate improvement suggestions
-        improvements = await generate_improvements(
-            original_score_result, new_score_result
-        )
+        improvements = generate_improvements(job_keywords)
 
         # Store the tailored resume
         tailored_resume = db.create_resume(
@@ -216,10 +192,7 @@ async def improve_resume_endpoint(
             original_resume_id=request.resume_id,
             tailored_resume_id=tailored_resume["resume_id"],
             job_id=request.job_id,
-            original_score=original_score,
-            new_score=new_score,
             improvements=improvements,
-            skill_comparison=new_score_result.get("skill_comparison", []),
         )
 
         return ImproveResumeResponse(
@@ -228,14 +201,11 @@ async def improve_resume_endpoint(
                 request_id=request_id,
                 resume_id=tailored_resume["resume_id"],
                 job_id=request.job_id,
-                original_score=original_score,
-                new_score=new_score,
                 resume_preview=ResumeData.model_validate(improved_data),
                 improvements=[
                     {"suggestion": imp["suggestion"], "lineNumber": imp.get("lineNumber")}
                     for imp in improvements
                 ],
-                skill_comparison=new_score_result.get("skill_comparison", []),
                 markdownOriginal=resume["content"],
                 markdownImproved=improved_text,
             ),

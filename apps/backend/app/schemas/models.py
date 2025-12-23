@@ -134,26 +134,14 @@ class ImprovementSuggestion(BaseModel):
     lineNumber: int | None = None
 
 
-class SkillComparison(BaseModel):
-    """Skill gap analysis entry."""
-
-    skill: str
-    requiredLevel: str
-    currentLevel: str
-    gap: str
-
-
 class ImproveResumeData(BaseModel):
     """Data payload for improve response."""
 
     request_id: str
     resume_id: str
     job_id: str
-    original_score: int
-    new_score: int
     resume_preview: ResumeData
     improvements: list[ImprovementSuggestion]
-    skill_comparison: list[SkillComparison] = Field(default_factory=list)
     markdownOriginal: str | None = None
     markdownImproved: str | None = None
 

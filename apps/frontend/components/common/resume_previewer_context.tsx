@@ -45,12 +45,6 @@ export interface AdditionalInfo {
     awards: string[];
 }
 
-export interface SkillComparisonEntry {
-    skill: string;
-    resume_mentions: number;
-    job_mentions: number;
-}
-
 export interface ResumePreview {
     personalInfo: PersonalInfo;
     summary?: string;
@@ -64,8 +58,6 @@ export interface Data {
     request_id: string;
     resume_id: string;
     job_id: string;
-    original_score: number;
-    new_score: number;
     resume_preview: ResumePreview;
     details?: string;
     commentary?: string;
@@ -77,7 +69,6 @@ export interface Data {
     updated_resume_markdown?: string;
     job_description?: string;
     job_keywords?: string;
-    skill_comparison?: SkillComparisonEntry[];
 }
 
 export interface ImprovedResult {
