@@ -38,7 +38,7 @@ Next.js dashboard with Swiss International Style design. See **[.frontend-workfl
 ### Frontend (TypeScript/React)
 - **Design System**: All UI changes MUST follow the **Swiss International Style** in `.style-guide.md`.
     - Use `font-serif` for headers, `font-mono` for metadata, `font-sans` for body text.
-    - Color palette: `#F0F0E8` (Canvas), `#000000` (Ink), `#1D4ED8` (Hyper Blue).
+    - Color palette: `#F0F0E8` (Canvas), `#000000` (Ink), `#1D4ED8` (Hyper Blue), `#15803D` (Signal Green), `#F97316` (Alert Orange), `#DC2626` (Alert Red), `#4B5563` (Steel Grey).
     - Components: `rounded-none` with 1px black borders and hard shadows.
 - Use PascalCase for components, camelCase for helpers.
 - Tailwind utility classes for styling; run Prettier before committing.

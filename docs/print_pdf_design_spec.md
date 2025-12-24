@@ -59,13 +59,16 @@ This is safe in Tailwind projects because it is **print-only**.
 - Force resume container to A4/Letter size.
 - Remove shadows, backgrounds, and grid textures.
 - Ensure content is real text (no SVG text).
+ - Scope print output to the `.resume-print` container (hide everything else via `visibility`).
 
 Example pattern:
 ```css
 @media print {
   body { background: #fff; }
   .no-print { display: none !important; }
-  .resume-print { width: 210mm; min-height: 297mm; }
+  body * { visibility: hidden !important; }
+  .resume-print, .resume-print * { visibility: visible !important; }
+  .resume-print { max-width: 210mm; min-height: 297mm; margin: 0 auto; }
   .resume-print * { box-shadow: none !important; }
 }
 ```
@@ -106,6 +109,8 @@ Mark UI controls with `.no-print` to hide them during print.
 Add:
 - `template` prop or `data-template` attribute.
 - `resume-print` class on outer container.
+- `resume-body` class on the resume content wrapper.
+- `resume-scale` class for any on-screen scaling that should be removed in print.
 
 ### Viewer Page
 Add:
@@ -135,4 +140,3 @@ Browser print is the **best minimal solution** for offline ATS-friendly PDFs:
 - Compatible with template system and Swiss design rules.
 
 If future requirements demand pixel-perfect, cross-browser fidelity, a bundled headless renderer may be considered — but it adds significant weight.
-

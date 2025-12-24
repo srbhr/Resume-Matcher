@@ -139,13 +139,24 @@
     color: #000000 !important;
   }
 
+  body * {
+    visibility: hidden !important;
+  }
+
   .no-print {
     display: none !important;
   }
 
+  .resume-print,
+  .resume-print * {
+    visibility: visible !important;
+  }
+
   .resume-print {
-    width: 210mm !important;
+    width: 100% !important;
+    max-width: 210mm !important;
     min-height: 297mm !important;
+    position: static !important;
     margin: 0 auto !important;
     border: none !important;
     box-shadow: none !important;
@@ -158,8 +169,18 @@
     background: #ffffff !important;
   }
 
+  .resume-scale {
+    transform: none !important;
+    scale: 1 !important;
+  }
+
   a {
     color: #000000 !important;
     text-decoration: none !important;
   }
+}
+
+@page {
+  size: A4;
+  margin: 10mm;
 }

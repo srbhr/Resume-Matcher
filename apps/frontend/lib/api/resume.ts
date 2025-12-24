@@ -140,3 +140,20 @@ export async function fetchResumeList(includeMaster = false): Promise<ResumeList
   const payload = (await res.json()) as { data: ResumeListItem[] };
   return payload.data;
 }
+
+export async function updateResume(
+  resumeId: string,
+  resumeData: ProcessedResume
+): Promise<ResumeResponse['data']> {
+  const res = await fetch(`${API_URL}/api/v1/resumes/${encodeURIComponent(resumeId)}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(resumeData),
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Failed to update resume (status ${res.status}): ${text}`);
+  }
+  const payload = (await res.json()) as ResumeResponse;
+  return payload.data;
+}

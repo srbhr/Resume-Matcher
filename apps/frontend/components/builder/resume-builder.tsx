@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useState, useRef, useEffect, Suspense, useCallback } from 'react';
+import React, { useState, useEffect, Suspense, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Resume, { ResumeData } from '@/components/dashboard/resume-component';
 import { ResumeForm } from './resume-form';
 import { Button } from '@/components/ui/button';
-import { Download, Save, Upload, AlertTriangle, ArrowLeft } from 'lucide-react';
+import { Download, Save, AlertTriangle, ArrowLeft, RotateCcw } from 'lucide-react';
 import { useResumePreview } from '@/components/common/resume_previewer_context';
-import { fetchResume } from '@/lib/api/resume';
+import { fetchResume, updateResume } from '@/lib/api/resume';
 
 const STORAGE_KEY = 'resume_builder_draft';
 
@@ -37,8 +37,9 @@ const INITIAL_DATA: ResumeData = {
 const ResumeBuilderContent = () => {
   const [resumeData, setResumeData] = useState<ResumeData>(INITIAL_DATA);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [lastSavedData, setLastSavedData] = useState<ResumeData>(INITIAL_DATA);
+  const [isSaving, setIsSaving] = useState(false);
   const [, setLoadingState] = useState<'idle' | 'loading' | 'loaded' | 'error'>('idle');
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const { improvedData } = useResumePreview();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -67,6 +68,7 @@ const ResumeBuilderContent = () => {
           // Prefer processed_resume if available
           if (data.processed_resume) {
             setResumeData(data.processed_resume as ResumeData);
+            setLastSavedData(data.processed_resume as ResumeData);
             setLoadingState('loaded');
             return;
           }
@@ -75,6 +77,7 @@ const ResumeBuilderContent = () => {
             try {
               const parsed = JSON.parse(data.raw_resume.content);
               setResumeData(parsed);
+              setLastSavedData(parsed);
               setLoadingState('loaded');
               return;
             } catch {
@@ -89,6 +92,7 @@ const ResumeBuilderContent = () => {
       // Priority 2: Improved Data from Context (Tailor Flow)
       if (improvedData?.data?.resume_preview) {
         setResumeData(improvedData.data.resume_preview);
+        setLastSavedData(improvedData.data.resume_preview);
         // Persist to localStorage as backup
         localStorage.setItem(STORAGE_KEY, JSON.stringify(improvedData.data.resume_preview));
         setLoadingState('loaded');
@@ -101,6 +105,7 @@ const ResumeBuilderContent = () => {
         try {
           const parsed = JSON.parse(savedDraft);
           setResumeData(parsed);
+          setLastSavedData(parsed);
           setHasUnsavedChanges(true); // Mark as unsaved since it's a draft
           setLoadingState('loaded');
           return;
@@ -123,46 +128,31 @@ const ResumeBuilderContent = () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(newData));
   }, []);
 
-  const handleSave = () => {
-    // TODO: Implement save to backend
-    // For now, clear unsaved changes flag since draft is auto-saved to localStorage
+  const handleSave = async () => {
+    if (!resumeId) {
+      alert('Save is only available when editing an existing resume.');
+      return;
+    }
+    try {
+      setIsSaving(true);
+      const updated = await updateResume(resumeId, resumeData);
+      const nextData = (updated.processed_resume || resumeData) as ResumeData;
+      setResumeData(nextData);
+      setLastSavedData(nextData);
+      setHasUnsavedChanges(false);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(nextData));
+    } catch (error) {
+      console.error('Failed to save resume:', error);
+      alert('Failed to save resume. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleReset = () => {
+    setResumeData(lastSavedData);
     setHasUnsavedChanges(false);
-    alert('Resume saved to local draft. Full save functionality coming soon!');
-  };
-
-  const handleExport = () => {
-    const dataStr = JSON.stringify(resumeData, null, 2);
-    const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
-    const exportFileDefaultName = 'resume-data.json';
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportFileDefaultName);
-    linkElement.click();
-  };
-
-  const handleImportClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const fileObj = event.target.files && event.target.files[0];
-    if (!fileObj) return;
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const text = e.target?.result;
-      if (typeof text === 'string') {
-        try {
-          const parsedData = JSON.parse(text);
-          setResumeData(parsedData);
-        } catch (error) {
-          console.error('Error parsing JSON:', error);
-          alert('Invalid JSON file');
-        }
-      }
-    };
-    reader.readAsText(fileObj);
-    event.target.value = '';
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(lastSavedData));
   };
 
   return (
@@ -177,7 +167,7 @@ const ResumeBuilderContent = () => {
       {/* Main Container */}
       <div className="w-full max-w-[90%] md:max-w-[95%] xl:max-w-[1800px] border border-black bg-[#F0F0E8] shadow-[8px_8px_0px_0px_rgba(0,0,0,0.1)] flex flex-col">
         {/* Header Section */}
-        <div className="border-b border-black p-8 md:p-12 flex flex-col md:flex-row justify-between items-start md:items-center bg-[#F0F0E8]">
+        <div className="border-b border-black p-8 md:p-12 flex flex-col md:flex-row justify-between items-start md:items-center bg-[#F0F0E8] no-print">
           <div>
             {/* Back Button */}
             <Button
@@ -206,38 +196,35 @@ const ResumeBuilderContent = () => {
           </div>
 
           <div className="flex gap-3 mt-6 md:mt-0">
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileChange}
-              className="hidden"
-              accept=".json"
-            />
             <Button
-              variant="outline"
               size="sm"
-              onClick={handleImportClick}
-              className="border-black rounded-none shadow-[2px_2px_0px_0px_#000000] hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none transition-all"
+              onClick={handleReset}
+              disabled={!hasUnsavedChanges}
+              className={`rounded-none border border-black shadow-[2px_2px_0px_0px_#000000] hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none transition-all ${
+                hasUnsavedChanges
+                  ? 'bg-[#F97316] text-black hover:bg-[#EA580C]'
+                  : 'bg-transparent text-gray-300'
+              }`}
             >
-              <Upload className="w-4 h-4 mr-2" />
-              Import JSON
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleExport}
-              className="border-black rounded-none shadow-[2px_2px_0px_0px_#000000] hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none transition-all"
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Export JSON
+              <RotateCcw className="w-4 h-4 mr-2" />
+              Reset
             </Button>
             <Button
               size="sm"
               onClick={handleSave}
+              disabled={!resumeId || isSaving}
               className="bg-blue-700 hover:bg-blue-800 text-white rounded-none border border-black shadow-[2px_2px_0px_0px_#000000] hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none transition-all"
             >
               <Save className="w-4 h-4 mr-2" />
-              Save
+              {isSaving ? 'Saving...' : 'Save'}
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => window.print()}
+              className="bg-green-700 text-white border-black rounded-none shadow-[2px_2px_0px_0px_#000000] hover:bg-green-800 hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none transition-all"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Download
             </Button>
           </div>
         </div>
@@ -245,7 +232,7 @@ const ResumeBuilderContent = () => {
         {/* Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 bg-black gap-[1px]">
           {/* Left Panel: Editor */}
-          <div className="bg-[#F0F0E8] p-6 md:p-8 h-[calc(100vh-300px)] overflow-y-auto">
+          <div className="bg-[#F0F0E8] p-6 md:p-8 h-[calc(100vh-300px)] overflow-y-auto no-print">
             <div className="max-w-3xl mx-auto space-y-8">
               <div className="flex items-center gap-2 border-b-2 border-black pb-2 mb-6">
                 <div className="w-3 h-3 bg-blue-700"></div>
@@ -259,15 +246,15 @@ const ResumeBuilderContent = () => {
 
           {/* Right Panel: Preview */}
           <div className="bg-[#E5E5E0] p-6 md:p-8 pb-10 h-[calc(100vh-300px)] overflow-y-auto relative flex flex-col items-center">
-            <div className="w-full max-w-3xl mb-6 flex items-center gap-2 border-b-2 border-gray-400 pb-2">
-              <div className="w-3 h-3 bg-gray-600"></div>
+            <div className="w-full max-w-3xl mb-6 flex items-center gap-2 border-b-2 border-gray-500 pb-2 no-print">
+              <div className="w-3 h-3 bg-green-700"></div>
               <h2 className="font-mono text-lg font-bold text-gray-600 uppercase tracking-wider">
                 Live Preview
               </h2>
             </div>
-            <div className="w-full max-w-[250mm] mb-4 shadow-[6px_6px_0px_0px_#000000] border-2 border-black bg-white">
+            <div className="resume-print w-full max-w-[250mm] mb-4 shadow-[6px_6px_0px_0px_#000000] border-2 border-black bg-white">
               {/* Resume component scale wrapper */}
-              <div className="origin-top scale-[0.75] md:scale-90 lg:scale-100">
+              <div className="resume-scale origin-top scale-[0.75] md:scale-90 lg:scale-100">
                 <Resume resumeData={resumeData} />
               </div>
             </div>
@@ -275,7 +262,7 @@ const ResumeBuilderContent = () => {
         </div>
 
         {/* Footer */}
-        <div className="p-4 bg-[#F0F0E8] flex justify-between items-center font-mono text-xs text-blue-700 border-t border-black">
+        <div className="p-4 bg-[#F0F0E8] flex justify-between items-center font-mono text-xs text-blue-700 border-t border-black no-print">
           <span className="uppercase font-bold">Resume Builder Module</span>
           <span>Ready to Process</span>
         </div>

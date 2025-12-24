@@ -11,6 +11,7 @@ The frontend is fully implemented and expects the following API endpoints:
 | `/api/v1/resumes/upload` | POST | Required | High |
 | `/api/v1/resumes` | GET | Required | High |
 | `/api/v1/resumes/list` | GET | Required | High |
+| `/api/v1/resumes/{id}` | PATCH | Required | High |
 | `/api/v1/jobs/upload` | POST | Required | High |
 | `/api/v1/resumes/improve` | POST | Required | High |
 | `/api/v1/config/llm-api-key` | GET | Required | Medium |
@@ -235,7 +236,24 @@ GET /api/v1/resumes/list?include_master=false
 }
 ```
 
-## 4. Upload Job Description Endpoint
+## 4. Update Resume Endpoint
+
+**Purpose:** Save edited resume JSON from the builder.
+
+### Request
+
+```
+PATCH /api/v1/resumes/{resume_id}
+Content-Type: application/json
+```
+
+**Request Body:** Same JSON schema as `processed_resume`.
+
+### Response (200 OK)
+
+Same response shape as **Fetch Resume Endpoint**.
+
+## 5. Upload Job Description Endpoint
 
 **Purpose:** Store job description text for use in resume tailoring.
 
@@ -301,7 +319,7 @@ Content-Type: application/json
 
 ---
 
-## 5. Improve/Tailor Resume Endpoint
+## 6. Improve/Tailor Resume Endpoint
 
 **Purpose:** Trigger AI agent to optimize resume against job description.
 
@@ -433,7 +451,7 @@ Content-Type: application/json
 
 ---
 
-## 6. LLM API Key Configuration Endpoints
+## 7. LLM API Key Configuration Endpoints
 
 **Purpose:** Manage OpenAI API key for LLM features.
 
@@ -487,7 +505,7 @@ Content-Type: application/json
 
 ---
 
-## 7. Data Type Definitions
+## 8. Data Type Definitions
 
 ### PersonalInfo
 ```typescript
@@ -561,7 +579,7 @@ interface ResumePreview {
 
 ---
 
-## 8. CORS Configuration
+## 9. CORS Configuration
 
 The frontend runs on `localhost:3000` and expects the backend on `localhost:8000`.
 
@@ -580,7 +598,7 @@ app.add_middleware(
 
 ---
 
-## 9. Frontend API Client Reference
+## 10. Frontend API Client Reference
 
 The frontend makes API calls from these files:
 
@@ -590,6 +608,7 @@ The frontend makes API calls from these files:
 | `lib/api/resume.ts` | `improveResume()` | POST /resumes/improve |
 | `lib/api/resume.ts` | `fetchResume()` | GET /resumes |
 | `lib/api/resume.ts` | `fetchResumeList()` | GET /resumes/list |
+| `lib/api/resume.ts` | `updateResume()` | PATCH /resumes/{id} |
 | `lib/api/config.ts` | `fetchLlmApiKey()` | GET /config/llm-api-key |
 | `lib/api/config.ts` | `updateLlmApiKey()` | PUT /config/llm-api-key |
 | `hooks/use-file-upload.ts` | Upload handler | POST /resumes/upload |
@@ -598,12 +617,13 @@ The frontend makes API calls from these files:
 
 ---
 
-## 10. Implementation Checklist
+## 11. Implementation Checklist
 
 ### Phase 1: Core APIs (Required for MVP)
 - [ ] `POST /api/v1/resumes/upload` - File upload with PDF/DOCX to MD conversion
 - [ ] `GET /api/v1/resumes` - Fetch resume by ID
 - [ ] `GET /api/v1/resumes/list` - List resumes for dashboard tiles
+- [ ] `PATCH /api/v1/resumes/{id}` - Update resume JSON
 - [ ] `POST /api/v1/jobs/upload` - Store job descriptions
 - [ ] `POST /api/v1/resumes/improve` - AI-powered resume tailoring
 
@@ -624,7 +644,7 @@ The frontend makes API calls from these files:
 
 ---
 
-## 11. Testing Requirements
+## 12. Testing Requirements
 
 ### API Contract Tests
 Each endpoint should have tests verifying:

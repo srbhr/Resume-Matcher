@@ -247,6 +247,55 @@ async def improve_resume_endpoint(
         )
 
 
+@router.patch("/{resume_id}", response_model=ResumeFetchResponse)
+async def update_resume_endpoint(
+    resume_id: str, resume_data: ResumeData
+) -> ResumeFetchResponse:
+    """Update a resume with new structured data."""
+    existing = db.get_resume(resume_id)
+    if not existing:
+        raise HTTPException(status_code=404, detail="Resume not found")
+
+    updated_data = resume_data.model_dump()
+    updated_content = json.dumps(updated_data, indent=2)
+
+    updated = db.update_resume(
+        resume_id,
+        {
+            "content": updated_content,
+            "content_type": "json",
+            "processed_data": updated_data,
+            "processing_status": "ready",
+        },
+    )
+
+    if not updated:
+        raise HTTPException(status_code=500, detail="Failed to update resume")
+
+    raw_resume = RawResume(
+        id=None,
+        content=updated["content"],
+        content_type=updated["content_type"],
+        created_at=updated["created_at"],
+        processing_status=updated.get("processing_status", "pending"),
+    )
+
+    processed_resume = (
+        ResumeData.model_validate(updated.get("processed_data"))
+        if updated.get("processed_data")
+        else None
+    )
+
+    return ResumeFetchResponse(
+        request_id=str(uuid4()),
+        data=ResumeFetchData(
+            resume_id=resume_id,
+            raw_resume=raw_resume,
+            processed_resume=processed_resume,
+        ),
+    )
+
+
 @router.delete("/{resume_id}")
 async def delete_resume(resume_id: str) -> dict:
     """Delete a resume by ID."""
