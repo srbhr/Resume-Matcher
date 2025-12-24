@@ -19,6 +19,8 @@ from app.schemas.models import (
     ResumeData,
     ResumeFetchData,
     ResumeFetchResponse,
+    ResumeListResponse,
+    ResumeSummary,
     ResumeUploadResponse,
     StatusResponse,
 )
@@ -34,6 +36,8 @@ __all__ = [
     "ResumeUploadResponse",
     "ResumeFetchData",
     "ResumeFetchResponse",
+    "ResumeSummary",
+    "ResumeListResponse",
     "JobUploadRequest",
     "JobUploadResponse",
     "ImproveResumeRequest",

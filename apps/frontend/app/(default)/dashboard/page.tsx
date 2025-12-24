@@ -6,8 +6,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
-import { Trash2, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
-import { fetchResume } from '@/lib/api/resume';
+import { Trash2, Loader2, AlertCircle, RefreshCw, Plus } from 'lucide-react';
+import { fetchResume, fetchResumeList, type ResumeListItem } from '@/lib/api/resume';
 
 type ProcessingStatus = 'pending' | 'processing' | 'ready' | 'failed' | 'loading';
 
@@ -15,11 +15,41 @@ export default function DashboardPage() {
   const [masterResumeId, setMasterResumeId] = useState<string | null>(null);
   const [processingStatus, setProcessingStatus] = useState<ProcessingStatus>('loading');
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [tailoredResumes, setTailoredResumes] = useState<ResumeListItem[]>([]);
   const router = useRouter();
 
+  const cardBaseClass = 'bg-[#F0F0E8] p-8 md:p-12 h-full relative flex flex-col';
   // The physics class from your Hero, adapted for cards
-  const cardWrapperClass =
-    'bg-[#F0F0E8] p-8 md:p-12 h-full transition-all duration-200 ease-in-out hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0px_0px_#000000] cursor-pointer group relative flex flex-col';
+  const interactiveCardClass = `${cardBaseClass} transition-all duration-200 ease-in-out hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0px_0px_#000000] cursor-pointer group`;
+
+  const isTailorEnabled = Boolean(masterResumeId) && processingStatus === 'ready';
+
+  const getTailorStatus = () => {
+    if (!masterResumeId) {
+      return { text: 'MASTER RESUME REQUIRED', color: 'text-gray-500' };
+    }
+    if (processingStatus === 'ready') {
+      return { text: 'READY TO TAILOR', color: 'text-green-700' };
+    }
+    if (processingStatus === 'failed') {
+      return { text: 'MASTER PROCESSING FAILED', color: 'text-red-600' };
+    }
+    if (processingStatus === 'processing' || processingStatus === 'loading') {
+      return { text: 'PROCESSING MASTER', color: 'text-blue-700' };
+    }
+    return { text: 'WAITING FOR MASTER', color: 'text-gray-500' };
+  };
+
+  const formatDate = (value: string) => {
+    if (!value) return 'Unknown';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return 'Unknown';
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: '2-digit',
+      year: 'numeric',
+    });
+  };
 
   const checkResumeStatus = useCallback(async (resumeId: string) => {
     try {
@@ -46,6 +76,24 @@ export default function DashboardPage() {
       checkResumeStatus(storedId);
     }
   }, [checkResumeStatus]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadTailoredResumes = async () => {
+      try {
+        const data = await fetchResumeList(false);
+        if (!cancelled) {
+          setTailoredResumes(data);
+        }
+      } catch (err) {
+        console.error('Failed to load tailored resumes:', err);
+      }
+    };
+    loadTailoredResumes();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleUploadComplete = (resumeId: string) => {
     localStorage.setItem('master_resume_id', resumeId);
@@ -121,7 +169,7 @@ export default function DashboardPage() {
         <ResumeUploadDialog
           onUploadComplete={handleUploadComplete}
           trigger={
-            <div className={`${cardWrapperClass} hover:bg-blue-700 hover:text-[#F0F0E8]`}>
+            <div className={`${interactiveCardClass} hover:bg-blue-700 hover:text-[#F0F0E8]`}>
               <div className="flex-1 flex flex-col justify-between pointer-events-none">
                 <div className="w-12 h-12 border-2 border-current rounded-full flex items-center justify-center mb-4">
                   <span className="text-2xl leading-none relative top-[-2px]">+</span>
@@ -140,7 +188,10 @@ export default function DashboardPage() {
         />
       ) : (
         // Master Resume Exists - Click to View
-        <div onClick={() => router.push(`/resumes/${masterResumeId}`)} className={cardWrapperClass}>
+        <div
+          onClick={() => router.push(`/resumes/${masterResumeId}`)}
+          className={interactiveCardClass}
+        >
           <div className="flex-1 flex flex-col h-full">
             <div className="flex justify-between items-start mb-6">
               <div className="w-12 h-12 border-2 border-black bg-blue-700 text-white flex items-center justify-center">
@@ -182,10 +233,58 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* 2. Fillers (Static, no hover effect, just structure) */}
-      {[1, 2, 3].map((i) => (
+      {/* 2. Create Tailored Resume */}
+      <div className={cardBaseClass}>
+        <div className="flex-1 flex flex-col">
+          <div className="w-12 h-12 border-2 border-black bg-white text-black flex items-center justify-center mb-4">
+            <Plus className="w-6 h-6" />
+          </div>
+          <h3 className="font-bold text-lg font-serif leading-tight">Create Tailored Resume</h3>
+          <p className={`text-xs font-mono mt-2 uppercase ${getTailorStatus().color}`}>
+            {getTailorStatus().text}
+          </p>
+          <Button
+            onClick={() => router.push('/tailor')}
+            disabled={!isTailorEnabled}
+            className="mt-auto w-full h-11 text-sm font-bold uppercase tracking-widest rounded-none border-2 border-black shadow-[4px_4px_0px_0px_#000000] hover:translate-y-[2px] hover:translate-x-[2px] hover:shadow-none transition-all"
+          >
+            +
+          </Button>
+        </div>
+      </div>
+
+      {/* 3. Tailored Resumes */}
+      {tailoredResumes.map((resume) => (
         <div
-          key={i}
+          key={resume.resume_id}
+          onClick={() => router.push(`/resumes/${resume.resume_id}`)}
+          className={`${interactiveCardClass} bg-[#E5E5E0]`}
+        >
+          <div className="flex-1 flex flex-col">
+            <div className="flex justify-between items-start mb-6">
+              <div className="w-12 h-12 border-2 border-black bg-white text-black flex items-center justify-center">
+                <span className="font-mono font-bold">T</span>
+              </div>
+              <span className="font-mono text-xs text-gray-500 uppercase">
+                {resume.processing_status}
+              </span>
+            </div>
+            <h3 className="font-bold text-lg font-serif leading-tight">
+              {resume.filename || 'Tailored Resume'}
+            </h3>
+            <p className="text-xs font-mono mt-auto pt-4 text-gray-500 uppercase">
+              Edited {formatDate(resume.updated_at || resume.created_at)}
+            </p>
+          </div>
+        </div>
+      ))}
+
+      {/* 4. Fillers (Static, no hover effect, just structure) */}
+      {Array.from({
+        length: Math.max(0, 3 - tailoredResumes.length),
+      }).map((_, index) => (
+        <div
+          key={`filler-${index}`}
           className="hidden md:block bg-[#F0F0E8] h-full min-h-[300px] opacity-50 pointer-events-none"
         ></div>
       ))}

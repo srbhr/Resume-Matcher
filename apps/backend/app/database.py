@@ -107,6 +107,10 @@ class Database:
         removed = self.resumes.remove(Resume.resume_id == resume_id)
         return len(removed) > 0
 
+    def list_resumes(self) -> list[dict[str, Any]]:
+        """List all resumes."""
+        return list(self.resumes.all())
+
     def set_master_resume(self, resume_id: str) -> bool:
         """Set a resume as the master, unsetting any existing master."""
         Resume = Query()

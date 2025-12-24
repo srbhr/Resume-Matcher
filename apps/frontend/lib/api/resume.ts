@@ -60,6 +60,16 @@ interface ResumeResponse {
   };
 }
 
+export interface ResumeListItem {
+  resume_id: string;
+  filename: string | null;
+  is_master: boolean;
+  parent_id: string | null;
+  processing_status: 'pending' | 'processing' | 'ready' | 'failed';
+  created_at: string;
+  updated_at: string;
+}
+
 /** Uploads job descriptions and returns a job_id */
 export async function uploadJobDescriptions(
   descriptions: string[],
@@ -117,5 +127,16 @@ export async function fetchResume(resumeId: string): Promise<ResumeResponse['dat
   const payload = (await res.json()) as ResumeResponse;
   // Support both raw_resume content (initial) and processed_resume (if available)
   // The viewer/builder logic should prioritize processed data if present
+  return payload.data;
+}
+
+export async function fetchResumeList(includeMaster = false): Promise<ResumeListItem[]> {
+  const res = await fetch(
+    `${API_URL}/api/v1/resumes/list?include_master=${includeMaster ? 'true' : 'false'}`
+  );
+  if (!res.ok) {
+    throw new Error(`Failed to load resumes list (status ${res.status}).`);
+  }
+  const payload = (await res.json()) as { data: ResumeListItem[] };
   return payload.data;
 }

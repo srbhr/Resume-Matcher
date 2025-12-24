@@ -10,6 +10,7 @@ The frontend is fully implemented and expects the following API endpoints:
 |----------|--------|--------|----------|
 | `/api/v1/resumes/upload` | POST | Required | High |
 | `/api/v1/resumes` | GET | Required | High |
+| `/api/v1/resumes/list` | GET | Required | High |
 | `/api/v1/jobs/upload` | POST | Required | High |
 | `/api/v1/resumes/improve` | POST | Required | High |
 | `/api/v1/config/llm-api-key` | GET | Required | Medium |
@@ -200,7 +201,41 @@ GET /api/v1/resumes?resume_id=<uuid>
 
 ---
 
-## 3. Upload Job Description Endpoint
+## 3. List Resumes Endpoint
+
+**Purpose:** List resumes for dashboard tiles (default excludes the master resume).
+
+### Request
+
+```
+GET /api/v1/resumes/list?include_master=false
+```
+
+**Query Parameters:**
+| Param | Type | Required | Description |
+|-------|------|----------|-------------|
+| `include_master` | boolean | No | Include the master resume in results |
+
+### Response (200 OK)
+
+```json
+{
+  "request_id": "uuid-string",
+  "data": [
+    {
+      "resume_id": "uuid-string",
+      "filename": "tailored_resume.pdf",
+      "is_master": false,
+      "parent_id": "uuid-string",
+      "processing_status": "ready",
+      "created_at": "2025-01-15T10:30:00Z",
+      "updated_at": "2025-01-15T10:30:00Z"
+    }
+  ]
+}
+```
+
+## 4. Upload Job Description Endpoint
 
 **Purpose:** Store job description text for use in resume tailoring.
 
@@ -266,7 +301,7 @@ Content-Type: application/json
 
 ---
 
-## 4. Improve/Tailor Resume Endpoint
+## 5. Improve/Tailor Resume Endpoint
 
 **Purpose:** Trigger AI agent to optimize resume against job description.
 
@@ -398,7 +433,7 @@ Content-Type: application/json
 
 ---
 
-## 5. LLM API Key Configuration Endpoints
+## 6. LLM API Key Configuration Endpoints
 
 **Purpose:** Manage OpenAI API key for LLM features.
 
@@ -452,7 +487,7 @@ Content-Type: application/json
 
 ---
 
-## 6. Data Type Definitions
+## 7. Data Type Definitions
 
 ### PersonalInfo
 ```typescript
@@ -526,7 +561,7 @@ interface ResumePreview {
 
 ---
 
-## 7. CORS Configuration
+## 8. CORS Configuration
 
 The frontend runs on `localhost:3000` and expects the backend on `localhost:8000`.
 
@@ -545,7 +580,7 @@ app.add_middleware(
 
 ---
 
-## 8. Frontend API Client Reference
+## 9. Frontend API Client Reference
 
 The frontend makes API calls from these files:
 
@@ -554,6 +589,7 @@ The frontend makes API calls from these files:
 | `lib/api/resume.ts` | `uploadJobDescriptions()` | POST /jobs/upload |
 | `lib/api/resume.ts` | `improveResume()` | POST /resumes/improve |
 | `lib/api/resume.ts` | `fetchResume()` | GET /resumes |
+| `lib/api/resume.ts` | `fetchResumeList()` | GET /resumes/list |
 | `lib/api/config.ts` | `fetchLlmApiKey()` | GET /config/llm-api-key |
 | `lib/api/config.ts` | `updateLlmApiKey()` | PUT /config/llm-api-key |
 | `hooks/use-file-upload.ts` | Upload handler | POST /resumes/upload |
@@ -562,11 +598,12 @@ The frontend makes API calls from these files:
 
 ---
 
-## 9. Implementation Checklist
+## 10. Implementation Checklist
 
 ### Phase 1: Core APIs (Required for MVP)
 - [ ] `POST /api/v1/resumes/upload` - File upload with PDF/DOCX to MD conversion
 - [ ] `GET /api/v1/resumes` - Fetch resume by ID
+- [ ] `GET /api/v1/resumes/list` - List resumes for dashboard tiles
 - [ ] `POST /api/v1/jobs/upload` - Store job descriptions
 - [ ] `POST /api/v1/resumes/improve` - AI-powered resume tailoring
 
@@ -587,7 +624,7 @@ The frontend makes API calls from these files:
 
 ---
 
-## 10. Testing Requirements
+## 11. Testing Requirements
 
 ### API Contract Tests
 Each endpoint should have tests verifying:

@@ -52,6 +52,7 @@ export default function SettingsPage() {
   const [model, setModel] = useState('');
   const [apiKey, setApiKey] = useState('');
   const [apiBase, setApiBase] = useState('');
+  const [hasStoredApiKey, setHasStoredApiKey] = useState(false);
 
   // System status state
   const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
@@ -74,7 +75,9 @@ export default function SettingsPage() {
         if (config) {
           setProvider(config.provider || 'openai');
           setModel(config.model || PROVIDER_INFO['openai'].defaultModel);
-          setApiKey(config.api_key || '');
+          const isMaskedKey = Boolean(config.api_key) && config.api_key.includes('*');
+          setHasStoredApiKey(Boolean(config.api_key));
+          setApiKey(isMaskedKey ? '' : config.api_key || '');
           setApiBase(config.api_base || '');
         }
 
@@ -104,8 +107,11 @@ export default function SettingsPage() {
     if (newProvider === 'ollama') {
       setApiBase('http://localhost:11434');
       setApiKey('');
+      setHasStoredApiKey(false);
     } else {
       setApiBase('');
+      setApiKey('');
+      setHasStoredApiKey(false);
     }
   };
 
@@ -115,12 +121,27 @@ export default function SettingsPage() {
     setError(null);
 
     try {
+      if (requiresApiKey && !apiKey.trim() && !hasStoredApiKey) {
+        setError('API key is required for the selected provider.');
+        setStatus('error');
+        return;
+      }
+
+      const trimmedKey = apiKey.trim();
       const config: Partial<LLMConfig> = {
         provider,
         model: model.trim(),
-        api_key: apiKey.trim(),
         api_base: apiBase.trim() || null,
       };
+      if (requiresApiKey) {
+        if (trimmedKey) {
+          config.api_key = trimmedKey;
+        } else if (!hasStoredApiKey) {
+          config.api_key = '';
+        }
+      } else {
+        config.api_key = '';
+      }
 
       await updateLlmConfig(config);
 
@@ -380,6 +401,11 @@ export default function SettingsPage() {
                   className="font-mono"
                   disabled={!requiresApiKey}
                 />
+                {requiresApiKey && hasStoredApiKey && !apiKey && (
+                  <p className="text-xs text-gray-500 font-mono">
+                    LEAVE BLANK TO KEEP EXISTING KEY
+                  </p>
+                )}
               </div>
 
               {/* API Base URL (for Ollama) */}

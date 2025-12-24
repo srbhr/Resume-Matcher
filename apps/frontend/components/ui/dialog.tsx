@@ -71,6 +71,12 @@ export function DialogContent({
       dialogRef.current?.close();
       document.body.style.overflow = 'auto';
     }
+    return () => {
+      document.body.style.overflow = 'auto';
+      if (dialogRef.current?.open) {
+        dialogRef.current.close();
+      }
+    };
   }, [isOpen]);
 
   const handleClose = () => {

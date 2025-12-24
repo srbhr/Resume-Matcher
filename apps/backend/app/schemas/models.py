@@ -104,6 +104,25 @@ class ResumeFetchResponse(BaseModel):
     data: ResumeFetchData
 
 
+class ResumeSummary(BaseModel):
+    """Summary details for listing resumes."""
+
+    resume_id: str
+    filename: str | None = None
+    is_master: bool = False
+    parent_id: str | None = None
+    processing_status: str = "pending"
+    created_at: str
+    updated_at: str
+
+
+class ResumeListResponse(BaseModel):
+    """Response for resume list."""
+
+    request_id: str
+    data: list[ResumeSummary]
+
+
 # Job Description Models
 class JobUploadRequest(BaseModel):
     """Request to upload job descriptions."""

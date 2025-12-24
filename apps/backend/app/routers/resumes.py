@@ -16,6 +16,8 @@ from app.schemas import (
     ResumeData,
     ResumeFetchData,
     ResumeFetchResponse,
+    ResumeListResponse,
+    ResumeSummary,
     ResumeUploadResponse,
     RawResume,
 )
@@ -140,6 +142,31 @@ async def get_resume(resume_id: str = Query(...)) -> ResumeFetchResponse:
             processed_resume=processed_resume,
         ),
     )
+
+
+@router.get("/list", response_model=ResumeListResponse)
+async def list_resumes(include_master: bool = Query(False)) -> ResumeListResponse:
+    """List resumes, optionally including the master resume."""
+    resumes = db.list_resumes()
+    if not include_master:
+        resumes = [resume for resume in resumes if not resume.get("is_master", False)]
+
+    resumes.sort(key=lambda item: item.get("updated_at", ""), reverse=True)
+
+    summaries = [
+        ResumeSummary(
+            resume_id=resume["resume_id"],
+            filename=resume.get("filename"),
+            is_master=resume.get("is_master", False),
+            parent_id=resume.get("parent_id"),
+            processing_status=resume.get("processing_status", "pending"),
+            created_at=resume.get("created_at", ""),
+            updated_at=resume.get("updated_at", ""),
+        )
+        for resume in resumes
+    ]
+
+    return ResumeListResponse(request_id=str(uuid4()), data=summaries)
 
 
 @router.post("/improve", response_model=ImproveResumeResponse)
