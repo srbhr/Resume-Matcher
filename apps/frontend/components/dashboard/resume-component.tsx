@@ -107,7 +107,7 @@ const Resume: React.FC<ResumeProps> = ({ resumeData }) => {
   return (
     // Resume container - wider than A4 for better web display
     // No shadow here - wrapper component provides Swiss-style shadow
-    <div className="font-serif bg-white text-black p-10 md:p-16 w-full mx-auto text-sm leading-relaxed">
+    <div className="resume-body font-serif bg-white text-black p-10 md:p-16 w-full mx-auto text-sm leading-relaxed">
       {/* --- Header Section --- */}
       {personalInfo && (
         <div className="mb-6 border-b-2 border-black pb-6">

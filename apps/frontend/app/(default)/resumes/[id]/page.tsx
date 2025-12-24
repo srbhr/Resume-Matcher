@@ -72,10 +72,6 @@ export default function ResumeViewerPage() {
     router.push(`/builder?id=${resumeId}`);
   };
 
-  const handleCreateResume = () => {
-    router.push('/tailor');
-  };
-
   const handleDeleteResume = async () => {
     try {
       const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -165,7 +161,7 @@ export default function ResumeViewerPage() {
     <div className="min-h-screen bg-[#F0F0E8] py-12 px-4 md:px-8 overflow-y-auto">
       <div className="max-w-7xl mx-auto">
         {/* Header Actions */}
-        <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 no-print">
           <Button
             variant="outline"
             onClick={() => router.push('/dashboard')}
@@ -185,23 +181,23 @@ export default function ResumeViewerPage() {
               Edit Resume
             </Button>
             <Button
-              onClick={handleCreateResume}
-              className="bg-blue-700 hover:bg-blue-800 text-white rounded-none border border-black shadow-[2px_2px_0px_0px_#000000] hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none transition-all"
+              onClick={() => window.print()}
+              className="bg-green-700 hover:bg-green-800 text-white rounded-none border border-black shadow-[2px_2px_0px_0px_#000000] hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none transition-all"
             >
               <Plus className="w-4 h-4 mr-2" />
-              Create Resume
+              Download Resume
             </Button>
           </div>
         </div>
 
         {/* Resume Viewer */}
         <div className="flex justify-center pb-4">
-          <div className="w-full max-w-[250mm] shadow-[8px_8px_0px_0px_#000000] border-2 border-black bg-white">
+          <div className="resume-print w-full max-w-[250mm] shadow-[8px_8px_0px_0px_#000000] border-2 border-black bg-white">
             <Resume resumeData={resumeData} />
           </div>
         </div>
 
-        <div className="flex justify-end pt-4">
+        <div className="flex justify-end pt-4 no-print">
           <Button
             onClick={() => setShowDeleteDialog(true)}
             className="bg-red-600 text-white border border-black rounded-none shadow-[2px_2px_0px_0px_#000000] hover:bg-red-700 hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none transition-all"

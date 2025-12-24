@@ -131,3 +131,35 @@
     @apply bg-background text-foreground;
   }
 }
+
+@media print {
+  html,
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .resume-print {
+    width: 210mm !important;
+    min-height: 297mm !important;
+    margin: 0 auto !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: #ffffff !important;
+  }
+
+  .resume-body {
+    padding: 16mm !important;
+    box-shadow: none !important;
+    background: #ffffff !important;
+  }
+
+  a {
+    color: #000000 !important;
+    text-decoration: none !important;
+  }
+}
