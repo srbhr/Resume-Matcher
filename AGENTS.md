@@ -17,7 +17,7 @@ A lean FastAPI application with multi-provider AI support. See **[.backend-guide
 ### Frontend (`apps/frontend/`)
 Next.js dashboard with Swiss International Style design. See **[.frontend-workflow.md](.frontend-workflow.md)** for user flow and **[.front-end-apis.md](.front-end-apis.md)** for API contracts.
 
-- `app/` - Next.js routes (dashboard, builder, tailor, resumes, settings)
+- `app/` - Next.js routes (dashboard, builder, tailor, resumes, settings, print)
 - `components/` - Reusable UI components
 - `lib/` - API clients and utilities
 - `hooks/` - Custom React hooks

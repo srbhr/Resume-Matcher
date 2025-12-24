@@ -5,8 +5,11 @@ import logging
 from uuid import uuid4
 
 from fastapi import APIRouter, File, HTTPException, Query, UploadFile
+from fastapi.responses import Response
 
 from app.database import db
+from app.pdf import render_resume_pdf
+from app.config import settings
 
 logger = logging.getLogger(__name__)
 from app.schemas import (
@@ -294,6 +297,24 @@ async def update_resume_endpoint(
             processed_resume=processed_resume,
         ),
     )
+
+
+@router.get("/{resume_id}/pdf")
+async def download_resume_pdf(
+    resume_id: str, template: str = Query("default")
+) -> Response:
+    """Generate a PDF for a resume using headless Chromium."""
+    resume = db.get_resume(resume_id)
+    if not resume:
+        raise HTTPException(status_code=404, detail="Resume not found")
+
+    url = f"{settings.frontend_base_url}/print/resumes/{resume_id}?template={template}"
+    pdf_bytes = await render_resume_pdf(url)
+
+    headers = {
+        "Content-Disposition": f'attachment; filename="resume_{resume_id}.pdf"'
+    }
+    return Response(content=pdf_bytes, media_type="application/pdf", headers=headers)
 
 
 @router.delete("/{resume_id}")

@@ -7,7 +7,7 @@ import { ResumeForm } from './resume-form';
 import { Button } from '@/components/ui/button';
 import { Download, Save, AlertTriangle, ArrowLeft, RotateCcw } from 'lucide-react';
 import { useResumePreview } from '@/components/common/resume_previewer_context';
-import { fetchResume, updateResume } from '@/lib/api/resume';
+import { downloadResumePdf, fetchResume, updateResume } from '@/lib/api/resume';
 
 const STORAGE_KEY = 'resume_builder_draft';
 
@@ -220,7 +220,24 @@ const ResumeBuilderContent = () => {
             </Button>
             <Button
               size="sm"
-              onClick={() => window.print()}
+              onClick={async () => {
+                if (!resumeId) {
+                  alert('Download is only available for saved resumes.');
+                  return;
+                }
+                try {
+                  const blob = await downloadResumePdf(resumeId);
+                  const url = window.URL.createObjectURL(blob);
+                  const link = document.createElement('a');
+                  link.href = url;
+                  link.download = `resume_${resumeId}.pdf`;
+                  link.click();
+                  window.URL.revokeObjectURL(url);
+                } catch (error) {
+                  console.error('Failed to download resume:', error);
+                  alert('Failed to download resume. Please try again.');
+                }
+              }}
               className="bg-green-700 text-white border-black rounded-none shadow-[2px_2px_0px_0px_#000000] hover:bg-green-800 hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none transition-all"
             >
               <Download className="w-4 h-4 mr-2" />

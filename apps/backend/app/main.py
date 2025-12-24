@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app import __version__
 from app.config import settings
 from app.database import db
+from app.pdf import close_pdf_renderer, init_pdf_renderer
 from app.routers import config_router, health_router, jobs_router, resumes_router
 
 
@@ -16,8 +17,10 @@ async def lifespan(app: FastAPI):
     """Application lifespan manager."""
     # Startup
     settings.data_dir.mkdir(parents=True, exist_ok=True)
+    await init_pdf_renderer()
     yield
     # Shutdown
+    await close_pdf_renderer()
     db.close()
 
 

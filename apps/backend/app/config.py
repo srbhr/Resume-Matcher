@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     # Server Configuration
     host: str = "0.0.0.0"
     port: int = 8000
+    frontend_base_url: str = "http://localhost:3000"
 
     # CORS Configuration
     cors_origins: list[str] = [

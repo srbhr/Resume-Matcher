@@ -157,3 +157,17 @@ export async function updateResume(
   const payload = (await res.json()) as ResumeResponse;
   return payload.data;
 }
+
+export async function downloadResumePdf(
+  resumeId: string,
+  template: string = 'default'
+): Promise<Blob> {
+  const res = await fetch(
+    `${API_URL}/api/v1/resumes/${encodeURIComponent(resumeId)}/pdf?template=${encodeURIComponent(template)}`
+  );
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Failed to download resume (status ${res.status}): ${text}`);
+  }
+  return await res.blob();
+}

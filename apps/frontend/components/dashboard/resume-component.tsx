@@ -54,9 +54,10 @@ export interface ResumeData {
 
 interface ResumeProps {
   resumeData: ResumeData;
+  template?: string;
 }
 
-const Resume: React.FC<ResumeProps> = ({ resumeData }) => {
+const Resume: React.FC<ResumeProps> = ({ resumeData, template }) => {
   const { personalInfo, summary, workExperience, education, personalProjects, additional } =
     resumeData;
 
@@ -107,7 +108,11 @@ const Resume: React.FC<ResumeProps> = ({ resumeData }) => {
   return (
     // Resume container - wider than A4 for better web display
     // No shadow here - wrapper component provides Swiss-style shadow
-    <div className="resume-body font-serif bg-white text-black p-10 md:p-16 w-full mx-auto text-sm leading-relaxed">
+    <div
+      className={`resume-body font-serif bg-white text-black p-10 md:p-16 w-full mx-auto text-sm leading-relaxed ${
+        template ? `resume-template-${template}` : ''
+      }`}
+    >
       {/* --- Header Section --- */}
       {personalInfo && (
         <div className="mb-6 border-b-2 border-black pb-6">

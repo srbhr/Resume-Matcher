@@ -5,8 +5,8 @@ import { useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import Resume, { ResumeData } from '@/components/dashboard/resume-component';
-import { fetchResume } from '@/lib/api/resume';
-import { ArrowLeft, Edit, Plus, Loader2, AlertCircle } from 'lucide-react';
+import { fetchResume, downloadResumePdf } from '@/lib/api/resume';
+import { ArrowLeft, Edit, Download, Loader2, AlertCircle } from 'lucide-react';
 
 type ProcessingStatus = 'pending' | 'processing' | 'ready' | 'failed';
 
@@ -70,6 +70,20 @@ export default function ResumeViewerPage() {
 
   const handleEdit = () => {
     router.push(`/builder?id=${resumeId}`);
+  };
+
+  const handleDownload = async () => {
+    try {
+      const blob = await downloadResumePdf(resumeId);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `resume_${resumeId}.pdf`;
+      link.click();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Failed to download resume:', err);
+    }
   };
 
   const handleDeleteResume = async () => {
@@ -181,10 +195,10 @@ export default function ResumeViewerPage() {
               Edit Resume
             </Button>
             <Button
-              onClick={() => window.print()}
+              onClick={handleDownload}
               className="bg-green-700 hover:bg-green-800 text-white rounded-none border border-black shadow-[2px_2px_0px_0px_#000000] hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none transition-all"
             >
-              <Plus className="w-4 h-4 mr-2" />
+              <Download className="w-4 h-4 mr-2" />
               Download Resume
             </Button>
           </div>
