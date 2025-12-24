@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import Resume, { ResumeData } from '@/components/dashboard/resume-component';
 import { fetchResume } from '@/lib/api/resume';
 import { ArrowLeft, Edit, Plus, Loader2, AlertCircle } from 'lucide-react';
@@ -16,6 +17,8 @@ export default function ResumeViewerPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [processingStatus, setProcessingStatus] = useState<ProcessingStatus | null>(null);
+  const [isMasterResume, setIsMasterResume] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const resumeId = params?.id as string;
 
@@ -62,6 +65,7 @@ export default function ResumeViewerPage() {
     };
 
     loadResume();
+    setIsMasterResume(localStorage.getItem('master_resume_id') === resumeId);
   }, [resumeId]);
 
   const handleEdit = () => {
@@ -70,6 +74,23 @@ export default function ResumeViewerPage() {
 
   const handleCreateResume = () => {
     router.push('/tailor');
+  };
+
+  const handleDeleteResume = async () => {
+    try {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      await fetch(`${API_URL}/api/v1/resumes/${resumeId}`, {
+        method: 'DELETE',
+      });
+      if (isMasterResume) {
+        localStorage.removeItem('master_resume_id');
+      }
+      router.push('/dashboard');
+    } catch (err) {
+      console.error('Failed to delete resume:', err);
+    } finally {
+      setShowDeleteDialog(false);
+    }
   };
 
   if (loading) {
@@ -146,9 +167,9 @@ export default function ResumeViewerPage() {
         {/* Header Actions */}
         <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <Button
-            variant="ghost"
+            variant="outline"
             onClick={() => router.push('/dashboard')}
-            className="pl-0 hover:bg-transparent hover:text-blue-700 gap-2"
+            className="border-black rounded-none shadow-[2px_2px_0px_0px_#000000] hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none transition-all gap-2"
           >
             <ArrowLeft className="w-4 h-4" />
             Back to Dashboard
@@ -179,7 +200,31 @@ export default function ResumeViewerPage() {
             <Resume resumeData={resumeData} />
           </div>
         </div>
+
+        <div className="flex justify-end pt-4">
+          <Button
+            onClick={() => setShowDeleteDialog(true)}
+            className="bg-red-600 text-white border border-black rounded-none shadow-[2px_2px_0px_0px_#000000] hover:bg-red-700 hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none transition-all"
+          >
+            {isMasterResume ? 'Delete Master Resume' : 'Delete Resume'}
+          </Button>
+        </div>
       </div>
+
+      <ConfirmDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        title={isMasterResume ? 'Delete Master Resume' : 'Delete Resume'}
+        description={
+          isMasterResume
+            ? 'This action cannot be undone. Your master resume will be permanently removed from the system.'
+            : 'This action cannot be undone. The resume will be permanently removed from the system.'
+        }
+        confirmLabel="Delete Resume"
+        cancelLabel="Keep Resume"
+        onConfirm={handleDeleteResume}
+        variant="danger"
+      />
     </div>
   );
 }

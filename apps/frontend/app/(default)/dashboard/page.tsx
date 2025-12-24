@@ -18,7 +18,8 @@ export default function DashboardPage() {
   const [tailoredResumes, setTailoredResumes] = useState<ResumeListItem[]>([]);
   const router = useRouter();
 
-  const cardBaseClass = 'bg-[#F0F0E8] p-8 md:p-12 h-full relative flex flex-col';
+  const cardBaseClass =
+    'bg-[#F0F0E8] p-6 md:p-8 aspect-square h-full relative flex flex-col';
   // The physics class from your Hero, adapted for cards
   const interactiveCardClass = `${cardBaseClass} transition-all duration-200 ease-in-out hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0px_0px_#000000] cursor-pointer group`;
 
@@ -161,6 +162,11 @@ export default function DashboardPage() {
     setProcessingStatus('loading');
   };
 
+  const totalCards = 1 + tailoredResumes.length + 1;
+  const fillerCount = Math.max(0, (5 - (totalCards % 5)) % 5);
+  const extraFillerCount = 5;
+  const fillerPalette = ['bg-[#E5E5E0]', 'bg-[#D8D8D2]', 'bg-[#CFCFC7]', 'bg-[#E0E0D8]'];
+
   return (
     <SwissGrid>
       {/* 1. Master Resume Logic */}
@@ -171,7 +177,7 @@ export default function DashboardPage() {
           trigger={
             <div className={`${interactiveCardClass} hover:bg-blue-700 hover:text-[#F0F0E8]`}>
               <div className="flex-1 flex flex-col justify-between pointer-events-none">
-                <div className="w-12 h-12 border-2 border-current rounded-full flex items-center justify-center mb-4">
+                <div className="w-14 h-14 border-2 border-current flex items-center justify-center mb-4">
                   <span className="text-2xl leading-none relative top-[-2px]">+</span>
                 </div>
                 <div>
@@ -188,14 +194,11 @@ export default function DashboardPage() {
         />
       ) : (
         // Master Resume Exists - Click to View
-        <div
-          onClick={() => router.push(`/resumes/${masterResumeId}`)}
-          className={interactiveCardClass}
-        >
+        <div onClick={() => router.push(`/resumes/${masterResumeId}`)} className={interactiveCardClass}>
           <div className="flex-1 flex flex-col h-full">
             <div className="flex justify-between items-start mb-6">
-              <div className="w-12 h-12 border-2 border-black bg-blue-700 text-white flex items-center justify-center">
-                <span className="font-mono font-bold">M</span>
+              <div className="w-16 h-16 border-2 border-black bg-blue-700 text-white flex items-center justify-center">
+                <span className="font-mono font-bold text-lg">M</span>
               </div>
               <div className="flex gap-1">
                 {processingStatus === 'failed' && (
@@ -209,14 +212,6 @@ export default function DashboardPage() {
                     <RefreshCw className="w-4 h-4" />
                   </Button>
                 )}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 hover:bg-red-100 hover:text-red-600 z-10 rounded-none"
-                  onClick={handleClearMaster}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
               </div>
             </div>
 
@@ -233,27 +228,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* 2. Create Tailored Resume */}
-      <div className={cardBaseClass}>
-        <div className="flex-1 flex flex-col">
-          <div className="w-12 h-12 border-2 border-black bg-white text-black flex items-center justify-center mb-4">
-            <Plus className="w-6 h-6" />
-          </div>
-          <h3 className="font-bold text-lg font-serif leading-tight">Create Tailored Resume</h3>
-          <p className={`text-xs font-mono mt-2 uppercase ${getTailorStatus().color}`}>
-            {getTailorStatus().text}
-          </p>
-          <Button
-            onClick={() => router.push('/tailor')}
-            disabled={!isTailorEnabled}
-            className="mt-auto w-full h-11 text-sm font-bold uppercase tracking-widest rounded-none border-2 border-black shadow-[4px_4px_0px_0px_#000000] hover:translate-y-[2px] hover:translate-x-[2px] hover:shadow-none transition-all"
-          >
-            +
-          </Button>
-        </div>
-      </div>
-
-      {/* 3. Tailored Resumes */}
+      {/* 2. Tailored Resumes */}
       {tailoredResumes.map((resume) => (
         <div
           key={resume.resume_id}
@@ -279,13 +254,34 @@ export default function DashboardPage() {
         </div>
       ))}
 
+      {/* 3. Create Tailored Resume */}
+      <div className={cardBaseClass}>
+        <div className="flex-1 flex flex-col items-center justify-center text-center">
+          <Button
+            onClick={() => router.push('/tailor')}
+            disabled={!isTailorEnabled}
+            className="w-20 h-20 bg-blue-700 text-white border-2 border-black shadow-[4px_4px_0px_0px_#000000] hover:bg-blue-800 hover:translate-y-[2px] hover:translate-x-[2px] hover:shadow-none transition-all rounded-none"
+          >
+            <Plus className="w-8 h-8" />
+          </Button>
+          <p className="text-xs font-mono mt-4 uppercase text-green-700">
+            Create Resume
+          </p>
+        </div>
+      </div>
+
       {/* 4. Fillers (Static, no hover effect, just structure) */}
-      {Array.from({
-        length: Math.max(0, 3 - tailoredResumes.length),
-      }).map((_, index) => (
+      {Array.from({ length: fillerCount }).map((_, index) => (
         <div
           key={`filler-${index}`}
-          className="hidden md:block bg-[#F0F0E8] h-full min-h-[300px] opacity-50 pointer-events-none"
+          className="hidden md:block bg-[#F0F0E8] aspect-square h-full opacity-50 pointer-events-none"
+        ></div>
+      ))}
+
+      {Array.from({ length: extraFillerCount }).map((_, index) => (
+        <div
+          key={`extra-filler-${index}`}
+          className={`hidden md:block ${fillerPalette[index % fillerPalette.length]} aspect-square h-full opacity-70 pointer-events-none`}
         ></div>
       ))}
 
@@ -300,6 +296,7 @@ export default function DashboardPage() {
         onConfirm={confirmDeleteMaster}
         variant="danger"
       />
+
     </SwissGrid>
   );
 }
