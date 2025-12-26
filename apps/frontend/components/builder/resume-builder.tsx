@@ -207,7 +207,7 @@ const ResumeBuilderContent = () => {
 
   return (
     <div
-      className="min-h-screen w-full bg-[#F0F0E8] flex justify-center items-start py-12 px-4 md:px-8"
+      className="h-screen w-full bg-[#F0F0E8] flex justify-center items-center p-4 md:p-8"
       style={{
         backgroundImage:
           'linear-gradient(rgba(29, 78, 216, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(29, 78, 216, 0.1) 1px, transparent 1px)',
@@ -215,7 +215,7 @@ const ResumeBuilderContent = () => {
       }}
     >
       {/* Main Container */}
-      <div className="w-full max-w-[90%] md:max-w-[95%] xl:max-w-[1800px] border border-black bg-[#F0F0E8] shadow-[8px_8px_0px_0px_rgba(0,0,0,0.1)] flex flex-col">
+      <div className="w-full h-full max-w-[90%] md:max-w-[95%] xl:max-w-[1800px] border border-black bg-[#F0F0E8] shadow-[8px_8px_0px_0px_rgba(0,0,0,0.1)] flex flex-col">
         {/* Header Section */}
         <div className="border-b border-black p-6 md:p-8 bg-[#F0F0E8] no-print">
           {/* Top Row: Back button and Actions */}
@@ -274,9 +274,9 @@ const ResumeBuilderContent = () => {
         </div>
 
         {/* Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 bg-black gap-[1px]">
+        <div className="grid grid-cols-1 lg:grid-cols-2 bg-black gap-[1px] flex-1 min-h-0">
           {/* Left Panel: Editor */}
-          <div className="bg-[#F0F0E8] p-6 md:p-8 h-[calc(100vh-380px)] overflow-y-auto no-print">
+          <div className="bg-[#F0F0E8] p-6 md:p-8 overflow-y-auto no-print">
             <div className="max-w-3xl mx-auto space-y-6">
               <div className="flex items-center gap-2 border-b-2 border-black pb-2">
                 <div className="w-3 h-3 bg-blue-700"></div>
@@ -294,7 +294,7 @@ const ResumeBuilderContent = () => {
           </div>
 
           {/* Right Panel: Preview */}
-          <div className="bg-[#E5E5E0] p-6 md:p-8 pb-10 h-[calc(100vh-380px)] overflow-y-auto relative flex flex-col items-center">
+          <div className="bg-[#E5E5E0] p-6 md:p-8 overflow-y-auto relative flex flex-col items-center">
             <div className="w-full max-w-3xl mb-6 flex items-center gap-2 border-b-2 border-gray-500 pb-2 no-print">
               <div className="w-3 h-3 bg-green-700"></div>
               <h2 className="font-mono text-lg font-bold text-gray-600 uppercase tracking-wider">
