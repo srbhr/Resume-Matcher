@@ -57,6 +57,8 @@ interface ResumeResponse {
       processing_status: 'pending' | 'processing' | 'ready' | 'failed';
     };
     processed_resume: ProcessedResume | null;
+    cover_letter?: string | null;
+    outreach_message?: string | null;
   };
 }
 
@@ -186,4 +188,38 @@ export async function deleteResume(resumeId: string): Promise<void> {
     const text = await res.text().catch(() => '');
     throw new Error(`Failed to delete resume (status ${res.status}): ${text}`);
   }
+}
+
+/** Updates the cover letter for a resume */
+export async function updateCoverLetter(resumeId: string, content: string): Promise<void> {
+  const res = await apiPatch(`/resumes/${encodeURIComponent(resumeId)}/cover-letter`, { content });
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Failed to update cover letter (status ${res.status}): ${text}`);
+  }
+}
+
+/** Updates the outreach message for a resume */
+export async function updateOutreachMessage(resumeId: string, content: string): Promise<void> {
+  const res = await apiPatch(`/resumes/${encodeURIComponent(resumeId)}/outreach-message`, { content });
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Failed to update outreach message (status ${res.status}): ${text}`);
+  }
+}
+
+/** Downloads cover letter as PDF */
+export async function downloadCoverLetterPdf(
+  resumeId: string,
+  pageSize: 'A4' | 'LETTER' = 'A4'
+): Promise<Blob> {
+  const params = new URLSearchParams({ pageSize });
+  const res = await apiFetch(
+    `/resumes/${encodeURIComponent(resumeId)}/cover-letter/pdf?${params.toString()}`
+  );
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Failed to download cover letter (status ${res.status}): ${text}`);
+  }
+  return await res.blob();
 }

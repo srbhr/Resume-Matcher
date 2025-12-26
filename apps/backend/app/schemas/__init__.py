@@ -4,6 +4,8 @@ from app.schemas.models import (
     AdditionalInfo,
     Education,
     Experience,
+    FeatureConfigRequest,
+    FeatureConfigResponse,
     HealthResponse,
     ImprovementSuggestion,
     ImproveResumeData,
@@ -23,6 +25,8 @@ from app.schemas.models import (
     ResumeSummary,
     ResumeUploadResponse,
     StatusResponse,
+    UpdateCoverLetterRequest,
+    UpdateOutreachMessageRequest,
 )
 
 __all__ = [
@@ -46,6 +50,10 @@ __all__ = [
     "ImprovementSuggestion",
     "LLMConfigRequest",
     "LLMConfigResponse",
+    "FeatureConfigRequest",
+    "FeatureConfigResponse",
+    "UpdateCoverLetterRequest",
+    "UpdateOutreachMessageRequest",
     "HealthResponse",
     "StatusResponse",
 ]

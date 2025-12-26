@@ -95,6 +95,8 @@ class ResumeFetchData(BaseModel):
     resume_id: str
     raw_resume: RawResume
     processed_resume: ResumeData | None = None
+    cover_letter: str | None = None
+    outreach_message: str | None = None
 
 
 class ResumeFetchResponse(BaseModel):
@@ -164,6 +166,8 @@ class ImproveResumeData(BaseModel):
     improvements: list[ImprovementSuggestion]
     markdownOriginal: str | None = None
     markdownImproved: str | None = None
+    cover_letter: str | None = None
+    outreach_message: str | None = None
 
 
 class ImproveResumeResponse(BaseModel):
@@ -190,6 +194,33 @@ class LLMConfigResponse(BaseModel):
     model: str
     api_key: str  # Masked
     api_base: str | None = None
+
+
+class FeatureConfigRequest(BaseModel):
+    """Request to update feature settings."""
+
+    enable_cover_letter: bool | None = None
+    enable_outreach_message: bool | None = None
+
+
+class FeatureConfigResponse(BaseModel):
+    """Response for feature settings."""
+
+    enable_cover_letter: bool = False
+    enable_outreach_message: bool = False
+
+
+# Update Cover Letter/Outreach Models
+class UpdateCoverLetterRequest(BaseModel):
+    """Request to update cover letter content."""
+
+    content: str
+
+
+class UpdateOutreachMessageRequest(BaseModel):
+    """Request to update outreach message content."""
+
+    content: str
 
 
 # Health/Status Models

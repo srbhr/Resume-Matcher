@@ -6,11 +6,15 @@ import {
   fetchLlmConfig,
   updateLlmConfig,
   testLlmConnection,
+  fetchFeatureConfig,
+  updateFeatureConfig,
   PROVIDER_INFO,
   type LLMConfig,
   type LLMProvider,
   type LLMHealthCheck,
+  type FeatureConfig,
 } from '@/lib/api/config';
+import { ToggleSwitch } from '@/components/ui/toggle-switch';
 import { useStatusCache } from '@/lib/context/status-cache';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,6 +34,7 @@ import {
   Briefcase,
   Sparkles,
   Clock,
+  Settings2,
 } from 'lucide-react';
 
 type Status = 'idle' | 'loading' | 'saving' | 'saved' | 'error' | 'testing';
@@ -65,23 +70,36 @@ export default function SettingsPage() {
   // Health check result from manual test
   const [healthCheck, setHealthCheck] = useState<LLMHealthCheck | null>(null);
 
-  // Load LLM config on mount
+  // Feature config state
+  const [enableCoverLetter, setEnableCoverLetter] = useState(false);
+  const [enableOutreach, setEnableOutreach] = useState(false);
+  const [featureConfigLoading, setFeatureConfigLoading] = useState(false);
+
+  // Load LLM config and feature config on mount
   useEffect(() => {
     let cancelled = false;
 
     async function loadConfig() {
       try {
-        const config = await fetchLlmConfig().catch(() => null);
+        const [llmConfig, featureConfig] = await Promise.all([
+          fetchLlmConfig().catch(() => null),
+          fetchFeatureConfig().catch(() => null),
+        ]);
 
         if (cancelled) return;
 
-        if (config) {
-          setProvider(config.provider || 'openai');
-          setModel(config.model || PROVIDER_INFO['openai'].defaultModel);
-          const isMaskedKey = Boolean(config.api_key) && config.api_key.includes('*');
-          setHasStoredApiKey(Boolean(config.api_key));
-          setApiKey(isMaskedKey ? '' : config.api_key || '');
-          setApiBase(config.api_base || '');
+        if (llmConfig) {
+          setProvider(llmConfig.provider || 'openai');
+          setModel(llmConfig.model || PROVIDER_INFO['openai'].defaultModel);
+          const isMaskedKey = Boolean(llmConfig.api_key) && llmConfig.api_key.includes('*');
+          setHasStoredApiKey(Boolean(llmConfig.api_key));
+          setApiKey(isMaskedKey ? '' : llmConfig.api_key || '');
+          setApiBase(llmConfig.api_base || '');
+        }
+
+        if (featureConfig) {
+          setEnableCoverLetter(featureConfig.enable_cover_letter);
+          setEnableOutreach(featureConfig.enable_outreach_message);
         }
 
         setStatus('idle');
@@ -171,6 +189,29 @@ export default function SettingsPage() {
       console.error('Failed to test connection', err);
       setHealthCheck({ healthy: false, provider, model, error: (err as Error).message });
       setStatus('idle');
+    }
+  };
+
+  // Update feature config
+  const handleFeatureConfigChange = async (
+    key: 'enable_cover_letter' | 'enable_outreach_message',
+    value: boolean
+  ) => {
+    setFeatureConfigLoading(true);
+    try {
+      const updated = await updateFeatureConfig({ [key]: value });
+      setEnableCoverLetter(updated.enable_cover_letter);
+      setEnableOutreach(updated.enable_outreach_message);
+    } catch (err) {
+      console.error('Failed to update feature config', err);
+      // Revert on error
+      if (key === 'enable_cover_letter') {
+        setEnableCoverLetter(!value);
+      } else {
+        setEnableOutreach(!value);
+      }
+    } finally {
+      setFeatureConfigLoading(false);
     }
   };
 
@@ -507,6 +548,47 @@ export default function SettingsPage() {
                   )}
                 </div>
               )}
+            </div>
+          </section>
+
+          {/* Content Generation Section */}
+          <section className="space-y-6">
+            <div className="flex items-center gap-2 border-b border-black/10 pb-2">
+              <Settings2 className="w-4 h-4" />
+              <h2 className="font-mono text-sm font-bold uppercase tracking-wider">
+                Content Generation
+              </h2>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-sm text-gray-600 mb-4">
+                Enable additional content generation during resume tailoring.
+                When enabled, these documents will be automatically generated
+                alongside your tailored resume.
+              </p>
+
+              <div className="space-y-3">
+                <ToggleSwitch
+                  checked={enableCoverLetter}
+                  onCheckedChange={(checked) => {
+                    setEnableCoverLetter(checked);
+                    handleFeatureConfigChange('enable_cover_letter', checked);
+                  }}
+                  label="Cover Letter"
+                  description="Generate a tailored cover letter alongside your resume"
+                  disabled={featureConfigLoading}
+                />
+                <ToggleSwitch
+                  checked={enableOutreach}
+                  onCheckedChange={(checked) => {
+                    setEnableOutreach(checked);
+                    handleFeatureConfigChange('enable_outreach_message', checked);
+                  }}
+                  label="Cold Outreach Message"
+                  description="Generate a networking message for LinkedIn or email"
+                  disabled={featureConfigLoading}
+                />
+              </div>
             </div>
           </section>
         </div>

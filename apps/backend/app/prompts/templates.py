@@ -102,5 +102,43 @@ Original Resume:
 Output in this JSON format:
 {schema}"""
 
+COVER_LETTER_PROMPT = """Generate a professional cover letter for this job application.
+
+Job Description:
+{job_description}
+
+Candidate Resume (JSON):
+{resume_data}
+
+Guidelines:
+- Professional but personable tone
+- 3-4 paragraphs, approximately 300-400 words
+- Highlight 2-3 key qualifications that match job requirements
+- Standard structure: greeting, introduction, body, closing
+- Do NOT invent information not present in the resume
+- Do NOT include placeholder brackets like [Company Name] or [Hiring Manager]
+- Use a generic but professional greeting like "Dear Hiring Team" or "Dear Hiring Manager"
+
+Output the cover letter as plain text only. No JSON, no markdown formatting."""
+
+OUTREACH_MESSAGE_PROMPT = """Generate a cold outreach message for LinkedIn or email about this job opportunity.
+
+Job Description:
+{job_description}
+
+Candidate Resume (JSON):
+{resume_data}
+
+Guidelines:
+- Conversational but professional tone
+- Brief: 100-150 words maximum
+- Include: a hook, value proposition, and call to action
+- Reference specific skills that match the role
+- Do NOT be overly salesy or desperate
+- Do NOT include placeholder brackets like [Name] or [Company]
+- Make it feel personal and genuine
+
+Output the message as plain text only. No JSON, no markdown formatting."""
+
 # Alias for backward compatibility
 RESUME_SCHEMA = RESUME_SCHEMA_EXAMPLE

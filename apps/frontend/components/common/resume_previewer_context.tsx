@@ -69,6 +69,8 @@ export interface Data {
   updated_resume_markdown?: string;
   job_description?: string;
   job_keywords?: string;
+  cover_letter?: string;
+  outreach_message?: string;
 }
 
 export interface ImprovedResult {

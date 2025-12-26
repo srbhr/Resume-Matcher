@@ -7,7 +7,12 @@ from fastapi import APIRouter, HTTPException
 
 from app.config import settings
 from app.llm import check_llm_health, LLMConfig
-from app.schemas import LLMConfigRequest, LLMConfigResponse
+from app.schemas import (
+    LLMConfigRequest,
+    LLMConfigResponse,
+    FeatureConfigRequest,
+    FeatureConfigResponse,
+)
 
 router = APIRouter(prefix="/config", tags=["Configuration"])
 
@@ -111,3 +116,34 @@ async def test_llm_connection() -> dict:
     )
 
     return await check_llm_health(config)
+
+
+@router.get("/features", response_model=FeatureConfigResponse)
+async def get_feature_config() -> FeatureConfigResponse:
+    """Get current feature configuration."""
+    stored = _load_config()
+
+    return FeatureConfigResponse(
+        enable_cover_letter=stored.get("enable_cover_letter", False),
+        enable_outreach_message=stored.get("enable_outreach_message", False),
+    )
+
+
+@router.put("/features", response_model=FeatureConfigResponse)
+async def update_feature_config(request: FeatureConfigRequest) -> FeatureConfigResponse:
+    """Update feature configuration."""
+    stored = _load_config()
+
+    # Update only provided fields
+    if request.enable_cover_letter is not None:
+        stored["enable_cover_letter"] = request.enable_cover_letter
+    if request.enable_outreach_message is not None:
+        stored["enable_outreach_message"] = request.enable_outreach_message
+
+    # Save config
+    _save_config(stored)
+
+    return FeatureConfigResponse(
+        enable_cover_letter=stored.get("enable_cover_letter", False),
+        enable_outreach_message=stored.get("enable_outreach_message", False),
+    )

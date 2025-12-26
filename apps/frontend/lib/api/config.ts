@@ -121,3 +121,46 @@ export const PROVIDER_INFO: Record<
   deepseek: { name: 'DeepSeek', defaultModel: 'deepseek-chat', requiresKey: true },
   ollama: { name: 'Ollama (Local)', defaultModel: 'llama3.2', requiresKey: false },
 };
+
+// Feature configuration types
+export interface FeatureConfig {
+  enable_cover_letter: boolean;
+  enable_outreach_message: boolean;
+}
+
+export interface FeatureConfigUpdate {
+  enable_cover_letter?: boolean;
+  enable_outreach_message?: boolean;
+}
+
+// Fetch feature configuration
+export async function fetchFeatureConfig(): Promise<FeatureConfig> {
+  const res = await apiFetch('/config/features', { credentials: 'include' });
+
+  if (!res.ok) {
+    throw new Error(`Failed to load feature config (status ${res.status}).`);
+  }
+
+  return res.json();
+}
+
+// Update feature configuration
+export async function updateFeatureConfig(
+  config: FeatureConfigUpdate
+): Promise<FeatureConfig> {
+  const res = await apiFetch('/config/features', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(config),
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(
+      data.detail || `Failed to update feature config (status ${res.status}).`
+    );
+  }
+
+  return res.json();
+}

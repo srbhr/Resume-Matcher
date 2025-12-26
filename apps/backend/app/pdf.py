@@ -31,13 +31,14 @@ async def close_pdf_renderer() -> None:
 
 
 async def render_resume_pdf(
-    url: str, page_size: str = "A4"
+    url: str, page_size: str = "A4", selector: str = ".resume-print"
 ) -> bytes:
-    """Render a resume URL to PDF bytes.
+    """Render a URL to PDF bytes.
 
     Args:
         url: The URL to render (print route with margins in HTML)
         page_size: Page size format - "A4" or "LETTER"
+        selector: CSS selector to wait for before rendering (default: ".resume-print")
 
     Note:
         Margins are now applied directly in the HTML content for WYSIWYG accuracy.
@@ -60,7 +61,7 @@ async def render_resume_pdf(
     page: Page = await _browser.new_page()
     try:
         await page.goto(url, wait_until="networkidle")
-        await page.wait_for_selector(".resume-print")
+        await page.wait_for_selector(selector)
         await page.evaluate("document.fonts.ready")
         pdf_bytes = await page.pdf(
             format=pdf_format,

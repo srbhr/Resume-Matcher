@@ -5,12 +5,26 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { type ResumeData } from '@/components/dashboard/resume-component';
 import { ResumeForm } from './resume-form';
 import { FormattingControls } from './formatting-controls';
+import { CoverLetterEditor } from './cover-letter-editor';
+import { OutreachEditor } from './outreach-editor';
+import { CoverLetterPreview } from './cover-letter-preview';
+import { OutreachPreview } from './outreach-preview';
 import { Button } from '@/components/ui/button';
-import { Download, Save, AlertTriangle, ArrowLeft, RotateCcw } from 'lucide-react';
+import { RetroTabs } from '@/components/ui/retro-tabs';
+import { Download, Save, AlertTriangle, ArrowLeft, RotateCcw, Copy, Check } from 'lucide-react';
 import { useResumePreview } from '@/components/common/resume_previewer_context';
 import { PaginatedPreview } from '@/components/preview';
-import { downloadResumePdf, fetchResume, updateResume } from '@/lib/api/resume';
+import {
+  downloadResumePdf,
+  downloadCoverLetterPdf,
+  fetchResume,
+  updateResume,
+  updateCoverLetter,
+  updateOutreachMessage,
+} from '@/lib/api/resume';
 import { type TemplateSettings, DEFAULT_TEMPLATE_SETTINGS } from '@/lib/types/template-settings';
+
+type TabId = 'resume' | 'cover-letter' | 'outreach';
 
 const STORAGE_KEY = 'resume_builder_draft';
 const SETTINGS_STORAGE_KEY = 'resume_builder_settings';
@@ -52,6 +66,16 @@ const ResumeBuilderContent = () => {
   const router = useRouter();
   const resumeId = searchParams.get('id');
 
+  // Tab state
+  const [activeTab, setActiveTab] = useState<TabId>('resume');
+
+  // Cover letter & outreach state
+  const [coverLetter, setCoverLetter] = useState('');
+  const [outreachMessage, setOutreachMessage] = useState('');
+  const [isCoverLetterSaving, setIsCoverLetterSaving] = useState(false);
+  const [isOutreachSaving, setIsOutreachSaving] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
+
   // Load template settings from localStorage on mount
   useEffect(() => {
     const savedSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
@@ -90,6 +114,13 @@ const ResumeBuilderContent = () => {
       if (resumeId) {
         try {
           const data = await fetchResume(resumeId);
+          // Load cover letter and outreach message if available
+          if (data.cover_letter) {
+            setCoverLetter(data.cover_letter);
+          }
+          if (data.outreach_message) {
+            setOutreachMessage(data.outreach_message);
+          }
           // Prefer processed_resume if available
           if (data.processed_resume) {
             setResumeData(data.processed_resume as ResumeData);
@@ -118,6 +149,13 @@ const ResumeBuilderContent = () => {
       if (improvedData?.data?.resume_preview) {
         setResumeData(improvedData.data.resume_preview);
         setLastSavedData(improvedData.data.resume_preview);
+        // Also load cover letter and outreach if present
+        if (improvedData.data.cover_letter) {
+          setCoverLetter(improvedData.data.cover_letter);
+        }
+        if (improvedData.data.outreach_message) {
+          setOutreachMessage(improvedData.data.outreach_message);
+        }
         // Persist to localStorage as backup
         localStorage.setItem(STORAGE_KEY, JSON.stringify(improvedData.data.resume_preview));
         setLoadingState('loaded');
@@ -206,6 +244,71 @@ const ResumeBuilderContent = () => {
     }
   };
 
+  // Cover letter handlers
+  const handleSaveCoverLetter = async () => {
+    if (!resumeId) return;
+    try {
+      setIsCoverLetterSaving(true);
+      await updateCoverLetter(resumeId, coverLetter);
+    } catch (error) {
+      console.error('Failed to save cover letter:', error);
+      alert('Failed to save cover letter. Please try again.');
+    } finally {
+      setIsCoverLetterSaving(false);
+    }
+  };
+
+  const handleDownloadCoverLetter = async () => {
+    if (!resumeId) {
+      alert('Save the resume first to download the cover letter.');
+      return;
+    }
+    if (!coverLetter) {
+      alert('No cover letter available. Enable cover letter generation in Settings and tailor a resume.');
+      return;
+    }
+    try {
+      setIsDownloading(true);
+      const blob = await downloadCoverLetterPdf(resumeId, templateSettings.pageSize);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `cover_letter_${resumeId}.pdf`;
+      link.click();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Failed to download cover letter:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      alert(`Failed to download cover letter: ${errorMessage}`);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  // Outreach handlers
+  const handleSaveOutreach = async () => {
+    if (!resumeId) return;
+    try {
+      setIsOutreachSaving(true);
+      await updateOutreachMessage(resumeId, outreachMessage);
+    } catch (error) {
+      console.error('Failed to save outreach message:', error);
+      alert('Failed to save outreach message. Please try again.');
+    } finally {
+      setIsOutreachSaving(false);
+    }
+  };
+
+  const handleCopyOutreach = async () => {
+    try {
+      await navigator.clipboard.writeText(outreachMessage);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    } catch (error) {
+      console.error('Failed to copy:', error);
+    }
+  };
+
   return (
     <div
       className="h-screen w-full bg-[#F0F0E8] flex justify-center items-center p-4 md:p-8"
@@ -248,28 +351,68 @@ const ResumeBuilderContent = () => {
             </div>
 
             <div className="flex gap-3 mt-4 md:mt-0">
-              <Button
-                variant="warning"
-                size="sm"
-                onClick={handleReset}
-                disabled={!hasUnsavedChanges}
-              >
-                <RotateCcw className="w-4 h-4" />
-                Reset
-              </Button>
-              <Button size="sm" onClick={handleSave} disabled={!resumeId || isSaving}>
-                <Save className="w-4 h-4" />
-                {isSaving ? 'Saving...' : 'Save'}
-              </Button>
-              <Button
-                variant="success"
-                size="sm"
-                onClick={handleDownload}
-                disabled={!resumeId || isDownloading}
-              >
-                <Download className="w-4 h-4" />
-                {isDownloading ? 'Generating...' : 'Download'}
-              </Button>
+              {/* Resume tab actions */}
+              {activeTab === 'resume' && (
+                <>
+                  <Button
+                    variant="warning"
+                    size="sm"
+                    onClick={handleReset}
+                    disabled={!hasUnsavedChanges}
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    Reset
+                  </Button>
+                  <Button size="sm" onClick={handleSave} disabled={!resumeId || isSaving}>
+                    <Save className="w-4 h-4" />
+                    {isSaving ? 'Saving...' : 'Save'}
+                  </Button>
+                  <Button
+                    variant="success"
+                    size="sm"
+                    onClick={handleDownload}
+                    disabled={!resumeId || isDownloading}
+                  >
+                    <Download className="w-4 h-4" />
+                    {isDownloading ? 'Generating...' : 'Download'}
+                  </Button>
+                </>
+              )}
+
+              {/* Cover letter tab actions */}
+              {activeTab === 'cover-letter' && (
+                <Button
+                  variant="success"
+                  size="sm"
+                  onClick={handleDownloadCoverLetter}
+                  disabled={!resumeId || !coverLetter || isDownloading}
+                >
+                  <Download className="w-4 h-4" />
+                  {isDownloading ? 'Generating...' : 'Download PDF'}
+                </Button>
+              )}
+
+              {/* Outreach tab actions */}
+              {activeTab === 'outreach' && (
+                <Button
+                  variant="success"
+                  size="sm"
+                  onClick={handleCopyOutreach}
+                  disabled={!outreachMessage}
+                >
+                  {isCopied ? (
+                    <>
+                      <Check className="w-4 h-4" />
+                      Copied!
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-4 h-4" />
+                      Copy to Clipboard
+                    </>
+                  )}
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -282,27 +425,82 @@ const ResumeBuilderContent = () => {
               <div className="flex items-center gap-2 border-b-2 border-black pb-2">
                 <div className="w-3 h-3 bg-blue-700"></div>
                 <h2 className="font-mono text-lg font-bold uppercase tracking-wider">
-                  Editor Panel
+                  {activeTab === 'resume' && 'Editor Panel'}
+                  {activeTab === 'cover-letter' && 'Cover Letter Editor'}
+                  {activeTab === 'outreach' && 'Outreach Message Editor'}
                 </h2>
               </div>
 
-              {/* Formatting Controls */}
-              <FormattingControls settings={templateSettings} onChange={handleSettingsChange} />
+              {/* Resume Editor */}
+              {activeTab === 'resume' && (
+                <>
+                  <FormattingControls settings={templateSettings} onChange={handleSettingsChange} />
+                  <ResumeForm resumeData={resumeData} onUpdate={handleUpdate} />
+                </>
+              )}
 
-              {/* Resume Form */}
-              <ResumeForm resumeData={resumeData} onUpdate={handleUpdate} />
+              {/* Cover Letter Editor */}
+              {activeTab === 'cover-letter' && (
+                <CoverLetterEditor
+                  content={coverLetter}
+                  onChange={setCoverLetter}
+                  onSave={handleSaveCoverLetter}
+                  isSaving={isCoverLetterSaving}
+                />
+              )}
+
+              {/* Outreach Editor */}
+              {activeTab === 'outreach' && (
+                <OutreachEditor
+                  content={outreachMessage}
+                  onChange={setOutreachMessage}
+                  onSave={handleSaveOutreach}
+                  isSaving={isOutreachSaving}
+                />
+              )}
             </div>
           </div>
 
-          {/* Right Panel: Paginated Preview */}
+          {/* Right Panel: Preview with Tabs */}
           <div className="bg-[#E5E5E0] overflow-hidden flex flex-col no-print">
-            <div className="flex items-center gap-2 border-b border-gray-400 px-6 py-3 shrink-0">
-              <div className="w-3 h-3 bg-green-700"></div>
-              <h2 className="font-mono text-lg font-bold text-gray-600 uppercase tracking-wider">
-                Live Preview
-              </h2>
+            {/* Tabs Header */}
+            <div className="px-6 pt-3 shrink-0 bg-[#E5E5E0]">
+              <RetroTabs
+                tabs={[
+                  { id: 'resume', label: 'RESUME' },
+                  { id: 'cover-letter', label: 'COVER LETTER', disabled: !coverLetter },
+                  { id: 'outreach', label: 'OUTREACH MAIL', disabled: !outreachMessage },
+                ]}
+                activeTab={activeTab}
+                onTabChange={(id) => setActiveTab(id as TabId)}
+              />
             </div>
-            <PaginatedPreview resumeData={resumeData} settings={templateSettings} />
+
+            {/* Preview Content */}
+            <div className="flex-1 overflow-y-auto">
+              {/* Resume Preview */}
+              {activeTab === 'resume' && (
+                <PaginatedPreview resumeData={resumeData} settings={templateSettings} />
+              )}
+
+              {/* Cover Letter Preview */}
+              {activeTab === 'cover-letter' && resumeData.personalInfo && (
+                <div className="p-6">
+                  <CoverLetterPreview
+                    content={coverLetter}
+                    personalInfo={resumeData.personalInfo}
+                    pageSize={templateSettings.pageSize}
+                  />
+                </div>
+              )}
+
+              {/* Outreach Preview */}
+              {activeTab === 'outreach' && (
+                <div className="p-6">
+                  <OutreachPreview content={outreachMessage} />
+                </div>
+              )}
+            </div>
           </div>
         </div>
 

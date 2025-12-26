@@ -57,6 +57,8 @@ class Database:
         parent_id: str | None = None,
         processed_data: dict[str, Any] | None = None,
         processing_status: str = "pending",
+        cover_letter: str | None = None,
+        outreach_message: str | None = None,
     ) -> dict[str, Any]:
         """Create a new resume entry.
 
@@ -74,6 +76,8 @@ class Database:
             "parent_id": parent_id,
             "processed_data": processed_data,
             "processing_status": processing_status,
+            "cover_letter": cover_letter,
+            "outreach_message": outreach_message,
             "created_at": now,
             "updated_at": now,
         }
