@@ -467,10 +467,11 @@ async def download_cover_letter_pdf(
     if not resume:
         raise HTTPException(status_code=404, detail="Resume not found")
 
-    if not resume.get("cover_letter"):
+    cover_letter = resume.get("cover_letter")
+    if not cover_letter:
         raise HTTPException(status_code=404, detail="No cover letter found for this resume")
 
-    # Build print URL for cover letter
+    # Build print URL (same pattern as resume PDF)
     url = f"{settings.frontend_base_url}/print/cover-letter/{resume_id}?pageSize={pageSize}"
 
     # Render PDF with cover letter selector

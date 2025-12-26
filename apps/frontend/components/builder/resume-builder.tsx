@@ -388,7 +388,7 @@ const ResumeBuilderContent = () => {
                   disabled={!resumeId || !coverLetter || isDownloading}
                 >
                   <Download className="w-4 h-4" />
-                  {isDownloading ? 'Generating...' : 'Download PDF'}
+                  {isDownloading ? 'Generating...' : 'Download'}
                 </Button>
               )}
 

@@ -1,8 +1,12 @@
+/**
+ * Cover Letter Print Page
+ *
+ * This page renders a cover letter for PDF generation.
+ * Uses the same API fetch pattern as the resume print page.
+ */
+
 import { API_BASE } from '@/lib/api/client';
 
-/**
- * Page dimensions in millimeters
- */
 const PAGE_DIMENSIONS = {
   A4: { width: 210, height: 297 },
   LETTER: { width: 215.9, height: 279.4 },
@@ -19,53 +23,37 @@ type PageProps = {
 
 interface PersonalInfo {
   name?: string;
-  title?: string;
   email?: string;
   phone?: string;
   location?: string;
-  website?: string;
   linkedin?: string;
-  github?: string;
 }
 
-interface ResumeResponse {
-  data: {
-    processed_resume?: {
-      personalInfo?: PersonalInfo;
-    };
-    cover_letter?: string;
-  };
+interface CoverLetterData {
+  coverLetter: string;
+  personalInfo: PersonalInfo;
 }
 
-async function fetchCoverLetterData(
-  id: string
-): Promise<{ personalInfo: PersonalInfo; coverLetter: string; error?: string }> {
-  const url = `${API_BASE}/resumes?resume_id=${encodeURIComponent(id)}`;
-
-  try {
-    const res = await fetch(url, {
-      cache: 'no-store',
-    });
-    if (!res.ok) {
-      return {
-        personalInfo: {},
-        coverLetter: '',
-        error: `Failed to fetch (status ${res.status})`,
-      };
-    }
-    const payload = (await res.json()) as ResumeResponse;
-
-    return {
-      personalInfo: payload.data.processed_resume?.personalInfo || {},
-      coverLetter: payload.data.cover_letter || '',
-    };
-  } catch (err) {
-    return {
-      personalInfo: {},
-      coverLetter: '',
-      error: `Fetch error: ${err instanceof Error ? err.message : String(err)}`,
-    };
+async function fetchCoverLetterData(resumeId: string): Promise<CoverLetterData> {
+  const res = await fetch(`${API_BASE}/resumes?resume_id=${encodeURIComponent(resumeId)}`, {
+    cache: 'no-store',
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to load resume (status ${res.status}).`);
   }
+  const payload = (await res.json()) as {
+    data: {
+      cover_letter?: string;
+      processed_resume?: {
+        personalInfo?: PersonalInfo;
+      };
+    };
+  };
+
+  return {
+    coverLetter: payload.data.cover_letter || '',
+    personalInfo: payload.data.processed_resume?.personalInfo || {},
+  };
 }
 
 function parsePageSize(value: string | undefined): PageSize {
@@ -78,30 +66,12 @@ function parsePageSize(value: string | undefined): PageSize {
 export default async function PrintCoverLetterPage({ params, searchParams }: PageProps) {
   const resolvedParams = await params;
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
-  const { personalInfo, coverLetter, error } = await fetchCoverLetterData(resolvedParams.id);
 
   const pageSize = parsePageSize(resolvedSearchParams?.pageSize);
   const pageDims = PAGE_DIMENSIONS[pageSize];
 
-  // Show error if fetch failed
-  if (error) {
-    return (
-      <div
-        className="cover-letter-print bg-white"
-        style={{
-          width: `${pageDims.width}mm`,
-          minHeight: `${pageDims.height}mm`,
-          padding: '25mm',
-          boxSizing: 'border-box',
-        }}
-      >
-        <h1 style={{ color: 'red', fontSize: '14pt' }}>Error Loading Cover Letter</h1>
-        <p style={{ fontSize: '11pt' }}>{error}</p>
-        <p style={{ fontSize: '9pt', color: '#666' }}>Resume ID: {resolvedParams.id}</p>
-        <p style={{ fontSize: '9pt', color: '#666' }}>API URL: {API_BASE}</p>
-      </div>
-    );
-  }
+  // Fetch cover letter data from API (same pattern as resume)
+  const { coverLetter, personalInfo } = await fetchCoverLetterData(resolvedParams.id);
 
   // Standard cover letter margins
   const margins = { top: 25, right: 25, bottom: 25, left: 25 };
@@ -113,49 +83,25 @@ export default async function PrintCoverLetterPage({ params, searchParams }: Pag
     day: 'numeric',
   });
 
-  // Split cover letter into paragraphs (handle both double and single newlines)
+  // Split cover letter into paragraphs
   const paragraphs = coverLetter
     .split(/\n\n+/)
     .flatMap((p) => p.split('\n'))
     .map((p) => p.trim())
     .filter((p) => p.length > 0);
 
-  // Debug info
-  const debugInfo = {
-    hasPersonalInfo: Object.keys(personalInfo).length > 0,
-    hasCoverLetter: coverLetter.length > 0,
-    coverLetterLength: coverLetter.length,
-    paragraphCount: paragraphs.length,
-  };
-
   return (
     <div
-      className="cover-letter-print"
+      className="cover-letter-print bg-white"
       style={{
         width: `${pageDims.width}mm`,
         minHeight: `${pageDims.height}mm`,
         padding: `${margins.top}mm ${margins.right}mm ${margins.bottom}mm ${margins.left}mm`,
         boxSizing: 'border-box',
         fontFamily: 'Georgia, serif',
-        backgroundColor: '#ffffff',
         color: '#000000',
       }}
     >
-      {/* Debug info - remove in production */}
-      {!coverLetter && (
-        <div
-          style={{
-            background: '#fff3cd',
-            border: '1px solid #ffc107',
-            padding: '8px',
-            marginBottom: '10mm',
-            fontSize: '9pt',
-            fontFamily: 'monospace',
-          }}
-        >
-          Debug: {JSON.stringify(debugInfo)}
-        </div>
-      )}
       {/* Header - Personal Info */}
       <header
         style={{
@@ -219,21 +165,9 @@ export default async function PrintCoverLetterPage({ params, searchParams }: Pag
               {para}
             </p>
           ))
-        ) : coverLetter ? (
-          // Fallback: render raw content with line breaks preserved
-          <pre
-            style={{
-              fontSize: '11pt',
-              margin: 0,
-              whiteSpace: 'pre-wrap',
-              fontFamily: 'Georgia, serif',
-            }}
-          >
-            {coverLetter}
-          </pre>
         ) : (
           <p style={{ fontSize: '11pt', color: '#999' }}>
-            No cover letter content available. (Resume ID: {resolvedParams.id})
+            No cover letter content available.
           </p>
         )}
       </div>

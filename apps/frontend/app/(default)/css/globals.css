@@ -148,11 +148,14 @@
   }
 
   .resume-print,
-  .resume-print * {
+  .resume-print *,
+  .cover-letter-print,
+  .cover-letter-print * {
     visibility: visible !important;
   }
 
-  .resume-print {
+  .resume-print,
+  .cover-letter-print {
     width: 100% !important;
     max-width: 210mm !important;
     min-height: 297mm !important;
