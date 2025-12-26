@@ -277,23 +277,19 @@
 
 /* ============================================
    PAGE BREAK CONTROL
-   Prevents sections and items from being split
-   across pages during PDF generation
+   Prevents individual items from being split
+   across pages during PDF generation.
+   NOTE: Sections CAN span pages - only individual
+   items (job entries, project entries) stay together.
    ============================================ */
 
-/* Sections should not be split across pages */
-.resume-body .resume-section {
-  break-inside: avoid;
-  page-break-inside: avoid;
-}
-
-/* Individual items should stay together */
+/* Individual items should stay together (job entries, projects, etc.) */
 .resume-body .resume-item {
   break-inside: avoid;
   page-break-inside: avoid;
 }
 
-/* Section titles should stay with their content */
+/* Section titles should not be orphaned at bottom of page */
 .resume-body .resume-section-title,
 .resume-body .resume-section-title-sm {
   break-after: avoid;
@@ -317,8 +313,7 @@
     border-bottom-color: #000000 !important;
   }
 
-  /* Reinforce page break rules in print */
-  .resume-body .resume-section,
+  /* Reinforce page break rules in print - only for individual items */
   .resume-body .resume-item {
     break-inside: avoid !important;
     page-break-inside: avoid !important;

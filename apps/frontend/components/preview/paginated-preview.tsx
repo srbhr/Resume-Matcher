@@ -167,6 +167,7 @@ export function PaginatedPreview({ resumeData, settings }: PaginatedPreviewProps
                 scale={zoom}
                 showMarginGuides={showMargins}
                 contentOffset={page.contentOffset}
+                contentEnd={page.contentEnd}
               >
                 <Resume resumeData={resumeData} template={settings.template} settings={settings} />
               </PageContainer>

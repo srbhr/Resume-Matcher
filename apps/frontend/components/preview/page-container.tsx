@@ -12,12 +12,15 @@ interface PageContainerProps {
   scale: number;
   showMarginGuides: boolean;
   children: React.ReactNode;
-  contentOffset?: number; // Vertical offset for content on this page (in px)
+  contentOffset?: number; // Where this page's content starts (in px)
+  contentEnd?: number; // Where this page's content ends (in px)
 }
 
 /**
  * PageContainer renders a single page at exact dimensions with optional margin guides.
  * Content is clipped to the printable area (page minus margins).
+ * Uses contentOffset and contentEnd to show only the content for this specific page,
+ * preventing duplication across pages.
  */
 export function PageContainer({
   pageSize,
@@ -28,6 +31,7 @@ export function PageContainer({
   showMarginGuides,
   children,
   contentOffset = 0,
+  contentEnd,
 }: PageContainerProps) {
   const pageDims = PAGE_DIMENSIONS[pageSize];
   const pageWidthPx = mmToPx(pageDims.width);
@@ -39,7 +43,13 @@ export function PageContainer({
   const marginRightPx = mmToPx(margins.right);
 
   const contentWidth = pageWidthPx - marginLeftPx - marginRightPx;
-  const contentHeight = pageHeightPx - marginTopPx - marginBottomPx;
+  const maxContentHeight = pageHeightPx - marginTopPx - marginBottomPx;
+
+  // Calculate the actual visible height for this page
+  // If contentEnd is provided, limit the height to avoid showing content that belongs on the next page
+  const actualContentHeight = contentEnd
+    ? Math.min(maxContentHeight, contentEnd - contentOffset)
+    : maxContentHeight;
 
   return (
     <div className="relative flex flex-col items-center">
@@ -61,7 +71,7 @@ export function PageContainer({
               top: marginTopPx,
               left: marginLeftPx,
               width: contentWidth,
-              height: contentHeight,
+              height: maxContentHeight,
               border: '1px dashed rgba(29, 78, 216, 0.5)',
             }}
           >
@@ -73,14 +83,14 @@ export function PageContainer({
           </div>
         )}
 
-        {/* Content area with clipping */}
+        {/* Content area with clipping - uses actualContentHeight to prevent content overlap */}
         <div
           className="absolute overflow-hidden"
           style={{
             top: marginTopPx,
             left: marginLeftPx,
             width: contentWidth,
-            height: contentHeight,
+            height: actualContentHeight,
           }}
         >
           {/* Content positioned based on page offset */}

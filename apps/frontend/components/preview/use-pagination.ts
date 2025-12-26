@@ -7,6 +7,7 @@ import { getContentAreaPx } from '@/lib/constants/page-dimensions';
 export interface PageBreak {
   pageNumber: number;
   contentOffset: number; // Where this page starts in the content (px)
+  contentEnd: number; // Where this page ends in the content (px)
 }
 
 interface UsePaginationOptions {
@@ -32,7 +33,9 @@ export function usePagination({
   measurementRef,
   debounceMs = 150,
 }: UsePaginationOptions): UsePaginationResult {
-  const [pages, setPages] = useState<PageBreak[]>([{ pageNumber: 1, contentOffset: 0 }]);
+  const [pages, setPages] = useState<PageBreak[]>([
+    { pageNumber: 1, contentOffset: 0, contentEnd: 0 },
+  ]);
   const [totalContentHeight, setTotalContentHeight] = useState(0);
   const [isCalculating, setIsCalculating] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -40,7 +43,7 @@ export function usePagination({
   const calculatePageBreaks = useCallback(() => {
     const container = measurementRef.current;
     if (!container) {
-      setPages([{ pageNumber: 1, contentOffset: 0 }]);
+      setPages([{ pageNumber: 1, contentOffset: 0, contentEnd: 0 }]);
       return;
     }
 
@@ -56,65 +59,74 @@ export function usePagination({
 
       // If content fits on one page, we're done
       if (contentHeight <= pageHeight) {
-        setPages([{ pageNumber: 1, contentOffset: 0 }]);
+        setPages([{ pageNumber: 1, contentOffset: 0, contentEnd: contentHeight }]);
         setIsCalculating(false);
         return;
       }
 
-      // Find all section elements that should not be split
-      const sections = container.querySelectorAll('.resume-section, .resume-item, [data-no-break]');
-      const sectionBounds: { top: number; bottom: number; element: Element }[] = [];
+      // Find individual items that should not be split (NOT entire sections)
+      // - .resume-item: Individual job entries, project entries, education entries
+      // - [data-no-break]: Explicitly marked elements
+      // NOTE: We do NOT include .resume-section because sections SHOULD span pages
+      const items = container.querySelectorAll('.resume-item, [data-no-break]');
+      const itemBounds: { top: number; bottom: number; element: Element }[] = [];
 
-      sections.forEach((section) => {
-        const rect = section.getBoundingClientRect();
+      items.forEach((item) => {
+        const rect = item.getBoundingClientRect();
         const containerRect = container.getBoundingClientRect();
-        sectionBounds.push({
+        itemBounds.push({
           top: rect.top - containerRect.top,
           bottom: rect.bottom - containerRect.top,
-          element: section,
+          element: item,
         });
       });
 
+      // Sort by top position for easier processing
+      itemBounds.sort((a, b) => a.top - b.top);
+
       // Calculate page breaks
-      const newPages: PageBreak[] = [{ pageNumber: 1, contentOffset: 0 }];
+      const breakPoints: number[] = [0]; // Start positions of each page
       let currentOffset = 0;
-      let pageNumber = 1;
 
       while (currentOffset + pageHeight < contentHeight) {
         let nextBreak = currentOffset + pageHeight;
 
-        // Check if this break would split a section
-        for (const bound of sectionBounds) {
-          // If a section straddles the page break
+        // Check if this break would split an individual item
+        for (const bound of itemBounds) {
+          // If an item straddles the page break
           if (bound.top < nextBreak && bound.bottom > nextBreak) {
-            // Move break to before this section starts
-            // But only if it doesn't push us back too far (at least 20% of page used)
+            // Move break to before this item starts
+            // But only if it doesn't push us back too far (at least 50% of page used)
+            // This ensures we fill pages well before moving items
             const proposedBreak = bound.top;
-            if (proposedBreak > currentOffset + pageHeight * 0.2) {
+            if (proposedBreak > currentOffset + pageHeight * 0.5) {
               nextBreak = proposedBreak;
               break;
             }
-            // If section is too large, we have to break it
-            // (content taller than page height)
+            // If item is too large or would leave too much empty space,
+            // just let it break naturally
           }
         }
 
-        // Safety: ensure we make progress (at least 50px per page)
-        if (nextBreak <= currentOffset + 50) {
+        // Safety: ensure we make progress (at least 100px per page)
+        if (nextBreak <= currentOffset + 100) {
           nextBreak = currentOffset + pageHeight;
         }
 
         currentOffset = nextBreak;
-        pageNumber++;
 
-        // Only add page if there's more content
+        // Only add break point if there's more content
         if (currentOffset < contentHeight) {
-          newPages.push({
-            pageNumber,
-            contentOffset: currentOffset,
-          });
+          breakPoints.push(currentOffset);
         }
       }
+
+      // Convert break points to page objects with start and end
+      const newPages: PageBreak[] = breakPoints.map((offset, index) => ({
+        pageNumber: index + 1,
+        contentOffset: offset,
+        contentEnd: index < breakPoints.length - 1 ? breakPoints[index + 1] : contentHeight,
+      }));
 
       setPages(newPages);
       setIsCalculating(false);
