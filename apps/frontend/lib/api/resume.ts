@@ -1,7 +1,6 @@
 import { ImprovedResult } from '@/components/common/resume_previewer_context';
 import { type TemplateSettings } from '@/lib/types/template-settings';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+import { API_BASE, apiPost, apiPatch, apiDelete, apiFetch } from './client';
 
 // Matches backend schemas/models.py ResumeData
 interface ProcessedResume {
@@ -76,14 +75,12 @@ export async function uploadJobDescriptions(
   descriptions: string[],
   resumeId: string
 ): Promise<string> {
-  const res = await fetch(`${API_URL}/api/v1/jobs/upload`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ job_descriptions: descriptions, resume_id: resumeId }),
+  const res = await apiPost('/jobs/upload', {
+    job_descriptions: descriptions,
+    resume_id: resumeId,
   });
   if (!res.ok) throw new Error(`Upload failed with status ${res.status}`);
   const data = await res.json();
-  console.log('Job upload response:', data);
   return data.job_id[0];
 }
 
@@ -91,10 +88,9 @@ export async function uploadJobDescriptions(
 export async function improveResume(resumeId: string, jobId: string): Promise<ImprovedResult> {
   let response: Response;
   try {
-    response = await fetch(`${API_URL}/api/v1/resumes/improve`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ resume_id: resumeId, job_id: jobId }),
+    response = await apiPost('/resumes/improve', {
+      resume_id: resumeId,
+      job_id: jobId,
     });
   } catch (networkError) {
     console.error('Network error during improveResume:', networkError);
@@ -115,13 +111,12 @@ export async function improveResume(resumeId: string, jobId: string): Promise<Im
     throw parseError;
   }
 
-  console.log('Resume improvement response:', data);
   return data;
 }
 
 /** Fetches a raw resume record for previewing the original upload */
 export async function fetchResume(resumeId: string): Promise<ResumeResponse['data']> {
-  const res = await fetch(`${API_URL}/api/v1/resumes?resume_id=${encodeURIComponent(resumeId)}`);
+  const res = await apiFetch(`/resumes?resume_id=${encodeURIComponent(resumeId)}`);
   if (!res.ok) {
     throw new Error(`Failed to load resume (status ${res.status}).`);
   }
@@ -132,9 +127,7 @@ export async function fetchResume(resumeId: string): Promise<ResumeResponse['dat
 }
 
 export async function fetchResumeList(includeMaster = false): Promise<ResumeListItem[]> {
-  const res = await fetch(
-    `${API_URL}/api/v1/resumes/list?include_master=${includeMaster ? 'true' : 'false'}`
-  );
+  const res = await apiFetch(`/resumes/list?include_master=${includeMaster ? 'true' : 'false'}`);
   if (!res.ok) {
     throw new Error(`Failed to load resumes list (status ${res.status}).`);
   }
@@ -146,11 +139,7 @@ export async function updateResume(
   resumeId: string,
   resumeData: ProcessedResume
 ): Promise<ResumeResponse['data']> {
-  const res = await fetch(`${API_URL}/api/v1/resumes/${encodeURIComponent(resumeId)}`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(resumeData),
-  });
+  const res = await apiPatch(`/resumes/${encodeURIComponent(resumeId)}`, resumeData);
   if (!res.ok) {
     const text = await res.text().catch(() => '');
     throw new Error(`Failed to update resume (status ${res.status}): ${text}`);
@@ -182,9 +171,7 @@ export async function downloadResumePdf(
     params.set('pageSize', 'A4');
   }
 
-  const res = await fetch(
-    `${API_URL}/api/v1/resumes/${encodeURIComponent(resumeId)}/pdf?${params.toString()}`
-  );
+  const res = await apiFetch(`/resumes/${encodeURIComponent(resumeId)}/pdf?${params.toString()}`);
   if (!res.ok) {
     const text = await res.text().catch(() => '');
     throw new Error(`Failed to download resume (status ${res.status}): ${text}`);
@@ -194,9 +181,7 @@ export async function downloadResumePdf(
 
 /** Deletes a resume by ID */
 export async function deleteResume(resumeId: string): Promise<void> {
-  const res = await fetch(`${API_URL}/api/v1/resumes/${encodeURIComponent(resumeId)}`, {
-    method: 'DELETE',
-  });
+  const res = await apiDelete(`/resumes/${encodeURIComponent(resumeId)}`);
   if (!res.ok) {
     const text = await res.text().catch(() => '');
     throw new Error(`Failed to delete resume (status ${res.status}): ${text}`);

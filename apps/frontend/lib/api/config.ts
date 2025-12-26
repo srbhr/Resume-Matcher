@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+import { apiFetch } from './client';
 
 // Supported LLM providers
 export type LLMProvider = 'openai' | 'anthropic' | 'openrouter' | 'gemini' | 'deepseek' | 'ollama';
@@ -42,10 +42,7 @@ export interface LLMHealthCheck {
 
 // Fetch full LLM configuration
 export async function fetchLlmConfig(): Promise<LLMConfig> {
-  const res = await fetch(`${API_URL}/api/v1/config/llm-api-key`, {
-    method: 'GET',
-    credentials: 'include',
-  });
+  const res = await apiFetch('/config/llm-api-key', { credentials: 'include' });
 
   if (!res.ok) {
     throw new Error(`Failed to load LLM config (status ${res.status}).`);
@@ -62,7 +59,7 @@ export async function fetchLlmApiKey(): Promise<string> {
 
 // Update LLM configuration
 export async function updateLlmConfig(config: LLMConfigUpdate): Promise<LLMConfig> {
-  const res = await fetch(`${API_URL}/api/v1/config/llm-api-key`, {
+  const res = await apiFetch('/config/llm-api-key', {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
@@ -85,7 +82,7 @@ export async function updateLlmApiKey(value: string): Promise<string> {
 
 // Test LLM connection
 export async function testLlmConnection(): Promise<LLMHealthCheck> {
-  const res = await fetch(`${API_URL}/api/v1/config/llm-test`, {
+  const res = await apiFetch('/config/llm-test', {
     method: 'POST',
     credentials: 'include',
   });
@@ -99,10 +96,7 @@ export async function testLlmConnection(): Promise<LLMHealthCheck> {
 
 // Fetch system status
 export async function fetchSystemStatus(): Promise<SystemStatus> {
-  const res = await fetch(`${API_URL}/api/v1/status`, {
-    method: 'GET',
-    credentials: 'include',
-  });
+  const res = await apiFetch('/status', { credentials: 'include' });
 
   if (!res.ok) {
     throw new Error(`Failed to fetch system status (status ${res.status}).`);

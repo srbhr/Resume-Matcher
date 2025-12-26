@@ -54,21 +54,20 @@ export default function SettingsPage() {
   const [apiBase, setApiBase] = useState('');
   const [hasStoredApiKey, setHasStoredApiKey] = useState(false);
 
-  // System status state
+  // System status state (not auto-loaded to avoid LLM API call on every page visit)
   const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
   const [healthCheck, setHealthCheck] = useState<LLMHealthCheck | null>(null);
-  const [statusLoading, setStatusLoading] = useState(true);
+  const [statusLoading, setStatusLoading] = useState(false);
 
-  // Load initial data
+  // Load initial data (config only - status fetched on demand to avoid LLM API call)
   useEffect(() => {
     let cancelled = false;
 
     async function loadData() {
       try {
-        const [config, sysStatus] = await Promise.all([
-          fetchLlmConfig().catch(() => null),
-          fetchSystemStatus().catch(() => null),
-        ]);
+        // Only fetch config on load - don't fetch status automatically
+        // as it triggers an LLM health check API call every time
+        const config = await fetchLlmConfig().catch(() => null);
 
         if (cancelled) return;
 
@@ -81,7 +80,6 @@ export default function SettingsPage() {
           setApiBase(config.api_base || '');
         }
 
-        setSystemStatus(sysStatus);
         setStatus('idle');
         setStatusLoading(false);
       } catch (err) {
@@ -237,11 +235,26 @@ export default function SettingsPage() {
               </Button>
             </div>
 
-            {statusLoading && !systemStatus ? (
+            {statusLoading ? (
               <div className="flex items-center justify-center p-8">
                 <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
               </div>
-            ) : systemStatus ? (
+            ) : !systemStatus ? (
+              <div className="flex flex-col items-center justify-center p-8 gap-3 border border-dashed border-gray-300 bg-gray-50">
+                <p className="font-mono text-xs text-gray-500 uppercase">
+                  Status not loaded (avoids LLM API call)
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={refreshStatus}
+                  className="gap-1 text-xs"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                  Load Status
+                </Button>
+              </div>
+            ) : (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {/* LLM Status */}
                 <div className="border border-black bg-white p-4 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)]">
@@ -294,12 +307,6 @@ export default function SettingsPage() {
                     {systemStatus.database_stats.total_jobs}
                   </span>
                 </div>
-              </div>
-            ) : (
-              <div className="border border-dashed border-red-300 bg-red-50 p-4">
-                <p className="font-mono text-xs text-red-600 text-center">
-                  UNABLE TO CONNECT TO BACKEND
-                </p>
               </div>
             )}
 
@@ -501,14 +508,20 @@ export default function SettingsPage() {
         <div className="bg-[#E5E5E0] p-4 border-t border-black flex justify-between items-center">
           <span className="font-mono text-xs text-gray-500">RESUME MATCHER v2.0.0</span>
           <div className="flex items-center gap-2">
-            <div
-              className={`w-3 h-3 ${systemStatus?.status === 'ready' ? 'bg-green-700' : 'bg-amber-500'}`}
-            ></div>
-            <span
-              className={`font-mono text-xs font-bold ${systemStatus?.status === 'ready' ? 'text-green-700' : 'text-amber-600'}`}
-            >
-              {systemStatus?.status === 'ready' ? 'STATUS: READY' : 'STATUS: SETUP REQUIRED'}
-            </span>
+            {systemStatus ? (
+              <>
+                <div
+                  className={`w-3 h-3 ${systemStatus.status === 'ready' ? 'bg-green-700' : 'bg-amber-500'}`}
+                ></div>
+                <span
+                  className={`font-mono text-xs font-bold ${systemStatus.status === 'ready' ? 'text-green-700' : 'text-amber-600'}`}
+                >
+                  {systemStatus.status === 'ready' ? 'STATUS: READY' : 'STATUS: SETUP REQUIRED'}
+                </span>
+              </>
+            ) : (
+              <span className="font-mono text-xs text-gray-500">STATUS: NOT CHECKED</span>
+            )}
           </div>
         </div>
       </div>

@@ -19,6 +19,7 @@ import {
   CheckCircle2Icon,
 } from 'lucide-react';
 import { useFileUpload, formatBytes } from '@/hooks/use-file-upload';
+import { getUploadUrl } from '@/lib/api/client';
 
 interface ResumeUploadDialogProps {
   trigger?: React.ReactNode;
@@ -39,10 +40,7 @@ export function ResumeUploadDialog({ trigger, onUploadComplete }: ResumeUploadDi
     message: string;
   } | null>(null);
 
-  // TODO: Update this URL to the actual endpoint
-  const UPLOAD_URL = process.env.NEXT_PUBLIC_API_URL
-    ? `${process.env.NEXT_PUBLIC_API_URL}/api/v1/resumes/upload`
-    : 'http://localhost:8000/api/v1/resumes/upload';
+  const UPLOAD_URL = getUploadUrl();
 
   const [
     { files, isDragging, errors, isUploadingGlobal },

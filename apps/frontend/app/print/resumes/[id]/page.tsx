@@ -6,8 +6,7 @@ import {
   type SpacingLevel,
   DEFAULT_TEMPLATE_SETTINGS,
 } from '@/lib/types/template-settings';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+import { API_BASE } from '@/lib/api/client';
 
 /**
  * Page dimensions in millimeters
@@ -35,7 +34,7 @@ type PageProps = {
 };
 
 async function fetchResumeData(id: string): Promise<ResumeData> {
-  const res = await fetch(`${API_URL}/api/v1/resumes?resume_id=${encodeURIComponent(id)}`, {
+  const res = await fetch(`${API_BASE}/resumes?resume_id=${encodeURIComponent(id)}`, {
     cache: 'no-store',
   });
   if (!res.ok) {
