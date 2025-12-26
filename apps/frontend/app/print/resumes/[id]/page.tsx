@@ -9,6 +9,14 @@ import {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
+/**
+ * Page dimensions in millimeters
+ */
+const PAGE_DIMENSIONS = {
+  A4: { width: 210, height: 297 },
+  LETTER: { width: 215.9, height: 279.4 },
+} as const;
+
 type PageProps = {
   params: Promise<{ id: string }>;
   searchParams?: Promise<{
@@ -136,8 +144,19 @@ export default async function PrintResumePage({ params, searchParams }: PageProp
     },
   };
 
+  const pageDims = PAGE_DIMENSIONS[settings.pageSize];
+  const { margins } = settings;
+
   return (
-    <div className="resume-print w-full max-w-[250mm] bg-white border-2 border-black">
+    <div
+      className="resume-print bg-white"
+      style={{
+        width: `${pageDims.width}mm`,
+        minHeight: `${pageDims.height}mm`,
+        padding: `${margins.top}mm ${margins.right}mm ${margins.bottom}mm ${margins.left}mm`,
+        boxSizing: 'border-box',
+      }}
+    >
       <Resume resumeData={resumeData} template={settings.template} settings={settings} />
     </div>
   );

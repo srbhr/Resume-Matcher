@@ -2,12 +2,13 @@
 
 import React, { useState, useEffect, Suspense, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import Resume, { ResumeData } from '@/components/dashboard/resume-component';
+import { type ResumeData } from '@/components/dashboard/resume-component';
 import { ResumeForm } from './resume-form';
 import { FormattingControls } from './formatting-controls';
 import { Button } from '@/components/ui/button';
 import { Download, Save, AlertTriangle, ArrowLeft, RotateCcw } from 'lucide-react';
 import { useResumePreview } from '@/components/common/resume_previewer_context';
+import { PaginatedPreview } from '@/components/preview';
 import { downloadResumePdf, fetchResume, updateResume } from '@/lib/api/resume';
 import { type TemplateSettings, DEFAULT_TEMPLATE_SETTINGS } from '@/lib/types/template-settings';
 
@@ -293,24 +294,15 @@ const ResumeBuilderContent = () => {
             </div>
           </div>
 
-          {/* Right Panel: Preview */}
-          <div className="bg-[#E5E5E0] p-6 md:p-8 overflow-y-auto relative flex flex-col items-center">
-            <div className="w-full max-w-3xl mb-6 flex items-center gap-2 border-b-2 border-gray-500 pb-2 no-print">
+          {/* Right Panel: Paginated Preview */}
+          <div className="bg-[#E5E5E0] overflow-hidden flex flex-col no-print">
+            <div className="flex items-center gap-2 border-b border-gray-400 px-6 py-3 shrink-0">
               <div className="w-3 h-3 bg-green-700"></div>
               <h2 className="font-mono text-lg font-bold text-gray-600 uppercase tracking-wider">
                 Live Preview
               </h2>
             </div>
-            <div className="resume-print w-full max-w-[250mm] mb-4 shadow-[6px_6px_0px_0px_#000000] border-2 border-black bg-white">
-              {/* Resume component scale wrapper */}
-              <div className="resume-scale origin-top scale-[0.65] md:scale-[0.8] lg:scale-90">
-                <Resume
-                  resumeData={resumeData}
-                  template={templateSettings.template}
-                  settings={templateSettings}
-                />
-              </div>
-            </div>
+            <PaginatedPreview resumeData={resumeData} settings={templateSettings} />
           </div>
         </div>
 

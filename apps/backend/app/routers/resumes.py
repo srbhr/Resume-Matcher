@@ -346,14 +346,9 @@ async def download_resume_pdf(
     )
     url = f"{settings.frontend_base_url}/print/resumes/{resume_id}?{params}"
 
-    # Pass margins and page size to PDF renderer
-    margins = {
-        "top": f"{marginTop}mm",
-        "bottom": f"{marginBottom}mm",
-        "left": f"{marginLeft}mm",
-        "right": f"{marginRight}mm",
-    }
-    pdf_bytes = await render_resume_pdf(url, margins, pageSize)
+    # Margins are now applied in the HTML content (via query params above)
+    # The PDF renderer uses zero margins for WYSIWYG accuracy
+    pdf_bytes = await render_resume_pdf(url, pageSize)
 
     headers = {
         "Content-Disposition": f'attachment; filename="resume_{resume_id}.pdf"'

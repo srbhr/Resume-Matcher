@@ -275,6 +275,37 @@
   margin-bottom: var(--item-gap);
 }
 
+/* ============================================
+   PAGE BREAK CONTROL
+   Prevents sections and items from being split
+   across pages during PDF generation
+   ============================================ */
+
+/* Sections should not be split across pages */
+.resume-body .resume-section {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+/* Individual items should stay together */
+.resume-body .resume-item {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+/* Section titles should stay with their content */
+.resume-body .resume-section-title,
+.resume-body .resume-section-title-sm {
+  break-after: avoid;
+  page-break-after: avoid;
+}
+
+/* Generic no-break class for any element */
+.resume-body [data-no-break] {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
 /* Print-specific overrides for resume templates */
 @media print {
   .resume-body {
@@ -284,5 +315,12 @@
   .resume-body .resume-section-title,
   .resume-body .resume-section-title-sm {
     border-bottom-color: #000000 !important;
+  }
+
+  /* Reinforce page break rules in print */
+  .resume-body .resume-section,
+  .resume-body .resume-item {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
   }
 }

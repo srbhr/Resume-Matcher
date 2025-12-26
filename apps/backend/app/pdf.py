@@ -31,22 +31,21 @@ async def close_pdf_renderer() -> None:
 
 
 async def render_resume_pdf(
-    url: str, margins: dict | None = None, page_size: str = "A4"
+    url: str, page_size: str = "A4"
 ) -> bytes:
     """Render a resume URL to PDF bytes.
 
     Args:
-        url: The URL to render (print route)
-        margins: Optional dict with top/right/bottom/left margin values (e.g. "10mm")
+        url: The URL to render (print route with margins in HTML)
         page_size: Page size format - "A4" or "LETTER"
+
+    Note:
+        Margins are now applied directly in the HTML content for WYSIWYG accuracy.
+        The PDF renderer uses zero margins to preserve the HTML layout.
     """
     if _browser is None:
         await init_pdf_renderer()
     assert _browser is not None
-
-    # Default margins if not provided
-    if margins is None:
-        margins = {"top": "10mm", "right": "10mm", "bottom": "10mm", "left": "10mm"}
 
     # Map page size to Playwright format
     format_map = {
@@ -54,6 +53,9 @@ async def render_resume_pdf(
         "LETTER": "Letter",
     }
     pdf_format = format_map.get(page_size, "A4")
+
+    # Zero margins - the HTML content already includes margins via padding
+    pdf_margins = {"top": "0mm", "right": "0mm", "bottom": "0mm", "left": "0mm"}
 
     page: Page = await _browser.new_page()
     try:
@@ -63,7 +65,7 @@ async def render_resume_pdf(
         pdf_bytes = await page.pdf(
             format=pdf_format,
             print_background=True,
-            margin=margins,
+            margin=pdf_margins,
         )
         return pdf_bytes
     finally:

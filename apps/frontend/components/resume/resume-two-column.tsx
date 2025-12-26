@@ -109,8 +109,8 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({ data }) => {
         </div>
       )}
 
-      {/* Two Column Layout */}
-      <div className="grid grid-cols-[65%_35%] gap-6 mt-[var(--section-gap)]">
+      {/* Two Column Layout - items-start ensures content aligns top while grid maintains equal row height */}
+      <div className="grid grid-cols-[65%_35%] gap-6 mt-[var(--section-gap)] items-start">
         {/* Main Column - Left */}
         <div className="pr-4 border-r border-gray-200">
           {/* Experience Section */}
