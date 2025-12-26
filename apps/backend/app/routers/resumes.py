@@ -301,15 +301,59 @@ async def update_resume_endpoint(
 
 @router.get("/{resume_id}/pdf")
 async def download_resume_pdf(
-    resume_id: str, template: str = Query("default")
+    resume_id: str,
+    template: str = Query("swiss-single"),
+    pageSize: str = Query("A4", pattern="^(A4|LETTER)$"),
+    marginTop: int = Query(10, ge=5, le=25),
+    marginBottom: int = Query(10, ge=5, le=25),
+    marginLeft: int = Query(10, ge=5, le=25),
+    marginRight: int = Query(10, ge=5, le=25),
+    sectionSpacing: int = Query(3, ge=1, le=5),
+    itemSpacing: int = Query(2, ge=1, le=5),
+    lineHeight: int = Query(3, ge=1, le=5),
+    fontSize: int = Query(3, ge=1, le=5),
+    headerScale: int = Query(3, ge=1, le=5),
 ) -> Response:
-    """Generate a PDF for a resume using headless Chromium."""
+    """Generate a PDF for a resume using headless Chromium.
+
+    Accepts template settings for customization:
+    - template: swiss-single or swiss-two-column
+    - pageSize: A4 or LETTER
+    - marginTop/Bottom/Left/Right: page margins in mm (5-25)
+    - sectionSpacing: gap between sections (1-5)
+    - itemSpacing: gap between items (1-5)
+    - lineHeight: text line height (1-5)
+    - fontSize: base font size (1-5)
+    - headerScale: header size scale (1-5)
+    """
     resume = db.get_resume(resume_id)
     if not resume:
         raise HTTPException(status_code=404, detail="Resume not found")
 
-    url = f"{settings.frontend_base_url}/print/resumes/{resume_id}?template={template}"
-    pdf_bytes = await render_resume_pdf(url)
+    # Build print URL with all settings
+    params = (
+        f"template={template}"
+        f"&pageSize={pageSize}"
+        f"&marginTop={marginTop}"
+        f"&marginBottom={marginBottom}"
+        f"&marginLeft={marginLeft}"
+        f"&marginRight={marginRight}"
+        f"&sectionSpacing={sectionSpacing}"
+        f"&itemSpacing={itemSpacing}"
+        f"&lineHeight={lineHeight}"
+        f"&fontSize={fontSize}"
+        f"&headerScale={headerScale}"
+    )
+    url = f"{settings.frontend_base_url}/print/resumes/{resume_id}?{params}"
+
+    # Pass margins and page size to PDF renderer
+    margins = {
+        "top": f"{marginTop}mm",
+        "bottom": f"{marginBottom}mm",
+        "left": f"{marginLeft}mm",
+        "right": f"{marginRight}mm",
+    }
+    pdf_bytes = await render_resume_pdf(url, margins, pageSize)
 
     headers = {
         "Content-Disposition": f'attachment; filename="resume_{resume_id}.pdf"'

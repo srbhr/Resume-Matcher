@@ -18,9 +18,14 @@ A lean FastAPI application with multi-provider AI support. See **[.backend-guide
 Next.js dashboard with Swiss International Style design. See **[.frontend-workflow.md](.frontend-workflow.md)** for user flow and **[.front-end-apis.md](.front-end-apis.md)** for API contracts.
 
 - `app/` - Next.js routes (dashboard, builder, tailor, resumes, settings, print)
-- `components/` - Reusable UI components
-- `lib/` - API clients and utilities
+- `components/` - Reusable UI components (including `ConfirmDialog` with danger/success variants)
+- `lib/` - API clients and utilities (`lib/api/resume.ts` includes CRUD operations)
 - `hooks/` - Custom React hooks
+
+**Key Features:**
+- Dashboard auto-refreshes on window focus (handles deletions from other pages)
+- `ConfirmDialog` component supports `danger`, `warning`, `success`, and `default` variants
+- Delete flow includes confirmation before and success message after deletion
 
 ### Root Tooling
 - `Makefile`, `setup.sh`, `package.json` - Workflow coordination

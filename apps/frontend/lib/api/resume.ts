@@ -1,4 +1,5 @@
 import { ImprovedResult } from '@/components/common/resume_previewer_context';
+import { type TemplateSettings } from '@/lib/types/template-settings';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -160,14 +161,44 @@ export async function updateResume(
 
 export async function downloadResumePdf(
   resumeId: string,
-  template: string = 'default'
+  settings?: TemplateSettings
 ): Promise<Blob> {
+  const params = new URLSearchParams();
+
+  if (settings) {
+    params.set('template', settings.template);
+    params.set('pageSize', settings.pageSize);
+    params.set('marginTop', String(settings.margins.top));
+    params.set('marginBottom', String(settings.margins.bottom));
+    params.set('marginLeft', String(settings.margins.left));
+    params.set('marginRight', String(settings.margins.right));
+    params.set('sectionSpacing', String(settings.spacing.section));
+    params.set('itemSpacing', String(settings.spacing.item));
+    params.set('lineHeight', String(settings.spacing.lineHeight));
+    params.set('fontSize', String(settings.fontSize.base));
+    params.set('headerScale', String(settings.fontSize.headerScale));
+  } else {
+    params.set('template', 'swiss-single');
+    params.set('pageSize', 'A4');
+  }
+
   const res = await fetch(
-    `${API_URL}/api/v1/resumes/${encodeURIComponent(resumeId)}/pdf?template=${encodeURIComponent(template)}`
+    `${API_URL}/api/v1/resumes/${encodeURIComponent(resumeId)}/pdf?${params.toString()}`
   );
   if (!res.ok) {
     const text = await res.text().catch(() => '');
     throw new Error(`Failed to download resume (status ${res.status}): ${text}`);
   }
   return await res.blob();
+}
+
+/** Deletes a resume by ID */
+export async function deleteResume(resumeId: string): Promise<void> {
+  const res = await fetch(`${API_URL}/api/v1/resumes/${encodeURIComponent(resumeId)}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Failed to delete resume (status ${res.status}): ${text}`);
+  }
 }

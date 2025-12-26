@@ -11,7 +11,7 @@ import {
   DialogClose,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, Trash2, XIcon } from 'lucide-react';
+import { AlertTriangle, Trash2, XIcon, CheckCircle2 } from 'lucide-react';
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -21,8 +21,9 @@ interface ConfirmDialogProps {
   confirmLabel?: string;
   cancelLabel?: string;
   onConfirm: () => void;
-  variant?: 'danger' | 'warning' | 'default';
+  variant?: 'danger' | 'warning' | 'default' | 'success';
   icon?: React.ReactNode;
+  showCancelButton?: boolean;
 }
 
 export function ConfirmDialog({
@@ -35,33 +36,42 @@ export function ConfirmDialog({
   onConfirm,
   variant = 'default',
   icon,
+  showCancelButton = true,
 }: ConfirmDialogProps) {
   const handleConfirm = () => {
     onConfirm();
     onOpenChange(false);
   };
 
+  // Map dialog variants to button variants and icon styles
   const getVariantStyles = () => {
     switch (variant) {
       case 'danger':
         return {
           iconBg: 'bg-red-100 border-red-300',
           iconColor: 'text-red-600',
-          confirmButton: 'bg-red-600 hover:bg-red-700 text-white border-red-700',
+          buttonVariant: 'destructive' as const,
           defaultIcon: <Trash2 className="w-6 h-6" />,
         };
       case 'warning':
         return {
           iconBg: 'bg-orange-100 border-orange-300',
           iconColor: 'text-orange-600',
-          confirmButton: 'bg-orange-600 hover:bg-orange-700 text-white border-orange-700',
+          buttonVariant: 'warning' as const,
           defaultIcon: <AlertTriangle className="w-6 h-6" />,
+        };
+      case 'success':
+        return {
+          iconBg: 'bg-green-100 border-green-300',
+          iconColor: 'text-green-700',
+          buttonVariant: 'success' as const,
+          defaultIcon: <CheckCircle2 className="w-6 h-6" />,
         };
       default:
         return {
           iconBg: 'bg-blue-100 border-blue-300',
           iconColor: 'text-blue-700',
-          confirmButton: 'bg-blue-700 hover:bg-blue-800 text-white border-blue-800',
+          buttonVariant: 'default' as const,
           defaultIcon: <AlertTriangle className="w-6 h-6" />,
         };
     }
@@ -109,20 +119,18 @@ export function ConfirmDialog({
 
         {/* Footer with actions */}
         <DialogFooter className="p-4 bg-[#F0F0E8] border-t border-black flex-row justify-end gap-3">
-          <DialogClose asChild>
-            <Button
-              variant="outline"
-              className="rounded-none border-black hover:bg-white shadow-[2px_2px_0px_0px_#000000] hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none transition-all"
-            >
-              <XIcon className="w-4 h-4 mr-2" />
-              {cancelLabel}
-            </Button>
-          </DialogClose>
-          <Button
-            onClick={handleConfirm}
-            className={`rounded-none border shadow-[2px_2px_0px_0px_#000000] hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none transition-all ${styles.confirmButton}`}
-          >
-            {variant === 'danger' && <Trash2 className="w-4 h-4 mr-2" />}
+          {showCancelButton && (
+            <DialogClose asChild>
+              <Button variant="outline">
+                <XIcon className="w-4 h-4" />
+                {cancelLabel}
+              </Button>
+            </DialogClose>
+          )}
+          <Button variant={styles.buttonVariant} onClick={handleConfirm}>
+            {variant === 'danger' && <Trash2 className="w-4 h-4" />}
+            {variant === 'success' && <CheckCircle2 className="w-4 h-4" />}
+            {variant === 'warning' && <AlertTriangle className="w-4 h-4" />}
             {confirmLabel}
           </Button>
         </DialogFooter>

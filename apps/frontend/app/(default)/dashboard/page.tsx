@@ -6,8 +6,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
-import { Trash2, Loader2, AlertCircle, RefreshCw, Plus } from 'lucide-react';
-import { fetchResume, fetchResumeList, type ResumeListItem } from '@/lib/api/resume';
+import { Loader2, AlertCircle, RefreshCw, Plus } from 'lucide-react';
+import { fetchResume, fetchResumeList, deleteResume, type ResumeListItem } from '@/lib/api/resume';
 
 type ProcessingStatus = 'pending' | 'processing' | 'ready' | 'failed' | 'loading';
 
@@ -18,28 +18,11 @@ export default function DashboardPage() {
   const [tailoredResumes, setTailoredResumes] = useState<ResumeListItem[]>([]);
   const router = useRouter();
 
-  const cardBaseClass =
-    'bg-[#F0F0E8] p-6 md:p-8 aspect-square h-full relative flex flex-col';
+  const cardBaseClass = 'bg-[#F0F0E8] p-6 md:p-8 aspect-square h-full relative flex flex-col';
   // The physics class from your Hero, adapted for cards
   const interactiveCardClass = `${cardBaseClass} transition-all duration-200 ease-in-out hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0px_0px_#000000] cursor-pointer group`;
 
   const isTailorEnabled = Boolean(masterResumeId) && processingStatus === 'ready';
-
-  const getTailorStatus = () => {
-    if (!masterResumeId) {
-      return { text: 'MASTER RESUME REQUIRED', color: 'text-gray-500' };
-    }
-    if (processingStatus === 'ready') {
-      return { text: 'READY TO TAILOR', color: 'text-green-700' };
-    }
-    if (processingStatus === 'failed') {
-      return { text: 'MASTER PROCESSING FAILED', color: 'text-red-600' };
-    }
-    if (processingStatus === 'processing' || processingStatus === 'loading') {
-      return { text: 'PROCESSING MASTER', color: 'text-blue-700' };
-    }
-    return { text: 'WAITING FOR MASTER', color: 'text-gray-500' };
-  };
 
   const formatDate = (value: string) => {
     if (!value) return 'Unknown';
@@ -78,23 +61,38 @@ export default function DashboardPage() {
     }
   }, [checkResumeStatus]);
 
+  const loadTailoredResumes = useCallback(async () => {
+    try {
+      const data = await fetchResumeList(false);
+      // Also filter out the current master resume by ID (in case is_master flag is out of sync)
+      const masterId = localStorage.getItem('master_resume_id');
+      const filtered = masterId ? data.filter((r) => r.resume_id !== masterId) : data;
+      setTailoredResumes(filtered);
+    } catch (err) {
+      console.error('Failed to load tailored resumes:', err);
+    }
+  }, []);
+
   useEffect(() => {
-    let cancelled = false;
-    const loadTailoredResumes = async () => {
-      try {
-        const data = await fetchResumeList(false);
-        if (!cancelled) {
-          setTailoredResumes(data);
-        }
-      } catch (err) {
-        console.error('Failed to load tailored resumes:', err);
+    loadTailoredResumes();
+  }, [loadTailoredResumes]);
+
+  // Refresh list when window gains focus (e.g., returning from viewer after delete)
+  useEffect(() => {
+    const handleFocus = () => {
+      loadTailoredResumes();
+      // Also re-check master resume status
+      const storedId = localStorage.getItem('master_resume_id');
+      if (storedId) {
+        setMasterResumeId(storedId);
+        checkResumeStatus(storedId);
+      } else {
+        setMasterResumeId(null);
       }
     };
-    loadTailoredResumes();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [loadTailoredResumes, checkResumeStatus]);
 
   const handleUploadComplete = (resumeId: string) => {
     localStorage.setItem('master_resume_id', resumeId);
@@ -139,19 +137,11 @@ export default function DashboardPage() {
     }
   };
 
-  const handleClearMaster = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent navigation
-    setShowDeleteDialog(true);
-  };
-
   const confirmDeleteMaster = async () => {
     // Delete from backend if it exists
     if (masterResumeId) {
       try {
-        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-        await fetch(`${API_URL}/api/v1/resumes/${masterResumeId}`, {
-          method: 'DELETE',
-        });
+        await deleteResume(masterResumeId);
       } catch (err) {
         console.error('Failed to delete resume from server:', err);
       }
@@ -160,6 +150,8 @@ export default function DashboardPage() {
     localStorage.removeItem('master_resume_id');
     setMasterResumeId(null);
     setProcessingStatus('loading');
+    // Refresh the tailored resumes list
+    loadTailoredResumes();
   };
 
   const totalCards = 1 + tailoredResumes.length + 1;
@@ -194,7 +186,10 @@ export default function DashboardPage() {
         />
       ) : (
         // Master Resume Exists - Click to View
-        <div onClick={() => router.push(`/resumes/${masterResumeId}`)} className={interactiveCardClass}>
+        <div
+          onClick={() => router.push(`/resumes/${masterResumeId}`)}
+          className={interactiveCardClass}
+        >
           <div className="flex-1 flex flex-col h-full">
             <div className="flex justify-between items-start mb-6">
               <div className="w-16 h-16 border-2 border-black bg-blue-700 text-white flex items-center justify-center">
@@ -264,9 +259,7 @@ export default function DashboardPage() {
           >
             <Plus className="w-8 h-8" />
           </Button>
-          <p className="text-xs font-mono mt-4 uppercase text-green-700">
-            Create Resume
-          </p>
+          <p className="text-xs font-mono mt-4 uppercase text-green-700">Create Resume</p>
         </div>
       </div>
 
@@ -296,7 +289,6 @@ export default function DashboardPage() {
         onConfirm={confirmDeleteMaster}
         variant="danger"
       />
-
     </SwissGrid>
   );
 }

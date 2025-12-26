@@ -208,9 +208,9 @@ export default function SettingsPage() {
             </p>
           </div>
           <Link href="/dashboard">
-            <Button variant="outline" size="sm" className="gap-2">
+            <Button variant="outline" size="sm">
               <ArrowLeft className="w-4 h-4" />
-              BACK
+              Back
             </Button>
           </Link>
         </div>
@@ -433,13 +433,13 @@ export default function SettingsPage() {
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : status === 'saved' ? (
                     <>
-                      <CheckCircle2 className="w-4 h-4 mr-2" />
-                      SAVED
+                      <CheckCircle2 className="w-4 h-4" />
+                      Saved
                     </>
                   ) : (
                     <>
-                      <Save className="w-4 h-4 mr-2" />
-                      SAVE CONFIGURATION
+                      <Save className="w-4 h-4" />
+                      Save Configuration
                     </>
                   )}
                 </Button>
@@ -452,8 +452,8 @@ export default function SettingsPage() {
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
                     <>
-                      <Activity className="w-4 h-4 mr-2" />
-                      TEST CONNECTION
+                      <Activity className="w-4 h-4" />
+                      Test Connection
                     </>
                   )}
                 </Button>
@@ -500,9 +500,16 @@ export default function SettingsPage() {
         {/* Footer */}
         <div className="bg-[#E5E5E0] p-4 border-t border-black flex justify-between items-center">
           <span className="font-mono text-xs text-gray-500">RESUME MATCHER v2.0.0</span>
-          <span className="font-mono text-xs text-gray-500">
-            {systemStatus?.status === 'ready' ? 'STATUS: READY' : 'STATUS: SETUP REQUIRED'}
-          </span>
+          <div className="flex items-center gap-2">
+            <div
+              className={`w-3 h-3 ${systemStatus?.status === 'ready' ? 'bg-green-700' : 'bg-amber-500'}`}
+            ></div>
+            <span
+              className={`font-mono text-xs font-bold ${systemStatus?.status === 'ready' ? 'text-green-700' : 'text-amber-600'}`}
+            >
+              {systemStatus?.status === 'ready' ? 'STATUS: READY' : 'STATUS: SETUP REQUIRED'}
+            </span>
+          </div>
         </div>
       </div>
     </div>

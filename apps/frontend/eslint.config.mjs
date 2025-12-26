@@ -13,7 +13,15 @@ const prettierPlugin = await import('eslint-plugin-prettier');
 
 const eslintConfig = [
   {
-    ignores: ['node_modules/**', '.next/**', 'out/**', 'dist/**', '*.config.js', '*.config.mjs', 'next-env.d.ts'],
+    ignores: [
+      'node_modules/**',
+      '.next/**',
+      'out/**',
+      'dist/**',
+      '*.config.js',
+      '*.config.mjs',
+      'next-env.d.ts',
+    ],
   },
   ...compat.extends('next/core-web-vitals', 'next/typescript', 'prettier'),
   {

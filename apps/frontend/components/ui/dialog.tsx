@@ -47,7 +47,9 @@ export function DialogTrigger({
   };
 
   if (asChild && React.isValidElement(children)) {
-    return React.cloneElement(children as React.ReactElement, { onClick: handleClick });
+    return React.cloneElement(children as React.ReactElement<{ onClick?: () => void }>, {
+      onClick: handleClick,
+    });
   }
 
   return <button onClick={handleClick}>{children}</button>;
@@ -164,7 +166,9 @@ export function DialogClose({
   const handleClick = () => setIsOpen(false);
 
   if (asChild && React.isValidElement(children)) {
-    return React.cloneElement(children as React.ReactElement, { onClick: handleClick });
+    return React.cloneElement(children as React.ReactElement<{ onClick?: () => void }>, {
+      onClick: handleClick,
+    });
   }
   return <button onClick={handleClick}>{children}</button>;
 }

@@ -5,7 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import Resume, { ResumeData } from '@/components/dashboard/resume-component';
-import { fetchResume, downloadResumePdf } from '@/lib/api/resume';
+import { fetchResume, downloadResumePdf, deleteResume } from '@/lib/api/resume';
 import { ArrowLeft, Edit, Download, Loader2, AlertCircle } from 'lucide-react';
 
 type ProcessingStatus = 'pending' | 'processing' | 'ready' | 'failed';
@@ -19,6 +19,8 @@ export default function ResumeViewerPage() {
   const [processingStatus, setProcessingStatus] = useState<ProcessingStatus | null>(null);
   const [isMasterResume, setIsMasterResume] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const resumeId = params?.id as string;
 
@@ -88,19 +90,23 @@ export default function ResumeViewerPage() {
 
   const handleDeleteResume = async () => {
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-      await fetch(`${API_URL}/api/v1/resumes/${resumeId}`, {
-        method: 'DELETE',
-      });
+      setDeleteError(null);
+      await deleteResume(resumeId);
       if (isMasterResume) {
         localStorage.removeItem('master_resume_id');
       }
-      router.push('/dashboard');
+      setShowDeleteDialog(false);
+      setShowSuccessDialog(true);
     } catch (err) {
       console.error('Failed to delete resume:', err);
-    } finally {
+      setDeleteError('Failed to delete resume. Please try again.');
       setShowDeleteDialog(false);
     }
+  };
+
+  const handleSuccessConfirm = () => {
+    setShowSuccessDialog(false);
+    router.push('/dashboard');
   };
 
   if (loading) {
@@ -144,25 +150,8 @@ export default function ResumeViewerPage() {
             {error || 'Resume not found'}
           </p>
           <div className="flex flex-col gap-2">
-            {isFailed && (
-              <Button
-                onClick={() => router.push('/tailor')}
-                className="bg-blue-700 hover:bg-blue-800 text-white rounded-none"
-              >
-                Use Tailor Feature
-              </Button>
-            )}
-            <Button
-              onClick={() => router.push('/dashboard')}
-              variant="outline"
-              className={`rounded-none ${
-                isProcessing
-                  ? 'border-blue-200 hover:bg-blue-100 text-blue-700'
-                  : isFailed
-                    ? 'border-orange-200 hover:bg-orange-100 text-orange-700'
-                    : 'border-red-200 hover:bg-red-100 text-red-700'
-              }`}
-            >
+            {isFailed && <Button onClick={() => router.push('/tailor')}>Use Tailor Feature</Button>}
+            <Button variant="outline" onClick={() => router.push('/dashboard')}>
               Return to Dashboard
             </Button>
           </div>
@@ -176,29 +165,18 @@ export default function ResumeViewerPage() {
       <div className="max-w-7xl mx-auto">
         {/* Header Actions */}
         <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 no-print">
-          <Button
-            variant="outline"
-            onClick={() => router.push('/dashboard')}
-            className="border-black rounded-none shadow-[2px_2px_0px_0px_#000000] hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none transition-all gap-2"
-          >
+          <Button variant="outline" onClick={() => router.push('/dashboard')}>
             <ArrowLeft className="w-4 h-4" />
             Back to Dashboard
           </Button>
 
           <div className="flex gap-3">
-            <Button
-              onClick={handleEdit}
-              variant="outline"
-              className="border-black rounded-none shadow-[2px_2px_0px_0px_#000000] hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none transition-all"
-            >
-              <Edit className="w-4 h-4 mr-2" />
+            <Button variant="outline" onClick={handleEdit}>
+              <Edit className="w-4 h-4" />
               Edit Resume
             </Button>
-            <Button
-              onClick={handleDownload}
-              className="bg-green-700 hover:bg-green-800 text-white rounded-none border border-black shadow-[2px_2px_0px_0px_#000000] hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none transition-all"
-            >
-              <Download className="w-4 h-4 mr-2" />
+            <Button variant="success" onClick={handleDownload}>
+              <Download className="w-4 h-4" />
               Download Resume
             </Button>
           </div>
@@ -212,10 +190,7 @@ export default function ResumeViewerPage() {
         </div>
 
         <div className="flex justify-end pt-4 no-print">
-          <Button
-            onClick={() => setShowDeleteDialog(true)}
-            className="bg-red-600 text-white border border-black rounded-none shadow-[2px_2px_0px_0px_#000000] hover:bg-red-700 hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none transition-all"
-          >
+          <Button variant="destructive" onClick={() => setShowDeleteDialog(true)}>
             {isMasterResume ? 'Delete Master Resume' : 'Delete Resume'}
           </Button>
         </div>
@@ -235,6 +210,34 @@ export default function ResumeViewerPage() {
         onConfirm={handleDeleteResume}
         variant="danger"
       />
+
+      <ConfirmDialog
+        open={showSuccessDialog}
+        onOpenChange={setShowSuccessDialog}
+        title="Resume Deleted"
+        description={
+          isMasterResume
+            ? 'Your master resume has been permanently deleted from the system.'
+            : 'The resume has been permanently deleted from the system.'
+        }
+        confirmLabel="Return to Dashboard"
+        onConfirm={handleSuccessConfirm}
+        variant="success"
+        showCancelButton={false}
+      />
+
+      {deleteError && (
+        <ConfirmDialog
+          open={!!deleteError}
+          onOpenChange={() => setDeleteError(null)}
+          title="Delete Failed"
+          description={deleteError}
+          confirmLabel="OK"
+          onConfirm={() => setDeleteError(null)}
+          variant="danger"
+          showCancelButton={false}
+        />
+      )}
     </div>
   );
 }

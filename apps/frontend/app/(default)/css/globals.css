@@ -184,3 +184,105 @@
   size: A4;
   margin: 10mm;
 }
+
+/* ============================================
+   RESUME TEMPLATE SYSTEM
+   Swiss International Style CSS Variables
+   ============================================ */
+
+/* Default CSS Variables for Resume Templates */
+.resume-body {
+  /* Spacing defaults (can be overridden via inline styles) */
+  --section-gap: 1.5rem;
+  --item-gap: 0.5rem;
+  --line-height: 1.5;
+  --font-size-base: 14px;
+  --header-scale: 2;
+
+  /* Margin defaults */
+  --margin-top: 10mm;
+  --margin-bottom: 10mm;
+  --margin-left: 10mm;
+  --margin-right: 10mm;
+
+  /* Apply base styles */
+  font-size: var(--font-size-base);
+  line-height: var(--line-height);
+  padding: 2.5rem;
+}
+
+/* Resume Section Styles */
+.resume-body .resume-section {
+  margin-bottom: var(--section-gap);
+}
+
+.resume-body .resume-section:last-child {
+  margin-bottom: 0;
+}
+
+/* Section Title - Full underline style */
+.resume-body .resume-section-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  border-bottom: 2px solid #000000;
+  margin-bottom: calc(var(--item-gap) * 2);
+  padding-bottom: 0.25rem;
+  letter-spacing: 0.05em;
+}
+
+/* Section Title - Small (for sidebar) */
+.resume-body .resume-section-title-sm {
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  border-bottom: 1px solid #000000;
+  margin-bottom: var(--item-gap);
+  padding-bottom: 0.125rem;
+  letter-spacing: 0.05em;
+}
+
+/* Items container within sections */
+.resume-body .resume-items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--item-gap);
+}
+
+/* Individual item within a section */
+.resume-body .resume-item {
+  margin-bottom: var(--item-gap);
+}
+
+.resume-body .resume-item:last-child {
+  margin-bottom: 0;
+}
+
+/* Template-specific overrides */
+
+/* Single Column Template */
+.resume-template-swiss-single {
+  /* Full width sections */
+}
+
+/* Two Column Template */
+.resume-template-swiss-two-column {
+  /* Slightly smaller base for density */
+}
+
+.resume-template-swiss-two-column .resume-section-title {
+  font-size: 0.875rem;
+  margin-bottom: var(--item-gap);
+}
+
+/* Print-specific overrides for resume templates */
+@media print {
+  .resume-body {
+    padding: var(--margin-top) var(--margin-right) var(--margin-bottom) var(--margin-left) !important;
+  }
+
+  .resume-body .resume-section-title,
+  .resume-body .resume-section-title-sm {
+    border-bottom-color: #000000 !important;
+  }
+}

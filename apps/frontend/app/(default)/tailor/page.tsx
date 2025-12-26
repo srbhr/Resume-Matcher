@@ -69,11 +69,7 @@ export default function TailorPage() {
     <div className="min-h-screen bg-[#F0F0E8] flex flex-col items-center justify-center p-4 md:p-8 font-sans">
       <div className="w-full max-w-3xl bg-white border border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,0.1)] p-8 md:p-12 relative">
         {/* Back Button */}
-        <Button
-          variant="ghost"
-          className="absolute top-4 left-4 text-gray-500 hover:text-black hover:bg-transparent pl-0 gap-2"
-          onClick={() => router.back()}
-        >
+        <Button variant="link" className="absolute top-4 left-4" onClick={() => router.back()}>
           <ArrowLeft className="w-4 h-4" />
           Back
         </Button>
@@ -108,13 +104,14 @@ export default function TailorPage() {
           )}
 
           <Button
+            size="lg"
             onClick={handleGenerate}
             disabled={isLoading || !jobDescription.trim()}
-            className="w-full h-14 text-lg font-bold uppercase tracking-wider rounded-none border-2 border-black shadow-[4px_4px_0px_0px_#000000] hover:translate-y-[2px] hover:translate-x-[2px] hover:shadow-none transition-all bg-blue-700 hover:bg-blue-800 text-white"
+            className="w-full"
           >
             {isLoading ? (
               <>
-                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                <Loader2 className="w-5 h-5 animate-spin" />
                 Processing...
               </>
             ) : (
