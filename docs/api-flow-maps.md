@@ -660,6 +660,114 @@ pdf_options = {
 
 ---
 
+## 7.1 Cover Letter PDF Generation Flow
+
+**Endpoint:** `GET /api/v1/resumes/{resume_id}/cover-letter/pdf`
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    COVER LETTER PDF GENERATION FLOW                          │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+Frontend                          Backend                           External
+─────────────────────────────────────────────────────────────────────────────
+     │                               │                                  │
+     │  GET /resumes/{id}/           │                                  │
+     │  cover-letter/pdf             │                                  │
+     │  ?pageSize=A4                 │                                  │
+     │──────────────────────────────>│                                  │
+     │                               │                                  │
+     │                    ┌──────────┴──────────┐                       │
+     │                    │ routers/resumes.py  │                       │
+     │                    │ download_cover_     │                       │
+     │                    │ letter_pdf()        │                       │
+     │                    └──────────┬──────────┘                       │
+     │                               │                                  │
+     │                    ┌──────────┴──────────┐                       │
+     │                    │ database.py         │                       │
+     │                    │ get_resume()        │                       │
+     │                    └──────────┬──────────┘                       │
+     │                               │                                  │
+     │                               │  [Query TinyDB]                  │
+     │                               │─────────────────────────────────>│
+     │                               │                                  │
+     │                    ┌──────────┴──────────┐                       │
+     │                    │ Check cover_letter  │                       │
+     │                    │ field exists        │                       │
+     │                    └──────────┬──────────┘                       │
+     │                               │                                  │
+     │                    ┌──────────┴──────────┐                       │
+     │                    │ Build print URL     │                       │
+     │                    │ FRONTEND_URL/print/ │                       │
+     │                    │ cover-letter/{id}   │                       │
+     │                    │ ?pageSize=...       │                       │
+     │                    └──────────┬──────────┘                       │
+     │                               │                                  │
+     │                    ┌──────────┴──────────┐                       │
+     │                    │ pdf.py              │                       │
+     │                    │ render_resume_pdf() │                       │
+     │                    │ selector=".cover-   │                       │
+     │                    │ letter-print"       │                       │
+     │                    └──────────┬──────────┘                       │
+     │                               │                                  │
+     │                    ┌──────────┴──────────┐                       │
+     │                    │ Playwright          │                       │
+     │                    │ Launch Chromium     │                       │
+     │                    └──────────┬──────────┘                       │
+     │                               │                                  │
+     │                               │  [HTTP GET to Frontend]          │
+     │                               │  /print/cover-letter/{id}        │
+     │                               │─────────────────────────────────>│
+     │                               │                                  │
+     │                               │  [Frontend fetches resume data]  │
+     │                               │  GET /resumes?resume_id={id}     │
+     │                               │─────────────────────────────────>│
+     │                               │                                  │
+     │                               │  [Rendered HTML page with        │
+     │                               │   .cover-letter-print class]     │
+     │                               │<─────────────────────────────────│
+     │                               │                                  │
+     │                    ┌──────────┴──────────┐                       │
+     │                    │ page.pdf()          │                       │
+     │                    │ wait for selector:  │                       │
+     │                    │ ".cover-letter-     │                       │
+     │                    │ print"              │                       │
+     │                    └──────────┬──────────┘                       │
+     │                               │                                  │
+     │  [PDF binary stream]          │                                  │
+     │  Content-Type: application/pdf│                                  │
+     │<──────────────────────────────│                                  │
+     │                               │                                  │
+```
+
+### Cover Letter Update Endpoints
+
+| Method | Endpoint | Handler | Description |
+|--------|----------|---------|-------------|
+| PATCH | `/resumes/{id}/cover-letter` | `update_cover_letter()` | Update cover letter text |
+| PATCH | `/resumes/{id}/outreach-message` | `update_outreach_message()` | Update outreach message |
+
+### Critical: CSS Visibility Rules
+
+**IMPORTANT:** The print CSS in `globals.css` hides all content by default and only shows elements matching specific selectors. For cover letter PDFs to work, `.cover-letter-print` must be whitelisted:
+
+```css
+@media print {
+  body * { visibility: hidden !important; }
+
+  .resume-print,
+  .resume-print *,
+  .cover-letter-print,
+  .cover-letter-print * {
+    visibility: visible !important;
+  }
+}
+```
+
+**If this CSS rule is missing, Playwright will generate blank PDFs.**
+
+---
+
 ## 8. Job Upload Flow
 
 **Endpoint:** `POST /api/v1/jobs/upload`

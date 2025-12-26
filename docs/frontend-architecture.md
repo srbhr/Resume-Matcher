@@ -22,7 +22,8 @@ apps/frontend/
 │   │   ├── settings/page.tsx       # Settings (/settings)
 │   │   └── resumes/[id]/page.tsx   # Resume viewer (/resumes/[id])
 │   └── print/                      # Print-specific routes (no layout)
-│       └── resumes/[id]/page.tsx   # Print-ready resume (/print/resumes/[id])
+│       ├── resumes/[id]/page.tsx   # Print-ready resume (/print/resumes/[id])
+│       └── cover-letter/[id]/page.tsx # Print-ready cover letter (/print/cover-letter/[id])
 ├── components/
 │   ├── ui/                         # Base UI components
 │   │   ├── button.tsx
@@ -30,7 +31,9 @@ apps/frontend/
 │   │   ├── textarea.tsx
 │   │   ├── label.tsx
 │   │   ├── dialog.tsx
-│   │   └── confirm-dialog.tsx
+│   │   ├── confirm-dialog.tsx
+│   │   ├── retro-tabs.tsx          # Windows 98 style tabs component
+│   │   └── toggle-switch.tsx       # Swiss brutalist toggle switch
 │   ├── home/                       # Landing page components
 │   │   ├── hero.tsx
 │   │   └── swiss-grid.tsx
@@ -39,10 +42,14 @@ apps/frontend/
 │   │   ├── resume-card.tsx
 │   │   └── resume-upload-dialog.tsx
 │   ├── builder/                    # Builder components
-│   │   ├── resume-builder.tsx      # Main builder container
+│   │   ├── resume-builder.tsx      # Main builder container (with tabs)
 │   │   ├── resume-form.tsx         # Form container
 │   │   ├── formatting-controls.tsx
 │   │   ├── template-selector.tsx
+│   │   ├── cover-letter-editor.tsx # Cover letter textarea editor
+│   │   ├── cover-letter-preview.tsx # Cover letter preview component
+│   │   ├── outreach-editor.tsx     # Outreach message editor with copy
+│   │   ├── outreach-preview.tsx    # Outreach message preview
 │   │   └── forms/                  # Section-specific forms
 │   │       ├── personal-info-form.tsx
 │   │       ├── summary-form.tsx
@@ -187,7 +194,18 @@ resumeData: ResumeData                 // Form data
 templateSettings: TemplateSettings     // Template, margins, spacing
 hasUnsavedChanges: boolean
 isSaving: boolean
+activeTab: 'resume' | 'cover-letter' | 'outreach'  // Current tab
+coverLetter: string | null             // Cover letter content (if exists)
+outreachMessage: string | null         // Outreach message content (if exists)
 ```
+
+**Tabs Feature:**
+The builder uses Windows 98 style tabs (RetroTabs component) to switch between:
+- **RESUME** - Resume editor and preview
+- **COVER LETTER** - Cover letter editor and preview (disabled if no cover letter)
+- **OUTREACH MAIL** - Outreach message editor and preview (disabled if no outreach message)
+
+Tabs are only enabled for tailored resumes that have generated cover letter/outreach content.
 
 **Data Loading Priority:**
 1. URL query param `?id=xyz` → Fetch from API
@@ -329,6 +347,46 @@ const { status: systemStatus, isLoading, lastFetched, refreshStatus } = useStatu
 - Uses exact page dimensions
 - No navigation elements
 - Class `.resume-print` for Playwright selector
+
+### 2.8 Cover Letter Print Route (`/print/cover-letter/[id]`)
+
+**File:** `app/print/cover-letter/[id]/page.tsx`
+
+**Purpose:** Headless Chrome renders this page for cover letter PDF generation
+
+**Query Params:**
+| Param | Type | Default |
+|-------|------|---------|
+| pageSize | A4 \| LETTER | A4 |
+
+**Data Flow:**
+1. Page fetches resume data via API (`GET /resumes?resume_id={id}`)
+2. Extracts `cover_letter` and `personalInfo` from response
+3. Renders professional letter format
+
+**Styling:**
+- Class `.cover-letter-print` for Playwright selector
+- Swiss typography (serif body, mono header)
+- Professional letter layout with header, date, body
+
+**Critical CSS Requirement:**
+
+The print CSS in `globals.css` must whitelist `.cover-letter-print`:
+
+```css
+@media print {
+  body * { visibility: hidden !important; }
+
+  .resume-print,
+  .resume-print *,
+  .cover-letter-print,
+  .cover-letter-print * {
+    visibility: visible !important;
+  }
+}
+```
+
+**If this CSS rule is missing, Playwright will generate blank PDFs.**
 
 ---
 
@@ -632,6 +690,9 @@ export function getUploadUrl(): string;  // Returns upload endpoint URL
 | `updateResume(resumeId, data)` | PATCH | /resumes/{id} | ResumeResponse['data'] |
 | `downloadResumePdf(resumeId, settings?)` | GET | /resumes/{id}/pdf | Blob |
 | `deleteResume(resumeId)` | DELETE | /resumes/{id} | void |
+| `updateCoverLetter(resumeId, content)` | PATCH | /resumes/{id}/cover-letter | void |
+| `updateOutreachMessage(resumeId, content)` | PATCH | /resumes/{id}/outreach-message | void |
+| `downloadCoverLetterPdf(resumeId, pageSize?)` | GET | /resumes/{id}/cover-letter/pdf | Blob |
 
 ### 5.3 Config Operations (`config.ts`)
 
@@ -973,7 +1034,10 @@ Each template must:
 | Delete resume | Viewer | `deleteResume()` | DELETE /resumes/{id} |
 | Edit resume | Viewer → Builder | `fetchResume()` | GET /resumes |
 | Save resume edits | Builder | `updateResume()` | PATCH /resumes/{id} |
-| Download PDF | Viewer/Builder | `downloadResumePdf()` | GET /resumes/{id}/pdf |
+| Download resume PDF | Viewer/Builder | `downloadResumePdf()` | GET /resumes/{id}/pdf |
+| Download cover letter PDF | Builder | `downloadCoverLetterPdf()` | GET /resumes/{id}/cover-letter/pdf |
+| Save cover letter | Builder | `updateCoverLetter()` | PATCH /resumes/{id}/cover-letter |
+| Save outreach message | Builder | `updateOutreachMessage()` | PATCH /resumes/{id}/outreach-message |
 | Submit job description | Tailor | `uploadJobDescriptions()` | POST /jobs/upload |
 | Generate tailored resume | Tailor | `improveResume()` | POST /resumes/improve |
 | Save LLM config | Settings | `updateLlmConfig()` | PUT /config/llm-api-key |

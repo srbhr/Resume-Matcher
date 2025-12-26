@@ -28,7 +28,8 @@ apps/backend/
 │   ├── services/
 │   │   ├── __init__.py             # Service exports
 │   │   ├── parser.py               # Document parsing (PDF/DOCX → Markdown → JSON)
-│   │   └── improver.py             # Resume tailoring via LLM
+│   │   ├── improver.py             # Resume tailoring via LLM
+│   │   └── cover_letter.py         # Cover letter & outreach message generation
 │   └── prompts/
 │       ├── __init__.py             # Prompt exports
 │       └── templates.py            # LLM prompt templates
@@ -100,10 +101,13 @@ test_llm_connection()
 | POST | `/api/v1/resumes/upload` | `upload_resume()` | Upload PDF/DOCX | **YES** (parsing) | **YES** (create) |
 | GET | `/api/v1/resumes` | `get_resume()` | Fetch resume by ID | No | **YES** (read) |
 | GET | `/api/v1/resumes/list` | `list_resumes()` | List all resumes | No | **YES** (list) |
-| POST | `/api/v1/resumes/improve` | `improve_resume_endpoint()` | Tailor resume for job | **YES** (2 calls) | **YES** (create) |
+| POST | `/api/v1/resumes/improve` | `improve_resume_endpoint()` | Tailor resume for job | **YES** (2-4 calls) | **YES** (create) |
 | PATCH | `/api/v1/resumes/{id}` | `update_resume_endpoint()` | Update resume data | No | **YES** (update) |
 | GET | `/api/v1/resumes/{id}/pdf` | `download_resume_pdf()` | Generate PDF | No (uses frontend) | **YES** (read) |
 | DELETE | `/api/v1/resumes/{id}` | `delete_resume()` | Delete resume | No | **YES** (delete) |
+| PATCH | `/api/v1/resumes/{id}/cover-letter` | `update_cover_letter()` | Update cover letter | No | **YES** (update) |
+| PATCH | `/api/v1/resumes/{id}/outreach-message` | `update_outreach_message()` | Update outreach message | No | **YES** (update) |
+| GET | `/api/v1/resumes/{id}/cover-letter/pdf` | `download_cover_letter_pdf()` | Generate cover letter PDF | No (uses frontend) | **YES** (read) |
 
 **Function Flow - Upload:**
 ```
@@ -123,15 +127,32 @@ upload_resume(file: UploadFile)
 improve_resume_endpoint(request: ImproveResumeRequest)
 ├── db.get_resume(resume_id) → Fetch original
 ├── db.get_job(job_id) → Fetch job description
+├── _load_feature_config() → Load cover letter/outreach toggles
 ├── extract_job_keywords(job_content) → LLM call #1
 │   └── Returns {required_skills, preferred_skills, keywords, ...}
 ├── improve_resume(original, job_desc, keywords) → LLM call #2
 │   └── Returns improved ResumeData JSON
 ├── generate_improvements(keywords) → Build suggestions (no LLM)
-├── db.create_resume(improved, parent_id=original_id, is_master=False)
+├── [If enable_cover_letter] generate_cover_letter() → LLM call #3
+├── [If enable_outreach_message] generate_outreach_message() → LLM call #4
+│   └── Uses asyncio.gather() for parallel generation
+├── db.create_resume(improved, cover_letter, outreach_message, ...)
 ├── db.create_improvement(original_id, tailored_id, job_id, improvements)
-└── Return ImproveResumeResponse{request_id, data}
+└── Return ImproveResumeResponse{request_id, data, cover_letter, outreach_message}
 ```
+
+**Function Flow - Cover Letter PDF:**
+```
+download_cover_letter_pdf(resume_id, pageSize)
+├── db.get_resume(resume_id)
+├── Check cover_letter field exists (404 if not)
+├── Build URL: {frontend_base_url}/print/cover-letter/{id}?pageSize={pageSize}
+├── render_resume_pdf(url, pageSize, selector=".cover-letter-print")
+│   └── Playwright renders HTML to PDF
+└── Return Response(content=pdf_bytes, media_type="application/pdf")
+```
+
+**Note:** The `selector` parameter in `render_resume_pdf()` is critical. For cover letters, it must be `.cover-letter-print` to match the CSS class in the print route.
 
 **Function Flow - PDF:**
 ```
@@ -252,6 +273,8 @@ db.get_stats() → {
     "additional": {"technicalSkills": [], "languages": [], "certificationsTraining": [], "awards": []}
   },
   "processing_status": "pending | processing | ready | failed",
+  "cover_letter": "string or null",          // Generated cover letter text (tailored resumes only)
+  "outreach_message": "string or null",      // Generated outreach message (tailored resumes only)
   "created_at": "ISO-8601",
   "updated_at": "ISO-8601"
 }
@@ -357,7 +380,37 @@ async def parse_resume_to_json(markdown_text: str) → dict
 # LLM CALL: YES
 ```
 
-### 5.2 Improver Service (`services/improver.py`)
+### 5.2 Cover Letter Service (`services/cover_letter.py`)
+
+```python
+# Cover Letter Generation (LLM)
+async def generate_cover_letter(
+    resume_data: dict,
+    job_description: str,
+) -> str
+# Generates tailored cover letter based on resume and job
+# Flow:
+#   1. Format COVER_LETTER_PROMPT with job description and resume JSON
+#   2. Call complete() with system_prompt="You are a professional career coach..."
+#   3. Return plain text cover letter
+# LLM CALL: YES
+# Returns: Plain text cover letter (300-400 words)
+
+# Outreach Message Generation (LLM)
+async def generate_outreach_message(
+    resume_data: dict,
+    job_description: str,
+) -> str
+# Generates cold outreach message for LinkedIn/email
+# Flow:
+#   1. Format OUTREACH_MESSAGE_PROMPT with job description and resume JSON
+#   2. Call complete() with system_prompt="You are a professional networking coach."
+#   3. Return plain text message
+# LLM CALL: YES
+# Returns: Plain text message (100-150 words)
+```
+
+### 5.3 Improver Service (`services/improver.py`)
 
 ```python
 # Keyword Extraction (LLM)
@@ -555,11 +608,15 @@ async def close_pdf_renderer() → None
 # Called at app shutdown
 # Closes browser and playwright instance
 
-async def render_resume_pdf(url: str, page_size: str = "A4") → bytes
+async def render_resume_pdf(
+    url: str,
+    page_size: str = "A4",
+    selector: str = ".resume-print"  # CSS selector to wait for
+) → bytes
 # Flow:
 #   1. Create new browser page
 #   2. Navigate to URL (wait_until="networkidle")
-#   3. Wait for .resume-print selector
+#   3. Wait for selector (default: ".resume-print", or ".cover-letter-print" for cover letters)
 #   4. Wait for document.fonts.ready
 #   5. Generate PDF with:
 #      - format: "A4" or "Letter"
@@ -567,10 +624,39 @@ async def render_resume_pdf(url: str, page_size: str = "A4") → bytes
 #      - margin: {top: 0, right: 0, bottom: 0, left: 0}  # Margins in HTML
 #   6. Close page
 #   7. Return PDF bytes
+
+# IMPORTANT: The selector parameter must match the CSS class used in the print page.
+# For resumes: selector=".resume-print"
+# For cover letters: selector=".cover-letter-print"
 ```
 
-### 7.2 Print URL Format
+### 7.2 Critical: CSS Visibility Rules
 
+**WARNING:** The frontend's `globals.css` hides all content in print mode by default:
+
+```css
+@media print {
+  body * { visibility: hidden !important; }
+
+  .resume-print,
+  .resume-print *,
+  .cover-letter-print,
+  .cover-letter-print * {
+    visibility: visible !important;
+  }
+}
+```
+
+**If a new print class is not whitelisted in CSS, Playwright will generate blank PDFs.**
+
+When adding new printable document types:
+1. Create print route with unique class (e.g., `.report-print`)
+2. Add class to `globals.css` visibility whitelist
+3. Pass correct selector to `render_resume_pdf()`
+
+### 7.3 Print URL Format
+
+**Resume Print URL:**
 ```
 {frontend_base_url}/print/resumes/{resume_id}?
   template=swiss-single|swiss-two-column
@@ -584,6 +670,12 @@ async def render_resume_pdf(url: str, page_size: str = "A4") → bytes
   &lineHeight=3 (1-5)
   &fontSize=3 (1-5)
   &headerScale=3 (1-5)
+```
+
+**Cover Letter Print URL:**
+```
+{frontend_base_url}/print/cover-letter/{resume_id}?
+  pageSize=A4|LETTER
 ```
 
 ---
