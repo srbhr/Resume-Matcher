@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Loader2, AlertCircle, RefreshCw, Plus } from 'lucide-react';
 import { fetchResume, fetchResumeList, deleteResume, type ResumeListItem } from '@/lib/api/resume';
+import { useStatusCache } from '@/lib/context/status-cache';
 
 type ProcessingStatus = 'pending' | 'processing' | 'ready' | 'failed' | 'loading';
 
@@ -17,6 +18,9 @@ export default function DashboardPage() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [tailoredResumes, setTailoredResumes] = useState<ResumeListItem[]>([]);
   const router = useRouter();
+
+  // Status cache for optimistic counter updates
+  const { incrementResumes, decrementResumes, setHasMasterResume } = useStatusCache();
 
   const cardBaseClass = 'bg-[#F0F0E8] p-6 md:p-8 aspect-square h-full relative flex flex-col';
   // The physics class from your Hero, adapted for cards
@@ -99,6 +103,9 @@ export default function DashboardPage() {
     setMasterResumeId(resumeId);
     // Check status after upload completes
     checkResumeStatus(resumeId);
+    // Update cached counters
+    incrementResumes();
+    setHasMasterResume(true);
   };
 
   const handleRetryProcessing = async (e: React.MouseEvent) => {
@@ -142,6 +149,9 @@ export default function DashboardPage() {
     if (masterResumeId) {
       try {
         await deleteResume(masterResumeId);
+        // Update cached counters
+        decrementResumes();
+        setHasMasterResume(false);
       } catch (err) {
         console.error('Failed to delete resume from server:', err);
       }

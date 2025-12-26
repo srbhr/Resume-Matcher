@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useResumePreview } from '@/components/common/resume_previewer_context';
 import { uploadJobDescriptions, improveResume } from '@/lib/api/resume';
+import { useStatusCache } from '@/lib/context/status-cache';
 import { Loader2, ArrowLeft } from 'lucide-react';
 
 export default function TailorPage() {
@@ -16,6 +17,7 @@ export default function TailorPage() {
 
   const router = useRouter();
   const { setImprovedData } = useResumePreview();
+  const { incrementJobs, incrementImprovements, incrementResumes } = useStatusCache();
 
   useEffect(() => {
     const storedId = localStorage.getItem('master_resume_id');
@@ -42,9 +44,12 @@ export default function TailorPage() {
       // 1. Upload Job Description
       // The API expects an array of strings
       const jobId = await uploadJobDescriptions([jobDescription], masterResumeId);
+      incrementJobs(); // Update cached counter
 
       // 2. Improve Resume
       const result = await improveResume(masterResumeId, jobId);
+      incrementImprovements(); // Update cached counter
+      incrementResumes(); // New tailored resume created
 
       // 3. Store in Context
       setImprovedData(result);

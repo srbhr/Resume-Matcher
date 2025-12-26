@@ -1,18 +1,17 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
   fetchLlmConfig,
   updateLlmConfig,
-  fetchSystemStatus,
   testLlmConnection,
   PROVIDER_INFO,
   type LLMConfig,
   type LLMProvider,
-  type SystemStatus,
   type LLMHealthCheck,
 } from '@/lib/api/config';
+import { useStatusCache } from '@/lib/context/status-cache';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -30,6 +29,7 @@ import {
   FileText,
   Briefcase,
   Sparkles,
+  Clock,
 } from 'lucide-react';
 
 type Status = 'idle' | 'loading' | 'saving' | 'saved' | 'error' | 'testing';
@@ -54,19 +54,23 @@ export default function SettingsPage() {
   const [apiBase, setApiBase] = useState('');
   const [hasStoredApiKey, setHasStoredApiKey] = useState(false);
 
-  // System status state (not auto-loaded to avoid LLM API call on every page visit)
-  const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
-  const [healthCheck, setHealthCheck] = useState<LLMHealthCheck | null>(null);
-  const [statusLoading, setStatusLoading] = useState(false);
+  // Use cached system status (loaded on app start, refreshes every 30 min)
+  const {
+    status: systemStatus,
+    isLoading: statusLoading,
+    lastFetched,
+    refreshStatus,
+  } = useStatusCache();
 
-  // Load initial data (config only - status fetched on demand to avoid LLM API call)
+  // Health check result from manual test
+  const [healthCheck, setHealthCheck] = useState<LLMHealthCheck | null>(null);
+
+  // Load LLM config on mount
   useEffect(() => {
     let cancelled = false;
 
-    async function loadData() {
+    async function loadConfig() {
       try {
-        // Only fetch config on load - don't fetch status automatically
-        // as it triggers an LLM health check API call every time
         const config = await fetchLlmConfig().catch(() => null);
 
         if (cancelled) return;
@@ -81,18 +85,16 @@ export default function SettingsPage() {
         }
 
         setStatus('idle');
-        setStatusLoading(false);
       } catch (err) {
         console.error('Failed to load settings', err);
         if (!cancelled) {
           setError('Unable to connect to backend. Is the server running?');
           setStatus('error');
-          setStatusLoading(false);
         }
       }
     }
 
-    loadData();
+    loadConfig();
     return () => {
       cancelled = true;
     };
@@ -143,9 +145,8 @@ export default function SettingsPage() {
 
       await updateLlmConfig(config);
 
-      // Refresh system status after save
-      const newStatus = await fetchSystemStatus().catch(() => null);
-      setSystemStatus(newStatus);
+      // Refresh cached system status after save
+      await refreshStatus();
 
       setStatus('saved');
       setTimeout(() => setStatus('idle'), 2000);
@@ -173,17 +174,15 @@ export default function SettingsPage() {
     }
   };
 
-  // Refresh status
-  const refreshStatus = useCallback(async () => {
-    setStatusLoading(true);
-    try {
-      const sysStatus = await fetchSystemStatus();
-      setSystemStatus(sysStatus);
-    } catch (err) {
-      console.error('Failed to refresh status', err);
-    }
-    setStatusLoading(false);
-  }, []);
+  // Format last fetched time for display
+  const formatLastFetched = () => {
+    if (!lastFetched) return 'Never';
+    const now = new Date();
+    const diff = Math.floor((now.getTime() - lastFetched.getTime()) / 1000);
+    if (diff < 60) return 'Just now';
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    return `${Math.floor(diff / 3600)}h ago`;
+  };
 
   const requiresApiKey = PROVIDER_INFO[provider]?.requiresKey ?? true;
 
@@ -217,11 +216,19 @@ export default function SettingsPage() {
           {/* System Status Panel */}
           <section className="space-y-4">
             <div className="flex items-center justify-between border-b border-black/10 pb-2">
-              <div className="flex items-center gap-2">
-                <Activity className="w-4 h-4" />
-                <h2 className="font-mono text-sm font-bold uppercase tracking-wider">
-                  System Status
-                </h2>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <Activity className="w-4 h-4" />
+                  <h2 className="font-mono text-sm font-bold uppercase tracking-wider">
+                    System Status
+                  </h2>
+                </div>
+                {lastFetched && (
+                  <span className="font-mono text-xs text-gray-400 flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    {formatLastFetched()}
+                  </span>
+                )}
               </div>
               <Button
                 variant="ghost"
@@ -240,9 +247,9 @@ export default function SettingsPage() {
                 <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
               </div>
             ) : !systemStatus ? (
-              <div className="flex flex-col items-center justify-center p-8 gap-3 border border-dashed border-gray-300 bg-gray-50">
-                <p className="font-mono text-xs text-gray-500 uppercase">
-                  Status not loaded (avoids LLM API call)
+              <div className="flex flex-col items-center justify-center p-8 gap-3 border border-dashed border-red-300 bg-red-50">
+                <p className="font-mono text-xs text-red-600 uppercase">
+                  Unable to connect to backend
                 </p>
                 <Button
                   variant="outline"
@@ -251,7 +258,7 @@ export default function SettingsPage() {
                   className="gap-1 text-xs"
                 >
                   <RefreshCw className="w-3 h-3" />
-                  Load Status
+                  Retry
                 </Button>
               </div>
             ) : (
@@ -508,7 +515,12 @@ export default function SettingsPage() {
         <div className="bg-[#E5E5E0] p-4 border-t border-black flex justify-between items-center">
           <span className="font-mono text-xs text-gray-500">RESUME MATCHER v2.0.0</span>
           <div className="flex items-center gap-2">
-            {systemStatus ? (
+            {statusLoading ? (
+              <>
+                <Loader2 className="w-3 h-3 animate-spin text-gray-500" />
+                <span className="font-mono text-xs text-gray-500">CHECKING...</span>
+              </>
+            ) : systemStatus ? (
               <>
                 <div
                   className={`w-3 h-3 ${systemStatus.status === 'ready' ? 'bg-green-700' : 'bg-amber-500'}`}
@@ -520,7 +532,7 @@ export default function SettingsPage() {
                 </span>
               </>
             ) : (
-              <span className="font-mono text-xs text-gray-500">STATUS: NOT CHECKED</span>
+              <span className="font-mono text-xs text-gray-500">STATUS: OFFLINE</span>
             )}
           </div>
         </div>

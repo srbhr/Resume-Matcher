@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import Resume, { ResumeData } from '@/components/dashboard/resume-component';
 import { fetchResume, downloadResumePdf, deleteResume } from '@/lib/api/resume';
+import { useStatusCache } from '@/lib/context/status-cache';
 import { ArrowLeft, Edit, Download, Loader2, AlertCircle } from 'lucide-react';
 
 type ProcessingStatus = 'pending' | 'processing' | 'ready' | 'failed';
@@ -13,6 +14,7 @@ type ProcessingStatus = 'pending' | 'processing' | 'ready' | 'failed';
 export default function ResumeViewerPage() {
   const params = useParams();
   const router = useRouter();
+  const { decrementResumes, setHasMasterResume } = useStatusCache();
   const [resumeData, setResumeData] = useState<ResumeData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -92,8 +94,11 @@ export default function ResumeViewerPage() {
     try {
       setDeleteError(null);
       await deleteResume(resumeId);
+      // Update cached counters
+      decrementResumes();
       if (isMasterResume) {
         localStorage.removeItem('master_resume_id');
+        setHasMasterResume(false);
       }
       setShowDeleteDialog(false);
       setShowSuccessDialog(true);
