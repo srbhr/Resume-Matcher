@@ -1,9 +1,42 @@
 # Repository Guidelines
 
+## Table of Contents
+
+- [Documentation](#documentation)
+- [Project Structure & Module Organization](#project-structure--module-organization)
+- [Build, Test, and Development Commands](#build-test-and-development-commands)
+- [Coding Style & Naming Conventions](#coding-style--naming-conventions)
+- [Testing Guidelines](#testing-guidelines)
+- [Commit & Pull Request Guidelines](#commit--pull-request-guidelines)
+- [LLM & AI Workflow Notes](#llm--ai-workflow-notes)
+
+---
+
+## Documentation
+
+All project documentation is located in the `docs/` folder:
+
+| Document | Description |
+|----------|-------------|
+| [backend-guide.md](docs/backend-guide.md) | Backend architecture, modules, and API endpoints |
+| [frontend-workflow.md](docs/frontend-workflow.md) | User flow, page routes, and component architecture |
+| [front-end-apis.md](docs/front-end-apis.md) | API contract between frontend and backend |
+| [style-guide.md](docs/style-guide.md) | Swiss International Style design system |
+| [backend-architecture.md](docs/backend-architecture.md) | Detailed backend architecture diagrams |
+| [frontend-architecture.md](docs/frontend-architecture.md) | Detailed frontend architecture diagrams |
+| [api-flow-maps.md](docs/api-flow-maps.md) | API request/response flow diagrams |
+| [design-system.md](docs/design-system.md) | Extended design system documentation |
+| [template-system.md](docs/template-system.md) | Resume template system documentation |
+| [print_pdf_design_spec.md](docs/print_pdf_design_spec.md) | PDF generation specifications |
+| [resume_template_design_spec.md](docs/resume_template_design_spec.md) | Resume template design specifications |
+| [i18n-preparation.md](docs/i18n-preparation.md) | Internationalization preparation notes |
+| [backend-requirements.md](docs/backend-requirements.md) | API contract specifications |
+| [review-todo.md](docs/review-todo.md) | Review checklist and TODOs |
+
 ## Project Structure & Module Organization
 
 ### Backend (`apps/backend/`)
-A lean FastAPI application with multi-provider AI support. See **[.backend-guide.md](.backend-guide.md)** for detailed architecture documentation.
+A lean FastAPI application with multi-provider AI support. See **[docs/backend-guide.md](docs/backend-guide.md)** for detailed architecture documentation.
 
 - `app/main.py` - FastAPI entry point with CORS and router setup
 - `app/config.py` - Pydantic settings loaded from environment
@@ -15,7 +48,7 @@ A lean FastAPI application with multi-provider AI support. See **[.backend-guide
 - `app/prompts/` - Simplified LLM prompt templates
 
 ### Frontend (`apps/frontend/`)
-Next.js dashboard with Swiss International Style design. See **[.frontend-workflow.md](.frontend-workflow.md)** for user flow and **[.front-end-apis.md](.front-end-apis.md)** for API contracts.
+Next.js dashboard with Swiss International Style design. See **[docs/frontend-workflow.md](docs/frontend-workflow.md)** for user flow and **[docs/front-end-apis.md](docs/front-end-apis.md)** for API contracts.
 
 - `app/` - Next.js routes (dashboard, builder, tailor, resumes, settings, print)
 - `components/` - Reusable UI components (including `ConfirmDialog` with danger/success variants)
@@ -28,20 +61,18 @@ Next.js dashboard with Swiss International Style design. See **[.frontend-workfl
 - Delete flow includes confirmation before and success message after deletion
 
 ### Root Tooling
-- `Makefile`, `setup.sh`, `package.json` - Workflow coordination
-- `backend-requirements.md` - API contract specifications
-- `.style-guide.md` - Swiss International Style design system
+- `package.json` - Workflow coordination and scripts
 
 ## Build, Test, and Development Commands
 - `npm run install` provisions the frontend and, via `uv`, the backend virtual environment.
-- `make run-dev` (or `npm run dev`) launches FastAPI on `:8000` and the UI on `:3000`; use `npm run dev:backend` or `npm run dev:frontend` to focus on a single tier.
-- Production builds: `npm run build` for both stacks, `npm run build:frontend` for UI-only, and `make build-prod` for a Makefile-driven bundle.
+- `npm run dev` launches FastAPI on `:8000` and the UI on `:3000`; use `npm run dev:backend` or `npm run dev:frontend` to focus on a single tier.
+- Production builds: `npm run build` for both stacks, `npm run build:frontend` for UI-only.
 - Quality checks: `npm run lint` for the UI, `npm run format` to apply Prettier.
 
 ## Coding Style & Naming Conventions
 
 ### Frontend (TypeScript/React)
-- **Design System**: All UI changes MUST follow the **Swiss International Style** in `.style-guide.md`.
+- **Design System**: All UI changes MUST follow the **Swiss International Style** in [docs/style-guide.md](docs/style-guide.md).
     - Use `font-serif` for headers, `font-mono` for metadata, `font-sans` for body text.
     - Color palette: `#F0F0E8` (Canvas), `#000000` (Ink), `#1D4ED8` (Hyper Blue), `#15803D` (Signal Green), `#F97316` (Alert Orange), `#DC2626` (Alert Red), `#4B5563` (Steel Grey).
     - Components: `rounded-none` with 1px black borders and hard shadows.
