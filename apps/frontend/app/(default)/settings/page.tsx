@@ -13,6 +13,7 @@ import {
   type LLMProvider,
   type LLMHealthCheck,
 } from '@/lib/api/config';
+import { API_URL } from '@/lib/api/client';
 import { ToggleSwitch } from '@/components/ui/toggle-switch';
 import { useStatusCache } from '@/lib/context/status-cache';
 import { Button } from '@/components/ui/button';
@@ -312,6 +313,9 @@ export default function SettingsPage() {
               <div className="flex flex-col items-center justify-center p-8 gap-3 border border-dashed border-red-300 bg-red-50">
                 <p className="font-mono text-xs text-red-600 uppercase">
                   Unable to connect to backend
+                </p>
+                <p className="font-mono text-xs text-gray-600">
+                  Expected at: <span className="font-bold">{API_URL}</span>
                 </p>
                 <Button
                   variant="outline"
