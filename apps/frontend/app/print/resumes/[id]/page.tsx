@@ -9,14 +9,6 @@ import {
 } from '@/lib/types/template-settings';
 import { API_BASE } from '@/lib/api/client';
 
-/**
- * Page dimensions in millimeters
- */
-const PAGE_DIMENSIONS = {
-  A4: { width: 210, height: 297 },
-  LETTER: { width: 215.9, height: 279.4 },
-} as const;
-
 type PageProps = {
   params: Promise<{ id: string }>;
   searchParams?: Promise<{
@@ -175,20 +167,18 @@ export default async function PrintResumePage({ params, searchParams }: PageProp
     ),
   };
 
-  const pageDims = PAGE_DIMENSIONS[settings.pageSize];
-  const { margins } = settings;
+  // Note: Margins are applied by Playwright's PDF renderer (not here)
+  // This ensures margins appear on EVERY page, not just the first
+  // The settings are passed to override CSS variables for spacing/fonts only
+  const printSettings: TemplateSettings = {
+    ...settings,
+    // Zero out margins in CSS since Playwright handles them
+    margins: { top: 0, bottom: 0, left: 0, right: 0 },
+  };
 
   return (
-    <div
-      className="resume-print bg-white"
-      style={{
-        width: `${pageDims.width}mm`,
-        minHeight: `${pageDims.height}mm`,
-        padding: `${margins.top}mm ${margins.right}mm ${margins.bottom}mm ${margins.left}mm`,
-        boxSizing: 'border-box',
-      }}
-    >
-      <Resume resumeData={resumeData} template={settings.template} settings={settings} />
+    <div className="resume-print bg-white">
+      <Resume resumeData={resumeData} template={settings.template} settings={printSettings} />
     </div>
   );
 }

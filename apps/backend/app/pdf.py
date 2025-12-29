@@ -31,18 +31,22 @@ async def close_pdf_renderer() -> None:
 
 
 async def render_resume_pdf(
-    url: str, page_size: str = "A4", selector: str = ".resume-print"
+    url: str,
+    page_size: str = "A4",
+    selector: str = ".resume-print",
+    margins: Optional[dict] = None,
 ) -> bytes:
     """Render a URL to PDF bytes.
 
     Args:
-        url: The URL to render (print route with margins in HTML)
+        url: The URL to render (print route)
         page_size: Page size format - "A4" or "LETTER"
         selector: CSS selector to wait for before rendering (default: ".resume-print")
+        margins: Page margins dict with top/right/bottom/left in mm (applied to every page)
 
     Note:
-        Margins are now applied directly in the HTML content for WYSIWYG accuracy.
-        The PDF renderer uses zero margins to preserve the HTML layout.
+        Margins are applied via Playwright's PDF margins, ensuring they appear
+        on every page (not just the first page like HTML padding would).
     """
     if _browser is None:
         await init_pdf_renderer()
@@ -55,8 +59,16 @@ async def render_resume_pdf(
     }
     pdf_format = format_map.get(page_size, "A4")
 
-    # Zero margins - the HTML content already includes margins via padding
-    pdf_margins = {"top": "0mm", "right": "0mm", "bottom": "0mm", "left": "0mm"}
+    # Use provided margins or defaults (applied to every page)
+    if margins:
+        pdf_margins = {
+            "top": f"{margins.get('top', 10)}mm",
+            "right": f"{margins.get('right', 10)}mm",
+            "bottom": f"{margins.get('bottom', 10)}mm",
+            "left": f"{margins.get('left', 10)}mm",
+        }
+    else:
+        pdf_margins = {"top": "10mm", "right": "10mm", "bottom": "10mm", "left": "10mm"}
 
     page: Page = await _browser.new_page()
     try:
