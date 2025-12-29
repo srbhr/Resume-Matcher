@@ -86,7 +86,7 @@ async def upload_resume(
             detail="Empty file. Please upload a valid file.",
         )
     
-    MAX_FILE_SIZE = 2 * 1024 * 1024 # File size validation (2 MB limit only)
+    #MAX_FILE_SIZE = 2 * 1024 * 1024 # File size validation (2 MB limit only)
 
      # Check file size 
     if len(file_bytes) > MAX_FILE_SIZE:
