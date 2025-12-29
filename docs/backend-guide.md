@@ -473,3 +473,24 @@ All endpoints return consistent error responses:
 | 413 | File too large |
 | 422 | Unprocessable (parsing failed) |
 | 500 | Server error (LLM failure) |
+| 503 | Service unavailable (PDF rendering failed) |
+
+### PDF Rendering Errors
+
+The PDF endpoints (`/resumes/{id}/pdf` and `/resumes/{id}/cover-letter/pdf`) return a 503 status with a helpful error message when PDF generation fails.
+
+**Common cause:** `FRONTEND_BASE_URL` mismatch
+
+If the frontend is running on a different port than configured:
+
+```
+Cannot connect to frontend for PDF generation. Attempted URL: http://localhost:3000/...
+Please ensure: 1) The frontend is running, 2) The FRONTEND_BASE_URL environment variable
+in the backend .env file matches the URL where your frontend is accessible.
+```
+
+**Fix:** Update your backend `.env` file:
+```env
+FRONTEND_BASE_URL=http://localhost:3001  # Match your frontend port
+CORS_ORIGINS=["http://localhost:3001", "http://127.0.0.1:3001"]
+```

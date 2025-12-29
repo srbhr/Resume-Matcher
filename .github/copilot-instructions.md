@@ -343,6 +343,42 @@ export function ResumeAnalysis({ resumeId, onAnalysisComplete }: ResumeAnalysisP
 - **Use connection pooling** for database operations
 - **Implement proper logging** without performance impact
 
+## PDF Generation
+
+The application uses Playwright (headless Chromium) to generate PDFs by rendering frontend print pages.
+
+### Architecture
+- Backend constructs URL: `{FRONTEND_BASE_URL}/print/resumes/{id}?{params}`
+- Playwright navigates to the URL and captures PDF
+- The `render_resume_pdf()` function in `app/pdf.py` handles this
+
+### Port Configuration
+The backend must know where the frontend is running:
+
+```env
+# In apps/backend/.env
+FRONTEND_BASE_URL=http://localhost:3000  # Must match frontend port
+CORS_ORIGINS=["http://localhost:3000", "http://127.0.0.1:3000"]
+```
+
+### Error Handling Pattern
+```python
+# Custom exception for PDF rendering errors
+class PDFRenderError(Exception):
+    """Custom exception for PDF rendering errors with helpful messages."""
+    pass
+
+# Catch connection errors and provide helpful messages
+try:
+    pdf_bytes = await render_resume_pdf(url, pageSize, margins=pdf_margins)
+except PDFRenderError as e:
+    raise HTTPException(status_code=503, detail=str(e))
+```
+
+### Common Issues
+- **Connection refused**: `FRONTEND_BASE_URL` doesn't match where frontend is running
+- **Blank PDFs**: CSS visibility rules not configured in `globals.css`
+
 ## Deployment & Operations
 
 - **Use environment-specific configuration**

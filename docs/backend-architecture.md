@@ -624,11 +624,37 @@ async def render_resume_pdf(
 #      - margin: {top: 0, right: 0, bottom: 0, left: 0}  # Margins in HTML
 #   6. Close page
 #   7. Return PDF bytes
+# Raises:
+#   PDFRenderError: If connection to frontend fails or rendering errors occur
 
 # IMPORTANT: The selector parameter must match the CSS class used in the print page.
 # For resumes: selector=".resume-print"
 # For cover letters: selector=".cover-letter-print"
 ```
+
+### 7.4 Error Handling
+
+The PDF renderer includes a custom `PDFRenderError` exception that provides helpful messages:
+
+```python
+class PDFRenderError(Exception):
+    """Custom exception for PDF rendering errors with helpful messages."""
+    pass
+```
+
+**Connection Errors:** When Playwright cannot connect to the frontend (e.g., `net::ERR_CONNECTION_REFUSED`), the error message includes:
+- The attempted URL
+- Instructions to check that the frontend is running
+- Instructions to verify `FRONTEND_BASE_URL` in the backend `.env` file
+
+**Example error message:**
+```
+Cannot connect to frontend for PDF generation. Attempted URL: http://localhost:3000/print/resumes/abc123?...
+Please ensure: 1) The frontend is running, 2) The FRONTEND_BASE_URL environment variable
+in the backend .env file matches the URL where your frontend is accessible.
+```
+
+The PDF endpoints (`/resumes/{id}/pdf` and `/resumes/{id}/cover-letter/pdf`) catch `PDFRenderError` and return HTTP 503 with the helpful error message.
 
 ### 7.2 Critical: CSS Visibility Rules
 

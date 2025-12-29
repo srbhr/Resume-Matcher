@@ -106,9 +106,14 @@ LLM_API_BASE=                    # Optional: for custom endpoints
 HOST=0.0.0.0
 PORT=8000
 
-# CORS Origins (optional, comma-separated for multiple)
-CORS_ORIGINS=["http://localhost:3000"]
+# Frontend URL for PDF generation (must match where frontend is running)
+FRONTEND_BASE_URL=http://localhost:3000
+
+# CORS Origins (must include frontend URL)
+CORS_ORIGINS=["http://localhost:3000", "http://127.0.0.1:3000"]
 ```
+
+> **Important:** If your frontend runs on a different port (e.g., 3001), update both `FRONTEND_BASE_URL` and `CORS_ORIGINS` accordingly. This is required for PDF generation to work.
 
 ### Supported LLM Providers
 
@@ -249,6 +254,29 @@ Clear the Next.js cache:
 rm -rf apps/frontend/.next
 npm run dev
 ```
+
+### PDF Generation Issues
+
+**"Connection refused" error when downloading PDF**
+
+If you see an error like:
+```
+Cannot connect to frontend for PDF generation. Attempted URL: http://localhost:3000/...
+```
+
+This means your frontend is running on a different port than the backend expects.
+
+**Fix:**
+
+1. Check which port your frontend is running on (look at the terminal output when you run `npm run dev`)
+
+2. Update `apps/backend/.env`:
+   ```env
+   FRONTEND_BASE_URL=http://localhost:3001  # Use your actual frontend port
+   CORS_ORIGINS=["http://localhost:3001", "http://127.0.0.1:3001"]
+   ```
+
+3. Restart the backend server
 
 ### Ollama Issues
 

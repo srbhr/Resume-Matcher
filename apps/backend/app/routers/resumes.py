@@ -10,7 +10,7 @@ from fastapi import APIRouter, File, HTTPException, Query, UploadFile
 from fastapi.responses import Response
 
 from app.database import db
-from app.pdf import render_resume_pdf
+from app.pdf import render_resume_pdf, PDFRenderError
 from app.config import settings
 
 logger = logging.getLogger(__name__)
@@ -449,7 +449,10 @@ async def download_resume_pdf(
     }
 
     # Render PDF with margins applied to every page
-    pdf_bytes = await render_resume_pdf(url, pageSize, margins=pdf_margins)
+    try:
+        pdf_bytes = await render_resume_pdf(url, pageSize, margins=pdf_margins)
+    except PDFRenderError as e:
+        raise HTTPException(status_code=503, detail=str(e))
 
     headers = {
         "Content-Disposition": f'attachment; filename="resume_{resume_id}.pdf"'
@@ -515,7 +518,10 @@ async def download_cover_letter_pdf(
     url = f"{settings.frontend_base_url}/print/cover-letter/{resume_id}?pageSize={pageSize}"
 
     # Render PDF with cover letter selector
-    pdf_bytes = await render_resume_pdf(url, pageSize, selector=".cover-letter-print")
+    try:
+        pdf_bytes = await render_resume_pdf(url, pageSize, selector=".cover-letter-print")
+    except PDFRenderError as e:
+        raise HTTPException(status_code=503, detail=str(e))
 
     headers = {
         "Content-Disposition": f'attachment; filename="cover_letter_{resume_id}.pdf"'

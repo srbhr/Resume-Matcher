@@ -4,7 +4,13 @@ from __future__ import annotations
 
 from typing import Optional
 
-from playwright.async_api import Browser, Page, async_playwright
+from playwright.async_api import Browser, Error as PlaywrightError, Page, async_playwright
+
+
+class PDFRenderError(Exception):
+    """Custom exception for PDF rendering errors with helpful messages."""
+
+    pass
 
 _playwright = None
 _browser: Optional[Browser] = None
@@ -81,5 +87,17 @@ async def render_resume_pdf(
             margin=pdf_margins,
         )
         return pdf_bytes
+    except PlaywrightError as e:
+        error_msg = str(e)
+        if "net::ERR_CONNECTION_REFUSED" in error_msg:
+            # Extract the URL from the error message if possible
+            raise PDFRenderError(
+                f"Cannot connect to frontend for PDF generation. "
+                f"Attempted URL: {url}. "
+                f"Please ensure: 1) The frontend is running, "
+                f"2) The FRONTEND_BASE_URL environment variable in the backend .env file "
+                f"matches the URL where your frontend is accessible."
+            ) from e
+        raise PDFRenderError(f"PDF rendering failed: {error_msg}") from e
     finally:
         await page.close()

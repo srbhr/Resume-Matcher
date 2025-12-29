@@ -168,5 +168,41 @@ When adding a new printable document type (e.g., `.report-print`):
 
 ---
 
+## Troubleshooting
+
+### Connection Refused Error
+
+If you see an error like:
+```
+net::ERR_CONNECTION_REFUSED at http://localhost:3000/print/resumes/...
+```
+
+This means the backend cannot connect to the frontend for PDF generation. The backend uses Playwright to render the frontend's print page and capture it as a PDF.
+
+**Cause:** The `FRONTEND_BASE_URL` in your backend `.env` file doesn't match where your frontend is actually running.
+
+**Fix:**
+
+1. Check which port your frontend is running on (default is 3000, but it may use 3001, 3002, etc. if port 3000 is busy)
+
+2. Update your backend `.env` file:
+   ```env
+   # Update this to match your frontend's actual URL
+   FRONTEND_BASE_URL=http://localhost:3001
+
+   # Also update CORS to include the new port
+   CORS_ORIGINS=["http://localhost:3001", "http://127.0.0.1:3001"]
+   ```
+
+3. Restart the backend server
+
+**Note:** The backend now provides a helpful error message when this occurs, explaining exactly what URL it tried to connect to and how to fix it.
+
+### Blank PDF Output
+
+If PDFs are generated but appear blank, see the [Critical CSS Requirement](#critical-css-requirement-print-visibility-rules) section above.
+
+---
+
 ## Summary
 Headless Chromium provides **pixel-perfect, ATS-friendly PDFs** while keeping the app local. It adds one dependency (`playwright`) and a Chromium install step but avoids client-side rendering inconsistencies.
