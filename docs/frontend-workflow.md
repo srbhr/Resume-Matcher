@@ -6,7 +6,7 @@ This document outlines the user flow and architecture for the Resume Matcher fro
 
 ### 1. Dashboard & Initialization (`/dashboard`)
 The entry point of the application.
--   **State**: Checks `localStorage` for a `master_resume_id`.
+-   **State**: Reads `localStorage` for `master_resume_id`, then reconciles with `GET /api/v1/resumes/list?include_master=true` to recover if local storage is stale.
 -   **No Master Resume**: Displays an "Initialize Master Resume" card.
     -   Triggers `ResumeUploadDialog`.
     -   On success: Saves `resume_id` to `localStorage` and updates UI.
@@ -14,7 +14,7 @@ The entry point of the application.
     -   **Action**: Clicking the card navigates to the **Resume Viewer** (`/resumes/[id]`).
 -   **Create Tailored Resume**: A "+" card opens `/tailor` (enabled only when the master resume is `ready`) with label text "Create Resume".
 -   **Tailored Resume Tiles**: Fetched from `GET /api/v1/resumes/list` and rendered as grey cards that open `/resumes/[id]`.
-    -   **Filtering**: Excludes master resume by both `is_master` flag AND localStorage `master_resume_id` (handles sync issues).
+-   **Filtering**: Excludes master resume by both `is_master` flag AND `master_resume_id` (handles sync issues).
 -   **Auto-Refresh**: Dashboard refreshes resume list and master status when window gains focus (handles deletions from viewer).
 -   **Layout**: Dashboard grid targets 5 columns at large breakpoints, with filler tiles using neutral greys to balance the canvas.
 -   **Navigation**: Settings access lives in the footer as a Swiss-style orange button.

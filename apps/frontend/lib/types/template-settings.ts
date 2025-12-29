@@ -12,6 +12,7 @@ export type PageSize = 'A4' | 'LETTER';
 export type SpacingLevel = 1 | 2 | 3 | 4 | 5;
 
 export type HeaderFontFamily = 'serif' | 'sans-serif' | 'mono';
+export type BodyFontFamily = 'serif' | 'sans-serif' | 'mono';
 
 export interface MarginSettings {
   top: number; // 5-25mm
@@ -30,6 +31,7 @@ export interface FontSizeSettings {
   base: SpacingLevel; // Overall text scale
   headerScale: SpacingLevel; // Header size multiplier
   headerFont: HeaderFontFamily; // Header font family
+  bodyFont: BodyFontFamily; // Body text font family
 }
 
 export interface TemplateSettings {
@@ -50,7 +52,7 @@ export const DEFAULT_TEMPLATE_SETTINGS: TemplateSettings = {
   pageSize: 'A4',
   margins: { top: 10, bottom: 10, left: 10, right: 10 },
   spacing: { section: 3, item: 2, lineHeight: 3 },
-  fontSize: { base: 3, headerScale: 3, headerFont: 'serif' },
+  fontSize: { base: 3, headerScale: 3, headerFont: 'serif', bodyFont: 'sans-serif' },
   compactMode: false,
   showContactIcons: false,
 };
@@ -122,6 +124,12 @@ export const HEADER_FONT_MAP: Record<HeaderFontFamily, string> = {
   mono: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace',
 };
 
+export const BODY_FONT_MAP: Record<BodyFontFamily, string> = {
+  serif: 'ui-serif, Georgia, Cambria, "Times New Roman", Times, serif',
+  'sans-serif': 'ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji"',
+  mono: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace',
+};
+
 // Compact mode multiplier (applied to spacing values only, NOT line-height)
 export const COMPACT_MULTIPLIER = 0.6;
 
@@ -135,11 +143,11 @@ export function settingsToCssVars(settings?: TemplateSettings): React.CSSPropert
   const s = settings || DEFAULT_TEMPLATE_SETTINGS;
   const compact = s.compactMode ? COMPACT_MULTIPLIER : 1;
 
-  // Calculate margins (reduced by 40% in compact mode)
-  const marginTop = s.compactMode ? s.margins.top * compact : s.margins.top;
-  const marginBottom = s.compactMode ? s.margins.bottom * compact : s.margins.bottom;
-  const marginLeft = s.compactMode ? s.margins.left * compact : s.margins.left;
-  const marginRight = s.compactMode ? s.margins.right * compact : s.margins.right;
+  // Margins remain literal; compact mode only affects spacing/line-height.
+  const marginTop = s.margins.top;
+  const marginBottom = s.margins.bottom;
+  const marginLeft = s.margins.left;
+  const marginRight = s.margins.right;
 
   return {
     '--section-gap': s.compactMode
@@ -156,6 +164,7 @@ export function settingsToCssVars(settings?: TemplateSettings): React.CSSPropert
     '--header-scale': HEADER_SCALE_MAP[s.fontSize.headerScale],
     '--section-header-scale': SECTION_HEADER_SCALE_MAP[s.fontSize.headerScale],
     '--header-font': HEADER_FONT_MAP[s.fontSize.headerFont],
+    '--body-font': BODY_FONT_MAP[s.fontSize.bodyFont],
     '--margin-top': `${marginTop}mm`,
     '--margin-bottom': `${marginBottom}mm`,
     '--margin-left': `${marginLeft}mm`,

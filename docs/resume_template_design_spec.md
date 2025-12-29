@@ -17,7 +17,7 @@ This document outlines the architecture for a multi-template resume system with 
 
 ### Non-Goals
 - Color customization (maintains Swiss black/white/blue palette)
-- Custom fonts (fixed: Serif headers, Sans body, Mono metadata)
+- Custom fonts outside the serif/sans/mono presets (metadata remains mono)
 - Drag-and-drop section reordering (future enhancement)
 
 ---
@@ -206,8 +206,9 @@ interface TemplateSettings {
     base: SpacingLevel;
     headerScale: SpacingLevel;
     headerFont: HeaderFontFamily;  // NEW: Font family for headers
+    bodyFont: HeaderFontFamily;    // NEW: Font family for body text
   };
-  compactMode: boolean;       // NEW: Apply 0.7x spacing multiplier
+  compactMode: boolean;       // NEW: Apply 0.6x spacing multiplier (spacing only; margins unchanged)
   showContactIcons: boolean;  // NEW: Show icons next to contact info
 }
 
@@ -217,7 +218,7 @@ const DEFAULT_SETTINGS: TemplateSettings = {
   pageSize: 'A4',
   margins: { top: 8, bottom: 8, left: 8, right: 8 },  // Reduced from 10mm
   spacing: { section: 3, item: 2, lineHeight: 3 },
-  fontSize: { base: 3, headerScale: 3, headerFont: 'serif' },
+  fontSize: { base: 3, headerScale: 3, headerFont: 'serif', bodyFont: 'sans-serif' },
   compactMode: false,
   showContactIcons: false,
 };
@@ -300,6 +301,7 @@ Location: Collapsible panel below template selector OR in Editor Panel sidebar.
 - `MarginSlider`: Range input 5-25, displays value
 - `SpacingSelector`: Button group with 5 options
 - `FontSizeSelector`: Button group with 5 options
+- `Effective Output`: Compact-aware summary of margins, spacing, line height, and typography
 
 ### 5.3 Live Preview Updates
 
@@ -359,30 +361,37 @@ const Resume: React.FC<ResumeProps> = ({ resumeData, template = 'swiss-single', 
 ```css
 /* Base resume styles with CSS variables */
 .resume-body {
-  /* Margins (set by parent/wrapper for PDF) */
-  padding: var(--resume-padding, 2.5rem);
+  --section-gap: 1rem;
+  --item-gap: 0.25rem;
+  --line-height: 1.35;
+  --font-size-base: 14px;
+  --header-scale: 2;
+  --section-header-scale: 1.2;
+  --header-font: ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
+  --body-font: ui-sans-serif, system-ui, sans-serif;
 
-  /* Spacing */
-  --section-gap: var(--section-spacing-3);
-  --item-gap: var(--item-spacing-2);
-  line-height: var(--line-height-3);
+  --margin-top: 10mm;
+  --margin-bottom: 10mm;
+  --margin-left: 10mm;
+  --margin-right: 10mm;
 
-  /* Font sizes */
-  font-size: var(--font-size-3);
+  font-family: var(--body-font);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height);
+  padding: var(--margin-top) var(--margin-right) var(--margin-bottom) var(--margin-left);
 }
 
-.resume-body h1 {
-  font-size: calc(var(--font-size-3) * var(--header-scale-3));
-}
-
-.resume-body .section {
+.resume-body .resume-section {
   margin-bottom: var(--section-gap);
 }
 
-.resume-body .section-item {
+.resume-body .resume-item {
   margin-bottom: var(--item-gap);
 }
 ```
+
+Template components should use the `resume-*` helper classes in `apps/frontend/app/(default)/css/globals.css`
+to ensure font sizes and spacing respond to template settings.
 
 ---
 
@@ -395,7 +404,7 @@ const Resume: React.FC<ResumeProps> = ({ resumeData, template = 'swiss-single', 
 Add query parameters for template settings:
 
 ```
-GET /api/v1/resumes/{id}/pdf?template=swiss-two-column&marginTop=10&marginBottom=10&marginLeft=15&marginRight=15&sectionSpacing=3&itemSpacing=2&lineHeight=3&fontSize=3&headerScale=3
+GET /api/v1/resumes/{id}/pdf?template=swiss-two-column&marginTop=10&marginBottom=10&marginLeft=15&marginRight=15&sectionSpacing=3&itemSpacing=2&lineHeight=3&fontSize=3&headerScale=3&headerFont=serif&bodyFont=sans-serif
 ```
 
 | Parameter | Type | Default | Description |
@@ -410,6 +419,8 @@ GET /api/v1/resumes/{id}/pdf?template=swiss-two-column&marginTop=10&marginBottom
 | lineHeight | int | 3 | Line height level (1-5) |
 | fontSize | int | 3 | Base font size level (1-5) |
 | headerScale | int | 3 | Header scale level (1-5) |
+| headerFont | string | serif | serif, sans-serif, mono |
+| bodyFont | string | sans-serif | serif, sans-serif, mono |
 
 ### 7.2 PDF Renderer Updates
 
@@ -444,7 +455,7 @@ Accept `template_settings` in request body:
     "template": "swiss-two-column",
     "margins": { "top": 10, "bottom": 10, "left": 15, "right": 15 },
     "spacing": { "section": 3, "item": 2, "lineHeight": 3 },
-    "fontSize": { "base": 3, "headerScale": 3 }
+    "fontSize": { "base": 3, "headerScale": 3, "headerFont": "serif", "bodyFont": "sans-serif" }
   }
 }
 ```
@@ -456,7 +467,7 @@ Accept `template_settings` in request body:
 ### 8.1 URL Structure
 
 ```
-/print/resumes/[id]?template=swiss-two-column&sectionSpacing=3&itemSpacing=2&lineHeight=3&fontSize=3&headerScale=3
+/print/resumes/[id]?template=swiss-two-column&sectionSpacing=3&itemSpacing=2&lineHeight=3&fontSize=3&headerScale=3&headerFont=serif&bodyFont=sans-serif
 ```
 
 ### 8.2 Page Component Update
@@ -485,6 +496,8 @@ export default async function PrintResumePage({ params, searchParams }: PageProp
     fontSize: {
       base: parseInt(resolvedSearchParams?.fontSize || '3') as 1|2|3|4|5,
       headerScale: parseInt(resolvedSearchParams?.headerScale || '3') as 1|2|3|4|5,
+      headerFont: (resolvedSearchParams?.headerFont as HeaderFontFamily) || 'serif',
+      bodyFont: (resolvedSearchParams?.bodyFont as HeaderFontFamily) || 'sans-serif',
     },
   };
 
@@ -521,6 +534,8 @@ export async function downloadResumePdf(
     params.set('lineHeight', String(settings.spacing.lineHeight));
     params.set('fontSize', String(settings.fontSize.base));
     params.set('headerScale', String(settings.fontSize.headerScale));
+    params.set('headerFont', settings.fontSize.headerFont);
+    params.set('bodyFont', settings.fontSize.bodyFont);
   }
 
   const url = `${API_URL}/api/v1/resumes/${encodeURIComponent(resumeId)}/pdf?${params}`;

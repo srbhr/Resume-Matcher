@@ -78,29 +78,21 @@ export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
     <>
       {/* Header Section - Centered Layout */}
       {personalInfo && (
-        <header className="text-center mb-4 pb-3 border-b-2 border-black">
+        <header className="text-center resume-header border-b-2 border-black">
           {/* Name - Centered */}
           {personalInfo.name && (
-            <h1
-              className="font-bold tracking-tight uppercase mb-1"
-              style={{
-                fontSize: 'calc(var(--font-size-base) * var(--header-scale))',
-                fontFamily: 'var(--header-font)',
-              }}
-            >
-              {personalInfo.name}
-            </h1>
+            <h1 className="resume-name tracking-tight uppercase mb-1">{personalInfo.name}</h1>
           )}
 
           {/* Title - Centered, below name */}
           {personalInfo.title && (
-            <h2 className="text-lg font-mono text-gray-700 tracking-wide uppercase mb-3">
+            <h2 className="resume-title resume-meta text-gray-700 tracking-wide uppercase mb-3">
               {personalInfo.title}
             </h2>
           )}
 
           {/* Contact - Own line, centered */}
-          <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs font-mono text-gray-600">
+          <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 resume-meta text-gray-600">
             {renderContactDetail('Email', personalInfo.email, 'mailto:')}
             {personalInfo.phone && (
               <>
@@ -140,7 +132,7 @@ export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
       {summary && (
         <div className="resume-section">
           <h3 className="resume-section-title">Summary</h3>
-          <p className="text-justify font-sans text-gray-800">{summary}</p>
+          <p className="text-justify resume-text text-gray-800">{summary}</p>
         </div>
       )}
 
@@ -151,18 +143,18 @@ export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
           <div className="resume-items">
             {workExperience.map((exp) => (
               <div key={exp.id} className="resume-item">
-                <div className="flex justify-between items-baseline mb-1">
-                  <h4 className="text-base font-bold">{exp.title}</h4>
-                  <span className="font-mono text-xs text-gray-600 shrink-0 ml-4">{exp.years}</span>
+                <div className="flex justify-between items-baseline resume-row-tight">
+                  <h4 className="resume-item-title">{exp.title}</h4>
+                  <span className="resume-meta-sm text-gray-600 shrink-0 ml-4">{exp.years}</span>
                 </div>
 
-                <div className="flex justify-between items-center mb-2 font-mono text-sm text-gray-700">
+                <div className="flex justify-between items-center resume-row resume-meta text-gray-700">
                   <span>{exp.company}</span>
                   {exp.location && <span>{exp.location}</span>}
                 </div>
 
                 {exp.description && exp.description.length > 0 && (
-                  <ul className="list-disc list-outside ml-4 space-y-1 text-gray-800 font-sans text-sm">
+                  <ul className="list-disc list-outside ml-4 resume-list resume-text-sm text-gray-800">
                     {exp.description.map((desc, index) => (
                       <li key={index} className="pl-1">
                         {desc}
@@ -183,17 +175,15 @@ export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
           <div className="resume-items">
             {personalProjects.map((project) => (
               <div key={project.id} className="resume-item">
-                <div className="flex justify-between items-baseline mb-1">
-                  <h4 className="text-base font-bold">{project.name}</h4>
-                  <span className="font-mono text-xs text-gray-600 shrink-0 ml-4">
-                    {project.years}
-                  </span>
+                <div className="flex justify-between items-baseline resume-row-tight">
+                  <h4 className="resume-item-title">{project.name}</h4>
+                  <span className="resume-meta-sm text-gray-600 shrink-0 ml-4">{project.years}</span>
                 </div>
                 {project.role && (
-                  <p className="font-mono text-sm text-gray-700 mb-2">{project.role}</p>
+                  <p className="resume-meta text-gray-700 resume-row">{project.role}</p>
                 )}
                 {project.description && project.description.length > 0 && (
-                  <ul className="list-disc list-outside ml-4 space-y-1 text-gray-800 font-sans text-sm">
+                  <ul className="list-disc list-outside ml-4 resume-list resume-text-sm text-gray-800">
                     {project.description.map((desc, index) => (
                       <li key={index} className="pl-1">
                         {desc}
@@ -214,15 +204,15 @@ export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
           <div className="resume-items">
             {education.map((edu) => (
               <div key={edu.id} className="resume-item">
-                <div className="flex justify-between items-baseline">
-                  <h4 className="text-base font-bold">{edu.institution}</h4>
-                  <span className="font-mono text-xs text-gray-600 shrink-0 ml-4">{edu.years}</span>
+                <div className="flex justify-between items-baseline resume-row-tight">
+                  <h4 className="resume-item-title">{edu.institution}</h4>
+                  <span className="resume-meta-sm text-gray-600 shrink-0 ml-4">{edu.years}</span>
                 </div>
-                <div className="flex justify-between font-mono text-sm text-gray-700">
+                <div className="flex justify-between resume-meta text-gray-700 resume-row-tight">
                   <span>{edu.degree}</span>
                 </div>
                 {edu.description && (
-                  <p className="mt-1 text-sm text-gray-800 font-sans">{edu.description}</p>
+                  <p className="resume-text-sm text-gray-800">{edu.description}</p>
                 )}
               </div>
             ))}
@@ -260,7 +250,7 @@ const AdditionalSection: React.FC<{ additional: ResumeData['additional'] }> = ({
   return (
     <div className="resume-section">
       <h3 className="resume-section-title">Skills & Awards</h3>
-      <div className="space-y-2 font-sans text-sm">
+      <div className="resume-stack resume-text-sm">
         {technicalSkills.length > 0 && (
           <div className="flex">
             <span className="font-bold w-32 shrink-0">Technical Skills:</span>

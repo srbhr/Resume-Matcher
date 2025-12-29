@@ -9,7 +9,15 @@ import {
   type PageSize,
   type SpacingLevel,
   type HeaderFontFamily,
+  type BodyFontFamily,
   DEFAULT_TEMPLATE_SETTINGS,
+  SECTION_SPACING_MAP,
+  ITEM_SPACING_MAP,
+  LINE_HEIGHT_MAP,
+  FONT_SIZE_MAP,
+  HEADER_SCALE_MAP,
+  COMPACT_MULTIPLIER,
+  COMPACT_LINE_HEIGHT_MULTIPLIER,
   TEMPLATE_OPTIONS,
   PAGE_SIZE_INFO,
 } from '@/lib/types/template-settings';
@@ -35,6 +43,16 @@ interface FormattingControlsProps {
  */
 export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings, onChange }) => {
   const [isExpanded, setIsExpanded] = useState(true);
+  const compactMultiplier = settings.compactMode ? COMPACT_MULTIPLIER : 1;
+  const sectionGapRem =
+    parseFloat(SECTION_SPACING_MAP[settings.spacing.section]) * compactMultiplier;
+  const itemGapRem = parseFloat(ITEM_SPACING_MAP[settings.spacing.item]) * compactMultiplier;
+  const lineHeightValue = settings.compactMode
+    ? LINE_HEIGHT_MAP[settings.spacing.lineHeight] * COMPACT_LINE_HEIGHT_MULTIPLIER
+    : LINE_HEIGHT_MAP[settings.spacing.lineHeight];
+
+  const formatRem = (value: number) =>
+    `${value.toFixed(2).replace(/\.00$/, '').replace(/0$/, '')}rem`;
 
   const handleTemplateChange = (template: TemplateType) => {
     onChange({ ...settings, template });
@@ -69,6 +87,13 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
     onChange({
       ...settings,
       fontSize: { ...settings.fontSize, headerFont },
+    });
+  };
+
+  const handleBodyFontChange = (bodyFont: BodyFontFamily) => {
+    onChange({
+      ...settings,
+      fontSize: { ...settings.fontSize, bodyFont },
     });
   };
 
@@ -237,7 +262,7 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
               />
               {/* Header Font Family */}
               <div className="flex items-center gap-2">
-                <span className="font-mono text-xs w-16 text-gray-600">Font:</span>
+                <span className="font-mono text-xs w-16 text-gray-600">Headers:</span>
                 <div className="flex gap-1">
                   {(['serif', 'sans-serif', 'mono'] as HeaderFontFamily[]).map((font) => (
                     <button
@@ -245,6 +270,35 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
                       onClick={() => handleHeaderFontChange(font)}
                       className={`px-2 py-1 font-mono text-xs border transition-all ${
                         settings.fontSize.headerFont === font
+                          ? 'bg-blue-700 text-white border-blue-700 shadow-[1px_1px_0px_0px_#000]'
+                          : 'bg-white text-gray-700 border-gray-300 hover:border-black'
+                      }`}
+                      style={{
+                        fontFamily:
+                          font === 'serif'
+                            ? 'Georgia, serif'
+                            : font === 'mono'
+                              ? 'monospace'
+                              : 'system-ui, sans-serif',
+                      }}
+                    >
+                      {font === 'sans-serif'
+                        ? 'Sans'
+                        : font.charAt(0).toUpperCase() + font.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {/* Body Font Family */}
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-xs w-16 text-gray-600">Body:</span>
+                <div className="flex gap-1">
+                  {(['serif', 'sans-serif', 'mono'] as BodyFontFamily[]).map((font) => (
+                    <button
+                      key={font}
+                      onClick={() => handleBodyFontChange(font)}
+                      className={`px-2 py-1 font-mono text-xs border transition-all ${
+                        settings.fontSize.bodyFont === font
                           ? 'bg-blue-700 text-white border-blue-700 shadow-[1px_1px_0px_0px_#000]'
                           : 'bg-white text-gray-700 border-gray-300 hover:border-black'
                       }`}
@@ -316,7 +370,41 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
           </div>
 
           {/* Reset Button */}
-          <div className="pt-2 border-t border-gray-200">
+          <div className="pt-2 border-t border-gray-200 space-y-3">
+            <div>
+              <h4 className="font-mono text-[10px] font-bold uppercase tracking-wider text-gray-600 mb-2">
+                Effective Output
+              </h4>
+              <div className="font-mono text-[10px] text-gray-600 space-y-1">
+                <div>
+                  Margins (mm): T{settings.margins.top} B{settings.margins.bottom} L
+                  {settings.margins.left} R{settings.margins.right}
+                </div>
+                <div>Section Gap: {formatRem(sectionGapRem)}</div>
+                <div>Item Gap: {formatRem(itemGapRem)}</div>
+                <div>Line Height: {lineHeightValue.toFixed(2)}</div>
+                <div>Base Font: {FONT_SIZE_MAP[settings.fontSize.base]}</div>
+                <div>Header Scale: {HEADER_SCALE_MAP[settings.fontSize.headerScale]}x</div>
+                <div>
+                  Header Font:{' '}
+                  {settings.fontSize.headerFont === 'sans-serif'
+                    ? 'Sans'
+                    : settings.fontSize.headerFont}
+                </div>
+                <div>
+                  Body Font:{' '}
+                  {settings.fontSize.bodyFont === 'sans-serif'
+                    ? 'Sans'
+                    : settings.fontSize.bodyFont}
+                </div>
+              </div>
+              {settings.compactMode && (
+                <div className="font-mono text-[10px] text-gray-500 mt-2">
+                  Compact mode tightens spacing and line height. Margins and base font size stay
+                  literal.
+                </div>
+              )}
+            </div>
             <Button variant="outline" size="sm" onClick={handleReset} className="w-full">
               <RotateCcw className="w-3 h-3" />
               Reset to Defaults

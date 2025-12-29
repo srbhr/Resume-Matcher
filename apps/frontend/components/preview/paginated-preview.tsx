@@ -28,6 +28,10 @@ export function PaginatedPreview({ resumeData, settings }: PaginatedPreviewProps
   const [zoom, setZoom] = useState(0.6);
   const [showMargins, setShowMargins] = useState(false);
   const [autoZoom, setAutoZoom] = useState(true);
+  const resumeSettings: TemplateSettings = {
+    ...settings,
+    margins: { top: 0, bottom: 0, left: 0, right: 0 },
+  };
 
   const { pages, isCalculating } = usePagination({
     pageSize: settings.pageSize,
@@ -143,7 +147,7 @@ export function PaginatedPreview({ resumeData, settings }: PaginatedPreviewProps
           }}
           aria-hidden="true"
         >
-          <Resume resumeData={resumeData} template={settings.template} settings={settings} />
+          <Resume resumeData={resumeData} template={settings.template} settings={resumeSettings} />
         </div>
 
         {/* Visible pages */}
@@ -169,7 +173,7 @@ export function PaginatedPreview({ resumeData, settings }: PaginatedPreviewProps
                 contentOffset={page.contentOffset}
                 contentEnd={page.contentEnd}
               >
-                <Resume resumeData={resumeData} template={settings.template} settings={settings} />
+                <Resume resumeData={resumeData} template={settings.template} settings={resumeSettings} />
               </PageContainer>
             </React.Fragment>
           ))}

@@ -115,9 +115,12 @@ export function usePagination({
 
         currentOffset = nextBreak;
 
-        // Only add break point if there's more content
+        // Only add break point if there's more content and it's not a duplicate
         if (currentOffset < contentHeight) {
-          breakPoints.push(currentOffset);
+          const lastBreak = breakPoints[breakPoints.length - 1];
+          if (currentOffset - lastBreak > 1) {
+            breakPoints.push(currentOffset);
+          }
         }
       }
 
@@ -128,7 +131,10 @@ export function usePagination({
         contentEnd: index < breakPoints.length - 1 ? breakPoints[index + 1] : contentHeight,
       }));
 
-      setPages(newPages);
+      const nonEmptyPages = newPages.filter(
+        (page, index) => page.contentEnd - page.contentOffset > 1 || index === 0
+      );
+      setPages(nonEmptyPages.length > 0 ? nonEmptyPages : newPages.slice(0, 1));
       setIsCalculating(false);
     });
   }, [pageSize, margins, measurementRef]);

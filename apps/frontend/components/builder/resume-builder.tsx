@@ -82,7 +82,13 @@ const ResumeBuilderContent = () => {
     if (savedSettings) {
       try {
         const parsed = JSON.parse(savedSettings);
-        setTemplateSettings({ ...DEFAULT_TEMPLATE_SETTINGS, ...parsed });
+        setTemplateSettings({
+          ...DEFAULT_TEMPLATE_SETTINGS,
+          ...parsed,
+          margins: { ...DEFAULT_TEMPLATE_SETTINGS.margins, ...parsed.margins },
+          spacing: { ...DEFAULT_TEMPLATE_SETTINGS.spacing, ...parsed.spacing },
+          fontSize: { ...DEFAULT_TEMPLATE_SETTINGS.fontSize, ...parsed.fontSize },
+        });
       } catch {
         // Use defaults
       }

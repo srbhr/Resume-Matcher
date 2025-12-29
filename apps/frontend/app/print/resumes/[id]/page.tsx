@@ -5,6 +5,7 @@ import {
   type TemplateSettings,
   type SpacingLevel,
   type HeaderFontFamily,
+  type BodyFontFamily,
   DEFAULT_TEMPLATE_SETTINGS,
 } from '@/lib/types/template-settings';
 import { API_BASE } from '@/lib/api/client';
@@ -24,6 +25,7 @@ type PageProps = {
     fontSize?: string;
     headerScale?: string;
     headerFont?: string;
+    bodyFont?: string;
     compactMode?: string;
     showContactIcons?: string;
   }>;
@@ -37,6 +39,16 @@ function parseHeaderFont(value: string | undefined): HeaderFontFamily {
     return value;
   }
   return DEFAULT_TEMPLATE_SETTINGS.fontSize.headerFont;
+}
+
+/**
+ * Parse body font family
+ */
+function parseBodyFont(value: string | undefined): BodyFontFamily {
+  if (value === 'serif' || value === 'sans-serif' || value === 'mono') {
+    return value;
+  }
+  return DEFAULT_TEMPLATE_SETTINGS.fontSize.bodyFont;
 }
 
 /**
@@ -156,6 +168,7 @@ export default async function PrintResumePage({ params, searchParams }: PageProp
         DEFAULT_TEMPLATE_SETTINGS.fontSize.headerScale
       ),
       headerFont: parseHeaderFont(resolvedSearchParams?.headerFont),
+      bodyFont: parseBodyFont(resolvedSearchParams?.bodyFont),
     },
     compactMode: parseBoolean(
       resolvedSearchParams?.compactMode,

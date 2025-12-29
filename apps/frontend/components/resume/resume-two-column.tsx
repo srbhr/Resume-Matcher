@@ -76,29 +76,21 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
     <>
       {/* Header Section - Centered Layout */}
       {personalInfo && (
-        <header className="text-center mb-4 pb-3 border-b-2 border-black">
+        <header className="text-center resume-header border-b-2 border-black">
           {/* Name - Centered */}
           {personalInfo.name && (
-            <h1
-              className="font-bold tracking-tight uppercase mb-1"
-              style={{
-                fontSize: 'calc(var(--font-size-base) * var(--header-scale))',
-                fontFamily: 'var(--header-font)',
-              }}
-            >
-              {personalInfo.name}
-            </h1>
+            <h1 className="resume-name tracking-tight uppercase mb-1">{personalInfo.name}</h1>
           )}
 
           {/* Title - Centered, below name */}
           {personalInfo.title && (
-            <h2 className="text-lg font-mono text-gray-700 tracking-wide uppercase mb-3">
+            <h2 className="resume-title resume-meta text-gray-700 tracking-wide uppercase mb-3">
               {personalInfo.title}
             </h2>
           )}
 
           {/* Contact - Own line, centered */}
-          <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 text-xs font-mono text-gray-600">
+          <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 resume-meta text-gray-600">
             {personalInfo.email && renderContactDetail('Email', personalInfo.email, 'mailto:')}
             {personalInfo.phone && (
               <>
@@ -135,7 +127,7 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
       )}
 
       {/* Two Column Layout - items-start ensures content aligns top while grid maintains equal row height */}
-      <div className="grid grid-cols-[65%_35%] gap-6 mt-[var(--section-gap)] items-start">
+      <div className="resume-two-column-grid">
         {/* Main Column - Left */}
         <div className="pr-4 border-r border-gray-200">
           {/* Experience Section */}
@@ -145,20 +137,20 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
               <div className="resume-items">
                 {workExperience.map((exp) => (
                   <div key={exp.id} className="resume-item">
-                    <div className="flex justify-between items-baseline mb-0.5">
-                      <h4 className="text-sm font-bold">{exp.title}</h4>
-                      <span className="font-mono text-[10px] text-gray-600 shrink-0 ml-2">
+                    <div className="flex justify-between items-baseline resume-row-tight">
+                      <h4 className="resume-item-title-sm">{exp.title}</h4>
+                      <span className="resume-meta-sm text-gray-600 shrink-0 ml-2">
                         {exp.years}
                       </span>
                     </div>
 
-                    <div className="flex justify-between items-center mb-1 font-mono text-xs text-gray-700">
+                    <div className="flex justify-between items-center resume-row-tight resume-meta-sm text-gray-700">
                       <span>{exp.company}</span>
                       {exp.location && <span>{exp.location}</span>}
                     </div>
 
                     {exp.description && exp.description.length > 0 && (
-                      <ul className="list-disc list-outside ml-4 space-y-0.5 text-gray-800 font-sans text-xs">
+                      <ul className="list-disc list-outside ml-4 resume-list resume-text-xs text-gray-800">
                         {exp.description.map((desc, index) => (
                           <li key={index} className="pl-0.5">
                             {desc}
@@ -177,22 +169,20 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
             <div className="resume-section">
               <h3 className="resume-section-title">Projects</h3>
               <div className="resume-items">
-                {personalProjects.map((project) => (
-                  <div key={project.id} className="resume-item">
-                    <div className="flex justify-between items-baseline mb-0.5">
-                      <h4 className="text-sm font-bold">{project.name}</h4>
-                      <span className="font-mono text-[10px] text-gray-600 shrink-0 ml-2">
-                        {project.years}
-                      </span>
-                    </div>
-                    {project.role && (
-                      <p className="font-mono text-xs text-gray-700 mb-1">{project.role}</p>
-                    )}
-                    {project.description && project.description.length > 0 && (
-                      <ul className="list-disc list-outside ml-4 space-y-0.5 text-gray-800 font-sans text-xs">
-                        {project.description.map((desc, index) => (
-                          <li key={index} className="pl-0.5">
-                            {desc}
+            {personalProjects.map((project) => (
+              <div key={project.id} className="resume-item">
+                <div className="flex justify-between items-baseline resume-row-tight">
+                  <h4 className="resume-item-title-sm">{project.name}</h4>
+                  <span className="resume-meta-sm text-gray-600 shrink-0 ml-2">{project.years}</span>
+                </div>
+                {project.role && (
+                  <p className="resume-meta-sm text-gray-700 resume-row-tight">{project.role}</p>
+                )}
+                {project.description && project.description.length > 0 && (
+                  <ul className="list-disc list-outside ml-4 resume-list resume-text-xs text-gray-800">
+                    {project.description.map((desc, index) => (
+                      <li key={index} className="pl-0.5">
+                        {desc}
                           </li>
                         ))}
                       </ul>
@@ -207,7 +197,7 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
           {additional?.certificationsTraining && additional.certificationsTraining.length > 0 && (
             <div className="resume-section">
               <h3 className="resume-section-title">Training & Certifications</h3>
-              <ul className="list-disc list-outside ml-4 space-y-1 text-gray-800 font-sans text-xs">
+              <ul className="list-disc list-outside ml-4 resume-list resume-text-xs text-gray-800">
                 {additional.certificationsTraining.map((cert, index) => (
                   <li key={index} className="pl-0.5">
                     {cert}
@@ -224,7 +214,7 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
           {summary && (
             <div className="resume-section">
               <h3 className="resume-section-title-sm">Summary</h3>
-              <p className="text-xs text-gray-800 font-sans leading-relaxed">{summary}</p>
+              <p className="resume-text-xs text-gray-800">{summary}</p>
             </div>
           )}
 
@@ -232,14 +222,14 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
           {education && education.length > 0 && (
             <div className="resume-section">
               <h3 className="resume-section-title-sm">Education</h3>
-              <div className="space-y-2">
+              <div className="resume-stack">
                 {education.map((edu) => (
                   <div key={edu.id}>
-                    <h4 className="text-xs font-bold">{edu.institution}</h4>
-                    <p className="font-mono text-[10px] text-gray-700">{edu.degree}</p>
-                    <p className="font-mono text-[10px] text-gray-500">{edu.years}</p>
+                    <h4 className="resume-item-title-sm">{edu.institution}</h4>
+                    <p className="resume-meta-sm text-gray-700">{edu.degree}</p>
+                    <p className="resume-meta-sm text-gray-500">{edu.years}</p>
                     {edu.description && (
-                      <p className="text-[10px] text-gray-600 mt-0.5">{edu.description}</p>
+                      <p className="resume-text-xs text-gray-600">{edu.description}</p>
                     )}
                   </div>
                 ))}
@@ -255,7 +245,7 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
                 {additional.technicalSkills.map((skill, index) => (
                   <span
                     key={index}
-                    className="text-[10px] font-mono bg-gray-100 px-1.5 py-0.5 border border-gray-300"
+                    className="resume-skill-pill bg-gray-100 border border-gray-300"
                   >
                     {skill}
                   </span>
@@ -268,7 +258,7 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
           {additional?.languages && additional.languages.length > 0 && (
             <div className="resume-section">
               <h3 className="resume-section-title-sm">Languages</h3>
-              <p className="text-xs text-gray-800 font-sans">{additional.languages.join(' • ')}</p>
+              <p className="resume-text-xs text-gray-800">{additional.languages.join(' • ')}</p>
             </div>
           )}
 
@@ -276,9 +266,9 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
           {additional?.awards && additional.awards.length > 0 && (
             <div className="resume-section">
               <h3 className="resume-section-title-sm">Awards</h3>
-              <ul className="space-y-1">
+              <ul className="resume-list">
                 {additional.awards.map((award, index) => (
-                  <li key={index} className="text-xs text-gray-800 font-sans">
+                  <li key={index} className="resume-text-xs text-gray-800">
                     {award}
                   </li>
                 ))}
@@ -291,7 +281,7 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
             (personalInfo.website || personalInfo.linkedin || personalInfo.github) && (
               <div className="resume-section">
                 <h3 className="resume-section-title-sm">Links</h3>
-                <div className="space-y-1 text-xs font-mono text-gray-700">
+                <div className="resume-stack-tight resume-meta-sm text-gray-700">
                   {personalInfo.linkedin && (
                     <div>{renderContactDetail('LinkedIn', personalInfo.linkedin)}</div>
                   )}

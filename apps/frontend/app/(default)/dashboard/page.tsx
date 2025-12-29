@@ -67,15 +67,26 @@ export default function DashboardPage() {
 
   const loadTailoredResumes = useCallback(async () => {
     try {
-      const data = await fetchResumeList(false);
-      // Also filter out the current master resume by ID (in case is_master flag is out of sync)
-      const masterId = localStorage.getItem('master_resume_id');
-      const filtered = masterId ? data.filter((r) => r.resume_id !== masterId) : data;
+      const data = await fetchResumeList(true);
+      const masterFromList = data.find((r) => r.is_master);
+      const storedId = localStorage.getItem('master_resume_id');
+      const resolvedMasterId = masterFromList?.resume_id || storedId;
+
+      if (resolvedMasterId) {
+        localStorage.setItem('master_resume_id', resolvedMasterId);
+        setMasterResumeId(resolvedMasterId);
+        checkResumeStatus(resolvedMasterId);
+      } else {
+        localStorage.removeItem('master_resume_id');
+        setMasterResumeId(null);
+      }
+
+      const filtered = data.filter((r) => r.resume_id !== resolvedMasterId);
       setTailoredResumes(filtered);
     } catch (err) {
       console.error('Failed to load tailored resumes:', err);
     }
-  }, []);
+  }, [checkResumeStatus]);
 
   useEffect(() => {
     loadTailoredResumes();
@@ -85,14 +96,6 @@ export default function DashboardPage() {
   useEffect(() => {
     const handleFocus = () => {
       loadTailoredResumes();
-      // Also re-check master resume status
-      const storedId = localStorage.getItem('master_resume_id');
-      if (storedId) {
-        setMasterResumeId(storedId);
-        checkResumeStatus(storedId);
-      } else {
-        setMasterResumeId(null);
-      }
     };
     window.addEventListener('focus', handleFocus);
     return () => window.removeEventListener('focus', handleFocus);

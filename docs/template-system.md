@@ -155,6 +155,7 @@ export type TemplateType = 'swiss-single' | 'swiss-two-column';
 export type PageSize = 'A4' | 'LETTER';
 export type SpacingLevel = 1 | 2 | 3 | 4 | 5;
 export type HeaderFontFamily = 'serif' | 'sans-serif' | 'mono';
+export type BodyFontFamily = 'serif' | 'sans-serif' | 'mono';
 
 export interface MarginSettings {
   top: number;    // 5-25mm
@@ -173,6 +174,7 @@ export interface FontSizeSettings {
   base: SpacingLevel;           // Overall text scale
   headerScale: SpacingLevel;    // Header size multiplier
   headerFont: HeaderFontFamily; // Header font family
+  bodyFont: BodyFontFamily;     // Body text font family
 }
 
 export interface TemplateSettings {
@@ -181,7 +183,7 @@ export interface TemplateSettings {
   margins: MarginSettings;
   spacing: SpacingSettings;
   fontSize: FontSizeSettings;
-  compactMode: boolean;      // Apply tighter spacing (0.7x multiplier)
+  compactMode: boolean;      // Apply tighter spacing (0.6x multiplier, margins unchanged)
   showContactIcons: boolean; // Show icons next to contact info
 }
 
@@ -190,7 +192,7 @@ export const DEFAULT_TEMPLATE_SETTINGS: TemplateSettings = {
   pageSize: 'A4',
   margins: { top: 8, bottom: 8, left: 8, right: 8 },
   spacing: { section: 3, item: 2, lineHeight: 3 },
-  fontSize: { base: 3, headerScale: 3, headerFont: 'serif' },
+  fontSize: { base: 3, headerScale: 3, headerFont: 'serif', bodyFont: 'sans-serif' },
   compactMode: false,
   showContactIcons: false,
 };
@@ -226,7 +228,14 @@ export const HEADER_FONT_MAP: Record<HeaderFontFamily, string> = {
   mono: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace',
 };
 
-export const COMPACT_MULTIPLIER = 0.7;
+export const BODY_FONT_MAP: Record<BodyFontFamily, string> = {
+  serif: 'ui-serif, Georgia, Cambria, "Times New Roman", Times, serif',
+  'sans-serif': 'ui-sans-serif, system-ui, sans-serif',
+  mono: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace',
+};
+
+export const COMPACT_MULTIPLIER = 0.6;
+export const COMPACT_LINE_HEIGHT_MULTIPLIER = 0.92;
 
 export function settingsToCssVars(settings?: TemplateSettings): React.CSSProperties {
   const s = settings || DEFAULT_TEMPLATE_SETTINGS;
@@ -240,12 +249,13 @@ export function settingsToCssVars(settings?: TemplateSettings): React.CSSPropert
       ? `calc(${ITEM_SPACING_MAP[s.spacing.item]} * ${compact})`
       : ITEM_SPACING_MAP[s.spacing.item],
     '--line-height': s.compactMode
-      ? LINE_HEIGHT_MAP[s.spacing.lineHeight] * compact
+      ? LINE_HEIGHT_MAP[s.spacing.lineHeight] * COMPACT_LINE_HEIGHT_MULTIPLIER
       : LINE_HEIGHT_MAP[s.spacing.lineHeight],
     '--font-size-base': FONT_SIZE_MAP[s.fontSize.base],
     '--header-scale': HEADER_SCALE_MAP[s.fontSize.headerScale],
     '--section-header-scale': SECTION_HEADER_SCALE_MAP[s.fontSize.headerScale],
     '--header-font': HEADER_FONT_MAP[s.fontSize.headerFont],
+    '--body-font': BODY_FONT_MAP[s.fontSize.bodyFont],
     '--margin-top': `${s.margins.top}mm`,
     '--margin-bottom': `${s.margins.bottom}mm`,
     '--margin-left': `${s.margins.left}mm`,
@@ -271,6 +281,7 @@ export function settingsToCssVars(settings?: TemplateSettings): React.CSSPropert
   --header-scale: 2;
   --section-header-scale: 1.2;
   --header-font: ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
+  --body-font: ui-sans-serif, system-ui, sans-serif;
 
   /* Margin defaults */
   --margin-top: 8mm;
@@ -279,6 +290,7 @@ export function settingsToCssVars(settings?: TemplateSettings): React.CSSPropert
   --margin-right: 8mm;
 
   /* Apply base styles */
+  font-family: var(--body-font);
   font-size: var(--font-size-base);
   line-height: var(--line-height);
   padding: 1.5rem;
@@ -314,6 +326,17 @@ export function settingsToCssVars(settings?: TemplateSettings): React.CSSPropert
 }
 ```
 
+### Template Helper Classes
+
+Resume templates should avoid fixed Tailwind `text-*` and `space-*` utilities. Use the `resume-*`
+helper classes in `apps/frontend/app/(default)/css/globals.css` so typography and spacing respond
+to user settings:
+
+- `resume-name`, `resume-title`, `resume-item-title`, `resume-item-title-sm`
+- `resume-meta`, `resume-meta-sm`, `resume-text`, `resume-text-sm`, `resume-text-xs`
+- `resume-stack`, `resume-stack-tight`, `resume-list`, `resume-row`, `resume-row-tight`
+- `resume-two-column-grid`, `resume-skill-pill`
+
 ### How Settings Map to CSS
 
 ```
@@ -337,7 +360,9 @@ fontSize.headerScale: 3 ──────────────>  --header-sc
 
 fontSize.headerFont     ──────────────>  --header-font: ui-serif, Georgia...
 
-compactMode: true       ──────────────>  All spacing values * 0.7
+fontSize.bodyFont       ──────────────>  --body-font: ui-sans-serif, system-ui...
+
+compactMode: true       ──────────────>  section/item spacing * 0.6, line-height * 0.92
 
 margins.top/bottom/     ──────────────>  --margin-top/bottom/left/right: Nmm
 left/right
@@ -356,7 +381,7 @@ left/right
 
 **Bold** = Default
 
-### Header Font Families
+### Header & Body Font Families
 
 | Option | Font Stack |
 |--------|------------|
@@ -396,16 +421,13 @@ interface Props {
 
 export function ResumeModernMinimal({ data, style, className }: Props) {
   return (
-    <div
-      className={`resume-container ${className ?? ""}`}
-      style={style}
-    >
+    <div className={`resume-body ${className ?? ""}`} style={style}>
       {/* Header Section */}
-      <header className="resume-section border-b-2 border-black pb-4 mb-6">
-        <h1 className="resume-header font-bold tracking-tight">
+      <header className="resume-section border-b-2 border-black resume-header">
+        <h1 className="resume-name tracking-tight uppercase">
           {data.personal_info.name}
         </h1>
-        <div className="flex gap-4 text-sm mt-2">
+        <div className="flex gap-4 resume-meta">
           {data.personal_info.email && (
             <span>{data.personal_info.email}</span>
           )}
@@ -660,6 +682,10 @@ export function FormattingControls({ settings, onChange }: FormattingControlsPro
 }
 ```
 
+Formatting controls should surface an "Effective Output" summary (margins, section/item gaps,
+line height, base font size, header scale) so compact-mode adjustments are visible without
+inspecting the preview.
+
 ### PDF Download with Settings
 
 Settings are passed to the PDF endpoint:
@@ -678,11 +704,13 @@ export async function downloadResumePdf(
     marginBottom: settings.margins.bottom.toString(),
     marginLeft: settings.margins.left.toString(),
     marginRight: settings.margins.right.toString(),
-    sectionSpacing: settings.sectionSpacing.toString(),
-    itemSpacing: settings.itemSpacing.toString(),
-    lineHeight: settings.lineHeight.toString(),
-    fontSize: settings.fontSize.toString(),
-    headerScale: settings.headerScale.toString(),
+    sectionSpacing: settings.spacing.section.toString(),
+    itemSpacing: settings.spacing.item.toString(),
+    lineHeight: settings.spacing.lineHeight.toString(),
+    fontSize: settings.fontSize.base.toString(),
+    headerScale: settings.fontSize.headerScale.toString(),
+    headerFont: settings.fontSize.headerFont,
+    bodyFont: settings.fontSize.bodyFont,
   });
 
   const response = await fetch(
@@ -721,22 +749,20 @@ This page:
 /* globals.css - Print-specific styles */
 
 @media print {
-  .resume-container {
-    width: 100%;
-    max-width: none;
-    padding: 0;
-    margin: 0;
+  .resume-print,
+  .resume-print * {
+    visibility: visible !important;
   }
 
-  .resume-section {
-    break-inside: avoid;
+  .resume-print {
+    width: 100% !important;
+    max-width: 210mm !important;
+    margin: 0 auto !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: #ffffff !important;
   }
 
-  .resume-item {
-    break-inside: avoid;
-  }
-
-  /* Hide non-print elements */
   .no-print {
     display: none !important;
   }
@@ -776,7 +802,12 @@ async def render_resume_pdf(
 
         pdf_bytes = await page.pdf(
             format=page_size,
-            margin={"top": "0mm", "right": "0mm", "bottom": "0mm", "left": "0mm"},
+            margin={
+                "top": f"{margins['top']}mm",
+                "right": f"{margins['right']}mm",
+                "bottom": f"{margins['bottom']}mm",
+                "left": f"{margins['left']}mm",
+            },
             print_background=True,
             prefer_css_page_size=False,
         )
@@ -788,27 +819,8 @@ async def render_resume_pdf(
 
 ### Margin Application
 
-Margins are applied in the HTML, not Playwright:
-
-```tsx
-// app/print/resumes/[id]/page.tsx
-
-export default function PrintResumePage({ searchParams }) {
-  const { marginTop = 15, marginBottom = 15, marginLeft = 15, marginRight = 15 } = searchParams;
-
-  return (
-    <div
-      style={{
-        padding: `${marginTop}mm ${marginRight}mm ${marginBottom}mm ${marginLeft}mm`,
-        width: searchParams.pageSize === "A4" ? "210mm" : "215.9mm",
-        minHeight: searchParams.pageSize === "A4" ? "297mm" : "279.4mm",
-      }}
-    >
-      <Resume data={resumeData} settings={settings} />
-    </div>
-  );
-}
-```
+Margins are applied in Playwright so they repeat on every page. The print route passes
+`TemplateSettings` with margins zeroed so CSS padding does not double-apply margins.
 
 ---
 

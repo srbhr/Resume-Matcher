@@ -281,6 +281,7 @@ improved = await improve_resume(original, job_desc, score, keywords)
 
 **Important Notes:**
 - The `is_master` flag in the database and `master_resume_id` in localStorage can get out of sync
+- Dashboard calls `GET /api/v1/resumes/list?include_master=true` to reconcile and recover the master resume when localStorage is stale
 - Dashboard filters tailored resumes by BOTH `is_master` flag AND localStorage master ID
 - Dashboard refreshes the resume list when the window gains focus (handles navigation back from viewer)
 

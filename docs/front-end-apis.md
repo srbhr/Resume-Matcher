@@ -116,9 +116,10 @@ Retrieves the structured data for a specific resume (Master or Tailored). Used b
 
 ### 3. List Resumes
 
-Lists resumes for dashboard tiles (default excludes the master resume).
+Lists resumes for dashboard tiles. The dashboard typically requests `include_master=true` to recover the master resume if local storage is stale, then filters it out of the tailored list.
 
--   **Endpoint**: `GET /api/v1/resumes/list?include_master=false`
+-   **Endpoint**: `GET /api/v1/resumes/list?include_master=false` (default)
+-   **Endpoint**: `GET /api/v1/resumes/list?include_master=true` (dashboard reconciliation)
 -   **Response (200 OK)**:
     ```json
     {
@@ -260,12 +261,13 @@ Generates a pixel-perfect PDF using headless Chromium with customizable template
     | `lineHeight` | int | 3 | 1-5 | Text line height |
     | `fontSize` | int | 3 | 1-5 | Base font size (1=11px, 5=16px) |
     | `headerScale` | int | 3 | 1-5 | Header size multiplier |
+    | `headerFont` | string | serif | serif, sans-serif, mono | Header font family |
+    | `bodyFont` | string | sans-serif | serif, sans-serif, mono | Body text font family |
 -   **Response (200 OK)**: PDF binary (`application/pdf`) with `Content-Disposition` attachment.
 
 **WYSIWYG Implementation:**
--   Margins are applied in the HTML content (via padding), not by Playwright
--   The print route (`/print/resumes/[id]`) renders the resume at exact page dimensions
--   Playwright uses zero margins to preserve the HTML layout exactly
+-   Margins are applied in Playwright (so they repeat on every page)
+-   The print route (`/print/resumes/[id]`) renders the resume without HTML padding
 -   This ensures the PDF matches the paginated preview in the builder 1:1
 
 **Frontend Integration:**

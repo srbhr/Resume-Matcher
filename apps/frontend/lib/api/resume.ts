@@ -169,6 +169,7 @@ export async function downloadResumePdf(
     params.set('fontSize', String(settings.fontSize.base));
     params.set('headerScale', String(settings.fontSize.headerScale));
     params.set('headerFont', settings.fontSize.headerFont);
+    params.set('bodyFont', settings.fontSize.bodyFont);
     params.set('compactMode', String(settings.compactMode));
     params.set('showContactIcons', String(settings.showContactIcons));
   } else {

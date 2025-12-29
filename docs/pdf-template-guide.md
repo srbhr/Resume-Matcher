@@ -101,16 +101,38 @@ export async function downloadResumePdf(resumeId: string, settings?: TemplateSet
 async def download_resume_pdf(
     resume_id: str,
     template: str = Query("swiss-single"),
+    pageSize: str = Query("A4"),
     marginTop: int = Query(10, ge=5, le=25),
+    marginBottom: int = Query(10, ge=5, le=25),
+    marginLeft: int = Query(10, ge=5, le=25),
+    marginRight: int = Query(10, ge=5, le=25),
+    headerFont: str = Query("serif"),
+    bodyFont: str = Query("sans-serif"),
     compactMode: bool = Query(False),
     # ... all other params
 ):
     # Build URL for print route
-    params = f"template={template}&marginTop={marginTop}&compactMode={str(compactMode).lower()}"
+    params = (
+        f"template={template}"
+        f"&pageSize={pageSize}"
+        f"&marginTop={marginTop}"
+        f"&marginBottom={marginBottom}"
+        f"&marginLeft={marginLeft}"
+        f"&marginRight={marginRight}"
+        f"&headerFont={headerFont}"
+        f"&bodyFont={bodyFont}"
+        f"&compactMode={str(compactMode).lower()}"
+    )
     url = f"{settings.frontend_base_url}/print/resumes/{resume_id}?{params}"
 
-    # Render with Playwright
-    pdf_bytes = await render_resume_pdf(url, pageSize)
+    # Render with Playwright (margins applied at PDF layer)
+    pdf_margins = {
+        "top": marginTop,
+        "right": marginRight,
+        "bottom": marginBottom,
+        "left": marginLeft,
+    }
+    pdf_bytes = await render_resume_pdf(url, pageSize, margins=pdf_margins)
     return Response(content=pdf_bytes, media_type="application/pdf")
 ```
 
@@ -130,8 +152,8 @@ export default async function PrintResumePage({ params, searchParams }) {
   };
 
   return (
-    <div className="resume-print" style={{ padding: `${margins.top}mm ...` }}>
-      <Resume resumeData={data} settings={settings} />
+    <div className="resume-print">
+      <Resume resumeData={data} settings={printSettings} />
     </div>
   );
 }
@@ -146,11 +168,11 @@ async def render_resume_pdf(url: str, page_size: str = "A4"):
     await page.goto(url, wait_until="networkidle")
     await page.wait_for_selector(".resume-print")
 
-    # Zero margins - HTML content includes all padding
+    # Margins come from the backend (applied to every page)
     pdf_bytes = await page.pdf(
         format=page_size,
         print_background=True,
-        margin={"top": "0mm", "right": "0mm", "bottom": "0mm", "left": "0mm"},
+        margin=pdf_margins,
     )
     return pdf_bytes
 ```
@@ -181,8 +203,9 @@ export interface TemplateSettings {
     base: SpacingLevel;           // 1-5, base font size
     headerScale: SpacingLevel;    // 1-5, header size multiplier
     headerFont: 'serif' | 'sans-serif' | 'mono';
+    bodyFont: 'serif' | 'sans-serif' | 'mono';
   };
-  compactMode: boolean;      // Reduce all spacing by 40%
+  compactMode: boolean;      // Reduce spacing by 40% (margins unchanged)
   showContactIcons: boolean; // Show icons next to contact info
 }
 ```
@@ -195,7 +218,7 @@ export const DEFAULT_TEMPLATE_SETTINGS: TemplateSettings = {
   pageSize: 'A4',
   margins: { top: 10, bottom: 10, left: 10, right: 10 },
   spacing: { section: 3, item: 2, lineHeight: 3 },
-  fontSize: { base: 3, headerScale: 3, headerFont: 'serif' },
+  fontSize: { base: 3, headerScale: 3, headerFont: 'serif', bodyFont: 'sans-serif' },
   compactMode: false,
   showContactIcons: false,
 };
@@ -223,6 +246,7 @@ CSS custom properties are set on `.resume-body` and can be overridden via inline
 | `--header-scale` | `2` | `fontSize.headerScale` | Name header multiplier |
 | `--section-header-scale` | `1.2` | `fontSize.headerScale` | Section title multiplier |
 | `--header-font` | `serif` | `fontSize.headerFont` | Header font family |
+| `--body-font` | `sans-serif` | `fontSize.bodyFont` | Body font family |
 
 ### Margin Variables
 
@@ -495,7 +519,7 @@ export const COMPACT_LINE_HEIGHT_MULTIPLIER = 0.92;  // 8% reduction for line-he
 | Section gap | 1rem | 0.6rem | 40% |
 | Item gap | 0.25rem | 0.15rem | 40% |
 | Line height | 1.35 | 1.24 | 8% |
-| Margins | 10mm | 6mm | 40% |
+| Margins | 10mm | 10mm | 0% |
 
 ### Modifying Compact Behavior
 
@@ -503,9 +527,6 @@ export const COMPACT_LINE_HEIGHT_MULTIPLIER = 0.92;  // 8% reduction for line-he
 // lib/types/template-settings.ts
 export function settingsToCssVars(settings?: TemplateSettings) {
   const compact = s.compactMode ? COMPACT_MULTIPLIER : 1;
-
-  // Margins reduced by compact multiplier
-  const marginTop = s.compactMode ? s.margins.top * compact : s.margins.top;
 
   // Line-height uses gentler multiplier to avoid text overlap
   '--line-height': s.compactMode
@@ -526,6 +547,7 @@ export function settingsToCssVars(settings?: TemplateSettings) {
 
 ```typescript
 params.set('headerFont', settings.fontSize.headerFont);
+params.set('bodyFont', settings.fontSize.bodyFont);
 params.set('compactMode', String(settings.compactMode));
 params.set('showContactIcons', String(settings.showContactIcons));
 ```
@@ -542,16 +564,15 @@ export const COMPACT_LINE_HEIGHT_MULTIPLIER = 0.95;  // was 0.92
 
 ### PDF Has Extra Margins
 
-**Cause**: `@page` CSS rule adding margins.
+**Cause**: `@page` CSS rules overriding Playwright margins.
 
-**Fix**: Ensure `@page` has zero margin:
+**Fix**: Remove `@page` margin overrides in `apps/frontend/app/(default)/css/globals.css` and rely on Playwright's margins.
 
-```css
-@page {
-  size: A4;
-  margin: 0;  /* Not 10mm */
-}
-```
+### Blank Page Appears in PDF
+
+**Cause**: Print CSS forcing a full-page minimum height or content overflow near page boundaries.
+
+**Fix**: Keep `.resume-print` and `.cover-letter-print` free of fixed `min-height` values and ensure pagination logic drops empty trailing pages.
 
 ### Resume Viewer Has No Padding
 
@@ -597,7 +618,7 @@ Backend builds: /print/resumes/{id}?params...
        ↓
 Playwright renders print route HTML
        ↓
-page.pdf() with zero margins
+page.pdf() with settings margins
        ↓
 PDF bytes returned → blob download
 ```

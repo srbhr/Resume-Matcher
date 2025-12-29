@@ -158,7 +158,7 @@
   .cover-letter-print {
     width: 100% !important;
     max-width: 210mm !important;
-    min-height: 297mm !important;
+    min-height: 0 !important;
     position: static !important;
     margin: 0 auto !important;
     border: none !important;
@@ -182,11 +182,6 @@
   }
 }
 
-@page {
-  size: A4;
-  margin: 0;
-}
-
 /* ============================================
    RESUME TEMPLATE SYSTEM
    Swiss International Style CSS Variables
@@ -202,6 +197,7 @@
   --header-scale: 2;
   --section-header-scale: 1.2;
   --header-font: ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
+  --body-font: ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
 
   /* Margin defaults - used as padding inside the resume container */
   --margin-top: 10mm;
@@ -210,10 +206,103 @@
   --margin-right: 10mm;
 
   /* Apply base styles */
+  font-family: var(--body-font);
   font-size: var(--font-size-base);
   line-height: var(--line-height);
   /* Use CSS variables for padding - these can be customized via inline styles */
   padding: var(--margin-top) var(--margin-right) var(--margin-bottom) var(--margin-left);
+}
+
+/* Resume typography + spacing helpers (derive from template settings) */
+.resume-header {
+  margin-bottom: var(--section-gap);
+  padding-bottom: calc(var(--item-gap) * 1.25);
+}
+
+.resume-name {
+  font-size: calc(var(--font-size-base) * var(--header-scale));
+  font-family: var(--header-font);
+  font-weight: 700;
+}
+
+.resume-title {
+  font-size: calc(var(--font-size-base) * 1.05);
+}
+
+.resume-meta {
+  font-family: var(--font-mono);
+  font-size: calc(var(--font-size-base) * 0.82);
+}
+
+.resume-meta-sm {
+  font-family: var(--font-mono);
+  font-size: calc(var(--font-size-base) * 0.75);
+}
+
+.resume-text {
+  font-family: var(--body-font);
+}
+
+.resume-text-sm {
+  font-family: var(--body-font);
+  font-size: calc(var(--font-size-base) * 0.92);
+}
+
+.resume-text-xs {
+  font-family: var(--body-font);
+  font-size: calc(var(--font-size-base) * 0.82);
+}
+
+.resume-item-title {
+  font-family: var(--body-font);
+  font-size: calc(var(--font-size-base) * 1);
+  font-weight: 700;
+}
+
+.resume-item-title-sm {
+  font-family: var(--body-font);
+  font-size: calc(var(--font-size-base) * 0.9);
+  font-weight: 700;
+}
+
+.resume-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--item-gap);
+}
+
+.resume-stack-tight {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--item-gap) * 0.6);
+}
+
+.resume-row {
+  margin-bottom: var(--item-gap);
+}
+
+.resume-row-tight {
+  margin-bottom: calc(var(--item-gap) * 0.6);
+}
+
+.resume-list {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--item-gap) * 0.75);
+}
+
+.resume-two-column-grid {
+  display: grid;
+  grid-template-columns: 65% 35%;
+  gap: var(--section-gap);
+  margin-top: var(--section-gap);
+  align-items: start;
+}
+
+.resume-skill-pill {
+  font-family: var(--font-mono);
+  font-size: calc(var(--font-size-base) * 0.75);
+  padding: 0.125rem 0.375rem;
 }
 
 /* Resume Section Styles */

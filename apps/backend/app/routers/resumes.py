@@ -389,6 +389,7 @@ async def download_resume_pdf(
     fontSize: int = Query(3, ge=1, le=5),
     headerScale: int = Query(3, ge=1, le=5),
     headerFont: str = Query("serif", pattern="^(serif|sans-serif|mono)$"),
+    bodyFont: str = Query("sans-serif", pattern="^(serif|sans-serif|mono)$"),
     compactMode: bool = Query(False),
     showContactIcons: bool = Query(False),
 ) -> Response:
@@ -404,6 +405,7 @@ async def download_resume_pdf(
     - fontSize: base font size (1-5)
     - headerScale: header size scale (1-5)
     - headerFont: serif, sans-serif, or mono
+    - bodyFont: serif, sans-serif, or mono
     - compactMode: enable tighter spacing
     - showContactIcons: show icons in contact info
     """
@@ -425,18 +427,18 @@ async def download_resume_pdf(
         f"&fontSize={fontSize}"
         f"&headerScale={headerScale}"
         f"&headerFont={headerFont}"
+        f"&bodyFont={bodyFont}"
         f"&compactMode={str(compactMode).lower()}"
         f"&showContactIcons={str(showContactIcons).lower()}"
     )
     url = f"{settings.frontend_base_url}/print/resumes/{resume_id}?{params}"
 
-    # Calculate actual margins (apply compact mode reduction if enabled)
-    compact_multiplier = 0.6 if compactMode else 1.0
+    # Use the exact margins provided; compact mode only affects spacing.
     pdf_margins = {
-        "top": int(marginTop * compact_multiplier),
-        "right": int(marginRight * compact_multiplier),
-        "bottom": int(marginBottom * compact_multiplier),
-        "left": int(marginLeft * compact_multiplier),
+        "top": marginTop,
+        "right": marginRight,
+        "bottom": marginBottom,
+        "left": marginLeft,
     }
 
     # Render PDF with margins applied to every page
