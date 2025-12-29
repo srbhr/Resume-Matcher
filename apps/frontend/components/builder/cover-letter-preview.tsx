@@ -38,9 +38,7 @@ export function CoverLetterPreview({
   });
 
   // Parse content into paragraphs
-  const paragraphs = content
-    .split('\n\n')
-    .filter((p) => p.trim().length > 0);
+  const paragraphs = content.split('\n\n').filter((p) => p.trim().length > 0);
 
   return (
     <div
@@ -53,10 +51,7 @@ export function CoverLetterPreview({
     >
       {/* Letter Content */}
       <div
-        className={cn(
-          'p-8 md:p-12',
-          pageSize === 'A4' ? 'min-h-[297mm]' : 'min-h-[11in]'
-        )}
+        className={cn('p-8 md:p-12', pageSize === 'A4' ? 'min-h-[297mm]' : 'min-h-[11in]')}
         style={{
           maxWidth: pageSize === 'A4' ? '210mm' : '8.5in',
         }}
@@ -70,9 +65,7 @@ export function CoverLetterPreview({
             {personalInfo.email && <span>{personalInfo.email}</span>}
             {personalInfo.phone && <span>{personalInfo.phone}</span>}
             {personalInfo.location && <span>{personalInfo.location}</span>}
-            {personalInfo.linkedin && (
-              <span>{personalInfo.linkedin}</span>
-            )}
+            {personalInfo.linkedin && <span>{personalInfo.linkedin}</span>}
           </div>
         </header>
 
@@ -85,18 +78,13 @@ export function CoverLetterPreview({
         <div className="space-y-4">
           {paragraphs.length > 0 ? (
             paragraphs.map((para, idx) => (
-              <p
-                key={idx}
-                className="font-serif text-base leading-relaxed text-gray-800"
-              >
+              <p key={idx} className="font-serif text-base leading-relaxed text-gray-800">
                 {para}
               </p>
             ))
           ) : (
             <div className="text-center py-12 text-gray-400">
-              <p className="font-mono text-sm">
-                No cover letter content yet.
-              </p>
+              <p className="font-mono text-sm">No cover letter content yet.</p>
               <p className="font-mono text-xs mt-2">
                 Enable cover letter generation in Settings, then tailor a resume.
               </p>

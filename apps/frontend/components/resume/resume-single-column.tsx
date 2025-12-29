@@ -1,8 +1,10 @@
 import React from 'react';
+import { Mail, Phone, MapPin, Globe, Linkedin, Github } from 'lucide-react';
 import type { ResumeData } from '@/components/dashboard/resume-component';
 
 interface ResumeSingleColumnProps {
   data: ResumeData;
+  showContactIcons?: boolean;
 }
 
 /**
@@ -13,8 +15,21 @@ interface ResumeSingleColumnProps {
  *
  * Section order: Header → Summary → Experience → Projects → Education → Additional
  */
-export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({ data }) => {
+export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
+  data,
+  showContactIcons = false,
+}) => {
   const { personalInfo, summary, workExperience, education, personalProjects, additional } = data;
+
+  // Icon mapping for contact types
+  const contactIcons: Record<string, React.ReactNode> = {
+    Email: <Mail size={12} />,
+    Phone: <Phone size={12} />,
+    Location: <MapPin size={12} />,
+    Website: <Globe size={12} />,
+    LinkedIn: <Linkedin size={12} />,
+    GitHub: <Github size={12} />,
+  };
 
   // Helper function to render contact details
   const renderContactDetail = (label: string, value?: string, hrefPrefix: string = '') => {
@@ -42,6 +57,7 @@ export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({ data }) 
 
     return (
       <span className="inline-flex items-center gap-1">
+        {showContactIcons && contactIcons[label]}
         {isLink ? (
           <a
             href={href}
@@ -60,61 +76,64 @@ export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({ data }) 
 
   return (
     <>
-      {/* Header Section */}
+      {/* Header Section - Centered Layout */}
       {personalInfo && (
-        <div className="resume-section border-b-2 border-black pb-[var(--item-gap)]">
+        <header className="text-center mb-4 pb-3 border-b-2 border-black">
+          {/* Name - Centered */}
           {personalInfo.name && (
             <h1
-              className="font-bold tracking-tight uppercase mb-2"
-              style={{ fontSize: 'calc(var(--font-size-base) * var(--header-scale))' }}
+              className="font-bold tracking-tight uppercase mb-1"
+              style={{
+                fontSize: 'calc(var(--font-size-base) * var(--header-scale))',
+                fontFamily: 'var(--header-font)',
+              }}
             >
               {personalInfo.name}
             </h1>
           )}
 
-          <div className="flex flex-col md:flex-row md:justify-between md:items-end">
-            {personalInfo.title && (
-              <h2 className="text-xl font-mono text-gray-700 tracking-wide uppercase">
-                {personalInfo.title}
-              </h2>
-            )}
+          {/* Title - Centered, below name */}
+          {personalInfo.title && (
+            <h2 className="text-lg font-mono text-gray-700 tracking-wide uppercase mb-3">
+              {personalInfo.title}
+            </h2>
+          )}
 
-            {/* Contact Grid */}
-            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs font-mono mt-4 md:mt-0 text-gray-600 justify-end">
-              {renderContactDetail('Email', personalInfo.email, 'mailto:')}
-              {personalInfo.phone && (
-                <>
-                  <span>|</span>
-                  {renderContactDetail('Phone', personalInfo.phone, 'tel:')}
-                </>
-              )}
-              {personalInfo.location && (
-                <>
-                  <span>|</span>
-                  {renderContactDetail('Location', personalInfo.location)}
-                </>
-              )}
-              {personalInfo.website && (
-                <>
-                  <span>|</span>
-                  {renderContactDetail('Website', personalInfo.website)}
-                </>
-              )}
-              {personalInfo.linkedin && (
-                <>
-                  <span>|</span>
-                  {renderContactDetail('LinkedIn', personalInfo.linkedin)}
-                </>
-              )}
-              {personalInfo.github && (
-                <>
-                  <span>|</span>
-                  {renderContactDetail('GitHub', personalInfo.github)}
-                </>
-              )}
-            </div>
+          {/* Contact - Own line, centered */}
+          <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs font-mono text-gray-600">
+            {renderContactDetail('Email', personalInfo.email, 'mailto:')}
+            {personalInfo.phone && (
+              <>
+                <span className="text-gray-400">|</span>
+                {renderContactDetail('Phone', personalInfo.phone, 'tel:')}
+              </>
+            )}
+            {personalInfo.location && (
+              <>
+                <span className="text-gray-400">|</span>
+                {renderContactDetail('Location', personalInfo.location)}
+              </>
+            )}
+            {personalInfo.website && (
+              <>
+                <span className="text-gray-400">|</span>
+                {renderContactDetail('Website', personalInfo.website)}
+              </>
+            )}
+            {personalInfo.linkedin && (
+              <>
+                <span className="text-gray-400">|</span>
+                {renderContactDetail('LinkedIn', personalInfo.linkedin)}
+              </>
+            )}
+            {personalInfo.github && (
+              <>
+                <span className="text-gray-400">|</span>
+                {renderContactDetail('GitHub', personalInfo.github)}
+              </>
+            )}
           </div>
-        </div>
+        </header>
       )}
 
       {/* Summary Section */}

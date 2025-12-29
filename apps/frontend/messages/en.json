@@ -1,0 +1,132 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "download": "Download",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "close": "Close",
+    "search": "Search",
+    "filter": "Filter",
+    "reset": "Reset",
+    "apply": "Apply"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "builder": "Resume Builder",
+    "tailor": "Tailor Resume",
+    "settings": "Settings"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "Manage your resumes and job applications",
+    "myResumes": "My Resumes",
+    "noResumes": "No resumes yet",
+    "noResumesDescription": "Upload your first resume to get started",
+    "uploadResume": "Upload Resume",
+    "createNew": "Create New",
+    "lastModified": "Last modified",
+    "actions": "Actions",
+    "viewResume": "View Resume",
+    "editResume": "Edit Resume",
+    "deleteResume": "Delete Resume",
+    "downloadPdf": "Download PDF",
+    "tailorResume": "Tailor for Job"
+  },
+  "builder": {
+    "title": "Resume Builder",
+    "editMode": "Edit Mode",
+    "previewMode": "Preview Mode",
+    "personalInfo": "Personal Information",
+    "summary": "Summary",
+    "experience": "Experience",
+    "education": "Education",
+    "skills": "Skills",
+    "projects": "Projects",
+    "certifications": "Certifications",
+    "languages": "Languages",
+    "awards": "Awards",
+    "addSection": "Add Section",
+    "removeSection": "Remove Section",
+    "saveChanges": "Save Changes",
+    "discardChanges": "Discard Changes"
+  },
+  "tailor": {
+    "title": "Tailor Resume",
+    "subtitle": "Optimize your resume for a specific job",
+    "selectResume": "Select Resume",
+    "pasteJobDescription": "Paste Job Description",
+    "jobDescriptionPlaceholder": "Paste the job description here...",
+    "analyzeJob": "Analyze Job",
+    "generateTailored": "Generate Tailored Resume",
+    "matchScore": "Match Score",
+    "suggestions": "Suggestions",
+    "keywords": "Keywords to Include"
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Configure your preferences",
+    "aiProvider": "AI Provider",
+    "aiProviderDescription": "Select your preferred AI provider for resume analysis",
+    "apiKey": "API Key",
+    "apiKeyPlaceholder": "Enter your API key",
+    "saveApiKey": "Save API Key",
+    "contentLanguage": "Content Language",
+    "contentLanguageDescription": "Language for generated content (resumes, cover letters)",
+    "uiLanguage": "UI Language",
+    "uiLanguageDescription": "Language for the user interface",
+    "theme": "Theme",
+    "themeDescription": "Choose your preferred color theme",
+    "lightMode": "Light",
+    "darkMode": "Dark",
+    "systemMode": "System"
+  },
+  "resume": {
+    "personalInfo": {
+      "name": "Full Name",
+      "title": "Job Title",
+      "email": "Email",
+      "phone": "Phone",
+      "location": "Location",
+      "website": "Website",
+      "linkedin": "LinkedIn",
+      "github": "GitHub"
+    },
+    "sections": {
+      "summary": "Summary",
+      "experience": "Experience",
+      "education": "Education",
+      "projects": "Projects",
+      "skills": "Skills & Awards",
+      "certifications": "Training & Certifications",
+      "languages": "Languages",
+      "awards": "Awards"
+    }
+  },
+  "coverLetter": {
+    "title": "Cover Letter",
+    "generate": "Generate Cover Letter",
+    "regenerate": "Regenerate",
+    "copyToClipboard": "Copy to Clipboard",
+    "copied": "Copied!"
+  },
+  "errors": {
+    "generic": "Something went wrong. Please try again.",
+    "networkError": "Network error. Please check your connection.",
+    "unauthorized": "Please sign in to continue.",
+    "notFound": "The requested resource was not found.",
+    "validationError": "Please check your input and try again."
+  },
+  "confirmations": {
+    "deleteResume": "Are you sure you want to delete this resume?",
+    "deleteResumeDescription": "This action cannot be undone.",
+    "discardChanges": "Are you sure you want to discard your changes?",
+    "discardChangesDescription": "Any unsaved changes will be lost."
+  }
+}

@@ -11,10 +11,7 @@ export interface OutreachPreviewProps {
   className?: string;
 }
 
-export function OutreachPreview({
-  content,
-  className,
-}: OutreachPreviewProps) {
+export function OutreachPreview({ content, className }: OutreachPreviewProps) {
   return (
     <div
       className={cn(
@@ -44,16 +41,12 @@ export function OutreachPreview({
           <div className="space-y-4">
             {/* Message Bubble Style */}
             <div className="bg-[#F5F5F0] border-2 border-black p-4 shadow-[2px_2px_0px_0px_#000000]">
-              <p className="font-sans text-sm leading-relaxed whitespace-pre-wrap">
-                {content}
-              </p>
+              <p className="font-sans text-sm leading-relaxed whitespace-pre-wrap">{content}</p>
             </div>
 
             {/* Usage Tips */}
             <div className="pt-4 border-t border-gray-200">
-              <p className="font-mono text-xs text-gray-500 uppercase mb-2">
-                How to use:
-              </p>
+              <p className="font-mono text-xs text-gray-500 uppercase mb-2">How to use:</p>
               <ul className="font-mono text-xs text-gray-500 space-y-1">
                 <li>1. Copy the message using the button above</li>
                 <li>2. Open LinkedIn or your email client</li>
@@ -64,9 +57,7 @@ export function OutreachPreview({
           </div>
         ) : (
           <div className="text-center py-12 text-gray-400">
-            <p className="font-mono text-sm">
-              No outreach message yet.
-            </p>
+            <p className="font-mono text-sm">No outreach message yet.</p>
             <p className="font-mono text-xs mt-2">
               Enable outreach message generation in Settings, then tailor a resume.
             </p>

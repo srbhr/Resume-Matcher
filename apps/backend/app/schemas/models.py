@@ -210,6 +210,21 @@ class FeatureConfigResponse(BaseModel):
     enable_outreach_message: bool = False
 
 
+class LanguageConfigRequest(BaseModel):
+    """Request to update language settings."""
+
+    ui_language: str | None = None  # en, es, zh, ja - for interface
+    content_language: str | None = None  # en, es, zh, ja - for generated content
+
+
+class LanguageConfigResponse(BaseModel):
+    """Response for language settings."""
+
+    ui_language: str = "en"  # Interface language
+    content_language: str = "en"  # Generated content language
+    supported_languages: list[str] = ["en", "es", "zh", "ja"]
+
+
 # Update Cover Letter/Outreach Models
 class UpdateCoverLetterRequest(BaseModel):
     """Request to update cover letter content."""

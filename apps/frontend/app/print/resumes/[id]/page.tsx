@@ -4,6 +4,7 @@ import {
   type PageSize,
   type TemplateSettings,
   type SpacingLevel,
+  type HeaderFontFamily,
   DEFAULT_TEMPLATE_SETTINGS,
 } from '@/lib/types/template-settings';
 import { API_BASE } from '@/lib/api/client';
@@ -30,8 +31,30 @@ type PageProps = {
     lineHeight?: string;
     fontSize?: string;
     headerScale?: string;
+    headerFont?: string;
+    compactMode?: string;
+    showContactIcons?: string;
   }>;
 };
+
+/**
+ * Parse header font family
+ */
+function parseHeaderFont(value: string | undefined): HeaderFontFamily {
+  if (value === 'serif' || value === 'sans-serif' || value === 'mono') {
+    return value;
+  }
+  return DEFAULT_TEMPLATE_SETTINGS.fontSize.headerFont;
+}
+
+/**
+ * Parse boolean from string
+ */
+function parseBoolean(value: string | undefined, defaultValue: boolean): boolean {
+  if (value === 'true') return true;
+  if (value === 'false') return false;
+  return defaultValue;
+}
 
 async function fetchResumeData(id: string): Promise<ResumeData> {
   const res = await fetch(`${API_BASE}/resumes?resume_id=${encodeURIComponent(id)}`, {
@@ -140,7 +163,16 @@ export default async function PrintResumePage({ params, searchParams }: PageProp
         resolvedSearchParams?.headerScale,
         DEFAULT_TEMPLATE_SETTINGS.fontSize.headerScale
       ),
+      headerFont: parseHeaderFont(resolvedSearchParams?.headerFont),
     },
+    compactMode: parseBoolean(
+      resolvedSearchParams?.compactMode,
+      DEFAULT_TEMPLATE_SETTINGS.compactMode
+    ),
+    showContactIcons: parseBoolean(
+      resolvedSearchParams?.showContactIcons,
+      DEFAULT_TEMPLATE_SETTINGS.showContactIcons
+    ),
   };
 
   const pageDims = PAGE_DIMENSIONS[settings.pageSize];

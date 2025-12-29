@@ -5,7 +5,16 @@
  */
 
 // Client utilities
-export { API_URL, API_BASE, apiFetch, apiPost, apiPatch, apiPut, apiDelete, getUploadUrl } from './client';
+export {
+  API_URL,
+  API_BASE,
+  apiFetch,
+  apiPost,
+  apiPatch,
+  apiPut,
+  apiDelete,
+  getUploadUrl,
+} from './client';
 
 // Resume operations
 export {

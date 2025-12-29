@@ -1,6 +1,6 @@
 import { ImprovedResult } from '@/components/common/resume_previewer_context';
 import { type TemplateSettings } from '@/lib/types/template-settings';
-import { API_BASE, apiPost, apiPatch, apiDelete, apiFetch } from './client';
+import { apiPost, apiPatch, apiDelete, apiFetch } from './client';
 
 // Matches backend schemas/models.py ResumeData
 interface ProcessedResume {
@@ -201,7 +201,9 @@ export async function updateCoverLetter(resumeId: string, content: string): Prom
 
 /** Updates the outreach message for a resume */
 export async function updateOutreachMessage(resumeId: string, content: string): Promise<void> {
-  const res = await apiPatch(`/resumes/${encodeURIComponent(resumeId)}/outreach-message`, { content });
+  const res = await apiPatch(`/resumes/${encodeURIComponent(resumeId)}/outreach-message`, {
+    content,
+  });
   if (!res.ok) {
     const text = await res.text().catch(() => '');
     throw new Error(`Failed to update outreach message (status ${res.status}): ${text}`);

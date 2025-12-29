@@ -49,32 +49,17 @@ export function OutreachEditor({
       <div className="flex items-center justify-between p-4 border-b-2 border-black bg-[#F5F5F0]">
         <div className="flex items-center gap-2">
           <Mail className="w-4 h-4" />
-          <h2 className="font-mono text-sm font-bold uppercase tracking-wider">
-            Outreach Message
-          </h2>
+          <h2 className="font-mono text-sm font-bold uppercase tracking-wider">Outreach Message</h2>
         </div>
         <div className="flex items-center gap-3">
           <span className="font-mono text-xs text-gray-500">
             {wordCount} words / {charCount} chars
           </span>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={onSave}
-            disabled={isSaving}
-          >
-            {isSaving ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Save className="w-4 h-4" />
-            )}
+          <Button size="sm" variant="outline" onClick={onSave} disabled={isSaving}>
+            {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             Save
           </Button>
-          <Button
-            size="sm"
-            onClick={handleCopy}
-            disabled={!content}
-          >
+          <Button size="sm" onClick={handleCopy} disabled={!content}>
             {isCopied ? (
               <>
                 <Check className="w-4 h-4" />

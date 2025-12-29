@@ -12,7 +12,6 @@ import {
   type LLMConfig,
   type LLMProvider,
   type LLMHealthCheck,
-  type FeatureConfig,
 } from '@/lib/api/config';
 import { ToggleSwitch } from '@/components/ui/toggle-switch';
 import { useStatusCache } from '@/lib/context/status-cache';
@@ -35,7 +34,12 @@ import {
   Sparkles,
   Clock,
   Settings2,
+  Globe,
 } from 'lucide-react';
+import { useLanguage } from '@/lib/context/language-context';
+import { useTranslations } from '@/lib/i18n';
+import type { SupportedLanguage } from '@/lib/api/config';
+import type { Locale } from '@/i18n/config';
 
 type Status = 'idle' | 'loading' | 'saving' | 'saved' | 'error' | 'testing';
 
@@ -74,6 +78,20 @@ export default function SettingsPage() {
   const [enableCoverLetter, setEnableCoverLetter] = useState(false);
   const [enableOutreach, setEnableOutreach] = useState(false);
   const [featureConfigLoading, setFeatureConfigLoading] = useState(false);
+
+  // Language settings
+  const {
+    contentLanguage,
+    uiLanguage,
+    setContentLanguage,
+    setUiLanguage,
+    languageNames,
+    supportedLanguages,
+    isLoading: languageLoading,
+  } = useLanguage();
+
+  // Translations
+  const { t } = useTranslations();
 
   // Load LLM config and feature config on mount
   useEffect(() => {
@@ -240,15 +258,17 @@ export default function SettingsPage() {
         {/* Header */}
         <div className="border-b border-black p-8 bg-white flex justify-between items-start">
           <div>
-            <h1 className="font-serif text-3xl font-bold tracking-tight">SETTINGS</h1>
+            <h1 className="font-serif text-3xl font-bold tracking-tight uppercase">
+              {t('settings.title')}
+            </h1>
             <p className="font-mono text-xs text-gray-500 mt-2 uppercase tracking-wider">
-              {'// SYSTEM CONFIGURATION'}
+              {'// '}{t('settings.subtitle')}
             </p>
           </div>
           <Link href="/dashboard">
             <Button variant="outline" size="sm">
               <ArrowLeft className="w-4 h-4" />
-              Back
+              {t('common.back')}
             </Button>
           </Link>
         </div>
@@ -489,12 +509,12 @@ export default function SettingsPage() {
                   ) : status === 'saved' ? (
                     <>
                       <CheckCircle2 className="w-4 h-4" />
-                      Saved
+                      {t('common.success')}
                     </>
                   ) : (
                     <>
                       <Save className="w-4 h-4" />
-                      Save Configuration
+                      {t('common.save')}
                     </>
                   )}
                 </Button>
@@ -562,9 +582,8 @@ export default function SettingsPage() {
 
             <div className="space-y-2">
               <p className="text-sm text-gray-600 mb-4">
-                Enable additional content generation during resume tailoring.
-                When enabled, these documents will be automatically generated
-                alongside your tailored resume.
+                Enable additional content generation during resume tailoring. When enabled, these
+                documents will be automatically generated alongside your tailored resume.
               </p>
 
               <div className="space-y-3">
@@ -588,6 +607,78 @@ export default function SettingsPage() {
                   description="Generate a networking message for LinkedIn or email"
                   disabled={featureConfigLoading}
                 />
+              </div>
+            </div>
+          </section>
+
+          {/* Language Settings Section */}
+          <section className="space-y-6">
+            <div className="flex items-center gap-2 border-b border-black/10 pb-2">
+              <Globe className="w-4 h-4" />
+              <h2 className="font-mono text-sm font-bold uppercase tracking-wider">
+                {t('settings.uiLanguage')} & {t('settings.contentLanguage')}
+              </h2>
+            </div>
+
+            {/* UI Language */}
+            <div className="space-y-4">
+              <div>
+                <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-gray-700 mb-2">
+                  {t('settings.uiLanguage')}
+                </h3>
+                <p className="text-sm text-gray-600 mb-3">
+                  {t('settings.uiLanguageDescription')}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  {supportedLanguages.map((lang) => (
+                    <button
+                      key={`ui-${lang}`}
+                      onClick={() => setUiLanguage(lang as Locale)}
+                      disabled={languageLoading}
+                      className={`px-4 py-3 border text-sm font-mono transition-all ${
+                        uiLanguage === lang
+                          ? 'bg-blue-700 text-white border-blue-700 shadow-[2px_2px_0px_0px_#000]'
+                          : 'bg-white text-black border-black hover:bg-gray-100'
+                      } ${languageLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                      {languageNames[lang]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Content Language */}
+            <div className="space-y-4 pt-4 border-t border-gray-200">
+              <div>
+                <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-gray-700 mb-2">
+                  {t('settings.contentLanguage')}
+                </h3>
+                <p className="text-sm text-gray-600 mb-3">
+                  {t('settings.contentLanguageDescription')}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  {supportedLanguages.map((lang) => (
+                    <button
+                      key={`content-${lang}`}
+                      onClick={() => setContentLanguage(lang as SupportedLanguage)}
+                      disabled={languageLoading}
+                      className={`px-4 py-3 border text-sm font-mono transition-all ${
+                        contentLanguage === lang
+                          ? 'bg-blue-700 text-white border-blue-700 shadow-[2px_2px_0px_0px_#000]'
+                          : 'bg-white text-black border-black hover:bg-gray-100'
+                      } ${languageLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                      {languageNames[lang]}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </section>

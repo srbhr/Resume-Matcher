@@ -14,7 +14,7 @@ apps/frontend/
 │   ├── layout.tsx                  # Root layout (fonts, metadata)
 │   ├── globals.css                 # Global styles (imported via layout)
 │   ├── (default)/                  # Route group for main app
-│   │   ├── layout.tsx              # App layout (StatusCacheProvider, ResumePreviewProvider)
+│   │   ├── layout.tsx              # App layout (StatusCacheProvider, LanguageProvider, ResumePreviewProvider)
 │   │   ├── page.tsx                # Landing page (/)
 │   │   ├── dashboard/page.tsx      # Dashboard (/dashboard)
 │   │   ├── builder/page.tsx        # Resume editor (/builder)
@@ -24,6 +24,8 @@ apps/frontend/
 │   └── print/                      # Print-specific routes (no layout)
 │       ├── resumes/[id]/page.tsx   # Print-ready resume (/print/resumes/[id])
 │       └── cover-letter/[id]/page.tsx # Print-ready cover letter (/print/cover-letter/[id])
+├── i18n/                           # Internationalization
+│   └── config.ts                   # Locale codes and display names
 ├── components/
 │   ├── ui/                         # Base UI components
 │   │   ├── button.tsx
@@ -75,10 +77,11 @@ apps/frontend/
 │   ├── api/                        # API client layer
 │   │   ├── client.ts               # Base client (API_URL, fetch helpers)
 │   │   ├── resume.ts               # Resume operations
-│   │   ├── config.ts               # LLM config operations
+│   │   ├── config.ts               # LLM config + feature flags + language APIs
 │   │   └── index.ts                # Barrel exports
 │   ├── context/
-│   │   └── status-cache.tsx        # System status caching
+│   │   ├── status-cache.tsx        # System status caching
+│   │   └── language-context.tsx    # Language preference state (i18n)
 │   ├── types/
 │   │   └── template-settings.ts    # Template configuration types
 │   ├── constants/
@@ -635,7 +638,33 @@ interface StatusCacheContextValue {
 | Settings | `status`, `isLoading`, `lastFetched`, `refreshStatus` |
 | Resume Viewer | `decrementResumes`, `setHasMasterResume` |
 
-### 4.2 ResumePreviewProvider (`components/common/resume_previewer_context.tsx`)
+### 4.2 LanguageProvider (`lib/context/language-context.tsx`)
+
+**Purpose:** Manage content language preference for generated resumes/cover letters
+
+**Context Value:**
+```typescript
+interface LanguageContextValue {
+  contentLanguage: SupportedLanguage;     // Current content language (en, es, zh, ja)
+  isLoading: boolean;                     // Loading state
+  setContentLanguage: (lang) => Promise<void>;  // Update language
+  languageNames: Record<Locale, string>;  // Display names
+  supportedLanguages: readonly Locale[];  // Available locales
+}
+```
+
+**Behavior:**
+- Loads from localStorage first (instant load)
+- Syncs with backend API on mount
+- Caches preference in localStorage for fast subsequent loads
+- Only affects NEW generated content, not existing resumes
+
+**Usage:**
+```typescript
+const { contentLanguage, setContentLanguage, languageNames } = useLanguage();
+```
+
+### 4.3 ResumePreviewProvider (`components/common/resume_previewer_context.tsx`)
 
 **Purpose:** Pass tailored resume data from tailor page to builder
 
@@ -653,13 +682,14 @@ interface ResumePreviewContextValue {
 3. Navigate to `/builder` or `/resumes/[id]`
 4. Builder reads from context for initial data
 
-### 4.3 localStorage Keys
+### 4.4 localStorage Keys
 
 | Key | Type | Purpose | Used By |
 |-----|------|---------|---------|
 | `master_resume_id` | string | Master resume UUID | Dashboard, Viewer, Tailor |
 | `resume_builder_draft` | ResumeData (JSON) | Auto-saved form data | Builder |
 | `resume_builder_settings` | TemplateSettings (JSON) | Template preferences | Builder |
+| `resume_matcher_content_language` | string | Content generation language (en, es, zh, ja) | LanguageProvider |
 
 ---
 

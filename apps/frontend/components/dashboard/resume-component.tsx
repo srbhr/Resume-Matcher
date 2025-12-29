@@ -98,8 +98,12 @@ const Resume: React.FC<ResumeProps> = ({ resumeData, template = 'swiss-single', 
       className={`resume-body font-serif bg-white text-black w-full mx-auto resume-template-${mergedSettings.template}`}
       style={cssVars}
     >
-      {mergedSettings.template === 'swiss-single' && <ResumeSingleColumn data={resumeData} />}
-      {mergedSettings.template === 'swiss-two-column' && <ResumeTwoColumn data={resumeData} />}
+      {mergedSettings.template === 'swiss-single' && (
+        <ResumeSingleColumn data={resumeData} showContactIcons={mergedSettings.showContactIcons} />
+      )}
+      {mergedSettings.template === 'swiss-two-column' && (
+        <ResumeTwoColumn data={resumeData} showContactIcons={mergedSettings.showContactIcons} />
+      )}
     </div>
   );
 };

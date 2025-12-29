@@ -1,5 +1,19 @@
 """LLM prompt templates for resume processing."""
 
+# Language code to full name mapping
+LANGUAGE_NAMES = {
+    "en": "English",
+    "es": "Spanish",
+    "zh": "Chinese (Simplified)",
+    "ja": "Japanese",
+}
+
+
+def get_language_name(code: str) -> str:
+    """Get full language name from code."""
+    return LANGUAGE_NAMES.get(code, "English")
+
+
 # Schema with example values - used for prompts to show LLM expected format
 RESUME_SCHEMA_EXAMPLE = """{
   "personalInfo": {
@@ -85,10 +99,14 @@ Job description:
 
 IMPROVE_RESUME_PROMPT = """Tailor this resume for the job. Output ONLY the JSON object, no other text.
 
+IMPORTANT: Generate ALL text content (summary, descriptions, skills) in {output_language}.
+
 Rules:
 - Rephrase content to highlight relevant experience
 - DO NOT invent new information
 - Use action verbs and quantifiable achievements
+- Keep proper nouns (names, company names, locations) unchanged
+- Translate job titles, descriptions, and skills to {output_language}
 
 Job Description:
 {job_description}
@@ -104,6 +122,8 @@ Output in this JSON format:
 
 COVER_LETTER_PROMPT = """Generate a professional cover letter for this job application.
 
+IMPORTANT: Write the entire cover letter in {output_language}.
+
 Job Description:
 {job_description}
 
@@ -117,11 +137,13 @@ Guidelines:
 - Standard structure: greeting, introduction, body, closing
 - Do NOT invent information not present in the resume
 - Do NOT include placeholder brackets like [Company Name] or [Hiring Manager]
-- Use a generic but professional greeting like "Dear Hiring Team" or "Dear Hiring Manager"
+- Use a generic but professional greeting appropriate for {output_language}
 
 Output the cover letter as plain text only. No JSON, no markdown formatting."""
 
 OUTREACH_MESSAGE_PROMPT = """Generate a cold outreach message for LinkedIn or email about this job opportunity.
+
+IMPORTANT: Write the entire message in {output_language}.
 
 Job Description:
 {job_description}
@@ -130,7 +152,7 @@ Candidate Resume (JSON):
 {resume_data}
 
 Guidelines:
-- Conversational but professional tone
+- Conversational but professional tone appropriate for {output_language}
 - Brief: 100-150 words maximum
 - Include: a hook, value proposition, and call to action
 - Reference specific skills that match the role

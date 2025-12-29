@@ -11,6 +11,8 @@ export type PageSize = 'A4' | 'LETTER';
 
 export type SpacingLevel = 1 | 2 | 3 | 4 | 5;
 
+export type HeaderFontFamily = 'serif' | 'sans-serif' | 'mono';
+
 export interface MarginSettings {
   top: number; // 5-25mm
   bottom: number;
@@ -27,6 +29,7 @@ export interface SpacingSettings {
 export interface FontSizeSettings {
   base: SpacingLevel; // Overall text scale
   headerScale: SpacingLevel; // Header size multiplier
+  headerFont: HeaderFontFamily; // Header font family
 }
 
 export interface TemplateSettings {
@@ -35,6 +38,8 @@ export interface TemplateSettings {
   margins: MarginSettings;
   spacing: SpacingSettings;
   fontSize: FontSizeSettings;
+  compactMode: boolean; // Apply tighter spacing across the board
+  showContactIcons: boolean; // Show icons next to contact info
 }
 
 /**
@@ -43,9 +48,11 @@ export interface TemplateSettings {
 export const DEFAULT_TEMPLATE_SETTINGS: TemplateSettings = {
   template: 'swiss-single',
   pageSize: 'A4',
-  margins: { top: 10, bottom: 10, left: 10, right: 10 },
+  margins: { top: 8, bottom: 8, left: 8, right: 8 }, // Reduced from 10mm
   spacing: { section: 3, item: 2, lineHeight: 3 },
-  fontSize: { base: 3, headerScale: 3 },
+  fontSize: { base: 3, headerScale: 3, headerFont: 'serif' },
+  compactMode: false,
+  showContactIcons: false,
 };
 
 /**
@@ -99,18 +106,46 @@ export const HEADER_SCALE_MAP: Record<SpacingLevel, number> = {
   5: 2.5,
 };
 
+// Section header scale (SUMMARY, EXPERIENCE, etc.) - slightly smaller than name
+export const SECTION_HEADER_SCALE_MAP: Record<SpacingLevel, number> = {
+  1: 1.0,
+  2: 1.1,
+  3: 1.2, // default
+  4: 1.3,
+  5: 1.4,
+};
+
+// Header font family mapping
+export const HEADER_FONT_MAP: Record<HeaderFontFamily, string> = {
+  serif: 'ui-serif, Georgia, Cambria, "Times New Roman", Times, serif',
+  'sans-serif': 'ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji"',
+  mono: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace',
+};
+
+// Compact mode multiplier (applied to spacing values)
+export const COMPACT_MULTIPLIER = 0.7;
+
 /**
  * Convert TemplateSettings to CSS custom properties
  */
 export function settingsToCssVars(settings?: TemplateSettings): React.CSSProperties {
   const s = settings || DEFAULT_TEMPLATE_SETTINGS;
+  const compact = s.compactMode ? COMPACT_MULTIPLIER : 1;
 
   return {
-    '--section-gap': SECTION_SPACING_MAP[s.spacing.section],
-    '--item-gap': ITEM_SPACING_MAP[s.spacing.item],
-    '--line-height': LINE_HEIGHT_MAP[s.spacing.lineHeight],
+    '--section-gap': s.compactMode
+      ? `calc(${SECTION_SPACING_MAP[s.spacing.section]} * ${compact})`
+      : SECTION_SPACING_MAP[s.spacing.section],
+    '--item-gap': s.compactMode
+      ? `calc(${ITEM_SPACING_MAP[s.spacing.item]} * ${compact})`
+      : ITEM_SPACING_MAP[s.spacing.item],
+    '--line-height': s.compactMode
+      ? LINE_HEIGHT_MAP[s.spacing.lineHeight] * compact
+      : LINE_HEIGHT_MAP[s.spacing.lineHeight],
     '--font-size-base': FONT_SIZE_MAP[s.fontSize.base],
     '--header-scale': HEADER_SCALE_MAP[s.fontSize.headerScale],
+    '--section-header-scale': SECTION_HEADER_SCALE_MAP[s.fontSize.headerScale],
+    '--header-font': HEADER_FONT_MAP[s.fontSize.headerFont],
     '--margin-top': `${s.margins.top}mm`,
     '--margin-bottom': `${s.margins.bottom}mm`,
     '--margin-left': `${s.margins.left}mm`,

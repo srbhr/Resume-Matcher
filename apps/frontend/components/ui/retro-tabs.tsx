@@ -28,12 +28,7 @@ export interface RetroTabsProps {
   className?: string;
 }
 
-export function RetroTabs({
-  tabs,
-  activeTab,
-  onTabChange,
-  className,
-}: RetroTabsProps) {
+export function RetroTabs({ tabs, activeTab, onTabChange, className }: RetroTabsProps) {
   return (
     <div className={cn('flex flex-col', className)}>
       {/* Tab Row */}
@@ -103,13 +98,7 @@ export interface RetroTabPanelProps {
 
 export function RetroTabPanel({ children, className }: RetroTabPanelProps) {
   return (
-    <div
-      role="tabpanel"
-      className={cn(
-        'border-2 border-t-0 border-black bg-white',
-        className
-      )}
-    >
+    <div role="tabpanel" className={cn('border-2 border-t-0 border-black bg-white', className)}>
       {children}
     </div>
   );

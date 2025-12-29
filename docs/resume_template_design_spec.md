@@ -183,8 +183,14 @@ Users can adjust page margins for one-page fitting.
 ### 4.1 Template Settings Interface
 
 ```typescript
+type TemplateType = 'swiss-single' | 'swiss-two-column';
+type PageSize = 'A4' | 'LETTER';
+type SpacingLevel = 1 | 2 | 3 | 4 | 5;
+type HeaderFontFamily = 'serif' | 'sans-serif' | 'mono';
+
 interface TemplateSettings {
-  template: 'swiss-single' | 'swiss-two-column';
+  template: TemplateType;
+  pageSize: PageSize;
   margins: {
     top: number;    // 5-25mm
     bottom: number;
@@ -192,22 +198,28 @@ interface TemplateSettings {
     right: number;
   };
   spacing: {
-    section: 1 | 2 | 3 | 4 | 5;
-    item: 1 | 2 | 3 | 4 | 5;
-    lineHeight: 1 | 2 | 3 | 4 | 5;
+    section: SpacingLevel;
+    item: SpacingLevel;
+    lineHeight: SpacingLevel;
   };
   fontSize: {
-    base: 1 | 2 | 3 | 4 | 5;
-    headerScale: 1 | 2 | 3 | 4 | 5;
+    base: SpacingLevel;
+    headerScale: SpacingLevel;
+    headerFont: HeaderFontFamily;  // NEW: Font family for headers
   };
+  compactMode: boolean;       // NEW: Apply 0.7x spacing multiplier
+  showContactIcons: boolean;  // NEW: Show icons next to contact info
 }
 
 // Default settings
 const DEFAULT_SETTINGS: TemplateSettings = {
   template: 'swiss-single',
-  margins: { top: 10, bottom: 10, left: 10, right: 10 },
+  pageSize: 'A4',
+  margins: { top: 8, bottom: 8, left: 8, right: 8 },  // Reduced from 10mm
   spacing: { section: 3, item: 2, lineHeight: 3 },
-  fontSize: { base: 3, headerScale: 3 },
+  fontSize: { base: 3, headerScale: 3, headerFont: 'serif' },
+  compactMode: false,
+  showContactIcons: false,
 };
 ```
 

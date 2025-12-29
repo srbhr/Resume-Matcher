@@ -7,6 +7,7 @@ from app.llm import complete_json
 from app.prompts import (
     EXTRACT_KEYWORDS_PROMPT,
     IMPROVE_RESUME_PROMPT,
+    get_language_name,
 )
 from app.prompts.templates import RESUME_SCHEMA
 from app.schemas import ResumeData
@@ -33,6 +34,7 @@ async def improve_resume(
     original_resume: str,
     job_description: str,
     job_keywords: dict[str, Any],
+    language: str = "en",
 ) -> dict[str, Any]:
     """Improve resume to better match job description.
 
@@ -40,17 +42,20 @@ async def improve_resume(
         original_resume: Original resume content (markdown)
         job_description: Target job description
         job_keywords: Extracted job keywords
+        language: Output language code (en, es, zh, ja)
 
     Returns:
         Improved resume data matching ResumeData schema
     """
     keywords_str = json.dumps(job_keywords, indent=2)
+    output_language = get_language_name(language)
 
     prompt = IMPROVE_RESUME_PROMPT.format(
         job_description=job_description,
         job_keywords=keywords_str,
         original_resume=original_resume,
         schema=RESUME_SCHEMA,
+        output_language=output_language,
     )
 
     result = await complete_json(

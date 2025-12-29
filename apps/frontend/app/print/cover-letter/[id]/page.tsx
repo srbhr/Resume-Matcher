@@ -166,9 +166,7 @@ export default async function PrintCoverLetterPage({ params, searchParams }: Pag
             </p>
           ))
         ) : (
-          <p style={{ fontSize: '11pt', color: '#999' }}>
-            No cover letter content available.
-          </p>
+          <p style={{ fontSize: '11pt', color: '#999' }}>No cover letter content available.</p>
         )}
       </div>
     </div>

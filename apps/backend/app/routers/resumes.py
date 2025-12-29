@@ -40,12 +40,24 @@ from app.services.cover_letter import (
 )
 
 
-def _load_feature_config() -> dict:
-    """Load feature configuration from config file."""
+def _load_config() -> dict:
+    """Load configuration from config file."""
     config_path = settings.config_path
     if config_path.exists():
         return json.loads(config_path.read_text())
     return {}
+
+
+def _load_feature_config() -> dict:
+    """Load feature configuration from config file."""
+    return _load_config()
+
+
+def _get_content_language() -> str:
+    """Get configured content language from config file."""
+    config = _load_config()
+    # Use content_language, fall back to legacy 'language' field, then default to 'en'
+    return config.get("content_language", config.get("language", "en"))
 
 router = APIRouter(prefix="/resumes", tags=["Resumes"])
 
@@ -211,20 +223,22 @@ async def improve_resume_endpoint(
     if not job:
         raise HTTPException(status_code=404, detail="Job description not found")
 
-    # Load feature configuration
+    # Load feature configuration and content language
     feature_config = _load_feature_config()
     enable_cover_letter = feature_config.get("enable_cover_letter", False)
     enable_outreach = feature_config.get("enable_outreach_message", False)
+    language = _get_content_language()
 
     try:
         # Extract keywords from job description
         job_keywords = await extract_job_keywords(job["content"])
 
-        # Generate improved resume
+        # Generate improved resume in the configured language
         improved_data = await improve_resume(
             original_resume=resume["content"],
             job_description=job["content"],
             job_keywords=job_keywords,
+            language=language,
         )
 
         # Convert improved data to JSON string for storage
@@ -240,11 +254,11 @@ async def improve_resume_endpoint(
         generation_tasks = []
         if enable_cover_letter:
             generation_tasks.append(
-                generate_cover_letter(improved_data, job["content"])
+                generate_cover_letter(improved_data, job["content"], language)
             )
         if enable_outreach:
             generation_tasks.append(
-                generate_outreach_message(improved_data, job["content"])
+                generate_outreach_message(improved_data, job["content"], language)
             )
 
         if generation_tasks:

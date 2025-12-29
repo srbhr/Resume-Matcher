@@ -11,10 +11,7 @@ export const API_BASE = `${API_URL}/api/v1`;
  * Standard fetch wrapper with common error handling.
  * Returns the Response object for flexibility.
  */
-export async function apiFetch(
-  endpoint: string,
-  options?: RequestInit
-): Promise<Response> {
+export async function apiFetch(endpoint: string, options?: RequestInit): Promise<Response> {
   const url = endpoint.startsWith('http') ? endpoint : `${API_BASE}${endpoint}`;
   return fetch(url, options);
 }

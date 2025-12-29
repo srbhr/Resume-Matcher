@@ -59,12 +59,8 @@ export function ToggleSwitch({
       )}
     >
       <div className="flex-1 min-w-0">
-        <span className="font-mono text-sm font-medium text-black">
-          {label}
-        </span>
-        {description && (
-          <p className="mt-0.5 text-xs text-gray-600">{description}</p>
-        )}
+        <span className="font-mono text-sm font-medium text-black">{label}</span>
+        {description && <p className="mt-0.5 text-xs text-gray-600">{description}</p>}
       </div>
 
       {/* Toggle Switch */}
@@ -83,9 +79,7 @@ export function ToggleSwitch({
           'transition-all duration-150 ease-out',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2',
           // State-based styles
-          checked
-            ? 'bg-blue-700'
-            : 'bg-[#E5E5E0] shadow-[2px_2px_0px_0px_#000000]',
+          checked ? 'bg-blue-700' : 'bg-[#E5E5E0] shadow-[2px_2px_0px_0px_#000000]',
           // Hover effect when OFF
           !checked && !disabled && 'hover:bg-[#D8D8D2]',
           // Disabled

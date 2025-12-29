@@ -8,6 +8,7 @@ import {
   type TemplateType,
   type PageSize,
   type SpacingLevel,
+  type HeaderFontFamily,
   DEFAULT_TEMPLATE_SETTINGS,
   TEMPLATE_OPTIONS,
   PAGE_SIZE_INFO,
@@ -62,6 +63,21 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
       ...settings,
       fontSize: { ...settings.fontSize, [key]: value },
     });
+  };
+
+  const handleHeaderFontChange = (headerFont: HeaderFontFamily) => {
+    onChange({
+      ...settings,
+      fontSize: { ...settings.fontSize, headerFont },
+    });
+  };
+
+  const handleCompactModeToggle = () => {
+    onChange({ ...settings, compactMode: !settings.compactMode });
+  };
+
+  const handleShowContactIconsToggle = () => {
+    onChange({ ...settings, showContactIcons: !settings.showContactIcons });
   };
 
   const handleReset = () => {
@@ -219,6 +235,83 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
                 value={settings.fontSize.headerScale}
                 onChange={(v) => handleFontChange('headerScale', v)}
               />
+              {/* Header Font Family */}
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-xs w-16 text-gray-600">Font:</span>
+                <div className="flex gap-1">
+                  {(['serif', 'sans-serif', 'mono'] as HeaderFontFamily[]).map((font) => (
+                    <button
+                      key={font}
+                      onClick={() => handleHeaderFontChange(font)}
+                      className={`px-2 py-1 font-mono text-xs border transition-all ${
+                        settings.fontSize.headerFont === font
+                          ? 'bg-blue-700 text-white border-blue-700 shadow-[1px_1px_0px_0px_#000]'
+                          : 'bg-white text-gray-700 border-gray-300 hover:border-black'
+                      }`}
+                      style={{
+                        fontFamily:
+                          font === 'serif'
+                            ? 'Georgia, serif'
+                            : font === 'mono'
+                              ? 'monospace'
+                              : 'system-ui, sans-serif',
+                      }}
+                    >
+                      {font === 'sans-serif' ? 'Sans' : font.charAt(0).toUpperCase() + font.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Options Section */}
+          <div>
+            <h4 className="font-mono text-xs font-bold uppercase tracking-wider mb-3 text-gray-600">
+              Options
+            </h4>
+            <div className="space-y-3">
+              {/* Compact Mode Toggle */}
+              <label className="flex items-center gap-3 cursor-pointer">
+                <button
+                  onClick={handleCompactModeToggle}
+                  className={`relative w-10 h-5 border-2 transition-all ${
+                    settings.compactMode
+                      ? 'bg-blue-700 border-blue-700'
+                      : 'bg-white border-gray-400'
+                  }`}
+                >
+                  <span
+                    className={`absolute top-0.5 w-3.5 h-3.5 bg-white border transition-all ${
+                      settings.compactMode
+                        ? 'left-5 border-blue-700'
+                        : 'left-0.5 border-gray-400'
+                    }`}
+                  />
+                </button>
+                <span className="font-mono text-xs text-gray-700">Compact Mode</span>
+              </label>
+
+              {/* Show Contact Icons Toggle */}
+              <label className="flex items-center gap-3 cursor-pointer">
+                <button
+                  onClick={handleShowContactIconsToggle}
+                  className={`relative w-10 h-5 border-2 transition-all ${
+                    settings.showContactIcons
+                      ? 'bg-blue-700 border-blue-700'
+                      : 'bg-white border-gray-400'
+                  }`}
+                >
+                  <span
+                    className={`absolute top-0.5 w-3.5 h-3.5 bg-white border transition-all ${
+                      settings.showContactIcons
+                        ? 'left-5 border-blue-700'
+                        : 'left-0.5 border-gray-400'
+                    }`}
+                  />
+                </button>
+                <span className="font-mono text-xs text-gray-700">Contact Icons</span>
+              </label>
             </div>
           </div>
 

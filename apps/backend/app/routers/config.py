@@ -12,6 +12,8 @@ from app.schemas import (
     LLMConfigResponse,
     FeatureConfigRequest,
     FeatureConfigResponse,
+    LanguageConfigRequest,
+    LanguageConfigResponse,
 )
 
 router = APIRouter(prefix="/config", tags=["Configuration"])
@@ -146,4 +148,59 @@ async def update_feature_config(request: FeatureConfigRequest) -> FeatureConfigR
     return FeatureConfigResponse(
         enable_cover_letter=stored.get("enable_cover_letter", False),
         enable_outreach_message=stored.get("enable_outreach_message", False),
+    )
+
+
+# Supported languages for i18n
+SUPPORTED_LANGUAGES = ["en", "es", "zh", "ja"]
+
+
+@router.get("/language", response_model=LanguageConfigResponse)
+async def get_language_config() -> LanguageConfigResponse:
+    """Get current language configuration."""
+    stored = _load_config()
+
+    # Support legacy single 'language' field migration
+    legacy_language = stored.get("language", "en")
+
+    return LanguageConfigResponse(
+        ui_language=stored.get("ui_language", legacy_language),
+        content_language=stored.get("content_language", legacy_language),
+        supported_languages=SUPPORTED_LANGUAGES,
+    )
+
+
+@router.put("/language", response_model=LanguageConfigResponse)
+async def update_language_config(request: LanguageConfigRequest) -> LanguageConfigResponse:
+    """Update language configuration."""
+    stored = _load_config()
+
+    # Validate and update UI language
+    if request.ui_language is not None:
+        if request.ui_language not in SUPPORTED_LANGUAGES:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Unsupported UI language: {request.ui_language}. Supported: {SUPPORTED_LANGUAGES}",
+            )
+        stored["ui_language"] = request.ui_language
+
+    # Validate and update content language
+    if request.content_language is not None:
+        if request.content_language not in SUPPORTED_LANGUAGES:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Unsupported content language: {request.content_language}. Supported: {SUPPORTED_LANGUAGES}",
+            )
+        stored["content_language"] = request.content_language
+
+    # Save config
+    _save_config(stored)
+
+    # Support legacy single 'language' field migration
+    legacy_language = stored.get("language", "en")
+
+    return LanguageConfigResponse(
+        ui_language=stored.get("ui_language", legacy_language),
+        content_language=stored.get("content_language", legacy_language),
+        supported_languages=SUPPORTED_LANGUAGES,
     )

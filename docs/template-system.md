@@ -149,55 +149,108 @@ export function Resume({ data, settings, className }: ResumeProps) {
 #### Template Settings Types (`lib/types/template-settings.ts`)
 
 ```typescript
-// Lines 1-80 - Complete type definitions
+// Complete type definitions
 
-export type TemplateType = "swiss-single" | "swiss-two-column";
-export type PageSize = "A4" | "LETTER";
+export type TemplateType = 'swiss-single' | 'swiss-two-column';
+export type PageSize = 'A4' | 'LETTER';
+export type SpacingLevel = 1 | 2 | 3 | 4 | 5;
+export type HeaderFontFamily = 'serif' | 'sans-serif' | 'mono';
+
+export interface MarginSettings {
+  top: number;    // 5-25mm
+  bottom: number;
+  left: number;
+  right: number;
+}
+
+export interface SpacingSettings {
+  section: SpacingLevel;    // Gap between major sections
+  item: SpacingLevel;       // Gap between items within sections
+  lineHeight: SpacingLevel; // Text line height
+}
+
+export interface FontSizeSettings {
+  base: SpacingLevel;           // Overall text scale
+  headerScale: SpacingLevel;    // Header size multiplier
+  headerFont: HeaderFontFamily; // Header font family
+}
 
 export interface TemplateSettings {
   template: TemplateType;
   pageSize: PageSize;
-  margins: {
-    top: number;    // mm
-    bottom: number;
-    left: number;
-    right: number;
-  };
-  sectionSpacing: number;  // 1-5 scale
-  itemSpacing: number;     // 1-5 scale
-  lineHeight: number;      // 1-5 scale
-  fontSize: number;        // 1-5 scale
-  headerScale: number;     // 1-5 scale
+  margins: MarginSettings;
+  spacing: SpacingSettings;
+  fontSize: FontSizeSettings;
+  compactMode: boolean;      // Apply tighter spacing (0.7x multiplier)
+  showContactIcons: boolean; // Show icons next to contact info
 }
 
 export const DEFAULT_TEMPLATE_SETTINGS: TemplateSettings = {
-  template: "swiss-single",
-  pageSize: "A4",
-  margins: { top: 15, bottom: 15, left: 15, right: 15 },
-  sectionSpacing: 3,
-  itemSpacing: 3,
-  lineHeight: 3,
-  fontSize: 3,
-  headerScale: 3,
+  template: 'swiss-single',
+  pageSize: 'A4',
+  margins: { top: 8, bottom: 8, left: 8, right: 8 },
+  spacing: { section: 3, item: 2, lineHeight: 3 },
+  fontSize: { base: 3, headerScale: 3, headerFont: 'serif' },
+  compactMode: false,
+  showContactIcons: false,
 };
 
-// CSS custom property mapping
-export const SPACING_VALUES = {
-  sectionSpacing: ["0.75rem", "1rem", "1.25rem", "1.5rem", "2rem"],
-  itemSpacing: ["0.25rem", "0.5rem", "0.75rem", "1rem", "1.25rem"],
-  lineHeight: ["1.2", "1.3", "1.4", "1.5", "1.6"],
-  fontSize: ["0.8rem", "0.875rem", "1rem", "1.125rem", "1.25rem"],
-  headerScale: ["1.5", "1.75", "2", "2.25", "2.5"],
+// CSS custom property value mappings
+export const SECTION_SPACING_MAP: Record<SpacingLevel, string> = {
+  1: '0.5rem', 2: '1rem', 3: '1.5rem', 4: '2rem', 5: '2.5rem',
 };
 
-export function getTemplateStyles(settings: TemplateSettings): CSSProperties {
+export const ITEM_SPACING_MAP: Record<SpacingLevel, string> = {
+  1: '0.25rem', 2: '0.5rem', 3: '0.75rem', 4: '1rem', 5: '1.25rem',
+};
+
+export const LINE_HEIGHT_MAP: Record<SpacingLevel, number> = {
+  1: 1.2, 2: 1.35, 3: 1.5, 4: 1.65, 5: 1.8,
+};
+
+export const FONT_SIZE_MAP: Record<SpacingLevel, string> = {
+  1: '11px', 2: '12px', 3: '14px', 4: '15px', 5: '16px',
+};
+
+export const HEADER_SCALE_MAP: Record<SpacingLevel, number> = {
+  1: 1.5, 2: 1.75, 3: 2, 4: 2.25, 5: 2.5,
+};
+
+export const SECTION_HEADER_SCALE_MAP: Record<SpacingLevel, number> = {
+  1: 1.0, 2: 1.1, 3: 1.2, 4: 1.3, 5: 1.4,
+};
+
+export const HEADER_FONT_MAP: Record<HeaderFontFamily, string> = {
+  serif: 'ui-serif, Georgia, Cambria, "Times New Roman", Times, serif',
+  'sans-serif': 'ui-sans-serif, system-ui, sans-serif',
+  mono: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace',
+};
+
+export const COMPACT_MULTIPLIER = 0.7;
+
+export function settingsToCssVars(settings?: TemplateSettings): React.CSSProperties {
+  const s = settings || DEFAULT_TEMPLATE_SETTINGS;
+  const compact = s.compactMode ? COMPACT_MULTIPLIER : 1;
+
   return {
-    "--section-spacing": SPACING_VALUES.sectionSpacing[settings.sectionSpacing - 1],
-    "--item-spacing": SPACING_VALUES.itemSpacing[settings.itemSpacing - 1],
-    "--line-height": SPACING_VALUES.lineHeight[settings.lineHeight - 1],
-    "--font-size": SPACING_VALUES.fontSize[settings.fontSize - 1],
-    "--header-scale": SPACING_VALUES.headerScale[settings.headerScale - 1],
-  } as CSSProperties;
+    '--section-gap': s.compactMode
+      ? `calc(${SECTION_SPACING_MAP[s.spacing.section]} * ${compact})`
+      : SECTION_SPACING_MAP[s.spacing.section],
+    '--item-gap': s.compactMode
+      ? `calc(${ITEM_SPACING_MAP[s.spacing.item]} * ${compact})`
+      : ITEM_SPACING_MAP[s.spacing.item],
+    '--line-height': s.compactMode
+      ? LINE_HEIGHT_MAP[s.spacing.lineHeight] * compact
+      : LINE_HEIGHT_MAP[s.spacing.lineHeight],
+    '--font-size-base': FONT_SIZE_MAP[s.fontSize.base],
+    '--header-scale': HEADER_SCALE_MAP[s.fontSize.headerScale],
+    '--section-header-scale': SECTION_HEADER_SCALE_MAP[s.fontSize.headerScale],
+    '--header-font': HEADER_FONT_MAP[s.fontSize.headerFont],
+    '--margin-top': `${s.margins.top}mm`,
+    '--margin-bottom': `${s.margins.bottom}mm`,
+    '--margin-left': `${s.margins.left}mm`,
+    '--margin-right': `${s.margins.right}mm`,
+  } as React.CSSProperties;
 }
 ```
 
@@ -208,56 +261,56 @@ export function getTemplateStyles(settings: TemplateSettings): CSSProperties {
 ### Global CSS Variables (`globals.css`)
 
 ```css
-/* Resume Template Variables */
-:root {
-  /* Spacing */
-  --section-spacing: 1.25rem;
-  --item-spacing: 0.75rem;
-
-  /* Typography */
-  --line-height: 1.4;
-  --font-size: 1rem;
+/* Default CSS Variables for Resume Templates */
+.resume-body {
+  /* Spacing defaults (can be overridden via inline styles) */
+  --section-gap: 1.5rem;
+  --item-gap: 0.5rem;
+  --line-height: 1.5;
+  --font-size-base: 14px;
   --header-scale: 2;
+  --section-header-scale: 1.2;
+  --header-font: ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
 
-  /* Colors (Swiss Design) */
-  --resume-bg: #FFFFFF;
-  --resume-text: #1a1a1a;
-  --resume-accent: #000000;
-  --resume-muted: #666666;
-  --resume-border: #E5E5E0;
-}
+  /* Margin defaults */
+  --margin-top: 8mm;
+  --margin-bottom: 8mm;
+  --margin-left: 8mm;
+  --margin-right: 8mm;
 
-/* Resume Base Styles */
-.resume-container {
-  font-size: var(--font-size);
+  /* Apply base styles */
+  font-size: var(--font-size-base);
   line-height: var(--line-height);
-  color: var(--resume-text);
-  background: var(--resume-bg);
+  padding: 1.5rem;
 }
 
-.resume-section {
-  margin-bottom: var(--section-spacing);
+/* Section Title - Uses CSS variables for font-size and font-family */
+.resume-body .resume-section-title {
+  font-size: calc(var(--font-size-base) * var(--section-header-scale));
+  font-family: var(--header-font);
+  font-weight: 700;
+  text-transform: uppercase;
+  border-bottom: 2px solid #000000;
+  margin-bottom: calc(var(--item-gap) * 2);
+  padding-bottom: 0.25rem;
+  letter-spacing: 0.05em;
 }
 
-.resume-item {
-  margin-bottom: var(--item-spacing);
+/* Resume sections and items */
+.resume-body .resume-section {
+  margin-bottom: var(--section-gap);
 }
 
-.resume-header {
-  font-size: calc(var(--font-size) * var(--header-scale));
-}
-
-/* Page Break Control */
-.resume-section {
+.resume-body .resume-item {
+  margin-bottom: var(--item-gap);
   break-inside: avoid;
+  page-break-inside: avoid;
 }
 
-.resume-item {
-  break-inside: avoid;
-}
-
-.resume-section-title {
+/* Section titles should not be orphaned at bottom of page */
+.resume-body .resume-section-title {
   break-after: avoid;
+  page-break-after: avoid;
 }
 ```
 
@@ -268,33 +321,48 @@ export function getTemplateStyles(settings: TemplateSettings): CSSProperties {
 │                    SETTINGS → CSS MAPPING                                   │
 └─────────────────────────────────────────────────────────────────────────────┘
 
-TemplateSettings                         CSS Custom Properties
+ TemplateSettings                         CSS Custom Properties
 ─────────────────────────────────────────────────────────────────────────────
 
-sectionSpacing: 3  ──────────────────>  --section-spacing: 1.25rem
-                                        (index 2 of SPACING_VALUES array)
+spacing.section: 3      ──────────────>  --section-gap: 1.5rem
 
-itemSpacing: 3     ──────────────────>  --item-spacing: 0.75rem
+spacing.item: 2         ──────────────>  --item-gap: 0.5rem
 
-lineHeight: 3      ──────────────────>  --line-height: 1.4
+spacing.lineHeight: 3   ──────────────>  --line-height: 1.5
 
-fontSize: 3        ──────────────────>  --font-size: 1rem
+fontSize.base: 3        ──────────────>  --font-size-base: 14px
 
-headerScale: 3     ──────────────────>  --header-scale: 2
-                                        (h1 becomes 2rem with --font-size: 1rem)
+fontSize.headerScale: 3 ──────────────>  --header-scale: 2
+                                         --section-header-scale: 1.2
+
+fontSize.headerFont     ──────────────>  --header-font: ui-serif, Georgia...
+
+compactMode: true       ──────────────>  All spacing values * 0.7
+
+margins.top/bottom/     ──────────────>  --margin-top/bottom/left/right: Nmm
+left/right
 ```
 
 ### Value Scales
 
 | Setting | Level 1 | Level 2 | Level 3 | Level 4 | Level 5 |
 |---------|---------|---------|---------|---------|---------|
-| Section Spacing | 0.75rem | 1rem | **1.25rem** | 1.5rem | 2rem |
-| Item Spacing | 0.25rem | 0.5rem | **0.75rem** | 1rem | 1.25rem |
-| Line Height | 1.2 | 1.3 | **1.4** | 1.5 | 1.6 |
-| Font Size | 0.8rem | 0.875rem | **1rem** | 1.125rem | 1.25rem |
+| Section Spacing | 0.5rem | 1rem | **1.5rem** | 2rem | 2.5rem |
+| Item Spacing | 0.25rem | **0.5rem** | 0.75rem | 1rem | 1.25rem |
+| Line Height | 1.2 | 1.35 | **1.5** | 1.65 | 1.8 |
+| Font Size | 11px | 12px | **14px** | 15px | 16px |
 | Header Scale | 1.5x | 1.75x | **2x** | 2.25x | 2.5x |
+| Section Header Scale | 1.0x | 1.1x | **1.2x** | 1.3x | 1.4x |
 
-**Bold** = Default (Level 3)
+**Bold** = Default
+
+### Header Font Families
+
+| Option | Font Stack |
+|--------|------------|
+| `serif` | ui-serif, Georgia, Cambria, "Times New Roman", Times, serif |
+| `sans-serif` | ui-sans-serif, system-ui, sans-serif |
+| `mono` | ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace |
 
 ---
 

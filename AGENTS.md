@@ -9,6 +9,8 @@
 - [Testing Guidelines](#testing-guidelines)
 - [Commit & Pull Request Guidelines](#commit--pull-request-guidelines)
 - [LLM & AI Workflow Notes](#llm--ai-workflow-notes)
+- [Resume Template Settings](#resume-template-settings)
+- [Content Language Settings](#content-language-settings)
 
 ---
 
@@ -113,3 +115,95 @@ Next.js dashboard with Swiss International Style design. See **[docs/frontend-wo
 - **Provider Configuration**: Users configure their preferred AI provider via the Settings page (`/settings`) or `PUT /api/v1/config/llm-api-key`.
 - **Health Checks**: The `/api/v1/status` endpoint validates LLM connectivity on app startup.
 - **Timeouts**: All LLM calls have configurable timeouts (30s for health checks, 120s for completions, 180s for JSON operations).
+
+## Resume Template Settings
+
+The application supports multiple resume templates with extensive formatting controls.
+
+### Template Types
+| Template | Description |
+|----------|-------------|
+| `swiss-single` | Traditional single-column layout with maximum content density |
+| `swiss-two-column` | 65%/35% split with experience in main column, skills in sidebar |
+
+### Formatting Controls
+| Control | Range | Default | Effect |
+|---------|-------|---------|--------|
+| Margins | 5-25mm | 8mm | Page margins |
+| Section Spacing | 1-5 | 3 | Gap between major sections |
+| Item Spacing | 1-5 | 2 | Gap between items within sections |
+| Line Height | 1-5 | 3 | Text line height |
+| Base Font Size | 1-5 | 3 | Overall text scale (11-16px) |
+| Header Scale | 1-5 | 3 | Name/section header size multiplier |
+| Header Font | serif/sans-serif/mono | serif | Font family for headers |
+| Compact Mode | boolean | false | Apply 0.7x spacing multiplier |
+| Contact Icons | boolean | false | Show icons next to contact info |
+
+### Key Files
+| File | Purpose |
+|------|---------|
+| `apps/frontend/lib/types/template-settings.ts` | Type definitions, defaults, CSS variable mapping |
+| `apps/frontend/app/(default)/css/globals.css` | CSS custom properties for resume styling |
+| `apps/frontend/components/builder/formatting-controls.tsx` | UI controls for template settings |
+| `apps/frontend/components/resume/resume-single-column.tsx` | Single column template |
+| `apps/frontend/components/resume/resume-two-column.tsx` | Two column template |
+
+### CSS Variables
+Templates use CSS custom properties for styling:
+- `--section-gap`, `--item-gap`, `--line-height` - Spacing
+- `--font-size-base`, `--header-scale`, `--section-header-scale` - Typography
+- `--header-font` - Header font family
+- `--margin-top/bottom/left/right` - Page margins
+
+---
+
+## Internationalization (i18n)
+
+The application supports multi-language UI and content generation.
+
+### Supported Languages
+| Code | Language | Native Name |
+|------|----------|-------------|
+| `en` | English | English |
+| `es` | Spanish | Español |
+| `zh` | Chinese (Simplified) | 中文 |
+| `ja` | Japanese | 日本語 |
+
+### Two Language Settings
+1. **UI Language** - Interface text (buttons, labels, navigation)
+2. **Content Language** - LLM-generated content (resumes, cover letters)
+
+Both are configured independently in the Settings page.
+
+### How It Works
+- **UI translations**: Simple JSON import approach, no external dependencies
+- **Content generation**: Backend receives language, passes to LLM prompts via `{output_language}`
+- **Existing content** in database remains in original language
+
+### Key Files
+| File | Purpose |
+|------|---------|
+| `apps/frontend/messages/*.json` | UI translation files (en, es, zh, ja) |
+| `apps/frontend/lib/i18n/translations.ts` | `useTranslations` hook |
+| `apps/frontend/lib/context/language-context.tsx` | LanguageProvider (UI + content) |
+| `apps/backend/app/prompts/templates.py` | LLM prompts with `{output_language}` |
+
+### Using Translations
+```typescript
+import { useTranslations } from '@/lib/i18n';
+
+const { t } = useTranslations();
+<button>{t('common.save')}</button>
+```
+
+### Storage
+| Key | Purpose |
+|-----|---------|
+| `resume_matcher_ui_language` | UI language (localStorage only) |
+| `resume_matcher_content_language` | Content language (localStorage + backend) |
+
+### Adding a New Language
+1. Create `apps/frontend/messages/{code}.json` with all translations
+2. Add locale to `apps/frontend/i18n/config.ts`
+3. Add language name to `apps/backend/app/prompts/templates.py`
+4. Update `SUPPORTED_LANGUAGES` in backend config router

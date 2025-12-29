@@ -1,8 +1,10 @@
 import React from 'react';
+import { Mail, Phone, MapPin, Globe, Linkedin, Github } from 'lucide-react';
 import type { ResumeData } from '@/components/dashboard/resume-component';
 
 interface ResumeTwoColumnProps {
   data: ResumeData;
+  showContactIcons?: boolean;
 }
 
 /**
@@ -16,8 +18,21 @@ interface ResumeTwoColumnProps {
  *
  * Best for technical roles with many projects, optimized for one-page resumes.
  */
-export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({ data }) => {
+export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
+  data,
+  showContactIcons = false,
+}) => {
   const { personalInfo, summary, workExperience, education, personalProjects, additional } = data;
+
+  // Icon mapping for contact types
+  const contactIcons: Record<string, React.ReactNode> = {
+    Email: <Mail size={12} />,
+    Phone: <Phone size={12} />,
+    Location: <MapPin size={12} />,
+    Website: <Globe size={12} />,
+    LinkedIn: <Linkedin size={12} />,
+    GitHub: <Github size={12} />,
+  };
 
   // Helper function to render contact details
   const renderContactDetail = (label: string, value?: string, hrefPrefix: string = '') => {
@@ -43,70 +58,80 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({ data }) => {
       displayText = value.replace(/^https?:\/\//, '').replace(/^www\./, '');
     }
 
-    return isLink ? (
-      <a href={href} target="_blank" rel="noopener noreferrer" className="hover:underline">
-        {displayText}
-      </a>
-    ) : (
-      <span>{displayText}</span>
+    return (
+      <span className="inline-flex items-center gap-1">
+        {showContactIcons && contactIcons[label]}
+        {isLink ? (
+          <a href={href} target="_blank" rel="noopener noreferrer" className="hover:underline">
+            {displayText}
+          </a>
+        ) : (
+          <span>{displayText}</span>
+        )}
+      </span>
     );
   };
 
   return (
     <>
-      {/* Header Section - Full Width */}
+      {/* Header Section - Centered Layout */}
       {personalInfo && (
-        <div className="resume-section border-b-2 border-black pb-[var(--item-gap)] text-center">
+        <header className="text-center mb-4 pb-3 border-b-2 border-black">
+          {/* Name - Centered */}
           {personalInfo.name && (
             <h1
               className="font-bold tracking-tight uppercase mb-1"
-              style={{ fontSize: 'calc(var(--font-size-base) * var(--header-scale))' }}
+              style={{
+                fontSize: 'calc(var(--font-size-base) * var(--header-scale))',
+                fontFamily: 'var(--header-font)',
+              }}
             >
               {personalInfo.name}
             </h1>
           )}
 
+          {/* Title - Centered, below name */}
           {personalInfo.title && (
-            <h2 className="text-lg font-mono text-gray-700 tracking-wide uppercase mb-2">
+            <h2 className="text-lg font-mono text-gray-700 tracking-wide uppercase mb-3">
               {personalInfo.title}
             </h2>
           )}
 
-          {/* Contact Info - Centered Row */}
+          {/* Contact - Own line, centered */}
           <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 text-xs font-mono text-gray-600">
             {personalInfo.email && renderContactDetail('Email', personalInfo.email, 'mailto:')}
             {personalInfo.phone && (
               <>
-                <span>|</span>
+                <span className="text-gray-400">|</span>
                 {renderContactDetail('Phone', personalInfo.phone, 'tel:')}
               </>
             )}
             {personalInfo.location && (
               <>
-                <span>|</span>
+                <span className="text-gray-400">|</span>
                 {renderContactDetail('Location', personalInfo.location)}
               </>
             )}
             {personalInfo.website && (
               <>
-                <span>|</span>
+                <span className="text-gray-400">|</span>
                 {renderContactDetail('Website', personalInfo.website)}
               </>
             )}
             {personalInfo.linkedin && (
               <>
-                <span>|</span>
+                <span className="text-gray-400">|</span>
                 {renderContactDetail('LinkedIn', personalInfo.linkedin)}
               </>
             )}
             {personalInfo.github && (
               <>
-                <span>|</span>
+                <span className="text-gray-400">|</span>
                 {renderContactDetail('GitHub', personalInfo.github)}
               </>
             )}
           </div>
-        </div>
+        </header>
       )}
 
       {/* Two Column Layout - items-start ensures content aligns top while grid maintains equal row height */}

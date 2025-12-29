@@ -201,17 +201,19 @@
   --line-height: 1.5;
   --font-size-base: 14px;
   --header-scale: 2;
+  --section-header-scale: 1.2;
+  --header-font: ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
 
   /* Margin defaults */
-  --margin-top: 10mm;
-  --margin-bottom: 10mm;
-  --margin-left: 10mm;
-  --margin-right: 10mm;
+  --margin-top: 8mm;
+  --margin-bottom: 8mm;
+  --margin-left: 8mm;
+  --margin-right: 8mm;
 
   /* Apply base styles */
   font-size: var(--font-size-base);
   line-height: var(--line-height);
-  padding: 2.5rem;
+  padding: 1.5rem;
 }
 
 /* Resume Section Styles */
@@ -225,7 +227,8 @@
 
 /* Section Title - Full underline style */
 .resume-body .resume-section-title {
-  font-size: 1.125rem;
+  font-size: calc(var(--font-size-base) * var(--section-header-scale));
+  font-family: var(--header-font);
   font-weight: 700;
   text-transform: uppercase;
   border-bottom: 2px solid #000000;
@@ -236,7 +239,8 @@
 
 /* Section Title - Small (for sidebar) */
 .resume-body .resume-section-title-sm {
-  font-size: 0.875rem;
+  font-size: calc(var(--font-size-base) * var(--section-header-scale) * 0.8);
+  font-family: var(--header-font);
   font-weight: 700;
   text-transform: uppercase;
   border-bottom: 1px solid #000000;

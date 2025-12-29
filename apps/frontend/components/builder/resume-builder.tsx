@@ -264,7 +264,9 @@ const ResumeBuilderContent = () => {
       return;
     }
     if (!coverLetter) {
-      alert('No cover letter available. Enable cover letter generation in Settings and tailor a resume.');
+      alert(
+        'No cover letter available. Enable cover letter generation in Settings and tailor a resume.'
+      );
       return;
     }
     try {

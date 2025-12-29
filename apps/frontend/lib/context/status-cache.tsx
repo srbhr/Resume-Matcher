@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
-import { fetchSystemStatus, type SystemStatus, type LLMHealthCheck } from '@/lib/api/config';
+import { fetchSystemStatus, type SystemStatus } from '@/lib/api/config';
 
 // Cache duration constants
 const LLM_HEALTH_CHECK_INTERVAL = 30 * 60 * 1000; // 30 minutes

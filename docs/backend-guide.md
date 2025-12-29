@@ -209,6 +209,18 @@ improved = await improve_resume(original, job_desc, score, keywords)
 | `GET /api/v1/config/llm-api-key` | GET | Get current config (key masked) |
 | `PUT /api/v1/config/llm-api-key` | PUT | Update LLM config |
 | `POST /api/v1/config/llm-test` | POST | Test LLM connection |
+| `GET /api/v1/config/features` | GET | Get feature flags (cover letter, outreach) |
+| `PUT /api/v1/config/features` | PUT | Update feature flags |
+| `GET /api/v1/config/language` | GET | Get language preference |
+| `PUT /api/v1/config/language` | PUT | Update language preference |
+
+**Language Response:**
+```json
+{
+  "language": "en",
+  "supported_languages": ["en", "es", "zh", "ja"]
+}
+```
 
 ### Resumes
 
