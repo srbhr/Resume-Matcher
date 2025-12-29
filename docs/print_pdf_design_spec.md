@@ -112,6 +112,59 @@ The PDF rendering system also supports cover letter generation using the same he
 
 ---
 
+## Page Break Control & Orphan Prevention
+
+The PDF system includes intelligent page break handling to prevent layout issues.
+
+### CSS Page Break Classes
+
+```css
+/* Individual items stay together */
+.resume-item {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+/* Section headers stay with first content */
+.resume-section-title,
+.resume-section-title-sm {
+  break-after: avoid;
+  page-break-after: avoid;
+}
+
+/* First content after header stays with header */
+.resume-section-title + .resume-items > *:first-child,
+.resume-section-title + p,
+.resume-section-title + ul {
+  break-before: avoid;
+  page-break-before: avoid;
+}
+```
+
+### Pagination Hook Logic
+
+The `usePagination` hook in `components/preview/use-pagination.ts` calculates page breaks:
+
+1. **Individual Items**: `.resume-item` and `[data-no-break]` elements are kept together
+2. **Section Headers**: Section titles are kept with their first content element
+3. **Minimum Fill**: Pages must be at least 50% filled before breaking to a new page
+
+**Key Algorithm:**
+- Finds all section titles (`.resume-section-title`, `.resume-section-title-sm`)
+- For each title, locates the first content element (`.resume-item`, `<p>`, `<ul>`, etc.)
+- Creates an "unbreakable zone" from the title top to the first content bottom
+- Page breaks are moved before this zone if it would be split
+
+### Preventing Orphaned Headers
+
+An "orphaned header" occurs when a section title appears at the bottom of a page with its content starting on the next page. This is prevented by:
+
+1. **CSS**: `break-after: avoid` on section titles
+2. **JS Pagination**: Treating header + first content as a single unit
+3. **Minimum Content**: Ensuring at least the first item stays with its header
+
+---
+
 ## Critical CSS Requirement: Print Visibility Rules
 
 **IMPORTANT:** When adding new printable content types (like cover letters), you MUST add CSS visibility rules in `globals.css`.

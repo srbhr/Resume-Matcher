@@ -553,16 +553,52 @@ interface PaginatedPreviewProps {
 
 #### usePagination Hook
 
-**Purpose:** Calculate page breaks
+**Purpose:** Calculate page breaks while preventing orphaned headers and split items
+
+**File:** `components/preview/use-pagination.ts`
 
 **Logic:**
-1. Render content in hidden container
-2. Measure actual heights
-3. Find page breaks respecting:
-   - `.resume-section` boundaries
-   - `.resume-item` boundaries
+1. Wait for fonts to load (`document.fonts.ready`)
+2. Find unbreakable elements:
+   - `.resume-item` - Individual job/project entries
+   - `[data-no-break]` - Explicitly marked elements
+   - Section header + first content (orphan prevention)
+3. Calculate page breaks respecting:
+   - Unbreakable zones (header + first item stay together)
    - Minimum 50% page fill before break
+   - Safety margin (at least 100px progress per page)
 4. Debounce calculations (150ms)
+
+**Orphan Prevention Algorithm:**
+```typescript
+// For each section title, create an unbreakable zone
+const sectionTitles = container.querySelectorAll('.resume-section-title');
+sectionTitles.forEach((title) => {
+  const section = title.closest('.resume-section');
+  const firstContent =
+    section.querySelector('.resume-item') ||
+    section.querySelector('.resume-items > *:first-child') ||
+    title.nextElementSibling;
+
+  // Zone from title top to first content bottom
+  itemBounds.push({
+    top: titleRect.top,
+    bottom: firstContentRect.bottom,
+    element: title,
+  });
+});
+```
+
+**Return Value:**
+```typescript
+interface UsePaginationResult {
+  pages: PageBreak[];         // Array of page boundaries
+  totalContentHeight: number; // Total content height in px
+  isCalculating: boolean;     // True during recalculation
+}
+```
+
+**Observers:** ResizeObserver and MutationObserver trigger recalculation on content changes
 
 ### 3.4 Form Components (`components/builder/forms/`)
 
@@ -925,6 +961,21 @@ export interface AdditionalInfo {
 
 .resume-item {
   break-inside: avoid;
+}
+
+/* Page break control - prevent orphaned headers */
+.resume-section-title,
+.resume-section-title-sm {
+  break-after: avoid;
+  page-break-after: avoid;
+}
+
+/* Keep header with first content element */
+.resume-section-title + .resume-items > *:first-child,
+.resume-section-title + p,
+.resume-section-title + ul {
+  break-before: avoid;
+  page-break-before: avoid;
 }
 ```
 
