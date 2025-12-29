@@ -67,7 +67,10 @@ export function useTranslations() {
       // Replace parameters like {name} with actual values
       if (params) {
         Object.entries(params).forEach(([paramKey, paramValue]) => {
-          translation = translation.replace(new RegExp(`\\{${paramKey}\\}`, 'g'), String(paramValue));
+          translation = translation.replace(
+            new RegExp(`\\{${paramKey}\\}`, 'g'),
+            String(paramValue)
+          );
         });
       }
 

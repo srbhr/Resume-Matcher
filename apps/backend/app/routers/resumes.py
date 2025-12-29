@@ -388,6 +388,9 @@ async def download_resume_pdf(
     lineHeight: int = Query(3, ge=1, le=5),
     fontSize: int = Query(3, ge=1, le=5),
     headerScale: int = Query(3, ge=1, le=5),
+    headerFont: str = Query("serif", pattern="^(serif|sans-serif|mono)$"),
+    compactMode: bool = Query(False),
+    showContactIcons: bool = Query(False),
 ) -> Response:
     """Generate a PDF for a resume using headless Chromium.
 
@@ -400,6 +403,9 @@ async def download_resume_pdf(
     - lineHeight: text line height (1-5)
     - fontSize: base font size (1-5)
     - headerScale: header size scale (1-5)
+    - headerFont: serif, sans-serif, or mono
+    - compactMode: enable tighter spacing
+    - showContactIcons: show icons in contact info
     """
     resume = db.get_resume(resume_id)
     if not resume:
@@ -418,6 +424,9 @@ async def download_resume_pdf(
         f"&lineHeight={lineHeight}"
         f"&fontSize={fontSize}"
         f"&headerScale={headerScale}"
+        f"&headerFont={headerFont}"
+        f"&compactMode={str(compactMode).lower()}"
+        f"&showContactIcons={str(showContactIcons).lower()}"
     )
     url = f"{settings.frontend_base_url}/print/resumes/{resume_id}?{params}"
 

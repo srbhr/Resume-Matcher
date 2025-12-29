@@ -48,7 +48,7 @@ export interface TemplateSettings {
 export const DEFAULT_TEMPLATE_SETTINGS: TemplateSettings = {
   template: 'swiss-single',
   pageSize: 'A4',
-  margins: { top: 8, bottom: 8, left: 8, right: 8 }, // Reduced from 10mm
+  margins: { top: 10, bottom: 10, left: 10, right: 10 },
   spacing: { section: 3, item: 2, lineHeight: 3 },
   fontSize: { base: 3, headerScale: 3, headerFont: 'serif' },
   compactMode: false,
@@ -67,27 +67,27 @@ export const PAGE_SIZE_INFO: Record<PageSize, { name: string; dimensions: string
  * CSS Variable mappings for spacing levels
  */
 export const SECTION_SPACING_MAP: Record<SpacingLevel, string> = {
-  1: '0.5rem', // 8px
-  2: '1rem', // 16px
-  3: '1.5rem', // 24px - default
-  4: '2rem', // 32px
-  5: '2.5rem', // 40px
+  1: '0.375rem', // 6px
+  2: '0.625rem', // 10px
+  3: '1rem', // 16px - default
+  4: '1.25rem', // 20px
+  5: '1.5rem', // 24px
 };
 
 export const ITEM_SPACING_MAP: Record<SpacingLevel, string> = {
-  1: '0.25rem', // 4px
-  2: '0.5rem', // 8px - default
-  3: '0.75rem', // 12px
-  4: '1rem', // 16px
-  5: '1.25rem', // 20px
+  1: '0.125rem', // 2px
+  2: '0.25rem', // 4px - default
+  3: '0.5rem', // 8px
+  4: '0.75rem', // 12px
+  5: '1rem', // 16px
 };
 
 export const LINE_HEIGHT_MAP: Record<SpacingLevel, number> = {
-  1: 1.2, // tight
-  2: 1.35,
-  3: 1.5, // default
-  4: 1.65,
-  5: 1.8, // loose
+  1: 1.15, // tight
+  2: 1.25,
+  3: 1.35, // default
+  4: 1.45,
+  5: 1.55, // loose
 };
 
 export const FONT_SIZE_MAP: Record<SpacingLevel, string> = {
@@ -122,8 +122,11 @@ export const HEADER_FONT_MAP: Record<HeaderFontFamily, string> = {
   mono: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace',
 };
 
-// Compact mode multiplier (applied to spacing values)
-export const COMPACT_MULTIPLIER = 0.7;
+// Compact mode multiplier (applied to spacing values only, NOT line-height)
+export const COMPACT_MULTIPLIER = 0.6;
+
+// Line height gets a gentler reduction in compact mode
+export const COMPACT_LINE_HEIGHT_MULTIPLIER = 0.92;
 
 /**
  * Convert TemplateSettings to CSS custom properties
@@ -139,8 +142,9 @@ export function settingsToCssVars(settings?: TemplateSettings): React.CSSPropert
     '--item-gap': s.compactMode
       ? `calc(${ITEM_SPACING_MAP[s.spacing.item]} * ${compact})`
       : ITEM_SPACING_MAP[s.spacing.item],
+    // Line-height uses a gentler multiplier to avoid text overlap
     '--line-height': s.compactMode
-      ? LINE_HEIGHT_MAP[s.spacing.lineHeight] * compact
+      ? LINE_HEIGHT_MAP[s.spacing.lineHeight] * COMPACT_LINE_HEIGHT_MULTIPLIER
       : LINE_HEIGHT_MAP[s.spacing.lineHeight],
     '--font-size-base': FONT_SIZE_MAP[s.fontSize.base],
     '--header-scale': HEADER_SCALE_MAP[s.fontSize.headerScale],

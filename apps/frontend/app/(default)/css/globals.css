@@ -167,7 +167,6 @@
   }
 
   .resume-body {
-    padding: 16mm !important;
     box-shadow: none !important;
     background: #ffffff !important;
   }
@@ -185,7 +184,7 @@
 
 @page {
   size: A4;
-  margin: 10mm;
+  margin: 0;
 }
 
 /* ============================================
@@ -196,24 +195,25 @@
 /* Default CSS Variables for Resume Templates */
 .resume-body {
   /* Spacing defaults (can be overridden via inline styles) */
-  --section-gap: 1.5rem;
-  --item-gap: 0.5rem;
-  --line-height: 1.5;
+  --section-gap: 1rem;
+  --item-gap: 0.25rem;
+  --line-height: 1.35;
   --font-size-base: 14px;
   --header-scale: 2;
   --section-header-scale: 1.2;
   --header-font: ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
 
-  /* Margin defaults */
-  --margin-top: 8mm;
-  --margin-bottom: 8mm;
-  --margin-left: 8mm;
-  --margin-right: 8mm;
+  /* Margin defaults - used as padding inside the resume container */
+  --margin-top: 10mm;
+  --margin-bottom: 10mm;
+  --margin-left: 10mm;
+  --margin-right: 10mm;
 
   /* Apply base styles */
   font-size: var(--font-size-base);
   line-height: var(--line-height);
-  padding: 1.5rem;
+  /* Use CSS variables for padding - these can be customized via inline styles */
+  padding: var(--margin-top) var(--margin-right) var(--margin-bottom) var(--margin-left);
 }
 
 /* Resume Section Styles */
@@ -232,8 +232,8 @@
   font-weight: 700;
   text-transform: uppercase;
   border-bottom: 2px solid #000000;
-  margin-bottom: calc(var(--item-gap) * 2);
-  padding-bottom: 0.25rem;
+  margin-bottom: var(--item-gap);
+  padding-bottom: 0.125rem;
   letter-spacing: 0.05em;
 }
 

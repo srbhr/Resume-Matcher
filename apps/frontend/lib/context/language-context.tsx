@@ -1,7 +1,11 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { fetchLanguageConfig, updateLanguageConfig, type SupportedLanguage } from '@/lib/api/config';
+import {
+  fetchLanguageConfig,
+  updateLanguageConfig,
+  type SupportedLanguage,
+} from '@/lib/api/config';
 import { locales, defaultLocale, localeNames, type Locale } from '@/i18n/config';
 
 const CONTENT_STORAGE_KEY = 'resume_matcher_content_language';
@@ -57,27 +61,30 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     loadLanguages();
   }, []);
 
-  const setContentLanguage = useCallback(async (lang: SupportedLanguage) => {
-    if (!locales.includes(lang as Locale)) {
-      console.error(`Unsupported language: ${lang}`);
-      return;
-    }
+  const setContentLanguage = useCallback(
+    async (lang: SupportedLanguage) => {
+      if (!locales.includes(lang as Locale)) {
+        console.error(`Unsupported language: ${lang}`);
+        return;
+      }
 
-    const previousLang = contentLanguage;
-    try {
-      // Optimistically update UI
-      setContentLanguageState(lang);
-      localStorage.setItem(CONTENT_STORAGE_KEY, lang);
+      const previousLang = contentLanguage;
+      try {
+        // Optimistically update UI
+        setContentLanguageState(lang);
+        localStorage.setItem(CONTENT_STORAGE_KEY, lang);
 
-      // Persist to backend
-      await updateLanguageConfig({ content_language: lang });
-    } catch (error) {
-      console.error('Failed to update content language:', error);
-      // Revert on error
-      setContentLanguageState(previousLang);
-      localStorage.setItem(CONTENT_STORAGE_KEY, previousLang);
-    }
-  }, [contentLanguage]);
+        // Persist to backend
+        await updateLanguageConfig({ content_language: lang });
+      } catch (error) {
+        console.error('Failed to update content language:', error);
+        // Revert on error
+        setContentLanguageState(previousLang);
+        localStorage.setItem(CONTENT_STORAGE_KEY, previousLang);
+      }
+    },
+    [contentLanguage]
+  );
 
   const setUiLanguage = useCallback((lang: Locale) => {
     if (!locales.includes(lang)) {

@@ -262,7 +262,8 @@ export default function SettingsPage() {
               {t('settings.title')}
             </h1>
             <p className="font-mono text-xs text-gray-500 mt-2 uppercase tracking-wider">
-              {'// '}{t('settings.subtitle')}
+              {'// '}
+              {t('settings.subtitle')}
             </p>
           </div>
           <Link href="/dashboard">
@@ -626,9 +627,7 @@ export default function SettingsPage() {
                 <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-gray-700 mb-2">
                   {t('settings.uiLanguage')}
                 </h3>
-                <p className="text-sm text-gray-600 mb-3">
-                  {t('settings.uiLanguageDescription')}
-                </p>
+                <p className="text-sm text-gray-600 mb-3">{t('settings.uiLanguageDescription')}</p>
               </div>
 
               <div className="space-y-2">

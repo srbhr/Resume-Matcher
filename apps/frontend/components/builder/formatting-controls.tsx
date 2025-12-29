@@ -257,7 +257,9 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
                               : 'system-ui, sans-serif',
                       }}
                     >
-                      {font === 'sans-serif' ? 'Sans' : font.charAt(0).toUpperCase() + font.slice(1)}
+                      {font === 'sans-serif'
+                        ? 'Sans'
+                        : font.charAt(0).toUpperCase() + font.slice(1)}
                     </button>
                   ))}
                 </div>
@@ -283,9 +285,7 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
                 >
                   <span
                     className={`absolute top-0.5 w-3.5 h-3.5 bg-white border transition-all ${
-                      settings.compactMode
-                        ? 'left-5 border-blue-700'
-                        : 'left-0.5 border-gray-400'
+                      settings.compactMode ? 'left-5 border-blue-700' : 'left-0.5 border-gray-400'
                     }`}
                   />
                 </button>

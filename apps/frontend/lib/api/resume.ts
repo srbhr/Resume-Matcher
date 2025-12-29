@@ -168,6 +168,9 @@ export async function downloadResumePdf(
     params.set('lineHeight', String(settings.spacing.lineHeight));
     params.set('fontSize', String(settings.fontSize.base));
     params.set('headerScale', String(settings.fontSize.headerScale));
+    params.set('headerFont', settings.fontSize.headerFont);
+    params.set('compactMode', String(settings.compactMode));
+    params.set('showContactIcons', String(settings.showContactIcons));
   } else {
     params.set('template', 'swiss-single');
     params.set('pageSize', 'A4');
