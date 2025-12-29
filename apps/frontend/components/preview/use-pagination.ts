@@ -70,15 +70,50 @@ export function usePagination({
       // NOTE: We do NOT include .resume-section because sections SHOULD span pages
       const items = container.querySelectorAll('.resume-item, [data-no-break]');
       const itemBounds: { top: number; bottom: number; element: Element }[] = [];
+      const containerRect = container.getBoundingClientRect();
 
       items.forEach((item) => {
         const rect = item.getBoundingClientRect();
-        const containerRect = container.getBoundingClientRect();
         itemBounds.push({
           top: rect.top - containerRect.top,
           bottom: rect.bottom - containerRect.top,
           element: item,
         });
+      });
+
+      // CRITICAL: Prevent section headers from being orphaned at page bottom
+      // A section header should stay with at least its first content element
+      const sectionTitles = container.querySelectorAll(
+        '.resume-section-title, .resume-section-title-sm'
+      );
+      sectionTitles.forEach((title) => {
+        const titleRect = title.getBoundingClientRect();
+        const section = title.closest('.resume-section');
+        if (section) {
+          // Find the first content element after the title
+          // Could be: .resume-item, .resume-items > first-child, p, ul, etc.
+          const firstContent =
+            section.querySelector('.resume-item') ||
+            section.querySelector('.resume-items > *:first-child') ||
+            title.nextElementSibling; // Fallback to immediate sibling (p, ul, etc.)
+
+          if (firstContent && firstContent !== title) {
+            const firstContentRect = firstContent.getBoundingClientRect();
+            // Create an unbreakable zone from title top to first content bottom
+            itemBounds.push({
+              top: titleRect.top - containerRect.top,
+              bottom: firstContentRect.bottom - containerRect.top,
+              element: title,
+            });
+          } else {
+            // No content found, just protect the title with some space after it
+            itemBounds.push({
+              top: titleRect.top - containerRect.top,
+              bottom: titleRect.bottom - containerRect.top + 50, // Add 50px buffer
+              element: title,
+            });
+          }
+        }
       });
 
       // Sort by top position for easier processing

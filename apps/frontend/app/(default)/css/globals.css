@@ -390,6 +390,27 @@
 .resume-body .resume-section-title-sm {
   break-after: avoid;
   page-break-after: avoid;
+  /* Ensure at least 3 lines of content follow the header before a page break */
+  orphans: 3;
+  widows: 3;
+}
+
+/* Keep section header together with its first item */
+.resume-body .resume-section {
+  break-inside: auto; /* Allow sections to span pages */
+}
+
+/* Ensure the header + first content element stay together */
+.resume-body .resume-section-title + .resume-items > *:first-child,
+.resume-body .resume-section-title-sm + .resume-items > *:first-child,
+.resume-body .resume-section-title + p,
+.resume-body .resume-section-title-sm + p,
+.resume-body .resume-section-title + ul,
+.resume-body .resume-section-title-sm + ul,
+.resume-body .resume-section-title + .resume-item,
+.resume-body .resume-section-title-sm + .resume-item {
+  break-before: avoid;
+  page-break-before: avoid;
 }
 
 /* Generic no-break class for any element */
@@ -407,11 +428,26 @@
   .resume-body .resume-section-title,
   .resume-body .resume-section-title-sm {
     border-bottom-color: #000000 !important;
+    break-after: avoid !important;
+    page-break-after: avoid !important;
   }
 
   /* Reinforce page break rules in print - only for individual items */
   .resume-body .resume-item {
     break-inside: avoid !important;
     page-break-inside: avoid !important;
+  }
+
+  /* Keep section header with first content in print */
+  .resume-body .resume-section-title + .resume-items > *:first-child,
+  .resume-body .resume-section-title-sm + .resume-items > *:first-child,
+  .resume-body .resume-section-title + p,
+  .resume-body .resume-section-title-sm + p,
+  .resume-body .resume-section-title + ul,
+  .resume-body .resume-section-title-sm + ul,
+  .resume-body .resume-section-title + .resume-item,
+  .resume-body .resume-section-title-sm + .resume-item {
+    break-before: avoid !important;
+    page-break-before: avoid !important;
   }
 }
