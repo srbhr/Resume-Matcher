@@ -29,6 +29,7 @@ All project documentation is located in the `docs/` folder:
 | [api-flow-maps.md](docs/api-flow-maps.md) | API request/response flow diagrams |
 | [design-system.md](docs/design-system.md) | Extended design system documentation |
 | [template-system.md](docs/template-system.md) | Resume template system documentation |
+| [pdf-template-guide.md](docs/pdf-template-guide.md) | **PDF rendering & template editing guide** |
 | [print_pdf_design_spec.md](docs/print_pdf_design_spec.md) | PDF generation specifications |
 | [resume_template_design_spec.md](docs/resume_template_design_spec.md) | Resume template design specifications |
 | [i18n-preparation.md](docs/i18n-preparation.md) | Internationalization preparation notes |

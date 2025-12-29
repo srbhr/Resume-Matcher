@@ -135,6 +135,12 @@ export function settingsToCssVars(settings?: TemplateSettings): React.CSSPropert
   const s = settings || DEFAULT_TEMPLATE_SETTINGS;
   const compact = s.compactMode ? COMPACT_MULTIPLIER : 1;
 
+  // Calculate margins (reduced by 40% in compact mode)
+  const marginTop = s.compactMode ? s.margins.top * compact : s.margins.top;
+  const marginBottom = s.compactMode ? s.margins.bottom * compact : s.margins.bottom;
+  const marginLeft = s.compactMode ? s.margins.left * compact : s.margins.left;
+  const marginRight = s.compactMode ? s.margins.right * compact : s.margins.right;
+
   return {
     '--section-gap': s.compactMode
       ? `calc(${SECTION_SPACING_MAP[s.spacing.section]} * ${compact})`
@@ -150,10 +156,10 @@ export function settingsToCssVars(settings?: TemplateSettings): React.CSSPropert
     '--header-scale': HEADER_SCALE_MAP[s.fontSize.headerScale],
     '--section-header-scale': SECTION_HEADER_SCALE_MAP[s.fontSize.headerScale],
     '--header-font': HEADER_FONT_MAP[s.fontSize.headerFont],
-    '--margin-top': `${s.margins.top}mm`,
-    '--margin-bottom': `${s.margins.bottom}mm`,
-    '--margin-left': `${s.margins.left}mm`,
-    '--margin-right': `${s.margins.right}mm`,
+    '--margin-top': `${marginTop}mm`,
+    '--margin-bottom': `${marginBottom}mm`,
+    '--margin-left': `${marginLeft}mm`,
+    '--margin-right': `${marginRight}mm`,
   } as React.CSSProperties;
 }
 
