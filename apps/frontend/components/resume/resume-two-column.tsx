@@ -1,6 +1,8 @@
 import React from 'react';
 import { Mail, Phone, MapPin, Globe, Linkedin, Github } from 'lucide-react';
-import type { ResumeData } from '@/components/dashboard/resume-component';
+import type { ResumeData, SectionMeta } from '@/components/dashboard/resume-component';
+import { getSortedSections } from '@/lib/utils/section-helpers';
+import { DynamicResumeSection } from './dynamic-resume-section';
 
 interface ResumeTwoColumnProps {
   data: ResumeData;
@@ -13,7 +15,7 @@ interface ResumeTwoColumnProps {
  * Two-column layout with experience-focused main column (left) and
  * supporting information sidebar (right).
  *
- * Main Column (65%): Experience, Projects, Certifications/Training
+ * Main Column (65%): Experience, Projects, Certifications/Training, Custom Sections
  * Sidebar (35%): Summary, Education, Skills, Languages, Awards
  *
  * Best for technical roles with many projects, optimized for one-page resumes.
@@ -23,6 +25,24 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
   showContactIcons = false,
 }) => {
   const { personalInfo, summary, workExperience, education, personalProjects, additional } = data;
+
+  // Get sorted visible sections
+  const sortedSections = getSortedSections(data);
+
+  // Get section display name from metadata
+  const getSectionDisplayName = (sectionKey: string, fallback: string): string => {
+    const section = sortedSections.find((s) => s.key === sectionKey);
+    return section?.displayName || fallback;
+  };
+
+  // Check if a section is visible
+  const isSectionVisible = (sectionKey: string): boolean => {
+    const section = sortedSections.find((s) => s.key === sectionKey);
+    return section?.isVisible ?? true;
+  };
+
+  // Get custom sections (non-default)
+  const customSections = sortedSections.filter((s) => !s.isDefault);
 
   // Icon mapping for contact types
   const contactIcons: Record<string, React.ReactNode> = {
@@ -131,9 +151,9 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
         {/* Main Column - Left */}
         <div className="pr-4 border-r border-gray-200">
           {/* Experience Section */}
-          {workExperience && workExperience.length > 0 && (
+          {isSectionVisible('workExperience') && workExperience && workExperience.length > 0 && (
             <div className="resume-section">
-              <h3 className="resume-section-title">Experience</h3>
+              <h3 className="resume-section-title">{getSectionDisplayName('workExperience', 'Experience')}</h3>
               <div className="resume-items">
                 {workExperience.map((exp) => (
                   <div key={exp.id} className="resume-item">
@@ -165,9 +185,9 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
           )}
 
           {/* Projects Section */}
-          {personalProjects && personalProjects.length > 0 && (
+          {isSectionVisible('personalProjects') && personalProjects && personalProjects.length > 0 && (
             <div className="resume-section">
-              <h3 className="resume-section-title">Projects</h3>
+              <h3 className="resume-section-title">{getSectionDisplayName('personalProjects', 'Projects')}</h3>
               <div className="resume-items">
             {personalProjects.map((project) => (
               <div key={project.id} className="resume-item">
@@ -194,7 +214,7 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
           )}
 
           {/* Certifications/Training - Main column */}
-          {additional?.certificationsTraining && additional.certificationsTraining.length > 0 && (
+          {isSectionVisible('additional') && additional?.certificationsTraining && additional.certificationsTraining.length > 0 && (
             <div className="resume-section">
               <h3 className="resume-section-title">Training & Certifications</h3>
               <ul className="list-disc list-outside ml-4 resume-list resume-text-xs text-gray-800">
@@ -206,22 +226,27 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
               </ul>
             </div>
           )}
+
+          {/* Custom Sections - Main column */}
+          {customSections.map((section) => (
+            <DynamicResumeSection key={section.id} sectionMeta={section} resumeData={data} />
+          ))}
         </div>
 
         {/* Sidebar Column - Right */}
         <div className="pl-2">
           {/* Summary Section */}
-          {summary && (
+          {isSectionVisible('summary') && summary && (
             <div className="resume-section">
-              <h3 className="resume-section-title-sm">Summary</h3>
+              <h3 className="resume-section-title-sm">{getSectionDisplayName('summary', 'Summary')}</h3>
               <p className="resume-text-xs text-gray-800">{summary}</p>
             </div>
           )}
 
           {/* Education Section */}
-          {education && education.length > 0 && (
+          {isSectionVisible('education') && education && education.length > 0 && (
             <div className="resume-section">
-              <h3 className="resume-section-title-sm">Education</h3>
+              <h3 className="resume-section-title-sm">{getSectionDisplayName('education', 'Education')}</h3>
               <div className="resume-stack">
                 {education.map((edu) => (
                   <div key={edu.id}>
@@ -238,7 +263,7 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
           )}
 
           {/* Skills Section */}
-          {additional?.technicalSkills && additional.technicalSkills.length > 0 && (
+          {isSectionVisible('additional') && additional?.technicalSkills && additional.technicalSkills.length > 0 && (
             <div className="resume-section">
               <h3 className="resume-section-title-sm">Skills</h3>
               <div className="flex flex-wrap gap-1">
@@ -255,7 +280,7 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
           )}
 
           {/* Languages Section */}
-          {additional?.languages && additional.languages.length > 0 && (
+          {isSectionVisible('additional') && additional?.languages && additional.languages.length > 0 && (
             <div className="resume-section">
               <h3 className="resume-section-title-sm">Languages</h3>
               <p className="resume-text-xs text-gray-800">{additional.languages.join(' • ')}</p>
@@ -263,7 +288,7 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
           )}
 
           {/* Awards Section */}
-          {additional?.awards && additional.awards.length > 0 && (
+          {isSectionVisible('additional') && additional?.awards && additional.awards.length > 0 && (
             <div className="resume-section">
               <h3 className="resume-section-title-sm">Awards</h3>
               <ul className="resume-list">

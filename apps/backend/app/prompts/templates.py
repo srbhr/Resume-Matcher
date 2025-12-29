@@ -66,18 +66,45 @@ RESUME_SCHEMA_EXAMPLE = """{
     "languages": ["English (Native)", "Spanish (Conversational)"],
     "certificationsTraining": ["AWS Solutions Architect"],
     "awards": ["Employee of the Year 2022"]
+  },
+  "customSections": {
+    "publications": {
+      "sectionType": "itemList",
+      "items": [
+        {
+          "id": 1,
+          "title": "Paper Title",
+          "subtitle": "Journal Name",
+          "years": "2023",
+          "description": ["Brief description of the publication"]
+        }
+      ]
+    },
+    "volunteer_work": {
+      "sectionType": "text",
+      "text": "Description of volunteer activities..."
+    }
   }
 }"""
 
 PARSE_RESUME_PROMPT = """Parse this resume into JSON. Output ONLY the JSON object, no other text.
 
+Map content to standard sections when possible. For non-standard sections (like Publications, Volunteer Work, Research, Hobbies), add them to customSections with an appropriate type.
+
 Example output format:
 {schema}
+
+Custom section types:
+- "text": Single text block (e.g., objective, statement)
+- "itemList": List of items with title, subtitle, years, description (e.g., publications, research)
+- "stringList": Simple list of strings (e.g., hobbies, interests)
 
 Rules:
 - Use "" for missing text fields, [] for missing arrays, null for optional fields
 - Number IDs starting from 1
 - Format years as "YYYY - YYYY" or "YYYY - Present"
+- Use snake_case for custom section keys (e.g., "volunteer_work", "publications")
+- Preserve the original section name as a descriptive key
 
 Resume to parse:
 {resume_text}"""
@@ -107,6 +134,8 @@ Rules:
 - Use action verbs and quantifiable achievements
 - Keep proper nouns (names, company names, locations) unchanged
 - Translate job titles, descriptions, and skills to {output_language}
+- Preserve the structure of any customSections from the original resume
+- Improve custom section content the same way as standard sections
 
 Job Description:
 {job_description}
@@ -120,9 +149,9 @@ Original Resume:
 Output in this JSON format:
 {schema}"""
 
-COVER_LETTER_PROMPT = """Generate a professional cover letter for this job application.
+COVER_LETTER_PROMPT = """Write a brief, punchy cover letter for this job application.
 
-IMPORTANT: Write the entire cover letter in {output_language}.
+IMPORTANT: Write in {output_language}.
 
 Job Description:
 {job_description}
@@ -130,16 +159,19 @@ Job Description:
 Candidate Resume (JSON):
 {resume_data}
 
-Guidelines:
-- Professional but personable tone
-- 3-4 paragraphs, approximately 300-400 words
-- Highlight 2-3 key qualifications that match job requirements
-- Standard structure: greeting, introduction, body, closing
-- Do NOT invent information not present in the resume
-- Do NOT include placeholder brackets like [Company Name] or [Hiring Manager]
-- Use a generic but professional greeting appropriate for {output_language}
+Requirements:
+- 100-150 words maximum
+- 3-4 short paragraphs
+- Professional but direct tone
+- Opening: Quick hook connecting candidate to role
+- Middle: 1-2 standout qualifications (with specifics)
+- Closing: Clear call to action
+- Do NOT invent information not in the resume
+- Do NOT include placeholder brackets like [Company Name]
+- Do NOT use generic filler phrases
+- Use a simple professional greeting appropriate for {output_language}
 
-Output the cover letter as plain text only. No JSON, no markdown formatting."""
+Output plain text only. No JSON, no markdown formatting."""
 
 OUTREACH_MESSAGE_PROMPT = """Generate a cold outreach message for LinkedIn or email about this job opportunity.
 

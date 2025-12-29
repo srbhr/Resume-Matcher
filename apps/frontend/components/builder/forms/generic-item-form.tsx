@@ -3,23 +3,52 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Experience } from '@/components/dashboard/resume-component';
 import { Plus, Trash2 } from 'lucide-react';
+import type { CustomSectionItem } from '@/components/dashboard/resume-component';
 
-interface ExperienceFormProps {
-  data: Experience[];
-  onChange: (data: Experience[]) => void;
+interface GenericItemFormProps {
+  items: CustomSectionItem[];
+  onChange: (items: CustomSectionItem[]) => void;
+  itemLabel?: string;
+  addLabel?: string;
+  showSubtitle?: boolean;
+  showLocation?: boolean;
+  showYears?: boolean;
+  titlePlaceholder?: string;
+  subtitlePlaceholder?: string;
+  locationPlaceholder?: string;
+  yearsPlaceholder?: string;
+  descriptionPlaceholder?: string;
 }
 
-export const ExperienceForm: React.FC<ExperienceFormProps> = ({ data, onChange }) => {
+/**
+ * Generic Item Form Component
+ *
+ * Used for ITEM_LIST type sections (like Experience, Education, Projects).
+ * Renders a list of items with configurable fields.
+ */
+export const GenericItemForm: React.FC<GenericItemFormProps> = ({
+  items,
+  onChange,
+  itemLabel = 'Item',
+  addLabel = 'Add Item',
+  showSubtitle = true,
+  showLocation = true,
+  showYears = true,
+  titlePlaceholder = 'Title',
+  subtitlePlaceholder = 'Organization',
+  locationPlaceholder = 'Location',
+  yearsPlaceholder = '2020 - Present',
+  descriptionPlaceholder = 'Describe your contribution...',
+}) => {
   const handleAdd = () => {
-    const newId = Math.max(...data.map((d) => d.id), 0) + 1;
+    const newId = Math.max(...items.map((d) => d.id), 0) + 1;
     onChange([
-      ...data,
+      ...items,
       {
         id: newId,
         title: '',
-        company: '',
+        subtitle: '',
         location: '',
         years: '',
         description: [''],
@@ -28,12 +57,12 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({ data, onChange }
   };
 
   const handleRemove = (id: number) => {
-    onChange(data.filter((item) => item.id !== id));
+    onChange(items.filter((item) => item.id !== id));
   };
 
-  const handleChange = (id: number, field: keyof Experience, value: string | string[]) => {
+  const handleChange = (id: number, field: keyof CustomSectionItem, value: string | string[]) => {
     onChange(
-      data.map((item) => {
+      items.map((item) => {
         if (item.id === id) {
           return { ...item, [field]: value };
         }
@@ -44,7 +73,7 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({ data, onChange }
 
   const handleDescriptionChange = (id: number, index: number, value: string) => {
     onChange(
-      data.map((item) => {
+      items.map((item) => {
         if (item.id === id) {
           const newDesc = [...(item.description || [])];
           newDesc[index] = value;
@@ -57,7 +86,7 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({ data, onChange }
 
   const handleAddDescription = (id: number) => {
     onChange(
-      data.map((item) => {
+      items.map((item) => {
         if (item.id === id) {
           return { ...item, description: [...(item.description || []), ''] };
         }
@@ -68,7 +97,7 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({ data, onChange }
 
   const handleRemoveDescription = (id: number, index: number) => {
     onChange(
-      data.map((item) => {
+      items.map((item) => {
         if (item.id === id) {
           const newDesc = [...(item.description || [])];
           newDesc.splice(index, 1);
@@ -80,7 +109,7 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({ data, onChange }
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex justify-end">
         <Button
           variant="outline"
@@ -88,12 +117,12 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({ data, onChange }
           onClick={handleAdd}
           className="rounded-none border-black hover:bg-black hover:text-white transition-colors"
         >
-          <Plus className="w-4 h-4 mr-2" /> Add Job
+          <Plus className="w-4 h-4 mr-2" /> {addLabel}
         </Button>
       </div>
 
       <div className="space-y-8">
-        {data.map((item) => (
+        {items.map((item) => (
           <div key={item.id} className="p-6 border border-black bg-gray-50 relative group">
             <Button
               variant="ghost"
@@ -107,48 +136,54 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({ data, onChange }
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 pr-8">
               <div className="space-y-2">
                 <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">
-                  Job Title
+                  Title
                 </Label>
                 <Input
                   value={item.title || ''}
                   onChange={(e) => handleChange(item.id, 'title', e.target.value)}
-                  placeholder="Senior Developer"
+                  placeholder={titlePlaceholder}
                   className="rounded-none border-black bg-white"
                 />
               </div>
-              <div className="space-y-2">
-                <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">
-                  Company
-                </Label>
-                <Input
-                  value={item.company || ''}
-                  onChange={(e) => handleChange(item.id, 'company', e.target.value)}
-                  placeholder="Tech Corp"
-                  className="rounded-none border-black bg-white"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">
-                  Location
-                </Label>
-                <Input
-                  value={item.location || ''}
-                  onChange={(e) => handleChange(item.id, 'location', e.target.value)}
-                  placeholder="Remote / City"
-                  className="rounded-none border-black bg-white"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">
-                  Years
-                </Label>
-                <Input
-                  value={item.years || ''}
-                  onChange={(e) => handleChange(item.id, 'years', e.target.value)}
-                  placeholder="2020 - Present"
-                  className="rounded-none border-black bg-white"
-                />
-              </div>
+              {showSubtitle && (
+                <div className="space-y-2">
+                  <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">
+                    Organization
+                  </Label>
+                  <Input
+                    value={item.subtitle || ''}
+                    onChange={(e) => handleChange(item.id, 'subtitle', e.target.value)}
+                    placeholder={subtitlePlaceholder}
+                    className="rounded-none border-black bg-white"
+                  />
+                </div>
+              )}
+              {showLocation && (
+                <div className="space-y-2">
+                  <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">
+                    Location
+                  </Label>
+                  <Input
+                    value={item.location || ''}
+                    onChange={(e) => handleChange(item.id, 'location', e.target.value)}
+                    placeholder={locationPlaceholder}
+                    className="rounded-none border-black bg-white"
+                  />
+                </div>
+              )}
+              {showYears && (
+                <div className="space-y-2">
+                  <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">
+                    Years
+                  </Label>
+                  <Input
+                    value={item.years || ''}
+                    onChange={(e) => handleChange(item.id, 'years', e.target.value)}
+                    placeholder={yearsPlaceholder}
+                    className="rounded-none border-black bg-white"
+                  />
+                </div>
+              )}
             </div>
 
             <div className="space-y-3">
@@ -171,7 +206,7 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({ data, onChange }
                     value={desc}
                     onChange={(e) => handleDescriptionChange(item.id, idx, e.target.value)}
                     className="min-h-[60px] text-black text-sm rounded-none border-black bg-white"
-                    placeholder="Describe your achievement..."
+                    placeholder={descriptionPlaceholder}
                   />
                   <Button
                     variant="ghost"
@@ -187,16 +222,11 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({ data, onChange }
           </div>
         ))}
 
-        {data.length === 0 && (
+        {items.length === 0 && (
           <div className="text-center py-12 bg-gray-50 border border-dashed border-black">
-            <p className="font-mono text-sm text-gray-500 mb-4">{'// NO EXPERIENCE ENTRIES'}</p>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleAdd}
-              className="rounded-none border-black"
-            >
-              <Plus className="w-4 h-4 mr-2" /> Add First Job
+            <p className="font-mono text-sm text-gray-500 mb-4">{`// NO ${itemLabel.toUpperCase()} ENTRIES`}</p>
+            <Button variant="outline" size="sm" onClick={handleAdd} className="rounded-none border-black">
+              <Plus className="w-4 h-4 mr-2" /> Add First {itemLabel}
             </Button>
           </div>
         )}

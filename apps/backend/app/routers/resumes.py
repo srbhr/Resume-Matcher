@@ -27,6 +27,7 @@ from app.schemas import (
     RawResume,
     UpdateCoverLetterRequest,
     UpdateOutreachMessageRequest,
+    normalize_resume_data,
 )
 from app.services.parser import parse_document, parse_resume_to_json
 from app.services.improver import (
@@ -144,6 +145,7 @@ async def get_resume(resume_id: str = Query(...)) -> ResumeFetchResponse:
 
     Returns both raw markdown and structured data (if available),
     plus cover letter and outreach message if they exist.
+    Applies lazy migration for section metadata if needed.
     """
     resume = db.get_resume(resume_id)
 
@@ -164,6 +166,11 @@ async def get_resume(resume_id: str = Query(...)) -> ResumeFetchResponse:
 
     # Get processed data if available (no more on-demand parsing)
     processed_data = resume.get("processed_data")
+
+    # Apply lazy migration - add section metadata to old resumes
+    if processed_data:
+        processed_data = normalize_resume_data(processed_data)
+
     processed_resume = ResumeData.model_validate(processed_data) if processed_data else None
 
     return ResumeFetchResponse(

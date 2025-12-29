@@ -198,7 +198,10 @@ The `ConfirmDialog` component (`components/ui/confirm-dialog.tsx`) supports:
     -   Padding: `p-10 md:p-16` for comfortable spacing
     -   Typography: Serif headers, mono metadata, sans body text
     -   No internal shadow (parent provides Swiss-style shadow)
--   **`ResumeForm`**: Form editor with collapsible sections for Personal Info, Experience, Education, Projects, and Additional info.
+-   **`ResumeForm`**: Dynamic form editor that renders sections based on `sectionMeta` order.
+    -   Supports section renaming, reordering (up/down), hiding, and deletion
+    -   Custom sections can be added via `AddSectionDialog`
+    -   Uses specialized forms for default sections, generic forms for custom sections
 -   **`PaginatedPreview`**: WYSIWYG preview component that shows exact page layout with pagination.
     -   Renders pages at actual dimensions (A4 or US Letter)
     -   Auto-calculates page breaks based on content
@@ -213,6 +216,47 @@ The `ConfirmDialog` component (`components/ui/confirm-dialog.tsx`) supports:
     -   Respects `.resume-item` boundaries (won't split individual entries)
     -   Uses ResizeObserver + MutationObserver for real-time updates
     -   150ms debounce for performance
+
+## Section Management
+
+The Builder supports full customization of resume sections:
+
+### Section Operations
+| Action | Description |
+|--------|-------------|
+| **Rename** | Click pencil icon to edit display name |
+| **Reorder** | Up/down arrow buttons to change section order |
+| **Hide/Show** | Eye icon to toggle visibility (all sections except Personal Info) |
+| **Delete** | Trash icon - hides default sections, deletes custom sections |
+| **Add Custom** | "Add Section" button opens dialog to create new sections |
+
+### Hidden Section Behavior
+- Hidden sections remain **editable** in the form (form uses `getAllSections`)
+- Hidden sections appear with:
+  - Dashed border and 60% opacity
+  - "Hidden from PDF" badge (amber colored)
+- Only the PDF/preview hides them (templates use `getSortedSections`)
+
+### Section Types for Custom Sections
+| Type | Form Component | Use Case |
+|------|---------------|----------|
+| Text | `GenericTextForm` | Single text block (objective, statement) |
+| Item List | `GenericItemForm` | Structured entries (publications, research) |
+| String List | `GenericListForm` | Simple list (hobbies, interests) |
+
+### Key Components
+| Component | Purpose |
+|-----------|---------|
+| `section-header.tsx` | Section controls (visibility, rename, reorder, delete) |
+| `add-section-dialog.tsx` | Modal to create custom sections |
+| `resume-form.tsx` | Dynamic form rendering with all sections |
+| `forms/generic-*.tsx` | Generic forms for custom section types |
+
+### Data Flow
+1. `getAllSections(resumeData)` returns ALL sections (including hidden) for form editing
+2. `ResumeForm` renders each section wrapped in `SectionHeader`
+3. Changes update `sectionMeta` and `customSections` in resume data
+4. Templates use `getSortedSections()` which filters to visible-only for PDF/preview
 
 ## State Management
 

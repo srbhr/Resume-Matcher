@@ -1,6 +1,8 @@
 import React from 'react';
 import { Mail, Phone, MapPin, Globe, Linkedin, Github } from 'lucide-react';
-import type { ResumeData } from '@/components/dashboard/resume-component';
+import type { ResumeData, SectionMeta } from '@/components/dashboard/resume-component';
+import { getSortedSections } from '@/lib/utils/section-helpers';
+import { DynamicResumeSection } from './dynamic-resume-section';
 
 interface ResumeSingleColumnProps {
   data: ResumeData;
@@ -13,13 +15,22 @@ interface ResumeSingleColumnProps {
  * Traditional full-width layout with sections stacked vertically.
  * Best for detailed experience descriptions and maximum content density.
  *
- * Section order: Header → Summary → Experience → Projects → Education → Additional
+ * Section order: Determined by sectionMeta ordering
  */
 export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
   data,
   showContactIcons = false,
 }) => {
   const { personalInfo, summary, workExperience, education, personalProjects, additional } = data;
+
+  // Get sorted visible sections
+  const sortedSections = getSortedSections(data);
+
+  // Get section display name from metadata
+  const getSectionDisplayName = (sectionKey: string): string => {
+    const section = sortedSections.find((s) => s.key === sectionKey);
+    return section?.displayName || sectionKey;
+  };
 
   // Icon mapping for contact types
   const contactIcons: Record<string, React.ReactNode> = {
@@ -74,9 +85,123 @@ export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
     );
   };
 
+  // Render a section based on its key
+  const renderSection = (section: SectionMeta) => {
+    switch (section.key) {
+      case 'personalInfo':
+        // Personal info is the header - handled separately
+        return null;
+
+      case 'summary':
+        if (!summary) return null;
+        return (
+          <div key={section.id} className="resume-section">
+            <h3 className="resume-section-title">{section.displayName}</h3>
+            <p className="text-justify resume-text text-gray-800">{summary}</p>
+          </div>
+        );
+
+      case 'workExperience':
+        if (!workExperience || workExperience.length === 0) return null;
+        return (
+          <div key={section.id} className="resume-section">
+            <h3 className="resume-section-title">{section.displayName}</h3>
+            <div className="resume-items">
+              {workExperience.map((exp) => (
+                <div key={exp.id} className="resume-item">
+                  <div className="flex justify-between items-baseline resume-row-tight">
+                    <h4 className="resume-item-title">{exp.title}</h4>
+                    <span className="resume-meta-sm text-gray-600 shrink-0 ml-4">{exp.years}</span>
+                  </div>
+                  <div className="flex justify-between items-center resume-row resume-meta text-gray-700">
+                    <span>{exp.company}</span>
+                    {exp.location && <span>{exp.location}</span>}
+                  </div>
+                  {exp.description && exp.description.length > 0 && (
+                    <ul className="list-disc list-outside ml-4 resume-list resume-text-sm text-gray-800">
+                      {exp.description.map((desc, index) => (
+                        <li key={index} className="pl-1">
+                          {desc}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
+      case 'personalProjects':
+        if (!personalProjects || personalProjects.length === 0) return null;
+        return (
+          <div key={section.id} className="resume-section">
+            <h3 className="resume-section-title">{section.displayName}</h3>
+            <div className="resume-items">
+              {personalProjects.map((project) => (
+                <div key={project.id} className="resume-item">
+                  <div className="flex justify-between items-baseline resume-row-tight">
+                    <h4 className="resume-item-title">{project.name}</h4>
+                    <span className="resume-meta-sm text-gray-600 shrink-0 ml-4">{project.years}</span>
+                  </div>
+                  {project.role && (
+                    <p className="resume-meta text-gray-700 resume-row">{project.role}</p>
+                  )}
+                  {project.description && project.description.length > 0 && (
+                    <ul className="list-disc list-outside ml-4 resume-list resume-text-sm text-gray-800">
+                      {project.description.map((desc, index) => (
+                        <li key={index} className="pl-1">
+                          {desc}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
+      case 'education':
+        if (!education || education.length === 0) return null;
+        return (
+          <div key={section.id} className="resume-section">
+            <h3 className="resume-section-title">{section.displayName}</h3>
+            <div className="resume-items">
+              {education.map((edu) => (
+                <div key={edu.id} className="resume-item">
+                  <div className="flex justify-between items-baseline resume-row-tight">
+                    <h4 className="resume-item-title">{edu.institution}</h4>
+                    <span className="resume-meta-sm text-gray-600 shrink-0 ml-4">{edu.years}</span>
+                  </div>
+                  <div className="flex justify-between resume-meta text-gray-700 resume-row-tight">
+                    <span>{edu.degree}</span>
+                  </div>
+                  {edu.description && (
+                    <p className="resume-text-sm text-gray-800">{edu.description}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
+      case 'additional':
+        if (!additional) return null;
+        return <AdditionalSection key={section.id} additional={additional} displayName={section.displayName} />;
+
+      default:
+        // Custom section - render using DynamicResumeSection
+        if (!section.isDefault) {
+          return <DynamicResumeSection key={section.id} sectionMeta={section} resumeData={data} />;
+        }
+        return null;
+    }
+  };
+
   return (
     <>
-      {/* Header Section - Centered Layout */}
+      {/* Header Section - Centered Layout (always first) */}
       {personalInfo && (
         <header className="text-center resume-header border-b-2 border-black">
           {/* Name - Centered */}
@@ -128,100 +253,10 @@ export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
         </header>
       )}
 
-      {/* Summary Section */}
-      {summary && (
-        <div className="resume-section">
-          <h3 className="resume-section-title">Summary</h3>
-          <p className="text-justify resume-text text-gray-800">{summary}</p>
-        </div>
-      )}
-
-      {/* Work Experience Section */}
-      {workExperience && workExperience.length > 0 && (
-        <div className="resume-section">
-          <h3 className="resume-section-title">Experience</h3>
-          <div className="resume-items">
-            {workExperience.map((exp) => (
-              <div key={exp.id} className="resume-item">
-                <div className="flex justify-between items-baseline resume-row-tight">
-                  <h4 className="resume-item-title">{exp.title}</h4>
-                  <span className="resume-meta-sm text-gray-600 shrink-0 ml-4">{exp.years}</span>
-                </div>
-
-                <div className="flex justify-between items-center resume-row resume-meta text-gray-700">
-                  <span>{exp.company}</span>
-                  {exp.location && <span>{exp.location}</span>}
-                </div>
-
-                {exp.description && exp.description.length > 0 && (
-                  <ul className="list-disc list-outside ml-4 resume-list resume-text-sm text-gray-800">
-                    {exp.description.map((desc, index) => (
-                      <li key={index} className="pl-1">
-                        {desc}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Projects Section */}
-      {personalProjects && personalProjects.length > 0 && (
-        <div className="resume-section">
-          <h3 className="resume-section-title">Projects</h3>
-          <div className="resume-items">
-            {personalProjects.map((project) => (
-              <div key={project.id} className="resume-item">
-                <div className="flex justify-between items-baseline resume-row-tight">
-                  <h4 className="resume-item-title">{project.name}</h4>
-                  <span className="resume-meta-sm text-gray-600 shrink-0 ml-4">{project.years}</span>
-                </div>
-                {project.role && (
-                  <p className="resume-meta text-gray-700 resume-row">{project.role}</p>
-                )}
-                {project.description && project.description.length > 0 && (
-                  <ul className="list-disc list-outside ml-4 resume-list resume-text-sm text-gray-800">
-                    {project.description.map((desc, index) => (
-                      <li key={index} className="pl-1">
-                        {desc}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Education Section */}
-      {education && education.length > 0 && (
-        <div className="resume-section">
-          <h3 className="resume-section-title">Education</h3>
-          <div className="resume-items">
-            {education.map((edu) => (
-              <div key={edu.id} className="resume-item">
-                <div className="flex justify-between items-baseline resume-row-tight">
-                  <h4 className="resume-item-title">{edu.institution}</h4>
-                  <span className="resume-meta-sm text-gray-600 shrink-0 ml-4">{edu.years}</span>
-                </div>
-                <div className="flex justify-between resume-meta text-gray-700 resume-row-tight">
-                  <span>{edu.degree}</span>
-                </div>
-                {edu.description && (
-                  <p className="resume-text-sm text-gray-800">{edu.description}</p>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Additional Section */}
-      {additional && <AdditionalSection additional={additional} />}
+      {/* Render sections in order based on sectionMeta */}
+      {sortedSections
+        .filter((section) => section.key !== 'personalInfo')
+        .map((section) => renderSection(section))}
     </>
   );
 };
@@ -229,7 +264,10 @@ export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
 /**
  * Additional info section (skills, languages, certifications, awards)
  */
-const AdditionalSection: React.FC<{ additional: ResumeData['additional'] }> = ({ additional }) => {
+const AdditionalSection: React.FC<{
+  additional: ResumeData['additional'];
+  displayName?: string;
+}> = ({ additional, displayName = 'Skills & Awards' }) => {
   if (!additional) return null;
 
   const {
@@ -249,7 +287,7 @@ const AdditionalSection: React.FC<{ additional: ResumeData['additional'] }> = ({
 
   return (
     <div className="resume-section">
-      <h3 className="resume-section-title">Skills & Awards</h3>
+      <h3 className="resume-section-title">{displayName}</h3>
       <div className="resume-stack resume-text-sm">
         {technicalSkills.length > 0 && (
           <div className="flex">

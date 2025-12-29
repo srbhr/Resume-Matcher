@@ -64,21 +64,40 @@ Resume (components/dashboard/resume-component.tsx)
 ├── Delegates to template based on settings.template
 │
 ├── ResumeSingleColumn (components/resume/resume-single-column.tsx)
-│   ├── PersonalInfoSection
-│   ├── ExperienceSection
-│   ├── EducationSection
-│   ├── ProjectsSection
-│   └── SkillsSection
+│   ├── Header (personalInfo - always first)
+│   ├── Dynamic sections via getSortedSections()
+│   │   ├── Default sections (summary, workExperience, education, etc.)
+│   │   └── Custom sections via DynamicResumeSection
+│   └── Respects sectionMeta order and visibility
 │
 └── ResumeTwoColumn (components/resume/resume-two-column.tsx)
+    ├── Header (personalInfo - centered)
     ├── LeftColumn (65%)
-    │   ├── PersonalInfoSection
-    │   ├── ExperienceSection (sidebar items)
-    │   └── ProjectsSection
+    │   ├── Experience, Projects, Certifications
+    │   └── Custom sections via DynamicResumeSection
     │
     └── RightColumn (35%)
-        ├── EducationSection
-        └── SkillsSection
+        ├── Summary, Education, Skills, Languages, Awards
+        └── Links section
+```
+
+### Dynamic Section Rendering
+
+Templates use `getSortedSections()` from `lib/utils/section-helpers.ts` to:
+- Get sections in user-defined order
+- Filter out hidden sections (`isVisible: false`)
+- Use custom display names instead of hardcoded titles
+- Render custom sections via `DynamicResumeSection` component
+
+```typescript
+// Template pattern for dynamic sections
+const sortedSections = getSortedSections(data);
+
+{sortedSections.map((section) => (
+  section.isDefault
+    ? <DefaultSection key={section.id} displayName={section.displayName} />
+    : <DynamicResumeSection key={section.id} sectionMeta={section} resumeData={data} />
+))}
 ```
 
 ---
@@ -91,12 +110,13 @@ Resume (components/dashboard/resume-component.tsx)
 apps/frontend/
 ├── components/
 │   ├── dashboard/
-│   │   └── resume-component.tsx      # Main router component
+│   │   └── resume-component.tsx      # Main router component + types
 │   │
 │   └── resume/
 │       ├── index.ts                  # Barrel export
 │       ├── resume-single-column.tsx  # Swiss single column
 │       ├── resume-two-column.tsx     # Swiss two column
+│       ├── dynamic-resume-section.tsx # Renders custom sections
 │       └── sections/                 # Shared section components
 │           ├── personal-info.tsx
 │           ├── experience.tsx

@@ -11,7 +11,7 @@ interface AdditionalFormProps {
 export const AdditionalForm: React.FC<AdditionalFormProps> = ({ data, onChange }) => {
   // Helper to handle array conversions (text -> string[])
   const handleArrayChange = (field: keyof AdditionalInfo, value: string) => {
-    // Split by newlines or commas
+    // Split by newlines only (preserving spaces within items)
     const items = value.split('\n').filter((item) => item.trim() !== '');
     onChange({
       ...data,
@@ -23,13 +23,18 @@ export const AdditionalForm: React.FC<AdditionalFormProps> = ({ data, onChange }
     return arr?.join('\n') || '';
   };
 
+  // Explicitly allow Enter key to create newlines (prevent form submission interference)
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter') {
+      // Allow default behavior (newline insertion)
+      e.stopPropagation();
+    }
+  };
+
   return (
-    <div className="space-y-6 border border-black p-6 bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)]">
-      <h3 className="font-serif text-xl font-bold border-b border-black pb-2 mb-4">
-        Additional Information
-      </h3>
-      <p className="font-mono text-xs text-blue-700 mb-6 border-l-2 border-blue-700 pl-3">
-        Enter items separated by new lines.
+    <div className="space-y-6">
+      <p className="font-mono text-xs text-blue-700 border-l-2 border-blue-700 pl-3">
+        Enter items separated by new lines (press Enter for each item).
       </p>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -44,6 +49,7 @@ export const AdditionalForm: React.FC<AdditionalFormProps> = ({ data, onChange }
             id="technicalSkills"
             value={formatArray(data.technicalSkills)}
             onChange={(e) => handleArrayChange('technicalSkills', e.target.value)}
+            onKeyDown={handleKeyDown}
             placeholder="React&#10;TypeScript&#10;Node.js"
             className="min-h-[120px] text-black rounded-none border-black bg-white focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-blue-700"
           />
@@ -59,6 +65,7 @@ export const AdditionalForm: React.FC<AdditionalFormProps> = ({ data, onChange }
             id="languages"
             value={formatArray(data.languages)}
             onChange={(e) => handleArrayChange('languages', e.target.value)}
+            onKeyDown={handleKeyDown}
             placeholder="English&#10;Spanish"
             className="min-h-[120px] text-black rounded-none border-black bg-white focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-blue-700"
           />
@@ -74,6 +81,7 @@ export const AdditionalForm: React.FC<AdditionalFormProps> = ({ data, onChange }
             id="certifications"
             value={formatArray(data.certificationsTraining)}
             onChange={(e) => handleArrayChange('certificationsTraining', e.target.value)}
+            onKeyDown={handleKeyDown}
             placeholder="AWS Solution Architect&#10;Google Analytics"
             className="min-h-[120px] text-black rounded-none border-black bg-white focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-blue-700"
           />
@@ -89,6 +97,7 @@ export const AdditionalForm: React.FC<AdditionalFormProps> = ({ data, onChange }
             id="awards"
             value={formatArray(data.awards)}
             onChange={(e) => handleArrayChange('awards', e.target.value)}
+            onKeyDown={handleKeyDown}
             placeholder="Employee of the Month&#10;Hackathon Winner"
             className="min-h-[120px] text-black rounded-none border-black bg-white focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-blue-700"
           />

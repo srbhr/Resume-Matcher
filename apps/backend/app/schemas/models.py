@@ -1,8 +1,19 @@
 """Pydantic models matching frontend expectations."""
 
+from enum import Enum
 from typing import Any
 
 from pydantic import BaseModel, Field
+
+
+# Section Type Enum for dynamic sections
+class SectionType(str, Enum):
+    """Types of resume sections."""
+
+    PERSONAL_INFO = "personalInfo"  # Special: always first, not reorderable
+    TEXT = "text"  # Single text block (like summary)
+    ITEM_LIST = "itemList"  # Array of items with fields (like experience)
+    STRING_LIST = "stringList"  # Array of strings (like skills)
 
 
 # Resume Data Models (matching frontend types in resume-component.tsx)
@@ -59,15 +70,125 @@ class AdditionalInfo(BaseModel):
     awards: list[str] = Field(default_factory=list)
 
 
+# Section Metadata Models for dynamic section management
+class SectionMeta(BaseModel):
+    """Metadata for a resume section."""
+
+    id: str  # Unique identifier (e.g., "summary", "custom_1")
+    key: str  # Data key (matches ResumeData field or customSections key)
+    displayName: str  # User-visible name
+    sectionType: SectionType  # Type of section
+    isDefault: bool = True  # True for built-in sections
+    isVisible: bool = True  # Whether to show in resume
+    order: int = 0  # Display order (0 = first after personalInfo)
+
+
+class CustomSectionItem(BaseModel):
+    """Generic item for custom item-based sections."""
+
+    id: int = 0
+    title: str = ""  # Primary title
+    subtitle: str | None = None  # Secondary info (company, institution, etc.)
+    location: str | None = None
+    years: str = ""
+    description: list[str] = Field(default_factory=list)
+
+
+class CustomSection(BaseModel):
+    """Custom section data container."""
+
+    sectionType: SectionType
+    items: list[CustomSectionItem] | None = None  # For ITEM_LIST
+    strings: list[str] | None = None  # For STRING_LIST
+    text: str | None = None  # For TEXT
+
+
+# Default section metadata for backward compatibility
+DEFAULT_SECTION_META: list[dict[str, Any]] = [
+    {
+        "id": "personalInfo",
+        "key": "personalInfo",
+        "displayName": "Personal Info",
+        "sectionType": SectionType.PERSONAL_INFO,
+        "isDefault": True,
+        "isVisible": True,
+        "order": 0,
+    },
+    {
+        "id": "summary",
+        "key": "summary",
+        "displayName": "Summary",
+        "sectionType": SectionType.TEXT,
+        "isDefault": True,
+        "isVisible": True,
+        "order": 1,
+    },
+    {
+        "id": "workExperience",
+        "key": "workExperience",
+        "displayName": "Experience",
+        "sectionType": SectionType.ITEM_LIST,
+        "isDefault": True,
+        "isVisible": True,
+        "order": 2,
+    },
+    {
+        "id": "education",
+        "key": "education",
+        "displayName": "Education",
+        "sectionType": SectionType.ITEM_LIST,
+        "isDefault": True,
+        "isVisible": True,
+        "order": 3,
+    },
+    {
+        "id": "personalProjects",
+        "key": "personalProjects",
+        "displayName": "Projects",
+        "sectionType": SectionType.ITEM_LIST,
+        "isDefault": True,
+        "isVisible": True,
+        "order": 4,
+    },
+    {
+        "id": "additional",
+        "key": "additional",
+        "displayName": "Skills & Awards",
+        "sectionType": SectionType.STRING_LIST,
+        "isDefault": True,
+        "isVisible": True,
+        "order": 5,
+    },
+]
+
+
+def normalize_resume_data(data: dict[str, Any]) -> dict[str, Any]:
+    """Ensure resume data has section metadata (migration helper).
+
+    This function is used for lazy migration of existing resumes
+    that don't have sectionMeta or customSections fields.
+    """
+    if not data.get("sectionMeta"):
+        data["sectionMeta"] = DEFAULT_SECTION_META
+    if "customSections" not in data:
+        data["customSections"] = {}
+    return data
+
+
 class ResumeData(BaseModel):
     """Complete structured resume data."""
 
+    # Existing fields (kept for backward compatibility)
     personalInfo: PersonalInfo = Field(default_factory=PersonalInfo)
     summary: str = ""
     workExperience: list[Experience] = Field(default_factory=list)
     education: list[Education] = Field(default_factory=list)
     personalProjects: list[Project] = Field(default_factory=list)
     additional: AdditionalInfo = Field(default_factory=AdditionalInfo)
+
+    # NEW: Section metadata and custom sections
+    sectionMeta: list[SectionMeta] = Field(default_factory=list)
+    customSections: dict[str, CustomSection] = Field(default_factory=dict)
 
 
 # API Response Models

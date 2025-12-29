@@ -285,16 +285,74 @@ improved = await improve_resume(original, job_desc, score, keywords)
 - Dashboard filters tailored resumes by BOTH `is_master` flag AND localStorage master ID
 - Dashboard refreshes the resume list when the window gains focus (handles navigation back from viewer)
 
+## Data Models
+
+### Resume Data Structure (`app/schemas/models.py`)
+
+The `ResumeData` model supports both default and custom sections:
+
+```python
+class ResumeData(BaseModel):
+    personalInfo: PersonalInfo | None = None
+    summary: str = ""
+    workExperience: list[Experience] = []
+    education: list[Education] = []
+    personalProjects: list[Project] = []
+    additional: AdditionalInfo | None = None
+
+    # Dynamic section support
+    sectionMeta: list[SectionMeta] = []      # Section order, names, visibility
+    customSections: dict[str, CustomSection] = {}  # Custom section data
+```
+
+### Section Types
+
+| Type | Description | Example Uses |
+|------|-------------|--------------|
+| `personalInfo` | Special type for header (always first) | Name, contact details |
+| `text` | Single text block | Summary, objective, statement |
+| `itemList` | Array of items with title, subtitle, years, description | Experience, projects, publications |
+| `stringList` | Simple array of strings | Skills, languages, hobbies |
+
+### Section Metadata (`SectionMeta`)
+
+```python
+class SectionMeta(BaseModel):
+    id: str              # Unique identifier (e.g., "summary", "custom_1")
+    key: str             # Data key in ResumeData
+    displayName: str     # User-visible name (editable)
+    sectionType: SectionType
+    isDefault: bool = True
+    isVisible: bool = True
+    order: int = 0
+```
+
+### Custom Sections (`CustomSection`)
+
+```python
+class CustomSection(BaseModel):
+    sectionType: SectionType
+    items: list[CustomSectionItem] | None = None   # For itemList
+    strings: list[str] | None = None               # For stringList
+    text: str | None = None                        # For text
+```
+
+### Migration
+
+Resumes without `sectionMeta` are automatically normalized via `normalize_resume_data()` when fetched from the API. This applies default section metadata lazily, ensuring backward compatibility.
+
 ## Prompt Templates
 
 Located in `app/prompts/templates.py`:
 
 | Prompt | Purpose |
 |--------|---------|
-| `PARSE_RESUME_PROMPT` | Convert Markdown to structured JSON |
+| `PARSE_RESUME_PROMPT` | Convert Markdown to structured JSON (includes custom sections) |
 | `EXTRACT_KEYWORDS_PROMPT` | Extract requirements from JD |
-| `IMPROVE_RESUME_PROMPT` | Generate tailored resume |
-| `RESUME_SCHEMA_EXAMPLE` | JSON schema example for structured output |
+| `IMPROVE_RESUME_PROMPT` | Generate tailored resume (preserves custom sections) |
+| `COVER_LETTER_PROMPT` | Generate brief cover letter (100-150 words) |
+| `OUTREACH_MESSAGE_PROMPT` | Generate LinkedIn/email outreach message |
+| `RESUME_SCHEMA_EXAMPLE` | JSON schema example with custom sections |
 
 **Prompt Design Guidelines:**
 

@@ -50,6 +50,38 @@ export interface AdditionalInfo {
   awards?: string[];
 }
 
+// Section Type for dynamic sections
+export type SectionType = 'personalInfo' | 'text' | 'itemList' | 'stringList';
+
+// Section Metadata for dynamic section management
+export interface SectionMeta {
+  id: string; // Unique identifier (e.g., "summary", "custom_1")
+  key: string; // Data key (matches ResumeData field or customSections key)
+  displayName: string; // User-visible name
+  sectionType: SectionType; // Type of section
+  isDefault: boolean; // True for built-in sections
+  isVisible: boolean; // Whether to show in resume
+  order: number; // Display order (0 = first after personalInfo)
+}
+
+// Generic item for custom item-based sections
+export interface CustomSectionItem {
+  id: number;
+  title?: string; // Primary title
+  subtitle?: string; // Secondary info (company, institution, etc.)
+  location?: string;
+  years?: string;
+  description?: string[];
+}
+
+// Custom section data container
+export interface CustomSection {
+  sectionType: SectionType;
+  items?: CustomSectionItem[]; // For itemList type
+  strings?: string[]; // For stringList type
+  text?: string; // For text type
+}
+
 export interface ResumeData {
   personalInfo?: PersonalInfo;
   summary?: string;
@@ -57,6 +89,9 @@ export interface ResumeData {
   education?: Education[];
   personalProjects?: Project[];
   additional?: AdditionalInfo;
+  // NEW: Section metadata and custom sections
+  sectionMeta?: SectionMeta[];
+  customSections?: Record<string, CustomSection>;
 }
 
 interface ResumeProps {
