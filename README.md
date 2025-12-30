@@ -1,6 +1,6 @@
 <div align="center">
 
-[![Resume Matcher](assets/page_2.png)](https://www.resumematcher.fyi)
+[![Resume Matcher](assets/header.png)](https://www.resumematcher.fyi)
 
 # Resume Matcher
 
@@ -61,24 +61,28 @@ Star the repo to support development and get notified of new releases.
 ![resume_matcher_features](assets/resume_matcher_features.png)
 
 ### Core Features
+
 - **Resume Tailoring**: AI-powered optimization of your resume for specific job descriptions
 - **Multi-Provider LLM Support**: Works with OpenAI, Anthropic, Gemini, OpenRouter, DeepSeek, and Ollama
 - **Works Locally**: Run everything on your machine with Ollama - no API costs required
 - **PDF Export**: Professional PDF generation with customizable templates
 
 ### Resume Builder
+
 - **Two Template Styles**: Single-column (traditional) and two-column (modern) layouts
 - **Custom Sections**: Add, rename, reorder, and hide sections to match your needs
 - **Formatting Controls**: Adjust margins, spacing, fonts, and more
 - **Live Preview**: See changes instantly with paginated preview
 
 ### AI-Powered Content
+
 - **Cover Letter Generation**: Auto-generate tailored cover letters for each job application
 - **Outreach Messages**: Generate cold outreach messages for networking
 - **Keyword Optimization**: Align your resume with job keywords and highlight relevant experience
 - **Guided Improvements**: Get actionable suggestions to make your resume stand out
 
 ### Internationalization
+
 - **Multi-Language UI**: Interface available in English, Spanish, Chinese, and Japanese
 - **Multi-Language Content**: Generate resumes and cover letters in your preferred language
 
@@ -123,7 +127,7 @@ npm install
 npm run dev
 ```
 
-Open **http://localhost:3000** and configure your AI provider in Settings.
+Open **<http://localhost:3000>** and configure your AI provider in Settings.
 
 ### Supported AI Providers
 
