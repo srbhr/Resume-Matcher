@@ -29,6 +29,8 @@ export const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
   disabled = false,
   className,
 }) => {
+  const labelId = React.useId();
+
   const handleToggle = () => {
     if (!disabled) {
       onCheckedChange(!checked);
@@ -45,13 +47,16 @@ export const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
       )}
     >
       <div className="flex-1 mr-4">
-        <div className="font-mono text-sm font-bold uppercase tracking-wider">{label}</div>
+        <div id={labelId} className="font-mono text-sm font-bold uppercase tracking-wider">
+          {label}
+        </div>
         {description && <div className="font-sans text-xs text-gray-500 mt-1">{description}</div>}
       </div>
       <button
         type="button"
         role="switch"
         aria-checked={checked}
+        aria-labelledby={labelId}
         disabled={disabled}
         onClick={handleToggle}
         className={cn(
