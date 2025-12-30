@@ -1,0 +1,132 @@
+{
+  "common": {
+    "save": "保存",
+    "cancel": "取消",
+    "delete": "删除",
+    "edit": "编辑",
+    "download": "下载",
+    "loading": "加载中...",
+    "error": "错误",
+    "success": "成功",
+    "confirm": "确认",
+    "back": "返回",
+    "next": "下一步",
+    "close": "关闭",
+    "search": "搜索",
+    "filter": "筛选",
+    "reset": "重置",
+    "apply": "应用"
+  },
+  "nav": {
+    "dashboard": "仪表板",
+    "builder": "简历生成器",
+    "tailor": "定制简历",
+    "settings": "设置"
+  },
+  "dashboard": {
+    "title": "仪表板",
+    "subtitle": "管理您的简历和求职申请",
+    "myResumes": "我的简历",
+    "noResumes": "暂无简历",
+    "noResumesDescription": "上传您的第一份简历开始使用",
+    "uploadResume": "上传简历",
+    "createNew": "新建",
+    "lastModified": "最后修改",
+    "actions": "操作",
+    "viewResume": "查看简历",
+    "editResume": "编辑简历",
+    "deleteResume": "删除简历",
+    "downloadPdf": "下载PDF",
+    "tailorResume": "为职位定制"
+  },
+  "builder": {
+    "title": "简历生成器",
+    "editMode": "编辑模式",
+    "previewMode": "预览模式",
+    "personalInfo": "个人信息",
+    "summary": "个人简介",
+    "experience": "工作经历",
+    "education": "教育背景",
+    "skills": "技能",
+    "projects": "项目经历",
+    "certifications": "证书",
+    "languages": "语言能力",
+    "awards": "荣誉奖项",
+    "addSection": "添加板块",
+    "removeSection": "删除板块",
+    "saveChanges": "保存更改",
+    "discardChanges": "放弃更改"
+  },
+  "tailor": {
+    "title": "定制简历",
+    "subtitle": "为特定职位优化您的简历",
+    "selectResume": "选择简历",
+    "pasteJobDescription": "粘贴职位描述",
+    "jobDescriptionPlaceholder": "在此粘贴职位描述...",
+    "analyzeJob": "分析职位",
+    "generateTailored": "生成定制简历",
+    "matchScore": "匹配度",
+    "suggestions": "建议",
+    "keywords": "关键词建议"
+  },
+  "settings": {
+    "title": "设置",
+    "subtitle": "配置您的偏好",
+    "aiProvider": "AI 供应商",
+    "aiProviderDescription": "选择您首选的AI供应商进行简历分析",
+    "apiKey": "API 密钥",
+    "apiKeyPlaceholder": "输入您的API密钥",
+    "saveApiKey": "保存API密钥",
+    "contentLanguage": "内容语言",
+    "contentLanguageDescription": "生成内容的语言（简历、求职信）",
+    "uiLanguage": "界面语言",
+    "uiLanguageDescription": "用户界面的语言",
+    "theme": "主题",
+    "themeDescription": "选择您喜欢的颜色主题",
+    "lightMode": "浅色",
+    "darkMode": "深色",
+    "systemMode": "跟随系统"
+  },
+  "resume": {
+    "personalInfo": {
+      "name": "姓名",
+      "title": "职位名称",
+      "email": "电子邮箱",
+      "phone": "电话",
+      "location": "所在地",
+      "website": "个人网站",
+      "linkedin": "领英",
+      "github": "GitHub"
+    },
+    "sections": {
+      "summary": "个人简介",
+      "experience": "工作经历",
+      "education": "教育背景",
+      "projects": "项目经历",
+      "skills": "技能与荣誉",
+      "certifications": "培训与证书",
+      "languages": "语言能力",
+      "awards": "荣誉奖项"
+    }
+  },
+  "coverLetter": {
+    "title": "求职信",
+    "generate": "生成求职信",
+    "regenerate": "重新生成",
+    "copyToClipboard": "复制到剪贴板",
+    "copied": "已复制！"
+  },
+  "errors": {
+    "generic": "出了点问题，请重试。",
+    "networkError": "网络错误，请检查您的连接。",
+    "unauthorized": "请登录后继续。",
+    "notFound": "未找到请求的资源。",
+    "validationError": "请检查您的输入后重试。"
+  },
+  "confirmations": {
+    "deleteResume": "您确定要删除此简历吗？",
+    "deleteResumeDescription": "此操作无法撤销。",
+    "discardChanges": "您确定要放弃更改吗？",
+    "discardChangesDescription": "所有未保存的更改将丢失。"
+  }
+}

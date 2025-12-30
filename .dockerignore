@@ -1,0 +1,57 @@
+# Git
+.git
+.gitignore
+
+# Node
+**/node_modules
+**/.next
+**/out
+
+# Python
+**/__pycache__
+**/*.pyc
+**/*.pyo
+**/.pytest_cache
+**/.mypy_cache
+**/*.egg-info
+**/.venv
+**/venv
+
+# Environment files (use UI to configure in Docker)
+**/.env
+**/.env.local
+**/.env.*.local
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Documentation (not needed in image)
+*.md
+!README.md
+docs/
+
+# Build artifacts
+dist/
+build/
+
+# Test files
+**/tests/
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx
+
+# Data directory (mounted as volume)
+apps/backend/data/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker files themselves
+Dockerfile
+docker-compose.yml
+.dockerignore

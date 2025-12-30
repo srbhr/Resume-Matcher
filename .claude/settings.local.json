@@ -1,15 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(yarn build)",
-      "Bash(yarn format)",
-      "Bash(npx tsc:*)",
-      "Bash(pkill -f \"next dev\")",
-      "Bash(yarn install)",
-      "Bash(yarn add:*)",
-      "Bash(timeout:*)",
-      "Bash(true)"
-    ],
-    "deny": []
+      "Bash(docker-compose ps:*)",
+      "Bash(docker-compose logs:*)",
+      "Bash(grep:*)"
+    ]
   }
 }
