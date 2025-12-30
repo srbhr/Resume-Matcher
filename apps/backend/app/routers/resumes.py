@@ -15,6 +15,7 @@ from app.config import settings
 
 logger = logging.getLogger(__name__)
 from app.schemas import (
+    GenerateContentResponse,
     ImproveResumeRequest,
     ImproveResumeResponse,
     ImproveResumeData,
@@ -181,6 +182,7 @@ async def get_resume(resume_id: str = Query(...)) -> ResumeFetchResponse:
             processed_resume=processed_resume,
             cover_letter=resume.get("cover_letter"),
             outreach_message=resume.get("outreach_message"),
+            parent_id=resume.get("parent_id"),
         ),
     )
 
@@ -493,6 +495,148 @@ async def update_outreach_message(
 
     db.update_resume(resume_id, {"outreach_message": request.content})
     return {"message": "Outreach message updated successfully"}
+
+
+@router.post("/{resume_id}/generate-cover-letter", response_model=GenerateContentResponse)
+async def generate_cover_letter_endpoint(resume_id: str) -> GenerateContentResponse:
+    """Generate a cover letter on-demand for an existing tailored resume.
+
+    This endpoint allows users to generate a cover letter after a resume has been
+    tailored, without needing to re-tailor the entire resume. It requires:
+    - The resume must be a tailored resume (has parent_id)
+    - The resume must have an associated job context in the improvements table
+    """
+    # Get the resume
+    resume = db.get_resume(resume_id)
+    if not resume:
+        raise HTTPException(status_code=404, detail="Resume not found")
+
+    # Check if it's a tailored resume (has parent_id)
+    if not resume.get("parent_id"):
+        raise HTTPException(
+            status_code=400,
+            detail="Cover letter can only be generated for tailored resumes. "
+            "Please tailor this resume to a job description first.",
+        )
+
+    # Get improvement record to find the job_id
+    improvement = db.get_improvement_by_tailored_resume(resume_id)
+    if not improvement:
+        raise HTTPException(
+            status_code=400,
+            detail="No job context found for this resume. "
+            "The resume may have been created before job tracking was implemented.",
+        )
+
+    # Get the job description
+    job = db.get_job(improvement["job_id"])
+    if not job:
+        raise HTTPException(
+            status_code=404,
+            detail="The associated job description was not found.",
+        )
+
+    # Get resume data
+    resume_data = resume.get("processed_data")
+    if not resume_data:
+        raise HTTPException(
+            status_code=400,
+            detail="Resume has no processed data. Please re-upload the resume.",
+        )
+
+    # Get language setting
+    language = _get_content_language()
+
+    # Generate cover letter
+    try:
+        cover_letter_content = await generate_cover_letter(
+            resume_data, job["content"], language
+        )
+    except Exception as e:
+        logger.error(f"Cover letter generation failed: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to generate cover letter: {str(e)}",
+        )
+
+    # Save to resume record
+    db.update_resume(resume_id, {"cover_letter": cover_letter_content})
+
+    return GenerateContentResponse(
+        content=cover_letter_content,
+        message="Cover letter generated successfully",
+    )
+
+
+@router.post("/{resume_id}/generate-outreach", response_model=GenerateContentResponse)
+async def generate_outreach_endpoint(resume_id: str) -> GenerateContentResponse:
+    """Generate an outreach message on-demand for an existing tailored resume.
+
+    This endpoint allows users to generate a cold outreach message after a resume
+    has been tailored. It requires:
+    - The resume must be a tailored resume (has parent_id)
+    - The resume must have an associated job context in the improvements table
+    """
+    # Get the resume
+    resume = db.get_resume(resume_id)
+    if not resume:
+        raise HTTPException(status_code=404, detail="Resume not found")
+
+    # Check if it's a tailored resume (has parent_id)
+    if not resume.get("parent_id"):
+        raise HTTPException(
+            status_code=400,
+            detail="Outreach message can only be generated for tailored resumes. "
+            "Please tailor this resume to a job description first.",
+        )
+
+    # Get improvement record to find the job_id
+    improvement = db.get_improvement_by_tailored_resume(resume_id)
+    if not improvement:
+        raise HTTPException(
+            status_code=400,
+            detail="No job context found for this resume. "
+            "The resume may have been created before job tracking was implemented.",
+        )
+
+    # Get the job description
+    job = db.get_job(improvement["job_id"])
+    if not job:
+        raise HTTPException(
+            status_code=404,
+            detail="The associated job description was not found.",
+        )
+
+    # Get resume data
+    resume_data = resume.get("processed_data")
+    if not resume_data:
+        raise HTTPException(
+            status_code=400,
+            detail="Resume has no processed data. Please re-upload the resume.",
+        )
+
+    # Get language setting
+    language = _get_content_language()
+
+    # Generate outreach message
+    try:
+        outreach_content = await generate_outreach_message(
+            resume_data, job["content"], language
+        )
+    except Exception as e:
+        logger.error(f"Outreach message generation failed: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to generate outreach message: {str(e)}",
+        )
+
+    # Save to resume record
+    db.update_resume(resume_id, {"outreach_message": outreach_content})
+
+    return GenerateContentResponse(
+        content=outreach_content,
+        message="Outreach message generated successfully",
+    )
 
 
 @router.get("/{resume_id}/cover-letter/pdf")
