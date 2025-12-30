@@ -2,7 +2,6 @@
 
 import json
 import logging
-import os
 import re
 from typing import Any
 
@@ -72,25 +71,6 @@ def get_model_name(config: LLMConfig) -> str:
 
     # Add provider prefix for models that need it
     return f"{prefix}{config.model}" if prefix else config.model
-
-
-def setup_llm_environment(config: LLMConfig) -> None:
-    """Set up environment variables for LiteLLM."""
-    env_map = {
-        "openai": "OPENAI_API_KEY",
-        "anthropic": "ANTHROPIC_API_KEY",
-        "openrouter": "OPENROUTER_API_KEY",
-        "gemini": "GEMINI_API_KEY",
-        "deepseek": "DEEPSEEK_API_KEY",
-    }
-
-    # Set the appropriate API key environment variable
-    if config.provider in env_map and config.api_key:
-        os.environ[env_map[config.provider]] = config.api_key
-
-    # For Ollama, set the base URL
-    if config.provider == "ollama" and config.api_base:
-        os.environ["OLLAMA_API_BASE"] = config.api_base
 
 
 async def check_llm_health(config: LLMConfig | None = None) -> dict[str, Any]:

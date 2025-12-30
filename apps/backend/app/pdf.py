@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-import logging
 from typing import Optional
 
 from playwright.async_api import Browser, Error as PlaywrightError, Page, async_playwright

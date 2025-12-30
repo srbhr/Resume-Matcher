@@ -2,15 +2,16 @@
 
 ## Executive Summary
 
-Analyzed **36 violations** reported by the AI PR review agent across 11 files.
+Analyzed **36 violations** reported by the AI PR review agent across 11 files. After consolidating duplicates and related issues, **29 distinct items** are documented below.
 
 | Category | Count | Status |
 |----------|-------|--------|
 | Critical (MUST FIX) | 4 | FIXED |
 | Security Issues | 6 | FIXED |
-| Code Quality (Deferred) | 12 | Document Only |
-| False Positives | 6 | No Action |
-| Other Low Priority | 8 | Document Only |
+| Code Quality (Deferred) | 7 | Document Only |
+| Architecture (Deferred) | 5 | Document Only |
+| Security Architectural (Deferred) | 3 | Document Only |
+| False Positives | 4 | No Action |
 
 ---
 

@@ -4,6 +4,8 @@ import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+
+logger = logging.getLogger(__name__)
 from fastapi.middleware.cors import CORSMiddleware
 
 from app import __version__
@@ -24,12 +26,12 @@ async def lifespan(app: FastAPI):
     try:
         await close_pdf_renderer()
     except Exception as e:
-        logging.error(f"Error closing PDF renderer: {e}")
+        logger.error(f"Error closing PDF renderer: {e}")
 
     try:
         db.close()
     except Exception as e:
-        logging.error(f"Error closing database: {e}")
+        logger.error(f"Error closing database: {e}")
 
 
 app = FastAPI(
