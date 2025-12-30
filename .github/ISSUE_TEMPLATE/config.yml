@@ -1,0 +1,15 @@
+# This prevents users from clicking "Open new issue" without picking a template first.
+blank_issues_enabled: false
+
+contact_links:
+  - name: 💬 Ask a Question (Discussions)
+    url: https://github.com/srbhr/Resume-Matcher/discussions
+    about: Please ask usage questions or discuss ideas here before opening a formal issue.
+
+  - name: 🔐 Report a Security Vulnerability
+    url: https://github.com/srbhr/Resume-Matcher/security/advisories/new
+    about: Please do not open public issues for security vulnerabilities.
+
+  - name: 📖 Read the Documentation
+    url: https://github.com/srbhr/Resume-Matcher/blob/master/README.md
+    about: Check the docs to see if your answer is already there.

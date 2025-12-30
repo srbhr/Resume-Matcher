@@ -1,388 +1,302 @@
-# Resume Matcher - GitHub Copilot Instructions
+# Repository Guidelines - GitHub CoPilot Instructions
 
-## Purpose & Role
+## Table of Contents
 
-You are an expert coding assistant for the **Resume Matcher** platform - an AI-powered system that helps users optimize resumes for ATS compatibility. Your role is to:
+(Read from Project Root)
 
-- **Generate consistent, high-quality code** following project patterns
-- **Maintain architectural integrity** across backend (FastAPI) and frontend (Next.js) 
-- **Apply domain-specific knowledge** of resume processing and job matching
-- **Follow security best practices** for handling sensitive PII data
-- **Write maintainable, well-documented code** with proper error handling
+- [Documentation](#documentation)
+- [Project Structure & Module Organization](#project-structure--module-organization)
+- [Build, Test, and Development Commands](#build-test-and-development-commands)
+- [Coding Style & Naming Conventions](#coding-style--naming-conventions)
+- [Testing Guidelines](#testing-guidelines)
+- [Commit & Pull Request Guidelines](#commit--pull-request-guidelines)
+- [LLM & AI Workflow Notes](#llm--ai-workflow-notes)
+- [Resume Template Settings](#resume-template-settings)
+- [Content Language Settings](#content-language-settings)
 
-## General Guidelines
+---
 
-### Tone & Approach
-- **Be precise and actionable** - focus on specific implementation details
-- **Prioritize code quality** over speed - emphasize maintainability
-- **Use domain terminology** consistently throughout the codebase
-- **Always consider security implications** when handling resume/job data
+## Documentation
 
-### Core Principles
-- **Follow async/await patterns** for all I/O operations
-- **Use dependency injection** for database sessions and services
-- **Implement proper error handling** with custom exception hierarchies
-- **Apply consistent naming conventions** across backend and frontend
-- **Write self-documenting code** with clear variable and function names
+(Read from Project Root)
 
-## Technology Stack & Architecture
+All project documentation is located in the `docs/` folder:
 
-### Backend Stack (`apps/backend/`)
-- **Language**: Python 3.12+ with type hints
-- **Framework**: `FastAPI` with async/await patterns
-- **Database**: `SQLite` with `SQLAlchemy` ORM (async sessions)
-- **AI Integration**: `Ollama` serving `gemma3:4b` model locally
-- **Document Processing**: `MarkItDown` for PDF/DOCX conversion
-- **Validation**: `Pydantic` models for request/response schemas
+| Document | Description |
+|----------|-------------|
+| [backend-guide.md](docs/backend-guide.md) | Backend architecture, modules, and API endpoints |
+| [frontend-workflow.md](docs/frontend-workflow.md) | User flow, page routes, and component architecture |
+| [front-end-apis.md](docs/front-end-apis.md) | API contract between frontend and backend |
+| [style-guide.md](docs/style-guide.md) | Swiss International Style design system |
+| [backend-architecture.md](docs/backend-architecture.md) | Detailed backend architecture diagrams |
+| [frontend-architecture.md](docs/frontend-architecture.md) | Detailed frontend architecture diagrams |
+| [api-flow-maps.md](docs/api-flow-maps.md) | API request/response flow diagrams |
+| [design-system.md](docs/design-system.md) | Extended design system documentation |
+| [template-system.md](docs/template-system.md) | Resume template system documentation |
+| [pdf-template-guide.md](docs/pdf-template-guide.md) | **PDF rendering & template editing guide** |
+| [print_pdf_design_spec.md](docs/print_pdf_design_spec.md) | PDF generation specifications |
+| [resume_template_design_spec.md](docs/resume_template_design_spec.md) | Resume template design specifications |
+| [i18n-preparation.md](docs/i18n-preparation.md) | Internationalization preparation notes |
+| [backend-requirements.md](docs/backend-requirements.md) | API contract specifications |
+| [review-todo.md](docs/review-todo.md) | Review checklist and TODOs |
 
-### Frontend Stack (`apps/frontend/`)
-- **Language**: TypeScript with strict mode enabled
-- **Framework**: `Next.js` 15+ with App Router pattern
-- **Styling**: `Tailwind CSS` 4.0 with utility-first approach
-- **Components**: `Radix UI` primitives with custom composition
-- **State**: React hooks and context (avoid external state management)
+## Project Structure & Module Organization
 
-### Project Structure
-```
-apps/backend/app/
-├── models/          # SQLAlchemy database models
-├── services/        # Business logic layer (service pattern)
-├── api/router/      # FastAPI route handlers  
-├── agent/           # AI agent management and providers
-├── prompt/          # AI prompt templates and schemas
-├── schemas/         # Pydantic models and JSON schemas
-└── core/            # Configuration, database, exceptions
+### Backend (`apps/backend/`)
+A lean FastAPI application with multi-provider AI support. See **[docs/backend-guide.md](docs/backend-guide.md)** for detailed architecture documentation.
 
-apps/frontend/
-├── app/             # Next.js App Router pages and layouts
-├── components/      # Reusable UI components
-└── lib/             # Utilities, API clients, type definitions
-```
+- `app/main.py` - FastAPI entry point with CORS and router setup
+- `app/config.py` - Pydantic settings loaded from environment
+- `app/database.py` - TinyDB wrapper for JSON storage
+- `app/llm.py` - LiteLLM wrapper with JSON mode support, retry logic, and robust JSON extraction
+- `app/routers/` - API endpoints (health, config, resumes, jobs)
+- `app/services/` - Business logic (parser, improver)
+- `app/schemas/` - Pydantic models matching frontend contracts
+- `app/prompts/` - Simplified LLM prompt templates
 
-## Domain Terminology & Data Models
+### Frontend (`apps/frontend/`)
+Next.js dashboard with Swiss International Style design. See **[docs/frontend-workflow.md](docs/frontend-workflow.md)** for user flow and **[docs/front-end-apis.md](docs/front-end-apis.md)** for API contracts.
 
-### Resume Processing Terms
-- **Resume Parsing**: Convert PDF/DOCX documents to structured JSON data
-- **Structured Resume**: JSON with `personal_data`, `experiences`, `skills`, `education` sections
-- **Resume Keywords**: Skills and terms extracted from resume content for matching
-- **ATS Compatibility**: Resume's ability to pass Applicant Tracking System filters
+- `app/` - Next.js routes (dashboard, builder, tailor, resumes, settings, print)
+- `components/` - Reusable UI components (including `ConfirmDialog` with danger/success variants)
+- `lib/` - API clients and utilities (`lib/api/resume.ts` includes CRUD operations)
+- `hooks/` - Custom React hooks
 
-### Job Analysis Terms  
-- **Job Description Processing**: Convert job postings to structured format
-- **Structured Job**: JSON with `job_title`, `company_profile`, `key_responsibilities`, `qualifications`
-- **Job Keywords**: Requirements and skills extracted from job descriptions
-- **Match Score**: Compatibility percentage between resume and job (0-100%)
+**Key Features:**
+- Dashboard auto-refreshes on window focus (handles deletions from other pages)
+- `ConfirmDialog` component supports `danger`, `warning`, `success`, and `default` variants
+- Delete flow includes confirmation before and success message after deletion
 
-### Core Data Models
-**Raw Data Storage:**
-```python
-Resume: {id, resume_id, content, content_type, created_at}
-Job: {id, job_id, resume_id, content, created_at}
-```
+### Root Tooling
+- `package.json` - Workflow coordination and scripts
 
-**Processed/Structured Data:**
-```python
-ProcessedResume: {
-    resume_id, personal_data, experiences, projects, 
-    skills, education, extracted_keywords, processed_at
-}
-ProcessedJob: {
-    job_id, job_title, company_profile, qualifications,
-    key_responsibilities, extracted_keywords, processed_at
-}
-```
+## Build, Test, and Development Commands
+- `npm run install` provisions the frontend and, via `uv`, the backend virtual environment.
+- `npm run dev` launches FastAPI on `:8000` and the UI on `:3000`; use `npm run dev:backend` or `npm run dev:frontend` to focus on a single tier.
+- Production builds: `npm run build` for both stacks, `npm run build:frontend` for UI-only.
+- Quality checks: `npm run lint` for the UI, `npm run format` to apply Prettier.
 
-### JSON Schema Conventions
-- **Dates**: Use `YYYY-MM-DD` format consistently
-- **Ongoing positions**: Use string `"Present"` for end dates
-- **Foreign keys**: Maintain relationships between raw and processed data
-- **JSON columns**: Store flexible structured data for complex objects
+## Coding Style & Naming Conventions
 
-## Development Workflows
-
-### Adding New Resume Processing Feature
-
-1. **Create Database Model** (`apps/backend/app/models/`)
-   - Add new field to `ProcessedResume` model
-   - Include proper JSON column type for complex data
-   - Add database migration if needed
-
-2. **Update Service Layer** (`apps/backend/app/services/resume_service.py`)
-   - Extend `ResumeService` class with new method
-   - Use async/await for all database operations
-   - Implement proper error handling with custom exceptions
-
-3. **Add API Endpoint** (`apps/backend/app/api/router/v1/resume.py`)
-   - Create new route with proper HTTP method
-   - Use Pydantic models for request/response validation
-   - Include OpenAPI documentation with examples
-
-4. **Frontend Integration** (`apps/frontend/`)
-   - Add TypeScript types in `lib/types/`
-   - Create API client function in `lib/api/`
-   - Build UI components in `components/`
-   - Update pages in `app/` directory
-
-### File Processing Workflow
-
-1. **Upload Validation**
-   ```python
-   # Validate file type and size
-   if file.content_type not in ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]:
-       raise HTTPException(status_code=400, detail="Unsupported file type")
-   ```
-
-2. **Document Processing**
-   ```python
-   # Use temporary files for security
-   with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_file:
-       temp_file.write(file_bytes)
-       result = self.md.convert(temp_file.name)
-       os.unlink(temp_file.name)  # Always clean up
-   ```
-
-3. **AI Processing**
-   ```python
-   # Use AgentManager for structured responses
-   agent_manager = AgentManager(model="gemma3:4b")
-   structured_data = await agent_manager.generate_structured_response(
-       prompt=prompt_template.format(content=content),
-       schema=json_schema,
-       validation_model=StructuredResumeModel
-   )
-   ```
-
-### Error Handling Pattern
-
-```python
-# Custom exception hierarchy
-class ResumeMatcherException(Exception):
-    """Base exception for Resume Matcher operations"""
-    pass
-
-class ResumeParsingError(ResumeMatcherException):
-    """Raised when resume parsing fails"""
-    pass
-
-class AIProcessingError(ResumeMatcherException):
-    """Raised when AI processing fails"""
-    pass
-
-# Usage in service methods
-try:
-    result = await self.process_resume(content)
-except ValidationError as e:
-    raise ResumeParsingError(f"Invalid resume structure: {e}")
-except Exception as e:
-    logger.error(f"Unexpected error: {e}", exc_info=True)
-    raise ResumeMatcherException("Processing failed")
-```
-
-## Coding Standards & Patterns
+### Frontend (TypeScript/React)
+- **Design System**: All UI changes MUST follow the **Swiss International Style** in [docs/style-guide.md](docs/style-guide.md).
+    - Use `font-serif` for headers, `font-mono` for metadata, `font-sans` for body text.
+    - Color palette: `#F0F0E8` (Canvas), `#000000` (Ink), `#1D4ED8` (Hyper Blue), `#15803D` (Signal Green), `#F97316` (Alert Orange), `#DC2626` (Alert Red), `#4B5563` (Steel Grey).
+    - Components: `rounded-none` with 1px black borders and hard shadows.
+- Use PascalCase for components, camelCase for helpers.
+- Tailwind utility classes for styling; run Prettier before committing.
+- **Textarea Enter Key**: All textareas in forms should include `onKeyDown` with `e.stopPropagation()` for Enter key to ensure newlines work correctly:
+  ```tsx
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter') e.stopPropagation();
+  };
+  ```
 
 ### Backend (Python/FastAPI)
-- **Always use async/await** for database operations and external API calls
-- **Follow service layer pattern**: Controllers → Services → Models
-- **Use Pydantic models** for all request/response validation
-- **Implement custom exceptions** with proper inheritance hierarchy
-- **Use dependency injection** for database sessions (`Depends(get_db_session)`)
-- **Add type hints** to all function parameters and return values
-- **Write docstrings** for all public methods explaining purpose and parameters
+- Python 3.11+, 4-space indents, type hints on all functions.
+- Async functions for I/O operations (database, LLM calls).
+- Mirror patterns in `app/services/improver.py` for new services.
+- Pydantic models for all request/response schemas.
+- Prompts go in `app/prompts/templates.py`.
+- **Error Handling**: Log detailed errors server-side, return generic messages to clients:
+  ```python
+  except Exception as e:
+      logger.error(f"Operation failed: {e}")
+      raise HTTPException(status_code=500, detail="Operation failed. Please try again.")
+  ```
+- **Race Conditions**: Use `asyncio.Lock()` for shared resource initialization (see `app/pdf.py` for example).
+- **Mutable Defaults**: Always use `copy.deepcopy()` when assigning mutable default values to avoid shared state bugs.
 
-### Frontend (TypeScript/Next.js)
-- **Use TypeScript strict mode** with proper interface definitions
-- **Implement App Router patterns** with proper layout hierarchy
-- **Create custom hooks** for state management and API interactions
-- **Follow component composition** patterns with `Radix UI` primitives
-- **Use Tailwind CSS** utility classes with component variants
-- **Implement error boundaries** and loading states for better UX
+### Environment Files
+- Backend: Copy `apps/backend/.env.example` to `.env`
+- Frontend: Copy to `apps/frontend/.env.local`
+- Only templates (`.example`, `.env.local.example`) belong in Git.
 
-### File Processing Patterns
-```python
-# Always use temporary files for document processing
-with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_file:
-    temp_file.write(file_bytes)
-    # Process file
-    os.unlink(temp_file.name)  # Clean up
-```
+## Testing Guidelines
+- UI contributions must pass `npm run lint`; add Jest or Playwright suites beneath `apps/frontend/__tests__/` named `*.test.tsx` as functionality expands.
+- Backend tests belong in `apps/backend/tests/` using `test_*.py` naming. Execute them with `uv run python -m pytest` once `pytest` is added, and seed anonymised resume/job fixtures.
 
-### AI Agent Patterns
-```python
-# Use AgentManager for AI operations
-agent_manager = AgentManager(model="gemma3:4b")
-response = await agent_manager.generate_structured_response(
-    prompt=prompt_template.format(data),
-    schema=json_schema,
-    validation_model=PydanticModel
-)
-```
+## Commit & Pull Request Guidelines
+- History shows concise, sentence-style subjects (e.g., `Add custom funding link to FUNDING.yml`) and GitHub merge commits; keep messages short and, if using prefixes, stick to `type: summary` in the imperative.
+- Reference issues (`Fixes #123`) and call out schema or prompt changes in the PR description so reviewers can smoke-test downstream agents.
+- List local verification commands and attach screenshots for UI or API changes.
 
-## API Design Principles
+## LLM & AI Workflow Notes
+- **Multi-Provider Support**: Backend uses LiteLLM to support OpenAI, Anthropic, OpenRouter, Gemini, DeepSeek, and Ollama through a unified API.
+- **API Key Handling**: API keys are passed directly to `litellm.acompletion()` via the `api_key` parameter (not via `os.environ`) to avoid race conditions in async contexts.
+- **JSON Mode**: The `complete_json()` function automatically enables `response_format={"type": "json_object"}` for providers that support it (OpenAI, Anthropic, Gemini, DeepSeek, and major OpenRouter models).
+- **Retry Logic**: JSON completions include 2 automatic retries with progressively lower temperature (0.1 → 0.0) to improve reliability.
+- **JSON Extraction**: Robust bracket-matching algorithm in `_extract_json()` handles malformed responses, markdown code blocks, and edge cases. Includes infinite recursion protection when content starts with `{` but matching fails.
+- **Error Handling Pattern**: LLM functions log detailed errors server-side but return generic messages to clients to avoid exposing internal details. Example:
+  ```python
+  except Exception as e:
+      logger.error(f"LLM completion failed: {e}")
+      raise ValueError("LLM completion failed. Please check your API configuration.")
+  ```
+- **Adding Prompts**: Add new prompt templates to `apps/backend/app/prompts/templates.py`. Keep prompts simple and direct—avoid complex escaping.
+- **Prompt Guidelines**:
+  - Use `{variable}` for substitution (single braces)
+  - Include example JSON schemas for structured outputs
+  - Keep instructions concise: "Output ONLY the JSON object, no other text"
+- **Provider Configuration**: Users configure their preferred AI provider via the Settings page (`/settings`) or `PUT /api/v1/config/llm-api-key`.
+- **Health Checks**: The `/api/v1/health` endpoint validates LLM connectivity. Note: Docker health checks must use `/api/v1/health` (not `/health`).
+- **Timeouts**: All LLM calls have configurable timeouts (30s for health checks, 120s for completions, 180s for JSON operations).
 
-### RESTful Endpoints
-- **Use descriptive resource names**: `/api/v1/resumes`, `/api/v1/jobs`
-- **Implement proper HTTP status codes** and error responses
-- **Use consistent response formats** with proper typing
-- **Version APIs** with `/v1/` prefix for future compatibility
+## Custom Sections System
 
-### Request/Response Patterns
-- **Accept multipart/form-data** for file uploads
-- **Return structured JSON** responses with consistent schemas
-- **Implement streaming responses** for long-running operations
-- **Use proper pagination** for list endpoints
+The application supports dynamic resume sections with full customization.
 
-### Error Handling
-```python
-# Custom exception hierarchy
-class ResumeMatcherException(Exception):
-    """Base exception for Resume Matcher operations"""
-    pass
+### Section Types
+| Type | Description | Example Uses |
+|------|-------------|--------------|
+| `personalInfo` | Special type for header (always first) | Name, contact details |
+| `text` | Single text block | Summary, objective, statement |
+| `itemList` | Array of items with title, subtitle, years, description | Experience, projects, publications |
+| `stringList` | Simple array of strings | Skills, languages, hobbies |
 
-class ResumeParsingError(ResumeMatcherException):
-    """Raised when resume parsing fails"""
-    pass
+### Section Features
+- **Rename sections**: Change display names (e.g., "Education" → "Academic Background")
+- **Reorder sections**: Up/down buttons to change section order
+- **Hide sections**: Toggle visibility (hidden sections still editable, just not in PDF)
+- **Delete sections**: Remove custom sections entirely
+- **Add custom sections**: Create new sections with any name and type
 
-class AIProcessingError(ResumeMatcherException):
-    """Raised when AI processing fails"""
-    pass
+### Section Controls (UI)
+Each section (except Personal Info) has these controls in the header:
+| Control | Icon | Function |
+|---------|------|----------|
+| Visibility | 👁 Eye / EyeOff | Toggle show/hide in PDF preview |
+| Move Up | ⬆ ChevronUp | Move section earlier in order |
+| Move Down | ⬇ ChevronDown | Move section later in order |
+| Rename | ✏️ Pencil | Edit section display name |
+| Delete | 🗑 Trash | Hide (default) or delete (custom) |
 
-class JobKeywordExtractionError(ResumeMatcherException):
-    """Raised when job keyword extraction fails"""
-    pass
-```
+### Hidden Section Behavior
+- Hidden sections appear in the form with:
+  - Dashed border and 60% opacity
+  - "Hidden from PDF" badge (amber)
+- Hidden sections are still editable
+- Only PDF/preview hides them (uses `getSortedSections` which filters by visibility)
+- Form shows all sections (uses `getAllSections`)
 
-## Testing Conventions
+### Key Files
+| File | Purpose |
+|------|---------|
+| `apps/backend/app/schemas/models.py` | `SectionType`, `SectionMeta`, `CustomSection` models |
+| `apps/frontend/lib/utils/section-helpers.ts` | Section management utilities (`getAllSections`, `getSortedSections`) |
+| `apps/frontend/components/builder/section-header.tsx` | Section controls UI with visibility toggle |
+| `apps/frontend/components/builder/add-section-dialog.tsx` | Add custom section dialog |
+| `apps/frontend/components/builder/resume-form.tsx` | Dynamic form rendering with all sections |
+| `apps/frontend/components/resume/dynamic-resume-section.tsx` | Renders custom sections in templates |
 
-### Backend Testing
-- **Use pytest** with async test patterns
-- **Mock external dependencies** (Ollama AI, file system operations)
-- **Test service layer** logic independently from API endpoints
-- **Implement database transaction rollback** for test isolation
-- **Use factory patterns** for test data creation
-
-### Frontend Testing
-- **Use Jest and React Testing Library** for component testing
-- **Test user interactions** and form submissions
-- **Mock API calls** and external dependencies
-- **Test responsive design** and accessibility features
-
-### Integration Testing
-- **Test file upload and processing workflows** end-to-end
-- **Verify AI prompt generation** and response parsing
-- **Test database relationships** and data consistency
-- **Validate API contract compliance**
-
-## Security Considerations
-
-### Data Protection
-- **Resume Data**: Contains PII (names, emails, addresses, work history)
-- **Sanitization**: Remove or mask sensitive information in logs
-- **Storage**: Use secure file handling, avoid storing files permanently
-- **Processing**: Process documents in memory when possible, clean up temp files
-
-### Input Validation
-- **Validate file types and sizes** for uploads (PDF/DOCX only)
-- **Sanitize user inputs** to prevent injection attacks
-- **Validate JSON schemas strictly** for AI-generated content
-- **Implement rate limiting** for API endpoints
-
-### AI Safety
-- **Validate AI model responses** against expected schemas
-- **Implement fallback mechanisms** for AI failures
-- **Log AI interactions** for debugging without exposing sensitive data
-- **Use structured prompts** to prevent prompt injection
-
-## Development Patterns
-
-### Database Operations
-```python
-# Always use async patterns
-async def get_resume_by_id(db: AsyncSession, resume_id: str) -> Optional[Resume]:
-    result = await db.execute(select(Resume).where(Resume.resume_id == resume_id))
-    return result.scalar_one_or_none()
-```
-
-### Component Structure (Frontend)
+### Data Structure
 ```typescript
-// Use composition patterns with proper typing
-interface ResumeAnalysisProps {
-  resumeId: string;
-  onAnalysisComplete: (score: number) => void;
-}
-
-export function ResumeAnalysis({ resumeId, onAnalysisComplete }: ResumeAnalysisProps) {
-  // Component implementation
+interface ResumeData {
+  // ... existing fields (personalInfo, summary, etc.)
+  sectionMeta?: SectionMeta[];  // Section order, names, visibility
+  customSections?: Record<string, CustomSection>;  // Custom section data
 }
 ```
 
-### Environment Configuration
-- **Use environment variables** for sensitive configuration
-- **Provide defaults** for development environments
-- **Document all required environment variables**
-- **Separate configuration** for different deployment environments
+### Migration
+Existing resumes are automatically migrated via lazy normalization - default section metadata is added when a resume is fetched if `sectionMeta` is missing.
 
-## AI Integration Guidelines
+**Important**: The `normalize_resume_data()` function uses `copy.deepcopy(DEFAULT_SECTION_META)` to avoid shared mutable reference bugs. Always use deep copies when assigning default mutable values.
 
-### Prompt Engineering
-- **Use structured prompts** with clear instructions
-- **Include examples** in prompts when possible
-- **Validate AI responses** against Pydantic models
-- **Implement retry logic** for AI failures
+---
 
-### Model Management
-- **Use Ollama** for local AI model serving
-- **Default to lightweight models** (gemma3:4b) for development
-- **Implement model switching** capabilities for different tasks
-- **Monitor AI response quality** and processing times
+## Resume Template Settings
 
-## Performance Considerations
+The application supports multiple resume templates with extensive formatting controls.
 
-- **Use database indexes** on frequently queried fields
-- **Implement async processing** for file operations
-- **Cache processed results** when appropriate
-- **Use connection pooling** for database operations
-- **Implement proper logging** without performance impact
+### Template Types
+| Template | Description |
+|----------|-------------|
+| `swiss-single` | Traditional single-column layout with maximum content density |
+| `swiss-two-column` | 65%/35% split with experience in main column, skills in sidebar |
 
-## PDF Generation
+### Formatting Controls
+| Control | Range | Default | Effect |
+|---------|-------|---------|--------|
+| Margins | 5-25mm | 8mm | Page margins |
+| Section Spacing | 1-5 | 3 | Gap between major sections |
+| Item Spacing | 1-5 | 2 | Gap between items within sections |
+| Line Height | 1-5 | 3 | Text line height |
+| Base Font Size | 1-5 | 3 | Overall text scale (11-16px) |
+| Header Scale | 1-5 | 3 | Name/section header size multiplier |
+| Header Font | serif/sans-serif/mono | serif | Font family for headers |
+| Body Font | serif/sans-serif/mono | sans-serif | Font family for body text |
+| Compact Mode | boolean | false | Apply 0.6x spacing multiplier (spacing only; margins unchanged) |
+| Contact Icons | boolean | false | Show icons next to contact info |
 
-The application uses Playwright (headless Chromium) to generate PDFs by rendering frontend print pages.
+### Key Files
+| File | Purpose |
+|------|---------|
+| `apps/frontend/lib/types/template-settings.ts` | Type definitions, defaults, CSS variable mapping |
+| `apps/frontend/app/(default)/css/globals.css` | CSS custom properties for resume styling |
+| `apps/frontend/components/builder/formatting-controls.tsx` | UI controls for template settings |
+| `apps/frontend/components/resume/resume-single-column.tsx` | Single column template |
+| `apps/frontend/components/resume/resume-two-column.tsx` | Two column template |
 
-### Architecture
-- Backend constructs URL: `{FRONTEND_BASE_URL}/print/resumes/{id}?{params}`
-- Playwright navigates to the URL and captures PDF
-- The `render_resume_pdf()` function in `app/pdf.py` handles this
+### CSS Variables
+Templates use CSS custom properties for styling:
+- `--section-gap`, `--item-gap`, `--line-height` - Spacing
+- `--font-size-base`, `--header-scale`, `--section-header-scale` - Typography
+- `--header-font` - Header font family
+- `--body-font` - Body text font family
+- `--margin-top/bottom/left/right` - Page margins
+Templates should use the `resume-*` helper classes in `apps/frontend/app/(default)/css/globals.css` to ensure all spacing and typography respond to template settings.
+Formatting controls include an "Effective Output" summary that reflects compact-mode adjustments for spacing/line-height.
 
-### Port Configuration
-The backend must know where the frontend is running:
+---
 
-```env
-# In apps/backend/.env
-FRONTEND_BASE_URL=http://localhost:3000  # Must match frontend port
-CORS_ORIGINS=["http://localhost:3000", "http://127.0.0.1:3000"]
+## Internationalization (i18n)
+
+The application supports multi-language UI and content generation.
+
+### Supported Languages
+| Code | Language | Native Name |
+|------|----------|-------------|
+| `en` | English | English |
+| `es` | Spanish | Español |
+| `zh` | Chinese (Simplified) | 中文 |
+| `ja` | Japanese | 日本語 |
+
+### Two Language Settings
+1. **UI Language** - Interface text (buttons, labels, navigation)
+2. **Content Language** - LLM-generated content (resumes, cover letters)
+
+Both are configured independently in the Settings page.
+
+### How It Works
+- **UI translations**: Simple JSON import approach, no external dependencies
+- **Content generation**: Backend receives language, passes to LLM prompts via `{output_language}`
+- **Existing content** in database remains in original language
+
+### Key Files
+| File | Purpose |
+|------|---------|
+| `apps/frontend/messages/*.json` | UI translation files (en, es, zh, ja) |
+| `apps/frontend/lib/i18n/translations.ts` | `useTranslations` hook |
+| `apps/frontend/lib/context/language-context.tsx` | LanguageProvider (UI + content) |
+| `apps/backend/app/prompts/templates.py` | LLM prompts with `{output_language}` |
+
+### Using Translations
+```typescript
+import { useTranslations } from '@/lib/i18n';
+
+const { t } = useTranslations();
+<button>{t('common.save')}</button>
 ```
 
-### Error Handling Pattern
-```python
-# Custom exception for PDF rendering errors
-class PDFRenderError(Exception):
-    """Custom exception for PDF rendering errors with helpful messages."""
-    pass
+### Storage
+| Key | Purpose |
+|-----|---------|
+| `resume_matcher_ui_language` | UI language (localStorage only) |
+| `resume_matcher_content_language` | Content language (localStorage + backend) |
 
-# Catch connection errors and provide helpful messages
-try:
-    pdf_bytes = await render_resume_pdf(url, pageSize, margins=pdf_margins)
-except PDFRenderError as e:
-    raise HTTPException(status_code=503, detail=str(e))
-```
-
-### Common Issues
-- **Connection refused**: `FRONTEND_BASE_URL` doesn't match where frontend is running
-- **Blank PDFs**: CSS visibility rules not configured in `globals.css`
-
-## Deployment & Operations
-
-- **Use environment-specific configuration**
-- **Implement health check endpoints**
-- **Use structured logging** for debugging
-- **Monitor AI model performance** and availability
-- **Implement graceful error handling** and recovery
+### Adding a New Language
+1. Create `apps/frontend/messages/{code}.json` with all translations
+2. Add locale to `apps/frontend/i18n/config.ts`
+3. Add language name to `apps/backend/app/prompts/templates.py`
+4. Update `SUPPORTED_LANGUAGES` in backend config router

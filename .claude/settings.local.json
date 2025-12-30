@@ -5,7 +5,8 @@
       "Bash(docker-compose logs:*)",
       "Bash(grep:*)",
       "Bash(uv run python:*)",
-      "Bash(npm run lint:*)"
+      "Bash(npm run lint:*)",
+      "Bash(npm run build:*)"
     ]
   }
 }

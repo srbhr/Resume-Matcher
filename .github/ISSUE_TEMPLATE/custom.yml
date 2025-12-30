@@ -1,0 +1,12 @@
+name: Custom / Other
+description: Describe this issue template's purpose here.
+title: ""
+labels: []
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Please describe your issue.
+    validations:
+      required: true
