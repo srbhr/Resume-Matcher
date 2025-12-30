@@ -56,6 +56,27 @@ Follow us on [LinkedIn](https://www.linkedin.com/company/resume-matcher/) for up
 
 Star the repo to support development and get notified of new releases.
 
+## Sponsors
+
+![sponsors](assets/sponsors.png)
+
+We are grateful to our sponsors who help keep this project going. If you find Resume Matcher helpful, please consider [**supporting us**](https://github.com/sponsors/srbhr) to ensure continued development and improvements.
+
+| Sponsor | Description |
+|---------|-------------|
+| [APIDECK](https://apideck.com) | One API to connect your app to 400+ SaaS platforms (accounting, HRIS, CRM, file storage). Build integrations once, not 50 times. 🌐 [apideck.com](https://apideck.com) |
+
+## Support the Development by Donating
+
+![donate](assets/supporting_resume_matcher.png)
+
+If you would like to support the development of Resume Matcher, you can do so by donating. Your contributions will help us keep the project alive and continue adding new features.
+
+| Platform  | Link                                   |
+|-----------|----------------------------------------|
+| GitHub    | [![GitHub Sponsors](https://img.shields.io/github/sponsors/srbhr?style=for-the-badge&color=1d4ed8&labelColor=F0F0E8&logo=github&logoColor=black)](https://github.com/sponsors/srbhr) |
+| Buy Me a Coffee | [![BuyMeACoffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&color=1d4ed8&labelColor=F0F0E8&logoColor=black)](https://www.buymeacoffee.com/srbhr) |
+
 ## Key Features
 
 ![resume_matcher_features](assets/resume_matcher_features.png)
@@ -174,16 +195,7 @@ Check out the roadmap if you would like to work on the features that are planned
   <img src="https://contrib.rocks/image?repo=srbhr/Resume-Matcher" />
 </a>
 
-## Support the Development by Donating
-
-![donate](assets/supporting_resume_matcher.png)
-
-If you would like to support the development of Resume Matcher, you can do so by donating. Your contributions will help us keep the project alive and continue adding new features.
-
-| Platform  | Link                                   |
-|-----------|----------------------------------------|
-| GitHub    | [![GitHub Sponsors](https://img.shields.io/github/sponsors/srbhr?style=for-the-badge&color=1d4ed8&labelColor=F0F0E8&logo=github&logoColor=black)](https://github.com/sponsors/srbhr) |
-| Buy Me a Coffee | [![BuyMeACoffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&color=1d4ed8&labelColor=F0F0E8&logoColor=black)](https://www.buymeacoffee.com/srbhr) |
+<br/>
 
 <details>
   <summary><kbd>Star History</kbd></summary>
