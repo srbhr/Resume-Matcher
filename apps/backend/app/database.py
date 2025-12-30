@@ -172,6 +172,20 @@ class Database:
         self.improvements.insert(doc)
         return doc
 
+    def get_improvement_by_tailored_resume(
+        self, tailored_resume_id: str
+    ) -> dict[str, Any] | None:
+        """Get improvement record by tailored resume ID.
+
+        This is used to retrieve the job context for on-demand
+        cover letter and outreach message generation.
+        """
+        Improvement = Query()
+        result = self.improvements.search(
+            Improvement.tailored_resume_id == tailored_resume_id
+        )
+        return result[0] if result else None
+
     # Stats
     def get_stats(self) -> dict[str, Any]:
         """Get database statistics."""
