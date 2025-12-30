@@ -86,7 +86,7 @@ async def analyze_resume(resume_id: str) -> AnalysisResponse:
         logger.error(f"Resume analysis failed: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to analyze resume: {str(e)}",
+            detail="Failed to analyze resume. Please try again.",
         )
 
 
@@ -125,7 +125,7 @@ async def generate_enhancements(request: EnhanceRequest) -> EnhancementPreview:
         logger.error(f"Failed to re-analyze resume: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to process enhancements: {str(e)}",
+            detail="Failed to process enhancements. Please try again.",
         )
 
     # Build question_id -> item_id mapping
@@ -257,13 +257,20 @@ async def apply_enhancements(
 
     # Update the resume in database
     updated_content = json.dumps(updated_data, indent=2)
-    db.update_resume(
-        resume_id,
-        {
-            "content": updated_content,
-            "processed_data": updated_data,
-        },
-    )
+    try:
+        db.update_resume(
+            resume_id,
+            {
+                "content": updated_content,
+                "processed_data": updated_data,
+            },
+        )
+    except Exception as e:
+        logger.error(f"Failed to save enhancements to database: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to save enhancements. Please try again.",
+        )
 
     return {
         "message": "Enhancements applied successfully",

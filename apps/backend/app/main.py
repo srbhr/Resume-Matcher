@@ -1,5 +1,6 @@
 """FastAPI application entry point."""
 
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -19,9 +20,16 @@ async def lifespan(app: FastAPI):
     settings.data_dir.mkdir(parents=True, exist_ok=True)
     await init_pdf_renderer()
     yield
-    # Shutdown
-    await close_pdf_renderer()
-    db.close()
+    # Shutdown - wrap each cleanup in try-except to ensure all resources are released
+    try:
+        await close_pdf_renderer()
+    except Exception as e:
+        logging.error(f"Error closing PDF renderer: {e}")
+
+    try:
+        db.close()
+    except Exception as e:
+        logging.error(f"Error closing database: {e}")
 
 
 app = FastAPI(

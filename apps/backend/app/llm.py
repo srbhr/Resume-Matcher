@@ -107,15 +107,16 @@ async def check_llm_health(config: LLMConfig | None = None) -> dict[str, Any]:
             "error": "API key not configured",
         }
 
-    setup_llm_environment(config)
     model_name = get_model_name(config)
 
     try:
         # Make a minimal test call with timeout
+        # Pass API key directly to avoid race conditions with global os.environ
         response = await litellm.acompletion(
             model=model_name,
             messages=[{"role": "user", "content": "Hi"}],
             max_tokens=5,
+            api_key=config.api_key,
             api_base=config.api_base,
             timeout=LLM_TIMEOUT_HEALTH_CHECK,
         )
@@ -148,7 +149,6 @@ async def complete(
     if config is None:
         config = get_llm_config()
 
-    setup_llm_environment(config)
     model_name = get_model_name(config)
 
     messages = []
@@ -156,16 +156,23 @@ async def complete(
         messages.append({"role": "system", "content": system_prompt})
     messages.append({"role": "user", "content": prompt})
 
-    response = await litellm.acompletion(
-        model=model_name,
-        messages=messages,
-        max_tokens=max_tokens,
-        temperature=temperature,
-        api_base=config.api_base,
-        timeout=LLM_TIMEOUT_COMPLETION,
-    )
+    try:
+        # Pass API key directly to avoid race conditions with global os.environ
+        response = await litellm.acompletion(
+            model=model_name,
+            messages=messages,
+            max_tokens=max_tokens,
+            temperature=temperature,
+            api_key=config.api_key,
+            api_base=config.api_base,
+            timeout=LLM_TIMEOUT_COMPLETION,
+        )
 
-    return response.choices[0].message.content
+        return response.choices[0].message.content
+    except Exception as e:
+        # Log the actual error server-side for debugging
+        logging.error(f"LLM completion failed: {e}", extra={"model": model_name})
+        raise ValueError("LLM completion failed. Please check your API configuration and try again.") from e
 
 
 def _supports_json_mode(provider: str, model: str) -> bool:
@@ -229,10 +236,11 @@ def _extract_json(content: str) -> str:
         if end_idx != -1:
             return content[: end_idx + 1]
 
-    # Try to find JSON object in the content
+    # Try to find JSON object in the content (only if not already at start)
     start_idx = content.find("{")
-    if start_idx != -1:
-        # Recursively extract from the found position
+    if start_idx > 0:
+        # Only recurse if { is found after position 0 to avoid infinite recursion
+        # If content starts with { but bracket matching failed, we don't retry
         return _extract_json(content[start_idx:])
 
     # Check if content looks like JSON properties without braces
@@ -261,7 +269,6 @@ async def complete_json(
     if config is None:
         config = get_llm_config()
 
-    setup_llm_environment(config)
     model_name = get_model_name(config)
 
     # Build messages
@@ -278,11 +285,13 @@ async def complete_json(
     for attempt in range(retries + 1):
         try:
             # Build request kwargs
+            # Pass API key directly to avoid race conditions with global os.environ
             kwargs: dict[str, Any] = {
                 "model": model_name,
                 "messages": messages,
                 "max_tokens": max_tokens,
                 "temperature": 0.1 if attempt == 0 else 0.0,  # Lower temp on retry
+                "api_key": config.api_key,
                 "api_base": config.api_base,
                 "timeout": LLM_TIMEOUT_JSON,
             }

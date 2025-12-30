@@ -76,8 +76,14 @@ async function fetchResumeData(id: string): Promise<ResumeData> {
   if (payload.data.raw_resume?.content) {
     try {
       return JSON.parse(payload.data.raw_resume.content) as ResumeData;
-    } catch {
-      return {} as ResumeData;
+    } catch (error) {
+      // Log error for debugging instead of silently failing
+      console.error('Failed to parse resume JSON:', {
+        resumeId: id,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        contentPreview: payload.data.raw_resume.content.substring(0, 100),
+      });
+      throw new Error('Failed to parse resume data. The resume content may be corrupted.');
     }
   }
   return {} as ResumeData;

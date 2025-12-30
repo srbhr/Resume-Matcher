@@ -94,6 +94,14 @@ Next.js dashboard with Swiss International Style design. See **[docs/frontend-wo
 - Mirror patterns in `app/services/improver.py` for new services.
 - Pydantic models for all request/response schemas.
 - Prompts go in `app/prompts/templates.py`.
+- **Error Handling**: Log detailed errors server-side, return generic messages to clients:
+  ```python
+  except Exception as e:
+      logger.error(f"Operation failed: {e}")
+      raise HTTPException(status_code=500, detail="Operation failed. Please try again.")
+  ```
+- **Race Conditions**: Use `asyncio.Lock()` for shared resource initialization (see `app/pdf.py` for example).
+- **Mutable Defaults**: Always use `copy.deepcopy()` when assigning mutable default values to avoid shared state bugs.
 
 ### Environment Files
 - Backend: Copy `apps/backend/.env.example` to `.env`
@@ -111,16 +119,23 @@ Next.js dashboard with Swiss International Style design. See **[docs/frontend-wo
 
 ## LLM & AI Workflow Notes
 - **Multi-Provider Support**: Backend uses LiteLLM to support OpenAI, Anthropic, OpenRouter, Gemini, DeepSeek, and Ollama through a unified API.
+- **API Key Handling**: API keys are passed directly to `litellm.acompletion()` via the `api_key` parameter (not via `os.environ`) to avoid race conditions in async contexts.
 - **JSON Mode**: The `complete_json()` function automatically enables `response_format={"type": "json_object"}` for providers that support it (OpenAI, Anthropic, Gemini, DeepSeek, and major OpenRouter models).
 - **Retry Logic**: JSON completions include 2 automatic retries with progressively lower temperature (0.1 → 0.0) to improve reliability.
-- **JSON Extraction**: Robust bracket-matching algorithm in `_extract_json()` handles malformed responses, markdown code blocks, and edge cases.
+- **JSON Extraction**: Robust bracket-matching algorithm in `_extract_json()` handles malformed responses, markdown code blocks, and edge cases. Includes infinite recursion protection when content starts with `{` but matching fails.
+- **Error Handling Pattern**: LLM functions log detailed errors server-side but return generic messages to clients to avoid exposing internal details. Example:
+  ```python
+  except Exception as e:
+      logger.error(f"LLM completion failed: {e}")
+      raise ValueError("LLM completion failed. Please check your API configuration.")
+  ```
 - **Adding Prompts**: Add new prompt templates to `apps/backend/app/prompts/templates.py`. Keep prompts simple and direct—avoid complex escaping.
 - **Prompt Guidelines**:
   - Use `{variable}` for substitution (single braces)
   - Include example JSON schemas for structured outputs
   - Keep instructions concise: "Output ONLY the JSON object, no other text"
 - **Provider Configuration**: Users configure their preferred AI provider via the Settings page (`/settings`) or `PUT /api/v1/config/llm-api-key`.
-- **Health Checks**: The `/api/v1/status` endpoint validates LLM connectivity on app startup.
+- **Health Checks**: The `/api/v1/health` endpoint validates LLM connectivity. Note: Docker health checks must use `/api/v1/health` (not `/health`).
 - **Timeouts**: All LLM calls have configurable timeouts (30s for health checks, 120s for completions, 180s for JSON operations).
 
 ## Custom Sections System
@@ -181,6 +196,8 @@ interface ResumeData {
 
 ### Migration
 Existing resumes are automatically migrated via lazy normalization - default section metadata is added when a resume is fetched if `sectionMeta` is missing.
+
+**Important**: The `normalize_resume_data()` function uses `copy.deepcopy(DEFAULT_SECTION_META)` to avoid shared mutable reference bugs. Always use deep copies when assigning default mutable values.
 
 ---
 

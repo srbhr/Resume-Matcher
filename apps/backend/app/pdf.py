@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import asyncio
+import logging
 from typing import Optional
 
 from playwright.async_api import Browser, Error as PlaywrightError, Page, async_playwright
@@ -12,17 +14,31 @@ class PDFRenderError(Exception):
 
     pass
 
+
 _playwright = None
 _browser: Optional[Browser] = None
+_init_lock = asyncio.Lock()  # Lock to prevent race condition during initialization
 
 
 async def init_pdf_renderer() -> None:
-    """Initialize the Playwright browser instance."""
+    """Initialize the Playwright browser instance.
+
+    Uses asyncio.Lock to prevent race conditions when multiple
+    concurrent requests try to initialize the browser simultaneously.
+    """
     global _playwright, _browser
+
+    # Fast path: already initialized
     if _browser is not None:
         return
-    _playwright = await async_playwright().start()
-    _browser = await _playwright.chromium.launch()
+
+    # Use lock to prevent race condition during initialization
+    async with _init_lock:
+        # Double-check after acquiring lock
+        if _browser is not None:
+            return
+        _playwright = await async_playwright().start()
+        _browser = await _playwright.chromium.launch()
 
 
 async def close_pdf_renderer() -> None:

@@ -1,5 +1,6 @@
 """Pydantic models matching frontend expectations."""
 
+import copy
 from enum import Enum
 from typing import Any
 
@@ -169,7 +170,9 @@ def normalize_resume_data(data: dict[str, Any]) -> dict[str, Any]:
     that don't have sectionMeta or customSections fields.
     """
     if not data.get("sectionMeta"):
-        data["sectionMeta"] = DEFAULT_SECTION_META
+        # Use deepcopy to avoid shared mutable reference bug
+        # Without this, all resumes would share the same list reference
+        data["sectionMeta"] = copy.deepcopy(DEFAULT_SECTION_META)
     if "customSections" not in data:
         data["customSections"] = {}
     return data

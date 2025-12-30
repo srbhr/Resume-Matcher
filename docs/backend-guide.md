@@ -126,10 +126,12 @@ data = await complete_json(prompt, system_prompt, config, retries=2)
 
 | Feature | Description |
 |---------|-------------|
+| API Key Passing | Keys passed directly to `litellm.acompletion()` via `api_key` param (avoids os.environ race conditions) |
 | JSON Mode | Auto-enables `response_format={"type": "json_object"}` for supported providers |
 | Retry Logic | 2 automatic retries with lower temperature on each attempt (0.1 → 0.0) |
-| JSON Extraction | Bracket-matching algorithm handles malformed responses and markdown blocks |
+| JSON Extraction | Bracket-matching algorithm handles malformed responses and markdown blocks (with recursion guard) |
 | Timeouts | Configurable per-operation: 30s (health), 120s (completion), 180s (JSON) |
+| Error Handling | Logs detailed errors server-side, returns generic messages to clients |
 
 **JSON Mode Support:**
 ```python
@@ -474,6 +476,27 @@ All endpoints return consistent error responses:
 | 422 | Unprocessable (parsing failed) |
 | 500 | Server error (LLM failure) |
 | 503 | Service unavailable (PDF rendering failed) |
+
+### Error Handling Best Practices
+
+**Security Rule**: Never expose raw exception messages to clients. Log detailed errors server-side for debugging, return generic messages to users.
+
+```python
+# CORRECT - Generic message to client, detailed log server-side
+except Exception as e:
+    logger.error(f"Resume improvement failed: {e}")
+    raise HTTPException(
+        status_code=500,
+        detail="Failed to improve resume. Please try again.",
+    )
+
+# WRONG - Exposes internal details (CWE-209)
+except Exception as e:
+    raise HTTPException(
+        status_code=500,
+        detail=f"Failed to improve resume: {str(e)}",  # Don't do this!
+    )
+```
 
 ### PDF Rendering Errors
 

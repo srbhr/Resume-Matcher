@@ -100,9 +100,10 @@ async def upload_resume(file: UploadFile = File(...)) -> ResumeUploadResponse:
     try:
         markdown_content = await parse_document(content, file.filename or "resume.pdf")
     except Exception as e:
+        logger.error(f"Document parsing failed: {e}")
         raise HTTPException(
             status_code=422,
-            detail=f"Failed to parse document: {str(e)}",
+            detail="Failed to parse document. Please ensure it's a valid PDF or DOCX file.",
         )
 
     # Check if this is the first resume (make it master)
@@ -328,9 +329,10 @@ async def improve_resume_endpoint(
         )
 
     except Exception as e:
+        logger.error(f"Resume improvement failed: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to improve resume: {str(e)}",
+            detail="Failed to improve resume. Please try again.",
         )
 
 
@@ -556,7 +558,7 @@ async def generate_cover_letter_endpoint(resume_id: str) -> GenerateContentRespo
         logger.error(f"Cover letter generation failed: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to generate cover letter: {str(e)}",
+            detail="Failed to generate cover letter. Please try again.",
         )
 
     # Save to resume record
@@ -627,7 +629,7 @@ async def generate_outreach_endpoint(resume_id: str) -> GenerateContentResponse:
         logger.error(f"Outreach message generation failed: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to generate outreach message: {str(e)}",
+            detail="Failed to generate outreach message. Please try again.",
         )
 
     # Save to resume record

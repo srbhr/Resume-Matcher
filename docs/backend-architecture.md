@@ -300,11 +300,11 @@ db.get_stats() → {
 ```python
 # Configuration
 get_llm_config() → LLMConfig  # Load from settings
-setup_llm_environment(config) → None  # Set env vars for LiteLLM
 
 # Health Check
 check_llm_health(config: LLMConfig | None) → dict
 # Makes minimal test call: "Hi" → 5 tokens max
+# Passes api_key directly to litellm.acompletion() (avoids os.environ race conditions)
 # Timeout: 30 seconds
 # Returns: {healthy: bool, provider, model, error?}
 
@@ -316,6 +316,9 @@ complete(
     max_tokens: int = 4096,
     temperature: float = 0.7
 ) → str
+# Passes api_key directly to litellm.acompletion()
+# Includes try-except with server-side logging
+# Returns generic error messages to callers
 # Timeout: 120 seconds
 
 # JSON Completion (with retry logic)
@@ -326,11 +329,14 @@ complete_json(
     max_tokens: int = 4096,
     retries: int = 2
 ) → dict
+# Passes api_key directly to litellm.acompletion()
 # Uses JSON mode when supported (openai, anthropic, gemini, deepseek)
 # Falls back to text extraction via _extract_json()
 # Timeout: 180 seconds
 # Retry: Lowers temperature (0.1 → 0.0), adds JSON instruction
 ```
+
+**Important**: API keys are passed directly via the `api_key` parameter instead of setting `os.environ`. This prevents race conditions when multiple async requests use different API configurations.
 
 ### 4.3 JSON Extraction Helper
 
@@ -342,6 +348,9 @@ _extract_json(content: str) → str
 # 3. Raw JSON starting with {
 # 4. JSON properties without braces (wraps them)
 # Raises ValueError if no JSON found
+#
+# Includes recursion guard: Only recurses if { is found after position 0
+# This prevents infinite recursion when content starts with { but bracket matching fails
 ```
 
 ### 4.4 LLM Timeout Constants
@@ -599,10 +608,13 @@ Output in this JSON format:
 # Global browser instance (initialized at startup)
 _playwright = None
 _browser: Browser | None = None
+_init_lock = asyncio.Lock()  # Prevents race conditions during init
 
 async def init_pdf_renderer() → None
 # Called at app startup via lifespan
-# Launches headless Chromium browser
+# Uses asyncio.Lock to prevent race conditions when multiple
+# concurrent requests try to initialize the browser simultaneously
+# Pattern: Fast path check → Lock → Double-check → Initialize
 
 async def close_pdf_renderer() → None
 # Called at app shutdown
@@ -897,10 +909,18 @@ async def lifespan(app: FastAPI):
     settings.data_dir.mkdir(parents=True, exist_ok=True)
     await init_pdf_renderer()  # Launch Chromium
     yield
-    # Shutdown
-    await close_pdf_renderer()  # Close Chromium
-    db.close()  # Close TinyDB
+    # Shutdown - Each cleanup wrapped in try-except to ensure all resources are released
+    try:
+        await close_pdf_renderer()  # Close Chromium
+    except Exception as e:
+        logging.error(f"Error closing PDF renderer: {e}")
+    try:
+        db.close()  # Close TinyDB
+    except Exception as e:
+        logging.error(f"Error closing database: {e}")
 ```
+
+**Note**: Shutdown cleanup uses individual try-except blocks so one failure doesn't prevent cleanup of other resources.
 
 ### 12.2 Request Flow
 
