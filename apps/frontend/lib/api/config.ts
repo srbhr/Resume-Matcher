@@ -202,3 +202,80 @@ export async function updateLanguageConfig(update: LanguageConfigUpdate): Promis
 
   return res.json();
 }
+
+// API Key Management types
+export type ApiKeyProvider = 'openai' | 'anthropic' | 'google' | 'openrouter' | 'deepseek';
+
+export interface ApiKeyProviderStatus {
+  provider: ApiKeyProvider;
+  configured: boolean;
+  masked_key: string | null;
+}
+
+export interface ApiKeyStatusResponse {
+  providers: ApiKeyProviderStatus[];
+}
+
+export interface ApiKeysUpdateRequest {
+  openai?: string;
+  anthropic?: string;
+  google?: string;
+  openrouter?: string;
+  deepseek?: string;
+}
+
+export interface ApiKeysUpdateResponse {
+  message: string;
+  updated_providers: string[];
+}
+
+// Provider display names for API keys
+export const API_KEY_PROVIDER_INFO: Record<ApiKeyProvider, { name: string; description: string }> =
+  {
+    openai: { name: 'OpenAI', description: 'GPT-4, GPT-4o, etc.' },
+    anthropic: { name: 'Anthropic', description: 'Claude 3.5, Claude 4, etc.' },
+    google: { name: 'Google', description: 'Gemini 1.5, Gemini 2, etc.' },
+    openrouter: { name: 'OpenRouter', description: 'Access multiple providers' },
+    deepseek: { name: 'DeepSeek', description: 'DeepSeek chat models' },
+  };
+
+// Fetch API key status for all providers
+export async function fetchApiKeyStatus(): Promise<ApiKeyStatusResponse> {
+  const res = await apiFetch('/config/api-keys', { credentials: 'include' });
+
+  if (!res.ok) {
+    throw new Error(`Failed to load API key status (status ${res.status}).`);
+  }
+
+  return res.json();
+}
+
+// Update API keys for one or more providers
+export async function updateApiKeys(keys: ApiKeysUpdateRequest): Promise<ApiKeysUpdateResponse> {
+  const res = await apiFetch('/config/api-keys', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(keys),
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || `Failed to update API keys (status ${res.status}).`);
+  }
+
+  return res.json();
+}
+
+// Delete API key for a specific provider
+export async function deleteApiKey(provider: ApiKeyProvider): Promise<void> {
+  const res = await apiFetch(`/config/api-keys/${provider}`, {
+    method: 'DELETE',
+    credentials: 'include',
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || `Failed to delete API key (status ${res.status}).`);
+  }
+}

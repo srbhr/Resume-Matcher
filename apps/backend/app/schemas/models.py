@@ -347,6 +347,38 @@ class LanguageConfigResponse(BaseModel):
     supported_languages: list[str] = ["en", "es", "zh", "ja"]
 
 
+# API Key Management Models
+class ApiKeyProviderStatus(BaseModel):
+    """Status of a single API key provider."""
+
+    provider: str  # openai, anthropic, google, etc.
+    configured: bool
+    masked_key: str | None = None  # Shows last 4 chars if configured
+
+
+class ApiKeyStatusResponse(BaseModel):
+    """Response for API key status check."""
+
+    providers: list[ApiKeyProviderStatus]
+
+
+class ApiKeysUpdateRequest(BaseModel):
+    """Request to update API keys."""
+
+    openai: str | None = None
+    anthropic: str | None = None
+    google: str | None = None
+    openrouter: str | None = None
+    deepseek: str | None = None
+
+
+class ApiKeysUpdateResponse(BaseModel):
+    """Response after updating API keys."""
+
+    message: str
+    updated_providers: list[str]
+
+
 # Update Cover Letter/Outreach Models
 class UpdateCoverLetterRequest(BaseModel):
     """Request to update cover letter content."""

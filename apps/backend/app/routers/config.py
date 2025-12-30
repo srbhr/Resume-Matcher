@@ -14,6 +14,15 @@ from app.schemas import (
     FeatureConfigResponse,
     LanguageConfigRequest,
     LanguageConfigResponse,
+    ApiKeyProviderStatus,
+    ApiKeyStatusResponse,
+    ApiKeysUpdateRequest,
+    ApiKeysUpdateResponse,
+)
+from app.config import (
+    get_api_keys_from_config,
+    save_api_keys_to_config,
+    delete_api_key_from_config,
 )
 
 router = APIRouter(prefix="/config", tags=["Configuration"])
@@ -204,3 +213,114 @@ async def update_language_config(request: LanguageConfigRequest) -> LanguageConf
         content_language=stored.get("content_language", legacy_language),
         supported_languages=SUPPORTED_LANGUAGES,
     )
+
+
+# Supported API key providers
+SUPPORTED_PROVIDERS = ["openai", "anthropic", "google", "openrouter", "deepseek"]
+
+
+def _mask_key_short(key: str | None) -> str | None:
+    """Mask API key showing only last 4 characters."""
+    if not key:
+        return None
+    if len(key) <= 4:
+        return "*" * len(key)
+    return "..." + key[-4:]
+
+
+@router.get("/api-keys", response_model=ApiKeyStatusResponse)
+async def get_api_keys_status() -> ApiKeyStatusResponse:
+    """Get status of all configured API keys (masked).
+
+    Returns the configuration status for each supported provider.
+    API keys are masked to show only the last 4 characters.
+    """
+    stored_keys = get_api_keys_from_config()
+
+    providers = []
+    for provider in SUPPORTED_PROVIDERS:
+        key = stored_keys.get(provider)
+        providers.append(
+            ApiKeyProviderStatus(
+                provider=provider,
+                configured=bool(key),
+                masked_key=_mask_key_short(key),
+            )
+        )
+
+    return ApiKeyStatusResponse(providers=providers)
+
+
+@router.post("/api-keys", response_model=ApiKeysUpdateResponse)
+async def update_api_keys(request: ApiKeysUpdateRequest) -> ApiKeysUpdateResponse:
+    """Update API keys for one or more providers.
+
+    Only updates the providers that are explicitly set in the request.
+    Empty strings will clear the key for that provider.
+    """
+    stored_keys = get_api_keys_from_config()
+    updated = []
+
+    # Update each provider if provided in request
+    if request.openai is not None:
+        if request.openai:
+            stored_keys["openai"] = request.openai
+        elif "openai" in stored_keys:
+            del stored_keys["openai"]
+        updated.append("openai")
+
+    if request.anthropic is not None:
+        if request.anthropic:
+            stored_keys["anthropic"] = request.anthropic
+        elif "anthropic" in stored_keys:
+            del stored_keys["anthropic"]
+        updated.append("anthropic")
+
+    if request.google is not None:
+        if request.google:
+            stored_keys["google"] = request.google
+        elif "google" in stored_keys:
+            del stored_keys["google"]
+        updated.append("google")
+
+    if request.openrouter is not None:
+        if request.openrouter:
+            stored_keys["openrouter"] = request.openrouter
+        elif "openrouter" in stored_keys:
+            del stored_keys["openrouter"]
+        updated.append("openrouter")
+
+    if request.deepseek is not None:
+        if request.deepseek:
+            stored_keys["deepseek"] = request.deepseek
+        elif "deepseek" in stored_keys:
+            del stored_keys["deepseek"]
+        updated.append("deepseek")
+
+    save_api_keys_to_config(stored_keys)
+
+    return ApiKeysUpdateResponse(
+        message=f"Updated {len(updated)} API key(s)",
+        updated_providers=updated,
+    )
+
+
+@router.delete("/api-keys/{provider}")
+async def delete_api_key(provider: str) -> dict:
+    """Delete API key for a specific provider.
+
+    Args:
+        provider: The provider name (openai, anthropic, google, openrouter, deepseek)
+
+    Returns:
+        Success message
+    """
+    if provider not in SUPPORTED_PROVIDERS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported provider: {provider}. Supported: {SUPPORTED_PROVIDERS}",
+        )
+
+    delete_api_key_from_config(provider)
+
+    return {"message": f"API key for {provider} has been removed"}

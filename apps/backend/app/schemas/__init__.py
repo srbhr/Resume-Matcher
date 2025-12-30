@@ -2,6 +2,10 @@
 
 from app.schemas.models import (
     AdditionalInfo,
+    ApiKeyProviderStatus,
+    ApiKeysUpdateRequest,
+    ApiKeysUpdateResponse,
+    ApiKeyStatusResponse,
     CustomSection,
     CustomSectionItem,
     Education,
@@ -67,6 +71,10 @@ __all__ = [
     "LanguageConfigResponse",
     "FeatureConfigRequest",
     "FeatureConfigResponse",
+    "ApiKeyProviderStatus",
+    "ApiKeyStatusResponse",
+    "ApiKeysUpdateRequest",
+    "ApiKeysUpdateResponse",
     "UpdateCoverLetterRequest",
     "UpdateOutreachMessageRequest",
     "GenerateContentResponse",
