@@ -9,9 +9,21 @@ import { CoverLetterEditor } from './cover-letter-editor';
 import { OutreachEditor } from './outreach-editor';
 import { CoverLetterPreview } from './cover-letter-preview';
 import { OutreachPreview } from './outreach-preview';
+import { GeneratePrompt } from './generate-prompt';
 import { Button } from '@/components/ui/button';
 import { RetroTabs } from '@/components/ui/retro-tabs';
-import { Download, Save, AlertTriangle, ArrowLeft, RotateCcw, Copy, Check } from 'lucide-react';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import {
+  Download,
+  Save,
+  AlertTriangle,
+  ArrowLeft,
+  RotateCcw,
+  Copy,
+  Check,
+  Sparkles,
+  Loader2,
+} from 'lucide-react';
 import { useResumePreview } from '@/components/common/resume_previewer_context';
 import { PaginatedPreview } from '@/components/preview';
 import {
@@ -21,6 +33,8 @@ import {
   updateResume,
   updateCoverLetter,
   updateOutreachMessage,
+  generateCoverLetter,
+  generateOutreachMessage,
 } from '@/lib/api/resume';
 import { type TemplateSettings, DEFAULT_TEMPLATE_SETTINGS } from '@/lib/types/template-settings';
 
@@ -76,6 +90,14 @@ const ResumeBuilderContent = () => {
   const [isOutreachSaving, setIsOutreachSaving] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
 
+  // On-demand generation state
+  const [isTailoredResume, setIsTailoredResume] = useState(false);
+  const [isGeneratingCoverLetter, setIsGeneratingCoverLetter] = useState(false);
+  const [isGeneratingOutreach, setIsGeneratingOutreach] = useState(false);
+  const [showRegenerateDialog, setShowRegenerateDialog] = useState<
+    'cover-letter' | 'outreach' | null
+  >(null);
+
   // Load template settings from localStorage on mount
   useEffect(() => {
     const savedSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
@@ -120,6 +142,8 @@ const ResumeBuilderContent = () => {
       if (resumeId) {
         try {
           const data = await fetchResume(resumeId);
+          // Track if this is a tailored resume (has parent_id)
+          setIsTailoredResume(Boolean(data.parent_id));
           // Load cover letter and outreach message if available
           if (data.cover_letter) {
             setCoverLetter(data.cover_letter);
@@ -317,6 +341,59 @@ const ResumeBuilderContent = () => {
     }
   };
 
+  // On-demand generation handlers
+  const doGenerateCoverLetter = async () => {
+    if (!resumeId) return;
+    setIsGeneratingCoverLetter(true);
+    setShowRegenerateDialog(null);
+    try {
+      const content = await generateCoverLetter(resumeId);
+      setCoverLetter(content);
+    } catch (error) {
+      console.error('Failed to generate cover letter:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      alert(`Failed to generate cover letter: ${errorMessage}`);
+    } finally {
+      setIsGeneratingCoverLetter(false);
+    }
+  };
+
+  const handleGenerateCoverLetter = () => {
+    if (!resumeId) return;
+    // If content exists, show confirmation dialog
+    if (coverLetter) {
+      setShowRegenerateDialog('cover-letter');
+      return;
+    }
+    doGenerateCoverLetter();
+  };
+
+  const doGenerateOutreach = async () => {
+    if (!resumeId) return;
+    setIsGeneratingOutreach(true);
+    setShowRegenerateDialog(null);
+    try {
+      const content = await generateOutreachMessage(resumeId);
+      setOutreachMessage(content);
+    } catch (error) {
+      console.error('Failed to generate outreach message:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      alert(`Failed to generate outreach message: ${errorMessage}`);
+    } finally {
+      setIsGeneratingOutreach(false);
+    }
+  };
+
+  const handleGenerateOutreach = () => {
+    if (!resumeId) return;
+    // If content exists, show confirmation dialog
+    if (outreachMessage) {
+      setShowRegenerateDialog('outreach');
+      return;
+    }
+    doGenerateOutreach();
+  };
+
   return (
     <div
       className="h-screen w-full bg-[#F0F0E8] flex justify-center items-center p-4 md:p-8"
@@ -388,38 +465,63 @@ const ResumeBuilderContent = () => {
               )}
 
               {/* Cover letter tab actions */}
-              {activeTab === 'cover-letter' && (
-                <Button
-                  variant="success"
-                  size="sm"
-                  onClick={handleDownloadCoverLetter}
-                  disabled={!resumeId || !coverLetter || isDownloading}
-                >
-                  <Download className="w-4 h-4" />
-                  {isDownloading ? 'Generating...' : 'Download'}
-                </Button>
+              {activeTab === 'cover-letter' && coverLetter && (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleGenerateCoverLetter}
+                    disabled={isGeneratingCoverLetter}
+                  >
+                    {isGeneratingCoverLetter ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Sparkles className="w-4 h-4" />
+                    )}
+                    Regenerate
+                  </Button>
+                  <Button
+                    variant="success"
+                    size="sm"
+                    onClick={handleDownloadCoverLetter}
+                    disabled={!resumeId || isDownloading}
+                  >
+                    <Download className="w-4 h-4" />
+                    {isDownloading ? 'Generating...' : 'Download'}
+                  </Button>
+                </>
               )}
 
               {/* Outreach tab actions */}
-              {activeTab === 'outreach' && (
-                <Button
-                  variant="success"
-                  size="sm"
-                  onClick={handleCopyOutreach}
-                  disabled={!outreachMessage}
-                >
-                  {isCopied ? (
-                    <>
-                      <Check className="w-4 h-4" />
-                      Copied!
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-4 h-4" />
-                      Copy to Clipboard
-                    </>
-                  )}
-                </Button>
+              {activeTab === 'outreach' && outreachMessage && (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleGenerateOutreach}
+                    disabled={isGeneratingOutreach}
+                  >
+                    {isGeneratingOutreach ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Sparkles className="w-4 h-4" />
+                    )}
+                    Regenerate
+                  </Button>
+                  <Button variant="success" size="sm" onClick={handleCopyOutreach}>
+                    {isCopied ? (
+                      <>
+                        <Check className="w-4 h-4" />
+                        Copied!
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-4 h-4" />
+                        Copy to Clipboard
+                      </>
+                    )}
+                  </Button>
+                </>
               )}
             </div>
           </div>
@@ -448,24 +550,40 @@ const ResumeBuilderContent = () => {
               )}
 
               {/* Cover Letter Editor */}
-              {activeTab === 'cover-letter' && (
-                <CoverLetterEditor
-                  content={coverLetter}
-                  onChange={setCoverLetter}
-                  onSave={handleSaveCoverLetter}
-                  isSaving={isCoverLetterSaving}
-                />
-              )}
+              {activeTab === 'cover-letter' &&
+                (coverLetter ? (
+                  <CoverLetterEditor
+                    content={coverLetter}
+                    onChange={setCoverLetter}
+                    onSave={handleSaveCoverLetter}
+                    isSaving={isCoverLetterSaving}
+                  />
+                ) : (
+                  <GeneratePrompt
+                    type="cover-letter"
+                    isGenerating={isGeneratingCoverLetter}
+                    onGenerate={handleGenerateCoverLetter}
+                    isTailoredResume={isTailoredResume}
+                  />
+                ))}
 
               {/* Outreach Editor */}
-              {activeTab === 'outreach' && (
-                <OutreachEditor
-                  content={outreachMessage}
-                  onChange={setOutreachMessage}
-                  onSave={handleSaveOutreach}
-                  isSaving={isOutreachSaving}
-                />
-              )}
+              {activeTab === 'outreach' &&
+                (outreachMessage ? (
+                  <OutreachEditor
+                    content={outreachMessage}
+                    onChange={setOutreachMessage}
+                    onSave={handleSaveOutreach}
+                    isSaving={isOutreachSaving}
+                  />
+                ) : (
+                  <GeneratePrompt
+                    type="outreach"
+                    isGenerating={isGeneratingOutreach}
+                    onGenerate={handleGenerateOutreach}
+                    isTailoredResume={isTailoredResume}
+                  />
+                ))}
             </div>
           </div>
 
@@ -492,22 +610,38 @@ const ResumeBuilderContent = () => {
               )}
 
               {/* Cover Letter Preview */}
-              {activeTab === 'cover-letter' && resumeData.personalInfo && (
-                <div className="p-6">
-                  <CoverLetterPreview
-                    content={coverLetter}
-                    personalInfo={resumeData.personalInfo}
-                    pageSize={templateSettings.pageSize}
+              {activeTab === 'cover-letter' &&
+                (coverLetter && resumeData.personalInfo ? (
+                  <div className="p-6">
+                    <CoverLetterPreview
+                      content={coverLetter}
+                      personalInfo={resumeData.personalInfo}
+                      pageSize={templateSettings.pageSize}
+                    />
+                  </div>
+                ) : (
+                  <GeneratePrompt
+                    type="cover-letter"
+                    isGenerating={isGeneratingCoverLetter}
+                    onGenerate={handleGenerateCoverLetter}
+                    isTailoredResume={isTailoredResume}
                   />
-                </div>
-              )}
+                ))}
 
               {/* Outreach Preview */}
-              {activeTab === 'outreach' && (
-                <div className="p-6">
-                  <OutreachPreview content={outreachMessage} />
-                </div>
-              )}
+              {activeTab === 'outreach' &&
+                (outreachMessage ? (
+                  <div className="p-6">
+                    <OutreachPreview content={outreachMessage} />
+                  </div>
+                ) : (
+                  <GeneratePrompt
+                    type="outreach"
+                    isGenerating={isGeneratingOutreach}
+                    onGenerate={handleGenerateOutreach}
+                    isTailoredResume={isTailoredResume}
+                  />
+                ))}
             </div>
           </div>
         </div>
@@ -529,6 +663,20 @@ const ResumeBuilderContent = () => {
           </div>
         </div>
       </div>
+
+      {/* Regenerate Confirmation Dialog */}
+      <ConfirmDialog
+        open={showRegenerateDialog !== null}
+        onOpenChange={(open) => !open && setShowRegenerateDialog(null)}
+        title={`Regenerate ${showRegenerateDialog === 'cover-letter' ? 'Cover Letter' : 'Outreach Message'}?`}
+        description={`This will replace your current ${showRegenerateDialog === 'cover-letter' ? 'cover letter' : 'outreach message'} with a newly generated one. Any edits you've made will be lost.`}
+        confirmLabel="Regenerate"
+        cancelLabel="Cancel"
+        variant="warning"
+        onConfirm={
+          showRegenerateDialog === 'cover-letter' ? doGenerateCoverLetter : doGenerateOutreach
+        }
+      />
     </div>
   );
 };
