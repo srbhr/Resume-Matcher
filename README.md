@@ -31,20 +31,30 @@ Hoping to make this, **VS Code for making resumes**.
 >
 > This project is in active development. New features are being added continuously, and we welcome contributions from the community. There are some breaking changes on the `main` branch. If you have any suggestions or feature requests, please feel free to open an issue on GitHub or discuss it on our [Discord](https://dsc.gg/resume-matcher) server.
 
-## Getting started with Resume Matcher
+## Getting Started
 
-Resume Matcher is designed to help you optimize your resume with the aim to highlight your skills and experience in a way that resonates with potential employers.
+Resume Matcher helps you optimize your resume to highlight skills and experience that resonate with potential employers. Upload your resume, paste a job description, and let AI tailor your content.
 
-We're actively working on improving the platform, building towards a **VS Code for making resumes**, and adding new features. The best way to stay updated is to join the Discord discussion and be part of the active development community.
+### How It Works
 
-> Join our [Discord](https://dsc.gg/resume-matcher) community 👇
+1. **Upload** your master resume (PDF or DOCX)
+2. **Paste** a job description you're targeting
+3. **Review** AI-generated improvements and tailored content
+4. **Export** as a professional PDF with your preferred template
+
+### Stay Connected
+
 [![Discord](assets/resume_matcher_discord.png)](https://dsc.gg/resume-matcher)
 
-> Follow us on [LinkedIn](https://www.linkedin.com/company/resume-matcher/) ✨
+Join our [Discord](https://dsc.gg/resume-matcher) for discussions, feature requests, and community support.
+
 [![LinkedIn](assets/resume_matcher_linkedin.png)](https://www.linkedin.com/company/resume-matcher/)
 
-> ⭐ Star Resume Matcher to support the development and get updates on GitHub.
+Follow us on [LinkedIn](https://www.linkedin.com/company/resume-matcher/) for updates.
+
 ![Star Resume Matcher](assets/star_resume_matcher.png)
+
+Star the repo to support development and get notified of new releases.
 
 ## Key Features
 
