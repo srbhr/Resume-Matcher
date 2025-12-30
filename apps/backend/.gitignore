@@ -1,6 +1,10 @@
 # Database files (local data)
 data/*.json
+data/config.json
 !data/.gitkeep
+
+# Config file with API keys - NEVER COMMIT
+config.json
 
 # Environment
 .env

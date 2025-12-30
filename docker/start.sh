@@ -110,7 +110,7 @@ BACKEND_PID=$!
 # Wait for backend to be ready
 info "Waiting for backend to be ready..."
 for i in {1..30}; do
-    if curl -s http://localhost:8000/health > /dev/null 2>&1; then
+    if curl -s http://localhost:8000/api/v1/health > /dev/null 2>&1; then
         status "Backend is ready (PID: $BACKEND_PID)"
         break
     fi
@@ -125,7 +125,7 @@ done
 echo ""
 info "Starting frontend server..."
 cd /app/frontend
-exec node server.js &
+npm start &
 FRONTEND_PID=$!
 
 echo ""

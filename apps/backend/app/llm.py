@@ -26,13 +26,29 @@ class LLMConfig(BaseModel):
     api_base: str | None = None
 
 
+def _load_stored_config() -> dict:
+    """Load config from config.json file."""
+    config_path = settings.config_path
+    if config_path.exists():
+        try:
+            return json.loads(config_path.read_text())
+        except (json.JSONDecodeError, OSError):
+            return {}
+    return {}
+
+
 def get_llm_config() -> LLMConfig:
-    """Get current LLM configuration from settings."""
+    """Get current LLM configuration.
+
+    Priority: config.json file > environment variables/settings
+    """
+    stored = _load_stored_config()
+
     return LLMConfig(
-        provider=settings.llm_provider,
-        model=settings.llm_model,
-        api_key=settings.llm_api_key,
-        api_base=settings.llm_api_base,
+        provider=stored.get("provider", settings.llm_provider),
+        model=stored.get("model", settings.llm_model),
+        api_key=stored.get("api_key", settings.llm_api_key),
+        api_base=stored.get("api_base", settings.llm_api_base),
     )
 
 

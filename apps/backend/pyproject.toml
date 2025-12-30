@@ -2,7 +2,7 @@
 name = "resume-matcher-backend"
 version = "2.0.0"
 description = "Resume Matcher Backend API - Lean & Local"
-requires-python = ">=3.11"
+requires-python = ">=3.13"
 dependencies = [
     "fastapi>=0.115.0",
     "uvicorn>=0.34.0",

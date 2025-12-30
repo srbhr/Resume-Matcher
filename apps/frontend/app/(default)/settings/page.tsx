@@ -41,7 +41,6 @@ import { useLanguage } from '@/lib/context/language-context';
 import { useTranslations } from '@/lib/i18n';
 import type { SupportedLanguage } from '@/lib/api/config';
 import type { Locale } from '@/i18n/config';
-import { ApiKeysSettings } from '@/components/settings/api-keys-settings';
 
 type Status = 'idle' | 'loading' | 'saving' | 'saved' | 'error' | 'testing';
 
@@ -576,9 +575,6 @@ export default function SettingsPage() {
               )}
             </div>
           </section>
-
-          {/* API Keys Storage Section */}
-          <ApiKeysSettings />
 
           {/* Content Generation Section */}
           <section className="space-y-6">

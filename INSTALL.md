@@ -6,9 +6,9 @@ This guide covers setting up Resume Matcher for local development.
 
 | Requirement | Version | Notes |
 |-------------|---------|-------|
-| Python | 3.11+ | Required for backend |
-| Node.js | 18+ | Required for frontend |
-| npm | 9+ | Included with Node.js |
+| Python | 3.13+ | Required for backend |
+| Node.js | 22+ | Required for frontend |
+| npm | 10+ | Included with Node.js |
 | uv | Latest | Python package manager ([install](https://docs.astral.sh/uv/getting-started/installation/)) |
 
 ## Quick Start

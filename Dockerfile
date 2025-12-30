@@ -4,7 +4,7 @@
 # ============================================
 # Stage 1: Build Frontend
 # ============================================
-FROM node:20-slim AS frontend-builder
+FROM node:22-slim AS frontend-builder
 
 WORKDIR /app/frontend
 
@@ -26,7 +26,7 @@ RUN npm run build
 # ============================================
 # Stage 2: Final Image
 # ============================================
-FROM python:3.12-slim
+FROM python:3.13-slim
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
@@ -60,8 +60,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     # Cleanup
     && rm -rf /var/lib/apt/lists/*
 
-# Install Node.js 20.x
-RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+# Install Node.js 22.x
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
     && apt-get install -y nodejs \
     && rm -rf /var/lib/apt/lists/*
 
@@ -78,9 +78,8 @@ WORKDIR /app/backend
 # Install Python dependencies
 RUN pip install -e .
 
-# Install Playwright and Chromium
-RUN python -m playwright install chromium \
-    && python -m playwright install-deps chromium 2>/dev/null || true
+# Install Playwright system dependencies (as root)
+RUN python -m playwright install-deps chromium 2>/dev/null || true
 
 # ============================================
 # Frontend Setup
@@ -112,6 +111,9 @@ RUN useradd -m -u 1000 appuser \
     && chown -R appuser:appuser /app
 
 USER appuser
+
+# Install Playwright Chromium as appuser (so browsers are in correct location)
+RUN python -m playwright install chromium
 
 # Expose ports
 EXPOSE 3000 8000
