@@ -42,23 +42,19 @@ Once running, access the application at:
 
 ## Initial Setup
 
-### Setting Up API Keys
+### Configuring Your LLM Provider
 
-Unlike local development, Docker deployments don't use `.env` files. Instead, configure API keys through the UI:
+Unlike local development, Docker deployments don't use `.env` files. Instead, configure your AI provider through the UI:
 
 1. Open http://localhost:3000/settings
-2. Scroll to **API Keys Storage** section
-3. Enter your API keys for the providers you want to use
-4. Click **Save** for each provider
-
-Your API keys are stored in `config.json` inside the persistent volume.
-
-### Selecting an LLM Provider
-
-1. In **LLM Configuration** section, select your provider
-2. Enter the model name (or use the default)
+2. In the **LLM Configuration** section:
+   - Select your provider (OpenAI, Anthropic, etc.)
+   - Enter the model name (or use the default)
+   - Enter your API key
 3. Click **Save**
 4. Click **Test Connection** to verify
+
+Your configuration is stored in `config.json` inside the persistent volume.
 
 ## Data Persistence
 
@@ -150,7 +146,7 @@ Check if both services are running:
 
 ```bash
 # Backend health
-curl http://localhost:8000/health
+curl http://localhost:8000/api/v1/health
 
 # Frontend (should return HTML)
 curl http://localhost:3000
