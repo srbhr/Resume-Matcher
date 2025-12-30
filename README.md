@@ -16,10 +16,10 @@ Hoping to make this, **VS Code for making resumes**.
 
 <div align="center">
 
-![Stars](https://img.shields.io/github/stars/srbhr/Resume-Matcher?labelColor=black&style=for-the-badge&color=c20a71)
-![Apache 2.0](https://img.shields.io/github/license/srbhr/Resume-Matcher?labelColor=black&style=for-the-badge&color=c20a71) ![Forks](https://img.shields.io/github/forks/srbhr/Resume-Matcher?labelColor=black&style=for-the-badge&color=c20a71) ![version](https://img.shields.io/badge/Version-0.1%20Veridis%20Quo-FFF?labelColor=black&logo=LinkedIn&style=for-the-badge&color=c20a71)
+![Stars](https://img.shields.io/github/stars/srbhr/Resume-Matcher?labelColor=F0F0E8&style=for-the-badge&color=1d4ed8)
+![Apache 2.0](https://img.shields.io/github/license/srbhr/Resume-Matcher?labelColor=F0F0E8&style=for-the-badge&color=1d4ed8) ![Forks](https://img.shields.io/github/forks/srbhr/Resume-Matcher?labelColor=F0F0E8&style=for-the-badge&color=1d4ed8) ![version](https://img.shields.io/badge/Version-1.0%20Aerodynamic%20-FFF?labelColor=F0F0E8&style=for-the-badge&color=1d4ed8)
 
-[![Discord](https://img.shields.io/discord/1122069176962531400?labelColor=black&logo=discord&logoColor=c20a71&style=for-the-badge&color=c20a71)](https://dsc.gg/resume-matcher) [![Website](https://img.shields.io/badge/website-Resume%20Matcher-FFF?labelColor=black&style=for-the-badge&color=c20a71)](https://resumematcher.fyi) [![LinkedIn](https://img.shields.io/badge/LinkedIn-Resume%20Matcher-FFF?labelColor=black&logo=LinkedIn&style=for-the-badge&color=c20a71)](https://www.linkedin.com/company/resume-matcher/)
+[![Discord](https://img.shields.io/discord/1122069176962531400?labelColor=F0F0E8&logo=discord&logoColor=1d4ed8&style=for-the-badge&color=1d4ed8)](https://dsc.gg/resume-matcher) [![Website](https://img.shields.io/badge/website-Resume%20Matcher-FFF?labelColor=F0F0E8&style=for-the-badge&color=1d4ed8)](https://resumematcher.fyi) [![LinkedIn](https://img.shields.io/badge/LinkedIn-Resume%20Matcher-FFF?labelColor=F0F0E8&logo=LinkedIn&style=for-the-badge&color=1d4ed8)](https://www.linkedin.com/company/resume-matcher/)
 
 <a href="https://trendshift.io/repositories/565" target="_blank"><img src="https://trendshift.io/api/badge/repositories/565" alt="srbhr%2FResume-Matcher | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
 
@@ -31,58 +31,128 @@ Hoping to make this, **VS Code for making resumes**.
 >
 > This project is in active development. New features are being added continuously, and we welcome contributions from the community. There are some breaking changes on the `main` branch. If you have any suggestions or feature requests, please feel free to open an issue on GitHub or discuss it on our [Discord](https://dsc.gg/resume-matcher) server.
 
-## Getting started with Resume Matcher
+## Getting Started
 
-Resume Matcher is designed to help you optimize your resume with the aim to highlight your skills and experience in a way that resonates with potential employers.
+Resume Matcher helps you optimize your resume to highlight skills and experience that resonate with potential employers. Upload your resume, paste a job description, and let AI tailor your content.
 
-We're actively working on improving the platform, building towards a **VS Code for making resumes**, and adding new features. The best way to stay updated is to join the Discord discussion and be part of the active development community.
+### How It Works
 
-> Join our [Discord](https://dsc.gg/resume-matcher) community 👇
+1. **Upload** your master resume (PDF or DOCX)
+2. **Paste** a job description you're targeting
+3. **Review** AI-generated improvements and tailored content
+4. **Export** as a professional PDF with your preferred template
+
+### Stay Connected
+
 [![Discord](assets/resume_matcher_discord.png)](https://dsc.gg/resume-matcher)
 
-> Follow us on [LinkedIn](https://www.linkedin.com/company/resume-matcher/) ✨
+Join our [Discord](https://dsc.gg/resume-matcher) for discussions, feature requests, and community support.
+
 [![LinkedIn](assets/resume_matcher_linkedin.png)](https://www.linkedin.com/company/resume-matcher/)
 
-> ⭐ Star Resume Matcher to support the development and get updates on GitHub.
+Follow us on [LinkedIn](https://www.linkedin.com/company/resume-matcher/) for updates.
+
 ![Star Resume Matcher](assets/star_resume_matcher.png)
+
+Star the repo to support development and get notified of new releases.
 
 ## Key Features
 
 ![resume_matcher_features](assets/resume_matcher_features.png)
 
-- **Works locally**: No need to upload your resume to a server. Everything runs on your machine with open source AI models by Ollama.
-- **ATS Compatibility**: Get a detailed analysis of your resume's compatibility with ATS systems.
-- **Instant Match Score**: Upload resume & job description for a quick match score and key improvement areas.
-- **Keyword Optimizer**: Align your resume with job keywords and identify critical content gaps.
-- **Guided Improvements**: Get clear suggestions to make your resume stand out.
+### Core Features
+- **Resume Tailoring**: AI-powered optimization of your resume for specific job descriptions
+- **Multi-Provider LLM Support**: Works with OpenAI, Anthropic, Gemini, OpenRouter, DeepSeek, and Ollama
+- **Works Locally**: Run everything on your machine with Ollama - no API costs required
+- **PDF Export**: Professional PDF generation with customizable templates
+
+### Resume Builder
+- **Two Template Styles**: Single-column (traditional) and two-column (modern) layouts
+- **Custom Sections**: Add, rename, reorder, and hide sections to match your needs
+- **Formatting Controls**: Adjust margins, spacing, fonts, and more
+- **Live Preview**: See changes instantly with paginated preview
+
+### AI-Powered Content
+- **Cover Letter Generation**: Auto-generate tailored cover letters for each job application
+- **Outreach Messages**: Generate cold outreach messages for networking
+- **Keyword Optimization**: Align your resume with job keywords and highlight relevant experience
+- **Guided Improvements**: Get actionable suggestions to make your resume stand out
+
+### Internationalization
+- **Multi-Language UI**: Interface available in English, Spanish, Chinese, and Japanese
+- **Multi-Language Content**: Generate resumes and cover letters in your preferred language
 
 ### Roadmap
 
-If you have any suggestions or feature requests, please feel free to open an issue on GitHub. And discuss it on our [Discord](https://dsc.gg/resume-matcher) server.
+If you have any suggestions or feature requests, please feel free to open an issue on GitHub or discuss it on our [Discord](https://dsc.gg/resume-matcher) server.
 
-- Visual keyword highlighting.
-- AI Canvas, which can help to craft impactful, metric-driven resume content.
-- Multi-job description optimization.
+- Visual keyword highlighting
+- AI Canvas for crafting impactful, metric-driven resume content
+- Multi-job description optimization
 
 ## How to Install
 
 ![Installation](assets/how_to_install_resumematcher.png)
 
-Follow the instructions in the [SETUP.md](SETUP.md) file to set up the project locally. The setup script will install all the necessary dependencies and configure your environment.
+For detailed setup instructions, see the **[SETUP.md](SETUP.md)** guide.
 
-The project is built using:
+### Prerequisites
 
-- FastAPI for the backend.
-- Next.js for the frontend.
-- Ollama for local AI model serving.
-- Tailwind CSS for styling.
-- SQLite for the database.
+| Tool | Version | Installation |
+|------|---------|--------------|
+| Python | 3.13+ | [python.org](https://python.org) |
+| Node.js | 22+ | [nodejs.org](https://nodejs.org) |
+| uv | Latest | [astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/) |
 
-| Technology   | Info/Version                               |
-|--------------|---------------------------------------|
-| Python      | 3.12+                   |
-| Next.js      | 15+                   |
-| Ollama       |        0.6.7        |
+### Quick Start
+
+```bash
+# Clone the repository
+git clone https://github.com/srbhr/Resume-Matcher.git
+cd Resume-Matcher
+
+# Backend (Terminal 1)
+cd apps/backend
+cp .env.example .env        # Configure your AI provider
+uv sync                      # Install dependencies
+uv run uvicorn app.main:app --reload --port 8000
+
+# Frontend (Terminal 2)
+cd apps/frontend
+npm install
+npm run dev
+```
+
+Open **http://localhost:3000** and configure your AI provider in Settings.
+
+### Supported AI Providers
+
+| Provider | Local/Cloud | Notes |
+|----------|-------------|-------|
+| **Ollama** | Local | Free, runs on your machine |
+| **OpenAI** | Cloud | GPT-4o, GPT-4o-mini |
+| **Anthropic** | Cloud | Claude 3.5 Sonnet |
+| **Google Gemini** | Cloud | Gemini 1.5 Flash/Pro |
+| **OpenRouter** | Cloud | Access to multiple models |
+| **DeepSeek** | Cloud | DeepSeek Chat |
+
+### Docker Deployment
+
+```bash
+docker-compose up -d
+```
+
+See [docs/docker.md](docs/docker.md) for detailed Docker instructions.
+
+### Tech Stack
+
+| Component | Technology |
+|-----------|------------|
+| Backend | FastAPI, Python 3.13+, LiteLLM |
+| Frontend | Next.js 15, React 19, TypeScript |
+| Database | TinyDB (JSON file storage) |
+| Styling | Tailwind CSS 4, Swiss International Style |
+| PDF | Headless Chromium via Playwright |
 
 ## Join Us and Contribute
 
@@ -108,8 +178,8 @@ If you would like to support the development of Resume Matcher, you can do so by
 
 | Platform  | Link                                   |
 |-----------|----------------------------------------|
-| GitHub    | [![GitHub Sponsors](https://img.shields.io/github/sponsors/srbhr?style=for-the-badge&color=c20a71&labelColor=black&logo=github)](https://github.com/sponsors/srbhr) |
-| Buy Me a Coffee | [![BuyMeACoffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&color=c20a72&logoColor=white)](https://www.buymeacoffee.com/srbhr) |
+| GitHub    | [![GitHub Sponsors](https://img.shields.io/github/sponsors/srbhr?style=for-the-badge&color=1d4ed8&labelColor=F0F0E8&logo=github&logoColor=black)](https://github.com/sponsors/srbhr) |
+| Buy Me a Coffee | [![BuyMeACoffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&color=1d4ed8&labelColor=F0F0E8&logoColor=black)](https://www.buymeacoffee.com/srbhr) |
 
 <details>
   <summary><kbd>Star History</kbd></summary>

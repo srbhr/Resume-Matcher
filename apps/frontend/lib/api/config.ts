@@ -1,36 +1,281 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+import { apiFetch } from './client';
 
-interface ApiKeyResponse {
-	api_key: string;
+// Supported LLM providers
+export type LLMProvider = 'openai' | 'anthropic' | 'openrouter' | 'gemini' | 'deepseek' | 'ollama';
+
+export interface LLMConfig {
+  provider: LLMProvider;
+  model: string;
+  api_key: string;
+  api_base: string | null;
 }
 
+export interface LLMConfigUpdate {
+  provider?: LLMProvider;
+  model?: string;
+  api_key?: string;
+  api_base?: string | null;
+}
+
+export interface DatabaseStats {
+  total_resumes: number;
+  total_jobs: number;
+  total_improvements: number;
+  has_master_resume: boolean;
+}
+
+export interface SystemStatus {
+  status: 'ready' | 'setup_required';
+  llm_configured: boolean;
+  llm_healthy: boolean;
+  has_master_resume: boolean;
+  database_stats: DatabaseStats;
+}
+
+export interface LLMHealthCheck {
+  healthy: boolean;
+  provider: string;
+  model: string;
+  error?: string;
+  response_model?: string;
+}
+
+// Fetch full LLM configuration
+export async function fetchLlmConfig(): Promise<LLMConfig> {
+  const res = await apiFetch('/config/llm-api-key', { credentials: 'include' });
+
+  if (!res.ok) {
+    throw new Error(`Failed to load LLM config (status ${res.status}).`);
+  }
+
+  return res.json();
+}
+
+// Legacy function for backwards compatibility
 export async function fetchLlmApiKey(): Promise<string> {
-	const res = await fetch(`${API_URL}/api/v1/config/llm-api-key`, {
-		method: 'GET',
-		credentials: 'include',
-	});
-
-	if (!res.ok) {
-		throw new Error(`Failed to load API key (status ${res.status}).`);
-	}
-
-	const data: ApiKeyResponse = await res.json();
-	return data.api_key ?? '';
+  const config = await fetchLlmConfig();
+  return config.api_key ?? '';
 }
 
+// Update LLM configuration
+export async function updateLlmConfig(config: LLMConfigUpdate): Promise<LLMConfig> {
+  const res = await apiFetch('/config/llm-api-key', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(config),
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || `Failed to update LLM config (status ${res.status}).`);
+  }
+
+  return res.json();
+}
+
+// Legacy function for backwards compatibility
 export async function updateLlmApiKey(value: string): Promise<string> {
-	const res = await fetch(`${API_URL}/api/v1/config/llm-api-key`, {
-		method: 'PUT',
-		headers: { 'Content-Type': 'application/json' },
-		credentials: 'include',
-		body: JSON.stringify({ api_key: value }),
-	});
+  const config = await updateLlmConfig({ api_key: value });
+  return config.api_key ?? '';
+}
 
-	if (!res.ok) {
-		const message = await res.text();
-		throw new Error(message || `Failed to update API key (status ${res.status}).`);
-	}
+// Test LLM connection
+export async function testLlmConnection(): Promise<LLMHealthCheck> {
+  const res = await apiFetch('/config/llm-test', {
+    method: 'POST',
+    credentials: 'include',
+  });
 
-	const data: ApiKeyResponse = await res.json();
-	return data.api_key ?? '';
+  if (!res.ok) {
+    throw new Error(`Failed to test LLM connection (status ${res.status}).`);
+  }
+
+  return res.json();
+}
+
+// Fetch system status
+export async function fetchSystemStatus(): Promise<SystemStatus> {
+  const res = await apiFetch('/status', { credentials: 'include' });
+
+  if (!res.ok) {
+    throw new Error(`Failed to fetch system status (status ${res.status}).`);
+  }
+
+  return res.json();
+}
+
+// Provider display names and default models
+export const PROVIDER_INFO: Record<
+  LLMProvider,
+  { name: string; defaultModel: string; requiresKey: boolean }
+> = {
+  openai: { name: 'OpenAI', defaultModel: 'gpt-4o-mini', requiresKey: true },
+  anthropic: { name: 'Anthropic', defaultModel: 'claude-3-5-sonnet-20241022', requiresKey: true },
+  openrouter: {
+    name: 'OpenRouter',
+    defaultModel: 'anthropic/claude-3.5-sonnet',
+    requiresKey: true,
+  },
+  gemini: { name: 'Google Gemini', defaultModel: 'gemini-1.5-flash', requiresKey: true },
+  deepseek: { name: 'DeepSeek', defaultModel: 'deepseek-chat', requiresKey: true },
+  ollama: { name: 'Ollama (Local)', defaultModel: 'llama3.2', requiresKey: false },
+};
+
+// Feature configuration types
+export interface FeatureConfig {
+  enable_cover_letter: boolean;
+  enable_outreach_message: boolean;
+}
+
+export interface FeatureConfigUpdate {
+  enable_cover_letter?: boolean;
+  enable_outreach_message?: boolean;
+}
+
+// Fetch feature configuration
+export async function fetchFeatureConfig(): Promise<FeatureConfig> {
+  const res = await apiFetch('/config/features', { credentials: 'include' });
+
+  if (!res.ok) {
+    throw new Error(`Failed to load feature config (status ${res.status}).`);
+  }
+
+  return res.json();
+}
+
+// Update feature configuration
+export async function updateFeatureConfig(config: FeatureConfigUpdate): Promise<FeatureConfig> {
+  const res = await apiFetch('/config/features', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(config),
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || `Failed to update feature config (status ${res.status}).`);
+  }
+
+  return res.json();
+}
+
+// Language configuration types
+export type SupportedLanguage = 'en' | 'es' | 'zh' | 'ja';
+
+export interface LanguageConfig {
+  ui_language: SupportedLanguage;
+  content_language: SupportedLanguage;
+  supported_languages: SupportedLanguage[];
+}
+
+export interface LanguageConfigUpdate {
+  ui_language?: SupportedLanguage;
+  content_language?: SupportedLanguage;
+}
+
+// Fetch language configuration
+export async function fetchLanguageConfig(): Promise<LanguageConfig> {
+  const res = await apiFetch('/config/language', { credentials: 'include' });
+
+  if (!res.ok) {
+    throw new Error(`Failed to load language config (status ${res.status}).`);
+  }
+
+  return res.json();
+}
+
+// Update language configuration
+export async function updateLanguageConfig(update: LanguageConfigUpdate): Promise<LanguageConfig> {
+  const res = await apiFetch('/config/language', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(update),
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || `Failed to update language config (status ${res.status}).`);
+  }
+
+  return res.json();
+}
+
+// API Key Management types
+export type ApiKeyProvider = 'openai' | 'anthropic' | 'google' | 'openrouter' | 'deepseek';
+
+export interface ApiKeyProviderStatus {
+  provider: ApiKeyProvider;
+  configured: boolean;
+  masked_key: string | null;
+}
+
+export interface ApiKeyStatusResponse {
+  providers: ApiKeyProviderStatus[];
+}
+
+export interface ApiKeysUpdateRequest {
+  openai?: string;
+  anthropic?: string;
+  google?: string;
+  openrouter?: string;
+  deepseek?: string;
+}
+
+export interface ApiKeysUpdateResponse {
+  message: string;
+  updated_providers: string[];
+}
+
+// Provider display names for API keys
+export const API_KEY_PROVIDER_INFO: Record<ApiKeyProvider, { name: string; description: string }> =
+  {
+    openai: { name: 'OpenAI', description: 'GPT-4, GPT-4o, etc.' },
+    anthropic: { name: 'Anthropic', description: 'Claude 3.5, Claude 4, etc.' },
+    google: { name: 'Google', description: 'Gemini 1.5, Gemini 2, etc.' },
+    openrouter: { name: 'OpenRouter', description: 'Access multiple providers' },
+    deepseek: { name: 'DeepSeek', description: 'DeepSeek chat models' },
+  };
+
+// Fetch API key status for all providers
+export async function fetchApiKeyStatus(): Promise<ApiKeyStatusResponse> {
+  const res = await apiFetch('/config/api-keys', { credentials: 'include' });
+
+  if (!res.ok) {
+    throw new Error(`Failed to load API key status (status ${res.status}).`);
+  }
+
+  return res.json();
+}
+
+// Update API keys for one or more providers
+export async function updateApiKeys(keys: ApiKeysUpdateRequest): Promise<ApiKeysUpdateResponse> {
+  const res = await apiFetch('/config/api-keys', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(keys),
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || `Failed to update API keys (status ${res.status}).`);
+  }
+
+  return res.json();
+}
+
+// Delete API key for a specific provider
+export async function deleteApiKey(provider: ApiKeyProvider): Promise<void> {
+  const res = await apiFetch(`/config/api-keys/${provider}`, {
+    method: 'DELETE',
+    credentials: 'include',
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || `Failed to delete API key (status ${res.status}).`);
+  }
 }

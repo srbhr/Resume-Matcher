@@ -1,0 +1,132 @@
+{
+  "common": {
+    "save": "保存",
+    "cancel": "キャンセル",
+    "delete": "削除",
+    "edit": "編集",
+    "download": "ダウンロード",
+    "loading": "読み込み中...",
+    "error": "エラー",
+    "success": "成功",
+    "confirm": "確認",
+    "back": "戻る",
+    "next": "次へ",
+    "close": "閉じる",
+    "search": "検索",
+    "filter": "フィルター",
+    "reset": "リセット",
+    "apply": "適用"
+  },
+  "nav": {
+    "dashboard": "ダッシュボード",
+    "builder": "履歴書ビルダー",
+    "tailor": "履歴書をカスタマイズ",
+    "settings": "設定"
+  },
+  "dashboard": {
+    "title": "ダッシュボード",
+    "subtitle": "履歴書と求人応募を管理",
+    "myResumes": "マイ履歴書",
+    "noResumes": "履歴書がありません",
+    "noResumesDescription": "最初の履歴書をアップロードして始めましょう",
+    "uploadResume": "履歴書をアップロード",
+    "createNew": "新規作成",
+    "lastModified": "最終更新",
+    "actions": "アクション",
+    "viewResume": "履歴書を見る",
+    "editResume": "履歴書を編集",
+    "deleteResume": "履歴書を削除",
+    "downloadPdf": "PDFをダウンロード",
+    "tailorResume": "求人に合わせてカスタマイズ"
+  },
+  "builder": {
+    "title": "履歴書ビルダー",
+    "editMode": "編集モード",
+    "previewMode": "プレビューモード",
+    "personalInfo": "個人情報",
+    "summary": "概要",
+    "experience": "職歴",
+    "education": "学歴",
+    "skills": "スキル",
+    "projects": "プロジェクト",
+    "certifications": "資格",
+    "languages": "言語",
+    "awards": "受賞歴",
+    "addSection": "セクションを追加",
+    "removeSection": "セクションを削除",
+    "saveChanges": "変更を保存",
+    "discardChanges": "変更を破棄"
+  },
+  "tailor": {
+    "title": "履歴書をカスタマイズ",
+    "subtitle": "特定の求人に合わせて履歴書を最適化",
+    "selectResume": "履歴書を選択",
+    "pasteJobDescription": "求人内容を貼り付け",
+    "jobDescriptionPlaceholder": "求人内容をここに貼り付けてください...",
+    "analyzeJob": "求人を分析",
+    "generateTailored": "カスタマイズ履歴書を生成",
+    "matchScore": "マッチスコア",
+    "suggestions": "提案",
+    "keywords": "含めるべきキーワード"
+  },
+  "settings": {
+    "title": "設定",
+    "subtitle": "設定をカスタマイズ",
+    "aiProvider": "AIプロバイダー",
+    "aiProviderDescription": "履歴書分析に使用するAIプロバイダーを選択",
+    "apiKey": "APIキー",
+    "apiKeyPlaceholder": "APIキーを入力",
+    "saveApiKey": "APIキーを保存",
+    "contentLanguage": "コンテンツ言語",
+    "contentLanguageDescription": "生成コンテンツの言語（履歴書、カバーレター）",
+    "uiLanguage": "UI言語",
+    "uiLanguageDescription": "ユーザーインターフェースの言語",
+    "theme": "テーマ",
+    "themeDescription": "お好みのカラーテーマを選択",
+    "lightMode": "ライト",
+    "darkMode": "ダーク",
+    "systemMode": "システム"
+  },
+  "resume": {
+    "personalInfo": {
+      "name": "氏名",
+      "title": "職種",
+      "email": "メールアドレス",
+      "phone": "電話番号",
+      "location": "所在地",
+      "website": "ウェブサイト",
+      "linkedin": "LinkedIn",
+      "github": "GitHub"
+    },
+    "sections": {
+      "summary": "概要",
+      "experience": "職歴",
+      "education": "学歴",
+      "projects": "プロジェクト",
+      "skills": "スキル・受賞歴",
+      "certifications": "研修・資格",
+      "languages": "言語",
+      "awards": "受賞歴"
+    }
+  },
+  "coverLetter": {
+    "title": "カバーレター",
+    "generate": "カバーレターを生成",
+    "regenerate": "再生成",
+    "copyToClipboard": "クリップボードにコピー",
+    "copied": "コピーしました！"
+  },
+  "errors": {
+    "generic": "エラーが発生しました。もう一度お試しください。",
+    "networkError": "ネットワークエラー。接続を確認してください。",
+    "unauthorized": "続行するにはサインインしてください。",
+    "notFound": "リクエストされたリソースが見つかりません。",
+    "validationError": "入力内容を確認してもう一度お試しください。"
+  },
+  "confirmations": {
+    "deleteResume": "この履歴書を削除してもよろしいですか？",
+    "deleteResumeDescription": "この操作は取り消せません。",
+    "discardChanges": "変更を破棄してもよろしいですか？",
+    "discardChangesDescription": "保存されていない変更は失われます。"
+  }
+}

@@ -1,0 +1,132 @@
+{
+  "common": {
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "download": "Descargar",
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito",
+    "confirm": "Confirmar",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "close": "Cerrar",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "reset": "Restablecer",
+    "apply": "Aplicar"
+  },
+  "nav": {
+    "dashboard": "Panel",
+    "builder": "Constructor de CV",
+    "tailor": "Personalizar CV",
+    "settings": "Configuración"
+  },
+  "dashboard": {
+    "title": "Panel",
+    "subtitle": "Gestiona tus currículums y solicitudes de empleo",
+    "myResumes": "Mis Currículums",
+    "noResumes": "Sin currículums aún",
+    "noResumesDescription": "Sube tu primer currículum para comenzar",
+    "uploadResume": "Subir Currículum",
+    "createNew": "Crear Nuevo",
+    "lastModified": "Última modificación",
+    "actions": "Acciones",
+    "viewResume": "Ver Currículum",
+    "editResume": "Editar Currículum",
+    "deleteResume": "Eliminar Currículum",
+    "downloadPdf": "Descargar PDF",
+    "tailorResume": "Personalizar para Empleo"
+  },
+  "builder": {
+    "title": "Constructor de CV",
+    "editMode": "Modo Edición",
+    "previewMode": "Modo Vista Previa",
+    "personalInfo": "Información Personal",
+    "summary": "Resumen",
+    "experience": "Experiencia",
+    "education": "Educación",
+    "skills": "Habilidades",
+    "projects": "Proyectos",
+    "certifications": "Certificaciones",
+    "languages": "Idiomas",
+    "awards": "Premios",
+    "addSection": "Agregar Sección",
+    "removeSection": "Eliminar Sección",
+    "saveChanges": "Guardar Cambios",
+    "discardChanges": "Descartar Cambios"
+  },
+  "tailor": {
+    "title": "Personalizar CV",
+    "subtitle": "Optimiza tu currículum para un trabajo específico",
+    "selectResume": "Seleccionar Currículum",
+    "pasteJobDescription": "Pegar Descripción del Trabajo",
+    "jobDescriptionPlaceholder": "Pega la descripción del trabajo aquí...",
+    "analyzeJob": "Analizar Trabajo",
+    "generateTailored": "Generar CV Personalizado",
+    "matchScore": "Puntuación de Coincidencia",
+    "suggestions": "Sugerencias",
+    "keywords": "Palabras Clave a Incluir"
+  },
+  "settings": {
+    "title": "Configuración",
+    "subtitle": "Configura tus preferencias",
+    "aiProvider": "Proveedor de IA",
+    "aiProviderDescription": "Selecciona tu proveedor de IA preferido para el análisis de CV",
+    "apiKey": "Clave API",
+    "apiKeyPlaceholder": "Ingresa tu clave API",
+    "saveApiKey": "Guardar Clave API",
+    "contentLanguage": "Idioma del Contenido",
+    "contentLanguageDescription": "Idioma para contenido generado (currículums, cartas de presentación)",
+    "uiLanguage": "Idioma de la Interfaz",
+    "uiLanguageDescription": "Idioma para la interfaz de usuario",
+    "theme": "Tema",
+    "themeDescription": "Elige tu tema de color preferido",
+    "lightMode": "Claro",
+    "darkMode": "Oscuro",
+    "systemMode": "Sistema"
+  },
+  "resume": {
+    "personalInfo": {
+      "name": "Nombre Completo",
+      "title": "Título del Puesto",
+      "email": "Correo Electrónico",
+      "phone": "Teléfono",
+      "location": "Ubicación",
+      "website": "Sitio Web",
+      "linkedin": "LinkedIn",
+      "github": "GitHub"
+    },
+    "sections": {
+      "summary": "Resumen",
+      "experience": "Experiencia",
+      "education": "Educación",
+      "projects": "Proyectos",
+      "skills": "Habilidades y Premios",
+      "certifications": "Formación y Certificaciones",
+      "languages": "Idiomas",
+      "awards": "Premios"
+    }
+  },
+  "coverLetter": {
+    "title": "Carta de Presentación",
+    "generate": "Generar Carta de Presentación",
+    "regenerate": "Regenerar",
+    "copyToClipboard": "Copiar al Portapapeles",
+    "copied": "¡Copiado!"
+  },
+  "errors": {
+    "generic": "Algo salió mal. Por favor, inténtalo de nuevo.",
+    "networkError": "Error de red. Por favor, verifica tu conexión.",
+    "unauthorized": "Por favor, inicia sesión para continuar.",
+    "notFound": "El recurso solicitado no fue encontrado.",
+    "validationError": "Por favor, verifica tu entrada e inténtalo de nuevo."
+  },
+  "confirmations": {
+    "deleteResume": "¿Estás seguro de que quieres eliminar este currículum?",
+    "deleteResumeDescription": "Esta acción no se puede deshacer.",
+    "discardChanges": "¿Estás seguro de que quieres descartar tus cambios?",
+    "discardChangesDescription": "Cualquier cambio no guardado se perderá."
+  }
+}
