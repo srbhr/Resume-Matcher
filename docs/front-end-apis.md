@@ -364,6 +364,56 @@ Tests the current LLM configuration by making a minimal API call.
     }
     ```
 
+### 13. Generate Cover Letter On-Demand
+
+Generates a cover letter for an existing tailored resume using the associated job description.
+
+-   **Endpoint**: `POST /api/v1/resumes/{resume_id}/generate-cover-letter`
+-   **Requirements**:
+    -   Resume must be a tailored resume (has `parent_id`)
+    -   Resume must have an associated job context in the improvements table
+-   **Response (200 OK)**:
+    ```json
+    {
+      "content": "Dear Hiring Manager...",
+      "message": "Cover letter generated successfully"
+    }
+    ```
+-   **Errors**:
+    -   `400 Bad Request`: Resume is not tailored or has no job context
+    -   `404 Not Found`: Resume or job not found
+    -   `500 Internal Server Error`: LLM generation failed
+
+**Frontend Integration:**
+-   Called from Resume Builder when user clicks "Generate" on empty cover letter tab
+-   Also supports "Regenerate" with confirmation dialog for existing content
+-   Result is automatically saved to the resume record
+
+### 14. Generate Outreach Message On-Demand
+
+Generates a cold outreach message for an existing tailored resume using the associated job description.
+
+-   **Endpoint**: `POST /api/v1/resumes/{resume_id}/generate-outreach`
+-   **Requirements**:
+    -   Resume must be a tailored resume (has `parent_id`)
+    -   Resume must have an associated job context in the improvements table
+-   **Response (200 OK)**:
+    ```json
+    {
+      "content": "Hi [Name], I noticed your team...",
+      "message": "Outreach message generated successfully"
+    }
+    ```
+-   **Errors**:
+    -   `400 Bad Request`: Resume is not tailored or has no job context
+    -   `404 Not Found`: Resume or job not found
+    -   `500 Internal Server Error`: LLM generation failed
+
+**Frontend Integration:**
+-   Called from Resume Builder when user clicks "Generate" on empty outreach tab
+-   Also supports "Regenerate" with confirmation dialog for existing content
+-   Result is automatically saved to the resume record
+
 ## Supported LLM Providers
 
 | Provider | Model Format | Requires API Key |
