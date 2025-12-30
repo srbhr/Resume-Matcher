@@ -126,12 +126,14 @@ async def check_llm_health(config: LLMConfig | None = None) -> dict[str, Any]:
             "model": config.model,
             "response_model": response.model if response else None,
         }
-    except Exception as e:
+    except Exception:
+        # Log full exception details server-side, but do not expose them to clients
+        logging.exception("LLM health check failed", extra={"provider": config.provider, "model": config.model})
         return {
             "healthy": False,
             "provider": config.provider,
             "model": config.model,
-            "error": str(e),
+            "error": "Health check failed",
         }
 
 

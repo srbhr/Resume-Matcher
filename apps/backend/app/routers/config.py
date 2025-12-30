@@ -100,7 +100,7 @@ async def update_llm_config(request: LLMConfigRequest) -> LLMConfigResponse:
     if not health["healthy"]:
         raise HTTPException(
             status_code=400,
-            detail=f"Invalid LLM configuration: {health.get('error', 'Unknown error')}",
+            detail="Invalid LLM configuration",
         )
 
     # Save validated config

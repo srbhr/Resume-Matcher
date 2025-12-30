@@ -3,7 +3,8 @@
     "allow": [
       "Bash(docker-compose ps:*)",
       "Bash(docker-compose logs:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(uv run python:*)"
     ]
   }
 }
