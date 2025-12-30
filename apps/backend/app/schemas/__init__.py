@@ -8,6 +8,7 @@ from app.schemas.models import (
     Experience,
     FeatureConfigRequest,
     FeatureConfigResponse,
+    GenerateContentResponse,
     HealthResponse,
     ImprovementSuggestion,
     ImproveResumeData,
@@ -68,6 +69,7 @@ __all__ = [
     "FeatureConfigResponse",
     "UpdateCoverLetterRequest",
     "UpdateOutreachMessageRequest",
+    "GenerateContentResponse",
     "HealthResponse",
     "StatusResponse",
 ]

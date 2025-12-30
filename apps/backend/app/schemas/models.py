@@ -218,6 +218,7 @@ class ResumeFetchData(BaseModel):
     processed_resume: ResumeData | None = None
     cover_letter: str | None = None
     outreach_message: str | None = None
+    parent_id: str | None = None  # For determining if resume is tailored
 
 
 class ResumeFetchResponse(BaseModel):
@@ -357,6 +358,13 @@ class UpdateOutreachMessageRequest(BaseModel):
     """Request to update outreach message content."""
 
     content: str
+
+
+class GenerateContentResponse(BaseModel):
+    """Response for on-demand content generation."""
+
+    content: str
+    message: str
 
 
 # Health/Status Models
