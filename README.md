@@ -60,46 +60,99 @@ Star the repo to support development and get notified of new releases.
 
 ![resume_matcher_features](assets/resume_matcher_features.png)
 
-- **Works locally**: Run everything on your machine with local AI models via Ollama, or use cloud providers.
-- **Multi-provider LLM support**: Works with OpenAI, Anthropic, Gemini, OpenRouter, DeepSeek, and Ollama.
-- **Resume Tailoring**: Automatically optimize your resume for specific job descriptions.
-- **Keyword Optimization**: Align your resume with job keywords and highlight relevant experience.
-- **Guided Improvements**: Get actionable suggestions to make your resume stand out.
+### Core Features
+- **Resume Tailoring**: AI-powered optimization of your resume for specific job descriptions
+- **Multi-Provider LLM Support**: Works with OpenAI, Anthropic, Gemini, OpenRouter, DeepSeek, and Ollama
+- **Works Locally**: Run everything on your machine with Ollama - no API costs required
+- **PDF Export**: Professional PDF generation with customizable templates
+
+### Resume Builder
+- **Two Template Styles**: Single-column (traditional) and two-column (modern) layouts
+- **Custom Sections**: Add, rename, reorder, and hide sections to match your needs
+- **Formatting Controls**: Adjust margins, spacing, fonts, and more
+- **Live Preview**: See changes instantly with paginated preview
+
+### AI-Powered Content
+- **Cover Letter Generation**: Auto-generate tailored cover letters for each job application
+- **Outreach Messages**: Generate cold outreach messages for networking
+- **Keyword Optimization**: Align your resume with job keywords and highlight relevant experience
+- **Guided Improvements**: Get actionable suggestions to make your resume stand out
+
+### Internationalization
+- **Multi-Language UI**: Interface available in English, Spanish, Chinese, and Japanese
+- **Multi-Language Content**: Generate resumes and cover letters in your preferred language
 
 ### Roadmap
 
-If you have any suggestions or feature requests, please feel free to open an issue on GitHub. And discuss it on our [Discord](https://dsc.gg/resume-matcher) server.
+If you have any suggestions or feature requests, please feel free to open an issue on GitHub or discuss it on our [Discord](https://dsc.gg/resume-matcher) server.
 
-- Visual keyword highlighting.
-- AI Canvas, which can help to craft impactful, metric-driven resume content.
-- Multi-job description optimization.
+- Visual keyword highlighting
+- AI Canvas for crafting impactful, metric-driven resume content
+- Multi-job description optimization
 
 ## How to Install
 
 ![Installation](assets/how_to_install_resumematcher.png)
 
-Follow the instructions in the [INSTALL.md](INSTALL.md) file to set up the project locally.
+For detailed setup instructions, see the **[SETUP.md](SETUP.md)** guide.
 
-**Quick Start:**
+### Prerequisites
+
+| Tool | Version | Installation |
+|------|---------|--------------|
+| Python | 3.13+ | [python.org](https://python.org) |
+| Node.js | 22+ | [nodejs.org](https://nodejs.org) |
+| uv | Latest | [astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/) |
+
+### Quick Start
 
 ```bash
-# Backend
-cd apps/backend && cp .env.sample .env && uv sync
+# Clone the repository
+git clone https://github.com/srbhr/Resume-Matcher.git
+cd Resume-Matcher
+
+# Backend (Terminal 1)
+cd apps/backend
+cp .env.example .env        # Configure your AI provider
+uv sync                      # Install dependencies
 uv run uvicorn app.main:app --reload --port 8000
 
-# Frontend (new terminal)
-cd apps/frontend && npm install && npm run dev
+# Frontend (Terminal 2)
+cd apps/frontend
+npm install
+npm run dev
 ```
+
+Open **http://localhost:3000** and configure your AI provider in Settings.
+
+### Supported AI Providers
+
+| Provider | Local/Cloud | Notes |
+|----------|-------------|-------|
+| **Ollama** | Local | Free, runs on your machine |
+| **OpenAI** | Cloud | GPT-4o, GPT-4o-mini |
+| **Anthropic** | Cloud | Claude 3.5 Sonnet |
+| **Google Gemini** | Cloud | Gemini 1.5 Flash/Pro |
+| **OpenRouter** | Cloud | Access to multiple models |
+| **DeepSeek** | Cloud | DeepSeek Chat |
+
+### Docker Deployment
+
+```bash
+docker-compose up -d
+```
+
+See [docs/docker.md](docs/docker.md) for detailed Docker instructions.
 
 ### Tech Stack
 
 | Component | Technology |
 |-----------|------------|
-| Backend | FastAPI, Python 3.11+ |
-| Frontend | Next.js 15, React 19 |
-| Database | TinyDB |
-| LLM | LiteLLM (OpenAI, Anthropic, Ollama, etc.) |
-| Styling | Tailwind CSS 4 |
+| Backend | FastAPI, Python 3.13+, LiteLLM |
+| Frontend | Next.js 15, React 19, TypeScript |
+| Database | TinyDB (JSON file storage) |
+| Styling | Tailwind CSS 4, Swiss International Style |
+| PDF | Headless Chromium via Playwright |
 
 ## Join Us and Contribute
 
@@ -125,8 +178,8 @@ If you would like to support the development of Resume Matcher, you can do so by
 
 | Platform  | Link                                   |
 |-----------|----------------------------------------|
-| GitHub    | [![GitHub Sponsors](https://img.shields.io/github/sponsors/srbhr?style=for-the-badge&color=1d4ed8&labelColor=F0F0E8&logo=github)](https://github.com/sponsors/srbhr) |
-| Buy Me a Coffee | [![BuyMeACoffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&color=1d4ed8&labelColor=F0F0E8&logoColor=white)](https://www.buymeacoffee.com/srbhr) |
+| GitHub    | [![GitHub Sponsors](https://img.shields.io/github/sponsors/srbhr?style=for-the-badge&color=1d4ed8&labelColor=F0F0E8&logo=github&logoColor=black)](https://github.com/sponsors/srbhr) |
+| Buy Me a Coffee | [![BuyMeACoffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&color=1d4ed8&labelColor=F0F0E8&logoColor=black)](https://www.buymeacoffee.com/srbhr) |
 
 <details>
   <summary><kbd>Star History</kbd></summary>
