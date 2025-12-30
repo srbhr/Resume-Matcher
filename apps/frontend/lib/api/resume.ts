@@ -59,6 +59,7 @@ interface ResumeResponse {
     processed_resume: ProcessedResume | null;
     cover_letter?: string | null;
     outreach_message?: string | null;
+    parent_id?: string | null; // For determining if resume is tailored
   };
 }
 
@@ -228,4 +229,26 @@ export async function downloadCoverLetterPdf(
     throw new Error(`Failed to download cover letter (status ${res.status}): ${text}`);
   }
   return await res.blob();
+}
+
+/** Generates a cover letter on-demand for a tailored resume */
+export async function generateCoverLetter(resumeId: string): Promise<string> {
+  const res = await apiPost(`/resumes/${encodeURIComponent(resumeId)}/generate-cover-letter`, {});
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Failed to generate cover letter (status ${res.status}): ${text}`);
+  }
+  const data = await res.json();
+  return data.content;
+}
+
+/** Generates an outreach message on-demand for a tailored resume */
+export async function generateOutreachMessage(resumeId: string): Promise<string> {
+  const res = await apiPost(`/resumes/${encodeURIComponent(resumeId)}/generate-outreach`, {});
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Failed to generate outreach message (status ${res.status}): ${text}`);
+  }
+  const data = await res.json();
+  return data.content;
 }
