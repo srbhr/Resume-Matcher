@@ -689,7 +689,10 @@ export default function SettingsPage() {
 
         {/* Footer */}
         <div className="bg-[#E5E5E0] p-4 border-t border-black flex justify-between items-center">
-          <span className="font-mono text-xs text-gray-500">RESUME MATCHER v2.0.0</span>
+          <div className="flex items-center gap-2">
+            <img src="/logo.svg" alt="Resume Matcher" className="w-5 h-5" />
+            <span className="font-mono text-xs text-gray-500">RESUME MATCHER v2.0.0</span>
+          </div>
           <div className="flex items-center gap-2">
             {statusLoading ? (
               <>
