@@ -44,8 +44,8 @@ export function RetroTabs({ tabs, activeTab, onTabChange, className }: RetroTabs
               role="tab"
               aria-selected={isActive}
               aria-disabled={isDisabled}
-              disabled={isDisabled}
-              onClick={() => !isDisabled && onTabChange(tab.id)}
+              // Allow clicking disabled tabs so users can see the generate prompt
+              onClick={() => onTabChange(tab.id)}
               className={cn(
                 // Base styles
                 'px-4 py-2 font-mono text-xs uppercase tracking-wider',
