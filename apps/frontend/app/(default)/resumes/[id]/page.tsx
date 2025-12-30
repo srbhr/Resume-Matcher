@@ -7,7 +7,8 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import Resume, { ResumeData } from '@/components/dashboard/resume-component';
 import { fetchResume, downloadResumePdf, deleteResume } from '@/lib/api/resume';
 import { useStatusCache } from '@/lib/context/status-cache';
-import { ArrowLeft, Edit, Download, Loader2, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Edit, Download, Loader2, AlertCircle, Sparkles } from 'lucide-react';
+import { EnrichmentModal } from '@/components/enrichment/enrichment-modal';
 
 type ProcessingStatus = 'pending' | 'processing' | 'ready' | 'failed';
 
@@ -23,6 +24,7 @@ export default function ResumeViewerPage() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [showEnrichmentModal, setShowEnrichmentModal] = useState(false);
 
   const resumeId = params?.id as string;
 
@@ -74,6 +76,23 @@ export default function ResumeViewerPage() {
 
   const handleEdit = () => {
     router.push(`/builder?id=${resumeId}`);
+  };
+
+  // Reload resume data after enrichment
+  const reloadResumeData = async () => {
+    try {
+      const data = await fetchResume(resumeId);
+      if (data.processed_resume) {
+        setResumeData(data.processed_resume as ResumeData);
+      }
+    } catch (err) {
+      console.error('Failed to reload resume:', err);
+    }
+  };
+
+  const handleEnrichmentComplete = () => {
+    setShowEnrichmentModal(false);
+    reloadResumeData();
   };
 
   const handleDownload = async () => {
@@ -176,6 +195,12 @@ export default function ResumeViewerPage() {
           </Button>
 
           <div className="flex gap-3">
+            {isMasterResume && (
+              <Button onClick={() => setShowEnrichmentModal(true)} className="gap-2">
+                <Sparkles className="w-4 h-4" />
+                Enhance Resume
+              </Button>
+            )}
             <Button variant="outline" onClick={handleEdit}>
               <Edit className="w-4 h-4" />
               Edit Resume
@@ -241,6 +266,16 @@ export default function ResumeViewerPage() {
           onConfirm={() => setDeleteError(null)}
           variant="danger"
           showCancelButton={false}
+        />
+      )}
+
+      {/* Enrichment Modal - Only for master resume */}
+      {isMasterResume && (
+        <EnrichmentModal
+          resumeId={resumeId}
+          isOpen={showEnrichmentModal}
+          onClose={() => setShowEnrichmentModal(false)}
+          onComplete={handleEnrichmentComplete}
         />
       )}
     </div>
