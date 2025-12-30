@@ -64,7 +64,7 @@ We are grateful to our sponsors who help keep this project going. If you find Re
 
 | Sponsor | Description |
 |---------|-------------|
-| [APIDECK](https://apideck.com) | One API to connect your app to 400+ SaaS platforms (accounting, HRIS, CRM, file storage). Build integrations once, not 50 times. 🌐 [apideck.com](https://apideck.com) |
+| [APIDECK](https://apideck.com?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) | One API to connect your app to 400+ SaaS platforms (accounting, HRIS, CRM, file storage). Build integrations once, not 50 times. 🌐 [apideck.com](https://apideck.com?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) |
 
 ## Support the Development by Donating
 
