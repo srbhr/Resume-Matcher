@@ -8,6 +8,8 @@
 
 Create tailored resumes for each job application with AI-powered suggestions. Works locally with Ollama or connect to your favorite LLM provider via API.
 
+![Resume Matcher Demo](assets/resume_matcher_demo.gif)
+
 </div>
 
 <br>
