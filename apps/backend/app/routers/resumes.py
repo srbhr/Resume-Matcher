@@ -664,8 +664,9 @@ async def get_job_description_for_resume(resume_id: str) -> dict:
     improvement = db.get_improvement_by_tailored_resume(resume_id)
     if not improvement:
         raise HTTPException(
-            status_code=404,
-            detail="No job context found for this resume.",
+            status_code=400,
+            detail="No job context found for this resume. "
+            "The resume may have been created before job tracking was implemented.",
         )
 
     # Get the job description

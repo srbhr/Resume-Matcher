@@ -221,20 +221,30 @@ const ResumeBuilderContent = () => {
 
   // Fetch job description when we have a tailored resume
   useEffect(() => {
+    let cancelled = false;
+
     const loadJobDescription = async () => {
       if (isTailoredResume && resumeId) {
         try {
           const data = await fetchJobDescription(resumeId);
-          setJobDescription(data.content);
+          if (!cancelled) {
+            setJobDescription(data.content);
+          }
         } catch (err) {
           // JD might not be available for older resumes
-          console.warn('Could not fetch job description:', err);
-          setJobDescription(null);
+          if (!cancelled) {
+            console.warn('Could not fetch job description:', err);
+            setJobDescription(null);
+          }
         }
+      } else {
+        // Clear job description when switching to non-tailored resume
+        setJobDescription(null);
       }
     };
 
     loadJobDescription();
+    return () => { cancelled = true; };
   }, [isTailoredResume, resumeId]);
 
   const handleUpdate = useCallback((newData: ResumeData) => {

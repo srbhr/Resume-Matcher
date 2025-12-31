@@ -31,7 +31,7 @@ Create tailored resumes for each job application with AI-powered suggestions. Wo
 
 ## Getting Started
 
-Resume Matcher works by creating a master resumes that you can use to tailor for each job application. Installation instructions here: [How to Install](#how-to-install)
+Resume Matcher works by creating a master resume that you can use to tailor for each job application. Installation instructions here: [How to Install](#how-to-install)
 
 ### How It Works
 

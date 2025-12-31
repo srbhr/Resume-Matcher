@@ -79,13 +79,15 @@ export function segmentTextByKeywords(
   const segments: Array<{ text: string; isMatch: boolean }> = [];
 
   // Split into word and non-word segments while preserving the original text
-  const parts = text.split(/(\s+|[^\w-]+)/);
+  // Use the same character set as extractKeywords: letters, digits, and hyphens
+  const parts = text.split(/([^a-zA-Z0-9-]+)/);
 
   for (const part of parts) {
     if (!part) continue;
 
     // Check if this part is a word (not just whitespace/punctuation)
-    const isWord = /^[\w-]+$/.test(part);
+    // Must match the same character set as extractKeywords
+    const isWord = /^[a-zA-Z0-9-]+$/.test(part);
 
     if (isWord) {
       const cleanWord = part.toLowerCase().replace(/^-+|-+$/g, '');
