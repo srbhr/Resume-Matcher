@@ -96,7 +96,7 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
     <>
       {/* Header Section - Centered Layout */}
       {personalInfo && (
-        <header className="text-center resume-header border-b-2 border-black">
+        <header className="text-center resume-header border-b border-gray-400">
           {/* Name - Centered */}
           {personalInfo.name && (
             <h1 className="resume-name tracking-tight uppercase mb-1">{personalInfo.name}</h1>

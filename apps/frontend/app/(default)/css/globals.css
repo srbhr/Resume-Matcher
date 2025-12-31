@@ -320,7 +320,7 @@
   font-family: var(--header-font);
   font-weight: 700;
   text-transform: uppercase;
-  border-bottom: 2px solid #000000;
+  border-bottom: 1px solid #9ca3af;
   margin-bottom: var(--item-gap);
   padding-bottom: 0.125rem;
   letter-spacing: 0.05em;
@@ -332,7 +332,7 @@
   font-family: var(--header-font);
   font-weight: 700;
   text-transform: uppercase;
-  border-bottom: 1px solid #000000;
+  border-bottom: 1px solid #9ca3af;
   margin-bottom: var(--item-gap);
   padding-bottom: 0.125rem;
   letter-spacing: 0.05em;
@@ -427,7 +427,7 @@
 
   .resume-body .resume-section-title,
   .resume-body .resume-section-title-sm {
-    border-bottom-color: #000000 !important;
+    border-bottom-color: #9ca3af !important;
     break-after: avoid !important;
     page-break-after: avoid !important;
   }
