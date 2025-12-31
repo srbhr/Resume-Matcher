@@ -203,7 +203,7 @@ export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
     <>
       {/* Header Section - Centered Layout (always first) */}
       {personalInfo && (
-        <header className="text-center resume-header border-b-2 border-black">
+        <header className="text-center resume-header border-b border-gray-400">
           {/* Name - Centered */}
           {personalInfo.name && (
             <h1 className="resume-name tracking-tight uppercase mb-1">{personalInfo.name}</h1>

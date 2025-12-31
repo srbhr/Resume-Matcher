@@ -8,7 +8,8 @@
       "Bash(npm run lint:*)",
       "Bash(npm run build:*)",
       "Bash(cd:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(export PATH=\"/usr/local/bin:/opt/homebrew/bin:$PATH\")"
     ]
   }
 }
