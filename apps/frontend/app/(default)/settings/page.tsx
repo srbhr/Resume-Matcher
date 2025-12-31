@@ -691,7 +691,7 @@ export default function SettingsPage() {
         <div className="bg-[#E5E5E0] p-4 border-t border-black flex justify-between items-center">
           <div className="flex items-center gap-2">
             <img src="/logo.svg" alt="Resume Matcher" className="w-5 h-5" />
-            <span className="font-mono text-xs text-gray-500">RESUME MATCHER v2.0.0</span>
+            <span className="font-mono text-xs text-gray-500">RESUME MATCHER v1.0 (Aerodynamic)</span>
           </div>
           <div className="flex items-center gap-2">
             {statusLoading ? (

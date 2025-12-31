@@ -641,6 +641,47 @@ async def generate_outreach_endpoint(resume_id: str) -> GenerateContentResponse:
     )
 
 
+@router.get("/{resume_id}/job-description")
+async def get_job_description_for_resume(resume_id: str) -> dict:
+    """Get the job description used to tailor this resume.
+
+    This endpoint retrieves the original job description that was used
+    to tailor a resume. Only works for tailored resumes (those with parent_id).
+    """
+    # Get the resume
+    resume = db.get_resume(resume_id)
+    if not resume:
+        raise HTTPException(status_code=404, detail="Resume not found")
+
+    # Check if it's a tailored resume (has parent_id)
+    if not resume.get("parent_id"):
+        raise HTTPException(
+            status_code=400,
+            detail="Job description is only available for tailored resumes.",
+        )
+
+    # Get improvement record to find the job_id
+    improvement = db.get_improvement_by_tailored_resume(resume_id)
+    if not improvement:
+        raise HTTPException(
+            status_code=404,
+            detail="No job context found for this resume.",
+        )
+
+    # Get the job description
+    job = db.get_job(improvement["job_id"])
+    if not job:
+        raise HTTPException(
+            status_code=404,
+            detail="The associated job description was not found.",
+        )
+
+    return {
+        "job_id": job["job_id"],
+        "content": job["content"],
+    }
+
+
 @router.get("/{resume_id}/cover-letter/pdf")
 async def download_cover_letter_pdf(
     resume_id: str,

@@ -252,3 +252,17 @@ export async function generateOutreachMessage(resumeId: string): Promise<string>
   const data = await res.json();
   return data.content;
 }
+
+/** Fetches the job description used to tailor a resume */
+export async function fetchJobDescription(
+  resumeId: string
+): Promise<{ job_id: string; content: string }> {
+  const res = await apiFetch(
+    `/resumes/${encodeURIComponent(resumeId)}/job-description`
+  );
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Failed to fetch job description (status ${res.status}): ${text}`);
+  }
+  return res.json();
+}
