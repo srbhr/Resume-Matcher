@@ -6,7 +6,9 @@
       "Bash(grep:*)",
       "Bash(uv run python:*)",
       "Bash(npm run lint:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(cd:*)",
+      "Bash(npx tsc:*)"
     ]
   }
 }

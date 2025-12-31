@@ -35,10 +35,12 @@ import {
   updateOutreachMessage,
   generateCoverLetter,
   generateOutreachMessage,
+  fetchJobDescription,
 } from '@/lib/api/resume';
+import { JDComparisonView } from './jd-comparison-view';
 import { type TemplateSettings, DEFAULT_TEMPLATE_SETTINGS } from '@/lib/types/template-settings';
 
-type TabId = 'resume' | 'cover-letter' | 'outreach';
+type TabId = 'resume' | 'cover-letter' | 'outreach' | 'jd-match';
 
 const STORAGE_KEY = 'resume_builder_draft';
 const SETTINGS_STORAGE_KEY = 'resume_builder_settings';
@@ -97,6 +99,9 @@ const ResumeBuilderContent = () => {
   const [showRegenerateDialog, setShowRegenerateDialog] = useState<
     'cover-letter' | 'outreach' | null
   >(null);
+
+  // JD comparison state
+  const [jobDescription, setJobDescription] = useState<string | null>(null);
 
   // Load template settings from localStorage on mount
   useEffect(() => {
@@ -213,6 +218,34 @@ const ResumeBuilderContent = () => {
 
     loadResumeData();
   }, [improvedData, resumeId]);
+
+  // Fetch job description when we have a tailored resume
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadJobDescription = async () => {
+      if (isTailoredResume && resumeId) {
+        try {
+          const data = await fetchJobDescription(resumeId);
+          if (!cancelled) {
+            setJobDescription(data.content);
+          }
+        } catch (err) {
+          // JD might not be available for older resumes
+          if (!cancelled) {
+            console.warn('Could not fetch job description:', err);
+            setJobDescription(null);
+          }
+        }
+      } else {
+        // Clear job description when switching to non-tailored resume
+        setJobDescription(null);
+      }
+    };
+
+    loadJobDescription();
+    return () => { cancelled = true; };
+  }, [isTailoredResume, resumeId]);
 
   const handleUpdate = useCallback((newData: ResumeData) => {
     setResumeData(newData);
@@ -538,6 +571,7 @@ const ResumeBuilderContent = () => {
                   {activeTab === 'resume' && 'Editor Panel'}
                   {activeTab === 'cover-letter' && 'Cover Letter Editor'}
                   {activeTab === 'outreach' && 'Outreach Message Editor'}
+                  {activeTab === 'jd-match' && 'JD Match Analysis'}
                 </h2>
               </div>
 
@@ -584,6 +618,45 @@ const ResumeBuilderContent = () => {
                     isTailoredResume={isTailoredResume}
                   />
                 ))}
+
+              {/* JD Match Info Panel */}
+              {activeTab === 'jd-match' && (
+                <div className="space-y-4">
+                  <div className="border-2 border-black bg-white p-4">
+                    <h3 className="font-mono text-sm font-bold uppercase mb-2">
+                      About JD Match
+                    </h3>
+                    <p className="text-sm text-gray-600 leading-relaxed">
+                      This view shows how well your resume matches the job description.
+                      Keywords from the JD are highlighted in yellow on your resume,
+                      helping you see which skills and terms are already covered.
+                    </p>
+                  </div>
+
+                  <div className="border-2 border-black bg-yellow-50 p-4">
+                    <h3 className="font-mono text-sm font-bold uppercase mb-2">
+                      Highlighted Keywords
+                    </h3>
+                    <p className="text-sm text-gray-600 leading-relaxed">
+                      Words highlighted in{' '}
+                      <mark className="bg-yellow-200 px-1">yellow</mark> appear in both
+                      the job description and your resume. A higher match rate suggests
+                      better alignment with the job requirements.
+                    </p>
+                  </div>
+
+                  <div className="border-2 border-black bg-gray-50 p-4">
+                    <h3 className="font-mono text-sm font-bold uppercase mb-2">
+                      Tips
+                    </h3>
+                    <ul className="text-sm text-gray-600 space-y-1 list-disc list-inside">
+                      <li>Use the Resume tab to add missing keywords</li>
+                      <li>Focus on technical skills and tools mentioned in the JD</li>
+                      <li>Match action verbs from the job requirements</li>
+                    </ul>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -596,6 +669,7 @@ const ResumeBuilderContent = () => {
                   { id: 'resume', label: 'RESUME' },
                   { id: 'cover-letter', label: 'COVER LETTER', disabled: !coverLetter },
                   { id: 'outreach', label: 'OUTREACH MAIL', disabled: !outreachMessage },
+                  { id: 'jd-match', label: 'JD MATCH', disabled: !jobDescription },
                 ]}
                 activeTab={activeTab}
                 onTabChange={(id) => setActiveTab(id as TabId)}
@@ -642,6 +716,14 @@ const ResumeBuilderContent = () => {
                     isTailoredResume={isTailoredResume}
                   />
                 ))}
+
+              {/* JD Match Comparison */}
+              {activeTab === 'jd-match' && jobDescription && (
+                <JDComparisonView
+                  jobDescription={jobDescription}
+                  resumeData={resumeData}
+                />
+              )}
             </div>
           </div>
         </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Check, X, Briefcase, FolderKanban, ArrowRight } from 'lucide-react';
+import { Check, X, Briefcase, FolderKanban } from 'lucide-react';
 import type { EnhancedDescription } from '@/lib/api/enrichment';
 
 interface PreviewStepProps {
@@ -15,9 +15,9 @@ export function PreviewStep({ enhancements, onApply, onCancel }: PreviewStepProp
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className="mb-6">
-        <h2 className="text-2xl font-bold mb-2">Review Enhancements</h2>
+        <h2 className="text-2xl font-bold mb-2">Review New Content</h2>
         <p className="text-gray-600 font-mono text-sm">
-          Review the enhanced descriptions before applying to your resume
+          Review the new bullet points that will be added to your resume
         </p>
       </div>
 
@@ -36,7 +36,7 @@ export function PreviewStep({ enhancements, onApply, onCancel }: PreviewStepProp
         </Button>
         <Button onClick={onApply} className="gap-2">
           <Check className="w-4 h-4" />
-          Apply All Changes
+          Add to Resume
         </Button>
       </div>
     </div>
@@ -65,38 +65,35 @@ function EnhancementCard({ enhancement, index }: EnhancementCardProps) {
         <span className="font-semibold">{enhancement.title}</span>
       </div>
 
-      {/* Comparison */}
+      {/* Content preview */}
       <div className="p-4">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* Original */}
+        <div className="space-y-4">
+          {/* Existing bullets - keeping */}
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-xs font-mono font-bold uppercase text-gray-500">Original</span>
+              <span className="text-xs font-mono font-bold uppercase text-gray-600">Keeping</span>
+              <span className="text-xs text-gray-400">({enhancement.original_description.length} existing)</span>
             </div>
             <ul className="space-y-2">
               {enhancement.original_description.map((bullet, i) => (
                 <li
                   key={i}
-                  className="text-sm text-gray-400 line-through pl-4 border-l-2 border-gray-200"
+                  className="text-sm text-gray-700 pl-4 border-l-2 border-gray-300"
                 >
                   {bullet}
                 </li>
               ))}
               {enhancement.original_description.length === 0 && (
-                <li className="text-sm text-gray-400 italic">No description</li>
+                <li className="text-sm text-gray-400 italic">No existing description</li>
               )}
             </ul>
           </div>
 
-          {/* Arrow divider for mobile */}
-          <div className="flex items-center justify-center lg:hidden">
-            <ArrowRight className="w-5 h-5 text-gray-400" />
-          </div>
-
-          {/* Enhanced */}
+          {/* New bullets - adding */}
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-xs font-mono font-bold uppercase text-green-600">Enhanced</span>
+              <span className="text-xs font-mono font-bold uppercase text-green-600">Adding</span>
+              <span className="text-xs text-green-600">({enhancement.enhanced_description.length} new)</span>
             </div>
             <ul className="space-y-2">
               {enhancement.enhanced_description.map((bullet, i) => (

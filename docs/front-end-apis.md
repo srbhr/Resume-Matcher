@@ -414,6 +414,30 @@ Generates a cold outreach message for an existing tailored resume using the asso
 -   Also supports "Regenerate" with confirmation dialog for existing content
 -   Result is automatically saved to the resume record
 
+### 15. Fetch Job Description for Resume
+
+Retrieves the original job description used to tailor a specific resume. Only available for tailored resumes.
+
+-   **Endpoint**: `GET /api/v1/resumes/{resume_id}/job-description`
+-   **Requirements**:
+    -   Resume must be a tailored resume (has `parent_id`)
+    -   Resume must have an associated job context in the improvements table
+-   **Response (200 OK)**:
+    ```json
+    {
+      "job_id": "uuid-string",
+      "content": "Full text of the job description..."
+    }
+    ```
+-   **Errors**:
+    -   `400 Bad Request`: Resume is not a tailored resume
+    -   `404 Not Found`: Resume not found or job context not found
+
+**Frontend Integration:**
+-   Called from Resume Builder to populate the "JD MATCH" tab
+-   Used to extract keywords for resume-JD comparison view
+-   Shows keyword matches highlighted in yellow on the resume
+
 ## Supported LLM Providers
 
 | Provider | Model Format | Requires API Key |

@@ -6,9 +6,7 @@
 
 [𝙹𝚘𝚒𝚗 𝙳𝚒𝚜𝚌𝚘𝚛𝚍](https://dsc.gg/resume-matcher) ✦ [𝚆𝚎𝚋𝚜𝚒𝚝𝚎](https://resumematcher.fyi) ✦ [𝙷𝚘𝚠 𝚝𝚘 𝙸𝚗𝚜𝚝𝚊𝚕𝚕](#how-to-install) ✦ [𝙲𝚘𝚗𝚝𝚛𝚒𝚋𝚞𝚝𝚘𝚛𝚜](#contributors) ✦ [𝙳𝚘𝚗𝚊𝚝𝚎](#support-the-development-by-donating) ✦ [𝚃𝚠𝚒𝚝𝚝𝚎𝚛/𝚇](https://twitter.com/ssrbhr) ✦ [𝙻𝚒𝚗𝚔𝚎𝚍𝙸𝚗](https://www.linkedin.com/company/resume-matcher/)
 
-**Stop getting auto-rejected by ATS bots.** Resume Matcher is the AI-powered platform that reverse-engineers hiring algorithms to show you exactly how to tailor your resume. Get the keywords, formatting, and insights that actually get you past the first screen and into human hands.
-
-Hoping to make this, **VS Code for making resumes**.
+Create tailored resumes for each job application with AI-powered suggestions. Works locally with Ollama or connect to your favorite LLM provider via API.
 
 </div>
 
@@ -29,18 +27,20 @@ Hoping to make this, **VS Code for making resumes**.
 
 > \[!IMPORTANT]
 >
-> This project is in active development. New features are being added continuously, and we welcome contributions from the community. There are some breaking changes on the `main` branch. If you have any suggestions or feature requests, please feel free to open an issue on GitHub or discuss it on our [Discord](https://dsc.gg/resume-matcher) server.
+> This project is in active development. New features are being added continuously, and we welcome contributions from the community. If you have any suggestions or feature requests, please feel free to open an issue on GitHub or discuss it on our [Discord](https://dsc.gg/resume-matcher) server.
 
 ## Getting Started
 
-Resume Matcher helps you optimize your resume to highlight skills and experience that resonate with potential employers. Upload your resume, paste a job description, and let AI tailor your content.
+Resume Matcher works by creating a master resume that you can use to tailor for each job application. Installation instructions here: [How to Install](#how-to-install)
 
 ### How It Works
 
 1. **Upload** your master resume (PDF or DOCX)
 2. **Paste** a job description you're targeting
 3. **Review** AI-generated improvements and tailored content
-4. **Export** as a professional PDF with your preferred template
+4. **Cover Letter & Email** generator for the job application
+5. **Customize** the layout and sections to fit your style
+6. **Export** as a professional PDF with your preferred template
 
 ### Stay Connected
 
@@ -79,28 +79,47 @@ If you would like to support the development of Resume Matcher, you can do so by
 
 ## Key Features
 
-![resume_matcher_features](assets/resume_matcher_features.png)
+![resume_matcher_features](assets/features.png)
 
 ### Core Features
 
-- **Resume Tailoring**: AI-powered optimization of your resume for specific job descriptions
-- **Multi-Provider LLM Support**: Works with OpenAI, Anthropic, Gemini, OpenRouter, DeepSeek, and Ollama
-- **Works Locally**: Run everything on your machine with Ollama - no API costs required
-- **PDF Export**: Professional PDF generation with customizable templates
+**Master Resume**: Create a comprehensive master resume to draw from your existing one.
+
+![Job Description Input](assets/step_2.png)
 
 ### Resume Builder
 
-- **Two Template Styles**: Single-column (traditional) and two-column (modern) layouts
-- **Custom Sections**: Add, rename, reorder, and hide sections to match your needs
-- **Formatting Controls**: Adjust margins, spacing, fonts, and more
-- **Live Preview**: See changes instantly with paginated preview
+![Resume Builder](assets/step_5.png)
 
-### AI-Powered Content
+Paste in a job description and get AI-powered resume tailored for that specific role.
 
-- **Cover Letter Generation**: Auto-generate tailored cover letters for each job application
-- **Outreach Messages**: Generate cold outreach messages for networking
-- **Keyword Optimization**: Align your resume with job keywords and highlight relevant experience
-- **Guided Improvements**: Get actionable suggestions to make your resume stand out
+You can:
+
+- Modify suggested content
+- Add/remove sections
+- Rearrange sections via drag-and-drop
+- Choose from multiple resume templates
+
+### Cover Letter & Email Generator
+
+Generate tailored cover letters and email templates based on the job description and your resume.
+
+![Cover Letter](assets/cover_letter.png)
+
+### Resume Scoring (In development feature)
+
+We are working on a resume scoring feature that will analyze your resume against the job description and provide a match score along with suggestions for improvement.
+
+![Resume Scoring and Keyword Highlight](assets/keyword_highlighter.png)
+
+### PDF Export
+
+Export your tailored resume and cover letter PDF.
+
+Templates:
+
+- [Single-column](assets/templates/single_column.pdf)
+- [Two-column](assets/templates/two_column.pdf)
 
 ### Internationalization
 
@@ -130,6 +149,8 @@ For detailed setup instructions, see the **[SETUP.md](SETUP.md)** guide.
 | uv | Latest | [astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/) |
 
 ### Quick Start
+
+Fastest for MacOS, WSL and Ubuntu users:
 
 ```bash
 # Clone the repository
@@ -168,6 +189,8 @@ docker-compose up -d
 ```
 
 See [docs/docker.md](docs/docker.md) for detailed Docker instructions.
+
+> **Using Ollama with Docker?** See [docs/docker-ollama.md](docs/docker-ollama.md) for setup instructions. TL;DR: Use `http://host.docker.internal:11434` as the Ollama URL instead of `localhost`.
 
 ### Tech Stack
 

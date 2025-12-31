@@ -162,3 +162,57 @@ Consider headless UI libraries (Radix, React Aria) if:
 - Tooltip/popover positioning becomes complex
 
 For now, the native HTML elements and custom components serve the design system well.
+
+---
+
+## Recent Updates
+
+### Question Limit (Max 6 Questions)
+
+**Change**: Limited the total number of questions to 6 maximum across all items.
+
+**Reasoning**:
+- Users reported feeling overwhelmed by too many questions
+- Previously, the system could generate 3-4 questions per item, resulting in 10+ questions
+- Now questions are prioritized by impact, limiting to 6 total
+
+**Implementation**:
+- Updated `ANALYZE_RESUME_PROMPT` in `apps/backend/app/prompts/enrichment.py`
+- Added "MAXIMUM 6 QUESTIONS TOTAL" as a hard limit in prompt instructions
+
+### Additive Enhancement (Add, Don't Replace)
+
+**Change**: Enhanced bullet points are now **added** to existing content instead of replacing it.
+
+**Reasoning**:
+- Users wanted to increase content count, not just improve existing content
+- Original bullet points often contain valuable information that shouldn't be lost
+- Additive approach results in richer, more comprehensive resumes
+
+**Implementation**:
+1. Updated `ENHANCE_DESCRIPTION_PROMPT` to generate `additional_bullets` (new key)
+2. Modified `apply_enhancements()` to concatenate instead of replace:
+   ```python
+   # Before: description = new_description (replacement)
+   # After:  description = existing_desc + additional_bullets (concatenation)
+   ```
+3. Updated Preview UI to show "Keeping" + "Adding" sections instead of strikethrough replacement
+
+### Preview UI Changes
+
+**Before**:
+- Original bullets shown with strikethrough
+- Enhanced bullets shown as replacement
+- Button: "Apply All Changes"
+
+**After**:
+- Original bullets shown normally under "Keeping" section
+- New bullets shown under "Adding" section with green highlight
+- Button: "Add to Resume"
+
+**Key Files Changed**:
+| File | Changes |
+|------|---------|
+| `apps/backend/app/prompts/enrichment.py` | 6 question limit, additive prompt |
+| `apps/backend/app/routers/enrichment.py` | Concatenate instead of replace |
+| `apps/frontend/components/enrichment/preview-step.tsx` | New "Keeping + Adding" UI |

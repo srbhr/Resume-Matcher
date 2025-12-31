@@ -189,7 +189,11 @@ async def generate_enhancements(request: EnhanceRequest) -> EnhancementPreview:
 
         try:
             result = await complete_json(prompt)
-            enhanced_desc = result.get("enhanced_description", [])
+            # Get additional bullets from LLM (new key name)
+            additional_bullets = result.get("additional_bullets", [])
+            # Fallback to old key for backwards compatibility
+            if not additional_bullets:
+                additional_bullets = result.get("enhanced_description", [])
 
             enhancements.append(
                 EnhancedDescription(
@@ -197,7 +201,7 @@ async def generate_enhancements(request: EnhanceRequest) -> EnhancementPreview:
                     item_type=item.get("item_type", "experience"),
                     title=item.get("title", ""),
                     original_description=current_desc,
-                    enhanced_description=enhanced_desc,
+                    enhanced_description=additional_bullets,  # These are NEW bullets to add
                 )
             )
         except Exception as e:
@@ -231,18 +235,24 @@ async def apply_enhancements(
     # Make a copy to modify
     updated_data = dict(processed_data)
 
-    # Apply each enhancement
+    # Apply each enhancement by ADDING new bullets to existing description
     for enhancement in request.enhancements:
         item_id = enhancement.item_id
         item_type = enhancement.item_type
-        new_description = enhancement.enhanced_description
+        additional_bullets = enhancement.enhanced_description  # These are NEW bullets to add
 
         if item_type == "experience":
             # Parse item_id like "exp_0" to get index
             try:
                 index = int(item_id.split("_")[1])
                 if "workExperience" in updated_data and index < len(updated_data["workExperience"]):
-                    updated_data["workExperience"][index]["description"] = new_description
+                    # Get existing description and ADD new bullets
+                    existing_desc = updated_data["workExperience"][index].get("description", [])
+                    if isinstance(existing_desc, list):
+                        updated_data["workExperience"][index]["description"] = existing_desc + additional_bullets
+                    else:
+                        # Handle edge case where description might be a string
+                        updated_data["workExperience"][index]["description"] = [existing_desc] + additional_bullets if existing_desc else additional_bullets
             except (ValueError, IndexError) as e:
                 logger.warning(f"Could not apply experience enhancement for {item_id}: {e}")
 
@@ -251,7 +261,13 @@ async def apply_enhancements(
             try:
                 index = int(item_id.split("_")[1])
                 if "personalProjects" in updated_data and index < len(updated_data["personalProjects"]):
-                    updated_data["personalProjects"][index]["description"] = new_description
+                    # Get existing description and ADD new bullets
+                    existing_desc = updated_data["personalProjects"][index].get("description", [])
+                    if isinstance(existing_desc, list):
+                        updated_data["personalProjects"][index]["description"] = existing_desc + additional_bullets
+                    else:
+                        # Handle edge case where description might be a string
+                        updated_data["personalProjects"][index]["description"] = [existing_desc] + additional_bullets if existing_desc else additional_bullets
             except (ValueError, IndexError) as e:
                 logger.warning(f"Could not apply project enhancement for {item_id}: {e}")
 

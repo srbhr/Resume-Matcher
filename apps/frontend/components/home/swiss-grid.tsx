@@ -31,7 +31,10 @@ export const SwissGrid = ({ children }: { children: React.ReactNode }) => {
 
         {/* Footer */}
         <div className="p-4 bg-[#F0F0E8] flex justify-between items-center font-mono text-xs text-blue-700 border-t border-black">
-          <span className="uppercase font-bold">Resume Matcher System</span>
+          <div className="flex items-center gap-2">
+            <img src="/logo.svg" alt="Resume Matcher" className="w-5 h-5" />
+            <span className="uppercase font-bold">Resume Matcher</span>
+          </div>
           <div className="flex items-center gap-4">
             <Link
               href="/settings"

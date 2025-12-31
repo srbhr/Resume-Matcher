@@ -21,6 +21,7 @@ All project documentation is located in the `docs/` folder:
 | Document | Description |
 |----------|-------------|
 | [backend-guide.md](docs/backend-guide.md) | Backend architecture, modules, and API endpoints |
+| [docker-ollama.md](docs/docker-ollama.md) | Docker + Ollama setup guide |
 | [frontend-workflow.md](docs/frontend-workflow.md) | User flow, page routes, and component architecture |
 | [front-end-apis.md](docs/front-end-apis.md) | API contract between frontend and backend |
 | [style-guide.md](docs/style-guide.md) | Swiss International Style design system |
@@ -296,3 +297,70 @@ const { t } = useTranslations();
 2. Add locale to `apps/frontend/i18n/config.ts`
 3. Add language name to `apps/backend/app/prompts/templates.py`
 4. Update `SUPPORTED_LANGUAGES` in backend config router
+
+---
+
+## Resume Enrichment Feature
+
+The application includes an AI-powered resume enrichment feature that helps users improve their master resume with more detailed content.
+
+### How It Works
+1. User clicks "Enhance Resume" on the master resume page
+2. AI analyzes the resume and identifies weak/generic descriptions
+3. User answers targeted questions (max 6 questions total) about their experience
+4. AI generates additional bullet points based on user answers
+5. New bullets are **added** to existing content (not replaced)
+
+### Key Design Decisions
+- **Maximum 6 questions**: To avoid overwhelming users, the AI generates at most 6 questions across all items
+- **Additive enhancement**: Original bullet points are preserved; new enhanced bullets are appended after them
+- **Question prioritization**: AI prioritizes the most impactful questions that will yield the best improvements
+
+### Key Files
+| File | Purpose |
+|------|---------|
+| `apps/backend/app/prompts/enrichment.py` | AI prompts for analysis and enhancement |
+| `apps/backend/app/routers/enrichment.py` | API endpoints for enrichment workflow |
+| `apps/frontend/hooks/use-enrichment-wizard.ts` | React state management for wizard flow |
+| `apps/frontend/components/enrichment/*.tsx` | UI components for enrichment modal |
+
+### API Endpoints
+| Endpoint | Description |
+|----------|-------------|
+| `POST /enrichment/analyze/{resume_id}` | Analyze resume and generate questions |
+| `POST /enrichment/enhance` | Generate enhanced descriptions from answers |
+| `POST /enrichment/apply/{resume_id}` | Apply enhancements to resume |
+
+---
+
+## JD Match Feature
+
+The Resume Builder includes a "JD Match" tab that shows how well a tailored resume matches the original job description.
+
+### How It Works
+1. User tailors a resume against a job description
+2. Opens the tailored resume in the Builder
+3. "JD MATCH" tab appears (only for tailored resumes)
+4. Shows side-by-side comparison:
+   - **Left panel**: Original job description (read-only)
+   - **Right panel**: Resume with matching keywords highlighted in yellow
+
+### Features
+- **Keyword extraction**: Extracts significant keywords from JD (filters common stop words)
+- **Case-insensitive matching**: Matches keywords regardless of case
+- **Match statistics**: Shows total keywords, matches found, and match percentage
+- **Color-coded percentage**: Green (≥50%), yellow (≥30%), red (<30%)
+
+### Key Files
+| File | Purpose |
+|------|---------|
+| `apps/frontend/lib/utils/keyword-matcher.ts` | Keyword extraction and matching utilities |
+| `apps/frontend/components/builder/jd-comparison-view.tsx` | Main split-view component |
+| `apps/frontend/components/builder/jd-display.tsx` | Read-only JD display |
+| `apps/frontend/components/builder/highlighted-resume-view.tsx` | Resume with keyword highlighting |
+| `apps/backend/app/routers/resumes.py` | `GET /{resume_id}/job-description` endpoint |
+
+### API Endpoint
+| Endpoint | Description |
+|----------|-------------|
+| `GET /resumes/{resume_id}/job-description` | Fetch JD used to tailor a resume |

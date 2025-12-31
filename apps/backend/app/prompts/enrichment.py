@@ -21,8 +21,10 @@ GOOD DESCRIPTION EXAMPLES (for reference):
 TASK:
 1. Review each Experience and Project item's description bullets
 2. Identify items that would benefit from more detail
-3. For each weak item, generate 3-4 targeted clarifying questions
-4. Questions should help extract: metrics, technologies, scope, impact, and specific contributions
+3. Generate a MAXIMUM of 6 questions total across ALL items (not per item)
+4. Prioritize the most impactful questions that will yield the best improvements
+5. If multiple items need enhancement, distribute questions wisely (e.g., 2-3 per item)
+6. Questions should help extract: metrics, technologies, scope, impact, and specific contributions
 
 OUTPUT FORMAT (JSON only, no other text):
 {{
@@ -66,29 +68,32 @@ OUTPUT FORMAT (JSON only, no other text):
 }}
 
 IMPORTANT RULES:
+- MAXIMUM 6 QUESTIONS TOTAL - this is a hard limit, never exceed it
 - Only include items that genuinely need improvement
 - If the resume is already strong, return empty arrays with a positive summary
 - Use "exp_0", "exp_1" for experience items (based on array index)
 - Use "proj_0", "proj_1" for project items (based on array index)
-- Generate unique question IDs: "q_0", "q_1", "q_2", etc.
+- Generate unique question IDs: "q_0", "q_1", "q_2", etc. (max q_5)
 - Questions should be specific to the role/project context
 - Keep questions conversational but professional
-- Placeholder text should give concrete examples"""
+- Placeholder text should give concrete examples
+- Prioritize quality over quantity - ask the most impactful questions first"""
 
-ENHANCE_DESCRIPTION_PROMPT = """You are a professional resume writer. Enhance this resume item using the additional context provided by the candidate.
+ENHANCE_DESCRIPTION_PROMPT = """You are a professional resume writer. Your goal is to ADD new bullet points to this resume item using the additional context provided by the candidate. DO NOT rewrite or replace existing bullets - only add new ones.
 
 ORIGINAL ITEM:
 Type: {item_type}
 Title: {title}
 Subtitle: {subtitle}
-Current Description:
+Current Description (KEEP ALL OF THESE):
 {current_description}
 
 CANDIDATE'S ADDITIONAL CONTEXT:
 {answers}
 
 TASK:
-Rewrite the description bullets to be:
+Generate NEW bullet points to ADD to the existing description. The original bullets will be kept as-is.
+New bullets should be:
 1. Action-oriented: Start with strong verbs (Led, Built, Architected, Implemented, Optimized)
 2. Quantified: Include metrics, numbers, percentages where the candidate provided them
 3. Technically specific: Mention technologies, tools, and methodologies
@@ -97,18 +102,20 @@ Rewrite the description bullets to be:
 
 OUTPUT FORMAT (JSON only, no other text):
 {{
-  "enhanced_description": [
-    "Strong bullet point 1 with metrics and impact",
-    "Strong bullet point 2 with technologies used",
-    "Strong bullet point 3 with scope and ownership"
+  "additional_bullets": [
+    "New bullet point 1 with metrics and impact",
+    "New bullet point 2 with technologies used",
+    "New bullet point 3 with scope and ownership"
   ]
 }}
 
 IMPORTANT RULES:
-- Generate 3-5 bullet points
-- Preserve factual accuracy - only use information provided
+- Generate 2-4 NEW bullet points to ADD (not replace)
+- DO NOT repeat or rephrase existing bullets - only add new information
+- Preserve factual accuracy - only use information provided by the candidate
 - Don't invent metrics or details not given by the candidate
-- If candidate's answers are brief, still improve what you can
+- If candidate's answers are brief, still add what you can
 - Keep bullets concise (1-2 lines each)
 - Use past tense for past roles, present tense for current roles
-- Avoid buzzwords and fluff - be specific and concrete"""
+- Avoid buzzwords and fluff - be specific and concrete
+- Focus on information from the candidate's answers that isn't already in the original bullets"""

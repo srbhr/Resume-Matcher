@@ -56,6 +56,12 @@ Unlike local development, Docker deployments don't use `.env` files. Instead, co
 
 Your configuration is stored in `config.json` inside the persistent volume.
 
+### Using Ollama (Local Models)
+
+Running Ollama with Docker requires special networking configuration. See the **[Docker + Ollama Guide](docker-ollama.md)** for detailed setup instructions.
+
+**Quick summary**: Use `http://host.docker.internal:11434` (Mac/Windows) or `http://172.17.0.1:11434` (Linux) as the Ollama Server URL instead of `localhost`.
+
 ## Data Persistence
 
 All application data is stored in a Docker volume at `/app/backend/data/`:
