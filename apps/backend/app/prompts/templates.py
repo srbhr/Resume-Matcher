@@ -105,6 +105,9 @@ Rules:
 - Format years as "YYYY - YYYY" or "YYYY - Present"
 - Use snake_case for custom section keys (e.g., "volunteer_work", "publications")
 - Preserve the original section name as a descriptive key
+- Normalize dates: "Jan 2020" → "2020", "2020-2021" → "2020 - 2021", "Current"/"Ongoing" → "Present"
+- For ambiguous dates like "3 years experience", infer approximate years from context or use "~YYYY"
+- Flag overlapping dates (concurrent roles) by preserving both, don't merge
 
 Resume to parse:
 {resume_text}"""
@@ -118,8 +121,12 @@ Example format:
   "experience_requirements": ["5+ years"],
   "education_requirements": ["Bachelor's in CS"],
   "key_responsibilities": ["Lead team"],
-  "keywords": ["microservices", "agile"]
+  "keywords": ["microservices", "agile"],
+  "experience_years": 5,
+  "seniority_level": "senior"
 }}
+
+Extract numeric years (e.g., "5+ years" → 5) and infer seniority level.
 
 Job description:
 {job_description}"""
@@ -136,6 +143,9 @@ Rules:
 - Translate job titles, descriptions, and skills to {output_language}
 - Preserve the structure of any customSections from the original resume
 - Improve custom section content the same way as standard sections
+- Preserve original date ranges exactly - do not modify years
+- Calculate and emphasize total relevant experience duration when it matches requirements
+- Do NOT use emdash anywhere in the write, even if it exists, remove it
 
 Job Description:
 {job_description}
@@ -149,7 +159,7 @@ Original Resume:
 Output in this JSON format:
 {schema}"""
 
-COVER_LETTER_PROMPT = """Write a brief, punchy cover letter for this job application.
+COVER_LETTER_PROMPT = """Write a brief cover letter for this job application.
 
 IMPORTANT: Write in {output_language}.
 
@@ -162,20 +172,20 @@ Candidate Resume (JSON):
 Requirements:
 - 100-150 words maximum
 - 3-4 short paragraphs
-- Professional but direct tone
-- Opening: Quick hook connecting candidate to role
-- Middle: 1-2 standout qualifications (with specifics)
-- Closing: Clear call to action
+- Opening: Reference ONE specific thing from the job description (product, tech stack, or problem they're solving) - not generic excitement about "the role"
+- Middle: Pick 1-2 qualifications from resume that DIRECTLY match stated requirements - prioritize relevance over impressiveness
+- Closing: Simple availability to discuss, no desperate enthusiasm
+- If resume shows career transition, frame the pivot as intentional and relevant
+- Extract company name from job description - do not use placeholders
 - Do NOT invent information not in the resume
-- Do NOT include placeholder brackets like [Company Name]
-- Do NOT use generic filler phrases
-- Use a simple professional greeting appropriate for {output_language}
+- Tone: Confident peer, not eager applicant
+- Do NOT use emdash anywhere in the write, even if it exists, remove it
 
 Output plain text only. No JSON, no markdown formatting."""
 
 OUTREACH_MESSAGE_PROMPT = """Generate a cold outreach message for LinkedIn or email about this job opportunity.
 
-IMPORTANT: Write the entire message in {output_language}.
+IMPORTANT: Write in {output_language}.
 
 Job Description:
 {job_description}
@@ -184,15 +194,16 @@ Candidate Resume (JSON):
 {resume_data}
 
 Guidelines:
-- Conversational but professional tone appropriate for {output_language}
-- Brief: 100-150 words maximum
-- Include: a hook, value proposition, and call to action
-- Reference specific skills that match the role
-- Do NOT be overly salesy or desperate
-- Do NOT include placeholder brackets like [Name] or [Company]
-- Make it feel personal and genuine
+- 70-100 words maximum (shorter than a cover letter)
+- First sentence: Reference specific detail from job description (team, product, technical challenge) - never open with "I'm reaching out" or "I saw your posting"
+- One sentence on strongest matching qualification with a concrete metric if available
+- End with low-friction ask: "Worth a quick chat?" not "I'd love the opportunity to discuss"
+- Tone: How you'd message a former colleague, not a stranger
+- Do NOT include placeholder brackets
+- Do NOT use phrases like "excited about" or "passionate about"
+- Do NOT use emdash anywhere in the write, even if it exists, remove it
 
-Output the message as plain text only. No JSON, no markdown formatting."""
+Output plain text only. No JSON, no markdown formatting."""
 
 # Alias for backward compatibility
 RESUME_SCHEMA = RESUME_SCHEMA_EXAMPLE
