@@ -35,11 +35,6 @@ Create tailored resumes for each job application with AI-powered suggestions. Wo
 
 Resume Matcher works by creating a master resume that you can use to tailor for each job application. Installation instructions here: [How to Install](#how-to-install)
 
-<video controls muted loop playsinline style="max-width:100%; height:auto;">
-  <source src="assets/Resume_Matcher_Video.mp4" type="video/mp4">
-  Your browser does not support the video tag. <a href="assets/Resume_Matcher_Video.mp4">Download the video</a>.
-</video>
-
 ### How It Works
 
 1. **Upload** your master resume (PDF or DOCX)

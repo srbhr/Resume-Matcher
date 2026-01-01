@@ -31,7 +31,7 @@ print_banner() {
 
 EOF
     echo -e "${NC}"
-    echo -e "${BOLD}        AI-Powered Resume Optimization${NC}"
+    echo -e "${BOLD}        Crazy Stuff with Resumes and Cover letters${NC}"
     echo ""
     echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     echo ""
