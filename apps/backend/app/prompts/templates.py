@@ -145,7 +145,7 @@ Rules:
 - Improve custom section content the same way as standard sections
 - Preserve original date ranges exactly - do not modify years
 - Calculate and emphasize total relevant experience duration when it matches requirements
-- Do NOT use emdash anywhere in the write, even if it exists, remove it
+- Do NOT use em dash ("—") anywhere in the writing/output, even if it exists, remove it
 
 Job Description:
 {job_description}
@@ -179,7 +179,7 @@ Requirements:
 - Extract company name from job description - do not use placeholders
 - Do NOT invent information not in the resume
 - Tone: Confident peer, not eager applicant
-- Do NOT use emdash anywhere in the write, even if it exists, remove it
+- Do NOT use em dash ("—") anywhere in the writing/output, even if it exists, remove it
 
 Output plain text only. No JSON, no markdown formatting."""
 
@@ -201,7 +201,7 @@ Guidelines:
 - Tone: How you'd message a former colleague, not a stranger
 - Do NOT include placeholder brackets
 - Do NOT use phrases like "excited about" or "passionate about"
-- Do NOT use emdash anywhere in the write, even if it exists, remove it
+- Do NOT use em dash ("—") anywhere in the writing/output, even if it exists, remove it
 
 Output plain text only. No JSON, no markdown formatting."""
 
