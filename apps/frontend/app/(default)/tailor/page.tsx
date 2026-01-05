@@ -163,13 +163,18 @@ export default function TailorPage() {
           <Button
             size="lg"
             onClick={handleGenerate}
-            disabled={isLoading || !jobDescription.trim() || !isLlmConfigured}
+            disabled={isLoading || statusLoading || !jobDescription.trim() || !isLlmConfigured}
             className="w-full"
           >
             {isLoading ? (
               <>
                 <Loader2 className="w-5 h-5 animate-spin" />
                 Processing...
+              </>
+            ) : statusLoading ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                Checking...
               </>
             ) : !isLlmConfigured ? (
               'Configure API Key First'

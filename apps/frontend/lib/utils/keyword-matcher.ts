@@ -75,7 +75,6 @@ const STOP_WORDS = new Set([
   'dare',
   'ought',
   'used',
-  'will',
   // Prepositions
   'a',
   'an',
