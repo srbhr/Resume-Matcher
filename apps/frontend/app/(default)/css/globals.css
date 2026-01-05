@@ -1,13 +1,6 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
-@custom-variant dark (&:is(.dark *));
-
-/* In your global CSS file (e.g., globals.css) */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 @keyframes gradient {
   to {
     background-position: 200% center;

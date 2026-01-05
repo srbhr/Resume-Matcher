@@ -24,26 +24,26 @@ All project documentation is located in the `docs/` folder:
 
 | Document | Description |
 |----------|-------------|
-| [backend-guide.md](docs/backend-guide.md) | Backend architecture, modules, and API endpoints |
-| [frontend-workflow.md](docs/frontend-workflow.md) | User flow, page routes, and component architecture |
-| [front-end-apis.md](docs/front-end-apis.md) | API contract between frontend and backend |
-| [style-guide.md](docs/style-guide.md) | Swiss International Style design system |
-| [backend-architecture.md](docs/backend-architecture.md) | Detailed backend architecture diagrams |
-| [frontend-architecture.md](docs/frontend-architecture.md) | Detailed frontend architecture diagrams |
-| [api-flow-maps.md](docs/api-flow-maps.md) | API request/response flow diagrams |
-| [design-system.md](docs/design-system.md) | Extended design system documentation |
-| [template-system.md](docs/template-system.md) | Resume template system documentation |
-| [pdf-template-guide.md](docs/pdf-template-guide.md) | **PDF rendering & template editing guide** |
-| [print_pdf_design_spec.md](docs/print_pdf_design_spec.md) | PDF generation specifications |
-| [resume_template_design_spec.md](docs/resume_template_design_spec.md) | Resume template design specifications |
-| [i18n-preparation.md](docs/i18n-preparation.md) | Internationalization preparation notes |
-| [backend-requirements.md](docs/backend-requirements.md) | API contract specifications |
-| [review-todo.md](docs/review-todo.md) | Review checklist and TODOs |
+| [backend-guide.md](docs/agent/30-architecture/backend-guide.md) | Backend architecture, modules, and API endpoints |
+| [frontend-workflow.md](docs/agent/30-architecture/frontend-workflow.md) | User flow, page routes, and component architecture |
+| [front-end-apis.md](docs/agent/40-apis/front-end-apis.md) | API contract between frontend and backend |
+| [style-guide.md](docs/agent/50-design-and-templates/style-guide.md) | Swiss International Style design system |
+| [backend-architecture.md](docs/agent/30-architecture/backend-architecture.md) | Detailed backend architecture diagrams |
+| [frontend-architecture.md](docs/agent/30-architecture/frontend-architecture.md) | Detailed frontend architecture diagrams |
+| [api-flow-maps.md](docs/agent/40-apis/api-flow-maps.md) | API request/response flow diagrams |
+| [design-system.md](docs/agent/50-design-and-templates/design-system.md) | Extended design system documentation |
+| [template-system.md](docs/agent/50-design-and-templates/template-system.md) | Resume template system documentation |
+| [pdf-template-guide.md](docs/agent/50-design-and-templates/pdf-template-guide.md) | **PDF rendering & template editing guide** |
+| [print_pdf_design_spec.md](docs/agent/50-design-and-templates/print-pdf-design-spec.md) | PDF generation specifications |
+| [resume_template_design_spec.md](docs/agent/50-design-and-templates/resume-template-design-spec.md) | Resume template design specifications |
+| [i18n-preparation.md](docs/agent/70-features/i18n-preparation.md) | Internationalization preparation notes |
+| [backend-requirements.md](docs/agent/40-apis/backend-requirements.md) | API contract specifications |
+| [review-todo.md](docs/agent/review-todo.md) | Review checklist and TODOs |
 
 ## Project Structure & Module Organization
 
 ### Backend (`apps/backend/`)
-A lean FastAPI application with multi-provider AI support. See **[docs/backend-guide.md](docs/backend-guide.md)** for detailed architecture documentation.
+A lean FastAPI application with multi-provider AI support. See **[docs/agent/30-architecture/backend-guide.md](docs/agent/30-architecture/backend-guide.md)** for detailed architecture documentation.
 
 - `app/main.py` - FastAPI entry point with CORS and router setup
 - `app/config.py` - Pydantic settings loaded from environment
@@ -55,7 +55,7 @@ A lean FastAPI application with multi-provider AI support. See **[docs/backend-g
 - `app/prompts/` - Simplified LLM prompt templates
 
 ### Frontend (`apps/frontend/`)
-Next.js dashboard with Swiss International Style design. See **[docs/frontend-workflow.md](docs/frontend-workflow.md)** for user flow and **[docs/front-end-apis.md](docs/front-end-apis.md)** for API contracts.
+Next.js dashboard with Swiss International Style design. See **[docs/agent/30-architecture/frontend-workflow.md](docs/agent/30-architecture/frontend-workflow.md)** for user flow and **[docs/agent/40-apis/front-end-apis.md](docs/agent/40-apis/front-end-apis.md)** for API contracts.
 
 - `app/` - Next.js routes (dashboard, builder, tailor, resumes, settings, print)
 - `components/` - Reusable UI components (including `ConfirmDialog` with danger/success variants)
@@ -79,7 +79,7 @@ Next.js dashboard with Swiss International Style design. See **[docs/frontend-wo
 ## Coding Style & Naming Conventions
 
 ### Frontend (TypeScript/React)
-- **Design System**: All UI changes MUST follow the **Swiss International Style** in [docs/style-guide.md](docs/style-guide.md).
+- **Design System**: All UI changes MUST follow the **Swiss International Style** in [docs/agent/50-design-and-templates/style-guide.md](docs/agent/50-design-and-templates/style-guide.md).
     - Use `font-serif` for headers, `font-mono` for metadata, `font-sans` for body text.
     - Color palette: `#F0F0E8` (Canvas), `#000000` (Ink), `#1D4ED8` (Hyper Blue), `#15803D` (Signal Green), `#F97316` (Alert Orange), `#DC2626` (Alert Red), `#4B5563` (Steel Grey).
     - Components: `rounded-none` with 1px black borders and hard shadows.
