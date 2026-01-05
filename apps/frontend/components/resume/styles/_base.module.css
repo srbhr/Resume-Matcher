@@ -139,6 +139,11 @@
   padding-bottom: 0.125rem;
   letter-spacing: 0.05em;
   color: var(--resume-text-primary);
+  /* Prevent title from being orphaned at bottom of page */
+  break-after: avoid;
+  page-break-after: avoid;
+  orphans: 3;
+  widows: 3;
 }
 
 /* Section Title - Small (for sidebar) */
@@ -152,6 +157,11 @@
   padding-bottom: 0.125rem;
   letter-spacing: 0.05em;
   color: var(--resume-text-primary);
+  /* Prevent title from being orphaned at bottom of page */
+  break-after: avoid;
+  page-break-after: avoid;
+  orphans: 3;
+  widows: 3;
 }
 
 /* Items container within sections */
@@ -164,6 +174,11 @@
 /* Individual item within a section */
 .resume-item {
   margin-bottom: var(--item-gap);
+  /* Prevent items from splitting across pages/columns in PDF and print output */
+  break-inside: avoid;
+  page-break-inside: avoid;
+  -webkit-column-break-inside: avoid;
+  -moz-column-break-inside: avoid;
 }
 
 .resume-item:last-child {
@@ -181,4 +196,38 @@
 
 .text-muted {
   color: var(--resume-text-tertiary);
+}
+
+@media print {
+  /* Ensure the main resume container respects page boundaries */
+  .resume-body {
+    page-break-inside: avoid !important;
+    break-inside: avoid-page !important;
+  }
+
+  /* Avoid breaking individual resume items across pages */
+  .resume-item {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Prevent section titles from being separated from their content */
+  .resume-section-title,
+  .resume-section-title-sm {
+    break-after: avoid !important;
+    page-break-after: avoid !important;
+  }
+
+  /* Keep section header together with its first item */
+  .resume-section-title + .resume-items > *:first-child,
+  .resume-section-title-sm + .resume-items > *:first-child,
+  .resume-section-title + p,
+  .resume-section-title-sm + p,
+  .resume-section-title + ul,
+  .resume-section-title-sm + ul,
+  .resume-section-title + .resume-item,
+  .resume-section-title-sm + .resume-item {
+    break-before: avoid !important;
+    page-break-before: avoid !important;
+  }
 }
