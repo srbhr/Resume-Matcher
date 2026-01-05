@@ -225,7 +225,12 @@ export const GenericItemForm: React.FC<GenericItemFormProps> = ({
         {items.length === 0 && (
           <div className="text-center py-12 bg-gray-50 border border-dashed border-black">
             <p className="font-mono text-sm text-gray-500 mb-4">{`// NO ${itemLabel.toUpperCase()} ENTRIES`}</p>
-            <Button variant="outline" size="sm" onClick={handleAdd} className="rounded-none border-black">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleAdd}
+              className="rounded-none border-black"
+            >
               <Plus className="w-4 h-4 mr-2" /> Add First {itemLabel}
             </Button>
           </div>

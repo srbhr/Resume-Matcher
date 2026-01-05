@@ -54,10 +54,7 @@ export function JDComparisonView({ jobDescription, resumeData }: JDComparisonVie
   }, [resumeData]);
 
   // Calculate match statistics
-  const stats = useMemo(
-    () => calculateMatchStats(resumeText, keywords),
-    [resumeText, keywords]
-  );
+  const stats = useMemo(() => calculateMatchStats(resumeText, keywords), [resumeText, keywords]);
 
   return (
     <div className="h-full flex flex-col">

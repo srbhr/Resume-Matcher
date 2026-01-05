@@ -20,12 +20,8 @@ export function HighlightedResumeView({ resumeData, keywords }: HighlightedResum
       {/* Header */}
       <div className="flex items-center gap-2 p-4 border-b border-gray-200 bg-gray-50">
         <FileUser className="w-4 h-4 text-gray-600" />
-        <h3 className="font-mono text-sm font-bold uppercase text-gray-700">
-          Your Resume
-        </h3>
-        <span className="text-xs text-gray-500 ml-2">
-          (matching keywords highlighted)
-        </span>
+        <h3 className="font-mono text-sm font-bold uppercase text-gray-700">Your Resume</h3>
+        <span className="text-xs text-gray-500 ml-2">(matching keywords highlighted)</span>
       </div>
 
       {/* Content */}
@@ -51,9 +47,7 @@ export function HighlightedResumeView({ resumeData, keywords }: HighlightedResum
                     </span>
                   )}
                 </div>
-                {exp.years && (
-                  <div className="text-xs text-gray-500 mb-1">{exp.years}</div>
-                )}
+                {exp.years && <div className="text-xs text-gray-500 mb-1">{exp.years}</div>}
                 {exp.description && (
                   <ul className="list-disc list-inside space-y-1 text-sm">
                     {exp.description.map((bullet, i) => (
@@ -81,9 +75,7 @@ export function HighlightedResumeView({ resumeData, keywords }: HighlightedResum
                     <HighlightedText text={edu.institution} keywords={keywords} />
                   </div>
                 )}
-                {edu.years && (
-                  <div className="text-xs text-gray-500">{edu.years}</div>
-                )}
+                {edu.years && <div className="text-xs text-gray-500">{edu.years}</div>}
               </div>
             ))}
           </Section>
@@ -103,9 +95,7 @@ export function HighlightedResumeView({ resumeData, keywords }: HighlightedResum
                     </span>
                   )}
                 </div>
-                {proj.years && (
-                  <div className="text-xs text-gray-500 mb-1">{proj.years}</div>
-                )}
+                {proj.years && <div className="text-xs text-gray-500 mb-1">{proj.years}</div>}
                 {proj.description && (
                   <ul className="list-disc list-inside space-y-1 text-sm">
                     {proj.description.map((bullet, i) => (
@@ -123,16 +113,19 @@ export function HighlightedResumeView({ resumeData, keywords }: HighlightedResum
         {/* Skills */}
         {resumeData.additional && (
           <Section title="Skills & Additional" icon={<Wrench className="w-4 h-4" />}>
-            {resumeData.additional.technicalSkills && resumeData.additional.technicalSkills.length > 0 && (
-              <div className="mb-3">
-                <div className="text-xs font-mono uppercase text-gray-500 mb-1">Technical Skills</div>
-                <div className="flex flex-wrap gap-1">
-                  {resumeData.additional.technicalSkills.map((skill, i) => (
-                    <SkillTag key={i} text={skill} keywords={keywords} />
-                  ))}
+            {resumeData.additional.technicalSkills &&
+              resumeData.additional.technicalSkills.length > 0 && (
+                <div className="mb-3">
+                  <div className="text-xs font-mono uppercase text-gray-500 mb-1">
+                    Technical Skills
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {resumeData.additional.technicalSkills.map((skill, i) => (
+                      <SkillTag key={i} text={skill} keywords={keywords} />
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
             {resumeData.additional.languages && resumeData.additional.languages.length > 0 && (
               <div className="mb-3">
@@ -145,18 +138,21 @@ export function HighlightedResumeView({ resumeData, keywords }: HighlightedResum
               </div>
             )}
 
-            {resumeData.additional.certificationsTraining && resumeData.additional.certificationsTraining.length > 0 && (
-              <div className="mb-3">
-                <div className="text-xs font-mono uppercase text-gray-500 mb-1">Certifications</div>
-                <ul className="list-disc list-inside space-y-1 text-sm">
-                  {resumeData.additional.certificationsTraining.map((cert, i) => (
-                    <li key={i} className="text-gray-700">
-                      <HighlightedText text={cert} keywords={keywords} />
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+            {resumeData.additional.certificationsTraining &&
+              resumeData.additional.certificationsTraining.length > 0 && (
+                <div className="mb-3">
+                  <div className="text-xs font-mono uppercase text-gray-500 mb-1">
+                    Certifications
+                  </div>
+                  <ul className="list-disc list-inside space-y-1 text-sm">
+                    {resumeData.additional.certificationsTraining.map((cert, i) => (
+                      <li key={i} className="text-gray-700">
+                        <HighlightedText text={cert} keywords={keywords} />
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
           </Section>
         )}
       </div>
@@ -197,10 +193,7 @@ function HighlightedText({ text, keywords }: { text: string; keywords: Set<strin
     <span>
       {segments.map((segment, i) =>
         segment.isMatch ? (
-          <mark
-            key={i}
-            className="bg-yellow-200 text-gray-900 px-0.5 rounded-sm"
-          >
+          <mark key={i} className="bg-yellow-200 text-gray-900 px-0.5 rounded-sm">
             {segment.text}
           </mark>
         ) : (
@@ -220,9 +213,7 @@ function SkillTag({ text, keywords }: { text: string; keywords: Set<string> }) {
   return (
     <span
       className={`inline-block px-2 py-0.5 text-xs rounded ${
-        isMatch
-          ? 'bg-yellow-200 text-gray-900 font-medium'
-          : 'bg-gray-100 text-gray-700'
+        isMatch ? 'bg-yellow-200 text-gray-900 font-medium' : 'bg-gray-100 text-gray-700'
       }`}
     >
       {text}

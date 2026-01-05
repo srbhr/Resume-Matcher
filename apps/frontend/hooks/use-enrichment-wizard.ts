@@ -109,10 +109,7 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
     case 'NEXT_QUESTION':
       return {
         ...state,
-        currentQuestionIndex: Math.min(
-          state.currentQuestionIndex + 1,
-          state.questions.length - 1
-        ),
+        currentQuestionIndex: Math.min(state.currentQuestionIndex + 1, state.questions.length - 1),
       };
 
     case 'PREV_QUESTION':
@@ -124,10 +121,7 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
     case 'GO_TO_QUESTION':
       return {
         ...state,
-        currentQuestionIndex: Math.max(
-          0,
-          Math.min(action.index, state.questions.length - 1)
-        ),
+        currentQuestionIndex: Math.max(0, Math.min(action.index, state.questions.length - 1)),
       };
 
     case 'START_GENERATION':
@@ -291,9 +285,7 @@ export function useEnrichmentWizard(resumeId: string) {
 
   // Get current question
   const currentQuestion =
-    state.questions.length > 0
-      ? state.questions[state.currentQuestionIndex]
-      : undefined;
+    state.questions.length > 0 ? state.questions[state.currentQuestionIndex] : undefined;
 
   // Get item for current question
   const currentItem = currentQuestion
@@ -305,9 +297,7 @@ export function useEnrichmentWizard(resumeId: string) {
   const isFirstQuestion = state.currentQuestionIndex === 0;
 
   // Count answered questions
-  const answeredCount = Object.values(state.answers).filter(
-    (a) => a.trim() !== ''
-  ).length;
+  const answeredCount = Object.values(state.answers).filter((a) => a.trim() !== '').length;
 
   return {
     state,

@@ -173,7 +173,11 @@ export function PaginatedPreview({ resumeData, settings }: PaginatedPreviewProps
                 contentOffset={page.contentOffset}
                 contentEnd={page.contentEnd}
               >
-                <Resume resumeData={resumeData} template={settings.template} settings={resumeSettings} />
+                <Resume
+                  resumeData={resumeData}
+                  template={settings.template}
+                  settings={resumeSettings}
+                />
               </PageContainer>
             </React.Fragment>
           ))}

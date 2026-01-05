@@ -58,9 +58,7 @@ function EnhancementCard({ enhancement, index }: EnhancementCardProps) {
         ) : (
           <FolderKanban className="w-4 h-4" />
         )}
-        <span className="font-mono text-sm font-bold uppercase">
-          {enhancement.item_type}
-        </span>
+        <span className="font-mono text-sm font-bold uppercase">{enhancement.item_type}</span>
         <span className="text-gray-600">|</span>
         <span className="font-semibold">{enhancement.title}</span>
       </div>
@@ -72,14 +70,13 @@ function EnhancementCard({ enhancement, index }: EnhancementCardProps) {
           <div>
             <div className="flex items-center gap-2 mb-2">
               <span className="text-xs font-mono font-bold uppercase text-gray-600">Keeping</span>
-              <span className="text-xs text-gray-400">({enhancement.original_description.length} existing)</span>
+              <span className="text-xs text-gray-400">
+                ({enhancement.original_description.length} existing)
+              </span>
             </div>
             <ul className="space-y-2">
               {enhancement.original_description.map((bullet, i) => (
-                <li
-                  key={i}
-                  className="text-sm text-gray-700 pl-4 border-l-2 border-gray-300"
-                >
+                <li key={i} className="text-sm text-gray-700 pl-4 border-l-2 border-gray-300">
                   {bullet}
                 </li>
               ))}
@@ -93,7 +90,9 @@ function EnhancementCard({ enhancement, index }: EnhancementCardProps) {
           <div>
             <div className="flex items-center gap-2 mb-2">
               <span className="text-xs font-mono font-bold uppercase text-green-600">Adding</span>
-              <span className="text-xs text-green-600">({enhancement.enhanced_description.length} new)</span>
+              <span className="text-xs text-green-600">
+                ({enhancement.enhanced_description.length} new)
+              </span>
             </div>
             <ul className="space-y-2">
               {enhancement.enhanced_description.map((bullet, i) => (

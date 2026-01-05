@@ -239,8 +239,16 @@ export const DynamicSectionForm: React.FC<DynamicSectionFormProps> = ({
   // For default sections that have their own wrapper styling (like PersonalInfoForm),
   // we render them directly. For custom sections and some default sections,
   // we wrap them with our SectionHeader.
-  const needsWrapper = !sectionMeta.isDefault ||
-    !['personalInfo', 'summary', 'workExperience', 'education', 'personalProjects', 'additional'].includes(sectionMeta.key);
+  const needsWrapper =
+    !sectionMeta.isDefault ||
+    ![
+      'personalInfo',
+      'summary',
+      'workExperience',
+      'education',
+      'personalProjects',
+      'additional',
+    ].includes(sectionMeta.key);
 
   // personalInfo is special - can't be deleted/hidden/reordered
   const isPersonalInfo = sectionMeta.id === 'personalInfo';

@@ -244,7 +244,9 @@ const ResumeBuilderContent = () => {
     };
 
     loadJobDescription();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [isTailoredResume, resumeId]);
 
   const handleUpdate = useCallback((newData: ResumeData) => {
@@ -623,13 +625,11 @@ const ResumeBuilderContent = () => {
               {activeTab === 'jd-match' && (
                 <div className="space-y-4">
                   <div className="border-2 border-black bg-white p-4">
-                    <h3 className="font-mono text-sm font-bold uppercase mb-2">
-                      About JD Match
-                    </h3>
+                    <h3 className="font-mono text-sm font-bold uppercase mb-2">About JD Match</h3>
                     <p className="text-sm text-gray-600 leading-relaxed">
-                      This view shows how well your resume matches the job description.
-                      Keywords from the JD are highlighted in yellow on your resume,
-                      helping you see which skills and terms are already covered.
+                      This view shows how well your resume matches the job description. Keywords
+                      from the JD are highlighted in yellow on your resume, helping you see which
+                      skills and terms are already covered.
                     </p>
                   </div>
 
@@ -638,17 +638,14 @@ const ResumeBuilderContent = () => {
                       Highlighted Keywords
                     </h3>
                     <p className="text-sm text-gray-600 leading-relaxed">
-                      Words highlighted in{' '}
-                      <mark className="bg-yellow-200 px-1">yellow</mark> appear in both
-                      the job description and your resume. A higher match rate suggests
+                      Words highlighted in <mark className="bg-yellow-200 px-1">yellow</mark> appear
+                      in both the job description and your resume. A higher match rate suggests
                       better alignment with the job requirements.
                     </p>
                   </div>
 
                   <div className="border-2 border-black bg-gray-50 p-4">
-                    <h3 className="font-mono text-sm font-bold uppercase mb-2">
-                      Tips
-                    </h3>
+                    <h3 className="font-mono text-sm font-bold uppercase mb-2">Tips</h3>
                     <ul className="text-sm text-gray-600 space-y-1 list-disc list-inside">
                       <li>Use the Resume tab to add missing keywords</li>
                       <li>Focus on technical skills and tools mentioned in the JD</li>
@@ -719,10 +716,7 @@ const ResumeBuilderContent = () => {
 
               {/* JD Match Comparison */}
               {activeTab === 'jd-match' && jobDescription && (
-                <JDComparisonView
-                  jobDescription={jobDescription}
-                  resumeData={resumeData}
-                />
+                <JDComparisonView jobDescription={jobDescription} resumeData={resumeData} />
               )}
             </div>
           </div>

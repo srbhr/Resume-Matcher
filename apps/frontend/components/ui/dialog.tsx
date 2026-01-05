@@ -35,9 +35,7 @@ interface DialogProps {
 }
 
 const Dialog: React.FC<DialogProps> = ({ open, onOpenChange, children }) => {
-  return (
-    <DialogContext.Provider value={{ open, onOpenChange }}>{children}</DialogContext.Provider>
-  );
+  return <DialogContext.Provider value={{ open, onOpenChange }}>{children}</DialogContext.Provider>;
 };
 
 interface DialogTriggerProps {
