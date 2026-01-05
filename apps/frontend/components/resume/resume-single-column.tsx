@@ -3,6 +3,8 @@ import { Mail, Phone, MapPin, Globe, Linkedin, Github } from 'lucide-react';
 import type { ResumeData, SectionMeta } from '@/components/dashboard/resume-component';
 import { getSortedSections } from '@/lib/utils/section-helpers';
 import { DynamicResumeSection } from './dynamic-resume-section';
+import baseStyles from './styles/_base.module.css';
+import styles from './styles/swiss-single.module.css';
 
 interface ResumeSingleColumnProps {
   data: ResumeData;
@@ -25,12 +27,6 @@ export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
 
   // Get sorted visible sections
   const sortedSections = getSortedSections(data);
-
-  // Get section display name from metadata
-  const getSectionDisplayName = (sectionKey: string): string => {
-    const section = sortedSections.find((s) => s.key === sectionKey);
-    return section?.displayName || sectionKey;
-  };
 
   // Icon mapping for contact types
   const contactIcons: Record<string, React.ReactNode> = {
@@ -74,12 +70,12 @@ export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
             href={href}
             target="_blank"
             rel="noopener noreferrer"
-            className="hover:underline text-black"
+            className={`${baseStyles['resume-link']} hover:underline`}
           >
             {displayText}
           </a>
         ) : (
-          <span className="text-black">{displayText}</span>
+          <span style={{ color: 'var(--resume-text-primary)' }}>{displayText}</span>
         )}
       </span>
     );
@@ -95,30 +91,38 @@ export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
       case 'summary':
         if (!summary) return null;
         return (
-          <div key={section.id} className="resume-section">
-            <h3 className="resume-section-title">{section.displayName}</h3>
-            <p className="text-justify resume-text text-gray-800">{summary}</p>
+          <div key={section.id} className={baseStyles['resume-section']}>
+            <h3 className={baseStyles['resume-section-title']}>{section.displayName}</h3>
+            <p className={`text-justify ${baseStyles['resume-text']}`}>{summary}</p>
           </div>
         );
 
       case 'workExperience':
         if (!workExperience || workExperience.length === 0) return null;
         return (
-          <div key={section.id} className="resume-section">
-            <h3 className="resume-section-title">{section.displayName}</h3>
-            <div className="resume-items">
+          <div key={section.id} className={baseStyles['resume-section']}>
+            <h3 className={baseStyles['resume-section-title']}>{section.displayName}</h3>
+            <div className={baseStyles['resume-items']}>
               {workExperience.map((exp) => (
-                <div key={exp.id} className="resume-item">
-                  <div className="flex justify-between items-baseline resume-row-tight">
-                    <h4 className="resume-item-title">{exp.title}</h4>
-                    <span className="resume-meta-sm text-gray-600 shrink-0 ml-4">{exp.years}</span>
+                <div key={exp.id} className={baseStyles['resume-item']}>
+                  <div
+                    className={`flex justify-between items-baseline ${baseStyles['resume-row-tight']}`}
+                  >
+                    <h4 className={baseStyles['resume-item-title']}>{exp.title}</h4>
+                    <span className={`${baseStyles['resume-meta-sm']} shrink-0 ml-4`}>
+                      {exp.years}
+                    </span>
                   </div>
-                  <div className="flex justify-between items-center resume-row resume-meta text-gray-700">
+                  <div
+                    className={`flex justify-between items-center ${baseStyles['resume-row']} ${baseStyles['resume-meta']}`}
+                  >
                     <span>{exp.company}</span>
                     {exp.location && <span>{exp.location}</span>}
                   </div>
                   {exp.description && exp.description.length > 0 && (
-                    <ul className="list-disc list-outside ml-4 resume-list resume-text-sm text-gray-800">
+                    <ul
+                      className={`list-disc list-outside ml-4 ${baseStyles['resume-list']} ${baseStyles['resume-text-sm']}`}
+                    >
                       {exp.description.map((desc, index) => (
                         <li key={index} className="pl-1">
                           {desc}
@@ -135,22 +139,28 @@ export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
       case 'personalProjects':
         if (!personalProjects || personalProjects.length === 0) return null;
         return (
-          <div key={section.id} className="resume-section">
-            <h3 className="resume-section-title">{section.displayName}</h3>
-            <div className="resume-items">
+          <div key={section.id} className={baseStyles['resume-section']}>
+            <h3 className={baseStyles['resume-section-title']}>{section.displayName}</h3>
+            <div className={baseStyles['resume-items']}>
               {personalProjects.map((project) => (
-                <div key={project.id} className="resume-item">
-                  <div className="flex justify-between items-baseline resume-row-tight">
-                    <h4 className="resume-item-title">{project.name}</h4>
-                    <span className="resume-meta-sm text-gray-600 shrink-0 ml-4">
+                <div key={project.id} className={baseStyles['resume-item']}>
+                  <div
+                    className={`flex justify-between items-baseline ${baseStyles['resume-row-tight']}`}
+                  >
+                    <h4 className={baseStyles['resume-item-title']}>{project.name}</h4>
+                    <span className={`${baseStyles['resume-meta-sm']} shrink-0 ml-4`}>
                       {project.years}
                     </span>
                   </div>
                   {project.role && (
-                    <p className="resume-meta text-gray-700 resume-row">{project.role}</p>
+                    <p className={`${baseStyles['resume-meta']} ${baseStyles['resume-row']}`}>
+                      {project.role}
+                    </p>
                   )}
                   {project.description && project.description.length > 0 && (
-                    <ul className="list-disc list-outside ml-4 resume-list resume-text-sm text-gray-800">
+                    <ul
+                      className={`list-disc list-outside ml-4 ${baseStyles['resume-list']} ${baseStyles['resume-text-sm']}`}
+                    >
                       {project.description.map((desc, index) => (
                         <li key={index} className="pl-1">
                           {desc}
@@ -167,20 +177,26 @@ export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
       case 'education':
         if (!education || education.length === 0) return null;
         return (
-          <div key={section.id} className="resume-section">
-            <h3 className="resume-section-title">{section.displayName}</h3>
-            <div className="resume-items">
+          <div key={section.id} className={baseStyles['resume-section']}>
+            <h3 className={baseStyles['resume-section-title']}>{section.displayName}</h3>
+            <div className={baseStyles['resume-items']}>
               {education.map((edu) => (
-                <div key={edu.id} className="resume-item">
-                  <div className="flex justify-between items-baseline resume-row-tight">
-                    <h4 className="resume-item-title">{edu.institution}</h4>
-                    <span className="resume-meta-sm text-gray-600 shrink-0 ml-4">{edu.years}</span>
+                <div key={edu.id} className={baseStyles['resume-item']}>
+                  <div
+                    className={`flex justify-between items-baseline ${baseStyles['resume-row-tight']}`}
+                  >
+                    <h4 className={baseStyles['resume-item-title']}>{edu.institution}</h4>
+                    <span className={`${baseStyles['resume-meta-sm']} shrink-0 ml-4`}>
+                      {edu.years}
+                    </span>
                   </div>
-                  <div className="flex justify-between resume-meta text-gray-700 resume-row-tight">
+                  <div
+                    className={`flex justify-between ${baseStyles['resume-meta']} ${baseStyles['resume-row-tight']}`}
+                  >
                     <span>{edu.degree}</span>
                   </div>
                   {edu.description && (
-                    <p className="resume-text-sm text-gray-800">{edu.description}</p>
+                    <p className={baseStyles['resume-text-sm']}>{edu.description}</p>
                   )}
                 </div>
               ))}
@@ -208,52 +224,61 @@ export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
   };
 
   return (
-    <>
+    <div className={styles.container}>
       {/* Header Section - Centered Layout (always first) */}
       {personalInfo && (
-        <header className="text-center resume-header border-b border-gray-400">
+        <header
+          className={`text-center ${baseStyles['resume-header']} border-b`}
+          style={{ borderColor: 'var(--resume-border-primary)' }}
+        >
           {/* Name - Centered */}
           {personalInfo.name && (
-            <h1 className="resume-name tracking-tight uppercase mb-1">{personalInfo.name}</h1>
+            <h1 className={`${baseStyles['resume-name']} tracking-tight uppercase mb-1`}>
+              {personalInfo.name}
+            </h1>
           )}
 
           {/* Title - Centered, below name */}
           {personalInfo.title && (
-            <h2 className="resume-title resume-meta text-gray-700 tracking-wide uppercase mb-3">
+            <h2
+              className={`${baseStyles['resume-title']} ${baseStyles['resume-meta']} tracking-wide uppercase mb-3`}
+            >
               {personalInfo.title}
             </h2>
           )}
 
           {/* Contact - Own line, centered */}
-          <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 resume-meta text-gray-600">
+          <div
+            className={`flex flex-wrap justify-center gap-x-4 gap-y-1 ${baseStyles['resume-meta']}`}
+          >
             {renderContactDetail('Email', personalInfo.email, 'mailto:')}
             {personalInfo.phone && (
               <>
-                <span className="text-gray-400">|</span>
+                <span className={baseStyles['text-muted']}>|</span>
                 {renderContactDetail('Phone', personalInfo.phone, 'tel:')}
               </>
             )}
             {personalInfo.location && (
               <>
-                <span className="text-gray-400">|</span>
+                <span className={baseStyles['text-muted']}>|</span>
                 {renderContactDetail('Location', personalInfo.location)}
               </>
             )}
             {personalInfo.website && (
               <>
-                <span className="text-gray-400">|</span>
+                <span className={baseStyles['text-muted']}>|</span>
                 {renderContactDetail('Website', personalInfo.website)}
               </>
             )}
             {personalInfo.linkedin && (
               <>
-                <span className="text-gray-400">|</span>
+                <span className={baseStyles['text-muted']}>|</span>
                 {renderContactDetail('LinkedIn', personalInfo.linkedin)}
               </>
             )}
             {personalInfo.github && (
               <>
-                <span className="text-gray-400">|</span>
+                <span className={baseStyles['text-muted']}>|</span>
                 {renderContactDetail('GitHub', personalInfo.github)}
               </>
             )}
@@ -265,7 +290,7 @@ export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
       {sortedSections
         .filter((section) => section.key !== 'personalInfo')
         .map((section) => renderSection(section))}
-    </>
+    </div>
   );
 };
 
@@ -294,31 +319,31 @@ const AdditionalSection: React.FC<{
   if (!hasContent) return null;
 
   return (
-    <div className="resume-section">
-      <h3 className="resume-section-title">{displayName}</h3>
-      <div className="resume-stack resume-text-sm">
+    <div className={baseStyles['resume-section']}>
+      <h3 className={baseStyles['resume-section-title']}>{displayName}</h3>
+      <div className={`${baseStyles['resume-stack']} ${baseStyles['resume-text-sm']}`}>
         {technicalSkills.length > 0 && (
           <div className="flex">
             <span className="font-bold w-32 shrink-0">Technical Skills:</span>
-            <span className="text-gray-800">{technicalSkills.join(', ')}</span>
+            <span>{technicalSkills.join(', ')}</span>
           </div>
         )}
         {languages.length > 0 && (
           <div className="flex">
             <span className="font-bold w-32 shrink-0">Languages:</span>
-            <span className="text-gray-800">{languages.join(', ')}</span>
+            <span>{languages.join(', ')}</span>
           </div>
         )}
         {certificationsTraining.length > 0 && (
           <div className="flex">
             <span className="font-bold w-32 shrink-0">Certifications:</span>
-            <span className="text-gray-800">{certificationsTraining.join(', ')}</span>
+            <span>{certificationsTraining.join(', ')}</span>
           </div>
         )}
         {awards.length > 0 && (
           <div className="flex">
             <span className="font-bold w-32 shrink-0">Awards:</span>
-            <span className="text-gray-800">{awards.join(', ')}</span>
+            <span>{awards.join(', ')}</span>
           </div>
         )}
       </div>
