@@ -268,6 +268,7 @@ Frontend                          Backend                           External
 ### LLM Prompts Used
 
 **LLM Call #1: Extract Keywords**
+
 ```
 File: prompts/templates.py
 Constant: EXTRACT_KEYWORDS_PROMPT
@@ -281,6 +282,7 @@ Output: {
 ```
 
 **LLM Call #2: Improve Resume**
+
 ```
 File: prompts/templates.py
 Constant: IMPROVE_RESUME_PROMPT
@@ -435,6 +437,7 @@ Frontend                          Backend                           External
 ### Validation Rules
 
 The `ResumeData` schema validates:
+
 - `personal_info` - Required, must have `name`
 - `experience[]` - Optional, each must have `title`, `company`
 - `education[]` - Optional, each must have `degree`, `institution`
@@ -497,11 +500,13 @@ Frontend                          Backend                           External
 ### Cascading Effects
 
 When a **master resume** is deleted:
+
 - The resume record is removed from `resumes` table
 - The uploaded file is deleted from disk
 - **Note:** Tailored resumes derived from it remain (orphaned)
 
 When a **tailored resume** is deleted:
+
 - Only the tailored resume record is removed
 - The improvement tracking record remains (for analytics)
 
@@ -773,6 +778,7 @@ Frontend                          Backend                           External
 ## 7.2 On-Demand Content Generation Flow
 
 **Endpoints:**
+
 - `POST /api/v1/resumes/{resume_id}/generate-cover-letter`
 - `POST /api/v1/resumes/{resume_id}/generate-outreach`
 
@@ -1526,4 +1532,4 @@ GET /pdf → Playwright Launch (FAILS)
 | Dialogs | Messages | "Are you sure you want to delete?" |
 | Form fields | Placeholders | "Enter job description..." |
 
-See `docs/i18n-preparation.md` for detailed extraction plan.
+See `docs/agent/70-features/i18n-preparation.md` for detailed extraction plan.

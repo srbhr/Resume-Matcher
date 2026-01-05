@@ -190,9 +190,9 @@ Open **<http://localhost:3000>** and configure your AI provider in Settings.
 docker-compose up -d
 ```
 
-See [docs/docker.md](docs/docker.md) for detailed Docker instructions.
+See [docs/agent/60-docker/docker.md](docs/agent/60-docker/docker.md) for detailed Docker instructions.
 
-> **Using Ollama with Docker?** See [docs/docker-ollama.md](docs/docker-ollama.md) for setup instructions. TL;DR: Use `http://host.docker.internal:11434` as the Ollama URL instead of `localhost`.
+> **Using Ollama with Docker?** See [docs/agent/60-docker/docker-ollama.md](docs/agent/60-docker/docker-ollama.md) for setup instructions. TL;DR: Use `http://host.docker.internal:11434` as the Ollama URL instead of `localhost`.
 
 ### Tech Stack
 

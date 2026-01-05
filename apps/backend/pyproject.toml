@@ -1,7 +1,7 @@
 [project]
-name = "resume-matcher-backend"
-version = "2.0.0"
-description = "Resume Matcher Backend API - Lean & Local"
+name = "rm-backend"
+version = "1.0.0"
+description = "Resume Matcher Backend API"
 requires-python = ">=3.13"
 dependencies = [
     "fastapi>=0.115.0",

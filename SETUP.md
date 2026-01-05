@@ -275,7 +275,7 @@ docker-compose down
 - Data is persisted in a Docker volume
 - Both frontend (3000) and backend (8000) ports are exposed
 
-For detailed Docker instructions, see [docs/docker.md](docs/docker.md).
+For detailed Docker instructions, see [docs/agent/60-docker/docker.md](docs/agent/60-docker/docker.md).
 
 ---
 
@@ -471,16 +471,16 @@ Stuck? Here are your options:
 
 - **Discord Community:** [dsc.gg/resume-matcher](https://dsc.gg/resume-matcher) - Active community for questions and discussions
 - **GitHub Issues:** [Open an issue](https://github.com/srbhr/Resume-Matcher/issues) for bugs or feature requests
-- **Documentation:** Check the [docs/](docs/) folder for detailed guides
+- **Documentation:** Check the [docs/agent/](docs/agent/) folder for detailed guides
 
 ### Useful Documentation
 
 | Document | Description |
 |----------|-------------|
-| [backend-guide.md](docs/backend-guide.md) | Backend architecture and API details |
-| [frontend-workflow.md](docs/frontend-workflow.md) | User flow and component architecture |
-| [docker.md](docs/docker.md) | Docker deployment guide |
-| [style-guide.md](docs/style-guide.md) | UI design system (Swiss International Style) |
+| [backend-guide.md](docs/agent/30-architecture/backend-guide.md) | Backend architecture and API details |
+| [frontend-workflow.md](docs/agent/30-architecture/frontend-workflow.md) | User flow and component architecture |
+| [docker.md](docs/agent/60-docker/docker.md) | Docker deployment guide |
+| [style-guide.md](docs/agent/50-design-and-templates/style-guide.md) | UI design system (Swiss International Style) |
 
 ---
 
