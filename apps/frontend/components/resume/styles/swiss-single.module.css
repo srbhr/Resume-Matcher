@@ -1,0 +1,26 @@
+@import './_tokens.css';
+
+/* 
+  Swiss Single Column Template
+  ID: swiss-single
+  
+  Uses the base token system.
+  Layout is primarily vertical stacking handled by base classes.
+*/
+
+.container {
+  /* Ensure full width usage */
+  width: 100%;
+}
+
+/* 
+  Overrides or specific tweaks for this template can go here.
+  For example, if we wanted a specific border style for section titles
+  only in this template:
+*/
+
+/* 
+.sectionTitle {
+  border-bottom-style: double;
+} 
+*/
