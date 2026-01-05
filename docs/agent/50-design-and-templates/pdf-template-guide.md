@@ -318,7 +318,7 @@ export const SECTION_SPACING_MAP: Record<SpacingLevel, string> = {
 
 ### Change CSS Defaults
 
-Edit `app/(default)/css/globals.css`:
+Edit `components/resume/styles/_base.module.css`:
 
 ```css
 .resume-body {
@@ -331,16 +331,17 @@ Edit `app/(default)/css/globals.css`:
 ### Change Section Title Styling
 
 ```css
-/* globals.css */
-.resume-body .resume-section-title {
+/* _base.module.css */
+.resume-section-title {
   font-size: calc(var(--font-size-base) * var(--section-header-scale));
   font-family: var(--header-font);
   font-weight: 700;
   text-transform: uppercase;
-  border-bottom: 2px solid #000000;
+  border-bottom: 1px solid var(--resume-border-primary);
   margin-bottom: var(--item-gap);
   padding-bottom: 0.125rem;
   letter-spacing: 0.05em;
+  color: var(--resume-text-primary);
 }
 ```
 
@@ -376,12 +377,12 @@ return {
 ### Step 3: Update CSS
 
 ```css
-/* globals.css */
+/* components/resume/styles/_base.module.css */
 .resume-body {
   --new-setting: value-off;
 }
 
-.resume-body .some-element {
+.some-element {
   property: var(--new-setting);
 }
 ```

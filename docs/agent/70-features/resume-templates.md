@@ -45,6 +45,6 @@ Templates use CSS custom properties for styling:
 - `--body-font` - Body text font family
 - `--margin-top/bottom/left/right` - Page margins
 
-> **Note**: Templates should use the `resume-*` helper classes in `apps/frontend/app/(default)/css/globals.css` to ensure all spacing and typography respond to template settings.
+> **Note**: Templates should use the styles exported from `apps/frontend/components/resume/styles/_base.module.css` (e.g., `baseStyles['resume-section']`) to ensure all spacing and typography respond to template settings.
 
 Formatting controls include an "Effective Output" summary that reflects compact-mode adjustments for spacing/line-height.
