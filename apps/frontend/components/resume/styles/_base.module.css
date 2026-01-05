@@ -71,7 +71,7 @@
 
 .resume-item-title {
   font-family: var(--body-font);
-  font-size: calc(var(--font-size-base) * 1);
+  font-size: var(--font-size-base);
   font-weight: 700;
   color: var(--resume-text-primary);
 }
@@ -180,5 +180,5 @@
 }
 
 .text-muted {
-  color: var(--resume-border-primary);
+  color: var(--resume-text-tertiary);
 }

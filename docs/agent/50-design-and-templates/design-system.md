@@ -49,15 +49,6 @@ The Resume Matcher uses **Swiss International Style** (also known as Internation
 | Dark Grey | #374151 | `gray-700` | Secondary text |
 | Light Text | #6B7280 | `gray-500` | Tertiary text, hints |
 
-### 2.4 Color CSS Variables
-
-```css
-/* globals.css */
-:root {
-  --color-warm-white: #F0F0E8;
-  --color-panel-grey: #E5E5E0;
-}
-```
 
 ---
 
