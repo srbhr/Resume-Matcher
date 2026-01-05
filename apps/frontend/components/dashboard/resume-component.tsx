@@ -131,7 +131,7 @@ const Resume: React.FC<ResumeProps> = ({ resumeData, template = 'swiss-single', 
 
   return (
     <div
-      className={`resume-body ${baseStyles['resume-body']} bg-white text-black w-full mx-auto resume-template-${mergedSettings.template}`}
+      className={`${baseStyles['resume-body']} bg-white text-black w-full mx-auto resume-template-${mergedSettings.template}`}
       style={cssVars}
     >
       {mergedSettings.template === 'swiss-single' && (
