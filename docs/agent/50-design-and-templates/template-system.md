@@ -139,7 +139,7 @@ apps/frontend/
 └── app/
     └── (default)/
         └── css/
-            └── globals.css           # CSS custom properties
+            └── globals.css           # Print styles & resets
 ```
 
 ### Key Files
@@ -925,7 +925,7 @@ When creating a new template, ensure:
 | File | Purpose |
 |------|---------|
 | `lib/types/template-settings.ts` | Settings types, defaults, CSS mapping |
-| `app/(default)/css/globals.css` | CSS custom properties, print styles |
+| `app/(default)/css/globals.css` | Print styles & resets |
 | `components/builder/resume-builder.tsx` | Settings state management |
 | `components/builder/formatting-controls.tsx` | Settings UI |
 | `app/print/resumes/[id]/page.tsx` | Print route with margins |

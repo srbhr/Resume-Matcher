@@ -58,7 +58,9 @@ This guide documents how PDF generation and resume templates work, making it eas
 | File | Purpose |
 |------|---------|
 | `lib/types/template-settings.ts` | Type definitions, defaults, CSS variable mappings, `settingsToCssVars()` |
-| `app/(default)/css/globals.css` | CSS custom properties, `.resume-body` styles, print media rules |
+| `components/resume/styles/_base.module.css` | Shared typography and layout styles (replaced globals.css) |
+| `components/resume/styles/_tokens.css` | Global design tokens (colors) |
+| `app/(default)/css/globals.css` | Print media rules and resets only |
 | `components/builder/formatting-controls.tsx` | UI controls for adjusting template settings |
 | `components/dashboard/resume-component.tsx` | Main Resume wrapper, applies CSS variables |
 | `components/resume/resume-single-column.tsx` | Single-column template layout |

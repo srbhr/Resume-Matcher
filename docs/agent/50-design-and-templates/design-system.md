@@ -633,41 +633,46 @@ const getStatusDisplay = () => {
 
 ## 11. Resume Styling
 
-### 11.1 CSS Custom Properties
+### 11.1 CSS Architecture
+
+The resume system uses **CSS Modules** and **Tokens** for styling.
+
+- **Tokens** (`components/resume/styles/_tokens.css`): Defines semantic variables for colors.
+- **Base Styles** (`components/resume/styles/_base.module.css`): Shared typography, spacing, and layout utilities.
+- **Template Styles** (`components/resume/styles/[id].module.css`): Specific layout rules for each template.
+
+### 11.2 Design Tokens
 
 ```css
+/* _tokens.css */
 .resume-body {
-  --section-gap: 1.5rem;       /* Gap between major sections */
-  --item-gap: 0.5rem;          /* Gap between items */
-  --line-height: 1.5;          /* Text line height */
-  --font-size-base: 14px;      /* Base font size */
-  --header-scale: 2;           /* Header size multiplier */
-  --margin-top: 10mm;          /* Page margins */
-  --margin-bottom: 10mm;
-  --margin-left: 10mm;
-  --margin-right: 10mm;
+  /* Text colors */
+  --resume-text-primary: #000000;
+  --resume-text-secondary: #374151;
+  
+  /* Borders */
+  --resume-border-primary: #9CA3AF;
+  
+  /* Backgrounds */
+  --resume-accent-bg: #F3F4F6;
 }
 ```
 
-### 11.2 Section Title Styling
+### 11.3 Base Styles
 
 ```css
-.resume-section-title {
-  font-size: calc(var(--font-size-base) * 1.2);
-  font-weight: bold;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  border-bottom: 2px solid black;
-  padding-bottom: 0.25rem;
-  margin-bottom: var(--item-gap);
+/* _base.module.css */
+.resume-body {
+  --section-gap: 1.5rem;
+  --item-gap: 0.5rem;
+  --line-height: 1.5;
+  --font-size-base: 14px;
+  /* ... */
 }
 
-.resume-section-title-sm {
-  font-size: calc(var(--font-size-base) * 1.1);
-  font-weight: bold;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: calc(var(--item-gap) * 0.75);
+.resume-section-title {
+  font-size: calc(var(--font-size-base) * 1.2);
+  /* ... */
 }
 ```
 

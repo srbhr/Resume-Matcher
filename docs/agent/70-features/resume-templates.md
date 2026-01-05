@@ -29,7 +29,8 @@
 | File | Purpose |
 |------|---------|
 | `apps/frontend/lib/types/template-settings.ts` | Type definitions, defaults, CSS variable mapping |
-| `apps/frontend/app/(default)/css/globals.css` | CSS custom properties for resume styling |
+| `apps/frontend/components/resume/styles/_tokens.css` | Global design tokens (colors) |
+| `apps/frontend/components/resume/styles/_base.module.css` | Shared typography and layout styles |
 | `apps/frontend/components/builder/formatting-controls.tsx` | UI controls for template settings |
 | `apps/frontend/components/resume/resume-single-column.tsx` | Single column template |
 | `apps/frontend/components/resume/resume-two-column.tsx` | Two column template |
