@@ -327,7 +327,7 @@ components/
 ├── resume/
 │   ├── resume-single-column.tsx    # NEW - single column template
 │   ├── resume-two-column.tsx       # NEW - two column template
-│   └── resume-wrapper.tsx          # NEW - applies CSS variables from settings
+│   └── dynamic-resume-section.tsx  # NEW - renders custom sections
 └── dashboard/
     └── resume-component.tsx        # UPDATE - delegate to template components
 ```

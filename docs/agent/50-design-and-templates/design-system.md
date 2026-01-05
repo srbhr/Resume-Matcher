@@ -676,7 +676,7 @@ The resume system uses **CSS Modules** and **Tokens** for styling.
 }
 ```
 
-### 11.3 Contact Link Styling
+### 11.4 Contact Link Styling
 
 ```tsx
 {/* Contact item with optional link */}
