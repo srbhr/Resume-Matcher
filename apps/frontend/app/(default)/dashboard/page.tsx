@@ -9,6 +9,8 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Loader2, AlertCircle, RefreshCw, Plus } from 'lucide-react';
 import { fetchResume, fetchResumeList, deleteResume, type ResumeListItem } from '@/lib/api/resume';
 import { useStatusCache } from '@/lib/context/status-cache';
+import Link from 'next/link';
+import { Settings, AlertTriangle } from 'lucide-react';
 
 type ProcessingStatus = 'pending' | 'processing' | 'ready' | 'failed' | 'loading';
 
@@ -19,8 +21,17 @@ export default function DashboardPage() {
   const [tailoredResumes, setTailoredResumes] = useState<ResumeListItem[]>([]);
   const router = useRouter();
 
-  // Status cache for optimistic counter updates
-  const { incrementResumes, decrementResumes, setHasMasterResume } = useStatusCache();
+  // Status cache for optimistic counter updates and LLM status check
+  const {
+    status: systemStatus,
+    isLoading: statusLoading,
+    incrementResumes,
+    decrementResumes,
+    setHasMasterResume,
+  } = useStatusCache();
+
+  // Check if LLM is configured (API key is set)
+  const isLlmConfigured = !statusLoading && systemStatus?.llm_configured;
 
   const cardBaseClass = 'bg-[#F0F0E8] p-6 md:p-8 aspect-square h-full relative flex flex-col';
   // The physics class from your Hero, adapted for cards
@@ -176,27 +187,55 @@ export default function DashboardPage() {
     <SwissGrid>
       {/* 1. Master Resume Logic */}
       {!masterResumeId ? (
-        // Upload State - Pass the card as the trigger
-        <ResumeUploadDialog
-          onUploadComplete={handleUploadComplete}
-          trigger={
-            <div className={`${interactiveCardClass} hover:bg-blue-700 hover:text-[#F0F0E8]`}>
-              <div className="flex-1 flex flex-col justify-between pointer-events-none">
-                <div className="w-14 h-14 border-2 border-current flex items-center justify-center mb-4">
-                  <span className="text-2xl leading-none relative top-[-2px]">+</span>
+        // Check if LLM is configured first
+        !isLlmConfigured && !statusLoading ? (
+          // LLM Not Configured - Show Setup Required Card
+          <Link href="/settings" className="block h-full">
+            <div
+              className={`${cardBaseClass} border-2 border-dashed border-amber-500 bg-amber-50 transition-all duration-200 ease-in-out hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,0.2)] cursor-pointer group`}
+            >
+              <div className="flex-1 flex flex-col justify-between">
+                <div className="w-14 h-14 border-2 border-amber-500 bg-white flex items-center justify-center mb-4">
+                  <AlertTriangle className="w-7 h-7 text-amber-600" />
                 </div>
                 <div>
-                  <h3 className="font-mono text-xl font-bold uppercase">
-                    Initialize Master Resume
+                  <h3 className="font-mono text-lg font-bold uppercase text-amber-800">
+                    [ SETUP REQUIRED ]
                   </h3>
-                  <p className="font-mono text-xs mt-2 opacity-60 group-hover:opacity-100">
-                    {'// Initialize Sequence'}
+                  <p className="font-mono text-xs mt-2 text-amber-700">
+                    {'>'} Configure API key in settings to enable resume tailoring.
                   </p>
+                  <div className="flex items-center gap-2 mt-4 text-amber-700 group-hover:text-amber-900">
+                    <Settings className="w-4 h-4" />
+                    <span className="font-mono text-xs font-bold uppercase">Go to Settings</span>
+                  </div>
                 </div>
               </div>
             </div>
-          }
-        />
+          </Link>
+        ) : (
+          // Upload State - Pass the card as the trigger
+          <ResumeUploadDialog
+            onUploadComplete={handleUploadComplete}
+            trigger={
+              <div className={`${interactiveCardClass} hover:bg-blue-700 hover:text-[#F0F0E8]`}>
+                <div className="flex-1 flex flex-col justify-between pointer-events-none">
+                  <div className="w-14 h-14 border-2 border-current flex items-center justify-center mb-4">
+                    <span className="text-2xl leading-none relative top-[-2px]">+</span>
+                  </div>
+                  <div>
+                    <h3 className="font-mono text-xl font-bold uppercase">
+                      Initialize Master Resume
+                    </h3>
+                    <p className="font-mono text-xs mt-2 opacity-60 group-hover:opacity-100">
+                      {'// Initialize Sequence'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            }
+          />
+        )
       ) : (
         // Master Resume Exists - Click to View
         <div

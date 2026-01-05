@@ -2,12 +2,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useResumePreview } from '@/components/common/resume_previewer_context';
 import { uploadJobDescriptions, improveResume } from '@/lib/api/resume';
 import { useStatusCache } from '@/lib/context/status-cache';
-import { Loader2, ArrowLeft } from 'lucide-react';
+import { Loader2, ArrowLeft, AlertTriangle, Settings } from 'lucide-react';
 
 export default function TailorPage() {
   const [jobDescription, setJobDescription] = useState('');
@@ -17,7 +18,16 @@ export default function TailorPage() {
 
   const router = useRouter();
   const { setImprovedData } = useResumePreview();
-  const { incrementJobs, incrementImprovements, incrementResumes } = useStatusCache();
+  const {
+    status: systemStatus,
+    isLoading: statusLoading,
+    incrementJobs,
+    incrementImprovements,
+    incrementResumes,
+  } = useStatusCache();
+
+  // Check if LLM is configured
+  const isLlmConfigured = !statusLoading && systemStatus?.llm_configured;
 
   useEffect(() => {
     const storedId = localStorage.getItem('master_resume_id');
@@ -64,7 +74,23 @@ export default function TailorPage() {
       }
     } catch (err) {
       console.error(err);
-      setError('Failed to generate resume. Please try again.');
+      // Check for common error patterns
+      const errorMessage = err instanceof Error ? err.message : '';
+      if (
+        errorMessage.toLowerCase().includes('api key') ||
+        errorMessage.toLowerCase().includes('unauthorized') ||
+        errorMessage.toLowerCase().includes('authentication') ||
+        errorMessage.includes('401')
+      ) {
+        setError('API key error. Please check your LLM configuration in Settings.');
+      } else if (
+        errorMessage.toLowerCase().includes('rate limit') ||
+        errorMessage.includes('429')
+      ) {
+        setError('Rate limit reached. Please wait a moment and try again.');
+      } else {
+        setError('Failed to generate resume. Please check your settings and try again.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -87,6 +113,32 @@ export default function TailorPage() {
             {'// Paste Job Description Below'}
           </p>
         </div>
+
+        {/* LLM Not Configured Warning */}
+        {!statusLoading && !isLlmConfigured && (
+          <div className="mb-6 border-2 border-amber-500 bg-amber-50 p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)]">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="font-mono text-sm font-bold uppercase tracking-wider text-amber-800">
+                  [ SETUP REQUIRED ]
+                </p>
+                <p className="font-mono text-xs text-amber-700 mt-1">
+                  {'>'} No API key configured. Resume tailoring requires an LLM provider.
+                </p>
+                <Link
+                  href="/settings"
+                  className="inline-flex items-center gap-2 mt-3 text-amber-700 hover:text-amber-900 transition-colors"
+                >
+                  <Settings className="w-4 h-4" />
+                  <span className="font-mono text-xs font-bold uppercase underline">
+                    Configure API Key
+                  </span>
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="space-y-6">
           <div className="relative">
@@ -111,7 +163,7 @@ export default function TailorPage() {
           <Button
             size="lg"
             onClick={handleGenerate}
-            disabled={isLoading || !jobDescription.trim()}
+            disabled={isLoading || statusLoading || !jobDescription.trim() || !isLlmConfigured}
             className="w-full"
           >
             {isLoading ? (
@@ -119,6 +171,13 @@ export default function TailorPage() {
                 <Loader2 className="w-5 h-5 animate-spin" />
                 Processing...
               </>
+            ) : statusLoading ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                Checking...
+              </>
+            ) : !isLlmConfigured ? (
+              'Configure API Key First'
             ) : (
               'Generate Tailored Resume'
             )}

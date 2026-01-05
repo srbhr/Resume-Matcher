@@ -111,9 +111,7 @@ export function QuestionStep({
               {item.item_type === 'experience' ? 'Experience' : 'Project'}:
             </span>
             <span className="font-semibold text-gray-900">{item.title}</span>
-            {item.subtitle && (
-              <span className="text-gray-500">@ {item.subtitle}</span>
-            )}
+            {item.subtitle && <span className="text-gray-500">@ {item.subtitle}</span>}
           </div>
         </div>
       )}
@@ -137,12 +135,7 @@ export function QuestionStep({
 
       {/* Navigation */}
       <div className="flex items-center justify-between pt-6 border-t border-gray-200 mt-6">
-        <Button
-          variant="outline"
-          onClick={onPrev}
-          disabled={isFirst}
-          className="gap-2"
-        >
+        <Button variant="outline" onClick={onPrev} disabled={isFirst} className="gap-2">
           <ChevronLeft className="w-4 h-4" />
           Back
         </Button>

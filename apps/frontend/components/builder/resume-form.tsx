@@ -55,7 +55,9 @@ export const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, onUpdate }) 
     const newSection = createCustomSection(allSections, displayName, sectionType);
 
     // Initialize section metadata if not present
-    const currentMeta = resumeData.sectionMeta?.length ? resumeData.sectionMeta : DEFAULT_SECTION_META;
+    const currentMeta = resumeData.sectionMeta?.length
+      ? resumeData.sectionMeta
+      : DEFAULT_SECTION_META;
 
     // Initialize custom section data
     const newCustomSection: CustomSection = {
@@ -315,17 +317,9 @@ export const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, onUpdate }) 
         const isLast = index === sortedAllSections.length - 1;
 
         if (section.isDefault) {
-          return (
-            <div key={section.id}>
-              {renderDefaultSection(section, isFirst, isLast)}
-            </div>
-          );
+          return <div key={section.id}>{renderDefaultSection(section, isFirst, isLast)}</div>;
         } else {
-          return (
-            <div key={section.id}>
-              {renderCustomSection(section, isFirst, isLast)}
-            </div>
-          );
+          return <div key={section.id}>{renderCustomSection(section, isFirst, isLast)}</div>;
         }
       })}
 

@@ -16,9 +16,7 @@ function LoadingStep({ message, submessage }: LoadingStepProps) {
       </div>
       <div className="text-center">
         <p className="text-xl font-mono font-bold">{message}</p>
-        {submessage && (
-          <p className="text-sm text-gray-500 mt-2 font-mono">{submessage}</p>
-        )}
+        {submessage && <p className="text-sm text-gray-500 mt-2 font-mono">{submessage}</p>}
       </div>
     </div>
   );
@@ -44,10 +42,7 @@ export function GeneratingStep() {
 
 export function ApplyingStep() {
   return (
-    <LoadingStep
-      message="Applying enhancements..."
-      submessage="Updating your master resume"
-    />
+    <LoadingStep message="Applying enhancements..." submessage="Updating your master resume" />
   );
 }
 
@@ -92,7 +87,8 @@ export function NoImprovementsStep({ onClose, summary }: NoImprovementsStepProps
       <div className="text-center max-w-md">
         <p className="text-2xl font-mono font-bold">Your resume looks great!</p>
         <p className="text-sm text-gray-500 mt-2 font-mono">
-          {summary || "We couldn't find any items that need improvement. Your experience and project descriptions are already well-detailed."}
+          {summary ||
+            "We couldn't find any items that need improvement. Your experience and project descriptions are already well-detailed."}
         </p>
       </div>
       <Button onClick={onClose} className="mt-4 gap-2">

@@ -54,7 +54,12 @@ export const AddSectionDialog: React.FC<AddSectionDialogProps> = ({
     }
   };
 
-  const sectionTypes: { type: SelectableSectionType; label: string; icon: React.ReactNode; description: string }[] = [
+  const sectionTypes: {
+    type: SelectableSectionType;
+    label: string;
+    icon: React.ReactNode;
+    description: string;
+  }[] = [
     {
       type: 'text',
       label: 'Text Block',
@@ -152,11 +157,7 @@ export const AddSectionDialog: React.FC<AddSectionDialogProps> = ({
               Cancel
             </Button>
           </DialogClose>
-          <Button
-            onClick={handleSubmit}
-            disabled={!displayName.trim()}
-            className="rounded-none"
-          >
+          <Button onClick={handleSubmit} disabled={!displayName.trim()} className="rounded-none">
             <Plus className="w-4 h-4 mr-2" />
             Add Section
           </Button>

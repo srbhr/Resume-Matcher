@@ -277,6 +277,24 @@ export default function SettingsPage() {
         </div>
 
         <div className="p-8 space-y-10">
+          {/* API Key Not Configured Warning */}
+          {!statusLoading && systemStatus && !systemStatus.llm_configured && (
+            <div className="border-2 border-amber-500 bg-amber-50 p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)]">
+              <div className="flex items-start gap-3">
+                <div className="w-3 h-3 bg-amber-500 mt-1 shrink-0"></div>
+                <div className="flex-1">
+                  <p className="font-mono text-sm font-bold uppercase tracking-wider text-amber-800">
+                    [ SETUP REQUIRED ]
+                  </p>
+                  <p className="font-mono text-xs text-amber-700 mt-1">
+                    {'>'} No API key configured. Add your LLM provider API key below to enable
+                    resume tailoring.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* System Status Panel */}
           <section className="space-y-4">
             <div className="flex items-center justify-between border-b border-black/10 pb-2">
@@ -692,7 +710,9 @@ export default function SettingsPage() {
         <div className="bg-[#E5E5E0] p-4 border-t border-black flex justify-between items-center">
           <div className="flex items-center gap-2">
             <img src="/logo.svg" alt="Resume Matcher" className="w-5 h-5" />
-            <span className="font-mono text-xs text-gray-500">{getVersionString().toUpperCase()}</span>
+            <span className="font-mono text-xs text-gray-500">
+              {getVersionString().toUpperCase()}
+            </span>
           </div>
           <div className="flex items-center gap-2">
             {statusLoading ? (

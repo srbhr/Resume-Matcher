@@ -123,11 +123,7 @@ const ItemListSectionContent: React.FC<{ items: CustomSectionItem[] }> = ({ item
 const StringListSectionContent: React.FC<{ strings: string[] }> = ({ strings }) => {
   if (strings.length === 0) return null;
 
-  return (
-    <div className="resume-text-sm text-gray-800">
-      {strings.join(', ')}
-    </div>
-  );
+  return <div className="resume-text-sm text-gray-800">{strings.join(', ')}</div>;
 };
 
 export default DynamicResumeSection;

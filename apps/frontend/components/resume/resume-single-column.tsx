@@ -142,7 +142,9 @@ export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
                 <div key={project.id} className="resume-item">
                   <div className="flex justify-between items-baseline resume-row-tight">
                     <h4 className="resume-item-title">{project.name}</h4>
-                    <span className="resume-meta-sm text-gray-600 shrink-0 ml-4">{project.years}</span>
+                    <span className="resume-meta-sm text-gray-600 shrink-0 ml-4">
+                      {project.years}
+                    </span>
                   </div>
                   {project.role && (
                     <p className="resume-meta text-gray-700 resume-row">{project.role}</p>
@@ -188,7 +190,13 @@ export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
 
       case 'additional':
         if (!additional) return null;
-        return <AdditionalSection key={section.id} additional={additional} displayName={section.displayName} />;
+        return (
+          <AdditionalSection
+            key={section.id}
+            additional={additional}
+            displayName={section.displayName}
+          />
+        );
 
       default:
         // Custom section - render using DynamicResumeSection

@@ -153,7 +153,9 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
           {/* Experience Section */}
           {isSectionVisible('workExperience') && workExperience && workExperience.length > 0 && (
             <div className="resume-section">
-              <h3 className="resume-section-title">{getSectionDisplayName('workExperience', 'Experience')}</h3>
+              <h3 className="resume-section-title">
+                {getSectionDisplayName('workExperience', 'Experience')}
+              </h3>
               <div className="resume-items">
                 {workExperience.map((exp) => (
                   <div key={exp.id} className="resume-item">
@@ -185,47 +187,57 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
           )}
 
           {/* Projects Section */}
-          {isSectionVisible('personalProjects') && personalProjects && personalProjects.length > 0 && (
-            <div className="resume-section">
-              <h3 className="resume-section-title">{getSectionDisplayName('personalProjects', 'Projects')}</h3>
-              <div className="resume-items">
-            {personalProjects.map((project) => (
-              <div key={project.id} className="resume-item">
-                <div className="flex justify-between items-baseline resume-row-tight">
-                  <h4 className="resume-item-title-sm">{project.name}</h4>
-                  <span className="resume-meta-sm text-gray-600 shrink-0 ml-2">{project.years}</span>
+          {isSectionVisible('personalProjects') &&
+            personalProjects &&
+            personalProjects.length > 0 && (
+              <div className="resume-section">
+                <h3 className="resume-section-title">
+                  {getSectionDisplayName('personalProjects', 'Projects')}
+                </h3>
+                <div className="resume-items">
+                  {personalProjects.map((project) => (
+                    <div key={project.id} className="resume-item">
+                      <div className="flex justify-between items-baseline resume-row-tight">
+                        <h4 className="resume-item-title-sm">{project.name}</h4>
+                        <span className="resume-meta-sm text-gray-600 shrink-0 ml-2">
+                          {project.years}
+                        </span>
+                      </div>
+                      {project.role && (
+                        <p className="resume-meta-sm text-gray-700 resume-row-tight">
+                          {project.role}
+                        </p>
+                      )}
+                      {project.description && project.description.length > 0 && (
+                        <ul className="list-disc list-outside ml-4 resume-list resume-text-xs text-gray-800">
+                          {project.description.map((desc, index) => (
+                            <li key={index} className="pl-0.5">
+                              {desc}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  ))}
                 </div>
-                {project.role && (
-                  <p className="resume-meta-sm text-gray-700 resume-row-tight">{project.role}</p>
-                )}
-                {project.description && project.description.length > 0 && (
-                  <ul className="list-disc list-outside ml-4 resume-list resume-text-xs text-gray-800">
-                    {project.description.map((desc, index) => (
-                      <li key={index} className="pl-0.5">
-                        {desc}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                ))}
               </div>
-            </div>
-          )}
+            )}
 
           {/* Certifications/Training - Main column */}
-          {isSectionVisible('additional') && additional?.certificationsTraining && additional.certificationsTraining.length > 0 && (
-            <div className="resume-section">
-              <h3 className="resume-section-title">Training & Certifications</h3>
-              <ul className="list-disc list-outside ml-4 resume-list resume-text-xs text-gray-800">
-                {additional.certificationsTraining.map((cert, index) => (
-                  <li key={index} className="pl-0.5">
-                    {cert}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+          {isSectionVisible('additional') &&
+            additional?.certificationsTraining &&
+            additional.certificationsTraining.length > 0 && (
+              <div className="resume-section">
+                <h3 className="resume-section-title">Training & Certifications</h3>
+                <ul className="list-disc list-outside ml-4 resume-list resume-text-xs text-gray-800">
+                  {additional.certificationsTraining.map((cert, index) => (
+                    <li key={index} className="pl-0.5">
+                      {cert}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
           {/* Custom Sections - Main column */}
           {customSections.map((section) => (
@@ -238,7 +250,9 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
           {/* Summary Section */}
           {isSectionVisible('summary') && summary && (
             <div className="resume-section">
-              <h3 className="resume-section-title-sm">{getSectionDisplayName('summary', 'Summary')}</h3>
+              <h3 className="resume-section-title-sm">
+                {getSectionDisplayName('summary', 'Summary')}
+              </h3>
               <p className="resume-text-xs text-gray-800">{summary}</p>
             </div>
           )}
@@ -246,7 +260,9 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
           {/* Education Section */}
           {isSectionVisible('education') && education && education.length > 0 && (
             <div className="resume-section">
-              <h3 className="resume-section-title-sm">{getSectionDisplayName('education', 'Education')}</h3>
+              <h3 className="resume-section-title-sm">
+                {getSectionDisplayName('education', 'Education')}
+              </h3>
               <div className="resume-stack">
                 {education.map((edu) => (
                   <div key={edu.id}>
@@ -263,29 +279,33 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
           )}
 
           {/* Skills Section */}
-          {isSectionVisible('additional') && additional?.technicalSkills && additional.technicalSkills.length > 0 && (
-            <div className="resume-section">
-              <h3 className="resume-section-title-sm">Skills</h3>
-              <div className="flex flex-wrap gap-1">
-                {additional.technicalSkills.map((skill, index) => (
-                  <span
-                    key={index}
-                    className="resume-skill-pill bg-gray-100 border border-gray-300"
-                  >
-                    {skill}
-                  </span>
-                ))}
+          {isSectionVisible('additional') &&
+            additional?.technicalSkills &&
+            additional.technicalSkills.length > 0 && (
+              <div className="resume-section">
+                <h3 className="resume-section-title-sm">Skills</h3>
+                <div className="flex flex-wrap gap-1">
+                  {additional.technicalSkills.map((skill, index) => (
+                    <span
+                      key={index}
+                      className="resume-skill-pill bg-gray-100 border border-gray-300"
+                    >
+                      {skill}
+                    </span>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
           {/* Languages Section */}
-          {isSectionVisible('additional') && additional?.languages && additional.languages.length > 0 && (
-            <div className="resume-section">
-              <h3 className="resume-section-title-sm">Languages</h3>
-              <p className="resume-text-xs text-gray-800">{additional.languages.join(' • ')}</p>
-            </div>
-          )}
+          {isSectionVisible('additional') &&
+            additional?.languages &&
+            additional.languages.length > 0 && (
+              <div className="resume-section">
+                <h3 className="resume-section-title-sm">Languages</h3>
+                <p className="resume-text-xs text-gray-800">{additional.languages.join(' • ')}</p>
+              </div>
+            )}
 
           {/* Awards Section */}
           {isSectionVisible('additional') && additional?.awards && additional.awards.length > 0 && (
