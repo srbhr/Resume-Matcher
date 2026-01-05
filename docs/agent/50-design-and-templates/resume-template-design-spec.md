@@ -327,7 +327,7 @@ components/
 ├── resume/
 │   ├── resume-single-column.tsx    # NEW - single column template
 │   ├── resume-two-column.tsx       # NEW - two column template
-│   └── resume-wrapper.tsx          # NEW - applies CSS variables from settings
+│   └── dynamic-resume-section.tsx  # NEW - renders custom sections
 └── dashboard/
     └── resume-component.tsx        # UPDATE - delegate to template components
 ```
@@ -356,42 +356,37 @@ const Resume: React.FC<ResumeProps> = ({ resumeData, template = 'swiss-single', 
 };
 ```
 
-### 6.3 CSS Custom Properties
+### 6.3 CSS Modules & Tokens
 
+The styling architecture uses **CSS Modules** for scoping and **CSS Variables** for design tokens.
+
+**Token System (`components/resume/styles/_tokens.css`)**
 ```css
-/* Base resume styles with CSS variables */
 .resume-body {
-  --section-gap: 1rem;
-  --item-gap: 0.25rem;
-  --line-height: 1.35;
-  --font-size-base: 14px;
-  --header-scale: 2;
-  --section-header-scale: 1.2;
-  --header-font: ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
-  --body-font: ui-sans-serif, system-ui, sans-serif;
-
-  --margin-top: 10mm;
-  --margin-bottom: 10mm;
-  --margin-left: 10mm;
-  --margin-right: 10mm;
-
-  font-family: var(--body-font);
-  font-size: var(--font-size-base);
-  line-height: var(--line-height);
-  padding: var(--margin-top) var(--margin-right) var(--margin-bottom) var(--margin-left);
-}
-
-.resume-body .resume-section {
-  margin-bottom: var(--section-gap);
-}
-
-.resume-body .resume-item {
-  margin-bottom: var(--item-gap);
+  /* Text colors */
+  --resume-text-primary: #000000;
+  --resume-text-secondary: #374151;
+  /* ... border colors, accents ... */
 }
 ```
 
-Template components should use the `resume-*` helper classes in `apps/frontend/app/(default)/css/globals.css`
-to ensure font sizes and spacing respond to template settings.
+**Base Styles (`components/resume/styles/_base.module.css`)**
+```css
+@import './_tokens.css';
+
+.resume-body {
+  /* Spacing defaults */
+  --section-gap: 1rem;
+  --item-gap: 0.25rem;
+  /* ... typography vars ... */
+}
+
+/* Helper classes */
+.resume-section-title { ... }
+.resume-item { ... }
+```
+
+Template components import `baseStyles` from `_base.module.css` and their own specific module (e.g., `swiss-single.module.css`).
 
 ---
 
@@ -629,9 +624,14 @@ apps/frontend/
 │   │   └── formatting-controls.tsx   # NEW
 │   ├── resume/
 │   │   ├── index.ts                  # NEW: Barrel export
-│   │   ├── resume-wrapper.tsx        # NEW: CSS vars wrapper
+│   │   ├── dynamic-resume-section.tsx
 │   │   ├── resume-single-column.tsx  # NEW: Template 1
-│   │   └── resume-two-column.tsx     # NEW: Template 2
+│   │   ├── resume-two-column.tsx     # NEW: Template 2
+│   │   └── styles/                   # NEW: CSS Modules
+│   │       ├── _tokens.css
+│   │       ├── _base.module.css
+│   │       ├── swiss-single.module.css
+│   │       └── swiss-two-column.module.css
 │   └── dashboard/
 │       └── resume-component.tsx      # UPDATE: Delegate to templates
 ├── lib/
@@ -644,8 +644,6 @@ apps/frontend/
 │       └── resumes/
 │           └── [id]/
 │               └── page.tsx          # UPDATE: Parse settings
-└── styles/
-    └── resume-templates.css          # NEW: CSS custom properties
 
 apps/backend/
 ├── app/

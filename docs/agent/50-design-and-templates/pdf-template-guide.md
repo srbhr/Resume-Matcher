@@ -58,7 +58,9 @@ This guide documents how PDF generation and resume templates work, making it eas
 | File | Purpose |
 |------|---------|
 | `lib/types/template-settings.ts` | Type definitions, defaults, CSS variable mappings, `settingsToCssVars()` |
-| `app/(default)/css/globals.css` | CSS custom properties, `.resume-body` styles, print media rules |
+| `components/resume/styles/_base.module.css` | Shared typography and layout styles (replaced globals.css) |
+| `components/resume/styles/_tokens.css` | Global design tokens (colors) |
+| `app/(default)/css/globals.css` | Print media rules and resets only |
 | `components/builder/formatting-controls.tsx` | UI controls for adjusting template settings |
 | `components/dashboard/resume-component.tsx` | Main Resume wrapper, applies CSS variables |
 | `components/resume/resume-single-column.tsx` | Single-column template layout |
@@ -316,7 +318,7 @@ export const SECTION_SPACING_MAP: Record<SpacingLevel, string> = {
 
 ### Change CSS Defaults
 
-Edit `app/(default)/css/globals.css`:
+Edit `components/resume/styles/_base.module.css`:
 
 ```css
 .resume-body {
@@ -329,16 +331,17 @@ Edit `app/(default)/css/globals.css`:
 ### Change Section Title Styling
 
 ```css
-/* globals.css */
-.resume-body .resume-section-title {
+/* _base.module.css */
+.resume-section-title {
   font-size: calc(var(--font-size-base) * var(--section-header-scale));
   font-family: var(--header-font);
   font-weight: 700;
   text-transform: uppercase;
-  border-bottom: 2px solid #000000;
+  border-bottom: 1px solid var(--resume-border-primary);
   margin-bottom: var(--item-gap);
   padding-bottom: 0.125rem;
   letter-spacing: 0.05em;
+  color: var(--resume-text-primary);
 }
 ```
 
@@ -374,12 +377,12 @@ return {
 ### Step 3: Update CSS
 
 ```css
-/* globals.css */
+/* components/resume/styles/_base.module.css */
 .resume-body {
   --new-setting: value-off;
 }
 
-.resume-body .some-element {
+.some-element {
   property: var(--new-setting);
 }
 ```

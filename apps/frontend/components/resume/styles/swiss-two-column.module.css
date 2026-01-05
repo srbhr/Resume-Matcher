@@ -1,0 +1,34 @@
+@import './_tokens.css';
+
+/* 
+  Swiss Two Column Template
+  ID: swiss-two-column
+*/
+
+.grid {
+  display: grid;
+  grid-template-columns: 65% 35%;
+  gap: var(--section-gap);
+  margin-top: var(--section-gap);
+  align-items: start;
+}
+
+.mainColumn {
+  display: flex;
+  flex-direction: column;
+  gap: var(--section-gap);
+  padding-right: 1rem;
+  border-right: 1px solid var(--resume-border-tertiary);
+}
+
+.sidebarColumn {
+  display: flex;
+  flex-direction: column;
+  gap: var(--section-gap);
+  padding-left: 0.5rem;
+}
+
+/* 
+  Specific overrides for two-column 
+  e.g. smaller section titles in sidebar 
+*/

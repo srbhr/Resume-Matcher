@@ -29,7 +29,8 @@
 | File | Purpose |
 |------|---------|
 | `apps/frontend/lib/types/template-settings.ts` | Type definitions, defaults, CSS variable mapping |
-| `apps/frontend/app/(default)/css/globals.css` | CSS custom properties for resume styling |
+| `apps/frontend/components/resume/styles/_tokens.css` | Global design tokens (colors) |
+| `apps/frontend/components/resume/styles/_base.module.css` | Shared typography and layout styles |
 | `apps/frontend/components/builder/formatting-controls.tsx` | UI controls for template settings |
 | `apps/frontend/components/resume/resume-single-column.tsx` | Single column template |
 | `apps/frontend/components/resume/resume-two-column.tsx` | Two column template |
@@ -44,6 +45,6 @@ Templates use CSS custom properties for styling:
 - `--body-font` - Body text font family
 - `--margin-top/bottom/left/right` - Page margins
 
-> **Note**: Templates should use the `resume-*` helper classes in `apps/frontend/app/(default)/css/globals.css` to ensure all spacing and typography respond to template settings.
+> **Note**: Templates should use the styles exported from `apps/frontend/components/resume/styles/_base.module.css` (e.g., `baseStyles['resume-section']`) to ensure all spacing and typography respond to template settings.
 
 Formatting controls include an "Effective Output" summary that reflects compact-mode adjustments for spacing/line-height.

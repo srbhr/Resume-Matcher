@@ -117,6 +117,11 @@ apps/frontend/
 │       ├── resume-single-column.tsx  # Swiss single column
 │       ├── resume-two-column.tsx     # Swiss two column
 │       ├── dynamic-resume-section.tsx # Renders custom sections
+│       ├── styles/                   # CSS Modules & Tokens
+│       │   ├── _tokens.css           # Design tokens (Colors)
+│       │   ├── _base.module.css      # Base typography & utilities
+│       │   ├── swiss-single.module.css
+│       │   └── swiss-two-column.module.css
 │       └── sections/                 # Shared section components
 │           ├── personal-info.tsx
 │           ├── experience.tsx
@@ -134,7 +139,7 @@ apps/frontend/
 └── app/
     └── (default)/
         └── css/
-            └── globals.css           # CSS custom properties
+            └── globals.css           # Print styles & resets
 ```
 
 ### Key Files
@@ -286,76 +291,71 @@ export function settingsToCssVars(settings?: TemplateSettings): React.CSSPropert
 
 ---
 
-## 3. CSS Custom Properties System
+## 3. CSS Modules & Token System
 
-### Global CSS Variables (`globals.css`)
+The template system uses **CSS Modules** for scoping and **CSS Variables** for design tokens.
+
+### Token System (`styles/_tokens.css`)
+
+Defines the semantic color palette and global theme variables.
 
 ```css
-/* Default CSS Variables for Resume Templates */
 .resume-body {
-  /* Spacing defaults (can be overridden via inline styles) */
-  --section-gap: 1.5rem;
-  --item-gap: 0.5rem;
-  --line-height: 1.5;
-  --font-size-base: 14px;
-  --header-scale: 2;
-  --section-header-scale: 1.2;
-  --header-font: ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
-  --body-font: ui-sans-serif, system-ui, sans-serif;
-
-  /* Margin defaults */
-  --margin-top: 8mm;
-  --margin-bottom: 8mm;
-  --margin-left: 8mm;
-  --margin-right: 8mm;
-
-  /* Apply base styles */
-  font-family: var(--body-font);
-  font-size: var(--font-size-base);
-  line-height: var(--line-height);
-  padding: 1.5rem;
-}
-
-/* Section Title - Uses CSS variables for font-size and font-family */
-.resume-body .resume-section-title {
-  font-size: calc(var(--font-size-base) * var(--section-header-scale));
-  font-family: var(--header-font);
-  font-weight: 700;
-  text-transform: uppercase;
-  border-bottom: 2px solid #000000;
-  margin-bottom: calc(var(--item-gap) * 2);
-  padding-bottom: 0.25rem;
-  letter-spacing: 0.05em;
-}
-
-/* Resume sections and items */
-.resume-body .resume-section {
-  margin-bottom: var(--section-gap);
-}
-
-.resume-body .resume-item {
-  margin-bottom: var(--item-gap);
-  break-inside: avoid;
-  page-break-inside: avoid;
-}
-
-/* Section titles should not be orphaned at bottom of page */
-.resume-body .resume-section-title {
-  break-after: avoid;
-  page-break-after: avoid;
+  /* Text colors */
+  --resume-text-primary: #000000;
+  --resume-text-secondary: #374151;
+  
+  /* Border colors */
+  --resume-border-primary: #9CA3AF;
+  
+  /* Accent */
+  --resume-accent-bg: #F3F4F6;
 }
 ```
 
-### Template Helper Classes
+### Base Styles (`styles/_base.module.css`)
 
-Resume templates should avoid fixed Tailwind `text-*` and `space-*` utilities. Use the `resume-*`
-helper classes in `apps/frontend/app/(default)/css/globals.css` so typography and spacing respond
-to user settings:
+Defines shared typography, spacing utilities, and layout primitives. Imports tokens.
 
-- `resume-name`, `resume-title`, `resume-item-title`, `resume-item-title-sm`
-- `resume-meta`, `resume-meta-sm`, `resume-text`, `resume-text-sm`, `resume-text-xs`
-- `resume-stack`, `resume-stack-tight`, `resume-list`, `resume-row`, `resume-row-tight`
-- `resume-two-column-grid`, `resume-skill-pill`
+```css
+@import './_tokens.css';
+
+.resume-body {
+  /* Spacing defaults */
+  --section-gap: 1rem;
+  /* ... */
+}
+
+.resume-section-title {
+  /* Shared title styling */
+}
+```
+
+### Template-Specific Styles
+
+Each template has its own module (e.g., `swiss-single.module.css`) for specific layout requirements.
+
+### Helper Classes (Base Module)
+
+Use the exports from `_base.module.css` instead of hardcoded Tailwind classes:
+
+- Typography: `resume-name`, `resume-title`, `resume-text`, `resume-meta`
+- Layout: `resume-stack`, `resume-row`, `resume-two-column-grid` (in base or specific)
+- Elements: `resume-section`, `resume-item`, `resume-skill-pill`
+
+### Usage in Components
+
+```tsx
+import baseStyles from './styles/_base.module.css';
+import styles from './styles/my-template.module.css';
+
+return (
+  <div className={styles.container}>
+    <h1 className={baseStyles['resume-name']}>{name}</h1>
+    {/* ... */}
+  </div>
+);
+```
 
 ### How Settings Map to CSS
 
@@ -427,110 +427,32 @@ export type TemplateType = "swiss-single" | "swiss-two-column" | "modern-minimal
 
 ### Step 2: Create Template Component
 
-Create a new file `components/resume/resume-modern-minimal.tsx`:
+Create a new style module `components/resume/styles/modern-minimal.module.css` and component `components/resume/resume-modern-minimal.tsx`:
 
-```typescript
+```tsx
 import { CSSProperties } from "react";
 import { ResumeData } from "@/lib/types/resume";
+import baseStyles from "./styles/_base.module.css";
+import styles from "./styles/modern-minimal.module.css";
 
 interface Props {
   data: ResumeData;
-  style?: CSSProperties;
-  className?: string;
+  style?: CSSProperties; // Contains spacing variables from settings
+  className?: string;    // Contains baseStyles['resume-body'] from parent
 }
 
 export function ResumeModernMinimal({ data, style, className }: Props) {
+  // Combine parent classes with local specific classes if needed
   return (
-    <div className={`resume-body ${className ?? ""}`} style={style}>
+    <div className={className} style={style}>
       {/* Header Section */}
-      <header className="resume-section border-b-2 border-black resume-header">
-        <h1 className="resume-name tracking-tight uppercase">
+      <header className={`${baseStyles['resume-section']} ${baseStyles['resume-header']}`}
+              style={{ borderBottom: '2px solid var(--resume-text-primary)' }}>
+        <h1 className={`${baseStyles['resume-name']} tracking-tight uppercase`}>
           {data.personal_info.name}
         </h1>
-        <div className="flex gap-4 resume-meta">
-          {data.personal_info.email && (
-            <span>{data.personal_info.email}</span>
-          )}
-          {data.personal_info.phone && (
-            <span>{data.personal_info.phone}</span>
-          )}
-          {data.personal_info.location && (
-            <span>{data.personal_info.location}</span>
-          )}
-        </div>
+        {/* ... */}
       </header>
-
-      {/* Summary */}
-      {data.personal_info.summary && (
-        <section className="resume-section">
-          <p className="text-gray-700 leading-relaxed">
-            {data.personal_info.summary}
-          </p>
-        </section>
-      )}
-
-      {/* Experience */}
-      {data.experience && data.experience.length > 0 && (
-        <section className="resume-section">
-          <h2 className="text-lg font-bold uppercase tracking-widest mb-3">
-            Experience
-          </h2>
-          {data.experience.map((exp, i) => (
-            <article key={i} className="resume-item">
-              <div className="flex justify-between items-baseline">
-                <h3 className="font-semibold">{exp.title}</h3>
-                <span className="text-sm text-gray-500">
-                  {exp.start_date} - {exp.end_date || "Present"}
-                </span>
-              </div>
-              <p className="text-gray-600">{exp.company}</p>
-              {exp.bullets && (
-                <ul className="mt-2 space-y-1">
-                  {exp.bullets.map((bullet, j) => (
-                    <li key={j} className="text-sm pl-4 relative before:content-['–'] before:absolute before:left-0">
-                      {bullet}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </article>
-          ))}
-        </section>
-      )}
-
-      {/* Education */}
-      {data.education && data.education.length > 0 && (
-        <section className="resume-section">
-          <h2 className="text-lg font-bold uppercase tracking-widest mb-3">
-            Education
-          </h2>
-          {data.education.map((edu, i) => (
-            <article key={i} className="resume-item">
-              <div className="flex justify-between items-baseline">
-                <h3 className="font-semibold">{edu.degree}</h3>
-                <span className="text-sm text-gray-500">
-                  {edu.graduation_date}
-                </span>
-              </div>
-              <p className="text-gray-600">{edu.institution}</p>
-            </article>
-          ))}
-        </section>
-      )}
-
-      {/* Skills */}
-      {data.skills && (
-        <section className="resume-section">
-          <h2 className="text-lg font-bold uppercase tracking-widest mb-3">
-            Skills
-          </h2>
-          <p className="text-sm">
-            {Array.isArray(data.skills)
-              ? data.skills.join(" • ")
-              : data.skills}
-          </p>
-        </section>
-      )}
     </div>
   );
 }
@@ -992,6 +914,7 @@ When creating a new template, ensure:
 |------|--------|
 | `lib/types/template-settings.ts` | Add to `TemplateType` union |
 | `components/resume/[new-template].tsx` | Create new component |
+| `components/resume/styles/[new-template].module.css` | Create new style module |
 | `components/resume/index.ts` | Export new component |
 | `components/dashboard/resume-component.tsx` | Add switch case |
 | `components/builder/formatting-controls.tsx` | Add to TEMPLATES array |
@@ -1002,7 +925,7 @@ When creating a new template, ensure:
 | File | Purpose |
 |------|---------|
 | `lib/types/template-settings.ts` | Settings types, defaults, CSS mapping |
-| `app/(default)/css/globals.css` | CSS custom properties, print styles |
+| `app/(default)/css/globals.css` | Print styles & resets |
 | `components/builder/resume-builder.tsx` | Settings state management |
 | `components/builder/formatting-controls.tsx` | Settings UI |
 | `app/print/resumes/[id]/page.tsx` | Print route with margins |

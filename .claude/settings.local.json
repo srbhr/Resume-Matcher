@@ -11,7 +11,8 @@
       "Bash(npx tsc:*)",
       "Bash(export PATH=\"/usr/local/bin:/opt/homebrew/bin:$PATH\")",
       "Bash(wc:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(head:*)"
     ]
   }
 }

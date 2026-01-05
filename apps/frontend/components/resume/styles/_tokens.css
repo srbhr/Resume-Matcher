@@ -1,0 +1,18 @@
+.resume-body {
+  /* Typography */
+  --resume-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Text colors */
+  --resume-text-primary: #000000;
+  --resume-text-secondary: #374151;    /* gray-700 */
+  --resume-text-tertiary: #4B5563;     /* gray-600 */
+  --resume-text-body: #1F2937;         /* gray-800 */
+
+  /* Border colors */
+  --resume-border-primary: #9CA3AF;    /* gray-400 */
+  --resume-border-secondary: #D1D5DB;  /* gray-300 */
+  --resume-border-tertiary: #E5E7EB;   /* gray-200 */
+
+  /* Accent */
+  --resume-accent-bg: #F3F4F6;         /* gray-100 */
+}

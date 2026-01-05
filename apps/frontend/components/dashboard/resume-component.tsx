@@ -6,6 +6,7 @@ import {
   DEFAULT_TEMPLATE_SETTINGS,
   settingsToCssVars,
 } from '@/lib/types/template-settings';
+import baseStyles from '@/components/resume/styles/_base.module.css';
 
 export interface PersonalInfo {
   name?: string;
@@ -130,7 +131,7 @@ const Resume: React.FC<ResumeProps> = ({ resumeData, template = 'swiss-single', 
 
   return (
     <div
-      className={`resume-body bg-white text-black w-full mx-auto resume-template-${mergedSettings.template}`}
+      className={`${baseStyles['resume-body']} bg-white text-black w-full mx-auto resume-template-${mergedSettings.template}`}
       style={cssVars}
     >
       {mergedSettings.template === 'swiss-single' && (
