@@ -185,6 +185,7 @@ export default async function PrintResumePage({ params, searchParams }: PageProp
       resolvedSearchParams?.showContactIcons,
       DEFAULT_TEMPLATE_SETTINGS.showContactIcons
     ),
+    accentColor: DEFAULT_TEMPLATE_SETTINGS.accentColor,
   };
 
   // Note: Margins are applied by Playwright's PDF renderer (not here)

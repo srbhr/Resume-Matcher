@@ -3,28 +3,25 @@ import { Mail, Phone, MapPin, Globe, Linkedin, Github, ExternalLink } from 'luci
 import type { ResumeData, SectionMeta } from '@/components/dashboard/resume-component';
 import { getSortedSections } from '@/lib/utils/section-helpers';
 import { formatDateRange } from '@/lib/utils';
-import { DynamicResumeSection } from './dynamic-resume-section';
 import { SafeHtml } from './safe-html';
 import baseStyles from './styles/_base.module.css';
-import styles from './styles/swiss-single.module.css';
+import styles from './styles/modern.module.css';
 
-interface ResumeSingleColumnProps {
+interface ResumeModernProps {
   data: ResumeData;
   showContactIcons?: boolean;
 }
 
 /**
- * Swiss Single-Column Resume Template
+ * Modern Resume Template
  *
- * Traditional full-width layout with sections stacked vertically.
- * Best for detailed experience descriptions and maximum content density.
+ * Single-column layout with user-selectable accent colors.
+ * Features colored section headers with underline and decorative name underline.
+ * ATS-compatible: all visual elements are real DOM text nodes.
  *
  * Section order: Determined by sectionMeta ordering
  */
-export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
-  data,
-  showContactIcons = false,
-}) => {
+export const ResumeModern: React.FC<ResumeModernProps> = ({ data, showContactIcons = false }) => {
   const { personalInfo, summary, workExperience, education, personalProjects, additional } = data;
 
   // Get sorted visible sections
@@ -94,7 +91,7 @@ export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
         if (!summary) return null;
         return (
           <div key={section.id} className={baseStyles['resume-section']}>
-            <h3 className={baseStyles['resume-section-title']}>{section.displayName}</h3>
+            <h3 className={styles['section-title-accent']}>{section.displayName}</h3>
             <p className={`text-justify ${baseStyles['resume-text']}`}>{summary}</p>
           </div>
         );
@@ -103,7 +100,7 @@ export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
         if (!workExperience || workExperience.length === 0) return null;
         return (
           <div key={section.id} className={baseStyles['resume-section']}>
-            <h3 className={baseStyles['resume-section-title']}>{section.displayName}</h3>
+            <h3 className={styles['section-title-accent']}>{section.displayName}</h3>
             <div className={baseStyles['resume-items']}>
               {workExperience.map((exp) => (
                 <div key={exp.id} className={baseStyles['resume-item']}>
@@ -145,7 +142,7 @@ export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
         if (!personalProjects || personalProjects.length === 0) return null;
         return (
           <div key={section.id} className={baseStyles['resume-section']}>
-            <h3 className={baseStyles['resume-section-title']}>{section.displayName}</h3>
+            <h3 className={styles['section-title-accent']}>{section.displayName}</h3>
             <div className={baseStyles['resume-items']}>
               {personalProjects.map((project) => (
                 <div key={project.id} className={baseStyles['resume-item']}>
@@ -230,7 +227,7 @@ export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
         if (!education || education.length === 0) return null;
         return (
           <div key={section.id} className={baseStyles['resume-section']}>
-            <h3 className={baseStyles['resume-section-title']}>{section.displayName}</h3>
+            <h3 className={styles['section-title-accent']}>{section.displayName}</h3>
             <div className={baseStyles['resume-items']}>
               {education.map((edu) => (
                 <div key={edu.id} className={baseStyles['resume-item']}>
@@ -269,7 +266,9 @@ export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
       default:
         // Custom section - render using DynamicResumeSection
         if (!section.isDefault) {
-          return <DynamicResumeSection key={section.id} sectionMeta={section} resumeData={data} />;
+          return (
+            <DynamicResumeSectionModern key={section.id} sectionMeta={section} resumeData={data} />
+          );
         }
         return null;
     }
@@ -279,10 +278,7 @@ export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
     <div className={styles.container}>
       {/* Header Section - Centered Layout (always first) */}
       {personalInfo && (
-        <header
-          className={`text-center ${baseStyles['resume-header']} border-b`}
-          style={{ borderColor: 'var(--resume-border-primary)' }}
-        >
+        <header className={`text-center ${baseStyles['resume-header']}`}>
           {/* Name - Centered */}
           {personalInfo.name && (
             <h1 className={`${baseStyles['resume-name']} tracking-tight uppercase mb-1`}>
@@ -290,10 +286,13 @@ export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
             </h1>
           )}
 
+          {/* Decorative accent underline under name */}
+          <div className={styles['name-underline']} aria-hidden="true" />
+
           {/* Title - Centered, below name */}
           {personalInfo.title && (
             <h2
-              className={`${baseStyles['resume-title']} ${baseStyles['resume-meta']} tracking-wide uppercase mb-3`}
+              className={`${baseStyles['resume-title']} ${baseStyles['resume-meta']} tracking-wide uppercase mt-3 mb-3`}
             >
               {personalInfo.title}
             </h2>
@@ -372,7 +371,7 @@ const AdditionalSection: React.FC<{
 
   return (
     <div className={baseStyles['resume-section']}>
-      <h3 className={baseStyles['resume-section-title']}>{displayName}</h3>
+      <h3 className={styles['section-title-accent']}>{displayName}</h3>
       <div className={`${baseStyles['resume-stack']} ${baseStyles['resume-text-sm']}`}>
         {technicalSkills.length > 0 && (
           <div className="flex">
@@ -403,4 +402,103 @@ const AdditionalSection: React.FC<{
   );
 };
 
-export default ResumeSingleColumn;
+/**
+ * Dynamic section wrapper for Modern template
+ * Uses accent-colored section titles
+ */
+const DynamicResumeSectionModern: React.FC<{
+  sectionMeta: SectionMeta;
+  resumeData: ResumeData;
+}> = ({ sectionMeta, resumeData }) => {
+  // Get the custom section data
+  const customSection = resumeData.customSections?.[sectionMeta.key];
+
+  if (!customSection) return null;
+
+  // Check if section has content
+  const hasContent = (() => {
+    switch (sectionMeta.sectionType) {
+      case 'text':
+        return Boolean(customSection.text?.trim());
+      case 'itemList':
+        return Boolean(customSection.items?.length);
+      case 'stringList':
+        return Boolean(customSection.strings?.length);
+      default:
+        return false;
+    }
+  })();
+
+  if (!hasContent) return null;
+
+  return (
+    <div className={baseStyles['resume-section']}>
+      <h3 className={styles['section-title-accent']}>{sectionMeta.displayName}</h3>
+      {renderDynamicContent(sectionMeta.sectionType, customSection)}
+    </div>
+  );
+};
+
+/**
+ * Render dynamic section content based on type
+ */
+function renderDynamicContent(
+  sectionType: SectionMeta['sectionType'],
+  customSection: NonNullable<ResumeData['customSections']>[string]
+) {
+  switch (sectionType) {
+    case 'text':
+      if (!customSection.text?.trim()) return null;
+      return <p className={`text-justify ${baseStyles['resume-text']}`}>{customSection.text}</p>;
+
+    case 'itemList':
+      if (!customSection.items?.length) return null;
+      return (
+        <div className={baseStyles['resume-items']}>
+          {customSection.items.map((item) => (
+            <div key={item.id} className={baseStyles['resume-item']}>
+              <div
+                className={`flex justify-between items-baseline ${baseStyles['resume-row-tight']}`}
+              >
+                <h4 className={baseStyles['resume-item-title']}>{item.title}</h4>
+                {item.years && (
+                  <span className={`${baseStyles['resume-meta-sm']} shrink-0 ml-4`}>
+                    {formatDateRange(item.years)}
+                  </span>
+                )}
+              </div>
+              {(item.subtitle || item.location) && (
+                <div
+                  className={`flex justify-between items-center ${baseStyles['resume-row']} ${baseStyles['resume-meta']}`}
+                >
+                  {item.subtitle && <span>{item.subtitle}</span>}
+                  {item.location && <span>{item.location}</span>}
+                </div>
+              )}
+              {item.description && item.description.length > 0 && (
+                <ul className={`ml-4 ${baseStyles['resume-list']} ${baseStyles['resume-text-sm']}`}>
+                  {item.description.map((desc, index) => (
+                    <li key={index} className="flex">
+                      <span className="mr-1.5 flex-shrink-0">•&nbsp;</span>
+                      <span>
+                        <SafeHtml html={desc} />
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          ))}
+        </div>
+      );
+
+    case 'stringList':
+      if (!customSection.strings?.length) return null;
+      return <div className={baseStyles['resume-text-sm']}>{customSection.strings.join(', ')}</div>;
+
+    default:
+      return null;
+  }
+}
+
+export default ResumeModern;

@@ -127,6 +127,8 @@
   color: var(--resume-text-body);
   border: 1px solid var(--resume-border-secondary);
   border-radius: 4px;
+  /* Prevent mid-word breaks on skill tags */
+  white-space: nowrap;
 }
 
 /* Link pill - styled clickable link with icon support */
