@@ -191,7 +191,9 @@ Open **<http://localhost:3000>** and configure your AI provider in Settings.
 ### Docker Deployment
 
 ```bash
-docker-compose up -d
+docker pull srbhr/resume-matcher:latest
+
+docker run srbhr/resume-matcher:latest
 ```
 
 See [docs/agent/60-docker/docker.md](docs/agent/60-docker/docker.md) for detailed Docker instructions.
