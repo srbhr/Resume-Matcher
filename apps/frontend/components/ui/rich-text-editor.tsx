@@ -71,8 +71,10 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
       // Convert <p> tags to plain content since we're in bullet mode
       const cleanHtml = html.replace(/<p>/g, '').replace(/<\/p>/g, '').trim();
       onChange(cleanHtml);
-      // Reset flag after a tick
-      isInternalUpdateRef.current = false;
+      // Reset flag after a tick to ensure it stays true through the render cycle
+      setTimeout(() => {
+        isInternalUpdateRef.current = false;
+      }, 0);
     },
     editorProps: {
       attributes: {

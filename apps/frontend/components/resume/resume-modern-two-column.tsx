@@ -306,7 +306,7 @@ export const ResumeModernTwoColumn: React.FC<ResumeModernTwoColumnProps> = ({
           {isSectionVisible('education') && education && education.length > 0 && (
             <div className={baseStyles['resume-section']}>
               <h3
-                className={`${baseStyles['resume-section-title-sm']} text-[var(--accent-primary)]`}
+                className={`${baseStyles['resume-section-title-sm']} text-[var(--resume-accent-primary)]`}
               >
                 {getSectionDisplayName('education', 'Education')}
               </h3>
@@ -344,7 +344,7 @@ export const ResumeModernTwoColumn: React.FC<ResumeModernTwoColumnProps> = ({
             additional.technicalSkills.length > 0 && (
               <div className={baseStyles['resume-section']}>
                 <h3
-                  className={`${baseStyles['resume-section-title-sm']} text-[var(--accent-primary)]`}
+                  className={`${baseStyles['resume-section-title-sm']} text-[var(--resume-accent-primary)]`}
                 >
                   Skills
                 </h3>
@@ -364,7 +364,7 @@ export const ResumeModernTwoColumn: React.FC<ResumeModernTwoColumnProps> = ({
             additional.languages.length > 0 && (
               <div className={baseStyles['resume-section']}>
                 <h3
-                  className={`${baseStyles['resume-section-title-sm']} text-[var(--accent-primary)]`}
+                  className={`${baseStyles['resume-section-title-sm']} text-[var(--resume-accent-primary)]`}
                 >
                   Languages
                 </h3>
@@ -376,7 +376,7 @@ export const ResumeModernTwoColumn: React.FC<ResumeModernTwoColumnProps> = ({
           {isSectionVisible('additional') && additional?.awards && additional.awards.length > 0 && (
             <div className={baseStyles['resume-section']}>
               <h3
-                className={`${baseStyles['resume-section-title-sm']} text-[var(--accent-primary)]`}
+                className={`${baseStyles['resume-section-title-sm']} text-[var(--resume-accent-primary)]`}
               >
                 Awards
               </h3>
@@ -395,7 +395,7 @@ export const ResumeModernTwoColumn: React.FC<ResumeModernTwoColumnProps> = ({
             (personalInfo.website || personalInfo.linkedin || personalInfo.github) && (
               <div className={baseStyles['resume-section']}>
                 <h3
-                  className={`${baseStyles['resume-section-title-sm']} text-[var(--accent-primary)]`}
+                  className={`${baseStyles['resume-section-title-sm']} text-[var(--resume-accent-primary)]`}
                 >
                   Links
                 </h3>
