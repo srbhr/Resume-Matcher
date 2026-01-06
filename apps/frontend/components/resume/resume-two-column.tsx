@@ -1,7 +1,7 @@
 import React from 'react';
 import { Mail, Phone, MapPin, Globe, Linkedin, Github, ExternalLink } from 'lucide-react';
 import type { ResumeData } from '@/components/dashboard/resume-component';
-import { getSortedSections } from '@/lib/utils/section-helpers';
+import { getSortedSections, getSectionMeta } from '@/lib/utils/section-helpers';
 import { formatDateRange } from '@/lib/utils';
 import { DynamicResumeSection } from './dynamic-resume-section';
 import { SafeHtml } from './safe-html';
@@ -33,15 +33,18 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
   // Get sorted visible sections
   const sortedSections = getSortedSections(data);
 
+  // Get all sections (including hidden) for visibility checks
+  const allSections = getSectionMeta(data);
+
   // Get section display name from metadata
   const getSectionDisplayName = (sectionKey: string, fallback: string): string => {
     const section = sortedSections.find((s) => s.key === sectionKey);
     return section?.displayName || fallback;
   };
 
-  // Check if a section is visible
+  // Check if a section is visible (use allSections, not sortedSections)
   const isSectionVisible = (sectionKey: string): boolean => {
-    const section = sortedSections.find((s) => s.key === sectionKey);
+    const section = allSections.find((s) => s.key === sectionKey);
     return section?.isVisible ?? true;
   };
 
