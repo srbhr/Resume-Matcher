@@ -39,8 +39,8 @@
 }
 
 .resume-title {
-  font-size: calc(var(--font-size-base) * 1.05);
-  color: var(--resume-text-secondary);
+  font-size: calc(var(--font-size-base) * 1.15);
+  color: var(--resume-text-body);
 }
 
 .resume-meta {
@@ -53,6 +53,16 @@
   font-family: var(--resume-font-mono);
   font-size: calc(var(--font-size-base) * 0.75);
   color: var(--resume-text-tertiary);
+}
+
+/* Date formatting - ensures dates never wrap and stay right-aligned */
+.resume-date {
+  font-family: var(--resume-font-mono);
+  font-size: calc(var(--font-size-base) * 0.75);
+  color: var(--resume-text-tertiary);
+  white-space: nowrap;
+  flex-shrink: 0;
+  text-align: right;
 }
 
 .resume-text {
@@ -81,6 +91,20 @@
   font-size: calc(var(--font-size-base) * 0.9);
   font-weight: 700;
   color: var(--resume-text-primary);
+}
+
+.resume-item-subtitle {
+  font-family: var(--body-font);
+  font-size: calc(var(--font-size-base) * 0.95);
+  font-weight: 600;
+  color: var(--resume-text-secondary);
+}
+
+.resume-item-subtitle-sm {
+  font-family: var(--body-font);
+  font-size: calc(var(--font-size-base) * 0.88);
+  font-weight: 600;
+  color: var(--resume-text-secondary);
 }
 
 .resume-stack {
@@ -117,6 +141,26 @@
   color: var(--resume-text-body);
   border: 1px solid var(--resume-border-secondary);
   border-radius: 4px;
+  /* Prevent mid-word breaks on skill tags */
+  white-space: nowrap;
+}
+
+/* Link pill - styled clickable link with icon support */
+.resume-link-pill {
+  font-family: var(--resume-font-mono);
+  font-size: calc(var(--font-size-base) * 0.7);
+  padding: 0.125rem 0.375rem;
+  color: var(--resume-text-primary);
+  border: 1px solid var(--resume-border-secondary);
+  border-radius: 2px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.resume-link-pill:hover {
+  background-color: var(--resume-accent-bg);
 }
 
 /* Resume Section Styles */
@@ -146,9 +190,9 @@
   widows: 3;
 }
 
-/* Section Title - Small (for sidebar) */
+/* Section Title - Small (for sidebar) - increased from 0.8x to 0.88x for better visual weight */
 .resume-section-title-sm {
-  font-size: calc(var(--font-size-base) * var(--section-header-scale) * 0.8);
+  font-size: calc(var(--font-size-base) * var(--section-header-scale) * 0.88);
   font-family: var(--header-font);
   font-weight: 700;
   text-transform: uppercase;
@@ -194,8 +238,40 @@
   text-decoration: underline;
 }
 
+/* Rich text formatting styles for bullet point content */
+.resume-body :global(strong),
+.resume-body :global(b) {
+  font-weight: 700;
+}
+
+.resume-body :global(em),
+.resume-body :global(i) {
+  font-style: italic;
+}
+
+.resume-body :global(u) {
+  text-decoration: underline;
+}
+
+/* Inline links within content (from rich text editor) */
+.resume-body :global(a) {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.resume-body :global(a:hover) {
+  color: var(--resume-text-primary);
+}
+
 .text-muted {
   color: var(--resume-text-tertiary);
+}
+
+/* Text wrapping for narrow columns (sidebar) */
+.sidebar-text-wrap {
+  word-break: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 
 @media print {
@@ -229,5 +305,25 @@
   .resume-section-title-sm + .resume-item {
     break-before: avoid !important;
     page-break-before: avoid !important;
+  }
+
+  /* Ensure rich text formatting and links render correctly in PDF */
+  .resume-body :global(a) {
+    color: inherit !important;
+    text-decoration: underline !important;
+  }
+
+  .resume-body :global(strong),
+  .resume-body :global(b) {
+    font-weight: 700 !important;
+  }
+
+  .resume-body :global(em),
+  .resume-body :global(i) {
+    font-style: italic !important;
+  }
+
+  .resume-body :global(u) {
+    text-decoration: underline !important;
   }
 }

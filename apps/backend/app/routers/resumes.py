@@ -61,6 +61,7 @@ def _get_content_language() -> str:
     # Use content_language, fall back to legacy 'language' field, then default to 'en'
     return config.get("content_language", config.get("language", "en"))
 
+
 router = APIRouter(prefix="/resumes", tags=["Resumes"])
 
 ALLOWED_TYPES = {
@@ -90,7 +91,7 @@ async def upload_resume(file: UploadFile = File(...)) -> ResumeUploadResponse:
     if len(content) > MAX_FILE_SIZE:
         raise HTTPException(
             status_code=413,
-            detail=f"File too large. Maximum size: {MAX_FILE_SIZE // (1024*1024)}MB",
+            detail=f"File too large. Maximum size: {MAX_FILE_SIZE // (1024 * 1024)}MB",
         )
 
     if len(content) == 0:
@@ -122,10 +123,13 @@ async def upload_resume(file: UploadFile = File(...)) -> ResumeUploadResponse:
     # Try to parse to structured JSON (optional, may fail if LLM not configured)
     try:
         processed_data = await parse_resume_to_json(markdown_content)
-        db.update_resume(resume["resume_id"], {
-            "processed_data": processed_data,
-            "processing_status": "ready",
-        })
+        db.update_resume(
+            resume["resume_id"],
+            {
+                "processed_data": processed_data,
+                "processing_status": "ready",
+            },
+        )
         resume["processed_data"] = processed_data
         resume["processing_status"] = "ready"
     except Exception as e:
@@ -173,7 +177,9 @@ async def get_resume(resume_id: str = Query(...)) -> ResumeFetchResponse:
     if processed_data:
         processed_data = normalize_resume_data(processed_data)
 
-    processed_resume = ResumeData.model_validate(processed_data) if processed_data else None
+    processed_resume = (
+        ResumeData.model_validate(processed_data) if processed_data else None
+    )
 
     return ResumeFetchResponse(
         request_id=str(uuid4()),
@@ -318,7 +324,10 @@ async def improve_resume_endpoint(
                 job_id=request.job_id,
                 resume_preview=ResumeData.model_validate(improved_data),
                 improvements=[
-                    {"suggestion": imp["suggestion"], "lineNumber": imp.get("lineNumber")}
+                    {
+                        "suggestion": imp["suggestion"],
+                        "lineNumber": imp.get("lineNumber"),
+                    }
                     for imp in improvements
                 ],
                 markdownOriginal=resume["content"],
@@ -403,11 +412,12 @@ async def download_resume_pdf(
     bodyFont: str = Query("sans-serif", pattern="^(serif|sans-serif|mono)$"),
     compactMode: bool = Query(False),
     showContactIcons: bool = Query(False),
+    accentColor: str = Query("blue", pattern="^(blue|green|orange|red)$"),
 ) -> Response:
     """Generate a PDF for a resume using headless Chromium.
 
     Accepts template settings for customization:
-    - template: swiss-single or swiss-two-column
+    - template: swiss-single, swiss-two-column, modern, or modern-two-column
     - pageSize: A4 or LETTER
     - marginTop/Bottom/Left/Right: page margins in mm (5-25)
     - sectionSpacing: gap between sections (1-5)
@@ -441,6 +451,7 @@ async def download_resume_pdf(
         f"&bodyFont={bodyFont}"
         f"&compactMode={str(compactMode).lower()}"
         f"&showContactIcons={str(showContactIcons).lower()}"
+        f"&accentColor={accentColor}"
     )
     url = f"{settings.frontend_base_url}/print/resumes/{resume_id}?{params}"
 
@@ -458,9 +469,7 @@ async def download_resume_pdf(
     except PDFRenderError as e:
         raise HTTPException(status_code=503, detail=str(e))
 
-    headers = {
-        "Content-Disposition": f'attachment; filename="resume_{resume_id}.pdf"'
-    }
+    headers = {"Content-Disposition": f'attachment; filename="resume_{resume_id}.pdf"'}
     return Response(content=pdf_bytes, media_type="application/pdf", headers=headers)
 
 
@@ -499,7 +508,9 @@ async def update_outreach_message(
     return {"message": "Outreach message updated successfully"}
 
 
-@router.post("/{resume_id}/generate-cover-letter", response_model=GenerateContentResponse)
+@router.post(
+    "/{resume_id}/generate-cover-letter", response_model=GenerateContentResponse
+)
 async def generate_cover_letter_endpoint(resume_id: str) -> GenerateContentResponse:
     """Generate a cover letter on-demand for an existing tailored resume.
 
@@ -700,14 +711,18 @@ async def download_cover_letter_pdf(
 
     cover_letter = resume.get("cover_letter")
     if not cover_letter:
-        raise HTTPException(status_code=404, detail="No cover letter found for this resume")
+        raise HTTPException(
+            status_code=404, detail="No cover letter found for this resume"
+        )
 
     # Build print URL (same pattern as resume PDF)
     url = f"{settings.frontend_base_url}/print/cover-letter/{resume_id}?pageSize={pageSize}"
 
     # Render PDF with cover letter selector
     try:
-        pdf_bytes = await render_resume_pdf(url, pageSize, selector=".cover-letter-print")
+        pdf_bytes = await render_resume_pdf(
+            url, pageSize, selector=".cover-letter-print"
+        )
     except PDFRenderError as e:
         raise HTTPException(status_code=503, detail=str(e))
 

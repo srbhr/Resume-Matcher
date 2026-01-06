@@ -6,25 +6,25 @@ import { formatDateRange } from '@/lib/utils';
 import { DynamicResumeSection } from './dynamic-resume-section';
 import { SafeHtml } from './safe-html';
 import baseStyles from './styles/_base.module.css';
-import styles from './styles/swiss-two-column.module.css';
+import styles from './styles/modern-two-column.module.css';
 
-interface ResumeTwoColumnProps {
+interface ResumeModernTwoColumnProps {
   data: ResumeData;
   showContactIcons?: boolean;
 }
 
 /**
- * Swiss Two-Column Resume Template
+ * Modern Two-Column Resume Template
  *
- * Two-column layout with experience-focused main column (left) and
- * supporting information sidebar (right).
+ * Two-column layout with modern colorful accents and customizable theme colors.
+ * Combines the efficiency of two-column layout with vibrant modern design.
  *
- * Main Column (62%): Summary, Experience, Projects, Certifications/Training, Custom Sections
- * Sidebar (38%): Education, Skills, Languages, Awards
+ * Main Column (65%): Summary, Experience, Projects, Certifications/Training, Custom Sections
+ * Sidebar (35%): Education, Skills, Languages, Awards, Links
  *
- * Best for technical roles with many projects, optimized for one-page resumes.
+ * Best for professionals who want modern aesthetics with space-efficient layout.
  */
-export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
+export const ResumeModernTwoColumn: React.FC<ResumeModernTwoColumnProps> = ({
   data,
   showContactIcons = false,
 }) => {
@@ -98,7 +98,7 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
             {displayText}
           </a>
         ) : (
-          <span>{displayText}</span>
+          <span style={{ color: 'var(--resume-text-primary)' }}>{displayText}</span>
         )}
       </span>
     );
@@ -106,85 +106,44 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
 
   return (
     <>
-      {/* Header Section - Centered Layout */}
-      {personalInfo && (
-        <header
-          className={`text-center ${baseStyles['resume-header']} border-b`}
-          style={{ borderColor: 'var(--resume-border-primary)' }}
-        >
-          {/* Name - Centered */}
-          {personalInfo.name && (
-            <h1 className={`${baseStyles['resume-name']} tracking-tight uppercase mb-1`}>
-              {personalInfo.name}
-            </h1>
-          )}
-
-          {/* Title - Centered, below name */}
-          {personalInfo.title && (
-            <h2
-              className={`${baseStyles['resume-title']} ${baseStyles['resume-meta']} tracking-wide uppercase mb-3`}
-            >
-              {personalInfo.title}
-            </h2>
-          )}
-
-          {/* Contact - Own line, centered */}
-          <div
-            className={`flex flex-wrap justify-center gap-x-1 gap-y-1 ${baseStyles['resume-meta']}`}
-          >
-            {personalInfo.email && renderContactDetail('Email', personalInfo.email, 'mailto:')}
-            {personalInfo.phone && (
-              <>
-                <span className={baseStyles['text-muted']}>,</span>
-                {renderContactDetail('Phone', personalInfo.phone, 'tel:')}
-              </>
-            )}
-            {personalInfo.location && (
-              <>
-                <span className={baseStyles['text-muted']}>,</span>
-                {renderContactDetail('Location', personalInfo.location)}
-              </>
-            )}
-            {personalInfo.website && (
-              <>
-                <span className={baseStyles['text-muted']}>,</span>
-                {renderContactDetail('Website', personalInfo.website)}
-              </>
-            )}
-            {personalInfo.linkedin && (
-              <>
-                <span className={baseStyles['text-muted']}>,</span>
-                {renderContactDetail('LinkedIn', personalInfo.linkedin)}
-              </>
-            )}
-            {personalInfo.github && (
-              <>
-                <span className={baseStyles['text-muted']}>,</span>
-                {renderContactDetail('GitHub', personalInfo.github)}
-              </>
-            )}
+      {/* Header */}
+      <div className={baseStyles['resume-header']}>
+        <h1 className={`${baseStyles['resume-name']} ${styles.nameAccent}`}>
+          {personalInfo?.name || 'Your Name'}
+        </h1>
+        {personalInfo?.title && (
+          <div className={`${baseStyles['resume-title']} mt-1`}>{personalInfo.title}</div>
+        )}
+        {personalInfo && (
+          <div className={`${baseStyles['resume-meta']} flex flex-wrap gap-x-3 gap-y-1 mt-2`}>
+            {renderContactDetail('Email', personalInfo.email, 'mailto:')}
+            {renderContactDetail('Phone', personalInfo.phone, 'tel:')}
+            {renderContactDetail('Location', personalInfo.location)}
+            {renderContactDetail('Website', personalInfo.website)}
+            {renderContactDetail('LinkedIn', personalInfo.linkedin)}
+            {renderContactDetail('GitHub', personalInfo.github)}
           </div>
-        </header>
-      )}
+        )}
+      </div>
 
-      {/* Two Column Layout - items-start ensures content aligns top while grid maintains equal row height */}
+      {/* Two-Column Grid */}
       <div className={styles.grid}>
         {/* Main Column - Left */}
         <div className={styles.mainColumn}>
           {/* Summary Section */}
           {isSectionVisible('summary') && summary && (
             <div className={baseStyles['resume-section']}>
-              <h3 className={baseStyles['resume-section-title']}>
+              <h3 className={styles.sectionTitleAccent}>
                 {getSectionDisplayName('summary', 'Summary')}
               </h3>
-              <p className={`text-justify ${baseStyles['resume-text-sm']}`}>{summary}</p>
+              <p className={`text-justify ${baseStyles['resume-text']}`}>{summary}</p>
             </div>
           )}
 
           {/* Experience Section */}
           {isSectionVisible('workExperience') && workExperience && workExperience.length > 0 && (
             <div className={baseStyles['resume-section']}>
-              <h3 className={baseStyles['resume-section-title']}>
+              <h3 className={styles.sectionTitleAccent}>
                 {getSectionDisplayName('workExperience', 'Experience')}
               </h3>
               <div className={baseStyles['resume-items']}>
@@ -194,11 +153,9 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
                       className={`flex justify-between items-baseline ${baseStyles['resume-row-tight']}`}
                     >
                       <h4 className={baseStyles['resume-item-title-sm']}>{exp.title}</h4>
-                      {exp.years && (
-                        <span className={`${baseStyles['resume-date']} ml-2`}>
-                          {formatDateRange(exp.years)}
-                        </span>
-                      )}
+                      <span className={`${baseStyles['resume-date']} ml-4`}>
+                        {formatDateRange(exp.years)}
+                      </span>
                     </div>
 
                     <div
@@ -235,7 +192,7 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
             personalProjects &&
             personalProjects.length > 0 && (
               <div className={baseStyles['resume-section']}>
-                <h3 className={baseStyles['resume-section-title']}>
+                <h3 className={styles.sectionTitleAccent}>
                   {getSectionDisplayName('personalProjects', 'Projects')}
                 </h3>
                 <div className={baseStyles['resume-items']}>
@@ -325,7 +282,7 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
             additional?.certificationsTraining &&
             additional.certificationsTraining.length > 0 && (
               <div className={baseStyles['resume-section']}>
-                <h3 className={baseStyles['resume-section-title']}>Training & Certifications</h3>
+                <h3 className={styles.sectionTitleAccent}>Training & Certifications</h3>
                 <ul className={`ml-4 ${baseStyles['resume-list']} ${baseStyles['resume-text-xs']}`}>
                   {additional.certificationsTraining.map((cert, index) => (
                     <li key={index} className="flex">
@@ -348,7 +305,9 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
           {/* Education Section */}
           {isSectionVisible('education') && education && education.length > 0 && (
             <div className={baseStyles['resume-section']}>
-              <h3 className={baseStyles['resume-section-title-sm']}>
+              <h3
+                className={`${baseStyles['resume-section-title-sm']} text-[var(--resume-accent-primary)]`}
+              >
                 {getSectionDisplayName('education', 'Education')}
               </h3>
               <div className={baseStyles['resume-stack']}>
@@ -384,7 +343,11 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
             additional?.technicalSkills &&
             additional.technicalSkills.length > 0 && (
               <div className={baseStyles['resume-section']}>
-                <h3 className={baseStyles['resume-section-title-sm']}>Skills</h3>
+                <h3
+                  className={`${baseStyles['resume-section-title-sm']} text-[var(--resume-accent-primary)]`}
+                >
+                  Skills
+                </h3>
                 <div className="flex flex-wrap gap-1">
                   {additional.technicalSkills.map((skill, index) => (
                     <span key={index} className={baseStyles['resume-skill-pill']}>
@@ -400,7 +363,11 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
             additional?.languages &&
             additional.languages.length > 0 && (
               <div className={baseStyles['resume-section']}>
-                <h3 className={baseStyles['resume-section-title-sm']}>Languages</h3>
+                <h3
+                  className={`${baseStyles['resume-section-title-sm']} text-[var(--resume-accent-primary)]`}
+                >
+                  Languages
+                </h3>
                 <p className={baseStyles['resume-text-xs']}>{additional.languages.join(' • ')}</p>
               </div>
             )}
@@ -408,7 +375,11 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
           {/* Awards Section */}
           {isSectionVisible('additional') && additional?.awards && additional.awards.length > 0 && (
             <div className={baseStyles['resume-section']}>
-              <h3 className={baseStyles['resume-section-title-sm']}>Awards</h3>
+              <h3
+                className={`${baseStyles['resume-section-title-sm']} text-[var(--resume-accent-primary)]`}
+              >
+                Awards
+              </h3>
               <ul className={baseStyles['resume-list']}>
                 {additional.awards.map((award, index) => (
                   <li key={index} className={baseStyles['resume-text-xs']}>
@@ -423,7 +394,11 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
           {personalInfo &&
             (personalInfo.website || personalInfo.linkedin || personalInfo.github) && (
               <div className={baseStyles['resume-section']}>
-                <h3 className={baseStyles['resume-section-title-sm']}>Links</h3>
+                <h3
+                  className={`${baseStyles['resume-section-title-sm']} text-[var(--resume-accent-primary)]`}
+                >
+                  Links
+                </h3>
                 <div
                   className={`${baseStyles['resume-stack-tight']} ${baseStyles['resume-meta-sm']}`}
                 >
@@ -445,4 +420,4 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
   );
 };
 
-export default ResumeTwoColumn;
+export default ResumeModernTwoColumn;
