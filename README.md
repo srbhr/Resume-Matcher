@@ -116,12 +116,18 @@ We are working on a resume scoring feature that will analyze your resume against
 
 ### PDF Export
 
-Export your tailored resume and cover letter PDF.
+Export your tailored resume and cover letter in PDF.
 
-Templates:
+### Templates
 
-- [Single-column](assets/templates/single_column.pdf)
-- [Two-column](assets/templates/two_column.pdf)
+//create a table for resume templates
+
+| Template Name | Preview | Description |
+|---------------|---------|-------------|
+| **Classic Single Column** | ![Classic Template](assets/pdf-templates/single-column.jpg) | A traditional and clean layout suitable for most industries. [𝐕𝐢𝐞𝐰 𝐏𝐃𝐅](assets/pdf-templates/single-column.pdf) |
+| **Modern Single Column** | ![Modern Template](assets/pdf-templates/modern-single-column.jpg) | A contemporary design with a focus on readability and aesthetics. [𝐕𝐢𝐞𝐰 𝐏𝐃𝐅](assets/pdf-templates/modern-single-column.pdf)|
+| **Classic Two Column** | ![Classic Two Column Template](assets/pdf-templates/two-column.jpg) | A structured layout that separates sections for clarity. [𝐕𝐢𝐞𝐰 𝐏𝐃𝐅](assets/pdf-templates/two-column.pdf)|
+| **Modern Two Column** | ![Modern Two Column Template](assets/pdf-templates/modern-two-column.jpg) | A sleek design that utilizes two columns for better organization. [𝐕𝐢𝐞𝐰 𝐏𝐃𝐅](assets/pdf-templates/modern-two-column.pdf)|
 
 ### Internationalization
 
