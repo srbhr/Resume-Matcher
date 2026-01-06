@@ -15,7 +15,9 @@
     "search": "Search",
     "filter": "Filter",
     "reset": "Reset",
-    "apply": "Apply"
+    "apply": "Apply",
+    "keysCleared": "API keys cleared successfully",
+    "databaseReset": "Database reset successfully"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -85,7 +87,12 @@
     "themeDescription": "Choose your preferred color theme",
     "lightMode": "Light",
     "darkMode": "Dark",
-    "systemMode": "System"
+    "systemMode": "System",
+    "dangerZone": "Danger Zone",
+    "clearApiKeys": "Clear API Keys",
+    "clearApiKeysDescription": "Removes all stored API keys from the configuration. This action cannot be undone.",
+    "resetDatabase": "Reset Database",
+    "resetDatabaseDescription": "Deletes ALL data including resumes, jobs, and generated content. This action cannot be undone."
   },
   "resume": {
     "personalInfo": {
@@ -127,6 +134,10 @@
     "deleteResume": "Are you sure you want to delete this resume?",
     "deleteResumeDescription": "This action cannot be undone.",
     "discardChanges": "Are you sure you want to discard your changes?",
-    "discardChangesDescription": "Any unsaved changes will be lost."
+    "discardChangesDescription": "Any unsaved changes will be lost.",
+    "clearApiKeys": "Clear All API Keys?",
+    "clearApiKeysDescription": "Are you sure you want to remove all API keys? You will need to re-enter them to use AI features.",
+    "resetDatabase": "Reset Database and Clear All Data?",
+    "resetDatabaseDescription": "This will permanently delete ALL resumes, job descriptions, and generated content. This action is irreversible."
   }
 }

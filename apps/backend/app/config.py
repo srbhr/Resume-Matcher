@@ -69,6 +69,19 @@ def delete_api_key_from_config(provider: str) -> None:
         save_config_file(config)
 
 
+def clear_all_api_keys() -> None:
+    """Clear all API keys from config file."""
+    config = load_config_file()
+    # Clear plural dict
+    config["api_keys"] = {}
+    # Clear singular top-level key
+    config["api_key"] = ""
+    # Also clear masked versions if they exist
+    if "masked_key" in config:
+        config["masked_key"] = ""
+    save_config_file(config)
+
+
 def _get_llm_api_key_with_fallback() -> str:
     """Get LLM API key with fallback to config file.
 

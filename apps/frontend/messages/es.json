@@ -15,7 +15,9 @@
     "search": "Buscar",
     "filter": "Filtrar",
     "reset": "Restablecer",
-    "apply": "Aplicar"
+    "apply": "Aplicar",
+    "keysCleared": "Claves API borradas con éxito",
+    "databaseReset": "Base de datos restablecida con éxito"
   },
   "nav": {
     "dashboard": "Panel",
@@ -85,7 +87,12 @@
     "themeDescription": "Elige tu tema de color preferido",
     "lightMode": "Claro",
     "darkMode": "Oscuro",
-    "systemMode": "Sistema"
+    "systemMode": "Sistema",
+    "dangerZone": "Zona de Peligro",
+    "clearApiKeys": "Borrar Claves API",
+    "clearApiKeysDescription": "Elimina todas las claves API guardadas de la configuración. Esta acción no se puede deshacer.",
+    "resetDatabase": "Restablecer Base de Datos",
+    "resetDatabaseDescription": "Elimina TODOS los datos, incluyendo currículums, trabajos y contenido generado. Esta acción no se puede deshacer."
   },
   "resume": {
     "personalInfo": {
@@ -127,6 +134,10 @@
     "deleteResume": "¿Estás seguro de que quieres eliminar este currículum?",
     "deleteResumeDescription": "Esta acción no se puede deshacer.",
     "discardChanges": "¿Estás seguro de que quieres descartar tus cambios?",
-    "discardChangesDescription": "Cualquier cambio no guardado se perderá."
+    "discardChangesDescription": "Cualquier cambio no guardado se perderá.",
+    "clearApiKeys": "¿Borrar Todas las Claves API?",
+    "clearApiKeysDescription": "¿Estás seguro de que quieres eliminar todas las claves API? Deberás ingresarlas de nuevo para usar las funciones de IA.",
+    "resetDatabase": "¿Restablecer Base de Datos y Borrar Todo?",
+    "resetDatabaseDescription": "Esto eliminará permanentemente TODOS los currículums, descripciones de trabajo y contenido generado. Esta acción es irreversible."
   }
 }

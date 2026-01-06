@@ -8,6 +8,8 @@ import {
   testLlmConnection,
   fetchFeatureConfig,
   updateFeatureConfig,
+  clearAllApiKeys,
+  resetDatabase,
   PROVIDER_INFO,
   type LLMConfig,
   type LLMProvider,
@@ -20,6 +22,7 @@ import { useStatusCache } from '@/lib/context/status-cache';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import {
   Save,
   Key,
@@ -37,6 +40,8 @@ import {
   Clock,
   Settings2,
   Globe,
+  Trash2,
+  AlertTriangle,
 } from 'lucide-react';
 import { useLanguage } from '@/lib/context/language-context';
 import { useTranslations } from '@/lib/i18n';
@@ -80,6 +85,13 @@ export default function SettingsPage() {
   const [enableCoverLetter, setEnableCoverLetter] = useState(false);
   const [enableOutreach, setEnableOutreach] = useState(false);
   const [featureConfigLoading, setFeatureConfigLoading] = useState(false);
+
+  // Danger Zone state
+  const [showClearApiKeysDialog, setShowClearApiKeysDialog] = useState(false);
+  const [showResetDatabaseDialog, setShowResetDatabaseDialog] = useState(false);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [successMessage, setSuccessDialogMessage] = useState({ title: '', description: '' });
+  const [isResetting, setIsResetting] = useState(false);
 
   // Language settings
   const {
@@ -232,6 +244,77 @@ export default function SettingsPage() {
       }
     } finally {
       setFeatureConfigLoading(false);
+    }
+  };
+
+  // Handle Clear API Keys
+  const handleClearApiKeys = async () => {
+    setIsResetting(true);
+    try {
+      await clearAllApiKeys();
+
+      // Refetch full LLM config to ensure local state is synced with backend
+      const llmConfig = await fetchLlmConfig().catch(() => null);
+      if (llmConfig) {
+        setProvider(llmConfig.provider || 'openai');
+        setModel(llmConfig.model || PROVIDER_INFO['openai'].defaultModel);
+        const isMaskedKey = Boolean(llmConfig.api_key) && llmConfig.api_key.includes('*');
+        setHasStoredApiKey(Boolean(llmConfig.api_key));
+        setApiKey(isMaskedKey ? '' : llmConfig.api_key || '');
+        setApiBase(llmConfig.api_base || '');
+      } else {
+        // Fallback if refetch fails
+        setApiKey('');
+        setHasStoredApiKey(false);
+      }
+
+      setHealthCheck(null);
+      // Refresh status
+      await refreshStatus();
+      setError(null);
+      setSuccessDialogMessage({
+        title: t('common.success'),
+        description: t('common.keysCleared'),
+      });
+      setShowSuccessDialog(true);
+    } catch (err) {
+      console.error('Failed to clear API keys', err);
+      setError('Failed to clear API keys. Please try again.');
+    } finally {
+      setIsResetting(false);
+      setShowClearApiKeysDialog(false);
+    }
+  };
+
+  // Handle Reset Database
+  const handleResetDatabase = async () => {
+    setIsResetting(true);
+    try {
+      await resetDatabase();
+
+      // Clear all related localStorage keys
+      localStorage.removeItem('master_resume_id');
+      localStorage.removeItem('resume_builder_draft');
+      localStorage.removeItem('resume_builder_settings');
+      localStorage.removeItem('resume_matcher_content_language');
+      localStorage.removeItem('resume_matcher_ui_language');
+
+      // Refresh status to show empty counts
+      await refreshStatus();
+      // Clear health check as context is lost
+      setHealthCheck(null);
+      setError(null);
+      setSuccessDialogMessage({
+        title: t('common.success'),
+        description: t('common.databaseReset'),
+      });
+      setShowSuccessDialog(true);
+    } catch (err) {
+      console.error('Failed to reset database', err);
+      setError('Failed to reset database. Please try again.');
+    } finally {
+      setIsResetting(false);
+      setShowResetDatabaseDialog(false);
     }
   };
 
@@ -704,6 +787,56 @@ export default function SettingsPage() {
               </div>
             </div>
           </section>
+
+          {/* Danger Zone */}
+          <section className="space-y-6">
+            <div className="flex items-center gap-2 border-b border-red-200 pb-2">
+              <AlertTriangle className="w-4 h-4 text-red-600" />
+              <h2 className="font-mono text-sm font-bold uppercase tracking-wider text-red-600">
+                {t('settings.dangerZone')}
+              </h2>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Clear API Keys */}
+              <div className="border border-red-200 bg-red-50/50 p-6 space-y-4">
+                <div>
+                  <h3 className="font-bold text-sm text-red-900 mb-1">
+                    {t('settings.clearApiKeys')}
+                  </h3>
+                  <p className="text-xs text-red-700">{t('settings.clearApiKeysDescription')}</p>
+                </div>
+                <Button
+                  variant="outline"
+                  className="w-full border-red-200 text-red-700 hover:bg-red-50 hover:text-red-800 hover:border-red-300"
+                  onClick={() => setShowClearApiKeysDialog(true)}
+                  disabled={isResetting}
+                >
+                  <Key className="w-4 h-4 mr-2" />
+                  {t('settings.clearApiKeys')}
+                </Button>
+              </div>
+
+              {/* Reset Database */}
+              <div className="border border-red-200 bg-red-50/50 p-6 space-y-4">
+                <div>
+                  <h3 className="font-bold text-sm text-red-900 mb-1">
+                    {t('settings.resetDatabase')}
+                  </h3>
+                  <p className="text-xs text-red-700">{t('settings.resetDatabaseDescription')}</p>
+                </div>
+                <Button
+                  variant="destructive"
+                  className="w-full"
+                  onClick={() => setShowResetDatabaseDialog(true)}
+                  disabled={isResetting}
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  {t('settings.resetDatabase')}
+                </Button>
+              </div>
+            </div>
+          </section>
         </div>
 
         {/* Footer */}
@@ -737,6 +870,37 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={showClearApiKeysDialog}
+        onOpenChange={setShowClearApiKeysDialog}
+        title={t('confirmations.clearApiKeys')}
+        description={t('confirmations.clearApiKeysDescription')}
+        confirmLabel={t('common.delete')}
+        variant="warning"
+        onConfirm={handleClearApiKeys}
+      />
+
+      <ConfirmDialog
+        open={showResetDatabaseDialog}
+        onOpenChange={setShowResetDatabaseDialog}
+        title={t('confirmations.resetDatabase')}
+        description={t('confirmations.resetDatabaseDescription')}
+        confirmLabel={t('common.reset')}
+        variant="danger"
+        onConfirm={handleResetDatabase}
+      />
+
+      <ConfirmDialog
+        open={showSuccessDialog}
+        onOpenChange={setShowSuccessDialog}
+        title={successMessage.title}
+        description={successMessage.description}
+        confirmLabel={t('common.close')}
+        showCancelButton={false}
+        variant="success"
+        onConfirm={() => setShowSuccessDialog(false)}
+      />
     </div>
   );
 }
