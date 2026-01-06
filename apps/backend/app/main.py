@@ -26,7 +26,7 @@ async def lifespan(app: FastAPI):
     """Application lifespan manager."""
     # Startup
     settings.data_dir.mkdir(parents=True, exist_ok=True)
-    # Skip PDF renderer init on Windows - will initialize on first use
+    # PDF renderer uses lazy initialization - will initialize on first use
     # await init_pdf_renderer()
     yield
     # Shutdown - wrap each cleanup in try-except to ensure all resources are released
