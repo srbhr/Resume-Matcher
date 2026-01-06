@@ -412,11 +412,12 @@ async def download_resume_pdf(
     bodyFont: str = Query("sans-serif", pattern="^(serif|sans-serif|mono)$"),
     compactMode: bool = Query(False),
     showContactIcons: bool = Query(False),
+    accentColor: str = Query("blue", pattern="^(blue|green|orange|red)$"),
 ) -> Response:
     """Generate a PDF for a resume using headless Chromium.
 
     Accepts template settings for customization:
-    - template: swiss-single, swiss-two-column, or modern
+    - template: swiss-single, swiss-two-column, modern, or modern-two-column
     - pageSize: A4 or LETTER
     - marginTop/Bottom/Left/Right: page margins in mm (5-25)
     - sectionSpacing: gap between sections (1-5)
@@ -450,6 +451,7 @@ async def download_resume_pdf(
         f"&bodyFont={bodyFont}"
         f"&compactMode={str(compactMode).lower()}"
         f"&showContactIcons={str(showContactIcons).lower()}"
+        f"&accentColor={accentColor}"
     )
     url = f"{settings.frontend_base_url}/print/resumes/{resume_id}?{params}"
 

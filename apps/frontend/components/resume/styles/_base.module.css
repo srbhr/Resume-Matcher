@@ -93,6 +93,20 @@
   color: var(--resume-text-primary);
 }
 
+.resume-item-subtitle {
+  font-family: var(--body-font);
+  font-size: calc(var(--font-size-base) * 0.95);
+  font-weight: 600;
+  color: var(--resume-text-secondary);
+}
+
+.resume-item-subtitle-sm {
+  font-family: var(--body-font);
+  font-size: calc(var(--font-size-base) * 0.88);
+  font-weight: 600;
+  color: var(--resume-text-secondary);
+}
+
 .resume-stack {
   display: flex;
   flex-direction: column;

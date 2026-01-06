@@ -113,7 +113,7 @@ export const ResumeModern: React.FC<ResumeModernProps> = ({ data, showContactIco
                     </span>
                   </div>
                   <div
-                    className={`flex justify-between items-center ${baseStyles['resume-row']} ${baseStyles['resume-meta']}`}
+                    className={`flex justify-between items-center ${baseStyles['resume-row']} ${baseStyles['resume-item-subtitle']}`}
                   >
                     <span>{exp.company}</span>
                     {exp.location && <span>{exp.location}</span>}
@@ -199,7 +199,9 @@ export const ResumeModern: React.FC<ResumeModernProps> = ({ data, showContactIco
                     )}
                   </div>
                   {project.role && (
-                    <div className={`${baseStyles['resume-row']} ${baseStyles['resume-meta']}`}>
+                    <div
+                      className={`${baseStyles['resume-row']} ${baseStyles['resume-item-subtitle']}`}
+                    >
                       <span>{project.role}</span>
                     </div>
                   )}
@@ -240,7 +242,7 @@ export const ResumeModern: React.FC<ResumeModernProps> = ({ data, showContactIco
                     </span>
                   </div>
                   <div
-                    className={`flex justify-between ${baseStyles['resume-meta']} ${baseStyles['resume-row-tight']}`}
+                    className={`flex justify-between ${baseStyles['resume-item-subtitle']} ${baseStyles['resume-row-tight']}`}
                   >
                     <span>{edu.degree}</span>
                   </div>

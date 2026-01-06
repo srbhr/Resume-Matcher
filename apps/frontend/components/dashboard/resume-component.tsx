@@ -1,5 +1,10 @@
 import React from 'react';
-import { ResumeSingleColumn, ResumeTwoColumn, ResumeModern } from '@/components/resume';
+import {
+  ResumeSingleColumn,
+  ResumeTwoColumn,
+  ResumeModern,
+  ResumeModernTwoColumn,
+} from '@/components/resume';
 import {
   type TemplateSettings,
   type TemplateType,
@@ -113,6 +118,7 @@ interface ResumeProps {
  * - swiss-single: Traditional single-column layout (default)
  * - swiss-two-column: Two-column layout with experience sidebar
  * - modern: Single-column with user-selectable accent colors
+ * - modern-two-column: Two-column layout with modern colorful accents
  */
 const Resume: React.FC<ResumeProps> = ({ resumeData, template = 'swiss-single', settings }) => {
   // Merge provided settings with defaults
@@ -145,6 +151,12 @@ const Resume: React.FC<ResumeProps> = ({ resumeData, template = 'swiss-single', 
       )}
       {mergedSettings.template === 'modern' && (
         <ResumeModern data={resumeData} showContactIcons={mergedSettings.showContactIcons} />
+      )}
+      {mergedSettings.template === 'modern-two-column' && (
+        <ResumeModernTwoColumn
+          data={resumeData}
+          showContactIcons={mergedSettings.showContactIcons}
+        />
       )}
     </div>
   );

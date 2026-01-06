@@ -5,7 +5,7 @@
  * These settings affect both the live preview and PDF generation.
  */
 
-export type TemplateType = 'swiss-single' | 'swiss-two-column' | 'modern';
+export type TemplateType = 'swiss-single' | 'swiss-two-column' | 'modern' | 'modern-two-column';
 
 export type PageSize = 'A4' | 'LETTER';
 
@@ -219,5 +219,10 @@ export const TEMPLATE_OPTIONS: TemplateInfo[] = [
     id: 'modern',
     name: 'Modern',
     description: 'Colorful accents with customizable theme colors',
+  },
+  {
+    id: 'modern-two-column',
+    name: 'Modern Two Column',
+    description: 'Two-column layout with modern colorful accents and themes',
   },
 ];
