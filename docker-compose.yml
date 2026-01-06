@@ -3,6 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: resume-matcher
     container_name: resume-matcher
     ports:
       - "3000:3000"   # Frontend
