@@ -1,5 +1,4 @@
-import DOMPurify from 'dompurify';
-import { JSDOM } from 'jsdom';
+import DOMPurify from 'isomorphic-dompurify';
 
 /**
  * Whitelist of allowed HTML tags for rich text content
@@ -14,22 +13,12 @@ const ALLOWED_ATTR = ['href', 'target', 'rel'];
 /**
  * Sanitizes HTML content using DOMPurify with a strict whitelist.
  * Only allows bold, italic, underline, and link formatting.
+ * Uses isomorphic-dompurify which works in both browser and Node.js.
  *
  * @param dirty - The unsanitized HTML string
  * @returns Sanitized HTML string safe for rendering
  */
 export function sanitizeHtml(dirty: string): string {
-  // Handle server-side rendering using JSDOM + DOMPurify
-  if (typeof window === 'undefined') {
-    const dom = new JSDOM('<!DOCTYPE html>');
-    const purify = DOMPurify(dom.window as unknown as Window);
-    return purify.sanitize(dirty, {
-      ALLOWED_TAGS,
-      ALLOWED_ATTR,
-      FORCE_BODY: true,
-    });
-  }
-
   return DOMPurify.sanitize(dirty, {
     ALLOWED_TAGS,
     ALLOWED_ATTR,
@@ -39,17 +28,12 @@ export function sanitizeHtml(dirty: string): string {
 
 /**
  * Strips all HTML tags from content, returning plain text.
+ * Uses isomorphic-dompurify which works in both browser and Node.js.
  *
  * @param html - HTML string to strip
  * @returns Plain text with all tags removed
  */
 export function stripHtml(html: string): string {
-  if (typeof window === 'undefined') {
-    // Robust server-side fallback for SSR: parse HTML and extract text content
-    const dom = new JSDOM(html);
-    return dom.window.document.body.textContent || '';
-  }
-
   return DOMPurify.sanitize(html, { ALLOWED_TAGS: [] });
 }
 
