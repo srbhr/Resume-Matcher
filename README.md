@@ -120,8 +120,6 @@ Export your tailored resume and cover letter in PDF.
 
 ### Templates
 
-//create a table for resume templates
-
 | Template Name | Preview | Description |
 |---------------|---------|-------------|
 | **Classic Single Column** | ![Classic Template](assets/pdf-templates/single-column.jpg) | A traditional and clean layout suitable for most industries. [𝐕𝐢𝐞𝐰 𝐏𝐃𝐅](assets/pdf-templates/single-column.pdf) |
