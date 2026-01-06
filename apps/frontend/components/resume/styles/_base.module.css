@@ -39,8 +39,8 @@
 }
 
 .resume-title {
-  font-size: calc(var(--font-size-base) * 1.05);
-  color: var(--resume-text-secondary);
+  font-size: calc(var(--font-size-base) * 1.15);
+  color: var(--resume-text-body);
 }
 
 .resume-meta {
