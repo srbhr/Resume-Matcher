@@ -35,6 +35,8 @@ interface ProcessedResume {
     name?: string;
     role?: string;
     years?: string;
+    github?: string | null;
+    website?: string | null;
     description?: string[];
   }>;
   additional?: {

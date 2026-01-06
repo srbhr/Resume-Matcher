@@ -41,6 +41,8 @@ export interface Project {
   name?: string;
   role?: string;
   years?: string;
+  github?: string;
+  website?: string;
   description?: string[];
 }
 

@@ -5,6 +5,7 @@ import type {
   CustomSection,
   CustomSectionItem,
 } from '@/components/dashboard/resume-component';
+import { SafeHtml } from './safe-html';
 import baseStyles from './styles/_base.module.css';
 
 interface DynamicResumeSectionProps {
@@ -111,7 +112,7 @@ const ItemListSectionContent: React.FC<{ items: CustomSectionItem[] }> = ({ item
             >
               {item.description.map((desc, index) => (
                 <li key={index} className="pl-1">
-                  {desc}
+                  <SafeHtml html={desc} />
                 </li>
               ))}
             </ul>

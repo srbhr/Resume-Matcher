@@ -194,6 +194,31 @@
   text-decoration: underline;
 }
 
+/* Rich text formatting styles for bullet point content */
+.resume-body :global(strong),
+.resume-body :global(b) {
+  font-weight: 700;
+}
+
+.resume-body :global(em),
+.resume-body :global(i) {
+  font-style: italic;
+}
+
+.resume-body :global(u) {
+  text-decoration: underline;
+}
+
+/* Inline links within content (from rich text editor) */
+.resume-body :global(a) {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.resume-body :global(a:hover) {
+  color: var(--resume-text-primary);
+}
+
 .text-muted {
   color: var(--resume-text-tertiary);
 }
@@ -229,5 +254,25 @@
   .resume-section-title-sm + .resume-item {
     break-before: avoid !important;
     page-break-before: avoid !important;
+  }
+
+  /* Ensure rich text formatting and links render correctly in PDF */
+  .resume-body :global(a) {
+    color: inherit !important;
+    text-decoration: underline !important;
+  }
+
+  .resume-body :global(strong),
+  .resume-body :global(b) {
+    font-weight: 700 !important;
+  }
+
+  .resume-body :global(em),
+  .resume-body :global(i) {
+    font-style: italic !important;
+  }
+
+  .resume-body :global(u) {
+    text-decoration: underline !important;
   }
 }

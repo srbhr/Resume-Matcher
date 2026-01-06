@@ -3,6 +3,7 @@ import { Mail, Phone, MapPin, Globe, Linkedin, Github } from 'lucide-react';
 import type { ResumeData, SectionMeta } from '@/components/dashboard/resume-component';
 import { getSortedSections } from '@/lib/utils/section-helpers';
 import { DynamicResumeSection } from './dynamic-resume-section';
+import { SafeHtml } from './safe-html';
 import baseStyles from './styles/_base.module.css';
 import styles from './styles/swiss-single.module.css';
 
@@ -125,7 +126,7 @@ export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
                     >
                       {exp.description.map((desc, index) => (
                         <li key={index} className="pl-1">
-                          {desc}
+                          <SafeHtml html={desc} />
                         </li>
                       ))}
                     </ul>
@@ -148,14 +149,50 @@ export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
                     className={`flex justify-between items-baseline ${baseStyles['resume-row-tight']}`}
                   >
                     <h4 className={baseStyles['resume-item-title']}>{project.name}</h4>
-                    <span className={`${baseStyles['resume-meta-sm']} shrink-0 ml-4`}>
-                      {project.years}
-                    </span>
+                    {project.years && (
+                      <span className={`${baseStyles['resume-meta-sm']} shrink-0 ml-4`}>
+                        {project.years}
+                      </span>
+                    )}
                   </div>
-                  {project.role && (
-                    <p className={`${baseStyles['resume-meta']} ${baseStyles['resume-row']}`}>
-                      {project.role}
-                    </p>
+                  {(project.role || project.github || project.website) && (
+                    <div
+                      className={`flex justify-between items-center ${baseStyles['resume-row']} ${baseStyles['resume-meta']}`}
+                    >
+                      {project.role && <span>{project.role}</span>}
+                      {(project.github || project.website) && (
+                        <span className="flex gap-3">
+                          {project.github && (
+                            <a
+                              href={
+                                project.github.startsWith('http')
+                                  ? project.github
+                                  : `https://${project.github}`
+                              }
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={`${baseStyles['resume-link']} hover:underline`}
+                            >
+                              GitHub
+                            </a>
+                          )}
+                          {project.website && (
+                            <a
+                              href={
+                                project.website.startsWith('http')
+                                  ? project.website
+                                  : `https://${project.website}`
+                              }
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={`${baseStyles['resume-link']} hover:underline`}
+                            >
+                              Website
+                            </a>
+                          )}
+                        </span>
+                      )}
+                    </div>
                   )}
                   {project.description && project.description.length > 0 && (
                     <ul
@@ -163,7 +200,7 @@ export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
                     >
                       {project.description.map((desc, index) => (
                         <li key={index} className="pl-1">
-                          {desc}
+                          <SafeHtml html={desc} />
                         </li>
                       ))}
                     </ul>

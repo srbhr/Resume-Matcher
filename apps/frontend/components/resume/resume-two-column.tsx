@@ -3,6 +3,7 @@ import { Mail, Phone, MapPin, Globe, Linkedin, Github } from 'lucide-react';
 import type { ResumeData } from '@/components/dashboard/resume-component';
 import { getSortedSections } from '@/lib/utils/section-helpers';
 import { DynamicResumeSection } from './dynamic-resume-section';
+import { SafeHtml } from './safe-html';
 import baseStyles from './styles/_base.module.css';
 import styles from './styles/swiss-two-column.module.css';
 
@@ -197,7 +198,7 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
                       >
                         {exp.description.map((desc, index) => (
                           <li key={index} className="pl-0.5">
-                            {desc}
+                            <SafeHtml html={desc} />
                           </li>
                         ))}
                       </ul>
@@ -223,16 +224,50 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
                         className={`flex justify-between items-baseline ${baseStyles['resume-row-tight']}`}
                       >
                         <h4 className={baseStyles['resume-item-title-sm']}>{project.name}</h4>
-                        <span className={`${baseStyles['resume-meta-sm']} shrink-0 ml-2`}>
-                          {project.years}
-                        </span>
+                        {project.years && (
+                          <span className={`${baseStyles['resume-meta-sm']} shrink-0 ml-2`}>
+                            {project.years}
+                          </span>
+                        )}
                       </div>
-                      {project.role && (
-                        <p
-                          className={`${baseStyles['resume-meta-sm']} ${baseStyles['resume-row-tight']}`}
+                      {(project.role || project.github || project.website) && (
+                        <div
+                          className={`flex justify-between items-center ${baseStyles['resume-row-tight']} ${baseStyles['resume-meta-sm']}`}
                         >
-                          {project.role}
-                        </p>
+                          {project.role && <span>{project.role}</span>}
+                          {(project.github || project.website) && (
+                            <span className="flex gap-2">
+                              {project.github && (
+                                <a
+                                  href={
+                                    project.github.startsWith('http')
+                                      ? project.github
+                                      : `https://${project.github}`
+                                  }
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className={`${baseStyles['resume-link']} hover:underline`}
+                                >
+                                  GitHub
+                                </a>
+                              )}
+                              {project.website && (
+                                <a
+                                  href={
+                                    project.website.startsWith('http')
+                                      ? project.website
+                                      : `https://${project.website}`
+                                  }
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className={`${baseStyles['resume-link']} hover:underline`}
+                                >
+                                  Website
+                                </a>
+                              )}
+                            </span>
+                          )}
+                        </div>
                       )}
                       {project.description && project.description.length > 0 && (
                         <ul
@@ -240,7 +275,7 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
                         >
                           {project.description.map((desc, index) => (
                             <li key={index} className="pl-0.5">
-                              {desc}
+                              <SafeHtml html={desc} />
                             </li>
                           ))}
                         </ul>

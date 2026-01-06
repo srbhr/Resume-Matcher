@@ -2,9 +2,9 @@ import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
+import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { Project } from '@/components/dashboard/resume-component';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Github, Globe } from 'lucide-react';
 
 interface ProjectsFormProps {
   data: Project[];
@@ -21,6 +21,8 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({ data, onChange }) =>
         name: '',
         role: '',
         years: '',
+        github: '',
+        website: '',
         description: [''],
       },
     ]);
@@ -128,12 +130,36 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({ data, onChange }) =>
               </div>
               <div className="space-y-2">
                 <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">
-                  Years
+                  Years <span className="text-gray-400">(Optional)</span>
                 </Label>
                 <Input
                   value={item.years || ''}
                   onChange={(e) => handleChange(item.id, 'years', e.target.value)}
                   placeholder="2023"
+                  className="rounded-none border-black bg-white"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">
+                  <Github className="w-3 h-3 inline mr-1" />
+                  GitHub <span className="text-gray-400">(Optional)</span>
+                </Label>
+                <Input
+                  value={item.github || ''}
+                  onChange={(e) => handleChange(item.id, 'github', e.target.value)}
+                  placeholder="github.com/username/project"
+                  className="rounded-none border-black bg-white"
+                />
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">
+                  <Globe className="w-3 h-3 inline mr-1" />
+                  Website <span className="text-gray-400">(Optional)</span>
+                </Label>
+                <Input
+                  value={item.website || ''}
+                  onChange={(e) => handleChange(item.id, 'website', e.target.value)}
+                  placeholder="https://project-demo.com"
                   className="rounded-none border-black bg-white"
                 />
               </div>
@@ -155,17 +181,19 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({ data, onChange }) =>
               </div>
               {item.description?.map((desc, idx) => (
                 <div key={idx} className="flex gap-2">
-                  <Textarea
-                    value={desc}
-                    onChange={(e) => handleDescriptionChange(item.id, idx, e.target.value)}
-                    className="min-h-[60px] text-black text-sm rounded-none border-black bg-white"
-                    placeholder="Project detail..."
-                  />
+                  <div className="flex-1">
+                    <RichTextEditor
+                      value={desc}
+                      onChange={(html) => handleDescriptionChange(item.id, idx, html)}
+                      placeholder="Project detail..."
+                      minHeight="60px"
+                    />
+                  </div>
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={() => handleRemoveDescription(item.id, idx)}
-                    className="h-[60px] w-8 text-muted-foreground hover:text-destructive"
+                    className="h-[60px] w-8 text-muted-foreground hover:text-destructive self-end"
                   >
                     <Trash2 className="w-3 h-3" />
                   </Button>

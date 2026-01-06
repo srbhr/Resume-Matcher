@@ -59,6 +59,8 @@ class Project(BaseModel):
     name: str = ""
     role: str = ""
     years: str = ""
+    github: str | None = None
+    website: str | None = None
     description: list[str] = Field(default_factory=list)
 
 
