@@ -74,11 +74,8 @@ def clear_all_api_keys() -> None:
     config = load_config_file()
     # Clear plural dict
     config["api_keys"] = {}
-    # Clear singular top-level key
+    # Clear singular top-level key (legacy support)
     config["api_key"] = ""
-    # Also clear masked versions if they exist
-    if "masked_key" in config:
-        config["masked_key"] = ""
     save_config_file(config)
 
 

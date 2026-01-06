@@ -397,6 +397,12 @@ class UpdateOutreachMessageRequest(BaseModel):
     content: str
 
 
+class ResetDatabaseRequest(BaseModel):
+    """Request to reset database with confirmation."""
+
+    confirm: str | None = None
+
+
 class GenerateContentResponse(BaseModel):
     """Response for on-demand content generation."""
 

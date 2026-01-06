@@ -282,7 +282,7 @@ export async function deleteApiKey(provider: ApiKeyProvider): Promise<void> {
 
 // Clear all API keys
 export async function clearAllApiKeys(): Promise<void> {
-  const res = await apiFetch('/config/api-keys', {
+  const res = await apiFetch('/config/api-keys?confirm=CLEAR_ALL_KEYS', {
     method: 'DELETE',
     credentials: 'include',
   });
@@ -298,6 +298,8 @@ export async function resetDatabase(): Promise<void> {
   const res = await apiFetch('/config/reset', {
     method: 'POST',
     credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ confirm: 'RESET_ALL_DATA' }),
   });
 
   if (!res.ok) {
