@@ -1,5 +1,5 @@
 import React from 'react';
-import { Mail, Phone, MapPin, Globe, Linkedin, Github } from 'lucide-react';
+import { Mail, Phone, MapPin, Globe, Linkedin, Github, ExternalLink } from 'lucide-react';
 import type { ResumeData, SectionMeta } from '@/components/dashboard/resume-component';
 import { getSortedSections } from '@/lib/utils/section-helpers';
 import { DynamicResumeSection } from './dynamic-resume-section';
@@ -110,9 +110,7 @@ export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
                     className={`flex justify-between items-baseline ${baseStyles['resume-row-tight']}`}
                   >
                     <h4 className={baseStyles['resume-item-title']}>{exp.title}</h4>
-                    <span className={`${baseStyles['resume-meta-sm']} shrink-0 ml-4`}>
-                      {exp.years}
-                    </span>
+                    <span className={`${baseStyles['resume-date']} ml-4`}>{exp.years}</span>
                   </div>
                   <div
                     className={`flex justify-between items-center ${baseStyles['resume-row']} ${baseStyles['resume-meta']}`}
@@ -150,9 +148,7 @@ export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
                   >
                     <h4 className={baseStyles['resume-item-title']}>{project.name}</h4>
                     {project.years && (
-                      <span className={`${baseStyles['resume-meta-sm']} shrink-0 ml-4`}>
-                        {project.years}
-                      </span>
+                      <span className={`${baseStyles['resume-date']} ml-4`}>{project.years}</span>
                     )}
                   </div>
                   {(project.role || project.github || project.website) && (
@@ -161,7 +157,7 @@ export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
                     >
                       {project.role && <span>{project.role}</span>}
                       {(project.github || project.website) && (
-                        <span className="flex gap-3">
+                        <span className="flex gap-2">
                           {project.github && (
                             <a
                               href={
@@ -171,8 +167,9 @@ export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
                               }
                               target="_blank"
                               rel="noopener noreferrer"
-                              className={`${baseStyles['resume-link']} hover:underline`}
+                              className={baseStyles['resume-link-pill']}
                             >
+                              <Github size={10} />
                               GitHub
                             </a>
                           )}
@@ -185,8 +182,9 @@ export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
                               }
                               target="_blank"
                               rel="noopener noreferrer"
-                              className={`${baseStyles['resume-link']} hover:underline`}
+                              className={baseStyles['resume-link-pill']}
                             >
+                              <ExternalLink size={10} />
                               Website
                             </a>
                           )}
@@ -223,9 +221,7 @@ export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
                     className={`flex justify-between items-baseline ${baseStyles['resume-row-tight']}`}
                   >
                     <h4 className={baseStyles['resume-item-title']}>{edu.institution}</h4>
-                    <span className={`${baseStyles['resume-meta-sm']} shrink-0 ml-4`}>
-                      {edu.years}
-                    </span>
+                    <span className={`${baseStyles['resume-date']} ml-4`}>{edu.years}</span>
                   </div>
                   <div
                     className={`flex justify-between ${baseStyles['resume-meta']} ${baseStyles['resume-row-tight']}`}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Mail, Phone, MapPin, Globe, Linkedin, Github } from 'lucide-react';
+import { Mail, Phone, MapPin, Globe, Linkedin, Github, ExternalLink } from 'lucide-react';
 import type { ResumeData } from '@/components/dashboard/resume-component';
 import { getSortedSections } from '@/lib/utils/section-helpers';
 import { DynamicResumeSection } from './dynamic-resume-section';
@@ -18,8 +18,8 @@ interface ResumeTwoColumnProps {
  * Two-column layout with experience-focused main column (left) and
  * supporting information sidebar (right).
  *
- * Main Column (65%): Experience, Projects, Certifications/Training, Custom Sections
- * Sidebar (35%): Summary, Education, Skills, Languages, Awards
+ * Main Column (62%): Experience, Projects, Certifications/Training, Custom Sections
+ * Sidebar (38%): Summary, Education, Skills, Languages, Awards
  *
  * Best for technical roles with many projects, optimized for one-page resumes.
  */
@@ -180,9 +180,7 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
                       className={`flex justify-between items-baseline ${baseStyles['resume-row-tight']}`}
                     >
                       <h4 className={baseStyles['resume-item-title-sm']}>{exp.title}</h4>
-                      <span className={`${baseStyles['resume-meta-sm']} shrink-0 ml-2`}>
-                        {exp.years}
-                      </span>
+                      <span className={`${baseStyles['resume-date']} ml-2`}>{exp.years}</span>
                     </div>
 
                     <div
@@ -225,7 +223,7 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
                       >
                         <h4 className={baseStyles['resume-item-title-sm']}>{project.name}</h4>
                         {project.years && (
-                          <span className={`${baseStyles['resume-meta-sm']} shrink-0 ml-2`}>
+                          <span className={`${baseStyles['resume-date']} ml-2`}>
                             {project.years}
                           </span>
                         )}
@@ -246,8 +244,9 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
                                   }
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className={`${baseStyles['resume-link']} hover:underline`}
+                                  className={baseStyles['resume-link-pill']}
                                 >
+                                  <Github size={10} />
                                   GitHub
                                 </a>
                               )}
@@ -260,8 +259,9 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
                                   }
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className={`${baseStyles['resume-link']} hover:underline`}
+                                  className={baseStyles['resume-link-pill']}
                                 >
+                                  <ExternalLink size={10} />
                                   Website
                                 </a>
                               )}
@@ -331,9 +331,13 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
               <div className={baseStyles['resume-stack']}>
                 {education.map((edu) => (
                   <div key={edu.id}>
-                    <h4 className={baseStyles['resume-item-title-sm']}>{edu.institution}</h4>
+                    <h4
+                      className={`${baseStyles['resume-item-title-sm']} ${baseStyles['sidebar-text-wrap']}`}
+                    >
+                      {edu.institution}
+                    </h4>
                     <p className={baseStyles['resume-meta-sm']}>{edu.degree}</p>
-                    <p className={`${baseStyles['resume-meta-sm']} ${baseStyles['text-muted']}`}>
+                    <p className={`${baseStyles['resume-date']} ${baseStyles['text-muted']}`}>
                       {edu.years}
                     </p>
                     {edu.description && (

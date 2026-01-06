@@ -55,6 +55,16 @@
   color: var(--resume-text-tertiary);
 }
 
+/* Date formatting - ensures dates never wrap and stay right-aligned */
+.resume-date {
+  font-family: var(--resume-font-mono);
+  font-size: calc(var(--font-size-base) * 0.75);
+  color: var(--resume-text-tertiary);
+  white-space: nowrap;
+  flex-shrink: 0;
+  text-align: right;
+}
+
 .resume-text {
   font-family: var(--body-font);
 }
@@ -119,6 +129,24 @@
   border-radius: 4px;
 }
 
+/* Link pill - styled clickable link with icon support */
+.resume-link-pill {
+  font-family: var(--resume-font-mono);
+  font-size: calc(var(--font-size-base) * 0.7);
+  padding: 0.125rem 0.375rem;
+  color: var(--resume-text-primary);
+  border: 1px solid var(--resume-border-secondary);
+  border-radius: 2px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.resume-link-pill:hover {
+  background-color: var(--resume-accent-bg);
+}
+
 /* Resume Section Styles */
 .resume-section {
   margin-bottom: var(--section-gap);
@@ -146,9 +174,9 @@
   widows: 3;
 }
 
-/* Section Title - Small (for sidebar) */
+/* Section Title - Small (for sidebar) - increased from 0.8x to 0.88x for better visual weight */
 .resume-section-title-sm {
-  font-size: calc(var(--font-size-base) * var(--section-header-scale) * 0.8);
+  font-size: calc(var(--font-size-base) * var(--section-header-scale) * 0.88);
   font-family: var(--header-font);
   font-weight: 700;
   text-transform: uppercase;
@@ -221,6 +249,13 @@
 
 .text-muted {
   color: var(--resume-text-tertiary);
+}
+
+/* Text wrapping for narrow columns (sidebar) */
+.sidebar-text-wrap {
+  word-break: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 
 @media print {

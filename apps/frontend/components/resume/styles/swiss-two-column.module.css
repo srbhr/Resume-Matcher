@@ -7,7 +7,7 @@
 
 .grid {
   display: grid;
-  grid-template-columns: 65% 35%;
+  grid-template-columns: 62% 38%; /* Widened sidebar from 35% to 38% for better readability */
   gap: var(--section-gap);
   margin-top: var(--section-gap);
   align-items: start;
@@ -25,7 +25,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--section-gap);
-  padding-left: 0.5rem;
+  padding-left: 0.75rem; /* Increased from 0.5rem for better spacing */
 }
 
 /* 
