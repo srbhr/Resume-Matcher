@@ -94,7 +94,7 @@ if [ -d "/root/.cache/ms-playwright" ] || [ -d "/home/appuser/.cache/ms-playwrig
     status "Playwright browsers found"
 else
     warn "Installing Playwright Chromium (this may take a moment)..."
-    cd /app/backend && python -m playwright install chromium --with-deps 2>/dev/null || {
+    cd /app/backend && python -m playwright install chromium 2>/dev/null || {
         warn "Playwright installation had warnings (this is usually OK)"
     }
     status "Playwright setup complete"

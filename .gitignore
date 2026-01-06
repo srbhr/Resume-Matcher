@@ -98,3 +98,7 @@ yarn-error.log*
 next-env.d.ts
 
 .idea/
+
+# Config file with API keys - NEVER COMMIT
+config.json
+**/config.json

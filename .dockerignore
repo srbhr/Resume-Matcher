@@ -55,3 +55,7 @@ Thumbs.db
 Dockerfile
 docker-compose.yml
 .dockerignore
+
+# Config file with API keys - NEVER COMMIT
+config.json
+**/config.json
