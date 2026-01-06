@@ -18,12 +18,15 @@ from app.schemas import (
     ApiKeyStatusResponse,
     ApiKeysUpdateRequest,
     ApiKeysUpdateResponse,
+    ResetDatabaseRequest,
 )
 from app.config import (
     get_api_keys_from_config,
     save_api_keys_to_config,
     delete_api_key_from_config,
+    clear_all_api_keys,
 )
+from app.database import db
 
 router = APIRouter(prefix="/config", tags=["Configuration"])
 
@@ -180,7 +183,9 @@ async def get_language_config() -> LanguageConfigResponse:
 
 
 @router.put("/language", response_model=LanguageConfigResponse)
-async def update_language_config(request: LanguageConfigRequest) -> LanguageConfigResponse:
+async def update_language_config(
+    request: LanguageConfigRequest,
+) -> LanguageConfigResponse:
     """Update language configuration."""
     stored = _load_config()
 
@@ -305,6 +310,31 @@ async def update_api_keys(request: ApiKeysUpdateRequest) -> ApiKeysUpdateRespons
     )
 
 
+@router.delete("/api-keys")
+async def delete_all_api_keys(confirm: str | None = None) -> dict:
+    """Clear all configured API keys.
+
+    This is a destructive operation. Requires confirmation token.
+
+    Args:
+        confirm: Must be "CLEAR_ALL_KEYS" to execute
+
+    Returns:
+        Success message
+
+    Note:
+        This is a local-only endpoint for single-user deployments.
+        In production/multi-user scenarios, add proper authentication.
+    """
+    if confirm != "CLEAR_ALL_KEYS":
+        raise HTTPException(
+            status_code=400,
+            detail="Confirmation required. Pass confirm=CLEAR_ALL_KEYS query parameter.",
+        )
+    clear_all_api_keys()
+    return {"message": "All API keys have been cleared"}
+
+
 @router.delete("/api-keys/{provider}")
 async def delete_api_key(provider: str) -> dict:
     """Delete API key for a specific provider.
@@ -324,3 +354,32 @@ async def delete_api_key(provider: str) -> dict:
     delete_api_key_from_config(provider)
 
     return {"message": f"API key for {provider} has been removed"}
+
+
+@router.post("/reset")
+async def reset_database_endpoint(request: ResetDatabaseRequest) -> dict:
+    """Reset the database and clear all data.
+
+    WARNING: This action is irreversible. It will:
+    1. Truncate all database tables (resumes, jobs, improvements)
+    2. Delete all uploaded files
+
+    Requires confirmation token for safety.
+
+    Args:
+        request: Request body containing confirmation token
+
+    Returns:
+        Success message
+
+    Note:
+        This is a local-only endpoint for single-user deployments.
+        In production/multi-user scenarios, add proper authentication.
+    """
+    if request.confirm != "RESET_ALL_DATA":
+        raise HTTPException(
+            status_code=400,
+            detail="Confirmation required. Pass confirm=RESET_ALL_DATA in request body.",
+        )
+    db.reset_database()
+    return {"message": "Database and all data have been reset successfully"}

@@ -279,3 +279,31 @@ export async function deleteApiKey(provider: ApiKeyProvider): Promise<void> {
     throw new Error(data.detail || `Failed to delete API key (status ${res.status}).`);
   }
 }
+
+// Clear all API keys
+export async function clearAllApiKeys(): Promise<void> {
+  const res = await apiFetch('/config/api-keys?confirm=CLEAR_ALL_KEYS', {
+    method: 'DELETE',
+    credentials: 'include',
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || `Failed to clear API keys (status ${res.status}).`);
+  }
+}
+
+// Reset database
+export async function resetDatabase(): Promise<void> {
+  const res = await apiFetch('/config/reset', {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ confirm: 'RESET_ALL_DATA' }),
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || `Failed to reset database (status ${res.status}).`);
+  }
+}

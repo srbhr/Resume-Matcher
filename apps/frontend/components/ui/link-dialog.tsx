@@ -69,7 +69,12 @@ export const LinkDialog: React.FC<LinkDialogProps> = ({ editor, onClose }) => {
           .insertContent({
             type: 'text',
             text: text,
-            marks: [{ type: 'link', attrs: { href: finalUrl, target: '_blank', rel: 'noopener noreferrer' } }]
+            marks: [
+              {
+                type: 'link',
+                attrs: { href: finalUrl, target: '_blank', rel: 'noopener noreferrer' },
+              },
+            ],
           })
           .run();
       } else {

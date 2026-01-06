@@ -196,6 +196,20 @@ class Database:
             "has_master_resume": self.get_master_resume() is not None,
         }
 
+    def reset_database(self) -> None:
+        """Reset the database by truncating all tables and clearing uploads."""
+        # Truncate tables
+        self.resumes.truncate()
+        self.jobs.truncate()
+        self.improvements.truncate()
+
+        # Clear uploads directory
+        uploads_dir = settings.data_dir / "uploads"
+        if uploads_dir.exists():
+            import shutil
+            shutil.rmtree(uploads_dir)
+            uploads_dir.mkdir(parents=True, exist_ok=True)
+
 
 # Global database instance
 db = Database()

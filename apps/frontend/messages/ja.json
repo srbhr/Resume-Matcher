@@ -15,7 +15,9 @@
     "search": "検索",
     "filter": "フィルター",
     "reset": "リセット",
-    "apply": "適用"
+    "apply": "適用",
+    "keysCleared": "APIキーが正常にクリアされました",
+    "databaseReset": "データベースが正常にリセットされました"
   },
   "nav": {
     "dashboard": "ダッシュボード",
@@ -85,7 +87,12 @@
     "themeDescription": "お好みのカラーテーマを選択",
     "lightMode": "ライト",
     "darkMode": "ダーク",
-    "systemMode": "システム"
+    "systemMode": "システム",
+    "dangerZone": "デインジャーゾーン",
+    "clearApiKeys": "APIキーを消去",
+    "clearApiKeysDescription": "設定から保存されているすべてのAPIキーを削除します。この操作は取り消せません。",
+    "resetDatabase": "データベースをリセット",
+    "resetDatabaseDescription": "履歴書、求人、生成されたコンテンツを含むすべてのデータを削除します。この操作は取り消せません。"
   },
   "resume": {
     "personalInfo": {
@@ -127,6 +134,10 @@
     "deleteResume": "この履歴書を削除してもよろしいですか？",
     "deleteResumeDescription": "この操作は取り消せません。",
     "discardChanges": "変更を破棄してもよろしいですか？",
-    "discardChangesDescription": "保存されていない変更は失われます。"
+    "discardChangesDescription": "保存されていない変更は失われます。",
+    "clearApiKeys": "すべてのAPIキーを消去しますか？",
+    "clearApiKeysDescription": "すべてのAPIキーを削除してもよろしいですか？AI機能を使用するには再入力が必要になります。",
+    "resetDatabase": "データベースをリセットして全データを消去しますか？",
+    "resetDatabaseDescription": "すべての履歴書、求人内容、生成されたコンテンツが永久に削除されます。この操作は取り消せません。"
   }
 }
