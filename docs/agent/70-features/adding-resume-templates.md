@@ -27,7 +27,7 @@ This guide explains how to add a new resume template to the Resume Matcher appli
 ### 1.1 Add to TemplateType union
 
 ```typescript
-export type TemplateType = 'swiss-single' | 'swiss-two-column' | 'modern' | 'your-template';
+export type TemplateType = 'swiss-single' | 'swiss-two-column' | 'modern' | 'modern-two-column' | 'your-template';
 ```
 
 ### 1.2 Add to TEMPLATE_OPTIONS array
@@ -48,11 +48,13 @@ export const TEMPLATE_OPTIONS: TemplateInfo[] = [
 If your template requires new settings (like accent colors), add:
 
 1. New type definition:
+
 ```typescript
 export type YourSetting = 'option1' | 'option2' | 'option3';
 ```
 
-2. Add to `TemplateSettings` interface:
+1. Add to `TemplateSettings` interface:
+
 ```typescript
 export interface TemplateSettings {
   // ... existing fields
@@ -60,7 +62,8 @@ export interface TemplateSettings {
 }
 ```
 
-3. Add to `DEFAULT_TEMPLATE_SETTINGS`:
+1. Add to `DEFAULT_TEMPLATE_SETTINGS`:
+
 ```typescript
 export const DEFAULT_TEMPLATE_SETTINGS: TemplateSettings = {
   // ... existing defaults
@@ -68,7 +71,8 @@ export const DEFAULT_TEMPLATE_SETTINGS: TemplateSettings = {
 };
 ```
 
-4. Add mapping constant (if converting to CSS):
+1. Add mapping constant (if converting to CSS):
+
 ```typescript
 export const YOUR_SETTING_MAP: Record<YourSetting, string> = {
   option1: '#value1',
@@ -77,7 +81,8 @@ export const YOUR_SETTING_MAP: Record<YourSetting, string> = {
 };
 ```
 
-5. Update `settingsToCssVars()` function:
+1. Update `settingsToCssVars()` function:
+
 ```typescript
 export function settingsToCssVars(settings?: TemplateSettings): React.CSSProperties {
   // ... existing code
@@ -235,13 +240,17 @@ baseStyles['resume-section']       // Section container
 baseStyles['resume-section-title'] // Section heading (h3)
 baseStyles['resume-item']          // Individual item
 baseStyles['resume-item-title']    // Item title (h4)
+baseStyles['resume-item-subtitle'] // Subtitle (0.95× base, weight 600) - for company, degree, role
+baseStyles['resume-item-subtitle-sm'] // Small subtitle (0.88× base) - for compact layouts
 baseStyles['resume-text']          // Body text
 baseStyles['resume-text-sm']       // Smaller body text
-baseStyles['resume-meta']          // Metadata (mono font)
+baseStyles['resume-meta']          // Metadata (mono font, 0.82× base)
 baseStyles['resume-date']          // Date formatting
 baseStyles['resume-list']          // Bullet list container
 baseStyles['resume-link']          // Hyperlinks
 ```
+
+**Best Practice:** Use `resume-item-subtitle` for company names, education degrees, and project roles instead of `resume-meta`. The subtitle classes provide better visibility with larger font size (0.95× vs 0.82×) and semi-bold weight (600 vs 400).
 
 ---
 
@@ -393,19 +402,111 @@ const handleYourSettingChange = (yourSetting: YourSetting) => {
 
 ---
 
-## Step 9: Print Page Compatibility
+## Step 9: Backend & Print Page Compatibility
+
+### 9.1 Frontend Print Page
 
 **File:** `apps/frontend/app/print/resumes/[id]/page.tsx`
 
-Ensure the settings object includes all required properties:
+Update the template parser to accept your new template:
+
+```typescript
+function parseTemplate(value: string | undefined): TemplateType {
+  if (
+    value === 'swiss-single' ||
+    value === 'swiss-two-column' ||
+    value === 'modern' ||
+    value === 'modern-two-column' ||
+    value === 'your-template'  // Add this
+  ) {
+    return value;
+  }
+  return 'swiss-single';
+}
+```
+
+If your template uses custom settings (like accent colors), add parser functions:
+
+```typescript
+function parseYourSetting(value: string | undefined): YourSetting {
+  if (value === 'option1' || value === 'option2' || value === 'option3') {
+    return value;
+  }
+  return DEFAULT_TEMPLATE_SETTINGS.yourSetting;
+}
+```
+
+And include it in the settings object:
 
 ```typescript
 const settings: TemplateSettings = {
   template: parseTemplate(resolvedSearchParams?.template),
   pageSize: parsePageSize(resolvedSearchParams?.pageSize),
   // ... all other settings
-  yourSetting: DEFAULT_TEMPLATE_SETTINGS.yourSetting, // Add if applicable
+  yourSetting: parseYourSetting(resolvedSearchParams?.yourSetting), // Add this
 };
+```
+
+### 9.2 Backend PDF Endpoint
+
+**File:** `apps/backend/app/routers/resumes.py`
+
+If your template requires custom parameters (like `accentColor` for Modern templates):
+
+**1. Add parameter to endpoint:**
+
+```python
+@router.get("/{resume_id}/pdf")
+async def download_resume_pdf(
+    resume_id: str,
+    template: str = Query("swiss-single"),
+    # ... existing parameters
+    yourSetting: str = Query("default", pattern="^(option1|option2|option3)$"),  # Add this
+) -> Response:
+```
+
+**2. Add to URL parameters:**
+
+```python
+    params = (
+        f"template={template}"
+        # ... existing params
+        f"&yourSetting={yourSetting}"  # Add this
+    )
+```
+
+**3. Update docstring:**
+
+```python
+    """Generate a PDF for a resume using headless Chromium.
+
+    Accepts template settings for customization:
+    - template: swiss-single, swiss-two-column, modern, modern-two-column, or your-template
+    # ... existing params
+    - yourSetting: option1, option2, or option3  # Add this
+    """
+```
+
+### 9.3 Frontend API Client
+
+**File:** `apps/frontend/lib/api/resume.ts`
+
+If your template has custom settings, add them to the PDF download function:
+
+```typescript
+export async function downloadResumePdf(
+  resumeId: string,
+  settings?: TemplateSettings
+): Promise<Blob> {
+  const params = new URLSearchParams();
+
+  if (settings) {
+    params.set('template', settings.template);
+    // ... existing params
+    params.set('yourSetting', settings.yourSetting);  // Add this
+  }
+  // ...
+}
 ```
 
 ---
@@ -450,7 +551,115 @@ apps/frontend/
 
 ---
 
-## Example: Adding a "Minimal" Template
+## Real-World Example: Modern Two-Column Template
+
+The `modern-two-column` template demonstrates how to combine features from multiple templates:
+
+### Type Definitions
+
+```typescript
+// apps/frontend/lib/types/template-settings.ts
+export type TemplateType = 'swiss-single' | 'swiss-two-column' | 'modern' | 'modern-two-column';
+
+export const TEMPLATE_OPTIONS: TemplateInfo[] = [
+  // ...
+  {
+    id: 'modern-two-column',
+    name: 'Modern Two Column',
+    description: 'Two-column layout with modern colorful accents and themes',
+  },
+];
+```
+
+### CSS Styles
+
+```css
+/* apps/frontend/components/resume/styles/modern-two-column.module.css */
+
+.grid {
+  display: grid;
+  grid-template-columns: 65% 35%;
+  gap: var(--section-gap);
+}
+
+.mainColumn {
+  border-right: 2px solid var(--accent-primary);  /* Uses accent color */
+}
+
+.sectionTitleAccent {
+  color: var(--accent-primary);
+  border-bottom: 2px solid var(--accent-primary);
+}
+```
+
+### Component Structure
+
+```tsx
+// apps/frontend/components/resume/resume-modern-two-column.tsx
+
+export const ResumeModernTwoColumn: React.FC<Props> = ({ data, showContactIcons }) => {
+  return (
+    <>
+      {/* Header with accent underline */}
+      <div className={baseStyles['resume-header']}>
+        <h1 className={`${baseStyles['resume-name']} ${styles.nameAccent}`}>
+          {personalInfo?.name}
+        </h1>
+      </div>
+
+      {/* Two-column grid */}
+      <div className={styles.grid}>
+        {/* Main column - accent section headers */}
+        <div className={styles.mainColumn}>
+          <h3 className={styles.sectionTitleAccent}>Experience</h3>
+          {/* Content uses baseStyles['resume-item-subtitle'] */}
+        </div>
+
+        {/* Sidebar - accent headers */}
+        <div className={styles.sidebarColumn}>
+          <h3 className={`${baseStyles['resume-section-title-sm']} text-[var(--accent-primary)]`}>
+            Education
+          </h3>
+        </div>
+      </div>
+    </>
+  );
+};
+```
+
+### Backend Integration
+
+```python
+# apps/backend/app/routers/resumes.py
+
+@router.get("/{resume_id}/pdf")
+async def download_resume_pdf(
+    resume_id: str,
+    template: str = Query("swiss-single"),
+    accentColor: str = Query("blue", pattern="^(blue|green|orange|red)$"),  # For Modern templates
+    # ...
+) -> Response:
+    """Generate a PDF for a resume using headless Chromium.
+    
+    - template: swiss-single, swiss-two-column, modern, or modern-two-column
+    - accentColor: blue, green, orange, or red (for modern templates)
+    """
+    params = f"template={template}&accentColor={accentColor}"  # Passed to print page
+```
+
+### Key Features
+
+- **Layout**: Combines two-column efficiency with modern aesthetics
+- **Accent Colors**: Inherits `accentColor` setting from Modern template
+- **Typography**: Uses `resume-item-subtitle-sm` for better visibility
+- **ATS Compatible**: All visual elements are real DOM text
+- **Responsive**: Uses CSS Grid with percentage-based columns
+
+---
+
+## Simpler Example: Adding a "Minimal" Template
+
+For a basic template without custom settings:
 
 1. Add `'minimal'` to `TemplateType`
 2. Add to `TEMPLATE_OPTIONS` with name "Minimal" and description
@@ -458,5 +667,8 @@ apps/frontend/
 4. Create `resume-minimal.tsx` with simplified layout
 5. Export from `index.ts`
 6. Add conditional render in `resume-component.tsx`
-7. Add thumbnail showing minimal layout
-8. Test lint, build, preview, and PDF export
+7. Add `'minimal'` to `parseTemplate()` in `app/print/resumes/[id]/page.tsx`
+8. Add thumbnail showing minimal layout
+9. Test lint, build, preview, and PDF export
+
+**No backend changes needed** since `template` parameter accepts any string.
