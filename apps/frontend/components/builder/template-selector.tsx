@@ -129,7 +129,7 @@ export const TemplateThumbnail: React.FC<TemplateThumbnailProps> = ({ type, isAc
           </div>
           {/* Right column (narrower) - with accent border and headers */}
           <div
-            className={`w-1/3 border-l-2 ${borderColor === 'border-blue-700' ? 'border-l-blue-600' : 'border-l-blue-400'} pl-1 space-y-0.5`}
+            className={`w-1/3 border-l-2 ${isActive ? 'border-l-blue-600' : 'border-l-blue-400'} pl-1 space-y-0.5`}
           >
             <div className={`h-0.5 ${accentColor} w-full`}></div>
             <div className={`h-0.5 ${lineColor} w-4/5 opacity-50`}></div>

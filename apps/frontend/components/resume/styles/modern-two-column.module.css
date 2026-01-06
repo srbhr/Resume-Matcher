@@ -21,7 +21,7 @@
   flex-direction: column;
   gap: var(--section-gap);
   padding-right: 0.875rem;
-  border-right: 2px solid var(--accent-primary);
+  border-right: 2px solid var(--resume-accent-primary);
   /* Prevent content overflow into sidebar */
   overflow: hidden;
 }
@@ -42,12 +42,12 @@
   font-family: var(--header-font);
   font-size: calc(var(--font-size-base) * var(--section-header-scale));
   font-weight: 700;
-  color: var(--accent-primary);
+  color: var(--resume-accent-primary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: calc(var(--item-gap) * 1.5);
   padding-bottom: calc(var(--item-gap) * 0.5);
-  border-bottom: 2px solid var(--accent-primary);
+  border-bottom: 2px solid var(--resume-accent-primary);
 }
 
 /* Name header with accent underline */
@@ -66,8 +66,8 @@
   height: 3px;
   background: linear-gradient(
     to right,
-    var(--accent-primary) 0%,
-    var(--accent-primary) 60%,
+    var(--resume-accent-primary) 0%,
+    var(--resume-accent-primary) 60%,
     transparent 100%
   );
 }
@@ -75,14 +75,14 @@
 /* Print compatibility */
 @media print {
   .sectionTitleAccent {
-    color: var(--accent-primary);
-    border-bottom-color: var(--accent-primary);
+    color: var(--resume-accent-primary);
+    border-bottom-color: var(--resume-accent-primary);
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
 
   .mainColumn {
-    border-right-color: var(--accent-primary);
+    border-right-color: var(--resume-accent-primary);
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
@@ -90,8 +90,8 @@
   .nameAccent::after {
     background: linear-gradient(
       to right,
-      var(--accent-primary) 0%,
-      var(--accent-primary) 60%,
+      var(--resume-accent-primary) 0%,
+      var(--resume-accent-primary) 60%,
       transparent 100%
     );
     -webkit-print-color-adjust: exact !important;

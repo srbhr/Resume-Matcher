@@ -173,8 +173,8 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
             </div>
           </div>
 
-          {/* Accent Color Selection - Only visible for Modern template */}
-          {settings.template === 'modern' && (
+          {/* Accent Color Selection - Visible for Modern templates */}
+          {(settings.template === 'modern' || settings.template === 'modern-two-column') && (
             <div>
               <h4 className="font-mono text-xs font-bold uppercase tracking-wider mb-3 text-gray-600">
                 Accent Color

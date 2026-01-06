@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
@@ -40,8 +40,8 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   const [showLinkDialog, setShowLinkDialog] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
-  // Track if we're doing an internal update to prevent loops
-  const [isInternalUpdate, setIsInternalUpdate] = useState(false);
+  // Track if we're doing an internal update to prevent loops (useRef to avoid re-renders)
+  const isInternalUpdateRef = useRef(false);
 
   const editor = useEditor({
     extensions: [
@@ -66,13 +66,13 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
     ],
     content: value || '',
     onUpdate: ({ editor }) => {
-      setIsInternalUpdate(true);
+      isInternalUpdateRef.current = true;
       const html = editor.getHTML();
       // Convert <p> tags to plain content since we're in bullet mode
       const cleanHtml = html.replace(/<p>/g, '').replace(/<\/p>/g, '').trim();
       onChange(cleanHtml);
       // Reset flag after a tick
-      setTimeout(() => setIsInternalUpdate(false), 0);
+      isInternalUpdateRef.current = false;
     },
     editorProps: {
       attributes: {
@@ -101,14 +101,14 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
 
   // Sync external value changes (e.g., from parent reset)
   useEffect(() => {
-    if (editor && !isInternalUpdate) {
+    if (editor && !isInternalUpdateRef.current) {
       const currentContent = editor.getHTML().replace(/<p>/g, '').replace(/<\/p>/g, '').trim();
 
       if (value !== currentContent) {
         editor.commands.setContent(value || '');
       }
     }
-  }, [value, editor, isInternalUpdate]);
+  }, [value, editor]);
 
   // Handle link keyboard shortcut (Ctrl+K)
   useEffect(() => {

@@ -190,8 +190,8 @@ export function settingsToCssVars(settings?: TemplateSettings): React.CSSPropert
     '--margin-left': `${marginLeft}mm`,
     '--margin-right': `${marginRight}mm`,
     // Accent colors for Modern template
-    '--accent-primary': accentColors.primary,
-    '--accent-light': accentColors.light,
+    '--resume-accent-primary': accentColors.primary,
+    '--resume-accent-light': accentColors.light,
   } as React.CSSProperties;
 }
 

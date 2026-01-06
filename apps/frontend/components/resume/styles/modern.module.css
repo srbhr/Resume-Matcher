@@ -19,7 +19,7 @@
 .name-underline {
   height: 3px;
   width: 60px;
-  background-color: var(--accent-primary);
+  background-color: var(--resume-accent-primary);
   margin: 0.5rem auto 0;
 }
 
@@ -29,8 +29,8 @@
   font-family: var(--header-font);
   font-weight: 700;
   text-transform: uppercase;
-  color: var(--accent-primary);
-  border-bottom: 2px solid var(--accent-primary);
+  color: var(--resume-accent-primary);
+  border-bottom: 2px solid var(--resume-accent-primary);
   margin-bottom: var(--item-gap);
   padding-bottom: 0.125rem;
   letter-spacing: 0.05em;
@@ -47,8 +47,8 @@
   font-family: var(--header-font);
   font-weight: 700;
   text-transform: uppercase;
-  color: var(--accent-primary);
-  border-bottom: 2px solid var(--accent-primary);
+  color: var(--resume-accent-primary);
+  border-bottom: 2px solid var(--resume-accent-primary);
   margin-bottom: var(--item-gap);
   padding-bottom: 0.125rem;
   letter-spacing: 0.05em;
@@ -64,12 +64,12 @@
   .section-title-accent-sm {
     break-after: avoid !important;
     page-break-after: avoid !important;
-    color: var(--accent-primary) !important;
-    border-bottom-color: var(--accent-primary) !important;
+    color: var(--resume-accent-primary) !important;
+    border-bottom-color: var(--resume-accent-primary) !important;
   }
 
   .name-underline {
-    background-color: var(--accent-primary) !important;
+    background-color: var(--resume-accent-primary) !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }

@@ -62,13 +62,15 @@ export const LinkDialog: React.FC<LinkDialogProps> = ({ editor, onClose }) => {
           .setLink({ href: finalUrl, target: '_blank', rel: 'noopener noreferrer' })
           .run();
       } else if (text) {
-        // Insert new text with link
+        // Insert new text with link using JSON structure (safe from XSS)
         editor
           .chain()
           .focus()
-          .insertContent(
-            `<a href="${finalUrl}" target="_blank" rel="noopener noreferrer">${text}</a>`
-          )
+          .insertContent({
+            type: 'text',
+            text: text,
+            marks: [{ type: 'link', attrs: { href: finalUrl, target: '_blank', rel: 'noopener noreferrer' } }]
+          })
           .run();
       } else {
         // Just set link on current selection

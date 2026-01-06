@@ -1,4 +1,5 @@
 import DOMPurify from 'dompurify';
+import { JSDOM } from 'jsdom';
 
 /**
  * Whitelist of allowed HTML tags for rich text content
@@ -18,15 +19,20 @@ const ALLOWED_ATTR = ['href', 'target', 'rel'];
  * @returns Sanitized HTML string safe for rendering
  */
 export function sanitizeHtml(dirty: string): string {
-  // Handle server-side rendering (DOMPurify requires DOM)
+  // Handle server-side rendering using JSDOM + DOMPurify
   if (typeof window === 'undefined') {
-    return dirty;
+    const dom = new JSDOM('<!DOCTYPE html>');
+    const purify = DOMPurify(dom.window as unknown as Window);
+    return purify.sanitize(dirty, {
+      ALLOWED_TAGS,
+      ALLOWED_ATTR,
+      FORCE_BODY: true,
+    });
   }
 
   return DOMPurify.sanitize(dirty, {
     ALLOWED_TAGS,
     ALLOWED_ATTR,
-    ADD_ATTR: ['target'],
     FORCE_BODY: true,
   });
 }
@@ -39,8 +45,9 @@ export function sanitizeHtml(dirty: string): string {
  */
 export function stripHtml(html: string): string {
   if (typeof window === 'undefined') {
-    // Simple regex fallback for SSR
-    return html.replace(/<[^>]*>/g, '');
+    // Robust server-side fallback for SSR: parse HTML and extract text content
+    const dom = new JSDOM(html);
+    return dom.window.document.body.textContent || '';
   }
 
   return DOMPurify.sanitize(html, { ALLOWED_TAGS: [] });

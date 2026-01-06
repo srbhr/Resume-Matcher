@@ -17,6 +17,6 @@
   --resume-accent-bg: #f3f4f6; /* gray-100 */
 
   /* Theme accent colors (defaults, overridden by JS) */
-  --accent-primary: #1d4ed8; /* blue - default */
-  --accent-light: #dbeafe; /* blue light - default */
+  --resume-accent-primary: #1d4ed8; /* blue - default */
+  --resume-accent-light: #dbeafe; /* blue light - default */
 }
