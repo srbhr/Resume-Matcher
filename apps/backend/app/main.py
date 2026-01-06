@@ -1,9 +1,15 @@
 """FastAPI application entry point."""
 
+import asyncio
 import logging
+import sys
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+
+# Fix for Windows: Use SelectorEventLoop for Playwright compatibility
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 logger = logging.getLogger(__name__)
 from fastapi.middleware.cors import CORSMiddleware
@@ -20,7 +26,8 @@ async def lifespan(app: FastAPI):
     """Application lifespan manager."""
     # Startup
     settings.data_dir.mkdir(parents=True, exist_ok=True)
-    await init_pdf_renderer()
+    # Skip PDF renderer init on Windows - will initialize on first use
+    # await init_pdf_renderer()
     yield
     # Shutdown - wrap each cleanup in try-except to ensure all resources are released
     try:
