@@ -118,15 +118,36 @@ async def update_llm_config(request: LLMConfigRequest) -> LLMConfigResponse:
 
 
 @router.post("/llm-test")
-async def test_llm_connection() -> dict:
-    """Test current LLM connection."""
+async def test_llm_connection(request: LLMConfigRequest | None = None) -> dict:
+    """Test LLM connection with provided or stored configuration.
+
+    If request body is provided, tests with those values (for pre-save testing).
+    Otherwise, tests with the currently saved configuration.
+    """
     stored = _load_config()
 
+    # Build config: use request values if provided, otherwise fall back to stored/default
     config = LLMConfig(
-        provider=stored.get("provider", settings.llm_provider),
-        model=stored.get("model", settings.llm_model),
-        api_key=stored.get("api_key", settings.llm_api_key),
-        api_base=stored.get("api_base", settings.llm_api_base),
+        provider=(
+            request.provider
+            if request and request.provider
+            else stored.get("provider", settings.llm_provider)
+        ),
+        model=(
+            request.model
+            if request and request.model
+            else stored.get("model", settings.llm_model)
+        ),
+        api_key=(
+            request.api_key
+            if request and request.api_key
+            else stored.get("api_key", settings.llm_api_key)
+        ),
+        api_base=(
+            request.api_base
+            if request and request.api_base is not None
+            else stored.get("api_base", settings.llm_api_base)
+        ),
     )
 
     return await check_llm_health(config)
