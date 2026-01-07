@@ -207,14 +207,29 @@ export default function SettingsPage() {
     }
   };
 
-  // Test connection
+  // Test connection with current form values (pre-save testing)
   const handleTestConnection = async () => {
     setStatus('testing');
     setError(null);
     setHealthCheck(null);
 
     try {
-      const result = await testLlmConnection();
+      // Build config from current form values
+      const testConfig: Partial<LLMConfig> = {
+        provider,
+        model: model.trim() || PROVIDER_INFO[provider].defaultModel,
+        api_base: apiBase.trim() || null,
+      };
+
+      // Only include API key if provided or if we have a stored key
+      if (requiresApiKey) {
+        if (apiKey.trim()) {
+          testConfig.api_key = apiKey.trim();
+        }
+        // If no new key but has stored key, don't send api_key (backend uses stored)
+      }
+
+      const result = await testLlmConnection(testConfig);
       setHealthCheck(result);
       setStatus('idle');
     } catch (err) {

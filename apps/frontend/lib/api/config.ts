@@ -80,12 +80,20 @@ export async function updateLlmApiKey(value: string): Promise<string> {
   return config.api_key ?? '';
 }
 
-// Test LLM connection
-export async function testLlmConnection(): Promise<LLMHealthCheck> {
-  const res = await apiFetch('/config/llm-test', {
+// Test LLM connection with optional config (for pre-save testing)
+export async function testLlmConnection(config?: LLMConfigUpdate): Promise<LLMHealthCheck> {
+  const options: RequestInit = {
     method: 'POST',
     credentials: 'include',
-  });
+  };
+
+  // If config provided, send it in the request body
+  if (config) {
+    options.headers = { 'Content-Type': 'application/json' };
+    options.body = JSON.stringify(config);
+  }
+
+  const res = await apiFetch('/config/llm-test', options);
 
   if (!res.ok) {
     throw new Error(`Failed to test LLM connection (status ${res.status}).`);
