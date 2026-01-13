@@ -16,6 +16,8 @@ dependencies = [
     "playwright>=1.50.0",
     "python-docx>=1.1.0",
     "python-dotenv>=1.1.0",
+    "starlette>=0.50.0",
+    "python-magic>=0.4.27",
 ]
 
 [project.optional-dependencies]
