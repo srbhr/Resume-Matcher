@@ -1,18 +1,23 @@
 """Resume management endpoints."""
 
 import asyncio
+import io
 import json
 import logging
+import re
+from logging import Logger
+from typing import Final
 from uuid import uuid4
 
+import magic
+import requests
 from fastapi import APIRouter, File, HTTPException, Query, UploadFile
 from fastapi.responses import Response
+from starlette.datastructures import UploadFile as StarletteUploadFile
 
 from app.config import settings
 from app.database import db
 from app.pdf import PDFRenderError, render_resume_pdf
-
-logger = logging.getLogger(__name__)
 from app.schemas import (
     GenerateContentResponse,
     ImproveResumeData,
@@ -61,14 +66,16 @@ def _get_content_language() -> str:
     return config.get("content_language", config.get("language", "en"))
 
 
+logger: Logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/resumes", tags=["Resumes"])
 
-ALLOWED_TYPES = {
+ALLOWED_TYPES: Final[set[str]] = {
     "application/pdf",
     "application/msword",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 }
-MAX_FILE_SIZE = 4 * 1024 * 1024  # 4MB
+MAX_FILE_SIZE: Final[int] = 4 * 1024 * 1024  # 4MB
+MAGIC_BUFFER_SIZE: Final[int] = 2048  # Number of bytes to read for file type detection
 
 
 @router.post("/upload", response_model=ResumeUploadResponse)
@@ -79,7 +86,12 @@ async def upload_resume(file: UploadFile = File(...)) -> ResumeUploadResponse:
     Optionally parses to structured JSON if LLM is configured.
     """
     # Validate file type
-    if file.content_type not in ALLOWED_TYPES:
+    file_type = (
+        file.headers.get("content-type")
+        if file.headers.get("is_link")
+        else file.content_type
+    )
+    if file_type not in ALLOWED_TYPES:
         raise HTTPException(
             status_code=400,
             detail=f"Invalid file type: {file.content_type}. Allowed: PDF, DOC, DOCX",
@@ -142,6 +154,105 @@ async def upload_resume(file: UploadFile = File(...)) -> ResumeUploadResponse:
         request_id=str(uuid4()),
         resume_id=resume["resume_id"],
     )
+
+
+@router.post("/upload_by_link", response_model=ResumeUploadResponse)
+async def resume_from_link(file_id: str | None) -> ResumeUploadResponse:
+    """Test uploading a resume file (PDF/DOCX) from a link.
+
+    Converts the file to Markdown and stores it in the database.
+    Optionally parses to structured JSON if LLM is configured.
+    """
+
+    url = f"https://docs.google.com/uc?export=download&id={file_id}"
+
+    response = requests.get(url, stream=True, allow_redirects=True)
+    response.raise_for_status()
+
+    # Extract filename from Content-Disposition header, fallback to a default
+    content_disposition = response.headers.get("Content-Disposition")
+    filename = "downloaded_file"
+    if content_disposition:
+        match = re.search(r'filename="([^"]+)"', content_disposition)
+        if match:
+            filename = match.group(1)
+
+    # Get content_type from header
+
+    content_type = await get_file_type(response)
+
+    # # Read the entire response content into an in-memory buffer
+    file_content = io.BytesIO(response.content)
+    file_content.seek(0)  # Reset buffer position to the beginning
+    # with open(filename, "wb") as f:
+    #     f.write(file_content.getbuffer())
+    #     print(f"File saved successfully as: {filename}")
+    #     file_content.seek(0)
+
+    # tempfile = tf.NamedTemporaryFile(delete=True, suffix=".pdf")
+    # tempfile.write(response.content)
+    # tempfile.flush()
+    # tempfile.seek(0)
+
+    file = StarletteUploadFile(
+        filename=filename,
+        file=file_content,
+        headers={"content-type": content_type, "is_link": True},
+    )
+    # file.content_type = content_type
+    test = await upload_resume(file)
+    return test
+
+
+async def get_file_type(
+    response: Response,
+) -> str | None:
+    """
+    Determines the file type from the response headers and content stream.
+    This function is designed to be efficient by reading only the beginning of the stream.
+
+    Args:
+        response: The HTTP response object from a streaming request.
+
+    Returns:
+        A string representing the determined MIME type, or None if it cannot be determined.
+    """
+    # 1. Use python-magic on the first few bytes (most reliable method)
+    try:
+        file_data = io.BytesIO(response.content)
+        # 1. Peek at the start for the magic number
+        file_data.seek(0)
+        file_start_bytes: bytes = file_data.read(MAGIC_BUFFER_SIZE)
+        mime_type = magic.from_buffer(file_start_bytes, mime=True)
+        file_data.seek(0)
+        if mime_type and mime_type != "application/octet-stream":
+            logger.info(f"File type detected via magic number: {mime_type}")
+            return mime_type
+    except (StopIteration, Exception) as e:
+        logger.warning(f"Could not read stream for magic number check: {e}")
+        pass
+
+    # 2. Fallback to Content-Disposition header
+    content_disposition = response.headers.get("Content-Disposition")
+    if content_disposition:
+        match = re.search(
+            r'filename="(.+?(\.pdf|\.docx?))"', content_disposition, re.IGNORECASE
+        )
+        if match:
+            extension = match.group(2).lower()
+            logger.info(
+                f"File type detected via extension '{extension}' in Content-Disposition"
+            )
+            if extension == ".pdf":
+                return "application/pdf"
+            if extension in [".doc", ".docx"]:
+                return "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+
+    # 3. Last resort: use the Content-Type header
+    final_mime_type = response.headers.get("Content-Type", "application/octet-stream")
+    logger.info(f"Falling back to Content-Type header: {final_mime_type}")
+    response.content.seek(0)
+    return final_mime_type
 
 
 @router.get("", response_model=ResumeFetchResponse)

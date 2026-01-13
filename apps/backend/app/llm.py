@@ -273,7 +273,7 @@ async def complete_json(
     json_system = (
         system_prompt or ""
     ) + "\n\nYou must respond with valid JSON only. No explanations, no markdown."
-    messages: list[dict[str, str]] = [
+    messages = [
         {"role": "system", "content": json_system},
         {"role": "user", "content": prompt},
     ]

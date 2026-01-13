@@ -20,6 +20,14 @@ dependencies = [
     "botocore>=1.42.25",
     "structlog>=25.5.0",
     "types-boto3[bedrock,bedrock-agent,lambda,s3]>=1.42.25",
+    "starlette>=0.50.0",
+    "python-magic>=0.4.27",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "httpx>=0.28.0",
 ]
 
 [build-system]
