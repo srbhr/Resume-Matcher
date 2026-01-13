@@ -1,0 +1,26 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+
+version: "3"
+
+tasks:
+  run:
+    desc: Running the project
+    cmds:
+      - uv run src/main.py
+
+  upgrade:
+    desc: Installing the project dependencies
+    cmds:
+      - uv sync --upgrade
+      - uv tool upgrade
+
+  docker:
+    desc: Running docker with build
+    cmds:
+      - docker compose up -d --build
+
+  install:
+    desc: Installing dependencies
+    cmds:
+      - pre-commit install
+      - uv sync

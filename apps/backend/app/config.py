@@ -4,8 +4,8 @@ import json
 from pathlib import Path
 from typing import Any, Literal
 
+from pydantic.fields import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
 
 # Path to config file for API key persistence
 CONFIG_FILE_PATH = Path(__file__).parent.parent / "data" / "config.json"
@@ -117,6 +117,12 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         extra="ignore",
     )
+
+    aws_access_key_id: str | None = Field(default=None, alias="AWS_ACCESS_KEY_ID")
+    aws_secret_access_key: str | None = Field(
+        default=None, alias="AWS_SECRET_ACCESS_KEY"
+    )
+    region_name: str = Field(default="us-east-1", alias="AWS_REGION_NAME")
 
     # LLM Configuration
     llm_provider: Literal[

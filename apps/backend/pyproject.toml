@@ -16,12 +16,10 @@ dependencies = [
     "playwright>=1.50.0",
     "python-docx>=1.1.0",
     "python-dotenv>=1.1.0",
-]
-
-[project.optional-dependencies]
-dev = [
-    "pytest>=8.0.0",
-    "httpx>=0.28.0",
+    "boto3>=1.42.25",
+    "botocore>=1.42.25",
+    "structlog>=25.5.0",
+    "types-boto3[bedrock,bedrock-agent,lambda,s3]>=1.42.25",
 ]
 
 [build-system]
@@ -30,3 +28,13 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["app"]
+
+[dependency-groups]
+dev = [
+    "bandit>=1.9.2",
+    "pre-commit>=4.5.1",
+    "pyrefly>=0.48.0",
+    "ruff>=0.14.11",
+    "pytest>=8.0.0",
+    "httpx>=0.28.0",
+]

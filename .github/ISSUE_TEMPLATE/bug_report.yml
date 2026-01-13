@@ -1,13 +1,8 @@
 name: Bug Report
-description: Create a report to help us improve
+description: Create a bug report
 title: "[Bug]: "
 labels: ["bug"]
 body:
-  - type: markdown
-    attributes:
-      value: |
-        Thanks for taking the time to fill out this bug report!
-
   - type: textarea
     id: description
     attributes:
@@ -16,44 +11,3 @@ body:
       placeholder: When I click the button, nothing happens...
     validations:
       required: true
-
-  - type: textarea
-    id: reproduce
-    attributes:
-      label: To Reproduce
-      description: Steps to reproduce the behavior.
-      placeholder: |
-        1. Go to '...'
-        2. Click on '....'
-        3. Scroll down to '....'
-        4. See error
-    validations:
-      required: true
-
-  - type: textarea
-    id: expected
-    attributes:
-      label: Expected behavior
-      description: A clear and concise description of what you expected to happen.
-    validations:
-      required: true
-
-  - type: textarea
-    id: environment
-    attributes:
-      label: Environment
-      description: Please provide details about your OS, Browser version, or Device.
-      value: |
-        - OS: [e.g. macOS / Windows / iOS]
-        - Browser / Version: [e.g. Chrome 100]
-        - Device: [e.g. iPhone 14]
-    validations:
-      required: true
-
-  - type: textarea
-    id: screenshots
-    attributes:
-      label: Screenshots
-      description: If applicable, add screenshots to help explain your problem.
-    validations:
-      required: false

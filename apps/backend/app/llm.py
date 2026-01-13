@@ -65,6 +65,7 @@ def get_model_name(config: LLMConfig) -> str:
         "gemini": "gemini/",
         "deepseek": "deepseek/",
         "ollama": "ollama/",
+        "aws": "aws/",
     }
 
     prefix = provider_prefixes.get(config.provider, "")
@@ -121,7 +122,10 @@ async def check_llm_health(config: LLMConfig | None = None) -> dict[str, Any]:
         }
     except Exception:
         # Log full exception details server-side, but do not expose them to clients
-        logging.exception("LLM health check failed", extra={"provider": config.provider, "model": config.model})
+        logging.exception(
+            "LLM health check failed",
+            extra={"provider": config.provider, "model": config.model},
+        )
         return {
             "healthy": False,
             "provider": config.provider,
@@ -164,7 +168,9 @@ async def complete(
     except Exception as e:
         # Log the actual error server-side for debugging
         logging.error(f"LLM completion failed: {e}", extra={"model": model_name})
-        raise ValueError("LLM completion failed. Please check your API configuration and try again.") from e
+        raise ValueError(
+            "LLM completion failed. Please check your API configuration and try again."
+        ) from e
 
 
 def _supports_json_mode(provider: str, model: str) -> bool:
@@ -264,14 +270,16 @@ async def complete_json(
     model_name = get_model_name(config)
 
     # Build messages
-    json_system = (system_prompt or "") + "\n\nYou must respond with valid JSON only. No explanations, no markdown."
-    messages = [
+    json_system = (
+        system_prompt or ""
+    ) + "\n\nYou must respond with valid JSON only. No explanations, no markdown."
+    messages: list[dict[str, str]] = [
         {"role": "system", "content": json_system},
         {"role": "user", "content": prompt},
     ]
 
     # Check if we can use JSON mode
-    use_json_mode = _supports_json_mode(config.provider, config.model)
+    use_json_mode: bool = _supports_json_mode(config.provider, config.model)
 
     last_error = None
     for attempt in range(retries + 1):
@@ -309,7 +317,10 @@ async def complete_json(
             logging.warning(f"JSON parse failed (attempt {attempt + 1}): {e}")
             if attempt < retries:
                 # Add hint to prompt for retry
-                messages[-1]["content"] = prompt + "\n\nIMPORTANT: Output ONLY a valid JSON object. Start with { and end with }."
+                messages[-1]["content"] = (
+                    prompt
+                    + "\n\nIMPORTANT: Output ONLY a valid JSON object. Start with { and end with }."
+                )
                 continue
             raise ValueError(f"Failed to parse JSON after {retries + 1} attempts: {e}")
 

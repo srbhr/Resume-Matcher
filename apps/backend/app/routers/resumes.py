@@ -3,43 +3,42 @@
 import asyncio
 import json
 import logging
-from pathlib import Path
 from uuid import uuid4
 
 from fastapi import APIRouter, File, HTTPException, Query, UploadFile
 from fastapi.responses import Response
 
-from app.database import db
-from app.pdf import render_resume_pdf, PDFRenderError
 from app.config import settings
+from app.database import db
+from app.pdf import PDFRenderError, render_resume_pdf
 
 logger = logging.getLogger(__name__)
 from app.schemas import (
     GenerateContentResponse,
+    ImproveResumeData,
     ImproveResumeRequest,
     ImproveResumeResponse,
-    ImproveResumeData,
+    RawResume,
     ResumeData,
     ResumeFetchData,
     ResumeFetchResponse,
     ResumeListResponse,
     ResumeSummary,
     ResumeUploadResponse,
-    RawResume,
     UpdateCoverLetterRequest,
     UpdateOutreachMessageRequest,
     normalize_resume_data,
-)
-from app.services.parser import parse_document, parse_resume_to_json
-from app.services.improver import (
-    extract_job_keywords,
-    generate_improvements,
-    improve_resume,
 )
 from app.services.cover_letter import (
     generate_cover_letter,
     generate_outreach_message,
 )
+from app.services.improver import (
+    extract_job_keywords,
+    generate_improvements,
+    improve_resume,
+)
+from app.services.parser import parse_document, parse_resume_to_json
 
 
 def _load_config() -> dict:
