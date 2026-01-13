@@ -103,6 +103,7 @@ def _get_llm_api_key_with_fallback() -> str:
         "openrouter": "openrouter",
         "deepseek": "deepseek",
         "ollama": "ollama",
+        "aws": "aws",
     }
 
     config_provider = provider_map.get(provider, provider)
@@ -126,9 +127,9 @@ class Settings(BaseSettings):
 
     # LLM Configuration
     llm_provider: Literal[
-        "openai", "anthropic", "openrouter", "gemini", "deepseek", "ollama"
-    ] = "openai"
-    llm_model: str = "gpt-4o-mini"
+        "openai", "anthropic", "openrouter", "gemini", "deepseek", "ollama", "aws"
+    ] = "aws"
+    llm_model: str = "us.anthropic.claude-3-haiku-20240307-v1:0"
     llm_api_key: str = ""
     llm_api_base: str | None = None  # For Ollama or custom endpoints
 

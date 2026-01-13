@@ -5,14 +5,8 @@ from botocore.exceptions import ClientError, NoCredentialsError
 from config import settings
 from structlog import get_logger
 from structlog.stdlib import BoundLogger
-from types_boto3_bedrock_runtime.client import BedrockRuntimeClient
-from types_boto3_bedrock_runtime.type_defs import InvokeModelResponseTypeDef
 
 logger: BoundLogger = get_logger()
-
-
-def main() -> None:
-    bedrock_client()
 
 
 def bedrock_client(
@@ -25,9 +19,9 @@ def bedrock_client(
             region_name=settings.region_name,
         )
 
-        bedrock_runtime: BedrockRuntimeClient = session.client("bedrock-runtime")
+        bedrock_runtime = session.client("bedrock-runtime")
 
-        response: InvokeModelResponseTypeDef = bedrock_runtime.invoke_model(
+        response = bedrock_runtime.invoke_model(
             modelId=model,
             body=dumps(
                 {

@@ -28,13 +28,13 @@ Welcome! This guide will walk you through setting up Resume Matcher on your loca
 
 Before you begin, make sure you have the following installed on your system:
 
-| Tool | Minimum Version | How to Check | Installation |
-|------|-----------------|--------------|--------------|
-| **Python** | 3.13+ | `python --version` | [python.org](https://python.org) |
-| **Node.js** | 22+ | `node --version` | [nodejs.org](https://nodejs.org) |
-| **npm** | 10+ | `npm --version` | Comes with Node.js |
-| **uv** | Latest | `uv --version` | [astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/) |
-| **Git** | Any | `git --version` | [git-scm.com](https://git-scm.com) |
+| Tool        | Minimum Version | How to Check       | Installation                                                            |
+| ----------- | --------------- | ------------------ | ----------------------------------------------------------------------- |
+| **Python**  | 3.13+           | `python --version` | [python.org](https://python.org)                                        |
+| **Node.js** | 22+             | `node --version`   | [nodejs.org](https://nodejs.org)                                        |
+| **npm**     | 10+             | `npm --version`    | Comes with Node.js                                                      |
+| **uv**      | Latest          | `uv --version`     | [astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/) |
+| **Git**     | Any             | `git --version`    | [git-scm.com](https://git-scm.com)                                      |
 
 ### Installing uv (Python Package Manager)
 
@@ -201,13 +201,13 @@ Resume Matcher supports multiple AI providers. You can configure your provider t
 
 ### Option A: Cloud Providers
 
-| Provider | Configuration | Get API Key |
-|----------|--------------|-------------|
-| **OpenAI** | `LLM_PROVIDER=openai`<br>`LLM_MODEL=gpt-4o-mini` | [platform.openai.com](https://platform.openai.com/api-keys) |
-| **Anthropic** | `LLM_PROVIDER=anthropic`<br>`LLM_MODEL=claude-3-5-sonnet-20241022` | [console.anthropic.com](https://console.anthropic.com/) |
-| **Google Gemini** | `LLM_PROVIDER=gemini`<br>`LLM_MODEL=gemini-1.5-flash` | [aistudio.google.com](https://aistudio.google.com/app/apikey) |
-| **OpenRouter** | `LLM_PROVIDER=openrouter`<br>`LLM_MODEL=anthropic/claude-3.5-sonnet` | [openrouter.ai](https://openrouter.ai/keys) |
-| **DeepSeek** | `LLM_PROVIDER=deepseek`<br>`LLM_MODEL=deepseek-chat` | [platform.deepseek.com](https://platform.deepseek.com/) |
+| Provider          | Configuration                                                        | Get API Key                                                   |
+| ----------------- | -------------------------------------------------------------------- | ------------------------------------------------------------- |
+| **OpenAI**        | `LLM_PROVIDER=openai`<br>`LLM_MODEL=gpt-4o-mini`                     | [platform.openai.com](https://platform.openai.com/api-keys)   |
+| **Anthropic**     | `LLM_PROVIDER=anthropic`<br>`LLM_MODEL=claude-3-5-sonnet-20241022`   | [console.anthropic.com](https://console.anthropic.com/)       |
+| **Google Gemini** | `LLM_PROVIDER=gemini`<br>`LLM_MODEL=gemini-1.5-flash`                | [aistudio.google.com](https://aistudio.google.com/app/apikey) |
+| **OpenRouter**    | `LLM_PROVIDER=openrouter`<br>`LLM_MODEL=anthropic/claude-3.5-sonnet` | [openrouter.ai](https://openrouter.ai/keys)                   |
+| **DeepSeek**      | `LLM_PROVIDER=deepseek`<br>`LLM_MODEL=deepseek-chat`                 | [platform.deepseek.com](https://platform.deepseek.com/)       |
 
 Example `.env` for Anthropic:
 
@@ -238,7 +238,7 @@ Other good options: `mistral`, `codellama`, `neural-chat`
 ```env
 LLM_PROVIDER=ollama
 LLM_MODEL=llama3.2
-LLM_API_BASE=http://localhost:11434
+LLM_API_BASE=http://ollama:11434
 # LLM_API_KEY is not needed for Ollama
 ```
 
@@ -283,13 +283,13 @@ For detailed Docker instructions, see [docs/agent/60-docker/docker.md](docs/agen
 
 Once both servers are running, open your browser:
 
-| URL | Description |
-|-----|-------------|
-| **<http://localhost:3000>** | Main application (Dashboard) |
-| **<http://localhost:3000/settings>** | Configure AI provider |
-| **<http://localhost:8000>** | Backend API root |
-| **<http://localhost:8000/docs>** | Interactive API documentation |
-| **<http://localhost:8000/health>** | Backend health check |
+| URL                                  | Description                   |
+| ------------------------------------ | ----------------------------- |
+| **<http://localhost:3000>**          | Main application (Dashboard)  |
+| **<http://localhost:3000/settings>** | Configure AI provider         |
+| **<http://localhost:8000>**          | Backend API root              |
+| **<http://localhost:8000/docs>**     | Interactive API documentation |
+| **<http://localhost:8000/health>**   | Backend health check          |
 
 ### First-Time Setup Checklist
 
@@ -475,12 +475,12 @@ Stuck? Here are your options:
 
 ### Useful Documentation
 
-| Document | Description |
-|----------|-------------|
-| [backend-guide.md](docs/agent/30-architecture/backend-guide.md) | Backend architecture and API details |
-| [frontend-workflow.md](docs/agent/30-architecture/frontend-workflow.md) | User flow and component architecture |
-| [docker.md](docs/agent/60-docker/docker.md) | Docker deployment guide |
-| [style-guide.md](docs/agent/50-design-and-templates/style-guide.md) | UI design system (Swiss International Style) |
+| Document                                                                | Description                                  |
+| ----------------------------------------------------------------------- | -------------------------------------------- |
+| [backend-guide.md](docs/agent/30-architecture/backend-guide.md)         | Backend architecture and API details         |
+| [frontend-workflow.md](docs/agent/30-architecture/frontend-workflow.md) | User flow and component architecture         |
+| [docker.md](docs/agent/60-docker/docker.md)                             | Docker deployment guide                      |
+| [style-guide.md](docs/agent/50-design-and-templates/style-guide.md)     | UI design system (Swiss International Style) |
 
 ---
 

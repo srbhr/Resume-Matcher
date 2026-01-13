@@ -57,6 +57,7 @@ const PROVIDERS: LLMProvider[] = [
   'gemini',
   'deepseek',
   'ollama',
+  'aws',
 ];
 
 export default function SettingsPage() {
@@ -155,7 +156,7 @@ export default function SettingsPage() {
     setProvider(newProvider);
     setModel(PROVIDER_INFO[newProvider].defaultModel);
     if (newProvider === 'ollama') {
-      setApiBase('http://localhost:11434');
+      setApiBase('http://ollama:11434');
       setApiKey('');
       setHasStoredApiKey(false);
     } else {
@@ -613,7 +614,7 @@ export default function SettingsPage() {
                     id="apiBase"
                     value={apiBase}
                     onChange={(e) => setApiBase(e.target.value)}
-                    placeholder="http://localhost:11434"
+                    placeholder="http://ollama:11434"
                     className="font-mono"
                   />
                 </div>

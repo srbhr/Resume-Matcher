@@ -3,24 +3,48 @@
 version: "3"
 
 tasks:
-  run:
-    desc: Running the project
-    cmds:
-      - uv run src/main.py
-
-  upgrade:
-    desc: Installing the project dependencies
+  upgrade-backend:
+    desc: Upgrading backend dependencies
+    dir: apps/backend
     cmds:
       - uv sync --upgrade
       - uv tool upgrade
+
+  upgrade-frontend:
+    desc: Upgrading backend dependencies
+    dir: apps/frontend
+    cmds:
+      - npm upgrade
+
+  upgrade:
+    desc: Upgrading dependencies
+    deps:
+      - upgrade-frontend
+      - upgrade-backend
+    cmds:
+      - brew upgrade
 
   docker:
     desc: Running docker with build
     cmds:
       - docker compose up -d --build
 
+  install-backend:
+    desc: Installing dependencies backend
+    dir: apps/backend
+    cmds:
+      - uv sync --quiet
+
+  install-frontend:
+    desc: Installing dependencies frontend
+    dir: apps/frontend
+    cmds:
+      - npm install --quiet
+
   install:
     desc: Installing dependencies
+    deps:
+      - install-frontend
+      - install-backend
     cmds:
       - pre-commit install
-      - uv sync

@@ -5,6 +5,7 @@ This document details the Resume Matcher backend architecture, design decisions,
 ## Overview
 
 The backend is a **lean, local-first** FastAPI application designed for:
+
 - Single-user local deployment
 - Multi-provider AI support
 - JSON-based storage (no database server required)
@@ -12,13 +13,13 @@ The backend is a **lean, local-first** FastAPI application designed for:
 
 ## Technology Stack
 
-| Component | Technology | Purpose |
-|-----------|------------|---------|
-| Framework | FastAPI | Async API with automatic OpenAPI docs |
-| Database | TinyDB | JSON file storage, zero configuration |
-| AI Integration | LiteLLM | Unified API for 100+ LLM providers |
-| Doc Parsing | markitdown | PDF/DOCX to Markdown conversion |
-| Validation | Pydantic | Request/response schema validation |
+| Component      | Technology | Purpose                               |
+| -------------- | ---------- | ------------------------------------- |
+| Framework      | FastAPI    | Async API with automatic OpenAPI docs |
+| Database       | TinyDB     | JSON file storage, zero configuration |
+| AI Integration | LiteLLM    | Unified API for 100+ LLM providers    |
+| Doc Parsing    | markitdown | PDF/DOCX to Markdown conversion       |
+| Validation     | Pydantic   | Request/response schema validation    |
 
 ## Directory Structure
 
@@ -74,6 +75,7 @@ class Settings(BaseSettings):
 ```
 
 Settings are loaded from:
+
 1. Environment variables (highest priority)
 2. `.env` file
 3. Defaults
@@ -102,6 +104,7 @@ db.get_stats()
 ```
 
 **Why TinyDB?**
+
 - Pure Python, no server process
 - Stores data as readable JSON
 - Perfect for local single-user apps
@@ -124,16 +127,17 @@ data = await complete_json(prompt, system_prompt, config, retries=2)
 
 **Key Features:**
 
-| Feature | Description |
-|---------|-------------|
+| Feature         | Description                                                                                             |
+| --------------- | ------------------------------------------------------------------------------------------------------- |
 | API Key Passing | Keys passed directly to `litellm.acompletion()` via `api_key` param (avoids os.environ race conditions) |
-| JSON Mode | Auto-enables `response_format={"type": "json_object"}` for supported providers |
-| Retry Logic | 2 automatic retries with lower temperature on each attempt (0.1 → 0.0) |
-| JSON Extraction | Bracket-matching algorithm handles malformed responses and markdown blocks (with recursion guard) |
-| Timeouts | Configurable per-operation: 30s (health), 120s (completion), 180s (JSON) |
-| Error Handling | Logs detailed errors server-side, returns generic messages to clients |
+| JSON Mode       | Auto-enables `response_format={"type": "json_object"}` for supported providers                          |
+| Retry Logic     | 2 automatic retries with lower temperature on each attempt (0.1 → 0.0)                                  |
+| JSON Extraction | Bracket-matching algorithm handles malformed responses and markdown blocks (with recursion guard)       |
+| Timeouts        | Configurable per-operation: 30s (health), 120s (completion), 180s (JSON)                                |
+| Error Handling  | Logs detailed errors server-side, returns generic messages to clients                                   |
 
 **JSON Mode Support:**
+
 ```python
 def _supports_json_mode(provider: str, model: str) -> bool:
     # Supported: openai, anthropic, gemini, deepseek
@@ -142,14 +146,14 @@ def _supports_json_mode(provider: str, model: str) -> bool:
 
 **Supported Providers:**
 
-| Provider | Model Format | API Key Env Var |
-|----------|--------------|-----------------|
-| OpenAI | `gpt-4o-mini` | `OPENAI_API_KEY` |
-| Anthropic | `anthropic/claude-3-5-sonnet` | `ANTHROPIC_API_KEY` |
-| OpenRouter | `openrouter/model-name` | `OPENROUTER_API_KEY` |
-| Google Gemini | `gemini/gemini-1.5-flash` | `GEMINI_API_KEY` |
-| DeepSeek | `deepseek/deepseek-chat` | `DEEPSEEK_API_KEY` |
-| Ollama | `ollama/llama3.2` | None (local) |
+| Provider      | Model Format                  | API Key Env Var      |
+| ------------- | ----------------------------- | -------------------- |
+| OpenAI        | `gpt-4o-mini`                 | `OPENAI_API_KEY`     |
+| Anthropic     | `anthropic/claude-3-5-sonnet` | `ANTHROPIC_API_KEY`  |
+| OpenRouter    | `openrouter/model-name`       | `OPENROUTER_API_KEY` |
+| Google Gemini | `gemini/gemini-1.5-flash`     | `GEMINI_API_KEY`     |
+| DeepSeek      | `deepseek/deepseek-chat`      | `DEEPSEEK_API_KEY`   |
+| Ollama        | `ollama/llama3.2`             | None (local)         |
 
 ### 4. Services
 
@@ -184,12 +188,13 @@ improved = await improve_resume(original, job_desc, score, keywords)
 
 ### Health & Status
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `GET /api/v1/health` | GET | LLM connectivity check |
-| `GET /api/v1/status` | GET | Full app status |
+| Endpoint             | Method | Description            |
+| -------------------- | ------ | ---------------------- |
+| `GET /api/v1/health` | GET    | LLM connectivity check |
+| `GET /api/v1/status` | GET    | Full app status        |
 
 **Status Response:**
+
 ```json
 {
   "status": "ready | setup_required",
@@ -206,17 +211,18 @@ improved = await improve_resume(original, job_desc, score, keywords)
 
 ### Configuration
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `GET /api/v1/config/llm-api-key` | GET | Get current config (key masked) |
-| `PUT /api/v1/config/llm-api-key` | PUT | Update LLM config |
-| `POST /api/v1/config/llm-test` | POST | Test LLM connection |
-| `GET /api/v1/config/features` | GET | Get feature flags (cover letter, outreach) |
-| `PUT /api/v1/config/features` | PUT | Update feature flags |
-| `GET /api/v1/config/language` | GET | Get language preference |
-| `PUT /api/v1/config/language` | PUT | Update language preference |
+| Endpoint                         | Method | Description                                |
+| -------------------------------- | ------ | ------------------------------------------ |
+| `GET /api/v1/config/llm-api-key` | GET    | Get current config (key masked)            |
+| `PUT /api/v1/config/llm-api-key` | PUT    | Update LLM config                          |
+| `POST /api/v1/config/llm-test`   | POST   | Test LLM connection                        |
+| `GET /api/v1/config/features`    | GET    | Get feature flags (cover letter, outreach) |
+| `PUT /api/v1/config/features`    | PUT    | Update feature flags                       |
+| `GET /api/v1/config/language`    | GET    | Get language preference                    |
+| `PUT /api/v1/config/language`    | PUT    | Update language preference                 |
 
 **Language Response:**
+
 ```json
 {
   "language": "en",
@@ -226,22 +232,22 @@ improved = await improve_resume(original, job_desc, score, keywords)
 
 ### Resumes
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `POST /api/v1/resumes/upload` | POST | Upload PDF/DOCX |
-| `GET /api/v1/resumes?resume_id=` | GET | Fetch resume by ID |
-| `GET /api/v1/resumes/list` | GET | List resumes (optionally include master) |
-| `PATCH /api/v1/resumes/{id}` | PATCH | Update resume JSON |
-| `GET /api/v1/resumes/{id}/pdf` | GET | Download resume PDF |
-| `POST /api/v1/resumes/improve` | POST | Tailor for job |
-| `DELETE /api/v1/resumes/{id}` | DELETE | Delete resume |
+| Endpoint                         | Method | Description                              |
+| -------------------------------- | ------ | ---------------------------------------- |
+| `POST /api/v1/resumes/upload`    | POST   | Upload PDF/DOCX                          |
+| `GET /api/v1/resumes?resume_id=` | GET    | Fetch resume by ID                       |
+| `GET /api/v1/resumes/list`       | GET    | List resumes (optionally include master) |
+| `PATCH /api/v1/resumes/{id}`     | PATCH  | Update resume JSON                       |
+| `GET /api/v1/resumes/{id}/pdf`   | GET    | Download resume PDF                      |
+| `POST /api/v1/resumes/improve`   | POST   | Tailor for job                           |
+| `DELETE /api/v1/resumes/{id}`    | DELETE | Delete resume                            |
 
 ### Jobs
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `POST /api/v1/jobs/upload` | POST | Store job description |
-| `GET /api/v1/jobs/{id}` | GET | Fetch job by ID |
+| Endpoint                   | Method | Description           |
+| -------------------------- | ------ | --------------------- |
+| `POST /api/v1/jobs/upload` | POST   | Store job description |
+| `GET /api/v1/jobs/{id}`    | GET    | Fetch job by ID       |
 
 ## Data Flow
 
@@ -282,6 +288,7 @@ improved = await improve_resume(original, job_desc, score, keywords)
 ```
 
 **Important Notes:**
+
 - The `is_master` flag in the database and `master_resume_id` in localStorage can get out of sync
 - Dashboard calls `GET /api/v1/resumes/list?include_master=true` to reconcile and recover the master resume when localStorage is stale
 - Dashboard filters tailored resumes by BOTH `is_master` flag AND localStorage master ID
@@ -309,12 +316,12 @@ class ResumeData(BaseModel):
 
 ### Section Types
 
-| Type | Description | Example Uses |
-|------|-------------|--------------|
-| `personalInfo` | Special type for header (always first) | Name, contact details |
-| `text` | Single text block | Summary, objective, statement |
-| `itemList` | Array of items with title, subtitle, years, description | Experience, projects, publications |
-| `stringList` | Simple array of strings | Skills, languages, hobbies |
+| Type           | Description                                             | Example Uses                       |
+| -------------- | ------------------------------------------------------- | ---------------------------------- |
+| `personalInfo` | Special type for header (always first)                  | Name, contact details              |
+| `text`         | Single text block                                       | Summary, objective, statement      |
+| `itemList`     | Array of items with title, subtitle, years, description | Experience, projects, publications |
+| `stringList`   | Simple array of strings                                 | Skills, languages, hobbies         |
 
 ### Section Metadata (`SectionMeta`)
 
@@ -347,14 +354,14 @@ Resumes without `sectionMeta` are automatically normalized via `normalize_resume
 
 Located in `app/prompts/templates.py`:
 
-| Prompt | Purpose |
-|--------|---------|
-| `PARSE_RESUME_PROMPT` | Convert Markdown to structured JSON (includes custom sections) |
-| `EXTRACT_KEYWORDS_PROMPT` | Extract requirements from JD |
-| `IMPROVE_RESUME_PROMPT` | Generate tailored resume (preserves custom sections) |
-| `COVER_LETTER_PROMPT` | Generate brief cover letter (100-150 words) |
-| `OUTREACH_MESSAGE_PROMPT` | Generate LinkedIn/email outreach message |
-| `RESUME_SCHEMA_EXAMPLE` | JSON schema example with custom sections |
+| Prompt                    | Purpose                                                        |
+| ------------------------- | -------------------------------------------------------------- |
+| `PARSE_RESUME_PROMPT`     | Convert Markdown to structured JSON (includes custom sections) |
+| `EXTRACT_KEYWORDS_PROMPT` | Extract requirements from JD                                   |
+| `IMPROVE_RESUME_PROMPT`   | Generate tailored resume (preserves custom sections)           |
+| `COVER_LETTER_PROMPT`     | Generate brief cover letter (100-150 words)                    |
+| `OUTREACH_MESSAGE_PROMPT` | Generate LinkedIn/email outreach message                       |
+| `RESUME_SCHEMA_EXAMPLE`   | JSON schema example with custom sections                       |
 
 **Prompt Design Guidelines:**
 
@@ -364,6 +371,7 @@ Located in `app/prompts/templates.py`:
 4. **Explicit output format**: End with "Output ONLY the JSON object, no other text"
 
 **Example prompt structure:**
+
 ```python
 PARSE_RESUME_PROMPT = """Parse this resume into JSON. Output ONLY the JSON object, no other text.
 
@@ -389,7 +397,7 @@ LLM_MODEL=gpt-4o-mini        # Model identifier
 LLM_API_KEY=sk-...           # API key (not needed for Ollama)
 
 # Optional
-LLM_API_BASE=http://localhost:11434  # For Ollama or custom endpoints
+LLM_API_BASE=http://ollama:11434  # For Ollama or custom endpoints
 HOST=0.0.0.0
 PORT=8000
 ```
@@ -468,14 +476,14 @@ All endpoints return consistent error responses:
 }
 ```
 
-| Status | Meaning |
-|--------|---------|
-| 400 | Bad request (validation error) |
-| 404 | Resource not found |
-| 413 | File too large |
-| 422 | Unprocessable (parsing failed) |
-| 500 | Server error (LLM failure) |
-| 503 | Service unavailable (PDF rendering failed) |
+| Status | Meaning                                    |
+| ------ | ------------------------------------------ |
+| 400    | Bad request (validation error)             |
+| 404    | Resource not found                         |
+| 413    | File too large                             |
+| 422    | Unprocessable (parsing failed)             |
+| 500    | Server error (LLM failure)                 |
+| 503    | Service unavailable (PDF rendering failed) |
 
 ### Error Handling Best Practices
 
@@ -513,6 +521,7 @@ in the backend .env file matches the URL where your frontend is accessible.
 ```
 
 **Fix:** Update your backend `.env` file:
+
 ```env
 FRONTEND_BASE_URL=http://localhost:3001  # Match your frontend port
 CORS_ORIGINS=["http://localhost:3001", "http://127.0.0.1:3001"]

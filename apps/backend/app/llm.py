@@ -78,7 +78,14 @@ def get_model_name(config: LLMConfig) -> str:
         return f"openrouter/{config.model}"
 
     # For other providers, don't add prefix if model already has a known prefix
-    known_prefixes = ["openrouter/", "anthropic/", "gemini/", "deepseek/", "ollama/"]
+    known_prefixes: list[str] = [
+        "openrouter/",
+        "anthropic/",
+        "gemini/",
+        "deepseek/",
+        "ollama/",
+        "aws/",
+    ]
     if any(config.model.startswith(p) for p in known_prefixes):
         return config.model
 
@@ -176,7 +183,7 @@ async def complete(
 def _supports_json_mode(provider: str, model: str) -> bool:
     """Check if the model supports JSON mode."""
     # Models that support response_format={"type": "json_object"}
-    json_mode_providers = ["openai", "anthropic", "gemini", "deepseek"]
+    json_mode_providers = ["openai", "anthropic", "gemini", "deepseek", "aws"]
     if provider in json_mode_providers:
         return True
     # OpenRouter models - check if underlying model supports it

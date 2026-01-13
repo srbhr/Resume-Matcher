@@ -21,17 +21,18 @@ This happens because of Docker networking: `localhost` inside a container refers
 
 The solution is to use the correct URL to reach your host machine from inside Docker:
 
-| Platform | Ollama Server URL |
-|----------|------------------|
-| **Docker Desktop (Mac/Windows)** | `http://host.docker.internal:11434` |
-| **Linux (default bridge network)** | `http://172.17.0.1:11434` |
-| **Linux (host network mode)** | `http://localhost:11434` |
+| Platform                           | Ollama Server URL                   |
+| ---------------------------------- | ----------------------------------- |
+| **Docker Desktop (Mac/Windows)**   | `http://host.docker.internal:11434` |
+| **Linux (default bridge network)** | `http://172.17.0.1:11434`           |
+| **Linux (host network mode)**      | `http://ollama:11434`               |
 
 ## Setup Instructions
 
 ### Option 1: Configure via UI (Recommended)
 
 1. Start the container:
+
    ```bash
    docker-compose up -d
    ```
@@ -39,6 +40,7 @@ The solution is to use the correct URL to reach your host machine from inside Do
 2. Open http://localhost:3000/settings
 
 3. Configure LLM settings:
+
    - **Provider**: Select `Ollama`
    - **Model**: Enter your model name (e.g., `llama3.2`, `mistral`, `codellama`)
    - **Ollama Server URL**: Enter the correct URL for your platform (see table above)
@@ -84,7 +86,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: resume-matcher
-    network_mode: host  # Container shares host's network
+    network_mode: host # Container shares host's network
     volumes:
       - resume-data:/app/backend/data
     environment:
@@ -92,7 +94,7 @@ services:
       - NEXT_PUBLIC_API_URL=http://localhost:8000
       - LLM_PROVIDER=ollama
       - LLM_MODEL=llama3.2
-      - LLM_API_BASE=http://localhost:11434
+      - LLM_API_BASE=http://ollama:11434
     restart: unless-stopped
 ```
 
@@ -151,13 +153,16 @@ docker exec -it ollama ollama pull llama3.2
 ### "Invalid LLM configuration" Error
 
 1. **Check Ollama is running**:
+
    ```bash
    # On your host machine
-   curl http://localhost:11434/api/tags
+   curl http://ollama:11434/api/tags
    ```
+
    Should return a list of installed models.
 
 2. **Check Docker can reach Ollama**:
+
    ```bash
    # From inside the container
    docker exec -it resume-matcher curl http://host.docker.internal:11434/api/tags
@@ -209,13 +214,13 @@ Or add it to your shell profile (`~/.bashrc`, `~/.zshrc`, etc.).
 
 ## Recommended Models
 
-| Model | Size | Best For |
-|-------|------|----------|
-| `llama3.2` | 3B | General use, fast responses |
-| `llama3.2:70b` | 70B | High quality, slower (needs 64GB+ RAM) |
-| `mistral` | 7B | Good balance of speed and quality |
-| `codellama` | 7B | Code-related tasks |
-| `gemma2` | 9B | Google's efficient model |
+| Model          | Size | Best For                               |
+| -------------- | ---- | -------------------------------------- |
+| `llama3.2`     | 3B   | General use, fast responses            |
+| `llama3.2:70b` | 70B  | High quality, slower (needs 64GB+ RAM) |
+| `mistral`      | 7B   | Good balance of speed and quality      |
+| `codellama`    | 7B   | Code-related tasks                     |
+| `gemma2`       | 9B   | Google's efficient model               |
 
 Pull models with:
 

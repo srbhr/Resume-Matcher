@@ -1,0 +1,30 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "compounds": [
+    {
+      "name": "Compound Debugger: Full",
+      "configurations": ["Node Debugger: React", "Python Debugger: FastAPI"]
+    }
+  ],
+  "configurations": [
+    {
+      "command": "npm run dev",
+      "name": "Node Debugger: React",
+      "cwd": "${workspaceFolder}/apps/frontend",
+      "request": "launch",
+      "type": "node-terminal"
+    },
+    {
+      "name": "Python Debugger: FastAPI",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "uvicorn",
+      "cwd": "${workspaceFolder}/apps/backend/app",
+      "args": ["app.main:app", "--reload"],
+      "jinja": true
+    }
+  ]
+}
