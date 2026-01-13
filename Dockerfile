@@ -79,7 +79,7 @@ WORKDIR /app/backend
 RUN pip install -e .
 
 # Install Playwright system dependencies (as root)
-RUN python -m playwright install-deps chromium 2>/dev/null || true
+# RUN python -m playwright install-deps chromium 2>/dev/null || true
 
 # ============================================
 # Frontend Setup
@@ -113,7 +113,7 @@ RUN useradd -m -u 1000 appuser \
 USER appuser
 
 # Install Playwright Chromium as appuser (so browsers are in correct location)
-RUN python -m playwright install chromium
+# RUN python -m playwright install chromium
 
 # Expose ports
 EXPOSE 3000 8000

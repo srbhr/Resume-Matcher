@@ -5,7 +5,8 @@ from __future__ import annotations
 import asyncio
 from typing import Optional
 
-from playwright.async_api import Browser, Error as PlaywrightError, Page, async_playwright
+from playwright.async_api import Browser, Page, async_playwright
+from playwright.async_api import Error as PlaywrightError
 
 
 class PDFRenderError(Exception):
