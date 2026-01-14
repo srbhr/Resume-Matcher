@@ -113,7 +113,7 @@ Puedes:
 
 Genera cartas de presentación y plantillas de email adaptadas según la descripción del puesto y tu currículum.
 
-![Cover Letter](assets/cover_letter.png)
+![Cover Letter](assets/cover_letter_es.png)
 
 ### Puntuación del currículum (función en desarrollo)
 

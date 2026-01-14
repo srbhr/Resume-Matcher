@@ -1,29 +1,48 @@
 {
   "common": {
     "save": "保存",
+    "saving": "保存中...",
     "cancel": "キャンセル",
     "delete": "削除",
     "edit": "編集",
     "download": "ダウンロード",
     "loading": "読み込み中...",
+    "uploading": "アップロード中...",
+    "checking": "確認中...",
+    "processing": "処理中...",
+    "generating": "生成中...",
     "error": "エラー",
     "success": "成功",
     "confirm": "確認",
     "back": "戻る",
+    "retry": "再試行",
     "next": "次へ",
+    "continue": "続行",
+    "finish": "完了",
+    "optional": "任意",
     "close": "閉じる",
+    "ok": "OK",
     "search": "検索",
     "filter": "フィルター",
     "reset": "リセット",
     "apply": "適用",
+    "unknown": "不明",
     "keysCleared": "APIキーが正常にクリアされました",
     "databaseReset": "データベースが正常にリセットされました"
+  },
+  "home": {
+    "brandLine1": "履歴書",
+    "brandLine2": "マッチャー",
+    "docs": "利用ドキュメント",
+    "launchApp": "アプリを起動"
   },
   "nav": {
     "dashboard": "ダッシュボード",
     "builder": "履歴書ビルダー",
     "tailor": "履歴書をカスタマイズ",
-    "settings": "設定"
+    "settings": "設定",
+    "backToDashboard": "ダッシュボードに戻る",
+    "goToSettings": "設定へ"
   },
   "dashboard": {
     "title": "ダッシュボード",
@@ -35,16 +54,46 @@
     "createNew": "新規作成",
     "lastModified": "最終更新",
     "actions": "アクション",
+    "preview": "プレビュー",
     "viewResume": "履歴書を見る",
     "editResume": "履歴書を編集",
     "deleteResume": "履歴書を削除",
     "downloadPdf": "PDFをダウンロード",
-    "tailorResume": "求人に合わせてカスタマイズ"
+    "tailorResume": "求人に合わせてカスタマイズ",
+    "selectModule": "モジュールを選択",
+    "masterResume": "マスター履歴書",
+    "tailoredResume": "カスタマイズ履歴書",
+    "initializeMasterResume": "マスター履歴書を初期化",
+    "initializeSequence": "初期化シーケンス",
+    "refreshStatus": "ステータスを更新",
+    "createResume": "履歴書を作成",
+    "edited": "編集 {date}",
+    "statusLine": "ステータス: {status}",
+    "status": {
+      "checking": "確認中...",
+      "processing": "処理中...",
+      "ready": "準備完了",
+      "failed": "処理に失敗しました",
+      "pending": "保留中"
+    },
+    "llmNotConfiguredTitle": "[ LLM 未設定 ]",
+    "llmNotConfiguredMessage": "> API キーがありません。設定するまで履歴書のカスタマイズは無効です。",
+    "setupRequiredTitle": "[ 設定が必要 ]",
+    "setupRequiredMessage": "> 履歴書のカスタマイズを有効にするには、設定で API キーを構成してください。",
+    "uploadDialog": {
+      "success": "履歴書のアップロードに成功しました。",
+      "successMissingId": "アップロードは成功しましたが、履歴書 ID が返されませんでした。",
+      "failed": "アップロードに失敗しました。",
+      "dropzoneTitle": "クリックまたはファイルをドラッグ",
+      "dropzoneSubtitle": "PDF、DOC、DOCX（最大 4MB）"
+    }
   },
   "builder": {
     "title": "履歴書ビルダー",
     "editMode": "編集モード",
     "previewMode": "プレビューモード",
+    "createAndPreview": "作成＆プレビュー",
+    "unsavedDraft": "未保存の下書き",
     "personalInfo": "個人情報",
     "summary": "概要",
     "experience": "職歴",
@@ -57,19 +106,307 @@
     "addSection": "セクションを追加",
     "removeSection": "セクションを削除",
     "saveChanges": "変更を保存",
-    "discardChanges": "変更を破棄"
+    "discardChanges": "変更を破棄",
+    "placeholders": {
+      "summary": "職務要約を簡潔に入力してください..."
+    },
+    "contentStats": {
+      "wordsChars": "{wordCount}語 / {charCount}文字"
+    },
+    "additionalForm": {
+      "instructions": "各項目を改行で区切って入力してください（1行につき1項目）。",
+      "placeholders": {
+        "technicalSkills": "React\nTypeScript\nNode.js",
+        "languages": "日本語\n英語",
+        "certifications": "AWS Solution Architect\nGoogle Analytics",
+        "awards": "月間MVP\nハッカソン優勝"
+      }
+    },
+    "customSections": {
+      "dialogTitle": "カスタムセクションを追加",
+      "dialogDescription": "任意の名前とタイプで新しいセクションを作成します。",
+      "sectionNameLabel": "セクション名",
+      "sectionNamePlaceholder": "例：出版、ボランティア、資格",
+      "sectionTypeLabel": "セクションタイプ",
+      "addCustomSectionButton": "カスタムセクションを追加",
+      "sectionTypes": {
+        "textBlockLabel": "テキストブロック",
+        "textBlockDescription": "単一のテキスト欄（概要など）",
+        "itemListLabel": "項目リスト",
+        "itemListDescription": "詳細を含む複数エントリ（職歴など）",
+        "stringListLabel": "シンプルリスト",
+        "stringListDescription": "シンプルな一覧（スキルなど）"
+      },
+      "contentLabel": "内容",
+      "contentPlaceholder": "{name} の内容を入力...",
+      "defaultTextPlaceholder": "内容を入力...",
+      "entryLabel": "エントリ",
+      "addEntryLabel": "エントリを追加",
+      "itemsLabel": "項目",
+      "itemsPlaceholder": "1行につき1項目を入力",
+      "unknownSectionType": "不明なセクションタイプ"
+    },
+    "sectionHeader": {
+      "renameSection": "セクション名を変更",
+      "customTag": "カスタム",
+      "hiddenFromPdfTag": "PDFに含めない",
+      "hideSection": "セクションを非表示",
+      "showSection": "セクションを表示",
+      "moveUp": "上へ移動",
+      "moveDown": "下へ移動",
+      "deleteSection": "セクションを削除",
+      "deleteTitle": "セクションを削除",
+      "deleteDescription": "「{name}」を削除しますか？この操作は元に戻せません。"
+    },
+    "previewTabs": {
+      "resume": "履歴書",
+      "coverLetter": "カバーレター",
+      "outreach": "連絡メール",
+      "jdMatch": "JD一致"
+    },
+    "footer": {
+      "moduleLabel": "履歴書ビルダーモジュール",
+      "singleColumn": "1カラム",
+      "twoColumn": "2カラム"
+    },
+    "generatePrompt": {
+      "notAvailableTitle": "{title}は利用できません",
+      "notAvailableDescription": "{title}を生成するには、まず求人内容を入力して履歴書をカスタマイズしてください。",
+      "goToDashboard": "ダッシュボードへ",
+      "generateTitle": "{title}を生成",
+      "coverLetterDescription": "履歴書と求人内容に基づいてカバーレターを生成します。",
+      "outreachDescription": "履歴書と求人内容に基づいて、LinkedIn またはメール向けの外連絡メッセージを生成します。",
+      "generateButton": "{title}を生成",
+      "coverLetterFooter": "ヒント：先にカスタマイズすると精度が上がります。",
+      "outreachFooter": "ヒント：短く、個別性を入れましょう。"
+    },
+    "regenerateDialog": {
+      "title": "{title}を再生成しますか？",
+      "description": "現在の{title}を新しく生成した内容で置き換えます。編集内容は失われます。"
+    },
+    "jdMatch": {
+      "yourResume": "あなたの履歴書",
+      "matchingKeywordsHighlighted": "（一致キーワードをハイライト）",
+      "jobDescriptionTitle": "求人内容",
+      "at": "＠",
+      "atSeparator": " @ ",
+      "roleSeparator": "—",
+      "aboutTitle": "JD一致について",
+      "aboutDescription": "このビューでは、履歴書が求人内容（JD）にどれだけ一致しているかを確認できます。JDのキーワードが履歴書内で黄色にハイライトされ、すでに含まれているスキルや用語が分かります。",
+      "highlightedKeywordsTitle": "ハイライトされたキーワード",
+      "highlightedKeywordsDescriptionTemplate": "__COLOR__でハイライトされた単語は、求人内容と履歴書の両方に含まれます。一致率が高いほど、要件への適合度が高いことを示します。",
+      "highlightedKeywordsDescriptionPrefix": "次の色でハイライトされた単語",
+      "highlightColor": "黄色",
+      "highlightedKeywordsDescriptionSuffix": "は、求人内容と履歴書の両方に含まれます。一致率が高いほど、要件への適合度が高いことを示します。",
+      "tipsTitle": "ヒント",
+      "tips": {
+        "items": {
+          "addMissingKeywords": "「履歴書」タブで不足しているキーワードを追加する",
+          "focusTechnicalSkills": "JDに記載された技術スキルやツールに注目する",
+          "matchActionVerbs": "要件にある行動動詞に合わせる"
+        }
+      },
+      "stats": {
+        "keywordsExtracted": "抽出キーワード数: {count}",
+        "matchesFound": "一致数: {count}",
+        "matchRateLabel": "一致率:"
+      }
+    },
+    "genericItemForm": {
+      "itemLabel": "項目",
+      "addItemLabel": "{label}を追加",
+      "fields": {
+        "title": "タイトル",
+        "organization": "組織",
+        "location": "場所",
+        "years": "期間",
+        "descriptionPoints": "説明ポイント"
+      },
+      "actions": {
+        "addPoint": "ポイントを追加"
+      },
+      "placeholders": {
+        "title": "タイトル",
+        "organization": "組織",
+        "location": "場所",
+        "years": "2020 - 現在",
+        "description": "あなたの貢献を説明..."
+      },
+      "noEntries": "// {label} の項目はありません",
+      "addFirstItem": "最初の{label}を追加"
+    },
+    "forms": {
+      "experience": {
+        "addJob": "職歴を追加",
+        "addFirstJob": "最初の職歴を追加",
+        "fields": {
+          "jobTitle": "職種",
+          "company": "会社"
+        },
+        "placeholders": {
+          "jobTitle": "シニアエンジニア",
+          "company": "Tech Corp",
+          "location": "リモート / 都市",
+          "years": "2020 - 現在",
+          "description": "実績を説明..."
+        }
+      },
+      "education": {
+        "addSchool": "学歴を追加",
+        "addFirstSchool": "最初の学歴を追加",
+        "fields": {
+          "institution": "学校/機関",
+          "degree": "学位",
+          "description": "説明",
+          "descriptionOptional": "説明（任意）"
+        },
+        "placeholders": {
+          "institution": "大学名",
+          "degree": "学士（理学）",
+          "years": "2016 - 2020",
+          "description": "追加の詳細..."
+        }
+      },
+      "projects": {
+        "addProject": "プロジェクトを追加",
+        "addFirstProject": "最初のプロジェクトを追加",
+        "fields": {
+          "projectName": "プロジェクト名",
+          "role": "役割",
+          "website": "Webサイト"
+        },
+        "placeholders": {
+          "projectName": "Resume Matcher",
+          "role": "作成者",
+          "years": "2023",
+          "github": "github.com/username/project",
+          "website": "https://project-demo.com",
+          "description": "プロジェクト詳細..."
+        }
+      }
+    },
+    "formatting": {
+      "panelTitle": "テンプレートと書式",
+      "template": "テンプレート",
+      "accentColor": "アクセントカラー",
+      "pageSize": "ページサイズ",
+      "margins": "余白（mm）",
+      "margin": {
+        "top": "上",
+        "bottom": "下",
+        "left": "左",
+        "right": "右"
+      },
+      "spacing": "間隔",
+      "spacingSection": "セクション",
+      "spacingItems": "項目",
+      "spacingLines": "行間",
+      "fontSize": "フォントサイズ",
+      "baseFontSize": "本文",
+      "headerScale": "見出し",
+      "headerFontFamily": "見出し",
+      "bodyFontFamily": "本文",
+      "options": "オプション",
+      "compactMode": "コンパクトモード",
+      "contactIcons": "連絡先アイコン",
+      "effectiveOutput": "適用結果",
+      "effectiveMargins": "余白（mm）：上{top} 下{bottom} 左{left} 右{right}",
+      "effectiveSectionGap": "セクション間隔",
+      "effectiveItemGap": "項目間隔",
+      "effectiveLineHeight": "行間",
+      "effectiveBaseFont": "本文フォント",
+      "effectiveHeaderScale": "見出しスケール",
+      "effectiveHeaderFont": "見出しフォント",
+      "effectiveBodyFont": "本文フォント",
+      "compactHint": "コンパクトモードでは間隔と行間が詰まります。余白と本文フォントサイズは維持されます。",
+      "resetDefaults": "デフォルトに戻す"
+    },
+    "personalInfoForm": {
+      "placeholders": {
+        "name": "山田 太郎",
+        "title": "ソフトウェアエンジニア",
+        "email": "taro@example.com",
+        "phone": "+81 90-0000-0000",
+        "location": "都市、国",
+        "website": "portfolio.com",
+        "linkedin": "linkedin.com/in/taro",
+        "github": "github.com/taro"
+      }
+    },
+    "leftPanel": {
+      "editorPanel": "編集パネル",
+      "coverLetterEditor": "カバーレター編集",
+      "outreachEditor": "連絡メール編集",
+      "jdMatchAnalysis": "JD一致分析"
+    }
+  },
+  "enrichment": {
+    "title": "履歴書の強化",
+    "loading": {
+      "analyzingTitle": "履歴書を分析しています...",
+      "analyzingDescription": "詳細を補足できる箇所を特定しています",
+      "generatingTitle": "強化した記述を作成しています...",
+      "generatingDescription": "回答内容をもとに履歴書を改善します",
+      "applyingTitle": "強化内容を適用しています...",
+      "applyingDescription": "マスター履歴書を更新しています"
+    },
+    "questionProgress": "質問 {current} / {total}",
+    "itemType": {
+      "experience": "経験",
+      "project": "プロジェクト"
+    },
+    "shortcutHint": "Shift+Enterで改行、Cmd/Ctrl+Enterで続行",
+    "preview": {
+      "title": "新しい内容を確認",
+      "description": "履歴書に追加される新しい箇条書きを確認してください",
+      "applyButton": "履歴書に追加",
+      "keepingLabel": "保持",
+      "addingLabel": "追加",
+      "existingCount": "（既存 {count} 件）",
+      "newCount": "（新規 {count} 件）",
+      "noExistingDescription": "既存の説明はありません"
+    },
+    "complete": {
+      "title": "履歴書を強化しました！",
+      "updatedCountSingular": "{count} 件を更新しました",
+      "updatedCountPlural": "{count} 件を更新しました",
+      "updatedFallback": "強化した記述を履歴書に反映しました",
+      "doneButton": "完了"
+    },
+    "noImprovements": {
+      "title": "履歴書はとても良い状態です！",
+      "defaultDescription": "改善が必要な項目は見つかりませんでした。すでに十分に詳細な記述です。"
+    },
+    "error": {
+      "title": "エラーが発生しました",
+      "unexpected": "予期しないエラーが発生しました"
+    }
   },
   "tailor": {
     "title": "履歴書をカスタマイズ",
     "subtitle": "特定の求人に合わせて履歴書を最適化",
+    "heroTitle": "履歴書をカスタマイズ",
     "selectResume": "履歴書を選択",
     "pasteJobDescription": "求人内容を貼り付け",
+    "pasteJobDescriptionBelow": "下に求人内容を貼り付け",
     "jobDescriptionPlaceholder": "求人内容をここに貼り付けてください...",
     "analyzeJob": "求人を分析",
     "generateTailored": "カスタマイズ履歴書を生成",
+    "setupRequiredTitle": "[ 設定が必要 ]",
+    "noApiKeyMessage": "> API キーが設定されていません。履歴書のカスタマイズには LLM プロバイダーが必要です。",
+    "configureApiKey": "API キーを設定",
+    "configureApiKeyFirst": "先に API キーを設定してください",
+    "charactersCount": "{count} 文字",
     "matchScore": "マッチスコア",
     "suggestions": "提案",
-    "keywords": "含めるべきキーワード"
+    "keywords": "含めるべきキーワード",
+    "footerTagline": "AI 搭載最適化エンジン",
+    "errors": {
+      "jobDescriptionTooShort": "求人内容が短すぎます。もう少し詳細を入力してください。",
+      "apiKeyError": "API キーのエラーです。設定で LLM 構成を確認してください。",
+      "rateLimit": "レート制限に達しました。しばらく待ってから再試行してください。",
+      "failedToGenerate": "履歴書の生成に失敗しました。設定を確認して再試行してください。"
+    }
   },
   "settings": {
     "title": "設定",
@@ -92,7 +429,107 @@
     "clearApiKeys": "APIキーを消去",
     "clearApiKeysDescription": "設定から保存されているすべてのAPIキーを削除します。この操作は取り消せません。",
     "resetDatabase": "データベースをリセット",
-    "resetDatabaseDescription": "履歴書、求人、生成されたコンテンツを含むすべてのデータを削除します。この操作は取り消せません。"
+    "resetDatabaseDescription": "履歴書、求人、生成されたコンテンツを含むすべてのデータを削除します。この操作は取り消せません。",
+    "llmConfigurationTitle": "LLM 設定",
+    "providerLabel": "プロバイダー",
+    "statusCards": {
+      "llm": "LLM",
+      "database": "データベース",
+      "resumes": "履歴書",
+      "jobs": "求人",
+      "improvements": "改善",
+      "masterResume": "マスター履歴書"
+    },
+    "statusValues": {
+      "healthy": "正常",
+      "offline": "オフライン",
+      "connected": "接続済み",
+      "configured": "設定済み",
+      "notSet": "未設定"
+    },
+    "setupRequired": {
+      "title": "[ 設定が必要 ]",
+      "description": "> API キーが設定されていません。下で LLM プロバイダーの API キーを追加して、履歴書のカスタマイズを有効にしてください。"
+    },
+    "systemStatus": {
+      "title": "システム状態",
+      "refresh": "更新",
+      "unableToConnect": "バックエンドに接続できません",
+      "expectedAt": "想定 URL: {apiUrl}",
+      "lastFetched": {
+        "never": "未取得",
+        "justNow": "たった今",
+        "minutesAgo": "{minutes} 分前",
+        "hoursAgo": "{hours} 時間前"
+      }
+    },
+    "llmConfiguration": {
+      "selectedProvider": "選択中: {provider}",
+      "modelLabel": "モデル",
+      "defaultModel": "既定: {model}",
+      "apiKeyLabel": "API キー",
+      "apiKeyOptionalForOllama": "（Ollama は任意）",
+      "apiKeyPlaceholder": "sk-...",
+      "apiKeyNotRequiredPlaceholder": "ローカルモデルでは不要",
+      "leaveBlankToKeepExistingKey": "空欄のままにすると既存キーを保持します",
+      "baseUrlLabel": "ベースURL（任意）",
+      "baseUrlPlaceholder": "例: https://api.openai.com/v1",
+      "baseUrlDescription": "プロキシ/アグリゲーター等のエンドポイントを使う場合に Base URL を上書きできます。空欄の場合は既定値を使用します。",
+      "ollamaServerUrl": "Ollama サーバー URL",
+      "ollamaServerUrlPlaceholder": "http://localhost:11434",
+      "testConnection": "接続テスト",
+      "errorPrefix": "エラー: {error}",
+      "connectionSuccessful": "接続成功",
+      "connectionFailed": "接続失敗",
+      "connectionDetails": "プロバイダー: {provider} | モデル: {model}"
+    },
+    "contentGeneration": {
+      "title": "コンテンツ生成",
+      "description": "履歴書のカスタマイズ時に追加のコンテンツ生成を有効化します。有効にすると、これらのドキュメントはカスタマイズ履歴書と一緒に自動生成されます。",
+      "coverLetter": {
+        "label": "カバーレター",
+        "description": "履歴書と一緒にカスタマイズされたカバーレターを生成します"
+      },
+      "outreachMessage": {
+        "label": "コールドアウトリーチメッセージ",
+        "description": "LinkedIn やメール向けのネットワーキングメッセージを生成します"
+      }
+    },
+    "footer": {
+      "status": {
+        "checking": "確認中...",
+        "ready": "ステータス: 準備完了",
+        "setupRequired": "ステータス: 設定が必要",
+        "offline": "ステータス: オフライン"
+      }
+    },
+    "errors": {
+      "unableToConnectBackend": "バックエンドに接続できません。サーバーは起動していますか？",
+      "apiKeyRequired": "選択したプロバイダーには API キーが必要です。",
+      "unknownProvider": "バックエンドから未知のプロバイダーが返されました: {provider}",
+      "unableToSaveConfiguration": "設定を保存できません",
+      "failedToClearApiKeys": "API キーの消去に失敗しました。もう一度お試しください。",
+      "failedToResetDatabase": "データベースのリセットに失敗しました。もう一度お試しください。"
+    }
+  },
+  "resumeViewer": {
+    "resumeNotFound": "履歴書が見つかりません",
+    "useTailorFeature": "カスタマイズ機能を使う",
+    "returnToDashboard": "ダッシュボードに戻る",
+    "enhanceResume": "履歴書を強化",
+    "downloadResume": "履歴書をダウンロード",
+    "deletedTitle": "履歴書を削除しました",
+    "deletedDescriptionMaster": "マスター履歴書はシステムから完全に削除されました。",
+    "deletedDescriptionRegular": "履歴書はシステムから完全に削除されました。",
+    "deleteFailedTitle": "削除に失敗しました",
+    "errors": {
+      "processingFailed": "履歴書の処理に失敗しました。AI サービスが構造化データを抽出できませんでした。カスタマイズ機能を使用するか、再アップロードしてください。",
+      "stillProcessing": "履歴書はまだ処理中です。少し待ってからページを更新してください。",
+      "notProcessedYet": "履歴書はまだ処理されていません。カスタマイズ機能で構造化履歴書を生成してください。",
+      "noDataAvailable": "利用可能な履歴書データがありません。",
+      "failedToLoad": "履歴書データの読み込みに失敗しました。",
+      "failedToDelete": "履歴書の削除に失敗しました。もう一度お試しください。"
+    }
   },
   "resume": {
     "personalInfo": {
@@ -106,6 +543,7 @@
       "github": "GitHub"
     },
     "sections": {
+      "personalInfo": "個人情報",
       "summary": "概要",
       "experience": "職歴",
       "education": "学歴",
@@ -114,6 +552,15 @@
       "certifications": "研修・資格",
       "languages": "言語",
       "awards": "受賞歴"
+    },
+    "additional": {
+      "technicalSkills": "技術スキル"
+    },
+    "additionalLabels": {
+      "technicalSkills": "技術スキル：",
+      "languages": "言語：",
+      "certifications": "資格：",
+      "awards": "受賞歴："
     }
   },
   "coverLetter": {
@@ -121,7 +568,43 @@
     "generate": "カバーレターを生成",
     "regenerate": "再生成",
     "copyToClipboard": "クリップボードにコピー",
+    "editor": {
+      "placeholder": "設定でカバーレター生成を有効にして履歴書をカスタマイズすると、ここに表示されます...",
+      "tip": "ヒント：良いカバーレターは通常300〜400語程度です。必要に応じて編集してください。"
+    },
+    "preview": {
+      "defaultName": "あなたの名前",
+      "emptyTitle": "まだカバーレターがありません。",
+      "emptyDescription": "設定でカバーレター生成を有効にしてから、履歴書をカスタマイズしてください。"
+    },
     "copied": "コピーしました！"
+  },
+  "outreach": {
+    "title": "連絡メール",
+    "generate": "連絡メールを生成",
+    "regenerate": "再生成",
+    "copy": "コピー",
+    "copyToClipboard": "クリップボードにコピー",
+    "copied": "コピーしました！",
+    "editor": {
+      "placeholder": "設定で外連絡メッセージ生成を有効にして履歴書をカスタマイズすると、ここに表示されます...",
+      "tip": "ヒント：外連絡メッセージは短く（100〜150語程度）まとめましょう。LinkedInやメールに貼り付けて使えます。"
+    },
+    "preview": {
+      "channels": {
+        "linkedin": "LinkedIn",
+        "email": "メール"
+      },
+      "howToUseTitle": "使い方：",
+      "steps": {
+        "step1": "1. 上のボタンでメッセージをコピー",
+        "step2": "2. LinkedIn またはメールクライアントを開く",
+        "step3": "3. 貼り付けて必要に応じて調整",
+        "step4": "4. リクルーターや採用担当に送信"
+      },
+      "emptyTitle": "まだ外連絡メッセージがありません。",
+      "emptyDescription": "設定で外連絡メッセージ生成を有効にしてから、履歴書をカスタマイズしてください。"
+    }
   },
   "errors": {
     "generic": "エラーが発生しました。もう一度お試しください。",
@@ -133,6 +616,11 @@
   "confirmations": {
     "deleteResume": "この履歴書を削除してもよろしいですか？",
     "deleteResumeDescription": "この操作は取り消せません。",
+    "deleteMasterResumeTitle": "マスター履歴書を削除",
+    "deleteMasterResumeDescription": "この操作は取り消せません。マスター履歴書はシステムから完全に削除されます。",
+    "deleteResumeFromSystemDescription": "この操作は取り消せません。履歴書はシステムから完全に削除されます。",
+    "deleteResumeConfirmLabel": "履歴書を削除",
+    "keepResumeCancelLabel": "履歴書を保持",
     "discardChanges": "変更を破棄してもよろしいですか？",
     "discardChangesDescription": "保存されていない変更は失われます。",
     "clearApiKeys": "すべてのAPIキーを消去しますか？",

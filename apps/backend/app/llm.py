@@ -25,6 +25,65 @@ class LLMConfig(BaseModel):
     api_base: str | None = None
 
 
+def _normalize_api_base(provider: str, api_base: str | None) -> str | None:
+    """Normalize api_base for LiteLLM provider-specific expectations.
+
+    When using proxies/aggregators, users often paste a base URL that already
+    includes a version segment (e.g., `/v1`). Some LiteLLM provider handlers
+    append those segments internally, which can lead to duplicated paths like
+    `/v1/v1/...` and cause 404s.
+    """
+    if not api_base:
+        return None
+
+    base = api_base.strip()
+    if not base:
+        return None
+
+    base = base.rstrip("/")
+
+    # Anthropic handler appends '/v1/messages'. If base already ends with '/v1',
+    # strip it to avoid '/v1/v1/messages'.
+    if provider == "anthropic" and base.endswith("/v1"):
+        base = base[: -len("/v1")].rstrip("/")
+
+    # Gemini handler appends '/v1/models/...'. If base already ends with '/v1',
+    # strip it to avoid '/v1/v1/models/...'.
+    if provider == "gemini" and base.endswith("/v1"):
+        base = base[: -len("/v1")].rstrip("/")
+
+    return base or None
+
+
+def _extract_message_text(message: Any) -> str | None:
+    """Extract plain text from a LiteLLM message object across providers."""
+    content: Any = None
+
+    if hasattr(message, "content"):
+        content = message.content
+    elif isinstance(message, dict):
+        content = message.get("content")
+
+    if isinstance(content, str):
+        return content
+
+    # Some providers return a list of content blocks (e.g., Anthropic-style).
+    if isinstance(content, list):
+        parts: list[str] = []
+        for item in content:
+            if isinstance(item, str):
+                parts.append(item)
+                continue
+            if isinstance(item, dict):
+                text = item.get("text")
+                if isinstance(text, str) and text:
+                    parts.append(text)
+        joined = "\n".join(parts).strip()
+        return joined or None
+
+    return None
+
+
 def _load_stored_config() -> dict:
     """Load config from config.json file."""
     config_path = settings.config_path
@@ -85,6 +144,32 @@ def get_model_name(config: LLMConfig) -> str:
     return f"{prefix}{config.model}" if prefix else config.model
 
 
+def _supports_temperature(provider: str, model: str) -> bool:
+    """Return whether passing `temperature` is supported for this model/provider combo.
+
+    Some models (e.g., OpenAI gpt-5 family) reject temperature values other than 1,
+    and LiteLLM may error when temperature is passed.
+    """
+    _ = provider
+    model_lower = model.lower()
+    if "gpt-5" in model_lower:
+        return False
+    return True
+
+
+def _get_reasoning_effort(provider: str, model: str) -> str | None:
+    """Return a default reasoning_effort for models that require it.
+
+    Some OpenAI gpt-5 models may return empty message.content unless a supported
+    `reasoning_effort` is explicitly set. This keeps downstream JSON parsing reliable.
+    """
+    _ = provider
+    model_lower = model.lower()
+    if "gpt-5" in model_lower:
+        return "minimal"
+    return None
+
+
 async def check_llm_health(config: LLMConfig | None = None) -> dict[str, Any]:
     """Check if the LLM provider is accessible and working."""
     if config is None:
@@ -104,14 +189,22 @@ async def check_llm_health(config: LLMConfig | None = None) -> dict[str, Any]:
     try:
         # Make a minimal test call with timeout
         # Pass API key directly to avoid race conditions with global os.environ
-        response = await litellm.acompletion(
-            model=model_name,
-            messages=[{"role": "user", "content": "Hi"}],
-            max_tokens=5,
-            api_key=config.api_key,
-            api_base=config.api_base,
-            timeout=LLM_TIMEOUT_HEALTH_CHECK,
-        )
+        kwargs: dict[str, Any] = {
+            "model": model_name,
+            "messages": [{"role": "user", "content": "Hi"}],
+            "max_tokens": 16,
+            "api_key": config.api_key,
+            "api_base": _normalize_api_base(config.provider, config.api_base),
+            "timeout": LLM_TIMEOUT_HEALTH_CHECK,
+        }
+        reasoning_effort = _get_reasoning_effort(config.provider, model_name)
+        if reasoning_effort:
+            kwargs["reasoning_effort"] = reasoning_effort
+
+        response = await litellm.acompletion(**kwargs)
+        content = _extract_message_text(response.choices[0].message)
+        if not content:
+            raise ValueError("Empty response from LLM")
 
         return {
             "healthy": True,
@@ -119,14 +212,25 @@ async def check_llm_health(config: LLMConfig | None = None) -> dict[str, Any]:
             "model": config.model,
             "response_model": response.model if response else None,
         }
-    except Exception:
+    except Exception as e:
         # Log full exception details server-side, but do not expose them to clients
         logging.exception("LLM health check failed", extra={"provider": config.provider, "model": config.model})
+
+        # Provide a minimal, actionable client-facing hint without leaking secrets.
+        error_hint = "Health check failed"
+        message = str(e)
+        if "404" in message and "/v1/v1/" in message:
+            error_hint = "Health check failed (可能是 Base URL 包含重复的 /v1 路径)"
+        elif "404" in message:
+            error_hint = "Health check failed (404 Not Found - 请检查 Base URL 与 provider 是否匹配)"
+        elif "<!doctype html" in message.lower() or "<html" in message.lower():
+            error_hint = "Health check failed (Base URL 返回 HTML 页面 - 可能填了官网/控制台地址而不是 API 地址，或该网关不支持当前 provider 的接口路径)"
+
         return {
             "healthy": False,
             "provider": config.provider,
             "model": config.model,
-            "error": "Health check failed",
+            "error": error_hint,
         }
 
 
@@ -150,17 +254,26 @@ async def complete(
 
     try:
         # Pass API key directly to avoid race conditions with global os.environ
-        response = await litellm.acompletion(
-            model=model_name,
-            messages=messages,
-            max_tokens=max_tokens,
-            temperature=temperature,
-            api_key=config.api_key,
-            api_base=config.api_base,
-            timeout=LLM_TIMEOUT_COMPLETION,
-        )
+        kwargs: dict[str, Any] = {
+            "model": model_name,
+            "messages": messages,
+            "max_tokens": max_tokens,
+            "api_key": config.api_key,
+            "api_base": _normalize_api_base(config.provider, config.api_base),
+            "timeout": LLM_TIMEOUT_COMPLETION,
+        }
+        if _supports_temperature(config.provider, model_name):
+            kwargs["temperature"] = temperature
+        reasoning_effort = _get_reasoning_effort(config.provider, model_name)
+        if reasoning_effort:
+            kwargs["reasoning_effort"] = reasoning_effort
 
-        return response.choices[0].message.content
+        response = await litellm.acompletion(**kwargs)
+
+        content = _extract_message_text(response.choices[0].message)
+        if not content:
+            raise ValueError("Empty response from LLM")
+        return content
     except Exception as e:
         # Log the actual error server-side for debugging
         logging.error(f"LLM completion failed: {e}", extra={"model": model_name})
@@ -282,18 +395,22 @@ async def complete_json(
                 "model": model_name,
                 "messages": messages,
                 "max_tokens": max_tokens,
-                "temperature": 0.1 if attempt == 0 else 0.0,  # Lower temp on retry
                 "api_key": config.api_key,
-                "api_base": config.api_base,
+                "api_base": _normalize_api_base(config.provider, config.api_base),
                 "timeout": LLM_TIMEOUT_JSON,
             }
+            if _supports_temperature(config.provider, model_name):
+                kwargs["temperature"] = 0.1 if attempt == 0 else 0.0  # Lower temp on retry
+            reasoning_effort = _get_reasoning_effort(config.provider, model_name)
+            if reasoning_effort:
+                kwargs["reasoning_effort"] = reasoning_effort
 
             # Add JSON mode if supported
             if use_json_mode:
                 kwargs["response_format"] = {"type": "json_object"}
 
             response = await litellm.acompletion(**kwargs)
-            content = response.choices[0].message.content
+            content = _extract_message_text(response.choices[0].message)
 
             if not content:
                 raise ValueError("Empty response from LLM")

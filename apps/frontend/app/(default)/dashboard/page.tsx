@@ -11,10 +11,12 @@ import { fetchResume, fetchResumeList, deleteResume, type ResumeListItem } from 
 import { useStatusCache } from '@/lib/context/status-cache';
 import Link from 'next/link';
 import { Settings, AlertTriangle } from 'lucide-react';
+import { useTranslations } from '@/lib/i18n';
 
 type ProcessingStatus = 'pending' | 'processing' | 'ready' | 'failed' | 'loading';
 
 export default function DashboardPage() {
+  const { t, locale } = useTranslations();
   const [masterResumeId, setMasterResumeId] = useState<string | null>(null);
   const [processingStatus, setProcessingStatus] = useState<ProcessingStatus>('loading');
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -41,10 +43,14 @@ export default function DashboardPage() {
     Boolean(masterResumeId) && processingStatus === 'ready' && isLlmConfigured;
 
   const formatDate = (value: string) => {
-    if (!value) return 'Unknown';
+    if (!value) return t('common.unknown');
     const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return 'Unknown';
-    return date.toLocaleDateString('en-US', {
+    if (Number.isNaN(date.getTime())) return t('common.unknown');
+
+    const dateLocale =
+      locale === 'es' ? 'es-ES' : locale === 'zh' ? 'zh-CN' : locale === 'ja' ? 'ja-JP' : 'en-US';
+
+    return date.toLocaleDateString(dateLocale, {
       month: 'short',
       day: '2-digit',
       year: 'numeric',
@@ -136,26 +142,26 @@ export default function DashboardPage() {
     switch (processingStatus) {
       case 'loading':
         return {
-          text: 'CHECKING...',
+          text: t('dashboard.status.checking'),
           icon: <Loader2 className="w-3 h-3 animate-spin" />,
           color: 'text-gray-500',
         };
       case 'processing':
         return {
-          text: 'PROCESSING...',
+          text: t('dashboard.status.processing'),
           icon: <Loader2 className="w-3 h-3 animate-spin" />,
           color: 'text-blue-700',
         };
       case 'ready':
-        return { text: 'READY', icon: null, color: 'text-green-700' };
+        return { text: t('dashboard.status.ready'), icon: null, color: 'text-green-700' };
       case 'failed':
         return {
-          text: 'PROCESSING FAILED',
+          text: t('dashboard.status.failed'),
           icon: <AlertCircle className="w-3 h-3" />,
           color: 'text-red-600',
         };
       default:
-        return { text: 'PENDING', icon: null, color: 'text-gray-500' };
+        return { text: t('dashboard.status.pending'), icon: null, color: 'text-gray-500' };
     }
   };
 
@@ -193,18 +199,17 @@ export default function DashboardPage() {
             <AlertTriangle className="w-5 h-5 text-amber-600" />
             <div>
               <p className="font-mono text-sm font-bold uppercase tracking-wider text-amber-800">
-                [ LLM NOT CONFIGURED ]
+                {t('dashboard.llmNotConfiguredTitle')}
               </p>
               <p className="font-mono text-xs text-amber-700 mt-0.5">
-                {'>'} API keys are missing. Resume tailoring is disabled until configured in
-                settings.
+                {t('dashboard.llmNotConfiguredMessage')}
               </p>
             </div>
           </div>
           <Link href="/settings">
             <Button variant="outline" size="sm" className="border-amber-500 text-amber-700">
               <Settings className="w-4 h-4 mr-2" />
-              Settings
+              {t('nav.settings')}
             </Button>
           </Link>
         </div>
@@ -226,14 +231,16 @@ export default function DashboardPage() {
                   </div>
                   <div>
                     <h3 className="font-mono text-lg font-bold uppercase text-amber-800">
-                      [ SETUP REQUIRED ]
+                      {t('dashboard.setupRequiredTitle')}
                     </h3>
                     <p className="font-mono text-xs mt-2 text-amber-700">
-                      {'>'} Configure API key in settings to enable resume tailoring.
+                      {t('dashboard.setupRequiredMessage')}
                     </p>
                     <div className="flex items-center gap-2 mt-4 text-amber-700 group-hover:text-amber-900">
                       <Settings className="w-4 h-4" />
-                      <span className="font-mono text-xs font-bold uppercase">Go to Settings</span>
+                      <span className="font-mono text-xs font-bold uppercase">
+                        {t('nav.goToSettings')}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -251,10 +258,11 @@ export default function DashboardPage() {
                     </div>
                     <div>
                       <h3 className="font-mono text-xl font-bold uppercase">
-                        Initialize Master Resume
+                        {t('dashboard.initializeMasterResume')}
                       </h3>
                       <p className="font-mono text-xs mt-2 opacity-60 group-hover:opacity-100">
-                        {'// Initialize Sequence'}
+                        {'// '}
+                        {t('dashboard.initializeSequence')}
                       </p>
                     </div>
                   </div>
@@ -280,7 +288,7 @@ export default function DashboardPage() {
                       size="icon"
                       className="h-8 w-8 hover:bg-blue-100 hover:text-blue-700 z-10 rounded-none"
                       onClick={handleRetryProcessing}
-                      title="Refresh status"
+                      title={t('dashboard.refreshStatus')}
                     >
                       <RefreshCw className="w-4 h-4" />
                     </Button>
@@ -289,13 +297,13 @@ export default function DashboardPage() {
               </div>
 
               <h3 className="font-bold text-lg font-serif leading-tight group-hover:text-blue-700">
-                Master Resume
+                {t('dashboard.masterResume')}
               </h3>
               <p
-                className={`text-xs font-mono mt-auto pt-4 flex items-center gap-1 ${getStatusDisplay().color}`}
+                className={`text-xs font-mono mt-auto pt-4 flex items-center gap-1 uppercase ${getStatusDisplay().color}`}
               >
                 {getStatusDisplay().icon}
-                STATUS: {getStatusDisplay().text}
+                {t('dashboard.statusLine', { status: getStatusDisplay().text })}
               </p>
             </div>
           </div>
@@ -318,10 +326,10 @@ export default function DashboardPage() {
                 </span>
               </div>
               <h3 className="font-bold text-lg font-serif leading-tight">
-                {resume.filename || 'Tailored Resume'}
+                {resume.filename || t('dashboard.tailoredResume')}
               </h3>
               <p className="text-xs font-mono mt-auto pt-4 text-gray-500 uppercase">
-                Edited {formatDate(resume.updated_at || resume.created_at)}
+                {t('dashboard.edited', { date: formatDate(resume.updated_at || resume.created_at) })}
               </p>
             </div>
           </div>
@@ -337,7 +345,9 @@ export default function DashboardPage() {
             >
               <Plus className="w-8 h-8" />
             </Button>
-            <p className="text-xs font-mono mt-4 uppercase text-green-700">Create Resume</p>
+            <p className="text-xs font-mono mt-4 uppercase text-green-700">
+              {t('dashboard.createResume')}
+            </p>
           </div>
         </div>
 
@@ -360,10 +370,10 @@ export default function DashboardPage() {
         <ConfirmDialog
           open={showDeleteDialog}
           onOpenChange={setShowDeleteDialog}
-          title="Delete Master Resume"
-          description="This action cannot be undone. Your master resume will be permanently removed from the system."
-          confirmLabel="Delete Resume"
-          cancelLabel="Keep Resume"
+          title={t('confirmations.deleteMasterResumeTitle')}
+          description={t('confirmations.deleteMasterResumeDescription')}
+          confirmLabel={t('confirmations.deleteResumeConfirmLabel')}
+          cancelLabel={t('confirmations.keepResumeCancelLabel')}
           onConfirm={confirmDeleteMaster}
           variant="danger"
         />

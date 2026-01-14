@@ -8,6 +8,7 @@ import { type TemplateSettings } from '@/lib/types/template-settings';
 import { PageContainer } from './page-container';
 import { usePagination } from './use-pagination';
 import { PAGE_DIMENSIONS, mmToPx, getContentAreaPx } from '@/lib/constants/page-dimensions';
+import { useTranslations } from '@/lib/i18n';
 
 interface PaginatedPreviewProps {
   resumeData: ResumeData;
@@ -23,6 +24,7 @@ const ZOOM_STEP = 0.1;
  * margin guides, and automatic pagination.
  */
 export function PaginatedPreview({ resumeData, settings }: PaginatedPreviewProps) {
+  const { t } = useTranslations();
   const measurementRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(0.6);
@@ -32,6 +34,16 @@ export function PaginatedPreview({ resumeData, settings }: PaginatedPreviewProps
     ...settings,
     margins: { top: 0, bottom: 0, left: 0, right: 0 },
   };
+
+  const additionalSectionLabels = React.useMemo(
+    () => ({
+      technicalSkills: t('resume.additionalLabels.technicalSkills'),
+      languages: t('resume.additionalLabels.languages'),
+      certifications: t('resume.additionalLabels.certifications'),
+      awards: t('resume.additionalLabels.awards'),
+    }),
+    [t]
+  );
 
   const { pages, isCalculating } = usePagination({
     pageSize: settings.pageSize,
@@ -147,7 +159,12 @@ export function PaginatedPreview({ resumeData, settings }: PaginatedPreviewProps
           }}
           aria-hidden="true"
         >
-          <Resume resumeData={resumeData} template={settings.template} settings={resumeSettings} />
+          <Resume
+            resumeData={resumeData}
+            template={settings.template}
+            settings={resumeSettings}
+            additionalSectionLabels={additionalSectionLabels}
+          />
         </div>
 
         {/* Visible pages */}
@@ -177,6 +194,7 @@ export function PaginatedPreview({ resumeData, settings }: PaginatedPreviewProps
                   resumeData={resumeData}
                   template={settings.template}
                   settings={resumeSettings}
+                  additionalSectionLabels={additionalSectionLabels}
                 />
               </PageContainer>
             </React.Fragment>

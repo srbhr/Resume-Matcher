@@ -102,6 +102,25 @@ export const useFileUpload = (
   });
 
   const inputRef = useRef<HTMLInputElement>(null);
+  const inFlightUploadsRef = useRef(0);
+
+  const markUploadStarted = useCallback(() => {
+    const nextCount = inFlightUploadsRef.current + 1;
+    inFlightUploadsRef.current = nextCount;
+
+    if (nextCount === 1) {
+      setState((prev) => (prev.isUploadingGlobal ? prev : { ...prev, isUploadingGlobal: true }));
+    }
+  }, []);
+
+  const markUploadFinished = useCallback(() => {
+    const nextCount = Math.max(0, inFlightUploadsRef.current - 1);
+    inFlightUploadsRef.current = nextCount;
+
+    if (nextCount === 0) {
+      setState((prev) => (prev.isUploadingGlobal ? { ...prev, isUploadingGlobal: false } : prev));
+    }
+  }, []);
 
   const validateFile = useCallback(
     (file: File): string | null => {
@@ -149,7 +168,7 @@ export const useFileUpload = (
     return `${file.name}-${file.size}-${file.lastModified}-${Math.random().toString(36).substring(2, 9)}`;
   }, []);
 
-  const _uploadFileInternal = async (fileToUpload: FileWithPreview) => {
+  const uploadFileInternal = useCallback(async (fileToUpload: FileWithPreview) => {
     // Ensure fileToUpload.file is a File instance for upload
     if (!(fileToUpload.file instanceof File)) {
       const errorMsg = `Cannot upload "${(fileToUpload.file as FileMetadata).name}"; it's not a valid file object for direct upload.`;
@@ -169,7 +188,6 @@ export const useFileUpload = (
           f.id === updatedFileWithMetaError.id ? updatedFileWithMetaError : f
         ),
         errors: [...prev.errors, errorMsg], // Add to general errors too
-        isUploadingGlobal: false, // Assuming this path means no actual network upload starts
       }));
       onUploadError?.(updatedFileWithMetaError, errorMsg);
       return;
@@ -196,7 +214,6 @@ export const useFileUpload = (
         ...prev,
         files: prev.files.map((f) => (f.id === fileWithConfigError.id ? fileWithConfigError : f)),
         errors: [...prev.errors, errorMsg],
-        isUploadingGlobal: false,
       }));
       onUploadError?.(fileWithConfigError, errorMsg);
       return;
@@ -205,7 +222,7 @@ export const useFileUpload = (
     const formData = new FormData();
     formData.append('file', fileToUpload.file); // FastAPI expects 'file' field
 
-    setState((prev) => ({ ...prev, isUploadingGlobal: true, errors: [] }));
+    markUploadStarted();
 
     try {
       const response = await fetch(uploadUrl, {
@@ -263,7 +280,7 @@ export const useFileUpload = (
           f.id === successfullyUploadedFile.id ? successfullyUploadedFile : f
         );
         onUploadSuccess?.(successfullyUploadedFile, responseData);
-        return { ...prev, files: updatedFiles, isUploadingGlobal: false };
+        return { ...prev, files: updatedFiles };
       });
     } catch (error: unknown) {
       const errorMessage =
@@ -290,14 +307,16 @@ export const useFileUpload = (
         newErrors.push(errorMessage);
 
         onUploadError?.(fileWithError, errorMessage);
-        return { ...prev, files: updatedFiles, errors: newErrors, isUploadingGlobal: false };
+        return { ...prev, files: updatedFiles, errors: newErrors };
       });
+    } finally {
+      markUploadFinished();
     }
-  };
+  }, [markUploadFinished, markUploadStarted, onUploadError, onUploadSuccess, uploadUrl]);
 
   const addFilesAndUpload = useCallback(
     (newFilesInput: FileList | File[]) => {
-      if (state.isUploadingGlobal) return; // Don't add if already uploading (for single mode primarily)
+      if (state.isUploadingGlobal && !multiple) return; // Don't add if already uploading (single mode)
       if (!newFilesInput || newFilesInput.length === 0) return;
 
       const newFilesArray = Array.from(newFilesInput);
@@ -387,7 +406,7 @@ export const useFileUpload = (
         });
 
         if (uploadUrl) {
-          filesToAddUpdate.forEach((fileToUpload) => _uploadFileInternal(fileToUpload));
+          filesToAddUpdate.forEach((fileToUpload) => uploadFileInternal(fileToUpload));
         } else {
           console.warn('uploadUrl not provided. Files added locally but not uploaded.');
           // If no uploadUrl, mark files as 'pending' or similar if needed, or convert to FileMetadata locally
@@ -433,7 +452,7 @@ export const useFileUpload = (
       createPreview, // Other useCallback deps
       onFilesChange,
       onFilesAdded, // Callbacks
-      // _uploadFileInternal is not directly a dep but its logic is tied to uploadUrl etc.
+      uploadFileInternal,
       // setState itself is stable.
     ]
   );
@@ -469,7 +488,6 @@ export const useFileUpload = (
           ...prev,
           files: newFiles,
           errors: updatedErrors,
-          isUploadingGlobal: newFiles.length > 0 ? prev.isUploadingGlobal : false,
         };
       });
     },
@@ -477,6 +495,7 @@ export const useFileUpload = (
   );
 
   const clearFiles = useCallback(() => {
+    inFlightUploadsRef.current = 0;
     setState((prev) => {
       prev.files.forEach((fwp) => {
         if (fwp.preview && fwp.file instanceof File && fwp.file.type.startsWith('image/')) {

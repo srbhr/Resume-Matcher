@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -39,7 +39,9 @@ import {
   getAllSections,
   createCustomSection,
   DEFAULT_SECTION_META,
+  localizeDefaultSectionMeta,
 } from '@/lib/utils/section-helpers';
+import { useTranslations } from '@/lib/i18n';
 
 interface ResumeFormProps {
   resumeData: ResumeData;
@@ -47,11 +49,17 @@ interface ResumeFormProps {
 }
 
 export const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, onUpdate }) => {
+  const { t } = useTranslations();
+
   // Get section metadata, falling back to defaults
   const allSections = getSectionMeta(resumeData);
   // Use getAllSections for form - shows ALL sections including hidden ones
   // (Hidden sections are editable but marked with visual indicator)
   const sortedAllSections = getAllSections(resumeData);
+  const sortedAllSectionsForDisplay = useMemo(
+    () => localizeDefaultSectionMeta(sortedAllSections, t),
+    [sortedAllSections, t]
+  );
 
   // Handle section metadata updates
   const handleSectionMetaUpdate = (sections: SectionMeta[]) => {
@@ -313,41 +321,41 @@ export const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, onUpdate }) 
     };
 
     const renderContent = () => {
-      switch (section.sectionType) {
-        case 'text':
-          return (
-            <GenericTextForm
-              value={customSection?.text || ''}
-              onChange={(value) => updateCustomSection({ text: value })}
-              label="Content"
-              placeholder={`Enter ${section.displayName.toLowerCase()} content...`}
-            />
-          );
+        switch (section.sectionType) {
+          case 'text':
+            return (
+              <GenericTextForm
+                value={customSection?.text || ''}
+                onChange={(value) => updateCustomSection({ text: value })}
+                label={t('builder.customSections.contentLabel')}
+                placeholder={t('builder.customSections.contentPlaceholder', { name: section.displayName })}
+              />
+            );
 
-        case 'itemList':
-          return (
-            <GenericItemForm
-              items={customSection?.items || []}
-              onChange={(items) => updateCustomSection({ items })}
-              itemLabel="Entry"
-              addLabel="Add Entry"
-            />
-          );
+          case 'itemList':
+            return (
+              <GenericItemForm
+                items={customSection?.items || []}
+                onChange={(items) => updateCustomSection({ items })}
+                itemLabel={t('builder.customSections.entryLabel')}
+                addLabel={t('builder.customSections.addEntryLabel')}
+              />
+            );
 
-        case 'stringList':
-          return (
-            <GenericListForm
-              items={customSection?.strings || []}
-              onChange={(strings) => updateCustomSection({ strings })}
-              label="Items"
-              placeholder="Enter items, one per line"
-            />
-          );
+          case 'stringList':
+            return (
+              <GenericListForm
+                items={customSection?.strings || []}
+                onChange={(strings) => updateCustomSection({ strings })}
+                label={t('builder.customSections.itemsLabel')}
+                placeholder={t('builder.customSections.itemsPlaceholder')}
+              />
+            );
 
-        default:
-          return <div className="text-gray-500">Unknown section type</div>;
-      }
-    };
+          default:
+            return <div className="text-gray-500">{t('builder.customSections.unknownSectionType')}</div>;
+        }
+      };
 
     return (
       <SectionHeader

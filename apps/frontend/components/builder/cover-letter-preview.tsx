@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { cn } from '@/lib/utils';
+import { useTranslations } from '@/lib/i18n';
 
 export interface CoverLetterPersonalInfo {
   name?: string;
@@ -31,11 +32,10 @@ export function CoverLetterPreview({
   pageSize = 'A4',
   className,
 }: CoverLetterPreviewProps) {
-  const today = new Date().toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
+  const { t, locale } = useTranslations();
+  const today = new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'long', day: 'numeric' }).format(
+    new Date()
+  );
 
   // Parse content into paragraphs
   const paragraphs = content.split('\n\n').filter((p) => p.trim().length > 0);
@@ -59,7 +59,7 @@ export function CoverLetterPreview({
         {/* Header - Personal Info */}
         <header className="mb-8 border-b-2 border-black pb-4">
           <h1 className="font-serif text-2xl font-bold tracking-tight">
-            {personalInfo.name || 'Your Name'}
+            {personalInfo.name || t('coverLetter.preview.defaultName')}
           </h1>
           <div className="mt-2 font-mono text-xs text-gray-600 flex flex-wrap gap-x-4 gap-y-1">
             {personalInfo.email && <span>{personalInfo.email}</span>}
@@ -84,9 +84,9 @@ export function CoverLetterPreview({
             ))
           ) : (
             <div className="text-center py-12 text-gray-400">
-              <p className="font-mono text-sm">No cover letter content yet.</p>
+              <p className="font-mono text-sm">{t('coverLetter.preview.emptyTitle')}</p>
               <p className="font-mono text-xs mt-2">
-                Enable cover letter generation in Settings, then tailor a resume.
+                {t('coverLetter.preview.emptyDescription')}
               </p>
             </div>
           )}

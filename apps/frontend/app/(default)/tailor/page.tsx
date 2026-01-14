@@ -9,8 +9,10 @@ import { useResumePreview } from '@/components/common/resume_previewer_context';
 import { uploadJobDescriptions, improveResume } from '@/lib/api/resume';
 import { useStatusCache } from '@/lib/context/status-cache';
 import { Loader2, ArrowLeft, AlertTriangle, Settings } from 'lucide-react';
+import { useTranslations } from '@/lib/i18n';
 
 export default function TailorPage() {
+  const { t } = useTranslations();
   const [jobDescription, setJobDescription] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -43,7 +45,7 @@ export default function TailorPage() {
 
     // Validation: Check for minimum length (e.g. 50 chars) to ensure it's a valid JD
     if (jobDescription.trim().length < 50) {
-      setError('Job description is too short. Please provide more details.');
+      setError(t('tailor.errors.jobDescriptionTooShort'));
       return;
     }
 
@@ -82,14 +84,14 @@ export default function TailorPage() {
         errorMessage.toLowerCase().includes('authentication') ||
         errorMessage.includes('401')
       ) {
-        setError('API key error. Please check your LLM configuration in Settings.');
+        setError(t('tailor.errors.apiKeyError'));
       } else if (
         errorMessage.toLowerCase().includes('rate limit') ||
         errorMessage.includes('429')
       ) {
-        setError('Rate limit reached. Please wait a moment and try again.');
+        setError(t('tailor.errors.rateLimit'));
       } else {
-        setError('Failed to generate resume. Please check your settings and try again.');
+        setError(t('tailor.errors.failedToGenerate'));
       }
     } finally {
       setIsLoading(false);
@@ -102,15 +104,16 @@ export default function TailorPage() {
         {/* Back Button */}
         <Button variant="link" className="absolute top-4 left-4" onClick={() => router.back()}>
           <ArrowLeft className="w-4 h-4" />
-          Back
+          {t('common.back')}
         </Button>
 
         <div className="mb-8 mt-4 text-center">
           <h1 className="font-serif text-4xl font-bold uppercase tracking-tight mb-2">
-            Tailor Your Resume
+            {t('tailor.heroTitle')}
           </h1>
           <p className="font-mono text-sm text-blue-700 font-bold uppercase">
-            {'// Paste Job Description Below'}
+            {'// '}
+            {t('tailor.pasteJobDescriptionBelow')}
           </p>
         </div>
 
@@ -121,10 +124,10 @@ export default function TailorPage() {
               <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
               <div className="flex-1">
                 <p className="font-mono text-sm font-bold uppercase tracking-wider text-amber-800">
-                  [ SETUP REQUIRED ]
+                  {t('tailor.setupRequiredTitle')}
                 </p>
                 <p className="font-mono text-xs text-amber-700 mt-1">
-                  {'>'} No API key configured. Resume tailoring requires an LLM provider.
+                  {t('tailor.noApiKeyMessage')}
                 </p>
                 <Link
                   href="/settings"
@@ -132,7 +135,7 @@ export default function TailorPage() {
                 >
                   <Settings className="w-4 h-4" />
                   <span className="font-mono text-xs font-bold uppercase underline">
-                    Configure API Key
+                    {t('tailor.configureApiKey')}
                   </span>
                 </Link>
               </div>
@@ -143,14 +146,14 @@ export default function TailorPage() {
         <div className="space-y-6">
           <div className="relative">
             <Textarea
-              placeholder="Paste the full job description here..."
+              placeholder={t('tailor.jobDescriptionPlaceholder')}
               className="min-h-[300px] font-mono text-sm bg-gray-50 border-2 border-black focus:ring-0 focus:border-blue-700 resize-none p-4 rounded-none shadow-inner"
               value={jobDescription}
               onChange={(e) => setJobDescription(e.target.value)}
               disabled={isLoading}
             />
             <div className="absolute bottom-2 right-2 text-xs font-mono text-gray-400 pointer-events-none">
-              {jobDescription.length} chars
+              {t('tailor.charactersCount', { count: jobDescription.length })}
             </div>
           </div>
 
@@ -169,24 +172,24 @@ export default function TailorPage() {
             {isLoading ? (
               <>
                 <Loader2 className="w-5 h-5 animate-spin" />
-                Processing...
+                {t('common.processing')}
               </>
             ) : statusLoading ? (
               <>
                 <Loader2 className="w-5 h-5 animate-spin" />
-                Checking...
+                {t('common.checking')}
               </>
             ) : !isLlmConfigured ? (
-              'Configure API Key First'
+              t('tailor.configureApiKeyFirst')
             ) : (
-              'Generate Tailored Resume'
+              t('tailor.generateTailored')
             )}
           </Button>
         </div>
 
         {/* Footer Info */}
         <div className="mt-8 pt-8 border-t border-gray-100 text-center">
-          <p className="text-xs font-mono text-gray-400">AI-POWERED OPTIMIZATION ENGINE</p>
+          <p className="text-xs font-mono text-gray-400">{t('tailor.footerTagline')}</p>
         </div>
       </div>
     </div>

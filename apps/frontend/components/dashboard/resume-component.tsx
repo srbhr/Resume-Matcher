@@ -58,6 +58,13 @@ export interface AdditionalInfo {
   awards?: string[];
 }
 
+export interface AdditionalSectionLabels {
+  technicalSkills: string;
+  languages: string;
+  certifications: string;
+  awards: string;
+}
+
 // Section Type for dynamic sections
 export type SectionType = 'personalInfo' | 'text' | 'itemList' | 'stringList';
 
@@ -106,6 +113,7 @@ interface ResumeProps {
   resumeData: ResumeData;
   template?: TemplateType;
   settings?: TemplateSettings;
+  additionalSectionLabels?: Partial<AdditionalSectionLabels>;
 }
 
 /**
@@ -120,7 +128,12 @@ interface ResumeProps {
  * - modern: Single-column with user-selectable accent colors
  * - modern-two-column: Two-column layout with modern colorful accents
  */
-const Resume: React.FC<ResumeProps> = ({ resumeData, template = 'swiss-single', settings }) => {
+const Resume: React.FC<ResumeProps> = ({
+  resumeData,
+  template = 'swiss-single',
+  settings,
+  additionalSectionLabels,
+}) => {
   // Merge provided settings with defaults
   const mergedSettings: TemplateSettings = {
     ...DEFAULT_TEMPLATE_SETTINGS,
@@ -144,13 +157,21 @@ const Resume: React.FC<ResumeProps> = ({ resumeData, template = 'swiss-single', 
       style={cssVars}
     >
       {mergedSettings.template === 'swiss-single' && (
-        <ResumeSingleColumn data={resumeData} showContactIcons={mergedSettings.showContactIcons} />
+        <ResumeSingleColumn
+          data={resumeData}
+          showContactIcons={mergedSettings.showContactIcons}
+          additionalSectionLabels={additionalSectionLabels}
+        />
       )}
       {mergedSettings.template === 'swiss-two-column' && (
         <ResumeTwoColumn data={resumeData} showContactIcons={mergedSettings.showContactIcons} />
       )}
       {mergedSettings.template === 'modern' && (
-        <ResumeModern data={resumeData} showContactIcons={mergedSettings.showContactIcons} />
+        <ResumeModern
+          data={resumeData}
+          showContactIcons={mergedSettings.showContactIcons}
+          additionalSectionLabels={additionalSectionLabels}
+        />
       )}
       {mergedSettings.template === 'modern-two-column' && (
         <ResumeModernTwoColumn

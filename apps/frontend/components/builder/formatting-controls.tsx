@@ -24,6 +24,7 @@ import {
   ACCENT_COLOR_MAP,
 } from '@/lib/types/template-settings';
 import { TemplateThumbnail } from './template-selector';
+import { useTranslations } from '@/lib/i18n';
 
 interface FormattingControlsProps {
   settings: TemplateSettings;
@@ -44,6 +45,7 @@ interface FormattingControlsProps {
  * Swiss design: Square buttons, monospace labels, high contrast
  */
 export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings, onChange }) => {
+  const { t } = useTranslations();
   const [isExpanded, setIsExpanded] = useState(true);
   const compactMultiplier = settings.compactMode ? COMPACT_MULTIPLIER : 1;
   const sectionGapRem =
@@ -125,7 +127,7 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 bg-blue-700"></div>
           <span className="font-mono text-xs font-bold uppercase tracking-wider">
-            Template & Formatting
+            {t('builder.formatting.panelTitle')}
           </span>
         </div>
         {isExpanded ? (
@@ -141,7 +143,7 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
           {/* Template Selection */}
           <div>
             <h4 className="font-mono text-xs font-bold uppercase tracking-wider mb-3 text-gray-600">
-              Template
+              {t('builder.formatting.template')}
             </h4>
             <div className="flex gap-3">
               {TEMPLATE_OPTIONS.map((template) => (
@@ -177,7 +179,7 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
           {(settings.template === 'modern' || settings.template === 'modern-two-column') && (
             <div>
               <h4 className="font-mono text-xs font-bold uppercase tracking-wider mb-3 text-gray-600">
-                Accent Color
+                {t('builder.formatting.accentColor')}
               </h4>
               <div className="flex gap-2">
                 {(Object.keys(ACCENT_COLOR_MAP) as AccentColor[]).map((color) => (
@@ -205,7 +207,7 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
           {/* Page Size Selection */}
           <div>
             <h4 className="font-mono text-xs font-bold uppercase tracking-wider mb-3 text-gray-600">
-              Page Size
+              {t('builder.formatting.pageSize')}
             </h4>
             <div className="flex gap-2">
               {(Object.keys(PAGE_SIZE_INFO) as PageSize[]).map((size) => (
@@ -229,26 +231,26 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
           {/* Margins Section */}
           <div>
             <h4 className="font-mono text-xs font-bold uppercase tracking-wider mb-3 text-gray-600">
-              Margins (mm)
+              {t('builder.formatting.margins')}
             </h4>
             <div className="grid grid-cols-2 gap-4">
               <MarginSlider
-                label="Top"
+                label={t('builder.formatting.margin.top')}
                 value={settings.margins.top}
                 onChange={(v) => handleMarginChange('top', v)}
               />
               <MarginSlider
-                label="Bottom"
+                label={t('builder.formatting.margin.bottom')}
                 value={settings.margins.bottom}
                 onChange={(v) => handleMarginChange('bottom', v)}
               />
               <MarginSlider
-                label="Left"
+                label={t('builder.formatting.margin.left')}
                 value={settings.margins.left}
                 onChange={(v) => handleMarginChange('left', v)}
               />
               <MarginSlider
-                label="Right"
+                label={t('builder.formatting.margin.right')}
                 value={settings.margins.right}
                 onChange={(v) => handleMarginChange('right', v)}
               />
@@ -258,21 +260,21 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
           {/* Spacing Section */}
           <div>
             <h4 className="font-mono text-xs font-bold uppercase tracking-wider mb-3 text-gray-600">
-              Spacing
+              {t('builder.formatting.spacing')}
             </h4>
             <div className="space-y-3">
               <SpacingSelector
-                label="Section"
+                label={t('builder.formatting.spacingSection')}
                 value={settings.spacing.section}
                 onChange={(v) => handleSpacingChange('section', v)}
               />
               <SpacingSelector
-                label="Items"
+                label={t('builder.formatting.spacingItems')}
                 value={settings.spacing.item}
                 onChange={(v) => handleSpacingChange('item', v)}
               />
               <SpacingSelector
-                label="Lines"
+                label={t('builder.formatting.spacingLines')}
                 value={settings.spacing.lineHeight}
                 onChange={(v) => handleSpacingChange('lineHeight', v)}
               />
@@ -282,22 +284,24 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
           {/* Font Size Section */}
           <div>
             <h4 className="font-mono text-xs font-bold uppercase tracking-wider mb-3 text-gray-600">
-              Font Size
+              {t('builder.formatting.fontSize')}
             </h4>
             <div className="space-y-3">
               <SpacingSelector
-                label="Base"
+                label={t('builder.formatting.baseFontSize')}
                 value={settings.fontSize.base}
                 onChange={(v) => handleFontChange('base', v)}
               />
               <SpacingSelector
-                label="Headers"
+                label={t('builder.formatting.headerScale')}
                 value={settings.fontSize.headerScale}
                 onChange={(v) => handleFontChange('headerScale', v)}
               />
               {/* Header Font Family */}
               <div className="flex items-center gap-2">
-                <span className="font-mono text-xs w-16 text-gray-600">Headers:</span>
+                <span className="font-mono text-xs w-16 text-gray-600">
+                  {t('builder.formatting.headerFontFamily')}:
+                </span>
                 <div className="flex gap-1">
                   {(['serif', 'sans-serif', 'mono'] as HeaderFontFamily[]).map((font) => (
                     <button
@@ -326,7 +330,9 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
               </div>
               {/* Body Font Family */}
               <div className="flex items-center gap-2">
-                <span className="font-mono text-xs w-16 text-gray-600">Body:</span>
+                <span className="font-mono text-xs w-16 text-gray-600">
+                  {t('builder.formatting.bodyFontFamily')}:
+                </span>
                 <div className="flex gap-1">
                   {(['serif', 'sans-serif', 'mono'] as BodyFontFamily[]).map((font) => (
                     <button
@@ -359,7 +365,7 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
           {/* Options Section */}
           <div>
             <h4 className="font-mono text-xs font-bold uppercase tracking-wider mb-3 text-gray-600">
-              Options
+              {t('builder.formatting.options')}
             </h4>
             <div className="space-y-3">
               {/* Compact Mode Toggle */}
@@ -378,7 +384,9 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
                     }`}
                   />
                 </button>
-                <span className="font-mono text-xs text-gray-700">Compact Mode</span>
+                <span className="font-mono text-xs text-gray-700">
+                  {t('builder.formatting.compactMode')}
+                </span>
               </label>
 
               {/* Show Contact Icons Toggle */}
@@ -399,7 +407,9 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
                     }`}
                   />
                 </button>
-                <span className="font-mono text-xs text-gray-700">Contact Icons</span>
+                <span className="font-mono text-xs text-gray-700">
+                  {t('builder.formatting.contactIcons')}
+                </span>
               </label>
             </div>
           </div>
@@ -408,26 +418,42 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
           <div className="pt-2 border-t border-gray-200 space-y-3">
             <div>
               <h4 className="font-mono text-[10px] font-bold uppercase tracking-wider text-gray-600 mb-2">
-                Effective Output
+                {t('builder.formatting.effectiveOutput')}
               </h4>
               <div className="font-mono text-[10px] text-gray-600 space-y-1">
-                <div>
-                  Margins (mm): T{settings.margins.top} B{settings.margins.bottom} L
-                  {settings.margins.left} R{settings.margins.right}
+                <div
+                  title={t('builder.formatting.margins')}
+                >
+                  {t('builder.formatting.effectiveMargins', {
+                    top: settings.margins.top,
+                    bottom: settings.margins.bottom,
+                    left: settings.margins.left,
+                    right: settings.margins.right,
+                  })}
                 </div>
-                <div>Section Gap: {formatRem(sectionGapRem)}</div>
-                <div>Item Gap: {formatRem(itemGapRem)}</div>
-                <div>Line Height: {lineHeightValue.toFixed(2)}</div>
-                <div>Base Font: {FONT_SIZE_MAP[settings.fontSize.base]}</div>
-                <div>Header Scale: {HEADER_SCALE_MAP[settings.fontSize.headerScale]}x</div>
                 <div>
-                  Header Font:{' '}
+                  {t('builder.formatting.effectiveSectionGap')}: {formatRem(sectionGapRem)}
+                </div>
+                <div>
+                  {t('builder.formatting.effectiveItemGap')}: {formatRem(itemGapRem)}
+                </div>
+                <div>
+                  {t('builder.formatting.effectiveLineHeight')}: {lineHeightValue.toFixed(2)}
+                </div>
+                <div>
+                  {t('builder.formatting.effectiveBaseFont')}: {FONT_SIZE_MAP[settings.fontSize.base]}
+                </div>
+                <div>
+                  {t('builder.formatting.effectiveHeaderScale')}: {HEADER_SCALE_MAP[settings.fontSize.headerScale]}x
+                </div>
+                <div>
+                  {t('builder.formatting.effectiveHeaderFont')}: {' '}
                   {settings.fontSize.headerFont === 'sans-serif'
                     ? 'Sans'
                     : settings.fontSize.headerFont}
                 </div>
                 <div>
-                  Body Font:{' '}
+                  {t('builder.formatting.effectiveBodyFont')}: {' '}
                   {settings.fontSize.bodyFont === 'sans-serif'
                     ? 'Sans'
                     : settings.fontSize.bodyFont}
@@ -435,14 +461,13 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
               </div>
               {settings.compactMode && (
                 <div className="font-mono text-[10px] text-gray-500 mt-2">
-                  Compact mode tightens spacing and line height. Margins and base font size stay
-                  literal.
+                  {t('builder.formatting.compactHint')}
                 </div>
               )}
             </div>
             <Button variant="outline" size="sm" onClick={handleReset} className="w-full">
               <RotateCcw className="w-3 h-3" />
-              Reset to Defaults
+              {t('builder.formatting.resetDefaults')}
             </Button>
           </div>
         </div>

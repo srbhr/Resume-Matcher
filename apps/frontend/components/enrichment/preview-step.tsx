@@ -3,6 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { Check, X, Briefcase, FolderKanban } from 'lucide-react';
 import type { EnhancedDescription } from '@/lib/api/enrichment';
+import { useTranslations } from '@/lib/i18n';
 
 interface PreviewStepProps {
   enhancements: EnhancedDescription[];
@@ -11,20 +12,24 @@ interface PreviewStepProps {
 }
 
 export function PreviewStep({ enhancements, onApply, onCancel }: PreviewStepProps) {
+  const { t } = useTranslations();
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className="mb-6">
-        <h2 className="text-2xl font-bold mb-2">Review New Content</h2>
+        <h2 className="text-2xl font-bold mb-2">{t('enrichment.preview.title')}</h2>
         <p className="text-gray-600 font-mono text-sm">
-          Review the new bullet points that will be added to your resume
+          {t('enrichment.preview.description')}
         </p>
       </div>
 
       {/* Enhancements list */}
       <div className="flex-1 overflow-y-auto space-y-6 pr-2">
-        {enhancements.map((enhancement, index) => (
-          <EnhancementCard key={enhancement.item_id} enhancement={enhancement} index={index} />
+        {enhancements.map((enhancement) => (
+          <EnhancementCard
+            key={enhancement.item_id}
+            enhancement={enhancement}
+          />
         ))}
       </div>
 
@@ -32,11 +37,11 @@ export function PreviewStep({ enhancements, onApply, onCancel }: PreviewStepProp
       <div className="flex items-center justify-between pt-6 border-t border-gray-200 mt-6">
         <Button variant="outline" onClick={onCancel} className="gap-2">
           <X className="w-4 h-4" />
-          Cancel
+          {t('common.cancel')}
         </Button>
         <Button onClick={onApply} className="gap-2">
           <Check className="w-4 h-4" />
-          Add to Resume
+          {t('enrichment.preview.applyButton')}
         </Button>
       </div>
     </div>
@@ -45,10 +50,15 @@ export function PreviewStep({ enhancements, onApply, onCancel }: PreviewStepProp
 
 interface EnhancementCardProps {
   enhancement: EnhancedDescription;
-  index: number;
 }
 
-function EnhancementCard({ enhancement, index }: EnhancementCardProps) {
+function EnhancementCard({ enhancement }: EnhancementCardProps) {
+  const { t } = useTranslations();
+  const itemTypeLabel =
+    enhancement.item_type === 'experience'
+      ? t('enrichment.itemType.experience')
+      : t('enrichment.itemType.project');
+
   return (
     <div className="border-2 border-black bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)]">
       {/* Card header */}
@@ -58,7 +68,7 @@ function EnhancementCard({ enhancement, index }: EnhancementCardProps) {
         ) : (
           <FolderKanban className="w-4 h-4" />
         )}
-        <span className="font-mono text-sm font-bold uppercase">{enhancement.item_type}</span>
+        <span className="font-mono text-sm font-bold uppercase">{itemTypeLabel}</span>
         <span className="text-gray-600">|</span>
         <span className="font-semibold">{enhancement.title}</span>
       </div>
@@ -69,9 +79,13 @@ function EnhancementCard({ enhancement, index }: EnhancementCardProps) {
           {/* Existing bullets - keeping */}
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-xs font-mono font-bold uppercase text-gray-600">Keeping</span>
+              <span className="text-xs font-mono font-bold uppercase text-gray-600">
+                {t('enrichment.preview.keepingLabel')}
+              </span>
               <span className="text-xs text-gray-400">
-                ({enhancement.original_description.length} existing)
+                {t('enrichment.preview.existingCount', {
+                  count: enhancement.original_description.length,
+                })}
               </span>
             </div>
             <ul className="space-y-2">
@@ -81,7 +95,9 @@ function EnhancementCard({ enhancement, index }: EnhancementCardProps) {
                 </li>
               ))}
               {enhancement.original_description.length === 0 && (
-                <li className="text-sm text-gray-400 italic">No existing description</li>
+                <li className="text-sm text-gray-400 italic">
+                  {t('enrichment.preview.noExistingDescription')}
+                </li>
               )}
             </ul>
           </div>
@@ -89,9 +105,13 @@ function EnhancementCard({ enhancement, index }: EnhancementCardProps) {
           {/* New bullets - adding */}
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-xs font-mono font-bold uppercase text-green-600">Adding</span>
+              <span className="text-xs font-mono font-bold uppercase text-green-600">
+                {t('enrichment.preview.addingLabel')}
+              </span>
               <span className="text-xs text-green-600">
-                ({enhancement.enhanced_description.length} new)
+                {t('enrichment.preview.newCount', {
+                  count: enhancement.enhanced_description.length,
+                })}
               </span>
             </div>
             <ul className="space-y-2">
