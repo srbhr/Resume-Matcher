@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -22,6 +22,7 @@ export default function TailorPage() {
   const [promptOptions, setPromptOptions] = useState<PromptOption[]>([]);
   const [selectedPromptId, setSelectedPromptId] = useState('keywords');
   const [promptLoading, setPromptLoading] = useState(false);
+  const hasUserSelectedPrompt = useRef(false);
 
   const router = useRouter();
   const { setImprovedData } = useResumePreview();
@@ -54,7 +55,9 @@ export default function TailorPage() {
         const config = await fetchPromptConfig();
         if (!cancelled) {
           setPromptOptions(config.prompt_options || []);
-          setSelectedPromptId(config.default_prompt_id || 'keywords');
+          if (!hasUserSelectedPrompt.current) {
+            setSelectedPromptId(config.default_prompt_id || 'keywords');
+          }
         }
       } catch (err) {
         console.error('Failed to load prompt config', err);
@@ -202,7 +205,10 @@ export default function TailorPage() {
                   ]
             }
             value={selectedPromptId}
-            onChange={setSelectedPromptId}
+            onChange={(value) => {
+              hasUserSelectedPrompt.current = true;
+              setSelectedPromptId(value);
+            }}
             label={t('tailor.promptLabel')}
             description={t('tailor.promptDescription')}
             disabled={isLoading || promptLoading}
