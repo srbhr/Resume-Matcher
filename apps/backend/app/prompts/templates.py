@@ -131,7 +131,61 @@ Extract numeric years (e.g., "5+ years" → 5) and infer seniority level.
 Job description:
 {job_description}"""
 
-IMPROVE_RESUME_PROMPT = """Tailor this resume for the job. Output ONLY the JSON object, no other text.
+IMPROVE_RESUME_PROMPT_NUDGE = """Lightly nudge this resume toward the job description. Output ONLY the JSON object, no other text.
+
+IMPORTANT: Generate ALL text content (summary, descriptions, skills) in {output_language}.
+
+Rules:
+- Make minimal, conservative edits only where there is a clear existing match
+- Do NOT change the candidate's role, industry, or seniority level
+- Do NOT introduce new tools, technologies, or certifications not already present
+- Do NOT add new bullet points or sections
+- Preserve original bullet count and ordering within each section
+- Keep proper nouns (names, company names, locations) unchanged
+- Preserve the structure of any customSections from the original resume
+- Preserve original date ranges exactly - do not modify years
+- If the resume is non-technical, do NOT add technical jargon
+- Do NOT use em dash ("—") anywhere in the writing/output, even if it exists, remove it
+
+Job Description:
+{job_description}
+
+Keywords to emphasize (only if already supported by resume content):
+{job_keywords}
+
+Original Resume:
+{original_resume}
+
+Output in this JSON format:
+{schema}"""
+
+IMPROVE_RESUME_PROMPT_KEYWORDS = """Enhance this resume with relevant keywords from the job description. Output ONLY the JSON object, no other text.
+
+IMPORTANT: Generate ALL text content (summary, descriptions, skills) in {output_language}.
+
+Rules:
+- Strengthen alignment by weaving in relevant keywords where evidence already exists
+- You may rephrase bullet points to include keyword phrasing
+- Do NOT introduce new skills, tools, or certifications not in the resume
+- Do NOT change role, industry, or seniority level
+- Preserve the structure of any customSections from the original resume
+- Preserve original date ranges exactly - do not modify years
+- If resume is non-technical, keep language non-technical while still aligning keywords
+- Do NOT use em dash ("—") anywhere in the writing/output, even if it exists, remove it
+
+Job Description:
+{job_description}
+
+Keywords to emphasize:
+{job_keywords}
+
+Original Resume:
+{original_resume}
+
+Output in this JSON format:
+{schema}"""
+
+IMPROVE_RESUME_PROMPT_FULL = """Tailor this resume for the job. Output ONLY the JSON object, no other text.
 
 IMPORTANT: Generate ALL text content (summary, descriptions, skills) in {output_language}.
 
@@ -158,6 +212,35 @@ Original Resume:
 
 Output in this JSON format:
 {schema}"""
+
+IMPROVE_PROMPT_OPTIONS = [
+    {
+        "id": "nudge",
+        "label": "Light nudge",
+        "description": "Minimal edits to better align existing experience.",
+    },
+    {
+        "id": "keywords",
+        "label": "Keyword enhance",
+        "description": "Blend in relevant keywords without changing role or scope.",
+    },
+    {
+        "id": "full",
+        "label": "Full tailor",
+        "description": "Comprehensive tailoring using the job description.",
+    },
+]
+
+IMPROVE_RESUME_PROMPTS = {
+    "nudge": IMPROVE_RESUME_PROMPT_NUDGE,
+    "keywords": IMPROVE_RESUME_PROMPT_KEYWORDS,
+    "full": IMPROVE_RESUME_PROMPT_FULL,
+}
+
+DEFAULT_IMPROVE_PROMPT_ID = "keywords"
+
+# Backward-compatible alias
+IMPROVE_RESUME_PROMPT = IMPROVE_RESUME_PROMPT_FULL
 
 COVER_LETTER_PROMPT = """Write a brief cover letter for this job application.
 

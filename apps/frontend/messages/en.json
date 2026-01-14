@@ -390,6 +390,22 @@
     "pasteJobDescription": "Paste Job Description",
     "pasteJobDescriptionBelow": "Paste Job Description Below",
     "jobDescriptionPlaceholder": "Paste the job description here...",
+    "promptLabel": "Tailoring intensity",
+    "promptDescription": "Choose how strongly to align your resume to the job description.",
+    "promptOptions": {
+      "nudge": {
+        "label": "Light nudge",
+        "description": "Minimal edits to better align existing experience."
+      },
+      "keywords": {
+        "label": "Keyword enhance",
+        "description": "Blend in relevant keywords without changing role or scope."
+      },
+      "full": {
+        "label": "Full tailor",
+        "description": "Comprehensive tailoring using the job description."
+      }
+    },
     "analyzeJob": "Analyze Job",
     "generateTailored": "Generate Tailored Resume",
     "setupRequiredTitle": "[ SETUP REQUIRED ]",
@@ -494,6 +510,11 @@
         "label": "Cold Outreach Message",
         "description": "Generate a networking message for LinkedIn or email"
       }
+    },
+    "promptSettings": {
+      "title": "Prompt Settings",
+      "description": "Choose the default prompt used for resume tailoring.",
+      "defaultLabel": "Default tailoring prompt"
     },
     "footer": {
       "status": {

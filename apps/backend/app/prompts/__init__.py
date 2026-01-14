@@ -1,8 +1,11 @@
 """LLM prompt templates."""
 
 from app.prompts.templates import (
+    DEFAULT_IMPROVE_PROMPT_ID,
     EXTRACT_KEYWORDS_PROMPT,
+    IMPROVE_PROMPT_OPTIONS,
     IMPROVE_RESUME_PROMPT,
+    IMPROVE_RESUME_PROMPTS,
     PARSE_RESUME_PROMPT,
     get_language_name,
 )
@@ -11,5 +14,8 @@ __all__ = [
     "PARSE_RESUME_PROMPT",
     "EXTRACT_KEYWORDS_PROMPT",
     "IMPROVE_RESUME_PROMPT",
+    "IMPROVE_RESUME_PROMPTS",
+    "IMPROVE_PROMPT_OPTIONS",
+    "DEFAULT_IMPROVE_PROMPT_ID",
     "get_language_name",
 ]

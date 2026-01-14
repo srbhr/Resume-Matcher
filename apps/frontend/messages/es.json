@@ -390,6 +390,22 @@
     "pasteJobDescription": "Pegar Descripción del Trabajo",
     "pasteJobDescriptionBelow": "Pega la descripción del trabajo abajo",
     "jobDescriptionPlaceholder": "Pega la descripción del trabajo aquí...",
+    "promptLabel": "Intensidad de ajuste",
+    "promptDescription": "Elige qué tanto alinear tu currículum con la descripción del puesto.",
+    "promptOptions": {
+      "nudge": {
+        "label": "Ajuste leve",
+        "description": "Cambios mínimos para alinear tu experiencia existente."
+      },
+      "keywords": {
+        "label": "Mejora de palabras clave",
+        "description": "Integra palabras clave relevantes sin cambiar rol ni alcance."
+      },
+      "full": {
+        "label": "Ajuste completo",
+        "description": "Ajuste integral usando la descripción del puesto."
+      }
+    },
     "analyzeJob": "Analizar Trabajo",
     "generateTailored": "Generar CV Personalizado",
     "matchScore": "Puntuación de Coincidencia",
@@ -494,6 +510,11 @@
         "label": "Mensaje de acercamiento en frío",
         "description": "Genera un mensaje de networking para LinkedIn o correo electrónico"
       }
+    },
+    "promptSettings": {
+      "title": "Configuración de Prompts",
+      "description": "Elige el prompt predeterminado para personalizar el currículum.",
+      "defaultLabel": "Prompt de personalización predeterminado"
     },
     "footer": {
       "status": {

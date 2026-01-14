@@ -8,12 +8,15 @@ import {
   testLlmConnection,
   fetchFeatureConfig,
   updateFeatureConfig,
+  fetchPromptConfig,
+  updatePromptConfig,
   clearAllApiKeys,
   resetDatabase,
   PROVIDER_INFO,
   type LLMConfig,
   type LLMProvider,
   type LLMHealthCheck,
+  type PromptOption,
 } from '@/lib/api/config';
 import { API_URL } from '@/lib/api/client';
 import { getVersionString } from '@/lib/config/version';
@@ -23,6 +26,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { Dropdown } from '@/components/ui/dropdown';
 import {
   Save,
   Key,
@@ -85,6 +89,9 @@ export default function SettingsPage() {
   const [enableCoverLetter, setEnableCoverLetter] = useState(false);
   const [enableOutreach, setEnableOutreach] = useState(false);
   const [featureConfigLoading, setFeatureConfigLoading] = useState(false);
+  const [promptConfigLoading, setPromptConfigLoading] = useState(false);
+  const [promptOptions, setPromptOptions] = useState<PromptOption[]>([]);
+  const [defaultPromptId, setDefaultPromptId] = useState('keywords');
 
   // Danger Zone state
   const [showClearApiKeysDialog, setShowClearApiKeysDialog] = useState(false);
@@ -114,9 +121,10 @@ export default function SettingsPage() {
 
     async function loadConfig() {
       try {
-        const [llmConfig, featureConfig] = await Promise.all([
+        const [llmConfig, featureConfig, promptConfig] = await Promise.all([
           fetchLlmConfig().catch(() => null),
           fetchFeatureConfig().catch(() => null),
+          fetchPromptConfig().catch(() => null),
         ]);
 
         if (cancelled) return;
@@ -141,6 +149,11 @@ export default function SettingsPage() {
         if (featureConfig) {
           setEnableCoverLetter(featureConfig.enable_cover_letter);
           setEnableOutreach(featureConfig.enable_outreach_message);
+        }
+
+        if (promptConfig) {
+          setPromptOptions(promptConfig.prompt_options || []);
+          setDefaultPromptId(promptConfig.default_prompt_id || 'keywords');
         }
 
         setStatus('idle');
@@ -267,6 +280,23 @@ export default function SettingsPage() {
       }
     } finally {
       setFeatureConfigLoading(false);
+    }
+  };
+
+  const handlePromptConfigChange = async (value: string) => {
+    setPromptConfigLoading(true);
+    setError(null);
+    try {
+      const updated = await updatePromptConfig({ default_prompt_id: value });
+      setDefaultPromptId(updated.default_prompt_id);
+      if (updated.prompt_options?.length) {
+        setPromptOptions(updated.prompt_options);
+      }
+    } catch (err) {
+      console.error('Failed to update prompt config', err);
+      setError((err as Error).message || t('settings.errors.unableToSaveConfiguration'));
+    } finally {
+      setPromptConfigLoading(false);
     }
   };
 
@@ -775,6 +805,37 @@ export default function SettingsPage() {
                   label={t('settings.contentGeneration.outreachMessage.label')}
                   description={t('settings.contentGeneration.outreachMessage.description')}
                   disabled={featureConfigLoading}
+                />
+              </div>
+
+              <div className="pt-4 border-t border-gray-200">
+                <Dropdown
+                  options={
+                    promptOptions.length
+                      ? promptOptions
+                      : [
+                          {
+                            id: 'nudge',
+                            label: t('tailor.promptOptions.nudge.label'),
+                            description: t('tailor.promptOptions.nudge.description'),
+                          },
+                          {
+                            id: 'keywords',
+                            label: t('tailor.promptOptions.keywords.label'),
+                            description: t('tailor.promptOptions.keywords.description'),
+                          },
+                          {
+                            id: 'full',
+                            label: t('tailor.promptOptions.full.label'),
+                            description: t('tailor.promptOptions.full.description'),
+                          },
+                        ]
+                  }
+                  value={defaultPromptId}
+                  onChange={handlePromptConfigChange}
+                  label={t('settings.promptSettings.title')}
+                  description={t('settings.promptSettings.description')}
+                  disabled={promptConfigLoading}
                 />
               </div>
             </div>

@@ -390,6 +390,22 @@
     "pasteJobDescription": "求人内容を貼り付け",
     "pasteJobDescriptionBelow": "下に求人内容を貼り付け",
     "jobDescriptionPlaceholder": "求人内容をここに貼り付けてください...",
+    "promptLabel": "調整の強さ",
+    "promptDescription": "求人情報にどの程度合わせるかを選択してください。",
+    "promptOptions": {
+      "nudge": {
+        "label": "軽く調整",
+        "description": "既存の経験に合わせて最小限の修正。"
+      },
+      "keywords": {
+        "label": "キーワード強化",
+        "description": "役割や範囲を変えずにキーワードを追加。"
+      },
+      "full": {
+        "label": "完全に調整",
+        "description": "求人情報を使って全面的に調整。"
+      }
+    },
     "analyzeJob": "求人を分析",
     "generateTailored": "カスタマイズ履歴書を生成",
     "setupRequiredTitle": "[ 設定が必要 ]",
@@ -494,6 +510,11 @@
         "label": "コールドアウトリーチメッセージ",
         "description": "LinkedIn やメール向けのネットワーキングメッセージを生成します"
       }
+    },
+    "promptSettings": {
+      "title": "プロンプト設定",
+      "description": "履歴書カスタマイズで使う既定のプロンプトを選択します。",
+      "defaultLabel": "既定のカスタマイズプロンプト"
     },
     "footer": {
       "status": {
