@@ -14,8 +14,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Plus, FileText, List, ListOrdered } from 'lucide-react';
-import type { SectionType, SectionMeta } from '@/components/dashboard/resume-component';
-import { getSectionTypeLabel } from '@/lib/utils/section-helpers';
+import type { SectionType } from '@/components/dashboard/resume-component';
+import { useTranslations } from '@/lib/i18n';
 
 interface AddSectionDialogProps {
   open: boolean;
@@ -36,6 +36,7 @@ export const AddSectionDialog: React.FC<AddSectionDialogProps> = ({
   onOpenChange,
   onAdd,
 }) => {
+  const { t } = useTranslations();
   const [displayName, setDisplayName] = useState('');
   const [sectionType, setSectionType] = useState<SelectableSectionType>('text');
 
@@ -62,61 +63,61 @@ export const AddSectionDialog: React.FC<AddSectionDialogProps> = ({
   }[] = [
     {
       type: 'text',
-      label: 'Text Block',
+      label: t('builder.customSections.sectionTypes.textBlockLabel'),
       icon: <FileText className="w-5 h-5" />,
-      description: 'Single text area (like Summary)',
+      description: t('builder.customSections.sectionTypes.textBlockDescription'),
     },
     {
       type: 'itemList',
-      label: 'Item List',
+      label: t('builder.customSections.sectionTypes.itemListLabel'),
       icon: <ListOrdered className="w-5 h-5" />,
-      description: 'Multiple entries with details (like Experience)',
+      description: t('builder.customSections.sectionTypes.itemListDescription'),
     },
     {
       type: 'stringList',
-      label: 'Skill List',
+      label: t('builder.customSections.sectionTypes.stringListLabel'),
       icon: <List className="w-5 h-5" />,
-      description: 'Simple list of items (like Skills)',
+      description: t('builder.customSections.sectionTypes.stringListDescription'),
     },
   ];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] p-0 gap-0 rounded-none">
-        <DialogHeader className="p-6 pb-4 border-b border-black">
-          <DialogTitle className="font-serif text-xl font-bold uppercase tracking-tight">
-            Add Custom Section
-          </DialogTitle>
-          <DialogDescription className="font-mono text-xs text-gray-600 mt-2">
-            Create a new section for your resume with a custom name and type.
-          </DialogDescription>
-        </DialogHeader>
+        <DialogContent className="sm:max-w-[500px] p-0 gap-0 rounded-none">
+          <DialogHeader className="p-6 pb-4 border-b border-black">
+            <DialogTitle className="font-serif text-xl font-bold uppercase tracking-tight">
+              {t('builder.customSections.dialogTitle')}
+            </DialogTitle>
+            <DialogDescription className="font-mono text-xs text-gray-600 mt-2">
+              {t('builder.customSections.dialogDescription')}
+            </DialogDescription>
+          </DialogHeader>
 
-        <div className="p-6 space-y-6">
-          {/* Section Name */}
-          <div className="space-y-2">
-            <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">
-              Section Name
-            </Label>
-            <Input
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="e.g., Publications, Volunteer Work, Certifications"
-              className="rounded-none border-black"
-              autoFocus
-            />
-          </div>
-
-          {/* Section Type */}
-          <div className="space-y-3">
-            <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">
-              Section Type
-            </Label>
+          <div className="p-6 space-y-6">
+            {/* Section Name */}
             <div className="space-y-2">
-              {sectionTypes.map((item) => (
-                <button
-                  key={item.type}
+              <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">
+                {t('builder.customSections.sectionNameLabel')}
+              </Label>
+              <Input
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={t('builder.customSections.sectionNamePlaceholder')}
+                className="rounded-none border-black"
+                autoFocus
+              />
+            </div>
+
+            {/* Section Type */}
+            <div className="space-y-3">
+              <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">
+                {t('builder.customSections.sectionTypeLabel')}
+              </Label>
+              <div className="space-y-2">
+                {sectionTypes.map((item) => (
+                  <button
+                    key={item.type}
                   type="button"
                   onClick={() => setSectionType(item.type)}
                   className={`w-full p-4 border text-left transition-colors ${
@@ -154,12 +155,12 @@ export const AddSectionDialog: React.FC<AddSectionDialogProps> = ({
         <DialogFooter className="p-4 bg-[#F0F0E8] border-t border-black flex-row justify-end gap-3">
           <DialogClose asChild>
             <Button variant="outline" className="rounded-none border-black">
-              Cancel
+              {t('common.cancel')}
             </Button>
           </DialogClose>
           <Button onClick={handleSubmit} disabled={!displayName.trim()} className="rounded-none">
             <Plus className="w-4 h-4 mr-2" />
-            Add Section
+            {t('builder.addSection')}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -177,6 +178,7 @@ interface AddSectionButtonProps {
 }
 
 export const AddSectionButton: React.FC<AddSectionButtonProps> = ({ onAdd }) => {
+  const { t } = useTranslations();
   const [open, setOpen] = useState(false);
 
   return (
@@ -187,7 +189,7 @@ export const AddSectionButton: React.FC<AddSectionButtonProps> = ({ onAdd }) => 
         className="w-full rounded-none border-dashed border-2 border-black py-6 hover:bg-gray-50 hover:border-solid transition-all"
       >
         <Plus className="w-5 h-5 mr-2" />
-        Add Custom Section
+        {t('builder.customSections.addCustomSectionButton')}
       </Button>
       <AddSectionDialog open={open} onOpenChange={setOpen} onAdd={onAdd} />
     </>

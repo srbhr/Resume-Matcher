@@ -138,7 +138,7 @@ export default function SettingsPage() {
       } catch (err) {
         console.error('Failed to load settings', err);
         if (!cancelled) {
-          setError('Unable to connect to backend. Is the server running?');
+          setError(t('settings.errors.unableToConnectBackend'));
           setStatus('error');
         }
       }
@@ -154,15 +154,14 @@ export default function SettingsPage() {
   const handleProviderChange = (newProvider: LLMProvider) => {
     setProvider(newProvider);
     setModel(PROVIDER_INFO[newProvider].defaultModel);
-    if (newProvider === 'ollama') {
+
+    if (newProvider === 'ollama' && !apiBase.trim()) {
       setApiBase('http://localhost:11434');
-      setApiKey('');
-      setHasStoredApiKey(false);
-    } else {
-      setApiBase('');
-      setApiKey('');
-      setHasStoredApiKey(false);
     }
+
+    // Clear API key input when switching providers to avoid accidental cross-provider usage.
+    setApiKey('');
+    setHasStoredApiKey(false);
   };
 
   // Save configuration
@@ -172,7 +171,7 @@ export default function SettingsPage() {
 
     try {
       if (requiresApiKey && !apiKey.trim() && !hasStoredApiKey) {
-        setError('API key is required for the selected provider.');
+        setError(t('settings.errors.apiKeyRequired'));
         setStatus('error');
         return;
       }
@@ -202,7 +201,7 @@ export default function SettingsPage() {
       setTimeout(() => setStatus('idle'), 2000);
     } catch (err) {
       console.error('Failed to save config', err);
-      setError((err as Error).message || 'Unable to save configuration');
+      setError((err as Error).message || t('settings.errors.unableToSaveConfiguration'));
       setStatus('error');
     }
   };
@@ -294,7 +293,7 @@ export default function SettingsPage() {
       setShowSuccessDialog(true);
     } catch (err) {
       console.error('Failed to clear API keys', err);
-      setError('Failed to clear API keys. Please try again.');
+      setError(t('settings.errors.failedToClearApiKeys'));
     } finally {
       setIsResetting(false);
       setShowClearApiKeysDialog(false);
@@ -326,7 +325,7 @@ export default function SettingsPage() {
       setShowSuccessDialog(true);
     } catch (err) {
       console.error('Failed to reset database', err);
-      setError('Failed to reset database. Please try again.');
+      setError(t('settings.errors.failedToResetDatabase'));
     } finally {
       setIsResetting(false);
       setShowResetDatabaseDialog(false);
@@ -335,12 +334,13 @@ export default function SettingsPage() {
 
   // Format last fetched time for display
   const formatLastFetched = () => {
-    if (!lastFetched) return 'Never';
+    if (!lastFetched) return t('settings.systemStatus.lastFetched.never');
     const now = new Date();
     const diff = Math.floor((now.getTime() - lastFetched.getTime()) / 1000);
-    if (diff < 60) return 'Just now';
-    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-    return `${Math.floor(diff / 3600)}h ago`;
+    if (diff < 60) return t('settings.systemStatus.lastFetched.justNow');
+    if (diff < 3600)
+      return t('settings.systemStatus.lastFetched.minutesAgo', { minutes: Math.floor(diff / 60) });
+    return t('settings.systemStatus.lastFetched.hoursAgo', { hours: Math.floor(diff / 3600) });
   };
 
   const requiresApiKey = PROVIDER_INFO[provider]?.requiresKey ?? true;
@@ -382,11 +382,10 @@ export default function SettingsPage() {
                 <div className="w-3 h-3 bg-amber-500 mt-1 shrink-0"></div>
                 <div className="flex-1">
                   <p className="font-mono text-sm font-bold uppercase tracking-wider text-amber-800">
-                    [ SETUP REQUIRED ]
+                    {t('settings.setupRequired.title')}
                   </p>
                   <p className="font-mono text-xs text-amber-700 mt-1">
-                    {'>'} No API key configured. Add your LLM provider API key below to enable
-                    resume tailoring.
+                    {t('settings.setupRequired.description')}
                   </p>
                 </div>
               </div>
@@ -400,7 +399,7 @@ export default function SettingsPage() {
                 <div className="flex items-center gap-2">
                   <Activity className="w-4 h-4" />
                   <h2 className="font-mono text-sm font-bold uppercase tracking-wider">
-                    System Status
+                    {t('settings.systemStatus.title')}
                   </h2>
                 </div>
                 {lastFetched && (
@@ -418,7 +417,7 @@ export default function SettingsPage() {
                 className="gap-1 text-xs"
               >
                 <RefreshCw className={`w-3 h-3 ${statusLoading ? 'animate-spin' : ''}`} />
-                REFRESH
+                {t('settings.systemStatus.refresh')}
               </Button>
             </div>
 
@@ -429,10 +428,10 @@ export default function SettingsPage() {
             ) : !systemStatus ? (
               <div className="flex flex-col items-center justify-center p-8 gap-3 border border-dashed border-red-300 bg-red-50">
                 <p className="font-mono text-xs text-red-600 uppercase">
-                  Unable to connect to backend
+                  {t('settings.systemStatus.unableToConnect')}
                 </p>
                 <p className="font-mono text-xs text-gray-600">
-                  Expected at: <span className="font-bold">{API_URL}</span>
+                  {t('settings.systemStatus.expectedAt', { apiUrl: API_URL })}
                 </p>
                 <Button
                   variant="outline"
@@ -441,7 +440,7 @@ export default function SettingsPage() {
                   className="gap-1 text-xs"
                 >
                   <RefreshCw className="w-3 h-3" />
-                  Retry
+                  {t('common.retry')}
                 </Button>
               </div>
             ) : (
@@ -450,7 +449,9 @@ export default function SettingsPage() {
                 <div className="border border-black bg-white p-4 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)]">
                   <div className="flex items-center gap-2 mb-2">
                     <Server className="w-4 h-4 text-gray-500" />
-                    <span className="font-mono text-xs uppercase text-gray-500">LLM</span>
+                    <span className="font-mono text-xs uppercase text-gray-500">
+                      {t('settings.statusCards.llm')}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
                     {systemStatus.llm_healthy ? (
@@ -459,7 +460,9 @@ export default function SettingsPage() {
                       <XCircle className="w-5 h-5 text-red-500" />
                     )}
                     <span className="font-mono text-sm font-bold">
-                      {systemStatus.llm_healthy ? 'HEALTHY' : 'OFFLINE'}
+                      {systemStatus.llm_healthy
+                        ? t('settings.statusValues.healthy')
+                        : t('settings.statusValues.offline')}
                     </span>
                   </div>
                 </div>
@@ -468,11 +471,15 @@ export default function SettingsPage() {
                 <div className="border border-black bg-white p-4 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)]">
                   <div className="flex items-center gap-2 mb-2">
                     <Database className="w-4 h-4 text-gray-500" />
-                    <span className="font-mono text-xs uppercase text-gray-500">Database</span>
+                    <span className="font-mono text-xs uppercase text-gray-500">
+                      {t('settings.statusCards.database')}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="w-5 h-5 text-green-600" />
-                    <span className="font-mono text-sm font-bold">CONNECTED</span>
+                    <span className="font-mono text-sm font-bold">
+                      {t('settings.statusValues.connected')}
+                    </span>
                   </div>
                 </div>
 
@@ -480,7 +487,9 @@ export default function SettingsPage() {
                 <div className="border border-black bg-white p-4 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)]">
                   <div className="flex items-center gap-2 mb-2">
                     <FileText className="w-4 h-4 text-gray-500" />
-                    <span className="font-mono text-xs uppercase text-gray-500">Resumes</span>
+                    <span className="font-mono text-xs uppercase text-gray-500">
+                      {t('settings.statusCards.resumes')}
+                    </span>
                   </div>
                   <span className="font-mono text-2xl font-bold">
                     {systemStatus.database_stats.total_resumes}
@@ -491,7 +500,9 @@ export default function SettingsPage() {
                 <div className="border border-black bg-white p-4 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)]">
                   <div className="flex items-center gap-2 mb-2">
                     <Briefcase className="w-4 h-4 text-gray-500" />
-                    <span className="font-mono text-xs uppercase text-gray-500">Jobs</span>
+                    <span className="font-mono text-xs uppercase text-gray-500">
+                      {t('settings.statusCards.jobs')}
+                    </span>
                   </div>
                   <span className="font-mono text-2xl font-bold">
                     {systemStatus.database_stats.total_jobs}
@@ -506,7 +517,9 @@ export default function SettingsPage() {
                 <div className="border border-black bg-white p-4 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)]">
                   <div className="flex items-center gap-2 mb-2">
                     <Sparkles className="w-4 h-4 text-gray-500" />
-                    <span className="font-mono text-xs uppercase text-gray-500">Improvements</span>
+                    <span className="font-mono text-xs uppercase text-gray-500">
+                      {t('settings.statusCards.improvements')}
+                    </span>
                   </div>
                   <span className="font-mono text-2xl font-bold">
                     {systemStatus.database_stats.total_improvements}
@@ -515,18 +528,24 @@ export default function SettingsPage() {
                 <div className="border border-black bg-white p-4 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)]">
                   <div className="flex items-center gap-2 mb-2">
                     <FileText className="w-4 h-4 text-gray-500" />
-                    <span className="font-mono text-xs uppercase text-gray-500">Master Resume</span>
+                    <span className="font-mono text-xs uppercase text-gray-500">
+                      {t('settings.statusCards.masterResume')}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
                     {systemStatus.has_master_resume ? (
                       <>
                         <CheckCircle2 className="w-5 h-5 text-green-600" />
-                        <span className="font-mono text-sm font-bold">CONFIGURED</span>
+                        <span className="font-mono text-sm font-bold">
+                          {t('settings.statusValues.configured')}
+                        </span>
                       </>
                     ) : (
                       <>
                         <XCircle className="w-5 h-5 text-amber-500" />
-                        <span className="font-mono text-sm font-bold">NOT SET</span>
+                        <span className="font-mono text-sm font-bold">
+                          {t('settings.statusValues.notSet')}
+                        </span>
                       </>
                     )}
                   </div>
@@ -540,14 +559,14 @@ export default function SettingsPage() {
             <div className="flex items-center gap-2 border-b border-black/10 pb-2">
               <Key className="w-4 h-4" />
               <h2 className="font-mono text-sm font-bold uppercase tracking-wider">
-                LLM Configuration
+                {t('settings.llmConfigurationTitle')}
               </h2>
             </div>
 
             <div className="grid gap-6">
               {/* Provider Selection */}
               <div className="space-y-2">
-                <Label>Provider</Label>
+                <Label>{t('settings.providerLabel')}</Label>
                 <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
                   {PROVIDERS.map((p) => (
                     <button
@@ -564,13 +583,15 @@ export default function SettingsPage() {
                   ))}
                 </div>
                 <p className="text-xs text-gray-500 font-mono">
-                  SELECTED: {PROVIDER_INFO[provider].name}
+                  {t('settings.llmConfiguration.selectedProvider', {
+                    provider: PROVIDER_INFO[provider].name,
+                  })}
                 </p>
               </div>
 
               {/* Model Input */}
               <div className="space-y-2">
-                <Label htmlFor="model">Model</Label>
+                <Label htmlFor="model">{t('settings.llmConfiguration.modelLabel')}</Label>
                 <Input
                   id="model"
                   value={model}
@@ -579,45 +600,56 @@ export default function SettingsPage() {
                   className="font-mono"
                 />
                 <p className="text-xs text-gray-500 font-mono">
-                  DEFAULT: {PROVIDER_INFO[provider].defaultModel}
+                  {t('settings.llmConfiguration.defaultModel', {
+                    model: PROVIDER_INFO[provider].defaultModel,
+                  })}
                 </p>
               </div>
 
               {/* API Key Input */}
               <div className="space-y-2">
                 <Label htmlFor="apiKey">
-                  API Key{' '}
-                  {!requiresApiKey && <span className="text-gray-400">(Optional for Ollama)</span>}
+                  {t('settings.llmConfiguration.apiKeyLabel')}{' '}
+                  {!requiresApiKey && (
+                    <span className="text-gray-400">
+                      {t('settings.llmConfiguration.apiKeyOptionalForOllama')}
+                    </span>
+                  )}
                 </Label>
                 <Input
                   id="apiKey"
                   type="password"
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
-                  placeholder={requiresApiKey ? 'sk-...' : 'Not required for local models'}
+                  placeholder={
+                    requiresApiKey
+                      ? t('settings.llmConfiguration.apiKeyPlaceholder')
+                      : t('settings.llmConfiguration.apiKeyNotRequiredPlaceholder')
+                  }
                   className="font-mono"
                   disabled={!requiresApiKey}
                 />
                 {requiresApiKey && hasStoredApiKey && !apiKey && (
                   <p className="text-xs text-gray-500 font-mono">
-                    LEAVE BLANK TO KEEP EXISTING KEY
+                    {t('settings.llmConfiguration.leaveBlankToKeepExistingKey')}
                   </p>
                 )}
               </div>
 
-              {/* API Base URL (for Ollama) */}
-              {provider === 'ollama' && (
-                <div className="space-y-2">
-                  <Label htmlFor="apiBase">Ollama Server URL</Label>
-                  <Input
-                    id="apiBase"
-                    value={apiBase}
-                    onChange={(e) => setApiBase(e.target.value)}
-                    placeholder="http://localhost:11434"
-                    className="font-mono"
-                  />
-                </div>
-              )}
+              {/* API Base URL (optional, for proxies/aggregators/custom endpoints) */}
+              <div className="space-y-2">
+                <Label htmlFor="apiBase">{t('settings.llmConfiguration.baseUrlLabel')}</Label>
+                <Input
+                  id="apiBase"
+                  value={apiBase}
+                  onChange={(e) => setApiBase(e.target.value)}
+                  placeholder={t('settings.llmConfiguration.baseUrlPlaceholder')}
+                  className="font-mono"
+                />
+                <p className="text-xs text-gray-500 font-mono">
+                  {t('settings.llmConfiguration.baseUrlDescription')}
+                </p>
+              </div>
 
               {/* Action Buttons */}
               <div className="flex gap-4">
@@ -650,7 +682,7 @@ export default function SettingsPage() {
                   ) : (
                     <>
                       <Activity className="w-4 h-4" />
-                      Test Connection
+                      {t('settings.llmConfiguration.testConnection')}
                     </>
                   )}
                 </Button>
@@ -659,7 +691,9 @@ export default function SettingsPage() {
               {/* Error Message */}
               {error && (
                 <div className="border border-red-300 bg-red-50 p-3">
-                  <p className="text-xs text-red-600 font-mono">ERROR: {error}</p>
+                  <p className="text-xs text-red-600 font-mono">
+                    {t('settings.llmConfiguration.errorPrefix', { error })}
+                  </p>
                 </div>
               )}
 
@@ -679,11 +713,16 @@ export default function SettingsPage() {
                       <XCircle className="w-5 h-5 text-red-500" />
                     )}
                     <span className="font-mono text-sm font-bold">
-                      {healthCheck.healthy ? 'CONNECTION SUCCESSFUL' : 'CONNECTION FAILED'}
+                      {healthCheck.healthy
+                        ? t('settings.llmConfiguration.connectionSuccessful')
+                        : t('settings.llmConfiguration.connectionFailed')}
                     </span>
                   </div>
                   <p className="font-mono text-xs text-gray-600">
-                    Provider: {healthCheck.provider} | Model: {healthCheck.model}
+                    {t('settings.llmConfiguration.connectionDetails', {
+                      provider: healthCheck.provider,
+                      model: healthCheck.model,
+                    })}
                   </p>
                   {healthCheck.error && (
                     <p className="font-mono text-xs text-red-600 mt-1">{healthCheck.error}</p>
@@ -698,14 +737,13 @@ export default function SettingsPage() {
             <div className="flex items-center gap-2 border-b border-black/10 pb-2">
               <Settings2 className="w-4 h-4" />
               <h2 className="font-mono text-sm font-bold uppercase tracking-wider">
-                Content Generation
+                {t('settings.contentGeneration.title')}
               </h2>
             </div>
 
             <div className="space-y-2">
               <p className="text-sm text-gray-600 mb-4">
-                Enable additional content generation during resume tailoring. When enabled, these
-                documents will be automatically generated alongside your tailored resume.
+                {t('settings.contentGeneration.description')}
               </p>
 
               <div className="space-y-3">
@@ -715,8 +753,8 @@ export default function SettingsPage() {
                     setEnableCoverLetter(checked);
                     handleFeatureConfigChange('enable_cover_letter', checked);
                   }}
-                  label="Cover Letter"
-                  description="Generate a tailored cover letter alongside your resume"
+                  label={t('settings.contentGeneration.coverLetter.label')}
+                  description={t('settings.contentGeneration.coverLetter.description')}
                   disabled={featureConfigLoading}
                 />
                 <ToggleSwitch
@@ -725,8 +763,8 @@ export default function SettingsPage() {
                     setEnableOutreach(checked);
                     handleFeatureConfigChange('enable_outreach_message', checked);
                   }}
-                  label="Cold Outreach Message"
-                  description="Generate a networking message for LinkedIn or email"
+                  label={t('settings.contentGeneration.outreachMessage.label')}
+                  description={t('settings.contentGeneration.outreachMessage.description')}
                   disabled={featureConfigLoading}
                 />
               </div>
@@ -866,7 +904,9 @@ export default function SettingsPage() {
             {statusLoading ? (
               <>
                 <Loader2 className="w-3 h-3 animate-spin text-gray-500" />
-                <span className="font-mono text-xs text-gray-500">CHECKING...</span>
+                <span className="font-mono text-xs text-gray-500">
+                  {t('settings.footer.status.checking')}
+                </span>
               </>
             ) : systemStatus ? (
               <>
@@ -876,11 +916,15 @@ export default function SettingsPage() {
                 <span
                   className={`font-mono text-xs font-bold ${systemStatus.status === 'ready' ? 'text-green-700' : 'text-amber-600'}`}
                 >
-                  {systemStatus.status === 'ready' ? 'STATUS: READY' : 'STATUS: SETUP REQUIRED'}
+                  {systemStatus.status === 'ready'
+                    ? t('settings.footer.status.ready')
+                    : t('settings.footer.status.setupRequired')}
                 </span>
               </>
             ) : (
-              <span className="font-mono text-xs text-gray-500">STATUS: OFFLINE</span>
+              <span className="font-mono text-xs text-gray-500">
+                {t('settings.footer.status.offline')}
+              </span>
             )}
           </div>
         </div>

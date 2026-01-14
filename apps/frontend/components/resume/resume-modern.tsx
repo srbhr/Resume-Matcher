@@ -1,6 +1,10 @@
 import React from 'react';
 import { Mail, Phone, MapPin, Globe, Linkedin, Github, ExternalLink } from 'lucide-react';
-import type { ResumeData, SectionMeta } from '@/components/dashboard/resume-component';
+import type {
+  ResumeData,
+  SectionMeta,
+  AdditionalSectionLabels,
+} from '@/components/dashboard/resume-component';
 import { getSortedSections } from '@/lib/utils/section-helpers';
 import { formatDateRange } from '@/lib/utils';
 import { SafeHtml } from './safe-html';
@@ -10,6 +14,7 @@ import styles from './styles/modern.module.css';
 interface ResumeModernProps {
   data: ResumeData;
   showContactIcons?: boolean;
+  additionalSectionLabels?: Partial<AdditionalSectionLabels>;
 }
 
 /**
@@ -21,7 +26,11 @@ interface ResumeModernProps {
  *
  * Section order: Determined by sectionMeta ordering
  */
-export const ResumeModern: React.FC<ResumeModernProps> = ({ data, showContactIcons = false }) => {
+export const ResumeModern: React.FC<ResumeModernProps> = ({
+  data,
+  showContactIcons = false,
+  additionalSectionLabels,
+}) => {
   const { personalInfo, summary, workExperience, education, personalProjects, additional } = data;
 
   // Get sorted visible sections
@@ -262,6 +271,7 @@ export const ResumeModern: React.FC<ResumeModernProps> = ({ data, showContactIco
             key={section.id}
             additional={additional}
             displayName={section.displayName}
+            labels={additionalSectionLabels}
           />
         );
 
@@ -353,7 +363,8 @@ export const ResumeModern: React.FC<ResumeModernProps> = ({ data, showContactIco
 const AdditionalSection: React.FC<{
   additional: ResumeData['additional'];
   displayName?: string;
-}> = ({ additional, displayName = 'Skills & Awards' }) => {
+  labels?: Partial<AdditionalSectionLabels>;
+}> = ({ additional, displayName = 'Skills & Awards', labels }) => {
   if (!additional) return null;
 
   const {
@@ -362,6 +373,13 @@ const AdditionalSection: React.FC<{
     certificationsTraining = [],
     awards = [],
   } = additional;
+
+  const mergedLabels: AdditionalSectionLabels = {
+    technicalSkills: labels?.technicalSkills ?? 'Technical Skills',
+    languages: labels?.languages ?? 'Languages',
+    certifications: labels?.certifications ?? 'Certifications',
+    awards: labels?.awards ?? 'Awards',
+  };
 
   const hasContent =
     technicalSkills.length > 0 ||
@@ -377,25 +395,25 @@ const AdditionalSection: React.FC<{
       <div className={`${baseStyles['resume-stack']} ${baseStyles['resume-text-sm']}`}>
         {technicalSkills.length > 0 && (
           <div className="flex">
-            <span className="font-bold w-32 shrink-0">Technical Skills:</span>
+            <span className="font-bold w-32 shrink-0">{mergedLabels.technicalSkills}:</span>
             <span>{technicalSkills.join(', ')}</span>
           </div>
         )}
         {languages.length > 0 && (
           <div className="flex">
-            <span className="font-bold w-32 shrink-0">Languages:</span>
+            <span className="font-bold w-32 shrink-0">{mergedLabels.languages}:</span>
             <span>{languages.join(', ')}</span>
           </div>
         )}
         {certificationsTraining.length > 0 && (
           <div className="flex">
-            <span className="font-bold w-32 shrink-0">Certifications:</span>
+            <span className="font-bold w-32 shrink-0">{mergedLabels.certifications}:</span>
             <span>{certificationsTraining.join(', ')}</span>
           </div>
         )}
         {awards.length > 0 && (
           <div className="flex">
-            <span className="font-bold w-32 shrink-0">Awards:</span>
+            <span className="font-bold w-32 shrink-0">{mergedLabels.awards}:</span>
             <span>{awards.join(', ')}</span>
           </div>
         )}

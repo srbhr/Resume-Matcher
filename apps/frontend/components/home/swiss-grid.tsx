@@ -1,7 +1,12 @@
+'use client';
+
 import React from 'react';
 import Link from 'next/link';
+import { useTranslations } from '@/lib/i18n';
 
 export const SwissGrid = ({ children }: { children: React.ReactNode }) => {
+  const { t } = useTranslations();
+
   return (
     // 1. Outer Wrapper: Matches your Layout background #F0F0E8
     <div
@@ -16,11 +21,12 @@ export const SwissGrid = ({ children }: { children: React.ReactNode }) => {
       <div className="w-full max-w-[86rem] border border-black bg-[#F0F0E8] shadow-[8px_8px_0px_0px_rgba(0,0,0,0.1)]">
         {/* Header Section */}
         <div className="border-b border-black p-8 md:p-12">
-          <h1 className="font-serif text-5xl md:text-7xl text-black tracking-tight leading-[0.95]">
-            DASHBOARD
+          <h1 className="font-serif text-5xl md:text-7xl text-black tracking-tight leading-[0.95] uppercase">
+            {t('nav.dashboard')}
           </h1>
           <p className="mt-6 text-sm font-mono text-blue-700 uppercase tracking-wide max-w-md font-bold">
-            {'// SELECT MODULE'}
+            {'// '}
+            {t('dashboard.selectModule')}
           </p>
         </div>
 
@@ -40,7 +46,7 @@ export const SwissGrid = ({ children }: { children: React.ReactNode }) => {
               href="/settings"
               className="bg-[#F97316] text-black border border-black px-6 py-2 uppercase font-bold tracking-wide shadow-[2px_2px_0px_0px_#000000] hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none transition-all min-w-[140px] text-center"
             >
-              Settings
+              {t('nav.settings')}
             </Link>
           </div>
         </div>

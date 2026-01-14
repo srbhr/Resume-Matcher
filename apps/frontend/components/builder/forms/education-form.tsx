@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -5,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Education } from '@/components/dashboard/resume-component';
 import { Plus, Trash2 } from 'lucide-react';
+import { useTranslations } from '@/lib/i18n';
 
 interface EducationFormProps {
   data: Education[];
@@ -12,6 +15,8 @@ interface EducationFormProps {
 }
 
 export const EducationForm: React.FC<EducationFormProps> = ({ data, onChange }) => {
+  const { t } = useTranslations();
+
   const handleAdd = () => {
     const newId = Math.max(...data.map((d) => d.id), 0) + 1;
     onChange([
@@ -50,7 +55,7 @@ export const EducationForm: React.FC<EducationFormProps> = ({ data, onChange }) 
           onClick={handleAdd}
           className="rounded-none border-black hover:bg-black hover:text-white transition-colors"
         >
-          <Plus className="w-4 h-4 mr-2" /> Add School
+          <Plus className="w-4 h-4 mr-2" /> {t('builder.forms.education.addSchool')}
         </Button>
       </div>
 
@@ -69,34 +74,34 @@ export const EducationForm: React.FC<EducationFormProps> = ({ data, onChange }) 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 pr-8">
               <div className="space-y-2">
                 <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">
-                  Institution
+                  {t('builder.forms.education.fields.institution')}
                 </Label>
                 <Input
                   value={item.institution || ''}
                   onChange={(e) => handleChange(item.id, 'institution', e.target.value)}
-                  placeholder="University Name"
+                  placeholder={t('builder.forms.education.placeholders.institution')}
                   className="rounded-none border-black bg-white"
                 />
               </div>
               <div className="space-y-2">
                 <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">
-                  Degree
+                  {t('builder.forms.education.fields.degree')}
                 </Label>
                 <Input
                   value={item.degree || ''}
                   onChange={(e) => handleChange(item.id, 'degree', e.target.value)}
-                  placeholder="Bachelor of Science"
+                  placeholder={t('builder.forms.education.placeholders.degree')}
                   className="rounded-none border-black bg-white"
                 />
               </div>
               <div className="space-y-2">
                 <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">
-                  Years
+                  {t('builder.genericItemForm.fields.years')}
                 </Label>
                 <Input
                   value={item.years || ''}
                   onChange={(e) => handleChange(item.id, 'years', e.target.value)}
-                  placeholder="2016 - 2020"
+                  placeholder={t('builder.forms.education.placeholders.years')}
                   className="rounded-none border-black bg-white"
                 />
               </div>
@@ -104,13 +109,14 @@ export const EducationForm: React.FC<EducationFormProps> = ({ data, onChange }) 
 
             <div className="space-y-2">
               <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">
-                Description (Optional)
+                {t('builder.forms.education.fields.description')}{' '}
+                <span className="text-gray-400">({t('common.optional')})</span>
               </Label>
               <Textarea
                 value={item.description || ''}
                 onChange={(e) => handleChange(item.id, 'description', e.target.value)}
                 className="min-h-[60px] text-black text-sm rounded-none border-black bg-white"
-                placeholder="Additional details..."
+                placeholder={t('builder.forms.education.placeholders.description')}
               />
             </div>
           </div>
@@ -118,14 +124,16 @@ export const EducationForm: React.FC<EducationFormProps> = ({ data, onChange }) 
 
         {data.length === 0 && (
           <div className="text-center py-12 bg-gray-50 border border-dashed border-black">
-            <p className="font-mono text-sm text-gray-500 mb-4">{'// NO EDUCATION ENTRIES'}</p>
+            <p className="font-mono text-sm text-gray-500 mb-4">
+              {t('builder.genericItemForm.noEntries', { label: t('resume.sections.education') })}
+            </p>
             <Button
               variant="outline"
               size="sm"
               onClick={handleAdd}
               className="rounded-none border-black"
             >
-              <Plus className="w-4 h-4 mr-2" /> Add First School
+              <Plus className="w-4 h-4 mr-2" /> {t('builder.forms.education.addFirstSchool')}
             </Button>
           </div>
         )}

@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { ChevronUp, ChevronDown, Trash2, Eye, EyeOff, Pencil, Check, X } from 'lucide-react';
 import type { SectionMeta } from '@/components/dashboard/resume-component';
+import { useTranslations } from '@/lib/i18n';
 
 interface SectionHeaderProps {
   section: SectionMeta;
@@ -41,6 +42,7 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
   canDelete,
   children,
 }) => {
+  const { t } = useTranslations();
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(section.displayName);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -128,19 +130,19 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
                   size="icon"
                   className="h-6 w-6 text-gray-400 hover:text-gray-600"
                   onClick={handleStartEdit}
-                  title="Rename section"
+                  title={t('builder.sectionHeader.renameSection')}
                 >
                   <Pencil className="w-3 h-3" />
                 </Button>
               )}
               {!section.isDefault && (
                 <span className="font-mono text-[10px] uppercase tracking-wider text-gray-400 bg-gray-100 px-1.5 py-0.5 border border-gray-200">
-                  Custom
+                  {t('builder.sectionHeader.customTag')}
                 </span>
               )}
               {isHidden && (
                 <span className="font-mono text-[10px] uppercase tracking-wider text-amber-600 bg-amber-50 px-1.5 py-0.5 border border-amber-200">
-                  Hidden from PDF
+                  {t('builder.sectionHeader.hiddenFromPdfTag')}
                 </span>
               )}
             </>
@@ -156,7 +158,11 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
               size="icon"
               className={`h-8 w-8 ${section.isVisible ? 'text-gray-500' : 'text-gray-300'}`}
               onClick={onToggleVisibility}
-              title={section.isVisible ? 'Hide section' : 'Show section'}
+              title={
+                section.isVisible
+                  ? t('builder.sectionHeader.hideSection')
+                  : t('builder.sectionHeader.showSection')
+              }
             >
               {section.isVisible ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
             </Button>
@@ -170,7 +176,7 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
               className="h-8 w-8 text-gray-500 hover:text-gray-700 disabled:opacity-30"
               onClick={onMoveUp}
               disabled={isFirst}
-              title="Move up"
+              title={t('builder.sectionHeader.moveUp')}
             >
               <ChevronUp className="w-4 h-4" />
             </Button>
@@ -184,7 +190,7 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
               className="h-8 w-8 text-gray-500 hover:text-gray-700 disabled:opacity-30"
               onClick={onMoveDown}
               disabled={isLast}
-              title="Move down"
+              title={t('builder.sectionHeader.moveDown')}
             >
               <ChevronDown className="w-4 h-4" />
             </Button>
@@ -197,7 +203,11 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
               size="icon"
               className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
               onClick={handleDeleteClick}
-              title={section.isDefault ? 'Hide section' : 'Delete section'}
+              title={
+                section.isDefault
+                  ? t('builder.sectionHeader.hideSection')
+                  : t('builder.sectionHeader.deleteSection')
+              }
             >
               <Trash2 className="w-4 h-4" />
             </Button>
@@ -212,10 +222,10 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
       <ConfirmDialog
         open={showDeleteConfirm}
         onOpenChange={setShowDeleteConfirm}
-        title="Delete Section"
-        description={`Are you sure you want to delete "${section.displayName}"? This action cannot be undone.`}
-        confirmLabel="Delete"
-        cancelLabel="Cancel"
+        title={t('builder.sectionHeader.deleteTitle')}
+        description={t('builder.sectionHeader.deleteDescription', { name: section.displayName })}
+        confirmLabel={t('common.delete')}
+        cancelLabel={t('common.cancel')}
         variant="danger"
         onConfirm={onDelete}
       />
