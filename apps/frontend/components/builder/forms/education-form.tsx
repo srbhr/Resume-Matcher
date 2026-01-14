@@ -109,8 +109,7 @@ export const EducationForm: React.FC<EducationFormProps> = ({ data, onChange }) 
 
             <div className="space-y-2">
               <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">
-                {t('builder.forms.education.fields.description')}{' '}
-                <span className="text-gray-400">({t('common.optional')})</span>
+                {t('builder.forms.education.fields.descriptionOptional')}
               </Label>
               <Textarea
                 value={item.description || ''}

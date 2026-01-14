@@ -37,10 +37,10 @@ export function PaginatedPreview({ resumeData, settings }: PaginatedPreviewProps
 
   const additionalSectionLabels = React.useMemo(
     () => ({
-      technicalSkills: t('resume.additional.technicalSkills'),
-      languages: t('resume.sections.languages'),
-      certifications: t('resume.sections.certifications'),
-      awards: t('resume.sections.awards'),
+      technicalSkills: t('resume.additionalLabels.technicalSkills'),
+      languages: t('resume.additionalLabels.languages'),
+      certifications: t('resume.additionalLabels.certifications'),
+      awards: t('resume.additionalLabels.awards'),
     }),
     [t]
   );

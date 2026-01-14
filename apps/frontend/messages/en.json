@@ -189,10 +189,12 @@
       "matchingKeywordsHighlighted": "(matching keywords highlighted)",
       "jobDescriptionTitle": "Job Description",
       "at": "at",
+      "atSeparator": " at ",
       "roleSeparator": "-",
       "aboutTitle": "About JD Match",
       "aboutDescription": "This view shows how well your resume matches the job description. Keywords from the JD are highlighted in yellow on your resume, helping you see which skills and terms are already covered.",
       "highlightedKeywordsTitle": "Highlighted Keywords",
+      "highlightedKeywordsDescriptionTemplate": "Words highlighted in __COLOR__ appear in both the job description and your resume. A higher match rate suggests better alignment with the job requirements.",
       "highlightedKeywordsDescriptionPrefix": "Words highlighted in",
       "highlightColor": "yellow",
       "highlightedKeywordsDescriptionSuffix": "appear in both the job description and your resume. A higher match rate suggests better alignment with the job requirements.",
@@ -255,7 +257,8 @@
         "fields": {
           "institution": "Institution",
           "degree": "Degree",
-          "description": "Description"
+          "description": "Description",
+          "descriptionOptional": "Description (Optional)"
         },
         "placeholders": {
           "institution": "University Name",
@@ -503,6 +506,7 @@
     "errors": {
       "unableToConnectBackend": "Unable to connect to backend. Is the server running?",
       "apiKeyRequired": "API key is required for the selected provider.",
+      "unknownProvider": "Unknown provider returned from backend: {provider}",
       "unableToSaveConfiguration": "Unable to save configuration",
       "failedToClearApiKeys": "Failed to clear API keys. Please try again.",
       "failedToResetDatabase": "Failed to reset database. Please try again."
@@ -551,6 +555,12 @@
     },
     "additional": {
       "technicalSkills": "Technical Skills"
+    },
+    "additionalLabels": {
+      "technicalSkills": "Technical Skills:",
+      "languages": "Languages:",
+      "certifications": "Certifications:",
+      "awards": "Awards:"
     }
   },
   "coverLetter": {

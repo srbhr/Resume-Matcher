@@ -52,9 +52,7 @@ export function HighlightedResumeView({ resumeData, keywords }: HighlightedResum
                   <HighlightedText text={exp.title || ''} keywords={keywords} />
                   {exp.company && (
                     <span className="text-gray-600">
-                      {' '}
-                      {t('builder.jdMatch.at')}
-                      {' '}
+                      {t('builder.jdMatch.atSeparator')}
                       <HighlightedText text={exp.company} keywords={keywords} />
                     </span>
                   )}

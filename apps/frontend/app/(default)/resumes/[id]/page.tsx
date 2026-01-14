@@ -42,6 +42,7 @@ export default function ResumeViewerPage() {
     const loadResume = async () => {
       try {
         setLoading(true);
+        setError(null);
         const data = await fetchResume(resumeId);
 
         // Get processing status
@@ -51,6 +52,7 @@ export default function ResumeViewerPage() {
         // Prioritize processed_resume if available (structured JSON)
         if (data.processed_resume) {
           setResumeData(data.processed_resume as ResumeData);
+          setError(null);
         } else if (status === 'failed') {
           setError(
             t('resumeViewer.errors.processingFailed')
@@ -87,16 +89,17 @@ export default function ResumeViewerPage() {
   };
 
   // Reload resume data after enrichment
-  const reloadResumeData = async () => {
-    try {
-      const data = await fetchResume(resumeId);
-      if (data.processed_resume) {
-        setResumeData(data.processed_resume as ResumeData);
+    const reloadResumeData = async () => {
+      try {
+        const data = await fetchResume(resumeId);
+        if (data.processed_resume) {
+          setResumeData(data.processed_resume as ResumeData);
+          setError(null);
+        }
+      } catch (err) {
+        console.error('Failed to reload resume:', err);
       }
-    } catch (err) {
-      console.error('Failed to reload resume:', err);
-    }
-  };
+    };
 
   const handleEnrichmentComplete = () => {
     setShowEnrichmentModal(false);
@@ -228,10 +231,10 @@ export default function ResumeViewerPage() {
               <Resume
                 resumeData={localizedResumeData || resumeData}
                 additionalSectionLabels={{
-                  technicalSkills: t('resume.additional.technicalSkills'),
-                  languages: t('resume.sections.languages'),
-                  certifications: t('resume.sections.certifications'),
-                  awards: t('resume.sections.awards'),
+                  technicalSkills: t('resume.additionalLabels.technicalSkills'),
+                  languages: t('resume.additionalLabels.languages'),
+                  certifications: t('resume.additionalLabels.certifications'),
+                  awards: t('resume.additionalLabels.awards'),
                 }}
               />
             </div>

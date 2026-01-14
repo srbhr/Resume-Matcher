@@ -189,6 +189,7 @@
       "matchingKeywordsHighlighted": "（已高亮匹配关键词）",
       "jobDescriptionTitle": "职位描述",
       "at": "在",
+      "atSeparator": " 在 ",
       "roleSeparator": "—",
       "aboutTitle": "关于 JD 匹配",
       "aboutDescription": "该视图用于展示简历与职位描述（JD）的匹配程度。职位描述中的关键词会在简历中以黄色高亮，帮助你快速查看已覆盖的技能与术语。",
@@ -196,6 +197,7 @@
       "highlightedKeywordsDescriptionPrefix": "被标记为",
       "highlightColor": "黄色",
       "highlightedKeywordsDescriptionSuffix": "的词同时出现在职位描述与简历中。匹配度越高，通常意味着与岗位要求的契合度更好。",
+      "highlightedKeywordsDescriptionTemplate": "被标记为__COLOR__的词同时出现在职位描述与简历中。匹配度越高，通常意味着与岗位要求的契合度更好。",
       "tipsTitle": "提示",
       "tips": {
         "items": {
@@ -255,7 +257,8 @@
         "fields": {
           "institution": "学校/机构",
           "degree": "学位/专业",
-          "description": "描述"
+          "description": "描述",
+          "descriptionOptional": "描述（可选）"
         },
         "placeholders": {
           "institution": "某某大学",
@@ -503,6 +506,7 @@
     "errors": {
       "unableToConnectBackend": "无法连接到后端。服务是否正在运行？",
       "apiKeyRequired": "所选提供商需要 API 密钥。",
+      "unknownProvider": "后端返回未知提供商：{provider}",
       "unableToSaveConfiguration": "无法保存配置",
       "failedToClearApiKeys": "清除 API 密钥失败，请重试。",
       "failedToResetDatabase": "重置数据库失败，请重试。"
@@ -551,6 +555,12 @@
     },
     "additional": {
       "technicalSkills": "技术技能"
+    },
+    "additionalLabels": {
+      "technicalSkills": "技术技能：",
+      "languages": "语言能力：",
+      "certifications": "培训与证书：",
+      "awards": "荣誉奖项："
     }
   },
   "coverLetter": {

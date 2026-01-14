@@ -189,6 +189,7 @@
       "matchingKeywordsHighlighted": "(palabras clave resaltadas)",
       "jobDescriptionTitle": "Descripción del puesto",
       "at": "en",
+      "atSeparator": " en ",
       "roleSeparator": "-",
       "aboutTitle": "Sobre la coincidencia JD",
       "aboutDescription": "Esta vista muestra cómo de bien tu currículum coincide con la descripción del puesto. Las palabras clave de la JD se resaltan en amarillo para ayudarte a ver qué habilidades y términos ya están cubiertos.",
@@ -196,6 +197,7 @@
       "highlightedKeywordsDescriptionPrefix": "Las palabras resaltadas en",
       "highlightColor": "amarillo",
       "highlightedKeywordsDescriptionSuffix": "aparecen tanto en la descripción del puesto como en tu currículum. Una mayor coincidencia sugiere mejor alineación con los requisitos.",
+      "highlightedKeywordsDescriptionTemplate": "Las palabras resaltadas en __COLOR__ aparecen tanto en la descripción del puesto como en tu currículum. Una mayor coincidencia sugiere mejor alineación con los requisitos.",
       "tipsTitle": "Consejos",
       "tips": {
         "items": {
@@ -255,7 +257,8 @@
         "fields": {
           "institution": "Institución",
           "degree": "Título",
-          "description": "Descripción"
+          "description": "Descripción",
+          "descriptionOptional": "Descripción (opcional)"
         },
         "placeholders": {
           "institution": "Nombre de la universidad",
@@ -503,6 +506,7 @@
     "errors": {
       "unableToConnectBackend": "No se pudo conectar al backend. ¿El servidor está en ejecución?",
       "apiKeyRequired": "Se requiere una clave API para el proveedor seleccionado.",
+      "unknownProvider": "Proveedor desconocido devuelto por el backend: {provider}",
       "unableToSaveConfiguration": "No se pudo guardar la configuración",
       "failedToClearApiKeys": "No se pudieron borrar las claves API. Inténtalo de nuevo.",
       "failedToResetDatabase": "No se pudo restablecer la base de datos. Inténtalo de nuevo."
@@ -551,6 +555,12 @@
     },
     "additional": {
       "technicalSkills": "Habilidades técnicas"
+    },
+    "additionalLabels": {
+      "technicalSkills": "Habilidades técnicas:",
+      "languages": "Idiomas:",
+      "certifications": "Certificaciones:",
+      "awards": "Premios:"
     }
   },
   "coverLetter": {

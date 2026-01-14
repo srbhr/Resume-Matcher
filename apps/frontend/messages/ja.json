@@ -188,11 +188,13 @@
       "yourResume": "あなたの履歴書",
       "matchingKeywordsHighlighted": "（一致キーワードをハイライト）",
       "jobDescriptionTitle": "求人内容",
-      "at": "at",
+      "at": "＠",
+      "atSeparator": " @ ",
       "roleSeparator": "—",
       "aboutTitle": "JD一致について",
       "aboutDescription": "このビューでは、履歴書が求人内容（JD）にどれだけ一致しているかを確認できます。JDのキーワードが履歴書内で黄色にハイライトされ、すでに含まれているスキルや用語が分かります。",
       "highlightedKeywordsTitle": "ハイライトされたキーワード",
+      "highlightedKeywordsDescriptionTemplate": "__COLOR__でハイライトされた単語は、求人内容と履歴書の両方に含まれます。一致率が高いほど、要件への適合度が高いことを示します。",
       "highlightedKeywordsDescriptionPrefix": "次の色でハイライトされた単語",
       "highlightColor": "黄色",
       "highlightedKeywordsDescriptionSuffix": "は、求人内容と履歴書の両方に含まれます。一致率が高いほど、要件への適合度が高いことを示します。",
@@ -255,7 +257,8 @@
         "fields": {
           "institution": "学校/機関",
           "degree": "学位",
-          "description": "説明"
+          "description": "説明",
+          "descriptionOptional": "説明（任意）"
         },
         "placeholders": {
           "institution": "大学名",
@@ -503,6 +506,7 @@
     "errors": {
       "unableToConnectBackend": "バックエンドに接続できません。サーバーは起動していますか？",
       "apiKeyRequired": "選択したプロバイダーには API キーが必要です。",
+      "unknownProvider": "バックエンドから未知のプロバイダーが返されました: {provider}",
       "unableToSaveConfiguration": "設定を保存できません",
       "failedToClearApiKeys": "API キーの消去に失敗しました。もう一度お試しください。",
       "failedToResetDatabase": "データベースのリセットに失敗しました。もう一度お試しください。"
@@ -551,6 +555,12 @@
     },
     "additional": {
       "technicalSkills": "技術スキル"
+    },
+    "additionalLabels": {
+      "technicalSkills": "技術スキル：",
+      "languages": "言語：",
+      "certifications": "資格：",
+      "awards": "受賞歴："
     }
   },
   "coverLetter": {

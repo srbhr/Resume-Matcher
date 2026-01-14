@@ -60,6 +60,7 @@ interface CompleteStepProps {
 
 export function CompleteStep({ onClose, updatedCount }: CompleteStepProps) {
   const { t } = useTranslations();
+  const hasUpdatedCount = updatedCount !== undefined;
   return (
     <div className="flex flex-col items-center justify-center h-full min-h-[400px] gap-6">
       <div className="relative">
@@ -68,7 +69,7 @@ export function CompleteStep({ onClose, updatedCount }: CompleteStepProps) {
       <div className="text-center">
         <p className="text-2xl font-mono font-bold">{t('enrichment.complete.title')}</p>
         <p className="text-sm text-gray-500 mt-2 font-mono">
-          {updatedCount ? (
+          {hasUpdatedCount ? (
             updatedCount === 1 ? (
               t('enrichment.complete.updatedCountSingular', { count: updatedCount })
             ) : (

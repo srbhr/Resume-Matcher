@@ -641,16 +641,27 @@ const ResumeBuilderContent = () => {
                     </p>
                   </div>
 
-                  <div className="border-2 border-black bg-yellow-50 p-4">
-                    <h3 className="font-mono text-sm font-bold uppercase mb-2">
-                      {t('builder.jdMatch.highlightedKeywordsTitle')}
-                    </h3>
-                    <p className="text-sm text-gray-600 leading-relaxed">
-                      {t('builder.jdMatch.highlightedKeywordsDescriptionPrefix')}{' '}
-                      <mark className="bg-yellow-200 px-1">{t('builder.jdMatch.highlightColor')}</mark>{' '}
-                      {t('builder.jdMatch.highlightedKeywordsDescriptionSuffix')}
-                    </p>
-                  </div>
+                   <div className="border-2 border-black bg-yellow-50 p-4">
+                     <h3 className="font-mono text-sm font-bold uppercase mb-2">
+                       {t('builder.jdMatch.highlightedKeywordsTitle')}
+                     </h3>
+                     <p className="text-sm text-gray-600 leading-relaxed">
+                      {(() => {
+                        const template = t('builder.jdMatch.highlightedKeywordsDescriptionTemplate');
+                        const parts = template.split('__COLOR__');
+                        if (parts.length < 2) return template;
+                        return (
+                          <>
+                            {parts[0]}
+                            <mark className="bg-yellow-200 px-1">
+                              {t('builder.jdMatch.highlightColor')}
+                            </mark>
+                            {parts.slice(1).join('__COLOR__')}
+                          </>
+                        );
+                      })()}
+                     </p>
+                   </div>
 
                   <div className="border-2 border-black bg-gray-50 p-4">
                     <h3 className="font-mono text-sm font-bold uppercase mb-2">

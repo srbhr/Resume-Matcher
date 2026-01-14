@@ -205,7 +205,9 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
               onClick={handleDeleteClick}
               title={
                 section.isDefault
-                  ? t('builder.sectionHeader.hideSection')
+                  ? section.isVisible
+                    ? t('builder.sectionHeader.hideSection')
+                    : t('builder.sectionHeader.showSection')
                   : t('builder.sectionHeader.deleteSection')
               }
             >

@@ -375,10 +375,10 @@ const AdditionalSection: React.FC<{
   } = additional;
 
   const mergedLabels: AdditionalSectionLabels = {
-    technicalSkills: labels?.technicalSkills ?? 'Technical Skills',
-    languages: labels?.languages ?? 'Languages',
-    certifications: labels?.certifications ?? 'Certifications',
-    awards: labels?.awards ?? 'Awards',
+    technicalSkills: labels?.technicalSkills ?? 'Technical Skills:',
+    languages: labels?.languages ?? 'Languages:',
+    certifications: labels?.certifications ?? 'Certifications:',
+    awards: labels?.awards ?? 'Awards:',
   };
 
   const hasContent =
@@ -395,25 +395,25 @@ const AdditionalSection: React.FC<{
       <div className={`${baseStyles['resume-stack']} ${baseStyles['resume-text-sm']}`}>
         {technicalSkills.length > 0 && (
           <div className="flex">
-            <span className="font-bold w-32 shrink-0">{mergedLabels.technicalSkills}:</span>
+            <span className="font-bold w-32 shrink-0">{mergedLabels.technicalSkills}</span>
             <span>{technicalSkills.join(', ')}</span>
           </div>
         )}
         {languages.length > 0 && (
           <div className="flex">
-            <span className="font-bold w-32 shrink-0">{mergedLabels.languages}:</span>
+            <span className="font-bold w-32 shrink-0">{mergedLabels.languages}</span>
             <span>{languages.join(', ')}</span>
           </div>
         )}
         {certificationsTraining.length > 0 && (
           <div className="flex">
-            <span className="font-bold w-32 shrink-0">{mergedLabels.certifications}:</span>
+            <span className="font-bold w-32 shrink-0">{mergedLabels.certifications}</span>
             <span>{certificationsTraining.join(', ')}</span>
           </div>
         )}
         {awards.length > 0 && (
           <div className="flex">
-            <span className="font-bold w-32 shrink-0">{mergedLabels.awards}:</span>
+            <span className="font-bold w-32 shrink-0">{mergedLabels.awards}</span>
             <span>{awards.join(', ')}</span>
           </div>
         )}

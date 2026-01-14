@@ -106,6 +106,7 @@ export default function SettingsPage() {
 
   // Translations
   const { t } = useTranslations();
+  const providerInfo = PROVIDER_INFO[provider] ?? PROVIDER_INFO['openai'];
 
   // Load LLM config and feature config on mount
   useEffect(() => {
@@ -121,12 +122,20 @@ export default function SettingsPage() {
         if (cancelled) return;
 
         if (llmConfig) {
-          setProvider(llmConfig.provider || 'openai');
-          setModel(llmConfig.model || PROVIDER_INFO['openai'].defaultModel);
+          const providerFromBackend = llmConfig.provider || 'openai';
+          const safeProvider = PROVIDERS.includes(providerFromBackend as LLMProvider)
+            ? (providerFromBackend as LLMProvider)
+            : 'openai';
+          setProvider(safeProvider);
+          setModel(llmConfig.model || PROVIDER_INFO[safeProvider].defaultModel);
           const isMaskedKey = Boolean(llmConfig.api_key) && llmConfig.api_key.includes('*');
           setHasStoredApiKey(Boolean(llmConfig.api_key));
           setApiKey(isMaskedKey ? '' : llmConfig.api_key || '');
           setApiBase(llmConfig.api_base || '');
+
+          if (providerFromBackend !== safeProvider) {
+            setError(t('settings.errors.unknownProvider', { provider: providerFromBackend }));
+          }
         }
 
         if (featureConfig) {
@@ -148,7 +157,7 @@ export default function SettingsPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [t]);
 
   // Handle provider change
   const handleProviderChange = (newProvider: LLMProvider) => {
@@ -216,7 +225,7 @@ export default function SettingsPage() {
       // Build config from current form values
       const testConfig: Partial<LLMConfig> = {
         provider,
-        model: model.trim() || PROVIDER_INFO[provider].defaultModel,
+        model: model.trim() || providerInfo.defaultModel,
         api_base: apiBase.trim() || null,
       };
 
@@ -343,7 +352,7 @@ export default function SettingsPage() {
     return t('settings.systemStatus.lastFetched.hoursAgo', { hours: Math.floor(diff / 3600) });
   };
 
-  const requiresApiKey = PROVIDER_INFO[provider]?.requiresKey ?? true;
+  const requiresApiKey = providerInfo.requiresKey ?? true;
 
   return (
     <div
@@ -584,7 +593,7 @@ export default function SettingsPage() {
                 </div>
                 <p className="text-xs text-gray-500 font-mono">
                   {t('settings.llmConfiguration.selectedProvider', {
-                    provider: PROVIDER_INFO[provider].name,
+                    provider: providerInfo.name,
                   })}
                 </p>
               </div>
@@ -596,12 +605,12 @@ export default function SettingsPage() {
                   id="model"
                   value={model}
                   onChange={(e) => setModel(e.target.value)}
-                  placeholder={PROVIDER_INFO[provider].defaultModel}
+                  placeholder={providerInfo.defaultModel}
                   className="font-mono"
                 />
                 <p className="text-xs text-gray-500 font-mono">
                   {t('settings.llmConfiguration.defaultModel', {
-                    model: PROVIDER_INFO[provider].defaultModel,
+                    model: providerInfo.defaultModel,
                   })}
                 </p>
               </div>

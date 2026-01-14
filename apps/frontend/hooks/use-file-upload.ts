@@ -149,7 +149,7 @@ export const useFileUpload = (
     return `${file.name}-${file.size}-${file.lastModified}-${Math.random().toString(36).substring(2, 9)}`;
   }, []);
 
-  const _uploadFileInternal = async (fileToUpload: FileWithPreview) => {
+  const uploadFileInternal = useCallback(async (fileToUpload: FileWithPreview) => {
     // Ensure fileToUpload.file is a File instance for upload
     if (!(fileToUpload.file instanceof File)) {
       const errorMsg = `Cannot upload "${(fileToUpload.file as FileMetadata).name}"; it's not a valid file object for direct upload.`;
@@ -293,7 +293,7 @@ export const useFileUpload = (
         return { ...prev, files: updatedFiles, errors: newErrors, isUploadingGlobal: false };
       });
     }
-  };
+  }, [onUploadError, onUploadSuccess, uploadUrl]);
 
   const addFilesAndUpload = useCallback(
     (newFilesInput: FileList | File[]) => {
@@ -387,7 +387,7 @@ export const useFileUpload = (
         });
 
         if (uploadUrl) {
-          filesToAddUpdate.forEach((fileToUpload) => _uploadFileInternal(fileToUpload));
+          filesToAddUpdate.forEach((fileToUpload) => uploadFileInternal(fileToUpload));
         } else {
           console.warn('uploadUrl not provided. Files added locally but not uploaded.');
           // If no uploadUrl, mark files as 'pending' or similar if needed, or convert to FileMetadata locally
@@ -433,7 +433,7 @@ export const useFileUpload = (
       createPreview, // Other useCallback deps
       onFilesChange,
       onFilesAdded, // Callbacks
-      // _uploadFileInternal is not directly a dep but its logic is tied to uploadUrl etc.
+      uploadFileInternal,
       // setState itself is stable.
     ]
   );
