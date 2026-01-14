@@ -7,6 +7,8 @@
 
 import type { ResumeData, SectionMeta, SectionType } from '@/components/dashboard/resume-component';
 
+export type TranslationFunction = (key: string, params?: Record<string, string | number>) => string;
+
 /**
  * Default section metadata for backward compatibility.
  * Used when a resume doesn't have sectionMeta defined.
@@ -67,6 +69,60 @@ export const DEFAULT_SECTION_META: SectionMeta[] = [
     order: 5,
   },
 ];
+
+const DEFAULT_SECTION_DISPLAY_NAME_BY_ID: Readonly<Record<string, string>> = Object.freeze(
+  Object.fromEntries(DEFAULT_SECTION_META.map((section) => [section.id, section.displayName]))
+);
+
+const DEFAULT_SECTION_I18N_KEY_BY_ID: Readonly<Record<string, string>> = Object.freeze({
+  personalInfo: 'resume.sections.personalInfo',
+  summary: 'resume.sections.summary',
+  workExperience: 'resume.sections.experience',
+  education: 'resume.sections.education',
+  personalProjects: 'resume.sections.projects',
+  additional: 'resume.sections.skills',
+});
+
+/**
+ * Localize default section display names without overwriting user customizations.
+ *
+ * Rules:
+ * - Only affects built-in sections (isDefault === true)
+ * - Only overwrites when the displayName still equals the original English default
+ */
+export function localizeDefaultSectionMeta(
+  sections: SectionMeta[],
+  t: TranslationFunction
+): SectionMeta[] {
+  return sections.map((section) => {
+    if (!section.isDefault) return section;
+
+    const i18nKey = DEFAULT_SECTION_I18N_KEY_BY_ID[section.id];
+    if (!i18nKey) return section;
+
+    const defaultDisplayName = DEFAULT_SECTION_DISPLAY_NAME_BY_ID[section.id];
+    if (!defaultDisplayName) return section;
+
+    if (section.displayName !== defaultDisplayName) return section;
+
+    return { ...section, displayName: t(i18nKey) };
+  });
+}
+
+/**
+ * Return a ResumeData object with localized default sectionMeta.
+ *
+ * - If resumeData.sectionMeta is missing, it generates it from DEFAULT_SECTION_META.
+ * - If sectionMeta exists, it only localizes untouched default English section names.
+ */
+export function withLocalizedDefaultSections(
+  resumeData: ResumeData,
+  t: TranslationFunction
+): ResumeData {
+  const baseMeta = resumeData.sectionMeta?.length ? resumeData.sectionMeta : DEFAULT_SECTION_META;
+  const localizedMeta = localizeDefaultSectionMeta(baseMeta, t);
+  return { ...resumeData, sectionMeta: localizedMeta };
+}
 
 /**
  * Get section metadata from resume data, falling back to defaults.

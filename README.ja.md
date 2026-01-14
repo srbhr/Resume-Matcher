@@ -94,7 +94,7 @@ Resume Matcher の開発を寄付で支援できます。ご支援はプロジ�
 
 ### 履歴書ビルダー
 
-![Resume Builder](assets/step_5.png)
+![Resume Builder](assets/step_5_ja.png)
 
 求人票を貼り付けると、その職種に合わせた AI 提案の履歴書を生成します。
 
@@ -109,13 +109,13 @@ Resume Matcher の開発を寄付で支援できます。ご支援はプロジ�
 
 求人票と履歴書に基づき、カスタマイズされたカバーレターとメール文面を生成します。
 
-![Cover Letter](assets/cover_letter.png)
+![Cover Letter](assets/cover_letter_ja.png)
 
 ### 履歴書スコアリング（開発中）
 
 履歴書と求人票を比較して、マッチスコアと改善提案を出す機能を開発中です。
 
-![Resume Scoring and Keyword Highlight](assets/keyword_highlighter.png)
+![Resume Scoring and Keyword Highlight](assets/keyword_highlighter_ja.png)
 
 ### PDF 出力
 

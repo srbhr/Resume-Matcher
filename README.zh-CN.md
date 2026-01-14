@@ -90,11 +90,11 @@ Resume Matcher 的工作方式是先建立一份“主简历”，然后针对�
 
 **主简历（Master Resume）**：基于你现有简历创建一份完整的主简历，后续每次投递都从这份主简历中抽取与定制。
 
-![Job Description Input](assets/step_2.png)
+![Job Description Input](assets/step_2_zh-CN.png)
 
 ### 简历生成器
 
-![Resume Builder](assets/step_5.png)
+![Resume Builder](assets/step_5_zh-CN.png)
 
 粘贴职位描述后，获得针对该岗位定制的 AI 简历建议。
 
@@ -109,13 +109,13 @@ Resume Matcher 的工作方式是先建立一份“主简历”，然后针对�
 
 基于职位描述与你的简历，生成定制化的求职信与邮件模板。
 
-![Cover Letter](assets/cover_letter.png)
+![Cover Letter](assets/cover_letter_zh-CN.png)
 
 ### 简历评分（开发中功能）
 
 我们正在开发“简历评分”功能：对比你的简历与职位描述，输出匹配分数，并给出改进建议。
 
-![Resume Scoring and Keyword Highlight](assets/keyword_highlighter.png)
+![Resume Scoring and Keyword Highlight](assets/keyword_highlighter_zh-CN.png)
 
 ### PDF 导出
 
@@ -148,7 +148,7 @@ Resume Matcher 的工作方式是先建立一份“主简历”，然后针对�
 
 ![Installation](assets/how_to_install_resumematcher.png)
 
-更详细的安装与配置说明请查看 **[SETUP.zh-CN.md](SETUP.zh-CN.md)**（也提供 [English](SETUP.md) / [Español](SETUP.es.md) / [日本語](SETUP.ja.md)）。
+更详细的安装与配置说明请查看 **[安装文档](SETUP.zh-CN.md)**（也提供 [English](SETUP.md) / [Español](SETUP.es.md) / [日本語](SETUP.ja.md)）。
 
 ### 前置条件
 

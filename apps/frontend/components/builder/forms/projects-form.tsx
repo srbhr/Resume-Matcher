@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -5,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { Project } from '@/components/dashboard/resume-component';
 import { Plus, Trash2, Github, Globe } from 'lucide-react';
+import { useTranslations } from '@/lib/i18n';
 
 interface ProjectsFormProps {
   data: Project[];
@@ -12,6 +15,8 @@ interface ProjectsFormProps {
 }
 
 export const ProjectsForm: React.FC<ProjectsFormProps> = ({ data, onChange }) => {
+  const { t } = useTranslations();
+
   const handleAdd = () => {
     const newId = Math.max(...data.map((d) => d.id), 0) + 1;
     onChange([
@@ -89,7 +94,7 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({ data, onChange }) =>
           onClick={handleAdd}
           className="rounded-none border-black hover:bg-black hover:text-white transition-colors"
         >
-          <Plus className="w-4 h-4 mr-2" /> Add Project
+          <Plus className="w-4 h-4 mr-2" /> {t('builder.forms.projects.addProject')}
         </Button>
       </div>
 
@@ -108,58 +113,60 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({ data, onChange }) =>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 pr-8">
               <div className="space-y-2">
                 <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">
-                  Project Name
+                  {t('builder.forms.projects.fields.projectName')}
                 </Label>
                 <Input
                   value={item.name || ''}
                   onChange={(e) => handleChange(item.id, 'name', e.target.value)}
-                  placeholder="Resume Matcher"
+                  placeholder={t('builder.forms.projects.placeholders.projectName')}
                   className="rounded-none border-black bg-white"
                 />
               </div>
               <div className="space-y-2">
                 <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">
-                  Role
+                  {t('builder.forms.projects.fields.role')}
                 </Label>
                 <Input
                   value={item.role || ''}
                   onChange={(e) => handleChange(item.id, 'role', e.target.value)}
-                  placeholder="Creator"
+                  placeholder={t('builder.forms.projects.placeholders.role')}
                   className="rounded-none border-black bg-white"
                 />
               </div>
               <div className="space-y-2">
                 <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">
-                  Years <span className="text-gray-400">(Optional)</span>
+                  {t('builder.genericItemForm.fields.years')}{' '}
+                  <span className="text-gray-400">({t('common.optional')})</span>
                 </Label>
                 <Input
                   value={item.years || ''}
                   onChange={(e) => handleChange(item.id, 'years', e.target.value)}
-                  placeholder="2023"
+                  placeholder={t('builder.forms.projects.placeholders.years')}
                   className="rounded-none border-black bg-white"
                 />
               </div>
               <div className="space-y-2">
                 <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">
                   <Github className="w-3 h-3 inline mr-1" />
-                  GitHub <span className="text-gray-400">(Optional)</span>
+                  GitHub <span className="text-gray-400">({t('common.optional')})</span>
                 </Label>
                 <Input
                   value={item.github || ''}
                   onChange={(e) => handleChange(item.id, 'github', e.target.value)}
-                  placeholder="github.com/username/project"
+                  placeholder={t('builder.forms.projects.placeholders.github')}
                   className="rounded-none border-black bg-white"
                 />
               </div>
               <div className="space-y-2 md:col-span-2">
                 <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">
                   <Globe className="w-3 h-3 inline mr-1" />
-                  Website <span className="text-gray-400">(Optional)</span>
+                  {t('builder.forms.projects.fields.website')}{' '}
+                  <span className="text-gray-400">({t('common.optional')})</span>
                 </Label>
                 <Input
                   value={item.website || ''}
                   onChange={(e) => handleChange(item.id, 'website', e.target.value)}
-                  placeholder="https://project-demo.com"
+                  placeholder={t('builder.forms.projects.placeholders.website')}
                   className="rounded-none border-black bg-white"
                 />
               </div>
@@ -168,7 +175,7 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({ data, onChange }) =>
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">
-                  Description Points
+                  {t('builder.genericItemForm.fields.descriptionPoints')}
                 </Label>
                 <Button
                   variant="ghost"
@@ -176,7 +183,7 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({ data, onChange }) =>
                   onClick={() => handleAddDescription(item.id)}
                   className="h-6 text-xs text-blue-700 hover:text-blue-800 hover:bg-blue-50"
                 >
-                  <Plus className="w-3 h-3 mr-1" /> Add Point
+                  <Plus className="w-3 h-3 mr-1" /> {t('builder.genericItemForm.actions.addPoint')}
                 </Button>
               </div>
               {item.description?.map((desc, idx) => (
@@ -185,7 +192,7 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({ data, onChange }) =>
                     <RichTextEditor
                       value={desc}
                       onChange={(html) => handleDescriptionChange(item.id, idx, html)}
-                      placeholder="Project detail..."
+                      placeholder={t('builder.forms.projects.placeholders.description')}
                       minHeight="60px"
                     />
                   </div>
@@ -205,14 +212,16 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({ data, onChange }) =>
 
         {data.length === 0 && (
           <div className="text-center py-12 bg-gray-50 border border-dashed border-black">
-            <p className="font-mono text-sm text-gray-500 mb-4">{'// NO PROJECTS ENTRIES'}</p>
+            <p className="font-mono text-sm text-gray-500 mb-4">
+              {t('builder.genericItemForm.noEntries', { label: t('resume.sections.projects') })}
+            </p>
             <Button
               variant="outline"
               size="sm"
               onClick={handleAdd}
               className="rounded-none border-black"
             >
-              <Plus className="w-4 h-4 mr-2" /> Add First Project
+              <Plus className="w-4 h-4 mr-2" /> {t('builder.forms.projects.addFirstProject')}
             </Button>
           </div>
         )}
