@@ -211,6 +211,49 @@ export async function updateLanguageConfig(update: LanguageConfigUpdate): Promis
   return res.json();
 }
 
+export interface PromptOption {
+  id: string;
+  label: string;
+  description: string;
+}
+
+export interface PromptConfig {
+  default_prompt_id: string;
+  prompt_options: PromptOption[];
+}
+
+export interface PromptConfigUpdate {
+  default_prompt_id?: string;
+}
+
+// Fetch prompt configuration
+export async function fetchPromptConfig(): Promise<PromptConfig> {
+  const res = await apiFetch('/config/prompts', { credentials: 'include' });
+
+  if (!res.ok) {
+    throw new Error(`Failed to load prompt config (status ${res.status}).`);
+  }
+
+  return res.json();
+}
+
+// Update prompt configuration
+export async function updatePromptConfig(update: PromptConfigUpdate): Promise<PromptConfig> {
+  const res = await apiFetch('/config/prompts', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(update),
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || `Failed to update prompt config (status ${res.status}).`);
+  }
+
+  return res.json();
+}
+
 // API Key Management types
 export type ApiKeyProvider = 'openai' | 'anthropic' | 'google' | 'openrouter' | 'deepseek';
 

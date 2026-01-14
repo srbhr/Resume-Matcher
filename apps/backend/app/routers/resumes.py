@@ -40,6 +40,7 @@ from app.services.cover_letter import (
     generate_cover_letter,
     generate_outreach_message,
 )
+from app.prompts import DEFAULT_IMPROVE_PROMPT_ID, IMPROVE_PROMPT_OPTIONS
 
 
 def _load_config() -> dict:
@@ -60,6 +61,14 @@ def _get_content_language() -> str:
     config = _load_config()
     # Use content_language, fall back to legacy 'language' field, then default to 'en'
     return config.get("content_language", config.get("language", "en"))
+
+
+def _get_default_prompt_id() -> str:
+    """Get configured default prompt id from config file."""
+    config = _load_config()
+    option_ids = {option["id"] for option in IMPROVE_PROMPT_OPTIONS}
+    prompt_id = config.get("default_prompt_id", DEFAULT_IMPROVE_PROMPT_ID)
+    return prompt_id if prompt_id in option_ids else DEFAULT_IMPROVE_PROMPT_ID
 
 
 router = APIRouter(prefix="/resumes", tags=["Resumes"])
@@ -250,11 +259,14 @@ async def improve_resume_endpoint(
         job_keywords = await extract_job_keywords(job["content"])
 
         # Generate improved resume in the configured language
+        prompt_id = request.prompt_id or _get_default_prompt_id()
+
         improved_data = await improve_resume(
             original_resume=resume["content"],
             job_description=job["content"],
             job_keywords=job_keywords,
             language=language,
+            prompt_id=prompt_id,
         )
 
         # Convert improved data to JSON string for storage

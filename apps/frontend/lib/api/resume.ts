@@ -90,12 +90,17 @@ export async function uploadJobDescriptions(
 }
 
 /** Improves the resume and returns the full preview object */
-export async function improveResume(resumeId: string, jobId: string): Promise<ImprovedResult> {
+export async function improveResume(
+  resumeId: string,
+  jobId: string,
+  promptId?: string
+): Promise<ImprovedResult> {
   let response: Response;
   try {
     response = await apiPost('/resumes/improve', {
       resume_id: resumeId,
       job_id: jobId,
+      prompt_id: promptId ?? null,
     });
   } catch (networkError) {
     console.error('Network error during improveResume:', networkError);

@@ -15,12 +15,16 @@ from app.schemas import (
     FeatureConfigResponse,
     LanguageConfigRequest,
     LanguageConfigResponse,
+    PromptConfigRequest,
+    PromptConfigResponse,
+    PromptOption,
     ApiKeyProviderStatus,
     ApiKeyStatusResponse,
     ApiKeysUpdateRequest,
     ApiKeysUpdateResponse,
     ResetDatabaseRequest,
 )
+from app.prompts import DEFAULT_IMPROVE_PROMPT_ID, IMPROVE_PROMPT_OPTIONS
 from app.config import (
     get_api_keys_from_config,
     save_api_keys_to_config,
@@ -59,6 +63,12 @@ def _mask_api_key(key: str) -> str:
     if len(key) <= 8:
         return "*" * len(key)
     return key[:4] + "*" * (len(key) - 8) + key[-4:]
+
+
+def _get_prompt_options() -> list[PromptOption]:
+    """Return available prompt options for resume tailoring."""
+    return [PromptOption(**option) for option in IMPROVE_PROMPT_OPTIONS]
+
 
 async def _log_llm_health_check(config: LLMConfig) -> None:
     """Run a best-effort health check and log outcome without affecting API responses."""
@@ -258,6 +268,54 @@ async def update_language_config(
         ui_language=stored.get("ui_language", legacy_language),
         content_language=stored.get("content_language", legacy_language),
         supported_languages=SUPPORTED_LANGUAGES,
+    )
+
+
+@router.get("/prompts", response_model=PromptConfigResponse)
+async def get_prompt_config() -> PromptConfigResponse:
+    """Get current prompt configuration for resume tailoring."""
+    stored = _load_config()
+    options = _get_prompt_options()
+    option_ids = {option.id for option in options}
+    default_prompt_id = stored.get("default_prompt_id", DEFAULT_IMPROVE_PROMPT_ID)
+    if default_prompt_id not in option_ids:
+        default_prompt_id = DEFAULT_IMPROVE_PROMPT_ID
+
+    return PromptConfigResponse(
+        default_prompt_id=default_prompt_id,
+        prompt_options=options,
+    )
+
+
+@router.put("/prompts", response_model=PromptConfigResponse)
+async def update_prompt_config(
+    request: PromptConfigRequest,
+) -> PromptConfigResponse:
+    """Update prompt configuration for resume tailoring."""
+    stored = _load_config()
+    options = _get_prompt_options()
+    option_ids = {option.id for option in options}
+
+    if request.default_prompt_id is not None:
+        if request.default_prompt_id not in option_ids:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Unsupported prompt id: "
+                    f"{request.default_prompt_id}. Supported: {sorted(option_ids)}"
+                ),
+            )
+        stored["default_prompt_id"] = request.default_prompt_id
+
+    _save_config(stored)
+
+    default_prompt_id = stored.get("default_prompt_id", DEFAULT_IMPROVE_PROMPT_ID)
+    if default_prompt_id not in option_ids:
+        default_prompt_id = DEFAULT_IMPROVE_PROMPT_ID
+
+    return PromptConfigResponse(
+        default_prompt_id=default_prompt_id,
+        prompt_options=options,
     )
 
 

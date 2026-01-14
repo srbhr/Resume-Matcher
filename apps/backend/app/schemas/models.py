@@ -274,6 +274,7 @@ class ImproveResumeRequest(BaseModel):
 
     resume_id: str
     job_id: str
+    prompt_id: str | None = None
 
 
 class ImprovementSuggestion(BaseModel):
@@ -350,6 +351,27 @@ class LanguageConfigResponse(BaseModel):
     ui_language: str = "en"  # Interface language
     content_language: str = "en"  # Generated content language
     supported_languages: list[str] = ["en", "es", "zh", "ja"]
+
+
+class PromptOption(BaseModel):
+    """Prompt option for resume tailoring."""
+
+    id: str
+    label: str
+    description: str
+
+
+class PromptConfigRequest(BaseModel):
+    """Request to update prompt settings."""
+
+    default_prompt_id: str | None = None
+
+
+class PromptConfigResponse(BaseModel):
+    """Response for prompt settings."""
+
+    default_prompt_id: str
+    prompt_options: list[PromptOption]
 
 
 # API Key Management Models

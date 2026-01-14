@@ -390,6 +390,22 @@
     "pasteJobDescription": "粘贴职位描述",
     "pasteJobDescriptionBelow": "在下方粘贴职位描述",
     "jobDescriptionPlaceholder": "在此粘贴职位描述...",
+    "promptLabel": "匹配强度",
+    "promptDescription": "选择与职位描述对齐的程度。",
+    "promptOptions": {
+      "nudge": {
+        "label": "轻度调整",
+        "description": "最小化修改以更好匹配现有经验。"
+      },
+      "keywords": {
+        "label": "关键词增强",
+        "description": "不改变角色或范围，融入相关关键词。"
+      },
+      "full": {
+        "label": "完全定制",
+        "description": "基于职位描述进行全面定制。"
+      }
+    },
     "analyzeJob": "分析职位",
     "generateTailored": "生成定制简历",
     "setupRequiredTitle": "[ 需要配置 ]",
@@ -494,6 +510,11 @@
         "label": "冷启动外联消息",
         "description": "生成用于 LinkedIn 或邮件的社交/外联消息"
       }
+    },
+    "promptSettings": {
+      "title": "提示词设置",
+      "description": "选择用于简历定制的默认提示词。",
+      "defaultLabel": "默认定制提示词"
     },
     "footer": {
       "status": {

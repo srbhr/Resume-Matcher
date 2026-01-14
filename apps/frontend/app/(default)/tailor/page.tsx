@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useResumePreview } from '@/components/common/resume_previewer_context';
 import { uploadJobDescriptions, improveResume } from '@/lib/api/resume';
+import { fetchPromptConfig, type PromptOption } from '@/lib/api/config';
+import { Dropdown } from '@/components/ui/dropdown';
 import { useStatusCache } from '@/lib/context/status-cache';
 import { Loader2, ArrowLeft, AlertTriangle, Settings } from 'lucide-react';
 import { useTranslations } from '@/lib/i18n';
@@ -17,6 +19,9 @@ export default function TailorPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [masterResumeId, setMasterResumeId] = useState<string | null>(null);
+  const [promptOptions, setPromptOptions] = useState<PromptOption[]>([]);
+  const [selectedPromptId, setSelectedPromptId] = useState('keywords');
+  const [promptLoading, setPromptLoading] = useState(false);
 
   const router = useRouter();
   const { setImprovedData } = useResumePreview();
@@ -40,6 +45,36 @@ export default function TailorPage() {
     }
   }, [router]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadPromptConfig = async () => {
+      setPromptLoading(true);
+      try {
+        const config = await fetchPromptConfig();
+        if (!cancelled) {
+          setPromptOptions(config.prompt_options || []);
+          setSelectedPromptId(config.default_prompt_id || 'keywords');
+        }
+      } catch (err) {
+        console.error('Failed to load prompt config', err);
+      } finally {
+        if (!cancelled) {
+          setPromptLoading(false);
+        }
+      }
+    };
+
+    loadPromptConfig();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handleTextareaKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter') e.stopPropagation();
+  };
+
   const handleGenerate = async () => {
     if (!jobDescription.trim() || !masterResumeId) return;
 
@@ -59,7 +94,7 @@ export default function TailorPage() {
       incrementJobs(); // Update cached counter
 
       // 2. Improve Resume
-      const result = await improveResume(masterResumeId, jobId);
+      const result = await improveResume(masterResumeId, jobId, selectedPromptId);
       incrementImprovements(); // Update cached counter
       incrementResumes(); // New tailored resume created
 
@@ -144,12 +179,42 @@ export default function TailorPage() {
         )}
 
         <div className="space-y-6">
+          <Dropdown
+            options={
+              promptOptions.length
+                ? promptOptions
+                : [
+                    {
+                      id: 'nudge',
+                      label: t('tailor.promptOptions.nudge.label'),
+                      description: t('tailor.promptOptions.nudge.description'),
+                    },
+                    {
+                      id: 'keywords',
+                      label: t('tailor.promptOptions.keywords.label'),
+                      description: t('tailor.promptOptions.keywords.description'),
+                    },
+                    {
+                      id: 'full',
+                      label: t('tailor.promptOptions.full.label'),
+                      description: t('tailor.promptOptions.full.description'),
+                    },
+                  ]
+            }
+            value={selectedPromptId}
+            onChange={setSelectedPromptId}
+            label={t('tailor.promptLabel')}
+            description={t('tailor.promptDescription')}
+            disabled={isLoading || promptLoading}
+          />
+
           <div className="relative">
             <Textarea
               placeholder={t('tailor.jobDescriptionPlaceholder')}
               className="min-h-[300px] font-mono text-sm bg-gray-50 border-2 border-black focus:ring-0 focus:border-blue-700 resize-none p-4 rounded-none shadow-inner"
               value={jobDescription}
               onChange={(e) => setJobDescription(e.target.value)}
+              onKeyDown={handleTextareaKeyDown}
               disabled={isLoading}
             />
             <div className="absolute bottom-2 right-2 text-xs font-mono text-gray-400 pointer-events-none">
