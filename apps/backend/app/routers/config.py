@@ -1,6 +1,7 @@
 """LLM configuration endpoints."""
 
 import json
+import logging
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException
@@ -77,7 +78,12 @@ async def get_llm_config_endpoint() -> LLMConfigResponse:
 async def update_llm_config(request: LLMConfigRequest) -> LLMConfigResponse:
     """Update LLM configuration.
 
-    Validates the new configuration before saving.
+    Saves the configuration and returns it (API key masked).
+
+    Note: We intentionally do NOT hard-fail the update based on a live health check.
+    Users may configure proxies/aggregators or temporarily unavailable endpoints and
+    still need to persist the configuration. Connectivity can be verified via
+    `/config/llm-test` and the System Status panel.
     """
     stored = _load_config()
 
@@ -91,7 +97,7 @@ async def update_llm_config(request: LLMConfigRequest) -> LLMConfigResponse:
     if request.api_base is not None:
         stored["api_base"] = request.api_base
 
-    # Validate the new configuration
+    # Build normalized config for response
     test_config = LLMConfig(
         provider=stored.get("provider", settings.llm_provider),
         model=stored.get("model", settings.llm_model),
@@ -99,15 +105,22 @@ async def update_llm_config(request: LLMConfigRequest) -> LLMConfigResponse:
         api_base=stored.get("api_base", settings.llm_api_base),
     )
 
-    health = await check_llm_health(test_config)
-    if not health["healthy"]:
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid LLM configuration",
-        )
-
-    # Save validated config
+    # Save config regardless of health check outcome (see docstring).
     _save_config(stored)
+
+    # Best-effort health check for server-side logs/diagnostics.
+    try:
+        health = await check_llm_health(test_config)
+        if not health.get("healthy", False):
+            logging.warning(
+                "LLM config saved but health check failed",
+                extra={"provider": test_config.provider, "model": test_config.model},
+            )
+    except Exception:
+        logging.exception(
+            "LLM config saved but health check raised exception",
+            extra={"provider": test_config.provider, "model": test_config.model},
+        )
 
     return LLMConfigResponse(
         provider=test_config.provider,
