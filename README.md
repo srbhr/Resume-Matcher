@@ -6,6 +6,8 @@
 
 [𝙹𝚘𝚒𝚗 𝙳𝚒𝚜𝚌𝚘𝚛𝚍](https://dsc.gg/resume-matcher) ✦ [𝚆𝚎𝚋𝚜𝚒𝚝𝚎](https://resumematcher.fyi) ✦ [𝙷𝚘𝚠 𝚝𝚘 𝙸𝚗𝚜𝚝𝚊𝚕𝚕](https://resumematcher.fyi/docs/installation) ✦ [𝙲𝚘𝚗𝚝𝚛𝚒𝚋𝚞𝚝𝚘𝚛𝚜](#contributors) ✦ [𝙳𝚘𝚗𝚊𝚝𝚎](#support-the-development-by-donating) ✦ [𝚃𝚠𝚒𝚝𝚝𝚎𝚛/𝚇](https://twitter.com/srbhrai) ✦ [𝙻𝚒𝚗𝚔𝚎𝚍𝙸𝚗](https://www.linkedin.com/company/resume-matcher/)
 
+**English** | [Español](README.es.md) | [简体中文](README.zh-CN.md) | [日本語](README.ja.md)
+
 Create tailored resumes for each job application with AI-powered suggestions. Works locally with Ollama or connect to your favorite LLM provider via API.
 
 ![Resume Matcher Demo](assets/Resume_Matcher_Demo_2.gif)
@@ -68,6 +70,7 @@ We are grateful to our sponsors who help keep this project going. If you find Re
 |---------|-------------|
 | [APIDECK](https://apideck.com?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) | One API to connect your app to 200+ SaaS platforms (accounting, HRIS, CRM, file storage). Build integrations once, not 50 times. 🌐 [apideck.com](https://apideck.com?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) |
 
+<a id="support-the-development-by-donating"></a>
 ## Support the Development by Donating
 
 ![donate](assets/supporting_resume_matcher.png)
@@ -140,11 +143,12 @@ If you have any suggestions or feature requests, please feel free to open an iss
 - AI Canvas for crafting impactful, metric-driven resume content
 - Multi-job description optimization
 
+<a id="how-to-install"></a>
 ## How to Install
 
 ![Installation](assets/how_to_install_resumematcher.png)
 
-For detailed setup instructions, see the **[SETUP.md](SETUP.md)** guide.
+For detailed setup instructions, see **[SETUP.md](SETUP.md)** (English) or: [Español](SETUP.es.md), [简体中文](SETUP.zh-CN.md), [日本語](SETUP.ja.md).
 
 ### Prerequisites
 
@@ -218,6 +222,7 @@ We welcome contributions from everyone! Whether you're a developer, designer, or
 
 Check out the roadmap if you would like to work on the features that are planned for the future. If you have any suggestions or feature requests, please feel free to open an issue on GitHub and discuss it on our [Discord](https://dsc.gg/resume-matcher) server.
 
+<a id="contributors"></a>
 ## Contributors
 
 ![Contributors](assets/contributors.png)
