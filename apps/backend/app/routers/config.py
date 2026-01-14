@@ -4,7 +4,7 @@ import json
 import logging
 from pathlib import Path
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, BackgroundTasks, HTTPException
 
 from app.config import settings
 from app.llm import check_llm_health, LLMConfig
@@ -60,6 +60,21 @@ def _mask_api_key(key: str) -> str:
         return "*" * len(key)
     return key[:4] + "*" * (len(key) - 8) + key[-4:]
 
+async def _log_llm_health_check(config: LLMConfig) -> None:
+    """Run a best-effort health check and log outcome without affecting API responses."""
+    try:
+        health = await check_llm_health(config)
+        if not health.get("healthy", False):
+            logging.warning(
+                "LLM config saved but health check failed",
+                extra={"provider": config.provider, "model": config.model},
+            )
+    except Exception:
+        logging.exception(
+            "LLM config saved but health check raised exception",
+            extra={"provider": config.provider, "model": config.model},
+        )
+
 
 @router.get("/llm-api-key", response_model=LLMConfigResponse)
 async def get_llm_config_endpoint() -> LLMConfigResponse:
@@ -75,7 +90,10 @@ async def get_llm_config_endpoint() -> LLMConfigResponse:
 
 
 @router.put("/llm-api-key", response_model=LLMConfigResponse)
-async def update_llm_config(request: LLMConfigRequest) -> LLMConfigResponse:
+async def update_llm_config(
+    request: LLMConfigRequest,
+    background_tasks: BackgroundTasks,
+) -> LLMConfigResponse:
     """Update LLM configuration.
 
     Saves the configuration and returns it (API key masked).
@@ -108,19 +126,8 @@ async def update_llm_config(request: LLMConfigRequest) -> LLMConfigResponse:
     # Save config regardless of health check outcome (see docstring).
     _save_config(stored)
 
-    # Best-effort health check for server-side logs/diagnostics.
-    try:
-        health = await check_llm_health(test_config)
-        if not health.get("healthy", False):
-            logging.warning(
-                "LLM config saved but health check failed",
-                extra={"provider": test_config.provider, "model": test_config.model},
-            )
-    except Exception:
-        logging.exception(
-            "LLM config saved but health check raised exception",
-            extra={"provider": test_config.provider, "model": test_config.model},
-        )
+    # Best-effort health check for server-side logs/diagnostics (do not block response).
+    background_tasks.add_task(_log_llm_health_check, test_config)
 
     return LLMConfigResponse(
         provider=test_config.provider,
