@@ -2,12 +2,22 @@
 
 import React, { useMemo } from 'react';
 import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import {
   ResumeData,
   PersonalInfo,
-  Experience,
-  Education,
-  Project,
-  AdditionalInfo,
   SectionMeta,
   SectionType,
   CustomSection,
@@ -23,6 +33,7 @@ import { GenericTextForm } from './forms/generic-text-form';
 import { GenericItemForm } from './forms/generic-item-form';
 import { GenericListForm } from './forms/generic-list-form';
 import { AddSectionButton } from './add-section-dialog';
+import { DraggableSectionWrapper } from './draggable-section-wrapper';
 import {
   getSectionMeta,
   getAllSections,
@@ -152,6 +163,51 @@ export const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, onUpdate }) 
       if (s.id === below.id) return { ...s, order: current.order };
       return s;
     });
+    handleSectionMetaUpdate(updatedSections);
+  };
+
+  // Configure drag-and-drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  // Handler for drag end event
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (!over || active.id === over.id) return;
+
+    const sorted = [...allSections].sort((a, b) => a.order - b.order);
+    const oldIndex = sorted.findIndex((s) => s.id === active.id);
+    const newIndex = sorted.findIndex((s) => s.id === over.id);
+
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    // Prevent moving above personalInfo
+    if (sorted[newIndex].id === 'personalInfo') return;
+
+    // Create new order by swapping the order values
+    const updatedSections = allSections.map((section) => {
+      if (section.id === active.id) {
+        return { ...section, order: sorted[newIndex].order };
+      }
+      if (oldIndex < newIndex) {
+        // Moving down: shift items up
+        if (section.order > sorted[oldIndex].order && section.order <= sorted[newIndex].order) {
+          return { ...section, order: section.order - 1 };
+        }
+      } else {
+        // Moving up: shift items down
+        if (section.order >= sorted[newIndex].order && section.order < sorted[oldIndex].order) {
+          return { ...section, order: section.order + 1 };
+        }
+      }
+      return section;
+    });
+
     handleSectionMetaUpdate(updatedSections);
   };
 
@@ -319,20 +375,32 @@ export const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, onUpdate }) 
   };
 
   return (
-    <div className="space-y-6 pb-20">
-      {sortedAllSectionsForDisplay.map((section, index) => {
-        const isFirst = index === 0 || section.id === 'personalInfo';
-        const isLast = index === sortedAllSectionsForDisplay.length - 1;
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <SortableContext
+        items={sortedAllSections.map((s) => s.id)}
+        strategy={verticalListSortingStrategy}
+      >
+        <div className="space-y-6 pb-20">
+          {sortedAllSections.map((section, index) => {
+            const isFirst = index === 0 || section.id === 'personalInfo';
+            const isLast = index === sortedAllSections.length - 1;
+            const isPersonalInfo = section.id === 'personalInfo';
 
-        if (section.isDefault) {
-          return <div key={section.id}>{renderDefaultSection(section, isFirst, isLast)}</div>;
-        } else {
-          return <div key={section.id}>{renderCustomSection(section, isFirst, isLast)}</div>;
-        }
-      })}
+            const sectionContent = section.isDefault
+              ? renderDefaultSection(section, isFirst, isLast)
+              : renderCustomSection(section, isFirst, isLast);
 
-      {/* Add Section Button */}
-      <AddSectionButton onAdd={handleAddSection} />
-    </div>
+            return (
+              <DraggableSectionWrapper key={section.id} id={section.id} disabled={isPersonalInfo}>
+                {sectionContent}
+              </DraggableSectionWrapper>
+            );
+          })}
+
+          {/* Add Section Button */}
+          <AddSectionButton onAdd={handleAddSection} />
+        </div>
+      </SortableContext>
+    </DndContext>
   );
 };
