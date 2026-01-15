@@ -6,7 +6,7 @@ import asyncio
 import os
 import sys
 from pathlib import Path
-from typing import Awaitable, Optional
+from typing import Awaitable, NoReturn, Optional
 
 from playwright.async_api import (
     Browser,
@@ -26,6 +26,7 @@ class PDFRenderError(Exception):
 _playwright = None
 _browser: Optional[Browser] = None
 _init_lock = asyncio.Lock()  # Lock to prevent race condition during initialization
+_subprocess_lock = asyncio.Lock()
 _subprocess_supported = True
 
 
@@ -180,7 +181,7 @@ async def _render_resume_pdf_in_thread(
     )
 
 
-def _raise_playwright_error(error: PlaywrightError, url: str) -> None:
+def _raise_playwright_error(error: PlaywrightError, url: str) -> NoReturn:
     error_msg = str(error)
     if "Executable doesn't exist" in error_msg:
         exe = sys.executable.replace("\\", "/")
@@ -244,18 +245,25 @@ async def render_resume_pdf(
     pdf_format = _resolve_pdf_format(page_size)
     pdf_margins = _resolve_pdf_margins(margins)
 
-    if _browser is None and _subprocess_supported:
+    async with _subprocess_lock:
+        subprocess_supported = _subprocess_supported
+
+    if _browser is None and subprocess_supported:
         if not _loop_supports_subprocess():
-            _subprocess_supported = False
+            async with _subprocess_lock:
+                _subprocess_supported = False
+            subprocess_supported = False
         else:
             try:
                 await init_pdf_renderer()
             except NotImplementedError:
-                _subprocess_supported = False
+                async with _subprocess_lock:
+                    _subprocess_supported = False
+                subprocess_supported = False
             except PlaywrightError as e:
                 _raise_playwright_error(e, url)
 
-    if not _subprocess_supported:
+    if not subprocess_supported:
         try:
             return await _render_resume_pdf_in_thread(
                 url, selector, pdf_format, pdf_margins

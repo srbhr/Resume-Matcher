@@ -78,10 +78,9 @@ const buildInitialData = (t: Translate): ResumeData => ({
 const ResumeBuilderContent = () => {
   const { t } = useTranslations();
   const { uiLanguage } = useLanguage();
-  const initialData = useMemo(() => buildInitialData(t), [t]);
-  const [resumeData, setResumeData] = useState<ResumeData>(() => initialData);
+  const [resumeData, setResumeData] = useState<ResumeData>(() => buildInitialData(t));
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [lastSavedData, setLastSavedData] = useState<ResumeData>(() => initialData);
+  const [lastSavedData, setLastSavedData] = useState<ResumeData>(() => buildInitialData(t));
   const [isSaving, setIsSaving] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [, setLoadingState] = useState<'idle' | 'loading' | 'loaded' | 'error'>('idle');
@@ -91,6 +90,19 @@ const ResumeBuilderContent = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const resumeId = searchParams.get('id');
+
+  useEffect(() => {
+    if (resumeId || hasUnsavedChanges || improvedData?.data?.resume_preview) {
+      return;
+    }
+    const savedDraft = localStorage.getItem(STORAGE_KEY);
+    if (savedDraft) {
+      return;
+    }
+    const nextInitial = buildInitialData(t);
+    setResumeData(nextInitial);
+    setLastSavedData(nextInitial);
+  }, [t, resumeId, hasUnsavedChanges, improvedData]);
 
   // Tab state
   const [activeTab, setActiveTab] = useState<TabId>('resume');

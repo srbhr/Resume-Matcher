@@ -425,6 +425,7 @@ async def download_resume_pdf(
     compactMode: bool = Query(False),
     showContactIcons: bool = Query(False),
     accentColor: str = Query("blue", pattern="^(blue|green|orange|red)$"),
+    lang: str | None = Query(None),
 ) -> Response:
     """Generate a PDF for a resume using headless Chromium.
 
@@ -441,6 +442,7 @@ async def download_resume_pdf(
     - bodyFont: serif, sans-serif, or mono
     - compactMode: enable tighter spacing
     - showContactIcons: show icons in contact info
+    - lang: locale used for print page translations
     """
     resume = db.get_resume(resume_id)
     if not resume:
@@ -465,6 +467,8 @@ async def download_resume_pdf(
         f"&showContactIcons={str(showContactIcons).lower()}"
         f"&accentColor={accentColor}"
     )
+    if lang:
+        params = f"{params}&lang={lang}"
     url = f"{settings.frontend_base_url}/print/resumes/{resume_id}?{params}"
 
     # Use the exact margins provided; compact mode only affects spacing.
@@ -710,12 +714,14 @@ async def get_job_description_for_resume(resume_id: str) -> dict:
 async def download_cover_letter_pdf(
     resume_id: str,
     pageSize: str = Query("A4", pattern="^(A4|LETTER)$"),
+    lang: str | None = Query(None),
 ) -> Response:
     """Generate a PDF for a cover letter using headless Chromium.
 
     Args:
         resume_id: The ID of the resume containing the cover letter
         pageSize: A4 or LETTER
+        lang: locale used for print page translations
     """
     resume = db.get_resume(resume_id)
     if not resume:
@@ -729,6 +735,8 @@ async def download_cover_letter_pdf(
 
     # Build print URL (same pattern as resume PDF)
     url = f"{settings.frontend_base_url}/print/cover-letter/{resume_id}?pageSize={pageSize}"
+    if lang:
+        url = f"{url}&lang={lang}"
 
     # Render PDF with cover letter selector
     try:
