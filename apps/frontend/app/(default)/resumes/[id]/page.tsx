@@ -12,6 +12,7 @@ import { EnrichmentModal } from '@/components/enrichment/enrichment-modal';
 import { useTranslations } from '@/lib/i18n';
 import { withLocalizedDefaultSections } from '@/lib/utils/section-helpers';
 import { useLanguage } from '@/lib/context/language-context';
+import { downloadBlobAsFile, openUrlInNewTab } from '@/lib/utils/download';
 
 type ProcessingStatus = 'pending' | 'processing' | 'ready' | 'failed';
 
@@ -111,21 +112,12 @@ export default function ResumeViewerPage() {
   const handleDownload = async () => {
     try {
       const blob = await downloadResumePdf(resumeId, undefined, uiLanguage);
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `resume_${resumeId}.pdf`;
-      link.click();
-      window.URL.revokeObjectURL(url);
+      downloadBlobAsFile(blob, `resume_${resumeId}.pdf`);
     } catch (err) {
       console.error('Failed to download resume:', err);
       if (err instanceof TypeError && err.message.includes('Failed to fetch')) {
         const fallbackUrl = getResumePdfUrl(resumeId, undefined, uiLanguage);
-        const link = document.createElement('a');
-        link.href = fallbackUrl;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
-        link.click();
+        openUrlInNewTab(fallbackUrl);
         return;
       }
     }

@@ -44,6 +44,7 @@ import { useTranslations } from '@/lib/i18n';
 import { type TemplateSettings, DEFAULT_TEMPLATE_SETTINGS } from '@/lib/types/template-settings';
 import { withLocalizedDefaultSections } from '@/lib/utils/section-helpers';
 import { useLanguage } from '@/lib/context/language-context';
+import { downloadBlobAsFile, openUrlInNewTab } from '@/lib/utils/download';
 
 type TabId = 'resume' | 'cover-letter' | 'outreach' | 'jd-match';
 
@@ -87,12 +88,15 @@ const ResumeBuilderContent = () => {
   const [templateSettings, setTemplateSettings] =
     useState<TemplateSettings>(DEFAULT_TEMPLATE_SETTINGS);
   const { improvedData } = useResumePreview();
+  const improvedPreview = improvedData?.data?.resume_preview;
+  const improvedCoverLetter = improvedData?.data?.cover_letter;
+  const improvedOutreach = improvedData?.data?.outreach_message;
   const searchParams = useSearchParams();
   const router = useRouter();
   const resumeId = searchParams.get('id');
 
   useEffect(() => {
-    if (resumeId || hasUnsavedChanges || improvedData?.data?.resume_preview) {
+    if (resumeId || hasUnsavedChanges || improvedPreview) {
       return;
     }
     const savedDraft = localStorage.getItem(STORAGE_KEY);
@@ -102,7 +106,7 @@ const ResumeBuilderContent = () => {
     const nextInitial = buildInitialData(t);
     setResumeData(nextInitial);
     setLastSavedData(nextInitial);
-  }, [t, resumeId, hasUnsavedChanges, improvedData]);
+  }, [t, resumeId, hasUnsavedChanges, improvedPreview]);
 
   // Tab state
   const [activeTab, setActiveTab] = useState<TabId>('resume');
@@ -208,18 +212,18 @@ const ResumeBuilderContent = () => {
       }
 
       // Priority 2: Improved Data from Context (Tailor Flow)
-      if (improvedData?.data?.resume_preview) {
-        setResumeData(improvedData.data.resume_preview);
-        setLastSavedData(improvedData.data.resume_preview);
+      if (improvedPreview) {
+        setResumeData(improvedPreview);
+        setLastSavedData(improvedPreview);
         // Also load cover letter and outreach if present
-        if (improvedData.data.cover_letter) {
-          setCoverLetter(improvedData.data.cover_letter);
+        if (improvedCoverLetter) {
+          setCoverLetter(improvedCoverLetter);
         }
-        if (improvedData.data.outreach_message) {
-          setOutreachMessage(improvedData.data.outreach_message);
+        if (improvedOutreach) {
+          setOutreachMessage(improvedOutreach);
         }
         // Persist to localStorage as backup
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(improvedData.data.resume_preview));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(improvedPreview));
         setLoadingState('loaded');
         return;
       }
@@ -244,7 +248,7 @@ const ResumeBuilderContent = () => {
     };
 
     loadResumeData();
-  }, [improvedData, resumeId]);
+  }, [improvedPreview, improvedCoverLetter, improvedOutreach, resumeId]);
 
   // Fetch job description when we have a tailored resume
   useEffect(() => {
@@ -322,21 +326,12 @@ const ResumeBuilderContent = () => {
     try {
       setIsDownloading(true);
       const blob = await downloadResumePdf(resumeId, templateSettings, uiLanguage);
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `resume_${resumeId}.pdf`;
-      link.click();
-      window.URL.revokeObjectURL(url);
+      downloadBlobAsFile(blob, `resume_${resumeId}.pdf`);
     } catch (error) {
       console.error('Failed to download resume:', error);
       if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
         const fallbackUrl = getResumePdfUrl(resumeId, templateSettings, uiLanguage);
-        const link = document.createElement('a');
-        link.href = fallbackUrl;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
-        link.click();
+        openUrlInNewTab(fallbackUrl);
         return;
       }
       alert(t('builder.alerts.downloadFailed'));
@@ -371,12 +366,7 @@ const ResumeBuilderContent = () => {
     try {
       setIsDownloading(true);
       const blob = await downloadCoverLetterPdf(resumeId, templateSettings.pageSize, uiLanguage);
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `cover_letter_${resumeId}.pdf`;
-      link.click();
-      window.URL.revokeObjectURL(url);
+      downloadBlobAsFile(blob, `cover_letter_${resumeId}.pdf`);
     } catch (error) {
       console.error('Failed to download cover letter:', error);
       if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
@@ -385,11 +375,7 @@ const ResumeBuilderContent = () => {
           templateSettings.pageSize,
           uiLanguage
         );
-        const link = document.createElement('a');
-        link.href = fallbackUrl;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
-        link.click();
+        openUrlInNewTab(fallbackUrl);
         return;
       }
       const errorMessage = error instanceof Error ? error.message : t('common.unknown');

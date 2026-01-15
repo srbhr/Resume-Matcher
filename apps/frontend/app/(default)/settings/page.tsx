@@ -131,30 +131,24 @@ export default function SettingsPage() {
       description: t('tailor.promptOptions.full.description'),
     },
   ];
+  const promptOptionOverrides: Record<string, { label: string; description: string }> = {
+    nudge: {
+      label: t('tailor.promptOptions.nudge.label'),
+      description: t('tailor.promptOptions.nudge.description'),
+    },
+    keywords: {
+      label: t('tailor.promptOptions.keywords.label'),
+      description: t('tailor.promptOptions.keywords.description'),
+    },
+    full: {
+      label: t('tailor.promptOptions.full.label'),
+      description: t('tailor.promptOptions.full.description'),
+    },
+  };
   const localizedPromptOptions = (promptOptions.length ? promptOptions : fallbackPromptOptions).map(
     (option) => {
-      if (option.id === 'nudge') {
-        return {
-          ...option,
-          label: t('tailor.promptOptions.nudge.label'),
-          description: t('tailor.promptOptions.nudge.description'),
-        };
-      }
-      if (option.id === 'keywords') {
-        return {
-          ...option,
-          label: t('tailor.promptOptions.keywords.label'),
-          description: t('tailor.promptOptions.keywords.description'),
-        };
-      }
-      if (option.id === 'full') {
-        return {
-          ...option,
-          label: t('tailor.promptOptions.full.label'),
-          description: t('tailor.promptOptions.full.description'),
-        };
-      }
-      return option;
+      const override = promptOptionOverrides[option.id];
+      return override ? { ...option, ...override } : option;
     }
   );
 

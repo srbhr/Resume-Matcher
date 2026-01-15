@@ -18,9 +18,10 @@ export function applyParams(
   params?: Record<string, string | number>
 ): string {
   if (!params) return value;
-  return Object.entries(params).reduce(
-    (current, [paramKey, paramValue]) =>
-      current.split(`{${paramKey}}`).join(String(paramValue)),
-    value
-  );
+  return value.replace(/\{([^{}]+)\}/g, (match, key) => {
+    if (Object.prototype.hasOwnProperty.call(params, key)) {
+      return String(params[key]);
+    }
+    return match;
+  });
 }

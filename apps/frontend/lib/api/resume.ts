@@ -66,6 +66,14 @@ interface ResumeResponse {
   };
 }
 
+function normalizeResumeId(resumeId: string): string {
+  const normalized = resumeId.trim();
+  if (!normalized) {
+    throw new Error('Resume ID is required.');
+  }
+  return normalized;
+}
+
 export interface ResumeListItem {
   resume_id: string;
   filename: string | null;
@@ -164,6 +172,7 @@ export function getResumePdfUrl(
   settings?: TemplateSettings,
   locale?: Locale
 ): string {
+  const normalizedId = normalizeResumeId(resumeId);
   const params = new URLSearchParams();
 
   if (settings) {
@@ -191,7 +200,7 @@ export function getResumePdfUrl(
     params.set('lang', locale);
   }
 
-  return `${API_BASE}/resumes/${encodeURIComponent(resumeId)}/pdf?${params.toString()}`;
+  return `${API_BASE}/resumes/${encodeURIComponent(normalizedId)}/pdf?${params.toString()}`;
 }
 
 export async function downloadResumePdf(
@@ -243,11 +252,12 @@ export function getCoverLetterPdfUrl(
   pageSize: 'A4' | 'LETTER' = 'A4',
   locale?: Locale
 ): string {
+  const normalizedId = normalizeResumeId(resumeId);
   const params = new URLSearchParams({ pageSize });
   if (locale) {
     params.set('lang', locale);
   }
-  return `${API_BASE}/resumes/${encodeURIComponent(resumeId)}/cover-letter/pdf?${params.toString()}`;
+  return `${API_BASE}/resumes/${encodeURIComponent(normalizedId)}/cover-letter/pdf?${params.toString()}`;
 }
 
 export async function downloadCoverLetterPdf(

@@ -97,7 +97,10 @@ async def _launch_browser(playwright: Playwright) -> Browser:
             raise
         fallback_executable = _find_chromium_executable()
         if not fallback_executable:
-            raise
+            raise PDFRenderError(
+                "Playwright browser executable is missing, and no system Chrome/Edge "
+                "installation was found. Install Playwright browsers or install Chrome/Edge."
+            ) from e
         return await playwright.chromium.launch(executable_path=fallback_executable)
 
 
@@ -185,10 +188,11 @@ def _raise_playwright_error(error: PlaywrightError, url: str) -> NoReturn:
     error_msg = str(error)
     if "Executable doesn't exist" in error_msg:
         exe = sys.executable.replace("\\", "/")
-        command = f"\"{exe}\" -m playwright install chromium"
+        command = f"{exe} -m playwright install chromium"
         raise PDFRenderError(
             "Playwright browser executable is missing or out of date. "
-            f"Run this in the backend environment: {command}"
+            "Command shown for reference; quote the path if it contains spaces: "
+            f"{command}"
         ) from error
     if "net::ERR_CONNECTION_REFUSED" in error_msg:
         raise PDFRenderError(
@@ -245,23 +249,22 @@ async def render_resume_pdf(
     pdf_format = _resolve_pdf_format(page_size)
     pdf_margins = _resolve_pdf_margins(margins)
 
-    async with _subprocess_lock:
-        subprocess_supported = _subprocess_supported
+    subprocess_supported = True
+    if _browser is None:
+        async with _subprocess_lock:
+            if _subprocess_supported and not _loop_supports_subprocess():
+                _subprocess_supported = False
+            subprocess_supported = _subprocess_supported
 
     if _browser is None and subprocess_supported:
-        if not _loop_supports_subprocess():
+        try:
+            await init_pdf_renderer()
+        except NotImplementedError:
             async with _subprocess_lock:
                 _subprocess_supported = False
             subprocess_supported = False
-        else:
-            try:
-                await init_pdf_renderer()
-            except NotImplementedError:
-                async with _subprocess_lock:
-                    _subprocess_supported = False
-                subprocess_supported = False
-            except PlaywrightError as e:
-                _raise_playwright_error(e, url)
+        except PlaywrightError as e:
+            _raise_playwright_error(e, url)
 
     if not subprocess_supported:
         try:

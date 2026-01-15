@@ -7,7 +7,7 @@
 
 import { API_BASE } from '@/lib/api/client';
 import { translate } from '@/lib/i18n/server';
-import { defaultLocale, locales, type Locale } from '@/i18n/config';
+import { resolveLocale } from '@/lib/i18n/locale';
 
 const PAGE_DIMENSIONS = {
   A4: { width: 210, height: 297 },
@@ -64,13 +64,6 @@ function parsePageSize(value: string | undefined): PageSize {
     return value;
   }
   return 'A4';
-}
-
-function resolveLocale(value: string | undefined): Locale {
-  if (value && locales.includes(value as Locale)) {
-    return value as Locale;
-  }
-  return defaultLocale;
 }
 
 export default async function PrintCoverLetterPage({ params, searchParams }: PageProps) {
