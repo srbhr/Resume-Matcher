@@ -29,6 +29,8 @@ import { PaginatedPreview } from '@/components/preview';
 import {
   downloadResumePdf,
   downloadCoverLetterPdf,
+  getResumePdfUrl,
+  getCoverLetterPdfUrl,
   fetchResume,
   updateResume,
   updateCoverLetter,
@@ -41,24 +43,27 @@ import { JDComparisonView } from './jd-comparison-view';
 import { useTranslations } from '@/lib/i18n';
 import { type TemplateSettings, DEFAULT_TEMPLATE_SETTINGS } from '@/lib/types/template-settings';
 import { withLocalizedDefaultSections } from '@/lib/utils/section-helpers';
+import { useLanguage } from '@/lib/context/language-context';
 
 type TabId = 'resume' | 'cover-letter' | 'outreach' | 'jd-match';
 
 const STORAGE_KEY = 'resume_builder_draft';
 const SETTINGS_STORAGE_KEY = 'resume_builder_settings';
 
-const INITIAL_DATA: ResumeData = {
+type Translate = (key: string, params?: Record<string, string | number>) => string;
+
+const buildInitialData = (t: Translate): ResumeData => ({
   personalInfo: {
-    name: 'Your Name',
-    title: 'Professional Title',
-    email: 'email@example.com',
-    phone: '+1 234 567 890',
-    location: 'City, Country',
-    website: 'portfolio.com',
-    linkedin: 'linkedin.com/in/you',
-    github: 'github.com/you',
+    name: t('builder.personalInfoForm.placeholders.name'),
+    title: t('builder.personalInfoForm.placeholders.title'),
+    email: t('builder.personalInfoForm.placeholders.email'),
+    phone: t('builder.personalInfoForm.placeholders.phone'),
+    location: t('builder.personalInfoForm.placeholders.location'),
+    website: t('builder.personalInfoForm.placeholders.website'),
+    linkedin: t('builder.personalInfoForm.placeholders.linkedin'),
+    github: t('builder.personalInfoForm.placeholders.github'),
   },
-  summary: 'A brief summary of your professional background and key achievements.',
+  summary: t('builder.placeholders.summary'),
   workExperience: [],
   education: [],
   personalProjects: [],
@@ -68,13 +73,15 @@ const INITIAL_DATA: ResumeData = {
     certificationsTraining: [],
     awards: [],
   },
-};
+});
 
 const ResumeBuilderContent = () => {
   const { t } = useTranslations();
-  const [resumeData, setResumeData] = useState<ResumeData>(INITIAL_DATA);
+  const { uiLanguage } = useLanguage();
+  const initialData = useMemo(() => buildInitialData(t), [t]);
+  const [resumeData, setResumeData] = useState<ResumeData>(() => initialData);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [lastSavedData, setLastSavedData] = useState<ResumeData>(INITIAL_DATA);
+  const [lastSavedData, setLastSavedData] = useState<ResumeData>(() => initialData);
   const [isSaving, setIsSaving] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [, setLoadingState] = useState<'idle' | 'loading' | 'loaded' | 'error'>('idle');
@@ -270,7 +277,7 @@ const ResumeBuilderContent = () => {
 
   const handleSave = async () => {
     if (!resumeId) {
-      alert('Save is only available when editing an existing resume.');
+      alert(t('builder.alerts.saveNotAvailable'));
       return;
     }
     try {
@@ -283,7 +290,7 @@ const ResumeBuilderContent = () => {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(nextData));
     } catch (error) {
       console.error('Failed to save resume:', error);
-      alert('Failed to save resume. Please try again.');
+      alert(t('builder.alerts.saveFailed'));
     } finally {
       setIsSaving(false);
     }
@@ -297,12 +304,12 @@ const ResumeBuilderContent = () => {
 
   const handleDownload = async () => {
     if (!resumeId) {
-      alert('Download is only available for saved resumes.');
+      alert(t('builder.alerts.downloadNotAvailable'));
       return;
     }
     try {
       setIsDownloading(true);
-      const blob = await downloadResumePdf(resumeId, templateSettings);
+      const blob = await downloadResumePdf(resumeId, templateSettings, uiLanguage);
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -311,7 +318,16 @@ const ResumeBuilderContent = () => {
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Failed to download resume:', error);
-      alert('Failed to download resume. Please try again.');
+      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+        const fallbackUrl = getResumePdfUrl(resumeId, templateSettings, uiLanguage);
+        const link = document.createElement('a');
+        link.href = fallbackUrl;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.click();
+        return;
+      }
+      alert(t('builder.alerts.downloadFailed'));
     } finally {
       setIsDownloading(false);
     }
@@ -325,7 +341,7 @@ const ResumeBuilderContent = () => {
       await updateCoverLetter(resumeId, coverLetter);
     } catch (error) {
       console.error('Failed to save cover letter:', error);
-      alert('Failed to save cover letter. Please try again.');
+      alert(t('builder.alerts.coverLetterSaveFailed'));
     } finally {
       setIsCoverLetterSaving(false);
     }
@@ -333,18 +349,16 @@ const ResumeBuilderContent = () => {
 
   const handleDownloadCoverLetter = async () => {
     if (!resumeId) {
-      alert('Save the resume first to download the cover letter.');
+      alert(t('builder.alerts.coverLetterDownloadRequiresResume'));
       return;
     }
     if (!coverLetter) {
-      alert(
-        'No cover letter available. Enable cover letter generation in Settings and tailor a resume.'
-      );
+      alert(t('builder.alerts.coverLetterMissing'));
       return;
     }
     try {
       setIsDownloading(true);
-      const blob = await downloadCoverLetterPdf(resumeId, templateSettings.pageSize);
+      const blob = await downloadCoverLetterPdf(resumeId, templateSettings.pageSize, uiLanguage);
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -353,8 +367,21 @@ const ResumeBuilderContent = () => {
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Failed to download cover letter:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      alert(`Failed to download cover letter: ${errorMessage}`);
+      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+        const fallbackUrl = getCoverLetterPdfUrl(
+          resumeId,
+          templateSettings.pageSize,
+          uiLanguage
+        );
+        const link = document.createElement('a');
+        link.href = fallbackUrl;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.click();
+        return;
+      }
+      const errorMessage = error instanceof Error ? error.message : t('common.unknown');
+      alert(t('builder.alerts.coverLetterDownloadFailed', { error: errorMessage }));
     } finally {
       setIsDownloading(false);
     }
@@ -368,7 +395,7 @@ const ResumeBuilderContent = () => {
       await updateOutreachMessage(resumeId, outreachMessage);
     } catch (error) {
       console.error('Failed to save outreach message:', error);
-      alert('Failed to save outreach message. Please try again.');
+      alert(t('builder.alerts.outreachSaveFailed'));
     } finally {
       setIsOutreachSaving(false);
     }
@@ -395,7 +422,7 @@ const ResumeBuilderContent = () => {
     } catch (error) {
       console.error('Failed to generate cover letter:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      alert(`Failed to generate cover letter: ${errorMessage}`);
+      alert(t('builder.alerts.coverLetterGenerateFailed', { error: errorMessage }));
     } finally {
       setIsGeneratingCoverLetter(false);
     }
@@ -421,7 +448,7 @@ const ResumeBuilderContent = () => {
     } catch (error) {
       console.error('Failed to generate outreach message:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      alert(`Failed to generate outreach message: ${errorMessage}`);
+      alert(t('builder.alerts.outreachGenerateFailed', { error: errorMessage }));
     } finally {
       setIsGeneratingOutreach(false);
     }
@@ -767,7 +794,7 @@ const ResumeBuilderContent = () => {
             </div>
             <span className="text-gray-400">|</span>
             <span className="uppercase">
-              {templateSettings.pageSize === 'A4' ? 'A4' : 'US Letter'}
+              {templateSettings.pageSize === 'A4' ? 'A4' : t('builder.pageSize.usLetter')}
             </span>
           </div>
         </div>
@@ -809,8 +836,9 @@ const ResumeBuilderContent = () => {
 };
 
 export const ResumeBuilder = () => {
+  const { t } = useTranslations();
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<div>{t('common.loading')}</div>}>
       <ResumeBuilderContent />
     </Suspense>
   );

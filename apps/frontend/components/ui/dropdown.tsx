@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown } from 'lucide-react';
+import { useTranslations } from '@/lib/i18n';
 
 export interface DropdownOption {
   id: string;
@@ -28,6 +29,7 @@ export function Dropdown({
   disabled = false,
   className = '',
 }: DropdownProps) {
+  const { t } = useTranslations();
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -83,7 +85,7 @@ export function Dropdown({
                 )}
               </div>
             ) : (
-              <span className="text-gray-400">Select an option...</span>
+              <span className="text-gray-400">{t('common.selectOption')}</span>
             )}
           </div>
           <ChevronDown

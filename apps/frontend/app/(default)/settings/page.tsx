@@ -114,6 +114,49 @@ export default function SettingsPage() {
   // Translations
   const { t } = useTranslations();
   const providerInfo = PROVIDER_INFO[provider] ?? PROVIDER_INFO['openai'];
+  const fallbackPromptOptions: PromptOption[] = [
+    {
+      id: 'nudge',
+      label: t('tailor.promptOptions.nudge.label'),
+      description: t('tailor.promptOptions.nudge.description'),
+    },
+    {
+      id: 'keywords',
+      label: t('tailor.promptOptions.keywords.label'),
+      description: t('tailor.promptOptions.keywords.description'),
+    },
+    {
+      id: 'full',
+      label: t('tailor.promptOptions.full.label'),
+      description: t('tailor.promptOptions.full.description'),
+    },
+  ];
+  const localizedPromptOptions = (promptOptions.length ? promptOptions : fallbackPromptOptions).map(
+    (option) => {
+      if (option.id === 'nudge') {
+        return {
+          ...option,
+          label: t('tailor.promptOptions.nudge.label'),
+          description: t('tailor.promptOptions.nudge.description'),
+        };
+      }
+      if (option.id === 'keywords') {
+        return {
+          ...option,
+          label: t('tailor.promptOptions.keywords.label'),
+          description: t('tailor.promptOptions.keywords.description'),
+        };
+      }
+      if (option.id === 'full') {
+        return {
+          ...option,
+          label: t('tailor.promptOptions.full.label'),
+          description: t('tailor.promptOptions.full.description'),
+        };
+      }
+      return option;
+    }
+  );
 
   // Load LLM config and feature config on mount
   useEffect(() => {
@@ -810,27 +853,7 @@ export default function SettingsPage() {
 
               <div className="pt-4 border-t border-gray-200">
                 <Dropdown
-                  options={
-                    promptOptions.length
-                      ? promptOptions
-                      : [
-                          {
-                            id: 'nudge',
-                            label: t('tailor.promptOptions.nudge.label'),
-                            description: t('tailor.promptOptions.nudge.description'),
-                          },
-                          {
-                            id: 'keywords',
-                            label: t('tailor.promptOptions.keywords.label'),
-                            description: t('tailor.promptOptions.keywords.description'),
-                          },
-                          {
-                            id: 'full',
-                            label: t('tailor.promptOptions.full.label'),
-                            description: t('tailor.promptOptions.full.description'),
-                          },
-                        ]
-                  }
+                  options={localizedPromptOptions}
                   value={defaultPromptId}
                   onChange={handlePromptConfigChange}
                   label={t('settings.promptSettings.title')}

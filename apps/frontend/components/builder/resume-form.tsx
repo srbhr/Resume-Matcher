@@ -353,7 +353,11 @@ export const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, onUpdate }) 
             );
 
           default:
-            return <div className="text-gray-500">{t('builder.customSections.unknownSectionType')}</div>;
+            return (
+              <div className="text-gray-500">
+                {t('builder.customSections.unknownSectionType', { type: section.sectionType })}
+              </div>
+            );
         }
       };
 

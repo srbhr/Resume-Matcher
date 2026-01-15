@@ -3,9 +3,18 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Optional
+import os
+import sys
+from pathlib import Path
+from typing import Awaitable, Optional
 
-from playwright.async_api import Browser, Error as PlaywrightError, Page, async_playwright
+from playwright.async_api import (
+    Browser,
+    Error as PlaywrightError,
+    Page,
+    Playwright,
+    async_playwright,
+)
 
 
 class PDFRenderError(Exception):
@@ -17,6 +26,7 @@ class PDFRenderError(Exception):
 _playwright = None
 _browser: Optional[Browser] = None
 _init_lock = asyncio.Lock()  # Lock to prevent race condition during initialization
+_subprocess_supported = True
 
 
 async def init_pdf_renderer() -> None:
@@ -37,7 +47,167 @@ async def init_pdf_renderer() -> None:
         if _browser is not None:
             return
         _playwright = await async_playwright().start()
-        _browser = await _playwright.chromium.launch()
+        _browser = await _launch_browser(_playwright)
+
+
+def _resolve_pdf_format(page_size: str) -> str:
+    format_map = {
+        "A4": "A4",
+        "LETTER": "Letter",
+    }
+    return format_map.get(page_size, "A4")
+
+
+def _resolve_pdf_margins(margins: Optional[dict]) -> dict:
+    if margins:
+        return {
+            "top": f"{margins.get('top', 10)}mm",
+            "right": f"{margins.get('right', 10)}mm",
+            "bottom": f"{margins.get('bottom', 10)}mm",
+            "left": f"{margins.get('left', 10)}mm",
+        }
+    return {"top": "10mm", "right": "10mm", "bottom": "10mm", "left": "10mm"}
+
+
+def _find_chromium_executable() -> Optional[str]:
+    if sys.platform != "win32":
+        return None
+    candidates = [
+        Path(os.environ.get("PROGRAMFILES", "C:/Program Files"))
+        / "Google/Chrome/Application/chrome.exe",
+        Path(os.environ.get("PROGRAMFILES(X86)", "C:/Program Files (x86)"))
+        / "Google/Chrome/Application/chrome.exe",
+        Path(os.environ.get("PROGRAMFILES", "C:/Program Files"))
+        / "Microsoft/Edge/Application/msedge.exe",
+        Path(os.environ.get("PROGRAMFILES(X86)", "C:/Program Files (x86)"))
+        / "Microsoft/Edge/Application/msedge.exe",
+    ]
+    for candidate in candidates:
+        if candidate.exists():
+            return str(candidate)
+    return None
+
+
+async def _launch_browser(playwright: Playwright) -> Browser:
+    try:
+        return await playwright.chromium.launch()
+    except PlaywrightError as e:
+        if "Executable doesn't exist" not in str(e):
+            raise
+        fallback_executable = _find_chromium_executable()
+        if not fallback_executable:
+            raise
+        return await playwright.chromium.launch(executable_path=fallback_executable)
+
+
+async def _render_page_to_pdf(
+    page: Page,
+    url: str,
+    selector: str,
+    pdf_format: str,
+    pdf_margins: dict,
+) -> bytes:
+    await page.goto(url, wait_until="networkidle")
+    await page.wait_for_selector(selector)
+    await page.evaluate("document.fonts.ready")
+    return await page.pdf(
+        format=pdf_format,
+        print_background=True,
+        margin=pdf_margins,
+    )
+
+
+async def _render_with_browser(
+    browser: Browser,
+    url: str,
+    selector: str,
+    pdf_format: str,
+    pdf_margins: dict,
+) -> bytes:
+    page: Page = await browser.new_page()
+    try:
+        return await _render_page_to_pdf(page, url, selector, pdf_format, pdf_margins)
+    finally:
+        await page.close()
+
+
+def _run_in_new_loop(coro: Awaitable[bytes]) -> bytes:
+    if sys.platform == "win32":
+        from asyncio.windows_events import ProactorEventLoop
+
+        loop = ProactorEventLoop()
+    else:
+        loop = asyncio.new_event_loop()
+
+    try:
+        asyncio.set_event_loop(loop)
+        return loop.run_until_complete(coro)
+    finally:
+        try:
+            loop.run_until_complete(loop.shutdown_asyncgens())
+        finally:
+            loop.close()
+            asyncio.set_event_loop(None)
+
+
+def _render_resume_pdf_sync(
+    url: str,
+    selector: str,
+    pdf_format: str,
+    pdf_margins: dict,
+) -> bytes:
+    async def _run() -> bytes:
+        async with async_playwright() as playwright:
+            browser = await _launch_browser(playwright)
+            try:
+                return await _render_with_browser(
+                    browser, url, selector, pdf_format, pdf_margins
+                )
+            finally:
+                await browser.close()
+
+    return _run_in_new_loop(_run())
+
+
+async def _render_resume_pdf_in_thread(
+    url: str,
+    selector: str,
+    pdf_format: str,
+    pdf_margins: dict,
+) -> bytes:
+    return await asyncio.to_thread(
+        _render_resume_pdf_sync, url, selector, pdf_format, pdf_margins
+    )
+
+
+def _raise_playwright_error(error: PlaywrightError, url: str) -> None:
+    error_msg = str(error)
+    if "Executable doesn't exist" in error_msg:
+        exe = sys.executable.replace("\\", "/")
+        command = f"\"{exe}\" -m playwright install chromium"
+        raise PDFRenderError(
+            "Playwright browser executable is missing or out of date. "
+            f"Run this in the backend environment: {command}"
+        ) from error
+    if "net::ERR_CONNECTION_REFUSED" in error_msg:
+        raise PDFRenderError(
+            f"Cannot connect to frontend for PDF generation. "
+            f"Attempted URL: {url}. "
+            f"Please ensure: 1) The frontend is running, "
+            f"2) The FRONTEND_BASE_URL environment variable in the backend .env file "
+            f"matches the URL where your frontend is accessible."
+        ) from error
+    raise PDFRenderError(f"PDF rendering failed: {error_msg}") from error
+
+
+def _loop_supports_subprocess() -> bool:
+    if sys.platform != "win32":
+        return True
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        return True
+    return loop.__class__.__name__ == "ProactorEventLoop"
 
 
 async def close_pdf_renderer() -> None:
@@ -69,50 +239,34 @@ async def render_resume_pdf(
         Margins are applied via Playwright's PDF margins, ensuring they appear
         on every page (not just the first page like HTML padding would).
     """
+    global _subprocess_supported
+
+    pdf_format = _resolve_pdf_format(page_size)
+    pdf_margins = _resolve_pdf_margins(margins)
+
+    if _browser is None and _subprocess_supported:
+        if not _loop_supports_subprocess():
+            _subprocess_supported = False
+        else:
+            try:
+                await init_pdf_renderer()
+            except NotImplementedError:
+                _subprocess_supported = False
+            except PlaywrightError as e:
+                _raise_playwright_error(e, url)
+
+    if not _subprocess_supported:
+        try:
+            return await _render_resume_pdf_in_thread(
+                url, selector, pdf_format, pdf_margins
+            )
+        except PlaywrightError as e:
+            _raise_playwright_error(e, url)
+
     if _browser is None:
-        await init_pdf_renderer()
-    assert _browser is not None
+        raise PDFRenderError("PDF renderer failed to initialize.")
 
-    # Map page size to Playwright format
-    format_map = {
-        "A4": "A4",
-        "LETTER": "Letter",
-    }
-    pdf_format = format_map.get(page_size, "A4")
-
-    # Use provided margins or defaults (applied to every page)
-    if margins:
-        pdf_margins = {
-            "top": f"{margins.get('top', 10)}mm",
-            "right": f"{margins.get('right', 10)}mm",
-            "bottom": f"{margins.get('bottom', 10)}mm",
-            "left": f"{margins.get('left', 10)}mm",
-        }
-    else:
-        pdf_margins = {"top": "10mm", "right": "10mm", "bottom": "10mm", "left": "10mm"}
-
-    page: Page = await _browser.new_page()
     try:
-        await page.goto(url, wait_until="networkidle")
-        await page.wait_for_selector(selector)
-        await page.evaluate("document.fonts.ready")
-        pdf_bytes = await page.pdf(
-            format=pdf_format,
-            print_background=True,
-            margin=pdf_margins,
-        )
-        return pdf_bytes
+        return await _render_with_browser(_browser, url, selector, pdf_format, pdf_margins)
     except PlaywrightError as e:
-        error_msg = str(e)
-        if "net::ERR_CONNECTION_REFUSED" in error_msg:
-            # Extract the URL from the error message if possible
-            raise PDFRenderError(
-                f"Cannot connect to frontend for PDF generation. "
-                f"Attempted URL: {url}. "
-                f"Please ensure: 1) The frontend is running, "
-                f"2) The FRONTEND_BASE_URL environment variable in the backend .env file "
-                f"matches the URL where your frontend is accessible."
-            ) from e
-        raise PDFRenderError(f"PDF rendering failed: {error_msg}") from e
-    finally:
-        await page.close()
+        _raise_playwright_error(e, url)

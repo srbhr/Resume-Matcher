@@ -5,17 +5,19 @@ import { useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import Resume, { ResumeData } from '@/components/dashboard/resume-component';
-import { fetchResume, downloadResumePdf, deleteResume } from '@/lib/api/resume';
+import { fetchResume, downloadResumePdf, getResumePdfUrl, deleteResume } from '@/lib/api/resume';
 import { useStatusCache } from '@/lib/context/status-cache';
 import { ArrowLeft, Edit, Download, Loader2, AlertCircle, Sparkles } from 'lucide-react';
 import { EnrichmentModal } from '@/components/enrichment/enrichment-modal';
 import { useTranslations } from '@/lib/i18n';
 import { withLocalizedDefaultSections } from '@/lib/utils/section-helpers';
+import { useLanguage } from '@/lib/context/language-context';
 
 type ProcessingStatus = 'pending' | 'processing' | 'ready' | 'failed';
 
 export default function ResumeViewerPage() {
   const { t } = useTranslations();
+  const { uiLanguage } = useLanguage();
   const params = useParams();
   const router = useRouter();
   const { decrementResumes, setHasMasterResume } = useStatusCache();
@@ -108,7 +110,7 @@ export default function ResumeViewerPage() {
 
   const handleDownload = async () => {
     try {
-      const blob = await downloadResumePdf(resumeId);
+      const blob = await downloadResumePdf(resumeId, undefined, uiLanguage);
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -117,6 +119,15 @@ export default function ResumeViewerPage() {
       window.URL.revokeObjectURL(url);
     } catch (err) {
       console.error('Failed to download resume:', err);
+      if (err instanceof TypeError && err.message.includes('Failed to fetch')) {
+        const fallbackUrl = getResumePdfUrl(resumeId, undefined, uiLanguage);
+        const link = document.createElement('a');
+        link.href = fallbackUrl;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.click();
+        return;
+      }
     }
   };
 
@@ -148,7 +159,9 @@ export default function ResumeViewerPage() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#F0F0E8]">
         <Loader2 className="w-10 h-10 animate-spin text-blue-700 mb-4" />
-        <p className="font-mono text-sm font-bold uppercase text-blue-700">Loading Resume...</p>
+        <p className="font-mono text-sm font-bold uppercase text-blue-700">
+          {t('resumeViewer.loading')}
+        </p>
       </div>
     );
   }
@@ -236,6 +249,18 @@ export default function ResumeViewerPage() {
                   certifications: t('resume.additionalLabels.certifications'),
                   awards: t('resume.additionalLabels.awards'),
                 }}
+                sectionHeadings={{
+                  summary: t('resume.sections.summary'),
+                  experience: t('resume.sections.experience'),
+                  education: t('resume.sections.education'),
+                  projects: t('resume.sections.projects'),
+                  certifications: t('resume.sections.certifications'),
+                  skills: t('resume.sections.skillsOnly'),
+                  languages: t('resume.sections.languages'),
+                  awards: t('resume.sections.awards'),
+                  links: t('resume.sections.links'),
+                }}
+                fallbackLabels={{ name: t('resume.defaults.name') }}
               />
             </div>
           </div>

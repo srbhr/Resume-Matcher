@@ -26,6 +26,7 @@
     "filter": "Filter",
     "reset": "Reset",
     "apply": "Apply",
+    "selectOption": "Select an option...",
     "unknown": "Unknown",
     "keysCleared": "API keys cleared successfully",
     "databaseReset": "Database reset successfully"
@@ -144,7 +145,8 @@
       "addEntryLabel": "Add Entry",
       "itemsLabel": "Items",
       "itemsPlaceholder": "Enter items, one per line",
-      "unknownSectionType": "Unknown section type"
+      "unknownSectionType": "Unknown section type: {type}",
+      "unknownDefaultSection": "Unknown default section: {section}"
     },
     "sectionHeader": {
       "renameSection": "Rename section",
@@ -168,6 +170,9 @@
       "moduleLabel": "Resume Builder Module",
       "singleColumn": "Single Column",
       "twoColumn": "Two Column"
+    },
+    "pageSize": {
+      "usLetter": "US Letter"
     },
     "generatePrompt": {
       "notAvailableTitle": "{title} Not Available",
@@ -288,7 +293,31 @@
     "formatting": {
       "panelTitle": "Template & Formatting",
       "template": "Template",
+      "templates": {
+        "swissSingle": {
+          "name": "Single Column",
+          "description": "Traditional full-width layout with maximum content density"
+        },
+        "swissTwoColumn": {
+          "name": "Two Column",
+          "description": "Experience-focused main column with sidebar for skills"
+        },
+        "modern": {
+          "name": "Modern",
+          "description": "Colorful accents with customizable theme colors"
+        },
+        "modernTwoColumn": {
+          "name": "Modern Two Column",
+          "description": "Two-column layout with modern colorful accents and themes"
+        }
+      },
       "accentColor": "Accent Color",
+      "accentColors": {
+        "blue": "Blue",
+        "green": "Green",
+        "orange": "Orange",
+        "red": "Red"
+      },
       "pageSize": "Page Size",
       "margins": "Margins (mm)",
       "margin": {
@@ -306,6 +335,11 @@
       "headerScale": "Headers",
       "headerFontFamily": "Headers",
       "bodyFontFamily": "Body",
+      "fontNames": {
+        "serif": "Serif",
+        "sans": "Sans",
+        "mono": "Mono"
+      },
       "options": "Options",
       "compactMode": "Compact Mode",
       "contactIcons": "Contact Icons",
@@ -338,6 +372,19 @@
       "coverLetterEditor": "Cover Letter Editor",
       "outreachEditor": "Outreach Message Editor",
       "jdMatchAnalysis": "JD Match Analysis"
+    },
+    "alerts": {
+      "saveNotAvailable": "Save is only available when editing an existing resume.",
+      "saveFailed": "Failed to save resume. Please try again.",
+      "downloadNotAvailable": "Download is only available for saved resumes.",
+      "downloadFailed": "Failed to download resume. Please try again.",
+      "coverLetterSaveFailed": "Failed to save cover letter. Please try again.",
+      "coverLetterDownloadRequiresResume": "Save the resume first to download the cover letter.",
+      "coverLetterMissing": "No cover letter available. Enable cover letter generation in Settings and tailor a resume.",
+      "coverLetterDownloadFailed": "Failed to download cover letter: {error}",
+      "outreachSaveFailed": "Failed to save outreach message. Please try again.",
+      "coverLetterGenerateFailed": "Failed to generate cover letter: {error}",
+      "outreachGenerateFailed": "Failed to generate outreach message: {error}"
     }
   },
   "enrichment": {
@@ -463,6 +510,14 @@
       "configured": "Configured",
       "notSet": "Not set"
     },
+    "apiKeyMenu": {
+      "buttonLabel": "LLM API",
+      "title": "OpenAI API Key",
+      "description": "Provide your key to enable hosted OpenAI models.",
+      "savedMessage": "API key saved.",
+      "loadError": "Unable to load API key",
+      "updateError": "Unable to update API key"
+    },
     "setupRequired": {
       "title": "[ SETUP REQUIRED ]",
       "description": "> No API key configured. Add your LLM provider API key below to enable resume tailoring."
@@ -535,6 +590,7 @@
   },
   "resumeViewer": {
     "resumeNotFound": "Resume not found",
+    "loading": "Loading Resume...",
     "useTailorFeature": "Use Tailor Feature",
     "returnToDashboard": "Return to Dashboard",
     "enhanceResume": "Enhance Resume",
@@ -551,6 +607,13 @@
       "failedToLoad": "Failed to load resume data.",
       "failedToDelete": "Failed to delete resume. Please try again."
     }
+  },
+  "preview": {
+    "margins": "Margins",
+    "calculating": "Calculating...",
+    "pageBreak": "Page Break",
+    "pageCountSingular": "{count} page",
+    "pageCountPlural": "{count} pages"
   },
   "resume": {
     "personalInfo": {
@@ -570,9 +633,14 @@
       "education": "Education",
       "projects": "Projects",
       "skills": "Skills & Awards",
+      "skillsOnly": "Skills",
       "certifications": "Training & Certifications",
       "languages": "Languages",
-      "awards": "Awards"
+      "awards": "Awards",
+      "links": "Links"
+    },
+    "defaults": {
+      "name": "Your Name"
     },
     "additional": {
       "technicalSkills": "Technical Skills"
@@ -598,6 +666,9 @@
       "defaultName": "Your Name",
       "emptyTitle": "No cover letter content yet.",
       "emptyDescription": "Enable cover letter generation in Settings, then tailor a resume."
+    },
+    "print": {
+      "emptyContent": "No cover letter content available."
     }
   },
   "outreach": {
@@ -632,7 +703,13 @@
     "networkError": "Network error. Please check your connection.",
     "unauthorized": "Please sign in to continue.",
     "notFound": "The requested resource was not found.",
-    "validationError": "Please check your input and try again."
+    "validationError": "Please check your input and try again.",
+    "boundary": {
+      "title": "Something Went Wrong",
+      "description": "An unexpected error occurred. This has been logged for review.",
+      "tryAgain": "Try Again",
+      "reloadPage": "Reload Page"
+    }
   },
   "confirmations": {
     "deleteResume": "Are you sure you want to delete this resume?",
