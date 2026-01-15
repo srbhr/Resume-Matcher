@@ -26,9 +26,11 @@
     "filter": "Filtrar",
     "reset": "Restablecer",
     "apply": "Aplicar",
+    "selectOption": "Selecciona una opción...",
     "unknown": "Desconocido",
     "keysCleared": "Claves API borradas con éxito",
-    "databaseReset": "Base de datos restablecida con éxito"
+    "databaseReset": "Base de datos restablecida con éxito",
+    "popupBlocked": "Se bloqueó la ventana emergente. Permite las ventanas emergentes o abre manualmente esta URL: {url}"
   },
   "home": {
     "brandLine1": "Currículum",
@@ -144,7 +146,8 @@
       "addEntryLabel": "Agregar entrada",
       "itemsLabel": "Elementos",
       "itemsPlaceholder": "Introduce elementos, uno por línea",
-      "unknownSectionType": "Tipo de sección desconocido"
+      "unknownSectionType": "Tipo de sección desconocido: {type}",
+      "unknownDefaultSection": "Sección predeterminada desconocida: {section}"
     },
     "sectionHeader": {
       "renameSection": "Renombrar sección",
@@ -168,6 +171,9 @@
       "moduleLabel": "Módulo del constructor",
       "singleColumn": "Una columna",
       "twoColumn": "Dos columnas"
+    },
+    "pageSize": {
+      "usLetter": "Carta (EE. UU.)"
     },
     "generatePrompt": {
       "notAvailableTitle": "{title} no disponible",
@@ -288,7 +294,31 @@
     "formatting": {
       "panelTitle": "Plantilla y formato",
       "template": "Plantilla",
+      "templates": {
+        "swissSingle": {
+          "name": "Una columna",
+          "description": "Diseño tradicional de ancho completo con máxima densidad de contenido"
+        },
+        "swissTwoColumn": {
+          "name": "Dos columnas",
+          "description": "Columna principal centrada en experiencia con barra lateral para habilidades"
+        },
+        "modern": {
+          "name": "Moderno",
+          "description": "Acentos coloridos con colores de tema personalizables"
+        },
+        "modernTwoColumn": {
+          "name": "Moderno de dos columnas",
+          "description": "Diseño de dos columnas moderno con acentos coloridos y temas"
+        }
+      },
       "accentColor": "Color de acento",
+      "accentColors": {
+        "blue": "Azul",
+        "green": "Verde",
+        "orange": "Naranja",
+        "red": "Rojo"
+      },
       "pageSize": "Tamaño de página",
       "margins": "Márgenes (mm)",
       "margin": {
@@ -306,6 +336,11 @@
       "headerScale": "Encabezados",
       "headerFontFamily": "Encabezados",
       "bodyFontFamily": "Cuerpo",
+      "fontNames": {
+        "serif": "Serif",
+        "sans": "Sans",
+        "mono": "Mono"
+      },
       "options": "Opciones",
       "compactMode": "Modo compacto",
       "contactIcons": "Iconos de contacto",
@@ -338,6 +373,19 @@
       "coverLetterEditor": "Editor de carta",
       "outreachEditor": "Editor de mensaje",
       "jdMatchAnalysis": "Análisis de coincidencia JD"
+    },
+    "alerts": {
+      "saveNotAvailable": "Guardar solo está disponible al editar un currículum existente.",
+      "saveFailed": "No se pudo guardar el currículum. Por favor, inténtalo de nuevo.",
+      "downloadNotAvailable": "La descarga solo está disponible para currículums guardados.",
+      "downloadFailed": "No se pudo descargar el currículum. Por favor, inténtalo de nuevo.",
+      "coverLetterSaveFailed": "No se pudo guardar la carta de presentación. Por favor, inténtalo de nuevo.",
+      "coverLetterDownloadRequiresResume": "Guarda el currículum antes de descargar la carta de presentación.",
+      "coverLetterMissing": "No hay carta disponible. Activa la generación de cartas en Ajustes y luego adapta un currículum.",
+      "coverLetterDownloadFailed": "No se pudo descargar la carta de presentación: {error}",
+      "outreachSaveFailed": "No se pudo guardar el mensaje de contacto. Por favor, inténtalo de nuevo.",
+      "coverLetterGenerateFailed": "No se pudo generar la carta de presentación: {error}",
+      "outreachGenerateFailed": "No se pudo generar el mensaje de contacto: {error}"
     }
   },
   "enrichment": {
@@ -463,6 +511,14 @@
       "configured": "Configurado",
       "notSet": "No configurado"
     },
+    "apiKeyMenu": {
+      "buttonLabel": "API de LLM",
+      "title": "Clave API de OpenAI",
+      "description": "Proporciona tu clave para habilitar modelos alojados de OpenAI.",
+      "savedMessage": "Clave API guardada.",
+      "loadError": "No se pudo cargar la clave API",
+      "updateError": "No se pudo actualizar la clave API"
+    },
     "setupRequired": {
       "title": "[ CONFIGURACIÓN REQUERIDA ]",
       "description": "> No hay clave API configurada. Añade la clave API de tu proveedor LLM abajo para habilitar la personalización del currículum."
@@ -535,6 +591,7 @@
   },
   "resumeViewer": {
     "resumeNotFound": "Currículum no encontrado",
+    "loading": "Cargando el currículum...",
     "useTailorFeature": "Usar función de personalización",
     "returnToDashboard": "Volver al Panel",
     "enhanceResume": "Mejorar currículum",
@@ -551,6 +608,13 @@
       "failedToLoad": "No se pudieron cargar los datos del currículum.",
       "failedToDelete": "No se pudo eliminar el currículum. Inténtalo de nuevo."
     }
+  },
+  "preview": {
+    "margins": "Márgenes",
+    "calculating": "Calculando...",
+    "pageBreak": "Salto de página",
+    "pageCountSingular": "{count} página",
+    "pageCountPlural": "{count} páginas"
   },
   "resume": {
     "personalInfo": {
@@ -570,9 +634,14 @@
       "education": "Educación",
       "projects": "Proyectos",
       "skills": "Habilidades y Premios",
+      "skillsOnly": "Habilidades",
       "certifications": "Formación y Certificaciones",
       "languages": "Idiomas",
-      "awards": "Premios"
+      "awards": "Premios",
+      "links": "Enlaces"
+    },
+    "defaults": {
+      "name": "Tu nombre"
     },
     "additional": {
       "technicalSkills": "Habilidades técnicas"
@@ -597,6 +666,9 @@
       "defaultName": "Tu nombre",
       "emptyTitle": "Todavía no hay contenido de carta.",
       "emptyDescription": "Activa la generación de carta en Ajustes y luego adapta un currículum."
+    },
+    "print": {
+      "emptyContent": "No hay contenido de carta de presentación."
     },
     "copied": "¡Copiado!"
   },
@@ -632,7 +704,13 @@
     "networkError": "Error de red. Por favor, verifica tu conexión.",
     "unauthorized": "Por favor, inicia sesión para continuar.",
     "notFound": "El recurso solicitado no fue encontrado.",
-    "validationError": "Por favor, verifica tu entrada e inténtalo de nuevo."
+    "validationError": "Por favor, verifica tu entrada e inténtalo de nuevo.",
+    "boundary": {
+      "title": "Algo salió mal",
+      "description": "Ocurrió un error inesperado. Se ha registrado para su revisión.",
+      "tryAgain": "Reintentar",
+      "reloadPage": "Recargar página"
+    }
   },
   "confirmations": {
     "deleteResume": "¿Estás seguro de que quieres eliminar este currículum?",

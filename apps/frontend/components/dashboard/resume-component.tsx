@@ -65,6 +65,22 @@ export interface AdditionalSectionLabels {
   awards: string;
 }
 
+export interface ResumeSectionHeadings {
+  summary: string;
+  experience: string;
+  education: string;
+  projects: string;
+  certifications: string;
+  skills: string;
+  languages: string;
+  awards: string;
+  links: string;
+}
+
+export interface ResumeFallbackLabels {
+  name: string;
+}
+
 // Section Type for dynamic sections
 export type SectionType = 'personalInfo' | 'text' | 'itemList' | 'stringList';
 
@@ -114,6 +130,8 @@ interface ResumeProps {
   template?: TemplateType;
   settings?: TemplateSettings;
   additionalSectionLabels?: Partial<AdditionalSectionLabels>;
+  sectionHeadings?: Partial<ResumeSectionHeadings>;
+  fallbackLabels?: Partial<ResumeFallbackLabels>;
 }
 
 /**
@@ -133,6 +151,8 @@ const Resume: React.FC<ResumeProps> = ({
   template = 'swiss-single',
   settings,
   additionalSectionLabels,
+  sectionHeadings,
+  fallbackLabels,
 }) => {
   // Merge provided settings with defaults
   const mergedSettings: TemplateSettings = {
@@ -164,7 +184,11 @@ const Resume: React.FC<ResumeProps> = ({
         />
       )}
       {mergedSettings.template === 'swiss-two-column' && (
-        <ResumeTwoColumn data={resumeData} showContactIcons={mergedSettings.showContactIcons} />
+        <ResumeTwoColumn
+          data={resumeData}
+          showContactIcons={mergedSettings.showContactIcons}
+          sectionHeadings={sectionHeadings}
+        />
       )}
       {mergedSettings.template === 'modern' && (
         <ResumeModern
@@ -177,6 +201,8 @@ const Resume: React.FC<ResumeProps> = ({
         <ResumeModernTwoColumn
           data={resumeData}
           showContactIcons={mergedSettings.showContactIcons}
+          sectionHeadings={sectionHeadings}
+          fallbackLabels={fallbackLabels}
         />
       )}
     </div>

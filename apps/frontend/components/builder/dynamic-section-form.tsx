@@ -22,6 +22,7 @@ import { AdditionalForm } from './forms/additional-form';
 import { GenericTextForm } from './forms/generic-text-form';
 import { GenericItemForm } from './forms/generic-item-form';
 import { GenericListForm } from './forms/generic-list-form';
+import { useTranslations } from '@/lib/i18n';
 
 interface DynamicSectionFormProps {
   sectionMeta: SectionMeta;
@@ -51,6 +52,7 @@ export const DynamicSectionForm: React.FC<DynamicSectionFormProps> = ({
   isFirst,
   isLast,
 }) => {
+  const { t } = useTranslations();
   // Handle section rename
   const handleRename = (newName: string) => {
     const updatedSections = allSections.map((s) =>
@@ -179,7 +181,11 @@ export const DynamicSectionForm: React.FC<DynamicSectionFormProps> = ({
           );
 
         default:
-          return <div className="text-gray-500">Unknown default section: {sectionMeta.key}</div>;
+          return (
+            <div className="text-gray-500">
+              {t('builder.customSections.unknownDefaultSection', { section: sectionMeta.key })}
+            </div>
+          );
       }
     }
 
@@ -206,8 +212,10 @@ export const DynamicSectionForm: React.FC<DynamicSectionFormProps> = ({
           <GenericTextForm
             value={customSection?.text || ''}
             onChange={(value) => updateCustomSection({ text: value })}
-            label="Content"
-            placeholder={`Enter ${sectionMeta.displayName.toLowerCase()} content...`}
+            label={t('builder.customSections.contentLabel')}
+            placeholder={t('builder.customSections.contentPlaceholder', {
+              name: sectionMeta.displayName,
+            })}
           />
         );
 
@@ -216,8 +224,8 @@ export const DynamicSectionForm: React.FC<DynamicSectionFormProps> = ({
           <GenericItemForm
             items={customSection?.items || []}
             onChange={(items) => updateCustomSection({ items })}
-            itemLabel="Entry"
-            addLabel="Add Entry"
+            itemLabel={t('builder.customSections.entryLabel')}
+            addLabel={t('builder.customSections.addEntryLabel')}
           />
         );
 
@@ -226,13 +234,17 @@ export const DynamicSectionForm: React.FC<DynamicSectionFormProps> = ({
           <GenericListForm
             items={customSection?.strings || []}
             onChange={(strings) => updateCustomSection({ strings })}
-            label="Items"
-            placeholder="Enter items, one per line"
+            label={t('builder.customSections.itemsLabel')}
+            placeholder={t('builder.customSections.itemsPlaceholder')}
           />
         );
 
       default:
-        return <div className="text-gray-500">Unknown section type: {sectionMeta.sectionType}</div>;
+        return (
+          <div className="text-gray-500">
+            {t('builder.customSections.unknownSectionType', { type: sectionMeta.sectionType })}
+          </div>
+        );
     }
   };
 

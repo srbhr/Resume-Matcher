@@ -117,6 +117,34 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
     onChange(DEFAULT_TEMPLATE_SETTINGS);
   };
 
+  const templateLabels = React.useMemo(
+    () => ({
+      'swiss-single': {
+        name: t('builder.formatting.templates.swissSingle.name'),
+        description: t('builder.formatting.templates.swissSingle.description'),
+      },
+      'swiss-two-column': {
+        name: t('builder.formatting.templates.swissTwoColumn.name'),
+        description: t('builder.formatting.templates.swissTwoColumn.description'),
+      },
+      modern: {
+        name: t('builder.formatting.templates.modern.name'),
+        description: t('builder.formatting.templates.modern.description'),
+      },
+      'modern-two-column': {
+        name: t('builder.formatting.templates.modernTwoColumn.name'),
+        description: t('builder.formatting.templates.modernTwoColumn.description'),
+      },
+    }),
+    [t]
+  );
+
+  const getFontLabel = (font: HeaderFontFamily | BodyFontFamily) => {
+    if (font === 'sans-serif') return t('builder.formatting.fontNames.sans');
+    if (font === 'serif') return t('builder.formatting.fontNames.serif');
+    return t('builder.formatting.fontNames.mono');
+  };
+
   return (
     <div className="border border-black bg-white">
       {/* Header - Always Visible */}
@@ -155,7 +183,7 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
                       ? 'border-blue-700 bg-blue-50 shadow-[2px_2px_0px_0px_#1D4ED8]'
                       : 'border-black bg-white hover:bg-gray-50 hover:shadow-[1px_1px_0px_0px_#000]'
                   }`}
-                  title={template.description}
+                  title={templateLabels[template.id].description}
                 >
                   <div className="w-12 h-16 mb-1.5 flex items-center justify-center">
                     <TemplateThumbnail
@@ -168,7 +196,7 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
                       settings.template === template.id ? 'text-blue-700' : 'text-gray-700'
                     }`}
                   >
-                    {template.name}
+                    {templateLabels[template.id].name}
                   </span>
                 </button>
               ))}
@@ -191,13 +219,13 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
                         ? 'border-blue-700 bg-blue-50 shadow-[2px_2px_0px_0px_#1D4ED8]'
                         : 'border-black bg-white hover:bg-gray-50'
                     }`}
-                    title={ACCENT_COLOR_MAP[color].name}
+                    title={t(`builder.formatting.accentColors.${color}`)}
                   >
                     <span
                       className="w-4 h-4 border border-gray-400"
                       style={{ backgroundColor: ACCENT_COLOR_MAP[color].primary }}
                     />
-                    <span className="capitalize">{color}</span>
+                    <span>{t(`builder.formatting.accentColors.${color}`)}</span>
                   </button>
                 ))}
               </div>
@@ -221,7 +249,9 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
                   }`}
                   title={PAGE_SIZE_INFO[size].dimensions}
                 >
-                  <div className="font-bold">{PAGE_SIZE_INFO[size].name}</div>
+                  <div className="font-bold">
+                    {size === 'A4' ? 'A4' : t('builder.pageSize.usLetter')}
+                  </div>
                   <div className="text-[9px] opacity-70">{PAGE_SIZE_INFO[size].dimensions}</div>
                 </button>
               ))}
@@ -321,9 +351,7 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
                               : 'system-ui, sans-serif',
                       }}
                     >
-                      {font === 'sans-serif'
-                        ? 'Sans'
-                        : font.charAt(0).toUpperCase() + font.slice(1)}
+                      {getFontLabel(font)}
                     </button>
                   ))}
                 </div>
@@ -352,9 +380,7 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
                               : 'system-ui, sans-serif',
                       }}
                     >
-                      {font === 'sans-serif'
-                        ? 'Sans'
-                        : font.charAt(0).toUpperCase() + font.slice(1)}
+                      {getFontLabel(font)}
                     </button>
                   ))}
                 </div>
@@ -448,15 +474,11 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
                 </div>
                 <div>
                   {t('builder.formatting.effectiveHeaderFont')}: {' '}
-                  {settings.fontSize.headerFont === 'sans-serif'
-                    ? 'Sans'
-                    : settings.fontSize.headerFont}
+                  {getFontLabel(settings.fontSize.headerFont)}
                 </div>
                 <div>
                   {t('builder.formatting.effectiveBodyFont')}: {' '}
-                  {settings.fontSize.bodyFont === 'sans-serif'
-                    ? 'Sans'
-                    : settings.fontSize.bodyFont}
+                  {getFontLabel(settings.fontSize.bodyFont)}
                 </div>
               </div>
               {settings.compactMode && (

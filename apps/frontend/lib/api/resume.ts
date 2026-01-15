@@ -1,6 +1,7 @@
 import { ImprovedResult } from '@/components/common/resume_previewer_context';
 import { type TemplateSettings } from '@/lib/types/template-settings';
-import { apiPost, apiPatch, apiDelete, apiFetch } from './client';
+import { type Locale } from '@/i18n/config';
+import { API_BASE, apiPost, apiPatch, apiDelete, apiFetch } from './client';
 
 // Matches backend schemas/models.py ResumeData
 interface ProcessedResume {
@@ -63,6 +64,14 @@ interface ResumeResponse {
     outreach_message?: string | null;
     parent_id?: string | null; // For determining if resume is tailored
   };
+}
+
+function normalizeResumeId(resumeId: string): string {
+  const normalized = resumeId.trim();
+  if (!normalized) {
+    throw new Error('Resume ID is required.');
+  }
+  return normalized;
 }
 
 export interface ResumeListItem {
@@ -158,10 +167,12 @@ export async function updateResume(
   return payload.data;
 }
 
-export async function downloadResumePdf(
+export function getResumePdfUrl(
   resumeId: string,
-  settings?: TemplateSettings
-): Promise<Blob> {
+  settings?: TemplateSettings,
+  locale?: Locale
+): string {
+  const normalizedId = normalizeResumeId(resumeId);
   const params = new URLSearchParams();
 
   if (settings) {
@@ -185,8 +196,20 @@ export async function downloadResumePdf(
     params.set('template', 'swiss-single');
     params.set('pageSize', 'A4');
   }
+  if (locale) {
+    params.set('lang', locale);
+  }
 
-  const res = await apiFetch(`/resumes/${encodeURIComponent(resumeId)}/pdf?${params.toString()}`);
+  return `${API_BASE}/resumes/${encodeURIComponent(normalizedId)}/pdf?${params.toString()}`;
+}
+
+export async function downloadResumePdf(
+  resumeId: string,
+  settings?: TemplateSettings,
+  locale?: Locale
+): Promise<Blob> {
+  const url = getResumePdfUrl(resumeId, settings, locale);
+  const res = await apiFetch(url);
   if (!res.ok) {
     const text = await res.text().catch(() => '');
     throw new Error(`Failed to download resume (status ${res.status}): ${text}`);
@@ -224,14 +247,26 @@ export async function updateOutreachMessage(resumeId: string, content: string): 
 }
 
 /** Downloads cover letter as PDF */
+export function getCoverLetterPdfUrl(
+  resumeId: string,
+  pageSize: 'A4' | 'LETTER' = 'A4',
+  locale?: Locale
+): string {
+  const normalizedId = normalizeResumeId(resumeId);
+  const params = new URLSearchParams({ pageSize });
+  if (locale) {
+    params.set('lang', locale);
+  }
+  return `${API_BASE}/resumes/${encodeURIComponent(normalizedId)}/cover-letter/pdf?${params.toString()}`;
+}
+
 export async function downloadCoverLetterPdf(
   resumeId: string,
-  pageSize: 'A4' | 'LETTER' = 'A4'
+  pageSize: 'A4' | 'LETTER' = 'A4',
+  locale?: Locale
 ): Promise<Blob> {
-  const params = new URLSearchParams({ pageSize });
-  const res = await apiFetch(
-    `/resumes/${encodeURIComponent(resumeId)}/cover-letter/pdf?${params.toString()}`
-  );
+  const url = getCoverLetterPdfUrl(resumeId, pageSize, locale);
+  const res = await apiFetch(url);
   if (!res.ok) {
     const text = await res.text().catch(() => '');
     throw new Error(`Failed to download cover letter (status ${res.status}): ${text}`);

@@ -44,6 +44,26 @@ export function PaginatedPreview({ resumeData, settings }: PaginatedPreviewProps
     }),
     [t]
   );
+  const sectionHeadings = React.useMemo(
+    () => ({
+      summary: t('resume.sections.summary'),
+      experience: t('resume.sections.experience'),
+      education: t('resume.sections.education'),
+      projects: t('resume.sections.projects'),
+      certifications: t('resume.sections.certifications'),
+      skills: t('resume.sections.skillsOnly'),
+      languages: t('resume.sections.languages'),
+      awards: t('resume.sections.awards'),
+      links: t('resume.sections.links'),
+    }),
+    [t]
+  );
+  const fallbackLabels = React.useMemo(
+    () => ({
+      name: t('resume.defaults.name'),
+    }),
+    [t]
+  );
 
   const { pages, isCalculating } = usePagination({
     pageSize: settings.pageSize,
@@ -123,7 +143,7 @@ export function PaginatedPreview({ resumeData, settings }: PaginatedPreviewProps
             className="h-8 gap-1.5"
           >
             {showMargins ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-            <span className="font-mono text-xs uppercase">Margins</span>
+            <span className="font-mono text-xs uppercase">{t('preview.margins')}</span>
           </Button>
         </div>
 
@@ -132,8 +152,10 @@ export function PaginatedPreview({ resumeData, settings }: PaginatedPreviewProps
           <FileText className="w-4 h-4" />
           <span className="font-mono text-xs uppercase">
             {isCalculating
-              ? 'Calculating...'
-              : `${pages.length} page${pages.length !== 1 ? 's' : ''}`}
+              ? t('preview.calculating')
+              : pages.length === 1
+                ? t('preview.pageCountSingular', { count: pages.length })
+                : t('preview.pageCountPlural', { count: pages.length })}
           </span>
         </div>
       </div>
@@ -164,6 +186,8 @@ export function PaginatedPreview({ resumeData, settings }: PaginatedPreviewProps
             template={settings.template}
             settings={resumeSettings}
             additionalSectionLabels={additionalSectionLabels}
+            sectionHeadings={sectionHeadings}
+            fallbackLabels={fallbackLabels}
           />
         </div>
 
@@ -175,7 +199,7 @@ export function PaginatedPreview({ resumeData, settings }: PaginatedPreviewProps
                 <div className="flex items-center gap-2 py-2">
                   <div className="h-px w-8 bg-gray-400" />
                   <span className="font-mono text-[10px] text-gray-500 uppercase tracking-wider">
-                    Page Break
+                    {t('preview.pageBreak')}
                   </span>
                   <div className="h-px w-8 bg-gray-400" />
                 </div>
@@ -195,6 +219,8 @@ export function PaginatedPreview({ resumeData, settings }: PaginatedPreviewProps
                   template={settings.template}
                   settings={resumeSettings}
                   additionalSectionLabels={additionalSectionLabels}
+                  sectionHeadings={sectionHeadings}
+                  fallbackLabels={fallbackLabels}
                 />
               </PageContainer>
             </React.Fragment>
