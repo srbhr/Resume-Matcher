@@ -29,7 +29,8 @@
     "selectOption": "Select an option...",
     "unknown": "Unknown",
     "keysCleared": "API keys cleared successfully",
-    "databaseReset": "Database reset successfully"
+    "databaseReset": "Database reset successfully",
+    "popupBlocked": "Popup blocked. Please allow popups or open this URL manually: {url}"
   },
   "home": {
     "brandLine1": "Resume",

@@ -79,9 +79,10 @@ const buildInitialData = (t: Translate): ResumeData => ({
 const ResumeBuilderContent = () => {
   const { t } = useTranslations();
   const { uiLanguage } = useLanguage();
-  const [resumeData, setResumeData] = useState<ResumeData>(() => buildInitialData(t));
+  const initialData = useMemo(() => buildInitialData(t), [t]);
+  const [resumeData, setResumeData] = useState<ResumeData>(() => initialData);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [lastSavedData, setLastSavedData] = useState<ResumeData>(() => buildInitialData(t));
+  const [lastSavedData, setLastSavedData] = useState<ResumeData>(() => initialData);
   const [isSaving, setIsSaving] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [, setLoadingState] = useState<'idle' | 'loading' | 'loaded' | 'error'>('idle');
@@ -103,10 +104,9 @@ const ResumeBuilderContent = () => {
     if (savedDraft) {
       return;
     }
-    const nextInitial = buildInitialData(t);
-    setResumeData(nextInitial);
-    setLastSavedData(nextInitial);
-  }, [t, resumeId, hasUnsavedChanges, improvedPreview]);
+    setResumeData(initialData);
+    setLastSavedData(initialData);
+  }, [initialData, resumeId, hasUnsavedChanges, improvedPreview]);
 
   // Tab state
   const [activeTab, setActiveTab] = useState<TabId>('resume');
@@ -331,7 +331,10 @@ const ResumeBuilderContent = () => {
       console.error('Failed to download resume:', error);
       if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
         const fallbackUrl = getResumePdfUrl(resumeId, templateSettings, uiLanguage);
-        openUrlInNewTab(fallbackUrl);
+        const didOpen = openUrlInNewTab(fallbackUrl);
+        if (!didOpen) {
+          alert(t('common.popupBlocked', { url: fallbackUrl }));
+        }
         return;
       }
       alert(t('builder.alerts.downloadFailed'));
@@ -375,7 +378,10 @@ const ResumeBuilderContent = () => {
           templateSettings.pageSize,
           uiLanguage
         );
-        openUrlInNewTab(fallbackUrl);
+        const didOpen = openUrlInNewTab(fallbackUrl);
+        if (!didOpen) {
+          alert(t('common.popupBlocked', { url: fallbackUrl }));
+        }
         return;
       }
       const errorMessage = error instanceof Error ? error.message : t('common.unknown');

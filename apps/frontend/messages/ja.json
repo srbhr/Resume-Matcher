@@ -29,7 +29,8 @@
     "selectOption": "選択してください...",
     "unknown": "不明",
     "keysCleared": "APIキーが正常にクリアされました",
-    "databaseReset": "データベースが正常にリセットされました"
+    "databaseReset": "データベースが正常にリセットされました",
+    "popupBlocked": "ポップアップがブロックされました。ポップアップを許可するか、次のURLを手動で開いてください: {url}"
   },
   "home": {
     "brandLine1": "履歴書",

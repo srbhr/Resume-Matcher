@@ -117,7 +117,10 @@ export default function ResumeViewerPage() {
       console.error('Failed to download resume:', err);
       if (err instanceof TypeError && err.message.includes('Failed to fetch')) {
         const fallbackUrl = getResumePdfUrl(resumeId, undefined, uiLanguage);
-        openUrlInNewTab(fallbackUrl);
+        const didOpen = openUrlInNewTab(fallbackUrl);
+        if (!didOpen) {
+          alert(t('common.popupBlocked', { url: fallbackUrl }));
+        }
         return;
       }
     }

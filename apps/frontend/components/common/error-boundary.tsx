@@ -133,24 +133,13 @@ export function LocalizedErrorBoundary({
   children: ReactNode;
   fallback?: ReactNode;
 }) {
-  let strings: ErrorBoundaryStrings = {
-    title: 'Something Went Wrong',
-    description: 'An unexpected error occurred. This has been logged for review.',
-    tryAgain: 'Try Again',
-    reloadPage: 'Reload Page',
+  const { t } = useTranslations();
+  const strings: ErrorBoundaryStrings = {
+    title: t('errors.boundary.title'),
+    description: t('errors.boundary.description'),
+    tryAgain: t('errors.boundary.tryAgain'),
+    reloadPage: t('errors.boundary.reloadPage'),
   };
-
-  try {
-    const { t } = useTranslations();
-    strings = {
-      title: t('errors.boundary.title'),
-      description: t('errors.boundary.description'),
-      tryAgain: t('errors.boundary.tryAgain'),
-      reloadPage: t('errors.boundary.reloadPage'),
-    };
-  } catch (error) {
-    console.warn('Falling back to default error boundary strings:', error);
-  }
 
   return (
     <ErrorBoundary fallback={fallback} strings={strings}>

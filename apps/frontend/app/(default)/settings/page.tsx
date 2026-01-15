@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import {
   fetchLlmConfig,
@@ -114,43 +114,50 @@ export default function SettingsPage() {
   // Translations
   const { t } = useTranslations();
   const providerInfo = PROVIDER_INFO[provider] ?? PROVIDER_INFO['openai'];
-  const fallbackPromptOptions: PromptOption[] = [
-    {
-      id: 'nudge',
-      label: t('tailor.promptOptions.nudge.label'),
-      description: t('tailor.promptOptions.nudge.description'),
-    },
-    {
-      id: 'keywords',
-      label: t('tailor.promptOptions.keywords.label'),
-      description: t('tailor.promptOptions.keywords.description'),
-    },
-    {
-      id: 'full',
-      label: t('tailor.promptOptions.full.label'),
-      description: t('tailor.promptOptions.full.description'),
-    },
-  ];
-  const promptOptionOverrides: Record<string, { label: string; description: string }> = {
-    nudge: {
-      label: t('tailor.promptOptions.nudge.label'),
-      description: t('tailor.promptOptions.nudge.description'),
-    },
-    keywords: {
-      label: t('tailor.promptOptions.keywords.label'),
-      description: t('tailor.promptOptions.keywords.description'),
-    },
-    full: {
-      label: t('tailor.promptOptions.full.label'),
-      description: t('tailor.promptOptions.full.description'),
-    },
-  };
-  const localizedPromptOptions = (promptOptions.length ? promptOptions : fallbackPromptOptions).map(
-    (option) => {
+  const fallbackPromptOptions = useMemo<PromptOption[]>(
+    () => [
+      {
+        id: 'nudge',
+        label: t('tailor.promptOptions.nudge.label'),
+        description: t('tailor.promptOptions.nudge.description'),
+      },
+      {
+        id: 'keywords',
+        label: t('tailor.promptOptions.keywords.label'),
+        description: t('tailor.promptOptions.keywords.description'),
+      },
+      {
+        id: 'full',
+        label: t('tailor.promptOptions.full.label'),
+        description: t('tailor.promptOptions.full.description'),
+      },
+    ],
+    [t]
+  );
+  const promptOptionOverrides = useMemo<Record<string, { label: string; description: string }>>(
+    () => ({
+      nudge: {
+        label: t('tailor.promptOptions.nudge.label'),
+        description: t('tailor.promptOptions.nudge.description'),
+      },
+      keywords: {
+        label: t('tailor.promptOptions.keywords.label'),
+        description: t('tailor.promptOptions.keywords.description'),
+      },
+      full: {
+        label: t('tailor.promptOptions.full.label'),
+        description: t('tailor.promptOptions.full.description'),
+      },
+    }),
+    [t]
+  );
+  const localizedPromptOptions = useMemo(() => {
+    const options = promptOptions.length ? promptOptions : fallbackPromptOptions;
+    return options.map((option) => {
       const override = promptOptionOverrides[option.id];
       return override ? { ...option, ...override } : option;
-    }
-  );
+    });
+  }, [promptOptions, fallbackPromptOptions, promptOptionOverrides]);
 
   // Load LLM config and feature config on mount
   useEffect(() => {

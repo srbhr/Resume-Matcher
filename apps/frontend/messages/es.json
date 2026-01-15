@@ -29,7 +29,8 @@
     "selectOption": "Selecciona una opción...",
     "unknown": "Desconocido",
     "keysCleared": "Claves API borradas con éxito",
-    "databaseReset": "Base de datos restablecida con éxito"
+    "databaseReset": "Base de datos restablecida con éxito",
+    "popupBlocked": "Se bloqueó la ventana emergente. Permite las ventanas emergentes o abre manualmente esta URL: {url}"
   },
   "home": {
     "brandLine1": "Currículum",

@@ -29,7 +29,8 @@
     "selectOption": "请选择...",
     "unknown": "未知",
     "keysCleared": "API密钥已成功清除",
-    "databaseReset": "数据库已成功重置"
+    "databaseReset": "数据库已成功重置",
+    "popupBlocked": "弹窗被阻止。请允许弹窗或手动打开此链接：{url}"
   },
   "home": {
     "brandLine1": "简历",

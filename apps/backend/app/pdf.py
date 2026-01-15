@@ -249,14 +249,19 @@ async def render_resume_pdf(
     pdf_format = _resolve_pdf_format(page_size)
     pdf_margins = _resolve_pdf_margins(margins)
 
-    subprocess_supported = True
-    if _browser is None:
-        async with _subprocess_lock:
-            if _subprocess_supported and not _loop_supports_subprocess():
-                _subprocess_supported = False
-            subprocess_supported = _subprocess_supported
+    if _browser is not None:
+        try:
+            return await _render_with_browser(_browser, url, selector, pdf_format, pdf_margins)
+        except PlaywrightError as e:
+            _raise_playwright_error(e, url)
 
-    if _browser is None and subprocess_supported:
+    async with _subprocess_lock:
+        subprocess_supported = _subprocess_supported
+        if subprocess_supported and not _loop_supports_subprocess():
+            _subprocess_supported = False
+            subprocess_supported = False
+
+    if subprocess_supported:
         try:
             await init_pdf_renderer()
         except NotImplementedError:
