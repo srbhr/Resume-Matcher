@@ -9,6 +9,7 @@ import en from '@/messages/en.json';
 import es from '@/messages/es.json';
 import zh from '@/messages/zh.json';
 import ja from '@/messages/ja.json';
+import pt from '@/messages/pt-BR.json';
 
 // Type for the messages structure
 export type Messages = typeof en;
@@ -19,6 +20,7 @@ const allMessages: Record<Locale, Messages> = {
   es,
   zh,
   ja,
+  pt
 };
 
 /**
