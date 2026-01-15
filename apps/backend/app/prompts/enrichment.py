@@ -2,6 +2,8 @@
 
 ANALYZE_RESUME_PROMPT = """You are a professional resume analyst. Analyze this resume to identify items in Experience and Projects sections that have weak, vague, or incomplete descriptions.
 
+IMPORTANT: Generate ALL output text (questions, placeholders, summaries, weakness reasons) in {output_language}.
+
 RESUME DATA (JSON):
 {resume_json}
 
@@ -80,6 +82,8 @@ IMPORTANT RULES:
 - Prioritize quality over quantity - ask the most impactful questions first"""
 
 ENHANCE_DESCRIPTION_PROMPT = """You are a professional resume writer. Your goal is to ADD new bullet points to this resume item using the additional context provided by the candidate. DO NOT rewrite or replace existing bullets - only add new ones.
+
+IMPORTANT: Generate ALL output text (bullet points) in {output_language}.
 
 ORIGINAL ITEM:
 Type: {item_type}
