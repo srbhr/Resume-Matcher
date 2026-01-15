@@ -158,12 +158,10 @@ async def upload_resume(file: UploadFile = File(...)) -> ResumeUploadResponse:
 
 @router.post("/upload_by_link", response_model=ResumeUploadResponse)
 async def resume_from_link(file_id: str | None) -> ResumeUploadResponse:
-    """Test uploading a resume file (PDF/DOCX) from a link.
-
-    Converts the file to Markdown and stores it in the database.
-    Optionally parses to structured JSON if LLM is configured.
+    """Uploading resume from google drive id.
+    Use the '/upload' endpoint to upload the file after downloading it
+    into the server memory, so that it can be processed.
     """
-
     url = f"https://docs.google.com/uc?export=download&id={file_id}"
 
     response = requests.get(url, stream=True, allow_redirects=True)
@@ -181,18 +179,9 @@ async def resume_from_link(file_id: str | None) -> ResumeUploadResponse:
 
     content_type = await get_file_type(response)
 
-    # # Read the entire response content into an in-memory buffer
+    # Read the entire response content into an in-memory buffer
     file_content = io.BytesIO(response.content)
     file_content.seek(0)  # Reset buffer position to the beginning
-    # with open(filename, "wb") as f:
-    #     f.write(file_content.getbuffer())
-    #     print(f"File saved successfully as: {filename}")
-    #     file_content.seek(0)
-
-    # tempfile = tf.NamedTemporaryFile(delete=True, suffix=".pdf")
-    # tempfile.write(response.content)
-    # tempfile.flush()
-    # tempfile.seek(0)
 
     file = StarletteUploadFile(
         filename=filename,
