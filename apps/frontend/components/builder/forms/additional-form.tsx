@@ -28,14 +28,6 @@ export const AdditionalForm: React.FC<AdditionalFormProps> = ({ data, onChange }
     return arr?.join('\n') || '';
   };
 
-  // Explicitly allow Enter key to create newlines (prevent form submission interference)
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter') {
-      // Allow default behavior (newline insertion)
-      e.stopPropagation();
-    }
-  };
-
   return (
     <div className="space-y-6">
       <p className="font-mono text-xs text-blue-700 border-l-2 border-blue-700 pl-3">
@@ -54,7 +46,6 @@ export const AdditionalForm: React.FC<AdditionalFormProps> = ({ data, onChange }
             id="technicalSkills"
             value={formatArray(data.technicalSkills)}
             onChange={(e) => handleArrayChange('technicalSkills', e.target.value)}
-            onKeyDown={handleKeyDown}
             placeholder={t('builder.additionalForm.placeholders.technicalSkills')}
             className="min-h-[120px] text-black rounded-none border-black bg-white focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-blue-700"
           />
@@ -70,7 +61,6 @@ export const AdditionalForm: React.FC<AdditionalFormProps> = ({ data, onChange }
             id="languages"
             value={formatArray(data.languages)}
             onChange={(e) => handleArrayChange('languages', e.target.value)}
-            onKeyDown={handleKeyDown}
             placeholder={t('builder.additionalForm.placeholders.languages')}
             className="min-h-[120px] text-black rounded-none border-black bg-white focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-blue-700"
           />
@@ -86,7 +76,6 @@ export const AdditionalForm: React.FC<AdditionalFormProps> = ({ data, onChange }
             id="certifications"
             value={formatArray(data.certificationsTraining)}
             onChange={(e) => handleArrayChange('certificationsTraining', e.target.value)}
-            onKeyDown={handleKeyDown}
             placeholder={t('builder.additionalForm.placeholders.certifications')}
             className="min-h-[120px] text-black rounded-none border-black bg-white focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-blue-700"
           />
@@ -102,7 +91,6 @@ export const AdditionalForm: React.FC<AdditionalFormProps> = ({ data, onChange }
             id="awards"
             value={formatArray(data.awards)}
             onChange={(e) => handleArrayChange('awards', e.target.value)}
-            onKeyDown={handleKeyDown}
             placeholder={t('builder.additionalForm.placeholders.awards')}
             className="min-h-[120px] text-black rounded-none border-black bg-white focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-blue-700"
           />

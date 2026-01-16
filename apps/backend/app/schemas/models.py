@@ -4,7 +4,7 @@ import copy
 from enum import Enum
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 # Section Type Enum for dynamic sections
@@ -95,6 +95,16 @@ class CustomSectionItem(BaseModel):
     location: str | None = None
     years: str = ""
     description: list[str] = Field(default_factory=list)
+
+    @field_validator("description", mode="before")
+    @classmethod
+    def convert_empty_string_to_list(cls, v):
+        """Convert empty string or None to empty list."""
+        if v == "" or v is None:
+            return []
+        if isinstance(v, str):
+            return [v]
+        return v
 
 
 class CustomSection(BaseModel):

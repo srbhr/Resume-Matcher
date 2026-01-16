@@ -24,6 +24,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en-US" className="h-full">
+      <head>
+        {/* Runtime config provides window.__RUNTIME_CONFIG with NEXT_PUBLIC_API_URL at runtime (optional) */}
+        <script src="/runtime-config.js" />
+      </head>
       <body
         className={`${geist.variable} ${spaceGrotesk.variable} antialiased bg-[#F0F0E8] text-gray-900 min-h-full`}
       >

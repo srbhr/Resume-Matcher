@@ -1,9 +1,11 @@
 """Application configuration using pydantic-settings."""
 
 import json
+import os
 from pathlib import Path
 from typing import Any, Literal
 
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -131,11 +133,37 @@ class Settings(BaseSettings):
     port: int = 8000
     frontend_base_url: str = "http://localhost:3000"
 
-    # CORS Configuration
-    cors_origins: list[str] = [
+    # CORS Configuration (internal field, populated from CORS_ORIGINS env var in __init__)
+    _cors_origins_internal: list[str] = [
         "http://localhost:3000",
         "http://127.0.0.1:3000",
     ]
+
+    @property
+    def cors_origins(self) -> list[str]:
+        """Get CORS origins list."""
+        return self._cors_origins_internal
+
+    def __init__(self, **data: Any) -> None:
+        """Initialize settings and parse CORS_ORIGINS from environment."""
+        super().__init__(**data)
+
+        # Manually parse CORS_ORIGINS from environment (not auto-parsed by Pydantic)
+        cors_env = os.environ.get("CORS_ORIGINS")
+        if cors_env:
+            cors_env = cors_env.strip()
+            # Check for wildcard configuration
+            if cors_env == "*":
+                self._cors_origins_internal = ["*"]
+            else:
+                try:
+                    # Try to parse as JSON array
+                    parsed_origins = json.loads(cors_env)
+                    if isinstance(parsed_origins, list):
+                        self._cors_origins_internal = parsed_origins
+                except (json.JSONDecodeError, ValueError):
+                    # If JSON parsing fails, treat as comma-separated list
+                    self._cors_origins_internal = [origin.strip() for origin in cors_env.split(",")]
 
     # Paths
     data_dir: Path = Path(__file__).parent.parent / "data"

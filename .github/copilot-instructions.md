@@ -26,6 +26,7 @@ All project documentation is located in the `docs/` folder:
 |----------|-------------|
 | [backend-guide.md](docs/agent/30-architecture/backend-guide.md) | Backend architecture, modules, and API endpoints |
 | [frontend-workflow.md](docs/agent/30-architecture/frontend-workflow.md) | User flow, page routes, and component architecture |
+| [server-side-proxy.md](docs/agent/30-architecture/server-side-proxy.md) | **Server-side API proxy architecture (eliminates CORS)** |
 | [front-end-apis.md](docs/agent/40-apis/front-end-apis.md) | API contract between frontend and backend |
 | [style-guide.md](docs/agent/50-design-and-templates/style-guide.md) | Swiss International Style design system |
 | [backend-architecture.md](docs/agent/30-architecture/backend-architecture.md) | Detailed backend architecture diagrams |
@@ -58,11 +59,16 @@ A lean FastAPI application with multi-provider AI support. See **[docs/agent/30-
 Next.js dashboard with Swiss International Style design. See **[docs/agent/30-architecture/frontend-workflow.md](docs/agent/30-architecture/frontend-workflow.md)** for user flow and **[docs/agent/40-apis/front-end-apis.md](docs/agent/40-apis/front-end-apis.md)** for API contracts.
 
 - `app/` - Next.js routes (dashboard, builder, tailor, resumes, settings, print)
+- `app/api/[...proxy]/` - **Server-side API proxy (eliminates CORS)** - see [server-side-proxy.md](docs/agent/30-architecture/server-side-proxy.md)
 - `components/` - Reusable UI components (including `ConfirmDialog` with danger/success variants)
 - `lib/` - API clients and utilities (`lib/api/resume.ts` includes CRUD operations)
 - `hooks/` - Custom React hooks
 
 **Key Features:**
+- **Server-side API Proxy**: All API calls go through Next.js `/api/*` routes, eliminating CORS issues entirely
+  - Browser → Next.js `/api/*` (same-origin, no CORS)
+  - Next.js → Backend (server-to-server, no CORS)
+  - Works from any IP/hostname without configuration changes
 - Dashboard auto-refreshes on window focus (handles deletions from other pages)
 - `ConfirmDialog` component supports `danger`, `warning`, `success`, and `default` variants
 - Delete flow includes confirmation before and success message after deletion

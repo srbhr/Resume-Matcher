@@ -59,19 +59,19 @@ services:
     ports:
       - "3000:3000"
       - "8000:8000"
-    volumes:
-      - resume-data:/app/backend/data
-    environment:
+    restart: unless-stopped
       - NODE_ENV=production
       - NEXT_PUBLIC_API_URL=http://localhost:8000
       # Ollama configuration (Mac/Windows)
-      - LLM_PROVIDER=ollama
-      - LLM_MODEL=llama3.2
-      - LLM_API_BASE=http://host.docker.internal:11434
-    restart: unless-stopped
+For Linux users, replace `host.docker.internal` with your host's IP or use host network mode.
 ```
 
-For Linux users, replace `host.docker.internal` with your host's IP or use host network mode.
+Then restart:
+
+```bash
+docker compose down
+docker compose up -d
+```
 
 ### Option 3: Linux Host Network Mode
 

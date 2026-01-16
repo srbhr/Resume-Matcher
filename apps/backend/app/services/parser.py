@@ -53,7 +53,7 @@ async def parse_resume_to_json(markdown_text: str) -> dict[str, Any]:
 
     result = await complete_json(
         prompt=prompt,
-        system_prompt="You are a JSON extraction engine. Output only valid JSON, no explanations.",
+        system_prompt="Extract resume data as JSON. Output pure JSON, no explanations.",
     )
 
     # Validate against schema
