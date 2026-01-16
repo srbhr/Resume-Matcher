@@ -4,7 +4,6 @@ import React, { useMemo } from 'react';
 import {
   DndContext,
   closestCenter,
-  KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors,
@@ -12,7 +11,6 @@ import {
 } from '@dnd-kit/core';
 import {
   SortableContext,
-  sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import {
@@ -167,10 +165,14 @@ export const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, onUpdate }) 
   };
 
   // Configure drag-and-drop sensors
+  // Note: KeyboardSensor can interfere with textarea Enter key.
+  // We rely on stopPropagation() in form textareas to prevent conflicts.
   const sensors = useSensors(
     useSensor(PointerSensor),
+    // Custom KeyboardSensor configuration to minimize interference with form inputs
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
+      // Optionally, you could add custom activation logic here if needed
     })
   );
 

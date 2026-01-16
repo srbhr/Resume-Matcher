@@ -1,18 +1,63 @@
 services:
-  resume-matcher:
+  # Frontend Service
+  resume-matcher-frontend:
     build:
       context: .
-      dockerfile: Dockerfile
-    image: resume-matcher
-    container_name: resume-matcher
+      dockerfile: frontend.Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ""
+    image: resume-matcher-frontend
+    container_name: resume-matcher-frontend
     ports:
-      - "3000:3000"   # Frontend
-      - "8000:8000"   # Backend API
-    volumes:
-      - resume-data:/app/backend/data
+      - "${FRONTEND_PORT:-3000}:3000"  # Expose frontend on port 3000
     environment:
       - NODE_ENV=production
-      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      # Backend URL for server-side API proxy (no CORS issues)
+      # Next.js server connects to backend service directly
+      - BACKEND_URL=http://resume-matcher-backend:8000
+      # Legacy: kept for fallback compatibility
+      - NEXT_PUBLIC_API_URL=http://resume-matcher-backend:8000
+    # Avoid mounting the local frontend folder in production: use the built image instead
+    restart: unless-stopped
+    depends_on:
+      - resume-matcher-backend
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://localhost:3000').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - resume-matcher-network
+
+  # Backend Service
+  resume-matcher-backend:
+    build:
+      context: .
+      dockerfile: backend.Dockerfile
+    image: resume-matcher-backend
+    container_name: resume-matcher-backend
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"  # Expose backend on port 8000 by default.
+    volumes:
+      - resume-data:/app/backend/data   # Persistent data volume
+    user: "1000:1000"  # Run as appuser (uid:gid 1000:1000) to match data directory ownership
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8000
+      - FRONTEND_BASE_URL=http://resume-matcher-frontend:3000
+      # CORS Configuration (OPTIONAL with new proxy architecture)
+      # With the new Next.js API proxy, CORS is no longer needed for normal operation.
+      # Browser requests go to Next.js (same-origin), which proxies to backend (server-to-server).
+      #
+      # Only needed if:
+      # - You want to allow direct backend API access from browsers
+      # - You're debugging or developing without the proxy
+      #
+      # Examples:
+      #   Allow all:           CORS_ORIGINS="*"
+      #   Specific origins:    CORS_ORIGINS='["http://localhost:3000","http://example.com:3000"]'
+      - CORS_ORIGINS=*
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
@@ -20,6 +65,12 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s
+    networks:
+      - resume-matcher-network
+
+networks:
+  resume-matcher-network:
+    driver: bridge
 
 volumes:
   resume-data:

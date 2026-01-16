@@ -67,7 +67,7 @@ async def improve_resume(
 
     result = await complete_json(
         prompt=prompt,
-        system_prompt="You are an expert resume editor. Output only valid JSON.",
+        system_prompt="You are an expert resume editor. Output pure JSON, no explanations.",
         max_tokens=8192,
     )
 
