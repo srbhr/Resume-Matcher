@@ -553,7 +553,10 @@
       "errorPrefix": "エラー: {error}",
       "connectionSuccessful": "接続成功",
       "connectionFailed": "接続失敗",
-      "connectionDetails": "プロバイダー: {provider} | モデル: {model}"
+      "connectionDetails": "プロバイダー: {provider} | モデル: {model}",
+      "testPromptLabel": "テスト内容",
+      "modelOutputLabel": "モデル出力",
+      "errorDetailLabel": "エラー詳細"
     },
     "contentGeneration": {
       "title": "コンテンツ生成",

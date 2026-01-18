@@ -553,7 +553,10 @@
       "errorPrefix": "错误：{error}",
       "connectionSuccessful": "连接成功",
       "connectionFailed": "连接失败",
-      "connectionDetails": "提供商：{provider} | 模型：{model}"
+      "connectionDetails": "提供商：{provider} | 模型：{model}",
+      "testPromptLabel": "测试内容",
+      "modelOutputLabel": "模型输出",
+      "errorDetailLabel": "错误详情"
     },
     "contentGeneration": {
       "title": "内容生成",

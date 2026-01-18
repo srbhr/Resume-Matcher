@@ -180,7 +180,8 @@ async def test_llm_connection(request: LLMConfigRequest | None = None) -> dict:
         ),
     )
 
-    return await check_llm_health(config)
+    test_prompt = "Hi"
+    return await check_llm_health(config, include_details=True, test_prompt=test_prompt)
 
 
 @router.get("/features", response_model=FeatureConfigResponse)

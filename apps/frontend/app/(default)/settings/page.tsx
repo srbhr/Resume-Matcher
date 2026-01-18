@@ -63,6 +63,17 @@ const PROVIDERS: LLMProvider[] = [
   'ollama',
 ];
 
+const unwrapCodeBlock = (value?: string | null): string | null => {
+  if (!value) return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const fenced = trimmed.match(/^```[a-zA-Z0-9_-]*\n([\s\S]*?)\n```$/);
+  if (fenced) {
+    return fenced[1]?.trimEnd() ?? '';
+  }
+  return trimmed;
+};
+
 export default function SettingsPage() {
   const [status, setStatus] = useState<Status>('loading');
   const [error, setError] = useState<string | null>(null);
@@ -158,6 +169,27 @@ export default function SettingsPage() {
       return override ? { ...option, ...override } : option;
     });
   }, [promptOptions, fallbackPromptOptions, promptOptionOverrides]);
+  const healthDetailItems = useMemo(() => {
+    if (!healthCheck) return [];
+
+    return [
+      {
+        key: 'testPrompt',
+        label: t('settings.llmConfiguration.testPromptLabel'),
+        value: unwrapCodeBlock(healthCheck.test_prompt),
+      },
+      {
+        key: 'modelOutput',
+        label: t('settings.llmConfiguration.modelOutputLabel'),
+        value: unwrapCodeBlock(healthCheck.model_output),
+      },
+      {
+        key: 'errorDetail',
+        label: t('settings.llmConfiguration.errorDetailLabel'),
+        value: unwrapCodeBlock(healthCheck.error_detail),
+      },
+    ].filter((item) => item.value);
+  }, [healthCheck, t]);
 
   // Load LLM config and feature config on mount
   useEffect(() => {
@@ -234,6 +266,7 @@ export default function SettingsPage() {
   const handleSave = async () => {
     setStatus('saving');
     setError(null);
+    setHealthCheck(null);
 
     try {
       if (requiresApiKey && !apiKey.trim() && !hasStoredApiKey) {
@@ -809,6 +842,23 @@ export default function SettingsPage() {
                   </p>
                   {healthCheck.error && (
                     <p className="font-mono text-xs text-red-600 mt-1">{healthCheck.error}</p>
+                  )}
+                  {healthCheck.warning && (
+                    <p className="font-mono text-xs text-amber-700 mt-1">{healthCheck.warning}</p>
+                  )}
+                  {healthDetailItems.length > 0 && (
+                    <div className="mt-3 space-y-3">
+                      {healthDetailItems.map((item) => (
+                        <div key={item.key}>
+                          <p className="font-mono text-[10px] uppercase tracking-wider text-gray-600">
+                            {item.label}
+                          </p>
+                          <pre className="mt-1 whitespace-pre-wrap rounded border border-black/10 bg-white p-3 text-xs text-gray-800">
+                            {item.value}
+                          </pre>
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </div>
               )}

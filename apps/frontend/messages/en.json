@@ -553,7 +553,10 @@
       "errorPrefix": "ERROR: {error}",
       "connectionSuccessful": "CONNECTION SUCCESSFUL",
       "connectionFailed": "CONNECTION FAILED",
-      "connectionDetails": "Provider: {provider} | Model: {model}"
+      "connectionDetails": "Provider: {provider} | Model: {model}",
+      "testPromptLabel": "TEST PROMPT",
+      "modelOutputLabel": "MODEL OUTPUT",
+      "errorDetailLabel": "ERROR DETAIL"
     },
     "contentGeneration": {
       "title": "Content Generation",
