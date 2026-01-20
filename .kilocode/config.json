@@ -1,0 +1,6 @@
+{
+	"project": {
+		"managedIndexingEnabled": true,
+		"baseBranch": "main"
+	}
+}
