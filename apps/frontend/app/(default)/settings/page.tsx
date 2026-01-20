@@ -887,7 +887,7 @@ export default function SettingsPage() {
                           <p className="font-mono text-[10px] uppercase tracking-wider text-gray-600">
                             {item.label}
                           </p>
-                          <pre className="mt-1 whitespace-pre-wrap rounded border border-black/10 bg-white p-3 text-xs text-gray-800">
+                          <pre className="mt-1 whitespace-pre-wrap rounded-none border border-black bg-white p-3 text-xs text-gray-800 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)]">
                             {item.value}
                           </pre>
                         </div>
