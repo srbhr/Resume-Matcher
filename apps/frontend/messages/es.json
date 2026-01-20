@@ -553,7 +553,20 @@
       "errorPrefix": "ERROR: {error}",
       "connectionSuccessful": "CONEXIÓN EXITOSA",
       "connectionFailed": "CONEXIÓN FALLIDA",
-      "connectionDetails": "Proveedor: {provider} | Modelo: {model}"
+      "connectionDetails": "Proveedor: {provider} | Modelo: {model}",
+      "testPromptLabel": "TEXTO DE PRUEBA",
+      "modelOutputLabel": "SALIDA DEL MODELO",
+      "errorDetailLabel": "DETALLE DEL ERROR",
+      "healthErrors": {
+        "api_key_missing": "La clave API no está configurada. Añádela en Configuración.",
+        "health_check_failed": "La verificación falló.",
+        "duplicate_v1_path": "La verificación falló. La URL base puede contener un /v1 duplicado.",
+        "not_found_404": "La verificación falló. 404 No encontrado: comprueba que la URL base coincide con el proveedor.",
+        "html_response": "La verificación falló. La URL base devolvió HTML; puede ser la URL de consola o una ruta de puerta de enlace no compatible."
+      },
+      "healthWarnings": {
+        "empty_content": "El LLM devolvió contenido vacío en la verificación de salud."
+      }
     },
     "contentGeneration": {
       "title": "Generación de contenido",

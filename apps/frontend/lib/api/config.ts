@@ -37,7 +37,13 @@ export interface LLMHealthCheck {
   provider: string;
   model: string;
   error?: string;
+  error_code?: string;
   response_model?: string;
+  warning?: string;
+  warning_code?: string;
+  test_prompt?: string;
+  model_output?: string;
+  error_detail?: string;
 }
 
 // Fetch full LLM configuration

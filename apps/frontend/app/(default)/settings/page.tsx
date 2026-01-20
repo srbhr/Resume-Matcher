@@ -63,6 +63,31 @@ const PROVIDERS: LLMProvider[] = [
   'ollama',
 ];
 
+const unwrapCodeBlock = (value?: string | null): string | null => {
+  if (!value) return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const fenced = trimmed.match(/^```[a-zA-Z0-9_-]*\n([\s\S]*?)\n```\s*$/);
+  if (fenced) {
+    return fenced[1]?.trimEnd() || null;
+  }
+  return trimmed;
+};
+
+const getHealthCheckMessage = (
+  t: (key: string, params?: Record<string, string | number>) => string,
+  baseKey: string,
+  code?: string,
+  fallback?: string
+): string | null => {
+  if (code) {
+    const key = `${baseKey}.${code}`;
+    const localized = t(key);
+    return localized !== key ? localized : fallback ?? code;
+  }
+  return fallback ?? null;
+};
+
 export default function SettingsPage() {
   const [status, setStatus] = useState<Status>('loading');
   const [error, setError] = useState<string | null>(null);
@@ -158,6 +183,45 @@ export default function SettingsPage() {
       return override ? { ...option, ...override } : option;
     });
   }, [promptOptions, fallbackPromptOptions, promptOptionOverrides]);
+  const healthDetailItems = useMemo(() => {
+    if (!healthCheck) return [];
+
+    return [
+      {
+        key: 'testPrompt',
+        label: t('settings.llmConfiguration.testPromptLabel'),
+        value: unwrapCodeBlock(healthCheck.test_prompt),
+      },
+      {
+        key: 'modelOutput',
+        label: t('settings.llmConfiguration.modelOutputLabel'),
+        value: unwrapCodeBlock(healthCheck.model_output),
+      },
+      {
+        key: 'errorDetail',
+        label: t('settings.llmConfiguration.errorDetailLabel'),
+        value: unwrapCodeBlock(healthCheck.error_detail),
+      },
+    ].filter((item) => item.value);
+  }, [healthCheck, t]);
+  const healthCheckError = useMemo(() => {
+    if (!healthCheck) return null;
+    return getHealthCheckMessage(
+      t,
+      'settings.llmConfiguration.healthErrors',
+      healthCheck.error_code,
+      healthCheck.error
+    );
+  }, [healthCheck, t]);
+  const healthCheckWarning = useMemo(() => {
+    if (!healthCheck) return null;
+    return getHealthCheckMessage(
+      t,
+      'settings.llmConfiguration.healthWarnings',
+      healthCheck.warning_code,
+      healthCheck.warning
+    );
+  }, [healthCheck, t]);
 
   // Load LLM config and feature config on mount
   useEffect(() => {
@@ -234,6 +298,7 @@ export default function SettingsPage() {
   const handleSave = async () => {
     setStatus('saving');
     setError(null);
+    setHealthCheck(null);
 
     try {
       if (requiresApiKey && !apiKey.trim() && !hasStoredApiKey) {
@@ -807,8 +872,27 @@ export default function SettingsPage() {
                       model: healthCheck.model,
                     })}
                   </p>
-                  {healthCheck.error && (
-                    <p className="font-mono text-xs text-red-600 mt-1">{healthCheck.error}</p>
+                  {healthCheckError && (
+                    <p className="font-mono text-xs text-red-600 mt-1">{healthCheckError}</p>
+                  )}
+                  {healthCheckWarning && (
+                    <p className="font-mono text-xs text-amber-700 mt-1">
+                      {healthCheckWarning}
+                    </p>
+                  )}
+                  {healthDetailItems.length > 0 && (
+                    <div className="mt-3 space-y-3">
+                      {healthDetailItems.map((item) => (
+                        <div key={item.key}>
+                          <p className="font-mono text-[10px] uppercase tracking-wider text-gray-600">
+                            {item.label}
+                          </p>
+                          <pre className="mt-1 whitespace-pre-wrap rounded-none border border-black bg-white p-3 text-xs text-gray-800 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)]">
+                            {item.value}
+                          </pre>
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </div>
               )}
