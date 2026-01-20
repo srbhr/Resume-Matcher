@@ -216,7 +216,7 @@ async def update_feature_config(request: FeatureConfigRequest) -> FeatureConfigR
 
 
 # Supported languages for i18n
-SUPPORTED_LANGUAGES = ["en", "es", "zh", "ja"]
+SUPPORTED_LANGUAGES = ["en", "es", "zh", "ja", "pt"]
 
 
 @router.get("/language", response_model=LanguageConfigResponse)

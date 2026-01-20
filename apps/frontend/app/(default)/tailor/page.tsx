@@ -184,8 +184,12 @@ export default function TailorPage() {
         <div className="space-y-6">
           <Dropdown
             options={
-              promptOptions.length
-                ? promptOptions
+              promptOptions.length > 0
+                ? promptOptions.map((opt) => ({
+                    id: opt.id,
+                    label: t(`tailor.promptOptions.${opt.id}.label`),
+                    description: t(`tailor.promptOptions.${opt.id}.description`),
+                  }))
                 : [
                     {
                       id: 'nudge',
