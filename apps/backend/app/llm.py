@@ -55,6 +55,68 @@ def _normalize_api_base(provider: str, api_base: str | None) -> str | None:
     return base or None
 
 
+def _extract_text_parts(value: Any, depth: int = 0, max_depth: int = 10) -> list[str]:
+    """Recursively extract text segments from nested response structures.
+
+    Handles strings, lists, dicts with 'text'/'content'/'value' keys, and objects
+    with text/content attributes. Limits recursion depth to avoid cycles.
+
+    Args:
+        value: Input value that may contain text in strings, lists, dicts, or objects.
+        depth: Current recursion depth.
+        max_depth: Maximum recursion depth before returning no content.
+
+    Returns:
+        A list of extracted text segments.
+    """
+    if depth >= max_depth:
+        return []
+
+    if value is None:
+        return []
+
+    if isinstance(value, str):
+        return [value]
+
+    if isinstance(value, list):
+        parts: list[str] = []
+        next_depth = depth + 1
+        for item in value:
+            parts.extend(_extract_text_parts(item, next_depth, max_depth))
+        return parts
+
+    if isinstance(value, dict):
+        next_depth = depth + 1
+        if "text" in value:
+            return _extract_text_parts(value.get("text"), next_depth, max_depth)
+        if "content" in value:
+            return _extract_text_parts(value.get("content"), next_depth, max_depth)
+        if "value" in value:
+            return _extract_text_parts(value.get("value"), next_depth, max_depth)
+        return []
+
+    next_depth = depth + 1
+    if hasattr(value, "text"):
+        return _extract_text_parts(getattr(value, "text"), next_depth, max_depth)
+    if hasattr(value, "content"):
+        return _extract_text_parts(getattr(value, "content"), next_depth, max_depth)
+
+    return []
+
+
+def _join_text_parts(parts: list[str]) -> str | None:
+    """Join text parts with newlines, filtering empty strings.
+
+    Args:
+        parts: Candidate text segments.
+
+    Returns:
+        Joined string or None if the result is empty.
+    """
+    joined = "\n".join(part for part in parts if part).strip()
+    return joined or None
+
+
 def _extract_message_text(message: Any) -> str | None:
     """Extract plain text from a LiteLLM message object across providers."""
     content: Any = None
@@ -64,24 +126,58 @@ def _extract_message_text(message: Any) -> str | None:
     elif isinstance(message, dict):
         content = message.get("content")
 
-    if isinstance(content, str):
+    return _join_text_parts(_extract_text_parts(content))
+
+
+def _extract_choice_text(choice: Any) -> str | None:
+    """Extract plain text from a LiteLLM choice object.
+
+    Tries message.content first, then choice.text, then choice.delta. Handles both
+    object attributes and dict keys.
+
+    Args:
+        choice: LiteLLM choice object or dict.
+
+    Returns:
+        Extracted text or None if no content is found.
+    """
+    message: Any = None
+    if hasattr(choice, "message"):
+        message = choice.message
+    elif isinstance(choice, dict):
+        message = choice.get("message")
+
+    content = _extract_message_text(message)
+    if content:
         return content
 
-    # Some providers return a list of content blocks (e.g., Anthropic-style).
-    if isinstance(content, list):
-        parts: list[str] = []
-        for item in content:
-            if isinstance(item, str):
-                parts.append(item)
-                continue
-            if isinstance(item, dict):
-                text = item.get("text")
-                if isinstance(text, str) and text:
-                    parts.append(text)
-        joined = "\n".join(parts).strip()
-        return joined or None
+    if hasattr(choice, "text"):
+        content = _join_text_parts(_extract_text_parts(getattr(choice, "text")))
+        if content:
+            return content
+    if isinstance(choice, dict) and "text" in choice:
+        content = _join_text_parts(_extract_text_parts(choice.get("text")))
+        if content:
+            return content
+
+    if hasattr(choice, "delta"):
+        content = _join_text_parts(_extract_text_parts(getattr(choice, "delta")))
+        if content:
+            return content
+    if isinstance(choice, dict) and "delta" in choice:
+        content = _join_text_parts(_extract_text_parts(choice.get("delta")))
+        if content:
+            return content
 
     return None
+
+
+def _to_code_block(content: str | None, language: str = "text") -> str:
+    """Wrap content in a markdown code block for client display."""
+    text = (content or "").strip()
+    if not text:
+        text = "<empty>"
+    return f"```{language}\n{text}\n```"
 
 
 def _load_stored_config() -> dict:
@@ -170,7 +266,12 @@ def _get_reasoning_effort(provider: str, model: str) -> str | None:
     return None
 
 
-async def check_llm_health(config: LLMConfig | None = None) -> dict[str, Any]:
+async def check_llm_health(
+    config: LLMConfig | None = None,
+    *,
+    include_details: bool = False,
+    test_prompt: str | None = None,
+) -> dict[str, Any]:
     """Check if the LLM provider is accessible and working."""
     if config is None:
         config = get_llm_config()
@@ -181,17 +282,19 @@ async def check_llm_health(config: LLMConfig | None = None) -> dict[str, Any]:
             "healthy": False,
             "provider": config.provider,
             "model": config.model,
-            "error": "API key not configured",
+            "error_code": "api_key_missing",
         }
 
     model_name = get_model_name(config)
+
+    prompt = test_prompt or "Hi"
 
     try:
         # Make a minimal test call with timeout
         # Pass API key directly to avoid race conditions with global os.environ
         kwargs: dict[str, Any] = {
             "model": model_name,
-            "messages": [{"role": "user", "content": "Hi"}],
+            "messages": [{"role": "user", "content": prompt}],
             "max_tokens": 16,
             "api_key": config.api_key,
             "api_base": _normalize_api_base(config.provider, config.api_base),
@@ -202,36 +305,58 @@ async def check_llm_health(config: LLMConfig | None = None) -> dict[str, Any]:
             kwargs["reasoning_effort"] = reasoning_effort
 
         response = await litellm.acompletion(**kwargs)
-        content = _extract_message_text(response.choices[0].message)
+        content = _extract_choice_text(response.choices[0])
         if not content:
-            raise ValueError("Empty response from LLM")
+            logging.warning(
+                "LLM health check returned empty content",
+                extra={"provider": config.provider, "model": config.model},
+            )
+            result: dict[str, Any] = {
+                "healthy": True,
+                "provider": config.provider,
+                "model": config.model,
+                "response_model": response.model if response else None,
+                "warning_code": "empty_content",
+            }
+            if include_details:
+                result["test_prompt"] = _to_code_block(prompt)
+                result["model_output"] = _to_code_block(None)
+            return result
 
-        return {
+        result = {
             "healthy": True,
             "provider": config.provider,
             "model": config.model,
             "response_model": response.model if response else None,
         }
+        if include_details:
+            result["test_prompt"] = _to_code_block(prompt)
+            result["model_output"] = _to_code_block(content)
+        return result
     except Exception as e:
         # Log full exception details server-side, but do not expose them to clients
         logging.exception("LLM health check failed", extra={"provider": config.provider, "model": config.model})
 
         # Provide a minimal, actionable client-facing hint without leaking secrets.
-        error_hint = "Health check failed"
+        error_code = "health_check_failed"
         message = str(e)
         if "404" in message and "/v1/v1/" in message:
-            error_hint = "Health check failed (可能是 Base URL 包含重复的 /v1 路径)"
+            error_code = "duplicate_v1_path"
         elif "404" in message:
-            error_hint = "Health check failed (404 Not Found - 请检查 Base URL 与 provider 是否匹配)"
+            error_code = "not_found_404"
         elif "<!doctype html" in message.lower() or "<html" in message.lower():
-            error_hint = "Health check failed (Base URL 返回 HTML 页面 - 可能填了官网/控制台地址而不是 API 地址，或该网关不支持当前 provider 的接口路径)"
-
-        return {
+            error_code = "html_response"
+        result = {
             "healthy": False,
             "provider": config.provider,
             "model": config.model,
-            "error": error_hint,
+            "error_code": error_code,
         }
+        if include_details:
+            result["test_prompt"] = _to_code_block(prompt)
+            result["model_output"] = _to_code_block(None)
+            result["error_detail"] = _to_code_block(message)
+        return result
 
 
 async def complete(
@@ -270,7 +395,7 @@ async def complete(
 
         response = await litellm.acompletion(**kwargs)
 
-        content = _extract_message_text(response.choices[0].message)
+        content = _extract_choice_text(response.choices[0])
         if not content:
             raise ValueError("Empty response from LLM")
         return content
@@ -410,7 +535,7 @@ async def complete_json(
                 kwargs["response_format"] = {"type": "json_object"}
 
             response = await litellm.acompletion(**kwargs)
-            content = _extract_message_text(response.choices[0].message)
+            content = _extract_choice_text(response.choices[0])
 
             if not content:
                 raise ValueError("Empty response from LLM")
