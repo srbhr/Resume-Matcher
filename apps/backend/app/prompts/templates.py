@@ -88,7 +88,7 @@ RESUME_SCHEMA_EXAMPLE = """{
   }
 }"""
 
-PARSE_RESUME_PROMPT = """Parse this resume into JSON. Output ONLY the JSON object, no other text.
+PARSE_RESUME_PROMPT = """Parse this resume into JSON format. Respond with JSON only, no other text.
 
 Map content to standard sections when possible. For non-standard sections (like Publications, Volunteer Work, Research, Hobbies), add them to customSections with an appropriate type.
 
@@ -113,7 +113,7 @@ Rules:
 Resume to parse:
 {resume_text}"""
 
-EXTRACT_KEYWORDS_PROMPT = """Extract job requirements as JSON. Output ONLY the JSON object, no other text.
+EXTRACT_KEYWORDS_PROMPT = """Extract job requirements as JSON. Respond with JSON only, no other text.
 
 Example format:
 {{

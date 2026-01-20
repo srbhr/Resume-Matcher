@@ -405,6 +405,29 @@ async def complete(
         raise ValueError("LLM completion failed. Please check your API configuration and try again.") from e
 
 
+def _repair_json(json_str: str) -> str:
+    """Attempt to repair common JSON syntax errors.
+
+    Common issues from LLMs:
+    - Trailing commas in objects/arrays
+    - Missing commas between properties
+    - Unclosed strings
+    """
+    import re
+
+    # Remove trailing commas before } or ]
+    json_str = re.sub(r',(\s*[}\]])', r'\1', json_str)
+
+    # Fix missing commas between properties (basic heuristic)
+    # Look for patterns like: "}\n    {" and add comma
+    json_str = re.sub(r'}\s*\n\s*{', '},\n{', json_str)
+
+    # Fix missing commas between array items
+    json_str = re.sub(r']\s*\n\s*{', '],\n{', json_str)
+
+    return json_str
+
+
 def _supports_json_mode(provider: str, model: str) -> bool:
     """Check if the model supports JSON mode."""
     # Models that support response_format={"type": "json_object"}
@@ -482,7 +505,9 @@ def _extract_json(content: str) -> str:
             content = content.rstrip().rstrip(",") + "}"
         return content
 
-    raise ValueError(f"No JSON found in response: {original[:200]}")
+    # Show more of the response to help debug
+    preview = original[:500] if len(original) > 500 else original
+    raise ValueError(f"No JSON found in response. Content preview: {preview}")
 
 
 async def complete_json(
@@ -501,8 +526,13 @@ async def complete_json(
 
     model_name = get_model_name(config)
 
-    # Build messages
-    json_system = (system_prompt or "") + "\n\nYou must respond with valid JSON only. No explanations, no markdown."
+    # Build messages with strong JSON enforcement
+    # For Ollama, add explicit English language requirement since some models default to other languages
+    json_instructions = "\n\nYou must respond with valid JSON only. No explanations, no markdown."
+    if config.provider == "ollama":
+        json_instructions += "\n\nRespond in English. Output pure JSON: {\"key\": \"value\", ...}"
+
+    json_system = (system_prompt or "") + json_instructions
     messages = [
         {"role": "system", "content": json_system},
         {"role": "user", "content": prompt},
@@ -524,6 +554,16 @@ async def complete_json(
                 "api_base": _normalize_api_base(config.provider, config.api_base),
                 "timeout": LLM_TIMEOUT_JSON,
             }
+
+            # Ollama-specific parameters
+            if config.provider == "ollama":
+                # Increase context window to handle longer resumes/prompts
+                # Default is 4096, which causes truncation warnings
+                kwargs["num_ctx"] = 8192
+                # Increase output token limit (num_predict) to prevent truncated responses
+                # This is especially important for resume improvement which generates full resumes
+                kwargs["num_predict"] = max_tokens
+
             if _supports_temperature(config.provider, model_name):
                 kwargs["temperature"] = 0.1 if attempt == 0 else 0.0  # Lower temp on retry
             reasoning_effort = _get_reasoning_effort(config.provider, model_name)

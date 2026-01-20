@@ -7,7 +7,7 @@
 // Client utilities
 export {
   API_URL,
-  API_BASE,
+  getApiBase,
   apiFetch,
   apiPost,
   apiPatch,
