@@ -6,7 +6,7 @@
 
 [English](README.md) | **Español** | [简体中文](README.zh-CN.md) | [日本語](README.ja.md)
 
-[Discord](https://dsc.gg/resume-matcher) • [Sitio web](https://resumematcher.fyi) • [Instalación](#how-to-install) • [Contribuidores](#contributors) • [Donar](#support-the-development-by-donating) • [X/Twitter](https://twitter.com/srbhrai) • [LinkedIn](https://www.linkedin.com/company/resume-matcher/)
+[𝙹𝚘𝚒𝚗 𝙳𝚒𝚜𝚌𝚘𝚛𝚍](https://dsc.gg/resume-matcher) ✦ [𝚆𝚎𝚋𝚜𝚒𝚝𝚎](https://resumematcher.fyi) ✦ [𝙷𝚘𝚠 𝚝𝚘 𝙸𝚗𝚜𝚝𝚊𝚕𝚕](https://resumematcher.fyi/docs/installation) ✦ [𝙲𝚘𝚗𝚝𝚛𝚒𝚋𝚞𝚝𝚘𝚛𝚜](#contributors) ✦ [𝚂𝚙𝚘𝚗𝚜𝚘𝚛](#sponsor-resume-matcher) ✦ [𝚃𝚠𝚒𝚝𝚝𝚎𝚛/𝚇](https://twitter.com/srbhrai) ✦ [𝙻𝚒𝚗𝚔𝚎𝚍𝙸𝚗](https://www.linkedin.com/company/resume-matcher/) ✦ [𝙲𝚛𝚎𝚊𝚝𝚘𝚛](https://srbhr.com)
 
 **Deja de ser rechazado automáticamente por los bots ATS.** Resume Matcher es la plataforma impulsada por IA que aplica ingeniería inversa a los algoritmos de contratación para mostrarte exactamente cómo adaptar tu currículum. Obtén las palabras clave, el formato y los conocimientos que realmente te ayudarán a superar el primer filtro y llegar a manos humanas.
 
@@ -23,7 +23,6 @@ Esperamos convertir esto en **el VS Code para crear currículums**.
 ![Stars](https://img.shields.io/github/stars/srbhr/Resume-Matcher?labelColor=F0F0E8&style=for-the-badge&color=1d4ed8)
 ![Apache 2.0](https://img.shields.io/github/license/srbhr/Resume-Matcher?labelColor=F0F0E8&style=for-the-badge&color=1d4ed8) ![Forks](https://img.shields.io/github/forks/srbhr/Resume-Matcher?labelColor=F0F0E8&style=for-the-badge&color=1d4ed8) ![version](https://img.shields.io/badge/Version-1.0%20Aerodynamic-FFF?labelColor=F0F0E8&style=for-the-badge&color=1d4ed8)
 
-
 [![Discord](https://img.shields.io/discord/1122069176962531400?labelColor=F0F0E8&logo=discord&logoColor=1d4ed8&style=for-the-badge&color=1d4ed8)](https://dsc.gg/resume-matcher) [![Website](https://img.shields.io/badge/website-Resume%20Matcher-FFF?labelColor=F0F0E8&style=for-the-badge&color=1d4ed8)](https://resumematcher.fyi) [![LinkedIn](https://img.shields.io/badge/LinkedIn-Resume%20Matcher-FFF?labelColor=F0F0E8&logo=LinkedIn&style=for-the-badge&color=1d4ed8)](https://www.linkedin.com/company/resume-matcher/)
 
 <a href="https://trendshift.io/repositories/565" target="_blank"><img src="https://trendshift.io/api/badge/repositories/565" alt="srbhr%2FResume-Matcher | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
@@ -35,7 +34,6 @@ Esperamos convertir esto en **el VS Code para crear currículums**.
 > \[!IMPORTANT]
 >
 > Este proyecto está en desarrollo activo. Se están añadiendo nuevas características continuamente y agradecemos las contribuciones de la comunidad. Si tienes alguna sugerencia o solicitud de características, no dudes en abrir un *issue* en GitHub o discutirlo en nuestro servidor de [Discord](https://dsc.gg/resume-matcher).
-
 
 ## Primeros pasos
 
@@ -72,19 +70,35 @@ Estamos agradecidos a nuestros patrocinadores que ayudan a mantener este proyect
 
 | Patrocinador | Descripción |
 |---------|-------------|
-| [APIDECK](https://apideck.com?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) | Una API para conectar tu aplicación con más de 200 plataformas SaaS (contabilidad, HRIS, CRM, almacenamiento de archivos). Crea integraciones una vez, no 50. Visita [apideck.com](https://apideck.com?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors). |
+| [APIDECK](https://apideck.com?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) | Una API para conectar tu aplicación con más de 200 plataformas SaaS (contabilidad, HRIS, CRM, almacenamiento de archivos). Crea integraciones una vez, no 50. 🌐 [apideck.com](https://apideck.com?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) |
+| [Vercel](https://vercel.com?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) | Resume Matcher es parte del programa Vercel OSS // Summer 2025 🌐 [vercel.com](https://vercel.com?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) |
+| [Cubic.dev](https://cubic.dev?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) | Cubic ofrece revisiones de PR para Resume Matcher 🌐 [cubic.dev](https://cubic.dev?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) |
+| [Kilo Code](https://kilo.ai?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) | Kilo Code proporciona revisiones de código de IA y créditos de codificación a Resume Matcher 🌐 [kilo.ai](https://kilo.ai?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) |
 
 <a id="support-the-development-by-donating"></a>
-## Apoya el desarrollo donando
+
+## Patrocina Resume Matcher
 
 ![donate](assets/supporting_resume_matcher.png)
 
-Si quieres apoyar el desarrollo de Resume Matcher, puedes hacerlo donando. Tus contribuciones ayudan a mantener el proyecto vivo y a seguir añadiendo nuevas funciones.
+Por favor lee nuestra [Sponsorship Guide](https://resumematcher.fyi/docs/sponsoring) para detalles de cómo tu patrocinio ayuda al proyecto. Recibirás un agradecimiento especial en el ReadME y en nuestro sitio web.
 
 | Plataforma  | Enlace |
 |-----------|--------|
 | GitHub | [![GitHub Sponsors](https://img.shields.io/github/sponsors/srbhr?style=for-the-badge&color=1d4ed8&labelColor=F0F0E8&logo=github&logoColor=black)](https://github.com/sponsors/srbhr) |
 | Buy Me a Coffee | [![BuyMeACoffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&color=1d4ed8&labelColor=F0F0E8&logoColor=black)](https://www.buymeacoffee.com/srbhr) |
+
+## Nota del Creador
+
+Gracias por visitar Resume Matcher. Si quieres conectar, colaborar o simplemente saludar, ¡no dudes en contactarme!
+~ **Saurabh Rai** ✨
+
+Puedes seguirme en:
+
+- Website: [https://srbhr.com](https://srbhr.com)
+- Linkedin: [https://www.linkedin.com/in/srbhr/](https://www.linkedin.com/in/srbhr/)
+- Twitter: [https://twitter.com/srbhrai](https://twitter.com/srbhrai)
+- GitHub: [https://github.com/srbhr](https://github.com/srbhr)
 
 ## Funciones clave
 
@@ -148,6 +162,7 @@ Si tienes alguna sugerencia o solicitud de características, no dudes en abrir u
 - Optimización para múltiples descripciones de trabajo
 
 <a id="how-to-install"></a>
+
 ## Cómo instalar
 
 ![Instalación](assets/how_to_install_resumematcher.png)
@@ -218,7 +233,6 @@ Consulta [docs/agent/60-docker/docker.md](docs/agent/60-docker/docker.md) para i
 | Estilos | Tailwind CSS 4, Swiss International Style |
 | PDF | Chromium headless vía Playwright |
 
-
 ## Únete y contribuye
 
 ![Cómo contribuir](assets/how_to_contribute.png)
@@ -228,7 +242,9 @@ Consulta [docs/agent/60-docker/docker.md](docs/agent/60-docker/docker.md) para i
 Echa un vistazo al roadmap si te gustaría trabajar en las características que están planeadas para el futuro. Si tienes alguna sugerencia o solicitud de características, no dudes en abrir un *issue* en GitHub y discutirlo en nuestro servidor de [Discord](https://dsc.gg/resume-matcher).
 
 <a id="contributors"></a>
+
 ## Colaboradores
+
 ![Colaboradores](assets/contributors.png)
 
 <a href="https://github.com/srbhr/Resume-Matcher/graphs/contributors">
