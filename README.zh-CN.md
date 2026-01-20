@@ -6,7 +6,7 @@
 
 [English](README.md) | [Español](README.es.md) | **简体中文** | [日本語](README.ja.md)
 
-[Discord](https://dsc.gg/resume-matcher) • [官网](https://resumematcher.fyi) • [安装文档](https://resumematcher.fyi/docs/installation) • [贡献者](#contributors) • [捐助](#support-the-development-by-donating) • [X/Twitter](https://twitter.com/srbhrai) • [LinkedIn](https://www.linkedin.com/company/resume-matcher/)
+[𝙹𝚘𝚒𝚗 𝙳𝚒𝚜𝚌𝚘𝚛𝚍](https://dsc.gg/resume-matcher) ✦ [𝚆𝚎𝚋𝚜𝚒𝚝𝚎](https://resumematcher.fyi) ✦ [𝙷𝚘𝚠 𝚝𝚘 𝙸𝚗𝚜𝚝𝚊𝚕𝚕](https://resumematcher.fyi/docs/installation) ✦ [𝙲𝚘𝚗𝚝𝚛𝚒𝚋𝚞𝚝𝚘𝚛𝚜](#contributors) ✦ [𝚂𝚙𝚘𝚗𝚜𝚘𝚛](#sponsor-resume-matcher) ✦ [𝚃𝚠𝚒𝚝𝚝𝚎𝚛/𝚇](https://twitter.com/srbhrai) ✦ [𝙻𝚒𝚗𝚔𝚎𝚍𝙸𝚗](https://www.linkedin.com/company/resume-matcher/) ✦ [𝙲𝚛𝚎𝚊𝚝𝚘𝚛](https://srbhr.com)
 
 为每一次求职投递生成量身定制的简历：AI 给出可执行的优化建议。支持本地使用 Ollama 运行，也可通过 API 连接你常用的 LLM 提供商。
 
@@ -68,19 +68,35 @@ Resume Matcher 的工作方式是先建立一份“主简历”，然后针对�
 
 | Sponsor | Description |
 |---------|-------------|
-| [APIDECK](https://apideck.com?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) | One API to connect your app to 200+ SaaS platforms (accounting, HRIS, CRM, file storage). Build integrations once, not 50 times. Visit [apideck.com](https://apideck.com?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors). |
+| [APIDECK](https://apideck.com?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) | One API to connect your app to 200+ SaaS platforms (accounting, HRIS, CRM, file storage). Build integrations once, not 50 times. 🌐 [apideck.com](https://apideck.com?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) |
+| [Vercel](https://vercel.com?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) | Resume Matcher 是 Vercel OSS // Summer 2025 计划的一部分 🌐 [vercel.com](https://vercel.com?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) |
+| [Cubic.dev](https://cubic.dev?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) | Cubic 为 Resume Matcher 提供 PR 审查 🌐 [cubic.dev](https://cubic.dev?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) |
+| [Kilo Code](https://kilo.ai?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) | Kilo Code 为 Resume Matcher 提供 AI 代码审查和编码积分 🌐 [kilo.ai](https://kilo.ai?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) |
 
 <a id="support-the-development-by-donating"></a>
-## 捐助支持项目开发
+
+## 赞助 Resume Matcher
 
 ![donate](assets/supporting_resume_matcher.png)
 
-如果你愿意支持 Resume Matcher 的开发，可以通过捐助的方式参与。你的贡献将帮助我们保持项目运转并持续添加新功能。
+请阅读我们的 [Sponsorship Guide](https://resumematcher.fyi/docs/sponsoring) 了解您的赞助如何帮助本项目。您将在 ReadME 和我们的网站上获得特别鸣谢。
 
 | 平台  | 链接 |
 |------|------|
 | GitHub | [![GitHub Sponsors](https://img.shields.io/github/sponsors/srbhr?style=for-the-badge&color=1d4ed8&labelColor=F0F0E8&logo=github&logoColor=black)](https://github.com/sponsors/srbhr) |
 | Buy Me a Coffee | [![BuyMeACoffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&color=1d4ed8&labelColor=F0F0E8&logoColor=black)](https://www.buymeacoffee.com/srbhr) |
+
+## 创作者留言
+
+感谢您关注 Resume Matcher。如果您想联系、合作或只是打个招呼，请随时联系我！
+~ **Saurabh Rai** ✨
+
+您可以在以下平台关注我：
+
+- Website: [https://srbhr.com](https://srbhr.com)
+- Linkedin: [https://www.linkedin.com/in/srbhr/](https://www.linkedin.com/in/srbhr/)
+- Twitter: [https://twitter.com/srbhrai](https://twitter.com/srbhrai)
+- GitHub: [https://github.com/srbhr](https://github.com/srbhr)
 
 ## 主要功能
 
@@ -144,6 +160,7 @@ Resume Matcher 的工作方式是先建立一份“主简历”，然后针对�
 - 多职位描述联合优化
 
 <a id="how-to-install"></a>
+
 ## 如何安装
 
 ![Installation](assets/how_to_install_resumematcher.png)
@@ -223,6 +240,7 @@ docker run srbhr/resume-matcher:latest
 如果你希望参与未来规划的功能，可以先看看路线图。若你有建议或功能需求，欢迎在 GitHub 提 Issue，并在我们的 [Discord](https://dsc.gg/resume-matcher) 讨论。
 
 <a id="contributors"></a>
+
 ## 贡献者
 
 ![Contributors](assets/contributors.png)
