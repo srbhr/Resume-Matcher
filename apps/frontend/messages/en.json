@@ -556,7 +556,17 @@
       "connectionDetails": "Provider: {provider} | Model: {model}",
       "testPromptLabel": "TEST PROMPT",
       "modelOutputLabel": "MODEL OUTPUT",
-      "errorDetailLabel": "ERROR DETAIL"
+      "errorDetailLabel": "ERROR DETAIL",
+      "healthErrors": {
+        "api_key_missing": "API key not configured. Please add a key in Settings.",
+        "health_check_failed": "Health check failed.",
+        "duplicate_v1_path": "Health check failed. The Base URL may contain a duplicate /v1 path.",
+        "not_found_404": "Health check failed. 404 Not Found - check that the Base URL matches the provider.",
+        "html_response": "Health check failed. The Base URL returned HTML; it may be a console URL or an unsupported gateway path."
+      },
+      "healthWarnings": {
+        "empty_content": "LLM returned empty content for the health check."
+      }
     },
     "contentGeneration": {
       "title": "Content Generation",

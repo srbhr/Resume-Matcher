@@ -282,7 +282,7 @@ async def check_llm_health(
             "healthy": False,
             "provider": config.provider,
             "model": config.model,
-            "error": "API key not configured",
+            "error_code": "api_key_missing",
         }
 
     model_name = get_model_name(config)
@@ -316,7 +316,7 @@ async def check_llm_health(
                 "provider": config.provider,
                 "model": config.model,
                 "response_model": response.model if response else None,
-                "warning": "LLM returned empty content for health check",
+                "warning_code": "empty_content",
             }
             if include_details:
                 result["test_prompt"] = _to_code_block(prompt)
@@ -338,19 +338,19 @@ async def check_llm_health(
         logging.exception("LLM health check failed", extra={"provider": config.provider, "model": config.model})
 
         # Provide a minimal, actionable client-facing hint without leaking secrets.
-        error_hint = "Health check failed"
+        error_code = "health_check_failed"
         message = str(e)
         if "404" in message and "/v1/v1/" in message:
-            error_hint = "Health check failed (It may be that the Base URL contains duplicate /v1 path)"
+            error_code = "duplicate_v1_path"
         elif "404" in message:
-            error_hint = "Health check failed (404 Not Found - Please check if the Base URL matches the provider)"
+            error_code = "not_found_404"
         elif "<!doctype html" in message.lower() or "<html" in message.lower():
-            error_hint = "Health check failed (Base URL returned an HTML page - it might be the official/console URL instead of the API URL, or the gateway does not support the current provider's API path)"
+            error_code = "html_response"
         result = {
             "healthy": False,
             "provider": config.provider,
             "model": config.model,
-            "error": error_hint,
+            "error_code": error_code,
         }
         if include_details:
             result["test_prompt"] = _to_code_block(prompt)

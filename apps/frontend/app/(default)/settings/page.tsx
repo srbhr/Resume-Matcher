@@ -74,6 +74,20 @@ const unwrapCodeBlock = (value?: string | null): string | null => {
   return trimmed;
 };
 
+const getHealthCheckMessage = (
+  t: (key: string, params?: Record<string, string | number>) => string,
+  baseKey: string,
+  code?: string,
+  fallback?: string
+): string | null => {
+  if (code) {
+    const key = `${baseKey}.${code}`;
+    const localized = t(key);
+    return localized !== key ? localized : fallback ?? code;
+  }
+  return fallback ?? null;
+};
+
 export default function SettingsPage() {
   const [status, setStatus] = useState<Status>('loading');
   const [error, setError] = useState<string | null>(null);
@@ -189,6 +203,24 @@ export default function SettingsPage() {
         value: unwrapCodeBlock(healthCheck.error_detail),
       },
     ].filter((item) => item.value);
+  }, [healthCheck, t]);
+  const healthCheckError = useMemo(() => {
+    if (!healthCheck) return null;
+    return getHealthCheckMessage(
+      t,
+      'settings.llmConfiguration.healthErrors',
+      healthCheck.error_code,
+      healthCheck.error
+    );
+  }, [healthCheck, t]);
+  const healthCheckWarning = useMemo(() => {
+    if (!healthCheck) return null;
+    return getHealthCheckMessage(
+      t,
+      'settings.llmConfiguration.healthWarnings',
+      healthCheck.warning_code,
+      healthCheck.warning
+    );
   }, [healthCheck, t]);
 
   // Load LLM config and feature config on mount
@@ -840,11 +872,13 @@ export default function SettingsPage() {
                       model: healthCheck.model,
                     })}
                   </p>
-                  {healthCheck.error && (
-                    <p className="font-mono text-xs text-red-600 mt-1">{healthCheck.error}</p>
+                  {healthCheckError && (
+                    <p className="font-mono text-xs text-red-600 mt-1">{healthCheckError}</p>
                   )}
-                  {healthCheck.warning && (
-                    <p className="font-mono text-xs text-amber-700 mt-1">{healthCheck.warning}</p>
+                  {healthCheckWarning && (
+                    <p className="font-mono text-xs text-amber-700 mt-1">
+                      {healthCheckWarning}
+                    </p>
                   )}
                   {healthDetailItems.length > 0 && (
                     <div className="mt-3 space-y-3">

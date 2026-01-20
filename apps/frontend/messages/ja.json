@@ -556,7 +556,17 @@
       "connectionDetails": "プロバイダー: {provider} | モデル: {model}",
       "testPromptLabel": "テスト内容",
       "modelOutputLabel": "モデル出力",
-      "errorDetailLabel": "エラー詳細"
+      "errorDetailLabel": "エラー詳細",
+      "healthErrors": {
+        "api_key_missing": "APIキーが設定されていません。設定で追加してください。",
+        "health_check_failed": "ヘルスチェックに失敗しました。",
+        "duplicate_v1_path": "ヘルスチェックに失敗しました。Base URL に /v1 が重複している可能性があります。",
+        "not_found_404": "ヘルスチェックに失敗しました。404 Not Found。Base URL が提供元と一致しているか確認してください。",
+        "html_response": "ヘルスチェックに失敗しました。Base URL が HTML を返しました。コンソールURLや未対応のゲートウェイの可能性があります。"
+      },
+      "healthWarnings": {
+        "empty_content": "ヘルスチェックで空の内容が返されました。"
+      }
     },
     "contentGeneration": {
       "title": "コンテンツ生成",
