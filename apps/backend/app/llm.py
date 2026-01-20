@@ -55,8 +55,23 @@ def _normalize_api_base(provider: str, api_base: str | None) -> str | None:
     return base or None
 
 
-def _extract_text_parts(value: Any) -> list[str]:
-    """Extract text segments from nested response structures."""
+def _extract_text_parts(value: Any, depth: int = 0, max_depth: int = 10) -> list[str]:
+    """Recursively extract text segments from nested response structures.
+
+    Handles strings, lists, dicts with 'text'/'content'/'value' keys, and objects
+    with text/content attributes. Limits recursion depth to avoid cycles.
+
+    Args:
+        value: Input value that may contain text in strings, lists, dicts, or objects.
+        depth: Current recursion depth.
+        max_depth: Maximum recursion depth before returning no content.
+
+    Returns:
+        A list of extracted text segments.
+    """
+    if depth >= max_depth:
+        return []
+
     if value is None:
         return []
 
@@ -65,28 +80,39 @@ def _extract_text_parts(value: Any) -> list[str]:
 
     if isinstance(value, list):
         parts: list[str] = []
+        next_depth = depth + 1
         for item in value:
-            parts.extend(_extract_text_parts(item))
+            parts.extend(_extract_text_parts(item, next_depth, max_depth))
         return parts
 
     if isinstance(value, dict):
+        next_depth = depth + 1
         if "text" in value:
-            return _extract_text_parts(value.get("text"))
+            return _extract_text_parts(value.get("text"), next_depth, max_depth)
         if "content" in value:
-            return _extract_text_parts(value.get("content"))
+            return _extract_text_parts(value.get("content"), next_depth, max_depth)
         if "value" in value:
-            return _extract_text_parts(value.get("value"))
+            return _extract_text_parts(value.get("value"), next_depth, max_depth)
         return []
 
+    next_depth = depth + 1
     if hasattr(value, "text"):
-        return _extract_text_parts(getattr(value, "text"))
+        return _extract_text_parts(getattr(value, "text"), next_depth, max_depth)
     if hasattr(value, "content"):
-        return _extract_text_parts(getattr(value, "content"))
+        return _extract_text_parts(getattr(value, "content"), next_depth, max_depth)
 
     return []
 
 
 def _join_text_parts(parts: list[str]) -> str | None:
+    """Join text parts with newlines, filtering empty strings.
+
+    Args:
+        parts: Candidate text segments.
+
+    Returns:
+        Joined string or None if the result is empty.
+    """
     joined = "\n".join(part for part in parts if part).strip()
     return joined or None
 
@@ -104,7 +130,17 @@ def _extract_message_text(message: Any) -> str | None:
 
 
 def _extract_choice_text(choice: Any) -> str | None:
-    """Extract plain text from a LiteLLM choice object across providers."""
+    """Extract plain text from a LiteLLM choice object.
+
+    Tries message.content first, then choice.text, then choice.delta. Handles both
+    object attributes and dict keys.
+
+    Args:
+        choice: LiteLLM choice object or dict.
+
+    Returns:
+        Extracted text or None if no content is found.
+    """
     message: Any = None
     if hasattr(choice, "message"):
         message = choice.message

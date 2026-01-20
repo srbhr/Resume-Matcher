@@ -67,9 +67,9 @@ const unwrapCodeBlock = (value?: string | null): string | null => {
   if (!value) return null;
   const trimmed = value.trim();
   if (!trimmed) return null;
-  const fenced = trimmed.match(/^```[a-zA-Z0-9_-]*\n([\s\S]*?)\n```$/);
+  const fenced = trimmed.match(/^```[a-zA-Z0-9_-]*\n([\s\S]*?)\n```\s*$/);
   if (fenced) {
-    return fenced[1]?.trimEnd() ?? '';
+    return fenced[1]?.trimEnd() || null;
   }
   return trimmed;
 };
