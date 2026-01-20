@@ -10,9 +10,10 @@ services:
       - "8000:8000"   # Backend API
     volumes:
       - resume-data:/app/backend/data
+    # Note: .env file is optional - create it to set environment variables
+    # If .env doesn't exist, Docker Compose will show a warning but continue
     env_file:
-      - path: .env
-        required: false
+      - .env
     environment:
       - NODE_ENV=production
       - NEXT_PUBLIC_API_URL=http://localhost:8000

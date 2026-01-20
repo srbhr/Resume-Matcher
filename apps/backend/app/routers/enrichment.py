@@ -145,7 +145,7 @@ async def generate_enhancements(request: EnhanceRequest) -> EnhancementPreview:
     )
 
     try:
-        analysis_result = await complete_json(analysis_prompt)
+        analysis_result = await complete_json(analysis_prompt, max_tokens=8192)
     except Exception as e:
         logger.error(f"Failed to re-analyze resume: {e}")
         raise HTTPException(
