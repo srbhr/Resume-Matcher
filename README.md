@@ -88,6 +88,8 @@ Please read our [Sponsorship Guide]([docs/agent/80-sponsorship/sponsorship-guide
 
 ## Creators' Note
 
+[![srbhr](assets/creators_note.png)](https://srbhr.com)
+
 Thank you for checking out Resume Matcher. If you want to connect, collaborate, or just say hi, feel free to reach out!
 ~ **Saurabh Rai** ✨
 
