@@ -4,7 +4,7 @@
 
 # Resume Matcher
 
-[𝙹𝚘𝚒𝚗 𝙳𝚒𝚜𝚌𝚘𝚛𝚍](https://dsc.gg/resume-matcher) ✦ [𝚆𝚎𝚋𝚜𝚒𝚝𝚎](https://resumematcher.fyi) ✦ [𝙷𝚘𝚠 𝚝𝚘 𝙸𝚗𝚜𝚝𝚊𝚕𝚕](https://resumematcher.fyi/docs/installation) ✦ [𝙲𝚘𝚗𝚝𝚛𝚒𝚋𝚞𝚝𝚘𝚛𝚜](#contributors) ✦ [𝙳𝚘𝚗𝚊𝚝𝚎](#support-the-development-by-donating) ✦ [𝚃𝚠𝚒𝚝𝚝𝚎𝚛/𝚇](https://twitter.com/srbhrai) ✦ [𝙻𝚒𝚗𝚔𝚎𝚍𝙸𝚗](https://www.linkedin.com/company/resume-matcher/)
+[𝙹𝚘𝚒𝚗 𝙳𝚒𝚜𝚌𝚘𝚛𝚍](https://dsc.gg/resume-matcher) ✦ [𝚆𝚎𝚋𝚜𝚒𝚝𝚎](https://resumematcher.fyi) ✦ [𝙷𝚘𝚠 𝚝𝚘 𝙸𝚗𝚜𝚝𝚊𝚕𝚕](https://resumematcher.fyi/docs/installation) ✦ [𝙲𝚘𝚗𝚝𝚛𝚒𝚋𝚞𝚝𝚘𝚛𝚜](#contributors) ✦ [𝚂𝚙𝚘𝚗𝚜𝚘𝚛](#sponsor-resume-matcher) ✦ [𝚃𝚠𝚒𝚝𝚝𝚎𝚛/𝚇](https://twitter.com/srbhrai) ✦ [𝙻𝚒𝚗𝚔𝚎𝚍𝙸𝚗](https://www.linkedin.com/company/resume-matcher/) ✦ [𝙲𝚛𝚎𝚊𝚝𝚘𝚛](https://srbhr.com)
 
 **English** | [Español](README.es.md) | [简体中文](README.zh-CN.md) | [日本語](README.ja.md)
 
@@ -64,23 +64,39 @@ Star the repo to support development and get notified of new releases.
 
 ![sponsors](assets/sponsors.png)
 
-We are grateful to our sponsors who help keep this project going. If you find Resume Matcher helpful, please consider [**supporting us**](https://github.com/sponsors/srbhr) to ensure continued development and improvements.
+We are grateful to our sponsors who help keep this project going. If you find Resume Matcher helpful, please consider [**sponsoring us**](https://github.com/sponsors/srbhr) to ensure continued development and improvements.
 
 | Sponsor | Description |
 |---------|-------------|
 | [APIDECK](https://apideck.com?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) | One API to connect your app to 200+ SaaS platforms (accounting, HRIS, CRM, file storage). Build integrations once, not 50 times. 🌐 [apideck.com](https://apideck.com?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) |
+| [Vercel](https://vercel.com?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) | Resume Matcher is a part of Vercel OSS // Summer 2025 Program 🌐 [vercel.com](https://vercel.com?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) |
+| [Cubic.dev](https://cubic.dev?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) | Cubic provides PR reviews for Resume Matcher 🌐 [cubic.dev](https://cubic.dev?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) |
+| [Kilo Code](https://kilo.ai?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) | Kilo Code provides AI code reviews and coding credits to Resume Matcher 🌐 [kilo.ai](https://kilo.ai?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) |
 
 <a id="support-the-development-by-donating"></a>
-## Support the Development by Donating
+
+## Sponsor Resume Matcher
 
 ![donate](assets/supporting_resume_matcher.png)
 
-If you would like to support the development of Resume Matcher, you can do so by donating. Your contributions will help us keep the project alive and continue adding new features.
+Please read our [Sponsorship Guide]([docs/agent/80-sponsorship/sponsorship-guide.md](https://resumematcher.fyi/docs/sponsoring)) for details on how your sponsorship helps the project. You will receive a special thank you in the ReadME and on our website.
 
 | Platform  | Link                                   |
 |-----------|----------------------------------------|
 | GitHub    | [![GitHub Sponsors](https://img.shields.io/github/sponsors/srbhr?style=for-the-badge&color=1d4ed8&labelColor=F0F0E8&logo=github&logoColor=black)](https://github.com/sponsors/srbhr) |
 | Buy Me a Coffee | [![BuyMeACoffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&color=1d4ed8&labelColor=F0F0E8&logoColor=black)](https://www.buymeacoffee.com/srbhr) |
+
+## Creators' Note
+
+Thank you for checking out Resume Matcher. If you want to connect, collaborate, or just say hi, feel free to reach out!
+~ **Saurabh Rai** ✨
+
+You can follow me on:
+
+- Website: [https://srbhr.com](https://srbhr.com)
+- Linkedin: [https://www.linkedin.com/in/srbhr/](https://www.linkedin.com/in/srbhr/)
+- Twitter: [https://twitter.com/srbhrai](https://twitter.com/srbhrai)
+- GitHub: [https://github.com/srbhr](https://github.com/srbhr)
 
 ## Key Features
 
@@ -144,6 +160,7 @@ If you have any suggestions or feature requests, please feel free to open an iss
 - Multi-job description optimization
 
 <a id="how-to-install"></a>
+
 ## How to Install
 
 ![Installation](assets/how_to_install_resumematcher.png)
@@ -223,6 +240,7 @@ We welcome contributions from everyone! Whether you're a developer, designer, or
 Check out the roadmap if you would like to work on the features that are planned for the future. If you have any suggestions or feature requests, please feel free to open an issue on GitHub and discuss it on our [Discord](https://dsc.gg/resume-matcher) server.
 
 <a id="contributors"></a>
+
 ## Contributors
 
 ![Contributors](assets/contributors.png)
