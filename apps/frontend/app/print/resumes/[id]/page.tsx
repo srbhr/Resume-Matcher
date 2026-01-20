@@ -10,6 +10,9 @@ import {
   DEFAULT_TEMPLATE_SETTINGS,
 } from '@/lib/types/template-settings';
 import { API_BASE } from '@/lib/api/client';
+import { translate } from '@/lib/i18n/server';
+import { resolveLocale } from '@/lib/i18n/locale';
+import { withLocalizedDefaultSections } from '@/lib/utils/section-helpers';
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -30,6 +33,7 @@ type PageProps = {
     compactMode?: string;
     showContactIcons?: string;
     accentColor?: string;
+    lang?: string;
   }>;
 };
 
@@ -151,6 +155,30 @@ export default async function PrintResumePage({ params, searchParams }: PageProp
   const resolvedParams = await params;
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const resumeData = await fetchResumeData(resolvedParams.id);
+  const locale = resolveLocale(resolvedSearchParams?.lang);
+  const t = (key: string, params?: Record<string, string | number>) =>
+    translate(locale, key, params);
+  const localizedResumeData = withLocalizedDefaultSections(resumeData, t);
+  const additionalSectionLabels = {
+    technicalSkills: t('resume.additionalLabels.technicalSkills'),
+    languages: t('resume.additionalLabels.languages'),
+    certifications: t('resume.additionalLabels.certifications'),
+    awards: t('resume.additionalLabels.awards'),
+  };
+  const sectionHeadings = {
+    summary: t('resume.sections.summary'),
+    experience: t('resume.sections.experience'),
+    education: t('resume.sections.education'),
+    projects: t('resume.sections.projects'),
+    certifications: t('resume.sections.certifications'),
+    skills: t('resume.sections.skillsOnly'),
+    languages: t('resume.sections.languages'),
+    awards: t('resume.sections.awards'),
+    links: t('resume.sections.links'),
+  };
+  const fallbackLabels = {
+    name: t('resume.defaults.name'),
+  };
 
   // Parse template settings from query params
   const settings: TemplateSettings = {
@@ -216,7 +244,14 @@ export default async function PrintResumePage({ params, searchParams }: PageProp
 
   return (
     <div className="resume-print bg-white">
-      <Resume resumeData={resumeData} template={settings.template} settings={printSettings} />
+      <Resume
+        resumeData={localizedResumeData}
+        template={settings.template}
+        settings={printSettings}
+        additionalSectionLabels={additionalSectionLabels}
+        sectionHeadings={sectionHeadings}
+        fallbackLabels={fallbackLabels}
+      />
     </div>
   );
 }

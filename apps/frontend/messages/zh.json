@@ -26,9 +26,11 @@
     "filter": "筛选",
     "reset": "重置",
     "apply": "应用",
+    "selectOption": "请选择...",
     "unknown": "未知",
     "keysCleared": "API密钥已成功清除",
-    "databaseReset": "数据库已成功重置"
+    "databaseReset": "数据库已成功重置",
+    "popupBlocked": "弹窗被阻止。请允许弹窗或手动打开此链接：{url}"
   },
   "home": {
     "brandLine1": "简历",
@@ -144,7 +146,8 @@
       "addEntryLabel": "添加条目",
       "itemsLabel": "列表项",
       "itemsPlaceholder": "每行一个列表项",
-      "unknownSectionType": "未知板块类型"
+      "unknownSectionType": "未知板块类型：{type}",
+      "unknownDefaultSection": "未知默认板块：{section}"
     },
     "sectionHeader": {
       "renameSection": "重命名板块",
@@ -168,6 +171,9 @@
       "moduleLabel": "简历编辑模块",
       "singleColumn": "单栏",
       "twoColumn": "双栏"
+    },
+    "pageSize": {
+      "usLetter": "美式信纸"
     },
     "generatePrompt": {
       "notAvailableTitle": "{title} 暂不可用",
@@ -288,7 +294,31 @@
     "formatting": {
       "panelTitle": "模板与排版",
       "template": "模板",
+      "templates": {
+        "swissSingle": {
+          "name": "单栏",
+          "description": "传统全宽布局，内容密度最高"
+        },
+        "swissTwoColumn": {
+          "name": "双栏",
+          "description": "以经历为主的主栏布局，侧栏展示技能"
+        },
+        "modern": {
+          "name": "现代",
+          "description": "彩色点缀，支持自定义主题色"
+        },
+        "modernTwoColumn": {
+          "name": "现代双栏",
+          "description": "现代双栏布局，带彩色点缀与主题色"
+        }
+      },
       "accentColor": "强调色",
+      "accentColors": {
+        "blue": "蓝色",
+        "green": "绿色",
+        "orange": "橙色",
+        "red": "红色"
+      },
       "pageSize": "纸张尺寸",
       "margins": "页边距（mm）",
       "margin": {
@@ -306,6 +336,11 @@
       "headerScale": "标题",
       "headerFontFamily": "标题字体",
       "bodyFontFamily": "正文字体",
+      "fontNames": {
+        "serif": "衬线",
+        "sans": "无衬线",
+        "mono": "等宽"
+      },
       "options": "选项",
       "compactMode": "紧凑模式",
       "contactIcons": "联系方式图标",
@@ -338,6 +373,19 @@
       "coverLetterEditor": "求职信编辑",
       "outreachEditor": "联系邮件编辑",
       "jdMatchAnalysis": "JD 匹配分析"
+    },
+    "alerts": {
+      "saveNotAvailable": "仅在编辑现有简历时可保存。",
+      "saveFailed": "保存简历失败，请重试。",
+      "downloadNotAvailable": "仅已保存的简历可下载。",
+      "downloadFailed": "下载简历失败，请重试。",
+      "coverLetterSaveFailed": "保存求职信失败，请重试。",
+      "coverLetterDownloadRequiresResume": "请先保存简历再下载求职信。",
+      "coverLetterMissing": "暂无求职信内容。请在设置中启用求职信生成并完成一次简历定制。",
+      "coverLetterDownloadFailed": "下载求职信失败：{error}",
+      "outreachSaveFailed": "保存联系邮件失败，请重试。",
+      "coverLetterGenerateFailed": "生成求职信失败：{error}",
+      "outreachGenerateFailed": "生成联系邮件失败：{error}"
     }
   },
   "enrichment": {
@@ -463,6 +511,14 @@
       "configured": "已配置",
       "notSet": "未设置"
     },
+    "apiKeyMenu": {
+      "buttonLabel": "LLM API",
+      "title": "OpenAI API 密钥",
+      "description": "提供密钥以启用托管的 OpenAI 模型。",
+      "savedMessage": "API 密钥已保存。",
+      "loadError": "无法加载 API 密钥",
+      "updateError": "无法更新 API 密钥"
+    },
     "setupRequired": {
       "title": "[ 需要配置 ]",
       "description": "> 未配置 API 密钥。请在下方添加 LLM 提供商的 API 密钥以启用简历定制。"
@@ -535,6 +591,7 @@
   },
   "resumeViewer": {
     "resumeNotFound": "未找到简历",
+    "loading": "正在加载简历...",
     "useTailorFeature": "使用定制功能",
     "returnToDashboard": "返回仪表板",
     "enhanceResume": "增强简历",
@@ -551,6 +608,13 @@
       "failedToLoad": "加载简历数据失败。",
       "failedToDelete": "删除简历失败，请重试。"
     }
+  },
+  "preview": {
+    "margins": "页边距",
+    "calculating": "计算中...",
+    "pageBreak": "分页符",
+    "pageCountSingular": "{count} 页",
+    "pageCountPlural": "{count} 页"
   },
   "resume": {
     "personalInfo": {
@@ -570,9 +634,14 @@
       "education": "教育背景",
       "projects": "项目经历",
       "skills": "技能与荣誉",
+      "skillsOnly": "技能",
       "certifications": "培训与证书",
       "languages": "语言能力",
-      "awards": "荣誉奖项"
+      "awards": "荣誉奖项",
+      "links": "链接"
+    },
+    "defaults": {
+      "name": "你的姓名"
     },
     "additional": {
       "technicalSkills": "技术技能"
@@ -598,6 +667,9 @@
       "defaultName": "你的姓名",
       "emptyTitle": "还没有求职信内容。",
       "emptyDescription": "请在设置中启用求职信生成，然后完成一次简历定制。"
+    },
+    "print": {
+      "emptyContent": "暂无求职信内容。"
     }
   },
   "outreach": {
@@ -632,7 +704,13 @@
     "networkError": "网络错误，请检查您的连接。",
     "unauthorized": "请登录后继续。",
     "notFound": "未找到请求的资源。",
-    "validationError": "请检查您的输入后重试。"
+    "validationError": "请检查您的输入后重试。",
+    "boundary": {
+      "title": "出现错误",
+      "description": "发生了意外错误，已记录以便排查。",
+      "tryAgain": "重试",
+      "reloadPage": "重新加载页面"
+    }
   },
   "confirmations": {
     "deleteResume": "您确定要删除此简历吗？",

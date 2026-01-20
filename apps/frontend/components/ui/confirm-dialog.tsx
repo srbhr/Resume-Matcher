@@ -11,6 +11,7 @@ import {
 } from './dialog';
 import { Button } from './button';
 import { cn } from '@/lib/utils';
+import { useTranslations } from '@/lib/i18n';
 
 /**
  * Swiss International Style Confirm Dialog Component
@@ -40,13 +41,17 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   onOpenChange,
   title,
   description,
-  confirmLabel = 'Confirm',
-  cancelLabel = 'Cancel',
+  confirmLabel,
+  cancelLabel,
   variant = 'default',
   onConfirm,
   onCancel,
   showCancelButton = true,
 }) => {
+  const { t } = useTranslations();
+  const finalConfirmLabel = confirmLabel ?? t('common.confirm');
+  const finalCancelLabel = cancelLabel ?? t('common.cancel');
+
   const handleConfirm = () => {
     onConfirm();
     onOpenChange(false);
@@ -113,11 +118,11 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
         <DialogFooter className="p-4 bg-[#E5E5E0] border-t border-black flex-row justify-end gap-3">
           {showCancelButton && (
             <Button variant="outline" onClick={handleCancel} className="rounded-none border-black">
-              {cancelLabel}
+              {finalCancelLabel}
             </Button>
           )}
           <Button variant={buttonVariant} onClick={handleConfirm} className="rounded-none">
-            {confirmLabel}
+            {finalConfirmLabel}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -26,9 +26,11 @@
     "filter": "フィルター",
     "reset": "リセット",
     "apply": "適用",
+    "selectOption": "選択してください...",
     "unknown": "不明",
     "keysCleared": "APIキーが正常にクリアされました",
-    "databaseReset": "データベースが正常にリセットされました"
+    "databaseReset": "データベースが正常にリセットされました",
+    "popupBlocked": "ポップアップがブロックされました。ポップアップを許可するか、次のURLを手動で開いてください: {url}"
   },
   "home": {
     "brandLine1": "履歴書",
@@ -144,7 +146,8 @@
       "addEntryLabel": "エントリを追加",
       "itemsLabel": "項目",
       "itemsPlaceholder": "1行につき1項目を入力",
-      "unknownSectionType": "不明なセクションタイプ"
+      "unknownSectionType": "不明なセクションタイプ：{type}",
+      "unknownDefaultSection": "不明なデフォルトセクション：{section}"
     },
     "sectionHeader": {
       "renameSection": "セクション名を変更",
@@ -168,6 +171,9 @@
       "moduleLabel": "履歴書ビルダーモジュール",
       "singleColumn": "1カラム",
       "twoColumn": "2カラム"
+    },
+    "pageSize": {
+      "usLetter": "USレター"
     },
     "generatePrompt": {
       "notAvailableTitle": "{title}は利用できません",
@@ -288,7 +294,31 @@
     "formatting": {
       "panelTitle": "テンプレートと書式",
       "template": "テンプレート",
+      "templates": {
+        "swissSingle": {
+          "name": "1カラム",
+          "description": "内容密度が高い伝統的な全幅レイアウト"
+        },
+        "swissTwoColumn": {
+          "name": "2カラム",
+          "description": "経験中心のメイン列とスキル用サイドバー"
+        },
+        "modern": {
+          "name": "モダン",
+          "description": "カラフルなアクセントとテーマ色のカスタマイズ"
+        },
+        "modernTwoColumn": {
+          "name": "モダン2カラム",
+          "description": "モダンな2カラムとカラフルなアクセント"
+        }
+      },
       "accentColor": "アクセントカラー",
+      "accentColors": {
+        "blue": "青",
+        "green": "緑",
+        "orange": "オレンジ",
+        "red": "赤"
+      },
       "pageSize": "ページサイズ",
       "margins": "余白（mm）",
       "margin": {
@@ -306,6 +336,11 @@
       "headerScale": "見出し",
       "headerFontFamily": "見出し",
       "bodyFontFamily": "本文",
+      "fontNames": {
+        "serif": "セリフ",
+        "sans": "サンセリフ",
+        "mono": "等幅"
+      },
       "options": "オプション",
       "compactMode": "コンパクトモード",
       "contactIcons": "連絡先アイコン",
@@ -338,6 +373,19 @@
       "coverLetterEditor": "カバーレター編集",
       "outreachEditor": "連絡メール編集",
       "jdMatchAnalysis": "JD一致分析"
+    },
+    "alerts": {
+      "saveNotAvailable": "既存の履歴書を編集中のみ保存できます。",
+      "saveFailed": "履歴書の保存に失敗しました。もう一度お試しください。",
+      "downloadNotAvailable": "保存済みの履歴書のみダウンロードできます。",
+      "downloadFailed": "履歴書のダウンロードに失敗しました。もう一度お試しください。",
+      "coverLetterSaveFailed": "カバーレターの保存に失敗しました。もう一度お試しください。",
+      "coverLetterDownloadRequiresResume": "カバーレターをダウンロードする前に履歴書を保存してください。",
+      "coverLetterMissing": "カバーレターがありません。設定で生成を有効にして履歴書をカスタマイズしてください。",
+      "coverLetterDownloadFailed": "カバーレターのダウンロードに失敗しました: {error}",
+      "outreachSaveFailed": "連絡メールの保存に失敗しました。もう一度お試しください。",
+      "coverLetterGenerateFailed": "カバーレターの生成に失敗しました: {error}",
+      "outreachGenerateFailed": "連絡メールの生成に失敗しました: {error}"
     }
   },
   "enrichment": {
@@ -463,6 +511,14 @@
       "configured": "設定済み",
       "notSet": "未設定"
     },
+    "apiKeyMenu": {
+      "buttonLabel": "LLM API",
+      "title": "OpenAI APIキー",
+      "description": "ホスト型 OpenAI モデルを有効にするためにキーを提供してください。",
+      "savedMessage": "APIキーを保存しました。",
+      "loadError": "APIキーを読み込めません",
+      "updateError": "APIキーを更新できません"
+    },
     "setupRequired": {
       "title": "[ 設定が必要 ]",
       "description": "> API キーが設定されていません。下で LLM プロバイダーの API キーを追加して、履歴書のカスタマイズを有効にしてください。"
@@ -535,6 +591,7 @@
   },
   "resumeViewer": {
     "resumeNotFound": "履歴書が見つかりません",
+    "loading": "履歴書を読み込み中...",
     "useTailorFeature": "カスタマイズ機能を使う",
     "returnToDashboard": "ダッシュボードに戻る",
     "enhanceResume": "履歴書を強化",
@@ -551,6 +608,13 @@
       "failedToLoad": "履歴書データの読み込みに失敗しました。",
       "failedToDelete": "履歴書の削除に失敗しました。もう一度お試しください。"
     }
+  },
+  "preview": {
+    "margins": "余白",
+    "calculating": "計算中...",
+    "pageBreak": "改ページ",
+    "pageCountSingular": "{count} ページ",
+    "pageCountPlural": "{count} ページ"
   },
   "resume": {
     "personalInfo": {
@@ -570,9 +634,14 @@
       "education": "学歴",
       "projects": "プロジェクト",
       "skills": "スキル・受賞歴",
+      "skillsOnly": "スキル",
       "certifications": "研修・資格",
       "languages": "言語",
-      "awards": "受賞歴"
+      "awards": "受賞歴",
+      "links": "リンク"
+    },
+    "defaults": {
+      "name": "あなたの名前"
     },
     "additional": {
       "technicalSkills": "技術スキル"
@@ -597,6 +666,9 @@
       "defaultName": "あなたの名前",
       "emptyTitle": "まだカバーレターがありません。",
       "emptyDescription": "設定でカバーレター生成を有効にしてから、履歴書をカスタマイズしてください。"
+    },
+    "print": {
+      "emptyContent": "カバーレターの内容がありません。"
     },
     "copied": "コピーしました！"
   },
@@ -632,7 +704,13 @@
     "networkError": "ネットワークエラー。接続を確認してください。",
     "unauthorized": "続行するにはサインインしてください。",
     "notFound": "リクエストされたリソースが見つかりません。",
-    "validationError": "入力内容を確認してもう一度お試しください。"
+    "validationError": "入力内容を確認してもう一度お試しください。",
+    "boundary": {
+      "title": "エラーが発生しました",
+      "description": "予期しないエラーが発生しました。記録しました。",
+      "tryAgain": "再試行",
+      "reloadPage": "ページを再読み込み"
+    }
   },
   "confirmations": {
     "deleteResume": "この履歴書を削除してもよろしいですか？",
