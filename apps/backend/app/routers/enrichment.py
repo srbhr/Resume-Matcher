@@ -3,7 +3,6 @@
 import json
 import logging
 from uuid import uuid4
-from pathlib import Path
 
 from fastapi import APIRouter, HTTPException
 
@@ -31,10 +30,13 @@ router = APIRouter(prefix="/enrichment", tags=["Enrichment"])
 def _get_content_language() -> str:
     """Get content language from stored config."""
     config_path = settings.config_path
-    if config_path.exists():
-        config = json.loads(config_path.read_text())
-        # Use content_language, fall back to legacy 'language' field, then default to 'en'
-        return config.get("content_language", config.get("language", "en"))
+    try:
+        if config_path.exists():
+            config = json.loads(config_path.read_text())
+            # Use content_language, fall back to legacy 'language' field, then default to 'en'
+            return config.get("content_language", config.get("language", "en"))
+    except (OSError, json.JSONDecodeError) as e:
+        logger.warning(f"Failed to read content language from config: {e}")
     return "en"
 
 
@@ -135,7 +137,12 @@ async def generate_enhancements(request: EnhanceRequest) -> EnhancementPreview:
     # Actually, let's parse the answers differently - the frontend should include item context
     # For now, we'll get the analysis to build the mapping
     resume_json = json.dumps(processed_data, indent=2)
-    analysis_prompt = ANALYZE_RESUME_PROMPT.format(resume_json=resume_json)
+    language = _get_content_language()
+    output_language = get_language_name(language)
+    analysis_prompt = ANALYZE_RESUME_PROMPT.format(
+        resume_json=resume_json,
+        output_language=output_language
+    )
 
     try:
         analysis_result = await complete_json(analysis_prompt)

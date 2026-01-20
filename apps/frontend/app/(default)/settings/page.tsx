@@ -811,23 +811,29 @@ export default function SettingsPage() {
               <div className="pt-4 border-t border-gray-200">
                 <Dropdown
                   options={
-                    [
-                      {
-                        id: 'nudge',
-                        label: t('tailor.promptOptions.nudge.label'),
-                        description: t('tailor.promptOptions.nudge.description'),
-                      },
-                      {
-                        id: 'keywords',
-                        label: t('tailor.promptOptions.keywords.label'),
-                        description: t('tailor.promptOptions.keywords.description'),
-                      },
-                      {
-                        id: 'full',
-                        label: t('tailor.promptOptions.full.label'),
-                        description: t('tailor.promptOptions.full.description'),
-                      },
-                    ]
+                    promptOptions.length > 0
+                      ? promptOptions.map((opt) => ({
+                          id: opt.id,
+                          label: t(`tailor.promptOptions.${opt.id}.label`),
+                          description: t(`tailor.promptOptions.${opt.id}.description`),
+                        }))
+                      : [
+                          {
+                            id: 'nudge',
+                            label: t('tailor.promptOptions.nudge.label'),
+                            description: t('tailor.promptOptions.nudge.description'),
+                          },
+                          {
+                            id: 'keywords',
+                            label: t('tailor.promptOptions.keywords.label'),
+                            description: t('tailor.promptOptions.keywords.description'),
+                          },
+                          {
+                            id: 'full',
+                            label: t('tailor.promptOptions.full.label'),
+                            description: t('tailor.promptOptions.full.description'),
+                          },
+                        ]
                   }
                   value={defaultPromptId}
                   onChange={handlePromptConfigChange}

@@ -11,7 +11,8 @@ services:
     volumes:
       - resume-data:/app/backend/data
     env_file:
-      - .env
+      - path: .env
+        required: false
     environment:
       - NODE_ENV=production
       - NEXT_PUBLIC_API_URL=http://localhost:8000
