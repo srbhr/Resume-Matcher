@@ -26,9 +26,11 @@
     "filter": "Filtrar",
     "reset": "Redefinir",
     "apply": "Aplicar",
+    "selectOption": "Selecione uma opção...",
     "unknown": "Desconhecido",
     "keysCleared": "Chaves de API removidas com sucesso",
-    "databaseReset": "Banco de dados redefinido com sucesso"
+    "databaseReset": "Banco de dados redefinido com sucesso",
+    "popupBlocked": "Popup bloqueado. Por favor, permita popups ou abra esta URL manualmente: {url}"
   },
   "home": {
     "brandLine1": "Resume",
@@ -144,7 +146,8 @@
       "addEntryLabel": "Adicionar Entrada",
       "itemsLabel": "Itens",
       "itemsPlaceholder": "Insira os itens, um por linha",
-      "unknownSectionType": "Tipo de seção desconhecido"
+      "unknownSectionType": "Tipo de seção desconhecido: {type}",
+      "unknownDefaultSection": "Seção padrão desconhecida: {section}"
     },
     "sectionHeader": {
       "renameSection": "Renomear seção",
@@ -168,6 +171,9 @@
       "moduleLabel": "Módulo de Criação de Currículo",
       "singleColumn": "Coluna Única",
       "twoColumn": "Duas Colunas"
+    },
+    "pageSize": {
+      "usLetter": "Carta US"
     },
     "generatePrompt": {
       "notAvailableTitle": "{title} Não Disponível",
@@ -286,6 +292,35 @@
       }
     },
     "formatting": {
+      "templates": {
+        "swissSingle": {
+          "name": "Coluna Única",
+          "description": "Layout tradicional de largura total com máxima densidade de conteúdo"
+        },
+        "swissTwoColumn": {
+          "name": "Duas Colunas",
+          "description": "Coluna principal focada em experiência com barra lateral para habilidades"
+        },
+        "modern": {
+          "name": "Moderno",
+          "description": "Acentos coloridos com cores de tema personalizáveis"
+        },
+        "modernTwoColumn": {
+          "name": "Moderno Duas Colunas",
+          "description": "Layout de duas colunas com acentos coloridos modernos e temas"
+        }
+      },
+      "accentColors": {
+        "blue": "Azul",
+        "green": "Verde",
+        "orange": "Laranja",
+        "red": "Vermelho"
+      },
+      "fontNames": {
+        "serif": "Serifada",
+        "sans": "Sem Serifa",
+        "mono": "Monoespaçada"
+      },
       "panelTitle": "Template e Formatação",
       "template": "Template",
       "accentColor": "Cor de Destaque",
@@ -338,6 +373,19 @@
       "coverLetterEditor": "Editor de Carta de Apresentação",
       "outreachEditor": "Editor de Mensagem de Contato",
       "jdMatchAnalysis": "Análise de Correspondência de Vaga"
+    },
+    "alerts": {
+      "saveNotAvailable": "Salvar só está disponível ao editar um currículo existente.",
+      "saveFailed": "Falha ao salvar currículo. Por favor, tente novamente.",
+      "downloadNotAvailable": "Download só está disponível para currículos salvos.",
+      "downloadFailed": "Falha ao baixar currículo. Por favor, tente novamente.",
+      "coverLetterSaveFailed": "Falha ao salvar carta de apresentação. Por favor, tente novamente.",
+      "coverLetterDownloadRequiresResume": "Salve o currículo primeiro para baixar a carta de apresentação.",
+      "coverLetterMissing": "Nenhuma carta de apresentação disponível. Habilite a geração de carta em Configurações e personalize um currículo.",
+      "coverLetterDownloadFailed": "Falha ao baixar carta de apresentação: {error}",
+      "outreachSaveFailed": "Falha ao salvar mensagem de contato. Por favor, tente novamente.",
+      "coverLetterGenerateFailed": "Falha ao gerar carta de apresentação: {error}",
+      "outreachGenerateFailed": "Falha ao gerar mensagem de contato: {error}"
     }
   },
   "enrichment": {
@@ -463,6 +511,14 @@
       "configured": "Configurado",
       "notSet": "Não configurado"
     },
+    "apiKeyMenu": {
+      "buttonLabel": "API LLM",
+      "title": "Chave de API OpenAI",
+      "description": "Forneça sua chave para habilitar modelos hospedados da OpenAI.",
+      "savedMessage": "Chave de API salva.",
+      "loadError": "Não foi possível carregar a chave de API",
+      "updateError": "Não foi possível atualizar a chave de API"
+    },
     "setupRequired": {
       "title": "[ CONFIGURAÇÃO NECESSÁRIA ]",
       "description": "> Nenhuma chave de API configurada. Adicione a chave de API do seu provedor de LLM abaixo para habilitar a personalização de currículo."
@@ -535,6 +591,7 @@
   },
   "resumeViewer": {
     "resumeNotFound": "Currículo não encontrado",
+    "loading": "Carregando Currículo...",
     "useTailorFeature": "Usar Recurso de Personalização",
     "returnToDashboard": "Voltar ao Painel",
     "enhanceResume": "Aprimorar Currículo",
@@ -551,6 +608,13 @@
       "failedToLoad": "Falha ao carregar dados do currículo.",
       "failedToDelete": "Falha ao excluir currículo. Por favor, tente novamente."
     }
+  },
+  "preview": {
+    "margins": "Margens",
+    "calculating": "Calculando...",
+    "pageBreak": "Quebra de Página",
+    "pageCountSingular": "{count} página",
+    "pageCountPlural": "{count} páginas"
   },
   "resume": {
     "personalInfo": {
@@ -571,8 +635,13 @@
       "projects": "Projetos",
       "skills": "Habilidades e Prêmios",
       "certifications": "Treinamentos e Certificações",
+      "skillsOnly": "Habilidades",
       "languages": "Idiomas",
-      "awards": "Prêmios"
+      "awards": "Prêmios",
+      "links": "Links"
+    },
+    "defaults": {
+      "name": "Seu Nome"
     },
     "additional": {
       "technicalSkills": "Habilidades Técnicas"
@@ -598,6 +667,9 @@
       "defaultName": "Seu Nome",
       "emptyTitle": "Nenhum conteúdo de carta ainda.",
       "emptyDescription": "Habilite a geração de carta de apresentação em Configurações, depois personalize um currículo."
+    },
+    "print": {
+      "emptyContent": "Nenhum conteúdo de carta de apresentação disponível."
     }
   },
   "outreach": {
@@ -632,7 +704,13 @@
     "networkError": "Erro de rede. Por favor, verifique sua conexão.",
     "unauthorized": "Por favor, faça login para continuar.",
     "notFound": "O recurso solicitado não foi encontrado.",
-    "validationError": "Por favor, verifique sua entrada e tente novamente."
+    "validationError": "Por favor, verifique sua entrada e tente novamente.",
+    "boundary": {
+      "title": "Algo Deu Errado",
+      "description": "Ocorreu um erro inesperado. Isso foi registrado para análise.",
+      "tryAgain": "Tentar Novamente",
+      "reloadPage": "Recarregar Página"
+    }
   },
   "confirmations": {
     "deleteResume": "Tem certeza que deseja excluir este currículo?",
