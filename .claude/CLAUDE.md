@@ -10,16 +10,22 @@ Resume Matcher is an AI-powered application for tailoring resumes to job descrip
 
 | Layer | Stack |
 |-------|-------|
-| **Backend** | FastAPI + Python 3.11+, LiteLLM (multi-provider AI) |
-| **Frontend** | Next.js 15 + React 19, Tailwind CSS |
+| **Backend** | FastAPI + Python 3.13+, LiteLLM (multi-provider AI) |
+| **Frontend** | Next.js 16 + React 19, Tailwind CSS v4 |
 | **Database** | TinyDB (JSON file storage) |
 | **PDF** | Headless Chromium via Playwright |
 
 ---
 
+## First Steps
+
+**Before exploring code, read the [navigator skill](/.claude/skills/navigator/SKILL.md)** for codebase orientation.
+
+---
+
 ## Non-Negotiable Rules
 
-1. **All frontend UI changes** MUST follow [Swiss International Style](../docs/agent/50-design-and-templates/style-guide.md)
+1. **All frontend UI changes** MUST follow [Swiss International Style](../docs/agent/design/style-guide.md)
 2. **All Python functions** MUST have type hints
 3. **Run `npm run lint`** before committing frontend changes
 4. **Run `npm run format`** (Prettier) before committing
@@ -80,28 +86,28 @@ apps/
 ## Documentation by Task
 
 ### For Backend Changes
-1. [Backend guide](../docs/agent/30-architecture/backend-guide.md) - Architecture, modules, services
-2. [API contracts](../docs/agent/40-apis/front-end-apis.md) - API specifications
-3. [LLM integration](../docs/agent/80-llm-integration.md) - Multi-provider AI support
+1. [Backend guide](../docs/agent/architecture/backend-guide.md) - Architecture, modules, services
+2. [API contracts](../docs/agent/apis/front-end-apis.md) - API specifications
+3. [LLM integration](../docs/agent/llm-integration.md) - Multi-provider AI support
 
 ### For Frontend Changes
-1. [Frontend workflow](../docs/agent/30-architecture/frontend-workflow.md) - User flow, components
-2. [Style guide](../docs/agent/50-design-and-templates/style-guide.md) - **REQUIRED** Swiss International Style
-3. [Coding standards](../docs/agent/25-coding-standards.md) - Frontend conventions
+1. [Frontend workflow](../docs/agent/architecture/frontend-workflow.md) - User flow, components
+2. [Style guide](../docs/agent/design/style-guide.md) - **REQUIRED** Swiss International Style
+3. [Coding standards](../docs/agent/coding-standards.md) - Frontend conventions
 
 ### For Template/PDF Changes
-1. [PDF template guide](../docs/agent/50-design-and-templates/pdf-template-guide.md) - PDF rendering
-2. [Template system](../docs/agent/50-design-and-templates/template-system.md) - Resume templates
-3. [Resume templates](../docs/agent/70-features/resume-templates.md) - Template types & controls
+1. [PDF template guide](../docs/agent/design/pdf-template-guide.md) - PDF rendering
+2. [Template system](../docs/agent/design/template-system.md) - Resume templates
+3. [Resume templates](../docs/agent/features/resume-templates.md) - Template types & controls
 
 ### For Features
 | Feature | Documentation |
 |---------|---------------|
-| Custom sections | [custom-sections.md](../docs/agent/70-features/custom-sections.md) |
-| Resume templates | [resume-templates.md](../docs/agent/70-features/resume-templates.md) |
-| i18n | [i18n.md](../docs/agent/70-features/i18n.md) |
-| AI enrichment | [enrichment.md](../docs/agent/70-features/enrichment.md) |
-| JD matching | [jd-match.md](../docs/agent/70-features/jd-match.md) |
+| Custom sections | [custom-sections.md](../docs/agent/features/custom-sections.md) |
+| Resume templates | [resume-templates.md](../docs/agent/features/resume-templates.md) |
+| i18n | [i18n.md](../docs/agent/features/i18n.md) |
+| AI enrichment | [enrichment.md](../docs/agent/features/enrichment.md) |
+| JD matching | [jd-match.md](../docs/agent/features/jd-match.md) |
 
 ---
 
