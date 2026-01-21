@@ -1,10 +1,11 @@
 # Repository Guidelines - GitHub CoPilot Instructions
 
+> **First:** Read the [navigator skill](/.claude/skills/navigator/SKILL.md) for codebase orientation.
+
 ## Table of Contents
 
-(Read from Project Root)
-
 - [Documentation](#documentation)
+- [Skills (AI Agent Patterns)](#skills-ai-agent-patterns)
 - [Project Structure & Module Organization](#project-structure--module-organization)
 - [Build, Test, and Development Commands](#build-test-and-development-commands)
 - [Coding Style & Naming Conventions](#coding-style--naming-conventions)
@@ -18,285 +19,182 @@
 
 ## Documentation
 
-(Read from Project Root)
+All project documentation is located in the `docs/agent/` folder:
 
-All project documentation is located in the `docs/` folder:
-
+### Core Docs
 | Document | Description |
 |----------|-------------|
-| [backend-guide.md](docs/agent/30-architecture/backend-guide.md) | Backend architecture, modules, and API endpoints |
-| [frontend-workflow.md](docs/agent/30-architecture/frontend-workflow.md) | User flow, page routes, and component architecture |
-| [front-end-apis.md](docs/agent/40-apis/front-end-apis.md) | API contract between frontend and backend |
-| [style-guide.md](docs/agent/50-design-and-templates/style-guide.md) | Swiss International Style design system |
-| [backend-architecture.md](docs/agent/30-architecture/backend-architecture.md) | Detailed backend architecture diagrams |
-| [frontend-architecture.md](docs/agent/30-architecture/frontend-architecture.md) | Detailed frontend architecture diagrams |
-| [api-flow-maps.md](docs/agent/40-apis/api-flow-maps.md) | API request/response flow diagrams |
-| [design-system.md](docs/agent/50-design-and-templates/design-system.md) | Extended design system documentation |
-| [template-system.md](docs/agent/50-design-and-templates/template-system.md) | Resume template system documentation |
-| [pdf-template-guide.md](docs/agent/50-design-and-templates/pdf-template-guide.md) | **PDF rendering & template editing guide** |
-| [print_pdf_design_spec.md](docs/agent/50-design-and-templates/print-pdf-design-spec.md) | PDF generation specifications |
-| [resume_template_design_spec.md](docs/agent/50-design-and-templates/resume-template-design-spec.md) | Resume template design specifications |
-| [i18n-preparation.md](docs/agent/70-features/i18n-preparation.md) | Internationalization preparation notes |
-| [backend-requirements.md](docs/agent/40-apis/backend-requirements.md) | API contract specifications |
-| [review-todo.md](docs/agent/review-todo.md) | Review checklist and TODOs |
+| [scope-and-principles.md](docs/agent/scope-and-principles.md) | Project scope and non-negotiable rules |
+| [quickstart.md](docs/agent/quickstart.md) | Install, run, test commands |
+| [workflow.md](docs/agent/workflow.md) | Git commits, PRs, testing guidelines |
+| [coding-standards.md](docs/agent/coding-standards.md) | Frontend and backend coding conventions |
+| [llm-integration.md](docs/agent/llm-integration.md) | Multi-provider AI support |
+
+### Architecture
+| Document | Description |
+|----------|-------------|
+| [backend-architecture.md](docs/agent/architecture/backend-architecture.md) | Backend modules, API endpoints, services |
+| [backend-guide.md](docs/agent/architecture/backend-guide.md) | Backend quick reference |
+| [frontend-architecture.md](docs/agent/architecture/frontend-architecture.md) | Components, pages, state |
+| [frontend-workflow.md](docs/agent/architecture/frontend-workflow.md) | User flow, page routes |
+
+### APIs
+| Document | Description |
+|----------|-------------|
+| [front-end-apis.md](docs/agent/apis/front-end-apis.md) | API client layer |
+| [api-flow-maps.md](docs/agent/apis/api-flow-maps.md) | API request/response flows |
+| [backend-requirements.md](docs/agent/apis/backend-requirements.md) | API contract specifications |
+
+### Design & Templates
+| Document | Description |
+|----------|-------------|
+| [style-guide.md](docs/agent/design/style-guide.md) | **Swiss International Style design system** |
+| [design-system.md](docs/agent/design/design-system.md) | Extended design tokens |
+| [template-system.md](docs/agent/design/template-system.md) | Resume template system |
+| [pdf-template-guide.md](docs/agent/design/pdf-template-guide.md) | PDF rendering & template editing |
+| [swiss-design-system-prompt.md](docs/agent/design/swiss-design-system-prompt.md) | AI prompt for Swiss style UI |
+
+### Features
+| Document | Description |
+|----------|-------------|
+| [custom-sections.md](docs/agent/features/custom-sections.md) | Dynamic resume sections |
+| [i18n.md](docs/agent/features/i18n.md) | Internationalization overview |
+| [i18n-preparation.md](docs/agent/features/i18n-preparation.md) | Detailed i18n plan |
+
+---
+
+## Skills (AI Agent Patterns)
+
+Reusable patterns and guidelines for AI agents located in `.claude/skills/`:
+
+| Skill | Description |
+|-------|-------------|
+| [navigator](/.claude/skills/navigator/SKILL.md) | Codebase orientation - use FIRST when exploring code |
+| [tailwind-patterns](/.claude/skills/tailwind-pattern/SKILL.md) | Tailwind CSS component patterns + Swiss style overrides |
+| [fastapi](/.claude/skills/fastapi/SKILL.md) | FastAPI patterns, JWT auth, Pydantic v2, async SQLAlchemy |
+| [design-principles](/.claude/skills/design-principles/SKILL.md) | Swiss International Style design principles |
+
+**Quick Start for Agents:**
+1. Read `navigator` skill first for codebase orientation
+2. Check `design-principles` and `tailwind-patterns` for UI work
+3. Check `fastapi` skill for backend work
+
+---
 
 ## Project Structure & Module Organization
 
 ### Backend (`apps/backend/`)
-A lean FastAPI application with multi-provider AI support. See **[docs/agent/30-architecture/backend-guide.md](docs/agent/30-architecture/backend-guide.md)** for detailed architecture documentation.
+A lean FastAPI application with multi-provider AI support. See **[architecture/backend-guide.md](docs/agent/architecture/backend-guide.md)** for details.
 
 - `app/main.py` - FastAPI entry point with CORS and router setup
 - `app/config.py` - Pydantic settings loaded from environment
 - `app/database.py` - TinyDB wrapper for JSON storage
-- `app/llm.py` - LiteLLM wrapper with JSON mode support, retry logic, and robust JSON extraction
+- `app/llm.py` - LiteLLM wrapper with JSON mode support
 - `app/routers/` - API endpoints (health, config, resumes, jobs)
 - `app/services/` - Business logic (parser, improver)
-- `app/schemas/` - Pydantic models matching frontend contracts
-- `app/prompts/` - Simplified LLM prompt templates
+- `app/schemas/` - Pydantic models
+- `app/prompts/` - LLM prompt templates
 
 ### Frontend (`apps/frontend/`)
-Next.js dashboard with Swiss International Style design. See **[docs/agent/30-architecture/frontend-workflow.md](docs/agent/30-architecture/frontend-workflow.md)** for user flow and **[docs/agent/40-apis/front-end-apis.md](docs/agent/40-apis/front-end-apis.md)** for API contracts.
+Next.js dashboard with Swiss International Style design. See **[architecture/frontend-workflow.md](docs/agent/architecture/frontend-workflow.md)** for user flow.
 
 - `app/` - Next.js routes (dashboard, builder, tailor, resumes, settings, print)
-- `components/` - Reusable UI components (including `ConfirmDialog` with danger/success variants)
-- `lib/` - API clients and utilities (`lib/api/resume.ts` includes CRUD operations)
+- `components/` - Reusable UI components
+- `lib/` - API clients and utilities
 - `hooks/` - Custom React hooks
 
-**Key Features:**
-- Dashboard auto-refreshes on window focus (handles deletions from other pages)
-- `ConfirmDialog` component supports `danger`, `warning`, `success`, and `default` variants
-- Delete flow includes confirmation before and success message after deletion
-
-### Root Tooling
-- `package.json` - Workflow coordination and scripts
+---
 
 ## Build, Test, and Development Commands
-- `npm run install` provisions the frontend and, via `uv`, the backend virtual environment.
-- `npm run dev` launches FastAPI on `:8000` and the UI on `:3000`; use `npm run dev:backend` or `npm run dev:frontend` to focus on a single tier.
-- Production builds: `npm run build` for both stacks, `npm run build:frontend` for UI-only.
-- Quality checks: `npm run lint` for the UI, `npm run format` to apply Prettier.
+
+```bash
+npm run install      # Install frontend + backend deps
+npm run dev          # FastAPI :8000 + Next.js :3000
+npm run dev:backend  # FastAPI only
+npm run dev:frontend # Next.js only
+npm run build        # Production build
+npm run lint         # ESLint
+npm run format       # Prettier
+```
+
+---
 
 ## Coding Style & Naming Conventions
 
 ### Frontend (TypeScript/React)
-- **Design System**: All UI changes MUST follow the **Swiss International Style** in [docs/agent/50-design-and-templates/style-guide.md](docs/agent/50-design-and-templates/style-guide.md).
-    - Use `font-serif` for headers, `font-mono` for metadata, `font-sans` for body text.
-    - Color palette: `#F0F0E8` (Canvas), `#000000` (Ink), `#1D4ED8` (Hyper Blue), `#15803D` (Signal Green), `#F97316` (Alert Orange), `#DC2626` (Alert Red), `#4B5563` (Steel Grey).
-    - Components: `rounded-none` with 1px black borders and hard shadows.
-- Use PascalCase for components, camelCase for helpers.
-- Tailwind utility classes for styling; run Prettier before committing.
-- **Textarea Enter Key**: All textareas in forms should include `onKeyDown` with `e.stopPropagation()` for Enter key to ensure newlines work correctly:
-  ```tsx
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter') e.stopPropagation();
-  };
-  ```
+- **Design System**: All UI changes MUST follow the **Swiss International Style** in [design/style-guide.md](docs/agent/design/style-guide.md)
+- Use `font-serif` for headers, `font-mono` for metadata, `font-sans` for body
+- Color palette: Canvas `#F0F0E8`, Ink `#000000`, Hyper Blue `#1D4ED8`, Signal Green `#15803D`
+- Components: `rounded-none` with 1px black borders and hard shadows
+- PascalCase for components, camelCase for helpers
+- Run Prettier before committing
 
 ### Backend (Python/FastAPI)
-- Python 3.11+, 4-space indents, type hints on all functions.
-- Async functions for I/O operations (database, LLM calls).
-- Mirror patterns in `app/services/improver.py` for new services.
-- Pydantic models for all request/response schemas.
-- Prompts go in `app/prompts/templates.py`.
-- **Error Handling**: Log detailed errors server-side, return generic messages to clients:
-  ```python
-  except Exception as e:
-      logger.error(f"Operation failed: {e}")
-      raise HTTPException(status_code=500, detail="Operation failed. Please try again.")
-  ```
-- **Race Conditions**: Use `asyncio.Lock()` for shared resource initialization (see `app/pdf.py` for example).
-- **Mutable Defaults**: Always use `copy.deepcopy()` when assigning mutable default values to avoid shared state bugs.
+- Python 3.13+, 4-space indents, type hints on all functions
+- Async functions for I/O operations
+- Pydantic models for all request/response schemas
+- Error handling: Log details server-side, generic messages to clients
 
-### Environment Files
-- Backend: Copy `apps/backend/.env.example` to `.env`
-- Frontend: Copy to `apps/frontend/.env.local`
-- Only templates (`.example`, `.env.local.example`) belong in Git.
+---
 
 ## Testing Guidelines
-- UI contributions must pass `npm run lint`; add Jest or Playwright suites beneath `apps/frontend/__tests__/` named `*.test.tsx` as functionality expands.
-- Backend tests belong in `apps/backend/tests/` using `test_*.py` naming. Execute them with `uv run python -m pytest` once `pytest` is added, and seed anonymised resume/job fixtures.
+- UI: Must pass `npm run lint`; add tests in `apps/frontend/__tests__/`
+- Backend: Tests in `apps/backend/tests/` with `test_*.py` naming
+
+---
 
 ## Commit & Pull Request Guidelines
-- History shows concise, sentence-style subjects (e.g., `Add custom funding link to FUNDING.yml`) and GitHub merge commits; keep messages short and, if using prefixes, stick to `type: summary` in the imperative.
-- Reference issues (`Fixes #123`) and call out schema or prompt changes in the PR description so reviewers can smoke-test downstream agents.
-- List local verification commands and attach screenshots for UI or API changes.
+- Concise, sentence-style subjects
+- Reference issues (`Fixes #123`)
+- Call out schema/prompt changes in PR description
+- Attach screenshots for UI changes
+
+---
 
 ## LLM & AI Workflow Notes
-- **Multi-Provider Support**: Backend uses LiteLLM to support OpenAI, Anthropic, OpenRouter, Gemini, DeepSeek, and Ollama through a unified API.
-- **API Key Handling**: API keys are passed directly to `litellm.acompletion()` via the `api_key` parameter (not via `os.environ`) to avoid race conditions in async contexts.
-- **JSON Mode**: The `complete_json()` function automatically enables `response_format={"type": "json_object"}` for providers that support it (OpenAI, Anthropic, Gemini, DeepSeek, and major OpenRouter models).
-- **Retry Logic**: JSON completions include 2 automatic retries with progressively lower temperature (0.1 → 0.0) to improve reliability.
-- **JSON Extraction**: Robust bracket-matching algorithm in `_extract_json()` handles malformed responses, markdown code blocks, and edge cases. Includes infinite recursion protection when content starts with `{` but matching fails.
-- **Error Handling Pattern**: LLM functions log detailed errors server-side but return generic messages to clients to avoid exposing internal details. Example:
-  ```python
-  except Exception as e:
-      logger.error(f"LLM completion failed: {e}")
-      raise ValueError("LLM completion failed. Please check your API configuration.")
-  ```
-- **Adding Prompts**: Add new prompt templates to `apps/backend/app/prompts/templates.py`. Keep prompts simple and direct—avoid complex escaping.
-- **Prompt Guidelines**:
-  - Use `{variable}` for substitution (single braces)
-  - Include example JSON schemas for structured outputs
-  - Keep instructions concise: "Output ONLY the JSON object, no other text"
-- **Provider Configuration**: Users configure their preferred AI provider via the Settings page (`/settings`) or `PUT /api/v1/config/llm-api-key`.
-- **Health Checks**: The `/api/v1/health` endpoint validates LLM connectivity. Note: Docker health checks must use `/api/v1/health` (not `/health`).
-- **Timeouts**: All LLM calls have configurable timeouts (30s for health checks, 120s for completions, 180s for JSON operations).
+- **Multi-Provider Support**: LiteLLM supports OpenAI, Anthropic, Gemini, DeepSeek, OpenRouter, Ollama
+- **API Key Handling**: Keys passed directly via `api_key` parameter (not os.environ)
+- **JSON Mode**: Auto-enabled for supported providers
+- **Retry Logic**: 2 retries with lower temperature
+- **Health Checks**: `/api/v1/health` validates LLM connectivity
+- **Timeouts**: 30s (health), 120s (completion), 180s (JSON)
+
+---
 
 ## Custom Sections System
 
-The application supports dynamic resume sections with full customization.
+Dynamic resume sections with customization:
 
-### Section Types
-| Type | Description | Example Uses |
-|------|-------------|--------------|
-| `personalInfo` | Special type for header (always first) | Name, contact details |
-| `text` | Single text block | Summary, objective, statement |
-| `itemList` | Array of items with title, subtitle, years, description | Experience, projects, publications |
-| `stringList` | Simple array of strings | Skills, languages, hobbies |
+| Type | Description |
+|------|-------------|
+| `personalInfo` | Header (always first) |
+| `text` | Single text block |
+| `itemList` | Items with title, subtitle, years, description |
+| `stringList` | Simple string array |
 
-### Section Features
-- **Rename sections**: Change display names (e.g., "Education" → "Academic Background")
-- **Reorder sections**: Up/down buttons to change section order
-- **Hide sections**: Toggle visibility (hidden sections still editable, just not in PDF)
-- **Delete sections**: Remove custom sections entirely
-- **Add custom sections**: Create new sections with any name and type
-
-### Section Controls (UI)
-Each section (except Personal Info) has these controls in the header:
-| Control | Icon | Function |
-|---------|------|----------|
-| Visibility | 👁 Eye / EyeOff | Toggle show/hide in PDF preview |
-| Move Up | ⬆ ChevronUp | Move section earlier in order |
-| Move Down | ⬇ ChevronDown | Move section later in order |
-| Rename | ✏️ Pencil | Edit section display name |
-| Delete | 🗑 Trash | Hide (default) or delete (custom) |
-
-### Hidden Section Behavior
-- Hidden sections appear in the form with:
-  - Dashed border and 60% opacity
-  - "Hidden from PDF" badge (amber)
-- Hidden sections are still editable
-- Only PDF/preview hides them (uses `getSortedSections` which filters by visibility)
-- Form shows all sections (uses `getAllSections`)
-
-### Key Files
-| File | Purpose |
-|------|---------|
-| `apps/backend/app/schemas/models.py` | `SectionType`, `SectionMeta`, `CustomSection` models |
-| `apps/frontend/lib/utils/section-helpers.ts` | Section management utilities (`getAllSections`, `getSortedSections`) |
-| `apps/frontend/components/builder/section-header.tsx` | Section controls UI with visibility toggle |
-| `apps/frontend/components/builder/add-section-dialog.tsx` | Add custom section dialog |
-| `apps/frontend/components/builder/resume-form.tsx` | Dynamic form rendering with all sections |
-| `apps/frontend/components/resume/dynamic-resume-section.tsx` | Renders custom sections in templates |
-
-### Data Structure
-```typescript
-interface ResumeData {
-  // ... existing fields (personalInfo, summary, etc.)
-  sectionMeta?: SectionMeta[];  // Section order, names, visibility
-  customSections?: Record<string, CustomSection>;  // Custom section data
-}
-```
-
-### Migration
-Existing resumes are automatically migrated via lazy normalization - default section metadata is added when a resume is fetched if `sectionMeta` is missing.
-
-**Important**: The `normalize_resume_data()` function uses `copy.deepcopy(DEFAULT_SECTION_META)` to avoid shared mutable reference bugs. Always use deep copies when assigning default mutable values.
+Features: Rename, reorder, hide, delete, add custom sections.
 
 ---
 
 ## Resume Template Settings
 
-The application supports multiple resume templates with extensive formatting controls.
-
-### Template Types
 | Template | Description |
 |----------|-------------|
-| `swiss-single` | Traditional single-column layout with maximum content density |
-| `swiss-two-column` | 65%/35% split with experience in main column, skills in sidebar |
+| `swiss-single` | Single-column layout |
+| `swiss-two-column` | 65%/35% split |
 
-### Formatting Controls
-| Control | Range | Default | Effect |
-|---------|-------|---------|--------|
-| Margins | 5-25mm | 8mm | Page margins |
-| Section Spacing | 1-5 | 3 | Gap between major sections |
-| Item Spacing | 1-5 | 2 | Gap between items within sections |
-| Line Height | 1-5 | 3 | Text line height |
-| Base Font Size | 1-5 | 3 | Overall text scale (11-16px) |
-| Header Scale | 1-5 | 3 | Name/section header size multiplier |
-| Header Font | serif/sans-serif/mono | serif | Font family for headers |
-| Body Font | serif/sans-serif/mono | sans-serif | Font family for body text |
-| Compact Mode | boolean | false | Apply 0.6x spacing multiplier (spacing only; margins unchanged) |
-| Contact Icons | boolean | false | Show icons next to contact info |
-
-### Key Files
-| File | Purpose |
-|------|---------|
-| `apps/frontend/lib/types/template-settings.ts` | Type definitions, defaults, CSS variable mapping |
-| `apps/frontend/app/(default)/css/globals.css` | CSS custom properties for resume styling |
-| `apps/frontend/components/builder/formatting-controls.tsx` | UI controls for template settings |
-| `apps/frontend/components/resume/resume-single-column.tsx` | Single column template |
-| `apps/frontend/components/resume/resume-two-column.tsx` | Two column template |
-
-### CSS Variables
-Templates use CSS custom properties for styling:
-- `--section-gap`, `--item-gap`, `--line-height` - Spacing
-- `--font-size-base`, `--header-scale`, `--section-header-scale` - Typography
-- `--header-font` - Header font family
-- `--body-font` - Body text font family
-- `--margin-top/bottom/left/right` - Page margins
-Templates should use the `resume-*` helper classes in `apps/frontend/app/(default)/css/globals.css` to ensure all spacing and typography respond to template settings.
-Formatting controls include an "Effective Output" summary that reflects compact-mode adjustments for spacing/line-height.
+Controls: Margins (5-25mm), spacing (1-5), font size (1-5), header scale (1-5).
 
 ---
 
 ## Internationalization (i18n)
 
-The application supports multi-language UI and content generation.
+Supported: `en`, `es`, `zh`, `ja`
 
-### Supported Languages
-| Code | Language | Native Name |
-|------|----------|-------------|
-| `en` | English | English |
-| `es` | Spanish | Español |
-| `zh` | Chinese (Simplified) | 中文 |
-| `ja` | Japanese | 日本語 |
+- **UI Language**: Interface text (localStorage)
+- **Content Language**: LLM-generated content (localStorage + backend)
 
-### Two Language Settings
-1. **UI Language** - Interface text (buttons, labels, navigation)
-2. **Content Language** - LLM-generated content (resumes, cover letters)
-
-Both are configured independently in the Settings page.
-
-### How It Works
-- **UI translations**: Simple JSON import approach, no external dependencies
-- **Content generation**: Backend receives language, passes to LLM prompts via `{output_language}`
-- **Existing content** in database remains in original language
-
-### Key Files
-| File | Purpose |
-|------|---------|
-| `apps/frontend/messages/*.json` | UI translation files (en, es, zh, ja) |
-| `apps/frontend/lib/i18n/translations.ts` | `useTranslations` hook |
-| `apps/frontend/lib/context/language-context.tsx` | LanguageProvider (UI + content) |
-| `apps/backend/app/prompts/templates.py` | LLM prompts with `{output_language}` |
-
-### Using Translations
 ```typescript
 import { useTranslations } from '@/lib/i18n';
-
 const { t } = useTranslations();
-<button>{t('common.save')}</button>
 ```
-
-### Storage
-| Key | Purpose |
-|-----|---------|
-| `resume_matcher_ui_language` | UI language (localStorage only) |
-| `resume_matcher_content_language` | Content language (localStorage + backend) |
-
-### Adding a New Language
-1. Create `apps/frontend/messages/{code}.json` with all translations
-2. Add locale to `apps/frontend/i18n/config.ts`
-3. Add language name to `apps/backend/app/prompts/templates.py`
-4. Update `SUPPORTED_LANGUAGES` in backend config router

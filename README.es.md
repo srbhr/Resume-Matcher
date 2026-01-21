@@ -219,9 +219,9 @@ docker pull srbhr/resume-matcher:latest
 docker run srbhr/resume-matcher:latest
 ```
 
-Consulta [docs/agent/60-docker/docker.md](docs/agent/60-docker/docker.md) para instrucciones detalladas de Docker.
+<!-- Nota: La documentación de Docker está pendiente. Por ahora, usa docker-compose.yml como referencia -->
 
-> **¿Usas Ollama con Docker?** Consulta [docs/agent/60-docker/docker-ollama.md](docs/agent/60-docker/docker-ollama.md). TL;DR: usa `http://host.docker.internal:11434` como URL de Ollama en lugar de `localhost`.
+> **¿Usas Ollama con Docker?** Usa `http://host.docker.internal:11434` como URL de Ollama en lugar de `localhost`.
 
 ### Stack tecnológico
 
