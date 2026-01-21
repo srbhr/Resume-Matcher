@@ -1,6 +1,7 @@
 """Resume improvement service using LLM."""
 
 import json
+from difflib import SequenceMatcher
 from typing import Any, Callable
 
 from app.llm import complete_json
@@ -114,6 +115,15 @@ def _format_project_entry(entry: dict[str, Any], index: int) -> str:
     )
 
 
+def _normalize_entry(
+    entry: dict[str, Any],
+    ignore_keys: set[str] | None,
+) -> dict[str, Any]:
+    if not ignore_keys:
+        return entry
+    return {key: value for key, value in entry.items() if key not in ignore_keys}
+
+
 def _append_entry_changes(
     changes: list[ResumeFieldDiff],
     field_key: str,
@@ -121,8 +131,26 @@ def _append_entry_changes(
     original_items: list[dict[str, Any]],
     improved_items: list[dict[str, Any]],
     formatter: Callable[[dict[str, Any], int], str],
+    ignore_keys: set[str] | None = None,
 ) -> None:
     min_len = min(len(original_items), len(improved_items))
+
+    for idx in range(min_len):
+        original_entry = original_items[idx]
+        improved_entry = improved_items[idx]
+        if _normalize_entry(original_entry, ignore_keys) != _normalize_entry(
+            improved_entry, ignore_keys
+        ):
+            changes.append(
+                ResumeFieldDiff(
+                    field_path=f"{field_key}[{idx}]",
+                    field_type=field_type,
+                    change_type="modified",
+                    original_value=formatter(original_entry, idx),
+                    new_value=formatter(improved_entry, idx),
+                    confidence="medium",
+                )
+            )
 
     for idx in range(min_len, len(improved_items)):
         changes.append(
@@ -147,22 +175,109 @@ def _append_entry_changes(
         )
 
 
+def _extract_description_list(entry: dict[str, Any]) -> list[str]:
+    descriptions = entry.get("description", [])
+    if not isinstance(descriptions, list):
+        return []
+    return [str(item) for item in descriptions if item]
+
+
+def _append_list_changes(
+    changes: list[ResumeFieldDiff],
+    field_path: str,
+    field_type: str,
+    original_items: list[str],
+    improved_items: list[str],
+    added_confidence: str,
+    removed_confidence: str,
+    modified_confidence: str,
+) -> None:
+    matcher = SequenceMatcher(a=original_items, b=improved_items)
+    for tag, i1, i2, j1, j2 in matcher.get_opcodes():
+        if tag == "equal":
+            continue
+        if tag == "delete":
+            for item in original_items[i1:i2]:
+                changes.append(
+                    ResumeFieldDiff(
+                        field_path=field_path,
+                        field_type=field_type,
+                        change_type="removed",
+                        original_value=item,
+                        confidence=removed_confidence,
+                    )
+                )
+        elif tag == "insert":
+            for item in improved_items[j1:j2]:
+                changes.append(
+                    ResumeFieldDiff(
+                        field_path=field_path,
+                        field_type=field_type,
+                        change_type="added",
+                        new_value=item,
+                        confidence=added_confidence,
+                    )
+                )
+        elif tag == "replace":
+            original_segment = original_items[i1:i2]
+            improved_segment = improved_items[j1:j2]
+            segment_len = max(len(original_segment), len(improved_segment))
+            for offset in range(segment_len):
+                original_value = (
+                    original_segment[offset] if offset < len(original_segment) else None
+                )
+                new_value = (
+                    improved_segment[offset] if offset < len(improved_segment) else None
+                )
+                if original_value is not None and new_value is not None:
+                    changes.append(
+                        ResumeFieldDiff(
+                            field_path=field_path,
+                            field_type=field_type,
+                            change_type="modified",
+                            original_value=original_value,
+                            new_value=new_value,
+                            confidence=modified_confidence,
+                        )
+                    )
+                elif new_value is not None:
+                    changes.append(
+                        ResumeFieldDiff(
+                            field_path=field_path,
+                            field_type=field_type,
+                            change_type="added",
+                            new_value=new_value,
+                            confidence=added_confidence,
+                        )
+                    )
+                elif original_value is not None:
+                    changes.append(
+                        ResumeFieldDiff(
+                            field_path=field_path,
+                            field_type=field_type,
+                            change_type="removed",
+                            original_value=original_value,
+                            confidence=removed_confidence,
+                        )
+                    )
+
+
 def calculate_resume_diff(
     original: dict[str, Any],
     improved: dict[str, Any],
 ) -> tuple[ResumeDiffSummary, list[ResumeFieldDiff]]:
-    """计算原始简历和定制简历之间的差异
+    """Compute the diff between original and improved resumes.
 
     Args:
-        original: 原始简历数据字典
-        improved: 改进后的简历数据字典
+        original: Original resume data dict
+        improved: Improved resume data dict
 
     Returns:
-        (差异摘要, 详细变更列表)
+        (diff summary, detailed change list)
     """
     changes: list[ResumeFieldDiff] = []
 
-    # 1. 对比 summary
+    # 1. Compare summary
     original_summary = (original.get("summary") or "").strip()
     improved_summary = (improved.get("summary") or "").strip()
     if original_summary != improved_summary:
@@ -177,7 +292,7 @@ def calculate_resume_diff(
             )
         )
 
-    # 2. 对比技能列表
+    # 2. Compare skills
     orig_skills = set(original.get("additional", {}).get("technicalSkills", []))
     new_skills = set(improved.get("additional", {}).get("technicalSkills", []))
 
@@ -187,7 +302,7 @@ def calculate_resume_diff(
             field_type="skill",
             change_type="added",
             new_value=skill,
-            confidence="high"  # 新增技能是高风险
+            confidence="high"  # Newly added skills are high risk
         ))
 
     for skill in orig_skills - new_skills:
@@ -199,38 +314,29 @@ def calculate_resume_diff(
             confidence="medium"
         ))
 
-    # 3. 对比工作经历描述
-    for i, orig_exp in enumerate(original.get("workExperience", [])):
-        improved_exp = improved.get("workExperience", [])[i] if i < len(improved.get("workExperience", [])) else None
-        if not improved_exp:
-            continue
+    # 3. Compare work experience descriptions
+    original_experiences = original.get("workExperience", [])
+    improved_experiences = improved.get("workExperience", [])
+    max_experience_len = max(len(original_experiences), len(improved_experiences))
+    for idx in range(max_experience_len):
+        original_entry = (
+            original_experiences[idx] if idx < len(original_experiences) else {}
+        )
+        improved_entry = (
+            improved_experiences[idx] if idx < len(improved_experiences) else {}
+        )
+        _append_list_changes(
+            changes,
+            field_path=f"workExperience[{idx}].description",
+            field_type="description",
+            original_items=_extract_description_list(original_entry),
+            improved_items=_extract_description_list(improved_entry),
+            added_confidence="medium",
+            removed_confidence="low",
+            modified_confidence="medium",
+        )
 
-        orig_desc = orig_exp.get("description", [])
-        new_desc = improved_exp.get("description", [])
-
-        # 使用简单的集合差异检测（可以后续优化为更智能的 diff）
-        orig_set = set(orig_desc)
-        new_set = set(new_desc)
-
-        for desc in new_set - orig_set:
-            changes.append(ResumeFieldDiff(
-                field_path=f"workExperience[{i}].description",
-                field_type="description",
-                change_type="added",
-                new_value=desc,
-                confidence="medium"
-            ))
-
-        for desc in orig_set - new_set:
-            changes.append(ResumeFieldDiff(
-                field_path=f"workExperience[{i}].description",
-                field_type="description",
-                change_type="removed",
-                original_value=desc,
-                confidence="low"
-            ))
-
-    # 4. 对比认证
+    # 4. Compare certifications
     orig_certs = set(original.get("additional", {}).get("certificationsTraining", []))
     new_certs = set(improved.get("additional", {}).get("certificationsTraining", []))
 
@@ -252,7 +358,7 @@ def calculate_resume_diff(
             confidence="medium"
         ))
 
-    # 5. 对比新增/删除条目
+    # 5. Compare added/removed/modified entries
     _append_entry_changes(
         changes,
         "workExperience",
@@ -260,6 +366,7 @@ def calculate_resume_diff(
         original.get("workExperience", []),
         improved.get("workExperience", []),
         _format_experience_entry,
+        {"description"},
     )
     _append_entry_changes(
         changes,
@@ -278,7 +385,7 @@ def calculate_resume_diff(
         _format_project_entry,
     )
 
-    # 6. 生成摘要
+    # 6. Build summary
     summary = ResumeDiffSummary(
         total_changes=len(changes),
         skills_added=len([c for c in changes if c.field_type == "skill" and c.change_type == "added"]),

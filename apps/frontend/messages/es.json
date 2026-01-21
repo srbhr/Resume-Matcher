@@ -486,6 +486,11 @@
       "rejectButton": "Rechazar y regenerar",
       "confirmButton": "Confirmar y guardar"
     },
+    "regenerateDialog": {
+      "title": "¿Regenerar el currículum personalizado?",
+      "description": "Esto descartará la vista previa actual y solicitará un nuevo resultado de personalización con IA.",
+      "confirmLabel": "Regenerar"
+    },
     "errors": {
       "jobDescriptionTooShort": "La descripción del trabajo es demasiado corta. Por favor, proporciona más detalles.",
       "apiKeyError": "Error de clave API. Revisa tu configuración de LLM en Configuración.",

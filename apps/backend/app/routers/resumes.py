@@ -377,8 +377,7 @@ async def improve_resume_confirm_endpoint(
     language = _get_content_language()
 
     try:
-        validated = ResumeData.model_validate(request.improved_data)
-        improved_data = validated.model_dump()
+        improved_data = request.improved_data.model_dump()
         improved_text = json.dumps(improved_data, indent=2)
 
         diff_summary, detailed_changes = _calculate_diff_from_resume(
@@ -421,7 +420,7 @@ async def improve_resume_confirm_endpoint(
                 request_id=request_id,
                 resume_id=tailored_resume["resume_id"],
                 job_id=request.job_id,
-                resume_preview=ResumeData.model_validate(improved_data),
+                resume_preview=request.improved_data,
                 improvements=request.improvements,
                 markdownOriginal=resume["content"],
                 markdownImproved=improved_text,
@@ -541,7 +540,7 @@ async def improve_resume_endpoint(
                 markdownImproved=improved_text,
                 cover_letter=cover_letter,
                 outreach_message=outreach_message,
-                # 新增字段：差异数据
+                # Diff metadata
                 diff_summary=diff_summary,
                 detailed_changes=detailed_changes,
             ),

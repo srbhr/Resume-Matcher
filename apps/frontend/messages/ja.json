@@ -486,11 +486,16 @@
       "rejectButton": "拒否して再生成",
       "confirmButton": "確認して保存"
     },
+    "regenerateDialog": {
+      "title": "カスタマイズ済み履歴書を再生成しますか？",
+      "description": "現在のプレビューを破棄し、新しい AI 調整結果を取得します。",
+      "confirmLabel": "再生成"
+    },
     "errors": {
       "jobDescriptionTooShort": "求人内容が短すぎます。もう少し詳細を入力してください。",
       "apiKeyError": "API キーのエラーです。設定で LLM 構成を確認してください。",
       "rateLimit": "レート制限に達しました。しばらく待ってから再試行してください。",
-      "failedToGenerate": "履歴書の生成に失敗しました。設定を確認して再試行してください."
+      "failedToGenerate": "履歴書の生成に失敗しました。設定を確認して再試行してください。"
     }
   },
   "settings": {

@@ -486,6 +486,11 @@
       "rejectButton": "拒绝并重新生成",
       "confirmButton": "确认并保存"
     },
+    "regenerateDialog": {
+      "title": "重新生成定制简历？",
+      "description": "这将丢弃当前预览并请求新的 AI 定制结果。",
+      "confirmLabel": "重新生成"
+    },
     "errors": {
       "jobDescriptionTooShort": "职位描述过短，请提供更多细节。",
       "apiKeyError": "API 密钥错误。请在设置中检查您的 LLM 配置。",

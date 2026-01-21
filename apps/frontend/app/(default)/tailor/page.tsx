@@ -19,6 +19,7 @@ import { useStatusCache } from '@/lib/context/status-cache';
 import { Loader2, ArrowLeft, AlertTriangle, Settings } from 'lucide-react';
 import { useTranslations } from '@/lib/i18n';
 import { DiffPreviewModal } from '@/components/tailor/diff-preview-modal';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 export default function TailorPage() {
   const { t } = useTranslations();
@@ -34,6 +35,7 @@ export default function TailorPage() {
   // Diff preview modal state
   const [showDiffModal, setShowDiffModal] = useState(false);
   const [pendingResult, setPendingResult] = useState<ImprovedResult | null>(null);
+  const [showRegenerateDialog, setShowRegenerateDialog] = useState(false);
 
   const router = useRouter();
   const { setImprovedData } = useResumePreview();
@@ -119,26 +121,24 @@ export default function TailorPage() {
     }
   };
 
-  const handleGenerate = async () => {
-    if (!jobDescription.trim() || !masterResumeId) return;
-
-    // Validation: Check for minimum length (e.g. 50 chars) to ensure it's a valid JD
+  const canGenerate = () => {
+    if (!jobDescription.trim() || !masterResumeId) return false;
     if (jobDescription.trim().length < 50) {
       setError(t('tailor.errors.jobDescriptionTooShort'));
-      return;
+      return false;
     }
+    return true;
+  };
 
-    setIsLoading(true);
-    setError(null);
-
+  const runGenerate = async (resumeId: string) => {
     try {
       // 1. Upload Job Description
       // The API expects an array of strings
-      const jobId = await uploadJobDescriptions([jobDescription], masterResumeId);
+      const jobId = await uploadJobDescriptions([jobDescription], resumeId);
       incrementJobs(); // Update cached counter
 
       // 2. Preview Resume
-      const result = await previewImproveResume(masterResumeId, jobId, selectedPromptId);
+      const result = await previewImproveResume(resumeId, jobId, selectedPromptId);
 
       if (!result?.data?.diff_summary || !result?.data?.detailed_changes) {
         await confirmAndNavigate(result);
@@ -148,7 +148,6 @@ export default function TailorPage() {
       // 3. Show diff preview modal
       setPendingResult(result);
       setShowDiffModal(true);
-
     } catch (err) {
       console.error(err);
       // Check for common error patterns
@@ -168,6 +167,17 @@ export default function TailorPage() {
       } else {
         setError(t('tailor.errors.failedToGenerate'));
       }
+    }
+  };
+
+  const handleGenerate = async () => {
+    if (!canGenerate()) return;
+    const resumeId = masterResumeId;
+    if (!resumeId) return;
+    setIsLoading(true);
+    setError(null);
+    try {
+      await runGenerate(resumeId);
     } finally {
       setIsLoading(false);
     }
@@ -198,12 +208,26 @@ export default function TailorPage() {
   const handleRejectChanges = () => {
     setShowDiffModal(false);
     setPendingResult(null);
-    void handleGenerate();
+    setShowRegenerateDialog(true);
   };
 
   const handleCloseDiffModal = () => {
     setShowDiffModal(false);
     setPendingResult(null);
+  };
+
+  const handleRegenerateConfirm = async () => {
+    setShowRegenerateDialog(false);
+    if (!canGenerate()) return;
+    const resumeId = masterResumeId;
+    if (!resumeId) return;
+    setIsLoading(true);
+    setError(null);
+    try {
+      await runGenerate(resumeId);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -349,6 +373,17 @@ export default function TailorPage() {
           detailedChanges={pendingResult?.data?.detailed_changes}
         />
       )}
+
+      <ConfirmDialog
+        open={showRegenerateDialog}
+        onOpenChange={setShowRegenerateDialog}
+        title={t('tailor.regenerateDialog.title')}
+        description={t('tailor.regenerateDialog.description')}
+        confirmLabel={t('tailor.regenerateDialog.confirmLabel')}
+        cancelLabel={t('common.cancel')}
+        variant="warning"
+        onConfirm={handleRegenerateConfirm}
+      />
     </div>
   );
 }

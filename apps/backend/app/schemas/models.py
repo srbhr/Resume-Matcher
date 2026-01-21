@@ -285,9 +285,9 @@ class ImprovementSuggestion(BaseModel):
 
 
 class ResumeFieldDiff(BaseModel):
-    """单个字段的变更记录"""
+    """Single field change record."""
 
-    field_path: str  # 如 "workExperience[0].description[2]"
+    field_path: str  # Example: "workExperience[0].description[2]"
     field_type: str  # "skill" | "description" | "summary" | "certification" | "experience" | "education" | "project"
     change_type: str  # "added" | "removed" | "modified"
     original_value: str | None = None
@@ -296,14 +296,14 @@ class ResumeFieldDiff(BaseModel):
 
 
 class ResumeDiffSummary(BaseModel):
-    """变更统计摘要"""
+    """Change summary stats."""
 
     total_changes: int
     skills_added: int
     skills_removed: int
     descriptions_modified: int
     certifications_added: int
-    high_risk_changes: int  # 高风险新增项
+    high_risk_changes: int  # High-risk additions
 
 
 class ImproveResumeData(BaseModel):
@@ -319,7 +319,7 @@ class ImproveResumeData(BaseModel):
     cover_letter: str | None = None
     outreach_message: str | None = None
 
-    # 新增字段：差异数据
+    # Diff metadata
     diff_summary: ResumeDiffSummary | None = None
     detailed_changes: list[ResumeFieldDiff] | None = None
 
@@ -336,7 +336,7 @@ class ImproveResumeConfirmRequest(BaseModel):
 
     resume_id: str
     job_id: str
-    improved_data: dict[str, Any]
+    improved_data: ResumeData
     improvements: list[ImprovementSuggestion]
 
 
