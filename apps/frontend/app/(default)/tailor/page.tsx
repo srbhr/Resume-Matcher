@@ -6,12 +6,19 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useResumePreview } from '@/components/common/resume_previewer_context';
-import { uploadJobDescriptions, improveResume } from '@/lib/api/resume';
+import type { ImprovedResult } from '@/components/common/resume_previewer_context';
+import type { ResumeData } from '@/components/dashboard/resume-component';
+import {
+  uploadJobDescriptions,
+  previewImproveResume,
+  confirmImproveResume,
+} from '@/lib/api/resume';
 import { fetchPromptConfig, type PromptOption } from '@/lib/api/config';
 import { Dropdown } from '@/components/ui/dropdown';
 import { useStatusCache } from '@/lib/context/status-cache';
 import { Loader2, ArrowLeft, AlertTriangle, Settings } from 'lucide-react';
 import { useTranslations } from '@/lib/i18n';
+import { DiffPreviewModal } from '@/components/tailor/diff-preview-modal';
 
 export default function TailorPage() {
   const { t } = useTranslations();
@@ -23,6 +30,10 @@ export default function TailorPage() {
   const [selectedPromptId, setSelectedPromptId] = useState('keywords');
   const [promptLoading, setPromptLoading] = useState(false);
   const hasUserSelectedPrompt = useRef(false);
+
+  // Diff preview modal state
+  const [showDiffModal, setShowDiffModal] = useState(false);
+  const [pendingResult, setPendingResult] = useState<ImprovedResult | null>(null);
 
   const router = useRouter();
   const { setImprovedData } = useResumePreview();
@@ -78,6 +89,36 @@ export default function TailorPage() {
     if (e.key === 'Enter') e.stopPropagation();
   };
 
+  const buildConfirmPayload = (result: ImprovedResult) => {
+    if (!masterResumeId) {
+      throw new Error('Master resume ID is missing.');
+    }
+    return {
+      resume_id: masterResumeId,
+      job_id: result.data.job_id,
+      improved_data: result.data.resume_preview as ResumeData,
+      improvements:
+        result.data.improvements?.map((item) => ({
+          suggestion: item.suggestion,
+          lineNumber: typeof item.lineNumber === 'number' ? item.lineNumber : null,
+        })) ?? [],
+    };
+  };
+
+  const confirmAndNavigate = async (result: ImprovedResult) => {
+    const confirmed = await confirmImproveResume(buildConfirmPayload(result));
+    incrementImprovements();
+    incrementResumes();
+    setImprovedData(confirmed);
+
+    const newResumeId = confirmed?.data?.resume_id;
+    if (newResumeId) {
+      router.push(`/resumes/${newResumeId}`);
+    } else {
+      router.push('/builder');
+    }
+  };
+
   const handleGenerate = async () => {
     if (!jobDescription.trim() || !masterResumeId) return;
 
@@ -96,22 +137,18 @@ export default function TailorPage() {
       const jobId = await uploadJobDescriptions([jobDescription], masterResumeId);
       incrementJobs(); // Update cached counter
 
-      // 2. Improve Resume
-      const result = await improveResume(masterResumeId, jobId, selectedPromptId);
-      incrementImprovements(); // Update cached counter
-      incrementResumes(); // New tailored resume created
+      // 2. Preview Resume
+      const result = await previewImproveResume(masterResumeId, jobId, selectedPromptId);
 
-      // 3. Store in Context
-      setImprovedData(result);
-
-      // 4. Redirect to the NEW Viewer page with the new resume ID
-      // Assuming the result contains the new resume ID in data.resume_id
-      if (result?.data?.resume_id) {
-        router.push(`/resumes/${result.data.resume_id}`);
-      } else {
-        // Fallback if ID is missing for some reason
-        router.push('/builder');
+      if (!result?.data?.diff_summary || !result?.data?.detailed_changes) {
+        await confirmAndNavigate(result);
+        return;
       }
+
+      // 3. Show diff preview modal
+      setPendingResult(result);
+      setShowDiffModal(true);
+
     } catch (err) {
       console.error(err);
       // Check for common error patterns
@@ -134,6 +171,39 @@ export default function TailorPage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // User confirms changes
+  const handleConfirmChanges = async () => {
+    if (!pendingResult) return;
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      await confirmAndNavigate(pendingResult);
+      setShowDiffModal(false);
+      setPendingResult(null);
+    } catch (err) {
+      console.error(err);
+      setError(t('tailor.errors.failedToGenerate'));
+      setShowDiffModal(false);
+      setPendingResult(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // User rejects changes
+  const handleRejectChanges = () => {
+    setShowDiffModal(false);
+    setPendingResult(null);
+    void handleGenerate();
+  };
+
+  const handleCloseDiffModal = () => {
+    setShowDiffModal(false);
+    setPendingResult(null);
   };
 
   return (
@@ -267,6 +337,18 @@ export default function TailorPage() {
           <p className="text-xs font-mono text-gray-400">{t('tailor.footerTagline')}</p>
         </div>
       </div>
+
+      {/* Diff preview modal */}
+      {showDiffModal && pendingResult && (
+        <DiffPreviewModal
+          isOpen={showDiffModal}
+          onClose={handleCloseDiffModal}
+          onReject={handleRejectChanges}
+          onConfirm={handleConfirmChanges}
+          diffSummary={pendingResult?.data?.diff_summary}
+          detailedChanges={pendingResult?.data?.detailed_changes}
+        />
+      )}
     </div>
   );
 }

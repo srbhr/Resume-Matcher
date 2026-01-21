@@ -20,6 +20,8 @@ export {
 export {
   uploadJobDescriptions,
   improveResume,
+  previewImproveResume,
+  confirmImproveResume,
   fetchResume,
   fetchResumeList,
   updateResume,

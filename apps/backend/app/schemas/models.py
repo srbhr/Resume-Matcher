@@ -284,11 +284,33 @@ class ImprovementSuggestion(BaseModel):
     lineNumber: int | None = None
 
 
+class ResumeFieldDiff(BaseModel):
+    """单个字段的变更记录"""
+
+    field_path: str  # 如 "workExperience[0].description[2]"
+    field_type: str  # "skill" | "description" | "summary" | "certification" | "experience" | "education" | "project"
+    change_type: str  # "added" | "removed" | "modified"
+    original_value: str | None = None
+    new_value: str | None = None
+    confidence: str = "medium"  # "low" | "medium" | "high"
+
+
+class ResumeDiffSummary(BaseModel):
+    """变更统计摘要"""
+
+    total_changes: int
+    skills_added: int
+    skills_removed: int
+    descriptions_modified: int
+    certifications_added: int
+    high_risk_changes: int  # 高风险新增项
+
+
 class ImproveResumeData(BaseModel):
     """Data payload for improve response."""
 
     request_id: str
-    resume_id: str
+    resume_id: str | None = None
     job_id: str
     resume_preview: ResumeData
     improvements: list[ImprovementSuggestion]
@@ -297,12 +319,25 @@ class ImproveResumeData(BaseModel):
     cover_letter: str | None = None
     outreach_message: str | None = None
 
+    # 新增字段：差异数据
+    diff_summary: ResumeDiffSummary | None = None
+    detailed_changes: list[ResumeFieldDiff] | None = None
+
 
 class ImproveResumeResponse(BaseModel):
     """Response for resume improvement."""
 
     request_id: str
     data: ImproveResumeData
+
+
+class ImproveResumeConfirmRequest(BaseModel):
+    """Request to confirm and save a tailored resume."""
+
+    resume_id: str
+    job_id: str
+    improved_data: dict[str, Any]
+    improvements: list[ImprovementSuggestion]
 
 
 # Config Models

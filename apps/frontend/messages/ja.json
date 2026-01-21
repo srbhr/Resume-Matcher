@@ -465,11 +465,32 @@
     "suggestions": "提案",
     "keywords": "含めるべきキーワード",
     "footerTagline": "AI 搭載最適化エンジン",
+    "diffModal": {
+      "title": "AI調整結果の確認",
+      "subtitle": "虚偽の情報が追加されていないか、変更内容を慎重に確認してください",
+      "summary": "変更の概要",
+      "skillsAdded": "追加されたスキル",
+      "skillsRemoved": "削除されたスキル",
+      "descriptionsModified": "変更された説明",
+      "certificationsAdded": "追加された資格",
+      "highRiskChanges": "高リスクの変更",
+      "warningTitle": "完全に新しいスキルが {count} 件検出されました",
+      "warningMessage": "これらのスキルが元の履歴書に実際に存在する、または説明内に反映されていることを確認してください",
+      "summaryChanges": "概要の変更",
+      "skillChanges": "スキルの変更",
+      "descriptionChanges": "職歴説明の変更",
+      "experienceChanges": "職歴の変更",
+      "educationChanges": "学歴の変更",
+      "projectChanges": "プロジェクトの変更",
+      "certificationChanges": "資格の変更",
+      "rejectButton": "拒否して再生成",
+      "confirmButton": "確認して保存"
+    },
     "errors": {
       "jobDescriptionTooShort": "求人内容が短すぎます。もう少し詳細を入力してください。",
       "apiKeyError": "API キーのエラーです。設定で LLM 構成を確認してください。",
       "rateLimit": "レート制限に達しました。しばらく待ってから再試行してください。",
-      "failedToGenerate": "履歴書の生成に失敗しました。設定を確認して再試行してください。"
+      "failedToGenerate": "履歴書の生成に失敗しました。設定を確認して再試行してください."
     }
   },
   "settings": {

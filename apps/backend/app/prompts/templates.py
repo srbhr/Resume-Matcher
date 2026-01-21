@@ -134,6 +134,18 @@ Job description:
 
 IMPROVE_RESUME_PROMPT_NUDGE = """Lightly nudge this resume toward the job description. Output ONLY the JSON object, no other text.
 
+CRITICAL TRUTHFULNESS RULES - NEVER VIOLATE:
+1. DO NOT add any skill, tool, technology, or certification that is not explicitly mentioned in the original resume
+2. DO NOT invent numeric achievements (e.g., "increased by 30%") unless they exist in original
+3. DO NOT add company names, product names, or technical terms not in the original
+4. DO NOT upgrade experience level (e.g., "Junior" → "Senior")
+5. DO NOT add languages, frameworks, or platforms the candidate hasn't used
+6. DO NOT add or modify date ranges
+7. DO NOT add new bullet points or content - only rephrase existing content
+8. Preserve factual accuracy - only use information provided by the candidate
+
+Violation of these rules could cause serious problems for the candidate in job interviews.
+
 IMPORTANT: Generate ALL text content (summary, descriptions, skills) in {output_language}.
 
 Rules:
@@ -162,6 +174,18 @@ Output in this JSON format:
 
 IMPROVE_RESUME_PROMPT_KEYWORDS = """Enhance this resume with relevant keywords from the job description. Output ONLY the JSON object, no other text.
 
+CRITICAL TRUTHFULNESS RULES - NEVER VIOLATE:
+1. DO NOT add any skill, tool, technology, or certification that is not explicitly mentioned in the original resume
+2. DO NOT invent numeric achievements (e.g., "increased by 30%") unless they exist in original
+3. DO NOT add company names, product names, or technical terms not in the original
+4. DO NOT upgrade experience level (e.g., "Junior" → "Senior")
+5. DO NOT add languages, frameworks, or platforms the candidate hasn't used
+6. DO NOT add or modify date ranges
+7. You may rephrase existing bullet points to include keywords, but do NOT add new bullet points
+8. Preserve factual accuracy - only use information provided by the candidate
+
+Violation of these rules could cause serious problems for the candidate in job interviews.
+
 IMPORTANT: Generate ALL text content (summary, descriptions, skills) in {output_language}.
 
 Rules:
@@ -187,6 +211,18 @@ Output in this JSON format:
 {schema}"""
 
 IMPROVE_RESUME_PROMPT_FULL = """Tailor this resume for the job. Output ONLY the JSON object, no other text.
+
+CRITICAL TRUTHFULNESS RULES - NEVER VIOLATE:
+1. DO NOT add any skill, tool, technology, or certification that is not explicitly mentioned in the original resume
+2. DO NOT invent numeric achievements (e.g., "increased by 30%") unless they exist in original
+3. DO NOT add company names, product names, or technical terms not in the original
+4. DO NOT upgrade experience level (e.g., "Junior" → "Senior")
+5. DO NOT add languages, frameworks, or platforms the candidate hasn't used
+6. DO NOT add or modify date ranges
+7. You may expand existing bullet points or add new ones that elaborate on existing work, but DO NOT invent entirely new responsibilities
+8. Preserve factual accuracy - only use information provided by the candidate
+
+Violation of these rules could cause serious problems for the candidate in job interviews.
 
 IMPORTANT: Generate ALL text content (summary, descriptions, skills) in {output_language}.
 
