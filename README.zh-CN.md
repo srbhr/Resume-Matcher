@@ -217,9 +217,9 @@ docker pull srbhr/resume-matcher:latest
 docker run srbhr/resume-matcher:latest
 ```
 
-更完整的 Docker 指南见 [docs/agent/60-docker/docker.md](docs/agent/60-docker/docker.md)。
+<!-- 注意：Docker 文档正在编写中。目前请参考 docker-compose.yml -->
 
-> **在 Docker 中使用 Ollama？** 见 [docs/agent/60-docker/docker-ollama.md](docs/agent/60-docker/docker-ollama.md)。TL;DR：将 Ollama URL 配置为 `http://host.docker.internal:11434`（而不是 `localhost`）。
+> **在 Docker 中使用 Ollama？** 将 Ollama URL 配置为 `http://host.docker.internal:11434`（而不是 `localhost`）。
 
 ### 技术栈
 

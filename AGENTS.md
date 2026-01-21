@@ -17,7 +17,7 @@ Resume Matcher is an AI-powered application for tailoring resumes to job descrip
 
 ## Non-Negotiable Rules
 
-1. **All frontend changes** MUST follow the [Swiss International Style](docs/agent/50-design-and-templates/style-guide.md)
+1. **All frontend changes** MUST follow the [Swiss International Style](docs/agent/design/style-guide.md)
 2. **All Python functions** MUST have type hints
 3. **Run `npm run lint`** before committing frontend changes
 4. **Run `npm run format`** (Prettier) before committing
@@ -54,50 +54,43 @@ npm run build
 | Topic | Document |
 |-------|----------|
 | **Full agent docs index** | [docs/agent/README.md](docs/agent/README.md) |
-| **Scope & principles** | [docs/agent/00-scope-and-principles.md](docs/agent/00-scope-and-principles.md) |
-| **Quickstart** | [docs/agent/10-quickstart.md](docs/agent/10-quickstart.md) |
-| **Workflow & PRs** | [docs/agent/20-workflow.md](docs/agent/20-workflow.md) |
-| **Coding standards** | [docs/agent/25-coding-standards.md](docs/agent/25-coding-standards.md) |
+| **Scope & principles** | [docs/agent/scope-and-principles.md](docs/agent/scope-and-principles.md) |
+| **Quickstart** | [docs/agent/quickstart.md](docs/agent/quickstart.md) |
+| **Workflow & PRs** | [docs/agent/workflow.md](docs/agent/workflow.md) |
+| **Coding standards** | [docs/agent/coding-standards.md](docs/agent/coding-standards.md) |
 
 ### Backend
 
 | Document | Description |
 |----------|-------------|
-| [Backend guide](docs/agent/30-architecture/backend-guide.md) | Architecture, modules, services |
-| [API contracts](docs/agent/40-apis/front-end-apis.md) | API specifications |
-| [LLM integration](docs/agent/80-llm-integration.md) | Multi-provider AI support |
+| [Backend guide](docs/agent/architecture/backend-guide.md) | Architecture, modules, services |
+| [API contracts](docs/agent/apis/front-end-apis.md) | API specifications |
+| [LLM integration](docs/agent/llm-integration.md) | Multi-provider AI support |
 
 ### Frontend
 
 | Document | Description |
 |----------|-------------|
-| [Frontend workflow](docs/agent/30-architecture/frontend-workflow.md) | User flow, components |
-| [Style guide](docs/agent/50-design-and-templates/style-guide.md) | **REQUIRED** for UI changes |
-| [Design system](docs/agent/50-design-and-templates/design-system.md) | Extended design docs |
+| [Frontend workflow](docs/agent/architecture/frontend-workflow.md) | User flow, components |
+| [Style guide](docs/agent/design/style-guide.md) | **REQUIRED** for UI changes |
+| [Design system](docs/agent/design/design-system.md) | Extended design docs |
 
 ### Templates & PDF
 
 | Document | Description |
 |----------|-------------|
-| [Template system](docs/agent/50-design-and-templates/template-system.md) | Resume template architecture |
-| [PDF template guide](docs/agent/50-design-and-templates/pdf-template-guide.md) | PDF rendering guide |
+| [Template system](docs/agent/design/template-system.md) | Resume template architecture |
+| [PDF template guide](docs/agent/design/pdf-template-guide.md) | PDF rendering guide |
 
 ### Features
 
 | Document | Description |
 |----------|-------------|
-| [Custom sections](docs/agent/70-features/custom-sections.md) | Dynamic resume sections |
-| [Resume templates](docs/agent/70-features/resume-templates.md) | Template formatting controls |
-| [i18n](docs/agent/70-features/i18n.md) | Internationalization |
-| [Enrichment](docs/agent/70-features/enrichment.md) | AI resume enhancement |
-| [JD Match](docs/agent/70-features/jd-match.md) | Keyword matching feature |
-
-### Docker
-
-| Document | Description |
-|----------|-------------|
-| [Docker setup](docs/agent/60-docker/docker.md) | Docker deployment |
-| [Docker + Ollama](docs/agent/60-docker/docker-ollama.md) | Local AI setup |
+| [Custom sections](docs/agent/features/custom-sections.md) | Dynamic resume sections |
+| [Resume templates](docs/agent/features/resume-templates.md) | Template formatting controls |
+| [i18n](docs/agent/features/i18n.md) | Internationalization |
+| [Enrichment](docs/agent/features/enrichment.md) | AI resume enhancement |
+| [JD Match](docs/agent/features/jd-match.md) | Keyword matching feature |
 
 ---
 
@@ -134,7 +127,7 @@ Before marking a PR as ready:
 - [ ] Code compiles without errors
 - [ ] `npm run lint` passes
 - [ ] New features have tests (or documented reason why not)
-- [ ] UI changes follow [Swiss International Style](docs/agent/50-design-and-templates/style-guide.md)
+- [ ] UI changes follow [Swiss International Style](docs/agent/design/style-guide.md)
 - [ ] Schema/prompt changes called out in PR description
 - [ ] Screenshots attached for UI changes
 
@@ -144,12 +137,11 @@ Before marking a PR as ready:
 
 | Need | Go to |
 |------|-------|
-| Backend architecture | [30-architecture/backend-guide.md](docs/agent/30-architecture/backend-guide.md) |
-| Frontend architecture | [30-architecture/frontend-workflow.md](docs/agent/30-architecture/frontend-workflow.md) |
-| API specs | [40-apis/front-end-apis.md](docs/agent/40-apis/front-end-apis.md) |
-| UI design rules | [50-design-and-templates/style-guide.md](docs/agent/50-design-and-templates/style-guide.md) |
-| LLM/AI patterns | [80-llm-integration.md](docs/agent/80-llm-integration.md) |
-| Docker setup | [60-docker/docker.md](docs/agent/60-docker/docker.md) |
+| Backend architecture | [architecture/backend-guide.md](docs/agent/architecture/backend-guide.md) |
+| Frontend architecture | [architecture/frontend-workflow.md](docs/agent/architecture/frontend-workflow.md) |
+| API specs | [apis/front-end-apis.md](docs/agent/apis/front-end-apis.md) |
+| UI design rules | [design/style-guide.md](docs/agent/design/style-guide.md) |
+| LLM/AI patterns | [llm-integration.md](docs/agent/llm-integration.md) |
 
 ---
 

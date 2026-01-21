@@ -217,9 +217,9 @@ docker pull srbhr/resume-matcher:latest
 docker run srbhr/resume-matcher:latest
 ```
 
-Docker の詳細は [docs/agent/60-docker/docker.md](docs/agent/60-docker/docker.md) を参照してください。
+<!-- 注：Docker ドキュメントは準備中です。現在は docker-compose.yml を参照してください -->
 
-> **Docker で Ollama を使う場合**： [docs/agent/60-docker/docker-ollama.md](docs/agent/60-docker/docker-ollama.md)。TL;DR：Ollama の URL は `localhost` ではなく `http://host.docker.internal:11434` を指定します。
+> **Docker で Ollama を使う場合**：Ollama の URL は `localhost` ではなく `http://host.docker.internal:11434` を指定します。
 
 ### 技術スタック
 
