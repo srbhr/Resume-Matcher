@@ -287,7 +287,7 @@ docker-compose down
 - データは Docker volume に永続化されます
 - フロントエンド（3000）とバックエンド（8000）のポートが公開されます
 
-詳細は [docs/agent/60-docker/docker.md](docs/agent/60-docker/docker.md) を参照してください。
+<!-- 注：Docker ドキュメントは準備中です。現在は docker-compose.yml を参照してください -->
 
 ---
 
@@ -492,10 +492,9 @@ Resume-Matcher/
 
 | ドキュメント | 内容 |
 |-------------|------|
-| [backend-guide.md](docs/agent/30-architecture/backend-guide.md) | バックエンドのアーキテクチャと API 詳細 |
-| [frontend-workflow.md](docs/agent/30-architecture/frontend-workflow.md) | ユーザーフローとコンポーネント構成 |
-| [docker.md](docs/agent/60-docker/docker.md) | Docker デプロイガイド |
-| [style-guide.md](docs/agent/50-design-and-templates/style-guide.md) | UI デザインシステム（Swiss International Style） |
+| [backend-guide.md](docs/agent/architecture/backend-guide.md) | バックエンドのアーキテクチャと API 詳細 |
+| [frontend-workflow.md](docs/agent/architecture/frontend-workflow.md) | ユーザーフローとコンポーネント構成 |
+| [style-guide.md](docs/agent/design/style-guide.md) | UI デザインシステム（Swiss International Style） |
 
 ---
 

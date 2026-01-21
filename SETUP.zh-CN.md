@@ -287,7 +287,7 @@ docker-compose down
 - 数据会保存在 Docker volume 中
 - 暴露前端（3000）与后端（8000）端口
 
-更详细的 Docker 指南见：[docs/agent/60-docker/docker.md](docs/agent/60-docker/docker.md)。
+<!-- 注意：Docker 文档正在编写中。目前请参考 docker-compose.yml -->
 
 ---
 
@@ -492,10 +492,9 @@ Resume-Matcher/
 
 | 文档 | 说明 |
 |------|------|
-| [backend-guide.md](docs/agent/30-architecture/backend-guide.md) | 后端架构与 API 细节 |
-| [frontend-workflow.md](docs/agent/30-architecture/frontend-workflow.md) | 用户流程与组件架构 |
-| [docker.md](docs/agent/60-docker/docker.md) | Docker 部署指南 |
-| [style-guide.md](docs/agent/50-design-and-templates/style-guide.md) | UI 设计系统（Swiss International Style） |
+| [backend-guide.md](docs/agent/architecture/backend-guide.md) | 后端架构与 API 细节 |
+| [frontend-workflow.md](docs/agent/architecture/frontend-workflow.md) | 用户流程与组件架构 |
+| [style-guide.md](docs/agent/design/style-guide.md) | UI 设计系统（Swiss International Style） |
 
 ---
 

@@ -287,7 +287,7 @@ docker-compose down
 - Los datos se persisten en un volumen de Docker
 - Se exponen los puertos del frontend (3000) y del backend (8000)
 
-Para instrucciones detalladas de Docker, consulta [docs/agent/60-docker/docker.md](docs/agent/60-docker/docker.md).
+<!-- Nota: La documentación de Docker está pendiente. Por ahora, usa docker-compose.yml como referencia -->
 
 ---
 
@@ -492,10 +492,9 @@ Resume-Matcher/
 
 | Documento | Descripción |
 |----------|-------------|
-| [backend-guide.md](docs/agent/30-architecture/backend-guide.md) | Arquitectura del backend y detalles de la API |
-| [frontend-workflow.md](docs/agent/30-architecture/frontend-workflow.md) | Flujo de usuario y arquitectura de componentes |
-| [docker.md](docs/agent/60-docker/docker.md) | Guía de despliegue con Docker |
-| [style-guide.md](docs/agent/50-design-and-templates/style-guide.md) | Sistema de diseño UI (Swiss International Style) |
+| [backend-guide.md](docs/agent/architecture/backend-guide.md) | Arquitectura del backend y detalles de la API |
+| [frontend-workflow.md](docs/agent/architecture/frontend-workflow.md) | Flujo de usuario y arquitectura de componentes |
+| [style-guide.md](docs/agent/design/style-guide.md) | Sistema de diseño UI (Swiss International Style) |
 
 ---
 
