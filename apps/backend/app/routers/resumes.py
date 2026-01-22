@@ -4,6 +4,7 @@ import asyncio
 import hashlib
 import json
 import logging
+import unicodedata
 from collections.abc import Awaitable
 from pathlib import Path
 from typing import Any, NoReturn
@@ -81,9 +82,40 @@ def _hash_job_content(content: str) -> str:
     return hashlib.sha256(content.encode("utf-8")).hexdigest()
 
 
+def _normalize_payload(value: Any) -> Any:
+    if isinstance(value, str):
+        return unicodedata.normalize("NFC", value)
+    if isinstance(value, list):
+        return [_normalize_payload(item) for item in value]
+    if isinstance(value, dict):
+        return {_normalize_payload(key): _normalize_payload(val) for key, val in value.items()}
+    return value
+
+
 def _hash_improved_data(data: dict[str, Any]) -> str:
-    serialized = json.dumps(data, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    """Hash canonicalized improved data for preview/confirm validation.
+
+    Uses NFC normalization for strings plus sorted JSON keys to reduce
+    false mismatches from Unicode normalization or key ordering.
+    """
+    normalized = _normalize_payload(data)
+    serialized = json.dumps(
+        normalized,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+    )
     return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
+
+
+def _normalize_personal_info_value(value: Any) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, str):
+        return unicodedata.normalize("NFC", value).strip()
+    if isinstance(value, (int, float, bool)):
+        return str(value)
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
 
 
 def _raise_improve_error(
@@ -136,13 +168,13 @@ def _validate_confirm_payload(
     original_info = original_data.get("personalInfo")
     improved_info = improved_data.get("personalInfo")
     if not isinstance(original_info, dict) or not isinstance(improved_info, dict):
-        return
-    immutable_fields = ("name", "email", "phone", "linkedin", "github", "website")
+        raise ValueError("personalInfo payload is missing or invalid")
+    fields = set(original_info.keys()) | set(improved_info.keys())
     mismatches = [
         field
-        for field in immutable_fields
-        if (str(original_info.get(field) or "").strip())
-        != (str(improved_info.get(field) or "").strip())
+        for field in sorted(fields)
+        if _normalize_personal_info_value(original_info.get(field))
+        != _normalize_personal_info_value(improved_info.get(field))
     ]
     if mismatches:
         raise ValueError(f"personalInfo fields changed: {', '.join(mismatches)}")
@@ -386,9 +418,17 @@ async def improve_resume_preview_endpoint(
         )
         improved_text = json.dumps(improved_data, indent=2)
         preview_hash = _hash_improved_data(improved_data)
+        preview_hashes = job.get("preview_hashes")
+        if not isinstance(preview_hashes, dict):
+            preview_hashes = {}
+        preview_hashes[prompt_id] = preview_hash
         db.update_job(
             request.job_id,
-            {"preview_hash": preview_hash, "preview_prompt_id": prompt_id},
+            {
+                "preview_hash": preview_hash,
+                "preview_prompt_id": prompt_id,
+                "preview_hashes": preview_hashes,
+            },
         )
         stage = "calculate_diff"
         diff_summary, detailed_changes = _calculate_diff_from_resume(
@@ -448,8 +488,8 @@ async def improve_resume_confirm_endpoint(
     try:
         improved_data = request.improved_data.model_dump()
         improved_text = json.dumps(improved_data, indent=2)
-        # NOTE: This endpoint trusts client-provided improved_data. Consider persisting preview
-        # results server-side or revalidating with a fresh improvement run if stronger guarantees are needed.
+        # NOTE: This endpoint relies on preview-hash validation to ensure the payload matches a prior preview.
+        # Stronger guarantees would require server-side preview storage or re-running the improvement.
         try:
             _validate_confirm_payload(_get_original_resume_data(resume), improved_data)
         except ValueError as e:
@@ -458,19 +498,33 @@ async def improve_resume_confirm_endpoint(
                 status_code=400,
                 detail="Invalid improved resume data. Please retry preview.",
             )
-        preview_hash = job.get("preview_hash")
-        if preview_hash:
-            request_hash = _hash_improved_data(improved_data)
-            if request_hash != preview_hash:
-                logger.warning("Resume confirm rejected due to preview hash mismatch.")
-                raise HTTPException(
-                    status_code=400,
-                    detail="Invalid improved resume data. Please retry preview.",
-                )
+        preview_hashes = job.get("preview_hashes")
+        allowed_hashes: set[str] = set()
+        if isinstance(preview_hashes, dict):
+            allowed_hashes.update(preview_hashes.values())
+        elif isinstance(preview_hashes, list):
+            allowed_hashes.update([value for value in preview_hashes if isinstance(value, str)])
         else:
+            preview_hash = job.get("preview_hash")
+            if isinstance(preview_hash, str):
+                allowed_hashes.add(preview_hash)
+
+        if not allowed_hashes:
             logger.warning(
-                "Skipping confirm payload hash check; preview hash missing for job %s.",
+                "Rejecting confirm; preview hash missing for job %s.",
                 request.job_id,
+            )
+            raise HTTPException(
+                status_code=400,
+                detail="Preview required before confirmation. Please retry preview.",
+            )
+
+        request_hash = _hash_improved_data(improved_data)
+        if request_hash not in allowed_hashes:
+            logger.warning("Resume confirm rejected due to preview hash mismatch.")
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid improved resume data. Please retry preview.",
             )
 
         stage = "calculate_diff"

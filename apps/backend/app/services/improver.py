@@ -197,6 +197,10 @@ def _append_entry_changes(
 
 
 def _normalize_string_list(value: Any, field_name: str) -> list[str]:
+    """Normalize string list values and log any non-string entries.
+
+    Accepts lists of strings or objects containing name/label/value keys.
+    """
     if not isinstance(value, list):
         return []
     normalized: list[str] = []
@@ -230,7 +234,7 @@ def _build_string_index(value: Any, field_name: str) -> dict[str, str]:
     items = _normalize_string_list(value, field_name)
     index: dict[str, str] = {}
     for item in items:
-        key = item.casefold()
+        key = item
         if key not in index:
             index[key] = item
     return index
@@ -472,7 +476,13 @@ def calculate_resume_diff(
         total_changes=len(changes),
         skills_added=len([c for c in changes if c.field_type == "skill" and c.change_type == "added"]),
         skills_removed=len([c for c in changes if c.field_type == "skill" and c.change_type == "removed"]),
-        descriptions_modified=len([c for c in changes if c.field_type == "description"]),
+        descriptions_modified=len(
+            [
+                c
+                for c in changes
+                if c.field_type == "description" and c.change_type == "modified"
+            ]
+        ),
         certifications_added=len([c for c in changes if c.field_type == "certification" and c.change_type == "added"]),
         high_risk_changes=len([c for c in changes if c.confidence == "high"])
     )
