@@ -136,7 +136,7 @@ CRITICAL_TRUTHFULNESS_RULES_TEMPLATE = """CRITICAL TRUTHFULNESS RULES - NEVER VI
 1. DO NOT add any skill, tool, technology, or certification that is not explicitly mentioned in the original resume
 2. DO NOT invent numeric achievements (e.g., "increased by 30%") unless they exist in original
 3. DO NOT add company names, product names, or technical terms not in the original
-4. DO NOT upgrade experience level (e.g., "Junior" б· "Senior")
+4. DO NOT upgrade experience level (e.g., "Junior" -> "Senior")
 5. DO NOT add languages, frameworks, or platforms the candidate hasn't used
 6. DO NOT extend employment dates or change timelines (start/end years)
 7. {rule_7}

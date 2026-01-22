@@ -3,14 +3,12 @@
 import { useState } from 'react';
 import { AlertTriangle, CheckCircle, X, ChevronDown, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useTranslations } from '@/lib/i18n';
-import type { ResumeDiffSummary, ResumeFieldDiff } from '@/components/common/resume_previewer_context';
+import type {
+  ResumeDiffSummary,
+  ResumeFieldDiff,
+} from '@/components/common/resume_previewer_context';
 
 interface DiffPreviewModalProps {
   isOpen: boolean;
@@ -51,9 +49,6 @@ export function DiffPreviewModal({
             <DialogTitle className="font-serif text-2xl font-bold uppercase tracking-tight">
               {t('tailor.missingDiffDialog.title')}
             </DialogTitle>
-            <p className="font-mono text-xs text-gray-600 mt-2">
-              // {t('tailor.missingDiffDialog.description')}
-            </p>
           </DialogHeader>
 
           <div className="mt-6 border-2 border-black bg-white p-4 font-mono text-xs text-gray-700">
@@ -107,7 +102,8 @@ export function DiffPreviewModal({
             {t('tailor.diffModal.title')}
           </DialogTitle>
           <p className="font-mono text-xs text-gray-600 mt-2">
-            // {t('tailor.diffModal.subtitle')}
+            {'// '}
+            {t('tailor.diffModal.subtitle')}
           </p>
         </DialogHeader>
 
@@ -320,13 +316,7 @@ interface ChangeSectionProps {
   children: React.ReactNode;
 }
 
-function ChangeSection({
-  title,
-  count,
-  isExpanded,
-  onToggle,
-  children,
-}: ChangeSectionProps) {
+function ChangeSection({ title, count, isExpanded, onToggle, children }: ChangeSectionProps) {
   return (
     <div className="border-2 border-black bg-white">
       <button
@@ -334,22 +324,14 @@ function ChangeSection({
         className="w-full flex items-center justify-between p-3 hover:bg-gray-50"
       >
         <div className="flex items-center gap-2">
-          {isExpanded ? (
-            <ChevronDown className="w-4 h-4" />
-          ) : (
-            <ChevronRight className="w-4 h-4" />
-          )}
+          {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
           <span className="font-mono text-sm font-bold uppercase tracking-wider">
             {title} ({count})
           </span>
         </div>
       </button>
 
-      {isExpanded && (
-        <div className="border-t-2 border-black p-4 space-y-3">
-          {children}
-        </div>
-      )}
+      {isExpanded && <div className="border-t-2 border-black p-4 space-y-3">{children}</div>}
     </div>
   );
 }
@@ -385,9 +367,7 @@ function ChangeItem({ change }: ChangeItemProps) {
             </div>
           )}
           {change.new_value && (
-            <div className="text-gray-900 font-mono text-sm">
-              {change.new_value}
-            </div>
+            <div className="text-gray-900 font-mono text-sm">{change.new_value}</div>
           )}
         </div>
         {change.confidence === 'high' && (

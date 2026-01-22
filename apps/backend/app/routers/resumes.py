@@ -100,11 +100,41 @@ def _calculate_diff_from_resume(
     resume: dict[str, Any],
     improved_data: dict[str, Any],
 ) -> tuple[ResumeDiffSummary | None, list[ResumeFieldDiff] | None]:
+    """Calculate resume diffs when structured data is available.
+
+    Returns (None, None) if structured data is missing, parsing fails, or
+    diff calculation encounters an error. Callers should handle this gracefully.
+    """
     original_data = _get_original_resume_data(resume)
     if not original_data:
         return None, None
     from app.services.improver import calculate_resume_diff
-    return calculate_resume_diff(original_data, improved_data)
+    try:
+        return calculate_resume_diff(original_data, improved_data)
+    except Exception as e:
+        logger.warning("Skipping resume diff due to calculation failure: %s", e)
+        return None, None
+
+
+def _validate_confirm_payload(
+    original_data: dict[str, Any] | None,
+    improved_data: dict[str, Any],
+) -> None:
+    if not original_data:
+        return
+    original_info = original_data.get("personalInfo")
+    improved_info = improved_data.get("personalInfo")
+    if not isinstance(original_info, dict) or not isinstance(improved_info, dict):
+        return
+    immutable_fields = ("name", "email", "phone", "linkedin", "github", "website")
+    mismatches = [
+        field
+        for field in immutable_fields
+        if (str(original_info.get(field) or "").strip())
+        != (str(improved_info.get(field) or "").strip())
+    ]
+    if mismatches:
+        raise ValueError(f"personalInfo fields changed: {', '.join(mismatches)}")
 
 
 async def _generate_auxiliary_messages(
@@ -396,6 +426,14 @@ async def improve_resume_confirm_endpoint(
     try:
         improved_data = request.improved_data.model_dump()
         improved_text = json.dumps(improved_data, indent=2)
+        try:
+            _validate_confirm_payload(_get_original_resume_data(resume), improved_data)
+        except ValueError as e:
+            logger.warning("Resume confirm rejected: %s", e)
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid improved resume data. Please retry preview.",
+            )
 
         stage = "calculate_diff"
         diff_summary, detailed_changes = _calculate_diff_from_resume(
@@ -451,6 +489,8 @@ async def improve_resume_confirm_endpoint(
                 detailed_changes=detailed_changes,
             ),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         _raise_improve_error("confirm", stage, e, detail)
 

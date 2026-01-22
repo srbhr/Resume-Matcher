@@ -99,36 +99,38 @@ export default function TailorPage() {
   const isResumeData = (value: unknown): value is ResumeData => {
     if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
     const data = value as Record<string, unknown>;
+    const requiredKeys = [
+      'personalInfo',
+      'summary',
+      'workExperience',
+      'education',
+      'personalProjects',
+      'additional',
+      'sectionMeta',
+      'customSections',
+    ];
+    for (const key of requiredKeys) {
+      if (!(key in data)) return false;
+    }
     if (
-      'personalInfo' in data &&
-      data.personalInfo !== null &&
-      (typeof data.personalInfo !== 'object' || Array.isArray(data.personalInfo))
+      !data.personalInfo ||
+      typeof data.personalInfo !== 'object' ||
+      Array.isArray(data.personalInfo)
     ) {
       return false;
     }
-    if ('workExperience' in data && data.workExperience !== null && !Array.isArray(data.workExperience)) {
+    if (typeof data.summary !== 'string') return false;
+    if (!Array.isArray(data.workExperience)) return false;
+    if (!Array.isArray(data.education)) return false;
+    if (!Array.isArray(data.personalProjects)) return false;
+    if (!data.additional || typeof data.additional !== 'object' || Array.isArray(data.additional)) {
       return false;
     }
-    if ('education' in data && data.education !== null && !Array.isArray(data.education)) {
-      return false;
-    }
-    if ('personalProjects' in data && data.personalProjects !== null && !Array.isArray(data.personalProjects)) {
-      return false;
-    }
+    if (!Array.isArray(data.sectionMeta)) return false;
     if (
-      'additional' in data &&
-      data.additional !== null &&
-      (typeof data.additional !== 'object' || Array.isArray(data.additional))
-    ) {
-      return false;
-    }
-    if ('sectionMeta' in data && data.sectionMeta !== null && !Array.isArray(data.sectionMeta)) {
-      return false;
-    }
-    if (
-      'customSections' in data &&
-      data.customSections !== null &&
-      (typeof data.customSections !== 'object' || Array.isArray(data.customSections))
+      !data.customSections ||
+      typeof data.customSections !== 'object' ||
+      Array.isArray(data.customSections)
     ) {
       return false;
     }

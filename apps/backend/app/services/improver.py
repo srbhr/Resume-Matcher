@@ -1,7 +1,9 @@
 """Resume improvement service using LLM."""
 
 import json
+import logging
 from difflib import SequenceMatcher
+from dataclasses import dataclass
 from typing import Any, Callable
 
 from app.llm import complete_json
@@ -14,6 +16,15 @@ from app.prompts import (
 )
 from app.prompts.templates import RESUME_SCHEMA
 from app.schemas import ResumeData, ResumeFieldDiff, ResumeDiffSummary
+
+logger = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class DiffConfidence:
+    added: str
+    removed: str
+    modified: str
 
 
 async def extract_job_keywords(job_description: str) -> dict[str, Any]:
@@ -180,11 +191,40 @@ def _append_entry_changes(
         )
 
 
-def _extract_description_list(entry: dict[str, Any]) -> list[str]:
-    descriptions = entry.get("description", [])
-    if not isinstance(descriptions, list):
+def _normalize_string_list(value: Any, field_name: str) -> list[str]:
+    if not isinstance(value, list):
         return []
-    return [str(item) for item in descriptions if item]
+    normalized: list[str] = []
+    skipped = 0
+    for item in value:
+        if isinstance(item, str):
+            stripped = item.strip()
+            if stripped:
+                normalized.append(stripped)
+            continue
+        if isinstance(item, dict):
+            candidate = item.get("name") or item.get("label") or item.get("value")
+            if isinstance(candidate, str):
+                stripped = candidate.strip()
+                if stripped:
+                    normalized.append(stripped)
+                else:
+                    skipped += 1
+            else:
+                skipped += 1
+            continue
+        if item is None:
+            continue
+        skipped += 1
+    if skipped:
+        logger.warning("Skipped non-string entries in %s: %d", field_name, skipped)
+    return normalized
+
+
+def _extract_description_list(entry: Any) -> list[str]:
+    if not isinstance(entry, dict):
+        return []
+    return _normalize_string_list(entry.get("description", []), "workExperience.description")
 
 
 def _append_list_changes(
@@ -193,9 +233,7 @@ def _append_list_changes(
     field_type: str,
     original_items: list[str],
     improved_items: list[str],
-    added_confidence: str,
-    removed_confidence: str,
-    modified_confidence: str,
+    confidences: DiffConfidence,
 ) -> None:
     matcher = SequenceMatcher(a=original_items, b=improved_items, autojunk=False)
     for tag, i1, i2, j1, j2 in matcher.get_opcodes():
@@ -209,7 +247,7 @@ def _append_list_changes(
                         field_type=field_type,
                         change_type="removed",
                         original_value=item,
-                        confidence=removed_confidence,
+                        confidence=confidences.removed,
                     )
                 )
         elif tag == "insert":
@@ -220,7 +258,7 @@ def _append_list_changes(
                         field_type=field_type,
                         change_type="added",
                         new_value=item,
-                        confidence=added_confidence,
+                        confidence=confidences.added,
                     )
                 )
         elif tag == "replace":
@@ -242,7 +280,7 @@ def _append_list_changes(
                             change_type="modified",
                             original_value=original_value,
                             new_value=new_value,
-                            confidence=modified_confidence,
+                            confidence=confidences.modified,
                         )
                     )
                 elif new_value is not None:
@@ -252,7 +290,7 @@ def _append_list_changes(
                             field_type=field_type,
                             change_type="added",
                             new_value=new_value,
-                            confidence=added_confidence,
+                            confidence=confidences.added,
                         )
                     )
                 elif original_value is not None:
@@ -262,7 +300,7 @@ def _append_list_changes(
                             field_type=field_type,
                             change_type="removed",
                             original_value=original_value,
-                            confidence=removed_confidence,
+                            confidence=confidences.removed,
                         )
                     )
 
@@ -304,8 +342,18 @@ def calculate_resume_diff(
         )
 
     # 2. Compare skills (order changes are intentionally ignored)
-    orig_skills = set(original.get("additional", {}).get("technicalSkills", []))
-    new_skills = set(improved.get("additional", {}).get("technicalSkills", []))
+    orig_skills = set(
+        _normalize_string_list(
+            original.get("additional", {}).get("technicalSkills", []),
+            "additional.technicalSkills",
+        )
+    )
+    new_skills = set(
+        _normalize_string_list(
+            improved.get("additional", {}).get("technicalSkills", []),
+            "additional.technicalSkills",
+        )
+    )
 
     for skill in new_skills - orig_skills:
         changes.append(ResumeFieldDiff(
@@ -329,27 +377,38 @@ def calculate_resume_diff(
     original_experiences = original.get("workExperience", [])
     improved_experiences = improved.get("workExperience", [])
     max_experience_len = max(len(original_experiences), len(improved_experiences))
+    confidences = DiffConfidence(added="medium", removed="low", modified="medium")
     for idx in range(max_experience_len):
         original_entry = (
-            original_experiences[idx] if idx < len(original_experiences) else {}
+            original_experiences[idx] if idx < len(original_experiences) else None
         )
         improved_entry = (
-            improved_experiences[idx] if idx < len(improved_experiences) else {}
+            improved_experiences[idx] if idx < len(improved_experiences) else None
         )
+        if not original_entry and not improved_entry:
+            continue
         _append_list_changes(
             changes,
             field_path=f"workExperience[{idx}].description",
             field_type="description",
             original_items=_extract_description_list(original_entry),
             improved_items=_extract_description_list(improved_entry),
-            added_confidence="medium",
-            removed_confidence="low",
-            modified_confidence="medium",
+            confidences=confidences,
         )
 
     # 4. Compare certifications (order changes are intentionally ignored)
-    orig_certs = set(original.get("additional", {}).get("certificationsTraining", []))
-    new_certs = set(improved.get("additional", {}).get("certificationsTraining", []))
+    orig_certs = set(
+        _normalize_string_list(
+            original.get("additional", {}).get("certificationsTraining", []),
+            "additional.certificationsTraining",
+        )
+    )
+    new_certs = set(
+        _normalize_string_list(
+            improved.get("additional", {}).get("certificationsTraining", []),
+            "additional.certificationsTraining",
+        )
+    )
 
     for cert in new_certs - orig_certs:
         changes.append(ResumeFieldDiff(
