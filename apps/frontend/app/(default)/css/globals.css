@@ -3,8 +3,6 @@
 
 @source "../../../{app,components,hooks,lib,messages}/**/*.{js,ts,jsx,tsx,mdx}";
 
-
-
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -43,22 +41,22 @@
   --color-sidebar-ring: var(--sidebar-ring);
 
   /* Swiss Style Tokens */
-  --color-canvas: #F0F0E8;
+  --color-canvas: #f0f0e8;
   --color-ink: #000000;
-  --color-success: #15803D;
-  --color-warning: #F97316;
-  
+  --color-success: #15803d;
+  --color-warning: #f97316;
+
   --shadow-sw-sm: 2px 2px 0px 0px #000000;
   --shadow-sw-default: 4px 4px 0px 0px #000000;
   --shadow-sw-card: 6px 6px 0px 0px #000000;
 
   /* Fonts */
-  --font-sans: "Geist Sans", sans-serif;
-  --font-mono: "Space Grotesk", monospace;
+  --font-sans: 'Geist Sans', sans-serif;
+  --font-mono: 'Space Grotesk', monospace;
 
   /* Animations */
   --animate-gradient: gradient 8s linear infinite;
-  
+
   @keyframes gradient {
     to {
       background-position: 200% center;
@@ -70,50 +68,50 @@
   --font-mono: 'Geist Mono', monospace;
   --font-sans: 'Geist', sans-serif;
   --radius: 0.625rem;
-  
+
   /* Swiss International Style Palette */
-  --background: #F0F0E8; /* Canvas */
+  --background: #f0f0e8; /* Canvas */
   --foreground: #000000; /* Ink */
-  
-  --card: #F0F0E8;
+
+  --card: #f0f0e8;
   --card-foreground: #000000;
-  
-  --popover: #F0F0E8;
+
+  --popover: #f0f0e8;
   --popover-foreground: #000000;
-  
-  --primary: #1D4ED8; /* Hyper Blue */
-  --primary-foreground: #FFFFFF;
-  
-  --secondary: #E5E5E0; /* Panel Grey */
+
+  --primary: #1d4ed8; /* Hyper Blue */
+  --primary-foreground: #ffffff;
+
+  --secondary: #e5e5e0; /* Panel Grey */
   --secondary-foreground: #000000;
-  
-  --muted: #E5E5E0;
-  --muted-foreground: #6B7280;
-  
-  --accent: #E5E5E0;
+
+  --muted: #e5e5e0;
+  --muted-foreground: #6b7280;
+
+  --accent: #e5e5e0;
   --accent-foreground: #000000;
-  
-  --destructive: #DC2626; /* Alert Red */
-  --destructive-foreground: #FFFFFF;
-  
+
+  --destructive: #dc2626; /* Alert Red */
+  --destructive-foreground: #ffffff;
+
   --border: #000000;
-  --input: #F0F0E8;
-  --ring: #1D4ED8;
-  
-  --chart-1: #1D4ED8;
-  --chart-2: #15803D;
-  --chart-3: #F97316;
-  --chart-4: #DC2626;
+  --input: #f0f0e8;
+  --ring: #1d4ed8;
+
+  --chart-1: #1d4ed8;
+  --chart-2: #15803d;
+  --chart-3: #f97316;
+  --chart-4: #dc2626;
   --chart-5: #000000;
 
-  --sidebar: #E5E5E0;
+  --sidebar: #e5e5e0;
   --sidebar-foreground: #000000;
-  --sidebar-primary: #1D4ED8;
-  --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #D8D8D2;
+  --sidebar-primary: #1d4ed8;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #d8d8d2;
   --sidebar-accent-foreground: #000000;
   --sidebar-border: #000000;
-  --sidebar-ring: #1D4ED8;
+  --sidebar-ring: #1d4ed8;
 }
 
 .dark {
@@ -146,6 +144,77 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* ============================================
+   GRADIENT BACKGROUND
+   Tinted gradient from top-left to bottom-right
+   Uses primary blue (#1D4ED8) concentrated at corners (~25% coverage).
+   Flow: Primary blue corner → canvas dominant → primary blue corner
+   Blue opacity increased by 8% for more prominent color.
+   ============================================ */
+
+.bg-gradient-swiss {
+  background: linear-gradient(
+    135deg,
+    /* Top-left: Primary blue */ rgba(29, 78, 216, 0.28) 0%,
+    /* Quick transition */ rgba(147, 197, 253, 0.33) 8%,
+    /* Canvas dominant */ rgba(240, 240, 232, 1) 20%,
+    /* Pure canvas */ rgba(240, 240, 232, 1) 80%,
+    /* Quick transition */ rgba(147, 197, 253, 0.28) 92%,
+    /* Bottom-right: Primary blue tint */ rgba(29, 78, 216, 0.23) 100%
+  );
+}
+
+/* Alternative: Radial gradient centered for hero sections */
+.bg-gradient-swiss-radial {
+  background: radial-gradient(
+    ellipse at 30% 20%,
+    rgba(29, 78, 216, 0.23) 0%,
+    rgba(147, 197, 253, 0.28) 15%,
+    rgba(240, 240, 232, 1) 35%,
+    rgba(240, 240, 232, 1) 100%
+  );
+}
+
+/* Combined: Gradient background with grid overlay ready */
+.bg-gradient-swiss-grid {
+  background: linear-gradient(
+    135deg,
+    rgba(29, 78, 216, 0.28) 0%,
+    rgba(147, 197, 253, 0.33) 8%,
+    rgba(240, 240, 232, 1) 20%,
+    rgba(240, 240, 232, 1) 80%,
+    rgba(147, 197, 253, 0.28) 92%,
+    rgba(29, 78, 216, 0.23) 100%
+  );
+}
+
+/* ============================================
+   NOISE TEXTURE OVERLAY
+   Adds grain/noise texture for depth and texture.
+   Uses noise.svg from public folder.
+   ============================================ */
+
+.bg-noise::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-image: url('/noise.svg');
+  background-repeat: repeat;
+  background-size: 150px 150px;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.03;
+  mix-blend-mode: overlay;
+}
+
+.bg-noise {
+  position: relative;
+  isolation: isolate;
 }
 
 @media print {

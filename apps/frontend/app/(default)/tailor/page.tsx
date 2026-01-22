@@ -426,7 +426,6 @@ export default function TailorPage() {
             )}
           </Button>
         </div>
-
       </div>
 
       {/* Diff preview modal */}
