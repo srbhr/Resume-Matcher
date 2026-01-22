@@ -16,8 +16,7 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
         'bg-canvas border-2 border-transparent', // Initial state
         'transition-all duration-200 ease-in-out',
         'cursor-pointer group',
-        'hover:-translate-y-1 hover:-translate-x-1 hover:shadow-sw-card',
-        'hover:border-ink hover:z-10' // Ensure it pops
+        'hover:z-20 hover:border-ink hover:shadow-sw-default hover:-translate-y-[2px] hover:-translate-x-[2px]'
       ),
       outline: 'bg-canvas border-2 border-ink',
       ghost: 'bg-transparent border-none shadow-none',

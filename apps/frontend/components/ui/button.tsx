@@ -109,13 +109,13 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         'active:translate-y-[2px] active:translate-x-[2px]'
       ),
 
-      // OUTLINE - Transparent with black border
+      // OUTLINE - Canvas background with black border
       // Use for: Cancel, Back, Secondary actions, Navigation
       outline: cn(
-        'bg-transparent text-black',
+        'bg-[#F0F0E8] text-black',
         'border border-black',
         'shadow-[2px_2px_0px_0px_#000000]',
-        'hover:bg-gray-100',
+        'hover:bg-[#E5E5E0]',
         'hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none',
         'active:translate-y-[2px] active:translate-x-[2px]'
       ),
