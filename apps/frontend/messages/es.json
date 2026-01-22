@@ -491,6 +491,11 @@
       "description": "Esto descartará la vista previa actual y solicitará un nuevo resultado de personalización con IA.",
       "confirmLabel": "Regenerar"
     },
+    "missingDiffDialog": {
+      "title": "No se pudieron calcular los cambios",
+      "description": "No pudimos calcular un diff para este currículum. Esto puede ocurrir con currículums antiguos sin datos estructurados. Puedes continuar para guardar el currículum personalizado o cancelar para revisarlo más tarde.",
+      "confirmLabel": "Continuar sin diff"
+    },
     "errors": {
       "jobDescriptionTooShort": "La descripción del trabajo es demasiado corta. Por favor, proporciona más detalles.",
       "apiKeyError": "Error de clave API. Revisa tu configuración de LLM en Configuración.",

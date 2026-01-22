@@ -10,40 +10,15 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useTranslations } from '@/lib/i18n';
-
-// Types
-interface DiffSummary {
-  total_changes: number;
-  skills_added: number;
-  skills_removed: number;
-  descriptions_modified: number;
-  certifications_added: number;
-  high_risk_changes: number;
-}
-
-interface DetailedChange {
-  field_path: string;
-  field_type:
-    | 'skill'
-    | 'description'
-    | 'summary'
-    | 'certification'
-    | 'experience'
-    | 'education'
-    | 'project';
-  change_type: 'added' | 'removed' | 'modified';
-  original_value?: string;
-  new_value?: string;
-  confidence: 'low' | 'medium' | 'high';
-}
+import type { ResumeDiffSummary, ResumeFieldDiff } from '@/components/common/resume_previewer_context';
 
 interface DiffPreviewModalProps {
   isOpen: boolean;
   onClose: () => void;
   onReject: () => void;
   onConfirm: () => void;
-  diffSummary?: DiffSummary;
-  detailedChanges?: DetailedChange[];
+  diffSummary?: ResumeDiffSummary;
+  detailedChanges?: ResumeFieldDiff[];
 }
 
 export function DiffPreviewModal({
@@ -111,7 +86,7 @@ export function DiffPreviewModal({
             </h3>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
             <StatCard
               label={t('tailor.diffModal.skillsAdded')}
               value={diffSummary.skills_added}
@@ -121,6 +96,11 @@ export function DiffPreviewModal({
               label={t('tailor.diffModal.skillsRemoved')}
               value={diffSummary.skills_removed}
               variant="warning"
+            />
+            <StatCard
+              label={t('tailor.diffModal.certificationsAdded')}
+              value={diffSummary.certifications_added}
+              variant="info"
             />
             <StatCard
               label={t('tailor.diffModal.descriptionsModified')}
@@ -336,7 +316,7 @@ function ChangeSection({
 
 // Helper component: change item
 interface ChangeItemProps {
-  change: DetailedChange;
+  change: ResumeFieldDiff;
 }
 
 function ChangeItem({ change }: ChangeItemProps) {

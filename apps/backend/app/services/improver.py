@@ -119,7 +119,7 @@ def _normalize_entry(
     entry: dict[str, Any],
     ignore_keys: set[str] | None,
 ) -> dict[str, Any]:
-    if not ignore_keys:
+    if ignore_keys is None:
         return entry
     return {key: value for key, value in entry.items() if key not in ignore_keys}
 
@@ -281,11 +281,17 @@ def calculate_resume_diff(
     original_summary = (original.get("summary") or "").strip()
     improved_summary = (improved.get("summary") or "").strip()
     if original_summary != improved_summary:
+        if original_summary and not improved_summary:
+            change_type = "removed"
+        elif improved_summary and not original_summary:
+            change_type = "added"
+        else:
+            change_type = "modified"
         changes.append(
             ResumeFieldDiff(
                 field_path="summary",
                 field_type="summary",
-                change_type="modified",
+                change_type=change_type,
                 original_value=original_summary or None,
                 new_value=improved_summary or None,
                 confidence="medium",

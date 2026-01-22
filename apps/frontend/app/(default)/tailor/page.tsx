@@ -36,6 +36,8 @@ export default function TailorPage() {
   const [showDiffModal, setShowDiffModal] = useState(false);
   const [pendingResult, setPendingResult] = useState<ImprovedResult | null>(null);
   const [showRegenerateDialog, setShowRegenerateDialog] = useState(false);
+  const [showMissingDiffDialog, setShowMissingDiffDialog] = useState(false);
+  const [missingDiffResult, setMissingDiffResult] = useState<ImprovedResult | null>(null);
 
   const router = useRouter();
   const { setImprovedData } = useResumePreview();
@@ -141,7 +143,11 @@ export default function TailorPage() {
       const result = await previewImproveResume(resumeId, jobId, selectedPromptId);
 
       if (!result?.data?.diff_summary || !result?.data?.detailed_changes) {
-        await confirmAndNavigate(result);
+        console.warn('Diff data missing for tailor preview; requesting user confirmation.');
+        setPendingResult(null);
+        setShowDiffModal(false);
+        setMissingDiffResult(result);
+        setShowMissingDiffDialog(true);
         return;
       }
 
@@ -214,6 +220,26 @@ export default function TailorPage() {
   const handleCloseDiffModal = () => {
     setShowDiffModal(false);
     setPendingResult(null);
+  };
+
+  const handleCloseMissingDiffDialog = () => {
+    setShowMissingDiffDialog(false);
+    setMissingDiffResult(null);
+  };
+
+  const handleMissingDiffConfirm = async () => {
+    if (!missingDiffResult) return;
+    setIsLoading(true);
+    setError(null);
+    try {
+      await confirmAndNavigate(missingDiffResult);
+    } catch (err) {
+      console.error(err);
+      setError(t('tailor.errors.failedToGenerate'));
+    } finally {
+      setIsLoading(false);
+      handleCloseMissingDiffDialog();
+    }
   };
 
   const handleRegenerateConfirm = async () => {
@@ -383,6 +409,22 @@ export default function TailorPage() {
         cancelLabel={t('common.cancel')}
         variant="warning"
         onConfirm={handleRegenerateConfirm}
+      />
+
+      <ConfirmDialog
+        open={showMissingDiffDialog}
+        onOpenChange={(open) => {
+          if (!open) {
+            handleCloseMissingDiffDialog();
+          }
+        }}
+        title={t('tailor.missingDiffDialog.title')}
+        description={t('tailor.missingDiffDialog.description')}
+        confirmLabel={t('tailor.missingDiffDialog.confirmLabel')}
+        cancelLabel={t('common.cancel')}
+        variant="warning"
+        onConfirm={handleMissingDiffConfirm}
+        onCancel={handleCloseMissingDiffDialog}
       />
     </div>
   );

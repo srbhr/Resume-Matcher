@@ -491,6 +491,11 @@
       "description": "現在のプレビューを破棄し、新しい AI 調整結果を取得します。",
       "confirmLabel": "再生成"
     },
+    "missingDiffDialog": {
+      "title": "変更を計算できませんでした",
+      "description": "この履歴書の差分を計算できませんでした。構造化データがない旧形式の履歴書で発生することがあります。カスタマイズ済み履歴書を保存するか、キャンセルして後で確認してください。",
+      "confirmLabel": "差分なしで続行"
+    },
     "errors": {
       "jobDescriptionTooShort": "求人内容が短すぎます。もう少し詳細を入力してください。",
       "apiKeyError": "API キーのエラーです。設定で LLM 構成を確認してください。",

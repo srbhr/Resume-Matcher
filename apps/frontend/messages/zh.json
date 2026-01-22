@@ -491,6 +491,11 @@
       "description": "这将丢弃当前预览并请求新的 AI 定制结果。",
       "confirmLabel": "重新生成"
     },
+    "missingDiffDialog": {
+      "title": "无法计算变更",
+      "description": "无法为此简历计算差异。这可能发生在缺少结构化数据的旧简历上。你可以继续保存定制简历，或取消后再检查。",
+      "confirmLabel": "继续保存"
+    },
     "errors": {
       "jobDescriptionTooShort": "职位描述过短，请提供更多细节。",
       "apiKeyError": "API 密钥错误。请在设置中检查您的 LLM 配置。",
