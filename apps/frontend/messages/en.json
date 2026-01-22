@@ -500,7 +500,9 @@
       "jobDescriptionTooShort": "Job description is too short. Please provide more details.",
       "apiKeyError": "API key error. Please check your LLM configuration in Settings.",
       "rateLimit": "Rate limit reached. Please wait a moment and try again.",
-      "failedToGenerate": "Failed to generate resume. Please check your settings and try again."
+      "failedToGenerate": "Failed to generate resume. Please check your settings and try again.",
+      "failedToPreview": "Failed to preview resume. Please check your settings and try again.",
+      "failedToConfirm": "Failed to confirm resume. Please try again."
     }
   },
   "settings": {

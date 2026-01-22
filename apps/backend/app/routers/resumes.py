@@ -121,7 +121,8 @@ def _normalize_personal_info_value(value: Any) -> str:
         return unicodedata.normalize("NFC", value).strip()
     if isinstance(value, (int, float, bool)):
         return str(value)
-    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    normalized = _normalize_payload(value)
+    return json.dumps(normalized, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
 
 
 def _raise_improve_error(
@@ -387,7 +388,10 @@ async def list_resumes(include_master: bool = Query(False)) -> ResumeListRespons
 async def improve_resume_preview_endpoint(
     request: ImproveResumeRequest,
 ) -> ImproveResumeResponse:
-    """Preview a tailored resume without persisting it."""
+    """Preview a tailored resume without persisting it.
+
+    The response includes resume_preview data but leaves resume_id null.
+    """
     resume = db.get_resume(request.resume_id)
     if not resume:
         raise HTTPException(status_code=404, detail="Resume not found")
@@ -410,10 +414,22 @@ async def improve_resume_preview_endpoint(
             job_keywords = await extract_job_keywords(job["content"])
             stage = "persist_job_keywords"
             # Cache extracted keywords with a content hash for basic invalidation.
-            db.update_job(
-                request.job_id,
-                {"job_keywords": job_keywords, "job_keywords_hash": content_hash},
-            )
+            try:
+                updated_job = db.update_job(
+                    request.job_id,
+                    {"job_keywords": job_keywords, "job_keywords_hash": content_hash},
+                )
+                if not updated_job:
+                    logger.warning(
+                        "Failed to persist job keywords for job %s.",
+                        request.job_id,
+                    )
+            except Exception as e:
+                logger.warning(
+                    "Failed to persist job keywords for job %s: %s",
+                    request.job_id,
+                    e,
+                )
         stage = "improve_resume"
         improved_data = await improve_resume(
             original_resume=resume["content"],
@@ -429,14 +445,19 @@ async def improve_resume_preview_endpoint(
             preview_hashes = {}
         preview_hashes[prompt_id] = preview_hash
         # NOTE: preview_hashes updates are last-write-wins; concurrent previews can race.
-        db.update_job(
-            request.job_id,
-            {
-                "preview_hash": preview_hash,
-                "preview_prompt_id": prompt_id,
-                "preview_hashes": preview_hashes,
-            },
-        )
+        try:
+            updated_job = db.update_job(
+                request.job_id,
+                {
+                    "preview_hash": preview_hash,
+                    "preview_prompt_id": prompt_id,
+                    "preview_hashes": preview_hashes,
+                },
+            )
+            if not updated_job:
+                logger.warning("Failed to persist preview hash for job %s.", request.job_id)
+        except Exception as e:
+            logger.warning("Failed to persist preview hash for job %s: %s", request.job_id, e)
         stage = "calculate_diff"
         diff_summary, detailed_changes = _calculate_diff_from_resume(
             resume,
@@ -603,6 +624,7 @@ async def improve_resume_endpoint(
     Uses LLM to analyze the job and generate an optimized resume version
     with improvement suggestions. Also generates cover letter and outreach
     message if enabled in feature configuration.
+    Persists the tailored resume and returns a non-null resume_id.
     """
     # Fetch resume
     resume = db.get_resume(request.resume_id)

@@ -500,7 +500,9 @@
       "jobDescriptionTooShort": "La descripción del trabajo es demasiado corta. Por favor, proporciona más detalles.",
       "apiKeyError": "Error de clave API. Revisa tu configuración de LLM en Configuración.",
       "rateLimit": "Se alcanzó el límite de tasa. Espera un momento e inténtalo de nuevo.",
-      "failedToGenerate": "No se pudo generar el currículum. Revisa tu configuración e inténtalo de nuevo."
+      "failedToGenerate": "No se pudo generar el currículum. Revisa tu configuración e inténtalo de nuevo.",
+      "failedToPreview": "No se pudo previsualizar el currículum. Revisa tu configuración e inténtalo de nuevo.",
+      "failedToConfirm": "No se pudo confirmar el currículum. Inténtalo de nuevo."
     }
   },
   "settings": {

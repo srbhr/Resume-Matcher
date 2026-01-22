@@ -500,7 +500,9 @@
       "jobDescriptionTooShort": "职位描述过短，请提供更多细节。",
       "apiKeyError": "API 密钥错误。请在设置中检查您的 LLM 配置。",
       "rateLimit": "触发速率限制，请稍后再试。",
-      "failedToGenerate": "生成简历失败。请检查设置后重试。"
+      "failedToGenerate": "生成简历失败。请检查设置后重试。",
+      "failedToPreview": "预览简历失败。请检查设置后重试。",
+      "failedToConfirm": "确认简历失败。请重试。"
     }
   },
   "settings": {

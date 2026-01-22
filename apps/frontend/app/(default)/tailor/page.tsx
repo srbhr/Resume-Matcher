@@ -104,6 +104,14 @@ export default function TailorPage() {
     if (!resumePreview || typeof resumePreview !== 'object' || Array.isArray(resumePreview)) {
       throw new Error('Resume preview data is invalid.');
     }
+    const previewRecord = resumePreview as Record<string, unknown>;
+    if (
+      !previewRecord.personalInfo ||
+      typeof previewRecord.personalInfo !== 'object' ||
+      Array.isArray(previewRecord.personalInfo)
+    ) {
+      throw new Error('Resume preview data is invalid.');
+    }
     return {
       resume_id: masterResumeId,
       job_id: result.data.job_id,
@@ -181,7 +189,7 @@ export default function TailorPage() {
       ) {
         setError(t('tailor.errors.rateLimit'));
       } else {
-        setError(t('tailor.errors.failedToGenerate'));
+        setError(t('tailor.errors.failedToPreview'));
       }
     }
   };
@@ -218,7 +226,7 @@ export default function TailorPage() {
       setPendingResult(null);
     } catch (err) {
       console.error(err);
-      const errorMessage = t('tailor.errors.failedToGenerate');
+      const errorMessage = t('tailor.errors.failedToConfirm');
       setError(errorMessage);
       setDiffConfirmError(errorMessage);
     } finally {
@@ -258,7 +266,7 @@ export default function TailorPage() {
       handleCloseMissingDiffDialog();
     } catch (err) {
       console.error(err);
-      const errorMessage = t('tailor.errors.failedToGenerate');
+      const errorMessage = t('tailor.errors.failedToConfirm');
       setError(errorMessage);
       setMissingDiffError(errorMessage);
     } finally {

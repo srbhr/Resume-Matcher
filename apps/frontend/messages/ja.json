@@ -500,7 +500,9 @@
       "jobDescriptionTooShort": "求人内容が短すぎます。もう少し詳細を入力してください。",
       "apiKeyError": "API キーのエラーです。設定で LLM 構成を確認してください。",
       "rateLimit": "レート制限に達しました。しばらく待ってから再試行してください。",
-      "failedToGenerate": "履歴書の生成に失敗しました。設定を確認して再試行してください。"
+      "failedToGenerate": "履歴書の生成に失敗しました。設定を確認して再試行してください。",
+      "failedToPreview": "履歴書のプレビューに失敗しました。設定を確認して再試行してください。",
+      "failedToConfirm": "履歴書の確定に失敗しました。もう一度お試しください。"
     }
   },
   "settings": {
