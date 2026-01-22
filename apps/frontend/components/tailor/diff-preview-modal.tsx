@@ -54,6 +54,10 @@ export function DiffPreviewModal({
           <div className="mt-6 border-2 border-black bg-white p-4 font-mono text-xs text-gray-700">
             {t('tailor.missingDiffDialog.description')}
           </div>
+          <div className="mt-3 flex items-center gap-2 font-mono text-xs text-amber-700">
+            <AlertTriangle className="w-4 h-4" />
+            <span>{t('tailor.missingDiffDialog.confirmLabel')}</span>
+          </div>
 
           <div className="flex justify-end items-center gap-3 pt-4 border-t-2 border-black bg-white -mx-6 -mb-6 px-6 py-4">
             <Button variant="outline" onClick={onClose} className="gap-2">
@@ -370,7 +374,7 @@ function ChangeItem({ change }: ChangeItemProps) {
             <div className="text-gray-900 font-mono text-sm">{change.new_value}</div>
           )}
         </div>
-        {change.confidence === 'high' && (
+        {change.change_type === 'added' && change.confidence === 'high' && (
           <AlertTriangle className="w-4 h-4 text-[#F97316] shrink-0" />
         )}
       </div>

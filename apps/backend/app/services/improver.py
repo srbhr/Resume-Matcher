@@ -69,6 +69,11 @@ async def improve_resume(
     prompt_template = IMPROVE_RESUME_PROMPTS.get(
         selected_prompt_id, IMPROVE_RESUME_PROMPTS[DEFAULT_IMPROVE_PROMPT_ID]
     )
+    if selected_prompt_id not in CRITICAL_TRUTHFULNESS_RULES:
+        logger.warning(
+            "Missing truthfulness rules for prompt '%s'; using default rules.",
+            selected_prompt_id,
+        )
     truthfulness_rules = CRITICAL_TRUTHFULNESS_RULES.get(
         selected_prompt_id, CRITICAL_TRUTHFULNESS_RULES[DEFAULT_IMPROVE_PROMPT_ID]
     )
@@ -195,7 +200,7 @@ def _normalize_string_list(value: Any, field_name: str) -> list[str]:
     if not isinstance(value, list):
         return []
     normalized: list[str] = []
-    skipped = 0
+    invalid_count = 0
     for item in value:
         if isinstance(item, str):
             stripped = item.strip()
@@ -209,16 +214,26 @@ def _normalize_string_list(value: Any, field_name: str) -> list[str]:
                 if stripped:
                     normalized.append(stripped)
                 else:
-                    skipped += 1
+                    invalid_count += 1
             else:
-                skipped += 1
+                invalid_count += 1
             continue
         if item is None:
             continue
-        skipped += 1
-    if skipped:
-        logger.warning("Skipped non-string entries in %s: %d", field_name, skipped)
+        invalid_count += 1
+    if invalid_count:
+        logger.warning("Skipped non-string entries in %s: %d", field_name, invalid_count)
     return normalized
+
+
+def _build_string_index(value: Any, field_name: str) -> dict[str, str]:
+    items = _normalize_string_list(value, field_name)
+    index: dict[str, str] = {}
+    for item in items:
+        key = item.casefold()
+        if key not in index:
+            index[key] = item
+    return index
 
 
 def _extract_description_list(entry: Any) -> list[str]:
@@ -342,34 +357,32 @@ def calculate_resume_diff(
         )
 
     # 2. Compare skills (order changes are intentionally ignored)
-    orig_skills = set(
-        _normalize_string_list(
-            original.get("additional", {}).get("technicalSkills", []),
-            "additional.technicalSkills",
-        )
+    orig_skills = _build_string_index(
+        original.get("additional", {}).get("technicalSkills", []),
+        "additional.technicalSkills",
     )
-    new_skills = set(
-        _normalize_string_list(
-            improved.get("additional", {}).get("technicalSkills", []),
-            "additional.technicalSkills",
-        )
+    new_skills = _build_string_index(
+        improved.get("additional", {}).get("technicalSkills", []),
+        "additional.technicalSkills",
     )
+    orig_skill_keys = set(orig_skills)
+    new_skill_keys = set(new_skills)
 
-    for skill in new_skills - orig_skills:
+    for skill_key in new_skill_keys - orig_skill_keys:
         changes.append(ResumeFieldDiff(
             field_path="additional.technicalSkills",
             field_type="skill",
             change_type="added",
-            new_value=skill,
+            new_value=new_skills[skill_key],
             confidence="high"  # Newly added skills are high risk
         ))
 
-    for skill in orig_skills - new_skills:
+    for skill_key in orig_skill_keys - new_skill_keys:
         changes.append(ResumeFieldDiff(
             field_path="additional.technicalSkills",
             field_type="skill",
             change_type="removed",
-            original_value=skill,
+            original_value=orig_skills[skill_key],
             confidence="medium"
         ))
 
@@ -397,34 +410,32 @@ def calculate_resume_diff(
         )
 
     # 4. Compare certifications (order changes are intentionally ignored)
-    orig_certs = set(
-        _normalize_string_list(
-            original.get("additional", {}).get("certificationsTraining", []),
-            "additional.certificationsTraining",
-        )
+    orig_certs = _build_string_index(
+        original.get("additional", {}).get("certificationsTraining", []),
+        "additional.certificationsTraining",
     )
-    new_certs = set(
-        _normalize_string_list(
-            improved.get("additional", {}).get("certificationsTraining", []),
-            "additional.certificationsTraining",
-        )
+    new_certs = _build_string_index(
+        improved.get("additional", {}).get("certificationsTraining", []),
+        "additional.certificationsTraining",
     )
+    orig_cert_keys = set(orig_certs)
+    new_cert_keys = set(new_certs)
 
-    for cert in new_certs - orig_certs:
+    for cert_key in new_cert_keys - orig_cert_keys:
         changes.append(ResumeFieldDiff(
             field_path="additional.certificationsTraining",
             field_type="certification",
             change_type="added",
-            new_value=cert,
+            new_value=new_certs[cert_key],
             confidence="high"
         ))
 
-    for cert in orig_certs - new_certs:
+    for cert_key in orig_cert_keys - new_cert_keys:
         changes.append(ResumeFieldDiff(
             field_path="additional.certificationsTraining",
             field_type="certification",
             change_type="removed",
-            original_value=cert,
+            original_value=orig_certs[cert_key],
             confidence="medium"
         ))
 

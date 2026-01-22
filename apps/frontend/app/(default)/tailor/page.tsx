@@ -96,59 +96,18 @@ export default function TailorPage() {
     if (e.key === 'Enter') e.stopPropagation();
   };
 
-  const isResumeData = (value: unknown): value is ResumeData => {
-    if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
-    const data = value as Record<string, unknown>;
-    const requiredKeys = [
-      'personalInfo',
-      'summary',
-      'workExperience',
-      'education',
-      'personalProjects',
-      'additional',
-      'sectionMeta',
-      'customSections',
-    ];
-    for (const key of requiredKeys) {
-      if (!(key in data)) return false;
-    }
-    if (
-      !data.personalInfo ||
-      typeof data.personalInfo !== 'object' ||
-      Array.isArray(data.personalInfo)
-    ) {
-      return false;
-    }
-    if (typeof data.summary !== 'string') return false;
-    if (!Array.isArray(data.workExperience)) return false;
-    if (!Array.isArray(data.education)) return false;
-    if (!Array.isArray(data.personalProjects)) return false;
-    if (!data.additional || typeof data.additional !== 'object' || Array.isArray(data.additional)) {
-      return false;
-    }
-    if (!Array.isArray(data.sectionMeta)) return false;
-    if (
-      !data.customSections ||
-      typeof data.customSections !== 'object' ||
-      Array.isArray(data.customSections)
-    ) {
-      return false;
-    }
-    return true;
-  };
-
   const buildConfirmPayload = (result: ImprovedResult) => {
     if (!masterResumeId) {
       throw new Error('Master resume ID is missing.');
     }
     const resumePreview = result.data.resume_preview;
-    if (!isResumeData(resumePreview)) {
+    if (!resumePreview || typeof resumePreview !== 'object' || Array.isArray(resumePreview)) {
       throw new Error('Resume preview data is invalid.');
     }
     return {
       resume_id: masterResumeId,
       job_id: result.data.job_id,
-      improved_data: resumePreview,
+      improved_data: resumePreview as ResumeData,
       improvements:
         result.data.improvements?.map((item) => ({
           suggestion: item.suggestion,

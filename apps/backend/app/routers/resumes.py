@@ -121,6 +121,7 @@ def _validate_confirm_payload(
     improved_data: dict[str, Any],
 ) -> None:
     if not original_data:
+        logger.warning("Skipping confirm payload validation; structured resume data unavailable.")
         return
     original_info = original_data.get("personalInfo")
     improved_info = improved_data.get("personalInfo")
@@ -165,14 +166,14 @@ async def _generate_auxiliary_messages(
             if not isinstance(result, Exception):
                 cover_letter = result
             else:
-                logger.warning(f"Cover letter generation failed: {result}")
+                logger.warning("Cover letter generation failed: %s", result)
             idx += 1
         if enable_outreach:
             result = results[idx]
             if not isinstance(result, Exception):
                 outreach_message = result
             else:
-                logger.warning(f"Outreach message generation failed: {result}")
+                logger.warning("Outreach message generation failed: %s", result)
 
     return cover_letter, outreach_message
 
@@ -358,6 +359,7 @@ async def improve_resume_preview_endpoint(
             stage = "extract_job_keywords"
             job_keywords = await extract_job_keywords(job["content"])
             stage = "persist_job_keywords"
+            # Cache extracted keywords; if job content changes, keywords stay stale until re-upload.
             db.update_job(request.job_id, {"job_keywords": job_keywords})
         stage = "improve_resume"
         improved_data = await improve_resume(
@@ -426,6 +428,8 @@ async def improve_resume_confirm_endpoint(
     try:
         improved_data = request.improved_data.model_dump()
         improved_text = json.dumps(improved_data, indent=2)
+        # NOTE: This endpoint trusts client-provided improved_data. Consider persisting preview
+        # results server-side or revalidating with a fresh improvement run if stronger guarantees are needed.
         try:
             _validate_confirm_payload(_get_original_resume_data(resume), improved_data)
         except ValueError as e:
