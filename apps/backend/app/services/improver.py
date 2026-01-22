@@ -230,14 +230,9 @@ def _normalize_string_list(value: Any, field_name: str) -> list[str]:
     return normalized
 
 
-def _build_string_index(value: Any, field_name: str) -> dict[str, str]:
+def _build_string_set(value: Any, field_name: str) -> set[str]:
     items = _normalize_string_list(value, field_name)
-    index: dict[str, str] = {}
-    for item in items:
-        key = item
-        if key not in index:
-            index[key] = item
-    return index
+    return set(items)
 
 
 def _extract_description_list(entry: Any) -> list[str]:
@@ -361,32 +356,29 @@ def calculate_resume_diff(
         )
 
     # 2. Compare skills (order changes are intentionally ignored)
-    orig_skills = _build_string_index(
+    orig_skills = _build_string_set(
         original.get("additional", {}).get("technicalSkills", []),
         "additional.technicalSkills",
     )
-    new_skills = _build_string_index(
+    new_skills = _build_string_set(
         improved.get("additional", {}).get("technicalSkills", []),
         "additional.technicalSkills",
     )
-    orig_skill_keys = set(orig_skills)
-    new_skill_keys = set(new_skills)
-
-    for skill_key in new_skill_keys - orig_skill_keys:
+    for skill in new_skills - orig_skills:
         changes.append(ResumeFieldDiff(
             field_path="additional.technicalSkills",
             field_type="skill",
             change_type="added",
-            new_value=new_skills[skill_key],
+            new_value=skill,
             confidence="high"  # Newly added skills are high risk
         ))
 
-    for skill_key in orig_skill_keys - new_skill_keys:
+    for skill in orig_skills - new_skills:
         changes.append(ResumeFieldDiff(
             field_path="additional.technicalSkills",
             field_type="skill",
             change_type="removed",
-            original_value=orig_skills[skill_key],
+            original_value=skill,
             confidence="medium"
         ))
 
@@ -414,32 +406,29 @@ def calculate_resume_diff(
         )
 
     # 4. Compare certifications (order changes are intentionally ignored)
-    orig_certs = _build_string_index(
+    orig_certs = _build_string_set(
         original.get("additional", {}).get("certificationsTraining", []),
         "additional.certificationsTraining",
     )
-    new_certs = _build_string_index(
+    new_certs = _build_string_set(
         improved.get("additional", {}).get("certificationsTraining", []),
         "additional.certificationsTraining",
     )
-    orig_cert_keys = set(orig_certs)
-    new_cert_keys = set(new_certs)
-
-    for cert_key in new_cert_keys - orig_cert_keys:
+    for cert in new_certs - orig_certs:
         changes.append(ResumeFieldDiff(
             field_path="additional.certificationsTraining",
             field_type="certification",
             change_type="added",
-            new_value=new_certs[cert_key],
+            new_value=cert,
             confidence="high"
         ))
 
-    for cert_key in orig_cert_keys - new_cert_keys:
+    for cert in orig_certs - new_certs:
         changes.append(ResumeFieldDiff(
             field_path="additional.certificationsTraining",
             field_type="certification",
             change_type="removed",
-            original_value=orig_certs[cert_key],
+            original_value=cert,
             confidence="medium"
         ))
 

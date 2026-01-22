@@ -88,7 +88,13 @@ def _normalize_payload(value: Any) -> Any:
     if isinstance(value, list):
         return [_normalize_payload(item) for item in value]
     if isinstance(value, dict):
-        return {_normalize_payload(key): _normalize_payload(val) for key, val in value.items()}
+        normalized: dict[Any, Any] = {}
+        for key, val in value.items():
+            normalized_key = (
+                unicodedata.normalize("NFC", key) if isinstance(key, str) else key
+            )
+            normalized[normalized_key] = _normalize_payload(val)
+        return normalized
     return value
 
 
@@ -422,6 +428,7 @@ async def improve_resume_preview_endpoint(
         if not isinstance(preview_hashes, dict):
             preview_hashes = {}
         preview_hashes[prompt_id] = preview_hash
+        # NOTE: preview_hashes updates are last-write-wins; concurrent previews can race.
         db.update_job(
             request.job_id,
             {
