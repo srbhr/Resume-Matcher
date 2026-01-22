@@ -487,13 +487,13 @@
       "confirmButton": "Confirmar e salvar"
     },
     "regenerateDialog": {
-      "title": "Regenerar o curr\u00edculo personalizado?",
-      "description": "Isso descartar\u00e1 a pr\u00e9via atual e solicitar\u00e1 um novo resultado de personaliza\u00e7\u00e3o por IA.",
+      "title": "Regenerar o currículo personalizado?",
+      "description": "Isso descartará a prévia atual e solicitará um novo resultado de personalização por IA.",
       "confirmLabel": "Regenerar"
     },
     "missingDiffDialog": {
-      "title": "N\u00e3o foi poss\u00edvel calcular as altera\u00e7\u00f5es",
-      "description": "N\u00e3o foi poss\u00edvel calcular um diff para este curr\u00edculo. Isso pode acontecer com curr\u00edculos antigos sem dados estruturados. Voc\u00ea pode continuar para salvar o curr\u00edculo personalizado ou cancelar para revisar mais tarde.",
+      "title": "Não foi possível calcular as alterações",
+      "description": "Não foi possível calcular um diff para este currículo. Isso pode acontecer com currículos antigos sem dados estruturados. Você pode continuar para salvar o currículo personalizado ou cancelar para revisar mais tarde.",
       "confirmLabel": "Continuar sem diff"
     },
     "errors": {

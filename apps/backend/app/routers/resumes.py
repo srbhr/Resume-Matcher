@@ -311,7 +311,10 @@ async def improve_resume_preview_endpoint(
     prompt_id = request.prompt_id or _get_default_prompt_id()
 
     try:
-        job_keywords = await extract_job_keywords(job["content"])
+        job_keywords = job.get("job_keywords")
+        if not job_keywords:
+            job_keywords = await extract_job_keywords(job["content"])
+            db.update_job(request.job_id, {"job_keywords": job_keywords})
         improved_data = await improve_resume(
             original_resume=resume["content"],
             job_description=job["content"],

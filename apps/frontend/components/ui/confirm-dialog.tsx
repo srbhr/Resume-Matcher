@@ -28,9 +28,12 @@ export interface ConfirmDialogProps {
   onOpenChange: (open: boolean) => void;
   title: string;
   description: string;
+  errorMessage?: string;
   confirmLabel?: string;
   cancelLabel?: string;
+  confirmDisabled?: boolean;
   variant?: 'danger' | 'warning' | 'success' | 'default';
+  closeOnConfirm?: boolean;
   onConfirm: () => void;
   onCancel?: () => void;
   showCancelButton?: boolean;
@@ -41,9 +44,12 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   onOpenChange,
   title,
   description,
+  errorMessage,
   confirmLabel,
   cancelLabel,
+  confirmDisabled = false,
   variant = 'default',
+  closeOnConfirm = true,
   onConfirm,
   onCancel,
   showCancelButton = true,
@@ -53,8 +59,11 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   const finalCancelLabel = cancelLabel ?? t('common.cancel');
 
   const handleConfirm = () => {
+    if (confirmDisabled) return;
     onConfirm();
-    onOpenChange(false);
+    if (closeOnConfirm) {
+      onOpenChange(false);
+    }
   };
 
   const handleCancel = () => {
@@ -115,13 +124,25 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             </div>
           </div>
         </DialogHeader>
+        {errorMessage && (
+          <div className="px-6 pb-4">
+            <div className="border-2 border-red-600 bg-red-50 p-3 font-mono text-xs text-red-700">
+              {errorMessage}
+            </div>
+          </div>
+        )}
         <DialogFooter className="p-4 bg-[#E5E5E0] border-t border-black flex-row justify-end gap-3">
           {showCancelButton && (
             <Button variant="outline" onClick={handleCancel} className="rounded-none border-black">
               {finalCancelLabel}
             </Button>
           )}
-          <Button variant={buttonVariant} onClick={handleConfirm} className="rounded-none">
+          <Button
+            variant={buttonVariant}
+            onClick={handleConfirm}
+            className="rounded-none"
+            disabled={confirmDisabled}
+          >
             {finalConfirmLabel}
           </Button>
         </DialogFooter>

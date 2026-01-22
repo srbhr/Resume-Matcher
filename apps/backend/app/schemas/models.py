@@ -2,7 +2,7 @@
 
 import copy
 from enum import Enum
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -288,8 +288,16 @@ class ResumeFieldDiff(BaseModel):
     """Single field change record."""
 
     field_path: str  # Example: "workExperience[0].description[2]"
-    field_type: str  # "skill" | "description" | "summary" | "certification" | "experience" | "education" | "project"
-    change_type: str  # "added" | "removed" | "modified"
+    field_type: Literal[
+        "skill",
+        "description",
+        "summary",
+        "certification",
+        "experience",
+        "education",
+        "project",
+    ]
+    change_type: Literal["added", "removed", "modified"]
     original_value: str | None = None
     new_value: str | None = None
     confidence: str = "medium"  # "low" | "medium" | "high"

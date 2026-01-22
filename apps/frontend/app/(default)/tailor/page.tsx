@@ -31,13 +31,16 @@ export default function TailorPage() {
   const [selectedPromptId, setSelectedPromptId] = useState('keywords');
   const [promptLoading, setPromptLoading] = useState(false);
   const hasUserSelectedPrompt = useRef(false);
+  const missingDiffConfirmInFlight = useRef(false);
 
   // Diff preview modal state
   const [showDiffModal, setShowDiffModal] = useState(false);
   const [pendingResult, setPendingResult] = useState<ImprovedResult | null>(null);
+  const [diffConfirmError, setDiffConfirmError] = useState<string | null>(null);
   const [showRegenerateDialog, setShowRegenerateDialog] = useState(false);
   const [showMissingDiffDialog, setShowMissingDiffDialog] = useState(false);
   const [missingDiffResult, setMissingDiffResult] = useState<ImprovedResult | null>(null);
+  const [missingDiffError, setMissingDiffError] = useState<string | null>(null);
 
   const router = useRouter();
   const { setImprovedData } = useResumePreview();
@@ -100,6 +103,7 @@ export default function TailorPage() {
     return {
       resume_id: masterResumeId,
       job_id: result.data.job_id,
+      // Safe: resume_preview is validated against ResumeData on the backend.
       improved_data: result.data.resume_preview as ResumeData,
       improvements:
         result.data.improvements?.map((item) => ({
@@ -123,20 +127,19 @@ export default function TailorPage() {
     }
   };
 
-  const canGenerate = () => {
-    if (!jobDescription.trim() || !masterResumeId) return false;
-    if (jobDescription.trim().length < 50) {
-      setError(t('tailor.errors.jobDescriptionTooShort'));
-      return false;
+  const getGenerateValidationError = (trimmedDescription: string) => {
+    if (!trimmedDescription) return null;
+    if (trimmedDescription.length < 50) {
+      return t('tailor.errors.jobDescriptionTooShort');
     }
-    return true;
+    return null;
   };
 
-  const runGenerate = async (resumeId: string) => {
+  const runGenerate = async (resumeId: string, description: string) => {
     try {
       // 1. Upload Job Description
       // The API expects an array of strings
-      const jobId = await uploadJobDescriptions([jobDescription], resumeId);
+      const jobId = await uploadJobDescriptions([description], resumeId);
       incrementJobs(); // Update cached counter
 
       // 2. Preview Resume
@@ -144,14 +147,18 @@ export default function TailorPage() {
 
       if (!result?.data?.diff_summary || !result?.data?.detailed_changes) {
         console.warn('Diff data missing for tailor preview; requesting user confirmation.');
+        setDiffConfirmError(null);
         setPendingResult(null);
         setShowDiffModal(false);
+        setMissingDiffError(null);
         setMissingDiffResult(result);
         setShowMissingDiffDialog(true);
         return;
       }
 
       // 3. Show diff preview modal
+      setDiffConfirmError(null);
+      setMissingDiffError(null);
       setPendingResult(result);
       setShowDiffModal(true);
     } catch (err) {
@@ -177,13 +184,18 @@ export default function TailorPage() {
   };
 
   const handleGenerate = async () => {
-    if (!canGenerate()) return;
+    const trimmedDescription = jobDescription.trim();
+    if (!trimmedDescription || !masterResumeId) return;
+    const validationError = getGenerateValidationError(trimmedDescription);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
     const resumeId = masterResumeId;
-    if (!resumeId) return;
     setIsLoading(true);
     setError(null);
     try {
-      await runGenerate(resumeId);
+      await runGenerate(resumeId, trimmedDescription);
     } finally {
       setIsLoading(false);
     }
@@ -195,6 +207,7 @@ export default function TailorPage() {
 
     setIsLoading(true);
     setError(null);
+    setDiffConfirmError(null);
 
     try {
       await confirmAndNavigate(pendingResult);
@@ -202,9 +215,9 @@ export default function TailorPage() {
       setPendingResult(null);
     } catch (err) {
       console.error(err);
-      setError(t('tailor.errors.failedToGenerate'));
-      setShowDiffModal(false);
-      setPendingResult(null);
+      const errorMessage = t('tailor.errors.failedToGenerate');
+      setError(errorMessage);
+      setDiffConfirmError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -214,43 +227,56 @@ export default function TailorPage() {
   const handleRejectChanges = () => {
     setShowDiffModal(false);
     setPendingResult(null);
+    setDiffConfirmError(null);
     setShowRegenerateDialog(true);
   };
 
   const handleCloseDiffModal = () => {
     setShowDiffModal(false);
     setPendingResult(null);
+    setDiffConfirmError(null);
   };
 
   const handleCloseMissingDiffDialog = () => {
     setShowMissingDiffDialog(false);
     setMissingDiffResult(null);
+    setMissingDiffError(null);
   };
 
   const handleMissingDiffConfirm = async () => {
-    if (!missingDiffResult) return;
+    if (!missingDiffResult || isLoading || missingDiffConfirmInFlight.current) return;
+    missingDiffConfirmInFlight.current = true;
     setIsLoading(true);
     setError(null);
+    setMissingDiffError(null);
     try {
       await confirmAndNavigate(missingDiffResult);
+      handleCloseMissingDiffDialog();
     } catch (err) {
       console.error(err);
-      setError(t('tailor.errors.failedToGenerate'));
+      const errorMessage = t('tailor.errors.failedToGenerate');
+      setError(errorMessage);
+      setMissingDiffError(errorMessage);
     } finally {
+      missingDiffConfirmInFlight.current = false;
       setIsLoading(false);
-      handleCloseMissingDiffDialog();
     }
   };
 
   const handleRegenerateConfirm = async () => {
     setShowRegenerateDialog(false);
-    if (!canGenerate()) return;
+    const trimmedDescription = jobDescription.trim();
+    if (!trimmedDescription || !masterResumeId) return;
+    const validationError = getGenerateValidationError(trimmedDescription);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
     const resumeId = masterResumeId;
-    if (!resumeId) return;
     setIsLoading(true);
     setError(null);
     try {
-      await runGenerate(resumeId);
+      await runGenerate(resumeId, trimmedDescription);
     } finally {
       setIsLoading(false);
     }
@@ -397,6 +423,7 @@ export default function TailorPage() {
           onConfirm={handleConfirmChanges}
           diffSummary={pendingResult?.data?.diff_summary}
           detailedChanges={pendingResult?.data?.detailed_changes}
+          errorMessage={diffConfirmError ?? undefined}
         />
       )}
 
@@ -423,8 +450,11 @@ export default function TailorPage() {
         confirmLabel={t('tailor.missingDiffDialog.confirmLabel')}
         cancelLabel={t('common.cancel')}
         variant="warning"
+        closeOnConfirm={false}
         onConfirm={handleMissingDiffConfirm}
         onCancel={handleCloseMissingDiffDialog}
+        confirmDisabled={isLoading || !missingDiffResult}
+        errorMessage={missingDiffError ?? undefined}
       />
     </div>
   );

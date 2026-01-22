@@ -298,7 +298,7 @@ def calculate_resume_diff(
             )
         )
 
-    # 2. Compare skills
+    # 2. Compare skills (order changes are intentionally ignored)
     orig_skills = set(original.get("additional", {}).get("technicalSkills", []))
     new_skills = set(improved.get("additional", {}).get("technicalSkills", []))
 
@@ -342,7 +342,7 @@ def calculate_resume_diff(
             modified_confidence="medium",
         )
 
-    # 4. Compare certifications
+    # 4. Compare certifications (order changes are intentionally ignored)
     orig_certs = set(original.get("additional", {}).get("certificationsTraining", []))
     new_certs = set(improved.get("additional", {}).get("certificationsTraining", []))
 
@@ -365,6 +365,7 @@ def calculate_resume_diff(
         ))
 
     # 5. Compare added/removed/modified entries
+    # Descriptions are diffed separately; ignore them when detecting entry-level changes.
     _append_entry_changes(
         changes,
         "workExperience",

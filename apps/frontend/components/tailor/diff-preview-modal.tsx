@@ -19,6 +19,7 @@ interface DiffPreviewModalProps {
   onConfirm: () => void;
   diffSummary?: ResumeDiffSummary;
   detailedChanges?: ResumeFieldDiff[];
+  errorMessage?: string;
 }
 
 export function DiffPreviewModal({
@@ -28,15 +29,45 @@ export function DiffPreviewModal({
   onConfirm,
   diffSummary,
   detailedChanges,
+  errorMessage,
 }: DiffPreviewModalProps) {
   const { t } = useTranslations();
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
     new Set(['summary', 'skills', 'descriptions', 'experience'])
   );
 
-  // Return empty state if no diff data is available
   if (!diffSummary || !detailedChanges) {
-    return null;
+    return (
+      <Dialog
+        open={isOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            onClose();
+          }
+        }}
+      >
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col bg-[#F0F0E8] border-2 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,0.1)]">
+          <DialogHeader className="border-b-2 border-black pb-4 bg-white -mx-6 -mt-6 px-6 pt-6">
+            <DialogTitle className="font-serif text-2xl font-bold uppercase tracking-tight">
+              {t('tailor.missingDiffDialog.title')}
+            </DialogTitle>
+            <p className="font-mono text-xs text-gray-600 mt-2">
+              // {t('tailor.missingDiffDialog.description')}
+            </p>
+          </DialogHeader>
+
+          <div className="mt-6 border-2 border-black bg-white p-4 font-mono text-xs text-gray-700">
+            {t('tailor.missingDiffDialog.description')}
+          </div>
+
+          <div className="flex justify-end items-center pt-4 border-t-2 border-black bg-white -mx-6 -mb-6 px-6 py-4">
+            <Button variant="outline" onClick={onClose} className="gap-2">
+              {t('common.close')}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
   }
 
   const toggleSection = (section: string) => {
@@ -130,6 +161,12 @@ export function DiffPreviewModal({
             </div>
           )}
         </div>
+
+        {errorMessage && (
+          <div className="mt-4 border-2 border-red-600 bg-red-50 p-3 font-mono text-xs text-red-700">
+            {errorMessage}
+          </div>
+        )}
 
         {/* Detailed changes list */}
         <div className="flex-1 overflow-y-auto mt-4 space-y-4">
