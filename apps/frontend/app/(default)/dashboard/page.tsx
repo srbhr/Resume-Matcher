@@ -7,7 +7,13 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Loader2, AlertCircle, RefreshCw, Plus } from 'lucide-react';
-import { fetchResume, fetchResumeList, deleteResume, type ResumeListItem } from '@/lib/api/resume';
+import {
+  fetchResume,
+  fetchResumeList,
+  deleteResume,
+  type ResumeListItem,
+  fetchResumeLocal,
+} from '@/lib/api/resume';
 import { useStatusCache } from '@/lib/context/status-cache';
 import Link from 'next/link';
 import { Settings, AlertTriangle } from 'lucide-react';
@@ -54,8 +60,13 @@ export default function DashboardPage() {
   const checkResumeStatus = useCallback(async (resumeId: string) => {
     try {
       setProcessingStatus('loading');
-      const data = await fetchResume(resumeId);
-      const status = data.raw_resume?.processing_status || 'pending';
+      // fetch resume local
+      //const status = data.raw_resume?.processing_status || 'pending';
+      const data = await fetchResumeLocal(resumeId);
+      console.log('Resume status:', data);
+      //const status = data.raw_resume?.processing_status || 'pending';
+      const status = data.processing_status || 'pending';
+
       setProcessingStatus(status as ProcessingStatus);
     } catch (err: unknown) {
       console.error('Failed to check resume status:', err);

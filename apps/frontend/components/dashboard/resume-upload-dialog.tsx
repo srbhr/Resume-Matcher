@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { useFileUpload, formatBytes } from '@/hooks/use-file-upload';
 import { getUploadUrl } from '@/lib/api/client';
-
+import { dbService } from '@/lib/database/db';
 interface ResumeUploadDialogProps {
   trigger?: React.ReactNode;
   onUploadComplete?: (resumeId: string) => void;
@@ -40,7 +40,8 @@ export function ResumeUploadDialog({ trigger, onUploadComplete }: ResumeUploadDi
     message: string;
   } | null>(null);
 
-  const UPLOAD_URL = getUploadUrl();
+  //const UPLOAD_URL = getUploadUrl();
+  const UPLOAD_URL = 'http://localhost:8000/api/v1/resumes/upload-local';
 
   const [
     { files, isDragging, errors, isUploadingGlobal },
@@ -59,13 +60,15 @@ export function ResumeUploadDialog({ trigger, onUploadComplete }: ResumeUploadDi
     multiple: false,
     uploadUrl: UPLOAD_URL,
     onUploadSuccess: (uploadedFile, response) => {
-      const data = response as { resume_id?: string };
-      if (data.resume_id) {
+      const data = response as { resume_id?: string; resume?: any };
+      if (data.resume_id && data && data.resume) {
+        dbService.addItem(JSON.stringify(data.resume));
         setUploadFeedback({
           type: 'success',
           message: 'Resume uploaded successfully.',
         });
         // Defer parent state update to avoid setState during render
+
         const resumeId = data.resume_id;
         setTimeout(() => {
           onUploadComplete?.(resumeId);

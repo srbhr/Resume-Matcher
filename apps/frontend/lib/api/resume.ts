@@ -1,6 +1,8 @@
 import { ImprovedResult } from '@/components/common/resume_previewer_context';
 import { type TemplateSettings } from '@/lib/types/template-settings';
 import { apiPost, apiPatch, apiDelete, apiFetch } from './client';
+import { dbService } from '../database/db';
+import { resolve } from 'node:path/win32';
 
 // Matches backend schemas/models.py ResumeData
 interface ProcessedResume {
@@ -122,6 +124,7 @@ export async function improveResume(resumeId: string, jobId: string): Promise<Im
 /** Fetches a raw resume record for previewing the original upload */
 export async function fetchResume(resumeId: string): Promise<ResumeResponse['data']> {
   const res = await apiFetch(`/resumes?resume_id=${encodeURIComponent(resumeId)}`);
+  console.log('This is res', res);
   if (!res.ok) {
     throw new Error(`Failed to load resume (status ${res.status}).`);
   }
@@ -131,6 +134,16 @@ export async function fetchResume(resumeId: string): Promise<ResumeResponse['dat
   return payload.data;
 }
 
+export async function fetchResumeLocal(resumeId: string): Promise<ResumeResponse> {
+  const res = await dbService.getItemById(resumeId);
+
+  if (!res) {
+    throw new Error(`Failed to load resume (status ${res}).`);
+  } else {
+    return res;
+  }
+}
+
 export async function fetchResumeList(includeMaster = false): Promise<ResumeListItem[]> {
   const res = await apiFetch(`/resumes/list?include_master=${includeMaster ? 'true' : 'false'}`);
   if (!res.ok) {
@@ -138,6 +151,14 @@ export async function fetchResumeList(includeMaster = false): Promise<ResumeList
   }
   const payload = (await res.json()) as { data: ResumeListItem[] };
   return payload.data;
+}
+export async function fetchResumeList_local(includeMaster = false): Promise<ResumeListItem[]> {
+  const res = await dbService.getAllItems();
+  if (!res) {
+    throw new Error(`Failed to load resumes list (status ${res}).`);
+  }
+
+  return res as ResumeListItem[];
 }
 
 export async function updateResume(

@@ -205,6 +205,15 @@ class ResumeUploadResponse(BaseModel):
     resume_id: str
 
 
+class ResumeUploadResponseLocal(BaseModel):
+    """Response for resume data."""
+
+    message: str
+    request_id: str
+    resume_id: str
+    resume: dict
+
+
 class RawResume(BaseModel):
     """Raw resume data from database."""
 
