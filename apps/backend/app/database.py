@@ -149,6 +149,14 @@ class Database:
         result = self.jobs.search(Job.job_id == job_id)
         return result[0] if result else None
 
+    def update_job(self, job_id: str, updates: dict[str, Any]) -> dict[str, Any] | None:
+        """Update a job by ID."""
+        Job = Query()
+        updated = self.jobs.update(updates, Job.job_id == job_id)
+        if not updated:
+            return None
+        return self.get_job(job_id)
+
     # Improvement operations
     def create_improvement(
         self,

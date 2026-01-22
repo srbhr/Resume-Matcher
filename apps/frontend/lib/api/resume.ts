@@ -1,4 +1,5 @@
 import { ImprovedResult } from '@/components/common/resume_previewer_context';
+import type { ResumeData } from '@/components/dashboard/resume-component';
 import { type TemplateSettings } from '@/lib/types/template-settings';
 import { type Locale } from '@/i18n/config';
 import { API_BASE, apiPost, apiPatch, apiDelete, apiFetch } from './client';
@@ -66,6 +67,16 @@ interface ResumeResponse {
   };
 }
 
+interface ImproveResumeConfirmRequest {
+  resume_id: string;
+  job_id: string;
+  improved_data: ResumeData;
+  improvements: Array<{
+    suggestion: string;
+    lineNumber?: number | null;
+  }>;
+}
+
 function normalizeResumeId(resumeId: string): string {
   const normalized = resumeId.trim();
   if (!normalized) {
@@ -82,6 +93,32 @@ export interface ResumeListItem {
   processing_status: 'pending' | 'processing' | 'ready' | 'failed';
   created_at: string;
   updated_at: string;
+}
+
+async function postImprove(
+  endpoint: string,
+  payload: Record<string, unknown>
+): Promise<ImprovedResult> {
+  let response: Response;
+  try {
+    response = await apiPost(endpoint, payload);
+  } catch (networkError) {
+    console.error(`Network error during ${endpoint}:`, networkError);
+    throw networkError;
+  }
+
+  const text = await response.text();
+  if (!response.ok) {
+    console.error('Improve failed response body:', text);
+    throw new Error(`Improve failed with status ${response.status}: ${text}`);
+  }
+
+  try {
+    return JSON.parse(text) as ImprovedResult;
+  } catch (parseError) {
+    console.error('Failed to parse improve response:', parseError, 'Raw response:', text);
+    throw parseError;
+  }
 }
 
 /** Uploads job descriptions and returns a job_id */
@@ -104,33 +141,31 @@ export async function improveResume(
   jobId: string,
   promptId?: string
 ): Promise<ImprovedResult> {
-  let response: Response;
-  try {
-    response = await apiPost('/resumes/improve', {
-      resume_id: resumeId,
-      job_id: jobId,
-      prompt_id: promptId ?? null,
-    });
-  } catch (networkError) {
-    console.error('Network error during improveResume:', networkError);
-    throw networkError;
-  }
+  return postImprove('/resumes/improve', {
+    resume_id: resumeId,
+    job_id: jobId,
+    prompt_id: promptId ?? null,
+  });
+}
 
-  const text = await response.text();
-  if (!response.ok) {
-    console.error('Improve failed response body:', text);
-    throw new Error(`Improve failed with status ${response.status}: ${text}`);
-  }
+/** Previews the resume improvement without saving */
+export async function previewImproveResume(
+  resumeId: string,
+  jobId: string,
+  promptId?: string
+): Promise<ImprovedResult> {
+  return postImprove('/resumes/improve/preview', {
+    resume_id: resumeId,
+    job_id: jobId,
+    prompt_id: promptId ?? null,
+  });
+}
 
-  let data: ImprovedResult;
-  try {
-    data = JSON.parse(text) as ImprovedResult;
-  } catch (parseError) {
-    console.error('Failed to parse improveResume response:', parseError, 'Raw response:', text);
-    throw parseError;
-  }
-
-  return data;
+/** Confirms and saves a tailored resume */
+export async function confirmImproveResume(
+  payload: ImproveResumeConfirmRequest
+): Promise<ImprovedResult> {
+  return postImprove('/resumes/improve/confirm', payload as Record<string, unknown>);
 }
 
 /** Fetches a raw resume record for previewing the original upload */

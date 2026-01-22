@@ -2,7 +2,7 @@
 
 import copy
 from enum import Enum
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -284,11 +284,44 @@ class ImprovementSuggestion(BaseModel):
     lineNumber: int | None = None
 
 
+class ResumeFieldDiff(BaseModel):
+    """Single field change record."""
+
+    field_path: str  # Example: "workExperience[0].description[2]"
+    field_type: Literal[
+        "skill",
+        "description",
+        "summary",
+        "certification",
+        "experience",
+        "education",
+        "project",
+    ]
+    change_type: Literal["added", "removed", "modified"]
+    original_value: str | None = None
+    new_value: str | None = None
+    confidence: Literal["low", "medium", "high"] = "medium"
+
+
+class ResumeDiffSummary(BaseModel):
+    """Change summary stats."""
+
+    total_changes: int
+    skills_added: int
+    skills_removed: int
+    descriptions_modified: int
+    certifications_added: int
+    high_risk_changes: int  # High-risk additions
+
+
 class ImproveResumeData(BaseModel):
     """Data payload for improve response."""
 
     request_id: str
-    resume_id: str
+    resume_id: str | None = Field(
+        default=None,
+        description="Null for preview responses; populated when the tailored resume is persisted.",
+    )
     job_id: str
     resume_preview: ResumeData
     improvements: list[ImprovementSuggestion]
@@ -297,12 +330,25 @@ class ImproveResumeData(BaseModel):
     cover_letter: str | None = None
     outreach_message: str | None = None
 
+    # Diff metadata
+    diff_summary: ResumeDiffSummary | None = None
+    detailed_changes: list[ResumeFieldDiff] | None = None
+
 
 class ImproveResumeResponse(BaseModel):
     """Response for resume improvement."""
 
     request_id: str
     data: ImproveResumeData
+
+
+class ImproveResumeConfirmRequest(BaseModel):
+    """Request to confirm and save a tailored resume."""
+
+    resume_id: str
+    job_id: str
+    improved_data: ResumeData
+    improvements: list[ImprovementSuggestion]
 
 
 # Config Models

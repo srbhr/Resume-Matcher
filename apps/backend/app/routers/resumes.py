@@ -1,9 +1,13 @@
 """Resume management endpoints."""
 
 import asyncio
+import hashlib
 import json
 import logging
+import unicodedata
+from collections.abc import Awaitable
 from pathlib import Path
+from typing import Any, NoReturn
 from uuid import uuid4
 
 from fastapi import APIRouter, File, HTTPException, Query, UploadFile
@@ -16,9 +20,12 @@ from app.config import settings
 logger = logging.getLogger(__name__)
 from app.schemas import (
     GenerateContentResponse,
+    ImproveResumeConfirmRequest,
     ImproveResumeRequest,
     ImproveResumeResponse,
     ImproveResumeData,
+    ResumeDiffSummary,
+    ResumeFieldDiff,
     ResumeData,
     ResumeFetchData,
     ResumeFetchResponse,
@@ -69,6 +76,155 @@ def _get_default_prompt_id() -> str:
     option_ids = {option["id"] for option in IMPROVE_PROMPT_OPTIONS}
     prompt_id = config.get("default_prompt_id", DEFAULT_IMPROVE_PROMPT_ID)
     return prompt_id if prompt_id in option_ids else DEFAULT_IMPROVE_PROMPT_ID
+
+
+def _hash_job_content(content: str) -> str:
+    return hashlib.sha256(content.encode("utf-8")).hexdigest()
+
+
+def _normalize_payload(value: Any) -> Any:
+    if isinstance(value, str):
+        return unicodedata.normalize("NFC", value)
+    if isinstance(value, list):
+        return [_normalize_payload(item) for item in value]
+    if isinstance(value, dict):
+        normalized: dict[Any, Any] = {}
+        for key, val in value.items():
+            normalized_key = (
+                unicodedata.normalize("NFC", key) if isinstance(key, str) else key
+            )
+            normalized[normalized_key] = _normalize_payload(val)
+        return normalized
+    return value
+
+
+def _hash_improved_data(data: dict[str, Any]) -> str:
+    """Hash canonicalized improved data for preview/confirm validation.
+
+    Uses NFC normalization for strings plus sorted JSON keys to reduce
+    false mismatches from Unicode normalization or key ordering.
+    """
+    normalized = _normalize_payload(data)
+    serialized = json.dumps(
+        normalized,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+    )
+    return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
+
+
+def _normalize_personal_info_value(value: Any) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, str):
+        return unicodedata.normalize("NFC", value).strip()
+    if isinstance(value, (int, float, bool)):
+        return str(value)
+    normalized = _normalize_payload(value)
+    return json.dumps(normalized, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+
+
+def _raise_improve_error(
+    action: str,
+    stage: str,
+    error: Exception,
+    detail: str,
+) -> NoReturn:
+    logger.error("Resume %s failed during %s: %s", action, stage, error)
+    raise HTTPException(status_code=500, detail=detail)
+
+
+def _get_original_resume_data(resume: dict[str, Any]) -> dict[str, Any] | None:
+    original_data = resume.get("processed_data")
+    if not original_data and resume.get("content_type") == "json":
+        try:
+            original_data = json.loads(resume["content"])
+        except json.JSONDecodeError as e:
+            logger.warning("Skipping resume diff due to JSON parse failure: %s", e)
+    return original_data
+
+
+def _calculate_diff_from_resume(
+    resume: dict[str, Any],
+    improved_data: dict[str, Any],
+) -> tuple[ResumeDiffSummary | None, list[ResumeFieldDiff] | None]:
+    """Calculate resume diffs when structured data is available.
+
+    Returns (None, None) if structured data is missing, parsing fails, or
+    diff calculation encounters an error. Callers should handle this gracefully.
+    """
+    original_data = _get_original_resume_data(resume)
+    if not original_data:
+        return None, None
+    from app.services.improver import calculate_resume_diff
+    try:
+        return calculate_resume_diff(original_data, improved_data)
+    except Exception as e:
+        logger.warning("Skipping resume diff due to calculation failure: %s", e)
+        return None, None
+
+
+def _validate_confirm_payload(
+    original_data: dict[str, Any] | None,
+    improved_data: dict[str, Any],
+) -> None:
+    if not original_data:
+        logger.warning("Skipping confirm payload validation; structured resume data unavailable.")
+        return
+    original_info = original_data.get("personalInfo")
+    improved_info = improved_data.get("personalInfo")
+    if not isinstance(original_info, dict) or not isinstance(improved_info, dict):
+        raise ValueError("personalInfo payload is missing or invalid")
+    fields = set(original_info.keys()) | set(improved_info.keys())
+    mismatches = [
+        field
+        for field in sorted(fields)
+        if _normalize_personal_info_value(original_info.get(field))
+        != _normalize_personal_info_value(improved_info.get(field))
+    ]
+    if mismatches:
+        raise ValueError(f"personalInfo fields changed: {', '.join(mismatches)}")
+
+
+async def _generate_auxiliary_messages(
+    improved_data: dict[str, Any],
+    job_content: str,
+    language: str,
+    enable_cover_letter: bool,
+    enable_outreach: bool,
+) -> tuple[str | None, str | None]:
+    cover_letter = None
+    outreach_message = None
+    generation_tasks: list[Awaitable[str]] = []
+
+    if enable_cover_letter:
+        generation_tasks.append(
+            generate_cover_letter(improved_data, job_content, language)
+        )
+    if enable_outreach:
+        generation_tasks.append(
+            generate_outreach_message(improved_data, job_content, language)
+        )
+
+    if generation_tasks:
+        results = await asyncio.gather(*generation_tasks, return_exceptions=True)
+        idx = 0
+        if enable_cover_letter:
+            result = results[idx]
+            if not isinstance(result, Exception):
+                cover_letter = result
+            else:
+                logger.warning("Cover letter generation failed: %s", result)
+            idx += 1
+        if enable_outreach:
+            result = results[idx]
+            if not isinstance(result, Exception):
+                outreach_message = result
+            else:
+                logger.warning("Outreach message generation failed: %s", result)
+
+    return cover_letter, outreach_message
 
 
 router = APIRouter(prefix="/resumes", tags=["Resumes"])
@@ -228,6 +384,237 @@ async def list_resumes(include_master: bool = Query(False)) -> ResumeListRespons
     return ResumeListResponse(request_id=str(uuid4()), data=summaries)
 
 
+@router.post("/improve/preview", response_model=ImproveResumeResponse)
+async def improve_resume_preview_endpoint(
+    request: ImproveResumeRequest,
+) -> ImproveResumeResponse:
+    """Preview a tailored resume without persisting it.
+
+    The response includes resume_preview data but leaves resume_id null.
+    """
+    resume = db.get_resume(request.resume_id)
+    if not resume:
+        raise HTTPException(status_code=404, detail="Resume not found")
+
+    job = db.get_job(request.job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job description not found")
+
+    language = _get_content_language()
+    prompt_id = request.prompt_id or _get_default_prompt_id()
+
+    stage = "load_job_keywords"
+    detail = "Failed to preview resume. Please try again."
+    try:
+        job_keywords = job.get("job_keywords")
+        job_keywords_hash = job.get("job_keywords_hash")
+        content_hash = _hash_job_content(job["content"])
+        if not job_keywords or job_keywords_hash != content_hash:
+            stage = "extract_job_keywords"
+            job_keywords = await extract_job_keywords(job["content"])
+            stage = "persist_job_keywords"
+            # Cache extracted keywords with a content hash for basic invalidation.
+            try:
+                updated_job = db.update_job(
+                    request.job_id,
+                    {"job_keywords": job_keywords, "job_keywords_hash": content_hash},
+                )
+                if not updated_job:
+                    logger.warning(
+                        "Failed to persist job keywords for job %s.",
+                        request.job_id,
+                    )
+            except Exception as e:
+                logger.warning(
+                    "Failed to persist job keywords for job %s: %s",
+                    request.job_id,
+                    e,
+                )
+        stage = "improve_resume"
+        improved_data = await improve_resume(
+            original_resume=resume["content"],
+            job_description=job["content"],
+            job_keywords=job_keywords,
+            language=language,
+            prompt_id=prompt_id,
+        )
+        improved_text = json.dumps(improved_data, indent=2)
+        preview_hash = _hash_improved_data(improved_data)
+        preview_hashes = job.get("preview_hashes")
+        if not isinstance(preview_hashes, dict):
+            preview_hashes = {}
+        preview_hashes[prompt_id] = preview_hash
+        # NOTE: preview_hashes updates are last-write-wins; concurrent previews can race.
+        try:
+            updated_job = db.update_job(
+                request.job_id,
+                {
+                    "preview_hash": preview_hash,
+                    "preview_prompt_id": prompt_id,
+                    "preview_hashes": preview_hashes,
+                },
+            )
+            if not updated_job:
+                logger.warning("Failed to persist preview hash for job %s.", request.job_id)
+        except Exception as e:
+            logger.warning("Failed to persist preview hash for job %s: %s", request.job_id, e)
+        stage = "calculate_diff"
+        diff_summary, detailed_changes = _calculate_diff_from_resume(
+            resume,
+            improved_data,
+        )
+        stage = "generate_improvements"
+        improvements = generate_improvements(job_keywords)
+
+        request_id = str(uuid4())
+        return ImproveResumeResponse(
+            request_id=request_id,
+            data=ImproveResumeData(
+                request_id=request_id,
+                resume_id=None,
+                job_id=request.job_id,
+                resume_preview=ResumeData.model_validate(improved_data),
+                improvements=[
+                    {
+                        "suggestion": imp["suggestion"],
+                        "lineNumber": imp.get("lineNumber"),
+                    }
+                    for imp in improvements
+                ],
+                markdownOriginal=resume["content"],
+                markdownImproved=improved_text,
+                cover_letter=None,
+                outreach_message=None,
+                diff_summary=diff_summary,
+                detailed_changes=detailed_changes,
+            ),
+        )
+    except Exception as e:
+        _raise_improve_error("preview", stage, e, detail)
+
+
+@router.post("/improve/confirm", response_model=ImproveResumeResponse)
+async def improve_resume_confirm_endpoint(
+    request: ImproveResumeConfirmRequest,
+) -> ImproveResumeResponse:
+    """Confirm and persist a tailored resume."""
+    resume = db.get_resume(request.resume_id)
+    if not resume:
+        raise HTTPException(status_code=404, detail="Resume not found")
+
+    job = db.get_job(request.job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job description not found")
+
+    feature_config = _load_feature_config()
+    enable_cover_letter = feature_config.get("enable_cover_letter", False)
+    enable_outreach = feature_config.get("enable_outreach_message", False)
+    language = _get_content_language()
+
+    stage = "serialize_improved_data"
+    detail = "Failed to confirm resume. Please try again."
+    try:
+        improved_data = request.improved_data.model_dump()
+        improved_text = json.dumps(improved_data, indent=2)
+        # NOTE: This endpoint relies on preview-hash validation to ensure the payload matches a prior preview.
+        # Stronger guarantees would require server-side preview storage or re-running the improvement.
+        try:
+            _validate_confirm_payload(_get_original_resume_data(resume), improved_data)
+        except ValueError as e:
+            logger.warning("Resume confirm rejected: %s", e)
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid improved resume data. Please retry preview.",
+            )
+        preview_hashes = job.get("preview_hashes")
+        allowed_hashes: set[str] = set()
+        if isinstance(preview_hashes, dict):
+            allowed_hashes.update(preview_hashes.values())
+        elif isinstance(preview_hashes, list):
+            allowed_hashes.update([value for value in preview_hashes if isinstance(value, str)])
+        else:
+            preview_hash = job.get("preview_hash")
+            if isinstance(preview_hash, str):
+                allowed_hashes.add(preview_hash)
+
+        if not allowed_hashes:
+            logger.warning(
+                "Rejecting confirm; preview hash missing for job %s.",
+                request.job_id,
+            )
+            raise HTTPException(
+                status_code=400,
+                detail="Preview required before confirmation. Please retry preview.",
+            )
+
+        request_hash = _hash_improved_data(improved_data)
+        if request_hash not in allowed_hashes:
+            logger.warning("Resume confirm rejected due to preview hash mismatch.")
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid improved resume data. Please retry preview.",
+            )
+
+        stage = "calculate_diff"
+        diff_summary, detailed_changes = _calculate_diff_from_resume(
+            resume,
+            improved_data,
+        )
+
+        stage = "generate_auxiliary_messages"
+        cover_letter, outreach_message = await _generate_auxiliary_messages(
+            improved_data,
+            job["content"],
+            language,
+            enable_cover_letter,
+            enable_outreach,
+        )
+
+        stage = "create_resume"
+        tailored_resume = db.create_resume(
+            content=improved_text,
+            content_type="json",
+            filename=f"tailored_{resume.get('filename', 'resume')}",
+            is_master=False,
+            parent_id=request.resume_id,
+            processed_data=improved_data,
+            processing_status="ready",
+            cover_letter=cover_letter,
+            outreach_message=outreach_message,
+        )
+
+        improvements_payload = [imp.model_dump() for imp in request.improvements]
+        stage = "create_improvement"
+        request_id = str(uuid4())
+        db.create_improvement(
+            original_resume_id=request.resume_id,
+            tailored_resume_id=tailored_resume["resume_id"],
+            job_id=request.job_id,
+            improvements=improvements_payload,
+        )
+
+        return ImproveResumeResponse(
+            request_id=request_id,
+            data=ImproveResumeData(
+                request_id=request_id,
+                resume_id=tailored_resume["resume_id"],
+                job_id=request.job_id,
+                resume_preview=request.improved_data,
+                improvements=request.improvements,
+                markdownOriginal=resume["content"],
+                markdownImproved=improved_text,
+                cover_letter=cover_letter,
+                outreach_message=outreach_message,
+                diff_summary=diff_summary,
+                detailed_changes=detailed_changes,
+            ),
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        _raise_improve_error("confirm", stage, e, detail)
+
+
 @router.post("/improve", response_model=ImproveResumeResponse)
 async def improve_resume_endpoint(
     request: ImproveResumeRequest,
@@ -237,6 +624,7 @@ async def improve_resume_endpoint(
     Uses LLM to analyze the job and generate an optimized resume version
     with improvement suggestions. Also generates cover letter and outreach
     message if enabled in feature configuration.
+    Persists the tailored resume and returns a non-null resume_id.
     """
     # Fetch resume
     resume = db.get_resume(request.resume_id)
@@ -272,39 +660,23 @@ async def improve_resume_endpoint(
         # Convert improved data to JSON string for storage
         improved_text = json.dumps(improved_data, indent=2)
 
+        # Calculate differences between original and improved resume
+        diff_summary, detailed_changes = _calculate_diff_from_resume(
+            resume,
+            improved_data,
+        )
+
         # Generate improvement suggestions
         improvements = generate_improvements(job_keywords)
 
         # Generate cover letter and outreach message in parallel if enabled
-        cover_letter = None
-        outreach_message = None
-
-        generation_tasks = []
-        if enable_cover_letter:
-            generation_tasks.append(
-                generate_cover_letter(improved_data, job["content"], language)
-            )
-        if enable_outreach:
-            generation_tasks.append(
-                generate_outreach_message(improved_data, job["content"], language)
-            )
-
-        if generation_tasks:
-            results = await asyncio.gather(*generation_tasks, return_exceptions=True)
-            idx = 0
-            if enable_cover_letter:
-                result = results[idx]
-                if not isinstance(result, Exception):
-                    cover_letter = result
-                else:
-                    logger.warning(f"Cover letter generation failed: {result}")
-                idx += 1
-            if enable_outreach:
-                result = results[idx]
-                if not isinstance(result, Exception):
-                    outreach_message = result
-                else:
-                    logger.warning(f"Outreach message generation failed: {result}")
+        cover_letter, outreach_message = await _generate_auxiliary_messages(
+            improved_data,
+            job["content"],
+            language,
+            enable_cover_letter,
+            enable_outreach,
+        )
 
         # Store the tailored resume with cover letter and outreach message
         tailored_resume = db.create_resume(
@@ -346,6 +718,9 @@ async def improve_resume_endpoint(
                 markdownImproved=improved_text,
                 cover_letter=cover_letter,
                 outreach_message=outreach_message,
+                # Diff metadata
+                diff_summary=diff_summary,
+                detailed_changes=detailed_changes,
             ),
         )
 

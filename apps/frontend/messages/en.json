@@ -465,11 +465,44 @@
     "suggestions": "Suggestions",
     "keywords": "Keywords to Include",
     "footerTagline": "AI-POWERED OPTIMIZATION ENGINE",
+    "diffModal": {
+      "title": "Review AI Tailoring Results",
+      "subtitle": "Please carefully review the changes to ensure no false information has been added",
+      "summary": "Change Summary",
+      "skillsAdded": "Skills Added",
+      "skillsRemoved": "Skills Removed",
+      "descriptionsModified": "Descriptions Modified",
+      "certificationsAdded": "Certifications Added",
+      "highRiskChanges": "High Risk Changes",
+      "warningTitle": "Detected {count} high-risk addition(s)",
+      "warningMessage": "Please confirm these additions exist in your original resume or are reflected in your descriptions",
+      "summaryChanges": "Summary Changes",
+      "skillChanges": "Skill Changes",
+      "descriptionChanges": "Experience Description Changes",
+      "experienceChanges": "Experience Entry Changes",
+      "educationChanges": "Education Changes",
+      "projectChanges": "Project Changes",
+      "certificationChanges": "Certification Changes",
+      "rejectButton": "Reject & Regenerate",
+      "confirmButton": "Confirm & Save"
+    },
+    "regenerateDialog": {
+      "title": "Regenerate tailored resume?",
+      "description": "This will discard the current preview and request a new AI tailoring result.",
+      "confirmLabel": "Regenerate"
+    },
+    "missingDiffDialog": {
+      "title": "Unable to calculate changes",
+      "description": "We could not compute a diff for this resume. This can happen with legacy resumes that lack structured data. You can continue to save the tailored resume or cancel to review later.",
+      "confirmLabel": "Continue without diff"
+    },
     "errors": {
       "jobDescriptionTooShort": "Job description is too short. Please provide more details.",
       "apiKeyError": "API key error. Please check your LLM configuration in Settings.",
       "rateLimit": "Rate limit reached. Please wait a moment and try again.",
-      "failedToGenerate": "Failed to generate resume. Please check your settings and try again."
+      "failedToGenerate": "Failed to generate resume. Please check your settings and try again.",
+      "failedToPreview": "Failed to preview resume. Please check your settings and try again.",
+      "failedToConfirm": "Failed to confirm resume. Please try again."
     }
   },
   "settings": {

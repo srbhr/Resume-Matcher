@@ -465,11 +465,44 @@
     "suggestions": "建议",
     "keywords": "关键词建议",
     "footerTagline": "AI 驱动的优化引擎",
+    "diffModal": {
+      "title": "审核 AI 定制结果",
+      "subtitle": "请仔细检查以下变更，确保不包含虚假内容",
+      "summary": "变更摘要",
+      "skillsAdded": "新增技能",
+      "skillsRemoved": "删除技能",
+      "descriptionsModified": "修改描述",
+      "certificationsAdded": "新增认证",
+      "highRiskChanges": "高风险变更",
+      "warningTitle": "检测到 {count} 项高风险新增内容",
+      "warningMessage": "请确认这些新增内容确实存在于您的原始简历中，或在描述中有所体现",
+      "summaryChanges": "摘要变更",
+      "skillChanges": "技能变更",
+      "descriptionChanges": "经历描述变更",
+      "experienceChanges": "经历条目变更",
+      "educationChanges": "教育变更",
+      "projectChanges": "项目变更",
+      "certificationChanges": "认证变更",
+      "rejectButton": "拒绝并重新生成",
+      "confirmButton": "确认并保存"
+    },
+    "regenerateDialog": {
+      "title": "重新生成定制简历？",
+      "description": "这将丢弃当前预览并请求新的 AI 定制结果。",
+      "confirmLabel": "重新生成"
+    },
+    "missingDiffDialog": {
+      "title": "无法计算变更",
+      "description": "无法为此简历计算差异。这可能发生在缺少结构化数据的旧简历上。你可以继续保存定制简历，或取消后再检查。",
+      "confirmLabel": "继续保存"
+    },
     "errors": {
       "jobDescriptionTooShort": "职位描述过短，请提供更多细节。",
       "apiKeyError": "API 密钥错误。请在设置中检查您的 LLM 配置。",
       "rateLimit": "触发速率限制，请稍后再试。",
-      "failedToGenerate": "生成简历失败。请检查设置后重试。"
+      "failedToGenerate": "生成简历失败。请检查设置后重试。",
+      "failedToPreview": "预览简历失败。请检查设置后重试。",
+      "failedToConfirm": "确认简历失败。请重试。"
     }
   },
   "settings": {
