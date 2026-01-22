@@ -57,9 +57,7 @@ export default function ResumeViewerPage() {
           setResumeData(data.processed_resume as ResumeData);
           setError(null);
         } else if (status === 'failed') {
-          setError(
-            t('resumeViewer.errors.processingFailed')
-          );
+          setError(t('resumeViewer.errors.processingFailed'));
         } else if (status === 'processing') {
           setError(t('resumeViewer.errors.stillProcessing'));
         } else if (data.raw_resume?.content) {
@@ -68,9 +66,7 @@ export default function ResumeViewerPage() {
             const parsed = JSON.parse(data.raw_resume.content);
             setResumeData(parsed as ResumeData);
           } catch {
-            setError(
-              t('resumeViewer.errors.notProcessedYet')
-            );
+            setError(t('resumeViewer.errors.notProcessedYet'));
           }
         } else {
           setError(t('resumeViewer.errors.noDataAvailable'));
@@ -92,17 +88,17 @@ export default function ResumeViewerPage() {
   };
 
   // Reload resume data after enrichment
-    const reloadResumeData = async () => {
-      try {
-        const data = await fetchResume(resumeId);
-        if (data.processed_resume) {
-          setResumeData(data.processed_resume as ResumeData);
-          setError(null);
-        }
-      } catch (err) {
-        console.error('Failed to reload resume:', err);
+  const reloadResumeData = async () => {
+    try {
+      const data = await fetchResume(resumeId);
+      if (data.processed_resume) {
+        setResumeData(data.processed_resume as ResumeData);
+        setError(null);
       }
-    };
+    } catch (err) {
+      console.error('Failed to reload resume:', err);
+    }
+  };
 
   const handleEnrichmentComplete = () => {
     setShowEnrichmentModal(false);
@@ -194,7 +190,9 @@ export default function ResumeViewerPage() {
           </p>
           <div className="flex flex-col gap-2">
             {isFailed && (
-              <Button onClick={() => router.push('/tailor')}>{t('resumeViewer.useTailorFeature')}</Button>
+              <Button onClick={() => router.push('/tailor')}>
+                {t('resumeViewer.useTailorFeature')}
+              </Button>
             )}
             <Button variant="outline" onClick={() => router.push('/dashboard')}>
               {t('resumeViewer.returnToDashboard')}
@@ -234,35 +232,37 @@ export default function ResumeViewerPage() {
         </div>
 
         {/* Resume Viewer */}
-          <div className="flex justify-center pb-4">
-            <div className="resume-print w-full max-w-[250mm] shadow-[8px_8px_0px_0px_#000000] border-2 border-black bg-white">
-              <Resume
-                resumeData={localizedResumeData || resumeData}
-                additionalSectionLabels={{
-                  technicalSkills: t('resume.additionalLabels.technicalSkills'),
-                  languages: t('resume.additionalLabels.languages'),
-                  certifications: t('resume.additionalLabels.certifications'),
-                  awards: t('resume.additionalLabels.awards'),
-                }}
-                sectionHeadings={{
-                  summary: t('resume.sections.summary'),
-                  experience: t('resume.sections.experience'),
-                  education: t('resume.sections.education'),
-                  projects: t('resume.sections.projects'),
-                  certifications: t('resume.sections.certifications'),
-                  skills: t('resume.sections.skillsOnly'),
-                  languages: t('resume.sections.languages'),
-                  awards: t('resume.sections.awards'),
-                  links: t('resume.sections.links'),
-                }}
-                fallbackLabels={{ name: t('resume.defaults.name') }}
-              />
-            </div>
+        <div className="flex justify-center pb-4">
+          <div className="resume-print w-full max-w-[250mm] shadow-[8px_8px_0px_0px_#000000] border-2 border-black bg-white">
+            <Resume
+              resumeData={localizedResumeData || resumeData}
+              additionalSectionLabels={{
+                technicalSkills: t('resume.additionalLabels.technicalSkills'),
+                languages: t('resume.additionalLabels.languages'),
+                certifications: t('resume.additionalLabels.certifications'),
+                awards: t('resume.additionalLabels.awards'),
+              }}
+              sectionHeadings={{
+                summary: t('resume.sections.summary'),
+                experience: t('resume.sections.experience'),
+                education: t('resume.sections.education'),
+                projects: t('resume.sections.projects'),
+                certifications: t('resume.sections.certifications'),
+                skills: t('resume.sections.skillsOnly'),
+                languages: t('resume.sections.languages'),
+                awards: t('resume.sections.awards'),
+                links: t('resume.sections.links'),
+              }}
+              fallbackLabels={{ name: t('resume.defaults.name') }}
+            />
           </div>
+        </div>
 
         <div className="flex justify-end pt-4 no-print">
           <Button variant="destructive" onClick={() => setShowDeleteDialog(true)}>
-            {isMasterResume ? t('confirmations.deleteMasterResumeTitle') : t('dashboard.deleteResume')}
+            {isMasterResume
+              ? t('confirmations.deleteMasterResumeTitle')
+              : t('dashboard.deleteResume')}
           </Button>
         </div>
       </div>
@@ -270,7 +270,9 @@ export default function ResumeViewerPage() {
       <ConfirmDialog
         open={showDeleteDialog}
         onOpenChange={setShowDeleteDialog}
-        title={isMasterResume ? t('confirmations.deleteMasterResumeTitle') : t('dashboard.deleteResume')}
+        title={
+          isMasterResume ? t('confirmations.deleteMasterResumeTitle') : t('dashboard.deleteResume')
+        }
         description={
           isMasterResume
             ? t('confirmations.deleteMasterResumeDescription')

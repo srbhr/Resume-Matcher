@@ -447,9 +447,7 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
                 {t('builder.formatting.effectiveOutput')}
               </h4>
               <div className="font-mono text-[10px] text-gray-600 space-y-1">
-                <div
-                  title={t('builder.formatting.margins')}
-                >
+                <div title={t('builder.formatting.margins')}>
                   {t('builder.formatting.effectiveMargins', {
                     top: settings.margins.top,
                     bottom: settings.margins.bottom,
@@ -467,17 +465,19 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
                   {t('builder.formatting.effectiveLineHeight')}: {lineHeightValue.toFixed(2)}
                 </div>
                 <div>
-                  {t('builder.formatting.effectiveBaseFont')}: {FONT_SIZE_MAP[settings.fontSize.base]}
+                  {t('builder.formatting.effectiveBaseFont')}:{' '}
+                  {FONT_SIZE_MAP[settings.fontSize.base]}
                 </div>
                 <div>
-                  {t('builder.formatting.effectiveHeaderScale')}: {HEADER_SCALE_MAP[settings.fontSize.headerScale]}x
+                  {t('builder.formatting.effectiveHeaderScale')}:{' '}
+                  {HEADER_SCALE_MAP[settings.fontSize.headerScale]}x
                 </div>
                 <div>
-                  {t('builder.formatting.effectiveHeaderFont')}: {' '}
+                  {t('builder.formatting.effectiveHeaderFont')}:{' '}
                   {getFontLabel(settings.fontSize.headerFont)}
                 </div>
                 <div>
-                  {t('builder.formatting.effectiveBodyFont')}: {' '}
+                  {t('builder.formatting.effectiveBodyFont')}:{' '}
                   {getFontLabel(settings.fontSize.bodyFont)}
                 </div>
               </div>

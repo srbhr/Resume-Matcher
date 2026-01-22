@@ -1,9 +1,6 @@
 import React from 'react';
 import { Mail, Phone, MapPin, Globe, Linkedin, Github, ExternalLink } from 'lucide-react';
-import type {
-  ResumeData,
-  ResumeSectionHeadings,
-} from '@/components/dashboard/resume-component';
+import type { ResumeData, ResumeSectionHeadings } from '@/components/dashboard/resume-component';
 import { getSortedSections, getSectionMeta } from '@/lib/utils/section-helpers';
 import { formatDateRange } from '@/lib/utils';
 import { DynamicResumeSection } from './dynamic-resume-section';
@@ -252,9 +249,9 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
             personalProjects &&
             personalProjects.length > 0 && (
               <div className={baseStyles['resume-section']}>
-              <h3 className={baseStyles['resume-section-title']}>
-                {getSectionDisplayName('personalProjects', headingFallbacks.projects)}
-              </h3>
+                <h3 className={baseStyles['resume-section-title']}>
+                  {getSectionDisplayName('personalProjects', headingFallbacks.projects)}
+                </h3>
                 <div className={baseStyles['resume-items']}>
                   {personalProjects.map((project) => (
                     <div key={project.id} className={baseStyles['resume-item']}>
@@ -342,9 +339,9 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
             additional?.certificationsTraining &&
             additional.certificationsTraining.length > 0 && (
               <div className={baseStyles['resume-section']}>
-              <h3 className={baseStyles['resume-section-title']}>
-                {headingFallbacks.certifications}
-              </h3>
+                <h3 className={baseStyles['resume-section-title']}>
+                  {headingFallbacks.certifications}
+                </h3>
                 <ul className={`ml-4 ${baseStyles['resume-list']} ${baseStyles['resume-text-xs']}`}>
                   {additional.certificationsTraining.map((cert, index) => (
                     <li key={index} className="flex">
@@ -403,9 +400,7 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
             additional?.technicalSkills &&
             additional.technicalSkills.length > 0 && (
               <div className={baseStyles['resume-section']}>
-                <h3 className={baseStyles['resume-section-title-sm']}>
-                  {headingFallbacks.skills}
-                </h3>
+                <h3 className={baseStyles['resume-section-title-sm']}>{headingFallbacks.skills}</h3>
                 <div className="flex flex-wrap gap-1">
                   {additional.technicalSkills.map((skill, index) => (
                     <span key={index} className={baseStyles['resume-skill-pill']}>
@@ -431,9 +426,7 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
           {/* Awards Section */}
           {isSectionVisible('additional') && additional?.awards && additional.awards.length > 0 && (
             <div className={baseStyles['resume-section']}>
-                <h3 className={baseStyles['resume-section-title-sm']}>
-                  {headingFallbacks.awards}
-                </h3>
+              <h3 className={baseStyles['resume-section-title-sm']}>{headingFallbacks.awards}</h3>
               <ul className={baseStyles['resume-list']}>
                 {additional.awards.map((award, index) => (
                   <li key={index} className={baseStyles['resume-text-xs']}>
@@ -448,9 +441,7 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
           {personalInfo &&
             (personalInfo.website || personalInfo.linkedin || personalInfo.github) && (
               <div className={baseStyles['resume-section']}>
-                <h3 className={baseStyles['resume-section-title-sm']}>
-                  {headingFallbacks.links}
-                </h3>
+                <h3 className={baseStyles['resume-section-title-sm']}>{headingFallbacks.links}</h3>
                 <div
                   className={`${baseStyles['resume-stack-tight']} ${baseStyles['resume-meta-sm']}`}
                 >

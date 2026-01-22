@@ -5,11 +5,6 @@ import type {
   ResumeData,
   SectionMeta,
   CustomSection,
-  CustomSectionItem,
-  Experience,
-  Education,
-  Project,
-  AdditionalInfo,
   PersonalInfo,
 } from '@/components/dashboard/resume-component';
 import { SectionHeader } from './section-header';

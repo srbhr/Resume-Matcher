@@ -133,9 +133,7 @@ export function QuestionStep({
           className="min-h-[180px] text-base resize-none font-mono"
         />
 
-        <p className="text-xs text-gray-400 mt-2 font-mono">
-          {t('enrichment.shortcutHint')}
-        </p>
+        <p className="text-xs text-gray-400 mt-2 font-mono">{t('enrichment.shortcutHint')}</p>
       </div>
 
       {/* Navigation */}

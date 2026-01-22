@@ -44,7 +44,7 @@ export function DiffPreviewModal({
           }
         }}
       >
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col bg-[#F0F0E8] border-2 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,0.1)]">
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col p-6 bg-[#F0F0E8] border-2 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,0.1)]">
           <DialogHeader className="border-b-2 border-black pb-4 bg-white -mx-6 -mt-6 px-6 pt-6">
             <DialogTitle className="font-serif text-2xl font-bold uppercase tracking-tight">
               {t('tailor.missingDiffDialog.title')}
@@ -100,7 +100,7 @@ export function DiffPreviewModal({
         }
       }}
     >
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col bg-[#F0F0E8] border-2 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,0.1)]">
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col p-6 bg-[#F0F0E8] border-2 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,0.1)]">
         <DialogHeader className="border-b-2 border-black pb-4 bg-white -mx-6 -mt-6 px-6 pt-6">
           <DialogTitle className="font-serif text-2xl font-bold uppercase tracking-tight">
             {t('tailor.diffModal.title')}
@@ -172,7 +172,7 @@ export function DiffPreviewModal({
         )}
 
         {/* Detailed changes list */}
-        <div className="flex-1 overflow-y-auto mt-4 space-y-4">
+        <div className="flex-1 min-h-0 overflow-y-auto mt-4 space-y-4">
           {/* Summary changes */}
           {summaryChanges.length > 0 && (
             <ChangeSection

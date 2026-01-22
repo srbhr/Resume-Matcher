@@ -83,41 +83,41 @@ export const AddSectionDialog: React.FC<AddSectionDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-[500px] p-0 gap-0 rounded-none">
-          <DialogHeader className="p-6 pb-4 border-b border-black">
-            <DialogTitle className="font-serif text-xl font-bold uppercase tracking-tight">
-              {t('builder.customSections.dialogTitle')}
-            </DialogTitle>
-            <DialogDescription className="font-mono text-xs text-gray-600 mt-2">
-              {t('builder.customSections.dialogDescription')}
-            </DialogDescription>
-          </DialogHeader>
+      <DialogContent className="sm:max-w-[500px] p-0 gap-0 rounded-none">
+        <DialogHeader className="p-6 pb-4 border-b border-black">
+          <DialogTitle className="font-serif text-xl font-bold uppercase tracking-tight">
+            {t('builder.customSections.dialogTitle')}
+          </DialogTitle>
+          <DialogDescription className="font-mono text-xs text-gray-600 mt-2">
+            {t('builder.customSections.dialogDescription')}
+          </DialogDescription>
+        </DialogHeader>
 
-          <div className="p-6 space-y-6">
-            {/* Section Name */}
+        <div className="p-6 space-y-6">
+          {/* Section Name */}
+          <div className="space-y-2">
+            <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">
+              {t('builder.customSections.sectionNameLabel')}
+            </Label>
+            <Input
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder={t('builder.customSections.sectionNamePlaceholder')}
+              className="rounded-none border-black"
+              autoFocus
+            />
+          </div>
+
+          {/* Section Type */}
+          <div className="space-y-3">
+            <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">
+              {t('builder.customSections.sectionTypeLabel')}
+            </Label>
             <div className="space-y-2">
-              <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">
-                {t('builder.customSections.sectionNameLabel')}
-              </Label>
-              <Input
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder={t('builder.customSections.sectionNamePlaceholder')}
-                className="rounded-none border-black"
-                autoFocus
-              />
-            </div>
-
-            {/* Section Type */}
-            <div className="space-y-3">
-              <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">
-                {t('builder.customSections.sectionTypeLabel')}
-              </Label>
-              <div className="space-y-2">
-                {sectionTypes.map((item) => (
-                  <button
-                    key={item.type}
+              {sectionTypes.map((item) => (
+                <button
+                  key={item.type}
                   type="button"
                   onClick={() => setSectionType(item.type)}
                   className={`w-full p-4 border text-left transition-colors ${

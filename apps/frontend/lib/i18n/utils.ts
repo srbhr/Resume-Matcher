@@ -13,10 +13,7 @@ export function getNestedValue(obj: Record<string, unknown>, path: string): stri
   return typeof result === 'string' ? result : path;
 }
 
-export function applyParams(
-  value: string,
-  params?: Record<string, string | number>
-): string {
+export function applyParams(value: string, params?: Record<string, string | number>): string {
   if (!params) return value;
   return value.replace(/\{([^{}]+)\}/g, (match, key) => {
     if (Object.prototype.hasOwnProperty.call(params, key)) {
