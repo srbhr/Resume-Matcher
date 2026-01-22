@@ -168,151 +168,156 @@ export const useFileUpload = (
     return `${file.name}-${file.size}-${file.lastModified}-${Math.random().toString(36).substring(2, 9)}`;
   }, []);
 
-  const uploadFileInternal = useCallback(async (fileToUpload: FileWithPreview) => {
-    // Ensure fileToUpload.file is a File instance for upload
-    if (!(fileToUpload.file instanceof File)) {
-      const errorMsg = `Cannot upload "${(fileToUpload.file as FileMetadata).name}"; it's not a valid file object for direct upload.`;
-      console.error(errorMsg, fileToUpload);
-      // Update this specific file's metadata with an error
-      const updatedFileWithMetaError: FileWithPreview = {
-        ...fileToUpload,
-        file: {
-          ...(fileToUpload.file as FileMetadata), // Keep existing metadata
-          uploadError: errorMsg,
-          uploaded: false,
-        },
-      };
-      setState((prev) => ({
-        ...prev,
-        files: prev.files.map((f) =>
-          f.id === updatedFileWithMetaError.id ? updatedFileWithMetaError : f
-        ),
-        errors: [...prev.errors, errorMsg], // Add to general errors too
-      }));
-      onUploadError?.(updatedFileWithMetaError, errorMsg);
-      return;
-    }
+  const uploadFileInternal = useCallback(
+    async (fileToUpload: FileWithPreview) => {
+      // Ensure fileToUpload.file is a File instance for upload
+      if (!(fileToUpload.file instanceof File)) {
+        const errorMsg = `Cannot upload "${(fileToUpload.file as FileMetadata).name}"; it's not a valid file object for direct upload.`;
+        console.error(errorMsg, fileToUpload);
+        // Update this specific file's metadata with an error
+        const updatedFileWithMetaError: FileWithPreview = {
+          ...fileToUpload,
+          file: {
+            ...(fileToUpload.file as FileMetadata), // Keep existing metadata
+            uploadError: errorMsg,
+            uploaded: false,
+          },
+        };
+        setState((prev) => ({
+          ...prev,
+          files: prev.files.map((f) =>
+            f.id === updatedFileWithMetaError.id ? updatedFileWithMetaError : f
+          ),
+          errors: [...prev.errors, errorMsg], // Add to general errors too
+        }));
+        onUploadError?.(updatedFileWithMetaError, errorMsg);
+        return;
+      }
 
-    if (!uploadUrl) {
-      const errorMsg = 'Upload URL is not configured.';
-      console.warn(errorMsg, 'File not uploaded:', fileToUpload.file.name);
-      // Update file metadata to reflect it wasn't uploaded due to config
-      const fileWithConfigError: FileWithPreview = {
-        ...fileToUpload,
-        file: {
-          // Convert to FileMetadata with error
-          name: fileToUpload.file.name,
-          size: fileToUpload.file.size,
-          type: fileToUpload.file.type,
-          id: fileToUpload.id,
-          url: fileToUpload.preview || '',
-          uploaded: false,
-          uploadError: errorMsg,
-        },
-      };
-      setState((prev) => ({
-        ...prev,
-        files: prev.files.map((f) => (f.id === fileWithConfigError.id ? fileWithConfigError : f)),
-        errors: [...prev.errors, errorMsg],
-      }));
-      onUploadError?.(fileWithConfigError, errorMsg);
-      return;
-    }
+      if (!uploadUrl) {
+        const errorMsg = 'Upload URL is not configured.';
+        console.warn(errorMsg, 'File not uploaded:', fileToUpload.file.name);
+        // Update file metadata to reflect it wasn't uploaded due to config
+        const fileWithConfigError: FileWithPreview = {
+          ...fileToUpload,
+          file: {
+            // Convert to FileMetadata with error
+            name: fileToUpload.file.name,
+            size: fileToUpload.file.size,
+            type: fileToUpload.file.type,
+            id: fileToUpload.id,
+            url: fileToUpload.preview || '',
+            uploaded: false,
+            uploadError: errorMsg,
+          },
+        };
+        setState((prev) => ({
+          ...prev,
+          files: prev.files.map((f) => (f.id === fileWithConfigError.id ? fileWithConfigError : f)),
+          errors: [...prev.errors, errorMsg],
+        }));
+        onUploadError?.(fileWithConfigError, errorMsg);
+        return;
+      }
 
-    const formData = new FormData();
-    formData.append('file', fileToUpload.file); // FastAPI expects 'file' field
+      const formData = new FormData();
+      formData.append('file', fileToUpload.file); // FastAPI expects 'file' field
 
-    markUploadStarted();
+      markUploadStarted();
 
-    try {
-      const response = await fetch(uploadUrl, {
-        method: 'POST',
-        body: formData,
-      });
+      try {
+        const response = await fetch(uploadUrl, {
+          method: 'POST',
+          body: formData,
+        });
 
-      let responseData: Record<string, unknown> = {}; // Initialize for broader scope
-      const contentType = response.headers.get('content-type');
+        let responseData: Record<string, unknown> = {}; // Initialize for broader scope
+        const contentType = response.headers.get('content-type');
 
-      if (!response.ok) {
-        let errorDetail = `Upload failed for ${fileToUpload.file.name}. Status: ${response.status} ${response.statusText}`;
-        try {
-          const errorText = await response.text();
-          errorDetail += ` - Server response: ${errorText.substring(0, 200)}${errorText.length > 200 ? '...' : ''}`;
-        } catch (textError: unknown) {
-          console.warn('Could not read error response text:', textError);
+        if (!response.ok) {
+          let errorDetail = `Upload failed for ${fileToUpload.file.name}. Status: ${response.status} ${response.statusText}`;
+          try {
+            const errorText = await response.text();
+            errorDetail += ` - Server response: ${errorText.substring(0, 200)}${errorText.length > 200 ? '...' : ''}`;
+          } catch (textError: unknown) {
+            console.warn('Could not read error response text:', textError);
+          }
+          throw new Error(errorDetail);
         }
-        throw new Error(errorDetail);
+
+        if (contentType && contentType.includes('application/json')) {
+          responseData = (await response.json()) as Record<string, unknown>;
+        } else {
+          // Handle non-JSON or missing Content-Type response if necessary,
+          // or assume success if response.ok and no JSON is expected for some cases.
+          // For now, we'll assume JSON is expected on success.
+          console.warn(
+            `Response for ${fileToUpload.file.name} was not JSON. Content-Type: ${contentType}`
+          );
+          // If JSON is strictly required, this could be an error condition:
+          // throw new Error(`Unexpected response type: ${contentType}. Expected JSON.`);
+        }
+
+        const successfullyUploadedFile: FileWithPreview = {
+          ...fileToUpload,
+          file: {
+            // This is FileMetadata
+            name: fileToUpload.file.name,
+            size: fileToUpload.file.size,
+            type: fileToUpload.file.type,
+            id: fileToUpload.id, // Use existing FileWithPreview ID as FileMetadata ID
+            url:
+              typeof responseData.file_url === 'string'
+                ? responseData.file_url // Assuming server returns 'file_url'
+                : typeof responseData.url === 'string'
+                  ? responseData.url
+                  : fileToUpload.preview || '',
+            uploaded: true,
+          },
+        };
+
+        setState((prev) => {
+          const updatedFiles = prev.files.map((f) =>
+            f.id === successfullyUploadedFile.id ? successfullyUploadedFile : f
+          );
+          onUploadSuccess?.(successfullyUploadedFile, responseData);
+          return { ...prev, files: updatedFiles };
+        });
+      } catch (error: unknown) {
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : `Error uploading ${(fileToUpload.file as File).name}.`;
+        const fileWithError: FileWithPreview = {
+          ...fileToUpload,
+          file: {
+            // This is FileMetadata
+            name: (fileToUpload.file as File).name,
+            size: (fileToUpload.file as File).size,
+            type: (fileToUpload.file as File).type,
+            id: fileToUpload.id,
+            url: fileToUpload.preview || '',
+            uploaded: false,
+            uploadError: errorMessage,
+          },
+        };
+        setState((prev) => {
+          const updatedFiles = prev.files.map((f) =>
+            f.id === fileWithError.id ? fileWithError : f
+          );
+          // Add to general errors in addition to specific file error
+          const newErrors = prev.errors.filter((e) => !e.includes(fileWithError.file.name)); // Avoid duplicate general messages for the same file
+          newErrors.push(errorMessage);
+
+          onUploadError?.(fileWithError, errorMessage);
+          return { ...prev, files: updatedFiles, errors: newErrors };
+        });
+      } finally {
+        markUploadFinished();
       }
-
-      if (contentType && contentType.includes('application/json')) {
-        responseData = (await response.json()) as Record<string, unknown>;
-      } else {
-        // Handle non-JSON or missing Content-Type response if necessary,
-        // or assume success if response.ok and no JSON is expected for some cases.
-        // For now, we'll assume JSON is expected on success.
-        console.warn(
-          `Response for ${fileToUpload.file.name} was not JSON. Content-Type: ${contentType}`
-        );
-        // If JSON is strictly required, this could be an error condition:
-        // throw new Error(`Unexpected response type: ${contentType}. Expected JSON.`);
-      }
-
-      const successfullyUploadedFile: FileWithPreview = {
-        ...fileToUpload,
-        file: {
-          // This is FileMetadata
-          name: fileToUpload.file.name,
-          size: fileToUpload.file.size,
-          type: fileToUpload.file.type,
-          id: fileToUpload.id, // Use existing FileWithPreview ID as FileMetadata ID
-          url:
-            typeof responseData.file_url === 'string'
-              ? responseData.file_url // Assuming server returns 'file_url'
-              : typeof responseData.url === 'string'
-                ? responseData.url
-                : fileToUpload.preview || '',
-          uploaded: true,
-        },
-      };
-
-      setState((prev) => {
-        const updatedFiles = prev.files.map((f) =>
-          f.id === successfullyUploadedFile.id ? successfullyUploadedFile : f
-        );
-        onUploadSuccess?.(successfullyUploadedFile, responseData);
-        return { ...prev, files: updatedFiles };
-      });
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : `Error uploading ${(fileToUpload.file as File).name}.`;
-      const fileWithError: FileWithPreview = {
-        ...fileToUpload,
-        file: {
-          // This is FileMetadata
-          name: (fileToUpload.file as File).name,
-          size: (fileToUpload.file as File).size,
-          type: (fileToUpload.file as File).type,
-          id: fileToUpload.id,
-          url: fileToUpload.preview || '',
-          uploaded: false,
-          uploadError: errorMessage,
-        },
-      };
-      setState((prev) => {
-        const updatedFiles = prev.files.map((f) => (f.id === fileWithError.id ? fileWithError : f));
-        // Add to general errors in addition to specific file error
-        const newErrors = prev.errors.filter((e) => !e.includes(fileWithError.file.name)); // Avoid duplicate general messages for the same file
-        newErrors.push(errorMessage);
-
-        onUploadError?.(fileWithError, errorMessage);
-        return { ...prev, files: updatedFiles, errors: newErrors };
-      });
-    } finally {
-      markUploadFinished();
-    }
-  }, [markUploadFinished, markUploadStarted, onUploadError, onUploadSuccess, uploadUrl]);
+    },
+    [markUploadFinished, markUploadStarted, onUploadError, onUploadSuccess, uploadUrl]
+  );
 
   const addFilesAndUpload = useCallback(
     (newFilesInput: FileList | File[]) => {
@@ -440,7 +445,6 @@ export const useFileUpload = (
         inputRef.current.value = '';
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       state.isUploadingGlobal,
       state.files, // Critical for logic within

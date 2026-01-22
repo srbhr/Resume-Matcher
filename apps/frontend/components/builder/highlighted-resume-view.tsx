@@ -42,10 +42,7 @@ export function HighlightedResumeView({ resumeData, keywords }: HighlightedResum
 
         {/* Work Experience */}
         {resumeData.workExperience && resumeData.workExperience.length > 0 && (
-          <Section
-            title={t('resume.sections.experience')}
-            icon={<Briefcase className="w-4 h-4" />}
-          >
+          <Section title={t('resume.sections.experience')} icon={<Briefcase className="w-4 h-4" />}>
             {resumeData.workExperience.map((exp) => (
               <div key={exp.id} className="mb-4 last:mb-0">
                 <div className="font-semibold text-gray-900">
@@ -107,8 +104,7 @@ export function HighlightedResumeView({ resumeData, keywords }: HighlightedResum
                   {proj.role && (
                     <span className="text-gray-600 font-normal">
                       {' '}
-                      {t('builder.jdMatch.roleSeparator')}
-                      {' '}
+                      {t('builder.jdMatch.roleSeparator')}{' '}
                       <HighlightedText text={proj.role} keywords={keywords} />
                     </span>
                   )}

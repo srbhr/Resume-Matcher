@@ -10,7 +10,6 @@ import {
   DialogFooter,
 } from './dialog';
 import { Button } from './button';
-import { cn } from '@/lib/utils';
 import { useTranslations } from '@/lib/i18n';
 
 /**

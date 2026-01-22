@@ -145,6 +145,19 @@ def _get_original_resume_data(resume: dict[str, Any]) -> dict[str, Any] | None:
     return original_data
 
 
+def _preserve_personal_info(
+    original_data: dict[str, Any] | None,
+    improved_data: dict[str, Any],
+) -> dict[str, Any]:
+    if not original_data:
+        return improved_data
+    original_info = original_data.get("personalInfo")
+    if isinstance(original_info, dict):
+        improved_data = dict(improved_data)
+        improved_data["personalInfo"] = original_info
+    return improved_data
+
+
 def _calculate_diff_from_resume(
     resume: dict[str, Any],
     improved_data: dict[str, Any],
@@ -438,6 +451,10 @@ async def improve_resume_preview_endpoint(
             language=language,
             prompt_id=prompt_id,
         )
+        improved_data = _preserve_personal_info(
+            _get_original_resume_data(resume),
+            improved_data,
+        )
         improved_text = json.dumps(improved_data, indent=2)
         preview_hash = _hash_improved_data(improved_data)
         preview_hashes = job.get("preview_hashes")
@@ -655,6 +672,10 @@ async def improve_resume_endpoint(
             job_keywords=job_keywords,
             language=language,
             prompt_id=prompt_id,
+        )
+        improved_data = _preserve_personal_info(
+            _get_original_resume_data(resume),
+            improved_data,
         )
 
         # Convert improved data to JSON string for storage

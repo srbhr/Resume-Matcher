@@ -28,11 +28,15 @@ export function OutreachPreview({ content, className }: OutreachPreviewProps) {
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <Linkedin className="w-4 h-4 text-[#0077B5]" />
-            <span className="font-mono text-xs uppercase">{t('outreach.preview.channels.linkedin')}</span>
+            <span className="font-mono text-xs uppercase">
+              {t('outreach.preview.channels.linkedin')}
+            </span>
           </div>
           <div className="flex items-center gap-2">
             <Mail className="w-4 h-4 text-gray-600" />
-            <span className="font-mono text-xs uppercase">{t('outreach.preview.channels.email')}</span>
+            <span className="font-mono text-xs uppercase">
+              {t('outreach.preview.channels.email')}
+            </span>
           </div>
         </div>
       </div>
@@ -62,9 +66,7 @@ export function OutreachPreview({ content, className }: OutreachPreviewProps) {
         ) : (
           <div className="text-center py-12 text-gray-400">
             <p className="font-mono text-sm">{t('outreach.preview.emptyTitle')}</p>
-            <p className="font-mono text-xs mt-2">
-              {t('outreach.preview.emptyDescription')}
-            </p>
+            <p className="font-mono text-xs mt-2">{t('outreach.preview.emptyDescription')}</p>
           </div>
         )}
       </div>

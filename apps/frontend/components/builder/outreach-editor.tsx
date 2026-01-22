@@ -98,9 +98,7 @@ export function OutreachEditor({
 
       {/* Footer Tips */}
       <div className="p-4 border-t border-gray-200 bg-[#F5F5F0]">
-        <p className="font-mono text-xs text-gray-500">
-          {t('outreach.editor.tip')}
-        </p>
+        <p className="font-mono text-xs text-gray-500">{t('outreach.editor.tip')}</p>
       </div>
     </div>
   );

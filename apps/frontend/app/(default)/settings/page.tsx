@@ -83,7 +83,7 @@ const getHealthCheckMessage = (
   if (code) {
     const key = `${baseKey}.${code}`;
     const localized = t(key);
-    return localized !== key ? localized : fallback ?? code;
+    return localized !== key ? localized : (fallback ?? code);
   }
   return fallback ?? null;
 };
@@ -876,9 +876,7 @@ export default function SettingsPage() {
                     <p className="font-mono text-xs text-red-600 mt-1">{healthCheckError}</p>
                   )}
                   {healthCheckWarning && (
-                    <p className="font-mono text-xs text-amber-700 mt-1">
-                      {healthCheckWarning}
-                    </p>
+                    <p className="font-mono text-xs text-amber-700 mt-1">{healthCheckWarning}</p>
                   )}
                   {healthDetailItems.length > 0 && (
                     <div className="mt-3 space-y-3">

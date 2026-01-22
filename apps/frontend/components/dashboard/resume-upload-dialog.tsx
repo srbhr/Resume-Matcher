@@ -171,7 +171,9 @@ export function ResumeUploadDialog({ trigger, onUploadComplete }: ResumeUploadDi
                 <div className="w-12 h-12 border border-black bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] flex items-center justify-center mb-4">
                   <UploadIcon className="w-6 h-6 text-black" />
                 </div>
-                <p className="font-bold text-lg mb-1">{t('dashboard.uploadDialog.dropzoneTitle')}</p>
+                <p className="font-bold text-lg mb-1">
+                  {t('dashboard.uploadDialog.dropzoneTitle')}
+                </p>
                 <p className="font-mono text-xs text-gray-500 uppercase">
                   {t('dashboard.uploadDialog.dropzoneSubtitle')}
                 </p>

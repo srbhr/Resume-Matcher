@@ -373,11 +373,7 @@ const ResumeBuilderContent = () => {
     } catch (error) {
       console.error('Failed to download cover letter:', error);
       if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
-        const fallbackUrl = getCoverLetterPdfUrl(
-          resumeId,
-          templateSettings.pageSize,
-          uiLanguage
-        );
+        const fallbackUrl = getCoverLetterPdfUrl(resumeId, templateSettings.pageSize, uiLanguage);
         const didOpen = openUrlInNewTab(fallbackUrl);
         if (!didOpen) {
           alert(t('common.popupBlocked', { url: fallbackUrl }));
@@ -672,13 +668,15 @@ const ResumeBuilderContent = () => {
                     </p>
                   </div>
 
-                   <div className="border-2 border-black bg-yellow-50 p-4">
-                     <h3 className="font-mono text-sm font-bold uppercase mb-2">
-                       {t('builder.jdMatch.highlightedKeywordsTitle')}
-                     </h3>
-                     <p className="text-sm text-gray-600 leading-relaxed">
+                  <div className="border-2 border-black bg-yellow-50 p-4">
+                    <h3 className="font-mono text-sm font-bold uppercase mb-2">
+                      {t('builder.jdMatch.highlightedKeywordsTitle')}
+                    </h3>
+                    <p className="text-sm text-gray-600 leading-relaxed">
                       {(() => {
-                        const template = t('builder.jdMatch.highlightedKeywordsDescriptionTemplate');
+                        const template = t(
+                          'builder.jdMatch.highlightedKeywordsDescriptionTemplate'
+                        );
                         const parts = template.split('__COLOR__');
                         if (parts.length < 2) return template;
                         return (
@@ -691,8 +689,8 @@ const ResumeBuilderContent = () => {
                           </>
                         );
                       })()}
-                     </p>
-                   </div>
+                    </p>
+                  </div>
 
                   <div className="border-2 border-black bg-gray-50 p-4">
                     <h3 className="font-mono text-sm font-bold uppercase mb-2">
@@ -721,8 +719,16 @@ const ResumeBuilderContent = () => {
                     label: t('builder.previewTabs.coverLetter'),
                     disabled: !coverLetter,
                   },
-                  { id: 'outreach', label: t('builder.previewTabs.outreach'), disabled: !outreachMessage },
-                  { id: 'jd-match', label: t('builder.previewTabs.jdMatch'), disabled: !jobDescription },
+                  {
+                    id: 'outreach',
+                    label: t('builder.previewTabs.outreach'),
+                    disabled: !outreachMessage,
+                  },
+                  {
+                    id: 'jd-match',
+                    label: t('builder.previewTabs.jdMatch'),
+                    disabled: !jobDescription,
+                  },
                 ]}
                 activeTab={activeTab}
                 onTabChange={(id) => setActiveTab(id as TabId)}
@@ -808,22 +814,14 @@ const ResumeBuilderContent = () => {
       <ConfirmDialog
         open={showRegenerateDialog !== null}
         onOpenChange={(open) => !open && setShowRegenerateDialog(null)}
-        title={
-          t('builder.regenerateDialog.title', {
-            title:
-              showRegenerateDialog === 'cover-letter'
-                ? t('coverLetter.title')
-                : t('outreach.title'),
-          })
-        }
-        description={
-          t('builder.regenerateDialog.description', {
-            title:
-              showRegenerateDialog === 'cover-letter'
-                ? t('coverLetter.title')
-                : t('outreach.title'),
-          })
-        }
+        title={t('builder.regenerateDialog.title', {
+          title:
+            showRegenerateDialog === 'cover-letter' ? t('coverLetter.title') : t('outreach.title'),
+        })}
+        description={t('builder.regenerateDialog.description', {
+          title:
+            showRegenerateDialog === 'cover-letter' ? t('coverLetter.title') : t('outreach.title'),
+        })}
         confirmLabel={
           showRegenerateDialog === 'cover-letter'
             ? t('coverLetter.regenerate')

@@ -47,12 +47,14 @@ export const GenericItemForm: React.FC<GenericItemFormProps> = ({
   const { t } = useTranslations();
 
   const finalItemLabel = itemLabel ?? t('builder.genericItemForm.itemLabel');
-  const finalAddLabel = addLabel ?? t('builder.genericItemForm.addItemLabel', { label: finalItemLabel });
+  const finalAddLabel =
+    addLabel ?? t('builder.genericItemForm.addItemLabel', { label: finalItemLabel });
 
   const finalTitlePlaceholder = titlePlaceholder ?? t('builder.genericItemForm.placeholders.title');
   const finalSubtitlePlaceholder =
     subtitlePlaceholder ?? t('builder.genericItemForm.placeholders.organization');
-  const finalLocationPlaceholder = locationPlaceholder ?? t('builder.genericItemForm.placeholders.location');
+  const finalLocationPlaceholder =
+    locationPlaceholder ?? t('builder.genericItemForm.placeholders.location');
   const finalYearsPlaceholder = yearsPlaceholder ?? t('builder.genericItemForm.placeholders.years');
   const finalDescriptionPlaceholder =
     descriptionPlaceholder ?? t('builder.genericItemForm.placeholders.description');
@@ -125,17 +127,17 @@ export const GenericItemForm: React.FC<GenericItemFormProps> = ({
   };
 
   return (
-      <div className="space-y-4">
-        <div className="flex justify-end">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleAdd}
-            className="rounded-none border-black hover:bg-black hover:text-white transition-colors"
-          >
-            <Plus className="w-4 h-4 mr-2" /> {finalAddLabel}
-          </Button>
-        </div>
+    <div className="space-y-4">
+      <div className="flex justify-end">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleAdd}
+          className="rounded-none border-black hover:bg-black hover:text-white transition-colors"
+        >
+          <Plus className="w-4 h-4 mr-2" /> {finalAddLabel}
+        </Button>
+      </div>
 
       <div className="space-y-8">
         {items.map((item) => (
@@ -149,83 +151,83 @@ export const GenericItemForm: React.FC<GenericItemFormProps> = ({
               <Trash2 className="w-4 h-4" />
             </Button>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 pr-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 pr-8">
+              <div className="space-y-2">
+                <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">
+                  {t('builder.genericItemForm.fields.title')}
+                </Label>
+                <Input
+                  value={item.title || ''}
+                  onChange={(e) => handleChange(item.id, 'title', e.target.value)}
+                  placeholder={finalTitlePlaceholder}
+                  className="rounded-none border-black bg-white"
+                />
+              </div>
+              {showSubtitle && (
                 <div className="space-y-2">
                   <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">
-                    {t('builder.genericItemForm.fields.title')}
+                    {t('builder.genericItemForm.fields.organization')}
                   </Label>
                   <Input
-                    value={item.title || ''}
-                    onChange={(e) => handleChange(item.id, 'title', e.target.value)}
-                    placeholder={finalTitlePlaceholder}
+                    value={item.subtitle || ''}
+                    onChange={(e) => handleChange(item.id, 'subtitle', e.target.value)}
+                    placeholder={finalSubtitlePlaceholder}
                     className="rounded-none border-black bg-white"
                   />
                 </div>
-                {showSubtitle && (
-                  <div className="space-y-2">
-                    <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">
-                      {t('builder.genericItemForm.fields.organization')}
-                    </Label>
-                    <Input
-                      value={item.subtitle || ''}
-                      onChange={(e) => handleChange(item.id, 'subtitle', e.target.value)}
-                      placeholder={finalSubtitlePlaceholder}
-                      className="rounded-none border-black bg-white"
-                    />
-                  </div>
-                )}
-                {showLocation && (
-                  <div className="space-y-2">
-                    <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">
-                      {t('builder.genericItemForm.fields.location')}
-                    </Label>
-                    <Input
-                      value={item.location || ''}
-                      onChange={(e) => handleChange(item.id, 'location', e.target.value)}
-                      placeholder={finalLocationPlaceholder}
-                      className="rounded-none border-black bg-white"
-                    />
-                  </div>
-                )}
-                {showYears && (
-                  <div className="space-y-2">
-                    <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">
-                      {t('builder.genericItemForm.fields.years')}
-                    </Label>
-                    <Input
-                      value={item.years || ''}
-                      onChange={(e) => handleChange(item.id, 'years', e.target.value)}
-                      placeholder={finalYearsPlaceholder}
-                      className="rounded-none border-black bg-white"
-                    />
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
+              )}
+              {showLocation && (
+                <div className="space-y-2">
                   <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">
-                    {t('builder.genericItemForm.fields.descriptionPoints')}
+                    {t('builder.genericItemForm.fields.location')}
                   </Label>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleAddDescription(item.id)}
-                    className="h-6 text-xs text-blue-700 hover:text-blue-800 hover:bg-blue-50"
-                  >
-                    <Plus className="w-3 h-3 mr-1" /> {t('builder.genericItemForm.actions.addPoint')}
-                  </Button>
+                  <Input
+                    value={item.location || ''}
+                    onChange={(e) => handleChange(item.id, 'location', e.target.value)}
+                    placeholder={finalLocationPlaceholder}
+                    className="rounded-none border-black bg-white"
+                  />
                 </div>
-                {item.description?.map((desc, idx) => (
-                  <div key={idx} className="flex gap-2">
-                    <div className="flex-1">
-                      <RichTextEditor
-                        value={desc}
-                        onChange={(html) => handleDescriptionChange(item.id, idx, html)}
-                        placeholder={finalDescriptionPlaceholder}
-                        minHeight="60px"
-                      />
-                    </div>
+              )}
+              {showYears && (
+                <div className="space-y-2">
+                  <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">
+                    {t('builder.genericItemForm.fields.years')}
+                  </Label>
+                  <Input
+                    value={item.years || ''}
+                    onChange={(e) => handleChange(item.id, 'years', e.target.value)}
+                    placeholder={finalYearsPlaceholder}
+                    className="rounded-none border-black bg-white"
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">
+                  {t('builder.genericItemForm.fields.descriptionPoints')}
+                </Label>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleAddDescription(item.id)}
+                  className="h-6 text-xs text-blue-700 hover:text-blue-800 hover:bg-blue-50"
+                >
+                  <Plus className="w-3 h-3 mr-1" /> {t('builder.genericItemForm.actions.addPoint')}
+                </Button>
+              </div>
+              {item.description?.map((desc, idx) => (
+                <div key={idx} className="flex gap-2">
+                  <div className="flex-1">
+                    <RichTextEditor
+                      value={desc}
+                      onChange={(html) => handleDescriptionChange(item.id, idx, html)}
+                      placeholder={finalDescriptionPlaceholder}
+                      minHeight="60px"
+                    />
+                  </div>
                   <Button
                     variant="ghost"
                     size="icon"
@@ -251,7 +253,8 @@ export const GenericItemForm: React.FC<GenericItemFormProps> = ({
               onClick={handleAdd}
               className="rounded-none border-black"
             >
-              <Plus className="w-4 h-4 mr-2" /> {t('builder.genericItemForm.addFirstItem', { label: finalItemLabel })}
+              <Plus className="w-4 h-4 mr-2" />{' '}
+              {t('builder.genericItemForm.addFirstItem', { label: finalItemLabel })}
             </Button>
           </div>
         )}

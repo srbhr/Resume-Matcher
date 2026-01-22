@@ -39,14 +39,7 @@ describe('DiffPreviewModal', () => {
   it('renders fallback dialog when diff data is missing', () => {
     const onClose = vi.fn();
     const onConfirm = vi.fn();
-    render(
-      <DiffPreviewModal
-        isOpen
-        onClose={onClose}
-        onReject={vi.fn()}
-        onConfirm={onConfirm}
-      />
-    );
+    render(<DiffPreviewModal isOpen onClose={onClose} onReject={vi.fn()} onConfirm={onConfirm} />);
 
     expect(screen.getByText('tailor.missingDiffDialog.title')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'tailor.missingDiffDialog.confirmLabel' }));
@@ -65,9 +58,7 @@ describe('DiffPreviewModal', () => {
       />
     );
 
-    expect(
-      screen.getByText('tailor.diffModal.warningTitle', { exact: false })
-    ).toBeInTheDocument();
+    expect(screen.getByText('tailor.diffModal.warningTitle', { exact: false })).toBeInTheDocument();
     const alertIcons = container.querySelectorAll('.lucide-triangle-alert');
     expect(alertIcons.length).toBe(2);
   });
@@ -85,9 +76,7 @@ describe('DiffPreviewModal', () => {
     );
 
     expect(screen.getByText('new summary')).toBeInTheDocument();
-    fireEvent.click(
-      screen.getByRole('button', { name: /tailor\.diffModal\.summaryChanges/i })
-    );
+    fireEvent.click(screen.getByRole('button', { name: /tailor\.diffModal\.summaryChanges/i }));
     expect(screen.queryByText('new summary')).not.toBeInTheDocument();
   });
 

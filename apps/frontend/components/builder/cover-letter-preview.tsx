@@ -33,9 +33,11 @@ export function CoverLetterPreview({
   className,
 }: CoverLetterPreviewProps) {
   const { t, locale } = useTranslations();
-  const today = new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'long', day: 'numeric' }).format(
-    new Date()
-  );
+  const today = new Intl.DateTimeFormat(locale, {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  }).format(new Date());
 
   // Parse content into paragraphs
   const paragraphs = content.split('\n\n').filter((p) => p.trim().length > 0);
@@ -85,9 +87,7 @@ export function CoverLetterPreview({
           ) : (
             <div className="text-center py-12 text-gray-400">
               <p className="font-mono text-sm">{t('coverLetter.preview.emptyTitle')}</p>
-              <p className="font-mono text-xs mt-2">
-                {t('coverLetter.preview.emptyDescription')}
-              </p>
+              <p className="font-mono text-xs mt-2">{t('coverLetter.preview.emptyDescription')}</p>
             </div>
           )}
         </div>

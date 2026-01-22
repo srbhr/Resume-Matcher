@@ -69,15 +69,11 @@ export function CompleteStep({ onClose, updatedCount }: CompleteStepProps) {
       <div className="text-center">
         <p className="text-2xl font-mono font-bold">{t('enrichment.complete.title')}</p>
         <p className="text-sm text-gray-500 mt-2 font-mono">
-          {hasUpdatedCount ? (
-            updatedCount === 1 ? (
-              t('enrichment.complete.updatedCountSingular', { count: updatedCount })
-            ) : (
-              t('enrichment.complete.updatedCountPlural', { count: updatedCount })
-            )
-          ) : (
-            t('enrichment.complete.updatedFallback')
-          )}
+          {hasUpdatedCount
+            ? updatedCount === 1
+              ? t('enrichment.complete.updatedCountSingular', { count: updatedCount })
+              : t('enrichment.complete.updatedCountPlural', { count: updatedCount })
+            : t('enrichment.complete.updatedFallback')}
         </p>
       </div>
       <Button onClick={onClose} className="mt-4 gap-2">

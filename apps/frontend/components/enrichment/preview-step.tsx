@@ -18,18 +18,13 @@ export function PreviewStep({ enhancements, onApply, onCancel }: PreviewStepProp
       {/* Header */}
       <div className="mb-6">
         <h2 className="text-2xl font-bold mb-2">{t('enrichment.preview.title')}</h2>
-        <p className="text-gray-600 font-mono text-sm">
-          {t('enrichment.preview.description')}
-        </p>
+        <p className="text-gray-600 font-mono text-sm">{t('enrichment.preview.description')}</p>
       </div>
 
       {/* Enhancements list */}
       <div className="flex-1 overflow-y-auto space-y-6 pr-2">
         {enhancements.map((enhancement) => (
-          <EnhancementCard
-            key={enhancement.item_id}
-            enhancement={enhancement}
-          />
+          <EnhancementCard key={enhancement.item_id} enhancement={enhancement} />
         ))}
       </div>
 

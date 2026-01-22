@@ -95,10 +95,10 @@ export default function ApiKeyMenu(): React.ReactElement {
         <>
           <div className="fixed inset-0 z-40" onClick={handleClose} aria-hidden="true" />
           <div className="absolute right-0 z-50 mt-2 w-80 rounded-md border border-gray-700 bg-gray-900/95 p-4 shadow-xl backdrop-blur">
-            <h3 className="text-base font-semibold text-white mb-2">{t('settings.apiKeyMenu.title')}</h3>
-            <p className="text-xs text-gray-400 mb-3">
-              {t('settings.apiKeyMenu.description')}
-            </p>
+            <h3 className="text-base font-semibold text-white mb-2">
+              {t('settings.apiKeyMenu.title')}
+            </h3>
+            <p className="text-xs text-gray-400 mb-3">{t('settings.apiKeyMenu.description')}</p>
             <label htmlFor="llmKey" className="text-xs font-medium text-gray-300">
               {t('settings.apiKey')}
             </label>

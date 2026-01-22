@@ -304,9 +304,7 @@ export const ResumeModernTwoColumn: React.FC<ResumeModernTwoColumnProps> = ({
             additional?.certificationsTraining &&
             additional.certificationsTraining.length > 0 && (
               <div className={baseStyles['resume-section']}>
-                <h3 className={styles.sectionTitleAccent}>
-                  {headingFallbacks.certifications}
-                </h3>
+                <h3 className={styles.sectionTitleAccent}>{headingFallbacks.certifications}</h3>
                 <ul className={`ml-4 ${baseStyles['resume-list']} ${baseStyles['resume-text-xs']}`}>
                   {additional.certificationsTraining.map((cert, index) => (
                     <li key={index} className="flex">
@@ -367,11 +365,11 @@ export const ResumeModernTwoColumn: React.FC<ResumeModernTwoColumnProps> = ({
             additional?.technicalSkills &&
             additional.technicalSkills.length > 0 && (
               <div className={baseStyles['resume-section']}>
-              <h3
-                className={`${baseStyles['resume-section-title-sm']} text-[var(--resume-accent-primary)]`}
-              >
-                {headingFallbacks.skills}
-              </h3>
+                <h3
+                  className={`${baseStyles['resume-section-title-sm']} text-[var(--resume-accent-primary)]`}
+                >
+                  {headingFallbacks.skills}
+                </h3>
                 <div className="flex flex-wrap gap-1">
                   {additional.technicalSkills.map((skill, index) => (
                     <span key={index} className={baseStyles['resume-skill-pill']}>
@@ -387,11 +385,11 @@ export const ResumeModernTwoColumn: React.FC<ResumeModernTwoColumnProps> = ({
             additional?.languages &&
             additional.languages.length > 0 && (
               <div className={baseStyles['resume-section']}>
-              <h3
-                className={`${baseStyles['resume-section-title-sm']} text-[var(--resume-accent-primary)]`}
-              >
-                {headingFallbacks.languages}
-              </h3>
+                <h3
+                  className={`${baseStyles['resume-section-title-sm']} text-[var(--resume-accent-primary)]`}
+                >
+                  {headingFallbacks.languages}
+                </h3>
                 <p className={baseStyles['resume-text-xs']}>{additional.languages.join(' • ')}</p>
               </div>
             )}
@@ -418,11 +416,11 @@ export const ResumeModernTwoColumn: React.FC<ResumeModernTwoColumnProps> = ({
           {personalInfo &&
             (personalInfo.website || personalInfo.linkedin || personalInfo.github) && (
               <div className={baseStyles['resume-section']}>
-              <h3
-                className={`${baseStyles['resume-section-title-sm']} text-[var(--resume-accent-primary)]`}
-              >
-                {headingFallbacks.links}
-              </h3>
+                <h3
+                  className={`${baseStyles['resume-section-title-sm']} text-[var(--resume-accent-primary)]`}
+                >
+                  {headingFallbacks.links}
+                </h3>
                 <div
                   className={`${baseStyles['resume-stack-tight']} ${baseStyles['resume-meta-sm']}`}
                 >

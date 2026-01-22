@@ -13,7 +13,7 @@ const allMessages: Record<Locale, Messages> = {
   es,
   zh,
   ja,
-  pt
+  pt,
 };
 
 export function getMessages(locale: Locale): Messages {
