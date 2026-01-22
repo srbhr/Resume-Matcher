@@ -5,7 +5,7 @@ import json
 import logging
 from collections.abc import Awaitable
 from pathlib import Path
-from typing import Any
+from typing import Any, NoReturn
 from uuid import uuid4
 
 from fastapi import APIRouter, File, HTTPException, Query, UploadFile
@@ -74,6 +74,16 @@ def _get_default_prompt_id() -> str:
     option_ids = {option["id"] for option in IMPROVE_PROMPT_OPTIONS}
     prompt_id = config.get("default_prompt_id", DEFAULT_IMPROVE_PROMPT_ID)
     return prompt_id if prompt_id in option_ids else DEFAULT_IMPROVE_PROMPT_ID
+
+
+def _raise_improve_error(
+    action: str,
+    stage: str,
+    error: Exception,
+    detail: str,
+) -> NoReturn:
+    logger.error("Resume %s failed during %s: %s", action, stage, error)
+    raise HTTPException(status_code=500, detail=detail)
 
 
 def _get_original_resume_data(resume: dict[str, Any]) -> dict[str, Any] | None:
@@ -310,11 +320,16 @@ async def improve_resume_preview_endpoint(
     language = _get_content_language()
     prompt_id = request.prompt_id or _get_default_prompt_id()
 
+    stage = "load_job_keywords"
+    detail = "Failed to preview resume. Please try again."
     try:
         job_keywords = job.get("job_keywords")
         if not job_keywords:
+            stage = "extract_job_keywords"
             job_keywords = await extract_job_keywords(job["content"])
+            stage = "persist_job_keywords"
             db.update_job(request.job_id, {"job_keywords": job_keywords})
+        stage = "improve_resume"
         improved_data = await improve_resume(
             original_resume=resume["content"],
             job_description=job["content"],
@@ -322,12 +337,13 @@ async def improve_resume_preview_endpoint(
             language=language,
             prompt_id=prompt_id,
         )
-
         improved_text = json.dumps(improved_data, indent=2)
+        stage = "calculate_diff"
         diff_summary, detailed_changes = _calculate_diff_from_resume(
             resume,
             improved_data,
         )
+        stage = "generate_improvements"
         improvements = generate_improvements(job_keywords)
 
         request_id = str(uuid4())
@@ -354,11 +370,7 @@ async def improve_resume_preview_endpoint(
             ),
         )
     except Exception as e:
-        logger.error(f"Resume preview failed: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail="Failed to preview resume. Please try again.",
-        )
+        _raise_improve_error("preview", stage, e, detail)
 
 
 @router.post("/improve/confirm", response_model=ImproveResumeResponse)
@@ -379,15 +391,19 @@ async def improve_resume_confirm_endpoint(
     enable_outreach = feature_config.get("enable_outreach_message", False)
     language = _get_content_language()
 
+    stage = "serialize_improved_data"
+    detail = "Failed to confirm resume. Please try again."
     try:
         improved_data = request.improved_data.model_dump()
         improved_text = json.dumps(improved_data, indent=2)
 
+        stage = "calculate_diff"
         diff_summary, detailed_changes = _calculate_diff_from_resume(
             resume,
             improved_data,
         )
 
+        stage = "generate_auxiliary_messages"
         cover_letter, outreach_message = await _generate_auxiliary_messages(
             improved_data,
             job["content"],
@@ -396,6 +412,7 @@ async def improve_resume_confirm_endpoint(
             enable_outreach,
         )
 
+        stage = "create_resume"
         tailored_resume = db.create_resume(
             content=improved_text,
             content_type="json",
@@ -409,6 +426,7 @@ async def improve_resume_confirm_endpoint(
         )
 
         improvements_payload = [imp.model_dump() for imp in request.improvements]
+        stage = "create_improvement"
         request_id = str(uuid4())
         db.create_improvement(
             original_resume_id=request.resume_id,
@@ -434,11 +452,7 @@ async def improve_resume_confirm_endpoint(
             ),
         )
     except Exception as e:
-        logger.error(f"Resume confirmation failed: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail="Failed to confirm resume. Please try again.",
-        )
+        _raise_improve_error("confirm", stage, e, detail)
 
 
 @router.post("/improve", response_model=ImproveResumeResponse)

@@ -96,15 +96,57 @@ export default function TailorPage() {
     if (e.key === 'Enter') e.stopPropagation();
   };
 
+  const isResumeData = (value: unknown): value is ResumeData => {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+    const data = value as Record<string, unknown>;
+    if (
+      'personalInfo' in data &&
+      data.personalInfo !== null &&
+      (typeof data.personalInfo !== 'object' || Array.isArray(data.personalInfo))
+    ) {
+      return false;
+    }
+    if ('workExperience' in data && data.workExperience !== null && !Array.isArray(data.workExperience)) {
+      return false;
+    }
+    if ('education' in data && data.education !== null && !Array.isArray(data.education)) {
+      return false;
+    }
+    if ('personalProjects' in data && data.personalProjects !== null && !Array.isArray(data.personalProjects)) {
+      return false;
+    }
+    if (
+      'additional' in data &&
+      data.additional !== null &&
+      (typeof data.additional !== 'object' || Array.isArray(data.additional))
+    ) {
+      return false;
+    }
+    if ('sectionMeta' in data && data.sectionMeta !== null && !Array.isArray(data.sectionMeta)) {
+      return false;
+    }
+    if (
+      'customSections' in data &&
+      data.customSections !== null &&
+      (typeof data.customSections !== 'object' || Array.isArray(data.customSections))
+    ) {
+      return false;
+    }
+    return true;
+  };
+
   const buildConfirmPayload = (result: ImprovedResult) => {
     if (!masterResumeId) {
       throw new Error('Master resume ID is missing.');
     }
+    const resumePreview = result.data.resume_preview;
+    if (!isResumeData(resumePreview)) {
+      throw new Error('Resume preview data is invalid.');
+    }
     return {
       resume_id: masterResumeId,
       job_id: result.data.job_id,
-      // Safe: resume_preview is validated against ResumeData on the backend.
-      improved_data: result.data.resume_preview as ResumeData,
+      improved_data: resumePreview,
       improvements:
         result.data.improvements?.map((item) => ({
           suggestion: item.suggestion,
@@ -241,6 +283,7 @@ export default function TailorPage() {
     setShowMissingDiffDialog(false);
     setMissingDiffResult(null);
     setMissingDiffError(null);
+    missingDiffConfirmInFlight.current = false;
   };
 
   const handleMissingDiffConfirm = async () => {

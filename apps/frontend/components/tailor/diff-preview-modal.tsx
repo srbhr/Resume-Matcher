@@ -60,9 +60,12 @@ export function DiffPreviewModal({
             {t('tailor.missingDiffDialog.description')}
           </div>
 
-          <div className="flex justify-end items-center pt-4 border-t-2 border-black bg-white -mx-6 -mb-6 px-6 py-4">
+          <div className="flex justify-end items-center gap-3 pt-4 border-t-2 border-black bg-white -mx-6 -mb-6 px-6 py-4">
             <Button variant="outline" onClick={onClose} className="gap-2">
-              {t('common.close')}
+              {t('common.cancel')}
+            </Button>
+            <Button variant="warning" onClick={onConfirm} className="gap-2">
+              {t('tailor.missingDiffDialog.confirmLabel')}
             </Button>
           </div>
         </DialogContent>

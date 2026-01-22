@@ -300,7 +300,7 @@ class ResumeFieldDiff(BaseModel):
     change_type: Literal["added", "removed", "modified"]
     original_value: str | None = None
     new_value: str | None = None
-    confidence: str = "medium"  # "low" | "medium" | "high"
+    confidence: Literal["low", "medium", "high"] = "medium"
 
 
 class ResumeDiffSummary(BaseModel):

@@ -6,6 +6,7 @@ from typing import Any, Callable
 
 from app.llm import complete_json
 from app.prompts import (
+    CRITICAL_TRUTHFULNESS_RULES,
     DEFAULT_IMPROVE_PROMPT_ID,
     EXTRACT_KEYWORDS_PROMPT,
     IMPROVE_RESUME_PROMPTS,
@@ -57,6 +58,9 @@ async def improve_resume(
     prompt_template = IMPROVE_RESUME_PROMPTS.get(
         selected_prompt_id, IMPROVE_RESUME_PROMPTS[DEFAULT_IMPROVE_PROMPT_ID]
     )
+    truthfulness_rules = CRITICAL_TRUTHFULNESS_RULES.get(
+        selected_prompt_id, CRITICAL_TRUTHFULNESS_RULES[DEFAULT_IMPROVE_PROMPT_ID]
+    )
 
     prompt = prompt_template.format(
         job_description=job_description,
@@ -64,6 +68,7 @@ async def improve_resume(
         original_resume=original_resume,
         schema=RESUME_SCHEMA,
         output_language=output_language,
+        critical_truthfulness_rules=truthfulness_rules,
     )
 
     result = await complete_json(
@@ -192,7 +197,7 @@ def _append_list_changes(
     removed_confidence: str,
     modified_confidence: str,
 ) -> None:
-    matcher = SequenceMatcher(a=original_items, b=improved_items)
+    matcher = SequenceMatcher(a=original_items, b=improved_items, autojunk=False)
     for tag, i1, i2, j1, j2 in matcher.get_opcodes():
         if tag == "equal":
             continue
