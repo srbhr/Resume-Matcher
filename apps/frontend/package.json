@@ -44,6 +44,6 @@
     "prettier": "^3.5.3",
     "tailwindcss": "^4",
     "typescript": "^5",
-    "vitest": "^2.1.9"
+    "vitest": "^4.0.17"
   }
 }
