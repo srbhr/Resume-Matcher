@@ -474,7 +474,7 @@
       "descriptionsModified": "変更された説明",
       "certificationsAdded": "追加された資格",
       "highRiskChanges": "高リスクの変更",
-      "warningTitle": "完全に新しいスキルが {count} 件検出されました",
+      "warningTitle": "高リスクな追加が {count} 件検出されました",
       "warningMessage": "これらのスキルが元の履歴書に実際に存在する、または説明内に反映されていることを確認してください",
       "summaryChanges": "概要の変更",
       "skillChanges": "スキルの変更",

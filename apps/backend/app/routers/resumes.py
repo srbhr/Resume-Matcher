@@ -1,6 +1,7 @@
 """Resume management endpoints."""
 
 import asyncio
+import hashlib
 import json
 import logging
 from collections.abc import Awaitable
@@ -74,6 +75,15 @@ def _get_default_prompt_id() -> str:
     option_ids = {option["id"] for option in IMPROVE_PROMPT_OPTIONS}
     prompt_id = config.get("default_prompt_id", DEFAULT_IMPROVE_PROMPT_ID)
     return prompt_id if prompt_id in option_ids else DEFAULT_IMPROVE_PROMPT_ID
+
+
+def _hash_job_content(content: str) -> str:
+    return hashlib.sha256(content.encode("utf-8")).hexdigest()
+
+
+def _hash_improved_data(data: dict[str, Any]) -> str:
+    serialized = json.dumps(data, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
 
 
 def _raise_improve_error(
@@ -355,12 +365,17 @@ async def improve_resume_preview_endpoint(
     detail = "Failed to preview resume. Please try again."
     try:
         job_keywords = job.get("job_keywords")
-        if not job_keywords:
+        job_keywords_hash = job.get("job_keywords_hash")
+        content_hash = _hash_job_content(job["content"])
+        if not job_keywords or job_keywords_hash != content_hash:
             stage = "extract_job_keywords"
             job_keywords = await extract_job_keywords(job["content"])
             stage = "persist_job_keywords"
-            # Cache extracted keywords; if job content changes, keywords stay stale until re-upload.
-            db.update_job(request.job_id, {"job_keywords": job_keywords})
+            # Cache extracted keywords with a content hash for basic invalidation.
+            db.update_job(
+                request.job_id,
+                {"job_keywords": job_keywords, "job_keywords_hash": content_hash},
+            )
         stage = "improve_resume"
         improved_data = await improve_resume(
             original_resume=resume["content"],
@@ -370,6 +385,11 @@ async def improve_resume_preview_endpoint(
             prompt_id=prompt_id,
         )
         improved_text = json.dumps(improved_data, indent=2)
+        preview_hash = _hash_improved_data(improved_data)
+        db.update_job(
+            request.job_id,
+            {"preview_hash": preview_hash, "preview_prompt_id": prompt_id},
+        )
         stage = "calculate_diff"
         diff_summary, detailed_changes = _calculate_diff_from_resume(
             resume,
@@ -437,6 +457,20 @@ async def improve_resume_confirm_endpoint(
             raise HTTPException(
                 status_code=400,
                 detail="Invalid improved resume data. Please retry preview.",
+            )
+        preview_hash = job.get("preview_hash")
+        if preview_hash:
+            request_hash = _hash_improved_data(improved_data)
+            if request_hash != preview_hash:
+                logger.warning("Resume confirm rejected due to preview hash mismatch.")
+                raise HTTPException(
+                    status_code=400,
+                    detail="Invalid improved resume data. Please retry preview.",
+                )
+        else:
+            logger.warning(
+                "Skipping confirm payload hash check; preview hash missing for job %s.",
+                request.job_id,
             )
 
         stage = "calculate_diff"
