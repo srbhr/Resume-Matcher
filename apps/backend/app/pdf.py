@@ -71,18 +71,33 @@ def _resolve_pdf_margins(margins: Optional[dict]) -> dict:
 
 
 def _find_chromium_executable() -> Optional[str]:
-    if sys.platform != "win32":
-        return None
-    candidates = [
-        Path(os.environ.get("PROGRAMFILES", "C:/Program Files"))
-        / "Google/Chrome/Application/chrome.exe",
-        Path(os.environ.get("PROGRAMFILES(X86)", "C:/Program Files (x86)"))
-        / "Google/Chrome/Application/chrome.exe",
-        Path(os.environ.get("PROGRAMFILES", "C:/Program Files"))
-        / "Microsoft/Edge/Application/msedge.exe",
-        Path(os.environ.get("PROGRAMFILES(X86)", "C:/Program Files (x86)"))
-        / "Microsoft/Edge/Application/msedge.exe",
-    ]
+    """Find system Chrome/Chromium/Edge executable across platforms."""
+    if sys.platform == "win32":
+        candidates = [
+            Path(os.environ.get("PROGRAMFILES", "C:/Program Files"))
+            / "Google/Chrome/Application/chrome.exe",
+            Path(os.environ.get("PROGRAMFILES(X86)", "C:/Program Files (x86)"))
+            / "Google/Chrome/Application/chrome.exe",
+            Path(os.environ.get("PROGRAMFILES", "C:/Program Files"))
+            / "Microsoft/Edge/Application/msedge.exe",
+            Path(os.environ.get("PROGRAMFILES(X86)", "C:/Program Files (x86)"))
+            / "Microsoft/Edge/Application/msedge.exe",
+        ]
+    else:
+        # Linux/macOS paths
+        candidates = [
+            Path("/usr/bin/google-chrome"),
+            Path("/usr/bin/google-chrome-stable"),
+            Path("/usr/bin/chromium"),
+            Path("/usr/bin/chromium-browser"),
+            Path("/usr/bin/microsoft-edge"),
+            Path("/snap/bin/chromium"),
+            Path("/var/lib/flatpak/exports/bin/com.google.Chrome"),
+            Path("/var/lib/flatpak/exports/bin/org.chromium.Chromium"),
+            Path(os.path.expanduser("~/.local/share/flatpak/exports/bin/com.google.Chrome")),
+            Path(os.path.expanduser("~/.local/share/flatpak/exports/bin/org.chromium.Chromium")),
+        ]
+    
     for candidate in candidates:
         if candidate.exists():
             return str(candidate)
