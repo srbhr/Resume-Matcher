@@ -13,6 +13,7 @@ import {
   deleteResume,
   type ResumeListItem,
   fetchResumeLocal,
+  fetchResumeList_local,
 } from '@/lib/api/resume';
 import { useStatusCache } from '@/lib/context/status-cache';
 import Link from 'next/link';
@@ -64,8 +65,10 @@ export default function DashboardPage() {
       //const status = data.raw_resume?.processing_status || 'pending';
       const data = await fetchResumeLocal(resumeId);
       console.log('Resume status:', data);
-      //const status = data.raw_resume?.processing_status || 'pending';
-      const status = data.processing_status || 'pending';
+      
+      // Data from fetchResumeLocal is now adapted to match ResumeResponse['data']
+      // So processing_status is inside raw_resume
+      const status = data.raw_resume?.processing_status || 'pending';
 
       setProcessingStatus(status as ProcessingStatus);
     } catch (err: unknown) {
@@ -90,7 +93,23 @@ export default function DashboardPage() {
 
   const loadTailoredResumes = useCallback(async () => {
     try {
-      const data = await fetchResumeList(true);
+      let data: ResumeListItem[] = [];
+      
+      // Try local fetch first
+      try {
+        const localData = await fetchResumeList_local(true);
+        if (localData && localData.length > 0) {
+          data = localData;
+        }
+      } catch (localErr) {
+        console.log('Local list fetch failed or empty, trying API...', localErr);
+      }
+
+      // Fallback to API if local is empty/failed
+      if (data.length === 0) {
+         data = await fetchResumeList(true);
+      }
+
       const masterFromList = data.find((r) => r.is_master);
       const storedId = localStorage.getItem('master_resume_id');
       const resolvedMasterId = masterFromList?.resume_id || storedId;
@@ -275,8 +294,8 @@ export default function DashboardPage() {
           )
         ) : (
           // Master Resume Exists - Click to View
-          <div
-            onClick={() => router.push(`/resumes/${masterResumeId}`)}
+          <Link
+            href={`/resumes/${masterResumeId}`}
             className={interactiveCardClass}
           >
             <div className="flex-1 flex flex-col h-full">
@@ -309,14 +328,14 @@ export default function DashboardPage() {
                 STATUS: {getStatusDisplay().text}
               </p>
             </div>
-          </div>
+          </Link>
         )}
 
         {/* 2. Tailored Resumes */}
         {tailoredResumes.map((resume) => (
-          <div
+          <Link
             key={resume.resume_id}
-            onClick={() => router.push(`/resumes/${resume.resume_id}`)}
+            href={`/resumes/${resume.resume_id}`}
             className={`${interactiveCardClass} bg-[#E5E5E0]`}
           >
             <div className="flex-1 flex flex-col">
@@ -335,7 +354,7 @@ export default function DashboardPage() {
                 Edited {formatDate(resume.updated_at || resume.created_at)}
               </p>
             </div>
-          </div>
+          </Link>
         ))}
 
         {/* 3. Create Tailored Resume */}

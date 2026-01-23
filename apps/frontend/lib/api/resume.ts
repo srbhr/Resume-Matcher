@@ -134,14 +134,28 @@ export async function fetchResume(resumeId: string): Promise<ResumeResponse['dat
   return payload.data;
 }
 
-export async function fetchResumeLocal(resumeId: string): Promise<ResumeResponse> {
-  const res = await dbService.getItemById(resumeId);
+export async function fetchResumeLocal(resumeId: string): Promise<ResumeResponse['data']> {
+  const res = (await dbService.getItemById(resumeId)) as any;
 
   if (!res) {
     throw new Error(`Failed to load resume (status ${res}).`);
-  } else {
-    return res;
   }
+
+  // Transform flat DB structure to nested API response structure
+  return {
+    resume_id: res.resume_id,
+    raw_resume: {
+      id: null,
+      content: res.content || '',
+      content_type: res.content_type || 'md',
+      created_at: res.created_at || new Date().toISOString(),
+      processing_status: res.processing_status || 'pending',
+    },
+    processed_resume: res.processed_data || null,
+    cover_letter: res.cover_letter,
+    outreach_message: res.outreach_message,
+    parent_id: res.parent_id,
+  };
 }
 
 export async function fetchResumeList(includeMaster = false): Promise<ResumeListItem[]> {

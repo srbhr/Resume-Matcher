@@ -5,7 +5,12 @@ import { useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import Resume, { ResumeData } from '@/components/dashboard/resume-component';
-import { fetchResume, downloadResumePdf, deleteResume } from '@/lib/api/resume';
+import {
+  fetchResume,
+  fetchResumeLocal,
+  downloadResumePdf,
+  deleteResume,
+} from '@/lib/api/resume';
 import { useStatusCache } from '@/lib/context/status-cache';
 import { ArrowLeft, Edit, Download, Loader2, AlertCircle, Sparkles } from 'lucide-react';
 import { EnrichmentModal } from '@/components/enrichment/enrichment-modal';
@@ -34,7 +39,25 @@ export default function ResumeViewerPage() {
     const loadResume = async () => {
       try {
         setLoading(true);
-        const data = await fetchResume(resumeId);
+
+        // Try local fetch first
+        let data;
+        let isLocal = false;
+        try {
+          data = await fetchResumeLocal(resumeId);
+          console.log('Local fetch success', data);
+          if (data) isLocal = true;
+        } catch (localErr) {
+          console.log('Local fetch failed, trying API...', localErr);
+        }
+
+
+        // NOTE: API fallback is currently disabled to force "Local/Offline Mode".
+        // This ensures the app relies strictly on data from IndexedDB (client-side storage).
+        // To enable hybrid mode (try local -> fail -> try API), uncomment the block below.
+        // if (!data) {
+        //   data = await fetchResume(resumeId);
+        // }
 
         // Get processing status
         const status = (data.raw_resume?.processing_status || 'pending') as ProcessingStatus;
