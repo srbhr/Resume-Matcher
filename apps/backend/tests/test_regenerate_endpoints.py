@@ -216,3 +216,26 @@ class TestRegenerateEndpoints(unittest.IsolatedAsyncioTestCase):
         updated = mock_db_legacy.update_resume.call_args.args[1]["processed_data"]
         self.assertEqual(updated["technicalSkills"], ["Python", "TypeScript"])
 
+    async def test_apply_regenerated_skills_fails_when_no_supported_path_exists(self) -> None:
+        resume_id = "resume_1"
+
+        mock_db = MagicMock()
+        mock_db.get_resume.return_value = {"processed_data": {"workExperience": []}}
+
+        regenerated_items = [
+            RegeneratedItem(
+                item_id="skills",
+                item_type="skills",
+                title="Technical Skills",
+                original_content=["Python"],
+                new_content=["Python", "TypeScript"],
+                diff_summary="Summary",
+            )
+        ]
+
+        with patch.object(enrichment_router, "db", mock_db):
+            with self.assertRaises(HTTPException) as ctx:
+                await enrichment_router.apply_regenerated_items(resume_id, regenerated_items)
+
+        self.assertEqual(ctx.exception.status_code, 409)
+        mock_db.update_resume.assert_not_called()

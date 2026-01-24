@@ -615,6 +615,8 @@ async def apply_regenerated_items(
             elif "technicalSkills" in updated_data:
                 # Fallback for legacy data structure
                 updated_data["technicalSkills"] = new_content
+            else:
+                apply_failures.append(item_id)
 
     if apply_failures:
         logger.warning(

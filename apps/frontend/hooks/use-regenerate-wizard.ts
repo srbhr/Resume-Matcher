@@ -8,7 +8,7 @@ import type { RegenerateWizardStep } from '@/components/builder/regenerate-wizar
 interface UseRegenerateWizardProps {
   resumeId: string;
   outputLanguage?: string;
-  onSuccess?: () => void;
+  onSuccess?: () => void | Promise<void>;
   onError?: (error: string) => void;
 }
 
@@ -136,8 +136,16 @@ export function useRegenerateWizard({
     try {
       await applyRegeneratedItems(resumeId, regeneratedItems);
       setStep('complete');
-      onSuccess?.();
-      // Reset after successful apply
+
+      if (onSuccess) {
+        try {
+          await onSuccess();
+        } catch (error) {
+          console.error('Regenerate wizard onSuccess callback failed:', error);
+        }
+      }
+
+      // Reset after the entire success flow completes
       reset();
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to apply changes';

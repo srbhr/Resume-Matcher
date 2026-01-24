@@ -136,21 +136,21 @@ const ResumeBuilderContent = () => {
   const regenerateWizard = useRegenerateWizard({
     resumeId: resumeId || '',
     outputLanguage: contentLanguage,
-    onSuccess: () => {
+    onSuccess: async () => {
       // Reload resume data after applying changes
-      if (resumeId) {
-        (async () => {
-          try {
-            const data = await fetchResume(resumeId);
-            if (data.processed_resume) {
-              setResumeData(data.processed_resume as ResumeData);
-              setLastSavedData(data.processed_resume as ResumeData);
-            }
-          } catch (error) {
-            console.error('Failed to reload resume after applying regenerated changes:', error);
-            alert(t('builder.alerts.reloadFailed'));
-          }
-        })();
+      if (!resumeId) {
+        return;
+      }
+
+      try {
+        const data = await fetchResume(resumeId);
+        if (data.processed_resume) {
+          setResumeData(data.processed_resume as ResumeData);
+          setLastSavedData(data.processed_resume as ResumeData);
+        }
+      } catch (error) {
+        console.error('Failed to reload resume after applying regenerated changes:', error);
+        alert(t('builder.alerts.reloadFailed'));
       }
     },
   });
