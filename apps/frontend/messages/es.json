@@ -209,6 +209,7 @@
       "instructionDialog": {
         "title": "¿Qué te gustaría mejorar?",
         "subtitle": "Proporciona comentarios específicos para guiar a la IA",
+        "defaultInstruction": "Mejora el contenido con verbos de acción más fuertes e impacto cuantificable cuando sea posible.",
         "selectedItems": "Elementos seleccionados",
         "placeholder": "Ejemplo: Añade más métricas cuantificables, enfatiza habilidades de liderazgo, usa más verbos de acción...",
         "hint": "Sé específico sobre lo que no te satisface",
@@ -218,6 +219,9 @@
       "diffPreview": {
         "title": "Vista previa de cambios",
         "subtitle": "Revisa el contenido regenerado antes de aplicarlo",
+        "expandItem": "Expandir {item}",
+        "collapseItem": "Contraer {item}",
+        "partialFailures": "No se pudieron regenerar algunos elementos ({count}). Aún puedes revisar y aplicar los que se generaron correctamente.",
         "changesCount": "{count} elementos modificados",
         "rejectButton": "Rechazar y regenerar",
         "acceptButton": "Aceptar cambios",
@@ -230,6 +234,7 @@
       "errors": {
         "generationFailed": "No se pudo generar el contenido. Inténtalo de nuevo.",
         "applyFailed": "No se pudieron aplicar los cambios. Inténtalo de nuevo.",
+        "resumeChanged": "El contenido del currículum cambió desde la regeneración. Vuelve a regenerar e inténtalo de nuevo.",
         "noChangesToApply": "No hay cambios para aplicar.",
         "networkError": "Error de red. Verifica tu conexión."
       }

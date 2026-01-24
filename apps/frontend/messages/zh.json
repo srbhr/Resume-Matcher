@@ -209,6 +209,7 @@
       "instructionDialog": {
         "title": "您想要改进什么？",
         "subtitle": "提供具体反馈以指导 AI",
+        "defaultInstruction": "使用更有力的行动动词改进内容，并在可能时体现可量化的影响。",
         "selectedItems": "已选项目",
         "placeholder": "示例：添加更多量化指标、强调领导能力、使用更多行动动词...",
         "hint": "请具体说明您不满意的地方",
@@ -218,6 +219,9 @@
       "diffPreview": {
         "title": "预览变更",
         "subtitle": "应用前查看重新生成的内容",
+        "expandItem": "展开 {item}",
+        "collapseItem": "收起 {item}",
+        "partialFailures": "部分项目未能重新生成（{count} 个）。你仍可以预览并应用已成功生成的变更。",
         "changesCount": "{count} 个项目已修改",
         "rejectButton": "拒绝并重新生成",
         "acceptButton": "接受变更",
@@ -230,6 +234,7 @@
       "errors": {
         "generationFailed": "生成内容失败，请重试。",
         "applyFailed": "应用变更失败，请重试。",
+        "resumeChanged": "简历内容在重新生成后已发生变化。请重新生成后再试。",
         "noChangesToApply": "没有可应用的变更。",
         "networkError": "网络错误，请检查您的连接。"
       }

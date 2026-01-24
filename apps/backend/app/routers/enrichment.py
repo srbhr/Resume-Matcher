@@ -27,6 +27,7 @@ from app.schemas.enrichment import (
     EnhancementPreview,
     EnrichmentItem,
     EnrichmentQuestion,
+    RegenerateItemError,
     RegenerateItemInput,
     RegenerateRequest,
     RegenerateResponse,
@@ -426,16 +427,38 @@ async def regenerate_items(request: RegenerateRequest) -> RegenerateResponse:
         else:
             tasks.append(_regenerate_experience_or_project(item, request.instruction, output_language))
 
-    try:
-        regenerated_items = await asyncio.gather(*tasks)
-    except Exception as e:
-        logger.error(f"Failed to regenerate items: {e}")
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+
+    regenerated_items: list[RegeneratedItem] = []
+    errors: list[RegenerateItemError] = []
+
+    for item, result in zip(request.items, results):
+        if isinstance(result, Exception):
+            logger.error(
+                "Failed to regenerate item. "
+                f"resume_id={request.resume_id} item_id={item.item_id} item_type={item.item_type}",
+                exc_info=result,
+            )
+            errors.append(
+                RegenerateItemError(
+                    item_id=item.item_id,
+                    item_type=item.item_type,
+                    title=item.title,
+                    subtitle=item.subtitle,
+                    message="Failed to regenerate this item. Please try again.",
+                )
+            )
+            continue
+
+        regenerated_items.append(result)
+
+    if not regenerated_items:
         raise HTTPException(
             status_code=500,
             detail="Failed to regenerate content. Please try again.",
         )
 
-    return RegenerateResponse(regenerated_items=list(regenerated_items))
+    return RegenerateResponse(regenerated_items=regenerated_items, errors=errors)
 
 
 @router.post("/apply-regenerated/{resume_id}")
@@ -465,6 +488,24 @@ async def apply_regenerated_items(
     def _normalize_match_value(value: str | None) -> str:
         return (value or "").strip().casefold()
 
+    def _normalize_lines(value: object) -> list[str]:
+        if value is None:
+            return []
+        if isinstance(value, list):
+            normalized: list[str] = []
+            for entry in value:
+                text = str(entry).strip()
+                if text:
+                    normalized.append(text)
+            return normalized
+        text = str(value).strip()
+        return [text] if text else []
+
+    def _lines_equal(left: object, right: object) -> bool:
+        left_norm = [line.casefold() for line in _normalize_lines(left)]
+        right_norm = [line.casefold() for line in _normalize_lines(right)]
+        return left_norm == right_norm
+
     def _find_unique_index_by_metadata(
         entries: list[dict],
         *,
@@ -472,6 +513,8 @@ async def apply_regenerated_items(
         subtitle_key: str,
         expected_title: str,
         expected_subtitle: str | None,
+        expected_original_content: list[str],
+        content_key: str,
     ) -> int | None:
         expected_title_norm = _normalize_match_value(expected_title)
         expected_subtitle_norm = _normalize_match_value(expected_subtitle)
@@ -494,6 +537,14 @@ async def apply_regenerated_items(
 
         if len(matches) == 1:
             return matches[0]
+
+        # If metadata is ambiguous, try to disambiguate using the original content.
+        matches_by_content = [
+            i for i in matches if _lines_equal(entries[i].get(content_key), expected_original_content)
+        ]
+        if len(matches_by_content) == 1:
+            return matches_by_content[0]
+
         return None
 
     def _parse_index(item_id: str, pattern: str) -> int | None:
@@ -523,6 +574,7 @@ async def apply_regenerated_items(
 
             expected_title = item.title
             expected_company = item.subtitle
+            expected_original_content = item.original_content
 
             resolved_index: int | None = None
             if 0 <= index < len(experiences):
@@ -532,7 +584,7 @@ async def apply_regenerated_items(
                 if entry_title == _normalize_match_value(expected_title) and (
                     not _normalize_match_value(expected_company)
                     or entry_company == _normalize_match_value(expected_company)
-                ):
+                ) and _lines_equal(entry.get("description"), expected_original_content):
                     resolved_index = index
 
             if resolved_index is None:
@@ -542,6 +594,8 @@ async def apply_regenerated_items(
                     subtitle_key="company",
                     expected_title=expected_title,
                     expected_subtitle=expected_company,
+                    expected_original_content=expected_original_content,
+                    content_key="description",
                 )
 
             if resolved_index is None:
@@ -555,6 +609,9 @@ async def apply_regenerated_items(
 
             entry = experiences[resolved_index]
             if isinstance(entry, dict):
+                if not _lines_equal(entry.get("description"), expected_original_content):
+                    apply_failures.append(item_id)
+                    continue
                 entry["description"] = new_content
             else:
                 apply_failures.append(item_id)
@@ -572,6 +629,7 @@ async def apply_regenerated_items(
 
             expected_name = item.title
             expected_role = item.subtitle
+            expected_original_content = item.original_content
 
             resolved_index = None
             if 0 <= index < len(projects):
@@ -581,7 +639,7 @@ async def apply_regenerated_items(
                 if entry_name == _normalize_match_value(expected_name) and (
                     not _normalize_match_value(expected_role)
                     or entry_role == _normalize_match_value(expected_role)
-                ):
+                ) and _lines_equal(entry.get("description"), expected_original_content):
                     resolved_index = index
 
             if resolved_index is None:
@@ -591,6 +649,8 @@ async def apply_regenerated_items(
                     subtitle_key="role",
                     expected_title=expected_name,
                     expected_subtitle=expected_role,
+                    expected_original_content=expected_original_content,
+                    content_key="description",
                 )
 
             if resolved_index is None:
@@ -604,16 +664,28 @@ async def apply_regenerated_items(
 
             entry = projects[resolved_index]
             if isinstance(entry, dict):
+                if not _lines_equal(entry.get("description"), expected_original_content):
+                    apply_failures.append(item_id)
+                    continue
                 entry["description"] = new_content
             else:
                 apply_failures.append(item_id)
 
         elif item_type == "skills":
             # Update technical skills (stored in additional.technicalSkills)
-            if "additional" in updated_data and isinstance(updated_data.get("additional"), dict):
-                updated_data["additional"]["technicalSkills"] = new_content
+            expected_original_content = item.original_content
+
+            additional = updated_data.get("additional")
+            if isinstance(additional, dict) and "technicalSkills" in additional:
+                if not _lines_equal(additional.get("technicalSkills"), expected_original_content):
+                    apply_failures.append(item_id)
+                    continue
+                additional["technicalSkills"] = new_content
             elif "technicalSkills" in updated_data:
                 # Fallback for legacy data structure
+                if not _lines_equal(updated_data.get("technicalSkills"), expected_original_content):
+                    apply_failures.append(item_id)
+                    continue
                 updated_data["technicalSkills"] = new_content
             else:
                 apply_failures.append(item_id)
@@ -625,7 +697,10 @@ async def apply_regenerated_items(
         )
         raise HTTPException(
             status_code=409,
-            detail="Resume content changed since regeneration. Please regenerate and try again.",
+            detail=(
+                "Resume content changed or could not be uniquely matched. "
+                "Please regenerate and try again."
+            ),
         )
 
     # Update the resume in database

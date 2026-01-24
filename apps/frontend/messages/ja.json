@@ -209,6 +209,7 @@
       "instructionDialog": {
         "title": "どこを改善したいですか？",
         "subtitle": "AIを導くために具体的なフィードバックを入力してください",
+        "defaultInstruction": "より強いアクション動詞で内容を改善し、可能な範囲で定量的な成果を示してください。",
         "selectedItems": "選択した項目",
         "placeholder": "例：より定量的な指標を追加する、リーダーシップを強調する、行動動詞を増やす…",
         "hint": "満足していない点を具体的に書いてください",
@@ -218,6 +219,9 @@
       "diffPreview": {
         "title": "変更をプレビュー",
         "subtitle": "適用する前に再生成された内容を確認してください",
+        "expandItem": "{item} を展開",
+        "collapseItem": "{item} を折りたたむ",
+        "partialFailures": "一部の項目を再生成できませんでした（{count}件）。成功した変更はそのまま確認して適用できます。",
         "changesCount": "{count} 件変更",
         "rejectButton": "却下して再生成",
         "acceptButton": "変更を適用",
@@ -230,6 +234,7 @@
       "errors": {
         "generationFailed": "生成に失敗しました。もう一度お試しください。",
         "applyFailed": "変更の適用に失敗しました。もう一度お試しください。",
+        "resumeChanged": "再生成後に履歴書の内容が変更されました。再生成してからもう一度お試しください。",
         "noChangesToApply": "適用できる変更がありません。",
         "networkError": "ネットワークエラー。接続を確認してください。"
       }

@@ -100,6 +100,59 @@ class TestRegenerateEndpoints(unittest.IsolatedAsyncioTestCase):
         mock_regenerate_item.assert_awaited()
         mock_regenerate_skills.assert_awaited()
 
+    async def test_regenerate_allows_partial_success_with_errors(self) -> None:
+        resume_id = "resume_1"
+        request = RegenerateRequest(
+            resume_id=resume_id,
+            items=[
+                RegenerateItemInput(
+                    item_id="exp_0",
+                    item_type="experience",
+                    title="Senior Software Engineer",
+                    subtitle="Google",
+                    current_content=["Old"],
+                ),
+                RegenerateItemInput(
+                    item_id="skills",
+                    item_type="skills",
+                    title="Technical Skills",
+                    current_content=["Python"],
+                ),
+            ],
+            instruction="Improve wording",
+            output_language="en",
+        )
+
+        mock_db = MagicMock()
+        mock_db.get_resume.return_value = {"processed_data": {"workExperience": [], "additional": {}}}
+
+        skills_item = RegeneratedItem(
+            item_id="skills",
+            item_type="skills",
+            title="Technical Skills",
+            original_content=["Python"],
+            new_content=["Python", "TypeScript"],
+            diff_summary="Summary",
+        )
+
+        with (
+            patch.object(enrichment_router, "db", mock_db),
+            patch.object(
+                enrichment_router,
+                "_regenerate_experience_or_project",
+                AsyncMock(side_effect=RuntimeError("boom")),
+            ),
+            patch.object(
+                enrichment_router,
+                "_regenerate_skills",
+                AsyncMock(return_value=skills_item),
+            ),
+        ):
+            response = await enrichment_router.regenerate_items(request)
+
+        self.assertEqual([item.item_id for item in response.regenerated_items], ["skills"])
+        self.assertEqual([err.item_id for err in response.errors], ["exp_0"])
+
     async def test_apply_regenerated_falls_back_to_metadata_matching(self) -> None:
         resume_id = "resume_1"
         processed_data = {
@@ -145,6 +198,42 @@ class TestRegenerateEndpoints(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(updated["workExperience"][0]["description"], ["Keep me"])
         self.assertEqual(updated["workExperience"][1]["description"], ["New bullet"])
+
+    async def test_apply_regenerated_disambiguates_duplicates_by_original_content(self) -> None:
+        resume_id = "resume_1"
+        processed_data = {
+            "workExperience": [
+                {"title": "Engineer", "company": "Google", "description": ["Bullet A"]},
+                {"title": "Engineer", "company": "Google", "description": ["Bullet B"]},
+            ],
+            "personalProjects": [],
+            "additional": {"technicalSkills": ["Python"]},
+        }
+
+        mock_db = MagicMock()
+        mock_db.get_resume.return_value = {"processed_data": processed_data}
+        mock_db.update_resume.return_value = None
+
+        regenerated_items = [
+            RegeneratedItem(
+                item_id="exp_0",  # could point to a different duplicate after reordering
+                item_type="experience",
+                title="Engineer",
+                subtitle="Google",
+                original_content=["Bullet B"],
+                new_content=["Bullet B (rewritten)"],
+                diff_summary="Summary",
+            )
+        ]
+
+        with patch.object(enrichment_router, "db", mock_db):
+            result = await enrichment_router.apply_regenerated_items(resume_id, regenerated_items)
+
+        self.assertEqual(result["updated_items"], 1)
+
+        updated = mock_db.update_resume.call_args.args[1]["processed_data"]
+        self.assertEqual(updated["workExperience"][0]["description"], ["Bullet A"])
+        self.assertEqual(updated["workExperience"][1]["description"], ["Bullet B (rewritten)"])
 
     async def test_apply_regenerated_refuses_when_items_do_not_match(self) -> None:
         resume_id = "resume_1"

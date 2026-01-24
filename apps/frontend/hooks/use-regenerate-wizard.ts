@@ -2,8 +2,14 @@
 
 import { useState, useCallback } from 'react';
 import { regenerateItems as regenerateItemsApi, applyRegeneratedItems } from '@/lib/api/enrichment';
-import type { RegenerateItemInput, RegeneratedItem, RegenerateRequest } from '@/lib/api/enrichment';
+import type {
+  RegenerateItemError,
+  RegenerateItemInput,
+  RegeneratedItem,
+  RegenerateRequest,
+} from '@/lib/api/enrichment';
 import type { RegenerateWizardStep } from '@/components/builder/regenerate-wizard';
+import { useTranslations } from '@/lib/i18n';
 
 interface UseRegenerateWizardProps {
   resumeId: string;
@@ -27,6 +33,7 @@ interface UseRegenerateWizardReturn {
 
   // Generated content
   regeneratedItems: RegeneratedItem[];
+  regenerateErrors: RegenerateItemError[];
 
   // Loading states
   isGenerating: boolean;
@@ -55,6 +62,8 @@ export function useRegenerateWizard({
   onSuccess,
   onError,
 }: UseRegenerateWizardProps): UseRegenerateWizardReturn {
+  const { t } = useTranslations();
+
   // Step state
   const [step, setStep] = useState<RegenerateWizardStep>('idle');
 
@@ -66,6 +75,7 @@ export function useRegenerateWizard({
 
   // Generated content
   const [regeneratedItems, setRegeneratedItems] = useState<RegeneratedItem[]>([]);
+  const [regenerateErrors, setRegenerateErrors] = useState<RegenerateItemError[]>([]);
 
   // Loading states
   const [isGenerating, setIsGenerating] = useState(false);
@@ -78,6 +88,7 @@ export function useRegenerateWizard({
   const startRegenerate = useCallback(() => {
     setStep('selecting');
     setError(null);
+    setRegenerateErrors([]);
   }, []);
 
   // Generate new content using AI
@@ -95,12 +106,13 @@ export function useRegenerateWizard({
       const request: RegenerateRequest = {
         resume_id: resumeId,
         items: selectedItems,
-        instruction: instruction || 'Improve the content with better action verbs and metrics.',
+        instruction: instruction || t('builder.regenerate.instructionDialog.defaultInstruction'),
         output_language: outputLanguage,
       };
 
       const response = await regenerateItemsApi(request);
       setRegeneratedItems(response.regenerated_items);
+      setRegenerateErrors(response.errors ?? []);
       setStep('previewing');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to generate content';
@@ -110,7 +122,7 @@ export function useRegenerateWizard({
     } finally {
       setIsGenerating(false);
     }
-  }, [resumeId, selectedItems, instruction, outputLanguage, onError]);
+  }, [resumeId, selectedItems, instruction, outputLanguage, onError, t]);
 
   // Reset all state
   const reset = useCallback(() => {
@@ -118,6 +130,7 @@ export function useRegenerateWizard({
     setSelectedItems([]);
     setInstruction('');
     setRegeneratedItems([]);
+    setRegenerateErrors([]);
     setError(null);
     setIsGenerating(false);
     setIsApplying(false);
@@ -159,6 +172,7 @@ export function useRegenerateWizard({
   // Reject changes and go back to instruction step
   const rejectAndRegenerate = useCallback(() => {
     setRegeneratedItems([]);
+    setRegenerateErrors([]);
     setError(null);
     setStep('instructing');
   }, []);
@@ -171,6 +185,7 @@ export function useRegenerateWizard({
     instruction,
     setInstruction,
     regeneratedItems,
+    regenerateErrors,
     isGenerating,
     isApplying,
     error,

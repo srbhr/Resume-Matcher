@@ -107,7 +107,18 @@ class RegeneratedItem(BaseModel):
     diff_summary: str = ""  # AI-generated summary of changes
 
 
+class RegenerateItemError(BaseModel):
+    """A non-fatal error for a single item regeneration request."""
+
+    item_id: str
+    item_type: RegenerateItemType
+    title: str
+    subtitle: str | None = None
+    message: str
+
+
 class RegenerateResponse(BaseModel):
     """Response with all regenerated items."""
 
     regenerated_items: list[RegeneratedItem] = Field(default_factory=list)
+    errors: list[RegenerateItemError] = Field(default_factory=list)

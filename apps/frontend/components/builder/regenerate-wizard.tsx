@@ -4,7 +4,11 @@ import React from 'react';
 import { RegenerateDialog } from './regenerate-dialog';
 import { RegenerateInstructionDialog } from './regenerate-instruction-dialog';
 import { RegenerateDiffPreview } from './regenerate-diff-preview';
-import type { RegenerateItemInput, RegeneratedItem } from '@/lib/api/enrichment';
+import type {
+  RegenerateItemError,
+  RegenerateItemInput,
+  RegeneratedItem,
+} from '@/lib/api/enrichment';
 
 export type RegenerateWizardStep =
   | 'idle'
@@ -34,6 +38,7 @@ interface RegenerateWizardProps {
 
   // Generated content
   regeneratedItems: RegeneratedItem[];
+  regenerateErrors: RegenerateItemError[];
 
   // Loading states
   isGenerating: boolean;
@@ -68,6 +73,7 @@ export const RegenerateWizard: React.FC<RegenerateWizardProps> = ({
   instruction,
   onInstructionChange,
   regeneratedItems,
+  regenerateErrors,
   isGenerating,
   isApplying,
   error,
@@ -144,6 +150,7 @@ export const RegenerateWizard: React.FC<RegenerateWizardProps> = ({
         open={isDiffPreviewOpen}
         onOpenChange={handleDiffPreviewClose}
         regeneratedItems={regeneratedItems}
+        regenerateErrors={regenerateErrors}
         error={error}
         onAccept={onAccept}
         onReject={onReject}

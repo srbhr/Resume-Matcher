@@ -209,6 +209,7 @@
       "instructionDialog": {
         "title": "What Would You Like to Improve?",
         "subtitle": "Provide specific feedback to guide the AI",
+        "defaultInstruction": "Improve the content with stronger action verbs and quantifiable impact where available.",
         "selectedItems": "Selected Items",
         "placeholder": "Example: Add more quantifiable metrics, emphasize leadership skills, use more action verbs...",
         "hint": "Be specific about what you're not satisfied with",
@@ -218,6 +219,9 @@
       "diffPreview": {
         "title": "Preview Changes",
         "subtitle": "Review the regenerated content before applying",
+        "expandItem": "Expand {item}",
+        "collapseItem": "Collapse {item}",
+        "partialFailures": "Some items couldn't be regenerated ({count}). You can still review and apply the successful ones.",
         "changesCount": "{count} items modified",
         "rejectButton": "Reject & Regenerate",
         "acceptButton": "Accept Changes",
@@ -230,6 +234,7 @@
       "errors": {
         "generationFailed": "Failed to generate content. Please try again.",
         "applyFailed": "Failed to apply changes. Please try again.",
+        "resumeChanged": "Resume content changed since regeneration. Please regenerate and try again.",
         "noChangesToApply": "No changes to apply.",
         "networkError": "Network error. Please check your connection."
       }

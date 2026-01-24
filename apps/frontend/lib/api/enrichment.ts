@@ -131,8 +131,17 @@ export interface RegeneratedItem {
   diff_summary: string;
 }
 
+export interface RegenerateItemError {
+  item_id: string;
+  item_type: 'experience' | 'project' | 'skills';
+  title: string;
+  subtitle?: string;
+  message: string;
+}
+
 export interface RegenerateResponse {
   regenerated_items: RegeneratedItem[];
+  errors?: RegenerateItemError[];
 }
 
 /**

@@ -20,12 +20,13 @@ import {
   Lightbulb,
 } from 'lucide-react';
 import { useTranslations } from '@/lib/i18n';
-import type { RegeneratedItem } from '@/lib/api/enrichment';
+import type { RegenerateItemError, RegeneratedItem } from '@/lib/api/enrichment';
 
 interface RegenerateDiffPreviewProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   regeneratedItems: RegeneratedItem[];
+  regenerateErrors?: RegenerateItemError[];
   error: string | null;
   onAccept: () => void;
   onReject: () => void;
@@ -43,6 +44,7 @@ export const RegenerateDiffPreview: React.FC<RegenerateDiffPreviewProps> = ({
   open,
   onOpenChange,
   regeneratedItems,
+  regenerateErrors = [],
   error,
   onAccept,
   onReject,
@@ -68,7 +70,9 @@ export const RegenerateDiffPreview: React.FC<RegenerateDiffPreviewProps> = ({
     setExpandedItems(newExpanded);
   };
 
-  const getItemLabel = (item: RegeneratedItem) => {
+  type ItemLabelSource = Pick<RegeneratedItem, 'item_id' | 'item_type' | 'title' | 'subtitle'>;
+
+  const getItemLabel = (item: ItemLabelSource) => {
     if (item.item_type === 'skills') {
       return t('builder.regenerate.selectDialog.skills');
     }
@@ -105,6 +109,10 @@ export const RegenerateDiffPreview: React.FC<RegenerateDiffPreviewProps> = ({
       return t('builder.regenerate.errors.networkError');
     }
 
+    if (/resume content changed|uniquely matched|please regenerate/i.test(value)) {
+      return t('builder.regenerate.errors.resumeChanged');
+    }
+
     return t('builder.regenerate.errors.applyFailed');
   };
 
@@ -139,6 +147,25 @@ export const RegenerateDiffPreview: React.FC<RegenerateDiffPreviewProps> = ({
           </div>
         ) : null}
 
+        {regenerateErrors.length > 0 ? (
+          <div className="px-6 pt-4">
+            <div className="border border-black bg-[#FFF9DB] px-4 py-3">
+              <p className="font-mono text-xs text-gray-900">
+                {t('builder.regenerate.diffPreview.partialFailures', {
+                  count: regenerateErrors.length,
+                })}
+              </p>
+              <ul className="mt-2 space-y-1">
+                {regenerateErrors.map((failed) => (
+                  <li key={failed.item_id} className="font-mono text-xs text-gray-800">
+                    • {getItemLabel(failed)}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        ) : null}
+
         {/* Diff Content */}
         <div className="p-6 space-y-4 max-h-[50vh] overflow-y-auto">
           {regeneratedItems.map((item) => (
@@ -147,6 +174,12 @@ export const RegenerateDiffPreview: React.FC<RegenerateDiffPreviewProps> = ({
               <button
                 type="button"
                 onClick={() => toggleItem(item.item_id)}
+                aria-expanded={expandedItems.has(item.item_id)}
+                aria-label={
+                  expandedItems.has(item.item_id)
+                    ? t('builder.regenerate.diffPreview.collapseItem', { item: getItemLabel(item) })
+                    : t('builder.regenerate.diffPreview.expandItem', { item: getItemLabel(item) })
+                }
                 className="w-full p-4 flex items-center justify-between bg-[#F0F0E8] hover:bg-[#E5E5E0] transition-colors"
               >
                 <div className="flex items-center gap-3">
@@ -182,7 +215,8 @@ export const RegenerateDiffPreview: React.FC<RegenerateDiffPreviewProps> = ({
                       {item.original_content.length > 0 ? (
                         item.original_content.map((content, idx) => (
                           <p key={idx} className="text-sm text-red-700 line-through">
-                            • {content}
+                            <span className="font-mono mr-2">−</span>
+                            {content}
                           </p>
                         ))
                       ) : (
@@ -203,7 +237,8 @@ export const RegenerateDiffPreview: React.FC<RegenerateDiffPreviewProps> = ({
                       {item.new_content.length > 0 ? (
                         item.new_content.map((content, idx) => (
                           <p key={idx} className="text-sm text-green-700">
-                            • {content}
+                            <span className="font-mono mr-2">+</span>
+                            {content}
                           </p>
                         ))
                       ) : (
