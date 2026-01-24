@@ -199,6 +199,11 @@
         "projects": "プロジェクト",
         "skills": "技術スキル",
         "noItemsSelected": "少なくとも1つ選択してください",
+        "noItemsAvailable": "再生成できる項目がありません。まず職務経験、プロジェクト、またはスキルを追加してください。",
+        "itemCount": {
+          "one": "{count}件",
+          "other": "{count}件"
+        },
         "continueButton": "続行"
       },
       "instructionDialog": {
@@ -416,6 +421,7 @@
     "alerts": {
       "saveNotAvailable": "既存の履歴書を編集中のみ保存できます。",
       "saveFailed": "履歴書の保存に失敗しました。もう一度お試しください。",
+      "reloadFailed": "変更は適用されましたが、履歴書の再読み込みに失敗しました。ページを更新してください。",
       "downloadNotAvailable": "保存済みの履歴書のみダウンロードできます。",
       "downloadFailed": "履歴書のダウンロードに失敗しました。もう一度お試しください。",
       "coverLetterSaveFailed": "カバーレターの保存に失敗しました。もう一度お試しください。",

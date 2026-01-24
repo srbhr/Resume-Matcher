@@ -87,7 +87,7 @@ export const RegenerateDialog: React.FC<RegenerateDialogProps> = ({
         <div className="p-6 space-y-4 max-h-[50vh] overflow-y-auto">
           {!hasItems && (
             <div className="text-center py-8 text-gray-500 font-mono text-sm">
-              {t('builder.regenerate.selectDialog.noItemsSelected')}
+              {t('builder.regenerate.selectDialog.noItemsAvailable')}
             </div>
           )}
 
@@ -227,6 +227,15 @@ interface ItemRowProps {
 }
 
 const ItemRow: React.FC<ItemRowProps> = ({ item, isSelected, onToggle }) => {
+  const { t } = useTranslations();
+
+  const contentCount = item.current_content.length;
+  const itemCountKey =
+    contentCount === 1
+      ? 'builder.regenerate.selectDialog.itemCount.one'
+      : 'builder.regenerate.selectDialog.itemCount.other';
+  const itemCountLabel = t(itemCountKey).replace('{count}', String(contentCount));
+
   return (
     <button
       type="button"
@@ -257,9 +266,7 @@ const ItemRow: React.FC<ItemRowProps> = ({ item, isSelected, onToggle }) => {
       </div>
 
       {/* Content preview */}
-      <div className="font-mono text-xs text-gray-400">
-        {item.current_content.length} {item.current_content.length === 1 ? 'item' : 'items'}
-      </div>
+      <div className="font-mono text-xs text-gray-400">{itemCountLabel}</div>
     </button>
   );
 };

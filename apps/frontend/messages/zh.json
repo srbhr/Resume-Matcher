@@ -199,6 +199,11 @@
         "projects": "项目经历",
         "skills": "技术技能",
         "noItemsSelected": "请至少选择一个项目",
+        "noItemsAvailable": "没有可重新生成的项目。请先添加工作经历、项目经历或技能。",
+        "itemCount": {
+          "one": "{count} 条",
+          "other": "{count} 条"
+        },
         "continueButton": "继续"
       },
       "instructionDialog": {
@@ -416,6 +421,7 @@
     "alerts": {
       "saveNotAvailable": "仅在编辑现有简历时可保存。",
       "saveFailed": "保存简历失败，请重试。",
+      "reloadFailed": "变更已应用，但重新加载简历失败。请刷新页面。",
       "downloadNotAvailable": "仅已保存的简历可下载。",
       "downloadFailed": "下载简历失败，请重试。",
       "coverLetterSaveFailed": "保存求职信失败，请重试。",

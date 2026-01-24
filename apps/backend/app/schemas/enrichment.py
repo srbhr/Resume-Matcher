@@ -91,7 +91,7 @@ class RegenerateRequest(BaseModel):
 
     resume_id: str
     items: list[RegenerateItemInput]
-    instruction: str  # User's feedback/instruction for improvement
+    instruction: str = Field(max_length=2000)  # User's feedback/instruction for improvement
     output_language: str = "en"
 
 

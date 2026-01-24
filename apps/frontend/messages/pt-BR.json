@@ -199,6 +199,11 @@
         "projects": "Projetos",
         "skills": "Habilidades técnicas",
         "noItemsSelected": "Selecione pelo menos um item",
+        "noItemsAvailable": "Não há itens disponíveis para regenerar. Adicione experiência, projetos ou habilidades primeiro.",
+        "itemCount": {
+          "one": "{count} item",
+          "other": "{count} itens"
+        },
         "continueButton": "Continuar"
       },
       "instructionDialog": {
@@ -416,6 +421,7 @@
     "alerts": {
       "saveNotAvailable": "Salvar só está disponível ao editar um currículo existente.",
       "saveFailed": "Falha ao salvar currículo. Por favor, tente novamente.",
+      "reloadFailed": "As alterações foram aplicadas, mas não foi possível recarregar o currículo. Atualize a página.",
       "downloadNotAvailable": "Download só está disponível para currículos salvos.",
       "downloadFailed": "Falha ao baixar currículo. Por favor, tente novamente.",
       "coverLetterSaveFailed": "Falha ao salvar carta de apresentação. Por favor, tente novamente.",

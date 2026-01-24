@@ -81,7 +81,7 @@ const buildInitialData = (t: Translate): ResumeData => ({
 
 const ResumeBuilderContent = () => {
   const { t } = useTranslations();
-  const { uiLanguage } = useLanguage();
+  const { uiLanguage, contentLanguage } = useLanguage();
   const initialData = useMemo(() => buildInitialData(t), [t]);
   const [resumeData, setResumeData] = useState<ResumeData>(() => initialData);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -135,16 +135,22 @@ const ResumeBuilderContent = () => {
   // AI Regenerate wizard
   const regenerateWizard = useRegenerateWizard({
     resumeId: resumeId || '',
-    outputLanguage: uiLanguage,
+    outputLanguage: contentLanguage,
     onSuccess: () => {
       // Reload resume data after applying changes
       if (resumeId) {
-        fetchResume(resumeId).then((data) => {
-          if (data.processed_resume) {
-            setResumeData(data.processed_resume as ResumeData);
-            setLastSavedData(data.processed_resume as ResumeData);
+        (async () => {
+          try {
+            const data = await fetchResume(resumeId);
+            if (data.processed_resume) {
+              setResumeData(data.processed_resume as ResumeData);
+              setLastSavedData(data.processed_resume as ResumeData);
+            }
+          } catch (error) {
+            console.error('Failed to reload resume after applying regenerated changes:', error);
+            alert(t('builder.alerts.reloadFailed'));
           }
-        });
+        })();
       }
     },
   });
@@ -176,12 +182,12 @@ const ResumeBuilderContent = () => {
       return {
         item_id: 'skills',
         item_type: 'skills' as const,
-        title: 'Technical Skills',
+        title: t('builder.regenerate.selectDialog.skills'),
         current_content: skills,
       };
     }
     return null;
-  }, [resumeData.additional?.technicalSkills]);
+  }, [resumeData.additional?.technicalSkills, t]);
 
   const localizedResumeDataForPreview = useMemo(
     () => withLocalizedDefaultSections(resumeData, t),

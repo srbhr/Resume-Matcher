@@ -199,6 +199,11 @@
         "projects": "Proyectos",
         "skills": "Habilidades técnicas",
         "noItemsSelected": "Selecciona al menos un elemento",
+        "noItemsAvailable": "No hay elementos disponibles para regenerar. Agrega experiencia, proyectos o habilidades primero.",
+        "itemCount": {
+          "one": "{count} elemento",
+          "other": "{count} elementos"
+        },
         "continueButton": "Continuar"
       },
       "instructionDialog": {
@@ -416,6 +421,7 @@
     "alerts": {
       "saveNotAvailable": "Guardar solo está disponible al editar un currículum existente.",
       "saveFailed": "No se pudo guardar el currículum. Por favor, inténtalo de nuevo.",
+      "reloadFailed": "Se aplicaron los cambios, pero no se pudo recargar el currículum. Actualiza la página.",
       "downloadNotAvailable": "La descarga solo está disponible para currículums guardados.",
       "downloadFailed": "No se pudo descargar el currículum. Por favor, inténtalo de nuevo.",
       "coverLetterSaveFailed": "No se pudo guardar la carta de presentación. Por favor, inténtalo de nuevo.",

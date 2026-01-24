@@ -167,18 +167,18 @@ export const RegenerateDiffPreview: React.FC<RegenerateDiffPreviewProps> = ({
                 <div className="border-t border-black">
                   {/* Change Summary */}
                   {item.diff_summary && (
-                    <div className="p-3 bg-blue-50 border-b border-blue-200">
+                    <div className="p-3 border-b border-black">
                       <p className="font-mono text-xs text-blue-700">{item.diff_summary}</p>
                     </div>
                   )}
 
                   {/* Original Content */}
-                  <div className="p-4 border-b border-gray-200">
+                  <div className="p-4 border-b border-black">
                     <div className="font-mono text-xs uppercase tracking-wider text-gray-500 mb-2 flex items-center gap-2">
-                      <span className="w-3 h-3 bg-red-100 border border-red-300" />
+                      <span className="w-3 h-3 bg-red-600 border border-black" />
                       {t('builder.regenerate.diffPreview.originalLabel')}
                     </div>
-                    <div className="border-l-4 border-red-400 bg-red-50 p-3 space-y-1">
+                    <div className="border-2 border-black bg-white p-3 space-y-1">
                       {item.original_content.length > 0 ? (
                         item.original_content.map((content, idx) => (
                           <p key={idx} className="text-sm text-red-700 line-through">
@@ -196,10 +196,10 @@ export const RegenerateDiffPreview: React.FC<RegenerateDiffPreviewProps> = ({
                   {/* New Content */}
                   <div className="p-4">
                     <div className="font-mono text-xs uppercase tracking-wider text-gray-500 mb-2 flex items-center gap-2">
-                      <span className="w-3 h-3 bg-green-100 border border-green-300" />
+                      <span className="w-3 h-3 bg-green-700 border border-black" />
                       {t('builder.regenerate.diffPreview.newLabel')}
                     </div>
-                    <div className="border-l-4 border-green-400 bg-green-50 p-3 space-y-1">
+                    <div className="border-2 border-black bg-white p-3 space-y-1">
                       {item.new_content.length > 0 ? (
                         item.new_content.map((content, idx) => (
                           <p key={idx} className="text-sm text-green-700">

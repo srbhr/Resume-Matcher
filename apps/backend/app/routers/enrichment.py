@@ -573,7 +573,7 @@ async def apply_regenerated_items(
             expected_name = item.title
             expected_role = item.subtitle
 
-            resolved_index: int | None = None
+            resolved_index = None
             if 0 <= index < len(projects):
                 entry = projects[index] if isinstance(projects[index], dict) else {}
                 entry_name = _normalize_match_value(str(entry.get("name", "")))
