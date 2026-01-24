@@ -177,6 +177,29 @@ const ResumeBuilderContent = () => {
         throw error;
       }
     },
+    onError: (errorMessage) => {
+      console.error('Error during regeneration or applying regenerated changes:', errorMessage);
+
+      if (
+        /network|fetch/i.test(errorMessage) ||
+        errorMessage.includes('Failed to fetch')
+      ) {
+        showNotification(t('builder.regenerate.errors.networkError'), 'danger');
+        return;
+      }
+
+      if (/resume content changed|uniquely matched|please regenerate/i.test(errorMessage)) {
+        showNotification(t('builder.regenerate.errors.resumeChanged'), 'danger');
+        return;
+      }
+
+      if (/generate/i.test(errorMessage)) {
+        showNotification(t('builder.regenerate.errors.generationFailed'), 'danger');
+        return;
+      }
+
+      showNotification(t('builder.regenerate.errors.applyFailed'), 'danger');
+    },
   });
 
   // Build regenerate items from resume data
