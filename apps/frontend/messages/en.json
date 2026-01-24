@@ -190,6 +190,45 @@
       "title": "Regenerate {title}?",
       "description": "This will replace your current {title} with a newly generated one. Any edits you've made will be lost."
     },
+    "regenerate": {
+      "buttonLabel": "AI Regenerate",
+      "selectDialog": {
+        "title": "Select Items to Regenerate",
+        "subtitle": "Choose which parts of your resume you want to improve",
+        "experience": "Work Experience",
+        "projects": "Projects",
+        "skills": "Technical Skills",
+        "noItemsSelected": "Please select at least one item",
+        "continueButton": "Continue"
+      },
+      "instructionDialog": {
+        "title": "What Would You Like to Improve?",
+        "subtitle": "Provide specific feedback to guide the AI",
+        "selectedItems": "Selected Items",
+        "placeholder": "Example: Add more quantifiable metrics, emphasize leadership skills, use more action verbs...",
+        "hint": "Be specific about what you're not satisfied with",
+        "backButton": "Back",
+        "generateButton": "Generate"
+      },
+      "diffPreview": {
+        "title": "Preview Changes",
+        "subtitle": "Review the regenerated content before applying",
+        "changesCount": "{count} items modified",
+        "rejectButton": "Reject & Regenerate",
+        "acceptButton": "Accept Changes",
+        "originalLabel": "Original",
+        "newLabel": "New",
+        "noContent": "No content",
+        "applying": "Applying...",
+        "loading": "Generating improved content..."
+      },
+      "errors": {
+        "generationFailed": "Failed to generate content. Please try again.",
+        "applyFailed": "Failed to apply changes. Please try again.",
+        "noChangesToApply": "No changes to apply.",
+        "networkError": "Network error. Please check your connection."
+      }
+    },
     "jdMatch": {
       "yourResume": "Your Resume",
       "matchingKeywordsHighlighted": "(matching keywords highlighted)",

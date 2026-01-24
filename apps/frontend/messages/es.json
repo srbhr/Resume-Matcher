@@ -190,6 +190,45 @@
       "title": "¿Regenerar {title}?",
       "description": "Esto reemplazará tu {title} actual por una nueva generación. Se perderán las ediciones que hayas hecho."
     },
+    "regenerate": {
+      "buttonLabel": "Regenerar con IA",
+      "selectDialog": {
+        "title": "Selecciona elementos para regenerar",
+        "subtitle": "Elige qué partes de tu currículum quieres mejorar",
+        "experience": "Experiencia laboral",
+        "projects": "Proyectos",
+        "skills": "Habilidades técnicas",
+        "noItemsSelected": "Selecciona al menos un elemento",
+        "continueButton": "Continuar"
+      },
+      "instructionDialog": {
+        "title": "¿Qué te gustaría mejorar?",
+        "subtitle": "Proporciona comentarios específicos para guiar a la IA",
+        "selectedItems": "Elementos seleccionados",
+        "placeholder": "Ejemplo: Añade más métricas cuantificables, enfatiza habilidades de liderazgo, usa más verbos de acción...",
+        "hint": "Sé específico sobre lo que no te satisface",
+        "backButton": "Atrás",
+        "generateButton": "Generar"
+      },
+      "diffPreview": {
+        "title": "Vista previa de cambios",
+        "subtitle": "Revisa el contenido regenerado antes de aplicarlo",
+        "changesCount": "{count} elementos modificados",
+        "rejectButton": "Rechazar y regenerar",
+        "acceptButton": "Aceptar cambios",
+        "originalLabel": "Original",
+        "newLabel": "Nuevo",
+        "noContent": "Sin contenido",
+        "applying": "Aplicando...",
+        "loading": "Generando contenido mejorado..."
+      },
+      "errors": {
+        "generationFailed": "No se pudo generar el contenido. Inténtalo de nuevo.",
+        "applyFailed": "No se pudieron aplicar los cambios. Inténtalo de nuevo.",
+        "noChangesToApply": "No hay cambios para aplicar.",
+        "networkError": "Error de red. Verifica tu conexión."
+      }
+    },
     "jdMatch": {
       "yourResume": "Tu currículum",
       "matchingKeywordsHighlighted": "(palabras clave resaltadas)",

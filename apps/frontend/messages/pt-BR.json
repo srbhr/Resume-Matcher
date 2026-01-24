@@ -190,6 +190,45 @@
       "title": "Regenerar {title}?",
       "description": "Isso substituirá seu {title} atual por um novo. Qualquer edição feita será perdida."
     },
+    "regenerate": {
+      "buttonLabel": "Regenerar com IA",
+      "selectDialog": {
+        "title": "Selecione itens para regenerar",
+        "subtitle": "Escolha quais partes do seu currículo você quer melhorar",
+        "experience": "Experiência profissional",
+        "projects": "Projetos",
+        "skills": "Habilidades técnicas",
+        "noItemsSelected": "Selecione pelo menos um item",
+        "continueButton": "Continuar"
+      },
+      "instructionDialog": {
+        "title": "O que você gostaria de melhorar?",
+        "subtitle": "Forneça feedback específico para orientar a IA",
+        "selectedItems": "Itens selecionados",
+        "placeholder": "Exemplo: Adicione mais métricas quantificáveis, enfatize liderança, use mais verbos de ação...",
+        "hint": "Seja específico sobre o que você não está satisfeito",
+        "backButton": "Voltar",
+        "generateButton": "Gerar"
+      },
+      "diffPreview": {
+        "title": "Prévia das alterações",
+        "subtitle": "Revise o conteúdo regenerado antes de aplicar",
+        "changesCount": "{count} itens modificados",
+        "rejectButton": "Rejeitar e regenerar",
+        "acceptButton": "Aceitar alterações",
+        "originalLabel": "Original",
+        "newLabel": "Novo",
+        "noContent": "Sem conteúdo",
+        "applying": "Aplicando...",
+        "loading": "Gerando conteúdo aprimorado..."
+      },
+      "errors": {
+        "generationFailed": "Falha ao gerar o conteúdo. Tente novamente.",
+        "applyFailed": "Falha ao aplicar as alterações. Tente novamente.",
+        "noChangesToApply": "Não há alterações para aplicar.",
+        "networkError": "Erro de rede. Verifique sua conexão."
+      }
+    },
     "jdMatch": {
       "yourResume": "Seu Currículo",
       "matchingKeywordsHighlighted": "(palavras-chave correspondentes destacadas)",
@@ -586,7 +625,20 @@
       "errorPrefix": "ERRO: {error}",
       "connectionSuccessful": "CONEXÃO BEM-SUCEDIDA",
       "connectionFailed": "CONEXÃO FALHOU",
-      "connectionDetails": "Provedor: {provider} | Modelo: {model}"
+      "connectionDetails": "Provedor: {provider} | Modelo: {model}",
+      "testPromptLabel": "PROMPT DE TESTE",
+      "modelOutputLabel": "SAÍDA DO MODELO",
+      "errorDetailLabel": "DETALHE DO ERRO",
+      "healthErrors": {
+        "api_key_missing": "Chave de API não configurada. Adicione uma chave em Configurações.",
+        "health_check_failed": "Falha na verificação de integridade.",
+        "duplicate_v1_path": "Falha na verificação de integridade. A URL base pode conter um caminho /v1 duplicado.",
+        "not_found_404": "Falha na verificação de integridade. 404 Não encontrado - verifique se a URL base corresponde ao provedor.",
+        "html_response": "Falha na verificação de integridade. A URL base retornou HTML; pode ser uma URL de console ou um caminho de gateway não suportado."
+      },
+      "healthWarnings": {
+        "empty_content": "O LLM retornou conteúdo vazio na verificação de integridade."
+      }
     },
     "contentGeneration": {
       "title": "Geração de Conteúdo",

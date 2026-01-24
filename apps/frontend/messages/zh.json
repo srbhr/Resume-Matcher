@@ -190,6 +190,45 @@
       "title": "重新生成 {title}？",
       "description": "将用新生成的内容替换当前的 {title}。你所做的任何编辑都会丢失。"
     },
+    "regenerate": {
+      "buttonLabel": "AI 重新生成",
+      "selectDialog": {
+        "title": "选择要重新生成的项目",
+        "subtitle": "选择您想要改进的简历部分",
+        "experience": "工作经历",
+        "projects": "项目经历",
+        "skills": "技术技能",
+        "noItemsSelected": "请至少选择一个项目",
+        "continueButton": "继续"
+      },
+      "instructionDialog": {
+        "title": "您想要改进什么？",
+        "subtitle": "提供具体反馈以指导 AI",
+        "selectedItems": "已选项目",
+        "placeholder": "示例：添加更多量化指标、强调领导能力、使用更多行动动词...",
+        "hint": "请具体说明您不满意的地方",
+        "backButton": "返回",
+        "generateButton": "生成"
+      },
+      "diffPreview": {
+        "title": "预览变更",
+        "subtitle": "应用前查看重新生成的内容",
+        "changesCount": "{count} 个项目已修改",
+        "rejectButton": "拒绝并重新生成",
+        "acceptButton": "接受变更",
+        "originalLabel": "原始",
+        "newLabel": "新内容",
+        "noContent": "无内容",
+        "applying": "正在应用...",
+        "loading": "正在生成改进内容..."
+      },
+      "errors": {
+        "generationFailed": "生成内容失败，请重试。",
+        "applyFailed": "应用变更失败，请重试。",
+        "noChangesToApply": "没有可应用的变更。",
+        "networkError": "网络错误，请检查您的连接。"
+      }
+    },
     "jdMatch": {
       "yourResume": "你的简历",
       "matchingKeywordsHighlighted": "（已高亮匹配关键词）",

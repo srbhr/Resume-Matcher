@@ -1,5 +1,6 @@
 """AI-powered resume enrichment endpoints."""
 
+import asyncio
 import json
 import logging
 from uuid import uuid4
@@ -9,7 +10,12 @@ from fastapi import APIRouter, HTTPException
 from app.config import settings
 from app.database import db
 from app.llm import complete_json
-from app.prompts.enrichment import ANALYZE_RESUME_PROMPT, ENHANCE_DESCRIPTION_PROMPT
+from app.prompts.enrichment import (
+    ANALYZE_RESUME_PROMPT,
+    ENHANCE_DESCRIPTION_PROMPT,
+    REGENERATE_ITEM_PROMPT,
+    REGENERATE_SKILLS_PROMPT,
+)
 from app.prompts.templates import get_language_name
 from app.schemas.enrichment import (
     AnalysisResponse,
@@ -20,6 +26,10 @@ from app.schemas.enrichment import (
     EnhancementPreview,
     EnrichmentItem,
     EnrichmentQuestion,
+    RegenerateItemInput,
+    RegenerateRequest,
+    RegenerateResponse,
+    RegeneratedItem,
 )
 
 logger = logging.getLogger(__name__)
@@ -320,4 +330,183 @@ async def apply_enhancements(
     return {
         "message": "Enhancements applied successfully",
         "updated_items": len(request.enhancements),
+    }
+
+
+# ============================================
+# AI Regenerate Feature Endpoints
+# ============================================
+
+
+async def _regenerate_experience_or_project(
+    item: RegenerateItemInput,
+    instruction: str,
+    output_language: str,
+) -> RegeneratedItem:
+    """Regenerate a single experience or project item."""
+    current_desc_text = (
+        "\n".join(f"- {d}" for d in item.current_content)
+        if item.current_content
+        else "(No description)"
+    )
+
+    prompt = REGENERATE_ITEM_PROMPT.format(
+        output_language=output_language,
+        item_type=item.item_type,
+        title=item.title,
+        subtitle=item.subtitle or "",
+        current_description=current_desc_text,
+        user_instruction=instruction,
+    )
+
+    result = await complete_json(prompt, max_tokens=4096)
+
+    return RegeneratedItem(
+        item_id=item.item_id,
+        item_type=item.item_type,
+        original_content=item.current_content,
+        new_content=result.get("new_bullets", []),
+        diff_summary=result.get("change_summary", ""),
+    )
+
+
+async def _regenerate_skills(
+    item: RegenerateItemInput,
+    instruction: str,
+    output_language: str,
+) -> RegeneratedItem:
+    """Regenerate the skills section."""
+    current_skills_text = ", ".join(item.current_content) if item.current_content else "(No skills)"
+
+    prompt = REGENERATE_SKILLS_PROMPT.format(
+        output_language=output_language,
+        current_skills=current_skills_text,
+        user_instruction=instruction,
+    )
+
+    result = await complete_json(prompt, max_tokens=2048)
+
+    return RegeneratedItem(
+        item_id=item.item_id,
+        item_type=item.item_type,
+        original_content=item.current_content,
+        new_content=result.get("new_skills", []),
+        diff_summary=result.get("change_summary", ""),
+    )
+
+
+@router.post("/regenerate", response_model=RegenerateResponse)
+async def regenerate_items(request: RegenerateRequest) -> RegenerateResponse:
+    """Regenerate selected resume items based on user feedback.
+
+    Takes selected items (experience, projects, skills) and a user instruction,
+    then uses AI to rewrite the content addressing the user's concerns.
+    """
+    # Validate resume exists
+    resume = db.get_resume(request.resume_id)
+    if not resume:
+        raise HTTPException(status_code=404, detail="Resume not found")
+
+    if not request.items:
+        raise HTTPException(status_code=400, detail="No items selected for regeneration")
+
+    # Get language name for LLM
+    output_language = get_language_name(request.output_language)
+
+    # Process all items in parallel for better performance
+    tasks = []
+    for item in request.items:
+        if item.item_type == "skills":
+            tasks.append(_regenerate_skills(item, request.instruction, output_language))
+        else:
+            tasks.append(_regenerate_experience_or_project(item, request.instruction, output_language))
+
+    try:
+        regenerated_items = await asyncio.gather(*tasks)
+    except Exception as e:
+        logger.error(f"Failed to regenerate items: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to regenerate content. Please try again.",
+        )
+
+    return RegenerateResponse(regenerated_items=list(regenerated_items))
+
+
+@router.post("/apply-regenerated/{resume_id}")
+async def apply_regenerated_items(
+    resume_id: str, regenerated_items: list[RegeneratedItem]
+) -> dict:
+    """Apply regenerated items to the master resume.
+
+    Updates the resume's Experience, Projects, and Skills sections with
+    the regenerated descriptions.
+    """
+    # Fetch resume
+    resume = db.get_resume(resume_id)
+    if not resume:
+        raise HTTPException(status_code=404, detail="Resume not found")
+
+    processed_data = resume.get("processed_data")
+    if not processed_data:
+        raise HTTPException(
+            status_code=400,
+            detail="Resume has no processed data.",
+        )
+
+    # Make a copy to modify
+    updated_data = dict(processed_data)
+
+    # Apply each regenerated item
+    for item in regenerated_items:
+        item_id = item.item_id
+        item_type = item.item_type
+        new_content = item.new_content
+
+        if item_type == "experience":
+            # Parse item_id like "exp_0" to get index
+            try:
+                index = int(item_id.split("_")[1])
+                if "workExperience" in updated_data and index < len(updated_data["workExperience"]):
+                    updated_data["workExperience"][index]["description"] = new_content
+            except (ValueError, IndexError) as e:
+                logger.warning(f"Could not apply experience regeneration for {item_id}: {e}")
+
+        elif item_type == "project":
+            # Parse item_id like "proj_0" to get index
+            try:
+                index = int(item_id.split("_")[1])
+                if "personalProjects" in updated_data and index < len(updated_data["personalProjects"]):
+                    updated_data["personalProjects"][index]["description"] = new_content
+            except (ValueError, IndexError) as e:
+                logger.warning(f"Could not apply project regeneration for {item_id}: {e}")
+
+        elif item_type == "skills":
+            # Update technical skills (stored in additional.technicalSkills)
+            if "additional" in updated_data:
+                updated_data["additional"]["technicalSkills"] = new_content
+            elif "technicalSkills" in updated_data:
+                # Fallback for legacy data structure
+                updated_data["technicalSkills"] = new_content
+
+    # Update the resume in database
+    updated_content = json.dumps(updated_data, indent=2)
+    try:
+        db.update_resume(
+            resume_id,
+            {
+                "content": updated_content,
+                "processed_data": updated_data,
+            },
+        )
+    except Exception as e:
+        logger.error(f"Failed to save regenerated content to database: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to save changes. Please try again.",
+        )
+
+    return {
+        "message": "Changes applied successfully",
+        "updated_items": len(regenerated_items),
     }

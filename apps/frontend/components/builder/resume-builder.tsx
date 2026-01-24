@@ -40,11 +40,14 @@ import {
   fetchJobDescription,
 } from '@/lib/api/resume';
 import { JDComparisonView } from './jd-comparison-view';
+import { RegenerateWizard } from './regenerate-wizard';
+import { useRegenerateWizard } from '@/hooks/use-regenerate-wizard';
 import { useTranslations } from '@/lib/i18n';
 import { type TemplateSettings, DEFAULT_TEMPLATE_SETTINGS } from '@/lib/types/template-settings';
 import { withLocalizedDefaultSections } from '@/lib/utils/section-helpers';
 import { useLanguage } from '@/lib/context/language-context';
 import { downloadBlobAsFile, openUrlInNewTab } from '@/lib/utils/download';
+import type { RegenerateItemInput } from '@/lib/api/enrichment';
 
 type TabId = 'resume' | 'cover-letter' | 'outreach' | 'jd-match';
 
@@ -128,6 +131,57 @@ const ResumeBuilderContent = () => {
 
   // JD comparison state
   const [jobDescription, setJobDescription] = useState<string | null>(null);
+
+  // AI Regenerate wizard
+  const regenerateWizard = useRegenerateWizard({
+    resumeId: resumeId || '',
+    outputLanguage: uiLanguage,
+    onSuccess: () => {
+      // Reload resume data after applying changes
+      if (resumeId) {
+        fetchResume(resumeId).then((data) => {
+          if (data.processed_resume) {
+            setResumeData(data.processed_resume as ResumeData);
+            setLastSavedData(data.processed_resume as ResumeData);
+          }
+        });
+      }
+    },
+  });
+
+  // Build regenerate items from resume data
+  const experienceItemsForRegenerate: RegenerateItemInput[] = useMemo(() => {
+    return (resumeData.workExperience || []).map((exp, idx) => ({
+      item_id: `exp_${idx}`,
+      item_type: 'experience' as const,
+      title: exp.title || 'Untitled',
+      subtitle: exp.company || undefined,
+      current_content: Array.isArray(exp.description) ? exp.description : [],
+    }));
+  }, [resumeData.workExperience]);
+
+  const projectItemsForRegenerate: RegenerateItemInput[] = useMemo(() => {
+    return (resumeData.personalProjects || []).map((proj, idx) => ({
+      item_id: `proj_${idx}`,
+      item_type: 'project' as const,
+      title: proj.name || 'Untitled',
+      subtitle: proj.role || undefined,
+      current_content: Array.isArray(proj.description) ? proj.description : [],
+    }));
+  }, [resumeData.personalProjects]);
+
+  const skillsItemForRegenerate: RegenerateItemInput | null = useMemo(() => {
+    const skills = resumeData.additional?.technicalSkills;
+    if (skills && skills.length > 0) {
+      return {
+        item_id: 'skills',
+        item_type: 'skills' as const,
+        title: 'Technical Skills',
+        current_content: skills,
+      };
+    }
+    return null;
+  }, [resumeData.additional?.technicalSkills]);
 
   const localizedResumeDataForPreview = useMemo(
     () => withLocalizedDefaultSections(resumeData, t),
@@ -510,6 +564,15 @@ const ResumeBuilderContent = () => {
               {activeTab === 'resume' && (
                 <>
                   <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => regenerateWizard.startRegenerate()}
+                    disabled={!resumeId}
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    {t('builder.regenerate.buttonLabel')}
+                  </Button>
+                  <Button
                     variant="warning"
                     size="sm"
                     onClick={handleReset}
@@ -832,6 +895,27 @@ const ResumeBuilderContent = () => {
         onConfirm={
           showRegenerateDialog === 'cover-letter' ? doGenerateCoverLetter : doGenerateOutreach
         }
+      />
+
+      {/* AI Regenerate Wizard */}
+      <RegenerateWizard
+        step={regenerateWizard.step}
+        onStepChange={regenerateWizard.setStep}
+        experienceItems={experienceItemsForRegenerate}
+        projectItems={projectItemsForRegenerate}
+        skillsItem={skillsItemForRegenerate}
+        selectedItems={regenerateWizard.selectedItems}
+        onSelectionChange={regenerateWizard.setSelectedItems}
+        instruction={regenerateWizard.instruction}
+        onInstructionChange={regenerateWizard.setInstruction}
+        regeneratedItems={regenerateWizard.regeneratedItems}
+        isGenerating={regenerateWizard.isGenerating}
+        isApplying={regenerateWizard.isApplying}
+        error={regenerateWizard.error}
+        onGenerate={regenerateWizard.generate}
+        onAccept={regenerateWizard.acceptChanges}
+        onReject={regenerateWizard.rejectAndRegenerate}
+        onClose={regenerateWizard.reset}
       />
     </div>
   );

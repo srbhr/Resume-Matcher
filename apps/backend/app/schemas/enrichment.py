@@ -65,3 +65,43 @@ class ApplyEnhancementsRequest(BaseModel):
     """Request to apply enhancements to the master resume."""
 
     enhancements: list[EnhancedDescription]
+
+
+# ============================================
+# AI Regenerate Feature Schemas
+# ============================================
+
+
+class RegenerateItemInput(BaseModel):
+    """Input for a single item to regenerate."""
+
+    item_id: str  # "exp_0", "proj_1", "skills"
+    item_type: str  # "experience" | "project" | "skills"
+    title: str
+    subtitle: str | None = None
+    current_content: list[str] = Field(default_factory=list)
+
+
+class RegenerateRequest(BaseModel):
+    """Request to regenerate selected resume items."""
+
+    resume_id: str
+    items: list[RegenerateItemInput]
+    instruction: str  # User's feedback/instruction for improvement
+    output_language: str = "en"
+
+
+class RegeneratedItem(BaseModel):
+    """Regenerated content for one item."""
+
+    item_id: str
+    item_type: str
+    original_content: list[str] = Field(default_factory=list)
+    new_content: list[str] = Field(default_factory=list)
+    diff_summary: str = ""  # AI-generated summary of changes
+
+
+class RegenerateResponse(BaseModel):
+    """Response with all regenerated items."""
+
+    regenerated_items: list[RegeneratedItem] = Field(default_factory=list)
