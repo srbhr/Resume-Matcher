@@ -124,6 +124,8 @@ export interface RegenerateRequest {
 export interface RegeneratedItem {
   item_id: string;
   item_type: 'experience' | 'project' | 'skills';
+  title: string;
+  subtitle?: string;
   original_content: string[];
   new_content: string[];
   diff_summary: string;

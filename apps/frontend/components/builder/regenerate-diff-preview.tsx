@@ -68,6 +68,21 @@ export const RegenerateDiffPreview: React.FC<RegenerateDiffPreviewProps> = ({
     setExpandedItems(newExpanded);
   };
 
+  const getItemLabel = (item: RegeneratedItem) => {
+    if (item.item_type === 'skills') {
+      return t('builder.regenerate.selectDialog.skills');
+    }
+
+    const title = item.title?.trim();
+    const subtitle = item.subtitle?.trim();
+
+    if (title && subtitle) {
+      return `${title} | ${subtitle}`;
+    }
+
+    return title || item.item_id;
+  };
+
   const getItemIcon = (itemType: string) => {
     switch (itemType) {
       case 'experience':
@@ -136,10 +151,8 @@ export const RegenerateDiffPreview: React.FC<RegenerateDiffPreviewProps> = ({
               >
                 <div className="flex items-center gap-3">
                   {getItemIcon(item.item_type)}
-                  <span className="font-mono text-sm uppercase tracking-wider font-medium">
-                    {item.item_type === 'skills'
-                      ? t('builder.regenerate.selectDialog.skills')
-                      : item.item_id}
+                  <span className="font-mono text-sm tracking-wider font-medium truncate">
+                    {getItemLabel(item)}
                   </span>
                 </div>
                 {expandedItems.has(item.item_id) ? (

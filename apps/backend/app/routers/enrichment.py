@@ -3,6 +3,7 @@
 import asyncio
 import json
 import logging
+import re
 from uuid import uuid4
 
 from fastapi import APIRouter, HTTPException
@@ -364,6 +365,8 @@ async def _regenerate_experience_or_project(
     return RegeneratedItem(
         item_id=item.item_id,
         item_type=item.item_type,
+        title=item.title,
+        subtitle=item.subtitle,
         original_content=item.current_content,
         new_content=result.get("new_bullets", []),
         diff_summary=result.get("change_summary", ""),
@@ -389,6 +392,8 @@ async def _regenerate_skills(
     return RegeneratedItem(
         item_id=item.item_id,
         item_type=item.item_type,
+        title=item.title,
+        subtitle=item.subtitle,
         original_content=item.current_content,
         new_content=result.get("new_skills", []),
         diff_summary=result.get("change_summary", ""),
@@ -457,37 +462,169 @@ async def apply_regenerated_items(
     # Make a copy to modify
     updated_data = dict(processed_data)
 
-    # Apply each regenerated item
+    def _normalize_match_value(value: str | None) -> str:
+        return (value or "").strip().casefold()
+
+    def _find_unique_index_by_metadata(
+        entries: list[dict],
+        *,
+        title_key: str,
+        subtitle_key: str,
+        expected_title: str,
+        expected_subtitle: str | None,
+    ) -> int | None:
+        expected_title_norm = _normalize_match_value(expected_title)
+        expected_subtitle_norm = _normalize_match_value(expected_subtitle)
+
+        if not expected_title_norm:
+            return None
+
+        matches: list[int] = []
+        for i, entry in enumerate(entries):
+            if not isinstance(entry, dict):
+                continue
+            entry_title = _normalize_match_value(str(entry.get(title_key, "")))
+            entry_subtitle = _normalize_match_value(str(entry.get(subtitle_key, "")))
+
+            if entry_title != expected_title_norm:
+                continue
+            if expected_subtitle_norm and entry_subtitle != expected_subtitle_norm:
+                continue
+            matches.append(i)
+
+        if len(matches) == 1:
+            return matches[0]
+        return None
+
+    def _parse_index(item_id: str, pattern: str) -> int | None:
+        match = re.fullmatch(pattern, item_id)
+        if not match:
+            return None
+        return int(match.group(1))
+
+    apply_failures: list[str] = []
+
+    # Apply each regenerated item (all-or-nothing to avoid corrupting user data)
     for item in regenerated_items:
         item_id = item.item_id
         item_type = item.item_type
         new_content = item.new_content
 
         if item_type == "experience":
-            # Parse item_id like "exp_0" to get index
-            try:
-                index = int(item_id.split("_")[1])
-                if "workExperience" in updated_data and index < len(updated_data["workExperience"]):
-                    updated_data["workExperience"][index]["description"] = new_content
-            except (ValueError, IndexError) as e:
-                logger.warning(f"Could not apply experience regeneration for {item_id}: {e}")
+            experiences = updated_data.get("workExperience", [])
+            if not isinstance(experiences, list):
+                apply_failures.append(item_id)
+                continue
+
+            index = _parse_index(item_id, r"exp_(\d+)")
+            if index is None:
+                apply_failures.append(item_id)
+                continue
+
+            expected_title = item.title
+            expected_company = item.subtitle
+
+            resolved_index: int | None = None
+            if 0 <= index < len(experiences):
+                entry = experiences[index] if isinstance(experiences[index], dict) else {}
+                entry_title = _normalize_match_value(str(entry.get("title", "")))
+                entry_company = _normalize_match_value(str(entry.get("company", "")))
+                if entry_title == _normalize_match_value(expected_title) and (
+                    not _normalize_match_value(expected_company)
+                    or entry_company == _normalize_match_value(expected_company)
+                ):
+                    resolved_index = index
+
+            if resolved_index is None:
+                resolved_index = _find_unique_index_by_metadata(
+                    experiences,
+                    title_key="title",
+                    subtitle_key="company",
+                    expected_title=expected_title,
+                    expected_subtitle=expected_company,
+                )
+
+            if resolved_index is None:
+                logger.warning(
+                    "apply-regenerated: experience item mismatch; resume may have changed. "
+                    f"resume_id={resume_id} item_id={item_id} expected_title={expected_title!r} "
+                    f"expected_company={expected_company!r}"
+                )
+                apply_failures.append(item_id)
+                continue
+
+            entry = experiences[resolved_index]
+            if isinstance(entry, dict):
+                entry["description"] = new_content
+            else:
+                apply_failures.append(item_id)
 
         elif item_type == "project":
-            # Parse item_id like "proj_0" to get index
-            try:
-                index = int(item_id.split("_")[1])
-                if "personalProjects" in updated_data and index < len(updated_data["personalProjects"]):
-                    updated_data["personalProjects"][index]["description"] = new_content
-            except (ValueError, IndexError) as e:
-                logger.warning(f"Could not apply project regeneration for {item_id}: {e}")
+            projects = updated_data.get("personalProjects", [])
+            if not isinstance(projects, list):
+                apply_failures.append(item_id)
+                continue
+
+            index = _parse_index(item_id, r"proj_(\d+)")
+            if index is None:
+                apply_failures.append(item_id)
+                continue
+
+            expected_name = item.title
+            expected_role = item.subtitle
+
+            resolved_index: int | None = None
+            if 0 <= index < len(projects):
+                entry = projects[index] if isinstance(projects[index], dict) else {}
+                entry_name = _normalize_match_value(str(entry.get("name", "")))
+                entry_role = _normalize_match_value(str(entry.get("role", "")))
+                if entry_name == _normalize_match_value(expected_name) and (
+                    not _normalize_match_value(expected_role)
+                    or entry_role == _normalize_match_value(expected_role)
+                ):
+                    resolved_index = index
+
+            if resolved_index is None:
+                resolved_index = _find_unique_index_by_metadata(
+                    projects,
+                    title_key="name",
+                    subtitle_key="role",
+                    expected_title=expected_name,
+                    expected_subtitle=expected_role,
+                )
+
+            if resolved_index is None:
+                logger.warning(
+                    "apply-regenerated: project item mismatch; resume may have changed. "
+                    f"resume_id={resume_id} item_id={item_id} expected_name={expected_name!r} "
+                    f"expected_role={expected_role!r}"
+                )
+                apply_failures.append(item_id)
+                continue
+
+            entry = projects[resolved_index]
+            if isinstance(entry, dict):
+                entry["description"] = new_content
+            else:
+                apply_failures.append(item_id)
 
         elif item_type == "skills":
             # Update technical skills (stored in additional.technicalSkills)
-            if "additional" in updated_data:
+            if "additional" in updated_data and isinstance(updated_data.get("additional"), dict):
                 updated_data["additional"]["technicalSkills"] = new_content
             elif "technicalSkills" in updated_data:
                 # Fallback for legacy data structure
                 updated_data["technicalSkills"] = new_content
+
+    if apply_failures:
+        logger.warning(
+            "apply-regenerated: refusing to apply due to mismatched/missing items. "
+            f"resume_id={resume_id} item_ids={apply_failures}"
+        )
+        raise HTTPException(
+            status_code=409,
+            detail="Resume content changed since regeneration. Please regenerate and try again.",
+        )
 
     # Update the resume in database
     updated_content = json.dumps(updated_data, indent=2)
