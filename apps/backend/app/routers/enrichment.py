@@ -1,6 +1,7 @@
 """AI-powered resume enrichment endpoints."""
 
 import asyncio
+import copy
 import json
 import logging
 import re
@@ -274,7 +275,7 @@ async def apply_enhancements(
         )
 
     # Make a copy to modify
-    updated_data = dict(processed_data)
+    updated_data = copy.deepcopy(processed_data)
 
     # Apply each enhancement by ADDING new bullets to existing description
     for enhancement in request.enhancements:
@@ -483,7 +484,7 @@ async def apply_regenerated_items(
         )
 
     # Make a copy to modify
-    updated_data = dict(processed_data)
+    updated_data = copy.deepcopy(processed_data)
 
     def _normalize_match_value(value: str | None) -> str:
         return (value or "").strip().casefold()

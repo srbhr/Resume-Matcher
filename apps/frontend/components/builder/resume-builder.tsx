@@ -169,10 +169,12 @@ const ResumeBuilderContent = () => {
         if (data.processed_resume) {
           setResumeData(data.processed_resume as ResumeData);
           setLastSavedData(data.processed_resume as ResumeData);
+          setHasUnsavedChanges(false);
         }
       } catch (error) {
         console.error('Failed to reload resume after applying regenerated changes:', error);
         showNotification(t('builder.alerts.reloadFailed'), 'danger');
+        throw error;
       }
     },
   });

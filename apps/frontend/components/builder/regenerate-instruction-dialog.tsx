@@ -128,6 +128,7 @@ export const RegenerateInstructionDialog: React.FC<RegenerateInstructionDialogPr
               value={instruction}
               onChange={(e) => onInstructionChange(e.target.value)}
               onKeyDown={handleKeyDown}
+              maxLength={2000}
               placeholder={t('builder.regenerate.instructionDialog.placeholder')}
               className="min-h-[120px] border-black"
               disabled={isGenerating}

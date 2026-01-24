@@ -148,17 +148,13 @@ export function useRegenerateWizard({
 
     try {
       await applyRegeneratedItems(resumeId, regeneratedItems);
-      setStep('complete');
-
       if (onSuccess) {
-        try {
-          await onSuccess();
-        } catch (error) {
-          console.error('Regenerate wizard onSuccess callback failed:', error);
-        }
+        await onSuccess();
       }
 
-      // Reset after the entire success flow completes
+      setStep('complete');
+      // Let the UI flush before closing the wizard.
+      await new Promise((resolve) => setTimeout(resolve, 0));
       reset();
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to apply changes';
