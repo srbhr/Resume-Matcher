@@ -102,3 +102,5 @@ next-env.d.ts
 # Config file with API keys - NEVER COMMIT
 config.json
 **/config.json
+
+megalinter-reports/
