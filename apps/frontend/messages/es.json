@@ -190,6 +190,55 @@
       "title": "¿Regenerar {title}?",
       "description": "Esto reemplazará tu {title} actual por una nueva generación. Se perderán las ediciones que hayas hecho."
     },
+    "regenerate": {
+      "buttonLabel": "Regenerar con IA",
+      "selectDialog": {
+        "title": "Selecciona elementos para regenerar",
+        "subtitle": "Elige qué partes de tu currículum quieres mejorar",
+        "experience": "Experiencia laboral",
+        "projects": "Proyectos",
+        "skills": "Habilidades técnicas",
+        "noItemsSelected": "Selecciona al menos un elemento",
+        "noItemsAvailable": "No hay elementos disponibles para regenerar. Agrega experiencia, proyectos o habilidades primero.",
+        "itemCount": {
+          "one": "{count} elemento",
+          "other": "{count} elementos"
+        },
+        "continueButton": "Continuar"
+      },
+      "instructionDialog": {
+        "title": "¿Qué te gustaría mejorar?",
+        "subtitle": "Proporciona comentarios específicos para guiar a la IA",
+        "defaultInstruction": "Mejora el contenido con verbos de acción más fuertes e impacto cuantificable cuando sea posible.",
+        "selectedItems": "Elementos seleccionados",
+        "placeholder": "Ejemplo: Añade más métricas cuantificables, enfatiza habilidades de liderazgo, usa más verbos de acción...",
+        "hint": "Sé específico sobre lo que no te satisface",
+        "backButton": "Atrás",
+        "generateButton": "Generar"
+      },
+      "diffPreview": {
+        "title": "Vista previa de cambios",
+        "subtitle": "Revisa el contenido regenerado antes de aplicarlo",
+        "expandItem": "Expandir {item}",
+        "collapseItem": "Contraer {item}",
+        "partialFailures": "No se pudieron regenerar algunos elementos ({count}). Aún puedes revisar y aplicar los que se generaron correctamente.",
+        "changesCount": "{count} elementos modificados",
+        "rejectButton": "Rechazar y regenerar",
+        "acceptButton": "Aceptar cambios",
+        "originalLabel": "Original",
+        "newLabel": "Nuevo",
+        "noContent": "Sin contenido",
+        "applying": "Aplicando...",
+        "loading": "Generando contenido mejorado..."
+      },
+      "errors": {
+        "generationFailed": "No se pudo generar el contenido. Inténtalo de nuevo.",
+        "applyFailed": "No se pudieron aplicar los cambios. Inténtalo de nuevo.",
+        "resumeChanged": "El contenido del currículum cambió desde la regeneración. Vuelve a regenerar e inténtalo de nuevo.",
+        "noChangesToApply": "No hay cambios para aplicar.",
+        "networkError": "Error de red. Verifica tu conexión."
+      }
+    },
     "jdMatch": {
       "yourResume": "Tu currículum",
       "matchingKeywordsHighlighted": "(palabras clave resaltadas)",
@@ -377,6 +426,7 @@
     "alerts": {
       "saveNotAvailable": "Guardar solo está disponible al editar un currículum existente.",
       "saveFailed": "No se pudo guardar el currículum. Por favor, inténtalo de nuevo.",
+      "reloadFailed": "Se aplicaron los cambios, pero no se pudo recargar el currículum. Actualiza la página.",
       "downloadNotAvailable": "La descarga solo está disponible para currículums guardados.",
       "downloadFailed": "No se pudo descargar el currículum. Por favor, inténtalo de nuevo.",
       "coverLetterSaveFailed": "No se pudo guardar la carta de presentación. Por favor, inténtalo de nuevo.",
