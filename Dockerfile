@@ -31,6 +31,17 @@ RUN npm run build
 # ============================================
 FROM python:3.13-slim
 
+# OCI Image Metadata
+# https://github.com/opencontainers/image-spec/blob/main/annotations.md
+LABEL org.opencontainers.image.title="Resume Matcher" \
+      org.opencontainers.image.description="Create tailored resumes for each job application with AI-powered suggestions. Works locally with Ollama or connect to your favorite LLM provider via API." \
+      org.opencontainers.image.authors="Saurabh Rai <srbhr@resume-matcher.com>" \
+      org.opencontainers.image.url="https://github.com/srbhr/Resume-Matcher" \
+      org.opencontainers.image.source="https://github.com/srbhr/Resume-Matcher" \
+      org.opencontainers.image.documentation="https://github.com/srbhr/Resume-Matcher#readme" \
+      org.opencontainers.image.licenses="Apache-2.0" \
+      org.opencontainers.image.vendor="Resume Matcher"
+
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
@@ -41,6 +52,7 @@ ENV PYTHONUNBUFFERED=1 \
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     # Node.js for frontend
+    ca-certificates \
     curl \
     # Playwright dependencies
     libnss3 \
