@@ -12,6 +12,7 @@ user-invocable: true
 Production-tested patterns for FastAPI with Pydantic v2, SQLAlchemy 2.0 async, and JWT authentication.
 
 **Latest Versions** (verified January 2026):
+
 - FastAPI: 0.128.0
 - Pydantic: 2.11.7
 - SQLAlchemy: 2.0.30
@@ -19,6 +20,7 @@ Production-tested patterns for FastAPI with Pydantic v2, SQLAlchemy 2.0 async, a
 - python-jose: 3.3.0
 
 **Requirements**:
+
 - Python 3.9+ (Python 3.8 support dropped in FastAPI 0.125.0)
 - Pydantic v2.7.0+ (Pydantic v1 support completely removed in FastAPI 0.128.0)
 
@@ -143,6 +145,7 @@ class ItemResponse(ItemBase):
 ```
 
 **Key Points**:
+
 - Use `Field()` for validation constraints
 - Separate Create/Update/Response schemas
 - `from_attributes=True` enables SQLAlchemy model conversion
@@ -478,6 +481,7 @@ settings = Settings()
 ```
 
 Create `.env`:
+
 ```
 DATABASE_URL=sqlite+aiosqlite:///./database.db
 SECRET_KEY=your-super-secret-key-here
@@ -517,6 +521,7 @@ This skill prevents **7** documented issues from official FastAPI GitHub and rel
 **Why It Happens**: Form data parsing preloads default values and passes them to the validator, making it impossible to distinguish between fields explicitly set by the user and fields using defaults. This bug ONLY affects Form data, not JSON body data.
 
 **Prevention**:
+
 ```python
 # ✗ AVOID: Pydantic model with Form when you need field_set metadata
 from typing import Annotated
@@ -547,6 +552,7 @@ async def endpoint(model: MyModel):
 **Why It Happens**: When you return a custom `Response` with a `background` parameter, it overwrites all tasks added to the injected `BackgroundTasks` dependency. This is not documented and causes silent failures.
 
 **Prevention**:
+
 ```python
 # ✗ WRONG: Mixing both mechanisms
 from fastapi import BackgroundTasks
@@ -585,6 +591,7 @@ async def endpoint():
 **Why It Happens**: Starting in FastAPI 0.114.0, optional form fields with `Literal` types fail validation when passed `None` via TestClient. Worked in 0.113.0.
 
 **Prevention**:
+
 ```python
 from typing import Annotated, Literal, Optional
 from fastapi import Form
@@ -620,6 +627,7 @@ async def endpoint(attribute: Annotated[str | None, Form()] = None):
 **Why It Happens**: Using Pydantic's `Json` type directly with `Form()` fails. You must accept the field as `str` and parse manually.
 
 **Prevention**:
+
 ```python
 from typing import Annotated
 from fastapi import Form
@@ -647,6 +655,7 @@ async def working(json_list: Annotated[str, Form()]) -> list[str]:
 **Why It Happens**: When using `Annotated` with `Depends()` and a forward reference (from `__future__ import annotations`), OpenAPI schema generation fails or produces incorrect schemas.
 
 **Prevention**:
+
 ```python
 # ✗ PROBLEMATIC: Forward reference with Depends
 from __future__ import annotations
@@ -693,6 +702,7 @@ def get_potato() -> Potato:  # Now works ✓
 **Why It Happens**: Major breaking change when migrating from Pydantic v1 to v2. Union types with `str` in path/query parameters now always parse as `str` (worked correctly in v1).
 
 **Prevention**:
+
 ```python
 from uuid import UUID
 
@@ -734,6 +744,7 @@ class PathParams(BaseModel):
 **Why It Happens**: When raising `ValueError` inside a Pydantic `@field_validator` with Form fields, FastAPI returns 500 Internal Server Error instead of the expected 422 Unprocessable Entity validation error.
 
 **Prevention**:
+
 ```python
 from typing import Annotated
 from fastapi import Form
@@ -773,11 +784,13 @@ class MyForm(BaseModel):
 **Cause**: Request body doesn't match Pydantic schema
 
 **Debug**:
+
 1. Check `/docs` endpoint - test there first
 2. Verify JSON structure matches schema
 3. Check required vs optional fields
 
 **Fix**: Add custom validation error handler:
+
 ```python
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -795,6 +808,7 @@ async def validation_exception_handler(request, exc):
 **Cause**: Missing or misconfigured CORS middleware
 
 **Fix**:
+
 ```python
 app.add_middleware(
     CORSMiddleware,
@@ -810,6 +824,7 @@ app.add_middleware(
 **Cause**: Blocking call in async route (e.g., `time.sleep()`, sync database client, CPU-bound operations)
 
 **Symptoms** (production-scale):
+
 - Throughput plateaus far earlier than expected
 - Latency "balloons" as concurrency increases
 - Request pattern looks almost serial under load
@@ -817,6 +832,7 @@ app.add_middleware(
 - Small scattered blocking calls that aren't obvious (not infinite loops)
 
 **Fix**: Use async alternatives:
+
 ```python
 # ✗ WRONG: Blocks event loop
 import time
@@ -867,6 +883,7 @@ async def mixed_task():
 **Cause**: Using `Optional[str]` without default
 
 **Fix**:
+
 ```python
 # Wrong
 description: Optional[str]  # Still required!
@@ -915,22 +932,26 @@ Run: `uv run pytest`
 ## Deployment
 
 ### Uvicorn (Development)
+
 ```bash
 uv run fastapi dev src/main.py
 ```
 
 ### Uvicorn (Production)
+
 ```bash
 uv run uvicorn src.main:app --host 0.0.0.0 --port 8000
 ```
 
 ### Gunicorn + Uvicorn (Production with workers)
+
 ```bash
 uv add gunicorn
 uv run gunicorn src.main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000
 ```
 
 ### Docker
+
 ```dockerfile
 FROM python:3.12-slim
 

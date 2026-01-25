@@ -10,6 +10,7 @@ description: Codebase orientation. Use FIRST when exploring code, finding files,
 3. Check `docs/agent/apis/api-flow-maps.md` for endpoint mappings
 
 ## Quick paths:
+
 - Backend routers: `apps/backend/app/routers/`
 - Frontend pages: `apps/frontend/app/`
 - Design specs: `docs/agent/design/`

@@ -24,14 +24,12 @@ export function ResumeNewTemplate({ resumeData, settings }: TemplateProps) {
       <header className="resume-section">
         <h1>{resumeData.personalInfo?.name}</h1>
       </header>
-      
+
       {/* Sections */}
-      {getSortedSections(resumeData).map(section => (
+      {getSortedSections(resumeData).map((section) => (
         <section key={section.id} className="resume-section">
           <h3 className="resume-section-title">{section.displayName}</h3>
-          <div className="resume-items">
-            {/* Items */}
-          </div>
+          <div className="resume-items">{/* Items */}</div>
         </section>
       ))}
     </div>
@@ -53,7 +51,7 @@ export function ResumeNewTemplate({ resumeData, settings }: TemplateProps) {
 
 ```typescript
 // components/resume/index.ts
-export { ResumeNewTemplate } from './resume-new-template';
+export { ResumeNewTemplate } from "./resume-new-template";
 ```
 
 ## Add to Selector
@@ -61,9 +59,9 @@ export { ResumeNewTemplate } from './resume-new-template';
 ```typescript
 // components/builder/formatting-controls.tsx
 const TEMPLATES = [
-  { id: 'swiss-single', name: 'Single Column' },
-  { id: 'swiss-two-column', name: 'Two Column' },
-  { id: 'new-template', name: 'New Template' }, // Add here
+  { id: "swiss-single", name: "Single Column" },
+  { id: "swiss-two-column", name: "Two Column" },
+  { id: "new-template", name: "New Template" }, // Add here
 ];
 ```
 

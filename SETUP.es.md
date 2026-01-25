@@ -27,17 +27,18 @@
 ---
 
 <a id="prerequisites"></a>
+
 ## Requisitos previos
 
 Antes de empezar, asegúrate de tener lo siguiente instalado en tu sistema:
 
-| Herramienta | Versión mínima | Cómo comprobarlo | Instalación |
-|------------|-----------------|------------------|-------------|
-| **Python** | 3.13+ | `python --version` | [python.org](https://python.org) |
-| **Node.js** | 22+ | `node --version` | [nodejs.org](https://nodejs.org) |
-| **npm** | 10+ | `npm --version` | Viene con Node.js |
-| **uv** | Última | `uv --version` | [astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/) |
-| **Git** | Cualquiera | `git --version` | [git-scm.com](https://git-scm.com) |
+| Herramienta | Versión mínima | Cómo comprobarlo   | Instalación                                                             |
+| ----------- | -------------- | ------------------ | ----------------------------------------------------------------------- |
+| **Python**  | 3.13+          | `python --version` | [python.org](https://python.org)                                        |
+| **Node.js** | 22+            | `node --version`   | [nodejs.org](https://nodejs.org)                                        |
+| **npm**     | 10+            | `npm --version`    | Viene con Node.js                                                       |
+| **uv**      | Última         | `uv --version`     | [astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/) |
+| **Git**     | Cualquiera     | `git --version`    | [git-scm.com](https://git-scm.com)                                      |
 
 ### Instalar uv (gestor de paquetes de Python)
 
@@ -57,6 +58,7 @@ pip install uv
 ---
 
 <a id="quick-start"></a>
+
 ## Inicio rápido
 
 Si ya estás familiarizado con herramientas de desarrollo y quieres arrancar rápido:
@@ -85,9 +87,11 @@ Abre **<http://localhost:3000>** en el navegador y listo.
 ---
 
 <a id="step-by-step-setup"></a>
+
 ## Configuración paso a paso
 
 <a id="1-clone-the-repository"></a>
+
 ### 1. Clonar el repositorio
 
 Primero, trae el código a tu máquina:
@@ -98,6 +102,7 @@ cd Resume-Matcher
 ```
 
 <a id="2-backend-setup"></a>
+
 ### 2. Configurar el backend
 
 El backend es una aplicación Python (FastAPI) que gestiona el procesamiento de IA, el parseo del currículum y el almacenamiento de datos.
@@ -162,6 +167,7 @@ INFO:     Started reloader process
 **Deja este terminal ejecutándose** y abre un nuevo terminal para el frontend.
 
 <a id="3-frontend-setup"></a>
+
 ### 3. Configurar el frontend
 
 El frontend es una aplicación Next.js que proporciona la interfaz de usuario.
@@ -204,20 +210,22 @@ Abre **<http://localhost:3000>** en el navegador. Deberías ver el panel de Resu
 ---
 
 <a id="configuring-your-ai-provider"></a>
+
 ## Configurar tu proveedor de IA
 
 Resume Matcher admite múltiples proveedores de IA. Puedes configurarlo desde la página de Settings en la app o editando el archivo `.env` del backend.
 
 <a id="option-a-cloud-providers"></a>
+
 ### Opción A: Proveedores en la nube
 
-| Proveedor | Configuración | Obtener API key |
-|----------|---------------|-----------------|
-| **OpenAI** | `LLM_PROVIDER=openai`<br>`LLM_MODEL=gpt-4o-mini` | [platform.openai.com](https://platform.openai.com/api-keys) |
-| **Anthropic** | `LLM_PROVIDER=anthropic`<br>`LLM_MODEL=claude-3-5-sonnet-20241022` | [console.anthropic.com](https://console.anthropic.com/) |
-| **Google Gemini** | `LLM_PROVIDER=gemini`<br>`LLM_MODEL=gemini-1.5-flash` | [aistudio.google.com](https://aistudio.google.com/app/apikey) |
-| **OpenRouter** | `LLM_PROVIDER=openrouter`<br>`LLM_MODEL=anthropic/claude-3.5-sonnet` | [openrouter.ai](https://openrouter.ai/keys) |
-| **DeepSeek** | `LLM_PROVIDER=deepseek`<br>`LLM_MODEL=deepseek-chat` | [platform.deepseek.com](https://platform.deepseek.com/) |
+| Proveedor         | Configuración                                                        | Obtener API key                                               |
+| ----------------- | -------------------------------------------------------------------- | ------------------------------------------------------------- |
+| **OpenAI**        | `LLM_PROVIDER=openai`<br>`LLM_MODEL=gpt-4o-mini`                     | [platform.openai.com](https://platform.openai.com/api-keys)   |
+| **Anthropic**     | `LLM_PROVIDER=anthropic`<br>`LLM_MODEL=claude-3-5-sonnet-20241022`   | [console.anthropic.com](https://console.anthropic.com/)       |
+| **Google Gemini** | `LLM_PROVIDER=gemini`<br>`LLM_MODEL=gemini-1.5-flash`                | [aistudio.google.com](https://aistudio.google.com/app/apikey) |
+| **OpenRouter**    | `LLM_PROVIDER=openrouter`<br>`LLM_MODEL=anthropic/claude-3.5-sonnet` | [openrouter.ai](https://openrouter.ai/keys)                   |
+| **DeepSeek**      | `LLM_PROVIDER=deepseek`<br>`LLM_MODEL=deepseek-chat`                 | [platform.deepseek.com](https://platform.deepseek.com/)       |
 
 Ejemplo de `.env` para Anthropic:
 
@@ -228,6 +236,7 @@ LLM_API_KEY=sk-ant-your-key-here
 ```
 
 <a id="option-b-local-ai-with-ollama-free"></a>
+
 ### Opción B: IA local con Ollama (gratis)
 
 ¿Quieres ejecutar modelos localmente sin costes de API? Usa Ollama.
@@ -264,6 +273,7 @@ Normalmente Ollama se inicia automáticamente tras la instalación.
 ---
 
 <a id="docker-deployment"></a>
+
 ## Despliegue con Docker
 
 ¿Prefieres un despliegue en contenedor? Resume Matcher incluye soporte para Docker.
@@ -292,17 +302,18 @@ docker-compose down
 ---
 
 <a id="accessing-the-application"></a>
+
 ## Acceder a la aplicación
 
 Cuando ambos servidores estén ejecutándose, abre el navegador:
 
-| URL | Descripción |
-|-----|-------------|
-| **<http://localhost:3000>** | Aplicación principal (Dashboard) |
-| **<http://localhost:3000/settings>** | Configurar proveedor de IA |
-| **<http://localhost:8000>** | Raíz de la API del backend |
-| **<http://localhost:8000/docs>** | Documentación interactiva de la API |
-| **<http://localhost:8000/health>** | Health check del backend |
+| URL                                  | Descripción                         |
+| ------------------------------------ | ----------------------------------- |
+| **<http://localhost:3000>**          | Aplicación principal (Dashboard)    |
+| **<http://localhost:3000/settings>** | Configurar proveedor de IA          |
+| **<http://localhost:8000>**          | Raíz de la API del backend          |
+| **<http://localhost:8000/docs>**     | Documentación interactiva de la API |
+| **<http://localhost:8000/health>**   | Health check del backend            |
 
 ### Checklist de primera ejecución
 
@@ -316,6 +327,7 @@ Cuando ambos servidores estén ejecutándose, abre el navegador:
 ---
 
 <a id="common-commands-reference"></a>
+
 ## Referencia de comandos comunes
 
 ### Comandos del backend
@@ -384,6 +396,7 @@ rm -rf apps/backend/data
 ---
 
 <a id="troubleshooting"></a>
+
 ## Solución de problemas
 
 ### El backend no arranca
@@ -447,6 +460,7 @@ CORS_ORIGINS=["http://localhost:3001", "http://127.0.0.1:3001"]
 ---
 
 <a id="project-structure-overview"></a>
+
 ## Estructura del proyecto
 
 ```text
@@ -480,6 +494,7 @@ Resume-Matcher/
 ---
 
 <a id="getting-help"></a>
+
 ## Obtener ayuda
 
 ¿Atascado? Estas son tus opciones:
@@ -490,13 +505,12 @@ Resume-Matcher/
 
 ### Documentación útil
 
-| Documento | Descripción |
-|----------|-------------|
-| [backend-guide.md](docs/agent/architecture/backend-guide.md) | Arquitectura del backend y detalles de la API |
-| [frontend-workflow.md](docs/agent/architecture/frontend-workflow.md) | Flujo de usuario y arquitectura de componentes |
-| [style-guide.md](docs/agent/design/style-guide.md) | Sistema de diseño UI (Swiss International Style) |
+| Documento                                                            | Descripción                                      |
+| -------------------------------------------------------------------- | ------------------------------------------------ |
+| [backend-guide.md](docs/agent/architecture/backend-guide.md)         | Arquitectura del backend y detalles de la API    |
+| [frontend-workflow.md](docs/agent/architecture/frontend-workflow.md) | Flujo de usuario y arquitectura de componentes   |
+| [style-guide.md](docs/agent/design/style-guide.md)                   | Sistema de diseño UI (Swiss International Style) |
 
 ---
 
 ¡Feliz creación de currículums! Si Resume Matcher te resulta útil, considera [darle una estrella al repo](https://github.com/srbhr/Resume-Matcher) y [unirte a nuestro Discord](https://dsc.gg/resume-matcher).
-

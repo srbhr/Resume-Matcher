@@ -22,44 +22,49 @@
 All project documentation is located in the `docs/agent/` folder:
 
 ### Core Docs
-| Document | Description |
-|----------|-------------|
-| [scope-and-principles.md](docs/agent/scope-and-principles.md) | Project scope and non-negotiable rules |
-| [quickstart.md](docs/agent/quickstart.md) | Install, run, test commands |
-| [workflow.md](docs/agent/workflow.md) | Git commits, PRs, testing guidelines |
-| [coding-standards.md](docs/agent/coding-standards.md) | Frontend and backend coding conventions |
-| [llm-integration.md](docs/agent/llm-integration.md) | Multi-provider AI support |
+
+| Document                                                      | Description                             |
+| ------------------------------------------------------------- | --------------------------------------- |
+| [scope-and-principles.md](docs/agent/scope-and-principles.md) | Project scope and non-negotiable rules  |
+| [quickstart.md](docs/agent/quickstart.md)                     | Install, run, test commands             |
+| [workflow.md](docs/agent/workflow.md)                         | Git commits, PRs, testing guidelines    |
+| [coding-standards.md](docs/agent/coding-standards.md)         | Frontend and backend coding conventions |
+| [llm-integration.md](docs/agent/llm-integration.md)           | Multi-provider AI support               |
 
 ### Architecture
-| Document | Description |
-|----------|-------------|
-| [backend-architecture.md](docs/agent/architecture/backend-architecture.md) | Backend modules, API endpoints, services |
-| [backend-guide.md](docs/agent/architecture/backend-guide.md) | Backend quick reference |
-| [frontend-architecture.md](docs/agent/architecture/frontend-architecture.md) | Components, pages, state |
-| [frontend-workflow.md](docs/agent/architecture/frontend-workflow.md) | User flow, page routes |
+
+| Document                                                                     | Description                              |
+| ---------------------------------------------------------------------------- | ---------------------------------------- |
+| [backend-architecture.md](docs/agent/architecture/backend-architecture.md)   | Backend modules, API endpoints, services |
+| [backend-guide.md](docs/agent/architecture/backend-guide.md)                 | Backend quick reference                  |
+| [frontend-architecture.md](docs/agent/architecture/frontend-architecture.md) | Components, pages, state                 |
+| [frontend-workflow.md](docs/agent/architecture/frontend-workflow.md)         | User flow, page routes                   |
 
 ### APIs
-| Document | Description |
-|----------|-------------|
-| [front-end-apis.md](docs/agent/apis/front-end-apis.md) | API client layer |
-| [api-flow-maps.md](docs/agent/apis/api-flow-maps.md) | API request/response flows |
+
+| Document                                                           | Description                 |
+| ------------------------------------------------------------------ | --------------------------- |
+| [front-end-apis.md](docs/agent/apis/front-end-apis.md)             | API client layer            |
+| [api-flow-maps.md](docs/agent/apis/api-flow-maps.md)               | API request/response flows  |
 | [backend-requirements.md](docs/agent/apis/backend-requirements.md) | API contract specifications |
 
 ### Design & Templates
-| Document | Description |
-|----------|-------------|
-| [style-guide.md](docs/agent/design/style-guide.md) | **Swiss International Style design system** |
-| [design-system.md](docs/agent/design/design-system.md) | Extended design tokens |
-| [template-system.md](docs/agent/design/template-system.md) | Resume template system |
-| [pdf-template-guide.md](docs/agent/design/pdf-template-guide.md) | PDF rendering & template editing |
-| [swiss-design-system-prompt.md](docs/agent/design/swiss-design-system-prompt.md) | AI prompt for Swiss style UI |
+
+| Document                                                                         | Description                                 |
+| -------------------------------------------------------------------------------- | ------------------------------------------- |
+| [style-guide.md](docs/agent/design/style-guide.md)                               | **Swiss International Style design system** |
+| [design-system.md](docs/agent/design/design-system.md)                           | Extended design tokens                      |
+| [template-system.md](docs/agent/design/template-system.md)                       | Resume template system                      |
+| [pdf-template-guide.md](docs/agent/design/pdf-template-guide.md)                 | PDF rendering & template editing            |
+| [swiss-design-system-prompt.md](docs/agent/design/swiss-design-system-prompt.md) | AI prompt for Swiss style UI                |
 
 ### Features
-| Document | Description |
-|----------|-------------|
-| [custom-sections.md](docs/agent/features/custom-sections.md) | Dynamic resume sections |
-| [i18n.md](docs/agent/features/i18n.md) | Internationalization overview |
-| [i18n-preparation.md](docs/agent/features/i18n-preparation.md) | Detailed i18n plan |
+
+| Document                                                       | Description                   |
+| -------------------------------------------------------------- | ----------------------------- |
+| [custom-sections.md](docs/agent/features/custom-sections.md)   | Dynamic resume sections       |
+| [i18n.md](docs/agent/features/i18n.md)                         | Internationalization overview |
+| [i18n-preparation.md](docs/agent/features/i18n-preparation.md) | Detailed i18n plan            |
 
 ---
 
@@ -67,14 +72,15 @@ All project documentation is located in the `docs/agent/` folder:
 
 Reusable patterns and guidelines for AI agents located in `.claude/skills/`:
 
-| Skill | Description |
-|-------|-------------|
-| [navigator](/.claude/skills/navigator/SKILL.md) | Codebase orientation - use FIRST when exploring code |
-| [tailwind-patterns](/.claude/skills/tailwind-pattern/SKILL.md) | Tailwind CSS component patterns + Swiss style overrides |
-| [fastapi](/.claude/skills/fastapi/SKILL.md) | FastAPI patterns, JWT auth, Pydantic v2, async SQLAlchemy |
-| [design-principles](/.claude/skills/design-principles/SKILL.md) | Swiss International Style design principles |
+| Skill                                                           | Description                                               |
+| --------------------------------------------------------------- | --------------------------------------------------------- |
+| [navigator](/.claude/skills/navigator/SKILL.md)                 | Codebase orientation - use FIRST when exploring code      |
+| [tailwind-patterns](/.claude/skills/tailwind-pattern/SKILL.md)  | Tailwind CSS component patterns + Swiss style overrides   |
+| [fastapi](/.claude/skills/fastapi/SKILL.md)                     | FastAPI patterns, JWT auth, Pydantic v2, async SQLAlchemy |
+| [design-principles](/.claude/skills/design-principles/SKILL.md) | Swiss International Style design principles               |
 
 **Quick Start for Agents:**
+
 1. Read `navigator` skill first for codebase orientation
 2. Check `design-principles` and `tailwind-patterns` for UI work
 3. Check `fastapi` skill for backend work
@@ -84,6 +90,7 @@ Reusable patterns and guidelines for AI agents located in `.claude/skills/`:
 ## Project Structure & Module Organization
 
 ### Backend (`apps/backend/`)
+
 A lean FastAPI application with multi-provider AI support. See **[architecture/backend-guide.md](docs/agent/architecture/backend-guide.md)** for details.
 
 - `app/main.py` - FastAPI entry point with CORS and router setup
@@ -96,6 +103,7 @@ A lean FastAPI application with multi-provider AI support. See **[architecture/b
 - `app/prompts/` - LLM prompt templates
 
 ### Frontend (`apps/frontend/`)
+
 Next.js dashboard with Swiss International Style design. See **[architecture/frontend-workflow.md](docs/agent/architecture/frontend-workflow.md)** for user flow.
 
 - `app/` - Next.js routes (dashboard, builder, tailor, resumes, settings, print)
@@ -122,6 +130,7 @@ npm run format       # Prettier
 ## Coding Style & Naming Conventions
 
 ### Frontend (TypeScript/React)
+
 - **Design System**: All UI changes MUST follow the **Swiss International Style** in [design/style-guide.md](docs/agent/design/style-guide.md)
 - Use `font-serif` for headers, `font-mono` for metadata, `font-sans` for body
 - Color palette: Canvas `#F0F0E8`, Ink `#000000`, Hyper Blue `#1D4ED8`, Signal Green `#15803D`
@@ -130,6 +139,7 @@ npm run format       # Prettier
 - Run Prettier before committing
 
 ### Backend (Python/FastAPI)
+
 - Python 3.13+, 4-space indents, type hints on all functions
 - Async functions for I/O operations
 - Pydantic models for all request/response schemas
@@ -138,12 +148,14 @@ npm run format       # Prettier
 ---
 
 ## Testing Guidelines
+
 - UI: Must pass `npm run lint`; add tests in `apps/frontend/__tests__/`
 - Backend: Tests in `apps/backend/tests/` with `test_*.py` naming
 
 ---
 
 ## Commit & Pull Request Guidelines
+
 - Concise, sentence-style subjects
 - Reference issues (`Fixes #123`)
 - Call out schema/prompt changes in PR description
@@ -152,6 +164,7 @@ npm run format       # Prettier
 ---
 
 ## LLM & AI Workflow Notes
+
 - **Multi-Provider Support**: LiteLLM supports OpenAI, Anthropic, Gemini, DeepSeek, OpenRouter, Ollama
 - **API Key Handling**: Keys passed directly via `api_key` parameter (not os.environ)
 - **JSON Mode**: Auto-enabled for supported providers
@@ -165,12 +178,12 @@ npm run format       # Prettier
 
 Dynamic resume sections with customization:
 
-| Type | Description |
-|------|-------------|
-| `personalInfo` | Header (always first) |
-| `text` | Single text block |
-| `itemList` | Items with title, subtitle, years, description |
-| `stringList` | Simple string array |
+| Type           | Description                                    |
+| -------------- | ---------------------------------------------- |
+| `personalInfo` | Header (always first)                          |
+| `text`         | Single text block                              |
+| `itemList`     | Items with title, subtitle, years, description |
+| `stringList`   | Simple string array                            |
 
 Features: Rename, reorder, hide, delete, add custom sections.
 
@@ -178,10 +191,10 @@ Features: Rename, reorder, hide, delete, add custom sections.
 
 ## Resume Template Settings
 
-| Template | Description |
-|----------|-------------|
-| `swiss-single` | Single-column layout |
-| `swiss-two-column` | 65%/35% split |
+| Template           | Description          |
+| ------------------ | -------------------- |
+| `swiss-single`     | Single-column layout |
+| `swiss-two-column` | 65%/35% split        |
 
 Controls: Margins (5-25mm), spacing (1-5), font size (1-5), header scale (1-5).
 
@@ -195,6 +208,6 @@ Supported: `en`, `es`, `zh`, `ja`
 - **Content Language**: LLM-generated content (localStorage + backend)
 
 ```typescript
-import { useTranslations } from '@/lib/i18n';
+import { useTranslations } from "@/lib/i18n";
 const { t } = useTranslations();
 ```

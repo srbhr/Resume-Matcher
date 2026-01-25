@@ -4,13 +4,13 @@
 
 ## Tech Stack
 
-| Component | Technology |
-|-----------|------------|
-| Framework | FastAPI |
-| Database | TinyDB (JSON file) |
-| AI | LiteLLM (100+ providers) |
-| Doc Parsing | markitdown |
-| Validation | Pydantic |
+| Component   | Technology               |
+| ----------- | ------------------------ |
+| Framework   | FastAPI                  |
+| Database    | TinyDB (JSON file)       |
+| AI          | LiteLLM (100+ providers) |
+| Doc Parsing | markitdown               |
+| Validation  | Pydantic                 |
 
 ## Directory Structure
 
@@ -40,12 +40,12 @@ db.create_job(content, resume_id)
 
 ## LLM Features
 
-| Feature | Description |
-|---------|-------------|
-| API Key Passing | Direct to litellm (avoids race conditions) |
-| JSON Mode | Auto-enabled for supported providers |
-| Retry Logic | 2 retries, temperature 0.1→0.0 |
-| Timeouts | 30s (health), 120s (completion), 180s (JSON) |
+| Feature         | Description                                  |
+| --------------- | -------------------------------------------- |
+| API Key Passing | Direct to litellm (avoids race conditions)   |
+| JSON Mode       | Auto-enabled for supported providers         |
+| Retry Logic     | 2 retries, temperature 0.1→0.0               |
+| Timeouts        | 30s (health), 120s (completion), 180s (JSON) |
 
 ## Prompt Guidelines
 
@@ -74,6 +74,7 @@ DELETE /api/v1/resumes/{id}
 ## Error Handling
 
 Log details server-side, generic messages to clients:
+
 ```python
 except Exception as e:
     logger.error(f"Failed: {e}")

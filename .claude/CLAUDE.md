@@ -8,12 +8,12 @@
 
 Resume Matcher is an AI-powered application for tailoring resumes to job descriptions.
 
-| Layer | Stack |
-|-------|-------|
-| **Backend** | FastAPI + Python 3.13+, LiteLLM (multi-provider AI) |
-| **Frontend** | Next.js 16 + React 19, Tailwind CSS v4 |
-| **Database** | TinyDB (JSON file storage) |
-| **PDF** | Headless Chromium via Playwright |
+| Layer        | Stack                                               |
+| ------------ | --------------------------------------------------- |
+| **Backend**  | FastAPI + Python 3.13+, LiteLLM (multi-provider AI) |
+| **Frontend** | Next.js 16 + React 19, Tailwind CSS v4              |
+| **Database** | TinyDB (JSON file storage)                          |
+| **PDF**      | Headless Chromium via Playwright                    |
 
 ---
 
@@ -86,34 +86,39 @@ apps/
 ## Documentation by Task
 
 ### For Backend Changes
+
 1. [Backend guide](../docs/agent/architecture/backend-guide.md) - Architecture, modules, services
 2. [API contracts](../docs/agent/apis/front-end-apis.md) - API specifications
 3. [LLM integration](../docs/agent/llm-integration.md) - Multi-provider AI support
 
 ### For Frontend Changes
+
 1. [Frontend workflow](../docs/agent/architecture/frontend-workflow.md) - User flow, components
 2. [Style guide](../docs/agent/design/style-guide.md) - **REQUIRED** Swiss International Style
 3. [Coding standards](../docs/agent/coding-standards.md) - Frontend conventions
 
 ### For Template/PDF Changes
+
 1. [PDF template guide](../docs/agent/design/pdf-template-guide.md) - PDF rendering
 2. [Template system](../docs/agent/design/template-system.md) - Resume templates
 3. [Resume templates](../docs/agent/features/resume-templates.md) - Template types & controls
 
 ### For Features
-| Feature | Documentation |
-|---------|---------------|
-| Custom sections | [custom-sections.md](../docs/agent/features/custom-sections.md) |
+
+| Feature          | Documentation                                                     |
+| ---------------- | ----------------------------------------------------------------- |
+| Custom sections  | [custom-sections.md](../docs/agent/features/custom-sections.md)   |
 | Resume templates | [resume-templates.md](../docs/agent/features/resume-templates.md) |
-| i18n | [i18n.md](../docs/agent/features/i18n.md) |
-| AI enrichment | [enrichment.md](../docs/agent/features/enrichment.md) |
-| JD matching | [jd-match.md](../docs/agent/features/jd-match.md) |
+| i18n             | [i18n.md](../docs/agent/features/i18n.md)                         |
+| AI enrichment    | [enrichment.md](../docs/agent/features/enrichment.md)             |
+| JD matching      | [jd-match.md](../docs/agent/features/jd-match.md)                 |
 
 ---
 
 ## Code Patterns
 
 ### Backend Error Handling
+
 ```python
 except Exception as e:
     logger.error(f"Operation failed: {e}")
@@ -121,15 +126,19 @@ except Exception as e:
 ```
 
 ### Frontend Textarea Fix
+
 All textareas need Enter key handling:
+
 ```tsx
 const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-  if (e.key === 'Enter') e.stopPropagation();
+  if (e.key === "Enter") e.stopPropagation();
 };
 ```
 
 ### Mutable Defaults (Python)
+
 Always use `copy.deepcopy()` for mutable defaults:
+
 ```python
 import copy
 data = copy.deepcopy(DEFAULT_DATA)  # Correct
@@ -140,18 +149,18 @@ data = copy.deepcopy(DEFAULT_DATA)  # Correct
 
 ## Design System Quick Reference
 
-| Element | Value |
-|---------|-------|
-| Canvas background | `#F0F0E8` |
-| Ink (text) | `#000000` |
-| Hyper Blue (links) | `#1D4ED8` |
-| Signal Green (success) | `#15803D` |
-| Alert Orange (warning) | `#F97316` |
-| Alert Red (error) | `#DC2626` |
-| Headers font | `font-serif` |
-| Body font | `font-sans` |
-| Metadata font | `font-mono` |
-| Borders | `rounded-none`, 1px black, hard shadows |
+| Element                | Value                                   |
+| ---------------------- | --------------------------------------- |
+| Canvas background      | `#F0F0E8`                               |
+| Ink (text)             | `#000000`                               |
+| Hyper Blue (links)     | `#1D4ED8`                               |
+| Signal Green (success) | `#15803D`                               |
+| Alert Orange (warning) | `#F97316`                               |
+| Alert Red (error)      | `#DC2626`                               |
+| Headers font           | `font-serif`                            |
+| Body font              | `font-sans`                             |
+| Metadata font          | `font-mono`                             |
+| Borders                | `rounded-none`, 1px black, hard shadows |
 
 ---
 
@@ -170,6 +179,7 @@ Before completing a task:
 ## Out of Scope
 
 Do NOT modify without explicit request:
+
 - `.github/workflows/` files
 - CI/CD configuration
 - Docker build behavior

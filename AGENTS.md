@@ -51,46 +51,46 @@ npm run build
 
 ## Read Before Making Changes
 
-| Topic | Document |
-|-------|----------|
-| **Full agent docs index** | [docs/agent/README.md](docs/agent/README.md) |
-| **Scope & principles** | [docs/agent/scope-and-principles.md](docs/agent/scope-and-principles.md) |
-| **Quickstart** | [docs/agent/quickstart.md](docs/agent/quickstart.md) |
-| **Workflow & PRs** | [docs/agent/workflow.md](docs/agent/workflow.md) |
-| **Coding standards** | [docs/agent/coding-standards.md](docs/agent/coding-standards.md) |
+| Topic                     | Document                                                                 |
+| ------------------------- | ------------------------------------------------------------------------ |
+| **Full agent docs index** | [docs/agent/README.md](docs/agent/README.md)                             |
+| **Scope & principles**    | [docs/agent/scope-and-principles.md](docs/agent/scope-and-principles.md) |
+| **Quickstart**            | [docs/agent/quickstart.md](docs/agent/quickstart.md)                     |
+| **Workflow & PRs**        | [docs/agent/workflow.md](docs/agent/workflow.md)                         |
+| **Coding standards**      | [docs/agent/coding-standards.md](docs/agent/coding-standards.md)         |
 
 ### Backend
 
-| Document | Description |
-|----------|-------------|
+| Document                                                  | Description                     |
+| --------------------------------------------------------- | ------------------------------- |
 | [Backend guide](docs/agent/architecture/backend-guide.md) | Architecture, modules, services |
-| [API contracts](docs/agent/apis/front-end-apis.md) | API specifications |
-| [LLM integration](docs/agent/llm-integration.md) | Multi-provider AI support |
+| [API contracts](docs/agent/apis/front-end-apis.md)        | API specifications              |
+| [LLM integration](docs/agent/llm-integration.md)          | Multi-provider AI support       |
 
 ### Frontend
 
-| Document | Description |
-|----------|-------------|
-| [Frontend workflow](docs/agent/architecture/frontend-workflow.md) | User flow, components |
-| [Style guide](docs/agent/design/style-guide.md) | **REQUIRED** for UI changes |
-| [Design system](docs/agent/design/design-system.md) | Extended design docs |
+| Document                                                          | Description                 |
+| ----------------------------------------------------------------- | --------------------------- |
+| [Frontend workflow](docs/agent/architecture/frontend-workflow.md) | User flow, components       |
+| [Style guide](docs/agent/design/style-guide.md)                   | **REQUIRED** for UI changes |
+| [Design system](docs/agent/design/design-system.md)               | Extended design docs        |
 
 ### Templates & PDF
 
-| Document | Description |
-|----------|-------------|
-| [Template system](docs/agent/design/template-system.md) | Resume template architecture |
-| [PDF template guide](docs/agent/design/pdf-template-guide.md) | PDF rendering guide |
+| Document                                                      | Description                  |
+| ------------------------------------------------------------- | ---------------------------- |
+| [Template system](docs/agent/design/template-system.md)       | Resume template architecture |
+| [PDF template guide](docs/agent/design/pdf-template-guide.md) | PDF rendering guide          |
 
 ### Features
 
-| Document | Description |
-|----------|-------------|
-| [Custom sections](docs/agent/features/custom-sections.md) | Dynamic resume sections |
+| Document                                                    | Description                  |
+| ----------------------------------------------------------- | ---------------------------- |
+| [Custom sections](docs/agent/features/custom-sections.md)   | Dynamic resume sections      |
 | [Resume templates](docs/agent/features/resume-templates.md) | Template formatting controls |
-| [i18n](docs/agent/features/i18n.md) | Internationalization |
-| [Enrichment](docs/agent/features/enrichment.md) | AI resume enhancement |
-| [JD Match](docs/agent/features/jd-match.md) | Keyword matching feature |
+| [i18n](docs/agent/features/i18n.md)                         | Internationalization         |
+| [Enrichment](docs/agent/features/enrichment.md)             | AI resume enhancement        |
+| [JD Match](docs/agent/features/jd-match.md)                 | Keyword matching feature     |
 
 ---
 
@@ -135,13 +135,13 @@ Before marking a PR as ready:
 
 ## Quick Reference
 
-| Need | Go to |
-|------|-------|
-| Backend architecture | [architecture/backend-guide.md](docs/agent/architecture/backend-guide.md) |
+| Need                  | Go to                                                                             |
+| --------------------- | --------------------------------------------------------------------------------- |
+| Backend architecture  | [architecture/backend-guide.md](docs/agent/architecture/backend-guide.md)         |
 | Frontend architecture | [architecture/frontend-workflow.md](docs/agent/architecture/frontend-workflow.md) |
-| API specs | [apis/front-end-apis.md](docs/agent/apis/front-end-apis.md) |
-| UI design rules | [design/style-guide.md](docs/agent/design/style-guide.md) |
-| LLM/AI patterns | [llm-integration.md](docs/agent/llm-integration.md) |
+| API specs             | [apis/front-end-apis.md](docs/agent/apis/front-end-apis.md)                       |
+| UI design rules       | [design/style-guide.md](docs/agent/design/style-guide.md)                         |
+| LLM/AI patterns       | [llm-integration.md](docs/agent/llm-integration.md)                               |
 
 ---
 

@@ -79,9 +79,9 @@ POST /api/v1/jobs/upload
 
 ## Resume Operations
 
-| Endpoint | Flow |
-|----------|------|
-| `GET /resumes?id=` | db.get_resume() |
-| `GET /resumes/list` | db.list_resumes() |
-| `PATCH /resumes/{id}` | db.update_resume() |
+| Endpoint               | Flow               |
+| ---------------------- | ------------------ |
+| `GET /resumes?id=`     | db.get_resume()    |
+| `GET /resumes/list`    | db.list_resumes()  |
+| `PATCH /resumes/{id}`  | db.update_resume() |
 | `DELETE /resumes/{id}` | db.delete_resume() |
