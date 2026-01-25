@@ -6,6 +6,9 @@
 # ============================================
 FROM node:22-slim AS frontend-builder
 
+# Install CA certificates for HTTPS requests (needed for Google Fonts)
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app/frontend
 
 # Copy package files first for better caching
