@@ -104,7 +104,7 @@ export default function TailorPage() {
     if (!resumePreview || typeof resumePreview !== 'object' || Array.isArray(resumePreview)) {
       throw new Error('Resume preview data is invalid.');
     }
-    const previewRecord = resumePreview as Record<string, unknown>;
+    const previewRecord = resumePreview as unknown as Record<string, unknown>;
     if (
       !previewRecord.personalInfo ||
       typeof previewRecord.personalInfo !== 'object' ||

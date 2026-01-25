@@ -586,7 +586,20 @@
       "errorPrefix": "ERRO: {error}",
       "connectionSuccessful": "CONEXÃO BEM-SUCEDIDA",
       "connectionFailed": "CONEXÃO FALHOU",
-      "connectionDetails": "Provedor: {provider} | Modelo: {model}"
+      "connectionDetails": "Provedor: {provider} | Modelo: {model}",
+      "testPromptLabel": "PROMPT DE TESTE",
+      "modelOutputLabel": "SAÍDA DO MODELO",
+      "errorDetailLabel": "DETALHE DO ERRO",
+      "healthErrors": {
+        "api_key_missing": "Chave de API não configurada. Por favor, adicione uma chave nas Configurações.",
+        "health_check_failed": "Verificação de saúde falhou.",
+        "duplicate_v1_path": "Verificação de saúde falhou. A URL Base pode conter um caminho /v1 duplicado.",
+        "not_found_404": "Verificação de saúde falhou. 404 Não Encontrado - verifique se a URL Base corresponde ao provedor.",
+        "html_response": "Verificação de saúde falhou. A URL Base retornou HTML; pode ser uma URL de console ou um caminho de gateway não suportado."
+      },
+      "healthWarnings": {
+        "empty_content": "O LLM retornou conteúdo vazio na verificação de saúde."
+      }
     },
     "contentGeneration": {
       "title": "Geração de Conteúdo",
