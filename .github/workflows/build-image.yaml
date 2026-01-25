@@ -19,7 +19,7 @@ jobs:
       # Install the cosign tool except on PR
       # https://github.com/sigstore/cosign-installer
       - name: Install cosign
-        uses: sigstore/cosign-installer@v4
+        uses: sigstore/cosign-installer@v4.0.0
       # Set up QEMU for multi-platform builds
       # https://github.com/docker/setup-qemu-action
       - name: Set up QEMU
