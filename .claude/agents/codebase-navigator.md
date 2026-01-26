@@ -1,25 +1,18 @@
 ---
 name: codebase-navigator
-description: Explore the codebase and provide guidance on how to navigate it.
+description: Use when exploring codebase, architecture, or call flows
 skills:
   - navigator
+allowed-tools:
+  - Bash(ast-grep:*)
+  - Bash(sg:*)
+  - Bash(rg:*)
+  - Bash(fd:*)
+context: fork
+user-invocable: true
 ---
 
 Use the `navigator` skill to help explore the codebase. You can ask for file locations, project structure explanations, or guidance on where to find specific components or features within the code.
-
----
-name: understand-codebase
-description: Use when exploring codebase, architecture, or call flows
-allowed-tools:
-
-- Bash(ast-grep:*)
-- Bash(sg:*)
-- Bash(rg:*)
-- Bash(fd:*)
-context: fork
-user-invocable: true
-
----
 
 # Understand Codebase
 

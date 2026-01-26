@@ -55,8 +55,7 @@ Provide a high-signal checklist to avoid async waterfalls, reduce client payload
 ## Outputs
 
 - `REACT_PATTERNS.md` for a condensed, offline-focused guide
-- `rules/` for detailed explanations and examples
-- `AGENTS.md` for the full compiled reference
+- `AGENT.md` for the full compiled reference
 
 ## Rule Categories by Priority
 
@@ -73,8 +72,8 @@ Provide a high-signal checklist to avoid async waterfalls, reduce client payload
 
 ## How to Use
 
-Start with `REACT_PATTERNS.md` for the condensed guidance, then open specific files in `rules/` when you need examples or deeper detail.
+Start with `REACT_PATTERNS.md` for the condensed guidance.
 
 ## Full Compiled Document
 
-For the complete guide with all rules expanded: `AGENTS.md`
+For the complete guide with all rules expanded: `AGENT.md`

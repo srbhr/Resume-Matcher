@@ -1,6 +1,6 @@
 # React and Next.js Top Patterns (Offline and Docker Focus)
 
-Condensed patterns from `AGENTS.md` and `rules/`, tuned for apps run locally after download or inside Docker. Emphasis is on startup time, main-thread responsiveness, and memory use rather than SEO or edge latency.
+Condensed patterns from `AGENT.md`, tuned for apps run locally after download or inside Docker. Emphasis is on startup time, main-thread responsiveness, and memory use rather than SEO or edge latency.
 
 ## Table of Contents
 
@@ -18,7 +18,7 @@ Condensed patterns from `AGENTS.md` and `rules/`, tuned for apps run locally aft
 
 ## Overview
 
-Use these patterns to avoid unnecessary waiting, reduce initial JS and memory cost, and keep the UI responsive under local loads. Each pattern maps to a rule file in `rules/` for details and examples.
+Use these patterns to avoid unnecessary waiting, reduce initial JS and memory cost, and keep the UI responsive under local loads.
 
 ## Offline and Docker Priorities
 
