@@ -90,6 +90,7 @@ Mobile-first approach (base styles = mobile, add larger breakpoints):
 ```
 
 **Variations**:
+
 - `max-w-4xl` - Narrow content (blog posts)
 - `max-w-5xl` - Medium content
 - `max-w-6xl` - Wide content
@@ -209,6 +210,7 @@ See `references/card-patterns.md` for more variants.
 ```
 
 **Size Variants**:
+
 - Small: `px-3 py-1.5 text-sm`
 - Default: `px-4 py-2`
 - Large: `px-6 py-3 text-lg`
@@ -492,6 +494,7 @@ This project uses **Swiss International Style (Brutalist)** design. For project-
 - **[swiss-design-system-prompt.md](docs/agent/design/swiss-design-system-prompt.md)** - AI prompt for generating Swiss-style UI
 
 **Key Swiss Style Overrides:**
+
 ```tsx
 // NO rounded corners - use rounded-none
 <button className="rounded-none border-2 border-black">
@@ -504,6 +507,7 @@ This project uses **Swiss International Style (Brutalist)** design. For project-
 ```
 
 **Swiss Color Palette:**
+
 | Color | Hex | Usage |
 |-------|-----|-------|
 | Canvas | `#F0F0E8` | Background |
@@ -517,7 +521,7 @@ This project uses **Swiss International Style (Brutalist)** design. For project-
 
 ## Official Documentation
 
-- **Tailwind CSS**: https://tailwindcss.com/docs
+- **Tailwind CSS**: <https://tailwindcss.com/docs>
 
 ---
 
