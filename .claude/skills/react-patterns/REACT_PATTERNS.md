@@ -4,15 +4,17 @@ Condensed patterns from `AGENTS.md` and `rules/`, tuned for apps run locally aft
 
 ## Table of Contents
 
-- [Overview](#overview)
-- [Offline and Docker Priorities](#offline-and-docker-priorities)
-- [Critical Patterns: Eliminate Waterfalls](#critical-patterns-eliminate-waterfalls)
-- [Critical Patterns: Startup and Bundle Control](#critical-patterns-startup-and-bundle-control)
-- [High Impact: Server and RSC Boundaries](#high-impact-server-and-rsc-boundaries)
-- [Medium Impact: Client Data and Events](#medium-impact-client-data-and-events)
-- [Medium Impact: Re-render and Rendering](#medium-impact-re-render-and-rendering)
-- [Low-Medium: JavaScript Hot Paths](#low-medium-javascript-hot-paths)
-- [Checklist](#checklist)
+- [React and Next.js Top Patterns (Offline and Docker Focus)](#react-and-nextjs-top-patterns-offline-and-docker-focus)
+  - [Table of Contents](#table-of-contents)
+  - [Overview](#overview)
+  - [Offline and Docker Priorities](#offline-and-docker-priorities)
+  - [Critical Patterns: Eliminate Waterfalls](#critical-patterns-eliminate-waterfalls)
+  - [Critical Patterns: Startup and Bundle Control](#critical-patterns-startup-and-bundle-control)
+  - [High Impact: Server and RSC Boundaries](#high-impact-server-and-rsc-boundaries)
+  - [Medium Impact: Client Data and Events](#medium-impact-client-data-and-events)
+  - [Medium Impact: Re-render and Rendering](#medium-impact-re-render-and-rendering)
+  - [Low-Medium: JavaScript Hot Paths](#low-medium-javascript-hot-paths)
+  - [Checklist](#checklist)
 
 ## Overview
 

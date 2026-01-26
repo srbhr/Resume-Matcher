@@ -9,7 +9,7 @@ user-invocable: true
 > **Invoke when:** Creating new components, modifying styles, or building new pages.
 > **Skip when:** Backend work, API changes, logic-only changes.
 
-## Before Designing:
+## Before Designing
 
 Read the full design specs in `docs/agent/design/`:
 
@@ -20,6 +20,7 @@ Read the full design specs in `docs/agent/design/`:
 ## Critical Rules (Always Apply)
 
 ### Colors
+
 | Name | Hex | Usage |
 |------|-----|-------|
 | Canvas | `#F0F0E8` | Background |
@@ -29,6 +30,7 @@ Read the full design specs in `docs/agent/design/`:
 | Alert Red | `#DC2626` | Danger |
 
 ### Typography
+
 ```
 font-serif  → Headers
 font-mono   → Labels, metadata (uppercase, tracking-wider)
@@ -36,6 +38,7 @@ font-sans   → Body text
 ```
 
 ### Component Patterns
+
 ```tsx
 // Button: Square corners, hard shadow, press effect
 <button className="rounded-none border-2 border-black shadow-[2px_2px_0px_0px_#000000] hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none">
@@ -48,6 +51,7 @@ font-sans   → Body text
 ```
 
 ### Status Indicators
+
 ```tsx
 <div className="w-3 h-3 bg-green-700" />  // Ready
 <div className="w-3 h-3 bg-amber-500" />  // Warning
