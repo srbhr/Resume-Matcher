@@ -180,10 +180,7 @@ const ResumeBuilderContent = () => {
     onError: (errorMessage) => {
       console.error('Error during regeneration or applying regenerated changes:', errorMessage);
 
-      if (
-        /network|fetch/i.test(errorMessage) ||
-        errorMessage.includes('Failed to fetch')
-      ) {
+      if (/network|fetch/i.test(errorMessage) || errorMessage.includes('Failed to fetch')) {
         showNotification(t('builder.regenerate.errors.networkError'), 'danger');
         return;
       }

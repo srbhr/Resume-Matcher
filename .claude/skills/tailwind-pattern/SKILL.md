@@ -524,14 +524,14 @@ This project uses **Swiss International Style (Brutalist)** design. For project-
 
 **Swiss Color Palette:**
 
-| Color | Hex | Usage |
-|-------|-----|-------|
-| Canvas | `#F0F0E8` | Background |
-| Ink | `#000000` | Text, borders |
-| Hyper Blue | `#1D4ED8` | Primary actions |
-| Signal Green | `#15803D` | Success |
-| Alert Orange | `#F97316` | Warning |
-| Alert Red | `#DC2626` | Danger |
+| Color        | Hex       | Usage           |
+| ------------ | --------- | --------------- |
+| Canvas       | `#F0F0E8` | Background      |
+| Ink          | `#000000` | Text, borders   |
+| Hyper Blue   | `#1D4ED8` | Primary actions |
+| Signal Green | `#15803D` | Success         |
+| Alert Orange | `#F97316` | Warning         |
+| Alert Red    | `#DC2626` | Danger          |
 
 ---
 
