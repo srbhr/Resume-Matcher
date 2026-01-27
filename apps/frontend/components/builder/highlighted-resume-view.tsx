@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { type ResumeData } from '@/components/dashboard/resume-component';
 import { segmentTextByKeywords } from '@/lib/utils/keyword-matcher';
 import { FileUser, Briefcase, GraduationCap, FolderKanban, Wrench } from 'lucide-react';
+import { useTranslations } from '@/lib/i18n';
 
 interface HighlightedResumeViewProps {
   resumeData: ResumeData;
@@ -15,34 +16,40 @@ interface HighlightedResumeViewProps {
  * Shows all resume sections with visual highlighting of JD matches.
  */
 export function HighlightedResumeView({ resumeData, keywords }: HighlightedResumeViewProps) {
+  const { t } = useTranslations();
+
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
       <div className="flex items-center gap-2 p-4 border-b border-gray-200 bg-gray-50">
         <FileUser className="w-4 h-4 text-gray-600" />
-        <h3 className="font-mono text-sm font-bold uppercase text-gray-700">Your Resume</h3>
-        <span className="text-xs text-gray-500 ml-2">(matching keywords highlighted)</span>
+        <h3 className="font-mono text-sm font-bold uppercase text-gray-700">
+          {t('builder.jdMatch.yourResume')}
+        </h3>
+        <span className="text-xs text-gray-500 ml-2">
+          {t('builder.jdMatch.matchingKeywordsHighlighted')}
+        </span>
       </div>
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4 space-y-6">
         {/* Summary */}
         {resumeData.summary && (
-          <Section title="Summary" icon={<FileUser className="w-4 h-4" />}>
+          <Section title={t('resume.sections.summary')} icon={<FileUser className="w-4 h-4" />}>
             <HighlightedText text={resumeData.summary} keywords={keywords} />
           </Section>
         )}
 
         {/* Work Experience */}
         {resumeData.workExperience && resumeData.workExperience.length > 0 && (
-          <Section title="Experience" icon={<Briefcase className="w-4 h-4" />}>
+          <Section title={t('resume.sections.experience')} icon={<Briefcase className="w-4 h-4" />}>
             {resumeData.workExperience.map((exp) => (
               <div key={exp.id} className="mb-4 last:mb-0">
                 <div className="font-semibold text-gray-900">
                   <HighlightedText text={exp.title || ''} keywords={keywords} />
                   {exp.company && (
                     <span className="text-gray-600">
-                      {' at '}
+                      {t('builder.jdMatch.atSeparator')}
                       <HighlightedText text={exp.company} keywords={keywords} />
                     </span>
                   )}
@@ -64,7 +71,10 @@ export function HighlightedResumeView({ resumeData, keywords }: HighlightedResum
 
         {/* Education */}
         {resumeData.education && resumeData.education.length > 0 && (
-          <Section title="Education" icon={<GraduationCap className="w-4 h-4" />}>
+          <Section
+            title={t('resume.sections.education')}
+            icon={<GraduationCap className="w-4 h-4" />}
+          >
             {resumeData.education.map((edu) => (
               <div key={edu.id} className="mb-3 last:mb-0">
                 <div className="font-semibold text-gray-900">
@@ -83,14 +93,18 @@ export function HighlightedResumeView({ resumeData, keywords }: HighlightedResum
 
         {/* Projects */}
         {resumeData.personalProjects && resumeData.personalProjects.length > 0 && (
-          <Section title="Projects" icon={<FolderKanban className="w-4 h-4" />}>
+          <Section
+            title={t('resume.sections.projects')}
+            icon={<FolderKanban className="w-4 h-4" />}
+          >
             {resumeData.personalProjects.map((proj) => (
               <div key={proj.id} className="mb-4 last:mb-0">
                 <div className="font-semibold text-gray-900">
                   <HighlightedText text={proj.name || ''} keywords={keywords} />
                   {proj.role && (
                     <span className="text-gray-600 font-normal">
-                      {' - '}
+                      {' '}
+                      {t('builder.jdMatch.roleSeparator')}{' '}
                       <HighlightedText text={proj.role} keywords={keywords} />
                     </span>
                   )}
@@ -112,12 +126,12 @@ export function HighlightedResumeView({ resumeData, keywords }: HighlightedResum
 
         {/* Skills */}
         {resumeData.additional && (
-          <Section title="Skills & Additional" icon={<Wrench className="w-4 h-4" />}>
+          <Section title={t('resume.sections.skills')} icon={<Wrench className="w-4 h-4" />}>
             {resumeData.additional.technicalSkills &&
               resumeData.additional.technicalSkills.length > 0 && (
                 <div className="mb-3">
                   <div className="text-xs font-mono uppercase text-gray-500 mb-1">
-                    Technical Skills
+                    {t('resume.additional.technicalSkills')}
                   </div>
                   <div className="flex flex-wrap gap-1">
                     {resumeData.additional.technicalSkills.map((skill, i) => (
@@ -129,7 +143,9 @@ export function HighlightedResumeView({ resumeData, keywords }: HighlightedResum
 
             {resumeData.additional.languages && resumeData.additional.languages.length > 0 && (
               <div className="mb-3">
-                <div className="text-xs font-mono uppercase text-gray-500 mb-1">Languages</div>
+                <div className="text-xs font-mono uppercase text-gray-500 mb-1">
+                  {t('resume.sections.languages')}
+                </div>
                 <div className="flex flex-wrap gap-1">
                   {resumeData.additional.languages.map((lang, i) => (
                     <SkillTag key={i} text={lang} keywords={keywords} />
@@ -142,7 +158,7 @@ export function HighlightedResumeView({ resumeData, keywords }: HighlightedResum
               resumeData.additional.certificationsTraining.length > 0 && (
                 <div className="mb-3">
                   <div className="text-xs font-mono uppercase text-gray-500 mb-1">
-                    Certifications
+                    {t('resume.sections.certifications')}
                   </div>
                   <ul className="list-disc list-inside space-y-1 text-sm">
                     {resumeData.additional.certificationsTraining.map((cert, i) => (

@@ -1,0 +1,763 @@
+{
+  "common": {
+    "save": "Salvar",
+    "saving": "Salvando...",
+    "cancel": "Cancelar",
+    "delete": "Excluir",
+    "edit": "Editar",
+    "download": "Baixar",
+    "loading": "Carregando...",
+    "uploading": "Enviando...",
+    "checking": "Verificando...",
+    "processing": "Processando...",
+    "generating": "Gerando...",
+    "error": "Erro",
+    "success": "Sucesso",
+    "confirm": "Confirmar",
+    "back": "Voltar",
+    "retry": "Tentar novamente",
+    "next": "Próximo",
+    "continue": "Continuar",
+    "finish": "Finalizar",
+    "optional": "Opcional",
+    "close": "Fechar",
+    "ok": "OK",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "reset": "Redefinir",
+    "apply": "Aplicar",
+    "selectOption": "Selecione uma opção...",
+    "unknown": "Desconhecido",
+    "keysCleared": "Chaves de API removidas com sucesso",
+    "databaseReset": "Banco de dados redefinido com sucesso",
+    "popupBlocked": "Popup bloqueado. Por favor, permita popups ou abra esta URL manualmente: {url}"
+  },
+  "home": {
+    "brandLine1": "Resume",
+    "brandLine2": "Matcher",
+    "docs": "Documentação",
+    "launchApp": "Abrir App"
+  },
+  "nav": {
+    "dashboard": "Painel",
+    "builder": "Criar Currículo",
+    "tailor": "Personalizar Currículo",
+    "settings": "Configurações",
+    "backToDashboard": "Voltar ao Painel",
+    "goToSettings": "Ir para Configurações"
+  },
+  "dashboard": {
+    "title": "Painel",
+    "subtitle": "Gerencie seus currículos e candidaturas",
+    "myResumes": "Meus Currículos",
+    "noResumes": "Nenhum currículo ainda",
+    "noResumesDescription": "Envie seu primeiro currículo para começar",
+    "uploadResume": "Enviar Currículo",
+    "createNew": "Criar Novo",
+    "lastModified": "Última modificação",
+    "actions": "Ações",
+    "preview": "Visualizar",
+    "viewResume": "Ver Currículo",
+    "editResume": "Editar Currículo",
+    "deleteResume": "Excluir Currículo",
+    "downloadPdf": "Baixar PDF",
+    "tailorResume": "Personalizar para Vaga",
+    "selectModule": "Selecionar Módulo",
+    "masterResume": "Currículo Principal",
+    "tailoredResume": "Currículo Personalizado",
+    "initializeMasterResume": "Inicializar Currículo Principal",
+    "initializeSequence": "Iniciar Sequência",
+    "refreshStatus": "Atualizar status",
+    "createResume": "Criar Currículo",
+    "edited": "Editado {date}",
+    "statusLine": "STATUS: {status}",
+    "status": {
+      "checking": "Verificando...",
+      "processing": "Processando...",
+      "ready": "Pronto",
+      "failed": "Processamento falhou",
+      "pending": "Pendente"
+    },
+    "llmNotConfiguredTitle": "[ LLM NÃO CONFIGURADO ]",
+    "llmNotConfiguredMessage": "> Chaves de API ausentes. A personalização de currículo está desativada até ser configurada.",
+    "setupRequiredTitle": "[ CONFIGURAÇÃO NECESSÁRIA ]",
+    "setupRequiredMessage": "> Configure a chave de API nas configurações para habilitar a personalização de currículo.",
+    "uploadDialog": {
+      "success": "Currículo enviado com sucesso.",
+      "successMissingId": "Upload concluído, mas sem ID retornado.",
+      "failed": "Falha no upload.",
+      "dropzoneTitle": "Clique ou Arraste o Arquivo",
+      "dropzoneSubtitle": "PDF, DOC, DOCX (Máximo 4MB)"
+    }
+  },
+  "builder": {
+    "title": "Criar Currículo",
+    "editMode": "Modo Edição",
+    "previewMode": "Modo Visualização",
+    "createAndPreview": "Criar e Visualizar",
+    "unsavedDraft": "Rascunho Não Salvo",
+    "personalInfo": "Informações Pessoais",
+    "summary": "Resumo",
+    "experience": "Experiência",
+    "education": "Formação",
+    "skills": "Habilidades",
+    "projects": "Projetos",
+    "certifications": "Certificações",
+    "languages": "Idiomas",
+    "awards": "Prêmios",
+    "addSection": "Adicionar Seção",
+    "removeSection": "Remover Seção",
+    "saveChanges": "Salvar Alterações",
+    "discardChanges": "Descartar Alterações",
+    "placeholders": {
+      "summary": "Descreva brevemente sua trajetória profissional..."
+    },
+    "contentStats": {
+      "wordsChars": "{wordCount} palavras / {charCount} caracteres"
+    },
+    "additionalForm": {
+      "instructions": "Insira os itens separados por novas linhas (pressione Enter para cada item).",
+      "placeholders": {
+        "technicalSkills": "React\nTypeScript\nNode.js",
+        "languages": "Inglês\nEspanhol",
+        "certifications": "AWS Solution Architect\nGoogle Analytics",
+        "awards": "Funcionário do Mês\nVencedor de Hackathon"
+      }
+    },
+    "customSections": {
+      "dialogTitle": "Adicionar Seção Personalizada",
+      "dialogDescription": "Crie uma nova seção para seu currículo com nome e tipo personalizados.",
+      "sectionNameLabel": "Nome da Seção",
+      "sectionNamePlaceholder": "Ex: Publicações, Trabalho Voluntário, Certificações",
+      "sectionTypeLabel": "Tipo de Seção",
+      "addCustomSectionButton": "Adicionar Seção Personalizada",
+      "sectionTypes": {
+        "textBlockLabel": "Bloco de Texto",
+        "textBlockDescription": "Área de texto única (como Resumo)",
+        "itemListLabel": "Lista de Itens",
+        "itemListDescription": "Múltiplas entradas com detalhes (como Experiência)",
+        "stringListLabel": "Lista de Habilidades",
+        "stringListDescription": "Lista simples de itens (como Habilidades)"
+      },
+      "contentLabel": "Conteúdo",
+      "contentPlaceholder": "Insira o conteúdo para {name}...",
+      "defaultTextPlaceholder": "Insira o conteúdo de texto...",
+      "entryLabel": "Entrada",
+      "addEntryLabel": "Adicionar Entrada",
+      "itemsLabel": "Itens",
+      "itemsPlaceholder": "Insira os itens, um por linha",
+      "unknownSectionType": "Tipo de seção desconhecido: {type}",
+      "unknownDefaultSection": "Seção padrão desconhecida: {section}"
+    },
+    "sectionHeader": {
+      "renameSection": "Renomear seção",
+      "customTag": "Personalizado",
+      "hiddenFromPdfTag": "Oculto do PDF",
+      "hideSection": "Ocultar seção",
+      "showSection": "Mostrar seção",
+      "moveUp": "Mover para cima",
+      "moveDown": "Mover para baixo",
+      "deleteSection": "Excluir seção",
+      "deleteTitle": "Excluir Seção",
+      "deleteDescription": "Tem certeza que deseja excluir \"{name}\"? Esta ação não pode ser desfeita."
+    },
+    "previewTabs": {
+      "resume": "CURRÍCULO",
+      "coverLetter": "CARTA DE APRESENTAÇÃO",
+      "outreach": "MENSAGEM DE CONTATO",
+      "jdMatch": "ANÁLISE DE VAGA"
+    },
+    "footer": {
+      "moduleLabel": "Módulo de Criação de Currículo",
+      "singleColumn": "Coluna Única",
+      "twoColumn": "Duas Colunas"
+    },
+    "pageSize": {
+      "usLetter": "Carta US"
+    },
+    "generatePrompt": {
+      "notAvailableTitle": "{title} Não Disponível",
+      "notAvailableDescription": "Para gerar {title}, primeiro personalize seu currículo com uma descrição de vaga.",
+      "goToDashboard": "Ir para o Painel",
+      "generateTitle": "Gerar {title}",
+      "coverLetterDescription": "Gere uma carta de apresentação personalizada com base no seu currículo e descrição da vaga.",
+      "outreachDescription": "Gere uma mensagem de contato concisa para LinkedIn ou email com base no seu currículo e descrição da vaga.",
+      "generateButton": "Gerar {title}",
+      "coverLetterFooter": "Dica: personalize primeiro para melhores resultados.",
+      "outreachFooter": "Dica: mantenha curta e personalizada."
+    },
+    "regenerateDialog": {
+      "title": "Regenerar {title}?",
+      "description": "Isso substituirá seu {title} atual por um novo. Qualquer edição feita será perdida."
+    },
+    "jdMatch": {
+      "yourResume": "Seu Currículo",
+      "matchingKeywordsHighlighted": "(palavras-chave correspondentes destacadas)",
+      "jobDescriptionTitle": "Descrição da Vaga",
+      "at": "na",
+      "atSeparator": " na ",
+      "roleSeparator": "-",
+      "aboutTitle": "Sobre a Análise de Vaga",
+      "aboutDescription": "Esta visualização mostra o quanto seu currículo corresponde à descrição da vaga. Palavras-chave do JD são destacadas em amarelo no seu currículo, ajudando você a ver quais habilidades e termos já estão cobertos.",
+      "highlightedKeywordsTitle": "Palavras-Chave Destacadas",
+      "highlightedKeywordsDescriptionTemplate": "Palavras destacadas em __COLOR__ aparecem tanto na descrição da vaga quanto no seu currículo. Uma taxa de correspondência maior sugere melhor alinhamento com os requisitos da vaga.",
+      "highlightedKeywordsDescriptionPrefix": "Palavras destacadas em",
+      "highlightColor": "amarelo",
+      "highlightedKeywordsDescriptionSuffix": "aparecem tanto na descrição da vaga quanto no seu currículo. Uma taxa de correspondência maior sugere melhor alinhamento com os requisitos da vaga.",
+      "tipsTitle": "Dicas",
+      "tips": {
+        "items": {
+          "addMissingKeywords": "Use a aba Currículo para adicionar palavras-chave ausentes",
+          "focusTechnicalSkills": "Foque em habilidades técnicas e ferramentas mencionadas na vaga",
+          "matchActionVerbs": "Combine verbos de ação dos requisitos da vaga"
+        }
+      },
+      "stats": {
+        "keywordsExtracted": "{count} palavras-chave extraídas",
+        "matchesFound": "{count} correspondências encontradas",
+        "matchRateLabel": "Taxa de Correspondência:"
+      }
+    },
+    "genericItemForm": {
+      "itemLabel": "Item",
+      "addItemLabel": "Adicionar {label}",
+      "fields": {
+        "title": "Título",
+        "organization": "Organização",
+        "location": "Localização",
+        "years": "Período",
+        "descriptionPoints": "Pontos de Descrição"
+      },
+      "actions": {
+        "addPoint": "Adicionar Ponto"
+      },
+      "placeholders": {
+        "title": "Título",
+        "organization": "Organização",
+        "location": "Localização",
+        "years": "2020 - Presente",
+        "description": "Descreva sua contribuição..."
+      },
+      "noEntries": "// NENHUMA ENTRADA DE {label}",
+      "addFirstItem": "Adicionar Primeira {label}"
+    },
+    "forms": {
+      "experience": {
+        "addJob": "Adicionar Emprego",
+        "addFirstJob": "Adicionar Primeiro Emprego",
+        "fields": {
+          "jobTitle": "Cargo",
+          "company": "Empresa"
+        },
+        "placeholders": {
+          "jobTitle": "Desenvolvedor Sênior",
+          "company": "Tech Corp",
+          "location": "Remoto / Cidade",
+          "years": "2020 - Presente",
+          "description": "Descreva sua conquista..."
+        }
+      },
+      "education": {
+        "addSchool": "Adicionar Instituição",
+        "addFirstSchool": "Adicionar Primeira Instituição",
+        "fields": {
+          "institution": "Instituição",
+          "degree": "Formação",
+          "description": "Descrição",
+          "descriptionOptional": "Descrição (Opcional)"
+        },
+        "placeholders": {
+          "institution": "Nome da Universidade",
+          "degree": "Bacharelado em Ciência da Computação",
+          "years": "2016 - 2020",
+          "description": "Detalhes adicionais..."
+        }
+      },
+      "projects": {
+        "addProject": "Adicionar Projeto",
+        "addFirstProject": "Adicionar Primeiro Projeto",
+        "fields": {
+          "projectName": "Nome do Projeto",
+          "role": "Função",
+          "website": "Website"
+        },
+        "placeholders": {
+          "projectName": "Resume Matcher",
+          "role": "Criador",
+          "years": "2023",
+          "github": "github.com/usuario/projeto",
+          "website": "https://projeto-demo.com",
+          "description": "Detalhe do projeto..."
+        }
+      }
+    },
+    "formatting": {
+      "templates": {
+        "swissSingle": {
+          "name": "Coluna Única",
+          "description": "Layout tradicional de largura total com máxima densidade de conteúdo"
+        },
+        "swissTwoColumn": {
+          "name": "Duas Colunas",
+          "description": "Coluna principal focada em experiência com barra lateral para habilidades"
+        },
+        "modern": {
+          "name": "Moderno",
+          "description": "Acentos coloridos com cores de tema personalizáveis"
+        },
+        "modernTwoColumn": {
+          "name": "Moderno Duas Colunas",
+          "description": "Layout de duas colunas com acentos coloridos modernos e temas"
+        }
+      },
+      "accentColors": {
+        "blue": "Azul",
+        "green": "Verde",
+        "orange": "Laranja",
+        "red": "Vermelho"
+      },
+      "fontNames": {
+        "serif": "Serifada",
+        "sans": "Sem Serifa",
+        "mono": "Monoespaçada"
+      },
+      "panelTitle": "Template e Formatação",
+      "template": "Template",
+      "accentColor": "Cor de Destaque",
+      "pageSize": "Tamanho da Página",
+      "margins": "Margens (mm)",
+      "margin": {
+        "top": "Superior",
+        "bottom": "Inferior",
+        "left": "Esquerda",
+        "right": "Direita"
+      },
+      "spacing": "Espaçamento",
+      "spacingSection": "Seção",
+      "spacingItems": "Itens",
+      "spacingLines": "Linhas",
+      "fontSize": "Tamanho da Fonte",
+      "baseFontSize": "Base",
+      "headerScale": "Cabeçalhos",
+      "headerFontFamily": "Cabeçalhos",
+      "bodyFontFamily": "Corpo",
+      "options": "Opções",
+      "compactMode": "Modo Compacto",
+      "contactIcons": "Ícones de Contato",
+      "effectiveOutput": "Saída Efetiva",
+      "effectiveMargins": "Margens (mm): S{top} I{bottom} E{left} D{right}",
+      "effectiveSectionGap": "Espaço de Seção",
+      "effectiveItemGap": "Espaço de Item",
+      "effectiveLineHeight": "Altura da Linha",
+      "effectiveBaseFont": "Fonte Base",
+      "effectiveHeaderScale": "Escala do Cabeçalho",
+      "effectiveHeaderFont": "Fonte do Cabeçalho",
+      "effectiveBodyFont": "Fonte do Corpo",
+      "compactHint": "O modo compacto reduz espaçamento e altura da linha. Margens e tamanho de fonte base permanecem literais.",
+      "resetDefaults": "Restaurar Padrões"
+    },
+    "personalInfoForm": {
+      "placeholders": {
+        "name": "João Silva",
+        "title": "Engenheiro de Software",
+        "email": "joao@exemplo.com",
+        "phone": "+55 (11) 99999-0000",
+        "location": "São Paulo, Brasil",
+        "website": "portfolio.com",
+        "linkedin": "linkedin.com/in/joao",
+        "github": "github.com/joao"
+      }
+    },
+    "leftPanel": {
+      "editorPanel": "Painel do Editor",
+      "coverLetterEditor": "Editor de Carta de Apresentação",
+      "outreachEditor": "Editor de Mensagem de Contato",
+      "jdMatchAnalysis": "Análise de Correspondência de Vaga"
+    },
+    "alerts": {
+      "saveNotAvailable": "Salvar só está disponível ao editar um currículo existente.",
+      "saveFailed": "Falha ao salvar currículo. Por favor, tente novamente.",
+      "downloadNotAvailable": "Download só está disponível para currículos salvos.",
+      "downloadFailed": "Falha ao baixar currículo. Por favor, tente novamente.",
+      "coverLetterSaveFailed": "Falha ao salvar carta de apresentação. Por favor, tente novamente.",
+      "coverLetterDownloadRequiresResume": "Salve o currículo primeiro para baixar a carta de apresentação.",
+      "coverLetterMissing": "Nenhuma carta de apresentação disponível. Habilite a geração de carta em Configurações e personalize um currículo.",
+      "coverLetterDownloadFailed": "Falha ao baixar carta de apresentação: {error}",
+      "outreachSaveFailed": "Falha ao salvar mensagem de contato. Por favor, tente novamente.",
+      "coverLetterGenerateFailed": "Falha ao gerar carta de apresentação: {error}",
+      "outreachGenerateFailed": "Falha ao gerar mensagem de contato: {error}"
+    }
+  },
+  "enrichment": {
+    "title": "Aprimoramento de Currículo",
+    "loading": {
+      "analyzingTitle": "Analisando seu currículo...",
+      "analyzingDescription": "Identificando áreas que podem usar mais detalhes",
+      "generatingTitle": "Elaborando descrições aprimoradas...",
+      "generatingDescription": "Usando suas respostas para melhorar seu currículo",
+      "applyingTitle": "Aplicando aprimoramentos...",
+      "applyingDescription": "Atualizando seu currículo principal"
+    },
+    "questionProgress": "Pergunta {current} de {total}",
+    "itemType": {
+      "experience": "Experiência",
+      "project": "Projeto"
+    },
+    "shortcutHint": "Pressione Shift+Enter para nova linha, Cmd/Ctrl+Enter para continuar",
+    "preview": {
+      "title": "Revisar Novo Conteúdo",
+      "description": "Revise os novos pontos que serão adicionados ao seu currículo",
+      "applyButton": "Adicionar ao Currículo",
+      "keepingLabel": "Mantendo",
+      "addingLabel": "Adicionando",
+      "existingCount": "({count} existentes)",
+      "newCount": "({count} novos)",
+      "noExistingDescription": "Sem descrição existente"
+    },
+    "complete": {
+      "title": "Currículo Aprimorado!",
+      "updatedCountSingular": "{count} item atualizado com sucesso",
+      "updatedCountPlural": "{count} itens atualizados com sucesso",
+      "updatedFallback": "Seu currículo foi atualizado com descrições aprimoradas",
+      "doneButton": "Concluído"
+    },
+    "noImprovements": {
+      "title": "Seu currículo está ótimo!",
+      "defaultDescription": "Não encontramos itens que precisam de melhoria. Suas descrições de experiência e projetos já estão bem detalhadas."
+    },
+    "error": {
+      "title": "Algo deu errado",
+      "unexpected": "Ocorreu um erro inesperado"
+    }
+  },
+  "tailor": {
+    "title": "Personalizar Currículo",
+    "subtitle": "Otimize seu currículo para uma vaga específica",
+    "heroTitle": "Personalize Seu Currículo",
+    "selectResume": "Selecionar Currículo",
+    "pasteJobDescription": "Colar Descrição da Vaga",
+    "pasteJobDescriptionBelow": "Cole a Descrição da Vaga Abaixo",
+    "jobDescriptionPlaceholder": "Cole a descrição da vaga aqui...",
+    "promptLabel": "Intensidade de personalização",
+    "promptDescription": "Escolha o quanto alinhar seu currículo à descrição da vaga.",
+    "promptOptions": {
+      "nudge": {
+        "label": "Ajuste leve",
+        "description": "Edições mínimas para melhor alinhar a experiência existente."
+      },
+      "keywords": {
+        "label": "Realce de palavras-chave",
+        "description": "Incorporar palavras-chave relevantes sem alterar cargo ou escopo."
+      },
+      "full": {
+        "label": "Personalização completa",
+        "description": "Personalização abrangente usando a descrição da vaga."
+      }
+    },
+    "analyzeJob": "Analisar Vaga",
+    "generateTailored": "Gerar Currículo Personalizado",
+    "setupRequiredTitle": "[ CONFIGURAÇÃO NECESSÁRIA ]",
+    "noApiKeyMessage": "> Nenhuma chave de API configurada. A personalização de currículo requer um provedor de LLM.",
+    "configureApiKey": "Configurar Chave de API",
+    "configureApiKeyFirst": "Configure a Chave de API Primeiro",
+    "charactersCount": "{count} caracteres",
+    "matchScore": "Pontuação de Correspondência",
+    "suggestions": "Sugestões",
+    "keywords": "Palavras-Chave a Incluir",
+    "footerTagline": "MECANISMO DE OTIMIZAÇÃO POWERED BY IA",
+    "diffModal": {
+      "title": "Revisar resultados da personalização com IA",
+      "subtitle": "Revise cuidadosamente as alterações para garantir que nenhuma informação falsa tenha sido adicionada",
+      "summary": "Resumo das alterações",
+      "skillsAdded": "Habilidades adicionadas",
+      "skillsRemoved": "Habilidades removidas",
+      "descriptionsModified": "Descrições modificadas",
+      "certificationsAdded": "Certificações adicionadas",
+      "highRiskChanges": "Alterações de alto risco",
+      "warningTitle": "Detectadas {count} adições de alto risco",
+      "warningMessage": "Confirme que estas adições existem no seu currículo original ou estão refletidas nas descrições",
+      "summaryChanges": "Alterações do resumo",
+      "skillChanges": "Alterações de habilidades",
+      "descriptionChanges": "Alterações nas descrições de experiência",
+      "experienceChanges": "Alterações de experiência",
+      "educationChanges": "Alterações de educação",
+      "projectChanges": "Alterações de projetos",
+      "certificationChanges": "Alterações de certificações",
+      "rejectButton": "Rejeitar e regenerar",
+      "confirmButton": "Confirmar e salvar"
+    },
+    "regenerateDialog": {
+      "title": "Regenerar o currículo personalizado?",
+      "description": "Isso descartará a prévia atual e solicitará um novo resultado de personalização por IA.",
+      "confirmLabel": "Regenerar"
+    },
+    "missingDiffDialog": {
+      "title": "Não foi possível calcular as alterações",
+      "description": "Não foi possível calcular um diff para este currículo. Isso pode acontecer com currículos antigos sem dados estruturados. Você pode continuar para salvar o currículo personalizado ou cancelar para revisar mais tarde.",
+      "confirmLabel": "Continuar sem diff"
+    },
+    "errors": {
+      "jobDescriptionTooShort": "Descrição da vaga muito curta. Por favor, forneça mais detalhes.",
+      "apiKeyError": "Erro na chave de API. Verifique sua configuração de LLM em Configurações.",
+      "rateLimit": "Limite de requisições atingido. Por favor, aguarde um momento e tente novamente.",
+      "failedToGenerate": "Falha ao gerar currículo. Verifique suas configurações e tente novamente.",
+      "failedToPreview": "Falha ao pré-visualizar o currículo. Verifique suas configurações e tente novamente.",
+      "failedToConfirm": "Falha ao confirmar o currículo. Tente novamente."
+    }
+  },
+  "settings": {
+    "title": "Configurações",
+    "subtitle": "Configure suas preferências",
+    "aiProvider": "Provedor de IA",
+    "aiProviderDescription": "Selecione seu provedor de IA preferido para análise de currículo",
+    "apiKey": "Chave de API",
+    "apiKeyPlaceholder": "Insira sua chave de API",
+    "saveApiKey": "Salvar Chave de API",
+    "contentLanguage": "Idioma do Conteúdo",
+    "contentLanguageDescription": "Idioma para conteúdo gerado (currículos, cartas de apresentação)",
+    "uiLanguage": "Idioma da Interface",
+    "uiLanguageDescription": "Idioma da interface do usuário",
+    "theme": "Tema",
+    "themeDescription": "Escolha seu tema de cores preferido",
+    "lightMode": "Claro",
+    "darkMode": "Escuro",
+    "systemMode": "Sistema",
+    "dangerZone": "Zona de Perigo",
+    "clearApiKeys": "Limpar Chaves de API",
+    "clearApiKeysDescription": "Remove todas as chaves de API armazenadas da configuração. Esta ação não pode ser desfeita.",
+    "resetDatabase": "Redefinir Banco de Dados",
+    "resetDatabaseDescription": "Exclui TODOS os dados incluindo currículos, vagas e conteúdo gerado. Esta ação não pode ser desfeita.",
+    "llmConfigurationTitle": "Configuração de LLM",
+    "providerLabel": "Provedor",
+    "statusCards": {
+      "llm": "LLM",
+      "database": "Banco de Dados",
+      "resumes": "Currículos",
+      "jobs": "Vagas",
+      "improvements": "Melhorias",
+      "masterResume": "Currículo Principal"
+    },
+    "statusValues": {
+      "healthy": "Conectado",
+      "offline": "Offline",
+      "connected": "Conectado",
+      "configured": "Configurado",
+      "notSet": "Não configurado"
+    },
+    "apiKeyMenu": {
+      "buttonLabel": "API LLM",
+      "title": "Chave de API OpenAI",
+      "description": "Forneça sua chave para habilitar modelos hospedados da OpenAI.",
+      "savedMessage": "Chave de API salva.",
+      "loadError": "Não foi possível carregar a chave de API",
+      "updateError": "Não foi possível atualizar a chave de API"
+    },
+    "setupRequired": {
+      "title": "[ CONFIGURAÇÃO NECESSÁRIA ]",
+      "description": "> Nenhuma chave de API configurada. Adicione a chave de API do seu provedor de LLM abaixo para habilitar a personalização de currículo."
+    },
+    "systemStatus": {
+      "title": "Status do Sistema",
+      "refresh": "Atualizar",
+      "unableToConnect": "Não foi possível conectar ao backend",
+      "expectedAt": "Esperado em: {apiUrl}",
+      "lastFetched": {
+        "never": "Nunca",
+        "justNow": "Agora mesmo",
+        "minutesAgo": "{minutes}min atrás",
+        "hoursAgo": "{hours}h atrás"
+      }
+    },
+    "llmConfiguration": {
+      "selectedProvider": "SELECIONADO: {provider}",
+      "modelLabel": "Modelo",
+      "defaultModel": "PADRÃO: {model}",
+      "apiKeyLabel": "Chave de API",
+      "apiKeyOptionalForOllama": "(Opcional para Ollama)",
+      "apiKeyPlaceholder": "sk-...",
+      "apiKeyNotRequiredPlaceholder": "Não necessário para modelos locais",
+      "leaveBlankToKeepExistingKey": "DEIXE EM BRANCO PARA MANTER A CHAVE EXISTENTE",
+      "baseUrlLabel": "URL Base (opcional)",
+      "baseUrlPlaceholder": "Ex: https://api.openai.com/v1",
+      "baseUrlDescription": "Sobrescreva a URL base da API para usar um proxy/agregador. Deixe em branco para usar o padrão do provedor.",
+      "ollamaServerUrl": "URL do Servidor Ollama",
+      "ollamaServerUrlPlaceholder": "http://localhost:11434",
+      "testConnection": "Testar Conexão",
+      "errorPrefix": "ERRO: {error}",
+      "connectionSuccessful": "CONEXÃO BEM-SUCEDIDA",
+      "connectionFailed": "CONEXÃO FALHOU",
+      "connectionDetails": "Provedor: {provider} | Modelo: {model}"
+    },
+    "contentGeneration": {
+      "title": "Geração de Conteúdo",
+      "description": "Habilite geração de conteúdo adicional durante a personalização de currículo. Quando habilitado, estes documentos serão gerados automaticamente junto com seu currículo personalizado.",
+      "coverLetter": {
+        "label": "Carta de Apresentação",
+        "description": "Gerar uma carta de apresentação personalizada junto com seu currículo"
+      },
+      "outreachMessage": {
+        "label": "Mensagem de Contato Frio",
+        "description": "Gerar uma mensagem de networking para LinkedIn ou email"
+      }
+    },
+    "promptSettings": {
+      "title": "Configurações de Prompt",
+      "description": "Escolha o prompt padrão usado para personalização de currículo.",
+      "defaultLabel": "Prompt padrão de personalização"
+    },
+    "footer": {
+      "status": {
+        "checking": "Verificando...",
+        "ready": "STATUS: PRONTO",
+        "setupRequired": "STATUS: CONFIGURAÇÃO NECESSÁRIA",
+        "offline": "STATUS: OFFLINE"
+      }
+    },
+    "errors": {
+      "unableToConnectBackend": "Não foi possível conectar ao backend. O servidor está rodando?",
+      "apiKeyRequired": "Chave de API é necessária para o provedor selecionado.",
+      "unknownProvider": "Provedor desconhecido retornado do backend: {provider}",
+      "unableToSaveConfiguration": "Não foi possível salvar a configuração",
+      "failedToClearApiKeys": "Falha ao limpar chaves de API. Por favor, tente novamente.",
+      "failedToResetDatabase": "Falha ao redefinir banco de dados. Por favor, tente novamente."
+    }
+  },
+  "resumeViewer": {
+    "resumeNotFound": "Currículo não encontrado",
+    "loading": "Carregando Currículo...",
+    "useTailorFeature": "Usar Recurso de Personalização",
+    "returnToDashboard": "Voltar ao Painel",
+    "enhanceResume": "Aprimorar Currículo",
+    "downloadResume": "Baixar Currículo",
+    "deletedTitle": "Currículo Excluído",
+    "deletedDescriptionMaster": "Seu currículo principal foi permanentemente excluído do sistema.",
+    "deletedDescriptionRegular": "O currículo foi permanentemente excluído do sistema.",
+    "deleteFailedTitle": "Falha ao Excluir",
+    "errors": {
+      "processingFailed": "O processamento do currículo falhou. O serviço de IA não conseguiu extrair dados estruturados do seu currículo. Você ainda pode usar o recurso de Personalização ou tentar enviar novamente.",
+      "stillProcessing": "O currículo ainda está sendo processado. Por favor, aguarde um momento e atualize a página.",
+      "notProcessedYet": "O currículo ainda não foi processado. Por favor, use o recurso de Personalização para gerar um currículo estruturado.",
+      "noDataAvailable": "Nenhum dado de currículo disponível.",
+      "failedToLoad": "Falha ao carregar dados do currículo.",
+      "failedToDelete": "Falha ao excluir currículo. Por favor, tente novamente."
+    }
+  },
+  "preview": {
+    "margins": "Margens",
+    "calculating": "Calculando...",
+    "pageBreak": "Quebra de Página",
+    "pageCountSingular": "{count} página",
+    "pageCountPlural": "{count} páginas"
+  },
+  "resume": {
+    "personalInfo": {
+      "name": "Nome Completo",
+      "title": "Cargo",
+      "email": "Email",
+      "phone": "Telefone",
+      "location": "Localização",
+      "website": "Website",
+      "linkedin": "LinkedIn",
+      "github": "GitHub"
+    },
+    "sections": {
+      "personalInfo": "Informações Pessoais",
+      "summary": "Resumo",
+      "experience": "Experiência",
+      "education": "Formação",
+      "projects": "Projetos",
+      "skills": "Habilidades e Prêmios",
+      "certifications": "Treinamentos e Certificações",
+      "skillsOnly": "Habilidades",
+      "languages": "Idiomas",
+      "awards": "Prêmios",
+      "links": "Links"
+    },
+    "defaults": {
+      "name": "Seu Nome"
+    },
+    "additional": {
+      "technicalSkills": "Habilidades Técnicas"
+    },
+    "additionalLabels": {
+      "technicalSkills": "Habilidades Técnicas:",
+      "languages": "Idiomas:",
+      "certifications": "Certificações:",
+      "awards": "Prêmios:"
+    }
+  },
+  "coverLetter": {
+    "title": "Carta de Apresentação",
+    "generate": "Gerar Carta de Apresentação",
+    "regenerate": "Regenerar",
+    "copyToClipboard": "Copiar para Área de Transferência",
+    "copied": "Copiado!",
+    "editor": {
+      "placeholder": "Sua carta de apresentação aparecerá aqui após personalizar seu currículo com a geração de carta habilitada...",
+      "tip": "DICA: Uma boa carta de apresentação tem tipicamente 300-400 palavras. Edite conforme necessário para personalizar."
+    },
+    "preview": {
+      "defaultName": "Seu Nome",
+      "emptyTitle": "Nenhum conteúdo de carta ainda.",
+      "emptyDescription": "Habilite a geração de carta de apresentação em Configurações, depois personalize um currículo."
+    },
+    "print": {
+      "emptyContent": "Nenhum conteúdo de carta de apresentação disponível."
+    }
+  },
+  "outreach": {
+    "title": "Mensagem de Contato",
+    "generate": "Gerar Mensagem de Contato",
+    "regenerate": "Regenerar",
+    "copy": "Copiar",
+    "copyToClipboard": "Copiar para Área de Transferência",
+    "copied": "Copiado!",
+    "editor": {
+      "placeholder": "Sua mensagem de contato frio aparecerá aqui após personalizar seu currículo com a geração de mensagem habilitada...",
+      "tip": "DICA: Mantenha mensagens de contato breves (100-150 palavras). Copie e cole no LinkedIn ou email."
+    },
+    "preview": {
+      "channels": {
+        "linkedin": "LinkedIn",
+        "email": "Email"
+      },
+      "howToUseTitle": "Como usar:",
+      "steps": {
+        "step1": "1. Copie a mensagem usando o botão acima",
+        "step2": "2. Abra o LinkedIn ou seu cliente de email",
+        "step3": "3. Cole e personalize conforme necessário",
+        "step4": "4. Envie para recrutadores ou gerentes de contratação"
+      },
+      "emptyTitle": "Nenhuma mensagem de contato ainda.",
+      "emptyDescription": "Habilite a geração de mensagem de contato em Configurações, depois personalize um currículo."
+    }
+  },
+  "errors": {
+    "generic": "Algo deu errado. Por favor, tente novamente.",
+    "networkError": "Erro de rede. Por favor, verifique sua conexão.",
+    "unauthorized": "Por favor, faça login para continuar.",
+    "notFound": "O recurso solicitado não foi encontrado.",
+    "validationError": "Por favor, verifique sua entrada e tente novamente.",
+    "boundary": {
+      "title": "Algo Deu Errado",
+      "description": "Ocorreu um erro inesperado. Isso foi registrado para análise.",
+      "tryAgain": "Tentar Novamente",
+      "reloadPage": "Recarregar Página"
+    }
+  },
+  "confirmations": {
+    "deleteResume": "Tem certeza que deseja excluir este currículo?",
+    "deleteResumeDescription": "Esta ação não pode ser desfeita.",
+    "deleteMasterResumeTitle": "Excluir Currículo Principal",
+    "deleteMasterResumeDescription": "Esta ação não pode ser desfeita. Seu currículo principal será permanentemente removido do sistema.",
+    "deleteResumeFromSystemDescription": "Esta ação não pode ser desfeita. O currículo será permanentemente removido do sistema.",
+    "deleteResumeConfirmLabel": "Excluir Currículo",
+    "keepResumeCancelLabel": "Manter Currículo",
+    "discardChanges": "Tem certeza que deseja descartar suas alterações?",
+    "discardChangesDescription": "Quaisquer alterações não salvas serão perdidas.",
+    "clearApiKeys": "Limpar Todas as Chaves de API?",
+    "clearApiKeysDescription": "Tem certeza que deseja remover todas as chaves de API? Você precisará inseri-las novamente para usar recursos de IA.",
+    "resetDatabase": "Redefinir Banco de Dados e Limpar Todos os Dados?",
+    "resetDatabaseDescription": "Isso excluirá permanentemente TODOS os currículos, descrições de vagas e conteúdo gerado. Esta ação é irreversível."
+  }
+}

@@ -1,11 +1,7 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
-@keyframes gradient {
-  to {
-    background-position: 200% center;
-  }
-}
+@source "../../../{app,components,hooks,lib,messages}/**/*.{js,ts,jsx,tsx,mdx}";
 
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
@@ -43,77 +39,102 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Swiss Style Tokens */
+  --color-canvas: #f0f0e8;
+  --color-ink: #000000;
+  --color-success: #15803d;
+  --color-warning: #f97316;
+
+  --shadow-sw-sm: 2px 2px 0px 0px #000000;
+  --shadow-sw-default: 4px 4px 0px 0px #000000;
+  --shadow-sw-card: 6px 6px 0px 0px #000000;
+
+  /* Fonts */
+  --font-sans: 'Geist Sans', sans-serif;
+  --font-mono: 'Space Grotesk', monospace;
+
+  /* Animations */
+  --animate-gradient: gradient 8s linear infinite;
+
+  @keyframes gradient {
+    to {
+      background-position: 200% center;
+    }
+  }
 }
 
 :root {
   --font-mono: 'Geist Mono', monospace;
   --font-sans: 'Geist', sans-serif;
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.141 0.005 285.823);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.141 0.005 285.823);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.141 0.005 285.823);
-  --primary: oklch(0.21 0.006 285.885);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.967 0.001 286.375);
-  --secondary-foreground: oklch(0.21 0.006 285.885);
-  --muted: oklch(0.967 0.001 286.375);
-  --muted-foreground: oklch(0.552 0.016 285.938);
-  --accent: oklch(0.967 0.001 286.375);
-  --accent-foreground: oklch(0.21 0.006 285.885);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.92 0.004 286.32);
-  --input: oklch(0.92 0.004 286.32);
-  --ring: oklch(0.705 0.015 286.067);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.141 0.005 285.823);
-  --sidebar-primary: oklch(0.21 0.006 285.885);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.967 0.001 286.375);
-  --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
-  --sidebar-border: oklch(0.92 0.004 286.32);
-  --sidebar-ring: oklch(0.705 0.015 286.067);
+
+  /* Swiss International Style Palette */
+  --background: #f0f0e8; /* Canvas */
+  --foreground: #000000; /* Ink */
+
+  --card: #f0f0e8;
+  --card-foreground: #000000;
+
+  --popover: #f0f0e8;
+  --popover-foreground: #000000;
+
+  --primary: #1d4ed8; /* Hyper Blue */
+  --primary-foreground: #ffffff;
+
+  --secondary: #e5e5e0; /* Panel Grey */
+  --secondary-foreground: #000000;
+
+  --muted: #e5e5e0;
+  --muted-foreground: #6b7280;
+
+  --accent: #e5e5e0;
+  --accent-foreground: #000000;
+
+  --destructive: #dc2626; /* Alert Red */
+  --destructive-foreground: #ffffff;
+
+  --border: #000000;
+  --input: #f0f0e8;
+  --ring: #1d4ed8;
+
+  --chart-1: #1d4ed8;
+  --chart-2: #15803d;
+  --chart-3: #f97316;
+  --chart-4: #dc2626;
+  --chart-5: #000000;
+
+  --sidebar: #e5e5e0;
+  --sidebar-foreground: #000000;
+  --sidebar-primary: #1d4ed8;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #d8d8d2;
+  --sidebar-accent-foreground: #000000;
+  --sidebar-border: #000000;
+  --sidebar-ring: #1d4ed8;
 }
 
 .dark {
-  --background: oklch(0.141 0.005 285.823);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.21 0.006 285.885);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.21 0.006 285.885);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.92 0.004 286.32);
-  --primary-foreground: oklch(0.21 0.006 285.885);
-  --secondary: oklch(0.274 0.006 286.033);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.274 0.006 286.033);
-  --muted-foreground: oklch(0.705 0.015 286.067);
-  --accent: oklch(0.274 0.006 286.033);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.552 0.016 285.938);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.21 0.006 285.885);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.274 0.006 286.033);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.552 0.016 285.938);
+  /* Minimal Dark Mode mapping for now - Swiss Style is predominantly light/brutalist */
+  --background: #1a1a1a;
+  --foreground: #ffffff;
+  --card: #2a2a2a;
+  --card-foreground: #ffffff;
+  --popover: #2a2a2a;
+  --popover-foreground: #ffffff;
+  --primary: #3b82f6;
+  --primary-foreground: #ffffff;
+  --secondary: #2a2a2a;
+  --secondary-foreground: #ffffff;
+  --muted: #2a2a2a;
+  --muted-foreground: #a3a3a3;
+  --accent: #2a2a2a;
+  --accent-foreground: #ffffff;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #404040;
+  --input: #2a2a2a;
+  --ring: #3b82f6;
 }
 
 @layer base {

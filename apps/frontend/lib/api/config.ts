@@ -37,7 +37,13 @@ export interface LLMHealthCheck {
   provider: string;
   model: string;
   error?: string;
+  error_code?: string;
   response_model?: string;
+  warning?: string;
+  warning_code?: string;
+  test_prompt?: string;
+  model_output?: string;
+  error_detail?: string;
 }
 
 // Fetch full LLM configuration
@@ -196,7 +202,7 @@ export async function updateFeatureConfig(config: FeatureConfigUpdate): Promise<
 }
 
 // Language configuration types
-export type SupportedLanguage = 'en' | 'es' | 'zh' | 'ja';
+export type SupportedLanguage = 'en' | 'es' | 'zh' | 'ja' | 'pt';
 
 export interface LanguageConfig {
   ui_language: SupportedLanguage;
@@ -232,6 +238,49 @@ export async function updateLanguageConfig(update: LanguageConfigUpdate): Promis
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
     throw new Error(data.detail || `Failed to update language config (status ${res.status}).`);
+  }
+
+  return res.json();
+}
+
+export interface PromptOption {
+  id: string;
+  label: string;
+  description: string;
+}
+
+export interface PromptConfig {
+  default_prompt_id: string;
+  prompt_options: PromptOption[];
+}
+
+export interface PromptConfigUpdate {
+  default_prompt_id?: string;
+}
+
+// Fetch prompt configuration
+export async function fetchPromptConfig(): Promise<PromptConfig> {
+  const res = await apiFetch('/config/prompts', { credentials: 'include' });
+
+  if (!res.ok) {
+    throw new Error(`Failed to load prompt config (status ${res.status}).`);
+  }
+
+  return res.json();
+}
+
+// Update prompt configuration
+export async function updatePromptConfig(update: PromptConfigUpdate): Promise<PromptConfig> {
+  const res = await apiFetch('/config/prompts', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(update),
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || `Failed to update prompt config (status ${res.status}).`);
   }
 
   return res.json();

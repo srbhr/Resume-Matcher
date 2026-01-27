@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ChevronLeft, ChevronRight, Briefcase, FolderKanban } from 'lucide-react';
 import type { EnrichmentQuestion, EnrichmentItem } from '@/lib/api/enrichment';
+import { useTranslations } from '@/lib/i18n';
 
 interface QuestionStepProps {
   question: EnrichmentQuestion;
@@ -33,6 +34,7 @@ export function QuestionStep({
   isFirst,
   isLast,
 }: QuestionStepProps) {
+  const { t } = useTranslations();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [localAnswer, setLocalAnswer] = useState(answer);
 
@@ -79,7 +81,7 @@ export function QuestionStep({
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-2">
           <span className="font-mono text-sm text-gray-500">
-            Question {questionNumber} of {totalQuestions}
+            {t('enrichment.questionProgress', { current: questionNumber, total: totalQuestions })}
           </span>
         </div>
         <div className="flex gap-1">
@@ -108,7 +110,10 @@ export function QuestionStep({
               <FolderKanban className="w-4 h-4 text-gray-600" />
             )}
             <span className="text-gray-600">
-              {item.item_type === 'experience' ? 'Experience' : 'Project'}:
+              {item.item_type === 'experience'
+                ? t('enrichment.itemType.experience')
+                : t('enrichment.itemType.project')}
+              :
             </span>
             <span className="font-semibold text-gray-900">{item.title}</span>
             {item.subtitle && <span className="text-gray-500">@ {item.subtitle}</span>}
@@ -128,27 +133,25 @@ export function QuestionStep({
           className="min-h-[180px] text-base resize-none font-mono"
         />
 
-        <p className="text-xs text-gray-400 mt-2 font-mono">
-          Press Shift+Enter for new line, Cmd/Ctrl+Enter to continue
-        </p>
+        <p className="text-xs text-gray-400 mt-2 font-mono">{t('enrichment.shortcutHint')}</p>
       </div>
 
       {/* Navigation */}
       <div className="flex items-center justify-between pt-6 border-t border-gray-200 mt-6">
         <Button variant="outline" onClick={onPrev} disabled={isFirst} className="gap-2">
           <ChevronLeft className="w-4 h-4" />
-          Back
+          {t('common.back')}
         </Button>
 
         <Button onClick={handleContinue} className="gap-2">
           {isLast ? (
             <>
-              Finish
+              {t('common.finish')}
               <ChevronRight className="w-4 h-4" />
             </>
           ) : (
             <>
-              Continue
+              {t('common.continue')}
               <ChevronRight className="w-4 h-4" />
             </>
           )}

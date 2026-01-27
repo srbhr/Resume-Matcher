@@ -8,13 +8,13 @@ tasks:
     dir: apps/backend
     cmds:
       - uv sync --upgrade
-      - uv tool upgrade
+      - uv tool upgrade --all
 
   upgrade-frontend:
     desc: Upgrading backend dependencies
     dir: apps/frontend
     cmds:
-      - npm upgrade
+      - bun upgrade
 
   upgrade:
     desc: Upgrading dependencies
@@ -39,7 +39,7 @@ tasks:
     desc: Installing dependencies frontend
     dir: apps/frontend
     cmds:
-      - npm install --quiet
+      - bun install --quiet
 
   install:
     desc: Installing dependencies

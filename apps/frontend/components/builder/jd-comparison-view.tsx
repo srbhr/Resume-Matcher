@@ -6,6 +6,7 @@ import { extractKeywords, calculateMatchStats } from '@/lib/utils/keyword-matche
 import { JDDisplay } from './jd-display';
 import { HighlightedResumeView } from './highlighted-resume-view';
 import { CheckCircle, Target } from 'lucide-react';
+import { useTranslations } from '@/lib/i18n';
 
 interface JDComparisonViewProps {
   jobDescription: string;
@@ -18,6 +19,8 @@ interface JDComparisonViewProps {
  * Right: Resume with matching keywords highlighted
  */
 export function JDComparisonView({ jobDescription, resumeData }: JDComparisonViewProps) {
+  const { t } = useTranslations();
+
   // Extract keywords from JD
   const keywords = useMemo(() => extractKeywords(jobDescription), [jobDescription]);
 
@@ -64,18 +67,20 @@ export function JDComparisonView({ jobDescription, resumeData }: JDComparisonVie
           <div className="flex items-center gap-2">
             <Target className="w-4 h-4 text-blue-600" />
             <span className="text-sm font-mono">
-              <span className="font-bold">{keywords.size}</span> keywords extracted
+              {t('builder.jdMatch.stats.keywordsExtracted', { count: keywords.size })}
             </span>
           </div>
           <div className="flex items-center gap-2">
             <CheckCircle className="w-4 h-4 text-green-600" />
             <span className="text-sm font-mono">
-              <span className="font-bold text-green-700">{stats.matchCount}</span> matches found
+              {t('builder.jdMatch.stats.matchesFound', { count: stats.matchCount })}
             </span>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-sm font-mono text-gray-600">Match Rate:</span>
+          <span className="text-sm font-mono text-gray-600">
+            {t('builder.jdMatch.stats.matchRateLabel')}
+          </span>
           <span
             className={`text-lg font-bold ${
               stats.matchPercentage >= 50

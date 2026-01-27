@@ -1,6 +1,8 @@
 import { ImprovedResult } from '@/components/common/resume_previewer_context';
+import type { ResumeData } from '@/components/dashboard/resume-component';
 import { type TemplateSettings } from '@/lib/types/template-settings';
-import { apiPost, apiPatch, apiDelete, apiFetch } from './client';
+import { type Locale } from '@/i18n/config';
+import { API_BASE, apiPost, apiPatch, apiDelete, apiFetch } from './client';
 
 // Matches backend schemas/models.py ResumeData
 interface ProcessedResume {
@@ -65,6 +67,24 @@ interface ResumeResponse {
   };
 }
 
+interface ImproveResumeConfirmRequest {
+  resume_id: string;
+  job_id: string;
+  improved_data: ResumeData;
+  improvements: Array<{
+    suggestion: string;
+    lineNumber?: number | null;
+  }>;
+}
+
+function normalizeResumeId(resumeId: string): string {
+  const normalized = resumeId.trim();
+  if (!normalized) {
+    throw new Error('Resume ID is required.');
+  }
+  return normalized;
+}
+
 export interface ResumeListItem {
   resume_id: string;
   filename: string | null;
@@ -73,6 +93,32 @@ export interface ResumeListItem {
   processing_status: 'pending' | 'processing' | 'ready' | 'failed';
   created_at: string;
   updated_at: string;
+}
+
+async function postImprove(
+  endpoint: string,
+  payload: Record<string, unknown>
+): Promise<ImprovedResult> {
+  let response: Response;
+  try {
+    response = await apiPost(endpoint, payload);
+  } catch (networkError) {
+    console.error(`Network error during ${endpoint}:`, networkError);
+    throw networkError;
+  }
+
+  const text = await response.text();
+  if (!response.ok) {
+    console.error('Improve failed response body:', text);
+    throw new Error(`Improve failed with status ${response.status}: ${text}`);
+  }
+
+  try {
+    return JSON.parse(text) as ImprovedResult;
+  } catch (parseError) {
+    console.error('Failed to parse improve response:', parseError, 'Raw response:', text);
+    throw parseError;
+  }
 }
 
 /** Uploads job descriptions and returns a job_id */
@@ -90,33 +136,36 @@ export async function uploadJobDescriptions(
 }
 
 /** Improves the resume and returns the full preview object */
-export async function improveResume(resumeId: string, jobId: string): Promise<ImprovedResult> {
-  let response: Response;
-  try {
-    response = await apiPost('/resumes/improve', {
-      resume_id: resumeId,
-      job_id: jobId,
-    });
-  } catch (networkError) {
-    console.error('Network error during improveResume:', networkError);
-    throw networkError;
-  }
+export async function improveResume(
+  resumeId: string,
+  jobId: string,
+  promptId?: string
+): Promise<ImprovedResult> {
+  return postImprove('/resumes/improve', {
+    resume_id: resumeId,
+    job_id: jobId,
+    prompt_id: promptId ?? null,
+  });
+}
 
-  const text = await response.text();
-  if (!response.ok) {
-    console.error('Improve failed response body:', text);
-    throw new Error(`Improve failed with status ${response.status}: ${text}`);
-  }
+/** Previews the resume improvement without saving */
+export async function previewImproveResume(
+  resumeId: string,
+  jobId: string,
+  promptId?: string
+): Promise<ImprovedResult> {
+  return postImprove('/resumes/improve/preview', {
+    resume_id: resumeId,
+    job_id: jobId,
+    prompt_id: promptId ?? null,
+  });
+}
 
-  let data: ImprovedResult;
-  try {
-    data = JSON.parse(text) as ImprovedResult;
-  } catch (parseError) {
-    console.error('Failed to parse improveResume response:', parseError, 'Raw response:', text);
-    throw parseError;
-  }
-
-  return data;
+/** Confirms and saves a tailored resume */
+export async function confirmImproveResume(
+  payload: ImproveResumeConfirmRequest
+): Promise<ImprovedResult> {
+  return postImprove('/resumes/improve/confirm', payload as Record<string, unknown>);
 }
 
 /** Fetches a raw resume record for previewing the original upload */
@@ -153,10 +202,12 @@ export async function updateResume(
   return payload.data;
 }
 
-export async function downloadResumePdf(
+export function getResumePdfUrl(
   resumeId: string,
-  settings?: TemplateSettings
-): Promise<Blob> {
+  settings?: TemplateSettings,
+  locale?: Locale
+): string {
+  const normalizedId = normalizeResumeId(resumeId);
   const params = new URLSearchParams();
 
   if (settings) {
@@ -180,8 +231,20 @@ export async function downloadResumePdf(
     params.set('template', 'swiss-single');
     params.set('pageSize', 'A4');
   }
+  if (locale) {
+    params.set('lang', locale);
+  }
 
-  const res = await apiFetch(`/resumes/${encodeURIComponent(resumeId)}/pdf?${params.toString()}`);
+  return `${API_BASE}/resumes/${encodeURIComponent(normalizedId)}/pdf?${params.toString()}`;
+}
+
+export async function downloadResumePdf(
+  resumeId: string,
+  settings?: TemplateSettings,
+  locale?: Locale
+): Promise<Blob> {
+  const url = getResumePdfUrl(resumeId, settings, locale);
+  const res = await apiFetch(url);
   if (!res.ok) {
     const text = await res.text().catch(() => '');
     throw new Error(`Failed to download resume (status ${res.status}): ${text}`);
@@ -219,14 +282,26 @@ export async function updateOutreachMessage(resumeId: string, content: string): 
 }
 
 /** Downloads cover letter as PDF */
+export function getCoverLetterPdfUrl(
+  resumeId: string,
+  pageSize: 'A4' | 'LETTER' = 'A4',
+  locale?: Locale
+): string {
+  const normalizedId = normalizeResumeId(resumeId);
+  const params = new URLSearchParams({ pageSize });
+  if (locale) {
+    params.set('lang', locale);
+  }
+  return `${API_BASE}/resumes/${encodeURIComponent(normalizedId)}/cover-letter/pdf?${params.toString()}`;
+}
+
 export async function downloadCoverLetterPdf(
   resumeId: string,
-  pageSize: 'A4' | 'LETTER' = 'A4'
+  pageSize: 'A4' | 'LETTER' = 'A4',
+  locale?: Locale
 ): Promise<Blob> {
-  const params = new URLSearchParams({ pageSize });
-  const res = await apiFetch(
-    `/resumes/${encodeURIComponent(resumeId)}/cover-letter/pdf?${params.toString()}`
-  );
+  const url = getCoverLetterPdfUrl(resumeId, pageSize, locale);
+  const res = await apiFetch(url);
   if (!res.ok) {
     const text = await res.text().catch(() => '');
     throw new Error(`Failed to download cover letter (status ${res.status}): ${text}`);

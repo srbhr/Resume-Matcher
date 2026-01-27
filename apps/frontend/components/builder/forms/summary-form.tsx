@@ -1,6 +1,9 @@
+'use client';
+
 import React from 'react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { useTranslations } from '@/lib/i18n';
 
 interface SummaryFormProps {
   value: string;
@@ -8,6 +11,8 @@ interface SummaryFormProps {
 }
 
 export const SummaryForm: React.FC<SummaryFormProps> = ({ value, onChange }) => {
+  const { t } = useTranslations();
+
   // Explicitly allow Enter key to create newlines
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter') {
@@ -22,14 +27,14 @@ export const SummaryForm: React.FC<SummaryFormProps> = ({ value, onChange }) => 
           htmlFor="summary"
           className="font-mono text-xs uppercase tracking-wider text-gray-500"
         >
-          Summary
+          {t('resume.sections.summary')}
         </Label>
         <Textarea
           id="summary"
           value={value || ''}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Briefly describe your professional background..."
+          placeholder={t('builder.placeholders.summary')}
           className="min-h-[150px] text-black rounded-none border-black focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-blue-700 bg-white"
         />
       </div>

@@ -1,29 +1,50 @@
 {
   "common": {
     "save": "Save",
+    "saving": "Saving...",
     "cancel": "Cancel",
     "delete": "Delete",
     "edit": "Edit",
     "download": "Download",
     "loading": "Loading...",
+    "uploading": "Uploading...",
+    "checking": "Checking...",
+    "processing": "Processing...",
+    "generating": "Generating...",
     "error": "Error",
     "success": "Success",
     "confirm": "Confirm",
     "back": "Back",
+    "retry": "Retry",
     "next": "Next",
+    "continue": "Continue",
+    "finish": "Finish",
+    "optional": "Optional",
     "close": "Close",
+    "ok": "OK",
     "search": "Search",
     "filter": "Filter",
     "reset": "Reset",
     "apply": "Apply",
+    "selectOption": "Select an option...",
+    "unknown": "Unknown",
     "keysCleared": "API keys cleared successfully",
-    "databaseReset": "Database reset successfully"
+    "databaseReset": "Database reset successfully",
+    "popupBlocked": "Popup blocked. Please allow popups or open this URL manually: {url}"
+  },
+  "home": {
+    "brandLine1": "Resume",
+    "brandLine2": "Matcher",
+    "docs": "Docs",
+    "launchApp": "Launch App"
   },
   "nav": {
     "dashboard": "Dashboard",
     "builder": "Resume Builder",
     "tailor": "Tailor Resume",
-    "settings": "Settings"
+    "settings": "Settings",
+    "backToDashboard": "Back to Dashboard",
+    "goToSettings": "Go to Settings"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -35,16 +56,46 @@
     "createNew": "Create New",
     "lastModified": "Last modified",
     "actions": "Actions",
+    "preview": "Preview",
     "viewResume": "View Resume",
     "editResume": "Edit Resume",
     "deleteResume": "Delete Resume",
     "downloadPdf": "Download PDF",
-    "tailorResume": "Tailor for Job"
+    "tailorResume": "Tailor for Job",
+    "selectModule": "Select Module",
+    "masterResume": "Master Resume",
+    "tailoredResume": "Tailored Resume",
+    "initializeMasterResume": "Initialize Master Resume",
+    "initializeSequence": "Initialize Sequence",
+    "refreshStatus": "Refresh status",
+    "createResume": "Create Resume",
+    "edited": "Edited {date}",
+    "statusLine": "STATUS: {status}",
+    "status": {
+      "checking": "Checking...",
+      "processing": "Processing...",
+      "ready": "Ready",
+      "failed": "Processing failed",
+      "pending": "Pending"
+    },
+    "llmNotConfiguredTitle": "[ LLM NOT CONFIGURED ]",
+    "llmNotConfiguredMessage": "> API keys are missing. Resume tailoring is disabled until configured in settings.",
+    "setupRequiredTitle": "[ SETUP REQUIRED ]",
+    "setupRequiredMessage": "> Configure API key in settings to enable resume tailoring.",
+    "uploadDialog": {
+      "success": "Resume uploaded successfully.",
+      "successMissingId": "Upload succeeded but no Resume ID returned.",
+      "failed": "Upload failed.",
+      "dropzoneTitle": "Click or Drag File",
+      "dropzoneSubtitle": "PDF, DOC, DOCX (Max 4MB)"
+    }
   },
   "builder": {
     "title": "Resume Builder",
     "editMode": "Edit Mode",
     "previewMode": "Preview Mode",
+    "createAndPreview": "Create & Preview",
+    "unsavedDraft": "Unsaved Draft",
     "personalInfo": "Personal Information",
     "summary": "Summary",
     "experience": "Experience",
@@ -57,19 +108,402 @@
     "addSection": "Add Section",
     "removeSection": "Remove Section",
     "saveChanges": "Save Changes",
-    "discardChanges": "Discard Changes"
+    "discardChanges": "Discard Changes",
+    "placeholders": {
+      "summary": "Briefly describe your professional background..."
+    },
+    "contentStats": {
+      "wordsChars": "{wordCount} words / {charCount} chars"
+    },
+    "additionalForm": {
+      "instructions": "Enter items separated by new lines (press Enter for each item).",
+      "placeholders": {
+        "technicalSkills": "React\nTypeScript\nNode.js",
+        "languages": "English\nSpanish",
+        "certifications": "AWS Solution Architect\nGoogle Analytics",
+        "awards": "Employee of the Month\nHackathon Winner"
+      }
+    },
+    "customSections": {
+      "dialogTitle": "Add Custom Section",
+      "dialogDescription": "Create a new section for your resume with a custom name and type.",
+      "sectionNameLabel": "Section Name",
+      "sectionNamePlaceholder": "e.g., Publications, Volunteer Work, Certifications",
+      "sectionTypeLabel": "Section Type",
+      "addCustomSectionButton": "Add Custom Section",
+      "sectionTypes": {
+        "textBlockLabel": "Text Block",
+        "textBlockDescription": "Single text area (like Summary)",
+        "itemListLabel": "Item List",
+        "itemListDescription": "Multiple entries with details (like Experience)",
+        "stringListLabel": "Skill List",
+        "stringListDescription": "Simple list of items (like Skills)"
+      },
+      "contentLabel": "Content",
+      "contentPlaceholder": "Enter content for {name}...",
+      "defaultTextPlaceholder": "Enter text content...",
+      "entryLabel": "Entry",
+      "addEntryLabel": "Add Entry",
+      "itemsLabel": "Items",
+      "itemsPlaceholder": "Enter items, one per line",
+      "unknownSectionType": "Unknown section type: {type}",
+      "unknownDefaultSection": "Unknown default section: {section}"
+    },
+    "sectionHeader": {
+      "renameSection": "Rename section",
+      "customTag": "Custom",
+      "hiddenFromPdfTag": "Hidden from PDF",
+      "hideSection": "Hide section",
+      "showSection": "Show section",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "deleteSection": "Delete section",
+      "deleteTitle": "Delete Section",
+      "deleteDescription": "Are you sure you want to delete \"{name}\"? This action cannot be undone."
+    },
+    "previewTabs": {
+      "resume": "RESUME",
+      "coverLetter": "COVER LETTER",
+      "outreach": "OUTREACH MAIL",
+      "jdMatch": "JD MATCH"
+    },
+    "footer": {
+      "moduleLabel": "Resume Builder Module",
+      "singleColumn": "Single Column",
+      "twoColumn": "Two Column"
+    },
+    "pageSize": {
+      "usLetter": "US Letter"
+    },
+    "generatePrompt": {
+      "notAvailableTitle": "{title} Not Available",
+      "notAvailableDescription": "To generate {title}, first tailor your resume with a job description.",
+      "goToDashboard": "Go to Dashboard",
+      "generateTitle": "Generate {title}",
+      "coverLetterDescription": "Generate a tailored cover letter based on your resume and job description.",
+      "outreachDescription": "Generate a concise outreach message for LinkedIn or email based on your resume and job description.",
+      "generateButton": "Generate {title}",
+      "coverLetterFooter": "Tip: tailor first for best results.",
+      "outreachFooter": "Tip: keep it short and personalized."
+    },
+    "regenerateDialog": {
+      "title": "Regenerate {title}?",
+      "description": "This will replace your current {title} with a newly generated one. Any edits you've made will be lost."
+    },
+    "jdMatch": {
+      "yourResume": "Your Resume",
+      "matchingKeywordsHighlighted": "(matching keywords highlighted)",
+      "jobDescriptionTitle": "Job Description",
+      "at": "at",
+      "atSeparator": " at ",
+      "roleSeparator": "-",
+      "aboutTitle": "About JD Match",
+      "aboutDescription": "This view shows how well your resume matches the job description. Keywords from the JD are highlighted in yellow on your resume, helping you see which skills and terms are already covered.",
+      "highlightedKeywordsTitle": "Highlighted Keywords",
+      "highlightedKeywordsDescriptionTemplate": "Words highlighted in __COLOR__ appear in both the job description and your resume. A higher match rate suggests better alignment with the job requirements.",
+      "highlightedKeywordsDescriptionPrefix": "Words highlighted in",
+      "highlightColor": "yellow",
+      "highlightedKeywordsDescriptionSuffix": "appear in both the job description and your resume. A higher match rate suggests better alignment with the job requirements.",
+      "tipsTitle": "Tips",
+      "tips": {
+        "items": {
+          "addMissingKeywords": "Use the Resume tab to add missing keywords",
+          "focusTechnicalSkills": "Focus on technical skills and tools mentioned in the JD",
+          "matchActionVerbs": "Match action verbs from the job requirements"
+        }
+      },
+      "stats": {
+        "keywordsExtracted": "{count} keywords extracted",
+        "matchesFound": "{count} matches found",
+        "matchRateLabel": "Match Rate:"
+      }
+    },
+    "genericItemForm": {
+      "itemLabel": "Item",
+      "addItemLabel": "Add {label}",
+      "fields": {
+        "title": "Title",
+        "organization": "Organization",
+        "location": "Location",
+        "years": "Years",
+        "descriptionPoints": "Description Points"
+      },
+      "actions": {
+        "addPoint": "Add Point"
+      },
+      "placeholders": {
+        "title": "Title",
+        "organization": "Organization",
+        "location": "Location",
+        "years": "2020 - Present",
+        "description": "Describe your contribution..."
+      },
+      "noEntries": "// NO {label} ENTRIES",
+      "addFirstItem": "Add First {label}"
+    },
+    "forms": {
+      "experience": {
+        "addJob": "Add Job",
+        "addFirstJob": "Add First Job",
+        "fields": {
+          "jobTitle": "Job Title",
+          "company": "Company"
+        },
+        "placeholders": {
+          "jobTitle": "Senior Developer",
+          "company": "Tech Corp",
+          "location": "Remote / City",
+          "years": "2020 - Present",
+          "description": "Describe your achievement..."
+        }
+      },
+      "education": {
+        "addSchool": "Add School",
+        "addFirstSchool": "Add First School",
+        "fields": {
+          "institution": "Institution",
+          "degree": "Degree",
+          "description": "Description",
+          "descriptionOptional": "Description (Optional)"
+        },
+        "placeholders": {
+          "institution": "University Name",
+          "degree": "Bachelor of Science",
+          "years": "2016 - 2020",
+          "description": "Additional details..."
+        }
+      },
+      "projects": {
+        "addProject": "Add Project",
+        "addFirstProject": "Add First Project",
+        "fields": {
+          "projectName": "Project Name",
+          "role": "Role",
+          "website": "Website"
+        },
+        "placeholders": {
+          "projectName": "Resume Matcher",
+          "role": "Creator",
+          "years": "2023",
+          "github": "github.com/username/project",
+          "website": "https://project-demo.com",
+          "description": "Project detail..."
+        }
+      }
+    },
+    "formatting": {
+      "panelTitle": "Template & Formatting",
+      "template": "Template",
+      "templates": {
+        "swissSingle": {
+          "name": "Single Column",
+          "description": "Traditional full-width layout with maximum content density"
+        },
+        "swissTwoColumn": {
+          "name": "Two Column",
+          "description": "Experience-focused main column with sidebar for skills"
+        },
+        "modern": {
+          "name": "Modern",
+          "description": "Colorful accents with customizable theme colors"
+        },
+        "modernTwoColumn": {
+          "name": "Modern Two Column",
+          "description": "Two-column layout with modern colorful accents and themes"
+        }
+      },
+      "accentColor": "Accent Color",
+      "accentColors": {
+        "blue": "Blue",
+        "green": "Green",
+        "orange": "Orange",
+        "red": "Red"
+      },
+      "pageSize": "Page Size",
+      "margins": "Margins (mm)",
+      "margin": {
+        "top": "Top",
+        "bottom": "Bottom",
+        "left": "Left",
+        "right": "Right"
+      },
+      "spacing": "Spacing",
+      "spacingSection": "Section",
+      "spacingItems": "Items",
+      "spacingLines": "Lines",
+      "fontSize": "Font Size",
+      "baseFontSize": "Base",
+      "headerScale": "Headers",
+      "headerFontFamily": "Headers",
+      "bodyFontFamily": "Body",
+      "fontNames": {
+        "serif": "Serif",
+        "sans": "Sans",
+        "mono": "Mono"
+      },
+      "options": "Options",
+      "compactMode": "Compact Mode",
+      "contactIcons": "Contact Icons",
+      "effectiveOutput": "Effective Output",
+      "effectiveMargins": "Margins (mm): T{top} B{bottom} L{left} R{right}",
+      "effectiveSectionGap": "Section Gap",
+      "effectiveItemGap": "Item Gap",
+      "effectiveLineHeight": "Line Height",
+      "effectiveBaseFont": "Base Font",
+      "effectiveHeaderScale": "Header Scale",
+      "effectiveHeaderFont": "Header Font",
+      "effectiveBodyFont": "Body Font",
+      "compactHint": "Compact mode tightens spacing and line height. Margins and base font size stay literal.",
+      "resetDefaults": "Reset to Defaults"
+    },
+    "personalInfoForm": {
+      "placeholders": {
+        "name": "John Doe",
+        "title": "Software Engineer",
+        "email": "john@example.com",
+        "phone": "+1 (555) 000-0000",
+        "location": "City, Country",
+        "website": "portfolio.com",
+        "linkedin": "linkedin.com/in/john",
+        "github": "github.com/john"
+      }
+    },
+    "leftPanel": {
+      "editorPanel": "Editor Panel",
+      "coverLetterEditor": "Cover Letter Editor",
+      "outreachEditor": "Outreach Message Editor",
+      "jdMatchAnalysis": "JD Match Analysis"
+    },
+    "alerts": {
+      "saveNotAvailable": "Save is only available when editing an existing resume.",
+      "saveFailed": "Failed to save resume. Please try again.",
+      "downloadNotAvailable": "Download is only available for saved resumes.",
+      "downloadFailed": "Failed to download resume. Please try again.",
+      "coverLetterSaveFailed": "Failed to save cover letter. Please try again.",
+      "coverLetterDownloadRequiresResume": "Save the resume first to download the cover letter.",
+      "coverLetterMissing": "No cover letter available. Enable cover letter generation in Settings and tailor a resume.",
+      "coverLetterDownloadFailed": "Failed to download cover letter: {error}",
+      "outreachSaveFailed": "Failed to save outreach message. Please try again.",
+      "coverLetterGenerateFailed": "Failed to generate cover letter: {error}",
+      "outreachGenerateFailed": "Failed to generate outreach message: {error}"
+    }
+  },
+  "enrichment": {
+    "title": "Resume Enhancement",
+    "loading": {
+      "analyzingTitle": "Analyzing your resume...",
+      "analyzingDescription": "Identifying areas that could use more detail",
+      "generatingTitle": "Crafting enhanced descriptions...",
+      "generatingDescription": "Using your answers to improve your resume",
+      "applyingTitle": "Applying enhancements...",
+      "applyingDescription": "Updating your master resume"
+    },
+    "questionProgress": "Question {current} of {total}",
+    "itemType": {
+      "experience": "Experience",
+      "project": "Project"
+    },
+    "shortcutHint": "Press Shift+Enter for new line, Cmd/Ctrl+Enter to continue",
+    "preview": {
+      "title": "Review New Content",
+      "description": "Review the new bullet points that will be added to your resume",
+      "applyButton": "Add to Resume",
+      "keepingLabel": "Keeping",
+      "addingLabel": "Adding",
+      "existingCount": "({count} existing)",
+      "newCount": "({count} new)",
+      "noExistingDescription": "No existing description"
+    },
+    "complete": {
+      "title": "Resume Enhanced!",
+      "updatedCountSingular": "{count} item updated successfully",
+      "updatedCountPlural": "{count} items updated successfully",
+      "updatedFallback": "Your resume has been updated with enhanced descriptions",
+      "doneButton": "Done"
+    },
+    "noImprovements": {
+      "title": "Your resume looks great!",
+      "defaultDescription": "We couldn't find any items that need improvement. Your experience and project descriptions are already well-detailed."
+    },
+    "error": {
+      "title": "Something went wrong",
+      "unexpected": "An unexpected error occurred"
+    }
   },
   "tailor": {
     "title": "Tailor Resume",
     "subtitle": "Optimize your resume for a specific job",
+    "heroTitle": "Tailor Your Resume",
     "selectResume": "Select Resume",
     "pasteJobDescription": "Paste Job Description",
+    "pasteJobDescriptionBelow": "Paste Job Description Below",
     "jobDescriptionPlaceholder": "Paste the job description here...",
+    "promptLabel": "Tailoring intensity",
+    "promptDescription": "Choose how strongly to align your resume to the job description.",
+    "promptOptions": {
+      "nudge": {
+        "label": "Light nudge",
+        "description": "Minimal edits to better align existing experience."
+      },
+      "keywords": {
+        "label": "Keyword enhance",
+        "description": "Blend in relevant keywords without changing role or scope."
+      },
+      "full": {
+        "label": "Full tailor",
+        "description": "Comprehensive tailoring using the job description."
+      }
+    },
     "analyzeJob": "Analyze Job",
     "generateTailored": "Generate Tailored Resume",
+    "setupRequiredTitle": "[ SETUP REQUIRED ]",
+    "noApiKeyMessage": "> No API key configured. Resume tailoring requires an LLM provider.",
+    "configureApiKey": "Configure API Key",
+    "configureApiKeyFirst": "Configure API Key First",
+    "charactersCount": "{count} chars",
     "matchScore": "Match Score",
     "suggestions": "Suggestions",
-    "keywords": "Keywords to Include"
+    "keywords": "Keywords to Include",
+    "footerTagline": "AI-POWERED OPTIMIZATION ENGINE",
+    "diffModal": {
+      "title": "Review AI Tailoring Results",
+      "subtitle": "Please carefully review the changes to ensure no false information has been added",
+      "summary": "Change Summary",
+      "skillsAdded": "Skills Added",
+      "skillsRemoved": "Skills Removed",
+      "descriptionsModified": "Descriptions Modified",
+      "certificationsAdded": "Certifications Added",
+      "highRiskChanges": "High Risk Changes",
+      "warningTitle": "Detected {count} high-risk addition(s)",
+      "warningMessage": "Please confirm these additions exist in your original resume or are reflected in your descriptions",
+      "summaryChanges": "Summary Changes",
+      "skillChanges": "Skill Changes",
+      "descriptionChanges": "Experience Description Changes",
+      "experienceChanges": "Experience Entry Changes",
+      "educationChanges": "Education Changes",
+      "projectChanges": "Project Changes",
+      "certificationChanges": "Certification Changes",
+      "rejectButton": "Reject & Regenerate",
+      "confirmButton": "Confirm & Save"
+    },
+    "regenerateDialog": {
+      "title": "Regenerate tailored resume?",
+      "description": "This will discard the current preview and request a new AI tailoring result.",
+      "confirmLabel": "Regenerate"
+    },
+    "missingDiffDialog": {
+      "title": "Unable to calculate changes",
+      "description": "We could not compute a diff for this resume. This can happen with legacy resumes that lack structured data. You can continue to save the tailored resume or cancel to review later.",
+      "confirmLabel": "Continue without diff"
+    },
+    "errors": {
+      "jobDescriptionTooShort": "Job description is too short. Please provide more details.",
+      "apiKeyError": "API key error. Please check your LLM configuration in Settings.",
+      "rateLimit": "Rate limit reached. Please wait a moment and try again.",
+      "failedToGenerate": "Failed to generate resume. Please check your settings and try again.",
+      "failedToPreview": "Failed to preview resume. Please check your settings and try again.",
+      "failedToConfirm": "Failed to confirm resume. Please try again."
+    }
   },
   "settings": {
     "title": "Settings",
@@ -92,7 +526,141 @@
     "clearApiKeys": "Clear API Keys",
     "clearApiKeysDescription": "Removes all stored API keys from the configuration. This action cannot be undone.",
     "resetDatabase": "Reset Database",
-    "resetDatabaseDescription": "Deletes ALL data including resumes, jobs, and generated content. This action cannot be undone."
+    "resetDatabaseDescription": "Deletes ALL data including resumes, jobs, and generated content. This action cannot be undone.",
+    "llmConfigurationTitle": "LLM Configuration",
+    "providerLabel": "Provider",
+    "statusCards": {
+      "llm": "LLM",
+      "database": "Database",
+      "resumes": "Resumes",
+      "jobs": "Jobs",
+      "improvements": "Improvements",
+      "masterResume": "Master Resume"
+    },
+    "statusValues": {
+      "healthy": "Healthy",
+      "offline": "Offline",
+      "connected": "Connected",
+      "configured": "Configured",
+      "notSet": "Not set"
+    },
+    "apiKeyMenu": {
+      "buttonLabel": "LLM API",
+      "title": "OpenAI API Key",
+      "description": "Provide your key to enable hosted OpenAI models.",
+      "savedMessage": "API key saved.",
+      "loadError": "Unable to load API key",
+      "updateError": "Unable to update API key"
+    },
+    "setupRequired": {
+      "title": "[ SETUP REQUIRED ]",
+      "description": "> No API key configured. Add your LLM provider API key below to enable resume tailoring."
+    },
+    "systemStatus": {
+      "title": "System Status",
+      "refresh": "Refresh",
+      "unableToConnect": "Unable to connect to backend",
+      "expectedAt": "Expected at: {apiUrl}",
+      "lastFetched": {
+        "never": "Never",
+        "justNow": "Just now",
+        "minutesAgo": "{minutes}m ago",
+        "hoursAgo": "{hours}h ago"
+      }
+    },
+    "llmConfiguration": {
+      "selectedProvider": "SELECTED: {provider}",
+      "modelLabel": "Model",
+      "defaultModel": "DEFAULT: {model}",
+      "apiKeyLabel": "API Key",
+      "apiKeyOptionalForOllama": "(Optional for Ollama)",
+      "apiKeyPlaceholder": "sk-...",
+      "apiKeyNotRequiredPlaceholder": "Not required for local models",
+      "leaveBlankToKeepExistingKey": "LEAVE BLANK TO KEEP EXISTING KEY",
+      "baseUrlLabel": "Base URL (optional)",
+      "baseUrlPlaceholder": "e.g. https://api.openai.com/v1",
+      "baseUrlDescription": "Override the API base URL to use a proxy/aggregator endpoint. Leave blank to use provider default.",
+      "ollamaServerUrl": "Ollama Server URL",
+      "ollamaServerUrlPlaceholder": "http://localhost:11434",
+      "testConnection": "Test Connection",
+      "errorPrefix": "ERROR: {error}",
+      "connectionSuccessful": "CONNECTION SUCCESSFUL",
+      "connectionFailed": "CONNECTION FAILED",
+      "connectionDetails": "Provider: {provider} | Model: {model}",
+      "testPromptLabel": "TEST PROMPT",
+      "modelOutputLabel": "MODEL OUTPUT",
+      "errorDetailLabel": "ERROR DETAIL",
+      "healthErrors": {
+        "api_key_missing": "API key not configured. Please add a key in Settings.",
+        "health_check_failed": "Health check failed.",
+        "duplicate_v1_path": "Health check failed. The Base URL may contain a duplicate /v1 path.",
+        "not_found_404": "Health check failed. 404 Not Found - check that the Base URL matches the provider.",
+        "html_response": "Health check failed. The Base URL returned HTML; it may be a console URL or an unsupported gateway path."
+      },
+      "healthWarnings": {
+        "empty_content": "LLM returned empty content for the health check."
+      }
+    },
+    "contentGeneration": {
+      "title": "Content Generation",
+      "description": "Enable additional content generation during resume tailoring. When enabled, these documents will be automatically generated alongside your tailored resume.",
+      "coverLetter": {
+        "label": "Cover Letter",
+        "description": "Generate a tailored cover letter alongside your resume"
+      },
+      "outreachMessage": {
+        "label": "Cold Outreach Message",
+        "description": "Generate a networking message for LinkedIn or email"
+      }
+    },
+    "promptSettings": {
+      "title": "Prompt Settings",
+      "description": "Choose the default prompt used for resume tailoring.",
+      "defaultLabel": "Default tailoring prompt"
+    },
+    "footer": {
+      "status": {
+        "checking": "Checking...",
+        "ready": "STATUS: READY",
+        "setupRequired": "STATUS: SETUP REQUIRED",
+        "offline": "STATUS: OFFLINE"
+      }
+    },
+    "errors": {
+      "unableToConnectBackend": "Unable to connect to backend. Is the server running?",
+      "apiKeyRequired": "API key is required for the selected provider.",
+      "unknownProvider": "Unknown provider returned from backend: {provider}",
+      "unableToSaveConfiguration": "Unable to save configuration",
+      "failedToClearApiKeys": "Failed to clear API keys. Please try again.",
+      "failedToResetDatabase": "Failed to reset database. Please try again."
+    }
+  },
+  "resumeViewer": {
+    "resumeNotFound": "Resume not found",
+    "loading": "Loading Resume...",
+    "useTailorFeature": "Use Tailor Feature",
+    "returnToDashboard": "Return to Dashboard",
+    "enhanceResume": "Enhance Resume",
+    "downloadResume": "Download Resume",
+    "deletedTitle": "Resume Deleted",
+    "deletedDescriptionMaster": "Your master resume has been permanently deleted from the system.",
+    "deletedDescriptionRegular": "The resume has been permanently deleted from the system.",
+    "deleteFailedTitle": "Delete Failed",
+    "errors": {
+      "processingFailed": "Resume processing failed. The AI service could not extract structured data from your resume. You can still use the Tailor feature or try uploading again.",
+      "stillProcessing": "Resume is still being processed. Please wait a moment and refresh the page.",
+      "notProcessedYet": "Resume has not been processed yet. Please use the Tailor feature to generate a structured resume.",
+      "noDataAvailable": "No resume data available.",
+      "failedToLoad": "Failed to load resume data.",
+      "failedToDelete": "Failed to delete resume. Please try again."
+    }
+  },
+  "preview": {
+    "margins": "Margins",
+    "calculating": "Calculating...",
+    "pageBreak": "Page Break",
+    "pageCountSingular": "{count} page",
+    "pageCountPlural": "{count} pages"
   },
   "resume": {
     "personalInfo": {
@@ -106,14 +674,29 @@
       "github": "GitHub"
     },
     "sections": {
+      "personalInfo": "Personal Info",
       "summary": "Summary",
       "experience": "Experience",
       "education": "Education",
       "projects": "Projects",
       "skills": "Skills & Awards",
+      "skillsOnly": "Skills",
       "certifications": "Training & Certifications",
       "languages": "Languages",
-      "awards": "Awards"
+      "awards": "Awards",
+      "links": "Links"
+    },
+    "defaults": {
+      "name": "Your Name"
+    },
+    "additional": {
+      "technicalSkills": "Technical Skills"
+    },
+    "additionalLabels": {
+      "technicalSkills": "Technical Skills:",
+      "languages": "Languages:",
+      "certifications": "Certifications:",
+      "awards": "Awards:"
     }
   },
   "coverLetter": {
@@ -121,18 +704,68 @@
     "generate": "Generate Cover Letter",
     "regenerate": "Regenerate",
     "copyToClipboard": "Copy to Clipboard",
-    "copied": "Copied!"
+    "copied": "Copied!",
+    "editor": {
+      "placeholder": "Your cover letter will appear here after tailoring your resume with cover letter generation enabled...",
+      "tip": "TIP: A good cover letter is typically 300-400 words. Edit as needed to personalize."
+    },
+    "preview": {
+      "defaultName": "Your Name",
+      "emptyTitle": "No cover letter content yet.",
+      "emptyDescription": "Enable cover letter generation in Settings, then tailor a resume."
+    },
+    "print": {
+      "emptyContent": "No cover letter content available."
+    }
+  },
+  "outreach": {
+    "title": "Outreach Message",
+    "generate": "Generate Outreach Message",
+    "regenerate": "Regenerate",
+    "copy": "Copy",
+    "copyToClipboard": "Copy to Clipboard",
+    "copied": "Copied!",
+    "editor": {
+      "placeholder": "Your cold outreach message will appear here after tailoring your resume with outreach message generation enabled...",
+      "tip": "TIP: Keep outreach messages brief (100-150 words). Copy and paste to LinkedIn or email."
+    },
+    "preview": {
+      "channels": {
+        "linkedin": "LinkedIn",
+        "email": "Email"
+      },
+      "howToUseTitle": "How to use:",
+      "steps": {
+        "step1": "1. Copy the message using the button above",
+        "step2": "2. Open LinkedIn or your email client",
+        "step3": "3. Paste and personalize as needed",
+        "step4": "4. Send to recruiters or hiring managers"
+      },
+      "emptyTitle": "No outreach message yet.",
+      "emptyDescription": "Enable outreach message generation in Settings, then tailor a resume."
+    }
   },
   "errors": {
     "generic": "Something went wrong. Please try again.",
     "networkError": "Network error. Please check your connection.",
     "unauthorized": "Please sign in to continue.",
     "notFound": "The requested resource was not found.",
-    "validationError": "Please check your input and try again."
+    "validationError": "Please check your input and try again.",
+    "boundary": {
+      "title": "Something Went Wrong",
+      "description": "An unexpected error occurred. This has been logged for review.",
+      "tryAgain": "Try Again",
+      "reloadPage": "Reload Page"
+    }
   },
   "confirmations": {
     "deleteResume": "Are you sure you want to delete this resume?",
     "deleteResumeDescription": "This action cannot be undone.",
+    "deleteMasterResumeTitle": "Delete Master Resume",
+    "deleteMasterResumeDescription": "This action cannot be undone. Your master resume will be permanently removed from the system.",
+    "deleteResumeFromSystemDescription": "This action cannot be undone. The resume will be permanently removed from the system.",
+    "deleteResumeConfirmLabel": "Delete Resume",
+    "keepResumeCancelLabel": "Keep Resume",
     "discardChanges": "Are you sure you want to discard your changes?",
     "discardChangesDescription": "Any unsaved changes will be lost.",
     "clearApiKeys": "Clear All API Keys?",

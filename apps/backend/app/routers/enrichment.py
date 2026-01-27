@@ -6,9 +6,11 @@ from uuid import uuid4
 
 from fastapi import APIRouter, HTTPException
 
+from app.config import settings
 from app.database import db
 from app.llm import complete_json
 from app.prompts.enrichment import ANALYZE_RESUME_PROMPT, ENHANCE_DESCRIPTION_PROMPT
+from app.prompts.templates import get_language_name
 from app.schemas.enrichment import (
     AnalysisResponse,
     AnswerInput,
@@ -23,6 +25,19 @@ from app.schemas.enrichment import (
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/enrichment", tags=["Enrichment"])
+
+
+def _get_content_language() -> str:
+    """Get content language from stored config."""
+    config_path = settings.config_path
+    try:
+        if config_path.exists():
+            config = json.loads(config_path.read_text())
+            # Use content_language, fall back to legacy 'language' field, then default to 'en'
+            return config.get("content_language", config.get("language", "en"))
+    except (OSError, json.JSONDecodeError) as e:
+        logger.warning(f"Failed to read content language from config: {e}")
+    return "en"
 
 
 @router.post("/analyze/{resume_id}", response_model=AnalysisResponse)
@@ -45,13 +60,18 @@ async def analyze_resume(resume_id: str) -> AnalysisResponse:
             detail="Resume has no processed data. Please re-upload the resume.",
         )
 
-    # Build prompt
+    # Build prompt with content language
     resume_json = json.dumps(processed_data, indent=2)
-    prompt = ANALYZE_RESUME_PROMPT.format(resume_json=resume_json)
+    language = _get_content_language()
+    output_language = get_language_name(language)
+    prompt = ANALYZE_RESUME_PROMPT.format(
+        resume_json=resume_json,
+        output_language=output_language
+    )
 
     try:
-        # Call LLM
-        result = await complete_json(prompt)
+        # Call LLM with increased max_tokens for non-English languages
+        result = await complete_json(prompt, max_tokens=8192)
 
         # Parse response into schema objects
         items_to_enrich = [
@@ -117,10 +137,15 @@ async def generate_enhancements(request: EnhanceRequest) -> EnhancementPreview:
     # Actually, let's parse the answers differently - the frontend should include item context
     # For now, we'll get the analysis to build the mapping
     resume_json = json.dumps(processed_data, indent=2)
-    analysis_prompt = ANALYZE_RESUME_PROMPT.format(resume_json=resume_json)
+    language = _get_content_language()
+    output_language = get_language_name(language)
+    analysis_prompt = ANALYZE_RESUME_PROMPT.format(
+        resume_json=resume_json,
+        output_language=output_language
+    )
 
     try:
-        analysis_result = await complete_json(analysis_prompt)
+        analysis_result = await complete_json(analysis_prompt, max_tokens=8192)
     except Exception as e:
         logger.error(f"Failed to re-analyze resume: {e}")
         raise HTTPException(
@@ -175,9 +200,12 @@ async def generate_enhancements(request: EnhanceRequest) -> EnhancementPreview:
             else:
                 answers_text += f"Additional info: {answer.answer}\n\n"
 
-        # Build enhancement prompt
+        # Build enhancement prompt with content language
         current_desc = item.get("current_description", [])
         current_desc_text = "\n".join(f"- {d}" for d in current_desc) if current_desc else "(No description)"
+        
+        language = _get_content_language()
+        output_language = get_language_name(language)
 
         prompt = ENHANCE_DESCRIPTION_PROMPT.format(
             item_type=item.get("item_type", "experience"),
@@ -185,6 +213,7 @@ async def generate_enhancements(request: EnhanceRequest) -> EnhancementPreview:
             subtitle=item.get("subtitle", ""),
             current_description=current_desc_text,
             answers=answers_text.strip(),
+            output_language=output_language,
         )
 
         try:

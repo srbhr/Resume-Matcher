@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { cn } from '@/lib/utils';
 import { Linkedin, Mail } from 'lucide-react';
+import { useTranslations } from '@/lib/i18n';
 
 export interface OutreachPreviewProps {
   /** Outreach message content */
@@ -12,6 +13,7 @@ export interface OutreachPreviewProps {
 }
 
 export function OutreachPreview({ content, className }: OutreachPreviewProps) {
+  const { t } = useTranslations();
   return (
     <div
       className={cn(
@@ -26,11 +28,15 @@ export function OutreachPreview({ content, className }: OutreachPreviewProps) {
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <Linkedin className="w-4 h-4 text-[#0077B5]" />
-            <span className="font-mono text-xs uppercase">LinkedIn</span>
+            <span className="font-mono text-xs uppercase">
+              {t('outreach.preview.channels.linkedin')}
+            </span>
           </div>
           <div className="flex items-center gap-2">
             <Mail className="w-4 h-4 text-gray-600" />
-            <span className="font-mono text-xs uppercase">Email</span>
+            <span className="font-mono text-xs uppercase">
+              {t('outreach.preview.channels.email')}
+            </span>
           </div>
         </div>
       </div>
@@ -46,21 +52,21 @@ export function OutreachPreview({ content, className }: OutreachPreviewProps) {
 
             {/* Usage Tips */}
             <div className="pt-4 border-t border-gray-200">
-              <p className="font-mono text-xs text-gray-500 uppercase mb-2">How to use:</p>
+              <p className="font-mono text-xs text-gray-500 uppercase mb-2">
+                {t('outreach.preview.howToUseTitle')}
+              </p>
               <ul className="font-mono text-xs text-gray-500 space-y-1">
-                <li>1. Copy the message using the button above</li>
-                <li>2. Open LinkedIn or your email client</li>
-                <li>3. Paste and personalize as needed</li>
-                <li>4. Send to recruiters or hiring managers</li>
+                <li>{t('outreach.preview.steps.step1')}</li>
+                <li>{t('outreach.preview.steps.step2')}</li>
+                <li>{t('outreach.preview.steps.step3')}</li>
+                <li>{t('outreach.preview.steps.step4')}</li>
               </ul>
             </div>
           </div>
         ) : (
           <div className="text-center py-12 text-gray-400">
-            <p className="font-mono text-sm">No outreach message yet.</p>
-            <p className="font-mono text-xs mt-2">
-              Enable outreach message generation in Settings, then tailor a resume.
-            </p>
+            <p className="font-mono text-sm">{t('outreach.preview.emptyTitle')}</p>
+            <p className="font-mono text-xs mt-2">{t('outreach.preview.emptyDescription')}</p>
           </div>
         )}
       </div>

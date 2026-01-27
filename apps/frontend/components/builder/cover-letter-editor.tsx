@@ -4,6 +4,7 @@ import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { Save, Loader2, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTranslations } from '@/lib/i18n';
 
 export interface CoverLetterEditorProps {
   /** Cover letter content */
@@ -25,6 +26,7 @@ export function CoverLetterEditor({
   isSaving,
   className,
 }: CoverLetterEditorProps) {
+  const { t } = useTranslations();
   const wordCount = content
     .trim()
     .split(/\s+/)
@@ -37,15 +39,17 @@ export function CoverLetterEditor({
       <div className="flex items-center justify-between p-4 border-b-2 border-black bg-[#F5F5F0]">
         <div className="flex items-center gap-2">
           <FileText className="w-4 h-4" />
-          <h2 className="font-mono text-sm font-bold uppercase tracking-wider">Cover Letter</h2>
+          <h2 className="font-mono text-sm font-bold uppercase tracking-wider">
+            {t('coverLetter.title')}
+          </h2>
         </div>
         <div className="flex items-center gap-3">
           <span className="font-mono text-xs text-gray-500">
-            {wordCount} words / {charCount} chars
+            {t('builder.contentStats.wordsChars', { wordCount, charCount })}
           </span>
           <Button size="sm" onClick={onSave} disabled={isSaving}>
             {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            Save
+            {isSaving ? t('common.saving') : t('common.save')}
           </Button>
         </div>
       </div>
@@ -55,7 +59,7 @@ export function CoverLetterEditor({
         <textarea
           value={content}
           onChange={(e) => onChange(e.target.value)}
-          placeholder="Your cover letter will appear here after tailoring your resume with cover letter generation enabled..."
+          placeholder={t('coverLetter.editor.placeholder')}
           className={cn(
             'w-full h-full min-h-[400px] p-4',
             'font-mono text-sm leading-relaxed',
@@ -69,9 +73,7 @@ export function CoverLetterEditor({
 
       {/* Footer Tips */}
       <div className="p-4 border-t border-gray-200 bg-[#F5F5F0]">
-        <p className="font-mono text-xs text-gray-500">
-          TIP: A good cover letter is typically 300-400 words. Edit as needed to personalize.
-        </p>
+        <p className="font-mono text-xs text-gray-500">{t('coverLetter.editor.tip')}</p>
       </div>
     </div>
   );

@@ -1,6 +1,9 @@
+'use client';
+
 import React from 'react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { useTranslations } from '@/lib/i18n';
 
 interface GenericListFormProps {
   items: string[];
@@ -18,9 +21,13 @@ interface GenericListFormProps {
 export const GenericListForm: React.FC<GenericListFormProps> = ({
   items,
   onChange,
-  label = 'Items',
-  placeholder = 'Enter items, one per line',
+  label,
+  placeholder,
 }) => {
+  const { t } = useTranslations();
+  const finalLabel = label ?? t('builder.customSections.itemsLabel');
+  const finalPlaceholder = placeholder ?? t('builder.customSections.itemsPlaceholder');
+
   const handleChange = (value: string) => {
     // Split by newlines, filter empty lines
     const newItems = value.split('\n').filter((item) => item.trim() !== '');
@@ -40,15 +47,17 @@ export const GenericListForm: React.FC<GenericListFormProps> = ({
 
   return (
     <div className="space-y-2">
-      <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">{label}</Label>
+      <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">
+        {finalLabel}
+      </Label>
       <p className="font-mono text-xs text-blue-700 border-l-2 border-blue-700 pl-3 mb-2">
-        Enter items separated by new lines (press Enter for each item).
+        {t('builder.additionalForm.instructions')}
       </p>
       <Textarea
         value={formatItems(items)}
         onChange={(e) => handleChange(e.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder={placeholder}
+        placeholder={finalPlaceholder}
         className="min-h-[150px] text-black rounded-none border-black bg-white focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-blue-700"
       />
     </div>

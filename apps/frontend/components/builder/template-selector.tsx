@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { type TemplateType, TEMPLATE_OPTIONS } from '@/lib/types/template-settings';
+import { useTranslations } from '@/lib/i18n';
 
 interface TemplateSelectorProps {
   value: TemplateType;
@@ -15,6 +16,26 @@ interface TemplateSelectorProps {
  * Swiss design: Square corners, high contrast, monospace labels.
  */
 export const TemplateSelector: React.FC<TemplateSelectorProps> = ({ value, onChange }) => {
+  const { t } = useTranslations();
+  const templateLabels = {
+    'swiss-single': {
+      name: t('builder.formatting.templates.swissSingle.name'),
+      description: t('builder.formatting.templates.swissSingle.description'),
+    },
+    'swiss-two-column': {
+      name: t('builder.formatting.templates.swissTwoColumn.name'),
+      description: t('builder.formatting.templates.swissTwoColumn.description'),
+    },
+    modern: {
+      name: t('builder.formatting.templates.modern.name'),
+      description: t('builder.formatting.templates.modern.description'),
+    },
+    'modern-two-column': {
+      name: t('builder.formatting.templates.modernTwoColumn.name'),
+      description: t('builder.formatting.templates.modernTwoColumn.description'),
+    },
+  };
+
   return (
     <div className="flex gap-3">
       {TEMPLATE_OPTIONS.map((template) => (
@@ -26,7 +47,7 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({ value, onCha
               ? 'border-blue-700 bg-blue-50 shadow-[3px_3px_0px_0px_#1D4ED8]'
               : 'border-black bg-white hover:bg-gray-50 hover:shadow-[2px_2px_0px_0px_#000]'
           }`}
-          title={template.description}
+          title={templateLabels[template.id].description}
         >
           {/* Template Thumbnail */}
           <div className="w-16 h-20 mb-2 flex items-center justify-center">
@@ -39,7 +60,7 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({ value, onCha
               value === template.id ? 'text-blue-700' : 'text-gray-700'
             }`}
           >
-            {template.name}
+            {templateLabels[template.id].name}
           </span>
         </button>
       ))}

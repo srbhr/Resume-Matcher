@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { XIcon, Sparkles } from 'lucide-react';
 import { useEnrichmentWizard } from '@/hooks/use-enrichment-wizard';
+import { useTranslations } from '@/lib/i18n';
 import {
   AnalyzingStep,
   GeneratingStep,
@@ -22,6 +23,7 @@ interface EnrichmentModalProps {
 }
 
 export function EnrichmentModal({ resumeId, isOpen, onClose, onComplete }: EnrichmentModalProps) {
+  const { t } = useTranslations();
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   const {
@@ -120,14 +122,14 @@ export function EnrichmentModal({ resumeId, isOpen, onClose, onComplete }: Enric
             <div className="flex items-center gap-3">
               <Sparkles className="w-5 h-5" />
               <h1 className="font-mono text-lg font-bold uppercase tracking-wider">
-                Resume Enhancement
+                {t('enrichment.title')}
               </h1>
             </div>
             {/* Only show close button in non-loading states */}
             {!['analyzing', 'generating', 'applying'].includes(state.step) && (
               <button onClick={handleClose} className="p-1 hover:bg-gray-200 transition-colors">
                 <XIcon className="w-5 h-5" />
-                <span className="sr-only">Close</span>
+                <span className="sr-only">{t('common.close')}</span>
               </button>
             )}
           </div>
@@ -187,7 +189,7 @@ export function EnrichmentModal({ resumeId, isOpen, onClose, onComplete }: Enric
       case 'error':
         return (
           <ErrorStep
-            error={state.error || 'An unexpected error occurred'}
+            error={state.error || t('enrichment.error.unexpected')}
             onRetry={retry}
             onClose={handleClose}
           />

@@ -45,6 +45,31 @@ export interface AdditionalInfo {
   awards: string[];
 }
 
+export interface ResumeDiffSummary {
+  total_changes: number;
+  skills_added: number;
+  skills_removed: number;
+  descriptions_modified: number;
+  certifications_added: number;
+  high_risk_changes: number;
+}
+
+export interface ResumeFieldDiff {
+  field_path: string;
+  field_type:
+    | 'skill'
+    | 'description'
+    | 'summary'
+    | 'certification'
+    | 'experience'
+    | 'education'
+    | 'project';
+  change_type: 'added' | 'removed' | 'modified';
+  original_value?: string;
+  new_value?: string;
+  confidence: 'low' | 'medium' | 'high';
+}
+
 export interface ResumePreview {
   personalInfo: PersonalInfo;
   summary?: string;
@@ -56,7 +81,7 @@ export interface ResumePreview {
 
 export interface Data {
   request_id: string;
-  resume_id: string;
+  resume_id: string | null;
   job_id: string;
   resume_preview: ResumePreview;
   details?: string;
@@ -71,6 +96,8 @@ export interface Data {
   job_keywords?: string;
   cover_letter?: string;
   outreach_message?: string;
+  diff_summary?: ResumeDiffSummary;
+  detailed_changes?: ResumeFieldDiff[];
 }
 
 export interface ImprovedResult {
