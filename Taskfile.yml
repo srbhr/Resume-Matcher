@@ -24,6 +24,26 @@ tasks:
     cmds:
       - brew upgrade
 
+  run-backend:
+    desc: Running backend
+    dir: apps/backend
+    cmds:
+      - uv run main.py
+
+  run-frontend:
+    desc: Running backend
+    dir: apps/frontend
+    cmds:
+      - bun run dev
+
+  run:
+    desc: Run the project
+    deps:
+      - run-frontend
+      - run-backend
+    cmds:
+      - brew upgrade
+
   docker:
     desc: Running docker with build
     cmds:
