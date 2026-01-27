@@ -1,6 +1,7 @@
 """Application configuration using pydantic-settings."""
 
 import json
+import os
 from pathlib import Path
 from typing import Any, Literal
 
@@ -8,7 +9,7 @@ from pydantic.fields import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Path to config file for API key persistence
-CONFIG_FILE_PATH = Path(__file__).parent.parent / "data" / "config.json"
+CONFIG_FILE_PATH: Path = Path(__file__).parent.parent / "data" / "config.json"
 
 
 def load_config_file() -> dict[str, Any]:
@@ -84,7 +85,6 @@ def _get_llm_api_key_with_fallback() -> str:
 
     Priority: Environment variable > config.json > empty string
     """
-    import os
 
     # First check environment variable
     env_key = os.environ.get("LLM_API_KEY", "")
