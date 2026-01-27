@@ -1,0 +1,114 @@
+{
+  "resumes": {
+    "1": {
+      "resume_id": "3cf27319-7d73-422e-b4f0-96f5f371c965",
+      "content": "Ben Baldut\nSoftware Developer\n\nbenbald21@gmail.com\n\n(+972) 542628546\n\nhttps://www.linkedin.com/in/ben-baldut\n\nAbout Me\n\n\u2022 Versatile software developer with hands-on experience with production grade Embedded\n\nSystems with infrastructure integration and automations.\n\n\u2022 Quick self-learner interested in taking ownership of problems to build and design modular\n\nmaintainable applications while understanding every layer of the stack.\n\n\u2022 Experienced with Image Processing, Low Level Programming, Web Development and Hardware\n\nIntegration.\n\nWork Experience\n\nIDF - Unit 0099 (Hatal)\n\nSoftware Developer\n\n2021-2024\n\n\u2022 Led and developed a platform for streaming video for AI edge detection analysis on a jetson\n\nedge device.\n\n\u2022 Designed a process for optimizing data handling to performance of real time video feed delivery\n\nby up to 20%.\n\n\u2022 Architected independent production level components with end-to-end integration testing of real\n\ntime delivered live feed from an embedded system.\n\n\u2022 Integrated OpenCV with GStreamer for an accelerated RTSP feed, to a real time API control\n\nmodel serving a full stack interface.\n\n\u2022 Automating data validation for testing media server renewing the streaming feed on failures.\n\u2022 Handling data with an asynchronous C++ backend for RabbitMQ message broker.\n\u2022 Embedding control logic for video and messaging components into lightweight native desktop\n\nand web applications.\n\n\u2022 Integrating microservices component-based architecture with AWS lambdas and EC2 instances\n\nfor automations.\n\nAwards & Recognition\n\nIDF\n\n2022\n\n\u2022 Military Excellence Award - Awarded for exceptional conduct and contribution in a high\n\nresponsibility role.\n\nEducation\n\nCyber Education Program - Magshimim\n\n2016-2019\n\n\u2022 Taking lessons in \u201cMagshimim\u201d about a variety of programming subjects, including C, C++, OSI\n\nModel, Python, Assembly, Shell, AI and Reverse Engineering.\n\nOrt Yuvaley Ariel\n\n2016-2019\n\n\u2022 Graduated with majors in Robotics and Mechanical Engineering, designing and building a\n\nself-made Ardu Pilot Drone with the ability to control and aim in real time\n\nSkills\n\n\u2022 Languages: C++, C, Python, JavaScript, TypeScript, Rust, Go\n\u2022 Libraries: GStreamer, FFmpeg, OpenCV, NVIDIA Jetson, Yolo, AMQP\n\u2022 Tools: Git, RabbitMQ, Docker, Angular, TailwindCSS, Tauri\n\n",
+      "content_type": "md",
+      "filename": "Ben Baldut - Resume 1.1.2-1.pdf",
+      "is_master": true,
+      "parent_id": null,
+      "processed_data": {
+        "personalInfo": {
+          "name": "Ben Baldut",
+          "title": "Software Developer",
+          "email": "benbald21@gmail.com",
+          "phone": "(+972) 542628546",
+          "location": "",
+          "website": "",
+          "linkedin": "https://www.linkedin.com/in/ben-baldut",
+          "github": ""
+        },
+        "summary": "Versatile software developer with hands-on experience with production grade Embedded Systems with infrastructure integration and automations.\nQuick self-learner interested in taking ownership of problems to build and design modular maintainable applications while understanding every layer of the stack.\nExperienced with Image Processing, Low Level Programming, Web Development and Hardware Integration.",
+        "workExperience": [
+          {
+            "id": 1,
+            "title": "Software Developer",
+            "company": "IDF - Unit 0099 (Hatal)",
+            "location": "",
+            "years": "2021 - 2024",
+            "description": [
+              "Led and developed a platform for streaming video for AI edge detection analysis on a jetson edge device.",
+              "Designed a process for optimizing data handling to performance of real time video feed delivery by up to 20%.",
+              "Architected independent production level components with end-to-end integration testing of real time delivered live feed from an embedded system.",
+              "Integrated OpenCV with GStreamer for an accelerated RTSP feed, to a real time API control model serving a full stack interface.",
+              "Automating data validation for testing media server renewing the streaming feed on failures.",
+              "Handling data with an asynchronous C++ backend for RabbitMQ message broker.",
+              "Embedding control logic for video and messaging components into lightweight native desktop and web applications.",
+              "Integrating microservices component-based architecture with AWS lambdas and EC2 instances for automations."
+            ]
+          }
+        ],
+        "education": [
+          {
+            "id": 1,
+            "institution": "Cyber Education Program - Magshimim",
+            "degree": "",
+            "years": "2016 - 2019",
+            "description": "Taking lessons in \u201cMagshimim\u201d about a variety of programming subjects, including C, C++, OSI Model, Python, Assembly, Shell, AI and Reverse Engineering."
+          },
+          {
+            "id": 2,
+            "institution": "Ort Yuvaley Ariel",
+            "degree": "",
+            "years": "2016 - 2019",
+            "description": "Graduated with majors in Robotics and Mechanical Engineering, designing and building a self-made Ardu Pilot Drone with the ability to control and aim in real time"
+          }
+        ],
+        "personalProjects": [],
+        "additional": {
+          "technicalSkills": [
+            "C++",
+            "C",
+            "Python",
+            "JavaScript",
+            "TypeScript",
+            "Rust",
+            "Go",
+            "GStreamer",
+            "FFmpeg",
+            "OpenCV",
+            "NVIDIA Jetson",
+            "Yolo",
+            "AMQP",
+            "Git",
+            "RabbitMQ",
+            "Docker",
+            "Angular",
+            "TailwindCSS",
+            "Tauri"
+          ],
+          "languages": [],
+          "certificationsTraining": [],
+          "awards": []
+        },
+        "sectionMeta": [],
+        "customSections": {
+          "awards_recognition": {
+            "sectionType": "itemList",
+            "items": [
+              {
+                "id": 1,
+                "title": "Military Excellence Award",
+                "subtitle": "IDF",
+                "location": null,
+                "years": "2022",
+                "description": [
+                  "Awarded for exceptional conduct and contribution in a high responsibility role."
+                ]
+              }
+            ],
+            "strings": null,
+            "text": null
+          }
+        }
+      },
+      "processing_status": "ready",
+      "cover_letter": null,
+      "outreach_message": null,
+      "created_at": "2026-01-22T15:43:24.234216+00:00",
+      "updated_at": "2026-01-22T15:43:42.055451+00:00"
+    }
+  },
+  "jobs": {},
+  "improvements": {}
+}

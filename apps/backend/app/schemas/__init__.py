@@ -3,9 +3,9 @@
 from app.schemas.models import (
     AdditionalInfo,
     ApiKeyProviderStatus,
+    ApiKeyStatusResponse,
     ApiKeysUpdateRequest,
     ApiKeysUpdateResponse,
-    ApiKeyStatusResponse,
     CustomSection,
     CustomSectionItem,
     Education,
@@ -25,7 +25,6 @@ from app.schemas.models import (
     LanguageConfigResponse,
     LLMConfigRequest,
     LLMConfigResponse,
-    normalize_resume_data,
     PersonalInfo,
     Project,
     PromptConfigRequest,
@@ -41,11 +40,13 @@ from app.schemas.models import (
     ResumeListResponse,
     ResumeSummary,
     ResumeUploadResponse,
+    ResumeUploadResponseLocal,
     SectionMeta,
     SectionType,
     StatusResponse,
     UpdateCoverLetterRequest,
     UpdateOutreachMessageRequest,
+    normalize_resume_data,
 )
 
 __all__ = [
@@ -62,6 +63,7 @@ __all__ = [
     "normalize_resume_data",
     "RawResume",
     "ResumeUploadResponse",
+    "ResumeUploadResponseLocal",
     "ResumeFetchData",
     "ResumeFetchResponse",
     "ResumeSummary",

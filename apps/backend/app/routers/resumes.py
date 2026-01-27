@@ -35,6 +35,7 @@ from app.schemas import (
     ResumeListResponse,
     ResumeSummary,
     ResumeUploadResponse,
+    ResumeUploadResponseLocal,
     UpdateCoverLetterRequest,
     UpdateOutreachMessageRequest,
     normalize_resume_data,
@@ -303,32 +304,42 @@ async def upload_resume(file: UploadFile = File(...)) -> ResumeUploadResponse:
     # Check if this is the first resume (make it master)
     is_master = db.get_master_resume() is None
 
+    # # Store in database first with "processing" status
+    # resume = db.create_resume(
+    #     content=markdown_content,
+    #     content_type="md",
+    #     filename=file.filename,
+    #     is_master=is_master,
+    #     processed_data=None,
+    #     processing_status="processing",
+    # )
+
     # Store in database first with "processing" status
-    resume = db.create_resume(
-        content=markdown_content,
-        content_type="md",
-        filename=file.filename,
-        is_master=is_master,
-        processed_data=None,
-        processing_status="processing",
-    )
+    resume = {
+        "content": markdown_content,
+        "content_type": "md",
+        "filename": file.filename,
+        "is_master": is_master,
+        "processed_data": None,
+        "processing_status": "processing",
+    }
 
     # Try to parse to structured JSON (optional, may fail if LLM not configured)
     try:
         processed_data = await parse_resume_to_json(markdown_content)
-        db.update_resume(
-            resume["resume_id"],
-            {
-                "processed_data": processed_data,
-                "processing_status": "ready",
-            },
-        )
+        # db.update_resume(
+        #     resume["resume_id"],
+        #     {
+        #         "processed_data": processed_data,
+        #         "processing_status": "ready",
+        #     },
+        # )
         resume["processed_data"] = processed_data
         resume["processing_status"] = "ready"
     except Exception as e:
         # LLM parsing failed, update status to failed
         logger.warning(f"Resume parsing to JSON failed for {file.filename}: {e}")
-        db.update_resume(resume["resume_id"], {"processing_status": "failed"})
+        # db.update_resume(resume["resume_id"], {"processing_status": "failed"})
         resume["processing_status"] = "failed"
 
     return ResumeUploadResponse(
@@ -338,14 +349,94 @@ async def upload_resume(file: UploadFile = File(...)) -> ResumeUploadResponse:
     )
 
 
-@router.post("/upload_by_link", response_model=ResumeUploadResponse)
-async def resume_from_link(file_id: str | None) -> ResumeUploadResponse:
-    """Test uploading a resume file (PDF/DOCX) from a link.
+@router.post("/upload-local", response_model=ResumeUploadResponseLocal)
+async def upload_local(file: UploadFile = File(...)) -> ResumeUploadResponseLocal:
+    """Upload and process a resume file (PDF/DOCX).
 
     Converts the file to Markdown and stores it in the database.
     Optionally parses to structured JSON if LLM is configured.
     """
+    # Validate file type
+    file_type = (
+        file.headers.get("content-type")
+        if file.headers.get("is_link")
+        else file.content_type
+    )
+    if file_type not in ALLOWED_TYPES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid file type: {file.content_type}. Allowed: PDF, DOC, DOCX",
+        )
 
+    # Read and validate size
+    content = await file.read()
+    if len(content) > MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=413,
+            detail=f"File too large. Maximum size: {MAX_FILE_SIZE // (1024 * 1024)}MB",
+        )
+
+    if len(content) == 0:
+        raise HTTPException(status_code=400, detail="Empty file")
+
+    # Convert to markdown
+    try:
+        markdown_content = await parse_document(content, file.filename or "resume.pdf")
+    except Exception as e:
+        logger.error(f"Document parsing failed: {e}")
+        raise HTTPException(
+            status_code=422,
+            detail="Failed to parse document. Please ensure it's a valid PDF or DOCX file.",
+        )
+
+    # Check if this is the first resume (make it master)
+    # is_master = db.get_master_resume() is None
+    is_master = True
+
+    # # Store in database first with "processing" status
+    # resume = db.create_resume(
+    #     content=markdown_content,
+    #     content_type="md",
+    #     filename=file.filename,
+    #     is_master=is_master,
+    #     processed_data=None,
+    #     processing_status="processing",
+    # )
+    # Store in database first with "processing" status
+    resume = {
+        "content": markdown_content,
+        "content_type": "md",
+        "filename": file.filename,
+        "is_master": is_master,
+        "processed_data": None,
+        "processing_status": "processing",
+        "resume_id": str(uuid4()),
+    }
+    # Try to parse to structured JSON (optional, may fail if LLM not configured)
+    try:
+        processed_data = await parse_resume_to_json(markdown_content)
+        resume["processed_data"] = processed_data
+        resume["processing_status"] = "ready"
+    except Exception as e:
+        # LLM parsing failed, update status to failed
+        logger.warning(f"Resume parsing to JSON failed for {file.filename}: {e}")
+        # db.update_resume(resume["resume_id"], {"processing_status": "ready"})
+        resume["processing_status"] = "failed"
+
+    return ResumeUploadResponseLocal(
+        message=f"File {file.filename} successfully processed as MD and stored in the DB",
+        request_id=str(uuid4()),
+        resume_id=resume["resume_id"],
+        resume=resume,
+    )
+
+
+@router.post("/upload_by_link", response_model=ResumeUploadResponse)
+async def resume_from_link(file_id: str | None) -> ResumeUploadResponse:
+    """Uploading resume from google drive id.
+    Use the '/upload' endpoint to upload the file after downloading it
+    into the server memory, so that it can be processed.
+    """
     url = f"https://docs.google.com/uc?export=download&id={file_id}"
 
     response = requests.get(url, stream=True, allow_redirects=True)
@@ -363,18 +454,9 @@ async def resume_from_link(file_id: str | None) -> ResumeUploadResponse:
 
     content_type = await get_file_type(response)
 
-    # # Read the entire response content into an in-memory buffer
+    # Read the entire response content into an in-memory buffer
     file_content = io.BytesIO(response.content)
     file_content.seek(0)  # Reset buffer position to the beginning
-    # with open(filename, "wb") as f:
-    #     f.write(file_content.getbuffer())
-    #     print(f"File saved successfully as: {filename}")
-    #     file_content.seek(0)
-
-    # tempfile = tf.NamedTemporaryFile(delete=True, suffix=".pdf")
-    # tempfile.write(response.content)
-    # tempfile.flush()
-    # tempfile.seek(0)
 
     file = StarletteUploadFile(
         filename=filename,

@@ -51,6 +51,8 @@ import { useLanguage } from '@/lib/context/language-context';
 import { useTranslations } from '@/lib/i18n';
 import type { SupportedLanguage } from '@/lib/api/config';
 import type { Locale } from '@/i18n/config';
+import { dbService } from '../../../lib/database/db'
+
 
 type Status = 'idle' | 'loading' | 'saving' | 'saved' | 'error' | 'testing';
 
@@ -453,7 +455,11 @@ export default function SettingsPage() {
   const handleResetDatabase = async () => {
     setIsResetting(true);
     try {
-      await resetDatabase();
+      //TODO: remove this
+      //await resetDatabase();
+
+      //reset indexDB
+      await dbService.clearAllItems();
 
       // Clear all related localStorage keys
       localStorage.removeItem('master_resume_id');

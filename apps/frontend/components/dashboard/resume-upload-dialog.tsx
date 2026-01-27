@@ -20,8 +20,7 @@ import {
 } from 'lucide-react';
 import { useFileUpload, formatBytes } from '@/hooks/use-file-upload';
 import { getUploadUrl } from '@/lib/api/client';
-import { useTranslations } from '@/lib/i18n';
-
+import { dbService } from '@/lib/database/db';
 interface ResumeUploadDialogProps {
   trigger?: React.ReactNode;
   onUploadComplete?: (resumeId: string) => void;
@@ -35,14 +34,14 @@ const ACCEPTED_FILE_TYPES = [
 const MAX_FILE_SIZE = 4 * 1024 * 1024; // 4MB
 
 export function ResumeUploadDialog({ trigger, onUploadComplete }: ResumeUploadDialogProps) {
-  const { t } = useTranslations();
   const [isOpen, setIsOpen] = useState(false);
   const [uploadFeedback, setUploadFeedback] = useState<{
     type: 'success' | 'error';
     message: string;
   } | null>(null);
 
-  const UPLOAD_URL = getUploadUrl();
+  //const UPLOAD_URL = getUploadUrl();
+  const UPLOAD_URL = 'http://localhost:8000/api/v1/resumes/upload-local';
 
   const [
     { files, isDragging, errors, isUploadingGlobal },
@@ -61,13 +60,15 @@ export function ResumeUploadDialog({ trigger, onUploadComplete }: ResumeUploadDi
     multiple: false,
     uploadUrl: UPLOAD_URL,
     onUploadSuccess: (uploadedFile, response) => {
-      const data = response as { resume_id?: string };
-      if (data.resume_id) {
+      const data = response as { resume_id?: string; resume?: any };
+      if (data.resume_id && data && data.resume) {
+        dbService.addItem(JSON.stringify(data.resume));
         setUploadFeedback({
           type: 'success',
-          message: t('dashboard.uploadDialog.success'),
+          message: 'Resume uploaded successfully.',
         });
         // Defer parent state update to avoid setState during render
+
         const resumeId = data.resume_id;
         setTimeout(() => {
           onUploadComplete?.(resumeId);
@@ -81,14 +82,14 @@ export function ResumeUploadDialog({ trigger, onUploadComplete }: ResumeUploadDi
       } else {
         setUploadFeedback({
           type: 'error',
-          message: t('dashboard.uploadDialog.successMissingId'),
+          message: 'Upload succeeded but no Resume ID returned.',
         });
       }
     },
     onUploadError: (file, errorMsg) => {
       setUploadFeedback({
         type: 'error',
-        message: errorMsg || t('dashboard.uploadDialog.failed'),
+        message: errorMsg || 'Upload failed.',
       });
     },
     onFilesChange: (currentFiles) => {
@@ -105,14 +106,14 @@ export function ResumeUploadDialog({ trigger, onUploadComplete }: ResumeUploadDi
         {trigger || (
           <Button className="rounded-none border border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none transition-all">
             <UploadIcon className="w-4 h-4 mr-2" />
-            {t('dashboard.uploadResume')}
+            Upload Resume
           </Button>
         )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-md bg-[#F0F0E8] border border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,0.2)] p-0 gap-0 rounded-none">
         <DialogHeader className="p-6 border-b border-black bg-white">
           <DialogTitle className="font-serif text-2xl font-bold uppercase tracking-tight">
-            {t('dashboard.uploadResume')}
+            Upload Resume
           </DialogTitle>
         </DialogHeader>
 
@@ -135,9 +136,7 @@ export function ResumeUploadDialog({ trigger, onUploadComplete }: ResumeUploadDi
             {isUploadingGlobal ? (
               <div className="flex flex-col items-center py-4">
                 <Loader2Icon className="w-10 h-10 animate-spin text-blue-700 mb-4" />
-                <p className="font-mono text-sm font-bold uppercase text-blue-700">
-                  {t('common.uploading')}
-                </p>
+                <p className="font-mono text-sm font-bold uppercase text-blue-700">Uploading...</p>
               </div>
             ) : currentFile ? (
               <div className="flex items-center justify-between gap-4">
@@ -171,11 +170,9 @@ export function ResumeUploadDialog({ trigger, onUploadComplete }: ResumeUploadDi
                 <div className="w-12 h-12 border border-black bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] flex items-center justify-center mb-4">
                   <UploadIcon className="w-6 h-6 text-black" />
                 </div>
-                <p className="font-bold text-lg mb-1">
-                  {t('dashboard.uploadDialog.dropzoneTitle')}
-                </p>
+                <p className="font-bold text-lg mb-1">Click or Drag File</p>
                 <p className="font-mono text-xs text-gray-500 uppercase">
-                  {t('dashboard.uploadDialog.dropzoneSubtitle')}
+                  PDF, DOC, DOCX (Max 4MB)
                 </p>
               </div>
             )}
@@ -204,7 +201,7 @@ export function ResumeUploadDialog({ trigger, onUploadComplete }: ResumeUploadDi
         <div className="p-4 border-t border-black bg-white flex justify-end gap-2">
           <DialogClose asChild>
             <Button variant="outline" className="rounded-none border-black hover:bg-gray-100">
-              {t('common.cancel')}
+              Cancel
             </Button>
           </DialogClose>
         </div>
