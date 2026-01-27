@@ -61,17 +61,34 @@ class DBService {
     return contentJson.resume_id;
   }
 
-  async updateItem(resume_id: string, content: ResumeData): Promise<void> {
+  async updateItem(resume_id: string, content: ResumeData): Promise<any> {
     const db = await this.getDb();
-      const resume = await db.get(STORE_NAME, resume_id);
-      console.log("Resume before:", resume);
-      if (!resume) {
-        throw new Error('Resume not found');
+    const resume = await db.get(STORE_NAME, resume_id) as any;
+    
+    if (!resume) {
+      throw new Error('Resume not found');
+    }
+
+    // Selective update based on matching keys to prevent accidental data overwrites
+    Object.keys(content).forEach(key => {
+      // Update top-level field if it exists in DB record
+      if (key in resume) {
+        resume[key] = (content as any)[key];
       }
-      resume.content = content
-      resume.updated_at = new Date().toISOString();
-      console.log("Resume after:", resume);
-      // await db.put(STORE_NAME,resume_id,resume);
+      
+      // Update field in structured data if it exists there
+      if (resume.processed_data && key in resume.processed_data) {
+        resume.processed_data[key] = (content as any)[key];
+      }
+    });
+
+    resume.updated_at = new Date().toISOString();
+
+    // Persist the changes to IndexedDB
+    await db.put(STORE_NAME, resume);
+    
+    console.log("Resume updated (matching keys):", resume);
+    return resume;
   }
 
   async deleteItem(id: string): Promise<void> {
