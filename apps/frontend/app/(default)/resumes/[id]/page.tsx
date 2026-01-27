@@ -48,7 +48,7 @@ export default function ResumeViewerPage() {
           console.log('Local fetch success', data);
           if (data) isLocal = true;
         } catch (localErr) {
-          console.log('Local fetch failed, trying API...', localErr);
+          console.log('Local fetch failed', localErr);
         }
 
 

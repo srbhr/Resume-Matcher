@@ -58,12 +58,20 @@ class DBService {
     const db = await this.getDb();
     const contentJson = JSON.parse(content) as ResumeListItem;
     await db.add(STORE_NAME, contentJson);
-    return resume_id;
+    return contentJson.resume_id;
   }
 
-  async updateItem(resume_id: string, content: string): Promise<void> {
+  async updateItem(resume_id: string, content: ResumeData): Promise<void> {
     const db = await this.getDb();
-    await db.put(STORE_NAME, { resume_id, content });
+      const resume = await db.get(STORE_NAME, resume_id);
+      console.log("Resume before:", resume);
+      if (!resume) {
+        throw new Error('Resume not found');
+      }
+      resume.content = content
+      resume.updated_at = new Date().toISOString();
+      console.log("Resume after:", resume);
+      // await db.put(STORE_NAME,resume_id,resume);
   }
 
   async deleteItem(id: string): Promise<void> {

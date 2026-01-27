@@ -24,21 +24,23 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/enrichment", tags=["Enrichment"])
 
-
+'''
+    Input: Whole resume json. for single app 
+    Output: List of items that need enrichment
+'''
 @router.post("/analyze/{resume_id}", response_model=AnalysisResponse)
-async def analyze_resume(resume_id: str) -> AnalysisResponse:
+async def analyze_resume(resume_json: dict) -> AnalysisResponse:
     """Analyze a resume to identify items that need enrichment.
 
     Uses AI to examine Experience and Projects sections for weak,
     vague, or incomplete descriptions and generates clarifying questions.
     """
     # Fetch resume
-    resume = db.get_resume(resume_id)
-    if not resume:
+    if not resume_json:
         raise HTTPException(status_code=404, detail="Resume not found")
 
     # Get processed data
-    processed_data = resume.get("processed_data")
+    processed_data = resume_json.get("processed_data")
     if not processed_data:
         raise HTTPException(
             status_code=400,
@@ -46,7 +48,7 @@ async def analyze_resume(resume_id: str) -> AnalysisResponse:
         )
 
     # Build prompt
-    resume_json = json.dumps(processed_data, indent=2)
+    resume_json = json.dumps(processed_data)
     prompt = ANALYZE_RESUME_PROMPT.format(resume_json=resume_json)
 
     try:

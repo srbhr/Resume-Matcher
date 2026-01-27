@@ -105,10 +105,10 @@ export default function DashboardPage() {
         console.log('Local list fetch failed or empty, trying API...', localErr);
       }
 
-      // Fallback to API if local is empty/failed
-      if (data.length === 0) {
-         data = await fetchResumeList(true);
-      }
+      // // Fallback to API if local is empty/failed
+      // if (data.length === 0) {
+      //    data = await fetchResumeList_local(true);
+      // }
 
       const masterFromList = data.find((r) => r.is_master);
       const storedId = localStorage.getItem('master_resume_id');

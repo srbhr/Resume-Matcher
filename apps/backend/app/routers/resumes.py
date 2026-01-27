@@ -122,32 +122,42 @@ async def upload_resume(file: UploadFile = File(...)) -> ResumeUploadResponse:
     # Check if this is the first resume (make it master)
     is_master = db.get_master_resume() is None
 
+    # # Store in database first with "processing" status
+    # resume = db.create_resume(
+    #     content=markdown_content,
+    #     content_type="md",
+    #     filename=file.filename,
+    #     is_master=is_master,
+    #     processed_data=None,
+    #     processing_status="processing",
+    # )
+
     # Store in database first with "processing" status
-    resume = db.create_resume(
-        content=markdown_content,
-        content_type="md",
-        filename=file.filename,
-        is_master=is_master,
-        processed_data=None,
-        processing_status="processing",
-    )
+    resume = {
+        "content": markdown_content,
+        "content_type": "md",
+        "filename": file.filename,
+        "is_master": is_master,
+        "processed_data": None,
+        "processing_status": "processing",
+    }
 
     # Try to parse to structured JSON (optional, may fail if LLM not configured)
     try:
         processed_data = await parse_resume_to_json(markdown_content)
-        db.update_resume(
-            resume["resume_id"],
-            {
-                "processed_data": processed_data,
-                "processing_status": "ready",
-            },
-        )
+        # db.update_resume(
+        #     resume["resume_id"],
+        #     {
+        #         "processed_data": processed_data,
+        #         "processing_status": "ready",
+        #     },
+        # )
         resume["processed_data"] = processed_data
         resume["processing_status"] = "ready"
     except Exception as e:
         # LLM parsing failed, update status to failed
         logger.warning(f"Resume parsing to JSON failed for {file.filename}: {e}")
-        db.update_resume(resume["resume_id"], {"processing_status": "failed"})
+        # db.update_resume(resume["resume_id"], {"processing_status": "failed"})
         resume["processing_status"] = "failed"
 
     return ResumeUploadResponse(
@@ -198,18 +208,28 @@ async def upload_local(file: UploadFile = File(...)) -> ResumeUploadResponseLoca
         )
 
     # Check if this is the first resume (make it master)
-    is_master = db.get_master_resume() is None
+    # is_master = db.get_master_resume() is None
+    is_master = True
 
+    # # Store in database first with "processing" status
+    # resume = db.create_resume(
+    #     content=markdown_content,
+    #     content_type="md",
+    #     filename=file.filename,
+    #     is_master=is_master,
+    #     processed_data=None,
+    #     processing_status="processing",
+    # )
     # Store in database first with "processing" status
-    resume = db.create_resume(
-        content=markdown_content,
-        content_type="md",
-        filename=file.filename,
-        is_master=is_master,
-        processed_data=None,
-        processing_status="processing",
-    )
-
+    resume = {
+        "content": markdown_content,
+        "content_type": "md",
+        "filename": file.filename,
+        "is_master": is_master,
+        "processed_data": None,
+        "processing_status": "processing",
+        "resume_id": str(uuid4()),
+    }
     # Try to parse to structured JSON (optional, may fail if LLM not configured)
     try:
         processed_data = await parse_resume_to_json(markdown_content)
@@ -218,7 +238,7 @@ async def upload_local(file: UploadFile = File(...)) -> ResumeUploadResponseLoca
     except Exception as e:
         # LLM parsing failed, update status to failed
         logger.warning(f"Resume parsing to JSON failed for {file.filename}: {e}")
-        db.update_resume(resume["resume_id"], {"processing_status": "ready"})
+        # db.update_resume(resume["resume_id"], {"processing_status": "ready"})
         resume["processing_status"] = "failed"
 
     return ResumeUploadResponseLocal(

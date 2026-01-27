@@ -36,7 +36,9 @@ import {
   generateCoverLetter,
   generateOutreachMessage,
   fetchJobDescription,
+  fetchResumeLocal,
 } from '@/lib/api/resume';
+import { dbService } from '@/lib/database/db';
 import { JDComparisonView } from './jd-comparison-view';
 import { type TemplateSettings, DEFAULT_TEMPLATE_SETTINGS } from '@/lib/types/template-settings';
 
@@ -146,7 +148,7 @@ const ResumeBuilderContent = () => {
       // Priority 1: Fetch from API if ID is in URL (most reliable)
       if (resumeId) {
         try {
-          const data = await fetchResume(resumeId);
+          const data = await fetchResumeLocal(resumeId);
           // Track if this is a tailored resume (has parent_id)
           setIsTailoredResume(Boolean(data.parent_id));
           // Load cover letter and outreach message if available
@@ -267,7 +269,8 @@ const ResumeBuilderContent = () => {
     }
     try {
       setIsSaving(true);
-      const updated = await updateResume(resumeId, resumeData);
+      // const updated = await updateResume(resumeId, resumeData);
+      const updated = await dbService.updateItem(resumeId, resumeData);
       const nextData = (updated.processed_resume || resumeData) as ResumeData;
       setResumeData(nextData);
       setLastSavedData(nextData);

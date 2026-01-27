@@ -22,7 +22,8 @@
       "type": "debugpy",
       "request": "launch",
       "module": "uvicorn",
-      "cwd": "${workspaceFolder}/apps/backend/app",
+      "cwd": "${workspaceFolder}/apps/backend",
+      "python": "${workspaceFolder}/apps/backend/.venv/bin/python",
       "args": ["app.main:app", "--reload"],
       "jinja": true
     }
