@@ -4,6 +4,7 @@ import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { Sparkles, Loader2, FileText, Mail, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTranslations } from '@/lib/i18n';
 
 export interface GeneratePromptProps {
   /** Type of content to generate */
@@ -25,9 +26,10 @@ export function GeneratePrompt({
   isTailoredResume,
   className,
 }: GeneratePromptProps) {
+  const { t } = useTranslations();
   const isOutreach = type === 'outreach';
   const Icon = isOutreach ? Mail : FileText;
-  const title = isOutreach ? 'Outreach Message' : 'Cover Letter';
+  const title = isOutreach ? t('outreach.title') : t('coverLetter.title');
 
   // Show a different message if resume is not tailored
   if (!isTailoredResume) {
@@ -42,15 +44,13 @@ export function GeneratePrompt({
           <Icon className="w-8 h-8 text-gray-400" />
         </div>
         <h3 className="font-mono text-sm font-bold uppercase tracking-wider text-gray-600 mb-3">
-          {title} Not Available
+          {t('builder.generatePrompt.notAvailableTitle', { title })}
         </h3>
         <p className="font-mono text-xs text-gray-500 max-w-md mb-6 leading-relaxed">
-          {title}s can only be generated for tailored resumes.
-          <br />
-          Go to the Dashboard and tailor this resume to a job description first.
+          {t('builder.generatePrompt.notAvailableDescription', { title })}
         </p>
         <div className="flex items-center gap-2 text-blue-700 font-mono text-xs">
-          <span>Go to Dashboard</span>
+          <span>{t('builder.generatePrompt.goToDashboard')}</span>
           <ArrowRight className="w-4 h-4" />
         </div>
       </div>
@@ -68,30 +68,30 @@ export function GeneratePrompt({
         <Icon className="w-8 h-8 text-blue-700" />
       </div>
       <h3 className="font-mono text-sm font-bold uppercase tracking-wider mb-3">
-        Generate {title}
+        {t('builder.generatePrompt.generateTitle', { title })}
       </h3>
       <p className="font-mono text-xs text-gray-600 max-w-md mb-6 leading-relaxed">
         {isOutreach
-          ? 'Create a personalized cold outreach message based on your resume and the job description.'
-          : 'Create a tailored cover letter based on your resume and the job description.'}
+          ? t('builder.generatePrompt.outreachDescription')
+          : t('builder.generatePrompt.coverLetterDescription')}
       </p>
       <Button onClick={onGenerate} disabled={isGenerating} className="gap-2">
         {isGenerating ? (
           <>
             <Loader2 className="w-4 h-4 animate-spin" />
-            Generating...
+            {t('common.generating')}
           </>
         ) : (
           <>
             <Sparkles className="w-4 h-4" />
-            Generate {title}
+            {t('builder.generatePrompt.generateButton', { title })}
           </>
         )}
       </Button>
       <p className="font-mono text-xs text-gray-400 mt-4">
         {isOutreach
-          ? 'Creates a brief, genuine networking message for LinkedIn or email.'
-          : 'Creates a professional cover letter highlighting your relevant qualifications.'}
+          ? t('builder.generatePrompt.outreachFooter')
+          : t('builder.generatePrompt.coverLetterFooter')}
       </p>
     </div>
   );

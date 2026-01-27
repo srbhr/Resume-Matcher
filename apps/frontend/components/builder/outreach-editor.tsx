@@ -4,6 +4,7 @@ import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { Save, Loader2, Copy, Check, Mail } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTranslations } from '@/lib/i18n';
 
 export interface OutreachEditorProps {
   /** Outreach message content */
@@ -25,6 +26,7 @@ export function OutreachEditor({
   isSaving,
   className,
 }: OutreachEditorProps) {
+  const { t } = useTranslations();
   const [isCopied, setIsCopied] = React.useState(false);
 
   const wordCount = content
@@ -49,26 +51,28 @@ export function OutreachEditor({
       <div className="flex items-center justify-between p-4 border-b-2 border-black bg-[#F5F5F0]">
         <div className="flex items-center gap-2">
           <Mail className="w-4 h-4" />
-          <h2 className="font-mono text-sm font-bold uppercase tracking-wider">Outreach Message</h2>
+          <h2 className="font-mono text-sm font-bold uppercase tracking-wider">
+            {t('outreach.title')}
+          </h2>
         </div>
         <div className="flex items-center gap-3">
           <span className="font-mono text-xs text-gray-500">
-            {wordCount} words / {charCount} chars
+            {t('builder.contentStats.wordsChars', { wordCount, charCount })}
           </span>
           <Button size="sm" variant="outline" onClick={onSave} disabled={isSaving}>
             {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            Save
+            {isSaving ? t('common.saving') : t('common.save')}
           </Button>
           <Button size="sm" onClick={handleCopy} disabled={!content}>
             {isCopied ? (
               <>
                 <Check className="w-4 h-4" />
-                Copied!
+                {t('outreach.copied')}
               </>
             ) : (
               <>
                 <Copy className="w-4 h-4" />
-                Copy
+                {t('outreach.copy')}
               </>
             )}
           </Button>
@@ -80,7 +84,7 @@ export function OutreachEditor({
         <textarea
           value={content}
           onChange={(e) => onChange(e.target.value)}
-          placeholder="Your cold outreach message will appear here after tailoring your resume with outreach message generation enabled..."
+          placeholder={t('outreach.editor.placeholder')}
           className={cn(
             'w-full h-full min-h-[250px] p-4',
             'font-mono text-sm leading-relaxed',
@@ -94,9 +98,7 @@ export function OutreachEditor({
 
       {/* Footer Tips */}
       <div className="p-4 border-t border-gray-200 bg-[#F5F5F0]">
-        <p className="font-mono text-xs text-gray-500">
-          TIP: Keep outreach messages brief (100-150 words). Copy and paste to LinkedIn or email.
-        </p>
+        <p className="font-mono text-xs text-gray-500">{t('outreach.editor.tip')}</p>
       </div>
     </div>
   );

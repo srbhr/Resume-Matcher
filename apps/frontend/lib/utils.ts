@@ -1,4 +1,5 @@
 import { type ClassValue, clsx } from 'clsx';
+import { twMerge } from 'tailwind-merge';
 
 /**
  * Combines multiple class names or class name objects into a single string.
@@ -8,7 +9,7 @@ import { type ClassValue, clsx } from 'clsx';
  * @returns A string of combined class names
  */
 export function cn(...inputs: ClassValue[]): string {
-  return clsx(inputs);
+  return twMerge(clsx(inputs));
 }
 
 /**

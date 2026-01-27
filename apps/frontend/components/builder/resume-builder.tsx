@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, Suspense, useCallback } from 'react';
+import React, { useState, useEffect, Suspense, useCallback, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { type ResumeData } from '@/components/dashboard/resume-component';
 import { ResumeForm } from './resume-form';
@@ -29,6 +29,8 @@ import { PaginatedPreview } from '@/components/preview';
 import {
   downloadResumePdf,
   downloadCoverLetterPdf,
+  getResumePdfUrl,
+  getCoverLetterPdfUrl,
   fetchResume,
   updateResume,
   updateCoverLetter,
@@ -38,25 +40,31 @@ import {
   fetchJobDescription,
 } from '@/lib/api/resume';
 import { JDComparisonView } from './jd-comparison-view';
+import { useTranslations } from '@/lib/i18n';
 import { type TemplateSettings, DEFAULT_TEMPLATE_SETTINGS } from '@/lib/types/template-settings';
+import { withLocalizedDefaultSections } from '@/lib/utils/section-helpers';
+import { useLanguage } from '@/lib/context/language-context';
+import { downloadBlobAsFile, openUrlInNewTab } from '@/lib/utils/download';
 
 type TabId = 'resume' | 'cover-letter' | 'outreach' | 'jd-match';
 
 const STORAGE_KEY = 'resume_builder_draft';
 const SETTINGS_STORAGE_KEY = 'resume_builder_settings';
 
-const INITIAL_DATA: ResumeData = {
+type Translate = (key: string, params?: Record<string, string | number>) => string;
+
+const buildInitialData = (t: Translate): ResumeData => ({
   personalInfo: {
-    name: 'Your Name',
-    title: 'Professional Title',
-    email: 'email@example.com',
-    phone: '+1 234 567 890',
-    location: 'City, Country',
-    website: 'portfolio.com',
-    linkedin: 'linkedin.com/in/you',
-    github: 'github.com/you',
+    name: t('builder.personalInfoForm.placeholders.name'),
+    title: t('builder.personalInfoForm.placeholders.title'),
+    email: t('builder.personalInfoForm.placeholders.email'),
+    phone: t('builder.personalInfoForm.placeholders.phone'),
+    location: t('builder.personalInfoForm.placeholders.location'),
+    website: t('builder.personalInfoForm.placeholders.website'),
+    linkedin: t('builder.personalInfoForm.placeholders.linkedin'),
+    github: t('builder.personalInfoForm.placeholders.github'),
   },
-  summary: 'A brief summary of your professional background and key achievements.',
+  summary: t('builder.placeholders.summary'),
   workExperience: [],
   education: [],
   personalProjects: [],
@@ -66,21 +74,39 @@ const INITIAL_DATA: ResumeData = {
     certificationsTraining: [],
     awards: [],
   },
-};
+});
 
 const ResumeBuilderContent = () => {
-  const [resumeData, setResumeData] = useState<ResumeData>(INITIAL_DATA);
+  const { t } = useTranslations();
+  const { uiLanguage } = useLanguage();
+  const initialData = useMemo(() => buildInitialData(t), [t]);
+  const [resumeData, setResumeData] = useState<ResumeData>(() => initialData);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [lastSavedData, setLastSavedData] = useState<ResumeData>(INITIAL_DATA);
+  const [lastSavedData, setLastSavedData] = useState<ResumeData>(() => initialData);
   const [isSaving, setIsSaving] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [, setLoadingState] = useState<'idle' | 'loading' | 'loaded' | 'error'>('idle');
   const [templateSettings, setTemplateSettings] =
     useState<TemplateSettings>(DEFAULT_TEMPLATE_SETTINGS);
   const { improvedData } = useResumePreview();
+  const improvedPreview = improvedData?.data?.resume_preview;
+  const improvedCoverLetter = improvedData?.data?.cover_letter;
+  const improvedOutreach = improvedData?.data?.outreach_message;
   const searchParams = useSearchParams();
   const router = useRouter();
   const resumeId = searchParams.get('id');
+
+  useEffect(() => {
+    if (resumeId || hasUnsavedChanges || improvedPreview) {
+      return;
+    }
+    const savedDraft = localStorage.getItem(STORAGE_KEY);
+    if (savedDraft) {
+      return;
+    }
+    setResumeData(initialData);
+    setLastSavedData(initialData);
+  }, [initialData, resumeId, hasUnsavedChanges, improvedPreview]);
 
   // Tab state
   const [activeTab, setActiveTab] = useState<TabId>('resume');
@@ -102,6 +128,11 @@ const ResumeBuilderContent = () => {
 
   // JD comparison state
   const [jobDescription, setJobDescription] = useState<string | null>(null);
+
+  const localizedResumeDataForPreview = useMemo(
+    () => withLocalizedDefaultSections(resumeData, t),
+    [resumeData, t]
+  );
 
   // Load template settings from localStorage on mount
   useEffect(() => {
@@ -181,18 +212,18 @@ const ResumeBuilderContent = () => {
       }
 
       // Priority 2: Improved Data from Context (Tailor Flow)
-      if (improvedData?.data?.resume_preview) {
-        setResumeData(improvedData.data.resume_preview);
-        setLastSavedData(improvedData.data.resume_preview);
+      if (improvedPreview) {
+        setResumeData(improvedPreview);
+        setLastSavedData(improvedPreview);
         // Also load cover letter and outreach if present
-        if (improvedData.data.cover_letter) {
-          setCoverLetter(improvedData.data.cover_letter);
+        if (improvedCoverLetter) {
+          setCoverLetter(improvedCoverLetter);
         }
-        if (improvedData.data.outreach_message) {
-          setOutreachMessage(improvedData.data.outreach_message);
+        if (improvedOutreach) {
+          setOutreachMessage(improvedOutreach);
         }
         // Persist to localStorage as backup
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(improvedData.data.resume_preview));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(improvedPreview));
         setLoadingState('loaded');
         return;
       }
@@ -217,7 +248,7 @@ const ResumeBuilderContent = () => {
     };
 
     loadResumeData();
-  }, [improvedData, resumeId]);
+  }, [improvedPreview, improvedCoverLetter, improvedOutreach, resumeId]);
 
   // Fetch job description when we have a tailored resume
   useEffect(() => {
@@ -262,7 +293,7 @@ const ResumeBuilderContent = () => {
 
   const handleSave = async () => {
     if (!resumeId) {
-      alert('Save is only available when editing an existing resume.');
+      alert(t('builder.alerts.saveNotAvailable'));
       return;
     }
     try {
@@ -275,7 +306,7 @@ const ResumeBuilderContent = () => {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(nextData));
     } catch (error) {
       console.error('Failed to save resume:', error);
-      alert('Failed to save resume. Please try again.');
+      alert(t('builder.alerts.saveFailed'));
     } finally {
       setIsSaving(false);
     }
@@ -289,21 +320,24 @@ const ResumeBuilderContent = () => {
 
   const handleDownload = async () => {
     if (!resumeId) {
-      alert('Download is only available for saved resumes.');
+      alert(t('builder.alerts.downloadNotAvailable'));
       return;
     }
     try {
       setIsDownloading(true);
-      const blob = await downloadResumePdf(resumeId, templateSettings);
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `resume_${resumeId}.pdf`;
-      link.click();
-      window.URL.revokeObjectURL(url);
+      const blob = await downloadResumePdf(resumeId, templateSettings, uiLanguage);
+      downloadBlobAsFile(blob, `resume_${resumeId}.pdf`);
     } catch (error) {
       console.error('Failed to download resume:', error);
-      alert('Failed to download resume. Please try again.');
+      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+        const fallbackUrl = getResumePdfUrl(resumeId, templateSettings, uiLanguage);
+        const didOpen = openUrlInNewTab(fallbackUrl);
+        if (!didOpen) {
+          alert(t('common.popupBlocked', { url: fallbackUrl }));
+        }
+        return;
+      }
+      alert(t('builder.alerts.downloadFailed'));
     } finally {
       setIsDownloading(false);
     }
@@ -317,7 +351,7 @@ const ResumeBuilderContent = () => {
       await updateCoverLetter(resumeId, coverLetter);
     } catch (error) {
       console.error('Failed to save cover letter:', error);
-      alert('Failed to save cover letter. Please try again.');
+      alert(t('builder.alerts.coverLetterSaveFailed'));
     } finally {
       setIsCoverLetterSaving(false);
     }
@@ -325,28 +359,29 @@ const ResumeBuilderContent = () => {
 
   const handleDownloadCoverLetter = async () => {
     if (!resumeId) {
-      alert('Save the resume first to download the cover letter.');
+      alert(t('builder.alerts.coverLetterDownloadRequiresResume'));
       return;
     }
     if (!coverLetter) {
-      alert(
-        'No cover letter available. Enable cover letter generation in Settings and tailor a resume.'
-      );
+      alert(t('builder.alerts.coverLetterMissing'));
       return;
     }
     try {
       setIsDownloading(true);
-      const blob = await downloadCoverLetterPdf(resumeId, templateSettings.pageSize);
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `cover_letter_${resumeId}.pdf`;
-      link.click();
-      window.URL.revokeObjectURL(url);
+      const blob = await downloadCoverLetterPdf(resumeId, templateSettings.pageSize, uiLanguage);
+      downloadBlobAsFile(blob, `cover_letter_${resumeId}.pdf`);
     } catch (error) {
       console.error('Failed to download cover letter:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      alert(`Failed to download cover letter: ${errorMessage}`);
+      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+        const fallbackUrl = getCoverLetterPdfUrl(resumeId, templateSettings.pageSize, uiLanguage);
+        const didOpen = openUrlInNewTab(fallbackUrl);
+        if (!didOpen) {
+          alert(t('common.popupBlocked', { url: fallbackUrl }));
+        }
+        return;
+      }
+      const errorMessage = error instanceof Error ? error.message : t('common.unknown');
+      alert(t('builder.alerts.coverLetterDownloadFailed', { error: errorMessage }));
     } finally {
       setIsDownloading(false);
     }
@@ -360,7 +395,7 @@ const ResumeBuilderContent = () => {
       await updateOutreachMessage(resumeId, outreachMessage);
     } catch (error) {
       console.error('Failed to save outreach message:', error);
-      alert('Failed to save outreach message. Please try again.');
+      alert(t('builder.alerts.outreachSaveFailed'));
     } finally {
       setIsOutreachSaving(false);
     }
@@ -387,7 +422,7 @@ const ResumeBuilderContent = () => {
     } catch (error) {
       console.error('Failed to generate cover letter:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      alert(`Failed to generate cover letter: ${errorMessage}`);
+      alert(t('builder.alerts.coverLetterGenerateFailed', { error: errorMessage }));
     } finally {
       setIsGeneratingCoverLetter(false);
     }
@@ -413,7 +448,7 @@ const ResumeBuilderContent = () => {
     } catch (error) {
       console.error('Failed to generate outreach message:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      alert(`Failed to generate outreach message: ${errorMessage}`);
+      alert(t('builder.alerts.outreachGenerateFailed', { error: errorMessage }));
     } finally {
       setIsGeneratingOutreach(false);
     }
@@ -451,20 +486,20 @@ const ResumeBuilderContent = () => {
                 className="mb-2 -ml-1"
               >
                 <ArrowLeft className="w-4 h-4" />
-                Back to Dashboard
+                {t('nav.backToDashboard')}
               </Button>
               <h1 className="font-serif text-3xl md:text-5xl text-black tracking-tight leading-[0.95] uppercase">
-                Resume Builder
+                {t('nav.builder')}
               </h1>
               <div className="mt-3 flex items-center gap-3">
                 <p className="text-sm font-mono text-blue-700 uppercase tracking-wide font-bold">
                   {'// '}
-                  {resumeId ? 'EDIT MODE' : 'CREATE & PREVIEW'}
+                  {resumeId ? t('builder.editMode') : t('builder.createAndPreview')}
                 </p>
                 {hasUnsavedChanges && (
                   <span className="flex items-center gap-1 text-xs font-mono text-amber-600 bg-amber-50 px-2 py-1 border border-amber-200">
                     <AlertTriangle className="w-3 h-3" />
-                    UNSAVED DRAFT
+                    {t('builder.unsavedDraft')}
                   </span>
                 )}
               </div>
@@ -481,11 +516,11 @@ const ResumeBuilderContent = () => {
                     disabled={!hasUnsavedChanges}
                   >
                     <RotateCcw className="w-4 h-4" />
-                    Reset
+                    {t('common.reset')}
                   </Button>
                   <Button size="sm" onClick={handleSave} disabled={!resumeId || isSaving}>
                     <Save className="w-4 h-4" />
-                    {isSaving ? 'Saving...' : 'Save'}
+                    {isSaving ? t('common.saving') : t('common.save')}
                   </Button>
                   <Button
                     variant="success"
@@ -494,7 +529,7 @@ const ResumeBuilderContent = () => {
                     disabled={!resumeId || isDownloading}
                   >
                     <Download className="w-4 h-4" />
-                    {isDownloading ? 'Generating...' : 'Download'}
+                    {isDownloading ? t('common.generating') : t('common.download')}
                   </Button>
                 </>
               )}
@@ -513,7 +548,7 @@ const ResumeBuilderContent = () => {
                     ) : (
                       <Sparkles className="w-4 h-4" />
                     )}
-                    Regenerate
+                    {t('coverLetter.regenerate')}
                   </Button>
                   <Button
                     variant="success"
@@ -522,7 +557,7 @@ const ResumeBuilderContent = () => {
                     disabled={!resumeId || isDownloading}
                   >
                     <Download className="w-4 h-4" />
-                    {isDownloading ? 'Generating...' : 'Download'}
+                    {isDownloading ? t('common.generating') : t('common.download')}
                   </Button>
                 </>
               )}
@@ -541,18 +576,18 @@ const ResumeBuilderContent = () => {
                     ) : (
                       <Sparkles className="w-4 h-4" />
                     )}
-                    Regenerate
+                    {t('outreach.regenerate')}
                   </Button>
                   <Button variant="success" size="sm" onClick={handleCopyOutreach}>
                     {isCopied ? (
                       <>
                         <Check className="w-4 h-4" />
-                        Copied!
+                        {t('outreach.copied')}
                       </>
                     ) : (
                       <>
                         <Copy className="w-4 h-4" />
-                        Copy to Clipboard
+                        {t('outreach.copyToClipboard')}
                       </>
                     )}
                   </Button>
@@ -570,10 +605,10 @@ const ResumeBuilderContent = () => {
               <div className="flex items-center gap-2 border-b-2 border-black pb-2">
                 <div className="w-3 h-3 bg-blue-700"></div>
                 <h2 className="font-mono text-lg font-bold uppercase tracking-wider">
-                  {activeTab === 'resume' && 'Editor Panel'}
-                  {activeTab === 'cover-letter' && 'Cover Letter Editor'}
-                  {activeTab === 'outreach' && 'Outreach Message Editor'}
-                  {activeTab === 'jd-match' && 'JD Match Analysis'}
+                  {activeTab === 'resume' && t('builder.leftPanel.editorPanel')}
+                  {activeTab === 'cover-letter' && t('builder.leftPanel.coverLetterEditor')}
+                  {activeTab === 'outreach' && t('builder.leftPanel.outreachEditor')}
+                  {activeTab === 'jd-match' && t('builder.leftPanel.jdMatchAnalysis')}
                 </h2>
               </div>
 
@@ -625,31 +660,46 @@ const ResumeBuilderContent = () => {
               {activeTab === 'jd-match' && (
                 <div className="space-y-4">
                   <div className="border-2 border-black bg-white p-4">
-                    <h3 className="font-mono text-sm font-bold uppercase mb-2">About JD Match</h3>
+                    <h3 className="font-mono text-sm font-bold uppercase mb-2">
+                      {t('builder.jdMatch.aboutTitle')}
+                    </h3>
                     <p className="text-sm text-gray-600 leading-relaxed">
-                      This view shows how well your resume matches the job description. Keywords
-                      from the JD are highlighted in yellow on your resume, helping you see which
-                      skills and terms are already covered.
+                      {t('builder.jdMatch.aboutDescription')}
                     </p>
                   </div>
 
                   <div className="border-2 border-black bg-yellow-50 p-4">
                     <h3 className="font-mono text-sm font-bold uppercase mb-2">
-                      Highlighted Keywords
+                      {t('builder.jdMatch.highlightedKeywordsTitle')}
                     </h3>
                     <p className="text-sm text-gray-600 leading-relaxed">
-                      Words highlighted in <mark className="bg-yellow-200 px-1">yellow</mark> appear
-                      in both the job description and your resume. A higher match rate suggests
-                      better alignment with the job requirements.
+                      {(() => {
+                        const template = t(
+                          'builder.jdMatch.highlightedKeywordsDescriptionTemplate'
+                        );
+                        const parts = template.split('__COLOR__');
+                        if (parts.length < 2) return template;
+                        return (
+                          <>
+                            {parts[0]}
+                            <mark className="bg-yellow-200 px-1">
+                              {t('builder.jdMatch.highlightColor')}
+                            </mark>
+                            {parts.slice(1).join('__COLOR__')}
+                          </>
+                        );
+                      })()}
                     </p>
                   </div>
 
                   <div className="border-2 border-black bg-gray-50 p-4">
-                    <h3 className="font-mono text-sm font-bold uppercase mb-2">Tips</h3>
+                    <h3 className="font-mono text-sm font-bold uppercase mb-2">
+                      {t('builder.jdMatch.tipsTitle')}
+                    </h3>
                     <ul className="text-sm text-gray-600 space-y-1 list-disc list-inside">
-                      <li>Use the Resume tab to add missing keywords</li>
-                      <li>Focus on technical skills and tools mentioned in the JD</li>
-                      <li>Match action verbs from the job requirements</li>
+                      <li>{t('builder.jdMatch.tips.items.addMissingKeywords')}</li>
+                      <li>{t('builder.jdMatch.tips.items.focusTechnicalSkills')}</li>
+                      <li>{t('builder.jdMatch.tips.items.matchActionVerbs')}</li>
                     </ul>
                   </div>
                 </div>
@@ -663,10 +713,22 @@ const ResumeBuilderContent = () => {
             <div className="px-6 pt-3 shrink-0 bg-[#E5E5E0]">
               <RetroTabs
                 tabs={[
-                  { id: 'resume', label: 'RESUME' },
-                  { id: 'cover-letter', label: 'COVER LETTER', disabled: !coverLetter },
-                  { id: 'outreach', label: 'OUTREACH MAIL', disabled: !outreachMessage },
-                  { id: 'jd-match', label: 'JD MATCH', disabled: !jobDescription },
+                  { id: 'resume', label: t('builder.previewTabs.resume') },
+                  {
+                    id: 'cover-letter',
+                    label: t('builder.previewTabs.coverLetter'),
+                    disabled: !coverLetter,
+                  },
+                  {
+                    id: 'outreach',
+                    label: t('builder.previewTabs.outreach'),
+                    disabled: !outreachMessage,
+                  },
+                  {
+                    id: 'jd-match',
+                    label: t('builder.previewTabs.jdMatch'),
+                    disabled: !jobDescription,
+                  },
                 ]}
                 activeTab={activeTab}
                 onTabChange={(id) => setActiveTab(id as TabId)}
@@ -677,7 +739,10 @@ const ResumeBuilderContent = () => {
             <div className="flex-1 overflow-y-auto">
               {/* Resume Preview */}
               {activeTab === 'resume' && (
-                <PaginatedPreview resumeData={resumeData} settings={templateSettings} />
+                <PaginatedPreview
+                  resumeData={localizedResumeDataForPreview}
+                  settings={templateSettings}
+                />
               )}
 
               {/* Cover Letter Preview */}
@@ -726,18 +791,20 @@ const ResumeBuilderContent = () => {
         <div className="p-4 bg-[#F0F0E8] flex justify-between items-center font-mono text-xs text-blue-700 border-t border-black no-print">
           <span className="uppercase font-bold flex items-center gap-2">
             <img src="/logo.svg" alt="Resume Matcher" className="w-5 h-5" />
-            Resume Builder Module
+            {t('builder.footer.moduleLabel')}
           </span>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 bg-green-700"></div>
               <span className="uppercase">
-                {templateSettings.template === 'swiss-single' ? 'Single Column' : 'Two Column'}
+                {templateSettings.template === 'swiss-single'
+                  ? t('builder.footer.singleColumn')
+                  : t('builder.footer.twoColumn')}
               </span>
             </div>
             <span className="text-gray-400">|</span>
             <span className="uppercase">
-              {templateSettings.pageSize === 'A4' ? 'A4' : 'US Letter'}
+              {templateSettings.pageSize === 'A4' ? 'A4' : t('builder.pageSize.usLetter')}
             </span>
           </div>
         </div>
@@ -747,10 +814,20 @@ const ResumeBuilderContent = () => {
       <ConfirmDialog
         open={showRegenerateDialog !== null}
         onOpenChange={(open) => !open && setShowRegenerateDialog(null)}
-        title={`Regenerate ${showRegenerateDialog === 'cover-letter' ? 'Cover Letter' : 'Outreach Message'}?`}
-        description={`This will replace your current ${showRegenerateDialog === 'cover-letter' ? 'cover letter' : 'outreach message'} with a newly generated one. Any edits you've made will be lost.`}
-        confirmLabel="Regenerate"
-        cancelLabel="Cancel"
+        title={t('builder.regenerateDialog.title', {
+          title:
+            showRegenerateDialog === 'cover-letter' ? t('coverLetter.title') : t('outreach.title'),
+        })}
+        description={t('builder.regenerateDialog.description', {
+          title:
+            showRegenerateDialog === 'cover-letter' ? t('coverLetter.title') : t('outreach.title'),
+        })}
+        confirmLabel={
+          showRegenerateDialog === 'cover-letter'
+            ? t('coverLetter.regenerate')
+            : t('outreach.regenerate')
+        }
+        cancelLabel={t('common.cancel')}
         variant="warning"
         onConfirm={
           showRegenerateDialog === 'cover-letter' ? doGenerateCoverLetter : doGenerateOutreach
@@ -761,8 +838,9 @@ const ResumeBuilderContent = () => {
 };
 
 export const ResumeBuilder = () => {
+  const { t } = useTranslations();
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<div>{t('common.loading')}</div>}>
       <ResumeBuilderContent />
     </Suspense>
   );

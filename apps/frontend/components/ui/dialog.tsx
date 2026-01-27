@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTranslations } from '@/lib/i18n';
 
 /**
  * Swiss International Style Dialog Component
@@ -94,6 +95,7 @@ interface DialogContentProps {
 
 const DialogContent: React.FC<DialogContentProps> = ({ children, className }) => {
   const { open, onOpenChange } = useDialogContext();
+  const { t } = useTranslations();
 
   // Handle escape key
   React.useEffect(() => {
@@ -146,7 +148,7 @@ const DialogContent: React.FC<DialogContentProps> = ({ children, className }) =>
             className="absolute right-4 top-4 opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-blue-700 focus:ring-offset-2"
           >
             <X className="h-5 w-5" />
-            <span className="sr-only">Close</span>
+            <span className="sr-only">{t('common.close')}</span>
           </button>
         </div>
       </div>

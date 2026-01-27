@@ -1,18 +1,24 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import Resume, { ResumeData } from '@/components/dashboard/resume-component';
-import { fetchResume, downloadResumePdf, deleteResume } from '@/lib/api/resume';
+import { fetchResume, downloadResumePdf, getResumePdfUrl, deleteResume } from '@/lib/api/resume';
 import { useStatusCache } from '@/lib/context/status-cache';
 import { ArrowLeft, Edit, Download, Loader2, AlertCircle, Sparkles } from 'lucide-react';
 import { EnrichmentModal } from '@/components/enrichment/enrichment-modal';
+import { useTranslations } from '@/lib/i18n';
+import { withLocalizedDefaultSections } from '@/lib/utils/section-helpers';
+import { useLanguage } from '@/lib/context/language-context';
+import { downloadBlobAsFile, openUrlInNewTab } from '@/lib/utils/download';
 
 type ProcessingStatus = 'pending' | 'processing' | 'ready' | 'failed';
 
 export default function ResumeViewerPage() {
+  const { t } = useTranslations();
+  const { uiLanguage } = useLanguage();
   const params = useParams();
   const router = useRouter();
   const { decrementResumes, setHasMasterResume } = useStatusCache();
@@ -28,12 +34,18 @@ export default function ResumeViewerPage() {
 
   const resumeId = params?.id as string;
 
+  const localizedResumeData = useMemo(() => {
+    if (!resumeData) return null;
+    return withLocalizedDefaultSections(resumeData, t);
+  }, [resumeData, t]);
+
   useEffect(() => {
     if (!resumeId) return;
 
     const loadResume = async () => {
       try {
         setLoading(true);
+        setError(null);
         const data = await fetchResume(resumeId);
 
         // Get processing status
@@ -43,28 +55,25 @@ export default function ResumeViewerPage() {
         // Prioritize processed_resume if available (structured JSON)
         if (data.processed_resume) {
           setResumeData(data.processed_resume as ResumeData);
+          setError(null);
         } else if (status === 'failed') {
-          setError(
-            'Resume processing failed. The AI service could not extract structured data from your resume. You can still use the Tailor feature or try uploading again.'
-          );
+          setError(t('resumeViewer.errors.processingFailed'));
         } else if (status === 'processing') {
-          setError('Resume is still being processed. Please wait a moment and refresh the page.');
+          setError(t('resumeViewer.errors.stillProcessing'));
         } else if (data.raw_resume?.content) {
           // Try to parse raw_resume content as JSON (for tailored resumes stored as JSON)
           try {
             const parsed = JSON.parse(data.raw_resume.content);
             setResumeData(parsed as ResumeData);
           } catch {
-            setError(
-              'Resume has not been processed yet. Please use the Tailor feature to generate a structured resume.'
-            );
+            setError(t('resumeViewer.errors.notProcessedYet'));
           }
         } else {
-          setError('No resume data available.');
+          setError(t('resumeViewer.errors.noDataAvailable'));
         }
       } catch (err) {
         console.error('Failed to load resume:', err);
-        setError('Failed to load resume data.');
+        setError(t('resumeViewer.errors.failedToLoad'));
       } finally {
         setLoading(false);
       }
@@ -72,7 +81,7 @@ export default function ResumeViewerPage() {
 
     loadResume();
     setIsMasterResume(localStorage.getItem('master_resume_id') === resumeId);
-  }, [resumeId]);
+  }, [resumeId, t]);
 
   const handleEdit = () => {
     router.push(`/builder?id=${resumeId}`);
@@ -84,6 +93,7 @@ export default function ResumeViewerPage() {
       const data = await fetchResume(resumeId);
       if (data.processed_resume) {
         setResumeData(data.processed_resume as ResumeData);
+        setError(null);
       }
     } catch (err) {
       console.error('Failed to reload resume:', err);
@@ -97,15 +107,18 @@ export default function ResumeViewerPage() {
 
   const handleDownload = async () => {
     try {
-      const blob = await downloadResumePdf(resumeId);
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `resume_${resumeId}.pdf`;
-      link.click();
-      window.URL.revokeObjectURL(url);
+      const blob = await downloadResumePdf(resumeId, undefined, uiLanguage);
+      downloadBlobAsFile(blob, `resume_${resumeId}.pdf`);
     } catch (err) {
       console.error('Failed to download resume:', err);
+      if (err instanceof TypeError && err.message.includes('Failed to fetch')) {
+        const fallbackUrl = getResumePdfUrl(resumeId, undefined, uiLanguage);
+        const didOpen = openUrlInNewTab(fallbackUrl);
+        if (!didOpen) {
+          alert(t('common.popupBlocked', { url: fallbackUrl }));
+        }
+        return;
+      }
     }
   };
 
@@ -123,7 +136,7 @@ export default function ResumeViewerPage() {
       setShowSuccessDialog(true);
     } catch (err) {
       console.error('Failed to delete resume:', err);
-      setDeleteError('Failed to delete resume. Please try again.');
+      setDeleteError(t('resumeViewer.errors.failedToDelete'));
       setShowDeleteDialog(false);
     }
   };
@@ -137,7 +150,9 @@ export default function ResumeViewerPage() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#F0F0E8]">
         <Loader2 className="w-10 h-10 animate-spin text-blue-700 mb-4" />
-        <p className="font-mono text-sm font-bold uppercase text-blue-700">Loading Resume...</p>
+        <p className="font-mono text-sm font-bold uppercase text-blue-700">
+          {t('resumeViewer.loading')}
+        </p>
       </div>
     );
   }
@@ -171,12 +186,16 @@ export default function ResumeViewerPage() {
               isProcessing ? 'text-blue-700' : isFailed ? 'text-orange-700' : 'text-red-700'
             }`}
           >
-            {error || 'Resume not found'}
+            {error || t('resumeViewer.resumeNotFound')}
           </p>
           <div className="flex flex-col gap-2">
-            {isFailed && <Button onClick={() => router.push('/tailor')}>Use Tailor Feature</Button>}
+            {isFailed && (
+              <Button onClick={() => router.push('/tailor')}>
+                {t('resumeViewer.useTailorFeature')}
+              </Button>
+            )}
             <Button variant="outline" onClick={() => router.push('/dashboard')}>
-              Return to Dashboard
+              {t('resumeViewer.returnToDashboard')}
             </Button>
           </div>
         </div>
@@ -191,23 +210,23 @@ export default function ResumeViewerPage() {
         <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 no-print">
           <Button variant="outline" onClick={() => router.push('/dashboard')}>
             <ArrowLeft className="w-4 h-4" />
-            Back to Dashboard
+            {t('nav.backToDashboard')}
           </Button>
 
           <div className="flex gap-3">
             {isMasterResume && (
               <Button onClick={() => setShowEnrichmentModal(true)} className="gap-2">
                 <Sparkles className="w-4 h-4" />
-                Enhance Resume
+                {t('resumeViewer.enhanceResume')}
               </Button>
             )}
             <Button variant="outline" onClick={handleEdit}>
               <Edit className="w-4 h-4" />
-              Edit Resume
+              {t('dashboard.editResume')}
             </Button>
             <Button variant="success" onClick={handleDownload}>
               <Download className="w-4 h-4" />
-              Download Resume
+              {t('resumeViewer.downloadResume')}
             </Button>
           </div>
         </div>
@@ -215,13 +234,35 @@ export default function ResumeViewerPage() {
         {/* Resume Viewer */}
         <div className="flex justify-center pb-4">
           <div className="resume-print w-full max-w-[250mm] shadow-[8px_8px_0px_0px_#000000] border-2 border-black bg-white">
-            <Resume resumeData={resumeData} />
+            <Resume
+              resumeData={localizedResumeData || resumeData}
+              additionalSectionLabels={{
+                technicalSkills: t('resume.additionalLabels.technicalSkills'),
+                languages: t('resume.additionalLabels.languages'),
+                certifications: t('resume.additionalLabels.certifications'),
+                awards: t('resume.additionalLabels.awards'),
+              }}
+              sectionHeadings={{
+                summary: t('resume.sections.summary'),
+                experience: t('resume.sections.experience'),
+                education: t('resume.sections.education'),
+                projects: t('resume.sections.projects'),
+                certifications: t('resume.sections.certifications'),
+                skills: t('resume.sections.skillsOnly'),
+                languages: t('resume.sections.languages'),
+                awards: t('resume.sections.awards'),
+                links: t('resume.sections.links'),
+              }}
+              fallbackLabels={{ name: t('resume.defaults.name') }}
+            />
           </div>
         </div>
 
         <div className="flex justify-end pt-4 no-print">
           <Button variant="destructive" onClick={() => setShowDeleteDialog(true)}>
-            {isMasterResume ? 'Delete Master Resume' : 'Delete Resume'}
+            {isMasterResume
+              ? t('confirmations.deleteMasterResumeTitle')
+              : t('dashboard.deleteResume')}
           </Button>
         </div>
       </div>
@@ -229,14 +270,16 @@ export default function ResumeViewerPage() {
       <ConfirmDialog
         open={showDeleteDialog}
         onOpenChange={setShowDeleteDialog}
-        title={isMasterResume ? 'Delete Master Resume' : 'Delete Resume'}
+        title={
+          isMasterResume ? t('confirmations.deleteMasterResumeTitle') : t('dashboard.deleteResume')
+        }
         description={
           isMasterResume
-            ? 'This action cannot be undone. Your master resume will be permanently removed from the system.'
-            : 'This action cannot be undone. The resume will be permanently removed from the system.'
+            ? t('confirmations.deleteMasterResumeDescription')
+            : t('confirmations.deleteResumeFromSystemDescription')
         }
-        confirmLabel="Delete Resume"
-        cancelLabel="Keep Resume"
+        confirmLabel={t('confirmations.deleteResumeConfirmLabel')}
+        cancelLabel={t('confirmations.keepResumeCancelLabel')}
         onConfirm={handleDeleteResume}
         variant="danger"
       />
@@ -244,13 +287,13 @@ export default function ResumeViewerPage() {
       <ConfirmDialog
         open={showSuccessDialog}
         onOpenChange={setShowSuccessDialog}
-        title="Resume Deleted"
+        title={t('resumeViewer.deletedTitle')}
         description={
           isMasterResume
-            ? 'Your master resume has been permanently deleted from the system.'
-            : 'The resume has been permanently deleted from the system.'
+            ? t('resumeViewer.deletedDescriptionMaster')
+            : t('resumeViewer.deletedDescriptionRegular')
         }
-        confirmLabel="Return to Dashboard"
+        confirmLabel={t('resumeViewer.returnToDashboard')}
         onConfirm={handleSuccessConfirm}
         variant="success"
         showCancelButton={false}
@@ -260,9 +303,9 @@ export default function ResumeViewerPage() {
         <ConfirmDialog
           open={!!deleteError}
           onOpenChange={() => setDeleteError(null)}
-          title="Delete Failed"
+          title={t('resumeViewer.deleteFailedTitle')}
           description={deleteError}
-          confirmLabel="OK"
+          confirmLabel={t('common.ok')}
           onConfirm={() => setDeleteError(null)}
           variant="danger"
           showCancelButton={false}

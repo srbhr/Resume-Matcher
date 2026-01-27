@@ -6,6 +6,8 @@
  */
 
 import { API_BASE } from '@/lib/api/client';
+import { translate } from '@/lib/i18n/server';
+import { resolveLocale } from '@/lib/i18n/locale';
 
 const PAGE_DIMENSIONS = {
   A4: { width: 210, height: 297 },
@@ -18,6 +20,7 @@ type PageProps = {
   params: Promise<{ id: string }>;
   searchParams?: Promise<{
     pageSize?: string;
+    lang?: string;
   }>;
 };
 
@@ -69,6 +72,7 @@ export default async function PrintCoverLetterPage({ params, searchParams }: Pag
 
   const pageSize = parsePageSize(resolvedSearchParams?.pageSize);
   const pageDims = PAGE_DIMENSIONS[pageSize];
+  const locale = resolveLocale(resolvedSearchParams?.lang);
 
   // Fetch cover letter data from API (same pattern as resume)
   const { coverLetter, personalInfo } = await fetchCoverLetterData(resolvedParams.id);
@@ -77,11 +81,12 @@ export default async function PrintCoverLetterPage({ params, searchParams }: Pag
   const margins = { top: 25, right: 25, bottom: 25, left: 25 };
 
   // Get today's date formatted
-  const today = new Date().toLocaleDateString('en-US', {
+  const today = new Date().toLocaleDateString(locale, {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
   });
+  const nameFallback = translate(locale, 'resume.defaults.name');
 
   // Split cover letter into paragraphs
   const paragraphs = coverLetter
@@ -118,7 +123,7 @@ export default async function PrintCoverLetterPage({ params, searchParams }: Pag
             letterSpacing: '-0.02em',
           }}
         >
-          {personalInfo.name || 'Your Name'}
+          {personalInfo.name || nameFallback}
         </h1>
         <div
           style={{
@@ -166,7 +171,9 @@ export default async function PrintCoverLetterPage({ params, searchParams }: Pag
             </p>
           ))
         ) : (
-          <p style={{ fontSize: '11pt', color: '#999' }}>No cover letter content available.</p>
+          <p style={{ fontSize: '11pt', color: '#999' }}>
+            {translate(locale, 'coverLetter.print.emptyContent')}
+          </p>
         )}
       </div>
     </div>

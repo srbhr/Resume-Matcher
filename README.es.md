@@ -1,15 +1,18 @@
 <div align="center">
 
-[![Resume Matcher](assets/page_2.png)](https://www.resumematcher.fyi)
+[![Resume Matcher](assets/header.png)](https://www.resumematcher.fyi)
 
 # Resume Matcher
 
+[English](README.md) | **Español** | [简体中文](README.zh-CN.md) | [日本語](README.ja.md)
 
-[Discord](https://dsc.gg/resume-matcher) ✦ [𝚂𝚒𝚝𝚒𝚘 𝚆𝚎𝚋](https://resumematcher.fyi) ✦ [𝙲𝚘́𝚖𝚘 𝙸𝚗𝚜𝚝𝚊𝚕𝚊𝚛](#cómo-instalar) ✦ [𝙲𝚘𝚕𝚊𝚋𝚘𝚛𝚊𝚍𝚘𝚛𝚎𝚜](#colaboradores) ✦ [𝙳𝚘𝚗𝚊𝚛](#apoya-el-desarrollo-donando) ✦ [𝚃𝚠𝚒𝚝𝚝𝚎𝚛/𝚇](https://twitter.com/_srbhr_) ✦ [𝙻𝚒𝚗𝚔𝚎𝚍𝙸𝚗](https://www.linkedin.com/company/resume-matcher/)
+[𝙹𝚘𝚒𝚗 𝙳𝚒𝚜𝚌𝚘𝚛𝚍](https://dsc.gg/resume-matcher) ✦ [𝚆𝚎𝚋𝚜𝚒𝚝𝚎](https://resumematcher.fyi) ✦ [𝙷𝚘𝚠 𝚝𝚘 𝙸𝚗𝚜𝚝𝚊𝚕𝚕](https://resumematcher.fyi/docs/installation) ✦ [𝙲𝚘𝚗𝚝𝚛𝚒𝚋𝚞𝚝𝚘𝚛𝚜](#contributors) ✦ [𝚂𝚙𝚘𝚗𝚜𝚘𝚛](#sponsor-resume-matcher) ✦ [𝚃𝚠𝚒𝚝𝚝𝚎𝚛/𝚇](https://twitter.com/srbhrai) ✦ [𝙻𝚒𝚗𝚔𝚎𝚍𝙸𝚗](https://www.linkedin.com/company/resume-matcher/) ✦ [𝙲𝚛𝚎𝚊𝚝𝚘𝚛](https://srbhr.com)
 
 **Deja de ser rechazado automáticamente por los bots ATS.** Resume Matcher es la plataforma impulsada por IA que aplica ingeniería inversa a los algoritmos de contratación para mostrarte exactamente cómo adaptar tu currículum. Obtén las palabras clave, el formato y los conocimientos que realmente te ayudarán a superar el primer filtro y llegar a manos humanas.
 
 Esperamos convertir esto en **el VS Code para crear currículums**.
+
+![Resume Matcher Demo](assets/Resume_Matcher_Demo_2.gif)
 
 </div>
 
@@ -17,76 +20,220 @@ Esperamos convertir esto en **el VS Code para crear currículums**.
 
 <div align="center">
 
-![Stars](https://img.shields.io/github/stars/srbhr/Resume-Matcher?labelColor=black&style=for-the-badge&color=c20a71)
-![Apache 2.0](https://img.shields.io/github/license/srbhr/Resume-Matcher?labelColor=black&style=for-the-badge&color=c20a71) ![Forks](https://img.shields.io/github/forks/srbhr/Resume-Matcher?labelColor=black&style=for-the-badge&color=c20a71) ![version](https://img.shields.io/badge/Version-0.1%20Veridis%20Quo-FFF?labelColor=black&logo=LinkedIn&style=for-the-badge&color=c20a71)
+![Stars](https://img.shields.io/github/stars/srbhr/Resume-Matcher?labelColor=F0F0E8&style=for-the-badge&color=1d4ed8)
+![Apache 2.0](https://img.shields.io/github/license/srbhr/Resume-Matcher?labelColor=F0F0E8&style=for-the-badge&color=1d4ed8) ![Forks](https://img.shields.io/github/forks/srbhr/Resume-Matcher?labelColor=F0F0E8&style=for-the-badge&color=1d4ed8) ![version](https://img.shields.io/badge/Version-1.0%20Aerodynamic-FFF?labelColor=F0F0E8&style=for-the-badge&color=1d4ed8)
 
-
-[![Discord](https://img.shields.io/discord/1122069176962531400?labelColor=black&logo=discord&logoColor=c20a71&style=for-the-badge&color=c20a71)](https://dsc.gg/resume-matcher) [![Sitio Web](https://img.shields.io/badge/website-Resume%20Matcher-FFF?labelColor=black&style=for-the-badge&color=c20a71)](https://resumematcher.fyi) [![LinkedIn](https://img.shields.io/badge/LinkedIn-Resume%20Matcher-FFF?labelColor=black&logo=LinkedIn&style=for-the-badge&color=c20a71)](https://www.linkedin.com/company/resume-matcher/)
+[![Discord](https://img.shields.io/discord/1122069176962531400?labelColor=F0F0E8&logo=discord&logoColor=1d4ed8&style=for-the-badge&color=1d4ed8)](https://dsc.gg/resume-matcher) [![Website](https://img.shields.io/badge/website-Resume%20Matcher-FFF?labelColor=F0F0E8&style=for-the-badge&color=1d4ed8)](https://resumematcher.fyi) [![LinkedIn](https://img.shields.io/badge/LinkedIn-Resume%20Matcher-FFF?labelColor=F0F0E8&logo=LinkedIn&style=for-the-badge&color=1d4ed8)](https://www.linkedin.com/company/resume-matcher/)
 
 <a href="https://trendshift.io/repositories/565" target="_blank"><img src="https://trendshift.io/api/badge/repositories/565" alt="srbhr%2FResume-Matcher | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
+
+![Vercel OSS Program](https://vercel.com/oss/program-badge.svg)
 
 </div>
 
 > \[!IMPORTANT]
 >
-> Este proyecto está en desarrollo activo. Se están añadiendo nuevas características continuamente y agradecemos las contribuciones de la comunidad. Hay algunos cambios importantes en la rama `main`. Si tienes alguna sugerencia o solicitud de características, no dudes en abrir un *issue* en GitHub o discutirlo en nuestro servidor de [Discord](https://dsc.gg/resume-matcher).
+> Este proyecto está en desarrollo activo. Se están añadiendo nuevas características continuamente y agradecemos las contribuciones de la comunidad. Si tienes alguna sugerencia o solicitud de características, no dudes en abrir un *issue* en GitHub o discutirlo en nuestro servidor de [Discord](https://dsc.gg/resume-matcher).
 
+## Primeros pasos
 
-## Primeros pasos con Resume Matcher
+Resume Matcher funciona creando un currículum maestro que puedes usar para adaptar cada postulación. Instrucciones de instalación aquí: [Cómo instalar](#how-to-install)
 
-Resume Matcher está diseñado para ayudarte a optimizar tu currículum con el objetivo de resaltar tus habilidades y experiencia de una manera que resuene con los empleadores potenciales.
+### Cómo funciona
 
-Estamos trabajando para mejorar activamente la plataforma, con el objetivo de construir **el VS Code para crear currículums**. La mejor manera de mantenerte actualizado es unirte a la discusión en Discord y ser parte de la comunidad de desarrollo activo.
+1. **Sube** tu currículum maestro (PDF o DOCX)
+2. **Pega** la descripción del puesto al que apuntas
+3. **Revisa** mejoras y contenido adaptado generado por IA
+4. **Genera** carta de presentación y plantillas de email para la postulación
+5. **Personaliza** el diseño y las secciones a tu estilo
+6. **Exporta** como PDF profesional con tu plantilla preferida
 
-> Únete a nuestra comunidad de [Discord](https://dsc.gg/resume-matcher) 👇
+### Mantente conectado
+
 [![Discord](assets/resume_matcher_discord.png)](https://dsc.gg/resume-matcher)
 
-> Síguenos en [LinkedIn](https://www.linkedin.com/company/resume-matcher/) ✨
+Únete a nuestro [Discord](https://dsc.gg/resume-matcher) para discusiones, solicitudes de funcionalidades y soporte de la comunidad.
+
 [![LinkedIn](assets/resume_matcher_linkedin.png)](https://www.linkedin.com/company/resume-matcher/)
 
-> ⭐ Dale una estrella a Resume Matcher para apoyar el desarrollo y recibir actualizaciones en GitHub.
-![Dale una estrella a Resume Matcher](assets/star_resume_matcher.png)
+Síguenos en [LinkedIn](https://www.linkedin.com/company/resume-matcher/) para actualizaciones.
 
-## Características Principales
+![Star Resume Matcher](assets/star_resume_matcher.png)
 
-![Características de Resume Matcher](assets/resume_matcher_features.png)
+Dale una estrella al repositorio para apoyar el desarrollo y recibir notificaciones de nuevas versiones.
 
-- **Funciona localmente**: No es necesario subir tu currículum a un servidor. Todo se ejecuta en tu máquina con modelos de IA de código abierto de Ollama.
-- **Compatibilidad con ATS**: Obtén un análisis detallado de la compatibilidad de tu currículum con los sistemas ATS.
-- **Puntuación de Coincidencia Instantánea**: Sube tu currículum y la descripción del trabajo para obtener una puntuación de coincidencia rápida y áreas clave de mejora.
-- **Optimizador de Palabras Clave**: Alinea tu currículum con las palabras clave del trabajo e identifica potenciales mejoras.
-- **Mejoras Guiadas**: Recibe sugerencias claras para que tu currículum resalte.
+## Patrocinadores
+
+![sponsors](assets/sponsors.png)
+
+Estamos agradecidos a nuestros patrocinadores que ayudan a mantener este proyecto. Si Resume Matcher te resulta útil, considera [**apoyarnos**](https://github.com/sponsors/srbhr) para asegurar el desarrollo y las mejoras continuas.
+
+| Patrocinador | Descripción |
+|---------|-------------|
+| [APIDECK](https://apideck.com?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) | Una API para conectar tu aplicación con más de 200 plataformas SaaS (contabilidad, HRIS, CRM, almacenamiento de archivos). Crea integraciones una vez, no 50. 🌐 [apideck.com](https://apideck.com?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) |
+| [Vercel](https://vercel.com?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) | Resume Matcher es parte del programa Vercel OSS // Summer 2025 🌐 [vercel.com](https://vercel.com?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) |
+| [Cubic.dev](https://cubic.dev?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) | Cubic ofrece revisiones de PR para Resume Matcher 🌐 [cubic.dev](https://cubic.dev?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) |
+| [Kilo Code](https://kilo.ai?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) | Kilo Code proporciona revisiones de código de IA y créditos de codificación a Resume Matcher 🌐 [kilo.ai](https://kilo.ai?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) |
+
+<a id="support-the-development-by-donating"></a>
+
+## Patrocina Resume Matcher
+
+![donate](assets/supporting_resume_matcher.png)
+
+Por favor lee nuestra [Sponsorship Guide](https://resumematcher.fyi/docs/sponsoring) para detalles de cómo tu patrocinio ayuda al proyecto. Recibirás un agradecimiento especial en el ReadME y en nuestro sitio web.
+
+| Plataforma  | Enlace |
+|-----------|--------|
+| GitHub | [![GitHub Sponsors](https://img.shields.io/github/sponsors/srbhr?style=for-the-badge&color=1d4ed8&labelColor=F0F0E8&logo=github&logoColor=black)](https://github.com/sponsors/srbhr) |
+| Buy Me a Coffee | [![BuyMeACoffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&color=1d4ed8&labelColor=F0F0E8&logoColor=black)](https://www.buymeacoffee.com/srbhr) |
+
+## Nota del Creador
+
+Gracias por visitar Resume Matcher. Si quieres conectar, colaborar o simplemente saludar, ¡no dudes en contactarme!
+~ **Saurabh Rai** ✨
+
+Puedes seguirme en:
+
+- Website: [https://srbhr.com](https://srbhr.com)
+- Linkedin: [https://www.linkedin.com/in/srbhr/](https://www.linkedin.com/in/srbhr/)
+- Twitter: [https://twitter.com/srbhrai](https://twitter.com/srbhrai)
+- GitHub: [https://github.com/srbhr](https://github.com/srbhr)
+
+## Funciones clave
+
+![resume_matcher_features](assets/features.png)
+
+### Funciones principales
+
+**Currículum maestro**: crea un currículum maestro completo a partir de tu currículum actual.
+
+![Job Description Input](assets/step_2.png)
+
+### Constructor de currículum
+
+![Resume Builder](assets/step_5.png)
+
+Pega una descripción del puesto y obtén un currículum adaptado con ayuda de IA.
+
+Puedes:
+
+- Modificar el contenido sugerido
+- Añadir/quitar secciones
+- Reordenar secciones con arrastrar y soltar
+- Elegir entre múltiples plantillas
+
+### Generador de carta de presentación y email
+
+Genera cartas de presentación y plantillas de email adaptadas según la descripción del puesto y tu currículum.
+
+![Cover Letter](assets/cover_letter_es.png)
+
+### Puntuación del currículum (función en desarrollo)
+
+Estamos trabajando en una función de puntuación que analiza tu currículum frente a la descripción del puesto y ofrece un puntaje de coincidencia con sugerencias de mejora.
+
+![Resume Scoring and Keyword Highlight](assets/keyword_highlighter.png)
+
+### Exportación a PDF
+
+Exporta tu currículum adaptado y tu carta de presentación en PDF.
+
+### Plantillas
+
+| Nombre de plantilla | Vista previa | Descripción |
+|---------------------|-------------|-------------|
+| **Clásica (una columna)** | ![Classic Template](assets/pdf-templates/single-column.jpg) | Diseño tradicional y limpio, adecuado para la mayoría de industrias. [Ver PDF](assets/pdf-templates/single-column.pdf) |
+| **Moderna (una columna)** | ![Modern Template](assets/pdf-templates/modern-single-column.jpg) | Diseño contemporáneo enfocado en legibilidad y estética. [Ver PDF](assets/pdf-templates/modern-single-column.pdf) |
+| **Clásica (dos columnas)** | ![Classic Two Column Template](assets/pdf-templates/two-column.jpg) | Estructura que separa secciones para mayor claridad. [Ver PDF](assets/pdf-templates/two-column.pdf) |
+| **Moderna (dos columnas)** | ![Modern Two Column Template](assets/pdf-templates/modern-two-column.jpg) | Diseño elegante que usa dos columnas para mejor organización. [Ver PDF](assets/pdf-templates/modern-two-column.pdf) |
+
+### Internacionalización
+
+- **UI multilingüe**: interfaz disponible en inglés, español, chino y japonés
+- **Contenido multilingüe**: genera currículums y cartas de presentación en tu idioma preferido
 
 ### Roadmap
 
-Si tienes alguna sugerencia o solicitud de características, no dudes en abrir un *issue* en GitHub y discutirlo en nuestro servidor de [Discord](https://dsc.gg/resume-matcher).
+Si tienes alguna sugerencia o solicitud de características, no dudes en abrir un *issue* en GitHub o discutirlo en nuestro servidor de [Discord](https://dsc.gg/resume-matcher).
 
-- Resaltado visual de palabras clave.
-- Lienzo de IA (AI Canvas), que puede ayudar a crear contenido de currículum impactante y basado en métricas.
-- Optimización para múltiples descripciones de trabajo.
+- Resaltado visual de palabras clave
+- AI Canvas para crear contenido de currículum impactante y basado en métricas
+- Optimización para múltiples descripciones de trabajo
 
-## Cómo Instalar
+<a id="how-to-install"></a>
+
+## Cómo instalar
 
 ![Instalación](assets/how_to_install_resumematcher.png)
 
-Sigue las instrucciones en el archivo [SETUP.es.md](SETUP.es.md) para configurar el proyecto localmente. El script de configuración instalará todas las dependencias necesarias y configurará tu entorno.
+Para instrucciones detalladas de configuración, consulta **[SETUP.es.md](SETUP.es.md)**. También está disponible en [English](SETUP.md), [简体中文](SETUP.zh-CN.md) y [日本語](SETUP.ja.md).
 
-El proyecto está construido usando:
+### Requisitos previos
 
-- FastAPI para el backend.
-- Next.js para el frontend.
-- Ollama para modelos de IA locales.
-- Tailwind CSS para los estilos.
-- SQLite para la base de datos.
+| Herramienta | Versión | Instalación |
+|------------|---------|-------------|
+| Python | 3.13+ | [python.org](https://python.org) |
+| Node.js | 22+ | [nodejs.org](https://nodejs.org) |
+| uv | Última | [astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/) |
 
-| Tecnología   | Info/Versión                                  |
-|--------------|-----------------------------------------------|
-| Python       | 3.12+                                         |
-| Next.js      | 15+                                           |
-| Ollama       | 0.6.7                                         |
+### Inicio rápido
 
+La forma más rápida (MacOS, WSL y Ubuntu):
 
-## Únete y Contribuye
+```bash
+# Clona el repositorio
+git clone https://github.com/srbhr/Resume-Matcher.git
+cd Resume-Matcher
+
+# Backend (Terminal 1)
+cd apps/backend
+cp .env.example .env        # Configura tu proveedor de IA
+uv sync                      # Instala dependencias
+uv run uvicorn app.main:app --reload --port 8000
+
+# Frontend (Terminal 2)
+cd apps/frontend
+npm install
+npm run dev
+```
+
+Abre **<http://localhost:3000>** y configura tu proveedor de IA en Settings.
+
+### Proveedores de IA compatibles
+
+| Proveedor | Local/Nube | Notas |
+|----------|------------|-------|
+| **Ollama** | Local | Gratis, se ejecuta en tu máquina |
+| **OpenAI** | Nube | GPT-4o, GPT-4o-mini |
+| **Anthropic** | Nube | Claude 3.5 Sonnet |
+| **Google Gemini** | Nube | Gemini 1.5 Flash/Pro |
+| **OpenRouter** | Nube | Acceso a múltiples modelos |
+| **DeepSeek** | Nube | DeepSeek Chat |
+
+### Despliegue con Docker
+
+```bash
+docker pull srbhr/resume-matcher:latest
+
+docker run srbhr/resume-matcher:latest
+```
+
+<!-- Nota: La documentación de Docker está pendiente. Por ahora, usa docker-compose.yml como referencia -->
+
+> **¿Usas Ollama con Docker?** Usa `http://host.docker.internal:11434` como URL de Ollama en lugar de `localhost`.
+
+### Stack tecnológico
+
+| Componente | Tecnología |
+|-----------|------------|
+| Backend | FastAPI, Python 3.13+, LiteLLM |
+| Frontend | Next.js 15, React 19, TypeScript |
+| Base de datos | TinyDB (almacenamiento en archivo JSON) |
+| Estilos | Tailwind CSS 4, Swiss International Style |
+| PDF | Chromium headless vía Playwright |
+
+## Únete y contribuye
 
 ![Cómo contribuir](assets/how_to_contribute.png)
 
@@ -94,22 +241,15 @@ El proyecto está construido usando:
 
 Echa un vistazo al roadmap si te gustaría trabajar en las características que están planeadas para el futuro. Si tienes alguna sugerencia o solicitud de características, no dudes en abrir un *issue* en GitHub y discutirlo en nuestro servidor de [Discord](https://dsc.gg/resume-matcher).
 
+<a id="contributors"></a>
+
 ## Colaboradores
+
 ![Colaboradores](assets/contributors.png)
 
 <a href="https://github.com/srbhr/Resume-Matcher/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=srbhr/Resume-Matcher" />
 </a>
-
-## Apoya el Desarrollo Donando
-![Apoyanos](assets/supporting_resume_matcher.png)
-
-Si te gustaría apoyar el desarrollo de Resume Matcher, puedes hacerlo donando. Tus contribuciones nos ayudarán a mantener el proyecto vivo y a seguir añadiendo nuevas funciones.
-
-| Plataforma  | Enlace                                   |
-|-----------|----------------------------------------|
-| GitHub    | [![Patrocinadores de Github](https://img.shields.io/github/sponsors/srbhr?style=for-the-badge&color=c20a71&labelColor=black&logo=github)](https://github.com/sponsors/srbhr) |
-| Buy Me a Coffee | [![BuyMeACoffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&color=c20a72&logoColor=white)](https://www.buymeacoffee.com/srbhr) |
 
 <details>
   <summary><kbd>Historial de Estrellas</kbd></summary>
@@ -118,3 +258,7 @@ Si te gustaría apoyar el desarrollo de Resume Matcher, puedes hacerlo donando. 
     <img width="100%" src="https://api.star-history.com/svg?repos=srbhr/resume-matcher&theme=dark&type=Date">
   </picture>
 </details>
+
+## Resume Matcher es parte del [Vercel Open Source Program](https://vercel.com/oss)
+
+![Vercel OSS Program](https://vercel.com/oss/program-badge.svg)

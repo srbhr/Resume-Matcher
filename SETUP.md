@@ -1,5 +1,7 @@
 # Resume Matcher Setup Guide
 
+[**English**](SETUP.md) | [Español](SETUP.es.md) | [简体中文](SETUP.zh-CN.md) | [日本語](SETUP.ja.md)
+
 Welcome! This guide will walk you through setting up Resume Matcher on your local machine. Whether you're a developer looking to contribute or someone who wants to run the application locally, this guide has you covered.
 
 ---
@@ -275,7 +277,7 @@ docker-compose down
 - Data is persisted in a Docker volume
 - Both frontend (3000) and backend (8000) ports are exposed
 
-For detailed Docker instructions, see [docs/agent/60-docker/docker.md](docs/agent/60-docker/docker.md).
+<!-- Note: Docker documentation is pending. For now, use docker-compose.yml as reference -->
 
 ---
 
@@ -477,10 +479,9 @@ Stuck? Here are your options:
 
 | Document | Description |
 |----------|-------------|
-| [backend-guide.md](docs/agent/30-architecture/backend-guide.md) | Backend architecture and API details |
-| [frontend-workflow.md](docs/agent/30-architecture/frontend-workflow.md) | User flow and component architecture |
-| [docker.md](docs/agent/60-docker/docker.md) | Docker deployment guide |
-| [style-guide.md](docs/agent/50-design-and-templates/style-guide.md) | UI design system (Swiss International Style) |
+| [backend-guide.md](docs/agent/architecture/backend-guide.md) | Backend architecture and API details |
+| [frontend-workflow.md](docs/agent/architecture/frontend-workflow.md) | User flow and component architecture |
+| [style-guide.md](docs/agent/design/style-guide.md) | UI design system (Swiss International Style) |
 
 ---
 

@@ -58,6 +58,29 @@ export interface AdditionalInfo {
   awards?: string[];
 }
 
+export interface AdditionalSectionLabels {
+  technicalSkills: string;
+  languages: string;
+  certifications: string;
+  awards: string;
+}
+
+export interface ResumeSectionHeadings {
+  summary: string;
+  experience: string;
+  education: string;
+  projects: string;
+  certifications: string;
+  skills: string;
+  languages: string;
+  awards: string;
+  links: string;
+}
+
+export interface ResumeFallbackLabels {
+  name: string;
+}
+
 // Section Type for dynamic sections
 export type SectionType = 'personalInfo' | 'text' | 'itemList' | 'stringList';
 
@@ -106,6 +129,9 @@ interface ResumeProps {
   resumeData: ResumeData;
   template?: TemplateType;
   settings?: TemplateSettings;
+  additionalSectionLabels?: Partial<AdditionalSectionLabels>;
+  sectionHeadings?: Partial<ResumeSectionHeadings>;
+  fallbackLabels?: Partial<ResumeFallbackLabels>;
 }
 
 /**
@@ -120,7 +146,14 @@ interface ResumeProps {
  * - modern: Single-column with user-selectable accent colors
  * - modern-two-column: Two-column layout with modern colorful accents
  */
-const Resume: React.FC<ResumeProps> = ({ resumeData, template = 'swiss-single', settings }) => {
+const Resume: React.FC<ResumeProps> = ({
+  resumeData,
+  template = 'swiss-single',
+  settings,
+  additionalSectionLabels,
+  sectionHeadings,
+  fallbackLabels,
+}) => {
   // Merge provided settings with defaults
   const mergedSettings: TemplateSettings = {
     ...DEFAULT_TEMPLATE_SETTINGS,
@@ -144,18 +177,32 @@ const Resume: React.FC<ResumeProps> = ({ resumeData, template = 'swiss-single', 
       style={cssVars}
     >
       {mergedSettings.template === 'swiss-single' && (
-        <ResumeSingleColumn data={resumeData} showContactIcons={mergedSettings.showContactIcons} />
+        <ResumeSingleColumn
+          data={resumeData}
+          showContactIcons={mergedSettings.showContactIcons}
+          additionalSectionLabels={additionalSectionLabels}
+        />
       )}
       {mergedSettings.template === 'swiss-two-column' && (
-        <ResumeTwoColumn data={resumeData} showContactIcons={mergedSettings.showContactIcons} />
+        <ResumeTwoColumn
+          data={resumeData}
+          showContactIcons={mergedSettings.showContactIcons}
+          sectionHeadings={sectionHeadings}
+        />
       )}
       {mergedSettings.template === 'modern' && (
-        <ResumeModern data={resumeData} showContactIcons={mergedSettings.showContactIcons} />
+        <ResumeModern
+          data={resumeData}
+          showContactIcons={mergedSettings.showContactIcons}
+          additionalSectionLabels={additionalSectionLabels}
+        />
       )}
       {mergedSettings.template === 'modern-two-column' && (
         <ResumeModernTwoColumn
           data={resumeData}
           showContactIcons={mergedSettings.showContactIcons}
+          sectionHeadings={sectionHeadings}
+          fallbackLabels={fallbackLabels}
         />
       )}
     </div>
