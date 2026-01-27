@@ -21,13 +21,13 @@ Read the full design specs in `docs/agent/design/`:
 
 ### Colors
 
-| Name | Hex | Usage |
-|------|-----|-------|
-| Canvas | `#F0F0E8` | Background |
-| Ink | `#000000` | Text, borders |
-| Hyper Blue | `#1D4ED8` | Primary actions |
-| Signal Green | `#15803D` | Success |
-| Alert Red | `#DC2626` | Danger |
+| Name         | Hex       | Usage           |
+| ------------ | --------- | --------------- |
+| Canvas       | `#F0F0E8` | Background      |
+| Ink          | `#000000` | Text, borders   |
+| Hyper Blue   | `#1D4ED8` | Primary actions |
+| Signal Green | `#15803D` | Success         |
+| Alert Red    | `#DC2626` | Danger          |
 
 ### Typography
 

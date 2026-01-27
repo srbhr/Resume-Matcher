@@ -4,23 +4,23 @@
 
 ## Typography
 
-| Element | Font | Size | Weight |
-|---------|------|------|--------|
-| Name | serif | 2xl | bold |
-| Title | serif | lg | normal |
-| Section heading | serif | lg | semibold |
-| Job title | sans | base | semibold |
-| Company | sans | sm | medium |
-| Body text | sans | sm | normal |
-| Metadata | mono | xs | normal |
+| Element         | Font  | Size | Weight   |
+| --------------- | ----- | ---- | -------- |
+| Name            | serif | 2xl  | bold     |
+| Title           | serif | lg   | normal   |
+| Section heading | serif | lg   | semibold |
+| Job title       | sans  | base | semibold |
+| Company         | sans  | sm   | medium   |
+| Body text       | sans  | sm   | normal   |
+| Metadata        | mono  | xs   | normal   |
 
 ## Spacing
 
-| Element | Spacing |
-|---------|---------|
+| Element          | Spacing |
+| ---------------- | ------- |
 | Between sections | 16-24px |
-| Between items | 8-12px |
-| Line height | 1.4-1.6 |
+| Between items    | 8-12px  |
+| Line height      | 1.4-1.6 |
 
 ## Colors
 

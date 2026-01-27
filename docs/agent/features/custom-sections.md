@@ -4,12 +4,12 @@
 
 ## Section Types
 
-| Type | Description | Example Uses |
-|------|-------------|--------------|
-| `personalInfo` | Special type for header (always first) | Name, contact details |
-| `text` | Single text block | Summary, objective, statement |
-| `itemList` | Array of items with title, subtitle, years, description | Experience, projects, publications |
-| `stringList` | Simple array of strings | Skills, languages, hobbies |
+| Type           | Description                                             | Example Uses                       |
+| -------------- | ------------------------------------------------------- | ---------------------------------- |
+| `personalInfo` | Special type for header (always first)                  | Name, contact details              |
+| `text`         | Single text block                                       | Summary, objective, statement      |
+| `itemList`     | Array of items with title, subtitle, years, description | Experience, projects, publications |
+| `stringList`   | Simple array of strings                                 | Skills, languages, hobbies         |
 
 ## Section Features
 
@@ -23,13 +23,13 @@
 
 Each section (except Personal Info) has these controls in the header:
 
-| Control | Icon | Function |
-|---------|------|----------|
-| Visibility | 👁 Eye / EyeOff | Toggle show/hide in PDF preview |
-| Move Up | ⬆ ChevronUp | Move section earlier in order |
-| Move Down | ⬇ ChevronDown | Move section later in order |
-| Rename | ✏️ Pencil | Edit section display name |
-| Delete | 🗑 Trash | Hide (default) or delete (custom) |
+| Control    | Icon            | Function                          |
+| ---------- | --------------- | --------------------------------- |
+| Visibility | 👁 Eye / EyeOff | Toggle show/hide in PDF preview   |
+| Move Up    | ⬆ ChevronUp     | Move section earlier in order     |
+| Move Down  | ⬇ ChevronDown   | Move section later in order       |
+| Rename     | ✏️ Pencil       | Edit section display name         |
+| Delete     | 🗑 Trash        | Hide (default) or delete (custom) |
 
 ## Hidden Section Behavior
 
@@ -42,22 +42,22 @@ Each section (except Personal Info) has these controls in the header:
 
 ## Key Files
 
-| File | Purpose |
-|------|---------|
-| `apps/backend/app/schemas/models.py` | `SectionType`, `SectionMeta`, `CustomSection` models |
-| `apps/frontend/lib/utils/section-helpers.ts` | Section management utilities |
-| `apps/frontend/components/builder/section-header.tsx` | Section controls UI |
-| `apps/frontend/components/builder/add-section-dialog.tsx` | Add custom section dialog |
-| `apps/frontend/components/builder/resume-form.tsx` | Dynamic form rendering |
-| `apps/frontend/components/resume/dynamic-resume-section.tsx` | Renders custom sections in templates |
+| File                                                         | Purpose                                              |
+| ------------------------------------------------------------ | ---------------------------------------------------- |
+| `apps/backend/app/schemas/models.py`                         | `SectionType`, `SectionMeta`, `CustomSection` models |
+| `apps/frontend/lib/utils/section-helpers.ts`                 | Section management utilities                         |
+| `apps/frontend/components/builder/section-header.tsx`        | Section controls UI                                  |
+| `apps/frontend/components/builder/add-section-dialog.tsx`    | Add custom section dialog                            |
+| `apps/frontend/components/builder/resume-form.tsx`           | Dynamic form rendering                               |
+| `apps/frontend/components/resume/dynamic-resume-section.tsx` | Renders custom sections in templates                 |
 
 ## Data Structure
 
 ```typescript
 interface ResumeData {
   // ... existing fields (personalInfo, summary, etc.)
-  sectionMeta?: SectionMeta[];  // Section order, names, visibility
-  customSections?: Record<string, CustomSection>;  // Custom section data
+  sectionMeta?: SectionMeta[]; // Section order, names, visibility
+  customSections?: Record<string, CustomSection>; // Custom section data
 }
 ```
 

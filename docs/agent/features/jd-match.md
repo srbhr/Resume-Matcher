@@ -24,16 +24,16 @@ The Resume Builder includes a "JD Match" tab that shows how well a tailored resu
 
 ## Key Files
 
-| File | Purpose |
-|------|---------|
-| `apps/frontend/lib/utils/keyword-matcher.ts` | Keyword extraction and matching utilities |
-| `apps/frontend/components/builder/jd-comparison-view.tsx` | Main split-view component |
-| `apps/frontend/components/builder/jd-display.tsx` | Read-only JD display |
-| `apps/frontend/components/builder/highlighted-resume-view.tsx` | Resume with keyword highlighting |
-| `apps/backend/app/routers/resumes.py` | `GET /{resume_id}/job-description` endpoint |
+| File                                                           | Purpose                                     |
+| -------------------------------------------------------------- | ------------------------------------------- |
+| `apps/frontend/lib/utils/keyword-matcher.ts`                   | Keyword extraction and matching utilities   |
+| `apps/frontend/components/builder/jd-comparison-view.tsx`      | Main split-view component                   |
+| `apps/frontend/components/builder/jd-display.tsx`              | Read-only JD display                        |
+| `apps/frontend/components/builder/highlighted-resume-view.tsx` | Resume with keyword highlighting            |
+| `apps/backend/app/routers/resumes.py`                          | `GET /{resume_id}/job-description` endpoint |
 
 ## API Endpoint
 
-| Endpoint | Description |
-|----------|-------------|
+| Endpoint                                   | Description                      |
+| ------------------------------------------ | -------------------------------- |
 | `GET /resumes/{resume_id}/job-description` | Fetch JD used to tailor a resume |

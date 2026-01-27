@@ -23,7 +23,7 @@ apps/frontend/messages/
 1. Create `messages/{locale}.json`
 2. Add locale to `i18n/config.ts`:
    ```typescript
-   export const locales = ['en', 'es', 'zh', 'ja', 'de'] as const;
+   export const locales = ["en", "es", "zh", "ja", "de"] as const;
    ```
 3. Add to `SUPPORTED_LANGUAGES` in backend `config.py`
 
@@ -45,11 +45,11 @@ apps/frontend/messages/
 ## Usage in Components
 
 ```tsx
-import { useTranslations } from 'next-intl';
+import { useTranslations } from "next-intl";
 
 export function MyComponent() {
-  const t = useTranslations('dashboard');
-  return <h1>{t('title')}</h1>;
+  const t = useTranslations("dashboard");
+  return <h1>{t("title")}</h1>;
 }
 ```
 
@@ -61,6 +61,7 @@ export function MyComponent() {
 ## Backend i18n (Future)
 
 Currently prompts are English-only. To support multiple languages:
+
 1. Create `app/i18n/locales/{lang}.json`
 2. Add language parameter to prompt templates
 3. Pass `Accept-Language` header from frontend

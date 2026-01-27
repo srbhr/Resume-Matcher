@@ -13,6 +13,7 @@ Production-tested patterns for FastAPI with Pydantic v2, SQLAlchemy 2.0 async, a
 
 **Latest Versions** (verified January 2026):
 
+
 - FastAPI: 0.128.0
 - Pydantic: 2.11.7
 - SQLAlchemy: 2.0.30

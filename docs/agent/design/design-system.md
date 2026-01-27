@@ -45,30 +45,34 @@ hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none
 ## Component Tokens
 
 ### Button Variants
-| Variant | BG | Text |
-|---------|-----|------|
-| default | `bg-blue-700` | white |
-| success | `bg-green-700` | white |
-| destructive | `bg-red-600` | white |
-| warning | `bg-orange-500` | white |
-| outline | transparent | black |
+
+| Variant     | BG              | Text  |
+| ----------- | --------------- | ----- |
+| default     | `bg-blue-700`   | white |
+| success     | `bg-green-700`  | white |
+| destructive | `bg-red-600`    | white |
+| warning     | `bg-orange-500` | white |
+| outline     | transparent     | black |
 
 ### Alert Styles
+
 ```jsx
-danger:  "bg-red-100 border-2 border-red-600"
-warning: "bg-orange-100 border-2 border-orange-600"
-success: "bg-green-100 border-2 border-green-700"
-info:    "bg-blue-100 border-2 border-blue-700"
+danger: "bg-red-100 border-2 border-red-600";
+warning: "bg-orange-100 border-2 border-orange-600";
+success: "bg-green-100 border-2 border-green-700";
+info: "bg-blue-100 border-2 border-blue-700";
 ```
 
 ## Layout Patterns
 
 ### Dashboard Grid
+
 ```jsx
 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
 ```
 
 ### Two-Panel Editor
+
 ```jsx
 <div className="flex h-full">
   <div className="w-1/2 border-r">Editor</div>
@@ -77,6 +81,7 @@ info:    "bg-blue-100 border-2 border-blue-700"
 ```
 
 ### Panel Headers
+
 ```jsx
 // Editor panel
 <div className="flex items-center gap-2">
@@ -95,8 +100,8 @@ info:    "bg-blue-100 border-2 border-blue-700"
 
 ```typescript
 const PAGE_SIZES = {
-  A4: { width: 210, height: 297 },     // mm
-  LETTER: { width: 215.9, height: 279.4 }
+  A4: { width: 210, height: 297 }, // mm
+  LETTER: { width: 215.9, height: 279.4 },
 };
 
 // Convert mm to px at 96 DPI

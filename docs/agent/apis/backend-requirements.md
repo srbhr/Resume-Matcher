@@ -56,6 +56,7 @@ GET /jobs/{id}             → {job_id, content, created_at}
 ## Request/Response Formats
 
 ### Resume Object
+
 ```json
 {
   "resume_id": "uuid",
@@ -75,6 +76,7 @@ GET /jobs/{id}             → {job_id, content, created_at}
 ```
 
 ### Error Response
+
 ```json
 {
   "detail": "Error message"
@@ -83,11 +85,11 @@ GET /jobs/{id}             → {job_id, content, created_at}
 
 ## Status Codes
 
-| Code | Meaning |
-|------|---------|
-| 400 | Bad request |
-| 404 | Not found |
-| 413 | File too large (>4MB) |
-| 422 | Parsing failed |
-| 500 | Server error |
-| 503 | PDF rendering failed |
+| Code | Meaning               |
+| ---- | --------------------- |
+| 400  | Bad request           |
+| 404  | Not found             |
+| 413  | File too large (>4MB) |
+| 422  | Parsing failed        |
+| 500  | Server error          |
+| 503  | PDF rendering failed  |

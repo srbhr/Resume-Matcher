@@ -33,7 +33,7 @@ Esperamos convertir esto en **el VS Code para crear currículums**.
 
 > \[!IMPORTANT]
 >
-> Este proyecto está en desarrollo activo. Se están añadiendo nuevas características continuamente y agradecemos las contribuciones de la comunidad. Si tienes alguna sugerencia o solicitud de características, no dudes en abrir un *issue* en GitHub o discutirlo en nuestro servidor de [Discord](https://dsc.gg/resume-matcher).
+> Este proyecto está en desarrollo activo. Se están añadiendo nuevas características continuamente y agradecemos las contribuciones de la comunidad. Si tienes alguna sugerencia o solicitud de características, no dudes en abrir un _issue_ en GitHub o discutirlo en nuestro servidor de [Discord](https://dsc.gg/resume-matcher).
 
 ## Primeros pasos
 
@@ -68,12 +68,12 @@ Dale una estrella al repositorio para apoyar el desarrollo y recibir notificacio
 
 Estamos agradecidos a nuestros patrocinadores que ayudan a mantener este proyecto. Si Resume Matcher te resulta útil, considera [**apoyarnos**](https://github.com/sponsors/srbhr) para asegurar el desarrollo y las mejoras continuas.
 
-| Patrocinador | Descripción |
-|---------|-------------|
+| Patrocinador                                                                                    | Descripción                                                                                                                                                                                                                                                          |
+| ----------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [APIDECK](https://apideck.com?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) | Una API para conectar tu aplicación con más de 200 plataformas SaaS (contabilidad, HRIS, CRM, almacenamiento de archivos). Crea integraciones una vez, no 50. 🌐 [apideck.com](https://apideck.com?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) |
-| [Vercel](https://vercel.com?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) | Resume Matcher es parte del programa Vercel OSS // Summer 2025 🌐 [vercel.com](https://vercel.com?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) |
-| [Cubic.dev](https://cubic.dev?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) | Cubic ofrece revisiones de PR para Resume Matcher 🌐 [cubic.dev](https://cubic.dev?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) |
-| [Kilo Code](https://kilo.ai?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) | Kilo Code proporciona revisiones de código de IA y créditos de codificación a Resume Matcher 🌐 [kilo.ai](https://kilo.ai?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) |
+| [Vercel](https://vercel.com?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors)   | Resume Matcher es parte del programa Vercel OSS // Summer 2025 🌐 [vercel.com](https://vercel.com?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors)                                                                                                  |
+| [Cubic.dev](https://cubic.dev?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) | Cubic ofrece revisiones de PR para Resume Matcher 🌐 [cubic.dev](https://cubic.dev?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors)                                                                                                                 |
+| [Kilo Code](https://kilo.ai?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors)   | Kilo Code proporciona revisiones de código de IA y créditos de codificación a Resume Matcher 🌐 [kilo.ai](https://kilo.ai?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors)                                                                          |
 
 <a id="support-the-development-by-donating"></a>
 
@@ -83,9 +83,9 @@ Estamos agradecidos a nuestros patrocinadores que ayudan a mantener este proyect
 
 Por favor lee nuestra [Sponsorship Guide](https://resumematcher.fyi/docs/sponsoring) para detalles de cómo tu patrocinio ayuda al proyecto. Recibirás un agradecimiento especial en el ReadME y en nuestro sitio web.
 
-| Plataforma  | Enlace |
-|-----------|--------|
-| GitHub | [![GitHub Sponsors](https://img.shields.io/github/sponsors/srbhr?style=for-the-badge&color=1d4ed8&labelColor=F0F0E8&logo=github&logoColor=black)](https://github.com/sponsors/srbhr) |
+| Plataforma      | Enlace                                                                                                                                                                                                   |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GitHub          | [![GitHub Sponsors](https://img.shields.io/github/sponsors/srbhr?style=for-the-badge&color=1d4ed8&labelColor=F0F0E8&logo=github&logoColor=black)](https://github.com/sponsors/srbhr)                     |
 | Buy Me a Coffee | [![BuyMeACoffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&color=1d4ed8&labelColor=F0F0E8&logoColor=black)](https://www.buymeacoffee.com/srbhr) |
 
 ## Nota del Creador
@@ -141,12 +141,12 @@ Exporta tu currículum adaptado y tu carta de presentación en PDF.
 
 ### Plantillas
 
-| Nombre de plantilla | Vista previa | Descripción |
-|---------------------|-------------|-------------|
-| **Clásica (una columna)** | ![Classic Template](assets/pdf-templates/single-column.jpg) | Diseño tradicional y limpio, adecuado para la mayoría de industrias. [Ver PDF](assets/pdf-templates/single-column.pdf) |
-| **Moderna (una columna)** | ![Modern Template](assets/pdf-templates/modern-single-column.jpg) | Diseño contemporáneo enfocado en legibilidad y estética. [Ver PDF](assets/pdf-templates/modern-single-column.pdf) |
-| **Clásica (dos columnas)** | ![Classic Two Column Template](assets/pdf-templates/two-column.jpg) | Estructura que separa secciones para mayor claridad. [Ver PDF](assets/pdf-templates/two-column.pdf) |
-| **Moderna (dos columnas)** | ![Modern Two Column Template](assets/pdf-templates/modern-two-column.jpg) | Diseño elegante que usa dos columnas para mejor organización. [Ver PDF](assets/pdf-templates/modern-two-column.pdf) |
+| Nombre de plantilla        | Vista previa                                                              | Descripción                                                                                                            |
+| -------------------------- | ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| **Clásica (una columna)**  | ![Classic Template](assets/pdf-templates/single-column.jpg)               | Diseño tradicional y limpio, adecuado para la mayoría de industrias. [Ver PDF](assets/pdf-templates/single-column.pdf) |
+| **Moderna (una columna)**  | ![Modern Template](assets/pdf-templates/modern-single-column.jpg)         | Diseño contemporáneo enfocado en legibilidad y estética. [Ver PDF](assets/pdf-templates/modern-single-column.pdf)      |
+| **Clásica (dos columnas)** | ![Classic Two Column Template](assets/pdf-templates/two-column.jpg)       | Estructura que separa secciones para mayor claridad. [Ver PDF](assets/pdf-templates/two-column.pdf)                    |
+| **Moderna (dos columnas)** | ![Modern Two Column Template](assets/pdf-templates/modern-two-column.jpg) | Diseño elegante que usa dos columnas para mejor organización. [Ver PDF](assets/pdf-templates/modern-two-column.pdf)    |
 
 ### Internacionalización
 
@@ -155,7 +155,7 @@ Exporta tu currículum adaptado y tu carta de presentación en PDF.
 
 ### Roadmap
 
-Si tienes alguna sugerencia o solicitud de características, no dudes en abrir un *issue* en GitHub o discutirlo en nuestro servidor de [Discord](https://dsc.gg/resume-matcher).
+Si tienes alguna sugerencia o solicitud de características, no dudes en abrir un _issue_ en GitHub o discutirlo en nuestro servidor de [Discord](https://dsc.gg/resume-matcher).
 
 - Resaltado visual de palabras clave
 - AI Canvas para crear contenido de currículum impactante y basado en métricas
@@ -171,11 +171,11 @@ Para instrucciones detalladas de configuración, consulta **[SETUP.es.md](SETUP.
 
 ### Requisitos previos
 
-| Herramienta | Versión | Instalación |
-|------------|---------|-------------|
-| Python | 3.13+ | [python.org](https://python.org) |
-| Node.js | 22+ | [nodejs.org](https://nodejs.org) |
-| uv | Última | [astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/) |
+| Herramienta | Versión | Instalación                                                             |
+| ----------- | ------- | ----------------------------------------------------------------------- |
+| Python      | 3.13+   | [python.org](https://python.org)                                        |
+| Node.js     | 22+     | [nodejs.org](https://nodejs.org)                                        |
+| uv          | Última  | [astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/) |
 
 ### Inicio rápido
 
@@ -202,14 +202,14 @@ Abre **<http://localhost:3000>** y configura tu proveedor de IA en Settings.
 
 ### Proveedores de IA compatibles
 
-| Proveedor | Local/Nube | Notas |
-|----------|------------|-------|
-| **Ollama** | Local | Gratis, se ejecuta en tu máquina |
-| **OpenAI** | Nube | GPT-4o, GPT-4o-mini |
-| **Anthropic** | Nube | Claude 3.5 Sonnet |
-| **Google Gemini** | Nube | Gemini 1.5 Flash/Pro |
-| **OpenRouter** | Nube | Acceso a múltiples modelos |
-| **DeepSeek** | Nube | DeepSeek Chat |
+| Proveedor         | Local/Nube | Notas                            |
+| ----------------- | ---------- | -------------------------------- |
+| **Ollama**        | Local      | Gratis, se ejecuta en tu máquina |
+| **OpenAI**        | Nube       | GPT-4o, GPT-4o-mini              |
+| **Anthropic**     | Nube       | Claude 3.5 Sonnet                |
+| **Google Gemini** | Nube       | Gemini 1.5 Flash/Pro             |
+| **OpenRouter**    | Nube       | Acceso a múltiples modelos       |
+| **DeepSeek**      | Nube       | DeepSeek Chat                    |
 
 ### Despliegue con Docker
 
@@ -225,13 +225,13 @@ docker run srbhr/resume-matcher:latest
 
 ### Stack tecnológico
 
-| Componente | Tecnología |
-|-----------|------------|
-| Backend | FastAPI, Python 3.13+, LiteLLM |
-| Frontend | Next.js 15, React 19, TypeScript |
-| Base de datos | TinyDB (almacenamiento en archivo JSON) |
-| Estilos | Tailwind CSS 4, Swiss International Style |
-| PDF | Chromium headless vía Playwright |
+| Componente    | Tecnología                                |
+| ------------- | ----------------------------------------- |
+| Backend       | FastAPI, Python 3.13+, LiteLLM            |
+| Frontend      | Next.js 15, React 19, TypeScript          |
+| Base de datos | TinyDB (almacenamiento en archivo JSON)   |
+| Estilos       | Tailwind CSS 4, Swiss International Style |
+| PDF           | Chromium headless vía Playwright          |
 
 ## Únete y contribuye
 
@@ -239,7 +239,7 @@ docker run srbhr/resume-matcher:latest
 
 ¡Damos la bienvenida a las contribuciones de todos! Ya seas un desarrollador, diseñador o simplemente alguien que quiere ayudar. Todos los colaboradores están listados en la [página "Acerca de"](https://resumematcher.fyi/about) en nuestro sitio web y en el Readme de GitHub.
 
-Echa un vistazo al roadmap si te gustaría trabajar en las características que están planeadas para el futuro. Si tienes alguna sugerencia o solicitud de características, no dudes en abrir un *issue* en GitHub y discutirlo en nuestro servidor de [Discord](https://dsc.gg/resume-matcher).
+Echa un vistazo al roadmap si te gustaría trabajar en las características que están planeadas para el futuro. Si tienes alguna sugerencia o solicitud de características, no dudes en abrir un _issue_ en GitHub y discutirlo en nuestro servidor de [Discord](https://dsc.gg/resume-matcher).
 
 <a id="contributors"></a>
 

@@ -6,8 +6,8 @@ services:
     image: resume-matcher
     container_name: resume-matcher
     ports:
-      - "3000:3000"   # Frontend
-      - "8000:8000"   # Backend API
+      - "3000:3000" # Frontend
+      - "8000:8000" # Backend API
     volumes:
       - resume-data:/app/backend/data
     environment:
