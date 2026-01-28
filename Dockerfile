@@ -4,7 +4,7 @@
 # ============================================
 # Stage 1: Build Frontend
 # ============================================
-FROM node:22-slim AS frontend-builder
+FROM node:lts-alpine3.23 AS frontend-builder
 
 WORKDIR /app/frontend
 
