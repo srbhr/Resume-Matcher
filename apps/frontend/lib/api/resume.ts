@@ -165,7 +165,7 @@ export async function previewImproveResume(
 export async function confirmImproveResume(
   payload: ImproveResumeConfirmRequest
 ): Promise<ImprovedResult> {
-  return postImprove('/resumes/improve/confirm', payload as Record<string, unknown>);
+  return postImprove('/resumes/improve/confirm', payload as unknown as Record<string, unknown>);
 }
 
 /** Fetches a raw resume record for previewing the original upload */

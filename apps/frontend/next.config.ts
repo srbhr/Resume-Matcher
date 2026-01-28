@@ -1,17 +1,20 @@
 import type { NextConfig } from 'next';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+// Backend URL for rewrites (internal Docker network or local dev)
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8000';
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Standalone output for Docker deployment
+  output: 'standalone',
   experimental: {
-    turbopackUseSystemTlsCerts: true,
+    // optimizePackageImports: ['...'],
   },
   async rewrites() {
     return [
       {
-        source: '/api_be/:path*',
-        destination: `${API_URL}/:path*`,
+        // Proxy all /api/* requests to the backend
+        source: '/api/:path*',
+        destination: `${BACKEND_URL}/api/:path*`,
       },
     ];
   },

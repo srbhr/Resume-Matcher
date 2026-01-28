@@ -121,11 +121,11 @@ for i in {1..30}; do
     sleep 1
 done
 
-# Start frontend
+# Start frontend (standalone server)
 echo ""
 info "Starting frontend server..."
 cd /app/frontend
-npm start &
+node server.js &
 FRONTEND_PID=$!
 
 echo ""

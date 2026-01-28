@@ -12,15 +12,13 @@ WORKDIR /app/frontend
 COPY apps/frontend/package*.json ./
 
 # Install dependencies
-RUN npm ci
+RUN apt-get update && apt-get install -y ca-certificates
+RUN npm install
 
 # Copy frontend source
 COPY apps/frontend/ ./
 
-# Set environment variable for production build
-ENV NEXT_PUBLIC_API_URL=http://localhost:8000
-
-# Build the frontend
+# Build the frontend (uses standalone output mode)
 RUN npm run build
 
 # ============================================
@@ -82,18 +80,15 @@ RUN pip install -e .
 RUN python -m playwright install-deps chromium 2>/dev/null || true
 
 # ============================================
-# Frontend Setup
+# Frontend Setup (Standalone Build)
 # ============================================
 WORKDIR /app/frontend
 
-# Copy built frontend from builder stage
-COPY --from=frontend-builder /app/frontend/.next ./.next
+# Copy standalone build from builder stage
+# Standalone output includes all necessary dependencies
+COPY --from=frontend-builder /app/frontend/.next/standalone ./
+COPY --from=frontend-builder /app/frontend/.next/static ./.next/static
 COPY --from=frontend-builder /app/frontend/public ./public
-COPY --from=frontend-builder /app/frontend/package*.json ./
-COPY --from=frontend-builder /app/frontend/next.config.ts ./
-
-# Install production dependencies only
-RUN npm ci --omit=dev
 
 # ============================================
 # Startup Script
@@ -115,8 +110,8 @@ USER appuser
 # Install Playwright Chromium as appuser (so browsers are in correct location)
 RUN python -m playwright install chromium
 
-# Expose ports
-EXPOSE 3000 8000
+# Expose only port 3000 (API is proxied through Next.js)
+EXPOSE 3000
 
 # Volume for persistent data
 VOLUME ["/app/backend/data"]
@@ -124,9 +119,9 @@ VOLUME ["/app/backend/data"]
 # Set working directory
 WORKDIR /app
 
-# Health check (endpoint is at /api/v1/health per backend router configuration)
+# Health check via frontend proxy (tests both frontend and backend)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:8000/api/v1/health || exit 1
+    CMD curl -f http://localhost:3000/api/v1/health || exit 1
 
 # Start the application
 CMD ["/app/start.sh"]

@@ -10,10 +10,10 @@ export type Messages = typeof en;
 
 const allMessages: Record<Locale, Messages> = {
   en,
-  es,
-  zh,
-  ja,
-  pt,
+  es: es as unknown as Messages,
+  zh: zh as unknown as Messages,
+  ja: ja as unknown as Messages,
+  pt: pt as unknown as Messages,
 };
 
 export function getMessages(locale: Locale): Messages {
