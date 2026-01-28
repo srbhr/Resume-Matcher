@@ -24,7 +24,7 @@ All textareas in forms should include `onKeyDown` with `e.stopPropagation()` for
 
 ```tsx
 const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-  if (e.key === 'Enter') e.stopPropagation();
+  if (e.key === "Enter") e.stopPropagation();
 };
 ```
 

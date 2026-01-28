@@ -16,23 +16,23 @@ Backend: GET /resumes/{id}/pdf
 
 ## Print Routes
 
-| Route | Selector | Output |
-|-------|----------|--------|
-| `/print/resumes/[id]` | `.resume-print` | Resume PDF |
+| Route                      | Selector              | Output           |
+| -------------------------- | --------------------- | ---------------- |
+| `/print/resumes/[id]`      | `.resume-print`       | Resume PDF       |
 | `/print/cover-letter/[id]` | `.cover-letter-print` | Cover letter PDF |
 
 ## Query Parameters
 
-| Param | Default | Range |
-|-------|---------|-------|
-| template | swiss-single | swiss-single, swiss-two-column |
-| pageSize | A4 | A4, LETTER |
-| marginTop/Bottom/Left/Right | 10 | 5-25mm |
-| sectionSpacing | 3 | 1-5 |
-| itemSpacing | 2 | 1-5 |
-| lineHeight | 3 | 1-5 |
-| fontSize | 3 | 1-5 |
-| headerScale | 3 | 1-5 |
+| Param                       | Default      | Range                          |
+| --------------------------- | ------------ | ------------------------------ |
+| template                    | swiss-single | swiss-single, swiss-two-column |
+| pageSize                    | A4           | A4, LETTER                     |
+| marginTop/Bottom/Left/Right | 10           | 5-25mm                         |
+| sectionSpacing              | 3            | 1-5                            |
+| itemSpacing                 | 2            | 1-5                            |
+| lineHeight                  | 3            | 1-5                            |
+| fontSize                    | 3            | 1-5                            |
+| headerScale                 | 3            | 1-5                            |
 
 ## Critical CSS Rule
 
@@ -40,13 +40,19 @@ In `globals.css`, whitelist print classes or PDFs will be blank:
 
 ```css
 @media print {
-  body * { visibility: hidden !important; }
-  
+  body * {
+    visibility: hidden !important;
+  }
+
   .resume-print,
-  .resume-print * { visibility: visible !important; }
-  
+  .resume-print * {
+    visibility: visible !important;
+  }
+
   .cover-letter-print,
-  .cover-letter-print * { visibility: visible !important; }
+  .cover-letter-print * {
+    visibility: visible !important;
+  }
 }
 ```
 
@@ -87,6 +93,7 @@ interface TemplateProps {
 ## Error Handling
 
 If Playwright can't connect to frontend, returns HTTP 503 with:
+
 ```
 Cannot connect to frontend for PDF generation.
 Please ensure: 1) Frontend is running

@@ -66,12 +66,12 @@ Resume Matcher 的工作方式是先建立一份“主简历”，然后针对�
 
 感谢赞助商帮助项目持续推进。如果你觉得 Resume Matcher 有帮助，欢迎通过 [**GitHub Sponsors**](https://github.com/sponsors/srbhr) 支持我们，以便持续迭代与改进。
 
-| Sponsor | Description |
-|---------|-------------|
+| Sponsor                                                                                         | Description                                                                                                                                                                                                                             |
+| ----------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [APIDECK](https://apideck.com?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) | One API to connect your app to 200+ SaaS platforms (accounting, HRIS, CRM, file storage). Build integrations once, not 50 times. 🌐 [apideck.com](https://apideck.com?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) |
-| [Vercel](https://vercel.com?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) | Resume Matcher 是 Vercel OSS // Summer 2025 计划的一部分 🌐 [vercel.com](https://vercel.com?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) |
-| [Cubic.dev](https://cubic.dev?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) | Cubic 为 Resume Matcher 提供 PR 审查 🌐 [cubic.dev](https://cubic.dev?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) |
-| [Kilo Code](https://kilo.ai?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) | Kilo Code 为 Resume Matcher 提供 AI 代码审查和编码积分 🌐 [kilo.ai](https://kilo.ai?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) |
+| [Vercel](https://vercel.com?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors)   | Resume Matcher 是 Vercel OSS // Summer 2025 计划的一部分 🌐 [vercel.com](https://vercel.com?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors)                                                                           |
+| [Cubic.dev](https://cubic.dev?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) | Cubic 为 Resume Matcher 提供 PR 审查 🌐 [cubic.dev](https://cubic.dev?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors)                                                                                                 |
+| [Kilo Code](https://kilo.ai?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors)   | Kilo Code 为 Resume Matcher 提供 AI 代码审查和编码积分 🌐 [kilo.ai](https://kilo.ai?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors)                                                                                   |
 
 <a id="support-the-development-by-donating"></a>
 
@@ -81,9 +81,9 @@ Resume Matcher 的工作方式是先建立一份“主简历”，然后针对�
 
 请阅读我们的 [Sponsorship Guide](https://resumematcher.fyi/docs/sponsoring) 了解您的赞助如何帮助本项目。您将在 ReadME 和我们的网站上获得特别鸣谢。
 
-| 平台  | 链接 |
-|------|------|
-| GitHub | [![GitHub Sponsors](https://img.shields.io/github/sponsors/srbhr?style=for-the-badge&color=1d4ed8&labelColor=F0F0E8&logo=github&logoColor=black)](https://github.com/sponsors/srbhr) |
+| 平台            | 链接                                                                                                                                                                                                     |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GitHub          | [![GitHub Sponsors](https://img.shields.io/github/sponsors/srbhr?style=for-the-badge&color=1d4ed8&labelColor=F0F0E8&logo=github&logoColor=black)](https://github.com/sponsors/srbhr)                     |
 | Buy Me a Coffee | [![BuyMeACoffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&color=1d4ed8&labelColor=F0F0E8&logoColor=black)](https://www.buymeacoffee.com/srbhr) |
 
 ## 创作者留言
@@ -139,12 +139,12 @@ Resume Matcher 的工作方式是先建立一份“主简历”，然后针对�
 
 ### 模板
 
-| 模板名称 | 预览 | 说明 |
-|---------|------|------|
-| **经典单栏** | ![Classic Template](assets/pdf-templates/single-column.jpg) | 传统且干净的排版，适用于大多数行业。[查看 PDF](assets/pdf-templates/single-column.pdf) |
-| **现代单栏** | ![Modern Template](assets/pdf-templates/modern-single-column.jpg) | 更强调可读性与审美的现代风格。[查看 PDF](assets/pdf-templates/modern-single-column.pdf) |
-| **经典双栏** | ![Classic Two Column Template](assets/pdf-templates/two-column.jpg) | 将内容分区展示，更清晰易扫读。[查看 PDF](assets/pdf-templates/two-column.pdf) |
-| **现代双栏** | ![Modern Two Column Template](assets/pdf-templates/modern-two-column.jpg) | 利用双栏结构做更强的信息组织。[查看 PDF](assets/pdf-templates/modern-two-column.pdf) |
+| 模板名称     | 预览                                                                      | 说明                                                                                    |
+| ------------ | ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| **经典单栏** | ![Classic Template](assets/pdf-templates/single-column.jpg)               | 传统且干净的排版，适用于大多数行业。[查看 PDF](assets/pdf-templates/single-column.pdf)  |
+| **现代单栏** | ![Modern Template](assets/pdf-templates/modern-single-column.jpg)         | 更强调可读性与审美的现代风格。[查看 PDF](assets/pdf-templates/modern-single-column.pdf) |
+| **经典双栏** | ![Classic Two Column Template](assets/pdf-templates/two-column.jpg)       | 将内容分区展示，更清晰易扫读。[查看 PDF](assets/pdf-templates/two-column.pdf)           |
+| **现代双栏** | ![Modern Two Column Template](assets/pdf-templates/modern-two-column.jpg) | 利用双栏结构做更强的信息组织。[查看 PDF](assets/pdf-templates/modern-two-column.pdf)    |
 
 ### 国际化
 
@@ -169,11 +169,11 @@ Resume Matcher 的工作方式是先建立一份“主简历”，然后针对�
 
 ### 前置条件
 
-| 工具 | 版本 | 安装 |
-|------|------|------|
-| Python | 3.13+ | [python.org](https://python.org) |
-| Node.js | 22+ | [nodejs.org](https://nodejs.org) |
-| uv | 最新版 | [astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/) |
+| 工具    | 版本   | 安装                                                                    |
+| ------- | ------ | ----------------------------------------------------------------------- |
+| Python  | 3.13+  | [python.org](https://python.org)                                        |
+| Node.js | 22+    | [nodejs.org](https://nodejs.org)                                        |
+| uv      | 最新版 | [astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/) |
 
 ### 快速开始
 
@@ -200,14 +200,14 @@ npm run dev
 
 ### 支持的 AI 提供商
 
-| 提供商 | 本地/云 | 说明 |
-|--------|---------|------|
-| **Ollama** | 本地 | 免费，在你的机器上运行 |
-| **OpenAI** | 云 | GPT-4o、GPT-4o-mini |
-| **Anthropic** | 云 | Claude 3.5 Sonnet |
-| **Google Gemini** | 云 | Gemini 1.5 Flash/Pro |
-| **OpenRouter** | 云 | 访问多种模型 |
-| **DeepSeek** | 云 | DeepSeek Chat |
+| 提供商            | 本地/云 | 说明                   |
+| ----------------- | ------- | ---------------------- |
+| **Ollama**        | 本地    | 免费，在你的机器上运行 |
+| **OpenAI**        | 云      | GPT-4o、GPT-4o-mini    |
+| **Anthropic**     | 云      | Claude 3.5 Sonnet      |
+| **Google Gemini** | 云      | Gemini 1.5 Flash/Pro   |
+| **OpenRouter**    | 云      | 访问多种模型           |
+| **DeepSeek**      | 云      | DeepSeek Chat          |
 
 ### Docker 部署
 
@@ -223,13 +223,13 @@ docker run srbhr/resume-matcher:latest
 
 ### 技术栈
 
-| 组件 | 技术 |
-|------|------|
-| 后端 | FastAPI、Python 3.13+、LiteLLM |
-| 前端 | Next.js 15、React 19、TypeScript |
-| 数据库 | TinyDB（JSON 文件存储） |
-| 样式 | Tailwind CSS 4、Swiss International Style |
-| PDF | Playwright 驱动的无头 Chromium |
+| 组件   | 技术                                      |
+| ------ | ----------------------------------------- |
+| 后端   | FastAPI、Python 3.13+、LiteLLM            |
+| 前端   | Next.js 15、React 19、TypeScript          |
+| 数据库 | TinyDB（JSON 文件存储）                   |
+| 样式   | Tailwind CSS 4、Swiss International Style |
+| PDF    | Playwright 驱动的无头 Chromium            |
 
 ## 参与贡献
 

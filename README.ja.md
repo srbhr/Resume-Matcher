@@ -66,12 +66,12 @@ Star を付けていただけると開発の励みになります（リリース
 
 スポンサーの皆さまに感謝します。Resume Matcher が役立ったと感じたら、[**GitHub Sponsors**](https://github.com/sponsors/srbhr) での支援をご検討ください。継続的な開発と改善につながります。
 
-| Sponsor | Description |
-|---------|-------------|
+| Sponsor                                                                                         | Description                                                                                                                                                                                                                                         |
+| ----------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [APIDECK](https://apideck.com?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) | アプリを200以上のSaaSプラットフォーム（会計、HRIS、CRM、ファイルストレージ）に接続する単一のAPI。50回ではなく、1回の構築で統合を実現します。 🌐 [apideck.com](https://apideck.com?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) |
-| [Vercel](https://vercel.com?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) | Resume Matcher は Vercel OSS // Summer 2025 プログラムの一部です 🌐 [vercel.com](https://vercel.com?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) |
-| [Cubic.dev](https://cubic.dev?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) | Cubic は Resume Matcher に PR レビューを提供しています 🌐 [cubic.dev](https://cubic.dev?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) |
-| [Kilo Code](https://kilo.ai?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) | Kilo Code は Resume Matcher に AI コードレビューとコーディングクレジットを提供しています 🌐 [kilo.ai](https://kilo.ai?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) |
+| [Vercel](https://vercel.com?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors)   | Resume Matcher は Vercel OSS // Summer 2025 プログラムの一部です 🌐 [vercel.com](https://vercel.com?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors)                                                                               |
+| [Cubic.dev](https://cubic.dev?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) | Cubic は Resume Matcher に PR レビューを提供しています 🌐 [cubic.dev](https://cubic.dev?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors)                                                                                           |
+| [Kilo Code](https://kilo.ai?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors)   | Kilo Code は Resume Matcher に AI コードレビューとコーディングクレジットを提供しています 🌐 [kilo.ai](https://kilo.ai?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors)                                                             |
 
 <a id="support-the-development-by-donating"></a>
 
@@ -81,10 +81,10 @@ Star を付けていただけると開発の励みになります（リリース
 
 スポンサーシップがプロジェクトにどのように役立つかについての詳細は、[Sponsorship Guide](https://resumematcher.fyi/docs/sponsoring) をご覧ください。ReadME およびウェブサイトにて特別に感謝の意を表します。
 
-| プラットフォーム | リンク |
-|------------------|--------|
-| GitHub | [![GitHub Sponsors](https://img.shields.io/github/sponsors/srbhr?style=for-the-badge&color=1d4ed8&labelColor=F0F0E8&logo=github&logoColor=black)](https://github.com/sponsors/srbhr) |
-| Buy Me a Coffee | [![BuyMeACoffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&color=1d4ed8&labelColor=F0F0E8&logoColor=black)](https://www.buymeacoffee.com/srbhr) |
+| プラットフォーム | リンク                                                                                                                                                                                                   |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GitHub           | [![GitHub Sponsors](https://img.shields.io/github/sponsors/srbhr?style=for-the-badge&color=1d4ed8&labelColor=F0F0E8&logo=github&logoColor=black)](https://github.com/sponsors/srbhr)                     |
+| Buy Me a Coffee  | [![BuyMeACoffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&color=1d4ed8&labelColor=F0F0E8&logoColor=black)](https://www.buymeacoffee.com/srbhr) |
 
 ## 制作者ノート
 
@@ -139,12 +139,12 @@ Resume Matcher をご覧いただきありがとうございます。つなが�
 
 ### テンプレート
 
-| テンプレート名 | プレビュー | 説明 |
-|---------------|-----------|------|
-| **クラシック（1 カラム）** | ![Classic Template](assets/pdf-templates/single-column.jpg) | 伝統的でクリーンなレイアウト。多くの業種に適しています。[PDF を見る](assets/pdf-templates/single-column.pdf) |
-| **モダン（1 カラム）** | ![Modern Template](assets/pdf-templates/modern-single-column.jpg) | 可読性と美しさを重視した現代的なデザイン。[PDF を見る](assets/pdf-templates/modern-single-column.pdf) |
-| **クラシック（2 カラム）** | ![Classic Two Column Template](assets/pdf-templates/two-column.jpg) | セクションを分けて見やすく整理します。[PDF を見る](assets/pdf-templates/two-column.pdf) |
-| **モダン（2 カラム）** | ![Modern Two Column Template](assets/pdf-templates/modern-two-column.jpg) | 2 カラムを活用して情報をより整理します。[PDF を見る](assets/pdf-templates/modern-two-column.pdf) |
+| テンプレート名             | プレビュー                                                                | 説明                                                                                                         |
+| -------------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| **クラシック（1 カラム）** | ![Classic Template](assets/pdf-templates/single-column.jpg)               | 伝統的でクリーンなレイアウト。多くの業種に適しています。[PDF を見る](assets/pdf-templates/single-column.pdf) |
+| **モダン（1 カラム）**     | ![Modern Template](assets/pdf-templates/modern-single-column.jpg)         | 可読性と美しさを重視した現代的なデザイン。[PDF を見る](assets/pdf-templates/modern-single-column.pdf)        |
+| **クラシック（2 カラム）** | ![Classic Two Column Template](assets/pdf-templates/two-column.jpg)       | セクションを分けて見やすく整理します。[PDF を見る](assets/pdf-templates/two-column.pdf)                      |
+| **モダン（2 カラム）**     | ![Modern Two Column Template](assets/pdf-templates/modern-two-column.jpg) | 2 カラムを活用して情報をより整理します。[PDF を見る](assets/pdf-templates/modern-two-column.pdf)             |
 
 ### 国際化
 
@@ -169,11 +169,11 @@ Resume Matcher をご覧いただきありがとうございます。つなが�
 
 ### 前提条件
 
-| ツール | バージョン | インストール |
-|--------|------------|--------------|
-| Python | 3.13+ | [python.org](https://python.org) |
-| Node.js | 22+ | [nodejs.org](https://nodejs.org) |
-| uv | 最新 | [astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/) |
+| ツール  | バージョン | インストール                                                            |
+| ------- | ---------- | ----------------------------------------------------------------------- |
+| Python  | 3.13+      | [python.org](https://python.org)                                        |
+| Node.js | 22+        | [nodejs.org](https://nodejs.org)                                        |
+| uv      | 最新       | [astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/) |
 
 ### クイックスタート
 
@@ -200,14 +200,14 @@ npm run dev
 
 ### 対応 AI プロバイダ
 
-| プロバイダ | ローカル/クラウド | 備考 |
-|------------|-------------------|------|
-| **Ollama** | ローカル | 無料。手元のマシンで動作 |
-| **OpenAI** | クラウド | GPT-4o、GPT-4o-mini |
-| **Anthropic** | クラウド | Claude 3.5 Sonnet |
-| **Google Gemini** | クラウド | Gemini 1.5 Flash/Pro |
-| **OpenRouter** | クラウド | 複数モデルへアクセス |
-| **DeepSeek** | クラウド | DeepSeek Chat |
+| プロバイダ        | ローカル/クラウド | 備考                     |
+| ----------------- | ----------------- | ------------------------ |
+| **Ollama**        | ローカル          | 無料。手元のマシンで動作 |
+| **OpenAI**        | クラウド          | GPT-4o、GPT-4o-mini      |
+| **Anthropic**     | クラウド          | Claude 3.5 Sonnet        |
+| **Google Gemini** | クラウド          | Gemini 1.5 Flash/Pro     |
+| **OpenRouter**    | クラウド          | 複数モデルへアクセス     |
+| **DeepSeek**      | クラウド          | DeepSeek Chat            |
 
 ### Docker デプロイ
 
@@ -223,13 +223,13 @@ docker run srbhr/resume-matcher:latest
 
 ### 技術スタック
 
-| コンポーネント | 技術 |
-|----------------|------|
-| バックエンド | FastAPI、Python 3.13+、LiteLLM |
-| フロントエンド | Next.js 15、React 19、TypeScript |
-| データベース | TinyDB（JSON ファイル保存） |
-| スタイリング | Tailwind CSS 4、Swiss International Style |
-| PDF | Playwright による Headless Chromium |
+| コンポーネント | 技術                                      |
+| -------------- | ----------------------------------------- |
+| バックエンド   | FastAPI、Python 3.13+、LiteLLM            |
+| フロントエンド | Next.js 15、React 19、TypeScript          |
+| データベース   | TinyDB（JSON ファイル保存）               |
+| スタイリング   | Tailwind CSS 4、Swiss International Style |
+| PDF            | Playwright による Headless Chromium       |
 
 ## 参加・コントリビュート
 

@@ -27,17 +27,18 @@
 ---
 
 <a id="prerequisites"></a>
+
 ## 前置条件
 
 开始前请确保系统已安装以下工具：
 
-| 工具 | 最低版本 | 如何检查 | 安装 |
-|------|----------|----------|------|
-| **Python** | 3.13+ | `python --version` | [python.org](https://python.org) |
-| **Node.js** | 22+ | `node --version` | [nodejs.org](https://nodejs.org) |
-| **npm** | 10+ | `npm --version` | 随 Node.js 一起安装 |
-| **uv** | 最新 | `uv --version` | [astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/) |
-| **Git** | 任意 | `git --version` | [git-scm.com](https://git-scm.com) |
+| 工具        | 最低版本 | 如何检查           | 安装                                                                    |
+| ----------- | -------- | ------------------ | ----------------------------------------------------------------------- |
+| **Python**  | 3.13+    | `python --version` | [python.org](https://python.org)                                        |
+| **Node.js** | 22+      | `node --version`   | [nodejs.org](https://nodejs.org)                                        |
+| **npm**     | 10+      | `npm --version`    | 随 Node.js 一起安装                                                     |
+| **uv**      | 最新     | `uv --version`     | [astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/) |
+| **Git**     | 任意     | `git --version`    | [git-scm.com](https://git-scm.com)                                      |
 
 ### 安装 uv（Python 包管理器）
 
@@ -57,6 +58,7 @@ pip install uv
 ---
 
 <a id="quick-start"></a>
+
 ## 快速开始
 
 如果你对开发工具比较熟悉，想快速跑起来：
@@ -85,9 +87,11 @@ npm run dev                  # 启动开发服务器
 ---
 
 <a id="step-by-step-setup"></a>
+
 ## 逐步安装
 
 <a id="1-clone-the-repository"></a>
+
 ### 1. 克隆仓库
 
 先把代码拉到本机：
@@ -98,6 +102,7 @@ cd Resume-Matcher
 ```
 
 <a id="2-backend-setup"></a>
+
 ### 2. 后端配置
 
 后端是 Python FastAPI 应用，负责 AI 调用、简历解析以及数据存储。
@@ -162,6 +167,7 @@ INFO:     Started reloader process
 **保持该终端运行**，然后为前端另开一个终端窗口。
 
 <a id="3-frontend-setup"></a>
+
 ### 3. 前端配置
 
 前端是 Next.js 应用，提供用户界面。
@@ -204,20 +210,22 @@ npm run dev
 ---
 
 <a id="configuring-your-ai-provider"></a>
+
 ## 配置 AI 提供商
 
 Resume Matcher 支持多种 AI 提供商。你可以在应用的 Settings 页面中配置，也可以直接编辑后端的 `.env` 文件。
 
 <a id="option-a-cloud-providers"></a>
+
 ### 选项 A：云端提供商
 
-| 提供商 | 配置方式 | 获取 API Key |
-|--------|----------|--------------|
-| **OpenAI** | `LLM_PROVIDER=openai`<br>`LLM_MODEL=gpt-4o-mini` | [platform.openai.com](https://platform.openai.com/api-keys) |
-| **Anthropic** | `LLM_PROVIDER=anthropic`<br>`LLM_MODEL=claude-3-5-sonnet-20241022` | [console.anthropic.com](https://console.anthropic.com/) |
-| **Google Gemini** | `LLM_PROVIDER=gemini`<br>`LLM_MODEL=gemini-1.5-flash` | [aistudio.google.com](https://aistudio.google.com/app/apikey) |
-| **OpenRouter** | `LLM_PROVIDER=openrouter`<br>`LLM_MODEL=anthropic/claude-3.5-sonnet` | [openrouter.ai](https://openrouter.ai/keys) |
-| **DeepSeek** | `LLM_PROVIDER=deepseek`<br>`LLM_MODEL=deepseek-chat` | [platform.deepseek.com](https://platform.deepseek.com/) |
+| 提供商            | 配置方式                                                             | 获取 API Key                                                  |
+| ----------------- | -------------------------------------------------------------------- | ------------------------------------------------------------- |
+| **OpenAI**        | `LLM_PROVIDER=openai`<br>`LLM_MODEL=gpt-4o-mini`                     | [platform.openai.com](https://platform.openai.com/api-keys)   |
+| **Anthropic**     | `LLM_PROVIDER=anthropic`<br>`LLM_MODEL=claude-3-5-sonnet-20241022`   | [console.anthropic.com](https://console.anthropic.com/)       |
+| **Google Gemini** | `LLM_PROVIDER=gemini`<br>`LLM_MODEL=gemini-1.5-flash`                | [aistudio.google.com](https://aistudio.google.com/app/apikey) |
+| **OpenRouter**    | `LLM_PROVIDER=openrouter`<br>`LLM_MODEL=anthropic/claude-3.5-sonnet` | [openrouter.ai](https://openrouter.ai/keys)                   |
+| **DeepSeek**      | `LLM_PROVIDER=deepseek`<br>`LLM_MODEL=deepseek-chat`                 | [platform.deepseek.com](https://platform.deepseek.com/)       |
 
 Anthropic 的 `.env` 示例：
 
@@ -228,6 +236,7 @@ LLM_API_KEY=sk-ant-your-key-here
 ```
 
 <a id="option-b-local-ai-with-ollama-free"></a>
+
 ### 选项 B：使用 Ollama 的本地 AI（免费）
 
 想在本机运行模型、避免 API 费用？可以使用 Ollama。
@@ -264,6 +273,7 @@ ollama serve
 ---
 
 <a id="docker-deployment"></a>
+
 ## Docker 部署
 
 如果你更喜欢容器化部署，Resume Matcher 已提供 Docker 支持。
@@ -292,17 +302,18 @@ docker-compose down
 ---
 
 <a id="accessing-the-application"></a>
+
 ## 访问应用
 
 当后端与前端都启动后，可通过以下地址访问：
 
-| URL | 说明 |
-|-----|------|
-| **<http://localhost:3000>** | 主应用（Dashboard） |
-| **<http://localhost:3000/settings>** | 配置 AI 提供商 |
-| **<http://localhost:8000>** | 后端 API 根路径 |
-| **<http://localhost:8000/docs>** | 可交互的 API 文档 |
-| **<http://localhost:8000/health>** | 后端健康检查 |
+| URL                                  | 说明                |
+| ------------------------------------ | ------------------- |
+| **<http://localhost:3000>**          | 主应用（Dashboard） |
+| **<http://localhost:3000/settings>** | 配置 AI 提供商      |
+| **<http://localhost:8000>**          | 后端 API 根路径     |
+| **<http://localhost:8000/docs>**     | 可交互的 API 文档   |
+| **<http://localhost:8000/health>**   | 后端健康检查        |
 
 ### 首次配置检查清单
 
@@ -316,6 +327,7 @@ docker-compose down
 ---
 
 <a id="common-commands-reference"></a>
+
 ## 常用命令速查
 
 ### 后端命令
@@ -384,6 +396,7 @@ rm -rf apps/backend/data
 ---
 
 <a id="troubleshooting"></a>
+
 ## 故障排查
 
 ### 后端无法启动
@@ -447,6 +460,7 @@ CORS_ORIGINS=["http://localhost:3001", "http://127.0.0.1:3001"]
 ---
 
 <a id="project-structure-overview"></a>
+
 ## 项目结构概览
 
 ```text
@@ -480,6 +494,7 @@ Resume-Matcher/
 ---
 
 <a id="getting-help"></a>
+
 ## 获取帮助
 
 如果遇到问题，可以从以下渠道获得支持：
@@ -490,13 +505,12 @@ Resume-Matcher/
 
 ### 推荐文档
 
-| 文档 | 说明 |
-|------|------|
-| [backend-guide.md](docs/agent/architecture/backend-guide.md) | 后端架构与 API 细节 |
-| [frontend-workflow.md](docs/agent/architecture/frontend-workflow.md) | 用户流程与组件架构 |
-| [style-guide.md](docs/agent/design/style-guide.md) | UI 设计系统（Swiss International Style） |
+| 文档                                                                 | 说明                                     |
+| -------------------------------------------------------------------- | ---------------------------------------- |
+| [backend-guide.md](docs/agent/architecture/backend-guide.md)         | 后端架构与 API 细节                      |
+| [frontend-workflow.md](docs/agent/architecture/frontend-workflow.md) | 用户流程与组件架构                       |
+| [style-guide.md](docs/agent/design/style-guide.md)                   | UI 设计系统（Swiss International Style） |
 
 ---
 
 祝你简历制作顺利！如果 Resume Matcher 对你有帮助，欢迎 [给仓库点个 Star](https://github.com/srbhr/Resume-Matcher)，以及 [加入我们的 Discord](https://dsc.gg/resume-matcher)。
-

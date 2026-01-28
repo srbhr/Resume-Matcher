@@ -26,17 +26,17 @@ The enrichment feature helps users improve their master resume with more detaile
 
 ## Key Files
 
-| File | Purpose |
-|------|---------|
-| `apps/backend/app/prompts/enrichment.py` | AI prompts for analysis and enhancement |
-| `apps/backend/app/routers/enrichment.py` | API endpoints for enrichment workflow |
-| `apps/frontend/hooks/use-enrichment-wizard.ts` | React state management for wizard flow |
-| `apps/frontend/components/enrichment/*.tsx` | UI components for enrichment modal |
+| File                                           | Purpose                                 |
+| ---------------------------------------------- | --------------------------------------- |
+| `apps/backend/app/prompts/enrichment.py`       | AI prompts for analysis and enhancement |
+| `apps/backend/app/routers/enrichment.py`       | API endpoints for enrichment workflow   |
+| `apps/frontend/hooks/use-enrichment-wizard.ts` | React state management for wizard flow  |
+| `apps/frontend/components/enrichment/*.tsx`    | UI components for enrichment modal      |
 
 ## API Endpoints
 
-| Endpoint | Description |
-|----------|-------------|
-| `POST /enrichment/analyze/{resume_id}` | Analyze resume and generate questions |
-| `POST /enrichment/enhance` | Generate enhanced descriptions from answers |
-| `POST /enrichment/apply/{resume_id}` | Apply enhancements to resume |
+| Endpoint                               | Description                                 |
+| -------------------------------------- | ------------------------------------------- |
+| `POST /enrichment/analyze/{resume_id}` | Analyze resume and generate questions       |
+| `POST /enrichment/enhance`             | Generate enhanced descriptions from answers |
+| `POST /enrichment/apply/{resume_id}`   | Apply enhancements to resume                |

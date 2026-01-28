@@ -5,7 +5,8 @@
 ## Base Client (`lib/api/client.ts`)
 
 ```typescript
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+export const API_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 export const API_BASE = `${API_URL}/api/v1`;
 
 export async function apiFetch(endpoint: string, options?: RequestInit);
@@ -61,17 +62,37 @@ updateLanguageConfig(language: string) → LanguageConfig
 
 ```typescript
 export const PROVIDER_INFO = {
-  openai: { name: 'OpenAI', defaultModel: 'gpt-4o-mini', requiresKey: true },
-  anthropic: { name: 'Anthropic', defaultModel: 'claude-3-5-sonnet-20241022', requiresKey: true },
-  openrouter: { name: 'OpenRouter', defaultModel: 'anthropic/claude-3.5-sonnet', requiresKey: true },
-  gemini: { name: 'Google Gemini', defaultModel: 'gemini-1.5-flash', requiresKey: true },
-  deepseek: { name: 'DeepSeek', defaultModel: 'deepseek-chat', requiresKey: true },
-  ollama: { name: 'Ollama (Local)', defaultModel: 'llama3.2', requiresKey: false },
+  openai: { name: "OpenAI", defaultModel: "gpt-4o-mini", requiresKey: true },
+  anthropic: {
+    name: "Anthropic",
+    defaultModel: "claude-3-5-sonnet-20241022",
+    requiresKey: true,
+  },
+  openrouter: {
+    name: "OpenRouter",
+    defaultModel: "anthropic/claude-3.5-sonnet",
+    requiresKey: true,
+  },
+  gemini: {
+    name: "Google Gemini",
+    defaultModel: "gemini-1.5-flash",
+    requiresKey: true,
+  },
+  deepseek: {
+    name: "DeepSeek",
+    defaultModel: "deepseek-chat",
+    requiresKey: true,
+  },
+  ollama: {
+    name: "Ollama (Local)",
+    defaultModel: "llama3.2",
+    requiresKey: false,
+  },
 };
 ```
 
 ## Usage
 
 ```typescript
-import { fetchResume, API_BASE, PROVIDER_INFO } from '@/lib/api';
+import { fetchResume, API_BASE, PROVIDER_INFO } from "@/lib/api";
 ```

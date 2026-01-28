@@ -27,17 +27,18 @@
 ---
 
 <a id="prerequisites"></a>
+
 ## 前提条件
 
 開始前に、以下がインストールされていることを確認してください：
 
-| ツール | 最低バージョン | 確認方法 | インストール |
-|------|----------------|----------|--------------|
-| **Python** | 3.13+ | `python --version` | [python.org](https://python.org) |
-| **Node.js** | 22+ | `node --version` | [nodejs.org](https://nodejs.org) |
-| **npm** | 10+ | `npm --version` | Node.js に同梱 |
-| **uv** | 最新 | `uv --version` | [astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/) |
-| **Git** | 任意 | `git --version` | [git-scm.com](https://git-scm.com) |
+| ツール      | 最低バージョン | 確認方法           | インストール                                                            |
+| ----------- | -------------- | ------------------ | ----------------------------------------------------------------------- |
+| **Python**  | 3.13+          | `python --version` | [python.org](https://python.org)                                        |
+| **Node.js** | 22+            | `node --version`   | [nodejs.org](https://nodejs.org)                                        |
+| **npm**     | 10+            | `npm --version`    | Node.js に同梱                                                          |
+| **uv**      | 最新           | `uv --version`     | [astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/) |
+| **Git**     | 任意           | `git --version`    | [git-scm.com](https://git-scm.com)                                      |
 
 ### uv のインストール（Python パッケージマネージャ）
 
@@ -57,6 +58,7 @@ pip install uv
 ---
 
 <a id="quick-start"></a>
+
 ## クイックスタート
 
 開発ツールに慣れていて、まず動かしたい方向け：
@@ -85,9 +87,11 @@ npm run dev                  # 開発サーバを起動
 ---
 
 <a id="step-by-step-setup"></a>
+
 ## 手順どおりにセットアップ
 
 <a id="1-clone-the-repository"></a>
+
 ### 1. リポジトリをクローン
 
 まずはコードを取得します：
@@ -98,6 +102,7 @@ cd Resume-Matcher
 ```
 
 <a id="2-backend-setup"></a>
+
 ### 2. バックエンドのセットアップ
 
 バックエンドは Python（FastAPI）で、AI 処理、履歴書の解析、データ保存を担当します。
@@ -162,6 +167,7 @@ INFO:     Started reloader process
 **このターミナルは起動したまま**、フロントエンド用に別ターミナルを開きます。
 
 <a id="3-frontend-setup"></a>
+
 ### 3. フロントエンドのセットアップ
 
 フロントエンドは Next.js で、UI を提供します。
@@ -204,20 +210,22 @@ npm run dev
 ---
 
 <a id="configuring-your-ai-provider"></a>
+
 ## AI プロバイダの設定
 
 Resume Matcher は複数の AI プロバイダに対応しています。アプリ内の Settings ページ、またはバックエンドの `.env` を編集して設定できます。
 
 <a id="option-a-cloud-providers"></a>
+
 ### オプション A: クラウドプロバイダ
 
-| プロバイダ | 設定 | API キー取得先 |
-|----------|------|----------------|
-| **OpenAI** | `LLM_PROVIDER=openai`<br>`LLM_MODEL=gpt-4o-mini` | [platform.openai.com](https://platform.openai.com/api-keys) |
-| **Anthropic** | `LLM_PROVIDER=anthropic`<br>`LLM_MODEL=claude-3-5-sonnet-20241022` | [console.anthropic.com](https://console.anthropic.com/) |
-| **Google Gemini** | `LLM_PROVIDER=gemini`<br>`LLM_MODEL=gemini-1.5-flash` | [aistudio.google.com](https://aistudio.google.com/app/apikey) |
-| **OpenRouter** | `LLM_PROVIDER=openrouter`<br>`LLM_MODEL=anthropic/claude-3.5-sonnet` | [openrouter.ai](https://openrouter.ai/keys) |
-| **DeepSeek** | `LLM_PROVIDER=deepseek`<br>`LLM_MODEL=deepseek-chat` | [platform.deepseek.com](https://platform.deepseek.com/) |
+| プロバイダ        | 設定                                                                 | API キー取得先                                                |
+| ----------------- | -------------------------------------------------------------------- | ------------------------------------------------------------- |
+| **OpenAI**        | `LLM_PROVIDER=openai`<br>`LLM_MODEL=gpt-4o-mini`                     | [platform.openai.com](https://platform.openai.com/api-keys)   |
+| **Anthropic**     | `LLM_PROVIDER=anthropic`<br>`LLM_MODEL=claude-3-5-sonnet-20241022`   | [console.anthropic.com](https://console.anthropic.com/)       |
+| **Google Gemini** | `LLM_PROVIDER=gemini`<br>`LLM_MODEL=gemini-1.5-flash`                | [aistudio.google.com](https://aistudio.google.com/app/apikey) |
+| **OpenRouter**    | `LLM_PROVIDER=openrouter`<br>`LLM_MODEL=anthropic/claude-3.5-sonnet` | [openrouter.ai](https://openrouter.ai/keys)                   |
+| **DeepSeek**      | `LLM_PROVIDER=deepseek`<br>`LLM_MODEL=deepseek-chat`                 | [platform.deepseek.com](https://platform.deepseek.com/)       |
 
 Anthropic の `.env` 例：
 
@@ -228,6 +236,7 @@ LLM_API_KEY=sk-ant-your-key-here
 ```
 
 <a id="option-b-local-ai-with-ollama-free"></a>
+
 ### オプション B: Ollama によるローカル AI（無料）
 
 API コストなしでローカル実行したい場合は Ollama を使えます。
@@ -264,6 +273,7 @@ ollama serve
 ---
 
 <a id="docker-deployment"></a>
+
 ## Docker デプロイ
 
 コンテナで動かしたい場合、Resume Matcher は Docker に対応しています。
@@ -292,17 +302,18 @@ docker-compose down
 ---
 
 <a id="accessing-the-application"></a>
+
 ## アプリへのアクセス
 
 両方のサーバが起動したら、ブラウザで以下にアクセスします：
 
-| URL | 内容 |
-|-----|------|
-| **<http://localhost:3000>** | メインアプリ（Dashboard） |
-| **<http://localhost:3000/settings>** | AI プロバイダ設定 |
-| **<http://localhost:8000>** | バックエンド API ルート |
-| **<http://localhost:8000/docs>** | 対話型 API ドキュメント |
-| **<http://localhost:8000/health>** | バックエンドヘルスチェック |
+| URL                                  | 内容                       |
+| ------------------------------------ | -------------------------- |
+| **<http://localhost:3000>**          | メインアプリ（Dashboard）  |
+| **<http://localhost:3000/settings>** | AI プロバイダ設定          |
+| **<http://localhost:8000>**          | バックエンド API ルート    |
+| **<http://localhost:8000/docs>**     | 対話型 API ドキュメント    |
+| **<http://localhost:8000/health>**   | バックエンドヘルスチェック |
 
 ### 初回セットアップチェックリスト
 
@@ -316,6 +327,7 @@ docker-compose down
 ---
 
 <a id="common-commands-reference"></a>
+
 ## よく使うコマンド
 
 ### バックエンド
@@ -384,6 +396,7 @@ rm -rf apps/backend/data
 ---
 
 <a id="troubleshooting"></a>
+
 ## トラブルシューティング
 
 ### バックエンドが起動しない
@@ -447,6 +460,7 @@ CORS_ORIGINS=["http://localhost:3001", "http://127.0.0.1:3001"]
 ---
 
 <a id="project-structure-overview"></a>
+
 ## プロジェクト構成
 
 ```text
@@ -480,6 +494,7 @@ Resume-Matcher/
 ---
 
 <a id="getting-help"></a>
+
 ## ヘルプ
 
 困ったときは次を参照してください：
@@ -490,13 +505,12 @@ Resume-Matcher/
 
 ### 参考ドキュメント
 
-| ドキュメント | 内容 |
-|-------------|------|
-| [backend-guide.md](docs/agent/architecture/backend-guide.md) | バックエンドのアーキテクチャと API 詳細 |
-| [frontend-workflow.md](docs/agent/architecture/frontend-workflow.md) | ユーザーフローとコンポーネント構成 |
-| [style-guide.md](docs/agent/design/style-guide.md) | UI デザインシステム（Swiss International Style） |
+| ドキュメント                                                         | 内容                                             |
+| -------------------------------------------------------------------- | ------------------------------------------------ |
+| [backend-guide.md](docs/agent/architecture/backend-guide.md)         | バックエンドのアーキテクチャと API 詳細          |
+| [frontend-workflow.md](docs/agent/architecture/frontend-workflow.md) | ユーザーフローとコンポーネント構成               |
+| [style-guide.md](docs/agent/design/style-guide.md)                   | UI デザインシステム（Swiss International Style） |
 
 ---
 
 楽しい履歴書づくりを！Resume Matcher が役立ったら、[リポジトリに Star](https://github.com/srbhr/Resume-Matcher) と [Discord 参加](https://dsc.gg/resume-matcher) をぜひ。
-

@@ -4,9 +4,9 @@
 
 ## Page Sizes
 
-| Size | Dimensions |
-|------|------------|
-| A4 | 210 × 297 mm |
+| Size      | Dimensions       |
+| --------- | ---------------- |
+| A4        | 210 × 297 mm     |
 | US Letter | 215.9 × 279.4 mm |
 
 ## Print Route
@@ -19,10 +19,14 @@
 
 ```css
 @media print {
-  body * { visibility: hidden !important; }
-  
+  body * {
+    visibility: hidden !important;
+  }
+
   .resume-print,
-  .resume-print * { visibility: visible !important; }
+  .resume-print * {
+    visibility: visible !important;
+  }
 }
 ```
 
@@ -46,9 +50,9 @@ Margins are applied via HTML padding, not PDF margins (WYSIWYG accuracy).
 
 ## File Locations
 
-| File | Purpose |
-|------|---------|
-| `app/print/resumes/[id]/page.tsx` | Print route |
-| `components/preview/use-pagination.ts` | Page break logic |
-| `lib/constants/page-dimensions.ts` | Size constants |
-| `apps/backend/app/pdf.py` | Playwright renderer |
+| File                                   | Purpose             |
+| -------------------------------------- | ------------------- |
+| `app/print/resumes/[id]/page.tsx`      | Print route         |
+| `components/preview/use-pagination.ts` | Page break logic    |
+| `lib/constants/page-dimensions.ts`     | Size constants      |
+| `apps/backend/app/pdf.py`              | Playwright renderer |

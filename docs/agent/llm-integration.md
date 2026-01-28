@@ -6,14 +6,14 @@
 
 Backend uses LiteLLM to support multiple providers through a unified API:
 
-| Provider | Type | Notes |
-|----------|------|-------|
-| **Ollama** | Local | Free, runs on your machine |
-| **OpenAI** | Cloud | GPT-4o, GPT-4o-mini |
-| **Anthropic** | Cloud | Claude 3.5 Sonnet |
-| **Google Gemini** | Cloud | Gemini 1.5 Flash/Pro |
-| **OpenRouter** | Cloud | Access to multiple models |
-| **DeepSeek** | Cloud | DeepSeek Chat |
+| Provider          | Type  | Notes                      |
+| ----------------- | ----- | -------------------------- |
+| **Ollama**        | Local | Free, runs on your machine |
+| **OpenAI**        | Cloud | GPT-4o, GPT-4o-mini        |
+| **Anthropic**     | Cloud | Claude 3.5 Sonnet          |
+| **Google Gemini** | Cloud | Gemini 1.5 Flash/Pro       |
+| **OpenRouter**    | Cloud | Access to multiple models  |
+| **DeepSeek**      | Cloud | DeepSeek Chat              |
 
 ## API Key Handling
 
@@ -106,17 +106,17 @@ The `/api/v1/health` endpoint validates LLM connectivity.
 
 All LLM calls have configurable timeouts:
 
-| Operation | Timeout |
-|-----------|---------|
-| Health checks | 30s |
-| Completions | 120s |
-| JSON operations | 180s |
+| Operation       | Timeout |
+| --------------- | ------- |
+| Health checks   | 30s     |
+| Completions     | 120s    |
+| JSON operations | 180s    |
 
 ## Key Files
 
-| File | Purpose |
-|------|---------|
-| `apps/backend/app/llm.py` | LiteLLM wrapper with JSON mode |
-| `apps/backend/app/prompts/templates.py` | Prompt templates |
-| `apps/backend/app/prompts/enrichment.py` | Enrichment-specific prompts |
-| `apps/backend/app/config.py` | Provider configuration |
+| File                                     | Purpose                        |
+| ---------------------------------------- | ------------------------------ |
+| `apps/backend/app/llm.py`                | LiteLLM wrapper with JSON mode |
+| `apps/backend/app/prompts/templates.py`  | Prompt templates               |
+| `apps/backend/app/prompts/enrichment.py` | Enrichment-specific prompts    |
+| `apps/backend/app/config.py`             | Provider configuration         |

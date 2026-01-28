@@ -11,15 +11,15 @@
 
 ## Color Palette
 
-| Name | Hex | Usage |
-|------|-----|-------|
-| Canvas | `#F0F0E8` | Background |
-| Ink | `#000000` | Text, borders |
-| Hyper Blue | `#1D4ED8` | Links, primary actions |
-| Signal Green | `#15803D` | Success, downloads |
-| Alert Orange | `#F97316` | Warnings |
-| Alert Red | `#DC2626` | Errors, delete |
-| Steel Grey | `#4B5563` | Secondary text |
+| Name         | Hex       | Usage                  |
+| ------------ | --------- | ---------------------- |
+| Canvas       | `#F0F0E8` | Background             |
+| Ink          | `#000000` | Text, borders          |
+| Hyper Blue   | `#1D4ED8` | Links, primary actions |
+| Signal Green | `#15803D` | Success, downloads     |
+| Alert Orange | `#F97316` | Warnings               |
+| Alert Red    | `#DC2626` | Errors, delete         |
+| Steel Grey   | `#4B5563` | Secondary text         |
 
 ## Typography
 
@@ -29,29 +29,33 @@ font-mono    /* Metadata, labels: SF Mono, Consolas */
 font-sans    /* Body text: Inter, Helvetica */
 ```
 
-| Use | Font | Size | Weight |
-|-----|------|------|--------|
-| Headers | serif | 3xl+ | bold |
-| Body | sans | base | normal |
-| Labels | mono | sm | medium, uppercase |
-| Metadata | mono | xs | light |
+| Use      | Font  | Size | Weight            |
+| -------- | ----- | ---- | ----------------- |
+| Headers  | serif | 3xl+ | bold              |
+| Body     | sans  | base | normal            |
+| Labels   | mono  | sm   | medium, uppercase |
+| Metadata | mono  | xs   | light             |
 
 ## Components
 
 ### Buttons
+
 - `rounded-none` (no rounded corners)
 - Hard shadows: `shadow-[2px_2px_0px_0px_#000000]`
 - Hover: `translate-y-[1px] translate-x-[1px] shadow-none`
 
 ### Inputs
+
 - `border border-black rounded-none`
 - Focus: `ring-1 ring-blue-700`
 
 ### Cards
+
 - `border-2 border-black`
 - Shadow: `shadow-[4px_4px_0px_0px_#000000]`
 
 ### Dialogs
+
 - Centered, `max-w-md`
 - Hard black border
 

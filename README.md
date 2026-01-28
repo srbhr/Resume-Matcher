@@ -66,12 +66,12 @@ Star the repo to support development and get notified of new releases.
 
 We are grateful to our sponsors who help keep this project going. If you find Resume Matcher helpful, please consider [**sponsoring us**](https://github.com/sponsors/srbhr) to ensure continued development and improvements.
 
-| Sponsor | Description |
-|---------|-------------|
+| Sponsor                                                                                         | Description                                                                                                                                                                                                                             |
+| ----------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [APIDECK](https://apideck.com?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) | One API to connect your app to 200+ SaaS platforms (accounting, HRIS, CRM, file storage). Build integrations once, not 50 times. 🌐 [apideck.com](https://apideck.com?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) |
-| [Vercel](https://vercel.com?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) | Resume Matcher is a part of Vercel OSS // Summer 2025 Program 🌐 [vercel.com](https://vercel.com?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) |
-| [Cubic.dev](https://cubic.dev?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) | Cubic provides PR reviews for Resume Matcher 🌐 [cubic.dev](https://cubic.dev?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) |
-| [Kilo Code](https://kilo.ai?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) | Kilo Code provides AI code reviews and coding credits to Resume Matcher 🌐 [kilo.ai](https://kilo.ai?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) |
+| [Vercel](https://vercel.com?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors)   | Resume Matcher is a part of Vercel OSS // Summer 2025 Program 🌐 [vercel.com](https://vercel.com?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors)                                                                      |
+| [Cubic.dev](https://cubic.dev?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) | Cubic provides PR reviews for Resume Matcher 🌐 [cubic.dev](https://cubic.dev?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors)                                                                                         |
+| [Kilo Code](https://kilo.ai?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors)   | Kilo Code provides AI code reviews and coding credits to Resume Matcher 🌐 [kilo.ai](https://kilo.ai?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors)                                                                  |
 
 <a id="support-the-development-by-donating"></a>
 
@@ -79,11 +79,11 @@ We are grateful to our sponsors who help keep this project going. If you find Re
 
 ![donate](assets/supporting_resume_matcher.png)
 
-Please read our [Sponsorship Guide]([docs/agent/80-sponsorship/sponsorship-guide.md](https://resumematcher.fyi/docs/sponsoring)) for details on how your sponsorship helps the project. You will receive a special thank you in the ReadME and on our website.
+Please read our [Sponsorship Guide](<[docs/agent/80-sponsorship/sponsorship-guide.md](https://resumematcher.fyi/docs/sponsoring)>) for details on how your sponsorship helps the project. You will receive a special thank you in the ReadME and on our website.
 
-| Platform  | Link                                   |
-|-----------|----------------------------------------|
-| GitHub    | [![GitHub Sponsors](https://img.shields.io/github/sponsors/srbhr?style=for-the-badge&color=1d4ed8&labelColor=F0F0E8&logo=github&logoColor=black)](https://github.com/sponsors/srbhr) |
+| Platform        | Link                                                                                                                                                                                                     |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GitHub          | [![GitHub Sponsors](https://img.shields.io/github/sponsors/srbhr?style=for-the-badge&color=1d4ed8&labelColor=F0F0E8&logo=github&logoColor=black)](https://github.com/sponsors/srbhr)                     |
 | Buy Me a Coffee | [![BuyMeACoffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&color=1d4ed8&labelColor=F0F0E8&logoColor=black)](https://www.buymeacoffee.com/srbhr) |
 
 ## Creators' Note
@@ -141,12 +141,12 @@ Export your tailored resume and cover letter in PDF.
 
 ### Templates
 
-| Template Name | Preview | Description |
-|---------------|---------|-------------|
-| **Classic Single Column** | ![Classic Template](assets/pdf-templates/single-column.jpg) | A traditional and clean layout suitable for most industries. [𝐕𝐢𝐞𝐰 𝐏𝐃𝐅](assets/pdf-templates/single-column.pdf) |
-| **Modern Single Column** | ![Modern Template](assets/pdf-templates/modern-single-column.jpg) | A contemporary design with a focus on readability and aesthetics. [𝐕𝐢𝐞𝐰 𝐏𝐃𝐅](assets/pdf-templates/modern-single-column.pdf)|
-| **Classic Two Column** | ![Classic Two Column Template](assets/pdf-templates/two-column.jpg) | A structured layout that separates sections for clarity. [𝐕𝐢𝐞𝐰 𝐏𝐃𝐅](assets/pdf-templates/two-column.pdf)|
-| **Modern Two Column** | ![Modern Two Column Template](assets/pdf-templates/modern-two-column.jpg) | A sleek design that utilizes two columns for better organization. [𝐕𝐢𝐞𝐰 𝐏𝐃𝐅](assets/pdf-templates/modern-two-column.pdf)|
+| Template Name             | Preview                                                                   | Description                                                                                                                 |
+| ------------------------- | ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| **Classic Single Column** | ![Classic Template](assets/pdf-templates/single-column.jpg)               | A traditional and clean layout suitable for most industries. [𝐕𝐢𝐞𝐰 𝐏𝐃𝐅](assets/pdf-templates/single-column.pdf)             |
+| **Modern Single Column**  | ![Modern Template](assets/pdf-templates/modern-single-column.jpg)         | A contemporary design with a focus on readability and aesthetics. [𝐕𝐢𝐞𝐰 𝐏𝐃𝐅](assets/pdf-templates/modern-single-column.pdf) |
+| **Classic Two Column**    | ![Classic Two Column Template](assets/pdf-templates/two-column.jpg)       | A structured layout that separates sections for clarity. [𝐕𝐢𝐞𝐰 𝐏𝐃𝐅](assets/pdf-templates/two-column.pdf)                    |
+| **Modern Two Column**     | ![Modern Two Column Template](assets/pdf-templates/modern-two-column.jpg) | A sleek design that utilizes two columns for better organization. [𝐕𝐢𝐞𝐰 𝐏𝐃𝐅](assets/pdf-templates/modern-two-column.pdf)    |
 
 ### Internationalization
 
@@ -171,11 +171,11 @@ For detailed setup instructions, see **[SETUP.md](SETUP.md)** (English) or: [Esp
 
 ### Prerequisites
 
-| Tool | Version | Installation |
-|------|---------|--------------|
-| Python | 3.13+ | [python.org](https://python.org) |
-| Node.js | 22+ | [nodejs.org](https://nodejs.org) |
-| uv | Latest | [astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/) |
+| Tool    | Version | Installation                                                            |
+| ------- | ------- | ----------------------------------------------------------------------- |
+| Python  | 3.13+   | [python.org](https://python.org)                                        |
+| Node.js | 22+     | [nodejs.org](https://nodejs.org)                                        |
+| uv      | Latest  | [astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/) |
 
 ### Quick Start
 
@@ -202,14 +202,14 @@ Open **<http://localhost:3000>** and configure your AI provider in Settings.
 
 ### Supported AI Providers
 
-| Provider | Local/Cloud | Notes |
-|----------|-------------|-------|
-| **Ollama** | Local | Free, runs on your machine |
-| **OpenAI** | Cloud | GPT-4o, GPT-4o-mini |
-| **Anthropic** | Cloud | Claude 3.5 Sonnet |
-| **Google Gemini** | Cloud | Gemini 1.5 Flash/Pro |
-| **OpenRouter** | Cloud | Access to multiple models |
-| **DeepSeek** | Cloud | DeepSeek Chat |
+| Provider          | Local/Cloud | Notes                      |
+| ----------------- | ----------- | -------------------------- |
+| **Ollama**        | Local       | Free, runs on your machine |
+| **OpenAI**        | Cloud       | GPT-4o, GPT-4o-mini        |
+| **Anthropic**     | Cloud       | Claude 3.5 Sonnet          |
+| **Google Gemini** | Cloud       | Gemini 1.5 Flash/Pro       |
+| **OpenRouter**    | Cloud       | Access to multiple models  |
+| **DeepSeek**      | Cloud       | DeepSeek Chat              |
 
 ### Docker Deployment
 
@@ -225,13 +225,13 @@ docker run srbhr/resume-matcher:latest
 
 ### Tech Stack
 
-| Component | Technology |
-|-----------|------------|
-| Backend | FastAPI, Python 3.13+, LiteLLM |
-| Frontend | Next.js 15, React 19, TypeScript |
-| Database | TinyDB (JSON file storage) |
-| Styling | Tailwind CSS 4, Swiss International Style |
-| PDF | Headless Chromium via Playwright |
+| Component | Technology                                |
+| --------- | ----------------------------------------- |
+| Backend   | FastAPI, Python 3.13+, LiteLLM            |
+| Frontend  | Next.js 15, React 19, TypeScript          |
+| Database  | TinyDB (JSON file storage)                |
+| Styling   | Tailwind CSS 4, Swiss International Style |
+| PDF       | Headless Chromium via Playwright          |
 
 ## Join Us and Contribute
 

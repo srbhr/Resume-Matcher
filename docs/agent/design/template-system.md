@@ -4,10 +4,10 @@
 
 ## Templates
 
-| Template | Layout | Best For |
-|----------|--------|----------|
-| swiss-single | Full-width vertical | 1-2 page resumes |
-| swiss-two-column | 65% main + 35% sidebar | Dense content |
+| Template         | Layout                 | Best For         |
+| ---------------- | ---------------------- | ---------------- |
+| swiss-single     | Full-width vertical    | 1-2 page resumes |
+| swiss-two-column | 65% main + 35% sidebar | Dense content    |
 
 ## File Structure
 
@@ -55,7 +55,7 @@ interface ResumeData {
   education: Education[];
   personalProjects: Project[];
   additional: AdditionalInfo;
-  sectionMeta: SectionMeta[];      // Order, visibility
+  sectionMeta: SectionMeta[]; // Order, visibility
   customSections: CustomSection[]; // User-added sections
 }
 ```
@@ -64,11 +64,11 @@ interface ResumeData {
 
 Users can add custom sections via `AddSectionDialog`:
 
-| Type | Component | Use Case |
-|------|-----------|----------|
-| text | `GenericTextForm` | Objective, statement |
-| itemList | `GenericItemForm` | Publications, research |
-| stringList | `GenericListForm` | Hobbies, interests |
+| Type       | Component         | Use Case               |
+| ---------- | ----------------- | ---------------------- |
+| text       | `GenericTextForm` | Objective, statement   |
+| itemList   | `GenericItemForm` | Publications, research |
+| stringList | `GenericListForm` | Hobbies, interests     |
 
 ## CSS Classes
 
