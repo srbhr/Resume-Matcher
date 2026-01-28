@@ -3,6 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      network: host
     image: resume-matcher
     container_name: resume-matcher
     ports:
