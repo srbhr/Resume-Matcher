@@ -1,0 +1,473 @@
+"""Multi-pass resume refinement service.
+
+This module provides functionality to refine an initially tailored resume through
+multiple passes:
+1. Keyword injection - add missing JD keywords where supported by master resume
+2. AI phrase removal - replace AI-generated buzzwords with simpler alternatives
+3. Master alignment validation - ensure no fabricated content was added
+"""
+
+import logging
+import re
+from typing import Any
+
+from app.llm import complete_json
+from app.prompts.refinement import (
+    AI_PHRASE_BLACKLIST,
+    AI_PHRASE_REPLACEMENTS,
+    KEYWORD_INJECTION_PROMPT,
+)
+from app.schemas.refinement import (
+    AlignmentReport,
+    AlignmentViolation,
+    KeywordGapAnalysis,
+    RefinementConfig,
+    RefinementResult,
+)
+
+logger = logging.getLogger(__name__)
+
+
+async def refine_resume(
+    initial_tailored: dict[str, Any],
+    master_resume: dict[str, Any],
+    job_description: str,
+    job_keywords: dict[str, Any],
+    config: RefinementConfig | None = None,
+) -> RefinementResult:
+    """Multi-pass refinement of an initially tailored resume.
+
+    Args:
+        initial_tailored: Output from improve_resume() first pass
+        master_resume: Original master resume data (source of truth)
+        job_description: Raw job description text
+        job_keywords: Extracted job keywords
+        config: Refinement configuration
+
+    Returns:
+        RefinementResult with refined data and analysis
+    """
+    if config is None:
+        config = RefinementConfig()
+
+    current = _deep_copy(initial_tailored)
+    passes = 0
+    ai_phrases_found: list[str] = []
+    keyword_analysis: KeywordGapAnalysis | None = None
+    alignment: AlignmentReport | None = None
+
+    # Pass 1: Keyword injection (if enabled)
+    if config.enable_keyword_injection:
+        keyword_analysis = analyze_keyword_gaps(job_keywords, current, master_resume)
+        if keyword_analysis.injectable_keywords:
+            logger.info(
+                "Injecting %d keywords: %s",
+                len(keyword_analysis.injectable_keywords),
+                keyword_analysis.injectable_keywords,
+            )
+            try:
+                current = await inject_keywords(
+                    current,
+                    keyword_analysis.injectable_keywords,
+                    master_resume,
+                    job_description,
+                )
+                passes += 1
+            except Exception as e:
+                logger.warning("Keyword injection failed: %s", e)
+
+    # Pass 2: AI phrase removal and polish (local, no LLM call)
+    if config.enable_ai_phrase_removal:
+        current, removed = remove_ai_phrases(current)
+        ai_phrases_found.extend(removed)
+        if removed:
+            logger.info("Removed %d AI phrases: %s", len(removed), removed)
+            passes += 1
+
+    # Pass 3: Master alignment validation
+    if config.enable_master_alignment_check:
+        alignment = validate_master_alignment(current, master_resume)
+        if not alignment.is_aligned:
+            logger.warning(
+                "Alignment violations found: %d",
+                len(alignment.violations),
+            )
+            current = fix_alignment_violations(current, alignment.violations)
+            passes += 1
+
+    # Calculate final match percentage
+    final_match = calculate_keyword_match(current, job_keywords)
+
+    return RefinementResult(
+        refined_data=current,
+        passes_completed=passes,
+        keyword_analysis=keyword_analysis,
+        alignment_report=alignment,
+        ai_phrases_removed=ai_phrases_found,
+        final_match_percentage=final_match,
+    )
+
+
+def analyze_keyword_gaps(
+    jd_keywords: dict[str, Any],
+    tailored: dict[str, Any],
+    master: dict[str, Any],
+) -> KeywordGapAnalysis:
+    """Analyze which JD keywords are missing from the tailored resume.
+
+    Args:
+        jd_keywords: Extracted job keywords with required_skills, preferred_skills, etc.
+        tailored: Current tailored resume data
+        master: Master resume data (source of truth)
+
+    Returns:
+        KeywordGapAnalysis with missing, injectable, and non-injectable keywords
+    """
+    # Extract text content from resumes
+    tailored_text = _extract_all_text(tailored).lower()
+    master_text = _extract_all_text(master).lower()
+
+    # Get all keywords from JD
+    all_jd_keywords: set[str] = set()
+    all_jd_keywords.update(jd_keywords.get("required_skills", []))
+    all_jd_keywords.update(jd_keywords.get("preferred_skills", []))
+    all_jd_keywords.update(jd_keywords.get("keywords", []))
+
+    # Find missing keywords
+    missing: list[str] = []
+    injectable: list[str] = []
+    non_injectable: list[str] = []
+
+    for keyword in all_jd_keywords:
+        kw_lower = keyword.lower()
+        if kw_lower not in tailored_text:
+            missing.append(keyword)
+            if kw_lower in master_text:
+                injectable.append(keyword)
+            else:
+                non_injectable.append(keyword)
+
+    # Calculate percentages
+    total = len(all_jd_keywords) if all_jd_keywords else 1
+    current_match = (total - len(missing)) / total * 100
+    potential_match = (total - len(non_injectable)) / total * 100
+
+    return KeywordGapAnalysis(
+        missing_keywords=missing,
+        injectable_keywords=injectable,
+        non_injectable_keywords=non_injectable,
+        current_match_percentage=current_match,
+        potential_match_percentage=potential_match,
+    )
+
+
+def remove_ai_phrases(data: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
+    """Remove AI-generated phrases from resume content.
+
+    This is a local operation that doesn't require an LLM call.
+    It performs case-insensitive replacement of blacklisted phrases.
+
+    Args:
+        data: Resume data dictionary
+
+    Returns:
+        Tuple of (cleaned data, list of removed phrases)
+    """
+    removed: list[str] = []
+
+    def clean_text(text: str) -> str:
+        cleaned = text
+        for phrase in AI_PHRASE_BLACKLIST:
+            if phrase.lower() in cleaned.lower():
+                removed.append(phrase)
+                replacement = AI_PHRASE_REPLACEMENTS.get(phrase.lower(), "")
+                # Case-insensitive replacement
+                pattern = re.compile(re.escape(phrase), re.IGNORECASE)
+                cleaned = pattern.sub(replacement, cleaned)
+        return cleaned
+
+    def clean_recursive(obj: Any) -> Any:
+        if isinstance(obj, str):
+            return clean_text(obj)
+        elif isinstance(obj, list):
+            return [clean_recursive(item) for item in obj]
+        elif isinstance(obj, dict):
+            return {k: clean_recursive(v) for k, v in obj.items()}
+        return obj
+
+    cleaned_data = clean_recursive(data)
+    return cleaned_data, list(set(removed))
+
+
+def validate_master_alignment(
+    tailored: dict[str, Any],
+    master: dict[str, Any],
+) -> AlignmentReport:
+    """Verify tailored resume doesn't contain fabricated content.
+
+    Checks that all skills, certifications, and work experience companies
+    in the tailored resume exist in the master resume.
+
+    Args:
+        tailored: Tailored resume data
+        master: Master resume data (source of truth)
+
+    Returns:
+        AlignmentReport with violations and confidence score
+    """
+    violations: list[AlignmentViolation] = []
+
+    # Check skills
+    tailored_skills = set(
+        s.lower()
+        for s in tailored.get("additional", {}).get("technicalSkills", [])
+        if isinstance(s, str)
+    )
+    master_skills = set(
+        s.lower()
+        for s in master.get("additional", {}).get("technicalSkills", [])
+        if isinstance(s, str)
+    )
+
+    for skill in tailored_skills - master_skills:
+        violations.append(
+            AlignmentViolation(
+                field_path="additional.technicalSkills",
+                violation_type="fabricated_skill",
+                value=skill,
+                severity="critical",
+            )
+        )
+
+    # Check certifications
+    tailored_certs = set(
+        c.lower()
+        for c in tailored.get("additional", {}).get("certificationsTraining", [])
+        if isinstance(c, str)
+    )
+    master_certs = set(
+        c.lower()
+        for c in master.get("additional", {}).get("certificationsTraining", [])
+        if isinstance(c, str)
+    )
+
+    for cert in tailored_certs - master_certs:
+        violations.append(
+            AlignmentViolation(
+                field_path="additional.certificationsTraining",
+                violation_type="fabricated_cert",
+                value=cert,
+                severity="critical",
+            )
+        )
+
+    # Check work experience companies (should not add new companies)
+    tailored_companies = set(
+        exp.get("company", "").lower()
+        for exp in tailored.get("workExperience", [])
+        if isinstance(exp, dict)
+    )
+    master_companies = set(
+        exp.get("company", "").lower()
+        for exp in master.get("workExperience", [])
+        if isinstance(exp, dict)
+    )
+
+    for company in tailored_companies - master_companies:
+        if company:  # Skip empty strings
+            violations.append(
+                AlignmentViolation(
+                    field_path="workExperience",
+                    violation_type="fabricated_company",
+                    value=company,
+                    severity="critical",
+                )
+            )
+
+    is_aligned = len([v for v in violations if v.severity == "critical"]) == 0
+    confidence = 1.0 - (len(violations) * 0.1)  # Decrease confidence per violation
+
+    return AlignmentReport(
+        is_aligned=is_aligned,
+        violations=violations,
+        confidence_score=max(0.0, confidence),
+    )
+
+
+async def inject_keywords(
+    tailored: dict[str, Any],
+    keywords_to_inject: list[str],
+    master: dict[str, Any],
+    job_description: str,
+) -> dict[str, Any]:
+    """Use LLM to inject missing keywords into appropriate sections.
+
+    Args:
+        tailored: Current tailored resume
+        keywords_to_inject: Keywords that are in master but missing from tailored
+        master: Master resume (source of truth)
+        job_description: Job description for context
+
+    Returns:
+        Updated resume data with keywords injected
+    """
+    import json
+
+    prompt = KEYWORD_INJECTION_PROMPT.format(
+        keywords_to_inject=json.dumps(keywords_to_inject),
+        current_resume=json.dumps(tailored, indent=2),
+        master_resume=json.dumps(master, indent=2),
+        job_description=job_description[:2000],  # Truncate for token limits
+    )
+
+    result = await complete_json(
+        prompt=prompt,
+        system_prompt=(
+            "You are a resume editor. Inject keywords naturally without adding "
+            "fabricated content. Return only valid JSON matching the input schema."
+        ),
+        max_tokens=8192,
+    )
+
+    if isinstance(result, dict):
+        return result
+    return tailored
+
+
+def fix_alignment_violations(
+    tailored: dict[str, Any],
+    violations: list[AlignmentViolation],
+) -> dict[str, Any]:
+    """Remove or correct alignment violations.
+
+    This is a local operation that removes fabricated content.
+
+    Args:
+        tailored: Tailored resume data
+        violations: List of alignment violations to fix
+
+    Returns:
+        Fixed resume data
+    """
+    fixed = _deep_copy(tailored)
+
+    for violation in violations:
+        if violation.severity != "critical":
+            continue
+
+        if violation.violation_type == "fabricated_skill":
+            skills = fixed.get("additional", {}).get("technicalSkills", [])
+            fixed.setdefault("additional", {})["technicalSkills"] = [
+                s for s in skills if s.lower() != violation.value.lower()
+            ]
+
+        elif violation.violation_type == "fabricated_cert":
+            certs = fixed.get("additional", {}).get("certificationsTraining", [])
+            fixed.setdefault("additional", {})["certificationsTraining"] = [
+                c for c in certs if c.lower() != violation.value.lower()
+            ]
+
+        elif violation.violation_type == "fabricated_company":
+            # Log but don't auto-fix - this is a serious error
+            logger.error(
+                "Critical: Fabricated company detected: %s", violation.value
+            )
+
+    return fixed
+
+
+def calculate_keyword_match(
+    resume: dict[str, Any],
+    jd_keywords: dict[str, Any],
+) -> float:
+    """Calculate keyword match percentage.
+
+    Args:
+        resume: Resume data dictionary
+        jd_keywords: Extracted job keywords
+
+    Returns:
+        Match percentage (0.0 to 100.0)
+    """
+    resume_text = _extract_all_text(resume).lower()
+
+    all_keywords: set[str] = set()
+    all_keywords.update(jd_keywords.get("required_skills", []))
+    all_keywords.update(jd_keywords.get("preferred_skills", []))
+    all_keywords.update(jd_keywords.get("keywords", []))
+
+    if not all_keywords:
+        return 100.0
+
+    matched = sum(1 for kw in all_keywords if kw.lower() in resume_text)
+    return (matched / len(all_keywords)) * 100
+
+
+def _extract_all_text(data: dict[str, Any]) -> str:
+    """Extract all text content from resume data for keyword matching.
+
+    Args:
+        data: Resume data dictionary
+
+    Returns:
+        Concatenated text from all resume sections
+    """
+    parts: list[str] = []
+
+    # Summary
+    if data.get("summary"):
+        parts.append(str(data["summary"]))
+
+    # Work experience
+    for exp in data.get("workExperience", []):
+        if isinstance(exp, dict):
+            parts.append(str(exp.get("title", "")))
+            parts.append(str(exp.get("company", "")))
+            desc = exp.get("description", [])
+            if isinstance(desc, list):
+                parts.extend(str(d) for d in desc)
+
+    # Education
+    for edu in data.get("education", []):
+        if isinstance(edu, dict):
+            parts.append(str(edu.get("degree", "")))
+            parts.append(str(edu.get("institution", "")))
+            if edu.get("description"):
+                parts.append(str(edu["description"]))
+
+    # Projects
+    for proj in data.get("personalProjects", []):
+        if isinstance(proj, dict):
+            parts.append(str(proj.get("name", "")))
+            parts.append(str(proj.get("role", "")))
+            desc = proj.get("description", [])
+            if isinstance(desc, list):
+                parts.extend(str(d) for d in desc)
+
+    # Additional
+    additional = data.get("additional", {})
+    if isinstance(additional, dict):
+        skills = additional.get("technicalSkills", [])
+        if isinstance(skills, list):
+            parts.extend(str(s) for s in skills)
+        certs = additional.get("certificationsTraining", [])
+        if isinstance(certs, list):
+            parts.extend(str(c) for c in certs)
+
+    return " ".join(p for p in parts if p)
+
+
+def _deep_copy(data: dict[str, Any]) -> dict[str, Any]:
+    """Create a deep copy of a dictionary.
+
+    Uses JSON serialization for simplicity and to handle nested structures.
+
+    Args:
+        data: Dictionary to copy
+
+    Returns:
+        Deep copy of the dictionary
+    """
+    import json
+
+    return json.loads(json.dumps(data))

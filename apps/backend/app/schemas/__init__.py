@@ -32,6 +32,7 @@ from app.schemas.models import (
     PromptConfigResponse,
     PromptOption,
     RawResume,
+    RefinementStats,
     ResumeDiffSummary,
     ResumeFieldDiff,
     ResetDatabaseRequest,
@@ -47,6 +48,7 @@ from app.schemas.models import (
     UpdateCoverLetterRequest,
     UpdateOutreachMessageRequest,
 )
+
 
 __all__ = [
     "PersonalInfo",
@@ -75,6 +77,7 @@ __all__ = [
     "ImprovementSuggestion",
     "ResumeDiffSummary",
     "ResumeFieldDiff",
+    "RefinementStats",
     "LLMConfigRequest",
     "LLMConfigResponse",
     "LanguageConfigRequest",

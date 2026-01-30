@@ -24,6 +24,7 @@ from app.schemas import (
     ImproveResumeRequest,
     ImproveResumeResponse,
     ImproveResumeData,
+    RefinementStats,
     ResumeDiffSummary,
     ResumeFieldDiff,
     ResumeData,
@@ -43,6 +44,8 @@ from app.services.improver import (
     generate_improvements,
     improve_resume,
 )
+from app.services.refiner import refine_resume, calculate_keyword_match
+from app.schemas.refinement import RefinementConfig
 from app.services.cover_letter import (
     generate_cover_letter,
     generate_outreach_message,
@@ -455,6 +458,58 @@ async def improve_resume_preview_endpoint(
             _get_original_resume_data(resume),
             improved_data,
         )
+
+        # Multi-pass refinement: keyword injection, AI phrase removal, alignment validation
+        stage = "refine_resume"
+        refinement_stats: RefinementStats | None = None
+        try:
+            # Get master resume for alignment validation
+            master_resume = db.get_master_resume()
+            master_data = (
+                _get_original_resume_data(master_resume)
+                if master_resume
+                else _get_original_resume_data(resume)
+            )
+            if master_data:
+                initial_match = calculate_keyword_match(improved_data, job_keywords)
+                refinement_result = await refine_resume(
+                    initial_tailored=improved_data,
+                    master_resume=master_data,
+                    job_description=job["content"],
+                    job_keywords=job_keywords,
+                    config=RefinementConfig(),
+                )
+                improved_data = refinement_result.refined_data
+                refinement_stats = RefinementStats(
+                    passes_completed=refinement_result.passes_completed,
+                    keywords_injected=(
+                        len(refinement_result.keyword_analysis.injectable_keywords)
+                        if refinement_result.keyword_analysis
+                        else 0
+                    ),
+                    ai_phrases_removed=refinement_result.ai_phrases_removed,
+                    alignment_violations_fixed=(
+                        len(
+                            [
+                                v
+                                for v in refinement_result.alignment_report.violations
+                                if v.severity == "critical"
+                            ]
+                        )
+                        if refinement_result.alignment_report
+                        else 0
+                    ),
+                    initial_match_percentage=initial_match,
+                    final_match_percentage=refinement_result.final_match_percentage,
+                )
+                logger.info(
+                    "Refinement completed: %d passes, %d AI phrases removed",
+                    refinement_result.passes_completed,
+                    len(refinement_result.ai_phrases_removed),
+                )
+        except Exception as e:
+            logger.warning("Refinement failed, using unrefined result: %s", e)
+
         improved_text = json.dumps(improved_data, indent=2)
         preview_hash = _hash_improved_data(improved_data)
         preview_hashes = job.get("preview_hashes")
@@ -504,6 +559,7 @@ async def improve_resume_preview_endpoint(
                 outreach_message=None,
                 diff_summary=diff_summary,
                 detailed_changes=detailed_changes,
+                refinement_stats=refinement_stats,
             ),
         )
     except Exception as e:
@@ -678,6 +734,56 @@ async def improve_resume_endpoint(
             improved_data,
         )
 
+        # Multi-pass refinement: keyword injection, AI phrase removal, alignment validation
+        refinement_stats: RefinementStats | None = None
+        try:
+            # Get master resume for alignment validation
+            master_resume = db.get_master_resume()
+            master_data = (
+                _get_original_resume_data(master_resume)
+                if master_resume
+                else _get_original_resume_data(resume)
+            )
+            if master_data:
+                initial_match = calculate_keyword_match(improved_data, job_keywords)
+                refinement_result = await refine_resume(
+                    initial_tailored=improved_data,
+                    master_resume=master_data,
+                    job_description=job["content"],
+                    job_keywords=job_keywords,
+                    config=RefinementConfig(),
+                )
+                improved_data = refinement_result.refined_data
+                refinement_stats = RefinementStats(
+                    passes_completed=refinement_result.passes_completed,
+                    keywords_injected=(
+                        len(refinement_result.keyword_analysis.injectable_keywords)
+                        if refinement_result.keyword_analysis
+                        else 0
+                    ),
+                    ai_phrases_removed=refinement_result.ai_phrases_removed,
+                    alignment_violations_fixed=(
+                        len(
+                            [
+                                v
+                                for v in refinement_result.alignment_report.violations
+                                if v.severity == "critical"
+                            ]
+                        )
+                        if refinement_result.alignment_report
+                        else 0
+                    ),
+                    initial_match_percentage=initial_match,
+                    final_match_percentage=refinement_result.final_match_percentage,
+                )
+                logger.info(
+                    "Refinement completed: %d passes, %d AI phrases removed",
+                    refinement_result.passes_completed,
+                    len(refinement_result.ai_phrases_removed),
+                )
+        except Exception as e:
+            logger.warning("Refinement failed, using unrefined result: %s", e)
+
         # Convert improved data to JSON string for storage
         improved_text = json.dumps(improved_data, indent=2)
 
@@ -742,6 +848,7 @@ async def improve_resume_endpoint(
                 # Diff metadata
                 diff_summary=diff_summary,
                 detailed_changes=detailed_changes,
+                refinement_stats=refinement_stats,
             ),
         )
 

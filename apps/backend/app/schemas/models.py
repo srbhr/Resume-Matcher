@@ -314,6 +314,30 @@ class ResumeDiffSummary(BaseModel):
     high_risk_changes: int  # High-risk additions
 
 
+class RefinementStats(BaseModel):
+    """Statistics from the multi-pass refinement process."""
+
+    passes_completed: int = Field(default=0, ge=0, description="Number of passes run")
+    keywords_injected: int = Field(
+        default=0, ge=0, description="Number of keywords injected"
+    )
+    ai_phrases_removed: list[str] = Field(
+        default_factory=list, description="List of AI phrases that were removed"
+    )
+    alignment_violations_fixed: int = Field(
+        default=0, ge=0, description="Number of alignment violations corrected"
+    )
+    initial_match_percentage: float = Field(
+        default=0.0,
+        ge=0.0,
+        le=100.0,
+        description="Keyword match before refinement",
+    )
+    final_match_percentage: float = Field(
+        default=0.0, ge=0.0, le=100.0, description="Keyword match after refinement"
+    )
+
+
 class ImproveResumeData(BaseModel):
     """Data payload for improve response."""
 
@@ -333,6 +357,9 @@ class ImproveResumeData(BaseModel):
     # Diff metadata
     diff_summary: ResumeDiffSummary | None = None
     detailed_changes: list[ResumeFieldDiff] | None = None
+
+    # Refinement metadata (multi-pass refinement stats)
+    refinement_stats: "RefinementStats | None" = None
 
 
 class ImproveResumeResponse(BaseModel):
