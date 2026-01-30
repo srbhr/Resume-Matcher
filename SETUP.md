@@ -123,7 +123,7 @@ The most important setting is your AI provider. Here's a minimal configuration f
 
 ```env
 LLM_PROVIDER=openai
-LLM_MODEL=gpt-4o-mini
+LLM_MODEL=gpt-5-nano-2025-08-07
 LLM_API_KEY=sk-your-api-key-here
 
 # Keep these as default for local development
@@ -205,17 +205,17 @@ Resume Matcher supports multiple AI providers. You can configure your provider t
 
 | Provider | Configuration | Get API Key |
 |----------|--------------|-------------|
-| **OpenAI** | `LLM_PROVIDER=openai`<br>`LLM_MODEL=gpt-4o-mini` | [platform.openai.com](https://platform.openai.com/api-keys) |
-| **Anthropic** | `LLM_PROVIDER=anthropic`<br>`LLM_MODEL=claude-3-5-sonnet-20241022` | [console.anthropic.com](https://console.anthropic.com/) |
-| **Google Gemini** | `LLM_PROVIDER=gemini`<br>`LLM_MODEL=gemini-1.5-flash` | [aistudio.google.com](https://aistudio.google.com/app/apikey) |
-| **OpenRouter** | `LLM_PROVIDER=openrouter`<br>`LLM_MODEL=anthropic/claude-3.5-sonnet` | [openrouter.ai](https://openrouter.ai/keys) |
-| **DeepSeek** | `LLM_PROVIDER=deepseek`<br>`LLM_MODEL=deepseek-chat` | [platform.deepseek.com](https://platform.deepseek.com/) |
+| **OpenAI** | `LLM_PROVIDER=openai`<br>`LLM_MODEL=gpt-5-nano-2025-08-07` | [platform.openai.com](https://platform.openai.com/api-keys) |
+| **Anthropic** | `LLM_PROVIDER=anthropic`<br>`LLM_MODEL=claude-haiku-4-5-20251001` | [console.anthropic.com](https://console.anthropic.com/) |
+| **Google Gemini** | `LLM_PROVIDER=gemini`<br>`LLM_MODEL=gemini-3-flash-preview` | [aistudio.google.com](https://aistudio.google.com/app/apikey) |
+| **OpenRouter** | `LLM_PROVIDER=openrouter`<br>`LLM_MODEL=deepseek/deepseek-v3.2` | [openrouter.ai](https://openrouter.ai/keys) |
+| **DeepSeek** | `LLM_PROVIDER=deepseek`<br>`LLM_MODEL=deepseek-v3.2` | [platform.deepseek.com](https://platform.deepseek.com/) |
 
 Example `.env` for Anthropic:
 
 ```env
 LLM_PROVIDER=anthropic
-LLM_MODEL=claude-3-5-sonnet-20241022
+LLM_MODEL=claude-haiku-4-5-20251001
 LLM_API_KEY=sk-ant-your-key-here
 ```
 
@@ -230,16 +230,16 @@ Download and install from [ollama.com](https://ollama.com)
 #### Step 2: Pull a model
 
 ```bash
-ollama pull llama3.2
+ollama pull gemma3:4b
 ```
 
-Other good options: `mistral`, `codellama`, `neural-chat`
+Other good options: `llama3.2`, `mistral`, `codellama`, `neural-chat`
 
 #### Step 3: Configure your `.env`
 
 ```env
 LLM_PROVIDER=ollama
-LLM_MODEL=llama3.2
+LLM_MODEL=gemma3:4b
 LLM_API_BASE=http://localhost:11434
 # LLM_API_KEY is not needed for Ollama
 ```
@@ -258,7 +258,7 @@ Ollama typically starts automatically after installation.
 
 Prefer containerized deployment? Resume Matcher includes Docker support.
 
-### Using Docker Compose (Recommended)
+### Quick Start with Docker Compose
 
 ```bash
 # Build and start the containers
@@ -271,15 +271,73 @@ docker-compose logs -f
 docker-compose down
 ```
 
-### Important Notes for Docker
+### Customizing Ports
 
-- **API keys are configured through the UI** at <http://localhost:3000/settings> (not `.env` files)
-- Data is persisted in a Docker volume
-- Both frontend (3000) and backend (8000) ports are exposed
+By default, Resume Matcher runs on ports 3000 (frontend) and 8000 (backend). To use different ports:
 
-<!-- Note: Docker documentation is pending. For now, use docker-compose.yml as reference -->
+**Option 1: Environment Variables (Frontend port only)**
 
----
+```bash
+# Change frontend port only (no rebuild needed)
+FRONTEND_PORT=4000 docker-compose up -d
+```
+
+**Option 2: Changing the Backend Port (requires rebuild)**
+
+The frontend's API URL is baked into the JavaScript bundle at build time. If you change `BACKEND_PORT`, you must rebuild the image:
+
+```bash
+# Build with custom backend port
+BACKEND_PORT=9000 docker-compose build
+
+# Then run with the same port
+BACKEND_PORT=9000 docker-compose up -d
+```
+
+Or create a `.env` file and rebuild:
+
+```bash
+# Create .env file
+cat > .env << EOF
+FRONTEND_PORT=4000
+BACKEND_PORT=9000
+LLM_PROVIDER=openai
+LLM_API_KEY=sk-your-key-here
+EOF
+
+# Rebuild and run
+docker-compose build && docker-compose up -d
+```
+
+### Configuration Options
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `FRONTEND_PORT` | `3000` | Host port for the web interface |
+| `BACKEND_PORT` | `8000` | Host port for the API |
+| `LLM_PROVIDER` | `openai` | AI provider (openai, anthropic, gemini, etc.) |
+| `LLM_MODEL` | — | Model to use (configured via Settings UI) |
+| `LLM_API_KEY` | — | API key (recommended: configure via Settings UI) |
+| `LLM_API_BASE` | — | Custom API endpoint (for Ollama or proxies) |
+
+### Using Ollama with Docker
+
+To use Ollama running on your host machine:
+
+```bash
+LLM_API_BASE=http://host.docker.internal:11434 docker-compose up -d
+```
+
+Then configure Ollama as your provider in the Settings UI.
+
+### Important Notes
+
+- **API keys are best configured through the UI** at `http://localhost:3000/settings`
+- Data is persisted in a Docker volume (`resume-data`)
+- The Settings UI configuration is stored in the volume and persists across restarts
+- **Backend port changes require a rebuild** - the frontend API URL is baked into the JS bundle at build time
+
+
 
 ## Accessing the Application
 
@@ -429,7 +487,7 @@ CORS_ORIGINS=["http://localhost:3001", "http://127.0.0.1:3001"]
 
 1. Check Ollama is running: `ollama list`
 2. Start Ollama if needed: `ollama serve`
-3. Make sure the model is downloaded: `ollama pull llama3.2`
+3. Make sure the model is downloaded: `ollama pull gemma3:4b`
 
 ---
 

@@ -124,16 +124,16 @@ export const PROVIDER_INFO: Record<
   LLMProvider,
   { name: string; defaultModel: string; requiresKey: boolean }
 > = {
-  openai: { name: 'OpenAI', defaultModel: 'gpt-4o-mini', requiresKey: true },
-  anthropic: { name: 'Anthropic', defaultModel: 'claude-3-5-sonnet-20241022', requiresKey: true },
+  openai: { name: 'OpenAI', defaultModel: 'gpt-5-nano-2025-08-07', requiresKey: true },
+  anthropic: { name: 'Anthropic', defaultModel: 'claude-haiku-4-5-20251001', requiresKey: true },
   openrouter: {
     name: 'OpenRouter',
-    defaultModel: 'anthropic/claude-3.5-sonnet',
+    defaultModel: 'deepseek/deepseek-v3.2',
     requiresKey: true,
   },
-  gemini: { name: 'Google Gemini', defaultModel: 'gemini-1.5-flash', requiresKey: true },
-  deepseek: { name: 'DeepSeek', defaultModel: 'deepseek-chat', requiresKey: true },
-  ollama: { name: 'Ollama (Local)', defaultModel: 'llama3.2', requiresKey: false },
+  gemini: { name: 'Google Gemini', defaultModel: 'gemini-3-flash-preview', requiresKey: true },
+  deepseek: { name: 'DeepSeek', defaultModel: 'deepseek-v3.2', requiresKey: true },
+  ollama: { name: 'Ollama (Local)', defaultModel: 'gemma3:4b', requiresKey: false },
 };
 
 // Feature configuration types

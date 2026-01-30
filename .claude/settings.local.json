@@ -14,7 +14,10 @@
       "Bash(cat:*)",
       "Bash(head:*)",
       "Bash(npm run format:*)",
-      "Bash(python -m py_compile:*)"
+      "Bash(python -m py_compile:*)",
+      "Bash(gh pr view:*)",
+      "Bash(gh pr diff:*)",
+      "Bash(gh issue view:*)"
     ]
   }
 }

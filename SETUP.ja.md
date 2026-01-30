@@ -128,7 +128,7 @@ code .env   # VS Code
 
 ```env
 LLM_PROVIDER=openai
-LLM_MODEL=gpt-4o-mini
+LLM_MODEL=gpt-5-nano-2025-08-07
 LLM_API_KEY=sk-your-api-key-here
 
 # ローカル開発では既定のままで OK
@@ -213,17 +213,17 @@ Resume Matcher は複数の AI プロバイダに対応しています。アプ�
 
 | プロバイダ | 設定 | API キー取得先 |
 |----------|------|----------------|
-| **OpenAI** | `LLM_PROVIDER=openai`<br>`LLM_MODEL=gpt-4o-mini` | [platform.openai.com](https://platform.openai.com/api-keys) |
-| **Anthropic** | `LLM_PROVIDER=anthropic`<br>`LLM_MODEL=claude-3-5-sonnet-20241022` | [console.anthropic.com](https://console.anthropic.com/) |
-| **Google Gemini** | `LLM_PROVIDER=gemini`<br>`LLM_MODEL=gemini-1.5-flash` | [aistudio.google.com](https://aistudio.google.com/app/apikey) |
-| **OpenRouter** | `LLM_PROVIDER=openrouter`<br>`LLM_MODEL=anthropic/claude-3.5-sonnet` | [openrouter.ai](https://openrouter.ai/keys) |
-| **DeepSeek** | `LLM_PROVIDER=deepseek`<br>`LLM_MODEL=deepseek-chat` | [platform.deepseek.com](https://platform.deepseek.com/) |
+| **OpenAI** | `LLM_PROVIDER=openai`<br>`LLM_MODEL=gpt-5-nano-2025-08-07` | [platform.openai.com](https://platform.openai.com/api-keys) |
+| **Anthropic** | `LLM_PROVIDER=anthropic`<br>`LLM_MODEL=claude-haiku-4-5-20251001` | [console.anthropic.com](https://console.anthropic.com/) |
+| **Google Gemini** | `LLM_PROVIDER=gemini`<br>`LLM_MODEL=gemini-3-flash-preview` | [aistudio.google.com](https://aistudio.google.com/app/apikey) |
+| **OpenRouter** | `LLM_PROVIDER=openrouter`<br>`LLM_MODEL=deepseek/deepseek-v3.2` | [openrouter.ai](https://openrouter.ai/keys) |
+| **DeepSeek** | `LLM_PROVIDER=deepseek`<br>`LLM_MODEL=deepseek-v3.2` | [platform.deepseek.com](https://platform.deepseek.com/) |
 
 Anthropic の `.env` 例：
 
 ```env
 LLM_PROVIDER=anthropic
-LLM_MODEL=claude-3-5-sonnet-20241022
+LLM_MODEL=claude-haiku-4-5-20251001
 LLM_API_KEY=sk-ant-your-key-here
 ```
 
@@ -239,7 +239,7 @@ API コストなしでローカル実行したい場合は Ollama を使えま�
 #### ステップ 2: モデルを取得
 
 ```bash
-ollama pull llama3.2
+ollama pull gemma3:4b
 ```
 
 他の候補：`mistral`、`codellama`、`neural-chat`
@@ -248,7 +248,7 @@ ollama pull llama3.2
 
 ```env
 LLM_PROVIDER=ollama
-LLM_MODEL=llama3.2
+LLM_MODEL=gemma3:4b
 LLM_API_BASE=http://localhost:11434
 # Ollama では LLM_API_KEY は不要です
 ```
@@ -442,7 +442,7 @@ CORS_ORIGINS=["http://localhost:3001", "http://127.0.0.1:3001"]
 
 1. Ollama の稼働確認：`ollama list`
 2. 必要なら起動：`ollama serve`
-3. モデルが取得済みか確認：`ollama pull llama3.2`
+3. モデルが取得済みか確認：`ollama pull gemma3:4b`
 
 ---
 
