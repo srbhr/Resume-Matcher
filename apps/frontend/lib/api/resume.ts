@@ -67,6 +67,15 @@ interface ResumeResponse {
   };
 }
 
+/** Response from resume upload endpoint */
+export interface ResumeUploadResponse {
+  message: string;
+  request_id: string;
+  resume_id: string;
+  processing_status: 'pending' | 'processing' | 'ready' | 'failed';
+  is_master: boolean;
+}
+
 interface ImproveResumeConfirmRequest {
   resume_id: string;
   job_id: string;
@@ -165,7 +174,7 @@ export async function previewImproveResume(
 export async function confirmImproveResume(
   payload: ImproveResumeConfirmRequest
 ): Promise<ImprovedResult> {
-  return postImprove('/resumes/improve/confirm', payload as Record<string, unknown>);
+  return postImprove('/resumes/improve/confirm', payload as unknown as Record<string, unknown>);
 }
 
 /** Fetches a raw resume record for previewing the original upload */

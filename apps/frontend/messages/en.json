@@ -84,7 +84,9 @@
     "setupRequiredMessage": "> Configure API key in settings to enable resume tailoring.",
     "uploadDialog": {
       "success": "Resume uploaded successfully.",
+      "successMaster": "Resume uploaded and set as master.",
       "successMissingId": "Upload succeeded but no Resume ID returned.",
+      "parsingFailed": "Resume uploaded but AI parsing failed. You can still tailor it manually.",
       "failed": "Upload failed.",
       "dropzoneTitle": "Click or Drag File",
       "dropzoneSubtitle": "PDF, DOC, DOCX (Max 4MB)"

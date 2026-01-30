@@ -1,5 +1,7 @@
 """TinyDB database layer for JSON storage."""
 
+import logging
+import threading
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -10,9 +12,13 @@ from tinydb.table import Table
 
 from app.config import settings
 
+logger = logging.getLogger(__name__)
+
 
 class Database:
     """TinyDB wrapper for resume matcher data."""
+
+    _master_resume_lock = threading.Lock()
 
     def __init__(self, db_path: Path | None = None):
         self.db_path = db_path or settings.db_path
@@ -84,6 +90,34 @@ class Database:
         self.resumes.insert(doc)
         return doc
 
+    def create_resume_atomic_master(
+        self,
+        content: str,
+        content_type: str = "md",
+        filename: str | None = None,
+        processed_data: dict[str, Any] | None = None,
+        processing_status: str = "pending",
+        cover_letter: str | None = None,
+        outreach_message: str | None = None,
+    ) -> dict[str, Any]:
+        """Create a new resume with atomic master assignment.
+
+        Uses a lock to prevent race conditions when multiple uploads
+        happen concurrently and both try to become master.
+        """
+        with self._master_resume_lock:
+            is_master = self.get_master_resume() is None
+            return self.create_resume(
+                content=content,
+                content_type=content_type,
+                filename=filename,
+                is_master=is_master,
+                processed_data=processed_data,
+                processing_status=processing_status,
+                cover_letter=cover_letter,
+                outreach_message=outreach_message,
+            )
+
     def get_resume(self, resume_id: str) -> dict[str, Any] | None:
         """Get resume by ID."""
         Resume = Query()
@@ -98,12 +132,24 @@ class Database:
 
     def update_resume(
         self, resume_id: str, updates: dict[str, Any]
-    ) -> dict[str, Any] | None:
-        """Update resume by ID."""
+    ) -> dict[str, Any]:
+        """Update resume by ID.
+
+        Raises:
+            ValueError: If resume not found.
+        """
         Resume = Query()
         updates["updated_at"] = datetime.now(timezone.utc).isoformat()
-        self.resumes.update(updates, Resume.resume_id == resume_id)
-        return self.get_resume(resume_id)
+        updated_count = self.resumes.update(updates, Resume.resume_id == resume_id)
+
+        if not updated_count:
+            raise ValueError(f"Resume not found: {resume_id}")
+
+        result = self.get_resume(resume_id)
+        if not result:
+            raise ValueError(f"Resume disappeared after update: {resume_id}")
+
+        return result
 
     def delete_resume(self, resume_id: str) -> bool:
         """Delete resume by ID."""
@@ -116,8 +162,18 @@ class Database:
         return list(self.resumes.all())
 
     def set_master_resume(self, resume_id: str) -> bool:
-        """Set a resume as the master, unsetting any existing master."""
+        """Set a resume as the master, unsetting any existing master.
+
+        Returns False if the resume doesn't exist.
+        """
         Resume = Query()
+
+        # First verify the target resume exists
+        target = self.resumes.search(Resume.resume_id == resume_id)
+        if not target:
+            logger.warning("Cannot set master: resume %s not found", resume_id)
+            return False
+
         # Unset current master
         self.resumes.update({"is_master": False}, Resume.is_master == True)
         # Set new master

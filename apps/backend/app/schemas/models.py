@@ -203,6 +203,8 @@ class ResumeUploadResponse(BaseModel):
     message: str
     request_id: str
     resume_id: str
+    processing_status: Literal["pending", "processing", "ready", "failed"] = "pending"
+    is_master: bool = False
 
 
 class RawResume(BaseModel):
@@ -360,6 +362,11 @@ class ImproveResumeData(BaseModel):
 
     # Refinement metadata (multi-pass refinement stats)
     refinement_stats: "RefinementStats | None" = None
+
+    # Warning and status fields for transparency
+    warnings: list[str] = Field(default_factory=list)
+    refinement_attempted: bool = False
+    refinement_successful: bool = False
 
 
 class ImproveResumeResponse(BaseModel):
