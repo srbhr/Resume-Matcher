@@ -4,7 +4,11 @@
 # ============================================
 # Stage 1: Build Frontend
 # ============================================
-FROM node:22-slim AS frontend-builder
+FROM node:22 AS frontend-builder
+
+# Build argument for API URL (allows customization at build time)
+# Default matches the default BACKEND_PORT in docker-compose.yml
+ARG NEXT_PUBLIC_API_URL=http://localhost:8000
 
 WORKDIR /app/frontend
 
@@ -18,7 +22,8 @@ RUN npm ci
 COPY apps/frontend/ ./
 
 # Set environment variable for production build
-ENV NEXT_PUBLIC_API_URL=http://localhost:8000
+# This gets baked into the JavaScript bundle at build time
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 
 # Build the frontend
 RUN npm run build
@@ -99,7 +104,8 @@ RUN npm ci --omit=dev
 # Startup Script
 # ============================================
 COPY docker/start.sh /app/start.sh
-RUN chmod +x /app/start.sh
+# Convert CRLF to LF (fixes Windows line ending issues) and make executable
+RUN sed -i 's/\r$//' /app/start.sh && chmod +x /app/start.sh
 
 # ============================================
 # Data Directory & Volume

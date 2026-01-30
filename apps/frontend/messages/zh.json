@@ -190,6 +190,55 @@
       "title": "重新生成 {title}？",
       "description": "将用新生成的内容替换当前的 {title}。你所做的任何编辑都会丢失。"
     },
+    "regenerate": {
+      "buttonLabel": "AI 重新生成",
+      "selectDialog": {
+        "title": "选择要重新生成的项目",
+        "subtitle": "选择您想要改进的简历部分",
+        "experience": "工作经历",
+        "projects": "项目经历",
+        "skills": "技术技能",
+        "noItemsSelected": "请至少选择一个项目",
+        "noItemsAvailable": "没有可重新生成的项目。请先添加工作经历、项目经历或技能。",
+        "itemCount": {
+          "one": "{count} 条",
+          "other": "{count} 条"
+        },
+        "continueButton": "继续"
+      },
+      "instructionDialog": {
+        "title": "您想要改进什么？",
+        "subtitle": "提供具体反馈以指导 AI",
+        "defaultInstruction": "使用更有力的行动动词改进内容，并在可能时体现可量化的影响。",
+        "selectedItems": "已选项目",
+        "placeholder": "示例：添加更多量化指标、强调领导能力、使用更多行动动词...",
+        "hint": "请具体说明您不满意的地方",
+        "backButton": "返回",
+        "generateButton": "生成"
+      },
+      "diffPreview": {
+        "title": "预览变更",
+        "subtitle": "应用前查看重新生成的内容",
+        "expandItem": "展开 {item}",
+        "collapseItem": "收起 {item}",
+        "partialFailures": "部分项目未能重新生成（{count} 个）。你仍可以预览并应用已成功生成的变更。",
+        "changesCount": "{count} 个项目已修改",
+        "rejectButton": "拒绝并重新生成",
+        "acceptButton": "接受变更",
+        "originalLabel": "原始",
+        "newLabel": "新内容",
+        "noContent": "无内容",
+        "applying": "正在应用...",
+        "loading": "正在生成改进内容..."
+      },
+      "errors": {
+        "generationFailed": "生成内容失败，请重试。",
+        "applyFailed": "应用变更失败，请重试。",
+        "resumeChanged": "简历内容在重新生成后已发生变化。请重新生成后再试。",
+        "noChangesToApply": "没有可应用的变更。",
+        "networkError": "网络错误，请检查您的连接。"
+      }
+    },
     "jdMatch": {
       "yourResume": "你的简历",
       "matchingKeywordsHighlighted": "（已高亮匹配关键词）",
@@ -377,6 +426,10 @@
     "alerts": {
       "saveNotAvailable": "仅在编辑现有简历时可保存。",
       "saveFailed": "保存简历失败，请重试。",
+      "coverLetterSaveSuccess": "求职信已保存",
+      "outreachSaveSuccess": "联系邮件已保存",
+      "downloadSuccess": "简历已下载",
+      "reloadFailed": "变更已应用，但重新加载简历失败。请刷新页面。",
       "downloadNotAvailable": "仅已保存的简历可下载。",
       "downloadFailed": "下载简历失败，请重试。",
       "coverLetterSaveFailed": "保存求职信失败，请重试。",

@@ -61,11 +61,21 @@ export function ResumeUploadDialog({ trigger, onUploadComplete }: ResumeUploadDi
     multiple: false,
     uploadUrl: UPLOAD_URL,
     onUploadSuccess: (uploadedFile, response) => {
-      const data = response as { resume_id?: string };
+      const data = response as {
+        resume_id?: string;
+        processing_status?: 'pending' | 'processing' | 'ready' | 'failed';
+        is_master?: boolean;
+      };
       if (data.resume_id) {
+        // Show different feedback based on processing status
+        const processingFailed = data.processing_status === 'failed';
         setUploadFeedback({
-          type: 'success',
-          message: t('dashboard.uploadDialog.success'),
+          type: processingFailed ? 'error' : 'success',
+          message: processingFailed
+            ? t('dashboard.uploadDialog.parsingFailed')
+            : data.is_master
+              ? t('dashboard.uploadDialog.successMaster')
+              : t('dashboard.uploadDialog.success'),
         });
         // Defer parent state update to avoid setState during render
         const resumeId = data.resume_id;
@@ -73,11 +83,14 @@ export function ResumeUploadDialog({ trigger, onUploadComplete }: ResumeUploadDi
           onUploadComplete?.(resumeId);
         }, 0);
         // Close dialog after a short delay to show success state
-        setTimeout(() => {
-          setIsOpen(false);
-          setUploadFeedback(null);
-          removeFile(uploadedFile.id); // Clear file for next time
-        }, 1500);
+        setTimeout(
+          () => {
+            setIsOpen(false);
+            setUploadFeedback(null);
+            removeFile(uploadedFile.id); // Clear file for next time
+          },
+          processingFailed ? 2500 : 1500
+        );
       } else {
         setUploadFeedback({
           type: 'error',

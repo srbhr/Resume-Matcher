@@ -122,7 +122,7 @@ class Settings(BaseSettings):
     llm_provider: Literal[
         "openai", "anthropic", "openrouter", "gemini", "deepseek", "ollama"
     ] = "openai"
-    llm_model: str = "gpt-4o-mini"
+    llm_model: str = "gpt-5-nano-2025-08-07"
     llm_api_key: str = ""
     llm_api_base: str | None = None  # For Ollama or custom endpoints
 

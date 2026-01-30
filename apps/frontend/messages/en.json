@@ -84,7 +84,9 @@
     "setupRequiredMessage": "> Configure API key in settings to enable resume tailoring.",
     "uploadDialog": {
       "success": "Resume uploaded successfully.",
+      "successMaster": "Resume uploaded and set as master.",
       "successMissingId": "Upload succeeded but no Resume ID returned.",
+      "parsingFailed": "Resume uploaded but AI parsing failed. You can still tailor it manually.",
       "failed": "Upload failed.",
       "dropzoneTitle": "Click or Drag File",
       "dropzoneSubtitle": "PDF, DOC, DOCX (Max 4MB)"
@@ -189,6 +191,55 @@
     "regenerateDialog": {
       "title": "Regenerate {title}?",
       "description": "This will replace your current {title} with a newly generated one. Any edits you've made will be lost."
+    },
+    "regenerate": {
+      "buttonLabel": "AI Regenerate",
+      "selectDialog": {
+        "title": "Select Items to Regenerate",
+        "subtitle": "Choose which parts of your resume you want to improve",
+        "experience": "Work Experience",
+        "projects": "Projects",
+        "skills": "Technical Skills",
+        "noItemsSelected": "Please select at least one item",
+        "noItemsAvailable": "No items available to regenerate. Add experience, projects, or skills first.",
+        "itemCount": {
+          "one": "{count} item",
+          "other": "{count} items"
+        },
+        "continueButton": "Continue"
+      },
+      "instructionDialog": {
+        "title": "What Would You Like to Improve?",
+        "subtitle": "Provide specific feedback to guide the AI",
+        "defaultInstruction": "Improve the content with stronger action verbs and quantifiable impact where available.",
+        "selectedItems": "Selected Items",
+        "placeholder": "Example: Add more quantifiable metrics, emphasize leadership skills, use more action verbs...",
+        "hint": "Be specific about what you're not satisfied with",
+        "backButton": "Back",
+        "generateButton": "Generate"
+      },
+      "diffPreview": {
+        "title": "Preview Changes",
+        "subtitle": "Review the regenerated content before applying",
+        "expandItem": "Expand {item}",
+        "collapseItem": "Collapse {item}",
+        "partialFailures": "Some items couldn't be regenerated ({count}). You can still review and apply the successful ones.",
+        "changesCount": "{count} items modified",
+        "rejectButton": "Reject & Regenerate",
+        "acceptButton": "Accept Changes",
+        "originalLabel": "Original",
+        "newLabel": "New",
+        "noContent": "No content",
+        "applying": "Applying...",
+        "loading": "Generating improved content..."
+      },
+      "errors": {
+        "generationFailed": "Failed to generate content. Please try again.",
+        "applyFailed": "Failed to apply changes. Please try again.",
+        "resumeChanged": "Resume content changed since regeneration. Please regenerate and try again.",
+        "noChangesToApply": "No changes to apply.",
+        "networkError": "Network error. Please check your connection."
+      }
     },
     "jdMatch": {
       "yourResume": "Your Resume",
@@ -377,6 +428,10 @@
     "alerts": {
       "saveNotAvailable": "Save is only available when editing an existing resume.",
       "saveFailed": "Failed to save resume. Please try again.",
+      "coverLetterSaveSuccess": "Cover letter saved",
+      "outreachSaveSuccess": "Outreach message saved",
+      "downloadSuccess": "Resume downloaded",
+      "reloadFailed": "Applied changes, but failed to reload the resume. Please refresh the page.",
       "downloadNotAvailable": "Download is only available for saved resumes.",
       "downloadFailed": "Failed to download resume. Please try again.",
       "coverLetterSaveFailed": "Failed to save cover letter. Please try again.",

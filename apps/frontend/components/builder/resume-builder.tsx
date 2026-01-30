@@ -12,7 +12,7 @@ import { OutreachPreview } from './outreach-preview';
 import { GeneratePrompt } from './generate-prompt';
 import { Button } from '@/components/ui/button';
 import { RetroTabs } from '@/components/ui/retro-tabs';
-import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { ConfirmDialog, type ConfirmDialogProps } from '@/components/ui/confirm-dialog';
 import {
   Download,
   Save,
@@ -40,11 +40,14 @@ import {
   fetchJobDescription,
 } from '@/lib/api/resume';
 import { JDComparisonView } from './jd-comparison-view';
+import { RegenerateWizard } from './regenerate-wizard';
+import { useRegenerateWizard } from '@/hooks/use-regenerate-wizard';
 import { useTranslations } from '@/lib/i18n';
 import { type TemplateSettings, DEFAULT_TEMPLATE_SETTINGS } from '@/lib/types/template-settings';
 import { withLocalizedDefaultSections } from '@/lib/utils/section-helpers';
 import { useLanguage } from '@/lib/context/language-context';
 import { downloadBlobAsFile, openUrlInNewTab } from '@/lib/utils/download';
+import type { RegenerateItemInput } from '@/lib/api/enrichment';
 
 type TabId = 'resume' | 'cover-letter' | 'outreach' | 'jd-match';
 
@@ -78,7 +81,29 @@ const buildInitialData = (t: Translate): ResumeData => ({
 
 const ResumeBuilderContent = () => {
   const { t } = useTranslations();
-  const { uiLanguage } = useLanguage();
+  const { uiLanguage, contentLanguage } = useLanguage();
+  const [notificationDialog, setNotificationDialog] = useState<{
+    title: string;
+    description: string;
+    variant: NonNullable<ConfirmDialogProps['variant']>;
+  } | null>(null);
+
+  const showNotification = useCallback(
+    (
+      description: string,
+      variant: NonNullable<ConfirmDialogProps['variant']> = 'default',
+      title?: string
+    ) => {
+      const fallbackTitle = variant === 'success' ? t('common.success') : t('common.error');
+      setNotificationDialog({
+        title: title ?? fallbackTitle,
+        description,
+        variant,
+      });
+    },
+    [t]
+  );
+
   const initialData = useMemo(() => buildInitialData(t), [t]);
   const [resumeData, setResumeData] = useState<ResumeData>(() => initialData);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -128,6 +153,85 @@ const ResumeBuilderContent = () => {
 
   // JD comparison state
   const [jobDescription, setJobDescription] = useState<string | null>(null);
+
+  // AI Regenerate wizard
+  const regenerateWizard = useRegenerateWizard({
+    resumeId: resumeId || '',
+    outputLanguage: contentLanguage,
+    onSuccess: async () => {
+      // Reload resume data after applying changes
+      if (!resumeId) {
+        return;
+      }
+
+      try {
+        const data = await fetchResume(resumeId);
+        if (data.processed_resume) {
+          setResumeData(data.processed_resume as ResumeData);
+          setLastSavedData(data.processed_resume as ResumeData);
+          setHasUnsavedChanges(false);
+        }
+      } catch (error) {
+        console.error('Failed to reload resume after applying regenerated changes:', error);
+        showNotification(t('builder.alerts.reloadFailed'), 'danger');
+        throw error;
+      }
+    },
+    onError: (errorMessage) => {
+      console.error('Error during regeneration or applying regenerated changes:', errorMessage);
+
+      if (/network|fetch/i.test(errorMessage) || errorMessage.includes('Failed to fetch')) {
+        showNotification(t('builder.regenerate.errors.networkError'), 'danger');
+        return;
+      }
+
+      if (/resume content changed|uniquely matched|please regenerate/i.test(errorMessage)) {
+        showNotification(t('builder.regenerate.errors.resumeChanged'), 'danger');
+        return;
+      }
+
+      if (/generate/i.test(errorMessage)) {
+        showNotification(t('builder.regenerate.errors.generationFailed'), 'danger');
+        return;
+      }
+
+      showNotification(t('builder.regenerate.errors.applyFailed'), 'danger');
+    },
+  });
+
+  // Build regenerate items from resume data
+  const experienceItemsForRegenerate: RegenerateItemInput[] = useMemo(() => {
+    return (resumeData.workExperience || []).map((exp, idx) => ({
+      item_id: `exp_${idx}`,
+      item_type: 'experience' as const,
+      title: exp.title ?? '',
+      subtitle: exp.company || undefined,
+      current_content: Array.isArray(exp.description) ? exp.description : [],
+    }));
+  }, [resumeData.workExperience]);
+
+  const projectItemsForRegenerate: RegenerateItemInput[] = useMemo(() => {
+    return (resumeData.personalProjects || []).map((proj, idx) => ({
+      item_id: `proj_${idx}`,
+      item_type: 'project' as const,
+      title: proj.name ?? '',
+      subtitle: proj.role || undefined,
+      current_content: Array.isArray(proj.description) ? proj.description : [],
+    }));
+  }, [resumeData.personalProjects]);
+
+  const skillsItemForRegenerate: RegenerateItemInput | null = useMemo(() => {
+    const skills = resumeData.additional?.technicalSkills;
+    if (skills && skills.length > 0) {
+      return {
+        item_id: 'skills',
+        item_type: 'skills' as const,
+        title: t('builder.regenerate.selectDialog.skills'),
+        current_content: skills,
+      };
+    }
+    return null;
+  }, [resumeData.additional?.technicalSkills, t]);
 
   const localizedResumeDataForPreview = useMemo(
     () => withLocalizedDefaultSections(resumeData, t),
@@ -293,7 +397,7 @@ const ResumeBuilderContent = () => {
 
   const handleSave = async () => {
     if (!resumeId) {
-      alert(t('builder.alerts.saveNotAvailable'));
+      showNotification(t('builder.alerts.saveNotAvailable'), 'warning');
       return;
     }
     try {
@@ -306,7 +410,7 @@ const ResumeBuilderContent = () => {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(nextData));
     } catch (error) {
       console.error('Failed to save resume:', error);
-      alert(t('builder.alerts.saveFailed'));
+      showNotification(t('builder.alerts.saveFailed'), 'danger');
     } finally {
       setIsSaving(false);
     }
@@ -320,24 +424,29 @@ const ResumeBuilderContent = () => {
 
   const handleDownload = async () => {
     if (!resumeId) {
-      alert(t('builder.alerts.downloadNotAvailable'));
+      showNotification(t('builder.alerts.downloadNotAvailable'), 'warning');
       return;
     }
     try {
       setIsDownloading(true);
       const blob = await downloadResumePdf(resumeId, templateSettings, uiLanguage);
       downloadBlobAsFile(blob, `resume_${resumeId}.pdf`);
+      showNotification(t('builder.alerts.downloadSuccess'), 'success');
     } catch (error) {
       console.error('Failed to download resume:', error);
       if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
         const fallbackUrl = getResumePdfUrl(resumeId, templateSettings, uiLanguage);
         const didOpen = openUrlInNewTab(fallbackUrl);
         if (!didOpen) {
-          alert(t('common.popupBlocked', { url: fallbackUrl }));
+          showNotification(t('common.popupBlocked', { url: fallbackUrl }), 'warning');
         }
         return;
       }
-      alert(t('builder.alerts.downloadFailed'));
+      let errorMessage = t('builder.alerts.downloadFailed');
+      if (error instanceof Error && error.message) {
+        errorMessage = `${t('builder.alerts.downloadFailed')}: ${error.message}`;
+      }
+      showNotification(errorMessage, 'danger');
     } finally {
       setIsDownloading(false);
     }
@@ -349,9 +458,10 @@ const ResumeBuilderContent = () => {
     try {
       setIsCoverLetterSaving(true);
       await updateCoverLetter(resumeId, coverLetter);
+      showNotification(t('builder.alerts.coverLetterSaveSuccess'), 'success');
     } catch (error) {
       console.error('Failed to save cover letter:', error);
-      alert(t('builder.alerts.coverLetterSaveFailed'));
+      showNotification(t('builder.alerts.coverLetterSaveFailed'), 'danger');
     } finally {
       setIsCoverLetterSaving(false);
     }
@@ -359,11 +469,11 @@ const ResumeBuilderContent = () => {
 
   const handleDownloadCoverLetter = async () => {
     if (!resumeId) {
-      alert(t('builder.alerts.coverLetterDownloadRequiresResume'));
+      showNotification(t('builder.alerts.coverLetterDownloadRequiresResume'), 'warning');
       return;
     }
     if (!coverLetter) {
-      alert(t('builder.alerts.coverLetterMissing'));
+      showNotification(t('builder.alerts.coverLetterMissing'), 'warning');
       return;
     }
     try {
@@ -376,12 +486,15 @@ const ResumeBuilderContent = () => {
         const fallbackUrl = getCoverLetterPdfUrl(resumeId, templateSettings.pageSize, uiLanguage);
         const didOpen = openUrlInNewTab(fallbackUrl);
         if (!didOpen) {
-          alert(t('common.popupBlocked', { url: fallbackUrl }));
+          showNotification(t('common.popupBlocked', { url: fallbackUrl }), 'warning');
         }
         return;
       }
       const errorMessage = error instanceof Error ? error.message : t('common.unknown');
-      alert(t('builder.alerts.coverLetterDownloadFailed', { error: errorMessage }));
+      showNotification(
+        t('builder.alerts.coverLetterDownloadFailed', { error: errorMessage }),
+        'danger'
+      );
     } finally {
       setIsDownloading(false);
     }
@@ -393,9 +506,10 @@ const ResumeBuilderContent = () => {
     try {
       setIsOutreachSaving(true);
       await updateOutreachMessage(resumeId, outreachMessage);
+      showNotification(t('builder.alerts.outreachSaveSuccess'), 'success');
     } catch (error) {
       console.error('Failed to save outreach message:', error);
-      alert(t('builder.alerts.outreachSaveFailed'));
+      showNotification(t('builder.alerts.outreachSaveFailed'), 'danger');
     } finally {
       setIsOutreachSaving(false);
     }
@@ -422,7 +536,10 @@ const ResumeBuilderContent = () => {
     } catch (error) {
       console.error('Failed to generate cover letter:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      alert(t('builder.alerts.coverLetterGenerateFailed', { error: errorMessage }));
+      showNotification(
+        t('builder.alerts.coverLetterGenerateFailed', { error: errorMessage }),
+        'danger'
+      );
     } finally {
       setIsGeneratingCoverLetter(false);
     }
@@ -448,7 +565,10 @@ const ResumeBuilderContent = () => {
     } catch (error) {
       console.error('Failed to generate outreach message:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      alert(t('builder.alerts.outreachGenerateFailed', { error: errorMessage }));
+      showNotification(
+        t('builder.alerts.outreachGenerateFailed', { error: errorMessage }),
+        'danger'
+      );
     } finally {
       setIsGeneratingOutreach(false);
     }
@@ -509,6 +629,15 @@ const ResumeBuilderContent = () => {
               {/* Resume tab actions */}
               {activeTab === 'resume' && (
                 <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => regenerateWizard.startRegenerate()}
+                    disabled={!resumeId}
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    {t('builder.regenerate.buttonLabel')}
+                  </Button>
                   <Button
                     variant="warning"
                     size="sm"
@@ -832,6 +961,40 @@ const ResumeBuilderContent = () => {
         onConfirm={
           showRegenerateDialog === 'cover-letter' ? doGenerateCoverLetter : doGenerateOutreach
         }
+      />
+
+      {/* Notification Dialog (replaces native alert()) */}
+      <ConfirmDialog
+        open={notificationDialog !== null}
+        onOpenChange={(open) => !open && setNotificationDialog(null)}
+        title={notificationDialog?.title ?? ''}
+        description={notificationDialog?.description ?? ''}
+        confirmLabel={t('common.ok')}
+        showCancelButton={false}
+        variant={notificationDialog?.variant ?? 'default'}
+        onConfirm={() => setNotificationDialog(null)}
+      />
+
+      {/* AI Regenerate Wizard */}
+      <RegenerateWizard
+        step={regenerateWizard.step}
+        onStepChange={regenerateWizard.setStep}
+        experienceItems={experienceItemsForRegenerate}
+        projectItems={projectItemsForRegenerate}
+        skillsItem={skillsItemForRegenerate}
+        selectedItems={regenerateWizard.selectedItems}
+        onSelectionChange={regenerateWizard.setSelectedItems}
+        instruction={regenerateWizard.instruction}
+        onInstructionChange={regenerateWizard.setInstruction}
+        regeneratedItems={regenerateWizard.regeneratedItems}
+        regenerateErrors={regenerateWizard.regenerateErrors}
+        isGenerating={regenerateWizard.isGenerating}
+        isApplying={regenerateWizard.isApplying}
+        error={regenerateWizard.error}
+        onGenerate={regenerateWizard.generate}
+        onAccept={regenerateWizard.acceptChanges}
+        onReject={regenerateWizard.rejectAndRegenerate}
+        onClose={regenerateWizard.reset}
       />
     </div>
   );

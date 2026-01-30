@@ -1,5 +1,7 @@
 """Pydantic models for AI-powered resume enrichment."""
 
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 
@@ -65,3 +67,58 @@ class ApplyEnhancementsRequest(BaseModel):
     """Request to apply enhancements to the master resume."""
 
     enhancements: list[EnhancedDescription]
+
+
+# ============================================
+# AI Regenerate Feature Schemas
+# ============================================
+
+RegenerateItemType = Literal["experience", "project", "skills"]
+
+
+class RegenerateItemInput(BaseModel):
+    """Input for a single item to regenerate."""
+
+    item_id: str  # "exp_0", "proj_1", "skills"
+    item_type: RegenerateItemType
+    title: str
+    subtitle: str | None = None
+    current_content: list[str] = Field(default_factory=list)
+
+
+class RegenerateRequest(BaseModel):
+    """Request to regenerate selected resume items."""
+
+    resume_id: str
+    items: list[RegenerateItemInput]
+    instruction: str = Field(max_length=2000)  # User's feedback/instruction for improvement
+    output_language: str = "en"
+
+
+class RegeneratedItem(BaseModel):
+    """Regenerated content for one item."""
+
+    item_id: str
+    item_type: RegenerateItemType
+    title: str
+    subtitle: str | None = None
+    original_content: list[str] = Field(default_factory=list)
+    new_content: list[str] = Field(default_factory=list)
+    diff_summary: str = ""  # AI-generated summary of changes
+
+
+class RegenerateItemError(BaseModel):
+    """A non-fatal error for a single item regeneration request."""
+
+    item_id: str
+    item_type: RegenerateItemType
+    title: str
+    subtitle: str | None = None
+    message: str
+
+
+class RegenerateResponse(BaseModel):
+    """Response with all regenerated items."""
+
+    regenerated_items: list[RegeneratedItem] = Field(default_factory=list)
+    errors: list[RegenerateItemError] = Field(default_factory=list)

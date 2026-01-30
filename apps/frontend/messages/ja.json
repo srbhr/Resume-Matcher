@@ -84,7 +84,9 @@
     "setupRequiredMessage": "> 履歴書のカスタマイズを有効にするには、設定で API キーを構成してください。",
     "uploadDialog": {
       "success": "履歴書のアップロードに成功しました。",
+      "successMaster": "履歴書がアップロードされ、マスターとして設定されました。",
       "successMissingId": "アップロードは成功しましたが、履歴書 ID が返されませんでした。",
+      "parsingFailed": "履歴書はアップロードされましたが、AI解析に失敗しました。手動でカスタマイズすることは可能です。",
       "failed": "アップロードに失敗しました。",
       "dropzoneTitle": "クリックまたはファイルをドラッグ",
       "dropzoneSubtitle": "PDF、DOC、DOCX（最大 4MB）"
@@ -189,6 +191,55 @@
     "regenerateDialog": {
       "title": "{title}を再生成しますか？",
       "description": "現在の{title}を新しく生成した内容で置き換えます。編集内容は失われます。"
+    },
+    "regenerate": {
+      "buttonLabel": "AIで再生成",
+      "selectDialog": {
+        "title": "再生成する項目を選択",
+        "subtitle": "改善したい履歴書の部分を選択してください",
+        "experience": "職務経験",
+        "projects": "プロジェクト",
+        "skills": "技術スキル",
+        "noItemsSelected": "少なくとも1つ選択してください",
+        "noItemsAvailable": "再生成できる項目がありません。まず職務経験、プロジェクト、またはスキルを追加してください。",
+        "itemCount": {
+          "one": "{count}件",
+          "other": "{count}件"
+        },
+        "continueButton": "続行"
+      },
+      "instructionDialog": {
+        "title": "どこを改善したいですか？",
+        "subtitle": "AIを導くために具体的なフィードバックを入力してください",
+        "defaultInstruction": "より強いアクション動詞で内容を改善し、可能な範囲で定量的な成果を示してください。",
+        "selectedItems": "選択した項目",
+        "placeholder": "例：より定量的な指標を追加する、リーダーシップを強調する、行動動詞を増やす…",
+        "hint": "満足していない点を具体的に書いてください",
+        "backButton": "戻る",
+        "generateButton": "生成"
+      },
+      "diffPreview": {
+        "title": "変更をプレビュー",
+        "subtitle": "適用する前に再生成された内容を確認してください",
+        "expandItem": "{item} を展開",
+        "collapseItem": "{item} を折りたたむ",
+        "partialFailures": "一部の項目を再生成できませんでした（{count}件）。成功した変更はそのまま確認して適用できます。",
+        "changesCount": "{count} 件変更",
+        "rejectButton": "却下して再生成",
+        "acceptButton": "変更を適用",
+        "originalLabel": "元の内容",
+        "newLabel": "新しい内容",
+        "noContent": "内容なし",
+        "applying": "適用中...",
+        "loading": "改善された内容を生成中..."
+      },
+      "errors": {
+        "generationFailed": "生成に失敗しました。もう一度お試しください。",
+        "applyFailed": "変更の適用に失敗しました。もう一度お試しください。",
+        "resumeChanged": "再生成後に履歴書の内容が変更されました。再生成してからもう一度お試しください。",
+        "noChangesToApply": "適用できる変更がありません。",
+        "networkError": "ネットワークエラー。接続を確認してください。"
+      }
     },
     "jdMatch": {
       "yourResume": "あなたの履歴書",
@@ -377,6 +428,10 @@
     "alerts": {
       "saveNotAvailable": "既存の履歴書を編集中のみ保存できます。",
       "saveFailed": "履歴書の保存に失敗しました。もう一度お試しください。",
+      "coverLetterSaveSuccess": "カバーレターを保存しました",
+      "outreachSaveSuccess": "連絡メールを保存しました",
+      "downloadSuccess": "履歴書をダウンロードしました",
+      "reloadFailed": "変更は適用されましたが、履歴書の再読み込みに失敗しました。ページを更新してください。",
       "downloadNotAvailable": "保存済みの履歴書のみダウンロードできます。",
       "downloadFailed": "履歴書のダウンロードに失敗しました。もう一度お試しください。",
       "coverLetterSaveFailed": "カバーレターの保存に失敗しました。もう一度お試しください。",
