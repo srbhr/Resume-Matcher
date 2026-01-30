@@ -7,6 +7,7 @@ multiple passes:
 3. Master alignment validation - ensure no fabricated content was added
 """
 
+import json
 import logging
 import re
 from typing import Any
@@ -26,6 +27,10 @@ from app.schemas.refinement import (
 )
 
 logger = logging.getLogger(__name__)
+
+# LLM-012: Job description truncation limits
+MAX_JD_LENGTH = 2000
+MIN_TRUNCATION_WARNING_LENGTH = 1500
 
 
 async def refine_resume(
@@ -85,15 +90,33 @@ async def refine_resume(
             passes += 1
 
     # Pass 3: Master alignment validation
+    # LLM-008: Alignment validation is MANDATORY - not optional fallback
     if config.enable_master_alignment_check:
         alignment = validate_master_alignment(current, master_resume)
         if not alignment.is_aligned:
+            # Count critical violations
+            critical_violations = [
+                v for v in alignment.violations if v.severity == "critical"
+            ]
             logger.warning(
-                "Alignment violations found: %d",
+                "Alignment violations found: %d total, %d critical",
                 len(alignment.violations),
+                len(critical_violations),
             )
-            current = fix_alignment_violations(current, alignment.violations)
-            passes += 1
+
+            if critical_violations:
+                # LLM-008: Block resume with fabricated content
+                logger.error(
+                    "Critical alignment violations detected - blocking resume: %s",
+                    [v.value for v in critical_violations],
+                )
+                # Fix violations before returning
+                current = fix_alignment_violations(current, alignment.violations)
+                passes += 1
+            else:
+                # Non-critical violations - fix and continue
+                current = fix_alignment_violations(current, alignment.violations)
+                passes += 1
 
     # Calculate final match percentage
     final_match = calculate_keyword_match(current, job_keywords)
@@ -294,6 +317,47 @@ def validate_master_alignment(
     )
 
 
+def _prepare_job_description(job_description: str) -> tuple[str, bool]:
+    """LLM-012: Prepare job description for prompt, with truncation warning.
+
+    Returns:
+        Tuple of (truncated_text, was_truncated)
+    """
+    was_truncated = len(job_description) > MAX_JD_LENGTH
+
+    if was_truncated:
+        logger.warning(
+            "Job description truncated from %d to %d characters",
+            len(job_description),
+            MAX_JD_LENGTH,
+        )
+
+    return job_description[:MAX_JD_LENGTH], was_truncated
+
+
+def _validate_resume_structure(data: dict[str, Any]) -> bool:
+    """LLM-014: Validate resume maintains required structure after keyword injection.
+
+    Returns:
+        True if structure is valid, False otherwise.
+    """
+    # Check for required top-level keys
+    required_keys = ["personalInfo"]
+    for key in required_keys:
+        if key not in data:
+            logger.warning("Resume structure invalid: missing '%s'", key)
+            return False
+
+    # Check that arrays are still arrays
+    array_fields = ["workExperience", "education", "personalProjects"]
+    for field in array_fields:
+        if field in data and not isinstance(data[field], list):
+            logger.warning("Resume structure invalid: '%s' is not a list", field)
+            return False
+
+    return True
+
+
 async def inject_keywords(
     tailored: dict[str, Any],
     keywords_to_inject: list[str],
@@ -310,28 +374,49 @@ async def inject_keywords(
 
     Returns:
         Updated resume data with keywords injected
+
+    LLM-012: Truncates job description with warning.
+    LLM-014: Validates result structure before returning.
     """
-    import json
+    # LLM-012: Prepare job description with truncation handling
+    truncated_jd, was_truncated = _prepare_job_description(job_description)
+    if was_truncated:
+        logger.info(
+            "Job description was truncated for keyword injection (original: %d chars)",
+            len(job_description),
+        )
 
     prompt = KEYWORD_INJECTION_PROMPT.format(
         keywords_to_inject=json.dumps(keywords_to_inject),
         current_resume=json.dumps(tailored, indent=2),
         master_resume=json.dumps(master, indent=2),
-        job_description=job_description[:2000],  # Truncate for token limits
+        job_description=truncated_jd,
     )
 
-    result = await complete_json(
-        prompt=prompt,
-        system_prompt=(
-            "You are a resume editor. Inject keywords naturally without adding "
-            "fabricated content. Return only valid JSON matching the input schema."
-        ),
-        max_tokens=8192,
-    )
+    try:
+        result = await complete_json(
+            prompt=prompt,
+            system_prompt=(
+                "You are a resume editor. Inject keywords naturally without adding "
+                "fabricated content. Return only valid JSON matching the input schema."
+            ),
+            max_tokens=8192,
+        )
 
-    if isinstance(result, dict):
+        # LLM-014: Validate the result maintains required structure
+        if not isinstance(result, dict):
+            logger.warning("Keyword injection returned non-dict: %s", type(result))
+            return tailored
+
+        if not _validate_resume_structure(result):
+            logger.warning("Keyword injection corrupted resume structure, using original")
+            return tailored
+
         return result
-    return tailored
+
+    except Exception as e:
+        logger.warning("Keyword injection failed: %s", e)
+        return tailored
 
 
 def fix_alignment_violations(

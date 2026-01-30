@@ -2,6 +2,7 @@
 
 import json
 import logging
+import re
 from difflib import SequenceMatcher
 from dataclasses import dataclass
 from typing import Any, Callable
@@ -19,12 +20,52 @@ from app.schemas import ResumeData, ResumeFieldDiff, ResumeDiffSummary
 
 logger = logging.getLogger(__name__)
 
+# LLM-011: Prompt injection patterns to sanitize
+_INJECTION_PATTERNS = [
+    r"ignore\s+(all\s+)?previous\s+instructions",
+    r"disregard\s+(all\s+)?above",
+    r"forget\s+(everything|all)",
+    r"new\s+instructions?:",
+    r"system\s*:",
+    r"<\s*/?\s*system\s*>",
+    r"\[\s*INST\s*\]",
+    r"\[\s*/\s*INST\s*\]",
+]
+
 
 @dataclass(frozen=True)
 class DiffConfidence:
     added: str
     removed: str
     modified: str
+
+
+def _sanitize_user_input(text: str) -> str:
+    """LLM-011: Sanitize user input to prevent prompt injection.
+
+    Removes or redacts common injection patterns that could manipulate LLM behavior.
+    """
+    sanitized = text
+    for pattern in _INJECTION_PATTERNS:
+        sanitized = re.sub(pattern, "[REDACTED]", sanitized, flags=re.IGNORECASE)
+    return sanitized
+
+
+def _check_for_truncation(data: dict[str, Any]) -> None:
+    """LLM-006: Check for obvious truncation signs before Pydantic validation.
+
+    Raises ValueError if data appears truncated.
+    """
+    required_sections = ["personalInfo"]
+    for section in required_sections:
+        if section not in data:
+            raise ValueError(f"Missing required section: {section}")
+
+    # Check for suspiciously empty required arrays
+    if "workExperience" in data and data["workExperience"] == []:
+        logger.warning(
+            "Resume has empty workExperience - possible truncation or unusual resume"
+        )
 
 
 async def extract_job_keywords(job_description: str) -> dict[str, Any]:
@@ -36,7 +77,9 @@ async def extract_job_keywords(job_description: str) -> dict[str, Any]:
     Returns:
         Structured keywords and requirements
     """
-    prompt = EXTRACT_KEYWORDS_PROMPT.format(job_description=job_description)
+    # LLM-011: Sanitize job description before using in prompt
+    sanitized_jd = _sanitize_user_input(job_description)
+    prompt = EXTRACT_KEYWORDS_PROMPT.format(job_description=sanitized_jd)
 
     return await complete_json(
         prompt=prompt,
@@ -61,6 +104,9 @@ async def improve_resume(
 
     Returns:
         Improved resume data matching ResumeData schema
+
+    LLM-006: Validates for truncation before Pydantic validation.
+    LLM-011: Sanitizes job description to prevent prompt injection.
     """
     keywords_str = json.dumps(job_keywords, indent=2)
     output_language = get_language_name(language)
@@ -78,8 +124,11 @@ async def improve_resume(
         selected_prompt_id, CRITICAL_TRUTHFULNESS_RULES[DEFAULT_IMPROVE_PROMPT_ID]
     )
 
+    # LLM-011: Sanitize job description to prevent prompt injection
+    sanitized_jd = _sanitize_user_input(job_description)
+
     prompt = prompt_template.format(
-        job_description=job_description,
+        job_description=sanitized_jd,
         job_keywords=keywords_str,
         original_resume=original_resume,
         schema=RESUME_SCHEMA,
@@ -92,6 +141,9 @@ async def improve_resume(
         system_prompt="You are an expert resume editor. Output only valid JSON.",
         max_tokens=8192,
     )
+
+    # LLM-006: Pre-validation check for truncation signs
+    _check_for_truncation(result)
 
     # Validate against schema
     validated = ResumeData.model_validate(result)

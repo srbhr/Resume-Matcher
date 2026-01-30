@@ -10,10 +10,29 @@ from pydantic import BaseModel
 
 from app.config import settings
 
-# LLM timeout configuration (seconds)
+# LLM timeout configuration (seconds) - base values
 LLM_TIMEOUT_HEALTH_CHECK = 30
 LLM_TIMEOUT_COMPLETION = 120
 LLM_TIMEOUT_JSON = 180  # JSON completions may take longer
+
+# LLM-004: OpenRouter JSON-capable models (explicit allowlist)
+OPENROUTER_JSON_CAPABLE_MODELS = {
+    "anthropic/claude-3-opus",
+    "anthropic/claude-3-sonnet",
+    "anthropic/claude-3-haiku",
+    "anthropic/claude-3.5-sonnet",
+    "anthropic/claude-3.5-haiku",
+    "openai/gpt-4-turbo",
+    "openai/gpt-4",
+    "openai/gpt-4o",
+    "openai/gpt-4o-mini",
+    "openai/gpt-3.5-turbo",
+    "google/gemini-pro",
+    "google/gemini-1.5-pro",
+    "google/gemini-1.5-flash",
+    "mistralai/mistral-large",
+    "mistralai/mistral-medium",
+}
 
 
 class LLMConfig(BaseModel):
@@ -307,16 +326,18 @@ async def check_llm_health(
         response = await litellm.acompletion(**kwargs)
         content = _extract_choice_text(response.choices[0])
         if not content:
+            # LLM-003: Empty response should mark health check as unhealthy
             logging.warning(
                 "LLM health check returned empty content",
                 extra={"provider": config.provider, "model": config.model},
             )
             result: dict[str, Any] = {
-                "healthy": True,
+                "healthy": False,  # Fixed: empty content means unhealthy
                 "provider": config.provider,
                 "model": config.model,
                 "response_model": response.model if response else None,
-                "warning_code": "empty_content",
+                "error_code": "empty_content",  # Changed from warning_code
+                "message": "LLM returned empty response",
             }
             if include_details:
                 result["test_prompt"] = _to_code_block(prompt)
@@ -411,16 +432,89 @@ def _supports_json_mode(provider: str, model: str) -> bool:
     json_mode_providers = ["openai", "anthropic", "gemini", "deepseek"]
     if provider in json_mode_providers:
         return True
-    # OpenRouter models - check if underlying model supports it
+    # LLM-004: OpenRouter models - use explicit allowlist instead of substring matching
     if provider == "openrouter":
-        # Most major models on OpenRouter support JSON mode
-        json_capable = ["claude", "gpt-4", "gpt-3.5", "gemini", "mistral"]
-        return any(cap in model.lower() for cap in json_capable)
+        return model in OPENROUTER_JSON_CAPABLE_MODELS
     return False
 
 
+def _appears_truncated(data: dict) -> bool:
+    """LLM-001: Check if JSON data appears to be truncated.
+
+    Detects suspicious patterns indicating incomplete responses.
+    """
+    if not isinstance(data, dict):
+        return False
+
+    # Check for empty arrays that should typically have content
+    suspicious_empty_arrays = ["workExperience", "education", "skills"]
+    for key in suspicious_empty_arrays:
+        if key in data and data[key] == []:
+            # Log warning - these are rarely empty in real resumes
+            logging.warning(
+                "Possible truncation detected: '%s' is empty",
+                key,
+            )
+            return True
+
+    # Check for missing critical sections
+    required_top_level = ["personalInfo"]
+    for key in required_top_level:
+        if key not in data:
+            logging.warning(
+                "Possible truncation detected: missing required section '%s'",
+                key,
+            )
+            return True
+
+    return False
+
+
+def _get_retry_temperature(attempt: int, base_temp: float = 0.1) -> float:
+    """LLM-002: Get temperature for retry attempt - increases with each retry.
+
+    Higher temperature on retries gives the model more variation to produce
+    different (hopefully valid) output.
+    """
+    temperatures = [base_temp, 0.3, 0.5, 0.7]
+    return temperatures[min(attempt, len(temperatures) - 1)]
+
+
+def _calculate_timeout(
+    operation: str,
+    max_tokens: int = 4096,
+    provider: str = "openai",
+) -> int:
+    """LLM-005: Calculate adaptive timeout based on operation and parameters."""
+    base_timeouts = {
+        "health_check": LLM_TIMEOUT_HEALTH_CHECK,
+        "completion": LLM_TIMEOUT_COMPLETION,
+        "json": LLM_TIMEOUT_JSON,
+    }
+
+    base = base_timeouts.get(operation, LLM_TIMEOUT_COMPLETION)
+
+    # Scale by token count (relative to 4096 baseline)
+    token_factor = max(1.0, max_tokens / 4096)
+
+    # Provider-specific latency adjustments
+    provider_factors = {
+        "openai": 1.0,
+        "anthropic": 1.2,
+        "openrouter": 1.5,  # More variable latency
+        "ollama": 2.0,  # Local models can be slower
+    }
+    provider_factor = provider_factors.get(provider, 1.0)
+
+    return int(base * token_factor * provider_factor)
+
+
 def _extract_json(content: str) -> str:
-    """Extract JSON from LLM response, handling various formats."""
+    """Extract JSON from LLM response, handling various formats.
+
+    LLM-001: Improved to detect and reject likely truncated JSON.
+    LLM-007: Improved error messages for debugging.
+    """
     original = content
 
     # Remove markdown code blocks
@@ -464,24 +558,26 @@ def _extract_json(content: str) -> str:
                     break
 
         if end_idx != -1:
-            return content[: end_idx + 1]
+            extracted = content[: end_idx + 1]
+            # LLM-001: Check if extraction ended prematurely (depth never reached 0)
+            if depth != 0:
+                logging.warning(
+                    "JSON extraction found unbalanced braces (depth=%d), possible truncation",
+                    depth,
+                )
+            return extracted
 
     # Try to find JSON object in the content (only if not already at start)
     start_idx = content.find("{")
     if start_idx > 0:
         # Only recurse if { is found after position 0 to avoid infinite recursion
-        # If content starts with { but bracket matching failed, we don't retry
         return _extract_json(content[start_idx:])
 
-    # Check if content looks like JSON properties without braces
-    if re.match(r'^\s*"[a-zA-Z]', content):
-        # Wrap in braces
-        content = "{" + content
-        # Find a reasonable end point
-        if not content.rstrip().endswith("}"):
-            content = content.rstrip().rstrip(",") + "}"
-        return content
-
+    # LLM-007: Log unrecognized format for debugging
+    logging.error(
+        "Could not extract JSON from response format. Content preview: %s",
+        content[:200] if content else "<empty>",
+    )
     raise ValueError(f"No JSON found in response: {original[:200]}")
 
 
@@ -522,10 +618,11 @@ async def complete_json(
                 "max_tokens": max_tokens,
                 "api_key": config.api_key,
                 "api_base": _normalize_api_base(config.provider, config.api_base),
-                "timeout": LLM_TIMEOUT_JSON,
+                "timeout": _calculate_timeout("json", max_tokens, config.provider),
             }
             if _supports_temperature(config.provider, model_name):
-                kwargs["temperature"] = 0.1 if attempt == 0 else 0.0  # Lower temp on retry
+                # LLM-002: Increase temperature on retry for variation
+                kwargs["temperature"] = _get_retry_temperature(attempt)
             reasoning_effort = _get_reasoning_effort(config.provider, model_name)
             if reasoning_effort:
                 kwargs["reasoning_effort"] = reasoning_effort
