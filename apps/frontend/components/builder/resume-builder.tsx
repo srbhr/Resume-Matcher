@@ -180,10 +180,7 @@ const ResumeBuilderContent = () => {
     onError: (errorMessage) => {
       console.error('Error during regeneration or applying regenerated changes:', errorMessage);
 
-      if (
-        /network|fetch/i.test(errorMessage) ||
-        errorMessage.includes('Failed to fetch')
-      ) {
+      if (/network|fetch/i.test(errorMessage) || errorMessage.includes('Failed to fetch')) {
         showNotification(t('builder.regenerate.errors.networkError'), 'danger');
         return;
       }
@@ -434,6 +431,7 @@ const ResumeBuilderContent = () => {
       setIsDownloading(true);
       const blob = await downloadResumePdf(resumeId, templateSettings, uiLanguage);
       downloadBlobAsFile(blob, `resume_${resumeId}.pdf`);
+      showNotification(t('builder.alerts.downloadSuccess'), 'success');
     } catch (error) {
       console.error('Failed to download resume:', error);
       if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
@@ -444,7 +442,11 @@ const ResumeBuilderContent = () => {
         }
         return;
       }
-      showNotification(t('builder.alerts.downloadFailed'), 'danger');
+      let errorMessage = t('builder.alerts.downloadFailed');
+      if (error instanceof Error && error.message) {
+        errorMessage = `${t('builder.alerts.downloadFailed')}: ${error.message}`;
+      }
+      showNotification(errorMessage, 'danger');
     } finally {
       setIsDownloading(false);
     }
@@ -456,6 +458,7 @@ const ResumeBuilderContent = () => {
     try {
       setIsCoverLetterSaving(true);
       await updateCoverLetter(resumeId, coverLetter);
+      showNotification(t('builder.alerts.coverLetterSaveSuccess'), 'success');
     } catch (error) {
       console.error('Failed to save cover letter:', error);
       showNotification(t('builder.alerts.coverLetterSaveFailed'), 'danger');
@@ -503,6 +506,7 @@ const ResumeBuilderContent = () => {
     try {
       setIsOutreachSaving(true);
       await updateOutreachMessage(resumeId, outreachMessage);
+      showNotification(t('builder.alerts.outreachSaveSuccess'), 'success');
     } catch (error) {
       console.error('Failed to save outreach message:', error);
       showNotification(t('builder.alerts.outreachSaveFailed'), 'danger');

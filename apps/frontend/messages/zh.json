@@ -426,6 +426,9 @@
     "alerts": {
       "saveNotAvailable": "仅在编辑现有简历时可保存。",
       "saveFailed": "保存简历失败，请重试。",
+      "coverLetterSaveSuccess": "求职信已保存",
+      "outreachSaveSuccess": "联系邮件已保存",
+      "downloadSuccess": "简历已下载",
       "reloadFailed": "变更已应用，但重新加载简历失败。请刷新页面。",
       "downloadNotAvailable": "仅已保存的简历可下载。",
       "downloadFailed": "下载简历失败，请重试。",

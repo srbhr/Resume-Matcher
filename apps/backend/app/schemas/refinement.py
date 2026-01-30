@@ -105,7 +105,7 @@ class RefinementResult(BaseModel):
             passes_completed=self.passes_completed,
             keywords_injected=(
                 len(self.keyword_analysis.injectable_keywords)
-                if self.keyword_analysis
+                if self.keyword_analysis and self.keyword_analysis.injectable_keywords
                 else 0
             ),
             ai_phrases_removed=self.ai_phrases_removed,
@@ -117,7 +117,7 @@ class RefinementResult(BaseModel):
                         if v.severity == "critical"
                     ]
                 )
-                if self.alignment_report
+                if self.alignment_report and self.alignment_report.violations
                 else 0
             ),
             initial_match_percentage=initial_match,

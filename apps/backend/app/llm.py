@@ -34,6 +34,10 @@ OPENROUTER_JSON_CAPABLE_MODELS = {
     "mistralai/mistral-medium",
 }
 
+# JSON-010: JSON extraction safety limits
+MAX_JSON_EXTRACTION_RECURSION = 10
+MAX_JSON_CONTENT_SIZE = 1024 * 1024  # 1MB
+
 
 class LLMConfig(BaseModel):
     """LLM configuration model."""
@@ -509,12 +513,19 @@ def _calculate_timeout(
     return int(base * token_factor * provider_factor)
 
 
-def _extract_json(content: str) -> str:
+def _extract_json(content: str, _depth: int = 0) -> str:
     """Extract JSON from LLM response, handling various formats.
 
     LLM-001: Improved to detect and reject likely truncated JSON.
     LLM-007: Improved error messages for debugging.
+    JSON-010: Added recursion depth and size limits.
     """
+    # JSON-010: Safety limits
+    if _depth > MAX_JSON_EXTRACTION_RECURSION:
+        raise ValueError(f"JSON extraction exceeded max recursion depth: {_depth}")
+    if len(content) > MAX_JSON_CONTENT_SIZE:
+        raise ValueError(f"Content too large for JSON extraction: {len(content)} bytes")
+
     original = content
 
     # Remove markdown code blocks
@@ -571,7 +582,7 @@ def _extract_json(content: str) -> str:
     start_idx = content.find("{")
     if start_idx > 0:
         # Only recurse if { is found after position 0 to avoid infinite recursion
-        return _extract_json(content[start_idx:])
+        return _extract_json(content[start_idx:], _depth + 1)
 
     # LLM-007: Log unrecognized format for debugging
     logging.error(

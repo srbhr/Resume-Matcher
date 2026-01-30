@@ -7,9 +7,12 @@ multiple passes:
 3. Master alignment validation - ensure no fabricated content was added
 """
 
+import copy
+import hashlib
 import json
 import logging
 import re
+from functools import lru_cache
 from typing import Any
 
 from app.llm import complete_json
@@ -31,6 +34,19 @@ logger = logging.getLogger(__name__)
 # LLM-012: Job description truncation limits
 MAX_JD_LENGTH = 2000
 MIN_TRUNCATION_WARNING_LENGTH = 1500
+
+
+def _keyword_in_text(keyword: str, text: str) -> bool:
+    """Check if keyword exists as a whole word in text.
+
+    SVC-010: Uses word boundaries instead of substring matching to avoid
+    false positives like 'python' matching 'pythonic' or 'go' matching 'going'.
+    """
+    # Escape special regex characters in keyword
+    escaped = re.escape(keyword.lower())
+    # Use word boundaries
+    pattern = rf"\b{escaped}\b"
+    return bool(re.search(pattern, text.lower()))
 
 
 async def refine_resume(
@@ -162,10 +178,9 @@ def analyze_keyword_gaps(
     non_injectable: list[str] = []
 
     for keyword in all_jd_keywords:
-        kw_lower = keyword.lower()
-        if kw_lower not in tailored_text:
+        if not _keyword_in_text(keyword, tailored_text):
             missing.append(keyword)
-            if kw_lower in master_text:
+            if _keyword_in_text(keyword, master_text):
                 injectable.append(keyword)
             else:
                 non_injectable.append(keyword)
@@ -453,10 +468,20 @@ def fix_alignment_violations(
             ]
 
         elif violation.violation_type == "fabricated_company":
-            # Log but don't auto-fix - this is a serious error
+            # SVC-002: Remove the fabricated work experience entry
             logger.error(
                 "Critical: Fabricated company detected: %s", violation.value
             )
+            if "workExperience" in fixed:
+                fixed["workExperience"] = [
+                    exp
+                    for exp in fixed["workExperience"]
+                    if exp.get("company", "").lower() != violation.value.lower()
+                ]
+                logger.info(
+                    "Removed fabricated company '%s' from resume",
+                    violation.value,
+                )
 
     return fixed
 
@@ -481,15 +506,20 @@ def calculate_keyword_match(
     all_keywords.update(jd_keywords.get("preferred_skills", []))
     all_keywords.update(jd_keywords.get("keywords", []))
 
+    # SVC-009: Return 0% if no keywords (not 100% - that's misleading)
     if not all_keywords:
-        return 100.0
+        logger.warning("No keywords found in job description")
+        return 0.0
 
-    matched = sum(1 for kw in all_keywords if kw.lower() in resume_text)
+    # SVC-010: Use word boundary matching instead of substring
+    matched = sum(1 for kw in all_keywords if _keyword_in_text(kw, resume_text))
     return (matched / len(all_keywords)) * 100
 
 
 def _extract_all_text(data: dict[str, Any]) -> str:
     """Extract all text content from resume data for keyword matching.
+
+    SVC-011: Uses caching to avoid repeated extraction on same resume data.
 
     Args:
         data: Resume data dictionary
@@ -497,6 +527,19 @@ def _extract_all_text(data: dict[str, Any]) -> str:
     Returns:
         Concatenated text from all resume sections
     """
+    # Create a cache key from the data
+    data_json = json.dumps(data, sort_keys=True, default=str)
+    return _extract_all_text_cached(data_json)
+
+
+@lru_cache(maxsize=100)
+def _extract_all_text_cached(data_json: str) -> str:
+    """Cached implementation of text extraction.
+
+    SVC-011: LRU cache avoids re-extracting text from the same resume
+    multiple times during a single refinement pass.
+    """
+    data = json.loads(data_json)
     parts: list[str] = []
 
     # Summary
@@ -545,14 +588,7 @@ def _extract_all_text(data: dict[str, Any]) -> str:
 def _deep_copy(data: dict[str, Any]) -> dict[str, Any]:
     """Create a deep copy of a dictionary.
 
-    Uses JSON serialization for simplicity and to handle nested structures.
-
-    Args:
-        data: Dictionary to copy
-
-    Returns:
-        Deep copy of the dictionary
+    Uses copy.deepcopy for reliability. JSON serialization is avoided
+    because it can't handle all Python types and loses type information.
     """
-    import json
-
-    return json.loads(json.dumps(data))
+    return copy.deepcopy(data)

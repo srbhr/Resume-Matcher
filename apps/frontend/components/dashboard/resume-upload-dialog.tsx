@@ -83,11 +83,14 @@ export function ResumeUploadDialog({ trigger, onUploadComplete }: ResumeUploadDi
           onUploadComplete?.(resumeId);
         }, 0);
         // Close dialog after a short delay to show success state
-        setTimeout(() => {
-          setIsOpen(false);
-          setUploadFeedback(null);
-          removeFile(uploadedFile.id); // Clear file for next time
-        }, processingFailed ? 2500 : 1500);
+        setTimeout(
+          () => {
+            setIsOpen(false);
+            setUploadFeedback(null);
+            removeFile(uploadedFile.id); // Clear file for next time
+          },
+          processingFailed ? 2500 : 1500
+        );
       } else {
         setUploadFeedback({
           type: 'error',

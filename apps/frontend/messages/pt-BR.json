@@ -84,7 +84,9 @@
     "setupRequiredMessage": "> Configure a chave de API nas configurações para habilitar a personalização de currículo.",
     "uploadDialog": {
       "success": "Currículo enviado com sucesso.",
+      "successMaster": "Currículo enviado e definido como principal.",
       "successMissingId": "Upload concluído, mas sem ID retornado.",
+      "parsingFailed": "Currículo enviado, mas a análise de IA falhou. Você ainda pode personalizá-lo manualmente.",
       "failed": "Falha no upload.",
       "dropzoneTitle": "Clique ou Arraste o Arquivo",
       "dropzoneSubtitle": "PDF, DOC, DOCX (Máximo 4MB)"
@@ -426,6 +428,9 @@
     "alerts": {
       "saveNotAvailable": "Salvar só está disponível ao editar um currículo existente.",
       "saveFailed": "Falha ao salvar currículo. Por favor, tente novamente.",
+      "coverLetterSaveSuccess": "Carta de apresentação salva",
+      "outreachSaveSuccess": "Mensagem de contato salva",
+      "downloadSuccess": "Currículo baixado",
       "reloadFailed": "As alterações foram aplicadas, mas não foi possível recarregar o currículo. Atualize a página.",
       "downloadNotAvailable": "Download só está disponível para currículos salvos.",
       "downloadFailed": "Falha ao baixar currículo. Por favor, tente novamente.",

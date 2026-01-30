@@ -1,6 +1,7 @@
 """Resume management endpoints."""
 
 import asyncio
+import copy
 import hashlib
 import json
 import logging
@@ -56,9 +57,13 @@ from app.prompts import DEFAULT_IMPROVE_PROMPT_ID, IMPROVE_PROMPT_OPTIONS
 def _load_config() -> dict:
     """Load configuration from config file."""
     config_path = settings.config_path
-    if config_path.exists():
+    if not config_path.exists():
+        return {}
+    try:
         return json.loads(config_path.read_text())
-    return {}
+    except (json.JSONDecodeError, OSError) as e:
+        logger.error("Failed to load config: %s", e)
+        return {}
 
 
 def _load_feature_config() -> dict:
@@ -102,17 +107,14 @@ def _normalize_payload(value: Any) -> Any:
 
 
 def _hash_improved_data(data: dict[str, Any]) -> str:
-    """Hash canonicalized improved data for preview/confirm validation.
-
-    Uses NFC normalization for strings plus sorted JSON keys to reduce
-    false mismatches from Unicode normalization or key ordering.
-    """
+    """Hash canonicalized improved data for preview/confirm validation."""
     normalized = _normalize_payload(data)
     serialized = json.dumps(
         normalized,
         sort_keys=True,
         separators=(",", ":"),
-        ensure_ascii=False,
+        ensure_ascii=True,  # ASCII for maximum compatibility
+        default=str,  # Handle non-serializable types gracefully
     )
     return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
 
@@ -152,7 +154,10 @@ def _preserve_personal_info(
     original_data: dict[str, Any] | None,
     improved_data: dict[str, Any],
 ) -> tuple[dict[str, Any], list[str]]:
-    """Preserve personal info from original, return warnings if unable."""
+    """Preserve personal info from original, return warnings if unable.
+
+    Uses deep copy to prevent mutation of original data.
+    """
     warnings: list[str] = []
 
     if not original_data:
@@ -166,9 +171,9 @@ def _preserve_personal_info(
         warnings.append("Original personal info missing or invalid")
         return improved_data, warnings
 
-    # Create a copy to avoid mutation
-    result = dict(improved_data)
-    result["personalInfo"] = original_info
+    # SVC-001: Use deep copy to prevent any mutation of original data
+    result = copy.deepcopy(improved_data)
+    result["personalInfo"] = copy.deepcopy(original_info)
     return result, warnings
 
 
@@ -202,8 +207,15 @@ def _validate_confirm_payload(
         return
     original_info = original_data.get("personalInfo")
     improved_info = improved_data.get("personalInfo")
-    if not isinstance(original_info, dict) or not isinstance(improved_info, dict):
-        raise ValueError("personalInfo payload is missing or invalid")
+    # JSON-008: Explicit null checks with clear error messages
+    if original_info is None:
+        raise ValueError("Original resume missing personalInfo")
+    if improved_info is None:
+        raise ValueError("Improved resume missing personalInfo")
+    if not isinstance(original_info, dict):
+        raise ValueError(f"Original personalInfo is not a dict: {type(original_info).__name__}")
+    if not isinstance(improved_info, dict):
+        raise ValueError(f"Improved personalInfo is not a dict: {type(improved_info).__name__}")
     fields = set(original_info.keys()) | set(improved_info.keys())
     mismatches = [
         field
@@ -248,7 +260,12 @@ async def _generate_auxiliary_messages(
             if not isinstance(result, Exception):
                 cover_letter = result
             else:
-                logger.warning("Cover letter generation failed: %s", result)
+                # SVC-008: Include full traceback for debugging
+                logger.warning(
+                    "Cover letter generation failed: %s",
+                    result,
+                    exc_info=result,
+                )
                 warnings.append("Cover letter generation failed")
             idx += 1
         if enable_outreach:
@@ -256,7 +273,12 @@ async def _generate_auxiliary_messages(
             if not isinstance(result, Exception):
                 outreach_message = result
             else:
-                logger.warning("Outreach message generation failed: %s", result)
+                # SVC-008: Include full traceback for debugging
+                logger.warning(
+                    "Outreach message generation failed: %s",
+                    result,
+                    exc_info=result,
+                )
                 warnings.append("Outreach message generation failed")
 
     return cover_letter, outreach_message, warnings
