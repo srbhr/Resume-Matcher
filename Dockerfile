@@ -6,6 +6,10 @@
 # ============================================
 FROM node:22 AS frontend-builder
 
+# Build argument for API URL (allows customization at build time)
+# Default matches the default BACKEND_PORT in docker-compose.yml
+ARG NEXT_PUBLIC_API_URL=http://localhost:8000
+
 WORKDIR /app/frontend
 
 # Copy package files first for better caching
@@ -18,7 +22,8 @@ RUN npm ci
 COPY apps/frontend/ ./
 
 # Set environment variable for production build
-ENV NEXT_PUBLIC_API_URL=http://localhost:8000
+# This gets baked into the JavaScript bundle at build time
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 
 # Build the frontend
 RUN npm run build

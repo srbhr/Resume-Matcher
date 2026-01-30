@@ -3,6 +3,12 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      # Build args for customizing the frontend API URL at build time
+      # IMPORTANT: NEXT_PUBLIC_API_URL is baked into the JS bundle during build.
+      # If you change BACKEND_PORT, you must rebuild with matching NEXT_PUBLIC_API_URL:
+      #   BACKEND_PORT=9000 docker-compose build --build-arg NEXT_PUBLIC_API_URL=http://localhost:9000
+      args:
+        - NEXT_PUBLIC_API_URL=http://localhost:${BACKEND_PORT:-8000}
     image: resume-matcher
     container_name: resume-matcher
     # Port mapping: HOST_PORT:CONTAINER_PORT

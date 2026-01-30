@@ -275,30 +275,38 @@ docker-compose down
 
 By default, Resume Matcher runs on ports 3000 (frontend) and 8000 (backend). To use different ports:
 
-**Option 1: Environment Variables**
+**Option 1: Environment Variables (Frontend port only)**
 
 ```bash
-# Run on ports 4000 and 9000
-FRONTEND_PORT=4000 BACKEND_PORT=9000 docker-compose up -d
+# Change frontend port only (no rebuild needed)
+FRONTEND_PORT=4000 docker-compose up -d
 ```
 
-**Option 2: Create a `.env` file**
+**Option 2: Changing the Backend Port (requires rebuild)**
+
+The frontend's API URL is baked into the JavaScript bundle at build time. If you change `BACKEND_PORT`, you must rebuild the image:
 
 ```bash
-# Copy the example file
-cp .env.example .env
+# Build with custom backend port
+BACKEND_PORT=9000 docker-compose build
 
-# Edit with your preferred ports
-nano .env
+# Then run with the same port
+BACKEND_PORT=9000 docker-compose up -d
 ```
 
-Example `.env` file:
+Or create a `.env` file and rebuild:
 
-```env
+```bash
+# Create .env file
+cat > .env << EOF
 FRONTEND_PORT=4000
 BACKEND_PORT=9000
 LLM_PROVIDER=openai
 LLM_API_KEY=sk-your-key-here
+EOF
+
+# Rebuild and run
+docker-compose build && docker-compose up -d
 ```
 
 ### Configuration Options
@@ -327,6 +335,7 @@ Then configure Ollama as your provider in the Settings UI.
 - **API keys are best configured through the UI** at `http://localhost:3000/settings`
 - Data is persisted in a Docker volume (`resume-data`)
 - The Settings UI configuration is stored in the volume and persists across restarts
+- **Backend port changes require a rebuild** - the frontend API URL is baked into the JS bundle at build time
 
 
 
