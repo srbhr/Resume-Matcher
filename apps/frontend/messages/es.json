@@ -84,7 +84,9 @@
     "setupRequiredMessage": "> Configura la clave API en Ajustes para habilitar la personalización del currículum.",
     "uploadDialog": {
       "success": "Currículum subido con éxito.",
+      "successMaster": "Currículum subido y establecido como maestro.",
       "successMissingId": "La subida fue exitosa pero no se devolvió el ID del currículum.",
+      "parsingFailed": "Currículum subido pero el análisis de IA falló. Aún puedes personalizarlo manualmente.",
       "failed": "La subida falló.",
       "dropzoneTitle": "Haz clic o arrastra un archivo",
       "dropzoneSubtitle": "PDF, DOC, DOCX (Máx. 4MB)"
@@ -426,6 +428,9 @@
     "alerts": {
       "saveNotAvailable": "Guardar solo está disponible al editar un currículum existente.",
       "saveFailed": "No se pudo guardar el currículum. Por favor, inténtalo de nuevo.",
+      "coverLetterSaveSuccess": "Carta de presentación guardada",
+      "outreachSaveSuccess": "Mensaje de contacto guardado",
+      "downloadSuccess": "Currículum descargado",
       "reloadFailed": "Se aplicaron los cambios, pero no se pudo recargar el currículum. Actualiza la página.",
       "downloadNotAvailable": "La descarga solo está disponible para currículums guardados.",
       "downloadFailed": "No se pudo descargar el currículum. Por favor, inténtalo de nuevo.",

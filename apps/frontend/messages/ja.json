@@ -84,7 +84,9 @@
     "setupRequiredMessage": "> 履歴書のカスタマイズを有効にするには、設定で API キーを構成してください。",
     "uploadDialog": {
       "success": "履歴書のアップロードに成功しました。",
+      "successMaster": "履歴書がアップロードされ、マスターとして設定されました。",
       "successMissingId": "アップロードは成功しましたが、履歴書 ID が返されませんでした。",
+      "parsingFailed": "履歴書はアップロードされましたが、AI解析に失敗しました。手動でカスタマイズすることは可能です。",
       "failed": "アップロードに失敗しました。",
       "dropzoneTitle": "クリックまたはファイルをドラッグ",
       "dropzoneSubtitle": "PDF、DOC、DOCX（最大 4MB）"
@@ -426,6 +428,9 @@
     "alerts": {
       "saveNotAvailable": "既存の履歴書を編集中のみ保存できます。",
       "saveFailed": "履歴書の保存に失敗しました。もう一度お試しください。",
+      "coverLetterSaveSuccess": "カバーレターを保存しました",
+      "outreachSaveSuccess": "連絡メールを保存しました",
+      "downloadSuccess": "履歴書をダウンロードしました",
       "reloadFailed": "変更は適用されましたが、履歴書の再読み込みに失敗しました。ページを更新してください。",
       "downloadNotAvailable": "保存済みの履歴書のみダウンロードできます。",
       "downloadFailed": "履歴書のダウンロードに失敗しました。もう一度お試しください。",

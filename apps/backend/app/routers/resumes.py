@@ -1,6 +1,7 @@
 """Resume management endpoints."""
 
 import asyncio
+import copy
 import hashlib
 import json
 import logging
@@ -24,6 +25,7 @@ from app.schemas import (
     ImproveResumeRequest,
     ImproveResumeResponse,
     ImproveResumeData,
+    RefinementStats,
     ResumeDiffSummary,
     ResumeFieldDiff,
     ResumeData,
@@ -43,6 +45,8 @@ from app.services.improver import (
     generate_improvements,
     improve_resume,
 )
+from app.services.refiner import refine_resume, calculate_keyword_match
+from app.schemas.refinement import RefinementConfig
 from app.services.cover_letter import (
     generate_cover_letter,
     generate_outreach_message,
@@ -53,9 +57,13 @@ from app.prompts import DEFAULT_IMPROVE_PROMPT_ID, IMPROVE_PROMPT_OPTIONS
 def _load_config() -> dict:
     """Load configuration from config file."""
     config_path = settings.config_path
-    if config_path.exists():
+    if not config_path.exists():
+        return {}
+    try:
         return json.loads(config_path.read_text())
-    return {}
+    except (json.JSONDecodeError, OSError) as e:
+        logger.error("Failed to load config: %s", e)
+        return {}
 
 
 def _load_feature_config() -> dict:
@@ -99,17 +107,14 @@ def _normalize_payload(value: Any) -> Any:
 
 
 def _hash_improved_data(data: dict[str, Any]) -> str:
-    """Hash canonicalized improved data for preview/confirm validation.
-
-    Uses NFC normalization for strings plus sorted JSON keys to reduce
-    false mismatches from Unicode normalization or key ordering.
-    """
+    """Hash canonicalized improved data for preview/confirm validation."""
     normalized = _normalize_payload(data)
     serialized = json.dumps(
         normalized,
         sort_keys=True,
         separators=(",", ":"),
-        ensure_ascii=False,
+        ensure_ascii=False,  # Preserve original behavior for hash stability
+        default=str,  # Handle non-serializable types gracefully
     )
     return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
 
@@ -122,7 +127,9 @@ def _normalize_personal_info_value(value: Any) -> str:
     if isinstance(value, (int, float, bool)):
         return str(value)
     normalized = _normalize_payload(value)
-    return json.dumps(normalized, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    return json.dumps(
+        normalized, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+    )
 
 
 def _raise_improve_error(
@@ -148,34 +155,50 @@ def _get_original_resume_data(resume: dict[str, Any]) -> dict[str, Any] | None:
 def _preserve_personal_info(
     original_data: dict[str, Any] | None,
     improved_data: dict[str, Any],
-) -> dict[str, Any]:
+) -> tuple[dict[str, Any], list[str]]:
+    """Preserve personal info from original, return warnings if unable.
+
+    Uses deep copy to prevent mutation of original data.
+    """
+    warnings: list[str] = []
+
     if not original_data:
-        return improved_data
+        warnings.append(
+            "Original resume data unavailable - personal info may be AI-generated"
+        )
+        return improved_data, warnings
+
     original_info = original_data.get("personalInfo")
-    if isinstance(original_info, dict):
-        improved_data = dict(improved_data)
-        improved_data["personalInfo"] = original_info
-    return improved_data
+    if not isinstance(original_info, dict):
+        warnings.append("Original personal info missing or invalid")
+        return improved_data, warnings
+
+    # SVC-001: Use deep copy to prevent any mutation of original data
+    result = copy.deepcopy(improved_data)
+    result["personalInfo"] = copy.deepcopy(original_info)
+    return result, warnings
 
 
 def _calculate_diff_from_resume(
     resume: dict[str, Any],
     improved_data: dict[str, Any],
-) -> tuple[ResumeDiffSummary | None, list[ResumeFieldDiff] | None]:
+) -> tuple[ResumeDiffSummary | None, list[ResumeFieldDiff] | None, str | None]:
     """Calculate resume diffs when structured data is available.
 
-    Returns (None, None) if structured data is missing, parsing fails, or
-    diff calculation encounters an error. Callers should handle this gracefully.
+    Returns (summary, changes, error_reason). Error reason is None on success,
+    or a string describing why diff calculation failed.
     """
     original_data = _get_original_resume_data(resume)
     if not original_data:
-        return None, None
+        return None, None, "original_data_missing"
     from app.services.improver import calculate_resume_diff
+
     try:
-        return calculate_resume_diff(original_data, improved_data)
+        summary, changes = calculate_resume_diff(original_data, improved_data)
+        return summary, changes, None
     except Exception as e:
         logger.warning("Skipping resume diff due to calculation failure: %s", e)
-        return None, None
+        return None, None, f"calculation_error: {str(e)}"
 
 
 def _validate_confirm_payload(
@@ -183,12 +206,25 @@ def _validate_confirm_payload(
     improved_data: dict[str, Any],
 ) -> None:
     if not original_data:
-        logger.warning("Skipping confirm payload validation; structured resume data unavailable.")
+        logger.warning(
+            "Skipping confirm payload validation; structured resume data unavailable."
+        )
         return
     original_info = original_data.get("personalInfo")
     improved_info = improved_data.get("personalInfo")
-    if not isinstance(original_info, dict) or not isinstance(improved_info, dict):
-        raise ValueError("personalInfo payload is missing or invalid")
+    # JSON-008: Explicit null checks with clear error messages
+    if original_info is None:
+        raise ValueError("Original resume missing personalInfo")
+    if improved_info is None:
+        raise ValueError("Improved resume missing personalInfo")
+    if not isinstance(original_info, dict):
+        raise ValueError(
+            f"Original personalInfo is not a dict: {type(original_info).__name__}"
+        )
+    if not isinstance(improved_info, dict):
+        raise ValueError(
+            f"Improved personalInfo is not a dict: {type(improved_info).__name__}"
+        )
     fields = set(original_info.keys()) | set(improved_info.keys())
     mismatches = [
         field
@@ -206,9 +242,14 @@ async def _generate_auxiliary_messages(
     language: str,
     enable_cover_letter: bool,
     enable_outreach: bool,
-) -> tuple[str | None, str | None]:
+) -> tuple[str | None, str | None, list[str]]:
+    """Generate cover letter and outreach message.
+
+    Returns (cover_letter, outreach_message, warnings).
+    """
     cover_letter = None
     outreach_message = None
+    warnings: list[str] = []
     generation_tasks: list[Awaitable[str]] = []
 
     if enable_cover_letter:
@@ -228,16 +269,28 @@ async def _generate_auxiliary_messages(
             if not isinstance(result, Exception):
                 cover_letter = result
             else:
-                logger.warning("Cover letter generation failed: %s", result)
+                # SVC-008: Include full traceback for debugging
+                logger.warning(
+                    "Cover letter generation failed: %s",
+                    result,
+                    exc_info=result,
+                )
+                warnings.append("Cover letter generation failed")
             idx += 1
         if enable_outreach:
             result = results[idx]
             if not isinstance(result, Exception):
                 outreach_message = result
             else:
-                logger.warning("Outreach message generation failed: %s", result)
+                # SVC-008: Include full traceback for debugging
+                logger.warning(
+                    "Outreach message generation failed: %s",
+                    result,
+                    exc_info=result,
+                )
+                warnings.append("Outreach message generation failed")
 
-    return cover_letter, outreach_message
+    return cover_letter, outreach_message, warnings
 
 
 router = APIRouter(prefix="/resumes", tags=["Resumes"])
@@ -285,15 +338,11 @@ async def upload_resume(file: UploadFile = File(...)) -> ResumeUploadResponse:
             detail="Failed to parse document. Please ensure it's a valid PDF or DOCX file.",
         )
 
-    # Check if this is the first resume (make it master)
-    is_master = db.get_master_resume() is None
-
-    # Store in database first with "processing" status
-    resume = db.create_resume(
+    # Store in database first with "processing" status (atomic master assignment)
+    resume = await db.create_resume_atomic_master(
         content=markdown_content,
         content_type="md",
         filename=file.filename,
-        is_master=is_master,
         processed_data=None,
         processing_status="processing",
     )
@@ -316,10 +365,17 @@ async def upload_resume(file: UploadFile = File(...)) -> ResumeUploadResponse:
         db.update_resume(resume["resume_id"], {"processing_status": "failed"})
         resume["processing_status"] = "failed"
 
+    # Return accurate status to client (API-001 fix)
     return ResumeUploadResponse(
-        message=f"File {file.filename} successfully processed as MD and stored in the DB",
+        message=(
+            f"File {file.filename} uploaded successfully"
+            if resume["processing_status"] == "ready"
+            else f"File {file.filename} uploaded but parsing failed"
+        ),
         request_id=str(uuid4()),
         resume_id=resume["resume_id"],
+        processing_status=resume["processing_status"],
+        is_master=resume.get("is_master", False),
     )
 
 
@@ -451,10 +507,72 @@ async def improve_resume_preview_endpoint(
             language=language,
             prompt_id=prompt_id,
         )
-        improved_data = _preserve_personal_info(
+        # Collect warnings throughout the process
+        response_warnings: list[str] = []
+
+        improved_data, preserve_warnings = _preserve_personal_info(
             _get_original_resume_data(resume),
             improved_data,
         )
+        response_warnings.extend(preserve_warnings)
+
+        # Multi-pass refinement: keyword injection, AI phrase removal, alignment validation
+        stage = "refine_resume"
+        refinement_stats: RefinementStats | None = None
+        refinement_attempted = False
+        refinement_successful = False
+        try:
+            # Get master resume for alignment validation
+            master_resume = db.get_master_resume()
+            master_data = (
+                _get_original_resume_data(master_resume)
+                if master_resume
+                else _get_original_resume_data(resume)
+            )
+            if master_data:
+                initial_match = calculate_keyword_match(improved_data, job_keywords)
+                refinement_attempted = True
+                refinement_result = await refine_resume(
+                    initial_tailored=improved_data,
+                    master_resume=master_data,
+                    job_description=job["content"],
+                    job_keywords=job_keywords,
+                    config=RefinementConfig(),
+                )
+                improved_data = refinement_result.refined_data
+                refinement_stats = RefinementStats(
+                    passes_completed=refinement_result.passes_completed,
+                    keywords_injected=(
+                        len(refinement_result.keyword_analysis.injectable_keywords)
+                        if refinement_result.keyword_analysis
+                        else 0
+                    ),
+                    ai_phrases_removed=refinement_result.ai_phrases_removed,
+                    alignment_violations_fixed=(
+                        len(
+                            [
+                                v
+                                for v in refinement_result.alignment_report.violations
+                                if v.severity == "critical"
+                            ]
+                        )
+                        if refinement_result.alignment_report
+                        else 0
+                    ),
+                    initial_match_percentage=initial_match,
+                    final_match_percentage=refinement_result.final_match_percentage,
+                )
+                refinement_successful = True
+                logger.info(
+                    "Refinement completed: %d passes, %d AI phrases removed",
+                    refinement_result.passes_completed,
+                    len(refinement_result.ai_phrases_removed),
+                )
+        except Exception as e:
+            logger.warning("Refinement failed, using unrefined result: %s", e)
+            if refinement_attempted:
+                response_warnings.append(f"Refinement failed: {str(e)}")
+
         improved_text = json.dumps(improved_data, indent=2)
         preview_hash = _hash_improved_data(improved_data)
         preview_hashes = job.get("preview_hashes")
@@ -472,14 +590,20 @@ async def improve_resume_preview_endpoint(
                 },
             )
             if not updated_job:
-                logger.warning("Failed to persist preview hash for job %s.", request.job_id)
+                logger.warning(
+                    "Failed to persist preview hash for job %s.", request.job_id
+                )
         except Exception as e:
-            logger.warning("Failed to persist preview hash for job %s: %s", request.job_id, e)
+            logger.warning(
+                "Failed to persist preview hash for job %s: %s", request.job_id, e
+            )
         stage = "calculate_diff"
-        diff_summary, detailed_changes = _calculate_diff_from_resume(
+        diff_summary, detailed_changes, diff_error = _calculate_diff_from_resume(
             resume,
             improved_data,
         )
+        if diff_error:
+            response_warnings.append(f"Could not calculate changes: {diff_error}")
         stage = "generate_improvements"
         improvements = generate_improvements(job_keywords)
 
@@ -504,6 +628,10 @@ async def improve_resume_preview_endpoint(
                 outreach_message=None,
                 diff_summary=diff_summary,
                 detailed_changes=detailed_changes,
+                refinement_stats=refinement_stats,
+                warnings=response_warnings,
+                refinement_attempted=refinement_attempted,
+                refinement_successful=refinement_successful,
             ),
         )
     except Exception as e:
@@ -548,7 +676,9 @@ async def improve_resume_confirm_endpoint(
         if isinstance(preview_hashes, dict):
             allowed_hashes.update(preview_hashes.values())
         elif isinstance(preview_hashes, list):
-            allowed_hashes.update([value for value in preview_hashes if isinstance(value, str)])
+            allowed_hashes.update(
+                [value for value in preview_hashes if isinstance(value, str)]
+            )
         else:
             preview_hash = job.get("preview_hash")
             if isinstance(preview_hash, str):
@@ -573,19 +703,27 @@ async def improve_resume_confirm_endpoint(
             )
 
         stage = "calculate_diff"
-        diff_summary, detailed_changes = _calculate_diff_from_resume(
+        response_warnings: list[str] = []
+        diff_summary, detailed_changes, diff_error = _calculate_diff_from_resume(
             resume,
             improved_data,
         )
+        if diff_error:
+            response_warnings.append(f"Could not calculate changes: {diff_error}")
 
         stage = "generate_auxiliary_messages"
-        cover_letter, outreach_message = await _generate_auxiliary_messages(
+        (
+            cover_letter,
+            outreach_message,
+            aux_warnings,
+        ) = await _generate_auxiliary_messages(
             improved_data,
             job["content"],
             language,
             enable_cover_letter,
             enable_outreach,
         )
+        response_warnings.extend(aux_warnings)
 
         stage = "create_resume"
         tailored_resume = db.create_resume(
@@ -624,6 +762,7 @@ async def improve_resume_confirm_endpoint(
                 outreach_message=outreach_message,
                 diff_summary=diff_summary,
                 detailed_changes=detailed_changes,
+                warnings=response_warnings,
             ),
         )
     except HTTPException:
@@ -673,31 +812,98 @@ async def improve_resume_endpoint(
             language=language,
             prompt_id=prompt_id,
         )
-        improved_data = _preserve_personal_info(
+        # Collect warnings throughout the process
+        response_warnings: list[str] = []
+
+        improved_data, preserve_warnings = _preserve_personal_info(
             _get_original_resume_data(resume),
             improved_data,
         )
+        response_warnings.extend(preserve_warnings)
+
+        # Multi-pass refinement: keyword injection, AI phrase removal, alignment validation
+        refinement_stats: RefinementStats | None = None
+        refinement_attempted = False
+        refinement_successful = False
+        try:
+            # Get master resume for alignment validation
+            master_resume = db.get_master_resume()
+            master_data = (
+                _get_original_resume_data(master_resume)
+                if master_resume
+                else _get_original_resume_data(resume)
+            )
+            if master_data:
+                initial_match = calculate_keyword_match(improved_data, job_keywords)
+                refinement_attempted = True
+                refinement_result = await refine_resume(
+                    initial_tailored=improved_data,
+                    master_resume=master_data,
+                    job_description=job["content"],
+                    job_keywords=job_keywords,
+                    config=RefinementConfig(),
+                )
+                improved_data = refinement_result.refined_data
+                refinement_stats = RefinementStats(
+                    passes_completed=refinement_result.passes_completed,
+                    keywords_injected=(
+                        len(refinement_result.keyword_analysis.injectable_keywords)
+                        if refinement_result.keyword_analysis
+                        else 0
+                    ),
+                    ai_phrases_removed=refinement_result.ai_phrases_removed,
+                    alignment_violations_fixed=(
+                        len(
+                            [
+                                v
+                                for v in refinement_result.alignment_report.violations
+                                if v.severity == "critical"
+                            ]
+                        )
+                        if refinement_result.alignment_report
+                        else 0
+                    ),
+                    initial_match_percentage=initial_match,
+                    final_match_percentage=refinement_result.final_match_percentage,
+                )
+                refinement_successful = True
+                logger.info(
+                    "Refinement completed: %d passes, %d AI phrases removed",
+                    refinement_result.passes_completed,
+                    len(refinement_result.ai_phrases_removed),
+                )
+        except Exception as e:
+            logger.warning("Refinement failed, using unrefined result: %s", e)
+            if refinement_attempted:
+                response_warnings.append(f"Refinement failed: {str(e)}")
 
         # Convert improved data to JSON string for storage
         improved_text = json.dumps(improved_data, indent=2)
 
         # Calculate differences between original and improved resume
-        diff_summary, detailed_changes = _calculate_diff_from_resume(
+        diff_summary, detailed_changes, diff_error = _calculate_diff_from_resume(
             resume,
             improved_data,
         )
+        if diff_error:
+            response_warnings.append(f"Could not calculate changes: {diff_error}")
 
         # Generate improvement suggestions
         improvements = generate_improvements(job_keywords)
 
         # Generate cover letter and outreach message in parallel if enabled
-        cover_letter, outreach_message = await _generate_auxiliary_messages(
+        (
+            cover_letter,
+            outreach_message,
+            aux_warnings,
+        ) = await _generate_auxiliary_messages(
             improved_data,
             job["content"],
             language,
             enable_cover_letter,
             enable_outreach,
         )
+        response_warnings.extend(aux_warnings)
 
         # Store the tailored resume with cover letter and outreach message
         tailored_resume = db.create_resume(
@@ -742,6 +948,10 @@ async def improve_resume_endpoint(
                 # Diff metadata
                 diff_summary=diff_summary,
                 detailed_changes=detailed_changes,
+                refinement_stats=refinement_stats,
+                warnings=response_warnings,
+                refinement_attempted=refinement_attempted,
+                refinement_successful=refinement_successful,
             ),
         )
 

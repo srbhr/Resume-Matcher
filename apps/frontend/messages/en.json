@@ -84,7 +84,9 @@
     "setupRequiredMessage": "> Configure API key in settings to enable resume tailoring.",
     "uploadDialog": {
       "success": "Resume uploaded successfully.",
+      "successMaster": "Resume uploaded and set as master.",
       "successMissingId": "Upload succeeded but no Resume ID returned.",
+      "parsingFailed": "Resume uploaded but AI parsing failed. You can still tailor it manually.",
       "failed": "Upload failed.",
       "dropzoneTitle": "Click or Drag File",
       "dropzoneSubtitle": "PDF, DOC, DOCX (Max 4MB)"
@@ -426,6 +428,9 @@
     "alerts": {
       "saveNotAvailable": "Save is only available when editing an existing resume.",
       "saveFailed": "Failed to save resume. Please try again.",
+      "coverLetterSaveSuccess": "Cover letter saved",
+      "outreachSaveSuccess": "Outreach message saved",
+      "downloadSuccess": "Resume downloaded",
       "reloadFailed": "Applied changes, but failed to reload the resume. Please refresh the page.",
       "downloadNotAvailable": "Download is only available for saved resumes.",
       "downloadFailed": "Failed to download resume. Please try again.",
