@@ -360,7 +360,10 @@ async def check_llm_health(
         return result
     except Exception as e:
         # Log full exception details server-side, but do not expose them to clients
-        logging.exception("LLM health check failed", extra={"provider": config.provider, "model": config.model})
+        logging.exception(
+            "LLM health check failed",
+            extra={"provider": config.provider, "model": config.model},
+        )
 
         # Provide a minimal, actionable client-facing hint without leaking secrets.
         error_code = "health_check_failed"
@@ -427,7 +430,9 @@ async def complete(
     except Exception as e:
         # Log the actual error server-side for debugging
         logging.error(f"LLM completion failed: {e}", extra={"model": model_name})
-        raise ValueError("LLM completion failed. Please check your API configuration and try again.") from e
+        raise ValueError(
+            "LLM completion failed. Please check your API configuration and try again."
+        ) from e
 
 
 def _supports_json_mode(provider: str, model: str) -> bool:
@@ -568,15 +573,15 @@ def _extract_json(content: str, _depth: int = 0) -> str:
                     end_idx = i
                     break
 
+        # LLM-001: Check for unbalanced braces - loop ended without depth reaching 0
+        if end_idx == -1 and depth != 0:
+            logging.warning(
+                "JSON extraction found unbalanced braces (depth=%d), possible truncation",
+                depth,
+            )
+
         if end_idx != -1:
-            extracted = content[: end_idx + 1]
-            # LLM-001: Check if extraction ended prematurely (depth never reached 0)
-            if depth != 0:
-                logging.warning(
-                    "JSON extraction found unbalanced braces (depth=%d), possible truncation",
-                    depth,
-                )
-            return extracted
+            return content[: end_idx + 1]
 
     # Try to find JSON object in the content (only if not already at start)
     start_idx = content.find("{")
@@ -609,7 +614,9 @@ async def complete_json(
     model_name = get_model_name(config)
 
     # Build messages
-    json_system = (system_prompt or "") + "\n\nYou must respond with valid JSON only. No explanations, no markdown."
+    json_system = (
+        system_prompt or ""
+    ) + "\n\nYou must respond with valid JSON only. No explanations, no markdown."
     messages = [
         {"role": "system", "content": json_system},
         {"role": "user", "content": prompt},
@@ -652,14 +659,25 @@ async def complete_json(
 
             # Extract and parse JSON
             json_str = _extract_json(content)
-            return json.loads(json_str)
+            result = json.loads(json_str)
+
+            # LLM-001: Check if parsed result appears truncated
+            if isinstance(result, dict) and _appears_truncated(result):
+                logging.warning(
+                    "Parsed JSON appears truncated, but proceeding with result"
+                )
+
+            return result
 
         except json.JSONDecodeError as e:
             last_error = e
             logging.warning(f"JSON parse failed (attempt {attempt + 1}): {e}")
             if attempt < retries:
                 # Add hint to prompt for retry
-                messages[-1]["content"] = prompt + "\n\nIMPORTANT: Output ONLY a valid JSON object. Start with { and end with }."
+                messages[-1]["content"] = (
+                    prompt
+                    + "\n\nIMPORTANT: Output ONLY a valid JSON object. Start with { and end with }."
+                )
                 continue
             raise ValueError(f"Failed to parse JSON after {retries + 1} attempts: {e}")
 

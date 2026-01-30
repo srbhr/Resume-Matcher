@@ -1,7 +1,7 @@
 """TinyDB database layer for JSON storage."""
 
+import asyncio
 import logging
-import threading
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 class Database:
     """TinyDB wrapper for resume matcher data."""
 
-    _master_resume_lock = threading.Lock()
+    _master_resume_lock = asyncio.Lock()
 
     def __init__(self, db_path: Path | None = None):
         self.db_path = db_path or settings.db_path
@@ -90,7 +90,7 @@ class Database:
         self.resumes.insert(doc)
         return doc
 
-    def create_resume_atomic_master(
+    async def create_resume_atomic_master(
         self,
         content: str,
         content_type: str = "md",
@@ -102,10 +102,11 @@ class Database:
     ) -> dict[str, Any]:
         """Create a new resume with atomic master assignment.
 
-        Uses a lock to prevent race conditions when multiple uploads
-        happen concurrently and both try to become master.
+        Uses an asyncio.Lock to prevent race conditions when multiple uploads
+        happen concurrently and both try to become master. This avoids blocking
+        the FastAPI event loop unlike threading.Lock.
         """
-        with self._master_resume_lock:
+        async with self._master_resume_lock:
             is_master = self.get_master_resume() is None
             return self.create_resume(
                 content=content,
@@ -130,9 +131,7 @@ class Database:
         result = self.resumes.search(Resume.is_master == True)
         return result[0] if result else None
 
-    def update_resume(
-        self, resume_id: str, updates: dict[str, Any]
-    ) -> dict[str, Any]:
+    def update_resume(self, resume_id: str, updates: dict[str, Any]) -> dict[str, Any]:
         """Update resume by ID.
 
         Raises:
@@ -183,9 +182,7 @@ class Database:
         return len(updated) > 0
 
     # Job operations
-    def create_job(
-        self, content: str, resume_id: str | None = None
-    ) -> dict[str, Any]:
+    def create_job(self, content: str, resume_id: str | None = None) -> dict[str, Any]:
         """Create a new job description entry."""
         job_id = str(uuid4())
         now = datetime.now(timezone.utc).isoformat()
@@ -271,6 +268,7 @@ class Database:
         uploads_dir = settings.data_dir / "uploads"
         if uploads_dir.exists():
             import shutil
+
             shutil.rmtree(uploads_dir)
             uploads_dir.mkdir(parents=True, exist_ok=True)
 

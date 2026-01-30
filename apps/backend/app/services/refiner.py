@@ -8,7 +8,6 @@ multiple passes:
 """
 
 import copy
-import hashlib
 import json
 import logging
 import re
@@ -211,13 +210,14 @@ def remove_ai_phrases(data: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
     Returns:
         Tuple of (cleaned data, list of removed phrases)
     """
-    removed: list[str] = []
+    # Use a set to avoid duplicate tracking
+    removed: set[str] = set()
 
     def clean_text(text: str) -> str:
         cleaned = text
         for phrase in AI_PHRASE_BLACKLIST:
             if phrase.lower() in cleaned.lower():
-                removed.append(phrase)
+                removed.add(phrase)
                 replacement = AI_PHRASE_REPLACEMENTS.get(phrase.lower(), "")
                 # Case-insensitive replacement
                 pattern = re.compile(re.escape(phrase), re.IGNORECASE)
@@ -234,7 +234,7 @@ def remove_ai_phrases(data: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
         return obj
 
     cleaned_data = clean_recursive(data)
-    return cleaned_data, list(set(removed))
+    return cleaned_data, list(removed)
 
 
 def validate_master_alignment(
@@ -424,7 +424,9 @@ async def inject_keywords(
             return tailored
 
         if not _validate_resume_structure(result):
-            logger.warning("Keyword injection corrupted resume structure, using original")
+            logger.warning(
+                "Keyword injection corrupted resume structure, using original"
+            )
             return tailored
 
         return result
@@ -469,9 +471,7 @@ def fix_alignment_violations(
 
         elif violation.violation_type == "fabricated_company":
             # SVC-002: Remove the fabricated work experience entry
-            logger.error(
-                "Critical: Fabricated company detected: %s", violation.value
-            )
+            logger.error("Critical: Fabricated company detected: %s", violation.value)
             if "workExperience" in fixed:
                 fixed["workExperience"] = [
                     exp

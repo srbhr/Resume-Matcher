@@ -113,7 +113,7 @@ def _hash_improved_data(data: dict[str, Any]) -> str:
         normalized,
         sort_keys=True,
         separators=(",", ":"),
-        ensure_ascii=True,  # ASCII for maximum compatibility
+        ensure_ascii=False,  # Preserve original behavior for hash stability
         default=str,  # Handle non-serializable types gracefully
     )
     return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
@@ -127,7 +127,9 @@ def _normalize_personal_info_value(value: Any) -> str:
     if isinstance(value, (int, float, bool)):
         return str(value)
     normalized = _normalize_payload(value)
-    return json.dumps(normalized, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    return json.dumps(
+        normalized, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+    )
 
 
 def _raise_improve_error(
@@ -190,6 +192,7 @@ def _calculate_diff_from_resume(
     if not original_data:
         return None, None, "original_data_missing"
     from app.services.improver import calculate_resume_diff
+
     try:
         summary, changes = calculate_resume_diff(original_data, improved_data)
         return summary, changes, None
@@ -203,7 +206,9 @@ def _validate_confirm_payload(
     improved_data: dict[str, Any],
 ) -> None:
     if not original_data:
-        logger.warning("Skipping confirm payload validation; structured resume data unavailable.")
+        logger.warning(
+            "Skipping confirm payload validation; structured resume data unavailable."
+        )
         return
     original_info = original_data.get("personalInfo")
     improved_info = improved_data.get("personalInfo")
@@ -213,9 +218,13 @@ def _validate_confirm_payload(
     if improved_info is None:
         raise ValueError("Improved resume missing personalInfo")
     if not isinstance(original_info, dict):
-        raise ValueError(f"Original personalInfo is not a dict: {type(original_info).__name__}")
+        raise ValueError(
+            f"Original personalInfo is not a dict: {type(original_info).__name__}"
+        )
     if not isinstance(improved_info, dict):
-        raise ValueError(f"Improved personalInfo is not a dict: {type(improved_info).__name__}")
+        raise ValueError(
+            f"Improved personalInfo is not a dict: {type(improved_info).__name__}"
+        )
     fields = set(original_info.keys()) | set(improved_info.keys())
     mismatches = [
         field
@@ -330,7 +339,7 @@ async def upload_resume(file: UploadFile = File(...)) -> ResumeUploadResponse:
         )
 
     # Store in database first with "processing" status (atomic master assignment)
-    resume = db.create_resume_atomic_master(
+    resume = await db.create_resume_atomic_master(
         content=markdown_content,
         content_type="md",
         filename=file.filename,
@@ -581,9 +590,13 @@ async def improve_resume_preview_endpoint(
                 },
             )
             if not updated_job:
-                logger.warning("Failed to persist preview hash for job %s.", request.job_id)
+                logger.warning(
+                    "Failed to persist preview hash for job %s.", request.job_id
+                )
         except Exception as e:
-            logger.warning("Failed to persist preview hash for job %s: %s", request.job_id, e)
+            logger.warning(
+                "Failed to persist preview hash for job %s: %s", request.job_id, e
+            )
         stage = "calculate_diff"
         diff_summary, detailed_changes, diff_error = _calculate_diff_from_resume(
             resume,
@@ -663,7 +676,9 @@ async def improve_resume_confirm_endpoint(
         if isinstance(preview_hashes, dict):
             allowed_hashes.update(preview_hashes.values())
         elif isinstance(preview_hashes, list):
-            allowed_hashes.update([value for value in preview_hashes if isinstance(value, str)])
+            allowed_hashes.update(
+                [value for value in preview_hashes if isinstance(value, str)]
+            )
         else:
             preview_hash = job.get("preview_hash")
             if isinstance(preview_hash, str):
@@ -697,7 +712,11 @@ async def improve_resume_confirm_endpoint(
             response_warnings.append(f"Could not calculate changes: {diff_error}")
 
         stage = "generate_auxiliary_messages"
-        cover_letter, outreach_message, aux_warnings = await _generate_auxiliary_messages(
+        (
+            cover_letter,
+            outreach_message,
+            aux_warnings,
+        ) = await _generate_auxiliary_messages(
             improved_data,
             job["content"],
             language,
@@ -873,7 +892,11 @@ async def improve_resume_endpoint(
         improvements = generate_improvements(job_keywords)
 
         # Generate cover letter and outreach message in parallel if enabled
-        cover_letter, outreach_message, aux_warnings = await _generate_auxiliary_messages(
+        (
+            cover_letter,
+            outreach_message,
+            aux_warnings,
+        ) = await _generate_auxiliary_messages(
             improved_data,
             job["content"],
             language,
