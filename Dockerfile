@@ -4,7 +4,7 @@
 # ============================================
 # Stage 1: Build Frontend
 # ============================================
-FROM node:22-slim AS frontend-builder
+FROM node:22 AS frontend-builder
 
 WORKDIR /app/frontend
 
@@ -99,7 +99,8 @@ RUN npm ci --omit=dev
 # Startup Script
 # ============================================
 COPY docker/start.sh /app/start.sh
-RUN chmod +x /app/start.sh
+# Convert CRLF to LF (fixes Windows line ending issues) and make executable
+RUN sed -i 's/\r$//' /app/start.sh && chmod +x /app/start.sh
 
 # ============================================
 # Data Directory & Volume

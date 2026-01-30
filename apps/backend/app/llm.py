@@ -17,19 +17,33 @@ LLM_TIMEOUT_JSON = 180  # JSON completions may take longer
 
 # LLM-004: OpenRouter JSON-capable models (explicit allowlist)
 OPENROUTER_JSON_CAPABLE_MODELS = {
+    # Anthropic models
     "anthropic/claude-3-opus",
     "anthropic/claude-3-sonnet",
     "anthropic/claude-3-haiku",
     "anthropic/claude-3.5-sonnet",
     "anthropic/claude-3.5-haiku",
+    "anthropic/claude-haiku-4-5-20251001",
+    "anthropic/claude-sonnet-4-20250514",
+    "anthropic/claude-opus-4-20250514",
+    # OpenAI models
     "openai/gpt-4-turbo",
     "openai/gpt-4",
     "openai/gpt-4o",
     "openai/gpt-4o-mini",
     "openai/gpt-3.5-turbo",
+    "openai/gpt-5-nano-2025-08-07",
+    # Google models
     "google/gemini-pro",
     "google/gemini-1.5-pro",
     "google/gemini-1.5-flash",
+    "google/gemini-2.0-flash",
+    "google/gemini-3-flash-preview",
+    # DeepSeek models
+    "deepseek/deepseek-chat",
+    "deepseek/deepseek-v3",
+    "deepseek/deepseek-v3.2",
+    # Mistral models
     "mistralai/mistral-large",
     "mistralai/mistral-medium",
 }

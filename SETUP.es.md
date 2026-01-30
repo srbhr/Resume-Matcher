@@ -128,7 +128,7 @@ El ajuste más importante es tu proveedor de IA. Aquí tienes una configuración
 
 ```env
 LLM_PROVIDER=openai
-LLM_MODEL=gpt-4o-mini
+LLM_MODEL=gpt-5-nano-2025-08-07
 LLM_API_KEY=sk-your-api-key-here
 
 # Mantén estos valores por defecto para desarrollo local
@@ -213,17 +213,17 @@ Resume Matcher admite múltiples proveedores de IA. Puedes configurarlo desde la
 
 | Proveedor | Configuración | Obtener API key |
 |----------|---------------|-----------------|
-| **OpenAI** | `LLM_PROVIDER=openai`<br>`LLM_MODEL=gpt-4o-mini` | [platform.openai.com](https://platform.openai.com/api-keys) |
-| **Anthropic** | `LLM_PROVIDER=anthropic`<br>`LLM_MODEL=claude-3-5-sonnet-20241022` | [console.anthropic.com](https://console.anthropic.com/) |
-| **Google Gemini** | `LLM_PROVIDER=gemini`<br>`LLM_MODEL=gemini-1.5-flash` | [aistudio.google.com](https://aistudio.google.com/app/apikey) |
-| **OpenRouter** | `LLM_PROVIDER=openrouter`<br>`LLM_MODEL=anthropic/claude-3.5-sonnet` | [openrouter.ai](https://openrouter.ai/keys) |
-| **DeepSeek** | `LLM_PROVIDER=deepseek`<br>`LLM_MODEL=deepseek-chat` | [platform.deepseek.com](https://platform.deepseek.com/) |
+| **OpenAI** | `LLM_PROVIDER=openai`<br>`LLM_MODEL=gpt-5-nano-2025-08-07` | [platform.openai.com](https://platform.openai.com/api-keys) |
+| **Anthropic** | `LLM_PROVIDER=anthropic`<br>`LLM_MODEL=claude-haiku-4-5-20251001` | [console.anthropic.com](https://console.anthropic.com/) |
+| **Google Gemini** | `LLM_PROVIDER=gemini`<br>`LLM_MODEL=gemini-3-flash-preview` | [aistudio.google.com](https://aistudio.google.com/app/apikey) |
+| **OpenRouter** | `LLM_PROVIDER=openrouter`<br>`LLM_MODEL=deepseek/deepseek-v3.2` | [openrouter.ai](https://openrouter.ai/keys) |
+| **DeepSeek** | `LLM_PROVIDER=deepseek`<br>`LLM_MODEL=deepseek-v3.2` | [platform.deepseek.com](https://platform.deepseek.com/) |
 
 Ejemplo de `.env` para Anthropic:
 
 ```env
 LLM_PROVIDER=anthropic
-LLM_MODEL=claude-3-5-sonnet-20241022
+LLM_MODEL=claude-haiku-4-5-20251001
 LLM_API_KEY=sk-ant-your-key-here
 ```
 
@@ -239,7 +239,7 @@ Descárgalo e instálalo desde [ollama.com](https://ollama.com)
 #### Paso 2: Descargar un modelo
 
 ```bash
-ollama pull llama3.2
+ollama pull gemma3:4b
 ```
 
 Otras buenas opciones: `mistral`, `codellama`, `neural-chat`
@@ -248,7 +248,7 @@ Otras buenas opciones: `mistral`, `codellama`, `neural-chat`
 
 ```env
 LLM_PROVIDER=ollama
-LLM_MODEL=llama3.2
+LLM_MODEL=gemma3:4b
 LLM_API_BASE=http://localhost:11434
 # LLM_API_KEY no es necesario con Ollama
 ```
@@ -442,7 +442,7 @@ CORS_ORIGINS=["http://localhost:3001", "http://127.0.0.1:3001"]
 
 1. Comprueba que Ollama está en ejecución: `ollama list`
 2. Inicia Ollama si es necesario: `ollama serve`
-3. Asegúrate de que el modelo está descargado: `ollama pull llama3.2`
+3. Asegúrate de que el modelo está descargado: `ollama pull gemma3:4b`
 
 ---
 
