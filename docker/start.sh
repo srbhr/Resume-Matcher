@@ -114,7 +114,7 @@ fi
 echo ""
 info "Starting backend server on port ${BACKEND_PORT}..."
 cd /app/backend
-python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+python -m uvicorn app.main:app --host 0.0.0.0 --port ${BACKEND_PORT} &
 BACKEND_PID=$!
 
 # Wait for backend to be ready
