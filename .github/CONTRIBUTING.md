@@ -52,7 +52,6 @@ Follow these steps to set up the environment and run the application.
    ```
 
 3. Create a Python Virtual Environment:
-
    - Using [virtualenv](https://learnpython.com/blog/how-to-use-virtualenv-python/):
 
      _Note_: Check how to install virtualenv on your system here [link](https://learnpython.com/blog/how-to-use-virtualenv-python/).
@@ -62,7 +61,6 @@ Follow these steps to set up the environment and run the application.
      ```
 
    **OR**
-
    - Create a Python Virtual Environment:
 
      ```bash
@@ -70,7 +68,6 @@ Follow these steps to set up the environment and run the application.
      ```
 
 4. Activate the Virtual Environment.
-
    - On Windows.
 
      ```bash
@@ -83,39 +80,45 @@ Follow these steps to set up the environment and run the application.
      source env/bin/activate
      ```
 
-    **OPTIONAL (For pyenv users)**
+     **OPTIONAL (For pyenv users)**
 
    Run the application with pyenv (Refer to this [article](https://realpython.com/intro-to-pyenv/#installing-pyenv))
-
    - Build dependencies (on ubuntu)
-      ```
-      sudo apt-get install -y make build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev libncursesw5-dev xz-utils tk-dev libffi-dev liblzma-dev python openssl
-      ```
-      ```
 
-      sudo apt-get install build-essential zlib1g-dev libffi-dev libssl-dev libbz2-dev libreadline-dev libsqlite3-dev liblzma-dev libncurses-dev
+     ```
+     sudo apt-get install -y make build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev libncursesw5-dev xz-utils tk-dev libffi-dev liblzma-dev python openssl
+     ```
 
-      sudo apt-get install python-tk python3-tk tk-dev
+     ```
 
-      sudo apt-get install build-essential zlib1g-dev libffi-dev libssl-dev libbz2-dev libreadline-dev libsqlite3-dev liblzma-dev
+     sudo apt-get install build-essential zlib1g-dev libffi-dev libssl-dev libbz2-dev libreadline-dev libsqlite3-dev liblzma-dev libncurses-dev
 
-      ```
+     sudo apt-get install python-tk python3-tk tk-dev
 
-        - pyenv installer
+     sudo apt-get install build-essential zlib1g-dev libffi-dev libssl-dev libbz2-dev libreadline-dev libsqlite3-dev liblzma-dev
+
+     ```
+
+     - pyenv installer
+
      ```
         curl https://pyenv.run | bash
      ```
+
    - Install desired python version
+
      ```
        pyenv install -v 3.11.0
      ```
 
    - pyenv with virtual enviroment
+
      ```
         pyenv virtualenv 3.11.0 venv
      ```
 
    - Activate virtualenv with pyenv
+
      ```
         pyenv activate venv
      ```
@@ -126,18 +129,17 @@ Follow these steps to set up the environment and run the application.
    pip install -r requirements.txt
    ```
 
-6. Prepare Data:
-
+5. Prepare Data:
    - Resumes: Place your resumes in PDF format in the `Data/Resumes` folder. Remove any existing contents in this folder.
    - Job Descriptions: Place your job descriptions in PDF format in the `Data/JobDescription` folder. Remove any existing contents in this folder.
 
-7. Parse Resumes to JSON:
+6. Parse Resumes to JSON:
 
    ```python
    python run_first.py
    ```
 
-8. Run the Application:
+7. Run the Application:
 
    ```python
    streamlit run streamlit_app.py
