@@ -84,7 +84,9 @@
     "setupRequiredMessage": "> 请在设置中配置 API 密钥以启用简历定制。",
     "uploadDialog": {
       "success": "简历上传成功。",
+      "successMaster": "简历已上传并设为主简历。",
       "successMissingId": "上传成功但未返回简历 ID。",
+      "parsingFailed": "简历已上传但AI解析失败。您仍可手动定制。",
       "failed": "上传失败。",
       "dropzoneTitle": "点击或拖拽文件",
       "dropzoneSubtitle": "PDF、DOC、DOCX（最大 4MB）"
