@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 from typing import Any, Literal
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -125,6 +126,14 @@ class Settings(BaseSettings):
     llm_model: str = "gpt-5-nano-2025-08-07"
     llm_api_key: str = ""
     llm_api_base: str | None = None  # For Ollama or custom endpoints
+
+    @field_validator("llm_provider", mode="before")
+    @classmethod
+    def set_default_provider(cls, v: Any) -> str:
+        """Handle empty string provider by defaulting to openai."""
+        if not v or (isinstance(v, str) and not v.strip()):
+            return "openai"
+        return v
 
     # Server Configuration
     host: str = "0.0.0.0"
