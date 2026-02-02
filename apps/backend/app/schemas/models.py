@@ -1,10 +1,108 @@
 """Pydantic models matching frontend expectations."""
 
 import copy
+import re
 from enum import Enum
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+
+_TEXT_VALUE_KEYS = (
+    "text",
+    "summary",
+    "description",
+    "value",
+    "content",
+    "title",
+    "subtitle",
+    "name",
+    "label",
+)
+_BULLET_PREFIX_RE = re.compile(r"^\s*(?:[-*•]+|\d+[.)])\s*")
+
+
+def _extract_text_fragments(value: Any, depth: int = 0, max_depth: int = 10) -> list[str]:
+    """Extract text-like content from nested list/dict values."""
+    if depth >= max_depth or value is None:
+        return []
+
+    if isinstance(value, str):
+        stripped = value.strip()
+        return [stripped] if stripped else []
+
+    if isinstance(value, (int, float)):
+        return [str(value)]
+
+    if isinstance(value, list):
+        fragments: list[str] = []
+        for item in value:
+            fragments.extend(_extract_text_fragments(item, depth + 1, max_depth))
+        return fragments
+
+    if isinstance(value, dict):
+        fragments: list[str] = []
+
+        for key in _TEXT_VALUE_KEYS:
+            if key in value:
+                fragments.extend(
+                    _extract_text_fragments(value.get(key), depth + 1, max_depth)
+                )
+
+        if fragments:
+            return fragments
+
+        for nested in value.values():
+            fragments.extend(_extract_text_fragments(nested, depth + 1, max_depth))
+        return fragments
+
+    return []
+
+
+def _coerce_text(value: Any, joiner: str = " ") -> str:
+    """Coerce nested values into a single text string."""
+    return joiner.join(_extract_text_fragments(value)).strip()
+
+
+def _coerce_optional_text(value: Any) -> str | None:
+    """Coerce nested values into optional text."""
+    if value is None:
+        return None
+    text = _coerce_text(value)
+    return text or None
+
+
+def _split_description_lines(value: str) -> list[str]:
+    """Split a description block into clean bullet lines."""
+    items: list[str] = []
+    for raw_line in re.split(r"\r?\n+", value):
+        line = _BULLET_PREFIX_RE.sub("", raw_line.strip())
+        if line:
+            items.append(line)
+    return items
+
+
+def _coerce_string_list(value: Any) -> list[str]:
+    """Coerce nested/string values into a list of strings."""
+    if value is None:
+        return []
+
+    if isinstance(value, str):
+        return _split_description_lines(value)
+
+    if isinstance(value, list):
+        items: list[str] = []
+        for entry in value:
+            if isinstance(entry, str):
+                items.extend(_split_description_lines(entry))
+                continue
+
+            coerced = _coerce_text(entry)
+            if coerced:
+                items.append(coerced)
+        return items
+
+    coerced = _coerce_text(value)
+    return [coerced] if coerced else []
 
 
 # Section Type Enum for dynamic sections
@@ -41,6 +139,11 @@ class Experience(BaseModel):
     years: str = ""
     description: list[str] = Field(default_factory=list)
 
+    @field_validator("description", mode="before")
+    @classmethod
+    def _normalize_description(cls, value: Any) -> list[str]:
+        return _coerce_string_list(value)
+
 
 class Education(BaseModel):
     """Education entry."""
@@ -50,6 +153,11 @@ class Education(BaseModel):
     degree: str = ""
     years: str = ""
     description: str | None = None
+
+    @field_validator("description", mode="before")
+    @classmethod
+    def _normalize_description(cls, value: Any) -> str | None:
+        return _coerce_optional_text(value)
 
 
 class Project(BaseModel):
@@ -63,6 +171,11 @@ class Project(BaseModel):
     website: str | None = None
     description: list[str] = Field(default_factory=list)
 
+    @field_validator("description", mode="before")
+    @classmethod
+    def _normalize_description(cls, value: Any) -> list[str]:
+        return _coerce_string_list(value)
+
 
 class AdditionalInfo(BaseModel):
     """Additional information section."""
@@ -71,6 +184,17 @@ class AdditionalInfo(BaseModel):
     languages: list[str] = Field(default_factory=list)
     certificationsTraining: list[str] = Field(default_factory=list)
     awards: list[str] = Field(default_factory=list)
+
+    @field_validator(
+        "technicalSkills",
+        "languages",
+        "certificationsTraining",
+        "awards",
+        mode="before",
+    )
+    @classmethod
+    def _normalize_string_fields(cls, value: Any) -> list[str]:
+        return _coerce_string_list(value)
 
 
 # Section Metadata Models for dynamic section management
@@ -96,6 +220,11 @@ class CustomSectionItem(BaseModel):
     years: str = ""
     description: list[str] = Field(default_factory=list)
 
+    @field_validator("description", mode="before")
+    @classmethod
+    def _normalize_description(cls, value: Any) -> list[str]:
+        return _coerce_string_list(value)
+
 
 class CustomSection(BaseModel):
     """Custom section data container."""
@@ -104,6 +233,18 @@ class CustomSection(BaseModel):
     items: list[CustomSectionItem] | None = None  # For ITEM_LIST
     strings: list[str] | None = None  # For STRING_LIST
     text: str | None = None  # For TEXT
+
+    @field_validator("strings", mode="before")
+    @classmethod
+    def _normalize_strings(cls, value: Any) -> list[str] | None:
+        if value is None:
+            return None
+        return _coerce_string_list(value)
+
+    @field_validator("text", mode="before")
+    @classmethod
+    def _normalize_text(cls, value: Any) -> str | None:
+        return _coerce_optional_text(value)
 
 
 # Default section metadata for backward compatibility
@@ -194,6 +335,11 @@ class ResumeData(BaseModel):
     # NEW: Section metadata and custom sections
     sectionMeta: list[SectionMeta] = Field(default_factory=list)
     customSections: dict[str, CustomSection] = Field(default_factory=dict)
+
+    @field_validator("summary", mode="before")
+    @classmethod
+    def _normalize_summary(cls, value: Any) -> str:
+        return _coerce_text(value)
 
 
 # API Response Models
