@@ -26,7 +26,7 @@ services:
       # LLM Configuration - configure via Settings UI or set env vars for explicit overrides
       # Supported providers: openai, anthropic, openrouter, gemini, deepseek, ollama
       # Defaults are defined in apps/backend/app/config.py
-      - LLM_PROVIDER=${LLM_PROVIDER:-}
+      - LLM_PROVIDER=${LLM_PROVIDER:-openai}
       - LLM_MODEL=${LLM_MODEL:-}
       - LLM_API_KEY=${LLM_API_KEY:-}
       # For Ollama running on host machine, use host.docker.internal:
