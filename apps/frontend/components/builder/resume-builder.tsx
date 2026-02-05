@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, Suspense, useCallback, useMemo } from 'react';
+import Image from 'next/image';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { type ResumeData } from '@/components/dashboard/resume-component';
 import { ResumeForm } from './resume-form';
@@ -919,7 +920,13 @@ const ResumeBuilderContent = () => {
         {/* Footer */}
         <div className="p-4 bg-[#F0F0E8] flex justify-between items-center font-mono text-xs text-blue-700 border-t border-black no-print">
           <span className="uppercase font-bold flex items-center gap-2">
-            <img src="/logo.svg" alt="Resume Matcher" className="w-5 h-5" />
+            <Image
+              src="/logo.svg"
+              alt="Resume Matcher"
+              width={20}
+              height={20}
+              className="w-5 h-5"
+            />
             {t('builder.footer.moduleLabel')}
           </span>
           <div className="flex items-center gap-4">
