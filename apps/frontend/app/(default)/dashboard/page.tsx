@@ -132,7 +132,6 @@ export default function DashboardPage() {
   }, [loadTailoredResumes, checkResumeStatus]);
 
   const handleUploadComplete = (resumeId: string) => {
-    setIsUploadDialogOpen(false);
     localStorage.setItem('master_resume_id', resumeId);
     setMasterResumeId(resumeId);
     // Check status after upload completes
@@ -150,6 +149,11 @@ export default function DashboardPage() {
       const result = await retryProcessing(masterResumeId);
       if (result.processing_status === 'ready') {
         setProcessingStatus('ready');
+      } else if (
+        result.processing_status === 'processing' ||
+        result.processing_status === 'pending'
+      ) {
+        setProcessingStatus(result.processing_status);
       } else {
         setProcessingStatus('failed');
       }
@@ -161,8 +165,12 @@ export default function DashboardPage() {
     }
   };
 
-  const handleDeleteAndReupload = async (e: React.MouseEvent) => {
+  const handleDeleteAndReupload = (e: React.MouseEvent) => {
     e.stopPropagation();
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDeleteAndReupload = async () => {
     if (!masterResumeId) return;
     try {
       await deleteResume(masterResumeId);
@@ -172,7 +180,7 @@ export default function DashboardPage() {
       setMasterResumeId(null);
       setProcessingStatus('loading');
       setIsUploadDialogOpen(true);
-      loadTailoredResumes();
+      await loadTailoredResumes();
     } catch (err) {
       console.error('Failed to delete resume:', err);
     }
@@ -203,22 +211,6 @@ export default function DashboardPage() {
       default:
         return { text: t('dashboard.status.pending'), icon: null, color: 'text-gray-500' };
     }
-  };
-
-  const confirmDeleteMaster = async () => {
-    if (masterResumeId) {
-      try {
-        await deleteResume(masterResumeId);
-        decrementResumes();
-        setHasMasterResume(false);
-      } catch (err) {
-        console.error('Failed to delete resume from server:', err);
-      }
-    }
-    localStorage.removeItem('master_resume_id');
-    setMasterResumeId(null);
-    setProcessingStatus('loading');
-    loadTailoredResumes();
   };
 
   const totalCards = 1 + tailoredResumes.length + 1;
@@ -454,9 +446,9 @@ export default function DashboardPage() {
           onOpenChange={setShowDeleteDialog}
           title={t('confirmations.deleteMasterResumeTitle')}
           description={t('confirmations.deleteMasterResumeDescription')}
-          confirmLabel={t('confirmations.deleteResumeConfirmLabel')}
+          confirmLabel={t('dashboard.deleteAndReupload')}
           cancelLabel={t('confirmations.keepResumeCancelLabel')}
-          onConfirm={confirmDeleteMaster}
+          onConfirm={confirmDeleteAndReupload}
           variant="danger"
         />
       </SwissGrid>
