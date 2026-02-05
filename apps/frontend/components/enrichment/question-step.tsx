@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ChevronLeft, ChevronRight, Briefcase, FolderKanban } from 'lucide-react';
@@ -48,6 +48,19 @@ export function QuestionStep({
     textareaRef.current?.focus();
   }, [question.question_id]);
 
+  const handleChange = (value: string) => {
+    setLocalAnswer(value);
+    onAnswer(value);
+  };
+
+  const handleContinue = useCallback(() => {
+    if (isLast) {
+      onFinish();
+    } else {
+      onNext();
+    }
+  }, [isLast, onFinish, onNext]);
+
   // Handle keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -60,20 +73,7 @@ export function QuestionStep({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isLast, localAnswer]);
-
-  const handleChange = (value: string) => {
-    setLocalAnswer(value);
-    onAnswer(value);
-  };
-
-  const handleContinue = () => {
-    if (isLast) {
-      onFinish();
-    } else {
-      onNext();
-    }
-  };
+  }, [handleContinue]);
 
   return (
     <div className="flex flex-col h-full min-h-[500px]">
