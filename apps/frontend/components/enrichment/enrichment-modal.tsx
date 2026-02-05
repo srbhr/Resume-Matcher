@@ -57,10 +57,11 @@ export function EnrichmentModal({ resumeId, isOpen, onClose, onComplete }: Enric
       document.body.style.overflow = 'auto';
     }
 
+    const dialog = dialogRef.current;
     return () => {
       document.body.style.overflow = 'auto';
-      if (dialogRef.current?.open) {
-        dialogRef.current.close();
+      if (dialog?.open) {
+        dialog.close();
       }
     };
   }, [isOpen, state.step, startAnalysis]);
