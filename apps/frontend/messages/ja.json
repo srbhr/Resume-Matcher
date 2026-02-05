@@ -68,6 +68,12 @@
     "initializeMasterResume": "マスター履歴書を初期化",
     "initializeSequence": "初期化シーケンス",
     "refreshStatus": "ステータスを更新",
+    "retryProcessing": "再処理",
+    "retryingProcessing": "再処理中...",
+    "deleteAndReupload": "削除して再アップロード",
+    "processingFailedHint": "AI 解析に失敗しました。再処理するか、削除して別ファイルをアップロードしてください。",
+    "retrySuccess": "処理に成功しました！",
+    "retryFailed": "再処理に失敗しました。別のファイルをアップロードしてください。",
     "createResume": "履歴書を作成",
     "edited": "編集 {date}",
     "statusLine": "ステータス: {status}",
@@ -89,7 +95,9 @@
       "parsingFailed": "履歴書はアップロードされましたが、AI解析に失敗しました。手動でカスタマイズすることは可能です。",
       "failed": "アップロードに失敗しました。",
       "dropzoneTitle": "クリックまたはファイルをドラッグ",
-      "dropzoneSubtitle": "PDF、DOC、DOCX（最大 4MB）"
+      "dropzoneSubtitle": "PDF、DOC、DOCX（最大 4MB）",
+      "tryDifferentFile": "別のファイルを試す",
+      "parsingFailedKeepOpen": "AI 解析に失敗しました。別のファイルを試すか、このダイアログを閉じてください。"
     }
   },
   "builder": {
@@ -694,6 +702,8 @@
     "resumeNotFound": "履歴書が見つかりません",
     "loading": "履歴書を読み込み中...",
     "useTailorFeature": "カスタマイズ機能を使う",
+    "retryProcessing": "再処理",
+    "deleteAndStartOver": "削除してやり直す",
     "returnToDashboard": "ダッシュボードに戻る",
     "enhanceResume": "履歴書を強化",
     "downloadResume": "履歴書をダウンロード",

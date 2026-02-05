@@ -68,6 +68,12 @@
     "initializeMasterResume": "初始化主简历",
     "initializeSequence": "初始化流程",
     "refreshStatus": "刷新状态",
+    "retryProcessing": "重试处理",
+    "retryingProcessing": "正在重试...",
+    "deleteAndReupload": "删除并重新上传",
+    "processingFailedHint": "AI 解析失败。请重试，或删除后上传其他文件。",
+    "retrySuccess": "处理成功！",
+    "retryFailed": "重试失败。请尝试上传其他文件。",
     "createResume": "创建简历",
     "edited": "编辑于 {date}",
     "statusLine": "状态：{status}",
@@ -89,7 +95,9 @@
       "parsingFailed": "简历已上传但AI解析失败。您仍可手动定制。",
       "failed": "上传失败。",
       "dropzoneTitle": "点击或拖拽文件",
-      "dropzoneSubtitle": "PDF、DOC、DOCX（最大 4MB）"
+      "dropzoneSubtitle": "PDF、DOC、DOCX（最大 4MB）",
+      "tryDifferentFile": "尝试其他文件",
+      "parsingFailedKeepOpen": "AI 解析失败。请尝试其他文件，或关闭此对话框。"
     }
   },
   "builder": {
@@ -694,6 +702,8 @@
     "resumeNotFound": "未找到简历",
     "loading": "正在加载简历...",
     "useTailorFeature": "使用定制功能",
+    "retryProcessing": "重试处理",
+    "deleteAndStartOver": "删除并重新开始",
     "returnToDashboard": "返回仪表板",
     "enhanceResume": "增强简历",
     "downloadResume": "下载简历",

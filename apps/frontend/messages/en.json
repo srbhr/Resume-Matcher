@@ -68,6 +68,12 @@
     "initializeMasterResume": "Initialize Master Resume",
     "initializeSequence": "Initialize Sequence",
     "refreshStatus": "Refresh status",
+    "retryProcessing": "Retry Processing",
+    "retryingProcessing": "Retrying...",
+    "deleteAndReupload": "Delete & Re-upload",
+    "processingFailedHint": "AI parsing failed. Retry or delete and upload a different file.",
+    "retrySuccess": "Processing succeeded!",
+    "retryFailed": "Retry failed. Try uploading a different file.",
     "createResume": "Create Resume",
     "edited": "Edited {date}",
     "statusLine": "STATUS: {status}",
@@ -89,7 +95,9 @@
       "parsingFailed": "Resume uploaded but AI parsing failed. You can still tailor it manually.",
       "failed": "Upload failed.",
       "dropzoneTitle": "Click or Drag File",
-      "dropzoneSubtitle": "PDF, DOC, DOCX (Max 4MB)"
+      "dropzoneSubtitle": "PDF, DOC, DOCX (Max 4MB)",
+      "tryDifferentFile": "Try Different File",
+      "parsingFailedKeepOpen": "AI parsing failed. Try a different file or close this dialog."
     }
   },
   "builder": {
@@ -694,6 +702,8 @@
     "resumeNotFound": "Resume not found",
     "loading": "Loading Resume...",
     "useTailorFeature": "Use Tailor Feature",
+    "retryProcessing": "Retry Processing",
+    "deleteAndStartOver": "Delete & Start Over",
     "returnToDashboard": "Return to Dashboard",
     "enhanceResume": "Enhance Resume",
     "downloadResume": "Download Resume",
@@ -702,7 +712,7 @@
     "deletedDescriptionRegular": "The resume has been permanently deleted from the system.",
     "deleteFailedTitle": "Delete Failed",
     "errors": {
-      "processingFailed": "Resume processing failed. The AI service could not extract structured data from your resume. You can still use the Tailor feature or try uploading again.",
+      "processingFailed": "Resume processing failed. The AI service could not extract structured data from your resume. You can retry processing or delete and re-upload.",
       "stillProcessing": "Resume is still being processed. Please wait a moment and refresh the page.",
       "notProcessedYet": "Resume has not been processed yet. Please use the Tailor feature to generate a structured resume.",
       "noDataAvailable": "No resume data available.",

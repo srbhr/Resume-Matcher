@@ -68,6 +68,12 @@
     "initializeMasterResume": "Inicializar currículum maestro",
     "initializeSequence": "Secuencia de inicialización",
     "refreshStatus": "Actualizar estado",
+    "retryProcessing": "Reintentar procesamiento",
+    "retryingProcessing": "Reintentando...",
+    "deleteAndReupload": "Eliminar y volver a subir",
+    "processingFailedHint": "El análisis de IA falló. Reintenta o elimina y sube otro archivo.",
+    "retrySuccess": "¡Procesamiento completado!",
+    "retryFailed": "El reintento falló. Prueba a subir otro archivo.",
     "createResume": "Crear currículum",
     "edited": "Editado {date}",
     "statusLine": "ESTADO: {status}",
@@ -89,7 +95,9 @@
       "parsingFailed": "Currículum subido pero el análisis de IA falló. Aún puedes personalizarlo manualmente.",
       "failed": "La subida falló.",
       "dropzoneTitle": "Haz clic o arrastra un archivo",
-      "dropzoneSubtitle": "PDF, DOC, DOCX (Máx. 4MB)"
+      "dropzoneSubtitle": "PDF, DOC, DOCX (Máx. 4MB)",
+      "tryDifferentFile": "Probar otro archivo",
+      "parsingFailedKeepOpen": "El análisis de IA falló. Prueba otro archivo o cierra este diálogo."
     }
   },
   "builder": {
@@ -694,6 +702,8 @@
     "resumeNotFound": "Currículum no encontrado",
     "loading": "Cargando el currículum...",
     "useTailorFeature": "Usar función de personalización",
+    "retryProcessing": "Reintentar procesamiento",
+    "deleteAndStartOver": "Eliminar y empezar de nuevo",
     "returnToDashboard": "Volver al Panel",
     "enhanceResume": "Mejorar currículum",
     "downloadResume": "Descargar currículum",
