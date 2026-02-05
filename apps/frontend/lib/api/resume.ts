@@ -340,6 +340,16 @@ export async function generateOutreachMessage(resumeId: string): Promise<string>
   return data.content;
 }
 
+/** Retries AI processing for a failed resume */
+export async function retryProcessing(resumeId: string): Promise<ResumeUploadResponse> {
+  const res = await apiPost(`/resumes/${encodeURIComponent(resumeId)}/retry-processing`, {});
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Failed to retry processing (status ${res.status}): ${text}`);
+  }
+  return res.json();
+}
+
 /** Fetches the job description used to tailor a resume */
 export async function fetchJobDescription(
   resumeId: string
