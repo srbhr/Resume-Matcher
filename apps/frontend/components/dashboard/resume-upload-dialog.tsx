@@ -25,6 +25,8 @@ import { useTranslations } from '@/lib/i18n';
 interface ResumeUploadDialogProps {
   trigger?: React.ReactNode;
   onUploadComplete?: (resumeId: string) => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 const ACCEPTED_FILE_TYPES = [
@@ -34,13 +36,26 @@ const ACCEPTED_FILE_TYPES = [
 ];
 const MAX_FILE_SIZE = 4 * 1024 * 1024; // 4MB
 
-export function ResumeUploadDialog({ trigger, onUploadComplete }: ResumeUploadDialogProps) {
+export function ResumeUploadDialog({
+  trigger,
+  onUploadComplete,
+  open: controlledOpen,
+  onOpenChange,
+}: ResumeUploadDialogProps) {
   const { t } = useTranslations();
-  const [isOpen, setIsOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
   const [uploadFeedback, setUploadFeedback] = useState<{
     type: 'success' | 'error';
     message: string;
   } | null>(null);
+  const isControlled = controlledOpen !== undefined;
+  const isOpen = isControlled ? controlledOpen : internalOpen;
+  const setIsOpen = (nextOpen: boolean) => {
+    if (!isControlled) {
+      setInternalOpen(nextOpen);
+    }
+    onOpenChange?.(nextOpen);
+  };
 
   const UPLOAD_URL = getUploadUrl();
 
@@ -72,25 +87,26 @@ export function ResumeUploadDialog({ trigger, onUploadComplete }: ResumeUploadDi
         setUploadFeedback({
           type: processingFailed ? 'error' : 'success',
           message: processingFailed
-            ? t('dashboard.uploadDialog.parsingFailed')
+            ? t('dashboard.uploadDialog.parsingFailedKeepOpen')
             : data.is_master
               ? t('dashboard.uploadDialog.successMaster')
               : t('dashboard.uploadDialog.success'),
         });
+        if (processingFailed) {
+          // Keep dialog open on failure — don't store the failed ID
+          return;
+        }
         // Defer parent state update to avoid setState during render
         const resumeId = data.resume_id;
         setTimeout(() => {
           onUploadComplete?.(resumeId);
         }, 0);
         // Close dialog after a short delay to show success state
-        setTimeout(
-          () => {
-            setIsOpen(false);
-            setUploadFeedback(null);
-            removeFile(uploadedFile.id); // Clear file for next time
-          },
-          processingFailed ? 2500 : 1500
-        );
+        setTimeout(() => {
+          setIsOpen(false);
+          setUploadFeedback(null);
+          removeFile(uploadedFile.id); // Clear file for next time
+        }, 1500);
       } else {
         setUploadFeedback({
           type: 'error',
@@ -215,6 +231,18 @@ export function ResumeUploadDialog({ trigger, onUploadComplete }: ResumeUploadDi
         </div>
 
         <div className="p-4 border-t border-black bg-white flex justify-end gap-2">
+          {uploadFeedback?.type === 'error' && files.length > 0 && (
+            <Button
+              variant="outline"
+              className="rounded-none border-black hover:bg-gray-100"
+              onClick={() => {
+                if (files[0]) removeFile(files[0].id);
+                setUploadFeedback(null);
+              }}
+            >
+              {t('dashboard.uploadDialog.tryDifferentFile')}
+            </Button>
+          )}
           <DialogClose asChild>
             <Button variant="outline" className="rounded-none border-black hover:bg-gray-100">
               {t('common.cancel')}
