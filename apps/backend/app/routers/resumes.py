@@ -1104,6 +1104,58 @@ async def delete_resume(resume_id: str) -> dict:
     return {"message": "Resume deleted successfully"}
 
 
+@router.post("/{resume_id}/retry-processing", response_model=ResumeUploadResponse)
+async def retry_processing(resume_id: str) -> ResumeUploadResponse:
+    """Retry AI processing for a failed resume.
+
+    Re-runs parse_resume_to_json() on the stored markdown content.
+    Only works for resumes with processing_status == "failed".
+    """
+    resume = db.get_resume(resume_id)
+    if not resume:
+        raise HTTPException(status_code=404, detail="Resume not found")
+
+    if resume.get("processing_status") != "failed":
+        raise HTTPException(
+            status_code=400,
+            detail="Only resumes with 'failed' processing status can be retried.",
+        )
+
+    markdown_content = resume.get("content", "")
+    if not markdown_content:
+        raise HTTPException(
+            status_code=400,
+            detail="Resume has no stored content to re-process.",
+        )
+
+    try:
+        processed_data = await parse_resume_to_json(markdown_content)
+        db.update_resume(
+            resume_id,
+            {
+                "processed_data": processed_data,
+                "processing_status": "ready",
+            },
+        )
+        return ResumeUploadResponse(
+            message="Resume processing succeeded on retry",
+            request_id=str(uuid4()),
+            resume_id=resume_id,
+            processing_status="ready",
+            is_master=resume.get("is_master", False),
+        )
+    except Exception as e:
+        logger.warning(f"Retry processing failed for resume {resume_id}: {e}")
+        db.update_resume(resume_id, {"processing_status": "failed"})
+        return ResumeUploadResponse(
+            message="Retry processing failed",
+            request_id=str(uuid4()),
+            resume_id=resume_id,
+            processing_status="failed",
+            is_master=resume.get("is_master", False),
+        )
+
+
 @router.patch("/{resume_id}/cover-letter")
 async def update_cover_letter(
     resume_id: str, request: UpdateCoverLetterRequest
