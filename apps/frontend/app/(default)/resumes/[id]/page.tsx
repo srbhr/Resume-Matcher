@@ -5,7 +5,13 @@ import { useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import Resume, { ResumeData } from '@/components/dashboard/resume-component';
-import { fetchResume, downloadResumePdf, getResumePdfUrl, deleteResume } from '@/lib/api/resume';
+import {
+  fetchResume,
+  downloadResumePdf,
+  getResumePdfUrl,
+  deleteResume,
+  retryProcessing,
+} from '@/lib/api/resume';
 import { useStatusCache } from '@/lib/context/status-cache';
 import { ArrowLeft, Edit, Download, Loader2, AlertCircle, Sparkles } from 'lucide-react';
 import { EnrichmentModal } from '@/components/enrichment/enrichment-modal';
@@ -31,6 +37,7 @@ export default function ResumeViewerPage() {
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [showEnrichmentModal, setShowEnrichmentModal] = useState(false);
+  const [isRetrying, setIsRetrying] = useState(false);
 
   const resumeId = params?.id as string;
 
@@ -82,6 +89,25 @@ export default function ResumeViewerPage() {
     loadResume();
     setIsMasterResume(localStorage.getItem('master_resume_id') === resumeId);
   }, [resumeId, t]);
+
+  const handleRetryProcessing = async () => {
+    if (!resumeId) return;
+    setIsRetrying(true);
+    try {
+      const result = await retryProcessing(resumeId);
+      if (result.processing_status === 'ready') {
+        // Reload the page to show the processed resume
+        window.location.reload();
+      } else {
+        setError(t('resumeViewer.errors.processingFailed'));
+      }
+    } catch (err) {
+      console.error('Retry processing failed:', err);
+      setError(t('resumeViewer.errors.processingFailed'));
+    } finally {
+      setIsRetrying(false);
+    }
+  };
 
   const handleEdit = () => {
     router.push(`/builder?id=${resumeId}`);
@@ -190,9 +216,21 @@ export default function ResumeViewerPage() {
           </p>
           <div className="flex flex-col gap-2">
             {isFailed && (
-              <Button onClick={() => router.push('/tailor')}>
-                {t('resumeViewer.useTailorFeature')}
-              </Button>
+              <>
+                <Button onClick={handleRetryProcessing} disabled={isRetrying}>
+                  {isRetrying ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      {t('common.processing')}
+                    </>
+                  ) : (
+                    t('resumeViewer.retryProcessing')
+                  )}
+                </Button>
+                <Button variant="destructive" onClick={() => setShowDeleteDialog(true)}>
+                  {t('resumeViewer.deleteAndStartOver')}
+                </Button>
+              </>
             )}
             <Button variant="outline" onClick={() => router.push('/dashboard')}>
               {t('resumeViewer.returnToDashboard')}
