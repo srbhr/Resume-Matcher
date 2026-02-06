@@ -8,7 +8,7 @@ interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 
 const Card = React.forwardRef<HTMLDivElement, CardProps>(
   ({ className, variant = 'default', noPadding = false, ...props }, ref) => {
-    const baseStyles = 'rounded-none flex flex-col relative';
+    const baseStyles = 'rounded-none flex flex-col relative overflow-hidden';
 
     const variants = {
       default: 'bg-canvas',

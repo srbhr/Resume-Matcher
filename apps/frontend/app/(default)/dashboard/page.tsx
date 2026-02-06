@@ -2,7 +2,7 @@
 
 import { SwissGrid } from '@/components/home/swiss-grid';
 import { ResumeUploadDialog } from '@/components/dashboard/resume-upload-dialog';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
@@ -23,6 +23,7 @@ import {
   fetchResumeList,
   deleteResume,
   retryProcessing,
+  fetchJobDescription,
   type ResumeListItem,
 } from '@/lib/api/resume';
 import { useStatusCache } from '@/lib/context/status-cache';
@@ -47,6 +48,11 @@ export default function DashboardPage() {
     decrementResumes,
     setHasMasterResume,
   } = useStatusCache();
+
+  // Request id guard for concurrent loadTailoredResumes invocations
+  const loadRequestIdRef = useRef(0);
+  // Lightweight in-memory cache for job snippets to avoid N+1 refetches
+  const jobSnippetCacheRef = useRef<Record<string, string>>({});
 
   // Check if LLM is configured (API key is set)
   const isLlmConfigured = !statusLoading && systemStatus?.llm_configured;
@@ -113,6 +119,44 @@ export default function DashboardPage() {
 
       const filtered = data.filter((r) => r.resume_id !== resolvedMasterId);
       setTailoredResumes(filtered);
+
+      // Only fetch job descriptions for resumes that are actually tailored
+      // (identified by having a non-null parent_id). This avoids N+1 calls
+      // for untailored resumes.
+      const tailoredWithParent = filtered.filter((r) => r.parent_id);
+
+      // Guard against concurrent invocations overwriting each other
+      const requestId = ++loadRequestIdRef.current;
+
+      // Fetch job description snippets for tailored resumes in parallel and attach to state
+      // Use a small in-memory cache to avoid re-fetching the same snippet repeatedly.
+      const jobSnippets: Record<string, string> = {};
+      await Promise.all(
+        tailoredWithParent.map(async (r) => {
+          // Use cached snippet when available
+          if (jobSnippetCacheRef.current[r.resume_id]) {
+            jobSnippets[r.resume_id] = jobSnippetCacheRef.current[r.resume_id];
+            return;
+          }
+          try {
+            const jd = await fetchJobDescription(r.resume_id);
+            const snippet = (jd?.content || '').slice(0, 80);
+            jobSnippetCacheRef.current[r.resume_id] = snippet;
+            jobSnippets[r.resume_id] = snippet;
+          } catch (_err) {
+            // ignore missing job descriptions and cache empty result
+            jobSnippetCacheRef.current[r.resume_id] = '';
+            jobSnippets[r.resume_id] = '';
+          }
+        })
+      );
+
+      // Only apply results if this invocation is the latest (prevents stale overwrite)
+      if (requestId === loadRequestIdRef.current) {
+        setTailoredResumes((prev) =>
+          prev.map((r) => ({ ...r, jobSnippet: jobSnippets[r.resume_id] || '' }))
+        );
+      }
     } catch (err) {
       console.error('Failed to load tailored resumes:', err);
     }
@@ -395,12 +439,21 @@ export default function DashboardPage() {
                 </span>
               </div>
               <CardTitle className="text-lg">
-                {resume.filename || t('dashboard.tailoredResume')}
+                {/* Job description snippet (if available) */}
+                <span className="block text-base font-bold leading-tight mb-1 truncate w-full whitespace-nowrap">
+                  {resume.jobSnippet
+                    ? resume.jobSnippet
+                    : resume.filename || t('dashboard.tailoredResume')}
+                </span>
+                {/* Resume filename snippet */}
+                <span className="block text-sm font-normal text-gray-700 truncate w-full whitespace-nowrap">
+                  {(resume.filename || t('dashboard.tailoredResume')).slice(0, 40)}
+                </span>
               </CardTitle>
               <CardDescription className="mt-auto pt-4 uppercase">
                 {t('dashboard.edited', {
                   date: formatDate(resume.updated_at || resume.created_at),
-                })}
+                })}{' '}
               </CardDescription>
             </div>
           </Card>
