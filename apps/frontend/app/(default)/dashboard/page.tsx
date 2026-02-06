@@ -23,6 +23,7 @@ import {
   fetchResumeList,
   deleteResume,
   retryProcessing,
+  fetchJobDescription,
   type ResumeListItem,
 } from '@/lib/api/resume';
 import { useStatusCache } from '@/lib/context/status-cache';
@@ -113,6 +114,26 @@ export default function DashboardPage() {
 
       const filtered = data.filter((r) => r.resume_id !== resolvedMasterId);
       setTailoredResumes(filtered);
+
+      // Fetch job description snippets for tailored resumes in parallel and attach to state
+      // We keep a lightweight map of resume_id -> job snippet to avoid re-fetching on render
+      const jobSnippets: Record<string, string> = {};
+      await Promise.allSettled(
+        filtered.map(async (r) => {
+          try {
+            const jd = await fetchJobDescription(r.resume_id);
+            // store first 80 chars as snippet
+            jobSnippets[r.resume_id] = (jd?.content || '').slice(0, 80);
+          } catch (err) {
+            // ignore missing job descriptions
+            jobSnippets[r.resume_id] = '';
+          }
+        })
+      );
+      // Attach snippets directly to each resume object for rendering convenience
+      setTailoredResumes((prev) =>
+        prev.map((r) => ({ ...r, jobSnippet: jobSnippets[r.resume_id] || '' }))
+      );
     } catch (err) {
       console.error('Failed to load tailored resumes:', err);
     }
@@ -395,12 +416,25 @@ export default function DashboardPage() {
                 </span>
               </div>
               <CardTitle className="text-lg">
-                {resume.filename || t('dashboard.tailoredResume')}
+                {/* Job description snippet (if available) */}
+                <div className="text-base font-bold leading-tight mb-1 truncate w-full whitespace-nowrap">
+                  {resume.jobSnippet
+                    ? resume.jobSnippet
+                    : resume.filename || t('dashboard.tailoredResume')}
+                </div>
+                {/* Resume filename snippet */}
+                <div className="text-sm font-normal text-gray-700 truncate w-full whitespace-nowrap">
+                  {(resume.filename || t('dashboard.tailoredResume')).slice(0, 40)}
+                </div>
               </CardTitle>
               <CardDescription className="mt-auto pt-4 uppercase">
                 {t('dashboard.edited', {
                   date: formatDate(resume.updated_at || resume.created_at),
-                })}
+                })}{' '}
+                {/* Show current time as requested */}
+                <span className="ml-2 text-xs text-gray-500">
+                  {new Date().toLocaleTimeString()}
+                </span>
               </CardDescription>
             </div>
           </Card>

@@ -102,6 +102,8 @@ export interface ResumeListItem {
   processing_status: 'pending' | 'processing' | 'ready' | 'failed';
   created_at: string;
   updated_at: string;
+  // Optional lightweight snippet of associated job description (populated client-side)
+  jobSnippet?: string;
 }
 
 async function postImprove(
