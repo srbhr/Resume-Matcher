@@ -18,7 +18,13 @@ import Plus from 'lucide-react/dist/esm/icons/plus';
 import Settings from 'lucide-react/dist/esm/icons/settings';
 import AlertTriangle from 'lucide-react/dist/esm/icons/alert-triangle';
 
-import { fetchResume, fetchResumeList, deleteResume, type ResumeListItem } from '@/lib/api/resume';
+import {
+  fetchResume,
+  fetchResumeList,
+  deleteResume,
+  retryProcessing,
+  type ResumeListItem,
+} from '@/lib/api/resume';
 import { useStatusCache } from '@/lib/context/status-cache';
 
 type ProcessingStatus = 'pending' | 'processing' | 'ready' | 'failed' | 'loading';
@@ -29,6 +35,8 @@ export default function DashboardPage() {
   const [processingStatus, setProcessingStatus] = useState<ProcessingStatus>('loading');
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [tailoredResumes, setTailoredResumes] = useState<ResumeListItem[]>([]);
+  const [isRetrying, setIsRetrying] = useState(false);
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const router = useRouter();
 
   // Status cache for optimistic counter updates and LLM status check
@@ -135,8 +143,46 @@ export default function DashboardPage() {
 
   const handleRetryProcessing = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (masterResumeId) {
-      checkResumeStatus(masterResumeId);
+    if (!masterResumeId) return;
+    setIsRetrying(true);
+    try {
+      const result = await retryProcessing(masterResumeId);
+      if (result.processing_status === 'ready') {
+        setProcessingStatus('ready');
+      } else if (
+        result.processing_status === 'processing' ||
+        result.processing_status === 'pending'
+      ) {
+        setProcessingStatus(result.processing_status);
+      } else {
+        setProcessingStatus('failed');
+      }
+    } catch (err) {
+      console.error('Retry processing failed:', err);
+      setProcessingStatus('failed');
+    } finally {
+      setIsRetrying(false);
+    }
+  };
+
+  const handleDeleteAndReupload = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDeleteAndReupload = async () => {
+    if (!masterResumeId) return;
+    try {
+      await deleteResume(masterResumeId);
+      decrementResumes();
+      setHasMasterResume(false);
+      localStorage.removeItem('master_resume_id');
+      setMasterResumeId(null);
+      setProcessingStatus('loading');
+      setIsUploadDialogOpen(true);
+      await loadTailoredResumes();
+    } catch (err) {
+      console.error('Failed to delete resume:', err);
     }
   };
 
@@ -165,22 +211,6 @@ export default function DashboardPage() {
       default:
         return { text: t('dashboard.status.pending'), icon: null, color: 'text-gray-500' };
     }
-  };
-
-  const confirmDeleteMaster = async () => {
-    if (masterResumeId) {
-      try {
-        await deleteResume(masterResumeId);
-        decrementResumes();
-        setHasMasterResume(false);
-      } catch (err) {
-        console.error('Failed to delete resume from server:', err);
-      }
-    }
-    localStorage.removeItem('master_resume_id');
-    setMasterResumeId(null);
-    setProcessingStatus('loading');
-    loadTailoredResumes();
   };
 
   const totalCards = 1 + tailoredResumes.length + 1;
@@ -248,6 +278,8 @@ export default function DashboardPage() {
             </Link>
           ) : (
             <ResumeUploadDialog
+              open={isUploadDialogOpen}
+              onOpenChange={setIsUploadDialogOpen}
               onUploadComplete={handleUploadComplete}
               trigger={
                 <Card
@@ -286,15 +318,22 @@ export default function DashboardPage() {
                 </div>
                 <div className="flex gap-1">
                   {processingStatus === 'failed' && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 hover:bg-blue-100 hover:text-blue-700 z-10 rounded-none relative"
-                      onClick={handleRetryProcessing}
-                      title={t('dashboard.refreshStatus')}
-                    >
-                      <RefreshCw className="w-4 h-4" />
-                    </Button>
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 hover:bg-blue-100 hover:text-blue-700 z-10 rounded-none relative"
+                        onClick={handleRetryProcessing}
+                        disabled={isRetrying}
+                        title={t('dashboard.retryProcessing')}
+                      >
+                        {isRetrying ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <RefreshCw className="w-4 h-4" />
+                        )}
+                      </Button>
+                    </>
                   )}
                 </div>
               </div>
@@ -304,10 +343,35 @@ export default function DashboardPage() {
               </CardTitle>
 
               <div
-                className={`text-xs font-mono mt-auto pt-4 flex items-center gap-1 uppercase ${getStatusDisplay().color}`}
+                className={`text-xs font-mono mt-auto pt-4 flex flex-col gap-2 uppercase ${getStatusDisplay().color}`}
               >
-                {getStatusDisplay().icon}
-                {t('dashboard.statusLine', { status: getStatusDisplay().text })}
+                <div className="flex items-center gap-1">
+                  {getStatusDisplay().icon}
+                  {t('dashboard.statusLine', { status: getStatusDisplay().text })}
+                </div>
+                {processingStatus === 'failed' && (
+                  <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs h-7 rounded-none border-black"
+                      onClick={handleRetryProcessing}
+                      disabled={isRetrying}
+                    >
+                      {isRetrying
+                        ? t('dashboard.retryingProcessing')
+                        : t('dashboard.retryProcessing')}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs h-7 rounded-none border-red-600 text-red-600 hover:bg-red-50"
+                      onClick={handleDeleteAndReupload}
+                    >
+                      {t('dashboard.deleteAndReupload')}
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
           </Card>
@@ -382,9 +446,9 @@ export default function DashboardPage() {
           onOpenChange={setShowDeleteDialog}
           title={t('confirmations.deleteMasterResumeTitle')}
           description={t('confirmations.deleteMasterResumeDescription')}
-          confirmLabel={t('confirmations.deleteResumeConfirmLabel')}
+          confirmLabel={t('dashboard.deleteAndReupload')}
           cancelLabel={t('confirmations.keepResumeCancelLabel')}
-          onConfirm={confirmDeleteMaster}
+          onConfirm={confirmDeleteAndReupload}
           variant="danger"
         />
       </SwissGrid>

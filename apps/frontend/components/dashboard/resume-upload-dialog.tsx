@@ -21,10 +21,13 @@ import {
 import { useFileUpload, formatBytes } from '@/hooks/use-file-upload';
 import { getUploadUrl } from '@/lib/api/client';
 import { useTranslations } from '@/lib/i18n';
+import { retryProcessing } from '@/lib/api/resume';
 
 interface ResumeUploadDialogProps {
   trigger?: React.ReactNode;
   onUploadComplete?: (resumeId: string) => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 const ACCEPTED_FILE_TYPES = [
@@ -34,15 +37,58 @@ const ACCEPTED_FILE_TYPES = [
 ];
 const MAX_FILE_SIZE = 4 * 1024 * 1024; // 4MB
 
-export function ResumeUploadDialog({ trigger, onUploadComplete }: ResumeUploadDialogProps) {
+export function ResumeUploadDialog({
+  trigger,
+  onUploadComplete,
+  open: controlledOpen,
+  onOpenChange,
+}: ResumeUploadDialogProps) {
   const { t } = useTranslations();
-  const [isOpen, setIsOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
   const [uploadFeedback, setUploadFeedback] = useState<{
     type: 'success' | 'error';
     message: string;
   } | null>(null);
+  const [failedResumeId, setFailedResumeId] = useState<string | null>(null);
+  const [isRetryingProcessing, setIsRetryingProcessing] = useState(false);
+  const isControlled = controlledOpen !== undefined;
+  const isOpen = isControlled ? controlledOpen : internalOpen;
+  const setIsOpen = (nextOpen: boolean) => {
+    if (!isControlled) {
+      setInternalOpen(nextOpen);
+    }
+    onOpenChange?.(nextOpen);
+  };
 
   const UPLOAD_URL = getUploadUrl();
+
+  const handleUploadSuccess = ({
+    resumeId,
+    fileId,
+    message,
+  }: {
+    resumeId: string;
+    fileId?: string;
+    message: string;
+  }) => {
+    setUploadFeedback({ type: 'success', message });
+    setFailedResumeId(null);
+
+    // Defer parent state update to avoid setState during render
+    setTimeout(() => {
+      onUploadComplete?.(resumeId);
+    }, 0);
+
+    // Close dialog after a short delay to show success state
+    setTimeout(() => {
+      setIsOpen(false);
+      setUploadFeedback(null);
+      setFailedResumeId(null);
+      if (fileId) {
+        removeFile(fileId); // Clear file for next time
+      }
+    }, 1500);
+  };
 
   const [
     { files, isDragging, errors, isUploadingGlobal },
@@ -67,31 +113,26 @@ export function ResumeUploadDialog({ trigger, onUploadComplete }: ResumeUploadDi
         is_master?: boolean;
       };
       if (data.resume_id) {
-        // Show different feedback based on processing status
         const processingFailed = data.processing_status === 'failed';
-        setUploadFeedback({
-          type: processingFailed ? 'error' : 'success',
-          message: processingFailed
-            ? t('dashboard.uploadDialog.parsingFailed')
-            : data.is_master
-              ? t('dashboard.uploadDialog.successMaster')
-              : t('dashboard.uploadDialog.success'),
+        const successMessage = data.is_master
+          ? t('dashboard.uploadDialog.successMaster')
+          : t('dashboard.uploadDialog.success');
+        if (processingFailed) {
+          // Keep dialog open on failure so users can retry processing.
+          setUploadFeedback({
+            type: 'error',
+            message: t('dashboard.uploadDialog.parsingFailedKeepOpen'),
+          });
+          setFailedResumeId(data.resume_id);
+          return;
+        }
+        handleUploadSuccess({
+          resumeId: data.resume_id,
+          fileId: uploadedFile.id,
+          message: successMessage,
         });
-        // Defer parent state update to avoid setState during render
-        const resumeId = data.resume_id;
-        setTimeout(() => {
-          onUploadComplete?.(resumeId);
-        }, 0);
-        // Close dialog after a short delay to show success state
-        setTimeout(
-          () => {
-            setIsOpen(false);
-            setUploadFeedback(null);
-            removeFile(uploadedFile.id); // Clear file for next time
-          },
-          processingFailed ? 2500 : 1500
-        );
       } else {
+        setFailedResumeId(null);
         setUploadFeedback({
           type: 'error',
           message: t('dashboard.uploadDialog.successMissingId'),
@@ -99,18 +140,51 @@ export function ResumeUploadDialog({ trigger, onUploadComplete }: ResumeUploadDi
       }
     },
     onUploadError: (file, errorMsg) => {
+      setFailedResumeId(null);
       setUploadFeedback({
         type: 'error',
         message: errorMsg || t('dashboard.uploadDialog.failed'),
       });
     },
     onFilesChange: (currentFiles) => {
-      if (currentFiles.length === 0) setUploadFeedback(null);
+      if (currentFiles.length === 0) {
+        setUploadFeedback(null);
+        setFailedResumeId(null);
+      }
     },
   });
 
   const currentFile = files[0];
   const displayErrors = uploadFeedback?.type === 'error' ? [uploadFeedback.message] : errors;
+  const preventDropzoneInteraction = (e: React.DragEvent<HTMLElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleRetryProcessing = async () => {
+    if (!failedResumeId) return;
+    const resumeIdToRetry = failedResumeId;
+    const fileIdToRemove = currentFile?.id;
+    setIsRetryingProcessing(true);
+    try {
+      const result = await retryProcessing(resumeIdToRetry);
+      if (result.processing_status !== 'ready') {
+        setUploadFeedback({ type: 'error', message: t('dashboard.retryFailed') });
+        return;
+      }
+
+      handleUploadSuccess({
+        resumeId: resumeIdToRetry,
+        fileId: fileIdToRemove,
+        message: t('dashboard.retrySuccess'),
+      });
+    } catch (err) {
+      console.error('Retry processing failed:', err);
+      setUploadFeedback({ type: 'error', message: t('dashboard.retryFailed') });
+    } finally {
+      setIsRetryingProcessing(false);
+    }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -135,13 +209,14 @@ export function ResumeUploadDialog({ trigger, onUploadComplete }: ResumeUploadDi
                             relative border-2 border-dashed p-8 text-center transition-all duration-200
                             ${isDragging ? 'border-blue-700 bg-blue-50' : 'border-gray-400 hover:border-black hover:bg-white'}
                             ${currentFile ? 'bg-white border-solid border-black' : ''}
-                            cursor-pointer
+                            ${!currentFile && !isRetryingProcessing ? 'cursor-pointer' : 'cursor-default'}
+                            ${isRetryingProcessing ? 'opacity-70' : ''}
                         `}
-            onClick={!currentFile ? openFileDialog : undefined}
-            onDragEnter={handleDragEnter}
-            onDragLeave={handleDragLeave}
-            onDragOver={handleDragOver}
-            onDrop={handleDrop}
+            onClick={!currentFile && !isRetryingProcessing ? openFileDialog : undefined}
+            onDragEnter={isRetryingProcessing ? preventDropzoneInteraction : handleDragEnter}
+            onDragLeave={isRetryingProcessing ? preventDropzoneInteraction : handleDragLeave}
+            onDragOver={isRetryingProcessing ? preventDropzoneInteraction : handleDragOver}
+            onDrop={isRetryingProcessing ? preventDropzoneInteraction : handleDrop}
           >
             <input {...getInputProps()} />
 
@@ -170,6 +245,7 @@ export function ResumeUploadDialog({ trigger, onUploadComplete }: ResumeUploadDi
                 <Button
                   variant="ghost"
                   size="icon"
+                  disabled={isRetryingProcessing}
                   onClick={(e) => {
                     e.stopPropagation();
                     removeFile(currentFile.id);
@@ -215,6 +291,32 @@ export function ResumeUploadDialog({ trigger, onUploadComplete }: ResumeUploadDi
         </div>
 
         <div className="p-4 border-t border-black bg-white flex justify-end gap-2">
+          {uploadFeedback?.type === 'error' && failedResumeId && (
+            <Button
+              variant="outline"
+              className="rounded-none border-black hover:bg-gray-100"
+              onClick={handleRetryProcessing}
+              disabled={isRetryingProcessing}
+            >
+              {isRetryingProcessing
+                ? t('dashboard.retryingProcessing')
+                : t('dashboard.retryProcessing')}
+            </Button>
+          )}
+          {uploadFeedback?.type === 'error' && files.length > 0 && (
+            <Button
+              variant="outline"
+              className="rounded-none border-black hover:bg-gray-100"
+              disabled={isRetryingProcessing}
+              onClick={() => {
+                if (files[0]) removeFile(files[0].id);
+                setUploadFeedback(null);
+                setFailedResumeId(null);
+              }}
+            >
+              {t('dashboard.uploadDialog.tryDifferentFile')}
+            </Button>
+          )}
           <DialogClose asChild>
             <Button variant="outline" className="rounded-none border-black hover:bg-gray-100">
               {t('common.cancel')}
