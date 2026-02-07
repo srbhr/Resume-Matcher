@@ -107,7 +107,19 @@ class Database:
         the FastAPI event loop unlike threading.Lock.
         """
         async with self._master_resume_lock:
-            is_master = self.get_master_resume() is None
+            current_master = self.get_master_resume()
+            is_master = current_master is None
+
+            # Recovery behavior: if the current master is stuck in failed parsing
+            # state, promote the next upload to become the new master resume.
+            if current_master and current_master.get("processing_status") == "failed":
+                Resume = Query()
+                self.resumes.update(
+                    {"is_master": False},
+                    Resume.resume_id == current_master["resume_id"],
+                )
+                is_master = True
+
             return self.create_resume(
                 content=content,
                 content_type=content_type,
