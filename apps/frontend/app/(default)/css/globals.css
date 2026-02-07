@@ -144,6 +144,9 @@
   body {
     @apply bg-background text-foreground;
   }
+  button {
+    font-family: var(--font-mono);
+  }
 }
 
 @media print {

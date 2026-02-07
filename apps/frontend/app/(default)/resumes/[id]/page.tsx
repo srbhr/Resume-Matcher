@@ -34,7 +34,8 @@ export default function ResumeViewerPage() {
   const [processingStatus, setProcessingStatus] = useState<ProcessingStatus | null>(null);
   const [isMasterResume, setIsMasterResume] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [showDeleteSuccessDialog, setShowDeleteSuccessDialog] = useState(false);
+  const [showDownloadSuccessDialog, setShowDownloadSuccessDialog] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [showEnrichmentModal, setShowEnrichmentModal] = useState(false);
   const [isRetrying, setIsRetrying] = useState(false);
@@ -135,6 +136,7 @@ export default function ResumeViewerPage() {
     try {
       const blob = await downloadResumePdf(resumeId, undefined, uiLanguage);
       downloadBlobAsFile(blob, `resume_${resumeId}.pdf`);
+      setShowDownloadSuccessDialog(true);
     } catch (err) {
       console.error('Failed to download resume:', err);
       if (err instanceof TypeError && err.message.includes('Failed to fetch')) {
@@ -159,7 +161,7 @@ export default function ResumeViewerPage() {
         setHasMasterResume(false);
       }
       setShowDeleteDialog(false);
-      setShowSuccessDialog(true);
+      setShowDeleteSuccessDialog(true);
     } catch (err) {
       console.error('Failed to delete resume:', err);
       setDeleteError(t('resumeViewer.errors.failedToDelete'));
@@ -167,9 +169,13 @@ export default function ResumeViewerPage() {
     }
   };
 
-  const handleSuccessConfirm = () => {
-    setShowSuccessDialog(false);
+  const handleDeleteSuccessConfirm = () => {
+    setShowDeleteSuccessDialog(false);
     router.push('/dashboard');
+  };
+
+  const handleDownloadSuccessConfirm = () => {
+    setShowDownloadSuccessDialog(false);
   };
 
   if (loading) {
@@ -323,8 +329,8 @@ export default function ResumeViewerPage() {
       />
 
       <ConfirmDialog
-        open={showSuccessDialog}
-        onOpenChange={setShowSuccessDialog}
+        open={showDeleteSuccessDialog}
+        onOpenChange={setShowDeleteSuccessDialog}
         title={t('resumeViewer.deletedTitle')}
         description={
           isMasterResume
@@ -332,7 +338,18 @@ export default function ResumeViewerPage() {
             : t('resumeViewer.deletedDescriptionRegular')
         }
         confirmLabel={t('resumeViewer.returnToDashboard')}
-        onConfirm={handleSuccessConfirm}
+        onConfirm={handleDeleteSuccessConfirm}
+        variant="success"
+        showCancelButton={false}
+      />
+
+      <ConfirmDialog
+        open={showDownloadSuccessDialog}
+        onOpenChange={setShowDownloadSuccessDialog}
+        title={t('common.success')}
+        description={t('builder.alerts.downloadSuccess')}
+        confirmLabel={t('common.ok')}
+        onConfirm={handleDownloadSuccessConfirm}
         variant="success"
         showCancelButton={false}
       />
