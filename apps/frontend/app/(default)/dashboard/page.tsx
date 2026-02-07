@@ -143,7 +143,7 @@ export default function DashboardPage() {
             const snippet = (jd?.content || '').slice(0, 80);
             jobSnippetCacheRef.current[r.resume_id] = snippet;
             jobSnippets[r.resume_id] = snippet;
-          } catch (_err) {
+          } catch {
             // ignore missing job descriptions and cache empty result
             jobSnippetCacheRef.current[r.resume_id] = '';
             jobSnippets[r.resume_id] = '';
@@ -440,16 +440,16 @@ export default function DashboardPage() {
               </div>
               <CardTitle className="text-lg">
                 {/* Job description snippet (if available) */}
-                <span className="block text-base font-bold leading-tight mb-1 truncate w-full whitespace-nowrap">
+                <span className="block font-serif text-base font-bold leading-tight mb-1 truncate w-full whitespace-nowrap">
                   {resume.jobSnippet
                     ? resume.jobSnippet
                     : resume.filename || t('dashboard.tailoredResume')}
                 </span>
-                {/* Resume filename snippet */}
-                <span className="block text-sm font-normal text-gray-700 truncate w-full whitespace-nowrap">
-                  {(resume.filename || t('dashboard.tailoredResume')).slice(0, 40)}
-                </span>
               </CardTitle>
+              {/* Resume filename snippet */}
+              <p className="mt-1 block font-sans text-sm font-normal text-gray-700 truncate w-full whitespace-nowrap">
+                {(resume.filename || t('dashboard.tailoredResume')).slice(0, 40)}
+              </p>
               <CardDescription className="mt-auto pt-4 uppercase">
                 {t('dashboard.edited', {
                   date: formatDate(resume.updated_at || resume.created_at),
