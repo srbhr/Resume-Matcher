@@ -1,0 +1,11 @@
+{
+  "name": "rm-backend",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000",
+    "build": "echo 'No build step for Python backend'",
+    "lint": "echo 'Use ruff or pylint directly'",
+    "test": "uv run pytest"
+  }
+}

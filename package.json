@@ -1,0 +1,17 @@
+{
+  "name": "resume-matcher",
+  "private": true,
+  "scripts": {
+    "dev": "turbo run dev",
+    "dev:backend": "turbo run dev --filter=rm-backend",
+    "dev:frontend": "turbo run dev --filter=resume-matcher-ui",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "format": "turbo run format",
+    "test": "turbo run test"
+  },
+  "devDependencies": {
+    "turbo": "^2"
+  },
+  "packageManager": "pnpm@9.15.4"
+}
