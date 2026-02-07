@@ -1,0 +1,9 @@
+{
+  "provider": "openrouter",
+  "model": "openai/gpt-5.2-pro",
+  "api_key": "INSERT_OPENROUTER_API",
+  "api_base": null,
+  "api_keys": {
+    "openrouter": "INSERT_OPENROUTER_API"
+  }
+}
