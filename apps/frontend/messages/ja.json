@@ -718,7 +718,8 @@
       "noDataAvailable": "利用可能な履歴書データがありません。",
       "failedToLoad": "履歴書データの読み込みに失敗しました。",
       "failedToDelete": "履歴書の削除に失敗しました。もう一度お試しください。"
-    }
+    },
+    "titlePlaceholder": "履歴書のタイトルを入力..."
   },
   "preview": {
     "margins": "余白",

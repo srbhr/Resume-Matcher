@@ -1,10 +1,14 @@
-"""Cover letter and outreach message generation service."""
+"""Cover letter, outreach message, and resume title generation service."""
 
 import json
 from typing import Any
 
 from app.llm import complete
-from app.prompts.templates import COVER_LETTER_PROMPT, OUTREACH_MESSAGE_PROMPT
+from app.prompts.templates import (
+    COVER_LETTER_PROMPT,
+    GENERATE_TITLE_PROMPT,
+    OUTREACH_MESSAGE_PROMPT,
+)
 from app.prompts import get_language_name
 
 
@@ -70,3 +74,35 @@ async def generate_outreach_message(
     )
 
     return result.strip()
+
+
+async def generate_resume_title(
+    job_description: str,
+    language: str = "en",
+) -> str:
+    """Generate a short descriptive title from a job description.
+
+    Args:
+        job_description: Target job description text
+        language: Output language code (en, es, zh, ja)
+
+    Returns:
+        Generated title like "Senior Frontend Engineer @ Stripe"
+    """
+    output_language = get_language_name(language)
+
+    prompt = GENERATE_TITLE_PROMPT.format(
+        job_description=job_description,
+        output_language=output_language,
+    )
+
+    result = await complete(
+        prompt=prompt,
+        system_prompt="You extract job titles and company names from job descriptions.",
+        max_tokens=60,
+        temperature=0.3,
+    )
+
+    # Strip quotes and whitespace, truncate to 80 chars
+    title = result.strip().strip('"\'')
+    return title[:80]

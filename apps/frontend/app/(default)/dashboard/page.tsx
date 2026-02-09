@@ -439,11 +439,11 @@ export default function DashboardPage() {
                 </span>
               </div>
               <CardTitle className="text-lg">
-                {/* Job description snippet (if available) */}
                 <span className="block font-serif text-base font-bold leading-tight mb-1 truncate w-full whitespace-nowrap">
-                  {resume.jobSnippet
-                    ? resume.jobSnippet
-                    : resume.filename || t('dashboard.tailoredResume')}
+                  {resume.title ||
+                    resume.jobSnippet ||
+                    resume.filename ||
+                    t('dashboard.tailoredResume')}
                 </span>
               </CardTitle>
               {/* Resume filename snippet */}

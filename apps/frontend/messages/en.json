@@ -718,7 +718,8 @@
       "noDataAvailable": "No resume data available.",
       "failedToLoad": "Failed to load resume data.",
       "failedToDelete": "Failed to delete resume. Please try again."
-    }
+    },
+    "titlePlaceholder": "Enter resume title..."
   },
   "preview": {
     "margins": "Margins",

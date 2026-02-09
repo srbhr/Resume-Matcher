@@ -718,7 +718,8 @@
       "noDataAvailable": "没有可用的简历数据。",
       "failedToLoad": "加载简历数据失败。",
       "failedToDelete": "删除简历失败，请重试。"
-    }
+    },
+    "titlePlaceholder": "输入简历标题..."
   },
   "preview": {
     "margins": "页边距",
