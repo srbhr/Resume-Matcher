@@ -122,7 +122,7 @@ const DialogContent: React.FC<DialogContentProps> = ({ children, className }) =>
     };
   }, [open]);
 
-  if (!open) return null;
+  if (!open || typeof document === 'undefined') return null;
 
   return createPortal(
     <div className="fixed inset-0 z-50">
