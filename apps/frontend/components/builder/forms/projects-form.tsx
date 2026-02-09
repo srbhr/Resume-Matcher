@@ -65,7 +65,7 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({ data, onChange }) =>
     onChange(
       data.map((item) => {
         if (item.id === id) {
-          return { ...item, description: [...(item.description || []), ''] };
+          return { ...item, description: ['', ...(item.description || [])] };
         }
         return item;
       })

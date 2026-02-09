@@ -64,7 +64,7 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({ data, onChange }
     onChange(
       data.map((item) => {
         if (item.id === id) {
-          return { ...item, description: [...(item.description || []), ''] };
+          return { ...item, description: ['', ...(item.description || [])] };
         }
         return item;
       })
