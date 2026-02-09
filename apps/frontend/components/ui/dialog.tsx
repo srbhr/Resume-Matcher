@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTranslations } from '@/lib/i18n';
@@ -123,7 +124,7 @@ const DialogContent: React.FC<DialogContentProps> = ({ children, className }) =>
 
   if (!open) return null;
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50">
       {/* Overlay */}
       <div
@@ -152,7 +153,8 @@ const DialogContent: React.FC<DialogContentProps> = ({ children, className }) =>
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
