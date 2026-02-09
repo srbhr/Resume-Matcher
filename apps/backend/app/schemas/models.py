@@ -21,7 +21,9 @@ _TEXT_VALUE_KEYS = (
 _BULLET_PREFIX_RE = re.compile(r"^\s*(?:[-*•]+|\d+[.)])\s*")
 
 
-def _extract_text_fragments(value: Any, depth: int = 0, max_depth: int = 10) -> list[str]:
+def _extract_text_fragments(
+    value: Any, depth: int = 0, max_depth: int = 10
+) -> list[str]:
     """Extract text-like content from nested list/dict values."""
     if depth >= max_depth or value is None:
         return []

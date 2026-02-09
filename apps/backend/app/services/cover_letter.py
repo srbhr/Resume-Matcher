@@ -104,5 +104,5 @@ async def generate_resume_title(
     )
 
     # Strip quotes and whitespace, truncate to 80 chars
-    title = result.strip().strip('"\'')
+    title = result.strip().strip("\"'")
     return title[:80]

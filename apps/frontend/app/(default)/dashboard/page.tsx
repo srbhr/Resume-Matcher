@@ -439,7 +439,7 @@ export default function DashboardPage() {
                 </span>
               </div>
               <CardTitle className="text-lg">
-                <span className="block font-serif text-base font-bold leading-tight mb-1 truncate w-full whitespace-nowrap">
+                <span className="block font-serif text-base font-bold leading-tight mb-1 w-full line-clamp-2">
                   {resume.title ||
                     resume.jobSnippet ||
                     resume.filename ||

@@ -50,7 +50,6 @@ from app.schemas.models import (
     UpdateTitleRequest,
 )
 
-
 __all__ = [
     "PersonalInfo",
     "Experience",
