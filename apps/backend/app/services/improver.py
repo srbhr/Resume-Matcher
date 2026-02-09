@@ -7,6 +7,7 @@ from difflib import SequenceMatcher
 from dataclasses import dataclass
 from typing import Any, Callable
 
+from app.database import db
 from app.llm import complete_json
 from app.prompts import (
     CRITICAL_TRUTHFULNESS_RULES,
@@ -31,6 +32,18 @@ _INJECTION_PATTERNS = [
     r"\[\s*INST\s*\]",
     r"\[\s*/\s*INST\s*\]",
 ]
+
+
+def _resolve_prompt_template(prompt_id: str) -> str:
+    template = IMPROVE_RESUME_PROMPTS.get(prompt_id)
+    if template:
+        return template
+
+    custom = db.get_prompt_template(prompt_id)
+    if custom and custom.get("prompt"):
+        return custom["prompt"]
+
+    return IMPROVE_RESUME_PROMPTS[DEFAULT_IMPROVE_PROMPT_ID]
 
 
 @dataclass(frozen=True)
@@ -112,9 +125,7 @@ async def improve_resume(
     output_language = get_language_name(language)
 
     selected_prompt_id = prompt_id or DEFAULT_IMPROVE_PROMPT_ID
-    prompt_template = IMPROVE_RESUME_PROMPTS.get(
-        selected_prompt_id, IMPROVE_RESUME_PROMPTS[DEFAULT_IMPROVE_PROMPT_ID]
-    )
+    prompt_template = _resolve_prompt_template(selected_prompt_id)
     if selected_prompt_id not in CRITICAL_TRUTHFULNESS_RULES:
         logger.warning(
             "Missing truthfulness rules for prompt '%s'; using default rules.",

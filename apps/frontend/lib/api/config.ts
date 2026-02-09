@@ -232,6 +232,28 @@ export interface PromptConfigUpdate {
   default_prompt_id?: string;
 }
 
+export interface PromptTemplate {
+  id: string;
+  label: string;
+  description: string;
+  prompt: string;
+  is_builtin: boolean;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
+export interface PromptTemplateCreate {
+  label: string;
+  description: string;
+  prompt: string;
+}
+
+export interface PromptTemplateUpdate {
+  label?: string;
+  description?: string;
+  prompt?: string;
+}
+
 // Fetch prompt configuration
 export async function fetchPromptConfig(): Promise<PromptConfig> {
   const res = await apiFetch('/config/prompts', { credentials: 'include' });
@@ -258,6 +280,72 @@ export async function updatePromptConfig(update: PromptConfigUpdate): Promise<Pr
   }
 
   return res.json();
+}
+
+// Fetch prompt templates
+export async function fetchPromptTemplates(): Promise<PromptTemplate[]> {
+  const res = await apiFetch('/config/prompt-templates', { credentials: 'include' });
+
+  if (!res.ok) {
+    throw new Error(`Failed to load prompt templates (status ${res.status}).`);
+  }
+
+  const payload = (await res.json()) as { data: PromptTemplate[] };
+  return payload.data;
+}
+
+// Create prompt template
+export async function createPromptTemplate(
+  template: PromptTemplateCreate
+): Promise<PromptTemplate> {
+  const res = await apiFetch('/config/prompt-templates', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(template),
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || `Failed to create prompt template (status ${res.status}).`);
+  }
+
+  const payload = (await res.json()) as { data: PromptTemplate };
+  return payload.data;
+}
+
+// Update prompt template
+export async function updatePromptTemplate(
+  promptId: string,
+  updates: PromptTemplateUpdate
+): Promise<PromptTemplate> {
+  const res = await apiFetch(`/config/prompt-templates/${encodeURIComponent(promptId)}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(updates),
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || `Failed to update prompt template (status ${res.status}).`);
+  }
+
+  const payload = (await res.json()) as { data: PromptTemplate };
+  return payload.data;
+}
+
+// Delete prompt template
+export async function deletePromptTemplate(promptId: string): Promise<void> {
+  const res = await apiFetch(`/config/prompt-templates/${encodeURIComponent(promptId)}`, {
+    method: 'DELETE',
+    credentials: 'include',
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || `Failed to delete prompt template (status ${res.status}).`);
+  }
 }
 
 // API Key Management types

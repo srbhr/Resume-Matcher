@@ -600,6 +600,52 @@ class PromptConfigResponse(BaseModel):
     prompt_options: list[PromptOption]
 
 
+class PromptTemplate(BaseModel):
+    """Prompt template for resume tailoring."""
+
+    id: str
+    label: str
+    description: str
+    prompt: str
+    is_builtin: bool = False
+    created_at: str | None = None
+    updated_at: str | None = None
+
+
+class PromptTemplateCreateRequest(BaseModel):
+    """Request to create a prompt template."""
+
+    label: str
+    description: str
+    prompt: str
+
+
+class PromptTemplateUpdateRequest(BaseModel):
+    """Request to update a prompt template."""
+
+    label: str | None = None
+    description: str | None = None
+    prompt: str | None = None
+
+
+class PromptTemplateResponse(BaseModel):
+    """Response for a single prompt template."""
+
+    data: PromptTemplate
+
+
+class PromptTemplateListResponse(BaseModel):
+    """Response for prompt templates list."""
+
+    data: list[PromptTemplate]
+
+
+class PromptTemplateDeleteResponse(BaseModel):
+    """Response after deleting a prompt template."""
+
+    message: str
+
+
 # API Key Management Models
 class ApiKeyProviderStatus(BaseModel):
     """Status of a single API key provider."""
