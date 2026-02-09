@@ -52,6 +52,9 @@ apps/backend/data/config.json
 .cursor/
 .cursorrules
 
+# Claude Code local settings (personal overrides)
+.claude/settings.local.json
+
 .DS_Store
 
 
