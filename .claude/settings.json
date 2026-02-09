@@ -20,7 +20,8 @@
       "Bash(gh issue view:*)",
       "Bash(export PATH=\"/opt/homebrew/bin:/usr/local/bin:$PATH\")",
       "Bash(node:*)",
-      "Bash(npm --version)"
+      "Bash(npm --version)",
+      "Bash(source:*)"
     ]
   }
 }
