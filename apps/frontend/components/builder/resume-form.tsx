@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -49,6 +49,11 @@ interface ResumeFormProps {
 
 export const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, onUpdate }) => {
   const { t } = useTranslations();
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Get section metadata, falling back to defaults
   const allSections = getSectionMeta(resumeData);
@@ -375,32 +380,48 @@ export const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, onUpdate }) 
     );
   };
 
+  const renderSectionList = (useDnd: boolean) => (
+    <div className="space-y-6 pb-20">
+      {sortedAllSections.map((section, index) => {
+        const isFirst = index === 0 || section.id === 'personalInfo';
+        const isLast = index === sortedAllSections.length - 1;
+        const isPersonalInfo = section.id === 'personalInfo';
+
+        const sectionContent = section.isDefault
+          ? renderDefaultSection(section, isFirst, isLast)
+          : renderCustomSection(section, isFirst, isLast);
+
+        if (!useDnd) {
+          return (
+            <div key={section.id} className={isPersonalInfo ? '' : 'pl-4'}>
+              {sectionContent}
+            </div>
+          );
+        }
+
+        return (
+          <DraggableSectionWrapper key={section.id} id={section.id} disabled={isPersonalInfo}>
+            {sectionContent}
+          </DraggableSectionWrapper>
+        );
+      })}
+
+      {/* Add Section Button */}
+      <AddSectionButton onAdd={handleAddSection} />
+    </div>
+  );
+
+  if (!isMounted) {
+    return renderSectionList(false);
+  }
+
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
       <SortableContext
         items={sortedAllSections.map((s) => s.id)}
         strategy={verticalListSortingStrategy}
       >
-        <div className="space-y-6 pb-20">
-          {sortedAllSections.map((section, index) => {
-            const isFirst = index === 0 || section.id === 'personalInfo';
-            const isLast = index === sortedAllSections.length - 1;
-            const isPersonalInfo = section.id === 'personalInfo';
-
-            const sectionContent = section.isDefault
-              ? renderDefaultSection(section, isFirst, isLast)
-              : renderCustomSection(section, isFirst, isLast);
-
-            return (
-              <DraggableSectionWrapper key={section.id} id={section.id} disabled={isPersonalInfo}>
-                {sectionContent}
-              </DraggableSectionWrapper>
-            );
-          })}
-
-          {/* Add Section Button */}
-          <AddSectionButton onAdd={handleAddSection} />
-        </div>
+        {renderSectionList(true)}
       </SortableContext>
     </DndContext>
   );

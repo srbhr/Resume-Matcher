@@ -53,10 +53,10 @@ export interface TemplateSettings {
 export const DEFAULT_TEMPLATE_SETTINGS: TemplateSettings = {
   template: 'swiss-single',
   pageSize: 'A4',
-  margins: { top: 10, bottom: 10, left: 10, right: 10 },
+  margins: { top: 5, bottom: 5, left: 10, right: 10 },
   spacing: { section: 3, item: 2, lineHeight: 3 },
   fontSize: { base: 3, headerScale: 3, headerFont: 'serif', bodyFont: 'sans-serif' },
-  compactMode: false,
+  compactMode: true,
   showContactIcons: false,
   accentColor: 'blue',
 };
