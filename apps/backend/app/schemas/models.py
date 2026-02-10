@@ -5,7 +5,7 @@ import re
 from enum import Enum
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 _TEXT_VALUE_KEYS = (
     "text",
@@ -236,6 +236,38 @@ class CustomSection(BaseModel):
     strings: list[str] | None = None  # For STRING_LIST
     text: str | None = None  # For TEXT
 
+    @model_validator(mode="before")
+    @classmethod
+    def _normalize_mismatched_items(cls, value: Any) -> Any:
+        # LLMs occasionally return string lists under "items" instead of
+        # "strings" (stringList) or proper item objects (itemList). Coerce
+        # these to preserve parsing rather than failing validation.
+        if not isinstance(value, dict):
+            return value
+
+        items = value.get("items")
+        if not items:
+            return value
+
+        if isinstance(items, list) and items and all(isinstance(i, str) for i in items):
+            section_type = value.get("sectionType")
+            if section_type == SectionType.STRING_LIST or section_type == "stringList":
+                value = dict(value)
+                value.pop("items", None)
+                value["strings"] = items
+                return value
+            if section_type == SectionType.TEXT or section_type == "text":
+                value = dict(value)
+                value.pop("items", None)
+                value["text"] = "\n".join(items)
+                return value
+
+            value = dict(value)
+            value["items"] = [{"title": item, "description": []} for item in items]
+            return value
+
+        return value
+
     @field_validator("strings", mode="before")
     @classmethod
     def _normalize_strings(cls, value: Any) -> list[str] | None:
@@ -369,12 +401,16 @@ class ResumeFetchData(BaseModel):
     """Data payload for resume fetch response."""
 
     resume_id: str
+    title: str | None = None
+    filename: str | None = None
     raw_resume: RawResume
     processed_resume: ResumeData | None = None
     cover_letter: str | None = None
     outreach_message: str | None = None
     parent_id: str | None = None  # For determining if resume is tailored
-    title: str | None = None
+    kanban_column_id: str | None = None
+    kanban_order: float | int | None = None
+    tags: list[str] | None = None
 
 
 class ResumeFetchResponse(BaseModel):
@@ -388,13 +424,16 @@ class ResumeSummary(BaseModel):
     """Summary details for listing resumes."""
 
     resume_id: str
+    title: str | None = None
     filename: str | None = None
     is_master: bool = False
     parent_id: str | None = None
     processing_status: str = "pending"
     created_at: str
     updated_at: str
-    title: str | None = None
+    kanban_column_id: str | None = None
+    kanban_order: float | int | None = None
+    tags: list[str] | None = None
 
 
 class ResumeListResponse(BaseModel):
@@ -402,6 +441,57 @@ class ResumeListResponse(BaseModel):
 
     request_id: str
     data: list[ResumeSummary]
+
+
+class ResumeMetaUpdateRequest(BaseModel):
+    """Request to update resume metadata."""
+
+    filename: str | None = None
+    title: str | None = None
+    kanban_column_id: str | None = None
+    kanban_order: float | int | None = None
+    tags: list[str] | None = None
+
+
+class KanbanColumn(BaseModel):
+    """Kanban column definition."""
+
+    id: str
+    label: str
+    order: int
+
+
+class KanbanConfigRequest(BaseModel):
+    """Request to update kanban configuration."""
+
+    columns: list[KanbanColumn]
+
+
+class KanbanConfigResponse(BaseModel):
+    """Response for kanban configuration."""
+
+    columns: list[KanbanColumn]
+
+
+class ResumeKanbanMove(BaseModel):
+    """Single kanban move update."""
+
+    resume_id: str
+    kanban_column_id: str
+    kanban_order: float | int
+
+
+class ResumeKanbanBulkUpdateRequest(BaseModel):
+    """Bulk update for kanban positions."""
+
+    moves: list[ResumeKanbanMove]
+
+
+class ResumeMetaResponse(BaseModel):
+    """Response for resume metadata update."""
+
+    request_id: str
+    data: ResumeSummary
 
 
 # Job Description Models

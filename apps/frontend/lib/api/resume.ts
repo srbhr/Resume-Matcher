@@ -2,7 +2,7 @@ import { ImprovedResult } from '@/components/common/resume_previewer_context';
 import type { ResumeData } from '@/components/dashboard/resume-component';
 import { type TemplateSettings } from '@/lib/types/template-settings';
 import { type Locale } from '@/i18n/config';
-import { API_BASE, apiPost, apiPatch, apiDelete, apiFetch } from './client';
+import { API_BASE, apiPost, apiPatch, apiDelete, apiFetch, apiPut } from './client';
 
 // Matches backend schemas/models.py ResumeData
 interface ProcessedResume {
@@ -53,6 +53,8 @@ interface ResumeResponse {
   request_id: string;
   data: {
     resume_id: string;
+    title?: string | null;
+    filename?: string | null;
     raw_resume: {
       id: number | null;
       content: string;
@@ -64,7 +66,9 @@ interface ResumeResponse {
     cover_letter?: string | null;
     outreach_message?: string | null;
     parent_id?: string | null; // For determining if resume is tailored
-    title?: string | null;
+    kanban_column_id?: string | null;
+    kanban_order?: number | null;
+    tags?: string[] | null;
   };
 }
 
@@ -97,15 +101,28 @@ function normalizeResumeId(resumeId: string): string {
 
 export interface ResumeListItem {
   resume_id: string;
+  title?: string | null;
   filename: string | null;
   is_master: boolean;
   parent_id: string | null;
   processing_status: 'pending' | 'processing' | 'ready' | 'failed';
   created_at: string;
   updated_at: string;
-  title?: string | null;
+  kanban_column_id?: string | null;
+  kanban_order?: number | null;
+  tags?: string[] | null;
   // Optional lightweight snippet of associated job description (populated client-side)
   jobSnippet?: string;
+}
+
+export interface KanbanColumn {
+  id: string;
+  label: string;
+  order: number;
+}
+
+export interface KanbanConfigResponse {
+  columns: KanbanColumn[];
 }
 
 async function postImprove(
@@ -212,6 +229,57 @@ export async function updateResume(
     throw new Error(`Failed to update resume (status ${res.status}): ${text}`);
   }
   const payload = (await res.json()) as ResumeResponse;
+  return payload.data;
+}
+
+export async function updateResumeMeta(
+  resumeId: string,
+  updates: {
+    filename?: string;
+    title?: string;
+    kanban_column_id?: string;
+    kanban_order?: number;
+    tags?: string[];
+  }
+): Promise<ResumeListItem> {
+  const res = await apiPatch(`/resumes/${encodeURIComponent(resumeId)}/meta`, updates);
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Failed to rename resume (status ${res.status}): ${text}`);
+  }
+  const payload = (await res.json()) as { data: ResumeListItem };
+  return payload.data;
+}
+
+export async function fetchKanbanConfig(): Promise<KanbanConfigResponse> {
+  const res = await apiFetch('/config/kanban');
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Failed to fetch kanban config (status ${res.status}): ${text}`);
+  }
+  return (await res.json()) as KanbanConfigResponse;
+}
+
+export async function updateKanbanConfig(
+  columns: KanbanColumn[]
+): Promise<KanbanConfigResponse> {
+  const res = await apiPut('/config/kanban', { columns });
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Failed to update kanban config (status ${res.status}): ${text}`);
+  }
+  return (await res.json()) as KanbanConfigResponse;
+}
+
+export async function bulkUpdateKanbanPositions(
+  moves: Array<{ resume_id: string; kanban_column_id: string; kanban_order: number }>
+): Promise<ResumeListItem[]> {
+  const res = await apiPatch('/resumes/kanban', { moves });
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Failed to update kanban positions (status ${res.status}): ${text}`);
+  }
+  const payload = (await res.json()) as { data: ResumeListItem[] };
   return payload.data;
 }
 

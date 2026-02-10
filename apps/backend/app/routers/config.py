@@ -18,6 +18,9 @@ from app.schemas import (
     PromptConfigRequest,
     PromptConfigResponse,
     PromptOption,
+    KanbanColumn,
+    KanbanConfigRequest,
+    KanbanConfigResponse,
     ApiKeyProviderStatus,
     ApiKeyStatusResponse,
     ApiKeysUpdateRequest,
@@ -219,6 +222,49 @@ async def update_feature_config(request: FeatureConfigRequest) -> FeatureConfigR
 SUPPORTED_LANGUAGES = ["en", "es", "zh", "ja", "pt"]
 
 
+KANBAN_DEFAULT_COLUMNS = [
+    KanbanColumn(id="applied", label="Applied", order=1),
+    KanbanColumn(id="interviewing", label="Interviewing", order=2),
+    KanbanColumn(id="offer", label="Offer", order=3),
+    KanbanColumn(id="rejected", label="Rejected", order=4),
+    KanbanColumn(id="archived", label="Archived", order=5),
+]
+
+
+def _normalize_kanban_columns(columns: list[KanbanColumn]) -> list[KanbanColumn]:
+    seen: set[str] = set()
+    normalized: list[KanbanColumn] = []
+    for idx, col in enumerate(columns, start=1):
+        col_id = col.id.strip()
+        label = col.label.strip()
+        if not col_id:
+            raise HTTPException(status_code=422, detail="Kanban column id cannot be empty")
+        if not label:
+            raise HTTPException(status_code=422, detail="Kanban column label cannot be empty")
+        if len(col_id) > 40:
+            raise HTTPException(status_code=422, detail="Kanban column id too long (max 40)")
+        if len(label) > 40:
+            raise HTTPException(status_code=422, detail="Kanban column label too long (max 40)")
+        if col_id in seen:
+            raise HTTPException(status_code=422, detail=f"Duplicate kanban column id: {col_id}")
+        seen.add(col_id)
+        normalized.append(KanbanColumn(id=col_id, label=label, order=idx))
+    if not normalized:
+        raise HTTPException(status_code=422, detail="Kanban must have at least one column")
+    return normalized
+
+
+def _get_kanban_columns(stored: dict) -> list[KanbanColumn]:
+    raw = stored.get("kanban", {}).get("columns")
+    if not raw:
+        return KANBAN_DEFAULT_COLUMNS
+    try:
+        parsed = [KanbanColumn(**col) for col in raw]
+        return _normalize_kanban_columns(parsed)
+    except Exception:
+        return KANBAN_DEFAULT_COLUMNS
+
+
 @router.get("/language", response_model=LanguageConfigResponse)
 async def get_language_config() -> LanguageConfigResponse:
     """Get current language configuration."""
@@ -286,6 +332,27 @@ async def get_prompt_config() -> PromptConfigResponse:
         default_prompt_id=default_prompt_id,
         prompt_options=options,
     )
+
+
+@router.get("/kanban", response_model=KanbanConfigResponse)
+async def get_kanban_config() -> KanbanConfigResponse:
+    """Get kanban column configuration."""
+    stored = _load_config()
+    columns = _get_kanban_columns(stored)
+    if stored.get("kanban", {}).get("columns") is None:
+        stored["kanban"] = {"columns": [col.model_dump() for col in columns]}
+        _save_config(stored)
+    return KanbanConfigResponse(columns=columns)
+
+
+@router.put("/kanban", response_model=KanbanConfigResponse)
+async def update_kanban_config(request: KanbanConfigRequest) -> KanbanConfigResponse:
+    """Update kanban column configuration."""
+    stored = _load_config()
+    columns = _normalize_kanban_columns(request.columns)
+    stored["kanban"] = {"columns": [col.model_dump() for col in columns]}
+    _save_config(stored)
+    return KanbanConfigResponse(columns=columns)
 
 
 @router.put("/prompts", response_model=PromptConfigResponse)

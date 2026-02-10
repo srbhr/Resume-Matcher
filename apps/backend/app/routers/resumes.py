@@ -34,6 +34,9 @@ from app.schemas import (
     ResumeListResponse,
     ResumeSummary,
     ResumeUploadResponse,
+    ResumeMetaUpdateRequest,
+    ResumeMetaResponse,
+    ResumeKanbanBulkUpdateRequest,
     RawResume,
     UpdateCoverLetterRequest,
     UpdateOutreachMessageRequest,
@@ -86,6 +89,32 @@ def _get_default_prompt_id() -> str:
     option_ids = {option["id"] for option in IMPROVE_PROMPT_OPTIONS}
     prompt_id = config.get("default_prompt_id", DEFAULT_IMPROVE_PROMPT_ID)
     return prompt_id if prompt_id in option_ids else DEFAULT_IMPROVE_PROMPT_ID
+
+
+KANBAN_DEFAULT_COLUMNS = [
+    {"id": "applied", "label": "Applied", "order": 1},
+    {"id": "interviewing", "label": "Interviewing", "order": 2},
+    {"id": "offer", "label": "Offer", "order": 3},
+    {"id": "rejected", "label": "Rejected", "order": 4},
+    {"id": "archived", "label": "Archived", "order": 5},
+]
+
+
+def _get_kanban_columns() -> list[dict]:
+    config = _load_config()
+    raw = config.get("kanban", {}).get("columns")
+    if not raw:
+        return KANBAN_DEFAULT_COLUMNS
+    columns = []
+    seen: set[str] = set()
+    for idx, col in enumerate(raw, start=1):
+        col_id = str(col.get("id", "")).strip()
+        label = str(col.get("label", "")).strip()
+        if not col_id or not label or col_id in seen:
+            continue
+        seen.add(col_id)
+        columns.append({"id": col_id, "label": label, "order": idx})
+    return columns or KANBAN_DEFAULT_COLUMNS
 
 
 def _hash_job_content(content: str) -> str:
@@ -419,12 +448,16 @@ async def get_resume(resume_id: str = Query(...)) -> ResumeFetchResponse:
         request_id=str(uuid4()),
         data=ResumeFetchData(
             resume_id=resume_id,
+            title=resume.get("title"),
+            filename=resume.get("filename"),
             raw_resume=raw_resume,
             processed_resume=processed_resume,
             cover_letter=resume.get("cover_letter"),
             outreach_message=resume.get("outreach_message"),
             parent_id=resume.get("parent_id"),
-            title=resume.get("title"),
+            kanban_column_id=resume.get("kanban_column_id"),
+            kanban_order=resume.get("kanban_order"),
+            tags=resume.get("tags"),
         ),
     )
 
@@ -432,25 +465,62 @@ async def get_resume(resume_id: str = Query(...)) -> ResumeFetchResponse:
 @router.get("/list", response_model=ResumeListResponse)
 async def list_resumes(include_master: bool = Query(False)) -> ResumeListResponse:
     """List resumes, optionally including the master resume."""
+    kanban_columns = _get_kanban_columns()
+    kanban_ids = {col["id"] for col in kanban_columns}
+    default_column_id = kanban_columns[0]["id"]
     resumes = db.list_resumes()
     if not include_master:
         resumes = [resume for resume in resumes if not resume.get("is_master", False)]
 
     resumes.sort(key=lambda item: item.get("updated_at", ""), reverse=True)
 
-    summaries = [
-        ResumeSummary(
-            resume_id=resume["resume_id"],
-            filename=resume.get("filename"),
-            is_master=resume.get("is_master", False),
-            parent_id=resume.get("parent_id"),
-            processing_status=resume.get("processing_status", "pending"),
-            created_at=resume.get("created_at", ""),
-            updated_at=resume.get("updated_at", ""),
-            title=resume.get("title"),
+    updates: list[tuple[str, dict]] = []
+    order_counter: dict[str, int] = {}
+    summaries = []
+    for resume in resumes:
+        column_id = resume.get("kanban_column_id")
+        kanban_order = resume.get("kanban_order")
+        if not resume.get("is_master") and resume.get("parent_id"):
+            if not column_id or column_id not in kanban_ids:
+                column_id = default_column_id
+            order_counter[column_id] = order_counter.get(column_id, 0) + 1
+            if kanban_order is None:
+                kanban_order = order_counter[column_id]
+
+        summaries.append(
+            ResumeSummary(
+                resume_id=resume["resume_id"],
+                title=resume.get("title"),
+                filename=resume.get("filename"),
+                is_master=resume.get("is_master", False),
+                parent_id=resume.get("parent_id"),
+                processing_status=resume.get("processing_status", "pending"),
+                created_at=resume.get("created_at", ""),
+                updated_at=resume.get("updated_at", ""),
+                kanban_column_id=column_id,
+                kanban_order=kanban_order,
+                tags=resume.get("tags"),
+            )
         )
-        for resume in resumes
-    ]
+
+        if resume.get("is_master") or not resume.get("parent_id"):
+            continue
+        if (
+            column_id != resume.get("kanban_column_id")
+            or kanban_order != resume.get("kanban_order")
+        ):
+            updates.append(
+                (
+                    resume["resume_id"],
+                    {"kanban_column_id": column_id, "kanban_order": kanban_order},
+                )
+            )
+
+    for resume_id, payload in updates:
+        try:
+            db.update_resume(resume_id, payload)
+        except Exception:
+            logger.warning("Failed to update kanban metadata for resume %s", resume_id)
 
     return ResumeListResponse(request_id=str(uuid4()), data=summaries)
 
@@ -739,7 +809,7 @@ async def improve_resume_confirm_endpoint(
             processing_status="ready",
             cover_letter=cover_letter,
             outreach_message=outreach_message,
-            title=title,
+            title=title or resume.get("title") or resume.get("filename"),
         )
 
         improvements_payload = [imp.model_dump() for imp in request.improvements]
@@ -921,7 +991,7 @@ async def improve_resume_endpoint(
             processing_status="ready",
             cover_letter=cover_letter,
             outreach_message=outreach_message,
-            title=title,
+            title=title or resume.get("title") or resume.get("filename"),
         )
 
         # Store improvement record
@@ -1016,6 +1086,149 @@ async def update_resume_endpoint(
             processed_resume=processed_resume,
         ),
     )
+
+
+@router.patch("/{resume_id}/meta", response_model=ResumeMetaResponse)
+async def update_resume_meta(
+    resume_id: str, request: ResumeMetaUpdateRequest
+) -> ResumeMetaResponse:
+    """Update resume metadata (e.g., filename)."""
+    existing = db.get_resume(resume_id)
+    if not existing:
+        raise HTTPException(status_code=404, detail="Resume not found")
+
+    updates: dict[str, Any] = {}
+    kanban_columns = _get_kanban_columns()
+    kanban_ids = {col["id"] for col in kanban_columns}
+
+    if request.filename is not None:
+        filename = request.filename.strip()
+        if not filename:
+            raise HTTPException(status_code=422, detail="Filename cannot be empty")
+        if len(filename) > 120:
+            raise HTTPException(status_code=422, detail="Filename too long (max 120 chars)")
+        updates["filename"] = filename
+
+    if request.title is not None:
+        title = request.title.strip()
+        if not title:
+            raise HTTPException(status_code=422, detail="Title cannot be empty")
+        if len(title) > 120:
+            raise HTTPException(status_code=422, detail="Title too long (max 120 chars)")
+        updates["title"] = title
+
+    if request.kanban_column_id is not None:
+        column_id = request.kanban_column_id.strip()
+        if not column_id:
+            raise HTTPException(status_code=422, detail="Kanban column id cannot be empty")
+        if column_id not in kanban_ids:
+            raise HTTPException(status_code=422, detail="Unknown kanban column id")
+        updates["kanban_column_id"] = column_id
+
+    if request.kanban_order is not None:
+        updates["kanban_order"] = request.kanban_order
+
+    if request.tags is not None:
+        tags: list[str] = []
+        seen: set[str] = set()
+        for raw in request.tags:
+            tag = str(raw).strip()
+            if not tag:
+                continue
+            if len(tag) > 40:
+                raise HTTPException(status_code=422, detail="Tag too long (max 40 chars)")
+            lower = tag.lower()
+            if lower in seen:
+                continue
+            seen.add(lower)
+            tags.append(lower)
+        if len(tags) > 10:
+            raise HTTPException(status_code=422, detail="Too many tags (max 10)")
+        updates["tags"] = tags
+
+    if not updates:
+        raise HTTPException(status_code=422, detail="No metadata fields provided")
+
+    updated = db.update_resume(resume_id, updates)
+
+    summary = ResumeSummary(
+        resume_id=updated["resume_id"],
+        title=updated.get("title"),
+        filename=updated.get("filename"),
+        is_master=updated.get("is_master", False),
+        parent_id=updated.get("parent_id"),
+        processing_status=updated.get("processing_status", "pending"),
+        created_at=updated.get("created_at"),
+        updated_at=updated.get("updated_at"),
+        kanban_column_id=updated.get("kanban_column_id"),
+        kanban_order=updated.get("kanban_order"),
+        tags=updated.get("tags"),
+    )
+
+    return ResumeMetaResponse(request_id=str(uuid4()), data=summary)
+
+
+@router.patch("/kanban", response_model=ResumeListResponse)
+async def update_kanban_positions(
+    request: ResumeKanbanBulkUpdateRequest,
+) -> ResumeListResponse:
+    """Bulk update kanban positions."""
+    kanban_columns = _get_kanban_columns()
+    kanban_ids = {col["id"] for col in kanban_columns}
+
+    if not request.moves:
+        raise HTTPException(status_code=422, detail="No kanban moves provided")
+
+    resumes_by_id: dict[str, dict] = {}
+    for resume in db.list_resumes():
+        stored_id = str(resume.get("resume_id", "")).strip()
+        if not stored_id:
+            continue
+        resumes_by_id[stored_id] = resume
+        resumes_by_id[stored_id.lower()] = resume
+
+    def resolve_resume(raw_id: str) -> dict | None:
+        candidate = str(raw_id).strip()
+        if not candidate:
+            return None
+        if candidate.startswith("drop:"):
+            candidate = candidate.replace("drop:", "", 1).strip()
+        return resumes_by_id.get(candidate) or resumes_by_id.get(candidate.lower())
+
+    summaries: list[ResumeSummary] = []
+    for move in request.moves:
+        if move.kanban_column_id not in kanban_ids:
+            raise HTTPException(status_code=422, detail="Unknown kanban column id")
+        resume = resolve_resume(move.resume_id)
+        if not resume:
+            raise HTTPException(status_code=404, detail="Resume not found")
+        if resume.get("is_master"):
+            raise HTTPException(status_code=422, detail="Master resume cannot be moved")
+
+        updated = db.update_resume(
+            resume["resume_id"],
+            {
+                "kanban_column_id": move.kanban_column_id,
+                "kanban_order": move.kanban_order,
+            },
+        )
+        summaries.append(
+            ResumeSummary(
+                resume_id=updated["resume_id"],
+                title=updated.get("title"),
+                filename=updated.get("filename"),
+                is_master=updated.get("is_master", False),
+                parent_id=updated.get("parent_id"),
+                processing_status=updated.get("processing_status", "pending"),
+                created_at=updated.get("created_at"),
+                updated_at=updated.get("updated_at"),
+                kanban_column_id=updated.get("kanban_column_id"),
+                kanban_order=updated.get("kanban_order"),
+                tags=updated.get("tags"),
+            )
+        )
+
+    return ResumeListResponse(request_id=str(uuid4()), data=summaries)
 
 
 @router.get("/{resume_id}/pdf")
