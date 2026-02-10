@@ -37,6 +37,7 @@ from app.schemas import (
     RawResume,
     UpdateCoverLetterRequest,
     UpdateOutreachMessageRequest,
+    UpdateTitleRequest,
     normalize_resume_data,
 )
 from app.services.parser import parse_document, parse_resume_to_json
@@ -50,6 +51,7 @@ from app.schemas.refinement import RefinementConfig
 from app.services.cover_letter import (
     generate_cover_letter,
     generate_outreach_message,
+    generate_resume_title,
 )
 from app.prompts import DEFAULT_IMPROVE_PROMPT_ID, IMPROVE_PROMPT_OPTIONS
 
@@ -242,55 +244,53 @@ async def _generate_auxiliary_messages(
     language: str,
     enable_cover_letter: bool,
     enable_outreach: bool,
-) -> tuple[str | None, str | None, list[str]]:
-    """Generate cover letter and outreach message.
+) -> tuple[str | None, str | None, str | None, list[str]]:
+    """Generate cover letter, outreach message, and resume title.
 
-    Returns (cover_letter, outreach_message, warnings).
+    Returns (cover_letter, outreach_message, title, warnings).
     """
     cover_letter = None
     outreach_message = None
+    title = None
     warnings: list[str] = []
     generation_tasks: list[Awaitable[str]] = []
+    task_labels: list[str] = []
+
+    # Title generation is always on (no feature flag)
+    generation_tasks.append(generate_resume_title(job_content, language))
+    task_labels.append("title")
 
     if enable_cover_letter:
         generation_tasks.append(
             generate_cover_letter(improved_data, job_content, language)
         )
+        task_labels.append("cover_letter")
     if enable_outreach:
         generation_tasks.append(
             generate_outreach_message(improved_data, job_content, language)
         )
+        task_labels.append("outreach")
 
-    if generation_tasks:
-        results = await asyncio.gather(*generation_tasks, return_exceptions=True)
-        idx = 0
-        if enable_cover_letter:
-            result = results[idx]
-            if not isinstance(result, Exception):
+    results = await asyncio.gather(*generation_tasks, return_exceptions=True)
+    for label, result in zip(task_labels, results):
+        if isinstance(result, Exception):
+            logger.warning(
+                "%s generation failed: %s",
+                label,
+                result,
+                exc_info=result,
+            )
+            if label != "title":
+                warnings.append(f"{label.replace('_', ' ').title()} generation failed")
+        else:
+            if label == "title":
+                title = result
+            elif label == "cover_letter":
                 cover_letter = result
-            else:
-                # SVC-008: Include full traceback for debugging
-                logger.warning(
-                    "Cover letter generation failed: %s",
-                    result,
-                    exc_info=result,
-                )
-                warnings.append("Cover letter generation failed")
-            idx += 1
-        if enable_outreach:
-            result = results[idx]
-            if not isinstance(result, Exception):
+            elif label == "outreach":
                 outreach_message = result
-            else:
-                # SVC-008: Include full traceback for debugging
-                logger.warning(
-                    "Outreach message generation failed: %s",
-                    result,
-                    exc_info=result,
-                )
-                warnings.append("Outreach message generation failed")
 
-    return cover_letter, outreach_message, warnings
+    return cover_letter, outreach_message, title, warnings
 
 
 router = APIRouter(prefix="/resumes", tags=["Resumes"])
@@ -424,6 +424,7 @@ async def get_resume(resume_id: str = Query(...)) -> ResumeFetchResponse:
             cover_letter=resume.get("cover_letter"),
             outreach_message=resume.get("outreach_message"),
             parent_id=resume.get("parent_id"),
+            title=resume.get("title"),
         ),
     )
 
@@ -446,6 +447,7 @@ async def list_resumes(include_master: bool = Query(False)) -> ResumeListRespons
             processing_status=resume.get("processing_status", "pending"),
             created_at=resume.get("created_at", ""),
             updated_at=resume.get("updated_at", ""),
+            title=resume.get("title"),
         )
         for resume in resumes
     ]
@@ -715,6 +717,7 @@ async def improve_resume_confirm_endpoint(
         (
             cover_letter,
             outreach_message,
+            title,
             aux_warnings,
         ) = await _generate_auxiliary_messages(
             improved_data,
@@ -736,6 +739,7 @@ async def improve_resume_confirm_endpoint(
             processing_status="ready",
             cover_letter=cover_letter,
             outreach_message=outreach_message,
+            title=title,
         )
 
         improvements_payload = [imp.model_dump() for imp in request.improvements]
@@ -891,10 +895,11 @@ async def improve_resume_endpoint(
         # Generate improvement suggestions
         improvements = generate_improvements(job_keywords)
 
-        # Generate cover letter and outreach message in parallel if enabled
+        # Generate cover letter, outreach message, and title in parallel if enabled
         (
             cover_letter,
             outreach_message,
+            title,
             aux_warnings,
         ) = await _generate_auxiliary_messages(
             improved_data,
@@ -905,7 +910,7 @@ async def improve_resume_endpoint(
         )
         response_warnings.extend(aux_warnings)
 
-        # Store the tailored resume with cover letter and outreach message
+        # Store the tailored resume with cover letter, outreach message, and title
         tailored_resume = db.create_resume(
             content=improved_text,
             content_type="json",
@@ -916,6 +921,7 @@ async def improve_resume_endpoint(
             processing_status="ready",
             cover_letter=cover_letter,
             outreach_message=outreach_message,
+            title=title,
         )
 
         # Store improvement record
@@ -1180,6 +1186,18 @@ async def update_outreach_message(
 
     db.update_resume(resume_id, {"outreach_message": request.content})
     return {"message": "Outreach message updated successfully"}
+
+
+@router.patch("/{resume_id}/title")
+async def update_title(resume_id: str, request: UpdateTitleRequest) -> dict:
+    """Update the title for a resume."""
+    resume = db.get_resume(resume_id)
+    if not resume:
+        raise HTTPException(status_code=404, detail="Resume not found")
+
+    title = request.title.strip()[:80]
+    db.update_resume(resume_id, {"title": title})
+    return {"message": "Title updated successfully"}
 
 
 @router.post(

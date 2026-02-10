@@ -718,7 +718,8 @@
       "noDataAvailable": "No hay datos de currículum disponibles.",
       "failedToLoad": "No se pudieron cargar los datos del currículum.",
       "failedToDelete": "No se pudo eliminar el currículum. Inténtalo de nuevo."
-    }
+    },
+    "titlePlaceholder": "Ingrese el título del currículum..."
   },
   "preview": {
     "margins": "Márgenes",

@@ -64,6 +64,7 @@ interface ResumeResponse {
     cover_letter?: string | null;
     outreach_message?: string | null;
     parent_id?: string | null; // For determining if resume is tailored
+    title?: string | null;
   };
 }
 
@@ -102,6 +103,7 @@ export interface ResumeListItem {
   processing_status: 'pending' | 'processing' | 'ready' | 'failed';
   created_at: string;
   updated_at: string;
+  title?: string | null;
   // Optional lightweight snippet of associated job description (populated client-side)
   jobSnippet?: string;
 }
@@ -289,6 +291,15 @@ export async function updateOutreachMessage(resumeId: string, content: string): 
   if (!res.ok) {
     const text = await res.text().catch(() => '');
     throw new Error(`Failed to update outreach message (status ${res.status}): ${text}`);
+  }
+}
+
+/** Renames a resume by updating its title */
+export async function renameResume(resumeId: string, title: string): Promise<void> {
+  const res = await apiPatch(`/resumes/${encodeURIComponent(resumeId)}/title`, { title });
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Failed to rename resume (status ${res.status}): ${text}`);
   }
 }
 

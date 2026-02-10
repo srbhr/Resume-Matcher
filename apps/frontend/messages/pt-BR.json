@@ -718,7 +718,8 @@
       "noDataAvailable": "Nenhum dado de currículo disponível.",
       "failedToLoad": "Falha ao carregar dados do currículo.",
       "failedToDelete": "Falha ao excluir currículo. Por favor, tente novamente."
-    }
+    },
+    "titlePlaceholder": "Digite o título do currículo..."
   },
   "preview": {
     "margins": "Margens",
