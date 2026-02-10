@@ -19,6 +19,7 @@ import { useTranslations } from '@/lib/i18n';
 import { withLocalizedDefaultSections } from '@/lib/utils/section-helpers';
 import { useLanguage } from '@/lib/context/language-context';
 import { downloadBlobAsFile, openUrlInNewTab } from '@/lib/utils/download';
+import { buildResumeFilename } from '@/lib/utils/filename';
 
 type ProcessingStatus = 'pending' | 'processing' | 'ready' | 'failed';
 
@@ -135,7 +136,7 @@ export default function ResumeViewerPage() {
   const handleDownload = async () => {
     try {
       const blob = await downloadResumePdf(resumeId, undefined, uiLanguage);
-      downloadBlobAsFile(blob, `resume_${resumeId}.pdf`);
+      downloadBlobAsFile(blob, buildResumeFilename(resumeData, undefined, uiLanguage));
       setShowDownloadSuccessDialog(true);
     } catch (err) {
       console.error('Failed to download resume:', err);

@@ -352,6 +352,7 @@
       "experience": {
         "addJob": "添加经历",
         "addFirstJob": "添加第一条经历",
+        "dragHint": "拖动以重新排序",
         "fields": {
           "jobTitle": "职位名称",
           "company": "公司"

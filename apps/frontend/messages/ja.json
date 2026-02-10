@@ -352,6 +352,7 @@
       "experience": {
         "addJob": "職歴を追加",
         "addFirstJob": "最初の職歴を追加",
+        "dragHint": "ドラッグして並べ替え",
         "fields": {
           "jobTitle": "職種",
           "company": "会社"

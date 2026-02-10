@@ -352,6 +352,7 @@
       "experience": {
         "addJob": "Adicionar Emprego",
         "addFirstJob": "Adicionar Primeiro Emprego",
+        "dragHint": "Arraste para reordenar",
         "fields": {
           "jobTitle": "Cargo",
           "company": "Empresa"

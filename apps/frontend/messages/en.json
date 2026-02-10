@@ -352,6 +352,7 @@
       "experience": {
         "addJob": "Add Job",
         "addFirstJob": "Add First Job",
+        "dragHint": "Drag to reorder jobs",
         "fields": {
           "jobTitle": "Job Title",
           "company": "Company"

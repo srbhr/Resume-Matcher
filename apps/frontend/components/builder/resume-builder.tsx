@@ -48,6 +48,7 @@ import { type TemplateSettings, DEFAULT_TEMPLATE_SETTINGS } from '@/lib/types/te
 import { withLocalizedDefaultSections } from '@/lib/utils/section-helpers';
 import { useLanguage } from '@/lib/context/language-context';
 import { downloadBlobAsFile, openUrlInNewTab } from '@/lib/utils/download';
+import { buildCoverLetterFilename, buildResumeFilename } from '@/lib/utils/filename';
 import type { RegenerateItemInput } from '@/lib/api/enrichment';
 
 type TabId = 'resume' | 'cover-letter' | 'outreach' | 'jd-match';
@@ -431,7 +432,7 @@ const ResumeBuilderContent = () => {
     try {
       setIsDownloading(true);
       const blob = await downloadResumePdf(resumeId, templateSettings, uiLanguage);
-      downloadBlobAsFile(blob, `resume_${resumeId}.pdf`);
+      downloadBlobAsFile(blob, buildResumeFilename(resumeData, templateSettings, uiLanguage));
       showNotification(t('builder.alerts.downloadSuccess'), 'success');
     } catch (error) {
       console.error('Failed to download resume:', error);
@@ -480,7 +481,7 @@ const ResumeBuilderContent = () => {
     try {
       setIsDownloading(true);
       const blob = await downloadCoverLetterPdf(resumeId, templateSettings.pageSize, uiLanguage);
-      downloadBlobAsFile(blob, `cover_letter_${resumeId}.pdf`);
+      downloadBlobAsFile(blob, buildCoverLetterFilename(resumeData, uiLanguage));
     } catch (error) {
       console.error('Failed to download cover letter:', error);
       if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
