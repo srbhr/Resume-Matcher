@@ -127,6 +127,13 @@ export const ResumeModern: React.FC<ResumeModernProps> = ({
                     <span>{exp.company}</span>
                     {exp.location && <span>{exp.location}</span>}
                   </div>
+                  {exp.jobDescription && (
+                    <p
+                      className={`${baseStyles['resume-row-tight']} ${baseStyles['resume-text-sm']}`}
+                    >
+                      <SafeHtml html={exp.jobDescription} />
+                    </p>
+                  )}
                   {exp.description && exp.description.length > 0 && (
                     <ul
                       className={`ml-4 ${baseStyles['resume-list']} ${baseStyles['resume-text-sm']}`}

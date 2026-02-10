@@ -355,13 +355,18 @@
         "dragHint": "ドラッグして並べ替え",
         "fields": {
           "jobTitle": "職種",
-          "company": "会社"
+          "company": "会社",
+          "jobDescriptionOptional": "職務概要（任意）"
+        },
+        "errors": {
+          "yearsRequiresMonth": "月名を含めてください（例: Aug 2020 - Present）"
         },
         "placeholders": {
           "jobTitle": "シニアエンジニア",
           "company": "Tech Corp",
           "location": "リモート / 都市",
-          "years": "2020 - 現在",
+          "years": "Aug 2020 - 現在",
+          "jobDescription": "役割と成果の概要を1段落で記載...",
           "description": "実績を説明..."
         }
       },

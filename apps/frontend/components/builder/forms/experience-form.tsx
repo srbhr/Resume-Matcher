@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -31,16 +31,86 @@ interface ExperienceFormProps {
   onChange: (data: Experience[]) => void;
 }
 
+const StaticExperienceCard: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <div className="p-6 border border-black bg-gray-50 relative group">{children}</div>
+);
+
+const SortableExperienceCard: React.FC<{
+  id: number;
+  dragHandleTitle: string;
+  children: React.ReactNode;
+}> = ({ id, dragHandleTitle, children }) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="p-6 pl-10 border border-black bg-gray-50 relative group"
+    >
+      <button
+        type="button"
+        {...attributes}
+        {...listeners}
+        className="absolute left-2 top-2 flex h-6 w-6 items-center justify-center cursor-grab active:cursor-grabbing"
+        title={dragHandleTitle}
+      >
+        <GripVertical className="w-4 h-4 text-gray-400 hover:text-gray-700 transition-colors" />
+      </button>
+      {children}
+    </div>
+  );
+};
+
 export const ExperienceForm: React.FC<ExperienceFormProps> = ({ data, onChange }) => {
   const { t } = useTranslations();
   const [isMounted, setIsMounted] = useState(false);
+  const [touchedYears, setTouchedYears] = useState<Record<number, boolean>>({});
+  const monthPattern = useMemo(
+    () =>
+      /\b(jan|january|feb|february|mar|march|apr|april|may|jun|june|jul|july|aug|august|sep|sept|september|oct|october|nov|november|dec|december)\b/i,
+    []
+  );
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
+  useEffect(() => {
+    let changed = false;
+    const used = new Set<number>();
+    const numericIds = data.map((item) => {
+      const value = Number(item.id);
+      return Number.isFinite(value) ? value : 0;
+    });
+    let nextId = Math.max(0, ...numericIds) + 1;
+
+    const normalized = data.map((item) => {
+      const rawId = Number(item.id);
+      let id = Number.isFinite(rawId) ? rawId : 0;
+      if (id <= 0 || used.has(id)) {
+        id = nextId++;
+        changed = true;
+      }
+      used.add(id);
+      return id === item.id ? item : { ...item, id };
+    });
+
+    if (changed) {
+      onChange(normalized);
+    }
+  }, [data, onChange]);
+
   const handleAdd = () => {
-    const newId = Math.max(...data.map((d) => d.id), 0) + 1;
+    const newId = Math.max(...data.map((d) => Number(d.id) || 0), 0) + 1;
     onChange([
       ...data,
       {
@@ -49,9 +119,14 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({ data, onChange }
         company: '',
         location: '',
         years: '',
+        jobDescription: '',
         description: [''],
       },
     ]);
+  };
+
+  const handleYearsBlur = (id: number) => {
+    setTouchedYears((prev) => ({ ...prev, [id]: true }));
   };
 
   const handleRemove = (id: number) => {
@@ -124,51 +199,8 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({ data, onChange }
     onChange(arrayMove(data, oldIndex, newIndex));
   };
 
-  const ExperienceCard = ({
-    item,
-    children,
-    draggable,
-  }: {
-    item: Experience;
-    children: React.ReactNode;
-    draggable: boolean;
-  }) => {
-    if (!draggable) {
-      return <div className="p-6 border border-black bg-gray-50 relative group">{children}</div>;
-    }
-
-    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-      id: item.id,
-    });
-
-    const style = {
-      transform: CSS.Transform.toString(transform),
-      transition,
-      opacity: isDragging ? 0.6 : 1,
-    };
-
-    return (
-      <div
-        ref={setNodeRef}
-        style={style}
-        className="p-6 pl-10 border border-black bg-gray-50 relative group"
-      >
-        <button
-          type="button"
-          {...attributes}
-          {...listeners}
-          className="absolute left-2 top-2 flex h-6 w-6 items-center justify-center cursor-grab active:cursor-grabbing"
-          title={t('builder.forms.experience.dragHint')}
-        >
-          <GripVertical className="w-4 h-4 text-gray-400 hover:text-gray-700 transition-colors" />
-        </button>
-        {children}
-      </div>
-    );
-  };
-
-  const renderExperienceItem = (item: Experience, draggable: boolean) => (
-    <ExperienceCard key={item.id} item={item} draggable={draggable}>
+  const renderExperienceContent = (item: Experience) => (
+    <>
       <Button
         variant="ghost"
         size="icon"
@@ -219,10 +251,28 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({ data, onChange }
           <Input
             value={item.years || ''}
             onChange={(e) => handleChange(item.id, 'years', e.target.value)}
+            onBlur={() => handleYearsBlur(item.id)}
             placeholder={t('builder.forms.experience.placeholders.years')}
             className="rounded-none border-black bg-white"
           />
+          {touchedYears[item.id] && !!item.years?.trim() && !monthPattern.test(item.years) && (
+            <p className="text-xs text-amber-700 font-mono">
+              {t('builder.forms.experience.errors.yearsRequiresMonth')}
+            </p>
+          )}
         </div>
+      </div>
+
+      <div className="space-y-2 mb-4">
+        <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">
+          {t('builder.forms.experience.fields.jobDescriptionOptional')}
+        </Label>
+        <RichTextEditor
+          value={item.jobDescription || ''}
+          onChange={(html) => handleChange(item.id, 'jobDescription', html)}
+          placeholder={t('builder.forms.experience.placeholders.jobDescription')}
+          minHeight="72px"
+        />
       </div>
 
       <div className="space-y-3">
@@ -260,8 +310,26 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({ data, onChange }
           </div>
         ))}
       </div>
-    </ExperienceCard>
+    </>
   );
+
+  const renderExperienceItem = (item: Experience, draggable: boolean) => {
+    if (draggable) {
+      return (
+        <SortableExperienceCard
+          key={item.id}
+          id={item.id}
+          dragHandleTitle={t('builder.forms.experience.dragHint')}
+        >
+          {renderExperienceContent(item)}
+        </SortableExperienceCard>
+      );
+    }
+
+    return (
+      <StaticExperienceCard key={item.id}>{renderExperienceContent(item)}</StaticExperienceCard>
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -278,8 +346,15 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({ data, onChange }
 
       <div className="space-y-8">
         {isMounted ? (
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            <SortableContext items={data.map((item) => item.id)} strategy={verticalListSortingStrategy}>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={data.map((item) => item.id)}
+              strategy={verticalListSortingStrategy}
+            >
               {data.map((item) => renderExperienceItem(item, true))}
             </SortableContext>
           </DndContext>

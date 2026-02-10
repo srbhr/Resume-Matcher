@@ -355,13 +355,18 @@
         "dragHint": "拖动以重新排序",
         "fields": {
           "jobTitle": "职位名称",
-          "company": "公司"
+          "company": "公司",
+          "jobDescriptionOptional": "岗位描述（可选）"
+        },
+        "errors": {
+          "yearsRequiresMonth": "请包含月份（例如：Aug 2020 - 至今）。"
         },
         "placeholders": {
           "jobTitle": "高级开发工程师",
           "company": "科技公司",
           "location": "远程 / 城市",
-          "years": "2020 - 至今",
+          "years": "Aug 2020 - 至今",
+          "jobDescription": "用一段话概述你的职责与影响...",
           "description": "描述你的成果..."
         }
       },

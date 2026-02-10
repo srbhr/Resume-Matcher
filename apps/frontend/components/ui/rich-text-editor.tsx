@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
@@ -43,8 +43,8 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   // Track if we're doing an internal update to prevent loops (useRef to avoid re-renders)
   const isInternalUpdateRef = useRef(false);
 
-  const editor = useEditor({
-    extensions: [
+  const extensions = useMemo(
+    () => [
       StarterKit.configure({
         // Disable features we don't need for bullet points
         heading: false,
@@ -54,6 +54,9 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
         codeBlock: false,
         horizontalRule: false,
         hardBreak: false,
+        // Avoid duplicate extensions if StarterKit includes these in current version
+        link: false,
+        underline: false,
       }),
       Underline,
       Link.configure({
@@ -64,6 +67,11 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
         },
       }),
     ],
+    []
+  );
+
+  const editor = useEditor({
+    extensions,
     content: value || '',
     onUpdate: ({ editor }) => {
       isInternalUpdateRef.current = true;

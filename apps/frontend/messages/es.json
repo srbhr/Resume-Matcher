@@ -355,13 +355,18 @@
         "dragHint": "Arrastra para reordenar trabajos",
         "fields": {
           "jobTitle": "Puesto",
-          "company": "Empresa"
+          "company": "Empresa",
+          "jobDescriptionOptional": "Descripción del puesto (opcional)"
+        },
+        "errors": {
+          "yearsRequiresMonth": "Incluye el mes (p. ej., Ago 2020 - Presente)."
         },
         "placeholders": {
           "jobTitle": "Desarrollador senior",
           "company": "Tech Corp",
           "location": "Remoto / Ciudad",
-          "years": "2020 - Actualidad",
+          "years": "Ago 2020 - Actualidad",
+          "jobDescription": "Resumen breve del rol y su impacto...",
           "description": "Describe tu logro..."
         }
       },

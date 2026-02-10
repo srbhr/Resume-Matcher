@@ -355,13 +355,18 @@
         "dragHint": "Drag to reorder jobs",
         "fields": {
           "jobTitle": "Job Title",
-          "company": "Company"
+          "company": "Company",
+          "jobDescriptionOptional": "Job Description (Optional)"
+        },
+        "errors": {
+          "yearsRequiresMonth": "Include month names (e.g., Aug 2020 - Present)."
         },
         "placeholders": {
           "jobTitle": "Senior Developer",
           "company": "Tech Corp",
           "location": "Remote / City",
-          "years": "2020 - Present",
+          "years": "Aug 2020 - Present",
+          "jobDescription": "One-paragraph overview of your role and impact...",
           "description": "Describe your achievement..."
         }
       },

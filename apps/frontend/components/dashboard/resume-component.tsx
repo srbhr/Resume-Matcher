@@ -30,6 +30,7 @@ export interface Experience {
   company?: string;
   location?: string;
   years?: string;
+  jobDescription?: string;
   description?: string[];
 }
 

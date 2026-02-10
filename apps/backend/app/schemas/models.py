@@ -137,7 +137,13 @@ class Experience(BaseModel):
     company: str = ""
     location: str | None = None
     years: str = ""
+    jobDescription: str | None = None
     description: list[str] = Field(default_factory=list)
+
+    @field_validator("jobDescription", mode="before")
+    @classmethod
+    def _normalize_job_description(cls, value: Any) -> str | None:
+        return _coerce_optional_text(value)
 
     @field_validator("description", mode="before")
     @classmethod

@@ -355,13 +355,18 @@
         "dragHint": "Arraste para reordenar",
         "fields": {
           "jobTitle": "Cargo",
-          "company": "Empresa"
+          "company": "Empresa",
+          "jobDescriptionOptional": "Descrição do cargo (opcional)"
+        },
+        "errors": {
+          "yearsRequiresMonth": "Inclua o mês (ex.: Ago 2020 - Presente)."
         },
         "placeholders": {
           "jobTitle": "Desenvolvedor Sênior",
           "company": "Tech Corp",
           "location": "Remoto / Cidade",
-          "years": "2020 - Presente",
+          "years": "Ago 2020 - Presente",
+          "jobDescription": "Resumo em um parágrafo do papel e impacto...",
           "description": "Descreva sua conquista..."
         }
       },
