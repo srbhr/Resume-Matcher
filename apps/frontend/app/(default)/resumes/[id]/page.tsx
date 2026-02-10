@@ -64,10 +64,8 @@ export default function ResumeViewerPage() {
         const status = (data.raw_resume?.processing_status || 'pending') as ProcessingStatus;
         setProcessingStatus(status);
 
-        // Capture title for editable display
-        if (data.title) {
-          setResumeTitle(data.title);
-        }
+        // Capture title for editable display (always set to clear stale state)
+        setResumeTitle(data.title ?? null);
 
         // Prioritize processed_resume if available (structured JSON)
         if (data.processed_resume) {
@@ -308,7 +306,7 @@ export default function ResumeViewerPage() {
         </div>
 
         {/* Editable Title (tailored resumes only) */}
-        {!isMasterResume && (resumeTitle || isEditingTitle) && (
+        {!isMasterResume && (
           <div className="mb-6 no-print">
             {isEditingTitle ? (
               <input
@@ -330,10 +328,10 @@ export default function ResumeViewerPage() {
                 }}
                 className="group flex items-center gap-2 cursor-pointer bg-transparent border-none p-0"
               >
-                <h2 className="font-serif text-2xl font-bold border-b-2 border-transparent group-hover:border-black transition-colors">
-                  {resumeTitle}
+                <h2 className={`font-serif text-2xl font-bold border-b-2 border-transparent group-hover:border-black transition-colors ${!resumeTitle ? 'text-gray-400' : ''}`}>
+                  {resumeTitle || t('resumeViewer.titlePlaceholder')}
                 </h2>
-                <Pencil className="w-4 h-4 opacity-0 group-hover:opacity-60 transition-opacity" />
+                <Pencil className={`w-4 h-4 transition-opacity ${resumeTitle ? 'opacity-0 group-hover:opacity-60' : 'opacity-40 group-hover:opacity-60'}`} />
               </button>
             )}
           </div>
