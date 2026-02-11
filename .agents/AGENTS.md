@@ -8,10 +8,60 @@
 
 Resume Matcher is an AI-powered application for tailoring resumes to job descriptions:
 
-- **Backend**: FastAPI + Python 3.11+ with multi-provider LLM support (LiteLLM)
-- **Frontend**: Next.js 15 + React 19 with Swiss International Style design
+- **Backend**: FastAPI + Python 3.13+ with multi-provider LLM support (LiteLLM)
+- **Frontend**: Next.js 16 + React 19 with Swiss International Style design
 - **Database**: TinyDB (JSON file storage)
 - **PDF Generation**: Headless Chromium via Playwright
+
+---
+
+## Available Agents
+
+| Agent | Location | Use for |
+|-------|----------|---------|
+| **codebase-navigator** | `.agents/skills/codebase-navigator/` | Search code, trace flows, find definitions (use FIRST) |
+| **backend-dev** | `.agents/skills/backend-dev/` | FastAPI endpoints, schemas, services, LLM integration |
+| **frontend-dev** | `.agents/skills/frontend-dev/` | Next.js pages, React components, Swiss style |
+| **ui-review** | `.agents/skills/ui-review/` | Swiss International Style compliance check |
+| **code-review** | `.agents/skills/code-review/` | Code quality, security, conventions review |
+
+### VS Code / GitHub Copilot
+
+| Agent | Prompt |
+|-------|--------|
+| Codebase Navigator | `.github/agents/codebase-navigator.agent.md` |
+| Backend Dev | `.github/agents/backend-dev.agent.md` |
+| Frontend Dev | `.github/agents/frontend-dev.agent.md` |
+| Full Stack Dev | `.github/agents/full-stack.agent.md` |
+| UI Review | `.github/agents/ui-review.agent.md` |
+| Code Review | `.github/agents/code-review.agent.md` |
+| Opus (general) | `.github/agents/opus.agent.md` |
+
+### VS Code Prompts
+
+| Prompt | Description |
+|--------|-------------|
+| `navigate-code` | Search and explore codebase |
+| `backend-dev` | Backend development tasks |
+| `frontend-dev` | Frontend development tasks |
+| `full-stack` | Cross-layer features |
+| `review-ui` | Swiss style compliance |
+| `review-code` | Code quality review |
+| `ask-opus` | General queries via Opus |
+
+### Codebase Search Scripts
+
+```bash
+# Search for functions, classes, components, etc.
+.agents/skills/codebase-navigator/scripts/search.sh <command> [pattern]
+
+# Trace API flows, component trees, data paths
+.agents/skills/codebase-navigator/scripts/trace.sh <command> [args]
+
+# Available search commands:
+#   functions, classes, components, endpoints, imports, exports,
+#   types, hooks, todos, deps, tree, files, usage, api-routes, schema, config
+```
 
 ---
 
@@ -94,6 +144,22 @@ npm run build
 
 ---
 
+## Skills (Reusable Patterns)
+
+| Skill | Description |
+|-------|-------------|
+| [codebase-navigator](.agents/skills/codebase-navigator/SKILL.md) | Code search with ripgrep scripts |
+| [backend-dev](.agents/skills/backend-dev/SKILL.md) | FastAPI development patterns |
+| [frontend-dev](.agents/skills/frontend-dev/SKILL.md) | Next.js + Swiss style patterns |
+| [ui-review](.agents/skills/ui-review/SKILL.md) | Swiss style compliance checker |
+| [code-review](.agents/skills/code-review/SKILL.md) | Code review guidelines |
+| [design-principles](.agents/skills/design-principles/skill.md) | Swiss International Style |
+| [fastapi](.agents/skills/fastapi/SKILL.md) | FastAPI, Pydantic v2, JWT auth |
+| [tailwind-pattern](.agents/skills/tailwind-pattern/SKILL.md) | Tailwind CSS patterns |
+| [nextjs-performance](.agents/skills/nextjs-performance/SKILL.md) | Next.js performance fixes |
+
+---
+
 ## Project Structure
 
 ```
@@ -137,6 +203,7 @@ Before marking a PR as ready:
 
 | Need | Go to |
 |------|-------|
+| Search codebase | `.agents/skills/codebase-navigator/scripts/search.sh` |
 | Backend architecture | [architecture/backend-guide.md](docs/agent/architecture/backend-guide.md) |
 | Frontend architecture | [architecture/frontend-workflow.md](docs/agent/architecture/frontend-workflow.md) |
 | API specs | [apis/front-end-apis.md](docs/agent/apis/front-end-apis.md) |

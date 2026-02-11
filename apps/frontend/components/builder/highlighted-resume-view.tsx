@@ -189,7 +189,7 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <div className="border border-gray-200 bg-white rounded">
+    <div className="border border-gray-200 bg-white rounded-none">
       <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-200 bg-gray-50">
         {icon}
         <span className="font-mono text-xs font-bold uppercase text-gray-600">{title}</span>
@@ -209,7 +209,7 @@ function HighlightedText({ text, keywords }: { text: string; keywords: Set<strin
     <span>
       {segments.map((segment, i) =>
         segment.isMatch ? (
-          <mark key={i} className="bg-yellow-200 text-gray-900 px-0.5 rounded-sm">
+          <mark key={i} className="bg-yellow-200 text-black px-0.5">
             {segment.text}
           </mark>
         ) : (
@@ -228,8 +228,8 @@ function SkillTag({ text, keywords }: { text: string; keywords: Set<string> }) {
 
   return (
     <span
-      className={`inline-block px-2 py-0.5 text-xs rounded ${
-        isMatch ? 'bg-yellow-200 text-gray-900 font-medium' : 'bg-gray-100 text-gray-700'
+      className={`inline-block px-2 py-0.5 text-xs ${
+        isMatch ? 'bg-yellow-200 text-black font-medium' : 'bg-[#F0F0E8] text-gray-600'
       }`}
     >
       {text}

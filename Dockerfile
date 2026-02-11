@@ -9,6 +9,7 @@ FROM node:22 AS frontend-builder
 # Build argument for API URL (allows customization at build time)
 # Default matches the default BACKEND_PORT in docker-compose.yml
 ARG NEXT_PUBLIC_API_URL=http://localhost:8000
+ENV NEXT_TELEMETRY_DISABLED=1
 
 WORKDIR /app/frontend
 
@@ -38,11 +39,13 @@ ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    NODE_ENV=production
+    NODE_ENV=production \
+    NEXT_TELEMETRY_DISABLED=1
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    # Node.js for frontend
+    # Node.js installer dependencies
+    ca-certificates \
     curl \
     # Playwright dependencies
     libnss3 \
@@ -62,12 +65,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libcairo2 \
     libatspi2.0-0 \
     libgtk-3-0 \
-    # Cleanup
-    && rm -rf /var/lib/apt/lists/*
-
-# Install Node.js 22.x
-RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
-    && apt-get install -y nodejs \
+    && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+    && apt-get install -y --no-install-recommends nodejs \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -81,24 +80,17 @@ COPY apps/backend/app /app/backend/app
 WORKDIR /app/backend
 
 # Install Python dependencies
-RUN pip install -e .
-
-# Install Playwright system dependencies (as root)
-RUN python -m playwright install-deps chromium 2>/dev/null || true
+RUN pip install .
 
 # ============================================
 # Frontend Setup
 # ============================================
 WORKDIR /app/frontend
 
-# Copy built frontend from builder stage
-COPY --from=frontend-builder /app/frontend/.next ./.next
+# Copy standalone frontend runtime from builder stage
+COPY --from=frontend-builder /app/frontend/.next/standalone ./
+COPY --from=frontend-builder /app/frontend/.next/static ./.next/static
 COPY --from=frontend-builder /app/frontend/public ./public
-COPY --from=frontend-builder /app/frontend/package*.json ./
-COPY --from=frontend-builder /app/frontend/next.config.ts ./
-
-# Install production dependencies only
-RUN npm ci --omit=dev
 
 # ============================================
 # Startup Script
