@@ -78,7 +78,13 @@ case "${1:-help}" in
     rg_safe "add_middleware|@app\.middleware" "$BACKEND" --type py
     echo ""
     echo "=== Next.js middleware ==="
-    rg_safe "." "$FRONTEND/middleware.ts" 2>/dev/null || rg_safe "." "$FRONTEND/middleware.tsx" 2>/dev/null || echo "(no middleware.ts found)"
+    if [ -f "$FRONTEND/middleware.ts" ]; then
+      rg_safe "." "$FRONTEND/middleware.ts"
+    elif [ -f "$FRONTEND/middleware.tsx" ]; then
+      rg_safe "." "$FRONTEND/middleware.tsx"
+    else
+      echo "(no middleware.ts found)"
+    fi
     echo ""
     echo "=== Next.js route wrappers ==="
     rg_safe "withAuth|withLayout|withProvider" "$FRONTEND" --glob "*.{ts,tsx}" || true

@@ -48,7 +48,7 @@ search() {
       ack --noheading --nocolor "$@" "$pattern" "$REPO_ROOT" 2>/dev/null || true
       ;;
     grep)
-      grep -rn --color=never "$@" "$pattern" "$REPO_ROOT" \
+      grep -Ern --color=never "$@" "$pattern" "$REPO_ROOT" \
         --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=__pycache__ \
         --exclude-dir=.git --exclude-dir=venv --exclude-dir=.venv 2>/dev/null || true
       ;;
@@ -75,11 +75,16 @@ search_type() {
         js) ext="*.js" ;;
         *) ext="*.$filetype" ;;
       esac
-      grep -rn --color=never --include="$ext" "$pattern" "$REPO_ROOT" \
+      grep -Ern --color=never --include="$ext" "$pattern" "$REPO_ROOT" \
         --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=__pycache__ \
         --exclude-dir=.git 2>/dev/null || true
       ;;
   esac
+}
+
+# Convert a glob pattern to a grep-compatible regex for ack fallback
+glob_to_regex() {
+  echo "$1" | sed -e 's/\./\\./g' -e 's/\*/.*/g' -e 's/{/(/g' -e 's/}/)/g' -e 's/,/|/g'
 }
 
 # Wrapper for glob-based file searching
@@ -91,10 +96,12 @@ search_glob() {
       rg --no-heading --line-number --color=never --glob "$glob" "$pattern" "$REPO_ROOT" 2>/dev/null || true
       ;;
     ack)
-      ack --noheading --nocolor "$pattern" "$REPO_ROOT" 2>/dev/null | grep "$glob" || true
+      local file_regex
+      file_regex=$(glob_to_regex "$glob")
+      ack --noheading --nocolor "$pattern" "$REPO_ROOT" 2>/dev/null | grep -E "$file_regex" || true
       ;;
     grep)
-      grep -rn --color=never --include="$glob" "$pattern" "$REPO_ROOT" \
+      grep -Ern --color=never --include="$glob" "$pattern" "$REPO_ROOT" \
         --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=__pycache__ \
         --exclude-dir=.git 2>/dev/null || true
       ;;
@@ -132,10 +139,10 @@ case "${1:-help}" in
   endpoints)
     PATTERN="${2:-.}"
     echo "=== FastAPI endpoints ==="
-    search_type "@(router|app)\.(get|post|put|patch|delete)" py
+    search_type "@(router|app)\.(get|post|put|patch|delete).*${PATTERN}" py
     echo ""
     echo "=== Next.js API routes ==="
-    search_glob "export (async )?function (GET|POST|PUT|PATCH|DELETE)" "*.{ts,tsx}"
+    search_glob "export (async )?function (GET|POST|PUT|PATCH|DELETE).*${PATTERN}" "*.{ts,tsx}"
     ;;
 
   imports)
