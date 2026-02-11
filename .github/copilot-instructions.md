@@ -1,11 +1,13 @@
 # Repository Guidelines - GitHub CoPilot Instructions
 
-> **First:** Read the [navigator skill](/.claude/skills/navigator/SKILL.md) for codebase orientation.
+> **First:** Use the [codebase-navigator agent](/.github/agents/codebase-navigator.agent.md) or read the [navigator skill](/.claude/skills/navigator/SKILL.md) for codebase orientation.
 
 ## Table of Contents
 
 - [Repository Guidelines - GitHub CoPilot Instructions](#repository-guidelines---github-copilot-instructions)
   - [Table of Contents](#table-of-contents)
+  - [Available Agents](#available-agents)
+  - [Available Prompts](#available-prompts)
   - [Documentation](#documentation)
     - [Core Docs](#core-docs)
     - [Architecture](#architecture)
@@ -13,6 +15,7 @@
     - [Design \& Templates](#design--templates)
     - [Features](#features)
   - [Skills (AI Agent Patterns)](#skills-ai-agent-patterns)
+  - [Codebase Search Scripts](#codebase-search-scripts)
   - [Project Structure \& Module Organization](#project-structure--module-organization)
     - [Backend (`apps/backend/`)](#backend-appsbackend)
     - [Frontend (`apps/frontend/`)](#frontend-appsfrontend)
@@ -26,6 +29,38 @@
   - [Custom Sections System](#custom-sections-system)
   - [Resume Template Settings](#resume-template-settings)
   - [Internationalization (i18n)](#internationalization-i18n)
+
+---
+
+## Available Agents
+
+Specialized agents for different development tasks (`.github/agents/`):
+
+| Agent | Description |
+|-------|-------------|
+| [codebase-navigator](/.github/agents/codebase-navigator.agent.md) | Search code, trace flows, find definitions. **Use first when exploring.** |
+| [backend-dev](/.github/agents/backend-dev.agent.md) | FastAPI endpoints, Pydantic schemas, services, LLM integration |
+| [frontend-dev](/.github/agents/frontend-dev.agent.md) | Next.js pages, React components, Swiss International Style |
+| [full-stack](/.github/agents/full-stack.agent.md) | Features spanning both backend and frontend |
+| [ui-review](/.github/agents/ui-review.agent.md) | Swiss International Style compliance checker |
+| [code-review](/.github/agents/code-review.agent.md) | Code quality, security, conventions review |
+| [opus-agent](/.github/agents/opus.agent.md) | General-purpose queries |
+
+---
+
+## Available Prompts
+
+Quick-invoke prompts (`.github/prompts/`):
+
+| Prompt | Description |
+|--------|-------------|
+| [navigate-code](/.github/prompts/navigate-code.prompt.md) | Search and explore codebase |
+| [backend-dev](/.github/prompts/backend-dev.prompt.md) | Backend development tasks |
+| [frontend-dev](/.github/prompts/frontend-dev.prompt.md) | Frontend development tasks |
+| [full-stack](/.github/prompts/full-stack.prompt.md) | Cross-layer feature development |
+| [review-ui](/.github/prompts/review-ui.prompt.md) | Swiss style compliance review |
+| [review-code](/.github/prompts/review-code.prompt.md) | Code quality review |
+| [ask-opus](/.github/prompts/ask-opus.prompt.md) | General queries via Opus |
 
 ---
 
@@ -82,20 +117,57 @@ All project documentation is located in the `docs/agent/` folder:
 
 ## Skills (AI Agent Patterns)
 
-Reusable patterns and guidelines for AI agents located in `.claude/skills/`:
+Reusable patterns and guidelines for AI agents located in `.claude/skills/` and `.agents/skills/`:
 
 | Skill | Description |
 |-------|-------------|
-| [navigator](/.claude/skills/navigator/SKILL.md) | Codebase orientation - use FIRST when exploring code |
+| [codebase-navigator](/.agents/skills/codebase-navigator/SKILL.md) | Code search with ripgrep scripts (**use FIRST**) |
+| [backend-dev](/.agents/skills/backend-dev/SKILL.md) | FastAPI development patterns |
+| [frontend-dev](/.agents/skills/frontend-dev/SKILL.md) | Next.js + Swiss style patterns |
+| [ui-review](/.agents/skills/ui-review/SKILL.md) | Swiss style compliance checker |
+| [code-review](/.agents/skills/code-review/SKILL.md) | Code review guidelines |
+| [navigator](/.claude/skills/navigator/SKILL.md) | Quick codebase orientation |
 | [tailwind-patterns](/.claude/skills/tailwind-pattern/SKILL.md) | Tailwind CSS component patterns + Swiss style overrides |
 | [fastapi](/.claude/skills/fastapi/SKILL.md) | FastAPI patterns, JWT auth, Pydantic v2, async SQLAlchemy |
-| [design-principles](/.claude/skills/design-principles/SKILL.md) | Swiss International Style design principles |
+| [design-principles](/.claude/skills/design-principles/skill.md) | Swiss International Style design principles |
+| [react-patterns](/.claude/skills/react-patterns/SKILL.md) | React/Next.js performance optimization |
+| [nextjs-performance](/.claude/skills/nextjs-performance/SKILL.md) | Next.js critical performance fixes |
 
 **Quick Start for Agents:**
 
-1. Read `navigator` skill first for codebase orientation
-2. Check `design-principles` and `tailwind-patterns` for UI work
-3. Check `fastapi` skill for backend work
+1. Use `codebase-navigator` agent first for code exploration
+2. Use `backend-dev` or `frontend-dev` agent for implementation
+3. Run `ui-review` before committing any UI changes
+4. Run `code-review` for quality checks
+
+---
+
+## Codebase Search Scripts
+
+Search scripts using ripgrep (`.agents/skills/codebase-navigator/scripts/`):
+
+```bash
+# Find functions, classes, components
+.agents/skills/codebase-navigator/scripts/search.sh functions <pattern>
+.agents/skills/codebase-navigator/scripts/search.sh classes <pattern>
+.agents/skills/codebase-navigator/scripts/search.sh components <pattern>
+
+# Find API endpoints and routes
+.agents/skills/codebase-navigator/scripts/search.sh endpoints
+.agents/skills/codebase-navigator/scripts/search.sh api-routes
+
+# Find types, schemas, imports
+.agents/skills/codebase-navigator/scripts/search.sh types <pattern>
+.agents/skills/codebase-navigator/scripts/search.sh schema <pattern>
+.agents/skills/codebase-navigator/scripts/search.sh imports <module>
+
+# Trace flows
+.agents/skills/codebase-navigator/scripts/trace.sh api-flow <endpoint>
+.agents/skills/codebase-navigator/scripts/trace.sh component-tree <name>
+.agents/skills/codebase-navigator/scripts/trace.sh data-flow <field>
+
+# More: exports, hooks, todos, deps, tree, files, usage, config
+```
 
 ---
 
