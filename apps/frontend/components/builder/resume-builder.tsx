@@ -798,7 +798,7 @@ const ResumeBuilderContent = () => {
                     </p>
                   </div>
 
-                  <div className="border-2 border-black bg-yellow-50 p-4">
+                  <div className="border-2 border-black bg-[#F0F0E8] p-4">
                     <h3 className="font-mono text-sm font-bold uppercase mb-2">
                       {t('builder.jdMatch.highlightedKeywordsTitle')}
                     </h3>
@@ -822,7 +822,7 @@ const ResumeBuilderContent = () => {
                     </p>
                   </div>
 
-                  <div className="border-2 border-black bg-gray-50 p-4">
+                  <div className="border-2 border-black bg-white p-4">
                     <h3 className="font-mono text-sm font-bold uppercase mb-2">
                       {t('builder.jdMatch.tipsTitle')}
                     </h3>

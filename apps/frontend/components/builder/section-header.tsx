@@ -141,7 +141,7 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
                 </span>
               )}
               {isHidden && (
-                <span className="font-mono text-[10px] uppercase tracking-wider text-amber-600 bg-amber-50 px-1.5 py-0.5 border border-amber-200">
+                <span className="font-mono text-[10px] uppercase tracking-wider text-orange-600 bg-white px-1.5 py-0.5 border border-orange-500">
                   {t('builder.sectionHeader.hiddenFromPdfTag')}
                 </span>
               )}

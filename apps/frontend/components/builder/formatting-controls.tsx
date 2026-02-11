@@ -146,7 +146,7 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
   };
 
   return (
-    <div className="border border-black bg-white">
+    <div className="border border-black bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)]">
       {/* Header - Always Visible */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
@@ -178,9 +178,9 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
                 <button
                   key={template.id}
                   onClick={() => handleTemplateChange(template.id)}
-                  className={`group flex flex-col items-center p-2 border-2 transition-all ${
+                  className={`group flex flex-col items-center p-2 border transition-all ${
                     settings.template === template.id
-                      ? 'border-blue-700 bg-blue-50 shadow-[2px_2px_0px_0px_#1D4ED8]'
+                      ? 'border-blue-700 bg-white shadow-[2px_2px_0px_0px_#1D4ED8]'
                       : 'border-black bg-white hover:bg-gray-50 hover:shadow-[1px_1px_0px_0px_#000]'
                   }`}
                   title={templateLabels[template.id].description}
@@ -214,9 +214,9 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
                   <button
                     key={color}
                     onClick={() => handleAccentColorChange(color)}
-                    className={`flex items-center gap-2 px-3 py-2 border-2 font-mono text-xs transition-all ${
+                    className={`flex items-center gap-2 px-3 py-2 border font-mono text-xs transition-all ${
                       settings.accentColor === color
-                        ? 'border-blue-700 bg-blue-50 shadow-[2px_2px_0px_0px_#1D4ED8]'
+                        ? 'border-blue-700 bg-white shadow-[2px_2px_0px_0px_#1D4ED8]'
                         : 'border-black bg-white hover:bg-gray-50'
                     }`}
                     title={t(`builder.formatting.accentColors.${color}`)}
@@ -242,10 +242,10 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
                 <button
                   key={size}
                   onClick={() => handlePageSizeChange(size)}
-                  className={`flex-1 px-3 py-2 border-2 font-mono text-xs transition-all ${
+                  className={`flex-1 px-3 py-2 border font-mono text-xs transition-all ${
                     settings.pageSize === size
-                      ? 'border-blue-700 bg-blue-50 text-blue-700 shadow-[2px_2px_0px_0px_#1D4ED8]'
-                      : 'border-black bg-white text-gray-700 hover:bg-gray-50'
+                      ? 'border-blue-700 bg-white text-blue-700 shadow-[2px_2px_0px_0px_#1D4ED8]'
+                      : 'border-black bg-white text-gray-600 hover:bg-gray-50'
                   }`}
                   title={PAGE_SIZE_INFO[size].dimensions}
                 >

@@ -387,7 +387,7 @@ export default function TailorPage() {
           <div className="relative">
             <Textarea
               placeholder={t('tailor.jobDescriptionPlaceholder')}
-              className="min-h-[300px] font-mono text-sm bg-gray-50 border-2 border-black focus:ring-0 focus:border-blue-700 resize-none p-4 rounded-none shadow-inner"
+              className="min-h-[300px] font-mono text-sm bg-[#F0F0E8] border-2 border-black focus:ring-0 focus:border-blue-700 resize-none p-4 rounded-none"
               value={jobDescription}
               onChange={(e) => setJobDescription(e.target.value)}
               onKeyDown={handleTextareaKeyDown}

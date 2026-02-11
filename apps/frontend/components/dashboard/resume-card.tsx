@@ -18,7 +18,7 @@ export const ResumeCard = ({ type, title, lastEdited, onClick }: ResumeCardProps
   if (type === 'new') {
     return (
       <button onClick={onClick} className={`${baseClasses} items-center justify-center group`}>
-        <div className="rounded-full border-2 border-black p-4">
+        <div className="border-2 border-black p-4">
           <Plus size={32} />
         </div>
         <span className="mt-4 font-bold uppercase tracking-wider text-sm">

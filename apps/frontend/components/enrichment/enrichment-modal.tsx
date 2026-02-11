@@ -112,8 +112,8 @@ export function EnrichmentModal({ resumeId, isOpen, onClose, onComplete }: Enric
       onClick={handleBackdropClick}
       onCancel={handleCancel}
     >
-      {/* Backdrop with blur */}
-      <div className="absolute inset-0 bg-black/30 backdrop-blur-[4px]" />
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/40" />
 
       {/* Modal container - 80% viewport with padding */}
       <div className="absolute inset-0 flex items-center justify-center p-5 sm:p-10">
