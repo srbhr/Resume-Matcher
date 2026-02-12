@@ -62,6 +62,18 @@ class LLMConfig(BaseModel):
     api_base: str | None = None
 
 
+def _is_github_copilot_authenticated() -> bool:
+    """Check if GitHub Copilot has a valid OAuth token on disk.
+
+    LiteLLM stores the token at ~/.config/litellm/github_copilot/access-token.
+    If the file is missing, any LLM call would trigger the device-code OAuth
+    flow (requiring manual browser intervention), so we fail fast instead.
+    """
+    from pathlib import Path
+    token_file = Path.home() / ".config" / "litellm" / "github_copilot" / "access-token"
+    return token_file.exists()
+
+
 def _normalize_api_base(provider: str, api_base: str | None) -> str | None:
     """Normalize api_base for LiteLLM provider-specific expectations.
 
@@ -323,6 +335,16 @@ async def check_llm_health(
             "error_code": "api_key_missing",
         }
 
+    # GitHub Copilot: fail fast if not authenticated to avoid triggering device flow
+    if config.provider == "github_copilot" and not _is_github_copilot_authenticated():
+        return {
+            "healthy": False,
+            "provider": config.provider,
+            "model": config.model,
+            "error_code": "github_copilot_not_authenticated",
+            "message": "GitHub Copilot is not authenticated. Please authenticate via Settings first.",
+        }
+
     model_name = get_model_name(config)
 
     prompt = test_prompt or "Hi"
@@ -418,6 +440,13 @@ async def complete(
         config = get_llm_config()
 
     model_name = get_model_name(config)
+
+    # GitHub Copilot: fail fast if not authenticated to avoid triggering device flow
+    if config.provider == "github_copilot" and not _is_github_copilot_authenticated():
+        raise ValueError(
+            "GitHub Copilot is not authenticated. "
+            "Please authenticate via Settings before using AI features."
+        )
 
     messages = []
     if system_prompt:
@@ -636,6 +665,13 @@ async def complete_json(
         config = get_llm_config()
 
     model_name = get_model_name(config)
+
+    # GitHub Copilot: fail fast if not authenticated to avoid triggering device flow
+    if config.provider == "github_copilot" and not _is_github_copilot_authenticated():
+        raise ValueError(
+            "GitHub Copilot is not authenticated. "
+            "Please authenticate via Settings before using AI features."
+        )
 
     # Build messages
     json_system = (

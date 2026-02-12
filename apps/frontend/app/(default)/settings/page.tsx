@@ -14,9 +14,7 @@ import {
   clearAllApiKeys,
   resetDatabase,
   logoutGithubCopilot,
-  checkGithubCopilotStatus,
   initiateGithubCopilotAuth,
-  cancelGithubCopilotAuth,
   PROVIDER_INFO,
   type LLMConfig,
   type LLMProvider,
@@ -387,24 +385,6 @@ export default function SettingsPage() {
     // Create new abort controller for this test
     testConnectionAbortRef.current = new AbortController();
 
-    // For GitHub Copilot, just check status - don't trigger OAuth
-    if (provider === 'github_copilot') {
-      try {
-        const status = await checkGithubCopilotStatus();
-        if (status.authenticated) {
-          setCopilotAuthStatus('authenticated');
-        } else {
-          setCopilotAuthStatus('not_authenticated');
-          setShowCopilotAuthInfo(true);
-        }
-        setStatus('idle');
-        testConnectionAbortRef.current = null;
-        return;
-      } catch {
-        // If check fails, proceed with actual test
-      }
-    }
-
     try {
       // Build config from current form values
       const testConfig: Partial<LLMConfig> = {
@@ -430,9 +410,9 @@ export default function SettingsPage() {
       }
 
       // Handle not_authenticated error for Copilot
-      if (!result.healthy && provider === 'github_copilot' && result.error_code === 'not_authenticated') {
+      if (!result.healthy && provider === 'github_copilot' &&
+          (result.error_code === 'not_authenticated' || result.error_code === 'github_copilot_not_authenticated')) {
         setCopilotAuthStatus('not_authenticated');
-        setShowCopilotAuthInfo(true);
       }
 
       setStatus('idle');
@@ -479,32 +459,6 @@ export default function SettingsPage() {
       setStatus('idle');
     }
   };
-
-  // Cancel ongoing test connection (and backend auth task for GitHub Copilot)
-  const handleCancelTestConnection = async () => {
-    // 1. Abort any in-flight frontend HTTP request
-    if (testConnectionAbortRef.current) {
-      testConnectionAbortRef.current.abort();
-      testConnectionAbortRef.current = null;
-    }
-
-    // 2. Cancel the backend OAuth background task for GitHub Copilot
-    if (provider === 'github_copilot') {
-      try {
-        await cancelGithubCopilotAuth();
-      } catch {
-        // Best-effort — don’t block the UI reset
-      }
-    }
-
-    // 3. Reset all auth-related states
-    setStatus('idle');
-    setShowCopilotAuthInfo(false);
-    setCopilotAuthStatus('unknown');
-    setHealthCheck(null);
-    setError(null);
-  };
-
   // Update feature config
   const handleFeatureConfigChange = async (
     key: 'enable_cover_letter' | 'enable_outreach_message',
@@ -938,18 +892,16 @@ export default function SettingsPage() {
                     <div className="p-5 space-y-4">
                       {/* Status Indicator */}
                       <div className="flex items-center gap-3">
-                        <div className={`w-3 h-3 ${copilotAuthStatus === 'authenticated' ? 'bg-green-500' : copilotAuthStatus === 'not_authenticated' ? 'bg-red-500' : 'bg-gray-400'}`}></div>
+                        <div className={`w-3 h-3 ${copilotAuthStatus === 'authenticated' ? 'bg-green-500' : 'bg-red-500'}`}></div>
                         <span className="font-mono text-sm font-bold">
                           {copilotAuthStatus === 'authenticated'
                             ? 'Authenticated'
-                            : copilotAuthStatus === 'not_authenticated'
-                              ? 'Not Authenticated'
-                              : 'Unknown Status'}
+                            : 'Not Authenticated'}
                         </span>
                       </div>
 
                       {/* Authentication Flow for unauthenticated users */}
-                      {copilotAuthStatus === 'not_authenticated' && (
+                      {copilotAuthStatus !== 'authenticated' && (
                         <div className="space-y-3">
                           <p className="font-mono text-xs text-gray-700">
                             To authenticate with GitHub Copilot:
@@ -974,16 +926,6 @@ export default function SettingsPage() {
                                 <>Start Authentication</>
                               )}
                             </Button>
-                            {showCopilotAuthInfo && (
-                              <Button
-                                variant="outline"
-                                onClick={handleCancelTestConnection}
-                                className="border-red-600 text-red-600 hover:bg-red-50"
-                              >
-                                <XCircle className="w-4 h-4" />
-                                Cancel
-                              </Button>
-                            )}
                           </div>
                         </div>
                       )}
@@ -1006,7 +948,6 @@ export default function SettingsPage() {
                               });
                               setShowSuccessDialog(true);
                               setCopilotAuthStatus('not_authenticated');
-                              setShowCopilotAuthInfo(false);
                               setStatus('idle');
                             } catch (err) {
                               console.error('Failed to logout', err);

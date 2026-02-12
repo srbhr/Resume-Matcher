@@ -188,25 +188,12 @@ async def test_llm_connection(request: LLMConfigRequest | None = None) -> dict:
         ),
     )
 
-    # For GitHub Copilot, check if already authenticated before testing
-    # to avoid triggering OAuth device flow automatically
-    if config.provider == "github_copilot":
-        from pathlib import Path
-        copilot_dir = Path.home() / ".config" / "litellm" / "github_copilot"
-        token_file = copilot_dir / "access-token"
-
-        if not token_file.exists():
-            # Not authenticated - return error without triggering OAuth
-            return {
-                "healthy": False,
-                "provider": config.provider,
-                "model": config.model,
-                "error_code": "not_authenticated",
-                "error": "GitHub Copilot not authenticated. Please check the terminal for device code and visit github.com/login/device",
-            }
-
     test_prompt = "Hi"
-    return await check_llm_health(config, include_details=True, test_prompt=test_prompt)
+    return await check_llm_health(
+        config,
+        include_details=True,
+        test_prompt=test_prompt,
+    )
 
 
 @router.get("/features", response_model=FeatureConfigResponse)
@@ -625,7 +612,7 @@ async def initiate_github_copilot_auth() -> dict:
         }
     
     # Import here to avoid circular imports
-    from ..llm import get_llm_config, check_llm_health
+    from ..llm import get_llm_config
     
     config = get_llm_config()
     
@@ -635,12 +622,25 @@ async def initiate_github_copilot_auth() -> dict:
             "message": "GitHub Copilot is not the current provider"
         }
     
-    # Trigger the OAuth flow by making a health check
-    # This will initiate the device flow and show the code in terminal
+    # Trigger the OAuth flow by making a direct LiteLLM call.
+    # We bypass check_llm_health() here because it now refuses to call
+    # LiteLLM when Copilot is unauthenticated (to prevent accidental
+    # device-flow triggers from enrich/tailor/etc.).  The initiate-auth
+    # endpoint is the ONE place where we *want* the device flow.
     try:
+        import litellm as _litellm
+        from ..llm import get_model_name
+
+        _auth_model = get_model_name(config)
+
         async def trigger_auth():
             try:
-                await check_llm_health(config)
+                await _litellm.acompletion(
+                    model=_auth_model,
+                    messages=[{"role": "user", "content": "Hi"}],
+                    max_tokens=16,
+                    timeout=30,
+                )
             except asyncio.CancelledError:
                 logging.info("GitHub Copilot auth task cancelled by user")
                 raise
