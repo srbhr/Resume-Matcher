@@ -457,14 +457,8 @@ export default function SettingsPage() {
         setCopilotAuthStatus('not_authenticated');
       } else if (result.status === 'already_authenticated') {
         setCopilotAuthStatus('authenticated');
-<<<<<<< HEAD
-        setShowCopilotAuthInfo(false);
-        setStatus('idle');
       } else if (result.status === 'error') {
         setError(result.message);
-        setStatus('idle');
-=======
->>>>>>> f70bd47 (feat: implement LLM health checks before generating content in various components)
       }
     } catch (err) {
       console.error('Failed to initiate auth', err);
@@ -473,34 +467,6 @@ export default function SettingsPage() {
       setIsInitiatingAuth(false);
     }
   };
-<<<<<<< HEAD
-=======
-
-  // Cancel ongoing test connection (and backend auth task for GitHub Copilot)
-  const handleCancelTestConnection = async () => {
-    // 1. Abort any in-flight frontend HTTP request
-    if (testConnectionAbortRef.current) {
-      testConnectionAbortRef.current.abort();
-      testConnectionAbortRef.current = null;
-    }
-
-    // 2. Cancel the backend OAuth background task for GitHub Copilot
-    if (provider === 'github_copilot') {
-      try {
-        await cancelGithubCopilotAuth();
-      } catch {
-        // Best-effort — don’t block the UI reset
-      }
-    }
-
-    // 3. Reset all auth-related states
-    setStatus('idle');
-    setCopilotAuthStatus('unknown');
-    setHealthCheck(null);
-    setError(null);
-  };
-
->>>>>>> f70bd47 (feat: implement LLM health checks before generating content in various components)
   // Update feature config
   const handleFeatureConfigChange = async (
     key: 'enable_cover_letter' | 'enable_outreach_message',
@@ -945,20 +911,6 @@ export default function SettingsPage() {
                       {/* Authentication Flow for unauthenticated users */}
                       {copilotAuthStatus !== 'authenticated' && (
                         <div className="space-y-4">
-                          {showCopilotAuthInfo && (
-                            <div className="p-3 bg-blue-50 border border-blue-200 rounded flex items-start gap-2">
-                              <div className="w-3 h-3 bg-blue-500 rounded-full mt-0.5 animate-pulse shrink-0"></div>
-                              <div>
-                                <p className="font-mono text-xs text-blue-800 font-bold">
-                                  Check Your Backend Terminal!
-                                </p>
-                                <p className="font-mono text-xs text-blue-700 mt-1">
-                                  The GitHub device code should be displayed in the terminal where
-                                  you started the backend server (uvicorn).
-                                </p>
-                              </div>
-                            </div>
-                          )}
                           <p className="font-mono text-xs text-gray-700">
                             To authenticate with GitHub Copilot:
                           </p>
@@ -972,23 +924,13 @@ export default function SettingsPage() {
                           </ol>
                           <Button
                             onClick={handleInitiateCopilotAuth}
-<<<<<<< HEAD
-                            disabled={status === 'testing'}
-                            className="w-full"
-                          >
-                            {status === 'testing' ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
-                              'Start Authentication'
-=======
                             disabled={isInitiatingAuth}
                             className="w-full"
                           >
                             {isInitiatingAuth ? (
                               <Loader2 className="w-4 h-4 animate-spin" />
                             ) : (
-                              <>Start Authentication</>
->>>>>>> f70bd47 (feat: implement LLM health checks before generating content in various components)
+                              'Start Authentication'
                             )}
                           </Button>
                         </div>
