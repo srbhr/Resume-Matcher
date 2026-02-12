@@ -57,11 +57,42 @@ export async function fetchLlmConfig(): Promise<LLMConfig> {
   return res.json();
 }
 
-// Legacy function for backwards compatibility
-export async function fetchLlmApiKey(): Promise<string> {
-  const config = await fetchLlmConfig();
-  return config.api_key ?? '';
+// Initiate GitHub Copilot OAuth authentication
+export interface InitiateCopilotAuthResponse {
+  status: 'initiated' | 'already_authenticated' | 'error';
+  message: string;
+  verification_uri?: string;
 }
+
+export async function initiateGithubCopilotAuth(): Promise<InitiateCopilotAuthResponse> {
+  const res = await apiFetch('/config/github-copilot/initiate-auth', {
+    method: 'POST',
+    credentials: 'include',
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || `Failed to initiate authentication (status ${res.status}).`);
+  }
+
+  return res.json();
+}
+
+// Cancel an in-progress GitHub Copilot OAuth authentication
+export async function cancelGithubCopilotAuth(): Promise<{ status: string; message: string }> {
+  const res = await apiFetch('/config/github-copilot/cancel-auth', {
+    method: 'POST',
+    credentials: 'include',
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || `Failed to cancel authentication (status ${res.status}).`);
+  }
+
+  return res.json();
+}
+
 
 // Update LLM configuration
 export async function updateLlmConfig(config: LLMConfigUpdate): Promise<LLMConfig> {
@@ -87,10 +118,14 @@ export async function updateLlmApiKey(value: string): Promise<string> {
 }
 
 // Test LLM connection with optional config (for pre-save testing)
-export async function testLlmConnection(config?: LLMConfigUpdate): Promise<LLMHealthCheck> {
+export async function testLlmConnection(
+  config?: LLMConfigUpdate,
+  signal?: AbortSignal
+): Promise<LLMHealthCheck> {
   const options: RequestInit = {
     method: 'POST',
     credentials: 'include',
+    signal,
   };
 
   // If config provided, send it in the request body
