@@ -13,6 +13,8 @@ import {
   updatePromptConfig,
   clearAllApiKeys,
   resetDatabase,
+  logoutGithubCopilot,
+  checkGithubCopilotStatus,
   PROVIDER_INFO,
   type LLMConfig,
   type LLMProvider,
@@ -47,6 +49,7 @@ import {
   Globe,
   Trash2,
   AlertTriangle,
+  LogOut,
 } from 'lucide-react';
 import { useLanguage } from '@/lib/context/language-context';
 import { useTranslations } from '@/lib/i18n';
@@ -62,6 +65,7 @@ const PROVIDERS: LLMProvider[] = [
   'gemini',
   'deepseek',
   'ollama',
+  'github_copilot',
 ];
 
 const SEGMENTED_BUTTON_BASE =
@@ -104,6 +108,10 @@ export default function SettingsPage() {
   const [apiKey, setApiKey] = useState('');
   const [apiBase, setApiBase] = useState('');
   const [hasStoredApiKey, setHasStoredApiKey] = useState(false);
+
+  // GitHub Copilot state
+  const [copilotAuthStatus, setCopilotAuthStatus] = useState<'unknown' | 'authenticated' | 'not_authenticated'>('unknown');
+  const [showCopilotAuthInfo, setShowCopilotAuthInfo] = useState(false);
 
   // Use cached system status (loaded on app start, refreshes every 30 min)
   const {
@@ -349,6 +357,11 @@ export default function SettingsPage() {
     setError(null);
     setHealthCheck(null);
 
+    // For GitHub Copilot, check auth status first
+    if (provider === 'github_copilot') {
+      setShowCopilotAuthInfo(true);
+    }
+
     try {
       // Build config from current form values
       const testConfig: Partial<LLMConfig> = {
@@ -367,10 +380,22 @@ export default function SettingsPage() {
 
       const result = await testLlmConnection(testConfig);
       setHealthCheck(result);
+      
+      // If successful and it's Copilot, update auth status
+      if (result.healthy && provider === 'github_copilot') {
+        setCopilotAuthStatus('authenticated');
+      }
+      
       setStatus('idle');
     } catch (err) {
       console.error('Failed to test connection', err);
       setHealthCheck({ healthy: false, provider, model, error: (err as Error).message });
+      
+      // If Copilot and not authenticated, show that status
+      if (provider === 'github_copilot') {
+        setCopilotAuthStatus('not_authenticated');
+      }
+      
       setStatus('idle');
     }
   };
@@ -540,6 +565,9 @@ export default function SettingsPage() {
                   </p>
                   <p className="font-mono text-xs text-amber-700 mt-1">
                     {t('settings.setupRequired.description')}
+                  </p>
+                  <p className="font-mono text-xs text-amber-600 mt-2 italic">
+                    Note: API key is optional for Ollama (local) and GitHub Copilot (OAuth) providers.
                   </p>
                 </div>
               </div>
@@ -764,7 +792,9 @@ export default function SettingsPage() {
                   {t('settings.llmConfiguration.apiKeyLabel')}{' '}
                   {!requiresApiKey && (
                     <span className="text-gray-400">
-                      {t('settings.llmConfiguration.apiKeyOptionalForOllama')}
+                      {provider === 'github_copilot' 
+                        ? '(Optional - uses GitHub OAuth)'
+                        : t('settings.llmConfiguration.apiKeyOptionalForOllama')}
                     </span>
                   )}
                 </Label>
@@ -774,9 +804,11 @@ export default function SettingsPage() {
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
                   placeholder={
-                    requiresApiKey
-                      ? t('settings.llmConfiguration.apiKeyPlaceholder')
-                      : t('settings.llmConfiguration.apiKeyNotRequiredPlaceholder')
+                    provider === 'github_copilot'
+                      ? 'Not required - use Test Connection to authenticate'
+                      : requiresApiKey
+                        ? t('settings.llmConfiguration.apiKeyPlaceholder')
+                        : t('settings.llmConfiguration.apiKeyNotRequiredPlaceholder')
                   }
                   className="font-mono"
                   disabled={!requiresApiKey}
@@ -787,6 +819,76 @@ export default function SettingsPage() {
                   </p>
                 )}
               </div>
+
+              {/* GitHub Copilot OAuth */}
+              {provider === 'github_copilot' && (
+                <div className="space-y-4">
+                  {/* Authentication Status Card */}
+                  <div className="border-2 border-black bg-[#F0F0E8] shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)]">
+                    <div className="border-b border-black bg-blue-700 p-3">
+                      <p className="font-mono text-sm font-bold text-white uppercase tracking-wider">
+                        GitHub Copilot Authentication
+                      </p>
+                    </div>
+                    <div className="p-5 space-y-4">
+                      {/* Status Indicator */}
+                      <div className="flex items-center gap-3">
+                        <div className={`w-3 h-3 ${healthCheck?.healthy ? 'bg-green-500' : copilotAuthStatus === 'not_authenticated' ? 'bg-red-500' : 'bg-gray-400'}`}></div>
+                        <span className="font-mono text-sm font-bold">
+                          {healthCheck?.healthy 
+                            ? 'Authenticated' 
+                            : copilotAuthStatus === 'not_authenticated' 
+                              ? 'Not Authenticated' 
+                              : 'Unknown Status'}
+                        </span>
+                      </div>
+
+                      {/* Instructions */}
+                      {!healthCheck?.healthy && (
+                        <div className="space-y-3">
+                          <p className="font-mono text-xs text-gray-700">
+                            To authenticate with GitHub Copilot:
+                          </p>
+                          <ol className="font-mono text-xs text-gray-600 space-y-2 list-decimal list-inside">
+                            <li>Click <strong>&quot;Test Connection&quot;</strong> below</li>
+                            <li>Look at your <strong>terminal/console</strong> where the backend is running</li>
+                            <li>You&apos;ll see a device code (like <code className="bg-blue-100 px-1 rounded">XXXX-XXXX</code>)</li>
+                            <li>Visit <a href="https://github.com/login/device" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">github.com/device</a></li>
+                            <li>Enter the code and authorize the application</li>
+                            <li>Return here and click <strong>&quot;Test Connection&quot;</strong> again to verify</li>
+                          </ol>
+                        </div>
+                      )}
+
+                      {/* Logout Button - show when authenticated */}
+                      {healthCheck?.healthy && (
+                    <Button
+                      variant="outline"
+                      onClick={async () => {
+                        try {
+                          const result = await logoutGithubCopilot();
+                          setSuccessDialogMessage({
+                            title: 'Logged Out',
+                            description: result.message,
+                          });
+                          setShowSuccessDialog(true);
+                          setHealthCheck(null);
+                          setCopilotAuthStatus('not_authenticated');
+                        } catch (err) {
+                          console.error('Failed to logout', err);
+                          setError((err as Error).message || 'Failed to logout from GitHub Copilot');
+                        }
+                      }}
+                      className="w-full border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)] hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none text-red-600"
+                    >
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Logout from GitHub Copilot
+                    </Button>
+                  )}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* API Base URL (optional, for proxies/aggregators/custom endpoints) */}
               <div className="space-y-2">

@@ -483,3 +483,81 @@ async def reset_database_endpoint(request: ResetDatabaseRequest) -> dict:
         )
     db.reset_database()
     return {"message": "Database and all data have been reset successfully"}
+
+
+@router.post("/logout-github-copilot")
+async def logout_github_copilot() -> dict:
+    """Logout from GitHub Copilot by clearing OAuth tokens.
+    
+    This deletes the OAuth tokens stored by LiteLLM in ~/.config/litellm/github_copilot/
+    
+    Returns:
+        Success message
+    """
+    import shutil
+    from pathlib import Path
+    
+    # LiteLLM stores GitHub Copilot tokens in this directory
+    copilot_config_dir = Path.home() / ".config" / "litellm" / "github_copilot"
+    
+    if copilot_config_dir.exists():
+        try:
+            shutil.rmtree(copilot_config_dir)
+            return {
+                "message": "Successfully logged out from GitHub Copilot",
+                "status": "logged_out"
+            }
+        except Exception as e:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to clear GitHub Copilot tokens: {str(e)}"
+            )
+    else:
+        return {
+            "message": "No active GitHub Copilot session found",
+            "status": "no_session"
+        }
+
+
+@router.get("/github-copilot/auth-status")
+async def check_github_copilot_auth_status() -> dict:
+    """Check if GitHub Copilot is authenticated.
+    
+    Returns:
+        Authentication status and device code if authentication is needed
+    """
+    from pathlib import Path
+    import subprocess
+    import re
+    
+    # Check if token exists
+    copilot_dir = Path.home() / ".config" / "litellm" / "github_copilot"
+    token_file = copilot_dir / "access-token"
+    
+    if token_file.exists():
+        return {
+            "authenticated": True,
+            "message": "GitHub Copilot is authenticated"
+        }
+    
+    # Try to trigger device flow by making a test call
+    # LiteLLM will output the device code to stderr
+    try:
+        # Import here to avoid circular imports
+        from ..llm import get_llm_config
+        config = get_llm_config()
+        
+        if config.provider == "github_copilot":
+            return {
+                "authenticated": False,
+                "message": "Authentication required",
+                "device_code": None,  # Will be shown in terminal
+                "verification_uri": "https://github.com/login/device"
+            }
+    except Exception:
+        pass
+    
+    return {
+        "authenticated": False,
+        "message": "Not authenticated"
+    }

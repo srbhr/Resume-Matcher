@@ -257,6 +257,7 @@ def get_model_name(config: LLMConfig) -> str:
         "gemini": "gemini/",
         "deepseek": "deepseek/",
         "ollama": "ollama/",
+        "github_copilot": "github_copilot/",
     }
 
     prefix = provider_prefixes.get(config.provider, "")
@@ -313,8 +314,8 @@ async def check_llm_health(
     if config is None:
         config = get_llm_config()
 
-    # Check if API key is configured (except for Ollama)
-    if config.provider != "ollama" and not config.api_key:
+    # Check if API key is configured (except for Ollama and GitHub Copilot which use OAuth)
+    if config.provider not in ("ollama", "github_copilot") and not config.api_key:
         return {
             "healthy": False,
             "provider": config.provider,
@@ -329,14 +330,18 @@ async def check_llm_health(
     try:
         # Make a minimal test call with timeout
         # Pass API key directly to avoid race conditions with global os.environ
+        # For GitHub Copilot, LiteLLM manages OAuth tokens internally, so don't pass api_key
         kwargs: dict[str, Any] = {
             "model": model_name,
             "messages": [{"role": "user", "content": prompt}],
             "max_tokens": 16,
-            "api_key": config.api_key,
-            "api_base": _normalize_api_base(config.provider, config.api_base),
             "timeout": LLM_TIMEOUT_HEALTH_CHECK,
         }
+        
+        # Only pass api_key for providers that use it (not OAuth-based providers)
+        if config.provider != "github_copilot":
+            kwargs["api_key"] = config.api_key
+            kwargs["api_base"] = _normalize_api_base(config.provider, config.api_base)
         reasoning_effort = _get_reasoning_effort(config.provider, model_name)
         if reasoning_effort:
             kwargs["reasoning_effort"] = reasoning_effort
@@ -421,14 +426,18 @@ async def complete(
 
     try:
         # Pass API key directly to avoid race conditions with global os.environ
+        # For GitHub Copilot, LiteLLM manages OAuth tokens internally, so don't pass api_key
         kwargs: dict[str, Any] = {
             "model": model_name,
             "messages": messages,
             "max_tokens": max_tokens,
-            "api_key": config.api_key,
-            "api_base": _normalize_api_base(config.provider, config.api_base),
             "timeout": LLM_TIMEOUT_COMPLETION,
         }
+        
+        # Only pass api_key for providers that use it (not OAuth-based providers)
+        if config.provider != "github_copilot":
+            kwargs["api_key"] = config.api_key
+            kwargs["api_base"] = _normalize_api_base(config.provider, config.api_base)
         if _supports_temperature(config.provider, model_name):
             kwargs["temperature"] = temperature
         reasoning_effort = _get_reasoning_effort(config.provider, model_name)
@@ -452,6 +461,7 @@ async def complete(
 def _supports_json_mode(provider: str, model: str) -> bool:
     """Check if the model supports JSON mode."""
     # Models that support response_format={"type": "json_object"}
+    # Note: github_copilot does NOT support response_format parameter
     json_mode_providers = ["openai", "anthropic", "gemini", "deepseek"]
     if provider in json_mode_providers:
         return True
@@ -644,14 +654,18 @@ async def complete_json(
         try:
             # Build request kwargs
             # Pass API key directly to avoid race conditions with global os.environ
+            # For GitHub Copilot, LiteLLM manages OAuth tokens internally, so don't pass api_key
             kwargs: dict[str, Any] = {
                 "model": model_name,
                 "messages": messages,
                 "max_tokens": max_tokens,
-                "api_key": config.api_key,
-                "api_base": _normalize_api_base(config.provider, config.api_base),
                 "timeout": _calculate_timeout("json", max_tokens, config.provider),
             }
+            
+            # Only pass api_key for providers that use it (not OAuth-based providers)
+            if config.provider != "github_copilot":
+                kwargs["api_key"] = config.api_key
+                kwargs["api_base"] = _normalize_api_base(config.provider, config.api_base)
             if _supports_temperature(config.provider, model_name):
                 # LLM-002: Increase temperature on retry for variation
                 kwargs["temperature"] = _get_retry_temperature(attempt)

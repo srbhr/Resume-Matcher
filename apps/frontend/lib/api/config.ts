@@ -1,7 +1,7 @@
 import { apiFetch } from './client';
 
 // Supported LLM providers
-export type LLMProvider = 'openai' | 'anthropic' | 'openrouter' | 'gemini' | 'deepseek' | 'ollama';
+export type LLMProvider = 'openai' | 'anthropic' | 'openrouter' | 'gemini' | 'deepseek' | 'ollama' | 'github_copilot';
 
 export interface LLMConfig {
   provider: LLMProvider;
@@ -134,6 +134,7 @@ export const PROVIDER_INFO: Record<
   gemini: { name: 'Google Gemini', defaultModel: 'gemini-3-flash-preview', requiresKey: true },
   deepseek: { name: 'DeepSeek', defaultModel: 'deepseek-v3.2', requiresKey: true },
   ollama: { name: 'Ollama (Local)', defaultModel: 'gemma3:4b', requiresKey: false },
+  github_copilot: { name: 'GitHub Copilot', defaultModel: 'gpt-4', requiresKey: false },
 };
 
 // Feature configuration types
@@ -363,4 +364,41 @@ export async function resetDatabase(): Promise<void> {
     const data = await res.json().catch(() => ({}));
     throw new Error(data.detail || `Failed to reset database (status ${res.status}).`);
   }
+}
+
+// Logout from GitHub Copilot
+export async function logoutGithubCopilot(): Promise<{ message: string; status: string }> {
+  const res = await apiFetch('/config/logout-github-copilot', {
+    method: 'POST',
+    credentials: 'include',
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || `Failed to logout from GitHub Copilot (status ${res.status}).`);
+  }
+
+  return res.json();
+}
+
+// Check GitHub Copilot authentication status
+export interface CopilotAuthStatus {
+  authenticated: boolean;
+  message: string;
+  device_code?: string | null;
+  verification_uri?: string;
+}
+
+export async function checkGithubCopilotStatus(): Promise<CopilotAuthStatus> {
+  const res = await apiFetch('/config/github-copilot/auth-status', {
+    method: 'GET',
+    credentials: 'include',
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || `Failed to check GitHub Copilot status (status ${res.status}).`);
+  }
+
+  return res.json();
 }
