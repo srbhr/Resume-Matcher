@@ -42,9 +42,57 @@
     "dashboard": "Panel",
     "builder": "Constructor de CV",
     "tailor": "Personalizar CV",
+    "prompts": "Prompts",
     "settings": "Configuración",
     "backToDashboard": "Volver al Panel",
     "goToSettings": "Ir a Configuración"
+  },
+  "prompts": {
+    "title": "Prompts",
+    "subtitle": "Manage tailoring intensity prompts",
+    "create": {
+      "title": "Create Prompt",
+      "description": "Add a custom prompt template for resume tailoring.",
+      "action": "Create Prompt",
+      "actionDefault": "Create & Set Default"
+    },
+    "fields": {
+      "label": "Label",
+      "description": "Description",
+      "prompt": "Prompt Template"
+    },
+    "placeholders": {
+      "label": "e.g. Executive polish",
+      "description": "Short summary of when to use this prompt",
+      "prompt": "Paste your prompt template here...",
+      "helper": "Available placeholders: {job_description}, {job_keywords}, {original_resume}, {schema}, {output_language}, {critical_truthfulness_rules}. Use double braces {{ }} for literal braces."
+    },
+    "list": {
+      "title": "Prompt Library",
+      "count": "{count} total"
+    },
+    "badges": {
+      "builtin": "Built-in",
+      "custom": "Custom",
+      "default": "Default"
+    },
+    "actions": {
+      "setDefault": "Set Default",
+      "duplicate": "Duplicate",
+      "copyPrefix": "Copy of"
+    },
+    "delete": {
+      "title": "Delete prompt?",
+      "description": "This will remove the prompt template. This cannot be undone."
+    },
+    "errors": {
+      "loadFailed": "Unable to load prompt templates.",
+      "saveFailed": "Unable to save prompt template.",
+      "createFailed": "Unable to create prompt template.",
+      "deleteFailed": "Unable to delete prompt template.",
+      "defaultFailed": "Unable to set default prompt.",
+      "requiredFields": "Label, description, and prompt are required."
+    }
   },
   "dashboard": {
     "title": "Panel",
@@ -304,15 +352,21 @@
       "experience": {
         "addJob": "Agregar trabajo",
         "addFirstJob": "Agregar primer trabajo",
+        "dragHint": "Arrastra para reordenar trabajos",
         "fields": {
           "jobTitle": "Puesto",
-          "company": "Empresa"
+          "company": "Empresa",
+          "jobDescriptionOptional": "Descripción del puesto (opcional)"
+        },
+        "errors": {
+          "yearsRequiresMonth": "Incluye el mes (p. ej., Ago 2020 - Presente)."
         },
         "placeholders": {
           "jobTitle": "Desarrollador senior",
           "company": "Tech Corp",
           "location": "Remoto / Ciudad",
-          "years": "2020 - Actualidad",
+          "years": "Ago 2020 - Actualidad",
+          "jobDescription": "Resumen breve del rol y su impacto...",
           "description": "Describe tu logro..."
         }
       },

@@ -35,6 +35,7 @@ RESUME_SCHEMA_EXAMPLE = """{
       "company": "Tech Corp",
       "location": "San Francisco, CA",
       "years": "2020 - Present",
+      "jobDescription": "Led platform modernization initiatives across customer-facing systems.",
       "description": [
         "Led development of microservices architecture",
         "Improved system performance by 40%"

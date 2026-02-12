@@ -139,7 +139,13 @@ class Experience(BaseModel):
     company: str = ""
     location: str | None = None
     years: str = ""
+    jobDescription: str | None = None
     description: list[str] = Field(default_factory=list)
+
+    @field_validator("jobDescription", mode="before")
+    @classmethod
+    def _normalize_job_description(cls, value: Any) -> str | None:
+        return _coerce_optional_text(value)
 
     @field_validator("description", mode="before")
     @classmethod
@@ -602,6 +608,52 @@ class PromptConfigResponse(BaseModel):
 
     default_prompt_id: str
     prompt_options: list[PromptOption]
+
+
+class PromptTemplate(BaseModel):
+    """Prompt template for resume tailoring."""
+
+    id: str
+    label: str
+    description: str
+    prompt: str
+    is_builtin: bool = False
+    created_at: str | None = None
+    updated_at: str | None = None
+
+
+class PromptTemplateCreateRequest(BaseModel):
+    """Request to create a prompt template."""
+
+    label: str
+    description: str
+    prompt: str
+
+
+class PromptTemplateUpdateRequest(BaseModel):
+    """Request to update a prompt template."""
+
+    label: str | None = None
+    description: str | None = None
+    prompt: str | None = None
+
+
+class PromptTemplateResponse(BaseModel):
+    """Response for a single prompt template."""
+
+    data: PromptTemplate
+
+
+class PromptTemplateListResponse(BaseModel):
+    """Response for prompt templates list."""
+
+    data: list[PromptTemplate]
+
+
+class PromptTemplateDeleteResponse(BaseModel):
+    """Response after deleting a prompt template."""
+
+    message: str
 
 
 # API Key Management Models

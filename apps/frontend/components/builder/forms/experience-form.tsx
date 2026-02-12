@@ -1,12 +1,29 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  arrayMove,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { Experience } from '@/components/dashboard/resume-component';
-import { Plus, Trash2 } from 'lucide-react';
+import { GripVertical, Plus, Trash2 } from 'lucide-react';
 import { useTranslations } from '@/lib/i18n';
 
 interface ExperienceFormProps {
@@ -14,11 +31,86 @@ interface ExperienceFormProps {
   onChange: (data: Experience[]) => void;
 }
 
+const StaticExperienceCard: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <div className="p-6 border border-black bg-gray-50 relative group">{children}</div>
+);
+
+const SortableExperienceCard: React.FC<{
+  id: number;
+  dragHandleTitle: string;
+  children: React.ReactNode;
+}> = ({ id, dragHandleTitle, children }) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="p-6 pl-10 border border-black bg-gray-50 relative group"
+    >
+      <button
+        type="button"
+        {...attributes}
+        {...listeners}
+        className="absolute left-2 top-2 flex h-6 w-6 items-center justify-center cursor-grab active:cursor-grabbing"
+        title={dragHandleTitle}
+      >
+        <GripVertical className="w-4 h-4 text-gray-400 hover:text-gray-700 transition-colors" />
+      </button>
+      {children}
+    </div>
+  );
+};
+
 export const ExperienceForm: React.FC<ExperienceFormProps> = ({ data, onChange }) => {
   const { t } = useTranslations();
+  const [isMounted, setIsMounted] = useState(false);
+  const [touchedYears, setTouchedYears] = useState<Record<number, boolean>>({});
+  const monthPattern = useMemo(
+    () =>
+      /\b(jan|january|feb|february|mar|march|apr|april|may|jun|june|jul|july|aug|august|sep|sept|september|oct|october|nov|november|dec|december)\b/i,
+    []
+  );
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    let changed = false;
+    const used = new Set<number>();
+    const numericIds = data.map((item) => {
+      const value = Number(item.id);
+      return Number.isFinite(value) ? value : 0;
+    });
+    let nextId = Math.max(0, ...numericIds) + 1;
+
+    const normalized = data.map((item) => {
+      const rawId = Number(item.id);
+      let id = Number.isFinite(rawId) ? rawId : 0;
+      if (id <= 0 || used.has(id)) {
+        id = nextId++;
+        changed = true;
+      }
+      used.add(id);
+      return id === item.id ? item : { ...item, id };
+    });
+
+    if (changed) {
+      onChange(normalized);
+    }
+  }, [data, onChange]);
 
   const handleAdd = () => {
-    const newId = Math.max(...data.map((d) => d.id), 0) + 1;
+    const newId = Math.max(...data.map((d) => Number(d.id) || 0), 0) + 1;
     onChange([
       ...data,
       {
@@ -27,9 +119,14 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({ data, onChange }
         company: '',
         location: '',
         years: '',
+        jobDescription: '',
         description: [''],
       },
     ]);
+  };
+
+  const handleYearsBlur = (id: number) => {
+    setTouchedYears((prev) => ({ ...prev, [id]: true }));
   };
 
   const handleRemove = (id: number) => {
@@ -64,7 +161,7 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({ data, onChange }
     onChange(
       data.map((item) => {
         if (item.id === id) {
-          return { ...item, description: [...(item.description || []), ''] };
+          return { ...item, description: ['', ...(item.description || [])] };
         }
         return item;
       })
@@ -84,6 +181,156 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({ data, onChange }
     );
   };
 
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = data.findIndex((item) => item.id === active.id);
+    const newIndex = data.findIndex((item) => item.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    onChange(arrayMove(data, oldIndex, newIndex));
+  };
+
+  const renderExperienceContent = (item: Experience) => (
+    <>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
+        onClick={() => handleRemove(item.id)}
+      >
+        <Trash2 className="w-4 h-4" />
+      </Button>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 pr-8">
+        <div className="space-y-2">
+          <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">
+            {t('builder.forms.experience.fields.jobTitle')}
+          </Label>
+          <Input
+            value={item.title || ''}
+            onChange={(e) => handleChange(item.id, 'title', e.target.value)}
+            placeholder={t('builder.forms.experience.placeholders.jobTitle')}
+            className="rounded-none border-black bg-white"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">
+            {t('builder.forms.experience.fields.company')}
+          </Label>
+          <Input
+            value={item.company || ''}
+            onChange={(e) => handleChange(item.id, 'company', e.target.value)}
+            placeholder={t('builder.forms.experience.placeholders.company')}
+            className="rounded-none border-black bg-white"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">
+            {t('builder.genericItemForm.fields.location')}
+          </Label>
+          <Input
+            value={item.location || ''}
+            onChange={(e) => handleChange(item.id, 'location', e.target.value)}
+            placeholder={t('builder.forms.experience.placeholders.location')}
+            className="rounded-none border-black bg-white"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">
+            {t('builder.genericItemForm.fields.years')}
+          </Label>
+          <Input
+            value={item.years || ''}
+            onChange={(e) => handleChange(item.id, 'years', e.target.value)}
+            onBlur={() => handleYearsBlur(item.id)}
+            placeholder={t('builder.forms.experience.placeholders.years')}
+            className="rounded-none border-black bg-white"
+          />
+          {touchedYears[item.id] && !!item.years?.trim() && !monthPattern.test(item.years) && (
+            <p className="text-xs text-amber-700 font-mono">
+              {t('builder.forms.experience.errors.yearsRequiresMonth')}
+            </p>
+          )}
+        </div>
+      </div>
+
+      <div className="space-y-2 mb-4">
+        <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">
+          {t('builder.forms.experience.fields.jobDescriptionOptional')}
+        </Label>
+        <RichTextEditor
+          value={item.jobDescription || ''}
+          onChange={(html) => handleChange(item.id, 'jobDescription', html)}
+          placeholder={t('builder.forms.experience.placeholders.jobDescription')}
+          minHeight="72px"
+        />
+      </div>
+
+      <div className="space-y-3">
+        <div className="flex justify-between items-center">
+          <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">
+            {t('builder.genericItemForm.fields.descriptionPoints')}
+          </Label>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleAddDescription(item.id)}
+            className="h-6 text-xs text-blue-700 hover:text-blue-800 hover:bg-blue-50"
+          >
+            <Plus className="w-3 h-3 mr-1" /> {t('builder.genericItemForm.actions.addPoint')}
+          </Button>
+        </div>
+        {item.description?.map((desc, idx) => (
+          <div key={idx} className="flex gap-2">
+            <div className="flex-1">
+              <RichTextEditor
+                value={desc}
+                onChange={(html) => handleDescriptionChange(item.id, idx, html)}
+                placeholder={t('builder.forms.experience.placeholders.description')}
+                minHeight="60px"
+              />
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => handleRemoveDescription(item.id, idx)}
+              className="h-[60px] w-8 text-muted-foreground hover:text-destructive self-end"
+            >
+              <Trash2 className="w-3 h-3" />
+            </Button>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+
+  const renderExperienceItem = (item: Experience, draggable: boolean) => {
+    if (draggable) {
+      return (
+        <SortableExperienceCard
+          key={item.id}
+          id={item.id}
+          dragHandleTitle={t('builder.forms.experience.dragHint')}
+        >
+          {renderExperienceContent(item)}
+        </SortableExperienceCard>
+      );
+    }
+
+    return (
+      <StaticExperienceCard key={item.id}>{renderExperienceContent(item)}</StaticExperienceCard>
+    );
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-end">
@@ -98,101 +345,22 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({ data, onChange }
       </div>
 
       <div className="space-y-8">
-        {data.map((item) => (
-          <div key={item.id} className="p-6 border border-black bg-gray-50 relative group">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
-              onClick={() => handleRemove(item.id)}
+        {isMounted ? (
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={data.map((item) => item.id)}
+              strategy={verticalListSortingStrategy}
             >
-              <Trash2 className="w-4 h-4" />
-            </Button>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 pr-8">
-              <div className="space-y-2">
-                <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">
-                  {t('builder.forms.experience.fields.jobTitle')}
-                </Label>
-                <Input
-                  value={item.title || ''}
-                  onChange={(e) => handleChange(item.id, 'title', e.target.value)}
-                  placeholder={t('builder.forms.experience.placeholders.jobTitle')}
-                  className="rounded-none border-black bg-white"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">
-                  {t('builder.forms.experience.fields.company')}
-                </Label>
-                <Input
-                  value={item.company || ''}
-                  onChange={(e) => handleChange(item.id, 'company', e.target.value)}
-                  placeholder={t('builder.forms.experience.placeholders.company')}
-                  className="rounded-none border-black bg-white"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">
-                  {t('builder.genericItemForm.fields.location')}
-                </Label>
-                <Input
-                  value={item.location || ''}
-                  onChange={(e) => handleChange(item.id, 'location', e.target.value)}
-                  placeholder={t('builder.forms.experience.placeholders.location')}
-                  className="rounded-none border-black bg-white"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">
-                  {t('builder.genericItemForm.fields.years')}
-                </Label>
-                <Input
-                  value={item.years || ''}
-                  onChange={(e) => handleChange(item.id, 'years', e.target.value)}
-                  placeholder={t('builder.forms.experience.placeholders.years')}
-                  className="rounded-none border-black bg-white"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">
-                  {t('builder.genericItemForm.fields.descriptionPoints')}
-                </Label>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleAddDescription(item.id)}
-                  className="h-6 text-xs text-blue-700 hover:text-blue-800 hover:bg-blue-50"
-                >
-                  <Plus className="w-3 h-3 mr-1" /> {t('builder.genericItemForm.actions.addPoint')}
-                </Button>
-              </div>
-              {item.description?.map((desc, idx) => (
-                <div key={idx} className="flex gap-2">
-                  <div className="flex-1">
-                    <RichTextEditor
-                      value={desc}
-                      onChange={(html) => handleDescriptionChange(item.id, idx, html)}
-                      placeholder={t('builder.forms.experience.placeholders.description')}
-                      minHeight="60px"
-                    />
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleRemoveDescription(item.id, idx)}
-                    className="h-[60px] w-8 text-muted-foreground hover:text-destructive self-end"
-                  >
-                    <Trash2 className="w-3 h-3" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
+              {data.map((item) => renderExperienceItem(item, true))}
+            </SortableContext>
+          </DndContext>
+        ) : (
+          data.map((item) => renderExperienceItem(item, false))
+        )}
 
         {data.length === 0 && (
           <div className="text-center py-12 bg-gray-50 border border-dashed border-black">

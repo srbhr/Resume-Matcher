@@ -351,11 +351,18 @@ export default function TailorPage() {
           <Dropdown
             options={
               promptOptions.length > 0
-                ? promptOptions.map((opt) => ({
-                    id: opt.id,
-                    label: t(`tailor.promptOptions.${opt.id}.label`),
-                    description: t(`tailor.promptOptions.${opt.id}.description`),
-                  }))
+                ? promptOptions.map((opt) => {
+                    const isBuiltin = ['nudge', 'keywords', 'full'].includes(opt.id);
+                    return {
+                      id: opt.id,
+                      label: isBuiltin
+                        ? t(`tailor.promptOptions.${opt.id}.label`)
+                        : opt.label,
+                      description: isBuiltin
+                        ? t(`tailor.promptOptions.${opt.id}.description`)
+                        : opt.description,
+                    };
+                  })
                 : [
                     {
                       id: 'nudge',

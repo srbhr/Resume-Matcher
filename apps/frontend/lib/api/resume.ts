@@ -23,6 +23,7 @@ interface ProcessedResume {
     company?: string;
     location?: string | null;
     years?: string;
+    jobDescription?: string | null;
     description?: string[];
   }>;
   education?: Array<{

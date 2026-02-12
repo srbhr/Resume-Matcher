@@ -106,7 +106,7 @@ export const GenericItemForm: React.FC<GenericItemFormProps> = ({
     onChange(
       items.map((item) => {
         if (item.id === id) {
-          return { ...item, description: [...(item.description || []), ''] };
+          return { ...item, description: ['', ...(item.description || [])] };
         }
         return item;
       })

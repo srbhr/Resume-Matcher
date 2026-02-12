@@ -293,13 +293,14 @@ def _supports_temperature(provider: str, model: str) -> bool:
 def _get_reasoning_effort(provider: str, model: str) -> str | None:
     """Return a default reasoning_effort for models that require it.
 
-    Some OpenAI gpt-5 models may return empty message.content unless a supported
-    `reasoning_effort` is explicitly set. This keeps downstream JSON parsing reliable.
+    Some OpenAI reasoning models (o1, o3, gpt-5) require a supported
+    `reasoning_effort` (low, medium, high) to work correctly.
     """
     _ = provider
     model_lower = model.lower()
-    if "gpt-5" in model_lower:
-        return "minimal"
+    # Handle GPT-5 (future-proofing) and o-series (o1, o3)
+    if any(m in model_lower for m in ["gpt-5", "o1", "o3"]):
+        return "medium"
     return None
 
 

@@ -223,6 +223,13 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
                         {exp.location && <> • {exp.location}</>}
                       </span>
                     </div>
+                    {exp.jobDescription && (
+                      <p
+                        className={`${baseStyles['resume-row-tight']} ${baseStyles['resume-text-xs']}`}
+                      >
+                        <SafeHtml html={exp.jobDescription} />
+                      </p>
+                    )}
 
                     {exp.description && exp.description.length > 0 && (
                       <ul

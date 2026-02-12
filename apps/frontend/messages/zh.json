@@ -42,9 +42,57 @@
     "dashboard": "仪表板",
     "builder": "简历生成器",
     "tailor": "定制简历",
+    "prompts": "Prompts",
     "settings": "设置",
     "backToDashboard": "返回仪表板",
     "goToSettings": "前往设置"
+  },
+  "prompts": {
+    "title": "Prompts",
+    "subtitle": "Manage tailoring intensity prompts",
+    "create": {
+      "title": "Create Prompt",
+      "description": "Add a custom prompt template for resume tailoring.",
+      "action": "Create Prompt",
+      "actionDefault": "Create & Set Default"
+    },
+    "fields": {
+      "label": "Label",
+      "description": "Description",
+      "prompt": "Prompt Template"
+    },
+    "placeholders": {
+      "label": "e.g. Executive polish",
+      "description": "Short summary of when to use this prompt",
+      "prompt": "Paste your prompt template here...",
+      "helper": "Available placeholders: {job_description}, {job_keywords}, {original_resume}, {schema}, {output_language}, {critical_truthfulness_rules}. Use double braces {{ }} for literal braces."
+    },
+    "list": {
+      "title": "Prompt Library",
+      "count": "{count} total"
+    },
+    "badges": {
+      "builtin": "Built-in",
+      "custom": "Custom",
+      "default": "Default"
+    },
+    "actions": {
+      "setDefault": "Set Default",
+      "duplicate": "Duplicate",
+      "copyPrefix": "Copy of"
+    },
+    "delete": {
+      "title": "Delete prompt?",
+      "description": "This will remove the prompt template. This cannot be undone."
+    },
+    "errors": {
+      "loadFailed": "Unable to load prompt templates.",
+      "saveFailed": "Unable to save prompt template.",
+      "createFailed": "Unable to create prompt template.",
+      "deleteFailed": "Unable to delete prompt template.",
+      "defaultFailed": "Unable to set default prompt.",
+      "requiredFields": "Label, description, and prompt are required."
+    }
   },
   "dashboard": {
     "title": "仪表板",
@@ -304,15 +352,21 @@
       "experience": {
         "addJob": "添加经历",
         "addFirstJob": "添加第一条经历",
+        "dragHint": "拖动以重新排序",
         "fields": {
           "jobTitle": "职位名称",
-          "company": "公司"
+          "company": "公司",
+          "jobDescriptionOptional": "岗位描述（可选）"
+        },
+        "errors": {
+          "yearsRequiresMonth": "请包含月份（例如：Aug 2020 - 至今）。"
         },
         "placeholders": {
           "jobTitle": "高级开发工程师",
           "company": "科技公司",
           "location": "远程 / 城市",
-          "years": "2020 - 至今",
+          "years": "Aug 2020 - 至今",
+          "jobDescription": "用一段话概述你的职责与影响...",
           "description": "描述你的成果..."
         }
       },

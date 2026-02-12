@@ -42,9 +42,57 @@
     "dashboard": "ダッシュボード",
     "builder": "履歴書ビルダー",
     "tailor": "履歴書をカスタマイズ",
+    "prompts": "Prompts",
     "settings": "設定",
     "backToDashboard": "ダッシュボードに戻る",
     "goToSettings": "設定へ"
+  },
+  "prompts": {
+    "title": "Prompts",
+    "subtitle": "Manage tailoring intensity prompts",
+    "create": {
+      "title": "Create Prompt",
+      "description": "Add a custom prompt template for resume tailoring.",
+      "action": "Create Prompt",
+      "actionDefault": "Create & Set Default"
+    },
+    "fields": {
+      "label": "Label",
+      "description": "Description",
+      "prompt": "Prompt Template"
+    },
+    "placeholders": {
+      "label": "e.g. Executive polish",
+      "description": "Short summary of when to use this prompt",
+      "prompt": "Paste your prompt template here...",
+      "helper": "Available placeholders: {job_description}, {job_keywords}, {original_resume}, {schema}, {output_language}, {critical_truthfulness_rules}. Use double braces {{ }} for literal braces."
+    },
+    "list": {
+      "title": "Prompt Library",
+      "count": "{count} total"
+    },
+    "badges": {
+      "builtin": "Built-in",
+      "custom": "Custom",
+      "default": "Default"
+    },
+    "actions": {
+      "setDefault": "Set Default",
+      "duplicate": "Duplicate",
+      "copyPrefix": "Copy of"
+    },
+    "delete": {
+      "title": "Delete prompt?",
+      "description": "This will remove the prompt template. This cannot be undone."
+    },
+    "errors": {
+      "loadFailed": "Unable to load prompt templates.",
+      "saveFailed": "Unable to save prompt template.",
+      "createFailed": "Unable to create prompt template.",
+      "deleteFailed": "Unable to delete prompt template.",
+      "defaultFailed": "Unable to set default prompt.",
+      "requiredFields": "Label, description, and prompt are required."
+    }
   },
   "dashboard": {
     "title": "ダッシュボード",
@@ -304,15 +352,21 @@
       "experience": {
         "addJob": "職歴を追加",
         "addFirstJob": "最初の職歴を追加",
+        "dragHint": "ドラッグして並べ替え",
         "fields": {
           "jobTitle": "職種",
-          "company": "会社"
+          "company": "会社",
+          "jobDescriptionOptional": "職務概要（任意）"
+        },
+        "errors": {
+          "yearsRequiresMonth": "月名を含めてください（例: Aug 2020 - Present）"
         },
         "placeholders": {
           "jobTitle": "シニアエンジニア",
           "company": "Tech Corp",
           "location": "リモート / 都市",
-          "years": "2020 - 現在",
+          "years": "Aug 2020 - 現在",
+          "jobDescription": "役割と成果の概要を1段落で記載...",
           "description": "実績を説明..."
         }
       },

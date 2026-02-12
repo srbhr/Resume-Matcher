@@ -47,6 +47,11 @@ class Database:
         """Improvement results table."""
         return self.db.table("improvements")
 
+    @property
+    def prompt_templates(self) -> Table:
+        """Custom prompt templates table."""
+        return self.db.table("prompt_templates")
+
     def close(self) -> None:
         """Close database connection."""
         if self._db is not None:
@@ -173,6 +178,59 @@ class Database:
     def list_resumes(self) -> list[dict[str, Any]]:
         """List all resumes."""
         return list(self.resumes.all())
+
+    # Prompt template operations
+    def list_prompt_templates(self) -> list[dict[str, Any]]:
+        """List all custom prompt templates."""
+        return list(self.prompt_templates.all())
+
+    def get_prompt_template(self, prompt_id: str) -> dict[str, Any] | None:
+        """Get a custom prompt template by ID."""
+        Prompt = Query()
+        result = self.prompt_templates.search(Prompt.prompt_id == prompt_id)
+        return result[0] if result else None
+
+    def create_prompt_template(
+        self, label: str, description: str, prompt: str
+    ) -> dict[str, Any]:
+        """Create a new custom prompt template."""
+        prompt_id = str(uuid4())
+        now = datetime.now(timezone.utc).isoformat()
+
+        doc = {
+            "prompt_id": prompt_id,
+            "label": label,
+            "description": description,
+            "prompt": prompt,
+            "created_at": now,
+            "updated_at": now,
+        }
+
+        self.prompt_templates.insert(doc)
+        return doc
+
+    def update_prompt_template(
+        self, prompt_id: str, updates: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Update a custom prompt template by ID."""
+        Prompt = Query()
+        updates["updated_at"] = datetime.now(timezone.utc).isoformat()
+        updated_count = self.prompt_templates.update(updates, Prompt.prompt_id == prompt_id)
+
+        if not updated_count:
+            raise ValueError(f"Prompt template not found: {prompt_id}")
+
+        result = self.get_prompt_template(prompt_id)
+        if not result:
+            raise ValueError(f"Prompt template disappeared after update: {prompt_id}")
+
+        return result
+
+    def delete_prompt_template(self, prompt_id: str) -> bool:
+        """Delete a custom prompt template by ID."""
+        Prompt = Query()
+        removed = self.prompt_templates.remove(Prompt.prompt_id == prompt_id)
+        return len(removed) > 0
 
     def set_master_resume(self, resume_id: str) -> bool:
         """Set a resume as the master, unsetting any existing master.

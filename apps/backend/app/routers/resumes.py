@@ -84,6 +84,9 @@ def _get_default_prompt_id() -> str:
     """Get configured default prompt id from config file."""
     config = _load_config()
     option_ids = {option["id"] for option in IMPROVE_PROMPT_OPTIONS}
+    option_ids.update(
+        prompt.get("prompt_id") for prompt in db.list_prompt_templates() if prompt.get("prompt_id")
+    )
     prompt_id = config.get("default_prompt_id", DEFAULT_IMPROVE_PROMPT_ID)
     return prompt_id if prompt_id in option_ids else DEFAULT_IMPROVE_PROMPT_ID
 

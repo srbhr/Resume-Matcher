@@ -2,6 +2,7 @@
 
 import json
 import logging
+import string
 from pathlib import Path
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException
@@ -18,13 +19,23 @@ from app.schemas import (
     PromptConfigRequest,
     PromptConfigResponse,
     PromptOption,
+    PromptTemplate,
+    PromptTemplateCreateRequest,
+    PromptTemplateDeleteResponse,
+    PromptTemplateListResponse,
+    PromptTemplateResponse,
+    PromptTemplateUpdateRequest,
     ApiKeyProviderStatus,
     ApiKeyStatusResponse,
     ApiKeysUpdateRequest,
     ApiKeysUpdateResponse,
     ResetDatabaseRequest,
 )
-from app.prompts import DEFAULT_IMPROVE_PROMPT_ID, IMPROVE_PROMPT_OPTIONS
+from app.prompts import (
+    DEFAULT_IMPROVE_PROMPT_ID,
+    IMPROVE_PROMPT_OPTIONS,
+    IMPROVE_RESUME_PROMPTS,
+)
 from app.config import (
     get_api_keys_from_config,
     save_api_keys_to_config,
@@ -67,7 +78,61 @@ def _mask_api_key(key: str) -> str:
 
 def _get_prompt_options() -> list[PromptOption]:
     """Return available prompt options for resume tailoring."""
-    return [PromptOption(**option) for option in IMPROVE_PROMPT_OPTIONS]
+    options = [PromptOption(**option) for option in IMPROVE_PROMPT_OPTIONS]
+    for prompt in db.list_prompt_templates():
+        options.append(
+            PromptOption(
+                id=prompt["prompt_id"],
+                label=prompt.get("label", ""),
+                description=prompt.get("description", ""),
+            )
+        )
+    return options
+
+
+def _get_builtin_prompt_templates() -> list[PromptTemplate]:
+    templates: list[PromptTemplate] = []
+    for option in IMPROVE_PROMPT_OPTIONS:
+        prompt_id = option["id"]
+        templates.append(
+            PromptTemplate(
+                id=prompt_id,
+                label=option["label"],
+                description=option["description"],
+                prompt=IMPROVE_RESUME_PROMPTS[prompt_id],
+                is_builtin=True,
+                created_at=None,
+                updated_at=None,
+            )
+        )
+    return templates
+
+
+_ALLOWED_PROMPT_FIELDS = {
+    "job_description",
+    "job_keywords",
+    "original_resume",
+    "schema",
+    "output_language",
+    "critical_truthfulness_rules",
+}
+
+
+def _validate_prompt_template(prompt: str) -> None:
+    fields = {
+        field_name
+        for _, field_name, _, _ in string.Formatter().parse(prompt)
+        if field_name
+    }
+    unknown = {field for field in fields if field not in _ALLOWED_PROMPT_FIELDS}
+    if unknown:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Unsupported prompt placeholders: "
+                f"{sorted(unknown)}. Allowed: {sorted(_ALLOWED_PROMPT_FIELDS)}"
+            ),
+        )
 
 
 async def _log_llm_health_check(config: LLMConfig) -> None:
@@ -318,6 +383,117 @@ async def update_prompt_config(
         default_prompt_id=default_prompt_id,
         prompt_options=options,
     )
+
+
+@router.get("/prompt-templates", response_model=PromptTemplateListResponse)
+async def list_prompt_templates() -> PromptTemplateListResponse:
+    """List built-in and custom prompt templates."""
+    builtins = _get_builtin_prompt_templates()
+    custom = [
+        PromptTemplate(
+            id=prompt["prompt_id"],
+            label=prompt.get("label", ""),
+            description=prompt.get("description", ""),
+            prompt=prompt.get("prompt", ""),
+            is_builtin=False,
+            created_at=prompt.get("created_at"),
+            updated_at=prompt.get("updated_at"),
+        )
+        for prompt in db.list_prompt_templates()
+    ]
+    return PromptTemplateListResponse(data=[*builtins, *custom])
+
+
+@router.post("/prompt-templates", response_model=PromptTemplateResponse)
+async def create_prompt_template(
+    request: PromptTemplateCreateRequest,
+) -> PromptTemplateResponse:
+    """Create a custom prompt template."""
+    label = request.label.strip()
+    description = request.description.strip()
+    prompt = request.prompt.strip()
+
+    if not label or not description or not prompt:
+        raise HTTPException(
+            status_code=400,
+            detail="Label, description, and prompt are required.",
+        )
+
+    _validate_prompt_template(prompt)
+
+    created = db.create_prompt_template(label=label, description=description, prompt=prompt)
+    return PromptTemplateResponse(
+        data=PromptTemplate(
+            id=created["prompt_id"],
+            label=created["label"],
+            description=created["description"],
+            prompt=created["prompt"],
+            is_builtin=False,
+            created_at=created.get("created_at"),
+            updated_at=created.get("updated_at"),
+        )
+    )
+
+
+@router.put("/prompt-templates/{prompt_id}", response_model=PromptTemplateResponse)
+async def update_prompt_template(
+    prompt_id: str,
+    request: PromptTemplateUpdateRequest,
+) -> PromptTemplateResponse:
+    """Update a custom prompt template."""
+    builtin_ids = {option["id"] for option in IMPROVE_PROMPT_OPTIONS}
+    if prompt_id in builtin_ids:
+        raise HTTPException(status_code=400, detail="Built-in prompts cannot be edited.")
+
+    updates: dict[str, str] = {}
+    if request.label is not None:
+        updates["label"] = request.label.strip()
+    if request.description is not None:
+        updates["description"] = request.description.strip()
+    if request.prompt is not None:
+        prompt = request.prompt.strip()
+        if prompt:
+            _validate_prompt_template(prompt)
+        updates["prompt"] = prompt
+
+    if not updates:
+        raise HTTPException(status_code=400, detail="No updates provided.")
+
+    try:
+        updated = db.update_prompt_template(prompt_id, updates)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+    return PromptTemplateResponse(
+        data=PromptTemplate(
+            id=updated["prompt_id"],
+            label=updated.get("label", ""),
+            description=updated.get("description", ""),
+            prompt=updated.get("prompt", ""),
+            is_builtin=False,
+            created_at=updated.get("created_at"),
+            updated_at=updated.get("updated_at"),
+        )
+    )
+
+
+@router.delete("/prompt-templates/{prompt_id}", response_model=PromptTemplateDeleteResponse)
+async def delete_prompt_template(prompt_id: str) -> PromptTemplateDeleteResponse:
+    """Delete a custom prompt template."""
+    builtin_ids = {option["id"] for option in IMPROVE_PROMPT_OPTIONS}
+    if prompt_id in builtin_ids:
+        raise HTTPException(status_code=400, detail="Built-in prompts cannot be deleted.")
+
+    removed = db.delete_prompt_template(prompt_id)
+    if not removed:
+        raise HTTPException(status_code=404, detail="Prompt template not found.")
+
+    stored = _load_config()
+    if stored.get("default_prompt_id") == prompt_id:
+        stored["default_prompt_id"] = DEFAULT_IMPROVE_PROMPT_ID
+        _save_config(stored)
+
+    return PromptTemplateDeleteResponse(message="Prompt template deleted.")
 
 
 # Supported API key providers
