@@ -111,7 +111,7 @@ export default function SettingsPage() {
 
   // GitHub Copilot state
   const [copilotAuthStatus, setCopilotAuthStatus] = useState<'unknown' | 'authenticated' | 'not_authenticated'>('unknown');
-  const [showCopilotAuthInfo, setShowCopilotAuthInfo] = useState(false);
+  const [isInitiatingAuth, setIsInitiatingAuth] = useState(false);
 
   // Use cached system status (loaded on app start, refreshes every 30 min)
   const {
@@ -327,7 +327,6 @@ export default function SettingsPage() {
     setHasStoredApiKey(false);
 
     // Reset Copilot-specific states when switching providers
-    setShowCopilotAuthInfo(false);
     setCopilotAuthStatus('unknown');
     setHealthCheck(null);
     setError(null);
@@ -439,7 +438,7 @@ export default function SettingsPage() {
 
   // Initiate GitHub Copilot OAuth authentication
   const handleInitiateCopilotAuth = async () => {
-    setStatus('testing');
+    setIsInitiatingAuth(true);
     setError(null);
 
     try {
@@ -455,23 +454,53 @@ export default function SettingsPage() {
       // Then initiate the authentication
       const result = await initiateGithubCopilotAuth();
       if (result.status === 'initiated') {
-        setShowCopilotAuthInfo(true);
         setCopilotAuthStatus('not_authenticated');
-        setStatus('idle');
       } else if (result.status === 'already_authenticated') {
         setCopilotAuthStatus('authenticated');
+<<<<<<< HEAD
         setShowCopilotAuthInfo(false);
         setStatus('idle');
       } else if (result.status === 'error') {
         setError(result.message);
         setStatus('idle');
+=======
+>>>>>>> f70bd47 (feat: implement LLM health checks before generating content in various components)
       }
     } catch (err) {
       console.error('Failed to initiate auth', err);
       setError((err as Error).message || 'Failed to initiate authentication');
-      setStatus('idle');
+    } finally {
+      setIsInitiatingAuth(false);
     }
   };
+<<<<<<< HEAD
+=======
+
+  // Cancel ongoing test connection (and backend auth task for GitHub Copilot)
+  const handleCancelTestConnection = async () => {
+    // 1. Abort any in-flight frontend HTTP request
+    if (testConnectionAbortRef.current) {
+      testConnectionAbortRef.current.abort();
+      testConnectionAbortRef.current = null;
+    }
+
+    // 2. Cancel the backend OAuth background task for GitHub Copilot
+    if (provider === 'github_copilot') {
+      try {
+        await cancelGithubCopilotAuth();
+      } catch {
+        // Best-effort — don’t block the UI reset
+      }
+    }
+
+    // 3. Reset all auth-related states
+    setStatus('idle');
+    setCopilotAuthStatus('unknown');
+    setHealthCheck(null);
+    setError(null);
+  };
+
+>>>>>>> f70bd47 (feat: implement LLM health checks before generating content in various components)
   // Update feature config
   const handleFeatureConfigChange = async (
     key: 'enable_cover_letter' | 'enable_outreach_message',
@@ -943,6 +972,7 @@ export default function SettingsPage() {
                           </ol>
                           <Button
                             onClick={handleInitiateCopilotAuth}
+<<<<<<< HEAD
                             disabled={status === 'testing'}
                             className="w-full"
                           >
@@ -950,6 +980,15 @@ export default function SettingsPage() {
                               <Loader2 className="w-4 h-4 animate-spin" />
                             ) : (
                               'Start Authentication'
+=======
+                            disabled={isInitiatingAuth}
+                            className="w-full"
+                          >
+                            {isInitiatingAuth ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <>Start Authentication</>
+>>>>>>> f70bd47 (feat: implement LLM health checks before generating content in various components)
                             )}
                           </Button>
                         </div>
