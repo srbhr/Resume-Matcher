@@ -443,6 +443,16 @@ export default function SettingsPage() {
     setError(null);
 
     try {
+      // First, save the provider configuration to backend
+      const config: Partial<LLMConfig> = {
+        provider: 'github_copilot',
+        model: model.trim() || providerInfo.defaultModel,
+        api_base: apiBase.trim() || null,
+        api_key: '',
+      };
+      await updateLlmConfig(config);
+
+      // Then initiate the authentication
       const result = await initiateGithubCopilotAuth();
       if (result.status === 'initiated') {
         setShowCopilotAuthInfo(true);
@@ -451,6 +461,9 @@ export default function SettingsPage() {
       } else if (result.status === 'already_authenticated') {
         setCopilotAuthStatus('authenticated');
         setShowCopilotAuthInfo(false);
+        setStatus('idle');
+      } else if (result.status === 'error') {
+        setError(result.message);
         setStatus('idle');
       }
     } catch (err) {
@@ -902,31 +915,43 @@ export default function SettingsPage() {
 
                       {/* Authentication Flow for unauthenticated users */}
                       {copilotAuthStatus !== 'authenticated' && (
-                        <div className="space-y-3">
+                        <div className="space-y-4">
+                          {showCopilotAuthInfo && (
+                            <div className="p-3 bg-blue-50 border border-blue-200 rounded flex items-start gap-2">
+                              <div className="w-3 h-3 bg-blue-500 rounded-full mt-0.5 animate-pulse shrink-0"></div>
+                              <div>
+                                <p className="font-mono text-xs text-blue-800 font-bold">
+                                  Check Your Backend Terminal!
+                                </p>
+                                <p className="font-mono text-xs text-blue-700 mt-1">
+                                  The GitHub device code should be displayed in the terminal where
+                                  you started the backend server (uvicorn).
+                                </p>
+                              </div>
+                            </div>
+                          )}
                           <p className="font-mono text-xs text-gray-700">
                             To authenticate with GitHub Copilot:
                           </p>
                           <ol className="font-mono text-xs text-gray-600 space-y-2 list-decimal list-inside">
                             <li>Click <strong>&quot;Start Authentication&quot;</strong> below</li>
-                            <li>Look at your <strong>terminal/console</strong> where the backend is running</li>
-                            <li>You&apos;ll see a device code (like <code className="bg-blue-100 px-1 rounded">XXXX-XXXX</code>)</li>
-                            <li>Visit <a href="https://github.com/login/device" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">github.com/device</a></li>
-                            <li>Enter the code and authorize the application</li>
+                            <li>Check the <strong>backend terminal</strong> for the device code</li>
+                            <li>Visit <a href="https://github.com/login/device" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">github.com/login/device</a></li>
+                            <li>Enter the code shown in your terminal</li>
+                            <li>Authorize the application on GitHub</li>
                             <li>Return here and click <strong>&quot;Test Connection&quot;</strong> to verify</li>
                           </ol>
-                          <div className="flex gap-2">
-                            <Button
-                              onClick={handleInitiateCopilotAuth}
-                              disabled={status === 'testing'}
-                              className="flex-1"
-                            >
-                              {status === 'testing' ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                              ) : (
-                                <>Start Authentication</>
-                              )}
-                            </Button>
-                          </div>
+                          <Button
+                            onClick={handleInitiateCopilotAuth}
+                            disabled={status === 'testing'}
+                            className="w-full"
+                          >
+                            {status === 'testing' ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              'Start Authentication'
+                            )}
+                          </Button>
                         </div>
                       )}
 
