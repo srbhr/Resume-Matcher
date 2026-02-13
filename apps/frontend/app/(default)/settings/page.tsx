@@ -316,8 +316,9 @@ export default function SettingsPage() {
           }
         } catch {
           if (!cancelled) {
-            // Only update if not currently initiating
-            setCopilotAuthStatus(prev => prev === 'initiating' ? prev : 'unknown');
+            // On error, allow retry by resetting from 'initiating' to 'not_authenticated'
+            // This prevents users from being stuck in infinite "Initiating..." state
+            setCopilotAuthStatus('not_authenticated');
           }
         }
       }
@@ -939,7 +940,7 @@ export default function SettingsPage() {
                   <div className="border-2 border-black bg-[#F0F0E8] shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)]">
                     <div className="border-b border-black bg-blue-700 p-3">
                       <p className="font-mono text-sm font-bold text-white uppercase tracking-wider">
-                        GitHub Copilot Authentication
+                        {t('settings.llmConfiguration.githubCopilot.title')}
                       </p>
                     </div>
                     <div className="p-5 space-y-4">
@@ -951,10 +952,10 @@ export default function SettingsPage() {
                         }`}></div>
                         <span className="font-mono text-sm font-bold">
                           {copilotAuthStatus === 'authenticated'
-                            ? 'Authenticated'
+                            ? t('settings.llmConfiguration.githubCopilot.statusAuthenticated')
                             : copilotAuthStatus === 'initiating'
-                            ? 'Initiating...'
-                            : 'Not Authenticated'}
+                            ? t('settings.llmConfiguration.githubCopilot.statusInitiating')
+                            : t('settings.llmConfiguration.githubCopilot.statusNotAuthenticated')}
                         </span>
                       </div>
 
@@ -965,25 +966,24 @@ export default function SettingsPage() {
                             <div className="space-y-3">
                               <div className="flex items-center gap-2 text-blue-700">
                                 <Loader2 className="w-4 h-4 animate-spin" />
-                                <span className="font-mono text-sm font-bold">Authentication in Progress...</span>
+                                <span className="font-mono text-sm font-bold">{t('settings.llmConfiguration.githubCopilot.authInProgressTitle')}</span>
                               </div>
                               <p className="font-mono text-xs text-gray-600">
-                                Check your <strong>backend terminal</strong> for the device code.
-                                After entering the code on GitHub and authorizing, click <strong>Refresh Status</strong> to verify.
+                                {t('settings.llmConfiguration.githubCopilot.authInProgressDescription')}
                               </p>
                             </div>
                           ) : (
                             <>
                               <p className="font-mono text-xs text-gray-700">
-                                To authenticate with GitHub Copilot:
+                                {t('settings.llmConfiguration.githubCopilot.instructionsTitle')}
                               </p>
                               <ol className="font-mono text-xs text-gray-600 space-y-2 list-decimal list-inside">
-                                <li>Click <strong>&quot;Start Authentication&quot;</strong> below</li>
-                                <li>Check the <strong>backend terminal</strong> for the device code</li>
-                                <li>Visit <a href="https://github.com/login/device" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">github.com/login/device</a></li>
-                                <li>Enter the code shown in your terminal</li>
-                                <li>Authorize the application on GitHub</li>
-                                <li>Click <strong>&quot;Refresh Status&quot;</strong> below to check if authenticated</li>
+                                <li>{t('settings.llmConfiguration.githubCopilot.step1')}</li>
+                                <li>{t('settings.llmConfiguration.githubCopilot.step2')}</li>
+                                <li>Visit <a href={t('settings.llmConfiguration.githubCopilot.verificationUri')} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">{t('settings.llmConfiguration.githubCopilot.verificationUri')}</a></li>
+                                <li>{t('settings.llmConfiguration.githubCopilot.step4')}</li>
+                                <li>{t('settings.llmConfiguration.githubCopilot.step5')}</li>
+                                <li>{t('settings.llmConfiguration.githubCopilot.step6')}</li>
                               </ol>
                             </>
                           )}
@@ -996,7 +996,7 @@ export default function SettingsPage() {
                               {copilotAuthStatus === 'initiating' ? (
                                 <Loader2 className="w-4 h-4 animate-spin" />
                               ) : (
-                                'Start Authentication'
+                                t('settings.llmConfiguration.githubCopilot.startAuthButton')
                               )}
                             </Button>
                             <Button
@@ -1049,7 +1049,7 @@ export default function SettingsPage() {
                           className="w-full border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)] hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none text-red-600"
                         >
                           <LogOut className="w-4 h-4 mr-2" />
-                          Logout from GitHub Copilot
+                          {t('settings.llmConfiguration.githubCopilot.logoutButton')}
                         </Button>
                       )}
                     </div>

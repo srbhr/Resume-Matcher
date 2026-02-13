@@ -65,12 +65,28 @@ class LLMConfig(BaseModel):
 def _is_github_copilot_authenticated() -> bool:
     """Check if GitHub Copilot has a valid OAuth token on disk.
 
-    LiteLLM stores the token at ~/.config/litellm/github_copilot/access-token.
+    LiteLLM stores the token at ~/.config/litellm/github_copilot/access-token
+    by default, but this can be overridden via environment variables.
     If the file is missing, any LLM call would trigger the device-code OAuth
     flow (requiring manual browser intervention), so we fail fast instead.
     """
+    import os
     from pathlib import Path
-    token_file = Path.home() / ".config" / "litellm" / "github_copilot" / "access-token"
+    
+    # Check for LiteLLM environment variable overrides
+    token_dir = os.environ.get('GITHUB_COPILOT_TOKEN_DIR')
+    token_file_env = os.environ.get('GITHUB_COPILOT_ACCESS_TOKEN_FILE')
+    
+    if token_file_env:
+        # Explicit token file path provided
+        token_file = Path(token_file_env)
+    elif token_dir:
+        # Custom token directory provided
+        token_file = Path(token_dir) / "access-token"
+    else:
+        # Default LiteLLM location
+        token_file = Path.home() / ".config" / "litellm" / "github_copilot" / "access-token"
+    
     return token_file.exists()
 
 
@@ -282,7 +298,7 @@ def get_model_name(config: LLMConfig) -> str:
         return f"openrouter/{config.model}"
 
     # For other providers, don't add prefix if model already has a known prefix
-    known_prefixes = ["openrouter/", "anthropic/", "gemini/", "deepseek/", "ollama/"]
+    known_prefixes = ["openrouter/", "anthropic/", "gemini/", "deepseek/", "ollama/", "github_copilot/"]
     if any(config.model.startswith(p) for p in known_prefixes):
         return config.model
 

@@ -519,10 +519,11 @@ async def logout_github_copilot() -> dict:
                 "message": "Successfully logged out from GitHub Copilot",
                 "status": "logged_out"
             }
-        except Exception as e:
+        except Exception:
+            logging.exception("Failed to clear GitHub Copilot tokens")
             raise HTTPException(
                 status_code=500,
-                detail=f"Failed to clear GitHub Copilot tokens: {str(e)}"
+                detail="Failed to clear GitHub Copilot tokens. Please try again or contact support."
             )
     else:
         return {
@@ -674,11 +675,11 @@ async def initiate_github_copilot_auth() -> dict:
             "message": "Authentication initiated. Check the backend terminal for device code.",
             "verification_uri": "https://github.com/login/device"
         }
-    except Exception as e:
+    except Exception:
         logging.exception("Failed to initiate GitHub Copilot auth")
         return {
             "status": "error",
-            "message": f"Failed to initiate authentication: {str(e)}"
+            "message": "Failed to initiate authentication. Please check the backend logs for details."
         }
 
 

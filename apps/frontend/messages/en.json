@@ -662,6 +662,26 @@
       },
       "healthWarnings": {
         "empty_content": "LLM returned empty content for the health check."
+      },
+      "githubCopilot": {
+        "title": "GitHub Copilot Authentication",
+        "statusAuthenticated": "Authenticated",
+        "statusNotAuthenticated": "Not Authenticated",
+        "statusInitiating": "Initiating...",
+        "statusUnknown": "Unknown Status",
+        "instructionsTitle": "To authenticate with GitHub Copilot:",
+        "step1": "Click \"Start Authentication\" below",
+        "step2": "Check the backend terminal for the device code",
+        "step3": "Visit github.com/login/device",
+        "step4": "Enter the code shown in your terminal",
+        "step5": "Authorize the application on GitHub",
+        "step6": "Click \"Refresh Status\" to verify",
+        "startAuthButton": "Start Authentication",
+        "refreshStatusButton": "Refresh Status",
+        "logoutButton": "Logout from GitHub Copilot",
+        "authInProgressTitle": "Authentication in Progress...",
+        "authInProgressDescription": "Check your backend terminal for the device code. After entering the code on GitHub and authorizing, click Refresh Status to verify.",
+        "verificationUri": "https://github.com/login/device"
       }
     },
     "contentGeneration": {

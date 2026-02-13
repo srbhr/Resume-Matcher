@@ -73,9 +73,18 @@ async def get_status() -> StatusResponse:
 
     db_stats = db.get_stats()
 
+    # Determine if LLM is properly configured
+    # For GitHub Copilot, check if token exists, not just if provider is selected
+    if config.provider == "github_copilot":
+        llm_configured = llm_status["healthy"]  # Token exists check
+    elif config.provider == "ollama":
+        llm_configured = True  # Ollama doesn't require API key
+    else:
+        llm_configured = bool(config.api_key)
+
     return StatusResponse(
         status="ready" if llm_status["healthy"] and db_stats["has_master_resume"] else "setup_required",
-        llm_configured=bool(config.api_key) or config.provider in ("ollama", "github_copilot"),
+        llm_configured=llm_configured,
         llm_healthy=llm_status["healthy"],
         has_master_resume=db_stats["has_master_resume"],
         database_stats=db_stats,
