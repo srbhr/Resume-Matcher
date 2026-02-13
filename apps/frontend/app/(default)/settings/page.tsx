@@ -303,7 +303,7 @@ export default function SettingsPage() {
     let interval: NodeJS.Timeout | null = null;
 
     async function checkAuthStatus() {
-      if (provider === 'github_copilot') {
+      if (provider === 'github_copilot' && !cancelled) {
         try {
           const authStatus = await checkGithubCopilotStatus();
           if (!cancelled) {
@@ -326,17 +326,20 @@ export default function SettingsPage() {
     // Check immediately on mount/provider change
     checkAuthStatus();
 
-    // Poll auth status every 3 seconds when on Copilot and not authenticated
-    // Keep polling even when initiating to detect when user completes auth
-    if (provider === 'github_copilot' && copilotAuthStatus !== 'authenticated') {
-      interval = setInterval(checkAuthStatus, 3000);
+    // Only poll when authentication is in progress (initiating)
+    // Stop polling once authenticated to save resources
+    if (provider === 'github_copilot' && copilotAuthStatus === 'initiating') {
+      interval = setInterval(checkAuthStatus, 5000);
     }
 
     return () => {
       cancelled = true;
-      if (interval) clearInterval(interval);
+      if (interval) {
+        clearInterval(interval);
+        interval = null;
+      }
     };
-  }, [provider]);
+  }, [provider, copilotAuthStatus]);
 
   // Cleanup on unmount - abort any ongoing test connection
   useEffect(() => {
