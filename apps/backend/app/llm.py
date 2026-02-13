@@ -78,11 +78,11 @@ def _is_github_copilot_authenticated() -> bool:
     token_file_env = os.environ.get('GITHUB_COPILOT_ACCESS_TOKEN_FILE')
     
     if token_file_env:
-        # Explicit token file path provided
-        token_file = Path(token_file_env)
+        # Explicit token file path provided - expand ~ to home directory
+        token_file = Path(token_file_env).expanduser()
     elif token_dir:
-        # Custom token directory provided
-        token_file = Path(token_dir) / "access-token"
+        # Custom token directory provided - expand ~ to home directory
+        token_file = Path(token_dir).expanduser() / "access-token"
     else:
         # Default LiteLLM location
         token_file = Path.home() / ".config" / "litellm" / "github_copilot" / "access-token"
