@@ -62,6 +62,34 @@ class LLMConfig(BaseModel):
     api_base: str | None = None
 
 
+def _is_github_copilot_authenticated() -> bool:
+    """Check if GitHub Copilot has a valid OAuth token on disk.
+
+    LiteLLM stores the token at ~/.config/litellm/github_copilot/access-token
+    by default, but this can be overridden via environment variables.
+    If the file is missing, any LLM call would trigger the device-code OAuth
+    flow (requiring manual browser intervention), so we fail fast instead.
+    """
+    import os
+    from pathlib import Path
+    
+    # Check for LiteLLM environment variable overrides
+    token_dir = os.environ.get('GITHUB_COPILOT_TOKEN_DIR')
+    token_file_env = os.environ.get('GITHUB_COPILOT_ACCESS_TOKEN_FILE')
+    
+    if token_file_env:
+        # Explicit token file path provided - expand ~ to home directory
+        token_file = Path(token_file_env).expanduser()
+    elif token_dir:
+        # Custom token directory provided - expand ~ to home directory
+        token_file = Path(token_dir).expanduser() / "access-token"
+    else:
+        # Default LiteLLM location
+        token_file = Path.home() / ".config" / "litellm" / "github_copilot" / "access-token"
+    
+    return token_file.exists()
+
+
 def _normalize_api_base(provider: str, api_base: str | None) -> str | None:
     """Normalize api_base for LiteLLM provider-specific expectations.
 
@@ -257,6 +285,7 @@ def get_model_name(config: LLMConfig) -> str:
         "gemini": "gemini/",
         "deepseek": "deepseek/",
         "ollama": "ollama/",
+        "github_copilot": "github_copilot/",
     }
 
     prefix = provider_prefixes.get(config.provider, "")
@@ -269,7 +298,7 @@ def get_model_name(config: LLMConfig) -> str:
         return f"openrouter/{config.model}"
 
     # For other providers, don't add prefix if model already has a known prefix
-    known_prefixes = ["openrouter/", "anthropic/", "gemini/", "deepseek/", "ollama/"]
+    known_prefixes = ["openrouter/", "anthropic/", "gemini/", "deepseek/", "ollama/", "github_copilot/"]
     if any(config.model.startswith(p) for p in known_prefixes):
         return config.model
 
@@ -313,13 +342,23 @@ async def check_llm_health(
     if config is None:
         config = get_llm_config()
 
-    # Check if API key is configured (except for Ollama)
-    if config.provider != "ollama" and not config.api_key:
+    # Check if API key is configured (except for Ollama and GitHub Copilot which use OAuth)
+    if config.provider not in ("ollama", "github_copilot") and not config.api_key:
         return {
             "healthy": False,
             "provider": config.provider,
             "model": config.model,
             "error_code": "api_key_missing",
+        }
+
+    # GitHub Copilot: fail fast if not authenticated to avoid triggering device flow
+    if config.provider == "github_copilot" and not _is_github_copilot_authenticated():
+        return {
+            "healthy": False,
+            "provider": config.provider,
+            "model": config.model,
+            "error_code": "github_copilot_not_authenticated",
+            "message": "GitHub Copilot is not authenticated. Please authenticate via Settings first.",
         }
 
     model_name = get_model_name(config)
@@ -329,14 +368,18 @@ async def check_llm_health(
     try:
         # Make a minimal test call with timeout
         # Pass API key directly to avoid race conditions with global os.environ
+        # For GitHub Copilot, LiteLLM manages OAuth tokens internally, so don't pass api_key
         kwargs: dict[str, Any] = {
             "model": model_name,
             "messages": [{"role": "user", "content": prompt}],
             "max_tokens": 16,
-            "api_key": config.api_key,
-            "api_base": _normalize_api_base(config.provider, config.api_base),
             "timeout": LLM_TIMEOUT_HEALTH_CHECK,
         }
+        
+        # Only pass api_key for providers that use it (not OAuth-based providers)
+        if config.provider != "github_copilot":
+            kwargs["api_key"] = config.api_key
+            kwargs["api_base"] = _normalize_api_base(config.provider, config.api_base)
         reasoning_effort = _get_reasoning_effort(config.provider, model_name)
         if reasoning_effort:
             kwargs["reasoning_effort"] = reasoning_effort
@@ -414,6 +457,13 @@ async def complete(
 
     model_name = get_model_name(config)
 
+    # GitHub Copilot: fail fast if not authenticated to avoid triggering device flow
+    if config.provider == "github_copilot" and not _is_github_copilot_authenticated():
+        raise ValueError(
+            "GitHub Copilot is not authenticated. "
+            "Please authenticate via Settings before using AI features."
+        )
+
     messages = []
     if system_prompt:
         messages.append({"role": "system", "content": system_prompt})
@@ -421,14 +471,18 @@ async def complete(
 
     try:
         # Pass API key directly to avoid race conditions with global os.environ
+        # For GitHub Copilot, LiteLLM manages OAuth tokens internally, so don't pass api_key
         kwargs: dict[str, Any] = {
             "model": model_name,
             "messages": messages,
             "max_tokens": max_tokens,
-            "api_key": config.api_key,
-            "api_base": _normalize_api_base(config.provider, config.api_base),
             "timeout": LLM_TIMEOUT_COMPLETION,
         }
+        
+        # Only pass api_key for providers that use it (not OAuth-based providers)
+        if config.provider != "github_copilot":
+            kwargs["api_key"] = config.api_key
+            kwargs["api_base"] = _normalize_api_base(config.provider, config.api_base)
         if _supports_temperature(config.provider, model_name):
             kwargs["temperature"] = temperature
         reasoning_effort = _get_reasoning_effort(config.provider, model_name)
@@ -452,6 +506,7 @@ async def complete(
 def _supports_json_mode(provider: str, model: str) -> bool:
     """Check if the model supports JSON mode."""
     # Models that support response_format={"type": "json_object"}
+    # Note: github_copilot does NOT support response_format parameter
     json_mode_providers = ["openai", "anthropic", "gemini", "deepseek"]
     if provider in json_mode_providers:
         return True
@@ -627,6 +682,13 @@ async def complete_json(
 
     model_name = get_model_name(config)
 
+    # GitHub Copilot: fail fast if not authenticated to avoid triggering device flow
+    if config.provider == "github_copilot" and not _is_github_copilot_authenticated():
+        raise ValueError(
+            "GitHub Copilot is not authenticated. "
+            "Please authenticate via Settings before using AI features."
+        )
+
     # Build messages
     json_system = (
         system_prompt or ""
@@ -644,14 +706,18 @@ async def complete_json(
         try:
             # Build request kwargs
             # Pass API key directly to avoid race conditions with global os.environ
+            # For GitHub Copilot, LiteLLM manages OAuth tokens internally, so don't pass api_key
             kwargs: dict[str, Any] = {
                 "model": model_name,
                 "messages": messages,
                 "max_tokens": max_tokens,
-                "api_key": config.api_key,
-                "api_base": _normalize_api_base(config.provider, config.api_base),
                 "timeout": _calculate_timeout("json", max_tokens, config.provider),
             }
+            
+            # Only pass api_key for providers that use it (not OAuth-based providers)
+            if config.provider != "github_copilot":
+                kwargs["api_key"] = config.api_key
+                kwargs["api_base"] = _normalize_api_base(config.provider, config.api_base)
             if _supports_temperature(config.provider, model_name):
                 # LLM-002: Increase temperature on retry for variation
                 kwargs["temperature"] = _get_retry_temperature(attempt)

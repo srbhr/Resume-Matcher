@@ -40,6 +40,7 @@ import {
   generateOutreachMessage,
   fetchJobDescription,
 } from '@/lib/api/resume';
+import { testLlmConnection } from '@/lib/api/config';
 import { JDComparisonView } from './jd-comparison-view';
 import { RegenerateWizard } from './regenerate-wizard';
 import { useRegenerateWizard } from '@/hooks/use-regenerate-wizard';
@@ -532,6 +533,18 @@ const ResumeBuilderContent = () => {
     setIsGeneratingCoverLetter(true);
     setShowRegenerateDialog(null);
     try {
+      // Check if LLM is authenticated/healthy before proceeding
+      const healthCheck = await testLlmConnection();
+      
+      if (!healthCheck.healthy) {
+        const errorMsg = healthCheck.error_code === 'not_authenticated'
+          ? 'AI provider not authenticated. Please authenticate in Settings before generating cover letters.'
+          : healthCheck.error || 'AI provider connection failed. Please check your settings.';
+        
+        showNotification(errorMsg, 'danger');
+        return;
+      }
+
       const content = await generateCoverLetter(resumeId);
       setCoverLetter(content);
     } catch (error) {
@@ -561,6 +574,18 @@ const ResumeBuilderContent = () => {
     setIsGeneratingOutreach(true);
     setShowRegenerateDialog(null);
     try {
+      // Check if LLM is authenticated/healthy before proceeding
+      const healthCheck = await testLlmConnection();
+      
+      if (!healthCheck.healthy) {
+        const errorMsg = healthCheck.error_code === 'not_authenticated'
+          ? 'AI provider not authenticated. Please authenticate in Settings before generating outreach messages.'
+          : healthCheck.error || 'AI provider connection failed. Please check your settings.';
+        
+        showNotification(errorMsg, 'danger');
+        return;
+      }
+
       const content = await generateOutreachMessage(resumeId);
       setOutreachMessage(content);
     } catch (error) {

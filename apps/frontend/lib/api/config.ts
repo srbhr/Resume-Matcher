@@ -1,7 +1,7 @@
 import { apiFetch } from './client';
 
 // Supported LLM providers
-export type LLMProvider = 'openai' | 'anthropic' | 'openrouter' | 'gemini' | 'deepseek' | 'ollama';
+export type LLMProvider = 'openai' | 'anthropic' | 'openrouter' | 'gemini' | 'deepseek' | 'ollama' | 'github_copilot';
 
 export interface LLMConfig {
   provider: LLMProvider;
@@ -57,11 +57,42 @@ export async function fetchLlmConfig(): Promise<LLMConfig> {
   return res.json();
 }
 
-// Legacy function for backwards compatibility
-export async function fetchLlmApiKey(): Promise<string> {
-  const config = await fetchLlmConfig();
-  return config.api_key ?? '';
+// Initiate GitHub Copilot OAuth authentication
+export interface InitiateCopilotAuthResponse {
+  status: 'initiated' | 'already_authenticated' | 'error';
+  message: string;
+  verification_uri?: string;
 }
+
+export async function initiateGithubCopilotAuth(): Promise<InitiateCopilotAuthResponse> {
+  const res = await apiFetch('/config/github-copilot/initiate-auth', {
+    method: 'POST',
+    credentials: 'include',
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || `Failed to initiate authentication (status ${res.status}).`);
+  }
+
+  return res.json();
+}
+
+// Cancel an in-progress GitHub Copilot OAuth authentication
+export async function cancelGithubCopilotAuth(): Promise<{ status: string; message: string }> {
+  const res = await apiFetch('/config/github-copilot/cancel-auth', {
+    method: 'POST',
+    credentials: 'include',
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || `Failed to cancel authentication (status ${res.status}).`);
+  }
+
+  return res.json();
+}
+
 
 // Update LLM configuration
 export async function updateLlmConfig(config: LLMConfigUpdate): Promise<LLMConfig> {
@@ -87,10 +118,14 @@ export async function updateLlmApiKey(value: string): Promise<string> {
 }
 
 // Test LLM connection with optional config (for pre-save testing)
-export async function testLlmConnection(config?: LLMConfigUpdate): Promise<LLMHealthCheck> {
+export async function testLlmConnection(
+  config?: LLMConfigUpdate,
+  signal?: AbortSignal
+): Promise<LLMHealthCheck> {
   const options: RequestInit = {
     method: 'POST',
     credentials: 'include',
+    signal,
   };
 
   // If config provided, send it in the request body
@@ -134,6 +169,7 @@ export const PROVIDER_INFO: Record<
   gemini: { name: 'Google Gemini', defaultModel: 'gemini-3-flash-preview', requiresKey: true },
   deepseek: { name: 'DeepSeek', defaultModel: 'deepseek-v3.2', requiresKey: true },
   ollama: { name: 'Ollama (Local)', defaultModel: 'gemma3:4b', requiresKey: false },
+  github_copilot: { name: 'GitHub Copilot', defaultModel: 'gpt-4', requiresKey: false },
 };
 
 // Feature configuration types
@@ -363,4 +399,41 @@ export async function resetDatabase(): Promise<void> {
     const data = await res.json().catch(() => ({}));
     throw new Error(data.detail || `Failed to reset database (status ${res.status}).`);
   }
+}
+
+// Logout from GitHub Copilot
+export async function logoutGithubCopilot(): Promise<{ message: string; status: string }> {
+  const res = await apiFetch('/config/logout-github-copilot', {
+    method: 'POST',
+    credentials: 'include',
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || `Failed to logout from GitHub Copilot (status ${res.status}).`);
+  }
+
+  return res.json();
+}
+
+// Check GitHub Copilot authentication status
+export interface CopilotAuthStatus {
+  authenticated: boolean;
+  message: string;
+  device_code?: string | null;
+  verification_uri?: string;
+}
+
+export async function checkGithubCopilotStatus(): Promise<CopilotAuthStatus> {
+  const res = await apiFetch('/config/github-copilot/auth-status', {
+    method: 'GET',
+    credentials: 'include',
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || `Failed to check GitHub Copilot status (status ${res.status}).`);
+  }
+
+  return res.json();
 }
