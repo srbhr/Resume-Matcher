@@ -15,6 +15,7 @@ import {
   resetDatabase,
   logoutGithubCopilot,
   initiateGithubCopilotAuth,
+  checkGithubCopilotStatus,
   PROVIDER_INFO,
   type LLMConfig,
   type LLMProvider,
@@ -110,8 +111,7 @@ export default function SettingsPage() {
   const [hasStoredApiKey, setHasStoredApiKey] = useState(false);
 
   // GitHub Copilot state
-  const [copilotAuthStatus, setCopilotAuthStatus] = useState<'unknown' | 'authenticated' | 'not_authenticated'>('unknown');
-  const [isInitiatingAuth, setIsInitiatingAuth] = useState(false);
+  const [copilotAuthStatus, setCopilotAuthStatus] = useState<'unknown' | 'authenticated' | 'not_authenticated' | 'initiating'>('unknown');
 
   // Use cached system status (loaded on app start, refreshes every 30 min)
   const {
@@ -297,6 +297,47 @@ export default function SettingsPage() {
     };
   }, [t]);
 
+  // Check GitHub Copilot auth status when provider changes or on mount
+  useEffect(() => {
+    let cancelled = false;
+    let interval: NodeJS.Timeout | null = null;
+
+    async function checkAuthStatus() {
+      if (provider === 'github_copilot') {
+        try {
+          const authStatus = await checkGithubCopilotStatus();
+          if (!cancelled) {
+            if (authStatus.authenticated) {
+              setCopilotAuthStatus('authenticated');
+            } else {
+              // Only update if not currently initiating (to keep UI showing "Initiating...")
+              setCopilotAuthStatus(prev => prev === 'initiating' ? prev : 'not_authenticated');
+            }
+          }
+        } catch {
+          if (!cancelled) {
+            // Only update if not currently initiating
+            setCopilotAuthStatus(prev => prev === 'initiating' ? prev : 'unknown');
+          }
+        }
+      }
+    }
+
+    // Check immediately on mount/provider change
+    checkAuthStatus();
+
+    // Poll auth status every 3 seconds when on Copilot and not authenticated
+    // Keep polling even when initiating to detect when user completes auth
+    if (provider === 'github_copilot' && copilotAuthStatus !== 'authenticated') {
+      interval = setInterval(checkAuthStatus, 3000);
+    }
+
+    return () => {
+      cancelled = true;
+      if (interval) clearInterval(interval);
+    };
+  }, [provider]);
+
   // Cleanup on unmount - abort any ongoing test connection
   useEffect(() => {
     return () => {
@@ -438,7 +479,7 @@ export default function SettingsPage() {
 
   // Initiate GitHub Copilot OAuth authentication
   const handleInitiateCopilotAuth = async () => {
-    setIsInitiatingAuth(true);
+    setCopilotAuthStatus('initiating');
     setError(null);
 
     try {
@@ -454,17 +495,18 @@ export default function SettingsPage() {
       // Then initiate the authentication
       const result = await initiateGithubCopilotAuth();
       if (result.status === 'initiated') {
-        setCopilotAuthStatus('not_authenticated');
+        // Keep showing "initiating" state - user needs to complete auth on GitHub
+        // The status will remain "initiating" until they refresh or we detect auth
       } else if (result.status === 'already_authenticated') {
         setCopilotAuthStatus('authenticated');
       } else if (result.status === 'error') {
+        setCopilotAuthStatus('not_authenticated');
         setError(result.message);
       }
     } catch (err) {
       console.error('Failed to initiate auth', err);
+      setCopilotAuthStatus('not_authenticated');
       setError((err as Error).message || 'Failed to initiate authentication');
-    } finally {
-      setIsInitiatingAuth(false);
     }
   };
   // Update feature config
@@ -900,10 +942,15 @@ export default function SettingsPage() {
                     <div className="p-5 space-y-4">
                       {/* Status Indicator */}
                       <div className="flex items-center gap-3">
-                        <div className={`w-3 h-3 ${copilotAuthStatus === 'authenticated' ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                        <div className={`w-3 h-3 ${
+                          copilotAuthStatus === 'authenticated' ? 'bg-green-500' : 
+                          copilotAuthStatus === 'initiating' ? 'bg-blue-500' : 'bg-red-500'
+                        }`}></div>
                         <span className="font-mono text-sm font-bold">
                           {copilotAuthStatus === 'authenticated'
                             ? 'Authenticated'
+                            : copilotAuthStatus === 'initiating'
+                            ? 'Initiating...'
                             : 'Not Authenticated'}
                         </span>
                       </div>
@@ -911,28 +958,64 @@ export default function SettingsPage() {
                       {/* Authentication Flow for unauthenticated users */}
                       {copilotAuthStatus !== 'authenticated' && (
                         <div className="space-y-4">
-                          <p className="font-mono text-xs text-gray-700">
-                            To authenticate with GitHub Copilot:
-                          </p>
-                          <ol className="font-mono text-xs text-gray-600 space-y-2 list-decimal list-inside">
-                            <li>Click <strong>&quot;Start Authentication&quot;</strong> below</li>
-                            <li>Check the <strong>backend terminal</strong> for the device code</li>
-                            <li>Visit <a href="https://github.com/login/device" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">github.com/login/device</a></li>
-                            <li>Enter the code shown in your terminal</li>
-                            <li>Authorize the application on GitHub</li>
-                            <li>Return here and click <strong>&quot;Test Connection&quot;</strong> to verify</li>
-                          </ol>
-                          <Button
-                            onClick={handleInitiateCopilotAuth}
-                            disabled={isInitiatingAuth}
-                            className="w-full"
-                          >
-                            {isInitiatingAuth ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
-                              'Start Authentication'
-                            )}
-                          </Button>
+                          {copilotAuthStatus === 'initiating' ? (
+                            <div className="space-y-3">
+                              <div className="flex items-center gap-2 text-blue-700">
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                <span className="font-mono text-sm font-bold">Authentication in Progress...</span>
+                              </div>
+                              <p className="font-mono text-xs text-gray-600">
+                                Check your <strong>backend terminal</strong> for the device code.
+                                After entering the code on GitHub and authorizing, click <strong>Refresh Status</strong> to verify.
+                              </p>
+                            </div>
+                          ) : (
+                            <>
+                              <p className="font-mono text-xs text-gray-700">
+                                To authenticate with GitHub Copilot:
+                              </p>
+                              <ol className="font-mono text-xs text-gray-600 space-y-2 list-decimal list-inside">
+                                <li>Click <strong>&quot;Start Authentication&quot;</strong> below</li>
+                                <li>Check the <strong>backend terminal</strong> for the device code</li>
+                                <li>Visit <a href="https://github.com/login/device" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">github.com/login/device</a></li>
+                                <li>Enter the code shown in your terminal</li>
+                                <li>Authorize the application on GitHub</li>
+                                <li>Click <strong>&quot;Refresh Status&quot;</strong> below to check if authenticated</li>
+                              </ol>
+                            </>
+                          )}
+                          <div className="flex gap-2">
+                            <Button
+                              onClick={handleInitiateCopilotAuth}
+                              disabled={copilotAuthStatus === 'initiating'}
+                              className="flex-1"
+                            >
+                              {copilotAuthStatus === 'initiating' ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                'Start Authentication'
+                              )}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              onClick={async () => {
+                                try {
+                                  const authStatus = await checkGithubCopilotStatus();
+                                  if (authStatus.authenticated) {
+                                    setCopilotAuthStatus('authenticated');
+                                  } else {
+                                    setCopilotAuthStatus('not_authenticated');
+                                  }
+                                } catch (err) {
+                                  console.error('Failed to check auth status', err);
+                                }
+                              }}
+                              disabled={copilotAuthStatus === 'initiating'}
+                              className="border-2 border-black"
+                            >
+                              <RefreshCw className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </div>
                       )}
 

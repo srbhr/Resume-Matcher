@@ -591,7 +591,6 @@ async def initiate_github_copilot_auth() -> dict:
     """
     global _copilot_auth_task
     import asyncio
-    import subprocess
     from pathlib import Path
     import logging
 
@@ -622,14 +621,12 @@ async def initiate_github_copilot_auth() -> dict:
         }
 
     try:
-        import litellm
         from ..llm import get_model_name
 
         auth_model = get_model_name(config)
 
         async def trigger_auth():
             import asyncio as _asyncio
-            import subprocess as _subprocess
 
             try:
                 logging.info("=" * 60)
@@ -642,38 +639,24 @@ async def initiate_github_copilot_auth() -> dict:
                 logging.info("The device code will appear below:")
                 logging.info("")
 
-                import os
-                client_id = getattr(litellm.constants, 'GITHUB_CLIENT_ID', 'CLIENT_ID_MISSING')
+                # Import litellm here to trigger the OAuth flow
+                # This will print the device code to the terminal
+                import litellm
                 
-                # Set up environment with GitHub client ID
-                env = os.environ.copy()
-                env['GITHUB_CLIENT_ID'] = client_id
-
-                proc = await _asyncio.create_subprocess_exec(
-                    "python",
-                    "-c",
-                    f"""
-import litellm
-try:
-    litellm.completion(
-        model="{auth_model}",
-        messages=[{{"role": "user", "content": "test"}}],
-        max_tokens=1
-    )
-except Exception as e:
-    if hasattr(e, 'stream') and e.stream:
-        pass
-    elif hasattr(e, 'headers') and hasattr(e, 'message'):
-        pass
-    print(str(e))
-""",
-                    stderr=_asyncio.subprocess.PIPE,
-                    stdout=_asyncio.subprocess.PIPE,
-                    env=env,
-                )
-                stdout, stderr = await proc.communicate(timeout=300)
-                output = stderr.decode() + stdout.decode()
-                logging.info(output)
+                # Make a completion call that will trigger the device flow
+                # The device code will be printed to stderr by LiteLLM
+                try:
+                    await litellm.acompletion(
+                        model=auth_model,
+                        messages=[{"role": "user", "content": "test"}],
+                        max_tokens=1,
+                        timeout=300,  # 5 minute timeout for user to authenticate
+                    )
+                except Exception as e:
+                    # Expected to fail if not authenticated yet
+                    # The device code should have been printed by LiteLLM
+                    logging.info(f"Auth attempt result: {e}")
+                
                 logging.info("")
                 logging.info("After authenticating, the token will be saved automatically.")
                 logging.info("Then return to the UI and click 'Test Connection'.")
@@ -681,8 +664,8 @@ except Exception as e:
             except _asyncio.CancelledError:
                 logging.info("GitHub Copilot auth task cancelled by user")
                 raise
-            except Exception:
-                pass
+            except Exception as e:
+                logging.error(f"Auth task error: {e}")
 
         _copilot_auth_task = asyncio.create_task(trigger_auth())
 
@@ -718,12 +701,13 @@ async def cancel_github_copilot_auth() -> dict:
             "message": "No active authentication flow to cancel"
         }
 
+    import asyncio as _asyncio
+    
     _copilot_auth_task.cancel()
     try:
         # Give the task a moment to acknowledge cancellation
-        import asyncio
-        await asyncio.wait_for(asyncio.shield(_copilot_auth_task), timeout=2.0)
-    except (asyncio.CancelledError, asyncio.TimeoutError, Exception):
+        await _asyncio.wait_for(_asyncio.shield(_copilot_auth_task), timeout=2.0)
+    except (_asyncio.CancelledError, _asyncio.TimeoutError, Exception):
         pass
 
     _copilot_auth_task = None
