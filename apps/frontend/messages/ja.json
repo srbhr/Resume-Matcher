@@ -277,7 +277,14 @@
         "matchRateLabel": "一致率:"
       },
       "boostButton": "JDマッチ度を上げる",
-      "boostFailed": "マッチ度の向上に失敗しました。もう一度お試しください。"
+      "boostFailed": "マッチ度の向上に失敗しました。もう一度お試しください。",
+      "analyzeButton": "詳細分析",
+      "analyzing": "分析中...",
+      "atsScore": "ATSキーワードスコア",
+      "semanticScore": "意味的関連性",
+      "synonymsResolved": "同義語の解決",
+      "missingKeywords": "不足",
+      "weakestSection": "最も弱いセクション"
     },
     "genericItemForm": {
       "itemLabel": "項目",

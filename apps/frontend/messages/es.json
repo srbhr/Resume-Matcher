@@ -277,7 +277,14 @@
         "matchRateLabel": "Tasa de coincidencia:"
       },
       "boostButton": "Aumentar coincidencia JD",
-      "boostFailed": "Error al aumentar la coincidencia. Inténtalo de nuevo."
+      "boostFailed": "Error al aumentar la coincidencia. Inténtalo de nuevo.",
+      "analyzeButton": "Análisis profundo",
+      "analyzing": "Analizando...",
+      "atsScore": "Puntuación ATS",
+      "semanticScore": "Relevancia semántica",
+      "synonymsResolved": "Sinónimos resueltos",
+      "missingKeywords": "Faltantes",
+      "weakestSection": "Sección más débil"
     },
     "genericItemForm": {
       "itemLabel": "Elemento",

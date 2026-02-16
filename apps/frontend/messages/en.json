@@ -277,7 +277,14 @@
         "matchRateLabel": "Match Rate:"
       },
       "boostButton": "Increase JD Match",
-      "boostFailed": "Failed to boost JD match. Please try again."
+      "boostFailed": "Failed to boost JD match. Please try again.",
+      "analyzeButton": "Deep Analysis",
+      "analyzing": "Analyzing...",
+      "atsScore": "ATS Keyword Score",
+      "semanticScore": "Semantic Relevance",
+      "synonymsResolved": "Synonyms resolved",
+      "missingKeywords": "Missing",
+      "weakestSection": "Weakest section"
     },
     "genericItemForm": {
       "itemLabel": "Item",

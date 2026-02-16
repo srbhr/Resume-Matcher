@@ -277,7 +277,14 @@
         "matchRateLabel": "匹配率："
       },
       "boostButton": "提高JD匹配度",
-      "boostFailed": "提高匹配度失败，请重试。"
+      "boostFailed": "提高匹配度失败，请重试。",
+      "analyzeButton": "深度分析",
+      "analyzing": "分析中...",
+      "atsScore": "ATS关键词得分",
+      "semanticScore": "语义相关性",
+      "synonymsResolved": "同义词匹配",
+      "missingKeywords": "缺失",
+      "weakestSection": "最弱部分"
     },
     "genericItemForm": {
       "itemLabel": "条目",

@@ -987,6 +987,7 @@ const ResumeBuilderContent = () => {
                   jobDescription={jobDescription}
                   resumeData={resumeData}
                   jobKeywords={jobKeywords}
+                  resumeId={resumeId ?? undefined}
                 />
               )}
             </div>

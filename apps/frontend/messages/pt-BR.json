@@ -277,7 +277,14 @@
         "matchRateLabel": "Taxa de Correspondência:"
       },
       "boostButton": "Aumentar correspondência JD",
-      "boostFailed": "Falha ao aumentar correspondência. Tente novamente."
+      "boostFailed": "Falha ao aumentar correspondência. Tente novamente.",
+      "analyzeButton": "Análise profunda",
+      "analyzing": "Analisando...",
+      "atsScore": "Pontuação ATS",
+      "semanticScore": "Relevância semântica",
+      "synonymsResolved": "Sinônimos resolvidos",
+      "missingKeywords": "Faltando",
+      "weakestSection": "Seção mais fraca"
     },
     "genericItemForm": {
       "itemLabel": "Item",
