@@ -329,10 +329,13 @@ async def check_llm_health(
     try:
         # Make a minimal test call with timeout
         # Pass API key directly to avoid race conditions with global os.environ
+        # Models with thinking/reasoning (e.g. Qwen3) consume tokens for
+        # chain-of-thought before producing visible content. 16 tokens is
+        # not enough for these models, so use 256 for all providers.
         kwargs: dict[str, Any] = {
             "model": model_name,
             "messages": [{"role": "user", "content": prompt}],
-            "max_tokens": 16,
+            "max_tokens": 256,
             "api_key": config.api_key,
             "api_base": _normalize_api_base(config.provider, config.api_base),
             "timeout": LLM_TIMEOUT_HEALTH_CHECK,
