@@ -47,6 +47,8 @@ from app.services.improver import (
     improve_resume,
 )
 from app.services.refiner import refine_resume, calculate_keyword_match
+from app.services.matcher import analyze_match
+from app.schemas.match_analysis import MatchAnalysisResponse
 from app.schemas.refinement import RefinementConfig
 from app.services.cover_letter import (
     generate_cover_letter,
@@ -1417,6 +1419,61 @@ async def get_job_description_for_resume(resume_id: str) -> dict:
         "content": job["content"],
         "job_keywords": job.get("job_keywords"),
     }
+
+
+@router.post("/{resume_id}/match-analysis", response_model=MatchAnalysisResponse)
+async def match_analysis_endpoint(resume_id: str) -> MatchAnalysisResponse:
+    """Run dual-score match analysis on a tailored resume against its job description.
+
+    Returns ATS keyword score (with synonym normalization), semantic relevance
+    score (sentence-transformer embeddings), and a combined blended score.
+    """
+    resume = db.get_resume(resume_id)
+    if not resume:
+        raise HTTPException(status_code=404, detail="Resume not found")
+
+    if not resume.get("parent_id"):
+        raise HTTPException(
+            status_code=400,
+            detail="Match analysis is only available for tailored resumes.",
+        )
+
+    resume_data = resume.get("processed_data")
+    if not resume_data:
+        raise HTTPException(
+            status_code=400,
+            detail="Resume has no processed data.",
+        )
+
+    improvement = db.get_improvement_by_tailored_resume(resume_id)
+    if not improvement:
+        raise HTTPException(
+            status_code=400,
+            detail="No job context found for this resume.",
+        )
+
+    job = db.get_job(improvement["job_id"])
+    if not job:
+        raise HTTPException(
+            status_code=404,
+            detail="The associated job description was not found.",
+        )
+
+    jd_keywords = job.get("job_keywords")
+    if not jd_keywords:
+        raise HTTPException(
+            status_code=400,
+            detail="Job keywords not available. Please re-tailor the resume.",
+        )
+
+    try:
+        return analyze_match(resume_data, job["content"], jd_keywords)
+    except Exception as e:
+        logger.error("Match analysis failed: %s", e)
+        raise HTTPException(
+            status_code=500,
+            detail="Match analysis failed. Please try again.",
+        )
 
 
 @router.get("/{resume_id}/cover-letter/pdf")

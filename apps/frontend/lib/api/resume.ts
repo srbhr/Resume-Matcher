@@ -384,3 +384,48 @@ export async function fetchJobDescription(
   }
   return res.json();
 }
+
+/** Synonym match detail from ATS scoring */
+export interface SynonymMatch {
+  jd_term: string;
+  resume_term: string;
+  canonical: string;
+}
+
+/** ATS keyword score result */
+export interface ATSScoreResult {
+  score: number;
+  matched_keywords: string[];
+  missing_keywords: string[];
+  synonym_matches: SynonymMatch[];
+  total_keywords: number;
+}
+
+/** Section-level semantic score */
+export interface SectionScore {
+  section: string;
+  score: number;
+}
+
+/** Semantic relevance score result */
+export interface SemanticScoreResult {
+  score: number;
+  section_scores: SectionScore[];
+}
+
+/** Complete match analysis response */
+export interface MatchAnalysisResponse {
+  ats_score: ATSScoreResult;
+  semantic_score: SemanticScoreResult;
+  combined_score: number;
+}
+
+/** Fetches dual-score match analysis for a tailored resume */
+export async function fetchMatchAnalysis(resumeId: string): Promise<MatchAnalysisResponse> {
+  const res = await apiPost(`/resumes/${encodeURIComponent(resumeId)}/match-analysis`, {});
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Match analysis failed (status ${res.status}): ${text}`);
+  }
+  return res.json();
+}
