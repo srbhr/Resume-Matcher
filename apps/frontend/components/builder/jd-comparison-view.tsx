@@ -154,9 +154,7 @@ export function JDComparisonView({
               disabled={analyzing}
               className="border border-black rounded-none px-3 py-1 text-xs font-mono uppercase tracking-wide hover:bg-black hover:text-white transition-colors disabled:opacity-50"
             >
-              {analyzing
-                ? t('builder.jdMatch.analyzing')
-                : t('builder.jdMatch.analyzeButton')}
+              {analyzing ? t('builder.jdMatch.analyzing') : t('builder.jdMatch.analyzeButton')}
             </button>
           )}
         </div>
@@ -236,17 +234,12 @@ export function JDComparisonView({
               )}
               {analysis.semantic_score.section_scores.length > 0 &&
                 (() => {
-                  const nonZero = analysis.semantic_score.section_scores.filter(
-                    (s) => s.score > 0
-                  );
+                  const nonZero = analysis.semantic_score.section_scores.filter((s) => s.score > 0);
                   if (nonZero.length === 0) return null;
-                  const weakest = nonZero.reduce((min, s) =>
-                    s.score < min.score ? s : min
-                  );
+                  const weakest = nonZero.reduce((min, s) => (s.score < min.score ? s : min));
                   return (
                     <p className="text-gray-600">
-                      {t('builder.jdMatch.weakestSection')}: {weakest.section} (
-                      {weakest.score}%)
+                      {t('builder.jdMatch.weakestSection')}: {weakest.section} ({weakest.score}%)
                     </p>
                   );
                 })()}
