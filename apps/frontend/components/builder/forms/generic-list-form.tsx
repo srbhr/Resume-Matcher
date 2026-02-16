@@ -29,8 +29,8 @@ export const GenericListForm: React.FC<GenericListFormProps> = ({
   const finalPlaceholder = placeholder ?? t('builder.customSections.itemsPlaceholder');
 
   const handleChange = (value: string) => {
-    // Split by newlines, filter empty lines
-    const newItems = value.split('\n').filter((item) => item.trim() !== '');
+    // Split by newlines, allow empty lines for editing
+    const newItems = value.split('\n');
     onChange(newItems);
   };
 

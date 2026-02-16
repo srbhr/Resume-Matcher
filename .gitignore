@@ -111,3 +111,4 @@ docs/plans/
 
 # agent notes
 .playwright-mcp/
+apps/backend/backend.log

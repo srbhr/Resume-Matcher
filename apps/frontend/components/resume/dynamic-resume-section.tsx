@@ -37,7 +37,7 @@ export const DynamicResumeSection: React.FC<DynamicResumeSectionProps> = ({
       case 'itemList':
         return Boolean(customSection.items?.length);
       case 'stringList':
-        return Boolean(customSection.strings?.length);
+        return Boolean(customSection.strings?.filter((s) => s.trim() !== '').length);
       default:
         return false;
     }
@@ -131,9 +131,10 @@ const ItemListSectionContent: React.FC<{ items: CustomSectionItem[] }> = ({ item
  * String List Section Content (like Skills)
  */
 const StringListSectionContent: React.FC<{ strings: string[] }> = ({ strings }) => {
-  if (strings.length === 0) return null;
+  const filteredStrings = strings.filter((s) => s.trim() !== '');
+  if (filteredStrings.length === 0) return null;
 
-  return <div className={baseStyles['resume-text-sm']}>{strings.join(', ')}</div>;
+  return <div className={baseStyles['resume-text-sm']}>{filteredStrings.join(', ')}</div>;
 };
 
 export default DynamicResumeSection;

@@ -42,7 +42,17 @@ export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
     Phone: <Phone size={12} />,
     Location: <MapPin size={12} />,
     Website: <Globe size={12} />,
-    LinkedIn: <Linkedin size={12} />,
+    LinkedIn: (
+      <svg
+        width="12"
+        height="12"
+        viewBox="0 0 24 24"
+        fill="currentColor"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
+      </svg>
+    ),
     GitHub: <Github size={12} />,
   };
 
@@ -335,15 +345,15 @@ const AdditionalSection: React.FC<{
   additional: ResumeData['additional'];
   displayName?: string;
   labels?: Partial<AdditionalSectionLabels>;
-}> = ({ additional, displayName = 'Technical Skills & Designations', labels }) => {
+}> = ({ additional, displayName = 'Skills & Certifications', labels }) => {
   if (!additional) return null;
 
-  const {
-    technicalSkills = [],
-    languages = [],
-    certificationsTraining = [],
-    awards = [],
-  } = additional;
+  const technicalSkills = (additional.technicalSkills || []).filter((s) => s.trim() !== '');
+  const languages = (additional.languages || []).filter((s) => s.trim() !== '');
+  const certificationsTraining = (additional.certificationsTraining || []).filter(
+    (s) => s.trim() !== ''
+  );
+  const awards = (additional.awards || []).filter((s) => s.trim() !== '');
 
   const mergedLabels: AdditionalSectionLabels = {
     technicalSkills: labels?.technicalSkills ?? 'Technical Skills:',

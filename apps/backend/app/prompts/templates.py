@@ -234,7 +234,14 @@ IMPROVE_RESUME_PROMPT_FULL = """Fully tailor this resume for the job description
 
 IMPORTANT: Generate ALL text content (summary, descriptions, skills) in {output_language}.
 
-Your primary goal is to MAXIMIZE JD keyword match by aggressively rewriting content.
+Your primary goal is to MAXIMIZE JD keyword match by aggressively rewriting content while maintaining high engineering rigor.
+
+ENGINEERING RIGOR RULES:
+1. Semantic Realism: Ensure technical tools match the scale described. Use Spark, Ray, or Flink for 'distributed' workloads; use Pandas/Scikit-learn for local/single-node workloads.
+2. Temporal Accuracy: Technology must match the role's timeline. Use 'MLOps' for 2021–2022; reserve 'LLMOps' or 'GenAI' for 2023 onwards.
+3. Business-to-Technical Translation: Frame leadership as technical partnership. Instead of "advised executives", use "Partnered with leadership to solve [Business Problem] by architecting [Technical Solution]."
+4. Grounded Metrics: Any metric improvement >25% MUST be paired with the method (e.g., "achieved via semantic chunking" or "fine-tuning on domain-specific datasets").
+5. Industry Lexicon: Use standard engineering verbs. Prioritize 'Scalable' over 'Expandable', 'Provisioned' over 'Built', and 'Optimized' over 'Analyzed'.
 
 BULLET POINT STRATEGY:
 - Treat each bullet point as a BLANK CANVAS - completely rewrite every bullet to directly address the JD's responsibilities
@@ -243,6 +250,7 @@ BULLET POINT STRATEGY:
 - INVENT realistic metrics (percentages, team sizes, dollar amounts, request volumes, uptime) for most bullets - keep them plausible for the role seniority and company size
 - You MAY add or remove bullets as needed - aim for 3-5 impactful bullets per role
 - Use strong action verbs and concrete, specific language matching the JD's terminology
+- FOLLOW the ENGINEERING RIGOR RULES above for all rewritten content
 
 SUMMARY STRATEGY:
 - REWRITE the summary as a 2-3 sentence targeted pitch for this specific role
@@ -262,7 +270,7 @@ HARD CONSTRAINTS (DO NOT VIOLATE):
 - DO NOT include spoken languages - set languages to an empty array []
 - Preserve the structure of any customSections from the original resume
 - Preserve original date ranges exactly - do not modify years
-- Do NOT use em dash ("\u2014") anywhere in the output, even if present in original - remove it
+- Do NOT use em dash ("-") anywhere in the output, even if present in original - remove it
 
 Job Description:
 {job_description}
@@ -282,7 +290,14 @@ IMPROVE_RESUME_PROMPT_BOOST = """You are re-tailoring an already-tailored resume
 
 IMPORTANT: Generate ALL text content (summary, descriptions, skills) in {output_language}.
 
-Your primary goal is to push the JD match percentage as high as possible.
+Your primary goal is to push the JD match percentage as high as possible while maintaining high engineering rigor.
+
+ENGINEERING RIGOR RULES:
+1. Semantic Realism: Ensure technical tools match the scale described. Use Spark, Ray, or Flink for 'distributed' workloads; use Pandas/Scikit-learn for local/single-node workloads.
+2. Temporal Accuracy: Technology must match the role's timeline. Use 'MLOps' for 2021–2022; reserve 'LLMOps' or 'GenAI' for 2023 onwards.
+3. Business-to-Technical Translation: Frame leadership as technical partnership. Instead of "advised executives", use "Partnered with leadership to solve [Business Problem] by architecting [Technical Solution]."
+4. Grounded Metrics: Any metric improvement >25% MUST be paired with the method (e.g., "achieved via semantic chunking" or "fine-tuning on domain-specific datasets").
+5. Industry Lexicon: Use standard engineering verbs. Prioritize 'Scalable' over 'Expandable', 'Provisioned' over 'Built', and 'Optimized' over 'Analyzed'.
 
 Rules:
 - Weave MORE keywords from the job description into bullet points naturally
@@ -292,12 +307,13 @@ Rules:
 - Mirror the JD's phrasing where it fits the candidate's real experience
 - You MAY invent realistic metrics (percentages, team sizes, dollar amounts) where they strengthen a bullet point, but keep them plausible
 - You MAY expand or add bullet points that elaborate on existing work to incorporate more keywords
+- FOLLOW the ENGINEERING RIGOR RULES above for all rewritten content
 - DO NOT modify, add, or remove any certifications or professional designations - copy certificationsTraining exactly as-is
 - DO NOT include spoken languages in the output - set languages to an empty array []
 - Keep company names, locations, and employment dates unchanged
 - Preserve the structure of any customSections from the original resume
 - Preserve original date ranges exactly - do not modify years
-- Do NOT use em dash ("\u2014") anywhere in the writing/output, even if it exists, remove it
+- Do NOT use em dash ("-") anywhere in the writing/output, even if it exists, remove it
 
 Job Description:
 {job_description}

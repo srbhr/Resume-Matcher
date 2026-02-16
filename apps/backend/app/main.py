@@ -5,7 +5,8 @@ import logging
 import sys
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 
 # Fix for Windows: Use ProactorEventLoop for subprocess support (Playwright)
 if sys.platform == "win32":
@@ -47,6 +48,19 @@ app = FastAPI(
     version=__version__,
     lifespan=lifespan,
 )
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    """Global exception handler to return detailed errors."""
+    logger.exception("Unhandled exception: %s", exc)
+    return JSONResponse(
+        status_code=500,
+        content={
+            "detail": str(exc),
+            "type": type(exc).__name__,
+            "message": "An unhandled error occurred."
+        },
+    )
 
 # CORS middleware - origins configurable via CORS_ORIGINS env var
 app.add_middleware(

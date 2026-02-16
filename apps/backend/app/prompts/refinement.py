@@ -33,7 +33,6 @@ AI_PHRASE_BLACKLIST: set[str] = {
     "disruptor",
     "holistic",
     "robust",
-    "scalable",
     "actionable",
     "impactful",
     "proactive",
@@ -99,7 +98,6 @@ AI_PHRASE_REPLACEMENTS: dict[str, str] = {
     "disruptive": "innovative",
     "holistic": "comprehensive",
     "robust": "strong",
-    "scalable": "expandable",
     "actionable": "practical",
     "impactful": "effective",
     "proactive": "active",
@@ -167,13 +165,20 @@ Output the complete resume JSON with ALL keywords integrated. Return ONLY valid 
 
 
 # Prompt for validation and polish pass
-VALIDATION_POLISH_PROMPT = """Review and polish this resume content. Remove any AI-sounding language.
+VALIDATION_POLISH_PROMPT = """Review and polish this resume content. Remove any AI-sounding language and ensure high engineering rigor.
 
 REMOVE or REPLACE:
 - Buzzwords: "spearheaded", "synergy", "leverage", "orchestrated", etc.
 - Em-dashes (use commas or semicolons instead)
 - Overly formal language: "utilized" -> "used", "endeavored" -> "worked"
 - Generic filler: "in order to" -> "to"
+
+ENGINEERING RIGOR RULES:
+1. Semantic Realism: Ensure technical tools match the scale described. Use Spark, Ray, or Flink for 'distributed' workloads; use Pandas/Scikit-learn for local/single-node workloads.
+2. Temporal Accuracy: Technology must match the role's timeline. Use 'MLOps' for 2021–2022; reserve 'LLMOps' or 'GenAI' for 2023 onwards.
+3. Business-to-Technical Translation: Frame leadership as technical partnership. Instead of "advised executives", use "Partnered with leadership to solve [Business Problem] by architecting [Technical Solution]."
+4. Grounded Metrics: Any metric improvement >25% MUST be paired with the method (e.g., "achieved via semantic chunking" or "fine-tuning on domain-specific datasets").
+5. Industry Lexicon: Use standard engineering verbs. Prioritize 'Scalable' over 'Expandable', 'Provisioned' over 'Built', and 'Optimized' over 'Analyzed'.
 
 VERIFY:
 - All certifications exist in the master resume (do NOT add new ones) - copy certificationsTraining exactly as-is

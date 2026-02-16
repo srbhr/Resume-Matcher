@@ -17,7 +17,7 @@ export const AdditionalForm: React.FC<AdditionalFormProps> = ({ data, onChange }
   // Helper to handle array conversions (text -> string[])
   const handleArrayChange = (field: keyof AdditionalInfo, value: string) => {
     // Split by newlines only (preserving spaces within items)
-    const items = value.split('\n').filter((item) => item.trim() !== '');
+    const items = value.split('\n');
     onChange({
       ...data,
       [field]: items,
