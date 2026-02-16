@@ -16,6 +16,7 @@ dependencies = [
     "playwright==1.58.0",
     "python-docx==1.2.0",
     "python-dotenv==1.2.1",
+    "sentence-transformers>=3.0.0",
 ]
 
 [project.optional-dependencies]
