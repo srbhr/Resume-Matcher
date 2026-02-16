@@ -62,7 +62,7 @@ export const DEFAULT_SECTION_META: SectionMeta[] = [
   {
     id: 'additional',
     key: 'additional',
-    displayName: 'Skills & Awards',
+    displayName: 'Technical Skills & Designations',
     sectionType: 'stringList',
     isDefault: true,
     isVisible: true,

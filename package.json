@@ -1,0 +1,20 @@
+{
+  "name": "cvfixer",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently -n fe,be -c blue,green \"npm run dev:frontend\" \"npm run dev:backend\"",
+    "dev:frontend": "cd apps/frontend && npm run dev",
+    "dev:backend": "cd apps/backend && uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload",
+    "stop": "npx kill-port 3000 8000",
+    "restart": "npm run stop && npm run dev",
+    "install:all": "cd apps/frontend && npm install && cd ../backend && uv sync",
+    "lint": "cd apps/frontend && npm run lint",
+    "format": "cd apps/frontend && npm run format",
+    "build": "cd apps/frontend && npm run build"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "kill-port": "^2.0.1"
+  }
+}

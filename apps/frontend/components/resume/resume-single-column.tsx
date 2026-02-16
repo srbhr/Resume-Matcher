@@ -308,41 +308,14 @@ export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
             </h2>
           )}
 
-          {/* Contact - Own line, centered */}
-          <div
-            className={`flex flex-wrap justify-center gap-x-1 gap-y-1 ${baseStyles['resume-meta']}`}
-          >
+          {/* Contact - Each on its own centered line */}
+          <div className={`flex flex-col items-center gap-y-0.5 ${baseStyles['resume-meta']}`}>
             {renderContactDetail('Email', personalInfo.email, 'mailto:')}
-            {personalInfo.phone && (
-              <>
-                <span className={baseStyles['text-muted']}>,</span>
-                {renderContactDetail('Phone', personalInfo.phone, 'tel:')}
-              </>
-            )}
-            {personalInfo.location && (
-              <>
-                <span className={baseStyles['text-muted']}>,</span>
-                {renderContactDetail('Location', personalInfo.location)}
-              </>
-            )}
-            {personalInfo.website && (
-              <>
-                <span className={baseStyles['text-muted']}>,</span>
-                {renderContactDetail('Website', personalInfo.website)}
-              </>
-            )}
-            {personalInfo.linkedin && (
-              <>
-                <span className={baseStyles['text-muted']}>,</span>
-                {renderContactDetail('LinkedIn', personalInfo.linkedin)}
-              </>
-            )}
-            {personalInfo.github && (
-              <>
-                <span className={baseStyles['text-muted']}>,</span>
-                {renderContactDetail('GitHub', personalInfo.github)}
-              </>
-            )}
+            {renderContactDetail('Phone', personalInfo.phone, 'tel:')}
+            {renderContactDetail('Location', personalInfo.location)}
+            {renderContactDetail('Website', personalInfo.website)}
+            {renderContactDetail('LinkedIn', personalInfo.linkedin)}
+            {renderContactDetail('GitHub', personalInfo.github)}
           </div>
         </header>
       )}
@@ -362,7 +335,7 @@ const AdditionalSection: React.FC<{
   additional: ResumeData['additional'];
   displayName?: string;
   labels?: Partial<AdditionalSectionLabels>;
-}> = ({ additional, displayName = 'Skills & Awards', labels }) => {
+}> = ({ additional, displayName = 'Technical Skills & Designations', labels }) => {
   if (!additional) return null;
 
   const {
@@ -375,8 +348,8 @@ const AdditionalSection: React.FC<{
   const mergedLabels: AdditionalSectionLabels = {
     technicalSkills: labels?.technicalSkills ?? 'Technical Skills:',
     languages: labels?.languages ?? 'Languages:',
-    certifications: labels?.certifications ?? 'Certifications:',
-    awards: labels?.awards ?? 'Awards:',
+    certifications: labels?.certifications ?? 'Professional Certifications:',
+    awards: labels?.awards ?? 'Professional Designations:',
   };
 
   const hasContent =
@@ -387,34 +360,58 @@ const AdditionalSection: React.FC<{
 
   if (!hasContent) return null;
 
+  // Render a list of entries, detecting "Label: values" convention for subcategories
+  const renderEntries = (entries: string[], fallbackLabel: string) => {
+    if (entries.length === 0) return null;
+
+    // Check if any entry uses "Label: values" convention
+    const hasSubcategories = entries.some((e) => e.includes(': '));
+
+    if (hasSubcategories) {
+      // Show section label as header, then each subcategory entry
+      return (
+        <>
+          <div className="font-bold">{fallbackLabel}</div>
+          {entries.map((entry, i) => {
+            const colonIdx = entry.indexOf(': ');
+            if (colonIdx !== -1) {
+              const label = entry.slice(0, colonIdx + 1);
+              const values = entry.slice(colonIdx + 2);
+              return (
+                <div key={i} className="flex pl-4">
+                  <span className="font-bold shrink-0 mr-2">{label}</span>
+                  <span>{values}</span>
+                </div>
+              );
+            }
+            // Entry without colon - render as plain text
+            return (
+              <div key={i} className="pl-4">
+                <span>{entry}</span>
+              </div>
+            );
+          })}
+        </>
+      );
+    }
+
+    // Flat list fallback - comma-separated with section label
+    return (
+      <div className="flex">
+        <span className="font-bold shrink-0 mr-2">{fallbackLabel}</span>
+        <span>{entries.join(', ')}</span>
+      </div>
+    );
+  };
+
   return (
     <div className={baseStyles['resume-section']}>
       <h3 className={baseStyles['resume-section-title']}>{displayName}</h3>
       <div className={`${baseStyles['resume-stack']} ${baseStyles['resume-text-sm']}`}>
-        {technicalSkills.length > 0 && (
-          <div className="flex">
-            <span className="font-bold w-32 shrink-0">{mergedLabels.technicalSkills}</span>
-            <span>{technicalSkills.join(', ')}</span>
-          </div>
-        )}
-        {languages.length > 0 && (
-          <div className="flex">
-            <span className="font-bold w-32 shrink-0">{mergedLabels.languages}</span>
-            <span>{languages.join(', ')}</span>
-          </div>
-        )}
-        {certificationsTraining.length > 0 && (
-          <div className="flex">
-            <span className="font-bold w-32 shrink-0">{mergedLabels.certifications}</span>
-            <span>{certificationsTraining.join(', ')}</span>
-          </div>
-        )}
-        {awards.length > 0 && (
-          <div className="flex">
-            <span className="font-bold w-32 shrink-0">{mergedLabels.awards}</span>
-            <span>{awards.join(', ')}</span>
-          </div>
-        )}
+        {renderEntries(technicalSkills, mergedLabels.technicalSkills)}
+        {renderEntries(languages, mergedLabels.languages)}
+        {renderEntries(certificationsTraining, mergedLabels.certifications)}
+        {renderEntries(awards, mergedLabels.awards)}
       </div>
     </div>
   );

@@ -328,10 +328,14 @@ export default function ResumeViewerPage() {
                 }}
                 className="group flex items-center gap-2 cursor-pointer bg-transparent border-none p-0"
               >
-                <h2 className={`font-serif text-2xl font-bold border-b-2 border-transparent group-hover:border-black transition-colors ${!resumeTitle ? 'text-gray-400' : ''}`}>
+                <h2
+                  className={`font-serif text-2xl font-bold border-b-2 border-transparent group-hover:border-black transition-colors ${!resumeTitle ? 'text-gray-400' : ''}`}
+                >
                   {resumeTitle || t('resumeViewer.titlePlaceholder')}
                 </h2>
-                <Pencil className={`w-4 h-4 transition-opacity ${resumeTitle ? 'opacity-0 group-hover:opacity-60' : 'opacity-40 group-hover:opacity-60'}`} />
+                <Pencil
+                  className={`w-4 h-4 transition-opacity ${resumeTitle ? 'opacity-0 group-hover:opacity-60' : 'opacity-40 group-hover:opacity-60'}`}
+                />
               </button>
             )}
           </div>

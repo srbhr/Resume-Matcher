@@ -126,11 +126,11 @@ async def refine_resume(
                     [v.value for v in critical_violations],
                 )
                 # Fix violations before returning
-                current = fix_alignment_violations(current, alignment.violations)
+                current = fix_alignment_violations(current, alignment.violations, master_resume)
                 passes += 1
             else:
                 # Non-critical violations - fix and continue
-                current = fix_alignment_violations(current, alignment.violations)
+                current = fix_alignment_violations(current, alignment.violations, master_resume)
                 passes += 1
 
     # Calculate final match percentage
@@ -179,9 +179,9 @@ def analyze_keyword_gaps(
     for keyword in all_jd_keywords:
         if not _keyword_in_text(keyword, tailored_text):
             missing.append(keyword)
-            if _keyword_in_text(keyword, master_text):
-                injectable.append(keyword)
-            else:
+            # Inject ALL missing JD keywords, not just those in master resume
+            injectable.append(keyword)
+            if not _keyword_in_text(keyword, master_text):
                 non_injectable.append(keyword)
 
     # Calculate percentages
@@ -255,27 +255,8 @@ def validate_master_alignment(
     """
     violations: list[AlignmentViolation] = []
 
-    # Check skills
-    tailored_skills = set(
-        s.lower()
-        for s in tailored.get("additional", {}).get("technicalSkills", [])
-        if isinstance(s, str)
-    )
-    master_skills = set(
-        s.lower()
-        for s in master.get("additional", {}).get("technicalSkills", [])
-        if isinstance(s, str)
-    )
-
-    for skill in tailored_skills - master_skills:
-        violations.append(
-            AlignmentViolation(
-                field_path="additional.technicalSkills",
-                violation_type="fabricated_skill",
-                value=skill,
-                severity="critical",
-            )
-        )
+    # Note: technicalSkills are NOT checked - we intentionally allow adding
+    # JD-relevant skills that aren't in the master resume.
 
     # Check certifications
     tailored_certs = set(
@@ -299,15 +280,22 @@ def validate_master_alignment(
             )
         )
 
-    # Check work experience companies (should not add new companies)
+    # Check work experience companies, titles, and dates against master
+    master_experiences = master.get("workExperience", [])
+    tailored_experiences = tailored.get("workExperience", [])
+
+    # Build master lookup by company name (lowered)
+    master_by_company: dict[str, dict[str, Any]] = {}
+    for exp in master_experiences:
+        if isinstance(exp, dict):
+            company_key = exp.get("company", "").lower()
+            if company_key:
+                master_by_company[company_key] = exp
+
+    master_companies = set(master_by_company.keys())
     tailored_companies = set(
         exp.get("company", "").lower()
-        for exp in tailored.get("workExperience", [])
-        if isinstance(exp, dict)
-    )
-    master_companies = set(
-        exp.get("company", "").lower()
-        for exp in master.get("workExperience", [])
+        for exp in tailored_experiences
         if isinstance(exp, dict)
     )
 
@@ -318,6 +306,41 @@ def validate_master_alignment(
                     field_path="workExperience",
                     violation_type="fabricated_company",
                     value=company,
+                    severity="critical",
+                )
+            )
+
+    # Check titles and dates for existing companies
+    for exp in tailored_experiences:
+        if not isinstance(exp, dict):
+            continue
+        company_key = exp.get("company", "").lower()
+        master_exp = master_by_company.get(company_key)
+        if not master_exp:
+            continue
+
+        # Check job title hasn't been changed (e.g., Junior → Senior)
+        tailored_title = exp.get("title", "").strip()
+        master_title = master_exp.get("title", "").strip()
+        if tailored_title and master_title and tailored_title.lower() != master_title.lower():
+            violations.append(
+                AlignmentViolation(
+                    field_path=f"workExperience[{company_key}].title",
+                    violation_type="modified_title",
+                    value=f"{master_title} -> {tailored_title}",
+                    severity="critical",
+                )
+            )
+
+        # Check dates haven't been extended
+        tailored_years = exp.get("years", "").strip()
+        master_years = master_exp.get("years", "").strip()
+        if tailored_years and master_years and tailored_years != master_years:
+            violations.append(
+                AlignmentViolation(
+                    field_path=f"workExperience[{company_key}].years",
+                    violation_type="modified_dates",
+                    value=f"{master_years} -> {tailored_years}",
                     severity="critical",
                 )
             )
@@ -439,31 +462,37 @@ async def inject_keywords(
 def fix_alignment_violations(
     tailored: dict[str, Any],
     violations: list[AlignmentViolation],
+    master: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Remove or correct alignment violations.
 
-    This is a local operation that removes fabricated content.
+    This is a local operation that removes fabricated content or restores
+    original values from the master resume.
 
     Args:
         tailored: Tailored resume data
         violations: List of alignment violations to fix
+        master: Master resume data (needed to restore titles/dates)
 
     Returns:
         Fixed resume data
     """
     fixed = _deep_copy(tailored)
 
+    # Build master lookup for title/date restoration
+    master_by_company: dict[str, dict[str, Any]] = {}
+    if master:
+        for exp in master.get("workExperience", []):
+            if isinstance(exp, dict):
+                company_key = exp.get("company", "").lower()
+                if company_key:
+                    master_by_company[company_key] = exp
+
     for violation in violations:
         if violation.severity != "critical":
             continue
 
-        if violation.violation_type == "fabricated_skill":
-            skills = fixed.get("additional", {}).get("technicalSkills", [])
-            fixed.setdefault("additional", {})["technicalSkills"] = [
-                s for s in skills if s.lower() != violation.value.lower()
-            ]
-
-        elif violation.violation_type == "fabricated_cert":
+        if violation.violation_type == "fabricated_cert":
             certs = fixed.get("additional", {}).get("certificationsTraining", [])
             fixed.setdefault("additional", {})["certificationsTraining"] = [
                 c for c in certs if c.lower() != violation.value.lower()
@@ -482,6 +511,26 @@ def fix_alignment_violations(
                     "Removed fabricated company '%s' from resume",
                     violation.value,
                 )
+
+        elif violation.violation_type == "modified_title":
+            # Restore original title from master
+            company_key = violation.field_path.split("[")[1].split("]")[0]
+            master_exp = master_by_company.get(company_key)
+            if master_exp:
+                for exp in fixed.get("workExperience", []):
+                    if exp.get("company", "").lower() == company_key:
+                        exp["title"] = master_exp.get("title", exp.get("title", ""))
+                        logger.info("Restored title for '%s'", company_key)
+
+        elif violation.violation_type == "modified_dates":
+            # Restore original dates from master
+            company_key = violation.field_path.split("[")[1].split("]")[0]
+            master_exp = master_by_company.get(company_key)
+            if master_exp:
+                for exp in fixed.get("workExperience", []):
+                    if exp.get("company", "").lower() == company_key:
+                        exp["years"] = master_exp.get("years", exp.get("years", ""))
+                        logger.info("Restored dates for '%s'", company_key)
 
     return fixed
 

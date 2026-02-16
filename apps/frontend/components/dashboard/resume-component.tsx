@@ -1,10 +1,5 @@
 import React from 'react';
-import {
-  ResumeSingleColumn,
-  ResumeTwoColumn,
-  ResumeModern,
-  ResumeModernTwoColumn,
-} from '@/components/resume';
+import { ResumeSingleColumn } from '@/components/resume';
 import {
   type TemplateSettings,
   type TemplateType,
@@ -137,14 +132,8 @@ interface ResumeProps {
 /**
  * Resume Component
  *
- * Main wrapper component that delegates rendering to template-specific components.
- * Applies CSS custom properties from settings for consistent styling.
- *
- * Templates:
- * - swiss-single: Traditional single-column layout (default)
- * - swiss-two-column: Two-column layout with experience sidebar
- * - modern: Single-column with user-selectable accent colors
- * - modern-two-column: Two-column layout with modern colorful accents
+ * Main wrapper component that applies CSS custom properties from settings
+ * and renders the single-column resume template.
  */
 const Resume: React.FC<ResumeProps> = ({
   resumeData,
@@ -176,35 +165,11 @@ const Resume: React.FC<ResumeProps> = ({
       className={`${baseStyles['resume-body']} bg-white text-black w-full mx-auto resume-template-${mergedSettings.template}`}
       style={cssVars}
     >
-      {mergedSettings.template === 'swiss-single' && (
-        <ResumeSingleColumn
-          data={resumeData}
-          showContactIcons={mergedSettings.showContactIcons}
-          additionalSectionLabels={additionalSectionLabels}
-        />
-      )}
-      {mergedSettings.template === 'swiss-two-column' && (
-        <ResumeTwoColumn
-          data={resumeData}
-          showContactIcons={mergedSettings.showContactIcons}
-          sectionHeadings={sectionHeadings}
-        />
-      )}
-      {mergedSettings.template === 'modern' && (
-        <ResumeModern
-          data={resumeData}
-          showContactIcons={mergedSettings.showContactIcons}
-          additionalSectionLabels={additionalSectionLabels}
-        />
-      )}
-      {mergedSettings.template === 'modern-two-column' && (
-        <ResumeModernTwoColumn
-          data={resumeData}
-          showContactIcons={mergedSettings.showContactIcons}
-          sectionHeadings={sectionHeadings}
-          fallbackLabels={fallbackLabels}
-        />
-      )}
+      <ResumeSingleColumn
+        data={resumeData}
+        showContactIcons={mergedSettings.showContactIcons}
+        additionalSectionLabels={additionalSectionLabels}
+      />
     </div>
   );
 };

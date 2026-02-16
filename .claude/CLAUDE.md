@@ -53,7 +53,12 @@ npm run format        # Format with Prettier
 
 # Build
 npm run build
+
+# Restart dev with clean cache (kills processes, clears __pycache__ and .next lock)
+bash scripts/restart-dev.sh
 ```
+
+> **Important:** After changing Python files (prompts, services, schemas), run `bash scripts/restart-dev.sh` to ensure the backend picks up changes. Uvicorn's `--reload` may not clear cached `.pyc` files.
 
 ---
 

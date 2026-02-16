@@ -158,7 +158,7 @@ def _preserve_personal_info(
     original_data: dict[str, Any] | None,
     improved_data: dict[str, Any],
 ) -> tuple[dict[str, Any], list[str]]:
-    """Preserve personal info from original, return warnings if unable.
+    """Preserve personal info, certifications from original; strip languages.
 
     Uses deep copy to prevent mutation of original data.
     """
@@ -178,6 +178,31 @@ def _preserve_personal_info(
     # SVC-001: Use deep copy to prevent any mutation of original data
     result = copy.deepcopy(improved_data)
     result["personalInfo"] = copy.deepcopy(original_info)
+
+    original_additional = original_data.get("additional", {})
+    if isinstance(original_additional, dict):
+        result_additional = result.setdefault("additional", {})
+
+        # Preserve certifications exactly from original resume
+        original_certs = original_additional.get("certificationsTraining")
+        if original_certs is not None:
+            result_additional["certificationsTraining"] = copy.deepcopy(original_certs)
+
+        # Populate technicalSkills from master if LLM returned empty
+        improved_skills = result_additional.get("technicalSkills", [])
+        if not improved_skills:
+            original_skills = original_additional.get("technicalSkills", [])
+            if original_skills:
+                result_additional["technicalSkills"] = copy.deepcopy(original_skills)
+                logger.info(
+                    "technicalSkills empty in LLM output; populated %d from master",
+                    len(original_skills),
+                )
+
+    # Strip spoken languages from output (not relevant to resume tailoring)
+    if isinstance(result.get("additional"), dict):
+        result["additional"]["languages"] = []
+
     return result, warnings
 
 
@@ -512,12 +537,6 @@ async def improve_resume_preview_endpoint(
         # Collect warnings throughout the process
         response_warnings: list[str] = []
 
-        improved_data, preserve_warnings = _preserve_personal_info(
-            _get_original_resume_data(resume),
-            improved_data,
-        )
-        response_warnings.extend(preserve_warnings)
-
         # Multi-pass refinement: keyword injection, AI phrase removal, alignment validation
         stage = "refine_resume"
         refinement_stats: RefinementStats | None = None
@@ -575,8 +594,19 @@ async def improve_resume_preview_endpoint(
             if refinement_attempted:
                 response_warnings.append(f"Refinement failed: {str(e)}")
 
+        # Preserve personal info AFTER refinement so LLM keyword injection
+        # doesn't undo the preservation (the LLM returns a new dict).
+        improved_data, preserve_warnings = _preserve_personal_info(
+            _get_original_resume_data(resume),
+            improved_data,
+        )
+        response_warnings.extend(preserve_warnings)
+
         improved_text = json.dumps(improved_data, indent=2)
-        preview_hash = _hash_improved_data(improved_data)
+        # Validate through Pydantic to ensure hash matches what the frontend
+        # will receive and send back (Pydantic may add defaults/drop extras).
+        validated_preview = ResumeData.model_validate(improved_data)
+        preview_hash = _hash_improved_data(validated_preview.model_dump())
         preview_hashes = job.get("preview_hashes")
         if not isinstance(preview_hashes, dict):
             preview_hashes = {}
@@ -616,7 +646,7 @@ async def improve_resume_preview_endpoint(
                 request_id=request_id,
                 resume_id=None,
                 job_id=request.job_id,
-                resume_preview=ResumeData.model_validate(improved_data),
+                resume_preview=validated_preview,
                 improvements=[
                     {
                         "suggestion": imp["suggestion"],
@@ -819,12 +849,6 @@ async def improve_resume_endpoint(
         # Collect warnings throughout the process
         response_warnings: list[str] = []
 
-        improved_data, preserve_warnings = _preserve_personal_info(
-            _get_original_resume_data(resume),
-            improved_data,
-        )
-        response_warnings.extend(preserve_warnings)
-
         # Multi-pass refinement: keyword injection, AI phrase removal, alignment validation
         refinement_stats: RefinementStats | None = None
         refinement_attempted = False
@@ -880,6 +904,14 @@ async def improve_resume_endpoint(
             logger.warning("Refinement failed, using unrefined result: %s", e)
             if refinement_attempted:
                 response_warnings.append(f"Refinement failed: {str(e)}")
+
+        # Preserve personal info AFTER refinement so LLM keyword injection
+        # doesn't undo the preservation (the LLM returns a new dict).
+        improved_data, preserve_warnings = _preserve_personal_info(
+            _get_original_resume_data(resume),
+            improved_data,
+        )
+        response_warnings.extend(preserve_warnings)
 
         # Convert improved data to JSON string for storage
         improved_text = json.dumps(improved_data, indent=2)
@@ -1383,6 +1415,7 @@ async def get_job_description_for_resume(resume_id: str) -> dict:
     return {
         "job_id": job["job_id"],
         "content": job["content"],
+        "job_keywords": job.get("job_keywords"),
     }
 
 

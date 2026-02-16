@@ -275,7 +275,9 @@
         "keywordsExtracted": "抽出キーワード数: {count}",
         "matchesFound": "一致数: {count}",
         "matchRateLabel": "一致率:"
-      }
+      },
+      "boostButton": "JDマッチ度を上げる",
+      "boostFailed": "マッチ度の向上に失敗しました。もう一度お試しください。"
     },
     "genericItemForm": {
       "itemLabel": "項目",
@@ -357,26 +359,7 @@
         "swissSingle": {
           "name": "1カラム",
           "description": "内容密度が高い伝統的な全幅レイアウト"
-        },
-        "swissTwoColumn": {
-          "name": "2カラム",
-          "description": "経験中心のメイン列とスキル用サイドバー"
-        },
-        "modern": {
-          "name": "モダン",
-          "description": "カラフルなアクセントとテーマ色のカスタマイズ"
-        },
-        "modernTwoColumn": {
-          "name": "モダン2カラム",
-          "description": "モダンな2カラムとカラフルなアクセント"
         }
-      },
-      "accentColor": "アクセントカラー",
-      "accentColors": {
-        "blue": "青",
-        "green": "緑",
-        "orange": "オレンジ",
-        "red": "赤"
       },
       "pageSize": "ページサイズ",
       "margins": "余白（mm）",
@@ -514,7 +497,7 @@
       },
       "full": {
         "label": "完全に調整",
-        "description": "求人情報を使って全面的に調整。"
+        "description": "箇条書きと要約を積極的に書き換え、求人とのマッチ度を最大化。"
       }
     },
     "analyzeJob": "求人を分析",
@@ -547,6 +530,7 @@
       "projectChanges": "プロジェクトの変更",
       "certificationChanges": "資格の変更",
       "rejectButton": "拒否して再生成",
+      "boostButton": "JDマッチ度を上げる",
       "confirmButton": "確認して保存"
     },
     "regenerateDialog": {

@@ -275,7 +275,9 @@
         "keywordsExtracted": "{count} keywords extracted",
         "matchesFound": "{count} matches found",
         "matchRateLabel": "Match Rate:"
-      }
+      },
+      "boostButton": "Increase JD Match",
+      "boostFailed": "Failed to boost JD match. Please try again."
     },
     "genericItemForm": {
       "itemLabel": "Item",
@@ -357,26 +359,7 @@
         "swissSingle": {
           "name": "Single Column",
           "description": "Traditional full-width layout with maximum content density"
-        },
-        "swissTwoColumn": {
-          "name": "Two Column",
-          "description": "Experience-focused main column with sidebar for skills"
-        },
-        "modern": {
-          "name": "Modern",
-          "description": "Colorful accents with customizable theme colors"
-        },
-        "modernTwoColumn": {
-          "name": "Modern Two Column",
-          "description": "Two-column layout with modern colorful accents and themes"
         }
-      },
-      "accentColor": "Accent Color",
-      "accentColors": {
-        "blue": "Blue",
-        "green": "Green",
-        "orange": "Orange",
-        "red": "Red"
       },
       "pageSize": "Page Size",
       "margins": "Margins (mm)",
@@ -514,7 +497,7 @@
       },
       "full": {
         "label": "Full tailor",
-        "description": "Comprehensive tailoring using the job description."
+        "description": "Aggressively rewrite bullets and summary to maximize JD match."
       }
     },
     "analyzeJob": "Analyze Job",
@@ -547,6 +530,7 @@
       "projectChanges": "Project Changes",
       "certificationChanges": "Certification Changes",
       "rejectButton": "Reject & Regenerate",
+      "boostButton": "Increase JD Match",
       "confirmButton": "Confirm & Save"
     },
     "regenerateDialog": {
@@ -745,7 +729,7 @@
       "experience": "Experience",
       "education": "Education",
       "projects": "Projects",
-      "skills": "Skills & Awards",
+      "skills": "Technical Skills & Designations",
       "skillsOnly": "Skills",
       "certifications": "Training & Certifications",
       "languages": "Languages",
@@ -761,8 +745,8 @@
     "additionalLabels": {
       "technicalSkills": "Technical Skills:",
       "languages": "Languages:",
-      "certifications": "Certifications:",
-      "awards": "Awards:"
+      "certifications": "Professional Certifications:",
+      "awards": "Professional Designations:"
     }
   },
   "coverLetter": {

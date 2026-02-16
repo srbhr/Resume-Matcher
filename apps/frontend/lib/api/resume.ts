@@ -239,7 +239,6 @@ export function getResumePdfUrl(
     params.set('bodyFont', settings.fontSize.bodyFont);
     params.set('compactMode', String(settings.compactMode));
     params.set('showContactIcons', String(settings.showContactIcons));
-    params.set('accentColor', settings.accentColor);
   } else {
     params.set('template', 'swiss-single');
     params.set('pageSize', 'A4');
@@ -364,9 +363,20 @@ export async function retryProcessing(resumeId: string): Promise<ResumeUploadRes
 }
 
 /** Fetches the job description used to tailor a resume */
+export interface JobKeywords {
+  required_skills?: string[];
+  preferred_skills?: string[];
+  keywords?: string[];
+  experience_requirements?: string[];
+  education_requirements?: string[];
+  key_responsibilities?: string[];
+  experience_years?: number;
+  seniority_level?: string;
+}
+
 export async function fetchJobDescription(
   resumeId: string
-): Promise<{ job_id: string; content: string }> {
+): Promise<{ job_id: string; content: string; job_keywords?: JobKeywords }> {
   const res = await apiFetch(`/resumes/${encodeURIComponent(resumeId)}/job-description`);
   if (!res.ok) {
     const text = await res.text().catch(() => '');

@@ -24,6 +24,7 @@ import {
   Check,
   Sparkles,
   Loader2,
+  TrendingUp,
 } from 'lucide-react';
 import { useResumePreview } from '@/components/common/resume_previewer_context';
 import { PaginatedPreview } from '@/components/preview';
@@ -39,6 +40,8 @@ import {
   generateCoverLetter,
   generateOutreachMessage,
   fetchJobDescription,
+  previewImproveResume,
+  confirmImproveResume,
 } from '@/lib/api/resume';
 import { JDComparisonView } from './jd-comparison-view';
 import { RegenerateWizard } from './regenerate-wizard';
@@ -154,6 +157,11 @@ const ResumeBuilderContent = () => {
 
   // JD comparison state
   const [jobDescription, setJobDescription] = useState<string | null>(null);
+  const [jobId, setJobId] = useState<string | null>(null);
+  const [jobKeywords, setJobKeywords] = useState<
+    { required_skills?: string[]; preferred_skills?: string[]; keywords?: string[] } | undefined
+  >(undefined);
+  const [isBoosting, setIsBoosting] = useState(false);
 
   // AI Regenerate wizard
   const regenerateWizard = useRegenerateWizard({
@@ -365,17 +373,23 @@ const ResumeBuilderContent = () => {
           const data = await fetchJobDescription(resumeId);
           if (!cancelled) {
             setJobDescription(data.content);
+            setJobId(data.job_id);
+            setJobKeywords(data.job_keywords ?? undefined);
           }
         } catch (err) {
           // JD might not be available for older resumes
           if (!cancelled) {
             console.warn('Could not fetch job description:', err);
             setJobDescription(null);
+            setJobId(null);
+            setJobKeywords(undefined);
           }
         }
       } else {
         // Clear job description when switching to non-tailored resume
         setJobDescription(null);
+        setJobId(null);
+        setJobKeywords(undefined);
       }
     };
 
@@ -585,6 +599,46 @@ const ResumeBuilderContent = () => {
     doGenerateOutreach();
   };
 
+  // Boost JD match: re-tailor with boost prompt, save, and reload
+  const handleBoostJdMatch = async () => {
+    if (!resumeId || !jobId || isBoosting) return;
+    const masterResumeId = localStorage.getItem('master_resume_id');
+    if (!masterResumeId) return;
+
+    setIsBoosting(true);
+    try {
+      // Preview with boost prompt
+      const result = await previewImproveResume(masterResumeId, jobId, 'boost');
+      const resumePreview = result?.data?.resume_preview;
+      if (!resumePreview || typeof resumePreview !== 'object' || Array.isArray(resumePreview)) {
+        throw new Error('Invalid preview data');
+      }
+
+      // Confirm and save the boosted result
+      const confirmed = await confirmImproveResume({
+        resume_id: masterResumeId,
+        job_id: jobId,
+        improved_data: resumePreview as ResumeData,
+        improvements:
+          result.data.improvements?.map((item) => ({
+            suggestion: item.suggestion,
+            lineNumber: typeof item.lineNumber === 'number' ? item.lineNumber : null,
+          })) ?? [],
+      });
+
+      // Navigate to the new boosted resume
+      const newResumeId = confirmed?.data?.resume_id;
+      if (newResumeId) {
+        router.push(`/resumes/${newResumeId}`);
+      }
+    } catch (err) {
+      console.error('Boost JD match failed:', err);
+      showNotification(t('builder.jdMatch.boostFailed'), 'danger');
+    } finally {
+      setIsBoosting(false);
+    }
+  };
+
   return (
     <div
       className="h-screen w-full bg-[#F0F0E8] flex justify-center items-center p-4 md:p-8"
@@ -690,6 +744,24 @@ const ResumeBuilderContent = () => {
                     {isDownloading ? t('common.generating') : t('common.download')}
                   </Button>
                 </>
+              )}
+
+              {/* JD Match tab actions */}
+              {activeTab === 'jd-match' && jobDescription && jobId && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleBoostJdMatch}
+                  disabled={isBoosting}
+                  className="gap-2 border-[#1D4ED8] text-[#1D4ED8] hover:bg-[#EFF6FF]"
+                >
+                  {isBoosting ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <TrendingUp className="w-4 h-4" />
+                  )}
+                  {isBoosting ? t('common.processing') : t('builder.jdMatch.boostButton')}
+                </Button>
               )}
 
               {/* Outreach tab actions */}
@@ -911,7 +983,11 @@ const ResumeBuilderContent = () => {
 
               {/* JD Match Comparison */}
               {activeTab === 'jd-match' && jobDescription && (
-                <JDComparisonView jobDescription={jobDescription} resumeData={resumeData} />
+                <JDComparisonView
+                  jobDescription={jobDescription}
+                  resumeData={resumeData}
+                  jobKeywords={jobKeywords}
+                />
               )}
             </div>
           </div>

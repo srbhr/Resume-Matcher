@@ -5,11 +5,9 @@
  * These settings affect both the live preview and PDF generation.
  */
 
-export type TemplateType = 'swiss-single' | 'swiss-two-column' | 'modern' | 'modern-two-column';
+export type TemplateType = 'swiss-single';
 
 export type PageSize = 'A4' | 'LETTER';
-
-export type AccentColor = 'blue' | 'green' | 'orange' | 'red';
 
 export type SpacingLevel = 1 | 2 | 3 | 4 | 5;
 
@@ -44,7 +42,6 @@ export interface TemplateSettings {
   fontSize: FontSizeSettings;
   compactMode: boolean; // Apply tighter spacing across the board
   showContactIcons: boolean; // Show icons next to contact info
-  accentColor: AccentColor; // Accent color for Modern template
 }
 
 /**
@@ -58,7 +55,6 @@ export const DEFAULT_TEMPLATE_SETTINGS: TemplateSettings = {
   fontSize: { base: 3, headerScale: 3, headerFont: 'serif', bodyFont: 'sans-serif' },
   compactMode: false,
   showContactIcons: false,
-  accentColor: 'blue',
 };
 
 /**
@@ -134,19 +130,6 @@ export const BODY_FONT_MAP: Record<BodyFontFamily, string> = {
   mono: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace',
 };
 
-/**
- * Accent color mapping for Modern template
- */
-export const ACCENT_COLOR_MAP: Record<
-  AccentColor,
-  { primary: string; light: string; name: string }
-> = {
-  blue: { primary: '#1D4ED8', light: '#DBEAFE', name: 'Blue' },
-  green: { primary: '#15803D', light: '#DCFCE7', name: 'Green' },
-  orange: { primary: '#EA580C', light: '#FED7AA', name: 'Orange' },
-  red: { primary: '#DC2626', light: '#FEE2E2', name: 'Red' },
-};
-
 // Compact mode multiplier (applied to spacing values only, NOT line-height)
 export const COMPACT_MULTIPLIER = 0.6;
 
@@ -165,9 +148,6 @@ export function settingsToCssVars(settings?: TemplateSettings): React.CSSPropert
   const marginBottom = s.margins.bottom;
   const marginLeft = s.margins.left;
   const marginRight = s.margins.right;
-
-  // Get accent colors for Modern template
-  const accentColors = ACCENT_COLOR_MAP[s.accentColor];
 
   return {
     '--section-gap': s.compactMode
@@ -189,9 +169,6 @@ export function settingsToCssVars(settings?: TemplateSettings): React.CSSPropert
     '--margin-bottom': `${marginBottom}mm`,
     '--margin-left': `${marginLeft}mm`,
     '--margin-right': `${marginRight}mm`,
-    // Accent colors for Modern template
-    '--resume-accent-primary': accentColors.primary,
-    '--resume-accent-light': accentColors.light,
   } as React.CSSProperties;
 }
 
@@ -209,20 +186,5 @@ export const TEMPLATE_OPTIONS: TemplateInfo[] = [
     id: 'swiss-single',
     name: 'Single Column',
     description: 'Traditional full-width layout with maximum content density',
-  },
-  {
-    id: 'swiss-two-column',
-    name: 'Two Column',
-    description: 'Experience-focused main column with sidebar for skills',
-  },
-  {
-    id: 'modern',
-    name: 'Modern',
-    description: 'Colorful accents with customizable theme colors',
-  },
-  {
-    id: 'modern-two-column',
-    name: 'Modern Two Column',
-    description: 'Two-column layout with modern colorful accents and themes',
   },
 ];

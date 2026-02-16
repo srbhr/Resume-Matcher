@@ -62,6 +62,17 @@ apps/
     └── lib/                 # Utilities, API client
 ```
 
+## Essential Commands
+
+```bash
+npm run dev              # Start both servers
+npm run lint             # Lint frontend
+npm run format           # Format with Prettier
+bash scripts/restart-dev.sh  # Clean restart (kills processes, clears cache)
+```
+
+> **Important:** After changing Python files (prompts, services, schemas), run `bash scripts/restart-dev.sh` to ensure the backend picks up changes. Uvicorn's `--reload` may not clear cached `.pyc` files.
+
 ## How to Use
 
 **New tasks:** Read `scope-and-principles` → `quickstart` → `workflow`

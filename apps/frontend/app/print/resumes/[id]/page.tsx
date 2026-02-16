@@ -6,7 +6,6 @@ import {
   type SpacingLevel,
   type HeaderFontFamily,
   type BodyFontFamily,
-  type AccentColor,
   DEFAULT_TEMPLATE_SETTINGS,
 } from '@/lib/types/template-settings';
 import { API_BASE } from '@/lib/api/client';
@@ -32,7 +31,6 @@ type PageProps = {
     bodyFont?: string;
     compactMode?: string;
     showContactIcons?: string;
-    accentColor?: string;
     lang?: string;
   }>;
 };
@@ -55,16 +53,6 @@ function parseBodyFont(value: string | undefined): BodyFontFamily {
     return value;
   }
   return DEFAULT_TEMPLATE_SETTINGS.fontSize.bodyFont;
-}
-
-/**
- * Parse accent color
- */
-function parseAccentColor(value: string | undefined): AccentColor {
-  if (value === 'blue' || value === 'green' || value === 'orange' || value === 'red') {
-    return value;
-  }
-  return DEFAULT_TEMPLATE_SETTINGS.accentColor;
 }
 
 /**
@@ -130,12 +118,7 @@ function parseMargin(value: string | undefined, defaultValue: number): number {
  * Validate template type
  */
 function parseTemplate(value: string | undefined): TemplateType {
-  if (
-    value === 'swiss-single' ||
-    value === 'swiss-two-column' ||
-    value === 'modern' ||
-    value === 'modern-two-column'
-  ) {
+  if (value === 'swiss-single') {
     return value;
   }
   return 'swiss-single';
@@ -230,7 +213,6 @@ export default async function PrintResumePage({ params, searchParams }: PageProp
       resolvedSearchParams?.showContactIcons,
       DEFAULT_TEMPLATE_SETTINGS.showContactIcons
     ),
-    accentColor: parseAccentColor(resolvedSearchParams?.accentColor),
   };
 
   // Note: Margins are applied by Playwright's PDF renderer (not here)

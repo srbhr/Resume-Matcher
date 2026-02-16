@@ -275,7 +275,9 @@
         "keywordsExtracted": "{count} palavras-chave extraídas",
         "matchesFound": "{count} correspondências encontradas",
         "matchRateLabel": "Taxa de Correspondência:"
-      }
+      },
+      "boostButton": "Aumentar correspondência JD",
+      "boostFailed": "Falha ao aumentar correspondência. Tente novamente."
     },
     "genericItemForm": {
       "itemLabel": "Item",
@@ -355,25 +357,7 @@
         "swissSingle": {
           "name": "Coluna Única",
           "description": "Layout tradicional de largura total com máxima densidade de conteúdo"
-        },
-        "swissTwoColumn": {
-          "name": "Duas Colunas",
-          "description": "Coluna principal focada em experiência com barra lateral para habilidades"
-        },
-        "modern": {
-          "name": "Moderno",
-          "description": "Acentos coloridos com cores de tema personalizáveis"
-        },
-        "modernTwoColumn": {
-          "name": "Moderno Duas Colunas",
-          "description": "Layout de duas colunas com acentos coloridos modernos e temas"
         }
-      },
-      "accentColors": {
-        "blue": "Azul",
-        "green": "Verde",
-        "orange": "Laranja",
-        "red": "Vermelho"
       },
       "fontNames": {
         "serif": "Serifada",
@@ -382,7 +366,6 @@
       },
       "panelTitle": "Template e Formatação",
       "template": "Template",
-      "accentColor": "Cor de Destaque",
       "pageSize": "Tamanho da Página",
       "margins": "Margens (mm)",
       "margin": {
@@ -514,7 +497,7 @@
       },
       "full": {
         "label": "Personalização completa",
-        "description": "Personalização abrangente usando a descrição da vaga."
+        "description": "Reescreve tópicos e resumo agressivamente para maximizar a correspondência com a vaga."
       }
     },
     "analyzeJob": "Analisar Vaga",
@@ -547,6 +530,7 @@
       "projectChanges": "Alterações de projetos",
       "certificationChanges": "Alterações de certificações",
       "rejectButton": "Rejeitar e regenerar",
+      "boostButton": "Aumentar correspondência JD",
       "confirmButton": "Confirmar e salvar"
     },
     "regenerateDialog": {

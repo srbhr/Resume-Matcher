@@ -105,3 +105,9 @@ next-env.d.ts
 # Config file with API keys - NEVER COMMIT
 config.json
 **/config.json
+
+# agent plans
+docs/plans/
+
+# agent notes
+.playwright-mcp/

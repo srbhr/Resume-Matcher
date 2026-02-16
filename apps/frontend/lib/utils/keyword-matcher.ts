@@ -290,3 +290,69 @@ export function calculateMatchStats(
 
   return { matchedKeywords, matchCount, totalKeywords, matchPercentage };
 }
+
+/**
+ * Build a keyword set from LLM-extracted structured job keywords.
+ * Uses multi-word phrases (e.g., "machine learning", "CI/CD") for accurate matching.
+ */
+export function buildKeywordsFromStructured(jobKeywords: {
+  required_skills?: string[];
+  preferred_skills?: string[];
+  keywords?: string[];
+}): Set<string> {
+  const keywords = new Set<string>();
+  for (const list of [
+    jobKeywords.required_skills,
+    jobKeywords.preferred_skills,
+    jobKeywords.keywords,
+  ]) {
+    if (Array.isArray(list)) {
+      for (const kw of list) {
+        if (typeof kw === 'string' && kw.trim()) {
+          keywords.add(kw.toLowerCase().trim());
+        }
+      }
+    }
+  }
+  return keywords;
+}
+
+/**
+ * Check if a multi-word keyword phrase exists in text using word boundaries.
+ * More accurate than single-word matching for phrases like "machine learning".
+ */
+function phraseInText(phrase: string, text: string): boolean {
+  const escaped = phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const pattern = new RegExp(`\\b${escaped}\\b`, 'i');
+  return pattern.test(text);
+}
+
+/**
+ * Calculate match stats using LLM-extracted structured keywords.
+ * Matches multi-word phrases against the full resume text using word boundaries,
+ * similar to how real ATS systems work.
+ */
+export function calculateStructuredMatchStats(
+  resumeText: string,
+  structuredKeywords: Set<string>
+): {
+  matchedKeywords: Set<string>;
+  matchCount: number;
+  totalKeywords: number;
+  matchPercentage: number;
+} {
+  const lowerText = resumeText.toLowerCase();
+  const matchedKeywords = new Set<string>();
+
+  for (const keyword of structuredKeywords) {
+    if (phraseInText(keyword, lowerText)) {
+      matchedKeywords.add(keyword);
+    }
+  }
+
+  const matchCount = matchedKeywords.size;
+  const totalKeywords = structuredKeywords.size;
+  const matchPercentage = totalKeywords > 0 ? Math.round((matchCount / totalKeywords) * 100) : 0;
+
+  return { matchedKeywords, matchCount, totalKeywords, matchPercentage };
+}

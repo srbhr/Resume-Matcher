@@ -132,15 +132,13 @@ Extract numeric years (e.g., "5+ years" → 5) and infer seniority level.
 Job description:
 {job_description}"""
 
-CRITICAL_TRUTHFULNESS_RULES_TEMPLATE = """CRITICAL TRUTHFULNESS RULES - NEVER VIOLATE:
-1. DO NOT add any skill, tool, technology, or certification that is not explicitly mentioned in the original resume
-2. DO NOT invent numeric achievements (e.g., "increased by 30%") unless they exist in original
-3. DO NOT add company names, product names, or technical terms not in the original
-4. DO NOT upgrade experience level (e.g., "Junior" -> "Senior")
-5. DO NOT add languages, frameworks, or platforms the candidate hasn't used
-6. DO NOT extend employment dates or change timelines (start/end years)
-7. {rule_7}
-8. Preserve factual accuracy - only use information provided by the candidate
+CRITICAL_TRUTHFULNESS_RULES_TEMPLATE = """TRUTHFULNESS RULES:
+1. DO NOT add certifications, degrees, or professional designations not in the original resume
+2. DO NOT add company names or change employment history
+3. DO NOT upgrade experience level (e.g., "Junior" -> "Senior")
+4. DO NOT extend employment dates or change timelines (start/end years)
+5. {rule_7}
+6. Preserve company names, dates, and education details exactly as provided
 
 Violation of these rules could cause serious problems for the candidate in job interviews.
 """
@@ -158,7 +156,17 @@ CRITICAL_TRUTHFULNESS_RULES = {
         "You may rephrase existing bullet points to include keywords, but do NOT add new bullet points"
     ),
     "full": _build_truthfulness_rules(
-        "You may expand existing bullet points or add new ones that elaborate on existing work, but DO NOT invent entirely new responsibilities"
+        "You MUST completely rewrite bullet points to directly address the job description's responsibilities and required skills. "
+        "Treat bullet point content as a BLANK CANVAS - the ONLY things you must preserve are company names, job titles, and dates. "
+        "ADD ALL relevant skills and tools from the job description to the technicalSkills section, even if not in the original resume. "
+        "INVENT realistic metrics (percentages, team sizes, dollar amounts) for most bullets - keep them plausible for the role seniority. "
+        "You MAY add or remove bullet points as needed to maximize alignment with the JD."
+    ),
+    "boost": _build_truthfulness_rules(
+        "You MAY freely add relevant skills and tools from the job description to the skills section. "
+        "You MAY invent realistic metrics (percentages, team sizes, dollar amounts) to strengthen bullet points. "
+        "You MAY expand, add, or rephrase bullet points to incorporate more JD keywords. "
+        "Prioritize maximizing keyword match over conservative editing."
     ),
 }
 
@@ -220,23 +228,76 @@ Original Resume:
 Output in this JSON format:
 {schema}"""
 
-IMPROVE_RESUME_PROMPT_FULL = """Tailor this resume for the job. Output ONLY the JSON object, no other text.
+IMPROVE_RESUME_PROMPT_FULL = """Fully tailor this resume for the job description. Output ONLY the JSON object, no other text.
 
 {critical_truthfulness_rules}
 
 IMPORTANT: Generate ALL text content (summary, descriptions, skills) in {output_language}.
 
-Rules:
-- Rephrase content to highlight relevant experience
-- DO NOT invent new information
-- Use action verbs and quantifiable achievements
-- Keep proper nouns (names, company names, locations) unchanged
-- Translate job titles, descriptions, and skills to {output_language}
+Your primary goal is to MAXIMIZE JD keyword match by aggressively rewriting content.
+
+BULLET POINT STRATEGY:
+- Treat each bullet point as a BLANK CANVAS - completely rewrite every bullet to directly address the JD's responsibilities
+- For each work experience entry, identify which JD requirements that role could plausibly address, then write bullets that mirror those requirements
+- Example: If JD says "Design and deploy microservices", write a bullet like "Designed and deployed 8 microservices handling 500K daily requests"
+- INVENT realistic metrics (percentages, team sizes, dollar amounts, request volumes, uptime) for most bullets - keep them plausible for the role seniority and company size
+- You MAY add or remove bullets as needed - aim for 3-5 impactful bullets per role
+- Use strong action verbs and concrete, specific language matching the JD's terminology
+
+SUMMARY STRATEGY:
+- REWRITE the summary as a 2-3 sentence targeted pitch for this specific role
+- Lead with the exact role title and seniority from the JD
+- Include the top 2-3 required skills from the JD
+- Mention total years of relevant experience if it matches JD requirements
+- Do NOT write a generic career overview - make it a compelling pitch for THIS job
+
+SKILLS STRATEGY:
+- ADD ALL relevant skills and tools from the job description to technicalSkills, even if not in the original resume
+- Include required_skills first, then preferred_skills, then other JD keywords
+- ALWAYS include a comprehensive technicalSkills section aligned with the JD
+
+HARD CONSTRAINTS (DO NOT VIOLATE):
+- Keep company names, locations, and employment dates EXACTLY as provided
+- DO NOT modify, add, or remove certifications - copy certificationsTraining exactly as-is from the original resume
+- DO NOT include spoken languages - set languages to an empty array []
 - Preserve the structure of any customSections from the original resume
-- Improve custom section content the same way as standard sections
 - Preserve original date ranges exactly - do not modify years
-- Calculate and emphasize total relevant experience duration when it matches requirements
-- Do NOT use em dash ("—") anywhere in the writing/output, even if it exists, remove it
+- Do NOT use em dash ("\u2014") anywhere in the output, even if present in original - remove it
+
+Job Description:
+{job_description}
+
+Keywords to emphasize (use ALL of these):
+{job_keywords}
+
+Original Resume:
+{original_resume}
+
+Output in this JSON format:
+{schema}"""
+
+IMPROVE_RESUME_PROMPT_BOOST = """You are re-tailoring an already-tailored resume to MAXIMIZE keyword match with the job description. Output ONLY the JSON object, no other text.
+
+{critical_truthfulness_rules}
+
+IMPORTANT: Generate ALL text content (summary, descriptions, skills) in {output_language}.
+
+Your primary goal is to push the JD match percentage as high as possible.
+
+Rules:
+- Weave MORE keywords from the job description into bullet points naturally
+- ADD any missing JD skills and tools to the technicalSkills list
+- ALWAYS include a technicalSkills section with relevant skills from the job description
+- Strengthen action verbs to match the language used in the job description
+- Mirror the JD's phrasing where it fits the candidate's real experience
+- You MAY invent realistic metrics (percentages, team sizes, dollar amounts) where they strengthen a bullet point, but keep them plausible
+- You MAY expand or add bullet points that elaborate on existing work to incorporate more keywords
+- DO NOT modify, add, or remove any certifications or professional designations - copy certificationsTraining exactly as-is
+- DO NOT include spoken languages in the output - set languages to an empty array []
+- Keep company names, locations, and employment dates unchanged
+- Preserve the structure of any customSections from the original resume
+- Preserve original date ranges exactly - do not modify years
+- Do NOT use em dash ("\u2014") anywhere in the writing/output, even if it exists, remove it
 
 Job Description:
 {job_description}
@@ -244,7 +305,7 @@ Job Description:
 Keywords to emphasize:
 {job_keywords}
 
-Original Resume:
+Current Tailored Resume (improve this further):
 {original_resume}
 
 Output in this JSON format:
@@ -264,7 +325,12 @@ IMPROVE_PROMPT_OPTIONS = [
     {
         "id": "full",
         "label": "Full tailor",
-        "description": "Comprehensive tailoring using the job description.",
+        "description": "Aggressively rewrite bullets and summary to maximize JD match.",
+    },
+    {
+        "id": "boost",
+        "label": "Increase JD Match",
+        "description": "Re-tailor to maximize keyword match percentage.",
     },
 ]
 
@@ -272,6 +338,7 @@ IMPROVE_RESUME_PROMPTS = {
     "nudge": IMPROVE_RESUME_PROMPT_NUDGE,
     "keywords": IMPROVE_RESUME_PROMPT_KEYWORDS,
     "full": IMPROVE_RESUME_PROMPT_FULL,
+    "boost": IMPROVE_RESUME_PROMPT_BOOST,
 }
 
 DEFAULT_IMPROVE_PROMPT_ID = "keywords"

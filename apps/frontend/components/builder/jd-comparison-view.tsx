@@ -2,7 +2,13 @@
 
 import { useMemo } from 'react';
 import { type ResumeData } from '@/components/dashboard/resume-component';
-import { extractKeywords, calculateMatchStats } from '@/lib/utils/keyword-matcher';
+import {
+  extractKeywords,
+  calculateMatchStats,
+  buildKeywordsFromStructured,
+  calculateStructuredMatchStats,
+} from '@/lib/utils/keyword-matcher';
+import type { JobKeywords } from '@/lib/api/resume';
 import { JDDisplay } from './jd-display';
 import { HighlightedResumeView } from './highlighted-resume-view';
 import { CheckCircle, Target } from 'lucide-react';
@@ -11,6 +17,7 @@ import { useTranslations } from '@/lib/i18n';
 interface JDComparisonViewProps {
   jobDescription: string;
   resumeData: ResumeData;
+  jobKeywords?: JobKeywords;
 }
 
 /**
@@ -18,11 +25,34 @@ interface JDComparisonViewProps {
  * Left: JD (read-only)
  * Right: Resume with matching keywords highlighted
  */
-export function JDComparisonView({ jobDescription, resumeData }: JDComparisonViewProps) {
+export function JDComparisonView({
+  jobDescription,
+  resumeData,
+  jobKeywords,
+}: JDComparisonViewProps) {
   const { t } = useTranslations();
 
-  // Extract keywords from JD
-  const keywords = useMemo(() => extractKeywords(jobDescription), [jobDescription]);
+  // Use LLM-extracted structured keywords when available, fall back to naive extraction
+  const structuredKeywords = useMemo(
+    () => (jobKeywords ? buildKeywordsFromStructured(jobKeywords) : null),
+    [jobKeywords]
+  );
+
+  // Naive keyword extraction (fallback) - also used for text highlighting
+  const keywords = useMemo(() => {
+    if (structuredKeywords) {
+      // Convert structured multi-word phrases to single-word set for highlight rendering
+      const highlightWords = new Set<string>();
+      for (const phrase of structuredKeywords) {
+        for (const word of phrase.split(/\s+/)) {
+          const clean = word.toLowerCase().replace(/[^a-z0-9-]/g, '');
+          if (clean.length >= 2) highlightWords.add(clean);
+        }
+      }
+      return highlightWords;
+    }
+    return extractKeywords(jobDescription);
+  }, [jobDescription, structuredKeywords]);
 
   // Build full resume text for stats calculation
   const resumeText = useMemo(() => {
@@ -56,8 +86,13 @@ export function JDComparisonView({ jobDescription, resumeData }: JDComparisonVie
     return parts.join(' ');
   }, [resumeData]);
 
-  // Calculate match statistics
-  const stats = useMemo(() => calculateMatchStats(resumeText, keywords), [resumeText, keywords]);
+  // Calculate match statistics - use structured keywords for accuracy when available
+  const stats = useMemo(() => {
+    if (structuredKeywords) {
+      return calculateStructuredMatchStats(resumeText, structuredKeywords);
+    }
+    return calculateMatchStats(resumeText, keywords);
+  }, [resumeText, keywords, structuredKeywords]);
 
   return (
     <div className="h-full flex flex-col">

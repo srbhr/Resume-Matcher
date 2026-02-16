@@ -275,7 +275,9 @@
         "keywordsExtracted": "{count} palabras clave extraídas",
         "matchesFound": "{count} coincidencias encontradas",
         "matchRateLabel": "Tasa de coincidencia:"
-      }
+      },
+      "boostButton": "Aumentar coincidencia JD",
+      "boostFailed": "Error al aumentar la coincidencia. Inténtalo de nuevo."
     },
     "genericItemForm": {
       "itemLabel": "Elemento",
@@ -357,26 +359,7 @@
         "swissSingle": {
           "name": "Una columna",
           "description": "Diseño tradicional de ancho completo con máxima densidad de contenido"
-        },
-        "swissTwoColumn": {
-          "name": "Dos columnas",
-          "description": "Columna principal centrada en experiencia con barra lateral para habilidades"
-        },
-        "modern": {
-          "name": "Moderno",
-          "description": "Acentos coloridos con colores de tema personalizables"
-        },
-        "modernTwoColumn": {
-          "name": "Moderno de dos columnas",
-          "description": "Diseño de dos columnas moderno con acentos coloridos y temas"
         }
-      },
-      "accentColor": "Color de acento",
-      "accentColors": {
-        "blue": "Azul",
-        "green": "Verde",
-        "orange": "Naranja",
-        "red": "Rojo"
       },
       "pageSize": "Tamaño de página",
       "margins": "Márgenes (mm)",
@@ -514,7 +497,7 @@
       },
       "full": {
         "label": "Ajuste completo",
-        "description": "Ajuste integral usando la descripción del puesto."
+        "description": "Reescribe viñetas y resumen agresivamente para maximizar coincidencia con la oferta."
       }
     },
     "analyzeJob": "Analizar Trabajo",
@@ -547,6 +530,7 @@
       "projectChanges": "Cambios en proyectos",
       "certificationChanges": "Cambios en certificaciones",
       "rejectButton": "Rechazar y regenerar",
+      "boostButton": "Aumentar coincidencia JD",
       "confirmButton": "Confirmar y guardar"
     },
     "regenerateDialog": {
