@@ -44,14 +44,10 @@ import {
   Sparkles,
   Clock,
   Settings2,
-  Globe,
   Trash2,
   AlertTriangle,
 } from 'lucide-react';
-import { useLanguage } from '@/lib/context/language-context';
 import { useTranslations } from '@/lib/i18n';
-import type { SupportedLanguage } from '@/lib/api/config';
-import type { Locale } from '@/i18n/config';
 
 type Status = 'idle' | 'loading' | 'saving' | 'saved' | 'error' | 'testing';
 
@@ -130,17 +126,6 @@ export default function SettingsPage() {
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [successMessage, setSuccessDialogMessage] = useState({ title: '', description: '' });
   const [isResetting, setIsResetting] = useState(false);
-
-  // Language settings
-  const {
-    contentLanguage,
-    uiLanguage,
-    setContentLanguage,
-    setUiLanguage,
-    languageNames,
-    supportedLanguages,
-    isLoading: languageLoading,
-  } = useLanguage();
 
   // Translations
   const { t } = useTranslations();
@@ -947,68 +932,6 @@ export default function SettingsPage() {
                   description={t('settings.promptSettings.description')}
                   disabled={promptConfigLoading}
                 />
-              </div>
-            </div>
-          </section>
-
-          {/* Language Settings Section */}
-          <section className="space-y-6">
-            <div className="flex items-center gap-2 border-b border-black/10 pb-2">
-              <Globe className="w-4 h-4" />
-              <h2 className="font-mono text-sm font-bold uppercase tracking-wider">
-                {t('settings.uiLanguage')} & {t('settings.contentLanguage')}
-              </h2>
-            </div>
-
-            {/* UI Language */}
-            <div className="space-y-4">
-              <div>
-                <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-gray-700 mb-2">
-                  {t('settings.uiLanguage')}
-                </h3>
-                <p className="text-sm text-gray-600 mb-3">{t('settings.uiLanguageDescription')}</p>
-              </div>
-
-              <div className="space-y-2">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                  {supportedLanguages.map((lang) => (
-                    <button
-                      key={`ui-${lang}`}
-                      onClick={() => setUiLanguage(lang as Locale)}
-                      disabled={languageLoading}
-                      className={`px-4 py-3 text-sm ${SEGMENTED_BUTTON_BASE} ${uiLanguage === lang ? SEGMENTED_BUTTON_ACTIVE : SEGMENTED_BUTTON_INACTIVE}`}
-                    >
-                      {languageNames[lang]}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Content Language */}
-            <div className="space-y-4 pt-4 border-t border-gray-200">
-              <div>
-                <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-gray-700 mb-2">
-                  {t('settings.contentLanguage')}
-                </h3>
-                <p className="text-sm text-gray-600 mb-3">
-                  {t('settings.contentLanguageDescription')}
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                  {supportedLanguages.map((lang) => (
-                    <button
-                      key={`content-${lang}`}
-                      onClick={() => setContentLanguage(lang as SupportedLanguage)}
-                      disabled={languageLoading}
-                      className={`px-4 py-3 text-sm ${SEGMENTED_BUTTON_BASE} ${contentLanguage === lang ? SEGMENTED_BUTTON_ACTIVE : SEGMENTED_BUTTON_INACTIVE}`}
-                    >
-                      {languageNames[lang]}
-                    </button>
-                  ))}
-                </div>
               </div>
             </div>
           </section>

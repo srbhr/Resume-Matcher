@@ -65,8 +65,9 @@ export default function DashboardPage() {
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return t('common.unknown');
 
-    const dateLocale =
-      locale === 'es' ? 'es-ES' : locale === 'zh' ? 'zh-CN' : locale === 'ja' ? 'ja-JP' : 'en-US';
+    // Map locale to Intl date locale. Extend when adding new languages.
+    const dateLocaleMap: Record<string, string> = { en: 'en-US' };
+    const dateLocale = dateLocaleMap[locale] ?? 'en-US';
 
     return date.toLocaleDateString(dateLocale, {
       month: 'short',

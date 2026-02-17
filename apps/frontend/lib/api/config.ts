@@ -176,7 +176,8 @@ export async function updateFeatureConfig(config: FeatureConfigUpdate): Promise<
 }
 
 // Language configuration types
-export type SupportedLanguage = 'en' | 'es' | 'zh' | 'ja' | 'pt';
+// To add languages, extend this union (e.g. 'en' | 'es' | 'zh')
+export type SupportedLanguage = 'en';
 
 export interface LanguageConfig {
   ui_language: SupportedLanguage;
