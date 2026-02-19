@@ -3,10 +3,11 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      # Build args for customizing the frontend API URL at build time
-      # IMPORTANT: NEXT_PUBLIC_API_URL is baked into the JS bundle during build.
-      # If you change BACKEND_PORT, you must rebuild with matching NEXT_PUBLIC_API_URL:
-      #   BACKEND_PORT=9000 docker-compose build --build-arg NEXT_PUBLIC_API_URL=http://localhost:9000
+      # NEXT_PUBLIC_API_URL is the backend URL used by the Next.js server-side
+      # proxy rewrite. It must be reachable from *inside* the container, so
+      # localhost:8000 is always correct here regardless of remote access.
+      # Browser requests are proxied through Next.js - they never contact the
+      # backend directly, so no CORS or IP configuration is needed for remote use.
       args:
         - NEXT_PUBLIC_API_URL=http://localhost:${BACKEND_PORT:-8000}
     image: resume-matcher
@@ -32,6 +33,14 @@ services:
       # For Ollama running on host machine, use host.docker.internal:
       # - LLM_API_BASE=http://host.docker.internal:11434
       - LLM_API_BASE=${LLM_API_BASE:-}
+      # CORS Configuration
+      # For remote server access, set CORS_ORIGINS to include your server's IP/hostname.
+      # Example: CORS_ORIGINS=["http://192.168.1.100:3000","http://localhost:3000"]
+      - CORS_ORIGINS=${CORS_ORIGINS:-["http://localhost:3000","http://127.0.0.1:3000"]}
+      # Frontend base URL used by Playwright (inside the container) for PDF generation.
+      # Keep this as localhost - Playwright runs inside the container where frontend is on port 3000.
+      # Only change if you have a custom single-container setup.
+      - FRONTEND_BASE_URL=${FRONTEND_BASE_URL:-http://localhost:3000}
     restart: unless-stopped
     healthcheck:
       # Health check uses internal container port (always 8000)
