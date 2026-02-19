@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
@@ -13,6 +13,9 @@ import {
   updatePromptConfig,
   clearAllApiKeys,
   resetDatabase,
+  logoutGithubCopilot,
+  initiateGithubCopilotAuth,
+  checkGithubCopilotStatus,
   PROVIDER_INFO,
   type LLMConfig,
   type LLMProvider,
@@ -47,6 +50,7 @@ import {
   Globe,
   Trash2,
   AlertTriangle,
+  LogOut,
 } from 'lucide-react';
 import { useLanguage } from '@/lib/context/language-context';
 import { useTranslations } from '@/lib/i18n';
@@ -62,6 +66,7 @@ const PROVIDERS: LLMProvider[] = [
   'gemini',
   'deepseek',
   'ollama',
+  'github_copilot',
 ];
 
 const SEGMENTED_BUTTON_BASE =
@@ -105,6 +110,9 @@ export default function SettingsPage() {
   const [apiBase, setApiBase] = useState('');
   const [hasStoredApiKey, setHasStoredApiKey] = useState(false);
 
+  // GitHub Copilot state
+  const [copilotAuthStatus, setCopilotAuthStatus] = useState<'unknown' | 'authenticated' | 'not_authenticated' | 'initiating'>('unknown');
+
   // Use cached system status (loaded on app start, refreshes every 30 min)
   const {
     status: systemStatus,
@@ -115,6 +123,9 @@ export default function SettingsPage() {
 
   // Health check result from manual test
   const [healthCheck, setHealthCheck] = useState<LLMHealthCheck | null>(null);
+
+  // Abort controller for cancelling test connection
+  const testConnectionAbortRef = useRef<AbortController | null>(null);
 
   // Feature config state
   const [enableCoverLetter, setEnableCoverLetter] = useState(false);
@@ -286,8 +297,69 @@ export default function SettingsPage() {
     };
   }, [t]);
 
+  // Check GitHub Copilot auth status when provider changes or on mount
+  useEffect(() => {
+    let cancelled = false;
+    let interval: NodeJS.Timeout | null = null;
+
+    async function checkAuthStatus() {
+      if (provider === 'github_copilot' && !cancelled) {
+        try {
+          const authStatus = await checkGithubCopilotStatus();
+          if (!cancelled) {
+            if (authStatus.authenticated) {
+              setCopilotAuthStatus('authenticated');
+            } else {
+              // Only update if not currently initiating (to keep UI showing "Initiating...")
+              setCopilotAuthStatus(prev => prev === 'initiating' ? prev : 'not_authenticated');
+            }
+          }
+        } catch {
+          if (!cancelled) {
+            // On error, allow retry by resetting from 'initiating' to 'not_authenticated'
+            // This prevents users from being stuck in infinite "Initiating..." state
+            setCopilotAuthStatus('not_authenticated');
+          }
+        }
+      }
+    }
+
+    // Check immediately on mount/provider change
+    checkAuthStatus();
+
+    // Only poll when authentication is in progress (initiating)
+    // Stop polling once authenticated to save resources
+    if (provider === 'github_copilot' && copilotAuthStatus === 'initiating') {
+      interval = setInterval(checkAuthStatus, 5000);
+    }
+
+    return () => {
+      cancelled = true;
+      if (interval) {
+        clearInterval(interval);
+        interval = null;
+      }
+    };
+  }, [provider, copilotAuthStatus]);
+
+  // Cleanup on unmount - abort any ongoing test connection
+  useEffect(() => {
+    return () => {
+      if (testConnectionAbortRef.current) {
+        testConnectionAbortRef.current.abort();
+        testConnectionAbortRef.current = null;
+      }
+    };
+  }, []);
+
   // Handle provider change
   const handleProviderChange = (newProvider: LLMProvider) => {
+    // Cancel any ongoing test before switching
+    if (testConnectionAbortRef.current) {
+      testConnectionAbortRef.current.abort();
+      testConnectionAbortRef.current = null;
+    }
+
     setProvider(newProvider);
     setModel(PROVIDER_INFO[newProvider].defaultModel);
 
@@ -298,6 +370,11 @@ export default function SettingsPage() {
     // Clear API key input when switching providers to avoid accidental cross-provider usage.
     setApiKey('');
     setHasStoredApiKey(false);
+
+    // Reset Copilot-specific states when switching providers
+    setCopilotAuthStatus('unknown');
+    setHealthCheck(null);
+    setError(null);
   };
 
   // Save configuration
@@ -349,6 +426,9 @@ export default function SettingsPage() {
     setError(null);
     setHealthCheck(null);
 
+    // Create new abort controller for this test
+    testConnectionAbortRef.current = new AbortController();
+
     try {
       // Build config from current form values
       const testConfig: Partial<LLMConfig> = {
@@ -365,16 +445,74 @@ export default function SettingsPage() {
         // If no new key but has stored key, don't send api_key (backend uses stored)
       }
 
-      const result = await testLlmConnection(testConfig);
+      const result = await testLlmConnection(testConfig, testConnectionAbortRef.current.signal);
       setHealthCheck(result);
+
+      // If successful and it's Copilot, update auth status
+      if (result.healthy && provider === 'github_copilot') {
+        setCopilotAuthStatus('authenticated');
+      }
+
+      // Handle not_authenticated error for Copilot
+      if (!result.healthy && provider === 'github_copilot' &&
+          (result.error_code === 'not_authenticated' || result.error_code === 'github_copilot_not_authenticated')) {
+        setCopilotAuthStatus('not_authenticated');
+      }
+
       setStatus('idle');
     } catch (err) {
+      // Check if this was an abort error
+      if (err instanceof Error && err.name === 'AbortError') {
+        setStatus('idle');
+        return;
+      }
+
       console.error('Failed to test connection', err);
       setHealthCheck({ healthy: false, provider, model, error: (err as Error).message });
+
+      // If Copilot and not authenticated, show that status
+      if (provider === 'github_copilot') {
+        setCopilotAuthStatus('not_authenticated');
+      }
+
       setStatus('idle');
+    } finally {
+      testConnectionAbortRef.current = null;
     }
   };
 
+  // Initiate GitHub Copilot OAuth authentication
+  const handleInitiateCopilotAuth = async () => {
+    setCopilotAuthStatus('initiating');
+    setError(null);
+
+    try {
+      // First, save the provider configuration to backend
+      const config: Partial<LLMConfig> = {
+        provider: 'github_copilot',
+        model: model.trim() || providerInfo.defaultModel,
+        api_base: apiBase.trim() || null,
+        api_key: '',
+      };
+      await updateLlmConfig(config);
+
+      // Then initiate the authentication
+      const result = await initiateGithubCopilotAuth();
+      if (result.status === 'initiated') {
+        // Keep showing "initiating" state - user needs to complete auth on GitHub
+        // The status will remain "initiating" until they refresh or we detect auth
+      } else if (result.status === 'already_authenticated') {
+        setCopilotAuthStatus('authenticated');
+      } else if (result.status === 'error') {
+        setCopilotAuthStatus('not_authenticated');
+        setError(result.message);
+      }
+    } catch (err) {
+      console.error('Failed to initiate auth', err);
+      setCopilotAuthStatus('not_authenticated');
+      setError((err as Error).message || 'Failed to initiate authentication');
+    }
+  };
   // Update feature config
   const handleFeatureConfigChange = async (
     key: 'enable_cover_letter' | 'enable_outreach_message',
@@ -540,6 +678,9 @@ export default function SettingsPage() {
                   </p>
                   <p className="font-mono text-xs text-amber-700 mt-1">
                     {t('settings.setupRequired.description')}
+                  </p>
+                  <p className="font-mono text-xs text-amber-600 mt-2 italic">
+                    Note: API key is optional for Ollama (local) and GitHub Copilot (OAuth) providers.
                   </p>
                 </div>
               </div>
@@ -764,7 +905,9 @@ export default function SettingsPage() {
                   {t('settings.llmConfiguration.apiKeyLabel')}{' '}
                   {!requiresApiKey && (
                     <span className="text-gray-400">
-                      {t('settings.llmConfiguration.apiKeyOptionalForOllama')}
+                      {provider === 'github_copilot' 
+                        ? '(Optional - uses GitHub OAuth)'
+                        : t('settings.llmConfiguration.apiKeyOptionalForOllama')}
                     </span>
                   )}
                 </Label>
@@ -774,9 +917,11 @@ export default function SettingsPage() {
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
                   placeholder={
-                    requiresApiKey
-                      ? t('settings.llmConfiguration.apiKeyPlaceholder')
-                      : t('settings.llmConfiguration.apiKeyNotRequiredPlaceholder')
+                    provider === 'github_copilot'
+                      ? 'Not required - use Test Connection to authenticate'
+                      : requiresApiKey
+                        ? t('settings.llmConfiguration.apiKeyPlaceholder')
+                        : t('settings.llmConfiguration.apiKeyNotRequiredPlaceholder')
                   }
                   className="font-mono"
                   disabled={!requiresApiKey}
@@ -787,6 +932,130 @@ export default function SettingsPage() {
                   </p>
                 )}
               </div>
+
+              {/* GitHub Copilot OAuth */}
+              {provider === 'github_copilot' && (
+                <div className="space-y-4">
+                  {/* Authentication Status Card */}
+                  <div className="border-2 border-black bg-[#F0F0E8] shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)]">
+                    <div className="border-b border-black bg-blue-700 p-3">
+                      <p className="font-mono text-sm font-bold text-white uppercase tracking-wider">
+                        {t('settings.llmConfiguration.githubCopilot.title')}
+                      </p>
+                    </div>
+                    <div className="p-5 space-y-4">
+                      {/* Status Indicator */}
+                      <div className="flex items-center gap-3">
+                        <div className={`w-3 h-3 ${
+                          copilotAuthStatus === 'authenticated' ? 'bg-green-500' : 
+                          copilotAuthStatus === 'initiating' ? 'bg-blue-500' : 'bg-red-500'
+                        }`}></div>
+                        <span className="font-mono text-sm font-bold">
+                          {copilotAuthStatus === 'authenticated'
+                            ? t('settings.llmConfiguration.githubCopilot.statusAuthenticated')
+                            : copilotAuthStatus === 'initiating'
+                            ? t('settings.llmConfiguration.githubCopilot.statusInitiating')
+                            : t('settings.llmConfiguration.githubCopilot.statusNotAuthenticated')}
+                        </span>
+                      </div>
+
+                      {/* Authentication Flow for unauthenticated users */}
+                      {copilotAuthStatus !== 'authenticated' && (
+                        <div className="space-y-4">
+                          {copilotAuthStatus === 'initiating' ? (
+                            <div className="space-y-3">
+                              <div className="flex items-center gap-2 text-blue-700">
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                <span className="font-mono text-sm font-bold">{t('settings.llmConfiguration.githubCopilot.authInProgressTitle')}</span>
+                              </div>
+                              <p className="font-mono text-xs text-gray-600">
+                                {t('settings.llmConfiguration.githubCopilot.authInProgressDescription')}
+                              </p>
+                            </div>
+                          ) : (
+                            <>
+                              <p className="font-mono text-xs text-gray-700">
+                                {t('settings.llmConfiguration.githubCopilot.instructionsTitle')}
+                              </p>
+                              <ol className="font-mono text-xs text-gray-600 space-y-2 list-decimal list-inside">
+                                <li>{t('settings.llmConfiguration.githubCopilot.step1')}</li>
+                                <li>{t('settings.llmConfiguration.githubCopilot.step2')}</li>
+                                <li>Visit <a href={t('settings.llmConfiguration.githubCopilot.verificationUri')} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">{t('settings.llmConfiguration.githubCopilot.verificationUri')}</a></li>
+                                <li>{t('settings.llmConfiguration.githubCopilot.step4')}</li>
+                                <li>{t('settings.llmConfiguration.githubCopilot.step5')}</li>
+                                <li>{t('settings.llmConfiguration.githubCopilot.step6')}</li>
+                              </ol>
+                            </>
+                          )}
+                          <div className="flex gap-2">
+                            <Button
+                              onClick={handleInitiateCopilotAuth}
+                              disabled={copilotAuthStatus === 'initiating'}
+                              className="flex-1"
+                            >
+                              {copilotAuthStatus === 'initiating' ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                t('settings.llmConfiguration.githubCopilot.startAuthButton')
+                              )}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              onClick={async () => {
+                                try {
+                                  const authStatus = await checkGithubCopilotStatus();
+                                  if (authStatus.authenticated) {
+                                    setCopilotAuthStatus('authenticated');
+                                  } else {
+                                    setCopilotAuthStatus('not_authenticated');
+                                  }
+                                } catch (err) {
+                                  console.error('Failed to check auth status', err);
+                                }
+                              }}
+                              disabled={copilotAuthStatus === 'initiating'}
+                              className="border-2 border-black"
+                            >
+                              <RefreshCw className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Logout Button - show when authenticated */}
+                      {copilotAuthStatus === 'authenticated' && (
+                        <Button
+                          variant="outline"
+                          onClick={async () => {
+                            // Cancel any ongoing test first
+                            if (testConnectionAbortRef.current) {
+                              testConnectionAbortRef.current.abort();
+                              testConnectionAbortRef.current = null;
+                            }
+                            try {
+                              const result = await logoutGithubCopilot();
+                              setSuccessDialogMessage({
+                                title: 'Logged Out',
+                                description: result.message,
+                              });
+                              setShowSuccessDialog(true);
+                              setCopilotAuthStatus('not_authenticated');
+                              setStatus('idle');
+                            } catch (err) {
+                              console.error('Failed to logout', err);
+                              setError((err as Error).message || 'Failed to logout from GitHub Copilot');
+                            }
+                          }}
+                          className="w-full border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)] hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none text-red-600"
+                        >
+                          <LogOut className="w-4 h-4 mr-2" />
+                          {t('settings.llmConfiguration.githubCopilot.logoutButton')}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* API Base URL (optional, for proxies/aggregators/custom endpoints) */}
               <div className="space-y-2">
@@ -827,16 +1096,14 @@ export default function SettingsPage() {
                 <Button
                   variant="outline"
                   onClick={handleTestConnection}
-                  disabled={status === 'testing' || status === 'saving'}
+                  disabled={status === 'saving' || status === 'testing'}
                 >
                   {status === 'testing' ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
-                    <>
-                      <Activity className="w-4 h-4" />
-                      {t('settings.llmConfiguration.testConnection')}
-                    </>
+                    <Activity className="w-4 h-4" />
                   )}
+                  {t('settings.llmConfiguration.testConnection')}
                 </Button>
               </div>
 

@@ -13,7 +13,7 @@ import {
   previewImproveResume,
   confirmImproveResume,
 } from '@/lib/api/resume';
-import { fetchPromptConfig, type PromptOption } from '@/lib/api/config';
+import { fetchPromptConfig, testLlmConnection, type PromptOption } from '@/lib/api/config';
 import { Dropdown } from '@/components/ui/dropdown';
 import { useStatusCache } from '@/lib/context/status-cache';
 import { Loader2, ArrowLeft, AlertTriangle, Settings } from 'lucide-react';
@@ -148,6 +148,18 @@ export default function TailorPage() {
 
   const runGenerate = async (resumeId: string, description: string) => {
     try {
+      // Check if LLM is authenticated/healthy before proceeding
+      const healthCheck = await testLlmConnection();
+      
+      if (!healthCheck.healthy) {
+        const errorMsg = healthCheck.error_code === 'not_authenticated'
+          ? 'AI provider not authenticated. Please authenticate in Settings before tailoring resumes.'
+          : healthCheck.error || 'AI provider connection failed. Please check your settings.';
+        
+        setError(errorMsg);
+        return;
+      }
+
       // 1. Upload Job Description
       // The API expects an array of strings
       const jobId = await uploadJobDescriptions([description], resumeId);

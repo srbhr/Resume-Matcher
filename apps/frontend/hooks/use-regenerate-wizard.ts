@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { regenerateItems as regenerateItemsApi, applyRegeneratedItems } from '@/lib/api/enrichment';
+import { testLlmConnection } from '@/lib/api/config';
 import type {
   RegenerateItemError,
   RegenerateItemInput,
@@ -103,6 +104,21 @@ export function useRegenerateWizard({
     setError(null);
 
     try {
+      // First, check if LLM is authenticated/healthy
+      const healthCheck = await testLlmConnection();
+      
+      if (!healthCheck.healthy) {
+        const errorMsg = healthCheck.error_code === 'not_authenticated'
+          ? 'AI provider not authenticated. Please authenticate in Settings before using regenerate.'
+          : healthCheck.error || 'AI provider connection failed. Please check your settings.';
+        
+        setError(errorMsg);
+        setStep('instructing'); // Go back to instruction step on error
+        setIsGenerating(false);
+        onError?.(errorMsg);
+        return;
+      }
+
       const request: RegenerateRequest = {
         resume_id: resumeId,
         items: selectedItems,

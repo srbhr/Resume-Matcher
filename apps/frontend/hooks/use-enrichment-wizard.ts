@@ -13,6 +13,7 @@ import {
   type EnhancedDescription,
   type AnswerInput,
 } from '@/lib/api/enrichment';
+import { testLlmConnection } from '@/lib/api/config';
 
 // Wizard steps
 export type WizardStep =
@@ -173,6 +174,21 @@ export function useEnrichmentWizard(resumeId: string) {
     dispatch({ type: 'START_ANALYSIS' });
 
     try {
+      // First, check if LLM is authenticated/healthy
+      const healthCheck = await testLlmConnection();
+      
+      if (!healthCheck.healthy) {
+        const errorMsg = healthCheck.error_code === 'not_authenticated'
+          ? 'AI provider not authenticated. Please authenticate in Settings before using enrichment.'
+          : healthCheck.error || 'AI provider connection failed. Please check your settings.';
+        
+        dispatch({
+          type: 'SET_ERROR',
+          error: errorMsg,
+        });
+        return;
+      }
+
       const result = await analyzeResume(resumeId);
 
       // Check if there are any improvements needed
