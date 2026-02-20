@@ -303,10 +303,11 @@ LLM_API_BASE=http://host.docker.internal:11434 docker compose up -d
 
 Then configure Ollama as your provider in the Settings UI.
 
-### Using Docker Secrets (`*_FILE`)
+### Using Docker Secrets
 
-The container supports Postgres-style `*_FILE` environment variables. For sensitive values like API keys,
-you can mount a secret file and point to it:
+The container supports `*_FILE` from 
+[docker secrets](https://docs.docker.com/compose/how-tos/use-secrets/#use-secrets). 
+For sensitive values like API keys, you can mount a secret file and point to it:
 
 ```bash
 LLM_API_KEY_FILE=/run/secrets/llm_api_key docker compose up -d

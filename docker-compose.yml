@@ -6,6 +6,8 @@ services:
       - "${PORT:-3000}:3000"
     volumes:
       - resume-data:/app/backend/data
+    #secrets:
+    #  - llm_api_key
     environment:
       # domain in reverse proxy
       - FRONTEND_BASE_URL=${FRONTEND_BASE_URL:-http://localhost:3000}
@@ -27,6 +29,10 @@ services:
       # - LLM_API_BASE=http://host.docker.internal:11434
       - LLM_API_BASE=${LLM_API_BASE:-}
     restart: unless-stopped
+
+#secrets:
+#  llm_api_key:
+#    file: ./secrets/llm_api_key
 
 volumes:
   resume-data:
