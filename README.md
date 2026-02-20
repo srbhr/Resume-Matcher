@@ -213,13 +213,28 @@ Open **<http://localhost:3000>** and configure your AI provider in Settings.
 
 ### Docker Deployment
 
-```bash
-docker pull srbhr/resume-matcher:latest
+Official Docker images are published for `linux/amd64` and `linux/arm64` on:
 
-docker run srbhr/resume-matcher:latest
+- `ghcr.io/srbhr/resume-matcher`
+- `srbhr/resume-matcher`
+
+Run on a single public port (`3000`) with API available at `/api`:
+
+```bash
+docker run --name resume-matcher \
+  -p 3000:3000 \
+  -v resume-data:/app/backend/data \
+  ghcr.io/srbhr/resume-matcher:latest
 ```
 
-<!-- Note: Docker documentation is pending. For now, use docker-compose.yml as reference -->
+Prefer pinning a version in production, for example `ghcr.io/srbhr/resume-matcher:1.1.0` or
+`ghcr.io/srbhr/resume-matcher:1.1`.
+
+Endpoints:
+
+- App: <http://localhost:3000>
+- API: <http://localhost:3000/api/v1>
+- API docs: <http://localhost:3000/docs>
 
 > **Using Ollama with Docker?** Use `http://host.docker.internal:11434` as the Ollama URL instead of `localhost`.
 

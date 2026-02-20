@@ -10,9 +10,9 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 BOLD='\033[1m'
 
-# Port configuration (can be overridden via environment variables)
-FRONTEND_PORT="${FRONTEND_PORT:-3000}"
-BACKEND_PORT="${BACKEND_PORT:-8000}"
+# Internal port configuration for single-port deployment.
+FRONTEND_PORT="3000"
+BACKEND_PORT="8000"
 
 # Print banner
 print_banner() {
@@ -61,6 +61,32 @@ error() {
     echo -e "${RED}[✗]${NC} $1"
 }
 
+# Docker-style secret loader: supports VAR or VAR_FILE
+file_env() {
+    local var="$1"
+    local def="${2:-}"
+    local file_var="${var}_FILE"
+
+    if [ -n "${!var:-}" ] && [ -n "${!file_var:-}" ]; then
+        error "Both $var and $file_var are set (but are exclusive)"
+        exit 1
+    fi
+
+    local val="$def"
+    if [ -n "${!var:-}" ]; then
+        val="${!var}"
+    elif [ -n "${!file_var:-}" ]; then
+        if [ ! -r "${!file_var}" ]; then
+            error "Cannot read ${!file_var} for $file_var"
+            exit 1
+        fi
+        val="$(< "${!file_var}")"
+    fi
+
+    export "$var"="$val"
+    unset "$file_var"
+}
+
 # Cleanup function for graceful shutdown
 cleanup() {
     echo ""
@@ -82,11 +108,19 @@ trap cleanup SIGTERM SIGINT SIGQUIT
 # Print banner
 print_banner
 
-# Display port configuration
-info "Port configuration:"
-echo -e "  Frontend port: ${BOLD}${FRONTEND_PORT}${NC}"
-echo -e "  Backend port:  ${BOLD}${BACKEND_PORT}${NC}"
+# Display routing configuration
+info "Routing configuration:"
+echo -e "  Public port:   ${BOLD}${FRONTEND_PORT}${NC}"
+echo -e "  Internal API:  ${BOLD}${BACKEND_PORT}${NC} (proxied at /api)"
 echo ""
+
+# Resolve env vars and optional *_FILE secret mounts
+info "Loading configuration from environment and *_FILE secrets..."
+file_env "LLM_PROVIDER" "openai"
+file_env "LLM_MODEL" ""
+file_env "LLM_API_KEY" ""
+file_env "LLM_API_BASE" ""
+status "Configuration loaded"
 
 # Check and create data directory
 info "Checking data directory..."
@@ -112,7 +146,7 @@ fi
 
 # Start backend
 echo ""
-info "Starting backend server on port ${BACKEND_PORT}..."
+info "Starting backend server on internal port ${BACKEND_PORT}..."
 cd /app/backend
 python -m uvicorn app.main:app --host 0.0.0.0 --port ${BACKEND_PORT} &
 BACKEND_PID=$!
@@ -145,14 +179,28 @@ fi
 node server.js &
 FRONTEND_PID=$!
 
+# Wait for frontend and proxy route to be ready
+info "Waiting for frontend and /api proxy to be ready..."
+for i in {1..30}; do
+    if curl -s "http://localhost:${FRONTEND_PORT}/api/v1/health" > /dev/null 2>&1; then
+        status "Frontend is ready and /api proxy is working (PID: $FRONTEND_PID)"
+        break
+    fi
+    if [ $i -eq 30 ]; then
+        error "Frontend started but /api proxy did not become ready within 30 seconds"
+        exit 1
+    fi
+    sleep 1
+done
+
 echo ""
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 status "Resume Matcher is running!"
 echo ""
 echo -e "  ${BOLD}Frontend:${NC}  http://localhost:${FRONTEND_PORT}"
-echo -e "  ${BOLD}Backend:${NC}   http://localhost:${BACKEND_PORT}"
-echo -e "  ${BOLD}API Docs:${NC}  http://localhost:${BACKEND_PORT}/docs"
+echo -e "  ${BOLD}API:${NC}       http://localhost:${FRONTEND_PORT}/api/v1"
+echo -e "  ${BOLD}API Docs:${NC}  http://localhost:${FRONTEND_PORT}/docs"
 echo ""
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""

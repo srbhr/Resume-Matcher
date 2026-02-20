@@ -261,63 +261,59 @@ Prefer containerized deployment? Resume Matcher includes Docker support.
 ### Quick Start with Docker Compose
 
 ```bash
-# Build and start the containers
-docker-compose up -d
+# Start the container from a published image
+docker compose up -d
 
 # View logs
-docker-compose logs -f
+docker compose logs -f
 
-# Stop the containers
-docker-compose down
+# Stop the container
+docker compose down
 ```
 
 ### Customizing Ports
 
-By default, Resume Matcher runs on ports 3000 (frontend) and 8000 (backend). To use different ports:
-
-**Option 1: Environment Variables (Frontend port only)**
-
-```bash
-# Change frontend port only (no rebuild needed)
-FRONTEND_PORT=4000 docker-compose up -d
-```
-
-**Option 2: Changing the Backend Port (requires rebuild)**
-
-The frontend's API URL is baked into the JavaScript bundle at build time. If you change `BACKEND_PORT`, you must rebuild the image:
+By default, Resume Matcher exposes a single public port (`3000`). The API is served from the same
+origin at `/api`.
 
 ```bash
-# Build with custom backend port
-BACKEND_PORT=9000 docker-compose build
-
-# Then run with the same port
-BACKEND_PORT=9000 docker-compose up -d
+# Change host port only (container stays on 3000)
+PORT=4000 docker compose up -d
 ```
 
-Or create a `.env` file and rebuild:
+### Image Version Pinning (Recommended)
+
+Pin an explicit image tag for reproducible deployments:
+
+```bash
+RM_IMAGE_TAG=1.1.0 docker compose up -d
+```
+
+Or define defaults in `.env`:
 
 ```bash
 # Create .env file
 cat > .env << EOF
-FRONTEND_PORT=4000
-BACKEND_PORT=9000
+PORT=3000
+RM_IMAGE_TAG=1.1.0
 LLM_PROVIDER=openai
 LLM_API_KEY=sk-your-key-here
 EOF
 
-# Rebuild and run
-docker-compose build && docker-compose up -d
+# Run
+docker compose up -d
 ```
 
 ### Configuration Options
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `FRONTEND_PORT` | `3000` | Host port for the web interface |
-| `BACKEND_PORT` | `8000` | Host port for the API |
+| `PORT` | `3000` | Host port mapped to container port `3000` |
+| `RM_IMAGE_TAG` | `latest` | Docker image tag (recommend pinning in production) |
 | `LLM_PROVIDER` | `openai` | AI provider (openai, anthropic, gemini, etc.) |
 | `LLM_MODEL` | — | Model to use (configured via Settings UI) |
 | `LLM_API_KEY` | — | API key (recommended: configure via Settings UI) |
+| `LLM_API_KEY_FILE` | — | Read API key from file path (Docker secrets compatible) |
 | `LLM_API_BASE` | — | Custom API endpoint (for Ollama or proxies) |
 
 ### Using Ollama with Docker
@@ -325,31 +321,45 @@ docker-compose build && docker-compose up -d
 To use Ollama running on your host machine:
 
 ```bash
-LLM_API_BASE=http://host.docker.internal:11434 docker-compose up -d
+LLM_API_BASE=http://host.docker.internal:11434 docker compose up -d
 ```
 
 Then configure Ollama as your provider in the Settings UI.
+
+### Using Docker Secrets (`*_FILE`)
+
+The container supports Postgres-style `*_FILE` environment variables. For sensitive values like API keys,
+you can mount a secret file and point to it:
+
+```bash
+LLM_API_KEY_FILE=/run/secrets/llm_api_key docker compose up -d
+```
+
+Rules:
+
+- Use either `LLM_API_KEY` or `LLM_API_KEY_FILE`, not both.
+- If both are set, the container exits with an explicit error.
 
 ### Important Notes
 
 - **API keys are best configured through the UI** at `http://localhost:3000/settings`
 - Data is persisted in a Docker volume (`resume-data`)
 - The Settings UI configuration is stored in the volume and persists across restarts
-- **Backend port changes require a rebuild** - the frontend API URL is baked into the JS bundle at build time
+- App and API share the same origin: frontend on `/`, API on `/api`
 
 
 
 ## Accessing the Application
 
-Once both servers are running, open your browser:
+Once the container is running, open your browser:
 
 | URL | Description |
 |-----|-------------|
 | **<http://localhost:3000>** | Main application (Dashboard) |
 | **<http://localhost:3000/settings>** | Configure AI provider |
-| **<http://localhost:8000>** | Backend API root |
-| **<http://localhost:8000/docs>** | Interactive API documentation |
-| **<http://localhost:8000/health>** | Backend health check |
+| **<http://localhost:3000/api/v1>** | Backend API root |
+| **<http://localhost:3000/docs>** | Interactive API documentation |
+| **<http://localhost:3000/api/v1/health>** | Backend health check |
 
 ### First-Time Setup Checklist
 
