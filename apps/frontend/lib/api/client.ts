@@ -38,7 +38,16 @@ export const API_BASE = resolveRuntimeApiBase(toApiBase(API_URL));
  */
 export async function apiFetch(endpoint: string, options?: RequestInit): Promise<Response> {
   const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-  const url = endpoint.startsWith('http') ? endpoint : `${API_BASE}${normalizedEndpoint}`;
+  const isAbsoluteUrl = endpoint.startsWith('http://') || endpoint.startsWith('https://');
+  const isApiPath = normalizedEndpoint.startsWith('/api/');
+  let url = `${API_BASE}${normalizedEndpoint}`;
+
+  if (isAbsoluteUrl) {
+    url = endpoint;
+  } else if (isApiPath) {
+    url = normalizedEndpoint;
+  }
+
   return fetch(url, options);
 }
 
