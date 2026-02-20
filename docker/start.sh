@@ -154,7 +154,7 @@ BACKEND_PID=$!
 # Wait for backend to be ready
 info "Waiting for backend to be ready..."
 for i in {1..30}; do
-    if curl -s "http://localhost:${BACKEND_PORT}/api/v1/health" > /dev/null 2>&1; then
+    if curl -s "http://127.0.0.1:${BACKEND_PORT}/api/v1/health" > /dev/null 2>&1; then
         status "Backend is ready (PID: $BACKEND_PID)"
         break
     fi
@@ -182,7 +182,7 @@ FRONTEND_PID=$!
 # Wait for frontend and proxy route to be ready
 info "Waiting for frontend and /api proxy to be ready..."
 for i in {1..30}; do
-    if curl -s "http://localhost:${FRONTEND_PORT}/api/v1/health" > /dev/null 2>&1; then
+    if curl -s "http://127.0.0.1:${FRONTEND_PORT}/api/v1/health" > /dev/null 2>&1; then
         status "Frontend is ready and /api proxy is working (PID: $FRONTEND_PID)"
         break
     fi
