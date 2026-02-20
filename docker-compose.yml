@@ -1,18 +1,19 @@
 services:
   resume-matcher:
-    image: ghcr.io/webysther/resume-matcher
+    image: ghcr.io/srbhr/resume-matcher
     container_name: resume-matcher
     ports:
-      - "${PORT:-3333}:3000"
+      - "${PORT:-3000}:3000"
     volumes:
       - resume-data:/app/backend/data
     environment:
-      - FRONTEND_BASE_URL=https://resume-matcher.webysther.org
+      # domain in reverse proxy
+      - FRONTEND_BASE_URL=${FRONTEND_BASE_URL:-http://localhost:3000}
       # Logging configuration: DEBUG, INFO, WARNING, ERROR
-      - LOG_LEVEL=${LOG_LEVEL:-DEBUG}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
       #- LOG_LEVEL_FILE=${LOG_LEVEL_FILE:-}
       # Debug level for LiteLLM: DEBUG, INFO, WARNING, ERROR
-      - LITELLM_LOG=${LITELLM_LOG:-DEBUG}
+      - LITELLM_LOG=${LITELLM_LOG:-WARNING}
       #- LITELLM_LOG_FILE=${LITELLM_LOG_FILE:-}
       # LLM Configuration - configure via Settings UI or set env vars for explicit overrides
       # Supported providers: openai, anthropic, openrouter, gemini, deepseek, ollama
