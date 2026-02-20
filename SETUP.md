@@ -273,9 +273,6 @@ docker compose down
 
 ### Customizing Ports
 
-By default, Resume Matcher exposes a single public port (`3000`). The API is served from the same
-origin at `/api`.
-
 ```bash
 # Change host port only (container stays on 3000)
 PORT=4000 docker compose up -d
