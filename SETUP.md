@@ -310,10 +310,11 @@ docker compose up -d
 |----------|---------|-------------|
 | `PORT` | `3000` | Host port mapped to container port `3000` |
 | `RM_IMAGE_TAG` | `latest` | Docker image tag (recommend pinning in production) |
+| `LOG_LEVEL` | `INFO` | Application-wide Python/Uvicorn log level |
+| `LITELLM_LOG` | `WARNING` | LiteLLM log level (`CRITICAL`, `ERROR`, `WARNING`, `INFO`, `DEBUG`) |
 | `LLM_PROVIDER` | `openai` | AI provider (openai, anthropic, gemini, etc.) |
 | `LLM_MODEL` | — | Model to use (configured via Settings UI) |
 | `LLM_API_KEY` | — | API key (recommended: configure via Settings UI) |
-| `LLM_API_KEY_FILE` | — | Read API key from file path (Docker secrets compatible) |
 | `LLM_API_BASE` | — | Custom API endpoint (for Ollama or proxies) |
 
 ### Using Ollama with Docker
@@ -339,6 +340,14 @@ Rules:
 
 - Use either `LLM_API_KEY` or `LLM_API_KEY_FILE`, not both.
 - If both are set, the container exits with an explicit error.
+
+### Logging Level Configuration
+
+You can tune logs globally and for LiteLLM separately:
+
+```bash
+LOG_LEVEL=INFO LITELLM_LOG=DEBUG docker compose up -d
+```
 
 ### Important Notes
 
