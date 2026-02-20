@@ -176,36 +176,5 @@ if [ ! -f "server.js" ]; then
     error "Missing frontend standalone server.js. Rebuild the Docker image."
     exit 1
 fi
-node server.js &
-FRONTEND_PID=$!
 
-# Wait for frontend and proxy route to be ready
-info "Waiting for frontend and /api proxy to be ready..."
-for i in {1..30}; do
-    if curl -s "http://127.0.0.1:${FRONTEND_PORT}/api/v1/health" > /dev/null 2>&1; then
-        status "Frontend is ready and /api proxy is working (PID: $FRONTEND_PID)"
-        break
-    fi
-    if [ $i -eq 30 ]; then
-        error "Frontend started but /api proxy did not become ready within 30 seconds"
-        exit 1
-    fi
-    sleep 1
-done
-
-echo ""
-echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo ""
-status "Resume Matcher is running!"
-echo ""
-echo -e "  ${BOLD}Frontend:${NC}  http://localhost:${FRONTEND_PORT}"
-echo -e "  ${BOLD}API:${NC}       http://localhost:${FRONTEND_PORT}/api/v1"
-echo -e "  ${BOLD}API Docs:${NC}  http://localhost:${FRONTEND_PORT}/docs"
-echo ""
-echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo ""
-info "Press Ctrl+C to stop"
-echo ""
-
-# Wait for processes
-wait $FRONTEND_PID
+node server.js "$@"
