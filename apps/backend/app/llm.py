@@ -15,7 +15,7 @@ LITELLM_LOGGER_NAMES = ("LiteLLM", "LiteLLM Router", "LiteLLM Proxy")
 
 def _configure_litellm_logging() -> None:
     """Align LiteLLM logger levels with application settings."""
-    numeric_level = getattr(logging, settings.litellm_log, logging.WARNING)
+    numeric_level = getattr(logging, settings.log_llm, logging.WARNING)
     for logger_name in LITELLM_LOGGER_NAMES:
         logging.getLogger(logger_name).setLevel(numeric_level)
 

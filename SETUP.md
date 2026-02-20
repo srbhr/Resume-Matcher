@@ -281,37 +281,13 @@ origin at `/api`.
 PORT=4000 docker compose up -d
 ```
 
-### Image Version Pinning (Recommended)
-
-Pin an explicit image tag for reproducible deployments:
-
-```bash
-RM_IMAGE_TAG=1.1.0 docker compose up -d
-```
-
-Or define defaults in `.env`:
-
-```bash
-# Create .env file
-cat > .env << EOF
-PORT=3000
-RM_IMAGE_TAG=1.1.0
-LLM_PROVIDER=openai
-LLM_API_KEY=sk-your-key-here
-EOF
-
-# Run
-docker compose up -d
-```
-
 ### Configuration Options
 
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `PORT` | `3000` | Host port mapped to container port `3000` |
-| `RM_IMAGE_TAG` | `latest` | Docker image tag (recommend pinning in production) |
-| `LOG_LEVEL` | `INFO` | Application-wide Python/Uvicorn log level |
-| `LITELLM_LOG` | `WARNING` | LiteLLM log level (`CRITICAL`, `ERROR`, `WARNING`, `INFO`, `DEBUG`) |
+| `LOG_LEVEL` | `INFO` | Application-wide Python/Uvicorn log level (`ERROR`, `WARNING`, `INFO`, `DEBUG`) |
+| `LOG_LLM` | `WARNING` | LiteLLM log level (`ERROR`, `WARNING`, `INFO`, `DEBUG`) |
 | `LLM_PROVIDER` | `openai` | AI provider (openai, anthropic, gemini, etc.) |
 | `LLM_MODEL` | — | Model to use (configured via Settings UI) |
 | `LLM_API_KEY` | — | API key (recommended: configure via Settings UI) |
@@ -346,7 +322,7 @@ Rules:
 You can tune logs globally and for LiteLLM separately:
 
 ```bash
-LOG_LEVEL=INFO LITELLM_LOG=DEBUG docker compose up -d
+LOG_LEVEL=INFO LOG_LLM=DEBUG docker compose up -d
 ```
 
 ### Important Notes

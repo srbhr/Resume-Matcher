@@ -13,8 +13,8 @@ services:
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       #- LOG_LEVEL_FILE=${LOG_LEVEL_FILE:-}
       # Debug level for LiteLLM: DEBUG, INFO, WARNING, ERROR
-      - LITELLM_LOG=${LITELLM_LOG:-WARNING}
-      #- LITELLM_LOG_FILE=${LITELLM_LOG_FILE:-}
+      - LOG_LLM=${LOG_LLM:-WARNING}
+      #- LOG_LLM_FILE=${LOG_LLM_FILE:-}
       # LLM Configuration - configure via Settings UI or set env vars for explicit overrides
       # Supported providers: openai, anthropic, openrouter, gemini, deepseek, ollama
       # Defaults are defined in apps/backend/app/config.py

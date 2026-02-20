@@ -93,7 +93,7 @@ normalize_log_level() {
     local name="${3}"
 
     case "$value" in
-        CRITICAL|ERROR|WARNING|INFO|DEBUG)
+        ERROR|WARNING|INFO|DEBUG)
             echo "$value"
             ;;
         *)
@@ -133,18 +133,19 @@ echo ""
 # Resolve env vars and optional *_FILE secret mounts
 info "Loading configuration from environment and *_FILE secrets..."
 file_env "LOG_LEVEL" "INFO"
-file_env "LITELLM_LOG" "WARNING"
+file_env "LOG_LLM" "WARNING"
+
 file_env "LLM_PROVIDER" "openai"
 file_env "LLM_MODEL" ""
 file_env "LLM_API_KEY" ""
 file_env "LLM_API_BASE" ""
 APP_LOG_LEVEL="$(normalize_log_level "${LOG_LEVEL}" "INFO" "LOG_LEVEL")"
-LITELLM_LOG_LEVEL="$(normalize_log_level "${LITELLM_LOG}" "WARNING" "LITELLM_LOG")"
+LLM_LOG_LEVEL="$(normalize_log_level "${LOG_LLM}" "WARNING" "LOG_LLM")"
 export LOG_LEVEL="${APP_LOG_LEVEL}"
-export LITELLM_LOG="${LITELLM_LOG_LEVEL}"
+export LOG_LLM="${LLM_LOG_LEVEL}"
 UVICORN_LOG_LEVEL="$(echo "${APP_LOG_LEVEL}" | tr '[:upper:]' '[:lower:]')"
 info "Application log level: ${BOLD}${LOG_LEVEL}${NC}"
-info "LiteLLM log level:     ${BOLD}${LITELLM_LOG}${NC}"
+info "LiteLLM log level:     ${BOLD}${LOG_LLM}${NC}"
 status "Configuration loaded"
 
 # Check and create data directory
