@@ -161,7 +161,7 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({ data, onChange }) =>
             <div className="space-y-8">
               {data.map((item) => (
                 <DraggableListItem key={item.id} id={item.id}>
-                  <div key={item.id} className="p-6 border border-black bg-gray-50 relative group">
+                  <div className="p-6 border border-black bg-gray-50 relative group">
                     <Button
                       variant="ghost"
                       size="icon"
