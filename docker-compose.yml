@@ -1,6 +1,7 @@
 services:
   resume-matcher:
     image: ghcr.io/srbhr/resume-matcher
+    build: .
     container_name: resume-matcher
     ports:
       - "${PORT:-3000}:3000"
