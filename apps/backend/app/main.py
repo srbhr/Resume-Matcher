@@ -22,9 +22,9 @@ from app.routers import config_router, enrichment_router, health_router, jobs_ro
 
 
 def _configure_application_logging() -> None:
-    """Set process-wide log level from configuration."""
+    """Set application log level from configuration."""
     numeric_level = getattr(logging, settings.log_level, logging.INFO)
-    logging.getLogger().setLevel(numeric_level)
+    logging.getLogger("app").setLevel(numeric_level)
 
 
 _configure_application_logging()
