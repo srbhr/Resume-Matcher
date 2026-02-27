@@ -136,9 +136,20 @@ file_env "LOG_LEVEL" "INFO"
 file_env "LOG_LLM" "WARNING"
 
 file_env "LLM_PROVIDER" "openai"
-file_env "LLM_MODEL" ""
-file_env "LLM_API_KEY" ""
-file_env "LLM_API_BASE" ""
+
+# Only resolve optional LLM_* vars if they (or their *_FILE variants) are provided,
+# so we don't override backend defaults with empty strings.
+if [ -n "${LLM_MODEL:-}" ] || [ -n "${LLM_MODEL_FILE:-}" ]; then
+    file_env "LLM_MODEL"
+fi
+
+if [ -n "${LLM_API_KEY:-}" ] || [ -n "${LLM_API_KEY_FILE:-}" ]; then
+    file_env "LLM_API_KEY"
+fi
+
+if [ -n "${LLM_API_BASE:-}" ] || [ -n "${LLM_API_BASE_FILE:-}" ]; then
+    file_env "LLM_API_BASE"
+fi
 APP_LOG_LEVEL="$(normalize_log_level "${LOG_LEVEL}" "INFO" "LOG_LEVEL")"
 LLM_LOG_LEVEL="$(normalize_log_level "${LOG_LLM}" "WARNING" "LOG_LLM")"
 export LOG_LEVEL="${APP_LOG_LEVEL}"
