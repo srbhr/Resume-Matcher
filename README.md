@@ -233,7 +233,7 @@ Prefer pinning a version in production, for example `ghcr.io/srbhr/resume-matche
 Endpoints:
 
 - App: <http://localhost:3000>
-- API: <http://localhost:3000/api/v1>
+- API health check: <http://localhost:3000/api/v1/health>
 - API docs: <http://localhost:3000/docs>
 
 > **Using Ollama with Docker?** Use `http://host.docker.internal:11434` as the Ollama URL instead of `localhost`.

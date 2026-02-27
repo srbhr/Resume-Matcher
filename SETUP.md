@@ -340,7 +340,7 @@ Once the container is running, open your browser:
 |-----|-------------|
 | **<http://localhost:3000>** | Main application (Dashboard) |
 | **<http://localhost:3000/settings>** | Configure AI provider |
-| **<http://localhost:3000/api/v1>** | Backend API root |
+| **<http://localhost:3000/api/v1/health>** | Backend API health check |
 | **<http://localhost:3000/docs>** | Interactive API documentation |
 | **<http://localhost:3000/api/v1/health>** | Backend health check |
 
