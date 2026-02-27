@@ -45,7 +45,7 @@ export async function apiFetch(endpoint: string, options?: RequestInit): Promise
   if (isAbsoluteUrl) {
     url = endpoint;
   } else if (isApiPath) {
-    url = normalizedEndpoint;
+    url = resolveRuntimeApiBase(normalizedEndpoint);
   }
 
   return fetch(url, options);
