@@ -120,7 +120,7 @@ VOLUME ["/app/backend/data"]
 WORKDIR /app
 
 # Health check on internal backend port only (independent of host port mapping).
-HEALTHCHECK --interval=10s --timeout=10s --start-period=10s --retries=10 \
+HEALTHCHECK --interval=10s --timeout=10s --start-period=30s --retries=5 \
     CMD curl -f http://127.0.0.1:8000/api/v1/health || exit 1
 
 # Start the application
