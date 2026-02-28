@@ -12,6 +12,9 @@ permissions:
   contents: read
   packages: write
 
+env:
+  HAS_DOCKERHUB: ${{ secrets.DOCKERHUB_USERNAME }}
+
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -33,7 +36,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Login to Docker Hub
-        if: ${{ secrets.DOCKERHUB_USERNAME != '' }}
+        if: ${{ env.HAS_DOCKERHUB != '' }}
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
@@ -45,7 +48,7 @@ jobs:
         with:
           images: |
             ghcr.io/srbhr/resume-matcher
-            ${{ secrets.DOCKERHUB_USERNAME != '' && 'srbhr/resume-matcher' || '' }}
+            ${{ env.HAS_DOCKERHUB != '' && 'srbhr/resume-matcher' || '' }}
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
             type=semver,pattern={{version}},value=${{ github.ref_name }},enable=${{ startsWith(github.ref, 'refs/tags/v') }}
