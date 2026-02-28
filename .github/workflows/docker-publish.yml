@@ -12,12 +12,11 @@ permissions:
   contents: read
   packages: write
 
-env:
-  HAS_DOCKERHUB: ${{ secrets.DOCKERHUB_USERNAME }}
-
 jobs:
   publish:
     runs-on: ubuntu-latest
+    env:
+      HAS_DOCKERHUB: ${{ secrets.DOCKERHUB_USERNAME }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
