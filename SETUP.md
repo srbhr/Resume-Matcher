@@ -302,17 +302,28 @@ Then configure Ollama as your provider in the Settings UI.
 
 ### Using Docker Secrets
 
-The container supports `*_FILE` from 
-[docker secrets](https://docs.docker.com/compose/how-tos/use-secrets/#use-secrets). 
-For sensitive values like API keys, you can mount a secret file and point to it:
+The container supports `*_FILE` from
+[docker secrets](https://docs.docker.com/compose/how-tos/use-secrets/#use-secrets).
+For sensitive values, you can mount a secret file and point to it:
 
 ```bash
 LLM_API_KEY_FILE=/run/secrets/llm_api_key docker compose up -d
 ```
 
+Supported `*_FILE` variables:
+
+| Variable | `*_FILE` variant |
+|----------|-----------------|
+| `LOG_LEVEL` | `LOG_LEVEL_FILE` |
+| `LOG_LLM` | `LOG_LLM_FILE` |
+| `LLM_PROVIDER` | `LLM_PROVIDER_FILE` |
+| `LLM_MODEL` | `LLM_MODEL_FILE` |
+| `LLM_API_KEY` | `LLM_API_KEY_FILE` |
+| `LLM_API_BASE` | `LLM_API_BASE_FILE` |
+
 Rules:
 
-- Use either `LLM_API_KEY` or `LLM_API_KEY_FILE`, not both.
+- Use either the variable or its `*_FILE` variant, not both.
 - If both are set, the container exits with an explicit error.
 
 ### Logging Level Configuration
@@ -322,6 +333,11 @@ You can tune logs globally and for LiteLLM separately:
 ```bash
 LOG_LEVEL=INFO LOG_LLM=DEBUG docker compose up -d
 ```
+
+> **Note:** LiteLLM also reads the `LITELLM_LOG` environment variable internally
+> to control handler-level filtering. `LOG_LLM` sets the *logger* level. Both must
+> allow a message for it to appear. If you set `LITELLM_LOG` from LiteLLM docs,
+> make sure `LOG_LLM` is set to an equal or lower level.
 
 ### Important Notes
 
