@@ -93,7 +93,7 @@ normalize_log_level() {
     local name="${3}"
 
     case "$value" in
-        ERROR|WARNING|INFO|DEBUG)
+        CRITICAL|ERROR|WARNING|INFO|DEBUG)
             echo "$value"
             ;;
         *)
@@ -214,4 +214,4 @@ if [ ! -f "server.js" ]; then
     exit 1
 fi
 
-node server.js "$@"
+exec node server.js "$@"
