@@ -290,6 +290,8 @@ PORT=4000 docker compose up -d
 | `LLM_API_KEY` | — | API key (recommended: configure via Settings UI) |
 | `LLM_API_BASE` | — | Custom API endpoint (for Ollama or proxies) |
 
+> **Note:** Changes to `LOG_LEVEL` and `LOG_LLM` require a container restart to take effect.
+
 ### Using Ollama with Docker
 
 To use Ollama running on your host machine:
@@ -333,6 +335,10 @@ You can tune logs globally and for LiteLLM separately:
 ```bash
 LOG_LEVEL=INFO LOG_LLM=DEBUG docker compose up -d
 ```
+
+> **Security warning:** `LOG_LLM=DEBUG` causes LiteLLM to log API keys in
+> plaintext. Do not use `DEBUG` level in production or shared environments.
+> The default `WARNING` is safe.
 
 > **Note:** LiteLLM also reads the `LITELLM_LOG` environment variable internally
 > to control handler-level filtering. `LOG_LLM` sets the *logger* level. Both must

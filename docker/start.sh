@@ -157,6 +157,9 @@ export LOG_LLM="${LLM_LOG_LEVEL}"
 UVICORN_LOG_LEVEL="$(echo "${APP_LOG_LEVEL}" | tr '[:upper:]' '[:lower:]')"
 info "Application log level: ${BOLD}${LOG_LEVEL}${NC}"
 info "LiteLLM log level:     ${BOLD}${LOG_LLM}${NC}"
+if [ "${LOG_LLM}" = "DEBUG" ]; then
+    warn "LOG_LLM=DEBUG may log API keys in plaintext. Do not use in production."
+fi
 status "Configuration loaded"
 
 # Check and create data directory
