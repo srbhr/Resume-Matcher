@@ -8,6 +8,8 @@ const nextConfig: NextConfig = {
     turbopackUseSystemTlsCerts: true,
   },
   async rewrites() {
+    // Note: Next.js serves filesystem routes (app/api/) before rewrites.
+    // Do not create app/api/ routes or they will shadow the backend proxy.
     return [
       {
         source: '/api/:path*',
