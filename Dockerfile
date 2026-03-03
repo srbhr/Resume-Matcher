@@ -113,6 +113,9 @@ RUN python -m playwright install chromium
 # Configurable ports (override at build time with --build-arg)
 ARG FRONTEND_PORT=3000
 ARG BACKEND_PORT=8000
+# Persist as ENV so HEALTHCHECK resolves the port at runtime
+ENV FRONTEND_PORT=${FRONTEND_PORT} \
+    BACKEND_PORT=${BACKEND_PORT}
 
 # Expose the public port (backend remains internal)
 EXPOSE ${FRONTEND_PORT}
