@@ -1112,19 +1112,19 @@ async def delete_resume(resume_id: str) -> dict:
 
 @router.post("/{resume_id}/retry-processing", response_model=ResumeUploadResponse)
 async def retry_processing(resume_id: str) -> ResumeUploadResponse:
-    """Retry AI processing for a failed resume.
+    """Retry AI processing for a failed or stuck resume.
 
     Re-runs parse_resume_to_json() on the stored markdown content.
-    Only works for resumes with processing_status == "failed".
+    Works for resumes with processing_status == "failed" or "processing".
     """
     resume = db.get_resume(resume_id)
     if not resume:
         raise HTTPException(status_code=404, detail="Resume not found")
 
-    if resume.get("processing_status") != "failed":
+    if resume.get("processing_status") not in ("failed", "processing"):
         raise HTTPException(
             status_code=400,
-            detail="Only resumes with 'failed' processing status can be retried.",
+            detail="Only resumes with 'failed' or 'processing' status can be retried.",
         )
 
     markdown_content = resume.get("content", "")

@@ -390,7 +390,7 @@ export default function DashboardPage() {
                   <span className="font-mono font-bold text-lg">M</span>
                 </div>
                 <div className="flex gap-1">
-                  {processingStatus === 'failed' && (
+                  {(processingStatus === 'failed' || processingStatus === 'processing') && (
                     <>
                       <Button
                         variant="ghost"
@@ -422,7 +422,7 @@ export default function DashboardPage() {
                   {getStatusDisplay().icon}
                   {t('dashboard.statusLine', { status: getStatusDisplay().text })}
                 </div>
-                {processingStatus === 'failed' && (
+                {(processingStatus === 'failed' || processingStatus === 'processing') && (
                   <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                     <Button
                       variant="outline"

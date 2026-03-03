@@ -112,9 +112,9 @@ class Database:
             current_master = self.get_master_resume()
             is_master = current_master is None
 
-            # Recovery behavior: if the current master is stuck in failed parsing
-            # state, promote the next upload to become the new master resume.
-            if current_master and current_master.get("processing_status") == "failed":
+            # Recovery behavior: if the current master is stuck in failed or
+            # processing state, promote the next upload to become the new master.
+            if current_master and current_master.get("processing_status") in ("failed", "processing"):
                 Resume = Query()
                 self.resumes.update(
                     {"is_master": False},
