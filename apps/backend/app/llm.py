@@ -10,6 +10,18 @@ from pydantic import BaseModel
 
 from app.config import settings
 
+LITELLM_LOGGER_NAMES = ("LiteLLM", "LiteLLM Router", "LiteLLM Proxy")
+
+
+def _configure_litellm_logging() -> None:
+    """Align LiteLLM logger levels with application settings."""
+    numeric_level = getattr(logging, settings.log_llm, logging.WARNING)
+    for logger_name in LITELLM_LOGGER_NAMES:
+        logging.getLogger(logger_name).setLevel(numeric_level)
+
+
+_configure_litellm_logging()
+
 # LLM timeout configuration (seconds) - base values
 LLM_TIMEOUT_HEALTH_CHECK = 30
 LLM_TIMEOUT_COMPLETION = 120

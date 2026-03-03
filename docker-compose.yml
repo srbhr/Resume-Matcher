@@ -1,45 +1,39 @@
 services:
   resume-matcher:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      # Build args for customizing the frontend API URL at build time
-      # IMPORTANT: NEXT_PUBLIC_API_URL is baked into the JS bundle during build.
-      # If you change BACKEND_PORT, you must rebuild with matching NEXT_PUBLIC_API_URL:
-      #   BACKEND_PORT=9000 docker-compose build --build-arg NEXT_PUBLIC_API_URL=http://localhost:9000
-      args:
-        - NEXT_PUBLIC_API_URL=http://localhost:${BACKEND_PORT:-8000}
-    image: resume-matcher
+    image: ghcr.io/srbhr/resume-matcher
+    build: .
     container_name: resume-matcher
-    # Port mapping: HOST_PORT:CONTAINER_PORT
-    # Customize host ports via environment variables (container ports are fixed)
     ports:
-      - "${FRONTEND_PORT:-3000}:3000"   # Frontend (Next.js)
-      - "${BACKEND_PORT:-8000}:8000"    # Backend API (FastAPI)
+      - "${PORT:-3000}:3000"
     volumes:
       - resume-data:/app/backend/data
+    #secrets:
+    #  - llm_api_key
     environment:
-      - NODE_ENV=production
-      # Pass port configuration to container for internal use
-      - FRONTEND_PORT=${FRONTEND_PORT:-3000}
-      - BACKEND_PORT=${BACKEND_PORT:-8000}
+      # domain in reverse proxy
+      - FRONTEND_BASE_URL=${FRONTEND_BASE_URL:-http://localhost:3000}
+      # Logging configuration: DEBUG, INFO, WARNING, ERROR
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      #- LOG_LEVEL_FILE=${LOG_LEVEL_FILE:-}
+      # Debug level for LiteLLM: DEBUG, INFO, WARNING, ERROR
+      - LOG_LLM=${LOG_LLM:-WARNING}
+      #- LOG_LLM_FILE=${LOG_LLM_FILE:-}
       # LLM Configuration - configure via Settings UI or set env vars for explicit overrides
       # Supported providers: openai, anthropic, openrouter, gemini, deepseek, ollama
       # Defaults are defined in apps/backend/app/config.py
       - LLM_PROVIDER=${LLM_PROVIDER:-openai}
       - LLM_MODEL=${LLM_MODEL:-}
+      # Optional Docker Secret file path (same behavior as Postgres-style *_FILE)
+      #- LLM_API_KEY_FILE=${LLM_API_KEY_FILE:-/run/secrets/llm_api_key}
       - LLM_API_KEY=${LLM_API_KEY:-}
       # For Ollama running on host machine, use host.docker.internal:
       # - LLM_API_BASE=http://host.docker.internal:11434
       - LLM_API_BASE=${LLM_API_BASE:-}
     restart: unless-stopped
-    healthcheck:
-      # Health check uses internal container port (always 8000)
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
+
+#secrets:
+#  llm_api_key:
+#    file: ./secrets/llm_api_key
 
 volumes:
   resume-data:

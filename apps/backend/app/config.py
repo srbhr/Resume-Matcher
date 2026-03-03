@@ -10,6 +10,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Path to config file for API key persistence
 CONFIG_FILE_PATH = Path(__file__).parent.parent / "data" / "config.json"
+ALLOWED_LOG_LEVELS = ("CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG")
 
 
 def load_config_file() -> dict[str, Any]:
@@ -126,6 +127,7 @@ class Settings(BaseSettings):
     llm_model: str = "gpt-5-nano-2025-08-07"
     llm_api_key: str = ""
     llm_api_base: str | None = None  # For Ollama or custom endpoints
+    log_llm: Literal["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"] = "WARNING"
 
     @field_validator("llm_provider", mode="before")
     @classmethod
@@ -135,10 +137,29 @@ class Settings(BaseSettings):
             return "openai"
         return v
 
+    @field_validator("log_llm", mode="before")
+    @classmethod
+    def normalize_log_llm_level(cls, v: Any) -> str:
+        """Normalize LiteLLM log level from environment values."""
+        value = "WARNING" if not v else str(v).strip().upper()
+        if value not in ALLOWED_LOG_LEVELS:
+            raise ValueError(f"Invalid LOG_LLM: {value}. Allowed: {ALLOWED_LOG_LEVELS}")
+        return value
+
     # Server Configuration
     host: str = "0.0.0.0"
     port: int = 8000
+    log_level: Literal["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"] = "INFO"
     frontend_base_url: str = "http://localhost:3000"
+
+    @field_validator("log_level", mode="before")
+    @classmethod
+    def normalize_log_level(cls, v: Any) -> str:
+        """Normalize application log level from environment values."""
+        value = "INFO" if not v else str(v).strip().upper()
+        if value not in ALLOWED_LOG_LEVELS:
+            raise ValueError(f"Invalid LOG_LEVEL: {value}. Allowed: {ALLOWED_LOG_LEVELS}")
+        return value
 
     # CORS Configuration
     cors_origins: list[str] = [

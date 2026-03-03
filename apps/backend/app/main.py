@@ -21,6 +21,15 @@ from app.pdf import close_pdf_renderer, init_pdf_renderer
 from app.routers import config_router, enrichment_router, health_router, jobs_router, resumes_router
 
 
+def _configure_application_logging() -> None:
+    """Set application log level from configuration."""
+    numeric_level = getattr(logging, settings.log_level, logging.INFO)
+    logging.getLogger("app").setLevel(numeric_level)
+
+
+_configure_application_logging()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan manager."""

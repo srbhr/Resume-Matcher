@@ -68,10 +68,11 @@ We are grateful to our sponsors who help keep this project going. If you find Re
 
 | Sponsor | Description |
 |---------|-------------|
-| [APIDECK](https://apideck.com?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) | One API to connect your app to 200+ SaaS platforms (accounting, HRIS, CRM, file storage). Build integrations once, not 50 times. 🌐 [apideck.com](https://apideck.com?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) |
+| [Apideck](https://apideck.com?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) | One API to connect your app to 200+ SaaS platforms (accounting, HRIS, CRM, file storage). Build integrations once, not 50 times. 🌐 [apideck.com](https://apideck.com?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) |
 | [Vercel](https://vercel.com?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) | Resume Matcher is a part of Vercel OSS // Summer 2025 Program 🌐 [vercel.com](https://vercel.com?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) |
 | [Cubic.dev](https://cubic.dev?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) | Cubic provides PR reviews for Resume Matcher 🌐 [cubic.dev](https://cubic.dev?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) |
 | [Kilo Code](https://kilo.ai?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) | Kilo Code provides AI code reviews and coding credits to Resume Matcher 🌐 [kilo.ai](https://kilo.ai?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) |
+| [ZanReal](https://zanreal.com/?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) | ZanReal is an AI-driven development company building scalable cloud solutions, from strategy and UX to DevOps, helping teams ship faster and turn ideas into production. 🌐 [zanreal.com](https://zanreal.com/?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) |
 
 <a id="support-the-development-by-donating"></a>
 
@@ -213,13 +214,28 @@ Open **<http://localhost:3000>** and configure your AI provider in Settings.
 
 ### Docker Deployment
 
-```bash
-docker pull srbhr/resume-matcher:latest
+Official Docker images are published for `linux/amd64` and `linux/arm64` on:
 
-docker run srbhr/resume-matcher:latest
+- `ghcr.io/srbhr/resume-matcher`
+- `srbhr/resume-matcher`
+
+Run on a single public port (`3000`) with API available at `/api`:
+
+```bash
+docker run --name resume-matcher \
+  -p 3000:3000 \
+  -v resume-data:/app/backend/data \
+  ghcr.io/srbhr/resume-matcher:latest
 ```
 
-<!-- Note: Docker documentation is pending. For now, use docker-compose.yml as reference -->
+Prefer pinning a version in production, for example `ghcr.io/srbhr/resume-matcher:1.1.0` or
+`ghcr.io/srbhr/resume-matcher:1.1`.
+
+Endpoints:
+
+- App: <http://localhost:3000>
+- API health check: <http://localhost:3000/api/v1/health>
+- API docs: <http://localhost:3000/docs>
 
 > **Using Ollama with Docker?** Use `http://host.docker.internal:11434` as the Ollama URL instead of `localhost`.
 
