@@ -41,3 +41,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Licensed fonts — not committed, copied from NAS before building
+/public/fonts/

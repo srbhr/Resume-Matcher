@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Geist, Space_Grotesk, Caladea } from 'next/font/google';
+import { Geist, Space_Grotesk } from 'next/font/google';
 import './(default)/css/globals.css';
 
 const spaceGrotesk = Space_Grotesk({
@@ -10,16 +10,6 @@ const spaceGrotesk = Space_Grotesk({
 
 const geist = Geist({
   variable: '--font-geist',
-  subsets: ['latin'],
-  display: 'swap',
-});
-
-// Metric-compatible Cambria substitute — used in resume PDFs rendered by
-// Playwright, which runs on Linux containers where Cambria is unavailable.
-const caladea = Caladea({
-  weight: ['400', '700'],
-  style: ['normal', 'italic'],
-  variable: '--font-caladea',
   subsets: ['latin'],
   display: 'swap',
 });
@@ -35,7 +25,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en-US" className="h-full" suppressHydrationWarning>
       <body
-        className={`${geist.variable} ${spaceGrotesk.variable} ${caladea.variable} antialiased bg-background text-ink-soft min-h-full`}
+        className={`${geist.variable} ${spaceGrotesk.variable} antialiased bg-background text-ink-soft min-h-full`}
       >
         {children}
       </body>

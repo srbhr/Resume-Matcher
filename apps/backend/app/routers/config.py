@@ -127,19 +127,38 @@ async def update_llm_config(
     """
     stored = _load_config()
 
+    # When switching providers, preserve the current API key in the per-provider
+    # store so it can be restored if the user switches back.
+    old_provider = stored.get("provider", settings.llm_provider)
+    new_provider = request.provider if request.provider is not None else old_provider
+    switching_provider = new_provider != old_provider
+
+    if switching_provider:
+        # Save old provider's key into api_keys dict before overwriting
+        old_key = stored.get("api_key", "")
+        if old_key:
+            api_keys = stored.setdefault("api_keys", {})
+            api_keys[old_provider] = old_key
+
     # Update only provided fields
     if request.provider is not None:
         stored["provider"] = request.provider
     if request.model is not None:
         stored["model"] = request.model
-    if request.api_key is not None:
-        stored["api_key"] = request.api_key
     if request.api_base is not None:
         stored["api_base"] = request.api_base
     if request.reasoning_effort is not None:
         # Persist empty string on clear so the gpt-5 auto-migration doesn't
         # re-fire on next get_llm_config() call.
         stored["reasoning_effort"] = request.reasoning_effort
+
+    # Handle api_key: when switching providers and no new key is provided
+    # (None or empty string), restore the saved key for the new provider.
+    if switching_provider and not request.api_key:
+        saved_key = stored.get("api_keys", {}).get(new_provider, "")
+        stored["api_key"] = saved_key
+    elif request.api_key is not None:
+        stored["api_key"] = request.api_key
 
     # Build normalized config for response and background health check
     resolved_provider = stored.get("provider", settings.llm_provider)

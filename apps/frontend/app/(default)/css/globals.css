@@ -1,6 +1,37 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
+/* Cambria — served from /fonts/ so Playwright embeds it in PDFs under the real
+   font name rather than a Next.js hashed name that PDF viewers won't recognize. */
+@font-face {
+  font-family: 'Cambria';
+  src: url('/fonts/cambria.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Cambria';
+  src: url('/fonts/cambriab.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Cambria';
+  src: url('/fonts/cambriai.ttf') format('truetype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Cambria';
+  src: url('/fonts/cambriaz.ttf') format('truetype');
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
 @source "../../../{app,components,hooks,lib,messages}/**/*.{js,ts,jsx,tsx,mdx}";
 
 @theme inline {

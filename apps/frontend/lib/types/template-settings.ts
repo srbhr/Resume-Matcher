@@ -174,16 +174,14 @@ export const HEADER_FONT_MAP: Record<HeaderFontFamily, string> = {
   serif: 'ui-serif, Georgia, Cambria, "Times New Roman", Times, serif',
   'sans-serif': 'ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji"',
   mono: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace',
-  // var(--font-caladea) is set by next/font/google on <html>; Caladea is metric-compatible
-  // with Cambria so layout is preserved in containers where Cambria is unavailable.
-  cambria: 'var(--font-caladea), Caladea, Cambria, Georgia, "Times New Roman", serif',
+  cambria: 'Cambria, Georgia, "Times New Roman", serif',
 };
 
 export const BODY_FONT_MAP: Record<BodyFontFamily, string> = {
   serif: 'ui-serif, Georgia, Cambria, "Times New Roman", Times, serif',
   'sans-serif': 'ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji"',
   mono: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace',
-  cambria: 'var(--font-caladea), Caladea, Cambria, Georgia, "Times New Roman", serif',
+  cambria: 'Cambria, Georgia, "Times New Roman", serif',
 };
 
 /**

@@ -43,8 +43,7 @@ ENV PYTHONUNBUFFERED=1 \
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     curl \
-    # Caladea: metric-compatible Cambria substitute for PDF rendering
-    fonts-crosextra-caladea \
+    fontconfig \
     fonts-crosextra-carlito \
     # Playwright dependencies
     libnss3 \
@@ -70,6 +69,10 @@ WORKDIR /app
 
 # Copy Node.js runtime from frontend builder for reproducible runtime behavior.
 COPY --from=frontend-builder /usr/local/bin/node /usr/local/bin/node
+
+# Install Cambria as a system font so Playwright's Chromium uses it for PDF rendering.
+COPY --from=frontend-builder /app/frontend/public/fonts/ /usr/local/share/fonts/cambria/
+RUN fc-cache -f
 
 # ============================================
 # Backend Setup

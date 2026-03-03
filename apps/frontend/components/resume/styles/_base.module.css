@@ -79,6 +79,7 @@
 
 .resume-text {
   font-family: var(--body-font);
+  font-size: var(--body-text-font-size);
 }
 
 .resume-text-sm {
