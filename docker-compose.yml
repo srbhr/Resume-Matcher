@@ -4,12 +4,17 @@ services:
     build: .
     container_name: resume-matcher
     ports:
-      - "${PORT:-3000}:3000"
+      - "${PORT:-3000}:${FRONTEND_PORT:-3000}"
     volumes:
       - resume-data:/app/backend/data
     #secrets:
     #  - llm_api_key
     environment:
+      # Internal container ports (default: 3000 frontend, 8000 backend)
+      # Note: changing BACKEND_PORT requires rebuilding the image with
+      # matching BACKEND_ORIGIN for the Next.js proxy rewrites.
+      - FRONTEND_PORT=${FRONTEND_PORT:-3000}
+      - BACKEND_PORT=${BACKEND_PORT:-8000}
       # domain in reverse proxy
       - FRONTEND_BASE_URL=${FRONTEND_BASE_URL:-http://localhost:3000}
       # Logging configuration: DEBUG, INFO, WARNING, ERROR
