@@ -14,12 +14,15 @@ import re
 from functools import lru_cache
 from typing import Any
 
+from pydantic import ValidationError
+
 from app.llm import complete_json
 from app.prompts.refinement import (
     AI_PHRASE_BLACKLIST,
     AI_PHRASE_REPLACEMENTS,
     KEYWORD_INJECTION_PROMPT,
 )
+from app.schemas import ResumeData
 from app.schemas.refinement import (
     AlignmentReport,
     AlignmentViolation,
@@ -429,7 +432,22 @@ async def inject_keywords(
             )
             return tailored
 
-        return result
+        # Validate through Pydantic model to normalize field types
+        # (e.g. LLM may return description as string instead of list[str])
+        try:
+            validated = ResumeData.model_validate(result)
+            output = validated.model_dump()
+            # Keyword injection only touches content fields. Restore
+            # metadata the LLM is likely to omit from its response.
+            for key in ("customSections", "sectionMeta"):
+                if key in tailored:
+                    output[key] = tailored[key]
+            return output
+        except ValidationError as ve:
+            logger.warning(
+                "Keyword injection returned invalid resume data: %s", ve
+            )
+            return tailored
 
     except Exception as e:
         logger.warning("Keyword injection failed: %s", e)
