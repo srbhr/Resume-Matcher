@@ -128,11 +128,14 @@ async def update_llm_config(
     switching_provider = new_provider != old_provider
 
     if switching_provider:
-        # Save old provider's key into api_keys dict before overwriting
+        # Save old provider's key into api_keys dict before overwriting,
+        # but only if api_keys doesn't already have a newer value for this
+        # provider (which could have been set via /config/api-keys).
         old_key = stored.get("api_key", "")
         if old_key:
             api_keys = stored.setdefault("api_keys", {})
-            api_keys[old_provider] = old_key
+            if not api_keys.get(old_provider):
+                api_keys[old_provider] = old_key
 
     # Update only provided fields
     if request.provider is not None:
