@@ -245,8 +245,10 @@ FRONTEND_PID=$!
 trap cleanup SIGTERM SIGINT SIGQUIT
 status "Frontend is running (PID: $FRONTEND_PID)"
 
-# Wait for either process to exit
+# Wait for either process to exit, but ignore errexit for this wait
+set +e
 wait -n "$BACKEND_PID" "$FRONTEND_PID" 2>/dev/null
 EXIT_CODE=$?
+set -e
 warn "A process exited unexpectedly (exit code: ${EXIT_CODE}), shutting down..."
 cleanup
