@@ -46,8 +46,8 @@ export function sanitizeFilename(
 
   // Remove or replace invalid characters: / \ : * ? " < > |
   sanitized = sanitized
-    .replace(/[/\\:*?"<>|]/g, '-')  // Replace invalid chars with dash
-    .replace(/\s+/g, ' ')            // Normalize whitespace
+    .replace(/[/\\:*?"<>|]/g, '-') // Replace invalid chars with dash
+    .replace(/\s+/g, ' ') // Normalize whitespace
     .trim();
 
   // Truncate to 100 characters using Array.from() to handle multi-byte characters correctly

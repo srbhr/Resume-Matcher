@@ -43,22 +43,22 @@ EOF
 
 # Print status message
 status() {
-    echo -e "${GREEN}[✓]${NC} $1"
+    echo -e "${GREEN}[✓]${NC} $1" >&2
 }
 
 # Print info message
 info() {
-    echo -e "${BLUE}[i]${NC} $1"
+    echo -e "${BLUE}[i]${NC} $1" >&2
 }
 
 # Print warning message
 warn() {
-    echo -e "${YELLOW}[!]${NC} $1"
+    echo -e "${YELLOW}[!]${NC} $1" >&2
 }
 
 # Print error message
 error() {
-    echo -e "${RED}[✗]${NC} $1"
+    echo -e "${RED}[✗]${NC} $1" >&2
 }
 
 # Docker-style secret loader: supports VAR or VAR_FILE
@@ -103,10 +103,22 @@ normalize_log_level() {
     esac
 }
 
+# Exit code to propagate from failed child processes
+EXIT_CODE=0
+
 # Cleanup function for graceful shutdown
 cleanup() {
-    echo ""
+    # Prevent re-entry from signals during cleanup
+    trap '' SIGTERM SIGINT SIGQUIT
+
+    echo "" >&2
     info "Shutting down Resume Matcher..."
+
+    # Kill frontend if running
+    if [ -n "$FRONTEND_PID" ] && kill -0 "$FRONTEND_PID" 2>/dev/null; then
+        kill "$FRONTEND_PID" 2>/dev/null || true
+        wait "$FRONTEND_PID" 2>/dev/null || true
+    fi
 
     # Kill backend if running
     if [ -n "$BACKEND_PID" ] && kill -0 "$BACKEND_PID" 2>/dev/null; then
@@ -115,8 +127,12 @@ cleanup() {
     fi
 
     status "Shutdown complete"
-    exit 0
+    exit "${EXIT_CODE}"
 }
+
+# Initialize PIDs so cleanup doesn't fail on early exit
+BACKEND_PID=""
+FRONTEND_PID=""
 
 # Set up signal handlers
 trap cleanup SIGTERM SIGINT SIGQUIT
@@ -178,8 +194,8 @@ if [ -d "/root/.cache/ms-playwright" ] || [ -d "/home/appuser/.cache/ms-playwrig
     status "Playwright browsers found"
 else
     warn "Installing Playwright Chromium (this may take a moment)..."
-    cd /app/backend && python -m playwright install chromium 2>/dev/null || {
-        warn "Playwright installation had warnings (this is usually OK)"
+    python -m playwright install chromium || {
+        warn "Playwright install failed — PDF export may not work"
     }
     status "Playwright setup complete"
 fi
@@ -188,8 +204,10 @@ fi
 echo ""
 info "Starting backend server on internal port ${BACKEND_PORT}..."
 cd /app/backend
-python -m uvicorn app.main:app --host 0.0.0.0 --port ${BACKEND_PORT} --log-level "${UVICORN_LOG_LEVEL}" &
+trap '' SIGTERM SIGINT SIGQUIT
+python -m uvicorn app.main:app --host 0.0.0.0 --port "${BACKEND_PORT}" --log-level "${UVICORN_LOG_LEVEL}" &
 BACKEND_PID=$!
+trap cleanup SIGTERM SIGINT SIGQUIT
 
 # Wait for backend to be ready
 info "Waiting for backend to be ready..."
@@ -197,6 +215,10 @@ for i in {1..30}; do
     if curl -s "http://127.0.0.1:${BACKEND_PORT}/api/v1/health" > /dev/null 2>&1; then
         status "Backend is ready (PID: $BACKEND_PID)"
         break
+    fi
+    if ! kill -0 "$BACKEND_PID" 2>/dev/null; then
+        error "Backend process (PID: $BACKEND_PID) died during startup"
+        exit 1
     fi
     if [ $i -eq 30 ]; then
         error "Backend failed to start within 30 seconds"
@@ -217,4 +239,16 @@ if [ ! -f "server.js" ]; then
     exit 1
 fi
 
-exec node server.js "$@"
+trap '' SIGTERM SIGINT SIGQUIT
+node server.js "$@" &
+FRONTEND_PID=$!
+trap cleanup SIGTERM SIGINT SIGQUIT
+status "Frontend is running (PID: $FRONTEND_PID)"
+
+# Wait for either process to exit, but ignore errexit for this wait
+set +e
+wait -n "$BACKEND_PID" "$FRONTEND_PID" 2>/dev/null
+EXIT_CODE=$?
+set -e
+warn "A process exited unexpectedly (exit code: ${EXIT_CODE}), shutting down..."
+cleanup
