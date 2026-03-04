@@ -640,6 +640,7 @@
       "apiKeyPlaceholder": "sk-...",
       "apiKeyNotRequiredPlaceholder": "本地模型不需要",
       "leaveBlankToKeepExistingKey": "留空以保留现有密钥",
+      "claudeCodeHint": "Claude Code 订阅用户可以在此使用令牌。运行: claude setup-token",
       "baseUrlLabel": "Base URL（可选）",
       "baseUrlPlaceholder": "例如 https://api.openai.com/v1",
       "baseUrlDescription": "可用于中转站/聚合站等自定义接口地址。不填写则使用提供商默认地址。",

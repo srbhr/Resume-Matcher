@@ -640,6 +640,7 @@
       "apiKeyPlaceholder": "sk-...",
       "apiKeyNotRequiredPlaceholder": "Não necessário para modelos locais",
       "leaveBlankToKeepExistingKey": "DEIXE EM BRANCO PARA MANTER A CHAVE EXISTENTE",
+      "claudeCodeHint": "Assinantes do Claude Code podem usar seu token aqui. Execute: claude setup-token",
       "baseUrlLabel": "URL Base (opcional)",
       "baseUrlPlaceholder": "Ex: https://api.openai.com/v1",
       "baseUrlDescription": "Sobrescreva a URL base da API para usar um proxy/agregador. Deixe em branco para usar o padrão do provedor.",

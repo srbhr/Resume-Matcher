@@ -786,6 +786,11 @@ export default function SettingsPage() {
                     {t('settings.llmConfiguration.leaveBlankToKeepExistingKey')}
                   </p>
                 )}
+                {provider === 'anthropic' && (
+                  <p className="text-xs text-gray-500">
+                    {t('settings.llmConfiguration.claudeCodeHint')}
+                  </p>
+                )}
               </div>
 
               {/* API Base URL (optional, for proxies/aggregators/custom endpoints) */}

@@ -640,6 +640,7 @@
       "apiKeyPlaceholder": "sk-...",
       "apiKeyNotRequiredPlaceholder": "ローカルモデルでは不要",
       "leaveBlankToKeepExistingKey": "空欄のままにすると既存キーを保持します",
+      "claudeCodeHint": "Claude Codeサブスクライバーはここでトークンを使用できます。実行: claude setup-token",
       "baseUrlLabel": "ベースURL（任意）",
       "baseUrlPlaceholder": "例: https://api.openai.com/v1",
       "baseUrlDescription": "プロキシ/アグリゲーター等のエンドポイントを使う場合に Base URL を上書きできます。空欄の場合は既定値を使用します。",
