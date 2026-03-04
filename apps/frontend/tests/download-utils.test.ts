@@ -205,11 +205,7 @@ describe('sanitizeFilename', () => {
     });
 
     it('should handle UUID-like fallback ID', () => {
-      const result = sanitizeFilename(
-        null,
-        'ec3aa096-0cba-498e-998b-bc867e35eff6',
-        'resume'
-      );
+      const result = sanitizeFilename(null, 'ec3aa096-0cba-498e-998b-bc867e35eff6', 'resume');
       expect(result).toBe('resume_ec3aa096-0cba-498e-998b-bc867e35eff6.pdf');
     });
 
