@@ -5,6 +5,7 @@ import logging
 import re
 from typing import Any
 
+import httpx
 import litellm
 from pydantic import BaseModel
 
@@ -239,6 +240,83 @@ def _load_stored_config() -> dict:
     return {}
 
 
+def _is_oauth_token(api_key: str) -> bool:
+    """Check if the API key is a Claude Code OAuth bearer token."""
+    return bool(api_key and api_key.startswith("sk-ant-oat01-"))
+
+
+async def _anthropic_oauth_completion(
+    messages: list[dict[str, str]],
+    model: str,
+    api_key: str,
+    max_tokens: int = 4096,
+    temperature: float | None = None,
+    timeout: int = 120,
+) -> dict[str, Any]:
+    """Make a direct Anthropic API call using OAuth bearer token.
+
+    LiteLLM doesn't support OAuth tokens — it sends them as x-api-key
+    instead of Authorization: Bearer. This bypasses litellm for
+    Claude Code setup tokens (sk-ant-oat01-*).
+    """
+    # Strip provider prefix from model name
+    model_name = model
+    if model_name.startswith("anthropic/"):
+        model_name = model_name[len("anthropic/"):]
+
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "anthropic-version": "2023-06-01",
+        "anthropic-beta": "oauth-2025-04-20",
+        "content-type": "application/json",
+    }
+
+    # Convert OpenAI-style messages to Anthropic format
+    system_content = None
+    api_messages: list[dict[str, str]] = []
+    for msg in messages:
+        if msg["role"] == "system":
+            system_content = msg["content"]
+        else:
+            api_messages.append({"role": msg["role"], "content": msg["content"]})
+
+    body: dict[str, Any] = {
+        "model": model_name,
+        "max_tokens": max_tokens,
+        "messages": api_messages,
+    }
+
+    if system_content:
+        body["system"] = system_content
+
+    if temperature is not None:
+        body["temperature"] = temperature
+
+    async with httpx.AsyncClient(timeout=timeout) as client:
+        resp = await client.post(
+            "https://api.anthropic.com/v1/messages",
+            headers=headers,
+            json=body,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+
+    # Extract text from Anthropic response: {"content": [{"type": "text", "text": "..."}]}
+    content_blocks = data.get("content", [])
+    text_parts = [
+        block.get("text", "")
+        for block in content_blocks
+        if block.get("type") == "text"
+    ]
+    text = "\n".join(text_parts)
+
+    return {
+        "text": text,
+        "model": data.get("model"),
+        "usage": data.get("usage"),
+    }
+
+
 def get_llm_config() -> LLMConfig:
     """Get current LLM configuration.
 
@@ -338,22 +416,37 @@ async def check_llm_health(
     prompt = test_prompt or "Hi"
 
     try:
-        # Make a minimal test call with timeout
-        # Pass API key directly to avoid race conditions with global os.environ
-        kwargs: dict[str, Any] = {
-            "model": model_name,
-            "messages": [{"role": "user", "content": prompt}],
-            "max_tokens": 16,
-            "api_key": config.api_key,
-            "api_base": _normalize_api_base(config.provider, config.api_base),
-            "timeout": LLM_TIMEOUT_HEALTH_CHECK,
-        }
-        reasoning_effort = _get_reasoning_effort(config.provider, model_name)
-        if reasoning_effort:
-            kwargs["reasoning_effort"] = reasoning_effort
+        messages = [{"role": "user", "content": prompt}]
 
-        response = await litellm.acompletion(**kwargs)
-        content = _extract_choice_text(response.choices[0])
+        # OAuth bearer token path — bypass litellm
+        if _is_oauth_token(config.api_key):
+            oauth_resp = await _anthropic_oauth_completion(
+                messages=messages,
+                model=model_name,
+                api_key=config.api_key,
+                max_tokens=16,
+                timeout=LLM_TIMEOUT_HEALTH_CHECK,
+            )
+            content = oauth_resp.get("text")
+            response_model = oauth_resp.get("model")
+        else:
+            # Standard litellm path
+            kwargs: dict[str, Any] = {
+                "model": model_name,
+                "messages": messages,
+                "max_tokens": 16,
+                "api_key": config.api_key,
+                "api_base": _normalize_api_base(config.provider, config.api_base),
+                "timeout": LLM_TIMEOUT_HEALTH_CHECK,
+            }
+            reasoning_effort = _get_reasoning_effort(config.provider, model_name)
+            if reasoning_effort:
+                kwargs["reasoning_effort"] = reasoning_effort
+
+            response = await litellm.acompletion(**kwargs)
+            content = _extract_choice_text(response.choices[0])
+            response_model = response.model if response else None
+
         if not content:
             # LLM-003: Empty response should mark health check as unhealthy
             logging.warning(
@@ -364,7 +457,7 @@ async def check_llm_health(
                 "healthy": False,  # Fixed: empty content means unhealthy
                 "provider": config.provider,
                 "model": config.model,
-                "response_model": response.model if response else None,
+                "response_model": response_model,
                 "error_code": "empty_content",  # Changed from warning_code
                 "message": "LLM returned empty response",
             }
@@ -377,7 +470,7 @@ async def check_llm_health(
             "healthy": True,
             "provider": config.provider,
             "model": config.model,
-            "response_model": response.model if response else None,
+            "response_model": response_model,
         }
         if include_details:
             result["test_prompt"] = _to_code_block(prompt)
@@ -431,24 +524,37 @@ async def complete(
     messages.append({"role": "user", "content": prompt})
 
     try:
-        # Pass API key directly to avoid race conditions with global os.environ
-        kwargs: dict[str, Any] = {
-            "model": model_name,
-            "messages": messages,
-            "max_tokens": max_tokens,
-            "api_key": config.api_key,
-            "api_base": _normalize_api_base(config.provider, config.api_base),
-            "timeout": LLM_TIMEOUT_COMPLETION,
-        }
-        if _supports_temperature(config.provider, model_name):
-            kwargs["temperature"] = temperature
-        reasoning_effort = _get_reasoning_effort(config.provider, model_name)
-        if reasoning_effort:
-            kwargs["reasoning_effort"] = reasoning_effort
+        # OAuth bearer token path — bypass litellm
+        if _is_oauth_token(config.api_key):
+            temp = temperature if _supports_temperature(config.provider, model_name) else None
+            oauth_resp = await _anthropic_oauth_completion(
+                messages=messages,
+                model=model_name,
+                api_key=config.api_key,
+                max_tokens=max_tokens,
+                temperature=temp,
+                timeout=LLM_TIMEOUT_COMPLETION,
+            )
+            content = oauth_resp.get("text")
+        else:
+            # Standard litellm path
+            kwargs: dict[str, Any] = {
+                "model": model_name,
+                "messages": messages,
+                "max_tokens": max_tokens,
+                "api_key": config.api_key,
+                "api_base": _normalize_api_base(config.provider, config.api_base),
+                "timeout": LLM_TIMEOUT_COMPLETION,
+            }
+            if _supports_temperature(config.provider, model_name):
+                kwargs["temperature"] = temperature
+            reasoning_effort = _get_reasoning_effort(config.provider, model_name)
+            if reasoning_effort:
+                kwargs["reasoning_effort"] = reasoning_effort
 
-        response = await litellm.acompletion(**kwargs)
+            response = await litellm.acompletion(**kwargs)
+            content = _extract_choice_text(response.choices[0])
 
-        content = _extract_choice_text(response.choices[0])
         if not content:
             raise ValueError("Empty response from LLM")
         return content
@@ -653,29 +759,46 @@ async def complete_json(
     last_error = None
     for attempt in range(retries + 1):
         try:
-            # Build request kwargs
-            # Pass API key directly to avoid race conditions with global os.environ
-            kwargs: dict[str, Any] = {
-                "model": model_name,
-                "messages": messages,
-                "max_tokens": max_tokens,
-                "api_key": config.api_key,
-                "api_base": _normalize_api_base(config.provider, config.api_base),
-                "timeout": _calculate_timeout("json", max_tokens, config.provider),
-            }
-            if _supports_temperature(config.provider, model_name):
-                # LLM-002: Increase temperature on retry for variation
-                kwargs["temperature"] = _get_retry_temperature(attempt)
-            reasoning_effort = _get_reasoning_effort(config.provider, model_name)
-            if reasoning_effort:
-                kwargs["reasoning_effort"] = reasoning_effort
+            timeout = _calculate_timeout("json", max_tokens, config.provider)
+            temp = (
+                _get_retry_temperature(attempt)
+                if _supports_temperature(config.provider, model_name)
+                else None
+            )
 
-            # Add JSON mode if supported
-            if use_json_mode:
-                kwargs["response_format"] = {"type": "json_object"}
+            # OAuth bearer token path — bypass litellm
+            if _is_oauth_token(config.api_key):
+                oauth_resp = await _anthropic_oauth_completion(
+                    messages=messages,
+                    model=model_name,
+                    api_key=config.api_key,
+                    max_tokens=max_tokens,
+                    temperature=temp,
+                    timeout=timeout,
+                )
+                content = oauth_resp.get("text")
+            else:
+                # Standard litellm path
+                kwargs: dict[str, Any] = {
+                    "model": model_name,
+                    "messages": messages,
+                    "max_tokens": max_tokens,
+                    "api_key": config.api_key,
+                    "api_base": _normalize_api_base(config.provider, config.api_base),
+                    "timeout": timeout,
+                }
+                if temp is not None:
+                    kwargs["temperature"] = temp
+                reasoning_effort = _get_reasoning_effort(config.provider, model_name)
+                if reasoning_effort:
+                    kwargs["reasoning_effort"] = reasoning_effort
 
-            response = await litellm.acompletion(**kwargs)
-            content = _extract_choice_text(response.choices[0])
+                # Add JSON mode if supported
+                if use_json_mode:
+                    kwargs["response_format"] = {"type": "json_object"}
+
+                response = await litellm.acompletion(**kwargs)
+                content = _extract_choice_text(response.choices[0])
 
             if not content:
                 raise ValueError("Empty response from LLM")
