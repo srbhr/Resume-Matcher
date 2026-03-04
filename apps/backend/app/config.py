@@ -167,6 +167,15 @@ class Settings(BaseSettings):
         "http://127.0.0.1:3000",
     ]
 
+    @property
+    def effective_cors_origins(self) -> list[str]:
+        """CORS origins including frontend_base_url for production deployments."""
+        origins = list(self.cors_origins)
+        url = self.frontend_base_url.strip().rstrip("/")
+        if url and url not in origins:
+            origins.append(url)
+        return origins
+
     # Paths
     data_dir: Path = Path(__file__).parent.parent / "data"
 
