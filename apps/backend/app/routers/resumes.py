@@ -15,7 +15,7 @@ from fastapi import APIRouter, File, HTTPException, Query, UploadFile
 from fastapi.responses import Response
 
 from app.database import db
-from app.pdf import render_resume_pdf, PDFRenderError
+from app.pdf import render_resume_pdf, PDFRenderError, add_qr_code_to_pdf
 from app.config import settings
 
 logger = logging.getLogger(__name__)
@@ -1038,6 +1038,10 @@ async def download_resume_pdf(
     showContactIcons: bool = Query(False),
     accentColor: str = Query("blue", pattern="^(blue|green|orange|red)$"),
     lang: str | None = Query(None, pattern="^[a-z]{2}(-[A-Z]{2})?$"),
+    qrCodeUrl: str | None = Query(None),
+    qrCodeSize: int = Query(70, ge=30, le=150),
+    qrCodeX: int = Query(510, ge=0, le=600),
+    qrCodeY: int = Query(765, ge=0, le=900),
 ) -> Response:
     """Generate a PDF for a resume using headless Chromium.
 
@@ -1094,6 +1098,17 @@ async def download_resume_pdf(
     # Render PDF with margins applied to every page
     try:
         pdf_bytes = await render_resume_pdf(url, pageSize, margins=pdf_margins)
+        
+        # Add QR code if requested
+        if qrCodeUrl:
+            pdf_bytes = add_qr_code_to_pdf(
+                pdf_bytes, 
+                qrCodeUrl, 
+                size=qrCodeSize, 
+                x=qrCodeX, 
+                y=qrCodeY,
+                page_size=pageSize
+            )
     except PDFRenderError as e:
         raise HTTPException(status_code=503, detail=str(e))
 

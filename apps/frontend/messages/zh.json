@@ -719,7 +719,17 @@
       "failedToLoad": "加载简历数据失败。",
       "failedToDelete": "删除简历失败，请重试。"
     },
-    "titlePlaceholder": "输入简历标题..."
+    "titlePlaceholder": "输入简历标题...",
+    "qrCode": {
+      "title": "下载简历",
+      "description": "在保存前自定义输出选项。",
+      "includeQr": "在简历中包含个人二维码",
+      "urlLabel": "二维码链接 (URL)",
+      "urlPlaceholder": "https://...",
+      "previewLabel": "位置预览",
+      "add": "下载 PDF",
+      "skip": "取消"
+    }
   },
   "preview": {
     "margins": "页边距",

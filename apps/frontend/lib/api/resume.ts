@@ -218,7 +218,8 @@ export async function updateResume(
 export function getResumePdfUrl(
   resumeId: string,
   settings?: TemplateSettings,
-  locale?: Locale
+  locale?: Locale,
+  qrCodeSettings?: { url: string; size?: number; x?: number; y?: number }
 ): string {
   const normalizedId = normalizeResumeId(resumeId);
   const params = new URLSearchParams();
@@ -248,15 +249,23 @@ export function getResumePdfUrl(
     params.set('lang', locale);
   }
 
+  if (qrCodeSettings) {
+    params.set('qrCodeUrl', qrCodeSettings.url);
+    if (qrCodeSettings.size) params.set('qrCodeSize', String(qrCodeSettings.size));
+    if (qrCodeSettings.x !== undefined) params.set('qrCodeX', String(qrCodeSettings.x));
+    if (qrCodeSettings.y !== undefined) params.set('qrCodeY', String(qrCodeSettings.y));
+  }
+
   return `${API_BASE}/resumes/${encodeURIComponent(normalizedId)}/pdf?${params.toString()}`;
 }
 
 export async function downloadResumePdf(
   resumeId: string,
   settings?: TemplateSettings,
-  locale?: Locale
+  locale?: Locale,
+  qrCodeSettings?: { url: string; size?: number; x?: number; y?: number }
 ): Promise<Blob> {
-  const url = getResumePdfUrl(resumeId, settings, locale);
+  const url = getResumePdfUrl(resumeId, settings, locale, qrCodeSettings);
   const res = await apiFetch(url);
   if (!res.ok) {
     const text = await res.text().catch(() => '');
