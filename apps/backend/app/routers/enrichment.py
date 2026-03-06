@@ -246,12 +246,17 @@ async def generate_enhancements(request: EnhanceRequest) -> EnhancementPreview:
         if not item:
             continue
 
-        # Format answers with their questions for context
+        # Format answers with their questions for context.
+        # In the fast path questions_by_id is empty, so fall back to
+        # question_text carried on the AnswerInput itself.
         answers_text = ""
         for answer in answers:
             matching_q = questions_by_id.get(answer.question_id)
-            if matching_q:
-                answers_text += f"Q: {matching_q.get('question', '')}\n"
+            question = (
+                matching_q.get("question", "") if matching_q else answer.question_text
+            )
+            if question:
+                answers_text += f"Q: {question}\n"
                 answers_text += f"A: {answer.answer}\n\n"
             else:
                 answers_text += f"Additional info: {answer.answer}\n\n"

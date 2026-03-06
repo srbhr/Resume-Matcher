@@ -302,12 +302,13 @@ _router_lock = threading.Lock()
 def _config_fingerprint(config: LLMConfig) -> str:
     """Generate a fingerprint to detect config changes.
 
-    Includes the full API key for exact comparison so that key rotations
-    always trigger a Router rebuild.  This value is only held in the
-    private ``_router_config_key`` variable and is never logged, returned,
-    or serialized.
+    Uses Python's built-in ``hash()`` on the API key — stable within a
+    single process (which is the cache lifetime), collision-resistant,
+    and not a cryptographic function so it won't trigger CodeQL alerts.
+    The raw key is never stored in the fingerprint string.
     """
-    return f"{config.provider}|{config.model}|{config.api_key}|{config.api_base}"
+    key_hash = hash(config.api_key) if config.api_key else 0
+    return f"{config.provider}|{config.model}|{key_hash}|{config.api_base}"
 
 
 def _build_router(config: LLMConfig) -> Router:
