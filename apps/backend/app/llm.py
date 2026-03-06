@@ -208,6 +208,34 @@ def _load_stored_config() -> dict:
     return {}
 
 
+_PROVIDER_KEY_MAP: dict[str, str] = {
+    "openai": "openai",
+    "anthropic": "anthropic",
+    "gemini": "google",
+    "openrouter": "openrouter",
+    "deepseek": "deepseek",
+    "ollama": "ollama",
+}
+
+
+def resolve_api_key(stored: dict, provider: str) -> str:
+    """Resolve the effective API key from stored config.
+
+    Priority: top-level api_key > api_keys[provider] > env/settings default.
+
+    This is the single source of truth for key resolution.  Every code path
+    that needs an API key (runtime, config display, health check, test
+    endpoint) must call this function instead of reading ``stored["api_key"]``
+    directly.
+    """
+    api_key = stored.get("api_key", "")
+    if not api_key:
+        api_keys = stored.get("api_keys", {})
+        config_provider = _PROVIDER_KEY_MAP.get(provider, provider)
+        api_key = api_keys.get(config_provider, settings.llm_api_key)
+    return api_key
+
+
 def get_llm_config() -> LLMConfig:
     """Get current LLM configuration.
 
@@ -215,21 +243,7 @@ def get_llm_config() -> LLMConfig:
     """
     stored = _load_stored_config()
     provider = stored.get("provider", settings.llm_provider)
-
-    # Resolve API key: top-level > provider key map > env/settings default
-    api_key = stored.get("api_key", "")
-    if not api_key:
-        _provider_key_map = {
-            "openai": "openai",
-            "anthropic": "anthropic",
-            "gemini": "google",
-            "openrouter": "openrouter",
-            "deepseek": "deepseek",
-            "ollama": "ollama",
-        }
-        api_keys = stored.get("api_keys", {})
-        config_provider = _provider_key_map.get(provider, provider)
-        api_key = api_keys.get(config_provider, settings.llm_api_key)
+    api_key = resolve_api_key(stored, provider)
 
     return LLMConfig(
         provider=provider,

@@ -7,7 +7,7 @@ from pathlib import Path
 from fastapi import APIRouter, BackgroundTasks, HTTPException
 
 from app.config import settings
-from app.llm import check_llm_health, LLMConfig
+from app.llm import check_llm_health, LLMConfig, resolve_api_key
 from app.schemas import (
     LLMConfigRequest,
     LLMConfigResponse,
@@ -91,10 +91,11 @@ async def get_llm_config_endpoint() -> LLMConfigResponse:
     """Get current LLM configuration (API key masked)."""
     stored = _load_config()
 
+    provider = stored.get("provider", settings.llm_provider)
     return LLMConfigResponse(
-        provider=stored.get("provider", settings.llm_provider),
+        provider=provider,
         model=stored.get("model", settings.llm_model),
-        api_key=_mask_api_key(stored.get("api_key", settings.llm_api_key)),
+        api_key=_mask_api_key(resolve_api_key(stored, provider)),
         api_base=stored.get("api_base", settings.llm_api_base),
     )
 
@@ -125,11 +126,12 @@ async def update_llm_config(
     if request.api_base is not None:
         stored["api_base"] = request.api_base
 
-    # Build normalized config for response
+    # Build normalized config for response and background health check
+    resolved_provider = stored.get("provider", settings.llm_provider)
     test_config = LLMConfig(
-        provider=stored.get("provider", settings.llm_provider),
+        provider=resolved_provider,
         model=stored.get("model", settings.llm_model),
-        api_key=stored.get("api_key", settings.llm_api_key),
+        api_key=resolve_api_key(stored, resolved_provider),
         api_base=stored.get("api_base", settings.llm_api_base),
     )
 
@@ -157,12 +159,13 @@ async def test_llm_connection(request: LLMConfigRequest | None = None) -> dict:
     stored = _load_config()
 
     # Build config: use request values if provided, otherwise fall back to stored/default
+    test_provider = (
+        request.provider
+        if request and request.provider
+        else stored.get("provider", settings.llm_provider)
+    )
     config = LLMConfig(
-        provider=(
-            request.provider
-            if request and request.provider
-            else stored.get("provider", settings.llm_provider)
-        ),
+        provider=test_provider,
         model=(
             request.model
             if request and request.model
@@ -171,7 +174,7 @@ async def test_llm_connection(request: LLMConfigRequest | None = None) -> dict:
         api_key=(
             request.api_key
             if request and request.api_key
-            else stored.get("api_key", settings.llm_api_key)
+            else resolve_api_key(stored, test_provider)
         ),
         api_base=(
             request.api_base
