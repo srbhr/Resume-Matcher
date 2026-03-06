@@ -211,14 +211,30 @@ def _load_stored_config() -> dict:
 def get_llm_config() -> LLMConfig:
     """Get current LLM configuration.
 
-    Priority: config.json file > environment variables/settings
+    Priority for api_key: top-level api_key > api_keys[provider] > env/settings
     """
     stored = _load_stored_config()
+    provider = stored.get("provider", settings.llm_provider)
+
+    # Resolve API key: top-level > provider key map > env/settings default
+    api_key = stored.get("api_key", "")
+    if not api_key:
+        _provider_key_map = {
+            "openai": "openai",
+            "anthropic": "anthropic",
+            "gemini": "google",
+            "openrouter": "openrouter",
+            "deepseek": "deepseek",
+            "ollama": "ollama",
+        }
+        api_keys = stored.get("api_keys", {})
+        config_provider = _provider_key_map.get(provider, provider)
+        api_key = api_keys.get(config_provider, settings.llm_api_key)
 
     return LLMConfig(
-        provider=stored.get("provider", settings.llm_provider),
+        provider=provider,
         model=stored.get("model", settings.llm_model),
-        api_key=stored.get("api_key", settings.llm_api_key),
+        api_key=api_key,
         api_base=stored.get("api_base", settings.llm_api_base),
     )
 
