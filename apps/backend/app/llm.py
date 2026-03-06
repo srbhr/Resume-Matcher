@@ -688,8 +688,19 @@ async def complete_json(
 
             # LLM-001: Check if parsed result appears truncated
             if isinstance(result, dict) and _appears_truncated(result):
+                if attempt < retries:
+                    logging.warning(
+                        "Parsed JSON appears truncated (attempt %d/%d), retrying",
+                        attempt + 1,
+                        retries + 1,
+                    )
+                    messages[-1]["content"] = (
+                        prompt
+                        + "\n\nIMPORTANT: Output the COMPLETE JSON object with ALL sections including personalInfo. Do not truncate."
+                    )
+                    continue
                 logging.warning(
-                    "Parsed JSON appears truncated, but proceeding with result"
+                    "Parsed JSON appears truncated on final attempt, proceeding with result"
                 )
 
             return result
