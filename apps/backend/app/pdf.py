@@ -15,6 +15,11 @@ from playwright.async_api import (
     Playwright,
     async_playwright,
 )
+import qrcode
+from pypdf import PdfReader, PdfWriter
+from io import BytesIO
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import A4, LETTER
 
 
 class PDFRenderError(Exception):
@@ -246,6 +251,69 @@ async def close_pdf_renderer() -> None:
     if _playwright is not None:
         await _playwright.stop()
         _playwright = None
+
+
+def add_qr_code_to_pdf(
+    pdf_bytes: bytes,
+    url: str,
+    size: int = 70,
+    x: int = 510,
+    y: int = 765,
+    page_size: str = "A4",
+) -> bytes:
+    """Add a QR code overlay to the first page of a PDF.
+
+    Args:
+        pdf_bytes: Original PDF content
+        url: URL to encode in QR code
+        size: QR code size in points
+        x: X coordinate (from left)
+        y: Y coordinate (from bottom)
+        page_size: "A4" or "LETTER"
+    """
+    try:
+        # 1. Generate QR code image
+        qr = qrcode.QRCode(version=1, box_size=10, border=1)
+        qr.add_data(url)
+        qr.make(fit=True)
+        img = qr.make_image(fill_color="black", back_color="white")
+        
+        img_buffer = BytesIO()
+        img.save(img_buffer, format="PNG")
+        img_buffer.seek(0)
+        
+        from reportlab.lib.utils import ImageReader
+        img_reader = ImageReader(img_buffer)
+
+        # 2. Create overlay PDF with QR code
+        packet = BytesIO()
+        pagesize = A4 if page_size == "A4" else LETTER
+        can = canvas.Canvas(packet, pagesize=pagesize)
+        can.drawImage(img_reader, x, y, width=size, height=size)
+        can.showPage()
+        can.save()
+        packet.seek(0)
+
+        # 3. Merge overlay with original PDF
+        reader = PdfReader(BytesIO(pdf_bytes))
+        writer = PdfWriter()
+        
+        qr_pdf = PdfReader(packet)
+        qr_page = qr_pdf.pages[0]
+
+        # Overlay QR on first page
+        if len(reader.pages) > 0:
+            page = reader.pages[0]
+            page.merge_page(qr_page)
+            
+        for p in reader.pages:
+            writer.add_page(p)
+
+        output_buffer = BytesIO()
+        writer.write(output_buffer)
+        return output_buffer.getvalue()
+    except Exception as e:
+        raise PDFRenderError(f"Failed to add QR code to PDF: {e}")
 
 
 async def render_resume_pdf(
