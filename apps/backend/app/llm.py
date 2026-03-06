@@ -243,13 +243,21 @@ def get_llm_config() -> LLMConfig:
     """Get current LLM configuration.
 
     Priority: config.json file > environment variables/settings
+    Falls back to per-provider api_keys dict when the top-level key is empty.
     """
     stored = _load_stored_config()
 
+    provider = stored.get("provider", settings.llm_provider)
+    api_key = stored.get("api_key", settings.llm_api_key)
+    if not api_key:
+        per_provider = stored.get("api_keys") or {}
+        if isinstance(per_provider, dict):
+            api_key = per_provider.get(provider, settings.llm_api_key)
+
     return LLMConfig(
-        provider=stored.get("provider", settings.llm_provider),
+        provider=provider,
         model=stored.get("model", settings.llm_model),
-        api_key=stored.get("api_key", settings.llm_api_key),
+        api_key=api_key,
         api_base=stored.get("api_base", settings.llm_api_base),
     )
 
