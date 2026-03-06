@@ -2,10 +2,11 @@
 
 import json
 import logging
-import re
 from typing import Any
 
 import litellm
+from litellm import Router
+from litellm.router import RetryPolicy
 from pydantic import BaseModel
 
 from app.config import settings
@@ -26,38 +27,6 @@ _configure_litellm_logging()
 LLM_TIMEOUT_HEALTH_CHECK = 30
 LLM_TIMEOUT_COMPLETION = 120
 LLM_TIMEOUT_JSON = 180  # JSON completions may take longer
-
-# LLM-004: OpenRouter JSON-capable models (explicit allowlist)
-OPENROUTER_JSON_CAPABLE_MODELS = {
-    # Anthropic models
-    "anthropic/claude-3-opus",
-    "anthropic/claude-3-sonnet",
-    "anthropic/claude-3-haiku",
-    "anthropic/claude-3.5-sonnet",
-    "anthropic/claude-3.5-haiku",
-    "anthropic/claude-haiku-4-5-20251001",
-    "anthropic/claude-sonnet-4-20250514",
-    "anthropic/claude-opus-4-20250514",
-    # OpenAI models
-    "openai/gpt-4-turbo",
-    "openai/gpt-4",
-    "openai/gpt-4o",
-    "openai/gpt-4o-mini",
-    "openai/gpt-3.5-turbo",
-    "openai/gpt-5-nano-2025-08-07",
-    # Google models
-    "google/gemini-pro",
-    "google/gemini-1.5-pro",
-    "google/gemini-1.5-flash",
-    "google/gemini-2.0-flash",
-    "google/gemini-3-flash-preview",
-    # DeepSeek models
-    "deepseek/deepseek-chat",
-    "deepseek/deepseek-reasoner",
-    # Mistral models
-    "mistralai/mistral-large",
-    "mistralai/mistral-medium",
-}
 
 # JSON-010: JSON extraction safety limits
 MAX_JSON_EXTRACTION_RECURSION = 10
@@ -288,6 +257,73 @@ def get_model_name(config: LLMConfig) -> str:
     return f"{prefix}{config.model}" if prefix else config.model
 
 
+# ---------------------------------------------------------------------------
+# Router — centralises transport retries, cooldowns, and error-type policies
+# ---------------------------------------------------------------------------
+
+_router: Router | None = None
+_router_config_key: str = ""
+
+
+def _config_fingerprint(config: LLMConfig) -> str:
+    """Generate a fingerprint to detect config changes."""
+    return f"{config.provider}|{config.model}|{config.api_key}|{config.api_base}"
+
+
+def _build_router(config: LLMConfig) -> Router:
+    """Build a LiteLLM Router with error-type retry policies."""
+    model_name = get_model_name(config)
+
+    litellm_params: dict[str, Any] = {"model": model_name}
+    if config.api_key:
+        litellm_params["api_key"] = config.api_key
+    api_base = _normalize_api_base(config.provider, config.api_base)
+    if api_base:
+        litellm_params["api_base"] = api_base
+
+    return Router(
+        model_list=[
+            {
+                "model_name": "primary",
+                "litellm_params": litellm_params,
+            }
+        ],
+        num_retries=3,
+        retry_policy=RetryPolicy(
+            AuthenticationErrorRetries=0,
+            BadRequestErrorRetries=0,
+            TimeoutErrorRetries=2,
+            RateLimitErrorRetries=3,
+            ContentPolicyViolationErrorRetries=0,
+            InternalServerErrorRetries=2,
+        ),
+        # Cooldowns disabled: with a single deployment and no fallback,
+        # cooldowns would blackout the backend on transient failures.
+        # Re-enable when a fallback deployment is added.
+        disable_cooldowns=True,
+    )
+
+
+def get_router(config: LLMConfig | None = None) -> tuple[Router, LLMConfig]:
+    """Get or rebuild the LiteLLM Router.
+
+    The Router is cached and only rebuilt when the underlying config changes.
+    Returns the Router and the config it was built from.
+    """
+    global _router, _router_config_key
+
+    if config is None:
+        config = get_llm_config()
+
+    key = _config_fingerprint(config)
+    if _router is None or _router_config_key != key:
+        _router = _build_router(config)
+        _router_config_key = key
+        logging.info("LiteLLM Router rebuilt for %s/%s", config.provider, config.model)
+
+    return _router, config
+
+
 def _supports_temperature(provider: str, model: str) -> bool:
     """Return whether passing `temperature` is supported for this model/provider combo.
 
@@ -419,10 +455,11 @@ async def complete(
     max_tokens: int = 4096,
     temperature: float = 0.7,
 ) -> str:
-    """Make a completion request to the LLM."""
-    if config is None:
-        config = get_llm_config()
+    """Make a completion request to the LLM.
 
+    Transport retries (429, 500, timeout) are handled by the Router.
+    """
+    router, config = get_router(config)
     model_name = get_model_name(config)
 
     messages = []
@@ -431,13 +468,10 @@ async def complete(
     messages.append({"role": "user", "content": prompt})
 
     try:
-        # Pass API key directly to avoid race conditions with global os.environ
         kwargs: dict[str, Any] = {
-            "model": model_name,
+            "model": "primary",
             "messages": messages,
             "max_tokens": max_tokens,
-            "api_key": config.api_key,
-            "api_base": _normalize_api_base(config.provider, config.api_base),
             "timeout": LLM_TIMEOUT_COMPLETION,
         }
         if _supports_temperature(config.provider, model_name):
@@ -446,7 +480,7 @@ async def complete(
         if reasoning_effort:
             kwargs["reasoning_effort"] = reasoning_effort
 
-        response = await litellm.acompletion(**kwargs)
+        response = await router.acompletion(**kwargs)
 
         content = _extract_choice_text(response.choices[0])
         if not content:
@@ -460,16 +494,26 @@ async def complete(
         ) from e
 
 
-def _supports_json_mode(provider: str, model: str) -> bool:
-    """Check if the model supports JSON mode."""
-    # Models that support response_format={"type": "json_object"}
-    json_mode_providers = ["openai", "anthropic", "gemini", "deepseek"]
-    if provider in json_mode_providers:
-        return True
-    # LLM-004: OpenRouter models - use explicit allowlist instead of substring matching
-    if provider == "openrouter":
-        return model in OPENROUTER_JSON_CAPABLE_MODELS
-    return False
+def _supports_json_mode(model_name: str) -> bool:
+    """Check if the model supports JSON mode via LiteLLM's model registry.
+
+    Queries LiteLLM's model info for every provider (including openai,
+    anthropic, etc.) so that capability is always determined from the
+    registry rather than a hardcoded provider list.
+
+    Args:
+        model_name: LiteLLM-formatted model name (from get_model_name).
+    """
+    try:
+        info = litellm.get_model_info(model=model_name)
+        supported_params = info.get("supported_openai_params", [])
+        return "response_format" in supported_params
+    except Exception:
+        # Model not in LiteLLM's registry — fall back to prompt-only JSON
+        # mode (the system prompt already instructs "respond with valid JSON
+        # only"). This avoids sending response_format to models that may
+        # reject it.
+        return False
 
 
 def _appears_truncated(data: dict) -> bool:
@@ -631,11 +675,11 @@ async def complete_json(
 ) -> dict[str, Any]:
     """Make a completion request expecting JSON response.
 
-    Uses JSON mode when available, with retry logic for reliability.
+    Uses JSON mode when available, with app-level retries for content-quality
+    issues (malformed JSON, truncation).  Transport retries (429, 500, timeout)
+    are handled by the Router and are NOT retried again here.
     """
-    if config is None:
-        config = get_llm_config()
-
+    router, config = get_router(config)
     model_name = get_model_name(config)
 
     # Build messages
@@ -648,19 +692,15 @@ async def complete_json(
     ]
 
     # Check if we can use JSON mode
-    use_json_mode = _supports_json_mode(config.provider, config.model)
+    use_json_mode = _supports_json_mode(model_name)
 
     last_error = None
     for attempt in range(retries + 1):
         try:
-            # Build request kwargs
-            # Pass API key directly to avoid race conditions with global os.environ
             kwargs: dict[str, Any] = {
-                "model": model_name,
+                "model": "primary",
                 "messages": messages,
                 "max_tokens": max_tokens,
-                "api_key": config.api_key,
-                "api_base": _normalize_api_base(config.provider, config.api_base),
                 "timeout": _calculate_timeout("json", max_tokens, config.provider),
             }
             if _supports_temperature(config.provider, model_name):
@@ -674,7 +714,7 @@ async def complete_json(
             if use_json_mode:
                 kwargs["response_format"] = {"type": "json_object"}
 
-            response = await litellm.acompletion(**kwargs)
+            response = await router.acompletion(**kwargs)
             content = _extract_choice_text(response.choices[0])
 
             if not content:
@@ -706,10 +746,10 @@ async def complete_json(
             return result
 
         except json.JSONDecodeError as e:
+            # Content quality — malformed JSON, retry with prompt hint
             last_error = e
             logging.warning(f"JSON parse failed (attempt {attempt + 1}): {e}")
             if attempt < retries:
-                # Add hint to prompt for retry
                 messages[-1]["content"] = (
                     prompt
                     + "\n\nIMPORTANT: Output ONLY a valid JSON object. Start with { and end with }."
@@ -717,11 +757,16 @@ async def complete_json(
                 continue
             raise ValueError(f"Failed to parse JSON after {retries + 1} attempts: {e}")
 
-        except Exception as e:
+        except ValueError as e:
+            # Content quality — empty response, JSON extraction failure
             last_error = e
-            logging.warning(f"LLM call failed (attempt {attempt + 1}): {e}")
+            logging.warning(f"Content extraction failed (attempt {attempt + 1}): {e}")
             if attempt < retries:
                 continue
+            raise
+
+        except Exception:
+            # Transport errors — Router already retried with backoff/cooldown
             raise
 
     raise ValueError(f"Failed after {retries + 1} attempts: {last_error}")
