@@ -302,11 +302,12 @@ _router_lock = threading.Lock()
 def _config_fingerprint(config: LLMConfig) -> str:
     """Generate a fingerprint to detect config changes.
 
-    Uses key length + last 4 chars for cache invalidation — enough to
-    detect key swaps without storing or hashing the full secret.
+    Includes the full API key for exact comparison so that key rotations
+    always trigger a Router rebuild.  This value is only held in the
+    private ``_router_config_key`` variable and is never logged, returned,
+    or serialized.
     """
-    key_tag = f"{len(config.api_key)}:{config.api_key[-4:]}" if config.api_key else ""
-    return f"{config.provider}|{config.model}|{key_tag}|{config.api_base}"
+    return f"{config.provider}|{config.model}|{config.api_key}|{config.api_base}"
 
 
 def _build_router(config: LLMConfig) -> Router:
