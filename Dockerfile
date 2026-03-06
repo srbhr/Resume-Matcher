@@ -110,8 +110,15 @@ USER appuser
 # Install Playwright Chromium as appuser (so browsers are in correct location)
 RUN python -m playwright install chromium
 
-# Expose the public port (backend remains internal on 8000)
-EXPOSE 3000
+# Configurable ports (override at build time with --build-arg)
+ARG FRONTEND_PORT=3000
+ARG BACKEND_PORT=8000
+# Persist as ENV so HEALTHCHECK resolves the port at runtime
+ENV FRONTEND_PORT=${FRONTEND_PORT} \
+    BACKEND_PORT=${BACKEND_PORT}
+
+# Expose the public port (backend remains internal)
+EXPOSE ${FRONTEND_PORT}
 
 # Volume for persistent data
 VOLUME ["/app/backend/data"]
@@ -121,7 +128,7 @@ WORKDIR /app
 
 # Health check on internal backend port only (independent of host port mapping).
 HEALTHCHECK --interval=10s --timeout=10s --start-period=30s --retries=5 \
-    CMD curl -f http://127.0.0.1:8000/api/v1/health || exit 1
+    CMD curl -f http://127.0.0.1:${BACKEND_PORT}/api/v1/health || exit 1
 
 # Start the application
 CMD ["/app/start.sh"]
