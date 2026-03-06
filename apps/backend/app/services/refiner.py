@@ -30,9 +30,9 @@ from app.schemas.refinement import (
 
 logger = logging.getLogger(__name__)
 
-# LLM-012: Job description truncation limits
-MAX_JD_LENGTH = 2000
-MIN_TRUNCATION_WARNING_LENGTH = 1500
+# LLM-012: Job description truncation limits (keyword injection uses this much of the JD)
+MAX_JD_LENGTH = 8000
+MIN_TRUNCATION_WARNING_LENGTH = 6000
 
 
 def _keyword_in_text(keyword: str, text: str) -> bool:
@@ -273,7 +273,7 @@ def validate_master_alignment(
                 field_path="additional.technicalSkills",
                 violation_type="fabricated_skill",
                 value=skill,
-                severity="critical",
+                severity="warning",
             )
         )
 
@@ -415,7 +415,7 @@ async def inject_keywords(
                 "You are a resume editor. Inject keywords naturally without adding "
                 "fabricated content. Return only valid JSON matching the input schema."
             ),
-            max_tokens=8192,
+            max_tokens=16384,
         )
 
         # LLM-014: Validate the result maintains required structure

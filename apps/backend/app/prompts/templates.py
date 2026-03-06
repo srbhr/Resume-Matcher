@@ -27,7 +27,7 @@ RESUME_SCHEMA_EXAMPLE = """{
     "linkedin": "linkedin.com/in/johndoe",
     "github": "github.com/johndoe"
   },
-  "summary": "Experienced software engineer with 5+ years...",
+  "summary": "Experienced software engineer with 8+ years...",
   "workExperience": [
     {
       "id": 1,
@@ -133,11 +133,11 @@ Job description:
 {job_description}"""
 
 CRITICAL_TRUTHFULNESS_RULES_TEMPLATE = """CRITICAL TRUTHFULNESS RULES - NEVER VIOLATE:
-1. DO NOT add any skill, tool, technology, or certification that is not explicitly mentioned in the original resume
+1. DO NOT add any  certification that is not explicitly mentioned in the original resume
 2. DO NOT invent numeric achievements (e.g., "increased by 30%") unless they exist in original
 3. DO NOT add company names, product names, or technical terms not in the original
 4. DO NOT upgrade experience level (e.g., "Junior" -> "Senior")
-5. DO NOT add languages, frameworks, or platforms the candidate hasn't used
+5. It is ok to add languages, frameworks, or platforms the candidate hasn't used
 6. DO NOT extend employment dates or change timelines (start/end years)
 7. {rule_7}
 8. Preserve factual accuracy - only use information provided by the candidate
@@ -228,8 +228,9 @@ IMPORTANT: Generate ALL text content (summary, descriptions, skills) in {output_
 
 Rules:
 - Rephrase content to highlight relevant experience
-- DO NOT invent new information
+- If the master resume is sparse or missing skills and role titles, you may infer reasonable skills, responsibilities, and role titles based on the job description, as long as they do not contradict any explicit facts in the original resume (dates, employers, locations, seniority).
 - Use action verbs and quantifiable achievements
+- Avoid copying the exact same job title across all work experiences; when there are multiple roles with different companies or date ranges, infer distinct, realistic titles per role or leave titles blank if you are unsure.
 - Keep proper nouns (names, company names, locations) unchanged
 - Translate job titles, descriptions, and skills to {output_language}
 - Preserve the structure of any customSections from the original resume
