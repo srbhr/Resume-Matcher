@@ -53,6 +53,50 @@ def _get_content_language() -> str:
     return "en"
 
 
+def _extract_item_from_resume(processed_data: dict, item_id: str) -> dict:
+    """Derive item details from resume data using the item_id pattern.
+
+    Avoids a redundant LLM analysis call when the frontend already knows
+    which item each answer belongs to.
+    """
+    try:
+        prefix, idx_str = item_id.split("_", 1)
+        index = int(idx_str)
+    except (ValueError, AttributeError):
+        return {}
+
+    if index < 0:
+        return {}
+
+    if prefix == "exp":
+        entries = processed_data.get("workExperience", [])
+        if not isinstance(entries, list) or index >= len(entries):
+            return {}
+        entry = entries[index]
+        desc = entry.get("description", [])
+        return {
+            "item_id": item_id,
+            "item_type": "experience",
+            "title": entry.get("title", ""),
+            "subtitle": entry.get("company", ""),
+            "current_description": desc if isinstance(desc, list) else [desc] if isinstance(desc, str) and desc else [],
+        }
+    elif prefix == "proj":
+        entries = processed_data.get("personalProjects", [])
+        if not isinstance(entries, list) or index >= len(entries):
+            return {}
+        entry = entries[index]
+        desc = entry.get("description", [])
+        return {
+            "item_id": item_id,
+            "item_type": "project",
+            "title": entry.get("name", ""),
+            "subtitle": entry.get("role", ""),
+            "current_description": desc if isinstance(desc, list) else [desc] if isinstance(desc, str) and desc else [],
+        }
+    return {}
+
+
 @router.post("/analyze/{resume_id}", response_model=AnalysisResponse)
 async def analyze_resume(resume_id: str) -> AnalysisResponse:
     """Analyze a resume to identify items that need enrichment.
@@ -142,49 +186,57 @@ async def generate_enhancements(request: EnhanceRequest) -> EnhancementPreview:
             detail="Resume has no processed data.",
         )
 
-    # Group answers by item_id (extract from question_id pattern)
-    # Question IDs are like "q_0", "q_1", etc. but we need to know which item each belongs to
-    # First, we need to re-analyze to get the mapping, or we need the items passed in
-    # For simplicity, we'll call analyze again to get the question-to-item mapping
+    # Group answers by item_id.
+    # When all answers carry item_id (from the analysis step), we can skip
+    # the expensive re-analysis LLM call and derive item details from the
+    # resume's processed_data directly.
+    answers_by_item: dict[str, list[AnswerInput]] = {}
+    item_details: dict[str, dict] = {}
+    # question_id → question dict, populated only in the legacy path
+    questions_by_id: dict[str, dict] = {}
 
-    # Actually, let's parse the answers differently - the frontend should include item context
-    # For now, we'll get the analysis to build the mapping
-    resume_json = json.dumps(processed_data, indent=2)
-    language = _get_content_language()
-    output_language = get_language_name(language)
-    analysis_prompt = ANALYZE_RESUME_PROMPT.format(
-        resume_json=resume_json,
-        output_language=output_language
-    )
-
-    try:
-        analysis_result = await complete_json(analysis_prompt, max_tokens=8192)
-    except Exception as e:
-        logger.error(f"Failed to re-analyze resume: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail="Failed to process enhancements. Please try again.",
+    if all(a.item_id for a in request.answers):
+        # Fast path — no re-analysis needed
+        for answer in request.answers:
+            item_id = answer.item_id or ""
+            answers_by_item.setdefault(item_id, []).append(answer)
+            if item_id not in item_details:
+                item_details[item_id] = _extract_item_from_resume(
+                    processed_data, item_id
+                )
+    else:
+        # Legacy path — re-analyze to get question-to-item mapping
+        resume_json = json.dumps(processed_data, indent=2)
+        language = _get_content_language()
+        output_language = get_language_name(language)
+        analysis_prompt = ANALYZE_RESUME_PROMPT.format(
+            resume_json=resume_json,
+            output_language=output_language,
         )
 
-    # Build question_id -> item_id mapping
-    question_to_item: dict[str, str] = {}
-    for q in analysis_result.get("questions", []):
-        question_to_item[q.get("question_id", "")] = q.get("item_id", "")
+        try:
+            analysis_result = await complete_json(analysis_prompt, max_tokens=8192)
+        except Exception as e:
+            logger.error(f"Failed to re-analyze resume: {e}")
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to process enhancements. Please try again.",
+            )
 
-    # Build item details mapping
-    item_details: dict[str, dict] = {}
-    for item in analysis_result.get("items_to_enrich", []):
-        item_id = item.get("item_id", "")
-        item_details[item_id] = item
+        question_to_item: dict[str, str] = {}
+        for q in analysis_result.get("questions", []):
+            qid = q.get("question_id", "")
+            question_to_item[qid] = q.get("item_id", "")
+            questions_by_id[qid] = q
 
-    # Group answers by item_id
-    answers_by_item: dict[str, list[AnswerInput]] = {}
-    for answer in request.answers:
-        item_id = question_to_item.get(answer.question_id, "")
-        if item_id:
-            if item_id not in answers_by_item:
-                answers_by_item[item_id] = []
-            answers_by_item[item_id].append(answer)
+        for item in analysis_result.get("items_to_enrich", []):
+            item_id = item.get("item_id", "")
+            item_details[item_id] = item
+
+        for answer in request.answers:
+            item_id = question_to_item.get(answer.question_id, "")
+            if item_id:
+                answers_by_item.setdefault(item_id, []).append(answer)
 
     # Generate enhanced descriptions for each item
     enhancements: list[EnhancedDescription] = []
@@ -194,21 +246,17 @@ async def generate_enhancements(request: EnhanceRequest) -> EnhancementPreview:
         if not item:
             continue
 
-        # Find the original questions to include context
-        item_questions = [
-            q for q in analysis_result.get("questions", []) if q.get("item_id") == item_id
-        ]
-
-        # Format answers with their questions for context
+        # Format answers with their questions for context.
+        # In the fast path questions_by_id is empty, so fall back to
+        # question_text carried on the AnswerInput itself.
         answers_text = ""
         for answer in answers:
-            # Find matching question
-            matching_q = next(
-                (q for q in item_questions if q.get("question_id") == answer.question_id),
-                None,
+            matching_q = questions_by_id.get(answer.question_id)
+            question = (
+                matching_q.get("question", "") if matching_q else answer.question_text
             )
-            if matching_q:
-                answers_text += f"Q: {matching_q.get('question', '')}\n"
+            if question:
+                answers_text += f"Q: {question}\n"
                 answers_text += f"A: {answer.answer}\n\n"
             else:
                 answers_text += f"Additional info: {answer.answer}\n\n"
@@ -236,6 +284,10 @@ async def generate_enhancements(request: EnhanceRequest) -> EnhancementPreview:
             # Fallback to old key for backwards compatibility
             if not additional_bullets:
                 additional_bullets = result.get("enhanced_description", [])
+            # Guard against non-list returns from LLM
+            if not isinstance(additional_bullets, list):
+                additional_bullets = []
+            additional_bullets = [str(b) for b in additional_bullets if b]
 
             enhancements.append(
                 EnhancedDescription(
@@ -364,14 +416,19 @@ async def _regenerate_experience_or_project(
 
     result = await complete_json(prompt, max_tokens=4096)
 
+    new_bullets = result.get("new_bullets", [])
+    if not isinstance(new_bullets, list):
+        new_bullets = []
+    new_bullets = [str(b) for b in new_bullets if b]
+
     return RegeneratedItem(
         item_id=item.item_id,
         item_type=item.item_type,
         title=item.title,
         subtitle=item.subtitle,
         original_content=item.current_content,
-        new_content=result.get("new_bullets", []),
-        diff_summary=result.get("change_summary", ""),
+        new_content=new_bullets,
+        diff_summary=str(result.get("change_summary") or ""),
     )
 
 
@@ -391,14 +448,19 @@ async def _regenerate_skills(
 
     result = await complete_json(prompt, max_tokens=2048)
 
+    new_skills = result.get("new_skills", [])
+    if not isinstance(new_skills, list):
+        new_skills = []
+    new_skills = [str(s) for s in new_skills if s]
+
     return RegeneratedItem(
         item_id=item.item_id,
         item_type=item.item_type,
         title=item.title,
         subtitle=item.subtitle,
         original_content=item.current_content,
-        new_content=result.get("new_skills", []),
-        diff_summary=result.get("change_summary", ""),
+        new_content=new_skills,
+        diff_summary=str(result.get("change_summary") or ""),
     )
 
 

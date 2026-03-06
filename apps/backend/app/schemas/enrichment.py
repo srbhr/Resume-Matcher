@@ -38,6 +38,8 @@ class AnswerInput(BaseModel):
 
     question_id: str
     answer: str
+    item_id: str | None = None  # When provided, skips redundant re-analysis
+    question_text: str | None = None  # Original question for prompt context in fast path
 
 
 class EnhanceRequest(BaseModel):
