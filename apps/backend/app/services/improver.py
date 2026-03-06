@@ -51,10 +51,53 @@ def _sanitize_user_input(text: str) -> str:
     return sanitized
 
 
+# Minimal personalInfo used when LLM output is truncated (missing personalInfo).
+# The router will overwrite with real data via _preserve_personal_info.
+_MINIMAL_PERSONAL_INFO: dict[str, Any] = {
+    "name": "",
+    "title": "",
+    "email": "",
+    "phone": "",
+    "location": "",
+    "website": None,
+    "linkedin": None,
+    "github": None,
+}
+
+
+def _repair_truncated_result(data: dict[str, Any]) -> None:
+    """If LLM returned truncated JSON, inject missing required/minimal fields.
+
+    Prevents 500 when output hits token limit. Router will restore real personalInfo
+    from the original resume via _preserve_personal_info.
+    """
+    repaired = False
+    if "personalInfo" not in data:
+        data["personalInfo"] = dict(_MINIMAL_PERSONAL_INFO)
+        repaired = True
+    for key, default in (
+        ("summary", ""),
+        ("workExperience", []),
+        ("education", []),
+        ("personalProjects", []),
+        ("additional", {}),
+        ("sectionMeta", []),
+        ("customSections", {}),
+    ):
+        if key not in data:
+            data[key] = default
+            repaired = True
+    if repaired:
+        logger.warning(
+            "LLM output was missing required fields (likely truncated). "
+            "Filled minimal placeholders; personalInfo will be restored from original resume."
+        )
+
+
 def _check_for_truncation(data: dict[str, Any]) -> None:
     """LLM-006: Check for obvious truncation signs before Pydantic validation.
 
-    Raises ValueError if data appears truncated.
+    Raises ValueError if data appears truncated and cannot be repaired.
     """
     required_sections = ["personalInfo"]
     for section in required_sections:
@@ -142,6 +185,8 @@ async def improve_resume(
         max_tokens=8192,
     )
 
+    # Repair truncated output (e.g. missing personalInfo) so we don't 500
+    _repair_truncated_result(result)
     # LLM-006: Pre-validation check for truncation signs
     _check_for_truncation(result)
 
