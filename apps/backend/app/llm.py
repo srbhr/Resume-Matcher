@@ -1,8 +1,8 @@
 """LiteLLM wrapper for multi-provider AI support."""
 
-import hashlib
 import json
 import logging
+import threading
 from typing import Any
 
 import litellm
@@ -296,15 +296,17 @@ def get_model_name(config: LLMConfig) -> str:
 
 _router: Router | None = None
 _router_config_key: str = ""
+_router_lock = threading.Lock()
 
 
 def _config_fingerprint(config: LLMConfig) -> str:
     """Generate a fingerprint to detect config changes.
 
-    The API key is hashed so the fingerprint is safe to log.
+    Uses key length + last 4 chars for cache invalidation — enough to
+    detect key swaps without storing or hashing the full secret.
     """
-    key_hash = hashlib.sha256(config.api_key.encode()).hexdigest()[:16] if config.api_key else ""
-    return f"{config.provider}|{config.model}|{key_hash}|{config.api_base}"
+    key_tag = f"{len(config.api_key)}:{config.api_key[-4:]}" if config.api_key else ""
+    return f"{config.provider}|{config.model}|{key_tag}|{config.api_base}"
 
 
 def _build_router(config: LLMConfig) -> Router:
@@ -353,10 +355,11 @@ def get_router(config: LLMConfig | None = None) -> tuple[Router, LLMConfig]:
         config = get_llm_config()
 
     key = _config_fingerprint(config)
-    if _router is None or _router_config_key != key:
-        _router = _build_router(config)
-        _router_config_key = key
-        logging.info("LiteLLM Router rebuilt for %s/%s", config.provider, config.model)
+    with _router_lock:
+        if _router is None or _router_config_key != key:
+            _router = _build_router(config)
+            _router_config_key = key
+            logging.info("LiteLLM Router rebuilt for %s/%s", config.provider, config.model)
 
     return _router, config
 

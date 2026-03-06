@@ -423,7 +423,7 @@ async def _regenerate_experience_or_project(
         subtitle=item.subtitle,
         original_content=item.current_content,
         new_content=new_bullets,
-        diff_summary=result.get("change_summary") or "",
+        diff_summary=str(result.get("change_summary") or ""),
     )
 
 
@@ -455,7 +455,7 @@ async def _regenerate_skills(
         subtitle=item.subtitle,
         original_content=item.current_content,
         new_content=new_skills,
-        diff_summary=result.get("change_summary") or "",
+        diff_summary=str(result.get("change_summary") or ""),
     )
 
 
