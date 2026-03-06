@@ -1,5 +1,6 @@
 """LiteLLM wrapper for multi-provider AI support."""
 
+import hashlib
 import json
 import logging
 from typing import Any
@@ -231,6 +232,8 @@ def resolve_api_key(stored: dict, provider: str) -> str:
     api_key = stored.get("api_key", "")
     if not api_key:
         api_keys = stored.get("api_keys", {})
+        if not isinstance(api_keys, dict):
+            api_keys = {}
         config_provider = _PROVIDER_KEY_MAP.get(provider, provider)
         api_key = api_keys.get(config_provider, settings.llm_api_key)
     return api_key
@@ -296,8 +299,12 @@ _router_config_key: str = ""
 
 
 def _config_fingerprint(config: LLMConfig) -> str:
-    """Generate a fingerprint to detect config changes."""
-    return f"{config.provider}|{config.model}|{config.api_key}|{config.api_base}"
+    """Generate a fingerprint to detect config changes.
+
+    The API key is hashed so the fingerprint is safe to log.
+    """
+    key_hash = hashlib.sha256(config.api_key.encode()).hexdigest()[:16] if config.api_key else ""
+    return f"{config.provider}|{config.model}|{key_hash}|{config.api_base}"
 
 
 def _build_router(config: LLMConfig) -> Router:
@@ -543,6 +550,7 @@ def _supports_json_mode(model_name: str) -> bool:
         # mode (the system prompt already instructs "respond with valid JSON
         # only"). This avoids sending response_format to models that may
         # reject it.
+        logging.debug("Model %s not in LiteLLM registry, skipping JSON mode", model_name)
         return False
 
 

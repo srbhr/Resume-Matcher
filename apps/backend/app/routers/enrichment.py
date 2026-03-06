@@ -65,28 +65,35 @@ def _extract_item_from_resume(processed_data: dict, item_id: str) -> dict:
     except (ValueError, AttributeError):
         return {}
 
+    if index < 0:
+        return {}
+
     if prefix == "exp":
         entries = processed_data.get("workExperience", [])
-        if index < len(entries):
-            entry = entries[index]
-            return {
-                "item_id": item_id,
-                "item_type": "experience",
-                "title": entry.get("title", ""),
-                "subtitle": entry.get("company", ""),
-                "current_description": entry.get("description", []),
-            }
+        if not isinstance(entries, list) or index >= len(entries):
+            return {}
+        entry = entries[index]
+        desc = entry.get("description", [])
+        return {
+            "item_id": item_id,
+            "item_type": "experience",
+            "title": entry.get("title", ""),
+            "subtitle": entry.get("company", ""),
+            "current_description": desc if isinstance(desc, list) else [desc] if isinstance(desc, str) and desc else [],
+        }
     elif prefix == "proj":
         entries = processed_data.get("personalProjects", [])
-        if index < len(entries):
-            entry = entries[index]
-            return {
-                "item_id": item_id,
-                "item_type": "project",
-                "title": entry.get("name", ""),
-                "subtitle": entry.get("role", ""),
-                "current_description": entry.get("description", []),
-            }
+        if not isinstance(entries, list) or index >= len(entries):
+            return {}
+        entry = entries[index]
+        desc = entry.get("description", [])
+        return {
+            "item_id": item_id,
+            "item_type": "project",
+            "title": entry.get("name", ""),
+            "subtitle": entry.get("role", ""),
+            "current_description": desc if isinstance(desc, list) else [desc] if isinstance(desc, str) and desc else [],
+        }
     return {}
 
 
@@ -185,6 +192,8 @@ async def generate_enhancements(request: EnhanceRequest) -> EnhancementPreview:
     # resume's processed_data directly.
     answers_by_item: dict[str, list[AnswerInput]] = {}
     item_details: dict[str, dict] = {}
+    # question_id → question dict, populated only in the legacy path
+    questions_by_id: dict[str, dict] = {}
 
     if all(a.item_id for a in request.answers):
         # Fast path — no re-analysis needed
@@ -216,7 +225,9 @@ async def generate_enhancements(request: EnhanceRequest) -> EnhancementPreview:
 
         question_to_item: dict[str, str] = {}
         for q in analysis_result.get("questions", []):
-            question_to_item[q.get("question_id", "")] = q.get("item_id", "")
+            qid = q.get("question_id", "")
+            question_to_item[qid] = q.get("item_id", "")
+            questions_by_id[qid] = q
 
         for item in analysis_result.get("items_to_enrich", []):
             item_id = item.get("item_id", "")
@@ -235,19 +246,10 @@ async def generate_enhancements(request: EnhanceRequest) -> EnhancementPreview:
         if not item:
             continue
 
-        # Find the original questions to include context
-        item_questions = [
-            q for q in analysis_result.get("questions", []) if q.get("item_id") == item_id
-        ]
-
         # Format answers with their questions for context
         answers_text = ""
         for answer in answers:
-            # Find matching question
-            matching_q = next(
-                (q for q in item_questions if q.get("question_id") == answer.question_id),
-                None,
-            )
+            matching_q = questions_by_id.get(answer.question_id)
             if matching_q:
                 answers_text += f"Q: {matching_q.get('question', '')}\n"
                 answers_text += f"A: {answer.answer}\n\n"
@@ -421,7 +423,7 @@ async def _regenerate_experience_or_project(
         subtitle=item.subtitle,
         original_content=item.current_content,
         new_content=new_bullets,
-        diff_summary=str(result.get("change_summary", "")),
+        diff_summary=result.get("change_summary") or "",
     )
 
 
@@ -453,7 +455,7 @@ async def _regenerate_skills(
         subtitle=item.subtitle,
         original_content=item.current_content,
         new_content=new_skills,
-        diff_summary=str(result.get("change_summary", "")),
+        diff_summary=result.get("change_summary") or "",
     )
 
 
