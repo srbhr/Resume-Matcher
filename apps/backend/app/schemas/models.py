@@ -238,9 +238,7 @@ class CustomSection(BaseModel):
 
     @field_validator("items", mode="before")
     @classmethod
-    def _normalize_items(
-        cls, value: Any
-    ) -> list[dict[str, Any]] | None:
+    def _normalize_items(cls, value: Any) -> Any:
         if value is None:
             return None
         if not isinstance(value, list):
