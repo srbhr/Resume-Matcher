@@ -40,7 +40,7 @@ from app.schemas import (
     UpdateTitleRequest,
     normalize_resume_data,
 )
-from app.services.parser import parse_document, parse_resume_to_json
+from app.services.parser import parse_document, parse_resume_to_json, restore_dates_from_markdown
 from app.services.improver import (
     extract_job_keywords,
     generate_improvements,
@@ -152,6 +152,22 @@ def _get_original_resume_data(resume: dict[str, Any]) -> dict[str, Any] | None:
         except json.JSONDecodeError as e:
             logger.warning("Skipping resume diff due to JSON parse failure: %s", e)
     return original_data
+
+
+def _get_original_markdown(resume: dict[str, Any]) -> str | None:
+    """Get the original markdown content from a resume.
+
+    Checks ``original_markdown`` first (persisted at upload), then
+    falls back to ``content`` if it's still in markdown format.
+    """
+    md = resume.get("original_markdown")
+    if md and isinstance(md, str):
+        return md
+    if resume.get("content_type") == "md":
+        content = resume.get("content", "")
+        if content and isinstance(content, str):
+            return content
+    return None
 
 
 def _restore_original_dates(
@@ -539,12 +555,15 @@ async def upload_resume(file: UploadFile = File(...)) -> ResumeUploadResponse:
         )
 
     # Store in database first with "processing" status (atomic master assignment)
+    # original_markdown is preserved permanently for date reference even after
+    # builder saves overwrite `content` with JSON.
     resume = await db.create_resume_atomic_master(
         content=markdown_content,
         content_type="md",
         filename=file.filename,
         processed_data=None,
         processing_status="processing",
+        original_markdown=markdown_content,
     )
 
     # Try to parse to structured JSON (optional, may fail if LLM not configured)
@@ -752,6 +771,10 @@ async def _improve_preview_flow(
 
     # Post-processing safety nets
     improved_data = _restore_original_dates(original_resume_data, improved_data)
+    # Restore month-inclusive dates from original markdown (bulletproof fallback)
+    original_markdown = _get_original_markdown(resume)
+    if original_markdown:
+        improved_data = restore_dates_from_markdown(improved_data, original_markdown)
     improved_data = _preserve_original_skills(original_resume_data, improved_data)
     improved_data = _protect_custom_sections(original_resume_data, improved_data)
 
@@ -1061,6 +1084,10 @@ async def improve_resume_endpoint(
 
         # Post-processing safety nets
         improved_data = _restore_original_dates(original_resume_data, improved_data)
+        # Restore month-inclusive dates from original markdown (bulletproof fallback)
+        original_markdown = _get_original_markdown(resume)
+        if original_markdown:
+            improved_data = restore_dates_from_markdown(improved_data, original_markdown)
         improved_data = _preserve_original_skills(original_resume_data, improved_data)
         improved_data = _protect_custom_sections(original_resume_data, improved_data)
 

@@ -294,7 +294,7 @@
         "title": "Título",
         "organization": "Organización",
         "location": "Ubicación",
-        "years": "2020 - Actualidad",
+        "years": "Jan 2020 - Present",
         "description": "Describe tu aportación..."
       },
       "noEntries": "// SIN {label}",
@@ -312,7 +312,7 @@
           "jobTitle": "Desarrollador senior",
           "company": "Tech Corp",
           "location": "Remoto / Ciudad",
-          "years": "2020 - Actualidad",
+          "years": "Jan 2020 - Present",
           "description": "Describe tu logro..."
         }
       },
@@ -328,7 +328,7 @@
         "placeholders": {
           "institution": "Nombre de la universidad",
           "degree": "Grado en ...",
-          "years": "2016 - 2020",
+          "years": "Aug 2016 - May 2020",
           "description": "Detalles adicionales..."
         }
       },
@@ -343,7 +343,7 @@
         "placeholders": {
           "projectName": "Resume Matcher",
           "role": "Creador",
-          "years": "2023",
+          "years": "Mar 2023",
           "github": "github.com/usuario/proyecto",
           "website": "https://demo-proyecto.com",
           "description": "Detalle del proyecto..."
