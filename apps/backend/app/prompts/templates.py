@@ -88,6 +88,69 @@ RESUME_SCHEMA_EXAMPLE = """{
   }
 }"""
 
+# Schema for improve prompts - excludes personalInfo (preserved from original)
+IMPROVE_SCHEMA_EXAMPLE = """{
+  "summary": "Experienced software engineer with 5+ years...",
+  "workExperience": [
+    {
+      "id": 1,
+      "title": "Senior Software Engineer",
+      "company": "Tech Corp",
+      "location": "San Francisco, CA",
+      "years": "2020 - Present",
+      "description": [
+        "Led development of microservices architecture",
+        "Improved system performance by 40%"
+      ]
+    }
+  ],
+  "education": [
+    {
+      "id": 1,
+      "institution": "University of California",
+      "degree": "B.S. Computer Science",
+      "years": "2014 - 2018",
+      "description": "Graduated with honors"
+    }
+  ],
+  "personalProjects": [
+    {
+      "id": 1,
+      "name": "Open Source Tool",
+      "role": "Creator & Maintainer",
+      "years": "2021 - Present",
+      "description": [
+        "Built CLI tool with 1000+ GitHub stars",
+        "Used by 50+ companies worldwide"
+      ]
+    }
+  ],
+  "additional": {
+    "technicalSkills": ["Python", "JavaScript", "AWS", "Docker"],
+    "languages": ["English (Native)", "Spanish (Conversational)"],
+    "certificationsTraining": ["AWS Solutions Architect"],
+    "awards": ["Employee of the Year 2022"]
+  },
+  "customSections": {
+    "publications": {
+      "sectionType": "itemList",
+      "items": [
+        {
+          "id": 1,
+          "title": "Paper Title",
+          "subtitle": "Journal Name",
+          "years": "2023",
+          "description": ["Brief description of the publication"]
+        }
+      ]
+    },
+    "volunteer_work": {
+      "sectionType": "text",
+      "text": "Description of volunteer activities..."
+    }
+  }
+}"""
+
 PARSE_RESUME_PROMPT = """Parse this resume into JSON. Output ONLY the JSON object, no other text.
 
 Map content to standard sections when possible. For non-standard sections (like Publications, Volunteer Work, Research, Hobbies), add them to customSections with an appropriate type.
@@ -141,6 +204,7 @@ CRITICAL_TRUTHFULNESS_RULES_TEMPLATE = """CRITICAL TRUTHFULNESS RULES - NEVER VI
 6. DO NOT extend employment dates or change timelines (start/end years)
 7. {rule_7}
 8. Preserve factual accuracy - only use information provided by the candidate
+9. NEVER remove existing skills, certifications, languages, or awards. You may reorder by relevance, but every original item must remain.
 
 Violation of these rules could cause serious problems for the candidate in job interviews.
 """
@@ -167,6 +231,7 @@ IMPROVE_RESUME_PROMPT_NUDGE = """Lightly nudge this resume toward the job descri
 {critical_truthfulness_rules}
 
 IMPORTANT: Generate ALL text content (summary, descriptions, skills) in {output_language}.
+Do NOT include personalInfo in your output - it will be preserved from the original resume.
 
 Rules:
 - Make minimal, conservative edits only where there is a clear existing match
@@ -175,7 +240,7 @@ Rules:
 - Do NOT add new bullet points or sections
 - Preserve original bullet count and ordering within each section
 - Keep proper nouns (names, company names, locations) unchanged
-- Preserve the structure of any customSections from the original resume
+- For customSections: preserve exact structure, item count, titles, subtitles, and years. If an item's description is an empty array [] in the original, keep it empty []. Do NOT generate descriptions for items that had none.
 - Preserve original date ranges exactly - do not modify years
 - If the resume is non-technical, do NOT add technical jargon
 - Do NOT use em dash ("—") anywhere in the writing/output, even if it exists, remove it
@@ -197,13 +262,14 @@ IMPROVE_RESUME_PROMPT_KEYWORDS = """Enhance this resume with relevant keywords f
 {critical_truthfulness_rules}
 
 IMPORTANT: Generate ALL text content (summary, descriptions, skills) in {output_language}.
+Do NOT include personalInfo in your output - it will be preserved from the original resume.
 
 Rules:
 - Strengthen alignment by weaving in relevant keywords where evidence already exists
 - You may rephrase bullet points to include keyword phrasing
 - Do NOT introduce new skills, tools, or certifications not in the resume
 - Do NOT change role, industry, or seniority level
-- Preserve the structure of any customSections from the original resume
+- For customSections: preserve exact structure, item count, titles, subtitles, and years. If an item's description is an empty array [] in the original, keep it empty []. Do NOT generate descriptions for items that had none.
 - Preserve original date ranges exactly - do not modify years
 - If resume is non-technical, keep language non-technical while still aligning keywords
 - Do NOT use em dash ("—") anywhere in the writing/output, even if it exists, remove it
@@ -225,14 +291,15 @@ IMPROVE_RESUME_PROMPT_FULL = """Tailor this resume for the job. Output ONLY the 
 {critical_truthfulness_rules}
 
 IMPORTANT: Generate ALL text content (summary, descriptions, skills) in {output_language}.
+Do NOT include personalInfo in your output - it will be preserved from the original resume.
 
 Rules:
-- Rephrase content to highlight relevant experience
+- Make targeted adjustments to bullet points to align with job description phrasing. Preserve the candidate's original details and voice - adjust wording, do not rewrite entirely.
 - DO NOT invent new information
-- Use action verbs and quantifiable achievements
+- Preserve existing action verbs. Do not invent quantifiable achievements not in the original.
 - Keep proper nouns (names, company names, locations) unchanged
 - Translate job titles, descriptions, and skills to {output_language}
-- Preserve the structure of any customSections from the original resume
+- For customSections: preserve exact structure, item count, titles, subtitles, and years. If an item's description is an empty array [] in the original, keep it empty []. Do NOT generate descriptions for items that had none.
 - Improve custom section content the same way as standard sections
 - Preserve original date ranges exactly - do not modify years
 - Calculate and emphasize total relevant experience duration when it matches requirements
