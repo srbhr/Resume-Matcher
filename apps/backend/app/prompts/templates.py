@@ -34,7 +34,7 @@ RESUME_SCHEMA_EXAMPLE = """{
       "title": "Senior Software Engineer",
       "company": "Tech Corp",
       "location": "San Francisco, CA",
-      "years": "2020 - Present",
+      "years": "Jan 2020 - Present",
       "description": [
         "Led development of microservices architecture",
         "Improved system performance by 40%"
@@ -55,7 +55,7 @@ RESUME_SCHEMA_EXAMPLE = """{
       "id": 1,
       "name": "Open Source Tool",
       "role": "Creator & Maintainer",
-      "years": "2021 - Present",
+      "years": "Mar 2021 - Present",
       "description": [
         "Built CLI tool with 1000+ GitHub stars",
         "Used by 50+ companies worldwide"
@@ -76,7 +76,7 @@ RESUME_SCHEMA_EXAMPLE = """{
           "id": 1,
           "title": "Paper Title",
           "subtitle": "Journal Name",
-          "years": "2023",
+          "years": "Jun 2023",
           "description": ["Brief description of the publication"]
         }
       ]
@@ -97,7 +97,7 @@ IMPROVE_SCHEMA_EXAMPLE = """{
       "title": "Senior Software Engineer",
       "company": "Tech Corp",
       "location": "San Francisco, CA",
-      "years": "2020 - Present",
+      "years": "Jan 2020 - Present",
       "description": [
         "Led development of microservices architecture",
         "Improved system performance by 40%"
@@ -118,7 +118,7 @@ IMPROVE_SCHEMA_EXAMPLE = """{
       "id": 1,
       "name": "Open Source Tool",
       "role": "Creator & Maintainer",
-      "years": "2021 - Present",
+      "years": "Mar 2021 - Present",
       "description": [
         "Built CLI tool with 1000+ GitHub stars",
         "Used by 50+ companies worldwide"
@@ -139,7 +139,7 @@ IMPROVE_SCHEMA_EXAMPLE = """{
           "id": 1,
           "title": "Paper Title",
           "subtitle": "Journal Name",
-          "years": "2023",
+          "years": "Jun 2023",
           "description": ["Brief description of the publication"]
         }
       ]
@@ -166,10 +166,10 @@ Custom section types:
 Rules:
 - Use "" for missing text fields, [] for missing arrays, null for optional fields
 - Number IDs starting from 1
-- Format years as "YYYY - YYYY" or "YYYY - Present"
+- Format dates preserving the original precision. Keep months when present: "Jan 2020 - Dec 2023", "May 2021 - Present". Use "YYYY - YYYY" only when the source has no months.
 - Use snake_case for custom section keys (e.g., "volunteer_work", "publications")
 - Preserve the original section name as a descriptive key
-- Normalize dates: "Jan 2020" → "2020", "2020-2021" → "2020 - 2021", "Current"/"Ongoing" → "Present"
+- Normalize date separators: "2020-2021" → "2020 - 2021", "Current"/"Ongoing" → "Present". Do NOT discard months.
 - For ambiguous dates like "3 years experience", infer approximate years from context or use "~YYYY"
 - Flag overlapping dates (concurrent roles) by preserving both, don't merge
 
