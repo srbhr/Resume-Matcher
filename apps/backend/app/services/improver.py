@@ -85,6 +85,32 @@ async def extract_job_keywords(job_description: str) -> dict[str, Any]:
     )
 
 
+_MONTH_PATTERN = re.compile(
+    r"\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\b",
+    re.IGNORECASE,
+)
+
+
+def _has_month_in_dates(data: dict[str, Any]) -> bool:
+    """Check whether any years field in the structured data includes a month."""
+    for section_key in ("workExperience", "education", "personalProjects"):
+        for entry in data.get(section_key, []):
+            if isinstance(entry, dict):
+                years = entry.get("years", "")
+                if isinstance(years, str) and _MONTH_PATTERN.search(years):
+                    return True
+    custom_sections = data.get("customSections", {})
+    if isinstance(custom_sections, dict):
+        for section in custom_sections.values():
+            if isinstance(section, dict) and section.get("sectionType") == "itemList":
+                for item in section.get("items", []):
+                    if isinstance(item, dict):
+                        years = item.get("years", "")
+                        if isinstance(years, str) and _MONTH_PATTERN.search(years):
+                            return True
+    return False
+
+
 def _prepare_keywords_for_prompt(job_keywords: dict[str, Any]) -> str:
     """Format job keywords as a focused, readable list for the LLM prompt.
 
@@ -155,9 +181,18 @@ async def improve_resume(
     # LLM-011: Sanitize job description to prevent prompt injection
     sanitized_jd = _sanitize_user_input(job_description)
 
-    # Use structured JSON when available for higher-fidelity LLM input
+    # Use structured JSON when available for higher-fidelity LLM input,
+    # but fall back to raw markdown if the structured data has truncated
+    # (year-only) dates — the markdown preserves months from the original PDF.
     if original_resume_data is not None:
-        resume_input = json.dumps(original_resume_data, indent=2)
+        if _has_month_in_dates(original_resume_data):
+            resume_input = json.dumps(original_resume_data, indent=2)
+        else:
+            logger.info(
+                "Structured resume data has year-only dates; using raw markdown "
+                "to preserve month precision."
+            )
+            resume_input = original_resume
     else:
         resume_input = original_resume
 

@@ -201,7 +201,7 @@ CRITICAL_TRUTHFULNESS_RULES_TEMPLATE = """CRITICAL TRUTHFULNESS RULES - NEVER VI
 3. DO NOT add company names, product names, or technical terms not in the original
 4. DO NOT upgrade experience level (e.g., "Junior" -> "Senior")
 5. DO NOT add languages, frameworks, or platforms the candidate hasn't used
-6. DO NOT extend employment dates or change timelines (start/end years)
+6. DO NOT extend employment dates or change timelines. Copy date ranges exactly as they appear, including months.
 7. {rule_7}
 8. Preserve factual accuracy - only use information provided by the candidate
 9. NEVER remove existing skills, certifications, languages, or awards. You may reorder by relevance, but every original item must remain.
@@ -241,7 +241,7 @@ Rules:
 - Preserve original bullet count and ordering within each section
 - Keep proper nouns (names, company names, locations) unchanged
 - For customSections: preserve exact structure, item count, titles, subtitles, and years. If an item's description is an empty array [] in the original, keep it empty []. Do NOT generate descriptions for items that had none.
-- Preserve original date ranges exactly - do not modify years
+- Copy the "years" field values EXACTLY as they appear in the original resume (including any month prefixes like "Jan 2020 - Present"). Do not shorten, reformat, or drop months.
 - If the resume is non-technical, do NOT add technical jargon
 - Do NOT use em dash ("—") anywhere in the writing/output, even if it exists, remove it
 
@@ -270,7 +270,7 @@ Rules:
 - Do NOT introduce new skills, tools, or certifications not in the resume
 - Do NOT change role, industry, or seniority level
 - For customSections: preserve exact structure, item count, titles, subtitles, and years. If an item's description is an empty array [] in the original, keep it empty []. Do NOT generate descriptions for items that had none.
-- Preserve original date ranges exactly - do not modify years
+- Copy the "years" field values EXACTLY as they appear in the original resume (including any month prefixes like "Jan 2020 - Present"). Do not shorten, reformat, or drop months.
 - If resume is non-technical, keep language non-technical while still aligning keywords
 - Do NOT use em dash ("—") anywhere in the writing/output, even if it exists, remove it
 
@@ -301,7 +301,7 @@ Rules:
 - Translate job titles, descriptions, and skills to {output_language}
 - For customSections: preserve exact structure, item count, titles, subtitles, and years. If an item's description is an empty array [] in the original, keep it empty []. Do NOT generate descriptions for items that had none.
 - Improve custom section content the same way as standard sections
-- Preserve original date ranges exactly - do not modify years
+- Copy the "years" field values EXACTLY as they appear in the original resume (including any month prefixes like "Jan 2020 - Present"). Do not shorten, reformat, or drop months.
 - Calculate and emphasize total relevant experience duration when it matches requirements
 - Do NOT use em dash ("—") anywhere in the writing/output, even if it exists, remove it
 

@@ -154,6 +154,82 @@ def _get_original_resume_data(resume: dict[str, Any]) -> dict[str, Any] | None:
     return original_data
 
 
+def _restore_original_dates(
+    original_data: dict[str, Any] | None,
+    improved_data: dict[str, Any],
+) -> dict[str, Any]:
+    """Restore original date/years values that the LLM may have truncated.
+
+    Compares each entry's ``years`` field in the tailored resume against
+    the corresponding entry in the original.  If the original has more
+    date precision (e.g. includes a month) and the tailored version lost
+    it, the original value is restored.
+    """
+    if not original_data:
+        return improved_data
+
+    result = copy.deepcopy(improved_data)
+
+    for section_key in ("workExperience", "education", "personalProjects"):
+        orig_entries = original_data.get(section_key, [])
+        result_entries = result.get(section_key, [])
+        for idx, orig_entry in enumerate(orig_entries):
+            if idx >= len(result_entries):
+                break
+            if not isinstance(orig_entry, dict) or not isinstance(result_entries[idx], dict):
+                continue
+            orig_years = orig_entry.get("years", "")
+            result_years = result_entries[idx].get("years", "")
+            if (
+                isinstance(orig_years, str)
+                and isinstance(result_years, str)
+                and orig_years
+                and orig_years != result_years
+                # Original is longer (has more info, e.g. months)
+                and len(orig_years) > len(result_years)
+            ):
+                logger.info(
+                    "Restoring date in %s[%d]: %r → %r",
+                    section_key,
+                    idx,
+                    result_years,
+                    orig_years,
+                )
+                result_entries[idx]["years"] = orig_years
+
+    # Custom sections (itemList)
+    orig_custom = original_data.get("customSections", {})
+    result_custom = result.get("customSections", {})
+    if isinstance(orig_custom, dict) and isinstance(result_custom, dict):
+        for section_key, orig_section in orig_custom.items():
+            if not isinstance(orig_section, dict):
+                continue
+            result_section = result_custom.get(section_key)
+            if not isinstance(result_section, dict):
+                continue
+            if orig_section.get("sectionType") != "itemList":
+                continue
+            orig_items = orig_section.get("items", [])
+            result_items = result_section.get("items", [])
+            for idx, orig_item in enumerate(orig_items):
+                if idx >= len(result_items):
+                    break
+                if not isinstance(orig_item, dict) or not isinstance(result_items[idx], dict):
+                    continue
+                orig_years = orig_item.get("years", "")
+                result_years = result_items[idx].get("years", "")
+                if (
+                    isinstance(orig_years, str)
+                    and isinstance(result_years, str)
+                    and orig_years
+                    and orig_years != result_years
+                    and len(orig_years) > len(result_years)
+                ):
+                    result_items[idx]["years"] = orig_years
+
+    return result
+
+
 def _preserve_original_skills(
     original_data: dict[str, Any] | None,
     improved_data: dict[str, Any],
@@ -674,7 +750,8 @@ async def _improve_preview_flow(
     )
     response_warnings.extend(preserve_warnings)
 
-    # Post-processing safety nets: restore dropped skills and protect custom sections
+    # Post-processing safety nets
+    improved_data = _restore_original_dates(original_resume_data, improved_data)
     improved_data = _preserve_original_skills(original_resume_data, improved_data)
     improved_data = _protect_custom_sections(original_resume_data, improved_data)
 
@@ -982,7 +1059,8 @@ async def improve_resume_endpoint(
         )
         response_warnings.extend(preserve_warnings)
 
-        # Post-processing safety nets: restore dropped skills and protect custom sections
+        # Post-processing safety nets
+        improved_data = _restore_original_dates(original_resume_data, improved_data)
         improved_data = _preserve_original_skills(original_resume_data, improved_data)
         improved_data = _protect_custom_sections(original_resume_data, improved_data)
 
