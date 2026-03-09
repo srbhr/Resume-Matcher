@@ -578,15 +578,9 @@ def _appears_truncated(data: dict) -> bool:
             )
             return True
 
-    # Check for missing critical sections
-    required_top_level = ["personalInfo"]
-    for key in required_top_level:
-        if key not in data:
-            logging.warning(
-                "Possible truncation detected: missing required section '%s'",
-                key,
-            )
-            return True
+    # personalInfo is intentionally excluded: the improve prompts tell the LLM
+    # to skip it, and _preserve_personal_info() restores it from the original.
+    # Checking for it here caused 3 wasteful retry attempts on every request.
 
     return False
 

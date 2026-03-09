@@ -35,8 +35,16 @@ export const API_BASE = resolveRuntimeApiBase(toApiBase(API_URL));
 /**
  * Standard fetch wrapper with common error handling.
  * Returns the Response object for flexibility.
+ *
+ * @param endpoint - API endpoint path or absolute URL
+ * @param options - Standard RequestInit options
+ * @param timeoutMs - Optional request timeout in milliseconds (default: 120_000)
  */
-export async function apiFetch(endpoint: string, options?: RequestInit): Promise<Response> {
+export async function apiFetch(
+  endpoint: string,
+  options?: RequestInit,
+  timeoutMs?: number
+): Promise<Response> {
   const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
   const isAbsoluteUrl = endpoint.startsWith('http://') || endpoint.startsWith('https://');
   const isApiPath = normalizedEndpoint.startsWith('/api/');
@@ -48,18 +56,30 @@ export async function apiFetch(endpoint: string, options?: RequestInit): Promise
     url = resolveRuntimeApiBase(normalizedEndpoint);
   }
 
-  return fetch(url, options);
+  const timeout = timeoutMs ?? 120_000;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeout);
+
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 /**
  * POST request with JSON body.
  */
-export async function apiPost<T>(endpoint: string, body: T): Promise<Response> {
-  return apiFetch(endpoint, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
+export async function apiPost<T>(endpoint: string, body: T, timeoutMs?: number): Promise<Response> {
+  return apiFetch(
+    endpoint,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    },
+    timeoutMs
+  );
 }
 
 /**
