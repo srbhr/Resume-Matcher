@@ -7,6 +7,7 @@ multiple passes:
 3. Master alignment validation - ensure no fabricated content was added
 """
 
+import asyncio
 import copy
 import json
 import logging
@@ -86,15 +87,18 @@ async def refine_resume(
                 keyword_analysis.injectable_keywords,
             )
             try:
-                current = await inject_keywords(
-                    current,
-                    keyword_analysis.injectable_keywords,
-                    master_resume,
-                    job_description,
+                current = await asyncio.wait_for(
+                    inject_keywords(
+                        current,
+                        keyword_analysis.injectable_keywords,
+                        master_resume,
+                        job_description,
+                    ),
+                    timeout=25.0,  # Fast fail — don't eat the whole refiner budget
                 )
                 passes += 1
             except Exception as e:
-                logger.warning("Keyword injection failed: %s", e)
+                logger.warning("Keyword injection failed or timed out: %s", e)
 
     # Pass 2: AI phrase removal and polish (local, no LLM call)
     if config.enable_ai_phrase_removal:

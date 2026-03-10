@@ -1,5 +1,6 @@
 """Resume improvement service using LLM."""
 
+import copy
 import json
 import logging
 import re
@@ -15,7 +16,13 @@ from app.prompts import (
     IMPROVE_RESUME_PROMPTS,
     get_language_name,
 )
-from app.prompts.templates import RESUME_SCHEMA
+from app.prompts.templates import (
+    RESUME_SCHEMA,
+    IMPROVE_RESUME_PROMPT_SKILLS,
+    IMPROVE_RESUME_PROMPT_EXPERIENCE,
+    SKILLS_SCHEMA_EXAMPLE,
+    EXPERIENCE_SCHEMA_EXAMPLE,
+)
 from app.schemas import ResumeData, ResumeFieldDiff, ResumeDiffSummary
 
 logger = logging.getLogger(__name__)
@@ -147,6 +154,121 @@ async def improve_resume(
 
     # Validate against schema
     validated = ResumeData.model_validate(result)
+    return validated.model_dump()
+
+
+async def improve_resume_granular(
+    original_resume: str,
+    original_data: dict[str, Any],
+    job_description: str,
+    job_keywords: dict[str, Any],
+    language: str = "en",
+    prompt_id: str | None = None,
+) -> dict[str, Any]:
+    """Improve resume using two focused LLM calls instead of one large call.
+
+    Call A: summary + technicalSkills only.
+    Call B: workExperience descriptions only (no factual fields sent to LLM).
+
+    This reduces hallucination risk by keeping each prompt small and focused.
+
+    Args:
+        original_resume: Original resume content (markdown) — passed for parity but not used
+        original_data: Parsed resume dict used for building partial inputs and merging
+        job_description: Target job description
+        job_keywords: Extracted job keywords
+        language: Output language code (en, es, zh, ja)
+        prompt_id: Intensity prompt id (nudge / keywords / full)
+
+    Returns:
+        Merged improved resume data matching ResumeData schema
+    """
+    keywords_str = json.dumps(job_keywords, indent=2)
+    output_language = get_language_name(language)
+
+    selected_prompt_id = prompt_id or DEFAULT_IMPROVE_PROMPT_ID
+    if selected_prompt_id not in CRITICAL_TRUTHFULNESS_RULES:
+        logger.warning(
+            "Missing truthfulness rules for prompt '%s'; using default rules.",
+            selected_prompt_id,
+        )
+    truthfulness_rules = CRITICAL_TRUTHFULNESS_RULES.get(
+        selected_prompt_id, CRITICAL_TRUTHFULNESS_RULES[DEFAULT_IMPROVE_PROMPT_ID]
+    )
+
+    sanitized_jd = _sanitize_user_input(job_description)
+
+    # Build partial dict for Call A: summary + technicalSkills
+    skills_partial: dict[str, Any] = {
+        "summary": original_data.get("summary", ""),
+        "additional": {
+            "technicalSkills": original_data.get("additional", {}).get(
+                "technicalSkills", []
+            )
+        },
+    }
+
+    # Build partial dict for Call B: workExperience descriptions only (id + description)
+    experience_partial: dict[str, Any] = {
+        "workExperience": [
+            {"id": entry.get("id", idx + 1), "description": entry.get("description", [])}
+            for idx, entry in enumerate(original_data.get("workExperience", []))
+        ]
+    }
+
+    prompt_skills = IMPROVE_RESUME_PROMPT_SKILLS.format(
+        job_description=sanitized_jd,
+        job_keywords=keywords_str,
+        partial_resume=json.dumps(skills_partial, indent=2),
+        schema=SKILLS_SCHEMA_EXAMPLE,
+        output_language=output_language,
+        critical_truthfulness_rules=truthfulness_rules,
+    )
+    prompt_experience = IMPROVE_RESUME_PROMPT_EXPERIENCE.format(
+        job_description=sanitized_jd,
+        job_keywords=keywords_str,
+        partial_resume=json.dumps(experience_partial, indent=2),
+        schema=EXPERIENCE_SCHEMA_EXAMPLE,
+        output_language=output_language,
+        critical_truthfulness_rules=truthfulness_rules,
+    )
+
+    system_prompt = "You are an expert resume editor. Output only valid JSON."
+    # Sequential calls: local models (Ollama) process one request at a time,
+    # so parallel calls just queue up and double the wait time.
+    result_a = await complete_json(prompt=prompt_skills, system_prompt=system_prompt)
+    result_b = await complete_json(prompt=prompt_experience, system_prompt=system_prompt)
+
+    # Merge: start from a deep copy of the original, overwrite only improved fields
+    merged = copy.deepcopy(original_data)
+
+    # Merge Call A: summary and technicalSkills
+    if isinstance(result_a.get("summary"), str):
+        merged["summary"] = result_a["summary"]
+    additional_a = result_a.get("additional", {})
+    if isinstance(additional_a, dict) and isinstance(
+        additional_a.get("technicalSkills"), list
+    ):
+        if "additional" not in merged or not isinstance(merged["additional"], dict):
+            merged["additional"] = {}
+        merged["additional"]["technicalSkills"] = additional_a["technicalSkills"]
+
+    # Merge Call B: workExperience descriptions, matched by index
+    improved_experiences = result_b.get("workExperience", [])
+    original_experiences = merged.get("workExperience", [])
+    for idx, improved_entry in enumerate(improved_experiences):
+        if idx < len(original_experiences) and isinstance(improved_entry, dict):
+            new_description = improved_entry.get("description")
+            if isinstance(new_description, list):
+                original_experiences[idx]["description"] = new_description
+    merged["workExperience"] = original_experiences
+
+    logger.info(
+        "Granular improvement complete: summary updated, %d experience entries processed",
+        len(improved_experiences),
+    )
+
+    validated = ResumeData.model_validate(merged)
     return validated.model_dump()
 
 

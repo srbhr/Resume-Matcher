@@ -501,8 +501,37 @@
     "pasteJobDescription": "粘贴职位描述",
     "pasteJobDescriptionBelow": "在下方粘贴职位描述",
     "jobDescriptionPlaceholder": "在此粘贴职位描述...",
+    "inputMode": {
+      "paste": "粘贴文本",
+      "url": "从URL获取"
+    },
+    "urlInput": {
+      "placeholder": "粘贴招聘网址（LinkedIn、Indeed、公司官网等）...",
+      "fetchButton": "获取",
+      "fetching": "获取中...",
+      "hint": "应用将自动提取职位描述。简历将以职位名称和公司名称命名。"
+    },
     "promptLabel": "匹配强度",
     "promptDescription": "选择与职位描述对齐的程度。",
+    "workflowLabel": "工作流程",
+    "workflowDescription": "选择是一次性优化整份简历，还是逐节优化。",
+    "workflowOptions": {
+      "standard": {
+        "label": "标准",
+        "description": "一次性重写完整简历。"
+      },
+      "granular": {
+        "label": "逐节处理",
+        "description": "分别针对技能和经历进行专项优化，降低幻觉风险。"
+      }
+    },
+    "progress": {
+      "title": "正在生成定制简历",
+      "uploading": "正在上传职位描述",
+      "tailoring": "AI 正在定制您的简历",
+      "elapsedSeconds": "已用时 {seconds} 秒",
+      "slowModelNote": "本地 AI 模型可能需要几分钟时间，请等待并不要关闭此页面。"
+    },
     "promptOptions": {
       "nudge": {
         "label": "轻度调整",
@@ -547,7 +576,10 @@
       "projectChanges": "项目变更",
       "certificationChanges": "认证变更",
       "rejectButton": "拒绝并重新生成",
-      "confirmButton": "确认并保存"
+      "confirmButton": "确认并保存",
+      "confirmPartialButton": "确认所选 ({accepted}/{total})",
+      "selectAll": "全选",
+      "deselectAll": "取消全选"
     },
     "regenerateDialog": {
       "title": "重新生成定制简历？",
@@ -565,7 +597,10 @@
       "rateLimit": "触发速率限制，请稍后再试。",
       "failedToGenerate": "生成简历失败。请检查设置后重试。",
       "failedToPreview": "预览简历失败。请检查设置后重试。",
-      "failedToConfirm": "确认简历失败。请重试。"
+      "failedToConfirm": "确认简历失败。请重试。",
+      "failedToFetchUrl": "无法从此URL获取职位描述。请尝试手动复制文本。",
+      "invalidUrl": "请输入以 http:// 或 https:// 开头的有效URL",
+      "urlTimeout": "请求超时，页面响应时间过长。"
     }
   },
   "settings": {

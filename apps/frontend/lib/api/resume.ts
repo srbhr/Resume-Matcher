@@ -85,6 +85,7 @@ interface ImproveResumeConfirmRequest {
     suggestion: string;
     lineNumber?: number | null;
   }>;
+  partial_confirm?: boolean;
 }
 
 function normalizeResumeId(resumeId: string): string {
@@ -165,12 +166,14 @@ export async function improveResume(
 export async function previewImproveResume(
   resumeId: string,
   jobId: string,
-  promptId?: string
+  promptId?: string,
+  workflowMode?: string
 ): Promise<ImprovedResult> {
   return postImprove('/resumes/improve/preview', {
     resume_id: resumeId,
     job_id: jobId,
     prompt_id: promptId ?? null,
+    workflow_mode: workflowMode ?? null,
   });
 }
 
@@ -359,6 +362,17 @@ export async function retryProcessing(resumeId: string): Promise<ResumeUploadRes
   if (!res.ok) {
     const text = await res.text().catch(() => '');
     throw new Error(`Failed to retry processing (status ${res.status}): ${text}`);
+  }
+  return res.json();
+}
+
+/** Fetches and extracts job description text from a public URL */
+export async function fetchJobFromUrl(url: string): Promise<{ content: string; url: string }> {
+  const res = await apiPost('/jobs/fetch-url', { url });
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    const detail = body?.detail ?? null;
+    throw new Error(detail ?? `Failed to fetch job URL (status ${res.status})`);
   }
   return res.json();
 }
