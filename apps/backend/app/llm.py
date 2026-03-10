@@ -200,7 +200,8 @@ def _extract_choice_text(choice: Any) -> str | None:
         return content
 
     if hasattr(choice, "text"):
-        content = _join_text_parts(_extract_text_parts(getattr(choice, "text")))
+        content = _join_text_parts(
+            _extract_text_parts(getattr(choice, "text")))
         if content:
             return content
     if isinstance(choice, dict) and "text" in choice:
@@ -209,7 +210,8 @@ def _extract_choice_text(choice: Any) -> str | None:
             return content
 
     if hasattr(choice, "delta"):
-        content = _join_text_parts(_extract_text_parts(getattr(choice, "delta")))
+        content = _join_text_parts(
+            _extract_text_parts(getattr(choice, "delta")))
         if content:
             return content
     if isinstance(choice, dict) and "delta" in choice:
@@ -280,7 +282,8 @@ def get_model_name(config: LLMConfig) -> str:
         return f"openrouter/{config.model}"
 
     # For other providers, don't add prefix if model already has a known prefix
-    known_prefixes = ["openrouter/", "anthropic/", "gemini/", "deepseek/", "ollama/"]
+    known_prefixes = ["openrouter/", "anthropic/",
+                      "gemini/", "deepseek/", "ollama/"]
     if any(config.model.startswith(p) for p in known_prefixes):
         return config.model
 
@@ -355,23 +358,28 @@ async def check_llm_health(
         response = await litellm.acompletion(**kwargs)
         content = _extract_choice_text(response.choices[0])
         if not content:
-            # LLM-003: Empty response should mark health check as unhealthy
-            logging.warning(
-                "LLM health check returned empty content",
-                extra={"provider": config.provider, "model": config.model},
-            )
-            result: dict[str, Any] = {
-                "healthy": False,  # Fixed: empty content means unhealthy
-                "provider": config.provider,
-                "model": config.model,
-                "response_model": response.model if response else None,
-                "error_code": "empty_content",  # Changed from warning_code
-                "message": "LLM returned empty response",
-            }
-            if include_details:
-                result["test_prompt"] = _to_code_block(prompt)
-                result["model_output"] = _to_code_block(None)
-            return result
+            # Check if the model responded with reasoning/thinking content
+            message = response.choices[0].message
+            has_reasoning = getattr(message, "reasoning_content", None) or getattr(
+                message, "thinking", None)
+            if not has_reasoning:
+                # LLM-003: Empty response should mark health check as unhealthy
+                logging.warning(
+                    "LLM health check returned empty content",
+                    extra={"provider": config.provider, "model": config.model},
+                )
+                result: dict[str, Any] = {
+                    "healthy": False,  # Fixed: empty content means unhealthy
+                    "provider": config.provider,
+                    "model": config.model,
+                    "response_model": response.model if response else None,
+                    "error_code": "empty_content",  # Changed from warning_code
+                    "message": "LLM returned empty response",
+                }
+                if include_details:
+                    result["test_prompt"] = _to_code_block(prompt)
+                    result["model_output"] = _to_code_block(None)
+                return result
 
         result = {
             "healthy": True,
@@ -454,7 +462,8 @@ async def complete(
         return content
     except Exception as e:
         # Log the actual error server-side for debugging
-        logging.error(f"LLM completion failed: {e}", extra={"model": model_name})
+        logging.error(f"LLM completion failed: {e}", extra={
+                      "model": model_name})
         raise ValueError(
             "LLM completion failed. Please check your API configuration and try again."
         ) from e
@@ -552,9 +561,11 @@ def _extract_json(content: str, _depth: int = 0) -> str:
     """
     # JSON-010: Safety limits
     if _depth > MAX_JSON_EXTRACTION_RECURSION:
-        raise ValueError(f"JSON extraction exceeded max recursion depth: {_depth}")
+        raise ValueError(
+            f"JSON extraction exceeded max recursion depth: {_depth}")
     if len(content) > MAX_JSON_CONTENT_SIZE:
-        raise ValueError(f"Content too large for JSON extraction: {len(content)} bytes")
+        raise ValueError(
+            f"Content too large for JSON extraction: {len(content)} bytes")
 
     original = content
 
@@ -666,7 +677,8 @@ async def complete_json(
             if _supports_temperature(config.provider, model_name):
                 # LLM-002: Increase temperature on retry for variation
                 kwargs["temperature"] = _get_retry_temperature(attempt)
-            reasoning_effort = _get_reasoning_effort(config.provider, model_name)
+            reasoning_effort = _get_reasoning_effort(
+                config.provider, model_name)
             if reasoning_effort:
                 kwargs["reasoning_effort"] = reasoning_effort
 
@@ -680,7 +692,8 @@ async def complete_json(
             if not content:
                 raise ValueError("Empty response from LLM")
 
-            logging.debug(f"LLM response (attempt {attempt + 1}): {content[:300]}")
+            logging.debug(
+                f"LLM response (attempt {attempt + 1}): {content[:300]}")
 
             # Extract and parse JSON
             json_str = _extract_json(content)
@@ -715,7 +728,8 @@ async def complete_json(
                     + "\n\nIMPORTANT: Output ONLY a valid JSON object. Start with { and end with }."
                 )
                 continue
-            raise ValueError(f"Failed to parse JSON after {retries + 1} attempts: {e}")
+            raise ValueError(
+                f"Failed to parse JSON after {retries + 1} attempts: {e}")
 
         except Exception as e:
             last_error = e
