@@ -45,6 +45,7 @@ from app.services.improver import (
     extract_job_keywords,
     generate_improvements,
     improve_resume,
+    improve_resume_granular,
 )
 from app.services.refiner import refine_resume, calculate_keyword_match
 from app.schemas.refinement import RefinementConfig
@@ -179,6 +180,44 @@ def _preserve_personal_info(
     result = copy.deepcopy(improved_data)
     result["personalInfo"] = copy.deepcopy(original_info)
     return result, warnings
+
+
+def _restore_factual_fields(
+    original_data: dict[str, Any] | None,
+    improved_data: dict[str, Any],
+) -> dict[str, Any]:
+    """Restore immutable factual fields from the original resume.
+
+    After LLM processing, certain fields must never be changed regardless of
+    what the model output. This guard ensures institution names, degree titles,
+    employment dates, company names and job titles are identical to the source.
+    """
+    if not original_data:
+        return improved_data
+
+    result = copy.deepcopy(improved_data)
+
+    # Restore education factual fields (institution, degree, years)
+    original_edu = original_data.get("education", [])
+    improved_edu = result.get("education", [])
+    for idx, orig_entry in enumerate(original_edu):
+        if idx < len(improved_edu) and isinstance(improved_edu[idx], dict):
+            for field in ("institution", "degree", "years"):
+                if field in orig_entry:
+                    improved_edu[idx][field] = orig_entry[field]
+    result["education"] = improved_edu
+
+    # Restore workExperience factual fields (company, title, years)
+    original_exp = original_data.get("workExperience", [])
+    improved_exp = result.get("workExperience", [])
+    for idx, orig_entry in enumerate(original_exp):
+        if idx < len(improved_exp) and isinstance(improved_exp[idx], dict):
+            for field in ("company", "title", "years"):
+                if field in orig_entry:
+                    improved_exp[idx][field] = orig_entry[field]
+    result["workExperience"] = improved_exp
+
+    return result
 
 
 def _calculate_diff_from_resume(
@@ -502,21 +541,45 @@ async def improve_resume_preview_endpoint(
                     e,
                 )
         stage = "improve_resume"
-        improved_data = await improve_resume(
-            original_resume=resume["content"],
-            job_description=job["content"],
-            job_keywords=job_keywords,
-            language=language,
-            prompt_id=prompt_id,
-        )
+        workflow_mode = request.workflow_mode
+        original_data = _get_original_resume_data(resume)
+        if workflow_mode == "granular" and original_data:
+            logger.info("Using granular workflow for resume preview")
+            improved_data = await improve_resume_granular(
+                original_resume=resume["content"],
+                original_data=original_data,
+                job_description=job["content"],
+                job_keywords=job_keywords,
+                language=language,
+                prompt_id=prompt_id,
+            )
+        else:
+            if workflow_mode == "granular":
+                logger.warning(
+                    "Granular workflow requested but original_data unavailable; "
+                    "falling back to standard workflow"
+                )
+            improved_data = await improve_resume(
+                original_resume=resume["content"],
+                job_description=job["content"],
+                job_keywords=job_keywords,
+                language=language,
+                prompt_id=prompt_id,
+            )
         # Collect warnings throughout the process
         response_warnings: list[str] = []
 
         improved_data, preserve_warnings = _preserve_personal_info(
-            _get_original_resume_data(resume),
+            original_data,
             improved_data,
         )
         response_warnings.extend(preserve_warnings)
+
+        # Restore immutable factual fields overwritten by LLM
+        improved_data = _restore_factual_fields(
+            original_data,
+            improved_data,
+        )
 
         # Multi-pass refinement: keyword injection, AI phrase removal, alignment validation
         stage = "refine_resume"
@@ -534,12 +597,15 @@ async def improve_resume_preview_endpoint(
             if master_data:
                 initial_match = calculate_keyword_match(improved_data, job_keywords)
                 refinement_attempted = True
-                refinement_result = await refine_resume(
-                    initial_tailored=improved_data,
-                    master_resume=master_data,
-                    job_description=job["content"],
-                    job_keywords=job_keywords,
-                    config=RefinementConfig(),
+                refinement_result = await asyncio.wait_for(
+                    refine_resume(
+                        initial_tailored=improved_data,
+                        master_resume=master_data,
+                        job_description=job["content"],
+                        job_keywords=job_keywords,
+                        config=RefinementConfig(),
+                    ),
+                    timeout=90.0,
                 )
                 improved_data = refinement_result.refined_data
                 refinement_stats = RefinementStats(
@@ -571,12 +637,15 @@ async def improve_resume_preview_endpoint(
                     len(refinement_result.ai_phrases_removed),
                 )
         except Exception as e:
-            logger.warning("Refinement failed, using unrefined result: %s", e)
+            logger.warning("Refinement failed or timed out, using unrefined result: %s", e)
             if refinement_attempted:
-                response_warnings.append(f"Refinement failed: {str(e)}")
+                response_warnings.append(f"Refinement skipped: {str(e)}")
 
         improved_text = json.dumps(improved_data, indent=2)
-        preview_hash = _hash_improved_data(improved_data)
+        # Normalize through Pydantic before hashing so preview_hash matches
+        # what confirm will compute via request.improved_data.model_dump()
+        _normalized_for_hash = ResumeData.model_validate(improved_data).model_dump()
+        preview_hash = _hash_improved_data(_normalized_for_hash)
         preview_hashes = job.get("preview_hashes")
         if not isinstance(preview_hashes, dict):
             preview_hashes = {}
@@ -673,36 +742,37 @@ async def improve_resume_confirm_endpoint(
                 status_code=400,
                 detail="Invalid improved resume data. Please retry preview.",
             )
-        preview_hashes = job.get("preview_hashes")
-        allowed_hashes: set[str] = set()
-        if isinstance(preview_hashes, dict):
-            allowed_hashes.update(preview_hashes.values())
-        elif isinstance(preview_hashes, list):
-            allowed_hashes.update(
-                [value for value in preview_hashes if isinstance(value, str)]
-            )
-        else:
-            preview_hash = job.get("preview_hash")
-            if isinstance(preview_hash, str):
-                allowed_hashes.add(preview_hash)
+        if not request.partial_confirm:
+            preview_hashes = job.get("preview_hashes")
+            allowed_hashes: set[str] = set()
+            if isinstance(preview_hashes, dict):
+                allowed_hashes.update(preview_hashes.values())
+            elif isinstance(preview_hashes, list):
+                allowed_hashes.update(
+                    [value for value in preview_hashes if isinstance(value, str)]
+                )
+            else:
+                preview_hash = job.get("preview_hash")
+                if isinstance(preview_hash, str):
+                    allowed_hashes.add(preview_hash)
 
-        if not allowed_hashes:
-            logger.warning(
-                "Rejecting confirm; preview hash missing for job %s.",
-                request.job_id,
-            )
-            raise HTTPException(
-                status_code=400,
-                detail="Preview required before confirmation. Please retry preview.",
-            )
+            if not allowed_hashes:
+                logger.warning(
+                    "Rejecting confirm; preview hash missing for job %s.",
+                    request.job_id,
+                )
+                raise HTTPException(
+                    status_code=400,
+                    detail="Preview required before confirmation. Please retry preview.",
+                )
 
-        request_hash = _hash_improved_data(improved_data)
-        if request_hash not in allowed_hashes:
-            logger.warning("Resume confirm rejected due to preview hash mismatch.")
-            raise HTTPException(
-                status_code=400,
-                detail="Invalid improved resume data. Please retry preview.",
-            )
+            request_hash = _hash_improved_data(improved_data)
+            if request_hash not in allowed_hashes:
+                logger.warning("Resume confirm rejected due to preview hash mismatch.")
+                raise HTTPException(
+                    status_code=400,
+                    detail="Invalid improved resume data. Please retry preview.",
+                )
 
         stage = "calculate_diff"
         response_warnings: list[str] = []
@@ -808,22 +878,45 @@ async def improve_resume_endpoint(
 
         # Generate improved resume in the configured language
         prompt_id = request.prompt_id or _get_default_prompt_id()
-
-        improved_data = await improve_resume(
-            original_resume=resume["content"],
-            job_description=job["content"],
-            job_keywords=job_keywords,
-            language=language,
-            prompt_id=prompt_id,
-        )
+        workflow_mode = request.workflow_mode
+        original_data = _get_original_resume_data(resume)
+        if workflow_mode == "granular" and original_data:
+            logger.info("Using granular workflow for resume improvement")
+            improved_data = await improve_resume_granular(
+                original_resume=resume["content"],
+                original_data=original_data,
+                job_description=job["content"],
+                job_keywords=job_keywords,
+                language=language,
+                prompt_id=prompt_id,
+            )
+        else:
+            if workflow_mode == "granular":
+                logger.warning(
+                    "Granular workflow requested but original_data unavailable; "
+                    "falling back to standard workflow"
+                )
+            improved_data = await improve_resume(
+                original_resume=resume["content"],
+                job_description=job["content"],
+                job_keywords=job_keywords,
+                language=language,
+                prompt_id=prompt_id,
+            )
         # Collect warnings throughout the process
         response_warnings: list[str] = []
 
         improved_data, preserve_warnings = _preserve_personal_info(
-            _get_original_resume_data(resume),
+            original_data,
             improved_data,
         )
         response_warnings.extend(preserve_warnings)
+
+        # Restore immutable factual fields overwritten by LLM
+        improved_data = _restore_factual_fields(
+            original_data,
+            improved_data,
+        )
 
         # Multi-pass refinement: keyword injection, AI phrase removal, alignment validation
         refinement_stats: RefinementStats | None = None
@@ -840,12 +933,15 @@ async def improve_resume_endpoint(
             if master_data:
                 initial_match = calculate_keyword_match(improved_data, job_keywords)
                 refinement_attempted = True
-                refinement_result = await refine_resume(
-                    initial_tailored=improved_data,
-                    master_resume=master_data,
-                    job_description=job["content"],
-                    job_keywords=job_keywords,
-                    config=RefinementConfig(),
+                refinement_result = await asyncio.wait_for(
+                    refine_resume(
+                        initial_tailored=improved_data,
+                        master_resume=master_data,
+                        job_description=job["content"],
+                        job_keywords=job_keywords,
+                        config=RefinementConfig(),
+                    ),
+                    timeout=90.0,
                 )
                 improved_data = refinement_result.refined_data
                 refinement_stats = RefinementStats(
@@ -877,9 +973,9 @@ async def improve_resume_endpoint(
                     len(refinement_result.ai_phrases_removed),
                 )
         except Exception as e:
-            logger.warning("Refinement failed, using unrefined result: %s", e)
+            logger.warning("Refinement failed or timed out, using unrefined result: %s", e)
             if refinement_attempted:
-                response_warnings.append(f"Refinement failed: {str(e)}")
+                response_warnings.append(f"Refinement skipped: {str(e)}")
 
         # Convert improved data to JSON string for storage
         improved_text = json.dumps(improved_data, indent=2)
@@ -1152,7 +1248,10 @@ async def retry_processing(resume_id: str) -> ResumeUploadResponse:
         )
     except Exception as e:
         logger.warning(f"Retry processing failed for resume {resume_id}: {e}")
-        db.update_resume(resume_id, {"processing_status": "failed"})
+        try:
+            db.update_resume(resume_id, {"processing_status": "failed"})
+        except Exception:
+            pass
         return ResumeUploadResponse(
             message="Retry processing failed",
             request_id=str(uuid4()),

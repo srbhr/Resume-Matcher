@@ -43,7 +43,15 @@ describe('DiffPreviewModal', () => {
   it('renders fallback dialog when diff data is missing', () => {
     const onClose = vi.fn();
     const onConfirm = vi.fn();
-    render(<DiffPreviewModal isOpen onClose={onClose} onReject={vi.fn()} onConfirm={onConfirm} />);
+    render(
+      <DiffPreviewModal
+        isOpen
+        onClose={onClose}
+        onReject={vi.fn()}
+        onConfirm={onConfirm}
+        onConfirmPartial={vi.fn()}
+      />
+    );
 
     expect(screen.getByText('tailor.missingDiffDialog.title')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'tailor.missingDiffDialog.confirmLabel' }));
@@ -57,6 +65,7 @@ describe('DiffPreviewModal', () => {
         onClose={vi.fn()}
         onReject={vi.fn()}
         onConfirm={vi.fn()}
+        onConfirmPartial={vi.fn()}
         diffSummary={diffSummary}
         detailedChanges={detailedChanges}
       />
@@ -74,6 +83,7 @@ describe('DiffPreviewModal', () => {
         onClose={vi.fn()}
         onReject={vi.fn()}
         onConfirm={vi.fn()}
+        onConfirmPartial={vi.fn()}
         diffSummary={diffSummary}
         detailedChanges={detailedChanges}
       />
@@ -94,6 +104,7 @@ describe('DiffPreviewModal', () => {
         onClose={vi.fn()}
         onReject={onReject}
         onConfirm={onConfirm}
+        onConfirmPartial={vi.fn()}
         diffSummary={diffSummary}
         detailedChanges={detailedChanges}
       />

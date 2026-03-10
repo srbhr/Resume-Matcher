@@ -501,8 +501,37 @@
     "pasteJobDescription": "Pegar Descripción del Trabajo",
     "pasteJobDescriptionBelow": "Pega la descripción del trabajo abajo",
     "jobDescriptionPlaceholder": "Pega la descripción del trabajo aquí...",
+    "inputMode": {
+      "paste": "Pegar Texto",
+      "url": "Desde URL"
+    },
+    "urlInput": {
+      "placeholder": "Pega el enlace de la oferta de trabajo (LinkedIn, Indeed, web de la empresa)...",
+      "fetchButton": "Obtener",
+      "fetching": "Obteniendo...",
+      "hint": "La app extraerá la descripción automáticamente. El currículum se nombrará con el puesto y la empresa."
+    },
     "promptLabel": "Intensidad de ajuste",
     "promptDescription": "Elige qué tanto alinear tu currículum con la descripción del puesto.",
+    "workflowLabel": "Flujo de trabajo",
+    "workflowDescription": "Elige si ajustar todo el currículum a la vez o sección por sección.",
+    "workflowOptions": {
+      "standard": {
+        "label": "Estándar",
+        "description": "Reescribe el currículum completo en un solo pase."
+      },
+      "granular": {
+        "label": "Sección por sección",
+        "description": "Pases enfocados por separado para habilidades y experiencia — menor riesgo de errores."
+      }
+    },
+    "progress": {
+      "title": "Generando CV personalizado",
+      "uploading": "Subiendo descripción del trabajo",
+      "tailoring": "La IA está adaptando tu CV",
+      "elapsedSeconds": "{seconds}s transcurridos",
+      "slowModelNote": "Los modelos de IA locales pueden tardar varios minutos. Por favor espera y no cierres esta página."
+    },
     "promptOptions": {
       "nudge": {
         "label": "Ajuste leve",
@@ -547,7 +576,10 @@
       "projectChanges": "Cambios en proyectos",
       "certificationChanges": "Cambios en certificaciones",
       "rejectButton": "Rechazar y regenerar",
-      "confirmButton": "Confirmar y guardar"
+      "confirmButton": "Confirmar y guardar",
+      "confirmPartialButton": "Confirmar seleccionados ({accepted}/{total})",
+      "selectAll": "Seleccionar todo",
+      "deselectAll": "Deseleccionar todo"
     },
     "regenerateDialog": {
       "title": "¿Regenerar el currículum personalizado?",
@@ -565,7 +597,10 @@
       "rateLimit": "Se alcanzó el límite de tasa. Espera un momento e inténtalo de nuevo.",
       "failedToGenerate": "No se pudo generar el currículum. Revisa tu configuración e inténtalo de nuevo.",
       "failedToPreview": "No se pudo previsualizar el currículum. Revisa tu configuración e inténtalo de nuevo.",
-      "failedToConfirm": "No se pudo confirmar el currículum. Inténtalo de nuevo."
+      "failedToConfirm": "No se pudo confirmar el currículum. Inténtalo de nuevo.",
+      "failedToFetchUrl": "No se pudo obtener la descripción del trabajo desde esta URL. Intenta copiar el texto manualmente.",
+      "invalidUrl": "Introduce una URL válida que comience con http:// o https://",
+      "urlTimeout": "Tiempo de espera agotado. La página tardó demasiado en responder."
     }
   },
   "settings": {

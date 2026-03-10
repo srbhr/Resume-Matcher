@@ -1,5 +1,7 @@
 """Health check and status endpoints."""
 
+import asyncio
+import time
 from fastapi import APIRouter
 
 from app.database import db
@@ -7,6 +9,24 @@ from app.llm import check_llm_health, get_llm_config
 from app.schemas import HealthResponse, StatusResponse
 
 router = APIRouter(tags=["Health"])
+
+# Cache for LLM health check result to avoid hammering Ollama on every /status poll
+_health_cache: dict = {"result": None, "ts": 0.0}
+_HEALTH_CACHE_TTL = 30  # seconds
+
+
+async def _get_cached_llm_health(config) -> dict:  # type: ignore[no-untyped-def]
+    """Return cached health result if fresh, otherwise run a new check."""
+    now = time.monotonic()
+    if _health_cache["result"] is not None and (now - _health_cache["ts"]) < _HEALTH_CACHE_TTL:
+        return _health_cache["result"]
+    try:
+        result = await asyncio.wait_for(check_llm_health(config), timeout=10.0)
+    except Exception:
+        result = {"healthy": False, "error": "health check timed out or failed"}
+    _health_cache["result"] = result
+    _health_cache["ts"] = now
+    return result
 
 
 @router.get("/health", response_model=HealthResponse)
@@ -30,7 +50,7 @@ async def get_status() -> StatusResponse:
         - Database statistics
     """
     config = get_llm_config()
-    llm_status = await check_llm_health(config)
+    llm_status = await _get_cached_llm_health(config)
     db_stats = db.get_stats()
 
     return StatusResponse(
