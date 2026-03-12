@@ -294,7 +294,7 @@
         "title": "Título",
         "organization": "Organização",
         "location": "Localização",
-        "years": "Jan 2020 - Present",
+        "years": "Jan 2020 - Presente",
         "description": "Descreva sua contribuição..."
       },
       "noEntries": "// NENHUMA ENTRADA DE {label}",
@@ -312,7 +312,7 @@
           "jobTitle": "Desenvolvedor Sênior",
           "company": "Tech Corp",
           "location": "Remoto / Cidade",
-          "years": "Jan 2020 - Present",
+          "years": "Jan 2020 - Presente",
           "description": "Descreva sua conquista..."
         }
       },
@@ -328,7 +328,7 @@
         "placeholders": {
           "institution": "Nome da Universidade",
           "degree": "Bacharelado em Ciência da Computação",
-          "years": "Aug 2016 - May 2020",
+          "years": "Ago 2016 - Mai 2020",
           "description": "Detalhes adicionais..."
         }
       },

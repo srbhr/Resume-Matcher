@@ -18,8 +18,19 @@ echo "🔍 Searching for test that creates: $POLLUTION_CHECK"
 echo "Test pattern: $TEST_PATTERN"
 echo ""
 
-# Get list of test files
+# Check for pre-existing pollution before any tests run
+if [ -e "$POLLUTION_CHECK" ]; then
+  echo "❌ ABORT: $POLLUTION_CHECK already exists before any test ran."
+  echo "   Clean the environment first, then re-run."
+  exit 2
+fi
+
+# Get list of test files (handle empty results correctly)
 TEST_FILES=$(find . -path "$TEST_PATTERN" | sort)
+if [ -z "$TEST_FILES" ]; then
+  echo "No test files found matching: $TEST_PATTERN"
+  exit 1
+fi
 TOTAL=$(echo "$TEST_FILES" | wc -l | tr -d ' ')
 
 echo "Found $TOTAL test files"
@@ -28,13 +39,6 @@ echo ""
 COUNT=0
 for TEST_FILE in $TEST_FILES; do
   COUNT=$((COUNT + 1))
-
-  # Skip if pollution already exists
-  if [ -e "$POLLUTION_CHECK" ]; then
-    echo "⚠️  Pollution already exists before test $COUNT/$TOTAL"
-    echo "   Skipping: $TEST_FILE"
-    continue
-  fi
 
   echo "[$COUNT/$TOTAL] Testing: $TEST_FILE"
 

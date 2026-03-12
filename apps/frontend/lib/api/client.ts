@@ -38,7 +38,7 @@ export const API_BASE = resolveRuntimeApiBase(toApiBase(API_URL));
  *
  * @param endpoint - API endpoint path or absolute URL
  * @param options - Standard RequestInit options
- * @param timeoutMs - Optional request timeout in milliseconds (default: 120_000)
+ * @param timeoutMs - Optional request timeout in milliseconds (default: 240_000)
  */
 export async function apiFetch(
   endpoint: string,

@@ -25,14 +25,26 @@ URL_HOST=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --project-dir)
+      if [[ -z "${2:-}" || "$2" == --* ]]; then
+        echo '{"error": "--project-dir requires a value"}'
+        exit 1
+      fi
       PROJECT_DIR="$2"
       shift 2
       ;;
     --host)
+      if [[ -z "${2:-}" || "$2" == --* ]]; then
+        echo '{"error": "--host requires a value"}'
+        exit 1
+      fi
       BIND_HOST="$2"
       shift 2
       ;;
     --url-host)
+      if [[ -z "${2:-}" || "$2" == --* ]]; then
+        echo '{"error": "--url-host requires a value"}'
+        exit 1
+      fi
       URL_HOST="$2"
       shift 2
       ;;
@@ -99,8 +111,7 @@ fi
 # Foreground mode for environments that reap detached/background processes.
 if [[ "$FOREGROUND" == "true" ]]; then
   echo "$$" > "$PID_FILE"
-  env BRAINSTORM_DIR="$SCREEN_DIR" BRAINSTORM_HOST="$BIND_HOST" BRAINSTORM_URL_HOST="$URL_HOST" BRAINSTORM_OWNER_PID="$OWNER_PID" node server.js
-  exit $?
+  exec env BRAINSTORM_DIR="$SCREEN_DIR" BRAINSTORM_HOST="$BIND_HOST" BRAINSTORM_URL_HOST="$URL_HOST" BRAINSTORM_OWNER_PID="$OWNER_PID" node server.js
 fi
 
 # Start server, capturing output to log file

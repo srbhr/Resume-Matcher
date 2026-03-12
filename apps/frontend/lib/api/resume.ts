@@ -114,7 +114,7 @@ async function postImprove(
 ): Promise<ImprovedResult> {
   let response: Response;
   try {
-    response = await apiPost(endpoint, payload, 300_000);
+    response = await apiPost(endpoint, payload, 240_000);
   } catch (networkError) {
     console.error(`Network error during ${endpoint}:`, networkError);
     throw networkError;

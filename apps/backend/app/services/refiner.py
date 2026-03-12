@@ -298,9 +298,9 @@ def validate_master_alignment(
             violations.append(
                 AlignmentViolation(
                     field_path="additional.technicalSkills",
-                    violation_type="fabricated_skill",
+                    violation_type="skill_variant",
                     value=skill,
-                    severity="warning",
+                    severity="info",
                 )
             )
         else:

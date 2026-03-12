@@ -365,8 +365,9 @@ def get_router(config: LLMConfig | None = None) -> tuple[Router, LLMConfig]:
             _router = _build_router(config)
             _router_config_key = key
             logging.info("LiteLLM Router rebuilt for %s/%s", config.provider, config.model)
+        router = _router
 
-    return _router, config
+    return router, config
 
 
 def _supports_temperature(provider: str, model: str) -> bool:

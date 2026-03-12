@@ -94,7 +94,10 @@ _MONTH_PATTERN = re.compile(
 def _has_month_in_dates(data: dict[str, Any]) -> bool:
     """Check whether any years field in the structured data includes a month."""
     for section_key in ("workExperience", "education", "personalProjects"):
-        for entry in data.get(section_key, []):
+        entries = data.get(section_key, [])
+        if not isinstance(entries, list):
+            continue
+        for entry in entries:
             if isinstance(entry, dict):
                 years = entry.get("years", "")
                 if isinstance(years, str) and _MONTH_PATTERN.search(years):
@@ -103,7 +106,10 @@ def _has_month_in_dates(data: dict[str, Any]) -> bool:
     if isinstance(custom_sections, dict):
         for section in custom_sections.values():
             if isinstance(section, dict) and section.get("sectionType") == "itemList":
-                for item in section.get("items", []):
+                items = section.get("items", [])
+                if not isinstance(items, list):
+                    continue
+                for item in items:
                     if isinstance(item, dict):
                         years = item.get("years", "")
                         if isinstance(years, str) and _MONTH_PATTERN.search(years):

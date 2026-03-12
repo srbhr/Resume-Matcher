@@ -294,7 +294,7 @@
         "title": "标题",
         "organization": "组织/公司",
         "location": "地点",
-        "years": "Jan 2020 - Present",
+        "years": "2020年1月 - 至今",
         "description": "描述你的贡献..."
       },
       "noEntries": "// 暂无{label}",
@@ -312,7 +312,7 @@
           "jobTitle": "高级开发工程师",
           "company": "科技公司",
           "location": "远程 / 城市",
-          "years": "Jan 2020 - Present",
+          "years": "2020年1月 - 至今",
           "description": "描述你的成果..."
         }
       },
@@ -328,7 +328,7 @@
         "placeholders": {
           "institution": "某某大学",
           "degree": "工学学士",
-          "years": "Aug 2016 - May 2020",
+          "years": "2016年8月 - 2020年5月",
           "description": "补充说明..."
         }
       },
@@ -343,7 +343,7 @@
         "placeholders": {
           "projectName": "Resume Matcher",
           "role": "作者",
-          "years": "Mar 2023",
+          "years": "2023年3月",
           "github": "github.com/username/project",
           "website": "https://project-demo.com",
           "description": "项目细节..."

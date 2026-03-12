@@ -37,11 +37,6 @@ def _extract_markdown_dates(markdown: str) -> list[str]:
     return _MD_DATE_RE.findall(markdown)
 
 
-def _normalize_date_for_match(date_str: str) -> str:
-    """Normalize a date string for fuzzy comparison (lowercase, strip)."""
-    return re.sub(r"\s+", " ", date_str.strip().lower())
-
-
 def restore_dates_from_markdown(
     parsed_data: dict[str, Any],
     markdown: str,

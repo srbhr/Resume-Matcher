@@ -195,7 +195,10 @@ async def generate_enhancements(request: EnhanceRequest) -> EnhancementPreview:
     # question_id → question dict, populated only in the legacy path
     questions_by_id: dict[str, dict] = {}
 
-    if all(a.item_id for a in request.answers):
+    if all(a.item_id for a in request.answers) and all(
+        _extract_item_from_resume(processed_data, a.item_id or "")
+        for a in request.answers
+    ):
         # Fast path — no re-analysis needed
         for answer in request.answers:
             item_id = answer.item_id or ""

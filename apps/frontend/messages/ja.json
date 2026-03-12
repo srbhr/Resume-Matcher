@@ -294,7 +294,7 @@
         "title": "タイトル",
         "organization": "組織",
         "location": "場所",
-        "years": "Jan 2020 - Present",
+        "years": "2020年1月 - 現在",
         "description": "あなたの貢献を説明..."
       },
       "noEntries": "// {label} の項目はありません",
@@ -312,7 +312,7 @@
           "jobTitle": "シニアエンジニア",
           "company": "Tech Corp",
           "location": "リモート / 都市",
-          "years": "Jan 2020 - Present",
+          "years": "2020年1月 - 現在",
           "description": "実績を説明..."
         }
       },
@@ -328,7 +328,7 @@
         "placeholders": {
           "institution": "大学名",
           "degree": "学士（理学）",
-          "years": "Aug 2016 - May 2020",
+          "years": "2016年8月 - 2020年5月",
           "description": "追加の詳細..."
         }
       },
@@ -343,7 +343,7 @@
         "placeholders": {
           "projectName": "Resume Matcher",
           "role": "作成者",
-          "years": "Mar 2023",
+          "years": "2023年3月",
           "github": "github.com/username/project",
           "website": "https://project-demo.com",
           "description": "プロジェクト詳細..."
