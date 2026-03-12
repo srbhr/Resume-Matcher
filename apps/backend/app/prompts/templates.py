@@ -34,7 +34,7 @@ RESUME_SCHEMA_EXAMPLE = """{
       "title": "Senior Software Engineer",
       "company": "Tech Corp",
       "location": "San Francisco, CA",
-      "years": "2020 - Present",
+      "years": "Jan 2020 - Present",
       "description": [
         "Led development of microservices architecture",
         "Improved system performance by 40%"
@@ -55,7 +55,7 @@ RESUME_SCHEMA_EXAMPLE = """{
       "id": 1,
       "name": "Open Source Tool",
       "role": "Creator & Maintainer",
-      "years": "2021 - Present",
+      "years": "Mar 2021 - Present",
       "description": [
         "Built CLI tool with 1000+ GitHub stars",
         "Used by 50+ companies worldwide"
@@ -76,7 +76,70 @@ RESUME_SCHEMA_EXAMPLE = """{
           "id": 1,
           "title": "Paper Title",
           "subtitle": "Journal Name",
-          "years": "2023",
+          "years": "Jun 2023",
+          "description": ["Brief description of the publication"]
+        }
+      ]
+    },
+    "volunteer_work": {
+      "sectionType": "text",
+      "text": "Description of volunteer activities..."
+    }
+  }
+}"""
+
+# Schema for improve prompts - excludes personalInfo (preserved from original)
+IMPROVE_SCHEMA_EXAMPLE = """{
+  "summary": "Experienced software engineer with 5+ years...",
+  "workExperience": [
+    {
+      "id": 1,
+      "title": "Senior Software Engineer",
+      "company": "Tech Corp",
+      "location": "San Francisco, CA",
+      "years": "Jan 2020 - Present",
+      "description": [
+        "Led development of microservices architecture",
+        "Improved system performance by 40%"
+      ]
+    }
+  ],
+  "education": [
+    {
+      "id": 1,
+      "institution": "University of California",
+      "degree": "B.S. Computer Science",
+      "years": "2014 - 2018",
+      "description": "Graduated with honors"
+    }
+  ],
+  "personalProjects": [
+    {
+      "id": 1,
+      "name": "Open Source Tool",
+      "role": "Creator & Maintainer",
+      "years": "Mar 2021 - Present",
+      "description": [
+        "Built CLI tool with 1000+ GitHub stars",
+        "Used by 50+ companies worldwide"
+      ]
+    }
+  ],
+  "additional": {
+    "technicalSkills": ["Python", "JavaScript", "AWS", "Docker"],
+    "languages": ["English (Native)", "Spanish (Conversational)"],
+    "certificationsTraining": ["AWS Solutions Architect"],
+    "awards": ["Employee of the Year 2022"]
+  },
+  "customSections": {
+    "publications": {
+      "sectionType": "itemList",
+      "items": [
+        {
+          "id": 1,
+          "title": "Paper Title",
+          "subtitle": "Journal Name",
+          "years": "Jun 2023",
           "description": ["Brief description of the publication"]
         }
       ]
@@ -103,10 +166,10 @@ Custom section types:
 Rules:
 - Use "" for missing text fields, [] for missing arrays, null for optional fields
 - Number IDs starting from 1
-- Format years as "YYYY - YYYY" or "YYYY - Present"
+- Format dates preserving the original precision. Keep months when present: "Jan 2020 - Dec 2023", "May 2021 - Present". Use "YYYY - YYYY" only when the source has no months.
 - Use snake_case for custom section keys (e.g., "volunteer_work", "publications")
 - Preserve the original section name as a descriptive key
-- Normalize dates: "Jan 2020" → "2020", "2020-2021" → "2020 - 2021", "Current"/"Ongoing" → "Present"
+- Normalize date separators: "2020-2021" → "2020 - 2021", "Current"/"Ongoing" → "Present". Do NOT discard months.
 - For ambiguous dates like "3 years experience", infer approximate years from context or use "~YYYY"
 - Flag overlapping dates (concurrent roles) by preserving both, don't merge
 
@@ -138,9 +201,10 @@ CRITICAL_TRUTHFULNESS_RULES_TEMPLATE = """CRITICAL TRUTHFULNESS RULES - NEVER VI
 3. DO NOT add company names, product names, or technical terms not in the original
 4. DO NOT upgrade experience level (e.g., "Junior" -> "Senior")
 5. DO NOT add languages, frameworks, or platforms the candidate hasn't used
-6. DO NOT extend employment dates or change timelines (start/end years)
+6. DO NOT extend employment dates or change timelines. Copy date ranges exactly as they appear, including months.
 7. {rule_7}
 8. Preserve factual accuracy - only use information provided by the candidate
+9. NEVER remove existing skills, certifications, languages, or awards. You may reorder by relevance, but every original item must remain.
 
 Violation of these rules could cause serious problems for the candidate in job interviews.
 """
@@ -167,6 +231,7 @@ IMPROVE_RESUME_PROMPT_NUDGE = """Lightly nudge this resume toward the job descri
 {critical_truthfulness_rules}
 
 IMPORTANT: Generate ALL text content (summary, descriptions, skills) in {output_language}.
+Do NOT include personalInfo in your output - it will be preserved from the original resume.
 
 Rules:
 - Make minimal, conservative edits only where there is a clear existing match
@@ -175,8 +240,8 @@ Rules:
 - Do NOT add new bullet points or sections
 - Preserve original bullet count and ordering within each section
 - Keep proper nouns (names, company names, locations) unchanged
-- Preserve the structure of any customSections from the original resume
-- Preserve original date ranges exactly - do not modify years
+- For customSections: preserve exact structure, item count, titles, subtitles, and years. If an item's description is an empty array [] in the original, keep it empty []. Do NOT generate descriptions for items that had none.
+- Copy the "years" field values EXACTLY as they appear in the original resume (including any month prefixes like "Jan 2020 - Present"). Do not shorten, reformat, or drop months.
 - If the resume is non-technical, do NOT add technical jargon
 - Do NOT use em dash ("—") anywhere in the writing/output, even if it exists, remove it
 
@@ -197,14 +262,15 @@ IMPROVE_RESUME_PROMPT_KEYWORDS = """Enhance this resume with relevant keywords f
 {critical_truthfulness_rules}
 
 IMPORTANT: Generate ALL text content (summary, descriptions, skills) in {output_language}.
+Do NOT include personalInfo in your output - it will be preserved from the original resume.
 
 Rules:
 - Strengthen alignment by weaving in relevant keywords where evidence already exists
 - You may rephrase bullet points to include keyword phrasing
 - Do NOT introduce new skills, tools, or certifications not in the resume
 - Do NOT change role, industry, or seniority level
-- Preserve the structure of any customSections from the original resume
-- Preserve original date ranges exactly - do not modify years
+- For customSections: preserve exact structure, item count, titles, subtitles, and years. If an item's description is an empty array [] in the original, keep it empty []. Do NOT generate descriptions for items that had none.
+- Copy the "years" field values EXACTLY as they appear in the original resume (including any month prefixes like "Jan 2020 - Present"). Do not shorten, reformat, or drop months.
 - If resume is non-technical, keep language non-technical while still aligning keywords
 - Do NOT use em dash ("—") anywhere in the writing/output, even if it exists, remove it
 
@@ -225,16 +291,17 @@ IMPROVE_RESUME_PROMPT_FULL = """Tailor this resume for the job. Output ONLY the 
 {critical_truthfulness_rules}
 
 IMPORTANT: Generate ALL text content (summary, descriptions, skills) in {output_language}.
+Do NOT include personalInfo in your output - it will be preserved from the original resume.
 
 Rules:
-- Rephrase content to highlight relevant experience
+- Make targeted adjustments to bullet points to align with job description phrasing. Preserve the candidate's original details and voice - adjust wording, do not rewrite entirely.
 - DO NOT invent new information
-- Use action verbs and quantifiable achievements
+- Preserve existing action verbs. Do not invent quantifiable achievements not in the original.
 - Keep proper nouns (names, company names, locations) unchanged
 - Translate job titles, descriptions, and skills to {output_language}
-- Preserve the structure of any customSections from the original resume
+- For customSections: preserve exact structure, item count, titles, subtitles, and years. If an item's description is an empty array [] in the original, keep it empty []. Do NOT generate descriptions for items that had none.
 - Improve custom section content the same way as standard sections
-- Preserve original date ranges exactly - do not modify years
+- Copy the "years" field values EXACTLY as they appear in the original resume (including any month prefixes like "Jan 2020 - Present"). Do not shorten, reformat, or drop months.
 - Calculate and emphasize total relevant experience duration when it matches requirements
 - Do NOT use em dash ("—") anywhere in the writing/output, even if it exists, remove it
 

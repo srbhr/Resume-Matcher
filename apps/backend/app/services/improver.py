@@ -15,7 +15,7 @@ from app.prompts import (
     IMPROVE_RESUME_PROMPTS,
     get_language_name,
 )
-from app.prompts.templates import RESUME_SCHEMA
+from app.prompts.templates import IMPROVE_SCHEMA_EXAMPLE
 from app.schemas import ResumeData, ResumeFieldDiff, ResumeDiffSummary
 
 logger = logging.getLogger(__name__)
@@ -52,14 +52,11 @@ def _sanitize_user_input(text: str) -> str:
 
 
 def _check_for_truncation(data: dict[str, Any]) -> None:
-    """LLM-006: Check for obvious truncation signs before Pydantic validation.
+    """LLM-006: Log warnings for obvious truncation signs before Pydantic validation.
 
-    Raises ValueError if data appears truncated.
+    Note: personalInfo is intentionally excluded — the improve prompts tell the
+    LLM to skip it, and _preserve_personal_info() restores it from the original.
     """
-    required_sections = ["personalInfo"]
-    for section in required_sections:
-        if section not in data:
-            raise ValueError(f"Missing required section: {section}")
 
     # Check for suspiciously empty required arrays
     if "workExperience" in data and data["workExperience"] == []:
@@ -87,12 +84,71 @@ async def extract_job_keywords(job_description: str) -> dict[str, Any]:
     )
 
 
+_MONTH_PATTERN = re.compile(
+    r"\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\b",
+    re.IGNORECASE,
+)
+
+
+def _has_month_in_dates(data: dict[str, Any]) -> bool:
+    """Check whether any years field in the structured data includes a month."""
+    for section_key in ("workExperience", "education", "personalProjects"):
+        entries = data.get(section_key, [])
+        if not isinstance(entries, list):
+            continue
+        for entry in entries:
+            if isinstance(entry, dict):
+                years = entry.get("years", "")
+                if isinstance(years, str) and _MONTH_PATTERN.search(years):
+                    return True
+    custom_sections = data.get("customSections", {})
+    if isinstance(custom_sections, dict):
+        for section in custom_sections.values():
+            if isinstance(section, dict) and section.get("sectionType") == "itemList":
+                items = section.get("items", [])
+                if not isinstance(items, list):
+                    continue
+                for item in items:
+                    if isinstance(item, dict):
+                        years = item.get("years", "")
+                        if isinstance(years, str) and _MONTH_PATTERN.search(years):
+                            return True
+    return False
+
+
+def _prepare_keywords_for_prompt(job_keywords: dict[str, Any]) -> str:
+    """Format job keywords as a focused, readable list for the LLM prompt.
+
+    Extracts only actionable fields (skills and keywords) and drops
+    informational fields that add noise without helping the LLM tailor.
+    """
+    sections: list[str] = []
+
+    required = job_keywords.get("required_skills", [])
+    if required:
+        sections.append("Required skills to emphasize:\n- " + "\n- ".join(str(s) for s in required))
+
+    preferred = job_keywords.get("preferred_skills", [])
+    if preferred:
+        sections.append(
+            "Preferred skills (include only if resume supports them):\n- "
+            + "\n- ".join(str(s) for s in preferred)
+        )
+
+    keywords = job_keywords.get("keywords", [])
+    if keywords:
+        sections.append("Additional keywords to weave in naturally:\n- " + "\n- ".join(str(k) for k in keywords))
+
+    return "\n\n".join(sections) if sections else "No specific keywords extracted."
+
+
 async def improve_resume(
     original_resume: str,
     job_description: str,
     job_keywords: dict[str, Any],
     language: str = "en",
     prompt_id: str | None = None,
+    original_resume_data: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Improve resume to better match job description.
 
@@ -101,6 +157,9 @@ async def improve_resume(
         job_description: Target job description
         job_keywords: Extracted job keywords
         language: Output language code (en, es, zh, ja)
+        prompt_id: Which tailor prompt to use
+        original_resume_data: Structured resume JSON; used instead of
+            markdown when available for higher-fidelity LLM input
 
     Returns:
         Improved resume data matching ResumeData schema
@@ -108,7 +167,7 @@ async def improve_resume(
     LLM-006: Validates for truncation before Pydantic validation.
     LLM-011: Sanitizes job description to prevent prompt injection.
     """
-    keywords_str = json.dumps(job_keywords, indent=2)
+    keywords_str = _prepare_keywords_for_prompt(job_keywords)
     output_language = get_language_name(language)
 
     selected_prompt_id = prompt_id or DEFAULT_IMPROVE_PROMPT_ID
@@ -127,11 +186,26 @@ async def improve_resume(
     # LLM-011: Sanitize job description to prevent prompt injection
     sanitized_jd = _sanitize_user_input(job_description)
 
+    # Use structured JSON when available for higher-fidelity LLM input,
+    # but fall back to raw markdown if the structured data has truncated
+    # (year-only) dates — the markdown preserves months from the original PDF.
+    if original_resume_data is not None:
+        if _has_month_in_dates(original_resume_data):
+            resume_input = json.dumps(original_resume_data, indent=2)
+        else:
+            logger.info(
+                "Structured resume data has year-only dates; using raw markdown "
+                "to preserve month precision."
+            )
+            resume_input = original_resume
+    else:
+        resume_input = original_resume
+
     prompt = prompt_template.format(
         job_description=sanitized_jd,
         job_keywords=keywords_str,
-        original_resume=original_resume,
-        schema=RESUME_SCHEMA,
+        original_resume=resume_input,
+        schema=IMPROVE_SCHEMA_EXAMPLE,
         output_language=output_language,
         critical_truthfulness_rules=truthfulness_rules,
     )

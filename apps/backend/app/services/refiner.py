@@ -98,7 +98,7 @@ async def refine_resume(
 
     # Pass 2: AI phrase removal and polish (local, no LLM call)
     if config.enable_ai_phrase_removal:
-        current, removed = remove_ai_phrases(current)
+        current, removed = remove_ai_phrases(current, job_description)
         ai_phrases_found.extend(removed)
         if removed:
             logger.info("Removed %d AI phrases: %s", len(removed), removed)
@@ -120,9 +120,9 @@ async def refine_resume(
             )
 
             if critical_violations:
-                # LLM-008: Block resume with fabricated content
+                # LLM-008: Remove fabricated content before returning
                 logger.error(
-                    "Critical alignment violations detected - blocking resume: %s",
+                    "Alignment violations found - removing fabricated content: %s",
                     [v.value for v in critical_violations],
                 )
                 # Fix violations before returning
@@ -198,24 +198,42 @@ def analyze_keyword_gaps(
     )
 
 
-def remove_ai_phrases(data: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
+def remove_ai_phrases(
+    data: dict[str, Any],
+    job_description: str = "",
+) -> tuple[dict[str, Any], list[str]]:
     """Remove AI-generated phrases from resume content.
 
     This is a local operation that doesn't require an LLM call.
     It performs case-insensitive replacement of blacklisted phrases.
+    Phrases that appear in the job description are protected from removal.
 
     Args:
         data: Resume data dictionary
+        job_description: Job description text; phrases found here are skipped
 
     Returns:
         Tuple of (cleaned data, list of removed phrases)
     """
+    # Build set of JD-protected phrases
+    jd_lower = job_description.lower()
+    jd_protected: set[str] = set()
+    for phrase in AI_PHRASE_BLACKLIST:
+        if phrase.lower() in jd_lower:
+            jd_protected.add(phrase.lower())
+
+    if jd_protected:
+        logger.info("JD-protected phrases (skipping removal): %s", jd_protected)
+
     # Use a set to avoid duplicate tracking
     removed: set[str] = set()
 
     def clean_text(text: str) -> str:
         cleaned = text
         for phrase in AI_PHRASE_BLACKLIST:
+            # Skip phrases that appear in the job description
+            if phrase.lower() in jd_protected:
+                continue
             if phrase.lower() in cleaned.lower():
                 removed.add(phrase)
                 replacement = AI_PHRASE_REPLACEMENTS.get(phrase.lower(), "")
@@ -255,7 +273,7 @@ def validate_master_alignment(
     """
     violations: list[AlignmentViolation] = []
 
-    # Check skills
+    # Check skills - use full resume text for broader matching
     tailored_skills = set(
         s.lower()
         for s in tailored.get("additional", {}).get("technicalSkills", [])
@@ -266,16 +284,34 @@ def validate_master_alignment(
         for s in master.get("additional", {}).get("technicalSkills", [])
         if isinstance(s, str)
     )
+    master_full_text = _extract_all_text(master).lower()
 
     for skill in tailored_skills - master_skills:
-        violations.append(
-            AlignmentViolation(
-                field_path="additional.technicalSkills",
-                violation_type="fabricated_skill",
-                value=skill,
-                severity="critical",
-            )
+        # Check substring/containment: e.g. "Python" in "Python 3.x"
+        has_substring_match = any(
+            skill in ms or ms in skill for ms in master_skills if ms
         )
+        # Check if skill appears anywhere in master resume text
+        found_in_text = _keyword_in_text(skill, master_full_text)
+
+        if has_substring_match or found_in_text:
+            violations.append(
+                AlignmentViolation(
+                    field_path="additional.technicalSkills",
+                    violation_type="skill_variant",
+                    value=skill,
+                    severity="info",
+                )
+            )
+        else:
+            violations.append(
+                AlignmentViolation(
+                    field_path="additional.technicalSkills",
+                    violation_type="fabricated_skill",
+                    value=skill,
+                    severity="critical",
+                )
+            )
 
     # Check certifications
     tailored_certs = set(
@@ -581,6 +617,38 @@ def _extract_all_text_cached(data_json: str) -> str:
         certs = additional.get("certificationsTraining", [])
         if isinstance(certs, list):
             parts.extend(str(c) for c in certs)
+        languages = additional.get("languages", [])
+        if isinstance(languages, list):
+            parts.extend(str(lang) for lang in languages)
+        awards = additional.get("awards", [])
+        if isinstance(awards, list):
+            parts.extend(str(a) for a in awards)
+
+    # Custom sections
+    custom_sections = data.get("customSections", {})
+    if isinstance(custom_sections, dict):
+        for section in custom_sections.values():
+            if not isinstance(section, dict):
+                continue
+            section_type = section.get("sectionType", "")
+            if section_type == "itemList":
+                for item in section.get("items", []):
+                    if isinstance(item, dict):
+                        parts.append(str(item.get("title", "")))
+                        parts.append(str(item.get("subtitle", "")))
+                        desc = item.get("description", [])
+                        if isinstance(desc, list):
+                            parts.extend(str(d) for d in desc)
+                        elif isinstance(desc, str):
+                            parts.append(desc)
+            elif section_type == "text":
+                text = section.get("text", "")
+                if isinstance(text, str):
+                    parts.append(text)
+            elif section_type == "stringList":
+                items = section.get("items", [])
+                if isinstance(items, list):
+                    parts.extend(str(i) for i in items)
 
     return " ".join(p for p in parts if p)
 

@@ -6,6 +6,7 @@ const nextConfig: NextConfig = {
   output: 'standalone',
   experimental: {
     turbopackUseSystemTlsCerts: true,
+    proxyTimeout: 240_000,
   },
   async rewrites() {
     // Note: Next.js serves filesystem routes (app/api/) before rewrites.

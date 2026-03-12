@@ -40,11 +40,11 @@ class AlignmentViolation(BaseModel):
 
     field_path: str = Field(description="Path to the violated field in resume data")
     violation_type: str = Field(
-        description="Type: fabricated_skill, fabricated_cert, fabricated_company, invented_content"
+        description="Type: fabricated_skill, skill_variant, fabricated_cert, fabricated_company, invented_content"
     )
     value: str = Field(description="The violating value")
     severity: str = Field(
-        default="warning", description="Severity: critical or warning"
+        default="warning", description="Severity: critical, warning, or info"
     )
 
 
