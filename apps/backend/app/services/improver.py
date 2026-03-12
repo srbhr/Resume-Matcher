@@ -52,9 +52,8 @@ def _sanitize_user_input(text: str) -> str:
 
 
 def _check_for_truncation(data: dict[str, Any]) -> None:
-    """LLM-006: Check for obvious truncation signs before Pydantic validation.
+    """LLM-006: Log warnings for obvious truncation signs before Pydantic validation.
 
-    Raises ValueError if data appears truncated.
     Note: personalInfo is intentionally excluded — the improve prompts tell the
     LLM to skip it, and _preserve_personal_info() restores it from the original.
     """

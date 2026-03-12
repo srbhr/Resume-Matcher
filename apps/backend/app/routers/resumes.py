@@ -5,6 +5,7 @@ import copy
 import hashlib
 import json
 import logging
+import re
 import unicodedata
 from collections.abc import Awaitable
 from pathlib import Path
@@ -170,6 +171,17 @@ def _get_original_markdown(resume: dict[str, Any]) -> str | None:
     return None
 
 
+_MONTH_RE = re.compile(
+    r"\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\b",
+    re.IGNORECASE,
+)
+
+
+def _has_month(date_str: str) -> bool:
+    """Return True if the date string contains a month name."""
+    return bool(_MONTH_RE.search(date_str))
+
+
 def _restore_original_dates(
     original_data: dict[str, Any] | None,
     improved_data: dict[str, Any],
@@ -201,8 +213,8 @@ def _restore_original_dates(
                 and isinstance(result_years, str)
                 and orig_years
                 and orig_years != result_years
-                # Original is longer (has more info, e.g. months)
-                and len(orig_years) > len(result_years)
+                and _has_month(orig_years)
+                and not _has_month(result_years)
             ):
                 logger.info(
                     "Restoring date in %s[%d]: %r → %r",
@@ -239,7 +251,8 @@ def _restore_original_dates(
                     and isinstance(result_years, str)
                     and orig_years
                     and orig_years != result_years
-                    and len(orig_years) > len(result_years)
+                    and _has_month(orig_years)
+                    and not _has_month(result_years)
                 ):
                     result_items[idx]["years"] = orig_years
 
