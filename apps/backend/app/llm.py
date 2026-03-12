@@ -817,7 +817,9 @@ async def complete_json(
             raise
 
         except Exception:
-            # Transport errors — Router already retried with backoff/cooldown
+            # Transport errors — Router already retried with backoff.
+            # Cooldowns are disabled (see _build_router); no additional
+            # retry is attempted here.
             raise
 
     raise ValueError(f"Failed after {retries + 1} attempts: {last_error}")

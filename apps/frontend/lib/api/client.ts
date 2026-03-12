@@ -56,7 +56,8 @@ export async function apiFetch(
     url = resolveRuntimeApiBase(normalizedEndpoint);
   }
 
-  const timeout = timeoutMs ?? 120_000;
+  // Matches the backend's 240s hard limit (resumes.py wait_for timeout)
+  const timeout = timeoutMs ?? 240_000;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeout);
 
