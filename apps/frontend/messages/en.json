@@ -719,7 +719,17 @@
       "failedToLoad": "Failed to load resume data.",
       "failedToDelete": "Failed to delete resume. Please try again."
     },
-    "titlePlaceholder": "Enter resume title..."
+    "titlePlaceholder": "Enter resume title...",
+    "qrCode": {
+      "title": "Download Resume",
+      "description": "Customize your output before saving.",
+      "includeQr": "Include personal QR code",
+      "urlLabel": "QR Code URL",
+      "urlPlaceholder": "https://...",
+      "previewLabel": "Placement Preview",
+      "add": "Download PDF",
+      "skip": "Cancel"
+    }
   },
   "preview": {
     "margins": "Margins",
