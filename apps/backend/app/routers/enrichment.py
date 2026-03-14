@@ -40,7 +40,6 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/enrichment", tags=["Enrichment"])
 
 
-
 def _extract_item_from_resume(processed_data: dict, item_id: str) -> dict:
     """Derive item details from resume data using the item_id pattern.
 
