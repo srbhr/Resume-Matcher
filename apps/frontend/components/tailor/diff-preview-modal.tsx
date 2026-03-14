@@ -90,7 +90,14 @@ export function DiffPreviewModal({
               {t('common.cancel')}
             </Button>
             <Button variant="warning" onClick={onConfirm} disabled={isConfirming} className="gap-2">
-              {t('tailor.missingDiffDialog.confirmLabel')}
+              {isConfirming ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  {t('common.saving')}
+                </>
+              ) : (
+                t('tailor.missingDiffDialog.confirmLabel')
+              )}
             </Button>
           </div>
         </DialogContent>
