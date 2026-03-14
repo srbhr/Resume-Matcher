@@ -31,6 +31,7 @@ from app.config import (
     delete_api_key_from_config,
     clear_all_api_keys,
 )
+from app.config_cache import invalidate_config_cache
 from app.database import db
 
 router = APIRouter(prefix="/config", tags=["Configuration"])
@@ -50,10 +51,11 @@ def _load_config() -> dict:
 
 
 def _save_config(config: dict) -> None:
-    """Save config to file."""
+    """Save config to file and invalidate the resume router's cache."""
     path = _get_config_path()
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(config, indent=2))
+    invalidate_config_cache()
 
 
 def _mask_api_key(key: str) -> str:
@@ -406,6 +408,7 @@ async def update_api_keys(request: ApiKeysUpdateRequest) -> ApiKeysUpdateRespons
         updated.append("deepseek")
 
     save_api_keys_to_config(stored_keys)
+    invalidate_config_cache()
 
     return ApiKeysUpdateResponse(
         message=f"Updated {len(updated)} API key(s)",
@@ -435,6 +438,7 @@ async def delete_all_api_keys(confirm: str | None = None) -> dict:
             detail="Confirmation required. Pass confirm=CLEAR_ALL_KEYS query parameter.",
         )
     clear_all_api_keys()
+    invalidate_config_cache()
     return {"message": "All API keys have been cleared"}
 
 
@@ -455,6 +459,7 @@ async def delete_api_key(provider: str) -> dict:
         )
 
     delete_api_key_from_config(provider)
+    invalidate_config_cache()
 
     return {"message": f"API key for {provider} has been removed"}
 

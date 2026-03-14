@@ -5,7 +5,6 @@ import copy
 import hashlib
 import json
 import logging
-import re
 import unicodedata
 from collections.abc import Awaitable
 from pathlib import Path
@@ -15,6 +14,7 @@ from uuid import uuid4
 from fastapi import APIRouter, File, HTTPException, Query, UploadFile
 from fastapi.responses import Response
 
+from app.config_cache import get_content_language, load_config as _load_config
 from app.database import db
 from app.pdf import render_resume_pdf, PDFRenderError
 from app.config import settings
@@ -43,6 +43,7 @@ from app.schemas import (
 )
 from app.services.parser import parse_document, parse_resume_to_json, restore_dates_from_markdown
 from app.services.improver import (
+    MONTH_PATTERN,
     extract_job_keywords,
     generate_improvements,
     improve_resume,
@@ -55,30 +56,6 @@ from app.services.cover_letter import (
     generate_resume_title,
 )
 from app.prompts import DEFAULT_IMPROVE_PROMPT_ID, IMPROVE_PROMPT_OPTIONS
-
-
-def _load_config() -> dict:
-    """Load configuration from config file."""
-    config_path = settings.config_path
-    if not config_path.exists():
-        return {}
-    try:
-        return json.loads(config_path.read_text())
-    except (json.JSONDecodeError, OSError) as e:
-        logger.error("Failed to load config: %s", e)
-        return {}
-
-
-def _load_feature_config() -> dict:
-    """Load feature configuration from config file."""
-    return _load_config()
-
-
-def _get_content_language() -> str:
-    """Get configured content language from config file."""
-    config = _load_config()
-    # Use content_language, fall back to legacy 'language' field, then default to 'en'
-    return config.get("content_language", config.get("language", "en"))
 
 
 def _get_default_prompt_id() -> str:
@@ -171,15 +148,9 @@ def _get_original_markdown(resume: dict[str, Any]) -> str | None:
     return None
 
 
-_MONTH_RE = re.compile(
-    r"\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\b",
-    re.IGNORECASE,
-)
-
-
 def _has_month(date_str: str) -> bool:
     """Return True if the date string contains a month name."""
-    return bool(_MONTH_RE.search(date_str))
+    return bool(MONTH_PATTERN.search(date_str))
 
 
 def _restore_original_dates(
@@ -703,7 +674,7 @@ async def improve_resume_preview_endpoint(
     if not job:
         raise HTTPException(status_code=404, detail="Job description not found")
 
-    language = _get_content_language()
+    language = get_content_language()
     prompt_id = request.prompt_id or _get_default_prompt_id()
 
     stage = "load_job_keywords"
@@ -921,10 +892,10 @@ async def improve_resume_confirm_endpoint(
     if not job:
         raise HTTPException(status_code=404, detail="Job description not found")
 
-    feature_config = _load_feature_config()
+    feature_config = _load_config()
     enable_cover_letter = feature_config.get("enable_cover_letter", False)
     enable_outreach = feature_config.get("enable_outreach_message", False)
-    language = _get_content_language()
+    language = get_content_language()
 
     stage = "serialize_improved_data"
     detail = "Failed to confirm resume. Please try again."
@@ -1065,10 +1036,10 @@ async def improve_resume_endpoint(
         raise HTTPException(status_code=404, detail="Job description not found")
 
     # Load feature configuration and content language
-    feature_config = _load_feature_config()
+    feature_config = _load_config()
     enable_cover_letter = feature_config.get("enable_cover_letter", False)
     enable_outreach = feature_config.get("enable_outreach_message", False)
-    language = _get_content_language()
+    language = get_content_language()
 
     try:
         # Extract keywords from job description
@@ -1529,7 +1500,7 @@ async def generate_cover_letter_endpoint(resume_id: str) -> GenerateContentRespo
         )
 
     # Get language setting
-    language = _get_content_language()
+    language = get_content_language()
 
     # Generate cover letter
     try:
@@ -1600,7 +1571,7 @@ async def generate_outreach_endpoint(resume_id: str) -> GenerateContentResponse:
         )
 
     # Get language setting
-    language = _get_content_language()
+    language = get_content_language()
 
     # Generate outreach message
     try:

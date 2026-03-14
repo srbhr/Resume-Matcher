@@ -31,7 +31,7 @@ async def generate_cover_letter(
 
     prompt = COVER_LETTER_PROMPT.format(
         job_description=job_description,
-        resume_data=json.dumps(resume_data, indent=2),
+        resume_data=json.dumps(resume_data),
         output_language=output_language,
     )
 
@@ -63,7 +63,7 @@ async def generate_outreach_message(
 
     prompt = OUTREACH_MESSAGE_PROMPT.format(
         job_description=job_description,
-        resume_data=json.dumps(resume_data, indent=2),
+        resume_data=json.dumps(resume_data),
         output_language=output_language,
     )
 

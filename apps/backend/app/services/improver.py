@@ -84,7 +84,7 @@ async def extract_job_keywords(job_description: str) -> dict[str, Any]:
     )
 
 
-_MONTH_PATTERN = re.compile(
+MONTH_PATTERN = re.compile(
     r"\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\b",
     re.IGNORECASE,
 )
@@ -99,7 +99,7 @@ def _has_month_in_dates(data: dict[str, Any]) -> bool:
         for entry in entries:
             if isinstance(entry, dict):
                 years = entry.get("years", "")
-                if isinstance(years, str) and _MONTH_PATTERN.search(years):
+                if isinstance(years, str) and MONTH_PATTERN.search(years):
                     return True
     custom_sections = data.get("customSections", {})
     if isinstance(custom_sections, dict):
@@ -111,7 +111,7 @@ def _has_month_in_dates(data: dict[str, Any]) -> bool:
                 for item in items:
                     if isinstance(item, dict):
                         years = item.get("years", "")
-                        if isinstance(years, str) and _MONTH_PATTERN.search(years):
+                        if isinstance(years, str) and MONTH_PATTERN.search(years):
                             return True
     return False
 
@@ -191,7 +191,7 @@ async def improve_resume(
     # (year-only) dates — the markdown preserves months from the original PDF.
     if original_resume_data is not None:
         if _has_month_in_dates(original_resume_data):
-            resume_input = json.dumps(original_resume_data, indent=2)
+            resume_input = json.dumps(original_resume_data)
         else:
             logger.info(
                 "Structured resume data has year-only dates; using raw markdown "
