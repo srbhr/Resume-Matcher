@@ -429,6 +429,7 @@ async def check_llm_health(
             "api_key": config.api_key,
             "api_base": _normalize_api_base(config.provider, config.api_base),
             "timeout": LLM_TIMEOUT_HEALTH_CHECK,
+            "think": False,
         }
         reasoning_effort = _get_reasoning_effort(config.provider, model_name)
         if reasoning_effort:
