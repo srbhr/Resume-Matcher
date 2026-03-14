@@ -147,47 +147,31 @@ def _extract_message_text(message: Any) -> str | None:
     return _join_text_parts(_extract_text_parts(content))
 
 
+def _safe_get(obj: Any, key: str) -> Any:
+    """Get attribute or dict key from an object."""
+    if hasattr(obj, key):
+        return getattr(obj, key)
+    if isinstance(obj, dict):
+        return obj.get(key)
+    return None
+
+
 def _extract_choice_text(choice: Any) -> str | None:
     """Extract plain text from a LiteLLM choice object.
 
     Tries message.content first, then choice.text, then choice.delta. Handles both
     object attributes and dict keys.
-
-    Args:
-        choice: LiteLLM choice object or dict.
-
-    Returns:
-        Extracted text or None if no content is found.
     """
-    message: Any = None
-    if hasattr(choice, "message"):
-        message = choice.message
-    elif isinstance(choice, dict):
-        message = choice.get("message")
-
-    content = _extract_message_text(message)
+    content = _extract_message_text(_safe_get(choice, "message"))
     if content:
         return content
 
-    if hasattr(choice, "text"):
-        content = _join_text_parts(
-            _extract_text_parts(getattr(choice, "text")))
-        if content:
-            return content
-    if isinstance(choice, dict) and "text" in choice:
-        content = _join_text_parts(_extract_text_parts(choice.get("text")))
-        if content:
-            return content
-
-    if hasattr(choice, "delta"):
-        content = _join_text_parts(
-            _extract_text_parts(getattr(choice, "delta")))
-        if content:
-            return content
-    if isinstance(choice, dict) and "delta" in choice:
-        content = _join_text_parts(_extract_text_parts(choice.get("delta")))
-        if content:
-            return content
+    for field in ("text", "delta"):
+        value = _safe_get(choice, field)
+        if value is not None:
+            extracted = _join_text_parts(_extract_text_parts(value))
+            if extracted:
+                return extracted
 
     return None
 
@@ -743,7 +727,6 @@ async def complete_json(
     # Check if we can use JSON mode
     use_json_mode = _supports_json_mode(model_name)
 
-    last_error = None
     for attempt in range(retries + 1):
         try:
             kwargs: dict[str, Any] = {
@@ -798,7 +781,6 @@ async def complete_json(
 
         except json.JSONDecodeError as e:
             # Content quality — malformed JSON, retry with prompt hint
-            last_error = e
             logging.warning(f"JSON parse failed (attempt {attempt + 1}): {e}")
             if attempt < retries:
                 messages[-1]["content"] = (
@@ -811,7 +793,6 @@ async def complete_json(
 
         except ValueError as e:
             # Content quality — empty response, JSON extraction failure
-            last_error = e
             logging.warning(f"Content extraction failed (attempt {attempt + 1}): {e}")
             if attempt < retries:
                 continue
@@ -823,4 +804,4 @@ async def complete_json(
             # retry is attempted here.
             raise
 
-    raise ValueError(f"Failed after {retries + 1} attempts: {last_error}")
+    raise ValueError(f"Failed after {retries + 1} attempts")
