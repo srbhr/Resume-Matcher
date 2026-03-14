@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -37,10 +37,32 @@ export default function TailorPage() {
   const [showDiffModal, setShowDiffModal] = useState(false);
   const [pendingResult, setPendingResult] = useState<ImprovedResult | null>(null);
   const [diffConfirmError, setDiffConfirmError] = useState<string | null>(null);
+  const [isConfirming, setIsConfirming] = useState(false);
   const [showRegenerateDialog, setShowRegenerateDialog] = useState(false);
   const [showMissingDiffDialog, setShowMissingDiffDialog] = useState(false);
   const [missingDiffResult, setMissingDiffResult] = useState<ImprovedResult | null>(null);
   const [missingDiffError, setMissingDiffError] = useState<string | null>(null);
+
+  // Elapsed timer for long operations
+  const [elapsed, setElapsed] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const startTimer = useCallback(() => {
+    setElapsed(0);
+    timerRef.current = setInterval(() => setElapsed((s) => s + 1), 1000);
+  }, []);
+
+  const stopTimer = useCallback(() => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = null;
+    setElapsed(0);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, []);
 
   const router = useRouter();
   const { setImprovedData } = useResumePreview();
@@ -205,19 +227,20 @@ export default function TailorPage() {
     const resumeId = masterResumeId;
     setIsLoading(true);
     setError(null);
+    startTimer();
     try {
       await runGenerate(resumeId, trimmedDescription);
     } finally {
       setIsLoading(false);
+      stopTimer();
     }
   };
 
   // User confirms changes
   const handleConfirmChanges = async () => {
-    // Guard against double-clicks - isLoading already tracks confirm in progress
-    if (!pendingResult || isLoading) return;
+    if (!pendingResult || isConfirming) return;
 
-    setIsLoading(true);
+    setIsConfirming(true);
     setError(null);
     setDiffConfirmError(null);
 
@@ -231,7 +254,7 @@ export default function TailorPage() {
       setError(errorMessage);
       setDiffConfirmError(errorMessage);
     } finally {
-      setIsLoading(false);
+      setIsConfirming(false);
     }
   };
 
@@ -288,10 +311,12 @@ export default function TailorPage() {
     const resumeId = masterResumeId;
     setIsLoading(true);
     setError(null);
+    startTimer();
     try {
       await runGenerate(resumeId, trimmedDescription);
     } finally {
       setIsLoading(false);
+      stopTimer();
     }
   };
 
@@ -414,6 +439,9 @@ export default function TailorPage() {
               <>
                 <Loader2 className="w-5 h-5 animate-spin" />
                 {t('common.processing')}
+                {elapsed > 0 && (
+                  <span className="font-mono text-xs opacity-70 ml-2">{elapsed}s</span>
+                )}
               </>
             ) : statusLoading ? (
               <>
@@ -433,6 +461,7 @@ export default function TailorPage() {
       {showDiffModal && pendingResult && (
         <DiffPreviewModal
           isOpen={showDiffModal}
+          isConfirming={isConfirming}
           onClose={handleCloseDiffModal}
           onReject={handleRejectChanges}
           onConfirm={handleConfirmChanges}
