@@ -4,6 +4,7 @@ This module owns the cached read of ``config.json`` so that routers
 (resumes, enrichment, config) can share it without importing each other.
 """
 
+import copy
 import json
 import logging
 import time
@@ -31,12 +32,12 @@ def invalidate_config_cache() -> None:
 def load_config() -> dict[str, Any]:
     """Load configuration from config file with 5-minute TTL cache.
 
-    Returns a shallow copy so callers cannot corrupt the cached data.
+    Returns a deep copy so callers cannot corrupt the cached data.
     """
     global _config_cache, _config_cache_time
     now = time.monotonic()
     if _config_cache and (now - _config_cache_time) < _CONFIG_CACHE_TTL:
-        return dict(_config_cache)
+        return copy.deepcopy(_config_cache)
 
     config_path = settings.config_path
     if not config_path.exists():
@@ -46,9 +47,11 @@ def load_config() -> dict[str, Any]:
     try:
         _config_cache = json.loads(config_path.read_text())
         _config_cache_time = now
-        return dict(_config_cache)
+        return copy.deepcopy(_config_cache)
     except (json.JSONDecodeError, OSError) as e:
         logger.error("Failed to load config: %s", e)
+        _config_cache = {}
+        _config_cache_time = now
         return {}
 
 

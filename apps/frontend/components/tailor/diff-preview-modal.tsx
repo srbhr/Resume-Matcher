@@ -65,7 +65,7 @@ export function DiffPreviewModal({
       <Dialog
         open={isOpen}
         onOpenChange={(open) => {
-          if (!open) {
+          if (!open && !isConfirming) {
             onClose();
           }
         }}
@@ -86,10 +86,10 @@ export function DiffPreviewModal({
           </div>
 
           <div className="flex justify-end items-center gap-3 pt-4 border-t-2 border-black bg-white -mx-6 -mb-6 px-6 py-4">
-            <Button variant="outline" onClick={onClose} className="gap-2">
+            <Button variant="outline" onClick={onClose} disabled={isConfirming} className="gap-2">
               {t('common.cancel')}
             </Button>
-            <Button variant="warning" onClick={onConfirm} className="gap-2">
+            <Button variant="warning" onClick={onConfirm} disabled={isConfirming} className="gap-2">
               {t('tailor.missingDiffDialog.confirmLabel')}
             </Button>
           </div>
