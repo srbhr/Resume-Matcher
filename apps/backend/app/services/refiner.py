@@ -439,8 +439,8 @@ async def inject_keywords(
 
     prompt = KEYWORD_INJECTION_PROMPT.format(
         keywords_to_inject=json.dumps(keywords_to_inject),
-        current_resume=json.dumps(tailored, indent=2),
-        master_resume=json.dumps(master, indent=2),
+        current_resume=json.dumps(tailored),
+        master_resume=json.dumps(master),
         job_description=truncated_jd,
     )
 
@@ -646,7 +646,7 @@ def _extract_all_text_cached(data_json: str) -> str:
                 if isinstance(text, str):
                     parts.append(text)
             elif section_type == "stringList":
-                items = section.get("items", [])
+                items = section.get("strings", [])
                 if isinstance(items, list):
                     parts.extend(str(i) for i in items)
 
