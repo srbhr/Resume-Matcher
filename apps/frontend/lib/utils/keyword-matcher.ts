@@ -223,13 +223,6 @@ export function extractKeywords(text: string): Set<string> {
 }
 
 /**
- * Check if a word matches any keyword (case-insensitive).
- */
-export function matchesKeyword(word: string, keywords: Set<string>): boolean {
-  return keywords.has(word.toLowerCase());
-}
-
-/**
  * Split text into segments, marking which segments are keyword matches.
  * Returns an array of { text, isMatch } objects for rendering.
  */

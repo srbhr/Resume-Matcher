@@ -9,7 +9,7 @@ from uuid import uuid4
 
 from fastapi import APIRouter, HTTPException
 
-from app.config import settings
+from app.config_cache import get_content_language
 from app.database import db
 from app.llm import complete_json
 from app.prompts.enrichment import (
@@ -38,19 +38,6 @@ from app.schemas.enrichment import (
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/enrichment", tags=["Enrichment"])
-
-
-def _get_content_language() -> str:
-    """Get content language from stored config."""
-    config_path = settings.config_path
-    try:
-        if config_path.exists():
-            config = json.loads(config_path.read_text())
-            # Use content_language, fall back to legacy 'language' field, then default to 'en'
-            return config.get("content_language", config.get("language", "en"))
-    except (OSError, json.JSONDecodeError) as e:
-        logger.warning(f"Failed to read content language from config: {e}")
-    return "en"
 
 
 def _extract_item_from_resume(processed_data: dict, item_id: str) -> dict:
@@ -118,8 +105,8 @@ async def analyze_resume(resume_id: str) -> AnalysisResponse:
         )
 
     # Build prompt with content language
-    resume_json = json.dumps(processed_data, indent=2)
-    language = _get_content_language()
+    resume_json = json.dumps(processed_data)
+    language = get_content_language()
     output_language = get_language_name(language)
     prompt = ANALYZE_RESUME_PROMPT.format(
         resume_json=resume_json,
@@ -209,8 +196,8 @@ async def generate_enhancements(request: EnhanceRequest) -> EnhancementPreview:
                 )
     else:
         # Legacy path — re-analyze to get question-to-item mapping
-        resume_json = json.dumps(processed_data, indent=2)
-        language = _get_content_language()
+        resume_json = json.dumps(processed_data)
+        language = get_content_language()
         output_language = get_language_name(language)
         analysis_prompt = ANALYZE_RESUME_PROMPT.format(
             resume_json=resume_json,
@@ -268,7 +255,7 @@ async def generate_enhancements(request: EnhanceRequest) -> EnhancementPreview:
         current_desc = item.get("current_description", [])
         current_desc_text = "\n".join(f"- {d}" for d in current_desc) if current_desc else "(No description)"
         
-        language = _get_content_language()
+        language = get_content_language()
         output_language = get_language_name(language)
 
         prompt = ENHANCE_DESCRIPTION_PROMPT.format(
