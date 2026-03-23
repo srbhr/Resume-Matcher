@@ -599,7 +599,7 @@
       "failedToPreview": "Failed to preview resume. Please check your settings and try again.",
       "failedToConfirm": "Failed to confirm resume. Please try again.",
       "failedToFetchUrl": "Could not extract job description from this URL. Sites like LinkedIn or Indeed use JavaScript — copy and paste the text manually instead.",
-      "invalidUrl": "Please enter a valid URL starting with http:// or https://",
+      "invalidUrl": "Please enter a valid URL starting with https://",
       "urlTimeout": "Request timed out. The page took too long to respond."
     }
   },

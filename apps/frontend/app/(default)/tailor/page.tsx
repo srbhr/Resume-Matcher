@@ -336,7 +336,7 @@ export default function TailorPage() {
   const handleFetchUrl = async () => {
     const trimmedUrl = jobUrl.trim();
     if (!trimmedUrl) return;
-    if (!trimmedUrl.startsWith('http://') && !trimmedUrl.startsWith('https://')) {
+    if (!trimmedUrl.startsWith('https://')) {
       setUrlFetchError(t('tailor.errors.invalidUrl'));
       return;
     }
@@ -345,11 +345,16 @@ export default function TailorPage() {
     try {
       const result = await fetchJobFromUrl(trimmedUrl);
       setJobDescription(result.content);
-      setInputMode('text');
     } catch (err) {
       const msg = err instanceof Error ? err.message : '';
       if (msg.includes('timed out') || msg.includes('504')) {
         setUrlFetchError(t('tailor.errors.urlTimeout'));
+      } else if (
+        msg.includes('Failed to fetch') ||
+        msg.includes('NetworkError') ||
+        msg.includes('fetch')
+      ) {
+        setUrlFetchError(t('tailor.errors.networkError'));
       } else if (msg) {
         // Show the server's detail message directly — it's user-friendly
         setUrlFetchError(msg);
@@ -686,6 +691,22 @@ export default function TailorPage() {
                 </div>
               )}
               <p className="font-mono text-xs text-gray-500">{t('tailor.urlInput.hint')}</p>
+
+              {jobDescription && (
+                <div className="relative mt-2">
+                  <Textarea
+                    placeholder={t('tailor.jobDescriptionPlaceholder')}
+                    className="min-h-[300px] font-mono text-sm bg-[#F0F0E8] border-2 border-black focus:ring-0 focus:border-blue-700 resize-none p-4 rounded-none"
+                    value={jobDescription}
+                    onChange={(e) => setJobDescription(e.target.value)}
+                    onKeyDown={handleTextareaKeyDown}
+                    disabled={isLoading}
+                  />
+                  <div className="absolute bottom-2 right-2 text-xs font-mono text-gray-400 pointer-events-none">
+                    {t('tailor.charactersCount', { count: jobDescription.length })}
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <div className="relative">

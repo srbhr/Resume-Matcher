@@ -148,6 +148,9 @@ CRITICAL_TRUTHFULNESS_RULES_TEMPLATE = """CRITICAL TRUTHFULNESS RULES - NEVER VI
    - workExperience[*].company (employer name)
    - workExperience[*].title (job title)
    - workExperience[*].years (employment dates)
+   - personalProjects[*].name (project name)
+   - personalProjects[*].years (project dates)
+   - additional.certificationsTraining (certification names and issuers)
    - personalInfo.name, personalInfo.email, personalInfo.location, personalInfo.phone
 
 Violation of these rules could cause serious problems for the candidate in job interviews.
@@ -286,7 +289,8 @@ IMPORTANT: Generate ALL text content (summary, skills) in {output_language}.
 Rules:
 - Only modify the summary and technicalSkills fields
 - Do NOT add skills, tools, or technologies not already in the original resume
-- You may reorder or rephrase existing skills to better match job keywords
+- RETURN ALL existing skills without exception — do not remove any skill from the original list
+- You may reorder existing skills to put the most job-relevant ones first
 - Keep the summary grounded in the candidate's actual background
 - Do NOT use em dash ("—") anywhere in the writing/output
 

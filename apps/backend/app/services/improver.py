@@ -91,6 +91,7 @@ async def extract_job_keywords(job_description: str) -> dict[str, Any]:
     return await complete_json(
         prompt=prompt,
         system_prompt="You are an expert job description analyzer.",
+        check_truncation=False,
     )
 
 
@@ -100,6 +101,7 @@ async def improve_resume(
     job_keywords: dict[str, Any],
     language: str = "en",
     prompt_id: str | None = None,
+    original_data: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Improve resume to better match job description.
 
@@ -151,6 +153,21 @@ async def improve_resume(
 
     # LLM-006: Pre-validation check for truncation signs
     _check_for_truncation(result)
+
+    # Skill preservation: restore any original skills the LLM silently dropped
+    if original_data:
+        orig_skills: list[str] = original_data.get("additional", {}).get("technicalSkills", [])
+        llm_skills: list[str] = (
+            result.get("additional", {}).get("technicalSkills", [])
+            if isinstance(result.get("additional"), dict)
+            else []
+        )
+        llm_lower: set[str] = {s.casefold() for s in llm_skills if isinstance(s, str)}
+        dropped = [s for s in orig_skills if isinstance(s, str) and s.casefold() not in llm_lower]
+        if dropped:
+            if not isinstance(result.get("additional"), dict):
+                result["additional"] = {}
+            result["additional"]["technicalSkills"] = llm_skills + dropped
 
     # Validate against schema
     validated = ResumeData.model_validate(result)
@@ -236,8 +253,8 @@ async def improve_resume_granular(
     system_prompt = "You are an expert resume editor. Output only valid JSON."
     # Sequential calls: local models (Ollama) process one request at a time,
     # so parallel calls just queue up and double the wait time.
-    result_a = await complete_json(prompt=prompt_skills, system_prompt=system_prompt)
-    result_b = await complete_json(prompt=prompt_experience, system_prompt=system_prompt)
+    result_a = await complete_json(prompt=prompt_skills, system_prompt=system_prompt, check_truncation=False)
+    result_b = await complete_json(prompt=prompt_experience, system_prompt=system_prompt, check_truncation=False)
 
     # Merge: start from a deep copy of the original, overwrite only improved fields
     merged = copy.deepcopy(original_data)
@@ -251,7 +268,13 @@ async def improve_resume_granular(
     ):
         if "additional" not in merged or not isinstance(merged["additional"], dict):
             merged["additional"] = {}
-        merged["additional"]["technicalSkills"] = additional_a["technicalSkills"]
+        # Skill preservation: use LLM ordering (most relevant first) then append
+        # any original skills the LLM dropped. This ensures no skills are lost.
+        original_skills: list[str] = original_data.get("additional", {}).get("technicalSkills", [])
+        llm_skills: list[str] = [s for s in additional_a["technicalSkills"] if isinstance(s, str)]
+        llm_lower: set[str] = {s.casefold() for s in llm_skills}
+        dropped = [s for s in original_skills if isinstance(s, str) and s.casefold() not in llm_lower]
+        merged["additional"]["technicalSkills"] = llm_skills + dropped
 
     # Merge Call B: workExperience descriptions, matched by index
     improved_experiences = result_b.get("workExperience", [])

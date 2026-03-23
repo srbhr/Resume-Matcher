@@ -599,7 +599,7 @@
       "failedToPreview": "预览简历失败。请检查设置后重试。",
       "failedToConfirm": "确认简历失败。请重试。",
       "failedToFetchUrl": "无法从此URL获取职位描述。请尝试手动复制文本。",
-      "invalidUrl": "请输入以 http:// 或 https:// 开头的有效URL",
+      "invalidUrl": "请输入以 https:// 开头的有效URL",
       "urlTimeout": "请求超时，页面响应时间过长。"
     }
   },

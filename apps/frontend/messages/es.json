@@ -599,7 +599,7 @@
       "failedToPreview": "No se pudo previsualizar el currículum. Revisa tu configuración e inténtalo de nuevo.",
       "failedToConfirm": "No se pudo confirmar el currículum. Inténtalo de nuevo.",
       "failedToFetchUrl": "No se pudo obtener la descripción del trabajo desde esta URL. Intenta copiar el texto manualmente.",
-      "invalidUrl": "Introduce una URL válida que comience con http:// o https://",
+      "invalidUrl": "Introduce una URL válida que comience con https://",
       "urlTimeout": "Tiempo de espera agotado. La página tardó demasiado en responder."
     }
   },

@@ -599,7 +599,7 @@
       "failedToPreview": "履歴書のプレビューに失敗しました。設定を確認して再試行してください。",
       "failedToConfirm": "履歴書の確定に失敗しました。もう一度お試しください。",
       "failedToFetchUrl": "このURLから求人内容を取得できませんでした。テキストを手動でコピーしてください。",
-      "invalidUrl": "http:// または https:// で始まる有効なURLを入力してください",
+      "invalidUrl": "https:// で始まる有効なURLを入力してください",
       "urlTimeout": "タイムアウトしました。ページの応答が遅すぎます。"
     }
   },

@@ -155,6 +155,36 @@ def _get_original_resume_data(resume: dict[str, Any]) -> dict[str, Any] | None:
     return original_data
 
 
+def _restore_dropped_skills(
+    original_data: dict[str, Any] | None,
+    improved_data: dict[str, Any],
+) -> dict[str, Any]:
+    """Restore any skills from original that the LLM silently dropped.
+
+    Uses LLM ordering (most relevant first) and appends dropped skills at the end.
+    Returns a mutated copy of improved_data only when skills need restoring.
+    """
+    if not original_data:
+        return improved_data
+    orig_skills: list[str] = original_data.get("additional", {}).get("technicalSkills", [])
+    if not orig_skills:
+        return improved_data
+    llm_skills: list[str] = (
+        improved_data.get("additional", {}).get("technicalSkills", [])
+        if isinstance(improved_data.get("additional"), dict)
+        else []
+    )
+    llm_lower: set[str] = {s.casefold() for s in llm_skills if isinstance(s, str)}
+    dropped = [s for s in orig_skills if isinstance(s, str) and s.casefold() not in llm_lower]
+    if not dropped:
+        return improved_data
+    improved_data = copy.deepcopy(improved_data)
+    if not isinstance(improved_data.get("additional"), dict):
+        improved_data["additional"] = {}
+    improved_data["additional"]["technicalSkills"] = llm_skills + dropped
+    return improved_data
+
+
 def _preserve_personal_info(
     original_data: dict[str, Any] | None,
     improved_data: dict[str, Any],
@@ -565,6 +595,7 @@ async def improve_resume_preview_endpoint(
                 job_keywords=job_keywords,
                 language=language,
                 prompt_id=prompt_id,
+                original_data=original_data,
             )
         # Collect warnings throughout the process
         response_warnings: list[str] = []
@@ -742,30 +773,30 @@ async def improve_resume_confirm_endpoint(
                 status_code=400,
                 detail="Invalid improved resume data. Please retry preview.",
             )
+        preview_hashes = job.get("preview_hashes")
+        allowed_hashes: set[str] = set()
+        if isinstance(preview_hashes, dict):
+            allowed_hashes.update(preview_hashes.values())
+        elif isinstance(preview_hashes, list):
+            allowed_hashes.update(
+                [value for value in preview_hashes if isinstance(value, str)]
+            )
+        else:
+            preview_hash = job.get("preview_hash")
+            if isinstance(preview_hash, str):
+                allowed_hashes.add(preview_hash)
+
+        if not allowed_hashes:
+            logger.warning(
+                "Rejecting confirm; preview hash missing for job %s.",
+                request.job_id,
+            )
+            raise HTTPException(
+                status_code=400,
+                detail="Preview required before confirmation. Please retry preview.",
+            )
+
         if not request.partial_confirm:
-            preview_hashes = job.get("preview_hashes")
-            allowed_hashes: set[str] = set()
-            if isinstance(preview_hashes, dict):
-                allowed_hashes.update(preview_hashes.values())
-            elif isinstance(preview_hashes, list):
-                allowed_hashes.update(
-                    [value for value in preview_hashes if isinstance(value, str)]
-                )
-            else:
-                preview_hash = job.get("preview_hash")
-                if isinstance(preview_hash, str):
-                    allowed_hashes.add(preview_hash)
-
-            if not allowed_hashes:
-                logger.warning(
-                    "Rejecting confirm; preview hash missing for job %s.",
-                    request.job_id,
-                )
-                raise HTTPException(
-                    status_code=400,
-                    detail="Preview required before confirmation. Please retry preview.",
-                )
-
             request_hash = _hash_improved_data(improved_data)
             if request_hash not in allowed_hashes:
                 logger.warning("Resume confirm rejected due to preview hash mismatch.")
@@ -902,6 +933,7 @@ async def improve_resume_endpoint(
                 job_keywords=job_keywords,
                 language=language,
                 prompt_id=prompt_id,
+                original_data=original_data,
             )
         # Collect warnings throughout the process
         response_warnings: list[str] = []

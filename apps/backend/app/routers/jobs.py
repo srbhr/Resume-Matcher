@@ -1,8 +1,11 @@
 """Job description management endpoints."""
 
 import asyncio
+import atexit
+import ipaddress
 import logging
 import re
+import socket
 from concurrent.futures import ThreadPoolExecutor
 from html.parser import HTMLParser
 from urllib.parse import urlparse
@@ -12,6 +15,18 @@ from fastapi import APIRouter, HTTPException
 
 from app.database import db
 from app.schemas import FetchJobUrlRequest, FetchJobUrlResponse, JobUploadRequest, JobUploadResponse
+
+_LLM_FILTER_PROMPT = """\
+Extract only the job description content from the raw text below.
+Include: job title, company name, company description, responsibilities, requirements/qualifications, tech stack, and benefits/perks.
+Exclude entirely: navigation menus, page headers, cookie banners, advertisements, \
+"similar offers" / "recommended jobs" sections, apply buttons, salary widgets repeated at the bottom, \
+share/save buttons, and any other UI chrome.
+Preserve the original language of the text.
+Return ONLY the cleaned job description — no preamble, no commentary.
+
+RAW TEXT:
+"""
 
 logger = logging.getLogger(__name__)
 
@@ -67,8 +82,23 @@ SITE_MAP: dict[str, dict] = {
         "selectors": [
             "[class*='JobOfferContent']",
             "[class*='job-offer-content']",
-            "[class*='JobOffer']:not([class*='Header']):not([class*='Nav'])",
+            "[class*='JobDescription']",
+            "[class*='job-description']",
+            "[class*='OfferBody']",
+            "[class*='offer-body']",
+            "[class*='JobOffer']:not([class*='Header']):not([class*='Nav']):not([class*='Similar']):not([class*='Footer'])",
             "main",
+        ],
+        # Text markers used to trim noise after Playwright extraction
+        "trim_after": [
+            "Check similar offers",
+            "Summary of the offer",
+            "ADVERTISEMENT",
+            "Check similar offers\n",
+        ],
+        "trim_before_last": [
+            # Remove the duplicated bottom card (salary repeated after the description)
+            # by keeping only content up to the second occurrence of the job title block
         ],
     },
     "linkedin.com": {
@@ -102,12 +132,77 @@ def _get_site_config(url: str) -> dict | None:
     return None
 
 
+def _is_private_host(hostname: str) -> bool:
+    """Return True if hostname resolves to a private/loopback/reserved IP (SSRF guard)."""
+    try:
+        ip_str = socket.gethostbyname(hostname)
+        ip = ipaddress.ip_address(ip_str)
+        return (
+            ip.is_private
+            or ip.is_loopback
+            or ip.is_link_local
+            or ip.is_multicast
+            or ip.is_reserved
+        )
+    except Exception:
+        return True  # Reject unresolvable hosts
+
+
+# ---------------------------------------------------------------------------
+# Site-specific text cleanup (applied after extraction, no LLM needed)
+# ---------------------------------------------------------------------------
+
+# Heading-level noise lines at the very top of the page (navigation counters, etc.)
+_TOP_NOISE_RE = re.compile(
+    r"^(?:Show menu\s*|(?:\d+\s*){3,}|\d+\s*)",
+    re.MULTILINE,
+)
+
+# Lines that are pure UI chrome (single action words / short labels)
+_UI_LINE_RE = re.compile(
+    r"^\s*(Save|Apply|Share|Follow|Report|Back|Close|Open|More|Less|"
+    r"Hybrid|Remote|Full-time|Part-time|B2B|Permanent|Mid|Senior|Junior|"
+    r"Contract|Freelance)\s*$",
+    re.IGNORECASE | re.MULTILINE,
+)
+
+
+def _apply_site_cleanup(text: str, config: dict) -> str:
+    """Apply rule-based noise removal using site-specific trim markers.
+
+    1. Cut everything after the first ``trim_after`` marker found in the text.
+    2. Strip leading nav/counter noise (e.g. the "0 0 0 0 … Show menu" header
+       that justjoin.it renders before the actual offer).
+    3. Remove isolated UI-chrome lines.
+    4. Collapse excessive blank lines.
+    """
+    trim_after: list[str] = config.get("trim_after", [])
+    for marker in trim_after:
+        idx = text.find(marker)
+        if idx != -1:
+            text = text[:idx]
+            logger.debug("Site cleanup: trimmed at marker %r", marker)
+            break
+
+    # Strip leading counter/nav noise (lines of single digits or "Show menu")
+    text = _TOP_NOISE_RE.sub("", text)
+
+    # Remove isolated UI-chrome single-word lines
+    text = _UI_LINE_RE.sub("", text)
+
+    # Collapse 3+ blank lines → 2
+    text = re.sub(r"\n{3,}", "\n\n", text)
+
+    return text.strip()
+
+
 # ---------------------------------------------------------------------------
 # Playwright extractor (for JS-rendered portals)
 # ---------------------------------------------------------------------------
 
 
 _playwright_executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix="playwright")
+atexit.register(_playwright_executor.shutdown, True)
 
 
 def _run_playwright_sync(url: str, config: dict) -> str | None:
@@ -170,12 +265,17 @@ def _run_playwright_sync(url: str, config: dict) -> str | None:
                     logger.info(
                         "Playwright: selector '%s' yielded %d chars", best_sel, len(best_text)
                     )
-                    return best_text
+                    cleaned = _apply_site_cleanup(best_text, config)
+                    logger.info(
+                        "Playwright: after site cleanup %d → %d chars", len(best_text), len(cleaned)
+                    )
+                    return cleaned
 
                 # Last resort: run SmartExtractor on fully-rendered HTML
                 logger.info("Playwright: no selector matched – falling back to SmartExtractor")
                 html = page.content()
-                return _extract_text_from_html(html)
+                raw = _extract_text_from_html(html)
+                return _apply_site_cleanup(raw, config)
 
             finally:
                 browser.close()
@@ -227,7 +327,10 @@ _SKIP_PATTERN = re.compile(
     r"sidebar|filter|filter[-_]|banner|notification|alert|popup|toast|"
     r"breadcrumb|social|share|follow|related|advert|promo|"
     r"search[-_]bar|header[-_]|footer[-_]|site[-_]header|site[-_]footer|"
-    r"top[-_]bar|bottom[-_]bar|widget|tag[-_]list)\b",
+    r"top[-_]bar|bottom[-_]bar|widget|tag[-_]list|"
+    r"similar[-_]offer|similar[-_]job|recommended[-_]job|check[-_]similar|"
+    r"other[-_]offer|more[-_]offer|job[-_]suggest|suggest[-_]|"
+    r"advertisement|sponsored|promoted)\b",
     re.IGNORECASE,
 )
 
@@ -361,6 +464,50 @@ def _extract_text_from_html(html: str) -> str:
 
 
 # ---------------------------------------------------------------------------
+# LLM-based content filter
+# ---------------------------------------------------------------------------
+
+# Heuristic: if extracted text has too high a ratio of short lines it is
+# probably full of UI noise (counters, nav items, button labels).
+_SHORT_LINE_RE = re.compile(r"^.{0,6}$")
+
+
+def _looks_noisy(text: str) -> bool:
+    """Return True when the text likely contains significant UI noise."""
+    lines = [ln.strip() for ln in text.splitlines() if ln.strip()]
+    if not lines:
+        return False
+    short = sum(1 for ln in lines if _SHORT_LINE_RE.match(ln))
+    return short / len(lines) > 0.25  # >25 % very-short lines → noisy
+
+
+async def _filter_job_content_with_llm(raw_text: str) -> str:
+    """Use the configured LLM to extract only the relevant job description.
+
+    Falls back to the original text if LLM is unavailable or fails.
+    """
+    try:
+        from app.llm import complete, get_llm_config  # local import to avoid circular deps
+
+        config = get_llm_config()
+        # Trim to ~8 000 chars so we stay within a small context window (e.g. Ollama 7B)
+        truncated = raw_text[:8_000]
+        cleaned = await complete(
+            _LLM_FILTER_PROMPT + truncated,
+            config=config,
+            max_tokens=2_048,
+            temperature=0.1,
+        )
+        if cleaned and len(cleaned) >= 200:
+            logger.info("LLM filter reduced content from %d → %d chars", len(raw_text), len(cleaned))
+            return cleaned.strip()
+        logger.warning("LLM filter returned short/empty result, keeping raw extraction")
+    except Exception as exc:
+        logger.warning("LLM filtering failed, using raw extraction: %s", exc)
+    return raw_text
+
+
+# ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
 
@@ -408,6 +555,11 @@ async def fetch_job_from_url(request: FetchJobUrlRequest) -> FetchJobUrlResponse
     if not url.startswith(("http://", "https://")):
         raise HTTPException(status_code=400, detail="URL must start with http:// or https://")
 
+    parsed_host = urlparse(url).hostname or ""
+    loop = asyncio.get_event_loop()
+    if await loop.run_in_executor(None, _is_private_host, parsed_host):
+        raise HTTPException(status_code=400, detail="URL must point to a public website")
+
     content: str | None = None
 
     # --- Try site-specific Playwright extraction first ---
@@ -423,7 +575,7 @@ async def fetch_job_from_url(request: FetchJobUrlRequest) -> FetchJobUrlResponse
             async with httpx.AsyncClient(
                 follow_redirects=True,
                 timeout=15.0,
-                verify=False,
+                verify=True,
                 headers={
                     "User-Agent": (
                         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
@@ -447,7 +599,12 @@ async def fetch_job_from_url(request: FetchJobUrlRequest) -> FetchJobUrlResponse
         if "text/html" not in content_type and "text/plain" not in content_type:
             raise HTTPException(status_code=422, detail="URL does not point to an HTML page.")
 
-        content = _extract_text_from_html(response.text)
+        raw = _extract_text_from_html(response.text)
+        # Apply site-specific text cleanup even on the httpx path
+        if site_config:
+            content = _apply_site_cleanup(raw, site_config)
+        else:
+            content = raw
 
     if not content or len(content) < 50:
         raise HTTPException(
@@ -458,6 +615,13 @@ async def fetch_job_from_url(request: FetchJobUrlRequest) -> FetchJobUrlResponse
                 "Please copy and paste the job description manually."
             ),
         )
+
+    # --- Optional LLM cleanup (only when LLM is available and content still noisy) ---
+    if _looks_noisy(content):
+        logger.info("Content still noisy (%d chars) — attempting LLM filter", len(content))
+        content = await _filter_job_content_with_llm(content)
+    else:
+        logger.debug("Content looks clean (%d chars) — skipping LLM filter", len(content))
 
     return FetchJobUrlResponse(content=content, url=url)
 

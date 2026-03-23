@@ -1,8 +1,11 @@
 """Health check and status endpoints."""
 
 import asyncio
+import logging
 import time
 from fastapi import APIRouter
+
+logger = logging.getLogger(__name__)
 
 from app.database import db
 from app.llm import check_llm_health, get_llm_config
@@ -21,8 +24,9 @@ async def _get_cached_llm_health(config) -> dict:  # type: ignore[no-untyped-def
     if _health_cache["result"] is not None and (now - _health_cache["ts"]) < _HEALTH_CACHE_TTL:
         return _health_cache["result"]
     try:
-        result = await asyncio.wait_for(check_llm_health(config), timeout=10.0)
-    except Exception:
+        result = await asyncio.wait_for(check_llm_health(config), timeout=60.0)
+    except Exception as e:
+        logger.warning("LLM health check failed: %s", e)
         result = {"healthy": False, "error": "health check timed out or failed"}
     _health_cache["result"] = result
     _health_cache["ts"] = now
