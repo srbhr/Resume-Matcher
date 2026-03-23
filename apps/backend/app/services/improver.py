@@ -1,5 +1,6 @@
 """Resume improvement service using LLM."""
 
+import copy
 import json
 import logging
 import re
@@ -11,12 +12,15 @@ from app.llm import complete_json
 from app.prompts import (
     CRITICAL_TRUTHFULNESS_RULES,
     DEFAULT_IMPROVE_PROMPT_ID,
+    DIFF_IMPROVE_PROMPT,
+    DIFF_STRATEGY_INSTRUCTIONS,
     EXTRACT_KEYWORDS_PROMPT,
     IMPROVE_RESUME_PROMPTS,
     get_language_name,
 )
 from app.prompts.templates import IMPROVE_SCHEMA_EXAMPLE
 from app.schemas import ResumeData, ResumeFieldDiff, ResumeDiffSummary
+from app.schemas.models import ImproveDiffResult, ResumeChange
 
 logger = logging.getLogger(__name__)
 
@@ -63,6 +67,424 @@ def _check_for_truncation(data: dict[str, Any]) -> None:
         logger.warning(
             "Resume has empty workExperience - possible truncation or unusual resume"
         )
+
+
+# ---------------------------------------------------------------------------
+# Diff-based improvement: path resolution, applier, verifier, LLM generator
+# ---------------------------------------------------------------------------
+
+_PATH_SEGMENT_RE = re.compile(r"([a-zA-Z_]+)(?:\[(\d+)\])?")
+
+# Allowed path patterns — only these can be modified by diffs
+_ALLOWED_PATH_PATTERNS = [
+    re.compile(r"^summary$"),
+    re.compile(r"^workExperience\[\d+\]\.description(\[\d+\])?$"),
+    re.compile(r"^personalProjects\[\d+\]\.description(\[\d+\])?$"),
+    re.compile(r"^additional\.technicalSkills$"),
+]
+
+# Blocked path prefixes — always rejected
+_BLOCKED_PATH_PREFIXES = frozenset({
+    "personalInfo",
+    "customSections",
+    "sectionMeta",
+})
+
+# Blocked field names — rejected when they appear as the leaf of a path
+_BLOCKED_FIELD_NAMES = frozenset({
+    "years",
+    "company",
+    "institution",
+    "title",
+    "degree",
+    "name",
+    "role",
+    "github",
+    "website",
+    "location",
+    "id",
+})
+
+_METRIC_RE = re.compile(r"\d+%|\d+x|\$\d+")
+
+
+def _is_path_allowed(path: str) -> bool:
+    """Check if a path is in the allowed whitelist."""
+    return any(p.match(path) for p in _ALLOWED_PATH_PATTERNS)
+
+
+def _is_path_blocked(path: str) -> bool:
+    """Check if a path matches any blocked pattern."""
+    for prefix in _BLOCKED_PATH_PREFIXES:
+        if path == prefix or path.startswith(prefix + ".") or path.startswith(prefix + "["):
+            return True
+
+    # Check if the leaf field is blocked
+    segments = path.split(".")
+    if segments:
+        last_segment = segments[-1]
+        field_name = re.sub(r"\[\d+\]$", "", last_segment)
+        # "description" is the one allowed field that shares a name pattern
+        if field_name in _BLOCKED_FIELD_NAMES and field_name != "description":
+            return True
+
+    if path.startswith("education"):
+        return True
+
+    return False
+
+
+def _resolve_path(data: dict[str, Any], path: str) -> tuple[Any, bool]:
+    """Resolve a dot+bracket path to a value in the data dict.
+
+    Returns:
+        (value, success). On failure returns (None, False).
+    """
+    current: Any = data
+    for segment_match in _PATH_SEGMENT_RE.finditer(path):
+        key = segment_match.group(1)
+        index_str = segment_match.group(2)
+
+        if not isinstance(current, dict) or key not in current:
+            return None, False
+        current = current[key]
+
+        if index_str is not None:
+            index = int(index_str)
+            if not isinstance(current, list) or index < 0 or index >= len(current):
+                return None, False
+            current = current[index]
+
+    return current, True
+
+
+def _set_at_path(data: dict[str, Any], path: str, value: Any) -> bool:
+    """Set a value at the given path. Returns True on success."""
+    segments = list(_PATH_SEGMENT_RE.finditer(path))
+    if not segments:
+        return False
+
+    # Navigate to parent of the target
+    current: Any = data
+    for seg in segments[:-1]:
+        key = seg.group(1)
+        index_str = seg.group(2)
+
+        if not isinstance(current, dict) or key not in current:
+            return False
+        current = current[key]
+
+        if index_str is not None:
+            index = int(index_str)
+            if not isinstance(current, list) or index < 0 or index >= len(current):
+                return False
+            current = current[index]
+
+    # Set on the final segment
+    last = segments[-1]
+    key = last.group(1)
+    index_str = last.group(2)
+
+    if index_str is not None:
+        if not isinstance(current, dict) or key not in current:
+            return False
+        target = current[key]
+        index = int(index_str)
+        if not isinstance(target, list) or index < 0 or index >= len(target):
+            return False
+        target[index] = value
+    else:
+        if not isinstance(current, dict):
+            return False
+        current[key] = value
+
+    return True
+
+
+def _verify_original_matches(actual: Any, expected: str | None) -> bool:
+    """Verify that the original text from the diff matches the actual value."""
+    if expected is None:
+        return True  # No verification needed (e.g. append, reorder)
+    if not isinstance(actual, str):
+        return False
+    return actual.strip().casefold() == expected.strip().casefold()
+
+
+def apply_diffs(
+    original: dict[str, Any],
+    changes: list[ResumeChange],
+) -> tuple[dict[str, Any], list[ResumeChange], list[ResumeChange]]:
+    """Apply verified diffs to original resume.
+
+    Each change goes through 4 gates:
+    1. Path is in allowed whitelist
+    2. Path is not in blocked list
+    3. Path resolves to an actual value in the original
+    4. Original text matches (for replace actions)
+
+    For reorder: validates the new list contains exactly the same items.
+
+    Args:
+        original: The original resume data (ResumeData-compatible dict)
+        changes: List of changes from the LLM
+
+    Returns:
+        (result_dict, applied_changes, rejected_changes)
+    """
+    result = copy.deepcopy(original)
+    applied: list[ResumeChange] = []
+    rejected: list[ResumeChange] = []
+
+    for change in changes:
+        path = change.path
+        action = change.action
+
+        # Gate 1: Path must be in allowed whitelist
+        if not _is_path_allowed(path):
+            logger.info("Diff rejected (not in allowed list): %s", path)
+            rejected.append(change)
+            continue
+
+        # Gate 2: Path must not be blocked
+        if _is_path_blocked(path):
+            logger.info("Diff rejected (blocked path): %s", path)
+            rejected.append(change)
+            continue
+
+        # Gate 3: Path must resolve to a real value
+        actual_value, resolved = _resolve_path(result, path)
+        if not resolved:
+            logger.info("Diff rejected (path not found): %s", path)
+            rejected.append(change)
+            continue
+
+        if action == "replace":
+            # Gate 4: Original text must match what's actually there
+            if not _verify_original_matches(actual_value, change.original):
+                logger.info(
+                    "Diff rejected (original mismatch): path=%s expected=%r actual=%r",
+                    path,
+                    change.original,
+                    actual_value,
+                )
+                rejected.append(change)
+                continue
+
+            if not _set_at_path(result, path, change.value):
+                rejected.append(change)
+                continue
+            applied.append(change)
+
+        elif action == "append":
+            if not isinstance(actual_value, list):
+                logger.info("Diff rejected (append to non-list): %s", path)
+                rejected.append(change)
+                continue
+            actual_value.append(change.value)
+            applied.append(change)
+
+        elif action == "reorder":
+            if not isinstance(actual_value, list) or not isinstance(change.value, list):
+                rejected.append(change)
+                continue
+            # Validate same items (case-insensitive)
+            orig_set = sorted(s.casefold() for s in actual_value if isinstance(s, str))
+            new_set = sorted(s.casefold() for s in change.value if isinstance(s, str))
+            if orig_set != new_set:
+                logger.info("Diff rejected (reorder items mismatch): %s", path)
+                rejected.append(change)
+                continue
+            if not _set_at_path(result, path, change.value):
+                rejected.append(change)
+                continue
+            applied.append(change)
+
+        else:
+            logger.info("Diff rejected (unknown action): %s", action)
+            rejected.append(change)
+
+    return result, applied, rejected
+
+
+def _count_description_words(data: dict[str, Any]) -> int:
+    """Count total words in all description and summary fields."""
+    total = 0
+    for key in ("workExperience", "personalProjects"):
+        for entry in data.get(key, []):
+            if isinstance(entry, dict):
+                desc = entry.get("description", [])
+                if isinstance(desc, list):
+                    total += sum(len(str(d).split()) for d in desc)
+                elif isinstance(desc, str):
+                    total += len(desc.split())
+    summary = data.get("summary", "")
+    if isinstance(summary, str):
+        total += len(summary.split())
+    return total
+
+
+def verify_diff_result(
+    original: dict[str, Any],
+    result: dict[str, Any],
+    applied_changes: list[ResumeChange],
+    job_keywords: dict[str, Any],
+) -> list[str]:
+    """Local quality checks on the diff result. Returns list of warnings.
+
+    All checks are local (zero LLM cost). Warnings are informational —
+    they don't block the response.
+    """
+    warnings: list[str] = []
+
+    # Check 1: No empty result
+    if not applied_changes:
+        warnings.append("No changes were applied — resume returned unchanged")
+        return warnings
+
+    # Check 2: Section counts preserved
+    for key, label in [
+        ("workExperience", "work experience"),
+        ("education", "education"),
+        ("personalProjects", "project"),
+    ]:
+        orig_count = len(original.get(key, []))
+        result_count = len(result.get(key, []))
+        if orig_count != result_count:
+            warnings.append(
+                f"Section count changed: {label} ({orig_count} → {result_count})"
+            )
+
+    # Check 3: Identity fields unchanged
+    for key, id_fields in [
+        ("workExperience", ["company", "title"]),
+        ("education", ["institution", "degree"]),
+    ]:
+        orig_entries = original.get(key, [])
+        result_entries = result.get(key, [])
+        for i, (orig, res) in enumerate(zip(orig_entries, result_entries)):
+            if not isinstance(orig, dict) or not isinstance(res, dict):
+                continue
+            for field in id_fields:
+                o_val = str(orig.get(field, "")).strip()
+                r_val = str(res.get(field, "")).strip()
+                if o_val and o_val != r_val:
+                    warnings.append(
+                        f"Identity field changed: {key}[{i}].{field} "
+                        f"('{o_val}' → '{r_val}')"
+                    )
+
+    # Check 4: Word count ratio
+    orig_words = _count_description_words(original)
+    result_words = _count_description_words(result)
+    if orig_words > 0 and result_words > orig_words * 1.8:
+        warnings.append(
+            f"Word count increased significantly: "
+            f"{orig_words} → {result_words} ({result_words / orig_words:.1f}x)"
+        )
+
+    # Check 5: Invented metrics
+    for change in applied_changes:
+        if change.action == "replace" and isinstance(change.value, str):
+            new_metrics = set(_METRIC_RE.findall(change.value))
+            original_text = change.original or ""
+            old_metrics = set(_METRIC_RE.findall(original_text))
+            invented = new_metrics - old_metrics
+            if invented:
+                warnings.append(
+                    f"Possible invented metric in {change.path}: "
+                    f"{', '.join(invented)} (not in original)"
+                )
+
+    return warnings
+
+
+async def generate_resume_diffs(
+    original_resume: str,
+    job_description: str,
+    job_keywords: dict[str, Any],
+    language: str = "en",
+    prompt_id: str | None = None,
+    original_resume_data: dict[str, Any] | None = None,
+) -> ImproveDiffResult:
+    """Generate targeted resume diffs via LLM.
+
+    Instead of asking the LLM for the full resume, asks for a list of
+    targeted changes. Each change specifies a path, action, and new value.
+
+    Args:
+        original_resume: Resume content (markdown)
+        job_description: Target job description
+        job_keywords: Extracted job keywords
+        language: Output language code (en, es, zh, ja)
+        prompt_id: Strategy id (nudge/keywords/full)
+        original_resume_data: Structured resume JSON
+
+    Returns:
+        ImproveDiffResult with list of changes and strategy notes
+    """
+    keywords_str = _prepare_keywords_for_prompt(job_keywords)
+    output_language = get_language_name(language)
+
+    selected_id = prompt_id or DEFAULT_IMPROVE_PROMPT_ID
+    strategy_instruction = DIFF_STRATEGY_INSTRUCTIONS.get(
+        selected_id, DIFF_STRATEGY_INSTRUCTIONS[DEFAULT_IMPROVE_PROMPT_ID]
+    )
+
+    # LLM-011: Sanitize job description
+    sanitized_jd = _sanitize_user_input(job_description)
+
+    # Use structured JSON if available with month precision, else markdown
+    if original_resume_data is not None:
+        if _has_month_in_dates(original_resume_data):
+            resume_input = json.dumps(original_resume_data)
+        else:
+            resume_input = original_resume
+    else:
+        resume_input = original_resume
+
+    prompt = DIFF_IMPROVE_PROMPT.format(
+        strategy_instruction=strategy_instruction,
+        output_language=output_language,
+        job_keywords=keywords_str,
+        job_description=sanitized_jd,
+        original_resume=resume_input,
+    )
+
+    result = await complete_json(
+        prompt=prompt,
+        system_prompt="You are an expert resume editor. Output only valid JSON with targeted changes.",
+        max_tokens=4096,
+    )
+
+    # Parse result — handle LLM ignoring diff format gracefully
+    raw_changes = result.get("changes", [])
+    if not isinstance(raw_changes, list):
+        logger.warning("LLM returned non-list changes: %s", type(raw_changes))
+        raw_changes = []
+
+    changes: list[ResumeChange] = []
+    for raw in raw_changes:
+        if not isinstance(raw, dict):
+            continue
+        try:
+            changes.append(
+                ResumeChange(
+                    path=str(raw.get("path", "")),
+                    action=raw.get("action", "replace"),
+                    original=raw.get("original"),
+                    value=raw.get("value", ""),
+                    reason=str(raw.get("reason", "")),
+                )
+            )
+        except Exception as e:
+            logger.warning("Skipping malformed change: %s — %s", raw, e)
+
+    strategy_notes = str(result.get("strategy_notes", ""))
+    if not raw_changes and "changes" not in result:
+        strategy_notes = "LLM output had no changes key — returned zero diffs"
+        logger.warning("LLM output missing 'changes' key: %s", list(result.keys()))
+
+    return ImproveDiffResult(changes=changes, strategy_notes=strategy_notes)
 
 
 async def extract_job_keywords(job_description: str) -> dict[str, Any]:
