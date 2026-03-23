@@ -1122,9 +1122,10 @@ async def improve_resume_endpoint(
                 )
 
             logger.info(
-                "Diff-based improve (legacy): %d applied, %d rejected",
+                "Diff-based improve (legacy): %d applied, %d rejected, %d warnings",
                 len(applied_changes),
                 len(rejected_changes),
+                len(diff_warnings),
             )
         else:
             # Fallback to full-output mode when no structured data available

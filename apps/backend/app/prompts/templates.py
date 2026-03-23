@@ -452,29 +452,29 @@ Original Resume:
 {original_resume}
 
 Output this exact JSON format, nothing else:
-{{{{
+{{
   "changes": [
-    {{{{
+    {{
       "path": "workExperience[0].description[1]",
       "action": "replace",
       "original": "the exact original text at this path",
       "value": "the improved text",
       "reason": "why this change helps"
-    }}}},
-    {{{{
+    }},
+    {{
       "path": "summary",
       "action": "replace",
       "original": "the current summary text",
       "value": "the improved summary",
       "reason": "why this change helps"
-    }}}},
-    {{{{
+    }},
+    {{
       "path": "additional.technicalSkills",
       "action": "reorder",
       "original": null,
       "value": ["most relevant skill first", "then next", "..."],
       "reason": "reordered to prioritize JD-relevant skills"
-    }}}}
+    }}
   ],
   "strategy_notes": "brief summary of the tailoring approach"
-}}}}"""
+}}"""

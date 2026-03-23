@@ -279,7 +279,9 @@ class TestApplyDiffsVerificationGates:
 
     def test_reject_unknown_action_at_schema_level(self, sample_resume):
         """Pydantic Literal type prevents invalid actions before apply_diffs sees them."""
-        with pytest.raises(Exception):  # Pydantic ValidationError
+        from pydantic import ValidationError
+
+        with pytest.raises(ValidationError):
             ResumeChange(
                 path="summary",
                 action="delete",  # type: ignore[arg-type]

@@ -60,13 +60,13 @@ class TestRemoveAiPhrases:
         cleaned, removed = remove_ai_phrases(clean_data)
         assert len(removed) == 0
 
-    def test_does_not_mutate_original(self, sample_resume):
-        original_copy = copy.deepcopy(sample_resume)
+    def test_does_not_mutate_input(self, sample_resume):
         data = copy.deepcopy(sample_resume)
         data["summary"] = "Spearheaded development"
+        data_before = copy.deepcopy(data)
         remove_ai_phrases(data)
-        # Original sample_resume should be untouched
-        assert sample_resume == original_copy
+        # The input dict should not be mutated by remove_ai_phrases
+        assert data == data_before
 
 
 class TestValidateMasterAlignment:

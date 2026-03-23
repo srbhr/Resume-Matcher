@@ -270,6 +270,12 @@ def apply_diffs(
                 rejected.append(change)
                 continue
 
+            # Replace must use a string value (not list)
+            if not isinstance(change.value, str):
+                logger.info("Diff rejected (replace with non-string value): %s", path)
+                rejected.append(change)
+                continue
+
             if not _set_at_path(result, path, change.value):
                 rejected.append(change)
                 continue
@@ -278,6 +284,11 @@ def apply_diffs(
         elif action == "append":
             if not isinstance(actual_value, list):
                 logger.info("Diff rejected (append to non-list): %s", path)
+                rejected.append(change)
+                continue
+            # Append must use a non-empty string (not list, to avoid nested lists)
+            if not isinstance(change.value, str) or not change.value.strip():
+                logger.info("Diff rejected (append non-string or empty value): %s", path)
                 rejected.append(change)
                 continue
             actual_value.append(change.value)
@@ -294,7 +305,17 @@ def apply_diffs(
                 logger.info("Diff rejected (reorder items mismatch): %s", path)
                 rejected.append(change)
                 continue
-            if not _set_at_path(result, path, change.value):
+            # Preserve original casing: map new order back to original strings
+            casefold_to_originals: dict[str, list[str]] = {}
+            for item in actual_value:
+                if isinstance(item, str):
+                    casefold_to_originals.setdefault(item.casefold(), []).append(item)
+            reordered: list[str] = []
+            for item in change.value:
+                if isinstance(item, str):
+                    originals = casefold_to_originals.get(item.casefold(), [])
+                    reordered.append(originals.pop(0) if originals else item)
+            if not _set_at_path(result, path, reordered):
                 rejected.append(change)
                 continue
             applied.append(change)
@@ -382,10 +403,11 @@ def verify_diff_result(
             f"{orig_words} → {result_words} ({result_words / orig_words:.1f}x)"
         )
 
-    # Check 5: Invented metrics
+    # Check 5: Invented metrics (covers both replace and append)
     for change in applied_changes:
-        if change.action == "replace" and isinstance(change.value, str):
+        if change.action in ("replace", "append") and isinstance(change.value, str):
             new_metrics = set(_METRIC_RE.findall(change.value))
+            # For append, original is None — any metric is potentially invented
             original_text = change.original or ""
             old_metrics = set(_METRIC_RE.findall(original_text))
             invented = new_metrics - old_metrics
@@ -426,6 +448,11 @@ async def generate_resume_diffs(
     output_language = get_language_name(language)
 
     selected_id = prompt_id or DEFAULT_IMPROVE_PROMPT_ID
+    if selected_id not in DIFF_STRATEGY_INSTRUCTIONS:
+        logger.warning(
+            "Unknown prompt_id '%s'; using default diff strategy.",
+            selected_id,
+        )
     strategy_instruction = DIFF_STRATEGY_INSTRUCTIONS.get(
         selected_id, DIFF_STRATEGY_INSTRUCTIONS[DEFAULT_IMPROVE_PROMPT_ID]
     )

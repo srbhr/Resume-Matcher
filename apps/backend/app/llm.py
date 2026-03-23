@@ -2,6 +2,7 @@
 
 import json
 import logging
+import re
 import threading
 from typing import Any
 
@@ -652,11 +653,10 @@ def _strip_thinking_tags(content: str) -> str:
     in <think>...</think> tags. The actual answer follows after the closing
     tag. Strip these so JSON extraction finds the real output.
     """
-    import re as _re
     # Remove <think>...</think> blocks (including multiline)
-    stripped = _re.sub(r"<think>.*?</think>", "", content, flags=_re.DOTALL)
+    stripped = re.sub(r"<think>.*?</think>", "", content, flags=re.DOTALL)
     # Also handle unclosed <think> tag (model may still be "thinking" at end)
-    stripped = _re.sub(r"<think>.*", "", stripped, flags=_re.DOTALL)
+    stripped = re.sub(r"<think>.*", "", stripped, flags=re.DOTALL)
     return stripped.strip()
 
 
