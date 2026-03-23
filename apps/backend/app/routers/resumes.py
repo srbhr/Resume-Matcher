@@ -44,9 +44,12 @@ from app.schemas import (
 from app.services.parser import parse_document, parse_resume_to_json, restore_dates_from_markdown
 from app.services.improver import (
     MONTH_PATTERN,
+    apply_diffs,
     extract_job_keywords,
     generate_improvements,
+    generate_resume_diffs,
     improve_resume,
+    verify_diff_result,
 )
 from app.services.refiner import refine_resume, calculate_keyword_match
 from app.schemas.refinement import RefinementConfig
@@ -736,26 +739,63 @@ async def _improve_preview_flow(
                 e,
             )
     original_resume_data = _get_original_resume_data(resume)
-    improved_data = await improve_resume(
-        original_resume=resume["content"],
-        job_description=job["content"],
-        job_keywords=job_keywords,
-        language=language,
-        prompt_id=prompt_id,
-        original_resume_data=original_resume_data,
-    )
     # Collect warnings throughout the process
     response_warnings: list[str] = []
 
+    # Diff-based improvement: generate targeted changes, apply with verification
+    if original_resume_data:
+        diff_result = await generate_resume_diffs(
+            original_resume=resume["content"],
+            job_description=job["content"],
+            job_keywords=job_keywords,
+            language=language,
+            prompt_id=prompt_id,
+            original_resume_data=original_resume_data,
+        )
+
+        improved_data, applied_changes, rejected_changes = apply_diffs(
+            original=original_resume_data,
+            changes=diff_result.changes,
+        )
+
+        diff_warnings = verify_diff_result(
+            original=original_resume_data,
+            result=improved_data,
+            applied_changes=applied_changes,
+            job_keywords=job_keywords,
+        )
+        response_warnings.extend(diff_warnings)
+
+        if rejected_changes:
+            response_warnings.append(
+                f"{len(rejected_changes)} change(s) rejected during verification"
+            )
+
+        logger.info(
+            "Diff-based improve: %d applied, %d rejected, %d warnings",
+            len(applied_changes),
+            len(rejected_changes),
+            len(diff_warnings),
+        )
+    else:
+        # Fallback to full-output mode when no structured data available
+        improved_data = await improve_resume(
+            original_resume=resume["content"],
+            job_description=job["content"],
+            job_keywords=job_keywords,
+            language=language,
+            prompt_id=prompt_id,
+            original_resume_data=original_resume_data,
+        )
+
+    # Safety nets (defense in depth — should rarely activate with diff-based flow)
     improved_data, preserve_warnings = _preserve_personal_info(
         original_resume_data,
         improved_data,
     )
     response_warnings.extend(preserve_warnings)
 
-    # Post-processing safety nets
     improved_data = _restore_original_dates(original_resume_data, improved_data)
-    # Restore month-inclusive dates from original markdown (bulletproof fallback)
     original_markdown = _get_original_markdown(resume)
     if original_markdown:
         improved_data = restore_dates_from_markdown(improved_data, original_markdown)
@@ -1049,26 +1089,62 @@ async def improve_resume_endpoint(
         prompt_id = request.prompt_id or _get_default_prompt_id()
 
         original_resume_data = _get_original_resume_data(resume)
-        improved_data = await improve_resume(
-            original_resume=resume["content"],
-            job_description=job["content"],
-            job_keywords=job_keywords,
-            language=language,
-            prompt_id=prompt_id,
-            original_resume_data=original_resume_data,
-        )
         # Collect warnings throughout the process
         response_warnings: list[str] = []
 
+        # Diff-based improvement: generate targeted changes, apply with verification
+        if original_resume_data:
+            diff_result = await generate_resume_diffs(
+                original_resume=resume["content"],
+                job_description=job["content"],
+                job_keywords=job_keywords,
+                language=language,
+                prompt_id=prompt_id,
+                original_resume_data=original_resume_data,
+            )
+
+            improved_data, applied_changes, rejected_changes = apply_diffs(
+                original=original_resume_data,
+                changes=diff_result.changes,
+            )
+
+            diff_warnings = verify_diff_result(
+                original=original_resume_data,
+                result=improved_data,
+                applied_changes=applied_changes,
+                job_keywords=job_keywords,
+            )
+            response_warnings.extend(diff_warnings)
+
+            if rejected_changes:
+                response_warnings.append(
+                    f"{len(rejected_changes)} change(s) rejected during verification"
+                )
+
+            logger.info(
+                "Diff-based improve (legacy): %d applied, %d rejected",
+                len(applied_changes),
+                len(rejected_changes),
+            )
+        else:
+            # Fallback to full-output mode when no structured data available
+            improved_data = await improve_resume(
+                original_resume=resume["content"],
+                job_description=job["content"],
+                job_keywords=job_keywords,
+                language=language,
+                prompt_id=prompt_id,
+                original_resume_data=original_resume_data,
+            )
+
+        # Safety nets (defense in depth)
         improved_data, preserve_warnings = _preserve_personal_info(
             original_resume_data,
             improved_data,
         )
         response_warnings.extend(preserve_warnings)
 
-        # Post-processing safety nets
         improved_data = _restore_original_dates(original_resume_data, improved_data)
-        # Restore month-inclusive dates from original markdown (bulletproof fallback)
         original_markdown = _get_original_markdown(resume)
         if original_markdown:
             improved_data = restore_dates_from_markdown(improved_data, original_markdown)
