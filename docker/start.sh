@@ -240,7 +240,7 @@ if [ ! -f "server.js" ]; then
 fi
 
 trap '' SIGTERM SIGINT SIGQUIT
-node server.js "$@" &
+HOSTNAME=0.0.0.0 PORT="${FRONTEND_PORT}" node server.js "$@" &
 FRONTEND_PID=$!
 trap cleanup SIGTERM SIGINT SIGQUIT
 status "Frontend is running (PID: $FRONTEND_PID)"
