@@ -2,6 +2,7 @@
 
 import json
 import logging
+import re
 import threading
 from typing import Any
 
@@ -69,6 +70,19 @@ def _normalize_api_base(provider: str, api_base: str | None) -> str | None:
     # strip it to avoid '/v1/v1/models/...'.
     if provider == "gemini" and base.endswith("/v1"):
         base = base[: -len("/v1")].rstrip("/")
+
+    # OpenRouter base is https://openrouter.ai/api/v1. LiteLLM appends /v1
+    # internally, so strip it to avoid /v1/v1.
+    if provider == "openrouter" and base.endswith("/v1"):
+        base = base[: -len("/v1")].rstrip("/")
+
+    # Ollama doesn't use /v1 paths. Strip common suffixes users might paste:
+    # /v1, /api/chat, /api/generate
+    if provider == "ollama":
+        for suffix in ("/v1", "/api/chat", "/api/generate", "/api"):
+            if base.endswith(suffix):
+                base = base[: -len(suffix)].rstrip("/")
+                break
 
     return base or None
 
@@ -255,7 +269,7 @@ def get_model_name(config: LLMConfig) -> str:
         "openrouter": "openrouter/",
         "gemini": "gemini/",
         "deepseek": "deepseek/",
-        "ollama": "ollama/",
+        "ollama": "ollama_chat/",  # ollama_chat/ routes to /api/chat (supports messages array)
     }
 
     prefix = provider_prefixes.get(config.provider, "")
@@ -269,7 +283,7 @@ def get_model_name(config: LLMConfig) -> str:
 
     # For other providers, don't add prefix if model already has a known prefix
     known_prefixes = ["openrouter/", "anthropic/",
-                      "gemini/", "deepseek/", "ollama/"]
+                      "gemini/", "deepseek/", "ollama/", "ollama_chat/"]
     if any(config.model.startswith(p) for p in known_prefixes):
         return config.model
 
@@ -520,6 +534,11 @@ async def complete(
         content = _extract_choice_text(response.choices[0])
         if not content:
             raise ValueError("Empty response from LLM")
+        # Strip thinking tags from reasoning models (deepseek-r1, qwq, etc.)
+        if "<think>" in content:
+            content = _strip_thinking_tags(content)
+            if not content:
+                raise ValueError("Response contained only thinking content, no output")
         return content
     except Exception as e:
         # Log the actual error server-side for debugging
@@ -537,9 +556,18 @@ def _supports_json_mode(model_name: str) -> bool:
     anthropic, etc.) so that capability is always determined from the
     registry rather than a hardcoded provider list.
 
+    Ollama models support JSON mode natively (format="json") but are
+    often not in LiteLLM's registry (custom/local models), so we
+    always return True for ollama.
+
     Args:
         model_name: LiteLLM-formatted model name (from get_model_name).
     """
+    # Ollama supports JSON mode natively via format="json" even when
+    # models aren't in LiteLLM's registry (custom, quantized, etc.)
+    if model_name.startswith(("ollama/", "ollama_chat/")):
+        return True
+
     try:
         info = litellm.get_model_info(model=model_name)
         supported_params = info.get("supported_openai_params", [])
@@ -618,6 +646,20 @@ def _calculate_timeout(
     return int(base * token_factor * provider_factor)
 
 
+def _strip_thinking_tags(content: str) -> str:
+    """Strip thinking/reasoning tags from model output.
+
+    Ollama thinking models (deepseek-r1, qwq, etc.) wrap their reasoning
+    in <think>...</think> tags. The actual answer follows after the closing
+    tag. Strip these so JSON extraction finds the real output.
+    """
+    # Remove <think>...</think> blocks (including multiline)
+    stripped = re.sub(r"<think>.*?</think>", "", content, flags=re.DOTALL)
+    # Also handle unclosed <think> tag (model may still be "thinking" at end)
+    stripped = re.sub(r"<think>.*", "", stripped, flags=re.DOTALL)
+    return stripped.strip()
+
+
 def _extract_json(content: str, _depth: int = 0) -> str:
     """Extract JSON from LLM response, handling various formats.
 
@@ -634,6 +676,10 @@ def _extract_json(content: str, _depth: int = 0) -> str:
             f"Content too large for JSON extraction: {len(content)} bytes")
 
     original = content
+
+    # Strip thinking model tags (deepseek-r1, qwq, etc.)
+    if "<think>" in content:
+        content = _strip_thinking_tags(content)
 
     # Remove markdown code blocks
     if "```json" in content:

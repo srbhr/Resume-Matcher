@@ -21,6 +21,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",
     "httpx>=0.28.0",
 ]
 
@@ -30,3 +31,20 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["app"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+asyncio_mode = "auto"
+addopts = [
+    "--strict-markers",
+    "-v",
+]
+markers = [
+    "unit: pure function tests, no external dependencies",
+    "service: service layer tests with mocked LLM",
+    "integration: API endpoint tests with httpx AsyncClient",
+]
