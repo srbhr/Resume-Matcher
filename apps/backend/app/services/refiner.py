@@ -52,9 +52,9 @@ def _keyword_in_text(keyword: str, text: str) -> bool:
     escaped = re.escape(kw)
     # \b works at a word-char edge; use a negative lookbehind/lookahead
     # when the keyword itself starts/ends with a non-word character.
-    _word_char = re.compile(r"[a-zA-Z0-9_]")
-    prefix = r"\b" if _word_char.match(kw[0]) else r"(?<![a-zA-Z0-9_])"
-    suffix = r"\b" if _word_char.match(kw[-1]) else r"(?![a-zA-Z0-9_])"
+    _word_char = re.compile(r"\w")
+    prefix = r"\b" if _word_char.match(kw[0]) else r"(?<!\w)"
+    suffix = r"\b" if _word_char.match(kw[-1]) else r"(?!\w)"
     pattern = prefix + escaped + suffix
     return bool(re.search(pattern, text.lower()))
 

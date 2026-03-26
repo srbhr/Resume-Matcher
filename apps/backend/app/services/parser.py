@@ -74,6 +74,14 @@ def restore_dates_from_markdown(
     if not year_to_full:
         return parsed_data
 
+    # Normalize a years string for lookup: replace any present-tense ongoing token
+    # (Current, Now, Ongoing, and variants) with canonical "Present" so that LLM
+    # output like "2021 - Current" resolves to the registered "2021 - Present" key.
+    _ongoing_re = re.compile(r"\b(?:Current|Now|Ongoing)\b", re.IGNORECASE)
+
+    def _normalize_for_lookup(years_str: str) -> str:
+        return _ongoing_re.sub("Present", years_str)
+
     patched = 0
     for section_key in ("workExperience", "education", "personalProjects"):
         for entry in parsed_data.get(section_key, []):
@@ -90,8 +98,9 @@ def restore_dates_from_markdown(
             ):
                 continue
             # Try to find a matching month-inclusive date
-            if years in year_to_full:
-                entry["years"] = year_to_full[years]
+            lookup = _normalize_for_lookup(years)
+            if lookup in year_to_full:
+                entry["years"] = year_to_full[lookup]
                 patched += 1
 
     # Custom sections
@@ -112,8 +121,9 @@ def restore_dates_from_markdown(
                     re.IGNORECASE,
                 ):
                     continue
-                if years in year_to_full:
-                    item["years"] = year_to_full[years]
+                lookup = _normalize_for_lookup(years)
+                if lookup in year_to_full:
+                    item["years"] = year_to_full[lookup]
                     patched += 1
 
     if patched:
