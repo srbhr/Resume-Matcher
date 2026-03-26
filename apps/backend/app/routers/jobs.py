@@ -154,7 +154,7 @@ def _is_private_host(hostname: str) -> bool:
 
 # Heading-level noise lines at the very top of the page (navigation counters, etc.)
 _TOP_NOISE_RE = re.compile(
-    r"^(?:Show menu\s*|(?:\d+\s*){3,}|\d+\s*)",
+    r"^(?:Show menu\s*|(?:\d+\s*){3,})",
     re.MULTILINE,
 )
 
@@ -287,7 +287,7 @@ def _run_playwright_sync(url: str, config: dict) -> str | None:
 
 async def _extract_with_playwright(url: str, config: dict) -> str | None:
     """Dispatch Playwright extraction to a thread pool (avoids Windows asyncio subprocess issue)."""
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     return await loop.run_in_executor(_playwright_executor, _run_playwright_sync, url, config)
 
 
@@ -556,7 +556,7 @@ async def fetch_job_from_url(request: FetchJobUrlRequest) -> FetchJobUrlResponse
         raise HTTPException(status_code=400, detail="URL must start with http:// or https://")
 
     parsed_host = urlparse(url).hostname or ""
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     if await loop.run_in_executor(None, _is_private_host, parsed_host):
         raise HTTPException(status_code=400, detail="URL must point to a public website")
 
@@ -571,6 +571,12 @@ async def fetch_job_from_url(request: FetchJobUrlRequest) -> FetchJobUrlResponse
     # --- Fall back to httpx + SmartExtractor ---
     if not content or len(content) < 50:
         logger.info("Using httpx/SmartExtractor strategy for %s", url)
+
+        async def _ssrf_redirect_guard(request: httpx.Request) -> None:
+            host = request.url.host
+            if await asyncio.get_running_loop().run_in_executor(None, _is_private_host, host):
+                raise httpx.RequestError(f"Redirect to private host blocked: {host}", request=request)
+
         try:
             async with httpx.AsyncClient(
                 follow_redirects=True,
@@ -582,6 +588,7 @@ async def fetch_job_from_url(request: FetchJobUrlRequest) -> FetchJobUrlResponse
                         "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
                     )
                 },
+                event_hooks={"request": [_ssrf_redirect_guard]},
             ) as client:
                 response = await client.get(url)
                 response.raise_for_status()

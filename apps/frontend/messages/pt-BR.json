@@ -294,7 +294,7 @@
         "title": "Título",
         "organization": "Organização",
         "location": "Localização",
-        "years": "2020 - Presente",
+        "years": "Jan 2020 - Presente",
         "description": "Descreva sua contribuição..."
       },
       "noEntries": "// NENHUMA ENTRADA DE {label}",
@@ -312,7 +312,7 @@
           "jobTitle": "Desenvolvedor Sênior",
           "company": "Tech Corp",
           "location": "Remoto / Cidade",
-          "years": "2020 - Presente",
+          "years": "Jan 2020 - Presente",
           "description": "Descreva sua conquista..."
         }
       },
@@ -328,7 +328,7 @@
         "placeholders": {
           "institution": "Nome da Universidade",
           "degree": "Bacharelado em Ciência da Computação",
-          "years": "2016 - 2020",
+          "years": "Ago 2016 - Mai 2020",
           "description": "Detalhes adicionais..."
         }
       },
@@ -343,7 +343,7 @@
         "placeholders": {
           "projectName": "Resume Matcher",
           "role": "Criador",
-          "years": "2023",
+          "years": "Mar 2023",
           "github": "github.com/usuario/projeto",
           "website": "https://projeto-demo.com",
           "description": "Detalhe do projeto..."
@@ -531,6 +531,12 @@
       "tailoring": "A IA está personalizando seu currículo",
       "elapsedSeconds": "{seconds}s decorridos",
       "slowModelNote": "Modelos de IA locais podem demorar vários minutos. Aguarde e não feche esta página."
+    },
+    "streamStages": {
+      "keywords": "Extraindo palavras-chave da vaga...",
+      "improving": "Personalizando o currículo...",
+      "refining": "Executando refinamento...",
+      "diff": "Calculando alterações..."
     },
     "promptOptions": {
       "nudge": {

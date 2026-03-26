@@ -66,6 +66,7 @@ class Database:
         cover_letter: str | None = None,
         outreach_message: str | None = None,
         title: str | None = None,
+        original_markdown: str | None = None,
     ) -> dict[str, Any]:
         """Create a new resume entry.
 
@@ -74,7 +75,7 @@ class Database:
         resume_id = str(uuid4())
         now = datetime.now(timezone.utc).isoformat()
 
-        doc = {
+        doc: dict[str, Any] = {
             "resume_id": resume_id,
             "content": content,
             "content_type": content_type,
@@ -89,6 +90,8 @@ class Database:
             "created_at": now,
             "updated_at": now,
         }
+        if original_markdown is not None:
+            doc["original_markdown"] = original_markdown
         self.resumes.insert(doc)
         return doc
 
@@ -101,6 +104,7 @@ class Database:
         processing_status: str = "pending",
         cover_letter: str | None = None,
         outreach_message: str | None = None,
+        original_markdown: str | None = None,
     ) -> dict[str, Any]:
         """Create a new resume with atomic master assignment.
 
@@ -131,6 +135,7 @@ class Database:
                 processing_status=processing_status,
                 cover_letter=cover_letter,
                 outreach_message=outreach_message,
+                original_markdown=original_markdown,
             )
 
     def get_resume(self, resume_id: str) -> dict[str, Any] | None:

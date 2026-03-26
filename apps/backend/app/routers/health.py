@@ -14,22 +14,24 @@ from app.schemas import HealthResponse, StatusResponse
 router = APIRouter(tags=["Health"])
 
 # Cache for LLM health check result to avoid hammering Ollama on every /status poll
-_health_cache: dict = {"result": None, "ts": 0.0}
+# Keyed by "provider:model" so config changes invalidate the cache automatically.
+_health_cache: dict[str, dict] = {}
 _HEALTH_CACHE_TTL = 30  # seconds
 
 
 async def _get_cached_llm_health(config) -> dict:  # type: ignore[no-untyped-def]
     """Return cached health result if fresh, otherwise run a new check."""
+    cache_key = f"{config.provider}:{config.model}"
     now = time.monotonic()
-    if _health_cache["result"] is not None and (now - _health_cache["ts"]) < _HEALTH_CACHE_TTL:
-        return _health_cache["result"]
+    cached = _health_cache.get(cache_key)
+    if cached is not None and (now - cached["ts"]) < _HEALTH_CACHE_TTL:
+        return cached["result"]
     try:
         result = await asyncio.wait_for(check_llm_health(config), timeout=60.0)
     except Exception as e:
         logger.warning("LLM health check failed: %s", e)
         result = {"healthy": False, "error": "health check timed out or failed"}
-    _health_cache["result"] = result
-    _health_cache["ts"] = now
+    _health_cache[cache_key] = {"result": result, "ts": time.monotonic()}
     return result
 
 

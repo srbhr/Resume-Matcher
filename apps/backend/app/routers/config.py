@@ -8,7 +8,7 @@ import httpx
 from fastapi import APIRouter, BackgroundTasks, HTTPException
 
 from app.config import settings
-from app.llm import check_llm_health, LLMConfig
+from app.llm import check_llm_health, LLMConfig, resolve_api_key
 from app.schemas import (
     LLMConfigRequest,
     LLMConfigResponse,
@@ -32,6 +32,7 @@ from app.config import (
     delete_api_key_from_config,
     clear_all_api_keys,
 )
+from app.config_cache import invalidate_config_cache
 from app.database import db
 
 router = APIRouter(prefix="/config", tags=["Configuration"])
@@ -51,10 +52,11 @@ def _load_config() -> dict:
 
 
 def _save_config(config: dict) -> None:
-    """Save config to file."""
+    """Save config to file and invalidate the resume router's cache."""
     path = _get_config_path()
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(config, indent=2))
+    invalidate_config_cache()
 
 
 def _mask_api_key(key: str) -> str:
@@ -92,10 +94,11 @@ async def get_llm_config_endpoint() -> LLMConfigResponse:
     """Get current LLM configuration (API key masked)."""
     stored = _load_config()
 
+    provider = stored.get("provider", settings.llm_provider)
     return LLMConfigResponse(
-        provider=stored.get("provider", settings.llm_provider),
+        provider=provider,
         model=stored.get("model", settings.llm_model),
-        api_key=_mask_api_key(stored.get("api_key", settings.llm_api_key)),
+        api_key=_mask_api_key(resolve_api_key(stored, provider)),
         api_base=stored.get("api_base", settings.llm_api_base),
     )
 
@@ -126,11 +129,12 @@ async def update_llm_config(
     if request.api_base is not None:
         stored["api_base"] = request.api_base
 
-    # Build normalized config for response
+    # Build normalized config for response and background health check
+    resolved_provider = stored.get("provider", settings.llm_provider)
     test_config = LLMConfig(
-        provider=stored.get("provider", settings.llm_provider),
+        provider=resolved_provider,
         model=stored.get("model", settings.llm_model),
-        api_key=stored.get("api_key", settings.llm_api_key),
+        api_key=resolve_api_key(stored, resolved_provider),
         api_base=stored.get("api_base", settings.llm_api_base),
     )
 
@@ -158,12 +162,13 @@ async def test_llm_connection(request: LLMConfigRequest | None = None) -> dict:
     stored = _load_config()
 
     # Build config: use request values if provided, otherwise fall back to stored/default
+    test_provider = (
+        request.provider
+        if request and request.provider
+        else stored.get("provider", settings.llm_provider)
+    )
     config = LLMConfig(
-        provider=(
-            request.provider
-            if request and request.provider
-            else stored.get("provider", settings.llm_provider)
-        ),
+        provider=test_provider,
         model=(
             request.model
             if request and request.model
@@ -172,7 +177,7 @@ async def test_llm_connection(request: LLMConfigRequest | None = None) -> dict:
         api_key=(
             request.api_key
             if request and request.api_key
-            else stored.get("api_key", settings.llm_api_key)
+            else resolve_api_key(stored, test_provider)
         ),
         api_base=(
             request.api_base
@@ -294,7 +299,8 @@ async def get_provider_models(provider: str) -> dict:
 
             elif provider == "gemini":
                 resp = await client.get(
-                    f"https://generativelanguage.googleapis.com/v1beta/models?key={api_key}"
+                    "https://generativelanguage.googleapis.com/v1beta/models",
+                    headers={"x-goog-api-key": api_key},
                 )
                 resp.raise_for_status()
                 data = resp.json()
@@ -543,6 +549,7 @@ async def update_api_keys(request: ApiKeysUpdateRequest) -> ApiKeysUpdateRespons
         updated.append("deepseek")
 
     save_api_keys_to_config(stored_keys)
+    invalidate_config_cache()
 
     return ApiKeysUpdateResponse(
         message=f"Updated {len(updated)} API key(s)",
@@ -572,6 +579,7 @@ async def delete_all_api_keys(confirm: str | None = None) -> dict:
             detail="Confirmation required. Pass confirm=CLEAR_ALL_KEYS query parameter.",
         )
     clear_all_api_keys()
+    invalidate_config_cache()
     return {"message": "All API keys have been cleared"}
 
 
@@ -592,6 +600,7 @@ async def delete_api_key(provider: str) -> dict:
         )
 
     delete_api_key_from_config(provider)
+    invalidate_config_cache()
 
     return {"message": f"API key for {provider} has been removed"}
 

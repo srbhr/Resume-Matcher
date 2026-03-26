@@ -1,7 +1,14 @@
 'use client';
 
-import { useState } from 'react';
-import { AlertTriangle, CheckCircle, X, ChevronDown, ChevronRight } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import {
+  AlertTriangle,
+  CheckCircle,
+  X,
+  ChevronDown,
+  ChevronRight,
+  Loader2,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useTranslations } from '@/lib/i18n';
@@ -12,6 +19,7 @@ import type {
 
 interface DiffPreviewModalProps {
   isOpen: boolean;
+  isConfirming?: boolean;
   onClose: () => void;
   onReject: () => void;
   onConfirm: () => void;
@@ -24,6 +32,7 @@ interface DiffPreviewModalProps {
 
 export function DiffPreviewModal({
   isOpen,
+  isConfirming = false,
   onClose,
   onReject,
   onConfirm,
@@ -41,12 +50,29 @@ export function DiffPreviewModal({
     () => new Set(detailedChanges?.map((_, i) => i) ?? [])
   );
 
+  // Elapsed timer while confirming
+  const [elapsed, setElapsed] = useState(0);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (isConfirming) {
+      setElapsed(0);
+      intervalRef.current = setInterval(() => setElapsed((s) => s + 1), 1000);
+    } else {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      setElapsed(0);
+    }
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [isConfirming]);
+
   if (!diffSummary || !detailedChanges) {
     return (
       <Dialog
         open={isOpen}
         onOpenChange={(open) => {
-          if (!open) {
+          if (!open && !isConfirming) {
             onClose();
           }
         }}
@@ -67,11 +93,18 @@ export function DiffPreviewModal({
           </div>
 
           <div className="flex justify-end items-center gap-3 pt-4 border-t-2 border-black bg-white -mx-6 -mb-6 px-6 py-4">
-            <Button variant="outline" onClick={onClose} className="gap-2">
+            <Button variant="outline" onClick={onClose} disabled={isConfirming} className="gap-2">
               {t('common.cancel')}
             </Button>
-            <Button variant="warning" onClick={onConfirm} className="gap-2">
-              {t('tailor.missingDiffDialog.confirmLabel')}
+            <Button variant="warning" onClick={onConfirm} disabled={isConfirming} className="gap-2">
+              {isConfirming ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  {t('common.saving')}
+                </>
+              ) : (
+                t('tailor.missingDiffDialog.confirmLabel')
+              )}
             </Button>
           </div>
         </DialogContent>
@@ -133,7 +166,7 @@ export function DiffPreviewModal({
     <Dialog
       open={isOpen}
       onOpenChange={(open) => {
-        if (!open) {
+        if (!open && !isConfirming) {
           onClose();
         }
       }}
@@ -375,15 +408,18 @@ export function DiffPreviewModal({
 
         {/* Action buttons */}
         <div className="flex justify-between items-center pt-4 border-t-2 border-black bg-white -mx-6 -mb-6 px-6 py-4">
-          <Button variant="outline" onClick={onReject} disabled={isLoading} className="gap-2">
+          <Button variant="outline" onClick={onReject} disabled={isLoading || isConfirming} className="gap-2">
             <X className="w-4 h-4" />
             {t('tailor.diffModal.rejectButton')}
           </Button>
           <div className="flex items-center gap-4">
+            {isConfirming && elapsed > 0 && (
+              <span className="font-mono text-xs text-gray-500">{elapsed}s</span>
+            )}
             <button
               onClick={acceptedCount === allCount ? handleDeselectAll : handleSelectAll}
               className="font-mono text-xs text-[#1D4ED8] underline hover:text-blue-900 disabled:opacity-50"
-              disabled={isLoading}
+              disabled={isLoading || isConfirming}
             >
               {acceptedCount === allCount
                 ? t('tailor.diffModal.deselectAll')
@@ -391,16 +427,25 @@ export function DiffPreviewModal({
             </button>
             <Button
               onClick={handleConfirmClick}
-              disabled={isLoading || acceptedCount === 0}
+              disabled={isLoading || isConfirming || acceptedCount === 0}
               className="gap-2 bg-[#15803D] hover:bg-[#166534]"
             >
-              <CheckCircle className="w-4 h-4" />
-              {acceptedCount === allCount
-                ? t('tailor.diffModal.confirmButton')
-                : t('tailor.diffModal.confirmPartialButton', {
-                    accepted: acceptedCount,
-                    total: allCount,
-                  })}
+              {isConfirming ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  {t('common.saving')}
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="w-4 h-4" />
+                  {acceptedCount === allCount
+                    ? t('tailor.diffModal.confirmButton')
+                    : t('tailor.diffModal.confirmPartialButton', {
+                        accepted: acceptedCount,
+                        total: allCount,
+                      })}
+                </>
+              )}
             </Button>
           </div>
         </div>

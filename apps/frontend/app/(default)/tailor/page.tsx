@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,7 @@ import type { ResumeFieldDiff } from '@/components/common/resume_previewer_conte
 import type { ResumeData } from '@/components/dashboard/resume-component';
 import {
   uploadJobDescriptions,
-  previewImproveResume,
+  previewImproveResumeStream,
   confirmImproveResume,
   fetchJobFromUrl,
 } from '@/lib/api/resume';
@@ -125,6 +125,7 @@ export default function TailorPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [loadingStage, setLoadingStage] = useState<LoadingStage>('idle');
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [loadingMessage, setLoadingMessage] = useState<string>('');
   const elapsedTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [masterResumeId, setMasterResumeId] = useState<string | null>(null);
@@ -139,6 +140,7 @@ export default function TailorPage() {
   const [showDiffModal, setShowDiffModal] = useState(false);
   const [pendingResult, setPendingResult] = useState<ImprovedResult | null>(null);
   const [diffConfirmError, setDiffConfirmError] = useState<string | null>(null);
+  const [isConfirming, setIsConfirming] = useState(false);
   const [showRegenerateDialog, setShowRegenerateDialog] = useState(false);
   const [showMissingDiffDialog, setShowMissingDiffDialog] = useState(false);
   const [missingDiffResult, setMissingDiffResult] = useState<ImprovedResult | null>(null);
@@ -149,6 +151,28 @@ export default function TailorPage() {
   const [jobUrl, setJobUrl] = useState('');
   const [isFetchingUrl, setIsFetchingUrl] = useState(false);
   const [urlFetchError, setUrlFetchError] = useState<string | null>(null);
+
+  // Elapsed timer for long operations
+  const [elapsed, setElapsed] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const startTimer = useCallback(() => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    setElapsed(0);
+    timerRef.current = setInterval(() => setElapsed((s) => s + 1), 1000);
+  }, []);
+
+  const stopTimer = useCallback(() => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = null;
+    setElapsed(0);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, []);
 
   const router = useRouter();
   const { setImprovedData } = useResumePreview();
@@ -286,11 +310,21 @@ export default function TailorPage() {
       // 2. Preview Resume — start elapsed timer for the slow LLM step
       setLoadingStage('tailoring');
       startElapsedTimer();
-      const result = await previewImproveResume(
+      const result = await previewImproveResumeStream(
         resumeId,
         jobId,
         selectedPromptId,
-        selectedWorkflowId
+        selectedWorkflowId,
+        (stage, message) => {
+          // Use server message if present; fall back to i18n key for the stage
+          const fallbacks: Record<string, string> = {
+            keywords: t('tailor.streamStages.keywords'),
+            improving: t('tailor.streamStages.improving'),
+            refining: t('tailor.streamStages.refining'),
+            diff: t('tailor.streamStages.diff'),
+          };
+          setLoadingMessage(message || fallbacks[stage] || '');
+        }
       );
       stopElapsedTimer();
 
@@ -377,21 +411,20 @@ export default function TailorPage() {
     const resumeId = masterResumeId;
     setIsLoading(true);
     setError(null);
+    startTimer();
     try {
       await runGenerate(resumeId, trimmedDescription);
     } finally {
       setIsLoading(false);
-      setLoadingStage('idle');
-      stopElapsedTimer();
+      stopTimer();
     }
   };
 
   // User confirms changes
   const handleConfirmChanges = async () => {
-    // Guard against double-clicks - isLoading already tracks confirm in progress
-    if (!pendingResult || isLoading) return;
+    if (!pendingResult || isConfirming) return;
 
-    setIsLoading(true);
+    setIsConfirming(true);
     setError(null);
     setDiffConfirmError(null);
 
@@ -405,7 +438,7 @@ export default function TailorPage() {
       setError(errorMessage);
       setDiffConfirmError(errorMessage);
     } finally {
-      setIsLoading(false);
+      setIsConfirming(false);
     }
   };
 
@@ -502,12 +535,12 @@ export default function TailorPage() {
     const resumeId = masterResumeId;
     setIsLoading(true);
     setError(null);
+    startTimer();
     try {
       await runGenerate(resumeId, trimmedDescription);
     } finally {
       setIsLoading(false);
-      setLoadingStage('idle');
-      stopElapsedTimer();
+      stopTimer();
     }
   };
 
@@ -765,7 +798,9 @@ export default function TailorPage() {
                   <span
                     className={`font-mono text-sm ${loadingStage === 'tailoring' ? 'font-bold' : 'text-gray-400'}`}
                   >
-                    {t('tailor.progress.tailoring')}
+                    {loadingStage === 'tailoring' && loadingMessage
+                      ? loadingMessage
+                      : t('tailor.progress.tailoring')}
                   </span>
                   {loadingStage === 'tailoring' && (
                     <span className="font-mono text-xs text-gray-500 ml-2">
@@ -775,7 +810,7 @@ export default function TailorPage() {
                 </div>
               </div>
 
-              {/* Slow model note — appears after 15s */}
+              {/* Slow model note */}
               {loadingStage === 'tailoring' && elapsedSeconds >= 15 && (
                 <p className="font-mono text-xs text-gray-500 mt-4 pt-4 border-t border-gray-200">
                   {t('tailor.progress.slowModelNote')}
@@ -808,6 +843,7 @@ export default function TailorPage() {
       {showDiffModal && pendingResult && (
         <DiffPreviewModal
           isOpen={showDiffModal}
+          isConfirming={isConfirming}
           onClose={handleCloseDiffModal}
           onReject={handleRejectChanges}
           onConfirm={handleConfirmChanges}

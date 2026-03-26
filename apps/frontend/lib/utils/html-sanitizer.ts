@@ -25,24 +25,3 @@ export function sanitizeHtml(dirty: string): string {
     FORCE_BODY: true,
   });
 }
-
-/**
- * Strips all HTML tags from content, returning plain text.
- * Uses isomorphic-dompurify which works in both browser and Node.js.
- *
- * @param html - HTML string to strip
- * @returns Plain text with all tags removed
- */
-export function stripHtml(html: string): string {
-  return DOMPurify.sanitize(html, { ALLOWED_TAGS: [] });
-}
-
-/**
- * Checks if a string contains HTML tags.
- *
- * @param text - String to check
- * @returns True if the string contains HTML tags
- */
-export function isHtmlContent(text: string): boolean {
-  return /<[a-z][\s\S]*>/i.test(text);
-}

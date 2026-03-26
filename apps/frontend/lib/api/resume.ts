@@ -115,7 +115,7 @@ async function postImprove(
 ): Promise<ImprovedResult> {
   let response: Response;
   try {
-    response = await apiPost(endpoint, payload);
+    response = await apiPost(endpoint, payload, 240_000);
   } catch (networkError) {
     console.error(`Network error during ${endpoint}:`, networkError);
     throw networkError;
@@ -175,6 +175,78 @@ export async function previewImproveResume(
     prompt_id: promptId ?? null,
     workflow_mode: workflowMode ?? null,
   });
+}
+
+/** Previews the resume improvement via SSE streaming — supports slow Ollama models */
+export async function previewImproveResumeStream(
+  resumeId: string,
+  jobId: string,
+  promptId: string | undefined,
+  workflowMode: string | undefined,
+  onProgress: (stage: string, message: string) => void
+): Promise<ImprovedResult> {
+  // AbortController wraps the entire operation (headers + body) for the 30-minute timeout.
+  // clearTimeout is in the outer finally so it fires after the body loop completes.
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 30 * 60 * 1000);
+
+  try {
+    const response = await fetch(`${API_BASE}/resumes/improve/preview/stream`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        resume_id: resumeId,
+        job_id: jobId,
+        prompt_id: promptId ?? null,
+        workflow_mode: workflowMode ?? null,
+      }),
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Stream request failed (status ${response.status}).`);
+    }
+
+    const reader = response.body!.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const parts = buffer.split('\n\n');
+        buffer = parts.pop()!;
+        for (const part of parts) {
+          const line = part.trim().startsWith('data: ') ? part.trim().slice(6) : null;
+          if (!line) continue;
+          let event: Record<string, unknown>;
+          try {
+            event = JSON.parse(line) as Record<string, unknown>;
+          } catch {
+            continue;
+          }
+          const stage = event['stage'] as string;
+          if (stage === 'done') {
+            return event['result'] as ImprovedResult;
+          }
+          if (stage === 'error') {
+            throw new Error((event['message'] as string) ?? 'Resume improvement failed.');
+          }
+          if (event['message']) {
+            onProgress(stage, event['message'] as string);
+          }
+        }
+      }
+    } finally {
+      reader.releaseLock();
+    }
+
+    throw new Error('Stream ended without a result.');
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 /** Confirms and saves a tailored resume */

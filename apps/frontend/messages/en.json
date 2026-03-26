@@ -294,7 +294,7 @@
         "title": "Title",
         "organization": "Organization",
         "location": "Location",
-        "years": "2020 - Present",
+        "years": "Jan 2020 - Present",
         "description": "Describe your contribution..."
       },
       "noEntries": "// NO {label} ENTRIES",
@@ -312,7 +312,7 @@
           "jobTitle": "Senior Developer",
           "company": "Tech Corp",
           "location": "Remote / City",
-          "years": "2020 - Present",
+          "years": "Jan 2020 - Present",
           "description": "Describe your achievement..."
         }
       },
@@ -328,7 +328,7 @@
         "placeholders": {
           "institution": "University Name",
           "degree": "Bachelor of Science",
-          "years": "2016 - 2020",
+          "years": "Aug 2016 - May 2020",
           "description": "Additional details..."
         }
       },
@@ -343,7 +343,7 @@
         "placeholders": {
           "projectName": "Resume Matcher",
           "role": "Creator",
-          "years": "2023",
+          "years": "Mar 2023",
           "github": "github.com/username/project",
           "website": "https://project-demo.com",
           "description": "Project detail..."
@@ -531,6 +531,12 @@
       "tailoring": "AI is tailoring your resume",
       "elapsedSeconds": "{seconds}s elapsed",
       "slowModelNote": "Local AI models may take several minutes. Please wait and don't close this page."
+    },
+    "streamStages": {
+      "keywords": "Extracting job keywords...",
+      "improving": "Tailoring resume...",
+      "refining": "Running refinement...",
+      "diff": "Calculating changes..."
     },
     "promptOptions": {
       "nudge": {

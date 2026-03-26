@@ -40,6 +40,7 @@ export default function ResumeViewerPage() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [showEnrichmentModal, setShowEnrichmentModal] = useState(false);
   const [isRetrying, setIsRetrying] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const [resumeTitle, setResumeTitle] = useState<string | null>(null);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editingTitleValue, setEditingTitleValue] = useState('');
@@ -163,6 +164,7 @@ export default function ResumeViewerPage() {
   };
 
   const handleDownload = async () => {
+    setIsDownloading(true);
     try {
       const blob = await downloadResumePdf(resumeId, undefined, uiLanguage);
       const filename = sanitizeFilename(resumeTitle, resumeId, 'resume');
@@ -178,6 +180,8 @@ export default function ResumeViewerPage() {
         }
         return;
       }
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -299,9 +303,9 @@ export default function ResumeViewerPage() {
               <Edit className="w-4 h-4" />
               {t('dashboard.editResume')}
             </Button>
-            <Button variant="success" onClick={handleDownload}>
+            <Button variant="success" onClick={handleDownload} disabled={isDownloading}>
               <Download className="w-4 h-4" />
-              {t('resumeViewer.downloadResume')}
+              {isDownloading ? t('common.generating') : t('resumeViewer.downloadResume')}
             </Button>
           </div>
         </div>

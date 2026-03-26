@@ -24,7 +24,7 @@ def _configure_litellm_logging() -> None:
 _configure_litellm_logging()
 
 # LLM timeout configuration (seconds) - base values
-LLM_TIMEOUT_HEALTH_CHECK = 120
+LLM_TIMEOUT_HEALTH_CHECK = 30
 LLM_TIMEOUT_COMPLETION = 120
 LLM_TIMEOUT_JSON = 180  # JSON completions may take longer
 
@@ -82,11 +82,17 @@ def _normalize_api_base(provider: str, api_base: str | None) -> str | None:
     append those segments internally, which can lead to duplicated paths like
     `/v1/v1/...` and cause 404s.
     """
+    # On Windows, aiohttp/httpx may fail to resolve 'localhost' via getaddrinfo
+    # in async context. Default Ollama to 127.0.0.1 when no base is configured.
     if not api_base:
+        if provider == "ollama":
+            return "http://127.0.0.1:11434"
         return None
 
     base = api_base.strip()
     if not base:
+        if provider == "ollama":
+            return "http://127.0.0.1:11434"
         return None
 
     base = base.rstrip("/")
@@ -101,9 +107,17 @@ def _normalize_api_base(provider: str, api_base: str | None) -> str | None:
     if provider == "gemini" and base.endswith("/v1"):
         base = base[: -len("/v1")].rstrip("/")
 
-    # On Windows, aiohttp/httpx may fail to resolve 'localhost' via getaddrinfo
-    # in async context. Using the explicit loopback address avoids the issue.
+    # OpenRouter base is https://openrouter.ai/api/v1. LiteLLM appends /v1
+    # internally, so strip it to avoid /v1/v1.
+    if provider == "openrouter" and base.endswith("/v1"):
+        base = base[: -len("/v1")].rstrip("/")
+
+    # Ollama: strip common suffixes users might paste, then fix localhost on Windows.
     if provider == "ollama":
+        for suffix in ("/v1", "/api/chat", "/api/generate", "/api"):
+            if base.endswith(suffix):
+                base = base[: -len(suffix)].rstrip("/")
+                break
         base = base.replace("//localhost:", "//127.0.0.1:")
 
     return base or None
@@ -172,12 +186,7 @@ def _join_text_parts(parts: list[str]) -> str | None:
 
 
 def _extract_message_text(message: Any) -> str | None:
-    """Extract plain text from a LiteLLM message object across providers.
-
-    Reasoning models (e.g. deepseek-r1 via Ollama) may return an empty
-    ``content`` field and put the actual reply in ``reasoning_content``.
-    We fall back to that field so health checks and completions succeed.
-    """
+    """Extract plain text from a LiteLLM message object across providers."""
     content: Any = None
 
     if hasattr(message, "content"):
@@ -185,18 +194,7 @@ def _extract_message_text(message: Any) -> str | None:
     elif isinstance(message, dict):
         content = message.get("content")
 
-    result = _join_text_parts(_extract_text_parts(content))
-    if result:
-        return result
-
-    # Fallback: reasoning_content (deepseek-r1 and similar reasoning models)
-    reasoning: Any = None
-    if hasattr(message, "reasoning_content"):
-        reasoning = message.reasoning_content
-    elif isinstance(message, dict):
-        reasoning = message.get("reasoning_content")
-
-    return _join_text_parts(_extract_text_parts(reasoning))
+    return _join_text_parts(_extract_text_parts(content))
 
 
 def _extract_choice_text(choice: Any) -> str | None:
@@ -261,6 +259,22 @@ def _load_stored_config() -> dict:
     return {}
 
 
+def resolve_api_key(stored: dict, provider: str) -> str:
+    """Resolve API key for a provider from stored config or settings.
+
+    Checks per-provider keys first (stored["api_keys"][provider]),
+    then falls back to the legacy single key (stored["api_key"]),
+    then to settings.
+    """
+    per_provider = stored.get("api_keys", {})
+    if isinstance(per_provider, dict) and per_provider.get(provider):
+        return per_provider[provider]
+    legacy = stored.get("api_key", "")
+    if legacy:
+        return legacy
+    return settings.llm_api_key or ""
+
+
 def get_llm_config() -> LLMConfig:
     """Get current LLM configuration.
 
@@ -323,14 +337,6 @@ def _supports_temperature(provider: str, model: str) -> bool:
     return True
 
 
-def _is_ollama_reasoning_model(provider: str, model: str) -> bool:
-    """Return True for Ollama-hosted reasoning models that support think=false."""
-    if provider != "ollama":
-        return False
-    model_lower = model.lower()
-    return any(name in model_lower for name in ("deepseek-r1", "qwq", "deepseek-r2"))
-
-
 def _get_reasoning_effort(provider: str, model: str) -> str | None:
     """Return a default reasoning_effort for models that require it.
 
@@ -342,6 +348,18 @@ def _get_reasoning_effort(provider: str, model: str) -> str | None:
     if "gpt-5" in model_lower:
         return "minimal"
     return None
+
+
+def _is_ollama_reasoning_model(provider: str, model: str) -> bool:
+    """Return True for Ollama-hosted reasoning models that support think=false.
+
+    Disabling chain-of-thought via think=false dramatically reduces response time
+    for resume tailoring tasks where step-by-step reasoning is not needed.
+    """
+    if provider != "ollama":
+        return False
+    model_lower = model.lower()
+    return any(name in model_lower for name in ("deepseek-r1", "qwq", "deepseek-r2"))
 
 
 async def check_llm_health(
@@ -365,46 +383,30 @@ async def check_llm_health(
 
     model_name = get_model_name(config)
 
-    # For Ollama status checks (no details needed), use a lightweight /api/tags
-    # probe instead of a full LLM completion — reasoning models like deepseek-r1
-    # can take 30+ seconds to generate even a single token, making LLM-based
-    # health checks unreliable.
+    # For Ollama status checks (no details needed), use a lightweight /api/tags probe
+    # instead of a full LLM completion — reasoning models like deepseek-r1 can take
+    # 30+ seconds to generate even a single token.
     if config.provider == "ollama" and not include_details:
-        api_base = (_normalize_api_base(config.provider, config.api_base) or "http://localhost:11434").rstrip("/")
-        # Strip the /v1 suffix that _normalize_api_base adds for OpenAI-compat
+        api_base = (_normalize_api_base(config.provider, config.api_base) or "http://127.0.0.1:11434").rstrip("/")
         ollama_base = api_base.removesuffix("/v1")
         try:
             async with httpx.AsyncClient(timeout=5.0) as client:
                 resp = await client.get(f"{ollama_base}/api/tags")
                 resp.raise_for_status()
-            return {
-                "healthy": True,
-                "provider": config.provider,
-                "model": config.model,
-                "response_model": model_name,
-            }
+            return {"healthy": True, "provider": config.provider, "model": config.model, "response_model": model_name}
         except Exception as e:
             logging.warning("Ollama /api/tags health check failed: %s", e)
-            return {
-                "healthy": False,
-                "provider": config.provider,
-                "model": config.model,
-                "error_code": "ollama_unreachable",
-            }
+            return {"healthy": False, "provider": config.provider, "model": config.model, "error_code": "ollama_unreachable"}
 
     prompt = test_prompt or "Hi"
 
     try:
         # Make a minimal test call with timeout
         # Pass API key directly to avoid race conditions with global os.environ
-        # Reasoning models (deepseek-r1, qwq, etc.) prepend a <think> block
-        # that consumes tokens before the actual reply — use a higher limit for
-        # health checks so they don't exhaust the budget and return empty content.
-        health_max_tokens = 128 if config.provider == "ollama" else 16
         kwargs: dict[str, Any] = {
             "model": model_name,
             "messages": [{"role": "user", "content": prompt}],
-            "max_tokens": health_max_tokens,
+            "max_tokens": 16,
             "api_key": config.api_key,
             "api_base": _normalize_api_base(config.provider, config.api_base),
             "timeout": LLM_TIMEOUT_HEALTH_CHECK,
@@ -412,6 +414,8 @@ async def check_llm_health(
         reasoning_effort = _get_reasoning_effort(config.provider, model_name)
         if reasoning_effort:
             kwargs["reasoning_effort"] = reasoning_effort
+        if _is_ollama_reasoning_model(config.provider, model_name):
+            kwargs["extra_body"] = {"think": False}
 
         response = await litellm.acompletion(**kwargs)
         content = _extract_choice_text(response.choices[0])
@@ -554,16 +558,6 @@ def _appears_truncated(data: dict) -> bool:
             )
             return True
 
-    # Check for missing critical sections
-    required_top_level = ["personalInfo"]
-    for key in required_top_level:
-        if key not in data:
-            logging.warning(
-                "Possible truncation detected: missing required section '%s'",
-                key,
-            )
-            return True
-
     return False
 
 
@@ -599,7 +593,7 @@ def _calculate_timeout(
         "openai": 1.0,
         "anthropic": 1.2,
         "openrouter": 1.5,  # More variable latency
-        "ollama": 2.0,  # Local models can be slower
+        "ollama": 6.0,  # Local models can be very slow (deepseek-r1:14b needs ~870s)
     }
     provider_factor = provider_factors.get(provider, 1.0)
 
@@ -691,7 +685,6 @@ async def complete_json(
     config: LLMConfig | None = None,
     max_tokens: int = 4096,
     retries: int = 2,
-    check_truncation: bool = True,
 ) -> dict[str, Any]:
     """Make a completion request expecting JSON response.
 
@@ -753,7 +746,7 @@ async def complete_json(
             result = json.loads(json_str)
 
             # LLM-001: Check if parsed result appears truncated
-            if check_truncation and isinstance(result, dict) and _appears_truncated(result):
+            if isinstance(result, dict) and _appears_truncated(result):
                 if attempt < retries:
                     logging.warning(
                         "Parsed JSON appears truncated (attempt %d/%d), retrying",
