@@ -60,6 +60,8 @@ def _extract_item_from_resume(processed_data: dict, item_id: str) -> dict:
         if not isinstance(entries, list) or index >= len(entries):
             return {}
         entry = entries[index]
+        if not isinstance(entry, dict):
+            return {}
         desc = entry.get("description", [])
         return {
             "item_id": item_id,
@@ -73,6 +75,8 @@ def _extract_item_from_resume(processed_data: dict, item_id: str) -> dict:
         if not isinstance(entries, list) or index >= len(entries):
             return {}
         entry = entries[index]
+        if not isinstance(entry, dict):
+            return {}
         desc = entry.get("description", [])
         return {
             "item_id": item_id,

@@ -152,28 +152,6 @@ export default function TailorPage() {
   const [isFetchingUrl, setIsFetchingUrl] = useState(false);
   const [urlFetchError, setUrlFetchError] = useState<string | null>(null);
 
-  // Elapsed timer for long operations
-  const [elapsed, setElapsed] = useState(0);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const startTimer = useCallback(() => {
-    if (timerRef.current) clearInterval(timerRef.current);
-    setElapsed(0);
-    timerRef.current = setInterval(() => setElapsed((s) => s + 1), 1000);
-  }, []);
-
-  const stopTimer = useCallback(() => {
-    if (timerRef.current) clearInterval(timerRef.current);
-    timerRef.current = null;
-    setElapsed(0);
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, []);
-
   const router = useRouter();
   const { setImprovedData } = useResumePreview();
   const {
@@ -411,12 +389,10 @@ export default function TailorPage() {
     const resumeId = masterResumeId;
     setIsLoading(true);
     setError(null);
-    startTimer();
     try {
       await runGenerate(resumeId, trimmedDescription);
     } finally {
       setIsLoading(false);
-      stopTimer();
     }
   };
 
@@ -535,12 +511,10 @@ export default function TailorPage() {
     const resumeId = masterResumeId;
     setIsLoading(true);
     setError(null);
-    startTimer();
     try {
       await runGenerate(resumeId, trimmedDescription);
     } finally {
       setIsLoading(false);
-      stopTimer();
     }
   };
 

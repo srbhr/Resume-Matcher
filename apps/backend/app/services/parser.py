@@ -54,16 +54,22 @@ def restore_dates_from_markdown(
     # Build a lookup: "2020 - 2021" → "Jun 2020 - Aug 2021"
     year_to_full: dict[str, str] = {}
     year_only_re = re.compile(r"\d{4}")
+    present_re = re.compile(r"\b(?:Present|Current|Now|Ongoing)\b", re.IGNORECASE)
     for md_date in md_dates:
         years_in_date = year_only_re.findall(md_date)
         if years_in_date:
+            # Normalize separators
+            normalized = re.sub(r"\s*[-–—]\s*", " - ", md_date.strip())
             # Create year-only key like "2020 - 2021" or "2023"
             year_key = " - ".join(years_in_date)
-            # Keep the first (most specific) match
             if year_key not in year_to_full:
-                # Normalize separators
-                normalized = re.sub(r"\s*[-–—]\s*", " - ", md_date.strip())
                 year_to_full[year_key] = normalized
+            # For ongoing ranges (e.g. "May 2021 - Present"), also register
+            # a key with "Present" so that LLM output "2021 - Present" matches.
+            if present_re.search(md_date) and len(years_in_date) == 1:
+                present_key = years_in_date[0] + " - Present"
+                if present_key not in year_to_full:
+                    year_to_full[present_key] = normalized
 
     if not year_to_full:
         return parsed_data

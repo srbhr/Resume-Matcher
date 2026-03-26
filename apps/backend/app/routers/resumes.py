@@ -70,29 +70,6 @@ def _sse_event(**kwargs: Any) -> str:
     return f"data: {json.dumps(payload)}\n\n"
 
 
-def _load_config() -> dict:
-    """Load configuration from config file."""
-    config_path = settings.config_path
-    if not config_path.exists():
-        return {}
-    try:
-        return json.loads(config_path.read_text())
-    except (json.JSONDecodeError, OSError) as e:
-        logger.error("Failed to load config: %s", e)
-        return {}
-
-
-def _load_feature_config() -> dict:
-    """Load feature configuration from config file."""
-    return _load_config()
-
-
-def _get_content_language() -> str:
-    """Get configured content language from config file."""
-    config = _load_config()
-    # Use content_language, fall back to legacy 'language' field, then default to 'en'
-    return config.get("content_language", config.get("language", "en"))
-
 
 def _get_default_prompt_id() -> str:
     """Get configured default prompt id from config file."""
@@ -892,7 +869,7 @@ async def _improve_preview_flow(
             response_warnings.append(f"Refinement failed: {str(e)}")
 
     improved_text = json.dumps(improved_data, indent=2)
-    preview_hash = _hash_improved_data(improved_data)
+    preview_hash = _hash_improved_data(ResumeData.model_validate(improved_data).model_dump())
     preview_hashes = job.get("preview_hashes")
     if not isinstance(preview_hashes, dict):
         preview_hashes = {}
@@ -969,7 +946,7 @@ async def improve_resume_preview_stream(
     if not job:
         raise HTTPException(status_code=404, detail="Job description not found")
 
-    language = _get_content_language()
+    language = get_content_language()
     prompt_id = request.prompt_id or _get_default_prompt_id()
     config = _load_config()
     model = config.get("model", "unknown")
@@ -1081,7 +1058,7 @@ async def improve_resume_preview_stream(
             # Stage 4: diff
             yield _sse_event(stage="diff", message="Calculating changes...")
             improved_text = json.dumps(improved_data, indent=2)
-            preview_hash = _hash_improved_data(improved_data)
+            preview_hash = _hash_improved_data(ResumeData.model_validate(improved_data).model_dump())
             preview_hashes = job.get("preview_hashes")
             if not isinstance(preview_hashes, dict):
                 preview_hashes = {}

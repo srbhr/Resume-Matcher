@@ -41,11 +41,21 @@ def _keyword_in_text(keyword: str, text: str) -> bool:
 
     SVC-010: Uses word boundaries instead of substring matching to avoid
     false positives like 'python' matching 'pythonic' or 'go' matching 'going'.
+
+    Uses lookahead/lookbehind at non-word-character edges so that keywords
+    like C++, C#, and Node.js are matched correctly (\\b fails when the
+    keyword boundary lands on a non-word character such as '+' or '#').
     """
-    # Escape special regex characters in keyword
-    escaped = re.escape(keyword.lower())
-    # Use word boundaries
-    pattern = rf"\b{escaped}\b"
+    kw = keyword.lower()
+    if not kw:
+        return False
+    escaped = re.escape(kw)
+    # \b works at a word-char edge; use a negative lookbehind/lookahead
+    # when the keyword itself starts/ends with a non-word character.
+    _word_char = re.compile(r"[a-zA-Z0-9_]")
+    prefix = r"\b" if _word_char.match(kw[0]) else r"(?<![a-zA-Z0-9_])"
+    suffix = r"\b" if _word_char.match(kw[-1]) else r"(?![a-zA-Z0-9_])"
+    pattern = prefix + escaped + suffix
     return bool(re.search(pattern, text.lower()))
 
 
