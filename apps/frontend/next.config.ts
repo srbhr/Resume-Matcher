@@ -6,7 +6,6 @@ const nextConfig: NextConfig = {
   output: 'standalone',
   experimental: {
     turbopackUseSystemTlsCerts: true,
-    proxyTimeout: 300000, // 5 min — AI tailoring can take 2-3 min with local Ollama
   },
   async rewrites() {
     // Note: Next.js serves filesystem routes (app/api/) before rewrites.

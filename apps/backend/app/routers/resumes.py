@@ -14,6 +14,7 @@ from uuid import uuid4
 from fastapi import APIRouter, File, HTTPException, Query, UploadFile
 from fastapi.responses import Response, StreamingResponse
 
+from app.config_cache import get_content_language, load_config as _load_config
 from app.database import db
 from app.pdf import render_resume_pdf, PDFRenderError
 from app.config import settings
@@ -40,11 +41,15 @@ from app.schemas import (
     UpdateTitleRequest,
     normalize_resume_data,
 )
-from app.services.parser import parse_document, parse_resume_to_json
+from app.services.parser import parse_document, parse_resume_to_json, restore_dates_from_markdown
 from app.services.improver import (
+    MONTH_PATTERN,
+    apply_diffs,
     extract_job_keywords,
     generate_improvements,
+    generate_resume_diffs,
     improve_resume,
+    verify_diff_result,
 )
 from app.services.refiner import refine_resume, calculate_keyword_match
 from app.schemas.refinement import RefinementConfig
@@ -161,6 +166,228 @@ def _get_original_resume_data(resume: dict[str, Any]) -> dict[str, Any] | None:
         except json.JSONDecodeError as e:
             logger.warning("Skipping resume diff due to JSON parse failure: %s", e)
     return original_data
+
+
+def _get_original_markdown(resume: dict[str, Any]) -> str | None:
+    """Get the original markdown content from a resume.
+
+    Checks ``original_markdown`` first (persisted at upload), then
+    falls back to ``content`` if it's still in markdown format.
+    """
+    md = resume.get("original_markdown")
+    if md and isinstance(md, str):
+        return md
+    if resume.get("content_type") == "md":
+        content = resume.get("content", "")
+        if content and isinstance(content, str):
+            return content
+    return None
+
+
+def _has_month(date_str: str) -> bool:
+    """Return True if the date string contains a month name."""
+    return bool(MONTH_PATTERN.search(date_str))
+
+
+def _restore_original_dates(
+    original_data: dict[str, Any] | None,
+    improved_data: dict[str, Any],
+) -> dict[str, Any]:
+    """Restore original date/years values that the LLM may have truncated.
+
+    Compares each entry's ``years`` field in the tailored resume against
+    the corresponding entry in the original.  If the original has more
+    date precision (e.g. includes a month) and the tailored version lost
+    it, the original value is restored.
+    """
+    if not original_data:
+        return improved_data
+
+    result = copy.deepcopy(improved_data)
+
+    for section_key in ("workExperience", "education", "personalProjects"):
+        orig_entries = original_data.get(section_key, [])
+        result_entries = result.get(section_key, [])
+        for idx, orig_entry in enumerate(orig_entries):
+            if idx >= len(result_entries):
+                break
+            if not isinstance(orig_entry, dict) or not isinstance(result_entries[idx], dict):
+                continue
+            orig_years = orig_entry.get("years", "")
+            result_years = result_entries[idx].get("years", "")
+            if (
+                isinstance(orig_years, str)
+                and isinstance(result_years, str)
+                and orig_years
+                and orig_years != result_years
+                and _has_month(orig_years)
+                and not _has_month(result_years)
+            ):
+                logger.info(
+                    "Restoring date in %s[%d]: %r → %r",
+                    section_key,
+                    idx,
+                    result_years,
+                    orig_years,
+                )
+                result_entries[idx]["years"] = orig_years
+
+    # Custom sections (itemList)
+    orig_custom = original_data.get("customSections", {})
+    result_custom = result.get("customSections", {})
+    if isinstance(orig_custom, dict) and isinstance(result_custom, dict):
+        for section_key, orig_section in orig_custom.items():
+            if not isinstance(orig_section, dict):
+                continue
+            result_section = result_custom.get(section_key)
+            if not isinstance(result_section, dict):
+                continue
+            if orig_section.get("sectionType") != "itemList":
+                continue
+            orig_items = orig_section.get("items", [])
+            result_items = result_section.get("items", [])
+            for idx, orig_item in enumerate(orig_items):
+                if idx >= len(result_items):
+                    break
+                if not isinstance(orig_item, dict) or not isinstance(result_items[idx], dict):
+                    continue
+                orig_years = orig_item.get("years", "")
+                result_years = result_items[idx].get("years", "")
+                if (
+                    isinstance(orig_years, str)
+                    and isinstance(result_years, str)
+                    and orig_years
+                    and orig_years != result_years
+                    and _has_month(orig_years)
+                    and not _has_month(result_years)
+                ):
+                    result_items[idx]["years"] = orig_years
+
+    return result
+
+
+def _preserve_original_skills(
+    original_data: dict[str, Any] | None,
+    improved_data: dict[str, Any],
+) -> dict[str, Any]:
+    """Restore any skills, certs, languages, or awards dropped by the LLM.
+
+    This is a hard safety net: regardless of what the LLM returns, no
+    original item from these lists is ever lost.  Dropped items are
+    appended at the end of the improved list.
+    """
+    if not original_data:
+        return improved_data
+
+    result = copy.deepcopy(improved_data)
+
+    orig_additional = original_data.get("additional", {})
+    if not isinstance(orig_additional, dict):
+        return result
+    result_additional = result.setdefault("additional", {})
+
+    list_fields = [
+        "technicalSkills",
+        "certificationsTraining",
+        "languages",
+        "awards",
+    ]
+    for field in list_fields:
+        orig_items = orig_additional.get(field, [])
+        if not isinstance(orig_items, list) or not orig_items:
+            continue
+        current_items = result_additional.get(field, [])
+        if not isinstance(current_items, list):
+            current_items = []
+
+        # Build a case-insensitive index of what the LLM kept
+        current_lower = {
+            item.casefold() for item in current_items if isinstance(item, str)
+        }
+
+        # Append any originals that were dropped
+        restored = 0
+        for item in orig_items:
+            if isinstance(item, str) and item.casefold() not in current_lower:
+                current_items.append(item)
+                current_lower.add(item.casefold())
+                restored += 1
+
+        if restored:
+            logger.info("Restored %d dropped items in additional.%s", restored, field)
+        result_additional[field] = current_items
+
+    return result
+
+
+def _protect_custom_sections(
+    original_data: dict[str, Any] | None,
+    improved_data: dict[str, Any],
+) -> dict[str, Any]:
+    """Protect custom sections from LLM hallucination.
+
+    - If an item originally had description: [], revert any fabricated descriptions.
+    - If the LLM added items that weren't in the original, remove them.
+    """
+    if not original_data:
+        return improved_data
+
+    orig_custom = original_data.get("customSections")
+    if not isinstance(orig_custom, dict) or not orig_custom:
+        return improved_data
+
+    result = copy.deepcopy(improved_data)
+    result_custom = result.get("customSections")
+    if not isinstance(result_custom, dict):
+        return result
+
+    for section_key, orig_section in orig_custom.items():
+        if not isinstance(orig_section, dict):
+            continue
+        result_section = result_custom.get(section_key)
+        if not isinstance(result_section, dict):
+            # Section was removed by LLM — restore original
+            result_custom[section_key] = copy.deepcopy(orig_section)
+            logger.info("Restored missing custom section: %s", section_key)
+            continue
+
+        section_type = orig_section.get("sectionType", "")
+        if section_type == "itemList":
+            orig_items = orig_section.get("items", [])
+            result_items = result_section.get("items", [])
+            if not isinstance(orig_items, list) or not isinstance(result_items, list):
+                continue
+
+            # Trim any items the LLM added beyond the original count
+            if len(result_items) > len(orig_items):
+                logger.info(
+                    "Trimming %d hallucinated items from customSections.%s",
+                    len(result_items) - len(orig_items),
+                    section_key,
+                )
+                result_items = result_items[: len(orig_items)]
+
+            # Revert fabricated descriptions on items that had empty descriptions
+            for idx, orig_item in enumerate(orig_items):
+                if idx >= len(result_items):
+                    break
+                if not isinstance(orig_item, dict):
+                    continue
+                orig_desc = orig_item.get("description")
+                if isinstance(orig_desc, list) and len(orig_desc) == 0:
+                    result_desc = result_items[idx].get("description")
+                    if isinstance(result_desc, list) and len(result_desc) > 0:
+                        logger.info(
+                            "Reverted fabricated description on customSections.%s.items[%d]",
+                            section_key,
+                            idx,
+                        )
+                        result_items[idx]["description"] = []
+
+            result_section["items"] = result_items
+
+    result["customSections"] = result_custom
+    return result
 
 
 def _preserve_personal_info(
@@ -348,12 +575,15 @@ async def upload_resume(file: UploadFile = File(...)) -> ResumeUploadResponse:
         )
 
     # Store in database first with "processing" status (atomic master assignment)
+    # original_markdown is preserved permanently for date reference even after
+    # builder saves overwrite `content` with JSON.
     resume = await db.create_resume_atomic_master(
         content=markdown_content,
         content_type="md",
         filename=file.filename,
         processed_data=None,
         processing_status="processing",
+        original_markdown=markdown_content,
     )
 
     # Try to parse to structured JSON (optional, may fail if LLM not configured)
@@ -480,173 +710,246 @@ async def improve_resume_preview_endpoint(
     if not job:
         raise HTTPException(status_code=404, detail="Job description not found")
 
-    language = _get_content_language()
+    language = get_content_language()
     prompt_id = request.prompt_id or _get_default_prompt_id()
 
     stage = "load_job_keywords"
     detail = "Failed to preview resume. Please try again."
     try:
-        job_keywords = job.get("job_keywords")
-        job_keywords_hash = job.get("job_keywords_hash")
-        content_hash = _hash_job_content(job["content"])
-        if not job_keywords or job_keywords_hash != content_hash:
-            stage = "extract_job_keywords"
-            job_keywords = await extract_job_keywords(job["content"])
-            stage = "persist_job_keywords"
-            # Cache extracted keywords with a content hash for basic invalidation.
-            try:
-                updated_job = db.update_job(
-                    request.job_id,
-                    {"job_keywords": job_keywords, "job_keywords_hash": content_hash},
-                )
-                if not updated_job:
-                    logger.warning(
-                        "Failed to persist job keywords for job %s.",
-                        request.job_id,
-                    )
-            except Exception as e:
+        return await asyncio.wait_for(
+            _improve_preview_flow(
+                request=request,
+                resume=resume,
+                job=job,
+                language=language,
+                prompt_id=prompt_id,
+            ),
+            timeout=240.0,  # 4-minute hard limit
+        )
+    except asyncio.TimeoutError:
+        logger.error(
+            "Improve preview timed out after 240s for resume %s / job %s",
+            request.resume_id,
+            request.job_id,
+        )
+        raise HTTPException(
+            status_code=504,
+            detail="Resume tailoring timed out. Please try again with a shorter job description or a simpler prompt.",
+        )
+    except Exception as e:
+        _raise_improve_error("preview", stage, e, detail)
+
+
+async def _improve_preview_flow(
+    *,
+    request: ImproveResumeRequest,
+    resume: dict[str, Any],
+    job: dict[str, Any],
+    language: str,
+    prompt_id: str,
+) -> ImproveResumeResponse:
+    """Inner flow for improve/preview, extracted so it can be wrapped in wait_for."""
+    job_keywords = job.get("job_keywords")
+    job_keywords_hash = job.get("job_keywords_hash")
+    content_hash = _hash_job_content(job["content"])
+    if not job_keywords or job_keywords_hash != content_hash:
+        job_keywords = await extract_job_keywords(job["content"])
+        # Cache extracted keywords with a content hash for basic invalidation.
+        try:
+            updated_job = db.update_job(
+                request.job_id,
+                {"job_keywords": job_keywords, "job_keywords_hash": content_hash},
+            )
+            if not updated_job:
                 logger.warning(
-                    "Failed to persist job keywords for job %s: %s",
+                    "Failed to persist job keywords for job %s.",
                     request.job_id,
-                    e,
                 )
-        stage = "improve_resume"
+        except Exception as e:
+            logger.warning(
+                "Failed to persist job keywords for job %s: %s",
+                request.job_id,
+                e,
+            )
+    original_resume_data = _get_original_resume_data(resume)
+    # Collect warnings throughout the process
+    response_warnings: list[str] = []
+
+    # Diff-based improvement: generate targeted changes, apply with verification
+    if original_resume_data:
+        diff_result = await generate_resume_diffs(
+            original_resume=resume["content"],
+            job_description=job["content"],
+            job_keywords=job_keywords,
+            language=language,
+            prompt_id=prompt_id,
+            original_resume_data=original_resume_data,
+        )
+
+        improved_data, applied_changes, rejected_changes = apply_diffs(
+            original=original_resume_data,
+            changes=diff_result.changes,
+        )
+
+        diff_warnings = verify_diff_result(
+            original=original_resume_data,
+            result=improved_data,
+            applied_changes=applied_changes,
+            job_keywords=job_keywords,
+        )
+        response_warnings.extend(diff_warnings)
+
+        if rejected_changes:
+            response_warnings.append(
+                f"{len(rejected_changes)} change(s) rejected during verification"
+            )
+
+        logger.info(
+            "Diff-based improve: %d applied, %d rejected, %d warnings",
+            len(applied_changes),
+            len(rejected_changes),
+            len(diff_warnings),
+        )
+    else:
+        # Fallback to full-output mode when no structured data available
         improved_data = await improve_resume(
             original_resume=resume["content"],
             job_description=job["content"],
             job_keywords=job_keywords,
             language=language,
             prompt_id=prompt_id,
+            original_resume_data=original_resume_data,
         )
-        # Collect warnings throughout the process
-        response_warnings: list[str] = []
 
-        improved_data, preserve_warnings = _preserve_personal_info(
-            _get_original_resume_data(resume),
-            improved_data,
+    # Safety nets (defense in depth — should rarely activate with diff-based flow)
+    improved_data, preserve_warnings = _preserve_personal_info(
+        original_resume_data,
+        improved_data,
+    )
+    response_warnings.extend(preserve_warnings)
+
+    improved_data = _restore_original_dates(original_resume_data, improved_data)
+    original_markdown = _get_original_markdown(resume)
+    if original_markdown:
+        improved_data = restore_dates_from_markdown(improved_data, original_markdown)
+    improved_data = _preserve_original_skills(original_resume_data, improved_data)
+    improved_data = _protect_custom_sections(original_resume_data, improved_data)
+
+    # Multi-pass refinement: keyword injection, AI phrase removal, alignment validation
+    refinement_stats: RefinementStats | None = None
+    refinement_attempted = False
+    refinement_successful = False
+    try:
+        # Get master resume for alignment validation
+        master_resume = db.get_master_resume()
+        master_data = (
+            _get_original_resume_data(master_resume)
+            if master_resume
+            else _get_original_resume_data(resume)
         )
-        response_warnings.extend(preserve_warnings)
-
-        # Multi-pass refinement: keyword injection, AI phrase removal, alignment validation
-        stage = "refine_resume"
-        refinement_stats: RefinementStats | None = None
-        refinement_attempted = False
-        refinement_successful = False
-        try:
-            # Get master resume for alignment validation
-            master_resume = db.get_master_resume()
-            master_data = (
-                _get_original_resume_data(master_resume)
-                if master_resume
-                else _get_original_resume_data(resume)
+        if master_data:
+            initial_match = calculate_keyword_match(improved_data, job_keywords)
+            refinement_attempted = True
+            refinement_result = await refine_resume(
+                initial_tailored=improved_data,
+                master_resume=master_data,
+                job_description=job["content"],
+                job_keywords=job_keywords,
+                config=RefinementConfig(),
             )
-            if master_data:
-                initial_match = calculate_keyword_match(improved_data, job_keywords)
-                refinement_attempted = True
-                refinement_result = await refine_resume(
-                    initial_tailored=improved_data,
-                    master_resume=master_data,
-                    job_description=job["content"],
-                    job_keywords=job_keywords,
-                    config=RefinementConfig(),
-                )
-                improved_data = refinement_result.refined_data
-                refinement_stats = RefinementStats(
-                    passes_completed=refinement_result.passes_completed,
-                    keywords_injected=(
-                        len(refinement_result.keyword_analysis.injectable_keywords)
-                        if refinement_result.keyword_analysis
-                        else 0
-                    ),
-                    ai_phrases_removed=refinement_result.ai_phrases_removed,
-                    alignment_violations_fixed=(
-                        len(
-                            [
-                                v
-                                for v in refinement_result.alignment_report.violations
-                                if v.severity == "critical"
-                            ]
-                        )
-                        if refinement_result.alignment_report
-                        else 0
-                    ),
-                    initial_match_percentage=initial_match,
-                    final_match_percentage=refinement_result.final_match_percentage,
-                )
-                refinement_successful = True
-                logger.info(
-                    "Refinement completed: %d passes, %d AI phrases removed",
-                    refinement_result.passes_completed,
-                    len(refinement_result.ai_phrases_removed),
-                )
-        except Exception as e:
-            logger.warning("Refinement failed, using unrefined result: %s", e)
-            if refinement_attempted:
-                response_warnings.append(f"Refinement failed: {str(e)}")
-
-        improved_text = json.dumps(improved_data, indent=2)
-        preview_hash = _hash_improved_data(improved_data)
-        preview_hashes = job.get("preview_hashes")
-        if not isinstance(preview_hashes, dict):
-            preview_hashes = {}
-        preview_hashes[prompt_id] = preview_hash
-        # NOTE: preview_hashes updates are last-write-wins; concurrent previews can race.
-        try:
-            updated_job = db.update_job(
-                request.job_id,
-                {
-                    "preview_hash": preview_hash,
-                    "preview_prompt_id": prompt_id,
-                    "preview_hashes": preview_hashes,
-                },
+            improved_data = refinement_result.refined_data
+            refinement_stats = RefinementStats(
+                passes_completed=refinement_result.passes_completed,
+                keywords_injected=(
+                    len(refinement_result.keyword_analysis.injectable_keywords)
+                    if refinement_result.keyword_analysis
+                    else 0
+                ),
+                ai_phrases_removed=refinement_result.ai_phrases_removed,
+                alignment_violations_fixed=(
+                    len(
+                        [
+                            v
+                            for v in refinement_result.alignment_report.violations
+                            if v.severity == "critical"
+                        ]
+                    )
+                    if refinement_result.alignment_report
+                    else 0
+                ),
+                initial_match_percentage=initial_match,
+                final_match_percentage=refinement_result.final_match_percentage,
             )
-            if not updated_job:
-                logger.warning(
-                    "Failed to persist preview hash for job %s.", request.job_id
-                )
-        except Exception as e:
-            logger.warning(
-                "Failed to persist preview hash for job %s: %s", request.job_id, e
+            refinement_successful = True
+            logger.info(
+                "Refinement completed: %d passes, %d AI phrases removed",
+                refinement_result.passes_completed,
+                len(refinement_result.ai_phrases_removed),
             )
-        stage = "calculate_diff"
-        diff_summary, detailed_changes, diff_error = _calculate_diff_from_resume(
-            resume,
-            improved_data,
-        )
-        if diff_error:
-            response_warnings.append(f"Could not calculate changes: {diff_error}")
-        stage = "generate_improvements"
-        improvements = generate_improvements(job_keywords)
-
-        request_id = str(uuid4())
-        return ImproveResumeResponse(
-            request_id=request_id,
-            data=ImproveResumeData(
-                request_id=request_id,
-                resume_id=None,
-                job_id=request.job_id,
-                resume_preview=ResumeData.model_validate(improved_data),
-                improvements=[
-                    {
-                        "suggestion": imp["suggestion"],
-                        "lineNumber": imp.get("lineNumber"),
-                    }
-                    for imp in improvements
-                ],
-                markdownOriginal=resume["content"],
-                markdownImproved=improved_text,
-                cover_letter=None,
-                outreach_message=None,
-                diff_summary=diff_summary,
-                detailed_changes=detailed_changes,
-                refinement_stats=refinement_stats,
-                warnings=response_warnings,
-                refinement_attempted=refinement_attempted,
-                refinement_successful=refinement_successful,
-            ),
-        )
     except Exception as e:
-        _raise_improve_error("preview", stage, e, detail)
+        logger.warning("Refinement failed, using unrefined result: %s", e)
+        if refinement_attempted:
+            response_warnings.append(f"Refinement failed: {str(e)}")
+
+    improved_text = json.dumps(improved_data, indent=2)
+    preview_hash = _hash_improved_data(improved_data)
+    preview_hashes = job.get("preview_hashes")
+    if not isinstance(preview_hashes, dict):
+        preview_hashes = {}
+    preview_hashes[prompt_id] = preview_hash
+    # NOTE: preview_hashes updates are last-write-wins; concurrent previews can race.
+    try:
+        updated_job = db.update_job(
+            request.job_id,
+            {
+                "preview_hash": preview_hash,
+                "preview_prompt_id": prompt_id,
+                "preview_hashes": preview_hashes,
+            },
+        )
+        if not updated_job:
+            logger.warning(
+                "Failed to persist preview hash for job %s.", request.job_id
+            )
+    except Exception as e:
+        logger.warning(
+            "Failed to persist preview hash for job %s: %s", request.job_id, e
+        )
+    diff_summary, detailed_changes, diff_error = _calculate_diff_from_resume(
+        resume,
+        improved_data,
+    )
+    if diff_error:
+        response_warnings.append(f"Could not calculate changes: {diff_error}")
+    improvements = generate_improvements(job_keywords)
+
+    request_id = str(uuid4())
+    return ImproveResumeResponse(
+        request_id=request_id,
+        data=ImproveResumeData(
+            request_id=request_id,
+            resume_id=None,
+            job_id=request.job_id,
+            resume_preview=ResumeData.model_validate(improved_data),
+            improvements=[
+                {
+                    "suggestion": imp["suggestion"],
+                    "lineNumber": imp.get("lineNumber"),
+                }
+                for imp in improvements
+            ],
+            markdownOriginal=resume["content"],
+            markdownImproved=improved_text,
+            cover_letter=None,
+            outreach_message=None,
+            diff_summary=diff_summary,
+            detailed_changes=detailed_changes,
+            refinement_stats=refinement_stats,
+            warnings=response_warnings,
+            refinement_attempted=refinement_attempted,
+            refinement_successful=refinement_successful,
+        ),
+    )
 
 
 @router.post("/improve/preview/stream")
@@ -864,10 +1167,10 @@ async def improve_resume_confirm_endpoint(
     if not job:
         raise HTTPException(status_code=404, detail="Job description not found")
 
-    feature_config = _load_feature_config()
+    feature_config = _load_config()
     enable_cover_letter = feature_config.get("enable_cover_letter", False)
     enable_outreach = feature_config.get("enable_outreach_message", False)
-    language = _get_content_language()
+    language = get_content_language()
 
     stage = "serialize_improved_data"
     detail = "Failed to confirm resume. Please try again."
@@ -1008,10 +1311,10 @@ async def improve_resume_endpoint(
         raise HTTPException(status_code=404, detail="Job description not found")
 
     # Load feature configuration and content language
-    feature_config = _load_feature_config()
+    feature_config = _load_config()
     enable_cover_letter = feature_config.get("enable_cover_letter", False)
     enable_outreach = feature_config.get("enable_outreach_message", False)
-    language = _get_content_language()
+    language = get_content_language()
 
     try:
         # Extract keywords from job description
@@ -1020,21 +1323,69 @@ async def improve_resume_endpoint(
         # Generate improved resume in the configured language
         prompt_id = request.prompt_id or _get_default_prompt_id()
 
-        improved_data = await improve_resume(
-            original_resume=resume["content"],
-            job_description=job["content"],
-            job_keywords=job_keywords,
-            language=language,
-            prompt_id=prompt_id,
-        )
+        original_resume_data = _get_original_resume_data(resume)
         # Collect warnings throughout the process
         response_warnings: list[str] = []
 
+        # Diff-based improvement: generate targeted changes, apply with verification
+        if original_resume_data:
+            diff_result = await generate_resume_diffs(
+                original_resume=resume["content"],
+                job_description=job["content"],
+                job_keywords=job_keywords,
+                language=language,
+                prompt_id=prompt_id,
+                original_resume_data=original_resume_data,
+            )
+
+            improved_data, applied_changes, rejected_changes = apply_diffs(
+                original=original_resume_data,
+                changes=diff_result.changes,
+            )
+
+            diff_warnings = verify_diff_result(
+                original=original_resume_data,
+                result=improved_data,
+                applied_changes=applied_changes,
+                job_keywords=job_keywords,
+            )
+            response_warnings.extend(diff_warnings)
+
+            if rejected_changes:
+                response_warnings.append(
+                    f"{len(rejected_changes)} change(s) rejected during verification"
+                )
+
+            logger.info(
+                "Diff-based improve (legacy): %d applied, %d rejected, %d warnings",
+                len(applied_changes),
+                len(rejected_changes),
+                len(diff_warnings),
+            )
+        else:
+            # Fallback to full-output mode when no structured data available
+            improved_data = await improve_resume(
+                original_resume=resume["content"],
+                job_description=job["content"],
+                job_keywords=job_keywords,
+                language=language,
+                prompt_id=prompt_id,
+                original_resume_data=original_resume_data,
+            )
+
+        # Safety nets (defense in depth)
         improved_data, preserve_warnings = _preserve_personal_info(
-            _get_original_resume_data(resume),
+            original_resume_data,
             improved_data,
         )
         response_warnings.extend(preserve_warnings)
+
+        improved_data = _restore_original_dates(original_resume_data, improved_data)
+        original_markdown = _get_original_markdown(resume)
+        if original_markdown:
+            improved_data = restore_dates_from_markdown(improved_data, original_markdown)
+        improved_data = _preserve_original_skills(original_resume_data, improved_data)
+        improved_data = _protect_custom_sections(original_resume_data, improved_data)
 
         # Multi-pass refinement: keyword injection, AI phrase removal, alignment validation
         refinement_stats: RefinementStats | None = None
@@ -1461,7 +1812,7 @@ async def generate_cover_letter_endpoint(resume_id: str) -> GenerateContentRespo
         )
 
     # Get language setting
-    language = _get_content_language()
+    language = get_content_language()
 
     # Generate cover letter
     try:
@@ -1532,7 +1883,7 @@ async def generate_outreach_endpoint(resume_id: str) -> GenerateContentResponse:
         )
 
     # Get language setting
-    language = _get_content_language()
+    language = get_content_language()
 
     # Generate outreach message
     try:
