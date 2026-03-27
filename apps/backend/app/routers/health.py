@@ -21,20 +21,28 @@ _HEALTH_CACHE_TTL = 30  # seconds
 
 
 async def _get_cached_llm_health(config) -> dict:  # type: ignore[no-untyped-def]
-    """Return cached health result if fresh, otherwise run a new check."""
+    """Return cached health result if fresh, otherwise run a new check.
+
+    The lock is held only for the cache read and write — not across the
+    awaited I/O — so concurrent /status requests are never serialized.
+    """
     cache_key = f"{config.provider}:{config.model}"
     async with _health_cache_lock:
         now = time.monotonic()
         cached = _health_cache.get(cache_key)
         if cached is not None and (now - cached["ts"]) < _HEALTH_CACHE_TTL:
             return cached["result"]
-        try:
-            result = await asyncio.wait_for(check_llm_health(config), timeout=60.0)
-        except Exception as e:
-            logger.warning("LLM health check failed: %s", e)
-            result = {"healthy": False, "error": "health check timed out or failed"}
+    # Perform the health check outside the lock so concurrent callers are not blocked.
+    # At most a small number of parallel checks can fire simultaneously; that is
+    # acceptable and far better than head-of-line blocking for 60 s.
+    try:
+        result = await asyncio.wait_for(check_llm_health(config), timeout=60.0)
+    except Exception as e:
+        logger.warning("LLM health check failed: %s", e)
+        result = {"healthy": False, "error": "health check timed out or failed"}
+    async with _health_cache_lock:
         _health_cache[cache_key] = {"result": result, "ts": time.monotonic()}
-        return result
+    return result
 
 
 @router.get("/health", response_model=HealthResponse)
