@@ -260,9 +260,15 @@ async def get_provider_models(provider: str) -> dict:
     api_key: str = stored.get("api_key", "") or settings.llm_api_key or ""
     api_base: str = stored.get("api_base", "") or ""
 
-    # Anthropic: no public models list endpoint
+    # Anthropic: no public models list endpoint, no API key required
     if provider == "anthropic":
         return {"models": _ANTHROPIC_MODELS}
+
+    if not api_key:
+        raise HTTPException(
+            status_code=400,
+            detail=f"API key required to fetch models for {provider}. Please configure your API key first.",
+        )
 
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:

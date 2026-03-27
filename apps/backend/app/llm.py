@@ -438,7 +438,8 @@ async def check_llm_health(
     # instead of a full LLM completion — reasoning models like deepseek-r1 can take
     # 30+ seconds to generate even a single token.
     if config.provider == "ollama" and not include_details:
-        api_base = (_normalize_api_base(config.provider, config.api_base) or "http://127.0.0.1:11434").rstrip("/")
+        api_base = _normalize_api_base(config.provider, config.api_base)
+        api_base = (api_base or "http://127.0.0.1:11434").rstrip("/")
         ollama_base = api_base.removesuffix("/v1")
         try:
             async with httpx.AsyncClient(timeout=5.0) as client:
