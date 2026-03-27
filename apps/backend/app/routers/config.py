@@ -257,7 +257,7 @@ async def get_provider_models(provider: str) -> dict:
         raise HTTPException(status_code=400, detail=f"Unsupported provider: {provider}")
 
     stored = _load_config()
-    api_key: str = stored.get("api_key", "") or settings.llm_api_key or ""
+    api_key: str = resolve_api_key(stored, provider)
     api_base: str = stored.get("api_base", "") or ""
 
     # Anthropic: no public models list endpoint, no API key required
