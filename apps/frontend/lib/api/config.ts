@@ -136,6 +136,38 @@ export const PROVIDER_INFO: Record<
   ollama: { name: 'Ollama (Local)', defaultModel: 'gemma3:4b', requiresKey: false },
 };
 
+// Fetch available Ollama models from the local instance
+export async function fetchOllamaModels(): Promise<string[]> {
+  const res = await apiFetch('/config/ollama-models', { credentials: 'include' });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || `Failed to fetch Ollama models (status ${res.status}).`);
+  }
+
+  const data = await res.json();
+  return data.models as string[];
+}
+
+// Fetch available models for a given provider using the stored API key
+export async function fetchProviderModels(provider: LLMProvider): Promise<string[]> {
+  if (provider === 'ollama') return fetchOllamaModels();
+
+  const res = await apiFetch(`/config/provider-models?provider=${provider}`, {
+    credentials: 'include',
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(
+      data.detail || `Failed to fetch models for ${provider} (status ${res.status}).`
+    );
+  }
+
+  const data = await res.json();
+  return data.models as string[];
+}
+
 // Feature configuration types
 export interface FeatureConfig {
   enable_cover_letter: boolean;

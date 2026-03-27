@@ -13,6 +13,8 @@ import {
   updatePromptConfig,
   clearAllApiKeys,
   resetDatabase,
+  fetchOllamaModels,
+  fetchProviderModels,
   PROVIDER_INFO,
   type LLMConfig,
   type LLMProvider,
@@ -115,6 +117,11 @@ export default function SettingsPage() {
 
   // Health check result from manual test
   const [healthCheck, setHealthCheck] = useState<LLMHealthCheck | null>(null);
+
+  // Provider model list (dynamic fetch — works for all providers including Ollama)
+  const [providerModels, setProviderModels] = useState<string[]>([]);
+  const [providerModelsLoading, setProviderModelsLoading] = useState(false);
+  const [providerModelsError, setProviderModelsError] = useState<string | null>(null);
 
   // Feature config state
   const [enableCoverLetter, setEnableCoverLetter] = useState(false);
@@ -286,13 +293,34 @@ export default function SettingsPage() {
     };
   }, [t]);
 
+  // Fetch available models for the current provider
+  const loadProviderModels = async (targetProvider: LLMProvider = provider) => {
+    setProviderModelsLoading(true);
+    setProviderModelsError(null);
+    try {
+      const models =
+        targetProvider === 'ollama'
+          ? await fetchOllamaModels()
+          : await fetchProviderModels(targetProvider);
+      setProviderModels(models);
+    } catch (err) {
+      setProviderModelsError((err as Error).message);
+      setProviderModels([]);
+    } finally {
+      setProviderModelsLoading(false);
+    }
+  };
+
   // Handle provider change
   const handleProviderChange = (newProvider: LLMProvider) => {
     setProvider(newProvider);
     setModel(PROVIDER_INFO[newProvider].defaultModel);
+    setProviderModels([]);
+    setProviderModelsError(null);
 
-    if (newProvider === 'ollama' && !apiBase.trim()) {
-      setApiBase('http://localhost:11434');
+    if (newProvider === 'ollama') {
+      if (!apiBase.trim()) setApiBase('http://localhost:11434');
+      loadProviderModels(newProvider);
     }
 
     // Clear API key input when switching providers to avoid accidental cross-provider usage.
@@ -741,21 +769,51 @@ export default function SettingsPage() {
                 </p>
               </div>
 
-              {/* Model Input */}
+              {/* Model picker — dynamic for all providers */}
               <div className="space-y-2">
-                <Label htmlFor="model">{t('settings.llmConfiguration.modelLabel')}</Label>
-                <Input
-                  id="model"
-                  value={model}
-                  onChange={(e) => setModel(e.target.value)}
-                  placeholder={providerInfo.defaultModel}
-                  className="font-mono"
-                />
-                <p className="text-xs text-gray-500 font-mono">
-                  {t('settings.llmConfiguration.defaultModel', {
-                    model: providerInfo.defaultModel,
-                  })}
-                </p>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="model">{t('settings.llmConfiguration.modelLabel')}</Label>
+                  <button
+                    type="button"
+                    onClick={() => loadProviderModels()}
+                    disabled={providerModelsLoading}
+                    className="flex items-center gap-1 text-xs font-mono text-blue-700 hover:text-blue-900 disabled:opacity-50"
+                  >
+                    <RefreshCw
+                      className={`w-3 h-3 ${providerModelsLoading ? 'animate-spin' : ''}`}
+                    />
+                    {providerModelsLoading ? 'Loading…' : 'Fetch models'}
+                  </button>
+                </div>
+
+                {providerModels.length > 0 ? (
+                  <Dropdown
+                    options={providerModels.map((m) => ({ id: m, label: m }))}
+                    value={model}
+                    onChange={setModel}
+                    searchable={providerModels.length > 10}
+                  />
+                ) : (
+                  <Input
+                    id="model"
+                    value={model}
+                    onChange={(e) => setModel(e.target.value)}
+                    placeholder={providerInfo.defaultModel}
+                    className="font-mono"
+                  />
+                )}
+
+                {providerModelsError && (
+                  <p className="text-xs text-red-600 font-mono">{providerModelsError}</p>
+                )}
+                {!providerModelsError && providerModels.length === 0 && !providerModelsLoading && (
+                  <p className="text-xs text-gray-500 font-mono">
+                    {t('settings.llmConfiguration.defaultModel', {
+                      model: providerInfo.defaultModel,
+                    })}
+                    {' — click "Fetch models" to load available options.'}
+                  </p>
+                )}
               </div>
 
               {/* API Key Input */}
