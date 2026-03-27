@@ -81,7 +81,11 @@ export function buildResumeFilename(
   } else if (cleanName) {
     raw = `${cleanName} - ${typeLabel}`;
   } else {
-    return sanitizeFilename(cleanCompany, fallbackId, type);
+    return sanitizeFilename(
+      cleanCompany ? `${typeLabel} - ${cleanCompany}` : null,
+      fallbackId,
+      type
+    );
   }
 
   return sanitizeFilename(raw, fallbackId, type);

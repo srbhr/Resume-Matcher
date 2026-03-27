@@ -430,7 +430,7 @@ const ResumeBuilderContent = () => {
 
   const getCompanyFromTitle = (title: string | null | undefined): string | null => {
     if (!title) return null;
-    const atIdx = title.indexOf(' @ ');
+    const atIdx = title.lastIndexOf(' @ ');
     return atIdx !== -1 ? title.substring(atIdx + 3).trim() : null;
   };
 
