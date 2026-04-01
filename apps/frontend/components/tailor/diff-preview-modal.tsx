@@ -1,14 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import {
-  AlertTriangle,
-  CheckCircle,
-  X,
-  ChevronDown,
-  ChevronRight,
-  Loader2,
-} from 'lucide-react';
+import { AlertTriangle, CheckCircle, X, ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useTranslations } from '@/lib/i18n';
