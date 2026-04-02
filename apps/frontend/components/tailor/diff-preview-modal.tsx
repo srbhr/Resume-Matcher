@@ -16,6 +16,8 @@ interface DiffPreviewModalProps {
   onClose: () => void;
   onReject: () => void;
   onConfirm: () => void;
+  onConfirmPartial: (acceptedIndices: Set<number>) => void;
+  isLoading?: boolean;
   diffSummary?: ResumeDiffSummary;
   detailedChanges?: ResumeFieldDiff[];
   errorMessage?: string;
@@ -27,6 +29,8 @@ export function DiffPreviewModal({
   onClose,
   onReject,
   onConfirm,
+  onConfirmPartial,
+  isLoading,
   diffSummary,
   detailedChanges,
   errorMessage,
@@ -34,6 +38,9 @@ export function DiffPreviewModal({
   const { t } = useTranslations();
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
     new Set(['summary', 'skills', 'descriptions', 'experience'])
+  );
+  const [acceptedIndices, setAcceptedIndices] = useState<Set<number>>(
+    () => new Set(detailedChanges?.map((_, i) => i) ?? [])
   );
 
   // Elapsed timer while confirming
@@ -106,6 +113,37 @@ export function DiffPreviewModal({
       newExpanded.add(section);
     }
     setExpandedSections(newExpanded);
+  };
+
+  const toggleChange = (idx: number) => {
+    setAcceptedIndices((prev) => {
+      const next = new Set(prev);
+      if (next.has(idx)) {
+        next.delete(idx);
+      } else {
+        next.add(idx);
+      }
+      return next;
+    });
+  };
+
+  const allCount = detailedChanges.length;
+  const acceptedCount = acceptedIndices.size;
+
+  const handleSelectAll = () => {
+    setAcceptedIndices(new Set(detailedChanges.map((_, i) => i)));
+  };
+
+  const handleDeselectAll = () => {
+    setAcceptedIndices(new Set());
+  };
+
+  const handleConfirmClick = () => {
+    if (acceptedCount === allCount) {
+      onConfirm();
+    } else {
+      onConfirmPartial(acceptedIndices);
+    }
   };
 
   // Group changes by type
@@ -207,9 +245,18 @@ export function DiffPreviewModal({
               isExpanded={expandedSections.has('summary')}
               onToggle={() => toggleSection('summary')}
             >
-              {summaryChanges.map((change, idx) => (
-                <ChangeItem key={idx} change={change} />
-              ))}
+              {summaryChanges.map((change) => {
+                const gi = detailedChanges.indexOf(change);
+                return (
+                  <ChangeItem
+                    key={gi}
+                    change={change}
+                    globalIndex={gi}
+                    isAccepted={acceptedIndices.has(gi)}
+                    onToggle={toggleChange}
+                  />
+                );
+              })}
             </ChangeSection>
           )}
 
@@ -221,9 +268,18 @@ export function DiffPreviewModal({
               isExpanded={expandedSections.has('skills')}
               onToggle={() => toggleSection('skills')}
             >
-              {skillChanges.map((change, idx) => (
-                <ChangeItem key={idx} change={change} />
-              ))}
+              {skillChanges.map((change) => {
+                const gi = detailedChanges.indexOf(change);
+                return (
+                  <ChangeItem
+                    key={gi}
+                    change={change}
+                    globalIndex={gi}
+                    isAccepted={acceptedIndices.has(gi)}
+                    onToggle={toggleChange}
+                  />
+                );
+              })}
             </ChangeSection>
           )}
 
@@ -235,9 +291,18 @@ export function DiffPreviewModal({
               isExpanded={expandedSections.has('experience')}
               onToggle={() => toggleSection('experience')}
             >
-              {experienceChanges.map((change, idx) => (
-                <ChangeItem key={idx} change={change} />
-              ))}
+              {experienceChanges.map((change) => {
+                const gi = detailedChanges.indexOf(change);
+                return (
+                  <ChangeItem
+                    key={gi}
+                    change={change}
+                    globalIndex={gi}
+                    isAccepted={acceptedIndices.has(gi)}
+                    onToggle={toggleChange}
+                  />
+                );
+              })}
             </ChangeSection>
           )}
 
@@ -249,9 +314,18 @@ export function DiffPreviewModal({
               isExpanded={expandedSections.has('descriptions')}
               onToggle={() => toggleSection('descriptions')}
             >
-              {descChanges.map((change, idx) => (
-                <ChangeItem key={idx} change={change} />
-              ))}
+              {descChanges.map((change) => {
+                const gi = detailedChanges.indexOf(change);
+                return (
+                  <ChangeItem
+                    key={gi}
+                    change={change}
+                    globalIndex={gi}
+                    isAccepted={acceptedIndices.has(gi)}
+                    onToggle={toggleChange}
+                  />
+                );
+              })}
             </ChangeSection>
           )}
 
@@ -263,9 +337,18 @@ export function DiffPreviewModal({
               isExpanded={expandedSections.has('education')}
               onToggle={() => toggleSection('education')}
             >
-              {educationChanges.map((change, idx) => (
-                <ChangeItem key={idx} change={change} />
-              ))}
+              {educationChanges.map((change) => {
+                const gi = detailedChanges.indexOf(change);
+                return (
+                  <ChangeItem
+                    key={gi}
+                    change={change}
+                    globalIndex={gi}
+                    isAccepted={acceptedIndices.has(gi)}
+                    onToggle={toggleChange}
+                  />
+                );
+              })}
             </ChangeSection>
           )}
 
@@ -277,9 +360,18 @@ export function DiffPreviewModal({
               isExpanded={expandedSections.has('project')}
               onToggle={() => toggleSection('project')}
             >
-              {projectChanges.map((change, idx) => (
-                <ChangeItem key={idx} change={change} />
-              ))}
+              {projectChanges.map((change) => {
+                const gi = detailedChanges.indexOf(change);
+                return (
+                  <ChangeItem
+                    key={gi}
+                    change={change}
+                    globalIndex={gi}
+                    isAccepted={acceptedIndices.has(gi)}
+                    onToggle={toggleChange}
+                  />
+                );
+              })}
             </ChangeSection>
           )}
 
@@ -291,26 +383,44 @@ export function DiffPreviewModal({
               isExpanded={expandedSections.has('certifications')}
               onToggle={() => toggleSection('certifications')}
             >
-              {certChanges.map((change, idx) => (
-                <ChangeItem key={idx} change={change} />
-              ))}
+              {certChanges.map((change) => {
+                const gi = detailedChanges.indexOf(change);
+                return (
+                  <ChangeItem
+                    key={gi}
+                    change={change}
+                    globalIndex={gi}
+                    isAccepted={acceptedIndices.has(gi)}
+                    onToggle={toggleChange}
+                  />
+                );
+              })}
             </ChangeSection>
           )}
         </div>
 
         {/* Action buttons */}
         <div className="flex justify-between items-center pt-4 border-t-2 border-black bg-white -mx-6 -mb-6 px-6 py-4">
-          <Button variant="outline" onClick={onReject} disabled={isConfirming} className="gap-2">
+          <Button variant="outline" onClick={onReject} disabled={isLoading || isConfirming} className="gap-2">
             <X className="w-4 h-4" />
             {t('tailor.diffModal.rejectButton')}
           </Button>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             {isConfirming && elapsed > 0 && (
               <span className="font-mono text-xs text-gray-500">{elapsed}s</span>
             )}
+            <button
+              onClick={acceptedCount === allCount ? handleDeselectAll : handleSelectAll}
+              className="font-mono text-xs text-[#1D4ED8] underline hover:text-blue-900 disabled:opacity-50"
+              disabled={isLoading || isConfirming}
+            >
+              {acceptedCount === allCount
+                ? t('tailor.diffModal.deselectAll')
+                : t('tailor.diffModal.selectAll')}
+            </button>
             <Button
-              onClick={onConfirm}
-              disabled={isConfirming}
+              onClick={handleConfirmClick}
+              disabled={isLoading || isConfirming || acceptedCount === 0}
               className="gap-2 bg-[#15803D] hover:bg-[#166534]"
             >
               {isConfirming ? (
@@ -321,7 +431,12 @@ export function DiffPreviewModal({
               ) : (
                 <>
                   <CheckCircle className="w-4 h-4" />
-                  {t('tailor.diffModal.confirmButton')}
+                  {acceptedCount === allCount
+                    ? t('tailor.diffModal.confirmButton')
+                    : t('tailor.diffModal.confirmPartialButton', {
+                        accepted: acceptedCount,
+                        total: allCount,
+                      })}
                 </>
               )}
             </Button>
@@ -384,12 +499,15 @@ function ChangeSection({ title, count, isExpanded, onToggle, children }: ChangeS
   );
 }
 
-// Helper component: change item
+// Helper component: change item with checkbox
 interface ChangeItemProps {
   change: ResumeFieldDiff;
+  globalIndex: number;
+  isAccepted: boolean;
+  onToggle: (idx: number) => void;
 }
 
-function ChangeItem({ change }: ChangeItemProps) {
+function ChangeItem({ change, globalIndex, isAccepted, onToggle }: ChangeItemProps) {
   const typeColors = {
     added: 'border-l-4 border-[#15803D] bg-[#F0FDF4]',
     removed: 'border-l-4 border-[#DC2626] bg-[#FEF2F2]',
@@ -403,8 +521,14 @@ function ChangeItem({ change }: ChangeItemProps) {
   };
 
   return (
-    <div className={`p-3 ${typeColors[change.change_type]}`}>
+    <div className={`p-3 ${typeColors[change.change_type]} ${!isAccepted ? 'opacity-50' : ''}`}>
       <div className="flex items-start gap-2">
+        <input
+          type="checkbox"
+          checked={isAccepted}
+          onChange={() => onToggle(globalIndex)}
+          className="mt-1 shrink-0 cursor-pointer accent-[#15803D]"
+        />
         <span className="font-mono text-xs font-bold uppercase tracking-wider text-gray-500">
           {typeLabels[change.change_type]}
         </span>

@@ -501,8 +501,43 @@
     "pasteJobDescription": "求人内容を貼り付け",
     "pasteJobDescriptionBelow": "下に求人内容を貼り付け",
     "jobDescriptionPlaceholder": "求人内容をここに貼り付けてください...",
+    "inputMode": {
+      "paste": "テキストを貼り付け",
+      "url": "URLから取得"
+    },
+    "urlInput": {
+      "placeholder": "求人URLを貼り付けてください（LinkedIn、Indeed、企業サイトなど）...",
+      "fetchButton": "取得",
+      "fetching": "取得中...",
+      "hint": "アプリが自動的に求人内容を抽出します。履歴書は職種と会社名で命名されます。"
+    },
     "promptLabel": "調整の強さ",
     "promptDescription": "求人情報にどの程度合わせるかを選択してください。",
+    "workflowLabel": "ワークフロー",
+    "workflowDescription": "履歴書全体を一括で調整するか、セクションごとに調整するかを選択してください。",
+    "workflowOptions": {
+      "standard": {
+        "label": "標準",
+        "description": "履歴書全体を一回のパスで書き直します。"
+      },
+      "granular": {
+        "label": "セクション別",
+        "description": "スキルと経験を個別の集中パスで処理 — ハルシネーションリスクを低減。"
+      }
+    },
+    "progress": {
+      "title": "履歴書を最適化中",
+      "uploading": "求人情報をアップロード中",
+      "tailoring": "AIが履歴書を最適化しています",
+      "elapsedSeconds": "{seconds}秒経過",
+      "slowModelNote": "ローカルAIモデルは数分かかる場合があります。このページを閉じずにお待ちください。"
+    },
+    "streamStages": {
+      "keywords": "求人キーワードを抽出中...",
+      "improving": "履歴書をカスタマイズ中...",
+      "refining": "最適化を実行中...",
+      "diff": "変更を計算中..."
+    },
     "promptOptions": {
       "nudge": {
         "label": "軽く調整",
@@ -547,7 +582,10 @@
       "projectChanges": "プロジェクトの変更",
       "certificationChanges": "資格の変更",
       "rejectButton": "拒否して再生成",
-      "confirmButton": "確認して保存"
+      "confirmButton": "確認して保存",
+      "confirmPartialButton": "選択した変更を確認 ({accepted}/{total})",
+      "selectAll": "すべて選択",
+      "deselectAll": "すべて解除"
     },
     "regenerateDialog": {
       "title": "カスタマイズ済み履歴書を再生成しますか？",
@@ -565,7 +603,10 @@
       "rateLimit": "レート制限に達しました。しばらく待ってから再試行してください。",
       "failedToGenerate": "履歴書の生成に失敗しました。設定を確認して再試行してください。",
       "failedToPreview": "履歴書のプレビューに失敗しました。設定を確認して再試行してください。",
-      "failedToConfirm": "履歴書の確定に失敗しました。もう一度お試しください。"
+      "failedToConfirm": "履歴書の確定に失敗しました。もう一度お試しください。",
+      "failedToFetchUrl": "このURLから求人内容を取得できませんでした。テキストを手動でコピーしてください。",
+      "invalidUrl": "https:// で始まる有効なURLを入力してください",
+      "urlTimeout": "タイムアウトしました。ページの応答が遅すぎます。"
     }
   },
   "settings": {

@@ -7,6 +7,7 @@ multiple passes:
 3. Master alignment validation - ensure no fabricated content was added
 """
 
+import asyncio
 import copy
 import json
 import logging
@@ -40,11 +41,21 @@ def _keyword_in_text(keyword: str, text: str) -> bool:
 
     SVC-010: Uses word boundaries instead of substring matching to avoid
     false positives like 'python' matching 'pythonic' or 'go' matching 'going'.
+
+    Uses lookahead/lookbehind at non-word-character edges so that keywords
+    like C++, C#, and Node.js are matched correctly (\\b fails when the
+    keyword boundary lands on a non-word character such as '+' or '#').
     """
-    # Escape special regex characters in keyword
-    escaped = re.escape(keyword.lower())
-    # Use word boundaries
-    pattern = rf"\b{escaped}\b"
+    kw = keyword.lower()
+    if not kw:
+        return False
+    escaped = re.escape(kw)
+    # \b works at a word-char edge; use a negative lookbehind/lookahead
+    # when the keyword itself starts/ends with a non-word character.
+    _word_char = re.compile(r"\w")
+    prefix = r"\b" if _word_char.match(kw[0]) else r"(?<!\w)"
+    suffix = r"\b" if _word_char.match(kw[-1]) else r"(?!\w)"
+    pattern = prefix + escaped + suffix
     return bool(re.search(pattern, text.lower()))
 
 
@@ -86,15 +97,18 @@ async def refine_resume(
                 keyword_analysis.injectable_keywords,
             )
             try:
-                current = await inject_keywords(
-                    current,
-                    keyword_analysis.injectable_keywords,
-                    master_resume,
-                    job_description,
+                current = await asyncio.wait_for(
+                    inject_keywords(
+                        current,
+                        keyword_analysis.injectable_keywords,
+                        master_resume,
+                        job_description,
+                    ),
+                    timeout=25.0,  # Fast fail — don't eat the whole refiner budget
                 )
                 passes += 1
             except Exception as e:
-                logger.warning("Keyword injection failed: %s", e)
+                logger.warning("Keyword injection failed or timed out: %s", e)
 
     # Pass 2: AI phrase removal and polish (local, no LLM call)
     if config.enable_ai_phrase_removal:

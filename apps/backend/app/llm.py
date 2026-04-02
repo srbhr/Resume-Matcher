@@ -6,6 +6,7 @@ import re
 import threading
 from typing import Any
 
+import httpx
 import litellm
 from litellm import Router
 from litellm.router import RetryPolicy
@@ -52,11 +53,17 @@ def _normalize_api_base(provider: str, api_base: str | None) -> str | None:
     append those segments internally, which can lead to duplicated paths like
     `/v1/v1/...` and cause 404s.
     """
+    # On Windows, aiohttp/httpx may fail to resolve 'localhost' via getaddrinfo
+    # in async context. Default Ollama to 127.0.0.1 when no base is configured.
     if not api_base:
+        if provider == "ollama":
+            return "http://127.0.0.1:11434"
         return None
 
     base = api_base.strip()
     if not base:
+        if provider == "ollama":
+            return "http://127.0.0.1:11434"
         return None
 
     base = base.rstrip("/")
@@ -76,13 +83,13 @@ def _normalize_api_base(provider: str, api_base: str | None) -> str | None:
     if provider == "openrouter" and base.endswith("/v1"):
         base = base[: -len("/v1")].rstrip("/")
 
-    # Ollama doesn't use /v1 paths. Strip common suffixes users might paste:
-    # /v1, /api/chat, /api/generate
+    # Ollama: strip common suffixes users might paste, then fix localhost on Windows.
     if provider == "ollama":
         for suffix in ("/v1", "/api/chat", "/api/generate", "/api"):
             if base.endswith(suffix):
                 base = base[: -len(suffix)].rstrip("/")
                 break
+        base = base.replace("//localhost:", "//127.0.0.1:")
 
     return base or None
 
@@ -394,6 +401,18 @@ def _get_reasoning_effort(provider: str, model: str) -> str | None:
     return None
 
 
+def _is_ollama_reasoning_model(provider: str, model: str) -> bool:
+    """Return True for Ollama-hosted reasoning models that support think=false.
+
+    Disabling chain-of-thought via think=false dramatically reduces response time
+    for resume tailoring tasks where step-by-step reasoning is not needed.
+    """
+    if provider != "ollama":
+        return False
+    model_lower = model.lower()
+    return any(name in model_lower for name in ("deepseek-r1", "qwq", "deepseek-r2"))
+
+
 async def check_llm_health(
     config: LLMConfig | None = None,
     *,
@@ -415,6 +434,22 @@ async def check_llm_health(
 
     model_name = get_model_name(config)
 
+    # For Ollama status checks (no details needed), use a lightweight /api/tags probe
+    # instead of a full LLM completion — reasoning models like deepseek-r1 can take
+    # 30+ seconds to generate even a single token.
+    if config.provider == "ollama" and not include_details:
+        api_base = _normalize_api_base(config.provider, config.api_base)
+        api_base = (api_base or "http://127.0.0.1:11434").rstrip("/")
+        ollama_base = api_base.removesuffix("/v1")
+        try:
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                resp = await client.get(f"{ollama_base}/api/tags")
+                resp.raise_for_status()
+            return {"healthy": True, "provider": config.provider, "model": config.model, "response_model": model_name}
+        except Exception as e:
+            logging.warning("Ollama /api/tags health check failed: %s", e)
+            return {"healthy": False, "provider": config.provider, "model": config.model, "error_code": "ollama_unreachable"}
+
     prompt = test_prompt or "Hi"
 
     try:
@@ -431,6 +466,8 @@ async def check_llm_health(
         reasoning_effort = _get_reasoning_effort(config.provider, model_name)
         if reasoning_effort:
             kwargs["reasoning_effort"] = reasoning_effort
+        if _is_ollama_reasoning_model(config.provider, model_name):
+            kwargs["extra_body"] = {"think": False}
 
         response = await litellm.acompletion(**kwargs)
         content = _extract_choice_text(response.choices[0])
@@ -528,6 +565,8 @@ async def complete(
         reasoning_effort = _get_reasoning_effort(config.provider, model_name)
         if reasoning_effort:
             kwargs["reasoning_effort"] = reasoning_effort
+        if _is_ollama_reasoning_model(config.provider, model_name):
+            kwargs["extra_body"] = {"think": False}
 
         response = await router.acompletion(**kwargs)
 
@@ -639,7 +678,7 @@ def _calculate_timeout(
         "openai": 1.0,
         "anthropic": 1.2,
         "openrouter": 1.5,  # More variable latency
-        "ollama": 2.0,  # Local models can be slower
+        "ollama": 6.0,  # Local models can be very slow (deepseek-r1:14b needs ~870s)
     }
     provider_factor = provider_factors.get(provider, 1.0)
 
@@ -788,6 +827,8 @@ async def complete_json(
                 config.provider, model_name)
             if reasoning_effort:
                 kwargs["reasoning_effort"] = reasoning_effort
+            if _is_ollama_reasoning_model(config.provider, model_name):
+                kwargs["extra_body"] = {"think": False}
 
             # Add JSON mode if supported
             if use_json_mode:

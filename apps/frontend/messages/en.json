@@ -501,8 +501,43 @@
     "pasteJobDescription": "Paste Job Description",
     "pasteJobDescriptionBelow": "Paste Job Description Below",
     "jobDescriptionPlaceholder": "Paste the job description here...",
+    "inputMode": {
+      "paste": "Paste Text",
+      "url": "From URL"
+    },
+    "urlInput": {
+      "placeholder": "Paste job listing URL (e.g. LinkedIn, Indeed, company site)...",
+      "fetchButton": "Fetch",
+      "fetching": "Analyzing...",
+      "hint": "Works best with direct job listing pages on company career sites. Job portals (LinkedIn, Indeed, Pracuj.pl, theprotocol.it) often load the description via JavaScript — open the specific listing and copy the text manually."
+    },
     "promptLabel": "Tailoring intensity",
     "promptDescription": "Choose how strongly to align your resume to the job description.",
+    "workflowLabel": "Workflow",
+    "workflowDescription": "Choose whether to tailor the whole resume at once or section by section.",
+    "workflowOptions": {
+      "standard": {
+        "label": "Standard",
+        "description": "Rewrites the full resume in a single pass."
+      },
+      "granular": {
+        "label": "Section-by-section",
+        "description": "Separate focused passes for skills and experience — less hallucination risk."
+      }
+    },
+    "progress": {
+      "title": "Generating tailored resume",
+      "uploading": "Uploading job description",
+      "tailoring": "AI is tailoring your resume",
+      "elapsedSeconds": "{seconds}s elapsed",
+      "slowModelNote": "Local AI models may take several minutes. Please wait and don't close this page."
+    },
+    "streamStages": {
+      "keywords": "Extracting job keywords...",
+      "improving": "Tailoring resume...",
+      "refining": "Running refinement...",
+      "diff": "Calculating changes..."
+    },
     "promptOptions": {
       "nudge": {
         "label": "Light nudge",
@@ -547,7 +582,10 @@
       "projectChanges": "Project Changes",
       "certificationChanges": "Certification Changes",
       "rejectButton": "Reject & Regenerate",
-      "confirmButton": "Confirm & Save"
+      "confirmButton": "Confirm & Save",
+      "confirmPartialButton": "Confirm Selected ({accepted}/{total})",
+      "selectAll": "Select All",
+      "deselectAll": "Deselect All"
     },
     "regenerateDialog": {
       "title": "Regenerate tailored resume?",
@@ -565,7 +603,10 @@
       "rateLimit": "Rate limit reached. Please wait a moment and try again.",
       "failedToGenerate": "Failed to generate resume. Please check your settings and try again.",
       "failedToPreview": "Failed to preview resume. Please check your settings and try again.",
-      "failedToConfirm": "Failed to confirm resume. Please try again."
+      "failedToConfirm": "Failed to confirm resume. Please try again.",
+      "failedToFetchUrl": "Could not extract job description from this URL. Sites like LinkedIn or Indeed use JavaScript — copy and paste the text manually instead.",
+      "invalidUrl": "Please enter a valid URL starting with https://",
+      "urlTimeout": "Request timed out. The page took too long to respond."
     }
   },
   "settings": {
