@@ -19,7 +19,7 @@ Create tailored resumes for each job application with AI-powered suggestions. Wo
 <div align="center">
 
 ![Stars](https://img.shields.io/github/stars/srbhr/Resume-Matcher?labelColor=F0F0E8&style=for-the-badge&color=1d4ed8)
-![Apache 2.0](https://img.shields.io/github/license/srbhr/Resume-Matcher?labelColor=F0F0E8&style=for-the-badge&color=1d4ed8) ![Forks](https://img.shields.io/github/forks/srbhr/Resume-Matcher?labelColor=F0F0E8&style=for-the-badge&color=1d4ed8) ![version](https://img.shields.io/badge/Version-1.1%20Voyager%20-FFF?labelColor=F0F0E8&style=for-the-badge&color=1d4ed8)
+![Apache 2.0](https://img.shields.io/github/license/srbhr/Resume-Matcher?labelColor=F0F0E8&style=for-the-badge&color=1d4ed8) ![Forks](https://img.shields.io/github/forks/srbhr/Resume-Matcher?labelColor=F0F0E8&style=for-the-badge&color=1d4ed8) ![version](https://img.shields.io/badge/Version-1.2%20Nightvision%20-FFF?labelColor=F0F0E8&style=for-the-badge&color=1d4ed8)
 
 [![Discord](https://img.shields.io/discord/1122069176962531400?labelColor=F0F0E8&logo=discord&logoColor=1d4ed8&style=for-the-badge&color=1d4ed8)](https://dsc.gg/resume-matcher) [![Website](https://img.shields.io/badge/website-Resume%20Matcher-FFF?labelColor=F0F0E8&style=for-the-badge&color=1d4ed8)](https://resumematcher.fyi) [![LinkedIn](https://img.shields.io/badge/LinkedIn-Resume%20Matcher-FFF?labelColor=F0F0E8&logo=LinkedIn&style=for-the-badge&color=1d4ed8)](https://www.linkedin.com/company/resume-matcher/)
 
@@ -42,7 +42,7 @@ Resume Matcher works by creating a master resume that you can use to tailor for 
 1. **Upload** your master resume (PDF or DOCX)
 2. **Paste** a job description you're targeting
 3. **Review** AI-generated improvements and tailored content
-4. **Cover Letter & Email** generator for the job application
+4. **Cover Letter** generator for the job application
 5. **Customize** the layout and sections to fit your style
 6. **Export** as a professional PDF with your preferred template
 
@@ -124,15 +124,15 @@ You can:
 - Rearrange sections via drag-and-drop
 - Choose from multiple resume templates
 
-### Cover Letter & Email Generator
+### Cover Letter Generator
 
-Generate tailored cover letters and email templates based on the job description and your resume.
+Generate tailored cover letters based on the job description and your resume.
 
 ![Cover Letter](assets/cover_letter.png)
 
-### Resume Scoring (In development feature)
+### Resume Scoring & Keyword Highlighting
 
-We are working on a resume scoring feature that will analyze your resume against the job description and provide a match score along with suggestions for improvement.
+Analyze your resume against the job description with a match score, keyword highlighting, and suggestions for improvement.
 
 ![Resume Scoring and Keyword Highlight](assets/keyword_highlighter.png)
 
@@ -151,15 +151,15 @@ Export your tailored resume and cover letter in PDF.
 
 ### Internationalization
 
-- **Multi-Language UI**: Interface available in English, Spanish, Chinese, and Japanese
+- **Multi-Language UI**: Interface available in English, Spanish, Chinese, Japanese, and Portuguese (Brazilian)
 - **Multi-Language Content**: Generate resumes and cover letters in your preferred language
 
 ### Roadmap
 
 If you have any suggestions or feature requests, please feel free to open an issue on GitHub or discuss it on our [Discord](https://dsc.gg/resume-matcher) server.
 
-- Visual keyword highlighting
 - AI Canvas for crafting impactful, metric-driven resume content
+- Email template generator for job applications
 - Multi-job description optimization
 
 <a id="how-to-install"></a>
@@ -206,9 +206,9 @@ Open **<http://localhost:3000>** and configure your AI provider in Settings.
 | Provider | Local/Cloud | Notes |
 |----------|-------------|-------|
 | **Ollama** | Local | Free, runs on your machine |
-| **OpenAI** | Cloud | GPT-4o, GPT-4o-mini |
-| **Anthropic** | Cloud | Claude 3.5 Sonnet |
-| **Google Gemini** | Cloud | Gemini 1.5 Flash/Pro |
+| **OpenAI** | Cloud | GPT-5 Nano, GPT-4o |
+| **Anthropic** | Cloud | Claude Haiku 4.5 |
+| **Google Gemini** | Cloud | Gemini 3 Flash |
 | **OpenRouter** | Cloud | Access to multiple models |
 | **DeepSeek** | Cloud | DeepSeek Chat |
 
@@ -228,8 +228,8 @@ docker run --name resume-matcher \
   ghcr.io/srbhr/resume-matcher:latest
 ```
 
-Prefer pinning a version in production, for example `ghcr.io/srbhr/resume-matcher:1.1.0` or
-`ghcr.io/srbhr/resume-matcher:1.1`.
+Prefer pinning a version in production, for example `ghcr.io/srbhr/resume-matcher:1.2.0` or
+`ghcr.io/srbhr/resume-matcher:1.2`.
 
 Endpoints:
 
@@ -244,7 +244,7 @@ Endpoints:
 | Component | Technology |
 |-----------|------------|
 | Backend | FastAPI, Python 3.13+, LiteLLM |
-| Frontend | Next.js 15, React 19, TypeScript |
+| Frontend | Next.js 16, React 19, TypeScript |
 | Database | TinyDB (JSON file storage) |
 | Styling | Tailwind CSS 4, Swiss International Style |
 | PDF | Headless Chromium via Playwright |

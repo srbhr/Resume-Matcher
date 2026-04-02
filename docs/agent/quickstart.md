@@ -4,27 +4,38 @@
 
 ## Prerequisites
 
-- Node.js 18+
-- Python 3.11+
+- Node.js 22+
+- Python 3.13+
 - [uv](https://docs.astral.sh/uv/) (Python package manager)
 
 ## Installation
 
 ```bash
-npm run install    # Installs frontend (npm) + backend (uv sync)
+# Backend (from repo root)
+cd apps/backend
+uv sync
+
+# Frontend (from repo root)
+cd apps/frontend
+npm install
 ```
 
 ## Development
 
 ```bash
-npm run dev           # Start both servers
-npm run dev:backend   # FastAPI on :8000
-npm run dev:frontend  # Next.js on :3000
+# Backend (Terminal 1, from repo root)
+cd apps/backend
+uv run uvicorn app.main:app --reload --port 8000
+
+# Frontend (Terminal 2, from repo root)
+cd apps/frontend
+npm run dev
 ```
 
 ## Quality Checks
 
 ```bash
+# From apps/frontend
 npm run lint     # Lint frontend
 npm run format   # Prettier
 ```

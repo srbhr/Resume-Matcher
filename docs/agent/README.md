@@ -2,7 +2,7 @@
 
 > Complete reference for AI agents working with Resume Matcher.
 
-Start at [/AGENTS.md](/AGENTS.md), then dive into topics below.
+Start with the topics below.
 
 ## Quick Navigation
 

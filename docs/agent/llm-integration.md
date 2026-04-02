@@ -9,9 +9,9 @@ Backend uses LiteLLM to support multiple providers through a unified API:
 | Provider | Type | Notes |
 |----------|------|-------|
 | **Ollama** | Local | Free, runs on your machine |
-| **OpenAI** | Cloud | GPT-4o, GPT-4o-mini |
-| **Anthropic** | Cloud | Claude 3.5 Sonnet |
-| **Google Gemini** | Cloud | Gemini 1.5 Flash/Pro |
+| **OpenAI** | Cloud | GPT-5 Nano, GPT-4o |
+| **Anthropic** | Cloud | Claude Haiku 4.5 |
+| **Google Gemini** | Cloud | Gemini 3 Flash |
 | **OpenRouter** | Cloud | Access to multiple models |
 | **DeepSeek** | Cloud | DeepSeek Chat |
 

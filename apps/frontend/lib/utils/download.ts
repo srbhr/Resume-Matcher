@@ -60,3 +60,33 @@ export function sanitizeFilename(
   // Add .pdf extension
   return `${sanitized}.pdf`;
 }
+
+/**
+ * Build a personalized download filename for resume or cover letter PDFs.
+ * Format: "{Name} - {Type} - {Company}.pdf" (falls back gracefully when data is missing)
+ */
+export function buildResumeFilename(
+  name: string | null | undefined,
+  company: string | null | undefined,
+  fallbackId: string,
+  type: 'resume' | 'cover-letter' = 'resume'
+): string {
+  const typeLabel = type === 'resume' ? 'Resume' : 'Cover Letter';
+  const cleanName = name?.trim() || null;
+  const cleanCompany = company?.trim() || null;
+
+  let raw: string;
+  if (cleanName && cleanCompany) {
+    raw = `${cleanName} - ${typeLabel} - ${cleanCompany}`;
+  } else if (cleanName) {
+    raw = `${cleanName} - ${typeLabel}`;
+  } else {
+    return sanitizeFilename(
+      cleanCompany ? `${typeLabel} - ${cleanCompany}` : null,
+      fallbackId,
+      type
+    );
+  }
+
+  return sanitizeFilename(raw, fallbackId, type);
+}

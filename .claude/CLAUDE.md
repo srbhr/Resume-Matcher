@@ -81,21 +81,21 @@ Resume Matcher is an AI-powered application for tailoring resumes to job descrip
 ## Essential Commands
 
 ```bash
-# Install all dependencies
-npm run install
+# Backend (from repo root)
+cd apps/backend
+uv sync                                              # Install Python dependencies
+uv run uvicorn app.main:app --reload --port 8000     # FastAPI on :8000
 
-# Development (both servers)
-npm run dev
+# Frontend (from repo root, in a separate terminal)
+cd apps/frontend
+npm install                                          # Install Node.js dependencies
+npm run dev                                          # Next.js on :3000
 
-# Individual servers
-npm run dev:backend   # FastAPI on :8000
-npm run dev:frontend  # Next.js on :3000
-
-# Quality checks
+# Quality checks (from apps/frontend)
 npm run lint          # Lint frontend
 npm run format        # Format with Prettier
 
-# Build
+# Build (from apps/frontend)
 npm run build
 ```
 
