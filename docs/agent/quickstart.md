@@ -11,11 +11,11 @@
 ## Installation
 
 ```bash
-# Backend
+# Backend (from repo root)
 cd apps/backend
 uv sync
 
-# Frontend
+# Frontend (from repo root)
 cd apps/frontend
 npm install
 ```
@@ -23,11 +23,11 @@ npm install
 ## Development
 
 ```bash
-# Backend (Terminal 1)
+# Backend (Terminal 1, from repo root)
 cd apps/backend
 uv run uvicorn app.main:app --reload --port 8000
 
-# Frontend (Terminal 2)
+# Frontend (Terminal 2, from repo root)
 cd apps/frontend
 npm run dev
 ```
