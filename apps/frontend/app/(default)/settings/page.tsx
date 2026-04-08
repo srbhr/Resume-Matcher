@@ -319,13 +319,9 @@ export default function SettingsPage() {
         model: model.trim(),
         api_base: apiBase.trim() || null,
       };
-      if (requiresApiKey) {
-        if (trimmedKey) {
-          config.api_key = trimmedKey;
-        } else if (!hasStoredApiKey) {
-          config.api_key = '';
-        }
-      } else {
+      if (trimmedKey) {
+        config.api_key = trimmedKey;
+      } else if (!hasStoredApiKey) {
         config.api_key = '';
       }
 
@@ -358,12 +354,10 @@ export default function SettingsPage() {
       };
 
       // Only include API key if provided or if we have a stored key
-      if (requiresApiKey) {
-        if (apiKey.trim()) {
-          testConfig.api_key = apiKey.trim();
-        }
-        // If no new key but has stored key, don't send api_key (backend uses stored)
+      if (apiKey.trim()) {
+        testConfig.api_key = apiKey.trim();
       }
+      // If no new key but has stored key, don't send api_key (backend uses stored)
 
       const result = await testLlmConnection(testConfig);
       setHealthCheck(result);
@@ -779,9 +773,8 @@ export default function SettingsPage() {
                       : t('settings.llmConfiguration.apiKeyNotRequiredPlaceholder')
                   }
                   className="font-mono"
-                  disabled={!requiresApiKey}
                 />
-                {requiresApiKey && hasStoredApiKey && !apiKey && (
+                {hasStoredApiKey && !apiKey && (
                   <p className="text-xs text-gray-500 font-mono">
                     {t('settings.llmConfiguration.leaveBlankToKeepExistingKey')}
                   </p>
