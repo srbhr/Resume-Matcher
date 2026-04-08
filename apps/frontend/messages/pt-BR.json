@@ -27,6 +27,8 @@
     "reset": "Redefinir",
     "apply": "Aplicar",
     "selectOption": "Selecione uma opção...",
+    "searchPlaceholder": "Pesquisar...",
+    "noOptionsFound": "Nenhuma opção encontrada",
     "unknown": "Desconhecido",
     "keysCleared": "Chaves de API removidas com sucesso",
     "databaseReset": "Banco de dados redefinido com sucesso",
@@ -606,7 +608,8 @@
       "failedToConfirm": "Falha ao confirmar o currículo. Tente novamente.",
       "failedToFetchUrl": "Não foi possível obter a descrição da vaga nesta URL. Tente copiar o texto manualmente.",
       "invalidUrl": "Insira uma URL válida começando com https://",
-      "urlTimeout": "Tempo esgotado. A página demorou muito para responder."
+      "urlTimeout": "Tempo esgotado. A página demorou muito para responder.",
+      "networkError": "Erro de rede. Verifique sua conexão."
     }
   },
   "settings": {
@@ -703,7 +706,10 @@
       },
       "healthWarnings": {
         "empty_content": "O LLM retornou conteúdo vazio na verificação de integridade."
-      }
+      },
+      "fetchModels": "Buscar modelos",
+      "loadingModels": "Carregando...",
+      "fetchModelsHint": "— clique em Buscar modelos para carregar as opções disponíveis."
     },
     "contentGeneration": {
       "title": "Geração de Conteúdo",

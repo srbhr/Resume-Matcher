@@ -27,6 +27,8 @@
     "reset": "Restablecer",
     "apply": "Aplicar",
     "selectOption": "Selecciona una opción...",
+    "searchPlaceholder": "Buscar...",
+    "noOptionsFound": "No se encontraron opciones",
     "unknown": "Desconocido",
     "keysCleared": "Claves API borradas con éxito",
     "databaseReset": "Base de datos restablecida con éxito",
@@ -606,7 +608,8 @@
       "failedToConfirm": "No se pudo confirmar el currículum. Inténtalo de nuevo.",
       "failedToFetchUrl": "No se pudo obtener la descripción del trabajo desde esta URL. Intenta copiar el texto manualmente.",
       "invalidUrl": "Introduce una URL válida que comience con https://",
-      "urlTimeout": "Tiempo de espera agotado. La página tardó demasiado en responder."
+      "urlTimeout": "Tiempo de espera agotado. La página tardó demasiado en responder.",
+      "networkError": "Error de red. Por favor, verifica tu conexión."
     }
   },
   "settings": {
@@ -703,7 +706,10 @@
       },
       "healthWarnings": {
         "empty_content": "El LLM devolvió contenido vacío en la verificación de salud."
-      }
+      },
+      "fetchModels": "Cargar modelos",
+      "loadingModels": "Cargando...",
+      "fetchModelsHint": "— haz clic en Cargar modelos para ver las opciones disponibles."
     },
     "contentGeneration": {
       "title": "Generación de contenido",

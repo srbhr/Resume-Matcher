@@ -782,7 +782,9 @@ export default function SettingsPage() {
                     <RefreshCw
                       className={`w-3 h-3 ${providerModelsLoading ? 'animate-spin' : ''}`}
                     />
-                    {providerModelsLoading ? 'Loading…' : 'Fetch models'}
+                    {providerModelsLoading
+                      ? t('settings.llmConfiguration.loadingModels')
+                      : t('settings.llmConfiguration.fetchModels')}
                   </button>
                 </div>
 
@@ -810,8 +812,8 @@ export default function SettingsPage() {
                   <p className="text-xs text-gray-500 font-mono">
                     {t('settings.llmConfiguration.defaultModel', {
                       model: providerInfo.defaultModel,
-                    })}
-                    {' — click "Fetch models" to load available options.'}
+                    })}{' '}
+                    {t('settings.llmConfiguration.fetchModelsHint')}
                   </p>
                 )}
               </div>

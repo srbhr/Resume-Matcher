@@ -50,6 +50,12 @@ export function DiffPreviewModal({
     () => new Set(detailedChanges?.map((_, i) => i) ?? [])
   );
 
+  // Reset checkbox state whenever detailedChanges is replaced (e.g. modal reopens
+  // with new data or the user regenerates).
+  useEffect(() => {
+    setAcceptedIndices(new Set(detailedChanges?.map((_, i) => i) ?? []));
+  }, [detailedChanges]);
+
   // Elapsed timer while confirming
   const [elapsed, setElapsed] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);

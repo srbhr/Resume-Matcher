@@ -8,7 +8,7 @@ from fastapi import APIRouter
 logger = logging.getLogger(__name__)
 
 from app.database import db
-from app.llm import check_llm_health, get_llm_config
+from app.llm import check_llm_health, get_llm_config, LLMConfig
 from app.schemas import HealthResponse, StatusResponse
 
 router = APIRouter(tags=["Health"])
@@ -21,7 +21,7 @@ _health_cache_lock = asyncio.Lock()
 _HEALTH_CACHE_TTL = 30  # seconds
 
 
-async def _run_health_check(cache_key: str, config) -> dict:  # type: ignore[no-untyped-def]
+async def _run_health_check(cache_key: str, config: LLMConfig) -> dict:
     """Execute a health check, store the result, and remove the in-flight marker."""
     try:
         result = await asyncio.wait_for(check_llm_health(config), timeout=60.0)
@@ -34,7 +34,7 @@ async def _run_health_check(cache_key: str, config) -> dict:  # type: ignore[no-
     return result
 
 
-async def _get_cached_llm_health(config) -> dict:  # type: ignore[no-untyped-def]
+async def _get_cached_llm_health(config: LLMConfig) -> dict:
     """Return cached health result if fresh; otherwise coalesce concurrent callers
     onto a single in-flight asyncio.Task (single-flight pattern).
 

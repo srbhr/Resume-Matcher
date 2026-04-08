@@ -27,6 +27,8 @@
     "reset": "Reset",
     "apply": "Apply",
     "selectOption": "Select an option...",
+    "searchPlaceholder": "Search...",
+    "noOptionsFound": "No options found",
     "unknown": "Unknown",
     "keysCleared": "API keys cleared successfully",
     "databaseReset": "Database reset successfully",
@@ -606,7 +608,8 @@
       "failedToConfirm": "Failed to confirm resume. Please try again.",
       "failedToFetchUrl": "Could not extract job description from this URL. Sites like LinkedIn or Indeed use JavaScript — copy and paste the text manually instead.",
       "invalidUrl": "Please enter a valid URL starting with https://",
-      "urlTimeout": "Request timed out. The page took too long to respond."
+      "urlTimeout": "Request timed out. The page took too long to respond.",
+      "networkError": "Network error. Please check your connection."
     }
   },
   "settings": {
@@ -703,7 +706,10 @@
       },
       "healthWarnings": {
         "empty_content": "LLM returned empty content for the health check."
-      }
+      },
+      "fetchModels": "Fetch models",
+      "loadingModels": "Loading...",
+      "fetchModelsHint": "— click Fetch models to load available options."
     },
     "contentGeneration": {
       "title": "Content Generation",

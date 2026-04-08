@@ -127,7 +127,7 @@ export function Dropdown({
                   type="text"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search models..."
+                  placeholder={t('common.searchPlaceholder')}
                   className="flex-1 font-mono text-xs outline-none bg-transparent"
                   onKeyDown={(e) => e.stopPropagation()}
                 />
@@ -138,7 +138,7 @@ export function Dropdown({
             )}
             <div className="max-h-64 overflow-y-auto">
               {filteredOptions.length === 0 ? (
-                <div className="px-4 py-3 font-mono text-xs text-gray-400">No models found</div>
+                <div className="px-4 py-3 font-mono text-xs text-gray-400">{t('common.noOptionsFound')}</div>
               ) : (
                 filteredOptions.map((option, index) => (
                   <React.Fragment key={option.id}>

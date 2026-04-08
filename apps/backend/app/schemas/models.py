@@ -466,7 +466,7 @@ class JobUploadResponse(BaseModel):
 class FetchJobUrlRequest(BaseModel):
     """Request to fetch a job description from a URL."""
 
-    url: str
+    url: str = Field(max_length=2048)
 
 
 class FetchJobUrlResponse(BaseModel):

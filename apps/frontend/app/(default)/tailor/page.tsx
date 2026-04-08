@@ -127,6 +127,7 @@ export default function TailorPage() {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [loadingMessage, setLoadingMessage] = useState<string>('');
   const elapsedTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const streamAbortRef = useRef<AbortController | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [masterResumeId, setMasterResumeId] = useState<string | null>(null);
   const [promptOptions, setPromptOptions] = useState<PromptOption[]>([]);
@@ -180,10 +181,11 @@ export default function TailorPage() {
     setElapsedSeconds(0);
   };
 
-  // Cleanup timer on unmount
+  // Cleanup timer and abort any in-flight SSE stream on unmount
   useEffect(() => {
     return () => {
       if (elapsedTimerRef.current) clearInterval(elapsedTimerRef.current);
+      streamAbortRef.current?.abort();
     };
   }, []);
 
@@ -288,6 +290,7 @@ export default function TailorPage() {
       // 2. Preview Resume — start elapsed timer for the slow LLM step
       setLoadingStage('tailoring');
       startElapsedTimer();
+      streamAbortRef.current = new AbortController();
       const result = await previewImproveResumeStream(
         resumeId,
         jobId,
@@ -302,7 +305,8 @@ export default function TailorPage() {
             diff: t('tailor.streamStages.diff'),
           };
           setLoadingMessage(message || fallbacks[stage] || '');
-        }
+        },
+        streamAbortRef.current.signal
       );
       stopElapsedTimer();
 

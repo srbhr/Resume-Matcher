@@ -183,12 +183,16 @@ export async function previewImproveResumeStream(
   jobId: string,
   promptId: string | undefined,
   workflowMode: string | undefined,
-  onProgress: (stage: string, message: string) => void
+  onProgress: (stage: string, message: string) => void,
+  signal?: AbortSignal
 ): Promise<ImprovedResult> {
   // AbortController wraps the entire operation (headers + body) for the 30-minute timeout.
   // clearTimeout is in the outer finally so it fires after the body loop completes.
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 30 * 60 * 1000);
+
+  // Propagate external abort (e.g. component unmount) into the internal controller.
+  signal?.addEventListener('abort', () => controller.abort(signal.reason));
 
   try {
     const response = await fetch(`${API_BASE}/resumes/improve/preview/stream`, {

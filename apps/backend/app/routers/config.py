@@ -208,9 +208,10 @@ async def get_ollama_models() -> dict:
             model_names: list[str] = [m["name"] for m in data.get("models", [])]
             return {"models": sorted(model_names)}
     except httpx.ConnectError:
+        logger.warning("Cannot connect to Ollama at %s", api_base)
         raise HTTPException(
             status_code=503,
-            detail=f"Cannot connect to Ollama at {api_base}. Make sure Ollama is running.",
+            detail="Cannot connect to Ollama. Make sure Ollama is running.",
         )
     except httpx.HTTPStatusError as exc:
         raise HTTPException(

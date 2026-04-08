@@ -27,6 +27,8 @@
     "reset": "リセット",
     "apply": "適用",
     "selectOption": "選択してください...",
+    "searchPlaceholder": "検索...",
+    "noOptionsFound": "オプションが見つかりません",
     "unknown": "不明",
     "keysCleared": "APIキーが正常にクリアされました",
     "databaseReset": "データベースが正常にリセットされました",
@@ -606,7 +608,8 @@
       "failedToConfirm": "履歴書の確定に失敗しました。もう一度お試しください。",
       "failedToFetchUrl": "このURLから求人内容を取得できませんでした。テキストを手動でコピーしてください。",
       "invalidUrl": "https:// で始まる有効なURLを入力してください",
-      "urlTimeout": "タイムアウトしました。ページの応答が遅すぎます。"
+      "urlTimeout": "タイムアウトしました。ページの応答が遅すぎます。",
+      "networkError": "ネットワークエラー。接続を確認してください。"
     }
   },
   "settings": {
@@ -703,7 +706,10 @@
       },
       "healthWarnings": {
         "empty_content": "ヘルスチェックで空の内容が返されました。"
-      }
+      },
+      "fetchModels": "モデルを取得",
+      "loadingModels": "読み込み中...",
+      "fetchModelsHint": "— 「モデルを取得」をクリックして利用可能なオプションを読み込んでください。"
     },
     "contentGeneration": {
       "title": "コンテンツ生成",

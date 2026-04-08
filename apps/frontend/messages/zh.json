@@ -27,6 +27,8 @@
     "reset": "重置",
     "apply": "应用",
     "selectOption": "请选择...",
+    "searchPlaceholder": "搜索...",
+    "noOptionsFound": "未找到选项",
     "unknown": "未知",
     "keysCleared": "API密钥已成功清除",
     "databaseReset": "数据库已成功重置",
@@ -606,7 +608,8 @@
       "failedToConfirm": "确认简历失败。请重试。",
       "failedToFetchUrl": "无法从此URL获取职位描述。请尝试手动复制文本。",
       "invalidUrl": "请输入以 https:// 开头的有效URL",
-      "urlTimeout": "请求超时，页面响应时间过长。"
+      "urlTimeout": "请求超时，页面响应时间过长。",
+      "networkError": "网络错误，请检查您的连接。"
     }
   },
   "settings": {
@@ -703,7 +706,10 @@
       },
       "healthWarnings": {
         "empty_content": "健康检查返回了空内容。"
-      }
+      },
+      "fetchModels": "获取模型",
+      "loadingModels": "加载中...",
+      "fetchModelsHint": "— 点击「获取模型」加载可用选项。"
     },
     "contentGeneration": {
       "title": "内容生成",

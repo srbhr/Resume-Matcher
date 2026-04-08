@@ -133,17 +133,28 @@ def _get_site_config(url: str) -> dict | None:
 
 
 def _is_private_host(hostname: str) -> bool:
-    """Return True if hostname resolves to a private/loopback/reserved IP (SSRF guard)."""
+    """Return True if hostname resolves to a private/loopback/reserved IP (SSRF guard).
+
+    Uses getaddrinfo() to cover both IPv4 and IPv6 (including IPv4-mapped IPv6
+    addresses like ::ffff:127.0.0.1).  Returns True (blocked) if *any* resolved
+    address is private, or if the hostname cannot be resolved.
+    """
     try:
-        ip_str = socket.gethostbyname(hostname)
-        ip = ipaddress.ip_address(ip_str)
-        return (
-            ip.is_private
-            or ip.is_loopback
-            or ip.is_link_local
-            or ip.is_multicast
-            or ip.is_reserved
-        )
+        results = socket.getaddrinfo(hostname, None)
+        for result in results:
+            ip_str = result[4][0]
+            # Strip IPv6 zone ID if present (e.g. "fe80::1%eth0")
+            ip_str = ip_str.split("%")[0]
+            ip = ipaddress.ip_address(ip_str)
+            if (
+                ip.is_private
+                or ip.is_loopback
+                or ip.is_link_local
+                or ip.is_multicast
+                or ip.is_reserved
+            ):
+                return True
+        return False
     except Exception:
         return True  # Reject unresolvable hosts
 
@@ -216,6 +227,13 @@ def _run_playwright_sync(url: str, config: dict) -> str | None:
 
     selectors: list[str] = config.get("selectors", [])
     wait_for: str = config.get("wait_for", "main")
+
+    # Re-check hostname inside the thread — defense-in-depth against DNS rebinding
+    # (the caller already validates, but the check-time to use-time window matters).
+    parsed_host = urlparse(url).hostname or ""
+    if _is_private_host(parsed_host):
+        logger.warning("Playwright: SSRF guard blocked %s inside thread", url)
+        return None
 
     try:
         with sync_playwright() as pw:
@@ -600,7 +618,8 @@ async def fetch_job_from_url(request: FetchJobUrlRequest) -> FetchJobUrlResponse
                 detail=f"The job listing page returned an error: {exc.response.status_code}",
             )
         except httpx.RequestError as exc:
-            raise HTTPException(status_code=502, detail=f"Failed to reach the URL: {exc}")
+            logger.warning("Failed to reach URL %s: %s", url, exc)
+            raise HTTPException(status_code=502, detail="Failed to reach the URL. Please check the address and try again.")
 
         content_type = response.headers.get("content-type", "")
         if "text/html" not in content_type and "text/plain" not in content_type:
