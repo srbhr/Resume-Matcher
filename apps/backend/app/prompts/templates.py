@@ -166,7 +166,7 @@ Custom section types:
 Rules:
 - Use "" for missing text fields, [] for missing arrays, null for optional fields
 - Number IDs starting from 1
-- Format dates preserving the original precision. Keep months when present: "Jan 2020 - Dec 2023", "May 2021 - Present". Use "YYYY - YYYY" only when the source has no months.
+- Format dates preserving the original precision. When months are present, normalize month names to English 3-letter abbreviations (Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec) in `Mon YYYY` format (e.g., "Jan 2020 - Dec 2023", "May 2021 - Present"). Use "YYYY - YYYY" only when the source has no months.
 - Use snake_case for custom section keys (e.g., "volunteer_work", "publications")
 - Preserve the original section name as a descriptive key
 - Normalize date separators: "2020-2021" → "2020 - 2021", "Current"/"Ongoing" → "Present". Do NOT discard months.
@@ -204,7 +204,18 @@ CRITICAL_TRUTHFULNESS_RULES_TEMPLATE = """CRITICAL TRUTHFULNESS RULES - NEVER VI
 6. DO NOT extend employment dates or change timelines. Copy date ranges exactly as they appear, including months.
 7. {rule_7}
 8. Preserve factual accuracy - only use information provided by the candidate
-9. NEVER remove existing skills, certifications, languages, or awards. You may reorder by relevance, but every original item must remain.
+9. IMMUTABLE FIELDS - copy these EXACTLY as-is from the original resume, character for character:
+   - education[*].institution (university/school name)
+   - education[*].degree (degree title, e.g. BSc, MSc)
+   - education[*].years (study dates)
+   - workExperience[*].company (employer name)
+   - workExperience[*].title (job title)
+   - workExperience[*].years (employment dates)
+   - personalProjects[*].name (project name)
+   - personalProjects[*].years (project dates)
+   - additional.certificationsTraining (certification names and issuers)
+   - personalInfo.name, personalInfo.email, personalInfo.location, personalInfo.phone
+10. NEVER remove existing skills, certifications, languages, or awards. You may reorder by relevance, but every original item must remain.
 
 Violation of these rules could cause serious problems for the candidate in job interviews.
 """
@@ -316,6 +327,90 @@ Original Resume:
 
 Output in this JSON format:
 {schema}"""
+
+SKILLS_SCHEMA_EXAMPLE = """{
+  "summary": "Experienced software engineer with 5+ years...",
+  "additional": {
+    "technicalSkills": ["Python", "JavaScript", "AWS", "Docker"]
+  }
+}"""
+
+EXPERIENCE_SCHEMA_EXAMPLE = """{
+  "workExperience": [
+    {
+      "id": 1,
+      "description": [
+        "Led development of microservices architecture",
+        "Improved system performance by 40%"
+      ]
+    }
+  ]
+}"""
+
+IMPROVE_RESUME_PROMPT_SKILLS = """Tailor the summary and technical skills section of this resume toward the job description. Output ONLY the JSON object, no other text.
+
+{critical_truthfulness_rules}
+
+IMPORTANT: Generate ALL text content (summary, skills) in {output_language}.
+
+Rules:
+- Only modify the summary and technicalSkills fields
+- Do NOT add skills, tools, or technologies not already in the original resume
+- RETURN ALL existing skills without exception — do not remove any skill from the original list
+- You may reorder existing skills to put the most job-relevant ones first
+- Keep the summary grounded in the candidate's actual background
+- Do NOT use em dash ("—") anywhere in the writing/output
+
+Job Description:
+{job_description}
+
+Keywords to emphasize:
+{job_keywords}
+
+Partial resume to improve:
+{partial_resume}
+
+Output in this JSON format:
+{schema}"""
+
+IMPROVE_RESUME_PROMPT_EXPERIENCE = """Improve the work experience descriptions in this resume to better match the job description. Output ONLY the JSON object, no other text.
+
+{critical_truthfulness_rules}
+
+IMPORTANT: Generate ALL text content (descriptions) in {output_language}.
+
+Rules:
+- Only modify the description arrays for each work experience entry
+- Do NOT change id values - preserve them exactly
+- Do NOT invent responsibilities, tools, or achievements not implied by existing descriptions
+- Use action verbs and results-oriented language where the original supports it
+- Preserve the number of bullet points per entry unless the original has none
+- Do NOT use em dash ("—") anywhere in the writing/output
+
+Job Description:
+{job_description}
+
+Keywords to emphasize:
+{job_keywords}
+
+Work experience to improve (descriptions only, no factual fields):
+{partial_resume}
+
+Output in this JSON format:
+{schema}"""
+
+WORKFLOW_OPTIONS = [
+    {
+        "id": "standard",
+        "label": "Standard",
+        "description": "Rewrites the full resume in a single pass.",
+    },
+    {
+        "id": "granular",
+        "label": "Section-by-section",
+        "description": "Separate focused passes for skills and experience — less hallucination risk.",
+    },
+]
 
 IMPROVE_PROMPT_OPTIONS = [
     {

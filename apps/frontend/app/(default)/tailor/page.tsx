@@ -6,29 +6,133 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useResumePreview } from '@/components/common/resume_previewer_context';
-import type { ImprovedResult } from '@/components/common/resume_previewer_context';
+import type { ImprovedResult, ResumePreview } from '@/components/common/resume_previewer_context';
+import type { ResumeFieldDiff } from '@/components/common/resume_previewer_context';
 import type { ResumeData } from '@/components/dashboard/resume-component';
 import {
   uploadJobDescriptions,
-  previewImproveResume,
+  previewImproveResumeStream,
   confirmImproveResume,
+  fetchJobFromUrl,
 } from '@/lib/api/resume';
 import { fetchPromptConfig, type PromptOption } from '@/lib/api/config';
 import { Dropdown } from '@/components/ui/dropdown';
 import { useStatusCache } from '@/lib/context/status-cache';
-import { Loader2, ArrowLeft, AlertTriangle, Settings } from 'lucide-react';
+import { Loader2, ArrowLeft, AlertTriangle, Settings, Link2, ClipboardList } from 'lucide-react';
 import { useTranslations } from '@/lib/i18n';
 import { DiffPreviewModal } from '@/components/tailor/diff-preview-modal';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+
+// --- Utility: parse a dot-bracket field_path into path segments ---
+function parsePath(path: string): Array<string | number> {
+  const segments: Array<string | number> = [];
+  for (const part of path.split('.')) {
+    const match = part.match(/^([^[]+)(?:\[(\d+)\])?$/);
+    if (match) {
+      segments.push(match[1]);
+      if (match[2] !== undefined) segments.push(Number(match[2]));
+    }
+  }
+  return segments;
+}
+
+// --- Utility: revert a single change in a deep-copied resume object ---
+function revertChange(data: Record<string, unknown>, change: ResumeFieldDiff): void {
+  const segments = parsePath(change.field_path);
+  if (segments.length === 0) return;
+
+  let current: unknown = data;
+  for (let i = 0; i < segments.length - 1; i++) {
+    if (current == null || typeof current !== 'object') return;
+    current = (current as Record<string | number, unknown>)[segments[i]];
+  }
+  if (current == null || typeof current !== 'object') return;
+
+  const key = segments[segments.length - 1];
+
+  if (Array.isArray(current)) {
+    const idx = key as number;
+    if (change.change_type === 'modified') {
+      current[idx] = change.original_value ?? '';
+    } else if (change.change_type === 'added') {
+      // Revert an AI-added array element: remove it
+      const target = change.new_value;
+      const foundIdx = target != null ? current.indexOf(target) : -1;
+      if (foundIdx !== -1) {
+        current.splice(foundIdx, 1);
+      } else {
+        current.splice(idx, 1);
+      }
+    } else if (change.change_type === 'removed') {
+      // Revert a removed array element: re-insert at original index
+      current.splice(idx, 0, change.original_value ?? '');
+    }
+  } else {
+    const parent = current as Record<string | number, unknown>;
+    if (change.change_type === 'modified' || change.change_type === 'removed') {
+      parent[key] = change.original_value ?? '';
+    } else if (change.change_type === 'added') {
+      delete parent[key];
+    }
+  }
+}
+
+// --- Utility: apply rejections by reverting non-accepted changes ---
+function applyRejections(
+  resumePreview: ResumeData,
+  detailedChanges: ResumeFieldDiff[],
+  acceptedIndices: Set<number>
+): ResumeData {
+  const result = JSON.parse(JSON.stringify(resumePreview)) as Record<string, unknown>;
+
+  const rejected = detailedChanges
+    .map((change, idx) => ({ change, idx }))
+    .filter(({ idx }) => !acceptedIndices.has(idx));
+
+  // Process removals (added → revert = remove) descending to avoid index shifting
+  const toRemove = rejected
+    .filter((x) => x.change.change_type === 'added')
+    .sort((a, b) => {
+      const ai = (parsePath(a.change.field_path).at(-1) as number) ?? 0;
+      const bi = (parsePath(b.change.field_path).at(-1) as number) ?? 0;
+      return bi - ai;
+    });
+
+  // Process insertions (removed → revert = insert) ascending
+  const toInsert = rejected
+    .filter((x) => x.change.change_type === 'removed')
+    .sort((a, b) => {
+      const ai = (parsePath(a.change.field_path).at(-1) as number) ?? 0;
+      const bi = (parsePath(b.change.field_path).at(-1) as number) ?? 0;
+      return ai - bi;
+    });
+
+  const toModify = rejected.filter((x) => x.change.change_type === 'modified');
+
+  for (const { change } of [...toModify, ...toRemove, ...toInsert]) {
+    revertChange(result, change);
+  }
+
+  return result as unknown as ResumeData;
+}
+
+type LoadingStage = 'idle' | 'uploading' | 'tailoring';
+type InputMode = 'text' | 'url';
 
 export default function TailorPage() {
   const { t } = useTranslations();
   const [jobDescription, setJobDescription] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingStage, setLoadingStage] = useState<LoadingStage>('idle');
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [loadingMessage, setLoadingMessage] = useState<string>('');
+  const elapsedTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const streamAbortRef = useRef<AbortController | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [masterResumeId, setMasterResumeId] = useState<string | null>(null);
   const [promptOptions, setPromptOptions] = useState<PromptOption[]>([]);
   const [selectedPromptId, setSelectedPromptId] = useState('keywords');
+  const [selectedWorkflowId, setSelectedWorkflowId] = useState('standard');
   const [promptLoading, setPromptLoading] = useState(false);
   const hasUserSelectedPrompt = useRef(false);
   const missingDiffConfirmInFlight = useRef(false);
@@ -43,27 +147,11 @@ export default function TailorPage() {
   const [missingDiffResult, setMissingDiffResult] = useState<ImprovedResult | null>(null);
   const [missingDiffError, setMissingDiffError] = useState<string | null>(null);
 
-  // Elapsed timer for long operations
-  const [elapsed, setElapsed] = useState(0);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const startTimer = useCallback(() => {
-    if (timerRef.current) clearInterval(timerRef.current);
-    setElapsed(0);
-    timerRef.current = setInterval(() => setElapsed((s) => s + 1), 1000);
-  }, []);
-
-  const stopTimer = useCallback(() => {
-    if (timerRef.current) clearInterval(timerRef.current);
-    timerRef.current = null;
-    setElapsed(0);
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, []);
+  // URL fetch mode state
+  const [inputMode, setInputMode] = useState<InputMode>('text');
+  const [jobUrl, setJobUrl] = useState('');
+  const [isFetchingUrl, setIsFetchingUrl] = useState(false);
+  const [urlFetchError, setUrlFetchError] = useState<string | null>(null);
 
   const router = useRouter();
   const { setImprovedData } = useResumePreview();
@@ -77,6 +165,29 @@ export default function TailorPage() {
 
   // Check if LLM is configured
   const isLlmConfigured = !statusLoading && systemStatus?.llm_configured;
+
+  const startElapsedTimer = () => {
+    setElapsedSeconds(0);
+    elapsedTimerRef.current = setInterval(() => {
+      setElapsedSeconds((s) => s + 1);
+    }, 1000);
+  };
+
+  const stopElapsedTimer = () => {
+    if (elapsedTimerRef.current) {
+      clearInterval(elapsedTimerRef.current);
+      elapsedTimerRef.current = null;
+    }
+    setElapsedSeconds(0);
+  };
+
+  // Cleanup timer and abort any in-flight SSE stream on unmount
+  useEffect(() => {
+    return () => {
+      if (elapsedTimerRef.current) clearInterval(elapsedTimerRef.current);
+      streamAbortRef.current?.abort();
+    };
+  }, []);
 
   useEffect(() => {
     const storedId = localStorage.getItem('master_resume_id');
@@ -172,12 +283,32 @@ export default function TailorPage() {
   const runGenerate = async (resumeId: string, description: string) => {
     try {
       // 1. Upload Job Description
-      // The API expects an array of strings
+      setLoadingStage('uploading');
       const jobId = await uploadJobDescriptions([description], resumeId);
       incrementJobs(); // Update cached counter
 
-      // 2. Preview Resume
-      const result = await previewImproveResume(resumeId, jobId, selectedPromptId);
+      // 2. Preview Resume — start elapsed timer for the slow LLM step
+      setLoadingStage('tailoring');
+      startElapsedTimer();
+      streamAbortRef.current = new AbortController();
+      const result = await previewImproveResumeStream(
+        resumeId,
+        jobId,
+        selectedPromptId,
+        selectedWorkflowId,
+        (stage, message) => {
+          // Use server message if present; fall back to i18n key for the stage
+          const fallbacks: Record<string, string> = {
+            keywords: t('tailor.streamStages.keywords'),
+            improving: t('tailor.streamStages.improving'),
+            refining: t('tailor.streamStages.refining'),
+            diff: t('tailor.streamStages.diff'),
+          };
+          setLoadingMessage(message || fallbacks[stage] || '');
+        },
+        streamAbortRef.current.signal
+      );
+      stopElapsedTimer();
 
       if (!result?.data?.diff_summary || !result?.data?.detailed_changes) {
         console.warn('Diff data missing for tailor preview; requesting user confirmation.');
@@ -196,6 +327,7 @@ export default function TailorPage() {
       setPendingResult(result);
       setShowDiffModal(true);
     } catch (err) {
+      stopElapsedTimer();
       console.error(err);
       // Check for common error patterns
       const errorMessage = err instanceof Error ? err.message : '';
@@ -217,6 +349,39 @@ export default function TailorPage() {
     }
   };
 
+  const handleFetchUrl = async () => {
+    const trimmedUrl = jobUrl.trim();
+    if (!trimmedUrl) return;
+    if (!trimmedUrl.startsWith('https://')) {
+      setUrlFetchError(t('tailor.errors.invalidUrl'));
+      return;
+    }
+    setIsFetchingUrl(true);
+    setUrlFetchError(null);
+    try {
+      const result = await fetchJobFromUrl(trimmedUrl);
+      setJobDescription(result.content);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : '';
+      if (msg.includes('timed out') || msg.includes('504')) {
+        setUrlFetchError(t('tailor.errors.urlTimeout'));
+      } else if (
+        msg.includes('Failed to fetch') ||
+        msg.includes('NetworkError') ||
+        msg.includes('fetch')
+      ) {
+        setUrlFetchError(t('tailor.errors.networkError'));
+      } else if (msg) {
+        // Show the server's detail message directly — it's user-friendly
+        setUrlFetchError(msg);
+      } else {
+        setUrlFetchError(t('tailor.errors.failedToFetchUrl'));
+      }
+    } finally {
+      setIsFetchingUrl(false);
+    }
+  };
+
   const handleGenerate = async () => {
     const trimmedDescription = jobDescription.trim();
     if (!trimmedDescription || !masterResumeId) return;
@@ -228,12 +393,10 @@ export default function TailorPage() {
     const resumeId = masterResumeId;
     setIsLoading(true);
     setError(null);
-    startTimer();
     try {
       await runGenerate(resumeId, trimmedDescription);
     } finally {
       setIsLoading(false);
-      stopTimer();
     }
   };
 
@@ -256,6 +419,46 @@ export default function TailorPage() {
       setDiffConfirmError(errorMessage);
     } finally {
       setIsConfirming(false);
+    }
+  };
+
+  // User confirms only selected changes (partial confirm)
+  const handleConfirmPartial = async (acceptedIndices: Set<number>) => {
+    if (!pendingResult || isLoading) return;
+    const detailedChanges = pendingResult.data.detailed_changes ?? [];
+    const modifiedPreview = applyRejections(
+      pendingResult.data.resume_preview as ResumeData,
+      detailedChanges,
+      acceptedIndices
+    );
+    const modifiedResult: ImprovedResult = {
+      ...pendingResult,
+      data: { ...pendingResult.data, resume_preview: modifiedPreview as unknown as ResumePreview },
+    };
+
+    setIsLoading(true);
+    setError(null);
+    setDiffConfirmError(null);
+    try {
+      const payload = {
+        ...buildConfirmPayload(modifiedResult),
+        partial_confirm: true,
+      };
+      const confirmed = await confirmImproveResume(payload);
+      incrementImprovements();
+      incrementResumes();
+      setImprovedData(confirmed);
+      setShowDiffModal(false);
+      setPendingResult(null);
+      const newResumeId = confirmed?.data?.resume_id;
+      router.push(newResumeId ? `/resumes/${newResumeId}` : '/builder');
+    } catch (err) {
+      console.error(err);
+      const errorMessage = t('tailor.errors.failedToConfirm');
+      setError(errorMessage);
+      setDiffConfirmError(errorMessage);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -312,12 +515,10 @@ export default function TailorPage() {
     const resumeId = masterResumeId;
     setIsLoading(true);
     setError(null);
-    startTimer();
     try {
       await runGenerate(resumeId, trimmedDescription);
     } finally {
       setIsLoading(false);
-      stopTimer();
     }
   };
 
@@ -410,19 +611,129 @@ export default function TailorPage() {
             disabled={isLoading || promptLoading}
           />
 
-          <div className="relative">
-            <Textarea
-              placeholder={t('tailor.jobDescriptionPlaceholder')}
-              className="min-h-[300px] font-mono text-sm bg-[#F0F0E8] border-2 border-black focus:ring-0 focus:border-blue-700 resize-none p-4 rounded-none"
-              value={jobDescription}
-              onChange={(e) => setJobDescription(e.target.value)}
-              onKeyDown={handleTextareaKeyDown}
+          <Dropdown
+            options={[
+              {
+                id: 'standard',
+                label: t('tailor.workflowOptions.standard.label'),
+                description: t('tailor.workflowOptions.standard.description'),
+              },
+              {
+                id: 'granular',
+                label: t('tailor.workflowOptions.granular.label'),
+                description: t('tailor.workflowOptions.granular.description'),
+              },
+            ]}
+            value={selectedWorkflowId}
+            onChange={(value) => setSelectedWorkflowId(value)}
+            label={t('tailor.workflowLabel')}
+            description={t('tailor.workflowDescription')}
+            disabled={isLoading}
+          />
+
+          {/* Input mode toggle */}
+          <div className="flex border-2 border-black">
+            <button
+              type="button"
+              onClick={() => setInputMode('text')}
               disabled={isLoading}
-            />
-            <div className="absolute bottom-2 right-2 text-xs font-mono text-gray-400 pointer-events-none">
-              {t('tailor.charactersCount', { count: jobDescription.length })}
-            </div>
+              className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 font-mono text-xs font-bold uppercase tracking-wider transition-colors ${
+                inputMode === 'text'
+                  ? 'bg-black text-white'
+                  : 'bg-white text-black hover:bg-gray-100'
+              }`}
+            >
+              <ClipboardList className="w-3 h-3" />
+              {t('tailor.inputMode.paste')}
+            </button>
+            <button
+              type="button"
+              onClick={() => setInputMode('url')}
+              disabled={isLoading}
+              className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 font-mono text-xs font-bold uppercase tracking-wider border-l-2 border-black transition-colors ${
+                inputMode === 'url'
+                  ? 'bg-black text-white'
+                  : 'bg-white text-black hover:bg-gray-100'
+              }`}
+            >
+              <Link2 className="w-3 h-3" />
+              {t('tailor.inputMode.url')}
+            </button>
           </div>
+
+          {inputMode === 'url' ? (
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <input
+                  type="url"
+                  placeholder={t('tailor.urlInput.placeholder')}
+                  className="flex-1 font-mono text-sm bg-[#F0F0E8] border-2 border-black focus:outline-none focus:border-blue-700 p-3"
+                  value={jobUrl}
+                  onChange={(e) => {
+                    setJobUrl(e.target.value);
+                    setUrlFetchError(null);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleFetchUrl();
+                    }
+                  }}
+                  disabled={isLoading || isFetchingUrl}
+                />
+                <Button
+                  onClick={handleFetchUrl}
+                  disabled={!jobUrl.trim() || isLoading || isFetchingUrl}
+                  className="shrink-0"
+                >
+                  {isFetchingUrl ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      {t('tailor.urlInput.fetching')}
+                    </>
+                  ) : (
+                    t('tailor.urlInput.fetchButton')
+                  )}
+                </Button>
+              </div>
+              {urlFetchError && (
+                <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs font-mono flex items-center gap-2">
+                  <span>!</span> {urlFetchError}
+                </div>
+              )}
+              <p className="font-mono text-xs text-gray-500">{t('tailor.urlInput.hint')}</p>
+
+              {jobDescription && (
+                <div className="relative mt-2">
+                  <Textarea
+                    placeholder={t('tailor.jobDescriptionPlaceholder')}
+                    className="min-h-[300px] font-mono text-sm bg-[#F0F0E8] border-2 border-black focus:ring-0 focus:border-blue-700 resize-none p-4 rounded-none"
+                    value={jobDescription}
+                    onChange={(e) => setJobDescription(e.target.value)}
+                    onKeyDown={handleTextareaKeyDown}
+                    disabled={isLoading}
+                  />
+                  <div className="absolute bottom-2 right-2 text-xs font-mono text-gray-400 pointer-events-none">
+                    {t('tailor.charactersCount', { count: jobDescription.length })}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="relative">
+              <Textarea
+                placeholder={t('tailor.jobDescriptionPlaceholder')}
+                className="min-h-[300px] font-mono text-sm bg-[#F0F0E8] border-2 border-black focus:ring-0 focus:border-blue-700 resize-none p-4 rounded-none"
+                value={jobDescription}
+                onChange={(e) => setJobDescription(e.target.value)}
+                onKeyDown={handleTextareaKeyDown}
+                disabled={isLoading}
+              />
+              <div className="absolute bottom-2 right-2 text-xs font-mono text-gray-400 pointer-events-none">
+                {t('tailor.charactersCount', { count: jobDescription.length })}
+              </div>
+            </div>
+          )}
 
           {error && (
             <div className="p-4 bg-red-50 border border-red-200 text-red-700 text-sm font-mono flex items-center gap-2">
@@ -430,31 +741,79 @@ export default function TailorPage() {
             </div>
           )}
 
-          <Button
-            size="lg"
-            onClick={handleGenerate}
-            disabled={isLoading || statusLoading || !jobDescription.trim() || !isLlmConfigured}
-            className="w-full"
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                {t('common.processing')}
-                {elapsed > 0 && (
-                  <span className="font-mono text-xs opacity-70 ml-2">{elapsed}s</span>
-                )}
-              </>
-            ) : statusLoading ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                {t('common.checking')}
-              </>
-            ) : !isLlmConfigured ? (
-              t('tailor.configureApiKeyFirst')
-            ) : (
-              t('tailor.generateTailored')
-            )}
-          </Button>
+          {isLoading ? (
+            <div className="border-2 border-black p-5 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)]">
+              <p className="font-mono text-xs font-bold uppercase tracking-wider text-gray-500 mb-4">
+                {t('tailor.progress.title')}
+              </p>
+
+              {/* Stage 1: Upload */}
+              <div className="flex items-center gap-3 mb-3">
+                <span className="font-mono text-sm w-5 shrink-0 text-green-700">
+                  {loadingStage === 'uploading' ? (
+                    <Loader2 className="w-4 h-4 animate-spin inline" />
+                  ) : (
+                    '✓'
+                  )}
+                </span>
+                <span
+                  className={`font-mono text-sm ${loadingStage !== 'uploading' ? 'text-gray-500' : 'font-bold'}`}
+                >
+                  {t('tailor.progress.uploading')}
+                </span>
+              </div>
+
+              {/* Stage 2: AI tailoring */}
+              <div className="flex items-start gap-3">
+                <span className="font-mono text-sm w-5 shrink-0 mt-0.5 text-blue-700">
+                  {loadingStage === 'tailoring' ? (
+                    <Loader2 className="w-4 h-4 animate-spin inline" />
+                  ) : (
+                    <span className="text-gray-300">·</span>
+                  )}
+                </span>
+                <div className="flex-1">
+                  <span
+                    className={`font-mono text-sm ${loadingStage === 'tailoring' ? 'font-bold' : 'text-gray-400'}`}
+                  >
+                    {loadingStage === 'tailoring' && loadingMessage
+                      ? loadingMessage
+                      : t('tailor.progress.tailoring')}
+                  </span>
+                  {loadingStage === 'tailoring' && (
+                    <span className="font-mono text-xs text-gray-500 ml-2">
+                      {t('tailor.progress.elapsedSeconds', { seconds: elapsedSeconds })}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Slow model note */}
+              {loadingStage === 'tailoring' && elapsedSeconds >= 15 && (
+                <p className="font-mono text-xs text-gray-500 mt-4 pt-4 border-t border-gray-200">
+                  {t('tailor.progress.slowModelNote')}
+                </p>
+              )}
+            </div>
+          ) : (
+            <Button
+              size="lg"
+              onClick={handleGenerate}
+              disabled={statusLoading || !jobDescription.trim() || !isLlmConfigured}
+              className="w-full"
+            >
+              {statusLoading ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  {t('common.checking')}
+                </>
+              ) : !isLlmConfigured ? (
+                t('tailor.configureApiKeyFirst')
+              ) : (
+                t('tailor.generateTailored')
+              )}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -466,6 +825,8 @@ export default function TailorPage() {
           onClose={handleCloseDiffModal}
           onReject={handleRejectChanges}
           onConfirm={handleConfirmChanges}
+          onConfirmPartial={handleConfirmPartial}
+          isLoading={isLoading}
           diffSummary={pendingResult?.data?.diff_summary}
           detailedChanges={pendingResult?.data?.detailed_changes}
           errorMessage={diffConfirmError ?? undefined}

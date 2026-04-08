@@ -141,6 +141,13 @@ class Experience(BaseModel):
     years: str = ""
     description: list[str] = Field(default_factory=list)
 
+    @field_validator("title", "company", "years", mode="before")
+    @classmethod
+    def _normalize_str(cls, value: Any) -> str:
+        if value is None:
+            return ""
+        return str(value)
+
     @field_validator("description", mode="before")
     @classmethod
     def _normalize_description(cls, value: Any) -> list[str]:
@@ -155,6 +162,13 @@ class Education(BaseModel):
     degree: str = ""
     years: str = ""
     description: str | None = None
+
+    @field_validator("institution", "degree", "years", mode="before")
+    @classmethod
+    def _normalize_str(cls, value: Any) -> str:
+        if value is None:
+            return ""
+        return str(value)
 
     @field_validator("description", mode="before")
     @classmethod
@@ -172,6 +186,13 @@ class Project(BaseModel):
     github: str | None = None
     website: str | None = None
     description: list[str] = Field(default_factory=list)
+
+    @field_validator("name", "role", "years", mode="before")
+    @classmethod
+    def _normalize_str(cls, value: Any) -> str:
+        if value is None:
+            return ""
+        return str(value)
 
     @field_validator("description", mode="before")
     @classmethod
@@ -358,6 +379,13 @@ class ResumeData(BaseModel):
     def _normalize_summary(cls, value: Any) -> str:
         return _coerce_text(value)
 
+    @field_validator("customSections", mode="before")
+    @classmethod
+    def _normalize_custom_sections(cls, value: Any) -> dict:
+        if not isinstance(value, dict):
+            return {}
+        return {k: v for k, v in value.items() if isinstance(v, dict)}
+
 
 # API Response Models
 class ResumeUploadResponse(BaseModel):
@@ -435,6 +463,19 @@ class JobUploadResponse(BaseModel):
     request: dict[str, Any]
 
 
+class FetchJobUrlRequest(BaseModel):
+    """Request to fetch a job description from a URL."""
+
+    url: str = Field(max_length=2048)
+
+
+class FetchJobUrlResponse(BaseModel):
+    """Response containing extracted job description text from a URL."""
+
+    content: str
+    url: str
+
+
 # Improvement Models
 class ImproveResumeRequest(BaseModel):
     """Request to improve/tailor a resume."""
@@ -442,6 +483,7 @@ class ImproveResumeRequest(BaseModel):
     resume_id: str
     job_id: str
     prompt_id: str | None = None
+    workflow_mode: str | None = None
 
 
 class ImprovementSuggestion(BaseModel):
@@ -548,6 +590,7 @@ class ImproveResumeConfirmRequest(BaseModel):
     job_id: str
     improved_data: ResumeData
     improvements: list[ImprovementSuggestion]
+    partial_confirm: bool = False
 
 
 # Config Models

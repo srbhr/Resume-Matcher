@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Search } from 'lucide-react';
 import { useTranslations } from '@/lib/i18n';
 
 export interface DropdownOption {
@@ -18,6 +18,7 @@ interface DropdownProps {
   description?: string;
   disabled?: boolean;
   className?: string;
+  searchable?: boolean;
 }
 
 export function Dropdown({
@@ -28,19 +29,31 @@ export function Dropdown({
   description,
   disabled = false,
   className = '',
+  searchable = false,
 }: DropdownProps) {
   const { t } = useTranslations();
   const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
 
   const selectedOption = options.find((opt) => opt.id === value);
+  const filteredOptions =
+    searchable && search.trim()
+      ? options.filter(
+          (opt) =>
+            opt.label.toLowerCase().includes(search.toLowerCase()) ||
+            opt.id.toLowerCase().includes(search.toLowerCase())
+        )
+      : options;
 
   // Close dropdown on outside click
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
         setIsOpen(false);
+        setSearch('');
       }
     }
 
@@ -50,9 +63,17 @@ export function Dropdown({
     }
   }, [isOpen]);
 
+  // Focus search input when dropdown opens
+  useEffect(() => {
+    if (isOpen && searchable && searchRef.current) {
+      setTimeout(() => searchRef.current?.focus(), 0);
+    }
+  }, [isOpen, searchable]);
+
   const handleSelect = (optionId: string) => {
     onChange(optionId);
     setIsOpen(false);
+    setSearch('');
   };
 
   return (
@@ -98,29 +119,50 @@ export function Dropdown({
         {/* Dropdown Menu */}
         {isOpen && (
           <div className="absolute top-full left-0 right-0 mt-1 z-50 border border-black bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] rounded-none">
+            {searchable && (
+              <div className="flex items-center gap-2 border-b border-black px-3 py-2">
+                <Search className="w-3 h-3 text-gray-400 shrink-0" />
+                <input
+                  ref={searchRef}
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder={t('common.searchPlaceholder')}
+                  className="flex-1 font-mono text-xs outline-none bg-transparent"
+                  onKeyDown={(e) => e.stopPropagation()}
+                />
+                {search && (
+                  <span className="font-mono text-xs text-gray-400">{filteredOptions.length}</span>
+                )}
+              </div>
+            )}
             <div className="max-h-64 overflow-y-auto">
-              {options.map((option, index) => (
-                <React.Fragment key={option.id}>
-                  <button
-                    onClick={() => handleSelect(option.id)}
-                    className={`w-full px-4 py-3 text-left font-mono transition-colors duration-150 border border-black ${
-                      option.id === value
-                        ? 'bg-green-700 text-white'
-                        : 'bg-white text-black hover:bg-gray-50'
-                    } ${index > 0 ? '-mt-[1px]' : ''} active:bg-gray-100`}
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1">
-                        <div className="font-bold text-sm">{option.label}</div>
-                        {option.description && (
-                          <div className="text-xs mt-1 opacity-80">{option.description}</div>
-                        )}
+              {filteredOptions.length === 0 ? (
+                <div className="px-4 py-3 font-mono text-xs text-gray-400">{t('common.noOptionsFound')}</div>
+              ) : (
+                filteredOptions.map((option, index) => (
+                  <React.Fragment key={option.id}>
+                    <button
+                      onClick={() => handleSelect(option.id)}
+                      className={`w-full px-4 py-3 text-left font-mono transition-colors duration-150 border border-black ${
+                        option.id === value
+                          ? 'bg-green-700 text-white'
+                          : 'bg-white text-black hover:bg-gray-50'
+                      } ${index > 0 ? '-mt-[1px]' : ''} active:bg-gray-100`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1">
+                          <div className="font-bold text-sm">{option.label}</div>
+                          {option.description && (
+                            <div className="text-xs mt-1 opacity-80">{option.description}</div>
+                          )}
+                        </div>
+                        {option.id === value && <div className="text-lg font-bold mt-0.5">✓</div>}
                       </div>
-                      {option.id === value && <div className="text-lg font-bold mt-0.5">✓</div>}
-                    </div>
-                  </button>
-                </React.Fragment>
-              ))}
+                    </button>
+                  </React.Fragment>
+                ))
+              )}
             </div>
           </div>
         )}

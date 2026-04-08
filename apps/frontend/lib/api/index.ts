@@ -21,6 +21,7 @@ export {
   uploadJobDescriptions,
   improveResume,
   previewImproveResume,
+  previewImproveResumeStream,
   confirmImproveResume,
   fetchResume,
   fetchResumeList,

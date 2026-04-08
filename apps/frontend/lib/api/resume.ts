@@ -85,6 +85,7 @@ interface ImproveResumeConfirmRequest {
     suggestion: string;
     lineNumber?: number | null;
   }>;
+  partial_confirm?: boolean;
 }
 
 function normalizeResumeId(resumeId: string): string {
@@ -165,13 +166,91 @@ export async function improveResume(
 export async function previewImproveResume(
   resumeId: string,
   jobId: string,
-  promptId?: string
+  promptId?: string,
+  workflowMode?: string
 ): Promise<ImprovedResult> {
   return postImprove('/resumes/improve/preview', {
     resume_id: resumeId,
     job_id: jobId,
     prompt_id: promptId ?? null,
+    workflow_mode: workflowMode ?? null,
   });
+}
+
+/** Previews the resume improvement via SSE streaming — supports slow Ollama models */
+export async function previewImproveResumeStream(
+  resumeId: string,
+  jobId: string,
+  promptId: string | undefined,
+  workflowMode: string | undefined,
+  onProgress: (stage: string, message: string) => void,
+  signal?: AbortSignal
+): Promise<ImprovedResult> {
+  // AbortController wraps the entire operation (headers + body) for the 30-minute timeout.
+  // clearTimeout is in the outer finally so it fires after the body loop completes.
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 30 * 60 * 1000);
+
+  // Propagate external abort (e.g. component unmount) into the internal controller.
+  signal?.addEventListener('abort', () => controller.abort(signal.reason));
+
+  try {
+    const response = await fetch(`${API_BASE}/resumes/improve/preview/stream`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        resume_id: resumeId,
+        job_id: jobId,
+        prompt_id: promptId ?? null,
+        workflow_mode: workflowMode ?? null,
+      }),
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Stream request failed (status ${response.status}).`);
+    }
+
+    const reader = response.body!.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const parts = buffer.split('\n\n');
+        buffer = parts.pop()!;
+        for (const part of parts) {
+          const line = part.trim().startsWith('data: ') ? part.trim().slice(6) : null;
+          if (!line) continue;
+          let event: Record<string, unknown>;
+          try {
+            event = JSON.parse(line) as Record<string, unknown>;
+          } catch {
+            continue;
+          }
+          const stage = event['stage'] as string;
+          if (stage === 'done') {
+            return event['result'] as ImprovedResult;
+          }
+          if (stage === 'error') {
+            throw new Error((event['message'] as string) ?? 'Resume improvement failed.');
+          }
+          if (event['message']) {
+            onProgress(stage, event['message'] as string);
+          }
+        }
+      }
+    } finally {
+      reader.releaseLock();
+    }
+
+    throw new Error('Stream ended without a result.');
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 /** Confirms and saves a tailored resume */
@@ -359,6 +438,17 @@ export async function retryProcessing(resumeId: string): Promise<ResumeUploadRes
   if (!res.ok) {
     const text = await res.text().catch(() => '');
     throw new Error(`Failed to retry processing (status ${res.status}): ${text}`);
+  }
+  return res.json();
+}
+
+/** Fetches and extracts job description text from a public URL */
+export async function fetchJobFromUrl(url: string): Promise<{ content: string; url: string }> {
+  const res = await apiPost('/jobs/fetch-url', { url });
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    const detail = body?.detail ?? null;
+    throw new Error(detail ?? `Failed to fetch job URL (status ${res.status})`);
   }
   return res.json();
 }

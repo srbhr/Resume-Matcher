@@ -27,6 +27,8 @@
     "reset": "Redefinir",
     "apply": "Aplicar",
     "selectOption": "Selecione uma opção...",
+    "searchPlaceholder": "Pesquisar...",
+    "noOptionsFound": "Nenhuma opção encontrada",
     "unknown": "Desconhecido",
     "keysCleared": "Chaves de API removidas com sucesso",
     "databaseReset": "Banco de dados redefinido com sucesso",
@@ -501,8 +503,43 @@
     "pasteJobDescription": "Colar Descrição da Vaga",
     "pasteJobDescriptionBelow": "Cole a Descrição da Vaga Abaixo",
     "jobDescriptionPlaceholder": "Cole a descrição da vaga aqui...",
+    "inputMode": {
+      "paste": "Colar Texto",
+      "url": "Via URL"
+    },
+    "urlInput": {
+      "placeholder": "Cole o link da vaga (LinkedIn, Indeed, site da empresa)...",
+      "fetchButton": "Buscar",
+      "fetching": "Buscando...",
+      "hint": "O app extrai a descrição automaticamente. O currículo será nomeado com o cargo e a empresa."
+    },
     "promptLabel": "Intensidade de personalização",
     "promptDescription": "Escolha o quanto alinhar seu currículo à descrição da vaga.",
+    "workflowLabel": "Fluxo de trabalho",
+    "workflowDescription": "Escolha se deseja personalizar o currículo completo de uma vez ou seção por seção.",
+    "workflowOptions": {
+      "standard": {
+        "label": "Padrão",
+        "description": "Reescreve o currículo completo em uma única passagem."
+      },
+      "granular": {
+        "label": "Seção por seção",
+        "description": "Passagens focadas separadas para habilidades e experiência — menor risco de alucinação."
+      }
+    },
+    "progress": {
+      "title": "Gerando currículo personalizado",
+      "uploading": "Enviando descrição da vaga",
+      "tailoring": "A IA está personalizando seu currículo",
+      "elapsedSeconds": "{seconds}s decorridos",
+      "slowModelNote": "Modelos de IA locais podem demorar vários minutos. Aguarde e não feche esta página."
+    },
+    "streamStages": {
+      "keywords": "Extraindo palavras-chave da vaga...",
+      "improving": "Personalizando o currículo...",
+      "refining": "Executando refinamento...",
+      "diff": "Calculando alterações..."
+    },
     "promptOptions": {
       "nudge": {
         "label": "Ajuste leve",
@@ -547,7 +584,10 @@
       "projectChanges": "Alterações de projetos",
       "certificationChanges": "Alterações de certificações",
       "rejectButton": "Rejeitar e regenerar",
-      "confirmButton": "Confirmar e salvar"
+      "confirmButton": "Confirmar e salvar",
+      "confirmPartialButton": "Confirmar selecionados ({accepted}/{total})",
+      "selectAll": "Selecionar todos",
+      "deselectAll": "Desmarcar todos"
     },
     "regenerateDialog": {
       "title": "Regenerar o currículo personalizado?",
@@ -565,7 +605,11 @@
       "rateLimit": "Limite de requisições atingido. Por favor, aguarde um momento e tente novamente.",
       "failedToGenerate": "Falha ao gerar currículo. Verifique suas configurações e tente novamente.",
       "failedToPreview": "Falha ao pré-visualizar o currículo. Verifique suas configurações e tente novamente.",
-      "failedToConfirm": "Falha ao confirmar o currículo. Tente novamente."
+      "failedToConfirm": "Falha ao confirmar o currículo. Tente novamente.",
+      "failedToFetchUrl": "Não foi possível obter a descrição da vaga nesta URL. Tente copiar o texto manualmente.",
+      "invalidUrl": "Insira uma URL válida começando com https://",
+      "urlTimeout": "Tempo esgotado. A página demorou muito para responder.",
+      "networkError": "Erro de rede. Verifique sua conexão."
     }
   },
   "settings": {
@@ -662,7 +706,10 @@
       },
       "healthWarnings": {
         "empty_content": "O LLM retornou conteúdo vazio na verificação de integridade."
-      }
+      },
+      "fetchModels": "Buscar modelos",
+      "loadingModels": "Carregando...",
+      "fetchModelsHint": "— clique em Buscar modelos para carregar as opções disponíveis."
     },
     "contentGeneration": {
       "title": "Geração de Conteúdo",

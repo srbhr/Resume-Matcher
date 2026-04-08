@@ -4,6 +4,7 @@ import json
 import logging
 from pathlib import Path
 
+import httpx
 from fastapi import APIRouter, BackgroundTasks, HTTPException
 
 from app.config import settings
@@ -187,6 +188,153 @@ async def test_llm_connection(request: LLMConfigRequest | None = None) -> dict:
 
     test_prompt = "Hi"
     return await check_llm_health(config, include_details=True, test_prompt=test_prompt)
+
+
+@router.get("/ollama-models")
+async def get_ollama_models() -> dict:
+    """Return a list of models available in the local Ollama instance.
+
+    Uses the api_base stored in config (defaults to http://localhost:11434).
+    Raises 503 when Ollama is not reachable so the frontend can show a clear error.
+    """
+    stored = _load_config()
+    api_base = (stored.get("api_base") or settings.llm_api_base or "http://localhost:11434").rstrip("/")
+
+    try:
+        async with httpx.AsyncClient(timeout=8.0) as client:
+            resp = await client.get(f"{api_base}/api/tags")
+            resp.raise_for_status()
+            data = resp.json()
+            model_names: list[str] = [m["name"] for m in data.get("models", [])]
+            return {"models": sorted(model_names)}
+    except httpx.ConnectError:
+        logger.warning("Cannot connect to Ollama at %s", api_base)
+        raise HTTPException(
+            status_code=503,
+            detail="Cannot connect to Ollama. Make sure Ollama is running.",
+        )
+    except httpx.HTTPStatusError as exc:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Ollama returned an error: {exc.response.status_code}",
+        )
+    except Exception as exc:
+        logging.error("Failed to fetch Ollama models: %s", exc)
+        raise HTTPException(status_code=502, detail="Failed to fetch models from Ollama.")
+
+
+_ANTHROPIC_MODELS = [
+    "claude-opus-4-6",
+    "claude-sonnet-4-6",
+    "claude-haiku-4-5-20251001",
+    "claude-3-5-sonnet-20241022",
+    "claude-3-5-haiku-20241022",
+    "claude-3-opus-20240229",
+]
+
+_OPENAI_CHAT_PREFIXES = ("gpt-", "o1", "o3", "o4", "chatgpt-")
+_OPENAI_EXCLUDE_KEYWORDS = (
+    "whisper", "dall-e", "tts", "embedding", "moderation",
+    "babbage", "davinci", "ada", "curie", "instruct",
+)
+
+
+def _is_openai_chat_model(model_id: str) -> bool:
+    lower = model_id.lower()
+    if any(kw in lower for kw in _OPENAI_EXCLUDE_KEYWORDS):
+        return False
+    return any(lower.startswith(pfx) for pfx in _OPENAI_CHAT_PREFIXES)
+
+
+@router.get("/provider-models")
+async def get_provider_models(provider: str) -> dict:
+    """Fetch available models for a given provider using the stored API key.
+
+    Supports: openai, anthropic, deepseek, openrouter, gemini.
+    Anthropic uses a static list (no public models API).
+    Raises 503/502 when the provider API is not reachable.
+    """
+    if provider not in ("openai", "anthropic", "deepseek", "openrouter", "gemini"):
+        raise HTTPException(status_code=400, detail=f"Unsupported provider: {provider}")
+
+    stored = _load_config()
+    api_key: str = resolve_api_key(stored, provider)
+    api_base: str = stored.get("api_base", "") or ""
+
+    # Anthropic: no public models list endpoint, no API key required
+    if provider == "anthropic":
+        return {"models": _ANTHROPIC_MODELS}
+
+    if not api_key:
+        raise HTTPException(
+            status_code=400,
+            detail=f"API key required to fetch models for {provider}. Please configure your API key first.",
+        )
+
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            if provider == "openai":
+                base = (api_base.rstrip("/") if api_base else "https://api.openai.com")
+                resp = await client.get(
+                    f"{base}/v1/models",
+                    headers={"Authorization": f"Bearer {api_key}"},
+                )
+                resp.raise_for_status()
+                data = resp.json()
+                models = sorted(
+                    m["id"] for m in data.get("data", []) if _is_openai_chat_model(m["id"])
+                )
+
+            elif provider == "deepseek":
+                base = (api_base.rstrip("/") if api_base else "https://api.deepseek.com")
+                resp = await client.get(
+                    f"{base}/v1/models",
+                    headers={"Authorization": f"Bearer {api_key}"},
+                )
+                resp.raise_for_status()
+                data = resp.json()
+                models = sorted(m["id"] for m in data.get("data", []))
+
+            elif provider == "openrouter":
+                resp = await client.get(
+                    "https://openrouter.ai/api/v1/models",
+                    headers={"Authorization": f"Bearer {api_key}"},
+                )
+                resp.raise_for_status()
+                data = resp.json()
+                models = sorted(m["id"] for m in data.get("data", []))
+
+            elif provider == "gemini":
+                resp = await client.get(
+                    "https://generativelanguage.googleapis.com/v1beta/models",
+                    headers={"x-goog-api-key": api_key},
+                )
+                resp.raise_for_status()
+                data = resp.json()
+                models = sorted(
+                    m["name"].replace("models/", "")
+                    for m in data.get("models", [])
+                    if "generateContent" in m.get("supportedGenerationMethods", [])
+                )
+
+            else:
+                models = []
+
+    except httpx.ConnectError:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Cannot connect to {provider} API. Check your network or API base URL.",
+        )
+    except httpx.HTTPStatusError as exc:
+        raise HTTPException(
+            status_code=502,
+            detail=f"{provider} API returned {exc.response.status_code}. Check your API key.",
+        )
+    except Exception as exc:
+        logging.error("Failed to fetch models for %s: %s", provider, exc)
+        raise HTTPException(status_code=502, detail=f"Failed to fetch models from {provider}.")
+
+    return {"models": models}
 
 
 @router.get("/features", response_model=FeatureConfigResponse)

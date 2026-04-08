@@ -12,7 +12,7 @@ from typing import Any, NoReturn
 from uuid import uuid4
 
 from fastapi import APIRouter, File, HTTPException, Query, UploadFile
-from fastapi.responses import Response
+from fastapi.responses import Response, StreamingResponse
 
 from app.config_cache import get_content_language, load_config as _load_config
 from app.database import db
@@ -59,6 +59,16 @@ from app.services.cover_letter import (
     generate_resume_title,
 )
 from app.prompts import DEFAULT_IMPROVE_PROMPT_ID, IMPROVE_PROMPT_OPTIONS
+
+
+def _sse_event(**kwargs: Any) -> str:
+    """Serialize keyword arguments as a single SSE data line."""
+    payload = {
+        k: v.model_dump() if hasattr(v, "model_dump") else v
+        for k, v in kwargs.items()
+    }
+    return f"data: {json.dumps(payload)}\n\n"
+
 
 
 def _get_default_prompt_id() -> str:
@@ -859,7 +869,7 @@ async def _improve_preview_flow(
             response_warnings.append(f"Refinement failed: {str(e)}")
 
     improved_text = json.dumps(improved_data, indent=2)
-    preview_hash = _hash_improved_data(improved_data)
+    preview_hash = _hash_improved_data(ResumeData.model_validate(improved_data).model_dump())
     preview_hashes = job.get("preview_hashes")
     if not isinstance(preview_hashes, dict):
         preview_hashes = {}
@@ -917,6 +927,208 @@ async def _improve_preview_flow(
             refinement_successful=refinement_successful,
         ),
     )
+
+
+@router.post("/improve/preview/stream")
+async def improve_resume_preview_stream(
+    request: ImproveResumeRequest,
+) -> StreamingResponse:
+    """Stream resume improvement progress via Server-Sent Events.
+
+    Emits JSON events: keywords → improving → refining → diff → done (or error).
+    The HTTP status is always 200; errors are communicated via stage='error' events.
+    """
+    resume = db.get_resume(request.resume_id)
+    if not resume:
+        raise HTTPException(status_code=404, detail="Resume not found")
+
+    job = db.get_job(request.job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job description not found")
+
+    language = get_content_language()
+    prompt_id = request.prompt_id or _get_default_prompt_id()
+    config = _load_config()
+    model = config.get("model", "unknown")
+
+    async def generate() -> None:  # noqa: ANN202 — AsyncGenerator[str, None] inferred by yield
+        try:
+            # Stage 1: keywords
+            yield _sse_event(stage="keywords", message="Extracting job keywords...")
+            job_keywords = job.get("job_keywords")
+            job_keywords_hash = job.get("job_keywords_hash")
+            content_hash = _hash_job_content(job["content"])
+            if not job_keywords or job_keywords_hash != content_hash:
+                job_keywords = await extract_job_keywords(job["content"])
+                try:
+                    updated_job = db.update_job(
+                        request.job_id,
+                        {
+                            "job_keywords": job_keywords,
+                            "job_keywords_hash": content_hash,
+                        },
+                    )
+                    if not updated_job:
+                        logger.warning(
+                            "Failed to persist job keywords for job %s.",
+                            request.job_id,
+                        )
+                except Exception as cache_err:
+                    logger.warning(
+                        "Failed to persist job keywords for job %s: %s",
+                        request.job_id,
+                        cache_err,
+                    )
+
+            # Stage 2: improving
+            yield _sse_event(
+                stage="improving",
+                message=f"Tailoring resume with {model}...",
+            )
+            improved_data = await improve_resume(
+                original_resume=resume["content"],
+                job_description=job["content"],
+                job_keywords=job_keywords,
+                language=language,
+                prompt_id=prompt_id,
+            )
+            response_warnings: list[str] = []
+            improved_data, preserve_warnings = _preserve_personal_info(
+                _get_original_resume_data(resume),
+                improved_data,
+            )
+            response_warnings.extend(preserve_warnings)
+
+            # Stage 3: refining
+            yield _sse_event(stage="refining", message="Running refinement...")
+            refinement_stats: RefinementStats | None = None
+            refinement_attempted = False
+            refinement_successful = False
+            try:
+                master_resume = db.get_master_resume()
+                master_data = (
+                    _get_original_resume_data(master_resume)
+                    if master_resume
+                    else _get_original_resume_data(resume)
+                )
+                if master_data:
+                    initial_match = calculate_keyword_match(improved_data, job_keywords)
+                    refinement_attempted = True
+                    refinement_result = await refine_resume(
+                        initial_tailored=improved_data,
+                        master_resume=master_data,
+                        job_description=job["content"],
+                        job_keywords=job_keywords,
+                        config=RefinementConfig(),
+                    )
+                    improved_data = refinement_result.refined_data
+                    refinement_stats = RefinementStats(
+                        passes_completed=refinement_result.passes_completed,
+                        keywords_injected=(
+                            len(refinement_result.keyword_analysis.injectable_keywords)
+                            if refinement_result.keyword_analysis
+                            else 0
+                        ),
+                        ai_phrases_removed=refinement_result.ai_phrases_removed,
+                        alignment_violations_fixed=(
+                            len(
+                                [
+                                    v
+                                    for v in refinement_result.alignment_report.violations
+                                    if v.severity == "critical"
+                                ]
+                            )
+                            if refinement_result.alignment_report
+                            else 0
+                        ),
+                        initial_match_percentage=initial_match,
+                        final_match_percentage=refinement_result.final_match_percentage,
+                    )
+                    refinement_successful = True
+                    logger.info(
+                        "Refinement completed: %d passes, %d AI phrases removed",
+                        refinement_result.passes_completed,
+                        len(refinement_result.ai_phrases_removed),
+                    )
+            except Exception as refine_err:
+                logger.warning("Refinement failed, using unrefined result: %s", refine_err)
+                if refinement_attempted:
+                    response_warnings.append(f"Refinement failed: {str(refine_err)}")
+
+            # Stage 4: diff
+            yield _sse_event(stage="diff", message="Calculating changes...")
+            improved_text = json.dumps(improved_data, indent=2)
+            preview_hash = _hash_improved_data(ResumeData.model_validate(improved_data).model_dump())
+            preview_hashes = job.get("preview_hashes")
+            if not isinstance(preview_hashes, dict):
+                preview_hashes = {}
+            preview_hashes[prompt_id] = preview_hash
+            try:
+                updated_job = db.update_job(
+                    request.job_id,
+                    {
+                        "preview_hash": preview_hash,
+                        "preview_prompt_id": prompt_id,
+                        "preview_hashes": preview_hashes,
+                    },
+                )
+                if not updated_job:
+                    logger.warning(
+                        "Failed to persist preview hash for job %s.", request.job_id
+                    )
+            except Exception as hash_err:
+                logger.warning(
+                    "Failed to persist preview hash for job %s: %s",
+                    request.job_id,
+                    hash_err,
+                )
+            diff_summary, detailed_changes, diff_error = _calculate_diff_from_resume(
+                resume,
+                improved_data,
+            )
+            if diff_error:
+                response_warnings.append(f"Could not calculate changes: {diff_error}")
+            improvements = generate_improvements(job_keywords)
+
+            # Stage 5: done
+            request_id = str(uuid4())
+            result = ImproveResumeResponse(
+                request_id=request_id,
+                data=ImproveResumeData(
+                    request_id=request_id,
+                    resume_id=None,
+                    job_id=request.job_id,
+                    resume_preview=ResumeData.model_validate(improved_data),
+                    improvements=[
+                        {
+                            "suggestion": imp["suggestion"],
+                            "lineNumber": imp.get("lineNumber"),
+                        }
+                        for imp in improvements
+                    ],
+                    markdownOriginal=resume["content"],
+                    markdownImproved=improved_text,
+                    cover_letter=None,
+                    outreach_message=None,
+                    diff_summary=diff_summary,
+                    detailed_changes=detailed_changes,
+                    refinement_stats=refinement_stats,
+                    warnings=response_warnings,
+                    refinement_attempted=refinement_attempted,
+                    refinement_successful=refinement_successful,
+                ),
+            )
+            yield _sse_event(stage="done", result=result)
+
+        except Exception as e:
+            logger.error("Resume preview stream failed: %s", e)
+            yield _sse_event(
+                stage="error",
+                message="An error occurred during resume improvement. Please try again.",
+                code="internal_error",
+            )
+
+    return StreamingResponse(generate(), media_type="text/event-stream")
 
 
 @router.post("/improve/confirm", response_model=ImproveResumeResponse)
