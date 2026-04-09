@@ -111,7 +111,7 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({ data, onChange }) =>
 
       <div className="space-y-8">
         {data.map((item) => (
-          <div key={item.id} className="p-6 border border-black bg-gray-50 relative group">
+          <div key={item.id} className="p-6 border border-black bg-paper-tint relative group">
             <Button
               variant="ghost"
               size="icon"
@@ -125,7 +125,7 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({ data, onChange }) =>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 pr-8">
               <div className="space-y-2">
-                <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">
+                <Label className="font-mono text-xs uppercase tracking-wider text-steel-grey">
                   {t('builder.forms.projects.fields.projectName')}
                 </Label>
                 <Input
@@ -136,7 +136,7 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({ data, onChange }) =>
                 />
               </div>
               <div className="space-y-2">
-                <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">
+                <Label className="font-mono text-xs uppercase tracking-wider text-steel-grey">
                   {t('builder.forms.projects.fields.role')}
                 </Label>
                 <Input
@@ -147,9 +147,9 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({ data, onChange }) =>
                 />
               </div>
               <div className="space-y-2">
-                <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">
+                <Label className="font-mono text-xs uppercase tracking-wider text-steel-grey">
                   {t('builder.genericItemForm.fields.years')}{' '}
-                  <span className="text-gray-400">({t('common.optional')})</span>
+                  <span className="text-steel-grey">({t('common.optional')})</span>
                 </Label>
                 <Input
                   value={item.years || ''}
@@ -159,9 +159,9 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({ data, onChange }) =>
                 />
               </div>
               <div className="space-y-2">
-                <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">
+                <Label className="font-mono text-xs uppercase tracking-wider text-steel-grey">
                   <Github className="w-3 h-3 inline mr-1" />
-                  GitHub <span className="text-gray-400">({t('common.optional')})</span>
+                  GitHub <span className="text-steel-grey">({t('common.optional')})</span>
                 </Label>
                 <Input
                   value={item.github || ''}
@@ -171,10 +171,10 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({ data, onChange }) =>
                 />
               </div>
               <div className="space-y-2 md:col-span-2">
-                <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">
+                <Label className="font-mono text-xs uppercase tracking-wider text-steel-grey">
                   <Globe className="w-3 h-3 inline mr-1" />
                   {t('builder.forms.projects.fields.website')}{' '}
-                  <span className="text-gray-400">({t('common.optional')})</span>
+                  <span className="text-steel-grey">({t('common.optional')})</span>
                 </Label>
                 <Input
                   value={item.website || ''}
@@ -187,7 +187,7 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({ data, onChange }) =>
 
             <div className="space-y-3">
               <div className="flex justify-between items-center">
-                <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">
+                <Label className="font-mono text-xs uppercase tracking-wider text-steel-grey">
                   {t('builder.genericItemForm.fields.descriptionPoints')}
                 </Label>
                 <Button
@@ -226,8 +226,8 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({ data, onChange }) =>
         ))}
 
         {data.length === 0 && (
-          <div className="text-center py-12 bg-gray-50 border border-dashed border-black">
-            <p className="font-mono text-sm text-gray-500 mb-4">
+          <div className="text-center py-12 bg-paper-tint border border-dashed border-black">
+            <p className="font-mono text-sm text-steel-grey mb-4">
               {t('builder.genericItemForm.noEntries', { label: t('resume.sections.projects') })}
             </p>
             <Button

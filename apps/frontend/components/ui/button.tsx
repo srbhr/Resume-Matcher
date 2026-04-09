@@ -71,7 +71,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       default: cn(
         'bg-blue-700 text-white',
         'border border-black',
-        'shadow-[2px_2px_0px_0px_#000000]',
+        'shadow-sw-sm',
         'hover:bg-blue-800',
         'hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none',
         'active:translate-y-[2px] active:translate-x-[2px]'
@@ -82,7 +82,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       destructive: cn(
         'bg-red-600 text-white',
         'border border-black',
-        'shadow-[2px_2px_0px_0px_#000000]',
+        'shadow-sw-sm',
         'hover:bg-red-700',
         'hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none',
         'active:translate-y-[2px] active:translate-x-[2px]'
@@ -93,7 +93,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       success: cn(
         'bg-green-700 text-white',
         'border border-black',
-        'shadow-[2px_2px_0px_0px_#000000]',
+        'shadow-sw-sm',
         'hover:bg-green-800',
         'hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none',
         'active:translate-y-[2px] active:translate-x-[2px]'
@@ -104,7 +104,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       warning: cn(
         'bg-orange-500 text-white',
         'border border-black',
-        'shadow-[2px_2px_0px_0px_#000000]',
+        'shadow-sw-sm',
         'hover:bg-orange-600',
         'hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none',
         'active:translate-y-[2px] active:translate-x-[2px]'
@@ -113,10 +113,10 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       // OUTLINE - Canvas background with black border
       // Use for: Cancel, Back, Secondary actions, Navigation
       outline: cn(
-        'bg-[#F0F0E8] text-black',
+        'bg-background text-black',
         'border border-black',
-        'shadow-[2px_2px_0px_0px_#000000]',
-        'hover:bg-[#E5E5E0]',
+        'shadow-sw-sm',
+        'hover:bg-secondary',
         'hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none',
         'active:translate-y-[2px] active:translate-x-[2px]'
       ),
@@ -124,9 +124,9 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       // SECONDARY - Panel Grey (#E5E5E0)
       // Use for: Less prominent actions, Toolbar buttons
       secondary: cn(
-        'bg-[#E5E5E0] text-black',
+        'bg-secondary text-black',
         'border border-black',
-        'shadow-[2px_2px_0px_0px_#000000]',
+        'shadow-sw-sm',
         'hover:bg-[#D8D8D2]',
         'hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none',
         'active:translate-y-[2px] active:translate-x-[2px]'
@@ -137,8 +137,8 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       ghost: cn(
         'bg-transparent text-black',
         'border-none shadow-none',
-        'hover:bg-gray-100',
-        'active:bg-gray-200'
+        'hover:bg-paper-tint',
+        'active:bg-paper-tint'
       ),
 
       // LINK - Text only with underline

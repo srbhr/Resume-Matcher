@@ -18,7 +18,7 @@ export function OutreachPreview({ content, className }: OutreachPreviewProps) {
     <div
       className={cn(
         'bg-white border-2 border-black',
-        'shadow-[4px_4px_0px_0px_#000000]',
+        'shadow-sw-default',
         'overflow-hidden',
         className
       )}
@@ -33,7 +33,7 @@ export function OutreachPreview({ content, className }: OutreachPreviewProps) {
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <Mail className="w-4 h-4 text-gray-600" />
+            <Mail className="w-4 h-4 text-ink-soft" />
             <span className="font-mono text-xs uppercase">
               {t('outreach.preview.channels.email')}
             </span>
@@ -46,16 +46,16 @@ export function OutreachPreview({ content, className }: OutreachPreviewProps) {
         {content ? (
           <div className="space-y-4">
             {/* Message Bubble Style */}
-            <div className="bg-[#F5F5F0] border-2 border-black p-4 shadow-[2px_2px_0px_0px_#000000]">
+            <div className="bg-[#F5F5F0] border-2 border-black p-4 shadow-sw-sm">
               <p className="font-sans text-sm leading-relaxed whitespace-pre-wrap">{content}</p>
             </div>
 
             {/* Usage Tips */}
-            <div className="pt-4 border-t border-gray-200">
-              <p className="font-mono text-xs text-gray-500 uppercase mb-2">
+            <div className="pt-4 border-t border-paper-tint">
+              <p className="font-mono text-xs text-steel-grey uppercase mb-2">
                 {t('outreach.preview.howToUseTitle')}
               </p>
-              <ul className="font-mono text-xs text-gray-500 space-y-1">
+              <ul className="font-mono text-xs text-steel-grey space-y-1">
                 <li>{t('outreach.preview.steps.step1')}</li>
                 <li>{t('outreach.preview.steps.step2')}</li>
                 <li>{t('outreach.preview.steps.step3')}</li>
@@ -64,7 +64,7 @@ export function OutreachPreview({ content, className }: OutreachPreviewProps) {
             </div>
           </div>
         ) : (
-          <div className="text-center py-12 text-gray-400">
+          <div className="text-center py-12 text-steel-grey">
             <p className="font-mono text-sm">{t('outreach.preview.emptyTitle')}</p>
             <p className="font-mono text-xs mt-2">{t('outreach.preview.emptyDescription')}</p>
           </div>

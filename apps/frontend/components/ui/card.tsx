@@ -25,7 +25,7 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
     // Dashboard specific style that was common:
     // border-2 border-dashed border-amber-500 bg-amber-50
     // We can handle specific overrides via className, but the base interactive card
-    // in dashboard had: bg-[#F0F0E8] (canvas)
+    // in dashboard had: bg-background (canvas)
 
     return (
       <div
@@ -60,7 +60,7 @@ const CardDescription = React.forwardRef<
   HTMLParagraphElement,
   React.HTMLAttributes<HTMLParagraphElement>
 >(({ className, ...props }, ref) => (
-  <p ref={ref} className={cn('text-sm text-gray-500 font-mono', className)} {...props} />
+  <p ref={ref} className={cn('text-sm text-steel-grey font-mono', className)} {...props} />
 ));
 CardDescription.displayName = 'CardDescription';
 

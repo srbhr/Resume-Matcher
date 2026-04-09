@@ -117,9 +117,9 @@ export function EnrichmentModal({ resumeId, isOpen, onClose, onComplete }: Enric
 
       {/* Modal container - 80% viewport with padding */}
       <div className="absolute inset-0 flex items-center justify-center p-5 sm:p-10">
-        <div className="relative w-full h-full max-w-[1200px] bg-white border-2 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,0.9)] flex flex-col overflow-hidden">
+        <div className="relative w-full h-full max-w-[1200px] bg-white border-2 border-black shadow-sw-lg flex flex-col overflow-hidden">
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b-2 border-black bg-gray-50">
+          <div className="flex items-center justify-between px-6 py-4 border-b-2 border-black bg-paper-tint">
             <div className="flex items-center gap-3">
               <Sparkles className="w-5 h-5" />
               <h1 className="font-mono text-lg font-bold uppercase tracking-wider">
@@ -128,7 +128,7 @@ export function EnrichmentModal({ resumeId, isOpen, onClose, onComplete }: Enric
             </div>
             {/* Only show close button in non-loading states */}
             {!['analyzing', 'generating', 'applying'].includes(state.step) && (
-              <button onClick={handleClose} className="p-1 hover:bg-gray-200 transition-colors">
+              <button onClick={handleClose} className="p-1 hover:bg-paper-tint transition-colors">
                 <XIcon className="w-5 h-5" />
                 <span className="sr-only">{t('common.close')}</span>
               </button>

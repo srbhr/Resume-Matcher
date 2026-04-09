@@ -87,8 +87,8 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
 
   return (
     <div
-      className={`space-y-0 border p-6 bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] ${
-        isHidden ? 'border-dashed border-gray-400 opacity-60' : 'border-black'
+      className={`space-y-0 border p-6 bg-white shadow-sw-default ${
+        isHidden ? 'border-dashed border-steel-grey opacity-60' : 'border-black'
       }`}
     >
       {/* Section Header */}
@@ -117,7 +117,7 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+                className="h-8 w-8 text-steel-grey hover:text-ink-soft hover:bg-paper-tint"
                 onClick={handleCancelEdit}
                 aria-label={t('common.cancel')}
                 title={t('common.cancel')}
@@ -132,7 +132,7 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-6 w-6 text-gray-400 hover:text-gray-600"
+                  className="h-6 w-6 text-steel-grey hover:text-ink-soft"
                   onClick={handleStartEdit}
                   aria-label={t('builder.sectionHeader.renameSection')}
                   title={t('builder.sectionHeader.renameSection')}
@@ -141,7 +141,7 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
                 </Button>
               )}
               {!section.isDefault && (
-                <span className="font-mono text-[10px] uppercase tracking-wider text-gray-400 bg-gray-100 px-1.5 py-0.5 border border-gray-200">
+                <span className="font-mono text-[10px] uppercase tracking-wider text-steel-grey bg-paper-tint px-1.5 py-0.5 border border-paper-tint">
                   {t('builder.sectionHeader.customTag')}
                 </span>
               )}
@@ -161,7 +161,7 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
             <Button
               variant="ghost"
               size="icon"
-              className={`h-8 w-8 ${section.isVisible ? 'text-gray-500' : 'text-gray-300'}`}
+              className={`h-8 w-8 ${section.isVisible ? 'text-steel-grey' : 'text-steel-grey'}`}
               onClick={onToggleVisibility}
               aria-label={
                 section.isVisible
@@ -184,7 +184,7 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-gray-500 hover:text-gray-700 disabled:opacity-30"
+              className="h-8 w-8 text-steel-grey hover:text-ink-soft disabled:opacity-30"
               onClick={onMoveUp}
               disabled={isFirst}
               aria-label={t('builder.sectionHeader.moveUp')}
@@ -199,7 +199,7 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-gray-500 hover:text-gray-700 disabled:opacity-30"
+              className="h-8 w-8 text-steel-grey hover:text-ink-soft disabled:opacity-30"
               onClick={onMoveDown}
               disabled={isLast}
               aria-label={t('builder.sectionHeader.moveDown')}

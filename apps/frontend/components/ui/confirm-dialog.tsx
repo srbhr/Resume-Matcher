@@ -117,7 +117,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
               <DialogTitle className="font-serif text-xl font-bold uppercase tracking-tight">
                 {title}
               </DialogTitle>
-              <DialogDescription className="font-mono text-xs text-gray-600 mt-2">
+              <DialogDescription className="font-mono text-xs text-ink-soft mt-2">
                 {description}
               </DialogDescription>
             </div>
@@ -130,7 +130,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             </div>
           </div>
         )}
-        <DialogFooter className="p-4 bg-[#E5E5E0] border-t border-black flex-row justify-end gap-3">
+        <DialogFooter className="p-4 bg-secondary border-t border-black flex-row justify-end gap-3">
           {showCancelButton && (
             <Button variant="outline" onClick={handleCancel} className="rounded-none border-black">
               {finalCancelLabel}

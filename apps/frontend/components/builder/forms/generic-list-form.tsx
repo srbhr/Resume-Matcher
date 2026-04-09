@@ -47,7 +47,7 @@ export const GenericListForm: React.FC<GenericListFormProps> = ({
 
   return (
     <div className="space-y-2">
-      <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">
+      <Label className="font-mono text-xs uppercase tracking-wider text-steel-grey">
         {finalLabel}
       </Label>
       <p className="font-mono text-xs uppercase tracking-wider text-blue-700 mb-2">
