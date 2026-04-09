@@ -6,11 +6,12 @@
 
 ### Design System
 
-All UI changes MUST follow the **Swiss International Style** in [style-guide.md](design/style-guide.md):
+All UI changes MUST follow the **Swiss International Style**. The full design system is published as a portable pack at [`docs/portable/swiss-design-system/`](../portable/swiss-design-system/README.md). The non-negotiable basics:
 
 - Use `font-serif` for headers, `font-mono` for metadata, `font-sans` for body text
 - Color palette: `#F0F0E8` (Canvas), `#000000` (Ink), `#1D4ED8` (Hyper Blue), `#15803D` (Signal Green), `#F97316` (Alert Orange), `#DC2626` (Alert Red), `#4B5563` (Steel Grey)
 - Components: `rounded-none` with 1px black borders and hard shadows
+- See [`tokens.md`](../portable/swiss-design-system/tokens.md), [`components.md`](../portable/swiss-design-system/components.md), and [`anti-patterns.md`](../portable/swiss-design-system/anti-patterns.md) for the full rules
 
 ### Naming Conventions
 

@@ -494,7 +494,7 @@ Resume-Matcher/
 |----------|-------------|
 | [backend-guide.md](docs/agent/architecture/backend-guide.md) | Arquitectura del backend y detalles de la API |
 | [frontend-workflow.md](docs/agent/architecture/frontend-workflow.md) | Flujo de usuario y arquitectura de componentes |
-| [style-guide.md](docs/agent/design/style-guide.md) | Sistema de diseño UI (Swiss International Style) |
+| [swiss-design-system/](docs/portable/swiss-design-system/README.md) | Sistema de diseño UI (Swiss International Style) — paquete portable |
 
 ---
 

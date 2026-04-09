@@ -69,7 +69,7 @@ Resume Matcher is an AI-powered application for tailoring resumes to job descrip
 
 ## Non-Negotiable Rules
 
-1. **All frontend UI changes** MUST follow [Swiss International Style](../docs/agent/design/style-guide.md)
+1. **All frontend UI changes** MUST follow [Swiss International Style](../docs/portable/swiss-design-system/README.md) — see [tokens](../docs/portable/swiss-design-system/tokens.md), [components](../docs/portable/swiss-design-system/components.md), [anti-patterns](../docs/portable/swiss-design-system/anti-patterns.md)
 2. **All Python functions** MUST have type hints
 3. **Run `npm run lint`** before committing frontend changes
 4. **Run `npm run format`** (Prettier) before committing
@@ -136,8 +136,9 @@ apps/
 
 ### For Frontend Changes
 1. [Frontend workflow](../docs/agent/architecture/frontend-workflow.md) - User flow, components
-2. [Style guide](../docs/agent/design/style-guide.md) - **REQUIRED** Swiss International Style
-3. [Coding standards](../docs/agent/coding-standards.md) - Frontend conventions
+2. [Swiss design system pack](../docs/portable/swiss-design-system/README.md) - **REQUIRED** Swiss International Style (portable pack)
+3. [Next.js performance pack](../docs/portable/nextjs-performance/README.md) - **REQUIRED** Next.js 15 perf patterns (portable pack)
+4. [Coding standards](../docs/agent/coding-standards.md) - Frontend conventions
 
 ### For Template/PDF Changes
 1. [PDF template guide](../docs/agent/design/pdf-template-guide.md) - PDF rendering
