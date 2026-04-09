@@ -117,6 +117,8 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({ data, onChange }) =>
               size="icon"
               className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
               onClick={() => handleRemove(item.id)}
+              aria-label={t('a11y.removeItem')}
+              title={t('a11y.removeItem')}
             >
               <Trash2 className="w-4 h-4" />
             </Button>
@@ -212,6 +214,8 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({ data, onChange }) =>
                     size="icon"
                     onClick={() => handleRemoveDescription(item.id, idx)}
                     className="h-[60px] w-8 text-muted-foreground hover:text-destructive self-end"
+                    aria-label={t('a11y.removeDescription')}
+                    title={t('a11y.removeDescription')}
                   >
                     <Trash2 className="w-3 h-3" />
                   </Button>

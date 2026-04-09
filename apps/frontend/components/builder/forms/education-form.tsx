@@ -128,6 +128,8 @@ export const EducationForm: React.FC<EducationFormProps> = ({ data, onChange }) 
                       size="icon"
                       className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
                       onClick={() => handleRemove(item.id)}
+                      aria-label={t('a11y.removeItem')}
+                      title={t('a11y.removeItem')}
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>

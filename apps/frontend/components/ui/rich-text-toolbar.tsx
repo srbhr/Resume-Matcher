@@ -61,6 +61,8 @@ export const RichTextToolbar: React.FC<RichTextToolbarProps> = ({ editor, onLink
             e.preventDefault();
             tool.action();
           }}
+          aria-label={tool.label}
+          aria-pressed={tool.isActive}
           title={`${tool.label} (${tool.shortcut})`}
           className={cn(
             'h-7 w-7 rounded-none',

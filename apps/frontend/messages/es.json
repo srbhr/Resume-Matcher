@@ -726,7 +726,9 @@
     "calculating": "Calculando...",
     "pageBreak": "Salto de página",
     "pageCountSingular": "{count} página",
-    "pageCountPlural": "{count} páginas"
+    "pageCountPlural": "{count} páginas",
+    "zoomIn": "Acercar",
+    "zoomOut": "Alejar"
   },
   "resume": {
     "personalInfo": {
@@ -823,6 +825,11 @@
       "tryAgain": "Reintentar",
       "reloadPage": "Recargar página"
     }
+  },
+  "a11y": {
+    "removeItem": "Eliminar elemento",
+    "removeDescription": "Eliminar viñeta de descripción",
+    "removeFile": "Eliminar archivo"
   },
   "confirmations": {
     "deleteResume": "¿Estás seguro de que quieres eliminar este currículum?",

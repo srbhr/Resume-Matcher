@@ -117,6 +117,8 @@ export function PaginatedPreview({ resumeData, settings }: PaginatedPreviewProps
             onClick={handleZoomOut}
             disabled={zoom <= MIN_ZOOM}
             className="h-8 w-8"
+            aria-label={t('preview.zoomOut')}
+            title={t('preview.zoomOut')}
           >
             <ZoomOut className="w-4 h-4" />
           </Button>
@@ -129,6 +131,8 @@ export function PaginatedPreview({ resumeData, settings }: PaginatedPreviewProps
             onClick={handleZoomIn}
             disabled={zoom >= MAX_ZOOM}
             className="h-8 w-8"
+            aria-label={t('preview.zoomIn')}
+            title={t('preview.zoomIn')}
           >
             <ZoomIn className="w-4 h-4" />
           </Button>

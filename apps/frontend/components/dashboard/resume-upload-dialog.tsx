@@ -251,6 +251,8 @@ export function ResumeUploadDialog({
                     removeFile(currentFile.id);
                   }}
                   className="hover:bg-red-100 text-red-600 rounded-none"
+                  aria-label={t('a11y.removeFile')}
+                  title={t('a11y.removeFile')}
                 >
                   <XIcon className="w-5 h-5" />
                 </Button>

@@ -726,7 +726,9 @@
     "calculating": "计算中...",
     "pageBreak": "分页符",
     "pageCountSingular": "{count} 页",
-    "pageCountPlural": "{count} 页"
+    "pageCountPlural": "{count} 页",
+    "zoomIn": "放大",
+    "zoomOut": "缩小"
   },
   "resume": {
     "personalInfo": {
@@ -823,6 +825,11 @@
       "tryAgain": "重试",
       "reloadPage": "重新加载页面"
     }
+  },
+  "a11y": {
+    "removeItem": "移除项目",
+    "removeDescription": "移除描述要点",
+    "removeFile": "移除文件"
   },
   "confirmations": {
     "deleteResume": "您确定要删除此简历吗？",

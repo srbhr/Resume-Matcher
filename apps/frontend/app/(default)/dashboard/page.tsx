@@ -398,6 +398,7 @@ export default function DashboardPage() {
                         className="h-8 w-8 hover:bg-blue-100 hover:text-blue-700 z-10 rounded-none relative"
                         onClick={handleRetryProcessing}
                         disabled={isRetrying}
+                        aria-label={t('dashboard.retryProcessing')}
                         title={t('dashboard.retryProcessing')}
                       >
                         {isRetrying ? (

@@ -109,6 +109,8 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
                 size="icon"
                 className="h-8 w-8 text-green-700 hover:text-green-800 hover:bg-green-50"
                 onClick={handleSaveEdit}
+                aria-label={t('common.save')}
+                title={t('common.save')}
               >
                 <Check className="w-4 h-4" />
               </Button>
@@ -117,6 +119,8 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
                 size="icon"
                 className="h-8 w-8 text-gray-500 hover:text-gray-700 hover:bg-gray-100"
                 onClick={handleCancelEdit}
+                aria-label={t('common.cancel')}
+                title={t('common.cancel')}
               >
                 <X className="w-4 h-4" />
               </Button>
@@ -130,6 +134,7 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
                   size="icon"
                   className="h-6 w-6 text-gray-400 hover:text-gray-600"
                   onClick={handleStartEdit}
+                  aria-label={t('builder.sectionHeader.renameSection')}
                   title={t('builder.sectionHeader.renameSection')}
                 >
                   <Pencil className="w-3 h-3" />
@@ -158,6 +163,12 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
               size="icon"
               className={`h-8 w-8 ${section.isVisible ? 'text-gray-500' : 'text-gray-300'}`}
               onClick={onToggleVisibility}
+              aria-label={
+                section.isVisible
+                  ? t('builder.sectionHeader.hideSection')
+                  : t('builder.sectionHeader.showSection')
+              }
+              aria-pressed={!section.isVisible}
               title={
                 section.isVisible
                   ? t('builder.sectionHeader.hideSection')
@@ -176,6 +187,7 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
               className="h-8 w-8 text-gray-500 hover:text-gray-700 disabled:opacity-30"
               onClick={onMoveUp}
               disabled={isFirst}
+              aria-label={t('builder.sectionHeader.moveUp')}
               title={t('builder.sectionHeader.moveUp')}
             >
               <ChevronUp className="w-4 h-4" />
@@ -190,6 +202,7 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
               className="h-8 w-8 text-gray-500 hover:text-gray-700 disabled:opacity-30"
               onClick={onMoveDown}
               disabled={isLast}
+              aria-label={t('builder.sectionHeader.moveDown')}
               title={t('builder.sectionHeader.moveDown')}
             >
               <ChevronDown className="w-4 h-4" />
@@ -203,6 +216,13 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
               size="icon"
               className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
               onClick={handleDeleteClick}
+              aria-label={
+                section.isDefault
+                  ? section.isVisible
+                    ? t('builder.sectionHeader.hideSection')
+                    : t('builder.sectionHeader.showSection')
+                  : t('builder.sectionHeader.deleteSection')
+              }
               title={
                 section.isDefault
                   ? section.isVisible

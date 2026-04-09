@@ -726,7 +726,9 @@
     "calculating": "計算中...",
     "pageBreak": "改ページ",
     "pageCountSingular": "{count} ページ",
-    "pageCountPlural": "{count} ページ"
+    "pageCountPlural": "{count} ページ",
+    "zoomIn": "拡大",
+    "zoomOut": "縮小"
   },
   "resume": {
     "personalInfo": {
@@ -823,6 +825,11 @@
       "tryAgain": "再試行",
       "reloadPage": "ページを再読み込み"
     }
+  },
+  "a11y": {
+    "removeItem": "項目を削除",
+    "removeDescription": "説明箇条書きを削除",
+    "removeFile": "ファイルを削除"
   },
   "confirmations": {
     "deleteResume": "この履歴書を削除してもよろしいですか？",

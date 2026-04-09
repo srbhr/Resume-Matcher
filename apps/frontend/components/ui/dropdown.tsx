@@ -72,6 +72,9 @@ export function Dropdown({
           type="button"
           onClick={() => setIsOpen(!isOpen)}
           disabled={disabled}
+          aria-haspopup="listbox"
+          aria-expanded={isOpen}
+          aria-label={label}
           className="w-full flex items-center justify-between border border-black bg-white px-4 py-3 font-mono text-sm transition-all duration-150 ease-out shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)] hover:shadow-none hover:translate-y-[2px] hover:translate-x-[2px] disabled:opacity-50 disabled:cursor-not-allowed rounded-none"
         >
           <div className="flex-1 text-left min-w-0">

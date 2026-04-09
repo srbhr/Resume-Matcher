@@ -151,12 +151,15 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       ),
     };
 
-    // Size styles
+    // Size styles. Icon variant is 44×44px to meet WCAG 2.2 AA target size
+    // (success criterion 2.5.8). Many call sites still override with smaller
+    // h-X w-X classes for dense toolbars — those are tracked separately and
+    // need a hit-area expansion pass (visual size smaller, padded touch area).
     const sizes = {
       default: 'h-10 px-6 py-2',
       sm: 'h-8 px-4 py-1 text-xs',
       lg: 'h-12 px-8 py-3 text-base',
-      icon: 'h-10 w-10 p-0',
+      icon: 'h-11 w-11 p-0',
     };
 
     const variantClass = variants[variant];

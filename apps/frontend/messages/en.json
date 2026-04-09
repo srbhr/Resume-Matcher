@@ -726,7 +726,9 @@
     "calculating": "Calculating...",
     "pageBreak": "Page Break",
     "pageCountSingular": "{count} page",
-    "pageCountPlural": "{count} pages"
+    "pageCountPlural": "{count} pages",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out"
   },
   "resume": {
     "personalInfo": {
@@ -823,6 +825,11 @@
       "tryAgain": "Try Again",
       "reloadPage": "Reload Page"
     }
+  },
+  "a11y": {
+    "removeItem": "Remove item",
+    "removeDescription": "Remove description bullet",
+    "removeFile": "Remove file"
   },
   "confirmations": {
     "deleteResume": "Are you sure you want to delete this resume?",
