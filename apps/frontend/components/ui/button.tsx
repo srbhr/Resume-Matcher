@@ -51,8 +51,9 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       // Layout & Typography
       'inline-flex items-center justify-center gap-2',
       'whitespace-nowrap text-sm font-medium font-mono uppercase tracking-wide',
-      // Transitions
-      'transition-all duration-150 ease-out',
+      // Transitions — only the properties that actually change on hover/active.
+      // Avoids the perf footgun of `transition-all` and matches Swiss "snap" feel.
+      'transition-[transform,box-shadow,background-color] duration-100 ease-out',
       // Focus state - sharp blue ring (not soft glow)
       'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2',
       // Disabled state
