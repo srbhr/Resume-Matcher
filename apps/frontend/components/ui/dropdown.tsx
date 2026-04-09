@@ -106,7 +106,13 @@ export function Dropdown({
           />
         </button>
 
-        {/* Dropdown Menu */}
+        {/* Dropdown Menu. Uses menuitemradio (not plain menuitem) because
+            this is a single-value selector, not a command menu — options
+            express a mutually-exclusive selection. aria-checked on the
+            selected item lets screen readers announce which option is
+            currently active. A full listbox pattern would also be valid
+            but needs arrow-key navigation + aria-activedescendant, which
+            is tracked as a follow-up. */}
         {isOpen && (
           <div
             id={menuId}
@@ -118,8 +124,8 @@ export function Dropdown({
               {options.map((option, index) => (
                 <React.Fragment key={option.id}>
                   <button
-                    role="menuitem"
-                    aria-current={option.id === value ? 'true' : undefined}
+                    role="menuitemradio"
+                    aria-checked={option.id === value}
                     onClick={() => handleSelect(option.id)}
                     className={`w-full px-4 py-3 text-left font-mono transition-colors duration-150 border border-black ${
                       option.id === value
