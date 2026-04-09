@@ -15,7 +15,7 @@ Resume Matcher is an AI-powered application that helps users tailor resumes to j
 
 ### Code Quality
 
-1. **All frontend changes** MUST follow the Swiss International Style in [style-guide.md](design/style-guide.md)
+1. **All frontend changes** MUST follow the Swiss International Style design system. The full system is published as a portable pack at [`docs/portable/swiss-design-system/`](../portable/swiss-design-system/README.md). Read [`tokens.md`](../portable/swiss-design-system/tokens.md) and [`components.md`](../portable/swiss-design-system/components.md) before touching UI.
 2. **All backend functions** MUST have type hints
 3. **Run `npm run lint`** before committing frontend changes
 4. **Run Prettier** (`npm run format`) before committing

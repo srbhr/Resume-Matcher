@@ -59,7 +59,7 @@ Before marking a PR as ready:
 - [ ] Code compiles without errors
 - [ ] `npm run lint` passes
 - [ ] New features have tests (or documented reason why not)
-- [ ] UI changes follow [Swiss International Style](design/style-guide.md)
+- [ ] UI changes follow the [Swiss International Style pack](../portable/swiss-design-system/README.md)
 - [ ] Schema/prompt changes are called out in PR description
 - [ ] Screenshots attached for UI changes
 - [ ] Verified locally with commands listed in PR

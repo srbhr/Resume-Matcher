@@ -553,7 +553,7 @@ Stuck? Here are your options:
 |----------|-------------|
 | [backend-guide.md](docs/agent/architecture/backend-guide.md) | Backend architecture and API details |
 | [frontend-workflow.md](docs/agent/architecture/frontend-workflow.md) | User flow and component architecture |
-| [style-guide.md](docs/agent/design/style-guide.md) | UI design system (Swiss International Style) |
+| [swiss-design-system/](docs/portable/swiss-design-system/README.md) | UI design system (Swiss International Style) — portable pack |
 
 ---
 
