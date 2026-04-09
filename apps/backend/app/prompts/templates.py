@@ -420,10 +420,10 @@ DIFF_STRATEGY_INSTRUCTIONS = {
 }
 
 DIFF_IMPROVE_PROMPT = """Given this resume and job description, output a JSON object with targeted changes to better align the resume with the job.
-
+{custom_instructions_section}
 RULES:
 1. Only modify content — never change names, companies, dates, institutions, or degrees
-2. Do not invent skills, metrics, or achievements not supported by the original resume text
+2. Do not invent skills, metrics, or achievements not supported by the original resume text or details.md
 3. Do not add new work entries, education entries, or project entries
 4. {strategy_instruction}
 5. Each change MUST include the original text (copied exactly) so it can be verified
@@ -442,12 +442,12 @@ PATHS you can target:
 
 Do NOT target: personalInfo, dates/years, company names, education, customSections.
 
-Keywords to emphasize (only if already supported by resume content):
+Keywords to emphasize (only if already supported by resume content or details.md):
 {job_keywords}
 
 Job Description:
 {job_description}
-
+{details_md_section}
 Original Resume:
 {original_resume}
 

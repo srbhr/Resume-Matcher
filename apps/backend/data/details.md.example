@@ -1,0 +1,40 @@
+# My Detailed Resume Content
+# (Copy this file to details.md and replace with your actual content)
+#
+# This file is your PRIMARY SOURCE OF TRUTH for resume content.
+# The backend reads details.md automatically on every resume improvement call
+# and injects it into the AI prompt alongside the job description.
+#
+# Be as detailed as possible — the AI selects and tailors the most
+# relevant content for each job description you provide.
+
+## Work Experience
+
+**Company Name | Job Title** — Month YYYY – Month YYYY
+- Bullet with full context, tools used, and metric (e.g., "Automated 12 recurring Excel reports using Python, saving 8 hours/week")
+- Another bullet
+
+**Previous Company | Job Title** — Month YYYY – Month YYYY
+- Bullet 1
+- Bullet 2
+
+## Projects
+
+**Project Name** (Personal/Academic/Contract) — YYYY
+- What you built, tech stack used, data scale, outcome, metrics
+- Tech: Python, SQL, XGBoost, AWS S3
+
+**Another Project** — YYYY
+- Description with concrete outcome
+
+## Technical Skills
+
+Languages: Python, SQL, R
+Tools: Power BI, Tableau, dbt, Airflow
+Databases: PostgreSQL, BigQuery, Redshift
+Cloud: AWS (S3, Lambda, Redshift), GCP (BigQuery)
+Libraries: pandas, scikit-learn, XGBoost, matplotlib
+
+## Certifications
+
+- AWS Certified Cloud Practitioner (2024)

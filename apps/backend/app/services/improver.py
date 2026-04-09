@@ -427,6 +427,8 @@ async def generate_resume_diffs(
     language: str = "en",
     prompt_id: str | None = None,
     original_resume_data: dict[str, Any] | None = None,
+    details_md: str | None = None,
+    custom_instructions: str | None = None,
 ) -> ImproveDiffResult:
     """Generate targeted resume diffs via LLM.
 
@@ -440,6 +442,8 @@ async def generate_resume_diffs(
         language: Output language code (en, es, zh, ja)
         prompt_id: Strategy id (nudge/keywords/full)
         original_resume_data: Structured resume JSON
+        details_md: Content of the user's details.md file (optional)
+        custom_instructions: Content of the user's custom_instructions.md file (optional)
 
     Returns:
         ImproveDiffResult with list of changes and strategy notes
@@ -469,12 +473,26 @@ async def generate_resume_diffs(
     else:
         resume_input = original_resume
 
+    # Build optional context sections from user-managed files
+    details_md_section = (
+        f"\nAdditional Candidate Context (from details.md — use as primary source for bullets and skills):\n{details_md}\n"
+        if details_md
+        else ""
+    )
+    custom_instructions_section = (
+        f"\nCustom Instructions (follow these in addition to the rules above):\n{custom_instructions}\n"
+        if custom_instructions
+        else ""
+    )
+
     prompt = DIFF_IMPROVE_PROMPT.format(
         strategy_instruction=strategy_instruction,
         output_language=output_language,
         job_keywords=keywords_str,
         job_description=sanitized_jd,
         original_resume=resume_input,
+        details_md_section=details_md_section,
+        custom_instructions_section=custom_instructions_section,
     )
 
     result = await complete_json(

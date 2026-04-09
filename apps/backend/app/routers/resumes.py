@@ -69,6 +69,22 @@ def _get_default_prompt_id() -> str:
     return prompt_id if prompt_id in option_ids else DEFAULT_IMPROVE_PROMPT_ID
 
 
+def _load_user_file(filename: str) -> str | None:
+    """Load a user-managed file from the data directory.
+
+    Returns the file contents if it exists and is non-empty, otherwise None.
+    Files live at apps/backend/data/<filename> and are edited directly in VS Code.
+    """
+    path = settings.data_dir / filename
+    try:
+        if path.exists():
+            content = path.read_text(encoding="utf-8").strip()
+            return content if content else None
+    except OSError as e:
+        logger.warning("Could not read user file %s: %s", filename, e)
+    return None
+
+
 def _hash_job_content(content: str) -> str:
     return hashlib.sha256(content.encode("utf-8")).hexdigest()
 
@@ -742,6 +758,14 @@ async def _improve_preview_flow(
     # Collect warnings throughout the process
     response_warnings: list[str] = []
 
+    # Load user-managed files from data/ directory (edited directly in VS Code)
+    details_md = _load_user_file("details.md")
+    custom_instructions = _load_user_file("custom_instructions.md")
+    if details_md:
+        logger.info("Loaded details.md (%d chars) for resume improvement", len(details_md))
+    if custom_instructions:
+        logger.info("Loaded custom_instructions.md (%d chars) for resume improvement", len(custom_instructions))
+
     # Diff-based improvement: generate targeted changes, apply with verification
     if original_resume_data:
         diff_result = await generate_resume_diffs(
@@ -751,6 +775,8 @@ async def _improve_preview_flow(
             language=language,
             prompt_id=prompt_id,
             original_resume_data=original_resume_data,
+            details_md=details_md,
+            custom_instructions=custom_instructions,
         )
 
         improved_data, applied_changes, rejected_changes = apply_diffs(
