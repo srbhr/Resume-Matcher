@@ -132,7 +132,12 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-6 w-6 text-steel-grey hover:text-ink-soft"
+                  // Visible 24×24 (matches the small inline pencil aesthetic
+                  // next to the section title), but the touch area is
+                  // extended to 44×44 via -inset-[10px] to meet WCAG 2.5.8.
+                  // The default Button overlay (-inset-1.5) only gives 36×36
+                  // for h-6 buttons; this override adds 4 more px per side.
+                  className="h-6 w-6 text-steel-grey hover:text-ink-soft before:-inset-[10px]"
                   onClick={handleStartEdit}
                   aria-label={t('builder.sectionHeader.renameSection')}
                   title={t('builder.sectionHeader.renameSection')}

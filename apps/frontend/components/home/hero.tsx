@@ -7,8 +7,12 @@ import { useTranslations } from '@/lib/i18n';
 export default function Hero() {
   const { t } = useTranslations();
 
+  // Hover translates DOWN-RIGHT (+1, +1) for the press-in effect — matches
+  // every other button in the codebase. The previous version translated
+  // UP-LEFT (-1, -1) which was the inverse and looked broken next to the
+  // rest of the design system.
   const buttonClass =
-    'group relative border border-black bg-transparent px-8 py-3 font-mono text-sm font-bold uppercase text-blue-700 transition-[transform,box-shadow,background-color,color] duration-150 ease-out hover:bg-blue-700 hover:text-background hover:-translate-y-1 hover:-translate-x-1 hover:shadow-sw-default active:translate-x-0 active:translate-y-0 active:shadow-none cursor-pointer';
+    'group relative border border-black bg-transparent px-8 py-3 font-mono text-sm font-bold uppercase text-blue-700 transition-[transform,box-shadow,background-color,color] duration-150 ease-out hover:bg-blue-700 hover:text-background hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-sw-default active:translate-x-0 active:translate-y-0 active:shadow-none cursor-pointer';
 
   return (
     <section

@@ -596,69 +596,69 @@ export default function SettingsPage() {
               // shown alongside a sidebar or in a split view.
               <div className="@container">
                 <div className="grid grid-cols-2 @3xl:grid-cols-4 gap-4">
-                {/* LLM Status */}
-                <div className="border border-black bg-white p-4 shadow-sw-sm">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Server className="w-4 h-4 text-steel-grey" />
-                    <span className="font-mono text-xs uppercase text-steel-grey">
-                      {t('settings.statusCards.llm')}
-                    </span>
+                  {/* LLM Status */}
+                  <div className="border border-black bg-white p-4 shadow-sw-sm">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Server className="w-4 h-4 text-steel-grey" />
+                      <span className="font-mono text-xs uppercase text-steel-grey">
+                        {t('settings.statusCards.llm')}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {systemStatus.llm_healthy ? (
+                        <CheckCircle2 className="w-5 h-5 text-green-600" />
+                      ) : (
+                        <XCircle className="w-5 h-5 text-red-500" />
+                      )}
+                      <span className="font-mono text-sm font-bold">
+                        {systemStatus.llm_healthy
+                          ? t('settings.statusValues.healthy')
+                          : t('settings.statusValues.offline')}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    {systemStatus.llm_healthy ? (
+
+                  {/* Database Status */}
+                  <div className="border border-black bg-white p-4 shadow-sw-sm">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Database className="w-4 h-4 text-steel-grey" />
+                      <span className="font-mono text-xs uppercase text-steel-grey">
+                        {t('settings.statusCards.database')}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
                       <CheckCircle2 className="w-5 h-5 text-green-600" />
-                    ) : (
-                      <XCircle className="w-5 h-5 text-red-500" />
-                    )}
-                    <span className="font-mono text-sm font-bold">
-                      {systemStatus.llm_healthy
-                        ? t('settings.statusValues.healthy')
-                        : t('settings.statusValues.offline')}
-                    </span>
+                      <span className="font-mono text-sm font-bold">
+                        {t('settings.statusValues.connected')}
+                      </span>
+                    </div>
                   </div>
-                </div>
 
-                {/* Database Status */}
-                <div className="border border-black bg-white p-4 shadow-sw-sm">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Database className="w-4 h-4 text-steel-grey" />
-                    <span className="font-mono text-xs uppercase text-steel-grey">
-                      {t('settings.statusCards.database')}
+                  {/* Resumes Count */}
+                  <div className="border border-black bg-white p-4 shadow-sw-sm">
+                    <div className="flex items-center gap-2 mb-2">
+                      <FileText className="w-4 h-4 text-steel-grey" />
+                      <span className="font-mono text-xs uppercase text-steel-grey">
+                        {t('settings.statusCards.resumes')}
+                      </span>
+                    </div>
+                    <span className="font-mono text-2xl font-bold">
+                      {systemStatus.database_stats.total_resumes}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-green-600" />
-                    <span className="font-mono text-sm font-bold">
-                      {t('settings.statusValues.connected')}
-                    </span>
-                  </div>
-                </div>
 
-                {/* Resumes Count */}
-                <div className="border border-black bg-white p-4 shadow-sw-sm">
-                  <div className="flex items-center gap-2 mb-2">
-                    <FileText className="w-4 h-4 text-steel-grey" />
-                    <span className="font-mono text-xs uppercase text-steel-grey">
-                      {t('settings.statusCards.resumes')}
+                  {/* Jobs Count */}
+                  <div className="border border-black bg-white p-4 shadow-sw-sm">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Briefcase className="w-4 h-4 text-steel-grey" />
+                      <span className="font-mono text-xs uppercase text-steel-grey">
+                        {t('settings.statusCards.jobs')}
+                      </span>
+                    </div>
+                    <span className="font-mono text-2xl font-bold">
+                      {systemStatus.database_stats.total_jobs}
                     </span>
                   </div>
-                  <span className="font-mono text-2xl font-bold">
-                    {systemStatus.database_stats.total_resumes}
-                  </span>
-                </div>
-
-                {/* Jobs Count */}
-                <div className="border border-black bg-white p-4 shadow-sw-sm">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Briefcase className="w-4 h-4 text-steel-grey" />
-                    <span className="font-mono text-xs uppercase text-steel-grey">
-                      {t('settings.statusCards.jobs')}
-                    </span>
-                  </div>
-                  <span className="font-mono text-2xl font-bold">
-                    {systemStatus.database_stats.total_jobs}
-                  </span>
-                </div>
                 </div>
               </div>
             )}

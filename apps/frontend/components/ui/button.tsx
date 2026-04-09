@@ -72,8 +72,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     // 44×44 touch target. For h-7 and smaller, the touch area still falls
     // short — those need an additional inline override at the call site
     // (e.g. before:-inset-[10px]).
-    const iconHitArea =
-      "before:absolute before:-inset-1.5 before:content-['']";
+    const iconHitArea = "before:absolute before:-inset-1.5 before:content-['']";
 
     // Variant styles - each has distinct purpose and color
     const variants = {
