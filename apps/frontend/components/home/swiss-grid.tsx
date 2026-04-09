@@ -31,10 +31,13 @@ export const SwissGrid = ({ children }: { children: React.ReactNode }) => {
           </p>
         </div>
 
-        {/* Content Grid - Scrollable area with NO padding */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden relative z-10">
+        {/* Content Grid - Scrollable area with NO padding.
+            @container makes the card grid respond to the container's actual
+            width, not the viewport. The Swiss frame is max-w-86rem so on
+            ultra-wide screens the cards no longer over-stretch. */}
+        <div className="@container flex-1 overflow-y-auto overflow-x-hidden relative z-10">
           <div className="p-[1.5px]">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 bg-black gap-[1px] border-b border-black">
+            <div className="grid grid-cols-1 @2xl:grid-cols-2 @3xl:grid-cols-3 @5xl:grid-cols-5 bg-black gap-[1px] border-b border-black">
               {children}
             </div>
           </div>

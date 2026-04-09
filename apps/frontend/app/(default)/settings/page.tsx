@@ -591,7 +591,11 @@ export default function SettingsPage() {
                 </Button>
               </div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              // @container so the status cards adapt to the section width
+              // rather than the viewport — useful when the settings page is
+              // shown alongside a sidebar or in a split view.
+              <div className="@container">
+                <div className="grid grid-cols-2 @3xl:grid-cols-4 gap-4">
                 {/* LLM Status */}
                 <div className="border border-black bg-white p-4 shadow-sw-sm">
                   <div className="flex items-center gap-2 mb-2">
@@ -654,6 +658,7 @@ export default function SettingsPage() {
                   <span className="font-mono text-2xl font-bold">
                     {systemStatus.database_stats.total_jobs}
                   </span>
+                </div>
                 </div>
               </div>
             )}

@@ -49,7 +49,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     // Swiss Design: clean, functional, high contrast
     const baseStyles = cn(
       // Layout & Typography
-      'inline-flex items-center justify-center gap-2',
+      'relative inline-flex items-center justify-center gap-2',
       'whitespace-nowrap text-sm font-medium font-mono uppercase tracking-wide',
       // Transitions — only the properties that actually change on hover/active.
       // Avoids the perf footgun of `transition-all` and matches Swiss "snap" feel.
@@ -63,6 +63,17 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       // Swiss Design: NO rounded corners
       'rounded-none'
     );
+
+    // Hit-area expansion for icon-only buttons. Many call sites override
+    // size="icon" with smaller h-X w-X classes for dense toolbars (h-8 w-8,
+    // h-7 w-7, etc.) — those visible sizes are under WCAG 2.5.8's 44×44 target
+    // size minimum. The ::before pseudo-element extends the touch area by 6px
+    // on each side without affecting visible layout, so a 32×32 button gets a
+    // 44×44 touch target. For h-7 and smaller, the touch area still falls
+    // short — those need an additional inline override at the call site
+    // (e.g. before:-inset-[10px]).
+    const iconHitArea =
+      "before:absolute before:-inset-1.5 before:content-['']";
 
     // Variant styles - each has distinct purpose and color
     const variants = {
@@ -152,14 +163,14 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     };
 
     // Size styles. Icon variant is 44×44px to meet WCAG 2.2 AA target size
-    // (success criterion 2.5.8). Many call sites still override with smaller
-    // h-X w-X classes for dense toolbars — those are tracked separately and
-    // need a hit-area expansion pass (visual size smaller, padded touch area).
+    // (success criterion 2.5.8). Call sites that override the visible size
+    // with smaller h-X w-X classes get the touch-area expansion via the
+    // iconHitArea overlay above.
     const sizes = {
       default: 'h-10 px-6 py-2',
       sm: 'h-8 px-4 py-1 text-xs',
       lg: 'h-12 px-8 py-3 text-base',
-      icon: 'h-11 w-11 p-0',
+      icon: cn('h-11 w-11 p-0', iconHitArea),
     };
 
     const variantClass = variants[variant];
