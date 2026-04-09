@@ -33,6 +33,9 @@ export function Dropdown({
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  // Stable id wiring the trigger's aria-controls to the popup's id, and
+  // the popup's role="menu" to its role="menuitem" children.
+  const menuId = React.useId();
 
   const selectedOption = options.find((opt) => opt.id === value);
 
@@ -66,14 +69,19 @@ export function Dropdown({
       {description && <p className="text-sm text-ink-soft">{description}</p>}
 
       <div className="relative">
-        {/* Trigger Button */}
+        {/* Trigger Button.
+            aria-haspopup="menu" matches the actual popup semantics: options
+            commit on click (not select-then-activate), which is a menu
+            pattern, not listbox. aria-controls wires the trigger to the
+            popup id so screen readers know they're linked. */}
         <button
           ref={buttonRef}
           type="button"
           onClick={() => setIsOpen(!isOpen)}
           disabled={disabled}
-          aria-haspopup="listbox"
+          aria-haspopup="menu"
           aria-expanded={isOpen}
+          aria-controls={isOpen ? menuId : undefined}
           aria-label={label}
           className="w-full flex items-center justify-between border border-black bg-white px-4 py-3 font-mono text-sm transition-all duration-150 ease-out shadow-sw-sm hover:shadow-none hover:translate-y-[2px] hover:translate-x-[2px] disabled:opacity-50 disabled:cursor-not-allowed rounded-none"
         >
@@ -100,11 +108,18 @@ export function Dropdown({
 
         {/* Dropdown Menu */}
         {isOpen && (
-          <div className="absolute top-full left-0 right-0 mt-1 z-50 border border-black bg-white shadow-sw-default rounded-none">
+          <div
+            id={menuId}
+            role="menu"
+            aria-label={label}
+            className="absolute top-full left-0 right-0 mt-1 z-50 border border-black bg-white shadow-sw-default rounded-none"
+          >
             <div className="max-h-64 overflow-y-auto">
               {options.map((option, index) => (
                 <React.Fragment key={option.id}>
                   <button
+                    role="menuitem"
+                    aria-current={option.id === value ? 'true' : undefined}
                     onClick={() => handleSelect(option.id)}
                     className={`w-full px-4 py-3 text-left font-mono transition-colors duration-150 border border-black ${
                       option.id === value

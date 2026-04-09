@@ -311,7 +311,7 @@ export function DiffPreviewModal({
             <Button
               onClick={onConfirm}
               disabled={isConfirming}
-              className="gap-2 bg-success hover:bg-[#166534]"
+              className="gap-2 bg-success hover:bg-green-800"
             >
               {isConfirming ? (
                 <>

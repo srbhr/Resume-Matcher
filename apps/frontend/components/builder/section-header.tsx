@@ -161,12 +161,15 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
 
         {/* Section Controls */}
         <div className="flex items-center gap-1">
-          {/* Visibility Toggle */}
+          {/* Visibility Toggle. The parent container already applies
+              opacity-60 when hidden (line 91), which carries the visual
+              "faded" cue for the hidden state. A conditional text color
+              here would be redundant — just use steel-grey. */}
           {!isPersonalInfo && (
             <Button
               variant="ghost"
               size="icon"
-              className={`h-8 w-8 ${section.isVisible ? 'text-steel-grey' : 'text-steel-grey'}`}
+              className="h-8 w-8 text-steel-grey"
               onClick={onToggleVisibility}
               aria-label={
                 section.isVisible
