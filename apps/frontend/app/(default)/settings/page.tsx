@@ -500,14 +500,7 @@ export default function SettingsPage() {
   const requiresApiKey = providerInfo.requiresKey ?? true;
 
   return (
-    <div
-      className="flex flex-col items-center justify-start p-6 md:p-12 min-h-screen overflow-y-auto"
-      style={{
-        backgroundImage:
-          'linear-gradient(rgba(29, 78, 216, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(29, 78, 216, 0.05) 1px, transparent 1px)',
-        backgroundSize: '40px 40px',
-      }}
-    >
+    <div className="flex flex-col items-center justify-start p-6 md:p-12 min-h-screen overflow-y-auto">
       <div className="w-full max-w-4xl border border-black bg-[#F0F0E8] shadow-[8px_8px_0px_0px_rgba(0,0,0,0.1)]">
         {/* Header */}
         <div className="border-b border-black p-8 bg-white flex justify-between items-start">

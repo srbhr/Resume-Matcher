@@ -603,14 +603,7 @@ const ResumeBuilderContent = () => {
   };
 
   return (
-    <div
-      className="h-screen w-full bg-[#F0F0E8] flex justify-center items-center p-4 md:p-8"
-      style={{
-        backgroundImage:
-          'linear-gradient(rgba(29, 78, 216, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(29, 78, 216, 0.1) 1px, transparent 1px)',
-        backgroundSize: '40px 40px',
-      }}
-    >
+    <div className="h-screen w-full bg-[#F0F0E8] flex justify-center items-center p-4 md:p-8">
       {/* Main Container */}
       <div className="w-full h-full max-w-[90%] md:max-w-[95%] xl:max-w-[1800px] border border-black bg-[#F0F0E8] shadow-[8px_8px_0px_0px_rgba(0,0,0,0.1)] flex flex-col">
         {/* Header Section */}

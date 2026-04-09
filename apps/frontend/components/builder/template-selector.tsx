@@ -148,9 +148,10 @@ export const TemplateThumbnail: React.FC<TemplateThumbnailProps> = ({ type, isAc
             <div className={`h-0.5 ${accentColor} w-full`}></div>
             <div className={`h-0.5 ${lineColor} w-5/6 opacity-50`}></div>
           </div>
-          {/* Right column (narrower) - with accent border and headers */}
+          {/* Right column (narrower). Active state uses a heavier full
+              border instead of a left stripe (impeccable BAN 1). */}
           <div
-            className={`w-1/3 border-l-2 ${isActive ? 'border-l-blue-600' : 'border-l-blue-400'} pl-1 space-y-0.5`}
+            className={`w-1/3 border ${isActive ? 'border-blue-600' : 'border-blue-300'} pl-1 space-y-0.5`}
           >
             <div className={`h-0.5 ${accentColor} w-full`}></div>
             <div className={`h-0.5 ${lineColor} w-4/5 opacity-50`}></div>

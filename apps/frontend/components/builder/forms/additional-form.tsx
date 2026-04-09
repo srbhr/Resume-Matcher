@@ -38,7 +38,7 @@ export const AdditionalForm: React.FC<AdditionalFormProps> = ({ data, onChange }
 
   return (
     <div className="space-y-6">
-      <p className="font-mono text-xs text-blue-700 border-l-2 border-blue-700 pl-3">
+      <p className="font-mono text-xs uppercase tracking-wider text-blue-700">
         {t('builder.additionalForm.instructions')}
       </p>
 

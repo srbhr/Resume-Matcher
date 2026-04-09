@@ -69,7 +69,7 @@ export const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
       >
         <span
           className={cn(
-            'pointer-events-none block h-4 w-4 bg-white border border-black shadow-sm',
+            'pointer-events-none block h-4 w-4 bg-white border border-black',
             'transition-transform duration-200',
             checked ? 'translate-x-6' : 'translate-x-1'
           )}

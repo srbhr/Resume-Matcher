@@ -85,7 +85,7 @@ function EnhancementCard({ enhancement }: EnhancementCardProps) {
             </div>
             <ul className="space-y-2">
               {enhancement.original_description.map((bullet, i) => (
-                <li key={i} className="text-sm text-gray-700 pl-4 border-l-2 border-gray-300">
+                <li key={i} className="text-sm text-gray-700 pl-4">
                   {bullet}
                 </li>
               ))}
@@ -113,7 +113,7 @@ function EnhancementCard({ enhancement }: EnhancementCardProps) {
               {enhancement.enhanced_description.map((bullet, i) => (
                 <li
                   key={i}
-                  className="text-sm text-gray-900 pl-4 border-l-2 border-green-500 bg-green-50 py-1 pr-2"
+                  className="text-sm text-gray-900 pl-4 bg-green-50 py-1 pr-2 border border-green-500"
                 >
                   {bullet}
                 </li>

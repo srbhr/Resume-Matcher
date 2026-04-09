@@ -390,10 +390,20 @@ interface ChangeItemProps {
 }
 
 function ChangeItem({ change }: ChangeItemProps) {
-  const typeColors = {
-    added: 'border-l-4 border-[#15803D] bg-[#F0FDF4]',
-    removed: 'border-l-4 border-[#DC2626] bg-[#FEF2F2]',
-    modified: 'border-l-4 border-[#1D4ED8] bg-[#EFF6FF]',
+  // Background tint + leading glyph instead of left-stripe borders.
+  // Side-stripe borders are an impeccable absolute_ban (BAN 1) — the most
+  // overused dashboard "design touch". The leading +/-/~ glyph carries the
+  // semantic load and the bg tint reinforces it.
+  const typeBackgrounds = {
+    added: 'bg-[#F0FDF4]',
+    removed: 'bg-[#FEF2F2]',
+    modified: 'bg-[#EFF6FF]',
+  };
+
+  const typeGlyphColors = {
+    added: 'text-[#15803D]',
+    removed: 'text-[#DC2626]',
+    modified: 'text-[#1D4ED8]',
   };
 
   const typeLabels = {
@@ -403,9 +413,12 @@ function ChangeItem({ change }: ChangeItemProps) {
   };
 
   return (
-    <div className={`p-3 ${typeColors[change.change_type]}`}>
+    <div className={`p-3 border border-black ${typeBackgrounds[change.change_type]}`}>
       <div className="flex items-start gap-2">
-        <span className="font-mono text-xs font-bold uppercase tracking-wider text-gray-500">
+        <span
+          className={`font-mono text-base font-bold uppercase tracking-wider ${typeGlyphColors[change.change_type]}`}
+          aria-hidden="true"
+        >
           {typeLabels[change.change_type]}
         </span>
         <div className="flex-1">
