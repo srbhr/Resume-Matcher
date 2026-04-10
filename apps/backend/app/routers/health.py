@@ -11,13 +11,11 @@ router = APIRouter(tags=["Health"])
 
 @router.get("/health", response_model=HealthResponse)
 async def health_check() -> HealthResponse:
-    """Basic health check endpoint."""
-    llm_status = await check_llm_health()
+    """Lightweight liveness check for Docker HEALTHCHECK.
 
-    return HealthResponse(
-        status="healthy" if llm_status["healthy"] else "degraded",
-        llm=llm_status,
-    )
+    Does NOT call the LLM provider. Use GET /status for full LLM health.
+    """
+    return HealthResponse(status="healthy")
 
 
 @router.get("/status", response_model=StatusResponse)
