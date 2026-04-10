@@ -40,7 +40,7 @@ export const DraggableListItem: React.FC<DraggableListItemProps> = ({ id, childr
         className="absolute left-0 top-0 h-full w-4 flex items-start justify-center cursor-grab active:cursor-grabbing z-10"
         title="Drag to reorder"
       >
-        <GripVertical className="w-4 h-4 text-gray-400 hover:text-gray-700 transition-colors" />
+        <GripVertical className="w-4 h-4 text-steel-grey hover:text-ink-soft transition-colors" />
       </div>
 
       {/* List Item Content - add left padding to make room for drag handle */}

@@ -4,10 +4,8 @@
 @source "../../../{app,components,hooks,lib,messages}/**/*.{js,ts,jsx,tsx,mdx}";
 
 @theme inline {
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  /* No --radius-* tokens — Swiss style commits to rounded-none everywhere.
+     Dead tokens removed. */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -40,15 +38,29 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  /* Swiss Style Tokens */
+  /* Swiss Style brand tokens. --color-primary, --color-destructive,
+     --color-secondary, --color-background already exist above via the
+     legacy var(--xxx) chain — these are only the additional brand
+     semantics that didn't exist as @theme tokens before. */
   --color-canvas: #f0f0e8;
   --color-ink: #000000;
   --color-success: #15803d;
   --color-warning: #f97316;
 
+  /* Brand-tinted neutrals (OKLCH, chroma tinted ~0.005-0.018 toward
+     Hyper Blue hue 264) — replace ad-hoc Tailwind grays. */
+  --color-paper-tint: oklch(96% 0.005 264);   /* replaces gray-50/100/200 */
+  --color-steel-grey: oklch(64% 0.012 264);   /* replaces gray-300/400/500 */
+  --color-ink-soft: oklch(38% 0.018 264);     /* replaces gray-600/700/800/900 */
+
+  /* Hard offset shadows in solid ink — Swiss style commits to no blur.
+     Sized small (1px) through xl (12px) for Hero/featured surfaces. */
+  --shadow-sw-xs: 1px 1px 0px 0px #000000;
   --shadow-sw-sm: 2px 2px 0px 0px #000000;
   --shadow-sw-default: 4px 4px 0px 0px #000000;
   --shadow-sw-card: 6px 6px 0px 0px #000000;
+  --shadow-sw-lg: 8px 8px 0px 0px #000000;
+  --shadow-sw-xl: 12px 12px 0px 0px #000000;
 
   /* Fonts */
   --font-sans: 'Geist Sans', sans-serif;
@@ -67,7 +79,6 @@
 :root {
   --font-mono: 'Geist Mono', monospace;
   --font-sans: 'Geist', sans-serif;
-  --radius: 0.625rem;
 
   /* Swiss International Style Palette */
   --background: #f0f0e8; /* Canvas */
@@ -114,28 +125,9 @@
   --sidebar-ring: #1d4ed8;
 }
 
-.dark {
-  /* Minimal Dark Mode mapping for now - Swiss Style is predominantly light/brutalist */
-  --background: #1a1a1a;
-  --foreground: #ffffff;
-  --card: #2a2a2a;
-  --card-foreground: #ffffff;
-  --popover: #2a2a2a;
-  --popover-foreground: #ffffff;
-  --primary: #3b82f6;
-  --primary-foreground: #ffffff;
-  --secondary: #2a2a2a;
-  --secondary-foreground: #ffffff;
-  --muted: #2a2a2a;
-  --muted-foreground: #a3a3a3;
-  --accent: #2a2a2a;
-  --accent-foreground: #ffffff;
-  --destructive: #ef4444;
-  --destructive-foreground: #ffffff;
-  --border: #404040;
-  --input: #2a2a2a;
-  --ring: #3b82f6;
-}
+/* Light theme only — Swiss/Brutalist works on the warm Canvas background.
+   The half-finished dark mode mapping was removed; .impeccable.md commits
+   to light only. */
 
 @layer base {
   * {
@@ -144,9 +136,9 @@
   body {
     @apply bg-background text-foreground;
   }
-  button {
-    font-family: var(--font-mono);
-  }
+  /* The global `button { font-family: var(--font-mono) }` rule was removed.
+     The Button component applies font-mono via its Tailwind classes, and the
+     global rule was leaking into nested text inside <button> elements. */
 }
 
 @media print {

@@ -46,7 +46,7 @@ export function CoverLetterPreview({
     <div
       className={cn(
         'bg-white border-2 border-black',
-        'shadow-[4px_4px_0px_0px_#000000]',
+        'shadow-sw-default',
         'overflow-hidden',
         className
       )}
@@ -63,7 +63,7 @@ export function CoverLetterPreview({
           <h1 className="font-serif text-2xl font-bold tracking-tight">
             {personalInfo.name || t('coverLetter.preview.defaultName')}
           </h1>
-          <div className="mt-2 font-mono text-xs text-gray-600 flex flex-wrap gap-x-4 gap-y-1">
+          <div className="mt-2 font-mono text-xs text-ink-soft flex flex-wrap gap-x-4 gap-y-1">
             {personalInfo.email && <span>{personalInfo.email}</span>}
             {personalInfo.phone && <span>{personalInfo.phone}</span>}
             {personalInfo.location && <span>{personalInfo.location}</span>}
@@ -73,19 +73,19 @@ export function CoverLetterPreview({
 
         {/* Date */}
         <div className="mb-8">
-          <p className="font-mono text-sm text-gray-600">{today}</p>
+          <p className="font-mono text-sm text-ink-soft">{today}</p>
         </div>
 
         {/* Body */}
         <div className="space-y-4">
           {paragraphs.length > 0 ? (
             paragraphs.map((para, idx) => (
-              <p key={idx} className="font-serif text-base leading-relaxed text-gray-800">
+              <p key={idx} className="font-serif text-base leading-relaxed text-ink-soft">
                 {para}
               </p>
             ))
           ) : (
-            <div className="text-center py-12 text-gray-400">
+            <div className="text-center py-12 text-steel-grey">
               <p className="font-mono text-sm">{t('coverLetter.preview.emptyTitle')}</p>
               <p className="font-mono text-xs mt-2">{t('coverLetter.preview.emptyDescription')}</p>
             </div>

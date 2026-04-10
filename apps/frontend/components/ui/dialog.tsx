@@ -13,11 +13,13 @@ import { useTranslations } from '@/lib/i18n';
  * - Square corners (rounded-none) - Brutalist aesthetic
  * - Black borders and hard shadows
  * - Canvas background (#F0F0E8)
+ * - WCAG 2.2 AA: role="dialog", aria-modal, aria-labelledby wired to title
  */
 
 interface DialogContextValue {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  titleId: string;
 }
 
 const DialogContext = React.createContext<DialogContextValue | null>(null);
@@ -37,7 +39,13 @@ interface DialogProps {
 }
 
 const Dialog: React.FC<DialogProps> = ({ open, onOpenChange, children }) => {
-  return <DialogContext.Provider value={{ open, onOpenChange }}>{children}</DialogContext.Provider>;
+  // Stable id per dialog instance for aria-labelledby wiring to DialogTitle.
+  const titleId = React.useId();
+  return (
+    <DialogContext.Provider value={{ open, onOpenChange, titleId }}>
+      {children}
+    </DialogContext.Provider>
+  );
 };
 
 interface DialogTriggerProps {
@@ -95,7 +103,7 @@ interface DialogContentProps {
 }
 
 const DialogContent: React.FC<DialogContentProps> = ({ children, className }) => {
-  const { open, onOpenChange } = useDialogContext();
+  const { open, onOpenChange, titleId } = useDialogContext();
   const { t } = useTranslations();
 
   // Handle escape key
@@ -134,9 +142,12 @@ const DialogContent: React.FC<DialogContentProps> = ({ children, className }) =>
       {/* Content */}
       <div className="fixed inset-0 flex items-center justify-center p-4">
         <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={titleId}
           className={cn(
             'relative w-full max-w-lg',
-            'border border-black bg-[#F0F0E8] shadow-[8px_8px_0px_0px_rgba(0,0,0,0.2)]',
+            'border border-black bg-background shadow-sw-lg',
             'rounded-none',
             'animate-in fade-in-0 zoom-in-95 duration-200',
             className
@@ -188,14 +199,18 @@ interface DialogTitleProps {
   className?: string;
 }
 
-const DialogTitle: React.FC<DialogTitleProps> = ({ className, children, ...props }) => (
-  <h2
-    className={cn('font-serif text-lg font-bold leading-none tracking-tight', className)}
-    {...props}
-  >
-    {children}
-  </h2>
-);
+const DialogTitle: React.FC<DialogTitleProps> = ({ className, children, ...props }) => {
+  const { titleId } = useDialogContext();
+  return (
+    <h2
+      id={titleId}
+      className={cn('font-serif text-lg font-bold leading-none tracking-tight', className)}
+      {...props}
+    >
+      {children}
+    </h2>
+  );
+};
 
 interface DialogDescriptionProps {
   children: React.ReactNode;
@@ -203,7 +218,7 @@ interface DialogDescriptionProps {
 }
 
 const DialogDescription: React.FC<DialogDescriptionProps> = ({ className, children, ...props }) => (
-  <p className={cn('text-sm text-gray-600', className)} {...props}>
+  <p className={cn('text-sm text-ink-soft', className)} {...props}>
     {children}
   </p>
 );

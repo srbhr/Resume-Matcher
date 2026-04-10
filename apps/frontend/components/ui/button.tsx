@@ -49,10 +49,11 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     // Swiss Design: clean, functional, high contrast
     const baseStyles = cn(
       // Layout & Typography
-      'inline-flex items-center justify-center gap-2',
+      'relative inline-flex items-center justify-center gap-2',
       'whitespace-nowrap text-sm font-medium font-mono uppercase tracking-wide',
-      // Transitions
-      'transition-all duration-150 ease-out',
+      // Transitions — only the properties that actually change on hover/active.
+      // Avoids the perf footgun of `transition-all` and matches Swiss "snap" feel.
+      'transition-[transform,box-shadow,background-color] duration-100 ease-out',
       // Focus state - sharp blue ring (not soft glow)
       'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2',
       // Disabled state
@@ -63,6 +64,16 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       'rounded-none'
     );
 
+    // Hit-area expansion for icon-only buttons. Many call sites override
+    // size="icon" with smaller h-X w-X classes for dense toolbars (h-8 w-8,
+    // h-7 w-7, etc.) — those visible sizes are under WCAG 2.5.8's 44×44 target
+    // size minimum. The ::before pseudo-element extends the touch area by 6px
+    // on each side without affecting visible layout, so a 32×32 button gets a
+    // 44×44 touch target. For h-7 and smaller, the touch area still falls
+    // short — those need an additional inline override at the call site
+    // (e.g. before:-inset-[10px]).
+    const iconHitArea = "before:absolute before:-inset-1.5 before:content-['']";
+
     // Variant styles - each has distinct purpose and color
     const variants = {
       // PRIMARY - Hyper Blue (#1D4ED8 / blue-700)
@@ -70,7 +81,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       default: cn(
         'bg-blue-700 text-white',
         'border border-black',
-        'shadow-[2px_2px_0px_0px_#000000]',
+        'shadow-sw-sm',
         'hover:bg-blue-800',
         'hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none',
         'active:translate-y-[2px] active:translate-x-[2px]'
@@ -81,7 +92,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       destructive: cn(
         'bg-red-600 text-white',
         'border border-black',
-        'shadow-[2px_2px_0px_0px_#000000]',
+        'shadow-sw-sm',
         'hover:bg-red-700',
         'hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none',
         'active:translate-y-[2px] active:translate-x-[2px]'
@@ -92,7 +103,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       success: cn(
         'bg-green-700 text-white',
         'border border-black',
-        'shadow-[2px_2px_0px_0px_#000000]',
+        'shadow-sw-sm',
         'hover:bg-green-800',
         'hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none',
         'active:translate-y-[2px] active:translate-x-[2px]'
@@ -103,7 +114,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       warning: cn(
         'bg-orange-500 text-white',
         'border border-black',
-        'shadow-[2px_2px_0px_0px_#000000]',
+        'shadow-sw-sm',
         'hover:bg-orange-600',
         'hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none',
         'active:translate-y-[2px] active:translate-x-[2px]'
@@ -112,10 +123,10 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       // OUTLINE - Canvas background with black border
       // Use for: Cancel, Back, Secondary actions, Navigation
       outline: cn(
-        'bg-[#F0F0E8] text-black',
+        'bg-background text-black',
         'border border-black',
-        'shadow-[2px_2px_0px_0px_#000000]',
-        'hover:bg-[#E5E5E0]',
+        'shadow-sw-sm',
+        'hover:bg-secondary',
         'hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none',
         'active:translate-y-[2px] active:translate-x-[2px]'
       ),
@@ -123,9 +134,9 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       // SECONDARY - Panel Grey (#E5E5E0)
       // Use for: Less prominent actions, Toolbar buttons
       secondary: cn(
-        'bg-[#E5E5E0] text-black',
+        'bg-secondary text-black',
         'border border-black',
-        'shadow-[2px_2px_0px_0px_#000000]',
+        'shadow-sw-sm',
         'hover:bg-[#D8D8D2]',
         'hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none',
         'active:translate-y-[2px] active:translate-x-[2px]'
@@ -136,8 +147,8 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       ghost: cn(
         'bg-transparent text-black',
         'border-none shadow-none',
-        'hover:bg-gray-100',
-        'active:bg-gray-200'
+        'hover:bg-paper-tint',
+        'active:bg-paper-tint'
       ),
 
       // LINK - Text only with underline
@@ -150,12 +161,15 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       ),
     };
 
-    // Size styles
+    // Size styles. Icon variant is 44×44px to meet WCAG 2.2 AA target size
+    // (success criterion 2.5.8). Call sites that override the visible size
+    // with smaller h-X w-X classes get the touch-area expansion via the
+    // iconHitArea overlay above.
     const sizes = {
       default: 'h-10 px-6 py-2',
       sm: 'h-8 px-4 py-1 text-xs',
       lg: 'h-12 px-8 py-3 text-base',
-      icon: 'h-10 w-10 p-0',
+      icon: cn('h-11 w-11 p-0', iconHitArea),
     };
 
     const variantClass = variants[variant];

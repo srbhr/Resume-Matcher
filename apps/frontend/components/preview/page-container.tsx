@@ -55,7 +55,7 @@ export function PageContainer({
     <div className="relative flex flex-col items-center">
       {/* Page wrapper with scale transform */}
       <div
-        className="relative bg-white border-2 border-black shadow-[6px_6px_0px_0px_#000000] origin-top"
+        className="relative bg-white border-2 border-black shadow-sw-card origin-top"
         style={{
           width: pageWidthPx,
           height: pageHeightPx,
@@ -107,7 +107,7 @@ export function PageContainer({
 
         {/* Page number indicator */}
         <div
-          className="absolute bottom-2 right-3 font-mono text-[10px] text-gray-400 uppercase tracking-wider"
+          className="absolute bottom-2 right-3 font-mono text-[10px] text-steel-grey uppercase tracking-wider"
           style={{ transform: `scale(${1 / scale})`, transformOrigin: 'bottom right' }}
         >
           Page {pageNumber} of {totalPages}

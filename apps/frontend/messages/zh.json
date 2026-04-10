@@ -71,7 +71,7 @@
     "retryProcessing": "重试处理",
     "retryingProcessing": "正在重试...",
     "deleteAndReupload": "删除并重新上传",
-    "processingFailedHint": "AI 解析失败。请重试，或删除后上传其他文件。",
+    "processingFailedHint": "我们无法读取此文件。请重试或上传其他文件。",
     "retrySuccess": "处理成功！",
     "retryFailed": "重试失败。请尝试上传其他文件。",
     "createResume": "创建简历",
@@ -560,12 +560,12 @@
       "confirmLabel": "继续保存"
     },
     "errors": {
-      "jobDescriptionTooShort": "职位描述过短，请提供更多细节。",
-      "apiKeyError": "API 密钥错误。请在设置中检查您的 LLM 配置。",
-      "rateLimit": "触发速率限制，请稍后再试。",
-      "failedToGenerate": "生成简历失败。请检查设置后重试。",
-      "failedToPreview": "预览简历失败。请检查设置后重试。",
-      "failedToConfirm": "确认简历失败。请重试。"
+      "jobDescriptionTooShort": "职位描述过短。请添加更多细节后重试。",
+      "apiKeyError": "您的 API 密钥无效。请在设置中检查。",
+      "rateLimit": "已达到速率限制。请等待约一分钟后重试。",
+      "failedToGenerate": "无法生成简历。请在设置中检查 API 密钥后重试。",
+      "failedToPreview": "无法预览简历。请在设置中检查 API 密钥后重试。",
+      "failedToConfirm": "无法应用更改。请重试。"
     }
   },
   "settings": {
@@ -622,7 +622,7 @@
     "systemStatus": {
       "title": "系统状态",
       "refresh": "刷新",
-      "unableToConnect": "无法连接到后端",
+      "unableToConnect": "无法连接到服务器",
       "expectedAt": "预期地址：{apiUrl}",
       "lastFetched": {
         "never": "从未",
@@ -690,7 +690,7 @@
       }
     },
     "errors": {
-      "unableToConnectBackend": "无法连接到后端。服务是否正在运行？",
+      "unableToConnectBackend": "无法连接到服务器。请确认服务器正在运行。",
       "apiKeyRequired": "所选提供商需要 API 密钥。",
       "unknownProvider": "后端返回未知提供商：{provider}",
       "unableToSaveConfiguration": "无法保存配置",
@@ -712,8 +712,8 @@
     "deletedDescriptionRegular": "该简历已从系统中永久删除。",
     "deleteFailedTitle": "删除失败",
     "errors": {
-      "processingFailed": "简历处理失败。AI 服务无法从您的简历中提取结构化数据。您仍可使用定制功能或尝试重新上传。",
-      "stillProcessing": "简历仍在处理中。请稍候并刷新页面。",
+      "processingFailed": "我们无法读取您的简历。请重试处理，或删除后上传其他文件。",
+      "stillProcessing": "您的简历仍在处理中。请等待几秒后刷新页面。",
       "notProcessedYet": "简历尚未处理。请使用定制功能生成结构化简历。",
       "noDataAvailable": "没有可用的简历数据。",
       "failedToLoad": "加载简历数据失败。",
@@ -726,7 +726,9 @@
     "calculating": "计算中...",
     "pageBreak": "分页符",
     "pageCountSingular": "{count} 页",
-    "pageCountPlural": "{count} 页"
+    "pageCountPlural": "{count} 页",
+    "zoomIn": "放大",
+    "zoomOut": "缩小"
   },
   "resume": {
     "personalInfo": {
@@ -816,27 +818,32 @@
     "networkError": "网络错误，请检查您的连接。",
     "unauthorized": "请登录后继续。",
     "notFound": "未找到请求的资源。",
-    "validationError": "请检查您的输入后重试。",
+    "validationError": "部分字段需要注意。请检查标记的字段后重试。",
     "boundary": {
       "title": "出现错误",
-      "description": "发生了意外错误，已记录以便排查。",
+      "description": "发生了意外问题。请尝试重新加载页面 — 如果问题持续，请告知我们。",
       "tryAgain": "重试",
       "reloadPage": "重新加载页面"
     }
   },
+  "a11y": {
+    "removeItem": "移除项目",
+    "removeDescription": "移除此行",
+    "removeFile": "移除文件"
+  },
   "confirmations": {
-    "deleteResume": "您确定要删除此简历吗？",
-    "deleteResumeDescription": "此操作无法撤销。",
+    "deleteResume": "删除此简历？",
+    "deleteResumeDescription": "简历将被永久删除。",
     "deleteMasterResumeTitle": "删除主简历",
-    "deleteMasterResumeDescription": "此操作无法撤销。您的主简历将从系统中永久删除。",
-    "deleteResumeFromSystemDescription": "此操作无法撤销。该简历将从系统中永久删除。",
+    "deleteMasterResumeDescription": "您的主简历将被永久删除。",
+    "deleteResumeFromSystemDescription": "该简历将被永久删除。",
     "deleteResumeConfirmLabel": "删除简历",
     "keepResumeCancelLabel": "保留简历",
-    "discardChanges": "您确定要放弃更改吗？",
-    "discardChangesDescription": "所有未保存的更改将丢失。",
+    "discardChanges": "放弃未保存的更改？",
+    "discardChangesDescription": "您将丢失所有未保存的工作。",
     "clearApiKeys": "清除所有 API 密钥？",
-    "clearApiKeysDescription": "您确定要删除所有 API 密钥吗？您需要重新输入它们才能使用 AI 功能。",
-    "resetDatabase": "重置数据库并清除所有数据？",
-    "resetDatabaseDescription": "这将永久删除所有简历、职位描述和生成的内容。此操作不可逆。"
+    "clearApiKeysDescription": "下次使用 AI 功能前，您需要重新输入它们。",
+    "resetDatabase": "重置所有内容并重新开始？",
+    "resetDatabaseDescription": "这将永久删除每一份简历、职位描述和生成的文档。"
   }
 }

@@ -71,7 +71,7 @@
     "retryProcessing": "再処理",
     "retryingProcessing": "再処理中...",
     "deleteAndReupload": "削除して再アップロード",
-    "processingFailedHint": "AI 解析に失敗しました。再処理するか、削除して別ファイルをアップロードしてください。",
+    "processingFailedHint": "このファイルを読み取れませんでした。再試行するか、別のファイルをアップロードしてください。",
     "retrySuccess": "処理に成功しました！",
     "retryFailed": "再処理に失敗しました。別のファイルをアップロードしてください。",
     "createResume": "履歴書を作成",
@@ -560,12 +560,12 @@
       "confirmLabel": "差分なしで続行"
     },
     "errors": {
-      "jobDescriptionTooShort": "求人内容が短すぎます。もう少し詳細を入力してください。",
-      "apiKeyError": "API キーのエラーです。設定で LLM 構成を確認してください。",
-      "rateLimit": "レート制限に達しました。しばらく待ってから再試行してください。",
-      "failedToGenerate": "履歴書の生成に失敗しました。設定を確認して再試行してください。",
-      "failedToPreview": "履歴書のプレビューに失敗しました。設定を確認して再試行してください。",
-      "failedToConfirm": "履歴書の確定に失敗しました。もう一度お試しください。"
+      "jobDescriptionTooShort": "求人内容が短すぎます。詳細を追加してから、もう一度お試しください。",
+      "apiKeyError": "API キーが機能していません。設定で確認してください。",
+      "rateLimit": "レート制限に達しました。約1分待ってから再試行してください。",
+      "failedToGenerate": "履歴書を生成できませんでした。設定で API キーを確認してから、もう一度お試しください。",
+      "failedToPreview": "履歴書をプレビューできませんでした。設定で API キーを確認してから、もう一度お試しください。",
+      "failedToConfirm": "変更を適用できませんでした。もう一度お試しください。"
     }
   },
   "settings": {
@@ -622,7 +622,7 @@
     "systemStatus": {
       "title": "システム状態",
       "refresh": "更新",
-      "unableToConnect": "バックエンドに接続できません",
+      "unableToConnect": "サーバーに接続できません",
       "expectedAt": "想定 URL: {apiUrl}",
       "lastFetched": {
         "never": "未取得",
@@ -690,7 +690,7 @@
       }
     },
     "errors": {
-      "unableToConnectBackend": "バックエンドに接続できません。サーバーは起動していますか？",
+      "unableToConnectBackend": "サーバーに接続できません。サーバーが起動していることを確認してください。",
       "apiKeyRequired": "選択したプロバイダーには API キーが必要です。",
       "unknownProvider": "バックエンドから未知のプロバイダーが返されました: {provider}",
       "unableToSaveConfiguration": "設定を保存できません",
@@ -712,8 +712,8 @@
     "deletedDescriptionRegular": "履歴書はシステムから完全に削除されました。",
     "deleteFailedTitle": "削除に失敗しました",
     "errors": {
-      "processingFailed": "履歴書の処理に失敗しました。AI サービスが構造化データを抽出できませんでした。カスタマイズ機能を使用するか、再アップロードしてください。",
-      "stillProcessing": "履歴書はまだ処理中です。少し待ってからページを更新してください。",
+      "processingFailed": "履歴書を読み取れませんでした。再処理するか、削除して別のファイルをアップロードしてください。",
+      "stillProcessing": "履歴書はまだ処理中です。数秒待ってからページを更新してください。",
       "notProcessedYet": "履歴書はまだ処理されていません。カスタマイズ機能で構造化履歴書を生成してください。",
       "noDataAvailable": "利用可能な履歴書データがありません。",
       "failedToLoad": "履歴書データの読み込みに失敗しました。",
@@ -726,7 +726,9 @@
     "calculating": "計算中...",
     "pageBreak": "改ページ",
     "pageCountSingular": "{count} ページ",
-    "pageCountPlural": "{count} ページ"
+    "pageCountPlural": "{count} ページ",
+    "zoomIn": "拡大",
+    "zoomOut": "縮小"
   },
   "resume": {
     "personalInfo": {
@@ -816,27 +818,32 @@
     "networkError": "ネットワークエラー。接続を確認してください。",
     "unauthorized": "続行するにはサインインしてください。",
     "notFound": "リクエストされたリソースが見つかりません。",
-    "validationError": "入力内容を確認してもう一度お試しください。",
+    "validationError": "いくつかの入力欄を確認してください。マークされた欄を修正して、もう一度お試しください。",
     "boundary": {
       "title": "エラーが発生しました",
-      "description": "予期しないエラーが発生しました。記録しました。",
+      "description": "予期しない問題が発生しました。ページを再読み込みしてください。問題が続く場合は、お知らせください。",
       "tryAgain": "再試行",
       "reloadPage": "ページを再読み込み"
     }
   },
+  "a11y": {
+    "removeItem": "項目を削除",
+    "removeDescription": "この行を削除",
+    "removeFile": "ファイルを削除"
+  },
   "confirmations": {
-    "deleteResume": "この履歴書を削除してもよろしいですか？",
-    "deleteResumeDescription": "この操作は取り消せません。",
+    "deleteResume": "この履歴書を削除しますか？",
+    "deleteResumeDescription": "履歴書は完全に削除されます。",
     "deleteMasterResumeTitle": "マスター履歴書を削除",
-    "deleteMasterResumeDescription": "この操作は取り消せません。マスター履歴書はシステムから完全に削除されます。",
-    "deleteResumeFromSystemDescription": "この操作は取り消せません。履歴書はシステムから完全に削除されます。",
+    "deleteMasterResumeDescription": "マスター履歴書は完全に削除されます。",
+    "deleteResumeFromSystemDescription": "履歴書は完全に削除されます。",
     "deleteResumeConfirmLabel": "履歴書を削除",
     "keepResumeCancelLabel": "履歴書を保持",
-    "discardChanges": "変更を破棄してもよろしいですか？",
-    "discardChangesDescription": "保存されていない変更は失われます。",
+    "discardChanges": "保存していない変更を破棄しますか？",
+    "discardChangesDescription": "保存していない作業内容は失われます。",
     "clearApiKeys": "すべてのAPIキーを消去しますか？",
-    "clearApiKeysDescription": "すべてのAPIキーを削除してもよろしいですか？AI機能を使用するには再入力が必要になります。",
-    "resetDatabase": "データベースをリセットして全データを消去しますか？",
-    "resetDatabaseDescription": "すべての履歴書、求人内容、生成されたコンテンツが永久に削除されます。この操作は取り消せません。"
+    "clearApiKeysDescription": "AI機能を再び使うには、もう一度入力が必要になります。",
+    "resetDatabase": "すべてリセットして最初からやり直しますか？",
+    "resetDatabaseDescription": "すべての履歴書、求人内容、生成されたドキュメントが完全に削除されます。"
   }
 }

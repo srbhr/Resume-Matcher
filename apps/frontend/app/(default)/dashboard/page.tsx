@@ -236,7 +236,7 @@ export default function DashboardPage() {
         return {
           text: t('dashboard.status.checking'),
           icon: <Loader2 className="w-3 h-3 animate-spin" />,
-          color: 'text-gray-500',
+          color: 'text-steel-grey',
         };
       case 'processing':
         return {
@@ -253,7 +253,7 @@ export default function DashboardPage() {
           color: 'text-red-600',
         };
       default:
-        return { text: t('dashboard.status.pending'), icon: null, color: 'text-gray-500' };
+        return { text: t('dashboard.status.pending'), icon: null, color: 'text-steel-grey' };
     }
   };
 
@@ -291,7 +291,7 @@ export default function DashboardPage() {
   const extraFillerCount = 5;
   // Use Tailwind classes for fillers now that we have them in config or use specific hex if needed
   // Using the hex values from before to maintain exact look, or we could map them to variants
-  const fillerPalette = ['bg-[#E5E5E0]', 'bg-[#D8D8D2]', 'bg-[#CFCFC7]', 'bg-[#E0E0D8]'];
+  const fillerPalette = ['bg-secondary', 'bg-[#D8D8D2]', 'bg-[#CFCFC7]', 'bg-[#E0E0D8]'];
 
   return (
     <div className="space-y-6">
@@ -398,6 +398,7 @@ export default function DashboardPage() {
                         className="h-8 w-8 hover:bg-blue-100 hover:text-blue-700 z-10 rounded-none relative"
                         onClick={handleRetryProcessing}
                         disabled={isRetrying}
+                        aria-label={t('dashboard.retryProcessing')}
                         title={t('dashboard.retryProcessing')}
                       >
                         {isRetrying ? (
@@ -470,7 +471,7 @@ export default function DashboardPage() {
                   >
                     <span className="font-mono font-bold">{getMonogram(title)}</span>
                   </div>
-                  <span className="font-mono text-xs text-gray-500 uppercase">
+                  <span className="font-mono text-xs text-steel-grey uppercase">
                     {resume.processing_status}
                   </span>
                 </div>

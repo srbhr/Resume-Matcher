@@ -71,7 +71,7 @@
     "retryProcessing": "Tentar novamente",
     "retryingProcessing": "Tentando novamente...",
     "deleteAndReupload": "Excluir e reenviar",
-    "processingFailedHint": "A análise de IA falhou. Tente novamente ou exclua e envie outro arquivo.",
+    "processingFailedHint": "Não conseguimos ler este arquivo. Tente novamente ou envie outro.",
     "retrySuccess": "Processamento concluído com sucesso!",
     "retryFailed": "A nova tentativa falhou. Tente enviar outro arquivo.",
     "createResume": "Criar Currículo",
@@ -560,12 +560,12 @@
       "confirmLabel": "Continuar sem diff"
     },
     "errors": {
-      "jobDescriptionTooShort": "Descrição da vaga muito curta. Por favor, forneça mais detalhes.",
-      "apiKeyError": "Erro na chave de API. Verifique sua configuração de LLM em Configurações.",
-      "rateLimit": "Limite de requisições atingido. Por favor, aguarde um momento e tente novamente.",
-      "failedToGenerate": "Falha ao gerar currículo. Verifique suas configurações e tente novamente.",
-      "failedToPreview": "Falha ao pré-visualizar o currículo. Verifique suas configurações e tente novamente.",
-      "failedToConfirm": "Falha ao confirmar o currículo. Tente novamente."
+      "jobDescriptionTooShort": "Descrição da vaga muito curta. Adicione mais detalhes e tente novamente.",
+      "apiKeyError": "Sua chave de API não está funcionando. Verifique em Configurações.",
+      "rateLimit": "Limite de requisições atingido. Aguarde cerca de um minuto e tente novamente.",
+      "failedToGenerate": "Não foi possível gerar o currículo. Verifique sua chave de API em Configurações e tente novamente.",
+      "failedToPreview": "Não foi possível pré-visualizar o currículo. Verifique sua chave de API em Configurações e tente novamente.",
+      "failedToConfirm": "Não foi possível aplicar as alterações. Tente novamente."
     }
   },
   "settings": {
@@ -622,7 +622,7 @@
     "systemStatus": {
       "title": "Status do Sistema",
       "refresh": "Atualizar",
-      "unableToConnect": "Não foi possível conectar ao backend",
+      "unableToConnect": "Não foi possível alcançar o servidor",
       "expectedAt": "Esperado em: {apiUrl}",
       "lastFetched": {
         "never": "Nunca",
@@ -690,7 +690,7 @@
       }
     },
     "errors": {
-      "unableToConnectBackend": "Não foi possível conectar ao backend. O servidor está rodando?",
+      "unableToConnectBackend": "Não foi possível alcançar o servidor. Verifique se ele está rodando.",
       "apiKeyRequired": "Chave de API é necessária para o provedor selecionado.",
       "unknownProvider": "Provedor desconhecido retornado do backend: {provider}",
       "unableToSaveConfiguration": "Não foi possível salvar a configuração",
@@ -712,8 +712,8 @@
     "deletedDescriptionRegular": "O currículo foi permanentemente excluído do sistema.",
     "deleteFailedTitle": "Falha ao Excluir",
     "errors": {
-      "processingFailed": "O processamento do currículo falhou. O serviço de IA não conseguiu extrair dados estruturados do seu currículo. Você ainda pode usar o recurso de Personalização ou tentar enviar novamente.",
-      "stillProcessing": "O currículo ainda está sendo processado. Por favor, aguarde um momento e atualize a página.",
+      "processingFailed": "Não conseguimos ler seu currículo. Tente processar novamente, ou exclua e envie outro arquivo.",
+      "stillProcessing": "Seu currículo ainda está sendo processado. Aguarde alguns segundos e atualize a página.",
       "notProcessedYet": "O currículo ainda não foi processado. Por favor, use o recurso de Personalização para gerar um currículo estruturado.",
       "noDataAvailable": "Nenhum dado de currículo disponível.",
       "failedToLoad": "Falha ao carregar dados do currículo.",
@@ -726,7 +726,9 @@
     "calculating": "Calculando...",
     "pageBreak": "Quebra de Página",
     "pageCountSingular": "{count} página",
-    "pageCountPlural": "{count} páginas"
+    "pageCountPlural": "{count} páginas",
+    "zoomIn": "Ampliar",
+    "zoomOut": "Reduzir"
   },
   "resume": {
     "personalInfo": {
@@ -816,27 +818,32 @@
     "networkError": "Erro de rede. Por favor, verifique sua conexão.",
     "unauthorized": "Por favor, faça login para continuar.",
     "notFound": "O recurso solicitado não foi encontrado.",
-    "validationError": "Por favor, verifique sua entrada e tente novamente.",
+    "validationError": "Alguns campos precisam de atenção. Verifique os campos destacados e tente novamente.",
     "boundary": {
       "title": "Algo Deu Errado",
-      "description": "Ocorreu um erro inesperado. Isso foi registrado para análise.",
+      "description": "Algo inesperado quebrou. Tente recarregar a página — se continuar acontecendo, nos avise.",
       "tryAgain": "Tentar Novamente",
       "reloadPage": "Recarregar Página"
     }
   },
+  "a11y": {
+    "removeItem": "Remover item",
+    "removeDescription": "Remover esta linha",
+    "removeFile": "Remover arquivo"
+  },
   "confirmations": {
-    "deleteResume": "Tem certeza que deseja excluir este currículo?",
-    "deleteResumeDescription": "Esta ação não pode ser desfeita.",
+    "deleteResume": "Excluir este currículo?",
+    "deleteResumeDescription": "O currículo será removido permanentemente.",
     "deleteMasterResumeTitle": "Excluir Currículo Principal",
-    "deleteMasterResumeDescription": "Esta ação não pode ser desfeita. Seu currículo principal será permanentemente removido do sistema.",
-    "deleteResumeFromSystemDescription": "Esta ação não pode ser desfeita. O currículo será permanentemente removido do sistema.",
+    "deleteMasterResumeDescription": "Seu currículo principal será removido permanentemente.",
+    "deleteResumeFromSystemDescription": "O currículo será removido permanentemente.",
     "deleteResumeConfirmLabel": "Excluir Currículo",
     "keepResumeCancelLabel": "Manter Currículo",
-    "discardChanges": "Tem certeza que deseja descartar suas alterações?",
-    "discardChangesDescription": "Quaisquer alterações não salvas serão perdidas.",
+    "discardChanges": "Descartar alterações não salvas?",
+    "discardChangesDescription": "Você perderá qualquer trabalho que não foi salvo.",
     "clearApiKeys": "Limpar Todas as Chaves de API?",
-    "clearApiKeysDescription": "Tem certeza que deseja remover todas as chaves de API? Você precisará inseri-las novamente para usar recursos de IA.",
-    "resetDatabase": "Redefinir Banco de Dados e Limpar Todos os Dados?",
-    "resetDatabaseDescription": "Isso excluirá permanentemente TODOS os currículos, descrições de vagas e conteúdo gerado. Esta ação é irreversível."
+    "clearApiKeysDescription": "Você precisará inseri-las novamente antes de usar os recursos de IA.",
+    "resetDatabase": "Redefinir tudo e começar de novo?",
+    "resetDatabaseDescription": "Isso excluirá permanentemente cada currículo, descrição de vaga e documento gerado."
   }
 }

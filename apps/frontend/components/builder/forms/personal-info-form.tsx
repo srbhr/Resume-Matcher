@@ -22,7 +22,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ data, onChan
   };
 
   return (
-    <div className="space-y-4 border border-black p-6 bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)]">
+    <div className="space-y-4 border border-black p-6 bg-white shadow-sw-default">
       <h3 className="font-serif text-xl font-bold border-b border-black pb-2 mb-4">
         {t('builder.personalInfo')}
       </h3>
@@ -30,7 +30,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ data, onChan
         <div className="space-y-2">
           <Label
             htmlFor="name"
-            className="font-mono text-xs uppercase tracking-wider text-gray-500"
+            className="font-mono text-xs uppercase tracking-wider text-steel-grey"
           >
             {t('resume.personalInfo.name')}
           </Label>
@@ -45,7 +45,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ data, onChan
         <div className="space-y-2">
           <Label
             htmlFor="title"
-            className="font-mono text-xs uppercase tracking-wider text-gray-500"
+            className="font-mono text-xs uppercase tracking-wider text-steel-grey"
           >
             {t('resume.personalInfo.title')}
           </Label>
@@ -60,7 +60,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ data, onChan
         <div className="space-y-2">
           <Label
             htmlFor="email"
-            className="font-mono text-xs uppercase tracking-wider text-gray-500"
+            className="font-mono text-xs uppercase tracking-wider text-steel-grey"
           >
             {t('resume.personalInfo.email')}
           </Label>
@@ -76,7 +76,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ data, onChan
         <div className="space-y-2">
           <Label
             htmlFor="phone"
-            className="font-mono text-xs uppercase tracking-wider text-gray-500"
+            className="font-mono text-xs uppercase tracking-wider text-steel-grey"
           >
             {t('resume.personalInfo.phone')}
           </Label>
@@ -92,7 +92,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ data, onChan
         <div className="space-y-2">
           <Label
             htmlFor="location"
-            className="font-mono text-xs uppercase tracking-wider text-gray-500"
+            className="font-mono text-xs uppercase tracking-wider text-steel-grey"
           >
             {t('resume.personalInfo.location')}
           </Label>
@@ -107,7 +107,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ data, onChan
         <div className="space-y-2">
           <Label
             htmlFor="website"
-            className="font-mono text-xs uppercase tracking-wider text-gray-500"
+            className="font-mono text-xs uppercase tracking-wider text-steel-grey"
           >
             {t('resume.personalInfo.website')}
           </Label>
@@ -122,7 +122,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ data, onChan
         <div className="space-y-2">
           <Label
             htmlFor="linkedin"
-            className="font-mono text-xs uppercase tracking-wider text-gray-500"
+            className="font-mono text-xs uppercase tracking-wider text-steel-grey"
           >
             {t('resume.personalInfo.linkedin')}
           </Label>
@@ -137,7 +137,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ data, onChan
         <div className="space-y-2">
           <Label
             htmlFor="github"
-            className="font-mono text-xs uppercase tracking-wider text-gray-500"
+            className="font-mono text-xs uppercase tracking-wider text-steel-grey"
           >
             {t('resume.personalInfo.github')}
           </Label>
