@@ -113,6 +113,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# turborepo
+.turbo
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
