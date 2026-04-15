@@ -6,7 +6,7 @@ requires-python = ">=3.13"
 dependencies = [
     "fastapi==0.128.4",
     "uvicorn==0.40.0",
-    "python-multipart==0.0.22",
+    "python-multipart==0.0.26",
     "pydantic==2.12.5",
     "pydantic-settings==2.12.0",
     "tinydb==4.8.2",
