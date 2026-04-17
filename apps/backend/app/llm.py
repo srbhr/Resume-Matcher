@@ -11,7 +11,7 @@ from litellm import Router
 from litellm.router import RetryPolicy
 from pydantic import BaseModel
 
-from app.config import settings
+from app.config import save_config_file, settings
 
 LITELLM_LOGGER_NAMES = ("LiteLLM", "LiteLLM Router", "LiteLLM Proxy")
 
@@ -252,19 +252,6 @@ def _load_stored_config() -> dict:
     return {}
 
 
-def _save_stored_config(config: dict) -> None:
-    """Persist config.json changes from within llm.py.
-
-    Thin wrapper around app.config.save_config_file so llm.py doesn't need
-    to re-implement path resolution.
-    """
-    from app.config import save_config_file
-    save_config_file(config)
-
-
-_GPT5_MIGRATION_KEY = "reasoning_effort"
-
-
 _PROVIDER_KEY_MAP: dict[str, str] = {
     "openai": "openai",
     "anthropic": "anthropic",
@@ -318,11 +305,11 @@ def get_llm_config() -> LLMConfig:
     if (
         provider == "openai"
         and "gpt-5" in model.lower()
-        and _GPT5_MIGRATION_KEY not in stored
+        and "reasoning_effort" not in stored
     ):
-        stored[_GPT5_MIGRATION_KEY] = "minimal"
+        stored["reasoning_effort"] = "minimal"
         try:
-            _save_stored_config(stored)
+            save_config_file(stored)
             logging.info(
                 "Migrated gpt-5 config to preserve reasoning_effort=minimal "
                 "(set REASONING_EFFORT= or clear in Settings to disable)"

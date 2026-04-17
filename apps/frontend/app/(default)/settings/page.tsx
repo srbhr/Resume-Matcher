@@ -107,8 +107,9 @@ export default function SettingsPage() {
   const [hasStoredApiKey, setHasStoredApiKey] = useState(false);
   // 'auto' is the UI sentinel for "do not send reasoning_effort". Maps to
   // empty string when persisted to the backend (so gpt-5 auto-migration
-  // won't re-fire on next load).
-  const [reasoningEffort, setReasoningEffort] = useState<string>('auto');
+  // won't re-fire on next load). Typed tightly so invalid values can't leak
+  // through the save path.
+  const [reasoningEffort, setReasoningEffort] = useState<ReasoningEffort | 'auto'>('auto');
 
   // Use cached system status (loaded on app start, refreshes every 30 min)
   const {
@@ -264,7 +265,7 @@ export default function SettingsPage() {
           setHasStoredApiKey(Boolean(llmConfig.api_key));
           setApiKey(isMaskedKey ? '' : llmConfig.api_key || '');
           setApiBase(llmConfig.api_base || '');
-          setReasoningEffort(llmConfig.reasoning_effort ?? 'auto');
+          setReasoningEffort((llmConfig.reasoning_effort as ReasoningEffort | null) ?? 'auto');
 
           if (providerFromBackend !== safeProvider) {
             setError(t('settings.errors.unknownProvider', { provider: providerFromBackend }));
@@ -822,7 +823,7 @@ export default function SettingsPage() {
                 <Dropdown
                   label={t('settings.llmConfiguration.reasoningEffortLabel')}
                   value={reasoningEffort}
-                  onChange={setReasoningEffort}
+                  onChange={(value) => setReasoningEffort(value as ReasoningEffort | 'auto')}
                   options={[
                     {
                       id: 'auto',
