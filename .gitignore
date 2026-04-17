@@ -68,6 +68,7 @@ skills-lock.json
 .kilocode/
 .gemini/
 .codex/
+.firecrawl/
 AGENTS.md
 GEMINI.md
 CODEX.md
