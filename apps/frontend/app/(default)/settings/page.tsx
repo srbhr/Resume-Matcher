@@ -15,9 +15,11 @@ import {
   resetDatabase,
   PROVIDER_INFO,
   type LLMConfig,
+  type LLMConfigUpdate,
   type LLMProvider,
   type LLMHealthCheck,
   type PromptOption,
+  type ReasoningEffort,
 } from '@/lib/api/config';
 import { API_URL } from '@/lib/api/client';
 import { getVersionString } from '@/lib/config/version';
@@ -104,6 +106,10 @@ export default function SettingsPage() {
   const [apiKey, setApiKey] = useState('');
   const [apiBase, setApiBase] = useState('');
   const [hasStoredApiKey, setHasStoredApiKey] = useState(false);
+  // 'auto' is the UI sentinel for "do not send reasoning_effort". Maps to
+  // empty string when persisted to the backend (so gpt-5 auto-migration
+  // won't re-fire on next load).
+  const [reasoningEffort, setReasoningEffort] = useState<string>('auto');
 
   // Use cached system status (loaded on app start, refreshes every 30 min)
   const {
@@ -254,6 +260,7 @@ export default function SettingsPage() {
           setHasStoredApiKey(Boolean(llmConfig.api_key));
           setApiKey(isMaskedKey ? '' : llmConfig.api_key || '');
           setApiBase(llmConfig.api_base || '');
+          setReasoningEffort(llmConfig.reasoning_effort ?? 'auto');
 
           if (providerFromBackend !== safeProvider) {
             setError(t('settings.errors.unknownProvider', { provider: providerFromBackend }));
@@ -314,22 +321,26 @@ export default function SettingsPage() {
       }
 
       const trimmedKey = apiKey.trim();
-      const config: Partial<LLMConfig> = {
+      const update: LLMConfigUpdate = {
         provider,
         model: model.trim(),
         api_base: apiBase.trim() || null,
+        // Map UI sentinel 'auto' → '' so the server persists an empty string
+        // and the gpt-5 auto-migration won't re-fire.
+        reasoning_effort:
+          reasoningEffort === 'auto' ? '' : (reasoningEffort as ReasoningEffort),
       };
       if (requiresApiKey) {
         if (trimmedKey) {
-          config.api_key = trimmedKey;
+          update.api_key = trimmedKey;
         } else if (!hasStoredApiKey) {
-          config.api_key = '';
+          update.api_key = '';
         }
       } else {
-        config.api_key = '';
+        update.api_key = '';
       }
 
-      await updateLlmConfig(config);
+      await updateLlmConfig(update);
 
       // Refresh cached system status after save
       await refreshStatus();
@@ -351,10 +362,12 @@ export default function SettingsPage() {
 
     try {
       // Build config from current form values
-      const testConfig: Partial<LLMConfig> = {
+      const testConfig: LLMConfigUpdate = {
         provider,
         model: model.trim() || providerInfo.defaultModel,
         api_base: apiBase.trim() || null,
+        reasoning_effort:
+          reasoningEffort === 'auto' ? '' : (reasoningEffort as ReasoningEffort),
       };
 
       // Only include API key if provided or if we have a stored key
@@ -430,6 +443,7 @@ export default function SettingsPage() {
         setHasStoredApiKey(Boolean(llmConfig.api_key));
         setApiKey(isMaskedKey ? '' : llmConfig.api_key || '');
         setApiBase(llmConfig.api_base || '');
+        setReasoningEffort(llmConfig.reasoning_effort ?? 'auto');
       } else {
         // Fallback if refetch fails
         setApiKey('');
@@ -798,6 +812,29 @@ export default function SettingsPage() {
                 />
                 <p className="text-xs text-steel-grey font-mono">
                   {t('settings.llmConfiguration.baseUrlDescription')}
+                </p>
+              </div>
+
+              {/* Reasoning Effort (optional, only applies to reasoning-capable models) */}
+              <div className="space-y-2">
+                <Dropdown
+                  label={t('settings.llmConfiguration.reasoningEffortLabel')}
+                  value={reasoningEffort}
+                  onChange={setReasoningEffort}
+                  options={[
+                    {
+                      id: 'auto',
+                      label: t('settings.llmConfiguration.reasoningEffortAuto'),
+                      description: t('settings.llmConfiguration.reasoningEffortAutoDesc'),
+                    },
+                    { id: 'minimal', label: t('settings.llmConfiguration.reasoningEffortMinimal') },
+                    { id: 'low', label: t('settings.llmConfiguration.reasoningEffortLow') },
+                    { id: 'medium', label: t('settings.llmConfiguration.reasoningEffortMedium') },
+                    { id: 'high', label: t('settings.llmConfiguration.reasoningEffortHigh') },
+                  ]}
+                />
+                <p className="text-xs text-steel-grey font-mono">
+                  {t('settings.llmConfiguration.reasoningEffortDescription')}
                 </p>
               </div>
 
