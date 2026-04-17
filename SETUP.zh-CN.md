@@ -149,7 +149,7 @@ uv sync
 #### 启动后端服务
 
 ```bash
-uv run app
+RELOAD=true uv run app
 ```
 
 你会看到类似输出：
@@ -324,7 +324,7 @@ docker-compose down
 cd apps/backend
 
 # 启动开发服务器（自动热重载）
-uv run app
+RELOAD=true uv run app
 
 # 启动生产服务器
 uv run uvicorn app.main:app --host 0.0.0.0 --port 8000

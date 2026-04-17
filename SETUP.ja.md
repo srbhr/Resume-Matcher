@@ -149,7 +149,7 @@ uv sync
 #### バックエンドサーバを起動
 
 ```bash
-uv run app
+RELOAD=true uv run app
 ```
 
 次のような出力が表示されます：
@@ -324,7 +324,7 @@ docker-compose down
 cd apps/backend
 
 # 開発サーバ（自動リロード）
-uv run app
+RELOAD=true uv run app
 
 # 本番サーバ
 uv run uvicorn app.main:app --host 0.0.0.0 --port 8000

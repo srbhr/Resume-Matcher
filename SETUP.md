@@ -144,7 +144,7 @@ This creates a virtual environment and installs all required packages.
 #### Start the backend server
 
 ```bash
-uv run app
+RELOAD=true uv run app
 ```
 
 You should see output like:
@@ -384,7 +384,7 @@ Once the container is running, open your browser:
 cd apps/backend
 
 # Start development server (with auto-reload)
-uv run app
+RELOAD=true uv run app
 
 # Start production server
 uv run uvicorn app.main:app --host 0.0.0.0 --port 8000

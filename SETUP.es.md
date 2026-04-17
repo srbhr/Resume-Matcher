@@ -149,7 +149,7 @@ Esto crea un entorno virtual e instala todos los paquetes requeridos.
 #### Iniciar el servidor del backend
 
 ```bash
-uv run app
+RELOAD=true uv run app
 ```
 
 Deberías ver una salida como:
@@ -324,7 +324,7 @@ Cuando ambos servidores estén ejecutándose, abre el navegador:
 cd apps/backend
 
 # Iniciar servidor de desarrollo (con auto-reload)
-uv run app
+RELOAD=true uv run app
 
 # Iniciar servidor de producción
 uv run uvicorn app.main:app --host 0.0.0.0 --port 8000
