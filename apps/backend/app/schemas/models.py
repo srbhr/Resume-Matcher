@@ -558,6 +558,10 @@ class LLMConfigRequest(BaseModel):
     model: str | None = None
     api_key: str | None = None
     api_base: str | None = None
+    # Optional reasoning-effort override. Empty string clears the field (the
+    # server persists "" rather than removing the key, so the gpt-5 auto-
+    # migration does not re-fire). None means "don't change this field".
+    reasoning_effort: str | None = None
 
 
 class LLMConfigResponse(BaseModel):
@@ -567,6 +571,7 @@ class LLMConfigResponse(BaseModel):
     model: str
     api_key: str  # Masked
     api_base: str | None = None
+    reasoning_effort: str | None = None
 
 
 class FeatureConfigRequest(BaseModel):

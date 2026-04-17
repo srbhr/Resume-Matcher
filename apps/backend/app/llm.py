@@ -526,6 +526,17 @@ async def check_llm_health(
         if include_details:
             result["test_prompt"] = _to_code_block(prompt)
             result["model_output"] = _to_code_block(content)
+            # Surface reasoning/thinking text separately when present so the UI
+            # can render a distinct "Model thinking" block without mixing it
+            # into the main answer.
+            msg = response.choices[0].message
+            reasoning_text = (
+                _join_text_parts(_extract_text_parts(_safe_get(msg, "reasoning_content")))
+                or _join_text_parts(_extract_text_parts(_safe_get(msg, "thinking")))
+            )
+            result["reasoning_content"] = (
+                _to_code_block(reasoning_text) if reasoning_text else None
+            )
         return result
     except Exception as e:
         # Log full exception details server-side, but do not expose them to clients
