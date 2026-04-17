@@ -254,16 +254,23 @@ def get_llm_config() -> LLMConfig:
     """Get current LLM configuration.
 
     Priority for api_key: top-level api_key > api_keys[provider] > env/settings
+    Priority for reasoning_effort: config.json > env/settings
     """
     stored = _load_stored_config()
     provider = stored.get("provider", settings.llm_provider)
     api_key = resolve_api_key(stored, provider)
+
+    raw_re = stored.get("reasoning_effort", settings.reasoning_effort)
+    # Normalize empty string to None — the user may have explicitly cleared
+    # the field (empty-string persist, not key removal — see PUT handler).
+    reasoning_effort = raw_re if raw_re else None
 
     return LLMConfig(
         provider=provider,
         model=stored.get("model", settings.llm_model),
         api_key=api_key,
         api_base=stored.get("api_base", settings.llm_api_base),
+        reasoning_effort=reasoning_effort,
     )
 
 
@@ -379,32 +386,6 @@ def get_router(config: LLMConfig | None = None) -> tuple[Router, LLMConfig]:
     return router, config
 
 
-def _supports_temperature(provider: str, model: str) -> bool:
-    """Return whether passing `temperature` is supported for this model/provider combo.
-
-    Some models (e.g., OpenAI gpt-5 family) reject temperature values other than 1,
-    and LiteLLM may error when temperature is passed.
-    """
-    _ = provider
-    model_lower = model.lower()
-    if "gpt-5" in model_lower:
-        return False
-    return True
-
-
-def _get_reasoning_effort(provider: str, model: str) -> str | None:
-    """Return a default reasoning_effort for models that require it.
-
-    Some OpenAI gpt-5 models may return empty message.content unless a supported
-    `reasoning_effort` is explicitly set. This keeps downstream JSON parsing reliable.
-    """
-    _ = provider
-    model_lower = model.lower()
-    if "gpt-5" in model_lower:
-        return "minimal"
-    return None
-
-
 async def check_llm_health(
     config: LLMConfig | None = None,
     *,
@@ -434,14 +415,13 @@ async def check_llm_health(
         kwargs: dict[str, Any] = {
             "model": model_name,
             "messages": [{"role": "user", "content": prompt}],
-            "max_tokens": 16,
+            "max_tokens": 64,
             "api_key": config.api_key,
             "api_base": _normalize_api_base(config.provider, config.api_base),
             "timeout": LLM_TIMEOUT_HEALTH_CHECK,
         }
-        reasoning_effort = _get_reasoning_effort(config.provider, model_name)
-        if reasoning_effort:
-            kwargs["reasoning_effort"] = reasoning_effort
+        if config.reasoning_effort:
+            kwargs["reasoning_effort"] = config.reasoning_effort
 
         response = await litellm.acompletion(**kwargs)
         content = _extract_choice_text(response.choices[0])
@@ -532,13 +512,11 @@ async def complete(
             "model": "primary",
             "messages": messages,
             "max_tokens": max_tokens,
+            "temperature": temperature,
             "timeout": LLM_TIMEOUT_COMPLETION,
         }
-        if _supports_temperature(config.provider, model_name):
-            kwargs["temperature"] = temperature
-        reasoning_effort = _get_reasoning_effort(config.provider, model_name)
-        if reasoning_effort:
-            kwargs["reasoning_effort"] = reasoning_effort
+        if config.reasoning_effort:
+            kwargs["reasoning_effort"] = config.reasoning_effort
 
         response = await router.acompletion(**kwargs)
 
@@ -789,16 +767,13 @@ async def complete_json(
             kwargs: dict[str, Any] = {
                 "model": "primary",
                 "messages": messages,
+                # LLM-002: Increase temperature on retry for variation
+                "temperature": _get_retry_temperature(attempt),
                 "max_tokens": max_tokens,
                 "timeout": _calculate_timeout("json", max_tokens, config.provider),
             }
-            if _supports_temperature(config.provider, model_name):
-                # LLM-002: Increase temperature on retry for variation
-                kwargs["temperature"] = _get_retry_temperature(attempt)
-            reasoning_effort = _get_reasoning_effort(
-                config.provider, model_name)
-            if reasoning_effort:
-                kwargs["reasoning_effort"] = reasoning_effort
+            if config.reasoning_effort:
+                kwargs["reasoning_effort"] = config.reasoning_effort
 
             # Add JSON mode if supported
             if use_json_mode:
