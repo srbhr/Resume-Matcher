@@ -161,7 +161,17 @@ def _join_text_parts(parts: list[str]) -> str | None:
 
 
 def _extract_message_text(message: Any) -> str | None:
-    """Extract plain text from a LiteLLM message object across providers."""
+    """Extract plain text from a LiteLLM message object across providers.
+
+    Fallback order:
+      1. message.content (standard OpenAI-compatible path)
+      2. message.reasoning_content (DeepSeek R1, OpenAI o1/o3 via LiteLLM
+         standardized field)
+      3. message.thinking (Anthropic extended thinking)
+
+    Reasoning-only responses are treated as valid content so thinking models
+    can be used without special-casing them in every call site.
+    """
     content: Any = None
 
     if hasattr(message, "content"):
@@ -169,7 +179,19 @@ def _extract_message_text(message: Any) -> str | None:
     elif isinstance(message, dict):
         content = message.get("content")
 
-    return _join_text_parts(_extract_text_parts(content))
+    text = _join_text_parts(_extract_text_parts(content))
+    if text:
+        return text
+
+    # Fallback: reasoning_content (DeepSeek R1, OpenAI o1/o3).
+    reasoning = _safe_get(message, "reasoning_content")
+    text = _join_text_parts(_extract_text_parts(reasoning))
+    if text:
+        return text
+
+    # Fallback: thinking (Anthropic extended thinking).
+    thinking = _safe_get(message, "thinking")
+    return _join_text_parts(_extract_text_parts(thinking))
 
 
 def _safe_get(obj: Any, key: str) -> Any:
@@ -426,28 +448,24 @@ async def check_llm_health(
         response = await litellm.acompletion(**kwargs)
         content = _extract_choice_text(response.choices[0])
         if not content:
-            # Check if the model responded with reasoning/thinking content
-            message = response.choices[0].message
-            has_reasoning = getattr(message, "reasoning_content", None) or getattr(
-                message, "thinking", None)
-            if not has_reasoning:
-                # LLM-003: Empty response should mark health check as unhealthy
-                logging.warning(
-                    "LLM health check returned empty content",
-                    extra={"provider": config.provider, "model": config.model},
-                )
-                result: dict[str, Any] = {
-                    "healthy": False,  # Fixed: empty content means unhealthy
-                    "provider": config.provider,
-                    "model": config.model,
-                    "response_model": response.model if response else None,
-                    "error_code": "empty_content",  # Changed from warning_code
-                    "message": "LLM returned empty response",
-                }
-                if include_details:
-                    result["test_prompt"] = _to_code_block(prompt)
-                    result["model_output"] = _to_code_block(None)
-                return result
+            # LLM-003: Empty response (even after reasoning_content / thinking
+            # fallbacks in _extract_choice_text) marks health as unhealthy.
+            logging.warning(
+                "LLM health check returned empty content",
+                extra={"provider": config.provider, "model": config.model},
+            )
+            result: dict[str, Any] = {
+                "healthy": False,
+                "provider": config.provider,
+                "model": config.model,
+                "response_model": response.model if response else None,
+                "error_code": "empty_content",
+                "message": "LLM returned empty response",
+            }
+            if include_details:
+                result["test_prompt"] = _to_code_block(prompt)
+                result["model_output"] = _to_code_block(None)
+            return result
 
         result = {
             "healthy": True,
