@@ -14,7 +14,6 @@ import {
   clearAllApiKeys,
   resetDatabase,
   PROVIDER_INFO,
-  type LLMConfig,
   type LLMConfigUpdate,
   type LLMProvider,
   type LLMHealthCheck,
@@ -332,8 +331,7 @@ export default function SettingsPage() {
         api_base: apiBase.trim() || null,
         // Map UI sentinel 'auto' → '' so the server persists an empty string
         // and the gpt-5 auto-migration won't re-fire.
-        reasoning_effort:
-          reasoningEffort === 'auto' ? '' : (reasoningEffort as ReasoningEffort),
+        reasoning_effort: reasoningEffort === 'auto' ? '' : (reasoningEffort as ReasoningEffort),
       };
       if (requiresApiKey) {
         if (trimmedKey) {
@@ -371,8 +369,7 @@ export default function SettingsPage() {
         provider,
         model: model.trim() || providerInfo.defaultModel,
         api_base: apiBase.trim() || null,
-        reasoning_effort:
-          reasoningEffort === 'auto' ? '' : (reasoningEffort as ReasoningEffort),
+        reasoning_effort: reasoningEffort === 'auto' ? '' : (reasoningEffort as ReasoningEffort),
       };
 
       // Only include API key if provided or if we have a stored key
@@ -943,7 +940,7 @@ export default function SettingsPage() {
                               {item.value}
                             </pre>
                           </div>
-                        ),
+                        )
                       )}
                     </div>
                   )}
