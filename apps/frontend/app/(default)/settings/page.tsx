@@ -881,7 +881,7 @@ export default function SettingsPage() {
               {/* Error Message */}
               {error && (
                 <div className="border border-red-300 bg-red-50 p-3">
-                  <p className="text-xs text-red-600 font-mono">
+                  <p className="text-xs text-red-600 font-mono break-words">
                     {t('settings.llmConfiguration.errorPrefix', { error })}
                   </p>
                 </div>
@@ -890,7 +890,7 @@ export default function SettingsPage() {
               {/* Health Check Result */}
               {healthCheck && (
                 <div
-                  className={`border p-4 ${
+                  className={`border p-4 break-words ${
                     healthCheck.healthy
                       ? 'border-green-300 bg-green-50'
                       : 'border-red-300 bg-red-50'
@@ -915,10 +915,14 @@ export default function SettingsPage() {
                     })}
                   </p>
                   {healthCheckError && (
-                    <p className="font-mono text-xs text-red-600 mt-1">{healthCheckError}</p>
+                    <p className="font-mono text-xs text-red-600 mt-1 break-words">
+                      {healthCheckError}
+                    </p>
                   )}
                   {healthCheckWarning && (
-                    <p className="font-mono text-xs text-amber-700 mt-1">{healthCheckWarning}</p>
+                    <p className="font-mono text-xs text-amber-700 mt-1 break-words">
+                      {healthCheckWarning}
+                    </p>
                   )}
                   {healthDetailItems.length > 0 && (
                     <div className="mt-3 space-y-3">
@@ -928,7 +932,7 @@ export default function SettingsPage() {
                             <summary className="cursor-pointer font-mono text-[10px] uppercase tracking-wider text-ink-soft hover:text-black">
                               {item.label}
                             </summary>
-                            <pre className="mt-1 whitespace-pre-wrap rounded-none border border-black bg-white p-3 text-xs text-ink-soft shadow-sw-sm">
+                            <pre className="mt-1 whitespace-pre-wrap break-words rounded-none border border-black bg-white p-3 text-xs text-ink-soft shadow-sw-sm">
                               {item.value}
                             </pre>
                           </details>
@@ -937,7 +941,7 @@ export default function SettingsPage() {
                             <p className="font-mono text-[10px] uppercase tracking-wider text-ink-soft">
                               {item.label}
                             </p>
-                            <pre className="mt-1 whitespace-pre-wrap rounded-none border border-black bg-white p-3 text-xs text-ink-soft shadow-sw-sm">
+                            <pre className="mt-1 whitespace-pre-wrap break-words rounded-none border border-black bg-white p-3 text-xs text-ink-soft shadow-sw-sm">
                               {item.value}
                             </pre>
                           </div>
