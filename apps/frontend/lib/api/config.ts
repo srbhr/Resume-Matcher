@@ -3,11 +3,16 @@ import { apiFetch } from './client';
 // Supported LLM providers
 export type LLMProvider = 'openai' | 'anthropic' | 'openrouter' | 'gemini' | 'deepseek' | 'ollama';
 
+// Reasoning-effort levels supported by LiteLLM. `null` (or absent) means
+// "do not send the parameter" — the default for max compatibility.
+export type ReasoningEffort = 'minimal' | 'low' | 'medium' | 'high';
+
 export interface LLMConfig {
   provider: LLMProvider;
   model: string;
   api_key: string;
   api_base: string | null;
+  reasoning_effort: ReasoningEffort | null;
 }
 
 export interface LLMConfigUpdate {
@@ -15,6 +20,8 @@ export interface LLMConfigUpdate {
   model?: string;
   api_key?: string;
   api_base?: string | null;
+  // Pass '' (empty string) to clear; null is ignored by the server.
+  reasoning_effort?: ReasoningEffort | '' | null;
 }
 
 export interface DatabaseStats {
@@ -43,6 +50,7 @@ export interface LLMHealthCheck {
   warning_code?: string;
   test_prompt?: string;
   model_output?: string;
+  reasoning_content?: string | null;
   error_detail?: string;
 }
 

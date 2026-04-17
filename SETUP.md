@@ -68,7 +68,7 @@ cd Resume-Matcher
 cd apps/backend
 cp .env.example .env        # Create config from template
 uv sync                      # Install Python dependencies
-uv run uvicorn app.main:app --reload --port 8000
+uv run app
 
 # 3. Start the frontend (Terminal 2)
 cd apps/frontend
@@ -144,7 +144,7 @@ This creates a virtual environment and installs all required packages.
 #### Start the backend server
 
 ```bash
-uv run uvicorn app.main:app --reload --port 8000
+RELOAD=true uv run app
 ```
 
 You should see output like:
@@ -384,7 +384,7 @@ Once the container is running, open your browser:
 cd apps/backend
 
 # Start development server (with auto-reload)
-uv run uvicorn app.main:app --reload --port 8000
+RELOAD=true uv run app
 
 # Start production server
 uv run uvicorn app.main:app --host 0.0.0.0 --port 8000

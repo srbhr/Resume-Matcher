@@ -551,6 +551,9 @@ class ImproveResumeConfirmRequest(BaseModel):
 
 
 # Config Models
+ReasoningEffortLiteral = Literal["minimal", "low", "medium", "high"]
+
+
 class LLMConfigRequest(BaseModel):
     """Request to update LLM configuration."""
 
@@ -558,6 +561,14 @@ class LLMConfigRequest(BaseModel):
     model: str | None = None
     api_key: str | None = None
     api_base: str | None = None
+    # Optional reasoning-effort override.
+    #   - A valid value ("minimal"/"low"/"medium"/"high") updates the setting.
+    #   - Empty string clears the field — the server persists "" rather than
+    #     removing the key, so the gpt-5 auto-migration does not re-fire.
+    #   - None means "don't change this field".
+    # Strictly typed so invalid values are rejected at the boundary (422)
+    # rather than corrupting config.json and crashing later reads.
+    reasoning_effort: Literal["minimal", "low", "medium", "high", ""] | None = None
 
 
 class LLMConfigResponse(BaseModel):
@@ -567,6 +578,7 @@ class LLMConfigResponse(BaseModel):
     model: str
     api_key: str  # Masked
     api_base: str | None = None
+    reasoning_effort: ReasoningEffortLiteral | None = None
 
 
 class FeatureConfigRequest(BaseModel):

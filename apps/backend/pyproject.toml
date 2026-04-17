@@ -18,6 +18,9 @@ dependencies = [
     "python-dotenv==1.2.1",
 ]
 
+[project.scripts]
+app = "app.main:main"
+
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0.0",
