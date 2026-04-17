@@ -25,6 +25,16 @@ def _configure_litellm_logging() -> None:
 
 _configure_litellm_logging()
 
+# Let LiteLLM drop provider-unsupported params (reasoning_effort, non-default
+# temperature, etc.) instead of raising UnsupportedParamsError. This replaces
+# the hardcoded per-model compatibility branches this module used to carry.
+litellm.drop_params = True
+
+# Let LiteLLM auto-drop `thinking_blocks` from assistant messages when required
+# for a given turn (e.g., tool-call turns missing the blocks). Defensive; no
+# current code path sends thinking, but future-proofs the Router.
+litellm.modify_params = True
+
 # LLM timeout configuration (seconds) - base values
 LLM_TIMEOUT_HEALTH_CHECK = 30
 LLM_TIMEOUT_COMPLETION = 120
