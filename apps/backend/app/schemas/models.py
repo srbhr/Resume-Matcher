@@ -631,6 +631,32 @@ class PromptConfigResponse(BaseModel):
     prompt_options: list[PromptOption]
 
 
+class FeaturePromptsRequest(BaseModel):
+    """Request to update custom feature prompts.
+
+    ``None`` means "don't change this field". An empty string clears the
+    override — the server persists ``""`` so runtime resolution falls back
+    to the built-in default without the key disappearing from config.json.
+    """
+
+    cover_letter_prompt: str | None = None
+    outreach_message_prompt: str | None = None
+
+
+class FeaturePromptsResponse(BaseModel):
+    """Response for custom feature prompts.
+
+    The ``*_default`` fields expose the built-in prompt strings so the UI
+    can render them as placeholder text without duplicating the content
+    across locales.
+    """
+
+    cover_letter_prompt: str
+    outreach_message_prompt: str
+    cover_letter_default: str
+    outreach_message_default: str
+
+
 # API Key Management Models
 class ApiKeyProviderStatus(BaseModel):
     """Status of a single API key provider."""

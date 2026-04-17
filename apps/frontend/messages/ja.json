@@ -683,7 +683,11 @@
       "outreachMessage": {
         "label": "コールドアウトリーチメッセージ",
         "description": "LinkedIn やメール向けのネットワーキングメッセージを生成します"
-      }
+      },
+      "customPromptLabel": "カスタムプロンプト（任意）",
+      "customPromptHelp": "次のプレースホルダーを中括弧で囲んで含めてください：job_description, resume_data, output_language。空欄の場合は既定のプロンプトを使用します。",
+      "customPromptResetButton": "デフォルトにリセット",
+      "customPromptErrorMissing": "必須のプレースホルダーが不足しています：{missing}"
     },
     "promptSettings": {
       "title": "プロンプト設定",

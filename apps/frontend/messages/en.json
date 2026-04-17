@@ -683,7 +683,11 @@
       "outreachMessage": {
         "label": "Cold Outreach Message",
         "description": "Generate a networking message for LinkedIn or email"
-      }
+      },
+      "customPromptLabel": "Custom prompt (optional)",
+      "customPromptHelp": "Must include these placeholders (each in curly braces): job_description, resume_data, output_language. Leave blank to use the default prompt.",
+      "customPromptResetButton": "Reset to default",
+      "customPromptErrorMissing": "Missing required placeholders: {missing}"
     },
     "promptSettings": {
       "title": "Prompt Settings",

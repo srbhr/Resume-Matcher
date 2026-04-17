@@ -11,7 +11,7 @@ from litellm import Router
 from litellm.router import RetryPolicy
 from pydantic import BaseModel
 
-from app.config import save_config_file, settings
+from app.config import load_config_file, save_config_file, settings
 
 LITELLM_LOGGER_NAMES = ("LiteLLM", "LiteLLM Router", "LiteLLM Proxy")
 
@@ -258,17 +258,6 @@ def _to_code_block(content: str | None, language: str = "text") -> str:
     return f"```{language}\n{text}\n```"
 
 
-def _load_stored_config() -> dict:
-    """Load config from config.json file."""
-    config_path = settings.config_path
-    if config_path.exists():
-        try:
-            return json.loads(config_path.read_text())
-        except (json.JSONDecodeError, OSError):
-            return {}
-    return {}
-
-
 _PROVIDER_KEY_MAP: dict[str, str] = {
     "openai": "openai",
     "openai_compatible": "openai_compatible",
@@ -313,7 +302,7 @@ def get_llm_config() -> LLMConfig:
     field explicitly (empty string persisted by the PUT handler) will not
     have it restored.
     """
-    stored = _load_stored_config()
+    stored = load_config_file()
     provider = stored.get("provider", settings.llm_provider)
     model = stored.get("model", settings.llm_model)
 

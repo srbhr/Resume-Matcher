@@ -283,6 +283,69 @@ export async function updatePromptConfig(update: PromptConfigUpdate): Promise<Pr
   return res.json();
 }
 
+// Custom feature prompts (cover letter, cold outreach)
+export interface FeaturePrompts {
+  cover_letter_prompt: string;
+  outreach_message_prompt: string;
+  cover_letter_default: string;
+  outreach_message_default: string;
+}
+
+export interface FeaturePromptsUpdate {
+  cover_letter_prompt?: string;
+  outreach_message_prompt?: string;
+}
+
+// 422 response shape when the user submits a prompt missing required
+// placeholders. The backend lists each missing token so the UI can point
+// users at exactly what's absent.
+export interface FeaturePromptsValidationError {
+  code: 'missing_placeholders';
+  field: 'cover_letter_prompt' | 'outreach_message_prompt';
+  missing: string[];
+}
+
+export class FeaturePromptsError extends Error {
+  detail: FeaturePromptsValidationError;
+
+  constructor(detail: FeaturePromptsValidationError) {
+    super(`Invalid ${detail.field}: missing ${detail.missing.join(', ')}`);
+    this.name = 'FeaturePromptsError';
+    this.detail = detail;
+  }
+}
+
+export async function fetchFeaturePrompts(): Promise<FeaturePrompts> {
+  const res = await apiFetch('/config/feature-prompts', { credentials: 'include' });
+  if (!res.ok) {
+    throw new Error(`Failed to load feature prompts (status ${res.status}).`);
+  }
+  return res.json();
+}
+
+export async function updateFeaturePrompts(update: FeaturePromptsUpdate): Promise<FeaturePrompts> {
+  const res = await apiFetch('/config/feature-prompts', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(update),
+  });
+
+  if (res.status === 422) {
+    const data = (await res.json().catch(() => ({}))) as { detail?: FeaturePromptsValidationError };
+    if (data.detail?.code === 'missing_placeholders') {
+      throw new FeaturePromptsError(data.detail);
+    }
+  }
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || `Failed to update feature prompts (status ${res.status}).`);
+  }
+
+  return res.json();
+}
+
 // API Key Management types
 export type ApiKeyProvider = 'openai' | 'anthropic' | 'google' | 'openrouter' | 'deepseek';
 

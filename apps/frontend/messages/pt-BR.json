@@ -683,7 +683,11 @@
       "outreachMessage": {
         "label": "Mensagem de Contato Frio",
         "description": "Gerar uma mensagem de networking para LinkedIn ou email"
-      }
+      },
+      "customPromptLabel": "Prompt personalizado (opcional)",
+      "customPromptHelp": "Deve incluir estes marcadores (cada um entre chaves): job_description, resume_data, output_language. Deixe em branco para usar o prompt padrão.",
+      "customPromptResetButton": "Restaurar padrão",
+      "customPromptErrorMissing": "Marcadores obrigatórios ausentes: {missing}"
     },
     "promptSettings": {
       "title": "Configurações de Prompt",
