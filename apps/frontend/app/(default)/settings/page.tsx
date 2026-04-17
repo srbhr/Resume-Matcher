@@ -210,6 +210,11 @@ export default function SettingsPage() {
         value: unwrapCodeBlock(healthCheck.model_output),
       },
       {
+        key: 'reasoningContent',
+        label: t('settings.llmConfiguration.reasoningContentLabel'),
+        value: unwrapCodeBlock(healthCheck.reasoning_content),
+      },
+      {
         key: 'errorDetail',
         label: t('settings.llmConfiguration.errorDetailLabel'),
         value: unwrapCodeBlock(healthCheck.error_detail),
@@ -919,16 +924,27 @@ export default function SettingsPage() {
                   )}
                   {healthDetailItems.length > 0 && (
                     <div className="mt-3 space-y-3">
-                      {healthDetailItems.map((item) => (
-                        <div key={item.key}>
-                          <p className="font-mono text-[10px] uppercase tracking-wider text-ink-soft">
-                            {item.label}
-                          </p>
-                          <pre className="mt-1 whitespace-pre-wrap rounded-none border border-black bg-white p-3 text-xs text-ink-soft shadow-sw-sm">
-                            {item.value}
-                          </pre>
-                        </div>
-                      ))}
+                      {healthDetailItems.map((item) =>
+                        item.key === 'reasoningContent' ? (
+                          <details key={item.key} className="group">
+                            <summary className="cursor-pointer font-mono text-[10px] uppercase tracking-wider text-ink-soft hover:text-black">
+                              {item.label}
+                            </summary>
+                            <pre className="mt-1 whitespace-pre-wrap rounded-none border border-black bg-white p-3 text-xs text-ink-soft shadow-sw-sm">
+                              {item.value}
+                            </pre>
+                          </details>
+                        ) : (
+                          <div key={item.key}>
+                            <p className="font-mono text-[10px] uppercase tracking-wider text-ink-soft">
+                              {item.label}
+                            </p>
+                            <pre className="mt-1 whitespace-pre-wrap rounded-none border border-black bg-white p-3 text-xs text-ink-soft shadow-sw-sm">
+                              {item.value}
+                            </pre>
+                          </div>
+                        ),
+                      )}
                     </div>
                   )}
                 </div>
