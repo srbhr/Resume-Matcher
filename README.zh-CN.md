@@ -188,7 +188,7 @@ cd Resume-Matcher
 cd apps/backend
 cp .env.example .env        # 配置你的 AI 提供商
 uv sync                      # 安装依赖
-uv run uvicorn app.main:app --reload --port 8000
+uv run app
 
 # 前端（终端 2）
 cd apps/frontend

@@ -84,7 +84,8 @@ async def root():
     }
 
 
-if __name__ == "__main__":
+def main():
+    """Entry point for the project.scripts console script."""
     import uvicorn
 
     uvicorn.run(
@@ -93,3 +94,7 @@ if __name__ == "__main__":
         port=settings.port,
         reload=True,
     )
+
+
+if __name__ == "__main__":
+    main()
