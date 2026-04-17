@@ -637,8 +637,10 @@
       "defaultModel": "PADRÃO: {model}",
       "apiKeyLabel": "Chave de API",
       "apiKeyOptionalForOllama": "(Opcional para Ollama)",
+      "apiKeyOptional": "(Opcional)",
       "apiKeyPlaceholder": "sk-...",
       "apiKeyNotRequiredPlaceholder": "Não necessário para modelos locais",
+      "apiKeyOptionalPlaceholder": "Deixe em branco se seu servidor não exigir autenticação",
       "leaveBlankToKeepExistingKey": "DEIXE EM BRANCO PARA MANTER A CHAVE EXISTENTE",
       "baseUrlLabel": "URL Base (opcional)",
       "baseUrlPlaceholder": "Ex: https://api.openai.com/v1",
@@ -683,7 +685,11 @@
       "outreachMessage": {
         "label": "Mensagem de Contato Frio",
         "description": "Gerar uma mensagem de networking para LinkedIn ou email"
-      }
+      },
+      "customPromptLabel": "Prompt personalizado (opcional)",
+      "customPromptHelp": "Deve incluir estes marcadores (cada um entre chaves): job_description, resume_data, output_language. Deixe em branco para usar o prompt padrão.",
+      "customPromptResetButton": "Restaurar padrão",
+      "customPromptErrorMissing": "Marcadores obrigatórios ausentes: {missing}"
     },
     "promptSettings": {
       "title": "Configurações de Prompt",

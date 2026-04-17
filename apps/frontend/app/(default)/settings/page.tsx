@@ -14,11 +14,15 @@ import {
   clearAllApiKeys,
   resetDatabase,
   PROVIDER_INFO,
+  fetchFeaturePrompts,
+  updateFeaturePrompts,
+  FeaturePromptsError,
   type LLMConfigUpdate,
   type LLMProvider,
   type LLMHealthCheck,
   type PromptOption,
   type ReasoningEffort,
+  type FeaturePromptsUpdate,
 } from '@/lib/api/config';
 import { API_URL } from '@/lib/api/client';
 import { getVersionString } from '@/lib/config/version';
@@ -58,6 +62,7 @@ type Status = 'idle' | 'loading' | 'saving' | 'saved' | 'error' | 'testing';
 
 const PROVIDERS: LLMProvider[] = [
   'openai',
+  'openai_compatible',
   'anthropic',
   'openrouter',
   'gemini',
@@ -129,6 +134,19 @@ export default function SettingsPage() {
   const [promptConfigLoading, setPromptConfigLoading] = useState(false);
   const [promptOptions, setPromptOptions] = useState<PromptOption[]>([]);
   const [defaultPromptId, setDefaultPromptId] = useState('keywords');
+
+  // Custom feature prompts (cover letter, cold outreach). Empty string
+  // means "use default"; the backend's *_default fields give us the
+  // actual default text for placeholder display.
+  const [coverLetterPrompt, setCoverLetterPrompt] = useState('');
+  const [outreachPrompt, setOutreachPrompt] = useState('');
+  const [coverLetterDefault, setCoverLetterDefault] = useState('');
+  const [outreachDefault, setOutreachDefault] = useState('');
+  const [featurePromptSaving, setFeaturePromptSaving] = useState<string | null>(null);
+  const [featurePromptError, setFeaturePromptError] = useState<{
+    field: string;
+    missing: string[];
+  } | null>(null);
 
   // Danger Zone state
   const [showClearApiKeysDialog, setShowClearApiKeysDialog] = useState(false);
@@ -246,10 +264,11 @@ export default function SettingsPage() {
 
     async function loadConfig() {
       try {
-        const [llmConfig, featureConfig, promptConfig] = await Promise.all([
+        const [llmConfig, featureConfig, promptConfig, featurePrompts] = await Promise.all([
           fetchLlmConfig().catch(() => null),
           fetchFeatureConfig().catch(() => null),
           fetchPromptConfig().catch(() => null),
+          fetchFeaturePrompts().catch(() => null),
         ]);
 
         if (cancelled) return;
@@ -282,6 +301,13 @@ export default function SettingsPage() {
           setDefaultPromptId(promptConfig.default_prompt_id || 'keywords');
         }
 
+        if (featurePrompts) {
+          setCoverLetterPrompt(featurePrompts.cover_letter_prompt);
+          setOutreachPrompt(featurePrompts.outreach_message_prompt);
+          setCoverLetterDefault(featurePrompts.cover_letter_default);
+          setOutreachDefault(featurePrompts.outreach_message_default);
+        }
+
         setStatus('idle');
       } catch (err) {
         console.error('Failed to load settings', err);
@@ -305,6 +331,10 @@ export default function SettingsPage() {
 
     if (newProvider === 'ollama' && !apiBase.trim()) {
       setApiBase('http://localhost:11434');
+    }
+    if (newProvider === 'openai_compatible' && !apiBase.trim()) {
+      // llama.cpp default; user can override for vLLM / LM Studio / etc.
+      setApiBase('http://localhost:8080/v1');
     }
 
     // Clear API key input when switching providers to avoid accidental cross-provider usage.
@@ -334,13 +364,15 @@ export default function SettingsPage() {
         // and the gpt-5 auto-migration won't re-fire.
         reasoning_effort: reasoningEffort === 'auto' ? '' : (reasoningEffort as ReasoningEffort),
       };
-      if (requiresApiKey) {
-        if (trimmedKey) {
-          update.api_key = trimmedKey;
-        } else if (!hasStoredApiKey) {
-          update.api_key = '';
-        }
-      } else {
+      // Key-send policy (applies to BOTH requiresKey=true and false):
+      //   - User typed a new key → send it (overwrite stored).
+      //   - User cleared the field AND has a stored key → omit so stored
+      //     key is preserved (matches existing UX; users rotate explicitly).
+      //   - No new key, no stored key → send '' so the backend clears the
+      //     field (mainly the required path; same shape for consistency).
+      if (trimmedKey) {
+        update.api_key = trimmedKey;
+      } else if (!hasStoredApiKey) {
         update.api_key = '';
       }
 
@@ -373,12 +405,11 @@ export default function SettingsPage() {
         reasoning_effort: reasoningEffort === 'auto' ? '' : (reasoningEffort as ReasoningEffort),
       };
 
-      // Only include API key if provided or if we have a stored key
-      if (requiresApiKey) {
-        if (apiKey.trim()) {
-          testConfig.api_key = apiKey.trim();
-        }
-        // If no new key but has stored key, don't send api_key (backend uses stored)
+      // Send the user-typed key if present (for any provider, required or
+      // optional). If blank, omit the field so the backend falls back to
+      // the stored key for that provider.
+      if (apiKey.trim()) {
+        testConfig.api_key = apiKey.trim();
       }
 
       const result = await testLlmConnection(testConfig);
@@ -411,6 +442,30 @@ export default function SettingsPage() {
       }
     } finally {
       setFeatureConfigLoading(false);
+    }
+  };
+
+  const handleFeaturePromptSave = async (
+    field: 'cover_letter_prompt' | 'outreach_message_prompt',
+    value: string
+  ) => {
+    setFeaturePromptSaving(field);
+    // Only clear the error for the field being saved; keep errors on the
+    // other field visible until the user addresses them.
+    setFeaturePromptError((prev) => (prev?.field === field ? null : prev));
+    try {
+      const update: FeaturePromptsUpdate = { [field]: value };
+      const fresh = await updateFeaturePrompts(update);
+      setCoverLetterPrompt(fresh.cover_letter_prompt);
+      setOutreachPrompt(fresh.outreach_message_prompt);
+    } catch (err) {
+      if (err instanceof FeaturePromptsError) {
+        setFeaturePromptError({ field: err.detail.field, missing: err.detail.missing });
+      } else {
+        setError((err as Error).message);
+      }
+    } finally {
+      setFeaturePromptSaving(null);
     }
   };
 
@@ -773,13 +828,18 @@ export default function SettingsPage() {
                 </p>
               </div>
 
-              {/* API Key Input */}
+              {/* API Key Input — always enabled. For providers that don't
+                  require a key (Ollama, OpenAI-Compatible local servers), the
+                  field is marked optional so users can STILL enter a key if
+                  their deployment needs auth (e.g., a secured LM Studio or a
+                  hosted OpenAI-compatible proxy). Save-time validation only
+                  fails when `requiresApiKey` is true. */}
               <div className="space-y-2">
                 <Label htmlFor="apiKey">
                   {t('settings.llmConfiguration.apiKeyLabel')}{' '}
                   {!requiresApiKey && (
                     <span className="text-steel-grey">
-                      {t('settings.llmConfiguration.apiKeyOptionalForOllama')}
+                      {t('settings.llmConfiguration.apiKeyOptional')}
                     </span>
                   )}
                 </Label>
@@ -791,12 +851,11 @@ export default function SettingsPage() {
                   placeholder={
                     requiresApiKey
                       ? t('settings.llmConfiguration.apiKeyPlaceholder')
-                      : t('settings.llmConfiguration.apiKeyNotRequiredPlaceholder')
+                      : t('settings.llmConfiguration.apiKeyOptionalPlaceholder')
                   }
                   className="font-mono"
-                  disabled={!requiresApiKey}
                 />
-                {requiresApiKey && hasStoredApiKey && !apiKey && (
+                {hasStoredApiKey && !apiKey && (
                   <p className="text-xs text-steel-grey font-mono">
                     {t('settings.llmConfiguration.leaveBlankToKeepExistingKey')}
                   </p>
@@ -881,7 +940,7 @@ export default function SettingsPage() {
               {/* Error Message */}
               {error && (
                 <div className="border border-red-300 bg-red-50 p-3">
-                  <p className="text-xs text-red-600 font-mono">
+                  <p className="text-xs text-red-600 font-mono break-words">
                     {t('settings.llmConfiguration.errorPrefix', { error })}
                   </p>
                 </div>
@@ -890,7 +949,7 @@ export default function SettingsPage() {
               {/* Health Check Result */}
               {healthCheck && (
                 <div
-                  className={`border p-4 ${
+                  className={`border p-4 break-words ${
                     healthCheck.healthy
                       ? 'border-green-300 bg-green-50'
                       : 'border-red-300 bg-red-50'
@@ -915,10 +974,14 @@ export default function SettingsPage() {
                     })}
                   </p>
                   {healthCheckError && (
-                    <p className="font-mono text-xs text-red-600 mt-1">{healthCheckError}</p>
+                    <p className="font-mono text-xs text-red-600 mt-1 break-words">
+                      {healthCheckError}
+                    </p>
                   )}
                   {healthCheckWarning && (
-                    <p className="font-mono text-xs text-amber-700 mt-1">{healthCheckWarning}</p>
+                    <p className="font-mono text-xs text-amber-700 mt-1 break-words">
+                      {healthCheckWarning}
+                    </p>
                   )}
                   {healthDetailItems.length > 0 && (
                     <div className="mt-3 space-y-3">
@@ -928,7 +991,7 @@ export default function SettingsPage() {
                             <summary className="cursor-pointer font-mono text-[10px] uppercase tracking-wider text-ink-soft hover:text-black">
                               {item.label}
                             </summary>
-                            <pre className="mt-1 whitespace-pre-wrap rounded-none border border-black bg-white p-3 text-xs text-ink-soft shadow-sw-sm">
+                            <pre className="mt-1 whitespace-pre-wrap break-words rounded-none border border-black bg-white p-3 text-xs text-ink-soft shadow-sw-sm">
                               {item.value}
                             </pre>
                           </details>
@@ -937,7 +1000,7 @@ export default function SettingsPage() {
                             <p className="font-mono text-[10px] uppercase tracking-wider text-ink-soft">
                               {item.label}
                             </p>
-                            <pre className="mt-1 whitespace-pre-wrap rounded-none border border-black bg-white p-3 text-xs text-ink-soft shadow-sw-sm">
+                            <pre className="mt-1 whitespace-pre-wrap break-words rounded-none border border-black bg-white p-3 text-xs text-ink-soft shadow-sw-sm">
                               {item.value}
                             </pre>
                           </div>
@@ -975,6 +1038,53 @@ export default function SettingsPage() {
                   description={t('settings.contentGeneration.coverLetter.description')}
                   disabled={featureConfigLoading}
                 />
+                {enableCoverLetter && (
+                  <div className="pl-6 space-y-2">
+                    <Label htmlFor="coverLetterPrompt">
+                      {t('settings.contentGeneration.customPromptLabel')}
+                    </Label>
+                    <textarea
+                      id="coverLetterPrompt"
+                      rows={8}
+                      value={coverLetterPrompt}
+                      onChange={(e) => setCoverLetterPrompt(e.target.value)}
+                      placeholder={coverLetterDefault}
+                      className="w-full rounded-none border border-black bg-white p-3 font-mono text-xs break-words focus:outline-none focus:shadow-[4px_4px_0_0_#000]"
+                    />
+                    <p className="text-xs text-steel-grey font-mono">
+                      {t('settings.contentGeneration.customPromptHelp')}
+                    </p>
+                    {featurePromptError?.field === 'cover_letter_prompt' && (
+                      <p className="text-xs text-red-600 font-mono break-words">
+                        {t('settings.contentGeneration.customPromptErrorMissing', {
+                          missing: featurePromptError.missing.join(', '),
+                        })}
+                      </p>
+                    )}
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() =>
+                          handleFeaturePromptSave('cover_letter_prompt', coverLetterPrompt)
+                        }
+                        disabled={featurePromptSaving === 'cover_letter_prompt'}
+                      >
+                        {featurePromptSaving === 'cover_letter_prompt' ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          t('common.save')
+                        )}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => handleFeaturePromptSave('cover_letter_prompt', '')}
+                        disabled={featurePromptSaving === 'cover_letter_prompt'}
+                      >
+                        {t('settings.contentGeneration.customPromptResetButton')}
+                      </Button>
+                    </div>
+                  </div>
+                )}
                 <ToggleSwitch
                   checked={enableOutreach}
                   onCheckedChange={(checked) => {
@@ -985,6 +1095,53 @@ export default function SettingsPage() {
                   description={t('settings.contentGeneration.outreachMessage.description')}
                   disabled={featureConfigLoading}
                 />
+                {enableOutreach && (
+                  <div className="pl-6 space-y-2">
+                    <Label htmlFor="outreachPrompt">
+                      {t('settings.contentGeneration.customPromptLabel')}
+                    </Label>
+                    <textarea
+                      id="outreachPrompt"
+                      rows={8}
+                      value={outreachPrompt}
+                      onChange={(e) => setOutreachPrompt(e.target.value)}
+                      placeholder={outreachDefault}
+                      className="w-full rounded-none border border-black bg-white p-3 font-mono text-xs break-words focus:outline-none focus:shadow-[4px_4px_0_0_#000]"
+                    />
+                    <p className="text-xs text-steel-grey font-mono">
+                      {t('settings.contentGeneration.customPromptHelp')}
+                    </p>
+                    {featurePromptError?.field === 'outreach_message_prompt' && (
+                      <p className="text-xs text-red-600 font-mono break-words">
+                        {t('settings.contentGeneration.customPromptErrorMissing', {
+                          missing: featurePromptError.missing.join(', '),
+                        })}
+                      </p>
+                    )}
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() =>
+                          handleFeaturePromptSave('outreach_message_prompt', outreachPrompt)
+                        }
+                        disabled={featurePromptSaving === 'outreach_message_prompt'}
+                      >
+                        {featurePromptSaving === 'outreach_message_prompt' ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          t('common.save')
+                        )}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => handleFeaturePromptSave('outreach_message_prompt', '')}
+                        disabled={featurePromptSaving === 'outreach_message_prompt'}
+                      >
+                        {t('settings.contentGeneration.customPromptResetButton')}
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="pt-4 border-t border-paper-tint">

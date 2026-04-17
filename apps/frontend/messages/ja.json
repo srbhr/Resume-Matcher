@@ -637,8 +637,10 @@
       "defaultModel": "既定: {model}",
       "apiKeyLabel": "API キー",
       "apiKeyOptionalForOllama": "（Ollama は任意）",
+      "apiKeyOptional": "（任意）",
       "apiKeyPlaceholder": "sk-...",
       "apiKeyNotRequiredPlaceholder": "ローカルモデルでは不要",
+      "apiKeyOptionalPlaceholder": "サーバーに認証が必要ない場合は空欄のままでOK",
       "leaveBlankToKeepExistingKey": "空欄のままにすると既存キーを保持します",
       "baseUrlLabel": "ベースURL（任意）",
       "baseUrlPlaceholder": "例: https://api.openai.com/v1",
@@ -683,7 +685,11 @@
       "outreachMessage": {
         "label": "コールドアウトリーチメッセージ",
         "description": "LinkedIn やメール向けのネットワーキングメッセージを生成します"
-      }
+      },
+      "customPromptLabel": "カスタムプロンプト（任意）",
+      "customPromptHelp": "次のプレースホルダーを中括弧で囲んで含めてください：job_description, resume_data, output_language。空欄の場合は既定のプロンプトを使用します。",
+      "customPromptResetButton": "デフォルトにリセット",
+      "customPromptErrorMissing": "必須のプレースホルダーが不足しています：{missing}"
     },
     "promptSettings": {
       "title": "プロンプト設定",

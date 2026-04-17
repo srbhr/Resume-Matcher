@@ -637,8 +637,10 @@
       "defaultModel": "DEFAULT: {model}",
       "apiKeyLabel": "API Key",
       "apiKeyOptionalForOllama": "(Optional for Ollama)",
+      "apiKeyOptional": "(Optional)",
       "apiKeyPlaceholder": "sk-...",
       "apiKeyNotRequiredPlaceholder": "Not required for local models",
+      "apiKeyOptionalPlaceholder": "Leave blank if your server has no auth",
       "leaveBlankToKeepExistingKey": "LEAVE BLANK TO KEEP EXISTING KEY",
       "baseUrlLabel": "Base URL (optional)",
       "baseUrlPlaceholder": "e.g. https://api.openai.com/v1",
@@ -683,7 +685,11 @@
       "outreachMessage": {
         "label": "Cold Outreach Message",
         "description": "Generate a networking message for LinkedIn or email"
-      }
+      },
+      "customPromptLabel": "Custom prompt (optional)",
+      "customPromptHelp": "Must include these placeholders (each in curly braces): job_description, resume_data, output_language. Leave blank to use the default prompt.",
+      "customPromptResetButton": "Reset to default",
+      "customPromptErrorMissing": "Missing required placeholders: {missing}"
     },
     "promptSettings": {
       "title": "Prompt Settings",

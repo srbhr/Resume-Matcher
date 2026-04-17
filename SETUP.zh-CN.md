@@ -218,6 +218,9 @@ Resume Matcher 支持多种 AI 提供商。你可以在应用的 Settings 页面
 | **Google Gemini** | `LLM_PROVIDER=gemini`<br>`LLM_MODEL=gemini-3-flash-preview` | [aistudio.google.com](https://aistudio.google.com/app/apikey) |
 | **OpenRouter** | `LLM_PROVIDER=openrouter`<br>`LLM_MODEL=deepseek/deepseek-chat` | [openrouter.ai](https://openrouter.ai/keys) |
 | **DeepSeek** | `LLM_PROVIDER=deepseek`<br>`LLM_MODEL=deepseek-chat` | [platform.deepseek.com](https://platform.deepseek.com/) |
+| **OpenAI-Compatible** | `LLM_PROVIDER=openai_compatible`<br>`LLM_MODEL=llama-3.1-8b`<br>`LLM_API_BASE=http://localhost:8080/v1` | —（本地） |
+
+**OpenAI-Compatible** 适用于任何暴露 OpenAI Chat Completions API 的本地服务器，例如 llama.cpp、vLLM、LM Studio 等。API Key 可选。
 
 Anthropic 的 `.env` 示例：
 

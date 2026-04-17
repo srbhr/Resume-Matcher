@@ -637,8 +637,10 @@
       "defaultModel": "默认：{model}",
       "apiKeyLabel": "API 密钥",
       "apiKeyOptionalForOllama": "（Ollama 可选）",
+      "apiKeyOptional": "（可选）",
       "apiKeyPlaceholder": "sk-...",
       "apiKeyNotRequiredPlaceholder": "本地模型不需要",
+      "apiKeyOptionalPlaceholder": "如果你的服务器不需要认证，留空即可",
       "leaveBlankToKeepExistingKey": "留空以保留现有密钥",
       "baseUrlLabel": "Base URL（可选）",
       "baseUrlPlaceholder": "例如 https://api.openai.com/v1",
@@ -683,7 +685,11 @@
       "outreachMessage": {
         "label": "冷启动外联消息",
         "description": "生成用于 LinkedIn 或邮件的社交/外联消息"
-      }
+      },
+      "customPromptLabel": "自定义提示词（可选）",
+      "customPromptHelp": "必须包含以下占位符（各自使用大括号括起来）：job_description、resume_data、output_language。留空则使用默认提示词。",
+      "customPromptResetButton": "恢复默认",
+      "customPromptErrorMissing": "缺少必需的占位符：{missing}"
     },
     "promptSettings": {
       "title": "提示词设置",

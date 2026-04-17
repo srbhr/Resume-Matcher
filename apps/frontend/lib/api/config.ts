@@ -1,7 +1,14 @@
 import { apiFetch } from './client';
 
 // Supported LLM providers
-export type LLMProvider = 'openai' | 'anthropic' | 'openrouter' | 'gemini' | 'deepseek' | 'ollama';
+export type LLMProvider =
+  | 'openai'
+  | 'openai_compatible'
+  | 'anthropic'
+  | 'openrouter'
+  | 'gemini'
+  | 'deepseek'
+  | 'ollama';
 
 // Reasoning-effort levels supported by LiteLLM. `null` (or absent) means
 // "do not send the parameter" — the default for max compatibility.
@@ -133,6 +140,14 @@ export const PROVIDER_INFO: Record<
   { name: string; defaultModel: string; requiresKey: boolean }
 > = {
   openai: { name: 'OpenAI', defaultModel: 'gpt-5-nano-2025-08-07', requiresKey: true },
+  // OpenAI-compatible: llama.cpp, vLLM, LM Studio, and other servers that expose
+  // the OpenAI Chat Completions API. Key is optional (most local servers don't
+  // require auth); backend passes a sentinel when blank.
+  openai_compatible: {
+    name: 'OpenAI-Compatible (Local)',
+    defaultModel: 'custom-model',
+    requiresKey: false,
+  },
   anthropic: { name: 'Anthropic', defaultModel: 'claude-haiku-4-5-20251001', requiresKey: true },
   openrouter: {
     name: 'OpenRouter',
@@ -266,6 +281,89 @@ export async function updatePromptConfig(update: PromptConfigUpdate): Promise<Pr
   }
 
   return res.json();
+}
+
+// Custom feature prompts (cover letter, cold outreach)
+export interface FeaturePrompts {
+  cover_letter_prompt: string;
+  outreach_message_prompt: string;
+  cover_letter_default: string;
+  outreach_message_default: string;
+}
+
+export interface FeaturePromptsUpdate {
+  cover_letter_prompt?: string;
+  outreach_message_prompt?: string;
+}
+
+// 422 response shape when the user submits a prompt missing required
+// placeholders. The backend lists each missing token so the UI can point
+// users at exactly what's absent.
+export interface FeaturePromptsValidationError {
+  code: 'missing_placeholders';
+  field: 'cover_letter_prompt' | 'outreach_message_prompt';
+  missing: string[];
+}
+
+export class FeaturePromptsError extends Error {
+  detail: FeaturePromptsValidationError;
+
+  constructor(detail: FeaturePromptsValidationError) {
+    super(`Invalid ${detail.field}: missing ${detail.missing.join(', ')}`);
+    this.name = 'FeaturePromptsError';
+    this.detail = detail;
+  }
+}
+
+export async function fetchFeaturePrompts(): Promise<FeaturePrompts> {
+  const res = await apiFetch('/config/feature-prompts', { credentials: 'include' });
+  if (!res.ok) {
+    throw new Error(`Failed to load feature prompts (status ${res.status}).`);
+  }
+  return res.json();
+}
+
+export async function updateFeaturePrompts(update: FeaturePromptsUpdate): Promise<FeaturePrompts> {
+  const res = await apiFetch('/config/feature-prompts', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(update),
+  });
+
+  if (!res.ok) {
+    // Error path: body may be absent or malformed, so we tolerate parse
+    // failure. A fetch body is a one-shot stream — read it once and reuse
+    // for both the 422-special-case and the generic fallback.
+    const errBody = (await res.json().catch(() => ({}))) as {
+      detail?: FeaturePromptsValidationError | string;
+    };
+    if (
+      res.status === 422 &&
+      typeof errBody.detail === 'object' &&
+      errBody.detail?.code === 'missing_placeholders'
+    ) {
+      throw new FeaturePromptsError(errBody.detail);
+    }
+    // FastAPI can return ``detail`` as a string or a structured object.
+    // Stringifying an object via the ``||`` shortcut yields "[object Object]";
+    // serialize explicitly.
+    let message: string;
+    if (typeof errBody.detail === 'string') {
+      message = errBody.detail;
+    } else if (errBody.detail) {
+      message = JSON.stringify(errBody.detail);
+    } else {
+      message = `Failed to update feature prompts (status ${res.status}).`;
+    }
+    throw new Error(message);
+  }
+
+  // Success path: require a valid JSON body. Swallowing parse errors here
+  // would let an invalid success response be returned as FeaturePrompts
+  // with undefined fields — caller code would then read .cover_letter_prompt
+  // and get surprising behavior. Let the parse error propagate.
+  return (await res.json()) as FeaturePrompts;
 }
 
 // API Key Management types

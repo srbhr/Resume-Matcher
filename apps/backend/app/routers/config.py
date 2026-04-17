@@ -13,6 +13,8 @@ from app.schemas import (
     LLMConfigResponse,
     FeatureConfigRequest,
     FeatureConfigResponse,
+    FeaturePromptsRequest,
+    FeaturePromptsResponse,
     LanguageConfigRequest,
     LanguageConfigResponse,
     PromptConfigRequest,
@@ -24,7 +26,12 @@ from app.schemas import (
     ApiKeysUpdateResponse,
     ResetDatabaseRequest,
 )
-from app.prompts import DEFAULT_IMPROVE_PROMPT_ID, IMPROVE_PROMPT_OPTIONS
+from app.prompts import (
+    DEFAULT_IMPROVE_PROMPT_ID,
+    IMPROVE_PROMPT_OPTIONS,
+    validate_prompt_placeholders,
+)
+from app.prompts.templates import COVER_LETTER_PROMPT, OUTREACH_MESSAGE_PROMPT
 from app.config import (
     get_api_keys_from_config,
     save_api_keys_to_config,
@@ -337,6 +344,78 @@ async def update_prompt_config(
     return PromptConfigResponse(
         default_prompt_id=default_prompt_id,
         prompt_options=options,
+    )
+
+
+@router.get("/feature-prompts", response_model=FeaturePromptsResponse)
+async def get_feature_prompts() -> FeaturePromptsResponse:
+    """Get custom feature prompts (cover letter, outreach message).
+
+    Empty strings mean "use default". The ``*_default`` fields expose the
+    built-in prompts so the UI can show them as placeholder text without
+    duplicating the content client-side.
+    """
+    stored = _load_config()
+    return FeaturePromptsResponse(
+        cover_letter_prompt=stored.get("cover_letter_prompt", "") or "",
+        outreach_message_prompt=stored.get("outreach_message_prompt", "") or "",
+        cover_letter_default=COVER_LETTER_PROMPT,
+        outreach_message_default=OUTREACH_MESSAGE_PROMPT,
+    )
+
+
+@router.put("/feature-prompts", response_model=FeaturePromptsResponse)
+async def update_feature_prompts(
+    request: FeaturePromptsRequest,
+) -> FeaturePromptsResponse:
+    """Update custom feature prompts.
+
+    Non-empty prompts are validated for the three required placeholders
+    (``{job_description}``, ``{resume_data}``, ``{output_language}``).
+    Missing placeholders return a 422 with a structured detail so the UI
+    can list exactly which ones are absent. Empty strings clear the
+    override — persisted as ``""`` so runtime resolution falls back to the
+    built-in default.
+    """
+    stored = _load_config()
+
+    if request.cover_letter_prompt is not None:
+        prompt = request.cover_letter_prompt.strip()
+        if prompt:
+            missing = validate_prompt_placeholders(prompt)
+            if missing:
+                raise HTTPException(
+                    status_code=422,
+                    detail={
+                        "code": "missing_placeholders",
+                        "field": "cover_letter_prompt",
+                        "missing": missing,
+                    },
+                )
+        stored["cover_letter_prompt"] = prompt
+
+    if request.outreach_message_prompt is not None:
+        prompt = request.outreach_message_prompt.strip()
+        if prompt:
+            missing = validate_prompt_placeholders(prompt)
+            if missing:
+                raise HTTPException(
+                    status_code=422,
+                    detail={
+                        "code": "missing_placeholders",
+                        "field": "outreach_message_prompt",
+                        "missing": missing,
+                    },
+                )
+        stored["outreach_message_prompt"] = prompt
+
+    _save_config(stored)
+
+    return FeaturePromptsResponse(
+        cover_letter_prompt=stored.get("cover_letter_prompt", "") or "",
+        outreach_message_prompt=stored.get("outreach_message_prompt", "") or "",
+        cover_letter_default=COVER_LETTER_PROMPT,
+        outreach_message_default=OUTREACH_MESSAGE_PROMPT,
     )
 
 
