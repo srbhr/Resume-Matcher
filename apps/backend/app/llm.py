@@ -526,14 +526,21 @@ async def check_llm_health(
         if include_details:
             result["test_prompt"] = _to_code_block(prompt)
             result["model_output"] = _to_code_block(content)
-            # Surface reasoning/thinking text separately when present so the UI
-            # can render a distinct "Model thinking" block without mixing it
-            # into the main answer.
+            # Surface reasoning/thinking text separately ONLY when the model
+            # also returned distinct primary content. If message.content was
+            # empty, _extract_choice_text already folded the reasoning text
+            # into `content` above — surfacing it here too would duplicate
+            # identical text in "Model output" and "Model thinking".
             msg = response.choices[0].message
-            reasoning_text = (
-                _join_text_parts(_extract_text_parts(_safe_get(msg, "reasoning_content")))
-                or _join_text_parts(_extract_text_parts(_safe_get(msg, "thinking")))
+            primary_content = _join_text_parts(
+                _extract_text_parts(_safe_get(msg, "content"))
             )
+            reasoning_text = None
+            if primary_content:
+                reasoning_text = (
+                    _join_text_parts(_extract_text_parts(_safe_get(msg, "reasoning_content")))
+                    or _join_text_parts(_extract_text_parts(_safe_get(msg, "thinking")))
+                )
             result["reasoning_content"] = (
                 _to_code_block(reasoning_text) if reasoning_text else None
             )
