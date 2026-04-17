@@ -252,6 +252,19 @@ def _load_stored_config() -> dict:
     return {}
 
 
+def _save_stored_config(config: dict) -> None:
+    """Persist config.json changes from within llm.py.
+
+    Thin wrapper around app.config.save_config_file so llm.py doesn't need
+    to re-implement path resolution.
+    """
+    from app.config import save_config_file
+    save_config_file(config)
+
+
+_GPT5_MIGRATION_KEY = "reasoning_effort"
+
+
 _PROVIDER_KEY_MAP: dict[str, str] = {
     "openai": "openai",
     "anthropic": "anthropic",
@@ -287,19 +300,46 @@ def get_llm_config() -> LLMConfig:
 
     Priority for api_key: top-level api_key > api_keys[provider] > env/settings
     Priority for reasoning_effort: config.json > env/settings
+
+    Runs a one-shot migration for existing gpt-5 users: if provider is openai,
+    model contains 'gpt-5', and reasoning_effort is ABSENT from config.json
+    (not merely empty), persist reasoning_effort='minimal' to preserve the
+    behavior the removed hardcoded branch provided. Users who clear the
+    field explicitly (empty string persisted by the PUT handler) will not
+    have it restored.
     """
     stored = _load_stored_config()
     provider = stored.get("provider", settings.llm_provider)
+    model = stored.get("model", settings.llm_model)
+
+    # One-shot migration: preserve old gpt-5 reasoning_effort behavior for
+    # existing configs. Gated on ABSENT key so users can opt out by clearing
+    # the field (PUT handler persists an empty string on clear).
+    if (
+        provider == "openai"
+        and "gpt-5" in model.lower()
+        and _GPT5_MIGRATION_KEY not in stored
+    ):
+        stored[_GPT5_MIGRATION_KEY] = "minimal"
+        try:
+            _save_stored_config(stored)
+            logging.info(
+                "Migrated gpt-5 config to preserve reasoning_effort=minimal "
+                "(set REASONING_EFFORT= or clear in Settings to disable)"
+            )
+        except Exception as e:
+            # Non-fatal — retry on next call.
+            logging.warning("Failed to persist gpt-5 migration: %s", e)
+
     api_key = resolve_api_key(stored, provider)
 
     raw_re = stored.get("reasoning_effort", settings.reasoning_effort)
-    # Normalize empty string to None — the user may have explicitly cleared
-    # the field (empty-string persist, not key removal — see PUT handler).
+    # Normalize empty string to None — user explicitly cleared.
     reasoning_effort = raw_re if raw_re else None
 
     return LLMConfig(
         provider=provider,
-        model=stored.get("model", settings.llm_model),
+        model=model,
         api_key=api_key,
         api_base=stored.get("api_base", settings.llm_api_base),
         reasoning_effort=reasoning_effort,
