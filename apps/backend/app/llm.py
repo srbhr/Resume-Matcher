@@ -79,7 +79,7 @@ def _normalize_api_base(provider: str, api_base: str | None) -> str | None:
 
     # OpenAI / OpenAI-compatible: preserve the URL as-is. The OpenAI client
     # resolves paths correctly whether the base includes /v1 or not.
-    if provider == "openai":
+    if provider in ("openai", "openai_compatible"):
         return base or None
 
     # Anthropic handler appends '/v1/messages'. If base already ends with '/v1',
@@ -106,6 +106,23 @@ def _normalize_api_base(provider: str, api_base: str | None) -> str | None:
                 break
 
     return base or None
+
+
+# Sentinel passed to the OpenAI client when the user leaves api_key blank for
+# openai_compatible. The client validates non-empty strings but not the value
+# format; local servers that don't check auth ignore it.
+_OPENAI_COMPATIBLE_SENTINEL = "sk-no-key"
+
+
+def _effective_api_key(provider: str, api_key: str) -> str:
+    """Return the api_key to pass to LiteLLM.
+
+    For openai_compatible with a blank key, substitute a sentinel so the
+    OpenAI client accepts the call. Other providers pass through unchanged.
+    """
+    if provider == "openai_compatible" and not api_key:
+        return _OPENAI_COMPATIBLE_SENTINEL
+    return api_key
 
 
 def _extract_text_parts(value: Any, depth: int = 0, max_depth: int = 10) -> list[str]:
@@ -254,6 +271,7 @@ def _load_stored_config() -> dict:
 
 _PROVIDER_KEY_MAP: dict[str, str] = {
     "openai": "openai",
+    "openai_compatible": "openai_compatible",
     "anthropic": "anthropic",
     "gemini": "google",
     "openrouter": "openrouter",
@@ -342,6 +360,10 @@ def get_model_name(config: LLMConfig) -> str:
     """
     provider_prefixes = {
         "openai": "",  # OpenAI models don't need prefix
+        # openai_compatible: route via LiteLLM's openai/ prefix so the OpenAI
+        # client handles the request; works for llama.cpp, vLLM, LM Studio,
+        # and any server exposing the OpenAI Chat Completions API shape.
+        "openai_compatible": "openai/",
         "anthropic": "anthropic/",
         "openrouter": "openrouter/",
         "gemini": "gemini/",
@@ -359,8 +381,15 @@ def get_model_name(config: LLMConfig) -> str:
         return f"openrouter/{config.model}"
 
     # For other providers, don't add prefix if model already has a known prefix
-    known_prefixes = ["openrouter/", "anthropic/",
-                      "gemini/", "deepseek/", "ollama/", "ollama_chat/"]
+    known_prefixes = [
+        "openrouter/",
+        "anthropic/",
+        "gemini/",
+        "deepseek/",
+        "ollama/",
+        "ollama_chat/",
+        "openai/",
+    ]
     if any(config.model.startswith(p) for p in known_prefixes):
         return config.model
 
@@ -394,8 +423,9 @@ def _build_router(config: LLMConfig) -> Router:
     model_name = get_model_name(config)
 
     litellm_params: dict[str, Any] = {"model": model_name}
-    if config.api_key:
-        litellm_params["api_key"] = config.api_key
+    effective_key = _effective_api_key(config.provider, config.api_key)
+    if effective_key:
+        litellm_params["api_key"] = effective_key
     api_base = _normalize_api_base(config.provider, config.api_base)
     if api_base:
         litellm_params["api_base"] = api_base
@@ -455,8 +485,11 @@ async def check_llm_health(
     if config is None:
         config = get_llm_config()
 
-    # Check if API key is configured (except for Ollama)
-    if config.provider != "ollama" and not config.api_key:
+    # Check if API key is configured. Ollama and openai_compatible local
+    # servers often run without auth, so a blank key is acceptable for those
+    # providers — a sentinel is passed downstream (see _effective_api_key)
+    # to satisfy the OpenAI client's non-empty-string validation.
+    if config.provider not in ("ollama", "openai_compatible") and not config.api_key:
         return {
             "healthy": False,
             "provider": config.provider,
@@ -475,7 +508,7 @@ async def check_llm_health(
             "model": model_name,
             "messages": [{"role": "user", "content": prompt}],
             "max_tokens": 64,
-            "api_key": config.api_key,
+            "api_key": _effective_api_key(config.provider, config.api_key),
             "api_base": _normalize_api_base(config.provider, config.api_base),
             "timeout": LLM_TIMEOUT_HEALTH_CHECK,
         }

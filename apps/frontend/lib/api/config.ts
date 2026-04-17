@@ -1,7 +1,14 @@
 import { apiFetch } from './client';
 
 // Supported LLM providers
-export type LLMProvider = 'openai' | 'anthropic' | 'openrouter' | 'gemini' | 'deepseek' | 'ollama';
+export type LLMProvider =
+  | 'openai'
+  | 'openai_compatible'
+  | 'anthropic'
+  | 'openrouter'
+  | 'gemini'
+  | 'deepseek'
+  | 'ollama';
 
 // Reasoning-effort levels supported by LiteLLM. `null` (or absent) means
 // "do not send the parameter" — the default for max compatibility.
@@ -133,6 +140,14 @@ export const PROVIDER_INFO: Record<
   { name: string; defaultModel: string; requiresKey: boolean }
 > = {
   openai: { name: 'OpenAI', defaultModel: 'gpt-5-nano-2025-08-07', requiresKey: true },
+  // OpenAI-compatible: llama.cpp, vLLM, LM Studio, and other servers that expose
+  // the OpenAI Chat Completions API. Key is optional (most local servers don't
+  // require auth); backend passes a sentinel when blank.
+  openai_compatible: {
+    name: 'OpenAI-Compatible (Local)',
+    defaultModel: 'custom-model',
+    requiresKey: false,
+  },
   anthropic: { name: 'Anthropic', defaultModel: 'claude-haiku-4-5-20251001', requiresKey: true },
   openrouter: {
     name: 'OpenRouter',

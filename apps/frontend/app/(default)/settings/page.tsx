@@ -58,6 +58,7 @@ type Status = 'idle' | 'loading' | 'saving' | 'saved' | 'error' | 'testing';
 
 const PROVIDERS: LLMProvider[] = [
   'openai',
+  'openai_compatible',
   'anthropic',
   'openrouter',
   'gemini',
@@ -305,6 +306,10 @@ export default function SettingsPage() {
 
     if (newProvider === 'ollama' && !apiBase.trim()) {
       setApiBase('http://localhost:11434');
+    }
+    if (newProvider === 'openai_compatible' && !apiBase.trim()) {
+      // llama.cpp default; user can override for vLLM / LM Studio / etc.
+      setApiBase('http://localhost:8080/v1');
     }
 
     // Clear API key input when switching providers to avoid accidental cross-provider usage.
