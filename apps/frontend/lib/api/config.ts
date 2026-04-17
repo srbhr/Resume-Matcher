@@ -331,19 +331,36 @@ export async function updateFeaturePrompts(update: FeaturePromptsUpdate): Promis
     body: JSON.stringify(update),
   });
 
-  if (res.status === 422) {
-    const data = (await res.json().catch(() => ({}))) as { detail?: FeaturePromptsValidationError };
-    if (data.detail?.code === 'missing_placeholders') {
-      throw new FeaturePromptsError(data.detail);
-    }
-  }
+  // Parse the body once — a fetch Response body is a one-shot stream. If we
+  // read it in the 422 branch and then again in the generic !res.ok branch,
+  // the second read fails silently and we lose the backend's detail payload.
+  const body = (await res.json().catch(() => ({}))) as {
+    detail?: FeaturePromptsValidationError | string;
+  };
 
   if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    throw new Error(data.detail || `Failed to update feature prompts (status ${res.status}).`);
+    if (
+      res.status === 422 &&
+      typeof body.detail === 'object' &&
+      body.detail?.code === 'missing_placeholders'
+    ) {
+      throw new FeaturePromptsError(body.detail);
+    }
+    // Fall-through path: FastAPI can return ``detail`` as either a string or
+    // a structured object. Stringifying an object with the ``||`` shortcut
+    // produces "[object Object]" which is unhelpful; serialize explicitly.
+    let message: string;
+    if (typeof body.detail === 'string') {
+      message = body.detail;
+    } else if (body.detail) {
+      message = JSON.stringify(body.detail);
+    } else {
+      message = `Failed to update feature prompts (status ${res.status}).`;
+    }
+    throw new Error(message);
   }
 
-  return res.json();
+  return body as FeaturePrompts;
 }
 
 // API Key Management types

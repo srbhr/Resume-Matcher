@@ -59,7 +59,13 @@ async def generate_cover_letter(
             resume_data=json.dumps(resume_data),
             output_language=output_language,
         )
-    except (KeyError, IndexError) as e:
+    except (KeyError, IndexError, ValueError) as e:
+        # str.format() raises KeyError for unknown placeholders, IndexError for
+        # positional out-of-range, and ValueError for unmatched/invalid braces
+        # (e.g., ``{foo``). If the failing template is the built-in default,
+        # something is broken upstream and the caller should see it — re-raise.
+        # If it's a user-supplied custom prompt, fall back to the default with a
+        # warning so generation doesn't crash on out-of-band disk edits.
         if not is_custom:
             raise
         logging.warning(
@@ -107,7 +113,8 @@ async def generate_outreach_message(
             resume_data=json.dumps(resume_data),
             output_language=output_language,
         )
-    except (KeyError, IndexError) as e:
+    except (KeyError, IndexError, ValueError) as e:
+        # See generate_cover_letter for rationale on the exception set.
         if not is_custom:
             raise
         logging.warning(

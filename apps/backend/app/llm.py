@@ -258,6 +258,41 @@ def _to_code_block(content: str | None, language: str = "text") -> str:
     return f"```{language}\n{text}\n```"
 
 
+# Regex for provider-style API-key tokens that may appear in upstream error
+# messages (OpenAI / Anthropic / OpenRouter / DeepSeek all use ``sk-...``;
+# Google AI Studio uses ``AIza...``). The OpenAI client already partially
+# masks keys in its error text but leaves the first ~8 and last ~4 chars
+# visible, which is enough to identify the provider and correlate with the
+# user's stored key. We redact any remaining key-like run before we surface
+# the message to the client via ``error_detail``.
+_SECRET_PATTERNS: tuple[re.Pattern[str], ...] = (
+    # sk-<anything-non-whitespace>, covering both plain and already-masked
+    # tokens (e.g., ``sk-ant-a****...7QAA``). Minimum length of 12 avoids
+    # matching harmless substrings like ``sk-foo``.
+    re.compile(r"sk-[A-Za-z0-9_\-*.]{12,}"),
+    # Google AI Studio.
+    re.compile(r"AIza[0-9A-Za-z_\-]{10,}"),
+    # Generic Bearer tokens in an Authorization header line.
+    re.compile(r"(?i)(Bearer\s+)[^\s\"']+"),
+)
+
+
+def _scrub_secrets(text: str) -> str:
+    """Redact API-key-like substrings before the text leaves the server.
+
+    Applied to ``error_detail`` on the failing-health-check path so that
+    upstream exception messages (which may include partially-masked keys)
+    can't be used by a Settings-page viewer to identify which provider /
+    key variant is configured.
+    """
+    if not text:
+        return text
+    redacted = text
+    for pattern in _SECRET_PATTERNS:
+        redacted = pattern.sub("<redacted>", redacted)
+    return redacted
+
+
 _PROVIDER_KEY_MAP: dict[str, str] = {
     "openai": "openai",
     "openai_compatible": "openai_compatible",
@@ -269,12 +304,25 @@ _PROVIDER_KEY_MAP: dict[str, str] = {
 }
 
 
+# Providers where the user commonly runs a local server without auth. For
+# these, we MUST NOT fall back to ``settings.llm_api_key`` (the env-level
+# default), because the env var may hold a real paid-API key that would then
+# leak to a local/compatible endpoint the user set up expecting no auth.
+_PROVIDERS_WITHOUT_ENV_KEY_FALLBACK: frozenset[str] = frozenset(
+    {"openai_compatible", "ollama"}
+)
+
+
 def resolve_api_key(stored: dict, provider: str) -> str:
     """Resolve the effective API key from stored config.
 
-    Priority: top-level api_key > api_keys[provider] > env/settings default.
+    Priority: top-level ``api_key`` > ``api_keys[provider]`` > env/settings
+    default — EXCEPT for providers in ``_PROVIDERS_WITHOUT_ENV_KEY_FALLBACK``
+    (``openai_compatible`` / ``ollama``), where the env-level default is
+    skipped so a paid OpenAI key in ``LLM_API_KEY`` cannot leak to a local
+    self-hosted server when the user leaves the provider key blank.
 
-    This is the single source of truth for key resolution.  Every code path
+    This is the single source of truth for key resolution. Every code path
     that needs an API key (runtime, config display, health check, test
     endpoint) must call this function instead of reading ``stored["api_key"]``
     directly.
@@ -285,7 +333,12 @@ def resolve_api_key(stored: dict, provider: str) -> str:
         if not isinstance(api_keys, dict):
             api_keys = {}
         config_provider = _PROVIDER_KEY_MAP.get(provider, provider)
-        api_key = api_keys.get(config_provider, settings.llm_api_key)
+        env_default = (
+            ""
+            if provider in _PROVIDERS_WITHOUT_ENV_KEY_FALLBACK
+            else settings.llm_api_key
+        )
+        api_key = api_keys.get(config_provider, env_default)
     return api_key
 
 
@@ -579,7 +632,10 @@ async def check_llm_health(
         if include_details:
             result["test_prompt"] = _to_code_block(prompt)
             result["model_output"] = _to_code_block(None)
-            result["error_detail"] = _to_code_block(message)
+            # Scrub api-key-like tokens before surfacing the upstream error
+            # text so the Settings UI can't be used to read back even a
+            # partially-masked copy of the configured key.
+            result["error_detail"] = _to_code_block(_scrub_secrets(message))
         return result
 
 

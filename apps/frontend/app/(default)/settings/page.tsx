@@ -827,13 +827,18 @@ export default function SettingsPage() {
                 </p>
               </div>
 
-              {/* API Key Input */}
+              {/* API Key Input — always enabled. For providers that don't
+                  require a key (Ollama, OpenAI-Compatible local servers), the
+                  field is marked optional so users can STILL enter a key if
+                  their deployment needs auth (e.g., a secured LM Studio or a
+                  hosted OpenAI-compatible proxy). Save-time validation only
+                  fails when `requiresApiKey` is true. */}
               <div className="space-y-2">
                 <Label htmlFor="apiKey">
                   {t('settings.llmConfiguration.apiKeyLabel')}{' '}
                   {!requiresApiKey && (
                     <span className="text-steel-grey">
-                      {t('settings.llmConfiguration.apiKeyOptionalForOllama')}
+                      {t('settings.llmConfiguration.apiKeyOptional')}
                     </span>
                   )}
                 </Label>
@@ -845,12 +850,11 @@ export default function SettingsPage() {
                   placeholder={
                     requiresApiKey
                       ? t('settings.llmConfiguration.apiKeyPlaceholder')
-                      : t('settings.llmConfiguration.apiKeyNotRequiredPlaceholder')
+                      : t('settings.llmConfiguration.apiKeyOptionalPlaceholder')
                   }
                   className="font-mono"
-                  disabled={!requiresApiKey}
                 />
-                {requiresApiKey && hasStoredApiKey && !apiKey && (
+                {hasStoredApiKey && !apiKey && (
                   <p className="text-xs text-steel-grey font-mono">
                     {t('settings.llmConfiguration.leaveBlankToKeepExistingKey')}
                   </p>
@@ -1072,10 +1076,7 @@ export default function SettingsPage() {
                       </Button>
                       <Button
                         variant="outline"
-                        onClick={() => {
-                          setCoverLetterPrompt('');
-                          handleFeaturePromptSave('cover_letter_prompt', '');
-                        }}
+                        onClick={() => handleFeaturePromptSave('cover_letter_prompt', '')}
                         disabled={featurePromptSaving === 'cover_letter_prompt'}
                       >
                         {t('settings.contentGeneration.customPromptResetButton')}
@@ -1132,10 +1133,7 @@ export default function SettingsPage() {
                       </Button>
                       <Button
                         variant="outline"
-                        onClick={() => {
-                          setOutreachPrompt('');
-                          handleFeaturePromptSave('outreach_message_prompt', '');
-                        }}
+                        onClick={() => handleFeaturePromptSave('outreach_message_prompt', '')}
                         disabled={featurePromptSaving === 'outreach_message_prompt'}
                       >
                         {t('settings.contentGeneration.customPromptResetButton')}
