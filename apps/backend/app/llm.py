@@ -4,7 +4,7 @@ import json
 import logging
 import re
 import threading
-from typing import Any
+from typing import Any, Literal
 
 import litellm
 from litellm import Router
@@ -52,6 +52,7 @@ class LLMConfig(BaseModel):
     model: str
     api_key: str
     api_base: str | None = None
+    reasoning_effort: Literal["minimal", "low", "medium", "high"] | None = None
 
 
 def _normalize_api_base(provider: str, api_base: str | None) -> str | None:
