@@ -62,6 +62,11 @@ def _normalize_api_base(provider: str, api_base: str | None) -> str | None:
     includes a version segment (e.g., `/v1`). Some LiteLLM provider handlers
     append those segments internally, which can lead to duplicated paths like
     `/v1/v1/...` and cause 404s.
+
+    For the `openai` provider, LiteLLM uses the upstream OpenAI client which
+    handles `/v1` correctly — we MUST preserve whatever the user pasted so
+    that OpenAI-compatible endpoints like llama.cpp (http://localhost:8080/v1)
+    round-trip intact. See issue #751.
     """
     if not api_base:
         return None
@@ -71,6 +76,11 @@ def _normalize_api_base(provider: str, api_base: str | None) -> str | None:
         return None
 
     base = base.rstrip("/")
+
+    # OpenAI / OpenAI-compatible: preserve the URL as-is. The OpenAI client
+    # resolves paths correctly whether the base includes /v1 or not.
+    if provider == "openai":
+        return base or None
 
     # Anthropic handler appends '/v1/messages'. If base already ends with '/v1',
     # strip it to avoid '/v1/v1/messages'.
