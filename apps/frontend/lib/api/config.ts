@@ -331,36 +331,39 @@ export async function updateFeaturePrompts(update: FeaturePromptsUpdate): Promis
     body: JSON.stringify(update),
   });
 
-  // Parse the body once — a fetch Response body is a one-shot stream. If we
-  // read it in the 422 branch and then again in the generic !res.ok branch,
-  // the second read fails silently and we lose the backend's detail payload.
-  const body = (await res.json().catch(() => ({}))) as {
-    detail?: FeaturePromptsValidationError | string;
-  };
-
   if (!res.ok) {
+    // Error path: body may be absent or malformed, so we tolerate parse
+    // failure. A fetch body is a one-shot stream — read it once and reuse
+    // for both the 422-special-case and the generic fallback.
+    const errBody = (await res.json().catch(() => ({}))) as {
+      detail?: FeaturePromptsValidationError | string;
+    };
     if (
       res.status === 422 &&
-      typeof body.detail === 'object' &&
-      body.detail?.code === 'missing_placeholders'
+      typeof errBody.detail === 'object' &&
+      errBody.detail?.code === 'missing_placeholders'
     ) {
-      throw new FeaturePromptsError(body.detail);
+      throw new FeaturePromptsError(errBody.detail);
     }
-    // Fall-through path: FastAPI can return ``detail`` as either a string or
-    // a structured object. Stringifying an object with the ``||`` shortcut
-    // produces "[object Object]" which is unhelpful; serialize explicitly.
+    // FastAPI can return ``detail`` as a string or a structured object.
+    // Stringifying an object via the ``||`` shortcut yields "[object Object]";
+    // serialize explicitly.
     let message: string;
-    if (typeof body.detail === 'string') {
-      message = body.detail;
-    } else if (body.detail) {
-      message = JSON.stringify(body.detail);
+    if (typeof errBody.detail === 'string') {
+      message = errBody.detail;
+    } else if (errBody.detail) {
+      message = JSON.stringify(errBody.detail);
     } else {
       message = `Failed to update feature prompts (status ${res.status}).`;
     }
     throw new Error(message);
   }
 
-  return body as FeaturePrompts;
+  // Success path: require a valid JSON body. Swallowing parse errors here
+  // would let an invalid success response be returned as FeaturePrompts
+  // with undefined fields — caller code would then read .cover_letter_prompt
+  // and get surprising behavior. Let the parse error propagate.
+  return (await res.json()) as FeaturePrompts;
 }
 
 // API Key Management types

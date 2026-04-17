@@ -364,13 +364,15 @@ export default function SettingsPage() {
         // and the gpt-5 auto-migration won't re-fire.
         reasoning_effort: reasoningEffort === 'auto' ? '' : (reasoningEffort as ReasoningEffort),
       };
-      if (requiresApiKey) {
-        if (trimmedKey) {
-          update.api_key = trimmedKey;
-        } else if (!hasStoredApiKey) {
-          update.api_key = '';
-        }
-      } else {
+      // Key-send policy (applies to BOTH requiresKey=true and false):
+      //   - User typed a new key → send it (overwrite stored).
+      //   - User cleared the field AND has a stored key → omit so stored
+      //     key is preserved (matches existing UX; users rotate explicitly).
+      //   - No new key, no stored key → send '' so the backend clears the
+      //     field (mainly the required path; same shape for consistency).
+      if (trimmedKey) {
+        update.api_key = trimmedKey;
+      } else if (!hasStoredApiKey) {
         update.api_key = '';
       }
 
@@ -403,12 +405,11 @@ export default function SettingsPage() {
         reasoning_effort: reasoningEffort === 'auto' ? '' : (reasoningEffort as ReasoningEffort),
       };
 
-      // Only include API key if provided or if we have a stored key
-      if (requiresApiKey) {
-        if (apiKey.trim()) {
-          testConfig.api_key = apiKey.trim();
-        }
-        // If no new key but has stored key, don't send api_key (backend uses stored)
+      // Send the user-typed key if present (for any provider, required or
+      // optional). If blank, omit the field so the backend falls back to
+      // the stored key for that provider.
+      if (apiKey.trim()) {
+        testConfig.api_key = apiKey.trim();
       }
 
       const result = await testLlmConnection(testConfig);
