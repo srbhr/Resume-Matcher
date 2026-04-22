@@ -134,8 +134,9 @@ async def update_llm_config(
         stored["model"] = request.model
     if request.api_key is not None:
         stored["api_key"] = request.api_key
-    if request.api_base is not None:
-        stored["api_base"] = request.api_base
+
+    stored["api_base"] = request.api_base if request.api_base is not None else ""
+
     if request.reasoning_effort is not None:
         # Persist empty string on clear so the gpt-5 auto-migration doesn't
         # re-fire on next get_llm_config() call.

@@ -46,6 +46,34 @@ class TestLlmConfig:
         data = resp.json()
         assert data["provider"] == "anthropic"
 
+    @patch("app.routers.config._save_config")
+    @patch("app.routers.config._load_config")
+    @patch("app.routers.config._log_llm_health_check", new_callable=AsyncMock)
+    async def test_put_llm_config_api_base_clears(self, mock_log, mock_load, mock_save, client):
+        # Simulate storage
+        stored = {}
+        mock_load.side_effect = lambda: stored.copy()
+
+        async with client:
+            resp = await client.put("/api/v1/config/llm-api-key", json={
+                "provider": "anthropic",
+                "model": "claude-3-sonnet",
+                "api_base": "https://openrouter.ai/api/v1"
+            })
+            assert resp.status_code == 200
+            data = resp.json()
+            assert data["provider"] == "anthropic"
+            assert data["api_base"] == "https://openrouter.ai/api/v1"
+
+            resp = await client.put("/api/v1/config/llm-api-key", json={
+                "provider": "anthropic",
+                "model": "claude-3-sonnet",
+            })
+            assert resp.status_code == 200
+            data = resp.json()
+            assert data["provider"] == "anthropic"
+            assert data["api_base"] == ""
+
 
 class TestLlmTest:
     """POST /api/v1/config/llm-test"""
