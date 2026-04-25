@@ -126,17 +126,16 @@ export const AddSectionDialog: React.FC<AddSectionDialogProps> = ({
                   key={item.type}
                   type="button"
                   onClick={() => setSectionType(item.type)}
-                  className={`w-full p-4 border text-left transition-colors ${
-                    sectionType === item.type
+                  className={`w-full p-4 border text-left transition-colors ${sectionType === item.type
                       ? 'border-black bg-paper-tint shadow-sw-sm'
                       : 'border-steel-grey hover:border-steel-grey'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-start gap-3">
                     <div
                       className={`p-2 border ${sectionType === item.type
-                          ? 'border-black bg-white'
-                          : 'border-steel-grey bg-paper-tint'
+                        ? 'border-black bg-white'
+                        : 'border-steel-grey bg-paper-tint'
                         }`}
                     >
                       {item.icon}
