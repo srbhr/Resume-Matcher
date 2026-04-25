@@ -115,6 +115,7 @@ class SectionType(str, Enum):
     TEXT = "text"  # Single text block (like summary)
     ITEM_LIST = "itemList"  # Array of items with fields (like experience)
     STRING_LIST = "stringList"  # Array of strings (like skills)
+    LABELED_LISTS = "labeledLists"  # Multiple titled lists (like Skills & Languages)
 
 
 # Resume Data Models (matching frontend types in resume-component.tsx)
@@ -228,6 +229,26 @@ class CustomSectionItem(BaseModel):
         return _coerce_string_list(value)
 
 
+class LabeledListItem(BaseModel):
+    """A labeled list for custom labeled-list sections (e.g., 'Technical Skills: Python, React')."""
+
+    id: int = 0
+    label: str = ""  # Section label (e.g., "Technical Skills", "Languages")
+    items: list[str] = Field(default_factory=list)  # Array of items for this label
+
+    @field_validator("label", mode="before")
+    @classmethod
+    def _normalize_label(cls, value: Any) -> str:
+        if value is None:
+            return ""
+        return _coerce_text(value)
+
+    @field_validator("items", mode="before")
+    @classmethod
+    def _normalize_items(cls, value: Any) -> list[str]:
+        return _coerce_string_list(value)
+
+
 class CustomSection(BaseModel):
     """Custom section data container."""
 
@@ -235,6 +256,7 @@ class CustomSection(BaseModel):
     items: list[CustomSectionItem] | None = None  # For ITEM_LIST
     strings: list[str] | None = None  # For STRING_LIST
     text: str | None = None  # For TEXT
+    namedLists: list[LabeledListItem] | None = None  # For LABELED_LISTS
 
     @field_validator("items", mode="before")
     @classmethod
@@ -262,6 +284,24 @@ class CustomSection(BaseModel):
     @classmethod
     def _normalize_text(cls, value: Any) -> str | None:
         return _coerce_optional_text(value)
+
+    @field_validator("namedLists", mode="before")
+    @classmethod
+    def _normalize_named_lists(cls, value: Any) -> list[LabeledListItem] | None:
+        if value is None:
+            return None
+        if not isinstance(value, list):
+            return value
+        result = []
+        for i, item in enumerate(value):
+            if isinstance(item, dict):
+                # Ensure id is set
+                if "id" not in item or item["id"] is None:
+                    item["id"] = i + 1
+                result.append(item)
+            else:
+                result.append({"id": i + 1, "label": str(item), "items": []})
+        return result
 
 
 # Default section metadata for backward compatibility

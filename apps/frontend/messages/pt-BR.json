@@ -147,7 +147,9 @@
         "itemListLabel": "Lista de Itens",
         "itemListDescription": "Múltiplas entradas com detalhes (como Experiência)",
         "stringListLabel": "Lista de Habilidades",
-        "stringListDescription": "Lista simples de itens (como Habilidades)"
+        "stringListDescription": "Lista simples de itens (como Habilidades)",
+        "labeledListsLabel": "Listas Rotuladas",
+        "labeledListsDescription": "Múltiplas listas com títulos (como Habilidades e Idiomas)"
       },
       "contentLabel": "Conteúdo",
       "contentPlaceholder": "Insira o conteúdo para {name}...",
@@ -158,6 +160,17 @@
       "itemsPlaceholder": "Insira os itens, um por linha",
       "unknownSectionType": "Tipo de seção desconhecido: {type}",
       "unknownDefaultSection": "Seção padrão desconhecida: {section}"
+    },
+    "genericLabeledListForm": {
+      "subsectionLabel": "Subseção",
+      "addSubsectionLabel": "Adicionar Subseção",
+      "labelPlaceholder": "Ex: Habilidades Técnicas, Idiomas",
+      "itemsPlaceholder": "Ex: Python, React, TypeScript",
+      "fields": {
+        "label": "Rótulo",
+        "items": "Itens"
+      },
+      "noSubsections": "Nenhuma subseção ainda. Clique no botão acima para adicionar sua primeira subseção."
     },
     "sectionHeader": {
       "renameSection": "Renomear seção",

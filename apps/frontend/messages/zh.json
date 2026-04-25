@@ -147,7 +147,9 @@
         "itemListLabel": "条目列表",
         "itemListDescription": "包含多个条目的列表（类似工作经历）",
         "stringListLabel": "简单列表",
-        "stringListDescription": "简单的文本列表（类似技能）"
+        "stringListDescription": "简单的文本列表（类似技能）",
+        "labeledListsLabel": "标记列表",
+        "labeledListsDescription": "多个标题列表（如技能和语言）"
       },
       "contentLabel": "内容",
       "contentPlaceholder": "请输入“{name}”的内容...",
@@ -158,6 +160,17 @@
       "itemsPlaceholder": "每行一个列表项",
       "unknownSectionType": "未知板块类型：{type}",
       "unknownDefaultSection": "未知默认板块：{section}"
+    },
+    "genericLabeledListForm": {
+      "subsectionLabel": "子板块",
+      "addSubsectionLabel": "添加子板块",
+      "labelPlaceholder": "例如：技术技能、语言",
+      "itemsPlaceholder": "例如：Python、React、TypeScript",
+      "fields": {
+        "label": "标签",
+        "items": "列表项"
+      },
+      "noSubsections": "暂无子板块。点击上方按钮添加第一个子板块。"
     },
     "sectionHeader": {
       "renameSection": "重命名板块",
