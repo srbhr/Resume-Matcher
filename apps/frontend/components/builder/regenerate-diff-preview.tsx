@@ -123,7 +123,7 @@ export const RegenerateDiffPreview: React.FC<RegenerateDiffPreviewProps> = ({
           <DialogTitle className="font-serif text-xl font-bold uppercase tracking-tight">
             {t('builder.regenerate.diffPreview.title')}
           </DialogTitle>
-          <DialogDescription className="font-mono text-xs text-gray-600 mt-2">
+          <DialogDescription className="font-mono text-xs text-ink-soft mt-2">
             {t('builder.regenerate.diffPreview.subtitle')}
           </DialogDescription>
         </DialogHeader>
@@ -150,14 +150,14 @@ export const RegenerateDiffPreview: React.FC<RegenerateDiffPreviewProps> = ({
         {regenerateErrors.length > 0 ? (
           <div className="px-6 pt-4">
             <div className="border border-black bg-[#FFF9DB] px-4 py-3">
-              <p className="font-mono text-xs text-gray-900">
+              <p className="font-mono text-xs text-ink-soft">
                 {t('builder.regenerate.diffPreview.partialFailures', {
                   count: regenerateErrors.length,
                 })}
               </p>
               <ul className="mt-2 space-y-1">
                 {regenerateErrors.map((failed) => (
-                  <li key={failed.item_id} className="font-mono text-xs text-gray-800">
+                  <li key={failed.item_id} className="font-mono text-xs text-ink-soft">
                     • {getItemLabel(failed)}
                   </li>
                 ))}
@@ -180,7 +180,7 @@ export const RegenerateDiffPreview: React.FC<RegenerateDiffPreviewProps> = ({
                     ? t('builder.regenerate.diffPreview.collapseItem', { item: getItemLabel(item) })
                     : t('builder.regenerate.diffPreview.expandItem', { item: getItemLabel(item) })
                 }
-                className="w-full p-4 flex items-center justify-between bg-[#F0F0E8] hover:bg-[#E5E5E0] transition-colors"
+                className="w-full p-4 flex items-center justify-between bg-background hover:bg-secondary transition-colors"
               >
                 <div className="flex items-center gap-3">
                   {getItemIcon(item.item_type)}
@@ -207,7 +207,7 @@ export const RegenerateDiffPreview: React.FC<RegenerateDiffPreviewProps> = ({
 
                   {/* Original Content */}
                   <div className="p-4 border-b border-black">
-                    <div className="font-mono text-xs uppercase tracking-wider text-gray-500 mb-2 flex items-center gap-2">
+                    <div className="font-mono text-xs uppercase tracking-wider text-steel-grey mb-2 flex items-center gap-2">
                       <span className="w-3 h-3 bg-red-600 border border-black" />
                       {t('builder.regenerate.diffPreview.originalLabel')}
                     </div>
@@ -220,7 +220,7 @@ export const RegenerateDiffPreview: React.FC<RegenerateDiffPreviewProps> = ({
                           </p>
                         ))
                       ) : (
-                        <p className="text-sm text-gray-400 italic">
+                        <p className="text-sm text-steel-grey italic">
                           {t('builder.regenerate.diffPreview.noContent')}
                         </p>
                       )}
@@ -229,7 +229,7 @@ export const RegenerateDiffPreview: React.FC<RegenerateDiffPreviewProps> = ({
 
                   {/* New Content */}
                   <div className="p-4">
-                    <div className="font-mono text-xs uppercase tracking-wider text-gray-500 mb-2 flex items-center gap-2">
+                    <div className="font-mono text-xs uppercase tracking-wider text-steel-grey mb-2 flex items-center gap-2">
                       <span className="w-3 h-3 bg-green-700 border border-black" />
                       {t('builder.regenerate.diffPreview.newLabel')}
                     </div>
@@ -242,7 +242,7 @@ export const RegenerateDiffPreview: React.FC<RegenerateDiffPreviewProps> = ({
                           </p>
                         ))
                       ) : (
-                        <p className="text-sm text-gray-400 italic">
+                        <p className="text-sm text-steel-grey italic">
                           {t('builder.regenerate.diffPreview.noContent')}
                         </p>
                       )}
@@ -254,7 +254,7 @@ export const RegenerateDiffPreview: React.FC<RegenerateDiffPreviewProps> = ({
           ))}
         </div>
 
-        <DialogFooter className="p-4 bg-[#E5E5E0] border-t border-black flex-row justify-between gap-3">
+        <DialogFooter className="p-4 bg-secondary border-t border-black flex-row justify-between gap-3">
           <Button
             variant="outline"
             onClick={onReject}

@@ -19,57 +19,13 @@ Resume Matcher is an AI-powered application for tailoring resumes to job descrip
 
 ## First Steps
 
-**Before exploring code, read the [navigator skill](/.claude/skills/navigator/SKILL.md)** for codebase orientation.
-
----
-
-## Skills-First Workflow
-
-**Before starting any task, identify which skills apply and invoke them.** This is mandatory, not optional.
-
-### How to Use Skills
-
-1. **Read the task** — understand what the user is asking.
-2. **Scan the catalog below** — identify every skill that could apply.
-3. **Invoke the matching skills** (via the Skill tool) before writing any code or giving answers.
-4. **Follow skill instructions** — each skill has its own process; respect it.
-
-### Skills Catalog
-
-| Skill | Invoke command | When to use |
-|-------|---------------|-------------|
-| **using-superpowers** | `/using-superpowers` | At conversation start — establishes skill discovery and usage |
-| **navigator** | `/navigator` | First step when exploring code, finding files, or understanding project structure |
-| **codebase-navigator** | `/codebase-navigator` | Advanced code search with ripgrep — find functions, classes, endpoints, trace data flows |
-| **brainstorming** | `/brainstorming` | Before any creative work — creating features, building components, adding functionality |
-| **simple** | `/simple` | Lightweight brainstorming for small/medium creative or architectural decisions |
-| **writing-plans** | `/writing-plans` | When you have a spec or requirements for a multi-step task, before touching code |
-| **systematic-debugging** | `/systematic-debugging` | When encountering any bug, test failure, or unexpected behavior — before proposing fixes |
-| **code-review** | `/code-review` | When receiving code review feedback — verify before implementing, don't blindly agree |
-| **requesting-code-review** | `/requesting-code-review` | After completing tasks or major features — verify work meets requirements before merging |
-| **design-principles** | `/design-principles` | When designing new UI components or modifying existing component styles (Swiss International Style) |
-| **react-patterns** | `/react-patterns` | React/Next.js performance optimization — local/offline or Docker-deployed apps |
-| **nextjs-performance** | `/nextjs-performance` | Next.js 15 critical fixes — components, data fetching, Server Actions, bundle size |
-| **tailwind-pattern** | `/tailwind-pattern` | Tailwind CSS patterns — layouts, cards, navigation, forms, buttons, typography |
-| **fastapi** | `/fastapi` | Python APIs with FastAPI, Pydantic v2, JWT auth — prevents 7 documented errors |
-
-### Task-to-Skills Mapping
-
-| Task type | Skills to invoke (in order) |
-|-----------|----------------------------|
-| **New feature** | brainstorming (or simple) → writing-plans → navigator → [frontend/backend skills] → requesting-code-review |
-| **Bug fix** | systematic-debugging → codebase-navigator → [frontend/backend skills] → requesting-code-review |
-| **Frontend UI work** | design-principles → react-patterns → nextjs-performance → tailwind-pattern |
-| **Backend API work** | fastapi → codebase-navigator |
-| **Code exploration** | navigator → codebase-navigator |
-| **Responding to review** | code-review |
-| **Multi-step implementation** | writing-plans → [relevant skills per step] |
+Before exploring code, read [docs/agent/README.md](../docs/agent/README.md) for project orientation.
 
 ---
 
 ## Non-Negotiable Rules
 
-1. **All frontend UI changes** MUST follow [Swiss International Style](../docs/agent/design/style-guide.md)
+1. **All frontend UI changes** MUST follow [Swiss International Style](../docs/portable/swiss-design-system/README.md) — see [tokens](../docs/portable/swiss-design-system/tokens.md), [components](../docs/portable/swiss-design-system/components.md), [anti-patterns](../docs/portable/swiss-design-system/anti-patterns.md)
 2. **All Python functions** MUST have type hints
 3. **Run `npm run lint`** before committing frontend changes
 4. **Run `npm run format`** (Prettier) before committing
@@ -136,8 +92,9 @@ apps/
 
 ### For Frontend Changes
 1. [Frontend workflow](../docs/agent/architecture/frontend-workflow.md) - User flow, components
-2. [Style guide](../docs/agent/design/style-guide.md) - **REQUIRED** Swiss International Style
-3. [Coding standards](../docs/agent/coding-standards.md) - Frontend conventions
+2. [Swiss design system pack](../docs/portable/swiss-design-system/README.md) - **REQUIRED** Swiss International Style (portable pack)
+3. [Next.js performance pack](../docs/portable/nextjs-performance/README.md) - **REQUIRED** Next.js 15 perf patterns (portable pack)
+4. [Coding standards](../docs/agent/coding-standards.md) - Frontend conventions
 
 ### For Template/PDF Changes
 1. [PDF template guide](../docs/agent/design/pdf-template-guide.md) - PDF rendering

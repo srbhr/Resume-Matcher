@@ -71,7 +71,7 @@
     "retryProcessing": "Retry Processing",
     "retryingProcessing": "Retrying...",
     "deleteAndReupload": "Delete & Re-upload",
-    "processingFailedHint": "AI parsing failed. Retry or delete and upload a different file.",
+    "processingFailedHint": "We couldn't read this file. Retry or upload a different one.",
     "retrySuccess": "Processing succeeded!",
     "retryFailed": "Retry failed. Try uploading a different file.",
     "createResume": "Create Resume",
@@ -573,12 +573,12 @@
       "confirmLabel": "Continue without diff"
     },
     "errors": {
-      "jobDescriptionTooShort": "Job description is too short. Please provide more details.",
-      "apiKeyError": "API key error. Please check your LLM configuration in Settings.",
-      "rateLimit": "Rate limit reached. Please wait a moment and try again.",
-      "failedToGenerate": "Failed to generate resume. Please check your settings and try again.",
-      "failedToPreview": "Failed to preview resume. Please check your settings and try again.",
-      "failedToConfirm": "Failed to confirm resume. Please try again."
+      "jobDescriptionTooShort": "Job description is too short. Add more detail and try again.",
+      "apiKeyError": "Your API key isn't working. Check it in Settings.",
+      "rateLimit": "Rate limit reached. Wait about a minute and try again.",
+      "failedToGenerate": "Couldn't generate the resume. Check your API key in Settings, then try again.",
+      "failedToPreview": "Couldn't preview the resume. Check your API key in Settings, then try again.",
+      "failedToConfirm": "Couldn't apply the changes. Please try again."
     }
   },
   "settings": {
@@ -635,7 +635,7 @@
     "systemStatus": {
       "title": "System Status",
       "refresh": "Refresh",
-      "unableToConnect": "Unable to connect to backend",
+      "unableToConnect": "Can't reach the server",
       "expectedAt": "Expected at: {apiUrl}",
       "lastFetched": {
         "never": "Never",
@@ -650,14 +650,24 @@
       "defaultModel": "DEFAULT: {model}",
       "apiKeyLabel": "API Key",
       "apiKeyOptionalForOllama": "(Optional for Ollama)",
+      "apiKeyOptional": "(Optional)",
       "apiKeyPlaceholder": "sk-...",
       "apiKeyNotRequiredPlaceholder": "Not required for local models",
+      "apiKeyOptionalPlaceholder": "Leave blank if your server has no auth",
       "leaveBlankToKeepExistingKey": "LEAVE BLANK TO KEEP EXISTING KEY",
       "baseUrlLabel": "Base URL (optional)",
       "baseUrlPlaceholder": "e.g. https://api.openai.com/v1",
       "baseUrlDescription": "Override the API base URL to use a proxy/aggregator endpoint. Leave blank to use provider default.",
       "ollamaServerUrl": "Ollama Server URL",
       "ollamaServerUrlPlaceholder": "http://localhost:11434",
+      "reasoningEffortLabel": "Reasoning effort",
+      "reasoningEffortAuto": "Auto",
+      "reasoningEffortAutoDesc": "Don't send reasoning_effort — default for max compatibility",
+      "reasoningEffortMinimal": "Minimal",
+      "reasoningEffortLow": "Low",
+      "reasoningEffortMedium": "Medium",
+      "reasoningEffortHigh": "High",
+      "reasoningEffortDescription": "Only affects reasoning-capable models (gpt-5 family, Claude 3.7+, DeepSeek R1, OpenAI o1/o3). Unsupported providers drop this value automatically.",
       "testConnection": "Test Connection",
       "errorPrefix": "ERROR: {error}",
       "connectionSuccessful": "CONNECTION SUCCESSFUL",
@@ -665,6 +675,7 @@
       "connectionDetails": "Provider: {provider} | Model: {model}",
       "testPromptLabel": "TEST PROMPT",
       "modelOutputLabel": "MODEL OUTPUT",
+      "reasoningContentLabel": "MODEL THINKING",
       "errorDetailLabel": "ERROR DETAIL",
       "healthErrors": {
         "api_key_missing": "API key not configured. Please add a key in Settings.",
@@ -687,7 +698,11 @@
       "outreachMessage": {
         "label": "Cold Outreach Message",
         "description": "Generate a networking message for LinkedIn or email"
-      }
+      },
+      "customPromptLabel": "Custom prompt (optional)",
+      "customPromptHelp": "Must include these placeholders (each in curly braces): job_description, resume_data, output_language. Leave blank to use the default prompt.",
+      "customPromptResetButton": "Reset to default",
+      "customPromptErrorMissing": "Missing required placeholders: {missing}"
     },
     "promptSettings": {
       "title": "Prompt Settings",
@@ -703,7 +718,7 @@
       }
     },
     "errors": {
-      "unableToConnectBackend": "Unable to connect to backend. Is the server running?",
+      "unableToConnectBackend": "Can't reach the server. Make sure it's running.",
       "apiKeyRequired": "API key is required for the selected provider.",
       "unknownProvider": "Unknown provider returned from backend: {provider}",
       "unableToSaveConfiguration": "Unable to save configuration",
@@ -725,8 +740,8 @@
     "deletedDescriptionRegular": "The resume has been permanently deleted from the system.",
     "deleteFailedTitle": "Delete Failed",
     "errors": {
-      "processingFailed": "Resume processing failed. The AI service could not extract structured data from your resume. You can retry processing or delete and re-upload.",
-      "stillProcessing": "Resume is still being processed. Please wait a moment and refresh the page.",
+      "processingFailed": "We couldn't read your resume. Retry processing, or delete it and upload a different file.",
+      "stillProcessing": "Your resume is still being processed. Wait a few seconds and refresh the page.",
       "notProcessedYet": "Resume has not been processed yet. Please use the Tailor feature to generate a structured resume.",
       "noDataAvailable": "No resume data available.",
       "failedToLoad": "Failed to load resume data.",
@@ -739,7 +754,9 @@
     "calculating": "Calculating...",
     "pageBreak": "Page Break",
     "pageCountSingular": "{count} page",
-    "pageCountPlural": "{count} pages"
+    "pageCountPlural": "{count} pages",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out"
   },
   "resume": {
     "personalInfo": {
@@ -829,27 +846,32 @@
     "networkError": "Network error. Please check your connection.",
     "unauthorized": "Please sign in to continue.",
     "notFound": "The requested resource was not found.",
-    "validationError": "Please check your input and try again.",
+    "validationError": "Some fields need attention. Check the highlighted fields and try again.",
     "boundary": {
       "title": "Something Went Wrong",
-      "description": "An unexpected error occurred. This has been logged for review.",
+      "description": "Something unexpected broke. Try reloading the page — if it keeps happening, let us know.",
       "tryAgain": "Try Again",
       "reloadPage": "Reload Page"
     }
   },
+  "a11y": {
+    "removeItem": "Remove item",
+    "removeDescription": "Remove this line",
+    "removeFile": "Remove file"
+  },
   "confirmations": {
-    "deleteResume": "Are you sure you want to delete this resume?",
-    "deleteResumeDescription": "This action cannot be undone.",
+    "deleteResume": "Delete this resume?",
+    "deleteResumeDescription": "The resume will be permanently removed.",
     "deleteMasterResumeTitle": "Delete Master Resume",
-    "deleteMasterResumeDescription": "This action cannot be undone. Your master resume will be permanently removed from the system.",
-    "deleteResumeFromSystemDescription": "This action cannot be undone. The resume will be permanently removed from the system.",
+    "deleteMasterResumeDescription": "Your master resume will be permanently removed.",
+    "deleteResumeFromSystemDescription": "The resume will be permanently removed.",
     "deleteResumeConfirmLabel": "Delete Resume",
     "keepResumeCancelLabel": "Keep Resume",
-    "discardChanges": "Are you sure you want to discard your changes?",
-    "discardChangesDescription": "Any unsaved changes will be lost.",
+    "discardChanges": "Discard unsaved changes?",
+    "discardChangesDescription": "You'll lose any work that hasn't been saved.",
     "clearApiKeys": "Clear All API Keys?",
-    "clearApiKeysDescription": "Are you sure you want to remove all API keys? You will need to re-enter them to use AI features.",
-    "resetDatabase": "Reset Database and Clear All Data?",
-    "resetDatabaseDescription": "This will permanently delete ALL resumes, job descriptions, and generated content. This action is irreversible."
+    "clearApiKeysDescription": "You'll need to re-enter them before using AI features again.",
+    "resetDatabase": "Reset everything and start over?",
+    "resetDatabaseDescription": "This permanently deletes every resume, job description, and generated document."
   }
 }

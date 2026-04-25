@@ -4,14 +4,14 @@ import json
 import logging
 import re
 import threading
-from typing import Any
+from typing import Any, Literal
 
 import litellm
 from litellm import Router
 from litellm.router import RetryPolicy
 from pydantic import BaseModel
 
-from app.config import settings
+from app.config import load_config_file, save_config_file, settings
 
 LITELLM_LOGGER_NAMES = ("LiteLLM", "LiteLLM Router", "LiteLLM Proxy")
 
@@ -24,6 +24,16 @@ def _configure_litellm_logging() -> None:
 
 
 _configure_litellm_logging()
+
+# Let LiteLLM drop provider-unsupported params (reasoning_effort, non-default
+# temperature, etc.) instead of raising UnsupportedParamsError. This replaces
+# the hardcoded per-model compatibility branches this module used to carry.
+litellm.drop_params = True
+
+# Let LiteLLM auto-drop `thinking_blocks` from assistant messages when required
+# for a given turn (e.g., tool-call turns missing the blocks). Defensive; no
+# current code path sends thinking, but future-proofs the Router.
+litellm.modify_params = True
 
 # LLM timeout configuration (seconds) - base values
 LLM_TIMEOUT_HEALTH_CHECK = 30
@@ -42,6 +52,7 @@ class LLMConfig(BaseModel):
     model: str
     api_key: str
     api_base: str | None = None
+    reasoning_effort: Literal["minimal", "low", "medium", "high"] | None = None
 
 
 def _normalize_api_base(provider: str, api_base: str | None) -> str | None:
@@ -51,6 +62,11 @@ def _normalize_api_base(provider: str, api_base: str | None) -> str | None:
     includes a version segment (e.g., `/v1`). Some LiteLLM provider handlers
     append those segments internally, which can lead to duplicated paths like
     `/v1/v1/...` and cause 404s.
+
+    For the `openai` provider, LiteLLM uses the upstream OpenAI client which
+    handles `/v1` correctly — we MUST preserve whatever the user pasted so
+    that OpenAI-compatible endpoints like llama.cpp (http://localhost:8080/v1)
+    round-trip intact. See issue #751.
     """
     if not api_base:
         return None
@@ -60,6 +76,11 @@ def _normalize_api_base(provider: str, api_base: str | None) -> str | None:
         return None
 
     base = base.rstrip("/")
+
+    # OpenAI / OpenAI-compatible: preserve the URL as-is. The OpenAI client
+    # resolves paths correctly whether the base includes /v1 or not.
+    if provider in ("openai", "openai_compatible"):
+        return base or None
 
     # Anthropic handler appends '/v1/messages'. If base already ends with '/v1',
     # strip it to avoid '/v1/v1/messages'.
@@ -85,6 +106,23 @@ def _normalize_api_base(provider: str, api_base: str | None) -> str | None:
                 break
 
     return base or None
+
+
+# Sentinel passed to the OpenAI client when the user leaves api_key blank for
+# openai_compatible. The client validates non-empty strings but not the value
+# format; local servers that don't check auth ignore it.
+_OPENAI_COMPATIBLE_SENTINEL = "sk-no-key"
+
+
+def _effective_api_key(provider: str, api_key: str) -> str:
+    """Return the api_key to pass to LiteLLM.
+
+    For openai_compatible with a blank key, substitute a sentinel so the
+    OpenAI client accepts the call. Other providers pass through unchanged.
+    """
+    if provider == "openai_compatible" and not api_key:
+        return _OPENAI_COMPATIBLE_SENTINEL
+    return api_key
 
 
 def _extract_text_parts(value: Any, depth: int = 0, max_depth: int = 10) -> list[str]:
@@ -150,7 +188,17 @@ def _join_text_parts(parts: list[str]) -> str | None:
 
 
 def _extract_message_text(message: Any) -> str | None:
-    """Extract plain text from a LiteLLM message object across providers."""
+    """Extract plain text from a LiteLLM message object across providers.
+
+    Fallback order:
+      1. message.content (standard OpenAI-compatible path)
+      2. message.reasoning_content (DeepSeek R1, OpenAI o1/o3 via LiteLLM
+         standardized field)
+      3. message.thinking (Anthropic extended thinking)
+
+    Reasoning-only responses are treated as valid content so thinking models
+    can be used without special-casing them in every call site.
+    """
     content: Any = None
 
     if hasattr(message, "content"):
@@ -158,7 +206,19 @@ def _extract_message_text(message: Any) -> str | None:
     elif isinstance(message, dict):
         content = message.get("content")
 
-    return _join_text_parts(_extract_text_parts(content))
+    text = _join_text_parts(_extract_text_parts(content))
+    if text:
+        return text
+
+    # Fallback: reasoning_content (DeepSeek R1, OpenAI o1/o3).
+    reasoning = _safe_get(message, "reasoning_content")
+    text = _join_text_parts(_extract_text_parts(reasoning))
+    if text:
+        return text
+
+    # Fallback: thinking (Anthropic extended thinking).
+    thinking = _safe_get(message, "thinking")
+    return _join_text_parts(_extract_text_parts(thinking))
 
 
 def _safe_get(obj: Any, key: str) -> Any:
@@ -198,19 +258,44 @@ def _to_code_block(content: str | None, language: str = "text") -> str:
     return f"```{language}\n{text}\n```"
 
 
-def _load_stored_config() -> dict:
-    """Load config from config.json file."""
-    config_path = settings.config_path
-    if config_path.exists():
-        try:
-            return json.loads(config_path.read_text())
-        except (json.JSONDecodeError, OSError):
-            return {}
-    return {}
+# Regex for provider-style API-key tokens that may appear in upstream error
+# messages (OpenAI / Anthropic / OpenRouter / DeepSeek all use ``sk-...``;
+# Google AI Studio uses ``AIza...``). The OpenAI client already partially
+# masks keys in its error text but leaves the first ~8 and last ~4 chars
+# visible, which is enough to identify the provider and correlate with the
+# user's stored key. We redact any remaining key-like run before we surface
+# the message to the client via ``error_detail``.
+_SECRET_PATTERNS: tuple[re.Pattern[str], ...] = (
+    # sk-<anything-non-whitespace>, covering both plain and already-masked
+    # tokens (e.g., ``sk-ant-a****...7QAA``). Minimum length of 12 avoids
+    # matching harmless substrings like ``sk-foo``.
+    re.compile(r"sk-[A-Za-z0-9_\-*.]{12,}"),
+    # Google AI Studio.
+    re.compile(r"AIza[0-9A-Za-z_\-]{10,}"),
+    # Generic Bearer tokens in an Authorization header line.
+    re.compile(r"(?i)(Bearer\s+)[^\s\"']+"),
+)
+
+
+def _scrub_secrets(text: str) -> str:
+    """Redact API-key-like substrings before the text leaves the server.
+
+    Applied to ``error_detail`` on the failing-health-check path so that
+    upstream exception messages (which may include partially-masked keys)
+    can't be used by a Settings-page viewer to identify which provider /
+    key variant is configured.
+    """
+    if not text:
+        return text
+    redacted = text
+    for pattern in _SECRET_PATTERNS:
+        redacted = pattern.sub("<redacted>", redacted)
+    return redacted
 
 
 _PROVIDER_KEY_MAP: dict[str, str] = {
     "openai": "openai",
+    "openai_compatible": "openai_compatible",
     "anthropic": "anthropic",
     "gemini": "google",
     "openrouter": "openrouter",
@@ -219,12 +304,25 @@ _PROVIDER_KEY_MAP: dict[str, str] = {
 }
 
 
+# Providers where the user commonly runs a local server without auth. For
+# these, we MUST NOT fall back to ``settings.llm_api_key`` (the env-level
+# default), because the env var may hold a real paid-API key that would then
+# leak to a local/compatible endpoint the user set up expecting no auth.
+_PROVIDERS_WITHOUT_ENV_KEY_FALLBACK: frozenset[str] = frozenset(
+    {"openai_compatible", "ollama"}
+)
+
+
 def resolve_api_key(stored: dict, provider: str) -> str:
     """Resolve the effective API key from stored config.
 
-    Priority: top-level api_key > api_keys[provider] > env/settings default.
+    Priority: top-level ``api_key`` > ``api_keys[provider]`` > env/settings
+    default — EXCEPT for providers in ``_PROVIDERS_WITHOUT_ENV_KEY_FALLBACK``
+    (``openai_compatible`` / ``ollama``), where the env-level default is
+    skipped so a paid OpenAI key in ``LLM_API_KEY`` cannot leak to a local
+    self-hosted server when the user leaves the provider key blank.
 
-    This is the single source of truth for key resolution.  Every code path
+    This is the single source of truth for key resolution. Every code path
     that needs an API key (runtime, config display, health check, test
     endpoint) must call this function instead of reading ``stored["api_key"]``
     directly.
@@ -235,7 +333,12 @@ def resolve_api_key(stored: dict, provider: str) -> str:
         if not isinstance(api_keys, dict):
             api_keys = {}
         config_provider = _PROVIDER_KEY_MAP.get(provider, provider)
-        api_key = api_keys.get(config_provider, settings.llm_api_key)
+        env_default = (
+            ""
+            if provider in _PROVIDERS_WITHOUT_ENV_KEY_FALLBACK
+            else settings.llm_api_key
+        )
+        api_key = api_keys.get(config_provider, env_default)
     return api_key
 
 
@@ -243,16 +346,50 @@ def get_llm_config() -> LLMConfig:
     """Get current LLM configuration.
 
     Priority for api_key: top-level api_key > api_keys[provider] > env/settings
+    Priority for reasoning_effort: config.json > env/settings
+
+    Runs a one-shot migration for existing gpt-5 users: if provider is openai,
+    model contains 'gpt-5', and reasoning_effort is ABSENT from config.json
+    (not merely empty), persist reasoning_effort='minimal' to preserve the
+    behavior the removed hardcoded branch provided. Users who clear the
+    field explicitly (empty string persisted by the PUT handler) will not
+    have it restored.
     """
-    stored = _load_stored_config()
+    stored = load_config_file()
     provider = stored.get("provider", settings.llm_provider)
+    model = stored.get("model", settings.llm_model)
+
+    # One-shot migration: preserve old gpt-5 reasoning_effort behavior for
+    # existing configs. Gated on ABSENT key so users can opt out by clearing
+    # the field (PUT handler persists an empty string on clear).
+    if (
+        provider == "openai"
+        and "gpt-5" in model.lower()
+        and "reasoning_effort" not in stored
+    ):
+        stored["reasoning_effort"] = "minimal"
+        try:
+            save_config_file(stored)
+            logging.info(
+                "Migrated gpt-5 config to preserve reasoning_effort=minimal "
+                "(set REASONING_EFFORT= or clear in Settings to disable)"
+            )
+        except Exception as e:
+            # Non-fatal — retry on next call.
+            logging.warning("Failed to persist gpt-5 migration: %s", e)
+
     api_key = resolve_api_key(stored, provider)
+
+    raw_re = stored.get("reasoning_effort", settings.reasoning_effort)
+    # Normalize empty string to None — user explicitly cleared.
+    reasoning_effort = raw_re if raw_re else None
 
     return LLMConfig(
         provider=provider,
-        model=stored.get("model", settings.llm_model),
+        model=model,
         api_key=api_key,
         api_base=stored.get("api_base", settings.llm_api_base),
+        reasoning_effort=reasoning_effort,
     )
 
 
@@ -265,6 +402,10 @@ def get_model_name(config: LLMConfig) -> str:
     """
     provider_prefixes = {
         "openai": "",  # OpenAI models don't need prefix
+        # openai_compatible: route via LiteLLM's openai/ prefix so the OpenAI
+        # client handles the request; works for llama.cpp, vLLM, LM Studio,
+        # and any server exposing the OpenAI Chat Completions API shape.
+        "openai_compatible": "openai/",
         "anthropic": "anthropic/",
         "openrouter": "openrouter/",
         "gemini": "gemini/",
@@ -282,8 +423,15 @@ def get_model_name(config: LLMConfig) -> str:
         return f"openrouter/{config.model}"
 
     # For other providers, don't add prefix if model already has a known prefix
-    known_prefixes = ["openrouter/", "anthropic/",
-                      "gemini/", "deepseek/", "ollama/", "ollama_chat/"]
+    known_prefixes = [
+        "openrouter/",
+        "anthropic/",
+        "gemini/",
+        "deepseek/",
+        "ollama/",
+        "ollama_chat/",
+        "openai/",
+    ]
     if any(config.model.startswith(p) for p in known_prefixes):
         return config.model
 
@@ -317,8 +465,9 @@ def _build_router(config: LLMConfig) -> Router:
     model_name = get_model_name(config)
 
     litellm_params: dict[str, Any] = {"model": model_name}
-    if config.api_key:
-        litellm_params["api_key"] = config.api_key
+    effective_key = _effective_api_key(config.provider, config.api_key)
+    if effective_key:
+        litellm_params["api_key"] = effective_key
     api_base = _normalize_api_base(config.provider, config.api_base)
     if api_base:
         litellm_params["api_base"] = api_base
@@ -368,32 +517,6 @@ def get_router(config: LLMConfig | None = None) -> tuple[Router, LLMConfig]:
     return router, config
 
 
-def _supports_temperature(provider: str, model: str) -> bool:
-    """Return whether passing `temperature` is supported for this model/provider combo.
-
-    Some models (e.g., OpenAI gpt-5 family) reject temperature values other than 1,
-    and LiteLLM may error when temperature is passed.
-    """
-    _ = provider
-    model_lower = model.lower()
-    if "gpt-5" in model_lower:
-        return False
-    return True
-
-
-def _get_reasoning_effort(provider: str, model: str) -> str | None:
-    """Return a default reasoning_effort for models that require it.
-
-    Some OpenAI gpt-5 models may return empty message.content unless a supported
-    `reasoning_effort` is explicitly set. This keeps downstream JSON parsing reliable.
-    """
-    _ = provider
-    model_lower = model.lower()
-    if "gpt-5" in model_lower:
-        return "minimal"
-    return None
-
-
 async def check_llm_health(
     config: LLMConfig | None = None,
     *,
@@ -404,8 +527,11 @@ async def check_llm_health(
     if config is None:
         config = get_llm_config()
 
-    # Check if API key is configured (except for Ollama)
-    if config.provider != "ollama" and not config.api_key:
+    # Check if API key is configured. Ollama and openai_compatible local
+    # servers often run without auth, so a blank key is acceptable for those
+    # providers — a sentinel is passed downstream (see _effective_api_key)
+    # to satisfy the OpenAI client's non-empty-string validation.
+    if config.provider not in ("ollama", "openai_compatible") and not config.api_key:
         return {
             "healthy": False,
             "provider": config.provider,
@@ -423,40 +549,35 @@ async def check_llm_health(
         kwargs: dict[str, Any] = {
             "model": model_name,
             "messages": [{"role": "user", "content": prompt}],
-            "max_tokens": 16,
-            "api_key": config.api_key,
+            "max_tokens": 64,
+            "api_key": _effective_api_key(config.provider, config.api_key),
             "api_base": _normalize_api_base(config.provider, config.api_base),
             "timeout": LLM_TIMEOUT_HEALTH_CHECK,
         }
-        reasoning_effort = _get_reasoning_effort(config.provider, model_name)
-        if reasoning_effort:
-            kwargs["reasoning_effort"] = reasoning_effort
+        if config.reasoning_effort:
+            kwargs["reasoning_effort"] = config.reasoning_effort
 
         response = await litellm.acompletion(**kwargs)
         content = _extract_choice_text(response.choices[0])
         if not content:
-            # Check if the model responded with reasoning/thinking content
-            message = response.choices[0].message
-            has_reasoning = getattr(message, "reasoning_content", None) or getattr(
-                message, "thinking", None)
-            if not has_reasoning:
-                # LLM-003: Empty response should mark health check as unhealthy
-                logging.warning(
-                    "LLM health check returned empty content",
-                    extra={"provider": config.provider, "model": config.model},
-                )
-                result: dict[str, Any] = {
-                    "healthy": False,  # Fixed: empty content means unhealthy
-                    "provider": config.provider,
-                    "model": config.model,
-                    "response_model": response.model if response else None,
-                    "error_code": "empty_content",  # Changed from warning_code
-                    "message": "LLM returned empty response",
-                }
-                if include_details:
-                    result["test_prompt"] = _to_code_block(prompt)
-                    result["model_output"] = _to_code_block(None)
-                return result
+            # LLM-003: Empty response (even after reasoning_content / thinking
+            # fallbacks in _extract_choice_text) marks health as unhealthy.
+            logging.warning(
+                "LLM health check returned empty content",
+                extra={"provider": config.provider, "model": config.model},
+            )
+            result: dict[str, Any] = {
+                "healthy": False,
+                "provider": config.provider,
+                "model": config.model,
+                "response_model": response.model if response else None,
+                "error_code": "empty_content",
+                "message": "LLM returned empty response",
+            }
+            if include_details:
+                result["test_prompt"] = _to_code_block(prompt)
+                result["model_output"] = _to_code_block(None)
+            return result
 
         result = {
             "healthy": True,
@@ -467,6 +588,24 @@ async def check_llm_health(
         if include_details:
             result["test_prompt"] = _to_code_block(prompt)
             result["model_output"] = _to_code_block(content)
+            # Surface reasoning/thinking text separately ONLY when the model
+            # also returned distinct primary content. If message.content was
+            # empty, _extract_choice_text already folded the reasoning text
+            # into `content` above — surfacing it here too would duplicate
+            # identical text in "Model output" and "Model thinking".
+            msg = response.choices[0].message
+            primary_content = _join_text_parts(
+                _extract_text_parts(_safe_get(msg, "content"))
+            )
+            reasoning_text = None
+            if primary_content:
+                reasoning_text = (
+                    _join_text_parts(_extract_text_parts(_safe_get(msg, "reasoning_content")))
+                    or _join_text_parts(_extract_text_parts(_safe_get(msg, "thinking")))
+                )
+            result["reasoning_content"] = (
+                _to_code_block(reasoning_text) if reasoning_text else None
+            )
         return result
     except Exception as e:
         # Log full exception details server-side, but do not expose them to clients
@@ -493,7 +632,10 @@ async def check_llm_health(
         if include_details:
             result["test_prompt"] = _to_code_block(prompt)
             result["model_output"] = _to_code_block(None)
-            result["error_detail"] = _to_code_block(message)
+            # Scrub api-key-like tokens before surfacing the upstream error
+            # text so the Settings UI can't be used to read back even a
+            # partially-masked copy of the configured key.
+            result["error_detail"] = _to_code_block(_scrub_secrets(message))
         return result
 
 
@@ -521,13 +663,11 @@ async def complete(
             "model": "primary",
             "messages": messages,
             "max_tokens": max_tokens,
+            "temperature": temperature,
             "timeout": LLM_TIMEOUT_COMPLETION,
         }
-        if _supports_temperature(config.provider, model_name):
-            kwargs["temperature"] = temperature
-        reasoning_effort = _get_reasoning_effort(config.provider, model_name)
-        if reasoning_effort:
-            kwargs["reasoning_effort"] = reasoning_effort
+        if config.reasoning_effort:
+            kwargs["reasoning_effort"] = config.reasoning_effort
 
         response = await router.acompletion(**kwargs)
 
@@ -778,16 +918,13 @@ async def complete_json(
             kwargs: dict[str, Any] = {
                 "model": "primary",
                 "messages": messages,
+                # LLM-002: Increase temperature on retry for variation
+                "temperature": _get_retry_temperature(attempt),
                 "max_tokens": max_tokens,
                 "timeout": _calculate_timeout("json", max_tokens, config.provider),
             }
-            if _supports_temperature(config.provider, model_name):
-                # LLM-002: Increase temperature on retry for variation
-                kwargs["temperature"] = _get_retry_temperature(attempt)
-            reasoning_effort = _get_reasoning_effort(
-                config.provider, model_name)
-            if reasoning_effort:
-                kwargs["reasoning_effort"] = reasoning_effort
+            if config.reasoning_effort:
+                kwargs["reasoning_effort"] = config.reasoning_effort
 
             # Add JSON mode if supported
             if use_json_mode:

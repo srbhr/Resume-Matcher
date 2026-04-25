@@ -591,6 +591,9 @@ class ImproveResumeConfirmRequest(BaseModel):
 
 
 # Config Models
+ReasoningEffortLiteral = Literal["minimal", "low", "medium", "high"]
+
+
 class LLMConfigRequest(BaseModel):
     """Request to update LLM configuration."""
 
@@ -598,6 +601,14 @@ class LLMConfigRequest(BaseModel):
     model: str | None = None
     api_key: str | None = None
     api_base: str | None = None
+    # Optional reasoning-effort override.
+    #   - A valid value ("minimal"/"low"/"medium"/"high") updates the setting.
+    #   - Empty string clears the field — the server persists "" rather than
+    #     removing the key, so the gpt-5 auto-migration does not re-fire.
+    #   - None means "don't change this field".
+    # Strictly typed so invalid values are rejected at the boundary (422)
+    # rather than corrupting config.json and crashing later reads.
+    reasoning_effort: Literal["minimal", "low", "medium", "high", ""] | None = None
 
 
 class LLMConfigResponse(BaseModel):
@@ -607,6 +618,7 @@ class LLMConfigResponse(BaseModel):
     model: str
     api_key: str  # Masked
     api_base: str | None = None
+    reasoning_effort: ReasoningEffortLiteral | None = None
 
 
 class FeatureConfigRequest(BaseModel):
@@ -657,6 +669,32 @@ class PromptConfigResponse(BaseModel):
 
     default_prompt_id: str
     prompt_options: list[PromptOption]
+
+
+class FeaturePromptsRequest(BaseModel):
+    """Request to update custom feature prompts.
+
+    ``None`` means "don't change this field". An empty string clears the
+    override — the server persists ``""`` so runtime resolution falls back
+    to the built-in default without the key disappearing from config.json.
+    """
+
+    cover_letter_prompt: str | None = None
+    outreach_message_prompt: str | None = None
+
+
+class FeaturePromptsResponse(BaseModel):
+    """Response for custom feature prompts.
+
+    The ``*_default`` fields expose the built-in prompt strings so the UI
+    can render them as placeholder text without duplicating the content
+    across locales.
+    """
+
+    cover_letter_prompt: str
+    outreach_message_prompt: str
+    cover_letter_default: str
+    outreach_message_default: str
 
 
 # API Key Management Models
@@ -728,7 +766,6 @@ class HealthResponse(BaseModel):
     """Health check response."""
 
     status: str
-    llm: dict[str, Any]
 
 
 class StatusResponse(BaseModel):

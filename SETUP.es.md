@@ -70,7 +70,7 @@ cd Resume-Matcher
 cd apps/backend
 cp .env.example .env        # Crea la configuración a partir de la plantilla
 uv sync                      # Instala dependencias de Python
-uv run uvicorn app.main:app --reload --port 8000
+uv run app
 
 # 3. Inicia el frontend (Terminal 2)
 cd apps/frontend
@@ -149,7 +149,7 @@ Esto crea un entorno virtual e instala todos los paquetes requeridos.
 #### Iniciar el servidor del backend
 
 ```bash
-uv run uvicorn app.main:app --reload --port 8000
+RELOAD=true uv run app
 ```
 
 Deberías ver una salida como:
@@ -218,6 +218,9 @@ Resume Matcher admite múltiples proveedores de IA. Puedes configurarlo desde la
 | **Google Gemini** | `LLM_PROVIDER=gemini`<br>`LLM_MODEL=gemini-3-flash-preview` | [aistudio.google.com](https://aistudio.google.com/app/apikey) |
 | **OpenRouter** | `LLM_PROVIDER=openrouter`<br>`LLM_MODEL=deepseek/deepseek-chat` | [openrouter.ai](https://openrouter.ai/keys) |
 | **DeepSeek** | `LLM_PROVIDER=deepseek`<br>`LLM_MODEL=deepseek-chat` | [platform.deepseek.com](https://platform.deepseek.com/) |
+| **OpenAI-Compatible** | `LLM_PROVIDER=openai_compatible`<br>`LLM_MODEL=llama-3.1-8b`<br>`LLM_API_BASE=http://localhost:8080/v1` | — (local) |
+
+**OpenAI-Compatible** apunta a cualquier servidor local que exponga la API Chat Completions de OpenAI — llama.cpp, vLLM, LM Studio, etc. La API key es opcional.
 
 Ejemplo de `.env` para Anthropic:
 
@@ -324,7 +327,7 @@ Cuando ambos servidores estén ejecutándose, abre el navegador:
 cd apps/backend
 
 # Iniciar servidor de desarrollo (con auto-reload)
-uv run uvicorn app.main:app --reload --port 8000
+RELOAD=true uv run app
 
 # Iniciar servidor de producción
 uv run uvicorn app.main:app --host 0.0.0.0 --port 8000
@@ -494,7 +497,7 @@ Resume-Matcher/
 |----------|-------------|
 | [backend-guide.md](docs/agent/architecture/backend-guide.md) | Arquitectura del backend y detalles de la API |
 | [frontend-workflow.md](docs/agent/architecture/frontend-workflow.md) | Flujo de usuario y arquitectura de componentes |
-| [style-guide.md](docs/agent/design/style-guide.md) | Sistema de diseño UI (Swiss International Style) |
+| [swiss-design-system/](docs/portable/swiss-design-system/README.md) | Sistema de diseño UI (Swiss International Style) — paquete portable |
 
 ---
 

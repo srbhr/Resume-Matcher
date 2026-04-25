@@ -122,7 +122,13 @@ class Settings(BaseSettings):
 
     # LLM Configuration
     llm_provider: Literal[
-        "openai", "anthropic", "openrouter", "gemini", "deepseek", "ollama"
+        "openai",
+        "openai_compatible",
+        "anthropic",
+        "openrouter",
+        "gemini",
+        "deepseek",
+        "ollama",
     ] = "openai"
     llm_model: str = "gpt-5-nano-2025-08-07"
     llm_api_key: str = ""
@@ -149,8 +155,23 @@ class Settings(BaseSettings):
     # Server Configuration
     host: str = "0.0.0.0"
     port: int = 8000
+    reload: bool = False
     log_level: Literal["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"] = "INFO"
     frontend_base_url: str = "http://localhost:3000"
+
+    # Reasoning effort for models that support it (OpenAI gpt-5 family,
+    # Anthropic Claude 3.7+, DeepSeek R1, etc.). None means "do not send the
+    # param" — the default for maximum compatibility. LiteLLM drops this
+    # parameter for providers that don't support it (via drop_params=True).
+    reasoning_effort: Literal["minimal", "low", "medium", "high"] | None = None
+
+    @field_validator("reasoning_effort", mode="before")
+    @classmethod
+    def normalize_reasoning_effort(cls, v: Any) -> Any:
+        """Treat empty string (common when env var is blank) as None."""
+        if isinstance(v, str) and not v.strip():
+            return None
+        return v
 
     @field_validator("log_level", mode="before")
     @classmethod

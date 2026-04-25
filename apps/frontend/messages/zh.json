@@ -71,7 +71,7 @@
     "retryProcessing": "重试处理",
     "retryingProcessing": "正在重试...",
     "deleteAndReupload": "删除并重新上传",
-    "processingFailedHint": "AI 解析失败。请重试，或删除后上传其他文件。",
+    "processingFailedHint": "我们无法读取此文件。请重试或上传其他文件。",
     "retrySuccess": "处理成功！",
     "retryFailed": "重试失败。请尝试上传其他文件。",
     "createResume": "创建简历",
@@ -573,12 +573,12 @@
       "confirmLabel": "继续保存"
     },
     "errors": {
-      "jobDescriptionTooShort": "职位描述过短，请提供更多细节。",
-      "apiKeyError": "API 密钥错误。请在设置中检查您的 LLM 配置。",
-      "rateLimit": "触发速率限制，请稍后再试。",
-      "failedToGenerate": "生成简历失败。请检查设置后重试。",
-      "failedToPreview": "预览简历失败。请检查设置后重试。",
-      "failedToConfirm": "确认简历失败。请重试。"
+      "jobDescriptionTooShort": "职位描述过短。请添加更多细节后重试。",
+      "apiKeyError": "您的 API 密钥无效。请在设置中检查。",
+      "rateLimit": "已达到速率限制。请等待约一分钟后重试。",
+      "failedToGenerate": "无法生成简历。请在设置中检查 API 密钥后重试。",
+      "failedToPreview": "无法预览简历。请在设置中检查 API 密钥后重试。",
+      "failedToConfirm": "无法应用更改。请重试。"
     }
   },
   "settings": {
@@ -635,7 +635,7 @@
     "systemStatus": {
       "title": "系统状态",
       "refresh": "刷新",
-      "unableToConnect": "无法连接到后端",
+      "unableToConnect": "无法连接到服务器",
       "expectedAt": "预期地址：{apiUrl}",
       "lastFetched": {
         "never": "从未",
@@ -650,14 +650,24 @@
       "defaultModel": "默认：{model}",
       "apiKeyLabel": "API 密钥",
       "apiKeyOptionalForOllama": "（Ollama 可选）",
+      "apiKeyOptional": "（可选）",
       "apiKeyPlaceholder": "sk-...",
       "apiKeyNotRequiredPlaceholder": "本地模型不需要",
+      "apiKeyOptionalPlaceholder": "如果你的服务器不需要认证，留空即可",
       "leaveBlankToKeepExistingKey": "留空以保留现有密钥",
       "baseUrlLabel": "Base URL（可选）",
       "baseUrlPlaceholder": "例如 https://api.openai.com/v1",
       "baseUrlDescription": "可用于中转站/聚合站等自定义接口地址。不填写则使用提供商默认地址。",
       "ollamaServerUrl": "Ollama 服务器地址",
       "ollamaServerUrlPlaceholder": "http://localhost:11434",
+      "reasoningEffortLabel": "推理深度",
+      "reasoningEffortAuto": "自动",
+      "reasoningEffortAutoDesc": "不发送 reasoning_effort —— 默认值，最大限度兼容",
+      "reasoningEffortMinimal": "极低",
+      "reasoningEffortLow": "低",
+      "reasoningEffortMedium": "中",
+      "reasoningEffortHigh": "高",
+      "reasoningEffortDescription": "仅影响具备推理能力的模型（gpt-5 系列、Claude 3.7+、DeepSeek R1、OpenAI o1/o3）。不支持的提供商会自动忽略该参数。",
       "testConnection": "测试连接",
       "errorPrefix": "错误：{error}",
       "connectionSuccessful": "连接成功",
@@ -665,6 +675,7 @@
       "connectionDetails": "提供商：{provider} | 模型：{model}",
       "testPromptLabel": "测试内容",
       "modelOutputLabel": "模型输出",
+      "reasoningContentLabel": "模型思考过程",
       "errorDetailLabel": "错误详情",
       "healthErrors": {
         "api_key_missing": "未配置 API Key，请在设置中添加。",
@@ -687,7 +698,11 @@
       "outreachMessage": {
         "label": "冷启动外联消息",
         "description": "生成用于 LinkedIn 或邮件的社交/外联消息"
-      }
+      },
+      "customPromptLabel": "自定义提示词（可选）",
+      "customPromptHelp": "必须包含以下占位符（各自使用大括号括起来）：job_description、resume_data、output_language。留空则使用默认提示词。",
+      "customPromptResetButton": "恢复默认",
+      "customPromptErrorMissing": "缺少必需的占位符：{missing}"
     },
     "promptSettings": {
       "title": "提示词设置",
@@ -703,7 +718,7 @@
       }
     },
     "errors": {
-      "unableToConnectBackend": "无法连接到后端。服务是否正在运行？",
+      "unableToConnectBackend": "无法连接到服务器。请确认服务器正在运行。",
       "apiKeyRequired": "所选提供商需要 API 密钥。",
       "unknownProvider": "后端返回未知提供商：{provider}",
       "unableToSaveConfiguration": "无法保存配置",
@@ -725,8 +740,8 @@
     "deletedDescriptionRegular": "该简历已从系统中永久删除。",
     "deleteFailedTitle": "删除失败",
     "errors": {
-      "processingFailed": "简历处理失败。AI 服务无法从您的简历中提取结构化数据。您仍可使用定制功能或尝试重新上传。",
-      "stillProcessing": "简历仍在处理中。请稍候并刷新页面。",
+      "processingFailed": "我们无法读取您的简历。请重试处理，或删除后上传其他文件。",
+      "stillProcessing": "您的简历仍在处理中。请等待几秒后刷新页面。",
       "notProcessedYet": "简历尚未处理。请使用定制功能生成结构化简历。",
       "noDataAvailable": "没有可用的简历数据。",
       "failedToLoad": "加载简历数据失败。",
@@ -739,7 +754,9 @@
     "calculating": "计算中...",
     "pageBreak": "分页符",
     "pageCountSingular": "{count} 页",
-    "pageCountPlural": "{count} 页"
+    "pageCountPlural": "{count} 页",
+    "zoomIn": "放大",
+    "zoomOut": "缩小"
   },
   "resume": {
     "personalInfo": {
@@ -829,27 +846,32 @@
     "networkError": "网络错误，请检查您的连接。",
     "unauthorized": "请登录后继续。",
     "notFound": "未找到请求的资源。",
-    "validationError": "请检查您的输入后重试。",
+    "validationError": "部分字段需要注意。请检查标记的字段后重试。",
     "boundary": {
       "title": "出现错误",
-      "description": "发生了意外错误，已记录以便排查。",
+      "description": "发生了意外问题。请尝试重新加载页面 — 如果问题持续，请告知我们。",
       "tryAgain": "重试",
       "reloadPage": "重新加载页面"
     }
   },
+  "a11y": {
+    "removeItem": "移除项目",
+    "removeDescription": "移除此行",
+    "removeFile": "移除文件"
+  },
   "confirmations": {
-    "deleteResume": "您确定要删除此简历吗？",
-    "deleteResumeDescription": "此操作无法撤销。",
+    "deleteResume": "删除此简历？",
+    "deleteResumeDescription": "简历将被永久删除。",
     "deleteMasterResumeTitle": "删除主简历",
-    "deleteMasterResumeDescription": "此操作无法撤销。您的主简历将从系统中永久删除。",
-    "deleteResumeFromSystemDescription": "此操作无法撤销。该简历将从系统中永久删除。",
+    "deleteMasterResumeDescription": "您的主简历将被永久删除。",
+    "deleteResumeFromSystemDescription": "该简历将被永久删除。",
     "deleteResumeConfirmLabel": "删除简历",
     "keepResumeCancelLabel": "保留简历",
-    "discardChanges": "您确定要放弃更改吗？",
-    "discardChangesDescription": "所有未保存的更改将丢失。",
+    "discardChanges": "放弃未保存的更改？",
+    "discardChangesDescription": "您将丢失所有未保存的工作。",
     "clearApiKeys": "清除所有 API 密钥？",
-    "clearApiKeysDescription": "您确定要删除所有 API 密钥吗？您需要重新输入它们才能使用 AI 功能。",
-    "resetDatabase": "重置数据库并清除所有数据？",
-    "resetDatabaseDescription": "这将永久删除所有简历、职位描述和生成的内容。此操作不可逆。"
+    "clearApiKeysDescription": "下次使用 AI 功能前，您需要重新输入它们。",
+    "resetDatabase": "重置所有内容并重新开始？",
+    "resetDatabaseDescription": "这将永久删除每一份简历、职位描述和生成的文档。"
   }
 }

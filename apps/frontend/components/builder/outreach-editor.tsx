@@ -56,7 +56,7 @@ export function OutreachEditor({
           </h2>
         </div>
         <div className="flex items-center gap-3">
-          <span className="font-mono text-xs text-gray-500">
+          <span className="font-mono text-xs text-steel-grey">
             {t('builder.contentStats.wordsChars', { wordCount, charCount })}
           </span>
           <Button size="sm" variant="outline" onClick={onSave} disabled={isSaving}>
@@ -91,14 +91,14 @@ export function OutreachEditor({
             'border-2 border-black bg-white',
             'resize-none',
             'focus:outline-none focus:ring-2 focus:ring-blue-700 focus:ring-offset-2',
-            'placeholder:text-gray-400'
+            'placeholder:text-steel-grey'
           )}
         />
       </div>
 
       {/* Footer Tips */}
-      <div className="p-4 border-t border-gray-200 bg-[#F5F5F0]">
-        <p className="font-mono text-xs text-gray-500">{t('outreach.editor.tip')}</p>
+      <div className="p-4 border-t border-paper-tint bg-[#F5F5F0]">
+        <p className="font-mono text-xs text-steel-grey">{t('outreach.editor.tip')}</p>
       </div>
     </div>
   );

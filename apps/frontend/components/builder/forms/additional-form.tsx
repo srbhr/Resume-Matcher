@@ -38,7 +38,7 @@ export const AdditionalForm: React.FC<AdditionalFormProps> = ({ data, onChange }
 
   return (
     <div className="space-y-6">
-      <p className="font-mono text-xs text-blue-700 border-l-2 border-blue-700 pl-3">
+      <p className="font-mono text-xs uppercase tracking-wider text-blue-700">
         {t('builder.additionalForm.instructions')}
       </p>
 
@@ -46,7 +46,7 @@ export const AdditionalForm: React.FC<AdditionalFormProps> = ({ data, onChange }
         <div className="space-y-2">
           <Label
             htmlFor="technicalSkills"
-            className="font-mono text-xs uppercase tracking-wider text-gray-500"
+            className="font-mono text-xs uppercase tracking-wider text-steel-grey"
           >
             {t('resume.additional.technicalSkills')}
           </Label>
@@ -62,7 +62,7 @@ export const AdditionalForm: React.FC<AdditionalFormProps> = ({ data, onChange }
         <div className="space-y-2">
           <Label
             htmlFor="languages"
-            className="font-mono text-xs uppercase tracking-wider text-gray-500"
+            className="font-mono text-xs uppercase tracking-wider text-steel-grey"
           >
             {t('resume.sections.languages')}
           </Label>
@@ -78,7 +78,7 @@ export const AdditionalForm: React.FC<AdditionalFormProps> = ({ data, onChange }
         <div className="space-y-2">
           <Label
             htmlFor="certifications"
-            className="font-mono text-xs uppercase tracking-wider text-gray-500"
+            className="font-mono text-xs uppercase tracking-wider text-steel-grey"
           >
             {t('resume.sections.certifications')}
           </Label>
@@ -94,7 +94,7 @@ export const AdditionalForm: React.FC<AdditionalFormProps> = ({ data, onChange }
         <div className="space-y-2">
           <Label
             htmlFor="awards"
-            className="font-mono text-xs uppercase tracking-wider text-gray-500"
+            className="font-mono text-xs uppercase tracking-wider text-steel-grey"
           >
             {t('resume.sections.awards')}
           </Label>

@@ -47,10 +47,10 @@ export const GenericListForm: React.FC<GenericListFormProps> = ({
 
   return (
     <div className="space-y-2">
-      <Label className="font-mono text-xs uppercase tracking-wider text-gray-500">
+      <Label className="font-mono text-xs uppercase tracking-wider text-steel-grey">
         {finalLabel}
       </Label>
-      <p className="font-mono text-xs text-blue-700 border-l-2 border-blue-700 pl-3 mb-2">
+      <p className="font-mono text-xs uppercase tracking-wider text-blue-700 mb-2">
         {t('builder.additionalForm.instructions')}
       </p>
       <Textarea

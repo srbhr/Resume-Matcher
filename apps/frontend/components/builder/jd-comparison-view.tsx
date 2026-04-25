@@ -62,7 +62,7 @@ export function JDComparisonView({ jobDescription, resumeData }: JDComparisonVie
   return (
     <div className="h-full flex flex-col">
       {/* Stats Bar */}
-      <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200">
+      <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-paper-tint">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <Target className="w-4 h-4 text-blue-600" />
@@ -78,7 +78,7 @@ export function JDComparisonView({ jobDescription, resumeData }: JDComparisonVie
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-sm font-mono text-gray-600">
+          <span className="text-sm font-mono text-ink-soft">
             {t('builder.jdMatch.stats.matchRateLabel')}
           </span>
           <span
@@ -98,7 +98,7 @@ export function JDComparisonView({ jobDescription, resumeData }: JDComparisonVie
       {/* Split View */}
       <div className="flex-1 grid grid-cols-2 min-h-0">
         {/* Left: JD */}
-        <div className="border-r border-gray-200 overflow-hidden">
+        <div className="border-r border-paper-tint overflow-hidden">
           <JDDisplay content={jobDescription} />
         </div>
 

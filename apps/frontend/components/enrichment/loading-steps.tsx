@@ -17,7 +17,7 @@ function LoadingStep({ message, submessage }: LoadingStepProps) {
       </div>
       <div className="text-center">
         <p className="text-xl font-mono font-bold">{message}</p>
-        {submessage && <p className="text-sm text-gray-500 mt-2 font-mono">{submessage}</p>}
+        {submessage && <p className="text-sm text-steel-grey mt-2 font-mono">{submessage}</p>}
       </div>
     </div>
   );
@@ -68,7 +68,7 @@ export function CompleteStep({ onClose, updatedCount }: CompleteStepProps) {
       </div>
       <div className="text-center">
         <p className="text-2xl font-mono font-bold">{t('enrichment.complete.title')}</p>
-        <p className="text-sm text-gray-500 mt-2 font-mono">
+        <p className="text-sm text-steel-grey mt-2 font-mono">
           {hasUpdatedCount
             ? updatedCount === 1
               ? t('enrichment.complete.updatedCountSingular', { count: updatedCount })
@@ -98,7 +98,7 @@ export function NoImprovementsStep({ onClose, summary }: NoImprovementsStepProps
       </div>
       <div className="text-center max-w-md">
         <p className="text-2xl font-mono font-bold">{t('enrichment.noImprovements.title')}</p>
-        <p className="text-sm text-gray-500 mt-2 font-mono">
+        <p className="text-sm text-steel-grey mt-2 font-mono">
           {summary || t('enrichment.noImprovements.defaultDescription')}
         </p>
       </div>

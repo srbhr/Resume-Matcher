@@ -70,7 +70,7 @@ cd Resume-Matcher
 cd apps/backend
 cp .env.example .env        # 从模板创建配置
 uv sync                      # 安装 Python 依赖
-uv run uvicorn app.main:app --reload --port 8000
+uv run app
 
 # 3. 启动前端（终端 2）
 cd apps/frontend
@@ -149,7 +149,7 @@ uv sync
 #### 启动后端服务
 
 ```bash
-uv run uvicorn app.main:app --reload --port 8000
+RELOAD=true uv run app
 ```
 
 你会看到类似输出：
@@ -218,6 +218,9 @@ Resume Matcher 支持多种 AI 提供商。你可以在应用的 Settings 页面
 | **Google Gemini** | `LLM_PROVIDER=gemini`<br>`LLM_MODEL=gemini-3-flash-preview` | [aistudio.google.com](https://aistudio.google.com/app/apikey) |
 | **OpenRouter** | `LLM_PROVIDER=openrouter`<br>`LLM_MODEL=deepseek/deepseek-chat` | [openrouter.ai](https://openrouter.ai/keys) |
 | **DeepSeek** | `LLM_PROVIDER=deepseek`<br>`LLM_MODEL=deepseek-chat` | [platform.deepseek.com](https://platform.deepseek.com/) |
+| **OpenAI-Compatible** | `LLM_PROVIDER=openai_compatible`<br>`LLM_MODEL=llama-3.1-8b`<br>`LLM_API_BASE=http://localhost:8080/v1` | —（本地） |
+
+**OpenAI-Compatible** 适用于任何暴露 OpenAI Chat Completions API 的本地服务器，例如 llama.cpp、vLLM、LM Studio 等。API Key 可选。
 
 Anthropic 的 `.env` 示例：
 
@@ -324,7 +327,7 @@ docker-compose down
 cd apps/backend
 
 # 启动开发服务器（自动热重载）
-uv run uvicorn app.main:app --reload --port 8000
+RELOAD=true uv run app
 
 # 启动生产服务器
 uv run uvicorn app.main:app --host 0.0.0.0 --port 8000
@@ -494,7 +497,7 @@ Resume-Matcher/
 |------|------|
 | [backend-guide.md](docs/agent/architecture/backend-guide.md) | 后端架构与 API 细节 |
 | [frontend-workflow.md](docs/agent/architecture/frontend-workflow.md) | 用户流程与组件架构 |
-| [style-guide.md](docs/agent/design/style-guide.md) | UI 设计系统（Swiss International Style） |
+| [swiss-design-system/](docs/portable/swiss-design-system/README.md) | UI 设计系统（Swiss International Style）— 便携包 |
 
 ---
 

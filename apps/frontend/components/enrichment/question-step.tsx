@@ -80,7 +80,7 @@ export function QuestionStep({
       {/* Progress indicator */}
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-2">
-          <span className="font-mono text-sm text-gray-500">
+          <span className="font-mono text-sm text-steel-grey">
             {t('enrichment.questionProgress', { current: questionNumber, total: totalQuestions })}
           </span>
         </div>
@@ -93,7 +93,7 @@ export function QuestionStep({
                   ? 'bg-black'
                   : i === questionNumber - 1
                     ? 'bg-black'
-                    : 'bg-gray-200'
+                    : 'bg-paper-tint'
               }`}
             />
           ))}
@@ -103,20 +103,20 @@ export function QuestionStep({
       {/* Item context badge */}
       {item && (
         <div className="mb-6">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 border border-gray-200 text-sm font-mono">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-paper-tint border border-paper-tint text-sm font-mono">
             {item.item_type === 'experience' ? (
-              <Briefcase className="w-4 h-4 text-gray-600" />
+              <Briefcase className="w-4 h-4 text-ink-soft" />
             ) : (
-              <FolderKanban className="w-4 h-4 text-gray-600" />
+              <FolderKanban className="w-4 h-4 text-ink-soft" />
             )}
-            <span className="text-gray-600">
+            <span className="text-ink-soft">
               {item.item_type === 'experience'
                 ? t('enrichment.itemType.experience')
                 : t('enrichment.itemType.project')}
               :
             </span>
-            <span className="font-semibold text-gray-900">{item.title}</span>
-            {item.subtitle && <span className="text-gray-500">@ {item.subtitle}</span>}
+            <span className="font-semibold text-ink-soft">{item.title}</span>
+            {item.subtitle && <span className="text-steel-grey">@ {item.subtitle}</span>}
           </div>
         </div>
       )}
@@ -133,11 +133,11 @@ export function QuestionStep({
           className="min-h-[180px] text-base resize-none font-mono"
         />
 
-        <p className="text-xs text-gray-400 mt-2 font-mono">{t('enrichment.shortcutHint')}</p>
+        <p className="text-xs text-steel-grey mt-2 font-mono">{t('enrichment.shortcutHint')}</p>
       </div>
 
       {/* Navigation */}
-      <div className="flex items-center justify-between pt-6 border-t border-gray-200 mt-6">
+      <div className="flex items-center justify-between pt-6 border-t border-paper-tint mt-6">
         <Button variant="outline" onClick={onPrev} disabled={isFirst} className="gap-2">
           <ChevronLeft className="w-4 h-4" />
           {t('common.back')}

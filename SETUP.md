@@ -68,7 +68,7 @@ cd Resume-Matcher
 cd apps/backend
 cp .env.example .env        # Create config from template
 uv sync                      # Install Python dependencies
-uv run uvicorn app.main:app --reload --port 8000
+uv run app
 
 # 3. Start the frontend (Terminal 2)
 cd apps/frontend
@@ -144,7 +144,7 @@ This creates a virtual environment and installs all required packages.
 #### Start the backend server
 
 ```bash
-uv run uvicorn app.main:app --reload --port 8000
+RELOAD=true uv run app
 ```
 
 You should see output like:
@@ -210,6 +210,9 @@ Resume Matcher supports multiple AI providers. You can configure your provider t
 | **Google Gemini** | `LLM_PROVIDER=gemini`<br>`LLM_MODEL=gemini/gemini-3-flash-preview` | [aistudio.google.com](https://aistudio.google.com/app/apikey) |
 | **OpenRouter** | `LLM_PROVIDER=openrouter`<br>`LLM_MODEL=deepseek/deepseek-chat` | [openrouter.ai](https://openrouter.ai/keys) |
 | **DeepSeek** | `LLM_PROVIDER=deepseek`<br>`LLM_MODEL=deepseek-chat` | [platform.deepseek.com](https://platform.deepseek.com/) |
+| **OpenAI-Compatible** | `LLM_PROVIDER=openai_compatible`<br>`LLM_MODEL=llama-3.1-8b`<br>`LLM_API_BASE=http://localhost:8080/v1` | — (local) |
+
+**OpenAI-Compatible** targets any local server that exposes the OpenAI Chat Completions API — llama.cpp, vLLM, LM Studio, etc. API key is optional.
 
 Example `.env` for Anthropic:
 
@@ -384,7 +387,7 @@ Once the container is running, open your browser:
 cd apps/backend
 
 # Start development server (with auto-reload)
-uv run uvicorn app.main:app --reload --port 8000
+RELOAD=true uv run app
 
 # Start production server
 uv run uvicorn app.main:app --host 0.0.0.0 --port 8000
@@ -553,7 +556,7 @@ Stuck? Here are your options:
 |----------|-------------|
 | [backend-guide.md](docs/agent/architecture/backend-guide.md) | Backend architecture and API details |
 | [frontend-workflow.md](docs/agent/architecture/frontend-workflow.md) | User flow and component architecture |
-| [style-guide.md](docs/agent/design/style-guide.md) | UI design system (Swiss International Style) |
+| [swiss-design-system/](docs/portable/swiss-design-system/README.md) | UI design system (Swiss International Style) — portable pack |
 
 ---
 

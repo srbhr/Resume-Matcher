@@ -86,7 +86,7 @@ export const RegenerateInstructionDialog: React.FC<RegenerateInstructionDialogPr
           <DialogTitle className="font-serif text-xl font-bold uppercase tracking-tight">
             {t('builder.regenerate.instructionDialog.title')}
           </DialogTitle>
-          <DialogDescription className="font-mono text-xs text-gray-600 mt-2">
+          <DialogDescription className="font-mono text-xs text-ink-soft mt-2">
             {t('builder.regenerate.instructionDialog.subtitle')}
           </DialogDescription>
         </DialogHeader>
@@ -99,16 +99,16 @@ export const RegenerateInstructionDialog: React.FC<RegenerateInstructionDialogPr
           ) : null}
           {/* Selected Items Summary */}
           <div className="space-y-2">
-            <label className="font-mono text-xs uppercase tracking-wider text-gray-500">
+            <label className="font-mono text-xs uppercase tracking-wider text-steel-grey">
               {t('builder.regenerate.instructionDialog.selectedItems')}
             </label>
-            <div className="bg-gray-100 border border-gray-300 p-3 space-y-2 max-h-32 overflow-y-auto">
+            <div className="bg-paper-tint border border-steel-grey p-3 space-y-2 max-h-32 overflow-y-auto">
               {selectedItems.map((item) => (
                 <div key={item.item_id} className="flex items-center gap-2 text-sm">
-                  <span className="text-gray-500">{getItemIcon(item.item_type)}</span>
+                  <span className="text-steel-grey">{getItemIcon(item.item_type)}</span>
                   <span className="font-medium truncate">{item.title}</span>
                   {item.subtitle && (
-                    <span className="text-gray-500 text-xs truncate">| {item.subtitle}</span>
+                    <span className="text-steel-grey text-xs truncate">| {item.subtitle}</span>
                   )}
                 </div>
               ))}
@@ -119,7 +119,7 @@ export const RegenerateInstructionDialog: React.FC<RegenerateInstructionDialogPr
           <div className="space-y-2">
             <label
               htmlFor="regenerate-instruction"
-              className="font-mono text-xs uppercase tracking-wider text-gray-500"
+              className="font-mono text-xs uppercase tracking-wider text-steel-grey"
             >
               {t('builder.regenerate.instructionDialog.hint')}
             </label>
@@ -136,7 +136,7 @@ export const RegenerateInstructionDialog: React.FC<RegenerateInstructionDialogPr
           </div>
         </div>
 
-        <DialogFooter className="p-4 bg-[#E5E5E0] border-t border-black flex-row justify-between gap-3">
+        <DialogFooter className="p-4 bg-secondary border-t border-black flex-row justify-between gap-3">
           <Button
             variant="outline"
             onClick={onBack}

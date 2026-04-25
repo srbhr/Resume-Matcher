@@ -191,7 +191,7 @@ cd Resume-Matcher
 cd apps/backend
 cp .env.example .env        # Configure your AI provider
 uv sync                      # Install dependencies
-uv run uvicorn app.main:app --reload --port 8000
+uv run app
 
 # Frontend (Terminal 2)
 cd apps/frontend

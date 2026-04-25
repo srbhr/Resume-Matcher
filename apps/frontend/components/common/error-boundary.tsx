@@ -66,14 +66,14 @@ export class ErrorBoundary extends Component<Props, State> {
       }
 
       return (
-        <div className="min-h-[400px] flex flex-col items-center justify-center p-8 bg-[#F0F0E8]">
-          <div className="max-w-md w-full bg-white border border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] p-8">
+        <div className="min-h-[400px] flex flex-col items-center justify-center p-8 bg-background">
+          <div className="max-w-md w-full bg-white border border-black shadow-sw-default p-8">
             <div className="flex items-center gap-3 mb-4">
               <AlertTriangle className="w-8 h-8 text-red-600" />
               <h2 className="font-serif text-2xl font-bold uppercase">{strings.title}</h2>
             </div>
 
-            <p className="text-gray-600 mb-4 font-mono text-sm">{strings.description}</p>
+            <p className="text-ink-soft mb-4 font-mono text-sm">{strings.description}</p>
 
             {process.env.NODE_ENV === 'development' && this.state.error && (
               <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-none">
@@ -87,13 +87,13 @@ export class ErrorBoundary extends Component<Props, State> {
               <Button
                 onClick={this.handleReset}
                 variant="outline"
-                className="flex-1 border-black rounded-none shadow-[2px_2px_0px_0px_#000000] hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none transition-all"
+                className="flex-1 border-black rounded-none shadow-sw-sm hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none transition-all"
               >
                 {strings.tryAgain}
               </Button>
               <Button
                 onClick={this.handleReload}
-                className="flex-1 bg-blue-700 hover:bg-blue-800 text-white rounded-none border border-black shadow-[2px_2px_0px_0px_#000000] hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none transition-all"
+                className="flex-1 bg-blue-700 hover:bg-blue-800 text-white rounded-none border border-black shadow-sw-sm hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none transition-all"
               >
                 <RefreshCw className="w-4 h-4 mr-2" />
                 {strings.reloadPage}
