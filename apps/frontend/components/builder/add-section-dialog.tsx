@@ -13,7 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Plus, FileText, List, ListOrdered } from 'lucide-react';
+import { Plus, FileText, List, ListOrdered, Layers } from 'lucide-react';
 import type { SectionType } from '@/components/dashboard/resume-component';
 import { useTranslations } from '@/lib/i18n';
 
@@ -61,25 +61,31 @@ export const AddSectionDialog: React.FC<AddSectionDialogProps> = ({
     icon: React.ReactNode;
     description: string;
   }[] = [
-    {
-      type: 'text',
-      label: t('builder.customSections.sectionTypes.textBlockLabel'),
-      icon: <FileText className="w-5 h-5" />,
-      description: t('builder.customSections.sectionTypes.textBlockDescription'),
-    },
-    {
-      type: 'itemList',
-      label: t('builder.customSections.sectionTypes.itemListLabel'),
-      icon: <ListOrdered className="w-5 h-5" />,
-      description: t('builder.customSections.sectionTypes.itemListDescription'),
-    },
-    {
-      type: 'stringList',
-      label: t('builder.customSections.sectionTypes.stringListLabel'),
-      icon: <List className="w-5 h-5" />,
-      description: t('builder.customSections.sectionTypes.stringListDescription'),
-    },
-  ];
+      {
+        type: 'text',
+        label: t('builder.customSections.sectionTypes.textBlockLabel'),
+        icon: <FileText className="w-5 h-5" />,
+        description: t('builder.customSections.sectionTypes.textBlockDescription'),
+      },
+      {
+        type: 'itemList',
+        label: t('builder.customSections.sectionTypes.itemListLabel'),
+        icon: <ListOrdered className="w-5 h-5" />,
+        description: t('builder.customSections.sectionTypes.itemListDescription'),
+      },
+      {
+        type: 'stringList',
+        label: t('builder.customSections.sectionTypes.stringListLabel'),
+        icon: <List className="w-5 h-5" />,
+        description: t('builder.customSections.sectionTypes.stringListDescription'),
+      },
+      {
+        type: 'labeledLists',
+        label: t('builder.customSections.sectionTypes.labeledListsLabel'),
+        icon: <Layers className="w-5 h-5" />,
+        description: t('builder.customSections.sectionTypes.labeledListsDescription'),
+      },
+    ];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -120,19 +126,17 @@ export const AddSectionDialog: React.FC<AddSectionDialogProps> = ({
                   key={item.type}
                   type="button"
                   onClick={() => setSectionType(item.type)}
-                  className={`w-full p-4 border text-left transition-colors ${
-                    sectionType === item.type
+                  className={`w-full p-4 border text-left transition-colors ${sectionType === item.type
                       ? 'border-black bg-gray-50 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
                       : 'border-gray-300 hover:border-gray-400'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-start gap-3">
                     <div
-                      className={`p-2 border ${
-                        sectionType === item.type
+                      className={`p-2 border ${sectionType === item.type
                           ? 'border-black bg-white'
                           : 'border-gray-300 bg-gray-50'
-                      }`}
+                        }`}
                     >
                       {item.icon}
                     </div>

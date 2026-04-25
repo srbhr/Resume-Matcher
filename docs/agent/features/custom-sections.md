@@ -4,12 +4,13 @@
 
 ## Section Types
 
-| Type | Description | Example Uses |
-|------|-------------|--------------|
-| `personalInfo` | Special type for header (always first) | Name, contact details |
-| `text` | Single text block | Summary, objective, statement |
-| `itemList` | Array of items with title, subtitle, years, description | Experience, projects, publications |
-| `stringList` | Simple array of strings | Skills, languages, hobbies |
+| Type           | Description                                             | Example Uses                                       |
+| -------------- | ------------------------------------------------------- | -------------------------------------------------- |
+| `personalInfo` | Special type for header (always first)                  | Name, contact details                              |
+| `text`         | Single text block                                       | Summary, objective, statement                      |
+| `itemList`     | Array of items with title, subtitle, years, description | Experience, projects, publications                 |
+| `stringList`   | Simple array of strings                                 | Skills, languages, hobbies                         |
+| `labeledLists` | Multiple titled lists (label + items)                   | Technical Skills, Languages; Frameworks, Databases |
 
 ## Section Features
 
@@ -23,13 +24,13 @@
 
 Each section (except Personal Info) has these controls in the header:
 
-| Control | Icon | Function |
-|---------|------|----------|
-| Visibility | 👁 Eye / EyeOff | Toggle show/hide in PDF preview |
-| Move Up | ⬆ ChevronUp | Move section earlier in order |
-| Move Down | ⬇ ChevronDown | Move section later in order |
-| Rename | ✏️ Pencil | Edit section display name |
-| Delete | 🗑 Trash | Hide (default) or delete (custom) |
+| Control    | Icon           | Function                          |
+| ---------- | -------------- | --------------------------------- |
+| Visibility | 👁 Eye / EyeOff | Toggle show/hide in PDF preview   |
+| Move Up    | ⬆ ChevronUp    | Move section earlier in order     |
+| Move Down  | ⬇ ChevronDown  | Move section later in order       |
+| Rename     | ✏️ Pencil       | Edit section display name         |
+| Delete     | 🗑 Trash        | Hide (default) or delete (custom) |
 
 ## Hidden Section Behavior
 
@@ -42,14 +43,89 @@ Each section (except Personal Info) has these controls in the header:
 
 ## Key Files
 
-| File | Purpose |
-|------|---------|
-| `apps/backend/app/schemas/models.py` | `SectionType`, `SectionMeta`, `CustomSection` models |
-| `apps/frontend/lib/utils/section-helpers.ts` | Section management utilities |
-| `apps/frontend/components/builder/section-header.tsx` | Section controls UI |
-| `apps/frontend/components/builder/add-section-dialog.tsx` | Add custom section dialog |
-| `apps/frontend/components/builder/resume-form.tsx` | Dynamic form rendering |
-| `apps/frontend/components/resume/dynamic-resume-section.tsx` | Renders custom sections in templates |
+| File                                                         | Purpose                                              |
+| ------------------------------------------------------------ | ---------------------------------------------------- |
+| `apps/backend/app/schemas/models.py`                         | `SectionType`, `SectionMeta`, `CustomSection` models |
+| `apps/frontend/lib/utils/section-helpers.ts`                 | Section management utilities                         |
+| `apps/frontend/components/builder/section-header.tsx`        | Section controls UI                                  |
+| `apps/frontend/components/builder/add-section-dialog.tsx`    | Add custom section dialog                            |
+| `apps/frontend/components/builder/resume-form.tsx`           | Dynamic form rendering                               |
+| `apps/frontend/components/resume/dynamic-resume-section.tsx` | Renders custom sections in templates                 |
+
+## Labeled Lists (labeledLists)
+
+The `labeledLists` section type allows creating multiple titled subsections, each containing comma-separated items. This is useful for organizing related information into categories without the overhead of full item entries.
+
+### Rendering
+
+Renders in a two-column layout with bold labels on the left:
+
+```
+Technical Skills:  Python, React, TypeScript, Node.js
+Languages:         English, Spanish, Mandarin
+Certifications:    AWS Solutions Architect, Google Analytics
+```
+
+### Data Format (Backend)
+
+```python
+class LabeledListItem(BaseModel):
+    id: int
+    label: str                    # e.g., "Technical Skills"
+    items: list[str]             # e.g., ["Python", "React", "TypeScript"]
+
+# Inside CustomSection:
+namedLists: list[LabeledListItem] | None = None
+```
+
+### Data Format (Frontend)
+
+```typescript
+interface LabeledListItem {
+  id: number;
+  label: string;
+  items: string[];
+}
+
+// Inside CustomSection:
+namedLists?: LabeledListItem[];
+```
+
+### Example Usage
+
+```json
+{
+  "sectionMeta": [
+    {
+      "id": "custom_1",
+      "key": "custom_1",
+      "displayName": "Technical Skills",
+      "sectionType": "labeledLists",
+      "isDefault": false,
+      "isVisible": true,
+      "order": 6
+    }
+  ],
+  "customSections": {
+    "custom_1": {
+      "sectionType": "labeledLists",
+      "namedLists": [
+        {"id": 1, "label": "Languages", "items": ["Python", "Go", "Rust"]},
+        {"id": 2, "label": "Frontend", "items": ["React", "Vue", "TypeScript"]},
+        {"id": 3, "label": "Databases", "items": ["PostgreSQL", "MongoDB", "Redis"]}
+      ]
+    }
+  }
+}
+```
+
+### UI Features
+
+- **Add subsections**: Click "Add Subsection" to add new labeled lists
+- **Remove subsections**: Hover over a subsection and click the trash icon
+- **Reorder subsections**: Use up/down arrows to move subsections (hover to show)
+- **Edit label**: Click on the label input to change the subsection title
+- **Edit items**: Enter items separated by newlines in the textarea
 
 ## Data Structure
 

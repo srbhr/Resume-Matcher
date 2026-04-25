@@ -147,7 +147,9 @@
         "itemListLabel": "Item List",
         "itemListDescription": "Multiple entries with details (like Experience)",
         "stringListLabel": "Skill List",
-        "stringListDescription": "Simple list of items (like Skills)"
+        "stringListDescription": "Simple list of items (like Skills)",
+        "labeledListsLabel": "Labeled Lists",
+        "labeledListsDescription": "Multiple titled lists (like Skills & Languages)"
       },
       "contentLabel": "Content",
       "contentPlaceholder": "Enter content for {name}...",
@@ -158,6 +160,17 @@
       "itemsPlaceholder": "Enter items, one per line",
       "unknownSectionType": "Unknown section type: {type}",
       "unknownDefaultSection": "Unknown default section: {section}"
+    },
+    "genericLabeledListForm": {
+      "subsectionLabel": "Subsection",
+      "addSubsectionLabel": "Add Subsection",
+      "labelPlaceholder": "e.g., Technical Skills, Languages",
+      "itemsPlaceholder": "e.g., Python, React, TypeScript",
+      "fields": {
+        "label": "Label",
+        "items": "Items"
+      },
+      "noSubsections": "No subsections yet. Click the button above to add your first subsection."
     },
     "sectionHeader": {
       "renameSection": "Rename section",

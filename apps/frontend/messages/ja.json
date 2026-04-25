@@ -147,7 +147,9 @@
         "itemListLabel": "項目リスト",
         "itemListDescription": "詳細を含む複数エントリ（職歴など）",
         "stringListLabel": "シンプルリスト",
-        "stringListDescription": "シンプルな一覧（スキルなど）"
+        "stringListDescription": "シンプルな一覧（スキルなど）",
+        "labeledListsLabel": "ラベル付きリスト",
+        "labeledListsDescription": "複数のタイトル付きリスト（スキル、言語など）"
       },
       "contentLabel": "内容",
       "contentPlaceholder": "{name} の内容を入力...",
@@ -158,6 +160,17 @@
       "itemsPlaceholder": "1行につき1項目を入力",
       "unknownSectionType": "不明なセクションタイプ：{type}",
       "unknownDefaultSection": "不明なデフォルトセクション：{section}"
+    },
+    "genericLabeledListForm": {
+      "subsectionLabel": "サブセクション",
+      "addSubsectionLabel": "サブセクションを追加",
+      "labelPlaceholder": "例：技技能、言語",
+      "itemsPlaceholder": "例：Python、React、TypeScript",
+      "fields": {
+        "label": "ラベル",
+        "items": "項目"
+      },
+      "noSubsections": "まだサブセクションがありません。上記のボタンをクリックして最初のサブセクションを追加してください。"
     },
     "sectionHeader": {
       "renameSection": "セクション名を変更",
