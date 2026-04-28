@@ -44,6 +44,12 @@ LLM_TIMEOUT_JSON = 180  # JSON completions may take longer
 MAX_JSON_EXTRACTION_RECURSION = 10
 MAX_JSON_CONTENT_SIZE = 1024 * 1024  # 1MB
 
+# Default token budget for structured JSON completions (e.g. resume parsing).
+# Chosen to accommodate large resumes while staying within most providers'
+# output limits. Callers should use get_safe_max_tokens() so this is
+# automatically clamped to the model's actual capacity.
+DEFAULT_JSON_MAX_TOKENS = 8192
+
 
 class LLMConfig(BaseModel):
     """LLM configuration model."""
@@ -719,6 +725,46 @@ def _supports_json_mode(model_name: str) -> bool:
         # reject it.
         logging.debug("Model %s not in LiteLLM registry, skipping JSON mode", model_name)
         return False
+
+
+def get_safe_max_tokens(model_name: str, requested: int = DEFAULT_JSON_MAX_TOKENS) -> int:
+    """Return a token count safe for the given model, clamped to its output limit.
+
+    Queries LiteLLM's model registry for ``max_output_tokens`` and returns
+    ``min(requested, model_limit)`` so callers never send a value that exceeds
+    what the backend actually supports.
+
+    Falls back to ``requested`` unchanged when the model is not in the registry
+    (e.g. custom Ollama models, openai_compatible servers) — in those cases the
+    server itself will enforce its own limit.
+
+    Args:
+        model_name: LiteLLM-formatted model name (from get_model_name).
+        requested: Desired token budget; defaults to DEFAULT_JSON_MAX_TOKENS.
+
+    Returns:
+        Safe token count, always >= 1.
+    """
+    try:
+        info = litellm.get_model_info(model=model_name)
+        model_limit = info.get("max_output_tokens") or info.get("max_tokens")
+        if model_limit and isinstance(model_limit, int) and model_limit > 0:
+            safe = min(requested, model_limit)
+            if safe < requested:
+                logging.debug(
+                    "max_tokens clamped %d → %d for model %s (model limit)",
+                    requested,
+                    safe,
+                    model_name,
+                )
+            return safe
+    except Exception:
+        logging.debug(
+            "Model %s not in LiteLLM registry, using requested max_tokens=%d",
+            model_name,
+            requested,
+        )
+    return requested
 
 
 def _appears_truncated(data: dict) -> bool:
