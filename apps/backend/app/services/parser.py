@@ -162,6 +162,8 @@ async def parse_resume_to_json(markdown_text: str) -> dict[str, Any]:
     result = await complete_json(
         prompt=prompt,
         system_prompt="You are a JSON extraction engine. Output only valid JSON, no explanations.",
+        max_tokens=8192,
+        retries=3,
     )
 
     # Patch dates: restore months the LLM may have dropped
