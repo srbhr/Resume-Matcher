@@ -59,7 +59,11 @@ async def run_pass2(
     if not isinstance(optimized_raw, dict):
         optimized_raw = {}
 
-    optimized_resume = ResumeData.model_validate(optimized_raw)
+    try:
+        optimized_resume = ResumeData.model_validate(optimized_raw)
+    except Exception as exc:
+        logger.warning("Pass 2 produced an invalid ResumeData structure: %s", exc)
+        raise
 
     suggestions = result.get("optimization_suggestions", [])
     if not isinstance(suggestions, list):
