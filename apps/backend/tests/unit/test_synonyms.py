@@ -43,3 +43,11 @@ class TestNormalize:
     def test_po_abbreviation(self):
         result = normalize("Hiring a PO for our team")
         assert "product manager" in result.lower()
+
+    def test_does_not_corrupt_email_with_ai(self):
+        result = normalize("Contact ai@example.com for details")
+        assert "ai@example.com" in result
+
+    def test_ai_standalone_expands(self):
+        result = normalize("Strong AI background required")
+        assert "artificial intelligence" in result.lower()

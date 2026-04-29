@@ -10,7 +10,7 @@ _SYNONYM_PAIRS: list[tuple[str, str]] = [
     (r"\bproduct mgr\b", "product manager"),
     (r"\bscrum master\b", "agile coach"),
     (r"\bml\b", "machine learning"),
-    (r"\bai\b", "artificial intelligence"),
+    (r"(?<![@\w])ai(?![@\w])", "artificial intelligence"),
     (r"\bux\b", "user experience"),
     (r"\bui\b", "user interface"),
     (r"\bkpis?\b", "key performance indicator"),
@@ -28,7 +28,7 @@ _SYNONYM_PAIRS: list[tuple[str, str]] = [
     (r"\bmau\b", "monthly active users"),
     (r"\bsme\b", "subject matter expert"),
     (r"\bci/cd\b", "continuous integration continuous deployment"),
-    (r"\bsql\b", "structured query language"),
+    (r"(?<![@\w])sql(?![@\w])", "structured query language"),
     (r"\bapi\b", "application programming interface"),
 ]
 
