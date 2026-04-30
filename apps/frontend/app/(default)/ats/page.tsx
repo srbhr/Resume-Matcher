@@ -1,17 +1,26 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Textarea } from '@/components/ui/textarea';
 import { ATSResumeInput, type ResumeInputValue } from '@/components/ats/ats-resume-input';
 import { ATSScreenPanel } from '@/components/ats/ats-screen-panel';
 
 export default function ATSPage() {
+  const searchParams = useSearchParams();
+
   const [resumeInput, setResumeInput] = useState<ResumeInputValue>({
     resumeId: null,
     resumeText: null,
   });
   const [jobDescription, setJobDescription] = useState('');
+
+  // Pre-fill job description from ?jd= URL param (set by Chrome extension)
+  useEffect(() => {
+    const jd = searchParams.get('jd');
+    if (jd) setJobDescription(decodeURIComponent(jd));
+  }, [searchParams]);
 
   return (
     <div
