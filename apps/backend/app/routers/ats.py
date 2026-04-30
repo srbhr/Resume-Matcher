@@ -6,7 +6,7 @@ import logging
 from fastapi import APIRouter, HTTPException
 
 from app.database import db
-from app.schemas.ats import ATSScreenRequest, ATSScreeningResult
+from app.schemas.ats import ATSScreenRequest, ATSScreeningResult, ATSSaveResumeRequest, ATSSaveResumeResponse
 from app.services.ats_optimizer import run_pass2
 from app.services.ats_scorer import run_pass1
 
@@ -71,18 +71,20 @@ async def screen_resume(request: ATSScreenRequest) -> ATSScreeningResult:
         ) from exc
 
     # Pass 2: Optimize (non-fatal — partial result returned on failure)
+    # Skip if no structured resume JSON available (paste mode only)
     optimized_resume = None
     optimization_suggestions: list[str] = []
-    try:
-        pass2 = await run_pass2(
-            resume_json=resume_json,
-            job_text=job_text,
-            score_data=pass1,
-        )
-        optimized_resume = pass2["optimized_resume"]
-        optimization_suggestions = pass2["optimization_suggestions"]
-    except Exception as exc:
-        logger.warning("ATS Pass 2 failed (non-fatal): %s", exc)
+    if resume_json:  # Only run if we have structured resume data
+        try:
+            pass2 = await run_pass2(
+                resume_json=resume_json,
+                job_text=job_text,
+                score_data=pass1,
+            )
+            optimized_resume = pass2["optimized_resume"]
+            optimization_suggestions = pass2["optimization_suggestions"]
+        except Exception as exc:
+            logger.warning("ATS Pass 2 failed (non-fatal): %s", exc)
 
     # Optionally persist the optimized resume
     saved_resume_id: str | None = None
@@ -120,3 +122,23 @@ async def screen_resume(request: ATSScreenRequest) -> ATSScreeningResult:
         optimized_resume=optimized_resume,
         saved_resume_id=saved_resume_id,
     )
+
+
+@router.post("/save-resume", response_model=ATSSaveResumeResponse)
+async def save_ats_resume(request: ATSSaveResumeRequest) -> ATSSaveResumeResponse:
+    """Save an ATS-optimized resume directly without re-running the LLM."""
+    import json as _json
+    try:
+        optimized_dict = request.resume_data.model_dump()
+        new_resume = db.create_resume(
+            content=_json.dumps(optimized_dict),
+            content_type="json",
+            processed_data=optimized_dict,
+            processing_status="ready",
+            parent_id=request.parent_id,
+            title=request.title,
+        )
+        return ATSSaveResumeResponse(resume_id=new_resume["resume_id"])
+    except Exception as exc:
+        logger.error("Failed to save ATS resume: %s", exc)
+        raise HTTPException(status_code=500, detail="Failed to save resume.") from exc

@@ -47,3 +47,17 @@ class ATSScreeningResult(BaseModel):
     optimization_suggestions: list[str]
     optimized_resume: ResumeData | None = None
     saved_resume_id: str | None = None  # populated when save_optimized=True
+
+
+class ATSSaveResumeRequest(BaseModel):
+    """Request body for POST /api/v1/ats/save-resume."""
+
+    resume_data: ResumeData
+    parent_id: str | None = None
+    title: str = "ATS Optimized Resume"
+
+
+class ATSSaveResumeResponse(BaseModel):
+    """Response body for POST /api/v1/ats/save-resume."""
+
+    resume_id: str

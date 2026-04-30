@@ -51,3 +51,24 @@ export async function screenResume(
   }
   return resp.json();
 }
+
+export interface ATSSaveResumeRequest {
+  resume_data: ResumeData;
+  parent_id?: string | null;
+  title?: string;
+}
+
+export interface ATSSaveResumeResponse {
+  resume_id: string;
+}
+
+export async function saveAtsResume(
+  request: ATSSaveResumeRequest
+): Promise<ATSSaveResumeResponse> {
+  const resp = await apiPost('/ats/save-resume', request, 30_000);
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({ detail: 'Save failed' }));
+    throw new Error(err.detail ?? 'Save failed');
+  }
+  return resp.json();
+}

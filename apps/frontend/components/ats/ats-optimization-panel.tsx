@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import type { ResumeData } from '@/components/dashboard/resume-component';
 import { ResumeForm } from '@/components/builder/resume-form';
-import { screenResume } from '@/lib/api/ats';
+import { saveAtsResume } from '@/lib/api/ats';
 
 interface ATSOptimizationPanelProps {
   suggestions: string[];
@@ -30,20 +30,20 @@ export function ATSOptimizationPanel({
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
+  useEffect(() => {
+    setEditedResume(optimizedResume);
+    setMode('view'); // Reset to view when a new result comes in
+  }, [optimizedResume]);
+
   const handleSave = async () => {
     setIsSaving(true);
     setSaveError(null);
     try {
-      const result = await screenResume({
-        resume_id: resumeId ?? undefined,
-        resume_text: resumeText ?? undefined,
-        job_id: jobId ?? undefined,
-        job_description: jobDescription ?? undefined,
-        save_optimized: true,
+      const result = await saveAtsResume({
+        resume_data: editedResume,
+        parent_id: resumeId ?? undefined,
       });
-      if (result.saved_resume_id) {
-        onSaved(result.saved_resume_id);
-      }
+      onSaved(result.resume_id);
     } catch (err: unknown) {
       setSaveError(err instanceof Error ? err.message : 'Save failed');
     } finally {

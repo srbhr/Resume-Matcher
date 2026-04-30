@@ -55,9 +55,12 @@ export {
 // ATS screening
 export {
   screenResume,
+  saveAtsResume,
   type ScoreBreakdown,
   type KeywordRow,
   type ATSDecision,
   type ATSScreeningResult,
   type ATSScreenRequest,
+  type ATSSaveResumeRequest,
+  type ATSSaveResumeResponse,
 } from './ats';
