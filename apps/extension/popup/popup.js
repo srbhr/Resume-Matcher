@@ -143,6 +143,7 @@ async function init() {
   });
 
   await loadResumes();
+  if (!vError.classList.contains('hidden')) return; // backend offline was shown
   updatePill();
   updateRunBtn();
   show(vReady);
