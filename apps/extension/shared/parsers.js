@@ -33,6 +33,7 @@ const _LEVEL_PATTERNS = [
 ];
 
 function parseLanguages(text) {
+  if (!text) return [];
   const lower = text.toLowerCase();
   const results = [];
   const seen = new Set();
@@ -42,15 +43,19 @@ function parseLanguages(text) {
 
     // Find the earliest mention of any alias
     let firstIdx = -1;
+    let matchedAliasLen = 0;
     for (const alias of aliases) {
-      const idx = lower.indexOf(alias);
-      if (idx !== -1 && (firstIdx === -1 || idx < firstIdx)) firstIdx = idx;
+      const regex = new RegExp(`\\b${alias}\\b`, 'i');
+      const m = regex.exec(text);
+      if (m && (firstIdx === -1 || m.index < firstIdx)) {
+        firstIdx = m.index;
+        matchedAliasLen = alias.length;
+      }
     }
     if (firstIdx === -1) continue;
 
     // Context window: 80 chars before and after the mention
-    const ctx = text.slice(Math.max(0, firstIdx - 80), firstIdx + normalizedName.length + 80);
-    const ctxLower = ctx.toLowerCase();
+    const ctx = text.slice(Math.max(0, firstIdx - 80), firstIdx + matchedAliasLen + 80);
 
     // Detect level
     let level = null;
@@ -73,6 +78,7 @@ function parseLanguages(text) {
 }
 
 function parseVisa(text) {
+  if (!text) return 'unclear';
   const lower = text.toLowerCase();
 
   const notAvailable = [
