@@ -51,3 +51,13 @@ export {
   type PromptConfig,
   type PromptConfigUpdate,
 } from './config';
+
+// ATS screening
+export {
+  screenResume,
+  type ScoreBreakdown,
+  type KeywordRow,
+  type ATSDecision,
+  type ATSScreeningResult,
+  type ATSScreenRequest,
+} from './ats';
