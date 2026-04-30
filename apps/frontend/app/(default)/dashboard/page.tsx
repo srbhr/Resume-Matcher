@@ -506,7 +506,28 @@ export default function DashboardPage() {
           </div>
         </Card>
 
-        {/* 4. Fillers */}
+        {/* 4. ATS Screen card */}
+        <Link href="/ats" className="block h-full">
+          <Card
+            variant="interactive"
+            className="aspect-square h-full hover:bg-[#1D4ED8] hover:text-white"
+          >
+            <div className="flex-1 flex flex-col justify-between pointer-events-none">
+              <div className="w-14 h-14 border-2 border-current flex items-center justify-center mb-4">
+                <span className="font-mono text-xl font-bold">ATS</span>
+              </div>
+              <div>
+                <CardTitle className="text-xl uppercase">ATS Screen</CardTitle>
+                <CardDescription className="mt-2 opacity-60 group-hover:opacity-100 text-current">
+                  {'// '}
+                  Score your resume against any JD
+                </CardDescription>
+              </div>
+            </div>
+          </Card>
+        </Link>
+
+        {/* 5. Fillers */}
         {Array.from({ length: fillerCount }).map((_, index) => (
           <Card
             key={`filler-${index}`}
