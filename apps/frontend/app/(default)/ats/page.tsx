@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { Textarea } from '@/components/ui/textarea';
 import { ATSResumeInput, type ResumeInputValue } from '@/components/ats/ats-resume-input';
 import { ATSScreenPanel } from '@/components/ats/ats-screen-panel';
@@ -24,6 +25,12 @@ export default function ATSPage() {
       <div className="w-full max-w-4xl border border-black bg-background shadow-sw-lg">
         {/* Header */}
         <div className="border-b border-black p-8 md:p-10">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1 font-mono text-xs uppercase tracking-widest text-muted-foreground hover:text-black transition-colors mb-4"
+          >
+            ← Home
+          </Link>
           <h1 className="font-serif text-4xl md:text-5xl text-black tracking-tight uppercase">
             ATS Screen
           </h1>

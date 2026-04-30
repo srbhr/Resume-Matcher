@@ -1,10 +1,15 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { Button } from '@/components/ui/button';
 import type { ResumeData } from '@/components/dashboard/resume-component';
-import { ResumeForm } from '@/components/builder/resume-form';
 import { saveAtsResume } from '@/lib/api/ats';
+
+const ResumeForm = dynamic(
+  () => import('@/components/builder/resume-form').then((m) => m.ResumeForm),
+  { ssr: false, loading: () => <p className="font-mono text-xs text-muted-foreground p-4">Loading editor...</p> }
+);
 
 interface ATSOptimizationPanelProps {
   suggestions: string[];
