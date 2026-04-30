@@ -205,3 +205,37 @@ class TestATSScreen:
         assert resp.status_code == 200
         assert resp.json()["saved_resume_id"] == "new-r1"
         mock_db.create_resume.assert_called_once()
+
+    @patch("app.routers.ats.run_pass1", new_callable=AsyncMock)
+    async def test_pass1_failure_returns_500(self, mock_pass1, client):
+        mock_pass1.side_effect = RuntimeError("LLM unavailable")
+        async with client:
+            resp = await client.post("/api/v1/ats/screen", json={
+                "resume_text": "I am a product manager " * 20,
+                "job_description": "We are looking for a senior PM " * 10,
+            })
+        assert resp.status_code == 500
+
+    @patch("app.routers.ats.run_pass2", new_callable=AsyncMock)
+    @patch("app.routers.ats.run_pass1", new_callable=AsyncMock)
+    async def test_save_optimized_when_pass2_fails_returns_409(
+        self, mock_pass1, mock_pass2, client
+    ):
+        from app.schemas.ats import ScoreBreakdown
+        mock_pass1.return_value = {
+            "score": ScoreBreakdown(skills_match=25, experience_match=22, domain_match=18,
+                                    tools_match=12, achievement_match=5, total=82),
+            "decision": "PASS",
+            "keyword_table": [],
+            "missing_keywords": [],
+            "warning_flags": [],
+        }
+        mock_pass2.side_effect = RuntimeError("LLM timeout")
+
+        async with client:
+            resp = await client.post("/api/v1/ats/screen", json={
+                "resume_text": "I am a product manager " * 20,
+                "job_description": "We are looking for a senior PM " * 10,
+                "save_optimized": True,
+            })
+        assert resp.status_code == 409
