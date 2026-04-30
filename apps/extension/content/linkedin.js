@@ -9,6 +9,9 @@
     '.jobs-description__content',
     '.jobs-description',
     '[data-job-id] .description__text',
+    // Feed / collections layout (right-hand panel)
+    '.job-details-about-the-job-module__description',
+    '.jobs-box__html-content',
   ];
 
   // Selectors for the container that holds the Easy Apply / Apply button
@@ -17,6 +20,9 @@
     '.jobs-s-apply',
     '.job-details-jobs-unified-top-card__primary-actions',
     '.jobs-unified-top-card__primary-actions',
+    // Feed / collections layout
+    '.jobs-details__main-content .mt4',
+    '.job-details-jobs-unified-top-card__container--two-pane',
   ];
 
   function extractJobTitle() {
@@ -83,4 +89,14 @@
   }
 
   init();
+
+  // LinkedIn is a SPA — re-run when the URL changes (user clicks a different job in the feed)
+  let _lastJobId = new URL(location.href).searchParams.get('currentJobId') || location.pathname;
+  new MutationObserver(() => {
+    const jobId = new URL(location.href).searchParams.get('currentJobId') || location.pathname;
+    if (jobId !== _lastJobId) {
+      _lastJobId = jobId;
+      setTimeout(init, 800); // brief delay for LinkedIn to finish rendering the new job
+    }
+  }).observe(document.body, { childList: true, subtree: true });
 })();
