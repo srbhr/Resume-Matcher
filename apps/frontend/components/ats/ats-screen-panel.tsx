@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { screenResume, type ATSScreeningResult } from '@/lib/api/ats';
@@ -33,6 +33,11 @@ export function ATSScreenPanel({
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<ATSScreeningResult | null>(initialResult ?? null);
   const [error, setError] = useState<string | null>(null);
+
+  // Sync when initialResult arrives asynchronously (e.g. parsed from URL params after mount)
+  useEffect(() => {
+    if (initialResult) setResult(initialResult);
+  }, [initialResult]);
   const [savedResumeId, setSavedResumeId] = useState<string | null>(null);
   const [elapsed, setElapsed] = useState(0);
 
