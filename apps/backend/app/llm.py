@@ -663,9 +663,10 @@ async def complete(
             "model": "primary",
             "messages": messages,
             "max_tokens": max_tokens,
-            "temperature": temperature,
             "timeout": LLM_TIMEOUT_COMPLETION,
         }
+        if _supports_temperature(model_name, temperature):
+            kwargs["temperature"] = temperature
         if config.reasoning_effort:
             kwargs["reasoning_effort"] = config.reasoning_effort
 
@@ -747,12 +748,72 @@ def _appears_truncated(data: dict) -> bool:
     return False
 
 
-def _get_retry_temperature(attempt: int, base_temp: float = 0.1) -> float:
-    """LLM-002: Get temperature for retry attempt - increases with each retry.
+def _supports_temperature(model_name: str, temperature: float | None = None) -> bool:
+    """Check if the model supports the given temperature value.
 
-    Higher temperature on retries gives the model more variation to produce
-    different (hopefully valid) output.
+    Uses LiteLLM model registry for capability detection, with
+    provider-specific fallbacks for known restrictions:
+      - Anthropic claude-opus-4.*: temperature is deprecated
+      - Moonshot kimi-k2.6: only temperature=1 allowed
+
+    Queries LiteLLM's model info for every provider so that capability is
+    always determined from the registry rather than a hardcoded list.
+
+    Args:
+        model_name: LiteLLM-formatted model name (from get_model_name).
+        temperature: The temperature value to check. If None, returns True
+            (caller isn't setting a specific value).
+
+    Returns:
+        True if the model supports the given temperature, False otherwise.
     """
+    if temperature is None:
+        return True
+
+    # Ollama models are often not in LiteLLM's registry (custom/local),
+    # but they universally support temperature.
+    if model_name.startswith(("ollama/", "ollama_chat/")):
+        return True
+
+    try:
+        info = litellm.get_model_info(model=model_name)
+        supported_params = info.get("supported_openai_params", [])
+        if "temperature" not in supported_params:
+            return False
+    except Exception:
+        # Model not in LiteLLM's registry — be conservative and skip
+        # temperature to avoid BadRequestError from unsupported params.
+        logging.debug(
+            "Model %s not in LiteLLM registry, skipping temperature", model_name
+        )
+        return False
+
+    # Provider-specific restrictions not captured by the registry.
+    # Anthropic Opus 4.x deprecated temperature entirely.
+    if "claude-opus-4" in model_name.lower():
+        return False
+
+    # Moonshot kimi-k2.6 only allows temperature=1.
+    if "kimi-k2.6" in model_name.lower() and temperature != 1.0:
+        return False
+
+    return True
+
+
+def _get_retry_temperature(model_name: str, attempt: int, base_temp: float = 0.1) -> float | None:
+    """LLM-002: Get temperature for retry attempt.
+
+    Returns None if the model does not support temperature at all.
+    Returns 1.0 for models that only support temperature=1.
+    Otherwise returns increasing temperatures for retry variation.
+    """
+    # Moonshot kimi-k2.6 only allows temperature=1.
+    if "kimi-k2.6" in model_name.lower():
+        return 1.0
+
+    if not _supports_temperature(model_name, base_temp):
+        return None
+
     temperatures = [base_temp, 0.3, 0.5, 0.7]
     return temperatures[min(attempt, len(temperatures) - 1)]
 
@@ -918,11 +979,13 @@ async def complete_json(
             kwargs: dict[str, Any] = {
                 "model": "primary",
                 "messages": messages,
-                # LLM-002: Increase temperature on retry for variation
-                "temperature": _get_retry_temperature(attempt),
                 "max_tokens": max_tokens,
                 "timeout": _calculate_timeout("json", max_tokens, config.provider),
             }
+            # LLM-002: Increase temperature on retry for variation
+            retry_temp = _get_retry_temperature(model_name, attempt)
+            if retry_temp is not None:
+                kwargs["temperature"] = retry_temp
             if config.reasoning_effort:
                 kwargs["reasoning_effort"] = config.reasoning_effort
 
