@@ -134,7 +134,9 @@ export function HighlightedResumeView({ resumeData, keywords }: HighlightedResum
                     {t('resume.additional.technicalSkills')}
                   </div>
                   <div className="flex flex-wrap gap-1">
-                    {resumeData.additional.technicalSkills.map((skill, i) => (
+                    {resumeData.additional.technicalSkills
+                    .filter((skill) => skill.trim() !== '')
+                    .map((skill, i) => (
                       <SkillTag key={i} text={skill} keywords={keywords} />
                     ))}
                   </div>
@@ -147,7 +149,9 @@ export function HighlightedResumeView({ resumeData, keywords }: HighlightedResum
                   {t('resume.sections.languages')}
                 </div>
                 <div className="flex flex-wrap gap-1">
-                  {resumeData.additional.languages.map((lang, i) => (
+                  {resumeData.additional.languages
+                  .filter((lang) => lang.trim() !== '')
+                  .map((lang, i) => (
                     <SkillTag key={i} text={lang} keywords={keywords} />
                   ))}
                 </div>
@@ -161,7 +165,9 @@ export function HighlightedResumeView({ resumeData, keywords }: HighlightedResum
                     {t('resume.sections.certifications')}
                   </div>
                   <ul className="list-disc list-inside space-y-1 text-sm">
-                    {resumeData.additional.certificationsTraining.map((cert, i) => (
+                    {resumeData.additional.certificationsTraining
+                    .filter((cert) => cert.trim() !== '')
+                    .map((cert, i) => (
                       <li key={i} className="text-ink-soft">
                         <HighlightedText text={cert} keywords={keywords} />
                       </li>

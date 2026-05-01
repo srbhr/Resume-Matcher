@@ -343,7 +343,9 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
                   {headingFallbacks.certifications}
                 </h3>
                 <ul className={`ml-4 ${baseStyles['resume-list']} ${baseStyles['resume-text-xs']}`}>
-                  {additional.certificationsTraining.map((cert, index) => (
+                  {additional.certificationsTraining
+                  .filter((cert) => cert.trim() !== '')
+                  .map((cert, index) => (
                     <li key={index} className="flex">
                       <span className="mr-1.5 flex-shrink-0">•&nbsp;</span>
                       <span>{cert}</span>
@@ -402,7 +404,9 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
               <div className={baseStyles['resume-section']}>
                 <h3 className={baseStyles['resume-section-title-sm']}>{headingFallbacks.skills}</h3>
                 <div className="flex flex-wrap gap-1">
-                  {additional.technicalSkills.map((skill, index) => (
+                  {additional.technicalSkills
+                  .filter((skill) => skill.trim() !== '')
+                  .map((skill, index) => (
                     <span key={index} className={baseStyles['resume-skill-pill']}>
                       {skill}
                     </span>
@@ -419,7 +423,9 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
                 <h3 className={baseStyles['resume-section-title-sm']}>
                   {headingFallbacks.languages}
                 </h3>
-                <p className={baseStyles['resume-text-xs']}>{additional.languages.join(' • ')}</p>
+                <p className={baseStyles['resume-text-xs']}>{additional.languages
+                .filter((language) => language.trim() !== '')
+                .join(' • ')}</p>
               </div>
             )}
 
@@ -428,7 +434,9 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
             <div className={baseStyles['resume-section']}>
               <h3 className={baseStyles['resume-section-title-sm']}>{headingFallbacks.awards}</h3>
               <ul className={baseStyles['resume-list']}>
-                {additional.awards.map((award, index) => (
+                {additional.awards
+                .filter((award) => award.trim() !== '')
+                .map((award, index) => (
                   <li key={index} className={baseStyles['resume-text-xs']}>
                     {award}
                   </li>
