@@ -23,6 +23,10 @@ interface ATSScreenPanelProps {
   initialResult?: ATSScreeningResult;
   /** Auto-expand the optimization panel (set by ?optimize=1 URL param) */
   autoShowOptimization?: boolean;
+  /** Job posting title — used to name the saved tailored resume */
+  jobTitle?: string;
+  /** Hiring company name — used to name the saved tailored resume */
+  company?: string;
 }
 
 export function ATSScreenPanel({
@@ -32,6 +36,8 @@ export function ATSScreenPanel({
   resumeText,
   initialResult,
   autoShowOptimization,
+  jobTitle,
+  company,
 }: ATSScreenPanelProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<ATSScreeningResult | null>(initialResult ?? null);
@@ -205,6 +211,8 @@ export function ATSScreenPanel({
               jobId={jobId ?? null}
               jobDescription={jobDescription ?? null}
               resumeText={resumeText ?? null}
+              jobTitle={jobTitle}
+              company={company}
               onSaved={(id) => setSavedResumeId(id)}
             />
           )}

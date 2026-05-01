@@ -197,6 +197,8 @@ async function init() {
       type: 'OPEN_FULL_RESULTS',
       payload: {
         jobText:          appState.currentJobText,
+        jobTitle:         appState.currentJobTitle || null,
+        company:          appState.currentCompany  || null,
         resumeId:         resumeSel.value || null,
         result:           lastResult,   // full result, optimized_resume included
         showOptimization: true,         // auto-expand the optimization panel

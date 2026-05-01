@@ -115,7 +115,7 @@ async function dispatch(message) {
 
   // User clicked "View Full Results" or "Create ATS Tailored Resume" — open the frontend app
   if (type === 'OPEN_FULL_RESULTS') {
-    const { jobText, resumeId, result, showOptimization } = payload;
+    const { jobText, jobTitle, company, resumeId, result, showOptimization } = payload;
     const { frontendUrl } = await getSettings();
 
     const url = new URL(`${frontendUrl}/ats`);
@@ -125,6 +125,10 @@ async function dispatch(message) {
 
     // Pre-selected resume
     if (resumeId) url.searchParams.set('resumeId', resumeId);
+
+    // Job title and company (used to name the saved resume)
+    if (jobTitle) url.searchParams.set('jobTitle', jobTitle);
+    if (company)  url.searchParams.set('company', company);
 
     // Pre-fetched results
     if (result) {

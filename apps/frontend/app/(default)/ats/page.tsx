@@ -19,6 +19,8 @@ function ATSPageContent() {
   const [jobDescription, setJobDescription] = useState('');
   const [initialResult, setInitialResult] = useState<ATSScreeningResult | undefined>(undefined);
   const [autoShowOptimization, setAutoShowOptimization] = useState(false);
+  const [jobTitle, setJobTitle] = useState<string | undefined>(undefined);
+  const [company, setCompany] = useState<string | undefined>(undefined);
 
   // Pre-fill from URL params set by the Chrome extension
   useEffect(() => {
@@ -39,6 +41,12 @@ function ATSPageContent() {
         // Ignore malformed result param — user can re-run manually
       }
     }
+
+    // Job title & company for naming the saved resume (?jobTitle= ?company=)
+    const jt = searchParams.get('jobTitle');
+    const co = searchParams.get('company');
+    if (jt) setJobTitle(jt);
+    if (co) setCompany(co);
 
     // Auto-expand the optimization panel (?optimize=1)
     if (searchParams.get('optimize') === '1') setAutoShowOptimization(true);
@@ -104,6 +112,8 @@ function ATSPageContent() {
             jobDescription={jobDescription || undefined}
             initialResult={initialResult}
             autoShowOptimization={autoShowOptimization}
+            jobTitle={jobTitle}
+            company={company}
           />
         </div>
       </div>

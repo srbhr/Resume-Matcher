@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { Button } from '@/components/ui/button';
+import { Download } from 'lucide-react';
 import type { ResumeData } from '@/components/dashboard/resume-component';
 import { saveAtsResume } from '@/lib/api/ats';
 
@@ -18,7 +19,25 @@ interface ATSOptimizationPanelProps {
   jobId: string | null;
   jobDescription: string | null;
   resumeText: string | null;
+  /** Job posting title — used to name the saved resume */
+  jobTitle?: string;
+  /** Hiring company name — used to name the saved resume */
+  company?: string;
   onSaved: (newResumeId: string) => void;
+}
+
+/** Sanitise a string so it's safe to use as a filename or DB title. */
+function sanitise(s: string) {
+  return s.replace(/[/\\:*?"<>|]/g, '').trim();
+}
+
+/** Build the save title: "Role_Company" when available, else fallback. */
+function buildTitle(jobTitle?: string, company?: string) {
+  const role = jobTitle ? sanitise(jobTitle) : '';
+  const co   = company  ? sanitise(company)  : '';
+  if (role && co)  return `${role}_${co}`;
+  if (role || co)  return role || co;
+  return 'ATS Optimized Resume';
 }
 
 export function ATSOptimizationPanel({
@@ -28,31 +47,59 @@ export function ATSOptimizationPanel({
   jobId,
   jobDescription,
   resumeText,
+  jobTitle,
+  company,
   onSaved,
 }: ATSOptimizationPanelProps) {
   const [mode, setMode] = useState<'view' | 'edit'>('view');
   const [editedResume, setEditedResume] = useState<ResumeData>(optimizedResume);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [savedResumeId, setSavedResumeId] = useState<string | null>(null);
 
   useEffect(() => {
     setEditedResume(optimizedResume);
-    setMode('view'); // Reset to view when a new result comes in
+    setMode('view');
+    setSavedResumeId(null); // reset when a new result comes in
   }, [optimizedResume]);
 
-  const handleSave = async () => {
+  const title = buildTitle(jobTitle, company);
+
+  // ── Save ────────────────────────────────────────────────────────────────────
+  const handleSave = async (): Promise<string | null> => {
     setIsSaving(true);
     setSaveError(null);
     try {
       const result = await saveAtsResume({
         resume_data: editedResume,
         parent_id: resumeId ?? undefined,
+        title,
       });
+      setSavedResumeId(result.resume_id);
       onSaved(result.resume_id);
+      return result.resume_id;
     } catch (err: unknown) {
       setSaveError(err instanceof Error ? err.message : 'Save failed');
+      return null;
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  // ── Download ─────────────────────────────────────────────────────────────────
+  // Opens the print page (formatted resume) in a new tab.
+  // Saves first if not yet saved.
+  const handleDownload = async () => {
+    setIsDownloading(true);
+    setSaveError(null);
+    try {
+      const id = savedResumeId ?? await handleSave();
+      if (id) {
+        window.open(`/print/resumes/${id}`, '_blank');
+      }
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -104,16 +151,40 @@ export function ATSOptimizationPanel({
           )}
         </div>
 
-        <div className="border-t border-black px-4 py-3 flex gap-3 items-center">
+        {/* Save title preview */}
+        <div className="border-t border-black px-4 py-2 bg-secondary">
+          <p className="font-mono text-xs text-muted-foreground">
+            Will be saved as: <span className="text-black font-bold">{title}</span>
+          </p>
+        </div>
+
+        <div className="border-t border-black px-4 py-3 flex flex-wrap gap-3 items-center">
           <Button
             onClick={handleSave}
-            disabled={isSaving}
+            disabled={isSaving || isDownloading}
             className="font-mono text-xs uppercase tracking-widest"
           >
-            {isSaving ? 'Saving...' : 'Save as New Resume'}
+            {isSaving ? 'Saving...' : savedResumeId ? '✓ Saved' : 'Save as New Resume'}
           </Button>
+
+          <Button
+            onClick={handleDownload}
+            disabled={isSaving || isDownloading}
+            variant="outline"
+            className="font-mono text-xs uppercase tracking-widest border-black"
+          >
+            {isDownloading ? (
+              'Preparing...'
+            ) : (
+              <>
+                <Download className="w-4 h-4 mr-2" />
+                Download Resume
+              </>
+            )}
+          </Button>
+
           {saveError && (
-            <p className="font-mono text-xs text-red-600">{saveError}</p>
+            <p className="font-mono text-xs text-red-600 w-full">{saveError}</p>
           )}
         </div>
       </div>
