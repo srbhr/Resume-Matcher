@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Download } from 'lucide-react';
 import type { ResumeData } from '@/components/dashboard/resume-component';
 import { saveAtsResume } from '@/lib/api/ats';
+import { downloadResumePdf } from '@/lib/api/resume';
+import { buildResumeFilename, downloadBlobAsFile } from '@/lib/utils/download';
 
 const ResumeForm = dynamic(
   () => import('@/components/builder/resume-form').then((m) => m.ResumeForm),
@@ -88,16 +90,20 @@ export function ATSOptimizationPanel({
   };
 
   // ── Download ─────────────────────────────────────────────────────────────────
-  // Opens the print page (formatted resume) in a new tab.
-  // Saves first if not yet saved.
+  // Saves first if needed, then downloads as a PDF via the backend renderer.
   const handleDownload = async () => {
     setIsDownloading(true);
     setSaveError(null);
     try {
       const id = savedResumeId ?? await handleSave();
-      if (id) {
-        window.open(`/print/resumes/${id}`, '_blank');
-      }
+      if (!id) return; // save failed — error already set
+
+      const personName = editedResume.personalInfo?.name ?? null;
+      const filename = buildResumeFilename(personName, company ?? null, id);
+      const blob = await downloadResumePdf(id);
+      downloadBlobAsFile(blob, filename);
+    } catch (err: unknown) {
+      setSaveError(err instanceof Error ? err.message : 'Download failed');
     } finally {
       setIsDownloading(false);
     }

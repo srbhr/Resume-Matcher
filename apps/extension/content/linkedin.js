@@ -21,7 +21,39 @@
     '.scaffold-layout__detail .jobs-search__job-details',
   ];
 
+  // ── Expand collapsed JD ("Show more" / "See more") ───────────────────────────
+  // LinkedIn truncates long descriptions. Click the expand button so we get the
+  // full text (language requirements, qualifications, etc. are often below the fold).
+  function expandJD() {
+    const panel = document.querySelector(
+      '.scaffold-layout__detail, .jobs-search__job-details--detail-panel, [data-view-name="job-details"]'
+    ) || document;
+
+    // Try known button selectors first
+    const btnSelectors = [
+      '.jobs-description__footer-button',
+      '.jobs-description__see-more-button',
+      'button.jobs-description__footer-button',
+    ];
+    for (const sel of btnSelectors) {
+      const btn = panel.querySelector(sel);
+      if (btn && btn.offsetParent) { btn.click(); return; }
+    }
+
+    // Fallback: any button/link with "show more" / "see more" text inside the panel
+    for (const el of panel.querySelectorAll('button, a')) {
+      const txt = (el.innerText || '').trim().toLowerCase();
+      if ((txt === 'show more' || txt === 'see more') && el.offsetParent) {
+        el.click();
+        return;
+      }
+    }
+  }
+
   function extractJD() {
+    // Expand collapsed description before reading text
+    expandJD();
+
     // Strategy 1: known selectors (scoped to the right-hand detail panel first)
     const detailPanel = document.querySelector(
       '.scaffold-layout__detail, .jobs-search__job-details--detail-panel, [data-view-name="job-details"]'
