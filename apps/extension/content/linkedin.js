@@ -22,8 +22,10 @@
   ];
 
   // ── Expand collapsed JD ("Show more" / "See more") ───────────────────────────
-  // LinkedIn truncates long descriptions. Click the expand button so we get the
-  // full text (language requirements, qualifications, etc. are often below the fold).
+  // LinkedIn truncates long descriptions. Click the expand button ONCE so we get
+  // the full text (language requirements, qualifications, etc. below the fold).
+  // IMPORTANT: only call this OUTSIDE of MutationObserver callbacks — clicking a
+  // button causes DOM mutations which would re-trigger the observer → infinite loop.
   function expandJD() {
     const panel = document.querySelector(
       '.scaffold-layout__detail, .jobs-search__job-details--detail-panel, [data-view-name="job-details"]'
@@ -37,10 +39,14 @@
     ];
     for (const sel of btnSelectors) {
       const btn = panel.querySelector(sel);
-      if (btn && btn.offsetParent) { btn.click(); return; }
+      // offsetParent null = hidden; aria-expanded="true" = already expanded
+      if (btn && btn.offsetParent && btn.getAttribute('aria-expanded') !== 'true') {
+        btn.click();
+        return;
+      }
     }
 
-    // Fallback: any button/link with "show more" / "see more" text inside the panel
+    // Fallback: any visible button/link with "show more" / "see more" text
     for (const el of panel.querySelectorAll('button, a')) {
       const txt = (el.innerText || '').trim().toLowerCase();
       if ((txt === 'show more' || txt === 'see more') && el.offsetParent) {
@@ -51,8 +57,9 @@
   }
 
   function extractJD() {
-    // Expand collapsed description before reading text
-    expandJD();
+    // NOTE: expandJD() is called once externally (in waitForJD) — NOT here,
+    // because extractJD is called on every MutationObserver tick and clicking
+    // a button inside the observer callback causes an infinite mutation loop.
 
     // Strategy 1: known selectors (scoped to the right-hand detail panel first)
     const detailPanel = document.querySelector(
@@ -124,15 +131,28 @@
 
   function waitForJD() {
     return new Promise((resolve) => {
+      // Try immediately first (JD might already be in the DOM)
       const found = tryDetectNow();
       if (found) return resolve(found);
 
+      // Expand collapsed JD ONCE before starting the observer.
+      // Do NOT call expandJD() inside the MutationObserver callback —
+      // clicking a DOM button triggers a new mutation → infinite loop.
+      expandJD();
+
+      // Give the expanded content ~400 ms to render, then try again before
+      // falling back to the observer for slower pages.
+      const afterExpand = setTimeout(() => {
+        const result = tryDetectNow();
+        if (result) { obs.disconnect(); resolve(result); return; }
+      }, 400);
+
       const obs = new MutationObserver(() => {
         const result = tryDetectNow();
-        if (result) { obs.disconnect(); resolve(result); }
+        if (result) { clearTimeout(afterExpand); obs.disconnect(); resolve(result); }
       });
       obs.observe(document.body, { childList: true, subtree: true });
-      setTimeout(() => { obs.disconnect(); resolve(null); }, 7000);
+      setTimeout(() => { clearTimeout(afterExpand); obs.disconnect(); resolve(null); }, 7000);
     });
   }
 
