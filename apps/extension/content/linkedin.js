@@ -22,41 +22,52 @@
   ];
 
   function extractJD() {
-    // Strategy 1: known selectors
+    // Strategy 1: known selectors (scoped to the right-hand detail panel first)
+    const detailPanel = document.querySelector(
+      '.scaffold-layout__detail, .jobs-search__job-details--detail-panel, [data-view-name="job-details"]'
+    );
+    const searchRoot = detailPanel || document;
+
     for (const sel of JD_SELECTORS) {
-      const el = document.querySelector(sel);
+      const el = searchRoot.querySelector(sel);
       if (el && el.innerText.trim().length > 150) {
         console.log('[RM] JD via selector:', sel);
         return el.innerText.trim();
       }
     }
 
-    // Strategy 2: any element that looks like a job description
-    // (large block of text NOT inside a nav/header/footer)
-    let best = null, bestLen = 300;
-    document.querySelectorAll('div, section, article').forEach(el => {
-      if (['NAV', 'HEADER', 'FOOTER'].includes(el.parentElement?.tagName)) return;
-      const txt = el.innerText.trim();
-      if (txt.length > bestLen && txt.split('\n').length > 5) {
-        best = txt;
-        bestLen = txt.length;
+    // Strategy 2: largest text block INSIDE the detail panel only
+    // (avoids picking up the search-results sidebar on /jobs/search/ pages)
+    if (detailPanel) {
+      let best = null, bestLen = 300;
+      detailPanel.querySelectorAll('div, section, article').forEach(el => {
+        const txt = el.innerText.trim();
+        if (txt.length > bestLen && txt.split('\n').length > 5) {
+          best = txt;
+          bestLen = txt.length;
+        }
+      });
+      if (best) {
+        console.log('[RM] JD via detail-panel fallback, length:', bestLen);
+        return best;
       }
-    });
-    if (best) {
-      console.log('[RM] JD via large-block fallback, length:', bestLen);
-      return best;
     }
 
     return null;
   }
 
   function extractJobTitle() {
+    // Prefer job-specific title elements (inside the detail panel) over page-level h1
+    // which on /jobs/search/ is the search count like "(4) Product Manager Jobs"
     return (
       document.querySelector('.job-details-jobs-unified-top-card__job-title h1')?.innerText.trim() ||
       document.querySelector('.jobs-unified-top-card__job-title h1')?.innerText.trim() ||
+      document.querySelector('.job-details-jobs-unified-top-card__job-title')?.innerText.trim() ||
+      document.querySelector('[class*="unified-top-card__job-title"]')?.innerText.trim() ||
+      document.querySelector('.scaffold-layout__detail h1')?.innerText.trim() ||
       document.querySelector('h1.t-24')?.innerText.trim() ||
-      document.querySelector('h1')?.innerText.trim() ||
-      document.title.replace(' | LinkedIn', '').trim()
+      // Last resort: page title — but strip the search-results prefix "(N) "
+      document.title.replace(/^\(\d+\)\s*/, '').replace(' | LinkedIn', '').trim()
     );
   }
 
