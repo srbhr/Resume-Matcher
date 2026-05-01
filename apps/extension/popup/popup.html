@@ -32,6 +32,8 @@
     .btn-run { width: 100%; background: #1D4ED8; color: #fff; border: none; padding: 10px; font-size: 12px; font-weight: 700; cursor: pointer; border-radius: 5px; letter-spacing: .03em; }
     .btn-run:hover:not(:disabled) { background: #1e40af; }
     .btn-run:disabled { background: #94a3b8; cursor: not-allowed; }
+    .btn-tailored { width: 100%; background: linear-gradient(135deg, #1D4ED8, #7c3aed); color: #fff; border: none; padding: 10px; font-size: 12px; font-weight: 700; cursor: pointer; border-radius: 5px; margin-bottom: 8px; letter-spacing: .02em; }
+    .btn-tailored:hover { opacity: .9; }
     .btn-full { width: 100%; background: #fff; color: #1D4ED8; border: 1.5px solid #1D4ED8; padding: 8px; font-size: 12px; font-weight: 700; cursor: pointer; border-radius: 5px; }
     .btn-full:hover { background: #eff6ff; }
 
@@ -161,6 +163,7 @@
   <div class="lbl">Missing keywords</div>
   <div class="kws" id="r-kws"></div>
 
+  <button class="btn-tailored" id="tailored-btn">✦ Create ATS Tailored Resume</button>
   <button class="btn-full" id="full-btn">View Full Results →</button>
 </div>
 

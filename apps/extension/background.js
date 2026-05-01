@@ -113,9 +113,9 @@ async function dispatch(message) {
     }
   }
 
-  // User clicked "View Full Results" — open the frontend app with JD, resume, and results pre-filled
+  // User clicked "View Full Results" or "Create ATS Tailored Resume" — open the frontend app
   if (type === 'OPEN_FULL_RESULTS') {
-    const { jobText, resumeId, result } = payload;
+    const { jobText, resumeId, result, showOptimization } = payload;
     const { frontendUrl } = await getSettings();
 
     const url = new URL(`${frontendUrl}/ats`);
@@ -126,11 +126,20 @@ async function dispatch(message) {
     // Pre-selected resume
     if (resumeId) url.searchParams.set('resumeId', resumeId);
 
-    // Pre-fetched results — strip optimized_resume (too large) before encoding
+    // Pre-fetched results
     if (result) {
-      const { optimized_resume, ...slim } = result;
-      url.searchParams.set('result', JSON.stringify(slim));
+      if (showOptimization) {
+        // Include full result with optimized_resume so the panel can open immediately
+        url.searchParams.set('result', JSON.stringify(result));
+      } else {
+        // "View Full Results" — strip optimized_resume to keep URL smaller
+        const { optimized_resume, ...slim } = result;
+        url.searchParams.set('result', JSON.stringify(slim));
+      }
     }
+
+    // Signal the page to auto-expand the optimization panel
+    if (showOptimization) url.searchParams.set('optimize', '1');
 
     chrome.tabs.create({ url: url.toString() });
     return { ok: true };

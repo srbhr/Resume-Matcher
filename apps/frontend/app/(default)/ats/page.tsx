@@ -18,8 +18,9 @@ function ATSPageContent() {
   });
   const [jobDescription, setJobDescription] = useState('');
   const [initialResult, setInitialResult] = useState<ATSScreeningResult | undefined>(undefined);
+  const [autoShowOptimization, setAutoShowOptimization] = useState(false);
 
-  // Pre-fill from URL params set by the Chrome extension "View Full Results" button
+  // Pre-fill from URL params set by the Chrome extension
   useEffect(() => {
     // Job description (?jd=)
     const jd = searchParams.get('jd');
@@ -38,6 +39,9 @@ function ATSPageContent() {
         // Ignore malformed result param — user can re-run manually
       }
     }
+
+    // Auto-expand the optimization panel (?optimize=1)
+    if (searchParams.get('optimize') === '1') setAutoShowOptimization(true);
   }, [searchParams]);
 
   return (
@@ -99,6 +103,7 @@ function ATSPageContent() {
             resumeText={resumeInput.resumeText ?? undefined}
             jobDescription={jobDescription || undefined}
             initialResult={initialResult}
+            autoShowOptimization={autoShowOptimization}
           />
         </div>
       </div>

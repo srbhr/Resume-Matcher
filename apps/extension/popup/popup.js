@@ -187,7 +187,19 @@ async function init() {
       payload: {
         jobText:  appState.currentJobText,
         resumeId: resumeSel.value || null,
-        result:   lastResult,          // null if screen hasn't been run yet
+        result:   lastResult,
+      },
+    });
+  });
+
+  $('tailored-btn').addEventListener('click', () => {
+    chrome.runtime.sendMessage({
+      type: 'OPEN_FULL_RESULTS',
+      payload: {
+        jobText:          appState.currentJobText,
+        resumeId:         resumeSel.value || null,
+        result:           lastResult,   // full result, optimized_resume included
+        showOptimization: true,         // auto-expand the optimization panel
       },
     });
   });
