@@ -5,142 +5,235 @@
   'use strict';
 
   // ── Extension context guard ───────────────────────────────────────────────────
-  // When the extension is reloaded while the page is open, chrome.runtime becomes
-  // invalid. Wrap every API call so we don't flood the console with errors.
   function safeSendMessage(msg) {
-    try {
-      chrome.runtime.sendMessage(msg);
-    } catch (e) {
-      // Extension context invalidated — page needs a refresh, nothing we can do.
-    }
+    try { chrome.runtime.sendMessage(msg); } catch (_) {}
   }
 
-  // ── JD extraction ─────────────────────────────────────────────────────────────
+  // ── JD extraction — multiple strategies ──────────────────────────────────────
   const JD_SELECTORS = [
     '.jobs-description__content',
     '.jobs-description',
     '.job-details-about-the-job-module__description',
     '.jobs-box__html-content',
     '[data-job-id] .description__text',
+    '.jobs-details__main-content',
+    // Collections / split-pane layout
+    '.scaffold-layout__detail .jobs-search__job-details',
   ];
 
   function extractJD() {
-    for (const selector of JD_SELECTORS) {
-      const el = document.querySelector(selector);
-      if (el && (el.innerText || '').trim().length > 150) return el.innerText.trim();
+    // Strategy 1: known selectors
+    for (const sel of JD_SELECTORS) {
+      const el = document.querySelector(sel);
+      if (el && el.innerText.trim().length > 150) {
+        console.log('[RM] JD via selector:', sel);
+        return el.innerText.trim();
+      }
     }
-    // Fallback: largest text block in the detail pane
-    const candidates = document.querySelectorAll(
-      '.scaffold-layout__detail section, .scaffold-layout__detail article'
-    );
-    let best = null, bestLen = 150;
-    for (const el of candidates) {
-      const len = (el.innerText || '').trim().length;
-      if (len > bestLen) { best = el; bestLen = len; }
+
+    // Strategy 2: any element that looks like a job description
+    // (large block of text NOT inside a nav/header/footer)
+    let best = null, bestLen = 300;
+    document.querySelectorAll('div, section, article').forEach(el => {
+      if (['NAV', 'HEADER', 'FOOTER'].includes(el.parentElement?.tagName)) return;
+      const txt = el.innerText.trim();
+      if (txt.length > bestLen && txt.split('\n').length > 5) {
+        best = txt;
+        bestLen = txt.length;
+      }
+    });
+    if (best) {
+      console.log('[RM] JD via large-block fallback, length:', bestLen);
+      return best;
     }
-    return best ? best.innerText.trim() : null;
+
+    return null;
   }
 
   function extractJobTitle() {
-    const el =
-      document.querySelector('.job-details-jobs-unified-top-card__job-title h1') ||
-      document.querySelector('.jobs-unified-top-card__job-title h1') ||
-      document.querySelector('h1.t-24') ||
-      document.querySelector('h1');
-    return el ? el.innerText.trim() : document.title.replace(' | LinkedIn', '').trim();
+    return (
+      document.querySelector('.job-details-jobs-unified-top-card__job-title h1')?.innerText.trim() ||
+      document.querySelector('.jobs-unified-top-card__job-title h1')?.innerText.trim() ||
+      document.querySelector('h1.t-24')?.innerText.trim() ||
+      document.querySelector('h1')?.innerText.trim() ||
+      document.title.replace(' | LinkedIn', '').trim()
+    );
   }
 
   function extractCompany() {
-    const el =
-      document.querySelector('.job-details-jobs-unified-top-card__company-name a') ||
-      document.querySelector('.jobs-unified-top-card__company-name a');
-    return el ? el.innerText.trim() : '';
+    return (
+      document.querySelector('.job-details-jobs-unified-top-card__company-name a')?.innerText.trim() ||
+      document.querySelector('.jobs-unified-top-card__company-name a')?.innerText.trim() ||
+      ''
+    );
   }
 
-  // ── Apply button finder ───────────────────────────────────────────────────────
-  // Uses button text rather than brittle CSS class names.
-  function findApplyButton() {
-    const all = document.querySelectorAll('button, a[role="button"]');
-    for (const b of all) {
-      const txt = (b.innerText || b.textContent || '').trim();
-      if ((txt === 'Easy Apply' || txt === 'Apply' || txt === 'Apply now') &&
-          b.offsetParent !== null) return b;
+  // ── Phase 1: Detect job ───────────────────────────────────────────────────────
+  function tryDetectNow() {
+    const jobText = extractJD();
+    if (!jobText) return null;
+    const jobTitle = extractJobTitle();
+    const company  = extractCompany();
+    console.log('[RM] Sending JOB_DETECTED:', jobTitle, '|', company);
+    safeSendMessage({ type: 'JOB_DETECTED', payload: { jobText, jobTitle, company } });
+    return { jobText, jobTitle, company };
+  }
+
+  function waitForJD() {
+    return new Promise((resolve) => {
+      const found = tryDetectNow();
+      if (found) return resolve(found);
+
+      const obs = new MutationObserver(() => {
+        const result = tryDetectNow();
+        if (result) { obs.disconnect(); resolve(result); }
+      });
+      obs.observe(document.body, { childList: true, subtree: true });
+      setTimeout(() => { obs.disconnect(); resolve(null); }, 7000);
+    });
+  }
+
+  // ── Phase 2: Inject button ────────────────────────────────────────────────────
+  function findApplyContainer() {
+    // Try aria-label on the button itself
+    const byAria = document.querySelector(
+      'button[aria-label*="Easy Apply"], a[aria-label*="Easy Apply"], button[aria-label*="Apply now"]'
+    );
+    if (byAria?.offsetParent) return byAria;
+
+    // Try visible text
+    for (const el of document.querySelectorAll('button, a[role="button"]')) {
+      const txt = (el.innerText || el.textContent || '').trim();
+      if (/^(Easy Apply|Apply now|Apply)$/.test(txt) && el.offsetParent !== null) return el;
     }
-    // Class-based fallbacks
-    const classes = [
+
+    // Try class names
+    for (const sel of [
       '.jobs-apply-button--top-card',
       '.jobs-apply-button',
       '.jobs-s-apply',
       '.job-details-jobs-unified-top-card__primary-actions',
       '.jobs-unified-top-card__primary-actions',
-    ];
-    for (const sel of classes) {
+    ]) {
       const el = document.querySelector(sel);
-      if (el && el.offsetParent !== null) return el;
+      if (el?.offsetParent) return el;
     }
     return null;
   }
 
+  let _buttonInjected = false;
+
+  async function injectButton(jobData) {
+    if (_buttonInjected) return;
+
+    // Wait up to 5 s for the apply button
+    const applyEl = await new Promise((resolve) => {
+      const found = findApplyContainer();
+      if (found) return resolve(found);
+      const obs = new MutationObserver(() => {
+        const btn = findApplyContainer();
+        if (btn) { obs.disconnect(); resolve(btn); }
+      });
+      obs.observe(document.body, { childList: true, subtree: true });
+      setTimeout(() => { obs.disconnect(); resolve(null); }, 5000);
+    });
+
+    if (_buttonInjected) return;
+    _buttonInjected = true;
+
+    if (applyEl) {
+      // Insert into the button's parent container so it sits alongside Apply
+      const container = applyEl.closest(
+        '[class*="primary-actions"], [class*="apply-button"], .jobs-s-apply'
+      ) || applyEl.parentElement || applyEl;
+      console.log('[RM] Injecting ATS button next to:', container.className || 'element');
+      injectAtsButton(container, (btn) => {
+        setButtonFeedback(btn, '✓ Ready — click the toolbar icon', 2500);
+        safeSendMessage({ type: 'JOB_DETECTED', payload: jobData });
+      });
+    } else {
+      // Fallback: floating button pinned to bottom-right of the detail panel
+      console.log('[RM] Apply button not found — injecting floating fallback');
+      _injectFloatingButton(jobData);
+    }
+  }
+
+  function _injectFloatingButton(jobData) {
+    const existing = document.getElementById('rm-ats-btn');
+    if (existing) existing.remove();
+
+    const btn = document.createElement('button');
+    btn.id = 'rm-ats-btn';
+    btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+      stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="20 6 9 17 4 12"/></svg> ATS Screen`;
+    btn.style.cssText = [
+      'position:fixed', 'bottom:24px', 'right:24px', 'z-index:99999',
+      'display:inline-flex', 'align-items:center', 'gap:6px',
+      'background:#1D4ED8', 'color:white', 'border:none', 'cursor:pointer',
+      'padding:10px 18px', 'border-radius:24px',
+      'font-size:13px', 'font-weight:700',
+      'font-family:-apple-system,BlinkMacSystemFont,sans-serif',
+      'box-shadow:0 4px 12px rgba(29,78,216,0.45)',
+    ].join(';');
+    btn.addEventListener('click', () => {
+      btn.textContent = '✓ Ready — click the toolbar icon';
+      safeSendMessage({ type: 'JOB_DETECTED', payload: jobData });
+      setTimeout(() => { btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> ATS Screen`; }, 2500);
+    });
+    document.body.appendChild(btn);
+  }
+
+  // ── Debug helper (call window.__rmDebug() in DevTools console) ───────────────
+  window.__rmDebug = function () {
+    console.group('[RM] Debug info');
+    console.log('URL:', location.href);
+    console.log('JD selectors found:');
+    JD_SELECTORS.forEach(sel => {
+      const el = document.querySelector(sel);
+      console.log(' ', sel, '→', el ? `found (${el.innerText.trim().length} chars)` : 'not found');
+    });
+    console.log('Apply button (aria):', document.querySelector('button[aria-label*="Easy Apply"], a[aria-label*="Easy Apply"]'));
+    console.log('Apply button (text):',
+      Array.from(document.querySelectorAll('button')).find(b => /Apply/.test(b.innerText)));
+    console.log('JD extraction result:', (extractJD() || '').slice(0, 100) + '...');
+    console.log('Job title:', extractJobTitle());
+    console.log('Company:', extractCompany());
+    console.groupEnd();
+  };
+  console.log('[RM] LinkedIn script loaded. Run window.__rmDebug() to diagnose.');
+
   // ── Main init ─────────────────────────────────────────────────────────────────
-  let _busy = false;
+  let _running = false;
 
   async function init() {
-    if (_busy) return;
-    _busy = true;
+    if (_running) return;
+    _running = true;
+    _buttonInjected = false;
+
+    const old = document.getElementById('rm-ats-btn');
+    if (old) old.remove();
 
     try {
-      // Remove any leftover button from a previous run (SPA navigation)
-      const old = document.getElementById('rm-ats-btn');
-      if (old) old.remove();
-
-      // Wait up to 5 s for the apply button using MutationObserver
-      const applyBtn = await new Promise((resolve) => {
-        const found = findApplyButton();
-        if (found) return resolve(found);
-
-        const obs = new MutationObserver(() => {
-          const btn = findApplyButton();
-          if (btn) { obs.disconnect(); resolve(btn); }
-        });
-        obs.observe(document.body, { childList: true, subtree: true });
-        setTimeout(() => { obs.disconnect(); resolve(null); }, 5000);
-      });
-
-      if (!applyBtn) {
-        console.debug('[RM] LinkedIn: apply button not found within 5 s');
-        return;
+      const jobData = await waitForJD();
+      if (jobData) {
+        injectButton(jobData).catch(() => {});
+      } else {
+        console.log('[RM] LinkedIn: no JD found within 7 s — run window.__rmDebug() for details');
       }
-
-      const jobText = extractJD();
-      if (!jobText) {
-        console.debug('[RM] LinkedIn: could not extract JD');
-        return;
-      }
-
-      const jobTitle = extractJobTitle();
-      const company  = extractCompany();
-
-      safeSendMessage({ type: 'JOB_DETECTED', payload: { jobText, jobTitle, company } });
-
-      injectAtsButton(applyBtn, (btn) => {
-        setButtonFeedback(btn, '✓ Ready — click the toolbar icon', 2500);
-        safeSendMessage({ type: 'JOB_DETECTED', payload: { jobText, jobTitle, company } });
-      });
     } finally {
-      _busy = false;
+      _running = false;
     }
   }
 
   init();
 
-  // ── SPA navigation — poll instead of MutationObserver ────────────────────────
-  // MutationObserver on LinkedIn fires thousands of times/sec and causes console spam.
-  // A 1-second interval poll is much cheaper and works just as well for URL detection.
+  // ── SPA navigation ────────────────────────────────────────────────────────────
   let _lastUrl = location.href;
   setInterval(() => {
     if (location.href !== _lastUrl) {
       _lastUrl = location.href;
-      setTimeout(init, 900); // wait for LinkedIn to finish rendering the new job
+      setTimeout(init, 1000);
     }
   }, 1000);
 
