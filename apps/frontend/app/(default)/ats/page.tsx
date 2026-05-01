@@ -1,13 +1,14 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Textarea } from '@/components/ui/textarea';
 import { ATSResumeInput, type ResumeInputValue } from '@/components/ats/ats-resume-input';
 import { ATSScreenPanel } from '@/components/ats/ats-screen-panel';
 
-export default function ATSPage() {
+// Inner component that uses useSearchParams — must be wrapped in <Suspense>
+function ATSPageContent() {
   const searchParams = useSearchParams();
 
   const [resumeInput, setResumeInput] = useState<ResumeInputValue>({
@@ -84,5 +85,14 @@ export default function ATSPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Suspense boundary required by Next.js 15 for useSearchParams() in client components
+export default function ATSPage() {
+  return (
+    <Suspense>
+      <ATSPageContent />
+    </Suspense>
   );
 }
