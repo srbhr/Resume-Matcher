@@ -44,6 +44,12 @@ LLM_TIMEOUT_JSON = 180  # JSON completions may take longer
 MAX_JSON_EXTRACTION_RECURSION = 10
 MAX_JSON_CONTENT_SIZE = 1024 * 1024  # 1MB
 
+# Default token budget for structured JSON completions (e.g. resume parsing).
+# Chosen to accommodate large resumes while staying within most providers'
+# output limits. Callers should use get_safe_max_tokens() so this is
+# automatically clamped to the model's actual capacity.
+DEFAULT_JSON_MAX_TOKENS = 8192
+
 
 class LLMConfig(BaseModel):
     """LLM configuration model."""
@@ -720,6 +726,53 @@ def _supports_json_mode(model_name: str) -> bool:
         # reject it.
         logging.debug("Model %s not in LiteLLM registry, skipping JSON mode", model_name)
         return False
+
+
+FALLBACK_MAX_TOKENS = 4096
+
+def get_safe_max_tokens(model_name: str, requested: int = DEFAULT_JSON_MAX_TOKENS) -> int:
+    """Return a token count safe for the given model, clamped to its output limit.
+
+    Queries LiteLLM's model registry for ``max_output_tokens`` and returns
+    ``min(requested, model_limit)`` so callers never send a value that exceeds
+    what the backend actually supports.
+
+    If the model is not in the registry (e.g. custom Ollama models), it falls
+    back to a safe conservative limit (FALLBACK_MAX_TOKENS).
+
+    Args:
+        model_name: LiteLLM-formatted model name (from get_model_name).
+        requested: Desired token budget; defaults to DEFAULT_JSON_MAX_TOKENS.
+
+    Returns:
+        Safe token count, clamped correctly and always >= 1.
+    """
+    safe_requested = max(1, requested)
+
+    try:
+        info = litellm.get_model_info(model=model_name)
+        model_limit = info.get("max_output_tokens") or info.get("max_tokens")
+        if model_limit and isinstance(model_limit, int) and model_limit > 0:
+            safe = min(safe_requested, model_limit)
+            if safe < safe_requested:
+                logging.debug(
+                    "max_tokens clamped %d → %d for model %s (model limit)",
+                    safe_requested,
+                    safe,
+                    model_name,
+                )
+            return safe
+    except Exception:
+        pass  # Model not in registry, drop down to fallback logic
+
+    safe = min(safe_requested, FALLBACK_MAX_TOKENS)
+    logging.debug(
+        "Model %s not in LiteLLM registry, clamping requested max_tokens %d → %d constraint",
+        model_name,
+        safe_requested,
+        safe,
+    )
+    return safe
 
 
 def _appears_truncated(data: dict) -> bool:
