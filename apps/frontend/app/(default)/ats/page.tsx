@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Textarea } from '@/components/ui/textarea';
 import { ATSResumeInput, type ResumeInputValue } from '@/components/ats/ats-resume-input';
 import { ATSScreenPanel } from '@/components/ats/ats-screen-panel';
+import type { ATSScreeningResult } from '@/lib/api/ats';
 
 // Inner component that uses useSearchParams — must be wrapped in <Suspense>
 function ATSPageContent() {
@@ -16,11 +17,27 @@ function ATSPageContent() {
     resumeText: null,
   });
   const [jobDescription, setJobDescription] = useState('');
+  const [initialResult, setInitialResult] = useState<ATSScreeningResult | undefined>(undefined);
 
-  // Pre-fill job description from ?jd= URL param (set by Chrome extension)
+  // Pre-fill from URL params set by the Chrome extension "View Full Results" button
   useEffect(() => {
+    // Job description (?jd=)
     const jd = searchParams.get('jd');
-    if (jd) setJobDescription(decodeURIComponent(jd));
+    if (jd) setJobDescription(jd);
+
+    // Pre-selected resume (?resumeId=)
+    const resumeId = searchParams.get('resumeId');
+    if (resumeId) setResumeInput({ resumeId, resumeText: null });
+
+    // Pre-fetched ATS result (?result=<JSON>)
+    const resultParam = searchParams.get('result');
+    if (resultParam) {
+      try {
+        setInitialResult(JSON.parse(resultParam) as ATSScreeningResult);
+      } catch {
+        // Ignore malformed result param — user can re-run manually
+      }
+    }
   }, [searchParams]);
 
   return (
@@ -81,6 +98,7 @@ function ATSPageContent() {
             resumeId={resumeInput.resumeId ?? undefined}
             resumeText={resumeInput.resumeText ?? undefined}
             jobDescription={jobDescription || undefined}
+            initialResult={initialResult}
           />
         </div>
       </div>

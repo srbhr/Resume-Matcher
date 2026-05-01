@@ -19,6 +19,8 @@ interface ATSScreenPanelProps {
   jobDescription?: string;
   /** Raw resume text (from standalone mode) */
   resumeText?: string;
+  /** Pre-fetched result passed in from the Chrome extension "View Full Results" flow */
+  initialResult?: ATSScreeningResult;
 }
 
 export function ATSScreenPanel({
@@ -26,9 +28,10 @@ export function ATSScreenPanel({
   jobId,
   jobDescription,
   resumeText,
+  initialResult,
 }: ATSScreenPanelProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<ATSScreeningResult | null>(null);
+  const [result, setResult] = useState<ATSScreeningResult | null>(initialResult ?? null);
   const [error, setError] = useState<string | null>(null);
   const [savedResumeId, setSavedResumeId] = useState<string | null>(null);
   const [elapsed, setElapsed] = useState(0);

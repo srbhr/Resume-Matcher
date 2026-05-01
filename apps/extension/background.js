@@ -113,13 +113,26 @@ async function dispatch(message) {
     }
   }
 
-  // User clicked "View Full Results" — open the frontend app with JD pre-filled
+  // User clicked "View Full Results" — open the frontend app with JD, resume, and results pre-filled
   if (type === 'OPEN_FULL_RESULTS') {
-    const { jobText } = payload;
+    const { jobText, resumeId, result } = payload;
     const { frontendUrl } = await getSettings();
-    // Truncate JD to 3000 chars to stay well within URL limits
-    const encoded = encodeURIComponent((jobText || '').slice(0, 3000));
-    chrome.tabs.create({ url: `${frontendUrl}/ats?jd=${encoded}` });
+
+    const url = new URL(`${frontendUrl}/ats`);
+
+    // Job description (cap at 4000 chars)
+    url.searchParams.set('jd', (jobText || '').slice(0, 4000));
+
+    // Pre-selected resume
+    if (resumeId) url.searchParams.set('resumeId', resumeId);
+
+    // Pre-fetched results — strip optimized_resume (too large) before encoding
+    if (result) {
+      const { optimized_resume, ...slim } = result;
+      url.searchParams.set('result', JSON.stringify(slim));
+    }
+
+    chrome.tabs.create({ url: url.toString() });
     return { ok: true };
   }
 
