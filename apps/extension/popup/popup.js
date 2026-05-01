@@ -168,7 +168,11 @@ async function init() {
         NO_RESUME:       ['📄', 'Select a resume to get started.'],
         NO_JOB:          ['🔍', 'Navigate to a job listing first.'],
       };
-      const [icon, msg] = msgs[res.error] || ['⚠️', 'Screening failed: ' + res.error];
+      const isTimeout = /timed?\s*out|timeout|abort/i.test(res.error || '');
+      const [icon, msg] = msgs[res.error] ||
+        (isTimeout
+          ? ['⏱️', 'Screening timed out — the AI model is busy. Please try again.']
+          : ['⚠️', 'Screening failed: ' + res.error]);
       showError(icon, msg);
       return;
     }

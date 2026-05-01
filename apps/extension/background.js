@@ -31,10 +31,10 @@ async function getCurrentJob() {
 
 // ── API helpers ────────────────────────────────────────────────────────────────
 
-async function apiFetch(backendUrl, path, options = {}) {
+async function apiFetch(backendUrl, path, options = {}, timeoutMs = 120_000) {
   const res = await fetch(`${backendUrl}${path}`, {
     ...options,
-    signal: AbortSignal.timeout(60_000),
+    signal: AbortSignal.timeout(timeoutMs),
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
