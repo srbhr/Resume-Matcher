@@ -39,6 +39,18 @@
     return null;
   }
 
+  /** Poll for JD text — mirrors linkedin.js waitForJD pattern. */
+  async function waitForJD(timeoutMs = 8000, intervalMs = 400) {
+    const deadline = Date.now() + timeoutMs;
+    while (Date.now() < deadline) {
+      if (!isContextValid()) return null;
+      const text = extractJD();
+      if (text) return text;
+      await new Promise(r => setTimeout(r, intervalMs));
+    }
+    return null;
+  }
+
   async function init() {
     if (!isContextValid()) return;
 
@@ -55,9 +67,10 @@
       return;
     }
 
-    const jobText = extractJD();
+    // Poll for JD — Glassdoor sometimes loads the description after the button
+    const jobText = await waitForJD();
     if (!jobText) {
-      console.debug('[RM] Glassdoor: could not extract JD');
+      console.debug('[RM] Glassdoor: could not extract JD after polling');
       return;
     }
 

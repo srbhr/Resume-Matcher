@@ -43,14 +43,28 @@
     return null;
   }
 
+  /** Race all apply-button selectors in parallel — first one wins. */
+  function waitForAnyElement(selectors, timeoutMs) {
+    return Promise.race(selectors.map(sel => waitForElement(sel, timeoutMs)));
+  }
+
+  /** Poll for JD text until it appears or times out. */
+  async function waitForJD(timeoutMs = 8000, intervalMs = 400) {
+    const deadline = Date.now() + timeoutMs;
+    while (Date.now() < deadline) {
+      if (!isContextValid()) return null;
+      const text = extractJD();
+      if (text) return text;
+      await new Promise(r => setTimeout(r, intervalMs));
+    }
+    return null;
+  }
+
   async function init() {
     if (!isContextValid()) return;
 
-    let applyContainer = null;
-    for (const selector of APPLY_SELECTORS) {
-      applyContainer = await waitForElement(selector, 4000);
-      if (applyContainer) break;
-    }
+    // Race all selectors in parallel instead of waiting 4s per selector sequentially
+    const applyContainer = await waitForAnyElement(APPLY_SELECTORS, 8000);
 
     if (!isContextValid()) return; // extension reloaded while waiting
 
@@ -59,9 +73,10 @@
       return;
     }
 
-    const jobText = extractJD();
+    // Poll for JD — Indeed sometimes renders description after the apply button
+    const jobText = await waitForJD();
     if (!jobText) {
-      console.debug('[RM] Indeed: could not extract JD');
+      console.debug('[RM] Indeed: could not extract JD after polling');
       return;
     }
 

@@ -370,17 +370,35 @@ class ResumeData(BaseModel):
         self.workExperience = [
             exp
             for exp in self.workExperience
-            if exp.title.strip() or exp.company.strip() or exp.description
+            if (
+                exp.title.strip()
+                or exp.company.strip()
+                or exp.location.strip()
+                or exp.years.strip()
+                or exp.description
+            )
         ]
         self.education = [
             edu
             for edu in self.education
-            if edu.institution.strip() or edu.degree.strip()
+            if (
+                edu.institution.strip()
+                or edu.degree.strip()
+                or edu.years.strip()
+                or edu.description
+            )
         ]
         self.personalProjects = [
             proj
             for proj in self.personalProjects
-            if proj.name.strip() or proj.description
+            if (
+                proj.name.strip()
+                or proj.role.strip()
+                or proj.years.strip()
+                or proj.github
+                or proj.website
+                or proj.description
+            )
         ]
         return self
 

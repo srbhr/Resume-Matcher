@@ -45,7 +45,7 @@ export function ATSScoreCard({ score, decision }: ATSScoreCardProps) {
       <div className="space-y-3">
         {SCORE_DIMS.map(({ key, label, max }) => {
           const value = score[key];
-          const pct = Math.round((value / max) * 100);
+          const pct = Math.min(100, Math.max(0, Math.round((value / max) * 100)));
           return (
             <div key={key}>
               <div className="flex justify-between font-mono text-xs uppercase mb-1">

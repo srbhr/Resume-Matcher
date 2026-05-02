@@ -22,34 +22,31 @@ function ATSPageContent() {
   const [jobTitle, setJobTitle] = useState<string | undefined>(undefined);
   const [company, setCompany] = useState<string | undefined>(undefined);
 
-  // Pre-fill from URL params set by the Chrome extension
+  // Pre-fill from URL params set by the Chrome extension.
+  // Reset ALL state on every searchParams change so navigating between
+  // different ?jd= URLs never shows stale inputs or results.
   useEffect(() => {
-    // Job description (?jd=)
-    const jd = searchParams.get('jd');
-    if (jd) setJobDescription(jd);
-
-    // Pre-selected resume (?resumeId=)
+    const jd       = searchParams.get('jd') ?? '';
     const resumeId = searchParams.get('resumeId');
-    if (resumeId) setResumeInput({ resumeId, resumeText: null });
+    const jt       = searchParams.get('jobTitle') ?? undefined;
+    const co       = searchParams.get('company')  ?? undefined;
 
-    // Pre-fetched ATS result (?result=<JSON>)
+    setJobDescription(jd);
+    setResumeInput(resumeId ? { resumeId, resumeText: null } : { resumeId: null, resumeText: null });
+    setJobTitle(jt);
+    setCompany(co);
+    setAutoShowOptimization(searchParams.get('optimize') === '1');
+
     const resultParam = searchParams.get('result');
     if (resultParam) {
       try {
         setInitialResult(JSON.parse(resultParam) as ATSScreeningResult);
       } catch {
-        // Ignore malformed result param — user can re-run manually
+        setInitialResult(undefined);
       }
+    } else {
+      setInitialResult(undefined);
     }
-
-    // Job title & company for naming the saved resume (?jobTitle= ?company=)
-    const jt = searchParams.get('jobTitle');
-    const co = searchParams.get('company');
-    if (jt) setJobTitle(jt);
-    if (co) setCompany(co);
-
-    // Auto-expand the optimization panel (?optimize=1)
-    if (searchParams.get('optimize') === '1') setAutoShowOptimization(true);
   }, [searchParams]);
 
   return (

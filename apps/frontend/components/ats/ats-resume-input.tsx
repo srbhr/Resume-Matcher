@@ -30,6 +30,7 @@ export function ATSResumeInput({ value, onChange }: ATSResumeInputProps) {
   }, []);
 
   const handleModeSwitch = (newMode: InputMode) => {
+    if (newMode === mode) return; // already on this tab — don't wipe input
     setMode(newMode);
     onChange({ resumeId: null, resumeText: null });
   };

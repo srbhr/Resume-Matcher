@@ -16,7 +16,7 @@ export function ATSWarningFlags({ flags }: ATSWarningFlagsProps) {
       </div>
       <ol className="divide-y divide-black">
         {flags.map((flag, i) => (
-          <li key={i} className="flex gap-3 px-4 py-3 font-mono text-sm">
+          <li key={flag} className="flex gap-3 px-4 py-3 font-mono text-sm">
             <span className="text-red-600 font-bold shrink-0">{i + 1}.</span>
             <span>{flag}</span>
           </li>

@@ -20,6 +20,25 @@ const show  = (el) => VIEWS.forEach(v => v.classList.toggle('hidden', v !== el))
 let appState   = null;  // populated by GET_STATE
 let lastResult = null;  // populated after RUN_SCREEN
 
+// ── Safe DOM helpers ──────────────────────────────────────────────────────────
+/** Escape a string for safe insertion as text (belt-and-suspenders alongside textContent). */
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/** Build a DOM element with optional className and text content. */
+function el(tag, cls, text) {
+  const node = document.createElement(tag);
+  if (cls)  node.className   = cls;
+  if (text !== undefined) node.textContent = text;
+  return node;
+}
+
 // ── Error helper ──────────────────────────────────────────────────────────────
 function showError(icon, msg) {
   $('err-icon').textContent = icon;
@@ -98,10 +117,15 @@ function renderResults(result, languages, visa) {
     ['Domain',      score.domain_match,     20],
     ['Tools',       score.tools_match,      15],
   ];
-  $('r-breakdown').innerHTML = rows.map(([lbl, val, max]) => {
+  const breakdown = $('r-breakdown');
+  breakdown.textContent = '';
+  rows.forEach(([lbl, val, max]) => {
     const warn = val < max * 0.6 ? ' w' : '';
-    return `<div class="bk-row"><span>${lbl}</span><span class="bk-val${warn}">${Math.round(val)}/${max}</span></div>`;
-  }).join('');
+    const row  = el('div', 'bk-row');
+    row.appendChild(el('span', '', lbl));
+    row.appendChild(el('span', 'bk-val' + warn, `${Math.round(val)}/${max}`));
+    breakdown.appendChild(row);
+  });
 
   // Languages
   const langBox = $('r-lang');
@@ -109,13 +133,21 @@ function renderResults(result, languages, visa) {
   if (languages.length > 0) {
     langBox.classList.remove('hidden');
     langLbl.classList.remove('hidden');
-    langBox.innerHTML = languages.map(({ language, level, required }) =>
-      `<div class="lang-row">
-        <span>${FLAG_MAP[language] || '🌐'}</span>
-        <span><strong>${language}</strong>${level ? ' — ' + level : ''}</span>
-        <span class="lang-badge ${required ? 'req' : 'pref'}">${required ? 'REQUIRED' : 'PREFERRED'}</span>
-      </div>`
-    ).join('');
+    langBox.textContent = '';
+    languages.forEach(({ language, level, required }) => {
+      const row   = el('div', 'lang-row');
+      const flag  = el('span', '', FLAG_MAP[language] || '🌐');
+      const nameEl = el('span');
+      const strong = el('strong', '', language);
+      nameEl.appendChild(strong);
+      if (level) nameEl.appendChild(document.createTextNode(' — ' + level));
+      const badge = el('span', 'lang-badge ' + (required ? 'req' : 'pref'),
+                       required ? 'REQUIRED' : 'PREFERRED');
+      row.appendChild(flag);
+      row.appendChild(nameEl);
+      row.appendChild(badge);
+      langBox.appendChild(row);
+    });
   } else {
     langBox.classList.add('hidden');
     langLbl.classList.add('hidden');
@@ -131,15 +163,26 @@ function renderResults(result, languages, visa) {
   // Missing keywords
   const shown = missing_keywords.slice(0, 5);
   const extra = missing_keywords.length - 5;
-  $('r-kws').innerHTML = shown.map(k => `<span class="kw">${k}</span>`).join('') +
-    (extra > 0 ? `<span class="kw more">+${extra} more</span>` : '');
+  const kwContainer = $('r-kws');
+  kwContainer.textContent = '';
+  shown.forEach(k => kwContainer.appendChild(el('span', 'kw', k)));
+  if (extra > 0) kwContainer.appendChild(el('span', 'kw more', `+${extra} more`));
 
   show(vResults);
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 async function init() {
-  appState = await chrome.runtime.sendMessage({ type: 'GET_STATE' });
+  try {
+    appState = await chrome.runtime.sendMessage({ type: 'GET_STATE' });
+  } catch (err) {
+    showError('⚠️', 'Could not connect to extension background. Try reopening the popup.');
+    return;
+  }
+  if (!appState) {
+    showError('⚠️', 'No response from background service. Try reopening the popup.');
+    return;
+  }
 
   settingsLnk.addEventListener('click', (e) => {
     e.preventDefault();

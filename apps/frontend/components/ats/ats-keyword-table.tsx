@@ -32,9 +32,9 @@ export function ATSKeywordTable({ rows }: ATSKeywordTableProps) {
             </tr>
           </thead>
           <tbody>
-            {rows.map((row, i) => (
+            {rows.map((row) => (
               <tr
-                key={i}
+                key={row.keyword}
                 className={`border-b border-black last:border-0 ${row.found_in_resume ? '' : 'bg-red-50'}`}
               >
                 <td className="px-4 py-2">{row.keyword}</td>

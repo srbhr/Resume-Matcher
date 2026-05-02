@@ -204,24 +204,26 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
               <div className={baseStyles['resume-items']}>
                 {workExperience.map((exp) => (
                   <div key={exp.id} className={baseStyles['resume-item']}>
-                    <div
-                      className={`flex justify-between items-baseline ${baseStyles['resume-row-tight']}`}
-                    >
-                      <h4 className={baseStyles['resume-item-title-sm']}>{exp.title}</h4>
-                      {exp.years && (
-                        <span className={`${baseStyles['resume-date']} ml-2`}>
-                          {formatDateRange(exp.years)}
-                        </span>
-                      )}
-                    </div>
+                    <div className={baseStyles['resume-item-header']}>
+                      <div
+                        className={`flex justify-between items-baseline ${baseStyles['resume-row-tight']}`}
+                      >
+                        <h4 className={baseStyles['resume-item-title-sm']}>{exp.title}</h4>
+                        {exp.years && (
+                          <span className={`${baseStyles['resume-date']} ml-2`}>
+                            {formatDateRange(exp.years)}
+                          </span>
+                        )}
+                      </div>
 
-                    <div
-                      className={`flex justify-between items-center ${baseStyles['resume-row-tight']} ${baseStyles['resume-item-subtitle-sm']}`}
-                    >
-                      <span>
-                        {exp.company}
-                        {exp.location && <> • {exp.location}</>}
-                      </span>
+                      <div
+                        className={`flex justify-between items-center ${baseStyles['resume-row-tight']} ${baseStyles['resume-item-subtitle-sm']}`}
+                      >
+                        <span>
+                          {exp.company}
+                          {exp.location && <> • {exp.location}</>}
+                        </span>
+                      </div>
                     </div>
 
                     {exp.description && exp.description.length > 0 && (
@@ -255,65 +257,67 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
                 <div className={baseStyles['resume-items']}>
                   {personalProjects.map((project) => (
                     <div key={project.id} className={baseStyles['resume-item']}>
-                      <div
-                        className={`flex justify-between items-baseline ${baseStyles['resume-row-tight']}`}
-                      >
-                        <div className="flex items-baseline gap-1.5">
-                          <h4 className={baseStyles['resume-item-title-sm']}>{project.name}</h4>
-                          {(project.github || project.website) && (
-                            <span className="flex gap-1">
-                              {project.github && (
-                                <a
-                                  href={
-                                    project.github.startsWith('http')
-                                      ? project.github
-                                      : `https://${project.github}`
-                                  }
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className={baseStyles['resume-link-pill']}
-                                >
-                                  <Github size={9} />
-                                  {project.github
-                                    .replace(/^https?:\/\//, '')
-                                    .replace(/^www\./, '')
-                                    .replace(/\/$/, '')}
-                                </a>
-                              )}
-                              {project.website && (
-                                <a
-                                  href={
-                                    project.website.startsWith('http')
-                                      ? project.website
-                                      : `https://${project.website}`
-                                  }
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className={baseStyles['resume-link-pill']}
-                                >
-                                  <ExternalLink size={9} />
-                                  {project.website
-                                    .replace(/^https?:\/\//, '')
-                                    .replace(/^www\./, '')
-                                    .replace(/\/$/, '')}
-                                </a>
-                              )}
+                      <div className={baseStyles['resume-item-header']}>
+                        <div
+                          className={`flex justify-between items-baseline ${baseStyles['resume-row-tight']}`}
+                        >
+                          <div className="flex items-baseline gap-1.5">
+                            <h4 className={baseStyles['resume-item-title-sm']}>{project.name}</h4>
+                            {(project.github || project.website) && (
+                              <span className="flex gap-1">
+                                {project.github && (
+                                  <a
+                                    href={
+                                      project.github.startsWith('http')
+                                        ? project.github
+                                        : `https://${project.github}`
+                                    }
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className={baseStyles['resume-link-pill']}
+                                  >
+                                    <Github size={9} />
+                                    {project.github
+                                      .replace(/^https?:\/\//, '')
+                                      .replace(/^www\./, '')
+                                      .replace(/\/$/, '')}
+                                  </a>
+                                )}
+                                {project.website && (
+                                  <a
+                                    href={
+                                      project.website.startsWith('http')
+                                        ? project.website
+                                        : `https://${project.website}`
+                                    }
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className={baseStyles['resume-link-pill']}
+                                  >
+                                    <ExternalLink size={9} />
+                                    {project.website
+                                      .replace(/^https?:\/\//, '')
+                                      .replace(/^www\./, '')
+                                      .replace(/\/$/, '')}
+                                  </a>
+                                )}
+                              </span>
+                            )}
+                          </div>
+                          {project.years && (
+                            <span className={`${baseStyles['resume-date']} ml-2`}>
+                              {formatDateRange(project.years)}
                             </span>
                           )}
                         </div>
-                        {project.years && (
-                          <span className={`${baseStyles['resume-date']} ml-2`}>
-                            {formatDateRange(project.years)}
-                          </span>
+                        {project.role && (
+                          <div
+                            className={`${baseStyles['resume-row-tight']} ${baseStyles['resume-item-subtitle-sm']}`}
+                          >
+                            <span>{project.role}</span>
+                          </div>
                         )}
                       </div>
-                      {project.role && (
-                        <div
-                          className={`${baseStyles['resume-row-tight']} ${baseStyles['resume-item-subtitle-sm']}`}
-                        >
-                          <span>{project.role}</span>
-                        </div>
-                      )}
                       {project.description && project.description.length > 0 && (
                         <ul
                           className={`ml-4 ${baseStyles['resume-list']} ${baseStyles['resume-text-xs']}`}

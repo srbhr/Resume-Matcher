@@ -61,11 +61,15 @@ export function ATSOptimizationPanel({
   const [isDownloading, setIsDownloading] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [savedResumeId, setSavedResumeId] = useState<string | null>(null);
+  // Track whether the resume has been edited since the last save so we know
+  // the savedResumeId PDF is stale and a re-save is required before download.
+  const [isDirty, setIsDirty] = useState(false);
 
   useEffect(() => {
     setEditedResume(optimizedResume);
     setMode('view');
-    setSavedResumeId(null); // reset when a new result comes in
+    setSavedResumeId(null);
+    setIsDirty(false);
   }, [optimizedResume]);
 
   const title = buildTitle(jobTitle, company);
@@ -81,6 +85,7 @@ export function ATSOptimizationPanel({
         title,
       });
       setSavedResumeId(result.resume_id);
+      setIsDirty(false);
       onSaved(result.resume_id);
       return result.resume_id;
     } catch (err: unknown) {
@@ -97,7 +102,9 @@ export function ATSOptimizationPanel({
     setIsDownloading(true);
     setSaveError(null);
     try {
-      const id = savedResumeId ?? await handleSave();
+      // Re-save whenever the resume has been edited since the last save so the
+      // downloaded PDF reflects the current state, not a stale version.
+      const id = (!isDirty && savedResumeId) ? savedResumeId : await handleSave();
       if (!id) return; // save failed — error already set
 
       const personName = editedResume.personalInfo?.name ?? null;
@@ -105,16 +112,13 @@ export function ATSOptimizationPanel({
       try {
         const blob = await downloadResumePdf(id, undefined, uiLanguage);
         downloadBlobAsFile(blob, filename);
-      } catch (err: unknown) {
-        // Fallback: open the PDF URL directly in a new tab if blob download fails
-        if (err instanceof TypeError && (err as TypeError).message.includes('Failed to fetch')) {
-          const fallbackUrl = getResumePdfUrl(id, undefined, uiLanguage);
-          if (!openUrlInNewTab(fallbackUrl)) {
-            setSaveError(`Download failed. Open manually: ${fallbackUrl}`);
-          }
-          return;
+      } catch {
+        // Fallback: open the PDF URL directly in a new tab on any blob download failure
+        // (network errors, AbortError timeouts, CORS issues, etc.)
+        const fallbackUrl = getResumePdfUrl(id, undefined, uiLanguage);
+        if (!openUrlInNewTab(fallbackUrl)) {
+          setSaveError(`Download failed. Open manually: ${fallbackUrl}`);
         }
-        throw err;
       }
     } catch (err: unknown) {
       setSaveError(err instanceof Error ? err.message : 'Download failed');
@@ -133,7 +137,7 @@ export function ATSOptimizationPanel({
           </div>
           <ul className="divide-y divide-black">
             {suggestions.map((s, i) => (
-              <li key={i} className="flex gap-3 px-4 py-3 font-mono text-sm">
+              <li key={s} className="flex gap-3 px-4 py-3 font-mono text-sm">
                 <span className="text-blue-700 font-bold shrink-0">{i + 1}.</span>
                 <span>{s}</span>
               </li>
@@ -162,7 +166,7 @@ export function ATSOptimizationPanel({
           {mode === 'edit' ? (
             <ResumeForm
               resumeData={editedResume}
-              onUpdate={(updated) => setEditedResume(updated)}
+              onUpdate={(updated) => { setEditedResume(updated); setIsDirty(true); }}
             />
           ) : (
             <div className="font-mono text-sm whitespace-pre-wrap text-muted-foreground bg-secondary p-4 border border-black max-h-96 overflow-y-auto">
@@ -184,7 +188,7 @@ export function ATSOptimizationPanel({
             disabled={isSaving || isDownloading}
             className="font-mono text-xs uppercase tracking-widest"
           >
-            {isSaving ? 'Saving...' : savedResumeId ? '✓ Saved' : 'Save as New Resume'}
+            {isSaving ? 'Saving...' : (savedResumeId && !isDirty) ? '✓ Saved' : 'Save as New Resume'}
           </Button>
 
           <Button

@@ -11,15 +11,12 @@ router = APIRouter(tags=["Health"])
 
 @router.get("/health", response_model=HealthResponse)
 async def health_check() -> HealthResponse:
-    """Liveness and readiness check.
+    """Lightweight liveness check — does NOT call the LLM.
 
-    Calls the LLM provider to verify connectivity. Returns 'degraded' if the
-    LLM is unreachable or misconfigured, 'healthy' otherwise.
+    Returns 'healthy' whenever the process is up and accepting requests.
+    Use /status for a full readiness check that includes LLM connectivity.
     """
-    config = get_llm_config()
-    llm_status = await check_llm_health(config)
-    status = "healthy" if llm_status["healthy"] else "degraded"
-    return HealthResponse(status=status)
+    return HealthResponse(status="healthy")
 
 
 @router.get("/status", response_model=StatusResponse)

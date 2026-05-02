@@ -385,6 +385,7 @@ export default function TailorPage() {
               {showAtsPanel && (
                 <div className="p-4">
                   <ATSScreenPanel
+                    key={`${masterResumeId}-${jobIdForAts}`}
                     resumeId={masterResumeId}
                     jobId={jobIdForAts}
                   />

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Loader2, Wand2 } from 'lucide-react';
 import { screenResume, type ATSScreeningResult } from '@/lib/api/ats';
@@ -44,12 +44,18 @@ export function ATSScreenPanel({
   const [error, setError] = useState<string | null>(null);
   const [savedResumeId, setSavedResumeId] = useState<string | null>(null);
   const [elapsed, setElapsed] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Whether the optimization panel is visible
   const [showOptimization, setShowOptimization] = useState(false);
   // Whether we are fetching optimization (when optimized_resume wasn't in the initial result)
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [optimizeError, setOptimizeError] = useState<string | null>(null);
+
+  // Clear elapsed timer on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, []);
 
   // Sync when initialResult arrives asynchronously (URL params parsed after mount)
   useEffect(() => {
@@ -104,7 +110,7 @@ export function ATSScreenPanel({
     setOptimizeError(null);
     setElapsed(0);
 
-    const timer = setInterval(() => setElapsed((s) => s + 1), 1000);
+    timerRef.current = setInterval(() => setElapsed((s) => s + 1), 1000);
 
     try {
       const data = await screenResume({
@@ -118,7 +124,8 @@ export function ATSScreenPanel({
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'ATS screening failed');
     } finally {
-      clearInterval(timer);
+      if (timerRef.current) clearInterval(timerRef.current);
+      timerRef.current = null;
       setIsLoading(false);
     }
   };
