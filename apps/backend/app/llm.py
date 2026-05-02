@@ -306,6 +306,7 @@ _PROVIDER_KEY_MAP: dict[str, str] = {
     "gemini": "google",
     "openrouter": "openrouter",
     "deepseek": "deepseek",
+    "groq": "groq",
     "ollama": "ollama",
 }
 
@@ -416,6 +417,7 @@ def get_model_name(config: LLMConfig) -> str:
         "openrouter": "openrouter/",
         "gemini": "gemini/",
         "deepseek": "deepseek/",
+        "groq": "groq/",
         "ollama": "ollama_chat/",  # ollama_chat/ routes to /api/chat (supports messages array)
     }
 
@@ -434,6 +436,7 @@ def get_model_name(config: LLMConfig) -> str:
         "anthropic/",
         "gemini/",
         "deepseek/",
+        "groq/",
         "ollama/",
         "ollama_chat/",
         "openai/",
@@ -669,7 +672,7 @@ async def complete(
             "model": "primary",
             "messages": messages,
             "max_tokens": max_tokens,
-            "timeout": LLM_TIMEOUT_COMPLETION,
+            "timeout": _calculate_timeout("completion", max_tokens, config.provider),
         }
         if _supports_temperature(model_name, temperature):
             kwargs["temperature"] = temperature
@@ -728,6 +731,7 @@ def _supports_json_mode(model_name: str) -> bool:
         return False
 
 
+def _appears_truncated(data: dict, schema_type: str = "resume") -> bool:
 FALLBACK_MAX_TOKENS = 4096
 
 def get_safe_max_tokens(model_name: str, requested: int = DEFAULT_JSON_MAX_TOKENS) -> int:
@@ -779,25 +783,45 @@ def _appears_truncated(data: dict) -> bool:
     """LLM-001: Check if JSON data appears to be truncated.
 
     Detects suspicious patterns indicating incomplete responses.
+    The checks are schema-aware so that enrichment/diff/keyword outputs
+    are not evaluated against resume-structure heuristics.
+
+    Args:
+        data: Parsed JSON dict.
+        schema_type: Expected schema — "resume" (full resume), "enrichment"
+            (analyze output), "diff" (diff changes), or "keywords".
+            Determines which fields are checked for truncation.
     """
     if not isinstance(data, dict):
         return False
 
-    # Check for empty arrays that should typically have content
-    suspicious_empty_arrays = ["workExperience", "education", "skills"]
-    for key in suspicious_empty_arrays:
-        if key in data and data[key] == []:
-            # Log warning - these are rarely empty in real resumes
+    if schema_type == "resume":
+        # Full resume structure: check for empty required arrays
+        suspicious_empty_arrays = ["workExperience", "education", "skills"]
+        for key in suspicious_empty_arrays:
+            if key in data and data[key] == []:
+                # Log warning - these are rarely empty in real resumes
+                logging.warning(
+                    "Possible truncation detected: '%s' is empty",
+                    key,
+                )
+                return True
+        return False
+
+    if schema_type == "enrichment":
+        # Enrichment analyze returns items_to_enrich + questions.
+        # Empty arrays are valid (resume is already strong).
+        # Only flag if keys are entirely missing (LLM ignored structure).
+        if "items_to_enrich" not in data or "questions" not in data:
             logging.warning(
-                "Possible truncation detected: '%s' is empty",
-                key,
+                "Possible truncation detected: enrichment missing required keys"
             )
             return True
+        return False
 
-    # personalInfo is intentionally excluded: the improve prompts tell the LLM
-    # to skip it, and _preserve_personal_info() restores it from the original.
-    # Checking for it here caused 3 wasteful retry attempts on every request.
-
+    # For "diff", "keywords", and unknown schemas: no truncation heuristics.
+    # Diff may legitimately return empty changes; keywords may return empty
+    # lists when the job description has no actionable terms.
     return False
 
 
@@ -893,6 +917,8 @@ def _calculate_timeout(
         "openai": 1.0,
         "anthropic": 1.2,
         "openrouter": 1.5,  # More variable latency
+        "deepseek": 1.3,  # DeepSeek API can be slower than OpenAI
+        "groq": 1.0,
         "ollama": 2.0,  # Local models can be slower
     }
     provider_factor = provider_factors.get(provider, 1.0)
@@ -1005,12 +1031,18 @@ async def complete_json(
     config: LLMConfig | None = None,
     max_tokens: int = 4096,
     retries: int = 2,
+    schema_type: str = "resume",
 ) -> dict[str, Any]:
     """Make a completion request expecting JSON response.
 
     Uses JSON mode when available, with app-level retries for content-quality
     issues (malformed JSON, truncation).  Transport retries (429, 500, timeout)
     are handled by the Router and are NOT retried again here.
+
+    Args:
+        schema_type: Expected schema — "resume", "enrichment", "diff", or
+            "keywords". Passed to _appears_truncated for context-aware truncation
+            detection and used to tailor retry hints.
     """
     router, config = get_router(config)
     model_name = get_model_name(config)
@@ -1026,6 +1058,7 @@ async def complete_json(
 
     # Check if we can use JSON mode
     use_json_mode = _supports_json_mode(model_name)
+    json_mode_failed = False
 
     for attempt in range(retries + 1):
         try:
@@ -1042,8 +1075,10 @@ async def complete_json(
             if config.reasoning_effort:
                 kwargs["reasoning_effort"] = config.reasoning_effort
 
-            # Add JSON mode if supported
-            if use_json_mode:
+            # JSON-012: Fallback to prompt-only JSON mode after JSON-mode failure.
+            # LiteLLM registry may report support for models that the upstream
+            # aggregator (OpenRouter) cannot actually serve with response_format.
+            if use_json_mode and not json_mode_failed:
                 kwargs["response_format"] = {"type": "json_object"}
 
             response = await router.acompletion(**kwargs)
@@ -1060,17 +1095,26 @@ async def complete_json(
             result = json.loads(json_str)
 
             # LLM-001: Check if parsed result appears truncated
-            if isinstance(result, dict) and _appears_truncated(result):
+            if isinstance(result, dict) and _appears_truncated(result, schema_type):
                 if attempt < retries:
                     logging.warning(
                         "Parsed JSON appears truncated (attempt %d/%d), retrying",
                         attempt + 1,
                         retries + 1,
                     )
-                    messages[-1]["content"] = (
-                        prompt
-                        + "\n\nIMPORTANT: Output the COMPLETE JSON object with ALL sections including personalInfo. Do not truncate."
-                    )
+                    if schema_type == "resume":
+                        hint = (
+                            "\n\nIMPORTANT: Output the COMPLETE JSON object with ALL sections. Do not truncate."
+                        )
+                    elif schema_type == "enrichment":
+                        hint = (
+                            "\n\nIMPORTANT: Output the COMPLETE JSON object with ALL keys: items_to_enrich, questions, analysis_summary. Do not truncate."
+                        )
+                    else:
+                        hint = (
+                            "\n\nIMPORTANT: Output ONLY a valid JSON object. Start with { and end with }."
+                        )
+                    messages[-1]["content"] = prompt + hint
                     continue
                 logging.warning(
                     "Parsed JSON appears truncated on final attempt, proceeding with result"
@@ -1081,6 +1125,14 @@ async def complete_json(
         except json.JSONDecodeError as e:
             # Content quality — malformed JSON, retry with prompt hint
             logging.warning(f"JSON parse failed (attempt {attempt + 1}): {e}")
+            if use_json_mode and not json_mode_failed:
+                # JSON-012: Registry claimed JSON mode support but the upstream
+                # failed to return valid JSON. Disable JSON mode for retries.
+                json_mode_failed = True
+                logging.warning(
+                    "JSON mode failed for %s, falling back to prompt-only (attempt %d)",
+                    model_name, attempt + 1,
+                )
             if attempt < retries:
                 messages[-1]["content"] = (
                     prompt
