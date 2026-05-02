@@ -306,6 +306,7 @@ _PROVIDER_KEY_MAP: dict[str, str] = {
     "gemini": "google",
     "openrouter": "openrouter",
     "deepseek": "deepseek",
+    "groq": "groq",
     "ollama": "ollama",
 }
 
@@ -416,6 +417,7 @@ def get_model_name(config: LLMConfig) -> str:
         "openrouter": "openrouter/",
         "gemini": "gemini/",
         "deepseek": "deepseek/",
+        "groq": "groq/",
         "ollama": "ollama_chat/",  # ollama_chat/ routes to /api/chat (supports messages array)
     }
 
@@ -434,6 +436,7 @@ def get_model_name(config: LLMConfig) -> str:
         "anthropic/",
         "gemini/",
         "deepseek/",
+        "groq/",
         "ollama/",
         "ollama_chat/",
         "openai/",
@@ -893,6 +896,7 @@ def _calculate_timeout(
         "openai": 1.0,
         "anthropic": 1.2,
         "openrouter": 1.5,  # More variable latency
+        "groq": 1.0,
         "ollama": 2.0,  # Local models can be slower
     }
     provider_factor = provider_factors.get(provider, 1.0)
