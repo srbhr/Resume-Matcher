@@ -118,9 +118,24 @@ async function dispatch(message) {
     const { jobText, jobTitle, company, resumeId, result, showOptimization } = payload;
     const { frontendUrl } = await getSettings();
 
+    // Verify the frontend is reachable before opening a tab — avoids a blank
+    // "This page isn't working" tab when the Next.js dev server isn't running.
+    // Note: host_permissions must include localhost for this fetch to succeed.
+    try {
+      await fetch(`${frontendUrl}/`, {
+        method: 'HEAD',
+        signal: AbortSignal.timeout(3000),
+        // Follow redirects (Next.js may redirect / → /dashboard, etc.)
+        redirect: 'follow',
+      });
+      // Any response (even 404) means the server is up — only a network error means offline
+    } catch {
+      return { error: 'FRONTEND_OFFLINE' };
+    }
+
     const url = new URL(`${frontendUrl}/ats`);
 
-    // Job description (cap at 4000 chars)
+    // Job description (cap at 4000 chars to keep URL manageable)
     url.searchParams.set('jd', (jobText || '').slice(0, 4000));
 
     // Pre-selected resume
@@ -130,16 +145,12 @@ async function dispatch(message) {
     if (jobTitle) url.searchParams.set('jobTitle', jobTitle);
     if (company)  url.searchParams.set('company', company);
 
-    // Pre-fetched results
+    // Always strip optimized_resume from the URL — it can be 10 000+ chars and
+    // causes "page isn't working" errors when the URL grows too large.
+    // The frontend re-fetches optimization via ?optimize=1 + resumeId.
     if (result) {
-      if (showOptimization) {
-        // Include full result with optimized_resume so the panel can open immediately
-        url.searchParams.set('result', JSON.stringify(result));
-      } else {
-        // "View Full Results" — strip optimized_resume to keep URL smaller
-        const { optimized_resume, ...slim } = result;
-        url.searchParams.set('result', JSON.stringify(slim));
-      }
+      const { optimized_resume, ...slim } = result;
+      url.searchParams.set('result', JSON.stringify(slim));
     }
 
     // Signal the page to auto-expand the optimization panel

@@ -4,12 +4,31 @@
 (function () {
   'use strict';
 
-  // ── Extension context guard ───────────────────────────────────────────────────
-  function safeSendMessage(msg) {
-    try { chrome.runtime.sendMessage(msg); } catch (_) {}
+  // ── Shutdown registry ─────────────────────────────────────────────────────────
+  const _intervals = new Set();
+  let _dead = false;
+
+  function trackInterval(fn, ms) {
+    const id = setInterval(() => {
+      if (_dead || !isContextValid()) { shutdown(); return; }
+      fn();
+    }, ms);
+    _intervals.add(id);
+    return id;
   }
 
-  // ── JD extraction — multiple strategies ──────────────────────────────────────
+  function clearTracked(id) {
+    clearInterval(id);
+    _intervals.delete(id);
+  }
+
+  function shutdown() {
+    _dead = true;
+    _intervals.forEach(clearInterval);
+    _intervals.clear();
+  }
+
+  // ── JD extraction ─────────────────────────────────────────────────────────────
   const JD_SELECTORS = [
     '.jobs-description__content',
     '.jobs-description',
@@ -17,21 +36,14 @@
     '.jobs-box__html-content',
     '[data-job-id] .description__text',
     '.jobs-details__main-content',
-    // Collections / split-pane layout
     '.scaffold-layout__detail .jobs-search__job-details',
   ];
 
-  // ── Expand collapsed JD ("Show more" / "See more") ───────────────────────────
-  // LinkedIn truncates long descriptions. Click the expand button ONCE so we get
-  // the full text (language requirements, qualifications, etc. below the fold).
-  // IMPORTANT: only call this OUTSIDE of MutationObserver callbacks — clicking a
-  // button causes DOM mutations which would re-trigger the observer → infinite loop.
   function expandJD() {
     const panel = document.querySelector(
       '.scaffold-layout__detail, .jobs-search__job-details--detail-panel, [data-view-name="job-details"]'
     ) || document;
 
-    // Try known button selectors first
     const btnSelectors = [
       '.jobs-description__footer-button',
       '.jobs-description__see-more-button',
@@ -39,29 +51,19 @@
     ];
     for (const sel of btnSelectors) {
       const btn = panel.querySelector(sel);
-      // offsetParent null = hidden; aria-expanded="true" = already expanded
       if (btn && btn.offsetParent && btn.getAttribute('aria-expanded') !== 'true') {
-        btn.click();
-        return;
+        btn.click(); return;
       }
     }
-
-    // Fallback: any visible button/link with "show more" / "see more" text
     for (const el of panel.querySelectorAll('button, a')) {
       const txt = (el.innerText || '').trim().toLowerCase();
       if ((txt === 'show more' || txt === 'see more') && el.offsetParent) {
-        el.click();
-        return;
+        el.click(); return;
       }
     }
   }
 
   function extractJD() {
-    // NOTE: expandJD() is called once externally (in waitForJD) — NOT here,
-    // because extractJD is called on every MutationObserver tick and clicking
-    // a button inside the observer callback causes an infinite mutation loop.
-
-    // Strategy 1: known selectors (scoped to the right-hand detail panel first)
     const detailPanel = document.querySelector(
       '.scaffold-layout__detail, .jobs-search__job-details--detail-panel, [data-view-name="job-details"]'
     );
@@ -75,15 +77,12 @@
       }
     }
 
-    // Strategy 2: largest text block INSIDE the detail panel only
-    // (avoids picking up the search-results sidebar on /jobs/search/ pages)
     if (detailPanel) {
       let best = null, bestLen = 300;
       detailPanel.querySelectorAll('div, section, article').forEach(el => {
         const txt = el.innerText.trim();
         if (txt.length > bestLen && txt.split('\n').length > 5) {
-          best = txt;
-          bestLen = txt.length;
+          best = txt; bestLen = txt.length;
         }
       });
       if (best) {
@@ -91,13 +90,10 @@
         return best;
       }
     }
-
     return null;
   }
 
   function extractJobTitle() {
-    // Prefer job-specific title elements (inside the detail panel) over page-level h1
-    // which on /jobs/search/ is the search count like "(4) Product Manager Jobs"
     return (
       document.querySelector('.job-details-jobs-unified-top-card__job-title h1')?.innerText.trim() ||
       document.querySelector('.jobs-unified-top-card__job-title h1')?.innerText.trim() ||
@@ -105,7 +101,6 @@
       document.querySelector('[class*="unified-top-card__job-title"]')?.innerText.trim() ||
       document.querySelector('.scaffold-layout__detail h1')?.innerText.trim() ||
       document.querySelector('h1.t-24')?.innerText.trim() ||
-      // Last resort: page title — but strip the search-results prefix "(N) "
       document.title.replace(/^\(\d+\)\s*/, '').replace(' | LinkedIn', '').trim()
     );
   }
@@ -119,58 +114,56 @@
   }
 
   // ── Phase 1: Detect job ───────────────────────────────────────────────────────
-  function tryDetectNow() {
+  function tryDetectNow(session) {
+    if (_dead || session !== _initSession) return null;
     const jobText = extractJD();
     if (!jobText) return null;
     const jobTitle = extractJobTitle();
     const company  = extractCompany();
-    console.log('[RM] Sending JOB_DETECTED:', jobTitle, '|', company);
-    safeSendMessage({ type: 'JOB_DETECTED', payload: { jobText, jobTitle, company } });
+    console.log('[RM] Job detected:', jobTitle, '|', company);
+    storeJobData(jobText, jobTitle, company);
     return { jobText, jobTitle, company };
   }
 
-  function waitForJD() {
+  // ── Wait for JD — polling, session-aware ──────────────────────────────────────
+  // skipImmediate: true when triggered by SPA navigation — wait at least one
+  // poll cycle (500 ms) before checking so LinkedIn has time to update the panel.
+  function waitForJD(session, skipImmediate) {
     return new Promise((resolve) => {
-      // Try immediately first (JD might already be in the DOM)
-      const found = tryDetectNow();
-      if (found) return resolve(found);
+      if (_dead || session !== _initSession) return resolve(null);
 
-      // Expand collapsed JD ONCE before starting the observer.
-      // Do NOT call expandJD() inside the MutationObserver callback —
-      // clicking a DOM button triggers a new mutation → infinite loop.
+      if (!skipImmediate) {
+        const found = tryDetectNow(session);
+        if (found) return resolve(found);
+      }
+
       expandJD();
 
-      // Give the expanded content ~400 ms to render, then try again before
-      // falling back to the observer for slower pages.
-      const afterExpand = setTimeout(() => {
-        const result = tryDetectNow();
-        if (result) { obs.disconnect(); resolve(result); return; }
-      }, 400);
-
-      const obs = new MutationObserver(() => {
-        const result = tryDetectNow();
-        if (result) { clearTimeout(afterExpand); obs.disconnect(); resolve(result); }
-      });
-      obs.observe(document.body, { childList: true, subtree: true });
-      setTimeout(() => { clearTimeout(afterExpand); obs.disconnect(); resolve(null); }, 7000);
+      let attempts = 0;
+      const poll = trackInterval(() => {
+        // Abort if the URL has changed (new job clicked)
+        if (session !== _initSession) { clearTracked(poll); resolve(null); return; }
+        attempts++;
+        const result = tryDetectNow(session);
+        if (result) { clearTracked(poll); resolve(result); return; }
+        if (attempts === 3) expandJD();
+        if (attempts >= 14) { clearTracked(poll); resolve(null); }
+      }, 500);
     });
   }
 
   // ── Phase 2: Inject button ────────────────────────────────────────────────────
   function findApplyContainer() {
-    // Try aria-label on the button itself
     const byAria = document.querySelector(
       'button[aria-label*="Easy Apply"], a[aria-label*="Easy Apply"], button[aria-label*="Apply now"]'
     );
     if (byAria?.offsetParent) return byAria;
 
-    // Try visible text
     for (const el of document.querySelectorAll('button, a[role="button"]')) {
       const txt = (el.innerText || el.textContent || '').trim();
       if (/^(Easy Apply|Apply now|Apply)$/.test(txt) && el.offsetParent !== null) return el;
     }
 
-    // Try class names
     for (const sel of [
       '.jobs-apply-button--top-card',
       '.jobs-apply-button',
@@ -186,36 +179,42 @@
 
   let _buttonInjected = false;
 
-  async function injectButton(jobData) {
-    if (_buttonInjected) return;
+  function waitForApplyButton(session) {
+    return new Promise((resolve) => {
+      if (_dead || session !== _initSession) return resolve(null);
 
-    // Wait up to 5 s for the apply button
-    const applyEl = await new Promise((resolve) => {
       const found = findApplyContainer();
       if (found) return resolve(found);
-      const obs = new MutationObserver(() => {
-        const btn = findApplyContainer();
-        if (btn) { obs.disconnect(); resolve(btn); }
-      });
-      obs.observe(document.body, { childList: true, subtree: true });
-      setTimeout(() => { obs.disconnect(); resolve(null); }, 5000);
-    });
 
-    if (_buttonInjected) return;
+      let attempts = 0;
+      const poll = trackInterval(() => {
+        if (session !== _initSession) { clearTracked(poll); resolve(null); return; }
+        attempts++;
+        const btn = findApplyContainer();
+        if (btn) { clearTracked(poll); resolve(btn); return; }
+        if (attempts >= 10) { clearTracked(poll); resolve(null); }
+      }, 500);
+    });
+  }
+
+  async function injectButton(jobData, session) {
+    if (_buttonInjected || _dead || session !== _initSession) return;
+
+    const applyEl = await waitForApplyButton(session);
+
+    if (_buttonInjected || _dead || session !== _initSession) return;
     _buttonInjected = true;
 
     if (applyEl) {
-      // Insert into the button's parent container so it sits alongside Apply
       const container = applyEl.closest(
         '[class*="primary-actions"], [class*="apply-button"], .jobs-s-apply'
       ) || applyEl.parentElement || applyEl;
       console.log('[RM] Injecting ATS button next to:', container.className || 'element');
       injectAtsButton(container, (btn) => {
         setButtonFeedback(btn, '✓ Ready — click the toolbar icon', 2500);
-        safeSendMessage({ type: 'JOB_DETECTED', payload: jobData });
+        storeJobData(jobData.jobText, jobData.jobTitle, jobData.company);
       });
     } else {
-      // Fallback: floating button pinned to bottom-right of the detail panel
       console.log('[RM] Apply button not found — injecting floating fallback');
       _injectFloatingButton(jobData);
     }
@@ -240,37 +239,52 @@
       'box-shadow:0 4px 12px rgba(29,78,216,0.45)',
     ].join(';');
     btn.addEventListener('click', () => {
+      if (_dead) return;
       btn.textContent = '✓ Ready — click the toolbar icon';
-      safeSendMessage({ type: 'JOB_DETECTED', payload: jobData });
-      setTimeout(() => { btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> ATS Screen`; }, 2500);
+      storeJobData(jobData.jobText, jobData.jobTitle, jobData.company);
+      setTimeout(() => {
+        btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> ATS Screen`;
+      }, 2500);
     });
     document.body.appendChild(btn);
   }
 
-  // ── Debug helper (call window.__rmDebug() in DevTools console) ───────────────
+  // ── Debug helper ──────────────────────────────────────────────────────────────
   window.__rmDebug = function () {
     console.group('[RM] Debug info');
     console.log('URL:', location.href);
-    console.log('JD selectors found:');
+    console.log('Context valid:', isContextValid());
+    console.log('Script dead:', _dead);
+    console.log('Active intervals:', _intervals.size);
+    console.log('Init session:', _initSession);
+    console.log('Running:', _running);
     JD_SELECTORS.forEach(sel => {
       const el = document.querySelector(sel);
       console.log(' ', sel, '→', el ? `found (${el.innerText.trim().length} chars)` : 'not found');
     });
-    console.log('Apply button (aria):', document.querySelector('button[aria-label*="Easy Apply"], a[aria-label*="Easy Apply"]'));
-    console.log('Apply button (text):',
-      Array.from(document.querySelectorAll('button')).find(b => /Apply/.test(b.innerText)));
-    console.log('JD extraction result:', (extractJD() || '').slice(0, 100) + '...');
+    console.log('JD result:', (extractJD() || '').slice(0, 100) + '...');
     console.log('Job title:', extractJobTitle());
     console.log('Company:', extractCompany());
     console.groupEnd();
   };
-  console.log('[RM] LinkedIn script loaded. Run window.__rmDebug() to diagnose.');
 
   // ── Main init ─────────────────────────────────────────────────────────────────
   let _running = false;
+  let _initSession = 0; // incremented on each URL change to cancel stale runs
 
-  async function init() {
+  function isJobPage() {
+    return /^\/jobs\//.test(location.pathname);
+  }
+
+  // skipImmediate: set true when called from SPA navigation so we wait for
+  // LinkedIn to update the detail panel before reading the JD.
+  async function init(skipImmediate = false) {
+    if (_dead) return;
+    if (!isContextValid()) { shutdown(); return; }
+    if (!isJobPage()) return;
     if (_running) return;
+
+    const session = _initSession; // capture at start
     _running = true;
     _buttonInjected = false;
 
@@ -278,26 +292,48 @@
     if (old) old.remove();
 
     try {
-      const jobData = await waitForJD();
+      const jobData = await waitForJD(session, skipImmediate);
+      if (session !== _initSession || _dead) return;
+      if (!isContextValid()) { shutdown(); return; }
+
       if (jobData) {
-        injectButton(jobData).catch(() => {});
+        await injectButton(jobData, session);
       } else {
         console.log('[RM] LinkedIn: no JD found within 7 s — run window.__rmDebug() for details');
       }
     } finally {
-      _running = false;
+      // Only release the lock if we're still the active session
+      if (session === _initSession) _running = false;
     }
   }
 
+  console.log('[RM] LinkedIn script loaded. Run window.__rmDebug() to diagnose.');
   init();
 
   // ── SPA navigation ────────────────────────────────────────────────────────────
   let _lastUrl = location.href;
-  setInterval(() => {
+  trackInterval(() => {
     if (location.href !== _lastUrl) {
       _lastUrl = location.href;
-      setTimeout(init, 1000);
+
+      // Cancel the currently running init (if any) by bumping the session.
+      _initSession++;
+      _running = false;
+      _buttonInjected = false;
+
+      // Immediately wipe stored job data so the popup never shows stale info
+      // from the previous job while the new one is being detected.
+      storeJobData('', '', '');
+
+      const old = document.getElementById('rm-ats-btn');
+      if (old) old.remove();
+
+      // 600 ms is enough for LinkedIn's panel to swap content.
+      // skipImmediate=true adds one extra 500 ms poll so we don't read the
+      // panel mid-transition. Total time to first JD check: ~1100 ms.
+      setTimeout(() => init(true), 600);
     }
-  }, 1000);
+  // Poll every 500 ms so URL changes are detected within half a second.
+  }, 500);
 
 })();

@@ -52,6 +52,10 @@ function updatePill() {
     const label = appState.currentJobTitle +
       (appState.currentCompany ? ' · ' + appState.currentCompany : '');
     pillText.textContent = 'Job detected: ' + label;
+  } else if (appState.currentJobText === '') {
+    // Storage was just cleared by a job switch — detection is in progress
+    pill.className = 'pill missing';
+    pillText.textContent = 'Detecting job… click a listing and wait a moment.';
   } else {
     pill.className = 'pill missing';
     pillText.textContent = 'Navigate to a job listing on LinkedIn, Indeed, or Glassdoor.';
@@ -181,28 +185,29 @@ async function init() {
     renderResults(res.result, parseLanguages(jobText), parseVisa(jobText));
   });
 
+  async function openFullResults(payload) {
+    const res = await chrome.runtime.sendMessage({ type: 'OPEN_FULL_RESULTS', payload });
+    if (res?.error === 'FRONTEND_OFFLINE') {
+      showError('🖥️', 'Resume Matcher frontend is not running. Start it with "npm run dev" and try again.');
+    }
+  }
+
   $('full-btn').addEventListener('click', () => {
-    chrome.runtime.sendMessage({
-      type: 'OPEN_FULL_RESULTS',
-      payload: {
-        jobText:  appState.currentJobText,
-        resumeId: resumeSel.value || null,
-        result:   lastResult,
-      },
+    openFullResults({
+      jobText:  appState.currentJobText,
+      resumeId: resumeSel.value || null,
+      result:   lastResult,
     });
   });
 
   $('tailored-btn').addEventListener('click', () => {
-    chrome.runtime.sendMessage({
-      type: 'OPEN_FULL_RESULTS',
-      payload: {
-        jobText:          appState.currentJobText,
-        jobTitle:         appState.currentJobTitle || null,
-        company:          appState.currentCompany  || null,
-        resumeId:         resumeSel.value || null,
-        result:           lastResult,   // full result, optimized_resume included
-        showOptimization: true,         // auto-expand the optimization panel
-      },
+    openFullResults({
+      jobText:          appState.currentJobText,
+      jobTitle:         appState.currentJobTitle || null,
+      company:          appState.currentCompany  || null,
+      resumeId:         resumeSel.value || null,
+      result:           lastResult,
+      showOptimization: true,
     });
   });
 }

@@ -2,8 +2,41 @@
 // Loaded before every site-specific content script. Defines globals used by linkedin.js, etc.
 
 /**
+ * Returns true if the extension context is still valid.
+ * After an extension reload the runtime.id becomes undefined and any API call
+ * throws "Extension context invalidated." — this guard prevents those errors.
+ */
+function isContextValid() {
+  try { return typeof chrome !== 'undefined' && !!chrome.runtime?.id; } catch (_) { return false; }
+}
+
+/**
+ * Writes job data directly to chrome.storage.local.
+ * This avoids chrome.runtime.sendMessage() entirely — sendMessage() routes
+ * through the background service worker and Chrome logs a network-level
+ * "GET chrome-extension://invalid/ net::ERR_FAILED" entry whenever the
+ * context is in a transitional state, even inside try/catch.
+ * chrome.storage.local.set() is a direct storage call that does not go
+ * through the SW, so it never generates those network entries.
+ */
+function storeJobData(jobText, jobTitle, company) {
+  if (!isContextValid()) return;
+  try {
+    chrome.storage.local.set({
+      currentJobText:  jobText  || '',
+      currentJobTitle: jobTitle || '',
+      currentCompany:  company  || '',
+    });
+  } catch (_) {}
+}
+
+/**
  * Waits for a DOM element matching selector to appear, up to maxMs milliseconds.
- * Returns the element or null if not found in time.
+ * Uses polling instead of MutationObserver to avoid the infinite-loop problem
+ * that occurs when a MutationObserver callback itself mutates the DOM (e.g. by
+ * clicking a button).  Also bails out immediately if the extension context
+ * becomes invalid (after a reload).
+ *
  * @param {string} selector
  * @param {number} maxMs
  * @returns {Promise<Element|null>}
@@ -13,20 +46,32 @@ function waitForElement(selector, maxMs = 3000) {
     const el = document.querySelector(selector);
     if (el) return resolve(el);
 
-    const observer = new MutationObserver(() => {
+    const interval = 250; // ms between polls
+    const maxAttempts = Math.ceil(maxMs / interval);
+    let attempts = 0;
+
+    const poll = setInterval(() => {
+      attempts++;
+
+      // Stop if extension was reloaded
+      if (!isContextValid()) {
+        clearInterval(poll);
+        resolve(null);
+        return;
+      }
+
       const found = document.querySelector(selector);
       if (found) {
-        observer.disconnect();
+        clearInterval(poll);
         resolve(found);
+        return;
       }
-    });
 
-    observer.observe(document.body, { childList: true, subtree: true });
-
-    setTimeout(() => {
-      observer.disconnect();
-      resolve(null);
-    }, maxMs);
+      if (attempts >= maxAttempts) {
+        clearInterval(poll);
+        resolve(null);
+      }
+    }, interval);
   });
 }
 

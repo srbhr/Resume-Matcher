@@ -44,11 +44,15 @@
   }
 
   async function init() {
+    if (!isContextValid()) return;
+
     let applyContainer = null;
     for (const selector of APPLY_SELECTORS) {
       applyContainer = await waitForElement(selector, 4000);
       if (applyContainer) break;
     }
+
+    if (!isContextValid()) return; // extension reloaded while waiting
 
     if (!applyContainer) {
       console.debug('[RM] Indeed: apply button not found');
@@ -64,19 +68,14 @@
     const jobTitle = extractJobTitle();
     const company  = extractCompany();
 
-    chrome.runtime.sendMessage({
-      type: 'JOB_DETECTED',
-      payload: { jobText, jobTitle, company },
-    });
+    storeJobData(jobText, jobTitle, company);
 
     injectAtsButton(applyContainer, (btn) => {
       setButtonFeedback(btn, '✓ Ready — click the toolbar icon', 2500);
-      chrome.runtime.sendMessage({
-        type: 'JOB_DETECTED',
-        payload: { jobText, jobTitle, company },
-      });
+      storeJobData(jobText, jobTitle, company);
     });
   }
 
   init();
+
 })();

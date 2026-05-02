@@ -56,11 +56,42 @@ export function ATSScreenPanel({
     if (initialResult) setResult(initialResult);
   }, [initialResult]);
 
-  // Auto-open optimization panel when signalled by URL param
+  // Track whether we have already auto-triggered optimization so we don't loop.
+  const autoOptTriggered = React.useRef(false);
+
+  // Auto-open / auto-fetch optimization when signalled by ?optimize=1 URL param.
+  // optimized_resume is stripped from the URL to keep it short, so we re-fetch
+  // it here automatically rather than making the user click the button again.
   useEffect(() => {
-    if (autoShowOptimization && result) {
+    if (!autoShowOptimization || !result) return;
+    if (result.optimized_resume) {
+      // Already have it (e.g. user ran ATS on the full page directly)
       setShowOptimization(true);
+      return;
     }
+    if (autoOptTriggered.current) return;
+    autoOptTriggered.current = true;
+
+    // Re-run screen to get optimized_resume (stripped from URL for size reasons)
+    setIsOptimizing(true);
+    setOptimizeError(null);
+    screenResume({
+      resume_id: resumeId,
+      resume_text: resumeText,
+      job_id: jobId,
+      job_description: jobDescription,
+      save_optimized: false,
+    })
+      .then((data) => {
+        setResult(data);
+        if (data.optimized_resume) setShowOptimization(true);
+        else setOptimizeError('Optimization requires a stored resume (not available in paste mode).');
+      })
+      .catch((err: unknown) => {
+        setOptimizeError(err instanceof Error ? err.message : 'Optimization failed');
+      })
+      .finally(() => setIsOptimizing(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoShowOptimization, result]);
 
   // ── Run ATS screen ────────────────────────────────────────────────────────────
@@ -176,8 +207,8 @@ export function ATSScreenPanel({
           <ATSMissingKeywords keywords={result.missing_keywords} />
           <ATSWarningFlags flags={result.warning_flags} />
 
-          {/* Create ATS Tailored Resume button */}
-          {canOptimize && !showOptimization && (
+          {/* Create ATS Tailored Resume button — also shown while auto-fetching */}
+          {canOptimize && (!showOptimization || isOptimizing) && (
             <div className="flex flex-col gap-2">
               <Button
                 onClick={handleCreateTailored}

@@ -7,7 +7,9 @@
   "host_permissions": [
     "https://www.linkedin.com/*",
     "https://www.indeed.com/*",
-    "https://www.glassdoor.com/*"
+    "https://www.glassdoor.com/*",
+    "http://localhost:*/*",
+    "http://127.0.0.1:*/*"
   ],
   "background": {
     "service_worker": "background.js"

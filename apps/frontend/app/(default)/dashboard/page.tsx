@@ -18,6 +18,7 @@ import AlertTriangle from 'lucide-react/dist/esm/icons/alert-triangle';
 import ArrowRight from 'lucide-react/dist/esm/icons/arrow-right';
 import FileText from 'lucide-react/dist/esm/icons/file-text';
 import Zap from 'lucide-react/dist/esm/icons/zap';
+import Trash2 from 'lucide-react/dist/esm/icons/trash-2';
 
 import {
   fetchResume,
@@ -205,6 +206,17 @@ export default function DashboardPage() {
     }
   };
 
+  const handleDeleteTailored = async (resumeId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await deleteResume(resumeId);
+      decrementResumes();
+      setTailoredResumes((prev) => prev.filter((r) => r.resume_id !== resumeId));
+    } catch (err) {
+      console.error('Failed to delete resume:', err);
+    }
+  };
+
   const getStatusDisplay = () => {
     switch (processingStatus) {
       case 'loading':
@@ -299,6 +311,39 @@ export default function DashboardPage() {
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
+            {/* ATS SCREEN */}
+            <Link href="/ats" className="block" style={{ minHeight: '220px' }}>
+              <div
+                className="group relative overflow-hidden border-2 border-ink bg-ink text-white p-8 shadow-sw-default hover:-translate-x-[3px] hover:-translate-y-[3px] hover:shadow-sw-lg transition-all duration-200 cursor-pointer h-full"
+              >
+                {/* Dark gradient wash */}
+                <div className="absolute inset-0 bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f3460]" />
+                {/* Grid texture */}
+                <div className="absolute inset-0 opacity-10" style={{
+                  backgroundImage: 'linear-gradient(rgba(255,255,255,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.4) 1px, transparent 1px)',
+                  backgroundSize: '20px 20px',
+                }} />
+
+                <div className="relative z-10 flex flex-col h-full">
+                  <div className="flex items-start justify-between mb-6">
+                    <div className="w-12 h-12 border-2 border-white/30 bg-white/10 flex items-center justify-center">
+                      <Zap className="w-6 h-6 text-white" />
+                    </div>
+                    <ArrowRight className="w-5 h-5 text-white/40 group-hover:text-white/90 group-hover:translate-x-1 transition-all duration-200" />
+                  </div>
+                  <div className="mt-auto">
+                    <p className="font-mono text-xs uppercase tracking-widest text-blue-300 mb-2">Most used</p>
+                    <h2 className="font-serif text-3xl font-bold text-white uppercase leading-tight mb-2">
+                      ATS Screen
+                    </h2>
+                    <p className="font-mono text-xs text-slate-300 leading-relaxed">
+                      Score your resume against any job description before applying
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </Link>
+
             {/* CREATE TAILORED RESUME */}
             <button
               onClick={() => isTailorEnabled && router.push('/tailor')}
@@ -342,40 +387,6 @@ export default function DashboardPage() {
                 </div>
               </div>
             </button>
-
-            {/* ATS SCREEN */}
-            <Link href="/ats" className="block">
-              <div
-                className="group relative overflow-hidden border-2 border-ink bg-ink text-white p-8 shadow-sw-default hover:-translate-x-[3px] hover:-translate-y-[3px] hover:shadow-sw-lg transition-all duration-200 cursor-pointer"
-                style={{ minHeight: '220px' }}
-              >
-                {/* Dark gradient wash */}
-                <div className="absolute inset-0 bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f3460]" />
-                {/* Grid texture */}
-                <div className="absolute inset-0 opacity-10" style={{
-                  backgroundImage: 'linear-gradient(rgba(255,255,255,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.4) 1px, transparent 1px)',
-                  backgroundSize: '20px 20px',
-                }} />
-
-                <div className="relative z-10 flex flex-col h-full">
-                  <div className="flex items-start justify-between mb-6">
-                    <div className="w-12 h-12 border-2 border-white/30 bg-white/10 flex items-center justify-center">
-                      <Zap className="w-6 h-6 text-white" />
-                    </div>
-                    <ArrowRight className="w-5 h-5 text-white/40 group-hover:text-white/90 group-hover:translate-x-1 transition-all duration-200" />
-                  </div>
-                  <div className="mt-auto">
-                    <p className="font-mono text-xs uppercase tracking-widest text-blue-300 mb-2">Most used</p>
-                    <h2 className="font-serif text-3xl font-bold text-white uppercase leading-tight mb-2">
-                      ATS Screen
-                    </h2>
-                    <p className="font-mono text-xs text-slate-300 leading-relaxed">
-                      Score your resume against any job description before applying
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </Link>
           </div>
         </div>
 
@@ -513,9 +524,13 @@ export default function DashboardPage() {
                       >
                         <span className="font-mono font-bold text-xs">{getMonogram(title)}</span>
                       </div>
-                      <span className="font-mono text-xs text-steel-grey uppercase">
-                        {resume.processing_status}
-                      </span>
+                      <button
+                        onClick={(e) => handleDeleteTailored(resume.resume_id, e)}
+                        className="p-1.5 text-steel-grey hover:text-red-600 hover:bg-red-50 border border-transparent hover:border-red-200 transition-colors"
+                        title="Delete resume"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                     <p className="font-serif text-base font-bold leading-tight line-clamp-2 mb-3 group-hover:text-blue-700 transition-colors">
                       {title}

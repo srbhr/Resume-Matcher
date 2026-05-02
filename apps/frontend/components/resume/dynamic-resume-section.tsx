@@ -88,25 +88,30 @@ const ItemListSectionContent: React.FC<{ items: CustomSectionItem[] }> = ({ item
     <div className={baseStyles['resume-items']}>
       {items.map((item) => (
         <div key={item.id} className={baseStyles['resume-item']}>
-          {/* Title and Years Row */}
-          <div className={`flex justify-between items-baseline ${baseStyles['resume-row-tight']}`}>
-            <h4 className={baseStyles['resume-item-title']}>{item.title}</h4>
-            {item.years && (
-              <span className={`${baseStyles['resume-meta-sm']} shrink-0 ml-4`}>
-                {formatDateRange(item.years)}
-              </span>
+          {/* Header rows: kept together, prevent orphaning at page bottom */}
+          <div className={baseStyles['resume-item-header']}>
+            {/* Title and Years Row */}
+            <div
+              className={`flex justify-between items-baseline ${baseStyles['resume-row-tight']}`}
+            >
+              <h4 className={baseStyles['resume-item-title']}>{item.title}</h4>
+              {item.years && (
+                <span className={`${baseStyles['resume-meta-sm']} shrink-0 ml-4`}>
+                  {formatDateRange(item.years)}
+                </span>
+              )}
+            </div>
+
+            {/* Subtitle and Location Row */}
+            {(item.subtitle || item.location) && (
+              <div
+                className={`flex justify-between items-center ${baseStyles['resume-row']} ${baseStyles['resume-item-subtitle']}`}
+              >
+                {item.subtitle && <span>{item.subtitle}</span>}
+                {item.location && <span>{item.location}</span>}
+              </div>
             )}
           </div>
-
-          {/* Subtitle and Location Row */}
-          {(item.subtitle || item.location) && (
-            <div
-              className={`flex justify-between items-center ${baseStyles['resume-row']} ${baseStyles['resume-item-subtitle']}`}
-            >
-              {item.subtitle && <span>{item.subtitle}</span>}
-              {item.location && <span>{item.location}</span>}
-            </div>
-          )}
 
           {/* Description Points */}
           {item.description && item.description.length > 0 && (

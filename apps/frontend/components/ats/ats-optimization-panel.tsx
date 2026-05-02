@@ -6,8 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Download } from 'lucide-react';
 import type { ResumeData } from '@/components/dashboard/resume-component';
 import { saveAtsResume } from '@/lib/api/ats';
-import { downloadResumePdf } from '@/lib/api/resume';
-import { buildResumeFilename, downloadBlobAsFile } from '@/lib/utils/download';
+import { downloadResumePdf, getResumePdfUrl } from '@/lib/api/resume';
+import { buildResumeFilename, downloadBlobAsFile, openUrlInNewTab } from '@/lib/utils/download';
+import { useLanguage } from '@/lib/context/language-context';
 
 const ResumeForm = dynamic(
   () => import('@/components/builder/resume-form').then((m) => m.ResumeForm),
@@ -53,6 +54,7 @@ export function ATSOptimizationPanel({
   company,
   onSaved,
 }: ATSOptimizationPanelProps) {
+  const { uiLanguage } = useLanguage();
   const [mode, setMode] = useState<'view' | 'edit'>('view');
   const [editedResume, setEditedResume] = useState<ResumeData>(optimizedResume);
   const [isSaving, setIsSaving] = useState(false);
@@ -100,8 +102,20 @@ export function ATSOptimizationPanel({
 
       const personName = editedResume.personalInfo?.name ?? null;
       const filename = buildResumeFilename(personName, company ?? null, id);
-      const blob = await downloadResumePdf(id);
-      downloadBlobAsFile(blob, filename);
+      try {
+        const blob = await downloadResumePdf(id, undefined, uiLanguage);
+        downloadBlobAsFile(blob, filename);
+      } catch (err: unknown) {
+        // Fallback: open the PDF URL directly in a new tab if blob download fails
+        if (err instanceof TypeError && (err as TypeError).message.includes('Failed to fetch')) {
+          const fallbackUrl = getResumePdfUrl(id, undefined, uiLanguage);
+          if (!openUrlInNewTab(fallbackUrl)) {
+            setSaveError(`Download failed. Open manually: ${fallbackUrl}`);
+          }
+          return;
+        }
+        throw err;
+      }
     } catch (err: unknown) {
       setSaveError(err instanceof Error ? err.message : 'Download failed');
     } finally {
