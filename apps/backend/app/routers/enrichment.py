@@ -115,7 +115,10 @@ async def analyze_resume(resume_id: str) -> AnalysisResponse:
 
     try:
         # Call LLM with increased max_tokens for non-English languages
-        result = await complete_json(prompt, max_tokens=8192)
+        result = await asyncio.wait_for(
+            complete_json(prompt, max_tokens=8192, schema_type="enrichment"),
+            timeout=180.0,  # 3-minute hard limit
+        )
 
         # Parse response into schema objects
         items_to_enrich = [
@@ -146,8 +149,20 @@ async def analyze_resume(resume_id: str) -> AnalysisResponse:
             analysis_summary=result.get("analysis_summary"),
         )
 
+    except asyncio.TimeoutError:
+        logger.error("Resume analysis timed out for resume %s", resume_id)
+        raise HTTPException(
+            status_code=504,
+            detail="Resume analysis timed out. Please try again with a shorter resume or a faster model.",
+        )
+    except ValueError as e:
+        logger.error("Resume analysis failed (content): %s", e)
+        raise HTTPException(
+            status_code=422,
+            detail="The AI returned an unreadable response. Please try again or switch models.",
+        )
     except Exception as e:
-        logger.error(f"Resume analysis failed: {e}")
+        logger.error("Resume analysis failed: %s", e)
         raise HTTPException(
             status_code=500,
             detail="Failed to analyze resume. Please try again.",
@@ -205,9 +220,24 @@ async def generate_enhancements(request: EnhanceRequest) -> EnhancementPreview:
         )
 
         try:
-            analysis_result = await complete_json(analysis_prompt, max_tokens=8192)
+            analysis_result = await asyncio.wait_for(
+                complete_json(analysis_prompt, max_tokens=8192, schema_type="enrichment"),
+                timeout=180.0,
+            )
+        except asyncio.TimeoutError:
+            logger.error("Resume re-analysis timed out for resume %s", request.resume_id)
+            raise HTTPException(
+                status_code=504,
+                detail="Resume analysis timed out. Please try again with a shorter resume or a faster model.",
+            )
+        except ValueError as e:
+            logger.error("Resume re-analysis failed (content): %s", e)
+            raise HTTPException(
+                status_code=422,
+                detail="The AI returned an unreadable response. Please try again or switch models.",
+            )
         except Exception as e:
-            logger.error(f"Failed to re-analyze resume: {e}")
+            logger.error("Failed to re-analyze resume: %s", e)
             raise HTTPException(
                 status_code=500,
                 detail="Failed to process enhancements. Please try again.",
@@ -268,7 +298,7 @@ async def generate_enhancements(request: EnhanceRequest) -> EnhancementPreview:
         )
 
         try:
-            result = await complete_json(prompt)
+            result = await complete_json(prompt, schema_type="diff")
             # Get additional bullets from LLM (new key name)
             additional_bullets = result.get("additional_bullets", [])
             # Fallback to old key for backwards compatibility
@@ -404,7 +434,7 @@ async def _regenerate_experience_or_project(
         user_instruction=instruction,
     )
 
-    result = await complete_json(prompt, max_tokens=4096)
+    result = await complete_json(prompt, max_tokens=4096, schema_type="diff")
 
     new_bullets = result.get("new_bullets", [])
     if not isinstance(new_bullets, list):
@@ -436,7 +466,7 @@ async def _regenerate_skills(
         user_instruction=instruction,
     )
 
-    result = await complete_json(prompt, max_tokens=2048)
+    result = await complete_json(prompt, max_tokens=2048, schema_type="diff")
 
     new_skills = result.get("new_skills", [])
     if not isinstance(new_skills, list):

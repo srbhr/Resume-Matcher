@@ -481,6 +481,7 @@ async def generate_resume_diffs(
         prompt=prompt,
         system_prompt="You are an expert resume editor. Output only valid JSON with targeted changes.",
         max_tokens=4096,
+        schema_type="diff",
     )
 
     # Parse result — handle LLM ignoring diff format gracefully
@@ -530,6 +531,7 @@ async def extract_job_keywords(job_description: str) -> dict[str, Any]:
     return await complete_json(
         prompt=prompt,
         system_prompt="You are an expert job description analyzer.",
+        schema_type="keywords",
     )
 
 
