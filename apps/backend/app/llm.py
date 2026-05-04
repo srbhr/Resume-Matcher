@@ -732,7 +732,7 @@ def _supports_json_mode(model_name: str) -> bool:
 
 
 def _appears_truncated(data: dict, schema_type: str = "resume") -> bool:
-FALLBACK_MAX_TOKENS = 4096
+    FALLBACK_MAX_TOKENS = 4096
 
 def get_safe_max_tokens(model_name: str, requested: int = DEFAULT_JSON_MAX_TOKENS) -> int:
     """Return a token count safe for the given model, clamped to its output limit.
