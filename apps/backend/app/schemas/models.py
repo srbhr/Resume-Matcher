@@ -680,6 +680,7 @@ class ApiKeysUpdateRequest(BaseModel):
     google: str | None = None
     openrouter: str | None = None
     deepseek: str | None = None
+    groq: str | None = None
 
 
 class ApiKeysUpdateResponse(BaseModel):

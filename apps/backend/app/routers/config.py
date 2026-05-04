@@ -420,7 +420,7 @@ async def update_feature_prompts(
 
 
 # Supported API key providers
-SUPPORTED_PROVIDERS = ["openai", "anthropic", "google", "openrouter", "deepseek"]
+SUPPORTED_PROVIDERS = ["openai", "anthropic", "google", "openrouter", "deepseek", "groq"]
 
 
 def _mask_key_short(key: str | None) -> str | None:
@@ -500,6 +500,13 @@ async def update_api_keys(request: ApiKeysUpdateRequest) -> ApiKeysUpdateRespons
         elif "deepseek" in stored_keys:
             del stored_keys["deepseek"]
         updated.append("deepseek")
+
+    if request.groq is not None:
+        if request.groq:
+            stored_keys["groq"] = request.groq
+        elif "groq" in stored_keys:
+            del stored_keys["groq"]
+        updated.append("groq")
 
     save_api_keys_to_config(stored_keys)
     invalidate_config_cache()

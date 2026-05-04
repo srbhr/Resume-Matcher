@@ -8,6 +8,7 @@ export type LLMProvider =
   | 'openrouter'
   | 'gemini'
   | 'deepseek'
+  | 'groq'
   | 'ollama';
 
 // Reasoning-effort levels supported by LiteLLM. `null` (or absent) means
@@ -156,6 +157,7 @@ export const PROVIDER_INFO: Record<
   },
   gemini: { name: 'Google Gemini', defaultModel: 'gemini-3-flash-preview', requiresKey: true },
   deepseek: { name: 'DeepSeek', defaultModel: 'deepseek-chat', requiresKey: true },
+  groq: { name: 'Groq', defaultModel: 'llama-3.3-70b-versatile', requiresKey: true },
   ollama: { name: 'Ollama (Local)', defaultModel: 'gemma3:4b', requiresKey: false },
 };
 
@@ -367,7 +369,7 @@ export async function updateFeaturePrompts(update: FeaturePromptsUpdate): Promis
 }
 
 // API Key Management types
-export type ApiKeyProvider = 'openai' | 'anthropic' | 'google' | 'openrouter' | 'deepseek';
+export type ApiKeyProvider = 'openai' | 'anthropic' | 'google' | 'openrouter' | 'deepseek' | 'groq';
 
 export interface ApiKeyProviderStatus {
   provider: ApiKeyProvider;
@@ -385,6 +387,7 @@ export interface ApiKeysUpdateRequest {
   google?: string;
   openrouter?: string;
   deepseek?: string;
+  groq?: string;
 }
 
 export interface ApiKeysUpdateResponse {
@@ -400,6 +403,7 @@ export const API_KEY_PROVIDER_INFO: Record<ApiKeyProvider, { name: string; descr
     google: { name: 'Google', description: 'Gemini 1.5, Gemini 2, etc.' },
     openrouter: { name: 'OpenRouter', description: 'Access multiple providers' },
     deepseek: { name: 'DeepSeek', description: 'DeepSeek chat models' },
+    groq: { name: 'Groq', description: 'Llama, Mixtral, Gemma on Groq' },
   };
 
 // Fetch API key status for all providers

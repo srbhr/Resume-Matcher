@@ -104,6 +104,7 @@ def _get_llm_api_key_with_fallback() -> str:
         "gemini": "google",
         "openrouter": "openrouter",
         "deepseek": "deepseek",
+        "groq": "groq",
         "ollama": "ollama",
     }
 
@@ -128,6 +129,7 @@ class Settings(BaseSettings):
         "openrouter",
         "gemini",
         "deepseek",
+        "groq",
         "ollama",
     ] = "openai"
     llm_model: str = "gpt-5-nano-2025-08-07"
