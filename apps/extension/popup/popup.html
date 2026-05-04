@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Resume Matcher ATS</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { width: 300px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #fff; color: #0f172a; }
+
+    /* Header */
+    .hd { background: #0f172a; padding: 10px 14px; display: flex; align-items: center; gap: 8px; }
+    .hd-logo { background: #1D4ED8; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 900; color: #fff; font-family: monospace; flex-shrink: 0; }
+    .hd-title { color: #fff; font-size: 11px; font-weight: 700; letter-spacing: .05em; flex: 1; }
+    .hd-gear { color: #94a3b8; font-size: 15px; cursor: pointer; text-decoration: none; line-height: 1; }
+
+    /* Resume row */
+    .res-row { background: #1e293b; padding: 8px 14px; display: flex; align-items: center; gap: 6px; border-bottom: 1px solid #334155; }
+    .res-lbl { color: #94a3b8; font-size: 10px; text-transform: uppercase; letter-spacing: .08em; white-space: nowrap; }
+    .res-sel { flex: 1; background: #0f172a; border: none; border-radius: 4px; padding: 4px 8px; color: #e2e8f0; font-size: 11px; cursor: pointer; outline: none; }
+    .res-sel option { background: #0f172a; }
+
+    /* Status pill */
+    .pill { padding: 6px 14px; font-size: 10px; font-weight: 600; display: flex; align-items: center; gap: 6px; border-bottom: 1px solid #e2e8f0; }
+    .pill.found { background: #f0fdf4; color: #15803d; border-bottom-color: #bbf7d0; }
+    .pill.missing { background: #fef9c3; color: #854d0e; border-bottom-color: #fde68a; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+
+    /* Main area */
+    .main { padding: 16px 14px; }
+
+    /* Buttons */
+    .btn-run { width: 100%; background: #1D4ED8; color: #fff; border: none; padding: 10px; font-size: 12px; font-weight: 700; cursor: pointer; border-radius: 5px; letter-spacing: .03em; }
+    .btn-run:hover:not(:disabled) { background: #1e40af; }
+    .btn-run:disabled { background: #94a3b8; cursor: not-allowed; }
+    .btn-tailored { width: 100%; background: linear-gradient(135deg, #1D4ED8, #7c3aed); color: #fff; border: none; padding: 10px; font-size: 12px; font-weight: 700; cursor: pointer; border-radius: 5px; margin-bottom: 8px; letter-spacing: .02em; }
+    .btn-tailored:hover { opacity: .9; }
+    .btn-full { width: 100%; background: #fff; color: #1D4ED8; border: 1.5px solid #1D4ED8; padding: 8px; font-size: 12px; font-weight: 700; cursor: pointer; border-radius: 5px; }
+    .btn-full:hover { background: #eff6ff; }
+
+    /* Score */
+    .sc-hd { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .badge { font-size: 13px; font-weight: 800; padding: 5px 14px; border-radius: 4px; letter-spacing: .05em; }
+    .badge.PASS       { background: #dcfce7; border: 1.5px solid #22c55e; color: #15803d; }
+    .badge.BORDERLINE { background: #fef3c7; border: 1.5px solid #f59e0b; color: #92400e; }
+    .badge.REJECT     { background: #fee2e2; border: 1.5px solid #ef4444; color: #991b1b; }
+    .sc-num .n { font-size: 28px; font-weight: 900; line-height: 1; }
+    .sc-num .d { font-size: 9px; color: #94a3b8; text-transform: uppercase; letter-spacing: .08em; text-align: right; }
+    .bar { background: #e2e8f0; border-radius: 2px; height: 6px; margin-bottom: 16px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, #1D4ED8, #22c55e); }
+
+    /* Section label */
+    .lbl { font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: .07em; margin-bottom: 6px; font-weight: 700; }
+
+    /* Breakdown */
+    .bk { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 16px; font-size: 11px; }
+    .bk-row { display: flex; justify-content: space-between; color: #374151; }
+    .bk-val { font-weight: 700; color: #1D4ED8; }
+    .bk-val.w { color: #f59e0b; }
+
+    /* Language box */
+    .lang-box { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 5px; padding: 8px 10px; margin-bottom: 12px; }
+    .lang-row { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #1e40af; }
+    .lang-row + .lang-row { margin-top: 4px; }
+    .lang-badge { margin-left: auto; font-size: 9px; padding: 1px 6px; border-radius: 3px; font-weight: 700; }
+    .lang-badge.req  { background: #dbeafe; color: #1d4ed8; }
+    .lang-badge.pref { background: #e0e7ff; color: #4338ca; }
+
+    /* Visa box */
+    .visa { border-radius: 5px; padding: 8px 10px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; border: 1px solid; }
+    .visa.available     { background: #f0fdf4; border-color: #bbf7d0; color: #166534; }
+    .visa.not_available { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
+    .visa.unclear       { background: #f8fafc; border-color: #e2e8f0; color: #475569; }
+    .visa-icon { font-size: 14px; }
+    .visa-text strong { font-size: 11px; display: block; }
+    .visa-text small  { font-size: 10px; }
+
+    /* Keywords */
+    .kws { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 16px; }
+    .kw  { background: #fef3c7; color: #92400e; font-size: 10px; padding: 2px 7px; border-radius: 3px; font-weight: 600; }
+    .kw.more { background: #f1f5f9; color: #475569; }
+
+    /* Loading */
+    .loading { padding: 28px 14px; text-align: center; }
+    .spinner { width: 26px; height: 26px; border: 3px solid #e2e8f0; border-top-color: #1D4ED8; border-radius: 50%; animation: spin .7s linear infinite; margin: 0 auto 12px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-txt { font-size: 12px; color: #64748b; }
+
+    /* Error */
+    .err-view { padding: 20px 14px; text-align: center; }
+    .err-icon { font-size: 28px; margin-bottom: 10px; }
+    .err-msg  { font-size: 12px; color: #475569; line-height: 1.55; }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="hd">
+  <div class="hd-logo">RM</div>
+  <span class="hd-title">RESUME MATCHER · ATS</span>
+  <a class="hd-gear" id="settings-link" href="#" title="Settings">⚙</a>
+</div>
+
+<!-- Resume selector -->
+<div class="res-row">
+  <span class="res-lbl">Resume</span>
+  <select class="res-sel" id="resume-select">
+    <option value="">Loading...</option>
+  </select>
+</div>
+
+<!-- Status pill -->
+<div class="pill" id="pill">
+  <div class="dot"></div>
+  <span id="pill-text">Checking...</span>
+</div>
+
+<!-- READY view -->
+<div class="main" id="v-ready">
+  <button class="btn-run" id="run-btn" disabled>Run ATS Screen</button>
+</div>
+
+<!-- LOADING view -->
+<div class="loading hidden" id="v-loading">
+  <div class="spinner"></div>
+  <div class="loading-txt">Analysing your resume…</div>
+</div>
+
+<!-- ERROR view -->
+<div class="err-view hidden" id="v-error">
+  <div class="err-icon" id="err-icon"></div>
+  <div class="err-msg"  id="err-msg"></div>
+</div>
+
+<!-- RESULTS view -->
+<div class="main hidden" id="v-results">
+  <div class="sc-hd">
+    <div class="badge" id="r-badge"></div>
+    <div class="sc-num">
+      <div class="n" id="r-score"></div>
+      <div class="d">/100</div>
+    </div>
+  </div>
+
+  <div class="bar"><div class="bar-fill" id="r-bar"></div></div>
+
+  <div class="lbl">Score breakdown</div>
+  <div class="bk" id="r-breakdown"></div>
+
+  <div class="lbl hidden" id="lang-lbl">Language requirements</div>
+  <div class="lang-box hidden" id="r-lang"></div>
+
+  <div class="lbl">Visa sponsorship</div>
+  <div class="visa" id="r-visa">
+    <span class="visa-icon" id="r-visa-icon"></span>
+    <div class="visa-text">
+      <strong id="r-visa-title"></strong>
+      <small  id="r-visa-sub"></small>
+    </div>
+  </div>
+
+  <div class="lbl">Missing keywords</div>
+  <div class="kws" id="r-kws"></div>
+
+  <button class="btn-tailored" id="tailored-btn">✦ Create ATS Tailored Resume</button>
+  <button class="btn-full" id="full-btn">View Full Results →</button>
+</div>
+
+<script src="../shared/parsers.js"></script>
+<script src="popup.js"></script>
+</body>
+</html>

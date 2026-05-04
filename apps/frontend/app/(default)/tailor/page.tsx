@@ -20,6 +20,7 @@ import { Loader2, ArrowLeft, AlertTriangle, Settings } from 'lucide-react';
 import { useTranslations } from '@/lib/i18n';
 import { DiffPreviewModal } from '@/components/tailor/diff-preview-modal';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { ATSScreenPanel } from '@/components/ats/ats-screen-panel';
 
 export default function TailorPage() {
   const { t } = useTranslations();
@@ -32,6 +33,9 @@ export default function TailorPage() {
   const [promptLoading, setPromptLoading] = useState(false);
   const hasUserSelectedPrompt = useRef(false);
   const missingDiffConfirmInFlight = useRef(false);
+
+  const [showAtsPanel, setShowAtsPanel] = useState(false);
+  const [jobIdForAts, setJobIdForAts] = useState<string | null>(null);
 
   // Diff preview modal state
   const [showDiffModal, setShowDiffModal] = useState(false);
@@ -175,6 +179,7 @@ export default function TailorPage() {
       // The API expects an array of strings
       const jobId = await uploadJobDescriptions([description], resumeId);
       incrementJobs(); // Update cached counter
+      setJobIdForAts(jobId);
 
       // 2. Preview Resume
       const result = await previewImproveResume(resumeId, jobId, selectedPromptId);
@@ -367,6 +372,28 @@ export default function TailorPage() {
         )}
 
         <div className="space-y-6">
+          {/* ATS Pre-Screen — collapsible, appears once JD is uploaded */}
+          {masterResumeId && jobIdForAts && (
+            <div className="border border-black">
+              <button
+                onClick={() => setShowAtsPanel(!showAtsPanel)}
+                className="w-full flex items-center justify-between px-4 py-3 font-mono text-xs uppercase tracking-widest bg-background hover:bg-secondary transition-colors border-b border-black"
+              >
+                <span className="font-bold">ATS Pre-Screen</span>
+                <span className="text-muted-foreground">{showAtsPanel ? '▲ collapse' : '▼ expand'}</span>
+              </button>
+              {showAtsPanel && (
+                <div className="p-4">
+                  <ATSScreenPanel
+                    key={`${masterResumeId}-${jobIdForAts}`}
+                    resumeId={masterResumeId}
+                    jobId={jobIdForAts}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
           <Dropdown
             options={
               promptOptions.length > 0

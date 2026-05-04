@@ -5,7 +5,7 @@ import re
 from enum import Enum
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 _TEXT_VALUE_KEYS = (
     "text",
@@ -357,6 +357,50 @@ class ResumeData(BaseModel):
     @classmethod
     def _normalize_summary(cls, value: Any) -> str:
         return _coerce_text(value)
+
+    @model_validator(mode="after")
+    def _strip_empty_entries(self) -> "ResumeData":
+        """Remove entries that have no meaningful content.
+
+        The ATS optimizer (and other LLM passes) sometimes produces placeholder
+        entries with all-default values — empty title, empty company, empty
+        description — that render as blank boxes in the PDF.  Strip them here so
+        they never reach the renderer or the database.
+        """
+        self.workExperience = [
+            exp
+            for exp in self.workExperience
+            if (
+                exp.title.strip()
+                or exp.company.strip()
+                or exp.location.strip()
+                or exp.years.strip()
+                or exp.description
+            )
+        ]
+        self.education = [
+            edu
+            for edu in self.education
+            if (
+                edu.institution.strip()
+                or edu.degree.strip()
+                or edu.years.strip()
+                or edu.description
+            )
+        ]
+        self.personalProjects = [
+            proj
+            for proj in self.personalProjects
+            if (
+                proj.name.strip()
+                or proj.role.strip()
+                or proj.years.strip()
+                or proj.github
+                or proj.website
+                or proj.description
+            )
+        ]
+        return self
 
 
 # API Response Models

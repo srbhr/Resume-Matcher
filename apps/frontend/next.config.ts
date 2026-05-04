@@ -4,8 +4,15 @@ const BACKEND_ORIGIN = process.env.BACKEND_ORIGIN || 'http://127.0.0.1:8000';
 
 const nextConfig: NextConfig = {
   output: 'standalone',
+  // Limit webpack parallelism to reduce virtual memory pressure on Windows
+  webpack: (config) => {
+    config.parallelism = 1;
+    return config;
+  },
   experimental: {
     proxyTimeout: 240_000,
+    // Limit build workers to 1 to reduce virtual memory pressure on Windows
+    cpus: 1,
     // Tree-shake barrel imports — saves ~200-800ms cold start per route
     optimizePackageImports: [
       'lucide-react',
