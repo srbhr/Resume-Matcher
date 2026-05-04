@@ -1,10 +1,10 @@
 """Unit tests for LLM capability helpers in app.llm."""
 
-from unittest.mock import patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from app.llm import _get_retry_temperature, _supports_temperature
+from app.llm import _appears_truncated, _get_retry_temperature, _supports_temperature
 
 
 # ---------------------------------------------------------------------------
@@ -123,3 +123,222 @@ class TestGetRetryTemperature:
         }
         assert _get_retry_temperature("gpt-4", 0, base_temp=0.2) == 0.2
         assert _get_retry_temperature("gpt-4", 1, base_temp=0.2) == 0.3
+
+
+# ---------------------------------------------------------------------------
+# _appears_truncated
+# ---------------------------------------------------------------------------
+
+
+class TestAppearsTruncated:
+    """Tests for _appears_truncated() with schema_type awareness."""
+
+    # --- resume schema ---
+
+    def test_resume_empty_work_experience(self):
+        """Empty workExperience array in resume structure is suspicious."""
+        data = {
+            "personalInfo": {"name": "John"},
+            "workExperience": [],
+            "education": [{"degree": "BS"}],
+            "skills": ["Python"],
+        }
+        assert _appears_truncated(data, schema_type="resume") is True
+
+    def test_resume_empty_education(self):
+        """Empty education array in resume structure is suspicious."""
+        data = {
+            "personalInfo": {"name": "John"},
+            "workExperience": [{"title": "Dev"}],
+            "education": [],
+            "skills": ["Python"],
+        }
+        assert _appears_truncated(data, schema_type="resume") is True
+
+    def test_resume_empty_skills(self):
+        """Empty skills array in resume structure is suspicious."""
+        data = {
+            "personalInfo": {"name": "John"},
+            "workExperience": [{"title": "Dev"}],
+            "education": [{"degree": "BS"}],
+            "skills": [],
+        }
+        assert _appears_truncated(data, schema_type="resume") is True
+
+    def test_resume_valid(self):
+        """Well-formed resume with all sections present is not truncated."""
+        data = {
+            "personalInfo": {"name": "John"},
+            "workExperience": [{"title": "Dev"}],
+            "education": [{"degree": "BS"}],
+            "skills": ["Python"],
+        }
+        assert _appears_truncated(data, schema_type="resume") is False
+
+    def test_resume_missing_fields_not_empty(self):
+        """Missing fields are not the same as empty arrays — not flagged."""
+        data = {
+            "personalInfo": {"name": "John"},
+            "workExperience": [{"title": "Dev"}],
+            # education and skills omitted
+        }
+        assert _appears_truncated(data, schema_type="resume") is False
+
+    # --- enrichment schema ---
+
+    def test_enrichment_missing_keys(self):
+        """Missing required keys in enrichment output is suspicious."""
+        data = {"analysis_summary": "Good resume"}
+        assert _appears_truncated(data, schema_type="enrichment") is True
+
+    def test_enrichment_empty_arrays(self):
+        """Empty items_to_enrich and questions are valid (resume already strong)."""
+        data = {
+            "items_to_enrich": [],
+            "questions": [],
+            "analysis_summary": "Already strong",
+        }
+        assert _appears_truncated(data, schema_type="enrichment") is False
+
+    def test_enrichment_populated(self):
+        """Populated enrichment output is not truncated."""
+        data = {
+            "items_to_enrich": [{"item_id": "exp_0"}],
+            "questions": [{"question_id": "q_0"}],
+            "analysis_summary": "Needs work",
+        }
+        assert _appears_truncated(data, schema_type="enrichment") is False
+
+    # --- diff schema ---
+
+    def test_diff_empty_changes(self):
+        """Empty changes array in diff output is valid (no changes needed)."""
+        data = {"changes": [], "strategy_notes": "No changes needed"}
+        assert _appears_truncated(data, schema_type="diff") is False
+
+    def test_diff_populated(self):
+        """Populated diff output is not truncated."""
+        data = {"changes": [{"path": "summary", "action": "replace"}]}
+        assert _appears_truncated(data, schema_type="diff") is False
+
+    # --- keywords schema ---
+
+    def test_keywords_empty(self):
+        """Empty keyword lists are valid (sparse job description)."""
+        data = {"required_skills": [], "preferred_skills": [], "keywords": []}
+        assert _appears_truncated(data, schema_type="keywords") is False
+
+    # --- default / unknown schema ---
+
+    def test_default_schema_acts_like_resume(self):
+        """Default schema_type behaves like 'resume' for backwards compatibility."""
+        data = {"workExperience": [], "education": [{"degree": "BS"}]}
+        assert _appears_truncated(data) is True
+
+    def test_unknown_schema_no_heuristics(self):
+        """Unknown schema types have no truncation heuristics."""
+        data = {"anything": []}
+        assert _appears_truncated(data, schema_type="custom") is False
+
+
+# ---------------------------------------------------------------------------
+# complete_json JSON mode fallback
+# ---------------------------------------------------------------------------
+
+
+class TestCompleteJsonFallback:
+    """Tests for JSON mode fallback in complete_json()."""
+
+    @pytest.mark.asyncio
+    @patch("app.llm.get_router")
+    @patch("app.llm.get_model_name")
+    @patch("app.llm._supports_json_mode")
+    async def test_json_mode_fallback_on_parse_error(
+        self, mock_supports_json, mock_get_name, mock_get_router
+    ):
+        """When JSON mode returns invalid JSON, fallback to prompt-only mode.
+
+        First call: JSON mode enabled → returns malformed JSON (trailing comma)
+          → _extract_json succeeds → json.loads fails → JSONDecodeError
+        Second call: JSON mode disabled → returns valid JSON → success
+        """
+        mock_supports_json.return_value = True
+        mock_get_name.return_value = "openrouter/openai/gpt-5.4"
+
+        # First response: balanced braces but trailing comma → json.loads fails
+        bad_choice = MagicMock()
+        bad_choice.message.content = '{"items_to_enrich": [], "questions": [],}'
+        bad_response = MagicMock()
+        bad_response.choices = [bad_choice]
+
+        # Second response: valid JSON without JSON mode
+        good_choice = MagicMock()
+        good_choice.message.content = '{"items_to_enrich": [], "questions": [], "analysis_summary": "ok"}'
+        good_response = MagicMock()
+        good_response.choices = [good_choice]
+
+        router = MagicMock()
+        router.acompletion = AsyncMock(side_effect=[bad_response, good_response])
+        config = MagicMock()
+        config.provider = "openrouter"
+        config.reasoning_effort = None
+        mock_get_router.return_value = (router, config)
+
+        from app.llm import complete_json
+
+        result = await complete_json(
+            prompt="Test prompt",
+            schema_type="enrichment",
+            retries=2,
+        )
+
+        assert result == {
+            "items_to_enrich": [],
+            "questions": [],
+            "analysis_summary": "ok",
+        }
+        # Verify JSON mode was used on first call but not second
+        calls = router.acompletion.call_args_list
+        assert calls[0].kwargs.get("response_format") == {"type": "json_object"}
+        assert "response_format" not in calls[1].kwargs
+
+
+# ---------------------------------------------------------------------------
+# complete() dynamic timeout
+# ---------------------------------------------------------------------------
+
+
+class TestCompleteDynamicTimeout:
+    """Tests for complete() using _calculate_timeout()."""
+
+    @pytest.mark.asyncio
+    @patch("app.llm.get_router")
+    @patch("app.llm.get_model_name")
+    @patch("app.llm._calculate_timeout")
+    @patch("app.llm._supports_temperature")
+    async def test_uses_calculate_timeout(
+        self, mock_supports_temp, mock_calc_timeout, mock_get_name, mock_get_router
+    ):
+        """complete() passes provider and max_tokens to _calculate_timeout."""
+        mock_supports_temp.return_value = True
+        mock_calc_timeout.return_value = 180
+        mock_get_name.return_value = "deepseek/deepseek-chat"
+
+        choice = MagicMock()
+        choice.message.content = "Hello"
+        response = MagicMock()
+        response.choices = [choice]
+
+        router = MagicMock()
+        router.acompletion = AsyncMock(return_value=response)
+        config = MagicMock()
+        config.provider = "deepseek"
+        mock_get_router.return_value = (router, config)
+
+        from app.llm import complete
+
+        await complete(prompt="Hi", max_tokens=8192)
+
+        mock_calc_timeout.assert_called_once_with("completion", 8192, "deepseek")
+        router.acompletion.assert_awaited_once()
+        assert router.acompletion.call_args.kwargs["timeout"] == 180
