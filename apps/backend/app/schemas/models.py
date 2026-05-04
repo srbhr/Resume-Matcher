@@ -595,6 +595,18 @@ class FeatureConfigResponse(BaseModel):
     enable_outreach_message: bool = False
 
 
+class DownloadPathRequest(BaseModel):
+    """Request to update the resume download directory."""
+
+    download_path: str
+
+
+class DownloadPathResponse(BaseModel):
+    """Response for the resume download directory."""
+
+    download_path: str = ""
+
+
 class LanguageConfigRequest(BaseModel):
     """Request to update language settings."""
 

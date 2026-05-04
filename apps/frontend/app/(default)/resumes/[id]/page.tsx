@@ -7,8 +7,7 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import Resume, { ResumeData } from '@/components/dashboard/resume-component';
 import {
   fetchResume,
-  downloadResumePdf,
-  getResumePdfUrl,
+  saveResumePdfToPath,
   deleteResume,
   retryProcessing,
   renameResume,
@@ -19,7 +18,7 @@ import { EnrichmentModal } from '@/components/enrichment/enrichment-modal';
 import { useTranslations } from '@/lib/i18n';
 import { withLocalizedDefaultSections } from '@/lib/utils/section-helpers';
 import { useLanguage } from '@/lib/context/language-context';
-import { downloadBlobAsFile, openUrlInNewTab, sanitizeFilename } from '@/lib/utils/download';
+import { sanitizeFilename } from '@/lib/utils/download';
 
 type ProcessingStatus = 'pending' | 'processing' | 'ready' | 'failed';
 
@@ -37,6 +36,8 @@ export default function ResumeViewerPage() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showDeleteSuccessDialog, setShowDeleteSuccessDialog] = useState(false);
   const [showDownloadSuccessDialog, setShowDownloadSuccessDialog] = useState(false);
+  const [savedDownloadPath, setSavedDownloadPath] = useState<string | null>(null);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [showEnrichmentModal, setShowEnrichmentModal] = useState(false);
   const [isRetrying, setIsRetrying] = useState(false);
@@ -165,21 +166,15 @@ export default function ResumeViewerPage() {
 
   const handleDownload = async () => {
     setIsDownloading(true);
+    setDownloadError(null);
     try {
-      const blob = await downloadResumePdf(resumeId, undefined, uiLanguage);
       const filename = sanitizeFilename(resumeTitle, resumeId, 'resume');
-      downloadBlobAsFile(blob, filename);
+      const result = await saveResumePdfToPath(resumeId, filename, undefined, uiLanguage);
+      setSavedDownloadPath(result.saved_path);
       setShowDownloadSuccessDialog(true);
     } catch (err) {
-      console.error('Failed to download resume:', err);
-      if (err instanceof TypeError && err.message.includes('Failed to fetch')) {
-        const fallbackUrl = getResumePdfUrl(resumeId, undefined, uiLanguage);
-        const didOpen = openUrlInNewTab(fallbackUrl);
-        if (!didOpen) {
-          alert(t('common.popupBlocked', { url: fallbackUrl }));
-        }
-        return;
-      }
+      console.error('Failed to save resume:', err);
+      setDownloadError((err as Error).message || 'Failed to save resume.');
     } finally {
       setIsDownloading(false);
     }
@@ -418,12 +413,27 @@ export default function ResumeViewerPage() {
         open={showDownloadSuccessDialog}
         onOpenChange={setShowDownloadSuccessDialog}
         title={t('common.success')}
-        description={t('builder.alerts.downloadSuccess')}
+        description={
+          savedDownloadPath ? `Saved to ${savedDownloadPath}` : t('builder.alerts.downloadSuccess')
+        }
         confirmLabel={t('common.ok')}
         onConfirm={handleDownloadSuccessConfirm}
         variant="success"
         showCancelButton={false}
       />
+
+      {downloadError && (
+        <ConfirmDialog
+          open={!!downloadError}
+          onOpenChange={() => setDownloadError(null)}
+          title={t('common.error')}
+          description={downloadError}
+          confirmLabel={t('common.ok')}
+          onConfirm={() => setDownloadError(null)}
+          variant="danger"
+          showCancelButton={false}
+        />
+      )}
 
       {deleteError && (
         <ConfirmDialog

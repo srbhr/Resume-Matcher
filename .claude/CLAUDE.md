@@ -139,6 +139,82 @@ data = copy.deepcopy(DEFAULT_DATA)  # Correct
 
 ---
 
+## App-Specific Behaviors
+
+### `.env` is loaded by absolute path
+`apps/backend/app/config.py` defines `ENV_FILE_PATH = <repo>/apps/backend/.env`
+and passes it to `SettingsConfigDict(env_file=str(ENV_FILE_PATH), ...)`. This
+means `LLM_PROVIDER`, `LLM_MODEL`, `LLM_API_KEY`, etc. are picked up regardless
+of the CWD the backend was launched from. **Don't change `env_file` back to
+the bare `".env"` string** — that breaks env loading when `uvicorn` is started
+outside `apps/backend/`.
+
+### Resume Download writes to a backend-configured path
+Clicking **Download Resume** on `app/(default)/resumes/[id]/page.tsx` does NOT
+trigger a browser download. It POSTs to `/api/v1/resumes/{id}/save-pdf`, which
+renders the PDF and writes it to the directory stored under `download_path` in
+`apps/backend/data/config.json`. The user configures this path in
+**Settings → Resume Download Path**.
+
+Relevant pieces:
+- `apps/backend/app/routers/config.py` — `GET/PUT /config/download-path`
+  (validates existence + writability via a tempfile probe).
+- `apps/backend/app/routers/resumes.py` — `POST /{resume_id}/save-pdf`
+  (`_build_print_url_and_margins` is the shared helper between this and the
+  legacy GET `/pdf` endpoint, which is still used by the builder flow).
+- `apps/backend/app/schemas/models.py` — `DownloadPathRequest` /
+  `DownloadPathResponse`.
+- `apps/frontend/lib/api/resume.ts` — `saveResumePdfToPath()`.
+- `apps/frontend/lib/api/config.ts` — `fetchDownloadPath` /
+  `updateDownloadPath`.
+- `apps/frontend/app/(default)/settings/page.tsx` — UI section.
+- `apps/frontend/app/(default)/resumes/[id]/page.tsx` — `handleDownload()`.
+
+The builder page (`components/builder/resume-builder.tsx`) still uses the old
+browser-blob `downloadResumePdf` flow — leave it alone unless asked. The
+"download to disk" change applies only to the tailored-resume viewer.
+
+### Docker: download path lives inside the container
+Because the backend runs in the container, the path saved in Settings must
+exist *in the container*. To save to the host, bind-mount a host directory
+(see the commented example in `docker-compose.yml`) and enter the container
+path in Settings. This is the most common gotcha when testing the feature
+under Docker.
+
+### Anthropic Claude 4.x rejects non-default `temperature`
+Anthropic's Claude 4.x models (opus-4-x, sonnet-4-x, haiku-4-x) return
+`temperature is deprecated for this model` for any non-default value. LiteLLM's
+`drop_params=True` does **not** catch this — it's a server-side deprecation,
+not a client-side capability gap LiteLLM tracks. The gate lives in
+`apps/backend/app/llm.py::_supports_temperature(model_name, temperature)`,
+which queries LiteLLM's registry first and then applies provider-specific
+fallbacks — including the `claude-opus-4` / `claude-sonnet-4` /
+`claude-haiku-4` substring deny-list and a Moonshot `kimi-k2.6 != 1.0`
+restriction. `complete()` gates the `temperature` kwarg behind this check;
+`complete_json()` calls `_get_retry_temperature(model_name, attempt)` which
+returns `None` to signal "skip the field". **When adding new LLM call sites,
+route through `complete`/`complete_json` rather than calling
+`router.acompletion` directly** so the gate applies. If a future Anthropic
+release lifts the deprecation, drop the matching pattern from the tuple at
+the bottom of `_supports_temperature`.
+
+### Bullet-length cap in prompts (25 words)
+Every prompt that emits or rewrites resume bullets carries a "≤25 words, one
+sentence, no semicolons" rule:
+- `apps/backend/app/prompts/templates.py` — `IMPROVE_RESUME_PROMPT_NUDGE`,
+  `_KEYWORDS`, `_FULL`, and `DIFF_IMPROVE_PROMPT`.
+- `apps/backend/app/prompts/enrichment.py` — `ENHANCE_DESCRIPTION_PROMPT`,
+  `REGENERATE_ITEM_PROMPT`.
+- `apps/backend/app/prompts/refinement.py` — `KEYWORD_INJECTION_PROMPT`,
+  `VALIDATION_POLISH_PROMPT`.
+
+Cover-letter and outreach prompts intentionally exclude this cap (they're
+prose, not bullets). If you add a new bullet-generating prompt, add the same
+rule. There's no server-side enforcement — relying on the LLM to obey is
+intentional; a hard truncate would chop mid-sentence and lose metrics.
+
+---
+
 ## Design System Quick Reference
 
 | Element | Value |

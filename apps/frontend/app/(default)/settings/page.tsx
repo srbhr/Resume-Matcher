@@ -17,6 +17,8 @@ import {
   fetchFeaturePrompts,
   updateFeaturePrompts,
   FeaturePromptsError,
+  fetchDownloadPath,
+  updateDownloadPath,
   type LLMConfigUpdate,
   type LLMProvider,
   type LLMHealthCheck,
@@ -52,6 +54,7 @@ import {
   Globe,
   Trash2,
   AlertTriangle,
+  FolderDown,
 } from 'lucide-react';
 import { useLanguage } from '@/lib/context/language-context';
 import { useTranslations } from '@/lib/i18n';
@@ -147,6 +150,14 @@ export default function SettingsPage() {
     field: string;
     missing: string[];
   } | null>(null);
+
+  // Resume download path (where the backend writes the tailored PDF when
+  // the user clicks Download). Empty string means "not configured".
+  const [downloadPath, setDownloadPath] = useState('');
+  const [downloadPathStatus, setDownloadPathStatus] = useState<
+    'idle' | 'saving' | 'saved' | 'error'
+  >('idle');
+  const [downloadPathError, setDownloadPathError] = useState<string | null>(null);
 
   // Danger Zone state
   const [showClearApiKeysDialog, setShowClearApiKeysDialog] = useState(false);
@@ -264,12 +275,14 @@ export default function SettingsPage() {
 
     async function loadConfig() {
       try {
-        const [llmConfig, featureConfig, promptConfig, featurePrompts] = await Promise.all([
-          fetchLlmConfig().catch(() => null),
-          fetchFeatureConfig().catch(() => null),
-          fetchPromptConfig().catch(() => null),
-          fetchFeaturePrompts().catch(() => null),
-        ]);
+        const [llmConfig, featureConfig, promptConfig, featurePrompts, downloadPathCfg] =
+          await Promise.all([
+            fetchLlmConfig().catch(() => null),
+            fetchFeatureConfig().catch(() => null),
+            fetchPromptConfig().catch(() => null),
+            fetchFeaturePrompts().catch(() => null),
+            fetchDownloadPath().catch(() => null),
+          ]);
 
         if (cancelled) return;
 
@@ -306,6 +319,10 @@ export default function SettingsPage() {
           setOutreachPrompt(featurePrompts.outreach_message_prompt);
           setCoverLetterDefault(featurePrompts.cover_letter_default);
           setOutreachDefault(featurePrompts.outreach_message_default);
+        }
+
+        if (downloadPathCfg) {
+          setDownloadPath(downloadPathCfg.download_path || '');
         }
 
         setStatus('idle');
@@ -419,6 +436,24 @@ export default function SettingsPage() {
       console.error('Failed to test connection', err);
       setHealthCheck({ healthy: false, provider, model, error: (err as Error).message });
       setStatus('idle');
+    }
+  };
+
+  // Save the resume download directory. The backend validates that the
+  // path exists and is writable; surface its error message verbatim so
+  // users know exactly which constraint failed.
+  const handleSaveDownloadPath = async () => {
+    setDownloadPathStatus('saving');
+    setDownloadPathError(null);
+    try {
+      const updated = await updateDownloadPath(downloadPath.trim());
+      setDownloadPath(updated.download_path || '');
+      setDownloadPathStatus('saved');
+      setTimeout(() => setDownloadPathStatus('idle'), 2000);
+    } catch (err) {
+      console.error('Failed to save download path', err);
+      setDownloadPathError((err as Error).message);
+      setDownloadPathStatus('error');
     }
   };
 
@@ -1008,6 +1043,56 @@ export default function SettingsPage() {
                       )}
                     </div>
                   )}
+                </div>
+              )}
+            </div>
+          </section>
+
+          {/* Resume Download Path */}
+          <section className="space-y-6">
+            <div className="flex items-center gap-2 border-b border-black/10 pb-2">
+              <FolderDown className="w-4 h-4" />
+              <h2 className="font-mono text-sm font-bold uppercase tracking-wider">
+                Resume Download Path
+              </h2>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="downloadPath">Save tailored resumes to</Label>
+              <Input
+                id="downloadPath"
+                value={downloadPath}
+                onChange={(e) => setDownloadPath(e.target.value)}
+                placeholder="/Users/you/Documents/Resumes"
+                className="font-mono"
+              />
+              <p className="text-xs text-steel-grey font-mono">
+                Absolute path to a writable directory on the machine running the backend. Clicking
+                Download Resume writes the PDF here instead of the browser&apos;s downloads folder.
+                When the backend runs in Docker, enter the container path (e.g.{' '}
+                <code>/downloads</code>) and bind-mount your host folder to it in{' '}
+                <code>docker-compose.yml</code>.
+              </p>
+              <div className="flex gap-4 pt-2">
+                <Button onClick={handleSaveDownloadPath} disabled={downloadPathStatus === 'saving'}>
+                  {downloadPathStatus === 'saving' ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : downloadPathStatus === 'saved' ? (
+                    <>
+                      <CheckCircle2 className="w-4 h-4" />
+                      {t('common.success')}
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4" />
+                      {t('common.save')}
+                    </>
+                  )}
+                </Button>
+              </div>
+              {downloadPathError && (
+                <div className="border border-red-300 bg-red-50 p-3">
+                  <p className="text-xs text-red-600 font-mono break-words">{downloadPathError}</p>
                 </div>
               )}
             </div>

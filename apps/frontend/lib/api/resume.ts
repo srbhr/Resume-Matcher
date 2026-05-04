@@ -265,6 +265,31 @@ export async function downloadResumePdf(
   return await res.blob();
 }
 
+export interface SaveResumePdfResponse {
+  saved_path: string;
+  filename: string;
+}
+
+export async function saveResumePdfToPath(
+  resumeId: string,
+  filename: string,
+  settings?: TemplateSettings,
+  locale?: Locale
+): Promise<SaveResumePdfResponse> {
+  const baseUrl = getResumePdfUrl(resumeId, settings, locale);
+  // Replace the trailing /pdf path segment with /save-pdf, preserving every
+  // template/locale query param the GET endpoint already encoded.
+  const url = baseUrl.replace('/pdf?', '/save-pdf?');
+  const separator = url.includes('?') ? '&' : '?';
+  const finalUrl = `${url}${separator}filename=${encodeURIComponent(filename)}`;
+  const res = await apiFetch(finalUrl, { method: 'POST' });
+  if (!res.ok) {
+    const data = (await res.json().catch(() => ({}))) as { detail?: string };
+    throw new Error(data.detail || `Failed to save resume PDF (status ${res.status}).`);
+  }
+  return (await res.json()) as SaveResumePdfResponse;
+}
+
 /** Deletes a resume by ID */
 export async function deleteResume(resumeId: string): Promise<void> {
   const res = await apiDelete(`/resumes/${encodeURIComponent(resumeId)}`);

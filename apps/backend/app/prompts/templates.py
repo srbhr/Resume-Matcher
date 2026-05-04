@@ -240,6 +240,7 @@ Rules:
 - Do NOT add new bullet points or sections
 - Preserve original bullet count and ordering within each section
 - Keep proper nouns (names, company names, locations) unchanged
+- Keep every bullet point to 25 words or fewer — one sentence, no semicolons. If a bullet exceeds 25 words, trim filler and secondary clauses; never add a clause that pushes it over.
 - For customSections: preserve exact structure, item count, titles, subtitles, and years. If an item's description is an empty array [] in the original, keep it empty []. Do NOT generate descriptions for items that had none.
 - Copy the "years" field values EXACTLY as they appear in the original resume (including any month prefixes like "Jan 2020 - Present"). Do not shorten, reformat, or drop months.
 - If the resume is non-technical, do NOT add technical jargon
@@ -269,6 +270,7 @@ Rules:
 - You may rephrase bullet points to include keyword phrasing
 - Do NOT introduce new skills, tools, or certifications not in the resume
 - Do NOT change role, industry, or seniority level
+- Keep every bullet point to 25 words or fewer — one sentence, no semicolons. When inserting keywords, drop adjacent filler so the bullet stays within budget.
 - For customSections: preserve exact structure, item count, titles, subtitles, and years. If an item's description is an empty array [] in the original, keep it empty []. Do NOT generate descriptions for items that had none.
 - Copy the "years" field values EXACTLY as they appear in the original resume (including any month prefixes like "Jan 2020 - Present"). Do not shorten, reformat, or drop months.
 - If resume is non-technical, keep language non-technical while still aligning keywords
@@ -297,6 +299,7 @@ Rules:
 - Make targeted adjustments to bullet points to align with job description phrasing. Preserve the candidate's original details and voice - adjust wording, do not rewrite entirely.
 - DO NOT invent new information
 - Preserve existing action verbs. Do not invent quantifiable achievements not in the original.
+- Keep every bullet point to 25 words or fewer — one sentence, no semicolons. Trim filler and secondary clauses to stay within budget; never expand a bullet past 25 words to add detail.
 - Keep proper nouns (names, company names, locations) unchanged
 - Translate job titles, descriptions, and skills to {output_language}
 - For customSections: preserve exact structure, item count, titles, subtitles, and years. If an item's description is an empty array [] in the original, keep it empty []. Do NOT generate descriptions for items that had none.
@@ -431,6 +434,7 @@ RULES:
 7. Generate all new text in {output_language}
 8. Do not use em dash characters
 9. Keep changes minimal and targeted — do not rewrite content that already aligns well
+10. Each bullet "value" must be 25 words or fewer — one sentence, no semicolons. Trim filler before letting a replacement go over; if the original was already over 25 words, your replacement must still respect the cap.
 
 PATHS you can target:
 - "summary" — the resume summary text

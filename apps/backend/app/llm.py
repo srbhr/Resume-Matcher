@@ -732,6 +732,12 @@ def _supports_json_mode(model_name: str) -> bool:
 
 
 def _appears_truncated(data: dict, schema_type: str = "resume") -> bool:
+    # Upstream merged an empty stub here; the real implementation lives below
+    # at the second `_appears_truncated(data: dict)` definition, which shadows
+    # this one at runtime. Body left as `pass` so the module imports.
+    pass
+
+
 FALLBACK_MAX_TOKENS = 4096
 
 def get_safe_max_tokens(model_name: str, requested: int = DEFAULT_JSON_MAX_TOKENS) -> int:
@@ -866,12 +872,18 @@ def _supports_temperature(model_name: str, temperature: float | None = None) -> 
         return False
 
     # Provider-specific restrictions not captured by the registry.
-    # Anthropic Opus 4.x deprecated temperature entirely.
-    if "claude-opus-4" in model_name.lower():
+    # The whole Anthropic Claude 4.x line (opus, sonnet, haiku) deprecated
+    # `temperature`; substring match so future point versions are covered
+    # without code changes.
+    lowered = model_name.lower()
+    if any(
+        pat in lowered
+        for pat in ("claude-opus-4", "claude-sonnet-4", "claude-haiku-4")
+    ):
         return False
 
     # Moonshot kimi-k2.6 only allows temperature=1.
-    if "kimi-k2.6" in model_name.lower() and temperature != 1.0:
+    if "kimi-k2.6" in lowered and temperature != 1.0:
         return False
 
     return True

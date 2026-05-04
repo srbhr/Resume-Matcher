@@ -159,6 +159,33 @@ export const PROVIDER_INFO: Record<
   ollama: { name: 'Ollama (Local)', defaultModel: 'gemma3:4b', requiresKey: false },
 };
 
+// Download path configuration
+export interface DownloadPathConfig {
+  download_path: string;
+}
+
+export async function fetchDownloadPath(): Promise<DownloadPathConfig> {
+  const res = await apiFetch('/config/download-path', { credentials: 'include' });
+  if (!res.ok) {
+    throw new Error(`Failed to load download path (status ${res.status}).`);
+  }
+  return res.json();
+}
+
+export async function updateDownloadPath(path: string): Promise<DownloadPathConfig> {
+  const res = await apiFetch('/config/download-path', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ download_path: path }),
+  });
+  if (!res.ok) {
+    const data = (await res.json().catch(() => ({}))) as { detail?: string };
+    throw new Error(data.detail || `Failed to update download path (status ${res.status}).`);
+  }
+  return res.json();
+}
+
 // Feature configuration types
 export interface FeatureConfig {
   enable_cover_letter: boolean;

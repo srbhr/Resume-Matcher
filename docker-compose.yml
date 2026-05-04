@@ -7,6 +7,12 @@ services:
       - "${PORT:-3000}:3000"
     volumes:
       - resume-data:/app/backend/data
+      # Resume Download Path (Settings → Resume Download Path):
+      # The backend runs inside the container, so the path you configure must
+      # exist in the CONTAINER. Bind-mount a host directory below, then enter
+      # the container path (e.g. /downloads) in Settings to write PDFs to your
+      # host machine.
+      - /Users/the_shire/Documents/Resumes:/downloads
     #secrets:
     #  - llm_api_key
     environment:

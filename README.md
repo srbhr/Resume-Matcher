@@ -138,7 +138,11 @@ Analyze your resume against the job description with a match score, keyword high
 
 ### PDF Export
 
-Export your tailored resume and cover letter in PDF.
+Export your tailored resume and cover letter in PDF. Clicking **Download Resume**
+on a tailored resume writes the PDF to a directory you configure in
+**Settings → Resume Download Path** (no browser download dialog). The directory
+must exist on the machine running the backend and be writable; the backend
+validates this when you save the path.
 
 ### Templates
 
@@ -238,6 +242,13 @@ Endpoints:
 - API docs: <http://localhost:3000/docs>
 
 > **Using Ollama with Docker?** Use `http://host.docker.internal:11434` as the Ollama URL instead of `localhost`.
+
+> **Saving downloaded resumes to your host?** The Resume Download Path is
+> resolved inside the container, so bind-mount a host directory and point the
+> Settings field at the *container* path. Example: add
+> `-v /Users/you/Documents/Resumes:/downloads` to your `docker run`, then enter
+> `/downloads` in **Settings → Resume Download Path**. (`docker-compose.yml`
+> includes a commented-out example.)
 
 ### Tech Stack
 

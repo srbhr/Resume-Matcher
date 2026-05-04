@@ -1345,6 +1345,90 @@ async def update_resume_endpoint(
     )
 
 
+def _build_print_url_and_margins(
+    resume_id: str,
+    *,
+    template: str,
+    pageSize: str,
+    marginTop: int,
+    marginBottom: int,
+    marginLeft: int,
+    marginRight: int,
+    sectionSpacing: int,
+    itemSpacing: int,
+    lineHeight: int,
+    fontSize: int,
+    headerScale: int,
+    headerFont: str,
+    bodyFont: str,
+    compactMode: bool,
+    showContactIcons: bool,
+    accentColor: str,
+    lang: str | None,
+) -> tuple[str, dict[str, int]]:
+    """Build the print URL and PDF margin dict from rendering options."""
+    params = (
+        f"template={template}"
+        f"&pageSize={pageSize}"
+        f"&marginTop={marginTop}"
+        f"&marginBottom={marginBottom}"
+        f"&marginLeft={marginLeft}"
+        f"&marginRight={marginRight}"
+        f"&sectionSpacing={sectionSpacing}"
+        f"&itemSpacing={itemSpacing}"
+        f"&lineHeight={lineHeight}"
+        f"&fontSize={fontSize}"
+        f"&headerScale={headerScale}"
+        f"&headerFont={headerFont}"
+        f"&bodyFont={bodyFont}"
+        f"&compactMode={str(compactMode).lower()}"
+        f"&showContactIcons={str(showContactIcons).lower()}"
+        f"&accentColor={accentColor}"
+    )
+    if lang:
+        params = f"{params}&lang={lang}"
+    url = f"{settings.frontend_base_url}/print/resumes/{resume_id}?{params}"
+    margins = {
+        "top": marginTop,
+        "right": marginRight,
+        "bottom": marginBottom,
+        "left": marginLeft,
+    }
+    return url, margins
+
+
+def _sanitize_pdf_filename(name: str | None, resume_id: str) -> str:
+    """Sanitize a user-supplied filename for safe writing to disk.
+
+    Strips path separators and null bytes, falls back to ``resume_{id}.pdf``
+    when blank, and ensures a ``.pdf`` extension.
+    """
+    candidate = (name or "").strip().replace("\x00", "")
+    candidate = candidate.replace("/", "_").replace("\\", "_")
+    # Strip leading dots/whitespace so we don't write hidden files.
+    candidate = candidate.lstrip(". ")
+    if not candidate:
+        candidate = f"resume_{resume_id}.pdf"
+    if not candidate.lower().endswith(".pdf"):
+        candidate = f"{candidate}.pdf"
+    return candidate
+
+
+def _resolve_unique_path(directory: Path, filename: str) -> Path:
+    """Return a path inside ``directory`` that doesn't collide with existing files."""
+    target = directory / filename
+    if not target.exists():
+        return target
+    stem = target.stem
+    suffix = target.suffix
+    counter = 1
+    while True:
+        candidate = directory / f"{stem} ({counter}){suffix}"
+        if not candidate.exists():
+            return candidate
+        counter += 1
+
+
 @router.get("/{resume_id}/pdf")
 async def download_resume_pdf(
     resume_id: str,
@@ -1387,38 +1471,27 @@ async def download_resume_pdf(
     if not resume:
         raise HTTPException(status_code=404, detail="Resume not found")
 
-    # Build print URL with all settings
-    params = (
-        f"template={template}"
-        f"&pageSize={pageSize}"
-        f"&marginTop={marginTop}"
-        f"&marginBottom={marginBottom}"
-        f"&marginLeft={marginLeft}"
-        f"&marginRight={marginRight}"
-        f"&sectionSpacing={sectionSpacing}"
-        f"&itemSpacing={itemSpacing}"
-        f"&lineHeight={lineHeight}"
-        f"&fontSize={fontSize}"
-        f"&headerScale={headerScale}"
-        f"&headerFont={headerFont}"
-        f"&bodyFont={bodyFont}"
-        f"&compactMode={str(compactMode).lower()}"
-        f"&showContactIcons={str(showContactIcons).lower()}"
-        f"&accentColor={accentColor}"
+    url, pdf_margins = _build_print_url_and_margins(
+        resume_id,
+        template=template,
+        pageSize=pageSize,
+        marginTop=marginTop,
+        marginBottom=marginBottom,
+        marginLeft=marginLeft,
+        marginRight=marginRight,
+        sectionSpacing=sectionSpacing,
+        itemSpacing=itemSpacing,
+        lineHeight=lineHeight,
+        fontSize=fontSize,
+        headerScale=headerScale,
+        headerFont=headerFont,
+        bodyFont=bodyFont,
+        compactMode=compactMode,
+        showContactIcons=showContactIcons,
+        accentColor=accentColor,
+        lang=lang,
     )
-    if lang:
-        params = f"{params}&lang={lang}"
-    url = f"{settings.frontend_base_url}/print/resumes/{resume_id}?{params}"
 
-    # Use the exact margins provided; compact mode only affects spacing.
-    pdf_margins = {
-        "top": marginTop,
-        "right": marginRight,
-        "bottom": marginBottom,
-        "left": marginLeft,
-    }
-
-    # Render PDF with margins applied to every page
     try:
         pdf_bytes = await render_resume_pdf(url, pageSize, margins=pdf_margins)
     except PDFRenderError as e:
@@ -1426,6 +1499,95 @@ async def download_resume_pdf(
 
     headers = {"Content-Disposition": f'attachment; filename="resume_{resume_id}.pdf"'}
     return Response(content=pdf_bytes, media_type="application/pdf", headers=headers)
+
+
+@router.post("/{resume_id}/save-pdf")
+async def save_resume_pdf_to_disk(
+    resume_id: str,
+    filename: str | None = Query(None),
+    template: str = Query("swiss-single"),
+    pageSize: str = Query("A4", pattern="^(A4|LETTER)$"),
+    marginTop: int = Query(10, ge=5, le=25),
+    marginBottom: int = Query(10, ge=5, le=25),
+    marginLeft: int = Query(10, ge=5, le=25),
+    marginRight: int = Query(10, ge=5, le=25),
+    sectionSpacing: int = Query(3, ge=1, le=5),
+    itemSpacing: int = Query(2, ge=1, le=5),
+    lineHeight: int = Query(3, ge=1, le=5),
+    fontSize: int = Query(3, ge=1, le=5),
+    headerScale: int = Query(3, ge=1, le=5),
+    headerFont: str = Query("serif", pattern="^(serif|sans-serif|mono)$"),
+    bodyFont: str = Query("sans-serif", pattern="^(serif|sans-serif|mono)$"),
+    compactMode: bool = Query(False),
+    showContactIcons: bool = Query(False),
+    accentColor: str = Query("blue", pattern="^(blue|green|orange|red)$"),
+    lang: str | None = Query(None, pattern="^[a-z]{2}(-[A-Z]{2})?$"),
+) -> dict[str, str]:
+    """Render the resume PDF and write it to the configured download directory.
+
+    Returns the absolute filesystem path of the written file. Errors:
+      - 404 if the resume doesn't exist
+      - 400 if no download_path is configured (user must set one in Settings)
+      - 400 if the configured directory disappeared or became unwritable
+      - 503 if PDF rendering fails
+    """
+    resume = db.get_resume(resume_id)
+    if not resume:
+        raise HTTPException(status_code=404, detail="Resume not found")
+
+    config = _load_config()
+    raw_path = (config.get("download_path") or "").strip()
+    if not raw_path:
+        raise HTTPException(
+            status_code=400,
+            detail="No download path configured. Set one in Settings.",
+        )
+
+    target_dir = Path(raw_path).expanduser()
+    if not target_dir.is_dir():
+        raise HTTPException(
+            status_code=400,
+            detail=f"Configured download path is not a directory: {target_dir}",
+        )
+
+    safe_name = _sanitize_pdf_filename(filename, resume_id)
+    output_path = _resolve_unique_path(target_dir, safe_name)
+
+    url, pdf_margins = _build_print_url_and_margins(
+        resume_id,
+        template=template,
+        pageSize=pageSize,
+        marginTop=marginTop,
+        marginBottom=marginBottom,
+        marginLeft=marginLeft,
+        marginRight=marginRight,
+        sectionSpacing=sectionSpacing,
+        itemSpacing=itemSpacing,
+        lineHeight=lineHeight,
+        fontSize=fontSize,
+        headerScale=headerScale,
+        headerFont=headerFont,
+        bodyFont=bodyFont,
+        compactMode=compactMode,
+        showContactIcons=showContactIcons,
+        accentColor=accentColor,
+        lang=lang,
+    )
+
+    try:
+        pdf_bytes = await render_resume_pdf(url, pageSize, margins=pdf_margins)
+    except PDFRenderError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+
+    try:
+        output_path.write_bytes(pdf_bytes)
+    except OSError as e:
+        logger.error(f"Failed to write resume PDF to {output_path}: {e}")
+        raise HTTPException(
+            status_code=400, detail=f"Failed to write PDF: {e}"
+        ) from e
+
+    return {"saved_path": str(output_path), "filename": output_path.name}
 
 
 @router.delete("/{resume_id}")

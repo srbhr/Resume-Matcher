@@ -119,7 +119,7 @@ IMPORTANT RULES:
 - Preserve factual accuracy - only use information provided by the candidate
 - Don't invent metrics or details not given by the candidate
 - If candidate's answers are brief, still add what you can
-- Keep bullets concise (1-2 lines each)
+- Keep every bullet to 25 words or fewer — one sentence, no semicolons. If a bullet runs long, split the idea across two bullets or drop the weakest clause.
 - Use past tense for past roles, present tense for current roles
 - Avoid buzzwords and fluff - be specific and concrete
 - Focus on information from the candidate's answers that isn't already in the original bullets"""
@@ -168,7 +168,7 @@ RULES:
 - Directly address the user's instruction
 - Do NOT add any new facts, metrics, dates, companies, titles, or accomplishments that are not already present in CURRENT DESCRIPTION or USER'S FEEDBACK/INSTRUCTION
 - If the user asks for metrics but none exist in the provided text, do not fabricate numbers; rewrite to emphasize scope/impact qualitatively instead
-- Keep bullets concise (1-2 lines each)
+- Keep every bullet to 25 words or fewer — one sentence, no semicolons. If a bullet runs long, split the idea across two bullets or drop the weakest clause.
 - Use past tense for past roles, present tense for current"""
 
 

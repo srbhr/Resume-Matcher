@@ -143,6 +143,7 @@ CRITICAL RULES:
 3. Rephrase existing bullet points to include keywords - do not invent new content
 4. Maintain the exact same JSON structure
 5. Do not use em-dashes (—) or their variants (---, --)
+6. Each bullet must be 25 words or fewer — one sentence, no semicolons. When inserting a keyword, drop adjacent filler so the bullet stays within budget; never let a rewrite go over the cap.
 
 Keywords to inject (only if supported by master resume):
 {keywords_to_inject}
@@ -172,6 +173,9 @@ VERIFY:
 - All skills exist in the master resume
 - All certifications exist in the master resume
 - No fabricated metrics or achievements
+
+ENFORCE:
+- Each bullet must be 25 words or fewer — one sentence, no semicolons. If the source bullet is over 25 words, trim filler and secondary clauses; never let a polish pass expand a bullet past the cap.
 
 Resume to polish:
 {resume}

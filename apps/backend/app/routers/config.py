@@ -11,6 +11,8 @@ from app.llm import check_llm_health, LLMConfig, resolve_api_key
 from app.schemas import (
     LLMConfigRequest,
     LLMConfigResponse,
+    DownloadPathRequest,
+    DownloadPathResponse,
     FeatureConfigRequest,
     FeatureConfigResponse,
     FeaturePromptsRequest,
@@ -209,6 +211,58 @@ async def test_llm_connection(request: LLMConfigRequest | None = None) -> dict:
 
     test_prompt = "Hi"
     return await check_llm_health(config, include_details=True, test_prompt=test_prompt)
+
+
+@router.get("/download-path", response_model=DownloadPathResponse)
+async def get_download_path() -> DownloadPathResponse:
+    """Get the configured directory where tailored resume PDFs are saved."""
+    stored = _load_config()
+    return DownloadPathResponse(download_path=stored.get("download_path", "") or "")
+
+
+@router.put("/download-path", response_model=DownloadPathResponse)
+async def update_download_path(request: DownloadPathRequest) -> DownloadPathResponse:
+    """Update the directory where tailored resume PDFs are saved.
+
+    Validates that the path expands to an existing, writable directory. Empty
+    string clears the override (the save endpoint will then return an error
+    asking the user to configure a path).
+    """
+    raw = request.download_path.strip()
+    if raw:
+        try:
+            expanded = Path(raw).expanduser().resolve()
+        except (OSError, RuntimeError) as e:
+            raise HTTPException(
+                status_code=400, detail=f"Invalid path: {e}"
+            ) from e
+        if not expanded.exists():
+            raise HTTPException(
+                status_code=400, detail=f"Path does not exist: {expanded}"
+            )
+        if not expanded.is_dir():
+            raise HTTPException(
+                status_code=400, detail=f"Path is not a directory: {expanded}"
+            )
+        # Probe writability with a tempfile rather than os.access (which lies
+        # about ACL-restricted paths on macOS).
+        probe = expanded / ".resume-fit-write-test"
+        try:
+            probe.touch()
+            probe.unlink()
+        except OSError as e:
+            raise HTTPException(
+                status_code=400, detail=f"Path is not writable: {e}"
+            ) from e
+        stored_value = str(expanded)
+    else:
+        stored_value = ""
+
+    stored = _load_config()
+    stored["download_path"] = stored_value
+    _save_config(stored)
+
+    return DownloadPathResponse(download_path=stored_value)
 
 
 @router.get("/features", response_model=FeatureConfigResponse)

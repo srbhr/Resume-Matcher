@@ -10,6 +10,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Path to config file for API key persistence
 CONFIG_FILE_PATH = Path(__file__).parent.parent / "data" / "config.json"
+# Absolute path to the .env file so pydantic-settings finds it regardless of
+# the CWD the server is launched from.
+ENV_FILE_PATH = Path(__file__).parent.parent / ".env"
 ALLOWED_LOG_LEVELS = ("CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG")
 
 
@@ -115,7 +118,7 @@ class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=str(ENV_FILE_PATH),
         env_file_encoding="utf-8",
         extra="ignore",
     )
