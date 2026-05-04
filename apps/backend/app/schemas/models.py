@@ -569,6 +569,23 @@ class LLMConfigRequest(BaseModel):
     # Strictly typed so invalid values are rejected at the boundary (422)
     # rather than corrupting config.json and crashing later reads.
     reasoning_effort: Literal["minimal", "low", "medium", "high", ""] | None = None
+    # Optional timeout override (seconds). When set, overrides the default
+    # base timeout used for completion and JSON operations. Health checks
+    # keep their 30s default. Range: 30–600 (5–10 minutes).
+    timeout_seconds: int | None = None
+
+    @field_validator("timeout_seconds", mode="before")
+    @classmethod
+    def _validate_timeout_seconds(cls, value: Any) -> int | None:
+        if value is None:
+            return None
+        try:
+            v = int(value)
+        except (TypeError, ValueError):
+            raise ValueError("timeout_seconds must be an integer")
+        if v < 30 or v > 600:
+            raise ValueError("timeout_seconds must be between 30 and 600")
+        return v
 
 
 class LLMConfigResponse(BaseModel):
@@ -579,6 +596,7 @@ class LLMConfigResponse(BaseModel):
     api_key: str  # Masked
     api_base: str | None = None
     reasoning_effort: ReasoningEffortLiteral | None = None
+    timeout_seconds: int | None = None
 
 
 class FeatureConfigRequest(BaseModel):
@@ -680,6 +698,7 @@ class ApiKeysUpdateRequest(BaseModel):
     google: str | None = None
     openrouter: str | None = None
     deepseek: str | None = None
+    groq: str | None = None
 
 
 class ApiKeysUpdateResponse(BaseModel):

@@ -67,6 +67,7 @@ const PROVIDERS: LLMProvider[] = [
   'openrouter',
   'gemini',
   'deepseek',
+  'groq',
   'ollama',
 ];
 
@@ -115,6 +116,7 @@ export default function SettingsPage() {
   // won't re-fire on next load). Typed tightly so invalid values can't leak
   // through the save path.
   const [reasoningEffort, setReasoningEffort] = useState<ReasoningEffort | 'auto'>('auto');
+  const [timeoutSeconds, setTimeoutSeconds] = useState<number | null>(null);
 
   // Use cached system status (loaded on app start, refreshes every 30 min)
   const {
@@ -285,6 +287,7 @@ export default function SettingsPage() {
           setApiKey(isMaskedKey ? '' : llmConfig.api_key || '');
           setApiBase(llmConfig.api_base || '');
           setReasoningEffort((llmConfig.reasoning_effort as ReasoningEffort | null) ?? 'auto');
+          setTimeoutSeconds(llmConfig.timeout_seconds ?? null);
 
           if (providerFromBackend !== safeProvider) {
             setError(t('settings.errors.unknownProvider', { provider: providerFromBackend }));
@@ -363,6 +366,7 @@ export default function SettingsPage() {
         // Map UI sentinel 'auto' → '' so the server persists an empty string
         // and the gpt-5 auto-migration won't re-fire.
         reasoning_effort: reasoningEffort === 'auto' ? '' : (reasoningEffort as ReasoningEffort),
+        timeout_seconds: timeoutSeconds,
       };
       // Key-send policy (applies to BOTH requiresKey=true and false):
       //   - User typed a new key → send it (overwrite stored).
@@ -403,6 +407,7 @@ export default function SettingsPage() {
         model: model.trim() || providerInfo.defaultModel,
         api_base: apiBase.trim() || null,
         reasoning_effort: reasoningEffort === 'auto' ? '' : (reasoningEffort as ReasoningEffort),
+        timeout_seconds: timeoutSeconds,
       };
 
       // Send the user-typed key if present (for any provider, required or
@@ -502,6 +507,7 @@ export default function SettingsPage() {
         setApiKey(isMaskedKey ? '' : llmConfig.api_key || '');
         setApiBase(llmConfig.api_base || '');
         setReasoningEffort(llmConfig.reasoning_effort ?? 'auto');
+        setTimeoutSeconds(llmConfig.timeout_seconds ?? null);
       } else {
         // Fallback if refetch fails
         setApiKey('');
@@ -897,6 +903,37 @@ export default function SettingsPage() {
                 />
                 <p className="text-xs text-steel-grey font-mono">
                   {t('settings.llmConfiguration.reasoningEffortDescription')}
+                </p>
+              </div>
+
+              {/* Timeout Override */}
+              <div className="space-y-2">
+                <Label htmlFor="timeoutSeconds">
+                  {t('settings.llmConfiguration.timeoutLabel')}
+                </Label>
+                <Input
+                  id="timeoutSeconds"
+                  type="number"
+                  min={30}
+                  max={600}
+                  step={30}
+                  value={timeoutSeconds ?? ''}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === '') {
+                      setTimeoutSeconds(null);
+                    } else {
+                      const num = parseInt(val, 10);
+                      if (!isNaN(num)) {
+                        setTimeoutSeconds(Math.min(600, Math.max(30, num)));
+                      }
+                    }
+                  }}
+                  placeholder={t('settings.llmConfiguration.timeoutPlaceholder')}
+                  className="font-mono"
+                />
+                <p className="text-xs text-steel-grey font-mono">
+                  {t('settings.llmConfiguration.timeoutDescription')}
                 </p>
               </div>
 
