@@ -306,7 +306,7 @@ export const ResumeModernTwoColumn: React.FC<ResumeModernTwoColumnProps> = ({
               <div className={baseStyles['resume-section']}>
                 <h3 className={styles.sectionTitleAccent}>{headingFallbacks.certifications}</h3>
                 <ul className={`ml-4 ${baseStyles['resume-list']} ${baseStyles['resume-text-xs']}`}>
-                  {additional.certificationsTraining.map((cert, index) => (
+                  {additional.certificationsTraining.filter((s) => s.trim()).map((cert, index) => (
                     <li key={index} className="flex">
                       <span className="mr-1.5 flex-shrink-0">•&nbsp;</span>
                       <span>{cert}</span>
@@ -371,7 +371,7 @@ export const ResumeModernTwoColumn: React.FC<ResumeModernTwoColumnProps> = ({
                   {headingFallbacks.skills}
                 </h3>
                 <div className="flex flex-wrap gap-1">
-                  {additional.technicalSkills.map((skill, index) => (
+                  {additional.technicalSkills.filter((s) => s.trim()).map((skill, index) => (
                     <span key={index} className={baseStyles['resume-skill-pill']}>
                       {skill}
                     </span>
@@ -390,7 +390,7 @@ export const ResumeModernTwoColumn: React.FC<ResumeModernTwoColumnProps> = ({
                 >
                   {headingFallbacks.languages}
                 </h3>
-                <p className={baseStyles['resume-text-xs']}>{additional.languages.join(' • ')}</p>
+                <p className={baseStyles['resume-text-xs']}>{additional.languages.filter((s) => s.trim()).join(' • ')}</p>
               </div>
             )}
 
@@ -403,7 +403,7 @@ export const ResumeModernTwoColumn: React.FC<ResumeModernTwoColumnProps> = ({
                 {headingFallbacks.awards}
               </h3>
               <ul className={baseStyles['resume-list']}>
-                {additional.awards.map((award, index) => (
+                {additional.awards.filter((s) => s.trim()).map((award, index) => (
                   <li key={index} className={baseStyles['resume-text-xs']}>
                     {award}
                   </li>
