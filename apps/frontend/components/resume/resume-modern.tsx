@@ -396,25 +396,25 @@ const AdditionalSection: React.FC<{
         {technicalSkills.length > 0 && (
           <div className="flex">
             <span className="font-bold w-32 shrink-0">{mergedLabels.technicalSkills}</span>
-            <span>{technicalSkills.join(', ')}</span>
+            <span>{technicalSkills.filter((s) => s.trim()).join(', ')}</span>
           </div>
         )}
         {languages.length > 0 && (
           <div className="flex">
             <span className="font-bold w-32 shrink-0">{mergedLabels.languages}</span>
-            <span>{languages.join(', ')}</span>
+            <span>{languages.filter((s) => s.trim()).join(', ')}</span>
           </div>
         )}
         {certificationsTraining.length > 0 && (
           <div className="flex">
             <span className="font-bold w-32 shrink-0">{mergedLabels.certifications}</span>
-            <span>{certificationsTraining.join(', ')}</span>
+            <span>{certificationsTraining.filter((s) => s.trim()).join(', ')}</span>
           </div>
         )}
         {awards.length > 0 && (
           <div className="flex">
             <span className="font-bold w-32 shrink-0">{mergedLabels.awards}</span>
-            <span>{awards.join(', ')}</span>
+            <span>{awards.filter((s) => s.trim()).join(', ')}</span>
           </div>
         )}
       </div>
