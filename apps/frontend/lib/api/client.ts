@@ -6,6 +6,7 @@
 
 const DEFAULT_PUBLIC_API_URL = '/';
 const INTERNAL_API_ORIGIN = 'http://127.0.0.1:8000';
+const DEFAULT_REQUEST_TIMEOUT_MS = 600_000;
 
 function normalizeApiUrl(value: string): string {
   const trimmed = value.trim();
@@ -38,7 +39,7 @@ export const API_BASE = resolveRuntimeApiBase(toApiBase(API_URL));
  *
  * @param endpoint - API endpoint path or absolute URL
  * @param options - Standard RequestInit options
- * @param timeoutMs - Optional request timeout in milliseconds (default: 240_000)
+ * @param timeoutMs - Optional request timeout in milliseconds (default: 600_000)
  */
 export async function apiFetch(
   endpoint: string,
@@ -56,13 +57,18 @@ export async function apiFetch(
     url = resolveRuntimeApiBase(normalizedEndpoint);
   }
 
-  // Matches the backend's 240s hard limit (resumes.py wait_for timeout)
-  const timeout = timeoutMs ?? 240_000;
+  // Matches the backend's 10-minute hard limit for long-running AI requests.
+  const timeout = timeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeout);
 
   try {
     return await fetch(url, { ...options, signal: controller.signal });
+  } catch (error) {
+    if (controller.signal.aborted) {
+      throw new Error(`Request timed out after ${Math.ceil(timeout / 1000)} seconds.`);
+    }
+    throw error;
   } finally {
     clearTimeout(timer);
   }

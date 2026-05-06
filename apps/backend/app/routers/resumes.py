@@ -693,11 +693,11 @@ async def improve_resume_preview_endpoint(
                 language=language,
                 prompt_id=prompt_id,
             ),
-            timeout=240.0,  # 4-minute hard limit
+            timeout=600.0,  # 10-minute hard limit
         )
     except asyncio.TimeoutError:
         logger.error(
-            "Improve preview timed out after 240s for resume %s / job %s",
+            "Improve preview timed out after 600s for resume %s / job %s",
             request.resume_id,
             request.job_id,
         )

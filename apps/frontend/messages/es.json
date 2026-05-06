@@ -563,6 +563,7 @@
       "jobDescriptionTooShort": "La descripción del trabajo es demasiado corta. Añade más detalles e inténtalo de nuevo.",
       "apiKeyError": "Tu clave API no funciona. Revísala en Configuración.",
       "rateLimit": "Se alcanzó el límite de tasa. Espera aproximadamente un minuto e inténtalo de nuevo.",
+      "timeout": "La vista previa del currículum agotó el tiempo de espera tras 10 minutos. Inténtalo de nuevo con una descripción del trabajo más corta o un prompt más simple.",
       "failedToGenerate": "No se pudo generar el currículum. Revisa tu clave API en Configuración e inténtalo de nuevo.",
       "failedToPreview": "No se pudo previsualizar el currículum. Revisa tu clave API en Configuración e inténtalo de nuevo.",
       "failedToConfirm": "No se pudieron aplicar los cambios. Inténtalo de nuevo."
