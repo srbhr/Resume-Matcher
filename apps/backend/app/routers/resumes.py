@@ -543,6 +543,13 @@ async def upload_resume(file: UploadFile = File(...)) -> ResumeUploadResponse:
             detail="Failed to parse document. Please ensure it's a valid PDF or DOCX file.",
         )
 
+    # Validate extracted text is not empty (image-based PDFs / scanned documents)
+    if not markdown_content or not markdown_content.strip():
+        raise HTTPException(
+            status_code=422,
+            detail="Could not extract text from the uploaded file. The document may be image-based or scanned. Please upload a file with selectable text.",
+        )
+
     # Store in database first with "processing" status (atomic master assignment)
     # original_markdown is preserved permanently for date reference even after
     # builder saves overwrite `content` with JSON.
