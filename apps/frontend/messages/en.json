@@ -564,6 +564,7 @@
       "apiKeyError": "Your API key isn't working. Check it in Settings.",
       "rateLimit": "Rate limit reached. Wait about a minute and try again.",
       "failedToGenerate": "Couldn't generate the resume. Check your API key in Settings, then try again.",
+      "timeout": "The request timed out. Please try again with a shorter job description or check your connection.",
       "failedToPreview": "Couldn't preview the resume. Check your API key in Settings, then try again.",
       "failedToConfirm": "Couldn't apply the changes. Please try again."
     }

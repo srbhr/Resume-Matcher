@@ -63,6 +63,11 @@ export async function apiFetch(
 
   try {
     return await fetch(url, { ...options, signal: controller.signal });
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error('Request timed out. Please try again with a shorter job description or check your connection.');
+    }
+    throw error;
   } finally {
     clearTimeout(timer);
   }

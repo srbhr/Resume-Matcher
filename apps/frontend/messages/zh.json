@@ -564,6 +564,7 @@
       "apiKeyError": "您的 API 密钥无效。请在设置中检查。",
       "rateLimit": "已达到速率限制。请等待约一分钟后重试。",
       "failedToGenerate": "无法生成简历。请在设置中检查 API 密钥后重试。",
+      "timeout": "请求超时。请尝试使用更短的职位描述或检查网络连接后重试。",
       "failedToPreview": "无法预览简历。请在设置中检查 API 密钥后重试。",
       "failedToConfirm": "无法应用更改。请重试。"
     }

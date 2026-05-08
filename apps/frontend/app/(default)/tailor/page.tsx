@@ -211,6 +211,11 @@ export default function TailorPage() {
         errorMessage.includes('429')
       ) {
         setError(t('tailor.errors.rateLimit'));
+      } else if (
+        errorMessage.toLowerCase().includes('timed out') ||
+        errorMessage.toLowerCase().includes('timeout')
+      ) {
+        setError(t('tailor.errors.timeout'));
       } else {
         setError(t('tailor.errors.failedToPreview'));
       }
