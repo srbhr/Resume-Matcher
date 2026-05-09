@@ -218,11 +218,18 @@
 /* Individual item within a section */
 .resume-item {
   margin-bottom: var(--item-gap);
-  /* Prevent items from splitting across pages/columns in PDF and print output */
+  /* Allow long items (e.g. many bullet points) to flow across pages naturally.
+     Page-break control is handled at the header level via .resume-item-header. */
+}
+
+/* Header rows (title + company) of a resume item.
+   Kept together on one page and prevented from being orphaned at the bottom
+   of a page without any following bullet content. */
+.resume-item-header {
   break-inside: avoid;
   page-break-inside: avoid;
-  -webkit-column-break-inside: avoid;
-  -moz-column-break-inside: avoid;
+  break-after: avoid;
+  page-break-after: avoid;
 }
 
 .resume-item:last-child {
@@ -281,10 +288,18 @@
     break-inside: avoid-page !important;
   }
 
-  /* Avoid breaking individual resume items across pages */
+  /* Allow long items to flow across pages; break control is at header level */
   .resume-item {
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+  }
+
+  /* Keep title+company header together and prevent it being orphaned */
+  .resume-item-header {
     break-inside: avoid !important;
     page-break-inside: avoid !important;
+    break-after: avoid !important;
+    page-break-after: avoid !important;
   }
 
   /* Prevent section titles from being separated from their content */

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Resume Matcher — Extension Settings</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+           max-width: 480px; margin: 48px auto; padding: 0 24px; color: #1e293b; }
+    h1 { font-size: 22px; font-weight: 900; margin-bottom: 4px; }
+    .sub { color: #64748b; font-size: 13px; margin-bottom: 36px; }
+    label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: .07em; color: #475569; margin-bottom: 6px; }
+    input { width: 100%; border: 1.5px solid #e2e8f0; border-radius: 5px;
+            padding: 9px 12px; font-size: 13px; color: #0f172a; outline: none; margin-bottom: 24px; }
+    input:focus { border-color: #1D4ED8; }
+    .row { display: flex; align-items: center; gap: 10px; }
+    button { padding: 9px 20px; font-size: 13px; font-weight: 700; border-radius: 5px; cursor: pointer; border: none; }
+    .btn-save { background: #1D4ED8; color: #fff; }
+    .btn-save:hover { background: #1e40af; }
+    .btn-test { background: #fff; color: #1D4ED8; border: 1.5px solid #1D4ED8; }
+    .btn-test:hover { background: #eff6ff; }
+    .status { font-size: 12px; }
+    .status.ok  { color: #15803d; }
+    .status.err { color: #dc2626; }
+    .saved { font-size: 12px; color: #15803d; display: none; }
+  </style>
+</head>
+<body>
+  <h1>Resume Matcher</h1>
+  <p class="sub">Chrome extension settings</p>
+
+  <label for="backend-url">Backend URL</label>
+  <input type="text" id="backend-url" placeholder="http://localhost:8000" />
+
+  <label for="frontend-url">Frontend URL</label>
+  <input type="text" id="frontend-url" placeholder="http://localhost:3000" />
+
+  <div class="row">
+    <button class="btn-save" id="save-btn">Save</button>
+    <button class="btn-test" id="test-btn">Test connection</button>
+    <span class="status" id="test-status"></span>
+    <span class="saved"  id="saved-msg">✓ Saved</span>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>

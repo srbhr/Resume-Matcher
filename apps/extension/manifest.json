@@ -1,0 +1,52 @@
+{
+  "manifest_version": 3,
+  "name": "Resume Matcher — ATS Screen",
+  "version": "1.0.0",
+  "description": "Score your resume against any job description without leaving the page.",
+  "permissions": ["storage", "tabs"],
+  "host_permissions": [
+    "https://www.linkedin.com/*",
+    "https://www.indeed.com/*",
+    "https://www.glassdoor.com/*",
+    "http://localhost:*/*",
+    "http://127.0.0.1:*/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png"
+    }
+  },
+  "options_page": "options/options.html",
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.linkedin.com/jobs/view/*",
+        "https://www.linkedin.com/jobs/collections/*",
+        "https://www.linkedin.com/jobs/search/*",
+        "https://www.linkedin.com/feed/*"
+      ],
+      "js": ["shared/parsers.js", "content/shared.js", "content/linkedin.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://www.indeed.com/viewjob*"],
+      "js": ["shared/parsers.js", "content/shared.js", "content/indeed.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://www.glassdoor.com/job-listing/*"],
+      "js": ["shared/parsers.js", "content/shared.js", "content/glassdoor.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

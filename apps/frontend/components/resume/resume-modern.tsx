@@ -105,155 +105,184 @@ export const ResumeModern: React.FC<ResumeModernProps> = ({
           </div>
         );
 
-      case 'workExperience':
-        if (!workExperience || workExperience.length === 0) return null;
+      case 'workExperience': {
+        const validExp = (workExperience || []).filter(
+          (exp) =>
+            exp.title?.trim() ||
+            exp.company?.trim() ||
+            (exp.description && exp.description.some((d) => d?.trim()))
+        );
+        if (validExp.length === 0) return null;
         return (
           <div key={section.id} className={baseStyles['resume-section']}>
             <h3 className={styles['section-title-accent']}>{section.displayName}</h3>
             <div className={baseStyles['resume-items']}>
-              {workExperience.map((exp) => (
-                <div key={exp.id} className={baseStyles['resume-item']}>
-                  <div
-                    className={`flex justify-between items-baseline ${baseStyles['resume-row-tight']}`}
-                  >
-                    <h4 className={baseStyles['resume-item-title']}>{exp.title}</h4>
-                    <span className={`${baseStyles['resume-date']} ml-4`}>
-                      {formatDateRange(exp.years)}
-                    </span>
+              {validExp.map((exp) => {
+                const dateStr = formatDateRange(exp.years);
+                const bullets = (exp.description || []).filter((d) => d?.trim());
+                return (
+                  <div key={exp.id} className={baseStyles['resume-item']}>
+                    <div className={baseStyles['resume-item-header']}>
+                      {(exp.title?.trim() || dateStr) && (
+                        <div
+                          className={`flex justify-between items-baseline ${baseStyles['resume-row-tight']}`}
+                        >
+                          <h4 className={baseStyles['resume-item-title']}>{exp.title}</h4>
+                          <span className={`${baseStyles['resume-date']} ml-4`}>{dateStr}</span>
+                        </div>
+                      )}
+                      {(exp.company?.trim() || exp.location?.trim()) && (
+                        <div
+                          className={`flex justify-between items-center ${baseStyles['resume-row']} ${baseStyles['resume-item-subtitle']}`}
+                        >
+                          <span>{exp.company}</span>
+                          {exp.location && <span>{exp.location}</span>}
+                        </div>
+                      )}
+                    </div>
+                    {bullets.length > 0 && (
+                      <ul
+                        className={`ml-4 ${baseStyles['resume-list']} ${baseStyles['resume-text-sm']}`}
+                      >
+                        {bullets.map((desc, index) => (
+                          <li key={index} className="flex">
+                            <span className="mr-1.5 flex-shrink-0">•&nbsp;</span>
+                            <span>
+                              <SafeHtml html={desc} />
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
-                  <div
-                    className={`flex justify-between items-center ${baseStyles['resume-row']} ${baseStyles['resume-item-subtitle']}`}
-                  >
-                    <span>{exp.company}</span>
-                    {exp.location && <span>{exp.location}</span>}
-                  </div>
-                  {exp.description && exp.description.length > 0 && (
-                    <ul
-                      className={`ml-4 ${baseStyles['resume-list']} ${baseStyles['resume-text-sm']}`}
-                    >
-                      {exp.description.map((desc, index) => (
-                        <li key={index} className="flex">
-                          <span className="mr-1.5 flex-shrink-0">•&nbsp;</span>
-                          <span>
-                            <SafeHtml html={desc} />
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         );
+      }
 
-      case 'personalProjects':
-        if (!personalProjects || personalProjects.length === 0) return null;
+      case 'personalProjects': {
+        const validProjects = (personalProjects || []).filter(
+          (p) => p.name?.trim() || (p.description && p.description.some((d) => d?.trim()))
+        );
+        if (validProjects.length === 0) return null;
         return (
           <div key={section.id} className={baseStyles['resume-section']}>
             <h3 className={styles['section-title-accent']}>{section.displayName}</h3>
             <div className={baseStyles['resume-items']}>
-              {personalProjects.map((project) => (
+              {validProjects.map((project) => (
                 <div key={project.id} className={baseStyles['resume-item']}>
-                  <div
-                    className={`flex justify-between items-baseline ${baseStyles['resume-row-tight']}`}
-                  >
-                    <div className="flex items-baseline gap-2">
-                      <h4 className={baseStyles['resume-item-title']}>{project.name}</h4>
-                      {(project.github || project.website) && (
-                        <span className="flex gap-1.5">
-                          {project.github && (
-                            <a
-                              href={
-                                project.github.startsWith('http')
-                                  ? project.github
-                                  : `https://${project.github}`
-                              }
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className={baseStyles['resume-link-pill']}
-                            >
-                              <Github size={10} />
-                              {project.github
-                                .replace(/^https?:\/\//, '')
-                                .replace(/^www\./, '')
-                                .replace(/\/$/, '')}
-                            </a>
-                          )}
-                          {project.website && (
-                            <a
-                              href={
-                                project.website.startsWith('http')
-                                  ? project.website
-                                  : `https://${project.website}`
-                              }
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className={baseStyles['resume-link-pill']}
-                            >
-                              <ExternalLink size={10} />
-                              {project.website
-                                .replace(/^https?:\/\//, '')
-                                .replace(/^www\./, '')
-                                .replace(/\/$/, '')}
-                            </a>
-                          )}
+                  <div className={baseStyles['resume-item-header']}>
+                    <div
+                      className={`flex justify-between items-baseline ${baseStyles['resume-row-tight']}`}
+                    >
+                      <div className="flex items-baseline gap-2">
+                        <h4 className={baseStyles['resume-item-title']}>{project.name}</h4>
+                        {(project.github || project.website) && (
+                          <span className="flex gap-1.5">
+                            {project.github && (
+                              <a
+                                href={
+                                  project.github.startsWith('http')
+                                    ? project.github
+                                    : `https://${project.github}`
+                                }
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={baseStyles['resume-link-pill']}
+                              >
+                                <Github size={10} />
+                                {project.github
+                                  .replace(/^https?:\/\//, '')
+                                  .replace(/^www\./, '')
+                                  .replace(/\/$/, '')}
+                              </a>
+                            )}
+                            {project.website && (
+                              <a
+                                href={
+                                  project.website.startsWith('http')
+                                    ? project.website
+                                    : `https://${project.website}`
+                                }
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={baseStyles['resume-link-pill']}
+                              >
+                                <ExternalLink size={10} />
+                                {project.website
+                                  .replace(/^https?:\/\//, '')
+                                  .replace(/^www\./, '')
+                                  .replace(/\/$/, '')}
+                              </a>
+                            )}
+                          </span>
+                        )}
+                      </div>
+                      {project.years && (
+                        <span className={`${baseStyles['resume-date']} ml-4`}>
+                          {formatDateRange(project.years)}
                         </span>
                       )}
                     </div>
-                    {project.years && (
-                      <span className={`${baseStyles['resume-date']} ml-4`}>
-                        {formatDateRange(project.years)}
-                      </span>
+                    {project.role && (
+                      <div
+                        className={`${baseStyles['resume-row']} ${baseStyles['resume-item-subtitle']}`}
+                      >
+                        <span>{project.role}</span>
+                      </div>
                     )}
                   </div>
-                  {project.role && (
-                    <div
-                      className={`${baseStyles['resume-row']} ${baseStyles['resume-item-subtitle']}`}
-                    >
-                      <span>{project.role}</span>
-                    </div>
-                  )}
-                  {project.description && project.description.length > 0 && (
-                    <ul
-                      className={`ml-4 ${baseStyles['resume-list']} ${baseStyles['resume-text-sm']}`}
-                    >
-                      {project.description.map((desc, index) => (
-                        <li key={index} className="flex">
-                          <span className="mr-1.5 flex-shrink-0">•&nbsp;</span>
-                          <span>
-                            <SafeHtml html={desc} />
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+                  {(() => {
+                    const bullets = (project.description || []).filter((d) => d?.trim());
+                    return bullets.length > 0 ? (
+                      <ul
+                        className={`ml-4 ${baseStyles['resume-list']} ${baseStyles['resume-text-sm']}`}
+                      >
+                        {bullets.map((desc, index) => (
+                          <li key={index} className="flex">
+                            <span className="mr-1.5 flex-shrink-0">•&nbsp;</span>
+                            <span>
+                              <SafeHtml html={desc} />
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null;
+                  })()}
                 </div>
               ))}
             </div>
           </div>
         );
+      }
 
-      case 'education':
-        if (!education || education.length === 0) return null;
+      case 'education': {
+        const validEdu = (education || []).filter(
+          (edu) => edu.institution?.trim() || edu.degree?.trim()
+        );
+        if (validEdu.length === 0) return null;
         return (
           <div key={section.id} className={baseStyles['resume-section']}>
             <h3 className={styles['section-title-accent']}>{section.displayName}</h3>
             <div className={baseStyles['resume-items']}>
-              {education.map((edu) => (
+              {validEdu.map((edu) => (
                 <div key={edu.id} className={baseStyles['resume-item']}>
-                  <div
-                    className={`flex justify-between items-baseline ${baseStyles['resume-row-tight']}`}
-                  >
-                    <h4 className={baseStyles['resume-item-title']}>{edu.institution}</h4>
-                    <span className={`${baseStyles['resume-date']} ml-4`}>
-                      {formatDateRange(edu.years)}
-                    </span>
-                  </div>
-                  <div
-                    className={`flex justify-between ${baseStyles['resume-item-subtitle']} ${baseStyles['resume-row-tight']}`}
-                  >
-                    <span>{edu.degree}</span>
+                  <div className={baseStyles['resume-item-header']}>
+                    <div
+                      className={`flex justify-between items-baseline ${baseStyles['resume-row-tight']}`}
+                    >
+                      <h4 className={baseStyles['resume-item-title']}>{edu.institution}</h4>
+                      <span className={`${baseStyles['resume-date']} ml-4`}>
+                        {formatDateRange(edu.years)}
+                      </span>
+                    </div>
+                    <div
+                      className={`flex justify-between ${baseStyles['resume-item-subtitle']} ${baseStyles['resume-row-tight']}`}
+                    >
+                      <span>{edu.degree}</span>
+                    </div>
                   </div>
                   {edu.description && (
                     <p className={baseStyles['resume-text-sm']}>{edu.description}</p>
@@ -263,6 +292,7 @@ export const ResumeModern: React.FC<ResumeModernProps> = ({
             </div>
           </div>
         );
+      }
 
       case 'additional':
         if (!additional) return null;
@@ -477,24 +507,26 @@ function renderDynamicContent(
         <div className={baseStyles['resume-items']}>
           {customSection.items.map((item) => (
             <div key={item.id} className={baseStyles['resume-item']}>
-              <div
-                className={`flex justify-between items-baseline ${baseStyles['resume-row-tight']}`}
-              >
-                <h4 className={baseStyles['resume-item-title']}>{item.title}</h4>
-                {item.years && (
-                  <span className={`${baseStyles['resume-meta-sm']} shrink-0 ml-4`}>
-                    {formatDateRange(item.years)}
-                  </span>
+              <div className={baseStyles['resume-item-header']}>
+                <div
+                  className={`flex justify-between items-baseline ${baseStyles['resume-row-tight']}`}
+                >
+                  <h4 className={baseStyles['resume-item-title']}>{item.title}</h4>
+                  {item.years && (
+                    <span className={`${baseStyles['resume-meta-sm']} shrink-0 ml-4`}>
+                      {formatDateRange(item.years)}
+                    </span>
+                  )}
+                </div>
+                {(item.subtitle || item.location) && (
+                  <div
+                    className={`flex justify-between items-center ${baseStyles['resume-row']} ${baseStyles['resume-meta']}`}
+                  >
+                    {item.subtitle && <span>{item.subtitle}</span>}
+                    {item.location && <span>{item.location}</span>}
+                  </div>
                 )}
               </div>
-              {(item.subtitle || item.location) && (
-                <div
-                  className={`flex justify-between items-center ${baseStyles['resume-row']} ${baseStyles['resume-meta']}`}
-                >
-                  {item.subtitle && <span>{item.subtitle}</span>}
-                  {item.location && <span>{item.location}</span>}
-                </div>
-              )}
               {item.description && item.description.length > 0 && (
                 <ul className={`ml-4 ${baseStyles['resume-list']} ${baseStyles['resume-text-sm']}`}>
                   {item.description.map((desc, index) => (

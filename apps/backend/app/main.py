@@ -18,7 +18,7 @@ from app import __version__
 from app.config import settings
 from app.database import db
 from app.pdf import close_pdf_renderer, init_pdf_renderer
-from app.routers import config_router, enrichment_router, health_router, jobs_router, resumes_router
+from app.routers import ats_router, config_router, enrichment_router, health_router, jobs_router, resumes_router
 
 
 def _configure_application_logging() -> None:
@@ -61,6 +61,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.effective_cors_origins,
+    allow_origin_regex=r"chrome-extension://.*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -72,6 +73,7 @@ app.include_router(config_router, prefix="/api/v1")
 app.include_router(resumes_router, prefix="/api/v1")
 app.include_router(jobs_router, prefix="/api/v1")
 app.include_router(enrichment_router, prefix="/api/v1")
+app.include_router(ats_router, prefix="/api/v1")
 
 
 @app.get("/")
