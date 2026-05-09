@@ -201,17 +201,24 @@ class Database:
         return len(updated) > 0
 
     # Job operations
-    def create_job(self, content: str, resume_id: str | None = None) -> dict[str, Any]:
+    def create_job(
+        self,
+        content: str,
+        resume_id: str | None = None,
+        job_title: str | None = None,
+    ) -> dict[str, Any]:
         """Create a new job description entry."""
         job_id = str(uuid4())
         now = datetime.now(timezone.utc).isoformat()
 
-        doc = {
+        doc: dict[str, Any] = {
             "job_id": job_id,
             "content": content,
             "resume_id": resume_id,
             "created_at": now,
         }
+        if job_title is not None:
+            doc["job_title"] = job_title
         self.jobs.insert(doc)
         return doc
 

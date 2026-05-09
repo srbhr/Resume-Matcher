@@ -1,8 +1,8 @@
 import { ImprovedResult } from '@/components/common/resume_previewer_context';
 import type { ResumeData } from '@/components/dashboard/resume-component';
-import { type TemplateSettings } from '@/lib/types/template-settings';
 import { type Locale } from '@/i18n/config';
-import { API_BASE, apiPost, apiPatch, apiDelete, apiFetch } from './client';
+import { type TemplateSettings } from '@/lib/types/template-settings';
+import { API_BASE, apiDelete, apiFetch, apiPatch, apiPost } from './client';
 
 // Matches backend schemas/models.py ResumeData
 interface ProcessedResume {
@@ -137,11 +137,13 @@ async function postImprove(
 /** Uploads job descriptions and returns a job_id */
 export async function uploadJobDescriptions(
   descriptions: string[],
-  resumeId: string
+  resumeId: string,
+  jobTitle?: string
 ): Promise<string> {
   const res = await apiPost('/jobs/upload', {
     job_descriptions: descriptions,
     resume_id: resumeId,
+    job_title: jobTitle,
   });
   if (!res.ok) throw new Error(`Upload failed with status ${res.status}`);
   const data = await res.json();

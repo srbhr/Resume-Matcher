@@ -26,6 +26,7 @@ async def upload_job_descriptions(request: JobUploadRequest) -> JobUploadRespons
         job = db.create_job(
             content=jd.strip(),
             resume_id=request.resume_id,
+            job_title=request.job_title,
         )
         job_ids.append(job["job_id"])
 

@@ -1,28 +1,29 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { useResumePreview } from '@/components/common/resume_previewer_context';
 import type { ImprovedResult } from '@/components/common/resume_previewer_context';
+import { useResumePreview } from '@/components/common/resume_previewer_context';
 import type { ResumeData } from '@/components/dashboard/resume-component';
-import {
-  uploadJobDescriptions,
-  previewImproveResume,
-  confirmImproveResume,
-} from '@/lib/api/resume';
-import { fetchPromptConfig, type PromptOption } from '@/lib/api/config';
-import { Dropdown } from '@/components/ui/dropdown';
-import { useStatusCache } from '@/lib/context/status-cache';
-import { Loader2, ArrowLeft, AlertTriangle, Settings } from 'lucide-react';
-import { useTranslations } from '@/lib/i18n';
 import { DiffPreviewModal } from '@/components/tailor/diff-preview-modal';
+import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { Dropdown } from '@/components/ui/dropdown';
+import { Textarea } from '@/components/ui/textarea';
+import { fetchPromptConfig, type PromptOption } from '@/lib/api/config';
+import {
+  confirmImproveResume,
+  previewImproveResume,
+  uploadJobDescriptions,
+} from '@/lib/api/resume';
+import { useStatusCache } from '@/lib/context/status-cache';
+import { useTranslations } from '@/lib/i18n';
+import { AlertTriangle, ArrowLeft, Loader2, Settings } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 export default function TailorPage() {
   const { t } = useTranslations();
+  const [jobTitle, setJobTitle] = useState('');
   const [jobDescription, setJobDescription] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -173,7 +174,7 @@ export default function TailorPage() {
     try {
       // 1. Upload Job Description
       // The API expects an array of strings
-      const jobId = await uploadJobDescriptions([description], resumeId);
+      const jobId = await uploadJobDescriptions([description], resumeId, jobTitle);
       incrementJobs(); // Update cached counter
 
       // 2. Preview Resume
@@ -402,6 +403,17 @@ export default function TailorPage() {
             description={t('tailor.promptDescription')}
             disabled={isLoading || promptLoading}
           />
+          <div className="relative">
+            <p className="font-mono text-xs text-steel-grey">{t('tailor.jobTitle')}</p>
+            <input
+              type="text"
+              placeholder={t('tailor.jobTitlePlaceholder') || 'Enter job title (optional)'}
+              className="w-full mt-2 px-3 py-2 font-mono text-sm bg-background border-2 border-black focus:ring-0 focus:border-blue-700 rounded-none"
+              value={jobTitle}
+              onChange={(e) => setJobTitle(e.target.value)}
+              disabled={isLoading}
+            />
+          </div>
 
           <div className="relative">
             <Textarea

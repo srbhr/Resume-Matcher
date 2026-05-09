@@ -500,6 +500,8 @@
     "selectResume": "选择简历",
     "pasteJobDescription": "粘贴职位描述",
     "pasteJobDescriptionBelow": "在下方粘贴职位描述",
+    "jobTitle": "职位名称",
+    "jobTitlePlaceholder": "输入职位名称（可选）",
     "jobDescriptionPlaceholder": "在此粘贴职位描述...",
     "promptLabel": "匹配强度",
     "promptDescription": "选择与职位描述对齐的程度。",

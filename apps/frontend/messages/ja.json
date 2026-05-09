@@ -500,6 +500,8 @@
     "selectResume": "履歴書を選択",
     "pasteJobDescription": "求人内容を貼り付け",
     "pasteJobDescriptionBelow": "下に求人内容を貼り付け",
+    "jobTitle": "職務名",
+    "jobTitlePlaceholder": "職務名を入力してください（オプション）",
     "jobDescriptionPlaceholder": "求人内容をここに貼り付けてください...",
     "promptLabel": "調整の強さ",
     "promptDescription": "求人情報にどの程度合わせるかを選択してください。",
