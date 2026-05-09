@@ -337,7 +337,7 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
           {/* Certifications/Training - Main column */}
           {isSectionVisible('additional') &&
             additional?.certificationsTraining &&
-            additional.certificationsTraining.length > 0 && (
+            additional.certificationsTraining.filter((s) => s.trim()).length > 0 && (
               <div className={baseStyles['resume-section']}>
                 <h3 className={baseStyles['resume-section-title']}>
                   {headingFallbacks.certifications}
@@ -398,7 +398,7 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
           {/* Skills Section */}
           {isSectionVisible('additional') &&
             additional?.technicalSkills &&
-            additional.technicalSkills.length > 0 && (
+            additional.technicalSkills.filter((s) => s.trim()).length > 0 && (
               <div className={baseStyles['resume-section']}>
                 <h3 className={baseStyles['resume-section-title-sm']}>{headingFallbacks.skills}</h3>
                 <div className="flex flex-wrap gap-1">
@@ -414,7 +414,7 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
           {/* Languages Section */}
           {isSectionVisible('additional') &&
             additional?.languages &&
-            additional.languages.length > 0 && (
+            additional.languages.filter((s) => s.trim()).length > 0 && (
               <div className={baseStyles['resume-section']}>
                 <h3 className={baseStyles['resume-section-title-sm']}>
                   {headingFallbacks.languages}
@@ -424,7 +424,7 @@ export const ResumeTwoColumn: React.FC<ResumeTwoColumnProps> = ({
             )}
 
           {/* Awards Section */}
-          {isSectionVisible('additional') && additional?.awards && additional.awards.length > 0 && (
+          {isSectionVisible('additional') && additional?.awards && additional.awards.filter((s) => s.trim()).length > 0 && (
             <div className={baseStyles['resume-section']}>
               <h3 className={baseStyles['resume-section-title-sm']}>{headingFallbacks.awards}</h3>
               <ul className={baseStyles['resume-list']}>
