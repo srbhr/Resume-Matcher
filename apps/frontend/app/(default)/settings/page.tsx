@@ -67,6 +67,7 @@ const PROVIDERS: LLMProvider[] = [
   'openrouter',
   'gemini',
   'deepseek',
+  'groq',
   'ollama',
 ];
 

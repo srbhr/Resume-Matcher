@@ -916,7 +916,6 @@ def _calculate_timeout(
         "openai": 1.0,
         "anthropic": 1.2,
         "openrouter": 1.5,  # More variable latency
-        "deepseek": 1.3,  # DeepSeek API can be slower than OpenAI
         "groq": 1.0,
         "ollama": 2.0,  # Local models can be slower
     }
