@@ -133,9 +133,13 @@ async def _render_page_to_pdf(
     pdf_format: str,
     pdf_margins: dict,
 ) -> bytes:
-    await page.goto(url, wait_until="networkidle")
-    await page.wait_for_selector(selector)
-    await page.evaluate("document.fonts.ready")
+    await page.goto(url, wait_until="domcontentloaded", timeout=15000)
+    await page.wait_for_selector(selector, timeout=10000)
+    try:
+        await page.evaluate("document.fonts.ready", timeout=10000)
+    except Exception:
+        # Font loading is not critical for PDF rendering
+        pass
     return await page.pdf(
         format=pdf_format,
         print_background=True,
