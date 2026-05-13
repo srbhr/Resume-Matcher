@@ -186,7 +186,7 @@ Then load the Chrome extension from `apps/extension/` (see [Chrome Extension Set
 docker run --name ats-copilot \
   -p 3000:3000 \
   -v ats-data:/app/backend/data \
-  ghcr.io/srbhr/resume-matcher:latest
+  ghcr.io/nikiyolo/ats-copilot:latest
 ```
 
 > Using Ollama with Docker? Set the Ollama URL to `http://host.docker.internal:11434` in Settings.
