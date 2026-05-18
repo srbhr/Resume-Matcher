@@ -44,7 +44,7 @@ export const ResumeModernTwoColumn: React.FC<ResumeModernTwoColumnProps> = ({
       if (!map.has(key)) map.set(key, { institution: edu.institution, entries: [] });
       map.get(key)!.entries.push(edu);
       return map;
-    }, new Map<string, { institution: string | undefined; entries: typeof education }>())
+    }, new Map<string, { institution: string | undefined; entries: NonNullable<typeof education> }>())
   );
 
   // Get sorted visible sections
