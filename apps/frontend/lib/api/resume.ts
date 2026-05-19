@@ -451,6 +451,16 @@ export async function saveTemplateSettings(
   }
 }
 
+/** Creates a blank master resume for building from scratch */
+export async function createBlankMasterResume(): Promise<ResumeUploadResponse> {
+  const res = await apiPost('/resumes/create-blank', {});
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Failed to create blank resume (status ${res.status}): ${text}`);
+  }
+  return res.json();
+}
+
 /** Retries AI processing for a failed resume */
 export async function retryProcessing(resumeId: string): Promise<ResumeUploadResponse> {
   const res = await apiPost(`/resumes/${encodeURIComponent(resumeId)}/retry-processing`, {});

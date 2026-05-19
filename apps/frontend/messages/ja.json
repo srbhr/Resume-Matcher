@@ -67,6 +67,8 @@
     "tailoredResume": "カスタマイズ履歴書",
     "initializeMasterResume": "マスター履歴書を初期化",
     "initializeSequence": "初期化シーケンス",
+    "createFromScratch": "ゼロから作成",
+    "createFromScratchDescription": "エディターで新しい履歴書を作成",
     "refreshStatus": "ステータスを更新",
     "retryProcessing": "再処理",
     "retryingProcessing": "再処理中...",

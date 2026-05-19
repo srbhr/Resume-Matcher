@@ -25,6 +25,7 @@ import {
   deleteResume,
   retryProcessing,
   fetchJobDescription,
+  createBlankMasterResume,
   type ResumeListItem,
 } from '@/lib/api/resume';
 import { useStatusCache } from '@/lib/context/status-cache';
@@ -39,6 +40,7 @@ export default function DashboardPage() {
   const [tailoredResumes, setTailoredResumes] = useState<ResumeListItem[]>([]);
   const [isRetrying, setIsRetrying] = useState(false);
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
+  const [isCreatingBlank, setIsCreatingBlank] = useState(false);
   const router = useRouter();
 
   // Status cache for optimistic counter updates and LLM status check
@@ -184,6 +186,21 @@ export default function DashboardPage() {
     // Update cached counters
     incrementResumes();
     setHasMasterResume(true);
+  };
+
+  const handleCreateFromScratch = async () => {
+    setIsCreatingBlank(true);
+    try {
+      const result = await createBlankMasterResume();
+      localStorage.setItem('master_resume_id', result.resume_id);
+      incrementResumes();
+      setHasMasterResume(true);
+      router.push(`/builder?id=${result.resume_id}`);
+    } catch (err) {
+      console.error('Failed to create blank resume:', err);
+    } finally {
+      setIsCreatingBlank(false);
+    }
   };
 
   const handleRetryProcessing = async (e: React.MouseEvent) => {
@@ -351,16 +368,14 @@ export default function DashboardPage() {
               </Card>
             </Link>
           ) : (
-            <ResumeUploadDialog
-              open={isUploadDialogOpen}
-              onOpenChange={setIsUploadDialogOpen}
-              onUploadComplete={handleUploadComplete}
-              trigger={
-                <Card
-                  variant="interactive"
-                  className="aspect-square h-full hover:bg-primary hover:text-canvas"
-                >
-                  <div className="flex-1 flex flex-col justify-between pointer-events-none">
+            <>
+              <Card
+                variant="interactive"
+                className="aspect-square h-full hover:bg-primary hover:text-canvas"
+                onClick={() => setIsUploadDialogOpen(true)}
+              >
+                <div className="flex-1 flex flex-col justify-between">
+                  <div className="pointer-events-none">
                     <div className="w-14 h-14 border-2 border-current flex items-center justify-center mb-4">
                       <span className="text-2xl leading-none relative top-[-2px]">+</span>
                     </div>
@@ -374,9 +389,25 @@ export default function DashboardPage() {
                       </CardDescription>
                     </div>
                   </div>
-                </Card>
-              }
-            />
+                  <button
+                    className="mt-4 text-left font-mono text-xs uppercase underline opacity-60 hover:opacity-100"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCreateFromScratch();
+                    }}
+                    disabled={isCreatingBlank}
+                  >
+                    {isCreatingBlank ? '...' : t('dashboard.createFromScratch')}
+                  </button>
+                </div>
+              </Card>
+              <ResumeUploadDialog
+                trigger={null}
+                open={isUploadDialogOpen}
+                onOpenChange={setIsUploadDialogOpen}
+                onUploadComplete={handleUploadComplete}
+              />
+            </>
           )
         ) : (
           // Master Resume Exists

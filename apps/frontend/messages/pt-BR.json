@@ -67,6 +67,8 @@
     "tailoredResume": "Currículo Personalizado",
     "initializeMasterResume": "Inicializar Currículo Principal",
     "initializeSequence": "Iniciar Sequência",
+    "createFromScratch": "Criar do zero",
+    "createFromScratchDescription": "Construa um novo currículo no editor",
     "refreshStatus": "Atualizar status",
     "retryProcessing": "Tentar novamente",
     "retryingProcessing": "Tentando novamente...",

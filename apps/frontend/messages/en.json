@@ -67,6 +67,8 @@
     "tailoredResume": "Tailored Resume",
     "initializeMasterResume": "Initialize Master Resume",
     "initializeSequence": "Initialize Sequence",
+    "createFromScratch": "Create from scratch",
+    "createFromScratchDescription": "Build a new resume in the editor",
     "refreshStatus": "Refresh status",
     "retryProcessing": "Retry Processing",
     "retryingProcessing": "Retrying...",

@@ -67,6 +67,8 @@
     "tailoredResume": "定制简历",
     "initializeMasterResume": "初始化主简历",
     "initializeSequence": "初始化流程",
+    "createFromScratch": "从头创建",
+    "createFromScratchDescription": "在编辑器中新建简历",
     "refreshStatus": "刷新状态",
     "retryProcessing": "重试处理",
     "retryingProcessing": "正在重试...",

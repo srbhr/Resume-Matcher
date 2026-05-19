@@ -601,6 +601,29 @@ async def upload_resume(file: UploadFile = File(...)) -> ResumeUploadResponse:
     )
 
 
+@router.post("/create-blank", response_model=ResumeUploadResponse)
+async def create_blank_resume() -> ResumeUploadResponse:
+    """Create a blank master resume for manual editing in the builder.
+
+    Bypasses the file-upload requirement so users can build a resume
+    from scratch directly in the editor.
+    """
+    resume = await db.create_resume_atomic_master(
+        content="",
+        content_type="json",
+        filename=None,
+        processed_data=None,
+        processing_status="ready",
+    )
+    return ResumeUploadResponse(
+        message="Blank resume created successfully",
+        request_id=str(uuid4()),
+        resume_id=resume["resume_id"],
+        processing_status=resume["processing_status"],
+        is_master=resume.get("is_master", False),
+    )
+
+
 @router.get("", response_model=ResumeFetchResponse)
 async def get_resume(resume_id: str = Query(...)) -> ResumeFetchResponse:
     """Fetch resume details by ID.
