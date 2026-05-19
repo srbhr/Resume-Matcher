@@ -167,7 +167,7 @@ export default function ResumeViewerPage() {
     setIsDownloading(true);
     try {
       const blob = await downloadResumePdf(resumeId, undefined, uiLanguage);
-      const filename = sanitizeFilename(resumeTitle, resumeId, 'resume');
+      const filename = sanitizeFilename(resumeData?.personalInfo?.name, resumeId, 'resume');
       downloadBlobAsFile(blob, filename);
       setShowDownloadSuccessDialog(true);
     } catch (err) {

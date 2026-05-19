@@ -98,7 +98,7 @@ export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
     }
 
     // Profile identity links always show their icon; contact details respect showContactIcons
-    const showIcon = ['LinkedIn', 'GitHub', 'ORCID'].includes(label) || showContactIcons;
+    const showIcon = ['Website', 'LinkedIn', 'GitHub', 'ORCID'].includes(label) || showContactIcons;
 
     return (
       <span className="inline-flex items-center gap-1">
@@ -363,21 +363,32 @@ export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
             )}
           </div>
 
-          {/* Contact row 2: LinkedIn, GitHub, ORCID */}
-          {(personalInfo.linkedin || personalInfo.github || personalInfo.orcid) && (
+          {/* Contact row 2: Website, LinkedIn, GitHub, ORCID */}
+          {(personalInfo.website ||
+            personalInfo.linkedin ||
+            personalInfo.github ||
+            personalInfo.orcid) && (
             <div
               className={`flex flex-wrap justify-center gap-x-1 gap-y-1 mt-1 ${baseStyles['resume-meta']}`}
             >
-              {renderContactDetail('LinkedIn', personalInfo.linkedin)}
+              {renderContactDetail('Website', personalInfo.website)}
+              {personalInfo.linkedin && (
+                <>
+                  {personalInfo.website && <span className={baseStyles['text-muted']}>,</span>}
+                  {renderContactDetail('LinkedIn', personalInfo.linkedin)}
+                </>
+              )}
               {personalInfo.github && (
                 <>
-                  {personalInfo.linkedin && <span className={baseStyles['text-muted']}>,</span>}
+                  {(personalInfo.website || personalInfo.linkedin) && (
+                    <span className={baseStyles['text-muted']}>,</span>
+                  )}
                   {renderContactDetail('GitHub', personalInfo.github)}
                 </>
               )}
               {personalInfo.orcid && (
                 <>
-                  {(personalInfo.linkedin || personalInfo.github) && (
+                  {(personalInfo.website || personalInfo.linkedin || personalInfo.github) && (
                     <span className={baseStyles['text-muted']}>,</span>
                   )}
                   {renderContactDetail('ORCID', personalInfo.orcid)}

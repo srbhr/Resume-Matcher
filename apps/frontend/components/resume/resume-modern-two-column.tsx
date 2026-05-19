@@ -135,7 +135,7 @@ export const ResumeModernTwoColumn: React.FC<ResumeModernTwoColumnProps> = ({
     }
 
     // Profile identity links always show their icon; contact details respect showContactIcons
-    const showIcon = ['LinkedIn', 'GitHub', 'ORCID'].includes(label) || showContactIcons;
+    const showIcon = ['Website', 'LinkedIn', 'GitHub', 'ORCID'].includes(label) || showContactIcons;
 
     return (
       <span className="inline-flex items-center gap-1">
@@ -176,13 +176,18 @@ export const ResumeModernTwoColumn: React.FC<ResumeModernTwoColumnProps> = ({
             )}
           </div>
         )}
-        {personalInfo && (personalInfo.linkedin || personalInfo.github || personalInfo.orcid) && (
-          <div className={`${baseStyles['resume-meta']} flex flex-wrap gap-x-3 gap-y-1 mt-1`}>
-            {renderContactDetail('LinkedIn', personalInfo.linkedin)}
-            {renderContactDetail('GitHub', personalInfo.github)}
-            {personalInfo.orcid && renderContactDetail('ORCID', personalInfo.orcid)}
-          </div>
-        )}
+        {personalInfo &&
+          (personalInfo.website ||
+            personalInfo.linkedin ||
+            personalInfo.github ||
+            personalInfo.orcid) && (
+            <div className={`${baseStyles['resume-meta']} flex flex-wrap gap-x-3 gap-y-1 mt-1`}>
+              {renderContactDetail('Website', personalInfo.website)}
+              {renderContactDetail('LinkedIn', personalInfo.linkedin)}
+              {renderContactDetail('GitHub', personalInfo.github)}
+              {personalInfo.orcid && renderContactDetail('ORCID', personalInfo.orcid)}
+            </div>
+          )}
       </div>
 
       {/* Two-Column Grid */}

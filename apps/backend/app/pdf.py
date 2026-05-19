@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 import asyncio
+import io
 import os
 import sys
 from pathlib import Path
 from typing import Awaitable, NoReturn, Optional
+
+from pypdf import PdfReader, PdfWriter
 
 from playwright.async_api import (
     Browser,
@@ -126,6 +129,18 @@ async def _launch_browser(playwright: Playwright) -> Browser:
         return await playwright.chromium.launch(executable_path=fallback_executable)
 
 
+def _strip_pdf_title(pdf_bytes: bytes) -> bytes:
+    """Remove the /Title entry from the PDF document metadata."""
+    reader = PdfReader(io.BytesIO(pdf_bytes))
+    writer = PdfWriter()
+    writer.append(reader)
+    if writer.metadata:
+        writer.metadata.pop("/Title", None)
+    out = io.BytesIO()
+    writer.write(out)
+    return out.getvalue()
+
+
 async def _render_page_to_pdf(
     page: Page,
     url: str,
@@ -136,11 +151,12 @@ async def _render_page_to_pdf(
     await page.goto(url, wait_until="networkidle")
     await page.wait_for_selector(selector)
     await page.evaluate("document.fonts.ready")
-    return await page.pdf(
+    pdf_bytes = await page.pdf(
         format=pdf_format,
         print_background=True,
         margin=pdf_margins,
     )
+    return _strip_pdf_title(pdf_bytes)
 
 
 async def _render_with_browser(

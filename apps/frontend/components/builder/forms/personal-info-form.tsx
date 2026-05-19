@@ -112,8 +112,23 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ data, onChan
         </div>
       </div>
 
-      {/* Row 3: LinkedIn, GitHub, ORCID */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* Row 3: Website, LinkedIn, GitHub, ORCID */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="space-y-2">
+          <Label
+            htmlFor="website"
+            className="font-mono text-xs uppercase tracking-wider text-steel-grey"
+          >
+            {t('resume.personalInfo.website')}
+          </Label>
+          <Input
+            id="website"
+            value={data.website || ''}
+            onChange={(e) => handleChange('website', e.target.value)}
+            placeholder={t('builder.personalInfoForm.placeholders.website')}
+            className="rounded-none border-black focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-blue-700 bg-transparent"
+          />
+        </div>
         <div className="space-y-2">
           <Label
             htmlFor="linkedin"

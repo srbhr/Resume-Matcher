@@ -1501,6 +1501,13 @@ async def download_resume_pdf(
     if not resume:
         raise HTTPException(status_code=404, detail="Resume not found")
 
+    # Build PDF filename from person's name (FirstnameLastname.pdf)
+    _processed: dict[str, Any] = resume.get("processed_data") or {}
+    _personal_info: dict[str, Any] = _processed.get("personalInfo") or {}
+    _name_raw: str = (_personal_info.get("name") or "").strip()
+    _name_safe: str = "".join(c for c in _name_raw if c not in '/\\:*?"<>|')
+    pdf_filename: str = f"{_name_safe}.pdf" if _name_safe else f"resume_{resume_id}.pdf"
+
     # Build print URL with all settings
     params = (
         f"template={template}"
@@ -1547,7 +1554,7 @@ async def download_resume_pdf(
     except PDFRenderError as e:
         raise HTTPException(status_code=503, detail=str(e))
 
-    headers = {"Content-Disposition": f'attachment; filename="resume_{resume_id}.pdf"'}
+    headers = {"Content-Disposition": f'attachment; filename="{pdf_filename}"'}
     return Response(content=pdf_bytes, media_type="application/pdf", headers=headers)
 
 
