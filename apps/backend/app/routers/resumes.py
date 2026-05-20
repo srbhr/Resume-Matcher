@@ -7,12 +7,14 @@ import json
 import logging
 import unicodedata
 from collections.abc import Awaitable
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, NoReturn
 from uuid import uuid4
 
 from fastapi import APIRouter, File, HTTPException, Query, UploadFile
 from fastapi.responses import Response
+from pydantic import ValidationError
 
 from app.config_cache import get_content_language, load_config as _load_config
 from app.database import db
@@ -135,6 +137,70 @@ def _get_original_resume_data(resume: dict[str, Any]) -> dict[str, Any] | None:
         except json.JSONDecodeError as e:
             logger.warning("Skipping resume diff due to JSON parse failure: %s", e)
     return original_data
+
+
+def _get_resume_json_payload(resume: dict[str, Any]) -> dict[str, Any]:
+    """Return the structured resume JSON for export or replacement."""
+    resume_data = resume.get("processed_data")
+    if not resume_data and resume.get("content_type") == "json":
+        try:
+            resume_data = json.loads(resume["content"])
+        except json.JSONDecodeError as e:
+            raise HTTPException(
+                status_code=422,
+                detail="Stored resume content is not valid JSON",
+            ) from e
+
+    if not isinstance(resume_data, dict):
+        raise HTTPException(status_code=404, detail="Resume JSON not found")
+
+    normalized_data = normalize_resume_data(copy.deepcopy(resume_data))
+    try:
+        return ResumeData.model_validate(normalized_data).model_dump(mode="json")
+    except ValidationError as e:
+        raise HTTPException(status_code=422, detail="Stored resume JSON is invalid") from e
+
+
+def _extract_uploaded_resume_json(payload: Any, resume_id: str) -> dict[str, Any]:
+    """Accept either a raw ResumeData object or exported {metadata, resume} JSON."""
+    if not isinstance(payload, dict):
+        raise HTTPException(status_code=400, detail="Uploaded JSON must be an object")
+
+    metadata = payload.get("metadata")
+    uploaded_resume_id = None
+    if isinstance(metadata, dict):
+        uploaded_resume_id = metadata.get("resume_id")
+    if uploaded_resume_id and uploaded_resume_id != resume_id:
+        raise HTTPException(
+            status_code=400,
+            detail="Uploaded JSON belongs to a different resume_id",
+        )
+
+    resume_payload = payload.get("resume", payload)
+    if not isinstance(resume_payload, dict):
+        raise HTTPException(status_code=400, detail="Uploaded resume JSON must be an object")
+
+    normalized_data = normalize_resume_data(copy.deepcopy(resume_payload))
+    try:
+        return ResumeData.model_validate(normalized_data).model_dump(mode="json")
+    except ValidationError as e:
+        raise HTTPException(status_code=422, detail="Uploaded resume JSON is invalid") from e
+
+
+def _build_json_export_metadata(resume: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "schema": "resume-matcher-json-export/v1",
+        "resume_id": resume["resume_id"],
+        "title": resume.get("title"),
+        "filename": resume.get("filename"),
+        "is_master": resume.get("is_master", False),
+        "parent_id": resume.get("parent_id"),
+        "content_type": resume.get("content_type"),
+        "processing_status": resume.get("processing_status", "pending"),
+        "created_at": resume.get("created_at"),
+        "updated_at": resume.get("updated_at"),
+        "exported_at": datetime.now(timezone.utc).isoformat(),
+    }
 
 
 def _get_original_markdown(resume: dict[str, Any]) -> str | None:
@@ -1382,6 +1448,70 @@ async def update_resume_endpoint(
             resume_id=resume_id,
             raw_resume=raw_resume,
             processed_resume=processed_resume,
+        ),
+    )
+
+
+@router.get("/{resume_id}/json")
+async def export_resume_json(resume_id: str) -> dict[str, Any]:
+    """Export a resume as JSON with metadata for browser downloads."""
+    resume = db.get_resume(resume_id)
+    if not resume:
+        raise HTTPException(status_code=404, detail="Resume not found")
+
+    return {
+        "metadata": _build_json_export_metadata(resume),
+        "resume": _get_resume_json_payload(resume),
+    }
+
+
+@router.put("/{resume_id}/json", response_model=ResumeFetchResponse)
+async def replace_resume_json(
+    resume_id: str, payload: dict[str, Any]
+) -> ResumeFetchResponse:
+    """Replace a resume's structured JSON, preserving the same resume_id.
+
+    The uploaded body can be either the export wrapper ({metadata, resume}) or
+    a raw ResumeData object. A backup of the previous JSON/content is stored
+    before the overwrite.
+    """
+    existing = db.get_resume(resume_id)
+    if not existing:
+        raise HTTPException(status_code=404, detail="Resume not found")
+
+    updated_data = _extract_uploaded_resume_json(payload, resume_id)
+    updated_content = json.dumps(updated_data, indent=2, ensure_ascii=False)
+
+    backup = db.create_resume_json_backup(existing, source="browser_json_upload")
+    updated = db.update_resume(
+        resume_id,
+        {
+            "content": updated_content,
+            "content_type": "json",
+            "processed_data": updated_data,
+            "processing_status": "ready",
+            "last_json_backup_id": backup["backup_id"],
+        },
+    )
+
+    raw_resume = RawResume(
+        id=None,
+        content=updated["content"],
+        content_type=updated["content_type"],
+        created_at=updated["created_at"],
+        processing_status=updated.get("processing_status", "pending"),
+    )
+
+    return ResumeFetchResponse(
+        request_id=str(uuid4()),
+        data=ResumeFetchData(
+            resume_id=resume_id,
+            raw_resume=raw_resume,
+            processed_resume=ResumeData.model_validate(updated.get("processed_data")),
+            cover_letter=updated.get("cover_letter"),
+            outreach_message=updated.get("outreach_message"),
+            parent_id=updated.get("parent_id"),
+            title=updated.get("title"),
         ),
     )
 

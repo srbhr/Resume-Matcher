@@ -35,9 +35,21 @@ export function sanitizeFilename(
   fallbackId: string,
   type: 'resume' | 'cover-letter' = 'resume'
 ): string {
+  return sanitizeDownloadFilename(
+    title,
+    type === 'resume' ? `resume_${fallbackId}` : `cover_letter_${fallbackId}`,
+    'pdf'
+  );
+}
+
+export function sanitizeDownloadFilename(
+  title: string | null | undefined,
+  fallbackBaseName: string,
+  extension: string
+): string {
   // Use fallback if no title
   if (!title?.trim()) {
-    return type === 'resume' ? `resume_${fallbackId}.pdf` : `cover_letter_${fallbackId}.pdf`;
+    return `${fallbackBaseName}.${extension}`;
   }
 
   // Normalize Unicode to NFC form to ensure consistent representation
@@ -57,8 +69,7 @@ export function sanitizeFilename(
     sanitized = chars.slice(0, 100).join('').trim();
   }
 
-  // Add .pdf extension
-  return `${sanitized}.pdf`;
+  return `${sanitized}.${extension}`;
 }
 
 /**
