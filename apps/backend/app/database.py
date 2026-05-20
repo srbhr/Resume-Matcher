@@ -47,6 +47,11 @@ class Database:
         """Improvement results table."""
         return self.db.table("improvements")
 
+    @property
+    def resume_json_backups(self) -> Table:
+        """Backups created before browser JSON imports overwrite resumes."""
+        return self.db.table("resume_json_backups")
+
     def close(self) -> None:
         """Close database connection."""
         if self._db is not None:
@@ -168,6 +173,29 @@ class Database:
             raise ValueError(f"Resume disappeared after update: {resume_id}")
 
         return result
+
+    def create_resume_json_backup(
+        self,
+        resume: dict[str, Any],
+        source: str = "json_upload",
+    ) -> dict[str, Any]:
+        """Create a point-in-time backup before replacing resume JSON."""
+        now = datetime.now(timezone.utc).isoformat()
+        backup = {
+            "backup_id": str(uuid4()),
+            "resume_id": resume["resume_id"],
+            "source": source,
+            "created_at": now,
+            "previous_content": resume.get("content"),
+            "previous_content_type": resume.get("content_type"),
+            "previous_processed_data": resume.get("processed_data"),
+            "previous_processing_status": resume.get("processing_status"),
+            "previous_title": resume.get("title"),
+            "previous_filename": resume.get("filename"),
+            "previous_updated_at": resume.get("updated_at"),
+        }
+        self.resume_json_backups.insert(backup)
+        return backup
 
     def delete_resume(self, resume_id: str) -> bool:
         """Delete resume by ID."""

@@ -148,6 +148,79 @@ class TestUpdateOutreachMessage:
         assert resp.status_code == 200
 
 
+class TestResumeJsonImportExport:
+    """GET/PUT /api/v1/resumes/{resume_id}/json"""
+
+    @patch("app.routers.resumes.db")
+    async def test_export_resume_json_includes_metadata(
+        self, mock_db, client, mock_resume_record
+    ):
+        mock_db.get_resume.return_value = {
+            **mock_resume_record,
+            "title": "Google TPM",
+            "content_type": "json",
+        }
+        async with client:
+            resp = await client.get("/api/v1/resumes/res-123/json")
+
+        assert resp.status_code == 200
+        payload = resp.json()
+        assert payload["metadata"]["schema"] == "resume-matcher-json-export/v1"
+        assert payload["metadata"]["resume_id"] == "res-123"
+        assert payload["metadata"]["title"] == "Google TPM"
+        assert payload["resume"]["personalInfo"]["name"] == "Jane Doe"
+
+    @patch("app.routers.resumes.db")
+    async def test_replace_resume_json_creates_backup(
+        self, mock_db, client, mock_resume_record, sample_resume
+    ):
+        mock_db.get_resume.return_value = mock_resume_record
+        mock_db.create_resume_json_backup.return_value = {"backup_id": "backup-123"}
+        mock_db.update_resume.return_value = {
+            **mock_resume_record,
+            "content": "{}",
+            "content_type": "json",
+            "processed_data": sample_resume,
+            "last_json_backup_id": "backup-123",
+        }
+
+        async with client:
+            resp = await client.put(
+                "/api/v1/resumes/res-123/json",
+                json={
+                    "metadata": {"resume_id": "res-123"},
+                    "resume": sample_resume,
+                },
+            )
+
+        assert resp.status_code == 200
+        mock_db.create_resume_json_backup.assert_called_once_with(
+            mock_resume_record, source="browser_json_upload"
+        )
+        update_payload = mock_db.update_resume.call_args.args[1]
+        assert update_payload["content_type"] == "json"
+        assert update_payload["processing_status"] == "ready"
+        assert update_payload["last_json_backup_id"] == "backup-123"
+
+    @patch("app.routers.resumes.db")
+    async def test_replace_resume_json_rejects_other_resume_id(
+        self, mock_db, client, mock_resume_record, sample_resume
+    ):
+        mock_db.get_resume.return_value = mock_resume_record
+
+        async with client:
+            resp = await client.put(
+                "/api/v1/resumes/res-123/json",
+                json={
+                    "metadata": {"resume_id": "other-resume"},
+                    "resume": sample_resume,
+                },
+            )
+
+        assert resp.status_code == 400
+        mock_db.update_resume.assert_not_called()
+
+
 class TestRetryProcessing:
     """POST /api/v1/resumes/{resume_id}/retry-processing"""
 

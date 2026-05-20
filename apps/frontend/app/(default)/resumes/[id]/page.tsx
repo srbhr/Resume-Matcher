@@ -1,25 +1,44 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import Resume, { ResumeData } from '@/components/dashboard/resume-component';
 import {
   fetchResume,
+  downloadResumeJson,
   downloadResumePdf,
   getResumePdfUrl,
   deleteResume,
   retryProcessing,
   renameResume,
+  uploadResumeJson,
+  type ResumeJsonExport,
 } from '@/lib/api/resume';
 import { useStatusCache } from '@/lib/context/status-cache';
-import { ArrowLeft, Edit, Download, Loader2, AlertCircle, Sparkles, Pencil } from 'lucide-react';
+import {
+  ArrowLeft,
+  Edit,
+  Download,
+  Loader2,
+  AlertCircle,
+  Sparkles,
+  Pencil,
+  FileJson,
+  Upload,
+  RefreshCw,
+} from 'lucide-react';
 import { EnrichmentModal } from '@/components/enrichment/enrichment-modal';
 import { useTranslations } from '@/lib/i18n';
 import { withLocalizedDefaultSections } from '@/lib/utils/section-helpers';
 import { useLanguage } from '@/lib/context/language-context';
-import { downloadBlobAsFile, openUrlInNewTab, sanitizeFilename } from '@/lib/utils/download';
+import {
+  downloadBlobAsFile,
+  openUrlInNewTab,
+  sanitizeDownloadFilename,
+  sanitizeFilename,
+} from '@/lib/utils/download';
 
 type ProcessingStatus = 'pending' | 'processing' | 'ready' | 'failed';
 
@@ -41,9 +60,17 @@ export default function ResumeViewerPage() {
   const [showEnrichmentModal, setShowEnrichmentModal] = useState(false);
   const [isRetrying, setIsRetrying] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isDownloadingJson, setIsDownloadingJson] = useState(false);
+  const [isUploadingJson, setIsUploadingJson] = useState(false);
   const [resumeTitle, setResumeTitle] = useState<string | null>(null);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editingTitleValue, setEditingTitleValue] = useState('');
+  const [pendingJsonUpload, setPendingJsonUpload] = useState<ResumeJsonExport | ResumeData | null>(
+    null
+  );
+  const [jsonActionError, setJsonActionError] = useState<string | null>(null);
+  const [jsonActionSuccess, setJsonActionSuccess] = useState<string | null>(null);
+  const uploadJsonInputRef = useRef<HTMLInputElement | null>(null);
 
   const resumeId = params?.id as string;
 
@@ -161,6 +188,80 @@ export default function ResumeViewerPage() {
   const handleEnrichmentComplete = () => {
     setShowEnrichmentModal(false);
     reloadResumeData();
+  };
+
+  const getJsonFilenameTitle = (jsonExport?: ResumeJsonExport): string | null | undefined =>
+    resumeTitle || jsonExport?.metadata.title || resumeData?.personalInfo?.name;
+
+  const handleDownloadJson = async () => {
+    setIsDownloadingJson(true);
+    try {
+      const jsonExport = await downloadResumeJson(resumeId);
+      const blob = new Blob([JSON.stringify(jsonExport, null, 2)], {
+        type: 'application/json',
+      });
+      const filename = sanitizeDownloadFilename(
+        getJsonFilenameTitle(jsonExport),
+        `resume_${resumeId}`,
+        'json'
+      );
+      downloadBlobAsFile(blob, filename);
+      setJsonActionSuccess(t('resumeViewer.jsonDownloadSuccess'));
+    } catch (err) {
+      console.error('Failed to download resume JSON:', err);
+      setJsonActionError(t('resumeViewer.jsonDownloadError'));
+    } finally {
+      setIsDownloadingJson(false);
+    }
+  };
+
+  const handleUploadJsonClick = () => {
+    uploadJsonInputRef.current?.click();
+  };
+
+  const handleUploadJsonFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+      const payload = JSON.parse(text) as ResumeJsonExport | ResumeData;
+      if (
+        'metadata' in payload &&
+        payload.metadata?.resume_id &&
+        payload.metadata.resume_id !== resumeId
+      ) {
+        setJsonActionError(t('resumeViewer.jsonDifferentResume'));
+        return;
+      }
+      setPendingJsonUpload(payload);
+    } catch (err) {
+      console.error('Failed to read resume JSON:', err);
+      setJsonActionError(t('resumeViewer.jsonInvalidFile'));
+    }
+  };
+
+  const handleUploadJsonConfirm = async () => {
+    if (!pendingJsonUpload) return;
+    setIsUploadingJson(true);
+    try {
+      const updated = await uploadResumeJson(resumeId, pendingJsonUpload);
+      if (updated.processed_resume) {
+        setResumeData(updated.processed_resume as ResumeData);
+      } else {
+        await reloadResumeData();
+      }
+      setProcessingStatus((updated.raw_resume?.processing_status || 'ready') as ProcessingStatus);
+      setResumeTitle(updated.title ?? null);
+      setJsonActionSuccess(t('resumeViewer.jsonUploadSuccess'));
+      setPendingJsonUpload(null);
+    } catch (err) {
+      console.error('Failed to upload resume JSON:', err);
+      setJsonActionError(t('resumeViewer.jsonUploadError'));
+    } finally {
+      setIsUploadingJson(false);
+    }
   };
 
   const handleDownload = async () => {
@@ -292,7 +393,7 @@ export default function ResumeViewerPage() {
             {t('nav.backToDashboard')}
           </Button>
 
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3 justify-end">
             {isMasterResume && (
               <Button onClick={() => setShowEnrichmentModal(true)} className="gap-2">
                 <Sparkles className="w-4 h-4" />
@@ -307,6 +408,33 @@ export default function ResumeViewerPage() {
               <Download className="w-4 h-4" />
               {isDownloading ? t('common.generating') : t('resumeViewer.downloadResume')}
             </Button>
+            <Button variant="outline" onClick={handleDownloadJson} disabled={isDownloadingJson}>
+              {isDownloadingJson ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <FileJson className="w-4 h-4" />
+              )}
+              {isDownloadingJson ? t('common.generating') : t('resumeViewer.downloadJson')}
+            </Button>
+            <Button variant="outline" onClick={handleUploadJsonClick} disabled={isUploadingJson}>
+              {isUploadingJson ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Upload className="w-4 h-4" />
+              )}
+              {isUploadingJson ? t('common.uploading') : t('resumeViewer.uploadJson')}
+            </Button>
+            <Button variant="secondary" onClick={reloadResumeData}>
+              <RefreshCw className="w-4 h-4" />
+              {t('resumeViewer.refresh')}
+            </Button>
+            <input
+              ref={uploadJsonInputRef}
+              type="file"
+              accept="application/json,.json"
+              className="hidden"
+              onChange={handleUploadJsonFile}
+            />
           </div>
         </div>
 
@@ -424,6 +552,47 @@ export default function ResumeViewerPage() {
         variant="success"
         showCancelButton={false}
       />
+
+      <ConfirmDialog
+        open={!!pendingJsonUpload}
+        onOpenChange={(open) => {
+          if (!open && !isUploadingJson) setPendingJsonUpload(null);
+        }}
+        title={t('resumeViewer.replaceJsonTitle')}
+        description={t('resumeViewer.replaceJsonDescription')}
+        confirmLabel={
+          isUploadingJson ? t('common.uploading') : t('resumeViewer.replaceJsonConfirm')
+        }
+        cancelLabel={t('common.cancel')}
+        onConfirm={handleUploadJsonConfirm}
+        variant="warning"
+      />
+
+      {jsonActionSuccess && (
+        <ConfirmDialog
+          open={!!jsonActionSuccess}
+          onOpenChange={() => setJsonActionSuccess(null)}
+          title={t('common.success')}
+          description={jsonActionSuccess}
+          confirmLabel={t('common.ok')}
+          onConfirm={() => setJsonActionSuccess(null)}
+          variant="success"
+          showCancelButton={false}
+        />
+      )}
+
+      {jsonActionError && (
+        <ConfirmDialog
+          open={!!jsonActionError}
+          onOpenChange={() => setJsonActionError(null)}
+          title={t('common.error')}
+          description={jsonActionError}
+          confirmLabel={t('common.ok')}
+          onConfirm={() => setJsonActionError(null)}
+          variant="danger"
+          showCancelButton={false}
+        />
+      )}
 
       {deleteError && (
         <ConfirmDialog
