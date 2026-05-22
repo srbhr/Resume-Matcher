@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 import { useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
@@ -44,6 +45,9 @@ export default function ResumeViewerPage() {
   const [resumeTitle, setResumeTitle] = useState<string | null>(null);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editingTitleValue, setEditingTitleValue] = useState('');
+  const [showQrCodeDialog, setShowQrCodeDialog] = useState(false);
+  const [includeQr, setIncludeQr] = useState(false);
+  const [qrUrl, setQrUrl] = useState('');
 
   const resumeId = params?.id as string;
 
@@ -166,18 +170,33 @@ export default function ResumeViewerPage() {
   const handleDownload = async () => {
     setIsDownloading(true);
     try {
-      const blob = await downloadResumePdf(resumeId, undefined, uiLanguage);
+      const qrSettings =
+        includeQr && qrUrl ? { url: qrUrl, size: 70, x: 510, y: 765 } : undefined;
+      const blob = await downloadResumePdf(resumeId, undefined, uiLanguage, qrSettings);
       const filename = sanitizeFilename(resumeData?.personalInfo?.name, resumeId, 'resume');
+
       downloadBlobAsFile(blob, filename);
+
+      // Auto-open in new tab for instant viewing
+      const pdfBlob = new Blob([blob], { type: 'application/pdf' });
+      const pdfUrl = URL.createObjectURL(pdfBlob);
+      window.open(pdfUrl, '_blank');
+
       setShowDownloadSuccessDialog(true);
+      setShowQrCodeDialog(false);
     } catch (err) {
       console.error('Failed to download resume:', err);
       if (err instanceof TypeError && err.message.includes('Failed to fetch')) {
-        const fallbackUrl = getResumePdfUrl(resumeId, undefined, uiLanguage);
+        const qrSettings =
+          includeQr && qrUrl ? { url: qrUrl, size: 70, x: 510, y: 765 } : undefined;
+        const fallbackUrl = getResumePdfUrl(resumeId, undefined, uiLanguage, qrSettings);
+
+        // In fallback case, it already opens in new tab via openUrlInNewTab
         const didOpen = openUrlInNewTab(fallbackUrl);
         if (!didOpen) {
           alert(t('common.popupBlocked', { url: fallbackUrl }));
         }
+        setShowQrCodeDialog(false);
         return;
       }
     } finally {
@@ -249,9 +268,8 @@ export default function ResumeViewerPage() {
             )}
           </div>
           <p
-            className={`font-bold mb-4 ${
-              isProcessing ? 'text-blue-700' : isFailed ? 'text-orange-700' : 'text-red-700'
-            }`}
+            className={`font-bold mb-4 ${isProcessing ? 'text-blue-700' : isFailed ? 'text-orange-700' : 'text-red-700'
+              }`}
           >
             {error || t('resumeViewer.resumeNotFound')}
           </p>
@@ -303,7 +321,14 @@ export default function ResumeViewerPage() {
               <Edit className="w-4 h-4" />
               {t('dashboard.editResume')}
             </Button>
-            <Button variant="success" onClick={handleDownload} disabled={isDownloading}>
+            <Button
+              variant="success"
+              onClick={() => {
+                setQrUrl(resumeData?.personalInfo?.website || '');
+                setShowQrCodeDialog(true);
+              }}
+              disabled={isDownloading}
+            >
               <Download className="w-4 h-4" />
               {isDownloading ? t('common.generating') : t('resumeViewer.downloadResume')}
             </Button>
@@ -423,6 +448,79 @@ export default function ResumeViewerPage() {
         onConfirm={handleDownloadSuccessConfirm}
         variant="success"
         showCancelButton={false}
+      />
+
+      {/* QR Code Dialog */}
+      <ConfirmDialog
+        open={showQrCodeDialog}
+        onOpenChange={setShowQrCodeDialog}
+        title={t('resumeViewer.qrCode.title')}
+        description={
+          <div className="space-y-6 pt-2">
+            <p className="text-sm text-gray-600">{t('resumeViewer.qrCode.description')}</p>
+
+            <div className="flex items-center gap-3 bg-gray-50 p-4 border-2 border-dashed border-gray-300">
+              <input
+                type="checkbox"
+                id="include-qr"
+                checked={includeQr}
+                onChange={(e) => setIncludeQr(e.target.checked)}
+                className="w-5 h-5 accent-black cursor-pointer"
+              />
+              <label htmlFor="include-qr" className="text-sm font-bold cursor-pointer select-none">
+                {t('resumeViewer.qrCode.includeQr')}
+              </label>
+            </div>
+
+            {includeQr && (
+              <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-wider text-gray-500">
+                    {t('resumeViewer.qrCode.urlLabel')}
+                  </label>
+                  <input
+                    type="url"
+                    value={qrUrl}
+                    onChange={(e) => setQrUrl(e.target.value)}
+                    placeholder={t('resumeViewer.qrCode.urlPlaceholder')}
+                    className="w-full border-2 border-black p-2 font-mono text-sm focus:bg-blue-50 outline-none"
+                    autoFocus
+                  />
+                </div>
+
+                <div className="pt-2">
+                  <label className="text-xs font-bold uppercase tracking-wider text-gray-500 block mb-3">
+                    {t('resumeViewer.qrCode.previewLabel')}
+                  </label>
+                  <div className="flex justify-center border-2 border-black p-4 bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] relative overflow-hidden group">
+                    {/* Simulated Resume Header Preview */}
+                    <div className="absolute top-0 right-0 w-16 h-16 opacity-10 pointer-events-none border-b border-l border-black bg-gray-100" />
+
+                    <div className="z-10 bg-white p-2 border border-black transition-transform group-hover:scale-105 duration-300">
+                      {qrUrl ? (
+                        <QRCodeSVG
+                          value={qrUrl}
+                          size={80}
+                          level="M"
+                          includeMargin={false}
+                        />
+                      ) : (
+                        <div className="w-[80px] h-[80px] bg-gray-100 flex items-center justify-center border border-dashed border-gray-400">
+                          <span className="text-[10px] text-gray-400 font-mono">NO URL</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        }
+        confirmLabel={t('resumeViewer.qrCode.add')}
+        cancelLabel={t('resumeViewer.qrCode.skip')}
+        onConfirm={() => handleDownload()}
+        onCancel={() => setShowQrCodeDialog(false)}
+        variant="success"
       />
 
       {deleteError && (

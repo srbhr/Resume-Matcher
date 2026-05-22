@@ -17,6 +17,8 @@ dependencies = [
     "python-docx==1.2.0",
     "python-dotenv==1.0.1",
     "pypdf>=6.11.0",
+    "qrcode==8.0",
+    "reportlab==4.3.1",
 ]
 
 [project.scripts]

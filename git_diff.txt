@@ -1,0 +1,374 @@
+diff --git a/apps/backend/app/pdf.py b/apps/backend/app/pdf.py
+index 73ef13c..3003467 100644
+--- a/apps/backend/app/pdf.py
++++ b/apps/backend/app/pdf.py
+@@ -15,6 +15,11 @@ from playwright.async_api import (
+     Playwright,
+     async_playwright,
+ )
++import qrcode
++from pypdf import PdfReader, PdfWriter
++from io import BytesIO
++from reportlab.pdfgen import canvas
++from reportlab.lib.pagesizes import A4, LETTER
+ 
+ 
+ class PDFRenderError(Exception):
+@@ -248,6 +253,66 @@ async def close_pdf_renderer() -> None:
+         _playwright = None
+ 
+ 
++def add_qr_code_to_pdf(
++    pdf_bytes: bytes,
++    url: str,
++    size: int = 70,
++    x: int = 510,
++    y: int = 720,
++    page_size: str = "A4",
++) -> bytes:
++    """Add a QR code overlay to the first page of a PDF.
++
++    Args:
++        pdf_bytes: Original PDF content
++        url: URL to encode in QR code
++        size: QR code size in points
++        x: X coordinate (from left)
++        y: Y coordinate (from bottom)
++        page_size: "A4" or "LETTER"
++    """
++    # 1. Generate QR code image
++    qr = qrcode.QRCode(version=1, box_size=10, border=1)
++    qr.add_data(url)
++    qr.make(fit=True)
++    img = qr.make_image(fill_color="black", back_color="white")
++    
++    img_buffer = BytesIO()
++    img.save(img_buffer, format="PNG")
++    img_buffer.seek(0)
++    
++    from reportlab.lib.utils import ImageReader
++    img_reader = ImageReader(img_buffer)
++
++    # 2. Create overlay PDF with QR code
++    packet = BytesIO()
++    pagesize = A4 if page_size == "A4" else LETTER
++    can = canvas.Canvas(packet, pagesize=pagesize)
++    can.drawImage(img_reader, x, y, width=size, height=size)
++    can.showPage()
++    can.save()
++    packet.seek(0)
++
++    # 3. Merge overlay with original PDF
++    reader = PdfReader(BytesIO(pdf_bytes))
++    writer = PdfWriter()
++    
++    qr_pdf = PdfReader(packet)
++    qr_page = qr_pdf.pages[0]
++
++    # Overlay QR on first page
++    if len(reader.pages) > 0:
++        page = reader.pages[0]
++        page.merge_page(qr_page)
++        
++    for p in reader.pages:
++        writer.add_page(p)
++
++    output_buffer = BytesIO()
++    writer.write(output_buffer)
++    return output_buffer.getvalue()
++
++
+ async def render_resume_pdf(
+     url: str,
+     page_size: str = "A4",
+diff --git a/apps/backend/app/routers/resumes.py b/apps/backend/app/routers/resumes.py
+index 4b9d14d..8cfa45d 100644
+--- a/apps/backend/app/routers/resumes.py
++++ b/apps/backend/app/routers/resumes.py
+@@ -15,7 +15,7 @@ from fastapi import APIRouter, File, HTTPException, Query, UploadFile
+ from fastapi.responses import Response
+ 
+ from app.database import db
+-from app.pdf import render_resume_pdf, PDFRenderError
++from app.pdf import render_resume_pdf, PDFRenderError, add_qr_code_to_pdf
+ from app.config import settings
+ 
+ logger = logging.getLogger(__name__)
+@@ -1038,6 +1038,10 @@ async def download_resume_pdf(
+     showContactIcons: bool = Query(False),
+     accentColor: str = Query("blue", pattern="^(blue|green|orange|red)$"),
+     lang: str | None = Query(None, pattern="^[a-z]{2}(-[A-Z]{2})?$"),
++    qrCodeUrl: str | None = Query(None),
++    qrCodeSize: int = Query(70, ge=30, le=150),
++    qrCodeX: int = Query(510, ge=0, le=600),
++    qrCodeY: int = Query(720, ge=0, le=900),
+ ) -> Response:
+     """Generate a PDF for a resume using headless Chromium.
+ 
+@@ -1094,6 +1098,17 @@ async def download_resume_pdf(
+     # Render PDF with margins applied to every page
+     try:
+         pdf_bytes = await render_resume_pdf(url, pageSize, margins=pdf_margins)
++        
++        # Add QR code if requested
++        if qrCodeUrl:
++            pdf_bytes = add_qr_code_to_pdf(
++                pdf_bytes, 
++                qrCodeUrl, 
++                size=qrCodeSize, 
++                x=qrCodeX, 
++                y=qrCodeY,
++                page_size=pageSize
++            )
+     except PDFRenderError as e:
+         raise HTTPException(status_code=503, detail=str(e))
+ 
+diff --git a/apps/backend/pyproject.toml b/apps/backend/pyproject.toml
+index da6d14f..ad4880f 100644
+--- a/apps/backend/pyproject.toml
++++ b/apps/backend/pyproject.toml
+@@ -16,6 +16,9 @@ dependencies = [
+     "playwright==1.58.0",
+     "python-docx==1.2.0",
+     "python-dotenv==1.2.1",
++    "qrcode==8.0",
++    "pypdf==5.3.0",
++    "reportlab==4.3.1",
+ ]
+ 
+ [project.optional-dependencies]
+diff --git a/apps/frontend/app/(default)/resumes/[id]/page.tsx b/apps/frontend/app/(default)/resumes/[id]/page.tsx
+index e2b6b6a..165e3aa 100644
+--- a/apps/frontend/app/(default)/resumes/[id]/page.tsx
++++ b/apps/frontend/app/(default)/resumes/[id]/page.tsx
+@@ -43,6 +43,8 @@ export default function ResumeViewerPage() {
+   const [resumeTitle, setResumeTitle] = useState<string | null>(null);
+   const [isEditingTitle, setIsEditingTitle] = useState(false);
+   const [editingTitleValue, setEditingTitleValue] = useState('');
++  const [showQrCodeDialog, setShowQrCodeDialog] = useState(false);
++  const [qrUrl, setQrUrl] = useState('');
+ 
+   const resumeId = params?.id as string;
+ 
+@@ -162,20 +164,26 @@ export default function ResumeViewerPage() {
+     reloadResumeData();
+   };
+ 
+-  const handleDownload = async () => {
++  const handleDownload = async (withQr = false) => {
+     try {
+-      const blob = await downloadResumePdf(resumeId, undefined, uiLanguage);
++      const qrSettings =
++        withQr && qrUrl ? { url: qrUrl, size: 70, x: 500, y: 765 } : undefined;
++      const blob = await downloadResumePdf(resumeId, undefined, uiLanguage, qrSettings);
+       const filename = sanitizeFilename(resumeTitle, resumeId, 'resume');
+       downloadBlobAsFile(blob, filename);
+       setShowDownloadSuccessDialog(true);
++      setShowQrCodeDialog(false);
+     } catch (err) {
+       console.error('Failed to download resume:', err);
+       if (err instanceof TypeError && err.message.includes('Failed to fetch')) {
+-        const fallbackUrl = getResumePdfUrl(resumeId, undefined, uiLanguage);
++        const qrSettings =
++          withQr && qrUrl ? { url: qrUrl, size: 70, x: 510, y: 720 } : undefined;
++        const fallbackUrl = getResumePdfUrl(resumeId, undefined, uiLanguage, qrSettings);
+         const didOpen = openUrlInNewTab(fallbackUrl);
+         if (!didOpen) {
+           alert(t('common.popupBlocked', { url: fallbackUrl }));
+         }
++        setShowQrCodeDialog(false);
+         return;
+       }
+     }
+@@ -227,13 +235,12 @@ export default function ResumeViewerPage() {
+     return (
+       <div className="min-h-screen flex flex-col items-center justify-center bg-[#F0F0E8] p-4">
+         <div
+-          className={`border p-6 text-center max-w-md shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] ${
+-            isProcessing
+-              ? 'bg-blue-50 border-blue-200'
+-              : isFailed
+-                ? 'bg-orange-50 border-orange-200'
+-                : 'bg-red-50 border-red-200'
+-          }`}
++          className={`border p-6 text-center max-w-md shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] ${isProcessing
++            ? 'bg-blue-50 border-blue-200'
++            : isFailed
++              ? 'bg-orange-50 border-orange-200'
++              : 'bg-red-50 border-red-200'
++            }`}
+         >
+           <div className="flex justify-center mb-4">
+             {isProcessing ? (
+@@ -245,9 +252,8 @@ export default function ResumeViewerPage() {
+             )}
+           </div>
+           <p
+-            className={`font-bold mb-4 ${
+-              isProcessing ? 'text-blue-700' : isFailed ? 'text-orange-700' : 'text-red-700'
+-            }`}
++            className={`font-bold mb-4 ${isProcessing ? 'text-blue-700' : isFailed ? 'text-orange-700' : 'text-red-700'
++              }`}
+           >
+             {error || t('resumeViewer.resumeNotFound')}
+           </p>
+@@ -299,7 +305,13 @@ export default function ResumeViewerPage() {
+               <Edit className="w-4 h-4" />
+               {t('dashboard.editResume')}
+             </Button>
+-            <Button variant="success" onClick={handleDownload}>
++            <Button
++              variant="success"
++              onClick={() => {
++                setQrUrl(resumeData?.personalInfo?.website || '');
++                setShowQrCodeDialog(true);
++              }}
++            >
+               <Download className="w-4 h-4" />
+               {t('resumeViewer.downloadResume')}
+             </Button>
+@@ -421,6 +433,35 @@ export default function ResumeViewerPage() {
+         showCancelButton={false}
+       />
+ 
++      {/* QR Code Dialog */}
++      <ConfirmDialog
++        open={showQrCodeDialog}
++        onOpenChange={setShowQrCodeDialog}
++        title={t('resumeViewer.qrCode.title')}
++        description={
++          <div className="space-y-4 pt-2">
++            <p className="text-sm text-gray-600">{t('resumeViewer.qrCode.description')}</p>
++            <div className="space-y-2">
++              <label className="text-xs font-bold uppercase tracking-wider text-gray-500">
++                {t('resumeViewer.qrCode.urlLabel')}
++              </label>
++              <input
++                type="url"
++                value={qrUrl}
++                onChange={(e) => setQrUrl(e.target.value)}
++                placeholder={t('resumeViewer.qrCode.urlPlaceholder')}
++                className="w-full border-2 border-black p-2 font-mono text-sm focus:bg-blue-50 outline-none"
++              />
++            </div>
++          </div>
++        }
++        confirmLabel={t('resumeViewer.qrCode.add')}
++        cancelLabel={t('resumeViewer.qrCode.skip')}
++        onConfirm={() => handleDownload(true)}
++        onCancel={() => handleDownload(false)}
++        variant="success"
++      />
++
+       {deleteError && (
+         <ConfirmDialog
+           open={!!deleteError}
+diff --git a/apps/frontend/components/ui/confirm-dialog.tsx b/apps/frontend/components/ui/confirm-dialog.tsx
+index ac55038..6607c45 100644
+--- a/apps/frontend/components/ui/confirm-dialog.tsx
++++ b/apps/frontend/components/ui/confirm-dialog.tsx
+@@ -26,7 +26,7 @@ export interface ConfirmDialogProps {
+   open: boolean;
+   onOpenChange: (open: boolean) => void;
+   title: string;
+-  description: string;
++  description: React.ReactNode;
+   errorMessage?: string;
+   confirmLabel?: string;
+   cancelLabel?: string;
+diff --git a/apps/frontend/lib/api/resume.ts b/apps/frontend/lib/api/resume.ts
+index 3c596e4..4a0a622 100644
+--- a/apps/frontend/lib/api/resume.ts
++++ b/apps/frontend/lib/api/resume.ts
+@@ -218,7 +218,8 @@ export async function updateResume(
+ export function getResumePdfUrl(
+   resumeId: string,
+   settings?: TemplateSettings,
+-  locale?: Locale
++  locale?: Locale,
++  qrCodeSettings?: { url: string; size?: number; x?: number; y?: number }
+ ): string {
+   const normalizedId = normalizeResumeId(resumeId);
+   const params = new URLSearchParams();
+@@ -248,15 +249,23 @@ export function getResumePdfUrl(
+     params.set('lang', locale);
+   }
+ 
++  if (qrCodeSettings) {
++    params.set('qrCodeUrl', qrCodeSettings.url);
++    if (qrCodeSettings.size) params.set('qrCodeSize', String(qrCodeSettings.size));
++    if (qrCodeSettings.x !== undefined) params.set('qrCodeX', String(qrCodeSettings.x));
++    if (qrCodeSettings.y !== undefined) params.set('qrCodeY', String(qrCodeSettings.y));
++  }
++
+   return `${API_BASE}/resumes/${encodeURIComponent(normalizedId)}/pdf?${params.toString()}`;
+ }
+ 
+ export async function downloadResumePdf(
+   resumeId: string,
+   settings?: TemplateSettings,
+-  locale?: Locale
++  locale?: Locale,
++  qrCodeSettings?: { url: string; size?: number; x?: number; y?: number }
+ ): Promise<Blob> {
+-  const url = getResumePdfUrl(resumeId, settings, locale);
++  const url = getResumePdfUrl(resumeId, settings, locale, qrCodeSettings);
+   const res = await apiFetch(url);
+   if (!res.ok) {
+     const text = await res.text().catch(() => '');
+diff --git a/apps/frontend/messages/en.json b/apps/frontend/messages/en.json
+index 8eacab8..62af324 100644
+--- a/apps/frontend/messages/en.json
++++ b/apps/frontend/messages/en.json
+@@ -719,7 +719,15 @@
+       "failedToLoad": "Failed to load resume data.",
+       "failedToDelete": "Failed to delete resume. Please try again."
+     },
+-    "titlePlaceholder": "Enter resume title..."
++    "titlePlaceholder": "Enter resume title...",
++    "qrCode": {
++      "title": "Add QR Code",
++      "description": "Add a QR code to the top right of the first page (e.g., for your Portfolio, LinkedIn, or Website).",
++      "urlLabel": "QR Code URL",
++      "urlPlaceholder": "https://...",
++      "add": "Add & Download",
++      "skip": "Download without QR"
++    }
+   },
+   "preview": {
+     "margins": "Margins",
+@@ -839,4 +847,4 @@
+     "resetDatabase": "Reset Database and Clear All Data?",
+     "resetDatabaseDescription": "This will permanently delete ALL resumes, job descriptions, and generated content. This action is irreversible."
+   }
+-}
++}
+\ No newline at end of file
+diff --git a/apps/frontend/messages/zh.json b/apps/frontend/messages/zh.json
+index a4eb94c..045859c 100644
+--- a/apps/frontend/messages/zh.json
++++ b/apps/frontend/messages/zh.json
+@@ -719,7 +719,15 @@
+       "failedToLoad": "加载简历数据失败。",
+       "failedToDelete": "删除简历失败，请重试。"
+     },
+-    "titlePlaceholder": "输入简历标题..."
++    "titlePlaceholder": "输入简历标题...",
++    "qrCode": {
++      "title": "添加二维码",
++      "description": "在简历第一页右上角添加二维码（如个人网站、作品集、LinkedIn）。",
++      "urlLabel": "二维码链接 (URL)",
++      "urlPlaceholder": "https://...",
++      "add": "添加并下载",
++      "skip": "不添加直接下载"
++    }
+   },
+   "preview": {
+     "margins": "页边距",
+@@ -839,4 +847,4 @@
+     "resetDatabase": "重置数据库并清除所有数据？",
+     "resetDatabaseDescription": "这将永久删除所有简历、职位描述和生成的内容。此操作不可逆。"
+   }
+-}
++}
+\ No newline at end of file
