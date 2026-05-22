@@ -572,6 +572,14 @@
       "description": "Não foi possível calcular um diff para este currículo. Isso pode acontecer com currículos antigos sem dados estruturados. Você pode continuar para salvar o currículo personalizado ou cancelar para revisar mais tarde.",
       "confirmLabel": "Continuar sem diff"
     },
+    "coverLetterStep": {
+      "heading": "Orientações para a carta de apresentação",
+      "subhead": "// PERSONALIZE SUA CARTA",
+      "description": "Diga à IA como abordar sua carta de apresentação — tom, o que enfatizar e qualquer contexto sobre sua trajetória. Opcional.",
+      "placeholder": "Exemplo: Tenho pouca experiência nesta área, mas minha experiência atual pode me permitir entrar no setor. Quero ser honesto sobre minha falta de experiência e, ao mesmo tempo, mostrar entusiasmo.",
+      "contextLabel": "Personalizando para",
+      "strategyLabel": "Estratégia"
+    },
     "errors": {
       "jobDescriptionTooShort": "Descrição da vaga muito curta. Adicione mais detalhes e tente novamente.",
       "apiKeyError": "Sua chave de API não está funcionando. Verifique em Configurações.",

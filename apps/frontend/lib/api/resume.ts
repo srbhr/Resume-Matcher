@@ -88,6 +88,7 @@ interface ImproveResumeConfirmRequest {
     suggestion: string;
     lineNumber?: number | null;
   }>;
+  cover_letter_guidance?: string | null;
 }
 
 function normalizeResumeId(resumeId: string): string {

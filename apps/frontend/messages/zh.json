@@ -572,6 +572,14 @@
       "description": "无法为此简历计算差异。这可能发生在缺少结构化数据的旧简历上。你可以继续保存定制简历，或取消后再检查。",
       "confirmLabel": "继续保存"
     },
+    "coverLetterStep": {
+      "heading": "求职信指引",
+      "subhead": "// 定制你的求职信",
+      "description": "告诉 AI 如何撰写你的求职信——语气、重点以及关于你背景的任何信息。可选。",
+      "placeholder": "示例：我在该领域经验有限，但我现有的经验可以帮助我进入该行业。我希望坦诚说明经验不足，同时展现热情。",
+      "contextLabel": "针对",
+      "strategyLabel": "策略"
+    },
     "errors": {
       "jobDescriptionTooShort": "职位描述过短。请添加更多细节后重试。",
       "apiKeyError": "您的 API 密钥无效。请在设置中检查。",

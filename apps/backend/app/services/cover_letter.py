@@ -37,6 +37,7 @@ async def generate_cover_letter(
     resume_data: dict[str, Any],
     job_description: str,
     language: str = "en",
+    user_guidance: str | None = None,
 ) -> str:
     """Generate a cover letter based on resume and job description.
 
@@ -44,6 +45,9 @@ async def generate_cover_letter(
         resume_data: Structured resume data (ResumeData format)
         job_description: Target job description text
         language: Output language code (en, es, zh, ja)
+        user_guidance: Optional freeform instructions from the user describing
+            how the cover letter should be framed (tone, emphasis, context).
+            Appended to the resolved prompt as an additional guidance block.
 
     Returns:
         Generated cover letter as plain text
@@ -76,6 +80,13 @@ async def generate_cover_letter(
             job_description=job_description,
             resume_data=json.dumps(resume_data),
             output_language=output_language,
+        )
+
+    if user_guidance and user_guidance.strip():
+        prompt = (
+            prompt
+            + "\n\nAdditional user guidance for this cover letter (honor the candidate's framing):\n"
+            + user_guidance.strip()
         )
 
     result = await complete(

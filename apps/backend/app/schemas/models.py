@@ -556,6 +556,7 @@ class ImproveResumeConfirmRequest(BaseModel):
     job_id: str
     improved_data: ResumeData
     improvements: list[ImprovementSuggestion]
+    cover_letter_guidance: str | None = None
 
 
 # Config Models

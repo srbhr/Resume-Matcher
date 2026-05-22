@@ -448,6 +448,7 @@ async def _generate_auxiliary_messages(
     language: str,
     enable_cover_letter: bool,
     enable_outreach: bool,
+    cover_letter_guidance: str | None = None,
 ) -> tuple[str | None, str | None, str | None, list[str]]:
     """Generate cover letter, outreach message, and resume title.
 
@@ -466,7 +467,12 @@ async def _generate_auxiliary_messages(
 
     if enable_cover_letter:
         generation_tasks.append(
-            generate_cover_letter(improved_data, job_content, language)
+            generate_cover_letter(
+                improved_data,
+                job_content,
+                language,
+                user_guidance=cover_letter_guidance,
+            )
         )
         task_labels.append("cover_letter")
     if enable_outreach:
@@ -1109,6 +1115,7 @@ async def _improve_confirm_flow(
             language,
             enable_cover_letter,
             enable_outreach,
+            cover_letter_guidance=request.cover_letter_guidance,
         )
         response_warnings.extend(aux_warnings)
 

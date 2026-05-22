@@ -572,6 +572,14 @@
       "description": "We could not compute a diff for this resume. This can happen with legacy resumes that lack structured data. You can continue to save the tailored resume or cancel to review later.",
       "confirmLabel": "Continue without diff"
     },
+    "coverLetterStep": {
+      "heading": "Cover Letter Guidance",
+      "subhead": "// SHAPE YOUR COVER LETTER",
+      "description": "Tell the AI how to frame your cover letter — tone, what to emphasize, any context about your background. Optional.",
+      "placeholder": "Example: I have minimal experience in this field, but my actual experience could allow me to breakthrough into the industry. I want to be honest about my lack of experience, but also show my enthusiasm.",
+      "contextLabel": "Tailoring for",
+      "strategyLabel": "Strategy"
+    },
     "errors": {
       "jobDescriptionTooShort": "Job description is too short. Add more detail and try again.",
       "apiKeyError": "Your API key isn't working. Check it in Settings.",
