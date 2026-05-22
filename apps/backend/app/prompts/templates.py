@@ -416,14 +416,49 @@ RESUME_SCHEMA = RESUME_SCHEMA_EXAMPLE
 DIFF_STRATEGY_INSTRUCTIONS = {
     "nudge": "Make minimal edits. Only rephrase where there is a clear match. Do not add new bullet points.",
     "keywords": "Weave in relevant keywords where evidence already exists. You may rephrase bullets but do not add new ones.",
-    "full": "Make targeted adjustments. You may rephrase bullets and add new ones that elaborate on existing work, but do not invent new responsibilities.",
+    "full": "Make targeted adjustments. You may rephrase bullets, add verified JD skills, and add new bullets that elaborate on existing work, but do not invent new responsibilities.",
 }
+
+SKILL_TARGET_PLAN_PROMPT = """Build a concise skill target plan for tailoring this resume to the job.
+
+Return ONLY a JSON object. Do not rewrite the resume.
+
+Rules:
+1. Prefer required and preferred JD skills.
+2. Include existing resume skills that are highly relevant to the JD.
+3. You may include JD skills that are missing from the resume skills list.
+4. Do not include skills unrelated to the JD.
+5. Do not include certifications.
+6. Generate reasons in {output_language}.
+
+Existing resume skills:
+{existing_skills}
+
+JD keywords and skills:
+{job_keywords}
+
+Job Description:
+{job_description}
+
+Resume JSON:
+{original_resume}
+
+Output this exact JSON format:
+{{
+  "target_skills": [
+    {{
+      "skill": "skill name",
+      "reason": "why this skill should be emphasized"
+    }}
+  ],
+  "strategy_notes": "brief notes for the next editing pass"
+}}"""
 
 DIFF_IMPROVE_PROMPT = """Given this resume and job description, output a JSON object with targeted changes to better align the resume with the job.
 
 RULES:
 1. Only modify content — never change names, companies, dates, institutions, or degrees
-2. Do not invent skills, metrics, or achievements not supported by the original resume text
+2. Do not invent metrics or achievements not supported by the original resume text
 3. Do not add new work entries, education entries, or project entries
 4. {strategy_instruction}
 5. Each change MUST include the original text (copied exactly) so it can be verified
@@ -431,6 +466,8 @@ RULES:
 7. Generate all new text in {output_language}
 8. Do not use em dash characters
 9. Keep changes minimal and targeted — do not rewrite content that already aligns well
+10. Exception to rule 2: you may add a skill only if it appears in the verified skill targets below
+11. Improve work and project bullets around the verified skill targets when the original text supports that alignment
 
 PATHS you can target:
 - "summary" — the resume summary text
@@ -438,12 +475,15 @@ PATHS you can target:
 - "workExperience[i].description" — append a new bullet (action: "append")
 - "personalProjects[i].description[j]" — a specific project bullet
 - "personalProjects[i].description" — append a new project bullet
-- "additional.technicalSkills" — reorder the skills list (action: "reorder")
+- "additional.technicalSkills" — reorder the skills list (action: "reorder") or add one verified skill (action: "add_skill")
 
 Do NOT target: personalInfo, dates/years, company names, education, customSections.
 
 Keywords to emphasize (only if already supported by resume content):
 {job_keywords}
+
+Verified skill targets:
+{skill_targets}
 
 Job Description:
 {job_description}
@@ -474,6 +514,13 @@ Output this exact JSON format, nothing else:
       "original": null,
       "value": ["most relevant skill first", "then next", "..."],
       "reason": "reordered to prioritize JD-relevant skills"
+    }},
+    {{
+      "path": "additional.technicalSkills",
+      "action": "add_skill",
+      "original": null,
+      "value": "verified skill target missing from the skills list",
+      "reason": "added verified JD skill for review"
     }}
   ],
   "strategy_notes": "brief summary of the tailoring approach"

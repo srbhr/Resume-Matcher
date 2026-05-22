@@ -16,6 +16,7 @@ from app.prompts import (
     DIFF_STRATEGY_INSTRUCTIONS,
     EXTRACT_KEYWORDS_PROMPT,
     IMPROVE_RESUME_PROMPTS,
+    SKILL_TARGET_PLAN_PROMPT,
     get_language_name,
 )
 from app.prompts.templates import IMPROVE_SCHEMA_EXAMPLE
@@ -213,6 +214,7 @@ def _verify_original_matches(actual: Any, expected: str | None) -> bool:
 def apply_diffs(
     original: dict[str, Any],
     changes: list[ResumeChange],
+    allowed_skill_targets: list[dict[str, Any] | str] | None = None,
 ) -> tuple[dict[str, Any], list[ResumeChange], list[ResumeChange]]:
     """Apply verified diffs to original resume.
 
@@ -227,6 +229,7 @@ def apply_diffs(
     Args:
         original: The original resume data (ResumeData-compatible dict)
         changes: List of changes from the LLM
+        allowed_skill_targets: Verified skill targets allowed for add_skill actions
 
     Returns:
         (result_dict, applied_changes, rejected_changes)
@@ -234,6 +237,7 @@ def apply_diffs(
     result = copy.deepcopy(original)
     applied: list[ResumeChange] = []
     rejected: list[ResumeChange] = []
+    allowed_skill_keys = _build_allowed_skill_target_keys(allowed_skill_targets)
 
     for change in changes:
         path = change.path
@@ -318,6 +322,36 @@ def apply_diffs(
             if not _set_at_path(result, path, reordered):
                 rejected.append(change)
                 continue
+            applied.append(change)
+
+        elif action == "add_skill":
+            if path != "additional.technicalSkills":
+                logger.info("Diff rejected (add_skill outside skills): %s", path)
+                rejected.append(change)
+                continue
+            if not isinstance(actual_value, list):
+                logger.info("Diff rejected (add_skill to non-list): %s", path)
+                rejected.append(change)
+                continue
+            if not isinstance(change.value, str) or not change.value.strip():
+                logger.info("Diff rejected (add_skill empty/non-string): %s", path)
+                rejected.append(change)
+                continue
+            new_skill = change.value.strip()
+            existing = {
+                item.casefold()
+                for item in actual_value
+                if isinstance(item, str)
+            }
+            if new_skill.casefold() in existing:
+                logger.info("Diff rejected (duplicate skill): %s", new_skill)
+                rejected.append(change)
+                continue
+            if _normalize_skill_key(new_skill) not in allowed_skill_keys:
+                logger.info("Diff rejected (skill not in verified targets): %s", new_skill)
+                rejected.append(change)
+                continue
+            actual_value.append(new_skill)
             applied.append(change)
 
         else:
@@ -427,6 +461,7 @@ async def generate_resume_diffs(
     language: str = "en",
     prompt_id: str | None = None,
     original_resume_data: dict[str, Any] | None = None,
+    skill_targets: list[dict[str, Any]] | None = None,
 ) -> ImproveDiffResult:
     """Generate targeted resume diffs via LLM.
 
@@ -440,6 +475,7 @@ async def generate_resume_diffs(
         language: Output language code (en, es, zh, ja)
         prompt_id: Strategy id (nudge/keywords/full)
         original_resume_data: Structured resume JSON
+        skill_targets: Verified skill targets from the planning pass
 
     Returns:
         ImproveDiffResult with list of changes and strategy notes
@@ -473,6 +509,7 @@ async def generate_resume_diffs(
         strategy_instruction=strategy_instruction,
         output_language=output_language,
         job_keywords=keywords_str,
+        skill_targets=_prepare_skill_targets_for_prompt(skill_targets),
         job_description=sanitized_jd,
         original_resume=resume_input,
     )
@@ -481,6 +518,7 @@ async def generate_resume_diffs(
         prompt=prompt,
         system_prompt="You are an expert resume editor. Output only valid JSON with targeted changes.",
         max_tokens=4096,
+        schema_type="diff",
     )
 
     # Parse result — handle LLM ignoring diff format gracefully
@@ -530,6 +568,7 @@ async def extract_job_keywords(job_description: str) -> dict[str, Any]:
     return await complete_json(
         prompt=prompt,
         system_prompt="You are an expert job description analyzer.",
+        schema_type="keywords",
     )
 
 
@@ -589,6 +628,229 @@ def _prepare_keywords_for_prompt(job_keywords: dict[str, Any]) -> str:
         sections.append("Additional keywords to weave in naturally:\n- " + "\n- ".join(str(k) for k in keywords))
 
     return "\n\n".join(sections) if sections else "No specific keywords extracted."
+
+
+def _normalize_skill_key(skill: str) -> str:
+    """Normalize a skill for case-insensitive comparison."""
+    return re.sub(r"\s+", " ", skill.strip()).casefold()
+
+
+def _extract_skill_index(items: Any) -> dict[str, str]:
+    """Build a normalized skill index from a string list."""
+    if not isinstance(items, list):
+        return {}
+    index: dict[str, str] = {}
+    for item in items:
+        if not isinstance(item, str):
+            continue
+        skill = item.strip()
+        if skill:
+            index.setdefault(_normalize_skill_key(skill), skill)
+    return index
+
+
+def _skill_mentioned_in_text(skill: str, text: str) -> bool:
+    """Return True when a skill phrase appears as a whole term in text."""
+    escaped = re.escape(skill.strip().lower())
+    if not escaped:
+        return False
+    return bool(re.search(rf"(?<!\w){escaped}(?!\w)", text.lower()))
+
+
+def _build_allowed_skill_target_keys(
+    allowed_skill_targets: list[dict[str, Any] | str] | None,
+) -> set[str]:
+    """Build normalized keys for skills approved by the planning verifier."""
+    keys: set[str] = set()
+    for target in allowed_skill_targets or []:
+        if isinstance(target, str):
+            skill = target
+        elif isinstance(target, dict):
+            skill = str(target.get("skill", ""))
+        else:
+            continue
+        if skill.strip():
+            keys.add(_normalize_skill_key(skill))
+    return keys
+
+
+def _extract_jd_skill_index(
+    job_keywords: dict[str, Any],
+    job_description: str | None = None,
+) -> dict[str, str]:
+    """Build a normalized index of explicit JD skills."""
+    index: dict[str, str] = {}
+    for field in ("required_skills", "preferred_skills"):
+        values = job_keywords.get(field, [])
+        if not isinstance(values, list):
+            continue
+        for value in values:
+            if not isinstance(value, str):
+                continue
+            skill = value.strip()
+            if skill and (
+                job_description is None
+                or _skill_mentioned_in_text(skill, job_description)
+            ):
+                index.setdefault(_normalize_skill_key(skill), skill)
+    return index
+
+
+def _skill_present_in_resume_text(skill: str, resume_data: dict[str, Any]) -> bool:
+    """Return True when a skill phrase already appears in the resume text."""
+    text = json.dumps(resume_data, ensure_ascii=False)
+    return _skill_mentioned_in_text(skill, text)
+
+
+def verify_skill_target_plan(
+    raw_plan: dict[str, Any],
+    original_resume_data: dict[str, Any],
+    job_keywords: dict[str, Any],
+    job_description: str | None = None,
+) -> dict[str, list[dict[str, str]] | str]:
+    """Filter and classify LLM-proposed skill targets before diff generation.
+
+    Existing resume skills are accepted as low-risk targets. Required and
+    preferred JD skills are accepted as explicit JD-added targets for user
+    review. Other skills are accepted only when they already appear in the
+    resume text.
+    """
+    original_skills = _extract_skill_index(
+        original_resume_data.get("additional", {}).get("technicalSkills", [])
+    )
+    jd_skills = _extract_jd_skill_index(job_keywords, job_description)
+    raw_targets = raw_plan.get("target_skills", [])
+    accepted: list[dict[str, str]] = []
+    rejected: list[dict[str, str]] = []
+    seen: set[str] = set()
+
+    if not isinstance(raw_targets, list):
+        raw_targets = []
+
+    for target in raw_targets:
+        if isinstance(target, str):
+            skill = target.strip()
+            reason = ""
+        elif isinstance(target, dict):
+            skill = str(target.get("skill", "")).strip()
+            reason = str(target.get("reason", "")).strip()
+        else:
+            continue
+
+        skill_key = _normalize_skill_key(skill)
+        if not skill or skill_key in seen:
+            continue
+        seen.add(skill_key)
+
+        if skill_key in original_skills:
+            accepted.append(
+                {
+                    "skill": original_skills[skill_key],
+                    "source": "existing",
+                    "reason": reason or "Already present in resume skills",
+                }
+            )
+        elif skill_key in jd_skills:
+            accepted.append(
+                {
+                    "skill": jd_skills[skill_key],
+                    "source": "jd_added",
+                    "reason": reason or "Required or preferred by the job description",
+                }
+            )
+        elif _skill_present_in_resume_text(skill, original_resume_data):
+            accepted.append(
+                {
+                    "skill": skill,
+                    "source": "supported_by_resume",
+                    "reason": reason or "Appears in the existing resume content",
+                }
+            )
+        else:
+            rejected.append(
+                {
+                    "skill": skill,
+                    "source": "unsupported",
+                    "reason": reason or "Not found in resume or job keywords",
+                }
+            )
+
+    return {
+        "accepted": accepted,
+        "rejected": rejected,
+        "strategy_notes": str(raw_plan.get("strategy_notes", "")),
+    }
+
+
+async def generate_skill_target_plan(
+    original_resume_data: dict[str, Any],
+    job_description: str,
+    job_keywords: dict[str, Any],
+    language: str = "en",
+) -> dict[str, Any]:
+    """Ask the LLM for a compact skill target plan before editing diffs."""
+    output_language = get_language_name(language)
+    existing_skills = original_resume_data.get("additional", {}).get(
+        "technicalSkills", []
+    )
+    sanitized_jd = _sanitize_user_input(job_description)
+    prompt = SKILL_TARGET_PLAN_PROMPT.format(
+        output_language=output_language,
+        existing_skills=json.dumps(existing_skills, ensure_ascii=False),
+        job_keywords=_prepare_keywords_for_prompt(job_keywords),
+        job_description=sanitized_jd,
+        original_resume=json.dumps(original_resume_data, ensure_ascii=False),
+    )
+
+    result = await complete_json(
+        prompt=prompt,
+        system_prompt=(
+            "You are a resume skill planning agent. Output only valid JSON with "
+            "target_skills and strategy_notes."
+        ),
+        max_tokens=2048,
+        schema_type="diff",
+    )
+
+    raw_targets = result.get("target_skills", [])
+    target_skills: list[dict[str, str]] = []
+    if isinstance(raw_targets, list):
+        for raw in raw_targets:
+            if isinstance(raw, str):
+                skill = raw.strip()
+                reason = ""
+            elif isinstance(raw, dict):
+                skill = str(raw.get("skill", "")).strip()
+                reason = str(raw.get("reason", "")).strip()
+            else:
+                continue
+            if skill:
+                target_skills.append({"skill": skill, "reason": reason})
+    else:
+        logger.warning("Skill target plan returned non-list target_skills")
+
+    return {
+        "target_skills": target_skills,
+        "strategy_notes": str(result.get("strategy_notes", "")),
+    }
+
+
+def _prepare_skill_targets_for_prompt(
+    skill_targets: list[dict[str, Any]] | None,
+) -> str:
+    """Format verified skill targets for the diff prompt."""
+    if not skill_targets:
+        return "No verified skill targets."
+    lines: list[str] = []
+    for target in skill_targets:
+        skill = str(target.get("skill", "")).strip()
+        if not skill:
+            continue
+        source = str(target.get("source", "unknown")).strip() or "unknown"
+        reason = str(target.get("reason", "")).strip()
+        suffix = f": {reason}" if reason else ""
+        lines.append(f"- {skill} ({source}){suffix}")
+    return "\n".join(lines) if lines else "No verified skill targets."
 
 
 async def improve_resume(

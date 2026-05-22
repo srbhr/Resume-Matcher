@@ -105,6 +105,86 @@ class TestApplyDiffsAppend:
         assert len(result["personalProjects"][0]["description"]) == original_count + 1
 
 
+class TestApplyDiffsAddSkill:
+    """Tests for adding verified skills to the technical skills list."""
+
+    def test_add_skill_to_technical_skills(self, sample_resume):
+        changes = [
+            ResumeChange(
+                path="additional.technicalSkills",
+                action="add_skill",
+                original=None,
+                value="Kubernetes",
+                reason="JD-required skill approved by verifier",
+            )
+        ]
+        result, applied, rejected = apply_diffs(
+            sample_resume,
+            changes,
+            allowed_skill_targets=[{"skill": "Kubernetes"}],
+        )
+        assert len(applied) == 1
+        assert len(rejected) == 0
+        assert "Kubernetes" in result["additional"]["technicalSkills"]
+
+    def test_add_skill_rejects_unverified_skill(self, sample_resume):
+        changes = [
+            ResumeChange(
+                path="additional.technicalSkills",
+                action="add_skill",
+                original=None,
+                value="BananaDB",
+                reason="Unsupported skill should not be appended",
+            )
+        ]
+        result, applied, rejected = apply_diffs(
+            sample_resume,
+            changes,
+            allowed_skill_targets=[{"skill": "Kubernetes"}],
+        )
+        assert len(applied) == 0
+        assert len(rejected) == 1
+        assert "BananaDB" not in result["additional"]["technicalSkills"]
+
+    def test_add_skill_rejects_duplicate_case_insensitive(self, sample_resume):
+        changes = [
+            ResumeChange(
+                path="additional.technicalSkills",
+                action="add_skill",
+                original=None,
+                value="python",
+                reason="Duplicate skill should not be appended",
+            )
+        ]
+        result, applied, rejected = apply_diffs(
+            sample_resume,
+            changes,
+            allowed_skill_targets=[{"skill": "Python"}],
+        )
+        assert len(applied) == 0
+        assert len(rejected) == 1
+        assert result["additional"]["technicalSkills"].count("Python") == 1
+
+    def test_add_skill_rejects_non_skill_path(self, sample_resume):
+        changes = [
+            ResumeChange(
+                path="summary",
+                action="add_skill",
+                original=None,
+                value="Kubernetes",
+                reason="Skill additions are only allowed in technical skills",
+            )
+        ]
+        result, applied, rejected = apply_diffs(
+            sample_resume,
+            changes,
+            allowed_skill_targets=[{"skill": "Kubernetes"}],
+        )
+        assert len(applied) == 0
+        assert len(rejected) == 1
+        assert "Kubernetes" not in result["additional"]["technicalSkills"]
+
+
 class TestApplyDiffsReorder:
     """Tests for the 'reorder' action."""
 

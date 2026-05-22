@@ -7,8 +7,10 @@ import pytest
 
 from app.services.improver import (
     extract_job_keywords,
+    generate_skill_target_plan,
     generate_resume_diffs,
     improve_resume,
+    verify_skill_target_plan,
 )
 
 
@@ -68,6 +70,33 @@ class TestGenerateResumeDiffs:
         assert len(result.changes) == 1
         assert result.changes[0].path == "summary"
         assert result.strategy_notes == "Focused on backend keywords"
+
+    @patch("app.services.improver.complete_json", new_callable=AsyncMock)
+    async def test_includes_verified_skill_targets_in_prompt(
+        self,
+        mock_llm,
+        sample_resume,
+        sample_job_keywords,
+    ):
+        mock_llm.return_value = {"changes": [], "strategy_notes": "test"}
+        await generate_resume_diffs(
+            original_resume="# Resume",
+            job_description="JD",
+            job_keywords=sample_job_keywords,
+            prompt_id="full",
+            original_resume_data=sample_resume,
+            skill_targets=[
+                {
+                    "skill": "Kubernetes",
+                    "source": "jd_added",
+                    "reason": "Required by JD",
+                }
+            ],
+        )
+        prompt = mock_llm.call_args.kwargs.get("prompt") or mock_llm.call_args.args[0]
+        assert "Verified skill targets" in prompt
+        assert "Kubernetes" in prompt
+        assert "add_skill" in prompt
 
     @patch("app.services.improver.complete_json", new_callable=AsyncMock)
     async def test_handles_empty_changes(self, mock_llm, sample_resume, sample_job_keywords):
@@ -181,6 +210,65 @@ class TestGenerateResumeDiffs:
         )
         prompt = mock_llm.call_args.kwargs.get("prompt") or mock_llm.call_args.args[0]
         assert "targeted adjustments" in prompt.lower()
+
+
+class TestSkillTargetPlanning:
+    """Tests for skill target planning and verification."""
+
+    @patch("app.services.improver.complete_json", new_callable=AsyncMock)
+    async def test_generate_skill_target_plan_parses_llm_output(
+        self,
+        mock_llm,
+        sample_resume,
+        sample_job_keywords,
+        sample_job_description,
+    ):
+        mock_llm.return_value = {
+            "target_skills": [
+                {"skill": "Python", "reason": "Already present"},
+                {"skill": "Kubernetes", "reason": "Required by JD"},
+            ],
+            "strategy_notes": "Prioritize platform keywords",
+        }
+        result = await generate_skill_target_plan(
+            original_resume_data=sample_resume,
+            job_description=sample_job_description,
+            job_keywords=sample_job_keywords,
+            language="en",
+        )
+        assert [item["skill"] for item in result["target_skills"]] == [
+            "Python",
+            "Kubernetes",
+        ]
+        assert result["strategy_notes"] == "Prioritize platform keywords"
+        assert mock_llm.call_args.kwargs["schema_type"] == "diff"
+
+    def test_verify_skill_target_plan_allows_existing_and_jd_skills(
+        self,
+        sample_resume,
+        sample_job_keywords,
+        sample_job_description,
+    ):
+        raw_plan = {
+            "target_skills": [
+                {"skill": "Python", "reason": "Already in resume"},
+                {"skill": "Kubernetes", "reason": "JD required"},
+                {"skill": "CI/CD", "reason": "Generic keyword, not skill field"},
+                {"skill": "BananaDB", "reason": "Unsupported"},
+            ]
+        }
+        verified = verify_skill_target_plan(
+            raw_plan,
+            original_resume_data=sample_resume,
+            job_keywords=sample_job_keywords,
+            job_description=sample_job_description,
+        )
+        accepted_skills = [item["skill"] for item in verified["accepted"]]
+        rejected_skills = [item["skill"] for item in verified["rejected"]]
+        assert accepted_skills == ["Python", "Kubernetes"]
+        assert rejected_skills == ["CI/CD", "BananaDB"]
+        assert verified["accepted"][0]["source"] == "existing"
+        assert verified["accepted"][1]["source"] == "jd_added"
 
 
 class TestGenerateResumeDiffsEdgeCases:

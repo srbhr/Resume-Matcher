@@ -56,6 +56,12 @@ MODEL_LOADING_MAX_RETRIES = 18    # 18 × 10s = 3-minute ceiling
 MAX_JSON_EXTRACTION_RECURSION = 10
 MAX_JSON_CONTENT_SIZE = 1024 * 1024  # 1MB
 
+# Default token budget for structured JSON completions (e.g. resume parsing).
+# Chosen to accommodate large resumes while staying within most providers'
+# output limits. Callers should use get_safe_max_tokens() so this is
+# automatically clamped to the model's actual capacity.
+DEFAULT_JSON_MAX_TOKENS = 8192
+
 
 class LLMConfig(BaseModel):
     """LLM configuration model."""
@@ -312,6 +318,7 @@ _PROVIDER_KEY_MAP: dict[str, str] = {
     "gemini": "google",
     "openrouter": "openrouter",
     "deepseek": "deepseek",
+    "groq": "groq",
     "ollama": "ollama",
 }
 
@@ -422,6 +429,7 @@ def get_model_name(config: LLMConfig) -> str:
         "openrouter": "openrouter/",
         "gemini": "gemini/",
         "deepseek": "deepseek/",
+        "groq": "groq/",
         "ollama": "ollama_chat/",  # ollama_chat/ routes to /api/chat (supports messages array)
     }
 
@@ -440,6 +448,7 @@ def get_model_name(config: LLMConfig) -> str:
         "anthropic/",
         "gemini/",
         "deepseek/",
+        "groq/",
         "ollama/",
         "ollama_chat/",
         "openai/",
@@ -712,9 +721,10 @@ async def complete(
             "model": "primary",
             "messages": messages,
             "max_tokens": max_tokens,
-            "temperature": temperature,
             "timeout": _calculate_timeout("completion", max_tokens, config.provider),
         }
+        if _supports_temperature(model_name, temperature):
+            kwargs["temperature"] = temperature
         if config.reasoning_effort:
             kwargs["reasoning_effort"] = config.reasoning_effort
         if config.provider == "ollama":
@@ -772,38 +782,165 @@ def _supports_json_mode(model_name: str) -> bool:
         return False
 
 
-def _appears_truncated(data: dict) -> bool:
+FALLBACK_MAX_TOKENS = 4096
+
+def get_safe_max_tokens(model_name: str, requested: int = DEFAULT_JSON_MAX_TOKENS) -> int:
+    """Return a token count safe for the given model, clamped to its output limit.
+
+    Queries LiteLLM's model registry for ``max_output_tokens`` and returns
+    ``min(requested, model_limit)`` so callers never send a value that exceeds
+    what the backend actually supports.
+
+    If the model is not in the registry (e.g. custom Ollama models), it falls
+    back to a safe conservative limit (FALLBACK_MAX_TOKENS).
+
+    Args:
+        model_name: LiteLLM-formatted model name (from get_model_name).
+        requested: Desired token budget; defaults to DEFAULT_JSON_MAX_TOKENS.
+
+    Returns:
+        Safe token count, clamped correctly and always >= 1.
+    """
+    safe_requested = max(1, requested)
+
+    try:
+        info = litellm.get_model_info(model=model_name)
+        model_limit = info.get("max_output_tokens") or info.get("max_tokens")
+        if model_limit and isinstance(model_limit, int) and model_limit > 0:
+            safe = min(safe_requested, model_limit)
+            if safe < safe_requested:
+                logging.debug(
+                    "max_tokens clamped %d → %d for model %s (model limit)",
+                    safe_requested,
+                    safe,
+                    model_name,
+                )
+            return safe
+    except Exception:
+        pass  # Model not in registry, drop down to fallback logic
+
+    safe = min(safe_requested, FALLBACK_MAX_TOKENS)
+    logging.debug(
+        "Model %s not in LiteLLM registry, clamping requested max_tokens %d → %d constraint",
+        model_name,
+        safe_requested,
+        safe,
+    )
+    return safe
+
+
+def _appears_truncated(data: dict, schema_type: str = "resume") -> bool:
     """LLM-001: Check if JSON data appears to be truncated.
 
     Detects suspicious patterns indicating incomplete responses.
+    The checks are schema-aware so that enrichment/diff/keyword outputs
+    are not evaluated against resume-structure heuristics.
+
+    Args:
+        data: Parsed JSON dict.
+        schema_type: Expected schema — "resume" (full resume), "enrichment"
+            (analyze output), "diff" (diff changes), or "keywords".
+            Determines which fields are checked for truncation.
     """
     if not isinstance(data, dict):
         return False
 
-    # Check for empty arrays that should typically have content
-    suspicious_empty_arrays = ["workExperience", "education", "skills"]
-    for key in suspicious_empty_arrays:
-        if key in data and data[key] == []:
-            # Log warning - these are rarely empty in real resumes
+    if schema_type == "resume":
+        # Full resume structure: check for empty required arrays
+        suspicious_empty_arrays = ["workExperience", "education", "skills"]
+        for key in suspicious_empty_arrays:
+            if key in data and data[key] == []:
+                # Log warning - these are rarely empty in real resumes
+                logging.warning(
+                    "Possible truncation detected: '%s' is empty",
+                    key,
+                )
+                return True
+        return False
+
+    if schema_type == "enrichment":
+        # Enrichment analyze returns items_to_enrich + questions.
+        # Empty arrays are valid (resume is already strong).
+        # Only flag if keys are entirely missing (LLM ignored structure).
+        if "items_to_enrich" not in data or "questions" not in data:
             logging.warning(
-                "Possible truncation detected: '%s' is empty",
-                key,
+                "Possible truncation detected: enrichment missing required keys"
             )
             return True
+        return False
 
-    # personalInfo is intentionally excluded: the improve prompts tell the LLM
-    # to skip it, and _preserve_personal_info() restores it from the original.
-    # Checking for it here caused 3 wasteful retry attempts on every request.
-
+    # For "diff", "keywords", and unknown schemas: no truncation heuristics.
+    # Diff may legitimately return empty changes; keywords may return empty
+    # lists when the job description has no actionable terms.
     return False
 
 
-def _get_retry_temperature(attempt: int, base_temp: float = 0.1) -> float:
-    """LLM-002: Get temperature for retry attempt - increases with each retry.
+def _supports_temperature(model_name: str, temperature: float | None = None) -> bool:
+    """Check if the model supports the given temperature value.
 
-    Higher temperature on retries gives the model more variation to produce
-    different (hopefully valid) output.
+    Uses LiteLLM model registry for capability detection, with
+    provider-specific fallbacks for known restrictions:
+      - Anthropic claude-opus-4.*: temperature is deprecated
+      - Moonshot kimi-k2.6: only temperature=1 allowed
+
+    Queries LiteLLM's model info for every provider so that capability is
+    always determined from the registry rather than a hardcoded list.
+
+    Args:
+        model_name: LiteLLM-formatted model name (from get_model_name).
+        temperature: The temperature value to check. If None, returns True
+            (caller isn't setting a specific value).
+
+    Returns:
+        True if the model supports the given temperature, False otherwise.
     """
+    if temperature is None:
+        return True
+
+    # Ollama models are often not in LiteLLM's registry (custom/local),
+    # but they universally support temperature.
+    if model_name.startswith(("ollama/", "ollama_chat/")):
+        return True
+
+    try:
+        info = litellm.get_model_info(model=model_name)
+        supported_params = info.get("supported_openai_params", [])
+        if "temperature" not in supported_params:
+            return False
+    except Exception:
+        # Model not in LiteLLM's registry — be conservative and skip
+        # temperature to avoid BadRequestError from unsupported params.
+        logging.debug(
+            "Model %s not in LiteLLM registry, skipping temperature", model_name
+        )
+        return False
+
+    # Provider-specific restrictions not captured by the registry.
+    # Anthropic Opus 4.x deprecated temperature entirely.
+    if "claude-opus-4" in model_name.lower():
+        return False
+
+    # Moonshot kimi-k2.6 only allows temperature=1.
+    if "kimi-k2.6" in model_name.lower() and temperature != 1.0:
+        return False
+
+    return True
+
+
+def _get_retry_temperature(model_name: str, attempt: int, base_temp: float = 0.1) -> float | None:
+    """LLM-002: Get temperature for retry attempt.
+
+    Returns None if the model does not support temperature at all.
+    Returns 1.0 for models that only support temperature=1.
+    Otherwise returns increasing temperatures for retry variation.
+    """
+    # Moonshot kimi-k2.6 only allows temperature=1.
+    if "kimi-k2.6" in model_name.lower():
+        return 1.0
+
+    if not _supports_temperature(model_name, base_temp):
+        return None
+
     temperatures = [base_temp, 0.3, 0.5, 0.7]
     return temperatures[min(attempt, len(temperatures) - 1)]
 
@@ -830,6 +967,7 @@ def _calculate_timeout(
         "openai": 1.0,
         "anthropic": 1.2,
         "openrouter": 1.5,  # More variable latency
+        "groq": 1.0,
         "ollama": 5.0,  # Local CPU models can take minutes per generation
         "openai_compatible": 5.0,  # Local CPU models (llama.cpp, LM Studio, etc.)
     }
@@ -943,12 +1081,18 @@ async def complete_json(
     config: LLMConfig | None = None,
     max_tokens: int = 4096,
     retries: int = 2,
+    schema_type: str = "resume",
 ) -> dict[str, Any]:
     """Make a completion request expecting JSON response.
 
     Uses JSON mode when available, with app-level retries for content-quality
     issues (malformed JSON, truncation).  Transport retries (429, 500, timeout)
     are handled by the Router and are NOT retried again here.
+
+    Args:
+        schema_type: Expected schema — "resume", "enrichment", "diff", or
+            "keywords". Passed to _appears_truncated for context-aware truncation
+            detection and used to tailor retry hints.
     """
     router, config = get_router(config)
     model_name = get_model_name(config)
@@ -964,24 +1108,29 @@ async def complete_json(
 
     # Check if we can use JSON mode
     use_json_mode = _supports_json_mode(model_name)
+    json_mode_failed = False
 
     for attempt in range(retries + 1):
         try:
             kwargs: dict[str, Any] = {
                 "model": "primary",
                 "messages": messages,
-                # LLM-002: Increase temperature on retry for variation
-                "temperature": _get_retry_temperature(attempt),
                 "max_tokens": max_tokens,
                 "timeout": _calculate_timeout("json", max_tokens, config.provider),
             }
+            # LLM-002: Increase temperature on retry for variation
+            retry_temp = _get_retry_temperature(model_name, attempt)
+            if retry_temp is not None:
+                kwargs["temperature"] = retry_temp
             if config.reasoning_effort:
                 kwargs["reasoning_effort"] = config.reasoning_effort
             if config.provider == "ollama":
                 kwargs["num_ctx"] = OLLAMA_NUM_CTX
 
-            # Add JSON mode if supported
-            if use_json_mode:
+            # JSON-012: Fallback to prompt-only JSON mode after JSON-mode failure.
+            # LiteLLM registry may report support for models that the upstream
+            # aggregator (OpenRouter) cannot actually serve with response_format.
+            if use_json_mode and not json_mode_failed:
                 kwargs["response_format"] = {"type": "json_object"}
 
             response = await _acompletion_with_loading_retry(router, **kwargs)
@@ -998,17 +1147,26 @@ async def complete_json(
             result = json.loads(json_str)
 
             # LLM-001: Check if parsed result appears truncated
-            if isinstance(result, dict) and _appears_truncated(result):
+            if isinstance(result, dict) and _appears_truncated(result, schema_type):
                 if attempt < retries:
                     logging.warning(
                         "Parsed JSON appears truncated (attempt %d/%d), retrying",
                         attempt + 1,
                         retries + 1,
                     )
-                    messages[-1]["content"] = (
-                        prompt
-                        + "\n\nIMPORTANT: Output the COMPLETE JSON object with ALL sections including personalInfo. Do not truncate."
-                    )
+                    if schema_type == "resume":
+                        hint = (
+                            "\n\nIMPORTANT: Output the COMPLETE JSON object with ALL sections. Do not truncate."
+                        )
+                    elif schema_type == "enrichment":
+                        hint = (
+                            "\n\nIMPORTANT: Output the COMPLETE JSON object with ALL keys: items_to_enrich, questions, analysis_summary. Do not truncate."
+                        )
+                    else:
+                        hint = (
+                            "\n\nIMPORTANT: Output ONLY a valid JSON object. Start with { and end with }."
+                        )
+                    messages[-1]["content"] = prompt + hint
                     continue
                 logging.warning(
                     "Parsed JSON appears truncated on final attempt, proceeding with result"
@@ -1019,6 +1177,14 @@ async def complete_json(
         except json.JSONDecodeError as e:
             # Content quality — malformed JSON, retry with prompt hint
             logging.warning(f"JSON parse failed (attempt {attempt + 1}): {e}")
+            if use_json_mode and not json_mode_failed:
+                # JSON-012: Registry claimed JSON mode support but the upstream
+                # failed to return valid JSON. Disable JSON mode for retries.
+                json_mode_failed = True
+                logging.warning(
+                    "JSON mode failed for %s, falling back to prompt-only (attempt %d)",
+                    model_name, attempt + 1,
+                )
             if attempt < retries:
                 messages[-1]["content"] = (
                     prompt

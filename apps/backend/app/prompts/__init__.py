@@ -11,6 +11,7 @@ from app.prompts.templates import (
     IMPROVE_RESUME_PROMPT,
     IMPROVE_RESUME_PROMPTS,
     PARSE_RESUME_PROMPT,
+    SKILL_TARGET_PLAN_PROMPT,
     get_language_name,
 )
 
@@ -48,6 +49,7 @@ __all__ = [
     "CRITICAL_TRUTHFULNESS_RULES",
     "DIFF_IMPROVE_PROMPT",
     "DIFF_STRATEGY_INSTRUCTIONS",
+    "SKILL_TARGET_PLAN_PROMPT",
     "GENERATE_TITLE_PROMPT",
     "REQUIRED_FEATURE_PROMPT_PLACEHOLDERS",
     "validate_prompt_placeholders",

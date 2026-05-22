@@ -689,6 +689,7 @@ class ApiKeysUpdateRequest(BaseModel):
     google: str | None = None
     openrouter: str | None = None
     deepseek: str | None = None
+    groq: str | None = None
 
 
 class ApiKeysUpdateResponse(BaseModel):
@@ -762,7 +763,7 @@ class ResumeChange(BaseModel):
     path: str = Field(
         description="Dot+bracket path, e.g. 'workExperience[0].description[1]'"
     )
-    action: Literal["replace", "append", "reorder"]
+    action: Literal["replace", "append", "reorder", "add_skill"]
     original: str | list[str] | None = Field(
         default=None, description="Current text at path — for verification"
     )

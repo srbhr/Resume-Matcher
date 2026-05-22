@@ -36,16 +36,41 @@ MIN_TRUNCATION_WARNING_LENGTH = 1500
 
 
 def _keyword_in_text(keyword: str, text: str) -> bool:
-    """Check if keyword exists as a whole word in text.
+    """Check if keyword exists as a whole term in text.
 
-    SVC-010: Uses word boundaries instead of substring matching to avoid
+    SVC-010: Uses term boundaries instead of substring matching to avoid
     false positives like 'python' matching 'pythonic' or 'go' matching 'going'.
     """
-    # Escape special regex characters in keyword
-    escaped = re.escape(keyword.lower())
-    # Use word boundaries
-    pattern = rf"\b{escaped}\b"
+    escaped = re.escape(keyword.strip().lower())
+    if not escaped:
+        return False
+    pattern = rf"(?<!\w){escaped}(?!\w)"
     return bool(re.search(pattern, text.lower()))
+
+
+def _normalize_skill_key(skill: str) -> str:
+    """Normalize a skill for case-insensitive comparisons."""
+    return re.sub(r"\s+", " ", skill.strip()).casefold()
+
+
+def _extract_jd_skill_keys(
+    job_keywords: dict[str, Any],
+    job_description: str,
+) -> set[str]:
+    """Extract normalized required/preferred skills present in the raw JD."""
+    keys: set[str] = set()
+    for field in ("required_skills", "preferred_skills"):
+        values = job_keywords.get(field, [])
+        if not isinstance(values, list):
+            continue
+        for value in values:
+            if (
+                isinstance(value, str)
+                and value.strip()
+                and _keyword_in_text(value, job_description)
+            ):
+                keys.add(_normalize_skill_key(value))
+    return keys
 
 
 async def refine_resume(
@@ -107,7 +132,14 @@ async def refine_resume(
     # Pass 3: Master alignment validation
     # LLM-008: Alignment validation is MANDATORY - not optional fallback
     if config.enable_master_alignment_check:
-        alignment = validate_master_alignment(current, master_resume)
+        alignment = validate_master_alignment(
+            current,
+            master_resume,
+            allowed_new_skills=_extract_jd_skill_keys(
+                job_keywords,
+                job_description,
+            ),
+        )
         if not alignment.is_aligned:
             # Count critical violations
             critical_violations = [
@@ -258,6 +290,7 @@ def remove_ai_phrases(
 def validate_master_alignment(
     tailored: dict[str, Any],
     master: dict[str, Any],
+    allowed_new_skills: set[str] | None = None,
 ) -> AlignmentReport:
     """Verify tailored resume doesn't contain fabricated content.
 
@@ -284,9 +317,16 @@ def validate_master_alignment(
         for s in master.get("additional", {}).get("technicalSkills", [])
         if isinstance(s, str)
     )
+    allowed_skills = {
+        _normalize_skill_key(skill)
+        for skill in (allowed_new_skills or set())
+        if isinstance(skill, str) and skill.strip()
+    }
     master_full_text = _extract_all_text(master).lower()
 
     for skill in tailored_skills - master_skills:
+        if _normalize_skill_key(skill) in allowed_skills:
+            continue
         # Check substring/containment: e.g. "Python" in "Python 3.x"
         has_substring_match = any(
             skill in ms or ms in skill for ms in master_skills if ms
