@@ -587,6 +587,7 @@
       "apiKeyError": "Sua chave de API não está funcionando. Verifique em Configurações.",
       "rateLimit": "Limite de requisições atingido. Aguarde cerca de um minuto e tente novamente.",
       "failedToGenerate": "Não foi possível gerar o currículo. Verifique sua chave de API em Configurações e tente novamente.",
+      "timeout": "A solicitação expirou. Tente novamente com uma descrição de vaga mais curta ou verifique sua conexão.",
       "failedToPreview": "Não foi possível pré-visualizar o currículo. Verifique sua chave de API em Configurações e tente novamente.",
       "failedToConfirm": "Não foi possível aplicar as alterações. Tente novamente."
     }
@@ -758,7 +759,17 @@
       "failedToLoad": "Falha ao carregar dados do currículo.",
       "failedToDelete": "Falha ao excluir currículo. Por favor, tente novamente."
     },
-    "titlePlaceholder": "Digite o título do currículo..."
+    "titlePlaceholder": "Digite o título do currículo...",
+    "qrCode": {
+      "title": "Baixar currículo",
+      "description": "Personalize sua saída antes de salvar.",
+      "includeQr": "Incluir QR code pessoal",
+      "urlLabel": "URL do QR code",
+      "urlPlaceholder": "https://...",
+      "previewLabel": "Visualização de posicionamento",
+      "add": "Baixar PDF",
+      "skip": "Cancelar"
+    }
   },
   "preview": {
     "margins": "Margens",

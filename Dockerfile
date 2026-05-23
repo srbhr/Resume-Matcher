@@ -43,6 +43,9 @@ ENV PYTHONUNBUFFERED=1 \
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     curl \
+    # Caladea: metric-compatible Cambria substitute for PDF rendering
+    fonts-crosextra-caladea \
+    fonts-crosextra-carlito \
     # Playwright dependencies
     libnss3 \
     libnspr4 \

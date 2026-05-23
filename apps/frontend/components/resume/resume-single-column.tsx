@@ -272,7 +272,9 @@ export const ResumeSingleColumn: React.FC<ResumeSingleColumnProps> = ({
             <div className={baseStyles['resume-items']}>
               {groupedEducation.map(([key, group]) => (
                 <div key={key} className={baseStyles['resume-item']}>
-                  <h4 className={baseStyles['resume-item-title']}>{group.institution}</h4>
+                  <div className={baseStyles['resume-row-tight']}>
+                    <h4 className={baseStyles['resume-item-title']}>{group.institution}</h4>
+                  </div>
                   {group.entries.map((edu) => (
                     <div key={edu.id}>
                       <div

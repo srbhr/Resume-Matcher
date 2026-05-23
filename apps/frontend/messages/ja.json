@@ -587,6 +587,7 @@
       "apiKeyError": "API キーが機能していません。設定で確認してください。",
       "rateLimit": "レート制限に達しました。約1分待ってから再試行してください。",
       "failedToGenerate": "履歴書を生成できませんでした。設定で API キーを確認してから、もう一度お試しください。",
+      "timeout": "リクエストがタイムアウトしました。より短い求人内容で再試行するか、接続を確認してください。",
       "failedToPreview": "履歴書をプレビューできませんでした。設定で API キーを確認してから、もう一度お試しください。",
       "failedToConfirm": "変更を適用できませんでした。もう一度お試しください。"
     }
@@ -758,7 +759,17 @@
       "failedToLoad": "履歴書データの読み込みに失敗しました。",
       "failedToDelete": "履歴書の削除に失敗しました。もう一度お試しください。"
     },
-    "titlePlaceholder": "履歴書のタイトルを入力..."
+    "titlePlaceholder": "履歴書のタイトルを入力...",
+    "qrCode": {
+      "title": "履歴書をダウンロード",
+      "description": "保存前に出力をカスタマイズしてください。",
+      "includeQr": "個人QRコードを含める",
+      "urlLabel": "QRコードURL",
+      "urlPlaceholder": "https://...",
+      "previewLabel": "配置プレビュー",
+      "add": "PDFをダウンロード",
+      "skip": "キャンセル"
+    }
   },
   "preview": {
     "margins": "余白",
