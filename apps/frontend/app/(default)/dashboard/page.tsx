@@ -15,6 +15,7 @@ import Loader2 from 'lucide-react/dist/esm/icons/loader-2';
 import AlertCircle from 'lucide-react/dist/esm/icons/alert-circle';
 import RefreshCw from 'lucide-react/dist/esm/icons/refresh-cw';
 import Plus from 'lucide-react/dist/esm/icons/plus';
+import Target from 'lucide-react/dist/esm/icons/target';
 import Settings from 'lucide-react/dist/esm/icons/settings';
 import AlertTriangle from 'lucide-react/dist/esm/icons/alert-triangle';
 
@@ -286,7 +287,7 @@ export default function DashboardPage() {
     return Math.abs(hash);
   };
 
-  const totalCards = 1 + tailoredResumes.length + 1;
+  const totalCards = 1 + tailoredResumes.length + 2;
   const fillerCount = Math.max(0, (5 - (totalCards % 5)) % 5);
   const extraFillerCount = 5;
   // Use Tailwind classes for fillers now that we have them in config or use specific hex if needed
@@ -503,6 +504,19 @@ export default function DashboardPage() {
             <p className="text-xs font-mono mt-4 uppercase text-green-700">
               {t('dashboard.createResume')}
             </p>
+          </div>
+        </Card>
+
+        {/* ATS Screen */}
+        <Card className="aspect-square h-full" variant="default">
+          <div className="flex-1 flex flex-col items-center justify-center text-center h-full">
+            <Button
+              onClick={() => router.push('/ats')}
+              className="w-20 h-20 bg-black text-white border-2 border-black shadow-sw-default hover:translate-y-[2px] hover:translate-x-[2px] hover:shadow-none transition-all rounded-none"
+            >
+              <Target className="w-8 h-8" />
+            </Button>
+            <p className="text-xs font-mono mt-4 uppercase text-blue-700">ATS Screen</p>
           </div>
         </Card>
 
