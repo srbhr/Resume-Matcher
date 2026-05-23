@@ -666,6 +666,7 @@
       "apiKeyNotRequiredPlaceholder": "Not required for local models",
       "apiKeyOptionalPlaceholder": "Leave blank if your server has no auth",
       "leaveBlankToKeepExistingKey": "LEAVE BLANK TO KEEP EXISTING KEY",
+      "claudeCodeHint": "Claude Code subscribers can use their token here. Run: claude setup-token",
       "baseUrlLabel": "Base URL (optional)",
       "baseUrlPlaceholder": "e.g. https://api.openai.com/v1",
       "baseUrlDescription": "Override the API base URL to use a proxy/aggregator endpoint. Leave blank to use provider default.",
