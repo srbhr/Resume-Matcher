@@ -14,6 +14,13 @@ interface PageContainerProps {
   children: React.ReactNode;
   contentOffset?: number; // Where this page's content starts (in px)
   contentEnd?: number; // Where this page's content ends (in px)
+  // Optional overlay positioned inside the content area (relative to its top-left),
+  // not clipped by page boundaries.
+  contentOverlay?: React.ReactNode;
+  // Optional overlay positioned at the PAGE top-left (origin includes margins).
+  // Used for the draggable QR code on page 1 so it can be placed flush to a
+  // page edge, including into the margin/bleed area.
+  pageOverlay?: React.ReactNode;
 }
 
 /**
@@ -32,6 +39,8 @@ export function PageContainer({
   children,
   contentOffset = 0,
   contentEnd,
+  contentOverlay,
+  pageOverlay,
 }: PageContainerProps) {
   const pageDims = PAGE_DIMENSIONS[pageSize];
   const pageWidthPx = mmToPx(pageDims.width);
@@ -104,6 +113,41 @@ export function PageContainer({
             {children}
           </div>
         </div>
+
+        {/* Content-area-relative overlay (rendered above content, not clipped) */}
+        {contentOverlay && (
+          <div
+            className="absolute"
+            style={{
+              top: marginTopPx,
+              left: marginLeftPx,
+              width: contentWidth,
+              height: maxContentHeight,
+              zIndex: 20,
+            }}
+          >
+            {contentOverlay}
+          </div>
+        )}
+
+        {/* Page-relative overlay (origin = page top-left, spans full page) */}
+        {pageOverlay && (
+          <div
+            className="absolute"
+            style={{
+              top: 0,
+              left: 0,
+              width: pageWidthPx,
+              height: pageHeightPx,
+              zIndex: 21,
+              pointerEvents: 'none',
+            }}
+          >
+            <div style={{ position: 'absolute', inset: 0, pointerEvents: 'auto' }}>
+              {pageOverlay}
+            </div>
+          </div>
+        )}
 
         {/* Page number indicator */}
         <div

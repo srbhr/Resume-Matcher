@@ -116,6 +116,14 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
     onChange({ ...settings, accentColor });
   };
 
+  const handleQrToggle = () => {
+    onChange({ ...settings, qrCode: { ...settings.qrCode, enabled: !settings.qrCode.enabled } });
+  };
+
+  const handleQrUrlChange = (url: string) => {
+    onChange({ ...settings, qrCode: { ...settings.qrCode, url } });
+  };
+
   const handleReset = () => {
     onChange(DEFAULT_TEMPLATE_SETTINGS);
   };
@@ -503,6 +511,56 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
                   {t('builder.formatting.contactIcons')}
                 </span>
               </label>
+            </div>
+          </div>
+
+          {/* QR Code Section */}
+          <div>
+            <h4 className="font-mono text-xs font-bold uppercase tracking-wider mb-3 text-ink-soft">
+              QR Code
+            </h4>
+            <div className="space-y-3">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <button
+                  onClick={handleQrToggle}
+                  className={`relative w-10 h-5 border-2 transition-all ${
+                    settings.qrCode.enabled
+                      ? 'bg-blue-700 border-blue-700'
+                      : 'bg-white border-steel-grey'
+                  }`}
+                >
+                  <span
+                    className={`absolute top-0.5 w-3.5 h-3.5 bg-white border transition-all ${
+                      settings.qrCode.enabled
+                        ? 'left-5 border-blue-700'
+                        : 'left-0.5 border-steel-grey'
+                    }`}
+                  />
+                </button>
+                <span className="font-mono text-xs text-ink-soft">Show QR code</span>
+              </label>
+              {settings.qrCode.enabled && (
+                <>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-xs w-12 text-ink-soft">URL:</span>
+                    <input
+                      type="url"
+                      value={settings.qrCode.url}
+                      onChange={(e) => handleQrUrlChange(e.target.value)}
+                      placeholder="https://example.com"
+                      className="flex-1 px-2 py-1 border border-steel-grey font-mono text-xs bg-white focus:outline-none focus:border-blue-700"
+                    />
+                  </div>
+                  <div className="font-mono text-[10px] text-steel-grey">
+                    Drag the QR on the preview to reposition. Drag a corner to resize (always
+                    square).
+                  </div>
+                  <div className="font-mono text-[10px] text-ink-soft">
+                    Position: {settings.qrCode.xMm.toFixed(0)}mm, {settings.qrCode.yMm.toFixed(0)}mm
+                    &nbsp;·&nbsp; Size: {settings.qrCode.sizeMm.toFixed(0)}mm
+                  </div>
+                </>
+              )}
             </div>
           </div>
 

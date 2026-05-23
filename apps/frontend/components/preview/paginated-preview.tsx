@@ -4,8 +4,9 @@ import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { ZoomIn, ZoomOut, Eye, EyeOff, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Resume, { type ResumeData } from '@/components/dashboard/resume-component';
-import { type TemplateSettings } from '@/lib/types/template-settings';
+import { type TemplateSettings, type QrCodeSettings } from '@/lib/types/template-settings';
 import { PageContainer } from './page-container';
+import { QrOverlay } from './qr-overlay';
 import { usePagination } from './use-pagination';
 import { PAGE_DIMENSIONS, mmToPx, getContentAreaPx } from '@/lib/constants/page-dimensions';
 import { useTranslations } from '@/lib/i18n';
@@ -13,6 +14,7 @@ import { useTranslations } from '@/lib/i18n';
 interface PaginatedPreviewProps {
   resumeData: ResumeData;
   settings: TemplateSettings;
+  onQrCodeChange?: (next: QrCodeSettings) => void;
 }
 
 const MIN_ZOOM = 0.4;
@@ -23,13 +25,14 @@ const ZOOM_STEP = 0.1;
  * PaginatedPreview shows a WYSIWYG preview of the resume with actual page dimensions,
  * margin guides, and automatic pagination.
  */
-export function PaginatedPreview({ resumeData, settings }: PaginatedPreviewProps) {
+export function PaginatedPreview({ resumeData, settings, onQrCodeChange }: PaginatedPreviewProps) {
   const { t } = useTranslations();
   const measurementRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(0.6);
   const [showMargins, setShowMargins] = useState(false);
   const [autoZoom, setAutoZoom] = useState(true);
+  const [qrSelected, setQrSelected] = useState(false);
   const resumeSettings: TemplateSettings = {
     ...settings,
     margins: { top: 0, bottom: 0, left: 0, right: 0 },
@@ -165,7 +168,11 @@ export function PaginatedPreview({ resumeData, settings }: PaginatedPreviewProps
       </div>
 
       {/* Scrollable preview area */}
-      <div ref={containerRef} className="flex-1 overflow-auto bg-[#D5D5D0] p-6">
+      <div
+        ref={containerRef}
+        className="flex-1 overflow-auto bg-[#D5D5D0] p-6"
+        onMouseDown={() => setQrSelected(false)}
+      >
         {/* Hidden measurement container - renders content at actual size */}
         <div
           ref={measurementRef}
@@ -209,6 +216,19 @@ export function PaginatedPreview({ resumeData, settings }: PaginatedPreviewProps
                 showMarginGuides={showMargins}
                 contentOffset={page.contentOffset}
                 contentEnd={page.contentEnd}
+                pageOverlay={
+                  index === 0 && settings.qrCode?.enabled ? (
+                    <QrOverlay
+                      qrCode={settings.qrCode}
+                      pageMm={PAGE_DIMENSIONS[settings.pageSize]}
+                      scale={zoom}
+                      editable={Boolean(onQrCodeChange)}
+                      selected={qrSelected}
+                      onSelect={() => setQrSelected(true)}
+                      onChange={onQrCodeChange}
+                    />
+                  ) : null
+                }
               >
                 <Resume
                   resumeData={resumeData}

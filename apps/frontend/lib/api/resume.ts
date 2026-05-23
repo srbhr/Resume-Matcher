@@ -285,7 +285,7 @@ export function getResumePdfUrl(
   resumeId: string,
   settings?: TemplateSettings,
   locale?: Locale,
-  qrCodeSettings?: { url: string; size?: number; x?: number; y?: number }
+  qrCodeSettings?: { url: string; sizeMm: number; xMm: number; yMm: number }
 ): string {
   const normalizedId = normalizeResumeId(resumeId);
   const params = new URLSearchParams();
@@ -324,11 +324,11 @@ export function getResumePdfUrl(
     params.set('lang', locale);
   }
 
-  if (qrCodeSettings) {
+  if (qrCodeSettings && qrCodeSettings.url) {
     params.set('qrCodeUrl', qrCodeSettings.url);
-    if (qrCodeSettings.size) params.set('qrCodeSize', String(qrCodeSettings.size));
-    if (qrCodeSettings.x !== undefined) params.set('qrCodeX', String(qrCodeSettings.x));
-    if (qrCodeSettings.y !== undefined) params.set('qrCodeY', String(qrCodeSettings.y));
+    params.set('qrCodeSizeMm', String(qrCodeSettings.sizeMm));
+    params.set('qrCodeXMm', String(qrCodeSettings.xMm));
+    params.set('qrCodeYMm', String(qrCodeSettings.yMm));
   }
 
   return `${API_BASE}/resumes/${encodeURIComponent(normalizedId)}/pdf?${params.toString()}`;
@@ -338,7 +338,7 @@ export async function downloadResumePdf(
   resumeId: string,
   settings?: TemplateSettings,
   locale?: Locale,
-  qrCodeSettings?: { url: string; size?: number; x?: number; y?: number }
+  qrCodeSettings?: { url: string; sizeMm: number; xMm: number; yMm: number }
 ): Promise<Blob> {
   const url = getResumePdfUrl(resumeId, settings, locale, qrCodeSettings);
   const res = await apiFetch(url);

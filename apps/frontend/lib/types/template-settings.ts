@@ -48,6 +48,17 @@ export interface TextStyleSettings {
   itemSubtitleItalic: boolean;
 }
 
+export interface QrCodeSettings {
+  enabled: boolean;
+  url: string;
+  // QR is rendered as a square overlay on page 1, with coordinates
+  // relative to the top-left of the page (NOT the content area), so the
+  // user can place it anywhere — including the margin/bleed area.
+  sizeMm: number;
+  xMm: number;
+  yMm: number;
+}
+
 export interface TemplateSettings {
   template: TemplateType;
   pageSize: PageSize;
@@ -58,6 +69,7 @@ export interface TemplateSettings {
   compactMode: boolean; // Apply tighter spacing across the board
   showContactIcons: boolean; // Show icons next to contact info
   accentColor: AccentColor; // Accent color for Modern template
+  qrCode: QrCodeSettings;
 }
 
 /**
@@ -88,6 +100,13 @@ export const DEFAULT_TEMPLATE_SETTINGS: TemplateSettings = {
   compactMode: false,
   showContactIcons: false,
   accentColor: 'blue',
+  qrCode: {
+    enabled: false,
+    url: '',
+    sizeMm: 25,
+    xMm: 175, // ~10mm from right edge of A4 (page-relative)
+    yMm: 5,
+  },
 };
 
 /**

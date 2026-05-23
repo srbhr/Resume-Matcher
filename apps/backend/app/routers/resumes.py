@@ -1172,6 +1172,7 @@ async def _improve_confirm_flow(
             cover_letter=cover_letter,
             outreach_message=outreach_message,
             title=title,
+            template_settings=resume.get("template_settings"),
         )
 
         improvements_payload = [imp.model_dump() for imp in request.improvements]
@@ -1390,7 +1391,9 @@ async def improve_resume_endpoint(
         )
         response_warnings.extend(aux_warnings)
 
-        # Store the tailored resume with cover letter, outreach message, and title
+        # Store the tailored resume with cover letter, outreach message, and title.
+        # Inherit template_settings (including QR position) from the master so the
+        # tailored resume opens with the same look as its parent.
         tailored_resume = db.create_resume(
             content=improved_text,
             content_type="json",
@@ -1402,6 +1405,7 @@ async def improve_resume_endpoint(
             cover_letter=cover_letter,
             outreach_message=outreach_message,
             title=title,
+            template_settings=resume.get("template_settings"),
         )
 
         # Store improvement record
@@ -1528,9 +1532,9 @@ async def download_resume_pdf(
     itemSubtitleBold: bool = Query(False),
     itemSubtitleItalic: bool = Query(False),
     qrCodeUrl: str | None = Query(None),
-    qrCodeSize: int = Query(70, ge=30, le=150),
-    qrCodeX: int = Query(510, ge=0, le=600),
-    qrCodeY: int = Query(765, ge=0, le=900),
+    qrCodeSizeMm: float = Query(25.0, ge=5.0, le=80.0),
+    qrCodeXMm: float = Query(140.0, ge=0.0, le=300.0),
+    qrCodeYMm: float = Query(5.0, ge=0.0, le=400.0),
 ) -> Response:
     """Generate a PDF for a resume using headless Chromium.
 
@@ -1600,19 +1604,21 @@ async def download_resume_pdf(
         "left": marginLeft,
     }
 
-    # Render PDF with margins applied to every page
+    # Render PDF with margins applied to every page.
+    # QR code (if configured) is composited onto the rendered PDF as a
+    # reportlab overlay rather than rendered into the print HTML, because
+    # Chromium's print engine clips absolutely-positioned content that
+    # falls outside the body's printable area (i.e., inside the page margins).
     try:
         pdf_bytes = await render_resume_pdf(url, pageSize, margins=pdf_margins)
-        
-        # Add QR code if requested
         if qrCodeUrl:
             pdf_bytes = add_qr_code_to_pdf(
-                pdf_bytes, 
-                qrCodeUrl, 
-                size=qrCodeSize, 
-                x=qrCodeX, 
-                y=qrCodeY,
-                page_size=pageSize
+                pdf_bytes,
+                qrCodeUrl,
+                size_mm=qrCodeSizeMm,
+                x_mm=qrCodeXMm,
+                y_mm=qrCodeYMm,
+                page_size=pageSize,
             )
     except PDFRenderError as e:
         raise HTTPException(status_code=503, detail=str(e))
@@ -1724,12 +1730,30 @@ async def update_title(resume_id: str, request: UpdateTitleRequest) -> dict:
 async def update_template_settings(
     resume_id: str, request: UpdateTemplateSettingsRequest
 ) -> dict:
-    """Persist template/formatting settings (fonts, sizes, styles) for a resume."""
+    """Persist template/formatting settings (fonts, sizes, styles) for a resume.
+
+    If the resume is a master, the QR-code portion of the settings is also
+    propagated to all tailored children so the QR position stays consistent
+    across every generated resume. Other formatting (margins, fonts) is left
+    alone on children since tailored resumes may have been customized.
+    """
     resume = db.get_resume(resume_id)
     if not resume:
         raise HTTPException(status_code=404, detail="Resume not found")
 
     db.update_resume(resume_id, {"template_settings": request.settings})
+
+    if resume.get("is_master"):
+        qr_code = (request.settings or {}).get("qrCode")
+        if qr_code is not None:
+            for child in db.list_resumes():
+                if child.get("parent_id") == resume_id:
+                    child_settings = dict(child.get("template_settings") or {})
+                    child_settings["qrCode"] = qr_code
+                    db.update_resume(
+                        child["resume_id"], {"template_settings": child_settings}
+                    )
+
     return {"message": "Template settings updated successfully"}
 
 

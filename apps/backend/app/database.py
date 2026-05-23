@@ -67,6 +67,7 @@ class Database:
         outreach_message: str | None = None,
         title: str | None = None,
         original_markdown: str | None = None,
+        template_settings: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Create a new resume entry.
 
@@ -92,6 +93,8 @@ class Database:
         }
         if original_markdown is not None:
             doc["original_markdown"] = original_markdown
+        if template_settings is not None:
+            doc["template_settings"] = template_settings
         self.resumes.insert(doc)
         return doc
 

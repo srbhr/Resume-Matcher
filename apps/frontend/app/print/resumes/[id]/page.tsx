@@ -307,6 +307,10 @@ export default async function PrintResumePage({ params, searchParams }: PageProp
       DEFAULT_TEMPLATE_SETTINGS.showContactIcons
     ),
     accentColor: parseAccentColor(resolvedSearchParams?.accentColor),
+    // QR is composited onto the PDF by the backend (reportlab overlay), not
+    // rendered into this HTML — Chromium clips margin-area content during
+    // PDF print. The in-settings copy is unused here.
+    qrCode: DEFAULT_TEMPLATE_SETTINGS.qrCode,
   };
 
   // Note: Margins are applied by Playwright's PDF renderer (not here)

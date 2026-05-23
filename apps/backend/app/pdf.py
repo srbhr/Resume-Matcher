@@ -269,22 +269,30 @@ async def close_pdf_renderer() -> None:
         _playwright = None
 
 
+_MM_TO_PT = 72.0 / 25.4
+
+
 def add_qr_code_to_pdf(
     pdf_bytes: bytes,
     url: str,
-    size: int = 70,
-    x: int = 510,
-    y: int = 765,
+    size_mm: float = 25.0,
+    x_mm: float = 175.0,
+    y_mm: float = 5.0,
     page_size: str = "A4",
 ) -> bytes:
     """Add a QR code overlay to the first page of a PDF.
 
+    Coordinates are page-relative (from the page's top-left corner) in mm,
+    matching the live builder preview. The overlay is page-relative so the
+    QR can be placed inside Playwright's PDF margin area where Chromium's
+    print engine would otherwise clip an HTML overlay.
+
     Args:
         pdf_bytes: Original PDF content
         url: URL to encode in QR code
-        size: QR code size in points
-        x: X coordinate (from left)
-        y: Y coordinate (from bottom)
+        size_mm: QR code edge length in mm
+        x_mm: X coordinate from page left in mm
+        y_mm: Y coordinate from page top in mm
         page_size: "A4" or "LETTER"
     """
     try:
@@ -293,19 +301,25 @@ def add_qr_code_to_pdf(
         qr.add_data(url)
         qr.make(fit=True)
         img = qr.make_image(fill_color="black", back_color="white")
-        
+
         img_buffer = BytesIO()
         img.save(img_buffer, format="PNG")
         img_buffer.seek(0)
-        
+
         from reportlab.lib.utils import ImageReader
         img_reader = ImageReader(img_buffer)
 
-        # 2. Create overlay PDF with QR code
+        # 2. Create overlay PDF with QR code.
+        # reportlab uses points from the bottom-left, but our inputs are
+        # mm from the top-left — convert here.
         packet = BytesIO()
         pagesize = A4 if page_size == "A4" else LETTER
+        _, page_height_pt = pagesize
+        size_pt = size_mm * _MM_TO_PT
+        x_pt = x_mm * _MM_TO_PT
+        y_pt = page_height_pt - (y_mm * _MM_TO_PT) - size_pt
         can = canvas.Canvas(packet, pagesize=pagesize)
-        can.drawImage(img_reader, x, y, width=size, height=size)
+        can.drawImage(img_reader, x_pt, y_pt, width=size_pt, height=size_pt)
         can.showPage()
         can.save()
         packet.seek(0)

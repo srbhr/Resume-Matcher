@@ -48,6 +48,13 @@ export default function ResumeViewerPage() {
   const [showQrCodeDialog, setShowQrCodeDialog] = useState(false);
   const [includeQr, setIncludeQr] = useState(false);
   const [qrUrl, setQrUrl] = useState('');
+  const [savedQrCode, setSavedQrCode] = useState<{
+    enabled: boolean;
+    url: string;
+    sizeMm: number;
+    xMm: number;
+    yMm: number;
+  } | null>(null);
 
   const resumeId = params?.id as string;
 
@@ -71,6 +78,33 @@ export default function ResumeViewerPage() {
 
         // Capture title for editable display (always set to clear stale state)
         setResumeTitle(data.title ?? null);
+
+        // Capture persisted QR code (template_settings.qrCode) so the viewer
+        // can show what was placed in the builder.
+        const ts = data.template_settings as
+          | {
+              qrCode?: {
+                enabled?: boolean;
+                url?: string;
+                sizeMm?: number;
+                xMm?: number;
+                yMm?: number;
+              };
+            }
+          | null
+          | undefined;
+        const qr = ts?.qrCode;
+        if (qr && qr.enabled && qr.url) {
+          setSavedQrCode({
+            enabled: true,
+            url: qr.url,
+            sizeMm: qr.sizeMm ?? 25,
+            xMm: qr.xMm ?? 175,
+            yMm: qr.yMm ?? 5,
+          });
+        } else {
+          setSavedQrCode(null);
+        }
 
         // Prioritize processed_resume if available (structured JSON)
         if (data.processed_resume) {
@@ -171,7 +205,7 @@ export default function ResumeViewerPage() {
     setIsDownloading(true);
     try {
       const qrSettings =
-        includeQr && qrUrl ? { url: qrUrl, size: 70, x: 510, y: 765 } : undefined;
+        includeQr && qrUrl ? { url: qrUrl, sizeMm: 25, xMm: 140, yMm: 5 } : undefined;
       const blob = await downloadResumePdf(resumeId, undefined, uiLanguage, qrSettings);
       const filename = sanitizeFilename(resumeData?.personalInfo?.name, resumeId, 'resume');
 
@@ -188,7 +222,7 @@ export default function ResumeViewerPage() {
       console.error('Failed to download resume:', err);
       if (err instanceof TypeError && err.message.includes('Failed to fetch')) {
         const qrSettings =
-          includeQr && qrUrl ? { url: qrUrl, size: 70, x: 510, y: 765 } : undefined;
+          includeQr && qrUrl ? { url: qrUrl, sizeMm: 25, xMm: 140, yMm: 5 } : undefined;
         const fallbackUrl = getResumePdfUrl(resumeId, undefined, uiLanguage, qrSettings);
 
         // In fallback case, it already opens in new tab via openUrlInNewTab
@@ -268,8 +302,9 @@ export default function ResumeViewerPage() {
             )}
           </div>
           <p
-            className={`font-bold mb-4 ${isProcessing ? 'text-blue-700' : isFailed ? 'text-orange-700' : 'text-red-700'
-              }`}
+            className={`font-bold mb-4 ${
+              isProcessing ? 'text-blue-700' : isFailed ? 'text-orange-700' : 'text-red-700'
+            }`}
           >
             {error || t('resumeViewer.resumeNotFound')}
           </p>
@@ -373,7 +408,29 @@ export default function ResumeViewerPage() {
 
         {/* Resume Viewer */}
         <div className="flex justify-center pb-4">
-          <div className="resume-print w-full max-w-[250mm] shadow-sw-lg border-2 border-black bg-white">
+          <div
+            className="resume-print w-full max-w-[250mm] shadow-sw-lg border-2 border-black bg-white"
+            style={{ position: 'relative' }}
+          >
+            {savedQrCode ? (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: `${savedQrCode.yMm}mm`,
+                  left: `${savedQrCode.xMm}mm`,
+                  width: `${savedQrCode.sizeMm}mm`,
+                  height: `${savedQrCode.sizeMm}mm`,
+                  zIndex: 10,
+                }}
+              >
+                <QRCodeSVG
+                  value={savedQrCode.url}
+                  level="M"
+                  includeMargin={false}
+                  style={{ width: '100%', height: '100%', display: 'block' }}
+                />
+              </div>
+            ) : null}
             <Resume
               resumeData={localizedResumeData || resumeData}
               additionalSectionLabels={{
@@ -498,12 +555,7 @@ export default function ResumeViewerPage() {
 
                     <div className="z-10 bg-white p-2 border border-black transition-transform group-hover:scale-105 duration-300">
                       {qrUrl ? (
-                        <QRCodeSVG
-                          value={qrUrl}
-                          size={80}
-                          level="M"
-                          includeMargin={false}
-                        />
+                        <QRCodeSVG value={qrUrl} size={80} level="M" includeMargin={false} />
                       ) : (
                         <div className="w-[80px] h-[80px] bg-gray-100 flex items-center justify-center border border-dashed border-gray-400">
                           <span className="text-[10px] text-gray-400 font-mono">NO URL</span>

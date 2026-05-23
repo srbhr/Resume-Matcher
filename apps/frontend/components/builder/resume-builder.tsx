@@ -415,6 +415,10 @@ const ResumeBuilderContent = () => {
     setTemplateSettings(newSettings);
   }, []);
 
+  const handleQrCodeChange = useCallback((qrCode: TemplateSettings['qrCode']) => {
+    setTemplateSettings((prev) => ({ ...prev, qrCode }));
+  }, []);
+
   const handleSave = async () => {
     if (!resumeId) {
       showNotification(t('builder.alerts.saveNotAvailable'), 'warning');
@@ -458,7 +462,16 @@ const ResumeBuilderContent = () => {
     }
     try {
       setIsDownloading(true);
-      const blob = await downloadResumePdf(resumeId, templateSettings, uiLanguage);
+      const qrSettings =
+        templateSettings.qrCode.enabled && templateSettings.qrCode.url
+          ? {
+              url: templateSettings.qrCode.url,
+              sizeMm: templateSettings.qrCode.sizeMm,
+              xMm: templateSettings.qrCode.xMm,
+              yMm: templateSettings.qrCode.yMm,
+            }
+          : undefined;
+      const blob = await downloadResumePdf(resumeId, templateSettings, uiLanguage, qrSettings);
       const company = getCompanyFromTitle(resumeTitle);
       const userName = resumeData.personalInfo?.name?.trim() || null;
       const filename = buildResumeFilename(userName, company, resumeId, 'resume');
@@ -467,7 +480,16 @@ const ResumeBuilderContent = () => {
     } catch (error) {
       console.error('Failed to download resume:', error);
       if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
-        const fallbackUrl = getResumePdfUrl(resumeId, templateSettings, uiLanguage);
+        const qrSettings =
+          templateSettings.qrCode.enabled && templateSettings.qrCode.url
+            ? {
+                url: templateSettings.qrCode.url,
+                sizeMm: templateSettings.qrCode.sizeMm,
+                xMm: templateSettings.qrCode.xMm,
+                yMm: templateSettings.qrCode.yMm,
+              }
+            : undefined;
+        const fallbackUrl = getResumePdfUrl(resumeId, templateSettings, uiLanguage, qrSettings);
         const didOpen = openUrlInNewTab(fallbackUrl);
         if (!didOpen) {
           showNotification(t('common.popupBlocked', { url: fallbackUrl }), 'warning');
@@ -899,6 +921,7 @@ const ResumeBuilderContent = () => {
                 <PaginatedPreview
                   resumeData={localizedResumeDataForPreview}
                   settings={templateSettings}
+                  onQrCodeChange={handleQrCodeChange}
                 />
               )}
 
