@@ -114,14 +114,23 @@ export default function ResumeViewerPage() {
   // resumeDocId/cvDocId point to whichever record holds that document's
   // data — they may equal `resumeId` (when the master IS that document)
   // or point to a linked child row.
-  const [documentKind, setDocumentKind] = useState<'resume' | 'cv'>('resume');
   const [resumeDocId, setResumeDocId] = useState<string | null>(null);
   const [cvDocId, setCvDocId] = useState<string | null>(null);
   const [cvData, setCvData] = useState<ResumeData | null>(null);
   const [cvLoading, setCvLoading] = useState(false);
+  const [cvTemplateSettings, setCvTemplateSettings] =
+    useState<TemplateSettings>(DEFAULT_TEMPLATE_SETTINGS);
   const [isGeneratingResume, setIsGeneratingResume] = useState(false);
   const [isGeneratingCV, setIsGeneratingCV] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
+
+  // CV in-place editor (independent of the Resume editor — CV and resume
+  // are distinct documents with their own drafts and template settings).
+  const [isEditingCv, setIsEditingCv] = useState(false);
+  const [cvDraft, setCvDraft] = useState<ResumeData | null>(null);
+  const [cvTemplateDraft, setCvTemplateDraft] =
+    useState<TemplateSettings>(DEFAULT_TEMPLATE_SETTINGS);
+  const [isSavingCv, setIsSavingCv] = useState(false);
 
   // Analysis side panel (jdmatch only — ATS now uses inline view)
   const [analysisPanel, setAnalysisPanel] = useState<AnalysisMode | null>(null);
@@ -181,7 +190,6 @@ export default function ResumeViewerPage() {
         setCoverLetter(data.cover_letter ?? null);
         setOutreachMessage(data.outreach_message ?? null);
         setIsMasterResume(Boolean(data.is_master));
-        setDocumentKind(data.document_kind ?? 'resume');
         setResumeDocId(data.resume_doc_id ?? null);
         setCvDocId(data.cv_doc_id ?? null);
 
@@ -308,7 +316,6 @@ export default function ResumeViewerPage() {
       }
       setCoverLetter(data.cover_letter ?? null);
       setOutreachMessage(data.outreach_message ?? null);
-      setDocumentKind(data.document_kind ?? 'resume');
       setResumeDocId(data.resume_doc_id ?? null);
       setCvDocId(data.cv_doc_id ?? null);
     } catch (err) {
@@ -329,6 +336,18 @@ export default function ResumeViewerPage() {
       .then((data) => {
         if (cancelled) return;
         if (data.processed_resume) setCvData(data.processed_resume as ResumeData);
+        if (data.template_settings) {
+          const saved = data.template_settings as Partial<TemplateSettings>;
+          setCvTemplateSettings({
+            ...DEFAULT_TEMPLATE_SETTINGS,
+            ...saved,
+            margins: { ...DEFAULT_TEMPLATE_SETTINGS.margins, ...(saved.margins ?? {}) },
+            spacing: { ...DEFAULT_TEMPLATE_SETTINGS.spacing, ...(saved.spacing ?? {}) },
+            fontSize: { ...DEFAULT_TEMPLATE_SETTINGS.fontSize, ...(saved.fontSize ?? {}) },
+            textStyle: { ...DEFAULT_TEMPLATE_SETTINGS.textStyle, ...(saved.textStyle ?? {}) },
+            qrCode: { ...DEFAULT_TEMPLATE_SETTINGS.qrCode, ...(saved.qrCode ?? {}) },
+          });
+        }
       })
       .catch((err) => console.error('Failed to load CV document:', err))
       .finally(() => {
@@ -338,6 +357,59 @@ export default function ResumeViewerPage() {
       cancelled = true;
     };
   }, [activeTab, cvDocId, cvData, resumeId]);
+
+  // The CV's structured data lives on the master row when master IS the CV,
+  // otherwise in the lazy-loaded cvData. Both editor + viewer pull from here.
+  const activeCvData = cvDocId === resumeId ? resumeData : cvData;
+  const activeCvTemplate =
+    cvDocId === resumeId ? templateSettings : cvTemplateSettings;
+
+  const handleEditCv = () => {
+    if (!cvDocId || !activeCvData) return;
+    setCvDraft(activeCvData);
+    setCvTemplateDraft(activeCvTemplate);
+    setIsEditingCv(true);
+  };
+
+  const handleCancelEditCv = () => {
+    setIsEditingCv(false);
+    setCvDraft(null);
+  };
+
+  const handleDraftCvQrChange = useCallback((qrCode: TemplateSettings['qrCode']) => {
+    setCvTemplateDraft((prev) => ({ ...prev, qrCode }));
+  }, []);
+
+  const localizedCvDraft = useMemo(
+    () => (cvDraft ? withLocalizedDefaultSections(cvDraft, t) : null),
+    [cvDraft, t]
+  );
+
+  const handleSaveCv = async () => {
+    if (!cvDocId || !cvDraft) return;
+    setIsSavingCv(true);
+    try {
+      const [updated] = await Promise.all([
+        updateResume(cvDocId, cvDraft),
+        saveTemplateSettings(cvDocId, cvTemplateDraft),
+      ]);
+      const next = (updated.processed_resume || cvDraft) as ResumeData;
+      // When the master IS the CV, the CV's data is also resumeData/templateSettings.
+      if (cvDocId === resumeId) {
+        setResumeData(next);
+        setTemplateSettings(cvTemplateDraft);
+      } else {
+        setCvData(next);
+        setCvTemplateSettings(cvTemplateDraft);
+      }
+      setIsEditingCv(false);
+      setCvDraft(null);
+    } catch (err) {
+      console.error('Failed to save CV:', err);
+    } finally {
+      setIsSavingCv(false);
+    }
+  };
 
   const masterIdForGenerate = isMasterResume ? resumeId : null;
 
@@ -352,7 +424,6 @@ export default function ResumeViewerPage() {
       // then drop cached CV data so the lazy-load effect refetches it.
       setCvData(null);
       const data = await fetchResume(resumeId);
-      setDocumentKind(data.document_kind ?? 'resume');
       setResumeDocId(data.resume_doc_id ?? null);
       setCvDocId(data.cv_doc_id ?? null);
       // If the master itself was the empty slot, its processed_resume just
@@ -385,6 +456,25 @@ export default function ResumeViewerPage() {
           yMm: templateSettings.qrCode.yMm,
         }
       : undefined;
+
+  const handleDownloadCv = async (cvId: string) => {
+    setIsDownloading(true);
+    try {
+      const qrSettings = buildQrSettings();
+      const blob = await downloadResumePdf(cvId, templateSettings, uiLanguage, qrSettings);
+      const dataForName = cvId === resumeId ? resumeData : cvData;
+      const filename = sanitizeFilename(dataForName?.personalInfo?.name, cvId, 'cv');
+      downloadBlobAsFile(blob, filename);
+      const pdfBlob = new Blob([blob], { type: 'application/pdf' });
+      const pdfUrl = URL.createObjectURL(pdfBlob);
+      window.open(pdfUrl, '_blank');
+      setShowDownloadSuccessDialog(true);
+    } catch (err) {
+      console.error('Failed to download CV:', err);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   const handleDownload = async () => {
     setIsDownloading(true);
@@ -816,7 +906,7 @@ export default function ResumeViewerPage() {
               </Button>
             </>
           )}
-          {activeTab === 'cv' && (
+          {activeTab === 'cv' && !isEditingCv && (
             <>
               {isMasterResume && !cvDocId && (
                 <Button
@@ -848,13 +938,53 @@ export default function ResumeViewerPage() {
                   {t('resumeViewer.actions.enhanceCV')}
                 </Button>
               )}
-              <Button size="sm" variant="outline" disabled>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={!cvDocId || !activeCvData}
+                onClick={handleEditCv}
+              >
                 <Pencil className="w-3.5 h-3.5" />
                 {t('resumeViewer.actions.editCV')}
               </Button>
-              <Button size="sm" variant="outline" disabled>
-                <Download className="w-3.5 h-3.5" />
-                {t('resumeViewer.actions.download')}
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={!cvDocId || isDownloading}
+                onClick={() => cvDocId && handleDownloadCv(cvDocId)}
+              >
+                {isDownloading ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    {t('common.generating')}
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-3.5 h-3.5" />
+                    {t('resumeViewer.actions.download')}
+                  </>
+                )}
+              </Button>
+            </>
+          )}
+          {activeTab === 'cv' && isEditingCv && (
+            <>
+              <Button size="sm" variant="outline" onClick={handleCancelEditCv}>
+                <XIcon className="w-3.5 h-3.5" />
+                {t('common.cancel')}
+              </Button>
+              <Button size="sm" onClick={handleSaveCv} disabled={isSavingCv}>
+                {isSavingCv ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    {t('common.saving')}
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-3.5 h-3.5" />
+                    {t('common.save')}
+                  </>
+                )}
               </Button>
             </>
           )}
@@ -1012,6 +1142,32 @@ export default function ResumeViewerPage() {
                   resumeData={localizedResumeDraft || resumeDraft}
                   settings={templateDraft}
                   onQrCodeChange={handleDraftQrChange}
+                />
+              </div>
+            </div>
+          </div>
+        ) : activeTab === 'cv' && isEditingCv && cvDraft ? (
+          <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-2 bg-border gap-[1px] no-print">
+            {/* Left: CV editor (separate from the resume editor) */}
+            <div className="bg-background overflow-y-auto p-6 md:p-8">
+              <div className="max-w-3xl mx-auto space-y-6">
+                <div className="flex items-center gap-2 border-b-2 border-border pb-2">
+                  <div className="w-3 h-3 bg-primary" />
+                  <h2 className="font-mono text-lg font-bold uppercase tracking-wider m-0">
+                    {t('builder.leftPanel.editorPanel')} · {t('resumeViewer.tabs.cv')}
+                  </h2>
+                </div>
+                <FormattingControls settings={cvTemplateDraft} onChange={setCvTemplateDraft} />
+                <ResumeForm resumeData={cvDraft} onUpdate={setCvDraft} />
+              </div>
+            </div>
+            {/* Right: CV live preview */}
+            <div className="bg-secondary overflow-hidden flex flex-col">
+              <div className="flex-1 overflow-y-auto">
+                <PaginatedPreview
+                  resumeData={localizedCvDraft || cvDraft}
+                  settings={cvTemplateDraft}
+                  onQrCodeChange={handleDraftCvQrChange}
                 />
               </div>
             </div>
