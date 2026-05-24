@@ -608,11 +608,12 @@ async def create_blank_resume() -> ResumeUploadResponse:
     Bypasses the file-upload requirement so users can build a resume
     from scratch directly in the editor.
     """
+    empty_resume_data = ResumeData().model_dump()
     resume = await db.create_resume_atomic_master(
-        content="",
+        content=json.dumps(empty_resume_data),
         content_type="json",
         filename=None,
-        processed_data=None,
+        processed_data=empty_resume_data,
         processing_status="ready",
     )
     return ResumeUploadResponse(
