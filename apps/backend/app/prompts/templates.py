@@ -151,27 +151,37 @@ IMPROVE_SCHEMA_EXAMPLE = """{
   }
 }"""
 
-PARSE_RESUME_PROMPT = """Parse this resume into JSON. Output ONLY the JSON object, no other text.
+PARSE_RESUME_PROMPT = """Extract this resume into JSON. Output ONLY the JSON object, no other text.
 
-Map content to standard sections when possible. For non-standard sections (like Publications, Volunteer Work, Research, Hobbies), add them to customSections with an appropriate type.
+You are a STRUCTURE-ONLY extractor. Your job is to place the resume's existing text into the correct JSON fields. You are NOT a writer, editor, summarizer, or proofreader.
 
-Example output format:
-{schema}
+ABSOLUTE PRESERVATION RULES — DO NOT VIOLATE:
+- Copy text VERBATIM from the source resume. Character-for-character identical.
+- DO NOT rephrase, reword, paraphrase, shorten, expand, or "clean up" any text.
+- DO NOT fix spelling, grammar, capitalization, or punctuation — even if it looks wrong.
+- DO NOT remove, drop, skip, or omit any content from the resume. Every bullet, sentence, skill, date, and item must appear in the output.
+- DO NOT merge, combine, or split bullet points or sentences.
+- DO NOT reorder bullets, items, or sections.
+- DO NOT infer, guess, or fabricate any value that is not literally present in the source.
+- DO NOT normalize, reformat, or "standardize" dates, separators, phone numbers, URLs, or any other text. Copy them exactly as written (e.g. if the source says "2020-2021", output "2020-2021", not "2020 - 2021"; if it says "Current" or "Ongoing", keep that word — do not change it to "Present").
+- DO NOT translate. Keep the original language.
+- DO NOT add content that is not in the source (no invented summaries, descriptions, skills, achievements, or fields).
+- If a field has no value in the source, use "" for text, [] for arrays, null for optional fields. NEVER fill it in yourself.
+
+What you ARE allowed to do (structure only):
+- Place text into the appropriate JSON field (e.g., job title → workExperience[].title).
+- Split clearly delimited bullet lists into array elements WITHOUT modifying their text. Strip only the bullet marker character itself ("- ", "* ", "• ", "1. "); leave the bullet's text untouched.
+- Number IDs starting from 1.
+- Route non-standard sections (Publications, Volunteer Work, Research, Hobbies, etc.) into customSections using snake_case keys derived from the original section name.
+- Format hyperlinks as markdown links: `[visible text](url)`. If the source shows the URL as the visible text (e.g. "https://example.com"), keep it as a bare URL — do not invent display text. If the source shows display text with an underlying hyperlink (e.g. "my portfolio" linking to https://example.com), output `[my portfolio](https://example.com)`. Apply this anywhere a link appears: bullet descriptions, summary, project entries, custom sections, etc. (Note: dedicated personalInfo fields like email, phone, website, linkedin, github should still be raw values, not markdown links.)
 
 Custom section types:
 - "text": Single text block (e.g., objective, statement)
 - "itemList": List of items with title, subtitle, years, description (e.g., publications, research)
 - "stringList": Simple list of strings (e.g., hobbies, interests)
 
-Rules:
-- Use "" for missing text fields, [] for missing arrays, null for optional fields
-- Number IDs starting from 1
-- Format dates preserving the original precision. Keep months when present: "Jan 2020 - Dec 2023", "May 2021 - Present". Use "YYYY - YYYY" only when the source has no months.
-- Use snake_case for custom section keys (e.g., "volunteer_work", "publications")
-- Preserve the original section name as a descriptive key
-- Normalize date separators: "2020-2021" → "2020 - 2021", "Current"/"Ongoing" → "Present". Do NOT discard months.
-- For ambiguous dates like "3 years experience", infer approximate years from context or use "~YYYY"
-- Flag overlapping dates (concurrent roles) by preserving both, don't merge
+Example output format (shows shape only — copy YOUR resume's text verbatim, do not borrow these example values):
+{schema}
 
 Resume to parse:
 {resume_text}"""
