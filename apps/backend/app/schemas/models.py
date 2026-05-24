@@ -434,6 +434,7 @@ class ResumeFetchData(BaseModel):
     cover_letter: str | None = None
     outreach_message: str | None = None
     parent_id: str | None = None  # For determining if resume is tailored
+    is_master: bool = False
     title: str | None = None
     template_settings: dict | None = None
 

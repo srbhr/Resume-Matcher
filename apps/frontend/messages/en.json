@@ -79,6 +79,19 @@
     "createResume": "Create Resume",
     "edited": "Edited {date}",
     "statusLine": "STATUS: {status}",
+    "groups": {
+      "masterCountLabel": "Master Resumes",
+      "totalTailored": "{count} Total Tailored",
+      "newMaster": "New Master",
+      "editMaster": "Edit Master",
+      "tailoredCount": "{count} Tailored",
+      "tailorNew": "Tailor New Resume",
+      "bandSubtitle": "Master · Edited {date}",
+      "noMasters": "No master resumes yet",
+      "noMastersDescription": "Upload or create your first master resume to start tailoring.",
+      "expand": "Click to expand",
+      "collapse": "Click to collapse"
+    },
     "status": {
       "checking": "Checking...",
       "processing": "Processing...",
@@ -786,6 +799,10 @@
       "loading": "Running analysis…",
       "errorTitle": "Analysis failed",
       "retry": "Retry"
+    },
+    "atsInline": {
+      "subtitle": "Predict your pass rate against this job",
+      "noJdHeadline": "// NO JOB DESCRIPTION ON FILE"
     },
     "empty": {
       "cvHeadline": "// NO CV GENERATED",

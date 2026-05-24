@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect, useRef, useCallback, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -12,6 +12,7 @@ import {
   uploadJobDescriptions,
   previewImproveResume,
   confirmImproveResume,
+  fetchResumeList,
 } from '@/lib/api/resume';
 import { fetchPromptConfig, fetchFeatureConfig, type PromptOption } from '@/lib/api/config';
 import { Dropdown } from '@/components/ui/dropdown';
@@ -21,7 +22,15 @@ import { useTranslations } from '@/lib/i18n';
 import { DiffPreviewModal } from '@/components/tailor/diff-preview-modal';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
-export default function TailorPage() {
+export default function TailorPageWrapper() {
+  return (
+    <Suspense fallback={null}>
+      <TailorPage />
+    </Suspense>
+  );
+}
+
+function TailorPage() {
   const { t } = useTranslations();
   const [jobDescription, setJobDescription] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -69,6 +78,7 @@ export default function TailorPage() {
   }, []);
 
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { setImprovedData } = useResumePreview();
   const {
     status: systemStatus,
@@ -82,13 +92,39 @@ export default function TailorPage() {
   const isLlmConfigured = !statusLoading && systemStatus?.llm_configured;
 
   useEffect(() => {
-    const storedId = localStorage.getItem('master_resume_id');
-    if (!storedId) {
-      router.push('/dashboard');
-    } else {
-      setMasterResumeId(storedId);
-    }
-  }, [router]);
+    let cancelled = false;
+
+    const resolveMaster = async () => {
+      // Prefer the master_id passed in the URL — that's the master the user
+      // clicked "Tailor New Resume" from on the grouped dashboard.
+      const fromUrl = searchParams?.get('master_id');
+      if (fromUrl) {
+        if (!cancelled) setMasterResumeId(fromUrl);
+        return;
+      }
+
+      // Fall back to the most-recently updated master in the list so direct
+      // visits to /tailor still work in multi-master mode.
+      try {
+        const resumes = await fetchResumeList(true);
+        const masters = resumes.filter((r) => r.is_master);
+        if (cancelled) return;
+        if (masters.length === 0) {
+          router.push('/dashboard');
+          return;
+        }
+        setMasterResumeId(masters[0].resume_id);
+      } catch (err) {
+        console.error('Failed to resolve master resume for tailor:', err);
+        if (!cancelled) router.push('/dashboard');
+      }
+    };
+
+    resolveMaster();
+    return () => {
+      cancelled = true;
+    };
+  }, [router, searchParams]);
 
   useEffect(() => {
     let cancelled = false;

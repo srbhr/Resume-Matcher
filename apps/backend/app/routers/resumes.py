@@ -669,6 +669,7 @@ async def get_resume(resume_id: str = Query(...)) -> ResumeFetchResponse:
             cover_letter=resume.get("cover_letter"),
             outreach_message=resume.get("outreach_message"),
             parent_id=resume.get("parent_id"),
+            is_master=resume.get("is_master", False),
             title=resume.get("title"),
             template_settings=resume.get("template_settings"),
         ),
@@ -915,8 +916,10 @@ async def _improve_preview_flow(
     refinement_attempted = False
     refinement_successful = False
     try:
-        # Get master resume for alignment validation
-        master_resume = db.get_master_resume()
+        # Get the master that this resume belongs to (for alignment validation).
+        # In multi-master mode, callers tailor against a specific master; resolve
+        # via parent_id rather than picking the global "the" master.
+        master_resume = db.resolve_master_for_resume(resume)
         master_data = (
             _get_original_resume_data(master_resume)
             if master_resume

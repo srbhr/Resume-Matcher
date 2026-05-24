@@ -79,6 +79,19 @@
     "createResume": "履歴書を作成",
     "edited": "編集 {date}",
     "statusLine": "ステータス: {status}",
+    "groups": {
+      "masterCountLabel": "マスター履歴書",
+      "totalTailored": "合計 {count} 件のカスタマイズ",
+      "newMaster": "新規マスター",
+      "editMaster": "マスターを編集",
+      "tailoredCount": "{count} 件のカスタマイズ",
+      "tailorNew": "新しい履歴書をカスタマイズ",
+      "bandSubtitle": "マスター · 編集 {date}",
+      "noMasters": "マスター履歴書がまだありません",
+      "noMastersDescription": "最初のマスター履歴書をアップロードまたは作成して、カスタマイズを始めましょう。",
+      "expand": "クリックで展開",
+      "collapse": "クリックで折りたたみ"
+    },
     "status": {
       "checking": "確認中...",
       "processing": "処理中...",
@@ -786,6 +799,10 @@
       "loading": "分析を実行中…",
       "errorTitle": "分析に失敗しました",
       "retry": "再試行"
+    },
+    "atsInline": {
+      "subtitle": "この求人に対する通過率を予測します",
+      "noJdHeadline": "// 求人内容が未登録"
     },
     "empty": {
       "cvHeadline": "// CV が未作成",

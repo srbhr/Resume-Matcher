@@ -109,31 +109,18 @@ class Database:
         outreach_message: str | None = None,
         original_markdown: str | None = None,
     ) -> dict[str, Any]:
-        """Create a new resume with atomic master assignment.
+        """Create a new master resume.
 
-        Uses an asyncio.Lock to prevent race conditions when multiple uploads
-        happen concurrently and both try to become master. This avoids blocking
-        the FastAPI event loop unlike threading.Lock.
+        Multiple master resumes are supported — each upload through this path
+        becomes its own master. The asyncio.Lock keeps concurrent uploads from
+        racing during creation.
         """
         async with self._master_resume_lock:
-            current_master = self.get_master_resume()
-            is_master = current_master is None
-
-            # Recovery behavior: if the current master is stuck in failed or
-            # processing state, promote the next upload to become the new master.
-            if current_master and current_master.get("processing_status") in ("failed", "processing"):
-                Resume = Query()
-                self.resumes.update(
-                    {"is_master": False},
-                    Resume.resume_id == current_master["resume_id"],
-                )
-                is_master = True
-
             return self.create_resume(
                 content=content,
                 content_type=content_type,
                 filename=filename,
-                is_master=is_master,
+                is_master=True,
                 processed_data=processed_data,
                 processing_status=processing_status,
                 cover_letter=cover_letter,
@@ -148,10 +135,42 @@ class Database:
         return result[0] if result else None
 
     def get_master_resume(self) -> dict[str, Any] | None:
-        """Get the master resume if exists."""
+        """Get the most recently updated master resume, if any exists.
+
+        Kept for callers (refinement, status) that just want "a" master. Prefer
+        list_master_resumes() or resolve_master_for_resume() when a specific
+        master is needed.
+        """
+        masters = self.list_master_resumes()
+        return masters[0] if masters else None
+
+    def list_master_resumes(self) -> list[dict[str, Any]]:
+        """Return every resume flagged as master, newest update first."""
         Resume = Query()
-        result = self.resumes.search(Resume.is_master == True)
-        return result[0] if result else None
+        masters = self.resumes.search(Resume.is_master == True)
+        return sorted(
+            masters,
+            key=lambda r: r.get("updated_at") or r.get("created_at") or "",
+            reverse=True,
+        )
+
+    def resolve_master_for_resume(
+        self, resume: dict[str, Any]
+    ) -> dict[str, Any] | None:
+        """Return the master resume that a tailored resume belongs to.
+
+        - If `resume` is itself a master, returns it.
+        - If `resume` has a parent_id, returns that parent (if it's a master).
+        - Otherwise falls back to the most recent master (legacy data).
+        """
+        if resume.get("is_master"):
+            return resume
+        parent_id = resume.get("parent_id")
+        if parent_id:
+            parent = self.get_resume(parent_id)
+            if parent and parent.get("is_master"):
+                return parent
+        return self.get_master_resume()
 
     def update_resume(self, resume_id: str, updates: dict[str, Any]) -> dict[str, Any]:
         """Update resume by ID.
@@ -183,21 +202,17 @@ class Database:
         return list(self.resumes.all())
 
     def set_master_resume(self, resume_id: str) -> bool:
-        """Set a resume as the master, unsetting any existing master.
+        """Mark a resume as a master without affecting other masters.
 
         Returns False if the resume doesn't exist.
         """
         Resume = Query()
 
-        # First verify the target resume exists
         target = self.resumes.search(Resume.resume_id == resume_id)
         if not target:
             logger.warning("Cannot set master: resume %s not found", resume_id)
             return False
 
-        # Unset current master
-        self.resumes.update({"is_master": False}, Resume.is_master == True)
-        # Set new master
         updated = self.resumes.update(
             {"is_master": True}, Resume.resume_id == resume_id
         )

@@ -66,6 +66,7 @@ interface ResumeResponse {
     cover_letter?: string | null;
     outreach_message?: string | null;
     parent_id?: string | null; // For determining if resume is tailored
+    is_master?: boolean;
     title?: string | null;
     template_settings?: Record<string, unknown> | null;
   };

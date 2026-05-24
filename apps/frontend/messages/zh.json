@@ -79,6 +79,19 @@
     "createResume": "创建简历",
     "edited": "编辑于 {date}",
     "statusLine": "状态：{status}",
+    "groups": {
+      "masterCountLabel": "主简历",
+      "totalTailored": "共 {count} 份定制简历",
+      "newMaster": "新建主简历",
+      "editMaster": "编辑主简历",
+      "tailoredCount": "{count} 份定制",
+      "tailorNew": "定制新简历",
+      "bandSubtitle": "主简历 · 编辑于 {date}",
+      "noMasters": "尚无主简历",
+      "noMastersDescription": "上传或创建你的第一份主简历，即可开始定制。",
+      "expand": "点击展开",
+      "collapse": "点击收起"
+    },
     "status": {
       "checking": "检查中...",
       "processing": "处理中...",
@@ -786,6 +799,10 @@
       "loading": "正在分析…",
       "errorTitle": "分析失败",
       "retry": "重试"
+    },
+    "atsInline": {
+      "subtitle": "预测此职位的通过率",
+      "noJdHeadline": "// 尚未添加职位描述"
     },
     "empty": {
       "cvHeadline": "// 尚未生成 CV",

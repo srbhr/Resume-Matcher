@@ -79,6 +79,19 @@
     "createResume": "Criar Currículo",
     "edited": "Editado {date}",
     "statusLine": "STATUS: {status}",
+    "groups": {
+      "masterCountLabel": "Currículos mestres",
+      "totalTailored": "{count} adaptados no total",
+      "newMaster": "Novo mestre",
+      "editMaster": "Editar mestre",
+      "tailoredCount": "{count} adaptados",
+      "tailorNew": "Adaptar novo currículo",
+      "bandSubtitle": "Mestre · Editado {date}",
+      "noMasters": "Ainda não há currículos mestres",
+      "noMastersDescription": "Envie ou crie seu primeiro currículo mestre para começar a adaptar.",
+      "expand": "Clique para expandir",
+      "collapse": "Clique para recolher"
+    },
     "status": {
       "checking": "Verificando...",
       "processing": "Processando...",
@@ -786,6 +799,10 @@
       "loading": "Executando análise…",
       "errorTitle": "Análise falhou",
       "retry": "Tentar novamente"
+    },
+    "atsInline": {
+      "subtitle": "Preveja sua taxa de aprovação para esta vaga",
+      "noJdHeadline": "// SEM DESCRIÇÃO DE VAGA"
     },
     "empty": {
       "cvHeadline": "// SEM CV GERADO",

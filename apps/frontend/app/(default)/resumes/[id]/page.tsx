@@ -45,6 +45,7 @@ import { ResumeForm } from '@/components/builder/resume-form';
 import { FormattingControls } from '@/components/builder/formatting-controls';
 import { PaginatedPreview } from '@/components/preview';
 import { AnalysisPanel, type AnalysisMode } from '@/components/resumes/analysis-panel';
+import { AtsInlineView } from '@/components/resumes/ats-inline-view';
 import { useTranslations } from '@/lib/i18n';
 import { withLocalizedDefaultSections } from '@/lib/utils/section-helpers';
 import { useLanguage } from '@/lib/context/language-context';
@@ -108,8 +109,12 @@ export default function ResumeViewerPage() {
   const [templateDraft, setTemplateDraft] = useState<TemplateSettings>(DEFAULT_TEMPLATE_SETTINGS);
   const [isSavingResume, setIsSavingResume] = useState(false);
 
-  // Analysis side panel
+  // Analysis side panel (jdmatch only — ATS now uses inline view)
   const [analysisPanel, setAnalysisPanel] = useState<AnalysisMode | null>(null);
+
+  // Inline ATS view (replaces preview when toggled on)
+  const [atsView, setAtsView] = useState(false);
+  const [atsEverOpened, setAtsEverOpened] = useState(false);
 
   const activeTab = parseTab(searchParams?.get('tab') ?? null);
   const savedQrCode =
@@ -161,6 +166,7 @@ export default function ResumeViewerPage() {
         setResumeTitle(data.title ?? null);
         setCoverLetter(data.cover_letter ?? null);
         setOutreachMessage(data.outreach_message ?? null);
+        setIsMasterResume(Boolean(data.is_master));
 
         if (data.template_settings) {
           const saved = data.template_settings as Partial<TemplateSettings>;
@@ -201,7 +207,6 @@ export default function ResumeViewerPage() {
     };
 
     loadResume();
-    setIsMasterResume(localStorage.getItem('master_resume_id') === resumeId);
   }, [resumeId, t]);
 
   const handleRetryProcessing = async () => {
@@ -465,6 +470,14 @@ export default function ResumeViewerPage() {
 
   const toggleAnalysisPanel = (mode: AnalysisMode) => {
     setAnalysisPanel((prev) => (prev === mode ? null : mode));
+  };
+
+  const toggleAtsView = () => {
+    setAtsView((prev) => {
+      const next = !prev;
+      if (next) setAtsEverOpened(true);
+      return next;
+    });
   };
 
   // ---- Delete ----
@@ -831,8 +844,8 @@ export default function ResumeViewerPage() {
                 label={t('resumeViewer.tools.jdMatch')}
               />
               <ToolButton
-                active={analysisPanel === 'ats'}
-                onClick={() => toggleAnalysisPanel('ats')}
+                active={atsView}
+                onClick={toggleAtsView}
                 icon={<BarChart3 className="w-3.5 h-3.5" />}
                 label={t('resumeViewer.tools.ats')}
               />
@@ -841,181 +854,191 @@ export default function ResumeViewerPage() {
         </div>
       </div>
 
-      {/* Body */}
-      {activeTab === 'resume' && isEditingResume && resumeDraft ? (
-        <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-2 bg-black gap-[1px] no-print">
-          {/* Left: editor */}
-          <div className="bg-background overflow-y-auto p-6 md:p-8">
-            <div className="max-w-3xl mx-auto space-y-6">
-              <div className="flex items-center gap-2 border-b-2 border-black pb-2">
-                <div className="w-3 h-3 bg-blue-700" />
-                <h2 className="font-mono text-lg font-bold uppercase tracking-wider m-0">
-                  {t('builder.leftPanel.editorPanel')}
-                </h2>
-              </div>
-              <FormattingControls settings={templateDraft} onChange={setTemplateDraft} />
-              <ResumeForm resumeData={resumeDraft} onUpdate={setResumeDraft} />
-            </div>
-          </div>
-          {/* Right: live preview with drag-and-drop QR */}
-          <div className="bg-secondary overflow-hidden flex flex-col">
-            <div className="flex-1 overflow-y-auto">
-              <PaginatedPreview
-                resumeData={localizedResumeDraft || resumeDraft}
-                settings={templateDraft}
-                onQrCodeChange={handleDraftQrChange}
-              />
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div className="flex-1 min-h-0 overflow-y-auto px-4 md:px-8 py-8">
+      {/* Inline ATS view (stays mounted once opened so the result survives toggles) */}
+      {atsEverOpened && (
+        <div className={atsView ? 'flex-1 min-h-0 overflow-y-auto px-4 md:px-8 py-8' : 'hidden'}>
           <div className="max-w-7xl mx-auto">
-            {activeTab === 'resume' && (
-              <div className="flex justify-center pb-4">
-                <div
-                  className="resume-print w-full max-w-[250mm] shadow-sw-lg border-2 border-black bg-white"
-                  style={{ position: 'relative' }}
-                >
-                  {savedQrCode ? (
-                    <div
-                      style={{
-                        position: 'absolute',
-                        top: `${savedQrCode.yMm}mm`,
-                        left: `${savedQrCode.xMm}mm`,
-                        width: `${savedQrCode.sizeMm}mm`,
-                        height: `${savedQrCode.sizeMm}mm`,
-                        zIndex: 10,
-                      }}
-                    >
-                      <QRCodeSVG
-                        value={savedQrCode.url}
-                        level="M"
-                        includeMargin={false}
-                        style={{ width: '100%', height: '100%', display: 'block' }}
-                      />
-                    </div>
-                  ) : null}
-                  <Resume
-                    resumeData={localizedResumeData || resumeData}
-                    additionalSectionLabels={{
-                      technicalSkills: t('resume.additionalLabels.technicalSkills'),
-                      languages: t('resume.additionalLabels.languages'),
-                      certifications: t('resume.additionalLabels.certifications'),
-                      awards: t('resume.additionalLabels.awards'),
-                    }}
-                    sectionHeadings={{
-                      summary: t('resume.sections.summary'),
-                      experience: t('resume.sections.experience'),
-                      education: t('resume.sections.education'),
-                      projects: t('resume.sections.projects'),
-                      certifications: t('resume.sections.certifications'),
-                      skills: t('resume.sections.skillsOnly'),
-                      languages: t('resume.sections.languages'),
-                      awards: t('resume.sections.awards'),
-                      links: t('resume.sections.links'),
-                    }}
-                    fallbackLabels={{ name: t('resume.defaults.name') }}
-                  />
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'cv' && (
-              <EmptyState
-                headline={t('resumeViewer.empty.cvHeadline')}
-                body={t('resumeViewer.empty.cvBody')}
-              />
-            )}
-
-            {activeTab === 'coverLetter' && (
-              <div className="flex justify-center pb-4">
-                <div className="w-full max-w-[210mm] border border-black bg-white shadow-sw-default">
-                  {isEditingCoverLetter ? (
-                    <CoverLetterEditor
-                      content={coverLetterDraft}
-                      onChange={setCoverLetterDraft}
-                      onSave={handleSaveCoverLetter}
-                      isSaving={isSavingCoverLetter}
-                    />
-                  ) : (
-                    <div className="p-[28px_32px]">
-                      {coverLetter ? (
-                        <>
-                          <h2 className="font-sans text-[22px] font-semibold tracking-[-0.01em] m-0">
-                            {t('resumeViewer.tabs.coverLetter')}
-                            {resumeTitle ? ` · ${resumeTitle}` : ''}
-                          </h2>
-                          <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-ink-soft mt-1 mb-6">
-                            {'// SHAPE YOUR COVER LETTER'}
-                          </div>
-                          <pre className="font-serif text-[15px] leading-relaxed whitespace-pre-wrap break-words m-0">
-                            {coverLetter}
-                          </pre>
-                        </>
-                      ) : (
-                        <EmptyState
-                          headline={t('resumeViewer.empty.coverHeadline')}
-                          body={t('resumeViewer.empty.coverBody')}
-                          bare
-                        />
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'outreach' && (
-              <div className="flex justify-center pb-4">
-                <div className="w-full max-w-[210mm] border border-black bg-white shadow-sw-default">
-                  {isEditingOutreach ? (
-                    <OutreachEditor
-                      content={outreachDraft}
-                      onChange={setOutreachDraft}
-                      onSave={handleSaveOutreach}
-                      isSaving={isSavingOutreach}
-                    />
-                  ) : (
-                    <div className="p-[28px_32px]">
-                      {outreachMessage ? (
-                        <>
-                          <h2 className="font-sans text-[22px] font-semibold tracking-[-0.01em] m-0">
-                            {t('resumeViewer.tabs.outreach')}
-                            {resumeTitle ? ` · ${resumeTitle}` : ''}
-                          </h2>
-                          <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-ink-soft mt-1 mb-6">
-                            {'// OUTREACH MESSAGE'}
-                          </div>
-                          <pre className="font-serif text-[15px] leading-relaxed whitespace-pre-wrap break-words m-0">
-                            {outreachMessage}
-                          </pre>
-                        </>
-                      ) : (
-                        <EmptyState
-                          headline={t('resumeViewer.empty.outreachHeadline')}
-                          body={t('resumeViewer.empty.outreachBody')}
-                          bare
-                        />
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'resume' && !isEditingResume && (
-              <div className="flex justify-end pt-4 no-print">
-                <Button variant="destructive" onClick={() => setShowDeleteDialog(true)}>
-                  {isMasterResume
-                    ? t('confirmations.deleteMasterResumeTitle')
-                    : t('dashboard.deleteResume')}
-                </Button>
-              </div>
-            )}
+            <AtsInlineView resumeId={resumeId} resumeTitle={resumeTitle} />
           </div>
         </div>
       )}
+
+      {/* Body — hidden when ATS view is active */}
+      {!atsView &&
+        (activeTab === 'resume' && isEditingResume && resumeDraft ? (
+          <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-2 bg-black gap-[1px] no-print">
+            {/* Left: editor */}
+            <div className="bg-background overflow-y-auto p-6 md:p-8">
+              <div className="max-w-3xl mx-auto space-y-6">
+                <div className="flex items-center gap-2 border-b-2 border-black pb-2">
+                  <div className="w-3 h-3 bg-blue-700" />
+                  <h2 className="font-mono text-lg font-bold uppercase tracking-wider m-0">
+                    {t('builder.leftPanel.editorPanel')}
+                  </h2>
+                </div>
+                <FormattingControls settings={templateDraft} onChange={setTemplateDraft} />
+                <ResumeForm resumeData={resumeDraft} onUpdate={setResumeDraft} />
+              </div>
+            </div>
+            {/* Right: live preview with drag-and-drop QR */}
+            <div className="bg-secondary overflow-hidden flex flex-col">
+              <div className="flex-1 overflow-y-auto">
+                <PaginatedPreview
+                  resumeData={localizedResumeDraft || resumeDraft}
+                  settings={templateDraft}
+                  onQrCodeChange={handleDraftQrChange}
+                />
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="flex-1 min-h-0 overflow-y-auto px-4 md:px-8 py-8">
+            <div className="max-w-7xl mx-auto">
+              {activeTab === 'resume' && (
+                <div className="flex justify-center pb-4">
+                  <div
+                    className="resume-print w-full max-w-[250mm] shadow-sw-lg border-2 border-black bg-white"
+                    style={{ position: 'relative' }}
+                  >
+                    {savedQrCode ? (
+                      <div
+                        style={{
+                          position: 'absolute',
+                          top: `${savedQrCode.yMm}mm`,
+                          left: `${savedQrCode.xMm}mm`,
+                          width: `${savedQrCode.sizeMm}mm`,
+                          height: `${savedQrCode.sizeMm}mm`,
+                          zIndex: 10,
+                        }}
+                      >
+                        <QRCodeSVG
+                          value={savedQrCode.url}
+                          level="M"
+                          includeMargin={false}
+                          style={{ width: '100%', height: '100%', display: 'block' }}
+                        />
+                      </div>
+                    ) : null}
+                    <Resume
+                      resumeData={localizedResumeData || resumeData}
+                      additionalSectionLabels={{
+                        technicalSkills: t('resume.additionalLabels.technicalSkills'),
+                        languages: t('resume.additionalLabels.languages'),
+                        certifications: t('resume.additionalLabels.certifications'),
+                        awards: t('resume.additionalLabels.awards'),
+                      }}
+                      sectionHeadings={{
+                        summary: t('resume.sections.summary'),
+                        experience: t('resume.sections.experience'),
+                        education: t('resume.sections.education'),
+                        projects: t('resume.sections.projects'),
+                        certifications: t('resume.sections.certifications'),
+                        skills: t('resume.sections.skillsOnly'),
+                        languages: t('resume.sections.languages'),
+                        awards: t('resume.sections.awards'),
+                        links: t('resume.sections.links'),
+                      }}
+                      fallbackLabels={{ name: t('resume.defaults.name') }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'cv' && (
+                <EmptyState
+                  headline={t('resumeViewer.empty.cvHeadline')}
+                  body={t('resumeViewer.empty.cvBody')}
+                />
+              )}
+
+              {activeTab === 'coverLetter' && (
+                <div className="flex justify-center pb-4">
+                  <div className="w-full max-w-[210mm] border border-black bg-white shadow-sw-default">
+                    {isEditingCoverLetter ? (
+                      <CoverLetterEditor
+                        content={coverLetterDraft}
+                        onChange={setCoverLetterDraft}
+                        onSave={handleSaveCoverLetter}
+                        isSaving={isSavingCoverLetter}
+                      />
+                    ) : (
+                      <div className="p-[28px_32px]">
+                        {coverLetter ? (
+                          <>
+                            <h2 className="font-sans text-[22px] font-semibold tracking-[-0.01em] m-0">
+                              {t('resumeViewer.tabs.coverLetter')}
+                              {resumeTitle ? ` · ${resumeTitle}` : ''}
+                            </h2>
+                            <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-ink-soft mt-1 mb-6">
+                              {'// SHAPE YOUR COVER LETTER'}
+                            </div>
+                            <pre className="font-serif text-[15px] leading-relaxed whitespace-pre-wrap break-words m-0">
+                              {coverLetter}
+                            </pre>
+                          </>
+                        ) : (
+                          <EmptyState
+                            headline={t('resumeViewer.empty.coverHeadline')}
+                            body={t('resumeViewer.empty.coverBody')}
+                            bare
+                          />
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'outreach' && (
+                <div className="flex justify-center pb-4">
+                  <div className="w-full max-w-[210mm] border border-black bg-white shadow-sw-default">
+                    {isEditingOutreach ? (
+                      <OutreachEditor
+                        content={outreachDraft}
+                        onChange={setOutreachDraft}
+                        onSave={handleSaveOutreach}
+                        isSaving={isSavingOutreach}
+                      />
+                    ) : (
+                      <div className="p-[28px_32px]">
+                        {outreachMessage ? (
+                          <>
+                            <h2 className="font-sans text-[22px] font-semibold tracking-[-0.01em] m-0">
+                              {t('resumeViewer.tabs.outreach')}
+                              {resumeTitle ? ` · ${resumeTitle}` : ''}
+                            </h2>
+                            <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-ink-soft mt-1 mb-6">
+                              {'// OUTREACH MESSAGE'}
+                            </div>
+                            <pre className="font-serif text-[15px] leading-relaxed whitespace-pre-wrap break-words m-0">
+                              {outreachMessage}
+                            </pre>
+                          </>
+                        ) : (
+                          <EmptyState
+                            headline={t('resumeViewer.empty.outreachHeadline')}
+                            body={t('resumeViewer.empty.outreachBody')}
+                            bare
+                          />
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'resume' && !isEditingResume && (
+                <div className="flex justify-end pt-4 no-print">
+                  <Button variant="destructive" onClick={() => setShowDeleteDialog(true)}>
+                    {isMasterResume
+                      ? t('confirmations.deleteMasterResumeTitle')
+                      : t('dashboard.deleteResume')}
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
 
       <AnalysisPanel
         open={analysisPanel !== null}
