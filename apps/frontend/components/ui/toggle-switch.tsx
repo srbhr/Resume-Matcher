@@ -40,7 +40,7 @@ export const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
   return (
     <div
       className={cn(
-        'flex items-center justify-between p-4 border border-black bg-white',
+        'flex items-center justify-between p-4 border border-border bg-card',
         'shadow-sw-sm',
         disabled && 'opacity-50 cursor-not-allowed',
         className
@@ -61,15 +61,15 @@ export const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
         onClick={handleToggle}
         className={cn(
           'relative inline-flex h-6 w-12 shrink-0 cursor-pointer items-center',
-          'border-2 border-black transition-colors',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2',
+          'border-2 border-border transition-colors',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
           'disabled:cursor-not-allowed',
-          checked ? 'bg-blue-700' : 'bg-paper-tint'
+          checked ? 'bg-primary' : 'bg-paper-tint'
         )}
       >
         <span
           className={cn(
-            'pointer-events-none block h-4 w-4 bg-white border border-black',
+            'pointer-events-none block h-4 w-4 bg-on-accent border border-border',
             'transition-transform duration-200',
             checked ? 'translate-x-6' : 'translate-x-1'
           )}

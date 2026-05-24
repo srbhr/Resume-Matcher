@@ -86,27 +86,20 @@ function ATSPageContent() {
   }, [resumeInput.resumeId]);
 
   return (
-    <div
-      className="min-h-screen w-full flex justify-center items-start py-12 px-4 md:px-8 bg-background"
-      style={{
-        backgroundImage:
-          'linear-gradient(rgba(29, 78, 216, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(29, 78, 216, 0.1) 1px, transparent 1px)',
-        backgroundSize: '40px 40px',
-      }}
-    >
-      <div className="w-full max-w-4xl border border-black bg-background shadow-sw-lg">
+    <div className="min-h-screen w-full flex justify-center items-start py-12 px-4 md:px-8 bg-background grid-bg">
+      <div className="w-full max-w-4xl border border-border bg-background shadow-sw-lg">
         {/* Header */}
-        <div className="border-b border-black p-8 md:p-10">
+        <div className="border-b border-border p-8 md:p-10">
           <Link
             href="/"
-            className="inline-flex items-center gap-1 font-mono text-xs uppercase tracking-widest text-muted-foreground hover:text-black transition-colors mb-4"
+            className="inline-flex items-center gap-1 font-mono text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors mb-4"
           >
             ← Home
           </Link>
-          <h1 className="font-serif text-4xl md:text-5xl text-black tracking-tight uppercase">
+          <h1 className="font-serif text-4xl md:text-5xl text-foreground tracking-tight uppercase">
             ATS Screen
           </h1>
-          <p className="mt-3 text-sm font-mono text-blue-700 uppercase tracking-wide font-bold">
+          <p className="mt-3 text-sm font-mono text-primary uppercase tracking-wide font-bold">
             {'// '}
             Predict your resume pass rate before applying
           </p>
@@ -129,7 +122,7 @@ function ATSPageContent() {
                 Job Description
               </label>
               {jdAutoLoaded ? (
-                <div className="border border-black bg-secondary p-3 font-mono text-xs whitespace-pre-wrap max-h-72 overflow-y-auto">
+                <div className="border border-border bg-secondary p-3 font-mono text-xs whitespace-pre-wrap max-h-72 overflow-y-auto">
                   {jobDescription}
                 </div>
               ) : (
@@ -138,7 +131,7 @@ function ATSPageContent() {
                   value={jobDescription}
                   onChange={(e) => setJobDescription(e.target.value)}
                   rows={12}
-                  className="font-mono text-sm border-black"
+                  className="font-mono text-sm border-border"
                 />
               )}
             </div>

@@ -15,6 +15,7 @@ import {
   retryProcessing,
   renameResume,
   generateCoverLetter,
+  generateCounterpart,
   generateOutreachMessage,
   updateCoverLetter,
   updateOutreachMessage,
@@ -109,6 +110,19 @@ export default function ResumeViewerPage() {
   const [templateDraft, setTemplateDraft] = useState<TemplateSettings>(DEFAULT_TEMPLATE_SETTINGS);
   const [isSavingResume, setIsSavingResume] = useState(false);
 
+  // Document group: master may hold a Resume, a CV, or one of each.
+  // resumeDocId/cvDocId point to whichever record holds that document's
+  // data — they may equal `resumeId` (when the master IS that document)
+  // or point to a linked child row.
+  const [documentKind, setDocumentKind] = useState<'resume' | 'cv'>('resume');
+  const [resumeDocId, setResumeDocId] = useState<string | null>(null);
+  const [cvDocId, setCvDocId] = useState<string | null>(null);
+  const [cvData, setCvData] = useState<ResumeData | null>(null);
+  const [cvLoading, setCvLoading] = useState(false);
+  const [isGeneratingResume, setIsGeneratingResume] = useState(false);
+  const [isGeneratingCV, setIsGeneratingCV] = useState(false);
+  const [generateError, setGenerateError] = useState<string | null>(null);
+
   // Analysis side panel (jdmatch only — ATS now uses inline view)
   const [analysisPanel, setAnalysisPanel] = useState<AnalysisMode | null>(null);
 
@@ -167,6 +181,9 @@ export default function ResumeViewerPage() {
         setCoverLetter(data.cover_letter ?? null);
         setOutreachMessage(data.outreach_message ?? null);
         setIsMasterResume(Boolean(data.is_master));
+        setDocumentKind(data.document_kind ?? 'resume');
+        setResumeDocId(data.resume_doc_id ?? null);
+        setCvDocId(data.cv_doc_id ?? null);
 
         if (data.template_settings) {
           const saved = data.template_settings as Partial<TemplateSettings>;
@@ -291,8 +308,66 @@ export default function ResumeViewerPage() {
       }
       setCoverLetter(data.cover_letter ?? null);
       setOutreachMessage(data.outreach_message ?? null);
+      setDocumentKind(data.document_kind ?? 'resume');
+      setResumeDocId(data.resume_doc_id ?? null);
+      setCvDocId(data.cv_doc_id ?? null);
     } catch (err) {
       console.error('Failed to reload resume:', err);
+    }
+  };
+
+  // Lazy-load the CV document when its data lives in a separate row.
+  // (When the master itself IS the CV, `resumeData` already holds it.)
+  useEffect(() => {
+    if (activeTab !== 'cv') return;
+    if (!cvDocId) return;
+    if (cvDocId === resumeId) return; // master is the CV; reuse resumeData
+    if (cvData) return; // already loaded
+    let cancelled = false;
+    setCvLoading(true);
+    fetchResume(cvDocId)
+      .then((data) => {
+        if (cancelled) return;
+        if (data.processed_resume) setCvData(data.processed_resume as ResumeData);
+      })
+      .catch((err) => console.error('Failed to load CV document:', err))
+      .finally(() => {
+        if (!cancelled) setCvLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab, cvDocId, cvData, resumeId]);
+
+  const masterIdForGenerate = isMasterResume ? resumeId : null;
+
+  const handleGenerate = async (target: 'resume' | 'cv') => {
+    if (!masterIdForGenerate) return;
+    setGenerateError(null);
+    if (target === 'cv') setIsGeneratingCV(true);
+    else setIsGeneratingResume(true);
+    try {
+      await generateCounterpart(masterIdForGenerate, target);
+      // Refresh master to pick up the new resume_doc_id / cv_doc_id pointers,
+      // then drop cached CV data so the lazy-load effect refetches it.
+      setCvData(null);
+      const data = await fetchResume(resumeId);
+      setDocumentKind(data.document_kind ?? 'resume');
+      setResumeDocId(data.resume_doc_id ?? null);
+      setCvDocId(data.cv_doc_id ?? null);
+      // If the master itself was the empty slot, its processed_resume just
+      // changed — refresh it too.
+      if (data.processed_resume) {
+        setResumeData(data.processed_resume as ResumeData);
+      }
+    } catch (err) {
+      console.error(`Failed to generate ${target}:`, err);
+      setGenerateError(
+        err instanceof Error ? err.message : t('resumeViewer.generateFailed', { target })
+      );
+    } finally {
+      if (target === 'cv') setIsGeneratingCV(false);
+      else setIsGeneratingResume(false);
     }
   };
 
@@ -512,8 +587,8 @@ export default function ResumeViewerPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background">
-        <Loader2 className="w-10 h-10 animate-spin text-blue-700 mb-4" />
-        <p className="font-mono text-sm font-bold uppercase text-blue-700">
+        <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />
+        <p className="font-mono text-sm font-bold uppercase text-primary">
           {t('resumeViewer.loading')}
         </p>
       </div>
@@ -537,7 +612,7 @@ export default function ResumeViewerPage() {
         >
           <div className="flex justify-center mb-4">
             {isProcessing ? (
-              <Loader2 className="w-8 h-8 animate-spin text-blue-700" />
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
             ) : isFailed ? (
               <AlertCircle className="w-8 h-8 text-orange-600" />
             ) : (
@@ -546,7 +621,7 @@ export default function ResumeViewerPage() {
           </div>
           <p
             className={`font-bold mb-4 ${
-              isProcessing ? 'text-blue-700' : isFailed ? 'text-orange-700' : 'text-red-700'
+              isProcessing ? 'text-primary' : isFailed ? 'text-orange-700' : 'text-red-700'
             }`}
           >
             {error || t('resumeViewer.resumeNotFound')}
@@ -594,13 +669,13 @@ export default function ResumeViewerPage() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Page header: breadcrumb + title + segmented tabs */}
-      <header className="flex flex-col gap-[18px] px-7 py-[18px] border-b border-black bg-background no-print md:flex-row md:items-center md:gap-[18px]">
+      <header className="flex flex-col gap-[18px] px-7 py-[18px] border-b border-border bg-background no-print md:flex-row md:items-center md:gap-[18px]">
         <div className="flex flex-col gap-1 min-w-0">
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => router.push('/dashboard')}
-              className="font-mono text-[10px] uppercase tracking-[0.18em] text-ink-soft hover:text-black hover:underline bg-transparent border-none p-0 cursor-pointer inline-flex items-center gap-1"
+              className="font-mono text-[10px] uppercase tracking-[0.18em] text-ink-soft hover:text-foreground hover:underline bg-transparent border-none p-0 cursor-pointer inline-flex items-center gap-1"
             >
               <ChevronLeft className="w-3 h-3" aria-hidden="true" />
               {t('resumeViewer.meta.dashboard')}
@@ -610,7 +685,7 @@ export default function ResumeViewerPage() {
                 <span className="font-mono text-xs text-ink-soft" aria-hidden="true">
                   /
                 </span>
-                <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-black truncate">
+                <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-foreground truncate">
                   {resumeTitle}
                 </span>
               </>
@@ -628,7 +703,7 @@ export default function ResumeViewerPage() {
                 autoFocus
                 maxLength={80}
                 placeholder={t('resumeViewer.titlePlaceholder')}
-                className="font-sans text-[22px] font-semibold tracking-[-0.01em] border-b border-black bg-transparent outline-none w-full max-w-xl px-0 py-0"
+                className="font-sans text-[22px] font-semibold tracking-[-0.01em] border-b border-border bg-transparent outline-none w-full max-w-xl px-0 py-0"
               />
             ) : (
               <button
@@ -664,14 +739,38 @@ export default function ResumeViewerPage() {
       </header>
 
       {/* Sub-toolbar: VIEWING · {tab} + per-tab actions */}
-      <div className="flex flex-wrap justify-between items-center gap-3 px-7 py-3 border-b border-black bg-background no-print">
+      <div className="flex flex-wrap justify-between items-center gap-3 px-7 py-3 border-b border-border bg-background no-print">
         <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-ink-soft">
           {t('resumeViewer.meta.viewing')} · {tabLabel}
         </div>
         <div className="flex flex-wrap gap-2 items-center">
           {activeTab === 'resume' && !isEditingResume && (
             <>
-              {isMasterResume && (
+              {isMasterResume && !resumeDocId && (
+                <Button
+                  size="sm"
+                  onClick={() => handleGenerate('resume')}
+                  disabled={isGeneratingResume || !cvDocId}
+                  title={
+                    !cvDocId
+                      ? t('resumeViewer.generateNeedsCV')
+                      : t('resumeViewer.actions.generateResume')
+                  }
+                >
+                  {isGeneratingResume ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      {t('common.generating')}
+                    </>
+                  ) : (
+                    <>
+                      <Wand2 className="w-3.5 h-3.5" />
+                      {t('resumeViewer.actions.generateResume')}
+                    </>
+                  )}
+                </Button>
+              )}
+              {isMasterResume && resumeDocId && (
                 <Button size="sm" onClick={() => setShowEnrichmentModal(true)}>
                   <Wand2 className="w-3.5 h-3.5" />
                   {t('resumeViewer.actions.enhance')}
@@ -719,10 +818,36 @@ export default function ResumeViewerPage() {
           )}
           {activeTab === 'cv' && (
             <>
-              <Button size="sm" disabled>
-                <Wand2 className="w-3.5 h-3.5" />
-                {t('resumeViewer.actions.enhanceCV')}
-              </Button>
+              {isMasterResume && !cvDocId && (
+                <Button
+                  size="sm"
+                  onClick={() => handleGenerate('cv')}
+                  disabled={isGeneratingCV || !resumeDocId}
+                  title={
+                    !resumeDocId
+                      ? t('resumeViewer.generateNeedsResume')
+                      : t('resumeViewer.actions.generateCV')
+                  }
+                >
+                  {isGeneratingCV ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      {t('common.generating')}
+                    </>
+                  ) : (
+                    <>
+                      <Wand2 className="w-3.5 h-3.5" />
+                      {t('resumeViewer.actions.generateCV')}
+                    </>
+                  )}
+                </Button>
+              )}
+              {cvDocId && (
+                <Button size="sm" disabled>
+                  <Wand2 className="w-3.5 h-3.5" />
+                  {t('resumeViewer.actions.enhanceCV')}
+                </Button>
+              )}
               <Button size="sm" variant="outline" disabled>
                 <Pencil className="w-3.5 h-3.5" />
                 {t('resumeViewer.actions.editCV')}
@@ -836,7 +961,7 @@ export default function ResumeViewerPage() {
 
           {showTools && (
             <>
-              <span aria-hidden="true" className="inline-block w-px h-5 bg-black/40 mx-1" />
+              <span aria-hidden="true" className="inline-block w-px h-5 bg-border/40 mx-1" />
               <ToolButton
                 active={analysisPanel === 'jdmatch'}
                 onClick={() => toggleAnalysisPanel('jdmatch')}
@@ -866,12 +991,12 @@ export default function ResumeViewerPage() {
       {/* Body — hidden when ATS view is active */}
       {!atsView &&
         (activeTab === 'resume' && isEditingResume && resumeDraft ? (
-          <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-2 bg-black gap-[1px] no-print">
+          <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-2 bg-border gap-[1px] no-print">
             {/* Left: editor */}
             <div className="bg-background overflow-y-auto p-6 md:p-8">
               <div className="max-w-3xl mx-auto space-y-6">
-                <div className="flex items-center gap-2 border-b-2 border-black pb-2">
-                  <div className="w-3 h-3 bg-blue-700" />
+                <div className="flex items-center gap-2 border-b-2 border-border pb-2">
+                  <div className="w-3 h-3 bg-primary" />
                   <h2 className="font-mono text-lg font-bold uppercase tracking-wider m-0">
                     {t('builder.leftPanel.editorPanel')}
                   </h2>
@@ -894,7 +1019,40 @@ export default function ResumeViewerPage() {
         ) : (
           <div className="flex-1 min-h-0 overflow-y-auto px-4 md:px-8 py-8">
             <div className="max-w-7xl mx-auto">
-              {activeTab === 'resume' && (
+              {activeTab === 'resume' && isMasterResume && !resumeDocId && (
+                <div className="flex flex-col items-center gap-4 py-12">
+                  <EmptyState
+                    headline={t('resumeViewer.empty.resumeHeadline')}
+                    body={t('resumeViewer.empty.resumeBody')}
+                    bare
+                  />
+                  <Button
+                    onClick={() => handleGenerate('resume')}
+                    disabled={isGeneratingResume || !cvDocId}
+                    title={
+                      !cvDocId
+                        ? t('resumeViewer.generateNeedsCV')
+                        : t('resumeViewer.actions.generateResume')
+                    }
+                  >
+                    {isGeneratingResume ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        {t('common.generating')}
+                      </>
+                    ) : (
+                      <>
+                        <Wand2 className="w-4 h-4 mr-2" />
+                        {t('resumeViewer.actions.generateResume')}
+                      </>
+                    )}
+                  </Button>
+                  {generateError && (
+                    <p className="font-mono text-xs text-red-600">{generateError}</p>
+                  )}
+                </div>
+              )}
+              {activeTab === 'resume' && (!isMasterResume || resumeDocId) && (
                 <div className="flex justify-center pb-4">
                   <div
                     className="resume-print w-full max-w-[250mm] shadow-sw-lg border-2 border-black bg-white"
@@ -944,12 +1102,86 @@ export default function ResumeViewerPage() {
                 </div>
               )}
 
-              {activeTab === 'cv' && (
-                <EmptyState
-                  headline={t('resumeViewer.empty.cvHeadline')}
-                  body={t('resumeViewer.empty.cvBody')}
-                />
-              )}
+              {activeTab === 'cv' &&
+                (() => {
+                  // CV content lives either on the master row (when the master
+                  // IS the CV) or on a child row that we lazy-load into cvData.
+                  const cvContent = cvDocId === resumeId ? resumeData : cvDocId ? cvData : null;
+                  if (cvContent) {
+                    return (
+                      <div className="flex justify-center pb-4">
+                        <div className="resume-print w-full max-w-[250mm] shadow-sw-lg border-2 border-black bg-white">
+                          <Resume
+                            resumeData={cvContent}
+                            additionalSectionLabels={{
+                              technicalSkills: t('resume.additionalLabels.technicalSkills'),
+                              languages: t('resume.additionalLabels.languages'),
+                              certifications: t('resume.additionalLabels.certifications'),
+                              awards: t('resume.additionalLabels.awards'),
+                            }}
+                            sectionHeadings={{
+                              summary: t('resume.sections.summary'),
+                              experience: t('resume.sections.experience'),
+                              education: t('resume.sections.education'),
+                              projects: t('resume.sections.projects'),
+                              certifications: t('resume.sections.certifications'),
+                              skills: t('resume.sections.skillsOnly'),
+                              languages: t('resume.sections.languages'),
+                              awards: t('resume.sections.awards'),
+                              links: t('resume.sections.links'),
+                            }}
+                            fallbackLabels={{ name: t('resume.defaults.name') }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  }
+                  if (cvLoading) {
+                    return (
+                      <div className="flex flex-col items-center py-16 gap-3">
+                        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                        <p className="font-mono text-xs uppercase tracking-[0.18em] text-ink-soft">
+                          {t('common.loading')}
+                        </p>
+                      </div>
+                    );
+                  }
+                  return (
+                    <div className="flex flex-col items-center gap-4 py-12">
+                      <EmptyState
+                        headline={t('resumeViewer.empty.cvHeadline')}
+                        body={t('resumeViewer.empty.cvBody')}
+                        bare
+                      />
+                      {isMasterResume && (
+                        <Button
+                          onClick={() => handleGenerate('cv')}
+                          disabled={isGeneratingCV || !resumeDocId}
+                          title={
+                            !resumeDocId
+                              ? t('resumeViewer.generateNeedsResume')
+                              : t('resumeViewer.actions.generateCV')
+                          }
+                        >
+                          {isGeneratingCV ? (
+                            <>
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              {t('common.generating')}
+                            </>
+                          ) : (
+                            <>
+                              <Wand2 className="w-4 h-4 mr-2" />
+                              {t('resumeViewer.actions.generateCV')}
+                            </>
+                          )}
+                        </Button>
+                      )}
+                      {generateError && (
+                        <p className="font-mono text-xs text-red-600">{generateError}</p>
+                      )}
+                    </div>
+                  );
+                })()}
 
               {activeTab === 'coverLetter' && (
                 <div className="flex justify-center pb-4">
@@ -1148,7 +1380,7 @@ interface EmptyStateProps {
 function EmptyState({ headline, body, bare = false }: EmptyStateProps) {
   const inner = (
     <>
-      <div className="font-mono text-[12px] uppercase tracking-[0.18em] text-black mb-3">
+      <div className="font-mono text-[12px] uppercase tracking-[0.18em] text-foreground mb-3">
         {headline}
       </div>
       <p className="font-sans text-sm text-ink-soft max-w-md m-0">{body}</p>
@@ -1186,8 +1418,8 @@ function ToolButton({ active, onClick, icon, label }: ToolButtonProps) {
         'px-[14px] py-[7px] border border-dashed rounded-none transition-colors duration-100 ease-out ' +
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 ' +
         (active
-          ? 'border-black bg-black text-white'
-          : 'border-black bg-transparent text-black hover:bg-paper-tint')
+          ? 'border-border bg-foreground text-background'
+          : 'border-border bg-transparent text-foreground hover:bg-paper-tint')
       }
     >
       {icon}

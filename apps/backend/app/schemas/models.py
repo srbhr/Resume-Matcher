@@ -413,6 +413,23 @@ class ResumeUploadResponse(BaseModel):
     resume_id: str
     processing_status: Literal["pending", "processing", "ready", "failed"] = "pending"
     is_master: bool = False
+    document_kind: Literal["resume", "cv"] = "resume"
+    cv_resume_id: str | None = None  # If a CV child was created alongside
+
+
+class GenerateCounterpartRequest(BaseModel):
+    """Request to generate the missing resume or CV from the existing one."""
+
+    target: Literal["resume", "cv"]
+
+
+class GenerateCounterpartResponse(BaseModel):
+    """Response after generating the missing counterpart document."""
+
+    message: str
+    resume_id: str  # ID of the newly generated (or updated) document
+    target: Literal["resume", "cv"]
+    processing_status: Literal["pending", "processing", "ready", "failed"]
 
 
 class RawResume(BaseModel):
@@ -437,6 +454,13 @@ class ResumeFetchData(BaseModel):
     is_master: bool = False
     title: str | None = None
     template_settings: dict | None = None
+    document_kind: Literal["resume", "cv"] = "resume"
+    # Pointers to the resume / CV that belong to the same master group.
+    # When viewing a master, both may be populated; one points back to self.
+    resume_doc_id: str | None = None
+    cv_doc_id: str | None = None
+    resume_download_filename: str | None = None
+    cv_download_filename: str | None = None
 
 
 class ResumeFetchResponse(BaseModel):
@@ -457,6 +481,7 @@ class ResumeSummary(BaseModel):
     created_at: str
     updated_at: str
     title: str | None = None
+    document_kind: Literal["resume", "cv"] = "resume"
 
 
 class ResumeListResponse(BaseModel):

@@ -12,7 +12,11 @@ from pdfminer.layout import LTChar
 from pypdf import PdfReader
 
 from app.llm import complete_json, get_llm_config, get_model_name, get_safe_max_tokens
-from app.prompts import PARSE_RESUME_PROMPT
+from app.prompts import (
+    CONDENSE_CV_TO_RESUME_PROMPT,
+    EXPAND_RESUME_TO_CV_PROMPT,
+    PARSE_RESUME_PROMPT,
+)
 from app.prompts.templates import RESUME_SCHEMA_EXAMPLE
 from app.schemas import ResumeData
 
@@ -432,5 +436,45 @@ async def parse_resume_to_json(markdown_text: str) -> dict[str, Any]:
     result = _convert_md_links_in_data(result)
 
     # Validate against schema
+    validated = ResumeData.model_validate(result)
+    return validated.model_dump()
+
+
+async def generate_counterpart_document(
+    source_data: dict[str, Any], target: str
+) -> dict[str, Any]:
+    """Generate the missing Resume or CV from the other document via LLM.
+
+    `target='cv'` expands a resume into a long-form CV; `target='resume'`
+    condenses a CV into a one-page resume. The output JSON shape matches
+    the input shape so it can be stored and rendered by the same components.
+    """
+    import json as _json
+
+    if target not in ("resume", "cv"):
+        raise ValueError(f"Invalid target: {target}")
+
+    prompt_template = (
+        EXPAND_RESUME_TO_CV_PROMPT if target == "cv" else CONDENSE_CV_TO_RESUME_PROMPT
+    )
+    payload_key = "resume_json" if target == "cv" else "cv_json"
+
+    prompt = prompt_template.format(
+        schema=RESUME_SCHEMA_EXAMPLE,
+        **{payload_key: _json.dumps(source_data, indent=2)},
+    )
+
+    config = get_llm_config()
+    model_name = get_model_name(config)
+    result = await complete_json(
+        prompt=prompt,
+        system_prompt=(
+            "You are a JSON resume/CV transformer. Output only valid JSON "
+            "matching the requested schema, no explanations."
+        ),
+        max_tokens=get_safe_max_tokens(model_name),
+        retries=3,
+    )
+
     validated = ResumeData.model_validate(result)
     return validated.model_dump()

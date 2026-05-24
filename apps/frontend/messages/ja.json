@@ -112,7 +112,20 @@
       "dropzoneTitle": "クリックまたはファイルをドラッグ",
       "dropzoneSubtitle": "PDF、DOC、DOCX（最大 4MB）",
       "tryDifferentFile": "別のファイルを試す",
-      "parsingFailedKeepOpen": "AI 解析に失敗しました。別のファイルを試すか、このダイアログを閉じてください。"
+      "parsingFailedKeepOpen": "AI 解析に失敗しました。別のファイルを試すか、このダイアログを閉じてください。",
+      "bundleTitle": "新しいマスターグループ",
+      "bundleSubtitle": "履歴書と CV のいずれか、または両方をアップロードしてください。最低 1 つが必要です。",
+      "groupNameLabel": "グループ名（任意）",
+      "groupNamePlaceholder": "例: エンジニアリング、マーケティング",
+      "groupNameHint": "ダッシュボードでマスターのカテゴリ名として使用されます。",
+      "resumeSlotLabel": "履歴書",
+      "cvSlotLabel": "CV",
+      "optional": "任意",
+      "chooseFile": "ファイルを選択...",
+      "resumeFilenameLabel": "履歴書のダウンロード名",
+      "cvFilenameLabel": "CV のダウンロード名",
+      "requireOne": "履歴書または CV のいずれかを 1 つ以上アップロードしてください。",
+      "uploadButton": "アップロード"
     }
   },
   "builder": {
@@ -779,7 +792,8 @@
       "copied": "コピー済み",
       "generate": "生成",
       "regenerate": "再生成",
-      "generateCV": "CV を生成"
+      "generateCV": "CV を生成",
+      "generateResume": "履歴書を生成"
     },
     "tools": {
       "jdMatch": "求人マッチ",
@@ -805,9 +819,11 @@
       "noJdHeadline": "// 求人内容が未登録"
     },
     "empty": {
-      "cvHeadline": "// CV が未作成",
-      "cvBody": "CV は履歴書のアカデミックな長文版です。仕事の全体像を示すために生成してください。",
+      "cvHeadline": "// CV が未登録",
+      "cvBody": "CV は履歴書のアカデミックな長文版です。履歴書から CV を生成して、仕事の全体像を示しましょう。",
       "cvAction": "CV を生成",
+      "resumeHeadline": "// 履歴書が未登録",
+      "resumeBody": "このマスターには CV のみが保存されています。CV を要約して履歴書を生成できます。",
       "coverHeadline": "// カバーレターが未作成",
       "coverBody": "対象の役職と企業に合わせたカバーレターを生成します。",
       "coverAction": "生成",
@@ -815,6 +831,9 @@
       "outreachBody": "この職務に合わせた紹介や初回連絡のメールを下書きします。",
       "outreachAction": "生成"
     },
+    "generateNeedsResume": "まず履歴書をアップロードしてください — CV は履歴書から生成されます。",
+    "generateNeedsCV": "まず CV をアップロードしてください — 履歴書は CV から要約されます。",
+    "generateFailed": "{target} の生成に失敗しました。もう一度お試しください。",
     "deletedTitle": "履歴書を削除しました",
     "deletedDescriptionMaster": "マスター履歴書はシステムから完全に削除されました。",
     "deletedDescriptionRegular": "履歴書はシステムから完全に削除されました。",

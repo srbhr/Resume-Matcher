@@ -73,25 +73,29 @@
      --color-secondary, --color-background already exist above via the
      legacy var(--xxx) chain — these are only the additional brand
      semantics that didn't exist as @theme tokens before. */
-  --color-canvas: #f0f0e8;
-  --color-ink: #000000;
-  --color-success: #15803d;
-  --color-warning: #f97316;
+  --color-canvas: var(--canvas);
+  --color-ink: var(--ink);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
 
-  /* Brand-tinted neutrals (OKLCH, chroma tinted ~0.005-0.018 toward
-     Hyper Blue hue 264) — replace ad-hoc Tailwind grays. */
-  --color-paper-tint: oklch(96% 0.005 264); /* replaces gray-50/100/200 */
-  --color-steel-grey: oklch(64% 0.012 264); /* replaces gray-300/400/500 */
-  --color-ink-soft: oklch(38% 0.018 264); /* replaces gray-600/700/800/900 */
+  /* Three-tier elevation surfaces for theme support. */
+  --color-surface: var(--surface);
+  --color-surface-elev: var(--surface-elev);
+  --color-on-accent: var(--on-accent);
+  --color-destructive-foreground: var(--destructive-foreground);
 
-  /* Hard offset shadows in solid ink — Swiss style commits to no blur.
-     Sized small (1px) through xl (12px) for Hero/featured surfaces. */
-  --shadow-sw-xs: 1px 1px 0px 0px #000000;
-  --shadow-sw-sm: 2px 2px 0px 0px #000000;
-  --shadow-sw-default: 4px 4px 0px 0px #000000;
-  --shadow-sw-card: 6px 6px 0px 0px #000000;
-  --shadow-sw-lg: 8px 8px 0px 0px #000000;
-  --shadow-sw-xl: 12px 12px 0px 0px #000000;
+  /* Brand-tinted neutrals — theme-aware via CSS vars. */
+  --color-paper-tint: var(--paper-tint);
+  --color-steel-grey: var(--steel-grey);
+  --color-ink-soft: var(--ink-soft);
+
+  /* Hard offset shadows — use --shadow-ink so dark themes can invert. */
+  --shadow-sw-xs: 1px 1px 0px 0px var(--shadow-ink);
+  --shadow-sw-sm: 2px 2px 0px 0px var(--shadow-ink);
+  --shadow-sw-default: 4px 4px 0px 0px var(--shadow-ink);
+  --shadow-sw-card: 6px 6px 0px 0px var(--shadow-ink);
+  --shadow-sw-lg: 8px 8px 0px 0px var(--shadow-ink);
+  --shadow-sw-xl: 12px 12px 0px 0px var(--shadow-ink);
 
   /* Fonts */
   --font-sans: 'Geist Sans', sans-serif;
@@ -111,54 +115,258 @@
   --font-mono: 'Geist Mono', monospace;
   --font-sans: 'Geist', sans-serif;
 
+  /* Brand primitives — overridden per [data-theme]. */
+  --canvas: #f0f0e8;
+  --surface: #f0f0e8;
+  --surface-elev: #ffffff;
+  --ink: #000000;
+  --ink-soft: oklch(38% 0.018 264);
+  --steel-grey: oklch(64% 0.012 264);
+  --paper-tint: oklch(96% 0.005 264);
+  --shadow-ink: #000000;
+  --on-accent: #ffffff;
+  --success: #15803d;
+  --warning: #f97316;
+
   /* Swiss International Style Palette */
-  --background: #f0f0e8; /* Canvas */
-  --foreground: #000000; /* Ink */
+  --background: var(--canvas);
+  --foreground: var(--ink);
 
-  --card: #f0f0e8;
-  --card-foreground: #000000;
+  --card: var(--surface);
+  --card-foreground: var(--ink);
 
-  --popover: #f0f0e8;
-  --popover-foreground: #000000;
+  --popover: var(--surface-elev);
+  --popover-foreground: var(--ink);
 
-  --primary: #1d4ed8; /* Hyper Blue */
-  --primary-foreground: #ffffff;
+  --primary: #1d4ed8;
+  --primary-foreground: var(--on-accent);
 
-  --secondary: #e5e5e0; /* Panel Grey */
-  --secondary-foreground: #000000;
+  --secondary: #e5e5e0;
+  --secondary-foreground: var(--ink);
 
   --muted: #e5e5e0;
-  --muted-foreground: #6b7280;
+  --muted-foreground: var(--steel-grey);
 
   --accent: #e5e5e0;
-  --accent-foreground: #000000;
+  --accent-foreground: var(--ink);
 
-  --destructive: #dc2626; /* Alert Red */
-  --destructive-foreground: #ffffff;
+  --destructive: #dc2626;
+  --destructive-foreground: var(--on-accent);
 
-  --border: #000000;
-  --input: #f0f0e8;
+  --border: var(--ink);
+  --input: var(--surface-elev);
   --ring: #1d4ed8;
 
   --chart-1: #1d4ed8;
   --chart-2: #15803d;
   --chart-3: #f97316;
   --chart-4: #dc2626;
-  --chart-5: #000000;
+  --chart-5: var(--ink);
 
   --sidebar: #e5e5e0;
-  --sidebar-foreground: #000000;
+  --sidebar-foreground: var(--ink);
   --sidebar-primary: #1d4ed8;
-  --sidebar-primary-foreground: #ffffff;
+  --sidebar-primary-foreground: var(--on-accent);
   --sidebar-accent: #d8d8d2;
-  --sidebar-accent-foreground: #000000;
-  --sidebar-border: #000000;
+  --sidebar-accent-foreground: var(--ink);
+  --sidebar-border: var(--ink);
   --sidebar-ring: #1d4ed8;
+
+  --grid-bg-image:
+    linear-gradient(color-mix(in srgb, var(--primary) 12%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--primary) 12%, transparent) 1px, transparent 1px);
 }
 
-/* Light theme only — Swiss/Brutalist works on the warm Canvas background.
-   The half-finished dark mode mapping was removed; .impeccable.md commits
-   to light only. */
+/* ============================================================
+   THEME: NEWSPRINT (light)
+   Bone canvas · coffee-dark panels · deep navy accent.
+   Classic Swiss poster aesthetic.
+   ============================================================ */
+[data-theme='newsprint'] {
+  --canvas: #f1ecdb;
+  --surface: #fcfaef;
+  --surface-elev: #ffffff;
+  --ink: #0a0703;
+  --ink-soft: #3d3525;
+  --steel-grey: #7b6b4a;
+  --paper-tint: #ece5cc;
+  --shadow-ink: #0a0703;
+  --on-accent: #fcfaef;
+
+  --primary: #1e3a8a;
+  --ring: #1e3a8a;
+  --secondary: #1a140a;
+  --secondary-foreground: #f1ecdb;
+  --muted: #2d2417;
+  --accent: #4a3d2a;
+  --accent-foreground: #f1ecdb;
+
+  --destructive: #991b1b;
+  --success: #14532d;
+  --warning: #c2410c;
+
+  --chart-1: #1e3a8a;
+  --chart-2: #14532d;
+  --chart-3: #c2410c;
+  --chart-4: #991b1b;
+
+  --sidebar: #1a140a;
+  --sidebar-foreground: #f1ecdb;
+  --sidebar-primary: #1e3a8a;
+  --sidebar-primary-foreground: #fcfaef;
+  --sidebar-accent: #2d2417;
+  --sidebar-accent-foreground: #f1ecdb;
+  --sidebar-border: #0a0703;
+  --sidebar-ring: #1e3a8a;
+}
+
+/* ============================================================
+   THEME: RIVIERA (light)
+   Ice canvas · deep navy panels · crimson accent.
+   Mediterranean tricolor Swiss style.
+   ============================================================ */
+[data-theme='riviera'] {
+  --canvas: #e5eff5;
+  --surface: #fcfeff;
+  --surface-elev: #ffffff;
+  --ink: #050b1f;
+  --ink-soft: #1e3a5c;
+  --steel-grey: #4a6585;
+  --paper-tint: #d0deeb;
+  --shadow-ink: #050b1f;
+  --on-accent: #fcfeff;
+
+  --primary: #dc2626;
+  --ring: #dc2626;
+  --secondary: #0f2a5c;
+  --secondary-foreground: #e5eff5;
+  --muted: #1e3a8a;
+  --accent: #2563eb;
+  --accent-foreground: #e5eff5;
+
+  --destructive: #991b1b;
+  --success: #15803d;
+  --warning: #ea580c;
+
+  --chart-1: #dc2626;
+  --chart-2: #15803d;
+  --chart-3: #ea580c;
+  --chart-4: #991b1b;
+
+  --sidebar: #0f2a5c;
+  --sidebar-foreground: #e5eff5;
+  --sidebar-primary: #dc2626;
+  --sidebar-primary-foreground: #fcfeff;
+  --sidebar-accent: #1e3a8a;
+  --sidebar-accent-foreground: #e5eff5;
+  --sidebar-border: #050b1f;
+  --sidebar-ring: #dc2626;
+}
+
+/* ============================================================
+   THEME: MIDNIGHT (dark)
+   Deep navy canvas · cyan accent · strong elevation.
+   ============================================================ */
+[data-theme='midnight'] {
+  --canvas: #06101f;
+  --surface: #122139;
+  --surface-elev: #1d3052;
+  --ink: #e8edf4;
+  --ink-soft: #b7c0cc;
+  --steel-grey: #7b8595;
+  --paper-tint: #0c172e;
+  --shadow-ink: #38bdf8;
+  --on-accent: #06101f;
+
+  --primary: #38bdf8;
+  --ring: #38bdf8;
+  --secondary: #243f66;
+  --secondary-foreground: #e8edf4;
+  --muted: #2e5081;
+  --muted-foreground: #7b8595;
+  --accent: #38629c;
+  --accent-foreground: #e8edf4;
+
+  --destructive: #f87171;
+  --destructive-foreground: #06101f;
+  --success: #34d399;
+  --warning: #fb923c;
+
+  --chart-1: #38bdf8;
+  --chart-2: #34d399;
+  --chart-3: #fb923c;
+  --chart-4: #f87171;
+
+  --sidebar: #122139;
+  --sidebar-foreground: #e8edf4;
+  --sidebar-primary: #38bdf8;
+  --sidebar-primary-foreground: #06101f;
+  --sidebar-accent: #1d3052;
+  --sidebar-accent-foreground: #e8edf4;
+  --sidebar-border: #243f66;
+  --sidebar-ring: #38bdf8;
+}
+
+/* ============================================================
+   THEME: OLIVE (dark)
+   Deep forest green canvas · lime accent.
+   ============================================================ */
+[data-theme='olive'] {
+  --canvas: #0a140c;
+  --surface: #1a2a1b;
+  --surface-elev: #28412a;
+  --ink: #efead0;
+  --ink-soft: #c4bd9a;
+  --steel-grey: #7b7553;
+  --paper-tint: #131f14;
+  --shadow-ink: #a3e635;
+  --on-accent: #0a140c;
+
+  --primary: #a3e635;
+  --ring: #a3e635;
+  --secondary: #335739;
+  --secondary-foreground: #efead0;
+  --muted: #436d49;
+  --muted-foreground: #7b7553;
+  --accent: #5a8761;
+  --accent-foreground: #efead0;
+
+  --destructive: #f87171;
+  --destructive-foreground: #0a140c;
+  --success: #86efac;
+  --warning: #fb923c;
+
+  --chart-1: #a3e635;
+  --chart-2: #86efac;
+  --chart-3: #fb923c;
+  --chart-4: #f87171;
+
+  --sidebar: #1a2a1b;
+  --sidebar-foreground: #efead0;
+  --sidebar-primary: #a3e635;
+  --sidebar-primary-foreground: #0a140c;
+  --sidebar-accent: #28412a;
+  --sidebar-accent-foreground: #efead0;
+  --sidebar-border: #335739;
+  --sidebar-ring: #a3e635;
+}
+
+/* Smooth theme transitions. */
+html,
+body,
+main {
+  transition:
+    background-color 220ms ease-out,
+    color 220ms ease-out,
+    border-color 220ms ease-out;
+}
+
+.grid-bg {
+  background-image: var(--grid-bg-image);
+  background-size: 40px 40px;
+}
+
+/* Swiss/Brutalist canvas background. */
 
 @layer base {
   * {

@@ -130,9 +130,9 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             </div>
           </div>
         )}
-        <DialogFooter className="p-4 bg-secondary border-t border-black flex-row justify-end gap-3">
+        <DialogFooter className="p-4 bg-secondary border-t border-border flex-row justify-end gap-3">
           {showCancelButton && (
-            <Button variant="outline" onClick={handleCancel} className="rounded-none border-black">
+            <Button variant="outline" onClick={handleCancel} className="rounded-none border-border">
               {finalCancelLabel}
             </Button>
           )}

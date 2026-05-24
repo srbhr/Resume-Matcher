@@ -37,8 +37,8 @@ export const SegmentedTabs: React.FC<SegmentedTabsProps> = ({
       role="tablist"
       aria-label={ariaLabel}
       className={cn(
-        'inline-flex flex-wrap border border-black bg-background',
-        'shadow-[3px_3px_0_0_#000] rounded-none',
+        'inline-flex flex-wrap border border-border bg-background',
+        'shadow-sw-sm rounded-none',
         className
       )}
     >
@@ -56,10 +56,12 @@ export const SegmentedTabs: React.FC<SegmentedTabsProps> = ({
             className={cn(
               'font-mono text-[10.5px] uppercase tracking-[0.16em] leading-none',
               'px-4 py-[11px] cursor-pointer transition-colors duration-100 ease-out',
-              'border-r border-black bg-transparent rounded-none',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-inset',
+              'border-r border-border bg-transparent rounded-none',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset',
               isLast && 'border-r-0',
-              isActive ? 'bg-black text-white font-bold' : 'text-ink-soft hover:bg-paper-tint',
+              isActive
+                ? 'bg-foreground text-background font-bold'
+                : 'text-ink-soft hover:bg-paper-tint',
               tab.disabled && 'opacity-50 cursor-not-allowed hover:bg-transparent'
             )}
           >

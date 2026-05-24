@@ -112,7 +112,20 @@
       "dropzoneTitle": "Click or Drag File",
       "dropzoneSubtitle": "PDF, DOC, DOCX (Max 4MB)",
       "tryDifferentFile": "Try Different File",
-      "parsingFailedKeepOpen": "AI parsing failed. Try a different file or close this dialog."
+      "parsingFailedKeepOpen": "AI parsing failed. Try a different file or close this dialog.",
+      "bundleTitle": "New Master Group",
+      "bundleSubtitle": "Upload a Resume and/or a CV. At least one is required.",
+      "groupNameLabel": "Group Name (Optional)",
+      "groupNamePlaceholder": "e.g. Engineering, Marketing",
+      "groupNameHint": "Used as this master's category name on the dashboard.",
+      "resumeSlotLabel": "Resume",
+      "cvSlotLabel": "CV",
+      "optional": "Optional",
+      "chooseFile": "Choose file...",
+      "resumeFilenameLabel": "Resume Download Filename",
+      "cvFilenameLabel": "CV Download Filename",
+      "requireOne": "Provide at least a Resume or a CV.",
+      "uploadButton": "Upload"
     }
   },
   "builder": {
@@ -779,7 +792,8 @@
       "copied": "Copied",
       "generate": "Generate",
       "regenerate": "Regenerate",
-      "generateCV": "Generate CV"
+      "generateCV": "Generate CV",
+      "generateResume": "Generate Resume"
     },
     "tools": {
       "jdMatch": "JD Match",
@@ -805,9 +819,11 @@
       "noJdHeadline": "// NO JOB DESCRIPTION ON FILE"
     },
     "empty": {
-      "cvHeadline": "// NO CV GENERATED",
-      "cvBody": "A CV is a longer, academic-format companion to your resume. Generate one to surface the full breadth of your work.",
+      "cvHeadline": "// NO CV ON FILE",
+      "cvBody": "A CV is a longer, academic-format companion to your resume. Generate one from your resume to surface the full breadth of your work.",
       "cvAction": "Generate CV",
+      "resumeHeadline": "// NO RESUME ON FILE",
+      "resumeBody": "This master holds a CV only. Generate a concise resume condensed from your CV.",
       "coverHeadline": "// NO COVER LETTER YET",
       "coverBody": "Generate a cover letter tailored to the target role and company.",
       "coverAction": "Generate",
@@ -815,6 +831,9 @@
       "outreachBody": "Draft a referral or cold-intro email tailored to this role.",
       "outreachAction": "Generate"
     },
+    "generateNeedsResume": "Upload a resume first — a CV is generated from a resume.",
+    "generateNeedsCV": "Upload a CV first — a resume is condensed from a CV.",
+    "generateFailed": "Failed to generate {target}. Please try again.",
     "deletedTitle": "Resume Deleted",
     "deletedDescriptionMaster": "Your master resume has been permanently deleted from the system.",
     "deletedDescriptionRegular": "The resume has been permanently deleted from the system.",

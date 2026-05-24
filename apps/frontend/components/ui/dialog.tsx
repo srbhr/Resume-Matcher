@@ -147,7 +147,7 @@ const DialogContent: React.FC<DialogContentProps> = ({ children, className }) =>
           aria-labelledby={titleId}
           className={cn(
             'relative w-full max-w-lg',
-            'border border-black bg-background shadow-sw-lg',
+            'border border-border bg-popover shadow-sw-lg',
             'rounded-none',
             'animate-in fade-in-0 zoom-in-95 duration-200',
             className

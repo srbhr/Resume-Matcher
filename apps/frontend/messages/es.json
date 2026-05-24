@@ -112,7 +112,20 @@
       "dropzoneTitle": "Haz clic o arrastra un archivo",
       "dropzoneSubtitle": "PDF, DOC, DOCX (Máx. 4MB)",
       "tryDifferentFile": "Probar otro archivo",
-      "parsingFailedKeepOpen": "El análisis de IA falló. Prueba otro archivo o cierra este diálogo."
+      "parsingFailedKeepOpen": "El análisis de IA falló. Prueba otro archivo o cierra este diálogo.",
+      "bundleTitle": "Nuevo grupo maestro",
+      "bundleSubtitle": "Sube un Currículum y/o un CV. Se requiere al menos uno.",
+      "groupNameLabel": "Nombre del grupo (opcional)",
+      "groupNamePlaceholder": "p. ej., Ingeniería, Marketing",
+      "groupNameHint": "Se usa como categoría del maestro en el panel.",
+      "resumeSlotLabel": "Currículum",
+      "cvSlotLabel": "CV",
+      "optional": "Opcional",
+      "chooseFile": "Elegir archivo...",
+      "resumeFilenameLabel": "Nombre de descarga del currículum",
+      "cvFilenameLabel": "Nombre de descarga del CV",
+      "requireOne": "Proporciona al menos un Currículum o un CV.",
+      "uploadButton": "Subir"
     }
   },
   "builder": {
@@ -779,7 +792,8 @@
       "copied": "Copiado",
       "generate": "Generar",
       "regenerate": "Regenerar",
-      "generateCV": "Generar CV"
+      "generateCV": "Generar CV",
+      "generateResume": "Generar currículum"
     },
     "tools": {
       "jdMatch": "Coincidencia",
@@ -805,9 +819,11 @@
       "noJdHeadline": "// SIN DESCRIPCIÓN DE PUESTO"
     },
     "empty": {
-      "cvHeadline": "// SIN CV GENERADO",
-      "cvBody": "Un CV es un complemento académico más extenso de tu currículum. Genera uno para mostrar toda la amplitud de tu trabajo.",
+      "cvHeadline": "// SIN CV EN ARCHIVO",
+      "cvBody": "Un CV es un complemento académico más extenso de tu currículum. Genera uno a partir de tu currículum para mostrar toda la amplitud de tu trabajo.",
       "cvAction": "Generar CV",
+      "resumeHeadline": "// SIN CURRÍCULUM EN ARCHIVO",
+      "resumeBody": "Este maestro solo tiene un CV. Genera un currículum conciso a partir de tu CV.",
       "coverHeadline": "// AÚN SIN CARTA",
       "coverBody": "Genera una carta de presentación adaptada al puesto y la empresa objetivo.",
       "coverAction": "Generar",
@@ -815,6 +831,9 @@
       "outreachBody": "Redacta un mensaje de presentación o de referencia adaptado a este puesto.",
       "outreachAction": "Generar"
     },
+    "generateNeedsResume": "Sube primero un currículum — el CV se genera a partir de un currículum.",
+    "generateNeedsCV": "Sube primero un CV — el currículum se condensa a partir de un CV.",
+    "generateFailed": "No se pudo generar {target}. Inténtalo de nuevo.",
     "deletedTitle": "Currículum eliminado",
     "deletedDescriptionMaster": "Tu currículum maestro se ha eliminado permanentemente del sistema.",
     "deletedDescriptionRegular": "El currículum se ha eliminado permanentemente del sistema.",

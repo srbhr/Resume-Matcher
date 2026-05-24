@@ -380,8 +380,8 @@ function TailorPage() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#F6F5EE] flex flex-col items-center justify-center p-4 md:p-8 font-sans">
-      <div className="w-full max-w-4xl bg-white border border-black shadow-sw-lg p-8 md:p-12 lg:p-14 relative">
+    <div className="min-h-screen w-full bg-background flex flex-col items-center justify-center p-4 md:p-8 font-sans">
+      <div className="w-full max-w-4xl bg-card border border-border shadow-sw-lg p-8 md:p-12 lg:p-14 relative">
         {/* Back Button */}
         <Button variant="link" className="absolute top-4 left-4" onClick={() => router.back()}>
           <ArrowLeft className="w-4 h-4" />
@@ -392,7 +392,7 @@ function TailorPage() {
           <h1 className="font-serif text-4xl font-bold uppercase tracking-tight mb-2">
             {t('tailor.heroTitle')}
           </h1>
-          <p className="font-mono text-sm text-blue-700 font-bold uppercase">
+          <p className="font-mono text-sm text-primary font-bold uppercase">
             {'// '}
             {t('tailor.pasteJobDescriptionBelow')}
           </p>
@@ -466,7 +466,7 @@ function TailorPage() {
               <div className="relative">
                 <Textarea
                   placeholder={t('tailor.jobDescriptionPlaceholder')}
-                  className="min-h-[300px] font-mono text-sm bg-background border-2 border-black focus:ring-0 focus:border-blue-700 resize-none p-4 rounded-none"
+                  className="min-h-[300px] font-mono text-sm bg-background border-2 border-border focus:ring-0 focus:border-primary resize-none p-4 rounded-none"
                   value={jobDescription}
                   onChange={(e) => setJobDescription(e.target.value)}
                   onKeyDown={handleTextareaKeyDown}
@@ -479,7 +479,7 @@ function TailorPage() {
             </>
           ) : (
             <>
-              <div className="border border-black bg-[#F6F5EE] p-4 font-mono text-xs space-y-1">
+              <div className="border border-border bg-background p-4 font-mono text-xs space-y-1">
                 <div>
                   <span className="font-bold uppercase tracking-wider">
                     {t('tailor.coverLetterStep.strategyLabel')}:
@@ -496,7 +496,7 @@ function TailorPage() {
               </div>
 
               <div>
-                <p className="font-mono text-sm text-blue-700 font-bold uppercase mb-1">
+                <p className="font-mono text-sm text-primary font-bold uppercase mb-1">
                   {t('tailor.coverLetterStep.subhead')}
                 </p>
                 <h2 className="font-serif text-2xl font-bold uppercase tracking-tight mb-2">
@@ -507,7 +507,7 @@ function TailorPage() {
                 </p>
                 <Textarea
                   placeholder={t('tailor.coverLetterStep.placeholder')}
-                  className="min-h-[220px] font-mono text-sm bg-background border-2 border-black focus:ring-0 focus:border-blue-700 resize-none p-4 rounded-none"
+                  className="min-h-[220px] font-mono text-sm bg-background border-2 border-border focus:ring-0 focus:border-primary resize-none p-4 rounded-none"
                   value={coverLetterGuidance}
                   onChange={(e) => setCoverLetterGuidance(e.target.value)}
                   onKeyDown={handleTextareaKeyDown}

@@ -69,6 +69,11 @@ interface ResumeResponse {
     is_master?: boolean;
     title?: string | null;
     template_settings?: Record<string, unknown> | null;
+    document_kind?: 'resume' | 'cv';
+    resume_doc_id?: string | null;
+    cv_doc_id?: string | null;
+    resume_download_filename?: string | null;
+    cv_download_filename?: string | null;
   };
 }
 
@@ -79,7 +84,11 @@ export interface ResumeUploadResponse {
   resume_id: string;
   processing_status: 'pending' | 'processing' | 'ready' | 'failed';
   is_master: boolean;
+  document_kind?: 'resume' | 'cv';
+  cv_resume_id?: string | null;
 }
+
+export type DocumentKind = 'resume' | 'cv';
 
 interface ImproveResumeConfirmRequest {
   resume_id: string;
@@ -109,6 +118,7 @@ export interface ResumeListItem {
   created_at: string;
   updated_at: string;
   title?: string | null;
+  document_kind?: 'resume' | 'cv';
   // Optional lightweight snippet of associated job description (populated client-side)
   jobSnippet?: string;
 }
@@ -458,6 +468,52 @@ export async function createBlankMasterResume(): Promise<ResumeUploadResponse> {
   if (!res.ok) {
     const text = await res.text().catch(() => '');
     throw new Error(`Failed to create blank resume (status ${res.status}): ${text}`);
+  }
+  return res.json();
+}
+
+/** Uploads a Resume and/or CV as a single master group */
+export async function uploadResumeBundle(opts: {
+  resumeFile?: File | null;
+  cvFile?: File | null;
+  groupName?: string;
+  resumeFilename?: string;
+  cvFilename?: string;
+}): Promise<ResumeUploadResponse> {
+  if (!opts.resumeFile && !opts.cvFile) {
+    throw new Error('At least one of resumeFile or cvFile must be provided.');
+  }
+  const formData = new FormData();
+  if (opts.resumeFile) formData.append('resume_file', opts.resumeFile);
+  if (opts.cvFile) formData.append('cv_file', opts.cvFile);
+  if (opts.groupName) formData.append('group_name', opts.groupName);
+  if (opts.resumeFilename) formData.append('resume_filename', opts.resumeFilename);
+  if (opts.cvFilename) formData.append('cv_filename', opts.cvFilename);
+
+  const res = await apiFetch('/resumes/upload-bundle', { method: 'POST', body: formData });
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Upload failed (status ${res.status}): ${text}`);
+  }
+  return (await res.json()) as ResumeUploadResponse;
+}
+
+/** Generates the missing Resume or CV from the existing counterpart */
+export async function generateCounterpart(
+  masterId: string,
+  target: DocumentKind
+): Promise<{
+  message: string;
+  resume_id: string;
+  target: DocumentKind;
+  processing_status: 'pending' | 'processing' | 'ready' | 'failed';
+}> {
+  const res = await apiPost(`/resumes/${encodeURIComponent(masterId)}/generate-counterpart`, {
+    target,
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Failed to generate ${target} (status ${res.status}): ${text}`);
   }
   return res.json();
 }

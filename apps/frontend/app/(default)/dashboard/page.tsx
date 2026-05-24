@@ -260,21 +260,14 @@ export default function DashboardPage() {
   const tailorEnabled = Boolean(isLlmConfigured);
 
   return (
-    <div
-      className="h-screen w-full flex justify-center items-start py-12 px-4 md:px-8 overflow-hidden bg-background"
-      style={{
-        backgroundImage:
-          'linear-gradient(rgba(29, 78, 216, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(29, 78, 216, 0.1) 1px, transparent 1px)',
-        backgroundSize: '40px 40px',
-      }}
-    >
-      <div className="w-full max-w-[86rem] max-h-full border border-black bg-canvas shadow-sw-lg flex flex-col overflow-hidden">
+    <div className="h-screen w-full flex justify-center items-start py-12 px-4 md:px-8 overflow-hidden bg-background grid-bg">
+      <div className="w-full max-w-[86rem] max-h-full border border-border bg-canvas shadow-sw-lg flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="border-b border-black p-8 md:p-12 shrink-0 bg-canvas relative z-30">
+        <div className="border-b border-border p-8 md:p-12 shrink-0 bg-canvas relative z-30">
           <h1 className="font-serif text-5xl md:text-7xl text-ink tracking-tight leading-[0.95] uppercase">
             {t('nav.dashboard')}
           </h1>
-          <p className="mt-6 text-sm font-mono text-blue-700 uppercase tracking-wide max-w-md font-bold">
+          <p className="mt-6 text-sm font-mono text-primary uppercase tracking-wide max-w-md font-bold">
             {'// '}
             {t('dashboard.selectModule')}
           </p>
@@ -315,7 +308,7 @@ export default function DashboardPage() {
                   {t('dashboard.groups.masterCountLabel')}
                 </span>
               </div>
-              <div className="mt-2 font-mono text-[11px] font-bold tracking-[0.08em] text-blue-700 uppercase">
+              <div className="mt-2 font-mono text-[11px] font-bold tracking-[0.08em] text-primary uppercase">
                 {'// '}
                 {t('dashboard.groups.totalTailored', { count: pad2(totalTailored) })}
               </div>
@@ -346,7 +339,7 @@ export default function DashboardPage() {
                     variant="interactive"
                     className="border-dashed border-warning bg-amber-50 max-w-md"
                   >
-                    <div className="w-14 h-14 border-2 border-warning bg-white flex items-center justify-center mb-4">
+                    <div className="w-14 h-14 border-2 border-warning bg-card flex items-center justify-center mb-4">
                       <AlertTriangle className="w-7 h-7 text-warning" />
                     </div>
                     <CardTitle className="text-lg uppercase text-amber-800 mb-2">
@@ -413,7 +406,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Footer */}
-        <div className="p-4 bg-canvas flex justify-between items-center font-mono text-xs text-blue-700 border-t border-black shrink-0 relative z-30">
+        <div className="p-4 bg-canvas flex justify-between items-center font-mono text-xs text-primary border-t border-border shrink-0 relative z-30">
           <div className="flex items-center gap-2">
             <Image
               src="/logo.svg"
@@ -427,7 +420,7 @@ export default function DashboardPage() {
           <div className="flex items-center gap-4">
             <Link
               href="/settings"
-              className="bg-warning text-black border border-black px-6 py-2 uppercase font-bold tracking-wide shadow-sw-sm hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none transition-all min-w-[140px] text-center"
+              className="bg-warning text-on-accent border border-border px-6 py-2 uppercase font-bold tracking-wide shadow-sw-sm hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none transition-all min-w-[140px] text-center"
             >
               {t('nav.settings')}
             </Link>
@@ -523,7 +516,7 @@ function MasterBand({
           <span className="font-serif text-2xl md:text-[26px] font-bold leading-none tracking-tight text-ink uppercase truncate">
             {title}
           </span>
-          <span className="font-mono text-[11px] font-bold tracking-[0.08em] text-blue-700 uppercase truncate">
+          <span className="font-mono text-[11px] font-bold tracking-[0.08em] text-primary uppercase truncate">
             {'// '}
             {t('dashboard.groups.bandSubtitle', { date: editedLabel.toUpperCase() })}
           </span>
@@ -565,7 +558,7 @@ function MasterBand({
           <Button
             variant="outline"
             size="sm"
-            className="text-xs h-7 rounded-none border-black"
+            className="text-xs h-7 rounded-none border-border"
             onClick={onRetry}
             disabled={retrying}
           >
@@ -673,7 +666,7 @@ function CreateTailoredCell({
           : 'cursor-pointer hover:outline-ink hover:shadow-sw-default hover:-translate-x-[2px] hover:-translate-y-[2px] hover:z-10'
       )}
     >
-      <div className="w-14 h-14 border-2 border-ink bg-blue-700 text-white flex items-center justify-center shadow-sw-sm">
+      <div className="w-14 h-14 border-2 border-ink bg-primary text-primary-foreground flex items-center justify-center shadow-sw-sm">
         <Plus className="w-7 h-7" />
       </div>
       <div className="mt-3.5 font-mono text-[11px] font-bold tracking-[0.1em] uppercase text-ink">
@@ -687,7 +680,7 @@ function CreateTailoredCell({
 function StatusPill({ status, compact = false }: { status: ProcessingStatus; compact?: boolean }) {
   const config: Record<ProcessingStatus, { label: string; dot: string; text: string }> = {
     ready: { label: 'READY', dot: 'bg-green-700', text: 'text-green-700' },
-    processing: { label: 'PROCESSING', dot: 'bg-blue-700', text: 'text-blue-700' },
+    processing: { label: 'PROCESSING', dot: 'bg-primary', text: 'text-primary' },
     pending: { label: 'PENDING', dot: 'bg-steel-grey', text: 'text-steel-grey' },
     failed: { label: 'FAILED', dot: 'bg-red-600', text: 'text-red-600' },
     loading: { label: 'CHECKING', dot: 'bg-steel-grey', text: 'text-steel-grey' },

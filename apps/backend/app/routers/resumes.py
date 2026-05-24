@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any, NoReturn
 from uuid import uuid4
 
-from fastapi import APIRouter, File, HTTPException, Query, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, Query, UploadFile
 from fastapi.responses import Response, StreamingResponse
 
 from app.config_cache import get_content_language, load_config as _load_config
@@ -22,6 +22,8 @@ from app.config import settings
 logger = logging.getLogger(__name__)
 from app.schemas import (
     GenerateContentResponse,
+    GenerateCounterpartRequest,
+    GenerateCounterpartResponse,
     ImproveResumeConfirmRequest,
     ImproveResumeRequest,
     ImproveResumeResponse,
@@ -42,7 +44,12 @@ from app.schemas import (
     UpdateTemplateSettingsRequest,
     normalize_resume_data,
 )
-from app.services.parser import parse_document, parse_resume_to_json, restore_dates_from_markdown
+from app.services.parser import (
+    generate_counterpart_document,
+    parse_document,
+    parse_resume_to_json,
+    restore_dates_from_markdown,
+)
 from app.services.improver import (
     MONTH_PATTERN,
     apply_diffs,
@@ -625,6 +632,241 @@ async def create_blank_resume() -> ResumeUploadResponse:
     )
 
 
+async def _read_and_parse_upload(
+    upload: UploadFile,
+) -> tuple[str, dict[str, Any] | None, str, str]:
+    """Read an UploadFile and parse it to markdown + structured JSON.
+
+    Returns (markdown, processed_data_or_none, processing_status, filename).
+    """
+    if upload.content_type not in ALLOWED_TYPES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid file type: {upload.content_type}. Allowed: PDF, DOC, DOCX",
+        )
+    content = await upload.read()
+    if len(content) > MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=413,
+            detail=f"File too large. Maximum size: {MAX_FILE_SIZE // (1024 * 1024)}MB",
+        )
+    if len(content) == 0:
+        raise HTTPException(status_code=400, detail="Empty file")
+
+    try:
+        markdown = await parse_document(content, upload.filename or "document.pdf")
+    except Exception as e:
+        logger.error(f"Document parsing failed: {e}")
+        raise HTTPException(
+            status_code=422,
+            detail="Failed to parse document. Please ensure it's a valid PDF or DOCX file.",
+        )
+
+    if not markdown or not markdown.strip():
+        raise HTTPException(
+            status_code=422,
+            detail="Could not extract text from the uploaded file. The document may be image-based or scanned. Please upload a file with selectable text.",
+        )
+
+    processed: dict[str, Any] | None = None
+    status_ = "failed"
+    try:
+        processed = await parse_resume_to_json(markdown)
+        status_ = "ready"
+    except Exception as e:
+        logger.warning(
+            f"Parsing to JSON failed for {upload.filename}: {e}"
+        )
+
+    return markdown, processed, status_, upload.filename or "document.pdf"
+
+
+@router.post("/upload-bundle", response_model=ResumeUploadResponse)
+async def upload_resume_bundle(
+    resume_file: UploadFile | None = File(None),
+    cv_file: UploadFile | None = File(None),
+    group_name: str | None = Form(None),
+    resume_filename: str | None = Form(None),
+    cv_filename: str | None = Form(None),
+) -> ResumeUploadResponse:
+    """Upload a Resume and/or CV together as a single master group.
+
+    At least one of `resume_file` or `cv_file` is required. If both are
+    provided, the resume becomes the master and the CV is stored as a linked
+    child document. If only one is provided, it becomes the master with the
+    matching `document_kind` and the user can later generate the other side
+    via /generate-counterpart.
+    """
+    if resume_file is None and cv_file is None:
+        raise HTTPException(
+            status_code=400,
+            detail="At least one of resume_file or cv_file must be provided.",
+        )
+
+    title = (group_name or "").strip() or None
+    resume_dl = (resume_filename or "").strip() or "Resume.pdf"
+    cv_dl = (cv_filename or "").strip() or "CV.pdf"
+
+    # Read+parse whichever files are present.
+    resume_payload = (
+        await _read_and_parse_upload(resume_file) if resume_file is not None else None
+    )
+    cv_payload = (
+        await _read_and_parse_upload(cv_file) if cv_file is not None else None
+    )
+
+    # The master holds the resume when present, else the CV.
+    if resume_payload is not None:
+        master_markdown, master_processed, master_status, master_filename = resume_payload
+        master_kind = "resume"
+    else:
+        assert cv_payload is not None
+        master_markdown, master_processed, master_status, master_filename = cv_payload
+        master_kind = "cv"
+
+    master = await db.create_resume_atomic_master(
+        content=master_markdown,
+        content_type="md",
+        filename=master_filename,
+        processed_data=master_processed,
+        processing_status=master_status,
+        original_markdown=master_markdown,
+        title=title,
+        document_kind=master_kind,
+        resume_download_filename=resume_dl,
+        cv_download_filename=cv_dl,
+    )
+
+    cv_child_id: str | None = None
+    if resume_payload is not None and cv_payload is not None:
+        cv_md, cv_processed, cv_status, cv_filename_raw = cv_payload
+        child = db.create_resume(
+            content=cv_md,
+            content_type="md",
+            filename=cv_filename_raw,
+            is_master=False,
+            parent_id=master["resume_id"],
+            processed_data=cv_processed,
+            processing_status=cv_status,
+            original_markdown=cv_md,
+            document_kind="cv",
+            title=title,
+        )
+        cv_child_id = child["resume_id"]
+
+    overall_status = master["processing_status"]
+    return ResumeUploadResponse(
+        message=(
+            "Bundle uploaded successfully"
+            if overall_status == "ready"
+            else "Bundle uploaded; some documents failed AI parsing"
+        ),
+        request_id=str(uuid4()),
+        resume_id=master["resume_id"],
+        processing_status=overall_status,
+        is_master=True,
+        document_kind=master_kind,
+        cv_resume_id=cv_child_id,
+    )
+
+
+@router.post(
+    "/{master_id}/generate-counterpart",
+    response_model=GenerateCounterpartResponse,
+)
+async def generate_counterpart_endpoint(
+    master_id: str, payload: GenerateCounterpartRequest
+) -> GenerateCounterpartResponse:
+    """Generate the missing Resume or CV from the document already on file.
+
+    `target='resume'` expands a stored CV into a one-page resume;
+    `target='cv'` expands a stored resume into a long-form CV.
+    """
+    master = db.get_resume(master_id)
+    if not master:
+        raise HTTPException(status_code=404, detail="Master resume not found")
+    if not master.get("is_master"):
+        raise HTTPException(
+            status_code=400,
+            detail="generate-counterpart must be called against a master resume",
+        )
+
+    resume_doc, cv_doc = db.get_documents_for_master(master)
+
+    target = payload.target
+    if target == "cv":
+        if cv_doc is not None:
+            raise HTTPException(
+                status_code=400,
+                detail="CV already exists for this master.",
+            )
+        source = resume_doc
+    else:
+        if resume_doc is not None:
+            raise HTTPException(
+                status_code=400,
+                detail="Resume already exists for this master.",
+            )
+        source = cv_doc
+
+    if source is None or not source.get("processed_data"):
+        raise HTTPException(
+            status_code=400,
+            detail="Source document has no structured data — cannot generate counterpart.",
+        )
+
+    try:
+        generated_data = await generate_counterpart_document(
+            source["processed_data"], target=target
+        )
+    except Exception as e:
+        logger.error(f"Counterpart generation failed: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to generate counterpart document. Please try again.",
+        )
+
+    generated_markdown = json.dumps(generated_data, indent=2)
+
+    # If the master's document_kind equals the target kind it means the master
+    # row itself is the empty/missing slot — update it in place. Otherwise we
+    # create a linked child row of the target kind.
+    if master.get("document_kind") == target:
+        updated = db.update_resume(
+            master_id,
+            {
+                "content": generated_markdown,
+                "content_type": "json",
+                "processed_data": generated_data,
+                "processing_status": "ready",
+            },
+        )
+        return GenerateCounterpartResponse(
+            message=f"Generated {target} successfully",
+            resume_id=updated["resume_id"],
+            target=target,
+            processing_status="ready",
+        )
+
+    child = db.create_resume(
+        content=generated_markdown,
+        content_type="json",
+        filename=None,
+        is_master=False,
+        parent_id=master_id,
+        processed_data=generated_data,
+        processing_status="ready",
+        document_kind=target,
+        title=master.get("title"),
+    )
+    return GenerateCounterpartResponse(
+        message=f"Generated {target} successfully",
+        resume_id=child["resume_id"],
+        target=target,
+        processing_status="ready",
+    )
+
+
 @router.get("", response_model=ResumeFetchResponse)
 async def get_resume(resume_id: str = Query(...)) -> ResumeFetchResponse:
     """Fetch resume details by ID.
@@ -661,6 +903,19 @@ async def get_resume(resume_id: str = Query(...)) -> ResumeFetchResponse:
         ResumeData.model_validate(processed_data) if processed_data else None
     )
 
+    # Resolve which document IDs belong to this master group, so the viewer
+    # can switch between Resume and CV tabs and know if either is missing.
+    if resume.get("is_master"):
+        resume_doc, cv_doc = db.get_documents_for_master(resume)
+    else:
+        parent = (
+            db.get_resume(resume["parent_id"]) if resume.get("parent_id") else None
+        )
+        if parent and parent.get("is_master"):
+            resume_doc, cv_doc = db.get_documents_for_master(parent)
+        else:
+            resume_doc, cv_doc = (resume, None) if resume.get("document_kind") != "cv" else (None, resume)
+
     return ResumeFetchResponse(
         request_id=str(uuid4()),
         data=ResumeFetchData(
@@ -673,16 +928,37 @@ async def get_resume(resume_id: str = Query(...)) -> ResumeFetchResponse:
             is_master=resume.get("is_master", False),
             title=resume.get("title"),
             template_settings=resume.get("template_settings"),
+            document_kind=resume.get("document_kind", "resume"),
+            resume_doc_id=resume_doc.get("resume_id") if resume_doc else None,
+            cv_doc_id=cv_doc.get("resume_id") if cv_doc else None,
+            resume_download_filename=resume.get("resume_download_filename"),
+            cv_download_filename=resume.get("cv_download_filename"),
         ),
     )
 
 
 @router.get("/list", response_model=ResumeListResponse)
 async def list_resumes(include_master: bool = Query(False)) -> ResumeListResponse:
-    """List resumes, optionally including the master resume."""
+    """List resumes, optionally including the master resume.
+
+    CV documents linked to a resume master are filtered out — they're part of
+    a master group, not standalone entries the dashboard should render.
+    """
     resumes = db.list_resumes()
     if not include_master:
         resumes = [resume for resume in resumes if not resume.get("is_master", False)]
+
+    # Exclude CV children of a resume master from the listing; they aren't
+    # tailored variants, so the dashboard shouldn't surface them as siblings.
+    resumes = [
+        resume
+        for resume in resumes
+        if not (
+            resume.get("document_kind") == "cv"
+            and resume.get("parent_id")
+            and not resume.get("is_master", False)
+        )
+    ]
 
     resumes.sort(key=lambda item: item.get("updated_at", ""), reverse=True)
 
@@ -696,6 +972,7 @@ async def list_resumes(include_master: bool = Query(False)) -> ResumeListRespons
             created_at=resume.get("created_at", ""),
             updated_at=resume.get("updated_at", ""),
             title=resume.get("title"),
+            document_kind=resume.get("document_kind", "resume"),
         )
         for resume in resumes
     ]

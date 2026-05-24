@@ -55,7 +55,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       // Avoids the perf footgun of `transition-all` and matches Swiss "snap" feel.
       'transition-[transform,box-shadow,background-color] duration-100 ease-out',
       // Focus state - sharp blue ring (not soft glow)
-      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2',
+      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
       // Disabled state
       'disabled:pointer-events-none disabled:opacity-50',
       // SVG icon sizing
@@ -79,82 +79,68 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       // PRIMARY - Hyper Blue (#1D4ED8 / blue-700)
       // Use for: Save, Submit, Create, Primary CTA
       default: cn(
-        'bg-blue-700 text-white',
-        'border border-black',
+        'bg-primary text-primary-foreground',
+        'border border-border',
         'shadow-sw-sm',
-        'hover:bg-blue-800',
+        'hover:bg-primary/90',
         'hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none',
         'active:translate-y-[2px] active:translate-x-[2px]'
       ),
 
-      // DESTRUCTIVE - Alert Red (#DC2626 / red-600)
-      // Use for: Delete, Remove, Destroy, Dangerous actions
       destructive: cn(
-        'bg-red-600 text-white',
-        'border border-black',
+        'bg-destructive text-destructive-foreground',
+        'border border-border',
         'shadow-sw-sm',
-        'hover:bg-red-700',
+        'hover:bg-destructive/90',
         'hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none',
         'active:translate-y-[2px] active:translate-x-[2px]'
       ),
 
-      // SUCCESS - Signal Green (#15803D / green-700)
-      // Use for: Download, Confirm, Complete, Positive actions
       success: cn(
-        'bg-green-700 text-white',
-        'border border-black',
+        'bg-success text-on-accent',
+        'border border-border',
         'shadow-sw-sm',
-        'hover:bg-green-800',
+        'hover:bg-success/90',
         'hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none',
         'active:translate-y-[2px] active:translate-x-[2px]'
       ),
 
-      // WARNING - Alert Orange (#F97316 / orange-500)
-      // Use for: Reset, Clear, Undo, Caution actions
       warning: cn(
-        'bg-orange-500 text-white',
-        'border border-black',
+        'bg-warning text-on-accent',
+        'border border-border',
         'shadow-sw-sm',
-        'hover:bg-orange-600',
+        'hover:bg-warning/90',
         'hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none',
         'active:translate-y-[2px] active:translate-x-[2px]'
       ),
 
-      // OUTLINE - Canvas background with black border
-      // Use for: Cancel, Back, Secondary actions, Navigation
       outline: cn(
-        'bg-background text-black',
-        'border border-black',
+        'bg-background text-foreground',
+        'border border-border',
         'shadow-sw-sm',
         'hover:bg-secondary',
         'hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none',
         'active:translate-y-[2px] active:translate-x-[2px]'
       ),
 
-      // SECONDARY - Panel Grey (#E5E5E0)
-      // Use for: Less prominent actions, Toolbar buttons
       secondary: cn(
-        'bg-secondary text-black',
-        'border border-black',
+        'bg-secondary text-secondary-foreground',
+        'border border-border',
         'shadow-sw-sm',
-        'hover:bg-[#D8D8D2]',
+        'hover:bg-accent',
         'hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none',
         'active:translate-y-[2px] active:translate-x-[2px]'
       ),
 
-      // GHOST - No background, minimal styling
-      // Use for: Icon buttons, Subtle navigation, Toolbars
       ghost: cn(
-        'bg-transparent text-black',
+        'bg-transparent text-foreground',
         'border-none shadow-none',
         'hover:bg-paper-tint',
         'active:bg-paper-tint'
       ),
 
-      // LINK - Text only with underline
-      // Use for: Inline links, Text navigation
       link: cn(
-        'bg-transparent text-blue-700',
+        'bg-transparent text-primary',
         'border-none shadow-none',
         'underline-offset-4 hover:underline',
         'p-0 h-auto'

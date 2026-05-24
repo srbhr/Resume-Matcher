@@ -436,6 +436,48 @@ Rules:
 
 Output the title only, nothing else."""
 
+EXPAND_RESUME_TO_CV_PROMPT = """Expand this resume into a long-form CV. Output ONLY the JSON object, no other text.
+
+A CV (Curriculum Vitae) is more detailed and comprehensive than a resume. It typically:
+- Includes more bullet points per role with deeper context and additional achievements
+- Adds a fuller summary/profile (3-5 sentences vs 1-2)
+- Lists more skills, languages, certifications, awards in full
+- Keeps a complete chronological history
+- Spells out education, including coursework or honors when present
+
+ABSOLUTE TRUTHFULNESS RULES — DO NOT VIOLATE:
+- Do NOT invent employers, dates, titles, skills, technologies, projects, achievements, or metrics that are not present in the source resume.
+- You may rephrase existing bullets into longer-form sentences, draw out implied details from context, and reorganize for clarity — but every concrete fact must trace back to the source.
+- Keep all existing entries; do not remove anything.
+- Preserve dates exactly as written (do not change "Present" to "Current" or vice versa).
+- Output in the same language as the source resume.
+
+Output the same JSON shape as the input (matching this schema). Copy IDs and structure 1:1; only enrich content within existing entries:
+{schema}
+
+Source resume (JSON):
+{resume_json}"""
+
+CONDENSE_CV_TO_RESUME_PROMPT = """Condense this CV into a concise one-to-two-page resume. Output ONLY the JSON object, no other text.
+
+A resume is shorter, more focused, and optimized for fast scanning. Typical adjustments:
+- Tighten the summary to 1-2 high-impact sentences
+- Reduce bullet points per role to the 3-5 strongest items, prioritizing measurable outcomes
+- Trim or merge older roles if they crowd the page; keep the most recent and most relevant
+- Keep skills focused; remove obvious or trivial entries
+- Preserve every distinct employer/role header — do NOT delete a job entirely; you may merely shorten its description
+
+ABSOLUTE TRUTHFULNESS RULES — DO NOT VIOLATE:
+- Do NOT invent or upgrade any fact. Every kept bullet must use words/facts that exist in the source.
+- Do NOT change dates, titles, employers, degrees, or institution names.
+- Output in the same language as the source CV.
+
+Output the same JSON shape as the input (matching this schema). Maintain IDs from kept items where possible:
+{schema}
+
+Source CV (JSON):
+{cv_json}"""
+
 # Alias for backward compatibility
 RESUME_SCHEMA = RESUME_SCHEMA_EXAMPLE
 

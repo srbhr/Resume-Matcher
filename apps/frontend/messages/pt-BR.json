@@ -112,7 +112,20 @@
       "dropzoneTitle": "Clique ou Arraste o Arquivo",
       "dropzoneSubtitle": "PDF, DOC, DOCX (Máximo 4MB)",
       "tryDifferentFile": "Tentar outro arquivo",
-      "parsingFailedKeepOpen": "A análise de IA falhou. Tente outro arquivo ou feche este diálogo."
+      "parsingFailedKeepOpen": "A análise de IA falhou. Tente outro arquivo ou feche este diálogo.",
+      "bundleTitle": "Novo grupo mestre",
+      "bundleSubtitle": "Envie um Currículo e/ou um CV. Pelo menos um é obrigatório.",
+      "groupNameLabel": "Nome do grupo (opcional)",
+      "groupNamePlaceholder": "ex.: Engenharia, Marketing",
+      "groupNameHint": "Usado como categoria do mestre no painel.",
+      "resumeSlotLabel": "Currículo",
+      "cvSlotLabel": "CV",
+      "optional": "Opcional",
+      "chooseFile": "Escolher arquivo...",
+      "resumeFilenameLabel": "Nome para download do currículo",
+      "cvFilenameLabel": "Nome para download do CV",
+      "requireOne": "Forneça pelo menos um Currículo ou um CV.",
+      "uploadButton": "Enviar"
     }
   },
   "builder": {
@@ -779,7 +792,8 @@
       "copied": "Copiado",
       "generate": "Gerar",
       "regenerate": "Regerar",
-      "generateCV": "Gerar CV"
+      "generateCV": "Gerar CV",
+      "generateResume": "Gerar currículo"
     },
     "tools": {
       "jdMatch": "Correspondência",
@@ -805,9 +819,11 @@
       "noJdHeadline": "// SEM DESCRIÇÃO DE VAGA"
     },
     "empty": {
-      "cvHeadline": "// SEM CV GERADO",
-      "cvBody": "Um CV é um complemento acadêmico e mais longo do currículo. Gere um para mostrar toda a amplitude do seu trabalho.",
+      "cvHeadline": "// SEM CV NO ARQUIVO",
+      "cvBody": "Um CV é um complemento acadêmico e mais longo do currículo. Gere um a partir do seu currículo para mostrar toda a amplitude do seu trabalho.",
       "cvAction": "Gerar CV",
+      "resumeHeadline": "// SEM CURRÍCULO NO ARQUIVO",
+      "resumeBody": "Este mestre contém apenas um CV. Gere um currículo conciso a partir do seu CV.",
       "coverHeadline": "// SEM CARTA AINDA",
       "coverBody": "Gere uma carta de apresentação personalizada para o cargo e a empresa-alvo.",
       "coverAction": "Gerar",
@@ -815,6 +831,9 @@
       "outreachBody": "Esboce uma mensagem de indicação ou primeiro contato personalizada para esta vaga.",
       "outreachAction": "Gerar"
     },
+    "generateNeedsResume": "Envie primeiro um currículo — o CV é gerado a partir de um currículo.",
+    "generateNeedsCV": "Envie primeiro um CV — o currículo é condensado a partir de um CV.",
+    "generateFailed": "Falha ao gerar {target}. Tente novamente.",
     "deletedTitle": "Currículo Excluído",
     "deletedDescriptionMaster": "Seu currículo principal foi permanentemente excluído do sistema.",
     "deletedDescriptionRegular": "O currículo foi permanentemente excluído do sistema.",

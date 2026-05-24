@@ -68,10 +68,14 @@ class Database:
         title: str | None = None,
         original_markdown: str | None = None,
         template_settings: dict[str, Any] | None = None,
+        document_kind: str = "resume",
+        resume_download_filename: str | None = None,
+        cv_download_filename: str | None = None,
     ) -> dict[str, Any]:
         """Create a new resume entry.
 
         processing_status: "pending", "processing", "ready", "failed"
+        document_kind: "resume" or "cv"
         """
         resume_id = str(uuid4())
         now = datetime.now(timezone.utc).isoformat()
@@ -88,6 +92,7 @@ class Database:
             "cover_letter": cover_letter,
             "outreach_message": outreach_message,
             "title": title,
+            "document_kind": document_kind,
             "created_at": now,
             "updated_at": now,
         }
@@ -95,6 +100,10 @@ class Database:
             doc["original_markdown"] = original_markdown
         if template_settings is not None:
             doc["template_settings"] = template_settings
+        if resume_download_filename is not None:
+            doc["resume_download_filename"] = resume_download_filename
+        if cv_download_filename is not None:
+            doc["cv_download_filename"] = cv_download_filename
         self.resumes.insert(doc)
         return doc
 
@@ -108,6 +117,10 @@ class Database:
         cover_letter: str | None = None,
         outreach_message: str | None = None,
         original_markdown: str | None = None,
+        title: str | None = None,
+        document_kind: str = "resume",
+        resume_download_filename: str | None = None,
+        cv_download_filename: str | None = None,
     ) -> dict[str, Any]:
         """Create a new master resume.
 
@@ -126,7 +139,41 @@ class Database:
                 cover_letter=cover_letter,
                 outreach_message=outreach_message,
                 original_markdown=original_markdown,
+                title=title,
+                document_kind=document_kind,
+                resume_download_filename=resume_download_filename,
+                cv_download_filename=cv_download_filename,
             )
+
+    def get_counterpart_for_master(
+        self, master_id: str, kind: str
+    ) -> dict[str, Any] | None:
+        """Return the child document of `kind` linked to this master, or None.
+
+        Used to look up the CV that belongs to a resume master (or vice versa).
+        """
+        Resume = Query()
+        children = self.resumes.search(
+            (Resume.parent_id == master_id) & (Resume.document_kind == kind)
+        )
+        return children[0] if children else None
+
+    def get_documents_for_master(
+        self, master: dict[str, Any]
+    ) -> tuple[dict[str, Any] | None, dict[str, Any] | None]:
+        """Return (resume_doc, cv_doc) for a master record.
+
+        The master itself is one of the two; the counterpart (if any) is a
+        child row linked via parent_id with the opposite document_kind.
+        """
+        master_kind = master.get("document_kind", "resume")
+        master_id = master["resume_id"]
+        if master_kind == "resume":
+            cv = self.get_counterpart_for_master(master_id, "cv")
+            return master, cv
+        else:
+            resume = self.get_counterpart_for_master(master_id, "resume")
+            return resume, master
 
     def get_resume(self, resume_id: str) -> dict[str, Any] | None:
         """Get resume by ID."""

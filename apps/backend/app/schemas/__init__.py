@@ -15,6 +15,8 @@ from app.schemas.models import (
     FeaturePromptsRequest,
     FeaturePromptsResponse,
     GenerateContentResponse,
+    GenerateCounterpartRequest,
+    GenerateCounterpartResponse,
     HealthResponse,
     ImproveDiffResult,
     ImprovementSuggestion,
@@ -106,6 +108,8 @@ __all__ = [
     "UpdateTitleRequest",
     "UpdateTemplateSettingsRequest",
     "GenerateContentResponse",
+    "GenerateCounterpartRequest",
+    "GenerateCounterpartResponse",
     "HealthResponse",
     "StatusResponse",
 ]
