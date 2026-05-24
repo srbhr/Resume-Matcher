@@ -54,11 +54,21 @@ RESUME_SCHEMA_EXAMPLE = """{
     {
       "id": 1,
       "name": "Open Source Tool",
-      "role": "Creator & Maintainer",
-      "years": "Mar 2021 - Present",
+      "role": "",
+      "years": "2021",
       "description": [
         "Built CLI tool with 1000+ GitHub stars",
         "Used by 50+ companies worldwide"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Hackathons",
+      "role": "",
+      "years": "2022, 2023",
+      "description": [
+        "ProjectAlpha (2022): Built XYZ for ABC.",
+        "ProjectBeta (2023): Co-developed something else."
       ]
     }
   ],
@@ -174,6 +184,14 @@ What you ARE allowed to do (structure only):
 - Number IDs starting from 1.
 - Route non-standard sections (Publications, Volunteer Work, Research, Hobbies, etc.) into customSections using snake_case keys derived from the original section name.
 - Format hyperlinks as markdown links: `[visible text](url)`. If the source shows the URL as the visible text (e.g. "https://example.com"), keep it as a bare URL — do not invent display text. If the source shows display text with an underlying hyperlink (e.g. "my portfolio" linking to https://example.com), output `[my portfolio](https://example.com)`. Apply this anywhere a link appears: bullet descriptions, summary, project entries, custom sections, etc. (Note: dedicated personalInfo fields like email, phone, website, linkedin, github should still be raw values, not markdown links.)
+
+Project groups:
+- If the Projects section contains a parent header with bulleted child projects underneath (e.g., a "Hackathons" header followed by two bulleted sub-projects), output ONE Project entry for the group — not one entry per child:
+  - `name` = the parent header text, verbatim.
+  - `years` = the parent header's date verbatim if present; otherwise "".
+  - `role` = "" (do NOT fabricate a role for the group or its children).
+  - `description` = each child sub-bullet preserved verbatim as a bullet, including any inline date prefix like "(2026):" and the full text after it. Do NOT promote children into their own Project entries. Do NOT invent per-child `role` or `years`.
+- Standalone projects (no parent header) become their own Project entry as normal.
 
 Custom section types:
 - "text": Single text block (e.g., objective, statement)
