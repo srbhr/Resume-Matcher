@@ -747,6 +747,57 @@
     "returnToDashboard": "Return to Dashboard",
     "enhanceResume": "Enhance Resume",
     "downloadResume": "Download Resume",
+    "tabs": {
+      "resume": "Resume",
+      "cv": "CV",
+      "coverLetter": "Cover Letter",
+      "outreach": "Outreach Mail",
+      "ariaLabel": "Document views"
+    },
+    "actions": {
+      "enhance": "Enhance Resume",
+      "enhanceCV": "Enhance CV",
+      "editResume": "Edit Resume",
+      "editCV": "Edit CV",
+      "editLetter": "Edit Letter",
+      "editMessage": "Edit Message",
+      "download": "Download",
+      "copy": "Copy",
+      "copied": "Copied",
+      "generate": "Generate",
+      "regenerate": "Regenerate",
+      "generateCV": "Generate CV"
+    },
+    "tools": {
+      "jdMatch": "JD Match",
+      "ats": "ATS"
+    },
+    "meta": {
+      "viewing": "Viewing",
+      "dashboard": "Dashboard"
+    },
+    "panel": {
+      "closeAria": "Close panel",
+      "jdMatchTitle": "JD Match",
+      "atsTitle": "ATS Report",
+      "againstLabel": "Against",
+      "jdMatchEmpty": "Add a job description to this resume to see how well it matches.",
+      "atsEmpty": "Add a job description to this resume to run an ATS score.",
+      "loading": "Running analysis…",
+      "errorTitle": "Analysis failed",
+      "retry": "Retry"
+    },
+    "empty": {
+      "cvHeadline": "// NO CV GENERATED",
+      "cvBody": "A CV is a longer, academic-format companion to your resume. Generate one to surface the full breadth of your work.",
+      "cvAction": "Generate CV",
+      "coverHeadline": "// NO COVER LETTER YET",
+      "coverBody": "Generate a cover letter tailored to the target role and company.",
+      "coverAction": "Generate",
+      "outreachHeadline": "// NO OUTREACH MESSAGE YET",
+      "outreachBody": "Draft a referral or cold-intro email tailored to this role.",
+      "outreachAction": "Generate"
+    },
     "deletedTitle": "Resume Deleted",
     "deletedDescriptionMaster": "Your master resume has been permanently deleted from the system.",
     "deletedDescriptionRegular": "The resume has been permanently deleted from the system.",

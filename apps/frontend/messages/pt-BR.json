@@ -747,6 +747,57 @@
     "returnToDashboard": "Voltar ao Painel",
     "enhanceResume": "Aprimorar Currículo",
     "downloadResume": "Baixar Currículo",
+    "tabs": {
+      "resume": "Currículo",
+      "cv": "CV",
+      "coverLetter": "Carta",
+      "outreach": "Mensagem de contato",
+      "ariaLabel": "Visualizações de documento"
+    },
+    "actions": {
+      "enhance": "Aprimorar Currículo",
+      "enhanceCV": "Aprimorar CV",
+      "editResume": "Editar Currículo",
+      "editCV": "Editar CV",
+      "editLetter": "Editar Carta",
+      "editMessage": "Editar mensagem",
+      "download": "Baixar",
+      "copy": "Copiar",
+      "copied": "Copiado",
+      "generate": "Gerar",
+      "regenerate": "Regerar",
+      "generateCV": "Gerar CV"
+    },
+    "tools": {
+      "jdMatch": "Correspondência",
+      "ats": "ATS"
+    },
+    "meta": {
+      "viewing": "Visualizando",
+      "dashboard": "Painel"
+    },
+    "panel": {
+      "closeAria": "Fechar painel",
+      "jdMatchTitle": "Correspondência com a vaga",
+      "atsTitle": "Relatório ATS",
+      "againstLabel": "Contra",
+      "jdMatchEmpty": "Adicione uma descrição de vaga para ver a correspondência.",
+      "atsEmpty": "Adicione uma descrição de vaga para rodar a análise ATS.",
+      "loading": "Executando análise…",
+      "errorTitle": "Análise falhou",
+      "retry": "Tentar novamente"
+    },
+    "empty": {
+      "cvHeadline": "// SEM CV GERADO",
+      "cvBody": "Um CV é um complemento acadêmico e mais longo do currículo. Gere um para mostrar toda a amplitude do seu trabalho.",
+      "cvAction": "Gerar CV",
+      "coverHeadline": "// SEM CARTA AINDA",
+      "coverBody": "Gere uma carta de apresentação personalizada para o cargo e a empresa-alvo.",
+      "coverAction": "Gerar",
+      "outreachHeadline": "// SEM MENSAGEM DE CONTATO",
+      "outreachBody": "Esboce uma mensagem de indicação ou primeiro contato personalizada para esta vaga.",
+      "outreachAction": "Gerar"
+    },
     "deletedTitle": "Currículo Excluído",
     "deletedDescriptionMaster": "Seu currículo principal foi permanentemente excluído do sistema.",
     "deletedDescriptionRegular": "O currículo foi permanentemente excluído do sistema.",

@@ -747,6 +747,57 @@
     "returnToDashboard": "Volver al Panel",
     "enhanceResume": "Mejorar currículum",
     "downloadResume": "Descargar currículum",
+    "tabs": {
+      "resume": "Currículum",
+      "cv": "CV",
+      "coverLetter": "Carta",
+      "outreach": "Correo de contacto",
+      "ariaLabel": "Vistas de documento"
+    },
+    "actions": {
+      "enhance": "Mejorar currículum",
+      "enhanceCV": "Mejorar CV",
+      "editResume": "Editar currículum",
+      "editCV": "Editar CV",
+      "editLetter": "Editar carta",
+      "editMessage": "Editar mensaje",
+      "download": "Descargar",
+      "copy": "Copiar",
+      "copied": "Copiado",
+      "generate": "Generar",
+      "regenerate": "Regenerar",
+      "generateCV": "Generar CV"
+    },
+    "tools": {
+      "jdMatch": "Coincidencia",
+      "ats": "ATS"
+    },
+    "meta": {
+      "viewing": "Viendo",
+      "dashboard": "Panel"
+    },
+    "panel": {
+      "closeAria": "Cerrar panel",
+      "jdMatchTitle": "Coincidencia con el puesto",
+      "atsTitle": "Informe ATS",
+      "againstLabel": "Contra",
+      "jdMatchEmpty": "Agrega una descripción del puesto para ver la coincidencia.",
+      "atsEmpty": "Agrega una descripción del puesto para ejecutar un análisis ATS.",
+      "loading": "Ejecutando análisis…",
+      "errorTitle": "Análisis fallido",
+      "retry": "Reintentar"
+    },
+    "empty": {
+      "cvHeadline": "// SIN CV GENERADO",
+      "cvBody": "Un CV es un complemento académico más extenso de tu currículum. Genera uno para mostrar toda la amplitud de tu trabajo.",
+      "cvAction": "Generar CV",
+      "coverHeadline": "// AÚN SIN CARTA",
+      "coverBody": "Genera una carta de presentación adaptada al puesto y la empresa objetivo.",
+      "coverAction": "Generar",
+      "outreachHeadline": "// AÚN SIN MENSAJE DE CONTACTO",
+      "outreachBody": "Redacta un mensaje de presentación o de referencia adaptado a este puesto.",
+      "outreachAction": "Generar"
+    },
     "deletedTitle": "Currículum eliminado",
     "deletedDescriptionMaster": "Tu currículum maestro se ha eliminado permanentemente del sistema.",
     "deletedDescriptionRegular": "El currículum se ha eliminado permanentemente del sistema.",

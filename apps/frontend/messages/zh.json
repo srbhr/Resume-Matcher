@@ -747,6 +747,57 @@
     "returnToDashboard": "返回仪表板",
     "enhanceResume": "增强简历",
     "downloadResume": "下载简历",
+    "tabs": {
+      "resume": "简历",
+      "cv": "CV",
+      "coverLetter": "求职信",
+      "outreach": "求职邮件",
+      "ariaLabel": "文档视图"
+    },
+    "actions": {
+      "enhance": "增强简历",
+      "enhanceCV": "增强 CV",
+      "editResume": "编辑简历",
+      "editCV": "编辑 CV",
+      "editLetter": "编辑信件",
+      "editMessage": "编辑邮件",
+      "download": "下载",
+      "copy": "复制",
+      "copied": "已复制",
+      "generate": "生成",
+      "regenerate": "重新生成",
+      "generateCV": "生成 CV"
+    },
+    "tools": {
+      "jdMatch": "职位匹配",
+      "ats": "ATS"
+    },
+    "meta": {
+      "viewing": "正在查看",
+      "dashboard": "仪表板"
+    },
+    "panel": {
+      "closeAria": "关闭面板",
+      "jdMatchTitle": "职位匹配",
+      "atsTitle": "ATS 报告",
+      "againstLabel": "对照",
+      "jdMatchEmpty": "添加职位描述以查看匹配度。",
+      "atsEmpty": "添加职位描述以运行 ATS 分析。",
+      "loading": "正在分析…",
+      "errorTitle": "分析失败",
+      "retry": "重试"
+    },
+    "empty": {
+      "cvHeadline": "// 尚未生成 CV",
+      "cvBody": "CV 是简历的学术风格长版补充。生成一份以展示您工作的全部广度。",
+      "cvAction": "生成 CV",
+      "coverHeadline": "// 尚未生成求职信",
+      "coverBody": "生成针对目标职位和公司定制的求职信。",
+      "coverAction": "生成",
+      "outreachHeadline": "// 尚未生成邮件",
+      "outreachBody": "撰写针对此职位的推荐或主动联系邮件。",
+      "outreachAction": "生成"
+    },
     "deletedTitle": "已删除简历",
     "deletedDescriptionMaster": "您的主简历已从系统中永久删除。",
     "deletedDescriptionRegular": "该简历已从系统中永久删除。",

@@ -747,6 +747,57 @@
     "returnToDashboard": "ダッシュボードに戻る",
     "enhanceResume": "履歴書を強化",
     "downloadResume": "履歴書をダウンロード",
+    "tabs": {
+      "resume": "履歴書",
+      "cv": "CV",
+      "coverLetter": "カバーレター",
+      "outreach": "アウトリーチメール",
+      "ariaLabel": "ドキュメントビュー"
+    },
+    "actions": {
+      "enhance": "履歴書を強化",
+      "enhanceCV": "CV を強化",
+      "editResume": "履歴書を編集",
+      "editCV": "CV を編集",
+      "editLetter": "レターを編集",
+      "editMessage": "メッセージを編集",
+      "download": "ダウンロード",
+      "copy": "コピー",
+      "copied": "コピー済み",
+      "generate": "生成",
+      "regenerate": "再生成",
+      "generateCV": "CV を生成"
+    },
+    "tools": {
+      "jdMatch": "求人マッチ",
+      "ats": "ATS"
+    },
+    "meta": {
+      "viewing": "表示中",
+      "dashboard": "ダッシュボード"
+    },
+    "panel": {
+      "closeAria": "パネルを閉じる",
+      "jdMatchTitle": "求人マッチ",
+      "atsTitle": "ATS レポート",
+      "againstLabel": "対象",
+      "jdMatchEmpty": "求人内容を追加するとマッチ度を確認できます。",
+      "atsEmpty": "求人内容を追加すると ATS スコアを実行できます。",
+      "loading": "分析を実行中…",
+      "errorTitle": "分析に失敗しました",
+      "retry": "再試行"
+    },
+    "empty": {
+      "cvHeadline": "// CV が未作成",
+      "cvBody": "CV は履歴書のアカデミックな長文版です。仕事の全体像を示すために生成してください。",
+      "cvAction": "CV を生成",
+      "coverHeadline": "// カバーレターが未作成",
+      "coverBody": "対象の役職と企業に合わせたカバーレターを生成します。",
+      "coverAction": "生成",
+      "outreachHeadline": "// アウトリーチメッセージが未作成",
+      "outreachBody": "この職務に合わせた紹介や初回連絡のメールを下書きします。",
+      "outreachAction": "生成"
+    },
     "deletedTitle": "履歴書を削除しました",
     "deletedDescriptionMaster": "マスター履歴書はシステムから完全に削除されました。",
     "deletedDescriptionRegular": "履歴書はシステムから完全に削除されました。",
