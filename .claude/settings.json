@@ -23,5 +23,9 @@
       "Bash(npm --version)",
       "Bash(source:*)"
     ]
+  },
+  "attribution": {
+    "commit": "",
+    "pr": ""
   }
 }
