@@ -564,6 +564,7 @@
       "apiKeyError": "Sua chave de API não está funcionando. Verifique em Configurações.",
       "rateLimit": "Limite de requisições atingido. Aguarde cerca de um minuto e tente novamente.",
       "failedToGenerate": "Não foi possível gerar o currículo. Verifique sua chave de API em Configurações e tente novamente.",
+      "timeout": "A solicitação excedeu o tempo de espera. Por favor, tente novamente com uma descrição de trabalho mais curta ou verifique sua conexão.",
       "failedToPreview": "Não foi possível pré-visualizar o currículo. Verifique sua chave de API em Configurações e tente novamente.",
       "failedToConfirm": "Não foi possível aplicar as alterações. Tente novamente."
     }
