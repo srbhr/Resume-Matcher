@@ -266,6 +266,18 @@ class Database:
         self.resume_json_backups.insert(backup)
         return backup
 
+    def list_resume_json_backups(self, resume_id: str) -> list[dict[str, Any]]:
+        """Return backups for a resume, newest first."""
+        Backup = Query()
+        rows = self.resume_json_backups.search(Backup.resume_id == resume_id)
+        return sorted(rows, key=lambda r: r.get("created_at") or "", reverse=True)
+
+    def get_resume_json_backup(self, backup_id: str) -> dict[str, Any] | None:
+        """Fetch a specific backup by id."""
+        Backup = Query()
+        rows = self.resume_json_backups.search(Backup.backup_id == backup_id)
+        return rows[0] if rows else None
+
     def delete_resume(self, resume_id: str) -> bool:
         """Delete resume by ID."""
         Resume = Query()

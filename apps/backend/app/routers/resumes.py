@@ -1936,6 +1936,131 @@ async def replace_resume_json(
     )
 
 
+@router.get("/{resume_id}/json/backups")
+async def list_resume_json_backups(resume_id: str) -> dict[str, Any]:
+    """List point-in-time backups for this resume, newest first.
+
+    Returns lightweight rows (no content) suitable for a revert picker. The
+    actual previous_processed_data is only loaded when the user restores.
+    """
+    existing = db.get_resume(resume_id)
+    if not existing:
+        raise HTTPException(status_code=404, detail="Resume not found")
+    rows = db.list_resume_json_backups(resume_id)
+    backups = [
+        {
+            "backup_id": r["backup_id"],
+            "created_at": r.get("created_at"),
+            "source": r.get("source"),
+            "previous_title": r.get("previous_title"),
+        }
+        for r in rows
+    ]
+    return {"backups": backups}
+
+
+@router.post("/{resume_id}/json/backups/{backup_id}/restore", response_model=ResumeFetchResponse)
+async def restore_resume_json_backup(
+    resume_id: str, backup_id: str
+) -> ResumeFetchResponse:
+    """Restore a previous JSON snapshot.
+
+    Creates a new backup of the current state first so the restore itself
+    is also undoable. The backup row stays in the table — restore does not
+    consume it.
+    """
+    existing = db.get_resume(resume_id)
+    if not existing:
+        raise HTTPException(status_code=404, detail="Resume not found")
+    backup = db.get_resume_json_backup(backup_id)
+    if not backup or backup.get("resume_id") != resume_id:
+        raise HTTPException(status_code=404, detail="Backup not found")
+
+    previous_data = backup.get("previous_processed_data")
+    if not isinstance(previous_data, dict):
+        raise HTTPException(
+            status_code=422,
+            detail="Snapshot does not contain a recoverable resume JSON.",
+        )
+
+    try:
+        validated = ResumeData.model_validate(
+            normalize_resume_data(copy.deepcopy(previous_data))
+        ).model_dump(mode="json")
+    except ValidationError as e:
+        raise HTTPException(status_code=422, detail="Snapshot is no longer valid") from e
+
+    new_backup = db.create_resume_json_backup(existing, source="chat_restore")
+    updated = db.update_resume(
+        resume_id,
+        {
+            "content": json.dumps(validated, indent=2, ensure_ascii=False),
+            "content_type": "json",
+            "processed_data": validated,
+            "processing_status": "ready",
+            "last_json_backup_id": new_backup["backup_id"],
+        },
+    )
+
+    raw_resume = RawResume(
+        id=None,
+        content=updated["content"],
+        content_type=updated["content_type"],
+        created_at=updated["created_at"],
+        processing_status=updated.get("processing_status", "pending"),
+    )
+    return ResumeFetchResponse(
+        request_id=str(uuid4()),
+        data=ResumeFetchData(
+            resume_id=resume_id,
+            raw_resume=raw_resume,
+            processed_resume=ResumeData.model_validate(updated.get("processed_data")),
+            cover_letter=updated.get("cover_letter"),
+            outreach_message=updated.get("outreach_message"),
+            parent_id=updated.get("parent_id"),
+            title=updated.get("title"),
+        ),
+    )
+
+
+@router.post("/from-json", response_model=ResumeUploadResponse)
+async def create_resume_from_json(payload: dict[str, Any]) -> ResumeUploadResponse:
+    """Create a new resume from a raw structured JSON payload.
+
+    Used by the chat assistant's 'tailor' mode where the LLM drafts a fresh
+    resume. Always creates a new master row — clones are independent.
+    """
+    resume_payload = payload.get("resume_json") if isinstance(payload, dict) else None
+    if not isinstance(resume_payload, dict):
+        raise HTTPException(status_code=400, detail="resume_json object is required")
+
+    title_raw = payload.get("title") if isinstance(payload, dict) else None
+    title = str(title_raw)[:120] if isinstance(title_raw, str) else None
+
+    try:
+        validated = ResumeData.model_validate(
+            normalize_resume_data(copy.deepcopy(resume_payload))
+        ).model_dump(mode="json")
+    except ValidationError as e:
+        raise HTTPException(status_code=422, detail="Resume JSON is invalid") from e
+
+    resume = await db.create_resume_atomic_master(
+        content=json.dumps(validated, indent=2, ensure_ascii=False),
+        content_type="json",
+        filename=None,
+        processed_data=validated,
+        processing_status="ready",
+        title=title,
+    )
+    return ResumeUploadResponse(
+        message="Resume created from JSON",
+        request_id=str(uuid4()),
+        resume_id=resume["resume_id"],
+        processing_status=resume["processing_status"],
+        is_master=resume.get("is_master", False),
+    )
+
+
 @router.get("/{resume_id}/pdf")
 async def download_resume_pdf(
     resume_id: str,

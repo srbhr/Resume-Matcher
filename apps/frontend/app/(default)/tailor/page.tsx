@@ -21,6 +21,7 @@ import { Loader2, ArrowLeft, ArrowRight, AlertTriangle, Settings } from 'lucide-
 import { useTranslations } from '@/lib/i18n';
 import { DiffPreviewModal } from '@/components/tailor/diff-preview-modal';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { ChatBot } from '@/components/chat-bot/chat-bot';
 
 export default function TailorPageWrapper() {
   return (
@@ -660,6 +661,7 @@ function TailorPage() {
         confirmDisabled={isLoading || !missingDiffResult}
         errorMessage={missingDiffError ?? undefined}
       />
+      {masterResumeId && <ChatBot resumeId={masterResumeId} />}
     </div>
   );
 }

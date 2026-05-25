@@ -63,6 +63,7 @@ import {
   sanitizeFilename,
 } from '@/lib/utils/download';
 import { type TemplateSettings, DEFAULT_TEMPLATE_SETTINGS } from '@/lib/types/template-settings';
+import { ChatBot } from '@/components/chat-bot/chat-bot';
 
 type ProcessingStatus = 'pending' | 'processing' | 'ready' | 'failed';
 type TabId = 'resume' | 'cv' | 'coverLetter' | 'outreach';
@@ -1797,6 +1798,7 @@ export default function ResumeViewerPage() {
           onComplete={handleEnrichmentComplete}
         />
       )}
+      {resumeId && <ChatBot resumeId={resumeId} onResumeChanged={reloadResumeData} />}
     </div>
   );
 }

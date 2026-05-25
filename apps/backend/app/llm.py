@@ -892,6 +892,87 @@ async def complete(
         ) from e
 
 
+async def chat_complete(
+    messages: list[dict[str, str]],
+    system_prompt: str | None = None,
+    config: LLMConfig | None = None,
+    max_tokens: int = 2048,
+    temperature: float = 0.7,
+) -> str:
+    """Multi-turn chat completion.
+
+    Mirrors :func:`complete` but takes a full conversation history. Used by
+    the floating chat assistant where turn-by-turn context matters.
+    """
+    router, config = get_router(config)
+    model_name = get_model_name(config)
+
+    payload: list[dict[str, str]] = []
+    if system_prompt:
+        payload.append({"role": "system", "content": system_prompt})
+    for msg in messages:
+        role = msg.get("role")
+        content = msg.get("content", "")
+        if role not in ("user", "assistant", "system") or not content:
+            continue
+        payload.append({"role": role, "content": content})
+
+    if not any(m["role"] == "user" for m in payload):
+        raise ValueError("At least one user message is required.")
+
+    try:
+        if _is_oauth_token(config.api_key):
+            temp = (
+                temperature
+                if _supports_temperature(model_name, temperature)
+                else None
+            )
+            oauth_resp = await _anthropic_oauth_completion(
+                messages=payload,
+                model=model_name,
+                api_key=config.api_key,
+                max_tokens=max_tokens,
+                temperature=temp,
+                timeout=_calculate_timeout("completion", max_tokens, config.provider),
+            )
+            content = oauth_resp.get("text") or ""
+            if not content:
+                raise ValueError("Empty response from LLM")
+            if "<think>" in content:
+                content = _strip_thinking_tags(content)
+                if not content:
+                    raise ValueError("Response contained only thinking content, no output")
+            return content
+
+        kwargs: dict[str, Any] = {
+            "model": "primary",
+            "messages": payload,
+            "max_tokens": max_tokens,
+            "timeout": _calculate_timeout("completion", max_tokens, config.provider),
+        }
+        if _supports_temperature(model_name, temperature):
+            kwargs["temperature"] = temperature
+        if config.reasoning_effort:
+            kwargs["reasoning_effort"] = config.reasoning_effort
+        if config.provider == "ollama":
+            kwargs["num_ctx"] = OLLAMA_NUM_CTX
+
+        response = await _acompletion_with_loading_retry(router, **kwargs)
+        content = _extract_choice_text(response.choices[0])
+        if not content:
+            raise ValueError("Empty response from LLM")
+        if "<think>" in content:
+            content = _strip_thinking_tags(content)
+            if not content:
+                raise ValueError("Response contained only thinking content, no output")
+        return content
+    except Exception as e:
+        logging.error(f"LLM chat completion failed: {e}", extra={"model": model_name})
+        raise ValueError(
+            "LLM completion failed. Please check your API configuration and try again."
+        ) from e
+
+
 def _supports_json_mode(model_name: str) -> bool:
     """Check if the model supports JSON mode via LiteLLM's model registry.
 
