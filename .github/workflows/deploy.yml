@@ -15,17 +15,19 @@ jobs:
           DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
         run: |
           TMPDIR=$(mktemp -d)
           echo "$DEPLOY_KEY" > "$TMPDIR/deploy_key"
           chmod 600 "$TMPDIR/deploy_key"
 
-          ssh -i "$TMPDIR/deploy_key" \
+          ssh -v -i "$TMPDIR/deploy_key" \
               -o StrictHostKeyChecking=no \
+              -p "$DEPLOY_PORT" \
               "$DEPLOY_USER@$DEPLOY_HOST" \
-              'cd ~/Resume-Matcher && \
+              'cd /home/andrew/home-lab/Resume/Resume-Matcher && \
                git pull && \
-               podman build --no-cache -t localhost/resume-matcher:latest . && \
+               podman build --no-cache --progress=plain -t localhost/resume-matcher:latest . && \
                podman ps -q --filter name=resume-matcher | xargs -r podman stop && \
                podman ps -aq --filter name=resume-matcher | xargs -r podman rm'
 
