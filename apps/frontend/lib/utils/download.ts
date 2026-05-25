@@ -33,13 +33,13 @@ export function openUrlInNewTab(url: string): boolean {
 export function sanitizeFilename(
   title: string | null | undefined,
   fallbackId: string,
-  type: 'resume' | 'cover-letter' = 'resume'
+  type: 'resume' | 'cover-letter' | 'cv' = 'resume'
 ): string {
-  return sanitizeDownloadFilename(
-    title,
-    type === 'resume' ? `resume_${fallbackId}` : `cover_letter_${fallbackId}`,
-    'pdf'
-  );
+  const fallbackPrefix =
+    type === 'resume' ? `resume_${fallbackId}` :
+    type === 'cv' ? `cv_${fallbackId}` :
+    `cover_letter_${fallbackId}`;
+  return sanitizeDownloadFilename(title, fallbackPrefix, 'pdf');
 }
 
 export function sanitizeDownloadFilename(
@@ -78,9 +78,10 @@ export function buildResumeFilename(
   name: string | null | undefined,
   company: string | null | undefined,
   fallbackId: string,
-  type: 'resume' | 'cover-letter' = 'resume'
+  type: 'resume' | 'cover-letter' | 'cv' = 'resume'
 ): string {
-  const typeLabel = type === 'resume' ? 'Resume' : 'Cover Letter';
+  const typeLabel =
+    type === 'resume' ? 'Resume' : type === 'cv' ? 'CV' : 'Cover Letter';
   const cleanName = name?.trim() || null;
   const cleanCompany = company?.trim() || null;
 
