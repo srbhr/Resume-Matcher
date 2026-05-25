@@ -1733,11 +1733,29 @@ export default function ResumeViewerPage() {
                             </pre>
                           </>
                         ) : (
-                          <EmptyState
-                            headline={t('resumeViewer.empty.outreachHeadline')}
-                            body={t('resumeViewer.empty.outreachBody')}
-                            bare
-                          />
+                          <div className="flex flex-col items-center gap-4 py-8">
+                            <EmptyState
+                              headline={t('resumeViewer.empty.outreachHeadline')}
+                              body={t('resumeViewer.empty.outreachBody')}
+                              bare
+                            />
+                            <Button
+                              onClick={handleGenerateOutreach}
+                              disabled={isGeneratingOutreach}
+                            >
+                              {isGeneratingOutreach ? (
+                                <>
+                                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                  {t('common.generating')}
+                                </>
+                              ) : (
+                                <>
+                                  <Wand2 className="w-4 h-4 mr-2" />
+                                  {t('resumeViewer.actions.generate')}
+                                </>
+                              )}
+                            </Button>
+                          </div>
                         )}
                       </div>
                     )}
