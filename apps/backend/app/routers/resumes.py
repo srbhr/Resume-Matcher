@@ -975,13 +975,11 @@ async def get_resume(resume_id: str = Query(...)) -> ResumeFetchResponse:
     if resume.get("is_master"):
         resume_doc, cv_doc = db.get_documents_for_master(resume)
     else:
-        parent = (
-            db.get_resume(resume["parent_id"]) if resume.get("parent_id") else None
-        )
-        if parent and parent.get("is_master"):
-            resume_doc, cv_doc = db.get_documents_for_master(parent)
-        else:
-            resume_doc, cv_doc = (resume, None) if resume.get("document_kind") != "cv" else (None, resume)
+        # Tailored resumes are their own document — don't resolve through
+        # the parent master's document group, which would make the viewer
+        # display the master's data instead of the tailored data.
+        doc_kind = resume.get("document_kind", "resume")
+        resume_doc, cv_doc = (resume, None) if doc_kind != "cv" else (None, resume)
 
     return ResumeFetchResponse(
         request_id=str(uuid4()),
