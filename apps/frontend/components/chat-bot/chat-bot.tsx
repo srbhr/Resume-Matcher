@@ -611,9 +611,8 @@ function starterPrompts(mode: ChatMode): string[] {
     ];
   }
   return [
-    'Draft a master resume for a grocery store assistant manager role.',
-    'Make a variant tailored for a remote backend engineer position.',
-    'Create a resume for an entry-level data analyst role at a small startup.',
+    'Draft a master resume based on a description.',
+    'Create a variant tailored for a position based on job description.',
   ];
 }
 

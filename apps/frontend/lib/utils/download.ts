@@ -36,9 +36,11 @@ export function sanitizeFilename(
   type: 'resume' | 'cover-letter' | 'cv' = 'resume'
 ): string {
   const fallbackPrefix =
-    type === 'resume' ? `resume_${fallbackId}` :
-    type === 'cv' ? `cv_${fallbackId}` :
-    `cover_letter_${fallbackId}`;
+    type === 'resume'
+      ? `resume_${fallbackId}`
+      : type === 'cv'
+        ? `cv_${fallbackId}`
+        : `cover_letter_${fallbackId}`;
   return sanitizeDownloadFilename(title, fallbackPrefix, 'pdf');
 }
 
@@ -80,8 +82,7 @@ export function buildResumeFilename(
   fallbackId: string,
   type: 'resume' | 'cover-letter' | 'cv' = 'resume'
 ): string {
-  const typeLabel =
-    type === 'resume' ? 'Resume' : type === 'cv' ? 'CV' : 'Cover Letter';
+  const typeLabel = type === 'resume' ? 'Resume' : type === 'cv' ? 'CV' : 'Cover Letter';
   const cleanName = name?.trim() || null;
   const cleanCompany = company?.trim() || null;
 

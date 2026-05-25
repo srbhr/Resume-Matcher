@@ -790,6 +790,7 @@
       "cv": "CV",
       "coverLetter": "Cover Letter",
       "outreach": "Outreach Mail",
+      "job": "Job",
       "ariaLabel": "Document views"
     },
     "actions": {
@@ -805,7 +806,9 @@
       "generate": "Generate",
       "regenerate": "Regenerate",
       "generateCV": "Generate CV",
-      "generateResume": "Generate Resume"
+      "generateResume": "Generate Resume",
+      "saveJob": "Save",
+      "cancelJobEdit": "Cancel"
     },
     "tools": {
       "jdMatch": "JD Match",
@@ -841,7 +844,12 @@
       "coverAction": "Generate",
       "outreachHeadline": "// NO OUTREACH MESSAGE YET",
       "outreachBody": "Draft a referral or cold-intro email tailored to this role.",
-      "outreachAction": "Generate"
+      "outreachAction": "Generate",
+      "jobHeadline": "// JOB DESCRIPTION",
+      "jobBody": "The job description used to tailor this resume.",
+      "jobEmpty": "No job description found for this resume.",
+      "jobSaveSuccess": "Job description updated.",
+      "jobSaveError": "Failed to update job description."
     },
     "generateNeedsResume": "Upload a resume first — a CV is generated from a resume.",
     "generateNeedsCV": "Upload a CV first — a resume is condensed from a CV.",

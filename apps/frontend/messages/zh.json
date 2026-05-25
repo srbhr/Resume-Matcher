@@ -790,6 +790,7 @@
       "cv": "CV",
       "coverLetter": "求职信",
       "outreach": "求职邮件",
+      "job": "职位",
       "ariaLabel": "文档视图"
     },
     "actions": {
@@ -805,7 +806,9 @@
       "generate": "生成",
       "regenerate": "重新生成",
       "generateCV": "生成 CV",
-      "generateResume": "生成简历"
+      "generateResume": "生成简历",
+      "saveJob": "保存",
+      "cancelJobEdit": "取消"
     },
     "tools": {
       "jdMatch": "职位匹配",
@@ -841,7 +844,12 @@
       "coverAction": "生成",
       "outreachHeadline": "// 尚未生成邮件",
       "outreachBody": "撰写针对此职位的推荐或主动联系邮件。",
-      "outreachAction": "生成"
+      "outreachAction": "生成",
+      "jobHeadline": "// 职位描述",
+      "jobBody": "用于定制此简历的职位描述。",
+      "jobEmpty": "未找到与此简历相关的职位描述。",
+      "jobSaveSuccess": "职位描述已更新。",
+      "jobSaveError": "更新职位描述失败。"
     },
     "generateNeedsResume": "请先上传简历 — CV 是根据简历生成的。",
     "generateNeedsCV": "请先上传 CV — 简历是根据 CV 浓缩生成的。",

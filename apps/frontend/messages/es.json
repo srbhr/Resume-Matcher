@@ -790,6 +790,7 @@
       "cv": "CV",
       "coverLetter": "Carta",
       "outreach": "Correo de contacto",
+      "job": "Puesto",
       "ariaLabel": "Vistas de documento"
     },
     "actions": {
@@ -805,7 +806,9 @@
       "generate": "Generar",
       "regenerate": "Regenerar",
       "generateCV": "Generar CV",
-      "generateResume": "Generar currículum"
+      "generateResume": "Generar currículum",
+      "saveJob": "Guardar",
+      "cancelJobEdit": "Cancelar"
     },
     "tools": {
       "jdMatch": "Coincidencia",
@@ -841,7 +844,12 @@
       "coverAction": "Generar",
       "outreachHeadline": "// AÚN SIN MENSAJE DE CONTACTO",
       "outreachBody": "Redacta un mensaje de presentación o de referencia adaptado a este puesto.",
-      "outreachAction": "Generar"
+      "outreachAction": "Generar",
+      "jobHeadline": "// DESCRIPCIÓN DEL PUESTO",
+      "jobBody": "La descripción del puesto utilizada para adaptar este currículum.",
+      "jobEmpty": "No se encontró descripción del puesto para este currículum.",
+      "jobSaveSuccess": "Descripción del puesto actualizada.",
+      "jobSaveError": "Error al actualizar la descripción del puesto."
     },
     "generateNeedsResume": "Sube primero un currículum — el CV se genera a partir de un currículum.",
     "generateNeedsCV": "Sube primero un CV — el currículum se condensa a partir de un CV.",

@@ -790,6 +790,7 @@
       "cv": "CV",
       "coverLetter": "カバーレター",
       "outreach": "アウトリーチメール",
+      "job": "求人",
       "ariaLabel": "ドキュメントビュー"
     },
     "actions": {
@@ -805,7 +806,9 @@
       "generate": "生成",
       "regenerate": "再生成",
       "generateCV": "CV を生成",
-      "generateResume": "履歴書を生成"
+      "generateResume": "履歴書を生成",
+      "saveJob": "保存",
+      "cancelJobEdit": "キャンセル"
     },
     "tools": {
       "jdMatch": "求人マッチ",
@@ -841,7 +844,12 @@
       "coverAction": "生成",
       "outreachHeadline": "// アウトリーチメッセージが未作成",
       "outreachBody": "この職務に合わせた紹介や初回連絡のメールを下書きします。",
-      "outreachAction": "生成"
+      "outreachAction": "生成",
+      "jobHeadline": "// 求人内容",
+      "jobBody": "この履歴書を調整するために使用された求人内容です。",
+      "jobEmpty": "この履歴書に関連する求人内容が見つかりませんでした。",
+      "jobSaveSuccess": "求人内容を更新しました。",
+      "jobSaveError": "求人内容の更新に失敗しました。"
     },
     "generateNeedsResume": "まず履歴書をアップロードしてください — CV は履歴書から生成されます。",
     "generateNeedsCV": "まず CV をアップロードしてください — 履歴書は CV から要約されます。",

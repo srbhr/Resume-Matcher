@@ -790,6 +790,7 @@
       "cv": "CV",
       "coverLetter": "Carta",
       "outreach": "Mensagem de contato",
+      "job": "Vaga",
       "ariaLabel": "Visualizações de documento"
     },
     "actions": {
@@ -805,7 +806,9 @@
       "generate": "Gerar",
       "regenerate": "Regerar",
       "generateCV": "Gerar CV",
-      "generateResume": "Gerar currículo"
+      "generateResume": "Gerar currículo",
+      "saveJob": "Salvar",
+      "cancelJobEdit": "Cancelar"
     },
     "tools": {
       "jdMatch": "Correspondência",
@@ -841,7 +844,12 @@
       "coverAction": "Gerar",
       "outreachHeadline": "// SEM MENSAGEM DE CONTATO",
       "outreachBody": "Esboce uma mensagem de indicação ou primeiro contato personalizada para esta vaga.",
-      "outreachAction": "Gerar"
+      "outreachAction": "Gerar",
+      "jobHeadline": "// DESCRIÇÃO DA VAGA",
+      "jobBody": "A descrição da vaga usada para personalizar este currículo.",
+      "jobEmpty": "Nenhuma descrição de vaga encontrada para este currículo.",
+      "jobSaveSuccess": "Descrição da vaga atualizada.",
+      "jobSaveError": "Falha ao atualizar a descrição da vaga."
     },
     "generateNeedsResume": "Envie primeiro um currículo — o CV é gerado a partir de um currículo.",
     "generateNeedsCV": "Envie primeiro um CV — o currículo é condensado a partir de um CV.",

@@ -9,6 +9,8 @@ import { SegmentedTabs, type SegmentedTab } from '@/components/ui/segmented-tabs
 import Resume, { ResumeData } from '@/components/dashboard/resume-component';
 import {
   fetchResume,
+  fetchJobDescription,
+  updateJobDescription,
   downloadResumeJson,
   downloadResumePdf,
   getResumePdfUrl,
@@ -66,9 +68,9 @@ import { type TemplateSettings, DEFAULT_TEMPLATE_SETTINGS } from '@/lib/types/te
 import { ChatBot } from '@/components/chat-bot/chat-bot';
 
 type ProcessingStatus = 'pending' | 'processing' | 'ready' | 'failed';
-type TabId = 'resume' | 'cv' | 'coverLetter' | 'outreach';
+type TabId = 'resume' | 'cv' | 'coverLetter' | 'outreach' | 'job';
 
-const TAB_IDS: readonly TabId[] = ['resume', 'cv', 'coverLetter', 'outreach'] as const;
+const TAB_IDS: readonly TabId[] = ['resume', 'cv', 'coverLetter', 'outreach', 'job'] as const;
 
 function parseTab(value: string | null): TabId {
   return (TAB_IDS as readonly string[]).includes(value ?? '') ? (value as TabId) : 'resume';
@@ -123,6 +125,14 @@ export default function ResumeViewerPage() {
   const [isGeneratingOutreach, setIsGeneratingOutreach] = useState(false);
   const [showRegenerateOutreachDialog, setShowRegenerateOutreachDialog] = useState(false);
   const [outreachCopied, setOutreachCopied] = useState(false);
+
+  // Job description (tailored resumes only)
+  const [jobDescription, setJobDescription] = useState<string | null>(null);
+  const [jobDraft, setJobDraft] = useState('');
+  const [isEditingJob, setIsEditingJob] = useState(false);
+  const [isSavingJob, setIsSavingJob] = useState(false);
+  const [jobLoading, setJobLoading] = useState(false);
+  const [jobError, setJobError] = useState<string | null>(null);
 
   // Resume in-place editor
   const [isEditingResume, setIsEditingResume] = useState(false);
@@ -435,6 +445,32 @@ export default function ResumeViewerPage() {
       cancelled = true;
     };
   }, [activeTab, resumeDocId, resumeChildData, resumeId]);
+
+  // Lazy-load job description when the Job tab is active (tailored resumes only)
+  useEffect(() => {
+    if (activeTab !== 'job') return;
+    if (isMasterResume) return;
+    if (jobDescription !== null) return;
+    let cancelled = false;
+    setJobLoading(true);
+    setJobError(null);
+    fetchJobDescription(resumeId)
+      .then((data) => {
+        if (cancelled) return;
+        setJobDescription(data.content);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        console.error('Failed to load job description:', err);
+        setJobError(err instanceof Error ? err.message : 'Failed to load job description');
+      })
+      .finally(() => {
+        if (!cancelled) setJobLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab, isMasterResume, jobDescription, resumeId]);
 
   // Active resume data: master row when master IS the resume, child row otherwise.
   const activeResumeData = resumeDocId === resumeId ? resumeData : resumeChildData;
@@ -901,15 +937,23 @@ export default function ResumeViewerPage() {
   const candidateName =
     resumeData.personalInfo?.name?.trim() || t('resume.defaults.name') || 'Resume';
 
-  const tabs: SegmentedTab[] = [
-    { id: 'resume', label: t('resumeViewer.tabs.resume') },
-    { id: 'cv', label: t('resumeViewer.tabs.cv') },
-    { id: 'coverLetter', label: t('resumeViewer.tabs.coverLetter') },
-    { id: 'outreach', label: t('resumeViewer.tabs.outreach') },
-  ];
+  const tabs: SegmentedTab[] = isMasterResume
+    ? [
+        { id: 'resume', label: t('resumeViewer.tabs.resume') },
+        { id: 'cv', label: t('resumeViewer.tabs.cv') },
+      ]
+    : [
+        { id: 'resume', label: t('resumeViewer.tabs.resume') },
+        { id: 'cv', label: t('resumeViewer.tabs.cv') },
+        { id: 'coverLetter', label: t('resumeViewer.tabs.coverLetter') },
+        { id: 'outreach', label: t('resumeViewer.tabs.outreach') },
+        { id: 'job', label: t('resumeViewer.tabs.job') },
+      ];
 
   const tabLabel = tabs.find((tab) => tab.id === activeTab)?.label ?? '';
-  const showTools = activeTab === 'resume' || activeTab === 'cv' || activeTab === 'coverLetter';
+  const showTools =
+    !isMasterResume &&
+    (activeTab === 'resume' || activeTab === 'cv' || activeTab === 'coverLetter');
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -1291,6 +1335,62 @@ export default function ResumeViewerPage() {
             </>
           )}
 
+          {activeTab === 'job' && !isMasterResume && !isEditingJob && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                setJobDraft(jobDescription ?? '');
+                setIsEditingJob(true);
+              }}
+              disabled={jobLoading || jobDescription === null}
+            >
+              <Pencil className="w-3.5 h-3.5" />
+              {t('resumeViewer.actions.editMessage')}
+            </Button>
+          )}
+          {activeTab === 'job' && !isMasterResume && isEditingJob && (
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setIsEditingJob(false)}
+                disabled={isSavingJob}
+              >
+                <XIcon className="w-3.5 h-3.5" />
+                {t('common.cancel')}
+              </Button>
+              <Button
+                size="sm"
+                onClick={async () => {
+                  setIsSavingJob(true);
+                  try {
+                    const result = await updateJobDescription(resumeId, jobDraft);
+                    setJobDescription(result.content);
+                    setIsEditingJob(false);
+                  } catch (err) {
+                    console.error('Failed to save job description:', err);
+                  } finally {
+                    setIsSavingJob(false);
+                  }
+                }}
+                disabled={isSavingJob}
+              >
+                {isSavingJob ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    {t('common.saving')}
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-3.5 h-3.5" />
+                    {t('common.save')}
+                  </>
+                )}
+              </Button>
+            </>
+          )}
+
           {showTools && (
             <>
               <span aria-hidden="true" className="inline-block w-px h-5 bg-border/40 mx-1" />
@@ -1641,6 +1741,51 @@ export default function ResumeViewerPage() {
                         )}
                       </div>
                     )}
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'job' && !isMasterResume && (
+                <div className="flex justify-center pb-4">
+                  <div className="w-full max-w-[210mm] border border-black bg-white shadow-sw-default">
+                    <div className="p-[28px_32px]">
+                      <h2 className="font-sans text-[22px] font-semibold tracking-[-0.01em] m-0">
+                        {t('resumeViewer.tabs.job')}
+                        {resumeTitle ? ` · ${resumeTitle}` : ''}
+                      </h2>
+                      <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-ink-soft mt-1 mb-6">
+                        {t('resumeViewer.empty.jobHeadline')}
+                      </div>
+                      {jobLoading ? (
+                        <div className="flex flex-col items-center py-16 gap-3">
+                          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                          <p className="font-mono text-xs uppercase tracking-[0.18em] text-ink-soft">
+                            {t('common.loading')}
+                          </p>
+                        </div>
+                      ) : jobError && !jobDescription ? (
+                        <p className="font-mono text-xs text-ink-soft">
+                          {t('resumeViewer.empty.jobEmpty')}
+                        </p>
+                      ) : isEditingJob ? (
+                        <textarea
+                          value={jobDraft}
+                          onChange={(e) => setJobDraft(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') e.stopPropagation();
+                          }}
+                          className="w-full min-h-[400px] font-serif text-[15px] leading-relaxed border border-black p-4 bg-white resize-y focus:outline-none focus:ring-1 focus:ring-black rounded-none"
+                        />
+                      ) : jobDescription ? (
+                        <pre className="font-serif text-[15px] leading-relaxed whitespace-pre-wrap break-words m-0">
+                          {jobDescription}
+                        </pre>
+                      ) : (
+                        <p className="font-mono text-xs text-ink-soft">
+                          {t('resumeViewer.empty.jobEmpty')}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}

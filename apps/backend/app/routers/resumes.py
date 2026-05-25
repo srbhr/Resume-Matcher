@@ -40,6 +40,7 @@ from app.schemas import (
     ResumeSummary,
     ResumeUploadResponse,
     RawResume,
+    UpdateJobDescriptionRequest,
     UpdateCoverLetterRequest,
     UpdateOutreachMessageRequest,
     UpdateTitleRequest,
@@ -2499,6 +2500,45 @@ async def get_job_description_for_resume(resume_id: str) -> dict:
     return {
         "job_id": job["job_id"],
         "content": job["content"],
+    }
+
+
+@router.put("/{resume_id}/job-description")
+async def update_job_description_for_resume(
+    resume_id: str, request: UpdateJobDescriptionRequest
+) -> dict:
+    """Update the job description associated with a tailored resume."""
+    resume = db.get_resume(resume_id)
+    if not resume:
+        raise HTTPException(status_code=404, detail="Resume not found")
+
+    if not resume.get("parent_id"):
+        raise HTTPException(
+            status_code=400,
+            detail="Job description can only be updated for tailored resumes.",
+        )
+
+    improvement = db.get_improvement_by_tailored_resume(resume_id)
+    if not improvement:
+        raise HTTPException(
+            status_code=400,
+            detail="No job context found for this resume.",
+        )
+
+    job = db.get_job(improvement["job_id"])
+    if not job:
+        raise HTTPException(
+            status_code=404,
+            detail="The associated job description was not found.",
+        )
+
+    updated = db.update_job(job["job_id"], {"content": request.content.strip()})
+    if not updated:
+        raise HTTPException(status_code=500, detail="Failed to update job description.")
+
+    return {
+        "job_id": updated["job_id"],
+        "content": updated["content"],
     }
 
 

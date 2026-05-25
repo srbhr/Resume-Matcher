@@ -764,6 +764,12 @@ class ApiKeysUpdateResponse(BaseModel):
 
 
 # Update Cover Letter/Outreach Models
+class UpdateJobDescriptionRequest(BaseModel):
+    """Request to update a job description."""
+
+    content: str
+
+
 class UpdateCoverLetterRequest(BaseModel):
     """Request to update cover letter content."""
 
