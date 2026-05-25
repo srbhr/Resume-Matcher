@@ -644,10 +644,6 @@ export default function ResumeViewerPage() {
 
       downloadBlobAsFile(blob, filename);
 
-      const pdfBlob = new Blob([blob], { type: 'application/pdf' });
-      const pdfUrl = URL.createObjectURL(pdfBlob);
-      window.open(pdfUrl, '_blank');
-
       setShowDownloadSuccessDialog(true);
     } catch (err) {
       console.error('Failed to download resume:', err);
