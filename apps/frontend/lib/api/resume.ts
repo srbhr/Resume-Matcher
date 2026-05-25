@@ -2,7 +2,7 @@ import { ImprovedResult } from '@/components/common/resume_previewer_context';
 import type { ResumeData } from '@/components/dashboard/resume-component';
 import { type TemplateSettings } from '@/lib/types/template-settings';
 import { type Locale } from '@/i18n/config';
-import { API_BASE, apiPost, apiPatch, apiDelete, apiFetch } from './client';
+import { API_BASE, apiPost, apiPatch, apiPut, apiDelete, apiFetch } from './client';
 
 // Matches backend schemas/models.py ResumeData
 interface ProcessedResume {
@@ -75,6 +75,23 @@ interface ResumeResponse {
     resume_download_filename?: string | null;
     cv_download_filename?: string | null;
   };
+}
+
+export interface ResumeJsonExport {
+  metadata: {
+    schema: string;
+    resume_id: string;
+    title?: string | null;
+    filename?: string | null;
+    is_master?: boolean;
+    parent_id?: string | null;
+    content_type?: string | null;
+    processing_status?: string | null;
+    created_at?: string | null;
+    updated_at?: string | null;
+    exported_at?: string | null;
+  };
+  resume: ProcessedResume;
 }
 
 /** Response from resume upload endpoint */
@@ -290,6 +307,28 @@ export async function updateResume(
   }
   const payload = (await res.json()) as ResumeResponse;
   return payload.data;
+}
+
+export async function downloadResumeJson(resumeId: string): Promise<ResumeJsonExport> {
+  const res = await apiFetch(`/resumes/${encodeURIComponent(resumeId)}/json`);
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Failed to download resume JSON (status ${res.status}): ${text}`);
+  }
+  return res.json();
+}
+
+export async function uploadResumeJson(
+  resumeId: string,
+  payload: ResumeJsonExport | ProcessedResume
+): Promise<ResumeResponse['data']> {
+  const res = await apiPut(`/resumes/${encodeURIComponent(resumeId)}/json`, payload);
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Failed to upload resume JSON (status ${res.status}): ${text}`);
+  }
+  const response = (await res.json()) as ResumeResponse;
+  return response.data;
 }
 
 export function getResumePdfUrl(

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,7 @@ import { SegmentedTabs, type SegmentedTab } from '@/components/ui/segmented-tabs
 import Resume, { ResumeData } from '@/components/dashboard/resume-component';
 import {
   fetchResume,
+  downloadResumeJson,
   downloadResumePdf,
   getResumePdfUrl,
   deleteResume,
@@ -22,7 +23,9 @@ import {
   downloadCoverLetterPdf,
   getCoverLetterPdfUrl,
   updateResume,
+  uploadResumeJson,
   saveTemplateSettings,
+  type ResumeJsonExport,
 } from '@/lib/api/resume';
 import { useStatusCache } from '@/lib/context/status-cache';
 import {
@@ -38,6 +41,9 @@ import {
   BarChart3,
   Save,
   X as XIcon,
+  FileJson,
+  Upload,
+  RefreshCw,
 } from 'lucide-react';
 import { EnrichmentModal } from '@/components/enrichment/enrichment-modal';
 import { CoverLetterEditor } from '@/components/builder/cover-letter-editor';
@@ -50,7 +56,12 @@ import { AtsInlineView } from '@/components/resumes/ats-inline-view';
 import { useTranslations } from '@/lib/i18n';
 import { withLocalizedDefaultSections } from '@/lib/utils/section-helpers';
 import { useLanguage } from '@/lib/context/language-context';
-import { downloadBlobAsFile, openUrlInNewTab, sanitizeFilename } from '@/lib/utils/download';
+import {
+  downloadBlobAsFile,
+  openUrlInNewTab,
+  sanitizeDownloadFilename,
+  sanitizeFilename,
+} from '@/lib/utils/download';
 import { type TemplateSettings, DEFAULT_TEMPLATE_SETTINGS } from '@/lib/types/template-settings';
 
 type ProcessingStatus = 'pending' | 'processing' | 'ready' | 'failed';
@@ -83,9 +94,17 @@ export default function ResumeViewerPage() {
   const [showEnrichmentModal, setShowEnrichmentModal] = useState(false);
   const [isRetrying, setIsRetrying] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isDownloadingJson, setIsDownloadingJson] = useState(false);
+  const [isUploadingJson, setIsUploadingJson] = useState(false);
   const [resumeTitle, setResumeTitle] = useState<string | null>(null);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editingTitleValue, setEditingTitleValue] = useState('');
+  const [pendingJsonUpload, setPendingJsonUpload] = useState<ResumeJsonExport | ResumeData | null>(
+    null
+  );
+  const [jsonActionError, setJsonActionError] = useState<string | null>(null);
+  const [jsonActionSuccess, setJsonActionSuccess] = useState<string | null>(null);
+  const uploadJsonInputRef = useRef<HTMLInputElement | null>(null);
   const [templateSettings, setTemplateSettings] =
     useState<TemplateSettings>(DEFAULT_TEMPLATE_SETTINGS);
 
@@ -120,6 +139,12 @@ export default function ResumeViewerPage() {
   const [cvLoading, setCvLoading] = useState(false);
   const [cvTemplateSettings, setCvTemplateSettings] =
     useState<TemplateSettings>(DEFAULT_TEMPLATE_SETTINGS);
+  // Symmetric storage for the case where the resume lives in a child row
+  // (master was uploaded as a CV; user later generated a resume).
+  const [resumeChildData, setResumeChildData] = useState<ResumeData | null>(null);
+  const [resumeChildLoading, setResumeChildLoading] = useState(false);
+  const [resumeChildTemplateSettings, setResumeChildTemplateSettings] =
+    useState<TemplateSettings>(DEFAULT_TEMPLATE_SETTINGS);
   const [isGeneratingResume, setIsGeneratingResume] = useState(false);
   const [isGeneratingCV, setIsGeneratingCV] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
@@ -140,8 +165,6 @@ export default function ResumeViewerPage() {
   const [atsEverOpened, setAtsEverOpened] = useState(false);
 
   const activeTab = parseTab(searchParams?.get('tab') ?? null);
-  const savedQrCode =
-    templateSettings.qrCode.enabled && templateSettings.qrCode.url ? templateSettings.qrCode : null;
 
   const resumeId = params?.id as string;
 
@@ -253,9 +276,13 @@ export default function ResumeViewerPage() {
   };
 
   const handleEdit = () => {
-    if (!resumeData) return;
-    setResumeDraft(resumeData);
-    setTemplateDraft(templateSettings);
+    // Draft from the resume's actual data (master row when master IS the
+    // resume; lazy-loaded child otherwise). Falls back to resumeData so the
+    // pre-existing common case is unaffected.
+    const source = activeResumeData ?? resumeData;
+    if (!source) return;
+    setResumeDraft(source);
+    setTemplateDraft(activeResumeTemplate);
     setIsEditingResume(true);
   };
 
@@ -268,13 +295,23 @@ export default function ResumeViewerPage() {
     if (!resumeDraft) return;
     setIsSavingResume(true);
     try {
+      // Persist to the resume's own row — that's the master when master IS the
+      // resume, or the linked child row when the resume was generated from a
+      // CV-only master. Writing to `resumeId` blindly would clobber the CV.
+      const targetId = activeResumeDocId;
+      const writesToMaster = targetId === resumeId;
       const [updated] = await Promise.all([
-        updateResume(resumeId, resumeDraft),
-        saveTemplateSettings(resumeId, templateDraft),
+        updateResume(targetId, resumeDraft),
+        saveTemplateSettings(targetId, templateDraft),
       ]);
       const next = (updated.processed_resume || resumeDraft) as ResumeData;
-      setResumeData(next);
-      setTemplateSettings(templateDraft);
+      if (writesToMaster) {
+        setResumeData(next);
+        setTemplateSettings(templateDraft);
+      } else {
+        setResumeChildData(next);
+        setResumeChildTemplateSettings(templateDraft);
+      }
       setIsEditingResume(false);
       setResumeDraft(null);
     } catch (err) {
@@ -361,8 +398,50 @@ export default function ResumeViewerPage() {
   // The CV's structured data lives on the master row when master IS the CV,
   // otherwise in the lazy-loaded cvData. Both editor + viewer pull from here.
   const activeCvData = cvDocId === resumeId ? resumeData : cvData;
-  const activeCvTemplate =
-    cvDocId === resumeId ? templateSettings : cvTemplateSettings;
+  const activeCvTemplate = cvDocId === resumeId ? templateSettings : cvTemplateSettings;
+
+  // Symmetric lazy-load for the resume document when it lives in a child row
+  // (master is a CV-only upload; user later generated a resume).
+  useEffect(() => {
+    if (activeTab !== 'resume') return;
+    if (!resumeDocId) return;
+    if (resumeDocId === resumeId) return; // master IS the resume; reuse resumeData
+    if (resumeChildData) return;
+    let cancelled = false;
+    setResumeChildLoading(true);
+    fetchResume(resumeDocId)
+      .then((data) => {
+        if (cancelled) return;
+        if (data.processed_resume) setResumeChildData(data.processed_resume as ResumeData);
+        if (data.template_settings) {
+          const saved = data.template_settings as Partial<TemplateSettings>;
+          setResumeChildTemplateSettings({
+            ...DEFAULT_TEMPLATE_SETTINGS,
+            ...saved,
+            margins: { ...DEFAULT_TEMPLATE_SETTINGS.margins, ...(saved.margins ?? {}) },
+            spacing: { ...DEFAULT_TEMPLATE_SETTINGS.spacing, ...(saved.spacing ?? {}) },
+            fontSize: { ...DEFAULT_TEMPLATE_SETTINGS.fontSize, ...(saved.fontSize ?? {}) },
+            textStyle: { ...DEFAULT_TEMPLATE_SETTINGS.textStyle, ...(saved.textStyle ?? {}) },
+            qrCode: { ...DEFAULT_TEMPLATE_SETTINGS.qrCode, ...(saved.qrCode ?? {}) },
+          });
+        }
+      })
+      .catch((err) => console.error('Failed to load resume document:', err))
+      .finally(() => {
+        if (!cancelled) setResumeChildLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab, resumeDocId, resumeChildData, resumeId]);
+
+  // Active resume data: master row when master IS the resume, child row otherwise.
+  const activeResumeData = resumeDocId === resumeId ? resumeData : resumeChildData;
+  const activeResumeTemplate =
+    resumeDocId === resumeId ? templateSettings : resumeChildTemplateSettings;
+  // The id we should read/write the resume against, regardless of whether it's
+  // stored on the master or on a child row.
+  const activeResumeDocId = resumeDocId ?? resumeId;
 
   const handleEditCv = () => {
     if (!cvDocId || !activeCvData) return;
@@ -421,8 +500,10 @@ export default function ResumeViewerPage() {
     try {
       await generateCounterpart(masterIdForGenerate, target);
       // Refresh master to pick up the new resume_doc_id / cv_doc_id pointers,
-      // then drop cached CV data so the lazy-load effect refetches it.
+      // then drop cached counterpart data so the lazy-load effect refetches
+      // whichever side just got created.
       setCvData(null);
+      setResumeChildData(null);
       const data = await fetchResume(resumeId);
       setResumeDocId(data.resume_doc_id ?? null);
       setCvDocId(data.cv_doc_id ?? null);
@@ -445,6 +526,80 @@ export default function ResumeViewerPage() {
   const handleEnrichmentComplete = () => {
     setShowEnrichmentModal(false);
     reloadResumeData();
+  };
+
+  const getJsonFilenameTitle = (jsonExport?: ResumeJsonExport): string | null | undefined =>
+    resumeTitle || jsonExport?.metadata.title || resumeData?.personalInfo?.name;
+
+  const handleDownloadJson = async () => {
+    setIsDownloadingJson(true);
+    try {
+      const jsonExport = await downloadResumeJson(resumeId);
+      const blob = new Blob([JSON.stringify(jsonExport, null, 2)], {
+        type: 'application/json',
+      });
+      const filename = sanitizeDownloadFilename(
+        getJsonFilenameTitle(jsonExport),
+        `resume_${resumeId}`,
+        'json'
+      );
+      downloadBlobAsFile(blob, filename);
+      setJsonActionSuccess(t('resumeViewer.jsonDownloadSuccess'));
+    } catch (err) {
+      console.error('Failed to download resume JSON:', err);
+      setJsonActionError(t('resumeViewer.jsonDownloadError'));
+    } finally {
+      setIsDownloadingJson(false);
+    }
+  };
+
+  const handleUploadJsonClick = () => {
+    uploadJsonInputRef.current?.click();
+  };
+
+  const handleUploadJsonFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+      const payload = JSON.parse(text) as ResumeJsonExport | ResumeData;
+      if (
+        'metadata' in payload &&
+        payload.metadata?.resume_id &&
+        payload.metadata.resume_id !== resumeId
+      ) {
+        setJsonActionError(t('resumeViewer.jsonDifferentResume'));
+        return;
+      }
+      setPendingJsonUpload(payload);
+    } catch (err) {
+      console.error('Failed to read resume JSON:', err);
+      setJsonActionError(t('resumeViewer.jsonInvalidFile'));
+    }
+  };
+
+  const handleUploadJsonConfirm = async () => {
+    if (!pendingJsonUpload) return;
+    setIsUploadingJson(true);
+    try {
+      const updated = await uploadResumeJson(resumeId, pendingJsonUpload);
+      if (updated.processed_resume) {
+        setResumeData(updated.processed_resume as ResumeData);
+      } else {
+        await reloadResumeData();
+      }
+      setProcessingStatus((updated.raw_resume?.processing_status || 'ready') as ProcessingStatus);
+      setResumeTitle(updated.title ?? null);
+      setJsonActionSuccess(t('resumeViewer.jsonUploadSuccess'));
+      setPendingJsonUpload(null);
+    } catch (err) {
+      console.error('Failed to upload resume JSON:', err);
+      setJsonActionError(t('resumeViewer.jsonUploadError'));
+    } finally {
+      setIsUploadingJson(false);
+    }
   };
 
   const buildQrSettings = () =>
@@ -480,8 +635,11 @@ export default function ResumeViewerPage() {
     setIsDownloading(true);
     try {
       const qrSettings = buildQrSettings();
-      const blob = await downloadResumePdf(resumeId, templateSettings, uiLanguage, qrSettings);
-      const filename = sanitizeFilename(resumeData?.personalInfo?.name, resumeId, 'resume');
+      // Download the resume's actual row — its data and template settings
+      // live there, so the PDF reflects what's on screen.
+      const targetId = activeResumeDocId;
+      const blob = await downloadResumePdf(targetId, activeResumeTemplate, uiLanguage, qrSettings);
+      const filename = sanitizeFilename(activeResumeData?.personalInfo?.name, targetId, 'resume');
 
       downloadBlobAsFile(blob, filename);
 
@@ -494,8 +652,8 @@ export default function ResumeViewerPage() {
       console.error('Failed to download resume:', err);
       if (err instanceof TypeError && err.message.includes('Failed to fetch')) {
         const fallbackUrl = getResumePdfUrl(
-          resumeId,
-          templateSettings,
+          activeResumeDocId,
+          activeResumeTemplate,
           uiLanguage,
           buildQrSettings()
         );
@@ -866,11 +1024,21 @@ export default function ResumeViewerPage() {
                   {t('resumeViewer.actions.enhance')}
                 </Button>
               )}
-              <Button size="sm" variant="outline" onClick={handleEdit}>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleEdit}
+                disabled={!activeResumeData || resumeChildLoading}
+              >
                 <Pencil className="w-3.5 h-3.5" />
                 {t('resumeViewer.actions.editResume')}
               </Button>
-              <Button size="sm" variant="outline" onClick={handleDownload} disabled={isDownloading}>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleDownload}
+                disabled={isDownloading || !activeResumeData}
+              >
                 {isDownloading ? (
                   <>
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -883,6 +1051,43 @@ export default function ResumeViewerPage() {
                   </>
                 )}
               </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleDownloadJson}
+                disabled={isDownloadingJson}
+              >
+                {isDownloadingJson ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <FileJson className="w-3.5 h-3.5" />
+                )}
+                {isDownloadingJson ? t('common.generating') : t('resumeViewer.downloadJson')}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleUploadJsonClick}
+                disabled={isUploadingJson}
+              >
+                {isUploadingJson ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Upload className="w-3.5 h-3.5" />
+                )}
+                {isUploadingJson ? t('common.uploading') : t('resumeViewer.uploadJson')}
+              </Button>
+              <Button size="sm" variant="secondary" onClick={reloadResumeData}>
+                <RefreshCw className="w-3.5 h-3.5" />
+                {t('resumeViewer.refresh')}
+              </Button>
+              <input
+                ref={uploadJsonInputRef}
+                type="file"
+                accept="application/json,.json"
+                className="hidden"
+                onChange={handleUploadJsonFile}
+              />
             </>
           )}
           {activeTab === 'resume' && isEditingResume && (
@@ -1208,55 +1413,83 @@ export default function ResumeViewerPage() {
                   )}
                 </div>
               )}
-              {activeTab === 'resume' && (!isMasterResume || resumeDocId) && (
-                <div className="flex justify-center pb-4">
-                  <div
-                    className="resume-print w-full max-w-[250mm] shadow-sw-lg border-2 border-black bg-white"
-                    style={{ position: 'relative' }}
-                  >
-                    {savedQrCode ? (
+              {activeTab === 'resume' &&
+                (!isMasterResume || resumeDocId) &&
+                (() => {
+                  // Resolve which data the Resume tab should render. The master
+                  // row holds it in the common case; when the resume is a child
+                  // of a CV-only master, we use the lazy-loaded child data.
+                  const resumeContent =
+                    resumeDocId && resumeDocId !== resumeId
+                      ? resumeChildData
+                      : localizedResumeData || resumeData;
+                  if (!resumeContent) {
+                    return (
+                      <div className="flex flex-col items-center py-16 gap-3">
+                        <Loader2 className="w-8 h-8 animate-spin text-blue-700" />
+                        <p className="font-mono text-xs uppercase tracking-[0.18em] text-ink-soft">
+                          {t('common.loading')}
+                        </p>
+                      </div>
+                    );
+                  }
+                  // QR overlay uses the resume's own template settings so a
+                  // child resume's QR position doesn't get pinned to the
+                  // master/CV's QR.
+                  const activeQr =
+                    activeResumeTemplate.qrCode.enabled && activeResumeTemplate.qrCode.url
+                      ? activeResumeTemplate.qrCode
+                      : null;
+                  return (
+                    <div className="flex justify-center pb-4">
                       <div
-                        style={{
-                          position: 'absolute',
-                          top: `${savedQrCode.yMm}mm`,
-                          left: `${savedQrCode.xMm}mm`,
-                          width: `${savedQrCode.sizeMm}mm`,
-                          height: `${savedQrCode.sizeMm}mm`,
-                          zIndex: 10,
-                        }}
+                        className="resume-print w-full max-w-[250mm] shadow-sw-lg border-2 border-black bg-white"
+                        style={{ position: 'relative' }}
                       >
-                        <QRCodeSVG
-                          value={savedQrCode.url}
-                          level="M"
-                          includeMargin={false}
-                          style={{ width: '100%', height: '100%', display: 'block' }}
+                        {activeQr ? (
+                          <div
+                            style={{
+                              position: 'absolute',
+                              top: `${activeQr.yMm}mm`,
+                              left: `${activeQr.xMm}mm`,
+                              width: `${activeQr.sizeMm}mm`,
+                              height: `${activeQr.sizeMm}mm`,
+                              zIndex: 10,
+                            }}
+                          >
+                            <QRCodeSVG
+                              value={activeQr.url}
+                              level="M"
+                              includeMargin={false}
+                              style={{ width: '100%', height: '100%', display: 'block' }}
+                            />
+                          </div>
+                        ) : null}
+                        <Resume
+                          resumeData={resumeContent}
+                          additionalSectionLabels={{
+                            technicalSkills: t('resume.additionalLabels.technicalSkills'),
+                            languages: t('resume.additionalLabels.languages'),
+                            certifications: t('resume.additionalLabels.certifications'),
+                            awards: t('resume.additionalLabels.awards'),
+                          }}
+                          sectionHeadings={{
+                            summary: t('resume.sections.summary'),
+                            experience: t('resume.sections.experience'),
+                            education: t('resume.sections.education'),
+                            projects: t('resume.sections.projects'),
+                            certifications: t('resume.sections.certifications'),
+                            skills: t('resume.sections.skillsOnly'),
+                            languages: t('resume.sections.languages'),
+                            awards: t('resume.sections.awards'),
+                            links: t('resume.sections.links'),
+                          }}
+                          fallbackLabels={{ name: t('resume.defaults.name') }}
                         />
                       </div>
-                    ) : null}
-                    <Resume
-                      resumeData={localizedResumeData || resumeData}
-                      additionalSectionLabels={{
-                        technicalSkills: t('resume.additionalLabels.technicalSkills'),
-                        languages: t('resume.additionalLabels.languages'),
-                        certifications: t('resume.additionalLabels.certifications'),
-                        awards: t('resume.additionalLabels.awards'),
-                      }}
-                      sectionHeadings={{
-                        summary: t('resume.sections.summary'),
-                        experience: t('resume.sections.experience'),
-                        education: t('resume.sections.education'),
-                        projects: t('resume.sections.projects'),
-                        certifications: t('resume.sections.certifications'),
-                        skills: t('resume.sections.skillsOnly'),
-                        languages: t('resume.sections.languages'),
-                        awards: t('resume.sections.awards'),
-                        links: t('resume.sections.links'),
-                      }}
-                      fallbackLabels={{ name: t('resume.defaults.name') }}
-                    />
-                  </div>
-                </div>
-              )}
+                    </div>
+                  );
+                })()}
 
               {activeTab === 'cv' &&
                 (() => {
@@ -1501,6 +1734,47 @@ export default function ResumeViewerPage() {
         onConfirm={doGenerateOutreach}
         variant="warning"
       />
+
+      <ConfirmDialog
+        open={!!pendingJsonUpload}
+        onOpenChange={(open) => {
+          if (!open && !isUploadingJson) setPendingJsonUpload(null);
+        }}
+        title={t('resumeViewer.replaceJsonTitle')}
+        description={t('resumeViewer.replaceJsonDescription')}
+        confirmLabel={
+          isUploadingJson ? t('common.uploading') : t('resumeViewer.replaceJsonConfirm')
+        }
+        cancelLabel={t('common.cancel')}
+        onConfirm={handleUploadJsonConfirm}
+        variant="warning"
+      />
+
+      {jsonActionSuccess && (
+        <ConfirmDialog
+          open={!!jsonActionSuccess}
+          onOpenChange={() => setJsonActionSuccess(null)}
+          title={t('common.success')}
+          description={jsonActionSuccess}
+          confirmLabel={t('common.ok')}
+          onConfirm={() => setJsonActionSuccess(null)}
+          variant="success"
+          showCancelButton={false}
+        />
+      )}
+
+      {jsonActionError && (
+        <ConfirmDialog
+          open={!!jsonActionError}
+          onOpenChange={() => setJsonActionError(null)}
+          title={t('common.error')}
+          description={jsonActionError}
+          confirmLabel={t('common.ok')}
+          onConfirm={() => setJsonActionError(null)}
+          variant="danger"
+          showCancelButton={false}
+        />
+      )}
 
       {deleteError && (
         <ConfirmDialog
