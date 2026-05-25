@@ -1,0 +1,32 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Deploy via SSH
+        env:
+          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          TMPDIR=$(mktemp -d)
+          echo "$DEPLOY_KEY" > "$TMPDIR/deploy_key"
+          chmod 600 "$TMPDIR/deploy_key"
+
+          ssh -i "$TMPDIR/deploy_key" \
+              -o StrictHostKeyChecking=no \
+              "$DEPLOY_USER@$DEPLOY_HOST" \
+              'cd ~/Resume-Matcher && \
+               git pull && \
+               podman build --no-cache -t localhost/resume-matcher:latest . && \
+               podman ps -q --filter name=resume-matcher | xargs -r podman stop && \
+               podman ps -aq --filter name=resume-matcher | xargs -r podman rm'
+
+          rm -rf "$TMPDIR"
