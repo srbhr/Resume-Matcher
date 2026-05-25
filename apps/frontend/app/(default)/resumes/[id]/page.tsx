@@ -981,39 +981,33 @@ export default function ResumeViewerPage() {
             )}
           </div>
 
-          {!isMasterResume ? (
-            isEditingTitle ? (
-              <input
-                type="text"
-                value={editingTitleValue}
-                onChange={(e) => setEditingTitleValue(e.target.value)}
-                onBlur={handleTitleSave}
-                onKeyDown={handleTitleKeyDown}
-                autoFocus
-                maxLength={80}
-                placeholder={t('resumeViewer.titlePlaceholder')}
-                className="font-sans text-[22px] font-semibold tracking-[-0.01em] border-b border-border bg-transparent outline-none w-full max-w-xl px-0 py-0"
-              />
-            ) : (
-              <button
-                type="button"
-                onClick={() => {
-                  setEditingTitleValue(resumeTitle || candidateName);
-                  setIsEditingTitle(true);
-                }}
-                className="group flex items-center gap-2 bg-transparent border-none p-0 cursor-pointer text-left"
-                aria-label="Edit resume title"
-              >
-                <h1 className="font-sans text-[22px] font-semibold tracking-[-0.01em] m-0">
-                  {candidateName}
-                </h1>
-                <Pencil className="w-4 h-4 opacity-0 group-hover:opacity-60 transition-opacity" />
-              </button>
-            )
+          {isEditingTitle ? (
+            <input
+              type="text"
+              value={editingTitleValue}
+              onChange={(e) => setEditingTitleValue(e.target.value)}
+              onBlur={handleTitleSave}
+              onKeyDown={handleTitleKeyDown}
+              autoFocus
+              maxLength={80}
+              placeholder={t('resumeViewer.titlePlaceholder')}
+              className="font-sans text-[22px] font-semibold tracking-[-0.01em] border-b border-border bg-transparent outline-none w-full max-w-xl px-0 py-0"
+            />
           ) : (
-            <h1 className="font-sans text-[22px] font-semibold tracking-[-0.01em] m-0">
-              {candidateName}
-            </h1>
+            <button
+              type="button"
+              onClick={() => {
+                setEditingTitleValue(resumeTitle || candidateName);
+                setIsEditingTitle(true);
+              }}
+              className="group flex items-center gap-2 bg-transparent border-none p-0 cursor-pointer text-left"
+              aria-label="Edit resume title"
+            >
+              <h1 className="font-sans text-[22px] font-semibold tracking-[-0.01em] m-0">
+                {candidateName}
+              </h1>
+              <Pencil className="w-4 h-4 opacity-0 group-hover:opacity-60 transition-opacity" />
+            </button>
           )}
         </div>
 
