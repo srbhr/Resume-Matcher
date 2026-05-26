@@ -260,11 +260,11 @@ export default function DashboardPage() {
   const tailorEnabled = Boolean(isLlmConfigured);
 
   return (
-    <div className="h-screen w-full flex justify-center items-start py-12 px-4 md:px-8 overflow-hidden bg-background grid-bg">
+    <div className="h-screen w-full flex justify-center items-start py-3 sm:py-8 md:py-12 px-3 sm:px-4 md:px-8 overflow-hidden bg-background grid-bg">
       <div className="w-full max-w-[86rem] max-h-full border border-border bg-canvas shadow-sw-lg flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="border-b border-border p-8 md:p-12 shrink-0 bg-canvas relative z-30">
-          <h1 className="font-serif text-5xl md:text-7xl text-ink tracking-tight leading-[0.95] uppercase">
+        <div className="border-b border-border p-4 sm:p-6 md:p-8 lg:p-12 shrink-0 bg-canvas relative z-30">
+          <h1 className="font-serif text-3xl sm:text-5xl md:text-7xl text-ink tracking-tight leading-[0.95] uppercase">
             {t('nav.dashboard')}
           </h1>
           <p className="mt-6 text-sm font-mono text-primary uppercase tracking-wide max-w-md font-bold">
@@ -298,10 +298,10 @@ export default function DashboardPage() {
           )}
 
           {/* Topbar: counts + New Master */}
-          <div className="flex items-end justify-between gap-6 px-8 md:px-10 py-6 border-b border-ink">
+          <div className="flex flex-wrap items-end justify-between gap-3 md:gap-6 px-4 sm:px-6 md:px-8 lg:px-10 py-3 md:py-6 border-b border-ink">
             <div>
               <div className="flex items-baseline gap-4">
-                <span className="font-serif text-5xl md:text-6xl font-bold leading-none tracking-tight text-ink">
+                <span className="font-serif text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-none tracking-tight text-ink">
                   {pad2(groups.length)}
                 </span>
                 <span className="font-mono text-xs font-bold tracking-[0.12em] uppercase text-ink">

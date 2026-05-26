@@ -389,8 +389,8 @@ function TailorPage() {
           {t('common.back')}
         </Button>
 
-        <div className="mb-8 mt-4 text-center">
-          <h1 className="font-serif text-4xl font-bold uppercase tracking-tight mb-2">
+        <div className="mb-6 mt-10 sm:mt-4 text-center">
+          <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold uppercase tracking-tight mb-2">
             {t('tailor.heroTitle')}
           </h1>
           <p className="font-mono text-sm text-primary font-bold uppercase">

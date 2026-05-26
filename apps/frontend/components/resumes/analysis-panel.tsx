@@ -82,7 +82,7 @@ export function AnalysisPanel({
 
   return (
     <aside
-      className="fixed top-0 right-0 z-40 h-full w-full max-w-[420px] border-l border-black bg-background flex flex-col"
+      className="fixed top-0 right-0 z-40 h-full w-full sm:max-w-[420px] border-l border-black bg-background flex flex-col"
       style={{ boxShadow: '-4px 0 0 0 #000' }}
       role="complementary"
       aria-label={title}

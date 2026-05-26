@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Geist, Space_Grotesk } from 'next/font/google';
 import './(default)/css/globals.css';
 
@@ -13,6 +13,11 @@ const geist = Geist({
   subsets: ['latin'],
   display: 'swap',
 });
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+};
 
 export const metadata: Metadata = {
   title: 'Resume Matcher',
