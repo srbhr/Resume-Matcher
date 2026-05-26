@@ -1681,10 +1681,7 @@ export default function ResumeViewerPage() {
                               {t('resumeViewer.tabs.coverLetter')}
                               {resumeTitle ? ` · ${resumeTitle}` : ''}
                             </h2>
-                            <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-ink-soft mt-1 mb-6">
-                              {'// SHAPE YOUR COVER LETTER'}
-                            </div>
-                            <pre className="font-serif text-[15px] leading-relaxed whitespace-pre-wrap break-words m-0">
+                            <pre className="font-serif text-[15px] leading-relaxed whitespace-pre-wrap break-words m-0 mt-6">
                               {coverLetter}
                             </pre>
                           </>
