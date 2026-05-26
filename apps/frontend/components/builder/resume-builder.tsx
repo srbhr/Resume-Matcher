@@ -485,7 +485,7 @@ const ResumeBuilderContent = () => {
         {/* Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 bg-black gap-[1px] flex-1 min-h-0">
           {/* Left Panel: Editor */}
-          <div className="bg-background p-6 md:p-8 overflow-y-auto no-print">
+          <div className="bg-background p-6 md:p-8 overflow-y-auto min-h-0 no-print">
             <div className="max-w-3xl mx-auto space-y-6">
               <div className="flex items-center gap-2 border-b-2 border-black pb-2">
                 <div className="w-3 h-3 bg-blue-700"></div>
