@@ -39,8 +39,11 @@ export function CoverLetterPreview({
     day: 'numeric',
   }).format(new Date());
 
-  // Parse content into paragraphs
-  const paragraphs = content.split('\n\n').filter((p) => p.trim().length > 0);
+  // Parse content into paragraphs (double newlines only)
+  const paragraphs = content
+    .split(/\n\n+/)
+    .map((p) => p.trim())
+    .filter((p) => p.length > 0);
 
   return (
     <div

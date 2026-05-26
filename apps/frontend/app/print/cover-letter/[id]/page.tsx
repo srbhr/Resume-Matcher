@@ -91,10 +91,9 @@ export default async function PrintCoverLetterPage({ params, searchParams }: Pag
   });
   const nameFallback = translate(locale, 'resume.defaults.name');
 
-  // Split cover letter into paragraphs
+  // Split cover letter into paragraphs (double newlines only)
   const paragraphs = coverLetter
     .split(/\n\n+/)
-    .flatMap((p) => p.split('\n'))
     .map((p) => p.trim())
     .filter((p) => p.length > 0);
 
