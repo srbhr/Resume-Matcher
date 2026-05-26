@@ -140,13 +140,13 @@ const DialogContent: React.FC<DialogContentProps> = ({ children, className }) =>
         onClick={() => onOpenChange(false)}
       />
       {/* Content */}
-      <div className="fixed inset-0 flex items-center justify-center p-4">
+      <div className="fixed inset-0 flex items-start justify-center p-4 overflow-y-auto">
         <div
           role="dialog"
           aria-modal="true"
           aria-labelledby={titleId}
           className={cn(
-            'relative w-full max-w-lg',
+            'relative w-full max-w-lg my-auto',
             'border border-border bg-popover shadow-sw-lg',
             'rounded-none',
             'animate-in fade-in-0 zoom-in-95 duration-200',

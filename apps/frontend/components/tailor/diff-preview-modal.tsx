@@ -63,9 +63,9 @@ export function DiffPreviewModal({
           }
         }}
       >
-        <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col p-6 bg-background border-2 border-black shadow-sw-lg">
+        <DialogContent className="max-w-5xl sm:max-h-[90vh] sm:overflow-hidden flex flex-col p-6 bg-background border-2 border-black shadow-sw-lg">
           <DialogHeader className="border-b-2 border-black pb-4 bg-white -mx-6 -mt-6 px-6 pt-6">
-            <DialogTitle className="font-serif text-2xl font-bold uppercase tracking-tight">
+            <DialogTitle className="font-serif text-2xl font-bold uppercase tracking-tight pr-10">
               {t('tailor.missingDiffDialog.title')}
             </DialogTitle>
           </DialogHeader>
@@ -126,9 +126,9 @@ export function DiffPreviewModal({
         }
       }}
     >
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col p-6 bg-background border-2 border-black shadow-sw-lg">
+      <DialogContent className="max-w-5xl sm:max-h-[90vh] sm:overflow-hidden flex flex-col p-6 bg-background border-2 border-black shadow-sw-lg">
         <DialogHeader className="border-b-2 border-black pb-4 bg-white -mx-6 -mt-6 px-6 pt-6">
-          <DialogTitle className="font-serif text-2xl font-bold uppercase tracking-tight">
+          <DialogTitle className="font-serif text-2xl font-bold uppercase tracking-tight pr-10">
             {t('tailor.diffModal.title')}
           </DialogTitle>
           <p className="font-mono text-xs text-ink-soft mt-2">
@@ -146,7 +146,7 @@ export function DiffPreviewModal({
             </h3>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-4">
             <StatCard
               label={t('tailor.diffModal.skillsAdded')}
               value={diffSummary.skills_added}
@@ -423,12 +423,12 @@ function ChangeItem({ change }: ChangeItemProps) {
         </span>
         <div className="flex-1">
           {change.original_value && (
-            <div className="line-through text-destructive font-mono text-sm mb-1">
+            <div className="line-through text-destructive font-mono text-sm mb-1 break-words">
               {change.original_value}
             </div>
           )}
           {change.new_value && (
-            <div className="text-ink-soft font-mono text-sm">{change.new_value}</div>
+            <div className="text-ink-soft font-mono text-sm break-words">{change.new_value}</div>
           )}
         </div>
         {change.change_type === 'added' && change.confidence === 'high' && (
