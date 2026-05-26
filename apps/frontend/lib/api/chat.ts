@@ -1,6 +1,8 @@
 import { apiPost, apiFetch } from './client';
 
 export type ChatMode = 'qa' | 'improve' | 'tailor';
+export type DocumentType = 'resume' | 'cv' | 'coverLetter' | 'outreach';
+export type DocumentChatMode = 'discuss' | 'edit';
 
 export interface ChatMessage {
   role: 'user' | 'assistant';
@@ -77,4 +79,76 @@ export async function createResumeFromJson(
   });
   if (!res.ok) throw new Error(`Failed to create resume (${res.status})`);
   return (await res.json()) as CreateFromJsonResponse;
+}
+
+// ---------------------------------------------------------------------------
+// Document chat (multi-document: resume, CV, cover letter, outreach)
+// ---------------------------------------------------------------------------
+
+export interface DiffHunk {
+  hunk_id: string;
+  label: string;
+  original_text: string;
+  proposed_text: string;
+  reason: string;
+}
+
+export interface EditProposal {
+  proposal_id: string;
+  summary: string;
+  hunks: DiffHunk[];
+  snapshot_id: string | null;
+}
+
+export interface DocumentChatRequest {
+  messages: ChatMessage[];
+  document_type: DocumentType;
+  mode: DocumentChatMode;
+  temperature?: number;
+}
+
+export interface DocumentChatResponse {
+  reply: string;
+  proposal: EditProposal | null;
+}
+
+export async function chatWithDocument(
+  resumeId: string,
+  payload: DocumentChatRequest
+): Promise<DocumentChatResponse> {
+  const res = await apiPost(`/chat/document/${encodeURIComponent(resumeId)}`, payload);
+  if (!res.ok) {
+    const detail = await res.text().catch(() => '');
+    throw new Error(detail || `Document chat request failed (${res.status})`);
+  }
+  return (await res.json()) as DocumentChatResponse;
+}
+
+export interface HunkVerdict {
+  hunk_id: string;
+  accepted: boolean;
+}
+
+export interface ApplyHunksRequest {
+  proposal_id: string;
+  document_type: DocumentType;
+  verdicts: HunkVerdict[];
+  hunks: DiffHunk[];
+}
+
+export interface ApplyHunksResponse {
+  applied_count: number;
+  rejected_count: number;
+}
+
+export async function applyHunkVerdicts(
+  resumeId: string,
+  payload: ApplyHunksRequest
+): Promise<ApplyHunksResponse> {
+  const res = await apiPost(`/chat/document/${encodeURIComponent(resumeId)}/apply`, payload);
+  if (!res.ok) {
+    const detail = await res.text().catch(() => '');
+    throw new Error(detail || `Failed to apply hunks (${res.status})`);
+  }
+  return (await res.json()) as ApplyHunksResponse;
 }

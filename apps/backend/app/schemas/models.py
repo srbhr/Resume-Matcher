@@ -846,3 +846,60 @@ class ImproveDiffResult(BaseModel):
 
     changes: list[ResumeChange] = Field(default_factory=list)
     strategy_notes: str = Field(default="")
+
+
+# ---------------------------------------------------------------------------
+# Document chat (multi-document: resume, CV, cover letter, outreach)
+# ---------------------------------------------------------------------------
+
+DocumentType = Literal["resume", "cv", "coverLetter", "outreach"]
+DocumentChatMode = Literal["discuss", "edit"]
+
+
+class DocumentChatMessage(BaseModel):
+    role: Literal["user", "assistant"]
+    content: str
+
+
+class DocumentChatRequest(BaseModel):
+    messages: list[DocumentChatMessage] = Field(..., min_length=1, max_length=40)
+    document_type: DocumentType
+    mode: DocumentChatMode = "discuss"
+    temperature: float = Field(0.5, ge=0.0, le=1.0)
+
+
+class DiffHunk(BaseModel):
+    hunk_id: str
+    label: str
+    original_text: str
+    proposed_text: str
+    reason: str
+
+
+class EditProposal(BaseModel):
+    proposal_id: str
+    summary: str
+    hunks: list[DiffHunk]
+    snapshot_id: str | None = None
+
+
+class DocumentChatResponse(BaseModel):
+    reply: str
+    proposal: EditProposal | None = None
+
+
+class HunkVerdict(BaseModel):
+    hunk_id: str
+    accepted: bool
+
+
+class ApplyHunksRequest(BaseModel):
+    proposal_id: str
+    document_type: DocumentType
+    verdicts: list[HunkVerdict]
+    hunks: list[DiffHunk]
+
+
+class ApplyHunksResponse(BaseModel):
+    applied_count: int
+    rejected_count: int

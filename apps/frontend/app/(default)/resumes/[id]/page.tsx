@@ -1948,7 +1948,9 @@ export default function ResumeViewerPage() {
           onComplete={handleEnrichmentComplete}
         />
       )}
-      {resumeId && <ChatBot resumeId={resumeId} onResumeChanged={reloadResumeData} />}
+      {resumeId && (
+        <ChatBot resumeId={resumeId} activeTab={activeTab} onDocumentChanged={reloadResumeData} />
+      )}
     </div>
   );
 }

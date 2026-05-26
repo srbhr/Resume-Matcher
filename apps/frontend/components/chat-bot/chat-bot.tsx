@@ -17,9 +17,9 @@ import {
   Send,
   History,
   ChevronLeft,
-  Sparkles,
   HelpCircle,
   Wand2,
+  Pencil,
   Check,
   RotateCcw,
   AlertTriangle,
@@ -27,56 +27,81 @@ import {
 
 import {
   chatWithResume,
+  chatWithDocument,
   createResumeFromJson,
   listResumeBackups,
   restoreResumeBackup,
   type ChatMessage,
   type ChatMode,
   type ChatProposal,
+  type DocumentType,
+  type EditProposal,
   type BackupRow,
 } from '@/lib/api/chat';
 import { uploadResumeJson } from '@/lib/api/resume';
+import { DiffReviewFlow } from './diff-review-flow';
 
 import styles from './chat-bot.module.css';
 
+type TabId = 'resume' | 'cv' | 'coverLetter' | 'outreach' | 'job';
 type View = 'menu' | 'chat' | 'history';
+type InternalMode = 'discuss' | 'edit' | 'tailor';
+
+function tabToDocumentType(tab: TabId): DocumentType {
+  if (tab === 'cv') return 'cv';
+  if (tab === 'coverLetter') return 'coverLetter';
+  if (tab === 'outreach') return 'outreach';
+  return 'resume';
+}
+
+const DOC_TYPE_LABELS: Record<DocumentType, string> = {
+  resume: 'Resume',
+  cv: 'CV',
+  coverLetter: 'Cover Letter',
+  outreach: 'Outreach Message',
+};
 
 interface UiMessage {
   role: 'user' | 'assistant';
   content: string;
   proposal?: ChatProposal | null;
+  editProposal?: EditProposal | null;
   error?: boolean;
-  /** Marks a proposal as already applied or dismissed so the card stays
-   *  in the transcript but no longer offers Apply/Cancel. */
   proposalState?: 'pending' | 'applied' | 'dismissed';
-  /** When applied: the new resume_id (for 'create' kind). */
   appliedResumeId?: string;
 }
 
 interface ChatBotProps {
   resumeId: string;
-  /** Called after an edit Apply or a backup Restore so the host page can
-   *  refresh its view of the resume. */
+  activeTab?: TabId;
+  onDocumentChanged?: () => void;
+  /** @deprecated Use onDocumentChanged */
   onResumeChanged?: () => void;
 }
 
-const MODE_LABELS: Record<ChatMode, string> = {
-  qa: 'Chat',
-  improve: 'Improve',
+const INTERNAL_MODE_LABELS: Record<InternalMode, string> = {
+  discuss: 'Discuss',
+  edit: 'Edit',
   tailor: 'Tailor',
 };
 
-const MODE_HINTS: Record<ChatMode, string> = {
-  qa: 'Ask anything about this resume.',
-  improve: 'Describe what to improve — a section, a bullet, the tone.',
-  tailor: 'Describe the target role or employer to draft a new resume for.',
-};
+function getModeHint(mode: InternalMode, docLabel: string): string {
+  if (mode === 'discuss') return `Ask anything about this ${docLabel.toLowerCase()}.`;
+  if (mode === 'edit')
+    return `Describe what to change — the AI will propose edits for your approval.`;
+  return 'Describe the target role or employer to draft a new resume for.';
+}
 
-export function ChatBot({ resumeId, onResumeChanged }: ChatBotProps) {
+export function ChatBot({
+  resumeId,
+  activeTab = 'resume',
+  onDocumentChanged,
+  onResumeChanged,
+}: ChatBotProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [view, setView] = useState<View>('menu');
-  const [mode, setMode] = useState<ChatMode>('qa');
+  const [mode, setMode] = useState<InternalMode>('discuss');
   const [messages, setMessages] = useState<UiMessage[]>([]);
   const [pending, setPending] = useState(false);
   const [input, setInput] = useState('');
@@ -84,6 +109,14 @@ export function ChatBot({ resumeId, onResumeChanged }: ChatBotProps) {
   const [backupsLoading, setBackupsLoading] = useState(false);
   const [backupsError, setBackupsError] = useState<string | null>(null);
   const [pendingBackupRestore, setPendingBackupRestore] = useState<string | null>(null);
+
+  const documentType = tabToDocumentType(activeTab);
+  const docLabel = DOC_TYPE_LABELS[documentType];
+
+  const notifyChanged = useCallback(() => {
+    onDocumentChanged?.();
+    onResumeChanged?.();
+  }, [onDocumentChanged, onResumeChanged]);
 
   const bodyRef = useRef<HTMLDivElement | null>(null);
   const taRef = useRef<HTMLTextAreaElement | null>(null);
@@ -105,7 +138,7 @@ export function ChatBot({ resumeId, onResumeChanged }: ChatBotProps) {
     ta.style.height = Math.min(ta.scrollHeight, 140) + 'px';
   }, [input]);
 
-  const startMode = (next: ChatMode) => {
+  const startMode = (next: InternalMode) => {
     setMode(next);
     setMessages([]);
     setInput('');
@@ -140,19 +173,37 @@ export function ChatBot({ resumeId, onResumeChanged }: ChatBotProps) {
           role: m.role,
           content: m.content,
         }));
-        const res = await chatWithResume(resumeId, {
-          messages: payloadMessages,
-          mode,
-        });
-        setMessages((m) => [
-          ...m,
-          {
-            role: 'assistant',
-            content: res.reply,
-            proposal: res.proposal ?? null,
-            proposalState: res.proposal ? 'pending' : undefined,
-          },
-        ]);
+
+        if (mode === 'tailor') {
+          const res = await chatWithResume(resumeId, {
+            messages: payloadMessages,
+            mode: 'tailor' as ChatMode,
+          });
+          setMessages((m) => [
+            ...m,
+            {
+              role: 'assistant',
+              content: res.reply,
+              proposal: res.proposal ?? null,
+              proposalState: res.proposal ? 'pending' : undefined,
+            },
+          ]);
+        } else {
+          const res = await chatWithDocument(resumeId, {
+            messages: payloadMessages,
+            document_type: documentType,
+            mode: mode as 'discuss' | 'edit',
+          });
+          setMessages((m) => [
+            ...m,
+            {
+              role: 'assistant',
+              content: res.reply,
+              editProposal: res.proposal ?? null,
+              proposalState: res.proposal ? 'pending' : undefined,
+            },
+          ]);
+        }
       } catch {
         setMessages((m) => [
           ...m,
@@ -166,7 +217,7 @@ export function ChatBot({ resumeId, onResumeChanged }: ChatBotProps) {
         setPending(false);
       }
     },
-    [messages, pending, mode, resumeId]
+    [messages, pending, mode, resumeId, documentType]
   );
 
   const handleSubmit = (e?: FormEvent) => {
@@ -192,7 +243,7 @@ export function ChatBot({ resumeId, onResumeChanged }: ChatBotProps) {
       if (proposal.kind === 'edit') {
         await uploadResumeJson(resumeId, proposal.resume_json as never);
         setMessageState(index, { proposalState: 'applied' });
-        onResumeChanged?.();
+        notifyChanged();
       } else {
         const created = await createResumeFromJson(
           proposal.resume_json,
@@ -223,7 +274,7 @@ export function ChatBot({ resumeId, onResumeChanged }: ChatBotProps) {
     setPendingBackupRestore(backupId);
     try {
       await restoreResumeBackup(resumeId, backupId);
-      onResumeChanged?.();
+      notifyChanged();
       setView('menu');
       setMessages([]);
     } catch (e) {
@@ -239,11 +290,34 @@ export function ChatBot({ resumeId, onResumeChanged }: ChatBotProps) {
     setView('menu');
   };
 
+  const handleEditProposalComplete = useCallback(
+    (appliedCount: number, rejectedCount: number) => {
+      const lastIdx = messages.length - 1;
+      if (lastIdx >= 0) {
+        setMessageState(lastIdx, { proposalState: appliedCount > 0 ? 'applied' : 'dismissed' });
+      }
+      if (appliedCount > 0) {
+        notifyChanged();
+      }
+      const parts: string[] = [];
+      if (appliedCount > 0) parts.push(`${appliedCount} accepted`);
+      if (rejectedCount > 0) parts.push(`${rejectedCount} rejected`);
+      setMessages((m) => [
+        ...m,
+        {
+          role: 'assistant',
+          content: parts.length > 0 ? parts.join(', ') + '.' : 'No changes applied.',
+        },
+      ]);
+    },
+    [messages, notifyChanged]
+  );
+
   const headerTitle = useMemo(() => {
     if (view === 'history') return 'Snapshot History';
-    if (view === 'chat') return `Resume Matcher · ${MODE_LABELS[mode]}`;
-    return 'Resume Matcher';
-  }, [view, mode]);
+    if (view === 'chat') return `${docLabel} · ${INTERNAL_MODE_LABELS[mode]}`;
+    return `Resume Matcher · ${docLabel}`;
+  }, [view, mode, docLabel]);
 
   if (!open) {
     return (
@@ -268,7 +342,7 @@ export function ChatBot({ resumeId, onResumeChanged }: ChatBotProps) {
             <div className={styles.subtitle}>
               <span className={styles.statusDot} data-mode={view} />
               {view === 'chat'
-                ? MODE_HINTS[mode]
+                ? getModeHint(mode, docLabel)
                 : view === 'history'
                   ? 'Restore an earlier snapshot.'
                   : 'Pick what to do.'}
@@ -314,7 +388,12 @@ export function ChatBot({ resumeId, onResumeChanged }: ChatBotProps) {
 
         <div className={styles.body} ref={bodyRef}>
           {view === 'menu' && (
-            <ActionMenu onStart={startMode} onHistory={() => void openHistory()} />
+            <ActionMenu
+              onStart={startMode}
+              onHistory={() => void openHistory()}
+              documentType={documentType}
+              docLabel={docLabel}
+            />
           )}
 
           {view === 'history' && (
@@ -331,10 +410,12 @@ export function ChatBot({ resumeId, onResumeChanged }: ChatBotProps) {
             <>
               {messages.length === 0 && (
                 <div className={styles.empty}>
-                  <div className={styles.greet}>{modeGreeting(mode)}</div>
-                  <div className={styles.tag}>{`// ${MODE_LABELS[mode].toUpperCase()} MODE`}</div>
+                  <div className={styles.greet}>{modeGreeting(mode, docLabel)}</div>
+                  <div
+                    className={styles.tag}
+                  >{`// ${INTERNAL_MODE_LABELS[mode].toUpperCase()} MODE — ${docLabel.toUpperCase()}`}</div>
                   <div className={styles.prompts}>
-                    {starterPrompts(mode).map((p) => (
+                    {starterPrompts(mode, docLabel).map((p) => (
                       <button
                         key={p}
                         type="button"
@@ -368,6 +449,23 @@ export function ChatBot({ resumeId, onResumeChanged }: ChatBotProps) {
                       onOpenCreated={(id) => router.push(`/resumes/${id}`)}
                     />
                   )}
+                  {m.editProposal && m.proposalState === 'pending' && (
+                    <DiffReviewFlow
+                      resumeId={resumeId}
+                      documentType={documentType}
+                      proposal={m.editProposal}
+                      onComplete={handleEditProposalComplete}
+                    />
+                  )}
+                  {m.editProposal && m.proposalState === 'applied' && (
+                    <div className={styles.proposalApplied}>
+                      <Check size={12} strokeWidth={2} />
+                      <span>Changes applied. View history to revert.</span>
+                    </div>
+                  )}
+                  {m.editProposal && m.proposalState === 'dismissed' && (
+                    <div className={styles.proposalDismissed}>No changes applied.</div>
+                  )}
                 </div>
               ))}
 
@@ -398,7 +496,9 @@ export function ChatBot({ resumeId, onResumeChanged }: ChatBotProps) {
                 placeholder={
                   mode === 'tailor'
                     ? 'Describe the target role or employer…'
-                    : 'Type a message — Shift+Enter for newline'
+                    : mode === 'edit'
+                      ? `Describe what to change in this ${docLabel.toLowerCase()}…`
+                      : 'Type a message — Shift+Enter for newline'
                 }
                 rows={1}
               />
@@ -412,7 +512,9 @@ export function ChatBot({ resumeId, onResumeChanged }: ChatBotProps) {
               </button>
             </form>
             <div className={styles.hint}>
-              <span>{MODE_LABELS[mode]}</span>
+              <span>
+                {INTERNAL_MODE_LABELS[mode]} · {docLabel}
+              </span>
               <span>{messages.length} msg</span>
             </div>
           </>
@@ -425,54 +527,61 @@ export function ChatBot({ resumeId, onResumeChanged }: ChatBotProps) {
 function ActionMenu({
   onStart,
   onHistory,
+  documentType,
+  docLabel,
 }: {
-  onStart: (m: ChatMode) => void;
+  onStart: (m: InternalMode) => void;
   onHistory: () => void;
+  documentType: DocumentType;
+  docLabel: string;
 }) {
+  const isStructured = documentType === 'resume' || documentType === 'cv';
   return (
     <div className={styles.menu}>
       <div className={styles.menuIntro}>
         <div className={styles.greet}>What do you want to do?</div>
-        <div className={styles.tag}>{'// PICK AN ACTION'}</div>
+        <div className={styles.tag}>{`// ${docLabel.toUpperCase()}`}</div>
       </div>
-      <button type="button" className={styles.menuItem} onClick={() => onStart('qa')}>
+      <button type="button" className={styles.menuItem} onClick={() => onStart('discuss')}>
         <span className={styles.menuItemIcon}>
           <HelpCircle size={18} strokeWidth={1.75} />
         </span>
         <span>
-          <span className={styles.menuItemTitle}>Chat about this resume</span>
+          <span className={styles.menuItemTitle}>Discuss {docLabel.toLowerCase()}</span>
           <span className={styles.menuItemDesc}>Ask questions — no edits made.</span>
         </span>
       </button>
-      <button type="button" className={styles.menuItem} onClick={() => onStart('improve')}>
+      <button type="button" className={styles.menuItem} onClick={() => onStart('edit')}>
         <span className={styles.menuItemIcon}>
-          <Sparkles size={18} strokeWidth={1.75} />
+          <Pencil size={18} strokeWidth={1.75} />
         </span>
         <span>
-          <span className={styles.menuItemTitle}>Suggest improvements</span>
+          <span className={styles.menuItemTitle}>Edit {docLabel.toLowerCase()}</span>
           <span className={styles.menuItemDesc}>
-            Propose edits to this resume. You approve or revert each change.
+            Propose changes you approve one-by-one as diffs.
           </span>
         </span>
       </button>
-      <button type="button" className={styles.menuItem} onClick={() => onStart('tailor')}>
-        <span className={styles.menuItemIcon}>
-          <Wand2 size={18} strokeWidth={1.75} />
-        </span>
-        <span>
-          <span className={styles.menuItemTitle}>Create tailored variant</span>
-          <span className={styles.menuItemDesc}>
-            Draft a new resume for a specific role or employer.
+      {isStructured && (
+        <button type="button" className={styles.menuItem} onClick={() => onStart('tailor')}>
+          <span className={styles.menuItemIcon}>
+            <Wand2 size={18} strokeWidth={1.75} />
           </span>
-        </span>
-      </button>
+          <span>
+            <span className={styles.menuItemTitle}>Create tailored variant</span>
+            <span className={styles.menuItemDesc}>
+              Draft a new {docLabel.toLowerCase()} for a specific role or employer.
+            </span>
+          </span>
+        </button>
+      )}
       <button type="button" className={styles.menuItem} onClick={onHistory}>
         <span className={styles.menuItemIcon}>
           <History size={18} strokeWidth={1.75} />
         </span>
         <span>
           <span className={styles.menuItemTitle}>View snapshot history</span>
-          <span className={styles.menuItemDesc}>Restore an earlier version of this resume.</span>
+          <span className={styles.menuItemDesc}>Restore an earlier version.</span>
         </span>
       </button>
     </div>
@@ -595,15 +704,44 @@ function ProposalCard({
   );
 }
 
-function starterPrompts(mode: ChatMode): string[] {
-  if (mode === 'qa') {
+function starterPrompts(mode: InternalMode, docLabel: string): string[] {
+  const lower = docLabel.toLowerCase();
+  if (mode === 'discuss') {
+    if (lower === 'cover letter') {
+      return [
+        'Does this cover letter match the tone of the job listing?',
+        'What could make the opening paragraph stronger?',
+        'Is the closing compelling?',
+      ];
+    }
+    if (lower === 'outreach message') {
+      return [
+        'Is this message too formal for LinkedIn?',
+        'Does the ask feel natural?',
+        'How could I make it more personal?',
+      ];
+    }
     return [
-      'Summarize the strongest parts of this resume.',
+      `Summarize the strongest parts of this ${lower}.`,
       'What roles am I best positioned for?',
       'Which sections are weakest?',
     ];
   }
-  if (mode === 'improve') {
+  if (mode === 'edit') {
+    if (lower === 'cover letter') {
+      return [
+        'Make the tone more confident.',
+        'Shorten the second paragraph.',
+        'Add a stronger call-to-action.',
+      ];
+    }
+    if (lower === 'outreach message') {
+      return [
+        'Make it shorter and punchier.',
+        'Add a specific hook referencing their recent work.',
+        'Rewrite for a warmer tone.',
+      ];
+    }
     return [
       'Tighten my professional summary.',
       'Rewrite the bullets under my most recent role to be more impact-driven.',
@@ -616,10 +754,11 @@ function starterPrompts(mode: ChatMode): string[] {
   ];
 }
 
-function modeGreeting(mode: ChatMode): string {
-  if (mode === 'qa') return 'Ask anything about this resume.';
-  if (mode === 'improve') return 'What should I improve?';
-  return 'Describe the role you want a resume for.';
+function modeGreeting(mode: InternalMode, docLabel: string): string {
+  const lower = docLabel.toLowerCase();
+  if (mode === 'discuss') return `Ask anything about this ${lower}.`;
+  if (mode === 'edit') return `What should I change in this ${lower}?`;
+  return `Describe the role you want a ${lower} for.`;
 }
 
 function formatTime(iso: string | null): string {

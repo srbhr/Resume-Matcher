@@ -11,11 +11,15 @@ itself in the user's actual structured data:
   - tailor  : drafts a NEW resume based on the current one + a target context
               (job description, role, employer). Apply creates a separate
               resume row via POST /resumes/from-json.
+
+Document chat endpoints (POST /chat/document/...) extend the above to
+cover letters, outreach messages, and CVs with per-hunk diff approval.
 """
 
 import copy
 import json
 import logging
+import uuid
 from typing import Any, Literal
 
 from fastapi import APIRouter, HTTPException
@@ -23,7 +27,19 @@ from pydantic import BaseModel, Field, ValidationError
 
 from app.database import db
 from app.llm import chat_complete
-from app.schemas import ResumeData, normalize_resume_data
+from app.schemas import (
+    ApplyHunksRequest,
+    ApplyHunksResponse,
+    DiffHunk,
+    DocumentChatRequest,
+    DocumentChatResponse,
+    EditProposal,
+    ResumeChange,
+    ResumeData,
+    normalize_resume_data,
+)
+from app.services.diff_engine import compute_resume_hunks, compute_text_hunks
+from app.services.improver import apply_diffs
 
 logger = logging.getLogger(__name__)
 
@@ -292,3 +308,392 @@ async def chat_with_resume(resume_id: str, request: ChatRequest) -> ChatResponse
         raise HTTPException(
             status_code=500, detail="Chat request failed. Please try again."
         )
+
+
+# ---------------------------------------------------------------------------
+# Document chat  (multi-document: resume, CV, cover letter, outreach)
+# ---------------------------------------------------------------------------
+
+DOCUMENT_PERSONA = (
+    "You are the Resume Matcher assistant. You speak in second person, never "
+    "use the first person, and keep replies concise (1-4 short sentences). "
+    "No hype, no emoji."
+)
+
+DOC_TYPE_LABELS = {
+    "resume": "resume",
+    "cv": "CV",
+    "coverLetter": "cover letter",
+    "outreach": "outreach message",
+}
+
+
+def _ground_in_text(
+    doc_label: str,
+    text: str,
+    resume_title: str | None = None,
+) -> str:
+    title = resume_title or "(untitled)"
+    return (
+        f"You have full read access to the user's {doc_label} "
+        f"(associated with a resume titled '{title}'). "
+        f"Treat the text below as ground truth — do not invent content.\n\n"
+        f"{doc_label.upper()}_TEXT:\n\"\"\"\n{text}\n\"\"\""
+    )
+
+
+def _text_edit_instructions(doc_label: str) -> str:
+    return (
+        f"The user wants you to edit their {doc_label}. "
+        f"Produce the complete updated text incorporating the requested changes. "
+        f"Preserve sections the user did not ask you to change.\n\n"
+        f"Respond with strict JSON only — no markdown fences, no prose outside "
+        f"the JSON:\n"
+        '{\n'
+        '  "reply": "1-3 sentence explanation of what you changed and why",\n'
+        '  "edited_text": "...the complete updated document text..."\n'
+        '}\n\n'
+        "If you cannot safely produce the edit (e.g. the user is just "
+        'chatting), return {"reply": "...", "edited_text": null}.'
+    )
+
+
+def _get_document_text(
+    resume: dict[str, Any],
+    document_type: str,
+) -> str | None:
+    """Extract the plain-text content for a text-based document type."""
+    if document_type == "coverLetter":
+        return resume.get("cover_letter")
+    if document_type == "outreach":
+        return resume.get("outreach_message")
+    return None
+
+
+@router.post("/document/{resume_id}", response_model=DocumentChatResponse)
+async def chat_with_document(
+    resume_id: str,
+    request: DocumentChatRequest,
+) -> DocumentChatResponse:
+    """Chat turn scoped to a specific document type.
+
+    For mode='discuss' the LLM gives a plain reply. For mode='edit' it
+    produces changes that are diffed into per-hunk proposals the frontend
+    can present one-at-a-time for approval.
+    """
+    resume = _get_resume_or_404(resume_id)
+    title = resume.get("title") or resume.get("filename")
+    doc_label = DOC_TYPE_LABELS.get(request.document_type, request.document_type)
+    is_structured = request.document_type in ("resume", "cv")
+
+    try:
+        if is_structured:
+            resume_json = _resume_json_payload(resume)
+            grounding = _ground_in_resume(title, resume_json)
+        else:
+            doc_text = _get_document_text(resume, request.document_type)
+            if not doc_text:
+                return DocumentChatResponse(
+                    reply=(
+                        f"No {doc_label} exists yet. Generate one first, "
+                        f"then come back to discuss or edit it."
+                    ),
+                )
+            grounding = _ground_in_text(doc_label, doc_text, title)
+
+        # -- Discuss mode --
+        if request.mode == "discuss":
+            system_prompt = (
+                f"{DOCUMENT_PERSONA} "
+                f"Help the user understand and discuss their {doc_label}."
+                f"\n\n{grounding}"
+            )
+            msgs = [
+                {"role": m.role, "content": m.content}
+                for m in request.messages
+            ]
+            reply = await chat_complete(
+                messages=msgs,
+                system_prompt=system_prompt,
+                temperature=request.temperature,
+                max_tokens=QA_MAX_TOKENS,
+            )
+            return DocumentChatResponse(reply=reply.strip())
+
+        # -- Edit mode --
+        if is_structured:
+            system_prompt = (
+                f"{DOCUMENT_PERSONA} "
+                f"Help the user improve their {doc_label}."
+                f"\n\n{grounding}\n\n{_proposal_instructions('edit')}"
+            )
+            msgs = [
+                {"role": m.role, "content": m.content}
+                for m in request.messages
+            ]
+            raw = await chat_complete(
+                messages=msgs,
+                system_prompt=system_prompt,
+                temperature=request.temperature,
+                max_tokens=PROPOSAL_MAX_TOKENS,
+            )
+
+            try:
+                payload = json.loads(_extract_json_block(raw))
+            except json.JSONDecodeError:
+                logger.warning("Document chat: model returned non-JSON for structured edit")
+                return DocumentChatResponse(
+                    reply="Could not produce a clean edit. Try rephrasing.",
+                )
+
+            reply_text = str(payload.get("reply") or "").strip()
+            proposed = payload.get("resume_json")
+            if not isinstance(proposed, dict):
+                return DocumentChatResponse(reply=reply_text or "Okay.")
+
+            try:
+                validated = ResumeData.model_validate(
+                    normalize_resume_data(copy.deepcopy(proposed))
+                ).model_dump(mode="json")
+            except ValidationError:
+                logger.warning("Document chat: proposed JSON failed validation")
+                return DocumentChatResponse(
+                    reply=reply_text or "The edit didn't match the schema. Try again.",
+                )
+
+            hunks = compute_resume_hunks(resume_json, validated)
+            if not hunks:
+                return DocumentChatResponse(
+                    reply=reply_text or "No changes detected.",
+                )
+
+            backup = db.create_resume_json_backup(resume, source="document_chat")
+
+            proposal = EditProposal(
+                proposal_id=str(uuid.uuid4()),
+                summary=str(payload.get("summary") or reply_text)[:120],
+                hunks=hunks,
+                snapshot_id=backup["backup_id"],
+            )
+            return DocumentChatResponse(reply=reply_text or proposal.summary, proposal=proposal)
+
+        else:
+            # Plain text edit (cover letter / outreach)
+            doc_text = _get_document_text(resume, request.document_type) or ""
+            system_prompt = (
+                f"{DOCUMENT_PERSONA} "
+                f"Help the user improve their {doc_label}."
+                f"\n\n{grounding}\n\n{_text_edit_instructions(doc_label)}"
+            )
+            msgs = [
+                {"role": m.role, "content": m.content}
+                for m in request.messages
+            ]
+            raw = await chat_complete(
+                messages=msgs,
+                system_prompt=system_prompt,
+                temperature=request.temperature,
+                max_tokens=PROPOSAL_MAX_TOKENS,
+            )
+
+            try:
+                payload = json.loads(_extract_json_block(raw))
+            except json.JSONDecodeError:
+                logger.warning("Document chat: model returned non-JSON for text edit")
+                return DocumentChatResponse(
+                    reply="Could not produce a clean edit. Try rephrasing.",
+                )
+
+            reply_text = str(payload.get("reply") or "").strip()
+            edited = payload.get("edited_text")
+            if not isinstance(edited, str) or not edited.strip():
+                return DocumentChatResponse(reply=reply_text or "Okay.")
+
+            hunks = compute_text_hunks(doc_text, edited.strip())
+            if not hunks:
+                return DocumentChatResponse(
+                    reply=reply_text or "No changes detected.",
+                )
+
+            # Back up current text using the resume JSON backup mechanism
+            backup = db.create_resume_json_backup(resume, source="document_chat")
+
+            proposal = EditProposal(
+                proposal_id=str(uuid.uuid4()),
+                summary=reply_text[:120] if reply_text else "Proposed edits",
+                hunks=hunks,
+                snapshot_id=backup["backup_id"],
+            )
+            return DocumentChatResponse(reply=reply_text or proposal.summary, proposal=proposal)
+
+    except HTTPException:
+        raise
+    except ValueError as e:
+        logger.error(f"Document chat completion failed: {e}")
+        raise HTTPException(
+            status_code=502, detail="Assistant is unavailable. Try again."
+        )
+    except Exception as e:
+        logger.error(f"Unexpected document chat error: {e}")
+        raise HTTPException(
+            status_code=500, detail="Chat request failed. Please try again."
+        )
+
+
+@router.post("/document/{resume_id}/apply", response_model=ApplyHunksResponse)
+async def apply_document_hunks(
+    resume_id: str,
+    request: ApplyHunksRequest,
+) -> ApplyHunksResponse:
+    """Apply user-approved hunks from a document chat edit proposal."""
+    resume = _get_resume_or_404(resume_id)
+    is_structured = request.document_type in ("resume", "cv")
+
+    verdict_map = {v.hunk_id: v.accepted for v in request.verdicts}
+    accepted_hunks = [h for h in request.hunks if verdict_map.get(h.hunk_id, False)]
+    rejected_count = len(request.hunks) - len(accepted_hunks)
+
+    if not accepted_hunks:
+        return ApplyHunksResponse(applied_count=0, rejected_count=rejected_count)
+
+    try:
+        if is_structured:
+            resume_json = _resume_json_payload(resume)
+
+            changes: list[ResumeChange] = []
+            for hunk in accepted_hunks:
+                if hunk.original_text and hunk.proposed_text:
+                    changes.append(ResumeChange(
+                        path=_find_path_for_hunk(resume_json, hunk),
+                        action="replace",
+                        original=hunk.original_text,
+                        value=hunk.proposed_text,
+                        reason=hunk.reason,
+                    ))
+                elif hunk.proposed_text and not hunk.original_text:
+                    changes.append(ResumeChange(
+                        path=_find_path_for_hunk(resume_json, hunk),
+                        action="append",
+                        value=hunk.proposed_text,
+                        reason=hunk.reason,
+                    ))
+
+            if changes:
+                result, applied, rejected = apply_diffs(resume_json, changes)
+
+                try:
+                    validated = ResumeData.model_validate(
+                        normalize_resume_data(copy.deepcopy(result))
+                    ).model_dump(mode="json")
+                except ValidationError:
+                    raise HTTPException(
+                        status_code=422,
+                        detail="Applied changes produced invalid resume data.",
+                    )
+
+                db.update_resume(resume_id, {
+                    "processed_data": validated,
+                    "content": json.dumps(validated),
+                    "content_type": "json",
+                })
+
+                return ApplyHunksResponse(
+                    applied_count=len(applied),
+                    rejected_count=rejected_count + len(rejected),
+                )
+
+            return ApplyHunksResponse(applied_count=0, rejected_count=rejected_count)
+
+        else:
+            # Text document (cover letter / outreach)
+            field = (
+                "cover_letter"
+                if request.document_type == "coverLetter"
+                else "outreach_message"
+            )
+            current_text = resume.get(field) or ""
+            lines = current_text.splitlines(keepends=True)
+
+            # Rebuild the text by applying accepted hunks.
+            # Each hunk has original_text / proposed_text; we do a simple
+            # search-and-replace on the original text for each accepted hunk.
+            result_text = current_text
+            for hunk in reversed(accepted_hunks):
+                if hunk.original_text:
+                    result_text = result_text.replace(
+                        hunk.original_text, hunk.proposed_text, 1
+                    )
+                elif hunk.proposed_text:
+                    result_text = result_text + "\n" + hunk.proposed_text
+
+            db.update_resume(resume_id, {field: result_text})
+
+            return ApplyHunksResponse(
+                applied_count=len(accepted_hunks),
+                rejected_count=rejected_count,
+            )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to apply document hunks: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to apply changes. Please try again.",
+        )
+
+
+def _find_path_for_hunk(
+    resume_json: dict[str, Any],
+    hunk: DiffHunk,
+) -> str:
+    """Best-effort reverse-map a DiffHunk label back to a JSON path.
+
+    This searches the resume JSON for the hunk's original_text to find
+    the matching field path. Falls back to "summary" if not found.
+    """
+    target = hunk.original_text
+
+    # Summary
+    if (resume_json.get("summary") or "") == target:
+        return "summary"
+
+    # Work experience bullets
+    for i, exp in enumerate(resume_json.get("workExperience", [])):
+        descs = exp.get("description", [])
+        if isinstance(descs, list):
+            for j, desc in enumerate(descs):
+                if str(desc) == target:
+                    return f"workExperience[{i}].description[{j}]"
+
+    # Skills
+    skills = (resume_json.get("additional", {}) or {}).get("technicalSkills", [])
+    if isinstance(skills, list):
+        for i, skill in enumerate(skills):
+            if str(skill) == target:
+                return f"additional.technicalSkills[{i}]"
+
+    # Certifications
+    certs = (resume_json.get("additional", {}) or {}).get("certificationsTraining", [])
+    if isinstance(certs, list):
+        for i, cert in enumerate(certs):
+            if str(cert) == target:
+                return f"additional.certificationsTraining[{i}]"
+
+    # Education descriptions
+    for i, edu in enumerate(resume_json.get("education", [])):
+        descs = edu.get("description", [])
+        if isinstance(descs, list):
+            for j, desc in enumerate(descs):
+                if str(desc) == target:
+                    return f"education[{i}].description[{j}]"
+
+    # Project descriptions
+    for i, proj in enumerate(resume_json.get("personalProjects", [])):
+        descs = proj.get("description", [])
+        if isinstance(descs, list):
+            for j, desc in enumerate(descs):
+                if str(desc) == target:
+                    return f"personalProjects[{i}].description[{j}]"
+
+    return "summary"
