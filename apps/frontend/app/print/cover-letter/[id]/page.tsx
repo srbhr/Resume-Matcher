@@ -12,6 +12,7 @@ import { resolveLocale } from '@/lib/i18n/locale';
 import {
   type CoverLetterSettings,
   type CoverLetterHeadingField,
+  type CoverLetterFontSizes,
   DEFAULT_COVER_LETTER_SETTINGS,
 } from '@/lib/types/cover-letter-settings';
 
@@ -79,6 +80,10 @@ async function fetchCoverLetterData(resumeId: string): Promise<CoverLetterData> 
           rawSettings.showTitle !== undefined
             ? Boolean(rawSettings.showTitle)
             : DEFAULT_COVER_LETTER_SETTINGS.showTitle,
+        fontSizes: {
+          ...DEFAULT_COVER_LETTER_SETTINGS.fontSizes,
+          ...((rawSettings.fontSizes as Partial<CoverLetterFontSizes>) ?? {}),
+        },
       }
     : DEFAULT_COVER_LETTER_SETTINGS;
 
@@ -127,6 +132,7 @@ export default async function PrintCoverLetterPage({ params, searchParams }: Pag
 
   const centered = settings.headingStyle === 'centered';
   const minimal = settings.headingStyle === 'minimal';
+  const fs = settings.fontSizes;
 
   const contactItems = settings.headingFields
     .map((f) => getFieldValue(personalInfo, f))
@@ -158,7 +164,7 @@ export default async function PrintCoverLetterPage({ params, searchParams }: Pag
         >
           <h1
             style={{
-              fontSize: '18pt',
+              fontSize: `${fs.name}pt`,
               fontWeight: 'bold',
               margin: 0,
               letterSpacing: '-0.02em',
@@ -170,7 +176,7 @@ export default async function PrintCoverLetterPage({ params, searchParams }: Pag
             <div
               style={{
                 marginTop: '2mm',
-                fontSize: '9pt',
+                fontSize: `${fs.contact}pt`,
                 fontFamily: 'monospace',
                 color: '#444',
               }}
@@ -191,7 +197,7 @@ export default async function PrintCoverLetterPage({ params, searchParams }: Pag
         >
           <h1
             style={{
-              fontSize: '22pt',
+              fontSize: `${fs.name}pt`,
               fontWeight: 'bold',
               margin: 0,
               letterSpacing: '-0.01em',
@@ -217,7 +223,7 @@ export default async function PrintCoverLetterPage({ params, searchParams }: Pag
             <div
               style={{
                 marginTop: '3mm',
-                fontSize: '9pt',
+                fontSize: `${fs.contact}pt`,
                 fontFamily: 'monospace',
                 color: '#111',
                 lineHeight: 1.6,
@@ -249,7 +255,7 @@ export default async function PrintCoverLetterPage({ params, searchParams }: Pag
             <p
               key={idx}
               style={{
-                fontSize: '11pt',
+                fontSize: `${fs.body}pt`,
                 margin: '0 0 4mm 0',
                 textAlign: 'justify',
               }}

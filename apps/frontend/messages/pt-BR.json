@@ -940,7 +940,11 @@
       "settingsTitle": "Configurações do cabeçalho",
       "style": "Layout",
       "showTitle": "Mostrar título profissional abaixo do nome",
-      "contactFields": "Informações de contato a exibir"
+      "contactFields": "Informações de contato a exibir",
+      "fontSizes": "Tamanhos de fonte (pt)",
+      "fontSizeName": "Nome",
+      "fontSizeContact": "Contato",
+      "fontSizeBody": "Corpo"
     },
     "preview": {
       "defaultName": "Seu Nome",

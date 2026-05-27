@@ -7,6 +7,7 @@ import {
   type CoverLetterSettings,
   type CoverLetterHeadingField,
   DEFAULT_COVER_LETTER_SETTINGS,
+  type CoverLetterFontSizes,
 } from '@/lib/types/cover-letter-settings';
 
 export interface CoverLetterPersonalInfo {
@@ -44,10 +45,12 @@ function ContactLine({
   personalInfo,
   fields,
   style,
+  fontSizes,
 }: {
   personalInfo: CoverLetterPersonalInfo;
   fields: CoverLetterHeadingField[];
   style: CoverLetterSettings['headingStyle'];
+  fontSizes: CoverLetterFontSizes;
 }) {
   const items = fields.map((f) => getFieldValue(personalInfo, f)).filter((v): v is string => !!v);
 
@@ -57,10 +60,8 @@ function ContactLine({
 
   return (
     <div
-      className={cn(
-        'font-mono text-[10px] leading-[1.6] text-ink',
-        centered ? 'text-center' : 'text-left'
-      )}
+      className={cn('font-mono leading-[1.6] text-ink', centered ? 'text-center' : 'text-left')}
+      style={{ fontSize: `${fontSizes.contact}pt` }}
     >
       {items.join('  ·  ')}
     </div>
@@ -76,6 +77,7 @@ export function CoverLetterPreview({
 }: CoverLetterPreviewProps) {
   const { t, locale } = useTranslations();
   const s = settings ?? DEFAULT_COVER_LETTER_SETTINGS;
+  const fs = s.fontSizes ?? DEFAULT_COVER_LETTER_SETTINGS.fontSizes;
 
   const today = new Intl.DateTimeFormat(locale, {
     year: 'numeric',
@@ -108,14 +110,18 @@ export function CoverLetterPreview({
         {minimal ? (
           /* Minimal (original) style */
           <header className="mb-8 border-b-2 border-black pb-4">
-            <h1 className="font-serif text-2xl font-bold tracking-tight">
+            <h1
+              className="font-serif font-bold tracking-tight"
+              style={{ fontSize: `${fs.name}pt` }}
+            >
               {personalInfo.name || t('coverLetter.preview.defaultName')}
             </h1>
-            <div className="mt-2 font-mono text-xs text-ink-soft flex flex-wrap gap-x-4 gap-y-1">
+            <div className="mt-2 text-ink-soft flex flex-wrap gap-x-4 gap-y-1">
               <ContactLine
                 personalInfo={personalInfo}
                 fields={s.headingFields}
                 style={s.headingStyle}
+                fontSizes={fs}
               />
             </div>
           </header>
@@ -124,9 +130,10 @@ export function CoverLetterPreview({
           <header className={cn('mb-8 pb-4 border-b-2 border-black', centered && 'text-center')}>
             <h1
               className={cn(
-                'font-serif text-[22pt] font-bold tracking-[-0.01em] leading-none',
+                'font-serif font-bold tracking-[-0.01em] leading-none',
                 centered && 'text-center'
               )}
+              style={{ fontSize: `${fs.name}pt` }}
             >
               {personalInfo.name || t('coverLetter.preview.defaultName')}
             </h1>
@@ -140,6 +147,7 @@ export function CoverLetterPreview({
                 personalInfo={personalInfo}
                 fields={s.headingFields}
                 style={s.headingStyle}
+                fontSizes={fs}
               />
             </div>
           </header>
@@ -156,7 +164,11 @@ export function CoverLetterPreview({
         <div className="space-y-4">
           {paragraphs.length > 0 ? (
             paragraphs.map((para, idx) => (
-              <p key={idx} className="font-serif text-base leading-relaxed text-ink">
+              <p
+                key={idx}
+                className="font-serif leading-relaxed text-ink"
+                style={{ fontSize: `${fs.body}pt` }}
+              >
                 {para}
               </p>
             ))

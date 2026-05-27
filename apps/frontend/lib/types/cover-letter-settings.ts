@@ -14,6 +14,15 @@ export type CoverLetterHeadingField =
   | 'github'
   | 'website';
 
+export interface CoverLetterFontSizes {
+  /** Candidate name in the letterhead (pt) */
+  name: number;
+  /** Contact info line in the letterhead (pt) */
+  contact: number;
+  /** Body paragraph text (pt) */
+  body: number;
+}
+
 export interface CoverLetterSettings {
   /** Visual layout of the letterhead */
   headingStyle: CoverLetterHeadingStyle;
@@ -21,12 +30,19 @@ export interface CoverLetterSettings {
   headingFields: CoverLetterHeadingField[];
   /** Whether to show the candidate's job title below their name */
   showTitle: boolean;
+  /** Font sizes for name, contact line, and body text (pt) */
+  fontSizes: CoverLetterFontSizes;
 }
 
 export const DEFAULT_COVER_LETTER_SETTINGS: CoverLetterSettings = {
   headingStyle: 'professional',
   headingFields: ['email', 'phone', 'location', 'linkedin'],
   showTitle: true,
+  fontSizes: {
+    name: 22,
+    contact: 10,
+    body: 11,
+  },
 };
 
 export const ALL_HEADING_FIELDS: CoverLetterHeadingField[] = [

@@ -10,6 +10,7 @@ import {
   type CoverLetterHeadingField,
   DEFAULT_COVER_LETTER_SETTINGS,
   ALL_HEADING_FIELDS,
+  type CoverLetterFontSizes,
 } from '@/lib/types/cover-letter-settings';
 
 const HEADING_STYLE_LABELS: Record<CoverLetterSettings['headingStyle'], string> = {
@@ -57,6 +58,7 @@ export function CoverLetterEditor({
   const [showSettings, setShowSettings] = React.useState(false);
 
   const s = settings ?? DEFAULT_COVER_LETTER_SETTINGS;
+  const fs: CoverLetterFontSizes = s.fontSizes ?? DEFAULT_COVER_LETTER_SETTINGS.fontSizes;
 
   const wordCount = content
     .trim()
@@ -72,6 +74,10 @@ export function CoverLetterEditor({
     const current = s.headingFields;
     const next = current.includes(field) ? current.filter((f) => f !== field) : [...current, field];
     updateSettings({ headingFields: next });
+  }
+
+  function updateFontSize(key: keyof CoverLetterFontSizes, value: number) {
+    updateSettings({ fontSizes: { ...fs, [key]: value } });
   }
 
   return (
@@ -177,6 +183,34 @@ export function CoverLetterEditor({
                   </button>
                 );
               })}
+            </div>
+          </div>
+
+          {/* Font Sizes */}
+          <div>
+            <p className="font-mono text-xs text-steel-grey mb-2">
+              {t('coverLetter.heading.fontSizes')}
+            </p>
+            <div className="flex gap-4 flex-wrap">
+              {(
+                [
+                  { key: 'name', label: t('coverLetter.heading.fontSizeName') },
+                  { key: 'contact', label: t('coverLetter.heading.fontSizeContact') },
+                  { key: 'body', label: t('coverLetter.heading.fontSizeBody') },
+                ] as { key: keyof CoverLetterFontSizes; label: string }[]
+              ).map(({ key, label }) => (
+                <label key={key} className="flex flex-col gap-1">
+                  <span className="font-mono text-xs text-ink">{label}</span>
+                  <input
+                    type="number"
+                    min={6}
+                    max={48}
+                    value={fs[key]}
+                    onChange={(e) => updateFontSize(key, Number(e.target.value))}
+                    className="w-16 font-mono text-xs border-2 border-black px-2 py-1 bg-white text-ink focus:outline-none focus:ring-1 focus:ring-black"
+                  />
+                </label>
+              ))}
             </div>
           </div>
         </div>

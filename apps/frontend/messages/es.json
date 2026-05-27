@@ -939,7 +939,11 @@
       "settingsTitle": "Ajustes de encabezado",
       "style": "Diseño",
       "showTitle": "Mostrar título profesional bajo el nombre",
-      "contactFields": "Información de contacto a mostrar"
+      "contactFields": "Información de contacto a mostrar",
+      "fontSizes": "Tamaños de fuente (pt)",
+      "fontSizeName": "Nombre",
+      "fontSizeContact": "Contacto",
+      "fontSizeBody": "Cuerpo"
     },
     "preview": {
       "defaultName": "Tu nombre",

@@ -940,7 +940,11 @@
       "settingsTitle": "Heading Settings",
       "style": "Layout",
       "showTitle": "Show professional title below name",
-      "contactFields": "Contact info to display"
+      "contactFields": "Contact info to display",
+      "fontSizes": "Font sizes (pt)",
+      "fontSizeName": "Name",
+      "fontSizeContact": "Contact",
+      "fontSizeBody": "Body"
     },
     "preview": {
       "defaultName": "Your Name",

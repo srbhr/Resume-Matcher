@@ -54,6 +54,7 @@ import {
 } from 'lucide-react';
 import { EnrichmentModal } from '@/components/enrichment/enrichment-modal';
 import { CoverLetterEditor } from '@/components/builder/cover-letter-editor';
+import { CoverLetterPreview } from '@/components/builder/cover-letter-preview';
 import { OutreachEditor } from '@/components/builder/outreach-editor';
 import { ResumeForm } from '@/components/builder/resume-form';
 import { FormattingControls } from '@/components/builder/formatting-controls';
@@ -256,6 +257,10 @@ export default function ResumeViewerPage() {
             ...saved,
             headingFields: (saved.headingFields ??
               DEFAULT_COVER_LETTER_SETTINGS.headingFields) as CoverLetterSettings['headingFields'],
+            fontSizes: {
+              ...DEFAULT_COVER_LETTER_SETTINGS.fontSizes,
+              ...(saved.fontSizes ?? {}),
+            },
           });
         }
 
@@ -1496,6 +1501,29 @@ export default function ResumeViewerPage() {
               </div>
             </div>
           </div>
+        ) : activeTab === 'coverLetter' && isEditingCoverLetter ? (
+          <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-2 bg-border gap-[1px] no-print">
+            {/* Left: editor */}
+            <div className="bg-background overflow-y-auto">
+              <CoverLetterEditor
+                content={coverLetterDraft}
+                onChange={setCoverLetterDraft}
+                onSave={handleSaveCoverLetter}
+                isSaving={isSavingCoverLetter}
+                settings={coverLetterSettings}
+                onSettingsChange={handleCoverLetterSettingsChange}
+              />
+            </div>
+            {/* Right: live preview */}
+            <div className="bg-secondary overflow-y-auto p-4 md:p-6 flex justify-center">
+              <CoverLetterPreview
+                content={coverLetterDraft}
+                personalInfo={resumeData?.personalInfo ?? {}}
+                pageSize={templateSettings.pageSize}
+                settings={coverLetterSettings}
+              />
+            </div>
+          </div>
         ) : (
           <div className="flex-1 min-h-0 overflow-y-auto px-4 md:px-8 py-8">
             <div className="max-w-7xl mx-auto">
@@ -1693,38 +1721,24 @@ export default function ResumeViewerPage() {
 
               {activeTab === 'coverLetter' && (
                 <div className="flex justify-center pb-4">
-                  <div className="w-full max-w-[210mm] border border-black bg-white shadow-sw-default">
-                    {isEditingCoverLetter ? (
-                      <CoverLetterEditor
-                        content={coverLetterDraft}
-                        onChange={setCoverLetterDraft}
-                        onSave={handleSaveCoverLetter}
-                        isSaving={isSavingCoverLetter}
-                        settings={coverLetterSettings}
-                        onSettingsChange={handleCoverLetterSettingsChange}
-                      />
-                    ) : (
+                  {coverLetter ? (
+                    <CoverLetterPreview
+                      content={coverLetter}
+                      personalInfo={resumeData?.personalInfo ?? {}}
+                      pageSize={templateSettings.pageSize}
+                      settings={coverLetterSettings}
+                    />
+                  ) : (
+                    <div className="w-full max-w-[210mm] border border-black bg-white shadow-sw-default">
                       <div className="p-[28px_32px]">
-                        {coverLetter ? (
-                          <>
-                            <h2 className="font-sans text-[22px] font-semibold tracking-[-0.01em] m-0">
-                              {t('resumeViewer.tabs.coverLetter')}
-                              {resumeTitle ? ` · ${resumeTitle}` : ''}
-                            </h2>
-                            <pre className="font-serif text-[15px] leading-relaxed whitespace-pre-wrap break-words m-0 mt-6">
-                              {coverLetter}
-                            </pre>
-                          </>
-                        ) : (
-                          <EmptyState
-                            headline={t('resumeViewer.empty.coverHeadline')}
-                            body={t('resumeViewer.empty.coverBody')}
-                            bare
-                          />
-                        )}
+                        <EmptyState
+                          headline={t('resumeViewer.empty.coverHeadline')}
+                          body={t('resumeViewer.empty.coverBody')}
+                          bare
+                        />
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
               )}
 

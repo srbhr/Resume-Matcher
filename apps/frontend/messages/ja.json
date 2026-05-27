@@ -939,7 +939,11 @@
       "settingsTitle": "ヘッダー設定",
       "style": "レイアウト",
       "showTitle": "名前の下に職業タイトルを表示する",
-      "contactFields": "表示する連絡先情報"
+      "contactFields": "表示する連絡先情報",
+      "fontSizes": "フォントサイズ (pt)",
+      "fontSizeName": "名前",
+      "fontSizeContact": "連絡先",
+      "fontSizeBody": "本文"
     },
     "preview": {
       "defaultName": "あなたの名前",

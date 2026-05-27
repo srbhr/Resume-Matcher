@@ -940,7 +940,11 @@
       "settingsTitle": "页眉设置",
       "style": "布局",
       "showTitle": "在姓名下方显示职业头衔",
-      "contactFields": "要显示的联系信息"
+      "contactFields": "要显示的联系信息",
+      "fontSizes": "字体大小 (pt)",
+      "fontSizeName": "姓名",
+      "fontSizeContact": "联系方式",
+      "fontSizeBody": "正文"
     },
     "preview": {
       "defaultName": "你的姓名",
