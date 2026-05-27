@@ -1,4 +1,4 @@
-import { apiPost, apiFetch } from './client';
+import { apiPost, apiPut, apiDelete, apiFetch } from './client';
 
 export type ChatMode = 'qa' | 'improve' | 'tailor';
 export type DocumentType = 'resume' | 'cv' | 'coverLetter' | 'outreach';
@@ -153,4 +153,73 @@ export async function applyHunkVerdicts(
     throw new Error(detail || `Failed to apply hunks (${res.status})`);
   }
   return (await res.json()) as ApplyHunksResponse;
+}
+
+// ---------------------------------------------------------------------------
+// Conversation history
+// ---------------------------------------------------------------------------
+
+export interface ConversationMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+export interface Conversation {
+  conversation_id: string;
+  document_type: string;
+  mode: string;
+  title: string;
+  created_at: string | null;
+  updated_at: string | null;
+  pinned: boolean;
+  message_count: number;
+  messages: ConversationMessage[];
+}
+
+export async function listConversations(resumeId: string): Promise<Conversation[]> {
+  const res = await apiFetch(`/chat/conversations/${encodeURIComponent(resumeId)}`);
+  if (!res.ok) throw new Error(`Failed to load conversations (${res.status})`);
+  const data = (await res.json()) as { conversations: Conversation[] };
+  return data.conversations;
+}
+
+export async function createConversation(
+  resumeId: string,
+  payload: { document_type: string; mode: string; messages: ConversationMessage[]; title: string }
+): Promise<Conversation> {
+  const res = await apiPost(`/chat/conversations/${encodeURIComponent(resumeId)}`, payload);
+  if (!res.ok) throw new Error(`Failed to save conversation (${res.status})`);
+  return (await res.json()) as Conversation;
+}
+
+export async function updateConversationMessages(
+  resumeId: string,
+  conversationId: string,
+  messages: ConversationMessage[]
+): Promise<Conversation> {
+  const res = await apiPut(
+    `/chat/conversations/${encodeURIComponent(resumeId)}/${encodeURIComponent(conversationId)}`,
+    { messages }
+  );
+  if (!res.ok) throw new Error(`Failed to update conversation (${res.status})`);
+  return (await res.json()) as Conversation;
+}
+
+export async function deleteConversation(resumeId: string, conversationId: string): Promise<void> {
+  const res = await apiDelete(
+    `/chat/conversations/${encodeURIComponent(resumeId)}/${encodeURIComponent(conversationId)}`
+  );
+  if (!res.ok) throw new Error(`Failed to delete conversation (${res.status})`);
+}
+
+export async function toggleConversationPin(
+  resumeId: string,
+  conversationId: string
+): Promise<Conversation> {
+  const res = await apiPost(
+    `/chat/conversations/${encodeURIComponent(resumeId)}/${encodeURIComponent(conversationId)}/pin`,
+    {}
+  );
+  if (!res.ok) throw new Error(`Failed to toggle pin (${res.status})`);
+  return (await res.json()) as Conversation;
 }

@@ -194,6 +194,42 @@ class ChatResponse(BaseModel):
     proposal: ChatProposal | None = None
 
 
+# ---------------------------------------------------------------------------
+# Conversation history schemas
+# ---------------------------------------------------------------------------
+
+class ConversationMessage(BaseModel):
+    role: Literal["user", "assistant"]
+    content: str
+
+
+class ConversationResponse(BaseModel):
+    conversation_id: str
+    document_type: str
+    mode: str
+    title: str
+    created_at: str | None = None
+    updated_at: str | None = None
+    pinned: bool
+    message_count: int
+    messages: list[ConversationMessage]
+
+
+class ConversationsListResponse(BaseModel):
+    conversations: list[ConversationResponse]
+
+
+class CreateConversationRequest(BaseModel):
+    document_type: str
+    mode: str
+    messages: list[ConversationMessage] = Field(..., min_length=1)
+    title: str = Field(..., max_length=120)
+
+
+class UpdateConversationRequest(BaseModel):
+    messages: list[ConversationMessage] = Field(..., min_length=1)
+
+
 def _get_resume_or_404(resume_id: str) -> dict[str, Any]:
     resume = db.get_resume(resume_id)
     if not resume:
@@ -770,4 +806,91 @@ async def apply_document_hunks(
             detail="Failed to apply changes. Please try again.",
         )
 
+
+# ---------------------------------------------------------------------------
+# Conversation history endpoints
+# ---------------------------------------------------------------------------
+
+def _row_to_conversation(row: dict[str, Any]) -> ConversationResponse:
+    return ConversationResponse(
+        conversation_id=row["conversation_id"],
+        document_type=row.get("document_type", ""),
+        mode=row.get("mode", ""),
+        title=row.get("title", ""),
+        created_at=row.get("created_at"),
+        updated_at=row.get("updated_at"),
+        pinned=row.get("pinned", False),
+        message_count=row.get("message_count", 0),
+        messages=[
+            ConversationMessage(role=m["role"], content=m["content"])
+            for m in row.get("messages", [])
+        ],
+    )
+
+
+@router.get("/conversations/{resume_id}", response_model=ConversationsListResponse)
+async def list_conversations(resume_id: str) -> ConversationsListResponse:
+    """List all saved conversations for a resume, newest first."""
+    _get_resume_or_404(resume_id)
+    rows = db.list_chat_conversations(resume_id)
+    return ConversationsListResponse(
+        conversations=[_row_to_conversation(r) for r in rows]
+    )
+
+
+@router.post("/conversations/{resume_id}", response_model=ConversationResponse, status_code=201)
+async def create_conversation(
+    resume_id: str,
+    request: CreateConversationRequest,
+) -> ConversationResponse:
+    """Save a new conversation. Oldest unpinned beyond the limit are evicted."""
+    _get_resume_or_404(resume_id)
+    messages = [m.model_dump() for m in request.messages]
+    row = db.create_chat_conversation(
+        resume_id=resume_id,
+        document_type=request.document_type,
+        mode=request.mode,
+        messages=messages,
+        title=request.title,
+    )
+    return _row_to_conversation(row)
+
+
+@router.put("/conversations/{resume_id}/{conversation_id}", response_model=ConversationResponse)
+async def update_conversation(
+    resume_id: str,
+    conversation_id: str,
+    request: UpdateConversationRequest,
+) -> ConversationResponse:
+    """Replace the messages of an existing conversation."""
+    _get_resume_or_404(resume_id)
+    messages = [m.model_dump() for m in request.messages]
+    row = db.update_chat_conversation_messages(conversation_id, messages)
+    if not row:
+        raise HTTPException(status_code=404, detail="Conversation not found.")
+    return _row_to_conversation(row)
+
+
+@router.delete("/conversations/{resume_id}/{conversation_id}", status_code=204)
+async def delete_conversation(resume_id: str, conversation_id: str) -> None:
+    """Delete a conversation."""
+    _get_resume_or_404(resume_id)
+    if not db.delete_chat_conversation(conversation_id):
+        raise HTTPException(status_code=404, detail="Conversation not found.")
+
+
+@router.post(
+    "/conversations/{resume_id}/{conversation_id}/pin",
+    response_model=ConversationResponse,
+)
+async def toggle_conversation_pin(
+    resume_id: str,
+    conversation_id: str,
+) -> ConversationResponse:
+    """Toggle the pinned state of a conversation."""
+    _get_resume_or_404(resume_id)
+    row = db.toggle_chat_conversation_pin(conversation_id)
+    if not row:
+        raise HTTPException(status_code=404, detail="Conversation not found.")
+    return _row_to_conversation(row)
 

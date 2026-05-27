@@ -962,6 +962,136 @@
   animation: cb-blink 1.2s ease-in-out infinite;
 }
 
+/* ── Conversation history view ─────────────────────────────── */
+.convList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.convGroupLabel {
+  font-family: var(--cb-font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--cb-steel);
+  padding: 4px 0 2px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.convRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--cb-paper);
+  border: 1px solid var(--cb-ink);
+  box-shadow: var(--cb-shadow-xs);
+}
+
+.convRowMain {
+  flex: 1;
+  min-width: 0;
+}
+
+.convTitle {
+  font-family: var(--cb-font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cb-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+}
+
+.convMeta {
+  font-family: var(--cb-font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--cb-steel);
+  margin-top: 3px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  align-items: center;
+}
+
+.convMetaSep {
+  opacity: 0.4;
+  margin: 0 1px;
+}
+
+.convActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.convResumeBtn {
+  font-family: var(--cb-font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 6px 8px;
+  background: var(--cb-canvas);
+  border: 1px solid var(--cb-ink);
+  color: var(--cb-ink);
+  cursor: pointer;
+  box-shadow: var(--cb-shadow-xs);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition:
+    transform 100ms ease-out,
+    box-shadow 100ms ease-out,
+    background-color 100ms ease-out;
+}
+.convResumeBtn:hover {
+  background: var(--cb-hyper-blue);
+  color: #fff;
+  transform: translate(1px, 1px);
+  box-shadow: none;
+}
+
+.convIconBtn {
+  width: 26px;
+  height: 26px;
+  background: var(--cb-canvas);
+  border: 1px solid var(--cb-ink);
+  color: var(--cb-steel);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: var(--cb-shadow-xs);
+  transition:
+    transform 100ms ease-out,
+    box-shadow 100ms ease-out,
+    color 100ms ease-out,
+    background-color 100ms ease-out;
+  padding: 0;
+}
+.convIconBtn:hover {
+  transform: translate(1px, 1px);
+  box-shadow: none;
+  color: var(--cb-ink);
+  background: var(--cb-panel);
+}
+.convIconBtn.convPinned {
+  color: var(--cb-hyper-blue);
+  background: var(--cb-canvas);
+}
+.convIconBtn.convPinned:hover {
+  color: var(--cb-ink);
+}
+
 @media (max-width: 520px) {
   .pane {
     width: 100vw;

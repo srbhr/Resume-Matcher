@@ -278,6 +278,100 @@ class Database:
         rows = self.resume_json_backups.search(Backup.backup_id == backup_id)
         return rows[0] if rows else None
 
+    # Chat conversation history
+
+    MAX_UNPINNED_CONVERSATIONS: int = 5
+
+    @property
+    def chat_conversations(self) -> Table:
+        """Chat conversation history table."""
+        return self.db.table("chat_conversations")
+
+    def list_chat_conversations(self, resume_id: str) -> list[dict[str, Any]]:
+        """Return all conversations for a resume, newest updated first."""
+        Conv = Query()
+        rows = self.chat_conversations.search(Conv.resume_id == resume_id)
+        return sorted(rows, key=lambda r: r.get("updated_at") or "", reverse=True)
+
+    def get_chat_conversation(self, conversation_id: str) -> dict[str, Any] | None:
+        """Fetch a single conversation by ID."""
+        Conv = Query()
+        rows = self.chat_conversations.search(Conv.conversation_id == conversation_id)
+        return rows[0] if rows else None
+
+    def create_chat_conversation(
+        self,
+        resume_id: str,
+        document_type: str,
+        mode: str,
+        messages: list[dict[str, Any]],
+        title: str,
+    ) -> dict[str, Any]:
+        """Create a conversation and evict oldest unpinned ones if over limit."""
+        now = datetime.now(timezone.utc).isoformat()
+        doc: dict[str, Any] = {
+            "conversation_id": str(uuid4()),
+            "resume_id": resume_id,
+            "document_type": document_type,
+            "mode": mode,
+            "messages": messages,
+            "title": title,
+            "created_at": now,
+            "updated_at": now,
+            "pinned": False,
+            "message_count": len(messages),
+        }
+        self.chat_conversations.insert(doc)
+        self._evict_old_conversations(resume_id)
+        return doc
+
+    def _evict_old_conversations(self, resume_id: str) -> None:
+        """Delete oldest unpinned conversations beyond MAX_UNPINNED_CONVERSATIONS."""
+        Conv = Query()
+        unpinned = self.chat_conversations.search(
+            (Conv.resume_id == resume_id) & (Conv.pinned == False)  # noqa: E712
+        )
+        by_age = sorted(unpinned, key=lambda r: r.get("updated_at") or "", reverse=True)
+        for old in by_age[self.MAX_UNPINNED_CONVERSATIONS:]:
+            self.chat_conversations.remove(
+                Conv.conversation_id == old["conversation_id"]
+            )
+
+    def update_chat_conversation_messages(
+        self,
+        conversation_id: str,
+        messages: list[dict[str, Any]],
+    ) -> dict[str, Any] | None:
+        """Replace the messages of an existing conversation."""
+        Conv = Query()
+        now = datetime.now(timezone.utc).isoformat()
+        updated = self.chat_conversations.update(
+            {"messages": messages, "updated_at": now, "message_count": len(messages)},
+            Conv.conversation_id == conversation_id,
+        )
+        return self.get_chat_conversation(conversation_id) if updated else None
+
+    def toggle_chat_conversation_pin(self, conversation_id: str) -> dict[str, Any] | None:
+        """Toggle pinned state; runs eviction after unpinning."""
+        Conv = Query()
+        row = self.get_chat_conversation(conversation_id)
+        if not row:
+            return None
+        new_pinned = not row.get("pinned", False)
+        self.chat_conversations.update(
+            {"pinned": new_pinned},
+            Conv.conversation_id == conversation_id,
+        )
+        if not new_pinned:
+            self._evict_old_conversations(row["resume_id"])
+        return self.get_chat_conversation(conversation_id)
+
+    def delete_chat_conversation(self, conversation_id: str) -> bool:
+        """Delete a conversation. Returns True if found and deleted."""
+        Conv = Query()
+        removed = self.chat_conversations.remove(Conv.conversation_id == conversation_id)
+        return bool(removed)
+
     def delete_resume(self, resume_id: str) -> bool:
         """Delete resume by ID."""
         Resume = Query()
@@ -387,6 +481,7 @@ class Database:
         self.resumes.truncate()
         self.jobs.truncate()
         self.improvements.truncate()
+        self.chat_conversations.truncate()
 
         # Clear uploads directory
         uploads_dir = settings.data_dir / "uploads"

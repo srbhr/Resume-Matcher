@@ -23,6 +23,10 @@ import {
   Check,
   RotateCcw,
   AlertTriangle,
+  Archive,
+  Pin,
+  PinOff,
+  Trash2,
 } from 'lucide-react';
 
 import {
@@ -31,12 +35,18 @@ import {
   createResumeFromJson,
   listResumeBackups,
   restoreResumeBackup,
+  listConversations,
+  createConversation,
+  updateConversationMessages,
+  deleteConversation,
+  toggleConversationPin,
   type ChatMessage,
   type ChatMode,
   type ChatProposal,
   type DocumentType,
   type EditProposal,
   type BackupRow,
+  type Conversation,
 } from '@/lib/api/chat';
 import { uploadResumeJson } from '@/lib/api/resume';
 import { DiffReviewFlow } from './diff-review-flow';
@@ -44,7 +54,7 @@ import { DiffReviewFlow } from './diff-review-flow';
 import styles from './chat-bot.module.css';
 
 type TabId = 'resume' | 'cv' | 'coverLetter' | 'outreach' | 'job';
-type View = 'menu' | 'chat' | 'history';
+type View = 'menu' | 'chat' | 'history' | 'conversations';
 type InternalMode = 'discuss' | 'edit' | 'tailor';
 
 function tabToDocumentType(tab: TabId): DocumentType {
@@ -110,8 +120,19 @@ export function ChatBot({
   const [backupsError, setBackupsError] = useState<string | null>(null);
   const [pendingBackupRestore, setPendingBackupRestore] = useState<string | null>(null);
 
+  // Conversation history state
+  const [conversations, setConversations] = useState<Conversation[] | null>(null);
+  const [conversationsLoading, setConversationsLoading] = useState(false);
+  const [conversationsError, setConversationsError] = useState<string | null>(null);
+  const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
+  // Set when resuming a saved conversation so document type matches the saved context.
+  const [conversationDocumentType, setConversationDocumentType] = useState<DocumentType | null>(
+    null
+  );
+
   const documentType = tabToDocumentType(activeTab);
-  const docLabel = DOC_TYPE_LABELS[documentType];
+  const effectiveDocumentType: DocumentType = conversationDocumentType ?? documentType;
+  const docLabel = DOC_TYPE_LABELS[effectiveDocumentType];
 
   const notifyChanged = useCallback(() => {
     onDocumentChanged?.();
@@ -142,6 +163,8 @@ export function ChatBot({
     setMode(next);
     setMessages([]);
     setInput('');
+    setCurrentConversationId(null);
+    setConversationDocumentType(null);
     setView('chat');
   };
 
@@ -159,6 +182,84 @@ export function ChatBot({
       setBackupsLoading(false);
     }
   }, [resumeId]);
+
+  const openConversations = useCallback(async () => {
+    setView('conversations');
+    setConversationsError(null);
+    setConversationsLoading(true);
+    try {
+      const list = await listConversations(resumeId);
+      setConversations(list);
+    } catch (e) {
+      setConversationsError(e instanceof Error ? e.message : 'Failed to load conversations.');
+      setConversations([]);
+    } finally {
+      setConversationsLoading(false);
+    }
+  }, [resumeId]);
+
+  const resumeConversation = useCallback((conv: Conversation) => {
+    setConversationDocumentType(conv.document_type as DocumentType);
+    setMode(conv.mode as InternalMode);
+    setCurrentConversationId(conv.conversation_id);
+    setMessages(conv.messages.map((m) => ({ role: m.role, content: m.content })));
+    setInput('');
+    setView('chat');
+  }, []);
+
+  const saveConversation = useCallback(
+    async (msgs: ChatMessage[]) => {
+      if (msgs.length < 2) return;
+      try {
+        if (currentConversationId) {
+          await updateConversationMessages(resumeId, currentConversationId, msgs);
+        } else {
+          const title = msgs[0]?.content?.slice(0, 80) ?? 'Conversation';
+          const conv = await createConversation(resumeId, {
+            document_type: effectiveDocumentType,
+            mode,
+            messages: msgs,
+            title,
+          });
+          setCurrentConversationId(conv.conversation_id);
+        }
+      } catch {
+        // best-effort — conversation history should not disrupt the chat UX
+      }
+    },
+    [resumeId, currentConversationId, effectiveDocumentType, mode]
+  );
+
+  const handleDeleteConversation = useCallback(
+    async (conversationId: string) => {
+      try {
+        await deleteConversation(resumeId, conversationId);
+        setConversations((prev) =>
+          (prev ?? []).filter((c) => c.conversation_id !== conversationId)
+        );
+        if (currentConversationId === conversationId) {
+          setCurrentConversationId(null);
+        }
+      } catch {
+        setConversationsError('Failed to delete conversation.');
+      }
+    },
+    [resumeId, currentConversationId]
+  );
+
+  const handleTogglePin = useCallback(
+    async (conversationId: string) => {
+      try {
+        const updated = await toggleConversationPin(resumeId, conversationId);
+        setConversations((prev) =>
+          (prev ?? []).map((c) => (c.conversation_id === conversationId ? updated : c))
+        );
+      } catch {
+        setConversationsError('Failed to toggle pin.');
+      }
+    },
+    [resumeId]
+  );
 
   const sendMessage = useCallback(
     async (text: string) => {
@@ -179,30 +280,30 @@ export function ChatBot({
             messages: payloadMessages,
             mode: 'tailor' as ChatMode,
           });
-          setMessages((m) => [
-            ...m,
-            {
-              role: 'assistant',
-              content: res.reply,
-              proposal: res.proposal ?? null,
-              proposalState: res.proposal ? 'pending' : undefined,
-            },
-          ]);
+          const assistantMsg: UiMessage = {
+            role: 'assistant',
+            content: res.reply,
+            proposal: res.proposal ?? null,
+            proposalState: res.proposal ? 'pending' : undefined,
+          };
+          const finalMsgs = [...next, assistantMsg];
+          setMessages(finalMsgs);
+          void saveConversation(finalMsgs.map((m) => ({ role: m.role, content: m.content })));
         } else {
           const res = await chatWithDocument(resumeId, {
             messages: payloadMessages,
-            document_type: documentType,
+            document_type: effectiveDocumentType,
             mode: mode as 'discuss' | 'edit',
           });
-          setMessages((m) => [
-            ...m,
-            {
-              role: 'assistant',
-              content: res.reply,
-              editProposal: res.proposal ?? null,
-              proposalState: res.proposal ? 'pending' : undefined,
-            },
-          ]);
+          const assistantMsg: UiMessage = {
+            role: 'assistant',
+            content: res.reply,
+            editProposal: res.proposal ?? null,
+            proposalState: res.proposal ? 'pending' : undefined,
+          };
+          const finalMsgs = [...next, assistantMsg];
+          setMessages(finalMsgs);
+          void saveConversation(finalMsgs.map((m) => ({ role: m.role, content: m.content })));
         }
       } catch {
         setMessages((m) => [
@@ -217,7 +318,7 @@ export function ChatBot({
         setPending(false);
       }
     },
-    [messages, pending, mode, resumeId, documentType]
+    [messages, pending, mode, resumeId, effectiveDocumentType, saveConversation]
   );
 
   const handleSubmit = (e?: FormEvent) => {
@@ -287,6 +388,8 @@ export function ChatBot({
   const newChat = () => {
     setMessages([]);
     setInput('');
+    setCurrentConversationId(null);
+    setConversationDocumentType(null);
     setView('menu');
   };
 
@@ -315,6 +418,7 @@ export function ChatBot({
 
   const headerTitle = useMemo(() => {
     if (view === 'history') return 'Snapshot History';
+    if (view === 'conversations') return 'Conversation History';
     if (view === 'chat') return `${docLabel} · ${INTERNAL_MODE_LABELS[mode]}`;
     return `Resume Matcher · ${docLabel}`;
   }, [view, mode, docLabel]);
@@ -345,7 +449,9 @@ export function ChatBot({
                 ? getModeHint(mode, docLabel)
                 : view === 'history'
                   ? 'Restore an earlier snapshot.'
-                  : 'Pick what to do.'}
+                  : view === 'conversations'
+                    ? 'Resume a past conversation.'
+                    : 'Pick what to do.'}
             </div>
           </div>
 
@@ -360,6 +466,20 @@ export function ChatBot({
               <Plus size={14} strokeWidth={1.75} />
             </button>
           )}
+
+          <button
+            type="button"
+            className={`${styles.iconBtn} ${view === 'conversations' ? styles.active : ''}`}
+            onClick={() => (view === 'conversations' ? setView('menu') : void openConversations())}
+            title={view === 'conversations' ? 'Back' : 'Conversation history'}
+            aria-label={view === 'conversations' ? 'Back' : 'Conversation history'}
+          >
+            {view === 'conversations' ? (
+              <ChevronLeft size={14} strokeWidth={1.75} />
+            ) : (
+              <Archive size={14} strokeWidth={1.75} />
+            )}
+          </button>
 
           <button
             type="button"
@@ -391,7 +511,8 @@ export function ChatBot({
             <ActionMenu
               onStart={startMode}
               onHistory={() => void openHistory()}
-              documentType={documentType}
+              onConversations={() => void openConversations()}
+              documentType={effectiveDocumentType}
               docLabel={docLabel}
             />
           )}
@@ -403,6 +524,17 @@ export function ChatBot({
               rows={backups ?? []}
               pendingId={pendingBackupRestore}
               onRestore={restoreBackup}
+            />
+          )}
+
+          {view === 'conversations' && (
+            <ConversationsView
+              loading={conversationsLoading}
+              error={conversationsError}
+              conversations={conversations ?? []}
+              onResume={resumeConversation}
+              onDelete={(id) => void handleDeleteConversation(id)}
+              onTogglePin={(id) => void handleTogglePin(id)}
             />
           )}
 
@@ -452,7 +584,7 @@ export function ChatBot({
                   {m.editProposal && m.proposalState === 'pending' && (
                     <DiffReviewFlow
                       resumeId={resumeId}
-                      documentType={documentType}
+                      documentType={effectiveDocumentType}
                       proposal={m.editProposal}
                       onComplete={handleEditProposalComplete}
                     />
@@ -527,11 +659,13 @@ export function ChatBot({
 function ActionMenu({
   onStart,
   onHistory,
+  onConversations,
   documentType,
   docLabel,
 }: {
   onStart: (m: InternalMode) => void;
   onHistory: () => void;
+  onConversations: () => void;
   documentType: DocumentType;
   docLabel: string;
 }) {
@@ -575,6 +709,15 @@ function ActionMenu({
           </span>
         </button>
       )}
+      <button type="button" className={styles.menuItem} onClick={onConversations}>
+        <span className={styles.menuItemIcon}>
+          <Archive size={18} strokeWidth={1.75} />
+        </span>
+        <span>
+          <span className={styles.menuItemTitle}>Resume a conversation</span>
+          <span className={styles.menuItemDesc}>Pick up where you left off.</span>
+        </span>
+      </button>
       <button type="button" className={styles.menuItem} onClick={onHistory}>
         <span className={styles.menuItemIcon}>
           <History size={18} strokeWidth={1.75} />
@@ -638,6 +781,121 @@ function HistoryView({
           </button>
         </div>
       ))}
+    </div>
+  );
+}
+
+const DOC_TYPE_LABELS_LOWER: Record<string, string> = {
+  resume: 'Resume',
+  cv: 'CV',
+  coverLetter: 'Cover Letter',
+  outreach: 'Outreach',
+};
+
+const MODE_LABELS_LOWER: Record<string, string> = {
+  discuss: 'Discuss',
+  edit: 'Edit',
+  tailor: 'Tailor',
+};
+
+function ConversationsView({
+  loading,
+  error,
+  conversations,
+  onResume,
+  onDelete,
+  onTogglePin,
+}: {
+  loading: boolean;
+  error: string | null;
+  conversations: Conversation[];
+  onResume: (conv: Conversation) => void;
+  onDelete: (id: string) => void;
+  onTogglePin: (id: string) => void;
+}) {
+  if (loading) {
+    return <div className={styles.historyEmpty}>Loading conversations…</div>;
+  }
+  if (error) {
+    return (
+      <div className={styles.historyEmpty}>
+        <AlertTriangle size={16} strokeWidth={1.75} /> {error}
+      </div>
+    );
+  }
+  if (conversations.length === 0) {
+    return (
+      <div className={styles.historyEmpty}>
+        No conversations yet. Start a discussion or edit session and it will be saved here
+        automatically.
+      </div>
+    );
+  }
+
+  const pinned = conversations.filter((c) => c.pinned);
+  const unpinned = conversations.filter((c) => !c.pinned);
+
+  const renderRow = (conv: Conversation) => (
+    <div key={conv.conversation_id} className={styles.convRow}>
+      <div className={styles.convRowMain}>
+        <div className={styles.convTitle}>{conv.title}</div>
+        <div className={styles.convMeta}>
+          <span>{DOC_TYPE_LABELS_LOWER[conv.document_type] ?? conv.document_type}</span>
+          <span className={styles.convMetaSep}>·</span>
+          <span>{MODE_LABELS_LOWER[conv.mode] ?? conv.mode}</span>
+          <span className={styles.convMetaSep}>·</span>
+          <span>{conv.message_count} msg</span>
+          <span className={styles.convMetaSep}>·</span>
+          <span>{formatTime(conv.updated_at)}</span>
+        </div>
+      </div>
+      <div className={styles.convActions}>
+        <button
+          type="button"
+          className={styles.convResumeBtn}
+          onClick={() => onResume(conv)}
+          aria-label="Resume conversation"
+        >
+          Resume
+        </button>
+        <button
+          type="button"
+          className={`${styles.convIconBtn} ${conv.pinned ? styles.convPinned : ''}`}
+          onClick={() => onTogglePin(conv.conversation_id)}
+          title={conv.pinned ? 'Unpin' : 'Pin (keeps beyond 5-conversation limit)'}
+          aria-label={conv.pinned ? 'Unpin conversation' : 'Pin conversation'}
+        >
+          {conv.pinned ? <PinOff size={11} strokeWidth={2} /> : <Pin size={11} strokeWidth={2} />}
+        </button>
+        <button
+          type="button"
+          className={styles.convIconBtn}
+          onClick={() => onDelete(conv.conversation_id)}
+          title="Delete conversation"
+          aria-label="Delete conversation"
+        >
+          <Trash2 size={11} strokeWidth={2} />
+        </button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className={styles.convList}>
+      {pinned.length > 0 && (
+        <>
+          <div className={styles.convGroupLabel}>
+            <Pin size={9} strokeWidth={2.5} /> Pinned
+          </div>
+          {pinned.map(renderRow)}
+        </>
+      )}
+      {unpinned.length > 0 && (
+        <>
+          {pinned.length > 0 && <div className={styles.convGroupLabel}>Recent</div>}
+          {unpinned.map(renderRow)}
+        </>
+      )}
     </div>
   );
 }
