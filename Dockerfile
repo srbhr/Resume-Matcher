@@ -4,7 +4,7 @@
 # ============================================
 # Stage 1: Build Frontend
 # ============================================
-FROM node:22-bookworm AS frontend-builder
+FROM node:22-bookworm-slim AS frontend-builder
 
 # Build argument for API URL (allows customization at build time)
 # Default routes requests through Next.js rewrites on the same origin.
@@ -17,8 +17,9 @@ WORKDIR /app/frontend
 # Copy package files first for better caching
 COPY apps/frontend/package*.json ./
 
-# Install dependencies
-RUN npm ci
+# Install dependencies — omit optional to skip large platform-specific SWC
+# binaries. Next.js falls back to its built-in WASM compiler automatically.
+RUN npm ci --omit=optional
 
 # Copy frontend source
 COPY apps/frontend/ ./
