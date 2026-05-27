@@ -91,6 +91,8 @@ export interface DiffHunk {
   original_text: string;
   proposed_text: string;
   reason: string;
+  field_path?: string;
+  change_type?: string;
 }
 
 export interface EditProposal {

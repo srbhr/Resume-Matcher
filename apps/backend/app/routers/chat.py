@@ -19,6 +19,7 @@ cover letters, outreach messages, and CVs with per-hunk diff approval.
 import copy
 import json
 import logging
+import re
 import uuid
 from typing import Any, Literal
 
@@ -34,16 +35,131 @@ from app.schemas import (
     DocumentChatRequest,
     DocumentChatResponse,
     EditProposal,
-    ResumeChange,
     ResumeData,
     normalize_resume_data,
 )
 from app.services.diff_engine import compute_resume_hunks, compute_text_hunks
-from app.services.improver import apply_diffs
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/chat", tags=["Chat"])
+
+# ---------------------------------------------------------------------------
+# Server-side cache for proposed JSON (keyed by proposal_id).
+# Populated when an edit proposal is generated; consumed (and removed) when
+# the user applies it. Single-user app — an in-memory dict is sufficient.
+# ---------------------------------------------------------------------------
+_proposal_json_cache: dict[str, dict[str, Any]] = {}
+
+_SECTION_DESCRIPTION_RE = re.compile(
+    r"^([a-zA-Z]+)\[(\d+)\]\.description$"
+)
+_SECTION_INDEX_RE = re.compile(
+    r"^([a-zA-Z]+)\[(\d+)\]$"
+)
+
+
+def _revert_hunks_in_proposed(
+    original_json: dict[str, Any],
+    proposed_json: dict[str, Any],
+    rejected_hunks: list[DiffHunk],
+) -> dict[str, Any]:
+    """Start from proposed JSON and undo the rejected hunks.
+
+    For each rejected hunk we reverse the specific change so that only the
+    accepted hunks remain in the final result.
+    """
+    result = copy.deepcopy(proposed_json)
+
+    for hunk in rejected_hunks:
+        path = hunk.field_path
+        ctype = hunk.change_type
+        if not path or not ctype:
+            continue
+
+        try:
+            if path == "summary":
+                result["summary"] = original_json.get("summary", "")
+
+            elif path == "additional.technicalSkills":
+                additional = result.setdefault("additional", {})
+                items: list[str] = additional.setdefault("technicalSkills", [])
+                if ctype == "added":
+                    proposed_lower = (hunk.proposed_text or "").casefold()
+                    additional["technicalSkills"] = [
+                        s for s in items
+                        if not (isinstance(s, str) and s.casefold() == proposed_lower)
+                    ]
+                elif ctype == "removed" and hunk.original_text:
+                    existing_lower = {s.casefold() for s in items if isinstance(s, str)}
+                    if hunk.original_text.casefold() not in existing_lower:
+                        items.append(hunk.original_text)
+
+            elif path == "additional.certificationsTraining":
+                additional = result.setdefault("additional", {})
+                items = additional.setdefault("certificationsTraining", [])
+                if ctype == "added":
+                    proposed_lower = (hunk.proposed_text or "").casefold()
+                    additional["certificationsTraining"] = [
+                        s for s in items
+                        if not (isinstance(s, str) and s.casefold() == proposed_lower)
+                    ]
+                elif ctype == "removed" and hunk.original_text:
+                    existing_lower = {s.casefold() for s in items if isinstance(s, str)}
+                    if hunk.original_text.casefold() not in existing_lower:
+                        items.append(hunk.original_text)
+
+            else:
+                desc_m = _SECTION_DESCRIPTION_RE.match(path)
+                entry_m = _SECTION_INDEX_RE.match(path) if not desc_m else None
+
+                if desc_m:
+                    section = desc_m.group(1)
+                    idx = int(desc_m.group(2))
+                    section_entries = result.get(section, [])
+                    if idx < len(section_entries):
+                        desc: list[str] = section_entries[idx].get("description", [])
+                        if ctype == "modified" and hunk.original_text and hunk.proposed_text:
+                            section_entries[idx]["description"] = [
+                                hunk.original_text if b == hunk.proposed_text else b
+                                for b in desc
+                            ]
+                        elif ctype == "added" and hunk.proposed_text:
+                            section_entries[idx]["description"] = [
+                                b for b in desc if b != hunk.proposed_text
+                            ]
+                        elif ctype == "removed" and hunk.original_text:
+                            orig_entries = original_json.get(section, [])
+                            if idx < len(orig_entries):
+                                orig_desc = orig_entries[idx].get("description", [])
+                                try:
+                                    pos = orig_desc.index(hunk.original_text)
+                                    desc.insert(min(pos, len(desc)), hunk.original_text)
+                                except ValueError:
+                                    desc.append(hunk.original_text)
+
+                elif entry_m:
+                    section = entry_m.group(1)
+                    idx = int(entry_m.group(2))
+                    section_entries = result.setdefault(section, [])
+                    orig_entries = original_json.get(section, [])
+                    if ctype == "modified":
+                        if idx < len(section_entries) and idx < len(orig_entries):
+                            section_entries[idx] = copy.deepcopy(orig_entries[idx])
+                    elif ctype == "added":
+                        if idx < len(section_entries):
+                            section_entries.pop(idx)
+                    elif ctype == "removed":
+                        if idx < len(orig_entries):
+                            section_entries.insert(idx, copy.deepcopy(orig_entries[idx]))
+
+        except (IndexError, KeyError, TypeError, AttributeError):
+            logger.warning(
+                "Could not revert hunk %s path=%s change_type=%s",
+                hunk.hunk_id, path, ctype,
+            )
+
+    return result
 
 
 # Output cap — proposals carry a full resume JSON, which is sizeable.
@@ -469,8 +585,11 @@ async def chat_with_document(
 
             backup = db.create_resume_json_backup(resume, source="document_chat")
 
+            proposal_id = str(uuid.uuid4())
+            _proposal_json_cache[proposal_id] = validated
+
             proposal = EditProposal(
-                proposal_id=str(uuid.uuid4()),
+                proposal_id=proposal_id,
                 summary=str(payload.get("summary") or reply_text)[:120],
                 hunks=hunks,
                 snapshot_id=backup["backup_id"],
@@ -554,55 +673,55 @@ async def apply_document_hunks(
     rejected_count = len(request.hunks) - len(accepted_hunks)
 
     if not accepted_hunks:
+        if is_structured:
+            _proposal_json_cache.pop(request.proposal_id, None)
         return ApplyHunksResponse(applied_count=0, rejected_count=rejected_count)
 
     try:
         if is_structured:
-            resume_json = _resume_json_payload(resume)
-
-            changes: list[ResumeChange] = []
-            for hunk in accepted_hunks:
-                if hunk.original_text and hunk.proposed_text:
-                    changes.append(ResumeChange(
-                        path=_find_path_for_hunk(resume_json, hunk),
-                        action="replace",
-                        original=hunk.original_text,
-                        value=hunk.proposed_text,
-                        reason=hunk.reason,
-                    ))
-                elif hunk.proposed_text and not hunk.original_text:
-                    changes.append(ResumeChange(
-                        path=_find_path_for_hunk(resume_json, hunk),
-                        action="append",
-                        value=hunk.proposed_text,
-                        reason=hunk.reason,
-                    ))
-
-            if changes:
-                result, applied, rejected = apply_diffs(resume_json, changes)
-
-                try:
-                    validated = ResumeData.model_validate(
-                        normalize_resume_data(copy.deepcopy(result))
-                    ).model_dump(mode="json")
-                except ValidationError:
-                    raise HTTPException(
-                        status_code=422,
-                        detail="Applied changes produced invalid resume data.",
-                    )
-
-                db.update_resume(resume_id, {
-                    "processed_data": validated,
-                    "content": json.dumps(validated),
-                    "content_type": "json",
-                })
-
-                return ApplyHunksResponse(
-                    applied_count=len(applied),
-                    rejected_count=rejected_count + len(rejected),
+            proposed_json = _proposal_json_cache.pop(request.proposal_id, None)
+            if proposed_json is None:
+                # Proposal expired (e.g. server restart) — cannot apply.
+                raise HTTPException(
+                    status_code=409,
+                    detail="Proposal has expired. Generate a new edit proposal and try again.",
                 )
 
-            return ApplyHunksResponse(applied_count=0, rejected_count=rejected_count)
+            original_json = _resume_json_payload(resume)
+
+            accepted_ids = {v.hunk_id for v in request.verdicts if v.accepted}
+            rejected_hunks = [h for h in request.hunks if h.hunk_id not in accepted_ids]
+            accepted_count = len(request.hunks) - len(rejected_hunks)
+
+            if accepted_count == 0:
+                return ApplyHunksResponse(applied_count=0, rejected_count=len(request.hunks))
+
+            result = (
+                _revert_hunks_in_proposed(original_json, proposed_json, rejected_hunks)
+                if rejected_hunks
+                else proposed_json
+            )
+
+            try:
+                validated = ResumeData.model_validate(
+                    normalize_resume_data(copy.deepcopy(result))
+                ).model_dump(mode="json")
+            except ValidationError:
+                raise HTTPException(
+                    status_code=422,
+                    detail="Applied changes produced invalid resume data.",
+                )
+
+            db.update_resume(resume_id, {
+                "processed_data": validated,
+                "content": json.dumps(validated),
+                "content_type": "json",
+            })
+
+            return ApplyHunksResponse(
+                applied_count=accepted_count,
+                rejected_count=len(rejected_hunks),
+            )
 
         else:
             # Text document (cover letter / outreach)
@@ -612,7 +731,6 @@ async def apply_document_hunks(
                 else "outreach_message"
             )
             current_text = resume.get(field) or ""
-            lines = current_text.splitlines(keepends=True)
 
             # Rebuild the text by applying accepted hunks.
             # Each hunk has original_text / proposed_text; we do a simple
@@ -643,57 +761,3 @@ async def apply_document_hunks(
         )
 
 
-def _find_path_for_hunk(
-    resume_json: dict[str, Any],
-    hunk: DiffHunk,
-) -> str:
-    """Best-effort reverse-map a DiffHunk label back to a JSON path.
-
-    This searches the resume JSON for the hunk's original_text to find
-    the matching field path. Falls back to "summary" if not found.
-    """
-    target = hunk.original_text
-
-    # Summary
-    if (resume_json.get("summary") or "") == target:
-        return "summary"
-
-    # Work experience bullets
-    for i, exp in enumerate(resume_json.get("workExperience", [])):
-        descs = exp.get("description", [])
-        if isinstance(descs, list):
-            for j, desc in enumerate(descs):
-                if str(desc) == target:
-                    return f"workExperience[{i}].description[{j}]"
-
-    # Skills
-    skills = (resume_json.get("additional", {}) or {}).get("technicalSkills", [])
-    if isinstance(skills, list):
-        for i, skill in enumerate(skills):
-            if str(skill) == target:
-                return f"additional.technicalSkills[{i}]"
-
-    # Certifications
-    certs = (resume_json.get("additional", {}) or {}).get("certificationsTraining", [])
-    if isinstance(certs, list):
-        for i, cert in enumerate(certs):
-            if str(cert) == target:
-                return f"additional.certificationsTraining[{i}]"
-
-    # Education descriptions
-    for i, edu in enumerate(resume_json.get("education", [])):
-        descs = edu.get("description", [])
-        if isinstance(descs, list):
-            for j, desc in enumerate(descs):
-                if str(desc) == target:
-                    return f"education[{i}].description[{j}]"
-
-    # Project descriptions
-    for i, proj in enumerate(resume_json.get("personalProjects", [])):
-        descs = proj.get("description", [])
-        if isinstance(descs, list):
-            for j, desc in enumerate(descs):
-                if str(desc) == target:
-                    return f"personalProjects[{i}].description[{j}]"
-
-    return "summary"

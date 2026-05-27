@@ -101,6 +101,8 @@ def compute_resume_hunks(
                 original_text=diff.original_value or "",
                 proposed_text=diff.new_value or "",
                 reason=_change_type_reason(diff),
+                field_path=diff.field_path,
+                change_type=diff.change_type,
             )
         )
 

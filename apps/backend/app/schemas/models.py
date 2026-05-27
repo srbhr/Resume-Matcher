@@ -881,6 +881,8 @@ class DiffHunk(BaseModel):
     original_text: str
     proposed_text: str
     reason: str
+    field_path: str | None = None
+    change_type: Literal["added", "removed", "modified"] | None = None
 
 
 class EditProposal(BaseModel):
