@@ -42,6 +42,7 @@ from app.schemas import (
     RawResume,
     UpdateJobDescriptionRequest,
     UpdateCoverLetterRequest,
+    UpdateCoverLetterSettingsRequest,
     UpdateOutreachMessageRequest,
     UpdateTitleRequest,
     UpdateTemplateSettingsRequest,
@@ -586,7 +587,23 @@ ALLOWED_TYPES = {
     "application/msword",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 }
+ALLOWED_EXTENSIONS = {".pdf", ".doc", ".docx"}
+# Some browsers/OSes report DOCX as zip or octet-stream; extension is more reliable.
+FALLBACK_TYPES = {"application/zip", "application/octet-stream", "application/x-zip-compressed"}
 MAX_FILE_SIZE = 4 * 1024 * 1024  # 4MB
+
+
+def _is_allowed_file(content_type: str | None, filename: str | None) -> bool:
+    """Return True if the upload is an allowed type by MIME or file extension."""
+    ext = Path(filename or "").suffix.lower()
+    if content_type and content_type in ALLOWED_TYPES:
+        return True
+    if ext in ALLOWED_EXTENSIONS:
+        return True
+    # Accept ambiguous MIME types (zip/octet-stream) only when extension is unambiguous
+    if content_type in FALLBACK_TYPES and ext in ALLOWED_EXTENSIONS:
+        return True
+    return False
 
 
 @router.post("/upload", response_model=ResumeUploadResponse)
@@ -596,8 +613,8 @@ async def upload_resume(file: UploadFile = File(...)) -> ResumeUploadResponse:
     Converts the file to Markdown and stores it in the database.
     Optionally parses to structured JSON if LLM is configured.
     """
-    # Validate file type
-    if file.content_type not in ALLOWED_TYPES:
+    # Validate file type by MIME type or extension (browsers may send zip/octet-stream for docx)
+    if not _is_allowed_file(file.content_type, file.filename):
         raise HTTPException(
             status_code=400,
             detail=f"Invalid file type: {file.content_type}. Allowed: PDF, DOC, DOCX",
@@ -706,7 +723,7 @@ async def _read_and_parse_upload(
 
     Returns (markdown, processed_data_or_none, processing_status, filename).
     """
-    if upload.content_type not in ALLOWED_TYPES:
+    if not _is_allowed_file(upload.content_type, upload.filename):
         raise HTTPException(
             status_code=400,
             detail=f"Invalid file type: {upload.content_type}. Allowed: PDF, DOC, DOCX",
@@ -993,6 +1010,7 @@ async def get_resume(resume_id: str = Query(...)) -> ResumeFetchResponse:
             is_master=resume.get("is_master", False),
             title=resume.get("title"),
             template_settings=resume.get("template_settings"),
+            cover_letter_settings=resume.get("cover_letter_settings"),
             document_kind=resume.get("document_kind", "resume"),
             resume_doc_id=resume_doc.get("resume_id") if resume_doc else None,
             cv_doc_id=cv_doc.get("resume_id") if cv_doc else None,
@@ -2257,6 +2275,19 @@ async def update_cover_letter(
 
     db.update_resume(resume_id, {"cover_letter": request.content})
     return {"message": "Cover letter updated successfully"}
+
+
+@router.patch("/{resume_id}/cover-letter-settings")
+async def update_cover_letter_settings(
+    resume_id: str, request: UpdateCoverLetterSettingsRequest
+) -> dict:
+    """Update the cover letter heading/display settings for a resume."""
+    resume = db.get_resume(resume_id)
+    if not resume:
+        raise HTTPException(status_code=404, detail="Resume not found")
+
+    db.update_resume(resume_id, {"cover_letter_settings": request.settings})
+    return {"message": "Cover letter settings updated successfully"}
 
 
 @router.patch("/{resume_id}/outreach-message")

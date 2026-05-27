@@ -454,6 +454,7 @@ class ResumeFetchData(BaseModel):
     is_master: bool = False
     title: str | None = None
     template_settings: dict | None = None
+    cover_letter_settings: dict | None = None
     document_kind: Literal["resume", "cv"] = "resume"
     # Pointers to the resume / CV that belong to the same master group.
     # When viewing a master, both may be populated; one points back to self.
@@ -774,6 +775,12 @@ class UpdateCoverLetterRequest(BaseModel):
     """Request to update cover letter content."""
 
     content: str
+
+
+class UpdateCoverLetterSettingsRequest(BaseModel):
+    """Request to update cover letter heading/display settings."""
+
+    settings: dict
 
 
 class UpdateOutreachMessageRequest(BaseModel):

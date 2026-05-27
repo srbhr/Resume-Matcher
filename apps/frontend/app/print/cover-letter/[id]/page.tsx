@@ -1,14 +1,19 @@
 /**
  * Cover Letter Print Page
  *
- * This page renders a cover letter for PDF generation.
- * Uses the same API fetch pattern as the resume print page.
+ * Renders a cover letter for PDF generation. Fetches cover_letter_settings
+ * from the resume record and applies configurable heading style.
  */
 
 import type { Metadata } from 'next';
 import { API_BASE } from '@/lib/api/client';
 import { translate } from '@/lib/i18n/server';
 import { resolveLocale } from '@/lib/i18n/locale';
+import {
+  type CoverLetterSettings,
+  type CoverLetterHeadingField,
+  DEFAULT_COVER_LETTER_SETTINGS,
+} from '@/lib/types/cover-letter-settings';
 
 export const metadata: Metadata = { title: '' };
 
@@ -29,15 +34,19 @@ type PageProps = {
 
 interface PersonalInfo {
   name?: string;
+  title?: string;
   email?: string;
   phone?: string;
   location?: string;
   linkedin?: string;
+  github?: string;
+  website?: string;
 }
 
 interface CoverLetterData {
   coverLetter: string;
   personalInfo: PersonalInfo;
+  settings: CoverLetterSettings;
 }
 
 async function fetchCoverLetterData(resumeId: string): Promise<CoverLetterData> {
@@ -50,23 +59,46 @@ async function fetchCoverLetterData(resumeId: string): Promise<CoverLetterData> 
   const payload = (await res.json()) as {
     data: {
       cover_letter?: string;
+      cover_letter_settings?: Record<string, unknown> | null;
       processed_resume?: {
         personalInfo?: PersonalInfo;
       };
     };
   };
 
+  const rawSettings = payload.data.cover_letter_settings;
+  const settings: CoverLetterSettings = rawSettings
+    ? {
+        headingStyle:
+          (rawSettings.headingStyle as CoverLetterSettings['headingStyle']) ??
+          DEFAULT_COVER_LETTER_SETTINGS.headingStyle,
+        headingFields:
+          (rawSettings.headingFields as CoverLetterHeadingField[]) ??
+          DEFAULT_COVER_LETTER_SETTINGS.headingFields,
+        showTitle:
+          rawSettings.showTitle !== undefined
+            ? Boolean(rawSettings.showTitle)
+            : DEFAULT_COVER_LETTER_SETTINGS.showTitle,
+      }
+    : DEFAULT_COVER_LETTER_SETTINGS;
+
   return {
     coverLetter: payload.data.cover_letter || '',
     personalInfo: payload.data.processed_resume?.personalInfo || {},
+    settings,
   };
 }
 
 function parsePageSize(value: string | undefined): PageSize {
-  if (value === 'A4' || value === 'LETTER') {
-    return value;
-  }
+  if (value === 'A4' || value === 'LETTER') return value;
   return 'A4';
+}
+
+function getFieldValue(
+  personalInfo: PersonalInfo,
+  field: CoverLetterHeadingField
+): string | undefined {
+  return personalInfo[field];
 }
 
 export default async function PrintCoverLetterPage({ params, searchParams }: PageProps) {
@@ -77,13 +109,10 @@ export default async function PrintCoverLetterPage({ params, searchParams }: Pag
   const pageDims = PAGE_DIMENSIONS[pageSize];
   const locale = resolveLocale(resolvedSearchParams?.lang);
 
-  // Fetch cover letter data from API (same pattern as resume)
-  const { coverLetter, personalInfo } = await fetchCoverLetterData(resolvedParams.id);
+  const { coverLetter, personalInfo, settings } = await fetchCoverLetterData(resolvedParams.id);
 
-  // Standard cover letter margins
   const margins = { top: 25, right: 25, bottom: 25, left: 25 };
 
-  // Get today's date formatted
   const today = new Date().toLocaleDateString(locale, {
     year: 'numeric',
     month: 'long',
@@ -91,11 +120,19 @@ export default async function PrintCoverLetterPage({ params, searchParams }: Pag
   });
   const nameFallback = translate(locale, 'resume.defaults.name');
 
-  // Split cover letter into paragraphs (double newlines only)
   const paragraphs = coverLetter
     .split(/\n\n+/)
     .map((p) => p.trim())
     .filter((p) => p.length > 0);
+
+  const centered = settings.headingStyle === 'centered';
+  const minimal = settings.headingStyle === 'minimal';
+
+  const contactItems = settings.headingFields
+    .map((f) => getFieldValue(personalInfo, f))
+    .filter((v): v is string => !!v);
+
+  const contactLine = contactItems.join('  ·  ');
 
   return (
     <div
@@ -105,53 +142,101 @@ export default async function PrintCoverLetterPage({ params, searchParams }: Pag
         minHeight: `${pageDims.height}mm`,
         padding: `${margins.top}mm ${margins.right}mm ${margins.bottom}mm ${margins.left}mm`,
         boxSizing: 'border-box',
-        fontFamily: 'Georgia, serif',
+        fontFamily: 'Georgia, "Times New Roman", serif',
         color: '#000000',
       }}
     >
-      {/* Header - Personal Info */}
-      <header
-        style={{
-          marginBottom: '8mm',
-          paddingBottom: '4mm',
-          borderBottom: '2px solid #000',
-        }}
-      >
-        <h1
+      {/* Letterhead */}
+      {minimal ? (
+        /* Minimal style */
+        <header
           style={{
-            fontSize: '18pt',
-            fontWeight: 'bold',
-            margin: 0,
-            letterSpacing: '-0.02em',
+            marginBottom: '8mm',
+            paddingBottom: '4mm',
+            borderBottom: '2px solid #000',
           }}
         >
-          {personalInfo.name || nameFallback}
-        </h1>
-        <div
+          <h1
+            style={{
+              fontSize: '18pt',
+              fontWeight: 'bold',
+              margin: 0,
+              letterSpacing: '-0.02em',
+            }}
+          >
+            {personalInfo.name || nameFallback}
+          </h1>
+          {contactLine && (
+            <div
+              style={{
+                marginTop: '2mm',
+                fontSize: '9pt',
+                fontFamily: 'monospace',
+                color: '#444',
+              }}
+            >
+              {contactLine}
+            </div>
+          )}
+        </header>
+      ) : (
+        /* Professional / Centered styles */
+        <header
           style={{
-            marginTop: '2mm',
-            fontSize: '9pt',
-            fontFamily: 'monospace',
-            color: '#666',
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: '4mm',
+            marginBottom: '8mm',
+            paddingBottom: '4mm',
+            borderBottom: '2px solid #000',
+            textAlign: centered ? 'center' : 'left',
           }}
         >
-          {personalInfo.email && <span>{personalInfo.email}</span>}
-          {personalInfo.phone && <span>{personalInfo.phone}</span>}
-          {personalInfo.location && <span>{personalInfo.location}</span>}
-          {personalInfo.linkedin && <span>{personalInfo.linkedin}</span>}
-        </div>
-      </header>
+          <h1
+            style={{
+              fontSize: '22pt',
+              fontWeight: 'bold',
+              margin: 0,
+              letterSpacing: '-0.01em',
+              lineHeight: 1,
+            }}
+          >
+            {personalInfo.name || nameFallback}
+          </h1>
+          {settings.showTitle && personalInfo.title && (
+            <p
+              style={{
+                fontFamily: 'Arial, sans-serif',
+                fontSize: '10pt',
+                color: '#444',
+                margin: '2mm 0 0 0',
+                fontWeight: 'normal',
+              }}
+            >
+              {personalInfo.title}
+            </p>
+          )}
+          {contactLine && (
+            <div
+              style={{
+                marginTop: '3mm',
+                fontSize: '9pt',
+                fontFamily: 'monospace',
+                color: '#111',
+                lineHeight: 1.6,
+              }}
+            >
+              {contactLine}
+            </div>
+          )}
+        </header>
+      )}
 
       {/* Date */}
       <div
         style={{
           marginBottom: '8mm',
-          fontSize: '10pt',
+          fontSize: '9pt',
           fontFamily: 'monospace',
-          color: '#666',
+          color: '#444',
+          textAlign: centered ? 'center' : 'left',
         }}
       >
         {today}

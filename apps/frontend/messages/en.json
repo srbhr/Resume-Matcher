@@ -936,6 +936,12 @@
       "placeholder": "Your cover letter will appear here after tailoring your resume with cover letter generation enabled...",
       "tip": "TIP: A good cover letter is typically 300-400 words. Edit as needed to personalize."
     },
+    "heading": {
+      "settingsTitle": "Heading Settings",
+      "style": "Layout",
+      "showTitle": "Show professional title below name",
+      "contactFields": "Contact info to display"
+    },
     "preview": {
       "defaultName": "Your Name",
       "emptyTitle": "No cover letter content yet.",

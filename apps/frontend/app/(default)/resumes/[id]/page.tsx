@@ -21,6 +21,7 @@ import {
   generateCounterpart,
   generateOutreachMessage,
   updateCoverLetter,
+  updateCoverLetterSettings,
   updateOutreachMessage,
   downloadCoverLetterPdf,
   getCoverLetterPdfUrl,
@@ -29,6 +30,10 @@ import {
   saveTemplateSettings,
   type ResumeJsonExport,
 } from '@/lib/api/resume';
+import {
+  type CoverLetterSettings,
+  DEFAULT_COVER_LETTER_SETTINGS,
+} from '@/lib/types/cover-letter-settings';
 import { useStatusCache } from '@/lib/context/status-cache';
 import {
   ChevronLeft,
@@ -110,6 +115,10 @@ export default function ResumeViewerPage() {
   const uploadJsonInputRef = useRef<HTMLInputElement | null>(null);
   const [templateSettings, setTemplateSettings] =
     useState<TemplateSettings>(DEFAULT_TEMPLATE_SETTINGS);
+
+  const [coverLetterSettings, setCoverLetterSettings] = useState<CoverLetterSettings>(
+    DEFAULT_COVER_LETTER_SETTINGS
+  );
 
   // Cover letter editing / generation
   const [coverLetterDraft, setCoverLetterDraft] = useState('');
@@ -237,6 +246,16 @@ export default function ResumeViewerPage() {
             fontSize: { ...DEFAULT_TEMPLATE_SETTINGS.fontSize, ...(saved.fontSize ?? {}) },
             textStyle: { ...DEFAULT_TEMPLATE_SETTINGS.textStyle, ...(saved.textStyle ?? {}) },
             qrCode: { ...DEFAULT_TEMPLATE_SETTINGS.qrCode, ...(saved.qrCode ?? {}) },
+          });
+        }
+
+        if (data.cover_letter_settings) {
+          const saved = data.cover_letter_settings as Partial<CoverLetterSettings>;
+          setCoverLetterSettings({
+            ...DEFAULT_COVER_LETTER_SETTINGS,
+            ...saved,
+            headingFields: (saved.headingFields ??
+              DEFAULT_COVER_LETTER_SETTINGS.headingFields) as CoverLetterSettings['headingFields'],
           });
         }
 
@@ -741,6 +760,15 @@ export default function ResumeViewerPage() {
       console.error('Failed to save cover letter:', err);
     } finally {
       setIsSavingCoverLetter(false);
+    }
+  };
+
+  const handleCoverLetterSettingsChange = async (newSettings: CoverLetterSettings) => {
+    setCoverLetterSettings(newSettings);
+    try {
+      await updateCoverLetterSettings(resumeId, newSettings);
+    } catch (err) {
+      console.error('Failed to save cover letter settings:', err);
     }
   };
 
@@ -1672,6 +1700,8 @@ export default function ResumeViewerPage() {
                         onChange={setCoverLetterDraft}
                         onSave={handleSaveCoverLetter}
                         isSaving={isSavingCoverLetter}
+                        settings={coverLetterSettings}
+                        onSettingsChange={handleCoverLetterSettingsChange}
                       />
                     ) : (
                       <div className="p-[28px_32px]">

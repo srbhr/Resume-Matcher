@@ -3,6 +3,11 @@
 import * as React from 'react';
 import { cn } from '@/lib/utils';
 import { useTranslations } from '@/lib/i18n';
+import {
+  type CoverLetterSettings,
+  type CoverLetterHeadingField,
+  DEFAULT_COVER_LETTER_SETTINGS,
+} from '@/lib/types/cover-letter-settings';
 
 export interface CoverLetterPersonalInfo {
   name?: string;
@@ -22,28 +27,69 @@ export interface CoverLetterPreviewProps {
   personalInfo: CoverLetterPersonalInfo;
   /** Page size for styling */
   pageSize?: 'A4' | 'LETTER';
+  /** Heading/display settings */
+  settings?: CoverLetterSettings;
   /** Additional class names */
   className?: string;
+}
+
+function getFieldValue(
+  personalInfo: CoverLetterPersonalInfo,
+  field: CoverLetterHeadingField
+): string | undefined {
+  return personalInfo[field];
+}
+
+function ContactLine({
+  personalInfo,
+  fields,
+  style,
+}: {
+  personalInfo: CoverLetterPersonalInfo;
+  fields: CoverLetterHeadingField[];
+  style: CoverLetterSettings['headingStyle'];
+}) {
+  const items = fields.map((f) => getFieldValue(personalInfo, f)).filter((v): v is string => !!v);
+
+  if (items.length === 0) return null;
+
+  const centered = style === 'centered';
+
+  return (
+    <div
+      className={cn(
+        'font-mono text-[10px] leading-[1.6] text-ink',
+        centered ? 'text-center' : 'text-left'
+      )}
+    >
+      {items.join('  ·  ')}
+    </div>
+  );
 }
 
 export function CoverLetterPreview({
   content,
   personalInfo,
   pageSize = 'A4',
+  settings,
   className,
 }: CoverLetterPreviewProps) {
   const { t, locale } = useTranslations();
+  const s = settings ?? DEFAULT_COVER_LETTER_SETTINGS;
+
   const today = new Intl.DateTimeFormat(locale, {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
   }).format(new Date());
 
-  // Parse content into paragraphs (double newlines only)
   const paragraphs = content
     .split(/\n\n+/)
     .map((p) => p.trim())
     .filter((p) => p.length > 0);
+
+  const centered = s.headingStyle === 'centered';
+  const minimal = s.headingStyle === 'minimal';
 
   return (
     <div
@@ -54,36 +100,63 @@ export function CoverLetterPreview({
         className
       )}
     >
-      {/* Letter Content */}
       <div
         className={cn('p-8 md:p-12', pageSize === 'A4' ? 'min-h-[297mm]' : 'min-h-[11in]')}
-        style={{
-          maxWidth: pageSize === 'A4' ? '210mm' : '8.5in',
-        }}
+        style={{ maxWidth: pageSize === 'A4' ? '210mm' : '8.5in' }}
       >
-        {/* Header - Personal Info */}
-        <header className="mb-8 border-b-2 border-black pb-4">
-          <h1 className="font-serif text-2xl font-bold tracking-tight">
-            {personalInfo.name || t('coverLetter.preview.defaultName')}
-          </h1>
-          <div className="mt-2 font-mono text-xs text-ink-soft flex flex-wrap gap-x-4 gap-y-1">
-            {personalInfo.email && <span>{personalInfo.email}</span>}
-            {personalInfo.phone && <span>{personalInfo.phone}</span>}
-            {personalInfo.location && <span>{personalInfo.location}</span>}
-            {personalInfo.linkedin && <span>{personalInfo.linkedin}</span>}
-          </div>
-        </header>
+        {/* Letterhead */}
+        {minimal ? (
+          /* Minimal (original) style */
+          <header className="mb-8 border-b-2 border-black pb-4">
+            <h1 className="font-serif text-2xl font-bold tracking-tight">
+              {personalInfo.name || t('coverLetter.preview.defaultName')}
+            </h1>
+            <div className="mt-2 font-mono text-xs text-ink-soft flex flex-wrap gap-x-4 gap-y-1">
+              <ContactLine
+                personalInfo={personalInfo}
+                fields={s.headingFields}
+                style={s.headingStyle}
+              />
+            </div>
+          </header>
+        ) : (
+          /* Professional / Centered styles */
+          <header className={cn('mb-8 pb-4 border-b-2 border-black', centered && 'text-center')}>
+            <h1
+              className={cn(
+                'font-serif text-[22pt] font-bold tracking-[-0.01em] leading-none',
+                centered && 'text-center'
+              )}
+            >
+              {personalInfo.name || t('coverLetter.preview.defaultName')}
+            </h1>
+            {s.showTitle && personalInfo.title && (
+              <p className={cn('font-sans text-sm mt-1 text-ink-soft', centered && 'text-center')}>
+                {personalInfo.title}
+              </p>
+            )}
+            <div className="mt-3">
+              <ContactLine
+                personalInfo={personalInfo}
+                fields={s.headingFields}
+                style={s.headingStyle}
+              />
+            </div>
+          </header>
+        )}
 
         {/* Date */}
         <div className="mb-8">
-          <p className="font-mono text-sm text-ink-soft">{today}</p>
+          <p className={cn('font-mono text-xs text-ink-soft', centered && 'text-center')}>
+            {today}
+          </p>
         </div>
 
         {/* Body */}
         <div className="space-y-4">
           {paragraphs.length > 0 ? (
             paragraphs.map((para, idx) => (
-              <p key={idx} className="font-serif text-base leading-relaxed text-ink-soft">
+              <p key={idx} className="font-serif text-base leading-relaxed text-ink">
                 {para}
               </p>
             ))

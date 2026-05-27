@@ -1,6 +1,7 @@
 import { ImprovedResult } from '@/components/common/resume_previewer_context';
 import type { ResumeData } from '@/components/dashboard/resume-component';
 import { type TemplateSettings } from '@/lib/types/template-settings';
+import { type CoverLetterSettings } from '@/lib/types/cover-letter-settings';
 import { type Locale } from '@/i18n/config';
 import { API_BASE, apiPost, apiPatch, apiPut, apiDelete, apiFetch } from './client';
 
@@ -69,6 +70,7 @@ interface ResumeResponse {
     is_master?: boolean;
     title?: string | null;
     template_settings?: Record<string, unknown> | null;
+    cover_letter_settings?: Record<string, unknown> | null;
     document_kind?: 'resume' | 'cv';
     resume_doc_id?: string | null;
     cv_doc_id?: string | null;
@@ -414,6 +416,20 @@ export async function updateCoverLetter(resumeId: string, content: string): Prom
   if (!res.ok) {
     const text = await res.text().catch(() => '');
     throw new Error(`Failed to update cover letter (status ${res.status}): ${text}`);
+  }
+}
+
+/** Updates cover letter heading/display settings for a resume */
+export async function updateCoverLetterSettings(
+  resumeId: string,
+  settings: CoverLetterSettings
+): Promise<void> {
+  const res = await apiPatch(`/resumes/${encodeURIComponent(resumeId)}/cover-letter-settings`, {
+    settings,
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Failed to update cover letter settings (status ${res.status}): ${text}`);
   }
 }
 
