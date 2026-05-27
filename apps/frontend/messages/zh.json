@@ -936,6 +936,12 @@
       "placeholder": "启用求职信生成并完成一次简历定制后，求职信内容会显示在这里...",
       "tip": "提示：一封好的求职信通常在 300-400 词左右，可根据需要进行个性化修改。"
     },
+    "heading": {
+      "settingsTitle": "页眉设置",
+      "style": "布局",
+      "showTitle": "在姓名下方显示职业头衔",
+      "contactFields": "要显示的联系信息"
+    },
     "preview": {
       "defaultName": "你的姓名",
       "emptyTitle": "还没有求职信内容。",

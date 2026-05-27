@@ -936,6 +936,12 @@
       "placeholder": "Sua carta de apresentação aparecerá aqui após personalizar seu currículo com a geração de carta habilitada...",
       "tip": "DICA: Uma boa carta de apresentação tem tipicamente 300-400 palavras. Edite conforme necessário para personalizar."
     },
+    "heading": {
+      "settingsTitle": "Configurações do cabeçalho",
+      "style": "Layout",
+      "showTitle": "Mostrar título profissional abaixo do nome",
+      "contactFields": "Informações de contato a exibir"
+    },
     "preview": {
       "defaultName": "Seu Nome",
       "emptyTitle": "Nenhum conteúdo de carta ainda.",
