@@ -516,6 +516,16 @@ async def chat_with_document(
                     ),
                 )
             grounding = _ground_in_text(doc_label, doc_text, title)
+            # Always include the underlying resume so the assistant has full context.
+            try:
+                resume_json = _resume_json_payload(resume)
+                grounding += (
+                    f"\n\nThe resume this {doc_label} was written from:\n\n"
+                    f"RESUME_JSON:\n```json\n"
+                    f"{json.dumps(resume_json, ensure_ascii=False)}\n```"
+                )
+            except HTTPException:
+                pass
 
         # -- Discuss mode --
         if request.mode == "discuss":
