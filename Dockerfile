@@ -17,9 +17,18 @@ WORKDIR /app/frontend
 # Copy package files first for better caching
 COPY apps/frontend/package*.json ./
 
-# Install dependencies — omit optional to skip large platform-specific SWC
-# binaries. Next.js falls back to its built-in WASM compiler automatically.
-RUN npm ci --omit=optional
+# Install dependencies — omit optional to skip large @next/swc-* binaries
+# (~100 MB each). Next.js falls back to its built-in WASM compiler automatically.
+# lightningcss native binary is required by Tailwind CSS v4 (no fallback) so we
+# reinstall it specifically for the current architecture.
+RUN npm ci --omit=optional \
+    && LCSS_VER=$(node -p "require('./node_modules/lightningcss/package.json').version") \
+    && case "$(uname -m)" in \
+         x86_64)  LCSS_PKG="lightningcss-linux-x64-gnu"  ;; \
+         aarch64) LCSS_PKG="lightningcss-linux-arm64-gnu" ;; \
+         *)       LCSS_PKG="lightningcss-linux-x64-gnu"   ;; \
+       esac \
+    && npm install --no-save "${LCSS_PKG}@${LCSS_VER}"
 
 # Copy frontend source
 COPY apps/frontend/ ./
