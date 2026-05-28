@@ -14,6 +14,30 @@ from app.prompts.templates import (
 from app.prompts import get_language_name
 
 
+def _append_guidance(
+    prompt: str,
+    *,
+    general_guidance: str | None,
+    category_guidance: str | None,
+    category_label: str,
+) -> str:
+    """Append optional user guidance blocks to a resolved prompt."""
+    blocks: list[str] = []
+    if general_guidance and general_guidance.strip():
+        blocks.append(
+            "General user guidance for all generated artifacts "
+            "(honor the candidate's framing):\n" + general_guidance.strip()
+        )
+    if category_guidance and category_guidance.strip():
+        blocks.append(
+            f"Additional user guidance for this {category_label} "
+            "(honor the candidate's framing):\n" + category_guidance.strip()
+        )
+    if not blocks:
+        return prompt
+    return prompt + "\n\n" + "\n\n".join(blocks)
+
+
 def _resolve_feature_prompt(
     custom_key: str,
     default_template: str,
@@ -38,6 +62,7 @@ async def generate_cover_letter(
     job_description: str,
     language: str = "en",
     user_guidance: str | None = None,
+    general_guidance: str | None = None,
 ) -> str:
     """Generate a cover letter based on resume and job description.
 
@@ -45,9 +70,10 @@ async def generate_cover_letter(
         resume_data: Structured resume data (ResumeData format)
         job_description: Target job description text
         language: Output language code (en, es, zh, ja)
-        user_guidance: Optional freeform instructions from the user describing
-            how the cover letter should be framed (tone, emphasis, context).
-            Appended to the resolved prompt as an additional guidance block.
+        user_guidance: Optional cover-letter-specific instructions
+            (tone, emphasis, context). Appended to the resolved prompt.
+        general_guidance: Optional cross-output guidance that should inform
+            every generated artifact for this tailor session.
 
     Returns:
         Generated cover letter as plain text
@@ -82,12 +108,12 @@ async def generate_cover_letter(
             output_language=output_language,
         )
 
-    if user_guidance and user_guidance.strip():
-        prompt = (
-            prompt
-            + "\n\nAdditional user guidance for this cover letter (honor the candidate's framing):\n"
-            + user_guidance.strip()
-        )
+    prompt = _append_guidance(
+        prompt,
+        general_guidance=general_guidance,
+        category_guidance=user_guidance,
+        category_label="cover letter",
+    )
 
     result = await complete(
         prompt=prompt,
@@ -102,6 +128,8 @@ async def generate_outreach_message(
     resume_data: dict[str, Any],
     job_description: str,
     language: str = "en",
+    user_guidance: str | None = None,
+    general_guidance: str | None = None,
 ) -> str:
     """Generate a cold outreach message for networking.
 
@@ -109,6 +137,9 @@ async def generate_outreach_message(
         resume_data: Structured resume data (ResumeData format)
         job_description: Target job description text
         language: Output language code (en, es, zh, ja)
+        user_guidance: Optional outreach-specific guidance from the user.
+        general_guidance: Optional cross-output guidance applied to every
+            generated artifact for this tailor session.
 
     Returns:
         Generated outreach message as plain text
@@ -137,6 +168,13 @@ async def generate_outreach_message(
             resume_data=json.dumps(resume_data),
             output_language=output_language,
         )
+
+    prompt = _append_guidance(
+        prompt,
+        general_guidance=general_guidance,
+        category_guidance=user_guidance,
+        category_label="outreach message",
+    )
 
     result = await complete(
         prompt=prompt,

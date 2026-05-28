@@ -109,6 +109,14 @@ export interface ResumeUploadResponse {
 
 export type DocumentKind = 'resume' | 'cv';
 
+export interface GuidanceSet {
+  general?: string | null;
+  resume?: string | null;
+  cv?: string | null;
+  cover_letter?: string | null;
+  outreach?: string | null;
+}
+
 interface ImproveResumeConfirmRequest {
   resume_id: string;
   job_id: string;
@@ -117,7 +125,7 @@ interface ImproveResumeConfirmRequest {
     suggestion: string;
     lineNumber?: number | null;
   }>;
-  cover_letter_guidance?: string | null;
+  guidance?: GuidanceSet | null;
 }
 
 function normalizeResumeId(resumeId: string): string {
@@ -261,12 +269,14 @@ export async function improveResume(
 export async function previewImproveResume(
   resumeId: string,
   jobId: string,
-  promptId?: string
+  promptId?: string,
+  guidance?: GuidanceSet | null
 ): Promise<ImprovedResult> {
   return postImprove('/resumes/improve/preview', {
     resume_id: resumeId,
     job_id: jobId,
     prompt_id: promptId ?? null,
+    guidance: guidance ?? null,
   });
 }
 

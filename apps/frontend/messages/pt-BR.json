@@ -610,13 +610,39 @@
       "description": "Não foi possível calcular um diff para este currículo. Isso pode acontecer com currículos antigos sem dados estruturados. Você pode continuar para salvar o currículo personalizado ou cancelar para revisar mais tarde.",
       "confirmLabel": "Continuar sem diff"
     },
-    "coverLetterStep": {
-      "heading": "Orientações para a carta de apresentação",
-      "subhead": "// PERSONALIZE SUA CARTA",
-      "description": "Diga à IA como abordar sua carta de apresentação — tom, o que enfatizar e qualquer contexto sobre sua trajetória. Opcional.",
-      "placeholder": "Exemplo: Tenho pouca experiência nesta área, mas minha experiência atual pode me permitir entrar no setor. Quero ser honesto sobre minha falta de experiência e, ao mesmo tempo, mostrar entusiasmo.",
+    "guidanceStep": {
+      "heading": "Orientações",
+      "subhead": "// PERSONALIZE O CONTEÚDO GERADO",
+      "description": "Todos os campos são opcionais. Use o campo Geral para contexto compartilhado entre todos os artefatos gerados, e os campos por categoria para instruções específicas.",
       "contextLabel": "Personalizando para",
-      "strategyLabel": "Estratégia"
+      "strategyLabel": "Estratégia",
+      "fields": {
+        "general": {
+          "label": "Orientações gerais",
+          "description": "Aplicam-se ao currículo, CV, carta de apresentação e e-mail de contato.",
+          "placeholder": "Exemplo: Estou migrando da gestão de produto para engenharia de ML."
+        },
+        "resume": {
+          "label": "Orientações do currículo",
+          "description": "Instruções específicas para o currículo personalizado.",
+          "placeholder": "Exemplo: Não adicione métricas que eu não tenha fornecido."
+        },
+        "cv": {
+          "label": "Orientações do CV",
+          "description": "Instruções específicas para o CV (usado no chat de documentos).",
+          "placeholder": "Exemplo: Mantenha a lista de publicações intacta."
+        },
+        "cover_letter": {
+          "label": "Orientações da carta de apresentação",
+          "description": "Instruções específicas para a carta de apresentação.",
+          "placeholder": "Exemplo: Tenho pouca experiência direta, mas quero transmitir entusiasmo com honestidade."
+        },
+        "outreach": {
+          "label": "Orientações do e-mail de contato",
+          "description": "Instruções específicas para a mensagem de contato.",
+          "placeholder": "Exemplo: Curto, conversacional, no máximo dois parágrafos."
+        }
+      }
     },
     "errors": {
       "jobDescriptionTooShort": "Descrição da vaga muito curta. Adicione mais detalhes e tente novamente.",

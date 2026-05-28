@@ -454,6 +454,36 @@ def verify_diff_result(
     return warnings
 
 
+def _append_user_guidance(
+    prompt: str,
+    *,
+    general_guidance: str | None,
+    category_guidance: str | None,
+    category_label: str,
+) -> str:
+    """Append optional user guidance to a resume-editing prompt.
+
+    Sanitizes guidance the same way job descriptions are sanitized to
+    reduce prompt-injection risk.
+    """
+    blocks: list[str] = []
+    if general_guidance and general_guidance.strip():
+        blocks.append(
+            "General user guidance for all generated artifacts "
+            "(honor the candidate's framing):\n"
+            + _sanitize_user_input(general_guidance.strip())
+        )
+    if category_guidance and category_guidance.strip():
+        blocks.append(
+            f"Additional user guidance for this {category_label} "
+            "(honor the candidate's framing):\n"
+            + _sanitize_user_input(category_guidance.strip())
+        )
+    if not blocks:
+        return prompt
+    return prompt + "\n\n" + "\n\n".join(blocks)
+
+
 async def generate_resume_diffs(
     original_resume: str,
     job_description: str,
@@ -462,6 +492,8 @@ async def generate_resume_diffs(
     prompt_id: str | None = None,
     original_resume_data: dict[str, Any] | None = None,
     skill_targets: list[dict[str, Any]] | None = None,
+    user_guidance: str | None = None,
+    general_guidance: str | None = None,
 ) -> ImproveDiffResult:
     """Generate targeted resume diffs via LLM.
 
@@ -512,6 +544,13 @@ async def generate_resume_diffs(
         skill_targets=_prepare_skill_targets_for_prompt(skill_targets),
         job_description=sanitized_jd,
         original_resume=resume_input,
+    )
+
+    prompt = _append_user_guidance(
+        prompt,
+        general_guidance=general_guidance,
+        category_guidance=user_guidance,
+        category_label="resume",
     )
 
     result = await complete_json(
@@ -860,6 +899,8 @@ async def improve_resume(
     language: str = "en",
     prompt_id: str | None = None,
     original_resume_data: dict[str, Any] | None = None,
+    user_guidance: str | None = None,
+    general_guidance: str | None = None,
 ) -> dict[str, Any]:
     """Improve resume to better match job description.
 
@@ -919,6 +960,13 @@ async def improve_resume(
         schema=IMPROVE_SCHEMA_EXAMPLE,
         output_language=output_language,
         critical_truthfulness_rules=truthfulness_rules,
+    )
+
+    prompt = _append_user_guidance(
+        prompt,
+        general_guidance=general_guidance,
+        category_guidance=user_guidance,
+        category_label="resume",
     )
 
     result = await complete_json(

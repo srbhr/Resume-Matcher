@@ -26,6 +26,7 @@ from app.schemas import (
     GenerateContentResponse,
     GenerateCounterpartRequest,
     GenerateCounterpartResponse,
+    GuidanceSet,
     ImproveResumeConfirmRequest,
     ImproveResumeRequest,
     ImproveResumeResponse,
@@ -526,7 +527,7 @@ async def _generate_auxiliary_messages(
     language: str,
     enable_cover_letter: bool,
     enable_outreach: bool,
-    cover_letter_guidance: str | None = None,
+    guidance: GuidanceSet | None = None,
 ) -> tuple[str | None, str | None, str | None, list[str]]:
     """Generate cover letter, outreach message, and resume title.
 
@@ -543,19 +544,27 @@ async def _generate_auxiliary_messages(
     generation_tasks.append(generate_resume_title(job_content, language))
     task_labels.append("title")
 
+    general_guidance = guidance.general if guidance else None
     if enable_cover_letter:
         generation_tasks.append(
             generate_cover_letter(
                 improved_data,
                 job_content,
                 language,
-                user_guidance=cover_letter_guidance,
+                user_guidance=guidance.cover_letter if guidance else None,
+                general_guidance=general_guidance,
             )
         )
         task_labels.append("cover_letter")
     if enable_outreach:
         generation_tasks.append(
-            generate_outreach_message(improved_data, job_content, language)
+            generate_outreach_message(
+                improved_data,
+                job_content,
+                language,
+                user_guidance=guidance.outreach if guidance else None,
+                general_guidance=general_guidance,
+            )
         )
         task_labels.append("outreach")
 
@@ -1221,6 +1230,8 @@ async def _improve_preview_flow(
             prompt_id=prompt_id,
             original_resume_data=original_resume_data,
             skill_targets=skill_targets,
+            user_guidance=request.guidance.resume if request.guidance else None,
+            general_guidance=request.guidance.general if request.guidance else None,
         )
 
         improved_data, applied_changes, rejected_changes = apply_diffs(
@@ -1257,6 +1268,8 @@ async def _improve_preview_flow(
             language=language,
             prompt_id=prompt_id,
             original_resume_data=original_resume_data,
+            user_guidance=request.guidance.resume if request.guidance else None,
+            general_guidance=request.guidance.general if request.guidance else None,
         )
 
     # Safety nets (defense in depth — should rarely activate with diff-based flow)
@@ -1555,7 +1568,7 @@ async def _improve_confirm_flow(
             language,
             enable_cover_letter,
             enable_outreach,
-            cover_letter_guidance=request.cover_letter_guidance,
+            guidance=request.guidance,
         )
         response_warnings.extend(aux_warnings)
 
@@ -1654,6 +1667,8 @@ async def improve_resume_endpoint(
                 language=language,
                 prompt_id=prompt_id,
                 original_resume_data=original_resume_data,
+                user_guidance=request.guidance.resume if request.guidance else None,
+                general_guidance=request.guidance.general if request.guidance else None,
             )
 
             improved_data, applied_changes, rejected_changes = apply_diffs(
@@ -1689,6 +1704,8 @@ async def improve_resume_endpoint(
                 language=language,
                 prompt_id=prompt_id,
                 original_resume_data=original_resume_data,
+                user_guidance=request.guidance.resume if request.guidance else None,
+                general_guidance=request.guidance.general if request.guidance else None,
             )
 
         # Safety nets (defense in depth)
@@ -1787,6 +1804,7 @@ async def improve_resume_endpoint(
             language,
             enable_cover_letter,
             enable_outreach,
+            guidance=request.guidance,
         )
         response_warnings.extend(aux_warnings)
 

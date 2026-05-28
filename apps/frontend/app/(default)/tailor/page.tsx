@@ -13,8 +13,9 @@ import {
   previewImproveResume,
   confirmImproveResume,
   fetchResumeList,
+  type GuidanceSet,
 } from '@/lib/api/resume';
-import { fetchPromptConfig, fetchFeatureConfig, type PromptOption } from '@/lib/api/config';
+import { fetchPromptConfig, type PromptOption } from '@/lib/api/config';
 import { Dropdown } from '@/components/ui/dropdown';
 import { useStatusCache } from '@/lib/context/status-cache';
 import { Loader2, ArrowLeft, ArrowRight, AlertTriangle, Settings } from 'lucide-react';
@@ -40,9 +41,14 @@ function TailorPage() {
   const [promptOptions, setPromptOptions] = useState<PromptOption[]>([]);
   const [selectedPromptId, setSelectedPromptId] = useState('keywords');
   const [promptLoading, setPromptLoading] = useState(false);
-  const [coverLetterEnabled, setCoverLetterEnabled] = useState(false);
-  const [step, setStep] = useState<'job' | 'coverLetter'>('job');
-  const [coverLetterGuidance, setCoverLetterGuidance] = useState('');
+  const [step, setStep] = useState<'job' | 'guidance'>('job');
+  const [guidance, setGuidance] = useState({
+    general: '',
+    resume: '',
+    cv: '',
+    cover_letter: '',
+    outreach: '',
+  });
   const hasUserSelectedPrompt = useRef(false);
   const missingDiffConfirmInFlight = useRef(false);
 
@@ -149,19 +155,7 @@ function TailorPage() {
       }
     };
 
-    const loadFeatureConfig = async () => {
-      try {
-        const config = await fetchFeatureConfig();
-        if (!cancelled) {
-          setCoverLetterEnabled(Boolean(config.enable_cover_letter));
-        }
-      } catch (err) {
-        console.error('Failed to load feature config', err);
-      }
-    };
-
     loadPromptConfig();
-    loadFeatureConfig();
     return () => {
       cancelled = true;
     };
@@ -169,6 +163,18 @@ function TailorPage() {
 
   const handleTextareaKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter') e.stopPropagation();
+  };
+
+  const buildGuidancePayload = (): GuidanceSet | null => {
+    const trimmed = {
+      general: guidance.general.trim() || null,
+      resume: guidance.resume.trim() || null,
+      cv: guidance.cv.trim() || null,
+      cover_letter: guidance.cover_letter.trim() || null,
+      outreach: guidance.outreach.trim() || null,
+    };
+    const hasAny = Object.values(trimmed).some((v) => v !== null);
+    return hasAny ? trimmed : null;
   };
 
   const buildConfirmPayload = (result: ImprovedResult, overridePreview?: ResumePreview) => {
@@ -187,7 +193,6 @@ function TailorPage() {
     ) {
       throw new Error('Resume preview data is invalid.');
     }
-    const trimmedGuidance = coverLetterGuidance.trim();
     return {
       resume_id: masterResumeId,
       job_id: result.data.job_id,
@@ -197,7 +202,7 @@ function TailorPage() {
           suggestion: item.suggestion,
           lineNumber: typeof item.lineNumber === 'number' ? item.lineNumber : null,
         })) ?? [],
-      cover_letter_guidance: coverLetterEnabled && trimmedGuidance ? trimmedGuidance : null,
+      guidance: buildGuidancePayload(),
     };
   };
 
@@ -231,7 +236,12 @@ function TailorPage() {
       incrementJobs(); // Update cached counter
 
       // 2. Preview Resume
-      const result = await previewImproveResume(resumeId, jobId, selectedPromptId);
+      const result = await previewImproveResume(
+        resumeId,
+        jobId,
+        selectedPromptId,
+        buildGuidancePayload()
+      );
 
       if (!result?.data?.diff_summary || !result?.data?.detailed_changes) {
         console.warn('Diff data missing for tailor preview; requesting user confirmation.');
@@ -483,13 +493,13 @@ function TailorPage() {
               <div className="border border-border bg-background p-4 font-mono text-xs space-y-1">
                 <div>
                   <span className="font-bold uppercase tracking-wider">
-                    {t('tailor.coverLetterStep.strategyLabel')}:
+                    {t('tailor.guidanceStep.strategyLabel')}:
                   </span>{' '}
                   {t(`tailor.promptOptions.${selectedPromptId}.label`)}
                 </div>
                 <div className="truncate">
                   <span className="font-bold uppercase tracking-wider">
-                    {t('tailor.coverLetterStep.contextLabel')}:
+                    {t('tailor.guidanceStep.contextLabel')}:
                   </span>{' '}
                   {jobDescription.trim().slice(0, 120)}
                   {jobDescription.trim().length > 120 ? '…' : ''}
@@ -498,22 +508,39 @@ function TailorPage() {
 
               <div>
                 <p className="font-mono text-sm text-primary font-bold uppercase mb-1">
-                  {t('tailor.coverLetterStep.subhead')}
+                  {t('tailor.guidanceStep.subhead')}
                 </p>
                 <h2 className="font-serif text-2xl font-bold uppercase tracking-tight mb-2">
-                  {t('tailor.coverLetterStep.heading')}
+                  {t('tailor.guidanceStep.heading')}
                 </h2>
-                <p className="font-mono text-xs text-steel-grey mb-3">
-                  {t('tailor.coverLetterStep.description')}
+                <p className="font-mono text-xs text-steel-grey mb-4">
+                  {t('tailor.guidanceStep.description')}
                 </p>
-                <Textarea
-                  placeholder={t('tailor.coverLetterStep.placeholder')}
-                  className="min-h-[220px] font-mono text-sm bg-background border-2 border-border focus:ring-0 focus:border-primary resize-none p-4 rounded-none"
-                  value={coverLetterGuidance}
-                  onChange={(e) => setCoverLetterGuidance(e.target.value)}
-                  onKeyDown={handleTextareaKeyDown}
-                  disabled={isLoading}
-                />
+
+                <div className="space-y-4">
+                  {(['general', 'resume', 'cv', 'cover_letter', 'outreach'] as const).map(
+                    (field) => (
+                      <div key={field}>
+                        <label className="block font-mono text-xs font-bold uppercase tracking-wider mb-1">
+                          {t(`tailor.guidanceStep.fields.${field}.label`)}
+                        </label>
+                        <p className="font-mono text-xs text-steel-grey mb-2">
+                          {t(`tailor.guidanceStep.fields.${field}.description`)}
+                        </p>
+                        <Textarea
+                          placeholder={t(`tailor.guidanceStep.fields.${field}.placeholder`)}
+                          className="min-h-[96px] font-mono text-sm bg-background border-2 border-border focus:ring-0 focus:border-primary resize-none p-3 rounded-none"
+                          value={guidance[field]}
+                          onChange={(e) =>
+                            setGuidance((prev) => ({ ...prev, [field]: e.target.value }))
+                          }
+                          onKeyDown={handleTextareaKeyDown}
+                          disabled={isLoading}
+                        />
+                      </div>
+                    )
+                  )}
+                </div>
               </div>
             </>
           )}
@@ -524,7 +551,7 @@ function TailorPage() {
             </div>
           )}
 
-          {step === 'job' && coverLetterEnabled ? (
+          {step === 'job' ? (
             <Button
               size="lg"
               onClick={() => {
@@ -536,7 +563,7 @@ function TailorPage() {
                   return;
                 }
                 setError(null);
-                setStep('coverLetter');
+                setStep('guidance');
               }}
               disabled={isLoading || statusLoading || !jobDescription.trim() || !isLlmConfigured}
               className="w-full"
@@ -553,32 +580,6 @@ function TailorPage() {
                   {t('common.next')}
                   <ArrowRight className="w-4 h-4" />
                 </>
-              )}
-            </Button>
-          ) : step === 'job' ? (
-            <Button
-              size="lg"
-              onClick={handleGenerate}
-              disabled={isLoading || statusLoading || !jobDescription.trim() || !isLlmConfigured}
-              className="w-full"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  {t('common.processing')}
-                  {elapsed > 0 && (
-                    <span className="font-mono text-xs opacity-70 ml-2">{elapsed}s</span>
-                  )}
-                </>
-              ) : statusLoading ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  {t('common.checking')}
-                </>
-              ) : !isLlmConfigured ? (
-                t('tailor.configureApiKeyFirst')
-              ) : (
-                t('tailor.generateTailored')
               )}
             </Button>
           ) : (

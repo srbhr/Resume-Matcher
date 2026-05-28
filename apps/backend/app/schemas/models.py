@@ -509,12 +509,29 @@ class JobUploadResponse(BaseModel):
 
 
 # Improvement Models
+class GuidanceSet(BaseModel):
+    """Optional user-provided guidance for generation.
+
+    ``general`` applies to all outputs (resume, CV, cover letter, outreach).
+    The category-specific fields are layered on top of ``general`` for the
+    matching output only. All fields are optional; blank/whitespace-only
+    values are treated as absent by the services that consume them.
+    """
+
+    general: str | None = None
+    resume: str | None = None
+    cv: str | None = None
+    cover_letter: str | None = None
+    outreach: str | None = None
+
+
 class ImproveResumeRequest(BaseModel):
     """Request to improve/tailor a resume."""
 
     resume_id: str
     job_id: str
     prompt_id: str | None = None
+    guidance: GuidanceSet | None = None
 
 
 class ImprovementSuggestion(BaseModel):
@@ -625,7 +642,7 @@ class ImproveResumeConfirmRequest(BaseModel):
     job_id: str
     improved_data: ResumeData
     improvements: list[ImprovementSuggestion]
-    cover_letter_guidance: str | None = None
+    guidance: GuidanceSet | None = None
 
 
 # Config Models

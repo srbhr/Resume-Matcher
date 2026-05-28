@@ -610,13 +610,39 @@
       "description": "We could not compute a diff for this resume. This can happen with legacy resumes that lack structured data. You can continue to save the tailored resume or cancel to review later.",
       "confirmLabel": "Continue without diff"
     },
-    "coverLetterStep": {
-      "heading": "Cover Letter Guidance",
-      "subhead": "// SHAPE YOUR COVER LETTER",
-      "description": "Tell the AI how to frame your cover letter — tone, what to emphasize, any context about your background. Optional.",
-      "placeholder": "Example: I have minimal experience in this field, but my actual experience could allow me to breakthrough into the industry. I want to be honest about my lack of experience, but also show my enthusiasm.",
+    "guidanceStep": {
+      "heading": "Guidance",
+      "subhead": "// SHAPE YOUR GENERATED CONTENT",
+      "description": "All fields are optional. Use General to provide context shared across every generated artifact, and the category fields to give targeted instructions for a single output.",
       "contextLabel": "Tailoring for",
-      "strategyLabel": "Strategy"
+      "strategyLabel": "Strategy",
+      "fields": {
+        "general": {
+          "label": "General guidance",
+          "description": "Applies to the resume, CV, cover letter, and outreach email.",
+          "placeholder": "Example: I'm pivoting from product management into ML engineering. Lean into transferable technical depth and de-emphasize stakeholder management."
+        },
+        "resume": {
+          "label": "Resume guidance",
+          "description": "Instructions specific to the tailored resume.",
+          "placeholder": "Example: Don't add metrics I haven't supplied. Prefer rewording bullets over inventing new ones."
+        },
+        "cv": {
+          "label": "CV guidance",
+          "description": "Instructions specific to the CV (used in document chat).",
+          "placeholder": "Example: Keep the publication list intact and prioritize teaching experience near the top."
+        },
+        "cover_letter": {
+          "label": "Cover letter guidance",
+          "description": "Instructions specific to the cover letter.",
+          "placeholder": "Example: I'm light on direct industry experience but want to convey enthusiasm and adjacent skills honestly."
+        },
+        "outreach": {
+          "label": "Outreach email guidance",
+          "description": "Instructions specific to the cold outreach message.",
+          "placeholder": "Example: Short, conversational, two paragraphs max. Mention the mutual connection in the opening line."
+        }
+      }
     },
     "errors": {
       "jobDescriptionTooShort": "Job description is too short. Add more detail and try again.",
