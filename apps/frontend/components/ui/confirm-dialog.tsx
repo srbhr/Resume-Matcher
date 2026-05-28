@@ -117,7 +117,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
               <DialogTitle className="font-serif text-xl font-bold uppercase tracking-tight">
                 {title}
               </DialogTitle>
-              <DialogDescription className="font-mono text-xs text-ink-soft mt-2">
+              <DialogDescription className="font-mono text-xs text-ink-soft mt-2 max-h-38 overflow-y-auto break-all">
                 {description}
               </DialogDescription>
             </div>
