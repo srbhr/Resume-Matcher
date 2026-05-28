@@ -691,17 +691,27 @@ async def improve_resume_preview_endpoint(
                 language=language,
                 prompt_id=prompt_id,
             ),
-            timeout=240.0,  # 4-minute hard limit
+            timeout=3600.0,  # 1-hour hard limit; inner LLM timeouts (from Settings) are shorter
         )
     except asyncio.TimeoutError:
         logger.error(
-            "Improve preview timed out after 240s for resume %s / job %s",
+            "Improve preview timed out after 3600s for resume %s / job %s",
             request.resume_id,
             request.job_id,
         )
         raise HTTPException(
             status_code=504,
             detail="Resume tailoring timed out. Please try again with a shorter job description or a simpler prompt.",
+        )
+    except asyncio.CancelledError:
+        logger.warning(
+            "Improve preview cancelled for resume %s / job %s (client disconnected)",
+            request.resume_id,
+            request.job_id,
+        )
+        raise HTTPException(
+            status_code=499,
+            detail="Request was cancelled. The server may still be processing.",
         )
     except Exception as e:
         _raise_improve_error("preview", stage, e, detail)

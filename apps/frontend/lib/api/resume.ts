@@ -4,6 +4,16 @@ import { type TemplateSettings } from '@/lib/types/template-settings';
 import { type Locale } from '@/i18n/config';
 import { API_BASE, apiPost, apiPatch, apiDelete, apiFetch } from './client';
 
+// Module-level cache for the configured improve timeout (ms).
+// Set by setImproveTimeoutMs() - read from backend LLM config on app start.
+let _improveTimeoutMs: number = 600_000;
+
+/** Override the default improve timeout (ms). Call with the backend's
+ *  timeout_seconds * 1000, e.g. after fetching LLM config. */
+export function setImproveTimeoutMs(ms: number): void {
+  _improveTimeoutMs = ms > 0 ? ms : 600_000;
+}
+
 // Matches backend schemas/models.py ResumeData
 interface ProcessedResume {
   personalInfo?: {
@@ -114,7 +124,7 @@ async function postImprove(
 ): Promise<ImprovedResult> {
   let response: Response;
   try {
-    response = await apiPost(endpoint, payload, 240_000);
+    response = await apiPost(endpoint, payload, _improveTimeoutMs);
   } catch (networkError) {
     console.error(`Network error during ${endpoint}:`, networkError);
     throw networkError;
