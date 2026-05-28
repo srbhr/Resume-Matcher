@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useResumePreview } from '@/components/common/resume_previewer_context';
-import type { ImprovedResult } from '@/components/common/resume_previewer_context';
+import type { ImprovedResult, ResumePreview } from '@/components/common/resume_previewer_context';
 import type { ResumeData } from '@/components/dashboard/resume-component';
 import {
   uploadJobDescriptions,
@@ -171,11 +171,11 @@ function TailorPage() {
     if (e.key === 'Enter') e.stopPropagation();
   };
 
-  const buildConfirmPayload = (result: ImprovedResult) => {
+  const buildConfirmPayload = (result: ImprovedResult, overridePreview?: ResumePreview) => {
     if (!masterResumeId) {
       throw new Error('Master resume ID is missing.');
     }
-    const resumePreview = result.data.resume_preview;
+    const resumePreview = overridePreview ?? result.data.resume_preview;
     if (!resumePreview || typeof resumePreview !== 'object' || Array.isArray(resumePreview)) {
       throw new Error('Resume preview data is invalid.');
     }
@@ -201,8 +201,8 @@ function TailorPage() {
     };
   };
 
-  const confirmAndNavigate = async (result: ImprovedResult) => {
-    const confirmed = await confirmImproveResume(buildConfirmPayload(result));
+  const confirmAndNavigate = async (result: ImprovedResult, overridePreview?: ResumePreview) => {
+    const confirmed = await confirmImproveResume(buildConfirmPayload(result, overridePreview));
     incrementImprovements();
     incrementResumes();
     setImprovedData(confirmed);
@@ -297,7 +297,7 @@ function TailorPage() {
   };
 
   // User confirms changes
-  const handleConfirmChanges = async () => {
+  const handleConfirmChanges = async (finalPreview?: ResumePreview) => {
     if (!pendingResult || isConfirming) return;
 
     setIsConfirming(true);
@@ -305,7 +305,7 @@ function TailorPage() {
     setDiffConfirmError(null);
 
     try {
-      await confirmAndNavigate(pendingResult);
+      await confirmAndNavigate(pendingResult, finalPreview);
       setShowDiffModal(false);
       setPendingResult(null);
     } catch (err) {
@@ -628,6 +628,8 @@ function TailorPage() {
           onConfirm={handleConfirmChanges}
           diffSummary={pendingResult?.data?.diff_summary}
           detailedChanges={pendingResult?.data?.detailed_changes}
+          improvedPreview={pendingResult?.data?.resume_preview}
+          tailorSessionId={pendingResult?.data?.tailor_session_id ?? null}
           errorMessage={diffConfirmError ?? undefined}
         />
       )}

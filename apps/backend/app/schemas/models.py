@@ -606,6 +606,10 @@ class ImproveResumeData(BaseModel):
     refinement_attempted: bool = False
     refinement_successful: bool = False
 
+    # Session handle for per-change regeneration in the review modal.
+    # See routers.resumes regenerate_single_change.
+    tailor_session_id: str | None = None
+
 
 class ImproveResumeResponse(BaseModel):
     """Response for resume improvement."""

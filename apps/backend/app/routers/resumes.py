@@ -14,7 +14,7 @@ from uuid import uuid4
 
 from fastapi import APIRouter, File, Form, HTTPException, Query, UploadFile
 from fastapi.responses import Response, StreamingResponse
-from pydantic import ValidationError
+from pydantic import BaseModel, Field, ValidationError
 
 from app.config_cache import get_content_language, load_config as _load_config
 from app.database import db
@@ -73,6 +73,7 @@ from app.services.cover_letter import (
     generate_resume_title,
 )
 from app.prompts import DEFAULT_IMPROVE_PROMPT_ID, IMPROVE_PROMPT_OPTIONS
+from app.llm import complete as llm_complete, chat_complete
 
 
 def _get_default_prompt_id() -> str:
@@ -1362,6 +1363,16 @@ async def _improve_preview_flow(
         response_warnings.append(f"Could not calculate changes: {diff_error}")
     improvements = generate_improvements(job_keywords)
 
+    try:
+        tailor_session_id = _build_tailor_session(
+            master_resume=original_resume_data or resume["content"],
+            job_description=job["content"],
+            improved_data=improved_data,
+        )
+    except Exception as e:
+        logger.warning("Failed to seed tailor session: %s", e)
+        tailor_session_id = None
+
     request_id = str(uuid4())
     return ImproveResumeResponse(
         request_id=request_id,
@@ -1387,6 +1398,7 @@ async def _improve_preview_flow(
             warnings=response_warnings,
             refinement_attempted=refinement_attempted,
             refinement_successful=refinement_successful,
+            tailor_session_id=tailor_session_id,
         ),
     )
 
@@ -2611,3 +2623,138 @@ async def download_cover_letter_pdf(
         "Content-Disposition": f'attachment; filename="cover_letter_{resume_id}.pdf"'
     }
     return Response(content=pdf_bytes, media_type="application/pdf", headers=headers)
+
+
+# ---------------------------------------------------------------------------
+# Per-change regeneration (used by the tailor review modal's "Change" button)
+#
+# A tailor session caches a synthetic LLM conversation that's seeded once at
+# preview time with the master resume + JD, then extended turn-by-turn as the
+# user clicks "Change" on individual review items. The master resume / JD is
+# never re-sent across calls — each Change request appends just the new user
+# feedback turn and lets the cached prefix carry the context.
+# ---------------------------------------------------------------------------
+
+
+_TAILOR_SESSION_CACHE: dict[str, list[dict[str, str]]] = {}
+_TAILOR_SESSION_SYSTEM = (
+    "You are a resume editing assistant. The user has already approved a "
+    "tailored resume but is now requesting targeted revisions to specific "
+    "changes. When asked to revise, respond with ONLY the revised text for "
+    "that single change — no JSON, no markdown, no commentary, no quotes "
+    "around the value."
+)
+
+
+def _build_tailor_session(
+    master_resume: dict[str, Any] | str,
+    job_description: str,
+    improved_data: dict[str, Any],
+) -> str:
+    """Seed a tailor session with the initial context turn and return its id."""
+    session_id = str(uuid4())
+
+    if isinstance(master_resume, dict):
+        master_serialized = json.dumps(master_resume, ensure_ascii=False)
+    else:
+        master_serialized = str(master_resume or "")
+
+    seed_user = (
+        "Here is the user's master resume (JSON) and the target job description. "
+        "Use them as ground truth for any revisions requested next.\n\n"
+        f"MASTER_RESUME_JSON:\n```json\n{master_serialized}\n```\n\n"
+        f"JOB_DESCRIPTION:\n```\n{job_description}\n```"
+    )
+    seed_assistant = json.dumps(improved_data, ensure_ascii=False)
+
+    _TAILOR_SESSION_CACHE[session_id] = [
+        {"role": "user", "content": seed_user},
+        {"role": "assistant", "content": seed_assistant},
+    ]
+    return session_id
+
+
+class RegenerateChangeRequest(BaseModel):
+    tailor_session_id: str | None = Field(
+        default=None,
+        description="Session handle from the preview response. If absent, the call falls back to a one-shot prompt.",
+    )
+    field_type: str = Field(..., description="summary | skill | description | certification | experience | education | project")
+    change_type: str = Field(..., description="added | removed | modified")
+    label: str = Field("", description="Human-readable context, e.g. 'Acme @ Software Engineer'")
+    original_value: str | None = None
+    proposed_value: str | None = None
+    user_reason: str = Field("", description="Why the user rejected the change")
+
+
+class RegenerateChangeResponse(BaseModel):
+    new_value: str
+
+
+def _format_change_request(req: RegenerateChangeRequest) -> str:
+    return (
+        "Revise the following change from the tailored resume.\n\n"
+        f"  Section: {req.field_type or '(unknown)'}\n"
+        f"  Where: {req.label or '(no context)'}\n"
+        f"  Change type: {req.change_type or 'modified'}\n"
+        f"  Original value: {(req.original_value or '').strip() or '(none)'}\n"
+        f"  Previously proposed value: {(req.proposed_value or '').strip() or '(none)'}\n\n"
+        f"USER FEEDBACK: {(req.user_reason or '').strip() or '(no reason given)'}\n\n"
+        "Reply with ONLY the new replacement value as plain text, in the same "
+        "form as the previously proposed value (bullet -> bullet, skill -> skill, "
+        "summary -> summary). No prefix, no quotes, no commentary."
+    )
+
+
+@router.post("/improve/regenerate-change", response_model=RegenerateChangeResponse)
+async def regenerate_single_change(
+    request: RegenerateChangeRequest,
+) -> RegenerateChangeResponse:
+    """Regenerate a single review-modal change based on user feedback.
+
+    Generic across field types — the same flow revises a summary, a skill, a
+    bullet, or a certification. When a tailor_session_id is supplied, the call
+    appends to the cached conversation so the master resume / JD context is
+    not re-sent.
+    """
+    user_message = _format_change_request(request)
+
+    session_messages: list[dict[str, str]] | None = None
+    if request.tailor_session_id:
+        session_messages = _TAILOR_SESSION_CACHE.get(request.tailor_session_id)
+
+    if session_messages is not None:
+        messages = list(session_messages) + [{"role": "user", "content": user_message}]
+    else:
+        # No session — fall back to a self-contained one-shot.
+        messages = [{"role": "user", "content": user_message}]
+
+    try:
+        raw = await asyncio.wait_for(
+            chat_complete(
+                messages=messages,
+                system_prompt=_TAILOR_SESSION_SYSTEM,
+                max_tokens=1024,
+                temperature=0.5,
+            ),
+            timeout=120.0,
+        )
+    except asyncio.TimeoutError:
+        logger.error("regenerate-change timed out for field_type=%s", request.field_type)
+        raise HTTPException(status_code=504, detail="Regeneration timed out. Please try again.")
+    except Exception as exc:
+        logger.error("regenerate-change failed: %s", exc)
+        raise HTTPException(status_code=500, detail="Failed to regenerate change. Please try again.")
+
+    new_value = (raw or "").strip()
+    if len(new_value) >= 2 and new_value[0] in {'"', "'"} and new_value[-1] == new_value[0]:
+        new_value = new_value[1:-1].strip()
+
+    if not new_value:
+        raise HTTPException(status_code=502, detail="The AI returned an empty response. Please try again.")
+
+    if session_messages is not None:
+        session_messages.append({"role": "user", "content": user_message})
+        session_messages.append({"role": "assistant", "content": new_value})
+
+    return RegenerateChangeResponse(new_value=new_value)

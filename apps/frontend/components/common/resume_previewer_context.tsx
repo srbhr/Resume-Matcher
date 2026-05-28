@@ -98,6 +98,7 @@ export interface Data {
   outreach_message?: string;
   diff_summary?: ResumeDiffSummary;
   detailed_changes?: ResumeFieldDiff[];
+  tailor_session_id?: string | null;
 }
 
 export interface ImprovedResult {

@@ -588,7 +588,17 @@
       "projectChanges": "Cambios en proyectos",
       "certificationChanges": "Cambios en certificaciones",
       "rejectButton": "Rechazar y regenerar",
-      "confirmButton": "Confirmar y guardar"
+      "confirmButton": "Confirmar y guardar",
+      "acceptChange": "Aceptar",
+      "rejectChange": "Rechazar",
+      "changeChange": "Cambiar",
+      "changeInPrefix": "Cambio en {title}:",
+      "pendingReviewWarning": "Revisa todos los cambios antes de confirmar ({count} pendientes)",
+      "changeDialogTitle": "Refinar este cambio",
+      "changeDialogDescription": "Indica a la IA qué hacer diferente para este elemento. El currículum maestro y la descripción del puesto ya están en contexto.",
+      "changeDialogPlaceholder": "Ejemplo: esta habilidad es demasiado genérica — reemplázala por algo más específico a mi experiencia.",
+      "changeDialogConfirm": "Regenerar",
+      "regenerating": "Regenerando..."
     },
     "regenerateDialog": {
       "title": "¿Regenerar el currículum personalizado?",

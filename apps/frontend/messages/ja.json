@@ -588,7 +588,17 @@
       "projectChanges": "プロジェクトの変更",
       "certificationChanges": "資格の変更",
       "rejectButton": "拒否して再生成",
-      "confirmButton": "確認して保存"
+      "confirmButton": "確認して保存",
+      "acceptChange": "承認",
+      "rejectChange": "却下",
+      "changeChange": "変更",
+      "changeInPrefix": "{title} の変更：",
+      "pendingReviewWarning": "確認前にすべての変更を確認してください（残り {count} 件）",
+      "changeDialogTitle": "この変更を調整",
+      "changeDialogDescription": "この項目について AI に別の対応を指示してください。マスター履歴書と求人情報はすでにコンテキストに含まれています。",
+      "changeDialogPlaceholder": "例: このスキルは一般的すぎます。私の経歴により具体的な内容に置き換えてください。",
+      "changeDialogConfirm": "再生成",
+      "regenerating": "再生成中..."
     },
     "regenerateDialog": {
       "title": "カスタマイズ済み履歴書を再生成しますか？",

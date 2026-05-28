@@ -588,7 +588,17 @@
       "projectChanges": "Alterações de projetos",
       "certificationChanges": "Alterações de certificações",
       "rejectButton": "Rejeitar e regenerar",
-      "confirmButton": "Confirmar e salvar"
+      "confirmButton": "Confirmar e salvar",
+      "acceptChange": "Aceitar",
+      "rejectChange": "Rejeitar",
+      "changeChange": "Alterar",
+      "changeInPrefix": "Alteração em {title}:",
+      "pendingReviewWarning": "Revise todas as alterações antes de confirmar ({count} restantes)",
+      "changeDialogTitle": "Refinar esta alteração",
+      "changeDialogDescription": "Diga à IA o que fazer de diferente neste item. O currículo principal e a descrição da vaga já estão no contexto.",
+      "changeDialogPlaceholder": "Exemplo: esta habilidade é muito genérica — substitua por algo mais específico ao meu perfil.",
+      "changeDialogConfirm": "Regenerar",
+      "regenerating": "Regerando..."
     },
     "regenerateDialog": {
       "title": "Regenerar o currículo personalizado?",

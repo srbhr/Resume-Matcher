@@ -87,7 +87,7 @@ describe('DiffPreviewModal', () => {
     expect(screen.queryByText('new summary')).not.toBeInTheDocument();
   });
 
-  it('fires confirm and reject handlers', () => {
+  it('fires reject handler and blocks confirm until every change is reviewed', () => {
     const onConfirm = vi.fn();
     const onReject = vi.fn();
 
@@ -99,13 +99,36 @@ describe('DiffPreviewModal', () => {
         onConfirm={onConfirm}
         diffSummary={diffSummary}
         detailedChanges={detailedChanges}
+        improvedPreview={{
+          personalInfo: { name: '', email: '', phone: '', location: '' },
+          summary: 'new summary',
+          workExperience: [],
+          education: [],
+          personalProjects: [],
+          additional: {
+            technicalSkills: ['Go'],
+            languages: [],
+            certificationsTraining: [],
+            awards: [],
+          },
+        }}
       />
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'tailor.diffModal.confirmButton' }));
-    fireEvent.click(screen.getByRole('button', { name: 'tailor.diffModal.rejectButton' }));
+    // Confirm starts disabled — clicking it must not fire.
+    fireEvent.click(screen.getByRole('button', { name: /tailor\.diffModal\.confirmButton/ }));
+    expect(onConfirm).not.toHaveBeenCalled();
 
-    expect(onConfirm).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('button', { name: /tailor\.diffModal\.rejectButton/ }));
     expect(onReject).toHaveBeenCalledTimes(1);
+
+    // Accept both changes, then Confirm should fire.
+    const acceptButtons = screen.getAllByRole('button', {
+      name: /tailor\.diffModal\.acceptChange/,
+    });
+    acceptButtons.forEach((b) => fireEvent.click(b));
+
+    fireEvent.click(screen.getByRole('button', { name: /tailor\.diffModal\.confirmButton/ }));
+    expect(onConfirm).toHaveBeenCalledTimes(1);
   });
 });

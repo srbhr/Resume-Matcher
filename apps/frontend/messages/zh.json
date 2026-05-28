@@ -588,7 +588,17 @@
       "projectChanges": "项目变更",
       "certificationChanges": "认证变更",
       "rejectButton": "拒绝并重新生成",
-      "confirmButton": "确认并保存"
+      "confirmButton": "确认并保存",
+      "acceptChange": "接受",
+      "rejectChange": "拒绝",
+      "changeChange": "修改",
+      "changeInPrefix": "{title} 中的更改：",
+      "pendingReviewWarning": "请先审阅所有更改再确认（剩余 {count} 项）",
+      "changeDialogTitle": "优化此更改",
+      "changeDialogDescription": "告诉 AI 对这一项需要做出哪些不同的处理。主简历和职位描述已在上下文中。",
+      "changeDialogPlaceholder": "示例：这个技能过于宽泛——请替换为更贴合我背景的内容。",
+      "changeDialogConfirm": "重新生成",
+      "regenerating": "正在重新生成..."
     },
     "regenerateDialog": {
       "title": "重新生成定制简历？",

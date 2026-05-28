@@ -588,7 +588,17 @@
       "projectChanges": "Project Changes",
       "certificationChanges": "Certification Changes",
       "rejectButton": "Reject & Regenerate",
-      "confirmButton": "Confirm & Save"
+      "confirmButton": "Confirm & Save",
+      "acceptChange": "Accept",
+      "rejectChange": "Reject",
+      "changeChange": "Change",
+      "changeInPrefix": "Change in {title}:",
+      "pendingReviewWarning": "Review all changes before confirming ({count} remaining)",
+      "changeDialogTitle": "Refine this change",
+      "changeDialogDescription": "Tell the AI what to do differently for this one item. The master resume and job description are already in context.",
+      "changeDialogPlaceholder": "Example: This skill is too generic — replace with something more specific to my background.",
+      "changeDialogConfirm": "Regenerate",
+      "regenerating": "Regenerating..."
     },
     "regenerateDialog": {
       "title": "Regenerate tailored resume?",

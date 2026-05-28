@@ -270,6 +270,31 @@ export async function previewImproveResume(
   });
 }
 
+export interface RegenerateChangePayload {
+  tailor_session_id?: string | null;
+  field_type: string;
+  change_type: string;
+  label?: string;
+  original_value?: string | null;
+  proposed_value?: string | null;
+  user_reason: string;
+}
+
+/** Regenerates a single change (one bullet, one skill, one summary, etc.) */
+export async function regenerateChange(
+  payload: RegenerateChangePayload
+): Promise<{ new_value: string }> {
+  const res = await apiPost(
+    '/resumes/improve/regenerate-change',
+    payload as unknown as Record<string, unknown>
+  );
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || `Failed to regenerate change (status ${res.status}).`);
+  }
+  return res.json();
+}
+
 /** Confirms and saves a tailored resume */
 export async function confirmImproveResume(
   payload: ImproveResumeConfirmRequest
