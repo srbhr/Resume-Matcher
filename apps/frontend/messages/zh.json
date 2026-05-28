@@ -546,6 +546,8 @@
       "educationChanges": "教育变更",
       "projectChanges": "项目变更",
       "certificationChanges": "认证变更",
+      "languageChanges": "语言变更",
+      "awardChanges": "奖项变更",
       "rejectButton": "拒绝并重新生成",
       "confirmButton": "确认并保存"
     },

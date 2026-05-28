@@ -546,6 +546,8 @@
       "educationChanges": "Cambios en educación",
       "projectChanges": "Cambios en proyectos",
       "certificationChanges": "Cambios en certificaciones",
+      "languageChanges": "Cambios en idiomas",
+      "awardChanges": "Cambios en premios",
       "rejectButton": "Rechazar y regenerar",
       "confirmButton": "Confirmar y guardar"
     },

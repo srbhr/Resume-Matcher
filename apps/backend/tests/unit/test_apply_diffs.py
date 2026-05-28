@@ -483,3 +483,100 @@ class TestApplyDiffsEdgeCases:
         assert result["workExperience"][1]["description"][0] == "Updated payment system description"
         # First entry unchanged
         assert result["workExperience"][0]["description"][0] == sample_resume["workExperience"][0]["description"][0]
+
+
+class TestApplyDiffsNewPaths:
+    """Tests for newly allowed paths (Issue #805 fix)."""
+
+    def test_replace_education_description(self, sample_resume):
+        """Education description should be replaceable."""
+        original_desc = sample_resume["education"][0]["description"]
+        changes = [
+            ResumeChange(
+                path="education[0].description",
+                action="replace",
+                original=original_desc,
+                value="Graduated with honors, focused on distributed systems",
+                reason="test",
+            )
+        ]
+        result, applied, rejected = apply_diffs(sample_resume, changes)
+        assert len(applied) == 1
+        assert len(rejected) == 0
+        assert result["education"][0]["description"] == changes[0].value
+
+    def test_reorder_languages(self, sample_resume):
+        """Languages list should be reorderable."""
+        original_langs = sample_resume["additional"]["languages"]
+        changes = [
+            ResumeChange(
+                path="additional.languages",
+                action="reorder",
+                original=None,
+                value=list(reversed(original_langs)),
+                reason="Prioritize Spanish for this role",
+            )
+        ]
+        result, applied, rejected = apply_diffs(sample_resume, changes)
+        assert len(applied) == 1
+        assert len(rejected) == 0
+        assert result["additional"]["languages"] == list(reversed(original_langs))
+
+    def test_reorder_awards(self, sample_resume):
+        """Awards list should be reorderable."""
+        original_awards = sample_resume["additional"]["awards"]
+        changes = [
+            ResumeChange(
+                path="additional.awards",
+                action="reorder",
+                original=None,
+                value=original_awards,
+                reason="No change needed",
+            )
+        ]
+        result, applied, rejected = apply_diffs(sample_resume, changes)
+        assert len(applied) == 1
+        assert len(rejected) == 0
+        assert result["additional"]["awards"] == original_awards
+
+    def test_reject_education_degree(self, sample_resume):
+        """Education degree should still be blocked."""
+        changes = [
+            ResumeChange(
+                path="education[0].degree",
+                action="replace",
+                original="B.S. Computer Science",
+                value="M.S. Computer Science",
+                reason="test",
+            )
+        ]
+        result, applied, rejected = apply_diffs(sample_resume, changes)
+        assert len(rejected) == 1
+
+    def test_reject_education_institution(self, sample_resume):
+        """Education institution should still be blocked."""
+        changes = [
+            ResumeChange(
+                path="education[0].institution",
+                action="replace",
+                original="MIT",
+                value="Stanford",
+                reason="test",
+            )
+        ]
+        result, applied, rejected = apply_diffs(sample_resume, changes)
+        assert len(rejected) == 1
+
+    def test_reject_education_years(self, sample_resume):
+        """Education years should still be blocked."""
+        changes = [
+            ResumeChange(
+                path="education[0].years",
+                action="replace",
+                original="2014 - 2018",
+                value="2014 - 2020",
+                reason="test",
+            )
+        ]
+        result, applied, rejected = apply_diffs(sample_resume, changes)
+        assert len(rejected) == 1
