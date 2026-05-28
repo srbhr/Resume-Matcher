@@ -10,7 +10,7 @@ dependencies = [
     "pydantic==2.12.5",
     "pydantic-settings==2.12.0",
     "tinydb==4.8.2",
-    "litellm==1.83.7",
+    "litellm==1.83.10",
     "markitdown[docx]==0.1.4",
     "pdfminer.six==20260107",
     "playwright==1.58.0",

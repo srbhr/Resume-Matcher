@@ -4,7 +4,7 @@ python-multipart==0.0.26
 pydantic==2.12.5
 pydantic-settings==2.12.0
 tinydb==4.8.2
-litellm==1.83.7
+litellm==1.83.10
 markitdown[docx]==0.1.4
 python-docx==1.2.0
 playwright==1.58.0

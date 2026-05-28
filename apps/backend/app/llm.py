@@ -731,7 +731,6 @@ def _supports_json_mode(model_name: str) -> bool:
         return False
 
 
-def _appears_truncated(data: dict, schema_type: str = "resume") -> bool:
 FALLBACK_MAX_TOKENS = 4096
 
 def get_safe_max_tokens(model_name: str, requested: int = DEFAULT_JSON_MAX_TOKENS) -> int:
@@ -779,7 +778,7 @@ def get_safe_max_tokens(model_name: str, requested: int = DEFAULT_JSON_MAX_TOKEN
     return safe
 
 
-def _appears_truncated(data: dict) -> bool:
+def _appears_truncated(data: dict, schema_type: str = "resume") -> bool:
     """LLM-001: Check if JSON data appears to be truncated.
 
     Detects suspicious patterns indicating incomplete responses.

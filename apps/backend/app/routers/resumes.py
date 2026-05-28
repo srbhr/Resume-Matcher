@@ -47,8 +47,10 @@ from app.services.improver import (
     apply_diffs,
     extract_job_keywords,
     generate_improvements,
+    generate_skill_target_plan,
     generate_resume_diffs,
     improve_resume,
+    verify_skill_target_plan,
     verify_diff_result,
 )
 from app.services.refiner import refine_resume, calculate_keyword_match
@@ -541,6 +543,13 @@ async def upload_resume(file: UploadFile = File(...)) -> ResumeUploadResponse:
             detail="Failed to parse document. Please ensure it's a valid PDF or DOCX file.",
         )
 
+    # Validate extracted text is not empty (image-based PDFs / scanned documents)
+    if not markdown_content or not markdown_content.strip():
+        raise HTTPException(
+            status_code=422,
+            detail="Could not extract text from the uploaded file. The document may be image-based or scanned. Please upload a file with selectable text.",
+        )
+
     # Store in database first with "processing" status (atomic master assignment)
     # original_markdown is preserved permanently for date reference even after
     # builder saves overwrite `content` with JSON.
@@ -744,6 +753,36 @@ async def _improve_preview_flow(
 
     # Diff-based improvement: generate targeted changes, apply with verification
     if original_resume_data:
+        skill_targets: list[dict[str, Any]] = []
+        try:
+            raw_skill_plan = await generate_skill_target_plan(
+                original_resume_data=original_resume_data,
+                job_description=job["content"],
+                job_keywords=job_keywords,
+                language=language,
+            )
+            verified_skill_plan = verify_skill_target_plan(
+                raw_skill_plan,
+                original_resume_data=original_resume_data,
+                job_keywords=job_keywords,
+                job_description=job["content"],
+            )
+            accepted_targets = verified_skill_plan.get("accepted", [])
+            if isinstance(accepted_targets, list):
+                skill_targets = [
+                    target
+                    for target in accepted_targets
+                    if isinstance(target, dict)
+                ]
+            rejected_targets = verified_skill_plan.get("rejected", [])
+            if isinstance(rejected_targets, list) and rejected_targets:
+                response_warnings.append(
+                    f"{len(rejected_targets)} unsupported skill target(s) rejected"
+                )
+        except Exception as e:
+            logger.warning("Skill target planning failed, continuing without it: %s", e)
+            response_warnings.append("Skill target planning failed")
+
         diff_result = await generate_resume_diffs(
             original_resume=resume["content"],
             job_description=job["content"],
@@ -751,11 +790,13 @@ async def _improve_preview_flow(
             language=language,
             prompt_id=prompt_id,
             original_resume_data=original_resume_data,
+            skill_targets=skill_targets,
         )
 
         improved_data, applied_changes, rejected_changes = apply_diffs(
             original=original_resume_data,
             changes=diff_result.changes,
+            allowed_skill_targets=skill_targets,
         )
 
         diff_warnings = verify_diff_result(
