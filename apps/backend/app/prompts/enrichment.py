@@ -153,6 +153,11 @@ Based on the user's feedback, completely REWRITE the description bullets. The ne
 4. Be technically specific with tools/technologies
 5. Show clear impact and ownership
 
+SPECIAL CASE FOR SUMMARY:
+- If `Type` is `summary`, output concise summary lines instead of role bullets.
+- For summary, generate 1-3 lines that improve positioning and clarity while staying factual.
+- Keep the same JSON key shape (`new_bullets`) for all non-skills item types.
+
 OUTPUT FORMAT (JSON only):
 {{
   "new_bullets": [
@@ -164,7 +169,8 @@ OUTPUT FORMAT (JSON only):
 }}
 
 RULES:
-- Generate 2-5 NEW bullets (not additions, but replacements)
+- For experience/project: generate 2-5 NEW bullets (not additions, but replacements)
+- For summary: generate 1-3 concise summary lines
 - Directly address the user's instruction
 - Do NOT add any new facts, metrics, dates, companies, titles, or accomplishments that are not already present in CURRENT DESCRIPTION or USER'S FEEDBACK/INSTRUCTION
 - If the user asks for metrics but none exist in the provided text, do not fabricate numbers; rewrite to emphasize scope/impact qualitatively instead

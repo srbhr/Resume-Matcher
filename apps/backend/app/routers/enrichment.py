@@ -418,7 +418,7 @@ async def _regenerate_experience_or_project(
     instruction: str,
     output_language: str,
 ) -> RegeneratedItem:
-    """Regenerate a single experience or project item."""
+    """Regenerate a single non-skills item (experience/project/summary)."""
     current_desc_text = (
         "\n".join(f"- {d}" for d in item.current_content)
         if item.current_content
@@ -507,8 +507,10 @@ async def regenerate_items(request: RegenerateRequest) -> RegenerateResponse:
     for item in request.items:
         if item.item_type == "skills":
             tasks.append(_regenerate_skills(item, request.instruction, output_language))
-        else:
-            tasks.append(_regenerate_experience_or_project(item, request.instruction, output_language))
+        elif item.item_type in {"experience", "project", "summary"}:
+            tasks.append(
+                _regenerate_experience_or_project(item, request.instruction, output_language)
+            )
 
     results = await asyncio.gather(*tasks, return_exceptions=True)
 
@@ -772,6 +774,17 @@ async def apply_regenerated_items(
                 updated_data["technicalSkills"] = new_content
             else:
                 apply_failures.append(item_id)
+
+        elif item_type == "summary":
+            expected_original_content = item.original_content
+            current_summary = updated_data.get("summary")
+
+            if not _lines_equal(current_summary, expected_original_content):
+                apply_failures.append(item_id)
+                continue
+
+            normalized_lines = _normalize_lines(new_content)
+            updated_data["summary"] = "\n".join(normalized_lines)
 
     if apply_failures:
         logger.warning(

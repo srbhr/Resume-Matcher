@@ -18,6 +18,7 @@ import {
   Briefcase,
   FolderKanban,
   Lightbulb,
+  FileText,
 } from 'lucide-react';
 import { useTranslations } from '@/lib/i18n';
 import type { RegenerateItemError, RegeneratedItem } from '@/lib/api/enrichment';
@@ -76,6 +77,9 @@ export const RegenerateDiffPreview: React.FC<RegenerateDiffPreviewProps> = ({
     if (item.item_type === 'skills') {
       return t('builder.regenerate.selectDialog.skills');
     }
+    if (item.item_type === 'summary') {
+      return t('builder.regenerate.selectDialog.summary');
+    }
 
     const title = item.title?.trim();
     const subtitle = item.subtitle?.trim();
@@ -95,6 +99,8 @@ export const RegenerateDiffPreview: React.FC<RegenerateDiffPreviewProps> = ({
         return <FolderKanban className="w-4 h-4" />;
       case 'skills':
         return <Lightbulb className="w-4 h-4" />;
+      case 'summary':
+        return <FileText className="w-4 h-4" />;
       default:
         return null;
     }

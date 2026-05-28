@@ -24,6 +24,7 @@ interface RegenerateWizardProps {
   onStepChange: (step: RegenerateWizardStep) => void;
 
   // Data from resume
+  summaryItem: RegenerateItemInput | null;
   experienceItems: RegenerateItemInput[];
   projectItems: RegenerateItemInput[];
   skillsItem: RegenerateItemInput | null;
@@ -65,6 +66,7 @@ interface RegenerateWizardProps {
 export const RegenerateWizard: React.FC<RegenerateWizardProps> = ({
   step,
   onStepChange,
+  summaryItem,
   experienceItems,
   projectItems,
   skillsItem,
@@ -124,6 +126,7 @@ export const RegenerateWizard: React.FC<RegenerateWizardProps> = ({
       <RegenerateDialog
         open={isSelectDialogOpen}
         onOpenChange={handleSelectDialogClose}
+        summaryItem={summaryItem}
         experienceItems={experienceItems}
         projectItems={projectItems}
         skillsItem={skillsItem}

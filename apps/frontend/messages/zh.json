@@ -205,11 +205,12 @@
       "selectDialog": {
         "title": "选择要重新生成的项目",
         "subtitle": "选择您想要改进的简历部分",
+        "summary": "职业摘要",
         "experience": "工作经历",
         "projects": "项目经历",
         "skills": "技术技能",
         "noItemsSelected": "请至少选择一个项目",
-        "noItemsAvailable": "没有可重新生成的项目。请先添加工作经历、项目经历或技能。",
+        "noItemsAvailable": "没有可重新生成的项目。请先添加职业摘要、工作经历、项目经历或技能。",
         "itemCount": {
           "one": "{count} 条",
           "other": "{count} 条"

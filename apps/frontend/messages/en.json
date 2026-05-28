@@ -205,11 +205,12 @@
       "selectDialog": {
         "title": "Select Items to Regenerate",
         "subtitle": "Choose which parts of your resume you want to improve",
+        "summary": "Professional Summary",
         "experience": "Work Experience",
         "projects": "Projects",
         "skills": "Technical Skills",
         "noItemsSelected": "Please select at least one item",
-        "noItemsAvailable": "No items available to regenerate. Add experience, projects, or skills first.",
+        "noItemsAvailable": "No items available to regenerate. Add a summary, experience, projects, or skills first.",
         "itemCount": {
           "one": "{count} item",
           "other": "{count} items"

@@ -237,6 +237,20 @@ const ResumeBuilderContent = () => {
     return null;
   }, [resumeData.additional?.technicalSkills, t]);
 
+  const summaryItemForRegenerate: RegenerateItemInput | null = useMemo(() => {
+    const summary = resumeData.summary?.trim();
+    if (!summary) {
+      return null;
+    }
+
+    return {
+      item_id: 'summary',
+      item_type: 'summary' as const,
+      title: t('builder.regenerate.selectDialog.summary'),
+      current_content: [summary],
+    };
+  }, [resumeData.summary, t]);
+
   const localizedResumeDataForPreview = useMemo(
     () => withLocalizedDefaultSections(resumeData, t),
     [resumeData, t]
@@ -997,6 +1011,7 @@ const ResumeBuilderContent = () => {
       <RegenerateWizard
         step={regenerateWizard.step}
         onStepChange={regenerateWizard.setStep}
+        summaryItem={summaryItemForRegenerate}
         experienceItems={experienceItemsForRegenerate}
         projectItems={projectItemsForRegenerate}
         skillsItem={skillsItemForRegenerate}

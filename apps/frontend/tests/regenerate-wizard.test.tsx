@@ -25,6 +25,7 @@ describe('RegenerateDialog', () => {
       <RegenerateDialog
         open
         onOpenChange={vi.fn()}
+        summaryItem={null}
         experienceItems={[]}
         projectItems={[]}
         skillsItem={null}
@@ -64,6 +65,7 @@ describe('RegenerateDialog', () => {
       <RegenerateDialog
         open
         onOpenChange={vi.fn()}
+        summaryItem={null}
         experienceItems={experienceItems}
         projectItems={[]}
         skillsItem={null}
@@ -96,6 +98,7 @@ describe('RegenerateDialog', () => {
         <RegenerateDialog
           open
           onOpenChange={vi.fn()}
+          summaryItem={null}
           experienceItems={experienceItems}
           projectItems={[]}
           skillsItem={null}
@@ -114,6 +117,43 @@ describe('RegenerateDialog', () => {
     expect(continueButton).toBeDisabled();
 
     fireEvent.click(screen.getByRole('button', { name: /Senior Software Engineer/i }));
+    expect(continueButton).toBeEnabled();
+  });
+
+  it('renders and selects summary when available', () => {
+    const summaryItem: RegenerateItemInput = {
+      item_id: 'summary',
+      item_type: 'summary',
+      title: 'builder.regenerate.selectDialog.summary',
+      current_content: ['Results-driven engineer with 8 years of experience.'],
+    };
+
+    const Wrapper = () => {
+      const [selectedItems, setSelectedItems] = React.useState<RegenerateItemInput[]>([]);
+      return (
+        <RegenerateDialog
+          open
+          onOpenChange={vi.fn()}
+          summaryItem={summaryItem}
+          experienceItems={[]}
+          projectItems={[]}
+          skillsItem={null}
+          selectedItems={selectedItems}
+          onSelectionChange={setSelectedItems}
+          onContinue={vi.fn()}
+        />
+      );
+    };
+
+    render(<Wrapper />);
+    expect(screen.getAllByText('builder.regenerate.selectDialog.summary').length).toBeGreaterThan(0);
+
+    const continueButton = screen.getByRole('button', {
+      name: 'builder.regenerate.selectDialog.continueButton',
+    });
+    expect(continueButton).toBeDisabled();
+
+    fireEvent.click(screen.getAllByRole('button', { name: /builder\.regenerate\.selectDialog\.summary/i })[1]);
     expect(continueButton).toBeEnabled();
   });
 });

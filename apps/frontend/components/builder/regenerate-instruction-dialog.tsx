@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, Sparkles, Briefcase, FolderKanban, Lightbulb } from 'lucide-react';
+import { ArrowLeft, Sparkles, Briefcase, FolderKanban, Lightbulb, FileText } from 'lucide-react';
 import { useTranslations } from '@/lib/i18n';
 import type { RegenerateItemInput } from '@/lib/api/enrichment';
 
@@ -74,6 +74,8 @@ export const RegenerateInstructionDialog: React.FC<RegenerateInstructionDialogPr
         return <FolderKanban className="w-4 h-4" />;
       case 'skills':
         return <Lightbulb className="w-4 h-4" />;
+      case 'summary':
+        return <FileText className="w-4 h-4" />;
       default:
         return null;
     }

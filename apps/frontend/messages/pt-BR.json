@@ -205,11 +205,12 @@
       "selectDialog": {
         "title": "Selecione itens para regenerar",
         "subtitle": "Escolha quais partes do seu currículo você quer melhorar",
+        "summary": "Resumo profissional",
         "experience": "Experiência profissional",
         "projects": "Projetos",
         "skills": "Habilidades técnicas",
         "noItemsSelected": "Selecione pelo menos um item",
-        "noItemsAvailable": "Não há itens disponíveis para regenerar. Adicione experiência, projetos ou habilidades primeiro.",
+        "noItemsAvailable": "Não há itens disponíveis para regenerar. Adicione resumo, experiência, projetos ou habilidades primeiro.",
         "itemCount": {
           "one": "{count} item",
           "other": "{count} itens"
