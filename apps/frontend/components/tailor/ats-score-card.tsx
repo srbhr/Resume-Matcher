@@ -24,19 +24,23 @@ function barColor(value: number): string {
   return 'bg-red-500';
 }
 
+function clampWidth(value: number): number {
+  return Number.isFinite(value) ? Math.min(Math.max(value, 0), 100) : 0;
+}
+
 function SubScoreRow({ label, value }: { label: string; value: number }) {
   return (
     <div>
       <div className="flex justify-between items-center mb-1">
         <span className="text-sm text-gray-300">{label}</span>
         <span className={`text-sm font-semibold tabular-nums ${scoreColor(value)}`}>
-          {value.toFixed(1)}%
+          {Number.isFinite(value) ? value.toFixed(1) : '—'}%
         </span>
       </div>
       <div className="w-full bg-gray-700 rounded-full h-1.5">
         <div
           className={`h-1.5 rounded-full transition-all duration-500 ${barColor(value)}`}
-          style={{ width: `${Math.min(value, 100)}%` }}
+          style={{ width: `${clampWidth(value)}%` }}
         />
       </div>
     </div>
@@ -64,7 +68,7 @@ export function ATSScoreCard({ atsScore }: ATSScoreCardProps) {
       <div className="w-full bg-gray-700 rounded-full h-2">
         <div
           className={`h-2 rounded-full transition-all duration-500 ${barColor(overall_score)}`}
-          style={{ width: `${Math.min(overall_score, 100)}%` }}
+          style={{ width: `${clampWidth(overall_score)}%` }}
         />
       </div>
 
@@ -86,9 +90,9 @@ export function ATSScoreCard({ atsScore }: ATSScoreCardProps) {
             Missing Keywords
           </p>
           <div className="flex flex-wrap gap-1.5">
-            {missing_keywords.map((kw) => (
+            {missing_keywords.map((kw, i) => (
               <span
-                key={kw}
+                key={`missing-${i}-${kw}`}
                 className="text-xs bg-red-900/40 border border-red-700/50 text-red-300 rounded px-2 py-0.5"
               >
                 {kw}
@@ -105,9 +109,9 @@ export function ATSScoreCard({ atsScore }: ATSScoreCardProps) {
             Safe to Add (in your master resume)
           </p>
           <div className="flex flex-wrap gap-1.5">
-            {injectable_keywords.map((kw) => (
+            {injectable_keywords.map((kw, i) => (
               <span
-                key={kw}
+                key={`injectable-${i}-${kw}`}
                 className="text-xs bg-blue-900/40 border border-blue-700/50 text-blue-300 rounded px-2 py-0.5"
               >
                 {kw}
