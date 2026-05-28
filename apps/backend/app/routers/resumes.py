@@ -422,7 +422,7 @@ def _build_ats_score(
             recommendations=ats_raw["recommendations"],
         )
     except Exception as e:
-        logger.warning("ATS score computation failed: %s", e)
+        logger.warning("ATS score computation failed", exc_info=True)
         return None
 
 

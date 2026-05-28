@@ -48,12 +48,17 @@ def _extract_all_text(data: dict[str, Any]) -> str:
     return " ".join(parts)
 
 
-def _keyword_in_text(keyword: str, text: str) -> bool:
-    """Whole-word match to avoid false positives like 'go' inside 'going'."""
+def _keyword_in_text(keyword: str, text_lower: str) -> bool:
+    """Whole-word match against pre-lowercased text to avoid false positives.
+
+    Args:
+        keyword: The keyword to search for (will be lowercased internally).
+        text_lower: Full text that has already been lowercased by the caller.
+    """
     escaped = re.escape(keyword.strip().lower())
     if not escaped:
         return False
-    return bool(re.search(rf"(?<!\w){escaped}(?!\w)", text.lower()))
+    return bool(re.search(rf"(?<!\w){escaped}(?!\w)", text_lower))
 
 
 def _compute_skills_coverage(
@@ -83,7 +88,7 @@ def _compute_skills_coverage(
         if not isinstance(skill, str):
             continue
         skill_lower = skill.lower()
-        # Direct skill list match or whole-word text match
+        # Direct skill list match or whole-word text match (resume_text is pre-lowercased)
         if skill_lower in resume_skills_lower or _keyword_in_text(skill, resume_text):
             matched += 1
 
@@ -94,8 +99,8 @@ def _compute_section_completeness(resume: dict[str, Any]) -> float:
     """Return section completeness score (0–100).
 
     Checks the structured resume dict for the presence of key sections.
-    Falls back to text scanning so it works even if the resume is stored
-    as a raw markdown string instead of a parsed dict.
+    If no structured sections are detected, falls back to scanning all
+    extracted text for common section heading keywords.
     """
     found = 0
 
