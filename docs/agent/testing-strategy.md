@@ -110,13 +110,13 @@ Three concrete mechanisms, applied to every change in this initiative:
 
 Legend: ✅ done · 🚧 in progress · ⬜ planned
 
-**Phase 1 — Foundation + cheap deterministic coverage (this branch → `dev`)**
+**Phase 1 — Foundation + cheap deterministic coverage (PR #820 → `dev`) ✅ COMPLETE**
 - ✅ Audit + this document
-- 🚧 Make the suite green (fix stale `health` tests; liveness vs readiness)
-- 🚧 `llm.py` provider/Ollama pure-function regression tests
-- 🚧 `parser.py` pure tests (date restoration) + empty-text rejection
-- 🚧 Real-TinyDB `database.py` CRUD tests
-- ⬜ Verify: green suite + coverage delta recorded
+- ✅ Make the suite green (fixed stale `health` tests; liveness vs readiness)
+- ✅ `llm.py` provider/Ollama pure-function regression tests (`tests/unit/test_llm_providers.py`)
+- ✅ `parser.py` pure tests (date restoration) (`tests/unit/test_parser.py`) + empty-text rejection (`tests/integration/test_upload_api.py`)
+- ✅ Real-TinyDB `database.py` CRUD tests (`tests/unit/test_database.py`)
+- ✅ Verify: **192 → 265 tests, 1 silent failure → 0, coverage 54% → 58%** (database 34→96%, parser 20→72%, llm 47→55%, health now meaningful). Anti-theater mutation check passed.
 
 **Phase 2 — Transport contract tests (LLM/Ollama)**
 - ⬜ `respx`-backed tests: real `complete` / `complete_json` / `check_llm_health` against a fake Ollama + OpenAI-compatible server (request shape, base-URL handling, thinking-tag stripping, JSON-mode fallback, error-code mapping)
