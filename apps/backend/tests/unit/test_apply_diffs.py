@@ -234,6 +234,187 @@ class TestApplyDiffsReorder:
         assert len(applied) == 1
 
 
+class TestApplyDiffsInsertAfter:
+    """Tests for add_skill positional placement via insert_after."""
+
+    def test_add_skill_with_insert_after_places_adjacent(self, sample_resume):
+        # Resume has Python, FastAPI, Docker, AWS, PostgreSQL, Redis.
+        # Adding SQL with insert_after=PostgreSQL should land at index 5.
+        changes = [
+            ResumeChange(
+                path="additional.technicalSkills",
+                action="add_skill",
+                original=None,
+                value="SQL",
+                insert_after="PostgreSQL",
+                reason="add near related DB skills",
+            )
+        ]
+        result, applied, _ = apply_diffs(
+            sample_resume,
+            changes,
+            allowed_skill_targets=[{"skill": "SQL"}],
+        )
+        assert len(applied) == 1
+        skills = result["additional"]["technicalSkills"]
+        assert skills.index("SQL") == skills.index("PostgreSQL") + 1
+
+    def test_add_skill_insert_after_missing_anchor_falls_back_to_append(self, sample_resume):
+        changes = [
+            ResumeChange(
+                path="additional.technicalSkills",
+                action="add_skill",
+                original=None,
+                value="Kubernetes",
+                insert_after="Snowflake",  # Not in resume
+                reason="anchor missing — append fallback",
+            )
+        ]
+        result, applied, _ = apply_diffs(
+            sample_resume,
+            changes,
+            allowed_skill_targets=[{"skill": "Kubernetes"}],
+        )
+        assert len(applied) == 1
+        assert result["additional"]["technicalSkills"][-1] == "Kubernetes"
+
+
+class TestApplyDiffsRenameSkill:
+    """Tests for the 'rename_skill' action."""
+
+    def test_rename_skill_replaces_in_place(self, sample_resume):
+        # Replace PostgreSQL (index 4) with SQL — should stay at index 4.
+        original_index = sample_resume["additional"]["technicalSkills"].index("PostgreSQL")
+        changes = [
+            ResumeChange(
+                path="additional.technicalSkills",
+                action="rename_skill",
+                original="PostgreSQL",
+                value="SQL",
+                reason="generalize to JD vocabulary",
+            )
+        ]
+        result, applied, _ = apply_diffs(
+            sample_resume,
+            changes,
+            allowed_skill_targets=[{"skill": "SQL"}],
+        )
+        assert len(applied) == 1
+        assert result["additional"]["technicalSkills"][original_index] == "SQL"
+        assert "PostgreSQL" not in result["additional"]["technicalSkills"]
+
+    def test_rename_skill_rejects_unverified_target(self, sample_resume):
+        changes = [
+            ResumeChange(
+                path="additional.technicalSkills",
+                action="rename_skill",
+                original="PostgreSQL",
+                value="BananaDB",
+                reason="unverified target",
+            )
+        ]
+        result, applied, rejected = apply_diffs(
+            sample_resume,
+            changes,
+            allowed_skill_targets=[{"skill": "SQL"}],
+        )
+        assert len(applied) == 0
+        assert len(rejected) == 1
+        assert "PostgreSQL" in result["additional"]["technicalSkills"]
+
+    def test_rename_skill_rejects_missing_original(self, sample_resume):
+        changes = [
+            ResumeChange(
+                path="additional.technicalSkills",
+                action="rename_skill",
+                original="Snowflake",  # not present
+                value="SQL",
+                reason="original missing",
+            )
+        ]
+        _, applied, rejected = apply_diffs(
+            sample_resume,
+            changes,
+            allowed_skill_targets=[{"skill": "SQL"}],
+        )
+        assert len(applied) == 0
+        assert len(rejected) == 1
+
+    def test_rename_skill_rejects_collision_with_existing(self, sample_resume):
+        # Renaming PostgreSQL -> Python would create duplicate Python.
+        changes = [
+            ResumeChange(
+                path="additional.technicalSkills",
+                action="rename_skill",
+                original="PostgreSQL",
+                value="Python",
+                reason="would collide",
+            )
+        ]
+        _, applied, rejected = apply_diffs(
+            sample_resume,
+            changes,
+            allowed_skill_targets=[{"skill": "Python"}],
+        )
+        assert len(applied) == 0
+        assert len(rejected) == 1
+
+
+class TestApplyDiffsRemoveSkill:
+    """Tests for the 'remove_skill' action and its floor guard."""
+
+    def test_remove_skill_drops_existing(self, sample_resume):
+        changes = [
+            ResumeChange(
+                path="additional.technicalSkills",
+                action="remove_skill",
+                original="AWS",
+                value=None,
+                reason="off-topic for JD",
+            )
+        ]
+        result, applied, _ = apply_diffs(sample_resume, changes)
+        assert len(applied) == 1
+        assert "AWS" not in result["additional"]["technicalSkills"]
+
+    def test_remove_skill_rejects_missing(self, sample_resume):
+        changes = [
+            ResumeChange(
+                path="additional.technicalSkills",
+                action="remove_skill",
+                original="Snowflake",
+                value=None,
+                reason="not present",
+            )
+        ]
+        _, applied, rejected = apply_diffs(sample_resume, changes)
+        assert len(applied) == 0
+        assert len(rejected) == 1
+
+    def test_remove_skill_rejects_beyond_cap(self, sample_resume):
+        # 6 skills, cap is 3. Attempting to remove 4 should reject the last one.
+        targets = ["AWS", "Docker", "Redis", "FastAPI"]
+        changes = [
+            ResumeChange(
+                path="additional.technicalSkills",
+                action="remove_skill",
+                original=t,
+                value=None,
+                reason="test",
+            )
+            for t in targets
+        ]
+        result, applied, rejected = apply_diffs(sample_resume, changes)
+        assert len(applied) == 3
+        assert len(rejected) == 1
+        # The 3 oldest in the proposal order should have been removed.
+        remaining = result["additional"]["technicalSkills"]
+        assert "AWS" not in remaining
+        assert "Docker" not in remaining
+        assert "Redis" not in remaining
+        assert "FastAPI" in remaining
+
+
 class TestApplyDiffsBlockedPaths:
     """Tests for blocked path rejection."""
 

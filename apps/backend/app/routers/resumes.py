@@ -62,6 +62,8 @@ from app.services.improver import (
     generate_improvements,
     generate_skill_target_plan,
     generate_resume_diffs,
+    intentional_skill_removals,
+    skill_rename_pairs,
     verify_skill_target_plan,
     verify_diff_result,
 )
@@ -318,12 +320,17 @@ def _restore_original_dates(
 def _preserve_original_skills(
     original_data: dict[str, Any] | None,
     improved_data: dict[str, Any],
+    intentional_skill_removals: set[str] | None = None,
 ) -> dict[str, Any]:
     """Restore any skills, certs, languages, or awards dropped by the LLM.
 
     This is a hard safety net: regardless of what the LLM returns, no
     original item from these lists is ever lost.  Dropped items are
     appended at the end of the improved list.
+
+    `intentional_skill_removals` (case-folded labels) names technicalSkills the
+    diff pipeline removed on purpose via `remove_skill` or `rename_skill`. Those
+    must NOT be restored.
     """
     if not original_data:
         return improved_data
@@ -334,6 +341,8 @@ def _preserve_original_skills(
     if not isinstance(orig_additional, dict):
         return result
     result_additional = result.setdefault("additional", {})
+
+    removals = intentional_skill_removals or set()
 
     list_fields = [
         "technicalSkills",
@@ -357,10 +366,16 @@ def _preserve_original_skills(
         # Append any originals that were dropped
         restored = 0
         for item in orig_items:
-            if isinstance(item, str) and item.casefold() not in current_lower:
-                current_items.append(item)
-                current_lower.add(item.casefold())
-                restored += 1
+            if not isinstance(item, str):
+                continue
+            key = item.casefold()
+            if key in current_lower:
+                continue
+            if field == "technicalSkills" and key in removals:
+                continue
+            current_items.append(item)
+            current_lower.add(key)
+            restored += 1
 
         if restored:
             logger.info("Restored %d dropped items in additional.%s", restored, field)
@@ -469,8 +484,13 @@ def _preserve_personal_info(
 def _calculate_diff_from_resume(
     resume: dict[str, Any],
     improved_data: dict[str, Any],
+    skill_renames: list[tuple[str, str]] | None = None,
 ) -> tuple[ResumeDiffSummary | None, list[ResumeFieldDiff] | None, str | None]:
     """Calculate resume diffs when structured data is available.
+
+    `skill_renames` carries (old, new) pairs from applied rename_skill actions so
+    the diff surfaces them as a single 'modified' skill row instead of a
+    remove+add pair.
 
     Returns (summary, changes, error_reason). Error reason is None on success,
     or a string describing why diff calculation failed.
@@ -481,7 +501,9 @@ def _calculate_diff_from_resume(
     from app.services.improver import calculate_resume_diff
 
     try:
-        summary, changes = calculate_resume_diff(original_data, improved_data)
+        summary, changes = calculate_resume_diff(
+            original_data, improved_data, skill_renames=skill_renames
+        )
         return summary, changes, None
     except Exception as e:
         logger.warning("Skipping resume diff due to calculation failure: %s", e)
@@ -1278,7 +1300,11 @@ async def _improve_preview_flow(
     original_markdown = _get_original_markdown(resume)
     if original_markdown:
         improved_data = restore_dates_from_markdown(improved_data, original_markdown)
-    improved_data = _preserve_original_skills(original_resume_data, improved_data)
+    improved_data = _preserve_original_skills(
+        original_resume_data,
+        improved_data,
+        intentional_skill_removals=intentional_skill_removals(applied_changes),
+    )
     improved_data = _protect_custom_sections(original_resume_data, improved_data)
 
     # Multi-pass refinement: keyword injection, AI phrase removal, alignment validation
@@ -1366,6 +1392,7 @@ async def _improve_preview_flow(
     diff_summary, detailed_changes, diff_error = _calculate_diff_from_resume(
         resume,
         improved_data,
+        skill_renames=skill_rename_pairs(applied_changes),
     )
     if diff_error:
         response_warnings.append(f"Could not calculate changes: {diff_error}")
@@ -1707,7 +1734,11 @@ async def improve_resume_endpoint(
         original_markdown = _get_original_markdown(resume)
         if original_markdown:
             improved_data = restore_dates_from_markdown(improved_data, original_markdown)
-        improved_data = _preserve_original_skills(original_resume_data, improved_data)
+        improved_data = _preserve_original_skills(
+            original_resume_data,
+            improved_data,
+            intentional_skill_removals=intentional_skill_removals(applied_changes),
+        )
         improved_data = _protect_custom_sections(original_resume_data, improved_data)
 
         # Multi-pass refinement: keyword injection, AI phrase removal, alignment validation
@@ -1773,6 +1804,7 @@ async def improve_resume_endpoint(
         diff_summary, detailed_changes, diff_error = _calculate_diff_from_resume(
             resume,
             improved_data,
+            skill_renames=skill_rename_pairs(applied_changes),
         )
         if diff_error:
             response_warnings.append(f"Could not calculate changes: {diff_error}")

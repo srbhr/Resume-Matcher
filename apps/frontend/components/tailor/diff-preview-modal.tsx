@@ -212,6 +212,10 @@ function undoChange(
       if (!list.some((s) => s.toLowerCase() === change.original_value!.toLowerCase())) {
         list.push(change.original_value);
       }
+    } else if (ctype === 'modified' && change.original_value && effectiveNewValue) {
+      const lower = effectiveNewValue.toLowerCase();
+      const i = list.findIndex((s) => s.toLowerCase() === lower);
+      if (i >= 0) list[i] = change.original_value;
     }
     return;
   }
@@ -861,6 +865,9 @@ function ChangeItem({
   const liveNewValue = state?.liveNewValue !== undefined ? state.liveNewValue : change.new_value;
   const isRevised = state?.liveNewValue !== undefined;
   const isRegenerating = state?.isRegenerating ?? false;
+  // "Change" doesn't make sense for skill removals — the row is just "drop X",
+  // there's no proposed value to revise. Accept/reject only.
+  const canRevise = !(change.field_type === 'skill' && change.change_type === 'removed');
 
   return (
     <div className={`p-3 border border-black ${typeBackgrounds[change.change_type]}`}>
@@ -911,10 +918,12 @@ function ChangeItem({
               <X className="w-3 h-3" />
               {rejectLabel}
             </Button>
-            <Button size="sm" variant="outline" onClick={onChange} className="h-7 px-2 text-xs">
-              <Pencil className="w-3 h-3" />
-              {changeLabel}
-            </Button>
+            {canRevise && (
+              <Button size="sm" variant="outline" onClick={onChange} className="h-7 px-2 text-xs">
+                <Pencil className="w-3 h-3" />
+                {changeLabel}
+              </Button>
+            )}
             <Button
               size="sm"
               onClick={onAccept}

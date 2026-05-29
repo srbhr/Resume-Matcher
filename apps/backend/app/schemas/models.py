@@ -861,11 +861,27 @@ class ResumeChange(BaseModel):
     path: str = Field(
         description="Dot+bracket path, e.g. 'workExperience[0].description[1]'"
     )
-    action: Literal["replace", "append", "reorder", "add_skill"]
+    action: Literal[
+        "replace",
+        "append",
+        "reorder",
+        "add_skill",
+        "remove_skill",
+        "rename_skill",
+    ]
     original: str | list[str] | None = Field(
         default=None, description="Current text at path — for verification"
     )
-    value: str | list[str] = Field(description="New content")
+    value: str | list[str] | None = Field(
+        default=None, description="New content (omit for remove_skill)"
+    )
+    insert_after: str | None = Field(
+        default=None,
+        description=(
+            "For add_skill only: the existing skill to insert the new skill after. "
+            "Used to place new skills near topically similar ones."
+        ),
+    )
     reason: str = Field(description="Why this change helps match the JD")
 
 

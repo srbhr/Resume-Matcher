@@ -239,6 +239,16 @@ def apply_diffs(
     rejected: list[ResumeChange] = []
     allowed_skill_keys = _build_allowed_skill_target_keys(allowed_skill_targets)
 
+    # Floor for skill removals: never remove more than half the original list,
+    # never leave fewer than the minimum below. Keeps the section from being
+    # gutted even if the model proposes aggressive pruning.
+    original_skill_count = len(
+        original.get("additional", {}).get("technicalSkills", []) or []
+    )
+    min_remaining_skills = min(3, original_skill_count)
+    max_skill_removals = max(0, original_skill_count // 2)
+    skill_removals_applied = 0
+
     for change in changes:
         path = change.path
         action = change.action
@@ -351,7 +361,111 @@ def apply_diffs(
                 logger.info("Diff rejected (skill not in verified targets): %s", new_skill)
                 rejected.append(change)
                 continue
-            actual_value.append(new_skill)
+            anchor = (change.insert_after or "").strip()
+            insert_index = -1
+            if anchor:
+                anchor_key = anchor.casefold()
+                for i, item in enumerate(actual_value):
+                    if isinstance(item, str) and item.casefold() == anchor_key:
+                        insert_index = i + 1
+                        break
+            if insert_index >= 0:
+                actual_value.insert(insert_index, new_skill)
+            else:
+                actual_value.append(new_skill)
+            applied.append(change)
+
+        elif action == "rename_skill":
+            if path != "additional.technicalSkills":
+                logger.info("Diff rejected (rename_skill outside skills): %s", path)
+                rejected.append(change)
+                continue
+            if not isinstance(actual_value, list):
+                logger.info("Diff rejected (rename_skill on non-list): %s", path)
+                rejected.append(change)
+                continue
+            old_label = change.original if isinstance(change.original, str) else ""
+            new_label = change.value if isinstance(change.value, str) else ""
+            old_label = old_label.strip()
+            new_label = new_label.strip()
+            if not old_label or not new_label:
+                logger.info("Diff rejected (rename_skill missing labels): %s", path)
+                rejected.append(change)
+                continue
+            old_key = old_label.casefold()
+            new_key = new_label.casefold()
+            match_index = -1
+            for i, item in enumerate(actual_value):
+                if isinstance(item, str) and item.casefold() == old_key:
+                    match_index = i
+                    break
+            if match_index < 0:
+                logger.info("Diff rejected (rename_skill original not found): %s", old_label)
+                rejected.append(change)
+                continue
+            # Reject if the new label collides with a different existing skill
+            duplicate = any(
+                isinstance(item, str)
+                and item.casefold() == new_key
+                and idx != match_index
+                for idx, item in enumerate(actual_value)
+            )
+            if duplicate:
+                logger.info("Diff rejected (rename_skill target already present): %s", new_label)
+                rejected.append(change)
+                continue
+            if _normalize_skill_key(new_label) not in allowed_skill_keys:
+                logger.info(
+                    "Diff rejected (rename target not in verified skills): %s",
+                    new_label,
+                )
+                rejected.append(change)
+                continue
+            actual_value[match_index] = new_label
+            applied.append(change)
+
+        elif action == "remove_skill":
+            if path != "additional.technicalSkills":
+                logger.info("Diff rejected (remove_skill outside skills): %s", path)
+                rejected.append(change)
+                continue
+            if not isinstance(actual_value, list):
+                logger.info("Diff rejected (remove_skill on non-list): %s", path)
+                rejected.append(change)
+                continue
+            target = change.original
+            if not isinstance(target, str) or not target.strip():
+                logger.info("Diff rejected (remove_skill missing original): %s", path)
+                rejected.append(change)
+                continue
+            target_key = target.strip().casefold()
+            match_index = -1
+            for i, item in enumerate(actual_value):
+                if isinstance(item, str) and item.casefold() == target_key:
+                    match_index = i
+                    break
+            if match_index < 0:
+                logger.info("Diff rejected (remove_skill not in list): %s", target)
+                rejected.append(change)
+                continue
+            if skill_removals_applied >= max_skill_removals:
+                logger.info(
+                    "Diff rejected (remove_skill cap reached %d): %s",
+                    max_skill_removals,
+                    target,
+                )
+                rejected.append(change)
+                continue
+            if len(actual_value) - 1 < min_remaining_skills:
+                logger.info(
+                    "Diff rejected (would drop below floor %d): %s",
+                    min_remaining_skills,
+                    target,
+                )
+                rejected.append(change)
+                continue
+            actual_value.pop(match_index)
+            skill_removals_applied += 1
             applied.append(change)
 
         else:
@@ -359,6 +473,35 @@ def apply_diffs(
             rejected.append(change)
 
     return result, applied, rejected
+
+
+def intentional_skill_removals(applied_changes: list[ResumeChange]) -> set[str]:
+    """Case-folded labels of skills the model intentionally removed or renamed away."""
+    removed: set[str] = set()
+    for change in applied_changes:
+        if change.action not in ("remove_skill", "rename_skill"):
+            continue
+        if change.path != "additional.technicalSkills":
+            continue
+        original = change.original if isinstance(change.original, str) else ""
+        if original.strip():
+            removed.add(original.strip().casefold())
+    return removed
+
+
+def skill_rename_pairs(applied_changes: list[ResumeChange]) -> list[tuple[str, str]]:
+    """Old→new label pairs from applied rename_skill actions, in apply order."""
+    pairs: list[tuple[str, str]] = []
+    for change in applied_changes:
+        if change.action != "rename_skill":
+            continue
+        if change.path != "additional.technicalSkills":
+            continue
+        old_label = change.original if isinstance(change.original, str) else ""
+        new_label = change.value if isinstance(change.value, str) else ""
+        if old_label.strip() and new_label.strip():
+            pairs.append((old_label.strip(), new_label.strip()))
+    return pairs
 
 
 def _count_description_words(data: dict[str, Any]) -> int:
@@ -1130,6 +1273,7 @@ def _append_list_changes(
 def calculate_resume_diff(
     original: dict[str, Any],
     improved: dict[str, Any],
+    skill_renames: list[tuple[str, str]] | None = None,
 ) -> tuple[ResumeDiffSummary, list[ResumeFieldDiff]]:
     """Compute the diff between original and improved resumes.
 
@@ -1163,7 +1307,9 @@ def calculate_resume_diff(
             )
         )
 
-    # 2. Compare skills (order changes are intentionally ignored)
+    # 2. Compare skills (order changes are intentionally ignored).
+    # Rename pairs from applied rename_skill actions are surfaced as a single
+    # 'modified' row instead of a remove+add pair, and excluded from set diff.
     orig_skills = _build_string_index(
         original.get("additional", {}).get("technicalSkills", []),
         "additional.technicalSkills",
@@ -1174,7 +1320,29 @@ def calculate_resume_diff(
     )
     orig_skill_keys = set(orig_skills)
     new_skill_keys = set(new_skills)
-    for skill_key in new_skill_keys - orig_skill_keys:
+
+    rename_old_keys: set[str] = set()
+    rename_new_keys: set[str] = set()
+    for old_label, new_label in skill_renames or []:
+        old_key = old_label.strip().casefold()
+        new_key = new_label.strip().casefold()
+        if not old_key or not new_key:
+            continue
+        if old_key not in orig_skill_keys or new_key not in new_skill_keys:
+            # Rename didn't land — fall back to natural add/remove diffs.
+            continue
+        rename_old_keys.add(old_key)
+        rename_new_keys.add(new_key)
+        changes.append(ResumeFieldDiff(
+            field_path="additional.technicalSkills",
+            field_type="skill",
+            change_type="modified",
+            original_value=orig_skills[old_key],
+            new_value=new_skills[new_key],
+            confidence="medium",
+        ))
+
+    for skill_key in new_skill_keys - orig_skill_keys - rename_new_keys:
         changes.append(ResumeFieldDiff(
             field_path="additional.technicalSkills",
             field_type="skill",
@@ -1183,7 +1351,7 @@ def calculate_resume_diff(
             confidence="high"  # Newly added skills are high risk
         ))
 
-    for skill_key in orig_skill_keys - new_skill_keys:
+    for skill_key in orig_skill_keys - new_skill_keys - rename_old_keys:
         changes.append(ResumeFieldDiff(
             field_path="additional.technicalSkills",
             field_type="skill",

@@ -22,6 +22,9 @@ WHAT YOU MAY DO
 - Reframe academic/research work in industry terms (or vice versa) when guidance supports it.
 - Include adjacent skills, tools, or framings that a candidate with this demonstrated background would plausibly have picked up.
 - Re-cast scope or audience (e.g. "for non-academic readers") when guidance asks for it.
+- Reframe the SUMMARY's leading self-identification when guidance signals a different audience, career stage, or career direction. The lead noun is repositionable — replace it with a framing supported by guidance and the resume — but the candidate's actual background must be preserved as supporting substance in the rest of the summary, not erased. Do not invent a status the candidate does not hold (e.g., do not assign a degree, program, certification, or current role that is not in the resume). Match what guidance establishes; default to the original framing when guidance is silent.
+- Rename an existing skill to a closely related verified target when the rename is a generalization, specialization, or near-synonym of the original (e.g., "MySQL" -> "SQL", "React.js" -> "React"). Use action "rename_skill". Do not use this to swap the skill for an unrelated one.
+- Remove an existing skill when it has no plausible relevance to the job description AND removing it does not strip the candidate of credible coverage. Use action "remove_skill". Example: removing "Forklift Certified" from a resume targeting a Full-Stack Engineer role.
 
 PLAUSIBILITY FLOOR - NEVER CROSS
 - Do not claim experience in a domain the candidate has no demonstrated footing in. A CS student with no physics work cannot be framed as a theoretical physicist. A backend engineer with no design work cannot claim UX research. Use the original resume as the boundary of what is plausible.
@@ -29,7 +32,11 @@ PLAUSIBILITY FLOOR - NEVER CROSS
 - Do not invent specific named tools, products, companies, certifications, degrees, or employers that are not in the original.
 - Do not extend employment dates or change timelines. Copy date ranges exactly.
 - Do not upgrade titles ("Intern" -> "Engineer", "Junior" -> "Senior").
-- Do not remove existing skills, certifications, languages, or awards. You may reorder by relevance.
+- Do not remove certifications, languages, or awards. You may reorder by relevance.
+- Skill removals are the narrow exception above and must respect ALL of:
+    * The skill is clearly off-topic for the JD (not just lower priority).
+    * It is NOT a generic baseline skill that hurts nothing to keep (e.g., Microsoft Word, Excel, Outlook, Git, basic Office tools). Leave those alone.
+    * The skills section will still look populated afterward. Do not propose so many removals that the section is gutted. When in doubt, reorder instead of remove.
 - Do not claim native/fluent proficiency in a language not listed.
 - If user guidance pushes past the plausibility floor, follow guidance up to the floor and stop. Do not silently sand down the guidance, but do not fabricate to satisfy it either.
 
@@ -48,7 +55,12 @@ PATHS you can target
 - "workExperience[i].description" - append a new bullet (action: "append")
 - "personalProjects[i].description[j]" - a specific project bullet
 - "personalProjects[i].description" - append a new project bullet
-- "additional.technicalSkills" - reorder the skills list (action: "reorder") or add one verified skill (action: "add_skill")
+- "additional.technicalSkills" - reorder the list (action: "reorder"), add one verified skill (action: "add_skill"), rename an existing skill to a verified target (action: "rename_skill"), or remove an irrelevant skill (action: "remove_skill")
+
+SKILL ACTION DETAILS
+- "add_skill": value = the new skill (must appear in Verified skill targets below). Include "insert_after" naming an existing skill that is topically adjacent so the new skill is placed near related ones (e.g., for "SQL" insert_after "PostgreSQL" or "Redis", not "AWS"). Omit "insert_after" only if no related skill exists.
+- "rename_skill": original = the existing skill exactly as it appears; value = the verified-target replacement. The replacement must be in Verified skill targets and must be a clear generalization/specialization/synonym of the original.
+- "remove_skill": original = the existing skill exactly as it appears; value = null. Use sparingly.
 
 Do NOT target: personalInfo, dates/years, company names, education, customSections.
 
@@ -93,7 +105,22 @@ Output this exact JSON format, nothing else:
       "action": "add_skill",
       "original": null,
       "value": "verified skill target missing from the skills list",
-      "reason": "added verified JD skill for review"
+      "insert_after": "an existing skill that is topically adjacent",
+      "reason": "added verified JD skill near related skills"
+    }},
+    {{
+      "path": "additional.technicalSkills",
+      "action": "rename_skill",
+      "original": "existing skill label exactly as it appears",
+      "value": "verified target that generalizes/specializes the original",
+      "reason": "rename narrows or broadens to match JD vocabulary"
+    }},
+    {{
+      "path": "additional.technicalSkills",
+      "action": "remove_skill",
+      "original": "existing skill label exactly as it appears",
+      "value": null,
+      "reason": "skill is unrelated to this JD and not a generic baseline"
     }}
   ],
   "strategy_notes": "brief summary of the tailoring approach"
