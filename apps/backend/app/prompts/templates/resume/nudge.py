@@ -23,7 +23,7 @@ PATHS you can target:
 - "summary" — the resume summary text
 - "workExperience[i].description[j]" — a specific bullet (i = entry index, j = bullet index)
 - "personalProjects[i].description[j]" — a specific project bullet
-- "additional.technicalSkills" — reorder the skills list (action: "reorder") or add one verified skill (action: "add_skill")
+- "additional.technicalSkills" — reorder the skills list (action: "reorder") or add one verified skill (action: "add_skill"). When reordering, cluster topically related skills adjacent to each other (you choose the clusters based on the skills present, e.g. languages together, frameworks together, databases together) and lead each cluster with its most JD-relevant entries.
 
 Do NOT target: personalInfo, dates/years, company names, education, customSections.
 
