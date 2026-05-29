@@ -219,12 +219,19 @@ export const RegenerateDiffPreview: React.FC<RegenerateDiffPreviewProps> = ({
                     </div>
                     <div className="border-2 border-black bg-white p-3 space-y-1">
                       {item.original_content.length > 0 ? (
-                        item.original_content.map((content, idx) => (
-                          <p key={idx} className="text-sm text-red-700 line-through">
+                        item.item_type === 'summary' ? (
+                          <p className="text-sm text-red-700 line-through">
                             <span className="font-mono mr-2">−</span>
-                            {content}
+                            {item.original_content.join(' ')}
                           </p>
-                        ))
+                        ) : (
+                          item.original_content.map((content, idx) => (
+                            <p key={idx} className="text-sm text-red-700 line-through">
+                              <span className="font-mono mr-2">−</span>
+                              {content}
+                            </p>
+                          ))
+                        )
                       ) : (
                         <p className="text-sm text-steel-grey italic">
                           {t('builder.regenerate.diffPreview.noContent')}
@@ -241,12 +248,19 @@ export const RegenerateDiffPreview: React.FC<RegenerateDiffPreviewProps> = ({
                     </div>
                     <div className="border-2 border-black bg-white p-3 space-y-1">
                       {item.new_content.length > 0 ? (
-                        item.new_content.map((content, idx) => (
-                          <p key={idx} className="text-sm text-green-700">
+                        item.item_type === 'summary' ? (
+                          <p className="text-sm text-green-700">
                             <span className="font-mono mr-2">+</span>
-                            {content}
+                            {item.new_content.join(' ')}
                           </p>
-                        ))
+                        ) : (
+                          item.new_content.map((content, idx) => (
+                            <p key={idx} className="text-sm text-green-700">
+                              <span className="font-mono mr-2">+</span>
+                              {content}
+                            </p>
+                          ))
+                        )
                       ) : (
                         <p className="text-sm text-steel-grey italic">
                           {t('builder.regenerate.diffPreview.noContent')}

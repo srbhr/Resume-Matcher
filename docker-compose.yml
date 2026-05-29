@@ -19,7 +19,7 @@ services:
       - LOG_LLM=${LOG_LLM:-WARNING}
       #- LOG_LLM_FILE=${LOG_LLM_FILE:-}
       # LLM Configuration - configure via Settings UI or set env vars for explicit overrides
-      # Supported providers: openai, anthropic, openrouter, gemini, deepseek, ollama
+      # Supported providers: openai, openai_compatible, cursor, anthropic, openrouter, gemini, deepseek, ollama
       # Defaults are defined in apps/backend/app/config.py
       - LLM_PROVIDER=${LLM_PROVIDER:-openai}
       - LLM_MODEL=${LLM_MODEL:-}
@@ -28,6 +28,9 @@ services:
       - LLM_API_KEY=${LLM_API_KEY:-}
       # For Ollama running on host machine, use host.docker.internal:
       # - LLM_API_BASE=http://host.docker.internal:11434
+      # For Cursor via cursor-api-proxy on the host:
+      # - LLM_PROVIDER=cursor
+      # - LLM_API_BASE=http://host.docker.internal:8765/v1
       - LLM_API_BASE=${LLM_API_BASE:-}
       # CORS origins (JSON array format). FRONTEND_BASE_URL is auto-included.
       #- CORS_ORIGINS=["http://localhost:3000","http://127.0.0.1:3000"]

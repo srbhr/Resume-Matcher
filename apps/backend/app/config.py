@@ -125,6 +125,7 @@ class Settings(BaseSettings):
     llm_provider: Literal[
         "openai",
         "openai_compatible",
+        "cursor",
         "anthropic",
         "openrouter",
         "gemini",

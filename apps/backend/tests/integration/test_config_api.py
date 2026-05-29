@@ -316,3 +316,56 @@ class TestResetDatabase:
         async with client:
             resp = await client.post("/api/v1/config/reset")
         assert resp.status_code == 422
+
+
+class TestProviderConfigs:
+    """Per-provider saved settings for Settings UI switching."""
+
+    @patch("app.routers.config._save_config")
+    @patch("app.routers.config._load_config")
+    async def test_get_seeds_provider_configs(self, mock_load, mock_save, client):
+        mock_load.return_value = {
+            "provider": "openai_compatible",
+            "model": "local-model",
+            "api_key": "sk-lm-test",
+            "api_base": "http://127.0.0.1:1234/v1",
+            "reasoning_effort": "",
+        }
+        async with client:
+            resp = await client.get("/api/v1/config/llm-api-key")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "openai_compatible" in data["provider_configs"]
+        snap = data["provider_configs"]["openai_compatible"]
+        assert snap["model"] == "local-model"
+        assert snap["api_base"] == "http://127.0.0.1:1234/v1"
+        assert snap["has_api_key"] is True
+        assert "*" in snap["api_key"]
+        mock_save.assert_called_once()
+
+    @patch("app.routers.config._log_llm_health_check", new_callable=AsyncMock)
+    @patch("app.routers.config._save_config")
+    @patch("app.routers.config._load_config")
+    async def test_put_saves_provider_snapshot(
+        self, mock_load, mock_save, mock_log_health, client
+    ):
+        mock_load.return_value = {
+            "provider": "openai_compatible",
+            "model": "local-model",
+            "api_key": "sk-lm-test",
+            "api_base": "http://127.0.0.1:1234/v1",
+            "provider_configs": {},
+        }
+        async with client:
+            resp = await client.put("/api/v1/config/llm-api-key", json={
+                "provider": "cursor",
+                "model": "auto",
+                "api_base": "http://127.0.0.1:8765/v1",
+                "api_key": "",
+            })
+        assert resp.status_code == 200
+        saved = mock_save.call_args.args[0]
+        assert saved["provider_configs"]["cursor"]["model"] == "auto"
+        assert saved["provider_configs"]["cursor"]["api_base"] == "http://127.0.0.1:8765/v1"
+        data = resp.json()
+        assert data["provider_configs"]["cursor"]["model"] == "auto"

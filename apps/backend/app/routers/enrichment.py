@@ -17,6 +17,8 @@ from app.prompts.enrichment import (
     ENHANCE_DESCRIPTION_PROMPT,
     REGENERATE_ITEM_PROMPT,
     REGENERATE_SKILLS_PROMPT,
+    REGENERATE_SUMMARY_PROMPT,
+    SUMMARY_MAX_CHARACTERS,
 )
 from app.prompts.templates import get_language_name
 from app.schemas.enrichment import (
@@ -413,12 +415,24 @@ async def apply_enhancements(
 # ============================================
 
 
+def _normalize_summary_paragraph(content: object) -> str:
+    """Collapse summary content into a single paragraph string."""
+    if content is None:
+        return ""
+    if isinstance(content, list):
+        parts = [str(entry).strip() for entry in content if entry and str(entry).strip()]
+        text = " ".join(parts)
+    else:
+        text = str(content).strip()
+    return " ".join(text.split())
+
+
 async def _regenerate_experience_or_project(
     item: RegenerateItemInput,
     instruction: str,
     output_language: str,
 ) -> RegeneratedItem:
-    """Regenerate a single non-skills item (experience/project/summary)."""
+    """Regenerate a single experience or project item."""
     current_desc_text = (
         "\n".join(f"- {d}" for d in item.current_content)
         if item.current_content
@@ -448,6 +462,38 @@ async def _regenerate_experience_or_project(
         subtitle=item.subtitle,
         original_content=item.current_content,
         new_content=new_bullets,
+        diff_summary=str(result.get("change_summary") or ""),
+    )
+
+
+async def _regenerate_summary(
+    item: RegenerateItemInput,
+    instruction: str,
+    output_language: str,
+) -> RegeneratedItem:
+    """Regenerate the professional summary as a single paragraph."""
+    current_summary = _normalize_summary_paragraph(item.current_content) or "(No summary)"
+
+    prompt = REGENERATE_SUMMARY_PROMPT.format(
+        output_language=output_language,
+        current_summary=current_summary,
+        user_instruction=instruction,
+        max_characters=SUMMARY_MAX_CHARACTERS,
+    )
+
+    result = await complete_json(prompt, max_tokens=2048, schema_type="diff")
+
+    new_summary = _normalize_summary_paragraph(result.get("new_summary"))
+    if not new_summary:
+        new_summary = _normalize_summary_paragraph(result.get("new_bullets"))
+
+    return RegeneratedItem(
+        item_id=item.item_id,
+        item_type=item.item_type,
+        title=item.title,
+        subtitle=item.subtitle,
+        original_content=item.current_content,
+        new_content=[new_summary] if new_summary else [],
         diff_summary=str(result.get("change_summary") or ""),
     )
 
@@ -507,7 +553,9 @@ async def regenerate_items(request: RegenerateRequest) -> RegenerateResponse:
     for item in request.items:
         if item.item_type == "skills":
             tasks.append(_regenerate_skills(item, request.instruction, output_language))
-        elif item.item_type in {"experience", "project", "summary"}:
+        elif item.item_type == "summary":
+            tasks.append(_regenerate_summary(item, request.instruction, output_language))
+        elif item.item_type in {"experience", "project"}:
             tasks.append(
                 _regenerate_experience_or_project(item, request.instruction, output_language)
             )
@@ -783,8 +831,7 @@ async def apply_regenerated_items(
                 apply_failures.append(item_id)
                 continue
 
-            normalized_lines = _normalize_lines(new_content)
-            updated_data["summary"] = "\n".join(normalized_lines)
+            updated_data["summary"] = _normalize_summary_paragraph(new_content)
 
     if apply_failures:
         logger.warning(

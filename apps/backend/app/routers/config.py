@@ -11,6 +11,7 @@ from app.llm import check_llm_health, LLMConfig, resolve_api_key
 from app.schemas import (
     LLMConfigRequest,
     LLMConfigResponse,
+    ProviderConfigSnapshot,
     FeatureConfigRequest,
     FeatureConfigResponse,
     FeaturePromptsRequest,
@@ -79,6 +80,82 @@ def _get_prompt_options() -> list[PromptOption]:
     return [PromptOption(**option) for option in IMPROVE_PROMPT_OPTIONS]
 
 
+
+
+def _provider_snapshot_from_stored(stored: dict) -> dict:
+    """Build a raw provider snapshot from top-level config fields."""
+    raw_re = stored.get("reasoning_effort", settings.reasoning_effort)
+    return {
+        "model": stored.get("model", settings.llm_model),
+        "api_key": stored.get("api_key", ""),
+        "api_base": stored.get("api_base", settings.llm_api_base),
+        "reasoning_effort": raw_re if raw_re else "",
+    }
+
+
+def _ensure_provider_configs(stored: dict) -> bool:
+    """Ensure provider_configs exists; seed current provider from top-level.
+
+    Returns True if stored was mutated (caller may persist).
+    """
+    mutated = False
+    if not isinstance(stored.get("provider_configs"), dict):
+        stored["provider_configs"] = {}
+        mutated = True
+
+    provider = stored.get("provider", settings.llm_provider)
+    if provider and provider not in stored["provider_configs"]:
+        if any(
+            stored.get(k)
+            for k in ("model", "api_base", "api_key")
+            if stored.get(k) not in (None, "")
+        ) or provider in stored:
+            stored["provider_configs"][provider] = _provider_snapshot_from_stored(stored)
+            mutated = True
+
+    return mutated
+
+
+def _save_provider_snapshot(stored: dict, provider: str) -> None:
+    """Persist last-saved settings for a provider."""
+    _ensure_provider_configs(stored)
+    stored["provider_configs"][provider] = _provider_snapshot_from_stored(stored)
+
+
+def _mask_provider_configs(configs: dict) -> dict[str, ProviderConfigSnapshot]:
+    """Return masked provider snapshots for API responses."""
+    masked: dict[str, ProviderConfigSnapshot] = {}
+    for provider, snap in configs.items():
+        if not isinstance(snap, dict):
+            continue
+        key = snap.get("api_key", "") or ""
+        raw_re = snap.get("reasoning_effort")
+        masked[provider] = ProviderConfigSnapshot(
+            model=snap.get("model", ""),
+            api_base=snap.get("api_base"),
+            api_key=_mask_api_key(key),
+            has_api_key=bool(key),
+            reasoning_effort=raw_re if raw_re else None,
+        )
+    return masked
+
+
+def _build_llm_config_response(stored: dict) -> LLMConfigResponse:
+    """Build LLM config response with masked keys and provider snapshots."""
+    provider = stored.get("provider", settings.llm_provider)
+    reasoning_effort = stored.get("reasoning_effort", settings.reasoning_effort)
+    provider_configs = stored.get("provider_configs", {})
+    return LLMConfigResponse(
+        provider=provider,
+        model=stored.get("model", settings.llm_model),
+        api_key=_mask_api_key(resolve_api_key(stored, provider)),
+        api_base=stored.get("api_base", settings.llm_api_base),
+        reasoning_effort=reasoning_effort or None,
+        provider_configs=_mask_provider_configs(provider_configs)
+        if isinstance(provider_configs, dict) and provider_configs
+        else None,
+    )
+
 async def _log_llm_health_check(config: LLMConfig) -> None:
     """Run a best-effort health check and log outcome without affecting API responses."""
     try:
@@ -100,15 +177,10 @@ async def get_llm_config_endpoint() -> LLMConfigResponse:
     """Get current LLM configuration (API key masked)."""
     stored = _load_config()
 
-    provider = stored.get("provider", settings.llm_provider)
-    reasoning_effort = stored.get("reasoning_effort", settings.reasoning_effort)
-    return LLMConfigResponse(
-        provider=provider,
-        model=stored.get("model", settings.llm_model),
-        api_key=_mask_api_key(resolve_api_key(stored, provider)),
-        api_base=stored.get("api_base", settings.llm_api_base),
-        reasoning_effort=reasoning_effort or None,
-    )
+    if _ensure_provider_configs(stored):
+        _save_config(stored)
+
+    return _build_llm_config_response(stored)
 
 
 @router.put("/llm-api-key", response_model=LLMConfigResponse)
@@ -153,19 +225,16 @@ async def update_llm_config(
         reasoning_effort=resolved_reasoning_effort,
     )
 
+    # Remember last-saved settings per provider for Settings UI switching.
+    _save_provider_snapshot(stored, resolved_provider)
+
     # Save config regardless of health check outcome (see docstring).
     _save_config(stored)
 
     # Best-effort health check for server-side logs/diagnostics (do not block response).
     background_tasks.add_task(_log_llm_health_check, test_config)
 
-    return LLMConfigResponse(
-        provider=test_config.provider,
-        model=test_config.model,
-        api_key=_mask_api_key(test_config.api_key),
-        api_base=test_config.api_base,
-        reasoning_effort=test_config.reasoning_effort,
-    )
+    return _build_llm_config_response(stored)
 
 
 @router.post("/llm-test")

@@ -85,7 +85,7 @@ def _normalize_api_base(provider: str, api_base: str | None) -> str | None:
 
     # OpenAI / OpenAI-compatible: preserve the URL as-is. The OpenAI client
     # resolves paths correctly whether the base includes /v1 or not.
-    if provider in ("openai", "openai_compatible"):
+    if provider in ("openai", "openai_compatible", "cursor"):
         return base or None
 
     # Anthropic handler appends '/v1/messages'. If base already ends with '/v1',
@@ -115,18 +115,19 @@ def _normalize_api_base(provider: str, api_base: str | None) -> str | None:
 
 
 # Sentinel passed to the OpenAI client when the user leaves api_key blank for
-# openai_compatible. The client validates non-empty strings but not the value
-# format; local servers that don't check auth ignore it.
+# openai_compatible / cursor. The client validates non-empty strings but not
+# the value format; local servers and cursor-api-proxy ignore it unless
+# CURSOR_BRIDGE_API_KEY is configured on the proxy.
 _OPENAI_COMPATIBLE_SENTINEL = "sk-no-key"
 
 
 def _effective_api_key(provider: str, api_key: str) -> str:
     """Return the api_key to pass to LiteLLM.
 
-    For openai_compatible with a blank key, substitute a sentinel so the
-    OpenAI client accepts the call. Other providers pass through unchanged.
+    For openai_compatible and cursor with a blank key, substitute a sentinel so
+    the OpenAI client accepts the call. Other providers pass through unchanged.
     """
-    if provider == "openai_compatible" and not api_key:
+    if provider in ("openai_compatible", "cursor") and not api_key:
         return _OPENAI_COMPATIBLE_SENTINEL
     return api_key
 
@@ -302,6 +303,7 @@ def _scrub_secrets(text: str) -> str:
 _PROVIDER_KEY_MAP: dict[str, str] = {
     "openai": "openai",
     "openai_compatible": "openai_compatible",
+    "cursor": "cursor",
     "anthropic": "anthropic",
     "gemini": "google",
     "openrouter": "openrouter",
@@ -316,8 +318,19 @@ _PROVIDER_KEY_MAP: dict[str, str] = {
 # default), because the env var may hold a real paid-API key that would then
 # leak to a local/compatible endpoint the user set up expecting no auth.
 _PROVIDERS_WITHOUT_ENV_KEY_FALLBACK: frozenset[str] = frozenset(
-    {"openai_compatible", "ollama"}
+    {"openai_compatible", "cursor", "ollama"}
 )
+
+
+def is_llm_provider_configured(config: LLMConfig) -> bool:
+    """Return whether tailoring can be attempted for the current provider.
+
+    Cloud providers require a resolved API key. Local / proxy providers
+    (Ollama, OpenAI-compatible, Cursor) treat the key as optional.
+    """
+    if config.provider in _PROVIDERS_WITHOUT_ENV_KEY_FALLBACK:
+        return True
+    return bool(config.api_key)
 
 
 def resolve_api_key(stored: dict, provider: str) -> str:
@@ -413,6 +426,7 @@ def get_model_name(config: LLMConfig) -> str:
         # client handles the request; works for llama.cpp, vLLM, LM Studio,
         # and any server exposing the OpenAI Chat Completions API shape.
         "openai_compatible": "openai/",
+        "cursor": "openai/",
         "anthropic": "anthropic/",
         "openrouter": "openrouter/",
         "gemini": "gemini/",
@@ -540,7 +554,7 @@ async def check_llm_health(
     # servers often run without auth, so a blank key is acceptable for those
     # providers — a sentinel is passed downstream (see _effective_api_key)
     # to satisfy the OpenAI client's non-empty-string validation.
-    if config.provider not in ("ollama", "openai_compatible") and not config.api_key:
+    if config.provider not in ("ollama", "openai_compatible", "cursor") and not config.api_key:
         return {
             "healthy": False,
             "provider": config.provider,
@@ -914,6 +928,10 @@ def _calculate_timeout(
     # Provider-specific latency adjustments
     provider_factors = {
         "openai": 1.0,
+        # Local OpenAI-compatible servers (LM Studio, vLLM, llama.cpp) on
+        # consumer hardware can exceed cloud-like latencies for long JSON jobs.
+        "openai_compatible": 2.0,
+        "cursor": 2.0,
         "anthropic": 1.2,
         "openrouter": 1.5,  # More variable latency
         "groq": 1.0,
@@ -1076,7 +1094,11 @@ async def complete_json(
             # JSON-012: Fallback to prompt-only JSON mode after JSON-mode failure.
             # LiteLLM registry may report support for models that the upstream
             # aggregator (OpenRouter) cannot actually serve with response_format.
-            if use_json_mode and not json_mode_failed:
+            # Some OpenAI-compatible local servers (e.g. LM Studio) reject
+            # `json_object` and accept only `json_schema`/`text`. Keep JSON mode
+            # for providers known to support json_object and fall back to
+            # prompt-only JSON for openai_compatible.
+            if use_json_mode and not json_mode_failed and config.provider not in ("openai_compatible", "cursor"):
                 kwargs["response_format"] = {"type": "json_object"}
 
             response = await router.acompletion(**kwargs)

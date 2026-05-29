@@ -42,6 +42,7 @@ export {
   fetchPromptConfig,
   updatePromptConfig,
   type LLMProvider,
+  type ProviderConfigSnapshot,
   type LLMConfig,
   type LLMConfigUpdate,
   type DatabaseStats,

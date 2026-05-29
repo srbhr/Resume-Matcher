@@ -22,6 +22,7 @@ import {
   type LLMHealthCheck,
   type PromptOption,
   type ReasoningEffort,
+  type ProviderConfigSnapshot,
   type FeaturePromptsUpdate,
 } from '@/lib/api/config';
 import { API_URL } from '@/lib/api/client';
@@ -63,6 +64,7 @@ type Status = 'idle' | 'loading' | 'saving' | 'saved' | 'error' | 'testing';
 const PROVIDERS: LLMProvider[] = [
   'openai',
   'openai_compatible',
+  'cursor',
   'anthropic',
   'openrouter',
   'gemini',
@@ -116,6 +118,9 @@ export default function SettingsPage() {
   // won't re-fire on next load). Typed tightly so invalid values can't leak
   // through the save path.
   const [reasoningEffort, setReasoningEffort] = useState<ReasoningEffort | 'auto'>('auto');
+  const [providerConfigs, setProviderConfigs] = useState<
+    Record<string, ProviderConfigSnapshot>
+  >({});
 
   // Use cached system status (loaded on app start, refreshes every 30 min)
   const {
@@ -286,6 +291,7 @@ export default function SettingsPage() {
           setApiKey(isMaskedKey ? '' : llmConfig.api_key || '');
           setApiBase(llmConfig.api_base || '');
           setReasoningEffort((llmConfig.reasoning_effort as ReasoningEffort | null) ?? 'auto');
+          setProviderConfigs(llmConfig.provider_configs ?? {});
 
           if (providerFromBackend !== safeProvider) {
             setError(t('settings.errors.unknownProvider', { provider: providerFromBackend }));
@@ -328,19 +334,33 @@ export default function SettingsPage() {
   // Handle provider change
   const handleProviderChange = (newProvider: LLMProvider) => {
     setProvider(newProvider);
+    const snapshot = providerConfigs[newProvider];
+
+    if (snapshot) {
+      setModel(snapshot.model || PROVIDER_INFO[newProvider].defaultModel);
+      setApiBase(snapshot.api_base || '');
+      setReasoningEffort((snapshot.reasoning_effort as ReasoningEffort | null) ?? 'auto');
+      const isMaskedKey = Boolean(snapshot.api_key) && snapshot.api_key.includes('*');
+      setHasStoredApiKey(snapshot.has_api_key || Boolean(snapshot.api_key));
+      setApiKey(isMaskedKey || snapshot.has_api_key ? '' : snapshot.api_key || '');
+      return;
+    }
+
     setModel(PROVIDER_INFO[newProvider].defaultModel);
 
-    if (newProvider === 'ollama' && !apiBase.trim()) {
+    if (newProvider === 'ollama') {
       setApiBase('http://localhost:11434');
-    }
-    if (newProvider === 'openai_compatible' && !apiBase.trim()) {
-      // llama.cpp default; user can override for vLLM / LM Studio / etc.
+    } else if (newProvider === 'openai_compatible') {
       setApiBase('http://localhost:8080/v1');
+    } else if (newProvider === 'cursor') {
+      setApiBase('http://127.0.0.1:8765/v1');
+    } else {
+      setApiBase('');
     }
 
-    // Clear API key input when switching providers to avoid accidental cross-provider usage.
     setApiKey('');
     setHasStoredApiKey(false);
+    setReasoningEffort('auto');
   };
 
   // Save configuration
@@ -377,7 +397,10 @@ export default function SettingsPage() {
         update.api_key = '';
       }
 
-      await updateLlmConfig(update);
+      const saved = await updateLlmConfig(update);
+      if (saved.provider_configs) {
+        setProviderConfigs(saved.provider_configs);
+      }
 
       // Refresh cached system status after save
       await refreshStatus();

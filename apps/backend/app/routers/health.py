@@ -3,7 +3,7 @@
 from fastapi import APIRouter
 
 from app.database import db
-from app.llm import check_llm_health, get_llm_config
+from app.llm import check_llm_health, get_llm_config, is_llm_provider_configured
 from app.schemas import HealthResponse, StatusResponse
 
 router = APIRouter(tags=["Health"])
@@ -33,7 +33,7 @@ async def get_status() -> StatusResponse:
 
     return StatusResponse(
         status="ready" if llm_status["healthy"] and db_stats["has_master_resume"] else "setup_required",
-        llm_configured=bool(config.api_key) or config.provider == "ollama",
+        llm_configured=is_llm_provider_configured(config),
         llm_healthy=llm_status["healthy"],
         has_master_resume=db_stats["has_master_resume"],
         database_stats=db_stats,

@@ -571,6 +571,16 @@ class LLMConfigRequest(BaseModel):
     reasoning_effort: Literal["minimal", "low", "medium", "high", ""] | None = None
 
 
+class ProviderConfigSnapshot(BaseModel):
+    """Last-saved LLM settings for a provider (for Settings UI switching)."""
+
+    model: str
+    api_base: str | None = None
+    api_key: str = ""  # Masked
+    has_api_key: bool = False
+    reasoning_effort: ReasoningEffortLiteral | None = None
+
+
 class LLMConfigResponse(BaseModel):
     """Response for LLM configuration."""
 
@@ -579,6 +589,7 @@ class LLMConfigResponse(BaseModel):
     api_key: str  # Masked
     api_base: str | None = None
     reasoning_effort: ReasoningEffortLiteral | None = None
+    provider_configs: dict[str, ProviderConfigSnapshot] | None = None
 
 
 class FeatureConfigRequest(BaseModel):

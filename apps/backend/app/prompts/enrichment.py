@@ -153,11 +153,6 @@ Based on the user's feedback, completely REWRITE the description bullets. The ne
 4. Be technically specific with tools/technologies
 5. Show clear impact and ownership
 
-SPECIAL CASE FOR SUMMARY:
-- If `Type` is `summary`, output concise summary lines instead of role bullets.
-- For summary, generate 1-3 lines that improve positioning and clarity while staying factual.
-- Keep the same JSON key shape (`new_bullets`) for all non-skills item types.
-
 OUTPUT FORMAT (JSON only):
 {{
   "new_bullets": [
@@ -169,13 +164,50 @@ OUTPUT FORMAT (JSON only):
 }}
 
 RULES:
-- For experience/project: generate 2-5 NEW bullets (not additions, but replacements)
-- For summary: generate 1-3 concise summary lines
+- Generate 2-5 NEW bullets (not additions, but replacements)
 - Directly address the user's instruction
 - Do NOT add any new facts, metrics, dates, companies, titles, or accomplishments that are not already present in CURRENT DESCRIPTION or USER'S FEEDBACK/INSTRUCTION
 - If the user asks for metrics but none exist in the provided text, do not fabricate numbers; rewrite to emphasize scope/impact qualitatively instead
 - Keep bullets concise (1-2 lines each)
 - Use past tense for past roles, present tense for current"""
+
+
+# ~3 printed lines at default A4 single-column settings (190mm content width, 14px body text).
+SUMMARY_MAX_CHARACTERS = 280
+
+
+REGENERATE_SUMMARY_PROMPT = """You are a professional resume writer. Rewrite the professional summary based on the user's feedback.
+
+IMPORTANT: Generate ALL output text in {output_language}.
+
+CURRENT SUMMARY (the user is NOT satisfied with this):
+{current_summary}
+
+USER'S FEEDBACK/INSTRUCTION:
+{user_instruction}
+
+TASK:
+Based on the user's feedback, completely REWRITE the professional summary. The new summary should:
+1. Address the user's specific concerns/requests
+2. Be concise and compelling — roughly 2-3 sentences that would print as 1-3 lines on an A4 resume
+3. Highlight quantifiable impact ONLY when it already exists in the current summary or the user's feedback (never invent numbers)
+4. Be technically specific with tools/technologies when relevant
+5. Show clear value and positioning for the target role
+
+OUTPUT FORMAT (JSON only):
+{{
+  "new_summary": "A single cohesive paragraph with no line breaks or bullet points.",
+  "change_summary": "Brief explanation of what was changed based on user feedback"
+}}
+
+RULES:
+- Output exactly ONE continuous paragraph in `new_summary` — never use bullet points, numbered lists, or line breaks
+- Keep `new_summary` under {max_characters} characters (approx. 3 lines at default A4 size)
+- Prefer 2-3 short sentences over one long run-on sentence
+- Directly address the user's instruction
+- Do NOT add any new facts, metrics, dates, companies, titles, or accomplishments that are not already present in CURRENT SUMMARY or USER'S FEEDBACK/INSTRUCTION
+- If the user asks for metrics but none exist in the provided text, do not fabricate numbers; rewrite to emphasize scope/impact qualitatively instead
+- Use present tense for current role positioning, past tense for prior accomplishments when mentioned"""
 
 
 REGENERATE_SKILLS_PROMPT = """You are a professional resume writer. Rewrite the technical skills section based on user feedback.

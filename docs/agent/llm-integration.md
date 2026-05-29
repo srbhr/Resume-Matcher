@@ -14,6 +14,8 @@ Backend uses LiteLLM to support multiple providers through a unified API:
 | **Google Gemini** | Cloud | Gemini 3 Flash |
 | **OpenRouter** | Cloud | Access to multiple models |
 | **DeepSeek** | Cloud | DeepSeek Chat |
+| **OpenAI-Compatible** | Local | LM Studio, llama.cpp, vLLM |
+| **Cursor** | Local proxy | Cursor subscription via `cursor-api-proxy` + Agent CLI |
 
 ## API Key Handling
 

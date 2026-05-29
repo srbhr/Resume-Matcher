@@ -4,6 +4,7 @@ import { apiFetch } from './client';
 export type LLMProvider =
   | 'openai'
   | 'openai_compatible'
+  | 'cursor'
   | 'anthropic'
   | 'openrouter'
   | 'gemini'
@@ -15,12 +16,21 @@ export type LLMProvider =
 // "do not send the parameter" — the default for max compatibility.
 export type ReasoningEffort = 'minimal' | 'low' | 'medium' | 'high';
 
+export interface ProviderConfigSnapshot {
+  model: string;
+  api_base: string | null;
+  api_key: string;
+  has_api_key: boolean;
+  reasoning_effort: ReasoningEffort | null;
+}
+
 export interface LLMConfig {
   provider: LLMProvider;
   model: string;
   api_key: string;
   api_base: string | null;
   reasoning_effort: ReasoningEffort | null;
+  provider_configs?: Record<string, ProviderConfigSnapshot> | null;
 }
 
 export interface LLMConfigUpdate {
@@ -147,6 +157,11 @@ export const PROVIDER_INFO: Record<
   openai_compatible: {
     name: 'OpenAI-Compatible (Local)',
     defaultModel: 'custom-model',
+    requiresKey: false,
+  },
+  cursor: {
+    name: 'Cursor (Subscription)',
+    defaultModel: 'auto',
     requiresKey: false,
   },
   anthropic: { name: 'Anthropic', defaultModel: 'claude-haiku-4-5-20251001', requiresKey: true },

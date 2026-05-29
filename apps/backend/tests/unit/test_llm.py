@@ -342,3 +342,78 @@ class TestCompleteDynamicTimeout:
         mock_calc_timeout.assert_called_once_with("completion", 8192, "deepseek")
         router.acompletion.assert_awaited_once()
         assert router.acompletion.call_args.kwargs["timeout"] == 180
+
+
+# ---------------------------------------------------------------------------
+# Cursor provider routing
+# ---------------------------------------------------------------------------
+
+
+class TestCursorProvider:
+    """Tests for cursor provider LiteLLM routing."""
+
+    def test_get_model_name_adds_openai_prefix(self):
+        from app.llm import LLMConfig, get_model_name
+
+        config = LLMConfig(
+            provider="cursor",
+            model="auto",
+            api_key="",
+            api_base="http://127.0.0.1:8765/v1",
+        )
+        assert get_model_name(config) == "openai/auto"
+
+    def test_resolve_api_key_skips_env_fallback(self):
+        from app.llm import resolve_api_key
+
+        stored = {"api_key": "", "api_keys": {}}
+        with patch("app.llm.settings") as mock_settings:
+            mock_settings.llm_api_key = "sk-env-should-not-leak"
+            assert resolve_api_key(stored, "cursor") == ""
+
+    def test_effective_api_key_uses_sentinel_when_blank(self):
+        from app.llm import _effective_api_key
+
+        assert _effective_api_key("cursor", "") == "sk-no-key"
+        assert _effective_api_key("cursor", "real-key") == "real-key"
+
+    def test_is_llm_provider_configured_without_key(self):
+        from app.llm import LLMConfig, is_llm_provider_configured
+
+        cursor = LLMConfig(
+            provider="cursor",
+            model="auto",
+            api_key="",
+            api_base="http://127.0.0.1:8765/v1",
+        )
+        assert is_llm_provider_configured(cursor) is True
+
+        openai = LLMConfig(
+            provider="openai",
+            model="gpt-4",
+            api_key="",
+        )
+        assert is_llm_provider_configured(openai) is False
+
+    @pytest.mark.asyncio
+    async def test_health_check_allows_blank_key(self):
+        from app.llm import LLMConfig, check_llm_health
+
+        config = LLMConfig(
+            provider="cursor",
+            model="auto",
+            api_key="",
+            api_base="http://127.0.0.1:8765/v1",
+        )
+        with patch("app.llm.litellm.acompletion", new_callable=AsyncMock) as mock_ac:
+            choice = MagicMock()
+            choice.message.content = "Hi there"
+            response = MagicMock()
+            response.choices = [choice]
+            response.model = "auto"
+            mock_ac.return_value = response
+
+            result = await check_llm_health(config)
+
+        assert result["healthy"] is True
+        assert result["provider"] == "cursor"

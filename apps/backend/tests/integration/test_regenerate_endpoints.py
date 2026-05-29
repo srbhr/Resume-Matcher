@@ -185,14 +185,14 @@ class TestRegenerateEndpoints(unittest.IsolatedAsyncioTestCase):
             patch.object(enrichment_router, "db", mock_db),
             patch.object(
                 enrichment_router,
-                "_regenerate_experience_or_project",
+                "_regenerate_summary",
                 AsyncMock(return_value=summary_item),
-            ) as mock_regenerate_item,
+            ) as mock_regenerate_summary,
         ):
             response = await enrichment_router.regenerate_items(request)
 
         self.assertEqual([item.item_id for item in response.regenerated_items], ["summary"])
-        mock_regenerate_item.assert_awaited_once()
+        mock_regenerate_summary.assert_awaited_once()
 
     async def test_apply_regenerated_falls_back_to_metadata_matching(self) -> None:
         resume_id = "resume_1"
@@ -404,6 +404,43 @@ class TestRegenerateEndpoints(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(
             updated["summary"],
             "Results-driven backend engineer with 8 years of experience building APIs.",
+        )
+
+    async def test_apply_regenerated_collapses_multiline_summary_to_paragraph(self) -> None:
+        resume_id = "resume_1"
+        processed_data = {
+            "summary": "Backend engineer with 8 years of experience.",
+            "workExperience": [],
+            "personalProjects": [],
+            "additional": {"technicalSkills": ["Python"]},
+        }
+
+        mock_db = MagicMock()
+        mock_db.get_resume.return_value = {"processed_data": processed_data}
+        mock_db.update_resume.return_value = None
+
+        regenerated_items = [
+            RegeneratedItem(
+                item_id="summary",
+                item_type="summary",
+                title="Professional Summary",
+                original_content=["Backend engineer with 8 years of experience."],
+                new_content=[
+                    "Results-driven backend engineer.",
+                    "Eight years building scalable APIs.",
+                ],
+                diff_summary="Refined positioning and clarity.",
+            )
+        ]
+
+        with patch.object(enrichment_router, "db", mock_db):
+            result = await enrichment_router.apply_regenerated_items(resume_id, regenerated_items)
+
+        self.assertEqual(result["updated_items"], 1)
+        updated = mock_db.update_resume.call_args.args[1]["processed_data"]
+        self.assertEqual(
+            updated["summary"],
+            "Results-driven backend engineer. Eight years building scalable APIs.",
         )
 
     async def test_apply_regenerated_summary_mismatch_returns_409(self) -> None:
