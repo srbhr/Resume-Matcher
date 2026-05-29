@@ -3,7 +3,7 @@
 import logging
 
 from app.llm import complete_json
-from app.prompts.ats import ATS_SCORE_PROMPT
+from app.prompts.templates.ats import ATS_SCORE_PROMPT
 from app.schemas.ats import KeywordRow, ScoreBreakdown
 from app.utils.synonyms import normalize
 

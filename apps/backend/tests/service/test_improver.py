@@ -9,7 +9,6 @@ from app.services.improver import (
     extract_job_keywords,
     generate_skill_target_plan,
     generate_resume_diffs,
-    improve_resume,
     verify_skill_target_plan,
 )
 
@@ -328,35 +327,3 @@ class TestGenerateResumeDiffsEdgeCases:
         assert len(result.changes) == 0
 
 
-class TestImproveResume:
-    """Tests for improve_resume() (legacy full-output mode) with mocked LLM."""
-
-    @patch("app.services.improver.complete_json", new_callable=AsyncMock)
-    async def test_returns_validated_resume(self, mock_llm, sample_resume, sample_job_keywords, sample_job_description):
-        # Return a valid resume structure (without personalInfo, as the prompt instructs)
-        mock_output = copy.deepcopy(sample_resume)
-        mock_output.pop("personalInfo", None)
-        mock_output["summary"] = "Improved summary."
-        mock_llm.return_value = mock_output
-
-        result = await improve_resume(
-            original_resume="# Resume markdown",
-            job_description=sample_job_description,
-            job_keywords=sample_job_keywords,
-            language="en",
-            prompt_id="keywords",
-            original_resume_data=sample_resume,
-        )
-        # Should be validated by ResumeData.model_validate
-        assert "summary" in result
-        assert isinstance(result.get("workExperience"), list)
-
-    @patch("app.services.improver.complete_json", new_callable=AsyncMock)
-    async def test_raises_on_invalid_json(self, mock_llm):
-        mock_llm.side_effect = ValueError("Failed to parse JSON")
-        with pytest.raises(ValueError):
-            await improve_resume(
-                original_resume="# Resume",
-                job_description="JD",
-                job_keywords={"required_skills": []},
-            )

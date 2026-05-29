@@ -12,13 +12,13 @@ from fastapi import APIRouter, HTTPException
 from app.config_cache import get_content_language
 from app.database import db
 from app.llm import complete_json
-from app.prompts.enrichment import (
-    ANALYZE_RESUME_PROMPT,
-    ENHANCE_DESCRIPTION_PROMPT,
-    REGENERATE_ITEM_PROMPT,
-    REGENERATE_SKILLS_PROMPT,
-)
 from app.prompts.templates import get_language_name
+from app.prompts.templates.enrichment import (
+    ENRICHMENT_ANALYZE_PROMPT,
+    ENRICHMENT_ENHANCE_PROMPT,
+    ENRICHMENT_REGENERATE_ITEM_PROMPT,
+    ENRICHMENT_REGENERATE_SKILLS_PROMPT,
+)
 from app.schemas.enrichment import (
     AnalysisResponse,
     AnswerInput,
@@ -108,7 +108,7 @@ async def analyze_resume(resume_id: str) -> AnalysisResponse:
     resume_json = json.dumps(processed_data)
     language = get_content_language()
     output_language = get_language_name(language)
-    prompt = ANALYZE_RESUME_PROMPT.format(
+    prompt = ENRICHMENT_ANALYZE_PROMPT.format(
         resume_json=resume_json,
         output_language=output_language
     )
@@ -214,7 +214,7 @@ async def generate_enhancements(request: EnhanceRequest) -> EnhancementPreview:
         resume_json = json.dumps(processed_data)
         language = get_content_language()
         output_language = get_language_name(language)
-        analysis_prompt = ANALYZE_RESUME_PROMPT.format(
+        analysis_prompt = ENRICHMENT_ANALYZE_PROMPT.format(
             resume_json=resume_json,
             output_language=output_language,
         )
@@ -288,7 +288,7 @@ async def generate_enhancements(request: EnhanceRequest) -> EnhancementPreview:
         language = get_content_language()
         output_language = get_language_name(language)
 
-        prompt = ENHANCE_DESCRIPTION_PROMPT.format(
+        prompt = ENRICHMENT_ENHANCE_PROMPT.format(
             item_type=item.get("item_type", "experience"),
             title=item.get("title", ""),
             subtitle=item.get("subtitle", ""),
@@ -425,7 +425,7 @@ async def _regenerate_experience_or_project(
         else "(No description)"
     )
 
-    prompt = REGENERATE_ITEM_PROMPT.format(
+    prompt = ENRICHMENT_REGENERATE_ITEM_PROMPT.format(
         output_language=output_language,
         item_type=item.item_type,
         title=item.title,
@@ -460,7 +460,7 @@ async def _regenerate_skills(
     """Regenerate the skills section."""
     current_skills_text = ", ".join(item.current_content) if item.current_content else "(No skills)"
 
-    prompt = REGENERATE_SKILLS_PROMPT.format(
+    prompt = ENRICHMENT_REGENERATE_SKILLS_PROMPT.format(
         output_language=output_language,
         current_skills=current_skills_text,
         user_instruction=instruction,

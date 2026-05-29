@@ -15,10 +15,10 @@ from functools import lru_cache
 from typing import Any
 
 from app.llm import complete_json
-from app.prompts.refinement import (
-    AI_PHRASE_BLACKLIST,
-    AI_PHRASE_REPLACEMENTS,
-    KEYWORD_INJECTION_PROMPT,
+from app.prompts.templates.refinement import (
+    REFINEMENT_AI_PHRASE_BLACKLIST,
+    REFINEMENT_AI_PHRASE_REPLACEMENTS,
+    REFINEMENT_KEYWORD_INJECTION_PROMPT,
 )
 from app.schemas.refinement import (
     AlignmentReport,
@@ -83,7 +83,7 @@ async def refine_resume(
     """Multi-pass refinement of an initially tailored resume.
 
     Args:
-        initial_tailored: Output from improve_resume() first pass
+        initial_tailored: Output from the first tailoring pass
         master_resume: Original master resume data (source of truth)
         job_description: Raw job description text
         job_keywords: Extracted job keywords
@@ -250,7 +250,7 @@ def remove_ai_phrases(
     # Build set of JD-protected phrases
     jd_lower = job_description.lower()
     jd_protected: set[str] = set()
-    for phrase in AI_PHRASE_BLACKLIST:
+    for phrase in REFINEMENT_AI_PHRASE_BLACKLIST:
         if phrase.lower() in jd_lower:
             jd_protected.add(phrase.lower())
 
@@ -262,13 +262,13 @@ def remove_ai_phrases(
 
     def clean_text(text: str) -> str:
         cleaned = text
-        for phrase in AI_PHRASE_BLACKLIST:
+        for phrase in REFINEMENT_AI_PHRASE_BLACKLIST:
             # Skip phrases that appear in the job description
             if phrase.lower() in jd_protected:
                 continue
             if phrase.lower() in cleaned.lower():
                 removed.add(phrase)
-                replacement = AI_PHRASE_REPLACEMENTS.get(phrase.lower(), "")
+                replacement = REFINEMENT_AI_PHRASE_REPLACEMENTS.get(phrase.lower(), "")
                 # Case-insensitive replacement
                 pattern = re.compile(re.escape(phrase), re.IGNORECASE)
                 cleaned = pattern.sub(replacement, cleaned)
@@ -477,7 +477,7 @@ async def inject_keywords(
             len(job_description),
         )
 
-    prompt = KEYWORD_INJECTION_PROMPT.format(
+    prompt = REFINEMENT_KEYWORD_INJECTION_PROMPT.format(
         keywords_to_inject=json.dumps(keywords_to_inject),
         current_resume=json.dumps(tailored),
         master_resume=json.dumps(master),

@@ -4,8 +4,8 @@ import json
 import logging
 
 from app.llm import complete_json
-from app.prompts.ats import ATS_OPTIMIZE_PROMPT
-from app.prompts.templates import CRITICAL_TRUTHFULNESS_RULES, RESUME_SCHEMA_EXAMPLE
+from app.prompts.templates.ats import ATS_OPTIMIZE_PROMPT
+from app.prompts.templates.resume import RESUME_SCHEMA_EXAMPLE
 from app.schemas.models import ResumeData
 
 logger = logging.getLogger(__name__)
@@ -40,7 +40,6 @@ async def run_pass2(
     )
 
     prompt = ATS_OPTIMIZE_PROMPT.format(
-        critical_truthfulness_rules=CRITICAL_TRUTHFULNESS_RULES["keywords"],
         missing_keywords=missing_keywords,
         warning_flags=warning_flags_text,
         score_breakdown=score_breakdown_text,

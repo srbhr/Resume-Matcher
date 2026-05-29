@@ -1,4 +1,4 @@
-"""Prompt templates for the ATS two-pass pipeline."""
+"""ATS scoring prompt (pass 1)."""
 
 ATS_SCORE_PROMPT = """You are an ATS (Applicant Tracking System) engine. Analyze the job description and resume below.
 
@@ -42,36 +42,3 @@ Job Description:
 
 Resume:
 {resume_text}"""
-
-
-ATS_OPTIMIZE_PROMPT = """You are an ATS resume optimizer. Improve the resume below to better match the job description, guided by the gap analysis.
-
-{critical_truthfulness_rules}
-
-Gap Analysis:
-Missing Keywords: {missing_keywords}
-
-Warning Flags:
-{warning_flags}
-
-Score Breakdown: {score_breakdown}
-
-Optimization rules:
-- Weave missing keywords into existing bullets ONLY where the candidate's actual experience supports them
-- If the resume contains any of these exact phrases — "product judgment", "operating in ambiguity", "structured thinking", "data-driven decision making" — preserve them verbatim in the output
-- Do NOT add those PM phrases if they do not appear anywhere in the original resume text
-- Strengthen vague action verbs ("worked on" → "led", "helped with" → "drove")
-- Improve the summary to lead with the most JD-relevant experience
-- Provide 5-10 specific, actionable optimization_suggestions explaining what changed and why
-
-Job Description:
-{job_description}
-
-Original Resume (JSON):
-{resume_json}
-
-Output ONLY this JSON. The optimized_resume field must match the schema exactly:
-{{
-  "optimized_resume": {schema},
-  "optimization_suggestions": ["suggestion1", "suggestion2"]
-}}"""

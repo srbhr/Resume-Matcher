@@ -1,7 +1,7 @@
-"""Prompt templates and blacklists for multi-pass resume refinement."""
+"""AI-phrase blacklist + replacements used by the refinement pipeline."""
 
 # AI Phrase Blacklist - Words and phrases that sound AI-generated
-AI_PHRASE_BLACKLIST: set[str] = {
+REFINEMENT_AI_PHRASE_BLACKLIST: set[str] = {
     # Action verbs (overused in AI resume writing)
     "spearheaded",
     "orchestrated",
@@ -62,13 +62,13 @@ AI_PHRASE_BLACKLIST: set[str] = {
     "in the event that",
     "in light of the fact that",
     # Punctuation patterns
-    "\u2014",  # Em-dash
+    "—",  # Em-dash
     "---",
     "--",  # Double hyphen often used as em-dash substitute
 }
 
 # Replacements for AI phrases - maps AI phrase to simpler alternative
-AI_PHRASE_REPLACEMENTS: dict[str, str] = {
+REFINEMENT_AI_PHRASE_REPLACEMENTS: dict[str, str] = {
     # Action verb replacements
     "spearheaded": "led",
     "orchestrated": "coordinated",
@@ -128,55 +128,7 @@ AI_PHRASE_REPLACEMENTS: dict[str, str] = {
     "in the event that": "if",
     "in light of the fact that": "since",
     # Punctuation replacements
-    "\u2014": ", ",  # Em-dash to comma
+    "—": ", ",  # Em-dash to comma
     "---": ", ",
     "--": ", ",
 }
-
-
-# Prompt for injecting missing keywords into a resume
-KEYWORD_INJECTION_PROMPT = """Inject the following keywords into this resume where they can be naturally and TRUTHFULLY incorporated.
-
-CRITICAL RULES:
-1. Only add keywords where the master resume provides supporting evidence
-2. Do NOT add skills, technologies, or certifications not in the master resume
-3. Rephrase existing bullet points to include keywords - do not invent new content
-4. Maintain the exact same JSON structure
-5. Do not use em-dashes (—) or their variants (---, --)
-
-Keywords to inject (only if supported by master resume):
-{keywords_to_inject}
-
-Current tailored resume:
-{current_resume}
-
-Master resume (source of truth):
-{master_resume}
-
-Job description context:
-{job_description}
-
-Output the complete resume JSON with keywords naturally integrated. Return ONLY valid JSON."""
-
-
-# Prompt for validation and polish pass
-VALIDATION_POLISH_PROMPT = """Review and polish this resume content. Remove any AI-sounding language and ensure all content is truthful.
-
-REMOVE or REPLACE:
-- Buzzwords: "spearheaded", "synergy", "leverage", "orchestrated", etc.
-- Em-dashes (use commas or semicolons instead)
-- Overly formal language: "utilized" -> "used", "endeavored" -> "worked"
-- Generic filler: "in order to" -> "to"
-
-VERIFY:
-- All skills exist in the master resume
-- All certifications exist in the master resume
-- No fabricated metrics or achievements
-
-Resume to polish:
-{resume}
-
-Master resume (verify all claims against this):
-{master_resume}
-
-Output the polished resume JSON. Return ONLY valid JSON."""

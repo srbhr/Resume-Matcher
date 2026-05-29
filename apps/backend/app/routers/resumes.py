@@ -62,7 +62,6 @@ from app.services.improver import (
     generate_improvements,
     generate_skill_target_plan,
     generate_resume_diffs,
-    improve_resume,
     verify_skill_target_plan,
     verify_diff_result,
 )
@@ -73,16 +72,19 @@ from app.services.cover_letter import (
     generate_outreach_message,
     generate_resume_title,
 )
-from app.prompts import DEFAULT_IMPROVE_PROMPT_ID, IMPROVE_PROMPT_OPTIONS
+from app.prompts.templates.resume import (
+    DEFAULT_RESUME_IMPROVE_PROMPT_ID,
+    RESUME_IMPROVE_OPTIONS,
+)
 from app.llm import complete as llm_complete, chat_complete
 
 
 def _get_default_prompt_id() -> str:
     """Get configured default prompt id from config file."""
     config = _load_config()
-    option_ids = {option["id"] for option in IMPROVE_PROMPT_OPTIONS}
-    prompt_id = config.get("default_prompt_id", DEFAULT_IMPROVE_PROMPT_ID)
-    return prompt_id if prompt_id in option_ids else DEFAULT_IMPROVE_PROMPT_ID
+    option_ids = {option["id"] for option in RESUME_IMPROVE_OPTIONS}
+    prompt_id = config.get("default_prompt_id", DEFAULT_RESUME_IMPROVE_PROMPT_ID)
+    return prompt_id if prompt_id in option_ids else DEFAULT_RESUME_IMPROVE_PROMPT_ID
 
 
 def _hash_job_content(content: str) -> str:
@@ -1260,16 +1262,9 @@ async def _improve_preview_flow(
             len(diff_warnings),
         )
     else:
-        # Fallback to full-output mode when no structured data available
-        improved_data = await improve_resume(
-            original_resume=resume["content"],
-            job_description=job["content"],
-            job_keywords=job_keywords,
-            language=language,
-            prompt_id=prompt_id,
-            original_resume_data=original_resume_data,
-            user_guidance=request.guidance.resume if request.guidance else None,
-            general_guidance=request.guidance.general if request.guidance else None,
+        raise HTTPException(
+            status_code=422,
+            detail="Resume is missing structured data; re-import the resume and try again.",
         )
 
     # Safety nets (defense in depth — should rarely activate with diff-based flow)
@@ -1696,16 +1691,9 @@ async def improve_resume_endpoint(
                 len(diff_warnings),
             )
         else:
-            # Fallback to full-output mode when no structured data available
-            improved_data = await improve_resume(
-                original_resume=resume["content"],
-                job_description=job["content"],
-                job_keywords=job_keywords,
-                language=language,
-                prompt_id=prompt_id,
-                original_resume_data=original_resume_data,
-                user_guidance=request.guidance.resume if request.guidance else None,
-                general_guidance=request.guidance.general if request.guidance else None,
+            raise HTTPException(
+                status_code=422,
+                detail="Resume is missing structured data; re-import the resume and try again.",
             )
 
         # Safety nets (defense in depth)

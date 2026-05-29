@@ -6,12 +6,12 @@ from typing import Any
 
 from app.config import load_config_file
 from app.llm import complete
-from app.prompts.templates import (
+from app.prompts.templates import get_language_name
+from app.prompts.templates.cover_letter import (
+    COVER_LETTER_OUTREACH_PROMPT,
     COVER_LETTER_PROMPT,
-    GENERATE_TITLE_PROMPT,
-    OUTREACH_MESSAGE_PROMPT,
 )
-from app.prompts import get_language_name
+from app.prompts.templates.job_description import JOB_DESCRIPTION_TITLE_PROMPT
 
 
 def _append_guidance(
@@ -147,7 +147,7 @@ async def generate_outreach_message(
     output_language = get_language_name(language)
 
     template, is_custom = _resolve_feature_prompt(
-        "outreach_message_prompt", OUTREACH_MESSAGE_PROMPT
+        "outreach_message_prompt", COVER_LETTER_OUTREACH_PROMPT
     )
     try:
         prompt = template.format(
@@ -163,7 +163,7 @@ async def generate_outreach_message(
             "Custom outreach message prompt failed to format (%s); falling back to default",
             e,
         )
-        prompt = OUTREACH_MESSAGE_PROMPT.format(
+        prompt = COVER_LETTER_OUTREACH_PROMPT.format(
             job_description=job_description,
             resume_data=json.dumps(resume_data),
             output_language=output_language,
@@ -200,7 +200,7 @@ async def generate_resume_title(
     """
     output_language = get_language_name(language)
 
-    prompt = GENERATE_TITLE_PROMPT.format(
+    prompt = JOB_DESCRIPTION_TITLE_PROMPT.format(
         job_description=job_description,
         output_language=output_language,
     )

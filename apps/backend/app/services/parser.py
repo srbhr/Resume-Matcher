@@ -12,12 +12,12 @@ from pdfminer.layout import LTChar
 from pypdf import PdfReader
 
 from app.llm import complete_json, get_llm_config, get_model_name, get_safe_max_tokens
-from app.prompts import (
-    CONDENSE_CV_TO_RESUME_PROMPT,
-    EXPAND_RESUME_TO_CV_PROMPT,
-    PARSE_RESUME_PROMPT,
+from app.prompts.templates.resume import (
+    RESUME_CONDENSE_FROM_CV_PROMPT,
+    RESUME_EXPAND_TO_CV_PROMPT,
+    RESUME_PARSE_PROMPT,
+    RESUME_SCHEMA_EXAMPLE,
 )
-from app.prompts.templates import RESUME_SCHEMA_EXAMPLE
 from app.schemas import ResumeData
 
 logger = logging.getLogger(__name__)
@@ -413,7 +413,7 @@ async def parse_resume_to_json(markdown_text: str) -> dict[str, Any]:
     Returns:
         Structured resume data matching ResumeData schema
     """
-    prompt = PARSE_RESUME_PROMPT.format(
+    prompt = RESUME_PARSE_PROMPT.format(
         schema=RESUME_SCHEMA_EXAMPLE,
         resume_text=markdown_text,
     )
@@ -455,7 +455,7 @@ async def generate_counterpart_document(
         raise ValueError(f"Invalid target: {target}")
 
     prompt_template = (
-        EXPAND_RESUME_TO_CV_PROMPT if target == "cv" else CONDENSE_CV_TO_RESUME_PROMPT
+        RESUME_EXPAND_TO_CV_PROMPT if target == "cv" else RESUME_CONDENSE_FROM_CV_PROMPT
     )
     payload_key = "resume_json" if target == "cv" else "cv_json"
 

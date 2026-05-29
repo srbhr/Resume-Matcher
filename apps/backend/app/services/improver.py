@@ -9,17 +9,17 @@ from dataclasses import dataclass
 from typing import Any, Callable
 
 from app.llm import complete_json
-from app.prompts import (
-    CRITICAL_TRUTHFULNESS_RULES,
-    DEFAULT_IMPROVE_PROMPT_ID,
-    DIFF_IMPROVE_PROMPT,
-    DIFF_STRATEGY_INSTRUCTIONS,
-    EXTRACT_KEYWORDS_PROMPT,
-    IMPROVE_RESUME_PROMPTS,
-    SKILL_TARGET_PLAN_PROMPT,
-    get_language_name,
+from app.prompts.templates import get_language_name
+from app.prompts.templates.job_description import (
+    JOB_DESCRIPTION_EXTRACT_KEYWORDS_PROMPT,
+    JOB_DESCRIPTION_SKILL_TARGET_PROMPT,
 )
-from app.prompts.templates import IMPROVE_SCHEMA_EXAMPLE
+from app.prompts.templates.resume import (
+    DEFAULT_RESUME_IMPROVE_PROMPT_ID,
+    RESUME_FULL_TAILOR_PROMPT,
+    RESUME_IMPROVE_PROMPT,
+    RESUME_NUDGE_PROMPT,
+)
 from app.schemas import ResumeData, ResumeFieldDiff, ResumeDiffSummary
 from app.schemas.models import ImproveDiffResult, ResumeChange
 
@@ -515,15 +515,19 @@ async def generate_resume_diffs(
     keywords_str = _prepare_keywords_for_prompt(job_keywords)
     output_language = get_language_name(language)
 
-    selected_id = prompt_id or DEFAULT_IMPROVE_PROMPT_ID
-    if selected_id not in DIFF_STRATEGY_INSTRUCTIONS:
+    _STRATEGY_PROMPTS = {
+        "nudge": RESUME_NUDGE_PROMPT,
+        "keywords": RESUME_IMPROVE_PROMPT,
+        "full": RESUME_FULL_TAILOR_PROMPT,
+    }
+
+    selected_id = prompt_id or DEFAULT_RESUME_IMPROVE_PROMPT_ID
+    if selected_id not in _STRATEGY_PROMPTS:
         logger.warning(
             "Unknown prompt_id '%s'; using default diff strategy.",
             selected_id,
         )
-    strategy_instruction = DIFF_STRATEGY_INSTRUCTIONS.get(
-        selected_id, DIFF_STRATEGY_INSTRUCTIONS[DEFAULT_IMPROVE_PROMPT_ID]
-    )
+        selected_id = DEFAULT_RESUME_IMPROVE_PROMPT_ID
 
     # LLM-011: Sanitize job description
     sanitized_jd = _sanitize_user_input(job_description)
@@ -537,8 +541,7 @@ async def generate_resume_diffs(
     else:
         resume_input = original_resume
 
-    prompt = DIFF_IMPROVE_PROMPT.format(
-        strategy_instruction=strategy_instruction,
+    prompt = _STRATEGY_PROMPTS[selected_id].format(
         output_language=output_language,
         job_keywords=keywords_str,
         skill_targets=_prepare_skill_targets_for_prompt(skill_targets),
@@ -602,7 +605,7 @@ async def extract_job_keywords(job_description: str) -> dict[str, Any]:
     """
     # LLM-011: Sanitize job description before using in prompt
     sanitized_jd = _sanitize_user_input(job_description)
-    prompt = EXTRACT_KEYWORDS_PROMPT.format(job_description=sanitized_jd)
+    prompt = JOB_DESCRIPTION_EXTRACT_KEYWORDS_PROMPT.format(job_description=sanitized_jd)
 
     return await complete_json(
         prompt=prompt,
@@ -833,7 +836,7 @@ async def generate_skill_target_plan(
         "technicalSkills", []
     )
     sanitized_jd = _sanitize_user_input(job_description)
-    prompt = SKILL_TARGET_PLAN_PROMPT.format(
+    prompt = JOB_DESCRIPTION_SKILL_TARGET_PROMPT.format(
         output_language=output_language,
         existing_skills=json.dumps(existing_skills, ensure_ascii=False),
         job_keywords=_prepare_keywords_for_prompt(job_keywords),
@@ -890,97 +893,6 @@ def _prepare_skill_targets_for_prompt(
         suffix = f": {reason}" if reason else ""
         lines.append(f"- {skill} ({source}){suffix}")
     return "\n".join(lines) if lines else "No verified skill targets."
-
-
-async def improve_resume(
-    original_resume: str,
-    job_description: str,
-    job_keywords: dict[str, Any],
-    language: str = "en",
-    prompt_id: str | None = None,
-    original_resume_data: dict[str, Any] | None = None,
-    user_guidance: str | None = None,
-    general_guidance: str | None = None,
-) -> dict[str, Any]:
-    """Improve resume to better match job description.
-
-    Args:
-        original_resume: Original resume content (markdown)
-        job_description: Target job description
-        job_keywords: Extracted job keywords
-        language: Output language code (en, es, zh, ja)
-        prompt_id: Which tailor prompt to use
-        original_resume_data: Structured resume JSON; used instead of
-            markdown when available for higher-fidelity LLM input
-
-    Returns:
-        Improved resume data matching ResumeData schema
-
-    LLM-006: Validates for truncation before Pydantic validation.
-    LLM-011: Sanitizes job description to prevent prompt injection.
-    """
-    keywords_str = _prepare_keywords_for_prompt(job_keywords)
-    output_language = get_language_name(language)
-
-    selected_prompt_id = prompt_id or DEFAULT_IMPROVE_PROMPT_ID
-    prompt_template = IMPROVE_RESUME_PROMPTS.get(
-        selected_prompt_id, IMPROVE_RESUME_PROMPTS[DEFAULT_IMPROVE_PROMPT_ID]
-    )
-    if selected_prompt_id not in CRITICAL_TRUTHFULNESS_RULES:
-        logger.warning(
-            "Missing truthfulness rules for prompt '%s'; using default rules.",
-            selected_prompt_id,
-        )
-    truthfulness_rules = CRITICAL_TRUTHFULNESS_RULES.get(
-        selected_prompt_id, CRITICAL_TRUTHFULNESS_RULES[DEFAULT_IMPROVE_PROMPT_ID]
-    )
-
-    # LLM-011: Sanitize job description to prevent prompt injection
-    sanitized_jd = _sanitize_user_input(job_description)
-
-    # Use structured JSON when available for higher-fidelity LLM input,
-    # but fall back to raw markdown if the structured data has truncated
-    # (year-only) dates — the markdown preserves months from the original PDF.
-    if original_resume_data is not None:
-        if _has_month_in_dates(original_resume_data):
-            resume_input = json.dumps(original_resume_data)
-        else:
-            logger.info(
-                "Structured resume data has year-only dates; using raw markdown "
-                "to preserve month precision."
-            )
-            resume_input = original_resume
-    else:
-        resume_input = original_resume
-
-    prompt = prompt_template.format(
-        job_description=sanitized_jd,
-        job_keywords=keywords_str,
-        original_resume=resume_input,
-        schema=IMPROVE_SCHEMA_EXAMPLE,
-        output_language=output_language,
-        critical_truthfulness_rules=truthfulness_rules,
-    )
-
-    prompt = _append_user_guidance(
-        prompt,
-        general_guidance=general_guidance,
-        category_guidance=user_guidance,
-        category_label="resume",
-    )
-
-    result = await complete_json(
-        prompt=prompt,
-        system_prompt="You are an expert resume editor. Output only valid JSON.",
-        max_tokens=8192,
-    )
-
-    # LLM-006: Pre-validation check for truncation signs
-    _check_for_truncation(result)
-
-    # Validate against schema
-    validated = ResumeData.model_validate(result)
-    return validated.model_dump()
 
 
 def _format_entry_label(parts: list[str], fallback: str) -> str:

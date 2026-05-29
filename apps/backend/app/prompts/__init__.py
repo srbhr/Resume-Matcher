@@ -1,22 +1,9 @@
-"""LLM prompt templates."""
+"""Prompt validation helpers.
 
-from app.prompts.templates import (
-    CONDENSE_CV_TO_RESUME_PROMPT,
-    CRITICAL_TRUTHFULNESS_RULES,
-    DEFAULT_IMPROVE_PROMPT_ID,
-    DIFF_IMPROVE_PROMPT,
-    DIFF_STRATEGY_INSTRUCTIONS,
-    EXPAND_RESUME_TO_CV_PROMPT,
-    EXTRACT_KEYWORDS_PROMPT,
-    GENERATE_TITLE_PROMPT,
-    IMPROVE_PROMPT_OPTIONS,
-    IMPROVE_RESUME_PROMPT,
-    IMPROVE_RESUME_PROMPTS,
-    PARSE_RESUME_PROMPT,
-    RESUME_SCHEMA_EXAMPLE,
-    SKILL_TARGET_PLAN_PROMPT,
-    get_language_name,
-)
+Prompt templates live under ``app.prompts.templates.<module>``; import them
+directly from the appropriate submodule (e.g.
+``from app.prompts.templates.resume import RESUME_PARSE_PROMPT``).
+"""
 
 # Placeholders every user-supplied cover-letter / outreach prompt must contain.
 # These correspond to the ``.format()`` keys used by the services in
@@ -43,21 +30,6 @@ def validate_prompt_placeholders(prompt: str) -> list[str]:
 
 
 __all__ = [
-    "PARSE_RESUME_PROMPT",
-    "EXTRACT_KEYWORDS_PROMPT",
-    "IMPROVE_RESUME_PROMPT",
-    "IMPROVE_RESUME_PROMPTS",
-    "IMPROVE_PROMPT_OPTIONS",
-    "DEFAULT_IMPROVE_PROMPT_ID",
-    "CRITICAL_TRUTHFULNESS_RULES",
-    "DIFF_IMPROVE_PROMPT",
-    "DIFF_STRATEGY_INSTRUCTIONS",
-    "SKILL_TARGET_PLAN_PROMPT",
-    "GENERATE_TITLE_PROMPT",
-    "EXPAND_RESUME_TO_CV_PROMPT",
-    "CONDENSE_CV_TO_RESUME_PROMPT",
-    "RESUME_SCHEMA_EXAMPLE",
     "REQUIRED_FEATURE_PROMPT_PLACEHOLDERS",
     "validate_prompt_placeholders",
-    "get_language_name",
 ]

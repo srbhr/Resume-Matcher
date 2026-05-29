@@ -26,12 +26,15 @@ from app.schemas import (
     ApiKeysUpdateResponse,
     ResetDatabaseRequest,
 )
-from app.prompts import (
-    DEFAULT_IMPROVE_PROMPT_ID,
-    IMPROVE_PROMPT_OPTIONS,
-    validate_prompt_placeholders,
+from app.prompts import validate_prompt_placeholders
+from app.prompts.templates.cover_letter import (
+    COVER_LETTER_OUTREACH_PROMPT,
+    COVER_LETTER_PROMPT,
 )
-from app.prompts.templates import COVER_LETTER_PROMPT, OUTREACH_MESSAGE_PROMPT
+from app.prompts.templates.resume import (
+    DEFAULT_RESUME_IMPROVE_PROMPT_ID,
+    RESUME_IMPROVE_OPTIONS,
+)
 from app.config import (
     get_api_keys_from_config,
     save_api_keys_to_config,
@@ -76,7 +79,7 @@ def _mask_api_key(key: str) -> str:
 
 def _get_prompt_options() -> list[PromptOption]:
     """Return available prompt options for resume tailoring."""
-    return [PromptOption(**option) for option in IMPROVE_PROMPT_OPTIONS]
+    return [PromptOption(**option) for option in RESUME_IMPROVE_OPTIONS]
 
 
 async def _log_llm_health_check(config: LLMConfig) -> None:
@@ -324,9 +327,9 @@ async def get_prompt_config() -> PromptConfigResponse:
     stored = _load_config()
     options = _get_prompt_options()
     option_ids = {option.id for option in options}
-    default_prompt_id = stored.get("default_prompt_id", DEFAULT_IMPROVE_PROMPT_ID)
+    default_prompt_id = stored.get("default_prompt_id", DEFAULT_RESUME_IMPROVE_PROMPT_ID)
     if default_prompt_id not in option_ids:
-        default_prompt_id = DEFAULT_IMPROVE_PROMPT_ID
+        default_prompt_id = DEFAULT_RESUME_IMPROVE_PROMPT_ID
 
     return PromptConfigResponse(
         default_prompt_id=default_prompt_id,
@@ -356,9 +359,9 @@ async def update_prompt_config(
 
     _save_config(stored)
 
-    default_prompt_id = stored.get("default_prompt_id", DEFAULT_IMPROVE_PROMPT_ID)
+    default_prompt_id = stored.get("default_prompt_id", DEFAULT_RESUME_IMPROVE_PROMPT_ID)
     if default_prompt_id not in option_ids:
-        default_prompt_id = DEFAULT_IMPROVE_PROMPT_ID
+        default_prompt_id = DEFAULT_RESUME_IMPROVE_PROMPT_ID
 
     return PromptConfigResponse(
         default_prompt_id=default_prompt_id,
@@ -379,7 +382,7 @@ async def get_feature_prompts() -> FeaturePromptsResponse:
         cover_letter_prompt=stored.get("cover_letter_prompt", "") or "",
         outreach_message_prompt=stored.get("outreach_message_prompt", "") or "",
         cover_letter_default=COVER_LETTER_PROMPT,
-        outreach_message_default=OUTREACH_MESSAGE_PROMPT,
+        outreach_message_default=COVER_LETTER_OUTREACH_PROMPT,
     )
 
 
@@ -434,7 +437,7 @@ async def update_feature_prompts(
         cover_letter_prompt=stored.get("cover_letter_prompt", "") or "",
         outreach_message_prompt=stored.get("outreach_message_prompt", "") or "",
         cover_letter_default=COVER_LETTER_PROMPT,
-        outreach_message_default=OUTREACH_MESSAGE_PROMPT,
+        outreach_message_default=COVER_LETTER_OUTREACH_PROMPT,
     )
 
 
