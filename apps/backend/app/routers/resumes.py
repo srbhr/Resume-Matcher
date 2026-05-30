@@ -547,7 +547,11 @@ async def upload_resume(file: UploadFile = File(...)) -> ResumeUploadResponse:
     if not markdown_content or not markdown_content.strip():
         raise HTTPException(
             status_code=422,
-            detail="Could not extract text from the uploaded file. The document may be image-based or scanned. Please upload a file with selectable text.",
+            detail=(
+                "Could not extract text from the uploaded file. The document may be "
+                "image-based or scanned. Please upload a text-based PDF/DOCX with "
+                "selectable text, or run OCR first."
+            ),
         )
 
     # Store in database first with "processing" status (atomic master assignment)
