@@ -380,10 +380,10 @@ const AdditionalSection: React.FC<{
   };
 
   const hasContent =
-    technicalSkills.length > 0 ||
-    languages.length > 0 ||
-    certificationsTraining.length > 0 ||
-    awards.length > 0;
+    technicalSkills.filter((s) => s.trim()).length > 0 ||
+    languages.filter((s) => s.trim()).length > 0 ||
+    certificationsTraining.filter((s) => s.trim()).length > 0 ||
+    awards.filter((s) => s.trim()).length > 0;
 
   if (!hasContent) return null;
 
@@ -391,28 +391,28 @@ const AdditionalSection: React.FC<{
     <div className={baseStyles['resume-section']}>
       <h3 className={baseStyles['resume-section-title']}>{displayName}</h3>
       <div className={`${baseStyles['resume-stack']} ${baseStyles['resume-text-sm']}`}>
-        {technicalSkills.length > 0 && (
+        {technicalSkills.filter((s) => s.trim()).length > 0 && (
           <div className="flex">
             <span className="font-bold w-32 shrink-0">{mergedLabels.technicalSkills}</span>
-            <span>{technicalSkills.join(', ')}</span>
+            <span>{technicalSkills.filter((s) => s.trim()).join(', ')}</span>
           </div>
         )}
-        {languages.length > 0 && (
+        {languages.filter((s) => s.trim()).length > 0 && (
           <div className="flex">
             <span className="font-bold w-32 shrink-0">{mergedLabels.languages}</span>
-            <span>{languages.join(', ')}</span>
+            <span>{languages.filter((s) => s.trim()).join(', ')}</span>
           </div>
         )}
-        {certificationsTraining.length > 0 && (
+        {certificationsTraining.filter((s) => s.trim()).length > 0 && (
           <div className="flex">
             <span className="font-bold w-32 shrink-0">{mergedLabels.certifications}</span>
-            <span>{certificationsTraining.join(', ')}</span>
+            <span>{certificationsTraining.filter((s) => s.trim()).join(', ')}</span>
           </div>
         )}
-        {awards.length > 0 && (
+        {awards.filter((s) => s.trim()).length > 0 && (
           <div className="flex">
             <span className="font-bold w-32 shrink-0">{mergedLabels.awards}</span>
-            <span>{awards.join(', ')}</span>
+            <span>{awards.filter((s) => s.trim()).join(', ')}</span>
           </div>
         )}
       </div>
