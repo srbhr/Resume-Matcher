@@ -563,6 +563,7 @@
       "jobDescriptionTooShort": "Descrição da vaga muito curta. Adicione mais detalhes e tente novamente.",
       "apiKeyError": "Sua chave de API não está funcionando. Verifique em Configurações.",
       "rateLimit": "Limite de requisições atingido. Aguarde cerca de um minuto e tente novamente.",
+      "timeout": "A prévia do currículo expirou após 4 minutos. Tente novamente com uma descrição de vaga mais curta ou um prompt mais simples.",
       "failedToGenerate": "Não foi possível gerar o currículo. Verifique sua chave de API em Configurações e tente novamente.",
       "timeout": "A solicitação expirou. Tente novamente com uma descrição de vaga mais curta ou verifique sua conexão.",
       "failedToPreview": "Não foi possível pré-visualizar o currículo. Verifique sua chave de API em Configurações e tente novamente.",
