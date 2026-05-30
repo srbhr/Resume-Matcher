@@ -82,7 +82,7 @@ export interface ResumeFallbackLabels {
 }
 
 // Section Type for dynamic sections
-export type SectionType = 'personalInfo' | 'text' | 'itemList' | 'stringList';
+export type SectionType = 'personalInfo' | 'text' | 'itemList' | 'stringList' | 'labeledLists';
 
 // Section Metadata for dynamic section management
 export interface SectionMeta {
@@ -105,12 +105,20 @@ export interface CustomSectionItem {
   description?: string[];
 }
 
+// Labeled list item for labeled-lists sections (e.g., 'Technical Skills: Python, React')
+export interface LabeledListItem {
+  id: number;
+  label: string; // Section label (e.g., "Technical Skills", "Languages")
+  items: string[]; // Array of items for this label
+}
+
 // Custom section data container
 export interface CustomSection {
   sectionType: SectionType;
   items?: CustomSectionItem[]; // For itemList type
   strings?: string[]; // For stringList type
   text?: string; // For text type
+  namedLists?: LabeledListItem[]; // For labeledLists type
 }
 
 export interface ResumeData {

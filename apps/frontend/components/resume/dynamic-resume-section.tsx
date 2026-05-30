@@ -4,6 +4,7 @@ import type {
   SectionMeta,
   CustomSection,
   CustomSectionItem,
+  LabeledListItem,
 } from '@/components/dashboard/resume-component';
 import { formatDateRange } from '@/lib/utils';
 import { SafeHtml } from './safe-html';
@@ -38,6 +39,8 @@ export const DynamicResumeSection: React.FC<DynamicResumeSectionProps> = ({
         return Boolean(customSection.items?.length);
       case 'stringList':
         return Boolean(customSection.strings?.length);
+      case 'labeledLists':
+        return Boolean(customSection.namedLists?.length);
       default:
         return false;
     }
@@ -64,6 +67,8 @@ function renderContent(sectionType: SectionMeta['sectionType'], customSection: C
       return <ItemListSectionContent items={customSection.items || []} />;
     case 'stringList':
       return <StringListSectionContent strings={customSection.strings || []} />;
+    case 'labeledLists':
+      return <LabeledListSectionContent namedLists={customSection.namedLists || []} />;
     default:
       return null;
   }
@@ -134,6 +139,24 @@ const StringListSectionContent: React.FC<{ strings: string[] }> = ({ strings }) 
   if (strings.length === 0) return null;
 
   return <div className={baseStyles['resume-text-sm']}>{strings.join(', ')}</div>;
+};
+
+/**
+ * Labeled List Section Content (e.g., Technical Skills: Python, React)
+ */
+const LabeledListSectionContent: React.FC<{ namedLists: LabeledListItem[] }> = ({ namedLists }) => {
+  if (namedLists.length === 0) return null;
+
+  return (
+    <div className={`${baseStyles['resume-stack']} ${baseStyles['resume-text-sm']}`}>
+      {namedLists.map((namedList) => (
+        <div key={namedList.id} className="flex">
+          <span className="font-bold w-32 shrink-0">{namedList.label}</span>
+          <span>{namedList.items.join(', ')}</span>
+        </div>
+      ))}
+    </div>
+  );
 };
 
 export default DynamicResumeSection;

@@ -444,6 +444,8 @@ const DynamicResumeSectionModern: React.FC<{
         return Boolean(customSection.items?.length);
       case 'stringList':
         return Boolean(customSection.strings?.length);
+      case 'labeledLists':
+        return Boolean(customSection.namedLists?.length);
       default:
         return false;
     }
@@ -515,6 +517,19 @@ function renderDynamicContent(
     case 'stringList':
       if (!customSection.strings?.length) return null;
       return <div className={baseStyles['resume-text-sm']}>{customSection.strings.join(', ')}</div>;
+
+    case 'labeledLists':
+      if (!customSection.namedLists?.length) return null;
+      return (
+        <div className={`${baseStyles['resume-stack']} ${baseStyles['resume-text-sm']}`}>
+          {customSection.namedLists.map((namedList) => (
+            <div key={namedList.id} className="flex">
+              <span className="font-bold w-32 shrink-0">{namedList.label}</span>
+              <span>{namedList.items.join(', ')}</span>
+            </div>
+          ))}
+        </div>
+      );
 
     default:
       return null;

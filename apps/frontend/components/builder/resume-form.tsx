@@ -32,6 +32,7 @@ import { SectionHeader } from './section-header';
 import { GenericTextForm } from './forms/generic-text-form';
 import { GenericItemForm } from './forms/generic-item-form';
 import { GenericListForm } from './forms/generic-list-form';
+import { GenericLabeledListForm } from './forms/generic-labeled-list-form';
 import { AddSectionButton } from './add-section-dialog';
 import { DraggableSectionWrapper } from './draggable-section-wrapper';
 import {
@@ -79,6 +80,7 @@ export const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, onUpdate }) 
       text: sectionType === 'text' ? '' : undefined,
       items: sectionType === 'itemList' ? [] : undefined,
       strings: sectionType === 'stringList' ? [] : undefined,
+      namedLists: sectionType === 'labeledLists' ? [] : undefined,
     };
 
     onUpdate({
@@ -346,6 +348,14 @@ export const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, onUpdate }) 
               onChange={(strings) => updateCustomSection({ strings })}
               label={t('builder.customSections.itemsLabel')}
               placeholder={t('builder.customSections.itemsPlaceholder')}
+            />
+          );
+
+        case 'labeledLists':
+          return (
+            <GenericLabeledListForm
+              items={customSection?.namedLists || []}
+              onChange={(namedLists) => updateCustomSection({ namedLists })}
             />
           );
 
