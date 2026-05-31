@@ -19,6 +19,7 @@ export interface ExperienceEntry {
   company: string;
   location?: string;
   years?: string;
+  current?: boolean;
   description: string[];
 }
 
@@ -27,6 +28,7 @@ export interface EducationEntry {
   institution: string;
   degree: string;
   years?: string;
+  current?: boolean;
   description?: string;
 }
 
@@ -35,6 +37,7 @@ export interface ProjectEntry {
   name: string;
   role?: string;
   years?: string;
+  current?: boolean;
   description: string[];
 }
 

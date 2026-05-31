@@ -32,6 +32,8 @@ export interface Experience {
   company?: string;
   location?: string;
   years?: string;
+  // Metadata only: marks the role as ongoing. Never rendered on the resume.
+  current?: boolean;
   description?: string[];
 }
 
@@ -40,6 +42,8 @@ export interface Education {
   institution?: string;
   degree?: string;
   years?: string;
+  // Metadata only: marks the degree as in progress. Never rendered on the resume.
+  current?: boolean;
   description?: string;
 }
 
@@ -48,6 +52,8 @@ export interface Project {
   name?: string;
   role?: string;
   years?: string;
+  // Metadata only: marks the project as ongoing. Never rendered on the resume.
+  current?: boolean;
   github?: string;
   website?: string;
   description?: string[];

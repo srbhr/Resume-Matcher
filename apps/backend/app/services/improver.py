@@ -4,6 +4,7 @@ import copy
 import json
 import logging
 import re
+from datetime import date
 from difflib import SequenceMatcher
 from dataclasses import dataclass
 from typing import Any, Callable
@@ -675,12 +676,24 @@ async def generate_resume_diffs(
     # LLM-011: Sanitize job description
     sanitized_jd = _sanitize_user_input(job_description)
 
-    # Use structured JSON if available with month precision, else markdown
-    if original_resume_data is not None:
-        if _has_month_in_dates(original_resume_data):
-            resume_input = json.dumps(original_resume_data)
-        else:
-            resume_input = original_resume
+    current_date = date.today().isoformat()
+
+    # Use structured JSON when it carries information the prompt relies on:
+    # month-precision dates, or an ongoing-entry ("current") flag. The structured
+    # form also gets a live `_meta.current_date` anchor so the model can reason
+    # about whether dated entries are in progress or completed. Otherwise fall
+    # back to markdown (the flags only exist in the structured representation).
+    if original_resume_data is not None and (
+        _has_month_in_dates(original_resume_data)
+        or _has_ongoing_entry(original_resume_data)
+    ):
+        resume_for_prompt = copy.deepcopy(original_resume_data)
+        meta = resume_for_prompt.get("_meta")
+        if not isinstance(meta, dict):
+            meta = {}
+        meta["current_date"] = current_date
+        resume_for_prompt["_meta"] = meta
+        resume_input = json.dumps(resume_for_prompt)
     else:
         resume_input = original_resume
 
@@ -690,6 +703,7 @@ async def generate_resume_diffs(
         skill_targets=_prepare_skill_targets_for_prompt(skill_targets),
         job_description=sanitized_jd,
         original_resume=resume_input,
+        current_date=current_date,
     )
 
     prompt = _append_user_guidance(
@@ -786,6 +800,22 @@ def _has_month_in_dates(data: dict[str, Any]) -> bool:
                         years = item.get("years", "")
                         if isinstance(years, str) and MONTH_PATTERN.search(years):
                             return True
+    return False
+
+
+def _has_ongoing_entry(data: dict[str, Any]) -> bool:
+    """Check whether any work/education/project entry is flagged as ongoing.
+
+    The ``current`` flag is metadata set by the user; ``True`` means a role or
+    project is ongoing, or (for education) the degree is in progress.
+    """
+    for section_key in ("workExperience", "education", "personalProjects"):
+        entries = data.get(section_key, [])
+        if not isinstance(entries, list):
+            continue
+        for entry in entries:
+            if isinstance(entry, dict) and entry.get("current") is True:
+                return True
     return False
 
 

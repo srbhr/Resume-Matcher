@@ -146,6 +146,10 @@ class Experience(BaseModel):
     company: str = ""
     location: str | None = None
     years: str = ""
+    # Metadata flag: True marks the role as ongoing ("current"). Purely
+    # informational — it never renders on the resume; it feeds the tailoring
+    # layer so the model can reason about ongoing vs. completed roles.
+    current: bool = False
     description: list[str] = Field(default_factory=list)
 
     @field_validator("description", mode="before")
@@ -161,6 +165,10 @@ class Education(BaseModel):
     institution: str = ""
     degree: str = ""
     years: str = ""
+    # Metadata flag: True marks the degree as in progress (the candidate is
+    # currently enrolled). Purely informational — it never renders on the
+    # resume; it lets the tailoring layer infer current-student status.
+    current: bool = False
     description: str | None = None
 
     @field_validator("description", mode="before")
@@ -176,6 +184,10 @@ class Project(BaseModel):
     name: str = ""
     role: str = ""
     years: str = ""
+    # Metadata flag: True marks the project as ongoing ("current"). Purely
+    # informational — it never renders on the resume; it feeds the tailoring
+    # layer so the model can reason about ongoing vs. completed projects.
+    current: bool = False
     github: str | None = None
     website: str | None = None
     description: list[str] = Field(default_factory=list)

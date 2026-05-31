@@ -313,7 +313,9 @@
         "organization": "組織",
         "location": "場所",
         "years": "期間",
-        "descriptionPoints": "説明ポイント"
+        "descriptionPoints": "説明ポイント",
+        "current": "現在",
+        "ongoingHint": "メタデータのみ — 履歴書は変更されません"
       },
       "actions": {
         "addPoint": "ポイントを追加"
@@ -351,7 +353,8 @@
           "institution": "学校/機関",
           "degree": "学位",
           "description": "説明",
-          "descriptionOptional": "説明（任意）"
+          "descriptionOptional": "説明（任意）",
+          "inProgress": "在学中"
         },
         "placeholders": {
           "institution": "大学名",

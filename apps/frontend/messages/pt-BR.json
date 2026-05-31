@@ -313,7 +313,9 @@
         "organization": "Organização",
         "location": "Localização",
         "years": "Período",
-        "descriptionPoints": "Pontos de Descrição"
+        "descriptionPoints": "Pontos de Descrição",
+        "current": "Atual",
+        "ongoingHint": "Apenas metadados — não altera seu currículo"
       },
       "actions": {
         "addPoint": "Adicionar Ponto"
@@ -351,7 +353,8 @@
           "institution": "Instituição",
           "degree": "Formação",
           "description": "Descrição",
-          "descriptionOptional": "Descrição (Opcional)"
+          "descriptionOptional": "Descrição (Opcional)",
+          "inProgress": "Em andamento"
         },
         "placeholders": {
           "institution": "Nome da Universidade",

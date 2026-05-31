@@ -18,6 +18,7 @@ const RichTextEditor = dynamic(
   }
 );
 import { Experience } from '@/components/dashboard/resume-component';
+import { ToggleSwitch } from '@/components/ui/toggle-switch';
 import { Plus, Trash2 } from 'lucide-react';
 import { useTranslations } from '@/lib/i18n';
 import {
@@ -88,7 +89,11 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({ data, onChange }
     onChange(data.filter((item) => item.id !== id));
   };
 
-  const handleChange = (id: number, field: keyof Experience, value: string | string[]) => {
+  const handleChange = (
+    id: number,
+    field: keyof Experience,
+    value: string | string[] | boolean
+  ) => {
     onChange(
       data.map((item) => {
         if (item.id === id) {
@@ -268,6 +273,15 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({ data, onChange }
                           </Button>
                         </div>
                       ))}
+                    </div>
+
+                    <div className="mt-4">
+                      <ToggleSwitch
+                        checked={item.current ?? false}
+                        onCheckedChange={(checked) => handleChange(item.id, 'current', checked)}
+                        label={t('builder.genericItemForm.fields.current')}
+                        description={t('builder.genericItemForm.fields.ongoingHint')}
+                      />
                     </div>
                   </div>
                 </DraggableListItem>

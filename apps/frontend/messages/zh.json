@@ -313,7 +313,9 @@
         "organization": "组织/公司",
         "location": "地点",
         "years": "时间",
-        "descriptionPoints": "描述要点"
+        "descriptionPoints": "描述要点",
+        "current": "当前",
+        "ongoingHint": "仅元数据 — 不会更改你的简历"
       },
       "actions": {
         "addPoint": "添加要点"
@@ -351,7 +353,8 @@
           "institution": "学校/机构",
           "degree": "学位/专业",
           "description": "描述",
-          "descriptionOptional": "描述（可选）"
+          "descriptionOptional": "描述（可选）",
+          "inProgress": "进行中"
         },
         "placeholders": {
           "institution": "某某大学",

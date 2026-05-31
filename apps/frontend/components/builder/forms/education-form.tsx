@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Education } from '@/components/dashboard/resume-component';
+import { ToggleSwitch } from '@/components/ui/toggle-switch';
 import { Plus, Trash2 } from 'lucide-react';
 import { useTranslations } from '@/lib/i18n';
 import {
@@ -75,7 +76,7 @@ export const EducationForm: React.FC<EducationFormProps> = ({ data, onChange }) 
     onChange(data.filter((item) => item.id !== id));
   };
 
-  const handleChange = (id: number, field: keyof Education, value: string) => {
+  const handleChange = (id: number, field: keyof Education, value: string | boolean) => {
     onChange(
       data.map((item) => {
         if (item.id === id) {
@@ -179,6 +180,15 @@ export const EducationForm: React.FC<EducationFormProps> = ({ data, onChange }) 
                         onChange={(e) => handleChange(item.id, 'description', e.target.value)}
                         className="min-h-[60px] text-black text-sm rounded-none border-black bg-white"
                         placeholder={t('builder.forms.education.placeholders.description')}
+                      />
+                    </div>
+
+                    <div className="mt-4">
+                      <ToggleSwitch
+                        checked={item.current ?? false}
+                        onCheckedChange={(checked) => handleChange(item.id, 'current', checked)}
+                        label={t('builder.forms.education.fields.inProgress')}
+                        description={t('builder.genericItemForm.fields.ongoingHint')}
                       />
                     </div>
                   </div>

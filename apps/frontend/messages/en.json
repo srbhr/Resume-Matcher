@@ -313,7 +313,9 @@
         "organization": "Organization",
         "location": "Location",
         "years": "Years",
-        "descriptionPoints": "Description Points"
+        "descriptionPoints": "Description Points",
+        "current": "Current",
+        "ongoingHint": "Metadata only — does not change your resume"
       },
       "actions": {
         "addPoint": "Add Point"
@@ -351,7 +353,8 @@
           "institution": "Institution",
           "degree": "Degree",
           "description": "Description",
-          "descriptionOptional": "Description (Optional)"
+          "descriptionOptional": "Description (Optional)",
+          "inProgress": "In Progress"
         },
         "placeholders": {
           "institution": "University Name",

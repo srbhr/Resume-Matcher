@@ -7,7 +7,7 @@ import json
 import logging
 import unicodedata
 from collections.abc import AsyncGenerator, Awaitable
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any, NoReturn
 from uuid import uuid4
@@ -1955,9 +1955,15 @@ async def export_resume_json(resume_id: str) -> dict[str, Any]:
     if not resume:
         raise HTTPException(status_code=404, detail="Resume not found")
 
+    resume_payload = _get_resume_json_payload(resume)
+    # Stamp a live current-date anchor into the JSON so it is always accurate
+    # (never frozen/stale in storage). This is the same anchor the tailoring
+    # layer reads to reason about in-progress degrees and ongoing roles.
+    resume_payload["_meta"] = {"current_date": date.today().isoformat()}
+
     return {
         "metadata": _build_json_export_metadata(resume),
-        "resume": _get_resume_json_payload(resume),
+        "resume": resume_payload,
     }
 
 
