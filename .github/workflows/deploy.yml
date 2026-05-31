@@ -27,7 +27,8 @@ jobs:
               "$DEPLOY_USER@$DEPLOY_HOST" \
               'cd /home/andrew/home-lab/Resume/Resume-Matcher && \
                git pull && \
-               podman build --no-cache --progress=plain -t localhost/resume-matcher:latest . && \
+               podman system prune -af && \
+               podman build --progress=plain -t localhost/resume-matcher:latest . && \
                podman ps -q --filter name=resume-matcher | xargs -r podman stop && \
                podman ps -aq --filter name=resume-matcher | xargs -r podman rm'
 
