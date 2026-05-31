@@ -58,9 +58,11 @@ app = FastAPI(
 )
 
 # CORS middleware - origins configurable via CORS_ORIGINS env var
+# Chrome extension origin allowed via EXTENSION_CORS_ORIGIN (see config.py)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.effective_cors_origins,
+    allow_origin_regex=settings.extension_cors_origin,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
