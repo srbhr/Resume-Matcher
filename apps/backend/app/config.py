@@ -189,10 +189,11 @@ class Settings(BaseSettings):
         "http://localhost:3000",
         "http://127.0.0.1:3000",
     ]
-    # Restrict to a specific extension ID (e.g. "chrome-extension://abcdef...") via
-    # EXTENSION_CORS_ORIGIN env var. Defaults to allowing any local extension for
-    # developer convenience; set an exact ID in shared / production environments.
-    extension_cors_origin: str = r"chrome-extension://.*"
+    # Set EXTENSION_CORS_ORIGIN to your packed extension ID to enable the Chrome
+    # extension. Use the exact origin (e.g. "chrome-extension://abcdef...") for
+    # production, or "chrome-extension://.*" during local development. Disabled
+    # (None) by default so shared/server deployments are unaffected.
+    extension_cors_origin: str | None = None
 
     @property
     def effective_cors_origins(self) -> list[str]:

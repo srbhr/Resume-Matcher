@@ -297,8 +297,27 @@ btnUploadResume.addEventListener('click', async () => {
 });
 
 btnSaveSettings.addEventListener('click', async () => {
-  const backendUrl = inputBackendUrl.value.trim().replace(/\/$/, '') || DEFAULT_BACKEND;
-  const resumeId   = inputResumeId.value.trim();
+  const rawUrl   = inputBackendUrl.value.trim().replace(/\/$/, '') || DEFAULT_BACKEND;
+  const resumeId = inputResumeId.value.trim();
+
+  // Validate URL format and restrict to localhost (host_permissions only covers localhost)
+  let parsedUrl;
+  try {
+    parsedUrl = new URL(rawUrl);
+  } catch {
+    showMsg(msgSettings, 'Backend URL is not a valid URL (e.g. http://localhost:8000).', 'error');
+    return;
+  }
+  if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+    showMsg(msgSettings, 'Backend URL must start with http:// or https://.', 'error');
+    return;
+  }
+  const isLocalhost = parsedUrl.hostname === 'localhost' || parsedUrl.hostname === '127.0.0.1';
+  if (!isLocalhost) {
+    showMsg(msgSettings, 'Non-localhost URLs require updating host_permissions in the extension manifest.', 'error');
+    return;
+  }
+  const backendUrl = rawUrl;
 
   if (resumeId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(resumeId)) {
     showMsg(msgSettings, 'Resume ID must be a valid UUID (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx).', 'error');
