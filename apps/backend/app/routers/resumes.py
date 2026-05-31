@@ -1561,12 +1561,21 @@ async def _improve_confirm_flow(
                 detail="Preview required before confirmation. Please retry preview.",
             )
 
+        # The payload may legitimately differ from the previewed data: the
+        # review modal lets users reject/edit individual changes, rebuilding the
+        # confirm payload from accepted changes only (see diff-preview-modal's
+        # buildFinalPreview). We therefore only require that a preview ran for
+        # this job (allowed_hashes non-empty, checked above) and do NOT reject on
+        # an exact-hash mismatch. This is not a security boundary anyway: clients
+        # can already persist arbitrary ResumeData via PATCH /resumes/{id}.
+        # personalInfo immutability is enforced separately by
+        # _validate_confirm_payload above.
         request_hash = _hash_improved_data(improved_data)
         if request_hash not in allowed_hashes:
-            logger.warning("Resume confirm rejected due to preview hash mismatch.")
-            raise HTTPException(
-                status_code=400,
-                detail="Invalid improved resume data. Please retry preview.",
+            logger.info(
+                "Confirm payload differs from previewed data for job %s "
+                "(expected with per-change accept/reject/edit); accepting.",
+                request.job_id,
             )
 
         stage = "calculate_diff"
