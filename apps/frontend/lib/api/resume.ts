@@ -117,6 +117,28 @@ export interface GuidanceSet {
   outreach?: string | null;
 }
 
+export interface ClarifyQuestion {
+  question_id: string;
+  question: string;
+  placeholder: string;
+  context: string;
+}
+
+export interface ClarifyResponse {
+  questions: ClarifyQuestion[];
+  analysis_summary: string;
+}
+
+export interface ClarificationItem {
+  question: string;
+  answer: string;
+}
+
+export interface ClarificationSet {
+  items: ClarificationItem[];
+  freeform?: string | null;
+}
+
 interface ImproveResumeConfirmRequest {
   resume_id: string;
   job_id: string;
@@ -126,6 +148,19 @@ interface ImproveResumeConfirmRequest {
     lineNumber?: number | null;
   }>;
   guidance?: GuidanceSet | null;
+  clarifications?: ClarificationSet | null;
+}
+
+export interface RefineChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+export interface RefineChatResponse {
+  reply: string;
+  updated_preview: ResumeData | null;
+  diff_summary: import('@/components/common/resume_previewer_context').ResumeDiffSummary | null;
+  detailed_changes: import('@/components/common/resume_previewer_context').ResumeFieldDiff[] | null;
 }
 
 function normalizeResumeId(resumeId: string): string {
@@ -265,19 +300,61 @@ export async function improveResume(
   });
 }
 
+/** Fetches pre-tailoring clarifying questions for the candidate */
+export async function fetchClarifyingQuestions(
+  resumeId: string,
+  jobId: string,
+  promptId?: string,
+  guidance?: GuidanceSet | null
+): Promise<ClarifyResponse> {
+  const res = await apiPost('/resumes/improve/clarify', {
+    resume_id: resumeId,
+    job_id: jobId,
+    prompt_id: promptId ?? null,
+    guidance: guidance ?? null,
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Clarify request failed with status ${res.status}: ${text}`);
+  }
+  return res.json();
+}
+
 /** Previews the resume improvement without saving */
 export async function previewImproveResume(
   resumeId: string,
   jobId: string,
   promptId?: string,
-  guidance?: GuidanceSet | null
+  guidance?: GuidanceSet | null,
+  clarifications?: ClarificationSet | null
 ): Promise<ImprovedResult> {
   return postImprove('/resumes/improve/preview', {
     resume_id: resumeId,
     job_id: jobId,
     prompt_id: promptId ?? null,
     guidance: guidance ?? null,
+    clarifications: clarifications ?? null,
   });
+}
+
+/** Sends a chat turn to refine the unsaved tailored preview */
+export async function refinePreviewChat(payload: {
+  resume_id: string;
+  tailor_session_id?: string | null;
+  current_preview: ResumeData;
+  message: string;
+  history: RefineChatMessage[];
+}): Promise<RefineChatResponse> {
+  const res = await apiPost(
+    '/resumes/improve/refine-chat',
+    payload as unknown as Record<string, unknown>,
+    60_000
+  );
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || `Refine chat failed (status ${res.status}).`);
+  }
+  return res.json();
 }
 
 export interface RegenerateChangePayload {

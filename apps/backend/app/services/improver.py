@@ -17,12 +17,18 @@ from app.prompts.templates.job_description import (
 )
 from app.prompts.templates.resume import (
     DEFAULT_RESUME_IMPROVE_PROMPT_ID,
+    RESUME_CLARIFY_PROMPT,
     RESUME_FULL_TAILOR_PROMPT,
     RESUME_IMPROVE_PROMPT,
     RESUME_NUDGE_PROMPT,
 )
 from app.schemas import ResumeData, ResumeFieldDiff, ResumeDiffSummary
-from app.schemas.models import ImproveDiffResult, ResumeChange
+from app.schemas.models import (
+    ClarificationSet,
+    ClarifyQuestion,
+    ImproveDiffResult,
+    ResumeChange,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -628,6 +634,140 @@ def _append_user_guidance(
     return prompt + "\n\n" + "\n\n".join(blocks)
 
 
+def _append_clarifications(
+    prompt: str,
+    clarifications: "ClarificationSet | None",
+) -> str:
+    """Append candidate-provided clarifying Q&A to a resume-editing prompt.
+
+    Only answered (non-empty) items are included. The block is labelled as
+    factual context from the candidate — bounded by the plausibility floor.
+    """
+    if not clarifications:
+        return prompt
+
+    lines: list[str] = []
+    for item in clarifications.items:
+        q = (item.question or "").strip()
+        a = _sanitize_user_input((item.answer or "").strip())
+        if q and a:
+            lines.append(f"Q: {q}\nA: {a}")
+
+    freeform = _sanitize_user_input((clarifications.freeform or "").strip())
+    if freeform:
+        lines.append(f"Additional context from candidate:\n{freeform}")
+
+    if not lines:
+        return prompt
+
+    block = (
+        "CLARIFYING Q&A (candidate-provided factual context — treat as ground truth, "
+        "still bounded by the plausibility floor):\n\n"
+        + "\n\n".join(lines)
+    )
+    return prompt + "\n\n" + block
+
+
+async def generate_clarifying_questions(
+    original_resume_data: dict[str, Any],
+    job_description: str,
+    guidance: "GuidanceSet | None" = None,
+    language: str = "en",
+) -> list[ClarifyQuestion]:
+    """Generate pre-tailoring clarifying questions for the candidate.
+
+    Compares the resume to the job description and surfaces gaps where the
+    candidate's answers would materially improve the tailored output. Returns
+    an empty list when the resume is a strong match or no questions would help.
+
+    Args:
+        original_resume_data: Structured resume JSON dict.
+        job_description: Target job description text.
+        guidance: Optional user guidance (included as context if present).
+        language: Output language code (en, es, zh, ja).
+
+    Returns:
+        List of ClarifyQuestion objects (may be empty).
+    """
+    from app.schemas.models import GuidanceSet  # avoid circular at module level
+
+    sanitized_jd = _sanitize_user_input(job_description)
+    current_date = date.today().isoformat()
+
+    resume_input = json.dumps(original_resume_data, ensure_ascii=False)
+
+    # Build optional guidance block
+    guidance_lines: list[str] = []
+    if guidance:
+        if guidance.general and guidance.general.strip():
+            guidance_lines.append(
+                "General user guidance: "
+                + _sanitize_user_input(guidance.general.strip())
+            )
+        if guidance.resume and guidance.resume.strip():
+            guidance_lines.append(
+                "Resume-specific guidance: "
+                + _sanitize_user_input(guidance.resume.strip())
+            )
+    guidance_block = (
+        "USER GUIDANCE (already provided):\n" + "\n".join(guidance_lines)
+        if guidance_lines
+        else ""
+    )
+
+    prompt = RESUME_CLARIFY_PROMPT.format(
+        current_date=current_date,
+        job_description=sanitized_jd,
+        original_resume=resume_input,
+        guidance_block=guidance_block,
+    )
+
+    try:
+        result = await complete_json(
+            prompt=prompt,
+            system_prompt=(
+                "You are a careful resume coach. Identify genuine information gaps. "
+                "Output only valid JSON with the questions array."
+            ),
+            max_tokens=2048,
+            schema_type="enrichment",
+        )
+    except Exception as e:
+        logger.warning("Clarifying questions generation failed: %s", e)
+        return []
+
+    raw_questions = result.get("questions", [])
+    if not isinstance(raw_questions, list):
+        logger.warning("Clarify LLM returned non-list questions: %s", type(raw_questions))
+        return []
+
+    questions: list[ClarifyQuestion] = []
+    for raw in raw_questions:
+        if not isinstance(raw, dict):
+            continue
+        qid = str(raw.get("question_id", f"q_{len(questions)}"))
+        question_text = str(raw.get("question", "")).strip()
+        if not question_text:
+            continue
+        questions.append(
+            ClarifyQuestion(
+                question_id=qid,
+                question=question_text,
+                placeholder=str(raw.get("placeholder", "")),
+                context=str(raw.get("context", "")),
+            )
+        )
+
+    # Hard cap at 5
+    return questions[:5]
+
+
+# Type alias import used by _append_clarifications above
+from typing import TYPE_CHECKING  # noqa: E402
+if TYPE_CHECKING:
+    from app.schemas.models import GuidanceSet
+
+
 async def generate_resume_diffs(
     original_resume: str,
     job_description: str,
@@ -638,6 +778,7 @@ async def generate_resume_diffs(
     skill_targets: list[dict[str, Any]] | None = None,
     user_guidance: str | None = None,
     general_guidance: str | None = None,
+    clarifications: "ClarificationSet | None" = None,
 ) -> ImproveDiffResult:
     """Generate targeted resume diffs via LLM.
 
@@ -712,6 +853,8 @@ async def generate_resume_diffs(
         category_guidance=user_guidance,
         category_label="resume",
     )
+
+    prompt = _append_clarifications(prompt, clarifications)
 
     result = await complete_json(
         prompt=prompt,

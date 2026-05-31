@@ -619,6 +619,8 @@
       "description": "Todos os campos são opcionais. Use o campo Geral para contexto compartilhado entre todos os artefatos gerados, e os campos por categoria para instruções específicas.",
       "contextLabel": "Personalizando para",
       "strategyLabel": "Estratégia",
+      "toggleLabel": "Adicionar orientação",
+      "toggleDescription": "Forneça instruções opcionais para moldar o tom, o enquadramento ou o foco do conteúdo gerado.",
       "fields": {
         "general": {
           "label": "Orientações gerais",
@@ -655,6 +657,31 @@
       "timeout": "A solicitação expirou. Tente novamente com uma descrição de vaga mais curta ou verifique sua conexão.",
       "failedToPreview": "Não foi possível pré-visualizar o currículo. Verifique sua chave de API em Configurações e tente novamente.",
       "failedToConfirm": "Não foi possível aplicar as alterações. Tente novamente."
+    },
+    "clarifyStep": {
+      "subhead": "// ASSISTENTE IA",
+      "questionProgress": "Pergunta {current} de {total}",
+      "freeformProgress": "Contexto adicional ({current} de {total})",
+      "freeformHeading": "Algo mais a adicionar?",
+      "freeformDescription": "Opcional: compartilhe qualquer contexto que possa ajudar a IA a personalizar seu currículo com mais precisão.",
+      "freeformPlaceholder": "Exemplo: Deixei esse cargo após um ano devido a uma aquisição, não por desempenho.",
+      "answerPlaceholder": "Digite sua resposta aqui, ou clique em Pular.",
+      "skip": "Pular",
+      "continueToGenerate": "Continuar para gerar",
+      "shortcutHint": "Ctrl+Enter para continuar",
+      "analyzing": "Analisando..."
+    },
+    "previewChat": {
+      "title": "Assistente IA",
+      "subtitle": "Faça perguntas ou solicite revisões na prévia personalizada.",
+      "toggleLabel": "Chat IA",
+      "toggleTitle": "Alternar painel de chat IA",
+      "emptyState": "Faça uma pergunta ou solicite uma alteração no currículo personalizado.",
+      "inputPlaceholder": "Exemplo: Reescreva o resumo para enfatizar a experiência de liderança.",
+      "sendTitle": "Enviar mensagem",
+      "thinking": "Pensando...",
+      "sendError": "Falha ao enviar mensagem. Tente novamente.",
+      "shortcutHint": "Ctrl+Enter para enviar"
     }
   },
   "settings": {

@@ -619,6 +619,8 @@
       "description": "すべての項目は任意です。General はすべての生成物に共通する文脈、カテゴリ別の項目は特定の出力への指示として使用されます。",
       "contextLabel": "対象",
       "strategyLabel": "戦略",
+      "toggleLabel": "ガイダンスを追加",
+      "toggleDescription": "生成コンテンツのトーン、フレーム、フォーカスを形成するためのオプションの指示を提供します。",
       "fields": {
         "general": {
           "label": "全般ガイダンス",
@@ -655,6 +657,31 @@
       "timeout": "リクエストがタイムアウトしました。より短い求人内容で再試行するか、接続を確認してください。",
       "failedToPreview": "履歴書をプレビューできませんでした。設定で API キーを確認してから、もう一度お試しください。",
       "failedToConfirm": "変更を適用できませんでした。もう一度お試しください。"
+    },
+    "clarifyStep": {
+      "subhead": "// AI アシスタント",
+      "questionProgress": "質問 {current} / {total}",
+      "freeformProgress": "追加コンテキスト ({current} / {total})",
+      "freeformHeading": "他に追加することはありますか？",
+      "freeformDescription": "オプション：AI が履歴書をより正確にカスタマイズするのに役立つコンテキストを共有してください。",
+      "freeformPlaceholder": "例：この職を1年後に退職したのは会社買収のためであり、業績の問題ではありません。",
+      "answerPlaceholder": "ここに回答を入力するか、スキップをクリックしてください。",
+      "skip": "スキップ",
+      "continueToGenerate": "生成を続ける",
+      "shortcutHint": "Ctrl+Enterで続ける",
+      "analyzing": "分析中..."
+    },
+    "previewChat": {
+      "title": "AI アシスタント",
+      "subtitle": "質問したり、カスタマイズされたプレビューの修正を依頼したりできます。",
+      "toggleLabel": "AI チャット",
+      "toggleTitle": "AI チャットパネルを切り替え",
+      "emptyState": "カスタマイズされた履歴書に関する質問や変更の依頼をしてください。",
+      "inputPlaceholder": "例：リーダーシップ経験を強調するようにサマリーを書き直してください。",
+      "sendTitle": "メッセージを送信",
+      "thinking": "考え中...",
+      "sendError": "メッセージの送信に失敗しました。もう一度お試しください。",
+      "shortcutHint": "Ctrl+Enterで送信"
     }
   },
   "settings": {

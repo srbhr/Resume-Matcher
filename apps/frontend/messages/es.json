@@ -619,6 +619,8 @@
       "description": "Todos los campos son opcionales. Usa General para contexto compartido entre todos los artefactos generados, y los campos por categoría para instrucciones específicas.",
       "contextLabel": "Adaptando para",
       "strategyLabel": "Estrategia",
+      "toggleLabel": "Añadir orientación",
+      "toggleDescription": "Proporciona instrucciones opcionales para dar forma al tono, encuadre o enfoque del resultado generado.",
       "fields": {
         "general": {
           "label": "Indicaciones generales",
@@ -646,6 +648,31 @@
           "placeholder": "Ejemplo: Breve, conversacional, máximo dos párrafos."
         }
       }
+    },
+    "clarifyStep": {
+      "subhead": "// ASISTENTE IA",
+      "questionProgress": "Pregunta {current} de {total}",
+      "freeformProgress": "Contexto adicional ({current} de {total})",
+      "freeformHeading": "¿Algo más que añadir?",
+      "freeformDescription": "Opcional: comparte cualquier contexto que pueda ayudar a la IA a adaptar tu currículum con más precisión.",
+      "freeformPlaceholder": "Ejemplo: Dejé este puesto después de un año debido a una adquisición, no por rendimiento.",
+      "answerPlaceholder": "Escribe tu respuesta aquí, o haz clic en Omitir.",
+      "skip": "Omitir",
+      "continueToGenerate": "Continuar a la generación",
+      "shortcutHint": "Ctrl+Intro para continuar",
+      "analyzing": "Analizando..."
+    },
+    "previewChat": {
+      "title": "Asistente IA",
+      "subtitle": "Haz preguntas o solicita revisiones de la vista previa.",
+      "toggleLabel": "Chat IA",
+      "toggleTitle": "Alternar panel de chat IA",
+      "emptyState": "Haz una pregunta o solicita un cambio en el currículum adaptado.",
+      "inputPlaceholder": "Ejemplo: Reescribe el resumen para enfatizar la experiencia de liderazgo.",
+      "sendTitle": "Enviar mensaje",
+      "thinking": "Pensando...",
+      "sendError": "No se pudo enviar el mensaje. Inténtalo de nuevo.",
+      "shortcutHint": "Ctrl+Intro para enviar"
     },
     "errors": {
       "jobDescriptionTooShort": "La descripción del trabajo es demasiado corta. Añade más detalles e inténtalo de nuevo.",

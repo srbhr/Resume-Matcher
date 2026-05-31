@@ -520,6 +520,41 @@ class JobUploadResponse(BaseModel):
     request: dict[str, Any]
 
 
+# Clarifying Questions Models
+class ClarifyQuestion(BaseModel):
+    """A single AI-generated clarifying question for the candidate."""
+
+    question_id: str
+    question: str
+    placeholder: str = ""
+    context: str = ""
+
+
+class ClarifyResponse(BaseModel):
+    """Response from the pre-tailoring clarify endpoint."""
+
+    questions: list[ClarifyQuestion]
+    analysis_summary: str = ""
+
+
+class ClarificationItem(BaseModel):
+    """A single answered clarifying question."""
+
+    question: str
+    answer: str
+
+
+class ClarificationSet(BaseModel):
+    """All candidate answers collected during the pre-tailoring Q&A step.
+
+    Only answered (non-skipped) items are included. ``freeform`` is the
+    optional open-ended addition at the end of the Q&A session.
+    """
+
+    items: list[ClarificationItem] = Field(default_factory=list)
+    freeform: str | None = None
+
+
 # Improvement Models
 class GuidanceSet(BaseModel):
     """Optional user-provided guidance for generation.
@@ -537,6 +572,15 @@ class GuidanceSet(BaseModel):
     outreach: str | None = None
 
 
+class ClarifyRequest(BaseModel):
+    """Request to generate pre-tailoring clarifying questions."""
+
+    resume_id: str
+    job_id: str
+    prompt_id: str | None = None
+    guidance: GuidanceSet | None = None
+
+
 class ImproveResumeRequest(BaseModel):
     """Request to improve/tailor a resume."""
 
@@ -544,6 +588,7 @@ class ImproveResumeRequest(BaseModel):
     job_id: str
     prompt_id: str | None = None
     guidance: GuidanceSet | None = None
+    clarifications: ClarificationSet | None = None
 
 
 class ImprovementSuggestion(BaseModel):
@@ -655,6 +700,7 @@ class ImproveResumeConfirmRequest(BaseModel):
     improved_data: ResumeData
     improvements: list[ImprovementSuggestion]
     guidance: GuidanceSet | None = None
+    clarifications: ClarificationSet | None = None
 
 
 # Config Models

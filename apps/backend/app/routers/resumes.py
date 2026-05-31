@@ -9,7 +9,7 @@ import unicodedata
 from collections.abc import AsyncGenerator, Awaitable
 from datetime import date, datetime, timezone
 from pathlib import Path
-from typing import Any, NoReturn
+from typing import Any, Literal, NoReturn
 from uuid import uuid4
 
 from fastapi import APIRouter, File, Form, HTTPException, Query, UploadFile
@@ -23,6 +23,9 @@ from app.config import settings
 
 logger = logging.getLogger(__name__)
 from app.schemas import (
+    ClarificationSet,
+    ClarifyRequest,
+    ClarifyResponse,
     GenerateContentResponse,
     GenerateCounterpartRequest,
     GenerateCounterpartResponse,
@@ -59,6 +62,7 @@ from app.services.improver import (
     MONTH_PATTERN,
     apply_diffs,
     extract_job_keywords,
+    generate_clarifying_questions,
     generate_improvements,
     generate_skill_target_plan,
     generate_resume_diffs,
@@ -552,6 +556,7 @@ async def _generate_auxiliary_messages(
     enable_cover_letter: bool,
     enable_outreach: bool,
     guidance: GuidanceSet | None = None,
+    clarifications: ClarificationSet | None = None,
 ) -> tuple[str | None, str | None, str | None, list[str]]:
     """Generate cover letter, outreach message, and resume title.
 
@@ -568,7 +573,31 @@ async def _generate_auxiliary_messages(
     generation_tasks.append(generate_resume_title(job_content, language))
     task_labels.append("title")
 
-    general_guidance = guidance.general if guidance else None
+    # Build enriched general guidance: original guidance + clarifications context
+    raw_general = guidance.general if guidance else None
+    clarify_context: str | None = None
+    if clarifications:
+        lines: list[str] = []
+        for item in clarifications.items:
+            q = (item.question or "").strip()
+            a = (item.answer or "").strip()
+            if q and a:
+                lines.append(f"Q: {q}\nA: {a}")
+        if clarifications.freeform and clarifications.freeform.strip():
+            lines.append(f"Additional context: {clarifications.freeform.strip()}")
+        if lines:
+            clarify_context = (
+                "Candidate-provided context (factual, treat as ground truth):\n"
+                + "\n\n".join(lines)
+            )
+
+    general_guidance: str | None
+    if raw_general and clarify_context:
+        general_guidance = raw_general + "\n\n" + clarify_context
+    elif clarify_context:
+        general_guidance = clarify_context
+    else:
+        general_guidance = raw_general
     if enable_cover_letter:
         generation_tasks.append(
             generate_cover_letter(
@@ -1097,6 +1126,50 @@ async def list_resumes(include_master: bool = Query(False)) -> ResumeListRespons
     return ResumeListResponse(request_id=str(uuid4()), data=summaries)
 
 
+@router.post("/improve/clarify", response_model=ClarifyResponse)
+async def improve_resume_clarify_endpoint(
+    request: ClarifyRequest,
+) -> ClarifyResponse:
+    """Generate pre-tailoring clarifying questions for the candidate.
+
+    Analyzes the resume against the job description and returns a (possibly
+    empty) list of targeted questions. Empty questions means no gaps found —
+    the frontend should skip directly to generation. Non-streaming JSON.
+    """
+    resume = db.get_resume(request.resume_id)
+    if not resume:
+        raise HTTPException(status_code=404, detail="Resume not found")
+
+    job = db.get_job(request.job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job description not found")
+
+    original_resume_data = _get_original_resume_data(resume)
+    if not original_resume_data:
+        raise HTTPException(
+            status_code=422,
+            detail="Resume is missing structured data; re-import the resume and try again.",
+        )
+
+    language = get_content_language()
+
+    try:
+        questions = await generate_clarifying_questions(
+            original_resume_data=original_resume_data,
+            job_description=job["content"],
+            guidance=request.guidance,
+            language=language,
+        )
+    except Exception as e:
+        logger.error("Clarify questions generation failed: %s", e)
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to generate clarifying questions. Please try again.",
+        )
+
+    return ClarifyResponse(questions=questions)
+
+
 @router.post("/improve/preview")
 async def improve_resume_preview_endpoint(
     request: ImproveResumeRequest,
@@ -1256,6 +1329,7 @@ async def _improve_preview_flow(
             skill_targets=skill_targets,
             user_guidance=request.guidance.resume if request.guidance else None,
             general_guidance=request.guidance.general if request.guidance else None,
+            clarifications=request.clarifications,
         )
 
         improved_data, applied_changes, rejected_changes = apply_diffs(
@@ -1600,6 +1674,7 @@ async def _improve_confirm_flow(
             enable_cover_letter,
             enable_outreach,
             guidance=request.guidance,
+            clarifications=request.clarifications,
         )
         response_warnings.extend(aux_warnings)
 
@@ -2725,6 +2800,223 @@ def _build_tailor_session(
         {"role": "assistant", "content": seed_assistant},
     ]
     return session_id
+
+
+# ---------------------------------------------------------------------------
+# Preview refinement chat (used by the approval stage inline chat panel)
+#
+# Operates on the in-memory tailored preview (not a saved resume). Re-uses
+# the _TAILOR_SESSION_CACHE seeded at preview time so master resume + JD
+# are never re-sent. When the model proposes a JSON revision the endpoint
+# re-derives the diff against the original master and returns it.
+# ---------------------------------------------------------------------------
+
+
+class RefineChatMessage(BaseModel):
+    role: Literal["user", "assistant"]
+    content: str
+
+
+class RefineChatRequest(BaseModel):
+    resume_id: str = Field(..., description="Master resume id (for diff derivation)")
+    tailor_session_id: str | None = Field(
+        default=None,
+        description="Session handle from the preview response.",
+    )
+    current_preview: dict[str, Any] = Field(
+        ...,
+        description="The current working tailored resume JSON (after user accept/reject decisions).",
+    )
+    message: str = Field(..., description="The user's chat message.")
+    history: list[RefineChatMessage] = Field(
+        default_factory=list,
+        description="Prior chat turns in this session (user + assistant).",
+        max_length=20,
+    )
+
+
+class RefineChatResponse(BaseModel):
+    reply: str
+    updated_preview: dict[str, Any] | None = None
+    diff_summary: "ResumeDiffSummary | None" = None
+    detailed_changes: "list[ResumeFieldDiff] | None" = None
+
+
+_REFINE_CHAT_SYSTEM_TEMPLATE = """\
+You are a resume tailoring assistant helping a user refine a tailored resume before saving it.
+
+CURRENT TAILORED RESUME (JSON) — always edit THIS version, not any earlier version:
+{current_preview_json}
+
+{jd_context}
+
+BEHAVIOR
+- If the user requests a change to the resume, respond with ONLY valid JSON in this exact shape:
+  {{"reply": "1-3 sentence explanation of what you changed and why", "changes": [<change objects>]}}
+- If the user is asking a question, giving general feedback without a specific edit request, or you
+  cannot safely make the change, respond with PLAIN TEXT only — no JSON, no code fences.
+  Keep plain-text replies concise (1-4 sentences).
+
+CHANGE OBJECT FORMAT (same as the tailoring diff system):
+  {{"path": "<path>", "action": "<action>", "original": "<exact current text>", "value": "<new text>", "reason": "<why>"}}
+
+ALLOWED PATHS AND ACTIONS:
+- "summary"                                     action: "replace"
+- "workExperience[i].description[j]"           action: "replace"
+- "workExperience[i].description"              action: "append"   (adds a new bullet; omit "original")
+- "personalProjects[i].description[j]"        action: "replace"
+- "personalProjects[i].description"           action: "append"
+- "additional.technicalSkills"                 action: "reorder" | "add_skill" | "rename_skill" | "remove_skill"
+
+CONSTRAINTS
+- "original" must match the current text in the resume EXACTLY (copy-paste from the JSON above).
+- Only change what the user asks for; leave everything else untouched.
+- Never invent facts, metrics, employers, degrees, certifications, or titles not in the resume.
+- Do not use em dash characters.
+- If the request would require fabricating information, explain why in plain text and offer the
+  closest honest alternative instead.\
+"""
+
+
+@router.post("/improve/refine-chat", response_model=RefineChatResponse)
+async def refine_preview_chat(
+    request: RefineChatRequest,
+) -> RefineChatResponse:
+    """Conversational chat to refine an unsaved tailored preview.
+
+    The current_preview is always embedded in the system prompt so the model
+    edits the up-to-date version (not a stale cached copy). When the model
+    returns targeted changes they are applied via the existing apply_diffs
+    machinery and a fresh diff is re-derived against the master.
+    """
+    resume = db.get_resume(request.resume_id)
+    if not resume:
+        raise HTTPException(status_code=404, detail="Resume not found")
+
+    original_resume_data = _get_original_resume_data(resume)
+    if not original_resume_data:
+        raise HTTPException(status_code=422, detail="Resume is missing structured data.")
+
+    # Pull JD context from the tailor session if available (master resume + JD
+    # were seeded there at preview time). We use this as extra context only —
+    # the resume the model edits is always current_preview from the request.
+    jd_context = ""
+    if request.tailor_session_id:
+        session_messages = _TAILOR_SESSION_CACHE.get(request.tailor_session_id)
+        if session_messages and len(session_messages) >= 1:
+            # First message in the session contains master resume + JD text
+            seed_content = session_messages[0].get("content", "")
+            # Extract just the job description block if present
+            jd_start = seed_content.find("JOB_DESCRIPTION:")
+            if jd_start != -1:
+                jd_block = seed_content[jd_start:].strip()
+                jd_context = f"TARGET JOB DESCRIPTION (for reference when editing):\n{jd_block}"
+
+    system_prompt = _REFINE_CHAT_SYSTEM_TEMPLATE.format(
+        current_preview_json=json.dumps(request.current_preview, ensure_ascii=False, indent=2),
+        jd_context=jd_context,
+    )
+
+    # Conversation history + current user message (no session blob prepended)
+    history_msgs = [{"role": m.role, "content": m.content} for m in request.history]
+    user_msg = {"role": "user", "content": request.message.strip()}
+    messages = history_msgs + [user_msg]
+
+    try:
+        raw = await asyncio.wait_for(
+            chat_complete(
+                messages=messages,
+                system_prompt=system_prompt,
+                max_tokens=3000,  # changes are small; full resume JSON not needed
+                temperature=0.3,
+            ),
+            timeout=120.0,
+        )
+    except asyncio.TimeoutError:
+        logger.error("refine-chat timed out for resume %s", request.resume_id)
+        raise HTTPException(status_code=504, detail="Chat timed out. Please try again.")
+    except Exception as exc:
+        logger.error("refine-chat failed: %s", exc)
+        raise HTTPException(status_code=500, detail="Chat request failed. Please try again.")
+
+    raw = (raw or "").strip()
+
+    updated_preview: dict[str, Any] | None = None
+    diff_summary: ResumeDiffSummary | None = None
+    detailed_changes: list[ResumeFieldDiff] | None = None
+    reply = raw
+
+    # Try to parse as a targeted-changes proposal
+    try:
+        from app.routers.chat import _extract_json_block  # type: ignore[import]
+        json_str = _extract_json_block(raw)
+        parsed = json.loads(json_str)
+
+        if isinstance(parsed, dict) and "changes" in parsed:
+            raw_changes = parsed.get("changes") or []
+            if not isinstance(raw_changes, list):
+                raw_changes = []
+
+            # Parse into ResumeChange objects (reuse existing schema)
+            change_objs: list[ResumeChange] = []
+            for rc in raw_changes:
+                if not isinstance(rc, dict):
+                    continue
+                try:
+                    change_objs.append(
+                        ResumeChange(
+                            path=str(rc.get("path", "")),
+                            action=rc.get("action", "replace"),
+                            original=rc.get("original"),
+                            value=rc.get("value", ""),
+                            reason=str(rc.get("reason", "")),
+                        )
+                    )
+                except Exception as e:
+                    logger.warning("refine-chat skipping malformed change: %s — %s", rc, e)
+
+            if change_objs:
+                # Apply to current_preview using the same apply_diffs gate
+                applied_preview, applied, rejected = apply_diffs(
+                    original=request.current_preview,
+                    changes=change_objs,
+                    allowed_skill_targets=[],
+                )
+                if rejected:
+                    logger.info(
+                        "refine-chat: %d change(s) rejected by apply_diffs gate",
+                        len(rejected),
+                    )
+
+                try:
+                    # Re-derive the diff against the master resume
+                    from app.services.improver import calculate_resume_diff
+                    diff_summary, detailed_changes = calculate_resume_diff(
+                        original=original_resume_data,
+                        improved=applied_preview,
+                    )
+                except Exception as diff_err:
+                    logger.warning("refine-chat diff derivation failed: %s", diff_err)
+
+                updated_preview = applied_preview
+                reply = str(parsed.get("reply", "Done — I've updated the preview.")).strip()
+            else:
+                # Model returned changes key but it was empty — treat as plain text
+                reply = str(parsed.get("reply", raw)).strip() or raw
+
+    except (json.JSONDecodeError, ValueError):
+        # Plain text reply — model chose not to make edits
+        pass
+    except Exception as exc:
+        logger.warning("refine-chat proposal processing failed: %s", exc)
+        reply = "I ran into a problem applying that change. Could you try rephrasing it?"
+
+    return RefineChatResponse(
+        reply=reply,
+        updated_preview=updated_preview,
+        diff_summary=diff_summary,
+        detailed_changes=detailed_changes,
+    )
 
 
 class RegenerateChangeRequest(BaseModel):

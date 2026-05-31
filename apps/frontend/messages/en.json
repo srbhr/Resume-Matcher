@@ -619,6 +619,8 @@
       "description": "All fields are optional. Use General to provide context shared across every generated artifact, and the category fields to give targeted instructions for a single output.",
       "contextLabel": "Tailoring for",
       "strategyLabel": "Strategy",
+      "toggleLabel": "Add Guidance",
+      "toggleDescription": "Provide optional instructions to shape the tone, framing, or focus of the generated output.",
       "fields": {
         "general": {
           "label": "General guidance",
@@ -646,6 +648,31 @@
           "placeholder": "Example: Short, conversational, two paragraphs max. Mention the mutual connection in the opening line."
         }
       }
+    },
+    "clarifyStep": {
+      "subhead": "// AI ASSISTANT",
+      "questionProgress": "Question {current} of {total}",
+      "freeformProgress": "Additional context ({current} of {total})",
+      "freeformHeading": "Anything else to add?",
+      "freeformDescription": "Optional: share any context that could help the AI tailor your resume more accurately. Leave blank to skip.",
+      "freeformPlaceholder": "e.g. I left this role after a year due to a company acquisition, not performance. Feel free to frame it professionally.",
+      "answerPlaceholder": "Type your answer here, or click Skip to leave it blank.",
+      "skip": "Skip",
+      "continueToGenerate": "Continue to Generate",
+      "shortcutHint": "Ctrl+Enter to continue",
+      "analyzing": "Analyzing..."
+    },
+    "previewChat": {
+      "title": "AI Assistant",
+      "subtitle": "Ask questions or request revisions to the tailored preview.",
+      "toggleLabel": "AI Chat",
+      "toggleTitle": "Toggle AI chat panel",
+      "emptyState": "Ask a question or request a change to the tailored resume.",
+      "inputPlaceholder": "e.g. Rewrite the summary to emphasize leadership experience.",
+      "sendTitle": "Send message",
+      "thinking": "Thinking...",
+      "sendError": "Failed to send message. Please try again.",
+      "shortcutHint": "Ctrl+Enter to send"
     },
     "errors": {
       "jobDescriptionTooShort": "Job description is too short. Add more detail and try again.",

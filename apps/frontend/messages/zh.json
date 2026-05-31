@@ -619,6 +619,8 @@
       "description": "所有字段均为可选。General 用于所有生成内容的共享背景信息；分类字段用于针对特定输出的指引。",
       "contextLabel": "针对",
       "strategyLabel": "策略",
+      "toggleLabel": "添加指导",
+      "toggleDescription": "提供可选说明，以塑造生成内容的语气、框架或重点。",
       "fields": {
         "general": {
           "label": "General guidance",
@@ -655,6 +657,31 @@
       "timeout": "请求超时。请尝试使用更短的职位描述或检查网络连接后重试。",
       "failedToPreview": "无法预览简历。请在设置中检查 API 密钥后重试。",
       "failedToConfirm": "无法应用更改。请重试。"
+    },
+    "clarifyStep": {
+      "subhead": "// AI 助手",
+      "questionProgress": "问题 {current} / {total}",
+      "freeformProgress": "附加背景 ({current} / {total})",
+      "freeformHeading": "还有其他要补充的吗？",
+      "freeformDescription": "可选：分享任何有助于 AI 更准确地定制简历的背景信息。",
+      "freeformPlaceholder": "例如：我在这个职位工作了一年后离职，原因是公司被收购，而非绩效问题。",
+      "answerPlaceholder": "在此输入您的答案，或点击跳过。",
+      "skip": "跳过",
+      "continueToGenerate": "继续生成",
+      "shortcutHint": "Ctrl+Enter 继续",
+      "analyzing": "分析中..."
+    },
+    "previewChat": {
+      "title": "AI 助手",
+      "subtitle": "提问或请求修改定制预览。",
+      "toggleLabel": "AI 对话",
+      "toggleTitle": "切换 AI 对话面板",
+      "emptyState": "提出问题或请求修改定制简历。",
+      "inputPlaceholder": "例如：重写摘要以突出领导力经验。",
+      "sendTitle": "发送消息",
+      "thinking": "思考中...",
+      "sendError": "发送消息失败，请重试。",
+      "shortcutHint": "Ctrl+Enter 发送"
     }
   },
   "settings": {

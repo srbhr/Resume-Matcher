@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { ToggleSwitch } from '@/components/ui/toggle-switch';
 import { useResumePreview } from '@/components/common/resume_previewer_context';
 import type { ImprovedResult, ResumePreview } from '@/components/common/resume_previewer_context';
 import type { ResumeData } from '@/components/dashboard/resume-component';
@@ -13,7 +14,11 @@ import {
   previewImproveResume,
   confirmImproveResume,
   fetchResumeList,
+  fetchClarifyingQuestions,
   type GuidanceSet,
+  type ClarifyQuestion,
+  type ClarificationItem,
+  type ClarificationSet,
 } from '@/lib/api/resume';
 import { fetchPromptConfig, type PromptOption } from '@/lib/api/config';
 import { Dropdown } from '@/components/ui/dropdown';
@@ -21,6 +26,7 @@ import { useStatusCache } from '@/lib/context/status-cache';
 import { Loader2, ArrowLeft, ArrowRight, AlertTriangle, Settings } from 'lucide-react';
 import { useTranslations } from '@/lib/i18n';
 import { DiffPreviewModal } from '@/components/tailor/diff-preview-modal';
+import { ClarifyStep } from '@/components/tailor/clarify-step';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { ChatBot } from '@/components/chat-bot/chat-bot';
 
@@ -41,7 +47,10 @@ function TailorPage() {
   const [promptOptions, setPromptOptions] = useState<PromptOption[]>([]);
   const [selectedPromptId, setSelectedPromptId] = useState('keywords');
   const [promptLoading, setPromptLoading] = useState(false);
-  const [step, setStep] = useState<'job' | 'guidance'>('job');
+  const [step, setStep] = useState<'job' | 'guidance' | 'clarify'>('job');
+
+  // Guidance
+  const [guidanceEnabled, setGuidanceEnabled] = useState(false);
   const [guidance, setGuidance] = useState({
     general: '',
     resume: '',
@@ -49,6 +58,15 @@ function TailorPage() {
     cover_letter: '',
     outreach: '',
   });
+
+  // Clarifying Q&A
+  const [clarifyQuestions, setClarifyQuestions] = useState<ClarifyQuestion[]>([]);
+  const [clarifyAnswers, setClarifyAnswers] = useState<Record<string, string>>({});
+  const [isClarifying, setIsClarifying] = useState(false);
+
+  // Stored job_id so we can pass it when clarify completes
+  const pendingJobIdRef = useRef<string | null>(null);
+
   const hasUserSelectedPrompt = useRef(false);
   const missingDiffConfirmInFlight = useRef(false);
 
@@ -166,6 +184,8 @@ function TailorPage() {
   };
 
   const buildGuidancePayload = (): GuidanceSet | null => {
+    // If guidance toggle is off, never send guidance regardless of stored text.
+    if (!guidanceEnabled) return null;
     const trimmed = {
       general: guidance.general.trim() || null,
       resume: guidance.resume.trim() || null,
@@ -177,7 +197,26 @@ function TailorPage() {
     return hasAny ? trimmed : null;
   };
 
-  const buildConfirmPayload = (result: ImprovedResult, overridePreview?: ResumePreview) => {
+  const buildClarificationsPayload = (freeform?: string): ClarificationSet | null => {
+    const items: ClarificationItem[] = clarifyQuestions
+      .filter((q) => {
+        const ans = (clarifyAnswers[q.question_id] ?? '').trim();
+        return ans.length > 0;
+      })
+      .map((q) => ({
+        question: q.question,
+        answer: clarifyAnswers[q.question_id].trim(),
+      }));
+    const trimmedFreeform = (freeform ?? '').trim() || null;
+    if (items.length === 0 && !trimmedFreeform) return null;
+    return { items, freeform: trimmedFreeform };
+  };
+
+  const buildConfirmPayload = (
+    result: ImprovedResult,
+    overridePreview?: ResumePreview,
+    clarifications?: ClarificationSet | null
+  ) => {
     if (!masterResumeId) {
       throw new Error('Master resume ID is missing.');
     }
@@ -203,11 +242,18 @@ function TailorPage() {
           lineNumber: typeof item.lineNumber === 'number' ? item.lineNumber : null,
         })) ?? [],
       guidance: buildGuidancePayload(),
+      clarifications: clarifications ?? null,
     };
   };
 
-  const confirmAndNavigate = async (result: ImprovedResult, overridePreview?: ResumePreview) => {
-    const confirmed = await confirmImproveResume(buildConfirmPayload(result, overridePreview));
+  const confirmAndNavigate = async (
+    result: ImprovedResult,
+    overridePreview?: ResumePreview,
+    clarifications?: ClarificationSet | null
+  ) => {
+    const confirmed = await confirmImproveResume(
+      buildConfirmPayload(result, overridePreview, clarifications)
+    );
     incrementImprovements();
     incrementResumes();
     setImprovedData(confirmed);
@@ -228,19 +274,25 @@ function TailorPage() {
     return null;
   };
 
-  const runGenerate = async (resumeId: string, description: string) => {
+  const runGenerate = async (
+    resumeId: string,
+    description: string,
+    jobId?: string,
+    clarifications?: ClarificationSet | null
+  ) => {
     try {
-      // 1. Upload Job Description
-      // The API expects an array of strings
-      const jobId = await uploadJobDescriptions([description], resumeId);
-      incrementJobs(); // Update cached counter
-
+      // 1. Upload Job Description (skip if we already have a jobId from clarify step)
+      const effectiveJobId = jobId ?? (await uploadJobDescriptions([description], resumeId));
+      if (!jobId) {
+        incrementJobs();
+      }
       // 2. Preview Resume
       const result = await previewImproveResume(
         resumeId,
-        jobId,
+        effectiveJobId,
         selectedPromptId,
-        buildGuidancePayload()
+        buildGuidancePayload(),
+        clarifications ?? null
       );
 
       if (!result?.data?.diff_summary || !result?.data?.detailed_changes) {
@@ -286,6 +338,9 @@ function TailorPage() {
     }
   };
 
+  // Called when user clicks "Generate" on the guidance step.
+  // Uploads the JD, then fetches clarifying questions. If questions are found,
+  // advances to the clarify step. Otherwise, goes straight to generation.
   const handleGenerate = async () => {
     const trimmedDescription = jobDescription.trim();
     if (!trimmedDescription || !masterResumeId) return;
@@ -295,11 +350,66 @@ function TailorPage() {
       return;
     }
     const resumeId = masterResumeId;
+    setIsClarifying(true);
+    setError(null);
+    try {
+      // Upload JD now so we have a job_id for the clarify call
+      const jobId = await uploadJobDescriptions([trimmedDescription], resumeId);
+      incrementJobs();
+      pendingJobIdRef.current = jobId;
+
+      const clarifyResult = await fetchClarifyingQuestions(
+        resumeId,
+        jobId,
+        selectedPromptId,
+        buildGuidancePayload()
+      );
+
+      if (clarifyResult.questions.length > 0) {
+        // Reset previous answers
+        setClarifyQuestions(clarifyResult.questions);
+        setClarifyAnswers({});
+        setStep('clarify');
+      } else {
+        // No questions — skip straight to generation
+        setIsLoading(true);
+        startTimer();
+        try {
+          await runGenerate(resumeId, trimmedDescription, jobId, null);
+        } finally {
+          setIsLoading(false);
+          stopTimer();
+        }
+      }
+    } catch (err) {
+      console.error('Clarify step failed, proceeding to generate:', err);
+      // Fallback: generate without clarifications if clarify endpoint fails
+      setIsLoading(true);
+      startTimer();
+      try {
+        await runGenerate(resumeId, trimmedDescription, pendingJobIdRef.current ?? undefined, null);
+      } finally {
+        setIsLoading(false);
+        stopTimer();
+      }
+    } finally {
+      setIsClarifying(false);
+    }
+  };
+
+  // Called when the clarify step finishes (user answered questions + optional freeform)
+  const handleClarifyFinish = async (freeform: string) => {
+    const trimmedDescription = jobDescription.trim();
+    const resumeId = masterResumeId;
+    const jobId = pendingJobIdRef.current;
+    if (!trimmedDescription || !resumeId) return;
+
+    const clarifications = buildClarificationsPayload(freeform);
     setIsLoading(true);
     setError(null);
     startTimer();
     try {
-      await runGenerate(resumeId, trimmedDescription);
+      await runGenerate(resumeId, trimmedDescription, jobId ?? undefined, clarifications);
     } finally {
       setIsLoading(false);
       stopTimer();
@@ -315,7 +425,7 @@ function TailorPage() {
     setDiffConfirmError(null);
 
     try {
-      await confirmAndNavigate(pendingResult, finalPreview);
+      await confirmAndNavigate(pendingResult, finalPreview, buildClarificationsPayload());
       setShowDiffModal(false);
       setPendingResult(null);
     } catch (err) {
@@ -356,7 +466,7 @@ function TailorPage() {
     setError(null);
     setMissingDiffError(null);
     try {
-      await confirmAndNavigate(missingDiffResult);
+      await confirmAndNavigate(missingDiffResult, undefined, buildClarificationsPayload());
       handleCloseMissingDiffDialog();
     } catch (err) {
       console.error(err);
@@ -383,7 +493,13 @@ function TailorPage() {
     setError(null);
     startTimer();
     try {
-      await runGenerate(resumeId, trimmedDescription);
+      // Re-use existing job_id if we have one, re-upload otherwise
+      await runGenerate(
+        resumeId,
+        trimmedDescription,
+        pendingJobIdRef.current ?? undefined,
+        buildClarificationsPayload()
+      );
     } finally {
       setIsLoading(false);
       stopTimer();
@@ -436,7 +552,34 @@ function TailorPage() {
         )}
 
         <div className="space-y-6">
-          {step === 'job' ? (
+          {step === 'clarify' ? (
+            /* ---- Clarify step ---- */
+            <>
+              <div className="border border-border bg-background p-4 font-mono text-xs space-y-1">
+                <div>
+                  <span className="font-bold uppercase tracking-wider">
+                    {t('tailor.guidanceStep.strategyLabel')}:
+                  </span>{' '}
+                  {t(`tailor.promptOptions.${selectedPromptId}.label`)}
+                </div>
+              </div>
+              <ClarifyStep
+                questions={clarifyQuestions}
+                answers={clarifyAnswers}
+                onAnswer={(qid, ans) => setClarifyAnswers((prev) => ({ ...prev, [qid]: ans }))}
+                onFinish={handleClarifyFinish}
+                onBack={() => setStep('guidance')}
+              />
+              {isLoading && (
+                <div className="flex items-center gap-2 font-mono text-xs text-steel-grey">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  {t('common.processing')}
+                  {elapsed > 0 && <span className="opacity-70 ml-1">{elapsed}s</span>}
+                </div>
+              )}
+            </>
+          ) : step === 'job' ? (
+            /* ---- Job description step ---- */
             <>
               <Dropdown
                 options={
@@ -489,6 +632,7 @@ function TailorPage() {
               </div>
             </>
           ) : (
+            /* ---- Guidance step ---- */
             <>
               <div className="border border-border bg-background p-4 font-mono text-xs space-y-1">
                 <div>
@@ -506,42 +650,52 @@ function TailorPage() {
                 </div>
               </div>
 
-              <div>
-                <p className="font-mono text-sm text-primary font-bold uppercase mb-1">
-                  {t('tailor.guidanceStep.subhead')}
-                </p>
-                <h2 className="font-serif text-2xl font-bold uppercase tracking-tight mb-2">
-                  {t('tailor.guidanceStep.heading')}
-                </h2>
-                <p className="font-mono text-xs text-steel-grey mb-4">
-                  {t('tailor.guidanceStep.description')}
-                </p>
+              <ToggleSwitch
+                checked={guidanceEnabled}
+                onCheckedChange={setGuidanceEnabled}
+                label={t('tailor.guidanceStep.toggleLabel')}
+                description={t('tailor.guidanceStep.toggleDescription')}
+                disabled={isLoading}
+              />
 
-                <div className="space-y-4">
-                  {(['general', 'resume', 'cv', 'cover_letter', 'outreach'] as const).map(
-                    (field) => (
-                      <div key={field}>
-                        <label className="block font-mono text-xs font-bold uppercase tracking-wider mb-1">
-                          {t(`tailor.guidanceStep.fields.${field}.label`)}
-                        </label>
-                        <p className="font-mono text-xs text-steel-grey mb-2">
-                          {t(`tailor.guidanceStep.fields.${field}.description`)}
-                        </p>
-                        <Textarea
-                          placeholder={t(`tailor.guidanceStep.fields.${field}.placeholder`)}
-                          className="min-h-[96px] font-mono text-sm bg-background border-2 border-border focus:ring-0 focus:border-primary resize-none p-3 rounded-none"
-                          value={guidance[field]}
-                          onChange={(e) =>
-                            setGuidance((prev) => ({ ...prev, [field]: e.target.value }))
-                          }
-                          onKeyDown={handleTextareaKeyDown}
-                          disabled={isLoading}
-                        />
-                      </div>
-                    )
-                  )}
+              {guidanceEnabled && (
+                <div>
+                  <p className="font-mono text-sm text-primary font-bold uppercase mb-1">
+                    {t('tailor.guidanceStep.subhead')}
+                  </p>
+                  <h2 className="font-serif text-2xl font-bold uppercase tracking-tight mb-2">
+                    {t('tailor.guidanceStep.heading')}
+                  </h2>
+                  <p className="font-mono text-xs text-steel-grey mb-4">
+                    {t('tailor.guidanceStep.description')}
+                  </p>
+
+                  <div className="space-y-4">
+                    {(['general', 'resume', 'cv', 'cover_letter', 'outreach'] as const).map(
+                      (field) => (
+                        <div key={field}>
+                          <label className="block font-mono text-xs font-bold uppercase tracking-wider mb-1">
+                            {t(`tailor.guidanceStep.fields.${field}.label`)}
+                          </label>
+                          <p className="font-mono text-xs text-steel-grey mb-2">
+                            {t(`tailor.guidanceStep.fields.${field}.description`)}
+                          </p>
+                          <Textarea
+                            placeholder={t(`tailor.guidanceStep.fields.${field}.placeholder`)}
+                            className="min-h-[96px] font-mono text-sm bg-background border-2 border-border focus:ring-0 focus:border-primary resize-none p-3 rounded-none"
+                            value={guidance[field]}
+                            onChange={(e) =>
+                              setGuidance((prev) => ({ ...prev, [field]: e.target.value }))
+                            }
+                            onKeyDown={handleTextareaKeyDown}
+                            disabled={isLoading}
+                          />
+                        </div>
+                      )
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
             </>
           )}
 
@@ -551,70 +705,82 @@ function TailorPage() {
             </div>
           )}
 
-          {step === 'job' ? (
-            <Button
-              size="lg"
-              onClick={() => {
-                const trimmed = jobDescription.trim();
-                if (!trimmed) return;
-                const validationError = getGenerateValidationError(trimmed);
-                if (validationError) {
-                  setError(validationError);
-                  return;
-                }
-                setError(null);
-                setStep('guidance');
-              }}
-              disabled={isLoading || statusLoading || !jobDescription.trim() || !isLlmConfigured}
-              className="w-full"
-            >
-              {statusLoading ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  {t('common.checking')}
-                </>
-              ) : !isLlmConfigured ? (
-                t('tailor.configureApiKeyFirst')
+          {step !== 'clarify' && (
+            <>
+              {step === 'job' ? (
+                <Button
+                  size="lg"
+                  onClick={() => {
+                    const trimmed = jobDescription.trim();
+                    if (!trimmed) return;
+                    const validationError = getGenerateValidationError(trimmed);
+                    if (validationError) {
+                      setError(validationError);
+                      return;
+                    }
+                    setError(null);
+                    setStep('guidance');
+                  }}
+                  disabled={
+                    isLoading || statusLoading || !jobDescription.trim() || !isLlmConfigured
+                  }
+                  className="w-full"
+                >
+                  {statusLoading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      {t('common.checking')}
+                    </>
+                  ) : !isLlmConfigured ? (
+                    t('tailor.configureApiKeyFirst')
+                  ) : (
+                    <>
+                      {t('common.next')}
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
+                </Button>
               ) : (
-                <>
-                  {t('common.next')}
-                  <ArrowRight className="w-4 h-4" />
-                </>
-              )}
-            </Button>
-          ) : (
-            <div className="flex gap-3">
-              <Button
-                size="lg"
-                variant="outline"
-                onClick={() => {
-                  setError(null);
-                  setStep('job');
-                }}
-                disabled={isLoading}
-              >
-                <ArrowLeft className="w-4 h-4" />
-                {t('common.back')}
-              </Button>
-              <Button
-                size="lg"
-                onClick={handleGenerate}
-                disabled={isLoading || statusLoading || !jobDescription.trim() || !isLlmConfigured}
-                className="flex-1"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    {t('common.processing')}
-                    {elapsed > 0 && (
-                      <span className="font-mono text-xs opacity-70 ml-2">{elapsed}s</span>
+                <div className="flex gap-3">
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    onClick={() => {
+                      setError(null);
+                      setStep('job');
+                    }}
+                    disabled={isLoading || isClarifying}
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    {t('common.back')}
+                  </Button>
+                  <Button
+                    size="lg"
+                    onClick={handleGenerate}
+                    disabled={
+                      isLoading ||
+                      isClarifying ||
+                      statusLoading ||
+                      !jobDescription.trim() ||
+                      !isLlmConfigured
+                    }
+                    className="flex-1"
+                  >
+                    {isLoading || isClarifying ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        {isClarifying ? t('tailor.clarifyStep.analyzing') : t('common.processing')}
+                        {elapsed > 0 && (
+                          <span className="font-mono text-xs opacity-70 ml-2">{elapsed}s</span>
+                        )}
+                      </>
+                    ) : (
+                      t('tailor.generateTailored')
                     )}
-                  </>
-                ) : (
-                  t('tailor.generateTailored')
-                )}
-              </Button>
-            </div>
+                  </Button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -632,6 +798,7 @@ function TailorPage() {
           improvedPreview={pendingResult?.data?.resume_preview}
           tailorSessionId={pendingResult?.data?.tailor_session_id ?? null}
           errorMessage={diffConfirmError ?? undefined}
+          resumeId={masterResumeId}
         />
       )}
 

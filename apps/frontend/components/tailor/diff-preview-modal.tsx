@@ -21,12 +21,14 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { useTranslations } from '@/lib/i18n';
-import { regenerateChange } from '@/lib/api/resume';
+import { regenerateChange, type RefineChatResponse } from '@/lib/api/resume';
 import type {
   ResumeDiffSummary,
   ResumeFieldDiff,
   ResumePreview,
 } from '@/components/common/resume_previewer_context';
+import { PreviewChatPanel } from '@/components/tailor/preview-chat-panel';
+import type { ResumeData } from '@/components/dashboard/resume-component';
 
 // ---------------------------------------------------------------------------
 // Public props
@@ -43,6 +45,8 @@ interface DiffPreviewModalProps {
   improvedPreview?: ResumePreview;
   tailorSessionId?: string | null;
   errorMessage?: string;
+  /** Master resume ID — used by the inline chat panel to call refine-chat */
+  resumeId?: string | null;
 }
 
 type Decision = 'pending' | 'accepted' | 'rejected';
@@ -287,13 +291,31 @@ export function DiffPreviewModal({
   onClose,
   onReject,
   onConfirm,
-  diffSummary,
-  detailedChanges,
-  improvedPreview,
+  diffSummary: diffSummaryProp,
+  detailedChanges: detailedChangesProp,
+  improvedPreview: improvedPreviewProp,
   tailorSessionId,
   errorMessage,
+  resumeId,
 }: DiffPreviewModalProps) {
   const { t } = useTranslations();
+
+  // Working copies — may be replaced by chat refinements
+  const [workingDiffSummary, setWorkingDiffSummary] = useState(diffSummaryProp);
+  const [workingDetailedChanges, setWorkingDetailedChanges] = useState(detailedChangesProp);
+  const [workingPreview, setWorkingPreview] = useState(improvedPreviewProp);
+
+  // Sync working copies when props change (new preview from parent)
+  useEffect(() => {
+    setWorkingDiffSummary(diffSummaryProp);
+    setWorkingDetailedChanges(detailedChangesProp);
+    setWorkingPreview(improvedPreviewProp);
+  }, [diffSummaryProp, detailedChangesProp, improvedPreviewProp]);
+
+  const diffSummary = workingDiffSummary;
+  const detailedChanges = workingDetailedChanges;
+  const improvedPreview = workingPreview;
+
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
     new Set([
       'summary',
@@ -309,6 +331,29 @@ export function DiffPreviewModal({
   const [changeStates, setChangeStates] = useState<Map<number, ChangeState>>(new Map());
   const [changeDialogIdx, setChangeDialogIdx] = useState<number | null>(null);
   const [changeDialogFeedback, setChangeDialogFeedback] = useState('');
+
+  // Handler for chat-panel preview updates
+  const handlePreviewUpdated = useCallback((response: RefineChatResponse) => {
+    if (response.updated_preview) {
+      setWorkingPreview(response.updated_preview as unknown as ResumePreview);
+    }
+    if (response.diff_summary) {
+      setWorkingDiffSummary(response.diff_summary as unknown as ResumeDiffSummary);
+    }
+    if (response.detailed_changes) {
+      setWorkingDetailedChanges(response.detailed_changes as unknown as ResumeFieldDiff[]);
+      // Reset decisions to pending for all new changes
+      const next = new Map<number, ChangeState>();
+      (response.detailed_changes as unknown as ResumeFieldDiff[]).forEach((_, idx) => {
+        next.set(idx, {
+          liveNewValue: undefined,
+          decision: 'pending',
+          isRegenerating: false,
+        });
+      });
+      setChangeStates(next);
+    }
+  }, []);
 
   // Reset per-change state whenever the underlying change list changes.
   useEffect(() => {
@@ -562,8 +607,14 @@ export function DiffPreviewModal({
           }
         }}
       >
-        <DialogContent className="max-w-5xl sm:max-h-[90vh] sm:overflow-hidden flex flex-col p-6 bg-background border-2 border-black shadow-sw-lg">
-          <DialogHeader className="border-b-2 border-black pb-4 bg-white -mx-6 -mt-6 px-6 pt-6">
+        {/*
+         * Wide, screen-filling dialog: chat on the left, review pane on the
+         * right. The two columns share a full-height flex row; header and
+         * footer span the full width.
+         */}
+        <DialogContent className="w-[96vw] max-w-[96vw] h-[92vh] flex flex-col p-0 bg-background border-2 border-black shadow-sw-lg overflow-hidden">
+          {/* ── Full-width header ── */}
+          <DialogHeader className="border-b-2 border-black px-6 pt-6 pb-4 bg-white shrink-0">
             <DialogTitle className="font-serif text-2xl font-bold uppercase tracking-tight pr-10">
               {t('tailor.diffModal.title')}
             </DialogTitle>
@@ -573,141 +624,163 @@ export function DiffPreviewModal({
             </p>
           </DialogHeader>
 
-          {/* Summary cards */}
-          <div className="border-2 border-black bg-white p-4 mt-4">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-3 h-3 bg-primary"></div>
-              <h3 className="font-mono text-sm font-bold uppercase tracking-wider">
-                {t('tailor.diffModal.summary')}
-              </h3>
-            </div>
+          {/* ── Two-column body ── */}
+          <div className="flex-1 min-h-0 flex overflow-hidden">
+            {/* Left column: AI chat (always visible when resumeId present) */}
+            {resumeId && (
+              <div className="w-80 flex-none flex flex-col border-r-2 border-black overflow-hidden">
+                <PreviewChatPanel
+                  resumeId={resumeId}
+                  tailorSessionId={tailorSessionId}
+                  currentPreview={(improvedPreview ?? {}) as unknown as ResumeData}
+                  onPreviewUpdated={handlePreviewUpdated}
+                />
+              </div>
+            )}
 
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-4">
-              <StatCard
-                label={t('tailor.diffModal.skillsAdded')}
-                value={diffSummary.skills_added}
-                variant="success"
-              />
-              <StatCard
-                label={t('tailor.diffModal.skillsRemoved')}
-                value={diffSummary.skills_removed}
-                variant="warning"
-              />
-              <StatCard
-                label={t('tailor.diffModal.certificationsAdded')}
-                value={diffSummary.certifications_added}
-                variant="info"
-              />
-              <StatCard
-                label={t('tailor.diffModal.descriptionsModified')}
-                value={diffSummary.descriptions_modified}
-                variant="info"
-              />
-              <StatCard
-                label={t('tailor.diffModal.highRiskChanges')}
-                value={diffSummary.high_risk_changes}
-                variant={diffSummary.high_risk_changes > 0 ? 'danger' : 'success'}
-              />
-            </div>
+            {/* Right column: summary stats + scrollable changes list */}
+            <div className="flex-1 flex flex-col min-h-0 overflow-hidden px-6 py-4">
+              {/* Summary cards */}
+              <div className="border-2 border-black bg-white p-4 shrink-0">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-3 h-3 bg-primary"></div>
+                  <h3 className="font-mono text-sm font-bold uppercase tracking-wider">
+                    {t('tailor.diffModal.summary')}
+                  </h3>
+                </div>
 
-            {diffSummary.high_risk_changes > 0 && (
-              <div className="mt-4 border-2 border-warning bg-[#FFF7ED] p-3 flex items-start gap-3">
-                <AlertTriangle className="w-5 h-5 text-warning shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-mono text-xs font-bold uppercase text-[#C2410C]">
-                    {t('tailor.diffModal.warningTitle', {
-                      count: diffSummary.high_risk_changes,
-                    })}
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-4">
+                  <StatCard
+                    label={t('tailor.diffModal.skillsAdded')}
+                    value={diffSummary.skills_added}
+                    variant="success"
+                  />
+                  <StatCard
+                    label={t('tailor.diffModal.skillsRemoved')}
+                    value={diffSummary.skills_removed}
+                    variant="warning"
+                  />
+                  <StatCard
+                    label={t('tailor.diffModal.certificationsAdded')}
+                    value={diffSummary.certifications_added}
+                    variant="info"
+                  />
+                  <StatCard
+                    label={t('tailor.diffModal.descriptionsModified')}
+                    value={diffSummary.descriptions_modified}
+                    variant="info"
+                  />
+                  <StatCard
+                    label={t('tailor.diffModal.highRiskChanges')}
+                    value={diffSummary.high_risk_changes}
+                    variant={diffSummary.high_risk_changes > 0 ? 'danger' : 'success'}
+                  />
+                </div>
+
+                {diffSummary.high_risk_changes > 0 && (
+                  <div className="mt-4 border-2 border-warning bg-[#FFF7ED] p-3 flex items-start gap-3">
+                    <AlertTriangle className="w-5 h-5 text-warning shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-mono text-xs font-bold uppercase text-[#C2410C]">
+                        {t('tailor.diffModal.warningTitle', {
+                          count: diffSummary.high_risk_changes,
+                        })}
+                      </p>
+                      <p className="font-mono text-xs text-[#C2410C] mt-1">
+                        {t('tailor.diffModal.warningMessage')}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {errorMessage && (
+                <div className="mt-4 border-2 border-red-600 bg-red-50 p-3 font-mono text-xs text-red-700 shrink-0">
+                  {errorMessage}
+                </div>
+              )}
+
+              {/* Scrollable changes list */}
+              <div className="flex-1 min-h-0 overflow-y-auto mt-4 space-y-4">
+                {groups
+                  .filter((g) => g.items.length > 0)
+                  .map((g) => (
+                    <ChangeSection
+                      key={g.key}
+                      title={g.title}
+                      count={g.items.length}
+                      isExpanded={expandedSections.has(g.key)}
+                      onToggle={() => toggleSection(g.key)}
+                    >
+                      {g.items.map(({ change, idx }) => {
+                        const state = changeStates.get(idx);
+                        return (
+                          <ChangeItem
+                            key={idx}
+                            change={change}
+                            state={state}
+                            contextLabel={getChangeLabel(change, improvedPreview)}
+                            onAccept={() => setDecision(idx, 'accepted')}
+                            onReject={() => setDecision(idx, 'rejected')}
+                            onChange={() => openChangeDialog(idx)}
+                            changeInPrefixT={(title) =>
+                              t('tailor.diffModal.changeInPrefix', { title })
+                            }
+                            acceptLabel={t('tailor.diffModal.acceptChange')}
+                            rejectLabel={t('tailor.diffModal.rejectChange')}
+                            changeLabel={t('tailor.diffModal.changeChange')}
+                            regeneratingLabel={t('tailor.diffModal.regenerating')}
+                          />
+                        );
+                      })}
+                    </ChangeSection>
+                  ))}
+              </div>
+
+              {/* Action buttons — pinned to bottom of the right column */}
+              <div className="flex flex-col gap-3 pt-4 border-t-2 border-black mt-4 shrink-0">
+                {pendingCount > 0 && (
+                  <p className="font-mono text-xs text-warning text-right">
+                    {t('tailor.diffModal.pendingReviewWarning', { count: pendingCount })}
                   </p>
-                  <p className="font-mono text-xs text-[#C2410C] mt-1">
-                    {t('tailor.diffModal.warningMessage')}
-                  </p>
+                )}
+                <div className="flex justify-between items-center gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={onReject}
+                    disabled={isConfirming}
+                    className="gap-2"
+                  >
+                    <X className="w-4 h-4" />
+                    {t('tailor.diffModal.rejectButton')}
+                  </Button>
+                  <div className="flex items-center gap-3">
+                    {isConfirming && elapsed > 0 && (
+                      <span className="font-mono text-xs text-steel-grey">{elapsed}s</span>
+                    )}
+                    <Button
+                      onClick={handleConfirm}
+                      disabled={isConfirming || pendingCount > 0}
+                      className="gap-2 bg-success hover:bg-green-800"
+                    >
+                      {isConfirming ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          {t('common.saving')}
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle className="w-4 h-4" />
+                          {t('tailor.diffModal.confirmButton')}
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 </div>
               </div>
-            )}
-          </div>
-
-          {errorMessage && (
-            <div className="mt-4 border-2 border-red-600 bg-red-50 p-3 font-mono text-xs text-red-700">
-              {errorMessage}
+              {/* end right column */}
             </div>
-          )}
-
-          {/* Detailed changes list */}
-          <div className="flex-1 min-h-0 overflow-y-auto mt-4 space-y-4">
-            {groups
-              .filter((g) => g.items.length > 0)
-              .map((g) => (
-                <ChangeSection
-                  key={g.key}
-                  title={g.title}
-                  count={g.items.length}
-                  isExpanded={expandedSections.has(g.key)}
-                  onToggle={() => toggleSection(g.key)}
-                >
-                  {g.items.map(({ change, idx }) => {
-                    const state = changeStates.get(idx);
-                    return (
-                      <ChangeItem
-                        key={idx}
-                        change={change}
-                        state={state}
-                        contextLabel={getChangeLabel(change, improvedPreview)}
-                        onAccept={() => setDecision(idx, 'accepted')}
-                        onReject={() => setDecision(idx, 'rejected')}
-                        onChange={() => openChangeDialog(idx)}
-                        changeInPrefixT={(title) => t('tailor.diffModal.changeInPrefix', { title })}
-                        acceptLabel={t('tailor.diffModal.acceptChange')}
-                        rejectLabel={t('tailor.diffModal.rejectChange')}
-                        changeLabel={t('tailor.diffModal.changeChange')}
-                        regeneratingLabel={t('tailor.diffModal.regenerating')}
-                      />
-                    );
-                  })}
-                </ChangeSection>
-              ))}
-          </div>
-
-          {/* Action buttons */}
-          <div className="flex flex-col gap-3 pt-4 border-t-2 border-black bg-white -mx-6 -mb-6 px-6 py-4">
-            {pendingCount > 0 && (
-              <p className="font-mono text-xs text-warning text-right">
-                {t('tailor.diffModal.pendingReviewWarning', { count: pendingCount })}
-              </p>
-            )}
-            <div className="flex justify-between items-center gap-3">
-              <Button
-                variant="outline"
-                onClick={onReject}
-                disabled={isConfirming}
-                className="gap-2"
-              >
-                <X className="w-4 h-4" />
-                {t('tailor.diffModal.rejectButton')}
-              </Button>
-              <div className="flex items-center gap-3">
-                {isConfirming && elapsed > 0 && (
-                  <span className="font-mono text-xs text-steel-grey">{elapsed}s</span>
-                )}
-                <Button
-                  onClick={handleConfirm}
-                  disabled={isConfirming || pendingCount > 0}
-                  className="gap-2 bg-success hover:bg-green-800"
-                >
-                  {isConfirming ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      {t('common.saving')}
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle className="w-4 h-4" />
-                      {t('tailor.diffModal.confirmButton')}
-                    </>
-                  )}
-                </Button>
-              </div>
-            </div>
+            {/* end two-column body */}
           </div>
         </DialogContent>
       </Dialog>
