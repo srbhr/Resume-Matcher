@@ -104,7 +104,7 @@ def _hash_improved_data(data: dict[str, Any]) -> str:
     valid tailoring is rejected with 400 ("preview hash mismatch").
     """
     try:
-        canonical: Any = ResumeData.model_validate(data).model_dump()
+        canonical: dict[str, Any] = ResumeData.model_validate(data).model_dump()
     except ValidationError:
         canonical = data  # not a full resume payload; hash as-is
     normalized = _normalize_payload(canonical)
