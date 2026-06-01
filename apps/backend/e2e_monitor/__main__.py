@@ -62,6 +62,15 @@ def _jds() -> list[tuple[str, str]]:
     )
 
 
+def _say(msg: str) -> None:
+    """Print live loop narration to stderr.
+
+    Progress/handoff text goes to stderr so the machine-readable ``bundle: <path>``
+    line stays alone on stdout for scripts/agents that parse it.
+    """
+    print(msg, file=sys.stderr, flush=True)
+
+
 def cmd_sweep(_: argparse.Namespace) -> int:
     ensure_enabled()
     from app.config import load_config_file
@@ -73,6 +82,13 @@ def cmd_sweep(_: argparse.Namespace) -> int:
         bundle.dir / "manifest.json",
         build_manifest(run_id=bundle.run_id, git_sha=_git_sha(), config=config, started_at=_now_iso()),
     )
+
+    _say("")
+    _say("  e2e-monitor · driving the real app end to end")
+    _say(f"  provider {config.get('provider', '?')}/{config.get('model', '?')}  ·  run {bundle.run_id}")
+    _say("  Captures an evidence bundle for an AI agent to JUDGE — built to run (or via")
+    _say("  the /monitor-e2e skill) while you work on the app as normal.")
+    _say("")
 
     # Pre-seed the isolated DB with a known master BEFORE booting the server.
     # Canonicalize to the exact ResumeData round-trip the app stores, so every
@@ -86,14 +102,17 @@ def cmd_sweep(_: argparse.Namespace) -> int:
     master = ResumeData.model_validate(raw_master).model_dump()
     resume_id = seed_master_db(bundle.data_dir, master)
     bundle.write_json(bundle.master_dir / "processed_data.json", master)
+    _say("  ✓ seed-master   canonical master → isolated DB (your real DB is untouched)")
 
     steps: list[dict[str, Any]] = []
     servers = Servers(bundle=bundle)
     variations: list[dict[str, Any]] = []
     try:
+        _say("  ▶ boot          spawning backend :8000 + frontend :3000 …")
         boot = servers.boot()
         steps.append({"stage": "boot", "ok": True, "ms": 0, "detail": boot})
         steps.append({"stage": "seed-master", "ok": True, "ms": 0, "detail": {"resume_id": resume_id}})
+        _say("  ✓ boot          backend up" + (" + frontend up" if boot.get("frontend_up") else " (frontend off — renders degrade to header+size)"))
 
         for jd_key, jd_text in _jds():
             vdir = bundle.variation_dir(jd_key)
@@ -103,10 +122,12 @@ def cmd_sweep(_: argparse.Namespace) -> int:
                 if kw.istitle() and kw.lower() not in _STOPWORDS
             ][:8]
 
+            _say(f"  ▶ {jd_key:<16} tailor → judge → render …")
             try:
                 t = tailor(resume_id, jd_text, keywords, master)
             except Exception as exc:  # noqa: BLE001
                 steps.append({"stage": f"tailor:{jd_key}", "ok": False, "ms": 0, "error": str(exc)})
+                _say(f"  ✗ {jd_key:<16} tailor FAILED: {str(exc)[:90]}")
                 continue
             bundle.write_json(vdir / "tailored.json", t["tailored"])
             bundle.write_json(vdir / "scores.json", t["scores"])
@@ -129,6 +150,13 @@ def cmd_sweep(_: argparse.Namespace) -> int:
                 except Exception as exc:  # noqa: BLE001
                     steps.append({"stage": f"render:{jd_key}", "ok": False, "ms": 0, "error": str(exc)})
             variations.append({"jd_key": jd_key, "scores": t["scores"], "judge": judge, "render": render})
+            _nb = render.get("non_blank")
+            _say(
+                f"  ✓ {jd_key:<16} judge={(judge or {}).get('score')}  "
+                f"kw={t['scores']['jd_keyword_coverage']}  "
+                f"render={'non-blank' if _nb else ('skipped' if _nb is None else 'BLANK!')}  "
+                f"fabricated={len(t['scores']['fabricated_employers'])}"
+            )
     finally:
         servers.teardown()
 
@@ -136,6 +164,7 @@ def cmd_sweep(_: argparse.Namespace) -> int:
     bundle.write_json(bundle.dir / "flow-trace.json", flow)
     summary = build_summary(flow=flow, variations=variations, provider=config.get("provider", ""))
     bundle.write_json(bundle.dir / "summary.json", summary)
+    baseline_line = ""
     if _BASELINE.exists():
         current = {
             v["jd_key"]: {
@@ -145,10 +174,30 @@ def cmd_sweep(_: argparse.Namespace) -> int:
             }
             for v in variations
         }
-        bundle.write_json(
-            bundle.dir / "baseline-diff.json",
-            diff_against_baseline(current, bundle.read_json(_BASELINE)),
+        diff = diff_against_baseline(current, bundle.read_json(_BASELINE))
+        bundle.write_json(bundle.dir / "baseline-diff.json", diff)
+        baseline_line = (
+            " · no regression vs baseline"
+            if not diff["regressed"]
+            else f" · REGRESSED ({len(diff['regressions'])} — see baseline-diff.json)"
         )
+
+    _say("")
+    _say("  ──────────────────────────────────────────────────────────────")
+    _say(
+        f"  sweep complete · {summary['variations']} variations · "
+        f"flow {'all passed' if summary['flow_all_passed'] else 'HAD FAILURES'} · "
+        f"renders {summary['renders_non_blank']}/{summary['variations']} non-blank"
+        + baseline_line
+    )
+    _say("")
+    _say("  ↳ NEXT — this is captured EVIDENCE, not a verdict. Hand it to an AI agent:")
+    _say("      • In Claude Code, invoke the  /monitor-e2e  skill, or just say")
+    _say('        "judge the latest e2e-monitor bundle".')
+    _say("      The agent reads the logs + artifacts, separates real issues from noise,")
+    _say("      and writes report.md. This harness is built to be DRIVEN BY an AI agent")
+    _say("      debugging in the background while you build the app as normal.")
+    _say("")
     print(f"bundle: {bundle.dir}")
     return 0
 
