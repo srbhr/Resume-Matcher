@@ -314,23 +314,57 @@ def apply_diffs(
             if not isinstance(actual_value, list) or not isinstance(change.value, list):
                 rejected.append(change)
                 continue
-            # Validate same items (case-insensitive)
             orig_set = sorted(s.casefold() for s in actual_value if isinstance(s, str))
             new_set = sorted(s.casefold() for s in change.value if isinstance(s, str))
-            if orig_set != new_set:
-                logger.info("Diff rejected (reorder items mismatch): %s", path)
-                rejected.append(change)
-                continue
-            # Preserve original casing: map new order back to original strings
-            casefold_to_originals: dict[str, list[str]] = {}
-            for item in actual_value:
-                if isinstance(item, str):
-                    casefold_to_originals.setdefault(item.casefold(), []).append(item)
             reordered: list[str] = []
-            for item in change.value:
-                if isinstance(item, str):
-                    originals = casefold_to_originals.get(item.casefold(), [])
-                    reordered.append(originals.pop(0) if originals else item)
+            if orig_set == new_set:
+                # Pure permutation: map the new order back to original casing.
+                casefold_to_originals: dict[str, list[str]] = {}
+                for item in actual_value:
+                    if isinstance(item, str):
+                        casefold_to_originals.setdefault(item.casefold(), []).append(item)
+                for item in change.value:
+                    if isinstance(item, str):
+                        originals = casefold_to_originals.get(item.casefold(), [])
+                        reordered.append(originals.pop(0) if originals else item)
+            else:
+                # Salvage (issue #736): the LLM folded new/removed items into a
+                # reorder. Rather than dropping the whole change, apply the SAFE
+                # subset: reorder the existing items in the requested order,
+                # re-append any original the LLM omitted (never silently lose a
+                # real item), and — for the skills list only — add new items that
+                # pass the SAME verified gate as add_skill. Other lists
+                # (languages/certs/awards) have no verifier, so new items are
+                # dropped to avoid fabrication.
+                originals_by_cf: dict[str, str] = {}
+                for item in actual_value:
+                    if isinstance(item, str):
+                        originals_by_cf.setdefault(item.casefold(), item)
+                seen: set[str] = set()
+                for item in change.value:
+                    if not isinstance(item, str):
+                        continue
+                    cf = item.casefold()
+                    if cf in originals_by_cf and cf not in seen:
+                        reordered.append(originals_by_cf[cf])
+                        seen.add(cf)
+                for item in actual_value:  # preserve any omitted originals
+                    if isinstance(item, str) and item.casefold() not in seen:
+                        reordered.append(item)
+                        seen.add(item.casefold())
+                if path == "additional.technicalSkills":
+                    for item in change.value:  # add only verified new skills
+                        if not isinstance(item, str):
+                            continue
+                        skill = item.strip()
+                        if not skill or skill.casefold() in seen:
+                            continue
+                        if _normalize_skill_key(skill) in allowed_skill_keys:
+                            reordered.append(skill)
+                            seen.add(skill.casefold())
+                        else:
+                            logger.info("Reorder salvage dropped unverified skill: %s", skill)
+                logger.info("Diff reorder salvaged (item-set mismatch): %s", path)
             if not _set_at_path(result, path, reordered):
                 rejected.append(change)
                 continue
