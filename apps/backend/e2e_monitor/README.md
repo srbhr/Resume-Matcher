@@ -38,7 +38,9 @@ The sweep:
 7. Writes a self-contained evidence bundle to `artifacts/e2e-monitor/<run-id>/`.
 8. Diffs against `baseline/baseline.json` and writes `baseline-diff.json`.
 
-The printed `bundle:` path is everything you need to judge.
+**The sweep only *captures* the bundle — it does not produce the verdict.** It's the deterministic half. The **agent in the loop** — a Claude Code instance, via the `/monitor-e2e` skill below or by just asking any Claude Code session to *"judge the latest e2e-monitor bundle"* — reads the bundle + logs, separates real issues from noise, and writes `report.md`. The sweep's terminal output narrates each move and points you to this handoff.
+
+In practice the front door is **`/monitor-e2e`** (it runs the sweep *and* judges in one step); the bare CLI is the plumbing the agent drives — handy for a quick capture, or a background / cron run that an AI agent later picks up to debug while you work on the app as normal.
 
 ---
 
