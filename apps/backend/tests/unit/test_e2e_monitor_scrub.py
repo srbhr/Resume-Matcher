@@ -17,6 +17,13 @@ def test_scrub_text_redacts_long_hex_and_jwt() -> None:
     assert "0123456789abcdef0123456789abcdef" not in out
 
 
+def test_scrub_text_redacts_google_and_bearer() -> None:
+    out = scrub_text("key=AIzaSyA1234567890abcdefghijklmnopqrstuv0 auth: Bearer abc.def-123_xyz")
+    assert "AIzaSyA1234567890abcdefghijklmnopqrstuv0" not in out
+    assert "Bearer abc.def-123_xyz" not in out
+    assert "[REDACTED]" in out
+
+
 def test_scrub_config_redacts_key_fields_keeps_provider() -> None:
     cfg = {
         "provider": "anthropic",

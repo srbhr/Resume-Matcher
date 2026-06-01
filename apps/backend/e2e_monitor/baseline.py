@@ -31,10 +31,18 @@ def diff_against_baseline(
         if non_blank is False:
             regressions.append({"jd_key": jd_key, "kind": "blank_render", "value": False})
         base_judge = base.get("judge_score")
-        if judge is not None and base_judge is not None and (base_judge - judge) > tol:
+        if (
+            isinstance(judge, int) and not isinstance(judge, bool)
+            and isinstance(base_judge, int) and not isinstance(base_judge, bool)
+            and (base_judge - judge) > tol
+        ):
             regressions.append(
                 {"jd_key": jd_key, "kind": "judge_drop", "from": base_judge, "to": judge}
             )
+
+    for jd_key in base_vars:
+        if jd_key not in current:
+            regressions.append({"jd_key": jd_key, "kind": "missing_variation"})
 
     return {"regressed": bool(regressions), "regressions": regressions}
 

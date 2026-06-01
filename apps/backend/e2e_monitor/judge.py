@@ -12,6 +12,22 @@ _RUBRIC = (  # mirrors tests/evals/test_tailoring_eval.py::_JUDGE_RUBRIC
 )
 
 
+def _normalize_score(raw: Any) -> int | None:
+    """Coerce a judge score to an int in 1-5, or None. Rejects bools."""
+    if isinstance(raw, bool):
+        return None
+    if isinstance(raw, (int, float)):
+        value = int(raw)
+    elif isinstance(raw, str):
+        try:
+            value = int(float(raw.strip()))
+        except ValueError:
+            return None
+    else:
+        return None
+    return value if 1 <= value <= 5 else None
+
+
 async def judge_variation(job_description: str, tailored: dict[str, Any]) -> dict[str, Any]:
     """Score one (JD, tailored) pair 1-5. Caller must be past the opt-in gate."""
     from app.llm import complete_json
@@ -26,4 +42,6 @@ async def judge_variation(job_description: str, tailored: dict[str, Any]) -> dic
         max_tokens=512,
         schema_type="keywords",  # "keywords" skips truncation heuristics; judge dict is accepted on the first call
     )
-    return result if isinstance(result, dict) else {"score": None, "reasons": str(result)}
+    if not isinstance(result, dict):
+        return {"score": None, "reasons": str(result)}
+    return {"score": _normalize_score(result.get("score")), "reasons": str(result.get("reasons", ""))}

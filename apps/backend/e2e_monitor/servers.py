@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import os
 import shutil
+import socket
 import subprocess
 import time
 from dataclasses import dataclass, field
@@ -31,6 +32,12 @@ from e2e_monitor.bundle import Bundle
 
 BACKEND_HEALTH = "http://127.0.0.1:8000/api/v1/health"
 FRONTEND_URL = "http://127.0.0.1:3000/"
+
+
+def _port_is_free(port: int) -> bool:
+    """True if nothing is listening on 127.0.0.1:<port>."""
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        return sock.connect_ex(("127.0.0.1", port)) != 0
 _REPO_BACKEND = Path(__file__).resolve().parents[1]  # apps/backend
 _REPO_ROOT = _REPO_BACKEND.parents[1]               # repo root
 _REAL_CONFIG = _REPO_BACKEND / "data" / "config.json"
@@ -59,6 +66,13 @@ class Servers:
         if _REAL_CONFIG.exists():
             shutil.copy2(_REAL_CONFIG, self.bundle.data_dir / "config.json")
 
+        if not _port_is_free(8000):
+            raise RuntimeError(
+                "port 8000 is already in use — stop any running backend so the "
+                "monitor can bind its own isolated instance (DATA_DIR isolation "
+                "depends on owning the port)."
+            )
+
         be_log = (self.bundle.logs_dir / "backend.log").open("w")
         self.log_files.append(be_log)
         env = {
@@ -79,16 +93,16 @@ class Servers:
             raise RuntimeError("backend did not become healthy on :8000")
 
         if with_frontend and shutil.which("node") and shutil.which("npm"):
-            fe_log = (self.bundle.logs_dir / "frontend.log").open("w")
-            self.log_files.append(fe_log)
-            self.procs.append(subprocess.Popen(
-                ["npm", "run", "dev"],
-                cwd=_REPO_ROOT / "apps" / "frontend",
-                stdout=fe_log,
-                stderr=subprocess.STDOUT,
-                env={**os.environ},
-            ))
-            self.frontend_up = self._wait(FRONTEND_URL, timeout_s=120)
+            if not _port_is_free(3000):
+                self.frontend_up = True  # reuse the already-running frontend (proxies to :8000)
+            else:
+                fe_log = (self.bundle.logs_dir / "frontend.log").open("w")
+                self.log_files.append(fe_log)
+                self.procs.append(subprocess.Popen(
+                    ["npm", "run", "dev"], cwd=_REPO_ROOT / "apps" / "frontend",
+                    stdout=fe_log, stderr=subprocess.STDOUT, env={**os.environ},
+                ))
+                self.frontend_up = self._wait(FRONTEND_URL, timeout_s=120)
         return {"frontend_up": self.frontend_up}
 
     def teardown(self) -> None:

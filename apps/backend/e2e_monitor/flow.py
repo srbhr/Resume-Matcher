@@ -72,7 +72,10 @@ def tailor(
         timeout=120,
     )
     jobs_resp.raise_for_status()
-    job_id = jobs_resp.json()["job_id"][0]
+    job_ids = jobs_resp.json().get("job_id", [])
+    if not job_ids:
+        raise RuntimeError("jobs/upload returned no job_id")
+    job_id = job_ids[0]
 
     preview_resp = httpx.post(
         f"{API}/resumes/improve/preview",

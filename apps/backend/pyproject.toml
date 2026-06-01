@@ -30,6 +30,7 @@ dev = [
 ]
 e2e-monitor = [
     "pypdf>=4.0.0",  # PDF text probe for the non-blank render check
+    "httpx>=0.28.0",
 ]
 
 [build-system]

@@ -35,6 +35,21 @@ def test_diff_flags_drop_beyond_tolerance_even_above_floor() -> None:
     assert any(r["kind"] == "judge_drop" for r in d["regressions"])
 
 
+def test_diff_flags_missing_variation() -> None:
+    baseline = {
+        "variations": {
+            "backend-eng": {"jd_keyword_coverage": 1.0, "judge_score": 4, "non_blank": True},
+            "ml-eng": {"jd_keyword_coverage": 0.8, "judge_score": 3, "non_blank": True},
+        },
+        "floor": {"min_judge_score": 2, "min_keyword_coverage": 0.5},
+        "judge_tolerance": 1,
+    }
+    current = {"backend-eng": {"jd_keyword_coverage": 1.0, "judge_score": 4, "non_blank": True}}
+    d = diff_against_baseline(current, baseline)
+    assert d["regressed"] is True
+    assert any(r["kind"] == "missing_variation" and r["jd_key"] == "ml-eng" for r in d["regressions"])
+
+
 def test_summary_to_baseline_roundtrips_shape() -> None:
     variations = [{"jd_key": "backend-eng", "scores": {"jd_keyword_coverage": 1.0},
                    "judge": {"score": 4}, "render": {"non_blank": True}}]

@@ -13,6 +13,8 @@ _SECRET_PATTERNS: tuple[re.Pattern[str], ...] = (
     re.compile(r"sk-[A-Za-z0-9_\-]{8,}"),                 # OpenAI/Anthropic-style keys
     re.compile(r"eyJ[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+"),  # JWTs
     re.compile(r"\b[0-9a-fA-F]{32,}\b"),                  # long hex blobs (generic keys)
+    re.compile(r"AIza[0-9A-Za-z_\-]{35}"),                # Google API keys
+    re.compile(r"(?i)\bBearer\s+[A-Za-z0-9._~+/\-]+=*"),  # Authorization: Bearer <token>
 )
 
 # Config keys whose values are secrets regardless of shape.

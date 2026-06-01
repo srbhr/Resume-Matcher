@@ -102,22 +102,33 @@ def cmd_sweep(_: argparse.Namespace) -> int:
                 kw for kw in (w.strip(":,.();") for w in jd_text.split())
                 if kw.istitle() and kw.lower() not in _STOPWORDS
             ][:8]
+
             try:
                 t = tailor(resume_id, jd_text, keywords, master)
-                bundle.write_json(vdir / "tailored.json", t["tailored"])
-                bundle.write_json(vdir / "scores.json", t["scores"])
-                steps.append({"stage": f"tailor:{jd_key}", "ok": True, "ms": 0})
+            except Exception as exc:  # noqa: BLE001
+                steps.append({"stage": f"tailor:{jd_key}", "ok": False, "ms": 0, "error": str(exc)})
+                continue
+            bundle.write_json(vdir / "tailored.json", t["tailored"])
+            bundle.write_json(vdir / "scores.json", t["scores"])
+            steps.append({"stage": f"tailor:{jd_key}", "ok": True, "ms": 0})
+
+            try:
                 judge = asyncio.run(judge_variation(jd_text, t["tailored"]))
-                bundle.write_json(vdir / "judge.json", judge)
-                render: dict[str, Any] = {"non_blank": None}
-                if servers.frontend_up and t["tailored_resume_id"]:
+            except Exception as exc:  # noqa: BLE001
+                judge = {"score": None, "reasons": f"judge failed: {exc}"}
+                steps.append({"stage": f"judge:{jd_key}", "ok": False, "ms": 0, "error": str(exc)})
+            bundle.write_json(vdir / "judge.json", judge)
+
+            render: dict[str, Any] = {"non_blank": None}
+            if servers.frontend_up and t["tailored_resume_id"]:
+                try:
                     pdf, render = render_variation(t["tailored_resume_id"])
                     (vdir / "resume.pdf").write_bytes(pdf)
                     bundle.write_json(vdir / "render.json", render)
                     steps.append({"stage": f"render:{jd_key}", "ok": bool(render["non_blank"]), "ms": 0})
-                variations.append({"jd_key": jd_key, "scores": t["scores"], "judge": judge, "render": render})
-            except Exception as exc:  # noqa: BLE001 — capture, keep going
-                steps.append({"stage": f"tailor:{jd_key}", "ok": False, "ms": 0, "error": str(exc)})
+                except Exception as exc:  # noqa: BLE001
+                    steps.append({"stage": f"render:{jd_key}", "ok": False, "ms": 0, "error": str(exc)})
+            variations.append({"jd_key": jd_key, "scores": t["scores"], "judge": judge, "render": render})
     finally:
         servers.teardown()
 
@@ -143,7 +154,7 @@ def cmd_sweep(_: argparse.Namespace) -> int:
 
 
 def cmd_update_baseline(args: argparse.Namespace) -> int:
-    ensure_enabled()
+    ensure_enabled(require_key=False)
     run_dir = Path(args.run_dir)
     variations: list[dict[str, Any]] = []
     for vdir in sorted((run_dir / "variations").glob("*")):

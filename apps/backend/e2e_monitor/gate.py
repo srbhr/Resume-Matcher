@@ -25,14 +25,18 @@ def _key_is_configured() -> bool:
     return bool(cfg.api_key) or cfg.provider in ("ollama", "openai_compatible")
 
 
-def ensure_enabled() -> None:
-    """Raise ``MonitorDisabled`` unless both locks are open."""
+def ensure_enabled(*, require_key: bool = True) -> None:
+    """Raise ``MonitorDisabled`` unless both locks are open.
+
+    When ``require_key=False`` the LLM key check is skipped (use for offline
+    moves such as ``update-baseline`` that need no LLM calls).
+    """
     if os.environ.get("RM_E2E_MONITOR") != "1":
         raise MonitorDisabled(
             "e2e monitor is disabled by default — it makes real, billed LLM calls "
             "and boots servers. Set RM_E2E_MONITOR=1 to enable."
         )
-    if not _key_is_configured():
+    if require_key and not _key_is_configured():
         raise MonitorDisabled(
             "no usable LLM key/provider configured (set one in data/config.json or "
             "the Settings UI, or point at a local provider)."
