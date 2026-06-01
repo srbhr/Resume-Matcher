@@ -1399,6 +1399,7 @@ def calculate_resume_diff(
         original.get("education", []),
         improved.get("education", []),
         _format_education_entry,
+        {"description"},  # diffed separately in step 4b — avoid duplicate entry-level diffs
     )
     _append_entry_changes(
         changes,
