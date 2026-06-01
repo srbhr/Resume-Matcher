@@ -198,3 +198,13 @@ Net: **65 → 117 frontend tests**, all green. The `pre-push` gate runs this sui
 - Decide coverage floors per module once the I/O surface is broadly covered (avoid a single global % that hides gaps).
 - A Node-aware `tsc`/`next build` gate (catches TS errors beyond locale drift) — deferred; needs reliable node-in-hook.
 - If GitHub Actions is ever reconsidered, run it on push to `dev`/`main` only (not on PRs).
+
+---
+
+## 10. Agentic end-to-end monitor (on-demand, report-only)
+
+Above the deterministic suites and the local pre-push gate sits an **agentic E2E monitor** — an opt-in, on-demand harness that drives the *real* running app (master resume → 3–4 tailored variations → PDFs), captures a durable evidence bundle (logs + every intermediate JSON + PDFs), and has a Claude Code skill judge it across three runtime jobs: **output quality**, **flow/render integrity**, and **provider reality**. It is a **report, never a gate** — it informs, never blocks a push, and is never wired into CI.
+
+- Design: `docs/superpowers/specs/2026-06-01-agentic-e2e-monitor-design.md`; plan: `docs/superpowers/plans/2026-06-01-agentic-e2e-monitor.md`; harness + how-to: `apps/backend/e2e_monitor/README.md`.
+- OSS-safe: harness deps are an optional extra (`uv sync --extra e2e-monitor`), every move is gated behind `RM_E2E_MONITOR=1` + a configured key, and the runnable skill is gitignored (its source is the committed `e2e_monitor/AGENT_PLAYBOOK.md`). The dev's real DB is never touched (isolated `DATA_DIR`).
+- Run: `cd apps/backend && RM_E2E_MONITOR=1 uv run python -m e2e_monitor sweep`, then `bash e2e_monitor/install_skill.sh` and invoke the `monitor-e2e` skill for the report.
