@@ -41,10 +41,20 @@ RESUME_PRINT_DATA_URL = (
 def _refused_url():
     """Return a URL on a closed, connection-refusing localhost port.
 
-    Bind an ephemeral port to reserve it, then release it: nothing listens, so
-    Chromium navigation fails with net::ERR_CONNECTION_REFUSED. (The discard
-    port 9 is on Chromium's unsafe-ports blocklist and yields ERR_UNSAFE_PORT
-    instead, which does not exercise the connection-refused mapping.)
+    Bind an ephemeral port to claim a free number, read it, then CLOSE the
+    socket: with nothing bound, the kernel answers a connect with RST, so
+    Chromium navigation fails fast with net::ERR_CONNECTION_REFUSED — the signal
+    this test needs.
+
+    We deliberately close rather than hold the socket bound-but-unlistening:
+    that was tried, and on macOS a bound, non-listening socket does NOT refuse —
+    the SYN is dropped and Chromium hangs until its 30s navigation timeout (a
+    different, slower failure path), so the test would stop exercising
+    connection-refused. The residual window between close() and connect() is
+    sub-millisecond on a loopback ephemeral port, and a collision would only
+    *delay* the same failure, never mask it. (Port 9/discard is on Chromium's
+    unsafe-ports blocklist and yields ERR_UNSAFE_PORT, which also doesn't
+    exercise this mapping.)
     """
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.bind(("127.0.0.1", 0))
