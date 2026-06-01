@@ -13,17 +13,21 @@ _RUBRIC = (  # mirrors tests/evals/test_tailoring_eval.py::_JUDGE_RUBRIC
 
 
 def _normalize_score(raw: Any) -> int | None:
-    """Coerce a judge score to an int in 1-5, or None. Rejects bools."""
+    """Coerce a judge score to an int in 1-5, or None. Rejects bools, non-finite, junk."""
     if isinstance(raw, bool):
         return None
     if isinstance(raw, (int, float)):
-        value = int(raw)
+        candidate: float = float(raw)
     elif isinstance(raw, str):
         try:
-            value = int(float(raw.strip()))
+            candidate = float(raw.strip())
         except ValueError:
             return None
     else:
+        return None
+    try:
+        value = round(candidate)  # round (not truncate); raises on inf/nan
+    except (ValueError, OverflowError):
         return None
     return value if 1 <= value <= 5 else None
 

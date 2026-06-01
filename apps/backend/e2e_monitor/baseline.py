@@ -26,7 +26,11 @@ def diff_against_baseline(
 
         if cov is not None and cov < floor.get("min_keyword_coverage", 0.0):
             regressions.append({"jd_key": jd_key, "kind": "keyword_floor", "value": cov})
-        if judge is not None and judge < floor.get("min_judge_score", 0):
+        if judge is None and base.get("judge_score") is not None:
+            # The judge produced a score for this variation at baseline but nothing
+            # now (e.g. it errored) — worse than any low score, so flag it.
+            regressions.append({"jd_key": jd_key, "kind": "judge_missing"})
+        elif judge is not None and judge < floor.get("min_judge_score", 0):
             regressions.append({"jd_key": jd_key, "kind": "judge_floor", "value": judge})
         if non_blank is False:
             regressions.append({"jd_key": jd_key, "kind": "blank_render", "value": False})

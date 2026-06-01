@@ -38,6 +38,8 @@ def _port_is_free(port: int) -> bool:
     """True if nothing is listening on 127.0.0.1:<port>."""
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         return sock.connect_ex(("127.0.0.1", port)) != 0
+
+
 _REPO_BACKEND = Path(__file__).resolve().parents[1]  # apps/backend
 _REPO_ROOT = _REPO_BACKEND.parents[1]               # repo root
 _REAL_CONFIG = _REPO_BACKEND / "data" / "config.json"
@@ -94,7 +96,10 @@ class Servers:
 
         if with_frontend and shutil.which("node") and shutil.which("npm"):
             if not _port_is_free(3000):
-                self.frontend_up = True  # reuse the already-running frontend (proxies to :8000)
+                # Something is on :3000 — verify it actually responds before trusting
+                # it as the frontend (it proxies to our :8000). A non-frontend process
+                # squatting the port leaves frontend_up False, so renders just skip.
+                self.frontend_up = self._wait(FRONTEND_URL, timeout_s=5)
             else:
                 fe_log = (self.bundle.logs_dir / "frontend.log").open("w")
                 self.log_files.append(fe_log)

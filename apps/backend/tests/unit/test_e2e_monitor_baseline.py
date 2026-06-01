@@ -20,6 +20,15 @@ def test_diff_clean_when_within_tolerance() -> None:
     assert d["regressions"] == []
 
 
+def test_diff_flags_judge_missing_when_judge_failed() -> None:
+    # judge_score None = the judge errored for this variation; the baseline had a
+    # score, so a now-missing score is a regression (worse than any low score).
+    current = {"backend-eng": {"jd_keyword_coverage": 1.0, "judge_score": None, "non_blank": True}}
+    d = diff_against_baseline(current, _BASELINE)
+    assert any(r["kind"] == "judge_missing" for r in d["regressions"])
+    assert d["regressed"] is True
+
+
 def test_diff_flags_floor_breach() -> None:
     current = {"backend-eng": {"jd_keyword_coverage": 0.5, "judge_score": 2, "non_blank": False}}
     d = diff_against_baseline(current, _BASELINE)
