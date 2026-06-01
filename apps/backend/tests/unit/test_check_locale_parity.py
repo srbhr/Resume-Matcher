@@ -64,6 +64,18 @@ def test_fails_on_object_vs_leaf_mismatch(messages_dir: Path) -> None:
     assert clp.main(["prog", str(messages_dir)]) == 1
 
 
+def test_fails_on_string_vs_number_mismatch(messages_dir: Path) -> None:
+    # a.b is a string in en but a number here — also breaks `next build`, and a
+    # coarse branch/leaf classification would have missed it.
+    _write(messages_dir, "es.json", {"a": {"b": 5, "c": "ya"}, "d": "z"})
+    assert clp.main(["prog", str(messages_dir)]) == 1
+
+
+def test_fails_on_string_vs_array_mismatch(messages_dir: Path) -> None:
+    _write(messages_dir, "es.json", {"a": {"b": ["x"], "c": "ya"}, "d": "z"})
+    assert clp.main(["prog", str(messages_dir)]) == 1
+
+
 def test_fails_on_malformed_json(messages_dir: Path) -> None:
     (messages_dir / "es.json").write_text("{ not valid json ", encoding="utf-8")
     assert clp.main(["prog", str(messages_dir)]) == 1

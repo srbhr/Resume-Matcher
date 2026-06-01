@@ -19,15 +19,23 @@ import { locales, type Locale } from '@/i18n/config';
  * the pre-push hook runs without Node).
  */
 
-type Kind = 'branch' | 'leaf';
+// Classify a JSON value by the type `typeof en` infers (object/array/string/…).
+// Note arrays and null are `typeof === 'object'` in JS, so they must be handled
+// before the generic object case — this keeps the classification in lock-step
+// with scripts/check_locale_parity.py (where lists/None are NOT objects).
+function nodeKind(v: unknown): string {
+  if (Array.isArray(v)) return 'array';
+  if (v === null) return 'null';
+  if (typeof v === 'object') return 'object';
+  return typeof v; // 'string' | 'number' | 'boolean'
+}
 
-function keyKinds(obj: unknown, prefix = '', out: Map<string, Kind> = new Map()): Map<string, Kind> {
-  if (!obj || typeof obj !== 'object') return out;
+function keyKinds(obj: unknown, prefix = '', out: Map<string, string> = new Map()): Map<string, string> {
+  if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return out;
   for (const [key, val] of Object.entries(obj as Record<string, unknown>)) {
     const path = prefix ? `${prefix}.${key}` : key;
-    const isBranch = !!val && typeof val === 'object';
-    out.set(path, isBranch ? 'branch' : 'leaf');
-    if (isBranch) keyKinds(val, path, out);
+    out.set(path, nodeKind(val));
+    if (val && typeof val === 'object' && !Array.isArray(val)) keyKinds(val, path, out);
   }
   return out;
 }
@@ -56,13 +64,16 @@ describe('i18n locale parity (guards the next build break)', () => {
     expect(REFERENCE.size).toBeGreaterThan(20);
   });
 
-  it('detects a leaf-vs-object shape mismatch, not just missing keys', () => {
-    // Proves the kind-aware comparison fires on the exact gap a presence-only
-    // set-diff would let through (cubic review, PR #820).
+  it('detects shape mismatches by JSON type (object / number / array vs string)', () => {
+    // Proves the kind-aware comparison fires on the exact gaps a presence-only
+    // set-diff would let through (cubic review, PR #820) — including primitive
+    // and array mismatches, not just object-vs-string.
     const ref = keyKinds({ a: { b: 'str' } });
-    const bad = keyKinds({ a: { b: { c: 'deep' } } }); // a.b is an object here
-    const mismatched = [...ref.keys()].filter((k) => bad.has(k) && bad.get(k) !== ref.get(k));
-    expect(mismatched).toContain('a.b');
+    const diff = (other: Map<string, string>) =>
+      [...ref.keys()].filter((k) => other.has(k) && other.get(k) !== ref.get(k));
+    expect(diff(keyKinds({ a: { b: { c: 'deep' } } }))).toContain('a.b'); // object
+    expect(diff(keyKinds({ a: { b: 5 } }))).toContain('a.b'); // number
+    expect(diff(keyKinds({ a: { b: ['x'] } }))).toContain('a.b'); // array
   });
 });
 

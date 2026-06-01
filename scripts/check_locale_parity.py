@@ -29,20 +29,42 @@ MESSAGES_DIR = Path(__file__).resolve().parents[1] / "apps" / "frontend" / "mess
 REFERENCE = "en.json"
 
 
-def key_kinds(obj: Any, prefix: str = "") -> dict[str, str]:
-    """Map every dotted key path to its kind: ``"branch"`` (object) or ``"leaf"``.
+def _node_kind(value: Any) -> str:
+    """Classify a JSON value by the type ``typeof en`` would infer for it.
 
-    Comparing *kinds* — not just key presence — is what catches a locale that
-    has, say, ``a.b`` as an object where ``en`` has it as a string. Such a
-    mismatch keeps the key path present (so a presence-only check passes) yet
-    still breaks ``next build`` because the locale is no longer assignable to
-    ``typeof en``.
+    ``bool`` is checked before ``int`` because ``bool`` is a subclass of ``int``
+    in Python (``isinstance(True, int)`` is ``True``).
+    """
+    if isinstance(value, dict):
+        return "object"
+    if isinstance(value, list):
+        return "array"
+    if isinstance(value, bool):
+        return "boolean"
+    if isinstance(value, (int, float)):
+        return "number"
+    if value is None:
+        return "null"
+    return "string"
+
+
+def key_kinds(obj: Any, prefix: str = "") -> dict[str, str]:
+    """Map every dotted key path to its JSON *kind* (object/array/string/number/…).
+
+    Comparing *kinds* — not just key presence — is what catches a locale whose
+    ``a.b`` is an object (or a number, or an array) where ``en`` has a string:
+    the key path is still present, so a presence-only check passes, yet it still
+    breaks ``next build`` because the locale is no longer assignable to
+    ``typeof en``. Tracking the full JSON type (rather than a coarse
+    branch/leaf) catches primitive/array mismatches too, and keeps this in lock-
+    step with the frontend in-suite guard. Recursion descends into objects only
+    (the only container these message files nest with).
     """
     kinds: dict[str, str] = {}
     if isinstance(obj, dict):
         for key, value in obj.items():
             path = f"{prefix}.{key}" if prefix else key
-            kinds[path] = "branch" if isinstance(value, dict) else "leaf"
+            kinds[path] = _node_kind(value)
             kinds.update(key_kinds(value, path))
     return kinds
 
@@ -100,8 +122,8 @@ def main(argv: list[str]) -> int:
         if mismatched:
             failed = True
             print(
-                f"locale-parity: ✗ {path.name} has keys whose shape differs from "
-                f"{REFERENCE} (object vs. string) — this breaks `next build`:",
+                f"locale-parity: ✗ {path.name} has keys whose JSON type differs "
+                f"from {REFERENCE} — this breaks `next build`:",
                 file=sys.stderr,
             )
             for key in sorted(mismatched):
