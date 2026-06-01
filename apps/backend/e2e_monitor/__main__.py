@@ -105,13 +105,15 @@ def cmd_sweep(_: argparse.Namespace) -> int:
     _say("  ✓ seed-master   canonical master → isolated DB (your real DB is untouched)")
 
     steps: list[dict[str, Any]] = []
+    # seed-master ran above (BEFORE boot) — record it first so flow-trace.json
+    # ordering matches actual execution.
+    steps.append({"stage": "seed-master", "ok": True, "ms": 0, "detail": {"resume_id": resume_id}})
     servers = Servers(bundle=bundle)
     variations: list[dict[str, Any]] = []
     try:
         _say("  ▶ boot          spawning backend :8000 + frontend :3000 …")
         boot = servers.boot()
         steps.append({"stage": "boot", "ok": True, "ms": 0, "detail": boot})
-        steps.append({"stage": "seed-master", "ok": True, "ms": 0, "detail": {"resume_id": resume_id}})
         _say("  ✓ boot          backend up" + (" + frontend up" if boot.get("frontend_up") else " (frontend off — renders degrade to header+size)"))
 
         for jd_key, jd_text in _jds():
@@ -141,20 +143,27 @@ def cmd_sweep(_: argparse.Namespace) -> int:
             bundle.write_json(vdir / "judge.json", judge)
 
             render: dict[str, Any] = {"non_blank": None}
+            render_status = "skipped"  # frontend down or no tailored id
             if servers.frontend_up and t["tailored_resume_id"]:
                 try:
                     pdf, render = render_variation(t["tailored_resume_id"])
                     (vdir / "resume.pdf").write_bytes(pdf)
                     bundle.write_json(vdir / "render.json", render)
                     steps.append({"stage": f"render:{jd_key}", "ok": bool(render["non_blank"]), "ms": 0})
+                    render_status = "non-blank" if render["non_blank"] else "BLANK!"
                 except Exception as exc:  # noqa: BLE001
                     steps.append({"stage": f"render:{jd_key}", "ok": False, "ms": 0, "error": str(exc)})
+                    render_status = "FAILED"
             variations.append({"jd_key": jd_key, "scores": t["scores"], "judge": judge, "render": render})
-            _nb = render.get("non_blank")
+
+            # ✓ only when the judge produced a score AND the render didn't fail/blank;
+            # otherwise ⚠ — the marker must never claim success over a caught failure.
+            variation_ok = (judge or {}).get("score") is not None and render_status in ("non-blank", "skipped")
             _say(
-                f"  ✓ {jd_key:<16} judge={(judge or {}).get('score')}  "
+                f"  {'✓' if variation_ok else '⚠'} {jd_key:<16} "
+                f"judge={(judge or {}).get('score')}  "
                 f"kw={t['scores']['jd_keyword_coverage']}  "
-                f"render={'non-blank' if _nb else ('skipped' if _nb is None else 'BLANK!')}  "
+                f"render={render_status}  "
                 f"fabricated={len(t['scores']['fabricated_employers'])}"
             )
     finally:
