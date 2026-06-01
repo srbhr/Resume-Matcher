@@ -546,6 +546,8 @@
       "educationChanges": "学歴の変更",
       "projectChanges": "プロジェクトの変更",
       "certificationChanges": "資格の変更",
+      "languageChanges": "言語の変更",
+      "awardChanges": "賞の変更",
       "rejectButton": "拒否して再生成",
       "confirmButton": "確認して保存"
     },

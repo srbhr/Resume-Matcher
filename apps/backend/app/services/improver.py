@@ -81,7 +81,13 @@ _ALLOWED_PATH_PATTERNS = [
     re.compile(r"^summary$"),
     re.compile(r"^workExperience\[\d+\]\.description(\[\d+\])?$"),
     re.compile(r"^personalProjects\[\d+\]\.description(\[\d+\])?$"),
+    # Education description is a single string (Education.description: str | None),
+    # so only the scalar path is allowed — not a [j]-indexed bullet form.
+    re.compile(r"^education\[\d+\]\.description$"),
     re.compile(r"^additional\.technicalSkills$"),
+    re.compile(r"^additional\.languages$"),
+    re.compile(r"^additional\.certificationsTraining$"),
+    re.compile(r"^additional\.awards$"),
 ]
 
 # Blocked path prefixes — always rejected
@@ -130,6 +136,10 @@ def _is_path_blocked(path: str) -> bool:
             return True
 
     if path.startswith("education"):
+        # Education descriptions may be tailored; degree/institution/years stay
+        # blocked (they are also caught by the blocked-leaf-name check above).
+        if re.match(r"^education\[\d+\]\.description$", path):
+            return False
         return True
 
     return False
@@ -1284,6 +1294,91 @@ def calculate_resume_diff(
             change_type="removed",
             original_value=orig_certs[cert_key],
             confidence="medium"
+        ))
+
+    # 4b. Compare education descriptions (a single string per entry, not a list)
+    original_education = original.get("education", [])
+    improved_education = improved.get("education", [])
+    for idx in range(max(len(original_education), len(improved_education))):
+        orig_entry = original_education[idx] if idx < len(original_education) else None
+        impr_entry = improved_education[idx] if idx < len(improved_education) else None
+        orig_desc = (
+            str(orig_entry.get("description") or "").strip()
+            if isinstance(orig_entry, dict)
+            else ""
+        )
+        impr_desc = (
+            str(impr_entry.get("description") or "").strip()
+            if isinstance(impr_entry, dict)
+            else ""
+        )
+        if orig_desc == impr_desc:
+            continue
+        if orig_desc and not impr_desc:
+            change_type = "removed"
+        elif impr_desc and not orig_desc:
+            change_type = "added"
+        else:
+            change_type = "modified"
+        changes.append(ResumeFieldDiff(
+            field_path=f"education[{idx}].description",
+            field_type="education",
+            change_type=change_type,
+            original_value=orig_desc or None,
+            new_value=impr_desc or None,
+            confidence="medium",
+        ))
+
+    # 4c. Compare languages (order changes are intentionally ignored)
+    orig_langs = _build_string_index(
+        original.get("additional", {}).get("languages", []),
+        "additional.languages",
+    )
+    new_langs = _build_string_index(
+        improved.get("additional", {}).get("languages", []),
+        "additional.languages",
+    )
+    for lang_key in set(new_langs) - set(orig_langs):
+        changes.append(ResumeFieldDiff(
+            field_path="additional.languages",
+            field_type="language",
+            change_type="added",
+            new_value=new_langs[lang_key],
+            confidence="high",
+        ))
+    for lang_key in set(orig_langs) - set(new_langs):
+        changes.append(ResumeFieldDiff(
+            field_path="additional.languages",
+            field_type="language",
+            change_type="removed",
+            original_value=orig_langs[lang_key],
+            confidence="medium",
+        ))
+
+    # 4d. Compare awards (order changes are intentionally ignored)
+    orig_awards = _build_string_index(
+        original.get("additional", {}).get("awards", []),
+        "additional.awards",
+    )
+    new_awards = _build_string_index(
+        improved.get("additional", {}).get("awards", []),
+        "additional.awards",
+    )
+    for award_key in set(new_awards) - set(orig_awards):
+        changes.append(ResumeFieldDiff(
+            field_path="additional.awards",
+            field_type="award",
+            change_type="added",
+            new_value=new_awards[award_key],
+            confidence="high",
+        ))
+    for award_key in set(orig_awards) - set(new_awards):
+        changes.append(ResumeFieldDiff(
+            field_path="additional.awards",
+            field_type="award",
+            change_type="removed",
+            original_value=orig_awards[award_key],
+            confidence="medium",
         ))
 
     # 5. Compare added/removed/modified entries

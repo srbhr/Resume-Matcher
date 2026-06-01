@@ -598,3 +598,111 @@ class TestApplyDiffsEdgeCases:
         assert result["workExperience"][1]["description"][0] == "Updated payment system description"
         # First entry unchanged
         assert result["workExperience"][0]["description"][0] == sample_resume["workExperience"][0]["description"][0]
+
+
+class TestApplyDiffsNewPaths:
+    """Newly allowed paths for issue #805 (broader diff scope, casing preserved)."""
+
+    def test_replace_education_description(self, sample_resume):
+        """Education description (a single string) should be replaceable."""
+        changes = [
+            ResumeChange(
+                path="education[0].description",
+                action="replace",
+                original=sample_resume["education"][0]["description"],
+                value="Graduated with honors; focus on distributed systems and APIs",
+                reason="surface relevant coursework",
+            )
+        ]
+        result, applied, rejected = apply_diffs(sample_resume, changes)
+        assert len(applied) == 1
+        assert len(rejected) == 0
+        assert result["education"][0]["description"] == changes[0].value
+
+    def test_reject_education_description_list_index(self, sample_resume):
+        """Education description is a scalar string, so the [j] bullet form is not allowed."""
+        changes = [
+            ResumeChange(
+                path="education[0].description[0]",
+                action="replace",
+                original="Graduated with honors, Dean's List",
+                value="anything",
+                reason="test",
+            )
+        ]
+        _result, applied, rejected = apply_diffs(sample_resume, changes)
+        assert len(applied) == 0
+        assert len(rejected) == 1
+
+    def test_reorder_languages(self, sample_resume):
+        """Languages list should be reorderable (same items, new order)."""
+        original = sample_resume["additional"]["languages"]
+        changes = [
+            ResumeChange(
+                path="additional.languages",
+                action="reorder",
+                original=None,
+                value=list(reversed(original)),
+                reason="prioritize Spanish for this role",
+            )
+        ]
+        result, applied, rejected = apply_diffs(sample_resume, changes)
+        assert len(applied) == 1
+        assert len(rejected) == 0
+        assert result["additional"]["languages"] == list(reversed(original))
+
+    def test_reorder_awards(self, sample_resume):
+        """Awards list should be reorderable."""
+        original = sample_resume["additional"]["awards"]
+        changes = [
+            ResumeChange(
+                path="additional.awards",
+                action="reorder",
+                original=None,
+                value=list(original),
+                reason="no change needed",
+            )
+        ]
+        result, applied, rejected = apply_diffs(sample_resume, changes)
+        assert len(applied) == 1
+        assert len(rejected) == 0
+        assert result["additional"]["awards"] == original
+
+    def test_reorder_certifications(self, sample_resume):
+        """Certifications list should be reorderable."""
+        original = sample_resume["additional"]["certificationsTraining"]
+        changes = [
+            ResumeChange(
+                path="additional.certificationsTraining",
+                action="reorder",
+                original=None,
+                value=list(original),
+                reason="no change needed",
+            )
+        ]
+        result, applied, rejected = apply_diffs(sample_resume, changes)
+        assert len(applied) == 1
+        assert len(rejected) == 0
+
+    @pytest.mark.parametrize(
+        "path,original,value",
+        [
+            ("education[0].degree", "B.S. Computer Science", "M.S. Computer Science"),
+            ("education[0].institution", "MIT", "Stanford"),
+            ("education[0].years", "2014 - 2018", "2014 - 2020"),
+        ],
+    )
+    def test_reject_blocked_education_fields(self, sample_resume, path, original, value):
+        """Degree/institution/years stay blocked even though description is now allowed."""
+        changes = [
+            ResumeChange(
+                path=path,
+                action="replace",
+                original=original,
+                value=value,
+                reason="test",
+            )
+        ]
+        _result, applied, rejected = apply_diffs(sample_resume, changes)
+        assert len(applied) == 0
+        assert len(rejected) == 1
