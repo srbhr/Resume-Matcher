@@ -336,7 +336,10 @@ class TestCheckHealthTransport:
         res = await check_llm_health(config=cfg, include_details=True)
 
         assert res["healthy"] is False
-        assert res["error_code"]  # some non-empty failure code is set
+        # A provider auth failure (401) falls through to the generic failure
+        # code — assert the specific value, not just "truthy", so a silent
+        # rename of the code is caught.
+        assert res["error_code"] == "health_check_failed"
         # The raw key must never reach the client, even partially.
         detail = res.get("error_detail") or ""
         assert leaking_key not in detail
