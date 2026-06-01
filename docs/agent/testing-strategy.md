@@ -1,7 +1,7 @@
 # Testing Strategy & Verification Plan
 
 > **Status:** Living document. Started 2026-05-30 on branch `test/backend-coverage-foundation` (base: `dev`).
-> **Scope of phase 1:** Backend (`apps/backend`). Frontend and CI follow in later, separately-agreed phases.
+> **Scope:** Backend (`apps/backend`, Phases 1–6) **and** frontend (`apps/frontend`, vitest — §8). Gating is a local `pre-push` hook, not PR CI.
 > **Why this exists:** We shipped a build break that no automation caught, users report "Ollama doesn't work" and "resume won't render," and we had no evidence-based read on whether our tests are real or theater. This doc is the resumable record of the assessment and the plan.
 
 ---
@@ -176,8 +176,25 @@ uv run pytest tests/unit/test_parser.py -q
 
 ---
 
-## 8. Open questions / future
+## 8. Frontend test suite
 
-- Frontend: add a locale-parity test (every `messages/*.json` structurally matches `en.json`) — this *exactly* reproduces and prevents the build break that started this effort. Belongs to the frontend phase.
-- Decide coverage floors per module once Phase 1–4 land (avoid a single global % that hides the I/O gaps).
-- When CI lands, structural evals run in-gate; LLM-judge evals run nightly with a repo secret or skip.
+`apps/frontend` uses **vitest + Testing Library (jsdom)** — run `npm run test` (or `./node_modules/.bin/vitest run`). The same rigor as the backend was applied: assess what existed (a green 65-test suite over `download-utils` + two components), then cover the highest-value untested logic.
+
+Added (`apps/frontend/tests/`):
+- `i18n-utils.test.ts` — the `t()` engine (`getNestedValue` dot-path + missing-key fallback, `applyParams` substitution).
+- `i18n-locale-parity.test.ts` — **in-suite guard for the build break**: every `messages/*.json` must structurally match `en.json` (mirrors `scripts/check_locale_parity.py`). Verified anti-theater (adding a key to `en.json` fails all four locales).
+- `keyword-matcher.test.ts` — JD↔resume keyword extract/segment/match-stats.
+- `section-helpers.test.ts` — section ordering, custom-section IDs, localize-only-untouched-defaults.
+- `html-sanitizer.test.ts` — the DOMPurify XSS whitelist (`strong/em/u/a`).
+- `api-client.test.ts` — `lib/api/client` URL resolution + timeout/AbortError (`fetch` stubbed).
+
+Net: **65 → 117 frontend tests**, all green. The `pre-push` gate runs this suite when Node is available; a full `tsc`/`next build` gate remains future work (nvm-in-hook fragility).
+
+---
+
+## 9. Open questions / future
+
+- ✅ ~~Frontend locale-parity test~~ — done (`i18n-locale-parity.test.ts` + the hook's `scripts/check_locale_parity.py`).
+- Decide coverage floors per module once the I/O surface is broadly covered (avoid a single global % that hides gaps).
+- A Node-aware `tsc`/`next build` gate (catches TS errors beyond locale drift) — deferred; needs reliable node-in-hook.
+- If GitHub Actions is ever reconsidered, run it on push to `dev`/`main` only (not on PRs).
