@@ -749,8 +749,11 @@ class ResumeChange(BaseModel):
         description="Dot+bracket path, e.g. 'workExperience[0].description[1]'"
     )
     action: Literal["replace", "append", "reorder", "add_skill"]
-    original: str | None = Field(
-        default=None, description="Current text at path — for verification"
+    original: str | list[str] | None = Field(
+        default=None,
+        description="Current text at path — for verification. May be a list (the "
+        "current items) for the reorder action; only used for text verification of "
+        "replace/append, ignored otherwise.",
     )
     value: str | list[str] = Field(description="New content")
     reason: str = Field(description="Why this change helps match the JD")

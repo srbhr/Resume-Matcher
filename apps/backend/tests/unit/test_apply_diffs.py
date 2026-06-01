@@ -233,6 +233,26 @@ class TestApplyDiffsReorder:
         result, applied, rejected = apply_diffs(sample_resume, changes)
         assert len(applied) == 1
 
+    def test_reorder_accepts_list_original_and_applies(self, sample_resume):
+        # The live LLM ignores the prompt's `original: null` for reorder and sends
+        # the current skills LIST as `original`. The schema must accept that — a
+        # `str | None`-only `original` dropped the whole change at parse time with a
+        # `string_type` error ("Skipping malformed change") — and a pure reorder
+        # (same items, new order) must still apply.
+        original_skills = sample_resume["additional"]["technicalSkills"]
+        reordered = list(reversed(original_skills))
+        change = ResumeChange(
+            path="additional.technicalSkills",
+            action="reorder",
+            original=original_skills,  # a LIST, exactly as the LLM sends it
+            value=reordered,
+            reason="prioritize JD-relevant skills",
+        )
+        assert change.original == original_skills
+        result, applied, rejected = apply_diffs(sample_resume, [change])
+        assert len(applied) == 1
+        assert result["additional"]["technicalSkills"] == reordered
+
 
 class TestApplyDiffsBlockedPaths:
     """Tests for blocked path rejection."""
