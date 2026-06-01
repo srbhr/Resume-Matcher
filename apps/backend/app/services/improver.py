@@ -314,23 +314,60 @@ def apply_diffs(
             if not isinstance(actual_value, list) or not isinstance(change.value, list):
                 rejected.append(change)
                 continue
-            # Validate same items (case-insensitive)
             orig_set = sorted(s.casefold() for s in actual_value if isinstance(s, str))
             new_set = sorted(s.casefold() for s in change.value if isinstance(s, str))
-            if orig_set != new_set:
-                logger.info("Diff rejected (reorder items mismatch): %s", path)
-                rejected.append(change)
-                continue
-            # Preserve original casing: map new order back to original strings
-            casefold_to_originals: dict[str, list[str]] = {}
-            for item in actual_value:
-                if isinstance(item, str):
-                    casefold_to_originals.setdefault(item.casefold(), []).append(item)
             reordered: list[str] = []
-            for item in change.value:
-                if isinstance(item, str):
-                    originals = casefold_to_originals.get(item.casefold(), [])
-                    reordered.append(originals.pop(0) if originals else item)
+            if orig_set == new_set:
+                # Pure permutation: map the new order back to original casing.
+                casefold_to_originals: dict[str, list[str]] = {}
+                for item in actual_value:
+                    if isinstance(item, str):
+                        casefold_to_originals.setdefault(item.casefold(), []).append(item)
+                for item in change.value:
+                    if isinstance(item, str):
+                        originals = casefold_to_originals.get(item.casefold(), [])
+                        reordered.append(originals.pop(0) if originals else item)
+            else:
+                # Salvage (issue #736): the LLM folded new/removed items into a
+                # reorder. Rather than dropping the whole change, apply the SAFE
+                # subset *in the requested order*: walk the proposed list, placing
+                # each existing item where the model put it (so prioritized JD
+                # skills stay near the top) and — for the skills list only —
+                # inserting new items that pass the SAME verified gate as
+                # add_skill. Originals the model omitted are appended at the end
+                # so a real item is never silently lost. Other lists
+                # (languages/certs/awards) have no verifier, so new items are
+                # dropped to avoid fabrication.
+                casefold_to_originals: dict[str, list[str]] = {}
+                for item in actual_value:
+                    if isinstance(item, str):
+                        casefold_to_originals.setdefault(item.casefold(), []).append(item)
+                original_cfs = set(casefold_to_originals)
+                is_skills = path == "additional.technicalSkills"
+                added_new: set[str] = set()
+                for item in change.value:
+                    if not isinstance(item, str):
+                        continue
+                    cf = item.casefold()
+                    if cf in original_cfs:
+                        bucket = casefold_to_originals[cf]
+                        if bucket:  # place original in requested position (dupes preserved)
+                            reordered.append(bucket.pop(0))
+                        # else: a duplicate of an already-placed original — skip
+                    elif is_skills and cf not in added_new:
+                        skill = item.strip()
+                        if skill and _normalize_skill_key(skill) in allowed_skill_keys:
+                            reordered.append(skill)  # verified new skill, requested position
+                            added_new.add(cf)
+                        else:
+                            logger.info("Reorder salvage dropped unverified skill: %s", skill)
+                    # else: non-skills new item → dropped (no verifier to ground it)
+                for item in actual_value:  # append any originals the model omitted
+                    if isinstance(item, str):
+                        bucket = casefold_to_originals[item.casefold()]
+                        if bucket:
+                            reordered.append(bucket.pop(0))
+                logger.info("Diff reorder salvaged (item-set mismatch): %s", path)
             if not _set_at_path(result, path, reordered):
                 rejected.append(change)
                 continue
@@ -763,6 +800,11 @@ def verify_skill_target_plan(
                 }
             )
         elif skill_key in jd_skills:
+            # JD-required/preferred skills are accepted as targets so the résumé
+            # can be tailored to actually pass ATS/recruiter screening — adding
+            # relevant JD skills is the product's purpose. (Truly unsupported
+            # skills — neither in the JD nor the résumé — are still rejected
+            # below.) The user reviews additions in the diff preview before save.
             accepted.append(
                 {
                     "skill": jd_skills[skill_key],
