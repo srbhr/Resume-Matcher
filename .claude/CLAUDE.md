@@ -178,10 +178,12 @@ Both apps have real test suites, and **tests are in scope** (deliberate testing 
 Before completing a task:
 
 - [ ] Code compiles without errors
+- [ ] Backend tests pass (`uv run pytest`); frontend tests pass (`npm run test`)
 - [ ] `npm run lint` passes
 - [ ] UI changes follow Swiss International Style
 - [ ] Python functions have type hints
 - [ ] Schema/prompt changes documented
+- [ ] New behavior covered by a deterministic test (it must fail if the behavior breaks)
 
 ---
 
