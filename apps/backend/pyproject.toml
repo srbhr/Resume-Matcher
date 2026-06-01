@@ -46,6 +46,10 @@ asyncio_mode = "auto"
 addopts = [
     "--strict-markers",
     "-v",
+    # Exclude LLM-as-judge evals from the default run (they may call a real
+    # provider and are non-deterministic). Run them on demand with `-m eval`.
+    "-m",
+    "not eval",
 ]
 markers = [
     "unit: pure function tests, no external dependencies",
