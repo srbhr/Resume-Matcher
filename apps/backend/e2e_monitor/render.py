@@ -10,6 +10,8 @@ from __future__ import annotations
 
 from typing import Any
 
+import httpx
+
 _MIN_BYTES = 1000  # a real one-page resume PDF is comfortably larger than this
 
 
@@ -49,3 +51,20 @@ def check_pdf_bytes(data: bytes) -> dict[str, Any]:
         "has_text": has_text,
         "non_blank": _verdict(is_pdf=is_pdf, size=size, pages=pages, has_text=has_text),
     }
+
+
+API = "http://127.0.0.1:8000/api/v1"
+
+
+def render_variation(
+    tailored_resume_id: str, *, lang: str | None = None
+) -> tuple[bytes, dict[str, Any]]:
+    """GET the PDF for a tailored resume; return (bytes, non-blank verdict)."""
+    params: dict[str, str] = {"template": "swiss-single", "pageSize": "A4"}
+    if lang:
+        params["lang"] = lang
+    resp = httpx.get(
+        f"{API}/resumes/{tailored_resume_id}/pdf", params=params, timeout=120
+    )
+    resp.raise_for_status()
+    return resp.content, check_pdf_bytes(resp.content)

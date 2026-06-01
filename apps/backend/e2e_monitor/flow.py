@@ -8,7 +8,10 @@ later task.)
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
+
+import httpx
 
 from tests.evals.scorers import (
     is_valid_resume,
@@ -29,4 +32,68 @@ def score_tailoring(
         "personal_info_unchanged": personal_info_unchanged(original, tailored),
         "is_valid_resume": is_valid_resume(tailored),
         "jd_keyword_coverage": jd_keywords_present(tailored, keywords),
+    }
+
+
+API = "http://127.0.0.1:8000/api/v1"
+
+
+def seed_master_db(data_dir: Path, master: dict[str, Any]) -> str:
+    """Pre-seed the isolated DB with a known master BEFORE the server boots.
+
+    The upload endpoint only accepts documents (and runs a non-deterministic LLM
+    parse), so for a controlled, deterministic master we write it straight into
+    the isolated TinyDB file via app.database.Database — the same file the server
+    opens once booted with DATA_DIR=<data_dir>. Returns the master's resume_id.
+    """
+    from app.database import Database
+
+    db = Database(db_path=data_dir / "database.json")
+    try:
+        doc = db.create_resume(
+            content="(seeded master resume)",
+            content_type="md",
+            is_master=True,
+            processed_data=master,
+            processing_status="ready",
+        )
+        return doc["resume_id"]
+    finally:
+        db.close()
+
+
+def tailor(
+    resume_id: str, jd_text: str, keywords: list[str], original: dict[str, Any]
+) -> dict[str, Any]:
+    """jobs/upload -> improve/preview -> improve/confirm; returns tailored + scores."""
+    job = httpx.post(
+        f"{API}/jobs/upload",
+        json={"job_descriptions": [jd_text], "resume_id": resume_id},
+        timeout=120,
+    ).json()
+    job_id = job["job_id"][0]
+    preview = httpx.post(
+        f"{API}/resumes/improve/preview",
+        json={"resume_id": resume_id, "job_id": job_id},
+        timeout=240,
+    ).json()
+    data = preview["data"]
+    tailored = data["resume_preview"]
+    improvements = data["improvements"]
+    confirm = httpx.post(
+        f"{API}/resumes/improve/confirm",
+        json={
+            "resume_id": resume_id,
+            "job_id": job_id,
+            "improved_data": tailored,
+            "improvements": improvements,
+        },
+        timeout=240,
+    ).json()
+    return {
+        "job_id": job_id,
+        "tailored": tailored,
+        "tailored_resume_id": confirm["data"].get("resume_id"),
+        "keywords": keywords,
+        "scores": score_tailoring(original, tailored, keywords),
     }
