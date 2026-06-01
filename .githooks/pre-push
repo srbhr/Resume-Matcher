@@ -7,6 +7,7 @@
 # Runs BEFORE every `git push` and BLOCKS the push if anything is red:
 #   1. backend test suite        (uv run pytest — LLM/eval tests excluded by default)
 #   2. frontend locale parity     (pure-Python check; guards the i18n build break)
+#   3. frontend test suite        (vitest — runs when Node is available, else skipped)
 #
 # Activate once per clone:   git config core.hooksPath .githooks
 # Bypass intentionally:      git push --no-verify     (e.g. docs-only / WIP branch)
@@ -15,8 +16,8 @@
 # Notes:
 #  - Both checks always run so you see ALL failures, not just the first.
 #  - The backend suite is ~8s and makes NO network/LLM calls (evals are opt-in).
-#  - Frontend type/build checks needing Node are intentionally NOT run here
-#    (nvm-in-hook fragility); the locale-parity check covers the known break.
+#  - The frontend vitest suite runs only when Node is on PATH (git hooks may run
+#    without nvm's node); a full `tsc`/`next build` is intentionally NOT run here.
 
 set -uo pipefail
 
@@ -45,6 +46,19 @@ if command -v python3 >/dev/null 2>&1; then
   fi
 else
   echo "  ⚠ python3 not found — skipping locale parity check" >&2
+fi
+
+# 3) Frontend test suite (vitest) — only when Node + the local binary are present
+#    (git hooks may run without nvm's node on PATH; skip rather than hard-fail).
+VITEST="$REPO_ROOT/apps/frontend/node_modules/.bin/vitest"
+if command -v node >/dev/null 2>&1 && [ -x "$VITEST" ]; then
+  echo "▶ frontend : vitest run"
+  if ! ( cd "$REPO_ROOT/apps/frontend" && "$VITEST" run ); then
+    echo "  ✗ frontend tests failed" >&2
+    status=1
+  fi
+else
+  echo "  ⚠ node or vitest not available — skipping frontend tests" >&2
 fi
 
 printf '─────────────────────────────────────────────────────────\n'
