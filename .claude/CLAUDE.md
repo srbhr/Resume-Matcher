@@ -80,7 +80,7 @@ apps/
     ├── components/          # UI components
     ├── lib/                 # Utilities, API client
     ├── hooks/               # Custom React hooks
-    └── messages/            # i18n translations (en, es, zh, ja)
+    └── messages/            # i18n translations (en, es, zh, ja, pt)
 ```
 
 ---
