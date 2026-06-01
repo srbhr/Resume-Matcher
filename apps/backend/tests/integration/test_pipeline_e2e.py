@@ -370,3 +370,112 @@ class TestTailoringPipeline:
         master = isolated_db.get_master_resume()
         assert master["resume_id"] == resume_id
         assert master["processed_data"]["summary"] == sample_resume["summary"]
+
+    async def test_preview_confirm_succeeds_for_non_canonical_stored_resume(
+        self, isolated_db, sample_resume
+    ):
+        """A stored resume whose ``processed_data`` OMITS optional schema fields
+        must still tailor + confirm successfully (regression for the confirm 400).
+
+        ``improve/preview`` hashes the raw ``improved_data`` — here a project that
+        omits the optional ``github``/``website`` keys ``ResumeData`` defaults to
+        ``None`` — while ``improve/confirm`` hashes the schema-defaulted
+        ``ResumeData`` round-trip. Before ``_hash_improved_data`` canonicalized
+        both sides these diverged and confirm returned 400 ("preview hash
+        mismatch"). NO canonicalize workaround is applied to ``improved`` here —
+        that is exactly the point.
+        """
+        upload_resp = await _upload_resume(isolated_db, sample_resume)
+        assert upload_resp.status_code == 200
+        resume_id = upload_resp.json()["resume_id"]
+
+        async with _new_client() as client:
+            jobs_resp = await client.post(
+                "/api/v1/jobs/upload",
+                json={"job_descriptions": ["Senior Backend Engineer: Python, FastAPI."]},
+            )
+        assert jobs_resp.status_code == 200
+        job_id = jobs_resp.json()["job_id"][0]
+
+        # Non-canonical tailored data: a project missing the optional
+        # github/website fields. personalInfo stays canonical/unchanged so the
+        # confirm identity invariant holds; only personalProjects is non-canonical.
+        improved = ResumeData.model_validate(copy.deepcopy(sample_resume)).model_dump()
+        improved["summary"] = (
+            "Senior backend engineer building Python and FastAPI services."
+        )
+        improved["personalProjects"] = [
+            {
+                "id": 1,
+                "name": "Sidecar",
+                "role": "Author",
+                "years": "2022",
+                "description": ["Shipped a CLI"],
+            }  # deliberately NO github/website keys
+        ]
+        assert "github" not in improved["personalProjects"][0]
+
+        with (
+            patch(
+                "app.routers.resumes.extract_job_keywords",
+                new_callable=AsyncMock,
+                return_value={"keywords": ["Python", "FastAPI"], "required_skills": []},
+            ),
+            patch(
+                "app.routers.resumes.generate_skill_target_plan",
+                new_callable=AsyncMock,
+                return_value={"accepted": [], "rejected": []},
+            ),
+            patch(
+                "app.routers.resumes.verify_skill_target_plan",
+                return_value={"accepted": [], "rejected": []},
+            ),
+            patch(
+                "app.routers.resumes.generate_resume_diffs",
+                new_callable=AsyncMock,
+                return_value=SimpleNamespace(changes=[]),
+            ),
+            patch(
+                "app.routers.resumes.apply_diffs",
+                return_value=(copy.deepcopy(improved), [], []),
+            ),
+            patch("app.routers.resumes.verify_diff_result", return_value=[]),
+            patch(
+                "app.routers.resumes.refine_resume",
+                new_callable=AsyncMock,
+                side_effect=RuntimeError("refinement disabled for test"),
+            ),
+            patch(
+                "app.routers.resumes.generate_resume_title",
+                new_callable=AsyncMock,
+                return_value="Senior Backend Engineer",
+            ),
+        ):
+            async with _new_client() as client:
+                preview_resp = await client.post(
+                    "/api/v1/resumes/improve/preview",
+                    json={"resume_id": resume_id, "job_id": job_id},
+                )
+            assert preview_resp.status_code == 200, preview_resp.text
+            preview_data = preview_resp.json()["data"]
+            preview_resume = preview_data["resume_preview"]
+            # The preview RESPONSE is schema-complete even though the stored
+            # improved_data wasn't — this asymmetry is what used to break confirm.
+            assert "github" in preview_resume["personalProjects"][0]
+
+            async with _new_client() as client:
+                confirm_resp = await client.post(
+                    "/api/v1/resumes/improve/confirm",
+                    json={
+                        "resume_id": resume_id,
+                        "job_id": job_id,
+                        "improved_data": preview_resume,
+                        "improvements": preview_data["improvements"],
+                    },
+                )
+            assert confirm_resp.status_code == 200, confirm_resp.text
+
+        # The tailored resume really persisted as a child of the master.
+        tailored_id = confirm_resp.json()["data"]["resume_id"]
+        assert tailored_id is not None and tailored_id != resume_id
+        assert isolated_db.get_resume(tailored_id) is not None
