@@ -360,7 +360,7 @@ Requirements:
 - 100-150 words maximum
 - 3-4 short paragraphs
 - Opening: Reference ONE specific thing from the job description (product, tech stack, or problem they're solving) - not generic excitement about "the role"
-- Middle: Pick 1-2 qualifications from resume that DIRECTLY match stated requirements - prioritize relevance over impressiveness
+- Middle: Pick 1-2 qualifications from resume that DIRECTLY match stated requirements, and reframe them in the job's language/terminology where the candidate's proven experience supports it (e.g., if the resume shows "built automated data pipelines" and the job says "ETL," describe that real work as ETL) - prioritize relevance over impressiveness
 - Closing: Simple availability to discuss, no desperate enthusiasm
 - If resume shows career transition, frame the pivot as intentional and relevant
 - Extract company name from job description - do not use placeholders
@@ -467,7 +467,7 @@ RULES:
 8. Do not use em dash characters
 9. Keep changes minimal and targeted — do not rewrite content that already aligns well
 10. Exception to rule 2: you may add a skill only if it appears in the verified skill targets below
-11. Improve work and project bullets around the verified skill targets when the original text supports that alignment
+11. By DEFAULT, scan the summary and every work and project bullet for content that already demonstrates a job-description keyword or skill, and reframe that text using the job description's terminology — while preserving the candidate's actual accomplishment. Do NOT add new work, metrics, or responsibilities; only restate existing content in the JD's language, and verify every reframe stays factually accurate.
 12. Preserve original capitalization, especially for proper nouns, technical terms (e.g., REST, API, AWS), and acronyms. Do not change the casing of words that were capitalized in the original.
 
 PATHS you can target:
