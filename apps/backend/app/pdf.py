@@ -151,7 +151,11 @@ async def _render_page_to_pdf(
     # so the outcome is deterministic.
     await page.goto(url, wait_until="load", timeout=_NAV_TIMEOUT_MS)
     await page.wait_for_selector(selector, timeout=_NAV_TIMEOUT_MS)
-    await page.evaluate("document.fonts.ready")
+    # Bound the fonts wait too — plain page.evaluate has no timeout, so a stuck
+    # font load could otherwise hang the render past _NAV_TIMEOUT_MS.
+    await page.wait_for_function(
+        "() => document.fonts.ready.then(() => true)", timeout=_NAV_TIMEOUT_MS
+    )
     return await page.pdf(
         format=pdf_format,
         print_background=True,
@@ -246,8 +250,8 @@ def _raise_playwright_error(error: PlaywrightError, url: str) -> NoReturn:
     # the client error modal, #811).
     logger.error("PDF rendering failed for %s: %s", url, error_msg)
     raise PDFRenderError(
-        "PDF rendering failed — the page took too long to render or returned an "
-        "error. Please try again, or try a simpler resume or a different template."
+        "PDF rendering failed. Please try again, or try a simpler resume or a "
+        "different template."
     ) from error
 
 

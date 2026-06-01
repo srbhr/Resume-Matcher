@@ -175,12 +175,15 @@ class TestRenderPageWaitStrategy:
         selector_arg = page.wait_for_selector.call_args.args[0]
         assert selector_arg == ".resume-print"
 
-    async def test_still_waits_for_fonts(self):
-        """Fonts must be loaded before snapshot, else text can render unstyled."""
+    async def test_still_waits_for_fonts_bounded(self):
+        """Fonts must be loaded before snapshot (else text renders unstyled), and
+        the wait must be bounded by the nav timeout — not Playwright's default."""
         page = AsyncMock()
         page.pdf.return_value = b"%PDF-1.4 fake"
         await _render_page_to_pdf(page, "http://f/print/r", ".resume-print", "A4", {"top": "10mm"})
-        page.evaluate.assert_any_await("document.fonts.ready")
+        page.wait_for_function.assert_awaited()
+        assert "fonts" in page.wait_for_function.call_args.args[0]
+        assert page.wait_for_function.call_args.kwargs.get("timeout")
 
 
 class TestPlaywrightErrorMapping:
