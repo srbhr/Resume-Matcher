@@ -177,7 +177,15 @@ Backend must run separately on :8000 (see root CLAUDE.md). Frontend proxies `/ap
 
 ## Testing
 
-`vitest` (jsdom) + Testing Library. Config `vitest.config.ts`, setup `vitest.setup.ts`. Existing specs: `tests/diff-preview-modal.test.tsx`, `tests/download-utils.test.ts`, `tests/regenerate-wizard.test.tsx`. Run with `npm run test`. (Per project norms, do not add or run tests unless asked.)
+`vitest` (jsdom) + Testing Library. Config `vitest.config.ts`, setup `vitest.setup.ts` (auto-cleanup). Run `npm run test` (or `./node_modules/.bin/vitest run`). **Tests are in scope** (see [testing-strategy.md](../../docs/agent/testing-strategy.md)); keep them deterministic and anti-theater (a test must fail when its target breaks).
+
+Specs (`tests/`):
+- **i18n** — `i18n-utils.test.ts` (`getNestedValue` dot-path + `applyParams` substitution), `i18n-locale-parity.test.ts` (every `messages/*.json` must structurally match `en.json` — the in-suite guard for the build break).
+- **lib/utils** — `keyword-matcher.test.ts`, `section-helpers.test.ts`, `html-sanitizer.test.ts` (XSS whitelist), `download-utils.test.ts`.
+- **lib/api** — `api-client.test.ts` (URL resolution, timeout/AbortError; `fetch` stubbed).
+- **components** — `diff-preview-modal.test.tsx`, `regenerate-wizard.test.tsx`.
+
+Pure logic (i18n, utils, api) is tested directly with stubbed `fetch`/`t`; component specs render via Testing Library. The locale-parity spec mirrors `scripts/check_locale_parity.py` (which the pre-push hook also runs without Node). The local `pre-push` gate runs this vitest suite too when Node is available — `git config core.hooksPath .githooks`; see [`.githooks/README.md`](../../.githooks/README.md).
 
 ---
 
