@@ -1,6 +1,6 @@
 # Agentic End-to-End Monitor — Design Spec
 
-> **Status:** Approved design (brainstorming complete). Implementation deferred — not yet planned/built.
+> **Status:** Implemented — harness in `apps/backend/e2e_monitor/` (PR #823); first live sweep run + golden baseline committed. This document is the design record; current state lives in the harness `README.md`.
 > **Date:** 2026-06-01
 > **Author:** Saurabh Rai (with Claude Code)
 > **Branch:** `docs/agentic-e2e-monitor-spec` (off `dev`)

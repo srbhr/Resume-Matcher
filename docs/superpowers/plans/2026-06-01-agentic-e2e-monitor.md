@@ -1341,7 +1341,7 @@ git commit -m "docs(e2e-monitor): agent playbook, skill installer, README, strat
 
 ```bash
 cd apps/backend
-uv sync --extra e2e-monitor
+uv sync --extra dev --extra e2e-monitor
 export RM_E2E_MONITOR=1
 uv run python -m e2e_monitor sweep
 ```
