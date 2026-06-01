@@ -65,7 +65,7 @@ Every `tests/integration/*` test patches `app.routers.<x>.db` and the LLM/parse 
 | Real `llm.py` against a fake provider (incl. Ollama) | `respx` (or `pytest-httpx`) | Mock at the HTTP transport so our actual routing/normalization code runs — the only way to regression-test "Ollama doesn't work" |
 | PDF render proof | Playwright (already a dep) | One smoke test → real PDF bytes from the print route |
 | Prompt/skill quality | In-repo **eval harness** | Golden fixtures + structural scorers + optional LLM-as-judge |
-| Build/route/lint gate | GitHub Actions | **Deferred** — see §7 |
+| Push gate (local, replaces PR CI) | `pre-push` git hook (`.githooks/`) | Runs backend suite + locale parity, blocks red pushes; no PR-triggered CI — see §5 Phase 6 |
 
 ### 3.1 Deterministic tests vs evals (the key distinction)
 
@@ -131,8 +131,10 @@ Legend: ✅ done · 🚧 in progress · ⬜ planned
 - ✅ Pure structural scorers (`sections_preserved`, `no_fabricated_employers`, `jd_keywords_present`, `is_valid_resume`, `personal_info_unchanged`) + golden fixtures, each proven on good AND bad inputs.
 - ✅ LLM-as-judge marked `@pytest.mark.eval`, uses the developer's own configured key, **excluded from the default run** (`addopts -m "not eval"`); run on demand with `uv run pytest -m eval`. Skips cleanly with no key.
 
-**Phase 6 — CI (separate sign-off)**
-- ⬜ GitHub Actions PR gate: backend `pytest`, frontend `tsc`/`build`/lint, structural evals. (Deferred per §7 — still needs explicit sign-off.)
+**Phase 6 — Local pre-push gate (replaces PR CI) ✅ COMPLETE** (`.githooks/pre-push`)
+- ✅ A version-controlled `pre-push` hook runs the backend suite + a node-free locale-parity check and **blocks the push on red**. Activate per-clone with `git config core.hooksPath .githooks`; bypass with `git push --no-verify`. See `.githooks/README.md`.
+- ✅ We **deliberately avoid a GitHub Actions PR gate** — the repo gets a high volume of external contributor PRs; PR-triggered CI would run on every one (and run untrusted code). The local hook keeps `dev`/`main` green for the maintainer's own pushes without that cost.
+- ⬜ (Optional, future) a Node-based `tsc`/`next build` check — deferred due to nvm-in-hook fragility; the pure-Python locale-parity guard already covers the known i18n break.
 
 ### Result after Phases 1–5
 **192 → 320 deterministic tests** (+ 1 opt-in LLM-judge eval), **0 failures**, **coverage 54% → 69%**. Built via parallel subagents (one per phase, strict file ownership) using the `dispatching-parallel-agents` skill; integrated and re-verified together.
@@ -170,6 +172,7 @@ uv run pytest tests/unit/test_parser.py -q
 | 2026-05-30 | **No CI workflow yet** (tests only). | User directive. CI is the highest-ROI fix but is a separate, explicit decision (and `.github/workflows/` is change-controlled). |
 | 2026-05-30 | Eval layer = **structural + LLM-as-judge**, judge uses the **developer-provided** LLM key, skipped when absent. | User directive — the developer (usually the maintainer) supplies the key, so real-LLM scoring is acceptable when configured. |
 | 2026-05-30 | Keep `pytest`; add `respx`, `pytest-cov`, Playwright smoke, eval harness. | Existing framework is correct; fill gaps rather than replace. |
+| 2026-05-30 | Gate pushes with a **local `pre-push` hook**, NOT GitHub Actions on PRs. | Maintainer gets a high volume of external PRs; PR-triggered CI would run on all of them (incl. untrusted code). A local hook keeps `dev`/`main` green for the maintainer's own pushes — backend suite + node-free locale parity — without that cost. `.githooks/` + `core.hooksPath`. |
 
 ---
 

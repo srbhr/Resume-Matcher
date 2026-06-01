@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+#
+# Local pre-push gate for Resume-Matcher — the "local CI" that replaces a
+# PR-triggered GitHub Actions workflow (we deliberately avoid CI on PRs because
+# the repo gets a high volume of external contributor PRs).
+#
+# Runs BEFORE every `git push` and BLOCKS the push if anything is red:
+#   1. backend test suite        (uv run pytest — LLM/eval tests excluded by default)
+#   2. frontend locale parity     (pure-Python check; guards the i18n build break)
+#
+# Activate once per clone:   git config core.hooksPath .githooks
+# Bypass intentionally:      git push --no-verify     (e.g. docs-only / WIP branch)
+# Disable entirely:          git config --unset core.hooksPath
+#
+# Notes:
+#  - Both checks always run so you see ALL failures, not just the first.
+#  - The backend suite is ~8s and makes NO network/LLM calls (evals are opt-in).
+#  - Frontend type/build checks needing Node are intentionally NOT run here
+#    (nvm-in-hook fragility); the locale-parity check covers the known break.
+
+set -uo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+status=0
+
+printf '\n── pre-push gate ────────────────────────────────────────\n'
+
+# 1) Backend test suite ----------------------------------------------------
+if command -v uv >/dev/null 2>&1; then
+  echo "▶ backend  : uv run pytest"
+  if ! ( cd "$REPO_ROOT/apps/backend" && uv run pytest -q -p no:cacheprovider ); then
+    echo "  ✗ backend tests failed" >&2
+    status=1
+  fi
+else
+  echo "  ✗ 'uv' not found — cannot run backend tests (install uv, or push with --no-verify)" >&2
+  status=1
+fi
+
+# 2) Frontend locale parity (no Node required) -----------------------------
+if command -v python3 >/dev/null 2>&1; then
+  echo "▶ frontend : locale parity (messages/*.json vs en.json)"
+  if ! python3 "$REPO_ROOT/scripts/check_locale_parity.py"; then
+    status=1
+  fi
+else
+  echo "  ⚠ python3 not found — skipping locale parity check" >&2
+fi
+
+printf '─────────────────────────────────────────────────────────\n'
+if [ "$status" -ne 0 ]; then
+  echo "✗ pre-push gate FAILED — push aborted. Fix the above, or bypass with: git push --no-verify" >&2
+  exit 1
+fi
+echo "✓ pre-push gate passed — pushing."
+exit 0
