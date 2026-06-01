@@ -98,6 +98,9 @@ apps/
 3. [Next.js performance pack](../docs/portable/nextjs-performance/README.md) - **REQUIRED** Next.js 15 perf patterns (portable pack)
 4. [Coding standards](../docs/agent/coding-standards.md) - Frontend conventions
 
+### For Testing
+1. [Testing strategy](../docs/agent/testing-strategy.md) - Current-state assessment, framework, phased plan, how to run + how we verify (anti-theater)
+
 ### For Template/PDF Changes
 1. [PDF template guide](../docs/agent/design/pdf-template-guide.md) - PDF rendering
 2. [Template system](../docs/agent/design/template-system.md) - Resume templates
