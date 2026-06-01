@@ -39,13 +39,15 @@ Before exploring code, read [docs/agent/README.md](../docs/agent/README.md) for 
 ```bash
 # Backend (from repo root)
 cd apps/backend
-uv sync                                              # Install Python dependencies
+uv sync --extra dev                                  # Install Python deps (incl. test deps)
 uv run uvicorn app.main:app --reload --port 8000     # FastAPI on :8000
+uv run pytest                                        # Run backend tests (~320; LLM evals excluded)
 
 # Frontend (from repo root, in a separate terminal)
 cd apps/frontend
 npm install                                          # Install Node.js dependencies
 npm run dev                                          # Next.js on :3000
+npm run test                                         # Run frontend tests (vitest)
 
 # Quality checks (from apps/frontend)
 npm run lint          # Lint frontend
