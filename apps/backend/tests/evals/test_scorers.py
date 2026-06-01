@@ -127,7 +127,11 @@ class TestIsValidResume:
         assert is_valid_resume(sample_resume) is True
 
     def test_empty_dict_is_valid_due_to_defaults(self):
-        # Every ResumeData field has a default, so {} is a valid (empty) resume.
+        # Canary: every ResumeData field currently has a default, so {} validates
+        # as an empty resume. If a future schema change makes a field REQUIRED
+        # (no default), is_valid_resume({}) flips to False and this test fails
+        # LOUDLY — by design — flagging that the scorers' "empty is valid"
+        # assumption no longer holds.
         assert is_valid_resume({}) is True
 
     def test_wrong_type_for_work_experience_is_invalid(self, sample_resume):

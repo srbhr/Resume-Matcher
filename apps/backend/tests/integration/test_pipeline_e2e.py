@@ -119,7 +119,14 @@ class TestPipelineCore:
         self, isolated_db, client
     ):
         """POST /jobs/upload stores the JD text and returns a job_id that is
-        actually retrievable from the real db; stats reflect one job."""
+        actually retrievable from the real db; stats reflect one job.
+
+        Fixture safety: ``isolated_db`` is listed before ``client`` (pytest
+        resolves same-scope fixtures left-to-right), and the routers look up the
+        module-global ``db`` at REQUEST time — so the monkeypatched isolated db
+        is always the one the ASGI app reads, independent of when ``client`` was
+        constructed.
+        """
         async with client:
             resp = await client.post(
                 "/api/v1/jobs/upload",
