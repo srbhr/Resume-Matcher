@@ -814,3 +814,41 @@ class TestReorderSalvage:
         assert result["additional"]["technicalSkills"] == [
             "Redis", "PostgreSQL", "AWS", "Docker", "FastAPI", "Python"
         ]
+
+    def test_salvage_places_verified_new_skill_in_requested_position(self, sample_resume):
+        """PR #830 review (Copilot): a verified new skill the model puts near the
+        top of the reorder must land there, not be appended last."""
+        changes = [
+            ResumeChange(
+                path="additional.technicalSkills",
+                action="reorder",
+                original=None,
+                value=["Kubernetes", "Python", "FastAPI", "Docker", "AWS", "PostgreSQL", "Redis"],
+                reason="prioritize Kubernetes (JD-required, verified)",
+            )
+        ]
+        result, applied, rejected = apply_diffs(
+            sample_resume, changes, allowed_skill_targets=[{"skill": "Kubernetes"}]
+        )
+        skills = result["additional"]["technicalSkills"]
+        assert skills[0] == "Kubernetes"  # requested position honored, not appended last
+        assert set(sample_resume["additional"]["technicalSkills"]).issubset(set(skills))
+
+    def test_salvage_preserves_case_duplicate_originals(self, sample_resume):
+        """PR #830 review (kilo): case-duplicate originals must not be lost."""
+        resume = {"additional": {"technicalSkills": ["python", "Python", "Docker"]}}
+        changes = [
+            ResumeChange(
+                path="additional.technicalSkills",
+                action="reorder",
+                original=None,
+                value=["Docker", "python", "Go"],  # Go new+unverified, both pythons are originals
+                reason="test dup handling",
+            )
+        ]
+        result, applied, rejected = apply_diffs(resume, changes)
+        skills = result["additional"]["technicalSkills"]
+        assert len(applied) == 1
+        # Both case-variants of the original survive; the unverified new item is dropped.
+        assert sorted(skills) == sorted(["python", "Python", "Docker"])
+        assert "Go" not in skills

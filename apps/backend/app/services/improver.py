@@ -330,40 +330,43 @@ def apply_diffs(
             else:
                 # Salvage (issue #736): the LLM folded new/removed items into a
                 # reorder. Rather than dropping the whole change, apply the SAFE
-                # subset: reorder the existing items in the requested order,
-                # re-append any original the LLM omitted (never silently lose a
-                # real item), and — for the skills list only — add new items that
-                # pass the SAME verified gate as add_skill. Other lists
+                # subset *in the requested order*: walk the proposed list, placing
+                # each existing item where the model put it (so prioritized JD
+                # skills stay near the top) and — for the skills list only —
+                # inserting new items that pass the SAME verified gate as
+                # add_skill. Originals the model omitted are appended at the end
+                # so a real item is never silently lost. Other lists
                 # (languages/certs/awards) have no verifier, so new items are
                 # dropped to avoid fabrication.
-                originals_by_cf: dict[str, str] = {}
+                casefold_to_originals: dict[str, list[str]] = {}
                 for item in actual_value:
                     if isinstance(item, str):
-                        originals_by_cf.setdefault(item.casefold(), item)
-                seen: set[str] = set()
+                        casefold_to_originals.setdefault(item.casefold(), []).append(item)
+                original_cfs = set(casefold_to_originals)
+                is_skills = path == "additional.technicalSkills"
+                added_new: set[str] = set()
                 for item in change.value:
                     if not isinstance(item, str):
                         continue
                     cf = item.casefold()
-                    if cf in originals_by_cf and cf not in seen:
-                        reordered.append(originals_by_cf[cf])
-                        seen.add(cf)
-                for item in actual_value:  # preserve any omitted originals
-                    if isinstance(item, str) and item.casefold() not in seen:
-                        reordered.append(item)
-                        seen.add(item.casefold())
-                if path == "additional.technicalSkills":
-                    for item in change.value:  # add only verified new skills
-                        if not isinstance(item, str):
-                            continue
+                    if cf in original_cfs:
+                        bucket = casefold_to_originals[cf]
+                        if bucket:  # place original in requested position (dupes preserved)
+                            reordered.append(bucket.pop(0))
+                        # else: a duplicate of an already-placed original — skip
+                    elif is_skills and cf not in added_new:
                         skill = item.strip()
-                        if not skill or skill.casefold() in seen:
-                            continue
-                        if _normalize_skill_key(skill) in allowed_skill_keys:
-                            reordered.append(skill)
-                            seen.add(skill.casefold())
+                        if skill and _normalize_skill_key(skill) in allowed_skill_keys:
+                            reordered.append(skill)  # verified new skill, requested position
+                            added_new.add(cf)
                         else:
                             logger.info("Reorder salvage dropped unverified skill: %s", skill)
+                    # else: non-skills new item → dropped (no verifier to ground it)
+                for item in actual_value:  # append any originals the model omitted
+                    if isinstance(item, str):
+                        bucket = casefold_to_originals[item.casefold()]
+                        if bucket:
+                            reordered.append(bucket.pop(0))
                 logger.info("Diff reorder salvaged (item-set mismatch): %s", path)
             if not _set_at_path(result, path, reordered):
                 rejected.append(change)
@@ -797,6 +800,11 @@ def verify_skill_target_plan(
                 }
             )
         elif skill_key in jd_skills:
+            # JD-required/preferred skills are accepted as targets so the résumé
+            # can be tailored to actually pass ATS/recruiter screening — adding
+            # relevant JD skills is the product's purpose. (Truly unsupported
+            # skills — neither in the JD nor the résumé — are still rejected
+            # below.) The user reviews additions in the diff preview before save.
             accepted.append(
                 {
                     "skill": jd_skills[skill_key],
