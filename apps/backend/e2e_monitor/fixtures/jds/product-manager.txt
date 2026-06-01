@@ -1,0 +1,15 @@
+We are looking for a Senior Product Manager to drive the strategy and execution of our
+B2B SaaS analytics suite. You will own the product roadmap across three workstreams, working
+alongside engineering, design, data science, and go-to-market teams to deliver measurable
+business outcomes.
+
+Responsibilities: Define and prioritize the product backlog using evidence from customer
+discovery interviews, NPS surveys, Mixpanel funnel data, and competitive analysis; author
+detailed PRDs and acceptance criteria; facilitate sprint planning and align stakeholders on
+quarterly OKRs; present roadmap updates to C-suite executives and enterprise customers.
+
+Requirements: 4+ years of product management experience in a SaaS environment; demonstrated
+ability to translate ambiguous business problems into clear product requirements; proficiency
+with analytics tools (Amplitude, Mixpanel, or Looker) and SQL for ad-hoc analysis; experience
+with A/B testing and experimentation frameworks; excellent written communication and stakeholder
+management skills. Technical background appreciated but not required — you will not write code.
