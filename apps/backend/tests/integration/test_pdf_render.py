@@ -17,12 +17,15 @@ be launched.
 """
 
 import socket
+from unittest.mock import AsyncMock
 
 import pytest
 from playwright.async_api import Error as PlaywrightError
 
 from app.pdf import (
     PDFRenderError,
+    _raise_playwright_error,
+    _render_page_to_pdf,
     _resolve_pdf_format,
     _resolve_pdf_margins,
     close_pdf_renderer,
@@ -143,6 +146,80 @@ class TestResolvePdfMargins:
             "bottom": "10mm",
             "left": "10mm",
         }
+
+
+class TestRenderPageWaitStrategy:
+    """#799/#808: rendering must wait on a deterministic readiness condition
+    (document 'load' + the resume content selector + fonts), NOT the
+    environment-fragile 'networkidle' that hangs against the Next.js dev server
+    (HMR/Turbopack/RSC streaming keep the network busy, so idle never arrives →
+    30s timeout → 503). These are browser-free: they mock the Playwright Page.
+    """
+
+    async def test_goto_uses_load_with_bounded_timeout(self):
+        page = AsyncMock()
+        page.pdf.return_value = b"%PDF-1.4 fake"
+        await _render_page_to_pdf(page, "http://f/print/r", ".resume-print", "A4", {"top": "10mm"})
+        _, goto_kwargs = page.goto.call_args
+        assert goto_kwargs.get("wait_until") == "load"
+        # An explicit, positive, bounded navigation timeout (not the fragile default).
+        timeout = goto_kwargs.get("timeout")
+        assert isinstance(timeout, (int, float)) and timeout > 0
+
+    async def test_still_gates_on_content_selector(self):
+        """The real readiness signal — the resume content must be present."""
+        page = AsyncMock()
+        page.pdf.return_value = b"%PDF-1.4 fake"
+        await _render_page_to_pdf(page, "http://f/print/r", ".resume-print", "A4", {"top": "10mm"})
+        page.wait_for_selector.assert_awaited()
+        selector_arg = page.wait_for_selector.call_args.args[0]
+        assert selector_arg == ".resume-print"
+
+    async def test_still_waits_for_fonts_bounded(self):
+        """Fonts must be loaded before snapshot (else text renders unstyled), and
+        the wait must be bounded by the nav timeout — not Playwright's default."""
+        page = AsyncMock()
+        page.pdf.return_value = b"%PDF-1.4 fake"
+        await _render_page_to_pdf(page, "http://f/print/r", ".resume-print", "A4", {"top": "10mm"})
+        page.wait_for_function.assert_awaited()
+        assert "fonts" in page.wait_for_function.call_args.args[0]
+        assert page.wait_for_function.call_args.kwargs.get("timeout")
+
+
+class TestPlaywrightErrorMapping:
+    """#811 + info-disclosure (CLAUDE.md rule 5): the catch-all must NOT leak raw
+    Playwright internals (call log, internal navigation URLs) to the client;
+    curated, safe messages must be preserved.
+    """
+
+    def test_catch_all_is_generic_and_hides_internals(self):
+        raw = (
+            "Page.goto: Timeout 30000ms exceeded.\n"
+            "Call log:\n"
+            '  - navigating to "http://localhost:3000/print/resumes/SECRET-RESUME-ID"'
+        )
+        with pytest.raises(PDFRenderError) as exc_info:
+            _raise_playwright_error(PlaywrightError(raw), "http://localhost:3000/print/resumes/SECRET-RESUME-ID")
+        msg = str(exc_info.value)
+        assert "Call log" not in msg
+        assert "SECRET-RESUME-ID" not in msg
+        assert "30000ms" not in msg
+
+    def test_connection_refused_message_preserved(self):
+        with pytest.raises(PDFRenderError) as exc_info:
+            _raise_playwright_error(
+                PlaywrightError("net::ERR_CONNECTION_REFUSED at http://localhost:3000"),
+                "http://localhost:3000/print/x",
+            )
+        assert "cannot connect to frontend" in str(exc_info.value).lower()
+
+    def test_missing_executable_message_preserved(self):
+        with pytest.raises(PDFRenderError) as exc_info:
+            _raise_playwright_error(
+                PlaywrightError("Executable doesn't exist at /ms-playwright/chromium"),
+                "http://x/",
+            )
+        assert "playwright install" in str(exc_info.value).lower()
 
 
 class TestRenderResumePdf:
