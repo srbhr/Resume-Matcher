@@ -123,3 +123,7 @@ next-env.d.ts
 # Config file with API keys - NEVER COMMIT
 config.json
 **/config.json
+
+# Agentic E2E monitor — runtime evidence bundles and the local-only skill
+/artifacts/
+/.claude/skills/monitor-e2e/
