@@ -118,21 +118,24 @@ Legend: ✅ done · 🚧 in progress · ⬜ planned
 - ✅ Real-TinyDB `database.py` CRUD tests (`tests/unit/test_database.py`)
 - ✅ Verify: **192 → 265 tests, 1 silent failure → 0, coverage 54% → 58%** (database 34→96%, parser 20→72%, llm 47→55%, health now meaningful). Anti-theater mutation check passed.
 
-**Phase 2 — Transport contract tests (LLM/Ollama)**
-- ⬜ `respx`-backed tests: real `complete` / `complete_json` / `check_llm_health` against a fake Ollama + OpenAI-compatible server (request shape, base-URL handling, thinking-tag stripping, JSON-mode fallback, error-code mapping)
+**Phase 2 — Transport contract tests (LLM/Ollama) ✅ COMPLETE** (`tests/integration/test_llm_contract.py`, 8 tests)
+- ✅ `respx`-backed tests: real `complete` / `complete_json` / `check_llm_health` against a fake Ollama + OpenAI-compatible HTTP server (base-URL handling #751, JSON extraction over the wire, thinking-tag stripping, health error-code mapping + secret scrubbing). Findings: litellm 1.86 defaults to an aiohttp transport respx can't see → tests set `disable_aiohttp_transport`; Ollama makes two calls (`/api/show` probe + `/api/chat`). **`llm.py` 55% → 74%.**
 
-**Phase 3 — Render safety net**
-- ⬜ Playwright PDF smoke test (print route → non-empty valid PDF) + error-path mapping in `pdf.py`
+**Phase 3 — Render safety net ✅ COMPLETE** (`tests/integration/test_pdf_render.py`, 11 tests)
+- ✅ Real headless-Chromium render of a self-contained `data:` URL → asserts genuine `%PDF` bytes; pure-helper tests (format/margins); connection-refused → `PDFRenderError` mapping. Render tests skip cleanly without Chromium. **`pdf.py` 20% → 54%.**
 
-**Phase 4 — End-to-end pipeline**
-- ⬜ One e2e: upload → parse → tailor → render with a mocked LLM, exercising real routers + real DB
+**Phase 4 — End-to-end pipeline ✅ COMPLETE** (`tests/integration/test_pipeline_e2e.py`, 5 tests)
+- ✅ Real routers + real temp DB (`isolated_db`), every LLM boundary mocked: upload → jobs → fetch **and** the preview→confirm tailoring handshake. Asserts real persisted state (master invariant, `parent_id` linkage, `improvements` record). **`resumes.py` 18% → 53%.**
 
-**Phase 5 — Eval harness (structural + LLM-as-judge)**
-- ⬜ Golden fixtures + structural scorers (run in normal suite)
-- ⬜ LLM-as-judge using the **developer's own configured key**, gated/skipped when no key is present; nightly/on-demand only
+**Phase 5 — Eval harness (structural + LLM-as-judge) ✅ COMPLETE** (`tests/evals/`, 31 scorer tests + 1 gated judge)
+- ✅ Pure structural scorers (`sections_preserved`, `no_fabricated_employers`, `jd_keywords_present`, `is_valid_resume`, `personal_info_unchanged`) + golden fixtures, each proven on good AND bad inputs.
+- ✅ LLM-as-judge marked `@pytest.mark.eval`, uses the developer's own configured key, **excluded from the default run** (`addopts -m "not eval"`); run on demand with `uv run pytest -m eval`. Skips cleanly with no key.
 
 **Phase 6 — CI (separate sign-off)**
-- ⬜ GitHub Actions PR gate: backend `pytest`, frontend `tsc`/`build`/lint, structural evals. (Deferred per §7.)
+- ⬜ GitHub Actions PR gate: backend `pytest`, frontend `tsc`/`build`/lint, structural evals. (Deferred per §7 — still needs explicit sign-off.)
+
+### Result after Phases 1–5
+**192 → 320 deterministic tests** (+ 1 opt-in LLM-judge eval), **0 failures**, **coverage 54% → 69%**. Built via parallel subagents (one per phase, strict file ownership) using the `dispatching-parallel-agents` skill; integrated and re-verified together.
 
 ---
 
@@ -141,11 +144,15 @@ Legend: ✅ done · 🚧 in progress · ⬜ planned
 ```bash
 cd apps/backend
 
-# Full suite
+# Full deterministic suite (LLM-judge evals are auto-excluded via addopts -m "not eval")
 uv run pytest
 
-# Quiet + coverage (ephemeral plugin, no pyproject change)
+# Coverage (ephemeral plugin, no pyproject change)
 uv run --with pytest-cov pytest -q --cov=app --cov-report=term-missing
+
+# Prompt-quality evals on demand — structural scorers always run; the LLM-judge
+# runs only when an LLM key is configured (uses the developer's own key), else skips
+uv run pytest -m eval
 
 # One module
 uv run pytest tests/unit/test_parser.py -q
