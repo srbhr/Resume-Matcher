@@ -3,14 +3,17 @@
 
 The frontend declares ``type Messages = typeof en`` and
 ``const allMessages: Record<Locale, Messages>``, so a locale JSON that is
-*missing* a key present in ``en.json`` makes ``tsc`` / ``next build`` fail. That
-is exactly the break that shipped to ``main`` and only surfaced (post-merge)
-inside the Docker publish job — the incident that motivated the testing work.
+*missing* a key present in ``en.json`` — or that has a key of a *different shape*
+(an object where ``en`` has a string, or vice versa) — makes ``tsc`` /
+``next build`` fail. That is exactly the break that shipped to ``main`` and only
+surfaced (post-merge) inside the Docker publish job — the incident that
+motivated the testing work.
 
 This check reproduces and prevents it with **pure stdlib** — no Node, npm, or
 nvm — so it runs fast inside the local pre-push hook regardless of shell setup.
 
-Exit code: 0 = all locales match; 1 = at least one locale is missing keys.
+Exit code: 0 = all locales match; 1 = at least one locale is missing keys, has a
+key whose shape (leaf vs. object) differs from ``en``, or is not valid JSON.
 Extra keys (present in a locale but not in ``en``) are reported as warnings only
 (they don't break the ``typeof en`` build, but signal drift worth cleaning up).
 """
@@ -26,19 +29,30 @@ MESSAGES_DIR = Path(__file__).resolve().parents[1] / "apps" / "frontend" / "mess
 REFERENCE = "en.json"
 
 
-def key_paths(obj: Any, prefix: str = "") -> set[str]:
-    """Return the set of dotted key paths (branches + leaves) in a nested dict."""
-    paths: set[str] = set()
+def key_kinds(obj: Any, prefix: str = "") -> dict[str, str]:
+    """Map every dotted key path to its kind: ``"branch"`` (object) or ``"leaf"``.
+
+    Comparing *kinds* — not just key presence — is what catches a locale that
+    has, say, ``a.b`` as an object where ``en`` has it as a string. Such a
+    mismatch keeps the key path present (so a presence-only check passes) yet
+    still breaks ``next build`` because the locale is no longer assignable to
+    ``typeof en``.
+    """
+    kinds: dict[str, str] = {}
     if isinstance(obj, dict):
         for key, value in obj.items():
             path = f"{prefix}.{key}" if prefix else key
-            paths.add(path)
-            paths |= key_paths(value, path)
-    return paths
+            kinds[path] = "branch" if isinstance(value, dict) else "leaf"
+            kinds.update(key_kinds(value, path))
+    return kinds
 
 
 def _load(path: Path) -> dict[str, Any]:
-    return json.loads(path.read_text(encoding="utf-8"))
+    """Parse a locale JSON file; raise ``ValueError`` with a clean message on bad JSON."""
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"{path.name} is not valid JSON: {exc}") from exc
 
 
 def main(argv: list[str]) -> int:
@@ -50,21 +64,52 @@ def main(argv: list[str]) -> int:
         print(f"locale-parity: reference {reference_file} not found", file=sys.stderr)
         return 1
 
-    reference_keys = key_paths(_load(reference_file))
+    try:
+        reference_kinds = key_kinds(_load(reference_file))
+    except ValueError as exc:
+        print(f"locale-parity: ✗ {exc}", file=sys.stderr)
+        return 1
+
+    reference_paths = set(reference_kinds)
     failed = False
 
     for path in sorted(messages_dir.glob("*.json")):
         if path.name == REFERENCE:
             continue
-        locale_keys = key_paths(_load(path))
-        missing = reference_keys - locale_keys
-        extra = locale_keys - reference_keys
+        try:
+            locale_kinds = key_kinds(_load(path))
+        except ValueError as exc:
+            failed = True
+            print(f"locale-parity: ✗ {exc}", file=sys.stderr)
+            continue
+
+        locale_paths = set(locale_kinds)
+        missing = reference_paths - locale_paths
+        extra = locale_paths - reference_paths
+        mismatched = {
+            p
+            for p in reference_paths & locale_paths
+            if reference_kinds[p] != locale_kinds[p]
+        }
 
         if missing:
             failed = True
             print(f"locale-parity: ✗ {path.name} is MISSING keys from {REFERENCE}:", file=sys.stderr)
             for key in sorted(missing):
                 print(f"    missing: {key}", file=sys.stderr)
+        if mismatched:
+            failed = True
+            print(
+                f"locale-parity: ✗ {path.name} has keys whose shape differs from "
+                f"{REFERENCE} (object vs. string) — this breaks `next build`:",
+                file=sys.stderr,
+            )
+            for key in sorted(mismatched):
+                print(
+                    f"    type-mismatch: {key} "
+                    f"({REFERENCE}={reference_kinds[key]}, {path.name}={locale_kinds[key]})",
+                    file=sys.stderr,
+                )
         if extra:
             print(f"locale-parity: ⚠ {path.name} has extra keys not in {REFERENCE} (non-fatal):", file=sys.stderr)
             for key in sorted(extra):
@@ -73,7 +118,8 @@ def main(argv: list[str]) -> int:
     if failed:
         print(
             "locale-parity: locale files are out of sync with en.json — this would "
-            "break `next build` (type Messages = typeof en). Add the missing keys.",
+            "break `next build` (type Messages = typeof en). Fix the missing / "
+            "mismatched keys.",
             file=sys.stderr,
         )
         return 1
