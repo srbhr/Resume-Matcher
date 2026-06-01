@@ -134,8 +134,14 @@ async def update_llm_config(
         stored["model"] = request.model
     if request.api_key is not None:
         stored["api_key"] = request.api_key
-    if request.api_base is not None:
-        stored["api_base"] = request.api_base
+    # api_base: distinguish "omitted" (leave unchanged) from "present but
+    # blank/null" (explicit clear). The frontend sends api_base: null/"" when
+    # the Base URL field is cleared; treating that as "don't change" left a
+    # stale override in config.json (issue #760). Normalize blank → None so an
+    # empty string also never reaches LiteLLM as a bogus endpoint.
+    if "api_base" in request.model_fields_set:
+        cleaned = (request.api_base or "").strip()
+        stored["api_base"] = cleaned or None
     if request.reasoning_effort is not None:
         # Persist empty string on clear so the gpt-5 auto-migration doesn't
         # re-fire on next get_llm_config() call.
