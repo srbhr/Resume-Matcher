@@ -141,6 +141,21 @@ data = copy.deepcopy(DEFAULT_DATA)  # Correct
 
 ---
 
+## Testing
+
+Both apps have real test suites, and **tests are in scope** (deliberate testing initiative — full plan in [docs/agent/testing-strategy.md](../docs/agent/testing-strategy.md)).
+
+| Suite | Stack | Run |
+|-------|-------|-----|
+| Backend | pytest + pytest-asyncio + httpx + respx | `cd apps/backend && uv run pytest` |
+| Frontend | vitest + Testing Library (jsdom) | `cd apps/frontend && npm run test` |
+
+- **Backend layers:** `tests/unit` (pure logic), `tests/service` (mocked LLM), `tests/integration` (real routers via httpx ASGI), `tests/evals` (prompt-quality scorers + a gated LLM-judge — excluded by default; run with `uv run pytest -m eval`).
+- **Local push gate (not CI):** a `pre-push` hook (`.githooks/pre-push`) runs the backend suite + a locale-parity check and **blocks red pushes**. Activate once per clone: `git config core.hooksPath .githooks`. We deliberately avoid a GitHub Actions PR gate (high external-PR volume) — see [`.githooks/README.md`](../.githooks/README.md).
+- Keep tests **deterministic and anti-theater**: a test must fail when its target breaks, and the default suites make no real network/LLM calls.
+
+---
+
 ## Design System Quick Reference
 
 | Element | Value |
