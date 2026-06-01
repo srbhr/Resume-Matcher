@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import os
 import sys
 from pathlib import Path
@@ -15,6 +16,14 @@ from playwright.async_api import (
     Playwright,
     async_playwright,
 )
+
+logger = logging.getLogger(__name__)
+
+# Explicit, bounded navigation/selector timeout. Chosen over Playwright's
+# implicit 30s default so a slow-but-working render (large resume, cold cache,
+# modest hardware) still completes, while a genuinely stuck page still fails
+# in finite time rather than hanging.
+_NAV_TIMEOUT_MS = 60_000
 
 
 class PDFRenderError(Exception):
@@ -133,8 +142,15 @@ async def _render_page_to_pdf(
     pdf_format: str,
     pdf_margins: dict,
 ) -> bytes:
-    await page.goto(url, wait_until="networkidle")
-    await page.wait_for_selector(selector)
+    # NOTE: do NOT use wait_until="networkidle" here. The Next.js dev server
+    # (HMR/Turbopack + RSC streaming) keeps the network busy, so "idle" may
+    # never arrive and goto silently hangs until timeout → 503 (issues
+    # #799/#808), with the failure depending on environment/network noise.
+    # Wait on the real readiness condition instead — document "load", the
+    # resume content selector, and fonts — all bounded by an explicit timeout
+    # so the outcome is deterministic.
+    await page.goto(url, wait_until="load", timeout=_NAV_TIMEOUT_MS)
+    await page.wait_for_selector(selector, timeout=_NAV_TIMEOUT_MS)
     await page.evaluate("document.fonts.ready")
     return await page.pdf(
         format=pdf_format,
@@ -224,7 +240,15 @@ def _raise_playwright_error(error: PlaywrightError, url: str) -> NoReturn:
             f"2) The FRONTEND_BASE_URL environment variable in the backend .env file "
             f"matches the URL where your frontend is accessible."
         ) from error
-    raise PDFRenderError(f"PDF rendering failed: {error_msg}") from error
+    # Catch-all: the raw Playwright message can carry internal navigation URLs
+    # and a full call log. Log it server-side; return a generic message to the
+    # client (CLAUDE.md rule 5 — and it stops the verbose trace from overflowing
+    # the client error modal, #811).
+    logger.error("PDF rendering failed for %s: %s", url, error_msg)
+    raise PDFRenderError(
+        "PDF rendering failed. The page took too long to render or returned an "
+        "error. Please try again; if the problem persists, check the backend logs."
+    ) from error
 
 
 def _loop_supports_subprocess() -> bool:
