@@ -1,10 +1,18 @@
 """Boot/teardown the backend (+ optional frontend) for a run.
 
-Backend is spawned with DATA_DIR pointed at the bundle's ``data/`` dir so the
-dev's real database.json is never touched; the real config.json is COPIED into
-that dir so the provider/key still resolve regardless of which path the app
-reads config from. Process stdout/stderr stream into the bundle's log files —
-a durable log trail with no change to app/ logging.
+The backend is spawned with DATA_DIR pointed at the bundle's ``data/`` dir, so
+the dev's real database.json and uploads are never touched, and the DATA_DIR-
+aware reads (feature flags / content language, via ``config_cache``) use the
+bundle's copied ``config.json``.
+
+The LLM key/provider is resolved separately, via ``app.config.load_config_file``
+which reads the repo's real ``apps/backend/data/config.json`` (a hardcoded path,
+NOT the bundle copy). That is intentional: the run uses the dev's configured
+provider, and the opt-in gate (``e2e_monitor.gate``) has already verified that
+real config carries a usable key before any move runs.
+
+Process stdout/stderr stream into the bundle's log files — a durable log trail
+with no change to app/ logging.
 """
 
 from __future__ import annotations
@@ -15,6 +23,7 @@ import subprocess
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 import httpx
 
@@ -31,6 +40,7 @@ _REAL_CONFIG = _REPO_BACKEND / "data" / "config.json"
 class Servers:
     bundle: Bundle
     procs: list[subprocess.Popen] = field(default_factory=list)
+    log_files: list[Any] = field(default_factory=list)
     frontend_up: bool = False
 
     def _wait(self, url: str, timeout_s: float) -> bool:
@@ -50,6 +60,7 @@ class Servers:
             shutil.copy2(_REAL_CONFIG, self.bundle.data_dir / "config.json")
 
         be_log = (self.bundle.logs_dir / "backend.log").open("w")
+        self.log_files.append(be_log)
         env = {
             "DATA_DIR": str(self.bundle.data_dir),
             "PORT": "8000",
@@ -69,6 +80,7 @@ class Servers:
 
         if with_frontend and shutil.which("node") and shutil.which("npm"):
             fe_log = (self.bundle.logs_dir / "frontend.log").open("w")
+            self.log_files.append(fe_log)
             self.procs.append(subprocess.Popen(
                 ["npm", "run", "dev"],
                 cwd=_REPO_ROOT / "apps" / "frontend",
@@ -88,3 +100,9 @@ class Servers:
             except subprocess.TimeoutExpired:
                 p.kill()
         self.procs.clear()
+        for f in self.log_files:
+            try:
+                f.close()
+            except Exception:
+                pass
+        self.log_files.clear()

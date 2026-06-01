@@ -66,30 +66,32 @@ def tailor(
     resume_id: str, jd_text: str, keywords: list[str], original: dict[str, Any]
 ) -> dict[str, Any]:
     """jobs/upload -> improve/preview -> improve/confirm; returns tailored + scores."""
-    job = httpx.post(
+    jobs_resp = httpx.post(
         f"{API}/jobs/upload",
         json={"job_descriptions": [jd_text], "resume_id": resume_id},
         timeout=120,
-    ).json()
-    job_id = job["job_id"][0]
-    preview = httpx.post(
+    )
+    jobs_resp.raise_for_status()
+    job_id = jobs_resp.json()["job_id"][0]
+
+    preview_resp = httpx.post(
         f"{API}/resumes/improve/preview",
         json={"resume_id": resume_id, "job_id": job_id},
         timeout=240,
-    ).json()
-    data = preview["data"]
+    )
+    preview_resp.raise_for_status()
+    data = preview_resp.json()["data"]
     tailored = data["resume_preview"]
     improvements = data["improvements"]
-    confirm = httpx.post(
+
+    confirm_resp = httpx.post(
         f"{API}/resumes/improve/confirm",
-        json={
-            "resume_id": resume_id,
-            "job_id": job_id,
-            "improved_data": tailored,
-            "improvements": improvements,
-        },
+        json={"resume_id": resume_id, "job_id": job_id,
+              "improved_data": tailored, "improvements": improvements},
         timeout=240,
-    ).json()
+    )
+    confirm_resp.raise_for_status()
+    confirm = confirm_resp.json()
     return {
         "job_id": job_id,
         "tailored": tailored,
