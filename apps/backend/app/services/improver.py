@@ -204,8 +204,10 @@ def _set_at_path(data: dict[str, Any], path: str, value: Any) -> bool:
 
 def _verify_original_matches(actual: Any, expected: str | list[str] | None) -> bool:
     """Verify that the original text from the diff matches the actual value."""
+    if expected is None:
+        return True  # no original provided (e.g. append) — nothing to verify
     if not isinstance(expected, str):
-        return True  # None or a list (e.g. reorder's original) — no text check
+        return False  # a non-str original on a text action is malformed — reject
     if not isinstance(actual, str):
         return False
     return actual.strip().casefold() == expected.strip().casefold()

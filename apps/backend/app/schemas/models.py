@@ -5,7 +5,7 @@ import re
 from enum import Enum
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 _TEXT_VALUE_KEYS = (
     "text",
@@ -757,6 +757,16 @@ class ResumeChange(BaseModel):
     )
     value: str | list[str] = Field(description="New content")
     reason: str = Field(description="Why this change helps match the JD")
+
+    @model_validator(mode="after")
+    def _list_original_only_for_reorder(self) -> "ResumeChange":
+        """A list ``original`` is only meaningful for ``reorder`` (the LLM sends
+        the current items). For the text actions it must stay a string/None — a
+        list there would silently bypass the replace verification gate and crash
+        the invented-metrics check, so reject it at parse time."""
+        if isinstance(self.original, list) and self.action != "reorder":
+            raise ValueError("'original' may be a list only for the reorder action")
+        return self
 
 
 class ImproveDiffResult(BaseModel):

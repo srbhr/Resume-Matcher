@@ -253,6 +253,21 @@ class TestApplyDiffsReorder:
         assert len(applied) == 1
         assert result["additional"]["technicalSkills"] == reordered
 
+    def test_list_original_rejected_for_non_reorder_actions(self):
+        # A list `original` is valid ONLY for reorder. For a text action like
+        # replace it would bypass the original-match gate and crash the
+        # invented-metrics check, so the schema rejects it at construction.
+        from pydantic import ValidationError
+
+        with pytest.raises(ValidationError):
+            ResumeChange(
+                path="summary",
+                action="replace",
+                original=["a", "b"],  # list original on a text action — invalid
+                value="new summary",
+                reason="test",
+            )
+
 
 class TestApplyDiffsBlockedPaths:
     """Tests for blocked path rejection."""
