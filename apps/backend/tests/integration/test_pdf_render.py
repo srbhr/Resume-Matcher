@@ -156,13 +156,6 @@ class TestRenderPageWaitStrategy:
     30s timeout → 503). These are browser-free: they mock the Playwright Page.
     """
 
-    async def test_goto_does_not_wait_for_networkidle(self):
-        page = AsyncMock()
-        page.pdf.return_value = b"%PDF-1.4 fake"
-        await _render_page_to_pdf(page, "http://f/print/r", ".resume-print", "A4", {"top": "10mm"})
-        _, goto_kwargs = page.goto.call_args
-        assert goto_kwargs.get("wait_until") != "networkidle"
-
     async def test_goto_uses_load_with_bounded_timeout(self):
         page = AsyncMock()
         page.pdf.return_value = b"%PDF-1.4 fake"
@@ -181,6 +174,13 @@ class TestRenderPageWaitStrategy:
         page.wait_for_selector.assert_awaited()
         selector_arg = page.wait_for_selector.call_args.args[0]
         assert selector_arg == ".resume-print"
+
+    async def test_still_waits_for_fonts(self):
+        """Fonts must be loaded before snapshot, else text can render unstyled."""
+        page = AsyncMock()
+        page.pdf.return_value = b"%PDF-1.4 fake"
+        await _render_page_to_pdf(page, "http://f/print/r", ".resume-print", "A4", {"top": "10mm"})
+        page.evaluate.assert_any_await("document.fonts.ready")
 
 
 class TestPlaywrightErrorMapping:

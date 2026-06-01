@@ -246,8 +246,8 @@ def _raise_playwright_error(error: PlaywrightError, url: str) -> NoReturn:
     # the client error modal, #811).
     logger.error("PDF rendering failed for %s: %s", url, error_msg)
     raise PDFRenderError(
-        "PDF rendering failed. The page took too long to render or returned an "
-        "error. Please try again; if the problem persists, check the backend logs."
+        "PDF rendering failed — the page took too long to render or returned an "
+        "error. Please try again, or try a simpler resume or a different template."
     ) from error
 
 
