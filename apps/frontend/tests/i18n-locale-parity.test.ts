@@ -19,35 +19,50 @@ import { locales, type Locale } from '@/i18n/config';
  * the pre-push hook runs without Node).
  */
 
-function keyPaths(obj: unknown, prefix = ''): string[] {
-  if (!obj || typeof obj !== 'object') return [];
-  const out: string[] = [];
+type Kind = 'branch' | 'leaf';
+
+function keyKinds(obj: unknown, prefix = '', out: Map<string, Kind> = new Map()): Map<string, Kind> {
+  if (!obj || typeof obj !== 'object') return out;
   for (const [key, val] of Object.entries(obj as Record<string, unknown>)) {
     const path = prefix ? `${prefix}.${key}` : key;
-    out.push(path);
-    out.push(...keyPaths(val, path));
+    const isBranch = !!val && typeof val === 'object';
+    out.set(path, isBranch ? 'branch' : 'leaf');
+    if (isBranch) keyKinds(val, path, out);
   }
   return out;
 }
 
-const REFERENCE = keyPaths(en).sort();
-const refSet = new Set(REFERENCE);
+const REFERENCE = keyKinds(en);
 const LOCALES: Record<string, unknown> = { es, zh, ja, pt };
 
 describe('i18n locale parity (guards the next build break)', () => {
   it.each(Object.keys(LOCALES))('%s.json matches en.json key structure exactly', (name) => {
-    const keys = keyPaths(LOCALES[name]).sort();
-    const keySet = new Set(keys);
-    const missing = REFERENCE.filter((k) => !keySet.has(k));
-    const extra = keys.filter((k) => !refSet.has(k));
-    // Missing keys are build-breaking; extra keys are drift. Locales should be identical.
+    const localeKinds = keyKinds(LOCALES[name]);
+    const missing = [...REFERENCE.keys()].filter((k) => !localeKinds.has(k));
+    const extra = [...localeKinds.keys()].filter((k) => !REFERENCE.has(k));
+    // A key present in BOTH but with a different shape (object vs string) keeps
+    // the path present yet still breaks `next build` — a presence-only check
+    // misses it. Compare the node KIND, not just the key path.
+    const mismatched = [...REFERENCE.keys()].filter(
+      (k) => localeKinds.has(k) && localeKinds.get(k) !== REFERENCE.get(k)
+    );
     expect(missing, `${name}.json is MISSING keys present in en.json`).toEqual([]);
+    expect(mismatched, `${name}.json has keys whose SHAPE differs from en.json`).toEqual([]);
     expect(extra, `${name}.json has EXTRA keys not in en.json`).toEqual([]);
   });
 
   it('reference (en.json) has a non-trivial number of keys', () => {
     // Guards against the check silently passing on an empty/garbled reference.
-    expect(REFERENCE.length).toBeGreaterThan(20);
+    expect(REFERENCE.size).toBeGreaterThan(20);
+  });
+
+  it('detects a leaf-vs-object shape mismatch, not just missing keys', () => {
+    // Proves the kind-aware comparison fires on the exact gap a presence-only
+    // set-diff would let through (cubic review, PR #820).
+    const ref = keyKinds({ a: { b: 'str' } });
+    const bad = keyKinds({ a: { b: { c: 'deep' } } }); // a.b is an object here
+    const mismatched = [...ref.keys()].filter((k) => bad.has(k) && bad.get(k) !== ref.get(k));
+    expect(mismatched).toContain('a.b');
   });
 });
 
