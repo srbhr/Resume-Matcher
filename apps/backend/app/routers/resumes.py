@@ -13,6 +13,7 @@ from uuid import uuid4
 
 from fastapi import APIRouter, File, HTTPException, Query, UploadFile
 from fastapi.responses import Response
+from pydantic import ValidationError
 
 from app.config_cache import get_content_language, load_config as _load_config
 from app.database import db
@@ -92,8 +93,21 @@ def _normalize_payload(value: Any) -> Any:
 
 
 def _hash_improved_data(data: dict[str, Any]) -> str:
-    """Hash canonicalized improved data for preview/confirm validation."""
-    normalized = _normalize_payload(data)
+    """Hash canonicalized improved data for preview/confirm validation.
+
+    Canonicalize through ``ResumeData`` first so a payload that merely omits
+    optional fields (which the schema defaults) hashes identically to its
+    schema-complete form. Without this, ``improve/preview`` (which hashes the
+    raw ``improved_data`` dict) and ``improve/confirm`` (which hashes the
+    ``ResumeData`` round-trip, ``request.improved_data.model_dump()``) disagree
+    for any stored resume whose ``processed_data`` is not schema-complete, and a
+    valid tailoring is rejected with 400 ("preview hash mismatch").
+    """
+    try:
+        canonical: Any = ResumeData.model_validate(data).model_dump()
+    except ValidationError:
+        canonical = data  # not a full resume payload; hash as-is
+    normalized = _normalize_payload(canonical)
     serialized = json.dumps(
         normalized,
         sort_keys=True,
