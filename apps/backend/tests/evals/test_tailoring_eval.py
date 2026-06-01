@@ -36,7 +36,10 @@ def _needs_key() -> None:
     one (``ollama``, ``openai_compatible``). This mirrors the gate used
     throughout the backend.
     """
-    cfg = get_llm_config()
+    try:
+        cfg = get_llm_config()
+    except Exception as exc:  # corrupt/unreadable config.json — skip, don't hard-fail
+        pytest.skip(f"could not read LLM config ({exc}); skipping LLM-judge eval")
     if not cfg.api_key and cfg.provider not in ("ollama", "openai_compatible"):
         pytest.skip("no LLM key configured; set one to run LLM-judge evals")
 
