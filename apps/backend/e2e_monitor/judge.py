@@ -24,6 +24,6 @@ async def judge_variation(job_description: str, tailored: dict[str, Any]) -> dic
         prompt,
         system_prompt="You are an impartial resume-tailoring evaluator.",
         max_tokens=512,
-        schema_type="enrichment",
+        schema_type="keywords",  # "keywords" skips truncation heuristics; judge dict is accepted on the first call
     )
     return result if isinstance(result, dict) else {"score": None, "reasons": str(result)}

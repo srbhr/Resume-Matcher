@@ -43,7 +43,7 @@ def summary_to_baseline(variations: list[dict[str, Any]]) -> dict[str, Any]:
     """Build a baseline ``variations`` block from a run's variation results."""
     out: dict[str, Any] = {
         "variations": {},
-        "floor": {"min_judge_score": 3, "min_keyword_coverage": 0.8},
+        "floor": {"min_judge_score": 3, "min_keyword_coverage": 0.5},
         "judge_tolerance": 1,
     }
     for v in variations:

@@ -33,6 +33,11 @@ _ARTIFACTS = _BACKEND.parents[1] / "artifacts" / "e2e-monitor"
 _FIXTURES = _PKG / "fixtures"
 _BASELINE = _PKG / "baseline" / "baseline.json"
 
+_STOPWORDS = frozenset({
+    "we", "you", "our", "your", "the", "a", "an", "and", "or", "for", "with",
+    "to", "of", "in", "on", "is", "are", "as", "at", "be", "by", "this", "that",
+})
+
 
 def _git_sha() -> str:
     try:
@@ -85,7 +90,10 @@ def cmd_sweep(_: argparse.Namespace) -> int:
         for jd_key, jd_text in _jds():
             vdir = bundle.variation_dir(jd_key)
             (vdir / "job_description.txt").write_text(jd_text, encoding="utf-8")
-            keywords = [w for w in jd_text.split() if w.istitle()][:8]
+            keywords = [
+                kw for kw in (w.strip(":,.();") for w in jd_text.split())
+                if kw.istitle() and kw.lower() not in _STOPWORDS
+            ][:8]
             try:
                 t = tailor(resume_id, jd_text, keywords, master)
                 bundle.write_json(vdir / "tailored.json", t["tailored"])
