@@ -468,16 +468,21 @@ RULES:
 9. Keep changes minimal and targeted — do not rewrite content that already aligns well
 10. Exception to rule 2: you may add a skill only if it appears in the verified skill targets below
 11. Improve work and project bullets around the verified skill targets when the original text supports that alignment
+12. Preserve original capitalization, especially for proper nouns, technical terms (e.g., REST, API, AWS), and acronyms. Do not change the casing of words that were capitalized in the original.
 
 PATHS you can target:
 - "summary" — the resume summary text
 - "workExperience[i].description[j]" — a specific bullet (i = entry index, j = bullet index)
 - "workExperience[i].description" — append a new bullet (action: "append")
 - "personalProjects[i].description[j]" — a specific project bullet
-- "personalProjects[i].description" — append a new project bullet
+- "personalProjects[i].description" — append a new project bullet (action: "append")
+- "education[i].description" — the education entry's description text (replace only; it is a single string, not a list)
 - "additional.technicalSkills" — reorder the skills list (action: "reorder") or add one verified skill (action: "add_skill")
+- "additional.languages" — reorder the languages list (action: "reorder")
+- "additional.certificationsTraining" — reorder the certifications list (action: "reorder")
+- "additional.awards" — reorder the awards list (action: "reorder")
 
-Do NOT target: personalInfo, dates/years, company names, education, customSections.
+Do NOT target: personalInfo, dates/years, company names, education degree/institution/years, customSections.
 
 Keywords to emphasize (only if already supported by resume content):
 {job_keywords}
