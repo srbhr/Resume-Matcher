@@ -10,7 +10,7 @@ You drive Resume-Matcher end to end, then judge the result. You are a REPORT, ne
 ## 0. Preconditions (refuse otherwise)
 - This makes REAL, BILLED LLM calls and boots servers. Only run when the maintainer explicitly asks.
 - Requires `RM_E2E_MONITOR=1` and a configured LLM key (the harness gate enforces both — if it refuses, surface the message and stop).
-- Run from `apps/backend`. The optional PDF text probe needs `uv sync --extra e2e-monitor`.
+- Run from `apps/backend`. The optional PDF text probe needs `uv sync --extra dev --extra e2e-monitor` (keep `dev` so test deps aren't removed).
 
 ## 1. Run the sweep
 ```

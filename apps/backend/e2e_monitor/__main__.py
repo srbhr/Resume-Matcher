@@ -75,7 +75,15 @@ def cmd_sweep(_: argparse.Namespace) -> int:
     )
 
     # Pre-seed the isolated DB with a known master BEFORE booting the server.
-    master = json.loads((_FIXTURES / "master.json").read_text(encoding="utf-8"))
+    # Canonicalize to the exact ResumeData round-trip the app stores, so every
+    # optional field is present. Otherwise improve/preview hashes the raw
+    # (field-missing) dict while improve/confirm hashes the schema-defaulted
+    # round-trip — a mismatch the app rejects with 400 (its preview/confirm
+    # hash gate). See _hash_improved_data in app/routers/resumes.py.
+    from app.schemas import ResumeData
+
+    raw_master = json.loads((_FIXTURES / "master.json").read_text(encoding="utf-8"))
+    master = ResumeData.model_validate(raw_master).model_dump()
     resume_id = seed_master_db(bundle.data_dir, master)
     bundle.write_json(bundle.master_dir / "processed_data.json", master)
 

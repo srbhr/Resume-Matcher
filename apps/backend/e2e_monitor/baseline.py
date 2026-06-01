@@ -43,7 +43,12 @@ def summary_to_baseline(variations: list[dict[str, Any]]) -> dict[str, Any]:
     """Build a baseline ``variations`` block from a run's variation results."""
     out: dict[str, Any] = {
         "variations": {},
-        "floor": {"min_judge_score": 3, "min_keyword_coverage": 0.5},
+        # Floors are the absolute "this is broken" bar; per-variation drift
+        # (judge_tolerance) catches regressions above the floor. The fixture set
+        # deliberately includes JDs far from the master (frontend/ML/PM) whose
+        # truthful tailoring legitimately scores ~2 — so the judge floor sits at
+        # 2, not 3, to avoid false-positives on those honest-but-weak variations.
+        "floor": {"min_judge_score": 2, "min_keyword_coverage": 0.5},
         "judge_tolerance": 1,
     }
     for v in variations:

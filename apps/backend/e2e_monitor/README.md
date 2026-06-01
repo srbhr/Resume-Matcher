@@ -11,10 +11,10 @@ An **opt-in, on-demand** harness that drives the real Resume-Matcher app end to 
 
 ```bash
 cd apps/backend
-uv sync --extra e2e-monitor
+uv sync --extra dev --extra e2e-monitor   # keep dev so test deps / the pre-push gate keep working
 ```
 
-The `e2e-monitor` extra is only needed for the PDF text probe (pdfminer-based non-blank check). The harness runs without it, degrading the non-blank check to a header+size heuristic. It is **not** included in `uv sync` or `--extra dev`, so random clones are unaffected.
+The `e2e-monitor` extra is only needed for the PDF text probe (pypdf-based non-blank check). The harness runs without it, degrading the non-blank check to a header+size heuristic. It is **not** part of the default `uv sync` or `--extra dev` (so random clones are unaffected) — sync it *alongside* `dev`, as above, so opting in doesn't remove your test deps (a bare `uv sync --extra e2e-monitor` would, and then the pre-push gate can't run pytest).
 
 ---
 
