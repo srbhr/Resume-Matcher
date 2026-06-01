@@ -23,3 +23,4 @@ def test_normalize_score_rounds_and_rejects_non_finite() -> None:
     assert _normalize_score(float("inf")) is None  # non-finite -> fail closed
     assert _normalize_score(float("nan")) is None
     assert _normalize_score("inf") is None
+    assert _normalize_score(10**400) is None  # huge int: float() overflows -> None

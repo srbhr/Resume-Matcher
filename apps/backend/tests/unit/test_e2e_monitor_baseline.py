@@ -25,7 +25,10 @@ def test_diff_flags_judge_missing_when_judge_failed() -> None:
     # score, so a now-missing score is a regression (worse than any low score).
     current = {"backend-eng": {"jd_keyword_coverage": 1.0, "judge_score": None, "non_blank": True}}
     d = diff_against_baseline(current, _BASELINE)
-    assert any(r["kind"] == "judge_missing" for r in d["regressions"])
+    assert any(
+        r["kind"] == "judge_missing" and r.get("baseline_value") == 4
+        for r in d["regressions"]
+    )
     assert d["regressed"] is True
 
 

@@ -96,10 +96,15 @@ class Servers:
 
         if with_frontend and shutil.which("node") and shutil.which("npm"):
             if not _port_is_free(3000):
-                # Something is on :3000 — verify it actually responds before trusting
-                # it as the frontend (it proxies to our :8000). A non-frontend process
-                # squatting the port leaves frontend_up False, so renders just skip.
-                self.frontend_up = self._wait(FRONTEND_URL, timeout_s=5)
+                # Something is on :3000 — require a 200 from the root before trusting
+                # it as the frontend (it proxies to our :8000). _wait() accepts any
+                # <500 (incl. 404), so an unrelated HTTP service squatting the port
+                # would be mistaken for a frontend; demand 200. Any failure leaves
+                # frontend_up False and renders just skip.
+                try:
+                    self.frontend_up = httpx.get(FRONTEND_URL, timeout=5.0).status_code == 200
+                except httpx.HTTPError:
+                    self.frontend_up = False
             else:
                 fe_log = (self.bundle.logs_dir / "frontend.log").open("w")
                 self.log_files.append(fe_log)

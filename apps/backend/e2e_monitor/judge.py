@@ -13,20 +13,24 @@ _RUBRIC = (  # mirrors tests/evals/test_tailoring_eval.py::_JUDGE_RUBRIC
 
 
 def _normalize_score(raw: Any) -> int | None:
-    """Coerce a judge score to an int in 1-5, or None. Rejects bools, non-finite, junk."""
+    """Coerce a judge score to an int in 1-5, or None. Rejects bools, non-finite, junk.
+
+    The whole conversion is wrapped in one try/except so a huge int (``float()``
+    OverflowError), ``inf``/``nan`` (``int()`` on a non-finite), or junk string
+    (``float()`` ValueError) all fail closed to ``None``. Uses round-half-up
+    (``int(x + 0.5)``) rather than ``round()``'s banker's rounding, since scores
+    are small positive integers.
+    """
     if isinstance(raw, bool):
         return None
-    if isinstance(raw, (int, float)):
-        candidate: float = float(raw)
-    elif isinstance(raw, str):
-        try:
-            candidate = float(raw.strip())
-        except ValueError:
-            return None
-    else:
-        return None
     try:
-        value = round(candidate)  # round (not truncate); raises on inf/nan
+        if isinstance(raw, (int, float)):
+            candidate = float(raw)
+        elif isinstance(raw, str):
+            candidate = float(raw.strip())
+        else:
+            return None
+        value = int(candidate + 0.5)  # round half up; raises on inf/nan
     except (ValueError, OverflowError):
         return None
     return value if 1 <= value <= 5 else None
