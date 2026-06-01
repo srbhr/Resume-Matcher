@@ -17,8 +17,12 @@ keeps `main`/`dev` green without touching contributor PRs.
    `apps/frontend/messages/*.json` has the same key structure as `en.json`.
    Pure Python (no Node/npm/nvm). This guards the exact i18n mismatch that once
    broke `next build` and only surfaced post-merge in the Docker job.
+3. **Frontend test suite** — `vitest run` in `apps/frontend`, but only when Node
+   and the local vitest binary are present (git hooks may run without nvm's
+   `node` on `PATH`); otherwise skipped with a warning. A full `tsc`/`next build`
+   is intentionally not run here.
 
-Both checks always run, so you see **all** failures at once.
+All checks always run, so you see **all** failures at once.
 
 ## Activate (once per clone)
 
@@ -46,6 +50,7 @@ git config --unset core.hooksPath   # disable the hooks entirely
 ```bash
 cd apps/backend && uv run pytest          # backend suite
 python3 scripts/check_locale_parity.py    # locale parity (from repo root)
+cd apps/frontend && npm run test          # frontend suite (vitest)
 ```
 
 See [`docs/agent/testing-strategy.md`](../docs/agent/testing-strategy.md) for the
