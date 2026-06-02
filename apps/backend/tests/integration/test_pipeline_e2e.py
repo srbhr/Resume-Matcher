@@ -479,3 +479,42 @@ class TestTailoringPipeline:
         tailored_id = confirm_resp.json()["data"]["resume_id"]
         assert tailored_id is not None and tailored_id != resume_id
         assert isolated_db.get_resume(tailored_id) is not None
+
+
+class TestConfigurableImproveTimeout:
+    """Issue #776: the improve timeout is driven by settings.request_timeout_seconds
+    (not a hardcoded 240), so a configured smaller value actually causes a 504."""
+
+    async def test_preview_times_out_per_configured_setting(
+        self, isolated_db, sample_resume, monkeypatch
+    ):
+        import asyncio
+
+        from app.config import settings
+
+        # Seed a master resume + a job through the real routers.
+        resume_id = (await _upload_resume(isolated_db, sample_resume)).json()["resume_id"]
+        async with _new_client() as client:
+            jr = await client.post(
+                "/api/v1/jobs/upload",
+                json={"job_descriptions": ["Senior Python / FastAPI role."]},
+            )
+        job_id = jr.json()["job_id"][0]
+
+        # Configure a tiny timeout and make the inner flow exceed it. The flow
+        # body never really runs (it is cancelled), so no LLM mocking is needed.
+        monkeypatch.setattr(settings, "request_timeout_seconds", 0.05)
+
+        async def _slow_flow(**_kwargs):
+            await asyncio.sleep(1.0)
+
+        monkeypatch.setattr("app.routers.resumes._improve_preview_flow", _slow_flow)
+
+        async with _new_client() as client:
+            resp = await client.post(
+                "/api/v1/resumes/improve/preview",
+                json={"resume_id": resume_id, "job_id": job_id},
+            )
+
+        assert resp.status_code == 504, resp.text
+        assert "timed out" in resp.json()["detail"].lower()
