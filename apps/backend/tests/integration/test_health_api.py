@@ -16,34 +16,30 @@ def client():
 
 
 class TestHealthEndpoint:
-    """GET /api/v1/health"""
+    """GET /api/v1/health — lightweight liveness probe (does NOT call the LLM)."""
 
-    @patch("app.routers.health.check_llm_health", new_callable=AsyncMock)
-    async def test_health_returns_healthy(self, mock_health, client):
-        mock_health.return_value = {
-            "healthy": True,
-            "provider": "openai",
-            "model": "gpt-4",
-        }
+    async def test_health_returns_healthy(self, client):
+        """Liveness probe always reports healthy and needs no LLM call."""
         async with client:
             resp = await client.get("/api/v1/health")
         assert resp.status_code == 200
-        data = resp.json()
-        assert data["status"] == "healthy"
+        assert resp.json()["status"] == "healthy"
 
     @patch("app.routers.health.check_llm_health", new_callable=AsyncMock)
-    async def test_health_returns_degraded(self, mock_health, client):
-        mock_health.return_value = {
-            "healthy": False,
-            "provider": "openai",
-            "model": "gpt-4",
-            "error_code": "api_key_missing",
-        }
+    async def test_health_is_independent_of_llm(self, mock_health, client):
+        """/health is a liveness probe: it stays healthy even when the LLM is
+        unhealthy, and must NOT call the provider. Readiness lives at /status.
+
+        Regression guard for the liveness-vs-readiness split — the previous
+        version of this test asserted the deleted '/health returns degraded'
+        behavior and failed silently because nothing ran the suite.
+        """
+        mock_health.return_value = {"healthy": False, "error_code": "api_key_missing"}
         async with client:
             resp = await client.get("/api/v1/health")
         assert resp.status_code == 200
-        data = resp.json()
-        assert data["status"] == "degraded"
+        assert resp.json()["status"] == "healthy"
+        mock_health.assert_not_awaited()
 
 
 class TestStatusEndpoint:

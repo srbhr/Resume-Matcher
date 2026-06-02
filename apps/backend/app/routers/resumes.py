@@ -13,6 +13,7 @@ from uuid import uuid4
 
 from fastapi import APIRouter, File, HTTPException, Query, UploadFile
 from fastapi.responses import Response
+from pydantic import ValidationError
 
 from app.config_cache import get_content_language, load_config as _load_config
 from app.database import db
@@ -92,8 +93,21 @@ def _normalize_payload(value: Any) -> Any:
 
 
 def _hash_improved_data(data: dict[str, Any]) -> str:
-    """Hash canonicalized improved data for preview/confirm validation."""
-    normalized = _normalize_payload(data)
+    """Hash canonicalized improved data for preview/confirm validation.
+
+    Canonicalize through ``ResumeData`` first so a payload that merely omits
+    optional fields (which the schema defaults) hashes identically to its
+    schema-complete form. Without this, ``improve/preview`` (which hashes the
+    raw ``improved_data`` dict) and ``improve/confirm`` (which hashes the
+    ``ResumeData`` round-trip, ``request.improved_data.model_dump()``) disagree
+    for any stored resume whose ``processed_data`` is not schema-complete, and a
+    valid tailoring is rejected with 400 ("preview hash mismatch").
+    """
+    try:
+        canonical: dict[str, Any] = ResumeData.model_validate(data).model_dump()
+    except ValidationError:
+        canonical = data  # not a full resume payload; hash as-is
+    normalized = _normalize_payload(canonical)
     serialized = json.dumps(
         normalized,
         sort_keys=True,
@@ -700,17 +714,23 @@ async def improve_resume_preview_endpoint(
                 language=language,
                 prompt_id=prompt_id,
             ),
-            timeout=240.0,  # 4-minute hard limit
+            timeout=settings.request_timeout_seconds,
         )
     except asyncio.TimeoutError:
         logger.error(
-            "Improve preview timed out after 240s for resume %s / job %s",
+            "Improve preview timed out after %ss for resume %s / job %s",
+            settings.request_timeout_seconds,
             request.resume_id,
             request.job_id,
         )
         raise HTTPException(
             status_code=504,
-            detail="Resume tailoring timed out. Please try again with a shorter job description or a simpler prompt.",
+            detail=(
+                f"Resume tailoring timed out after {settings.request_timeout_seconds}s. "
+                "If you are running a local LLM, raise REQUEST_TIMEOUT_SECONDS (and the "
+                "matching frontend NEXT_PUBLIC_REQUEST_TIMEOUT_MS); otherwise try a shorter "
+                "job description or a simpler prompt."
+            ),
         )
     except Exception as e:
         _raise_improve_error("preview", stage, e, detail)

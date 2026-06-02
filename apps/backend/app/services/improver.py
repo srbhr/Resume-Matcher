@@ -81,7 +81,13 @@ _ALLOWED_PATH_PATTERNS = [
     re.compile(r"^summary$"),
     re.compile(r"^workExperience\[\d+\]\.description(\[\d+\])?$"),
     re.compile(r"^personalProjects\[\d+\]\.description(\[\d+\])?$"),
+    # Education description is a single string (Education.description: str | None),
+    # so only the scalar path is allowed — not a [j]-indexed bullet form.
+    re.compile(r"^education\[\d+\]\.description$"),
     re.compile(r"^additional\.technicalSkills$"),
+    re.compile(r"^additional\.languages$"),
+    re.compile(r"^additional\.certificationsTraining$"),
+    re.compile(r"^additional\.awards$"),
 ]
 
 # Blocked path prefixes — always rejected
@@ -130,6 +136,10 @@ def _is_path_blocked(path: str) -> bool:
             return True
 
     if path.startswith("education"):
+        # Education descriptions may be tailored; degree/institution/years stay
+        # blocked (they are also caught by the blocked-leaf-name check above).
+        if re.match(r"^education\[\d+\]\.description$", path):
+            return False
         return True
 
     return False
@@ -202,10 +212,12 @@ def _set_at_path(data: dict[str, Any], path: str, value: Any) -> bool:
     return True
 
 
-def _verify_original_matches(actual: Any, expected: str | None) -> bool:
+def _verify_original_matches(actual: Any, expected: str | list[str] | None) -> bool:
     """Verify that the original text from the diff matches the actual value."""
     if expected is None:
-        return True  # No verification needed (e.g. append, reorder)
+        return True  # no original provided (e.g. append) — nothing to verify
+    if not isinstance(expected, str):
+        return False  # a non-str original on a text action is malformed — reject
     if not isinstance(actual, str):
         return False
     return actual.strip().casefold() == expected.strip().casefold()
@@ -302,23 +314,60 @@ def apply_diffs(
             if not isinstance(actual_value, list) or not isinstance(change.value, list):
                 rejected.append(change)
                 continue
-            # Validate same items (case-insensitive)
             orig_set = sorted(s.casefold() for s in actual_value if isinstance(s, str))
             new_set = sorted(s.casefold() for s in change.value if isinstance(s, str))
-            if orig_set != new_set:
-                logger.info("Diff rejected (reorder items mismatch): %s", path)
-                rejected.append(change)
-                continue
-            # Preserve original casing: map new order back to original strings
-            casefold_to_originals: dict[str, list[str]] = {}
-            for item in actual_value:
-                if isinstance(item, str):
-                    casefold_to_originals.setdefault(item.casefold(), []).append(item)
             reordered: list[str] = []
-            for item in change.value:
-                if isinstance(item, str):
-                    originals = casefold_to_originals.get(item.casefold(), [])
-                    reordered.append(originals.pop(0) if originals else item)
+            if orig_set == new_set:
+                # Pure permutation: map the new order back to original casing.
+                casefold_to_originals: dict[str, list[str]] = {}
+                for item in actual_value:
+                    if isinstance(item, str):
+                        casefold_to_originals.setdefault(item.casefold(), []).append(item)
+                for item in change.value:
+                    if isinstance(item, str):
+                        originals = casefold_to_originals.get(item.casefold(), [])
+                        reordered.append(originals.pop(0) if originals else item)
+            else:
+                # Salvage (issue #736): the LLM folded new/removed items into a
+                # reorder. Rather than dropping the whole change, apply the SAFE
+                # subset *in the requested order*: walk the proposed list, placing
+                # each existing item where the model put it (so prioritized JD
+                # skills stay near the top) and — for the skills list only —
+                # inserting new items that pass the SAME verified gate as
+                # add_skill. Originals the model omitted are appended at the end
+                # so a real item is never silently lost. Other lists
+                # (languages/certs/awards) have no verifier, so new items are
+                # dropped to avoid fabrication.
+                casefold_to_originals: dict[str, list[str]] = {}
+                for item in actual_value:
+                    if isinstance(item, str):
+                        casefold_to_originals.setdefault(item.casefold(), []).append(item)
+                original_cfs = set(casefold_to_originals)
+                is_skills = path == "additional.technicalSkills"
+                added_new: set[str] = set()
+                for item in change.value:
+                    if not isinstance(item, str):
+                        continue
+                    cf = item.casefold()
+                    if cf in original_cfs:
+                        bucket = casefold_to_originals[cf]
+                        if bucket:  # place original in requested position (dupes preserved)
+                            reordered.append(bucket.pop(0))
+                        # else: a duplicate of an already-placed original — skip
+                    elif is_skills and cf not in added_new:
+                        skill = item.strip()
+                        if skill and _normalize_skill_key(skill) in allowed_skill_keys:
+                            reordered.append(skill)  # verified new skill, requested position
+                            added_new.add(cf)
+                        else:
+                            logger.info("Reorder salvage dropped unverified skill: %s", skill)
+                    # else: non-skills new item → dropped (no verifier to ground it)
+                for item in actual_value:  # append any originals the model omitted
+                    if isinstance(item, str):
+                        bucket = casefold_to_originals[item.casefold()]
+                        if bucket:
+                            reordered.append(bucket.pop(0))
+                logger.info("Diff reorder salvaged (item-set mismatch): %s", path)
             if not _set_at_path(result, path, reordered):
                 rejected.append(change)
                 continue
@@ -751,6 +800,11 @@ def verify_skill_target_plan(
                 }
             )
         elif skill_key in jd_skills:
+            # JD-required/preferred skills are accepted as targets so the résumé
+            # can be tailored to actually pass ATS/recruiter screening — adding
+            # relevant JD skills is the product's purpose. (Truly unsupported
+            # skills — neither in the JD nor the résumé — are still rejected
+            # below.) The user reviews additions in the diff preview before save.
             accepted.append(
                 {
                     "skill": jd_skills[skill_key],
@@ -1284,6 +1338,91 @@ def calculate_resume_diff(
             confidence="medium"
         ))
 
+    # 4b. Compare education descriptions (a single string per entry, not a list)
+    original_education = original.get("education", [])
+    improved_education = improved.get("education", [])
+    for idx in range(max(len(original_education), len(improved_education))):
+        orig_entry = original_education[idx] if idx < len(original_education) else None
+        impr_entry = improved_education[idx] if idx < len(improved_education) else None
+        orig_desc = (
+            str(orig_entry.get("description") or "").strip()
+            if isinstance(orig_entry, dict)
+            else ""
+        )
+        impr_desc = (
+            str(impr_entry.get("description") or "").strip()
+            if isinstance(impr_entry, dict)
+            else ""
+        )
+        if orig_desc == impr_desc:
+            continue
+        if orig_desc and not impr_desc:
+            change_type = "removed"
+        elif impr_desc and not orig_desc:
+            change_type = "added"
+        else:
+            change_type = "modified"
+        changes.append(ResumeFieldDiff(
+            field_path=f"education[{idx}].description",
+            field_type="education",
+            change_type=change_type,
+            original_value=orig_desc or None,
+            new_value=impr_desc or None,
+            confidence="medium",
+        ))
+
+    # 4c. Compare languages (order changes are intentionally ignored)
+    orig_langs = _build_string_index(
+        original.get("additional", {}).get("languages", []),
+        "additional.languages",
+    )
+    new_langs = _build_string_index(
+        improved.get("additional", {}).get("languages", []),
+        "additional.languages",
+    )
+    for lang_key in set(new_langs) - set(orig_langs):
+        changes.append(ResumeFieldDiff(
+            field_path="additional.languages",
+            field_type="language",
+            change_type="added",
+            new_value=new_langs[lang_key],
+            confidence="high",
+        ))
+    for lang_key in set(orig_langs) - set(new_langs):
+        changes.append(ResumeFieldDiff(
+            field_path="additional.languages",
+            field_type="language",
+            change_type="removed",
+            original_value=orig_langs[lang_key],
+            confidence="medium",
+        ))
+
+    # 4d. Compare awards (order changes are intentionally ignored)
+    orig_awards = _build_string_index(
+        original.get("additional", {}).get("awards", []),
+        "additional.awards",
+    )
+    new_awards = _build_string_index(
+        improved.get("additional", {}).get("awards", []),
+        "additional.awards",
+    )
+    for award_key in set(new_awards) - set(orig_awards):
+        changes.append(ResumeFieldDiff(
+            field_path="additional.awards",
+            field_type="award",
+            change_type="added",
+            new_value=new_awards[award_key],
+            confidence="high",
+        ))
+    for award_key in set(orig_awards) - set(new_awards):
+        changes.append(ResumeFieldDiff(
+            field_path="additional.awards",
+            field_type="award",
+            change_type="removed",
+            original_value=orig_awards[award_key],
+            confidence="medium",
+        ))
+
     # 5. Compare added/removed/modified entries
     # Descriptions are diffed separately; ignore them when detecting entry-level changes.
     _append_entry_changes(
@@ -1302,6 +1441,7 @@ def calculate_resume_diff(
         original.get("education", []),
         improved.get("education", []),
         _format_education_entry,
+        {"description"},  # diffed separately in step 4b — avoid duplicate entry-level diffs
     )
     _append_entry_changes(
         changes,

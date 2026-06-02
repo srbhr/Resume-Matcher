@@ -1,0 +1,29 @@
+{
+  "variations": {
+    "backend-eng": {
+      "jd_keyword_coverage": 0.5,
+      "judge_score": 4,
+      "non_blank": true
+    },
+    "frontend-eng": {
+      "jd_keyword_coverage": 0.75,
+      "judge_score": 2,
+      "non_blank": true
+    },
+    "ml-eng": {
+      "jd_keyword_coverage": 0.625,
+      "judge_score": 2,
+      "non_blank": true
+    },
+    "product-manager": {
+      "jd_keyword_coverage": 0.625,
+      "judge_score": 2,
+      "non_blank": true
+    }
+  },
+  "floor": {
+    "min_judge_score": 2,
+    "min_keyword_coverage": 0.5
+  },
+  "judge_tolerance": 1
+}

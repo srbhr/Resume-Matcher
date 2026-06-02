@@ -39,13 +39,15 @@ Before exploring code, read [docs/agent/README.md](../docs/agent/README.md) for 
 ```bash
 # Backend (from repo root)
 cd apps/backend
-uv sync                                              # Install Python dependencies
+uv sync --extra dev                                  # Install Python deps (incl. test deps)
 uv run uvicorn app.main:app --reload --port 8000     # FastAPI on :8000
+uv run pytest                                        # Run backend tests (~320; LLM evals excluded)
 
 # Frontend (from repo root, in a separate terminal)
 cd apps/frontend
 npm install                                          # Install Node.js dependencies
 npm run dev                                          # Next.js on :3000
+npm run test                                         # Run frontend tests (vitest)
 
 # Quality checks (from apps/frontend)
 npm run lint          # Lint frontend
@@ -78,7 +80,7 @@ apps/
     ├── components/          # UI components
     ├── lib/                 # Utilities, API client
     ├── hooks/               # Custom React hooks
-    └── messages/            # i18n translations (en, es, zh, ja)
+    └── messages/            # i18n translations (en, es, zh, ja, pt)
 ```
 
 ---
@@ -95,6 +97,9 @@ apps/
 2. [Swiss design system pack](../docs/portable/swiss-design-system/README.md) - **REQUIRED** Swiss International Style (portable pack)
 3. [Next.js performance pack](../docs/portable/nextjs-performance/README.md) - **REQUIRED** Next.js 15 perf patterns (portable pack)
 4. [Coding standards](../docs/agent/coding-standards.md) - Frontend conventions
+
+### For Testing
+1. [Testing strategy](../docs/agent/testing-strategy.md) - Current-state assessment, framework, phased plan, how to run + how we verify (anti-theater)
 
 ### For Template/PDF Changes
 1. [PDF template guide](../docs/agent/design/pdf-template-guide.md) - PDF rendering
@@ -139,6 +144,21 @@ data = copy.deepcopy(DEFAULT_DATA)  # Correct
 
 ---
 
+## Testing
+
+Both apps have real test suites, and **tests are in scope** (deliberate testing initiative — full plan in [docs/agent/testing-strategy.md](../docs/agent/testing-strategy.md)).
+
+| Suite | Stack | Run |
+|-------|-------|-----|
+| Backend | pytest + pytest-asyncio + httpx + respx | `cd apps/backend && uv run pytest` |
+| Frontend | vitest + Testing Library (jsdom) | `cd apps/frontend && npm run test` |
+
+- **Backend layers:** `tests/unit` (pure logic), `tests/service` (mocked LLM), `tests/integration` (real routers via httpx ASGI), `tests/evals` (prompt-quality scorers + a gated LLM-judge — excluded by default; run with `uv run pytest -m eval`).
+- **Local push gate (not CI):** a `pre-push` hook (`.githooks/pre-push`) runs the backend suite + a locale-parity check and **blocks red pushes**. Activate once per clone: `git config core.hooksPath .githooks`. We deliberately avoid a GitHub Actions PR gate (high external-PR volume) — see [`.githooks/README.md`](../.githooks/README.md).
+- Keep tests **deterministic and anti-theater**: a test must fail when its target breaks, and the default suites make no real network/LLM calls.
+
+---
+
 ## Design System Quick Reference
 
 | Element | Value |
@@ -161,10 +181,12 @@ data = copy.deepcopy(DEFAULT_DATA)  # Correct
 Before completing a task:
 
 - [ ] Code compiles without errors
+- [ ] Backend tests pass (`uv run pytest`); frontend tests pass (`npm run test`)
 - [ ] `npm run lint` passes
 - [ ] UI changes follow Swiss International Style
 - [ ] Python functions have type hints
 - [ ] Schema/prompt changes documented
+- [ ] New behavior covered by a deterministic test (it must fail if the behavior breaks)
 
 ---
 

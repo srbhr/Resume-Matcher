@@ -147,7 +147,23 @@ Config via `.env` (see `.env.example`). Interactive API docs at `/docs`.
 
 ---
 
-## Testing & Out of Scope
+## Testing
 
-- **Tests exist** (`tests/`, pytest + pytest-asyncio; markers `unit`/`service`/`integration`; config in `[tool.pytest.ini_options]`). Run with `uv run pytest`. Do **not** run/modify tests unless explicitly asked.
-- Out of scope without explicit request: `.github/workflows/`, CI/CD, Docker behavior, removing/disabling existing tests.
+**Tests are in scope** (deliberate testing initiative — see [`testing-strategy.md`](../../docs/agent/testing-strategy.md) for the full assessment + roadmap). Stack: pytest + pytest-asyncio + httpx + respx; config in `[tool.pytest.ini_options]`. Run `uv run pytest` (the LLM-judge evals are excluded by default via `addopts -m "not eval"`). Coverage: `uv run --with pytest-cov pytest --cov=app --cov-report=term-missing` (ephemeral plugin, no pyproject change).
+
+Layout (`apps/backend/tests/`):
+
+| Dir | What | Notes |
+|-----|------|-------|
+| `unit/` | pure functions | diffs, `llm` provider/key helpers, parser date-restore, real-TinyDB CRUD |
+| `service/` | service layer, **LLM mocked** | improver diff flow, prompt construction |
+| `integration/` | endpoints via httpx `ASGITransport` | config/health/jobs/resume/upload, plus `test_llm_contract.py` (real `llm.py` over `respx`) and `test_pipeline_e2e.py` (upload→tailor→render, real routers + real temp DB) |
+| `evals/` | prompt quality | pure structural scorers (always run) + a gated LLM-judge (`@pytest.mark.eval`, uses the dev's own key; run with `uv run pytest -m eval`) |
+
+Key fixtures/tools: `conftest.py::isolated_db` swaps the global `db` singleton for a disposable temp-file TinyDB across **all** router modules (for real-DB endpoint/e2e tests); `respx` mocks the HTTP transport so `llm.py`'s real routing runs against a fake Ollama / OpenAI server (gotcha: litellm 1.86 needs `disable_aiohttp_transport=True` for respx to intercept). Keep every test **anti-theater** — it must fail when its target breaks.
+
+**Local push gate:** `.githooks/pre-push` runs this suite + a locale-parity check and blocks red pushes (`git config core.hooksPath .githooks`; see [`.githooks/README.md`](../../.githooks/README.md)). We avoid a GitHub Actions PR gate (high external-PR volume).
+
+## Out of Scope
+
+Without an explicit request: `.github/workflows/`, CI/CD, Docker behavior, and **removing/disabling existing tests** (adding/fixing tests is encouraged).

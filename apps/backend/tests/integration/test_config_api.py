@@ -73,6 +73,62 @@ class TestLlmConfig:
         assert data["api_key"].startswith("loca")
         assert data["api_key"].endswith("-key")
         assert "*" in data["api_key"]
+
+    # --- Base URL clearing (issue #760) ----------------------------------
+    # The frontend sends api_base: null (or "") when the field is cleared.
+    # A null/blank value that is *present* in the request must clear the
+    # stored override; an *omitted* field must leave it unchanged.
+
+    @patch("app.routers.config._log_llm_health_check", new_callable=AsyncMock)
+    @patch("app.routers.config._save_config")
+    @patch("app.routers.config._load_config")
+    async def test_put_null_api_base_clears_stale_value(
+        self, mock_load, mock_save, mock_log_health, client
+    ):
+        mock_load.return_value = {
+            "provider": "openrouter",
+            "model": "x",
+            "api_base": "http://stale.example/v1",
+        }
+        async with client:
+            resp = await client.put(
+                "/api/v1/config/llm-api-key",
+                json={"provider": "openrouter", "api_base": None},
+            )
+        assert resp.status_code == 200
+        saved_config = mock_save.call_args.args[0]
+        assert saved_config["api_base"] is None
+        assert resp.json()["api_base"] is None
+
+    @patch("app.routers.config._log_llm_health_check", new_callable=AsyncMock)
+    @patch("app.routers.config._save_config")
+    @patch("app.routers.config._load_config")
+    async def test_put_blank_api_base_is_normalized_to_none(
+        self, mock_load, mock_save, mock_log_health, client
+    ):
+        mock_load.return_value = {"provider": "openrouter", "api_base": "http://stale/v1"}
+        async with client:
+            resp = await client.put(
+                "/api/v1/config/llm-api-key",
+                json={"provider": "openrouter", "api_base": "   "},
+            )
+        assert resp.status_code == 200
+        assert mock_save.call_args.args[0]["api_base"] is None
+
+    @patch("app.routers.config._log_llm_health_check", new_callable=AsyncMock)
+    @patch("app.routers.config._save_config")
+    @patch("app.routers.config._load_config")
+    async def test_put_omitting_api_base_leaves_it_unchanged(
+        self, mock_load, mock_save, mock_log_health, client
+    ):
+        mock_load.return_value = {"provider": "openrouter", "api_base": "http://keep/v1"}
+        async with client:
+            resp = await client.put(
+                "/api/v1/config/llm-api-key",
+                json={"model": "new-model"},  # api_base intentionally omitted
+            )
+        assert resp.status_code == 200
+        assert mock_save.call_args.args[0]["api_base"] == "http://keep/v1"
         mock_log_health.assert_awaited_once()
 
 
