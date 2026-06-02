@@ -32,13 +32,22 @@ function resolveRuntimeApiBase(apiBase: string): string {
 export const API_URL = normalizeApiUrl(process.env.NEXT_PUBLIC_API_URL ?? DEFAULT_PUBLIC_API_URL);
 export const API_BASE = resolveRuntimeApiBase(toApiBase(API_URL));
 
+// Default request timeout (ms). MUST match the backend's REQUEST_TIMEOUT_SECONDS
+// and the Next.js proxyTimeout (next.config.ts) — the shortest layer aborts
+// first, so all three are driven by the same NEXT_PUBLIC_REQUEST_TIMEOUT_MS env
+// var. Bounded to [30s, 30min]. Local LLMs often need more than the 240s default.
+export const DEFAULT_TIMEOUT_MS = Math.min(
+  1_800_000,
+  Math.max(30_000, Number(process.env.NEXT_PUBLIC_REQUEST_TIMEOUT_MS) || 240_000),
+);
+
 /**
  * Standard fetch wrapper with common error handling.
  * Returns the Response object for flexibility.
  *
  * @param endpoint - API endpoint path or absolute URL
  * @param options - Standard RequestInit options
- * @param timeoutMs - Optional request timeout in milliseconds (default: 240_000)
+ * @param timeoutMs - Optional request timeout in milliseconds (default: DEFAULT_TIMEOUT_MS, from NEXT_PUBLIC_REQUEST_TIMEOUT_MS, 240_000 if unset)
  */
 export async function apiFetch(
   endpoint: string,
@@ -56,8 +65,10 @@ export async function apiFetch(
     url = resolveRuntimeApiBase(normalizedEndpoint);
   }
 
-  // Matches the backend's 240s hard limit (resumes.py wait_for timeout)
-  const timeout = timeoutMs ?? 240_000;
+  // Defaults to DEFAULT_TIMEOUT_MS, which tracks the backend's
+  // REQUEST_TIMEOUT_SECONDS (see next.config.ts proxyTimeout — all three layers
+  // must agree or the shortest aborts first).
+  const timeout = timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeout);
 
@@ -65,7 +76,9 @@ export async function apiFetch(
     return await fetch(url, { ...options, signal: controller.signal });
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') {
-      throw new Error('Request timed out. Please try again with a shorter job description or check your connection.');
+      throw new Error(
+        'Request timed out. If you are running a local LLM, increase NEXT_PUBLIC_REQUEST_TIMEOUT_MS (and the backend REQUEST_TIMEOUT_SECONDS to match); otherwise try a shorter job description or check your connection.'
+      );
     }
     throw error;
   } finally {

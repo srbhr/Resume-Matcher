@@ -714,17 +714,23 @@ async def improve_resume_preview_endpoint(
                 language=language,
                 prompt_id=prompt_id,
             ),
-            timeout=240.0,  # 4-minute hard limit
+            timeout=settings.request_timeout_seconds,
         )
     except asyncio.TimeoutError:
         logger.error(
-            "Improve preview timed out after 240s for resume %s / job %s",
+            "Improve preview timed out after %ss for resume %s / job %s",
+            settings.request_timeout_seconds,
             request.resume_id,
             request.job_id,
         )
         raise HTTPException(
             status_code=504,
-            detail="Resume tailoring timed out. Please try again with a shorter job description or a simpler prompt.",
+            detail=(
+                f"Resume tailoring timed out after {settings.request_timeout_seconds}s. "
+                "If you are running a local LLM, raise REQUEST_TIMEOUT_SECONDS (and the "
+                "matching frontend NEXT_PUBLIC_REQUEST_TIMEOUT_MS); otherwise try a shorter "
+                "job description or a simpler prompt."
+            ),
         )
     except Exception as e:
         _raise_improve_error("preview", stage, e, detail)

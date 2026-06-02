@@ -161,6 +161,28 @@ class Settings(BaseSettings):
     log_level: Literal["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"] = "INFO"
     frontend_base_url: str = "http://localhost:3000"
 
+    # Hard timeout (seconds) for a single resume tailoring/improve request — the
+    # backend wraps the improve flow in asyncio.wait_for(timeout=this). It MUST be
+    # kept in sync with the two frontend layers (Next.js `proxyTimeout` and the
+    # client AbortController, both driven by NEXT_PUBLIC_REQUEST_TIMEOUT_MS):
+    # whichever layer is shortest aborts first, so raising only one silently fails
+    # (this is why issue #776's backend-only workaround didn't work). Local LLMs
+    # (Ollama, llama.cpp, …) often need longer than the 240s default; bounded to
+    # [30, 1800]s so a stuck request can't hold a worker indefinitely.
+    request_timeout_seconds: int = 240
+
+    @field_validator("request_timeout_seconds", mode="before")
+    @classmethod
+    def clamp_request_timeout(cls, v: Any) -> int:
+        """Clamp to [30, 1800] seconds; fall back to 240 on blank/invalid input."""
+        if v is None or (isinstance(v, str) and not v.strip()):
+            return 240
+        try:
+            seconds = int(float(str(v).strip()))
+        except (TypeError, ValueError):
+            return 240
+        return max(30, min(1800, seconds))
+
     # Reasoning effort for models that support it (OpenAI gpt-5 family,
     # Anthropic Claude 3.7+, DeepSeek R1, etc.). None means "do not send the
     # param" — the default for maximum compatibility. LiteLLM drops this
