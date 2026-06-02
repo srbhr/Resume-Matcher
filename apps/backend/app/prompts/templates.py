@@ -467,7 +467,7 @@ RULES:
 8. Do not use em dash characters
 9. Keep changes minimal and targeted — do not rewrite content that already aligns well
 10. Exception to rule 2: you may add a skill only if it appears in the verified skill targets below
-11. By DEFAULT, scan the summary and every work and project bullet for content that already demonstrates a job-description keyword or skill, and reframe that text using the job description's terminology — while preserving the candidate's actual accomplishment. Do NOT add new work, metrics, or responsibilities; only restate existing content in the JD's language, and verify every reframe stays factually accurate.
+11. By DEFAULT, scan the summary and every work, project, and education description for content that already demonstrates a job-description keyword or skill, and reframe that text using the job description's terminology, while preserving the candidate's actual accomplishment. Do NOT add new work, metrics, or responsibilities; only restate existing content in the JD's language, and verify every reframe stays factually accurate.
 12. Preserve original capitalization, especially for proper nouns, technical terms (e.g., REST, API, AWS), and acronyms. Do not change the casing of words that were capitalized in the original.
 
 PATHS you can target:
