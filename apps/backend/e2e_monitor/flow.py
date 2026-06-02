@@ -13,6 +13,7 @@ from typing import Any
 
 import httpx
 
+from e2e_monitor import API_BASE
 from tests.evals.scorers import (
     is_valid_resume,
     jd_keywords_present,
@@ -33,9 +34,6 @@ def score_tailoring(
         "is_valid_resume": is_valid_resume(tailored),
         "jd_keyword_coverage": jd_keywords_present(tailored, keywords),
     }
-
-
-API = "http://127.0.0.1:8000/api/v1"
 
 
 def seed_master_db(data_dir: Path, master: dict[str, Any]) -> str:
@@ -67,7 +65,7 @@ def tailor(
 ) -> dict[str, Any]:
     """jobs/upload -> improve/preview -> improve/confirm; returns tailored + scores."""
     jobs_resp = httpx.post(
-        f"{API}/jobs/upload",
+        f"{API_BASE}/jobs/upload",
         json={"job_descriptions": [jd_text], "resume_id": resume_id},
         timeout=120,
     )
@@ -78,7 +76,7 @@ def tailor(
     job_id = job_ids[0]
 
     preview_resp = httpx.post(
-        f"{API}/resumes/improve/preview",
+        f"{API_BASE}/resumes/improve/preview",
         json={"resume_id": resume_id, "job_id": job_id},
         timeout=240,
     )
@@ -88,7 +86,7 @@ def tailor(
     improvements = data["improvements"]
 
     confirm_resp = httpx.post(
-        f"{API}/resumes/improve/confirm",
+        f"{API_BASE}/resumes/improve/confirm",
         json={"resume_id": resume_id, "job_id": job_id,
               "improved_data": tailored, "improvements": improvements},
         timeout=240,

@@ -44,7 +44,7 @@ const REFERENCE = keyKinds(en);
 const LOCALES: Record<string, unknown> = { es, zh, ja, pt };
 
 describe('i18n locale parity (guards the next build break)', () => {
-  it.each(Object.keys(LOCALES))('%s.json matches en.json key structure exactly', (name) => {
+  it.each(Object.keys(LOCALES))('%s.json has every en.json key with a matching shape', (name) => {
     const localeKinds = keyKinds(LOCALES[name]);
     const missing = [...REFERENCE.keys()].filter((k) => !localeKinds.has(k));
     const extra = [...localeKinds.keys()].filter((k) => !REFERENCE.has(k));
@@ -54,9 +54,16 @@ describe('i18n locale parity (guards the next build break)', () => {
     const mismatched = [...REFERENCE.keys()].filter(
       (k) => localeKinds.has(k) && localeKinds.get(k) !== REFERENCE.get(k)
     );
+    // Only MISSING or SHAPE-MISMATCHED keys break `type Messages = typeof en`
+    // (and therefore `next build`). EXTRA keys are still assignable to the
+    // en-derived type, so they are NON-FATAL — surfaced as a warning, never a
+    // failure, to stay in lock-step with scripts/check_locale_parity.py (which
+    // reports extras as `⚠ (non-fatal)`). See that script's module docstring.
     expect(missing, `${name}.json is MISSING keys present in en.json`).toEqual([]);
     expect(mismatched, `${name}.json has keys whose SHAPE differs from en.json`).toEqual([]);
-    expect(extra, `${name}.json has EXTRA keys not in en.json`).toEqual([]);
+    if (extra.length > 0) {
+      console.warn(`locale-parity: ${name}.json has extra keys not in en.json (non-fatal): ${extra.join(', ')}`);
+    }
   });
 
   it('reference (en.json) has a non-trivial number of keys', () => {

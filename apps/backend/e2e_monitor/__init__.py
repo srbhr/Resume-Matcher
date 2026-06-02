@@ -7,3 +7,8 @@ refuses to run unless explicitly enabled (see ``e2e_monitor.gate``). See
 """
 
 __version__ = "0.1.0"
+
+# Single source of truth for the backend API base the monitor drives. Defined
+# here as an inert, side-effect-free constant so render.py / flow.py / servers.py
+# don't each hard-code the URL and drift apart.
+API_BASE = "http://127.0.0.1:8000/api/v1"

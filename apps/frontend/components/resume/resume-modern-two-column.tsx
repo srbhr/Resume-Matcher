@@ -40,11 +40,11 @@ export const ResumeModernTwoColumn: React.FC<ResumeModernTwoColumnProps> = ({
 
   // Drop blank/whitespace-only entries so empty lines (e.g. from editing in the
   // builder) never render in the resume or PDF (issue #763).
-  const technicalSkills = additional?.technicalSkills?.filter((item) => item.trim() !== '') ?? [];
-  const languages = additional?.languages?.filter((item) => item.trim() !== '') ?? [];
+  const technicalSkills = additional?.technicalSkills?.filter((item): item is string => typeof item === 'string' && item.trim() !== '') ?? [];
+  const languages = additional?.languages?.filter((item): item is string => typeof item === 'string' && item.trim() !== '') ?? [];
   const certificationsTraining =
-    additional?.certificationsTraining?.filter((item) => item.trim() !== '') ?? [];
-  const awards = additional?.awards?.filter((item) => item.trim() !== '') ?? [];
+    additional?.certificationsTraining?.filter((item): item is string => typeof item === 'string' && item.trim() !== '') ?? [];
+  const awards = additional?.awards?.filter((item): item is string => typeof item === 'string' && item.trim() !== '') ?? [];
 
   // Get sorted visible sections
   const sortedSections = getSortedSections(data);

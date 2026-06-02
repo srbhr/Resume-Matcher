@@ -12,6 +12,8 @@ from typing import Any
 
 import httpx
 
+from e2e_monitor import API_BASE
+
 _MIN_BYTES = 1000  # a real one-page resume PDF is comfortably larger than this
 
 
@@ -53,9 +55,6 @@ def check_pdf_bytes(data: bytes) -> dict[str, Any]:
     }
 
 
-API = "http://127.0.0.1:8000/api/v1"
-
-
 def render_variation(
     tailored_resume_id: str, *, lang: str | None = None
 ) -> tuple[bytes, dict[str, Any]]:
@@ -64,7 +63,7 @@ def render_variation(
     if lang:
         params["lang"] = lang
     resp = httpx.get(
-        f"{API}/resumes/{tailored_resume_id}/pdf", params=params, timeout=120
+        f"{API_BASE}/resumes/{tailored_resume_id}/pdf", params=params, timeout=120
     )
     resp.raise_for_status()
     return resp.content, check_pdf_bytes(resp.content)

@@ -28,9 +28,10 @@ from typing import Any
 
 import httpx
 
+from e2e_monitor import API_BASE
 from e2e_monitor.bundle import Bundle
 
-BACKEND_HEALTH = "http://127.0.0.1:8000/api/v1/health"
+BACKEND_HEALTH = f"{API_BASE}/health"
 FRONTEND_URL = "http://127.0.0.1:3000/"
 
 

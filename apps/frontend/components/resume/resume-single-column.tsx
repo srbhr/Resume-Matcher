@@ -374,10 +374,10 @@ const AdditionalSection: React.FC<{
 
   // Drop blank/whitespace-only entries so empty lines (e.g. from editing in the
   // builder) never render in the resume or PDF (issue #763).
-  const technicalSkills = rawTechnicalSkills.filter((item) => item.trim() !== '');
-  const languages = rawLanguages.filter((item) => item.trim() !== '');
-  const certificationsTraining = rawCertificationsTraining.filter((item) => item.trim() !== '');
-  const awards = rawAwards.filter((item) => item.trim() !== '');
+  const technicalSkills = rawTechnicalSkills.filter((item): item is string => typeof item === 'string' && item.trim() !== '');
+  const languages = rawLanguages.filter((item): item is string => typeof item === 'string' && item.trim() !== '');
+  const certificationsTraining = rawCertificationsTraining.filter((item): item is string => typeof item === 'string' && item.trim() !== '');
+  const awards = rawAwards.filter((item): item is string => typeof item === 'string' && item.trim() !== '');
 
   const mergedLabels: AdditionalSectionLabels = {
     technicalSkills: labels?.technicalSkills ?? 'Technical Skills:',

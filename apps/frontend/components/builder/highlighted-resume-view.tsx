@@ -21,11 +21,11 @@ export function HighlightedResumeView({ resumeData, keywords }: HighlightedResum
   // Drop blank/whitespace-only entries so empty lines (e.g. from editing in the
   // builder) never render in the preview (issue #763).
   const visibleTechnicalSkills =
-    resumeData.additional?.technicalSkills?.filter((item) => item.trim() !== '') ?? [];
+    resumeData.additional?.technicalSkills?.filter((item): item is string => typeof item === 'string' && item.trim() !== '') ?? [];
   const visibleLanguages =
-    resumeData.additional?.languages?.filter((item) => item.trim() !== '') ?? [];
+    resumeData.additional?.languages?.filter((item): item is string => typeof item === 'string' && item.trim() !== '') ?? [];
   const visibleCertificationsTraining =
-    resumeData.additional?.certificationsTraining?.filter((item) => item.trim() !== '') ?? [];
+    resumeData.additional?.certificationsTraining?.filter((item): item is string => typeof item === 'string' && item.trim() !== '') ?? [];
 
   return (
     <div className="h-full flex flex-col">
