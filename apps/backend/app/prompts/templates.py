@@ -457,7 +457,7 @@ Output this exact JSON format:
 DIFF_IMPROVE_PROMPT = """Given this resume and job description, output a JSON object with targeted changes to better align the resume with the job.
 
 RULES:
-1. Only modify content — never change names, companies, dates, institutions, or degrees
+1. Only modify content; never change names, companies, dates, institutions, or degrees
 2. Do not invent metrics or achievements not supported by the original resume text
 3. Do not add new work entries, education entries, or project entries
 4. {strategy_instruction}
@@ -465,9 +465,9 @@ RULES:
 6. For each change, explain WHY it helps match the job description
 7. Generate all new text in {output_language}
 8. Do not use em dash characters
-9. Keep changes minimal and targeted — do not rewrite content that already aligns well
+9. Keep changes minimal and targeted; do not rewrite content that already aligns well
 10. Exception to rule 2: you may add a skill only if it appears in the verified skill targets below
-11. By DEFAULT, scan the summary and every work, project, and education description for content that already demonstrates a job-description keyword or skill, and reframe that text using the job description's terminology, while preserving the candidate's actual accomplishment. Do NOT add new work, metrics, or responsibilities; only restate existing content in the JD's language, and verify every reframe stays factually accurate.
+11. By DEFAULT, scan the summary and every work, project, and education description for content that already demonstrates a job-description keyword or skill, and reframe that text using the job description's terminology where it is not already phrased that way (per rule 9, leave content that already aligns well), while preserving the candidate's actual accomplishment. Do NOT add new work, metrics, or responsibilities; only restate existing content in the JD's language, and verify every reframe stays factually accurate.
 12. Preserve original capitalization, especially for proper nouns, technical terms (e.g., REST, API, AWS), and acronyms. Do not change the casing of words that were capitalized in the original.
 
 PATHS you can target:
