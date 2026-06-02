@@ -36,10 +36,11 @@ export const API_BASE = resolveRuntimeApiBase(toApiBase(API_URL));
 // and the Next.js proxyTimeout (next.config.ts) — the shortest layer aborts
 // first, so all three are driven by the same NEXT_PUBLIC_REQUEST_TIMEOUT_MS env
 // var. Bounded to [30s, 30min]. Local LLMs often need more than the 240s default.
-export const DEFAULT_TIMEOUT_MS = Math.min(
-  1_800_000,
-  Math.max(30_000, Number(process.env.NEXT_PUBLIC_REQUEST_TIMEOUT_MS) || 240_000),
-);
+const rawTimeoutMs = process.env.NEXT_PUBLIC_REQUEST_TIMEOUT_MS;
+const parsedTimeoutMs = rawTimeoutMs ? Number(rawTimeoutMs) : NaN;
+export const DEFAULT_TIMEOUT_MS = Number.isFinite(parsedTimeoutMs)
+  ? Math.min(1_800_000, Math.max(30_000, parsedTimeoutMs))
+  : 240_000;
 
 /**
  * Standard fetch wrapper with common error handling.

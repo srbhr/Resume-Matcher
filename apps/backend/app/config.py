@@ -179,7 +179,9 @@ class Settings(BaseSettings):
             return 240
         try:
             seconds = int(float(str(v).strip()))
-        except (TypeError, ValueError):
+        except (TypeError, ValueError, OverflowError):
+            # OverflowError guards against inf (int(float("inf"))); ValueError
+            # against nan/garbage. A bad env value must never crash startup.
             return 240
         return max(30, min(1800, seconds))
 
