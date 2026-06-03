@@ -12,6 +12,7 @@ import {
   type BodyFontFamily,
   type AccentColor,
   DEFAULT_TEMPLATE_SETTINGS,
+  applyTemplatePreset,
   SECTION_SPACING_MAP,
   ITEM_SPACING_MAP,
   LINE_HEIGHT_MAP,
@@ -59,7 +60,9 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
     `${value.toFixed(2).replace(/\.00$/, '').replace(/0$/, '')}rem`;
 
   const handleTemplateChange = (template: TemplateType) => {
-    onChange({ ...settings, template });
+    // Single-typeface templates (latex/clean) seed their signature fonts on selection
+    // so they match their reference look by default; both font controls stay live.
+    onChange(applyTemplatePreset(settings, template));
   };
 
   const handlePageSizeChange = (pageSize: PageSize) => {
@@ -135,6 +138,18 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
         name: t('builder.formatting.templates.modernTwoColumn.name'),
         description: t('builder.formatting.templates.modernTwoColumn.description'),
       },
+      latex: {
+        name: t('builder.formatting.templates.latex.name'),
+        description: t('builder.formatting.templates.latex.description'),
+      },
+      clean: {
+        name: t('builder.formatting.templates.clean.name'),
+        description: t('builder.formatting.templates.clean.description'),
+      },
+      vivid: {
+        name: t('builder.formatting.templates.vivid.name'),
+        description: t('builder.formatting.templates.vivid.description'),
+      },
     }),
     [t]
   );
@@ -173,7 +188,7 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
             <h4 className="font-mono text-xs font-bold uppercase tracking-wider mb-3 text-ink-soft">
               {t('builder.formatting.template')}
             </h4>
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-3">
               {TEMPLATE_OPTIONS.map((template) => (
                 <button
                   key={template.id}
@@ -204,7 +219,9 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
           </div>
 
           {/* Accent Color Selection - Visible for Modern templates */}
-          {(settings.template === 'modern' || settings.template === 'modern-two-column') && (
+          {(settings.template === 'modern' ||
+            settings.template === 'modern-two-column' ||
+            settings.template === 'vivid') && (
             <div>
               <h4 className="font-mono text-xs font-bold uppercase tracking-wider mb-3 text-ink-soft">
                 {t('builder.formatting.accentColor')}

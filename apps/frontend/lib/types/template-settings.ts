@@ -5,7 +5,14 @@
  * These settings affect both the live preview and PDF generation.
  */
 
-export type TemplateType = 'swiss-single' | 'swiss-two-column' | 'modern' | 'modern-two-column';
+export type TemplateType =
+  | 'swiss-single'
+  | 'swiss-two-column'
+  | 'modern'
+  | 'modern-two-column'
+  | 'latex'
+  | 'clean'
+  | 'vivid';
 
 export type PageSize = 'A4' | 'LETTER';
 
@@ -225,4 +232,52 @@ export const TEMPLATE_OPTIONS: TemplateInfo[] = [
     name: 'Modern Two Column',
     description: 'Two-column layout with modern colorful accents and themes',
   },
+  {
+    id: 'latex',
+    name: 'LaTeX',
+    description: 'Classic serif academic layout with ruled section headers',
+  },
+  {
+    id: 'clean',
+    name: 'Clean',
+    description: 'Minimal sans layout with large understated section headers',
+  },
+  {
+    id: 'vivid',
+    name: 'Vivid',
+    description: 'Colorful two-column layout with accent headers and arrow bullets',
+  },
 ];
+
+/**
+ * Signature font presets for single-typeface templates.
+ *
+ * LaTeX and Clean bind their headers to `--header-font` and body to `--body-font`, so
+ * both font controls are live. Selecting one of these templates applies its signature
+ * fonts (so it matches its reference look by default); the user can then override either
+ * control. Templates not listed here keep the current font settings on selection.
+ */
+export const TEMPLATE_FONT_PRESETS: Partial<
+  Record<TemplateType, { headerFont: HeaderFontFamily; bodyFont: BodyFontFamily }>
+> = {
+  latex: { headerFont: 'serif', bodyFont: 'serif' },
+  clean: { headerFont: 'sans-serif', bodyFont: 'sans-serif' },
+};
+
+/**
+ * Return settings with the given template applied, seeding the template's signature
+ * fonts when it has a preset. Use this at every template-change entry point so the
+ * single-typeface templates render their reference look by default.
+ */
+export function applyTemplatePreset(
+  settings: TemplateSettings,
+  template: TemplateType
+): TemplateSettings {
+  const preset = TEMPLATE_FONT_PRESETS[template];
+  if (!preset) return { ...settings, template };
+  return {
+    ...settings,
+    template,
+    fontSize: { ...settings.fontSize, headerFont: preset.headerFont, bodyFont: preset.bodyFont },
+  };
+}

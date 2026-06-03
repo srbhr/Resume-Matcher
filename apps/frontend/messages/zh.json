@@ -369,6 +369,18 @@
         "modernTwoColumn": {
           "name": "现代双栏",
           "description": "现代双栏布局，带彩色点缀与主题色"
+        },
+        "latex": {
+          "name": "LaTeX",
+          "description": "经典衬线学术版式，带分隔线的栏目标题"
+        },
+        "clean": {
+          "name": "简洁",
+          "description": "极简无衬线版式，栏目标题大而低调"
+        },
+        "vivid": {
+          "name": "鲜明",
+          "description": "彩色双栏布局，强调色标题与箭头项目符号"
         }
       },
       "accentColor": "强调色",

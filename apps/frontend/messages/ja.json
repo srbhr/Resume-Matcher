@@ -369,6 +369,18 @@
         "modernTwoColumn": {
           "name": "モダン2カラム",
           "description": "モダンな2カラムとカラフルなアクセント"
+        },
+        "latex": {
+          "name": "LaTeX",
+          "description": "罫線付き見出しのクラシックなセリフ体レイアウト"
+        },
+        "clean": {
+          "name": "クリーン",
+          "description": "大きく控えめな見出しのミニマルなサンセリフ体レイアウト"
+        },
+        "vivid": {
+          "name": "ビビッド",
+          "description": "アクセント見出しと矢印箇条書きのカラフルな2カラムレイアウト"
         }
       },
       "accentColor": "アクセントカラー",
