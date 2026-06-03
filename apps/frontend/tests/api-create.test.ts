@@ -16,8 +16,8 @@ describe('create api', () => {
     fetchMock.mockResolvedValue(
       new Response(
         JSON.stringify({ request_id: 'r', section: 'work', data: { company: 'Google' } }),
-        { status: 200 },
-      ),
+        { status: 200 }
+      )
     );
     const data = await draftSection({ section: 'work', answers: 'google' });
     expect(fetchMock.mock.calls[0][0]).toBe('/api/v1/resumes/draft-section');
@@ -35,8 +35,8 @@ describe('create api', () => {
           message: 'ok',
           request_id: 'r',
         }),
-        { status: 200 },
-      ),
+        { status: 200 }
+      )
     );
     const res = await createResumeFromWizard({ personalInfo: { name: 'James' } });
     expect(fetchMock.mock.calls[0][0]).toBe('/api/v1/resumes');

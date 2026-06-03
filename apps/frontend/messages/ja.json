@@ -950,5 +950,52 @@
       "moveFailed": "応募を移動できませんでした。",
       "deleteFailed": "応募を削除できませんでした。"
     }
+  },
+  "create": {
+    "navLabel": "一から作成",
+    "title": "履歴書を作成",
+    "greeting": "こんにちは！履歴書の作成をお手伝いします。お名前は？",
+    "askRole": "ようこそ、{name}さん！お仕事は何をされていますか？",
+    "pickSection": "どこから始めましょうか？",
+    "sections": {
+      "work": "職務経歴",
+      "education": "学歴",
+      "project": "プロジェクト",
+      "skills": "スキル"
+    },
+    "ask": {
+      "work": "お仕事について教えてください：会社、役職、担当したこと。話すだけでOK、私が整えます。",
+      "education": "学歴について教えてください：学校、学位、在籍期間。",
+      "project": "プロジェクトについて教えてください：内容と作ったもの。",
+      "skills": "スキルを挙げてください（ツール、言語、技術）。"
+    },
+    "drafting": "作成中...",
+    "addAnother": "+ さらに追加",
+    "pickAnother": "別のセクションを選ぶ",
+    "done": "完了しました",
+    "contactTitle": "ヘッダー用のいくつかの情報",
+    "contact": {
+      "location": "所在地",
+      "phone": "電話",
+      "email": "メール",
+      "linkedin": "LinkedIn",
+      "github": "GitHub",
+      "website": "ウェブサイト"
+    },
+    "contactContinue": "続ける",
+    "summaryIntro": "あなたのために書いた要約です：",
+    "regenerateSummary": "書き直す",
+    "acceptSummary": "良さそうです",
+    "tweakPrompt": "何か調整しましょうか？",
+    "save": "保存してビルダーで開く",
+    "saving": "保存中...",
+    "previewTitle": "ライブプレビュー",
+    "showPreview": "プレビュー",
+    "hidePreview": "非表示",
+    "needMore": "完了する前に少なくとも1つのセクションを追加してください。",
+    "errors": {
+      "draft": "うまく作成できませんでした。言い換えるか、スキップしてください。",
+      "save": "履歴書を保存できませんでした。もう一度お試しください。"
+    }
   }
 }

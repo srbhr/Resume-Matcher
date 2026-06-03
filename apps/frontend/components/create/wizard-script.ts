@@ -49,7 +49,7 @@ export function canFinish(d: WizardData): boolean {
 export function appendDraft(
   d: WizardData,
   section: SectionKind,
-  fragment: Record<string, unknown>,
+  fragment: Record<string, unknown>
 ): WizardData {
   switch (section) {
     case 'work': {

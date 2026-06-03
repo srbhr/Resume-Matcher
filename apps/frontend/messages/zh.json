@@ -950,5 +950,52 @@
       "moveFailed": "无法移动该申请。",
       "deleteFailed": "无法删除该申请。"
     }
+  },
+  "create": {
+    "navLabel": "从零开始创建",
+    "title": "创建你的简历",
+    "greeting": "你好！我来帮你创建简历。你叫什么名字？",
+    "askRole": "欢迎，{name}！你是做什么的？",
+    "pickSection": "我们从哪里开始？",
+    "sections": {
+      "work": "工作经历",
+      "education": "教育",
+      "project": "项目",
+      "skills": "技能"
+    },
+    "ask": {
+      "work": "说说一份工作：公司、职位以及你做了什么。你随便说，我来整理。",
+      "education": "说说你的教育经历：学校、学位和年份。",
+      "project": "说说一个项目：它是什么以及你做了什么。",
+      "skills": "列出你的技能（工具、语言、技术）。"
+    },
+    "drafting": "正在撰写...",
+    "addAnother": "+ 再添加一项",
+    "pickAnother": "选择其他部分",
+    "done": "我完成了",
+    "contactTitle": "页眉所需的一些信息",
+    "contact": {
+      "location": "所在地",
+      "phone": "电话",
+      "email": "邮箱",
+      "linkedin": "LinkedIn",
+      "github": "GitHub",
+      "website": "网站"
+    },
+    "contactContinue": "继续",
+    "summaryIntro": "这是我为你写的简介：",
+    "regenerateSummary": "重写",
+    "acceptSummary": "看起来不错",
+    "tweakPrompt": "需要我调整什么吗？",
+    "save": "保存并在编辑器中打开",
+    "saving": "正在保存...",
+    "previewTitle": "实时预览",
+    "showPreview": "预览",
+    "hidePreview": "隐藏",
+    "needMore": "完成前至少添加一个部分。",
+    "errors": {
+      "draft": "我无法撰写该内容。请尝试换种说法，或跳过。",
+      "save": "无法保存你的简历。请重试。"
+    }
   }
 }

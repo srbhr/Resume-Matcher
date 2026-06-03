@@ -32,7 +32,7 @@ export async function draftSection(req: DraftSectionRequest): Promise<Record<str
 /** Persist the assembled resume (becomes master iff none exists). */
 export async function createResumeFromWizard(
   processedData: ProcessedResume,
-  title?: string,
+  title?: string
 ): Promise<CreateResumeResponse> {
   const resp = await apiPost('/resumes', { processed_data: processedData, title });
   if (!resp.ok) {
