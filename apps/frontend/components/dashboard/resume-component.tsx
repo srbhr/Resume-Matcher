@@ -4,6 +4,7 @@ import {
   ResumeTwoColumn,
   ResumeModern,
   ResumeModernTwoColumn,
+  ResumeLatex,
 } from '@/components/resume';
 import {
   type TemplateSettings,
@@ -203,6 +204,13 @@ const Resume: React.FC<ResumeProps> = ({
           showContactIcons={mergedSettings.showContactIcons}
           sectionHeadings={sectionHeadings}
           fallbackLabels={fallbackLabels}
+        />
+      )}
+      {mergedSettings.template === 'latex' && (
+        <ResumeLatex
+          data={resumeData}
+          showContactIcons={mergedSettings.showContactIcons}
+          additionalSectionLabels={additionalSectionLabels}
         />
       )}
     </div>

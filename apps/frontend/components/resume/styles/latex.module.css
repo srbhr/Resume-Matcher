@@ -1,0 +1,97 @@
+@import './_tokens.css';
+
+/*
+  LaTeX Template
+  ID: latex
+
+  Classic serif academic layout. Single-typeface design: all text inherits
+  --header-font (serif by default), so the Header Font control drives the whole
+  template. Title-Case ruled section headers, company-first two-line entries.
+*/
+
+.container {
+  width: 100%;
+}
+
+/* Force the single serif typeface across the whole template. */
+.container,
+.container :global(p),
+.container :global(li),
+.container :global(a),
+.container :global(span),
+.container :global(div),
+.container :global(h1),
+.container :global(h3) {
+  font-family: var(--header-font);
+}
+
+.name {
+  font-family: var(--header-font);
+  font-size: calc(var(--font-size-base) * var(--header-scale));
+  font-weight: 700;
+  font-variant: small-caps;
+  letter-spacing: 0.02em;
+  color: var(--resume-text-primary);
+}
+
+.locationLine {
+  font-size: var(--font-size-base);
+  color: var(--resume-text-body);
+}
+
+.tagline {
+  font-style: italic;
+  font-size: calc(var(--font-size-base) * 1.05);
+  color: var(--resume-text-body);
+}
+
+.contactRow {
+  font-size: calc(var(--font-size-base) * 0.95);
+  color: var(--resume-text-body);
+}
+
+.contactSep {
+  color: var(--resume-text-tertiary);
+}
+
+/* Title-Case section header with a full-width rule (overrides base uppercase). */
+.sectionTitle {
+  font-family: var(--header-font);
+  font-size: calc(var(--font-size-base) * var(--section-header-scale));
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--resume-text-primary);
+  border-bottom: 1px solid var(--resume-text-primary);
+  padding-bottom: 0.1rem;
+  margin-bottom: var(--item-gap);
+  break-after: avoid;
+  page-break-after: avoid;
+  orphans: 3;
+  widows: 3;
+}
+
+.entryPrimary {
+  font-weight: 700;
+  color: var(--resume-text-primary);
+}
+
+.entryDates {
+  font-weight: 700;
+  color: var(--resume-text-primary);
+  white-space: nowrap;
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.entrySecondary {
+  font-style: italic;
+  color: var(--resume-text-body);
+}
+
+@media print {
+  .sectionTitle {
+    break-after: avoid !important;
+    page-break-after: avoid !important;
+  }
+}

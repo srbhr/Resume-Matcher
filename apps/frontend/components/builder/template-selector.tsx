@@ -117,6 +117,28 @@ export const TemplateThumbnail: React.FC<TemplateThumbnailProps> = ({ type, isAc
     );
   }
 
+  if (type === 'latex') {
+    // LaTeX thumbnail - centered name + Title-Case ruled section headers (serif feel)
+    return (
+      <div className={`w-14 h-18 border ${borderColor} bg-white p-1.5 flex flex-col gap-1`}>
+        {/* Centered name + contact */}
+        <div className="flex flex-col items-center gap-0.5">
+          <div className={`h-1.5 ${lineColor} w-2/3`}></div>
+          <div className={`h-0.5 ${lineColor} w-1/2 opacity-60`}></div>
+        </div>
+        {/* Sections: each header is a full-width line with a bottom rule */}
+        <div className="flex-1 space-y-1 mt-1">
+          <div className={`h-0.5 ${lineColor} w-2/5 border-b ${borderColor} pb-1`}></div>
+          <div className={`h-0.5 ${lineColor} w-5/6 opacity-50`}></div>
+          <div className={`h-0.5 ${lineColor} w-4/6 opacity-50`}></div>
+          <div className="h-0.5"></div>
+          <div className={`h-0.5 ${lineColor} w-1/3 border-b ${borderColor} pb-1`}></div>
+          <div className={`h-0.5 ${lineColor} w-5/6 opacity-50`}></div>
+        </div>
+      </div>
+    );
+  }
+
   if (type === 'modern') {
     // Modern template thumbnail - with accent color highlights
     return (
