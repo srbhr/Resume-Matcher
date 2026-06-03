@@ -13,12 +13,8 @@ CONFIG_FILE_PATH = Path(__file__).parent.parent / "data" / "config.json"
 ALLOWED_LOG_LEVELS = ("CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG")
 
 
-def load_config_file() -> dict[str, Any]:
-    """Load configuration from config.json file.
-
-    Returns:
-        Dictionary with configuration values, empty dict if file doesn't exist.
-    """
+def _read_config_json() -> dict[str, Any]:
+    """Raw read of config.json (no key injection)."""
     if CONFIG_FILE_PATH.exists():
         try:
             return json.loads(CONFIG_FILE_PATH.read_text())
@@ -27,58 +23,144 @@ def load_config_file() -> dict[str, Any]:
     return {}
 
 
-def save_config_file(config: dict[str, Any]) -> None:
-    """Save configuration to config.json file.
-
-    Args:
-        config: Dictionary with configuration values to save.
-    """
-    # Ensure data directory exists
+def _write_config_json(config: dict[str, Any]) -> None:
+    """Raw write of config.json (no secret stripping)."""
     CONFIG_FILE_PATH.parent.mkdir(parents=True, exist_ok=True)
     CONFIG_FILE_PATH.write_text(json.dumps(config, indent=2))
 
 
+def load_config_file() -> dict[str, Any]:
+    """Load non-secret configuration, with decrypted API keys injected.
+
+    API keys live in the encrypted SQLite store, not config.json. They are
+    injected here under ``api_keys`` so ``resolve_api_key(stored, provider)``
+    keeps resolving per-provider keys everywhere ``stored`` is built from this
+    function. ``save_config_file`` strips them again, so they never round-trip
+    back to disk.
+    """
+    config = _read_config_json()
+    config["api_keys"] = get_api_keys_from_config()
+    return config
+
+
+def save_config_file(config: dict[str, Any]) -> None:
+    """Save non-secret configuration to config.json.
+
+    Secrets (``api_keys`` map and the legacy single ``api_key``) are stripped
+    before writing — they belong to the encrypted store only.
+    """
+    config = dict(config)
+    config.pop("api_keys", None)
+    config.pop("api_key", None)
+    _write_config_json(config)
+
+
 def get_api_keys_from_config() -> dict[str, str]:
-    """Get API keys from config file.
+    """Get decrypted API keys from the encrypted SQLite store.
 
     Returns:
-        Dictionary with provider names as keys and API keys as values.
+        Dictionary with key-store provider names as keys and plaintext keys as
+        values (entries that fail to decrypt are omitted).
     """
-    config = load_config_file()
-    return config.get("api_keys", {})
+    from app.crypto import decrypt
+    from app.database import db
+
+    decrypted: dict[str, str] = {}
+    for provider, ciphertext in db.get_api_key_ciphertexts().items():
+        plaintext = decrypt(ciphertext)
+        if plaintext:
+            decrypted[provider] = plaintext
+    return decrypted
 
 
 def save_api_keys_to_config(api_keys: dict[str, str]) -> None:
-    """Save API keys to config file.
+    """Replace the encrypted key store with ``api_keys`` (encrypting each).
 
-    Args:
-        api_keys: Dictionary with provider names as keys and API keys as values.
+    Replace-all semantics mirror the legacy ``config["api_keys"] = api_keys``;
+    the config router reads-merges-saves the full map.
     """
-    config = load_config_file()
-    config["api_keys"] = api_keys
-    save_config_file(config)
+    from app.crypto import encrypt
+    from app.database import db
+
+    # Encrypt everything first, then swap in a single transaction, so a partial
+    # failure (encryption error or DB write) can never wipe previously stored
+    # keys mid-replace.
+    ciphertexts = {provider: encrypt(key) for provider, key in api_keys.items() if key}
+    db.replace_api_keys(ciphertexts)
 
 
 def delete_api_key_from_config(provider: str) -> None:
-    """Delete a specific API key from config file.
+    """Delete a specific API key from the encrypted store."""
+    from app.database import db
 
-    Args:
-        provider: The provider name to delete.
-    """
-    config = load_config_file()
-    if "api_keys" in config and provider in config["api_keys"]:
-        del config["api_keys"][provider]
-        save_config_file(config)
+    db.delete_api_key(provider)
 
 
 def clear_all_api_keys() -> None:
-    """Clear all API keys from config file."""
-    config = load_config_file()
-    # Clear plural dict
-    config["api_keys"] = {}
-    # Clear singular top-level key (legacy support)
-    config["api_key"] = ""
-    save_config_file(config)
+    """Clear all API keys from the encrypted store and any legacy config slots."""
+    from app.database import db
+
+    db.clear_api_keys()
+    # Defensively clear any legacy plaintext remnants from config.json.
+    config = _read_config_json()
+    if "api_keys" in config or "api_key" in config:
+        config.pop("api_keys", None)
+        config.pop("api_key", None)
+        _write_config_json(config)
+
+
+def migrate_legacy_keys() -> None:
+    """Fold legacy plaintext keys from config.json into the encrypted store.
+
+    Idempotent and non-clobbering: an existing config.json ``api_keys`` map and
+    the legacy single ``api_key`` (mapped to its key-store provider via the
+    active provider) are written to the encrypted store **only if that provider
+    slot is empty**, then removed from config.json. This eliminates the
+    legacy-shadow bug where ``resolve_api_key`` returned one shared key for
+    every provider.
+    """
+    config = _read_config_json()
+    legacy_map = config.get("api_keys")
+    legacy_single = config.get("api_key")
+    if not legacy_map and not legacy_single:
+        return
+
+    from app.crypto import encrypt
+    from app.database import db
+
+    existing = set(db.get_api_key_ciphertexts().keys())
+
+    if isinstance(legacy_map, dict):
+        for provider, key in legacy_map.items():
+            if key and provider not in existing:
+                db.set_api_key_ciphertext(provider, encrypt(key))
+                existing.add(provider)
+
+    if legacy_single:
+        # Map the active LLM provider to its key-store provider name.
+        provider = config.get("provider") or settings.llm_provider
+        key_provider = _LEGACY_PROVIDER_KEY_MAP.get(provider, provider)
+        if key_provider not in existing:
+            db.set_api_key_ciphertext(key_provider, encrypt(legacy_single))
+
+    # Strip the legacy slots from config.json now that they're in the store.
+    config.pop("api_keys", None)
+    config.pop("api_key", None)
+    _write_config_json(config)
+
+
+# Mirror of llm._PROVIDER_KEY_MAP, duplicated to avoid importing llm.py (which
+# pulls in litellm) at config import time.
+_LEGACY_PROVIDER_KEY_MAP: dict[str, str] = {
+    "openai": "openai",
+    "openai_compatible": "openai_compatible",
+    "anthropic": "anthropic",
+    "gemini": "google",
+    "openrouter": "openrouter",
+    "deepseek": "deepseek",
+    "groq": "groq",
+    "ollama": "ollama",
+}
 
 
 def _get_llm_api_key_with_fallback() -> str:
@@ -228,8 +310,13 @@ class Settings(BaseSettings):
 
     @property
     def db_path(self) -> Path:
-        """Path to TinyDB database file."""
+        """Path to the legacy TinyDB database file (migration source only)."""
         return self.data_dir / "database.json"
+
+    @property
+    def sqlite_path(self) -> Path:
+        """Path to the SQLite database file (primary data store)."""
+        return self.data_dir / "resume_matcher.db"
 
     @property
     def config_path(self) -> Path:

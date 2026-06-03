@@ -3,7 +3,7 @@
 > FastAPI backend for Resume Matcher. This file goes **deeper on the backend**.
 > For project-wide context see the root [`.claude/CLAUDE.md`](../../.claude/CLAUDE.md) and [`docs/agent/README.md`](../../docs/agent/README.md).
 
-Stack: FastAPI 0.128 · Python **3.13+** · Pydantic v2 / pydantic-settings · TinyDB (JSON file) · LiteLLM (multi-provider AI) · markitdown (DOCX/PDF→Markdown) · Playwright/Chromium (PDF). Managed with **uv** (`pyproject.toml`, version `1.2.0`).
+Stack: FastAPI 0.128 · Python **3.13+** · Pydantic v2 / pydantic-settings · SQLAlchemy 2 (async) + SQLite (`aiosqlite`) · LiteLLM (multi-provider AI) · markitdown (DOCX/PDF→Markdown) · Playwright/Chromium (PDF). Managed with **uv** (`pyproject.toml`, version `1.2.0`).
 
 ---
 
@@ -12,9 +12,11 @@ Stack: FastAPI 0.128 · Python **3.13+** · Pydantic v2 / pydantic-settings · T
 | Module | Responsibility | Key files |
 |--------|----------------|-----------|
 | Entry / wiring | App, lifespan, CORS, router mounting (all under `/api/v1`) | `app/main.py` |
-| Settings | Env vars via `pydantic-settings`; `settings` singleton; API-key fallback to `config.json` | `app/config.py` |
+| Settings | Env vars via `pydantic-settings`; `settings` singleton; API keys read from the encrypted SQLite store | `app/config.py` |
+| Crypto | Fernet encrypt/decrypt for API keys at rest (`data/.secret_key`, `chmod 600`, gitignored) | `app/crypto.py` |
 | Config cache | Shared, TTL-cached (5 min) read of `data/config.json`; `get_content_language()` | `app/config_cache.py` |
-| Database | TinyDB wrapper; tables `resumes`/`jobs`/`improvements`; global `db` singleton | `app/database.py` |
+| Database | Async SQLAlchemy/SQLite facade; tables `resumes`/`jobs`/`improvements`/`applications`/`api_keys`; returns plain dicts; global `db` singleton | `app/database.py`, `app/models.py`, `app/db_engine.py` |
+| Tracker | Kanban application-tracker endpoints | `app/routers/applications.py`, `app/schemas/applications.py` |
 | LLM | LiteLLM wrapper: Router, retries, JSON extraction, timeouts, provider quirks | `app/llm.py` |
 | PDF | Headless Chromium render of frontend `/print/*` pages; lazy browser init | `app/pdf.py` |
 | Routers | HTTP endpoints (see below) | `app/routers/*.py` |
@@ -22,7 +24,7 @@ Stack: FastAPI 0.128 · Python **3.13+** · Pydantic v2 / pydantic-settings · T
 | Prompts | All LLM prompt templates + placeholder validation | `app/prompts/*.py` |
 | Schemas | Pydantic request/response + `ResumeData` models | `app/schemas/*.py` |
 
-`data/` holds `database.json`, `config.json`, an `uploads/` dir, and a legacy/unused `prompts.json` (not loaded by any code path — see Prompt Management). `apps/backend/.gitignore` ignores `data/*.json` (so DB + config files never get committed), but **`uploads/` is NOT git-ignored** — don't commit user uploads. `db.reset_database()` truncates tables and wipes `uploads/`.
+`data/` holds `resume_matcher.db` (SQLite; primary store), `config.json` (non-secret config), `.secret_key` (Fernet secret for encrypted API keys), an `uploads/` dir, and possibly a legacy `database.json` (TinyDB — imported into SQLite on first startup, then renamed `database.json.migrated`). `.gitignore` ignores `*.db*`, `data/*.json`, and `data/.secret_key` (DB + config + secret never get committed), but **`uploads/` is NOT git-ignored** — don't commit user uploads. `db.reset_database()` truncates the document tables + `applications` (preserving `api_keys`) and wipes `uploads/`.
 
 ### Routers (all prefixed `/api/v1`)
 - `health.py` — `GET /health` (liveness, no LLM call), `GET /status` (LLM health + DB stats).
@@ -119,7 +121,7 @@ Config via `.env` (see `.env.example`). Interactive API docs at `/docs`.
 
 - **uv.lock is gitignored** (`.gitignore`), so dependency resolution isn't reproducible from VCS — rely on the exact pins in `pyproject.toml` / `requirements.txt`.
 - **litellm ↔ python-dotenv trap:** litellm `<1.84.0` hard-pinned `python-dotenv==1.0.1`, which used to fight other pins. Resolved at the current pins (`litellm==1.86.2`, `python-dotenv==1.2.2`); do **not** downgrade litellm below 1.84 without re-checking dotenv.
-- **`config.json` vs `.env`:** API keys/provider/model can come from either; `config.json` (written by the Settings UI) takes priority over env for stored keys. After any write to `config.json`, call `invalidate_config_cache()` (config router does this).
+- **Keys vs non-secret config:** API **keys** live ONLY in the encrypted `api_keys` SQLite table (per-provider, via `_PROVIDER_KEY_MAP`); `load_config_file()` injects the decrypted keys into the returned dict and `save_config_file()` strips them, so secrets never round-trip to `config.json`. Non-secret provider/model/base/features stay in `config.json`. `PUT /config/llm-api-key` no longer writes any key; keys go through `PUT /config/api-keys`. `migrate_legacy_keys()` folds any legacy plaintext keys into the encrypted store (idempotent, non-clobbering). After any write to `config.json`, call `invalidate_config_cache()`.
 - **Master resume invariant:** exactly one resume has `is_master=True`. Concurrent uploads use `create_resume_atomic_master` (an `asyncio.Lock`, not threading) and auto-promote if the current master is stuck `failed`/`processing`.
 - **Dates lose months:** LLMs drop month precision; `restore_dates_from_markdown` + `_restore_original_dates` re-insert them. Preserve this when editing the parse/improve flow.
 - **Single-worker assumption:** caches and locks assume one uvicorn worker / cooperative async. Don't add cross-worker shared mutable state without revisiting `config_cache` and the master lock.
@@ -155,12 +157,12 @@ Layout (`apps/backend/tests/`):
 
 | Dir | What | Notes |
 |-----|------|-------|
-| `unit/` | pure functions | diffs, `llm` provider/key helpers, parser date-restore, real-TinyDB CRUD |
+| `unit/` | pure functions | diffs, `llm` provider/key helpers, parser date-restore, real-SQLite CRUD |
 | `service/` | service layer, **LLM mocked** | improver diff flow, prompt construction |
 | `integration/` | endpoints via httpx `ASGITransport` | config/health/jobs/resume/upload, plus `test_llm_contract.py` (real `llm.py` over `respx`) and `test_pipeline_e2e.py` (upload→tailor→render, real routers + real temp DB) |
 | `evals/` | prompt quality | pure structural scorers (always run) + a gated LLM-judge (`@pytest.mark.eval`, uses the dev's own key; run with `uv run pytest -m eval`) |
 
-Key fixtures/tools: `conftest.py::isolated_db` swaps the global `db` singleton for a disposable temp-file TinyDB across **all** router modules (for real-DB endpoint/e2e tests); `respx` mocks the HTTP transport so `llm.py`'s real routing runs against a fake Ollama / OpenAI server (gotcha: litellm 1.86 needs `disable_aiohttp_transport=True` for respx to intercept). Keep every test **anti-theater** — it must fail when its target breaks.
+Key fixtures/tools: `conftest.py::isolated_db` swaps the global `db` singleton for a disposable temp-file SQLite database across **all** router modules (for real-DB endpoint/e2e tests); `respx` mocks the HTTP transport so `llm.py`'s real routing runs against a fake Ollama / OpenAI server (gotcha: litellm 1.86 needs `disable_aiohttp_transport=True` for respx to intercept). Keep every test **anti-theater** — it must fail when its target breaks.
 
 **Local push gate:** `.githooks/pre-push` runs this suite + a locale-parity check and blocks red pushes (`git config core.hooksPath .githooks`; see [`.githooks/README.md`](../../.githooks/README.md)). We avoid a GitHub Actions PR gate (high external-PR volume).
 

@@ -49,9 +49,13 @@ class TestLlmConfig:
     @patch("app.routers.config._log_llm_health_check", new_callable=AsyncMock)
     @patch("app.routers.config._save_config")
     @patch("app.routers.config._load_config")
-    async def test_put_llm_config_persists_optional_provider_api_key(
+    async def test_put_llm_config_does_not_persist_api_key(
         self, mock_load, mock_save, mock_log_health, client
     ):
+        # PUT /llm-api-key persists provider/model/api_base but NO LONGER the
+        # api_key — keys live in the encrypted per-provider store (PUT
+        # /config/api-keys). Writing the legacy single slot here is exactly what
+        # made providers overwrite each other, so it must not happen.
         mock_load.return_value = {}
         async with client:
             resp = await client.put("/api/v1/config/llm-api-key", json={
@@ -65,14 +69,12 @@ class TestLlmConfig:
         saved_config = mock_save.call_args.args[0]
         assert saved_config["provider"] == "openai_compatible"
         assert saved_config["model"] == "llama-3.1-8b"
-        assert saved_config["api_key"] == "local-secret-key"
         assert saved_config["api_base"] == "http://localhost:8080/v1"
+        # The provided key is ignored for persistence (the bug fix).
+        assert saved_config.get("api_key") != "local-secret-key"
         data = resp.json()
         assert data["provider"] == "openai_compatible"
         assert data["api_base"] == "http://localhost:8080/v1"
-        assert data["api_key"].startswith("loca")
-        assert data["api_key"].endswith("-key")
-        assert "*" in data["api_key"]
 
     # --- Base URL clearing (issue #760) ----------------------------------
     # The frontend sends api_base: null (or "") when the field is cleared.
@@ -352,7 +354,7 @@ class TestLanguageConfig:
 class TestResetDatabase:
     """POST /api/v1/config/reset"""
 
-    @patch("app.routers.config.db")
+    @patch("app.routers.config.db", new_callable=AsyncMock)
     async def test_reset_with_correct_token(self, mock_db, client):
         async with client:
             resp = await client.post("/api/v1/config/reset", json={
@@ -372,3 +374,143 @@ class TestResetDatabase:
         async with client:
             resp = await client.post("/api/v1/config/reset")
         assert resp.status_code == 422
+
+
+# ---------------------------------------------------------------------------
+# Encrypted multi-provider API key store (Workstream B)
+# ---------------------------------------------------------------------------
+
+class TestEncryptedApiKeys:
+    """Per-provider keys are encrypted at rest, independent, and never leak."""
+
+    @pytest.fixture
+    def keys_env(self, isolated_db, tmp_path, monkeypatch):
+        """Isolate the key store (temp DB), config.json, and crypto secret."""
+        from app import crypto
+        from app.config import settings
+        import app.config as config_module
+
+        monkeypatch.setattr(settings, "data_dir", tmp_path)
+        monkeypatch.setattr(config_module, "CONFIG_FILE_PATH", tmp_path / "config.json")
+        crypto.reset_cache()
+        yield isolated_db
+        crypto.reset_cache()
+
+    async def test_saving_provider_b_does_not_erase_provider_a(self, keys_env, client):
+        async with client:
+            r1 = await client.post("/api/v1/config/api-keys", json={"openai": "sk-openai-key"})
+            assert r1.status_code == 200
+            r2 = await client.post("/api/v1/config/api-keys", json={"anthropic": "sk-anthropic-key"})
+            assert r2.status_code == 200
+            status = await client.get("/api/v1/config/api-keys")
+        configured = {p["provider"]: p for p in status.json()["providers"]}
+        assert configured["openai"]["configured"] is True
+        assert configured["anthropic"]["configured"] is True
+
+    async def test_keys_encrypted_at_rest(self, keys_env, client):
+        async with client:
+            await client.post("/api/v1/config/api-keys", json={"openai": "sk-plaintext-123"})
+        ciphertexts = keys_env.get_api_key_ciphertexts()
+        assert "openai" in ciphertexts
+        # Stored value is ciphertext, not the plaintext key.
+        assert "sk-plaintext-123" not in ciphertexts["openai"]
+        from app import crypto
+        assert crypto.decrypt(ciphertexts["openai"]) == "sk-plaintext-123"
+
+    async def test_responses_never_contain_raw_key(self, keys_env, client):
+        async with client:
+            await client.post("/api/v1/config/api-keys", json={"openai": "sk-rawsecret-9999"})
+            status = await client.get("/api/v1/config/api-keys")
+        body = status.text
+        assert "sk-rawsecret-9999" not in body
+        # Masked form shows only the tail.
+        openai = {p["provider"]: p for p in status.json()["providers"]}["openai"]
+        assert openai["masked_key"].endswith("9999")
+
+    async def test_gemini_resolves_to_google_slot(self, keys_env, client):
+        from app.config import load_config_file
+        from app.llm import resolve_api_key
+
+        async with client:
+            await client.post("/api/v1/config/api-keys", json={"google": "sk-google-key"})
+        stored = load_config_file()
+        # The gemini LLM provider maps to the google key-store slot.
+        assert resolve_api_key(stored, "gemini") == "sk-google-key"
+
+    async def test_delete_single_provider(self, keys_env, client):
+        async with client:
+            await client.post("/api/v1/config/api-keys", json={"openai": "a", "anthropic": "b"})
+            await client.delete("/api/v1/config/api-keys/openai")
+            status = await client.get("/api/v1/config/api-keys")
+        configured = {p["provider"]: p["configured"] for p in status.json()["providers"]}
+        assert configured["openai"] is False
+        assert configured["anthropic"] is True
+
+
+class TestLegacyKeyMigration:
+    """migrate_legacy_keys folds config.json secrets into the encrypted store."""
+
+    @pytest.fixture
+    def keys_env(self, isolated_db, tmp_path, monkeypatch):
+        from app import crypto
+        from app.config import settings
+        import app.config as config_module
+
+        monkeypatch.setattr(settings, "data_dir", tmp_path)
+        monkeypatch.setattr(config_module, "CONFIG_FILE_PATH", tmp_path / "config.json")
+        crypto.reset_cache()
+        yield isolated_db
+        crypto.reset_cache()
+
+    async def test_migration_folds_and_clears_legacy_slots(self, keys_env, monkeypatch, tmp_path):
+        import json
+        import app.config as config_module
+        from app.config import migrate_legacy_keys, get_api_keys_from_config
+
+        # Legacy config.json: a plural map AND a single legacy api_key.
+        config = {
+            "provider": "anthropic",
+            "model": "claude",
+            "api_keys": {"openai": "legacy-openai"},
+            "api_key": "legacy-anthropic-single",
+        }
+        config_module.CONFIG_FILE_PATH.write_text(json.dumps(config))
+
+        migrate_legacy_keys()
+
+        keys = get_api_keys_from_config()
+        assert keys["openai"] == "legacy-openai"
+        # The single legacy key is mapped via the active provider (anthropic).
+        assert keys["anthropic"] == "legacy-anthropic-single"
+        # config.json no longer holds the secrets.
+        on_disk = json.loads(config_module.CONFIG_FILE_PATH.read_text())
+        assert "api_keys" not in on_disk
+        assert "api_key" not in on_disk
+        assert on_disk["model"] == "claude"  # non-secret config preserved
+
+    async def test_migration_is_idempotent_and_non_clobbering(self, keys_env, monkeypatch):
+        import json
+        import app.config as config_module
+        from app.config import migrate_legacy_keys, get_api_keys_from_config
+
+        # Pre-existing encrypted key for openai must NOT be clobbered.
+        from app import crypto
+        keys_env.set_api_key_ciphertext("openai", crypto.encrypt("already-stored"))
+
+        config_module.CONFIG_FILE_PATH.write_text(
+            json.dumps({"provider": "openai", "api_keys": {"openai": "legacy-should-not-win"}})
+        )
+        migrate_legacy_keys()
+        migrate_legacy_keys()  # idempotent second run
+
+        keys = get_api_keys_from_config()
+        assert keys["openai"] == "already-stored"  # not clobbered
+
+    async def test_migration_noop_without_legacy(self, keys_env):
+        import app.config as config_module
+        from app.config import migrate_legacy_keys
+
+        # No config.json at all → no-op, no crash.
+        if config_module.CONFIG_FILE_PATH.exists():
+            config_module.CONFIG_FILE_PATH.unlink()
+        migrate_legacy_keys()

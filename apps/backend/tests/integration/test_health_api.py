@@ -45,7 +45,7 @@ class TestHealthEndpoint:
 class TestStatusEndpoint:
     """GET /api/v1/status"""
 
-    @patch("app.routers.health.db")
+    @patch("app.routers.health.db", new_callable=AsyncMock)
     @patch("app.routers.health.check_llm_health", new_callable=AsyncMock)
     @patch("app.routers.health.get_llm_config")
     async def test_status_ready(self, mock_config, mock_health, mock_db, client):
@@ -65,7 +65,7 @@ class TestStatusEndpoint:
         assert data["llm_healthy"] is True
         assert data["has_master_resume"] is True
 
-    @patch("app.routers.health.db")
+    @patch("app.routers.health.db", new_callable=AsyncMock)
     @patch("app.routers.health.check_llm_health", new_callable=AsyncMock)
     @patch("app.routers.health.get_llm_config")
     async def test_status_setup_required(self, mock_config, mock_health, mock_db, client):

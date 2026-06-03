@@ -44,7 +44,8 @@
     "tailor": "Personalizar Currículo",
     "settings": "Configurações",
     "backToDashboard": "Voltar ao Painel",
-    "goToSettings": "Ir para Configurações"
+    "goToSettings": "Ir para Configurações",
+    "applicationTracker": "Acompanhamento de candidaturas"
   },
   "dashboard": {
     "title": "Painel",
@@ -726,6 +727,12 @@
       "unableToSaveConfiguration": "Não foi possível salvar a configuração",
       "failedToClearApiKeys": "Falha ao limpar chaves de API. Por favor, tente novamente.",
       "failedToResetDatabase": "Falha ao redefinir banco de dados. Por favor, tente novamente."
+    },
+    "apiKeys": {
+      "savedTitle": "Chaves de API salvas",
+      "deleteAria": "Excluir a chave de {provider}",
+      "deleteConfirmTitle": "Excluir chave de API?",
+      "deleteConfirmDescription": "Remover a chave de API de {provider} salva? Você pode adicioná-la novamente depois."
     }
   },
   "resumeViewer": {
@@ -875,5 +882,73 @@
     "clearApiKeysDescription": "Você precisará inseri-las novamente antes de usar os recursos de IA.",
     "resetDatabase": "Redefinir tudo e começar de novo?",
     "resetDatabaseDescription": "Isso excluirá permanentemente cada currículo, descrição de vaga e documento gerado."
+  },
+  "tracker": {
+    "scroll": {
+      "prev": "Rolar para a esquerda",
+      "next": "Rolar para a direita",
+      "hint": "Role para ver mais etapas"
+    },
+    "title": "Acompanhamento de candidaturas",
+    "subtitle": "Acompanhe em que etapa está cada currículo personalizado.",
+    "addApplication": "Adicionar candidatura",
+    "columns": {
+      "saved": "Salvo",
+      "applied": "Enviado",
+      "no_response": "Sem resposta",
+      "response": "Resposta",
+      "interview": "Entrevista",
+      "accepted": "Aceito",
+      "rejected": "Recusado",
+      "empty": "Nada aqui ainda"
+    },
+    "empty": {
+      "title": "Nenhuma candidatura ainda",
+      "description": "Personalize um currículo para uma vaga ou adicione manualmente para começar."
+    },
+    "card": {
+      "companyUnknown": "Empresa desconhecida",
+      "roleUnknown": "Cargo sem título",
+      "sharedResume": "Currículo compartilhado",
+      "selectAria": "Selecionar candidatura",
+      "dragAria": "Arraste para reordenar"
+    },
+    "modal": {
+      "jobDescription": "Descrição da vaga",
+      "noJobDescription": "Nenhuma descrição de vaga registrada.",
+      "notes": "Notas",
+      "notesPlaceholder": "Adicione notas sobre esta candidatura…",
+      "saveNotes": "Salvar notas",
+      "resumeUnavailable": "O currículo enviado não está mais disponível.",
+      "loadFailed": "Não foi possível carregar esta candidatura.",
+      "editResume": "Editar currículo"
+    },
+    "bulk": {
+      "selected": "{count} selecionada(s)",
+      "moveTo": "Mover para…",
+      "clear": "Limpar",
+      "deleteConfirmTitle": "Excluir candidaturas?",
+      "deleteConfirmDescription": "Excluir {count} candidatura(s) selecionada(s)? Isso não pode ser desfeito."
+    },
+    "manualAdd": {
+      "title": "Adicionar candidatura",
+      "description": "Acompanhe uma candidatura colando a descrição da vaga.",
+      "resume": "Currículo",
+      "untitledResume": "Currículo sem título",
+      "jobDescription": "Descrição da vaga",
+      "jobDescriptionPlaceholder": "Cole a descrição da vaga aqui…",
+      "company": "Empresa",
+      "role": "Cargo",
+      "optional": "Opcional",
+      "status": "Status",
+      "submit": "Adicionar",
+      "validation": "Escolha um currículo e cole uma descrição de vaga.",
+      "failed": "Não foi possível criar a candidatura."
+    },
+    "errors": {
+      "loadFailed": "Não foi possível carregar as candidaturas.",
+      "moveFailed": "Não foi possível mover a candidatura.",
+      "deleteFailed": "Não foi possível excluir a(s) candidatura(s)."
+    }
   }
 }
