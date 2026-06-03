@@ -12,6 +12,7 @@ recoverable without the original secret.
 
 import logging
 import os
+import tempfile
 from pathlib import Path
 
 from cryptography.fernet import Fernet, InvalidToken
@@ -29,15 +30,19 @@ def _secret_path() -> Path:
 
 
 def _write_secret(path: Path, key: bytes, *, exclusive: bool = False) -> None:
-    """Write the secret with 0600 perms, looping to handle partial writes.
+    """Atomically write the secret with 0600 perms.
 
-    With ``exclusive=True`` the create is atomic (``O_EXCL``) and raises
-    ``FileExistsError`` if the file already exists, so a concurrent first-run
-    generation cannot overwrite an already-written secret.
+    The key is written **in full** to a temp file in the same directory (mode
+    0600 via ``mkstemp``), fsync'd, then moved into place atomically — so a
+    concurrent reader can never observe a partial key. With ``exclusive=True``
+    the move is an atomic hard-link that raises ``FileExistsError`` if the
+    target already exists (first-run generation must not clobber a secret that
+    may already have encrypted data); otherwise it is an atomic replace (used to
+    overwrite a corrupt/unreadable secret).
     """
     path.parent.mkdir(parents=True, exist_ok=True)
-    flags = os.O_WRONLY | os.O_CREAT | (os.O_EXCL if exclusive else os.O_TRUNC)
-    fd = os.open(path, flags, 0o600)
+    fd, tmp_name = tempfile.mkstemp(dir=str(path.parent), prefix=".secret_key.tmp.")
+    tmp = Path(tmp_name)
     try:
         remaining = key
         while remaining:
@@ -46,12 +51,18 @@ def _write_secret(path: Path, key: bytes, *, exclusive: bool = False) -> None:
                 # Guard against a 0-byte write spinning forever.
                 raise OSError("os.write wrote 0 bytes to the secret file")
             remaining = remaining[written:]
+        os.fsync(fd)
     finally:
         os.close(fd)
     try:
-        os.chmod(path, 0o600)
-    except OSError:  # pragma: no cover - platform dependent (e.g. Windows)
-        pass
+        if exclusive:
+            # Atomic + exclusive: fails if the target exists, and the linked
+            # file is already complete (no partial-read window).
+            os.link(tmp, path)
+        else:
+            os.replace(tmp, path)
+    finally:
+        tmp.unlink(missing_ok=True)
 
 
 def _load_fernet() -> Fernet:
