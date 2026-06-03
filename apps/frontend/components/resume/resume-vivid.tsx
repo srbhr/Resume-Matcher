@@ -2,12 +2,12 @@ import React from 'react';
 import { Mail, Phone, MapPin, Globe, Linkedin, Github, ExternalLink } from 'lucide-react';
 import type {
   ResumeData,
+  SectionMeta,
   ResumeSectionHeadings,
   ResumeFallbackLabels,
 } from '@/components/dashboard/resume-component';
 import { getSortedSections, getSectionMeta } from '@/lib/utils/section-helpers';
 import { formatDateRange } from '@/lib/utils';
-import { DynamicResumeSection } from './dynamic-resume-section';
 import { SafeHtml } from './safe-html';
 import baseStyles from './styles/_base.module.css';
 import styles from './styles/vivid.module.css';
@@ -207,8 +207,7 @@ export const ResumeVivid: React.FC<ResumeVividProps> = ({
                       </span>
                     </div>
                     <div className={`${baseStyles['resume-row-tight']} ${styles.entryMeta}`}>
-                      {formatDateRange(exp.years)}
-                      {exp.location && <> | {exp.location}</>}
+                      {[formatDateRange(exp.years), exp.location].filter(Boolean).join(' | ')}
                     </div>
                     {renderArrowBullets(exp.description)}
                   </div>
@@ -300,7 +299,12 @@ export const ResumeVivid: React.FC<ResumeVividProps> = ({
           )}
 
           {customSections.map((section) => (
-            <DynamicResumeSection key={section.id} sectionMeta={section} resumeData={data} />
+            <DynamicResumeSectionVivid
+              key={section.id}
+              sectionMeta={section}
+              resumeData={data}
+              renderArrowBullets={renderArrowBullets}
+            />
           ))}
         </div>
 
@@ -385,6 +389,74 @@ export const ResumeVivid: React.FC<ResumeVividProps> = ({
         </div>
       </div>
     </>
+  );
+};
+
+/**
+ * Dynamic (custom) section wrapper for the Vivid template.
+ * Uses the accent small-caps section title and accent arrow bullets so custom
+ * sections match the rest of the template (rather than the plain shared styling).
+ */
+const DynamicResumeSectionVivid: React.FC<{
+  sectionMeta: SectionMeta;
+  resumeData: ResumeData;
+  renderArrowBullets: (items?: string[], textClass?: string) => React.ReactNode;
+}> = ({ sectionMeta, resumeData, renderArrowBullets }) => {
+  const customSection = resumeData.customSections?.[sectionMeta.key];
+  if (!customSection) return null;
+
+  const hasContent = (() => {
+    switch (sectionMeta.sectionType) {
+      case 'text':
+        return Boolean(customSection.text?.trim());
+      case 'itemList':
+        return Boolean(customSection.items?.length);
+      case 'stringList':
+        return Boolean(customSection.strings?.length);
+      default:
+        return false;
+    }
+  })();
+
+  if (!hasContent) return null;
+
+  return (
+    <div className={baseStyles['resume-section']}>
+      <h3 className={styles.sectionTitle}>{sectionMeta.displayName}</h3>
+      {sectionMeta.sectionType === 'text' && customSection.text?.trim() && (
+        <p className={`text-justify ${baseStyles['resume-text']}`}>{customSection.text}</p>
+      )}
+      {sectionMeta.sectionType === 'itemList' && customSection.items?.length ? (
+        <div className={baseStyles['resume-items']}>
+          {customSection.items.map((item) => (
+            <div key={item.id} className={baseStyles['resume-item']}>
+              <div
+                className={`flex justify-between items-baseline ${baseStyles['resume-row-tight']}`}
+              >
+                <span className="min-w-0">
+                  <span className={styles.entryCompany}>{item.title}</span>
+                  {item.subtitle && (
+                    <>
+                      <span className={styles.entrySep}>|</span>
+                      <span className={styles.entryRole}>{item.subtitle}</span>
+                    </>
+                  )}
+                </span>
+                {(item.years || item.location) && (
+                  <span className={`${styles.entryMeta} ml-2`}>
+                    {[formatDateRange(item.years), item.location].filter(Boolean).join(' | ')}
+                  </span>
+                )}
+              </div>
+              {renderArrowBullets(item.description)}
+            </div>
+          ))}
+        </div>
+      ) : null}
+      {sectionMeta.sectionType === 'stringList' && customSection.strings?.length ? (
+        <p className={baseStyles['resume-text-xs']}>{customSection.strings.join(' • ')}</p>
+      ) : null}
+    </div>
   );
 };
 

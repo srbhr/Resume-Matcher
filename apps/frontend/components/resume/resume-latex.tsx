@@ -1,5 +1,5 @@
 import React from 'react';
-import { Mail, Phone, MapPin, Globe, Linkedin, Github, ExternalLink } from 'lucide-react';
+import { Mail, Phone, Globe, Linkedin, Github, ExternalLink } from 'lucide-react';
 import type {
   ResumeData,
   SectionMeta,
@@ -38,10 +38,10 @@ export const ResumeLatex: React.FC<ResumeLatexProps> = ({
 
   const sortedSections = getSortedSections(data);
 
+  // LaTeX renders location as its own centered line, so it is not a contact-row item.
   const contactIcons: Record<string, React.ReactNode> = {
     Email: <Mail size={12} />,
     Phone: <Phone size={12} />,
-    Location: <MapPin size={12} />,
     Website: <Globe size={12} />,
     LinkedIn: <Linkedin size={12} />,
     GitHub: <Github size={12} />,
@@ -286,11 +286,11 @@ export const ResumeLatex: React.FC<ResumeLatexProps> = ({
       {personalInfo && (
         <header className={`text-center ${baseStyles['resume-header']}`}>
           {personalInfo.name && <h1 className={`${styles.name} mb-1`}>{personalInfo.name}</h1>}
-          {personalInfo.location && (
-            <div className={`${styles.locationLine} mb-1`}>{personalInfo.location}</div>
-          )}
           {personalInfo.title && (
             <div className={`${styles.tagline} mb-1`}>{personalInfo.title}</div>
+          )}
+          {personalInfo.location && (
+            <div className={`${styles.locationLine} mb-1`}>{personalInfo.location}</div>
           )}
           {contactItems.length > 0 && (
             <div

@@ -33,4 +33,15 @@ describe('ResumeVivid', () => {
     render(<ResumeVivid data={data} />);
     expect(screen.getByText('Python • TypeScript')).toBeInTheDocument();
   });
+
+  it('does not render an orphaned leading pipe when years is missing but location exists', () => {
+    const noYears: ResumeData = {
+      personalInfo: { name: 'Saurabh Rai' },
+      workExperience: [{ id: 1, title: 'Engineer', company: 'Apideck', location: 'Remote' }],
+    } as ResumeData;
+    render(<ResumeVivid data={noYears} />);
+    // Meta should be just the location, never "| Remote".
+    expect(screen.getByText('Remote')).toBeInTheDocument();
+    expect(screen.queryByText('| Remote')).toBeNull();
+  });
 });
