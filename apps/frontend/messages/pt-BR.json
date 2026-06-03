@@ -996,6 +996,7 @@
     "errors": {
       "draft": "Não consegui redigir isso. Tente reformular ou pule.",
       "save": "Não foi possível salvar seu currículo. Tente novamente."
-    }
+    },
+    "added": "Adicionado: {summary}. O que deseja adicionar a seguir?"
   }
 }

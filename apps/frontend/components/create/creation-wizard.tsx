@@ -8,6 +8,7 @@ import {
   appendDraft,
   assembleResume,
   canFinish,
+  summarizeFragment,
   type ContactFields,
   type WizardData,
 } from '@/components/create/wizard-script';
@@ -98,7 +99,9 @@ export function CreationWizard() {
             role: data.role,
           });
           setData((d) => appendDraft(d, section, fragment));
-          say('ai', t('create.pickSection'));
+          // Confirm the drafted entry in the chat (it also lands in the live preview).
+          const summary = summarizeFragment(section, fragment);
+          say('ai', summary ? t('create.added', { summary }) : t('create.pickSection'));
         } catch {
           say('ai', t('create.errors.draft'));
         } finally {

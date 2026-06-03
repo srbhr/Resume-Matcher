@@ -996,6 +996,7 @@
     "errors": {
       "draft": "No pude redactar eso. Intenta reformularlo u omítelo.",
       "save": "No se pudo guardar tu currículum. Inténtalo de nuevo."
-    }
+    },
+    "added": "Añadido: {summary}. ¿Qué quieres agregar a continuación?"
   }
 }

@@ -4,6 +4,7 @@ import {
   appendDraft,
   assembleResume,
   canFinish,
+  summarizeFragment,
   type WizardData,
 } from '@/components/create/wizard-script';
 
@@ -28,10 +29,24 @@ describe('wizard-script', () => {
     expect(d.workExperience[1].company).toBe('B');
   });
 
-  it('appendDraft skills replaces the skills list', () => {
+  it('appendDraft skills merges repeated drafts and dedupes (case-insensitive)', () => {
     let d = emptyWizardData();
     d = appendDraft(d, 'skills', { technicalSkills: ['Python', 'AWS'] });
     expect(d.technicalSkills).toEqual(['Python', 'AWS']);
+    // A second Skills pass appends rather than overwrites; dupes are dropped.
+    d = appendDraft(d, 'skills', { technicalSkills: ['aws', 'Docker'] });
+    expect(d.technicalSkills).toEqual(['Python', 'AWS', 'Docker']);
+  });
+
+  it('summarizeFragment renders a short chat confirmation per section', () => {
+    expect(summarizeFragment('work', { title: 'Engineer', company: 'Google' })).toBe(
+      'Engineer · Google'
+    );
+    expect(summarizeFragment('education', { degree: 'BS CS', institution: 'MIT' })).toBe(
+      'BS CS · MIT'
+    );
+    expect(summarizeFragment('project', { name: 'CLI Tool' })).toBe('CLI Tool');
+    expect(summarizeFragment('skills', { technicalSkills: ['Python', 'AWS'] })).toBe('Python, AWS');
   });
 
   it('appendDraft summary sets summary text', () => {

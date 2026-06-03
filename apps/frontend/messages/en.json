@@ -996,6 +996,7 @@
     "errors": {
       "draft": "I couldn't draft that. Try rephrasing, or skip ahead.",
       "save": "Couldn't save your resume. Please try again."
-    }
+    },
+    "added": "Added: {summary}. What would you like to add next?"
   }
 }

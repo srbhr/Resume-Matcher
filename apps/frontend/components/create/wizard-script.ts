@@ -67,12 +67,42 @@ export function appendDraft(
       const entry = { ...fragment, id } as WizardData['personalProjects'][number];
       return { ...d, personalProjects: [...d.personalProjects, entry] };
     }
-    case 'skills':
-      return { ...d, technicalSkills: (fragment.technicalSkills as string[]) ?? [] };
+    case 'skills': {
+      // Skills is repeatable, so merge rather than overwrite; dedupe case-insensitively.
+      const incoming = (fragment.technicalSkills as string[]) ?? [];
+      const merged = [...d.technicalSkills];
+      const seen = new Set(merged.map((s) => s.toLowerCase()));
+      for (const skill of incoming) {
+        const key = skill.toLowerCase();
+        if (!seen.has(key)) {
+          seen.add(key);
+          merged.push(skill);
+        }
+      }
+      return { ...d, technicalSkills: merged };
+    }
     case 'summary':
       return { ...d, summary: (fragment.summary as string) ?? '' };
     default:
       return d;
+  }
+}
+
+/** A short, human-readable summary of a drafted fragment, for the chat confirmation. */
+export function summarizeFragment(section: SectionKind, fragment: Record<string, unknown>): string {
+  switch (section) {
+    case 'work':
+      return [fragment.title, fragment.company].filter(Boolean).join(' · ');
+    case 'education':
+      return [fragment.degree, fragment.institution].filter(Boolean).join(' · ');
+    case 'project':
+      return (fragment.name as string) || '';
+    case 'skills':
+      return ((fragment.technicalSkills as string[]) ?? []).join(', ');
+    case 'summary':
+      return (fragment.summary as string) || '';
+    default:
+      return '';
   }
 }
 
