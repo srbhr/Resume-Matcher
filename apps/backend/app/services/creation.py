@@ -60,7 +60,9 @@ async def draft_section(
     elif section == "skills":
         prompt = DRAFT_SKILLS_PROMPT.format(output_language=language, answers=safe_answers)
     elif section == "summary":
-        resume_json = json.dumps(resume_context or {}, ensure_ascii=False)
+        # resume_context carries user-entered name/title/contact and prior drafted
+        # text, so sanitize the serialized JSON before embedding it in the prompt.
+        resume_json = _sanitize_user_input(json.dumps(resume_context or {}, ensure_ascii=False))
         prompt = DRAFT_SUMMARY_PROMPT.format(
             output_language=language, name=safe_name or "the candidate", resume_json=resume_json
         )
