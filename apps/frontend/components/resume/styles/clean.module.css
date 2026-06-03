@@ -13,19 +13,22 @@
   width: 100%;
 }
 
-/* Force the single sans typeface across the whole template. */
+/*
+  Body text is driven by the Body Font control; the name + section headers are driven
+  by the Header Font control. Both controls are live; selecting Clean seeds sans/sans
+  (see TEMPLATE_FONT_PRESETS) so the default look stays all-sans.
+*/
 .container,
 .container :global(p),
 .container :global(li),
 .container :global(a),
 .container :global(span),
-.container :global(div),
-.container :global(h1),
-.container :global(h3) {
+.container :global(div) {
   font-family: var(--body-font);
 }
 
 .name {
+  font-family: var(--header-font);
   font-size: calc(var(--font-size-base) * var(--header-scale));
   font-weight: 400;
   letter-spacing: 0.01em;
@@ -49,6 +52,7 @@
 
 /* Large, understated, gray uppercase header with a thin rule. */
 .sectionTitle {
+  font-family: var(--header-font);
   font-size: calc(var(--font-size-base) * var(--section-header-scale) * 1.15);
   font-weight: 600;
   text-transform: uppercase;

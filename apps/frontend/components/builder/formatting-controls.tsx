@@ -12,6 +12,7 @@ import {
   type BodyFontFamily,
   type AccentColor,
   DEFAULT_TEMPLATE_SETTINGS,
+  applyTemplatePreset,
   SECTION_SPACING_MAP,
   ITEM_SPACING_MAP,
   LINE_HEIGHT_MAP,
@@ -59,7 +60,9 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
     `${value.toFixed(2).replace(/\.00$/, '').replace(/0$/, '')}rem`;
 
   const handleTemplateChange = (template: TemplateType) => {
-    onChange({ ...settings, template });
+    // Single-typeface templates (latex/clean) seed their signature fonts on selection
+    // so they match their reference look by default; both font controls stay live.
+    onChange(applyTemplatePreset(settings, template));
   };
 
   const handlePageSizeChange = (pageSize: PageSize) => {

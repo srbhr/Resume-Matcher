@@ -248,3 +248,36 @@ export const TEMPLATE_OPTIONS: TemplateInfo[] = [
     description: 'Colorful two-column layout with accent headers and arrow bullets',
   },
 ];
+
+/**
+ * Signature font presets for single-typeface templates.
+ *
+ * LaTeX and Clean bind their headers to `--header-font` and body to `--body-font`, so
+ * both font controls are live. Selecting one of these templates applies its signature
+ * fonts (so it matches its reference look by default); the user can then override either
+ * control. Templates not listed here keep the current font settings on selection.
+ */
+export const TEMPLATE_FONT_PRESETS: Partial<
+  Record<TemplateType, { headerFont: HeaderFontFamily; bodyFont: BodyFontFamily }>
+> = {
+  latex: { headerFont: 'serif', bodyFont: 'serif' },
+  clean: { headerFont: 'sans-serif', bodyFont: 'sans-serif' },
+};
+
+/**
+ * Return settings with the given template applied, seeding the template's signature
+ * fonts when it has a preset. Use this at every template-change entry point so the
+ * single-typeface templates render their reference look by default.
+ */
+export function applyTemplatePreset(
+  settings: TemplateSettings,
+  template: TemplateType
+): TemplateSettings {
+  const preset = TEMPLATE_FONT_PRESETS[template];
+  if (!preset) return { ...settings, template };
+  return {
+    ...settings,
+    template,
+    fontSize: { ...settings.fontSize, headerFont: preset.headerFont, bodyFont: preset.bodyFont },
+  };
+}

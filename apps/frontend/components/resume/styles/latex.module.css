@@ -13,16 +13,18 @@
   width: 100%;
 }
 
-/* Force the single serif typeface across the whole template. */
+/*
+  Body text is driven by the Body Font control; the name + section headers are driven
+  by the Header Font control. Both controls are live; selecting LaTeX seeds serif/serif
+  (see TEMPLATE_FONT_PRESETS) so the default look stays all-serif.
+*/
 .container,
 .container :global(p),
 .container :global(li),
 .container :global(a),
 .container :global(span),
-.container :global(div),
-.container :global(h1),
-.container :global(h3) {
-  font-family: var(--header-font);
+.container :global(div) {
+  font-family: var(--body-font);
 }
 
 .name {
