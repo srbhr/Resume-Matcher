@@ -21,6 +21,7 @@ from app.pdf import close_pdf_renderer, init_pdf_renderer
 from app.routers import (
     applications_router,
     config_router,
+    creation_router,
     enrichment_router,
     health_router,
     jobs_router,
@@ -89,6 +90,7 @@ app.add_middleware(
 app.include_router(health_router, prefix="/api/v1")
 app.include_router(config_router, prefix="/api/v1")
 app.include_router(resumes_router, prefix="/api/v1")
+app.include_router(creation_router, prefix="/api/v1")
 app.include_router(jobs_router, prefix="/api/v1")
 app.include_router(enrichment_router, prefix="/api/v1")
 app.include_router(applications_router, prefix="/api/v1")
