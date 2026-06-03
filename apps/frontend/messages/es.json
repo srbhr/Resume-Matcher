@@ -884,6 +884,11 @@
     "resetDatabaseDescription": "Esto eliminará permanentemente cada currículum, descripción de trabajo y documento generado."
   },
   "tracker": {
+    "scroll": {
+      "prev": "Desplazar a la izquierda",
+      "next": "Desplazar a la derecha",
+      "hint": "Desplázate para ver más etapas"
+    },
     "title": "Seguimiento de candidaturas",
     "subtitle": "Controla en qué punto está cada currículum adaptado de tu proceso.",
     "addApplication": "Añadir candidatura",

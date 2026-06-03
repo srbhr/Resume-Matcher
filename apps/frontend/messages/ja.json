@@ -884,6 +884,11 @@
     "resetDatabaseDescription": "すべての履歴書、求人内容、生成されたドキュメントが完全に削除されます。"
   },
   "tracker": {
+    "scroll": {
+      "prev": "左へスクロール",
+      "next": "右へスクロール",
+      "hint": "スクロールして他のステージを表示"
+    },
     "title": "応募トラッカー",
     "subtitle": "各カスタマイズ済み履歴書の選考状況を管理します。",
     "addApplication": "応募を追加",

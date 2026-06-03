@@ -884,6 +884,11 @@
     "resetDatabaseDescription": "This permanently deletes every resume, job description, and generated document."
   },
   "tracker": {
+    "scroll": {
+      "prev": "Scroll left",
+      "next": "Scroll right",
+      "hint": "Scroll for more stages"
+    },
     "title": "Application Tracker",
     "subtitle": "Track where each tailored resume stands in your pipeline.",
     "addApplication": "Add Application",

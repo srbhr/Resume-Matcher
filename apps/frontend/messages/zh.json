@@ -884,6 +884,11 @@
     "resetDatabaseDescription": "这将永久删除每一份简历、职位描述和生成的文档。"
   },
   "tracker": {
+    "scroll": {
+      "prev": "向左滚动",
+      "next": "向右滚动",
+      "hint": "滚动查看更多阶段"
+    },
     "title": "申请追踪",
     "subtitle": "追踪每份定制简历在求职流程中的进展。",
     "addApplication": "添加申请",

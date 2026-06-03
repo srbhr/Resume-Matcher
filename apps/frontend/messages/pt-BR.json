@@ -884,6 +884,11 @@
     "resetDatabaseDescription": "Isso excluirá permanentemente cada currículo, descrição de vaga e documento gerado."
   },
   "tracker": {
+    "scroll": {
+      "prev": "Rolar para a esquerda",
+      "next": "Rolar para a direita",
+      "hint": "Role para ver mais etapas"
+    },
     "title": "Acompanhamento de candidaturas",
     "subtitle": "Acompanhe em que etapa está cada currículo personalizado.",
     "addApplication": "Adicionar candidatura",
