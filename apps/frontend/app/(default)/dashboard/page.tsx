@@ -17,6 +17,7 @@ import RefreshCw from 'lucide-react/dist/esm/icons/refresh-cw';
 import Plus from 'lucide-react/dist/esm/icons/plus';
 import Settings from 'lucide-react/dist/esm/icons/settings';
 import AlertTriangle from 'lucide-react/dist/esm/icons/alert-triangle';
+import Sparkles from 'lucide-react/dist/esm/icons/sparkles';
 
 import {
   fetchResume,
@@ -350,32 +351,53 @@ export default function DashboardPage() {
               </Card>
             </Link>
           ) : (
-            <ResumeUploadDialog
-              open={isUploadDialogOpen}
-              onOpenChange={setIsUploadDialogOpen}
-              onUploadComplete={handleUploadComplete}
-              trigger={
+            <>
+              <ResumeUploadDialog
+                open={isUploadDialogOpen}
+                onOpenChange={setIsUploadDialogOpen}
+                onUploadComplete={handleUploadComplete}
+                trigger={
+                  <Card
+                    variant="interactive"
+                    className="aspect-square h-full hover:bg-primary hover:text-canvas"
+                  >
+                    <div className="flex-1 flex flex-col justify-between pointer-events-none">
+                      <div className="w-14 h-14 border-2 border-current flex items-center justify-center mb-4">
+                        <span className="text-2xl leading-none relative top-[-2px]">+</span>
+                      </div>
+                      <div>
+                        <CardTitle className="text-xl uppercase">
+                          {t('dashboard.initializeMasterResume')}
+                        </CardTitle>
+                        <CardDescription className="mt-2 opacity-60 group-hover:opacity-100 text-current">
+                          {'// '}
+                          {t('dashboard.initializeSequence')}
+                        </CardDescription>
+                      </div>
+                    </div>
+                  </Card>
+                }
+              />
+              <Link href="/create" className="block h-full">
                 <Card
                   variant="interactive"
-                  className="aspect-square h-full hover:bg-primary hover:text-canvas"
+                  className="aspect-square h-full hover:bg-blue-700 hover:text-canvas"
                 >
                   <div className="flex-1 flex flex-col justify-between pointer-events-none">
                     <div className="w-14 h-14 border-2 border-current flex items-center justify-center mb-4">
-                      <span className="text-2xl leading-none relative top-[-2px]">+</span>
+                      <Sparkles className="w-7 h-7" />
                     </div>
                     <div>
-                      <CardTitle className="text-xl uppercase">
-                        {t('dashboard.initializeMasterResume')}
-                      </CardTitle>
+                      <CardTitle className="text-xl uppercase">{t('create.title')}</CardTitle>
                       <CardDescription className="mt-2 opacity-60 group-hover:opacity-100 text-current">
                         {'// '}
-                        {t('dashboard.initializeSequence')}
+                        {t('create.navLabel')}
                       </CardDescription>
                     </div>
                   </div>
                 </Card>
-              }
-            />
+              </Link>
+            </>
           )
         ) : (
           // Master Resume Exists
