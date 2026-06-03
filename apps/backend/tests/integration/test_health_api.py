@@ -125,3 +125,26 @@ class TestStatusEndpoint:
         assert data["llm_healthy"] is True  # LLM check still ran
         assert data["has_master_resume"] is False
         assert data["database_stats"]["total_resumes"] == 0
+
+    @patch("app.routers.health.db", new_callable=AsyncMock)
+    @patch("app.routers.health.check_llm_health", new_callable=AsyncMock)
+    @patch("app.routers.health.get_llm_config")
+    async def test_status_openai_compatible_is_configured_without_key(
+        self, mock_config, mock_health, mock_db, client
+    ):
+        """openai_compatible (like ollama) runs without an API key, so it must
+        report llm_configured=True to stay consistent with the health check."""
+        mock_config.return_value = type(
+            "C", (), {"api_key": "", "provider": "openai_compatible"}
+        )()
+        mock_health.return_value = {"healthy": True}
+        mock_db.get_stats.return_value = {
+            "total_resumes": 0,
+            "total_jobs": 0,
+            "total_improvements": 0,
+            "has_master_resume": False,
+        }
+        async with client:
+            resp = await client.get("/api/v1/status")
+        assert resp.status_code == 200
+        assert resp.json()["llm_configured"] is True

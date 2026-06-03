@@ -43,17 +43,18 @@ async def get_status() -> StatusResponse:
     llm_healthy = False
     try:
         config = get_llm_config()
-        llm_configured = bool(config.api_key) or config.provider == "ollama"
+        # ollama / openai_compatible run without a key, matching check_llm_health.
+        llm_configured = bool(config.api_key) or config.provider in ("ollama", "openai_compatible")
         llm_status = await check_llm_health(config)
         llm_healthy = bool(llm_status.get("healthy"))
-    except Exception as e:
-        logger.error("Status: LLM health check failed: %s", e)
+    except Exception:
+        logger.exception("Status: LLM health check failed")
 
     db_stats: dict = dict(_EMPTY_DB_STATS)
     try:
         db_stats = await db.get_stats()
-    except Exception as e:
-        logger.error("Status: database stats failed: %s", e)
+    except Exception:
+        logger.exception("Status: database stats failed")
 
     has_master_resume = bool(db_stats.get("has_master_resume"))
 
