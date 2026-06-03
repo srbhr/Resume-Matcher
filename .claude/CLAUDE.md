@@ -80,7 +80,7 @@ apps/
 │   └── data/                # resume_matcher.db (SQLite) + encrypted API keys + .secret_key
 │
 └── frontend/                # Next.js + React
-    ├── app/                 # Pages (dashboard, builder, tailor, tracker, print)
+    ├── app/                 # Pages (dashboard, builder, tailor, tracker, create, print)
     ├── components/          # UI components (incl. tracker/)
     ├── lib/                 # Utilities, API client (incl. api/tracker.ts)
     ├── hooks/               # Custom React hooks
@@ -114,6 +114,7 @@ apps/
 | Feature | Documentation |
 |---------|---------------|
 | Application tracker | [application-tracker.md](../docs/agent/features/application-tracker.md) |
+| Create resume (Q&A wizard) | [create-resume.md](../docs/agent/features/create-resume.md) |
 | Custom sections | [custom-sections.md](../docs/agent/features/custom-sections.md) |
 | Resume templates | [resume-templates.md](../docs/agent/features/resume-templates.md) |
 | i18n | [i18n.md](../docs/agent/features/i18n.md) |

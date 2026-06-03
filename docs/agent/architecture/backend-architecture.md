@@ -40,6 +40,8 @@ apps/backend/app/
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | POST | `/resumes/upload` | Upload PDF/DOCX |
+| POST | `/resumes/draft-section` | Create wizard: author one section fragment from Q&A answers (LLM) |
+| POST | `/resumes` | Create wizard: persist resume from structured data (master iff none) |
 | GET | `/resumes?resume_id=` | Fetch resume |
 | GET | `/resumes/list` | List all |
 | POST | `/resumes/improve` | Tailor for job (LLM) |
