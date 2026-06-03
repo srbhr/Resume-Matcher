@@ -49,7 +49,7 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({ value, onCha
   };
 
   return (
-    <div className="flex gap-3">
+    <div className="flex flex-wrap gap-3">
       {TEMPLATE_OPTIONS.map((template) => (
         <button
           key={template.id}

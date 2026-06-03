@@ -185,7 +185,7 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
             <h4 className="font-mono text-xs font-bold uppercase tracking-wider mb-3 text-ink-soft">
               {t('builder.formatting.template')}
             </h4>
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-3">
               {TEMPLATE_OPTIONS.map((template) => (
                 <button
                   key={template.id}
