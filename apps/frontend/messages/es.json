@@ -369,6 +369,18 @@
         "modernTwoColumn": {
           "name": "Moderno de dos columnas",
           "description": "Diseño de dos columnas moderno con acentos coloridos y temas"
+        },
+        "latex": {
+          "name": "LaTeX",
+          "description": "Diseño académico clásico con tipografía serif y encabezados con líneas"
+        },
+        "clean": {
+          "name": "Limpio",
+          "description": "Diseño minimalista sans con encabezados grandes y sobrios"
+        },
+        "vivid": {
+          "name": "Vívido",
+          "description": "Diseño de dos columnas colorido con encabezados de acento y viñetas de flecha"
         }
       },
       "accentColor": "Color de acento",

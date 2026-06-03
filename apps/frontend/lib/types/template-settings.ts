@@ -5,7 +5,14 @@
  * These settings affect both the live preview and PDF generation.
  */
 
-export type TemplateType = 'swiss-single' | 'swiss-two-column' | 'modern' | 'modern-two-column';
+export type TemplateType =
+  | 'swiss-single'
+  | 'swiss-two-column'
+  | 'modern'
+  | 'modern-two-column'
+  | 'latex'
+  | 'clean'
+  | 'vivid';
 
 export type PageSize = 'A4' | 'LETTER';
 
@@ -224,5 +231,20 @@ export const TEMPLATE_OPTIONS: TemplateInfo[] = [
     id: 'modern-two-column',
     name: 'Modern Two Column',
     description: 'Two-column layout with modern colorful accents and themes',
+  },
+  {
+    id: 'latex',
+    name: 'LaTeX',
+    description: 'Classic serif academic layout with ruled section headers',
+  },
+  {
+    id: 'clean',
+    name: 'Clean',
+    description: 'Minimal sans layout with large understated section headers',
+  },
+  {
+    id: 'vivid',
+    name: 'Vivid',
+    description: 'Colorful two-column layout with accent headers and arrow bullets',
   },
 ];

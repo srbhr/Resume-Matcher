@@ -367,6 +367,18 @@
         "modernTwoColumn": {
           "name": "Moderno Duas Colunas",
           "description": "Layout de duas colunas com acentos coloridos modernos e temas"
+        },
+        "latex": {
+          "name": "LaTeX",
+          "description": "Layout acadêmico clássico em serifa com cabeçalhos com linhas"
+        },
+        "clean": {
+          "name": "Limpo",
+          "description": "Layout minimalista sem serifa com cabeçalhos grandes e discretos"
+        },
+        "vivid": {
+          "name": "Vívido",
+          "description": "Layout de duas colunas colorido com cabeçalhos de destaque e marcadores em seta"
         }
       },
       "accentColors": {

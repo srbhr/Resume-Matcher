@@ -135,6 +135,18 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
         name: t('builder.formatting.templates.modernTwoColumn.name'),
         description: t('builder.formatting.templates.modernTwoColumn.description'),
       },
+      latex: {
+        name: t('builder.formatting.templates.latex.name'),
+        description: t('builder.formatting.templates.latex.description'),
+      },
+      clean: {
+        name: t('builder.formatting.templates.clean.name'),
+        description: t('builder.formatting.templates.clean.description'),
+      },
+      vivid: {
+        name: t('builder.formatting.templates.vivid.name'),
+        description: t('builder.formatting.templates.vivid.description'),
+      },
     }),
     [t]
   );
@@ -204,7 +216,9 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
           </div>
 
           {/* Accent Color Selection - Visible for Modern templates */}
-          {(settings.template === 'modern' || settings.template === 'modern-two-column') && (
+          {(settings.template === 'modern' ||
+            settings.template === 'modern-two-column' ||
+            settings.template === 'vivid') && (
             <div>
               <h4 className="font-mono text-xs font-bold uppercase tracking-wider mb-3 text-ink-soft">
                 {t('builder.formatting.accentColor')}

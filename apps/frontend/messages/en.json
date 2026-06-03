@@ -369,6 +369,18 @@
         "modernTwoColumn": {
           "name": "Modern Two Column",
           "description": "Two-column layout with modern colorful accents and themes"
+        },
+        "latex": {
+          "name": "LaTeX",
+          "description": "Classic serif academic layout with ruled section headers"
+        },
+        "clean": {
+          "name": "Clean",
+          "description": "Minimal sans layout with large understated section headers"
+        },
+        "vivid": {
+          "name": "Vivid",
+          "description": "Colorful two-column layout with accent headers and arrow bullets"
         }
       },
       "accentColor": "Accent Color",

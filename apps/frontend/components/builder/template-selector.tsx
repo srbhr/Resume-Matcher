@@ -34,6 +34,18 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({ value, onCha
       name: t('builder.formatting.templates.modernTwoColumn.name'),
       description: t('builder.formatting.templates.modernTwoColumn.description'),
     },
+    latex: {
+      name: t('builder.formatting.templates.latex.name'),
+      description: t('builder.formatting.templates.latex.description'),
+    },
+    clean: {
+      name: t('builder.formatting.templates.clean.name'),
+      description: t('builder.formatting.templates.clean.description'),
+    },
+    vivid: {
+      name: t('builder.formatting.templates.vivid.name'),
+      description: t('builder.formatting.templates.vivid.description'),
+    },
   };
 
   return (
