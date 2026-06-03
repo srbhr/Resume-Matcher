@@ -16,7 +16,8 @@ App Router under `app/`. A `(default)` route group wraps the main app in provide
 | `/dashboard` | `app/(default)/dashboard/page.tsx` | Client | Resume list, upload, delete, retry, status grid |
 | `/builder` | `app/(default)/builder/page.tsx` | Client wrapper → `components/builder/resume-builder.tsx` | Master-resume editor (forms, drag-drop sections, templates, AI regenerate, cover letter / outreach) |
 | `/tailor` | `app/(default)/tailor/page.tsx` | Client | Paste JD → preview/confirm tailored resume (diff modal) |
-| `/settings` | `app/(default)/settings/page.tsx` | Client | LLM provider/model/key, API keys, features, prompts, language, reset DB |
+| `/tracker` | `app/(default)/tracker/page.tsx` | Client | Kanban application tracker — 7-column board (drag/drop, bulk ops, manual add) |
+| `/settings` | `app/(default)/settings/page.tsx` | Client | LLM provider/model/key, per-provider API keys, features, prompts, language, reset DB |
 | `/resumes/[id]` | `app/(default)/resumes/[id]/page.tsx` | Client | View one resume, download PDF, rename, enrichment modal |
 | `/print/resumes/[id]` | `app/print/resumes/[id]/page.tsx` | **Server** | Print-only resume render for PDF (reads `searchParams` for template settings + `lang`) |
 | `/print/cover-letter/[id]` | `app/print/cover-letter/[id]/page.tsx` | **Server** | Print-only cover-letter render for PDF |
@@ -38,6 +39,9 @@ components/
   builder/           # builder page UI + forms/ (per-section form components)
   dashboard/         # resume list/card, upload dialog
   tailor/            # diff-preview-modal
+  tracker/           # kanban-board, kanban-column, application-card,
+                     #   card-detail-modal, bulk-action-bar,
+                     #   manual-add-application-dialog, reorder.ts (pure planMove)
   enrichment/        # AI enrichment wizard modal/steps
   resume/            # resume render templates (single/two-column, modern) + styles/*.module.css
   preview/           # paginated A4/Letter preview (use-pagination.ts)
@@ -68,8 +72,9 @@ All backend calls go through **`lib/api/`** — never call `fetch` to the backen
   - Base URL: `NEXT_PUBLIC_API_URL` (default `'/'`) → `API_BASE` becomes `/api/v1`. On the **server** a `/`-relative base is rewritten to `http://127.0.0.1:8000/api/v1` (`INTERNAL_API_ORIGIN`); browser uses the relative path (proxied by `next.config.ts` rewrites to `BACKEND_ORIGIN`).
   - Default request timeout **240_000ms** (matches backend `wait_for` hard limit). `AbortError` → friendly "Request timed out" message.
 - `lib/api/resume.ts` — resumes/jobs: upload, improve / improve.preview / improve.confirm, fetch, list, update (PATCH), PDF URLs + blob download, delete, cover-letter / outreach generate+update, rename, retry-processing, fetch JD.
-- `lib/api/config.ts` — LLM config, `testLlmConnection`, system `/status`, feature flags, prompt config, **feature prompts** (`FeaturePromptsError` for 422 `missing_placeholders`), API-key management, language config, `resetDatabase`. `PROVIDER_INFO` lists supported providers + default models.
+- `lib/api/config.ts` — LLM config, `testLlmConnection`, system `/status`, feature flags, prompt config, **feature prompts** (`FeaturePromptsError` for 422 `missing_placeholders`), **per-provider API-key management** (each provider's key persists independently — switching the active provider no longer wipes another's; stored encrypted server-side), language config, `resetDatabase`. `PROVIDER_INFO` lists supported providers + default models.
 - `lib/api/enrichment.ts` — AI enrichment (analyze/enhance/apply) and AI regenerate (regenerate/apply-regenerated).
+- `lib/api/tracker.ts` — application-tracker CRUD/bulk over `apiFetch/apiPost/apiPatch/apiDelete`: grouped list, detail (JD + resume), manual add, status/position/notes PATCH, bulk move, delete, bulk-delete.
 - `lib/api/index.ts` — barrel re-export (note: not everything is re-exported; some functions are imported from `./resume` / `./config` / `./enrichment` directly).
 
 **Contracts:** `lib/api/*` interfaces mirror backend Pydantic schemas. See [front-end-apis.md](../../docs/agent/apis/front-end-apis.md) and [api-flow-maps.md](../../docs/agent/apis/api-flow-maps.md).
@@ -77,6 +82,8 @@ All backend calls go through **`lib/api/`** — never call `fetch` to the backen
 **Shared client state (React Context, not a fetch lib):**
 - `StatusCacheProvider` (`lib/context/status-cache.tsx`) — caches `/status` (LLM health 30min, DB stats 5min stale), with optimistic counter updates. Use `useStatusCache()` / `useIsStatusStale()`.
 - `LanguageProvider` (`lib/context/language-context.tsx`) — UI + content language, localStorage + backend sync. Use `useLanguage()`.
+
+> The **tracker board owns its state locally** — `components/tracker/kanban-board.tsx` holds the columns in `useState` and owns the single `@dnd-kit` `DndContext`. There is **no** `TrackerProvider` / tracker context; don't look for one.
 
 ---
 
@@ -104,6 +111,8 @@ const allMessages: Record<Locale, Messages> = { en, es, zh, ja, pt };
 Because every locale is typed as `Messages` (= the exact shape of `en.json`), **every locale JSON must structurally match `en.json` exactly.** Add a key to `en.json` and the production `tsc` / `next build` FAILS until that same key path exists in `es`, `zh`, `ja`, and `pt-BR`. (A real build break was caused by exactly this.)
 
 **When editing translations:** any key you add/remove/rename in `en.json` MUST be mirrored in all 5 files (`en`, `es`, `zh`, `ja`, `pt-BR`) with identical structure. `npm run dev` may tolerate drift; the build will not.
+
+The tracker ships a `tracker.*` key tree (`columns`, `modal`, `manualAdd`, `bulk`, `errors`, `scroll`) plus `nav.applicationTracker`, present in all 5 locale files — subject to the same parity rule.
 
 See [i18n.md](../../docs/agent/features/i18n.md), [i18n-preparation.md](../../docs/agent/features/i18n-preparation.md).
 

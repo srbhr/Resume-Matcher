@@ -43,7 +43,7 @@ Takeaway: a green checkmark here meant nothing, and a red one went unseen. That 
 | `llm.py` | 47% | 🟡 Pure helpers tested; **real request + `check_llm_health` + Ollama paths NOT** |
 | `routers/enrichment.py` | 38% | 🟡 Regenerate matching tested; rest mocked |
 | `config_cache.py` | 38% | 🔴 |
-| `database.py` (TinyDB) | 34% | 🔴 Real DB never exercised — every integration test mocks `db` |
+| `database.py` | 34% | 🔴 Real DB never exercised — every integration test mocks `db` |
 | `services/cover_letter.py` | 26% | 🔴 Untested |
 | `services/parser.py` | 20% | 🔴 Upload→markdown→JSON untested; even the pure date-restore is uncovered |
 | `pdf.py` (render) | 20% | 🔴 The "resume won't render" class |
@@ -51,7 +51,7 @@ Takeaway: a green checkmark here meant nothing, and a red one went unseen. That 
 
 ### 2.3 The structural truth about the integration tests
 
-Every `tests/integration/*` test patches `app.routers.<x>.db` and the LLM/parse calls. They verify **status codes, request validation, response shape, and router branch logic** (e.g. API-key masking, regenerate fallback matching). They are valuable *contract* tests. They do **not** prove TinyDB persists, Playwright renders, markitdown parses, or any provider (Ollama included) actually responds.
+Every `tests/integration/*` test patches `app.routers.<x>.db` and the LLM/parse calls. They verify **status codes, request validation, response shape, and router branch logic** (e.g. API-key masking, regenerate fallback matching). They are valuable *contract* tests. They do **not** prove the database persists, Playwright renders, markitdown parses, or any provider (Ollama included) actually responds.
 
 ---
 
@@ -115,7 +115,7 @@ Legend: ✅ done · 🚧 in progress · ⬜ planned
 - ✅ Make the suite green (fixed stale `health` tests; liveness vs readiness)
 - ✅ `llm.py` provider/Ollama pure-function regression tests (`tests/unit/test_llm_providers.py`)
 - ✅ `parser.py` pure tests (date restoration) (`tests/unit/test_parser.py`) + empty-text rejection (`tests/integration/test_upload_api.py`)
-- ✅ Real-TinyDB `database.py` CRUD tests (`tests/unit/test_database.py`)
+- ✅ Real-SQLite `database.py` CRUD tests (`tests/unit/test_database.py`)
 - ✅ Verify: **192 → 265 tests, 1 silent failure → 0, coverage 54% → 58%** (database 34→96%, parser 20→72%, llm 47→55%, health now meaningful). Anti-theater mutation check passed.
 
 **Phase 2 — Transport contract tests (LLM/Ollama) ✅ COMPLETE** (`tests/integration/test_llm_contract.py`, 8 tests)
@@ -136,8 +136,15 @@ Legend: ✅ done · 🚧 in progress · ⬜ planned
 - ✅ We **deliberately avoid a GitHub Actions PR gate** — the repo gets a high volume of external contributor PRs; PR-triggered CI would run on every one (and run untrusted code). The local hook keeps `dev`/`main` green for the maintainer's own pushes without that cost.
 - ⬜ (Optional, future) a Node-based `tsc`/`next build` check — deferred due to nvm-in-hook fragility; the pure-Python locale-parity guard already covers the known i18n break.
 
-### Result after Phases 1–5
-**192 → 320 deterministic tests** (+ 1 opt-in LLM-judge eval), **0 failures**, **coverage 54% → 69%**. Built via parallel subagents (one per phase, strict file ownership) using the `dispatching-parallel-agents` skill; integrated and re-verified together.
+**Phase 7 — SQLite persistence + tracker + encrypted-keys coverage (PRs #841 + #843 → `main`) ✅ COMPLETE**
+- ✅ The persistence layer moved from TinyDB to **SQLite (async SQLAlchemy)**; the `conftest.py::isolated_db` fixture now swaps a disposable **temp-file SQLite** DB (not TinyDB) across all router modules, and `tests/unit/test_database.py` exercises **real SQLite CRUD** (incl. `TestApplications`).
+- ✅ New tracker coverage: `tests/integration/test_applications_api.py` (CRUD, column grouping, detail tolerance for a deleted resume, bulk move/delete) and `tests/integration/test_tracker_autocreate.py` (confirming a tailoring auto-creates an `applied` card).
+- ✅ Encrypted per-provider API keys: `tests/unit/test_crypto.py` (Fernet encrypt/decrypt round-trip + masking).
+- ✅ `/status` graceful degradation (#843): `tests/integration/test_health_api.py` expanded — each check isolated, so a single failing probe yields 200 with partial/degraded state instead of 500.
+- ✅ Verify: default `uv run pytest` count is now **~444** (was ~320). `respx` still mocks the HTTP transport for `llm.py`.
+
+### Result after Phases 1–7
+**192 → ~444 deterministic tests** (+ 1 opt-in LLM-judge eval), **0 failures**. Phases 1–5 were built via parallel subagents (one per phase, strict file ownership) using the `dispatching-parallel-agents` skill; Phase 7 followed the TinyDB→SQLite migration (PRs #841 + #843).
 
 ---
 
@@ -206,5 +213,5 @@ Net: **65 → 117 frontend tests**, all green. The `pre-push` gate runs this sui
 Above the deterministic suites and the local pre-push gate sits an **agentic E2E monitor** — an opt-in, on-demand harness that drives the *real* running app (master resume → 3–4 tailored variations → PDFs), captures a durable evidence bundle (logs + every intermediate JSON + PDFs), and has a Claude Code skill judge it across three runtime jobs: **output quality**, **flow/render integrity**, and **provider reality**. It is a **report, never a gate** — it informs, never blocks a push, and is never wired into CI.
 
 - Design: `docs/superpowers/specs/2026-06-01-agentic-e2e-monitor-design.md`; plan: `docs/superpowers/plans/2026-06-01-agentic-e2e-monitor.md`; harness + how-to: `apps/backend/e2e_monitor/README.md`.
-- OSS-safe: harness deps are an optional extra (`uv sync --extra dev --extra e2e-monitor`), every move is gated behind `RM_E2E_MONITOR=1` + a configured key, and the runnable skill is gitignored (its source is the committed `e2e_monitor/AGENT_PLAYBOOK.md`). The dev's real DB is never touched (isolated `DATA_DIR`).
+- OSS-safe: harness deps are an optional extra (`uv sync --extra dev --extra e2e-monitor`), every move is gated behind `RM_E2E_MONITOR=1` + a configured key, and the runnable skill is gitignored (its source is the committed `e2e_monitor/AGENT_PLAYBOOK.md`). The dev's real SQLite DB is never touched (isolated `DATA_DIR`).
 - Run: `cd apps/backend && RM_E2E_MONITOR=1 uv run python -m e2e_monitor sweep`, then `bash e2e_monitor/install_skill.sh` and invoke the `monitor-e2e` skill for the report.

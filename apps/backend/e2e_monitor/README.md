@@ -29,7 +29,7 @@ uv run python -m e2e_monitor sweep
 The harness gate requires **both** `RM_E2E_MONITOR=1` and a configured LLM key (via `LLM_API_KEY` or the project's config). If either is absent the gate refuses with an explanatory message — nothing runs.
 
 The sweep:
-1. Seeds an isolated `DATA_DIR` (your real TinyDB is never touched).
+1. Seeds an isolated `DATA_DIR` (your real SQLite DB is never touched).
 2. Boots the backend in-process.
 3. Tailors the master resume against 3–4 bundled JDs.
 4. Attempts PDF renders (skipped/degraded if `node` or the frontend is absent).
