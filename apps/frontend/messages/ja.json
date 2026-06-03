@@ -44,7 +44,8 @@
     "tailor": "履歴書をカスタマイズ",
     "settings": "設定",
     "backToDashboard": "ダッシュボードに戻る",
-    "goToSettings": "設定へ"
+    "goToSettings": "設定へ",
+    "applicationTracker": "応募トラッカー"
   },
   "dashboard": {
     "title": "ダッシュボード",
@@ -726,6 +727,12 @@
       "unableToSaveConfiguration": "設定を保存できません",
       "failedToClearApiKeys": "API キーの消去に失敗しました。もう一度お試しください。",
       "failedToResetDatabase": "データベースのリセットに失敗しました。もう一度お試しください。"
+    },
+    "apiKeys": {
+      "savedTitle": "保存済み API キー",
+      "deleteAria": "{provider} のキーを削除",
+      "deleteConfirmTitle": "API キーを削除しますか？",
+      "deleteConfirmDescription": "保存された {provider} の API キーを削除しますか？後で再度追加できます。"
     }
   },
   "resumeViewer": {
@@ -875,5 +882,68 @@
     "clearApiKeysDescription": "AI機能を再び使うには、もう一度入力が必要になります。",
     "resetDatabase": "すべてリセットして最初からやり直しますか？",
     "resetDatabaseDescription": "すべての履歴書、求人内容、生成されたドキュメントが完全に削除されます。"
+  },
+  "tracker": {
+    "title": "応募トラッカー",
+    "subtitle": "各カスタマイズ済み履歴書の選考状況を管理します。",
+    "addApplication": "応募を追加",
+    "columns": {
+      "saved": "保存済み",
+      "applied": "応募済み",
+      "no_response": "返信なし",
+      "response": "返信あり",
+      "interview": "面接",
+      "accepted": "内定",
+      "rejected": "不採用",
+      "empty": "まだ何もありません"
+    },
+    "empty": {
+      "title": "応募はまだありません",
+      "description": "求人に合わせて履歴書を調整するか、手動で追加して追跡を開始しましょう。"
+    },
+    "card": {
+      "companyUnknown": "会社名不明",
+      "roleUnknown": "役職名なし",
+      "sharedResume": "共有された履歴書",
+      "selectAria": "応募を選択",
+      "dragAria": "ドラッグして並べ替え"
+    },
+    "modal": {
+      "jobDescription": "求人内容",
+      "noJobDescription": "求人内容はありません。",
+      "notes": "メモ",
+      "notesPlaceholder": "この応募についてのメモを追加…",
+      "saveNotes": "メモを保存",
+      "resumeUnavailable": "応募した履歴書は利用できなくなりました。",
+      "loadFailed": "この応募を読み込めませんでした。",
+      "editResume": "履歴書を編集"
+    },
+    "bulk": {
+      "selected": "{count} 件選択中",
+      "moveTo": "移動先…",
+      "clear": "クリア",
+      "deleteConfirmTitle": "応募を削除しますか？",
+      "deleteConfirmDescription": "選択した {count} 件の応募を削除しますか？この操作は取り消せません。"
+    },
+    "manualAdd": {
+      "title": "応募を追加",
+      "description": "求人内容を貼り付けて応募を追跡します。",
+      "resume": "履歴書",
+      "untitledResume": "無題の履歴書",
+      "jobDescription": "求人内容",
+      "jobDescriptionPlaceholder": "ここに求人内容を貼り付け…",
+      "company": "会社",
+      "role": "役職",
+      "optional": "任意",
+      "status": "ステータス",
+      "submit": "追加",
+      "validation": "履歴書を選び、求人内容を貼り付けてください。",
+      "failed": "応募を作成できませんでした。"
+    },
+    "errors": {
+      "loadFailed": "応募を読み込めませんでした。",
+      "moveFailed": "応募を移動できませんでした。",
+      "deleteFailed": "応募を削除できませんでした。"
+    }
   }
 }

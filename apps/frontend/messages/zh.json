@@ -44,7 +44,8 @@
     "tailor": "定制简历",
     "settings": "设置",
     "backToDashboard": "返回仪表板",
-    "goToSettings": "前往设置"
+    "goToSettings": "前往设置",
+    "applicationTracker": "申请追踪"
   },
   "dashboard": {
     "title": "仪表板",
@@ -726,6 +727,12 @@
       "unableToSaveConfiguration": "无法保存配置",
       "failedToClearApiKeys": "清除 API 密钥失败，请重试。",
       "failedToResetDatabase": "重置数据库失败，请重试。"
+    },
+    "apiKeys": {
+      "savedTitle": "已保存的 API 密钥",
+      "deleteAria": "删除 {provider} 密钥",
+      "deleteConfirmTitle": "删除 API 密钥？",
+      "deleteConfirmDescription": "删除已保存的 {provider} API 密钥？你之后可以重新添加。"
     }
   },
   "resumeViewer": {
@@ -875,5 +882,68 @@
     "clearApiKeysDescription": "下次使用 AI 功能前，您需要重新输入它们。",
     "resetDatabase": "重置所有内容并重新开始？",
     "resetDatabaseDescription": "这将永久删除每一份简历、职位描述和生成的文档。"
+  },
+  "tracker": {
+    "title": "申请追踪",
+    "subtitle": "追踪每份定制简历在求职流程中的进展。",
+    "addApplication": "添加申请",
+    "columns": {
+      "saved": "已保存",
+      "applied": "已投递",
+      "no_response": "无回复",
+      "response": "有回复",
+      "interview": "面试",
+      "accepted": "已录用",
+      "rejected": "已拒绝",
+      "empty": "这里还没有内容"
+    },
+    "empty": {
+      "title": "暂无申请",
+      "description": "为某个职位定制简历，或手动添加一项，即可开始追踪。"
+    },
+    "card": {
+      "companyUnknown": "未知公司",
+      "roleUnknown": "未命名职位",
+      "sharedResume": "共享简历",
+      "selectAria": "选择申请",
+      "dragAria": "拖动以重新排序"
+    },
+    "modal": {
+      "jobDescription": "职位描述",
+      "noJobDescription": "没有职位描述。",
+      "notes": "备注",
+      "notesPlaceholder": "为此申请添加备注……",
+      "saveNotes": "保存备注",
+      "resumeUnavailable": "所投递的简历已不可用。",
+      "loadFailed": "无法加载此申请。",
+      "editResume": "编辑简历"
+    },
+    "bulk": {
+      "selected": "已选择 {count} 项",
+      "moveTo": "移动到……",
+      "clear": "清除",
+      "deleteConfirmTitle": "删除申请？",
+      "deleteConfirmDescription": "删除选中的 {count} 项申请？此操作无法撤销。"
+    },
+    "manualAdd": {
+      "title": "添加申请",
+      "description": "粘贴职位描述以追踪一项申请。",
+      "resume": "简历",
+      "untitledResume": "未命名简历",
+      "jobDescription": "职位描述",
+      "jobDescriptionPlaceholder": "在此粘贴职位描述……",
+      "company": "公司",
+      "role": "职位",
+      "optional": "可选",
+      "status": "状态",
+      "submit": "添加",
+      "validation": "请选择一份简历并粘贴职位描述。",
+      "failed": "无法创建该申请。"
+    },
+    "errors": {
+      "loadFailed": "无法加载申请。",
+      "moveFailed": "无法移动该申请。",
+      "deleteFailed": "无法删除该申请。"
+    }
   }
 }

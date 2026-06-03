@@ -33,6 +33,11 @@ uv.lock
 # SQLite databases
 *.sqlite3
 *.db
+*.db-wal
+*.db-shm
+
+# Encryption secret for API keys at rest - NEVER COMMIT
+**/data/.secret_key
 
 # Test artifacts
 .pytest_cache/

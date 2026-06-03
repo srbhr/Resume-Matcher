@@ -92,7 +92,7 @@ async def analyze_resume(resume_id: str) -> AnalysisResponse:
     vague, or incomplete descriptions and generates clarifying questions.
     """
     # Fetch resume
-    resume = db.get_resume(resume_id)
+    resume = await db.get_resume(resume_id)
     if not resume:
         raise HTTPException(status_code=404, detail="Resume not found")
 
@@ -177,7 +177,7 @@ async def generate_enhancements(request: EnhanceRequest) -> EnhancementPreview:
     improved description bullets for each item.
     """
     # Fetch resume
-    resume = db.get_resume(request.resume_id)
+    resume = await db.get_resume(request.resume_id)
     if not resume:
         raise HTTPException(status_code=404, detail="Resume not found")
 
@@ -335,7 +335,7 @@ async def apply_enhancements(
     the enhanced descriptions.
     """
     # Fetch resume
-    resume = db.get_resume(resume_id)
+    resume = await db.get_resume(resume_id)
     if not resume:
         raise HTTPException(status_code=404, detail="Resume not found")
 
@@ -388,7 +388,7 @@ async def apply_enhancements(
     # Update the resume in database
     updated_content = json.dumps(updated_data, indent=2)
     try:
-        db.update_resume(
+        await db.update_resume(
             resume_id,
             {
                 "content": updated_content,
@@ -492,7 +492,7 @@ async def regenerate_items(request: RegenerateRequest) -> RegenerateResponse:
     then uses AI to rewrite the content addressing the user's concerns.
     """
     # Validate resume exists
-    resume = db.get_resume(request.resume_id)
+    resume = await db.get_resume(request.resume_id)
     if not resume:
         raise HTTPException(status_code=404, detail="Resume not found")
 
@@ -554,7 +554,7 @@ async def apply_regenerated_items(
     the regenerated descriptions.
     """
     # Fetch resume
-    resume = db.get_resume(resume_id)
+    resume = await db.get_resume(resume_id)
     if not resume:
         raise HTTPException(status_code=404, detail="Resume not found")
 
@@ -789,7 +789,7 @@ async def apply_regenerated_items(
     # Update the resume in database
     updated_content = json.dumps(updated_data, indent=2)
     try:
-        db.update_resume(
+        await db.update_resume(
             resume_id,
             {
                 "content": updated_content,
