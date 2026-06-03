@@ -7,6 +7,7 @@ never sees ORM objects — preserving the TinyDB-era contracts.
 """
 
 from datetime import datetime, timezone
+from typing import Any
 
 from sqlalchemy import JSON, Boolean, Index, Integer, String, Text, UniqueConstraint, text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
@@ -78,7 +79,7 @@ class Job(Base):
     content: Mapped[str] = mapped_column(Text)
     resume_id: Mapped[str | None] = mapped_column(String, nullable=True)
     created_at: Mapped[str] = mapped_column(String, default=_utcnow_iso)
-    metadata_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    metadata_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
 
 
 class Improvement(Base):

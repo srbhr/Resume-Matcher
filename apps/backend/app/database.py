@@ -542,6 +542,11 @@ class Database:
                 )
                 found = dup.scalars().first()
                 if found is not None:
+                    logger.debug(
+                        "Deduped concurrent application create for job=%s resume=%s",
+                        job_id,
+                        resume_id,
+                    )
                     return self._application_to_dict(found)
                 raise
             return self._application_to_dict(row)

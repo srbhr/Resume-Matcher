@@ -28,10 +28,16 @@ def _secret_path() -> Path:
     return settings.data_dir / ".secret_key"
 
 
-def _write_secret(path: Path, key: bytes) -> None:
-    """Write the secret with 0600 perms, looping to handle partial writes."""
+def _write_secret(path: Path, key: bytes, *, exclusive: bool = False) -> None:
+    """Write the secret with 0600 perms, looping to handle partial writes.
+
+    With ``exclusive=True`` the create is atomic (``O_EXCL``) and raises
+    ``FileExistsError`` if the file already exists, so a concurrent first-run
+    generation cannot overwrite an already-written secret.
+    """
     path.parent.mkdir(parents=True, exist_ok=True)
-    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    flags = os.O_WRONLY | os.O_CREAT | (os.O_EXCL if exclusive else os.O_TRUNC)
+    fd = os.open(path, flags, 0o600)
     try:
         remaining = key
         while remaining:
@@ -65,8 +71,13 @@ def _load_fernet() -> Fernet:
             pass
     else:
         key = Fernet.generate_key()
-        _write_secret(path, key)
-        logger.info("Generated new encryption secret at %s", path)
+        try:
+            _write_secret(path, key, exclusive=True)
+            logger.info("Generated new encryption secret at %s", path)
+        except FileExistsError:
+            # Another caller generated the secret first — use theirs so we
+            # never overwrite a key that may already have encrypted data.
+            key = path.read_bytes().strip()
 
     try:
         _fernet = Fernet(key)
