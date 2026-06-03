@@ -53,6 +53,12 @@ from app.schemas.models import (
     UpdateOutreachMessageRequest,
     UpdateTitleRequest,
 )
+from app.schemas.creation import (
+    DraftSectionRequest,
+    DraftSectionResponse,
+    SectionKind,
+    WizardResumeCreate,
+)
 from app.schemas.applications import (
     ApplicationActionResponse,
     ApplicationDetailResponse,
@@ -128,4 +134,8 @@ __all__ = [
     "BulkStatusUpdate",
     "BulkDelete",
     "ApplicationActionResponse",
+    "DraftSectionRequest",
+    "DraftSectionResponse",
+    "SectionKind",
+    "WizardResumeCreate",
 ]

@@ -40,6 +40,18 @@ updateCoverLetter(resumeId: string, content: string) → void
 updateOutreachMessage(resumeId: string, content: string) → void
 ```
 
+## Create Wizard (`lib/api/create.ts`)
+
+```typescript
+// Author one ResumeData fragment from the user's plain answers (LLM).
+draftSection({ section, answers, name?, role?, resume_context? }) → fragment
+// section: 'work' | 'education' | 'project' | 'skills' | 'summary'
+
+// Persist the assembled resume; becomes master iff none exists.
+createResumeFromWizard(processedData: ProcessedResume, title?: string)
+  → { resume_id, is_master, processing_status, ... }
+```
+
 ## Application Tracker (`lib/api/tracker.ts`)
 
 ```typescript

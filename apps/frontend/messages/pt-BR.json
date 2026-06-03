@@ -950,5 +950,53 @@
       "moveFailed": "Não foi possível mover a candidatura.",
       "deleteFailed": "Não foi possível excluir a(s) candidatura(s)."
     }
+  },
+  "create": {
+    "navLabel": "Criar do zero",
+    "title": "Crie seu currículo",
+    "greeting": "Olá! Vou te ajudar a criar seu currículo. Qual é o seu nome?",
+    "askRole": "Bem-vindo, {name}! O que você faz?",
+    "pickSection": "Por onde começamos?",
+    "sections": {
+      "work": "Experiência",
+      "education": "Educação",
+      "project": "Projetos",
+      "skills": "Habilidades"
+    },
+    "ask": {
+      "work": "Conte sobre um emprego: empresa, cargo e o que você fez. Pode falar à vontade, eu organizo.",
+      "education": "Conte sobre sua formação: instituição, curso e anos.",
+      "project": "Conte sobre um projeto: o que era e o que você construiu.",
+      "skills": "Liste suas habilidades (ferramentas, linguagens, tecnologias)."
+    },
+    "drafting": "Redigindo...",
+    "addAnother": "+ Outro",
+    "pickAnother": "Escolher outra seção",
+    "done": "Terminei",
+    "contactTitle": "Alguns dados para o cabeçalho",
+    "contact": {
+      "location": "Localização",
+      "phone": "Telefone",
+      "email": "E-mail",
+      "linkedin": "LinkedIn",
+      "github": "GitHub",
+      "website": "Site"
+    },
+    "contactContinue": "Continuar",
+    "summaryIntro": "Aqui está um resumo que escrevi para você:",
+    "regenerateSummary": "Reescrever",
+    "acceptSummary": "Está ótimo",
+    "tweakPrompt": "Quer que eu ajuste algo?",
+    "save": "Salvar e abrir no editor",
+    "saving": "Salvando...",
+    "previewTitle": "Prévia ao vivo",
+    "showPreview": "Prévia",
+    "hidePreview": "Ocultar",
+    "needMore": "Adicione pelo menos uma seção antes de finalizar.",
+    "errors": {
+      "draft": "Não consegui redigir isso. Tente reformular ou pule.",
+      "save": "Não foi possível salvar seu currículo. Tente novamente."
+    },
+    "added": "Adicionado: {summary}. O que deseja adicionar a seguir?"
   }
 }

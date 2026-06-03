@@ -14,6 +14,7 @@ App Router under `app/`. A `(default)` route group wraps the main app in provide
 |-------|------|------|---------|
 | `/` | `app/(default)/page.tsx` | Server | Landing — renders `<Hero/>` |
 | `/dashboard` | `app/(default)/dashboard/page.tsx` | Client | Resume list, upload, delete, retry, status grid |
+| `/create` | `app/(default)/create/page.tsx` | Client wrapper → `components/create/creation-wizard.tsx` | Conversational Q&A wizard — AI authors a resume from answers, live preview, saves as master → Builder |
 | `/builder` | `app/(default)/builder/page.tsx` | Client wrapper → `components/builder/resume-builder.tsx` | Master-resume editor (forms, drag-drop sections, templates, AI regenerate, cover letter / outreach) |
 | `/tailor` | `app/(default)/tailor/page.tsx` | Client | Paste JD → preview/confirm tailored resume (diff modal) |
 | `/tracker` | `app/(default)/tracker/page.tsx` | Client | Kanban application tracker — 7-column board (drag/drop, bulk ops, manual add) |
@@ -37,6 +38,9 @@ components/
                      #   card, retro-tabs, toggle-switch, confirm-dialog,
                      #   rich-text-editor (Tiptap), link-dialog, label
   builder/           # builder page UI + forms/ (per-section form components)
+  create/            # Q&A wizard: creation-wizard (orchestrator), wizard-script.ts
+                     #   (pure assemble/append/finish), chat-message/input,
+                     #   section-picker, contact-fields, wizard-preview
   dashboard/         # resume list/card, upload dialog
   tailor/            # diff-preview-modal
   tracker/           # kanban-board, kanban-column, application-card,
@@ -71,7 +75,8 @@ All backend calls go through **`lib/api/`** — never call `fetch` to the backen
 - `lib/api/client.ts` — single source of truth. Exports `apiFetch / apiPost / apiPatch / apiPut / apiDelete`, `API_URL`, `API_BASE`, `getUploadUrl()`.
   - Base URL: `NEXT_PUBLIC_API_URL` (default `'/'`) → `API_BASE` becomes `/api/v1`. On the **server** a `/`-relative base is rewritten to `http://127.0.0.1:8000/api/v1` (`INTERNAL_API_ORIGIN`); browser uses the relative path (proxied by `next.config.ts` rewrites to `BACKEND_ORIGIN`).
   - Default request timeout **240_000ms** (matches backend `wait_for` hard limit). `AbortError` → friendly "Request timed out" message.
-- `lib/api/resume.ts` — resumes/jobs: upload, improve / improve.preview / improve.confirm, fetch, list, update (PATCH), PDF URLs + blob download, delete, cover-letter / outreach generate+update, rename, retry-processing, fetch JD.
+- `lib/api/resume.ts` — resumes/jobs: upload, improve / improve.preview / improve.confirm, fetch, list, update (PATCH), PDF URLs + blob download, delete, cover-letter / outreach generate+update, rename, retry-processing, fetch JD. Exports the canonical `ProcessedResume` type.
+- `lib/api/create.ts` — create-resume wizard: `draftSection` (`POST /resumes/draft-section`, author one section fragment from Q&A answers) and `createResumeFromWizard` (`POST /resumes`, persist the assembled `ProcessedResume`; master iff none).
 - `lib/api/config.ts` — LLM config, `testLlmConnection`, system `/status`, feature flags, prompt config, **feature prompts** (`FeaturePromptsError` for 422 `missing_placeholders`), **per-provider API-key management** (each provider's key persists independently — switching the active provider no longer wipes another's; stored encrypted server-side), language config, `resetDatabase`. `PROVIDER_INFO` lists supported providers + default models.
 - `lib/api/enrichment.ts` — AI enrichment (analyze/enhance/apply) and AI regenerate (regenerate/apply-regenerated).
 - `lib/api/tracker.ts` — application-tracker CRUD/bulk over `apiFetch/apiPost/apiPatch/apiDelete`: grouped list, detail (JD + resume), manual add, status/position/notes PATCH, bulk move, delete, bulk-delete.
@@ -112,7 +117,7 @@ Because every locale is typed as `Messages` (= the exact shape of `en.json`), **
 
 **When editing translations:** any key you add/remove/rename in `en.json` MUST be mirrored in all 5 files (`en`, `es`, `zh`, `ja`, `pt-BR`) with identical structure. `npm run dev` may tolerate drift; the build will not.
 
-The tracker ships a `tracker.*` key tree (`columns`, `modal`, `manualAdd`, `bulk`, `errors`, `scroll`) plus `nav.applicationTracker`, present in all 5 locale files — subject to the same parity rule.
+The tracker ships a `tracker.*` key tree (`columns`, `modal`, `manualAdd`, `bulk`, `errors`, `scroll`) plus `nav.applicationTracker`, present in all 5 locale files — subject to the same parity rule. The create wizard ships a `create.*` key tree (`greeting`, `askRole`, `sections`, `ask`, `contact`, `summaryIntro`, `errors`, …) across the same 5 locales.
 
 See [i18n.md](../../docs/agent/features/i18n.md), [i18n-preparation.md](../../docs/agent/features/i18n-preparation.md).
 

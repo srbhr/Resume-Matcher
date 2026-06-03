@@ -5,7 +5,7 @@ import { type Locale } from '@/i18n/config';
 import { API_BASE, DEFAULT_TIMEOUT_MS, apiPost, apiPatch, apiDelete, apiFetch } from './client';
 
 // Matches backend schemas/models.py ResumeData
-interface ProcessedResume {
+export interface ProcessedResume {
   personalInfo?: {
     name?: string;
     title?: string;

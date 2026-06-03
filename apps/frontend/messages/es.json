@@ -950,5 +950,53 @@
       "moveFailed": "No se pudo mover la candidatura.",
       "deleteFailed": "No se pudieron eliminar las candidaturas."
     }
+  },
+  "create": {
+    "navLabel": "Crear desde cero",
+    "title": "Crea tu currículum",
+    "greeting": "¡Hola! Te ayudaré a crear tu currículum. ¿Cómo te llamas?",
+    "askRole": "¡Bienvenido, {name}! ¿A qué te dedicas?",
+    "pickSection": "¿Por dónde empezamos?",
+    "sections": {
+      "work": "Experiencia",
+      "education": "Educación",
+      "project": "Proyectos",
+      "skills": "Habilidades"
+    },
+    "ask": {
+      "work": "Cuéntame sobre un empleo: empresa, puesto y lo que hiciste. Tú habla, yo le doy forma.",
+      "education": "Cuéntame sobre tu formación: centro, título y años.",
+      "project": "Cuéntame sobre un proyecto: qué era y qué construiste.",
+      "skills": "Enumera tus habilidades (herramientas, lenguajes, tecnologías)."
+    },
+    "drafting": "Redactando...",
+    "addAnother": "+ Otro",
+    "pickAnother": "Elegir otra sección",
+    "done": "He terminado",
+    "contactTitle": "Algunos datos para tu encabezado",
+    "contact": {
+      "location": "Ubicación",
+      "phone": "Teléfono",
+      "email": "Correo",
+      "linkedin": "LinkedIn",
+      "github": "GitHub",
+      "website": "Sitio web"
+    },
+    "contactContinue": "Continuar",
+    "summaryIntro": "Aquí tienes un resumen que escribí para ti:",
+    "regenerateSummary": "Reescribir",
+    "acceptSummary": "Se ve bien",
+    "tweakPrompt": "¿Quieres que ajuste algo?",
+    "save": "Guardar y abrir en el editor",
+    "saving": "Guardando...",
+    "previewTitle": "Vista previa en vivo",
+    "showPreview": "Vista previa",
+    "hidePreview": "Ocultar",
+    "needMore": "Añade al menos una sección antes de terminar.",
+    "errors": {
+      "draft": "No pude redactar eso. Intenta reformularlo u omítelo.",
+      "save": "No se pudo guardar tu currículum. Inténtalo de nuevo."
+    },
+    "added": "Añadido: {summary}. ¿Qué quieres agregar a continuación?"
   }
 }

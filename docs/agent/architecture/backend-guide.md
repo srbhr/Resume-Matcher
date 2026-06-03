@@ -94,6 +94,8 @@ GET  /api/v1/status              # Full status (LLM + DB isolated; 200 on partia
 GET/PUT /api/v1/config/llm-api-key            # no longer persists a key
 GET/POST/DELETE /api/v1/config/api-keys       # per-provider encrypted keys
 POST /api/v1/resumes/upload      # PDF/DOCX
+POST /api/v1/resumes/draft-section # Create wizard: author one ResumeData fragment (LLM)
+POST /api/v1/resumes             # Create wizard: persist resume from JSON (master iff none)
 POST /api/v1/resumes/improve     # Tailor (LLM)
 GET  /api/v1/resumes/{id}/pdf
 DELETE /api/v1/resumes/{id}

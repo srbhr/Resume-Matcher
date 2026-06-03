@@ -950,5 +950,53 @@
       "moveFailed": "Could not move the application.",
       "deleteFailed": "Could not delete the application(s)."
     }
+  },
+  "create": {
+    "navLabel": "Create from scratch",
+    "title": "Create your resume",
+    "greeting": "Hi! I'm going to help you build your resume. What's your name?",
+    "askRole": "Welcome, {name}! What do you do?",
+    "pickSection": "Where should we start?",
+    "sections": {
+      "work": "Work",
+      "education": "Education",
+      "project": "Projects",
+      "skills": "Skills"
+    },
+    "ask": {
+      "work": "Tell me about a job: company, role, and what you did. Just talk, I'll shape it.",
+      "education": "Tell me about your education: school, degree, and years.",
+      "project": "Tell me about a project: what it was and what you built.",
+      "skills": "List your skills (tools, languages, technologies)."
+    },
+    "drafting": "Drafting...",
+    "addAnother": "+ Another",
+    "pickAnother": "Pick another section",
+    "done": "I'm done",
+    "contactTitle": "A few details for your header",
+    "contact": {
+      "location": "Location",
+      "phone": "Phone",
+      "email": "Email",
+      "linkedin": "LinkedIn",
+      "github": "GitHub",
+      "website": "Website"
+    },
+    "contactContinue": "Continue",
+    "summaryIntro": "Here's a summary I wrote for you:",
+    "regenerateSummary": "Rewrite it",
+    "acceptSummary": "Looks good",
+    "tweakPrompt": "Want me to tweak anything?",
+    "save": "Save & open in Builder",
+    "saving": "Saving...",
+    "previewTitle": "Live preview",
+    "showPreview": "Preview",
+    "hidePreview": "Hide",
+    "needMore": "Add at least one section before finishing.",
+    "errors": {
+      "draft": "I couldn't draft that. Try rephrasing, or skip ahead.",
+      "save": "Couldn't save your resume. Please try again."
+    },
+    "added": "Added: {summary}. What would you like to add next?"
   }
 }

@@ -2,6 +2,7 @@
 
 from app.routers.applications import router as applications_router
 from app.routers.config import router as config_router
+from app.routers.creation import router as creation_router
 from app.routers.enrichment import router as enrichment_router
 from app.routers.health import router as health_router
 from app.routers.jobs import router as jobs_router
@@ -14,4 +15,5 @@ __all__ = [
     "health_router",
     "enrichment_router",
     "applications_router",
+    "creation_router",
 ]
