@@ -220,6 +220,45 @@ export const TemplateThumbnail: React.FC<TemplateThumbnailProps> = ({ type, isAc
     );
   }
 
+  if (type === 'vivid') {
+    // Vivid thumbnail - two-tone accent name + accent headers + accent arrow bullets
+    return (
+      <div className={`w-14 h-18 border ${borderColor} bg-white p-1.5 flex flex-col gap-1`}>
+        {/* Two-tone name (left-aligned) */}
+        <div className="flex items-center gap-0.5">
+          <div className={`h-1.5 ${accentColor} w-1/3`}></div>
+          <div className={`h-1.5 ${accentColor} w-1/4 opacity-50`}></div>
+        </div>
+        <div className={`h-0.5 ${lineColor} w-2/3 opacity-40`}></div>
+        {/* Two columns (no divider) */}
+        <div className="flex-1 flex gap-1 mt-0.5">
+          {/* Left column with arrow ticks */}
+          <div className="w-2/3 space-y-0.5">
+            <div className={`h-0.5 ${accentColor} w-1/2`}></div>
+            <div className="flex items-center gap-0.5">
+              <div className={`h-0.5 w-0.5 ${accentColor}`}></div>
+              <div className={`h-0.5 ${lineColor} w-5/6 opacity-50`}></div>
+            </div>
+            <div className="flex items-center gap-0.5">
+              <div className={`h-0.5 w-0.5 ${accentColor}`}></div>
+              <div className={`h-0.5 ${lineColor} w-4/6 opacity-50`}></div>
+            </div>
+            <div className="h-0.5"></div>
+            <div className={`h-0.5 ${accentColor} w-2/5`}></div>
+          </div>
+          {/* Right column (sidebar) */}
+          <div className="w-1/3 space-y-0.5">
+            <div className={`h-0.5 ${accentColor} w-full`}></div>
+            <div className={`h-0.5 ${lineColor} w-4/5 opacity-50`}></div>
+            <div className="h-0.5"></div>
+            <div className={`h-0.5 ${accentColor} w-full`}></div>
+            <div className={`h-0.5 ${lineColor} w-3/5 opacity-50`}></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Two column thumbnail (swiss-two-column)
   return (
     <div className={`w-14 h-18 border ${borderColor} bg-white p-1.5 flex flex-col gap-1`}>
