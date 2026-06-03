@@ -132,7 +132,10 @@ export const ResumeVivid: React.FC<ResumeVividProps> = ({
     );
   };
 
-  const renderArrowBullets = (items?: string[], textClass: string = baseStyles['resume-text-xs']) => {
+  const renderArrowBullets = (
+    items?: string[],
+    textClass: string = baseStyles['resume-text-xs']
+  ) => {
     if (!items || items.length === 0) return null;
     return (
       <ul className={`ml-4 ${baseStyles['resume-list']} ${textClass}`}>
@@ -190,7 +193,9 @@ export const ResumeVivid: React.FC<ResumeVividProps> = ({
               <div className={baseStyles['resume-items']}>
                 {workExperience.map((exp) => (
                   <div key={exp.id} className={baseStyles['resume-item']}>
-                    <div className={`flex justify-between items-baseline ${baseStyles['resume-row-tight']}`}>
+                    <div
+                      className={`flex justify-between items-baseline ${baseStyles['resume-row-tight']}`}
+                    >
                       <span>
                         <span className={styles.entryCompany}>{exp.company}</span>
                         {exp.title && (
@@ -212,76 +217,80 @@ export const ResumeVivid: React.FC<ResumeVividProps> = ({
             </div>
           )}
 
-          {isSectionVisible('personalProjects') && personalProjects && personalProjects.length > 0 && (
-            <div className={baseStyles['resume-section']}>
-              <h3 className={styles.sectionTitle}>
-                {getSectionDisplayName('personalProjects', headingFallbacks.projects)}
-              </h3>
-              <div className={baseStyles['resume-items']}>
-                {personalProjects.map((project) => (
-                  <div key={project.id} className={baseStyles['resume-item']}>
-                    <div className={`flex justify-between items-baseline ${baseStyles['resume-row-tight']}`}>
-                      <span className="flex items-baseline gap-1.5 min-w-0">
-                        <span className={styles.entryCompany}>{project.name}</span>
-                        {project.role && (
-                          <>
-                            <span className={styles.entrySep}>|</span>
-                            <span className={styles.entryRole}>{project.role}</span>
-                          </>
-                        )}
-                        {(project.github || project.website) && (
-                          <span className="flex gap-1">
-                            {project.github && (
-                              <a
-                                href={
-                                  project.github.startsWith('http')
-                                    ? project.github
-                                    : `https://${project.github}`
-                                }
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className={baseStyles['resume-link-pill']}
-                              >
-                                <Github size={9} />
-                                {project.github
-                                  .replace(/^https?:\/\//, '')
-                                  .replace(/^www\./, '')
-                                  .replace(/\/$/, '')}
-                              </a>
-                            )}
-                            {project.website && (
-                              <a
-                                href={
-                                  project.website.startsWith('http')
-                                    ? project.website
-                                    : `https://${project.website}`
-                                }
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className={baseStyles['resume-link-pill']}
-                              >
-                                <ExternalLink size={9} />
-                                {project.website
-                                  .replace(/^https?:\/\//, '')
-                                  .replace(/^www\./, '')
-                                  .replace(/\/$/, '')}
-                              </a>
-                            )}
+          {isSectionVisible('personalProjects') &&
+            personalProjects &&
+            personalProjects.length > 0 && (
+              <div className={baseStyles['resume-section']}>
+                <h3 className={styles.sectionTitle}>
+                  {getSectionDisplayName('personalProjects', headingFallbacks.projects)}
+                </h3>
+                <div className={baseStyles['resume-items']}>
+                  {personalProjects.map((project) => (
+                    <div key={project.id} className={baseStyles['resume-item']}>
+                      <div
+                        className={`flex justify-between items-baseline ${baseStyles['resume-row-tight']}`}
+                      >
+                        <span className="flex items-baseline gap-1.5 min-w-0">
+                          <span className={styles.entryCompany}>{project.name}</span>
+                          {project.role && (
+                            <>
+                              <span className={styles.entrySep}>|</span>
+                              <span className={styles.entryRole}>{project.role}</span>
+                            </>
+                          )}
+                          {(project.github || project.website) && (
+                            <span className="flex gap-1">
+                              {project.github && (
+                                <a
+                                  href={
+                                    project.github.startsWith('http')
+                                      ? project.github
+                                      : `https://${project.github}`
+                                  }
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className={baseStyles['resume-link-pill']}
+                                >
+                                  <Github size={9} />
+                                  {project.github
+                                    .replace(/^https?:\/\//, '')
+                                    .replace(/^www\./, '')
+                                    .replace(/\/$/, '')}
+                                </a>
+                              )}
+                              {project.website && (
+                                <a
+                                  href={
+                                    project.website.startsWith('http')
+                                      ? project.website
+                                      : `https://${project.website}`
+                                  }
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className={baseStyles['resume-link-pill']}
+                                >
+                                  <ExternalLink size={9} />
+                                  {project.website
+                                    .replace(/^https?:\/\//, '')
+                                    .replace(/^www\./, '')
+                                    .replace(/\/$/, '')}
+                                </a>
+                              )}
+                            </span>
+                          )}
+                        </span>
+                        {project.years && (
+                          <span className={`${styles.entryMeta} ml-2`}>
+                            {formatDateRange(project.years)}
                           </span>
                         )}
-                      </span>
-                      {project.years && (
-                        <span className={`${styles.entryMeta} ml-2`}>
-                          {formatDateRange(project.years)}
-                        </span>
-                      )}
+                      </div>
+                      {renderArrowBullets(project.description)}
                     </div>
-                    {renderArrowBullets(project.description)}
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
           {isSectionVisible('additional') && certificationsTraining.length > 0 && (
             <div className={baseStyles['resume-section']}>
@@ -319,12 +328,16 @@ export const ResumeVivid: React.FC<ResumeVividProps> = ({
               <div className={baseStyles['resume-stack']}>
                 {education.map((edu) => (
                   <div key={edu.id}>
-                    <h4 className={`${baseStyles['resume-item-title-sm']} ${baseStyles['sidebar-text-wrap']}`}>
+                    <h4
+                      className={`${baseStyles['resume-item-title-sm']} ${baseStyles['sidebar-text-wrap']}`}
+                    >
                       {edu.institution}
                     </h4>
                     <p className={baseStyles['resume-item-subtitle-sm']}>{edu.degree}</p>
                     {edu.years && (
-                      <p className={`${baseStyles['resume-meta-sm']}`}>{formatDateRange(edu.years)}</p>
+                      <p className={`${baseStyles['resume-meta-sm']}`}>
+                        {formatDateRange(edu.years)}
+                      </p>
                     )}
                     {edu.description && (
                       <p className={`${baseStyles['resume-text-xs']} ${baseStyles['resume-meta']}`}>
@@ -350,20 +363,25 @@ export const ResumeVivid: React.FC<ResumeVividProps> = ({
             </div>
           )}
 
-          {personalInfo && (personalInfo.website || personalInfo.linkedin || personalInfo.github) && (
-            <div className={baseStyles['resume-section']}>
-              <h3 className={styles.sectionTitleSm}>{headingFallbacks.links}</h3>
-              <div className={`${baseStyles['resume-stack-tight']} ${baseStyles['resume-meta-sm']}`}>
-                {personalInfo.linkedin && (
-                  <div>{renderContactDetail('LinkedIn', personalInfo.linkedin)}</div>
-                )}
-                {personalInfo.github && <div>{renderContactDetail('GitHub', personalInfo.github)}</div>}
-                {personalInfo.website && (
-                  <div>{renderContactDetail('Website', personalInfo.website)}</div>
-                )}
+          {personalInfo &&
+            (personalInfo.website || personalInfo.linkedin || personalInfo.github) && (
+              <div className={baseStyles['resume-section']}>
+                <h3 className={styles.sectionTitleSm}>{headingFallbacks.links}</h3>
+                <div
+                  className={`${baseStyles['resume-stack-tight']} ${baseStyles['resume-meta-sm']}`}
+                >
+                  {personalInfo.linkedin && (
+                    <div>{renderContactDetail('LinkedIn', personalInfo.linkedin)}</div>
+                  )}
+                  {personalInfo.github && (
+                    <div>{renderContactDetail('GitHub', personalInfo.github)}</div>
+                  )}
+                  {personalInfo.website && (
+                    <div>{renderContactDetail('Website', personalInfo.website)}</div>
+                  )}
+                </div>
               </div>
-            </div>
-          )}
+            )}
         </div>
       </div>
     </>

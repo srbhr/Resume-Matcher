@@ -107,7 +107,9 @@ export const ResumeClean: React.FC<ResumeCleanProps> = ({
   ) => {
     const meta = [location, dates ? formatDateRange(dates) : undefined].filter(Boolean).join(' | ');
     return (
-      <div className={`flex justify-between items-baseline gap-3 ${baseStyles['resume-row-tight']}`}>
+      <div
+        className={`flex justify-between items-baseline gap-3 ${baseStyles['resume-row-tight']}`}
+      >
         <span className="min-w-0">
           <span className={styles.entryCompany}>{primary}</span>
           {role && (
@@ -289,7 +291,9 @@ export const ResumeClean: React.FC<ResumeCleanProps> = ({
       {personalInfo && (
         <header className={`text-center ${baseStyles['resume-header']}`}>
           {personalInfo.name && <h1 className={`${styles.name} mb-1`}>{personalInfo.name}</h1>}
-          {personalInfo.title && <div className={`${styles.tagline} mb-1`}>{personalInfo.title}</div>}
+          {personalInfo.title && (
+            <div className={`${styles.tagline} mb-1`}>{personalInfo.title}</div>
+          )}
           {contactItems.length > 0 && (
             <div
               className={`flex flex-wrap justify-center items-center gap-x-2 gap-y-1 ${styles.contactRow}`}

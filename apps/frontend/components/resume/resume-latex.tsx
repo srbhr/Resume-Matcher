@@ -289,9 +289,13 @@ export const ResumeLatex: React.FC<ResumeLatexProps> = ({
           {personalInfo.location && (
             <div className={`${styles.locationLine} mb-1`}>{personalInfo.location}</div>
           )}
-          {personalInfo.title && <div className={`${styles.tagline} mb-1`}>{personalInfo.title}</div>}
+          {personalInfo.title && (
+            <div className={`${styles.tagline} mb-1`}>{personalInfo.title}</div>
+          )}
           {contactItems.length > 0 && (
-            <div className={`flex flex-wrap justify-center items-center gap-x-2 gap-y-1 ${styles.contactRow}`}>
+            <div
+              className={`flex flex-wrap justify-center items-center gap-x-2 gap-y-1 ${styles.contactRow}`}
+            >
               {contactItems.map((item, index) => (
                 <React.Fragment key={index}>
                   {index > 0 && <span className={styles.contactSep}>·</span>}
