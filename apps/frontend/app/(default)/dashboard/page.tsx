@@ -528,6 +528,29 @@ export default function DashboardPage() {
           </div>
         </Card>
 
+        {/* 3b. Create from scratch — also available once a master exists (makes a non-master resume) */}
+        {masterResumeId && (
+          <Link href="/create" className="block h-full">
+            <Card
+              variant="interactive"
+              className="aspect-square h-full hover:bg-blue-700 hover:text-canvas"
+            >
+              <div className="flex-1 flex flex-col justify-between pointer-events-none">
+                <div className="w-14 h-14 border-2 border-current flex items-center justify-center mb-4">
+                  <Sparkles className="w-7 h-7" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl uppercase">{t('create.title')}</CardTitle>
+                  <CardDescription className="mt-2 opacity-60 group-hover:opacity-100 text-current">
+                    {'// '}
+                    {t('create.navLabel')}
+                  </CardDescription>
+                </div>
+              </div>
+            </Card>
+          </Link>
+        )}
+
         {/* 4. Fillers */}
         {Array.from({ length: fillerCount }).map((_, index) => (
           <Card
