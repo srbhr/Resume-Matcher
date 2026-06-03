@@ -8,6 +8,11 @@
 |----------|--------|----------|
 | swiss-single | Full-width vertical | 1-2 page resumes |
 | swiss-two-column | 65% main + 35% sidebar | Dense content |
+| modern | Single column, accent headers | Colorful single-column |
+| modern-two-column | 65% main + 35% sidebar, accent | Colorful dense content |
+| latex | Single column, serif, ruled headers | Classic/academic résumés |
+| clean | Single column, minimal sans | Understated modern résumés |
+| vivid | 63% main + 37% sidebar, accent | Colorful Awesome-CV style (accent color) |
 
 ## File Structure
 
