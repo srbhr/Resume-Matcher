@@ -185,3 +185,49 @@ class TestBulkAndDelete:
         async with _client() as client:
             board = (await client.get("/api/v1/applications")).json()["columns"]
         assert board["applied"] == []
+
+
+class TestRobustnessFixes:
+    async def test_create_dedupes_same_job_resume(self, isolated_db):
+        """A second card for the same (job, resume) returns the existing one."""
+        first = await _seed_card(isolated_db, job_id="dup-j", resume_id="dup-r", status="applied")
+        second = await isolated_db.create_application(
+            job_id="dup-j", resume_id="dup-r", status="applied"
+        )
+        assert second["application_id"] == first["application_id"]
+        async with _client() as client:
+            board = (await client.get("/api/v1/applications")).json()["columns"]
+        assert len(board["applied"]) == 1
+
+    async def test_unknown_status_is_skipped_not_500(self, isolated_db):
+        """A row whose status is outside the enum must not 500 the board."""
+        await isolated_db.create_application(job_id="j1", resume_id="r1", status="bogus_status")
+        await _seed_card(isolated_db, job_id="j2", resume_id="r2", status="applied")
+        async with _client() as client:
+            resp = await client.get("/api/v1/applications")
+        assert resp.status_code == 200
+        columns = resp.json()["columns"]
+        assert "bogus_status" not in columns
+        assert len(columns["applied"]) == 1  # the valid card still renders
+
+    async def test_manual_add_cleans_up_orphan_job_on_failure(self, isolated_db):
+        """If application creation fails, the just-created job is removed."""
+        with patch.object(
+            isolated_db,
+            "create_application",
+            new_callable=AsyncMock,
+            side_effect=RuntimeError("boom"),
+        ):
+            async with _client() as client:
+                resp = await client.post(
+                    "/api/v1/applications",
+                    json={
+                        "resume_id": "res-1",
+                        "job_description": "JD text",
+                        "company": "Given Co",
+                        "role": "Given Role",
+                    },
+                )
+        assert resp.status_code == 500
+        stats = await isolated_db.get_stats()
+        assert stats["total_jobs"] == 0  # no orphan job left behind

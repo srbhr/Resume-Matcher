@@ -37,6 +37,12 @@ def _load_fernet() -> Fernet:
 
     if path.exists():
         key = path.read_bytes().strip()
+        # Re-assert restrictive perms in case the file pre-existed (or was
+        # copied) with broader permissions before this hardening (best-effort).
+        try:
+            os.chmod(path, 0o600)
+        except OSError:  # pragma: no cover - platform dependent (e.g. Windows)
+            pass
     else:
         key = Fernet.generate_key()
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -52,7 +58,25 @@ def _load_fernet() -> Fernet:
             pass
         logger.info("Generated new encryption secret at %s", path)
 
-    _fernet = Fernet(key)
+    try:
+        _fernet = Fernet(key)
+    except (ValueError, TypeError):
+        # A corrupt/invalid secret would otherwise crash every encrypt/decrypt
+        # call. Regenerate a fresh secret (previously stored ciphertext is
+        # already unrecoverable) so key save/read flows keep working.
+        logger.warning("Invalid encryption secret at %s; regenerating.", path)
+        key = Fernet.generate_key()
+        path.parent.mkdir(parents=True, exist_ok=True)
+        fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        try:
+            os.write(fd, key)
+        finally:
+            os.close(fd)
+        try:
+            os.chmod(path, 0o600)
+        except OSError:  # pragma: no cover - platform dependent (e.g. Windows)
+            pass
+        _fernet = Fernet(key)
     _loaded_from = path
     return _fernet
 

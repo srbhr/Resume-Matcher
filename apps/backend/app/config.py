@@ -82,10 +82,11 @@ def save_api_keys_to_config(api_keys: dict[str, str]) -> None:
     from app.crypto import encrypt
     from app.database import db
 
-    db.clear_api_keys()
-    for provider, key in api_keys.items():
-        if key:
-            db.set_api_key_ciphertext(provider, encrypt(key))
+    # Encrypt everything first, then swap in a single transaction, so a partial
+    # failure (encryption error or DB write) can never wipe previously stored
+    # keys mid-replace.
+    ciphertexts = {provider: encrypt(key) for provider, key in api_keys.items() if key}
+    db.replace_api_keys(ciphertexts)
 
 
 def delete_api_key_from_config(provider: str) -> None:

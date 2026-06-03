@@ -785,8 +785,11 @@ async def _improve_preview_flow(
             "job_keywords": job_keywords,
             "job_keywords_hash": content_hash,
         }
-        company = (job_keywords.get("company") or "").strip()
-        role = (job_keywords.get("role") or "").strip()
+        # LLM output isn't guaranteed to be a string — guard before .strip().
+        raw_company = job_keywords.get("company")
+        raw_role = job_keywords.get("role")
+        company = raw_company.strip() if isinstance(raw_company, str) else ""
+        role = raw_role.strip() if isinstance(raw_role, str) else ""
         if company:
             cache_updates["company"] = company
         if role:

@@ -19,6 +19,7 @@ from typing import Any
 from uuid import uuid4
 
 from sqlalchemy import delete, func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -405,6 +406,16 @@ class Database:
             await session.commit()
             return self._job_to_dict(row)
 
+    async def delete_job(self, job_id: str) -> bool:
+        """Delete a job by ID (used to clean up an orphaned manual-add job)."""
+        async with self._session() as session:
+            row = await session.get(Job, job_id)
+            if row is None:
+                return False
+            await session.delete(row)
+            await session.commit()
+            return True
+
     # -- Improvement operations ---------------------------------------------
 
     async def create_improvement(
@@ -517,7 +528,22 @@ class Database:
                 updated_at=now,
             )
             session.add(row)
-            await session.commit()
+            try:
+                await session.commit()
+            except IntegrityError:
+                # A concurrent create won the (job_id, resume_id) unique
+                # constraint — return the existing card instead of duplicating.
+                await session.rollback()
+                dup = await session.execute(
+                    select(Application).where(
+                        Application.job_id == job_id,
+                        Application.resume_id == resume_id,
+                    )
+                )
+                found = dup.scalars().first()
+                if found is not None:
+                    return self._application_to_dict(found)
+                raise
             return self._application_to_dict(row)
 
     async def list_applications(self, status: str | None = None) -> list[dict[str, Any]]:
@@ -675,6 +701,22 @@ class Database:
         """Delete all stored keys (sync)."""
         with self._sync() as session:
             session.execute(delete(ApiKey))
+            session.commit()
+
+    def replace_api_keys(self, ciphertexts: dict[str, str]) -> None:
+        """Atomically replace the whole key store (clear + insert in one txn).
+
+        A single transaction means a failure mid-write can't leave the store
+        half-cleared and wipe a user's previously saved keys.
+        """
+        with self._sync() as session:
+            session.execute(delete(ApiKey))
+            now = _now()
+            for provider, ciphertext in ciphertexts.items():
+                if ciphertext:
+                    session.add(
+                        ApiKey(provider=provider, ciphertext=ciphertext, updated_at=now)
+                    )
             session.commit()
 
     # -- Stats / maintenance ------------------------------------------------

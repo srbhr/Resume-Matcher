@@ -8,7 +8,7 @@ never sees ORM objects — preserving the TinyDB-era contracts.
 
 from datetime import datetime, timezone
 
-from sqlalchemy import JSON, Boolean, Index, Integer, String, Text, text
+from sqlalchemy import JSON, Boolean, Index, Integer, String, Text, UniqueConstraint, text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -98,6 +98,11 @@ class Application(Base):
     """A Kanban application-tracker card."""
 
     __tablename__ = "applications"
+    __table_args__ = (
+        # Concurrency-safe dedupe: a card is unique per (job, applied resume).
+        # The app-level select-then-insert relies on this to collapse races.
+        UniqueConstraint("job_id", "resume_id", name="uq_application_job_resume"),
+    )
 
     application_id: Mapped[str] = mapped_column(String, primary_key=True)
     job_id: Mapped[str] = mapped_column(String, index=True)

@@ -25,13 +25,18 @@ router = APIRouter(prefix="/applications", tags=["Application Tracker"])
 
 
 def _group_by_status(applications: list[dict[str, Any]]) -> dict[str, list[ApplicationResponse]]:
-    """Group a flat list into the seven columns (all keys always present)."""
+    """Group a flat list into the seven columns (all keys always present).
+
+    A row with an unknown status can't be represented by the enum-backed
+    ``ApplicationResponse``; rather than 500 the whole board we skip it (the
+    board only renders the seven known columns) and log it.
+    """
     columns: dict[str, list[ApplicationResponse]] = {s: [] for s in APPLICATION_STATUS_ORDER}
     for app in applications:
         status = app.get("status")
         if status not in columns:
-            # Defensive: unknown status lands in its own bucket so cards aren't lost.
-            columns.setdefault(status, [])
+            logger.warning("Skipping application with unknown status %r", status)
+            continue
         columns[status].append(ApplicationResponse(**app))
     return columns
 
@@ -52,24 +57,20 @@ async def create_application(request: ManualApplicationCreate) -> ApplicationRes
     """Manually add a card from a pasted job description.
 
     Creates the job, runs a best-effort company/role extraction when not
-    provided, then creates the application.
+    provided, then creates the application. If application creation fails the
+    just-created job is cleaned up (no orphan jobs / retry drift); caching
+    company/role on the job is best-effort and never fails the request.
     """
+    job = await db.create_job(content=request.job_description, resume_id=request.resume_id)
+
+    company = request.company
+    role = request.role
+    if not company or not role:
+        extracted = await _extract_company_role(request.job_description)
+        company = company or extracted.get("company")
+        role = role or extracted.get("role")
+
     try:
-        job = await db.create_job(content=request.job_description, resume_id=request.resume_id)
-
-        company = request.company
-        role = request.role
-        if not company or not role:
-            extracted = await _extract_company_role(request.job_description)
-            company = company or extracted.get("company")
-            role = role or extracted.get("role")
-            # Cache on the job so it's reused later.
-            if extracted:
-                await db.update_job(
-                    job["job_id"],
-                    {"company": company, "role": role},
-                )
-
         application = await db.create_application(
             job_id=job["job_id"],
             resume_id=request.resume_id,
@@ -78,10 +79,22 @@ async def create_application(request: ManualApplicationCreate) -> ApplicationRes
             role=role,
             notes=request.notes,
         )
-        return ApplicationResponse(**application)
     except Exception as e:
         logger.error("Failed to create application: %s", e)
+        try:
+            await db.delete_job(job["job_id"])
+        except Exception as cleanup_error:
+            logger.warning("Failed to clean up orphan job %s: %s", job["job_id"], cleanup_error)
         raise HTTPException(status_code=500, detail="Failed to create application. Please try again.")
+
+    # Best-effort: cache company/role on the job for later reuse — never 500.
+    if company or role:
+        try:
+            await db.update_job(job["job_id"], {"company": company, "role": role})
+        except Exception as e:
+            logger.warning("Failed to cache company/role on job %s: %s", job["job_id"], e)
+
+    return ApplicationResponse(**application)
 
 
 @router.get("/{application_id}", response_model=ApplicationDetailResponse)
@@ -160,17 +173,20 @@ async def bulk_delete_applications(request: BulkDelete) -> ApplicationActionResp
     return ApplicationActionResponse(message=f"Deleted {deleted} application(s)", affected=deleted)
 
 
-async def _extract_company_role(job_description: str) -> dict[str, str]:
+async def _extract_company_role(job_description: str) -> dict[str, str | None]:
     """Best-effort company/role extraction for the manual-add path.
 
     Reuses the cached keyword-extraction pass; falls back to blank (editable)
-    on any failure so a flaky LLM never blocks card creation.
+    on any failure so a flaky LLM never blocks card creation. LLM output isn't
+    guaranteed to be a string, so values are type-guarded before ``.strip()``.
     """
     try:
         keywords = await extract_job_keywords(job_description)
+        raw_company = keywords.get("company")
+        raw_role = keywords.get("role")
         return {
-            "company": (keywords.get("company") or "").strip() or None,
-            "role": (keywords.get("role") or "").strip() or None,
+            "company": (raw_company.strip() if isinstance(raw_company, str) else "") or None,
+            "role": (raw_role.strip() if isinstance(raw_role, str) else "") or None,
         }
     except Exception as e:
         logger.warning("Company/role extraction failed (manual add): %s", e)

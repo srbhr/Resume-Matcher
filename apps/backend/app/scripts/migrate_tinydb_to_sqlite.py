@@ -17,7 +17,7 @@ from typing import Any
 
 from app.config import settings
 from app.database import Database, db
-from app.models import Improvement, Job, Resume
+from app.models import Improvement, Job, Resume, _utcnow_iso
 
 logger = logging.getLogger(__name__)
 
@@ -84,8 +84,8 @@ async def migrate(database: Database | None = None) -> dict[str, Any]:
                     outreach_message=r.get("outreach_message"),
                     title=r.get("title"),
                     original_markdown=r.get("original_markdown"),
-                    created_at=r.get("created_at"),
-                    updated_at=r.get("updated_at", r.get("created_at")),
+                    created_at=r.get("created_at") or _utcnow_iso(),
+                    updated_at=r.get("updated_at") or r.get("created_at") or _utcnow_iso(),
                 )
             )
         for j in jobs:
@@ -95,7 +95,7 @@ async def migrate(database: Database | None = None) -> dict[str, Any]:
                     job_id=j["job_id"],
                     content=j.get("content", ""),
                     resume_id=j.get("resume_id"),
-                    created_at=j.get("created_at"),
+                    created_at=j.get("created_at") or _utcnow_iso(),
                     metadata_json=meta,
                 )
             )
@@ -107,7 +107,7 @@ async def migrate(database: Database | None = None) -> dict[str, Any]:
                     tailored_resume_id=imp.get("tailored_resume_id", ""),
                     job_id=imp.get("job_id", ""),
                     improvements=imp.get("improvements", []),
-                    created_at=imp.get("created_at"),
+                    created_at=imp.get("created_at") or _utcnow_iso(),
                 )
             )
         await session.commit()
