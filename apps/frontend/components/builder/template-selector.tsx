@@ -139,6 +139,28 @@ export const TemplateThumbnail: React.FC<TemplateThumbnailProps> = ({ type, isAc
     );
   }
 
+  if (type === 'clean') {
+    // Clean thumbnail - centered light name + large understated gray uppercase headers
+    return (
+      <div className={`w-14 h-18 border ${borderColor} bg-white p-1.5 flex flex-col gap-1`}>
+        {/* Centered light name + contact line */}
+        <div className="flex flex-col items-center gap-0.5">
+          <div className={`h-1.5 ${lineColor} w-1/2 opacity-70`}></div>
+          <div className={`h-0.5 ${lineColor} w-2/3 opacity-40`}></div>
+        </div>
+        {/* Large gray section headers (taller, lower opacity) + thin rule */}
+        <div className="flex-1 space-y-1 mt-1">
+          <div className={`h-1 ${lineColor} w-1/2 opacity-30 border-b ${borderColor}`}></div>
+          <div className={`h-0.5 ${lineColor} w-5/6 opacity-50`}></div>
+          <div className={`h-0.5 ${lineColor} w-4/6 opacity-50`}></div>
+          <div className="h-0.5"></div>
+          <div className={`h-1 ${lineColor} w-2/5 opacity-30 border-b ${borderColor}`}></div>
+          <div className={`h-0.5 ${lineColor} w-5/6 opacity-50`}></div>
+        </div>
+      </div>
+    );
+  }
+
   if (type === 'modern') {
     // Modern template thumbnail - with accent color highlights
     return (
