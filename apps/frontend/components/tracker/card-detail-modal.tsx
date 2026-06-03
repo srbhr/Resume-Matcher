@@ -37,6 +37,7 @@ export function CardDetailModal({
   const [loading, setLoading] = useState(false);
   const [notes, setNotes] = useState('');
   const [savingNotes, setSavingNotes] = useState(false);
+  const [notesError, setNotesError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open || !applicationId) {
@@ -50,6 +51,7 @@ export function CardDetailModal({
         if (cancelled) return;
         setDetail(data);
         setNotes(data.notes ?? '');
+        setNotesError(null);
       })
       .catch(() => {
         if (!cancelled) setDetail(null);
@@ -70,11 +72,13 @@ export function CardDetailModal({
   const handleSaveNotes = async () => {
     if (!applicationId) return;
     setSavingNotes(true);
+    setNotesError(null);
     try {
       await updateApplication(applicationId, { notes });
       onUpdated();
-    } catch {
-      // Surface nothing modal-breaking; the board owns error toasts.
+    } catch (err) {
+      // Surface the failure inline rather than silently swallowing it.
+      setNotesError((err as Error).message || t('common.error'));
     } finally {
       setSavingNotes(false);
     }
@@ -120,7 +124,10 @@ export function CardDetailModal({
                 placeholder={t('tracker.modal.notesPlaceholder')}
                 rows={3}
               />
-              <div className="flex justify-end">
+              <div className="flex items-center justify-end gap-3">
+                {notesError && (
+                  <span className="font-mono text-xs text-destructive">{notesError}</span>
+                )}
                 <Button
                   size="sm"
                   variant="outline"
