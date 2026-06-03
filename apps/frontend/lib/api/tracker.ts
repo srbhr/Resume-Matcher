@@ -85,6 +85,15 @@ function extractDetail(data: unknown): string | null {
       .filter((m): m is string => Boolean(m));
     if (messages.length > 0) return messages.join('; ');
   }
+  // A dict detail (e.g. HTTPException(detail={...})) — stringify so it reads as
+  // something rather than "[object Object]".
+  if (detail && typeof detail === 'object' && !Array.isArray(detail)) {
+    try {
+      return JSON.stringify(detail);
+    } catch {
+      return null;
+    }
+  }
   return null;
 }
 

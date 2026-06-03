@@ -28,6 +28,23 @@ def _secret_path() -> Path:
     return settings.data_dir / ".secret_key"
 
 
+def _write_secret(path: Path, key: bytes) -> None:
+    """Write the secret with 0600 perms, looping to handle partial writes."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    try:
+        remaining = key
+        while remaining:
+            written = os.write(fd, remaining)
+            remaining = remaining[written:]
+    finally:
+        os.close(fd)
+    try:
+        os.chmod(path, 0o600)
+    except OSError:  # pragma: no cover - platform dependent (e.g. Windows)
+        pass
+
+
 def _load_fernet() -> Fernet:
     """Load (or generate) the Fernet instance, cached per secret path."""
     global _fernet, _loaded_from
@@ -45,17 +62,7 @@ def _load_fernet() -> Fernet:
             pass
     else:
         key = Fernet.generate_key()
-        path.parent.mkdir(parents=True, exist_ok=True)
-        # Write with restrictive permissions from the start.
-        fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-        try:
-            os.write(fd, key)
-        finally:
-            os.close(fd)
-        try:
-            os.chmod(path, 0o600)
-        except OSError:  # pragma: no cover - platform dependent (e.g. Windows)
-            pass
+        _write_secret(path, key)
         logger.info("Generated new encryption secret at %s", path)
 
     try:
@@ -66,16 +73,7 @@ def _load_fernet() -> Fernet:
         # already unrecoverable) so key save/read flows keep working.
         logger.warning("Invalid encryption secret at %s; regenerating.", path)
         key = Fernet.generate_key()
-        path.parent.mkdir(parents=True, exist_ok=True)
-        fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-        try:
-            os.write(fd, key)
-        finally:
-            os.close(fd)
-        try:
-            os.chmod(path, 0o600)
-        except OSError:  # pragma: no cover - platform dependent (e.g. Windows)
-            pass
+        _write_secret(path, key)
         _fernet = Fernet(key)
     _loaded_from = path
     return _fernet

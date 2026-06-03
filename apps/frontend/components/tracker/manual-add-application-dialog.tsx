@@ -84,8 +84,8 @@ export function ManualAddApplicationDialog({
       reset();
       onCreated();
       onOpenChange(false);
-    } catch (err) {
-      setError((err as Error).message || t('tracker.manualAdd.failed'));
+    } catch {
+      setError(t('tracker.manualAdd.failed'));
     } finally {
       setSubmitting(false);
     }

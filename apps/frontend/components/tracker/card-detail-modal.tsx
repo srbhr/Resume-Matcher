@@ -76,9 +76,10 @@ export function CardDetailModal({
     try {
       await updateApplication(applicationId, { notes });
       onUpdated();
-    } catch (err) {
-      // Surface the failure inline rather than silently swallowing it.
-      setNotesError((err as Error).message || t('common.error'));
+    } catch {
+      // Show a generic message — never echo raw backend error text inline,
+      // which could contain sensitive values.
+      setNotesError(t('common.error'));
     } finally {
       setSavingNotes(false);
     }

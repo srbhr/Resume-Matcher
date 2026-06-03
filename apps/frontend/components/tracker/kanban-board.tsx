@@ -67,8 +67,8 @@ export function KanbanBoard() {
       // Ensure all seven keys exist even if the server omits an empty one.
       setColumns({ ...emptyColumns(), ...data.columns });
       setError(null);
-    } catch (err) {
-      setError((err as Error).message || t('tracker.errors.loadFailed'));
+    } catch {
+      setError(t('tracker.errors.loadFailed'));
     } finally {
       setLoading(false);
     }
@@ -97,24 +97,23 @@ export function KanbanBoard() {
 
   const isEmpty = allCards.length === 0;
 
-  const syncScrollHints = () => {
-    const el = scrollRef.current;
-    if (!el) return;
-    setCanScrollLeft(el.scrollLeft > 4);
-    setCanScrollRight(Math.ceil(el.scrollLeft + el.clientWidth) < el.scrollWidth - 4);
-  };
-
   useEffect(() => {
-    syncScrollHints();
     const el = scrollRef.current;
     if (!el) return;
-    el.addEventListener('scroll', syncScrollHints, { passive: true });
-    window.addEventListener('resize', syncScrollHints);
-    return () => {
-      el.removeEventListener('scroll', syncScrollHints);
-      window.removeEventListener('resize', syncScrollHints);
+    // Board width is driven by the seven fixed-width columns, so we only need to
+    // (re)attach when the board appears — not on every card-list change.
+    const sync = () => {
+      setCanScrollLeft(el.scrollLeft > 4);
+      setCanScrollRight(Math.ceil(el.scrollLeft + el.clientWidth) < el.scrollWidth - 4);
     };
-  }, [loading, isEmpty, columns]);
+    sync();
+    el.addEventListener('scroll', sync, { passive: true });
+    window.addEventListener('resize', sync);
+    return () => {
+      el.removeEventListener('scroll', sync);
+      window.removeEventListener('resize', sync);
+    };
+  }, [loading, isEmpty]);
 
   const scrollByColumn = (direction: 1 | -1) => {
     scrollRef.current?.scrollBy({ left: direction * 320, behavior: 'smooth' });
@@ -137,9 +136,12 @@ export function KanbanBoard() {
     // could be stale if another move/refresh landed in the meantime.
     setColumns(plan.next);
     updateApplication(String(active.id), { status: plan.status, position: plan.position }).catch(
-      (err) => {
-        setError((err as Error).message || t('tracker.errors.moveFailed'));
-        void load();
+      async () => {
+        // Re-sync authoritative state, THEN show a generic failure message:
+        // load() clears the error on success, so set it afterwards to keep it
+        // visible. Never echo raw backend error text (it could leak secrets).
+        await load();
+        setError(t('tracker.errors.moveFailed'));
       }
     );
   };
@@ -162,8 +164,8 @@ export function KanbanBoard() {
       await bulkUpdateStatus(ids, status);
       clearSelection();
       await load();
-    } catch (err) {
-      setError((err as Error).message || t('tracker.errors.moveFailed'));
+    } catch {
+      setError(t('tracker.errors.moveFailed'));
     }
   };
 
@@ -174,8 +176,8 @@ export function KanbanBoard() {
       await bulkDeleteApplications(ids);
       clearSelection();
       await load();
-    } catch (err) {
-      setError((err as Error).message || t('tracker.errors.deleteFailed'));
+    } catch {
+      setError(t('tracker.errors.deleteFailed'));
     }
   };
 
