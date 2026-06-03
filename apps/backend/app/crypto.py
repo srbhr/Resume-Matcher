@@ -36,6 +36,9 @@ def _write_secret(path: Path, key: bytes) -> None:
         remaining = key
         while remaining:
             written = os.write(fd, remaining)
+            if written == 0:
+                # Guard against a 0-byte write spinning forever.
+                raise OSError("os.write wrote 0 bytes to the secret file")
             remaining = remaining[written:]
     finally:
         os.close(fd)

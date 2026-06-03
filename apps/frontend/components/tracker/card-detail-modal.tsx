@@ -105,7 +105,14 @@ export function CardDetailModal({
               <span className="border border-black bg-paper-tint px-2 py-0.5">
                 {t(`tracker.columns.${detail.status}`)}
               </span>
-              {detail.applied_at && <span>{new Date(detail.applied_at).toLocaleDateString()}</span>}
+              {detail.applied_at && (
+                <span>
+                  {new Date(detail.applied_at).toLocaleDateString('en-US', {
+                    month: 'short',
+                    year: 'numeric',
+                  })}
+                </span>
+              )}
             </div>
 
             <div className="space-y-1">
