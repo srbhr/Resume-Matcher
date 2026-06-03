@@ -40,6 +40,22 @@ updateCoverLetter(resumeId: string, content: string) → void
 updateOutreachMessage(resumeId: string, content: string) → void
 ```
 
+## Application Tracker (`lib/api/tracker.ts`)
+
+```typescript
+// Kanban board (7 status columns: saved | applied | no_response |
+// response | interview | accepted | rejected)
+listApplications() → ApplicationListResponse        // { columns: Record<status, Application[]> }
+createApplication(payload: ManualApplicationCreate) → Application   // manual add from a pasted JD
+getApplicationDetail(id: string) → ApplicationDetail               // embedded JD + applied resume (resume null if deleted)
+updateApplication(id: string, payload: ApplicationUpdate) → Application   // status/position/notes/company/role/applied_at
+
+// Bulk
+bulkUpdateStatus(applicationIds: string[], status: ApplicationStatus) → ApplicationActionResponse
+deleteApplication(id: string) → void
+bulkDeleteApplications(applicationIds: string[]) → ApplicationActionResponse
+```
+
 ## Config Operations (`lib/api/config.ts`)
 
 ```typescript
@@ -47,6 +63,13 @@ fetchLlmConfig() → LLMConfig
 updateLlmConfig(config: LLMConfigUpdate) → LLMConfig
 testLlmConnection() → LLMHealthCheck
 fetchSystemStatus() → SystemStatus
+
+// Per-provider API keys (encrypted server-side; switching the active
+// provider no longer wipes another provider's key — responses always masked)
+fetchApiKeyStatus() → ApiKeyStatusResponse           // { providers: [{ provider, configured, masked_key }] }
+updateApiKeys(keys: ApiKeysUpdateRequest) → ApiKeysUpdateResponse
+deleteApiKey(provider: ApiKeyProvider) → void
+clearAllApiKeys() → void
 
 // Feature flags
 fetchFeatureConfig() → FeatureConfig
@@ -56,6 +79,8 @@ updateFeatureConfig(config: FeatureConfigUpdate) → FeatureConfig
 fetchLanguageConfig() → LanguageConfig
 updateLanguageConfig(language: string) → LanguageConfig
 ```
+
+> `updateLlmApiKey` (`PUT /config/llm-api-key`) no longer persists a key — keys are managed per-provider via the encrypted `/config/api-keys` endpoints above.
 
 ## Provider Info
 

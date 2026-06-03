@@ -6,13 +6,13 @@
 
 ## Project Overview
 
-Resume Matcher is an AI-powered application for tailoring resumes to job descriptions.
+Resume Matcher is an AI-powered application for tailoring resumes to job descriptions, with a Kanban Application Tracker for managing the job-application pipeline.
 
 | Layer | Stack |
 |-------|-------|
 | **Backend** | FastAPI + Python 3.13+, LiteLLM (multi-provider AI) |
 | **Frontend** | Next.js 16 + React 19, Tailwind CSS v4 |
-| **Database** | TinyDB (JSON file storage) |
+| **Database** | SQLite (SQLAlchemy 2.0 async / aiosqlite) |
 | **PDF** | Headless Chromium via Playwright |
 
 ---
@@ -41,7 +41,7 @@ Before exploring code, read [docs/agent/README.md](../docs/agent/README.md) for 
 cd apps/backend
 uv sync --extra dev                                  # Install Python deps (incl. test deps)
 uv run uvicorn app.main:app --reload --port 8000     # FastAPI on :8000
-uv run pytest                                        # Run backend tests (~320; LLM evals excluded)
+uv run pytest                                        # Run backend tests (~444; LLM evals excluded)
 
 # Frontend (from repo root, in a separate terminal)
 cd apps/frontend
@@ -67,18 +67,22 @@ apps/
 │   ├── app/
 │   │   ├── main.py          # Entry point
 │   │   ├── config.py        # Environment settings
-│   │   ├── database.py      # TinyDB wrapper
+│   │   ├── database.py      # Async SQLAlchemy/SQLite facade
+│   │   ├── models.py        # SQLAlchemy ORM models (Resume/Job/Improvement/Application/ApiKey)
+│   │   ├── db_engine.py     # Async + sync SQLite engines (WAL/FK pragmas)
+│   │   ├── crypto.py        # Fernet encrypt/decrypt for API keys at rest
 │   │   ├── llm.py           # LiteLLM wrapper
-│   │   ├── routers/         # API endpoints
+│   │   ├── routers/         # API endpoints (incl. applications.py = tracker)
 │   │   ├── services/        # Business logic
-│   │   ├── schemas/         # Pydantic models
-│   │   └── prompts/         # LLM prompt templates
-│   └── data/                # Database storage
+│   │   ├── schemas/         # Pydantic models (incl. applications.py)
+│   │   ├── prompts/         # LLM prompt templates
+│   │   └── scripts/         # One-time TinyDB→SQLite migration (runs on startup)
+│   └── data/                # resume_matcher.db (SQLite) + encrypted API keys + .secret_key
 │
 └── frontend/                # Next.js + React
-    ├── app/                 # Pages (dashboard, builder, tailor, print)
-    ├── components/          # UI components
-    ├── lib/                 # Utilities, API client
+    ├── app/                 # Pages (dashboard, builder, tailor, tracker, print)
+    ├── components/          # UI components (incl. tracker/)
+    ├── lib/                 # Utilities, API client (incl. api/tracker.ts)
     ├── hooks/               # Custom React hooks
     └── messages/            # i18n translations (en, es, zh, ja, pt)
 ```
@@ -109,6 +113,7 @@ apps/
 ### For Features
 | Feature | Documentation |
 |---------|---------------|
+| Application tracker | [application-tracker.md](../docs/agent/features/application-tracker.md) |
 | Custom sections | [custom-sections.md](../docs/agent/features/custom-sections.md) |
 | Resume templates | [resume-templates.md](../docs/agent/features/resume-templates.md) |
 | i18n | [i18n.md](../docs/agent/features/i18n.md) |
