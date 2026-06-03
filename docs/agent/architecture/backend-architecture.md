@@ -26,7 +26,7 @@ apps/backend/app/
 ### Health & Status
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/v1/health` | LLM health check |
+| GET | `/api/v1/health` | Liveness probe (no LLM call) |
 | GET | `/api/v1/status` | Full system status (LLM probe + DB stats, each isolated → 200 with degraded state on partial failure) |
 
 ### Configuration
@@ -34,7 +34,7 @@ apps/backend/app/
 |--------|----------|-------------|
 | GET/PUT | `/api/v1/config/llm-api-key` | LLM config (no longer persists a key) |
 | POST | `/api/v1/config/llm-test` | Test connection |
-| GET/PUT/DELETE | `/api/v1/config/api-keys` | Per-provider encrypted API keys |
+| GET/POST/DELETE | `/api/v1/config/api-keys` | Per-provider encrypted API keys |
 
 ### Resumes
 | Method | Endpoint | Description |
@@ -175,7 +175,7 @@ FRONTEND_BASE_URL=http://localhost:3000
 Non-secret config (provider/model/base/features) stored in `data/config.json`, takes
 precedence over env vars. **API keys are never written to `config.json`** — they live
 encrypted in the SQLite `api_keys` table (per-provider) and are injected into the config
-dict only at read time. Set them via `PUT /config/api-keys`; `PUT /config/llm-api-key` no
+dict only at read time. Set them via `POST /config/api-keys`; `PUT /config/llm-api-key` no
 longer persists a key.
 
 ## Error Handling

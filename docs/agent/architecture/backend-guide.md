@@ -64,7 +64,7 @@ unique index. Jobs' dynamic pipeline fields (`preview_hash(es)`, `job_keywords`,
 - **Keys** (`crypto.py`): Fernet-encrypted, per-provider, in the `api_keys` table. Secret
   at `data/.secret_key` (`chmod 600`, gitignored, atomic write; plaintext only in memory).
   `config.py` injects decrypted keys at read time and strips them on save, so secrets
-  never reach `config.json`. Set via `PUT /config/api-keys`; `PUT /config/llm-api-key` no
+  never reach `config.json`. Set via `POST /config/api-keys`; `PUT /config/llm-api-key` no
   longer persists a key.
 - **Migration** (`scripts/migrate_tinydb_to_sqlite.py`): runs on lifespan startup. Imports
   a legacy `data/database.json` (TinyDB) into SQLite if present, then renames it
@@ -89,10 +89,10 @@ unique index. Jobs' dynamic pipeline fields (`preview_hash(es)`, `job_keywords`,
 ## API Endpoints Quick Ref
 
 ```
-GET  /api/v1/health              # LLM check
+GET  /api/v1/health              # liveness probe (no LLM call)
 GET  /api/v1/status              # Full status (LLM + DB isolated; 200 on partial failure)
 GET/PUT /api/v1/config/llm-api-key            # no longer persists a key
-GET/PUT/DELETE /api/v1/config/api-keys        # per-provider encrypted keys
+GET/POST/DELETE /api/v1/config/api-keys       # per-provider encrypted keys
 POST /api/v1/resumes/upload      # PDF/DOCX
 POST /api/v1/resumes/improve     # Tailor (LLM)
 GET  /api/v1/resumes/{id}/pdf

@@ -43,15 +43,15 @@ Takeaway: a green checkmark here meant nothing, and a red one went unseen. That 
 | `llm.py` | 47% | 🟡 Pure helpers tested; **real request + `check_llm_health` + Ollama paths NOT** |
 | `routers/enrichment.py` | 38% | 🟡 Regenerate matching tested; rest mocked |
 | `config_cache.py` | 38% | 🔴 |
-| `database.py` | 34% | 🔴 Real DB never exercised — every integration test mocks `db` |
+| `database.py` | 34% | 🔴 Real DB not exercised *at this baseline* — integration tests mocked `db` (changed in Phases 4 & 7) |
 | `services/cover_letter.py` | 26% | 🔴 Untested |
 | `services/parser.py` | 20% | 🔴 Upload→markdown→JSON untested; even the pure date-restore is uncovered |
 | `pdf.py` (render) | 20% | 🔴 The "resume won't render" class |
 | `routers/resumes.py` | 18% | 🔴 Biggest file (1,796 LOC): tailor + PDF + CRUD — almost entirely untested |
 
-### 2.3 The structural truth about the integration tests
+### 2.3 The structural truth about the integration tests (at the 192-test baseline)
 
-Every `tests/integration/*` test patches `app.routers.<x>.db` and the LLM/parse calls. They verify **status codes, request validation, response shape, and router branch logic** (e.g. API-key masking, regenerate fallback matching). They are valuable *contract* tests. They do **not** prove the database persists, Playwright renders, markitdown parses, or any provider (Ollama included) actually responds.
+At the 192-test baseline, every `tests/integration/*` test patched `app.routers.<x>.db` and the LLM/parse calls. They verified **status codes, request validation, response shape, and router branch logic** (e.g. API-key masking, regenerate fallback matching) — valuable *contract* tests. They did **not** prove the database persists, Playwright renders, markitdown parses, or any provider (Ollama included) actually responds. *(Phases 4 & 7 below later added real-SQLite `isolated_db` persistence + pipeline/tracker integration tests.)*
 
 ---
 
