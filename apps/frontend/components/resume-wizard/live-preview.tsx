@@ -68,7 +68,7 @@ export function LivePreview({ resumeData, inferredSkills }: LivePreviewProps) {
                 {t('resumeWizard.preview.experience')}
               </p>
               {experience.map((item, index) => (
-                <div key={item.id || index} className="mt-2">
+                <div key={index} className="mt-2">
                   <p className="font-sans text-sm font-bold">
                     {[item.title, item.company].filter(Boolean).join(' · ')}
                   </p>
@@ -93,7 +93,7 @@ export function LivePreview({ resumeData, inferredSkills }: LivePreviewProps) {
                 {t('resumeWizard.preview.projects')}
               </p>
               {projects.map((item, index) => (
-                <p key={item.id || index} className="mt-2 font-sans text-sm font-bold">
+                <p key={index} className="mt-2 font-sans text-sm font-bold">
                   {item.name}
                 </p>
               ))}
@@ -106,7 +106,7 @@ export function LivePreview({ resumeData, inferredSkills }: LivePreviewProps) {
                 {t('resumeWizard.preview.education')}
               </p>
               {education.map((item, index) => (
-                <p key={item.id || index} className="mt-2 font-sans text-sm">
+                <p key={index} className="mt-2 font-sans text-sm">
                   {[item.degree, item.institution].filter(Boolean).join(' · ')}
                 </p>
               ))}

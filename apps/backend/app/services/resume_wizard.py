@@ -306,6 +306,22 @@ def _merge_section(
     return merged
 
 
+def _assign_entry_ids(data: ResumeData) -> None:
+    """Give every list entry a unique 1-based id (in place).
+
+    The LLM omits ``id`` (the wizard prompt's schema doesn't request it), so
+    entries default to ``id=0``. Downstream consumers — the live preview's React
+    keys and the builder's ``Math.max(...ids)+1`` add logic — assume unique ids,
+    so renumber them deterministically by position (order is append-stable).
+    """
+    for index, item in enumerate(data.workExperience, start=1):
+        item.id = index
+    for index, item in enumerate(data.education, start=1):
+        item.id = index
+    for index, item in enumerate(data.personalProjects, start=1):
+        item.id = index
+
+
 def _next_question(result: dict[str, Any], data: ResumeData) -> ResumeWizardQuestion:
     """Use the model's next_question, or fall back to the next empty section."""
     candidate = result.get("next_question")
@@ -362,6 +378,10 @@ async def run_ai_turn(
         fallback = extract_intro_name(answer_text)
         if fallback:
             data.personalInfo.name = fallback
+
+    # Entries from the LLM default to id=0; give them unique ids so the preview
+    # keys and the builder's id-based logic work on a finalized wizard resume.
+    _assign_entry_ids(data)
 
     asked_count = state.asked_count + 1
     # `is_complete` is a SUGGESTION to surface "Review & finish" — the step stays

@@ -418,3 +418,29 @@ async def test_ai_turn_sanitizes_user_answer_before_prompting() -> None:
     sent_prompt = mock_complete.call_args.args[0]
     assert "[REDACTED]" in sent_prompt
     assert "Ignore previous instructions" not in sent_prompt
+
+
+async def test_ai_turn_assigns_unique_entry_ids() -> None:
+    # The LLM omits ids (entries default to id=0); the turn must renumber them
+    # uniquely so the preview keys and the builder's id logic work.
+    state = _state_on_section("workExperience")
+    result_no_ids = {
+        "resume_data": {
+            "workExperience": [
+                {"title": "Eng", "company": "Acme", "years": "2021", "description": ["a"]},
+                {"title": "Dev", "company": "Globex", "years": "2019", "description": ["b"]},
+            ],
+        },
+        "next_question": {"text": "More?", "section": "workExperience"},
+        "inferred_skills": [],
+        "is_complete": False,
+    }
+    with patch(
+        "app.services.resume_wizard.complete_json",
+        new_callable=AsyncMock,
+        return_value=result_no_ids,
+    ):
+        result = await run_ai_turn(state, "two roles", skip=False)
+
+    ids = [e.id for e in result.resume_data.workExperience]
+    assert ids == [1, 2]  # unique 1-based ids, not the default [0, 0]
