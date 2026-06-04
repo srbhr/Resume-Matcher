@@ -51,3 +51,59 @@ def test_answer_rejects_empty_text() -> None:
 def test_answer_rejects_text_over_6000_chars() -> None:
     with pytest.raises(ValidationError):
         ResumeWizardAnswer(text="x" * 6001)
+
+
+from app.schemas.models import ResumeData
+from app.services.resume_wizard import (
+    RESUME_WIZARD_MAX_QUESTIONS,
+    build_initial_wizard_state,
+    build_review_warnings,
+    compute_progress,
+    extract_intro_name,
+    merge_unique_skills,
+    section_prompt,
+)
+
+
+def test_build_initial_state_has_intro_question() -> None:
+    state = build_initial_wizard_state()
+    assert state.step == "intro"
+    assert state.current_question.section == "intro"
+    assert state.current_question.text.startswith("Hi")
+
+
+def test_extract_intro_name_from_conversational_answer() -> None:
+    assert extract_intro_name("Hi, I'm James and I want product roles") == "James"
+    assert extract_intro_name("My name is Priya Sharma") == "Priya Sharma"
+    assert extract_intro_name("just looking around") == ""
+
+
+def test_merge_unique_skills_dedupes_case_insensitively_and_keeps_order() -> None:
+    assert merge_unique_skills(["Python", "React"], ["python", "FastAPI"]) == [
+        "Python",
+        "React",
+        "FastAPI",
+    ]
+
+
+def test_section_prompt_falls_back_for_unknown_section() -> None:
+    assert section_prompt("workExperience").lower().startswith("tell me about one role")
+    assert section_prompt("totally-unknown") == "What would you like to add next?"
+
+
+def test_compute_progress_grows_with_questions_and_caps() -> None:
+    early = compute_progress(asked_count=2, is_complete=False)
+    assert early.current == 2
+    assert early.total == 8
+    capped = compute_progress(asked_count=RESUME_WIZARD_MAX_QUESTIONS, is_complete=True)
+    assert capped.total == RESUME_WIZARD_MAX_QUESTIONS
+    assert capped.current == RESUME_WIZARD_MAX_QUESTIONS
+
+
+def test_review_warnings_identify_thin_resume() -> None:
+    data = ResumeData()
+    data.personalInfo.name = "James"
+    warnings = build_review_warnings(data)
+    assert any("contact" in w.lower() for w in warnings)
+    assert any("experience" in w.lower() for w in warnings)
+    assert any("skills" in w.lower() for w in warnings)
