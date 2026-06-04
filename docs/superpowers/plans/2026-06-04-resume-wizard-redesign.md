@@ -24,7 +24,8 @@ Backend:
 - (`routers/__init__.py` and `main.py` already mount `resume_wizard_router` — no change.)
 
 Frontend:
-- Rewrite `apps/frontend/lib/api/resume-wizard.ts` — new types + helpers. (`lib/api/index.ts` already re-exports it — no change.)
+- Rewrite `apps/frontend/lib/api/resume-wizard.ts` — new types + helpers.
+- Modify `apps/frontend/lib/api/index.ts` — its named re-export list currently includes `type ResumeWizardOption`, which the redesign removes; drop that one line (all other re-exported names still exist).
 - Create `apps/frontend/components/resume-wizard/live-preview.tsx`.
 - Delete `apps/frontend/components/resume-wizard/draft-preview.tsx`.
 - Create `apps/frontend/components/resume-wizard/question-card.tsx`.
@@ -1475,15 +1476,40 @@ export async function finalizeResumeWizard(
 }
 ```
 
-- [ ] **Step 4: Run the test to verify it passes**
+- [ ] **Step 4: Fix the barrel export in `lib/api/index.ts`**
+
+`apps/frontend/lib/api/index.ts` re-exports wizard symbols by name and includes `type ResumeWizardOption`, which no longer exists. Remove exactly that one line so the named export list compiles. The block should read:
+
+```typescript
+// Resume wizard operations
+export {
+  createInitialResumeWizardState,
+  finalizeResumeWizard,
+  postResumeWizardTurn,
+  type ResumeWizardAction,
+  type ResumeWizardFinalizeResponse,
+  type ResumeWizardSection,
+  type ResumeWizardState,
+  type ResumeWizardStep,
+  type ResumeWizardTurnRequest,
+  type ResumeWizardTurnResponse,
+} from './resume-wizard';
+```
+
+(The `type ResumeWizardOption,` line is deleted; every other name still resolves.)
+
+- [ ] **Step 5: Run the test to verify it passes**
 
 Run: `cd apps/frontend && npm run test -- resume-wizard-api.test.ts`
 Expected: 3 passed.
 
-- [ ] **Step 5: Commit**
+Also typecheck the barrel: `cd apps/frontend && ./node_modules/.bin/tsc --noEmit -p tsconfig.json 2>&1 | grep -i resume-wizard || echo "no wizard type errors"`
+Expected: `no wizard type errors`.
+
+- [ ] **Step 6: Commit**
 
 ```bash
-git add apps/frontend/lib/api/resume-wizard.ts apps/frontend/tests/resume-wizard-api.test.ts
+git add apps/frontend/lib/api/resume-wizard.ts apps/frontend/lib/api/index.ts apps/frontend/tests/resume-wizard-api.test.ts
 git commit -m "feat(wizard): adaptive wizard API client types"
 ```
 
