@@ -183,6 +183,29 @@ describe('ResumeWizardPage', () => {
     expect(screen.getByText('James')).toBeInTheDocument(); // preview rendered, no crash
   });
 
+  it('recovers from a draft with non-string personalInfo fields', async () => {
+    // A numeric name would make a later personalInfo.name.trim() throw; the
+    // normalizer must coerce personalInfo fields to strings.
+    localStorage.setItem(
+      'resume_wizard_draft',
+      JSON.stringify({
+        step: 'question',
+        current_question: { text: 'Recovered q2?', section: 'skills' },
+        resume_data: {
+          personalInfo: { name: 123, title: { bad: 1 } },
+          workExperience: [{ id: 1, title: 'Engineer', company: 'Acme' }],
+        },
+        asked_count: 1,
+      })
+    );
+
+    render(<ResumeWizardPage />);
+
+    // No crash: the question renders and the (coerced) experience shows in the preview.
+    expect(await screen.findByText('Recovered q2?')).toBeInTheDocument();
+    expect(screen.getByText(/Engineer/)).toBeInTheDocument();
+  });
+
   it('dispatches a skip turn', async () => {
     localStorage.setItem(
       'resume_wizard_draft',

@@ -15,6 +15,7 @@ from app.schemas.resume_wizard import (
     ResumeWizardTurnResponse,
 )
 from app.services.resume_wizard import (
+    RESUME_WIZARD_MAX_QUESTIONS,
     apply_back,
     apply_review,
     build_initial_wizard_state,
@@ -39,6 +40,12 @@ async def resume_wizard_turn(
             return ResumeWizardTurnResponse(state=apply_back(request.state))
         if action == "review":
             return ResumeWizardTurnResponse(state=apply_review(request.state))
+
+        # Cost guard: once the question cap is reached, stop making LLM calls for
+        # answer/skip turns and route the user to review instead of advancing.
+        if request.state.asked_count >= RESUME_WIZARD_MAX_QUESTIONS:
+            return ResumeWizardTurnResponse(state=apply_review(request.state))
+
         if action == "skip":
             state = await run_ai_turn(request.state, "", skip=True)
             return ResumeWizardTurnResponse(state=state)
@@ -79,12 +86,15 @@ async def finalize_resume_wizard(
         content = json.dumps(data, ensure_ascii=False, sort_keys=True)
         name = data.get("personalInfo", {}).get("name", "").strip() or "Resume"
         title = f"{name} Master Resume"
+        # Set the title in the atomic create so a separate update can't fail and
+        # leave a committed-but-untitled master behind (which would 409 on retry).
         resume = await db.create_resume_atomic_master(
             content=content,
             content_type="json",
             filename=f"AI Resume Wizard - {name}.json",
             processed_data=data,
             processing_status="ready",
+            title=title,
         )
         if not resume.get("is_master", False):
             try:
@@ -99,7 +109,6 @@ async def finalize_resume_wizard(
                 status_code=409,
                 detail="A master resume already exists. Delete it before creating a new one.",
             )
-        resume = await db.update_resume(resume["resume_id"], {"title": title})
         return ResumeWizardFinalizeResponse(
             message="Master resume created.",
             request_id=str(uuid4()),

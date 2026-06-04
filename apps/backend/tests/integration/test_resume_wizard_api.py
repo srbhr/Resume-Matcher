@@ -7,7 +7,10 @@ from httpx import ASGITransport, AsyncClient
 
 from app.main import app
 from app.schemas.resume_wizard import ResumeWizardHistoryEntry, ResumeWizardQuestion
-from app.services.resume_wizard import build_initial_wizard_state
+from app.services.resume_wizard import (
+    RESUME_WIZARD_MAX_QUESTIONS,
+    build_initial_wizard_state,
+)
 
 _AI_RESULT = {
     "resume_data": {
@@ -210,3 +213,29 @@ async def test_turn_skip_advances_without_modifying_resume_data(isolated_db) -> 
     assert payload["current_question"]["section"] == "skills"
     assert payload["resume_data"]["education"] == []  # skip must not apply the model's data
     assert payload["asked_count"] == 1
+
+
+async def test_turn_answer_past_cap_routes_to_review_without_llm(isolated_db) -> None:
+    transport = ASGITransport(app=app)
+    state = build_initial_wizard_state()
+    state.step = "question"
+    state.current_question.section = "skills"
+    state.asked_count = RESUME_WIZARD_MAX_QUESTIONS  # at the cap
+
+    with patch(
+        "app.services.resume_wizard.complete_json",
+        new_callable=AsyncMock,
+    ) as mock_complete:
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            response = await client.post(
+                "/api/v1/resume-wizard/turn",
+                json={
+                    "state": state.model_dump(mode="json"),
+                    "action": "answer",
+                    "answer": {"text": "one more thing"},
+                },
+            )
+
+    assert response.status_code == 200
+    assert response.json()["state"]["step"] == "review"
+    mock_complete.assert_not_awaited()  # cap guard must skip the LLM call

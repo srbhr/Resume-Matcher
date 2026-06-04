@@ -13,7 +13,9 @@ function dedupeSkills(skills: string[]): string[] {
   const unique: string[] = [];
   for (const skill of skills) {
     const trimmed = skill.trim();
-    const key = trimmed.toLocaleLowerCase();
+    // Locale-invariant casing (matches the backend's casefold) — toLocaleLowerCase
+    // would diverge in some locales (e.g. Turkish dotted/dotless I).
+    const key = trimmed.toLowerCase();
     if (!trimmed || seen.has(key)) continue;
     seen.add(key);
     unique.push(trimmed);
@@ -29,7 +31,7 @@ export function LivePreview({ resumeData, inferredSkills }: LivePreviewProps) {
   const education = resumeData.education ?? [];
   const technicalSkills = resumeData.additional?.technicalSkills ?? [];
   const skills = dedupeSkills([...technicalSkills, ...inferredSkills]);
-  const inferredKeys = new Set(inferredSkills.map((s) => s.trim().toLocaleLowerCase()));
+  const inferredKeys = new Set(inferredSkills.map((s) => s.trim().toLowerCase()));
 
   const hasAnyContent =
     Boolean(personalInfo.name?.trim()) ||
@@ -65,8 +67,8 @@ export function LivePreview({ resumeData, inferredSkills }: LivePreviewProps) {
               <p className="border-b border-black pb-1 font-mono text-xs font-bold uppercase tracking-wider">
                 {t('resumeWizard.preview.experience')}
               </p>
-              {experience.map((item) => (
-                <div key={item.id} className="mt-2">
+              {experience.map((item, index) => (
+                <div key={item.id || index} className="mt-2">
                   <p className="font-sans text-sm font-bold">
                     {[item.title, item.company].filter(Boolean).join(' · ')}
                   </p>
@@ -90,8 +92,8 @@ export function LivePreview({ resumeData, inferredSkills }: LivePreviewProps) {
               <p className="border-b border-black pb-1 font-mono text-xs font-bold uppercase tracking-wider">
                 {t('resumeWizard.preview.projects')}
               </p>
-              {projects.map((item) => (
-                <p key={item.id} className="mt-2 font-sans text-sm font-bold">
+              {projects.map((item, index) => (
+                <p key={item.id || index} className="mt-2 font-sans text-sm font-bold">
                   {item.name}
                 </p>
               ))}
@@ -103,8 +105,8 @@ export function LivePreview({ resumeData, inferredSkills }: LivePreviewProps) {
               <p className="border-b border-black pb-1 font-mono text-xs font-bold uppercase tracking-wider">
                 {t('resumeWizard.preview.education')}
               </p>
-              {education.map((item) => (
-                <p key={item.id} className="mt-2 font-sans text-sm">
+              {education.map((item, index) => (
+                <p key={item.id || index} className="mt-2 font-sans text-sm">
                   {[item.degree, item.institution].filter(Boolean).join(' · ')}
                 </p>
               ))}
@@ -118,7 +120,7 @@ export function LivePreview({ resumeData, inferredSkills }: LivePreviewProps) {
               </p>
               <div className="mt-2 flex flex-wrap gap-2">
                 {skills.map((skill) => {
-                  const isNew = inferredKeys.has(skill.toLocaleLowerCase());
+                  const isNew = inferredKeys.has(skill.toLowerCase());
                   return (
                     <span
                       key={skill}

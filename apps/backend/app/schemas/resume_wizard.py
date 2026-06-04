@@ -2,7 +2,7 @@
 
 from typing import Literal
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from app.schemas.models import ResumeData
 
@@ -41,6 +41,13 @@ class ResumeWizardAnswer(BaseModel):
     """User answer for one wizard turn."""
 
     text: str = Field(min_length=1, max_length=6000)
+
+    @field_validator("text")
+    @classmethod
+    def _reject_blank(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("answer text must not be blank")
+        return value
 
 
 class ResumeWizardHistoryEntry(BaseModel):

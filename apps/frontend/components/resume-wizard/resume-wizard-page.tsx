@@ -38,6 +38,29 @@ function asArray<T>(value: unknown): T[] {
   return Array.isArray(value) ? (value as T[]) : [];
 }
 
+function asString(value: unknown, fallback = ''): string {
+  return typeof value === 'string' ? value : fallback;
+}
+
+/** Coerce every personalInfo field to a string so a corrupt draft (e.g. a numeric
+ *  name) can't make a later `.trim()` throw and trap the user in a reload loop. */
+function normalizeDraftPersonalInfo(
+  value: unknown,
+  fallback: NonNullable<ResumeWizardState['resume_data']['personalInfo']>
+): ResumeWizardState['resume_data']['personalInfo'] {
+  if (!isRecord(value)) return fallback;
+  return {
+    name: asString(value.name, fallback.name ?? ''),
+    title: asString(value.title, fallback.title ?? ''),
+    email: asString(value.email, fallback.email ?? ''),
+    phone: asString(value.phone, fallback.phone ?? ''),
+    location: asString(value.location, fallback.location ?? ''),
+    website: asString(value.website, fallback.website ?? ''),
+    linkedin: asString(value.linkedin, fallback.linkedin ?? ''),
+    github: asString(value.github, fallback.github ?? ''),
+  };
+}
+
 /**
  * Deeply coerce a possibly-corrupt persisted `resume_data` into a safe shape.
  * The list fields are what the preview/cards iterate, so a non-array there
@@ -52,9 +75,7 @@ function normalizeDraftResumeData(
   const additional = isRecord(value.additional) ? value.additional : {};
   return {
     ...fallback,
-    personalInfo: isRecord(value.personalInfo)
-      ? (value.personalInfo as ResumeWizardState['resume_data']['personalInfo'])
-      : fallback.personalInfo,
+    personalInfo: normalizeDraftPersonalInfo(value.personalInfo, fallback.personalInfo ?? {}),
     summary: typeof value.summary === 'string' ? value.summary : fallback.summary,
     workExperience: asArray(value.workExperience),
     education: asArray(value.education),
@@ -157,7 +178,12 @@ export function ResumeWizardPage() {
 
   useEffect(() => {
     if (!isLoaded || state.step === 'complete') return;
-    localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(state));
+    try {
+      localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(state));
+    } catch {
+      // Draft persistence is a best-effort nicety; never let a quota/serialization
+      // error (e.g. a large history) crash the wizard.
+    }
   }, [isLoaded, state]);
 
   const sectionLabel = t(`resumeWizard.sections.${state.current_question.section}`);
@@ -208,6 +234,9 @@ export function ResumeWizardPage() {
     setIsBusy(true);
     try {
       const response = await finalizeResumeWizard(state);
+      if (!response.resume_id) {
+        throw new Error('Finalize returned no resume id');
+      }
       localStorage.setItem(MASTER_RESUME_KEY, response.resume_id);
       localStorage.removeItem(DRAFT_STORAGE_KEY);
       incrementResumes();

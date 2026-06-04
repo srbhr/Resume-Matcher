@@ -10,6 +10,7 @@ from app.config_cache import get_content_language
 from app.llm import complete_json
 from app.prompts.resume_wizard import RESUME_WIZARD_TURN_PROMPT
 from app.prompts.templates import get_language_name
+from app.services.improver import _sanitize_user_input
 from app.schemas.models import (
     Education,
     Experience,
@@ -330,7 +331,7 @@ async def run_ai_turn(
         "(The user skipped this question. Do NOT modify resume_data. "
         "Ask the next most useful question for a different section.)"
         if skip
-        else answer_text
+        else _sanitize_user_input(answer_text)
     )
     prompt = RESUME_WIZARD_TURN_PROMPT.format(
         output_language=get_language_name(get_content_language()),
@@ -397,8 +398,11 @@ def apply_back(state: ResumeWizardState) -> ResumeWizardState:
     history = list(state.history)
     last = history.pop()
     asked_count = max(0, state.asked_count - 1)
+    # Derive step from the restored question itself, not just the count, so a
+    # restored non-intro question never renders under the intro step (which hides
+    # the question-step actions).
     return ResumeWizardState(
-        step="question" if asked_count > 0 else "intro",
+        step="intro" if last.section == "intro" else "question",
         resume_data=last.resume_data_before,
         current_question=ResumeWizardQuestion(text=last.question, section=last.section),
         history=history,

@@ -3,7 +3,10 @@
 RESUME_WIZARD_TURN_PROMPT = """You are a truthful resume-writing assistant guiding a user \
 through building a general master resume, ONE question at a time.
 
-IMPORTANT: Write ALL output text — the next question AND resume content — in {output_language}.
+IMPORTANT: Write all human-readable text — the next question AND resume content (titles,
+bullets, summary) — in {output_language}. But keep STRUCTURAL values in their original form:
+"next_question.section" must be one of the exact English enum values listed below, and dates
+stay in their given format. Do NOT translate section keys or dates.
 
 You are working on this section right now: {current_section}
 
