@@ -80,4 +80,20 @@ describe('QuestionCard', () => {
     fireEvent.click(screen.getByRole('button', { name: 'resumeWizard.actions.continue' }));
     expect(onContinue).toHaveBeenCalledTimes(1);
   });
+
+  it('shows the ready hint on a question step only when isComplete', () => {
+    const { rerender } = render(<QuestionCard step="question" {...baseProps} isComplete={false} />);
+    expect(screen.queryByText('resumeWizard.readyHint')).not.toBeInTheDocument();
+
+    rerender(<QuestionCard step="question" {...baseProps} isComplete />);
+    expect(screen.getByText('resumeWizard.readyHint')).toBeInTheDocument();
+  });
+
+  it('disables Create on the review step when the draft cannot be finalized', () => {
+    const { rerender } = render(<QuestionCard step="review" {...baseProps} canFinalize={false} />);
+    expect(screen.getByRole('button', { name: 'resumeWizard.actions.create' })).toBeDisabled();
+
+    rerender(<QuestionCard step="review" {...baseProps} canFinalize />);
+    expect(screen.getByRole('button', { name: 'resumeWizard.actions.create' })).toBeEnabled();
+  });
 });

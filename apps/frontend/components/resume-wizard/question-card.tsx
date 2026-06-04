@@ -22,6 +22,10 @@ interface QuestionCardProps {
   onFinalize: () => void;
   onKeepAdding: () => void;
   warnings: string[];
+  /** AI's "you have enough to finish" signal — surfaces a ready hint on question steps. */
+  isComplete?: boolean;
+  /** Whether the draft can be finalized (e.g. has a name); gates the Create button. */
+  canFinalize?: boolean;
 }
 
 export function QuestionCard({
@@ -40,6 +44,8 @@ export function QuestionCard({
   onFinalize,
   onKeepAdding,
   warnings,
+  isComplete = false,
+  canFinalize = true,
 }: QuestionCardProps) {
   const { t } = useTranslations();
   const isReview = step === 'review';
@@ -117,10 +123,22 @@ export function QuestionCard({
           </div>
         )}
 
+        {isQuestion && isComplete && (
+          <p className="flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-wider text-green-700">
+            <span aria-hidden="true" className="inline-block h-3 w-3 bg-green-700" />
+            {t('resumeWizard.readyHint')}
+          </p>
+        )}
+
         <div className="flex flex-wrap gap-3 border-t-2 border-black pt-5">
           {isReview ? (
             <>
-              <Button type="button" variant="success" onClick={onFinalize} disabled={isBusy}>
+              <Button
+                type="button"
+                variant="success"
+                onClick={onFinalize}
+                disabled={isBusy || !canFinalize}
+              >
                 {isBusy ? t('common.saving') : t('resumeWizard.actions.create')}
               </Button>
               <Button type="button" variant="outline" onClick={onKeepAdding} disabled={isBusy}>

@@ -887,6 +887,7 @@
     "title": "Resume Wizard",
     "answerLabel": "Your answer",
     "keepAddingPrompt": "What would you like to add or change?",
+    "readyHint": "You have enough for a solid resume — review and finish whenever you are ready.",
     "sections": {
       "intro": "Getting started",
       "contact": "Contact details",

@@ -111,6 +111,14 @@ def test_review_warnings_identify_thin_resume() -> None:
     assert any("contact" in w.lower() for w in warnings)
     assert any("experience" in w.lower() for w in warnings)
     assert any("skills" in w.lower() for w in warnings)
+    # Name is set, so there must be NO name warning.
+    assert not any("name" in w.lower() for w in warnings)
+
+
+def test_review_warnings_flag_missing_name() -> None:
+    data = ResumeData()  # name is empty
+    warnings = build_review_warnings(data)
+    assert any("name" in w.lower() for w in warnings)
 
 
 from unittest.mock import AsyncMock, patch

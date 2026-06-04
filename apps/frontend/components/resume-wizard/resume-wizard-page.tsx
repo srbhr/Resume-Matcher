@@ -259,6 +259,8 @@ export function ResumeWizardPage() {
             onFinalize={handleFinalize}
             onKeepAdding={handleKeepAdding}
             warnings={state.warnings}
+            isComplete={state.is_complete}
+            canFinalize={Boolean(state.resume_data.personalInfo?.name?.trim())}
           />
         </div>
 

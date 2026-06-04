@@ -887,6 +887,7 @@
     "title": "Asistente de currículum",
     "answerLabel": "Tu respuesta",
     "keepAddingPrompt": "¿Qué te gustaría añadir o cambiar?",
+    "readyHint": "Ya tienes suficiente para un currículum sólido: revísalo y termínalo cuando quieras.",
     "sections": {
       "intro": "Primeros pasos",
       "contact": "Datos de contacto",

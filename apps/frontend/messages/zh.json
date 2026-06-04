@@ -887,6 +887,7 @@
     "title": "简历向导",
     "answerLabel": "你的回答",
     "keepAddingPrompt": "你想添加或修改什么？",
+    "readyHint": "你已经有足够的内容来生成一份出色的简历——随时可以查看并完成。",
     "sections": {
       "intro": "开始使用",
       "contact": "联系方式",

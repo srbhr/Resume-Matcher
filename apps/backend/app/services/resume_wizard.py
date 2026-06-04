@@ -122,6 +122,10 @@ def build_review_warnings(data: ResumeData) -> list[str]:
     """Deterministic, gentle notes about useful resume facts that are missing."""
     warnings: list[str] = []
     info = data.personalInfo
+    # Name is the one HARD requirement for finalize (the request 422s without it),
+    # so surface it at review rather than letting the user hit a generic failure.
+    if not info.name.strip():
+        warnings.append("Add your name — it's required to create your resume.")
     contact = [
         info.email,
         info.phone,

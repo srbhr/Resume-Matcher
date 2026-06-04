@@ -887,6 +887,7 @@
     "title": "Assistente de currículo",
     "answerLabel": "Sua resposta",
     "keepAddingPrompt": "O que você gostaria de adicionar ou alterar?",
+    "readyHint": "Você já tem o suficiente para um currículo sólido — revise e finalize quando quiser.",
     "sections": {
       "intro": "Primeiros passos",
       "contact": "Dados de contato",
