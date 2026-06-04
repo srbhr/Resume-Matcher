@@ -30,6 +30,15 @@ describe('resume wizard api', () => {
     expect(state.progress.total).toBe(8);
   });
 
+  it('returns a fresh state object each call (no shared mutable references)', () => {
+    const a = createInitialResumeWizardState();
+    const b = createInitialResumeWizardState();
+    expect(a).not.toBe(b);
+    expect(a.history).not.toBe(b.history);
+    expect(a.resume_data).not.toBe(b.resume_data);
+    expect(a.resume_data.workExperience).not.toBe(b.resume_data.workExperience);
+  });
+
   it('posts a turn to the resume-wizard endpoint', async () => {
     const state = createInitialResumeWizardState();
     await postResumeWizardTurn({ state, action: 'answer', answer: { text: "I'm James." } });
@@ -37,7 +46,10 @@ describe('resume wizard api', () => {
     const [url, init] = fetchMock.mock.calls[0];
     expect(url).toBe('/api/v1/resume-wizard/turn');
     expect(init.method).toBe('POST');
-    expect(JSON.parse(init.body as string).answer.text).toBe("I'm James.");
+    const body = JSON.parse(init.body as string);
+    expect(body.action).toBe('answer');
+    expect(body.answer.text).toBe("I'm James.");
+    expect(body.state.step).toBe('intro');
   });
 
   it('throws endpoint text when finalize fails', async () => {
