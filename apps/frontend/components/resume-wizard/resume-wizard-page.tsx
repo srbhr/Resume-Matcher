@@ -34,6 +34,53 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }
 
+function asArray<T>(value: unknown): T[] {
+  return Array.isArray(value) ? (value as T[]) : [];
+}
+
+/**
+ * Deeply coerce a possibly-corrupt persisted `resume_data` into a safe shape.
+ * The list fields are what the preview/cards iterate, so a non-array there
+ * (e.g. a hand-edited or shape-drifted draft) would otherwise crash render and
+ * trap the user in an unrecoverable reload loop. Coerce them to arrays.
+ */
+function normalizeDraftResumeData(
+  value: unknown,
+  fallback: ResumeWizardState['resume_data']
+): ResumeWizardState['resume_data'] {
+  if (!isRecord(value)) return fallback;
+  const additional = isRecord(value.additional) ? value.additional : {};
+  return {
+    ...fallback,
+    personalInfo: isRecord(value.personalInfo)
+      ? (value.personalInfo as ResumeWizardState['resume_data']['personalInfo'])
+      : fallback.personalInfo,
+    summary: typeof value.summary === 'string' ? value.summary : fallback.summary,
+    workExperience: asArray(value.workExperience),
+    education: asArray(value.education),
+    personalProjects: asArray(value.personalProjects),
+    additional: {
+      technicalSkills: asArray<string>(additional.technicalSkills),
+      languages: asArray<string>(additional.languages),
+      certificationsTraining: asArray<string>(additional.certificationsTraining),
+      awards: asArray<string>(additional.awards),
+    },
+    sectionMeta: asArray(value.sectionMeta),
+    customSections: isRecord(value.customSections)
+      ? (value.customSections as ResumeWizardState['resume_data']['customSections'])
+      : {},
+  };
+}
+
+/** First section still missing content (matches the backend gap heuristic); falls
+ *  back to 'skills' (its additional.* merge is the broadest catch-all). */
+function firstGapSection(data: ResumeWizardState['resume_data']): ResumeWizardSection {
+  if (!data.workExperience?.length) return 'workExperience';
+  if (!data.education?.length) return 'education';
+  if (!data.personalProjects?.length) return 'personalProjects';
+  return 'skills';
+}
+
 /** Validate a saved draft against the current shape; fall back to a fresh state. */
 function readSavedDraft(): ResumeWizardState | null {
   try {
@@ -55,9 +102,7 @@ function readSavedDraft(): ResumeWizardState | null {
       ...initial,
       ...parsed,
       step,
-      resume_data: isRecord(parsed.resume_data)
-        ? (parsed.resume_data as ResumeWizardState['resume_data'])
-        : initial.resume_data,
+      resume_data: normalizeDraftResumeData(parsed.resume_data, initial.resume_data),
       current_question: {
         text:
           typeof question.text === 'string' && question.text.trim()
@@ -139,7 +184,12 @@ export function ResumeWizardPage() {
     setState((current) => ({
       ...current,
       step: 'question',
-      current_question: { text: t('resumeWizard.keepAddingPrompt'), section: 'review' },
+      // Target the next content gap so the answer actually merges — the `review`
+      // section is a no-op in the backend merge and would silently drop the answer.
+      current_question: {
+        text: t('resumeWizard.keepAddingPrompt'),
+        section: firstGapSection(current.resume_data),
+      },
     }));
 
   const handleFinalize = async () => {

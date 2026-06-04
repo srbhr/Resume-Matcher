@@ -159,4 +159,112 @@ describe('ResumeWizardPage', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('resumeWizard.errors.turnFailed');
     expect(screen.getByText('Skills?')).toBeInTheDocument();
   });
+
+  it('recovers from a corrupt saved draft without crashing the render', async () => {
+    // workExperience is a string, not an array — the unguarded path would crash
+    // when the preview calls .map(). The normalizer must coerce it to [].
+    localStorage.setItem(
+      'resume_wizard_draft',
+      JSON.stringify({
+        step: 'question',
+        current_question: { text: 'Recovered question?', section: 'skills' },
+        resume_data: { workExperience: 'x', additional: 'nope', personalInfo: { name: 'James' } },
+        asked_count: 1,
+      })
+    );
+
+    render(<ResumeWizardPage />);
+
+    expect(await screen.findByText('Recovered question?')).toBeInTheDocument();
+    expect(screen.getByText('James')).toBeInTheDocument(); // preview rendered, no crash
+  });
+
+  it('dispatches a skip turn', async () => {
+    localStorage.setItem(
+      'resume_wizard_draft',
+      JSON.stringify(
+        makeState({
+          step: 'question',
+          current_question: { text: 'Skills?', section: 'skills' },
+          asked_count: 1,
+        })
+      )
+    );
+    mockedPostTurn.mockResolvedValueOnce({
+      state: makeState({
+        step: 'question',
+        current_question: { text: 'Next?', section: 'education' },
+        asked_count: 2,
+      }),
+    });
+
+    render(<ResumeWizardPage />);
+    fireEvent.click(await screen.findByRole('button', { name: 'resumeWizard.actions.skip' }));
+
+    await waitFor(() => {
+      expect(mockedPostTurn).toHaveBeenCalledWith(
+        expect.objectContaining({ action: 'skip' })
+      );
+    });
+    expect(await screen.findByText('Next?')).toBeInTheDocument();
+  });
+
+  it('dispatches a back turn when history exists', async () => {
+    localStorage.setItem(
+      'resume_wizard_draft',
+      JSON.stringify(
+        makeState({
+          step: 'question',
+          current_question: { text: 'Skills?', section: 'skills' },
+          asked_count: 1,
+          history: [
+            {
+              question: 'Where did you work?',
+              answer: 'Acme',
+              section: 'workExperience',
+              resume_data_before: createInitialResumeWizardState().resume_data,
+            },
+          ],
+        })
+      )
+    );
+    mockedPostTurn.mockResolvedValueOnce({
+      state: makeState({
+        step: 'question',
+        current_question: { text: 'Where did you work?', section: 'workExperience' },
+        asked_count: 0,
+      }),
+    });
+
+    render(<ResumeWizardPage />);
+    fireEvent.click(await screen.findByRole('button', { name: 'resumeWizard.actions.back' }));
+
+    await waitFor(() => {
+      expect(mockedPostTurn).toHaveBeenCalledWith(expect.objectContaining({ action: 'back' }));
+    });
+  });
+
+  it('keep-adding returns to a question step locally without an API call', async () => {
+    localStorage.setItem(
+      'resume_wizard_draft',
+      JSON.stringify(
+        makeState({
+          step: 'review',
+          current_question: { text: 'Review', section: 'review' },
+          resume_data: {
+            ...createInitialResumeWizardState().resume_data,
+            personalInfo: { name: 'James' },
+          },
+          warnings: ['Add skills.'],
+        })
+      )
+    );
+
+    render(<ResumeWizardPage />);
+    fireEvent.click(await screen.findByRole('button', { name: 'resumeWizard.actions.keepAdding' }));
+
+    // Returns to a question step (textbox visible) — no backend turn dispatched.
+    expect(await screen.findByRole('textbox')).toBeInTheDocument();
+    expect(mockedPostTurn).not.toHaveBeenCalled();
+  });
 });
