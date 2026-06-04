@@ -883,6 +883,61 @@
     "resetDatabase": "¿Restablecer todo y empezar de nuevo?",
     "resetDatabaseDescription": "Esto eliminará permanentemente cada currículum, descripción de trabajo y documento generado."
   },
+  "resumeWizard": {
+    "title": "Asistente de currículum",
+    "answerLabel": "Tu respuesta",
+    "keepAddingPrompt": "¿Qué te gustaría añadir o cambiar?",
+    "sections": {
+      "intro": "Primeros pasos",
+      "contact": "Datos de contacto",
+      "summary": "Resumen profesional",
+      "workExperience": "Experiencia laboral",
+      "internships": "Prácticas",
+      "education": "Educación",
+      "personalProjects": "Proyectos",
+      "skills": "Habilidades",
+      "review": "Revisión"
+    },
+    "actions": {
+      "continue": "Continuar",
+      "skip": "Omitir",
+      "back": "Atrás",
+      "review": "Revisar y finalizar",
+      "create": "Crear currículum maestro",
+      "keepAdding": "Seguir añadiendo",
+      "backToDashboard": "Volver al panel"
+    },
+    "preview": {
+      "label": "Borrador en vivo",
+      "empty": "Tu currículum aparece aquí a medida que respondes.",
+      "unnamed": "Currículum sin nombre",
+      "experience": "Experiencia",
+      "education": "Educación",
+      "projects": "Proyectos",
+      "skills": "Habilidades"
+    },
+    "errors": {
+      "turnFailed": "El asistente no pudo guardar esa respuesta. Inténtalo de nuevo.",
+      "finalizeFailed": "El asistente no pudo crear tu currículum maestro. Inténtalo de nuevo."
+    },
+    "entry": {
+      "kicker": "Configuración del currículum maestro",
+      "title": "Elige tu punto de partida",
+      "description": "Crea tu currículum maestro a partir de un documento existente o constrúyelo paso a paso con ayuda de IA.",
+      "upload": {
+        "kicker": "Archivo existente",
+        "title": "Subir un currículum",
+        "description": "Empieza con un archivo PDF, DOC o DOCX y deja que Resume Matcher lo convierta en tu perfil maestro.",
+        "action": "Subir currículum"
+      },
+      "wizard": {
+        "kicker": "Guiado por IA",
+        "title": "Construir con el asistente de IA",
+        "description": "Responde preguntas enfocadas y deja que el asistente arme un primer borrador sólido de tu currículum maestro.",
+        "action": "Iniciar asistente"
+      }
+    }
+  },
   "tracker": {
     "scroll": {
       "prev": "Desplazar a la izquierda",

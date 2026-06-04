@@ -883,6 +883,61 @@
     "resetDatabase": "Redefinir tudo e começar de novo?",
     "resetDatabaseDescription": "Isso excluirá permanentemente cada currículo, descrição de vaga e documento gerado."
   },
+  "resumeWizard": {
+    "title": "Assistente de currículo",
+    "answerLabel": "Sua resposta",
+    "keepAddingPrompt": "O que você gostaria de adicionar ou alterar?",
+    "sections": {
+      "intro": "Primeiros passos",
+      "contact": "Dados de contato",
+      "summary": "Resumo profissional",
+      "workExperience": "Experiência profissional",
+      "internships": "Estágios",
+      "education": "Formação acadêmica",
+      "personalProjects": "Projetos",
+      "skills": "Habilidades",
+      "review": "Revisão"
+    },
+    "actions": {
+      "continue": "Continuar",
+      "skip": "Pular",
+      "back": "Voltar",
+      "review": "Revisar e concluir",
+      "create": "Criar currículo mestre",
+      "keepAdding": "Continuar adicionando",
+      "backToDashboard": "Voltar ao painel"
+    },
+    "preview": {
+      "label": "Rascunho ao vivo",
+      "empty": "Seu currículo aparece aqui conforme você responde.",
+      "unnamed": "Currículo sem nome",
+      "experience": "Experiência",
+      "education": "Formação",
+      "projects": "Projetos",
+      "skills": "Habilidades"
+    },
+    "errors": {
+      "turnFailed": "O assistente não conseguiu salvar essa resposta. Tente novamente.",
+      "finalizeFailed": "O assistente não conseguiu criar seu currículo mestre. Tente novamente."
+    },
+    "entry": {
+      "kicker": "Configuração do currículo mestre",
+      "title": "Escolha seu ponto de partida",
+      "description": "Crie seu currículo mestre a partir de um documento existente ou construa-o passo a passo com orientação de IA.",
+      "upload": {
+        "kicker": "Arquivo existente",
+        "title": "Enviar um currículo",
+        "description": "Comece com um arquivo PDF, DOC ou DOCX e deixe o Resume Matcher convertê-lo no seu perfil mestre.",
+        "action": "Enviar currículo"
+      },
+      "wizard": {
+        "kicker": "Guiado por IA",
+        "title": "Criar com o assistente de IA",
+        "description": "Responda a perguntas objetivas e deixe o assistente montar um primeiro rascunho forte do seu currículo mestre.",
+        "action": "Iniciar assistente"
+      }
+    }
+  },
   "tracker": {
     "scroll": {
       "prev": "Rolar para a esquerda",

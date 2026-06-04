@@ -883,6 +883,61 @@
     "resetDatabase": "Reset everything and start over?",
     "resetDatabaseDescription": "This permanently deletes every resume, job description, and generated document."
   },
+  "resumeWizard": {
+    "title": "Resume Wizard",
+    "answerLabel": "Your answer",
+    "keepAddingPrompt": "What would you like to add or change?",
+    "sections": {
+      "intro": "Getting started",
+      "contact": "Contact details",
+      "summary": "Professional summary",
+      "workExperience": "Work experience",
+      "internships": "Internships",
+      "education": "Education",
+      "personalProjects": "Projects",
+      "skills": "Skills",
+      "review": "Review"
+    },
+    "actions": {
+      "continue": "Continue",
+      "skip": "Skip",
+      "back": "Back",
+      "review": "Review & finish",
+      "create": "Create master resume",
+      "keepAdding": "Keep adding",
+      "backToDashboard": "Back to Dashboard"
+    },
+    "preview": {
+      "label": "Live Draft",
+      "empty": "Your resume appears here as you answer.",
+      "unnamed": "Unnamed Resume",
+      "experience": "Experience",
+      "education": "Education",
+      "projects": "Projects",
+      "skills": "Skills"
+    },
+    "errors": {
+      "turnFailed": "The wizard could not save that answer. Try again.",
+      "finalizeFailed": "The wizard could not create your master resume. Try again."
+    },
+    "entry": {
+      "kicker": "Master Resume Setup",
+      "title": "Choose your starting point",
+      "description": "Create your master resume from an existing document or build it step by step with AI guidance.",
+      "upload": {
+        "kicker": "Existing File",
+        "title": "Upload a resume",
+        "description": "Start from a PDF, DOC, or DOCX file and let Resume Matcher parse it into your master profile.",
+        "action": "Upload Resume"
+      },
+      "wizard": {
+        "kicker": "AI Guided",
+        "title": "Build with AI wizard",
+        "description": "Answer focused prompts and let the wizard assemble a strong first master resume draft.",
+        "action": "Start Wizard"
+      }
+    }
+  },
   "tracker": {
     "scroll": {
       "prev": "Scroll left",
