@@ -326,3 +326,61 @@ def test_apply_review_builds_warnings_without_llm() -> None:
     assert result.step == "review"
     assert result.current_question.section == "review"
     assert result.warnings  # thin resume -> at least one note
+
+
+_GLOBEX_ROLE = {
+    "id": 1,
+    "title": "PM",
+    "company": "Globex",
+    "years": "2019 - 2021",
+    "description": ["Ran the roadmap"],
+}
+_ACME_ROLE = {
+    "id": 2,
+    "title": "Engineer",
+    "company": "Acme",
+    "years": "2021 - Present",
+    "description": ["Shipped billing"],
+}
+
+
+async def test_ai_turn_full_echo_keeps_all_experience_in_order() -> None:
+    # Model echoes the FULL list (existing + new) — both must survive, in order.
+    state = _state_on_section("workExperience")
+    state.resume_data = ResumeData.model_validate({"workExperience": [_GLOBEX_ROLE]})
+
+    full_echo = {
+        "resume_data": {"workExperience": [_GLOBEX_ROLE, _ACME_ROLE]},
+        "next_question": {"text": "More roles?", "section": "workExperience"},
+        "inferred_skills": [],
+        "is_complete": False,
+    }
+    with patch(
+        "app.services.resume_wizard.complete_json",
+        new_callable=AsyncMock,
+        return_value=full_echo,
+    ):
+        result = await run_ai_turn(state, "I also worked at Acme", skip=False)
+
+    assert [e.company for e in result.resume_data.workExperience] == ["Globex", "Acme"]
+
+
+async def test_ai_turn_partial_echo_does_not_drop_prior_experience() -> None:
+    # Model returns ONLY the new role (a common mis-read) — prior role must NOT be lost.
+    state = _state_on_section("workExperience")
+    state.resume_data = ResumeData.model_validate({"workExperience": [_GLOBEX_ROLE]})
+
+    partial = {
+        "resume_data": {"workExperience": [_ACME_ROLE]},
+        "next_question": {"text": "More roles?", "section": "workExperience"},
+        "inferred_skills": [],
+        "is_complete": False,
+    }
+    with patch(
+        "app.services.resume_wizard.complete_json",
+        new_callable=AsyncMock,
+        return_value=partial,
+    ):
+        result = await run_ai_turn(state, "I also worked at Acme", skip=False)
+
+    assert {e.company for e in result.resume_data.workExperience} == {"Globex", "Acme"}

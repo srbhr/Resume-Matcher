@@ -3,13 +3,20 @@
 import copy
 import json
 import re
+from collections.abc import Callable
 from typing import Any
 
 from app.config_cache import get_content_language
 from app.llm import complete_json
 from app.prompts.resume_wizard import RESUME_WIZARD_TURN_PROMPT
 from app.prompts.templates import get_language_name
-from app.schemas.models import ResumeData, normalize_resume_data
+from app.schemas.models import (
+    Education,
+    Experience,
+    Project,
+    ResumeData,
+    normalize_resume_data,
+)
 from app.schemas.resume_wizard import (
     ResumeWizardHistoryEntry,
     ResumeWizardProgress,
@@ -168,6 +175,53 @@ def _next_gap_section(data: ResumeData) -> str:
     return "review"
 
 
+def _merge_entries[T](
+    existing: list[T],
+    updated: list[T],
+    key: Callable[[T], tuple[str, ...]],
+) -> list[T]:
+    """Union list entries by identity signature.
+
+    A partial model reply (e.g. it echoes only the role the user just described
+    instead of the full list) must NOT erase earlier entries. So: existing
+    entries the model omits are kept, entries it echoes (same signature) are
+    replaced in place, and genuinely new entries are appended. Signatures are
+    content-based rather than ``id``-based because wizard entry ids default to 0.
+    """
+    result = list(existing)
+    index: dict[tuple[str, ...], int] = {}
+    for position, item in enumerate(result):
+        index.setdefault(key(item), position)
+    for item in updated:
+        signature = key(item)
+        if signature in index:
+            result[index[signature]] = item
+        else:
+            index[signature] = len(result)
+            result.append(item)
+    return result
+
+
+def _experience_key(item: Experience) -> tuple[str, ...]:
+    return (
+        item.title.strip().casefold(),
+        item.company.strip().casefold(),
+        item.years.strip().casefold(),
+    )
+
+
+def _education_key(item: Education) -> tuple[str, ...]:
+    return (
+        item.institution.strip().casefold(),
+        item.degree.strip().casefold(),
+        item.years.strip().casefold(),
+    )
+
+
+def _project_key(item: Project) -> tuple[str, ...]:
+    return (item.name.strip().casefold(), item.years.strip().casefold())
+
+
 def _merge_section(
     *,
     existing: ResumeData,
@@ -198,17 +252,23 @@ def _merge_section(
 
     if section in {"workExperience", "internships"}:
         if "workExperience" in raw_updated:
-            merged.workExperience = updated.workExperience
+            merged.workExperience = _merge_entries(
+                merged.workExperience, updated.workExperience, _experience_key
+            )
         return merged
 
     if section == "education":
         if "education" in raw_updated:
-            merged.education = updated.education
+            merged.education = _merge_entries(
+                merged.education, updated.education, _education_key
+            )
         return merged
 
     if section == "personalProjects":
         if "personalProjects" in raw_updated:
-            merged.personalProjects = updated.personalProjects
+            merged.personalProjects = _merge_entries(
+                merged.personalProjects, updated.personalProjects, _project_key
+            )
         return merged
 
     if section == "skills":
@@ -299,6 +359,8 @@ async def run_ai_turn(
             data.personalInfo.name = fallback
 
     asked_count = state.asked_count + 1
+    # `is_complete` is a SUGGESTION to surface "Review & finish" — the step stays
+    # "question" and never auto-finalizes. The client decides when to call /review.
     is_complete = bool(result.get("is_complete")) or asked_count >= RESUME_WIZARD_MAX_QUESTIONS
 
     history = list(state.history)
