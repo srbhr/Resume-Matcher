@@ -883,6 +883,62 @@
     "resetDatabase": "すべてリセットして最初からやり直しますか？",
     "resetDatabaseDescription": "すべての履歴書、求人内容、生成されたドキュメントが完全に削除されます。"
   },
+  "resumeWizard": {
+    "title": "履歴書ウィザード",
+    "answerLabel": "あなたの回答",
+    "keepAddingPrompt": "追加または変更したい内容は何ですか？",
+    "readyHint": "しっかりした履歴書を作るのに十分な情報が集まりました。準備ができたら確認して完成させましょう。",
+    "sections": {
+      "intro": "はじめに",
+      "contact": "連絡先情報",
+      "summary": "職務要約",
+      "workExperience": "職務経験",
+      "internships": "インターンシップ",
+      "education": "学歴",
+      "personalProjects": "プロジェクト",
+      "skills": "スキル",
+      "review": "確認"
+    },
+    "actions": {
+      "continue": "続行",
+      "skip": "スキップ",
+      "back": "戻る",
+      "review": "確認して完了",
+      "create": "マスター履歴書を作成",
+      "keepAdding": "続けて追加",
+      "backToDashboard": "ダッシュボードに戻る"
+    },
+    "preview": {
+      "label": "ライブ下書き",
+      "empty": "回答するにつれて、ここに履歴書が表示されます。",
+      "unnamed": "名前未設定の履歴書",
+      "experience": "職務経験",
+      "education": "学歴",
+      "projects": "プロジェクト",
+      "skills": "スキル"
+    },
+    "errors": {
+      "turnFailed": "ウィザードはその回答を保存できませんでした。もう一度お試しください。",
+      "finalizeFailed": "ウィザードはマスター履歴書を作成できませんでした。もう一度お試しください。"
+    },
+    "entry": {
+      "kicker": "マスター履歴書の設定",
+      "title": "開始方法を選択",
+      "description": "既存の書類からマスター履歴書を作成するか、AI の案内で一歩ずつ作成します。",
+      "upload": {
+        "kicker": "既存ファイル",
+        "title": "履歴書をアップロード",
+        "description": "PDF、DOC、DOCX ファイルから始め、Resume Matcher にマスタープロフィールへ解析させます。",
+        "action": "履歴書をアップロード"
+      },
+      "wizard": {
+        "kicker": "AI ガイド",
+        "title": "AI ウィザードで作成",
+        "description": "焦点を絞った質問に答えると、ウィザードが質の高いマスター履歴書の初稿を組み立てます。",
+        "action": "ウィザードを開始"
+      }
+    }
+  },
   "tracker": {
     "scroll": {
       "prev": "左へスクロール",

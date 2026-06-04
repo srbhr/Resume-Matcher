@@ -248,6 +248,7 @@ class Database:
         cover_letter: str | None = None,
         outreach_message: str | None = None,
         original_markdown: str | None = None,
+        title: str | None = None,
     ) -> dict[str, Any]:
         """Create a new resume with atomic master assignment.
 
@@ -281,6 +282,7 @@ class Database:
                 cover_letter=cover_letter,
                 outreach_message=outreach_message,
                 original_markdown=original_markdown,
+                title=title,
             )
 
     async def get_resume(self, resume_id: str) -> dict[str, Any] | None:

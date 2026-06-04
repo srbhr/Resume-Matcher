@@ -2,7 +2,8 @@
 
 import { SwissGrid } from '@/components/home/swiss-grid';
 import { ResumeUploadDialog } from '@/components/dashboard/resume-upload-dialog';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { MasterResumeChoiceDialog } from '@/components/dashboard/master-resume-choice-dialog';
+import { useState, useEffect, useCallback, useRef, type KeyboardEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
@@ -38,6 +39,7 @@ export default function DashboardPage() {
   const [tailoredResumes, setTailoredResumes] = useState<ResumeListItem[]>([]);
   const [isRetrying, setIsRetrying] = useState(false);
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
+  const [isMasterChoiceDialogOpen, setIsMasterChoiceDialogOpen] = useState(false);
   const router = useRouter();
 
   // Status cache for optimistic counter updates and LLM status check
@@ -183,6 +185,23 @@ export default function DashboardPage() {
     // Update cached counters
     incrementResumes();
     setHasMasterResume(true);
+  };
+
+  const handleChooseUpload = () => {
+    setIsMasterChoiceDialogOpen(false);
+    setIsUploadDialogOpen(true);
+  };
+
+  const handleChooseWizard = () => {
+    setIsMasterChoiceDialogOpen(false);
+    router.push('/resume-wizard');
+  };
+
+  const handleInitializeMasterKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      setIsMasterChoiceDialogOpen(true);
+    }
   };
 
   const handleRetryProcessing = async (e: React.MouseEvent) => {
@@ -350,32 +369,46 @@ export default function DashboardPage() {
               </Card>
             </Link>
           ) : (
-            <ResumeUploadDialog
-              open={isUploadDialogOpen}
-              onOpenChange={setIsUploadDialogOpen}
-              onUploadComplete={handleUploadComplete}
-              trigger={
-                <Card
-                  variant="interactive"
-                  className="aspect-square h-full hover:bg-primary hover:text-canvas"
-                >
-                  <div className="flex-1 flex flex-col justify-between pointer-events-none">
-                    <div className="w-14 h-14 border-2 border-current flex items-center justify-center mb-4">
-                      <span className="text-2xl leading-none relative top-[-2px]">+</span>
-                    </div>
-                    <div>
-                      <CardTitle className="text-xl uppercase">
-                        {t('dashboard.initializeMasterResume')}
-                      </CardTitle>
-                      <CardDescription className="mt-2 opacity-60 group-hover:opacity-100 text-current">
-                        {'// '}
-                        {t('dashboard.initializeSequence')}
-                      </CardDescription>
-                    </div>
+            <>
+              <Card
+                variant="interactive"
+                className="aspect-square h-full hover:bg-primary hover:text-canvas"
+                role="button"
+                tabIndex={0}
+                aria-label={t('dashboard.initializeMasterResume')}
+                onClick={() => setIsMasterChoiceDialogOpen(true)}
+                onKeyDown={handleInitializeMasterKeyDown}
+              >
+                <div className="flex-1 flex flex-col justify-between pointer-events-none">
+                  <div className="w-14 h-14 border-2 border-current flex items-center justify-center mb-4">
+                    <span className="text-2xl leading-none relative top-[-2px]">+</span>
                   </div>
-                </Card>
-              }
-            />
+                  <div>
+                    <CardTitle className="text-xl uppercase">
+                      {t('dashboard.initializeMasterResume')}
+                    </CardTitle>
+                    <CardDescription className="mt-2 opacity-60 group-hover:opacity-100 text-current">
+                      {'// '}
+                      {t('dashboard.initializeSequence')}
+                    </CardDescription>
+                  </div>
+                </div>
+              </Card>
+              <MasterResumeChoiceDialog
+                open={isMasterChoiceDialogOpen}
+                onOpenChange={setIsMasterChoiceDialogOpen}
+                onChooseUpload={handleChooseUpload}
+                onChooseWizard={handleChooseWizard}
+              />
+              <ResumeUploadDialog
+                open={isUploadDialogOpen}
+                onOpenChange={setIsUploadDialogOpen}
+                onUploadComplete={handleUploadComplete}
+                trigger={
+                  <button type="button" className="hidden" tabIndex={-1} aria-hidden="true" />
+                }
+              />
+            </>
           )
         ) : (
           // Master Resume Exists

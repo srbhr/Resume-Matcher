@@ -883,6 +883,62 @@
     "resetDatabase": "重置所有内容并重新开始？",
     "resetDatabaseDescription": "这将永久删除每一份简历、职位描述和生成的文档。"
   },
+  "resumeWizard": {
+    "title": "简历向导",
+    "answerLabel": "你的回答",
+    "keepAddingPrompt": "你想添加或修改什么？",
+    "readyHint": "你已经有足够的内容来生成一份出色的简历——随时可以查看并完成。",
+    "sections": {
+      "intro": "开始使用",
+      "contact": "联系方式",
+      "summary": "职业摘要",
+      "workExperience": "工作经历",
+      "internships": "实习经历",
+      "education": "教育背景",
+      "personalProjects": "项目",
+      "skills": "技能",
+      "review": "审查"
+    },
+    "actions": {
+      "continue": "继续",
+      "skip": "跳过",
+      "back": "返回",
+      "review": "审查并完成",
+      "create": "创建主简历",
+      "keepAdding": "继续添加",
+      "backToDashboard": "返回仪表板"
+    },
+    "preview": {
+      "label": "实时草稿",
+      "empty": "当你回答问题时，简历将在此处显示。",
+      "unnamed": "未命名简历",
+      "experience": "经历",
+      "education": "教育",
+      "projects": "项目",
+      "skills": "技能"
+    },
+    "errors": {
+      "turnFailed": "向导无法保存该回答。请重试。",
+      "finalizeFailed": "向导无法创建你的主简历。请重试。"
+    },
+    "entry": {
+      "kicker": "主简历设置",
+      "title": "选择你的起点",
+      "description": "从现有文档创建主简历，或在 AI 引导下逐步构建。",
+      "upload": {
+        "kicker": "现有文件",
+        "title": "上传简历",
+        "description": "从 PDF、DOC 或 DOCX 文件开始，让 Resume Matcher 将其解析为你的主档案。",
+        "action": "上传简历"
+      },
+      "wizard": {
+        "kicker": "AI 引导",
+        "title": "使用 AI 向导构建",
+        "description": "回答聚焦问题，让向导为你的主简历整理出扎实的初稿。",
+        "action": "启动向导"
+      }
+    }
+  },
   "tracker": {
     "scroll": {
       "prev": "向左滚动",
