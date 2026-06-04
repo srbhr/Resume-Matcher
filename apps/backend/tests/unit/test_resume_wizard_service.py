@@ -95,6 +95,9 @@ def test_compute_progress_grows_with_questions_and_caps() -> None:
     early = compute_progress(asked_count=2, is_complete=False)
     assert early.current == 2
     assert early.total == 8
+    growing = compute_progress(asked_count=7, is_complete=False)
+    assert growing.current == 7
+    assert growing.total == 9  # asked + 2 = 9 grows past the baseline of 8
     capped = compute_progress(asked_count=RESUME_WIZARD_MAX_QUESTIONS, is_complete=True)
     assert capped.total == RESUME_WIZARD_MAX_QUESTIONS
     assert capped.current == RESUME_WIZARD_MAX_QUESTIONS

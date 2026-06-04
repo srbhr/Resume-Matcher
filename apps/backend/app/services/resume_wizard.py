@@ -58,16 +58,14 @@ _SECTION_PROMPTS = {
     "review": "Let's review what's here before we create your master resume.",
 }
 
+# The keyword ("my name", "name") may be lower- or upper-cased, but the captured
+# name must start uppercase — so we case the keyword explicitly with [Mm]/[Nn]
+# instead of re.IGNORECASE (which would let the [A-Z] capture match lowercase
+# words and produce false positives like "domain name facebook is" -> "facebook is").
 _INTRO_NAME_PATTERNS = (
     re.compile(r"\bI(?:'| a)m\s+([A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+)?)"),
-    re.compile(
-        r"\bmy name is\s+([A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+)?)",
-        re.IGNORECASE,
-    ),
-    re.compile(
-        r"\bname(?:'s| is)?\s+([A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+)?)",
-        re.IGNORECASE,
-    ),
+    re.compile(r"\b[Mm]y name is\s+([A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+)?)"),
+    re.compile(r"\b[Nn]ame(?:'s| is)?\s+([A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+)?)"),
 )
 
 
