@@ -200,7 +200,15 @@ async def isolated_db(tmp_path, monkeypatch):
 
     test_db = Database(db_path=tmp_path / "isolated_db.db")
     monkeypatch.setattr(database_module, "db", test_db)
-    for router_name in ("resumes", "jobs", "enrichment", "config", "health", "applications"):
+    for router_name in (
+        "resumes",
+        "jobs",
+        "enrichment",
+        "config",
+        "health",
+        "applications",
+        "resume_wizard",
+    ):
         try:
             module = importlib.import_module(f"app.routers.{router_name}")
         except ModuleNotFoundError:

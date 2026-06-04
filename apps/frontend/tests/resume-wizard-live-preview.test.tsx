@@ -9,14 +9,18 @@ vi.mock('@/lib/i18n', () => ({
 
 describe('LivePreview', () => {
   it('shows the empty state before any answers', () => {
-    render(<LivePreview resumeData={createInitialResumeWizardState().resume_data} inferredSkills={[]} />);
+    render(
+      <LivePreview resumeData={createInitialResumeWizardState().resume_data} inferredSkills={[]} />
+    );
     expect(screen.getByText('resumeWizard.preview.empty')).toBeInTheDocument();
   });
 
   it('renders name, experience and skills as content (not counts)', () => {
     const data = createInitialResumeWizardState().resume_data;
     data.personalInfo = { name: 'Priya Shah' };
-    data.workExperience = [{ id: 1, title: 'Senior PM', company: 'Acme', years: '2021', description: ['Cut churn 18%'] }];
+    data.workExperience = [
+      { id: 1, title: 'Senior PM', company: 'Acme', years: '2021', description: ['Cut churn 18%'] },
+    ];
     data.additional = { technicalSkills: ['SQL', 'Roadmapping'] };
 
     render(<LivePreview resumeData={data} inferredSkills={[]} />);
