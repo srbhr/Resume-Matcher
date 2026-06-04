@@ -1,4 +1,4 @@
-"""Schemas for the adaptive (Typeform-style) AI resume wizard."""
+"""Schemas for the adaptive one-question-at-a-time AI resume wizard."""
 
 from typing import Literal
 

@@ -1,4 +1,4 @@
-"""Resume wizard endpoints (adaptive Typeform flow)."""
+"""Resume wizard endpoints (adaptive one-question-at-a-time flow)."""
 
 import json
 import logging

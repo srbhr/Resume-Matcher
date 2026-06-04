@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Replace the manual section-picker resume wizard with an AI-led, Typeform-style flow — one question at a time, the AI writes truthful resume content and chooses the next question, with a quiet live resume preview.
+**Goal:** Replace the manual section-picker resume wizard with an AI-led, one-question-at-a-time flow — one question at a time, the AI writes truthful resume content and chooses the next question, with a quiet live resume preview.
 
-**Architecture:** A stateless backend turn protocol (full `ResumeWizardState` round-trips each call). One adaptive `complete_json` call per answer returns updated `resume_data`, the next question, inferred skills, and an `is_complete` flag; deterministic server-side guards (question cap, server-computed progress, section-scoped merge) keep it reliable. The frontend is a two-pane page: a Typeform question card + a live preview. Finalize creates the single master resume and routes to `/builder`.
+**Architecture:** A stateless backend turn protocol (full `ResumeWizardState` round-trips each call). One adaptive `complete_json` call per answer returns updated `resume_data`, the next question, inferred skills, and an `is_complete` flag; deterministic server-side guards (question cap, server-computed progress, section-scoped merge) keep it reliable. The frontend is a two-pane page: a one-question-at-a-time question card + a live preview. Finalize creates the single master resume and routes to `/builder`.
 
 **Tech Stack:** FastAPI, Pydantic v2, LiteLLM `complete_json`, SQLite facade, Next.js 16 App Router, React 19, TypeScript, Tailwind v4, pytest, Vitest.
 
@@ -104,7 +104,7 @@ Expected: ImportError / failures — the new schema names don't exist yet.
 Replace the entire contents of `apps/backend/app/schemas/resume_wizard.py` with:
 
 ```python
-"""Schemas for the adaptive (Typeform-style) AI resume wizard."""
+"""Schemas for the adaptive (one-question-at-a-time) AI resume wizard."""
 
 from typing import Literal
 
@@ -1143,7 +1143,7 @@ Expected: failures — the router still has the old action set / response shape.
 Replace the entire contents of `apps/backend/app/routers/resume_wizard.py` with:
 
 ```python
-"""Resume wizard endpoints (adaptive Typeform flow)."""
+"""Resume wizard endpoints (adaptive one-question-at-a-time flow)."""
 
 import json
 import logging
@@ -1899,7 +1899,7 @@ export function QuestionCard({
     // Repo pattern: never let Enter bubble to a parent form/dialog.
     if (event.key !== 'Enter') return;
     event.stopPropagation();
-    // Typeform feel: Enter submits, Shift+Enter makes a newline.
+    // one-question-at-a-time feel: Enter submits, Shift+Enter makes a newline.
     if (!event.shiftKey) {
       event.preventDefault();
       if (canContinue) onContinue();
@@ -2014,7 +2014,7 @@ Expected: 4 passed.
 ```bash
 git add apps/frontend/components/resume-wizard/question-card.tsx apps/frontend/tests/resume-wizard-question-card.test.tsx
 git rm apps/frontend/components/resume-wizard/section-picker.tsx
-git commit -m "feat(wizard): Typeform question card; remove section picker"
+git commit -m "feat(wizard): one-question-at-a-time question card; remove section picker"
 ```
 
 ---
@@ -2416,7 +2416,7 @@ Expected: 5 passed.
 
 ```bash
 git add apps/frontend/components/resume-wizard/resume-wizard-page.tsx apps/frontend/tests/resume-wizard-page.test.tsx
-git commit -m "feat(wizard): Typeform page orchestrator with live preview"
+git commit -m "feat(wizard): one-question-at-a-time page orchestrator with live preview"
 ```
 
 ---
@@ -2582,7 +2582,7 @@ git commit -m "chore(wizard): lint + format pass" || echo "nothing to format"
 ## Plan Self-Review
 
 **Spec coverage:**
-- Typeform two-pane layout → Tasks 7 (card), 8 (page layout `lg:grid-cols-[1fr_360px]`).
+- one-question-at-a-time two-pane layout → Tasks 7 (card), 8 (page layout `lg:grid-cols-[1fr_360px]`).
 - Live preview (no counts/warnings) → Task 6.
 - AI writes + adapts (single call) → Task 3 (`run_ai_turn`).
 - Server-side guardrails (cap, server progress, section merge, fallbacks) → Tasks 2 (`compute_progress`, `RESUME_WIZARD_MAX_QUESTIONS`) + 3 (`_merge_section`, `_next_question`, cap override).

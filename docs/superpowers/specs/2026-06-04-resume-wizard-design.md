@@ -2,7 +2,7 @@
 
 ## Goal
 
-Add a general-master-resume creation pipeline for users who do not already have a PDF or DOCX resume. The existing upload path remains the fast path, while the new wizard helps users create a truthful structured master resume from scratch through a hybrid TypeForm-style Q&A.
+Add a general-master-resume creation pipeline for users who do not already have a PDF or DOCX resume. The existing upload path remains the fast path, while the new wizard helps users create a truthful structured master resume from scratch through a hybrid one-question-at-a-time Q&A.
 
 ## Current Context
 

@@ -10,7 +10,7 @@
 
 Turn `/resume-wizard` from a manual, multi-zone form (intro box, a 6-button section
 grid, a free-text answer area, and a stats/warnings side panel) into an **AI-led,
-Typeform-style** flow: one focused question at a time, the AI writes the polished
+one-question-at-a-time** flow: one focused question at a time, the AI writes the polished
 (truthful) resume content, decides what to ask next, and the user watches their real
 resume build in a quiet live preview. Finalizing creates the master resume and drops
 the user into the existing `/builder`.
@@ -27,7 +27,7 @@ the user into the existing `/builder`.
 
 ## Locked decisions
 
-1. **Format — Typeform cards.** One big question per screen, single input, thin
+1. **Format — one-question-at-a-time cards.** One big question per screen, single input, thin
    segmented progress bar, advance on `Enter`. No section-button grid.
 2. **Right side — live resume preview.** A quiet, real resume page fills in as you
    answer. No stat counts, no always-on warnings.

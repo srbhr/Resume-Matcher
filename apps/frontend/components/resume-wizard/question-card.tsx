@@ -57,7 +57,7 @@ export function QuestionCard({
     // Repo pattern: never let Enter bubble to a parent form/dialog.
     if (event.key !== 'Enter') return;
     event.stopPropagation();
-    // Typeform feel: Enter submits, Shift+Enter makes a newline.
+    // Enter submits, Shift+Enter inserts a newline.
     if (!event.shiftKey) {
       event.preventDefault();
       if (canContinue) onContinue();
