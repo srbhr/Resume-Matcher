@@ -11,7 +11,7 @@ ResumeWizardSection = Literal[
     "contact",
     "summary",
     "workExperience",
-    "internships",
+    "internships",  # mapped onto workExperience by the service merge layer
     "education",
     "personalProjects",
     "skills",

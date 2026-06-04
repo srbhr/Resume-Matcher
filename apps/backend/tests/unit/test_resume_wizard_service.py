@@ -4,6 +4,7 @@ import pytest
 from pydantic import ValidationError
 
 from app.schemas.resume_wizard import (
+    ResumeWizardAnswer,
     ResumeWizardFinalizeRequest,
     ResumeWizardQuestion,
     ResumeWizardState,
@@ -40,3 +41,13 @@ def test_question_rejects_unknown_section() -> None:
 def test_finalize_requires_non_empty_name() -> None:
     with pytest.raises(ValidationError):
         ResumeWizardFinalizeRequest(state=ResumeWizardState())
+
+
+def test_answer_rejects_empty_text() -> None:
+    with pytest.raises(ValidationError):
+        ResumeWizardAnswer(text="")
+
+
+def test_answer_rejects_text_over_6000_chars() -> None:
+    with pytest.raises(ValidationError):
+        ResumeWizardAnswer(text="x" * 6001)
