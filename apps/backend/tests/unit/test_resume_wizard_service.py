@@ -6,6 +6,7 @@ from pydantic import ValidationError
 from app.schemas.resume_wizard import (
     ResumeWizardAnswer,
     ResumeWizardFinalizeRequest,
+    ResumeWizardHistoryEntry,
     ResumeWizardQuestion,
     ResumeWizardState,
     ResumeWizardTurnRequest,
@@ -110,3 +111,218 @@ def test_review_warnings_identify_thin_resume() -> None:
     assert any("contact" in w.lower() for w in warnings)
     assert any("experience" in w.lower() for w in warnings)
     assert any("skills" in w.lower() for w in warnings)
+
+
+from unittest.mock import AsyncMock, patch
+
+from app.services.resume_wizard import (
+    apply_back,
+    apply_review,
+    run_ai_turn,
+)
+
+_AI_EXPERIENCE_RESULT = {
+    "resume_data": {
+        "personalInfo": {"name": "James"},
+        "summary": "",
+        "workExperience": [
+            {
+                "id": 1,
+                "title": "Engineer",
+                "company": "Acme",
+                "years": "2021 - Present",
+                "description": ["Shipped the billing service"],
+            }
+        ],
+        "education": [],
+        "personalProjects": [],
+        "additional": {
+            "technicalSkills": [],
+            "languages": [],
+            "certificationsTraining": [],
+            "awards": [],
+        },
+        "sectionMeta": [],
+        "customSections": {},
+    },
+    "next_question": {"text": "What did you build at Acme?", "section": "workExperience"},
+    "inferred_skills": ["Python"],
+    "is_complete": False,
+}
+
+
+def _state_on_section(section: str) -> ResumeWizardState:
+    state = build_initial_wizard_state()
+    state.step = "question"
+    state.current_question = ResumeWizardQuestion(text="?", section=section)
+    return state
+
+
+async def test_ai_turn_merges_only_target_section_and_advances() -> None:
+    state = _state_on_section("workExperience")
+    state.resume_data.personalInfo.name = "James"
+    state.resume_data.education = []
+
+    with patch(
+        "app.services.resume_wizard.complete_json",
+        new_callable=AsyncMock,
+        return_value=_AI_EXPERIENCE_RESULT,
+    ):
+        result = await run_ai_turn(state, "I was an engineer at Acme", skip=False)
+
+    assert len(result.resume_data.workExperience) == 1
+    assert result.resume_data.workExperience[0].company == "Acme"
+    assert result.current_question.text == "What did you build at Acme?"
+    assert result.asked_count == 1
+    assert result.inferred_skills == ["Python"]
+    assert len(result.history) == 1
+    assert result.history[0].section == "workExperience"
+
+
+async def test_ai_turn_does_not_let_other_sections_be_clobbered() -> None:
+    state = _state_on_section("skills")
+    state.resume_data.workExperience = []
+    existing = {
+        "id": 9,
+        "title": "PM",
+        "company": "Globex",
+        "years": "2019 - 2021",
+        "description": ["Ran the roadmap"],
+    }
+    state.resume_data = ResumeData.model_validate(
+        {"workExperience": [existing], "additional": {"technicalSkills": ["SQL"]}}
+    )
+
+    skills_result = {
+        "resume_data": {
+            "workExperience": [],  # model wrongly clears experience
+            "additional": {"technicalSkills": ["Python"]},
+        },
+        "next_question": {"text": "Anything else?", "section": "review"},
+        "inferred_skills": [],
+        "is_complete": False,
+    }
+    with patch(
+        "app.services.resume_wizard.complete_json",
+        new_callable=AsyncMock,
+        return_value=skills_result,
+    ):
+        result = await run_ai_turn(state, "I use Python", skip=False)
+
+    # Experience preserved; skills merged (case-insensitive, order-preserving).
+    assert len(result.resume_data.workExperience) == 1
+    assert result.resume_data.additional.technicalSkills == ["SQL", "Python"]
+
+
+async def test_ai_turn_question_cap_forces_completion() -> None:
+    state = _state_on_section("workExperience")
+    state.asked_count = RESUME_WIZARD_MAX_QUESTIONS - 1
+
+    with patch(
+        "app.services.resume_wizard.complete_json",
+        new_callable=AsyncMock,
+        return_value=_AI_EXPERIENCE_RESULT,  # is_complete False from model
+    ):
+        result = await run_ai_turn(state, "more detail", skip=False)
+
+    assert result.asked_count == RESUME_WIZARD_MAX_QUESTIONS
+    assert result.is_complete is True
+
+
+async def test_ai_turn_skip_does_not_modify_resume_data() -> None:
+    state = _state_on_section("education")
+    before = state.resume_data.model_dump()
+
+    skip_result = {
+        "resume_data": {"education": [{"id": 1, "institution": "MIT"}]},
+        "next_question": {"text": "What skills?", "section": "skills"},
+        "inferred_skills": [],
+        "is_complete": False,
+    }
+    with patch(
+        "app.services.resume_wizard.complete_json",
+        new_callable=AsyncMock,
+        return_value=skip_result,
+    ):
+        result = await run_ai_turn(state, "", skip=True)
+
+    assert result.resume_data.model_dump() == before
+    assert result.current_question.section == "skills"
+    assert result.history[0].answer == ""
+
+
+async def test_ai_turn_intro_uses_deterministic_name_fallback() -> None:
+    state = build_initial_wizard_state()  # section intro
+    result_without_name = {
+        "resume_data": {"personalInfo": {"title": "Engineer"}},
+        "next_question": {"text": "Where have you worked?", "section": "workExperience"},
+        "inferred_skills": [],
+        "is_complete": False,
+    }
+    with patch(
+        "app.services.resume_wizard.complete_json",
+        new_callable=AsyncMock,
+        return_value=result_without_name,
+    ):
+        result = await run_ai_turn(state, "Hi, I'm Priya, after backend roles", skip=False)
+
+    assert result.resume_data.personalInfo.name == "Priya"
+
+
+async def test_ai_turn_missing_next_question_falls_back_to_gap() -> None:
+    state = _state_on_section("workExperience")
+    bad_result = {
+        "resume_data": _AI_EXPERIENCE_RESULT["resume_data"],
+        "next_question": None,
+        "inferred_skills": [],
+        "is_complete": False,
+    }
+    with patch(
+        "app.services.resume_wizard.complete_json",
+        new_callable=AsyncMock,
+        return_value=bad_result,
+    ):
+        result = await run_ai_turn(state, "engineer at Acme", skip=False)
+
+    # workExperience now filled -> next gap is education.
+    assert result.current_question.section == "education"
+
+
+def test_apply_back_restores_previous_snapshot() -> None:
+    state = _state_on_section("skills")
+    state.asked_count = 2
+    before = ResumeData()
+    before.personalInfo.name = "James"
+    state.history = [
+        ResumeWizardHistoryEntry(
+            question="Where have you worked?",
+            answer="Acme",
+            section="workExperience",
+            resume_data_before=before,
+        )
+    ]
+    state.resume_data.additional.technicalSkills = ["Python"]
+
+    result = apply_back(state)
+
+    assert result.asked_count == 1
+    assert result.current_question.section == "workExperience"
+    assert result.resume_data.additional.technicalSkills == []
+    assert result.resume_data.personalInfo.name == "James"
+    assert result.history == []
+
+
+def test_apply_back_noop_without_history() -> None:
+    state = build_initial_wizard_state()
+    result = apply_back(state)
+    assert result.step == "intro"
+    assert result.asked_count == 0
+
+
+def test_apply_review_builds_warnings_without_llm() -> None:
+    state = _state_on_section("skills")
+    state.resume_data.personalInfo.name = "James"
+    result = apply_review(state)
+    assert result.step == "review"
+    assert result.current_question.section == "review"
+    assert result.warnings  # thin resume -> at least one note

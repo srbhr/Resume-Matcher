@@ -166,3 +166,190 @@ def _next_gap_section(data: ResumeData) -> str:
     if not data.additional.technicalSkills:
         return "skills"
     return "review"
+
+
+def _merge_section(
+    *,
+    existing: ResumeData,
+    updated: ResumeData,
+    raw_updated: dict[str, Any],
+    section: str,
+    inferred_skills: list[str],
+) -> ResumeData:
+    """Merge LLM output ONLY into the active section, never clobbering the rest."""
+    merged = existing.model_copy(deep=True)
+
+    if section in {"intro", "contact"}:
+        if isinstance(raw_updated.get("personalInfo"), dict):
+            for field in ("name", "title", "email", "phone", "location"):
+                new_val = getattr(updated.personalInfo, field)
+                if isinstance(new_val, str) and new_val.strip():
+                    setattr(merged.personalInfo, field, new_val)
+            for field in ("website", "linkedin", "github"):
+                new_val = getattr(updated.personalInfo, field)
+                if new_val:
+                    setattr(merged.personalInfo, field, new_val)
+        return merged
+
+    if section == "summary":
+        if "summary" in raw_updated and updated.summary.strip():
+            merged.summary = updated.summary
+        return merged
+
+    if section in {"workExperience", "internships"}:
+        if "workExperience" in raw_updated:
+            merged.workExperience = updated.workExperience
+        return merged
+
+    if section == "education":
+        if "education" in raw_updated:
+            merged.education = updated.education
+        return merged
+
+    if section == "personalProjects":
+        if "personalProjects" in raw_updated:
+            merged.personalProjects = updated.personalProjects
+        return merged
+
+    if section == "skills":
+        raw_additional = raw_updated.get("additional")
+        if isinstance(raw_additional, dict):
+            if "technicalSkills" in raw_additional:
+                merged.additional.technicalSkills = merge_unique_skills(
+                    merged.additional.technicalSkills,
+                    updated.additional.technicalSkills,
+                )
+            if "languages" in raw_additional:
+                merged.additional.languages = merge_unique_skills(
+                    merged.additional.languages, updated.additional.languages
+                )
+            if "certificationsTraining" in raw_additional:
+                merged.additional.certificationsTraining = merge_unique_skills(
+                    merged.additional.certificationsTraining,
+                    updated.additional.certificationsTraining,
+                )
+            if "awards" in raw_additional:
+                merged.additional.awards = merge_unique_skills(
+                    merged.additional.awards, updated.additional.awards
+                )
+        merged.additional.technicalSkills = merge_unique_skills(
+            merged.additional.technicalSkills, inferred_skills
+        )
+        return merged
+
+    # Unknown / review section: never mutate resume_data.
+    return merged
+
+
+def _next_question(result: dict[str, Any], data: ResumeData) -> ResumeWizardQuestion:
+    """Use the model's next_question, or fall back to the next empty section."""
+    candidate = result.get("next_question")
+    if isinstance(candidate, dict):
+        text = candidate.get("text")
+        section = candidate.get("section")
+        if isinstance(text, str) and text.strip() and isinstance(section, str):
+            return ResumeWizardQuestion(text=text.strip(), section=valid_section(section))
+    gap = _next_gap_section(data)
+    return ResumeWizardQuestion(text=section_prompt(gap), section=gap)
+
+
+async def run_ai_turn(
+    state: ResumeWizardState,
+    answer_text: str,
+    *,
+    skip: bool,
+) -> ResumeWizardState:
+    """Run one adaptive AI turn (answer or skip) and validate the result."""
+    section = state.current_question.section
+    resume_json = json.dumps(state.resume_data.model_dump(mode="json"), ensure_ascii=False)
+    prompt_answer = (
+        "(The user skipped this question. Do NOT modify resume_data. "
+        "Ask the next most useful question for a different section.)"
+        if skip
+        else answer_text
+    )
+    prompt = RESUME_WIZARD_TURN_PROMPT.format(
+        output_language=get_language_name(get_content_language()),
+        current_section=section,
+        resume_json=resume_json,
+        answer_text=prompt_answer,
+    )
+    result = await complete_json(prompt, max_tokens=8192, schema_type="resume")
+    if not isinstance(result, dict):
+        raise ValueError("Resume wizard LLM response must be a JSON object.")
+
+    raw_resume = result.get("resume_data")
+    inferred = _string_list(result.get("inferred_skills"))
+
+    if skip or not isinstance(raw_resume, dict):
+        data = state.resume_data.model_copy(deep=True)
+    else:
+        updated = ResumeData.model_validate(normalize_wizard_resume_data(raw_resume))
+        data = _merge_section(
+            existing=state.resume_data,
+            updated=updated,
+            raw_updated=raw_resume,
+            section=section,
+            inferred_skills=inferred,
+        )
+
+    if section == "intro" and not data.personalInfo.name.strip():
+        fallback = extract_intro_name(answer_text)
+        if fallback:
+            data.personalInfo.name = fallback
+
+    asked_count = state.asked_count + 1
+    is_complete = bool(result.get("is_complete")) or asked_count >= RESUME_WIZARD_MAX_QUESTIONS
+
+    history = list(state.history)
+    history.append(
+        ResumeWizardHistoryEntry(
+            question=state.current_question.text,
+            answer="" if skip else answer_text,
+            section=section,
+            resume_data_before=state.resume_data,
+        )
+    )
+
+    return ResumeWizardState(
+        step="question",
+        resume_data=data,
+        current_question=_next_question(result, data),
+        history=history,
+        asked_count=asked_count,
+        inferred_skills=inferred,
+        is_complete=is_complete,
+        progress=compute_progress(asked_count, is_complete),
+        warnings=[],
+    )
+
+
+def apply_back(state: ResumeWizardState) -> ResumeWizardState:
+    """Deterministically restore the previous question + draft snapshot."""
+    if not state.history:
+        return state.model_copy(deep=True)
+    history = list(state.history)
+    last = history.pop()
+    asked_count = max(0, state.asked_count - 1)
+    return ResumeWizardState(
+        step="question" if asked_count > 0 else "intro",
+        resume_data=last.resume_data_before,
+        current_question=ResumeWizardQuestion(text=last.question, section=last.section),
+        history=history,
+        asked_count=asked_count,
+        inferred_skills=[],
+        is_complete=False,
+        progress=compute_progress(asked_count, False),
+        warnings=[],
+    )
+
+
+def apply_review(state: ResumeWizardState) -> ResumeWizardState:
+    """Move to the review step (no LLM call) and compute gentle warnings."""
+    next_state = state.model_copy(deep=True)
+    next_state.step = "review"
+    next_state.current_question = ResumeWizardQuestion(
+        text=section_prompt("review"), section="review"
+    )
+    next_state.warnings = build_review_warnings(next_state.resume_data)
+    return next_state
