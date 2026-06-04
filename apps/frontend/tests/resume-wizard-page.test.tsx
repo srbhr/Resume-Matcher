@@ -97,11 +97,15 @@ describe('ResumeWizardPage', () => {
 
     await waitFor(() => {
       expect(mockedPostTurn).toHaveBeenCalledWith({
-        state: expect.objectContaining({ current_question: expect.objectContaining({ section: 'skills' }) }),
+        state: expect.objectContaining({
+          current_question: expect.objectContaining({ section: 'skills' }),
+        }),
         action: 'review',
       });
     });
-    expect(await screen.findByRole('button', { name: 'resumeWizard.actions.create' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('button', { name: 'resumeWizard.actions.create' })
+    ).toBeInTheDocument();
   });
 
   it('finalizes a review draft, updates status cache, clears the draft, and routes to builder', async () => {
@@ -202,9 +206,7 @@ describe('ResumeWizardPage', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'resumeWizard.actions.skip' }));
 
     await waitFor(() => {
-      expect(mockedPostTurn).toHaveBeenCalledWith(
-        expect.objectContaining({ action: 'skip' })
-      );
+      expect(mockedPostTurn).toHaveBeenCalledWith(expect.objectContaining({ action: 'skip' }));
     });
     expect(await screen.findByText('Next?')).toBeInTheDocument();
   });

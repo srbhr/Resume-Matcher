@@ -9,9 +9,11 @@ describe('resume wizard api', () => {
   let fetchMock: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
-    fetchMock = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify({ state: createInitialResumeWizardState() }), { status: 200 })
-    );
+    fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        new Response(JSON.stringify({ state: createInitialResumeWizardState() }), { status: 200 })
+      );
     vi.stubGlobal('fetch', fetchMock);
   });
 

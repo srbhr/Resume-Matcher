@@ -110,14 +110,25 @@ function readSavedDraft(): ResumeWizardState | null {
             : initial.current_question.text,
         section,
       },
-      history: Array.isArray(parsed.history) ? (parsed.history as ResumeWizardState['history']) : [],
+      history: Array.isArray(parsed.history)
+        ? (parsed.history as ResumeWizardState['history'])
+        : [],
       asked_count: typeof parsed.asked_count === 'number' ? parsed.asked_count : 0,
       inferred_skills: Array.isArray(parsed.inferred_skills)
         ? (parsed.inferred_skills as string[]).filter((s) => typeof s === 'string')
         : [],
       is_complete: parsed.is_complete === true,
       progress: isRecord(parsed.progress)
-        ? (parsed.progress as ResumeWizardState['progress'])
+        ? {
+            current:
+              typeof parsed.progress.current === 'number'
+                ? parsed.progress.current
+                : initial.progress.current,
+            total:
+              typeof parsed.progress.total === 'number'
+                ? parsed.progress.total
+                : initial.progress.total,
+          }
         : initial.progress,
       warnings: Array.isArray(parsed.warnings)
         ? (parsed.warnings as string[]).filter((w) => typeof w === 'string')

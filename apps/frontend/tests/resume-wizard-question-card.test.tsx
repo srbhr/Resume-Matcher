@@ -28,7 +28,9 @@ describe('QuestionCard', () => {
     render(<QuestionCard step="question" {...baseProps} />);
     expect(screen.getByText('What is your most recent role?')).toBeInTheDocument();
     expect(screen.getByRole('textbox')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'resumeWizard.actions.continue' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'resumeWizard.actions.continue' })
+    ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'resumeWizard.actions.skip' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'resumeWizard.actions.review' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'resumeWizard.actions.back' })).toBeInTheDocument();
@@ -39,19 +41,23 @@ describe('QuestionCard', () => {
 
   it('on the intro step hides skip, review, and back', () => {
     render(<QuestionCard step="intro" {...baseProps} canGoBack={false} />);
-    expect(screen.getByRole('button', { name: 'resumeWizard.actions.continue' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'resumeWizard.actions.skip' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'resumeWizard.actions.review' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'resumeWizard.actions.back' })).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'resumeWizard.actions.continue' })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'resumeWizard.actions.skip' })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'resumeWizard.actions.review' })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'resumeWizard.actions.back' })
+    ).not.toBeInTheDocument();
   });
 
   it('on the review step shows create + keep adding and gentle notes', () => {
     render(
-      <QuestionCard
-        step="review"
-        {...baseProps}
-        warnings={['Add at least one contact method.']}
-      />
+      <QuestionCard step="review" {...baseProps} warnings={['Add at least one contact method.']} />
     );
     expect(screen.getByRole('button', { name: 'resumeWizard.actions.create' })).toBeInTheDocument();
     expect(
@@ -68,7 +74,9 @@ describe('QuestionCard', () => {
     );
     expect(screen.getByRole('button', { name: 'resumeWizard.actions.continue' })).toBeDisabled();
 
-    rerender(<QuestionCard step="question" {...baseProps} onContinue={onContinue} answer="My answer" />);
+    rerender(
+      <QuestionCard step="question" {...baseProps} onContinue={onContinue} answer="My answer" />
+    );
     fireEvent.click(screen.getByRole('button', { name: 'resumeWizard.actions.continue' }));
     expect(onContinue).toHaveBeenCalledTimes(1);
   });
