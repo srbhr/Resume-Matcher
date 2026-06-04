@@ -59,8 +59,14 @@ export function QuestionCard({
   };
 
   return (
-    <section className="border-2 border-black bg-white shadow-[8px_8px_0px_0px_#000000]">
-      <div className="flex gap-1 border-b-2 border-black p-2" aria-hidden="true">
+    <section className="border-2 border-black bg-white shadow-sw-lg">
+      <div
+        className="flex gap-1 border-b-2 border-black p-2"
+        role="progressbar"
+        aria-valuemin={0}
+        aria-valuemax={totalSegments}
+        aria-valuenow={progress.current}
+      >
         {Array.from({ length: totalSegments }).map((_, index) => (
           <span
             key={index}
@@ -77,14 +83,14 @@ export function QuestionCard({
         <p className="font-mono text-xs font-bold uppercase tracking-wider text-blue-700">
           {sectionLabel}
         </p>
-        <h1 className="font-serif text-3xl font-bold leading-tight md:text-4xl">{question}</h1>
+        <h2 className="font-serif text-3xl font-bold leading-tight md:text-4xl">{question}</h2>
 
         {isReview ? (
           warnings.length > 0 && (
             <ul className="grid gap-2">
-              {warnings.map((warning) => (
+              {warnings.map((warning, index) => (
                 <li
-                  key={warning}
+                  key={index}
                   className="border border-steel-grey bg-white px-3 py-2 font-sans text-sm text-steel-grey"
                 >
                   {warning}
