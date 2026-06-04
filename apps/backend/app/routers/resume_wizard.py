@@ -64,14 +64,14 @@ async def finalize_resume_wizard(
     request: ResumeWizardFinalizeRequest,
 ) -> ResumeWizardFinalizeResponse:
     """Create the master resume from a validated wizard draft."""
-    current_master = await db.get_master_resume()
-    if current_master and current_master.get("processing_status") == "ready":
-        raise HTTPException(
-            status_code=409,
-            detail="A master resume already exists. Delete it before creating a new one.",
-        )
-
     try:
+        current_master = await db.get_master_resume()
+        if current_master and current_master.get("processing_status") == "ready":
+            raise HTTPException(
+                status_code=409,
+                detail="A master resume already exists. Delete it before creating a new one.",
+            )
+
         normalized = normalize_resume_data(
             request.state.resume_data.model_dump(mode="json")
         )

@@ -6,6 +6,7 @@ from unittest.mock import AsyncMock, patch
 from httpx import ASGITransport, AsyncClient
 
 from app.main import app
+from app.schemas.resume_wizard import ResumeWizardHistoryEntry, ResumeWizardQuestion
 from app.services.resume_wizard import build_initial_wizard_state
 
 _AI_RESULT = {
@@ -133,3 +134,79 @@ async def test_finalize_rejects_when_master_exists(isolated_db, sample_resume) -
 
     assert response.status_code == 409
     assert "already exists" in response.json()["detail"].lower()
+
+
+async def test_turn_start_returns_initial_state(isolated_db) -> None:
+    transport = ASGITransport(app=app)
+    state = build_initial_wizard_state()
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        response = await client.post(
+            "/api/v1/resume-wizard/turn",
+            json={"state": state.model_dump(mode="json"), "action": "start"},
+        )
+
+    assert response.status_code == 200
+    payload = response.json()["state"]
+    assert payload["step"] == "intro"
+    assert payload["current_question"]["section"] == "intro"
+    assert payload["asked_count"] == 0
+
+
+async def test_turn_back_restores_previous_question(isolated_db) -> None:
+    transport = ASGITransport(app=app)
+    state = build_initial_wizard_state()
+    state.step = "question"
+    state.asked_count = 1
+    state.current_question = ResumeWizardQuestion(text="Skills?", section="skills")
+    state.resume_data.additional.technicalSkills = ["Python"]
+    state.history = [
+        ResumeWizardHistoryEntry(
+            question="Where have you worked?",
+            answer="Acme",
+            section="workExperience",
+            resume_data_before=build_initial_wizard_state().resume_data,
+        )
+    ]
+
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        response = await client.post(
+            "/api/v1/resume-wizard/turn",
+            json={"state": state.model_dump(mode="json"), "action": "back"},
+        )
+
+    assert response.status_code == 200
+    payload = response.json()["state"]
+    assert payload["asked_count"] == 0
+    assert payload["current_question"]["section"] == "workExperience"
+    # The pre-answer snapshot is restored, dropping the later skills edit.
+    assert payload["resume_data"]["additional"]["technicalSkills"] == []
+
+
+async def test_turn_skip_advances_without_modifying_resume_data(isolated_db) -> None:
+    transport = ASGITransport(app=app)
+    state = build_initial_wizard_state()
+    state.step = "question"
+    state.current_question = ResumeWizardQuestion(text="Education?", section="education")
+
+    skip_result = {
+        "resume_data": {"education": [{"id": 1, "institution": "MIT"}]},
+        "next_question": {"text": "What skills?", "section": "skills"},
+        "inferred_skills": [],
+        "is_complete": False,
+    }
+    with patch(
+        "app.services.resume_wizard.complete_json",
+        new_callable=AsyncMock,
+        return_value=skip_result,
+    ):
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            response = await client.post(
+                "/api/v1/resume-wizard/turn",
+                json={"state": state.model_dump(mode="json"), "action": "skip"},
+            )
+
+    assert response.status_code == 200
+    payload = response.json()["state"]
+    assert payload["current_question"]["section"] == "skills"
+    assert payload["resume_data"]["education"] == []  # skip must not apply the model's data
+    assert payload["asked_count"] == 1
