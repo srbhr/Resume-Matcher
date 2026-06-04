@@ -7,7 +7,7 @@ from collections.abc import Callable
 from typing import Any
 
 from app.config_cache import get_content_language
-from app.llm import complete_json
+from app.llm import _scrub_secrets, complete_json
 from app.prompts.resume_wizard import RESUME_WIZARD_TURN_PROMPT
 from app.prompts.templates import get_language_name
 from app.services.improver import _sanitize_user_input
@@ -347,7 +347,9 @@ async def run_ai_turn(
         "(The user skipped this question. Do NOT modify resume_data. "
         "Ask the next most useful question for a different section.)"
         if skip
-        else _sanitize_user_input(answer_text)
+        # Strip prompt-injection patterns AND redact credential-like tokens
+        # (sk-…/AIza…/Bearer …) before the answer reaches the LLM.
+        else _scrub_secrets(_sanitize_user_input(answer_text))
     )
     prompt = RESUME_WIZARD_TURN_PROMPT.format(
         output_language=get_language_name(get_content_language()),

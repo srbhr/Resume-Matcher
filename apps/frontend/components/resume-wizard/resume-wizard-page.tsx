@@ -42,6 +42,15 @@ function asString(value: unknown, fallback = ''): string {
   return typeof value === 'string' ? value : fallback;
 }
 
+/** Coerce to an array of objects and give each a unique 1-based `id`, so a
+ *  restored draft (incl. pre-fix drafts with id=0 entries) always has the unique
+ *  ids the preview's `key={item.id}` and the builder's id logic depend on. */
+function asEntriesWithIds<T>(value: unknown): T[] {
+  return asArray<unknown>(value)
+    .filter(isRecord)
+    .map((item, index) => ({ ...item, id: index + 1 }) as T);
+}
+
 /** Coerce every personalInfo field to a string so a corrupt draft (e.g. a numeric
  *  name) can't make a later `.trim()` throw and trap the user in a reload loop. */
 function normalizeDraftPersonalInfo(
@@ -77,9 +86,9 @@ function normalizeDraftResumeData(
     ...fallback,
     personalInfo: normalizeDraftPersonalInfo(value.personalInfo, fallback.personalInfo ?? {}),
     summary: typeof value.summary === 'string' ? value.summary : fallback.summary,
-    workExperience: asArray(value.workExperience),
-    education: asArray(value.education),
-    personalProjects: asArray(value.personalProjects),
+    workExperience: asEntriesWithIds(value.workExperience),
+    education: asEntriesWithIds(value.education),
+    personalProjects: asEntriesWithIds(value.personalProjects),
     additional: {
       technicalSkills: asArray<string>(additional.technicalSkills),
       languages: asArray<string>(additional.languages),

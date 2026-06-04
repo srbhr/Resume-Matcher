@@ -420,9 +420,31 @@ async def test_ai_turn_sanitizes_user_answer_before_prompting() -> None:
     assert "Ignore previous instructions" not in sent_prompt
 
 
+def test_assign_entry_ids_renumbers_all_three_lists() -> None:
+    # Directly exercise the helper across all three lists (the section-scoped
+    # merge only fills one list per turn, so test the helper itself here).
+    from app.services.resume_wizard import _assign_entry_ids
+
+    data = ResumeData.model_validate(
+        {
+            "workExperience": [{"company": "Acme"}, {"company": "Globex"}],
+            "education": [{"institution": "MIT"}, {"institution": "Stanford"}],
+            "personalProjects": [{"name": "Alpha"}, {"name": "Beta"}],
+        }
+    )
+    # All default to id=0 before assignment.
+    assert [e.id for e in data.workExperience] == [0, 0]
+
+    _assign_entry_ids(data)
+
+    assert [e.id for e in data.workExperience] == [1, 2]
+    assert [e.id for e in data.education] == [1, 2]
+    assert [p.id for p in data.personalProjects] == [1, 2]
+
+
 async def test_ai_turn_assigns_unique_entry_ids() -> None:
     # The LLM omits ids (entries default to id=0); the turn must renumber them
-    # uniquely so the preview keys and the builder's id logic work.
+    # so the preview keys and the builder's id logic work on a finalized resume.
     state = _state_on_section("workExperience")
     result_no_ids = {
         "resume_data": {
