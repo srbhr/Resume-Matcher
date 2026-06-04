@@ -73,7 +73,7 @@ export function LivePreview({ resumeData, inferredSkills }: LivePreviewProps) {
                   {item.years?.trim() && (
                     <p className="font-mono text-xs text-steel-grey">{item.years}</p>
                   )}
-                  <ul className="mt-1 space-y-1">
+                  <ul className="mt-1 list-none space-y-1">
                     {(item.description ?? []).map((line, index) => (
                       <li key={index} className="font-sans text-xs leading-snug">
                         {line}
@@ -129,7 +129,7 @@ export function LivePreview({ resumeData, inferredSkills }: LivePreviewProps) {
                       }
                     >
                       {skill}
-                      {isNew && <span aria-hidden> ✓</span>}
+                      {isNew && <span aria-hidden="true"> ✓</span>}
                     </span>
                   );
                 })}
