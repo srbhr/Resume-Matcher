@@ -1,4 +1,4 @@
-"""Resume wizard endpoints."""
+"""Resume wizard endpoints (adaptive Typeform flow)."""
 
 import json
 import logging
@@ -14,7 +14,12 @@ from app.schemas.resume_wizard import (
     ResumeWizardTurnRequest,
     ResumeWizardTurnResponse,
 )
-from app.services.resume_wizard import build_initial_wizard_state
+from app.services.resume_wizard import (
+    apply_back,
+    apply_review,
+    build_initial_wizard_state,
+    run_ai_turn,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -25,15 +30,33 @@ router = APIRouter(prefix="/resume-wizard", tags=["Resume Wizard"])
 async def resume_wizard_turn(
     request: ResumeWizardTurnRequest,
 ) -> ResumeWizardTurnResponse:
-    """Advance the resume wizard by one structured turn.
+    """Advance the resume wizard by one structured turn."""
+    try:
+        action = request.action
+        if action == "start":
+            return ResumeWizardTurnResponse(state=build_initial_wizard_state())
+        if action == "back":
+            return ResumeWizardTurnResponse(state=apply_back(request.state))
+        if action == "review":
+            return ResumeWizardTurnResponse(state=apply_review(request.state))
+        if action == "skip":
+            state = await run_ai_turn(request.state, "", skip=True)
+            return ResumeWizardTurnResponse(state=state)
 
-    NOTE: Full AI-turn logic is implemented in Task 3. This stub keeps the
-    router importable during the Task 2 → Task 3 transition.
-    """
-    raise HTTPException(
-        status_code=501,
-        detail="Resume wizard AI turn not yet implemented.",
-    )
+        answer_text = request.answer.text if request.answer else ""
+        state = await run_ai_turn(request.state, answer_text, skip=False)
+        return ResumeWizardTurnResponse(state=state)
+    except HTTPException:
+        raise
+    except ValueError as e:
+        logger.error("Resume wizard turn validation failed: %s", e)
+        raise HTTPException(status_code=422, detail="Could not update the resume draft.")
+    except Exception as e:
+        logger.error("Resume wizard turn failed: %s", e)
+        raise HTTPException(
+            status_code=500,
+            detail="Resume wizard failed. Please try again.",
+        )
 
 
 @router.post("/finalize", response_model=ResumeWizardFinalizeResponse)
@@ -74,14 +97,9 @@ async def finalize_resume_wizard(
                 )
             raise HTTPException(
                 status_code=409,
-                detail=(
-                    "A master resume already exists. Delete it before creating a new one."
-                ),
+                detail="A master resume already exists. Delete it before creating a new one.",
             )
-        resume = await db.update_resume(
-            resume["resume_id"],
-            {"title": title},
-        )
+        resume = await db.update_resume(resume["resume_id"], {"title": title})
         return ResumeWizardFinalizeResponse(
             message="Master resume created.",
             request_id=str(uuid4()),
@@ -93,7 +111,4 @@ async def finalize_resume_wizard(
         raise
     except Exception as e:
         logger.error("Resume wizard finalize failed: %s", e)
-        raise HTTPException(
-            status_code=500,
-            detail="Could not create master resume.",
-        )
+        raise HTTPException(status_code=500, detail="Could not create master resume.")
