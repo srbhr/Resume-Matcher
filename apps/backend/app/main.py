@@ -78,13 +78,16 @@ app = FastAPI(
 )
 
 # CORS middleware - origins configurable via CORS_ORIGINS env var
-app.add_middleware(
-    CORSMiddleware,
+# Chrome extension origin opt-in via EXTENSION_CORS_ORIGIN (see config.py)
+_cors_kwargs: dict = dict(
     allow_origins=settings.effective_cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+if settings.extension_cors_origin:
+    _cors_kwargs["allow_origin_regex"] = settings.extension_cors_origin
+app.add_middleware(CORSMiddleware, **_cors_kwargs)
 
 # Include routers
 app.include_router(health_router, prefix="/api/v1")
