@@ -192,6 +192,12 @@ describe('sanitizeFilename', () => {
   });
 
   describe('Edge cases', () => {
+    it('should avoid Windows reserved filenames', () => {
+      expect(sanitizeFilename('CON', 'test-id')).toBe('CON_.pdf');
+      expect(sanitizeFilename('aux', 'test-id')).toBe('aux_.pdf');
+      expect(sanitizeFilename('LPT1', 'test-id')).toBe('LPT1_.pdf');
+    });
+
     it('should handle title with only invalid characters', () => {
       const result = sanitizeFilename('/<>:*?"|\\', 'test-id');
       expect(result).toBe('---------.pdf');

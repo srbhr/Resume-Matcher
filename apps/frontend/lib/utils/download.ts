@@ -57,6 +57,11 @@ export function sanitizeFilename(
     sanitized = chars.slice(0, 100).join('').trim();
   }
 
+  const reservedWindowsNames = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i;
+  if (reservedWindowsNames.test(sanitized)) {
+    sanitized = `${sanitized}_`;
+  }
+
   // Add .pdf extension
   return `${sanitized}.pdf`;
 }
