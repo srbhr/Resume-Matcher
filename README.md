@@ -80,7 +80,7 @@ We are grateful to our sponsors who help keep this project going. If you find Re
 
 ![donate](assets/supporting_resume_matcher.png)
 
-Please read our [Sponsorship Guide]([docs/agent/80-sponsorship/sponsorship-guide.md](https://resumematcher.fyi/docs/sponsoring)) for details on how your sponsorship helps the project. You will receive a special thank you in the ReadME and on our website.
+Please read our [Sponsorship Guide](https://resumematcher.fyi/docs/sponsoring) for details on how your sponsorship helps the project. You will receive a special thank you in the README and on our website.
 
 | Platform  | Link                                   |
 |-----------|----------------------------------------|
