@@ -51,19 +51,17 @@ def restore_dates_from_markdown(
     if not md_dates:
         return parsed_data
 
-    # Build a lookup: "2020 - 2021" → "Jun 2020 - Aug 2021"
-    year_to_full: dict[str, str] = {}
+    # Build a lookup: "2020 - 2021" → ["Jun 2020 - Aug 2021", ...].
+    # Keep all matches so repeated year-only entries can be restored in order.
+    year_to_full: dict[str, list[str]] = {}
     year_only_re = re.compile(r"\d{4}")
     for md_date in md_dates:
         years_in_date = year_only_re.findall(md_date)
         if years_in_date:
             # Create year-only key like "2020 - 2021" or "2023"
             year_key = " - ".join(years_in_date)
-            # Keep the first (most specific) match
-            if year_key not in year_to_full:
-                # Normalize separators
-                normalized = re.sub(r"\s*[-–—]\s*", " - ", md_date.strip())
-                year_to_full[year_key] = normalized
+            normalized = re.sub(r"\s*[-–—]\s*", " - ", md_date.strip())
+            year_to_full.setdefault(year_key, []).append(normalized)
 
     if not year_to_full:
         return parsed_data
@@ -84,8 +82,8 @@ def restore_dates_from_markdown(
             ):
                 continue
             # Try to find a matching month-inclusive date
-            if years in year_to_full:
-                entry["years"] = year_to_full[years]
+            if years in year_to_full and year_to_full[years]:
+                entry["years"] = year_to_full[years].pop(0)
                 patched += 1
 
     # Custom sections
@@ -106,8 +104,8 @@ def restore_dates_from_markdown(
                     re.IGNORECASE,
                 ):
                     continue
-                if years in year_to_full:
-                    item["years"] = year_to_full[years]
+                if years in year_to_full and year_to_full[years]:
+                    item["years"] = year_to_full[years].pop(0)
                     patched += 1
 
     if patched:

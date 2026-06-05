@@ -37,6 +37,25 @@ class TestRestoreDatesFromMarkdown:
         result = restore_dates_from_markdown(parsed, markdown)
         assert result["education"][0]["years"] == "Jun 2023"
 
+    def test_restores_repeated_year_ranges_in_markdown_order(self):
+        parsed = {
+            "workExperience": [
+                {"title": "First", "years": "2020 - 2021"},
+                {"title": "Second", "years": "2020 - 2021"},
+            ]
+        }
+        markdown = "\n".join(
+            [
+                "First role, Jan 2020 - Mar 2021",
+                "Second role, Jun 2020 - Aug 2021",
+            ]
+        )
+
+        result = restore_dates_from_markdown(parsed, markdown)
+
+        assert result["workExperience"][0]["years"] == "Jan 2020 - Mar 2021"
+        assert result["workExperience"][1]["years"] == "Jun 2020 - Aug 2021"
+
     def test_leaves_entries_that_already_have_months(self):
         parsed = {"workExperience": [{"years": "Jan 2020 - Mar 2021"}]}
         markdown = "Jun 2020 - Aug 2021"  # same years, different months
