@@ -17,9 +17,9 @@ if not exist "apps\frontend" (
     goto error
 )
 
-:: Check for AUTOMATED APPLY folder
-if not exist "AUTOMATED APPLY" (
-    echo [ERROR] AUTOMATED APPLY folder not found
+:: Check for extensions\automated-apply folder
+if not exist "extensions\automated-apply" (
+    echo [ERROR] Automated Apply extension folder not found at extensions\automated-apply
     goto error
 )
 
@@ -33,7 +33,7 @@ start "Resume Matcher - Frontend" cmd /k "cd apps\frontend && npm run dev"
 
 :: Start the Job Applier Scraper in a separate command window
 echo Starting Job Applier and Scraper (python main.py)...
-start "Resume Matcher - Job Applier" cmd /k "cd "extensions\automated-apply" && venv\Scripts\python.exe -u main.py"
+start "Resume Matcher - Job Applier" cmd /k "cd extensions\automated-apply && venv\Scripts\python.exe -u main.py"
 
 :: Wait 5 seconds using ping (works in redirected environments where timeout fails)
 echo Waiting for servers to initialize...

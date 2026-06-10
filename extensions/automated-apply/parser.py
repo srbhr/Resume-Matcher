@@ -1,5 +1,5 @@
 import docx
-from docx.shared import Pt, Inches, RGBColor
+from docx.shared import Pt, Inches
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 
 def extract_text_from_docx(file_path):

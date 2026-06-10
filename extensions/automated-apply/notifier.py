@@ -9,17 +9,22 @@ account_sid = os.getenv("TWILIO_ACCOUNT_SID")
 auth_token = os.getenv("TWILIO_AUTH_TOKEN")
 twilio_number = os.getenv("TWILIO_WHATSAPP_NUMBER")
 my_number = os.getenv("YOUR_WHATSAPP_NUMBER")
+allow_public_upload = os.getenv("ALLOW_PUBLIC_RESUME_UPLOAD", "false").lower() == "true"
 
 def upload_to_tmpfiles(file_path):
     """
     Uploads a file to tmpfiles.org and returns the direct download URL.
     """
+    if not allow_public_upload:
+        print(f"Skipping upload of {file_path} because ALLOW_PUBLIC_RESUME_UPLOAD is set to false (privacy-safe mode).")
+        return None
+
+    print(f"[WARNING] Uploading {file_path} to tmpfiles.org for WhatsApp delivery. This file will be publicly accessible via the generated link.")
     url = 'https://tmpfiles.org/api/v1/upload'
-    print(f"Uploading {file_path} to tmpfiles.org for WhatsApp delivery...")
     try:
         with open(file_path, 'rb') as f:
             files = {'file': f}
-            response = requests.post(url, files=files)
+            response = requests.post(url, files=files, timeout=15)
             if response.status_code == 200:
                 data = response.json()
                 if data.get('status') == 'success':

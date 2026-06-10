@@ -565,7 +565,7 @@
       "rateLimit": "Se alcanzó el límite de tasa. Espera aproximadamente un minuto e inténtalo de nuevo.",
       "failedToGenerate": "No se pudo generar el currículum. Revisa tu clave API en Configuración e inténtalo de nuevo.",
       "failedToPreview": "No se pudo previsualizar el currículum. Revisa tu clave API en Configuración e inténtalo de nuevo.",
-      "timeout": "La solicitud ha expirado. Por favor, inténtelo de nuevo com una descripción de trabajo más corta o verifique su conexión.",
+      "timeout": "La solicitud ha expirado. Por favor, inténtelo de nuevo con una descripción de trabajo más corta o verifique su conexión.",
       "failedToConfirm": "No se pudieron aplicar los cambios. Inténtalo de nuevo."
     }
   },

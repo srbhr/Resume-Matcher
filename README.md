@@ -48,7 +48,7 @@ Our extension adds a fully automated loop that runs in the background to handle 
 To start the automated flow alongside the Resume Matcher UI:
 
 1. **Configure Scraper Settings:**
-   In [AUTOMATED APPLY/.env](AUTOMATED%20APPLY/.env), add your Twilio WhatsApp settings and configure your target LLM provider:
+   In [extensions/automated-apply/.env](extensions/automated-apply/.env), add your Twilio WhatsApp settings and configure your target LLM provider:
    ```env
    # LLM Config (supports gemini, groq, ollama, openai, etc.)
    LLM_PROVIDER="groq"

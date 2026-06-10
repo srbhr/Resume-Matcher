@@ -349,8 +349,6 @@ def process_job_posting(job, master_resume_id, master_resume_data, processed_url
         return False
         
     print(f"\n--- Processing Job from {site.upper()}: {title} at {company} ---")
-    processed_urls.add(apply_link)
-    save_processed_url(apply_link)
     
     try:
         # 1. Upload JD to Resume Matcher
@@ -528,6 +526,8 @@ def process_job_posting(job, master_resume_id, master_resume_data, processed_url
             cover_letter=cover_letter,
             project_suggestion=suggested_project_feedback
         )
+        processed_urls.add(apply_link)
+        save_processed_url(apply_link)
         return True
         
     except Exception as ex:

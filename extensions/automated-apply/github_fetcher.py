@@ -8,7 +8,7 @@ def fetch_github_projects(username="Chinmaya-shah"):
     url = f"https://api.github.com/users/{username}/repos"
     print(f"Fetching GitHub projects for {username}...")
     try:
-        response = requests.get(url)
+        response = requests.get(url, timeout=10)
         if response.status_code == 200:
             repos = response.json()
             project_list = []

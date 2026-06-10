@@ -116,6 +116,9 @@ def apply_programmatic_spelling_corrections(text):
     """
     Applies regex search-and-replace to correct common technical capitalization and abbreviation typos.
     """
+    # Expand millisecond abbreviation next to digits (e.g. "15ms" or "15 ms" -> "15 milliseconds")
+    text = re.sub(r'(\d+)\s*ms\b', r'\1 milliseconds', text, flags=re.IGNORECASE)
+
     for pattern, replacement in TECH_SPELLING_MAP.items():
         text = re.sub(pattern, replacement, text, flags=re.IGNORECASE)
     return text
@@ -179,7 +182,7 @@ def validate_resume_json(data):
     
     # 1. Check summary
     summary = data.get("summary", "")
-    sentences = [s.strip() for s in re.split(r'\.(?:\s+|$)', summary) if s.strip()]
+    sentences = [s.strip() for s in re.split(r'(?<!\be\.g)(?<!\bi\.e)\.(?=\s+[A-Z]|$)', summary) if s.strip()]
     if len(sentences) != 3:
         errors.append(f"Summary does not have exactly 3 sentences (found {len(sentences)}). Summary text: '{summary}'")
         
@@ -393,7 +396,7 @@ def fallback_post_processor(data):
     verb variety, and keyword repetitions programmatically if LLM correction loop fails.
     """
     summary = data.get("summary", "")
-    sentences = [s.strip() for s in re.split(r'\.(?:\s+|$)', summary) if s.strip()]
+    sentences = [s.strip() for s in re.split(r'(?<!\be\.g)(?<!\bi\.e)\.(?=\s+[A-Z]|$)', summary) if s.strip()]
     if len(sentences) < 3:
         while len(sentences) < 3:
             sentences.append("Demonstrated engineering depth by delivering clean, maintainable backend code solutions.")
