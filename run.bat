@@ -33,7 +33,7 @@ start "Resume Matcher - Frontend" cmd /k "cd apps\frontend && npm run dev"
 
 :: Start the Job Applier Scraper in a separate command window
 echo Starting Job Applier and Scraper (python main.py)...
-start "Resume Matcher - Job Applier" cmd /k "cd "AUTOMATED APPLY" && venv\Scripts\python.exe -u main.py"
+start "Resume Matcher - Job Applier" cmd /k "cd "extensions\automated-apply" && venv\Scripts\python.exe -u main.py"
 
 :: Wait 5 seconds using ping (works in redirected environments where timeout fails)
 echo Waiting for servers to initialize...
