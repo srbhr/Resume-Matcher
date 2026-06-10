@@ -2,7 +2,76 @@
 
 [![Resume Matcher](assets/header.png)](https://www.resumematcher.fyi)
 
-# Resume Matcher
+# Resume Matcher - Automated Apply & Tailoring Extension
+
+</div>
+
+---
+
+# 🤖 Resume Matcher - Automated Apply Scraper Extension
+
+> [!NOTE]
+> This is an enhanced fork of the excellent **[Resume Matcher](https://github.com/srbhr/Resume-Matcher)** project. We have built an **Automated Apply & Resume Tailoring Pipeline** directly on top of their core engine, enabling hands-free, high-quality job searching.
+
+---
+
+## 📺 Demo Video
+*(Paste your LinkedIn/YouTube video walk-through embed link here!)*
+
+<!-- You can replace this placeholder with an iframe or a markdown link to your video -->
+[![Watch the Demo Video](https://img.shields.io/badge/Watch%20Demo%20Video-Red?style=for-the-badge&logo=youtube&logoColor=white)](YOUR_VIDEO_LINK_HERE)
+
+---
+
+## ⚡ Core Automation Features
+
+Our extension adds a fully automated loop that runs in the background to handle the entire job application lifecycle:
+
+1. **🕵️ Playwright Stealth Scrapers:**
+   - Automatically scrapes fresh job postings from major portals like **LinkedIn** and **Naukri.com**.
+   - Leverages **Playwright** with advanced **Stealth** drivers to naturally bypass Cloudflare and Bot-detection barriers.
+2. **🎯 Strict Fresher Experience Filtering:**
+   - Scans job titles and description bodies using robust NLP/regex rules.
+   - Automatically filters out mid/senior roles (rejecting any listing requiring $\ge 3$ years of experience) to focus strictly on true entry-level/fresher job listings.
+3. **🧠 Unified Multi-LLM Resume Tailoring (LiteLLM):**
+   - Integrates with local models (like **Gemma 2 9B** or **Llama 3.1** running locally on **Ollama**) or high-limit cloud APIs (like **Groq** or **Gemini**) via **LiteLLM**.
+   - Tailors your resume using Google's XYZ formula, enforces action verb uniqueness across bullet points, performs grammatical auditing, and recommends custom projects to build.
+   - Evaluates outputs against strict ATS validation metrics.
+4. **📱 Direct WhatsApp Notifications:**
+   - Uploads your customized PDF/DOCX resumes, tailored cover letters, and project ideas.
+   - Sends direct alerts to your WhatsApp phone number via **Twilio**, providing direct download links so you can apply instantly.
+
+---
+
+## 🛠️ Additional Setup & Config
+
+To start the automated flow alongside the Resume Matcher UI:
+
+1. **Configure Scraper Settings:**
+   In [AUTOMATED APPLY/.env](AUTOMATED%20APPLY/.env), add your Twilio WhatsApp settings and configure your target LLM provider:
+   ```env
+   # LLM Config (supports gemini, groq, ollama, openai, etc.)
+   LLM_PROVIDER="groq"
+   LLM_MODEL="llama-3.3-70b-versatile"
+   LLM_API_KEY="your_groq_api_key"
+
+   # Twilio Configuration
+   TWILIO_ACCOUNT_SID="your_account_sid"
+   TWILIO_AUTH_TOKEN="your_auth_token"
+   TWILIO_WHATSAPP_NUMBER="whatsapp:+14155238886"
+   YOUR_WHATSAPP_NUMBER="whatsapp:+919724200396"
+   ```
+2. **Run All Services:**
+   Execute the root startup script to boot up the FastAPI backend, Next.js frontend, and the automated applier loop:
+   ```bash
+   run.bat
+   ```
+
+---
+
+<div align="center">
+
+# Original Resume Matcher Core
 
 [𝙹𝚘𝚒𝚗 𝙳𝚒𝚜𝚌𝚘𝚛𝚍](https://dsc.gg/resume-matcher) ✦ [𝚆𝚎𝚋𝚜𝚒𝚝𝚎](https://resumematcher.fyi) ✦ [𝙷𝚘𝚠 𝚝𝚘 𝙸𝚗𝚜𝚝𝚊𝚕𝚕](https://resumematcher.fyi/docs/installation) ✦ [𝙲𝚘𝚗𝚝𝚛𝚒𝚋𝚞𝚝𝚘𝚛𝚜](#contributors) ✦ [𝚂𝚙𝚘𝚗𝚜𝚘𝚛](#sponsor-resume-matcher) ✦ [𝚃𝚠𝚒𝚝𝚝𝚎𝚛/𝚇](https://twitter.com/srbhrai) ✦ [𝙻𝚒𝚗𝚔𝚎𝚍𝙸𝚗](https://www.linkedin.com/company/resume-matcher/) ✦ [𝙲𝚛𝚎𝚊𝚝𝚘𝚛](https://srbhr.com)
 

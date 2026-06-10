@@ -141,6 +141,13 @@ class Experience(BaseModel):
     years: str = ""
     description: list[str] = Field(default_factory=list)
 
+    @field_validator("title", "company", "years", mode="before")
+    @classmethod
+    def _coerce_none_to_string(cls, value: Any) -> str:
+        if value is None:
+            return ""
+        return str(value)
+
     @field_validator("description", mode="before")
     @classmethod
     def _normalize_description(cls, value: Any) -> list[str]:
@@ -155,6 +162,13 @@ class Education(BaseModel):
     degree: str = ""
     years: str = ""
     description: str | None = None
+
+    @field_validator("institution", "degree", "years", mode="before")
+    @classmethod
+    def _coerce_none_to_string(cls, value: Any) -> str:
+        if value is None:
+            return ""
+        return str(value)
 
     @field_validator("description", mode="before")
     @classmethod
@@ -172,6 +186,13 @@ class Project(BaseModel):
     github: str | None = None
     website: str | None = None
     description: list[str] = Field(default_factory=list)
+
+    @field_validator("role", "years", mode="before")
+    @classmethod
+    def _coerce_none_to_string(cls, value: Any) -> str:
+        if value is None:
+            return ""
+        return str(value)
 
     @field_validator("description", mode="before")
     @classmethod

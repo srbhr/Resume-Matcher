@@ -565,6 +565,7 @@
       "rateLimit": "Limite de requisições atingido. Aguarde cerca de um minuto e tente novamente.",
       "failedToGenerate": "Não foi possível gerar o currículo. Verifique sua chave de API em Configurações e tente novamente.",
       "failedToPreview": "Não foi possível pré-visualizar o currículo. Verifique sua chave de API em Configurações e tente novamente.",
+      "timeout": "A requisição expirou. Tente novamente com uma descrição de vaga mais curta ou verifique sua conexão.",
       "failedToConfirm": "Não foi possível aplicar as alterações. Tente novamente."
     }
   },
