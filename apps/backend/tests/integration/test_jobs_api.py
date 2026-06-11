@@ -1,6 +1,6 @@
 """Integration tests for job description endpoints."""
 
-from unittest.mock import patch, MagicMock
+from unittest.mock import AsyncMock, patch, MagicMock
 
 import pytest
 from httpx import ASGITransport, AsyncClient
@@ -17,7 +17,7 @@ def client():
 class TestJobUpload:
     """POST /api/v1/jobs/upload"""
 
-    @patch("app.routers.jobs.db")
+    @patch("app.routers.jobs.db", new_callable=AsyncMock)
     async def test_upload_single_job(self, mock_db, client):
         mock_db.create_job.return_value = {
             "job_id": "job-123",
@@ -34,7 +34,7 @@ class TestJobUpload:
         assert data["message"] == "data successfully processed"
         assert len(data["job_id"]) == 1
 
-    @patch("app.routers.jobs.db")
+    @patch("app.routers.jobs.db", new_callable=AsyncMock)
     async def test_upload_multiple_jobs(self, mock_db, client):
         mock_db.create_job.side_effect = [
             {"job_id": f"job-{i}", "content": f"JD {i}", "created_at": "2026-01-01T00:00:00Z"}
@@ -65,7 +65,7 @@ class TestJobUpload:
 class TestGetJob:
     """GET /api/v1/jobs/{job_id}"""
 
-    @patch("app.routers.jobs.db")
+    @patch("app.routers.jobs.db", new_callable=AsyncMock)
     async def test_get_existing_job(self, mock_db, client):
         mock_db.get_job.return_value = {
             "job_id": "job-123",
@@ -77,7 +77,7 @@ class TestGetJob:
         assert resp.status_code == 200
         assert resp.json()["job_id"] == "job-123"
 
-    @patch("app.routers.jobs.db")
+    @patch("app.routers.jobs.db", new_callable=AsyncMock)
     async def test_get_nonexistent_job_returns_404(self, mock_db, client):
         mock_db.get_job.return_value = None
         async with client:

@@ -57,7 +57,7 @@ class TestRegenerateEndpoints(unittest.IsolatedAsyncioTestCase):
             output_language="en",
         )
 
-        mock_db = MagicMock()
+        mock_db = AsyncMock()
         mock_db.get_resume.return_value = {"processed_data": {"workExperience": [], "additional": {}}}
 
         exp_item = RegeneratedItem(
@@ -123,7 +123,7 @@ class TestRegenerateEndpoints(unittest.IsolatedAsyncioTestCase):
             output_language="en",
         )
 
-        mock_db = MagicMock()
+        mock_db = AsyncMock()
         mock_db.get_resume.return_value = {"processed_data": {"workExperience": [], "additional": {}}}
 
         skills_item = RegeneratedItem(
@@ -172,7 +172,7 @@ class TestRegenerateEndpoints(unittest.IsolatedAsyncioTestCase):
             "additional": {"technicalSkills": ["Python"]},
         }
 
-        mock_db = MagicMock()
+        mock_db = AsyncMock()
         mock_db.get_resume.return_value = {"processed_data": processed_data}
         mock_db.update_resume.return_value = None
 
@@ -210,7 +210,7 @@ class TestRegenerateEndpoints(unittest.IsolatedAsyncioTestCase):
             "additional": {"technicalSkills": ["Python"]},
         }
 
-        mock_db = MagicMock()
+        mock_db = AsyncMock()
         mock_db.get_resume.return_value = {"processed_data": processed_data}
         mock_db.update_resume.return_value = None
 
@@ -245,7 +245,7 @@ class TestRegenerateEndpoints(unittest.IsolatedAsyncioTestCase):
             "additional": {"technicalSkills": ["Python"]},
         }
 
-        mock_db = MagicMock()
+        mock_db = AsyncMock()
         mock_db.get_resume.return_value = {"processed_data": processed_data}
 
         regenerated_items = [
@@ -280,7 +280,7 @@ class TestRegenerateEndpoints(unittest.IsolatedAsyncioTestCase):
         )
 
         # additional.technicalSkills path
-        mock_db_additional = MagicMock()
+        mock_db_additional = AsyncMock()
         mock_db_additional.get_resume.return_value = {
             "processed_data": {"additional": {"technicalSkills": ["Python"]}}
         }
@@ -294,7 +294,7 @@ class TestRegenerateEndpoints(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(updated["additional"]["technicalSkills"], ["Python", "TypeScript"])
 
         # legacy technicalSkills path
-        mock_db_legacy = MagicMock()
+        mock_db_legacy = AsyncMock()
         mock_db_legacy.get_resume.return_value = {"processed_data": {"technicalSkills": ["Python"]}}
         mock_db_legacy.update_resume.return_value = None
 
@@ -308,7 +308,7 @@ class TestRegenerateEndpoints(unittest.IsolatedAsyncioTestCase):
     async def test_apply_regenerated_skills_fails_when_no_supported_path_exists(self) -> None:
         resume_id = "resume_1"
 
-        mock_db = MagicMock()
+        mock_db = AsyncMock()
         mock_db.get_resume.return_value = {"processed_data": {"workExperience": []}}
 
         regenerated_items = [

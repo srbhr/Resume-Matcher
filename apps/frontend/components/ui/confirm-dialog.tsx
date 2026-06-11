@@ -117,7 +117,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
               <DialogTitle className="font-serif text-xl font-bold uppercase tracking-tight">
                 {title}
               </DialogTitle>
-              <DialogDescription className="font-mono text-xs text-ink-soft mt-2">
+              <DialogDescription className="font-mono text-xs text-ink-soft mt-2 max-h-60 overflow-y-auto whitespace-pre-wrap [overflow-wrap:anywhere]">
                 {description}
               </DialogDescription>
             </div>
@@ -125,7 +125,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
         </DialogHeader>
         {errorMessage && (
           <div className="px-6 pb-4">
-            <div className="border-2 border-red-600 bg-red-50 p-3 font-mono text-xs text-red-700">
+            <div className="border-2 border-red-600 bg-red-50 p-3 font-mono text-xs text-red-700 max-h-60 overflow-y-auto whitespace-pre-wrap [overflow-wrap:anywhere]">
               {errorMessage}
             </div>
           </div>

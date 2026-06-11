@@ -1,6 +1,7 @@
 """Shared test fixtures for Resume Matcher backend tests."""
 
 import copy
+import importlib
 
 import pytest
 
@@ -176,3 +177,45 @@ def sample_changes():
             reason="Already in good order, no change needed",
         ),
     ]
+
+
+# ---------------------------------------------------------------------------
+# Isolated database — swap the global TinyDB singleton for a temp-file DB
+# ---------------------------------------------------------------------------
+
+@pytest.fixture
+async def isolated_db(tmp_path, monkeypatch):
+    """Replace the global ``db`` singleton with a disposable temp-file SQLite DB
+    across ``app.database`` and every router module that imported it.
+
+    Lets endpoint / e2e tests run against a REAL (but isolated) database instead
+    of a MagicMock, so persistence, the master-resume invariant, and CRUD are
+    actually exercised — without touching the developer's real database. A
+    temp **file** (not ``:memory:``) is required: SQLite's connection pool gives
+    each connection its own in-memory DB, so the async + sync engines would not
+    share state.
+    """
+    import app.database as database_module
+    from app.database import Database
+
+    test_db = Database(db_path=tmp_path / "isolated_db.db")
+    monkeypatch.setattr(database_module, "db", test_db)
+    for router_name in (
+        "resumes",
+        "jobs",
+        "enrichment",
+        "config",
+        "health",
+        "applications",
+        "resume_wizard",
+    ):
+        try:
+            module = importlib.import_module(f"app.routers.{router_name}")
+        except ModuleNotFoundError:
+            continue
+        if hasattr(module, "db"):
+            monkeypatch.setattr(module, "db", test_db)
+    try:
+        yield test_db
+    finally:
+        await test_db.close()
