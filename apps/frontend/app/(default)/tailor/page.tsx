@@ -19,6 +19,7 @@ import { useStatusCache } from '@/lib/context/status-cache';
 import { Loader2, ArrowLeft, AlertTriangle, Settings } from 'lucide-react';
 import { useTranslations } from '@/lib/i18n';
 import { DiffPreviewModal } from '@/components/tailor/diff-preview-modal';
+import { ATSScoreCard } from '@/components/tailor/ats-score-card';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 export default function TailorPage() {
@@ -455,6 +456,13 @@ export default function TailorPage() {
           </Button>
         </div>
       </div>
+
+      {/* ATS Score Breakdown — shown once a preview result is available */}
+      {pendingResult?.data?.ats_score && (
+        <div className="w-full max-w-4xl mt-6">
+          <ATSScoreCard atsScore={pendingResult.data.ats_score} />
+        </div>
+      )}
 
       {/* Diff preview modal */}
       {showDiffModal && pendingResult && (

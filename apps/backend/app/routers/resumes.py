@@ -22,6 +22,8 @@ from app.config import settings
 
 logger = logging.getLogger(__name__)
 from app.schemas import (
+    ATSScore,
+    ATSSubScores,
     GenerateContentResponse,
     ImproveResumeConfirmRequest,
     ImproveResumeRequest,
@@ -55,6 +57,7 @@ from app.services.improver import (
     verify_diff_result,
 )
 from app.services.refiner import refine_resume, calculate_keyword_match
+from app.services.ats import compute_ats_score
 from app.schemas.refinement import RefinementConfig
 from app.services.cover_letter import (
     generate_cover_letter,
@@ -426,6 +429,43 @@ def _preserve_personal_info(
     result = copy.deepcopy(improved_data)
     result["personalInfo"] = copy.deepcopy(original_info)
     return result, warnings
+
+
+def _build_ats_score(
+    improved_data: dict[str, Any],
+    job_keywords: dict[str, Any],
+    refinement_result: Any,
+    refinement_successful: bool,
+) -> ATSScore | None:
+    """Build ATSScore from refinement result and resume data."""
+    try:
+        kw_analysis = (
+            refinement_result.keyword_analysis
+            if refinement_successful and refinement_result is not None
+            else None
+        )
+        final_match = (
+            refinement_result.final_match_percentage
+            if refinement_successful and refinement_result is not None
+            else calculate_keyword_match(improved_data, job_keywords)
+        )
+        ats_raw = compute_ats_score(
+            refined_resume=improved_data,
+            job_keywords=job_keywords,
+            keyword_match_percentage=final_match,
+            missing_keywords=kw_analysis.non_injectable_keywords if kw_analysis else [],
+            injectable_keywords=kw_analysis.injectable_keywords if kw_analysis else [],
+        )
+        return ATSScore(
+            overall_score=ats_raw["overall_score"],
+            sub_scores=ATSSubScores(**ats_raw["sub_scores"]),
+            missing_keywords=ats_raw["missing_keywords"],
+            injectable_keywords=ats_raw["injectable_keywords"],
+            recommendations=ats_raw["recommendations"],
+        )
+    except Exception as e:
+        logger.warning("ATS score computation failed", exc_info=True)
+        return None
 
 
 def _calculate_diff_from_resume(
@@ -908,6 +948,7 @@ async def _improve_preview_flow(
 
     # Multi-pass refinement: keyword injection, AI phrase removal, alignment validation
     refinement_stats: RefinementStats | None = None
+    refinement_result = None
     refinement_attempted = False
     refinement_successful = False
     try:
@@ -1016,6 +1057,12 @@ async def _improve_preview_flow(
             diff_summary=diff_summary,
             detailed_changes=detailed_changes,
             refinement_stats=refinement_stats,
+            ats_score=_build_ats_score(
+                improved_data,
+                job_keywords,
+                refinement_result,
+                refinement_successful,
+            ),
             warnings=response_warnings,
             refinement_attempted=refinement_attempted,
             refinement_successful=refinement_successful,
@@ -1266,6 +1313,7 @@ async def improve_resume_endpoint(
 
         # Multi-pass refinement: keyword injection, AI phrase removal, alignment validation
         refinement_stats: RefinementStats | None = None
+        refinement_result = None
         refinement_attempted = False
         refinement_successful = False
         try:
@@ -1402,6 +1450,12 @@ async def improve_resume_endpoint(
                 diff_summary=diff_summary,
                 detailed_changes=detailed_changes,
                 refinement_stats=refinement_stats,
+                ats_score=_build_ats_score(
+                    improved_data,
+                    job_keywords,
+                    refinement_result,
+                    refinement_successful,
+                ),
                 warnings=response_warnings,
                 refinement_attempted=refinement_attempted,
                 refinement_successful=refinement_successful,

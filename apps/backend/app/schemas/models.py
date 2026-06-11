@@ -483,6 +483,47 @@ class ResumeDiffSummary(BaseModel):
     high_risk_changes: int  # High-risk additions
 
 
+class ATSSubScores(BaseModel):
+    """Individual component scores that make up the ATS overall score."""
+
+    keyword_match: float = Field(
+        default=0.0, ge=0.0, le=100.0, description="Keyword match % (0–100)"
+    )
+    skills_coverage: float = Field(
+        default=0.0, ge=0.0, le=100.0, description="JD skills matched in resume (0–100)"
+    )
+    section_completeness: float = Field(
+        default=0.0,
+        ge=0.0,
+        le=100.0,
+        description="Key resume sections present (0–100)",
+    )
+
+
+class ATSScore(BaseModel):
+    """ATS-style score breakdown for a resume against a job description."""
+
+    overall_score: float = Field(
+        default=0.0,
+        ge=0.0,
+        le=100.0,
+        description="Weighted composite ATS score (0–100)",
+    )
+    sub_scores: ATSSubScores = Field(default_factory=ATSSubScores)
+    missing_keywords: list[str] = Field(
+        default_factory=list,
+        description="Job keywords absent from the tailored resume",
+    )
+    injectable_keywords: list[str] = Field(
+        default_factory=list,
+        description="Missing keywords that exist in the master resume and can be safely added",
+    )
+    recommendations: list[str] = Field(
+        default_factory=list,
+        description="Actionable suggestions to improve the ATS score",
+    )
+
+
 class RefinementStats(BaseModel):
     """Statistics from the multi-pass refinement process."""
 
@@ -529,6 +570,9 @@ class ImproveResumeData(BaseModel):
 
     # Refinement metadata (multi-pass refinement stats)
     refinement_stats: "RefinementStats | None" = None
+
+    # ATS score breakdown
+    ats_score: "ATSScore | None" = None
 
     # Warning and status fields for transparency
     warnings: list[str] = Field(default_factory=list)
