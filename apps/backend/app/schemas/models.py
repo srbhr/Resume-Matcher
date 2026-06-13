@@ -425,6 +425,7 @@ class JobUploadRequest(BaseModel):
 
     job_descriptions: list[str]
     resume_id: str | None = None
+    job_title: str | None = None
 
 
 class JobUploadResponse(BaseModel):
@@ -433,6 +434,7 @@ class JobUploadResponse(BaseModel):
     message: str
     job_id: list[str]
     request: dict[str, Any]
+    job_title: str | None = None
 
 
 # Improvement Models

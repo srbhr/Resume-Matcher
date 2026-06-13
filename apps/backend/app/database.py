@@ -359,23 +359,44 @@ class Database:
             await session.commit()
             return True
 
-    # -- Job operations -----------------------------------------------------
-
-    async def create_job(self, content: str, resume_id: str | None = None) -> dict[str, Any]:
+        # -- Job operations -----------------------------------------------------
+    async def create_job(
+        self,
+        content: str,
+        resume_id: str | None = None,
+        job_title: str | None = None,
+    ) -> dict[str, Any]:
         """Create a new job description entry."""
         job_id = str(uuid4())
         now = _now()
+
+        metadata_json: dict[str, Any] = {}
+        if job_title is not None:
+            metadata_json["job_title"] = job_title
+
         async with self._session() as session:
             session.add(
-                Job(job_id=job_id, content=content, resume_id=resume_id, created_at=now, metadata_json={})
+                Job(
+                    job_id=job_id,
+                    content=content,
+                    resume_id=resume_id,
+                    created_at=now,
+                    metadata_json=metadata_json,
+                )
             )
             await session.commit()
-        return {
+
+        result: dict[str, Any] = {
             "job_id": job_id,
             "content": content,
             "resume_id": resume_id,
             "created_at": now,
         }
+
+        if job_title is not None:
+            result["job_title"] = job_title
+
+        return result
 
     async def get_job(self, job_id: str) -> dict[str, Any] | None:
         """Get job by ID (dynamic fields flattened to top level)."""
