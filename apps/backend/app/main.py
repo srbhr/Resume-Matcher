@@ -18,7 +18,15 @@ from app import __version__
 from app.config import settings
 from app.database import db
 from app.pdf import close_pdf_renderer, init_pdf_renderer
-from app.routers import config_router, enrichment_router, health_router, jobs_router, resumes_router
+from app.routers import (
+    applications_router,
+    config_router,
+    enrichment_router,
+    health_router,
+    jobs_router,
+    resume_wizard_router,
+    resumes_router,
+)
 
 
 def _configure_application_logging() -> None:
@@ -35,6 +43,18 @@ async def lifespan(app: FastAPI):
     """Application lifespan manager."""
     # Startup
     settings.data_dir.mkdir(parents=True, exist_ok=True)
+    # Import a legacy TinyDB database into SQLite if present (idempotent).
+    # Fail-fast on error: starting with an empty DB would look like data loss.
+    from app.scripts.migrate_tinydb_to_sqlite import migrate as migrate_tinydb
+
+    result = await migrate_tinydb()
+    if result.get("status") == "migrated":
+        logger.info("Startup data migration: %s", result)
+    # Fold any legacy plaintext API keys into the encrypted store (idempotent,
+    # non-clobbering), then strip them from config.json.
+    from app.config import migrate_legacy_keys
+
+    migrate_legacy_keys()
     # PDF renderer uses lazy initialization - will initialize on first use
     # await init_pdf_renderer()
     yield
@@ -45,7 +65,7 @@ async def lifespan(app: FastAPI):
         logger.error(f"Error closing PDF renderer: {e}")
 
     try:
-        db.close()
+        await db.close()
     except Exception as e:
         logger.error(f"Error closing database: {e}")
 
@@ -72,6 +92,8 @@ app.include_router(config_router, prefix="/api/v1")
 app.include_router(resumes_router, prefix="/api/v1")
 app.include_router(jobs_router, prefix="/api/v1")
 app.include_router(enrichment_router, prefix="/api/v1")
+app.include_router(applications_router, prefix="/api/v1")
+app.include_router(resume_wizard_router, prefix="/api/v1")
 
 
 @app.get("/")

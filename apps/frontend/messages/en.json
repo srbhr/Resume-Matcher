@@ -44,7 +44,8 @@
     "tailor": "Tailor Resume",
     "settings": "Settings",
     "backToDashboard": "Back to Dashboard",
-    "goToSettings": "Go to Settings"
+    "goToSettings": "Go to Settings",
+    "applicationTracker": "Application Tracker"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -369,6 +370,18 @@
         "modernTwoColumn": {
           "name": "Modern Two Column",
           "description": "Two-column layout with modern colorful accents and themes"
+        },
+        "latex": {
+          "name": "LaTeX",
+          "description": "Classic serif academic layout with ruled section headers"
+        },
+        "clean": {
+          "name": "Clean",
+          "description": "Minimal sans layout with large understated section headers"
+        },
+        "vivid": {
+          "name": "Vivid",
+          "description": "Colorful two-column layout with accent headers and arrow bullets"
         }
       },
       "accentColor": "Accent Color",
@@ -548,6 +561,8 @@
       "educationChanges": "Education Changes",
       "projectChanges": "Project Changes",
       "certificationChanges": "Certification Changes",
+      "languageChanges": "Language Changes",
+      "awardChanges": "Award Changes",
       "rejectButton": "Reject & Regenerate",
       "confirmButton": "Confirm & Save"
     },
@@ -714,6 +729,12 @@
       "unableToSaveConfiguration": "Unable to save configuration",
       "failedToClearApiKeys": "Failed to clear API keys. Please try again.",
       "failedToResetDatabase": "Failed to reset database. Please try again."
+    },
+    "apiKeys": {
+      "savedTitle": "Saved API Keys",
+      "deleteAria": "Delete {provider} key",
+      "deleteConfirmTitle": "Delete API key?",
+      "deleteConfirmDescription": "Remove the saved {provider} API key? You can add it again later."
     }
   },
   "resumeViewer": {
@@ -863,5 +884,129 @@
     "clearApiKeysDescription": "You'll need to re-enter them before using AI features again.",
     "resetDatabase": "Reset everything and start over?",
     "resetDatabaseDescription": "This permanently deletes every resume, job description, and generated document."
+  },
+  "resumeWizard": {
+    "title": "Resume Wizard",
+    "answerLabel": "Your answer",
+    "keepAddingPrompt": "What would you like to add or change?",
+    "readyHint": "You have enough for a solid resume — review and finish whenever you are ready.",
+    "sections": {
+      "intro": "Getting started",
+      "contact": "Contact details",
+      "summary": "Professional summary",
+      "workExperience": "Work experience",
+      "internships": "Internships",
+      "education": "Education",
+      "personalProjects": "Projects",
+      "skills": "Skills",
+      "review": "Review"
+    },
+    "actions": {
+      "continue": "Continue",
+      "skip": "Skip",
+      "back": "Back",
+      "review": "Review & finish",
+      "create": "Create master resume",
+      "keepAdding": "Keep adding",
+      "backToDashboard": "Back to Dashboard"
+    },
+    "preview": {
+      "label": "Live Draft",
+      "empty": "Your resume appears here as you answer.",
+      "unnamed": "Unnamed Resume",
+      "experience": "Experience",
+      "education": "Education",
+      "projects": "Projects",
+      "skills": "Skills"
+    },
+    "errors": {
+      "turnFailed": "The wizard could not save that answer. Try again.",
+      "finalizeFailed": "The wizard could not create your master resume. Try again."
+    },
+    "entry": {
+      "kicker": "Master Resume Setup",
+      "title": "Choose your starting point",
+      "description": "Create your master resume from an existing document or build it step by step with AI guidance.",
+      "upload": {
+        "kicker": "Existing File",
+        "title": "Upload a resume",
+        "description": "Start from a PDF, DOC, or DOCX file and let Resume Matcher parse it into your master profile.",
+        "action": "Upload Resume"
+      },
+      "wizard": {
+        "kicker": "AI Guided",
+        "title": "Build with AI wizard",
+        "description": "Answer focused prompts and let the wizard assemble a strong first master resume draft.",
+        "action": "Start Wizard"
+      }
+    }
+  },
+  "tracker": {
+    "scroll": {
+      "prev": "Scroll left",
+      "next": "Scroll right",
+      "hint": "Scroll for more stages"
+    },
+    "title": "Application Tracker",
+    "subtitle": "Track where each tailored resume stands in your pipeline.",
+    "addApplication": "Add Application",
+    "columns": {
+      "saved": "Saved",
+      "applied": "Applied",
+      "no_response": "No Response",
+      "response": "Response",
+      "interview": "Interview",
+      "accepted": "Accepted",
+      "rejected": "Rejected",
+      "empty": "Nothing here yet"
+    },
+    "empty": {
+      "title": "No applications yet",
+      "description": "Tailor a resume to a job, or add one manually, to start tracking."
+    },
+    "card": {
+      "companyUnknown": "Unknown company",
+      "roleUnknown": "Untitled role",
+      "sharedResume": "Shared resume",
+      "selectAria": "Select application",
+      "dragAria": "Drag to reorder"
+    },
+    "modal": {
+      "jobDescription": "Job Description",
+      "noJobDescription": "No job description on file.",
+      "notes": "Notes",
+      "notesPlaceholder": "Add notes about this application…",
+      "saveNotes": "Save notes",
+      "resumeUnavailable": "The applied resume is no longer available.",
+      "loadFailed": "Could not load this application.",
+      "editResume": "Edit resume"
+    },
+    "bulk": {
+      "selected": "{count} selected",
+      "moveTo": "Move to…",
+      "clear": "Clear",
+      "deleteConfirmTitle": "Delete applications?",
+      "deleteConfirmDescription": "Delete {count} selected application(s)? This cannot be undone."
+    },
+    "manualAdd": {
+      "title": "Add Application",
+      "description": "Track an application by pasting its job description.",
+      "resume": "Resume",
+      "untitledResume": "Untitled resume",
+      "jobDescription": "Job Description",
+      "jobDescriptionPlaceholder": "Paste the job description here…",
+      "company": "Company",
+      "role": "Role",
+      "optional": "Optional",
+      "status": "Status",
+      "submit": "Add",
+      "validation": "Pick a resume and paste a job description.",
+      "failed": "Could not create the application."
+    },
+    "errors": {
+      "loadFailed": "Could not load applications.",
+      "moveFailed": "Could not move the application.",
+      "deleteFailed": "Could not delete the application(s)."
+    }
   }
 }

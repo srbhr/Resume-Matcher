@@ -2,7 +2,7 @@ import { ImprovedResult } from '@/components/common/resume_previewer_context';
 import type { ResumeData } from '@/components/dashboard/resume-component';
 import { type Locale } from '@/i18n/config';
 import { type TemplateSettings } from '@/lib/types/template-settings';
-import { API_BASE, apiDelete, apiFetch, apiPatch, apiPost } from './client';
+import { API_BASE, DEFAULT_TIMEOUT_MS, apiDelete, apiFetch, apiPatch, apiPost } from './client';
 
 // Matches backend schemas/models.py ResumeData
 interface ProcessedResume {
@@ -114,7 +114,9 @@ async function postImprove(
 ): Promise<ImprovedResult> {
   let response: Response;
   try {
-    response = await apiPost(endpoint, payload, 240_000);
+    // Use the configurable request timeout so NEXT_PUBLIC_REQUEST_TIMEOUT_MS
+    // actually applies to the long-running improve/preview/confirm calls (#776).
+    response = await apiPost(endpoint, payload, DEFAULT_TIMEOUT_MS);
   } catch (networkError) {
     console.error(`Network error during ${endpoint}:`, networkError);
     throw networkError;

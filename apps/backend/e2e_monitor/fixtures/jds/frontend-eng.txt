@@ -1,0 +1,11 @@
+We are hiring a Senior Frontend Engineer to lead the development of our consumer-facing web
+application. You will build performant, accessible React and Next.js interfaces backed by a
+TypeScript-first codebase, working closely with product designers and a GraphQL API team.
+
+Requirements: 4+ years building production React applications; expert-level TypeScript; strong
+understanding of Next.js 14+ App Router, server components, and streaming SSR; proficiency with
+Tailwind CSS and CSS-in-JS patterns; hands-on experience with WCAG 2.1 AA accessibility
+compliance, including screen-reader testing and keyboard navigation; familiarity with Storybook
+for component documentation, Vitest or Jest for unit tests, and Playwright for end-to-end
+testing. You will own Core Web Vitals (LCP, CLS, INP), collaborate on our design-system token
+library, and drive frontend performance budgets across our three product surfaces.

@@ -4,35 +4,64 @@
 
 ## Templates
 
-| Template | Layout | Best For |
-|----------|--------|----------|
-| swiss-single | Full-width vertical | 1-2 page resumes |
-| swiss-two-column | 65% main + 35% sidebar | Dense content |
+| Template          | Layout                              | Best For                                 |
+| ----------------- | ----------------------------------- | ---------------------------------------- |
+| swiss-single      | Full-width vertical                 | 1-2 page resumes                         |
+| swiss-two-column  | 65% main + 35% sidebar              | Dense content                            |
+| modern            | Single column, accent headers       | Colorful single-column                   |
+| modern-two-column | 65% main + 35% sidebar, accent      | Colorful dense content                   |
+| latex             | Single column, serif, ruled headers | Classic/academic résumés                 |
+| clean             | Single column, minimal sans         | Understated modern résumés               |
+| vivid             | 63% main + 37% sidebar, accent      | Colorful Awesome-CV style (accent color) |
 
 ## File Structure
 
 ```
 components/resume/
-├── index.ts                    # Re-exports all templates
-├── resume-single-column.tsx    # Single column template
-└── resume-two-column.tsx       # Two column template
+├── index.ts                      # Re-exports all templates
+├── resume-single-column.tsx      # swiss-single
+├── resume-two-column.tsx         # swiss-two-column
+├── resume-modern.tsx             # modern
+├── resume-modern-two-column.tsx  # modern-two-column
+├── resume-latex.tsx              # latex
+├── resume-clean.tsx              # clean
+├── resume-vivid.tsx              # vivid
+├── dynamic-resume-section.tsx    # shared custom-section renderer
+├── safe-html.tsx                 # sanitized rich-text renderer
+└── styles/                       # *.module.css per template + _base/_tokens
 ```
 
 ## Template Settings
 
+Authoritative definition: `apps/frontend/lib/types/template-settings.ts` (`TemplateSettings`,
+`DEFAULT_TEMPLATE_SETTINGS`, and the CSS-variable maps). Current shape:
+
 ```typescript
 interface TemplateSettings {
-  template: 'swiss-single' | 'swiss-two-column';
-  pageSize: 'A4' | 'LETTER';
-  marginTop: number;    // 5-25mm
-  marginBottom: number;
-  marginLeft: number;
-  marginRight: number;
-  sectionSpacing: 1-5;  // Inter-section gap
-  itemSpacing: 1-5;     // Item gap
-  lineHeight: 1-5;
-  fontSize: 1-5;        // Base font scale
-  headerScale: 1-5;     // Header size scale
+  template:
+    | "swiss-single"
+    | "swiss-two-column"
+    | "modern"
+    | "modern-two-column"
+    | "latex"
+    | "clean"
+    | "vivid";
+  pageSize: "A4" | "LETTER";
+  margins: { top: number; bottom: number; left: number; right: number }; // 5-25mm each
+  spacing: {
+    section: 1 | 2 | 3 | 4 | 5;
+    item: 1 | 2 | 3 | 4 | 5;
+    lineHeight: 1 | 2 | 3 | 4 | 5;
+  };
+  fontSize: {
+    base: 1 | 2 | 3 | 4 | 5;
+    headerScale: 1 | 2 | 3 | 4 | 5;
+    headerFont: "serif" | "sans-serif" | "mono";
+    bodyFont: "serif" | "sans-serif" | "mono";
+  };
+  compactMode: boolean;
+  showContactIcons: boolean;
+  accentColor: "blue" | "green" | "orange" | "red"; // modern, modern-two-column, vivid
 }
 ```
 
@@ -55,7 +84,7 @@ interface ResumeData {
   education: Education[];
   personalProjects: Project[];
   additional: AdditionalInfo;
-  sectionMeta: SectionMeta[];      // Order, visibility
+  sectionMeta: SectionMeta[]; // Order, visibility
   customSections: CustomSection[]; // User-added sections
 }
 ```
@@ -64,11 +93,11 @@ interface ResumeData {
 
 Users can add custom sections via `AddSectionDialog`:
 
-| Type | Component | Use Case |
-|------|-----------|----------|
-| text | `GenericTextForm` | Objective, statement |
-| itemList | `GenericItemForm` | Publications, research |
-| stringList | `GenericListForm` | Hobbies, interests |
+| Type       | Component         | Use Case               |
+| ---------- | ----------------- | ---------------------- |
+| text       | `GenericTextForm` | Objective, statement   |
+| itemList   | `GenericItemForm` | Publications, research |
+| stringList | `GenericListForm` | Hobbies, interests     |
 
 ## CSS Classes
 
