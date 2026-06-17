@@ -4,6 +4,9 @@ import {
   ResumeTwoColumn,
   ResumeModern,
   ResumeModernTwoColumn,
+  ResumeLatex,
+  ResumeClean,
+  ResumeVivid,
 } from '@/components/resume';
 import {
   type TemplateSettings,
@@ -199,6 +202,28 @@ const Resume: React.FC<ResumeProps> = ({
       )}
       {mergedSettings.template === 'modern-two-column' && (
         <ResumeModernTwoColumn
+          data={resumeData}
+          showContactIcons={mergedSettings.showContactIcons}
+          sectionHeadings={sectionHeadings}
+          fallbackLabels={fallbackLabels}
+        />
+      )}
+      {mergedSettings.template === 'latex' && (
+        <ResumeLatex
+          data={resumeData}
+          showContactIcons={mergedSettings.showContactIcons}
+          additionalSectionLabels={additionalSectionLabels}
+        />
+      )}
+      {mergedSettings.template === 'clean' && (
+        <ResumeClean
+          data={resumeData}
+          showContactIcons={mergedSettings.showContactIcons}
+          additionalSectionLabels={additionalSectionLabels}
+        />
+      )}
+      {mergedSettings.template === 'vivid' && (
+        <ResumeVivid
           data={resumeData}
           showContactIcons={mergedSettings.showContactIcons}
           sectionHeadings={sectionHeadings}

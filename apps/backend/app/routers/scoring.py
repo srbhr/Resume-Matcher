@@ -30,7 +30,7 @@ async def get_latest_score_for_resume(resume_id: str) -> ScoreResult | None:
 
     Returns null if no score has been computed for this resume yet.
     """
-    results = db.list_scores_by_resume(resume_id)
+    results = await db.list_scores_by_resume(resume_id)
     if not results:
         return None
     return ScoreResult(**{**results[0], "cached": True})
@@ -42,7 +42,7 @@ async def get_score(resume_id: str, job_id: str) -> ScoreResult:
 
     Returns 404 if no score has been computed for this pair yet.
     """
-    cached = db.get_score(resume_id, job_id)
+    cached = await db.get_score(resume_id, job_id)
     if not cached:
         raise HTTPException(status_code=404, detail="Score not found.")
     return ScoreResult(**{**cached, "cached": True})
@@ -54,6 +54,6 @@ async def delete_score(resume_id: str, job_id: str) -> None:
 
     Returns 204 on success, 404 if no score exists for this pair.
     """
-    deleted = db.delete_score(resume_id, job_id)
+    deleted = await db.delete_score(resume_id, job_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="Score not found.")

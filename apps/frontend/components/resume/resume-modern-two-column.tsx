@@ -38,6 +38,14 @@ export const ResumeModernTwoColumn: React.FC<ResumeModernTwoColumnProps> = ({
 }) => {
   const { personalInfo, summary, workExperience, education, personalProjects, additional } = data;
 
+  // Drop blank/whitespace-only entries so empty lines (e.g. from editing in the
+  // builder) never render in the resume or PDF (issue #763).
+  const technicalSkills = additional?.technicalSkills?.filter((item): item is string => typeof item === 'string' && item.trim() !== '') ?? [];
+  const languages = additional?.languages?.filter((item): item is string => typeof item === 'string' && item.trim() !== '') ?? [];
+  const certificationsTraining =
+    additional?.certificationsTraining?.filter((item): item is string => typeof item === 'string' && item.trim() !== '') ?? [];
+  const awards = additional?.awards?.filter((item): item is string => typeof item === 'string' && item.trim() !== '') ?? [];
+
   // Get sorted visible sections
   const sortedSections = getSortedSections(data);
 
@@ -300,21 +308,19 @@ export const ResumeModernTwoColumn: React.FC<ResumeModernTwoColumnProps> = ({
             )}
 
           {/* Certifications/Training - Main column */}
-          {isSectionVisible('additional') &&
-            additional?.certificationsTraining &&
-            additional.certificationsTraining.length > 0 && (
-              <div className={baseStyles['resume-section']}>
-                <h3 className={styles.sectionTitleAccent}>{headingFallbacks.certifications}</h3>
-                <ul className={`ml-4 ${baseStyles['resume-list']} ${baseStyles['resume-text-xs']}`}>
-                  {additional.certificationsTraining.map((cert, index) => (
-                    <li key={index} className="flex">
-                      <span className="mr-1.5 flex-shrink-0">•&nbsp;</span>
-                      <span>{cert}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+          {isSectionVisible('additional') && certificationsTraining.length > 0 && (
+            <div className={baseStyles['resume-section']}>
+              <h3 className={styles.sectionTitleAccent}>{headingFallbacks.certifications}</h3>
+              <ul className={`ml-4 ${baseStyles['resume-list']} ${baseStyles['resume-text-xs']}`}>
+                {certificationsTraining.map((cert, index) => (
+                  <li key={index} className="flex">
+                    <span className="mr-1.5 flex-shrink-0">•&nbsp;</span>
+                    <span>{cert}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           {/* Custom Sections - Main column */}
           {customSections.map((section) => (
@@ -361,41 +367,37 @@ export const ResumeModernTwoColumn: React.FC<ResumeModernTwoColumnProps> = ({
           )}
 
           {/* Skills Section */}
-          {isSectionVisible('additional') &&
-            additional?.technicalSkills &&
-            additional.technicalSkills.length > 0 && (
-              <div className={baseStyles['resume-section']}>
-                <h3
-                  className={`${baseStyles['resume-section-title-sm']} text-[var(--resume-accent-primary)]`}
-                >
-                  {headingFallbacks.skills}
-                </h3>
-                <div className="flex flex-wrap gap-1">
-                  {additional.technicalSkills.map((skill, index) => (
-                    <span key={index} className={baseStyles['resume-skill-pill']}>
-                      {skill}
-                    </span>
-                  ))}
-                </div>
+          {isSectionVisible('additional') && technicalSkills.length > 0 && (
+            <div className={baseStyles['resume-section']}>
+              <h3
+                className={`${baseStyles['resume-section-title-sm']} text-[var(--resume-accent-primary)]`}
+              >
+                {headingFallbacks.skills}
+              </h3>
+              <div className="flex flex-wrap gap-1">
+                {technicalSkills.map((skill, index) => (
+                  <span key={index} className={baseStyles['resume-skill-pill']}>
+                    {skill}
+                  </span>
+                ))}
               </div>
-            )}
+            </div>
+          )}
 
           {/* Languages Section */}
-          {isSectionVisible('additional') &&
-            additional?.languages &&
-            additional.languages.length > 0 && (
-              <div className={baseStyles['resume-section']}>
-                <h3
-                  className={`${baseStyles['resume-section-title-sm']} text-[var(--resume-accent-primary)]`}
-                >
-                  {headingFallbacks.languages}
-                </h3>
-                <p className={baseStyles['resume-text-xs']}>{additional.languages.join(' • ')}</p>
-              </div>
-            )}
+          {isSectionVisible('additional') && languages.length > 0 && (
+            <div className={baseStyles['resume-section']}>
+              <h3
+                className={`${baseStyles['resume-section-title-sm']} text-[var(--resume-accent-primary)]`}
+              >
+                {headingFallbacks.languages}
+              </h3>
+              <p className={baseStyles['resume-text-xs']}>{languages.join(' • ')}</p>
+            </div>
+          )}
 
           {/* Awards Section */}
-          {isSectionVisible('additional') && additional?.awards && additional.awards.length > 0 && (
+          {isSectionVisible('additional') && awards.length > 0 && (
             <div className={baseStyles['resume-section']}>
               <h3
                 className={`${baseStyles['resume-section-title-sm']} text-[var(--resume-accent-primary)]`}
@@ -403,7 +405,7 @@ export const ResumeModernTwoColumn: React.FC<ResumeModernTwoColumnProps> = ({
                 {headingFallbacks.awards}
               </h3>
               <ul className={baseStyles['resume-list']}>
-                {additional.awards.map((award, index) => (
+                {awards.map((award, index) => (
                   <li key={index} className={baseStyles['resume-text-xs']}>
                     {award}
                   </li>

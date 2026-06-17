@@ -7,10 +7,11 @@ from app.services.refiner import (
     analyze_keyword_gaps,
     calculate_keyword_match,
     fix_alignment_violations,
+    refine_resume,
     remove_ai_phrases,
     validate_master_alignment,
 )
-from app.schemas.refinement import AlignmentViolation
+from app.schemas.refinement import AlignmentViolation, RefinementConfig
 
 
 class TestRemoveAiPhrases:
@@ -84,6 +85,102 @@ class TestValidateMasterAlignment:
         skill_violations = [v for v in report.violations if "skill" in v.violation_type]
         assert len(skill_violations) >= 1
         assert any("kubernetes" in v.value.lower() for v in skill_violations)
+
+    def test_allows_jd_added_skill_when_explicitly_allowed(self, sample_resume, master_resume):
+        tailored = copy.deepcopy(sample_resume)
+        tailored["additional"]["technicalSkills"].append("Kubernetes")
+        report = validate_master_alignment(
+            tailored,
+            master_resume,
+            allowed_new_skills={"Kubernetes"},
+        )
+        critical_skill_violations = [
+            v
+            for v in report.violations
+            if "skill" in v.violation_type and v.severity == "critical"
+        ]
+        assert critical_skill_violations == []
+
+    async def test_refiner_rejects_skill_from_generic_keyword_only(
+        self,
+        sample_resume,
+        master_resume,
+    ):
+        tailored = copy.deepcopy(sample_resume)
+        tailored["additional"]["technicalSkills"].append("CI/CD")
+        result = await refine_resume(
+            initial_tailored=tailored,
+            master_resume=master_resume,
+            job_description="Familiarity with CI/CD pipelines and agile practices",
+            job_keywords={
+                "required_skills": [],
+                "preferred_skills": [],
+                "keywords": ["CI/CD"],
+            },
+            config=RefinementConfig(
+                enable_keyword_injection=False,
+                enable_ai_phrase_removal=False,
+                enable_master_alignment_check=True,
+            ),
+        )
+        assert "CI/CD" not in result.refined_data["additional"]["technicalSkills"]
+
+    async def test_refiner_allows_required_skill_present_in_job_description(
+        self,
+        sample_resume,
+        master_resume,
+    ):
+        tailored = copy.deepcopy(sample_resume)
+        tailored["additional"]["technicalSkills"].append("Kubernetes")
+        result = await refine_resume(
+            initial_tailored=tailored,
+            master_resume=master_resume,
+            job_description="Experience with Kubernetes is required.",
+            job_keywords={
+                "required_skills": ["Kubernetes"],
+                "preferred_skills": [],
+                "keywords": [],
+            },
+            config=RefinementConfig(
+                enable_keyword_injection=False,
+                enable_ai_phrase_removal=False,
+                enable_master_alignment_check=True,
+            ),
+        )
+        assert "Kubernetes" in result.refined_data["additional"]["technicalSkills"]
+
+    @pytest.mark.parametrize(
+        ("skill", "job_description"),
+        [
+            ("C++", "Experience with C++ is required for systems tooling."),
+            ("C#", "Experience with C# is required for .NET services."),
+        ],
+    )
+    async def test_refiner_allows_required_punctuated_skill_present_in_job_description(
+        self,
+        sample_resume,
+        master_resume,
+        skill,
+        job_description,
+    ):
+        tailored = copy.deepcopy(sample_resume)
+        tailored["additional"]["technicalSkills"].append(skill)
+        result = await refine_resume(
+            initial_tailored=tailored,
+            master_resume=master_resume,
+            job_description=job_description,
+            job_keywords={
+                "required_skills": [skill],
+                "preferred_skills": [],
+                "keywords": [],
+            },
+            config=RefinementConfig(
+                enable_keyword_injection=False,
+                enable_ai_phrase_removal=False,
+                enable_master_alignment_check=True,
+            ),
+        )
+        assert skill in result.refined_data["additional"]["technicalSkills"]
 
     def test_detects_fabricated_certification(self, sample_resume, master_resume):
         tailored = copy.deepcopy(sample_resume)

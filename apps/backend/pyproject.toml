@@ -6,22 +6,33 @@ requires-python = ">=3.13"
 dependencies = [
     "fastapi==0.128.4",
     "uvicorn==0.40.0",
-    "python-multipart==0.0.26",
+    "python-multipart==0.0.27",
     "pydantic==2.12.5",
     "pydantic-settings==2.12.0",
     "tinydb==4.8.2",
-    "litellm==1.83.0",
+    "sqlalchemy[asyncio]==2.0.36",
+    "aiosqlite==0.20.0",
+    "cryptography==46.0.7",
+    "litellm==1.86.2",
     "markitdown[docx]==0.1.4",
     "pdfminer.six==20260107",
     "playwright==1.58.0",
     "python-docx==1.2.0",
-    "python-dotenv==1.2.1",
+    "python-dotenv==1.2.2",
 ]
+
+[project.scripts]
+app = "app.main:main"
 
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0.0",
     "pytest-asyncio>=0.24.0",
+    "httpx>=0.28.0",
+    "respx>=0.21.1",
+]
+e2e-monitor = [
+    "pypdf>=4.0.0",  # PDF text probe for the non-blank render check
     "httpx>=0.28.0",
 ]
 
@@ -42,9 +53,14 @@ asyncio_mode = "auto"
 addopts = [
     "--strict-markers",
     "-v",
+    # Exclude LLM-as-judge evals from the default run (they may call a real
+    # provider and are non-deterministic). Run them on demand with `-m eval`.
+    "-m",
+    "not eval",
 ]
 markers = [
     "unit: pure function tests, no external dependencies",
     "service: service layer tests with mocked LLM",
     "integration: API endpoint tests with httpx AsyncClient",
+    "eval: prompt-quality evaluations; may call a real LLM, skipped without a configured key",
 ]

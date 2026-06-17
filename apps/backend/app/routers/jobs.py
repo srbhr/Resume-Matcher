@@ -55,7 +55,7 @@ async def upload_job_descriptions(request: JobUploadRequest) -> JobUploadRespons
         if not jd.strip():
             raise HTTPException(status_code=400, detail="Empty job description")
 
-        job = db.create_job(
+        job = await db.create_job(
             content=jd.strip(),
             resume_id=request.resume_id,
             company=request.company,
@@ -76,18 +76,14 @@ async def upload_job_descriptions(request: JobUploadRequest) -> JobUploadRespons
 
 @router.get("", response_model=list[JobSummary])
 async def list_jobs() -> list[JobSummary]:
-    """List all uploaded job descriptions.
-
-    The `content_preview` field contains the first 200 characters of the
-    job description. Use `GET /jobs/{job_id}` to retrieve the full text.
-    """
-    return [_to_summary(job) for job in db.list_jobs()]
+    """List all uploaded job descriptions."""
+    return [_to_summary(job) for job in await db.list_jobs()]
 
 
 @router.get("/{job_id}", response_model=JobDetail)
 async def get_job(job_id: str) -> JobDetail:
     """Get a job description by ID with all fields and full content."""
-    job = db.get_job(job_id)
+    job = await db.get_job(job_id)
 
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
@@ -98,9 +94,9 @@ async def get_job(job_id: str) -> JobDetail:
 @router.patch("/{job_id}", response_model=JobDetail)
 async def update_job(job_id: str, request: JobUpdateRequest) -> JobDetail:
     """Update optional metadata (company, title, url) on a job description."""
-    if not db.get_job(job_id):
+    if not await db.get_job(job_id):
         raise HTTPException(status_code=404, detail="Job not found")
 
     updates = {k: v for k, v in request.model_dump().items() if v is not None}
-    job = db.update_job(job_id, updates)
+    job = await db.update_job(job_id, updates)
     return _to_detail(job)

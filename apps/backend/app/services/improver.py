@@ -16,6 +16,7 @@ from app.prompts import (
     DIFF_STRATEGY_INSTRUCTIONS,
     EXTRACT_KEYWORDS_PROMPT,
     IMPROVE_RESUME_PROMPTS,
+    SKILL_TARGET_PLAN_PROMPT,
     get_language_name,
 )
 from app.prompts.templates import IMPROVE_SCHEMA_EXAMPLE
@@ -80,7 +81,13 @@ _ALLOWED_PATH_PATTERNS = [
     re.compile(r"^summary$"),
     re.compile(r"^workExperience\[\d+\]\.description(\[\d+\])?$"),
     re.compile(r"^personalProjects\[\d+\]\.description(\[\d+\])?$"),
+    # Education description is a single string (Education.description: str | None),
+    # so only the scalar path is allowed — not a [j]-indexed bullet form.
+    re.compile(r"^education\[\d+\]\.description$"),
     re.compile(r"^additional\.technicalSkills$"),
+    re.compile(r"^additional\.languages$"),
+    re.compile(r"^additional\.certificationsTraining$"),
+    re.compile(r"^additional\.awards$"),
 ]
 
 # Blocked path prefixes — always rejected
@@ -129,6 +136,10 @@ def _is_path_blocked(path: str) -> bool:
             return True
 
     if path.startswith("education"):
+        # Education descriptions may be tailored; degree/institution/years stay
+        # blocked (they are also caught by the blocked-leaf-name check above).
+        if re.match(r"^education\[\d+\]\.description$", path):
+            return False
         return True
 
     return False
@@ -201,10 +212,12 @@ def _set_at_path(data: dict[str, Any], path: str, value: Any) -> bool:
     return True
 
 
-def _verify_original_matches(actual: Any, expected: str | None) -> bool:
+def _verify_original_matches(actual: Any, expected: str | list[str] | None) -> bool:
     """Verify that the original text from the diff matches the actual value."""
     if expected is None:
-        return True  # No verification needed (e.g. append, reorder)
+        return True  # no original provided (e.g. append) — nothing to verify
+    if not isinstance(expected, str):
+        return False  # a non-str original on a text action is malformed — reject
     if not isinstance(actual, str):
         return False
     return actual.strip().casefold() == expected.strip().casefold()
@@ -213,6 +226,7 @@ def _verify_original_matches(actual: Any, expected: str | None) -> bool:
 def apply_diffs(
     original: dict[str, Any],
     changes: list[ResumeChange],
+    allowed_skill_targets: list[dict[str, Any] | str] | None = None,
 ) -> tuple[dict[str, Any], list[ResumeChange], list[ResumeChange]]:
     """Apply verified diffs to original resume.
 
@@ -227,6 +241,7 @@ def apply_diffs(
     Args:
         original: The original resume data (ResumeData-compatible dict)
         changes: List of changes from the LLM
+        allowed_skill_targets: Verified skill targets allowed for add_skill actions
 
     Returns:
         (result_dict, applied_changes, rejected_changes)
@@ -234,6 +249,7 @@ def apply_diffs(
     result = copy.deepcopy(original)
     applied: list[ResumeChange] = []
     rejected: list[ResumeChange] = []
+    allowed_skill_keys = _build_allowed_skill_target_keys(allowed_skill_targets)
 
     for change in changes:
         path = change.path
@@ -298,26 +314,93 @@ def apply_diffs(
             if not isinstance(actual_value, list) or not isinstance(change.value, list):
                 rejected.append(change)
                 continue
-            # Validate same items (case-insensitive)
             orig_set = sorted(s.casefold() for s in actual_value if isinstance(s, str))
             new_set = sorted(s.casefold() for s in change.value if isinstance(s, str))
-            if orig_set != new_set:
-                logger.info("Diff rejected (reorder items mismatch): %s", path)
-                rejected.append(change)
-                continue
-            # Preserve original casing: map new order back to original strings
-            casefold_to_originals: dict[str, list[str]] = {}
-            for item in actual_value:
-                if isinstance(item, str):
-                    casefold_to_originals.setdefault(item.casefold(), []).append(item)
             reordered: list[str] = []
-            for item in change.value:
-                if isinstance(item, str):
-                    originals = casefold_to_originals.get(item.casefold(), [])
-                    reordered.append(originals.pop(0) if originals else item)
+            if orig_set == new_set:
+                # Pure permutation: map the new order back to original casing.
+                casefold_to_originals: dict[str, list[str]] = {}
+                for item in actual_value:
+                    if isinstance(item, str):
+                        casefold_to_originals.setdefault(item.casefold(), []).append(item)
+                for item in change.value:
+                    if isinstance(item, str):
+                        originals = casefold_to_originals.get(item.casefold(), [])
+                        reordered.append(originals.pop(0) if originals else item)
+            else:
+                # Salvage (issue #736): the LLM folded new/removed items into a
+                # reorder. Rather than dropping the whole change, apply the SAFE
+                # subset *in the requested order*: walk the proposed list, placing
+                # each existing item where the model put it (so prioritized JD
+                # skills stay near the top) and — for the skills list only —
+                # inserting new items that pass the SAME verified gate as
+                # add_skill. Originals the model omitted are appended at the end
+                # so a real item is never silently lost. Other lists
+                # (languages/certs/awards) have no verifier, so new items are
+                # dropped to avoid fabrication.
+                casefold_to_originals: dict[str, list[str]] = {}
+                for item in actual_value:
+                    if isinstance(item, str):
+                        casefold_to_originals.setdefault(item.casefold(), []).append(item)
+                original_cfs = set(casefold_to_originals)
+                is_skills = path == "additional.technicalSkills"
+                added_new: set[str] = set()
+                for item in change.value:
+                    if not isinstance(item, str):
+                        continue
+                    cf = item.casefold()
+                    if cf in original_cfs:
+                        bucket = casefold_to_originals[cf]
+                        if bucket:  # place original in requested position (dupes preserved)
+                            reordered.append(bucket.pop(0))
+                        # else: a duplicate of an already-placed original — skip
+                    elif is_skills and cf not in added_new:
+                        skill = item.strip()
+                        if skill and _normalize_skill_key(skill) in allowed_skill_keys:
+                            reordered.append(skill)  # verified new skill, requested position
+                            added_new.add(cf)
+                        else:
+                            logger.info("Reorder salvage dropped unverified skill: %s", skill)
+                    # else: non-skills new item → dropped (no verifier to ground it)
+                for item in actual_value:  # append any originals the model omitted
+                    if isinstance(item, str):
+                        bucket = casefold_to_originals[item.casefold()]
+                        if bucket:
+                            reordered.append(bucket.pop(0))
+                logger.info("Diff reorder salvaged (item-set mismatch): %s", path)
             if not _set_at_path(result, path, reordered):
                 rejected.append(change)
                 continue
+            applied.append(change)
+
+        elif action == "add_skill":
+            if path != "additional.technicalSkills":
+                logger.info("Diff rejected (add_skill outside skills): %s", path)
+                rejected.append(change)
+                continue
+            if not isinstance(actual_value, list):
+                logger.info("Diff rejected (add_skill to non-list): %s", path)
+                rejected.append(change)
+                continue
+            if not isinstance(change.value, str) or not change.value.strip():
+                logger.info("Diff rejected (add_skill empty/non-string): %s", path)
+                rejected.append(change)
+                continue
+            new_skill = change.value.strip()
+            existing = {
+                item.casefold()
+                for item in actual_value
+                if isinstance(item, str)
+            }
+            if new_skill.casefold() in existing:
+                logger.info("Diff rejected (duplicate skill): %s", new_skill)
+                rejected.append(change)
+                continue
+            if _normalize_skill_key(new_skill) not in allowed_skill_keys:
+                logger.info("Diff rejected (skill not in verified targets): %s", new_skill)
+                rejected.append(change)
+                continue
+            actual_value.append(new_skill)
             applied.append(change)
 
         else:
@@ -427,6 +510,7 @@ async def generate_resume_diffs(
     language: str = "en",
     prompt_id: str | None = None,
     original_resume_data: dict[str, Any] | None = None,
+    skill_targets: list[dict[str, Any]] | None = None,
 ) -> ImproveDiffResult:
     """Generate targeted resume diffs via LLM.
 
@@ -440,6 +524,7 @@ async def generate_resume_diffs(
         language: Output language code (en, es, zh, ja)
         prompt_id: Strategy id (nudge/keywords/full)
         original_resume_data: Structured resume JSON
+        skill_targets: Verified skill targets from the planning pass
 
     Returns:
         ImproveDiffResult with list of changes and strategy notes
@@ -473,6 +558,7 @@ async def generate_resume_diffs(
         strategy_instruction=strategy_instruction,
         output_language=output_language,
         job_keywords=keywords_str,
+        skill_targets=_prepare_skill_targets_for_prompt(skill_targets),
         job_description=sanitized_jd,
         original_resume=resume_input,
     )
@@ -481,6 +567,7 @@ async def generate_resume_diffs(
         prompt=prompt,
         system_prompt="You are an expert resume editor. Output only valid JSON with targeted changes.",
         max_tokens=4096,
+        schema_type="diff",
     )
 
     # Parse result — handle LLM ignoring diff format gracefully
@@ -530,6 +617,7 @@ async def extract_job_keywords(job_description: str) -> dict[str, Any]:
     return await complete_json(
         prompt=prompt,
         system_prompt="You are an expert job description analyzer.",
+        schema_type="keywords",
     )
 
 
@@ -589,6 +677,234 @@ def _prepare_keywords_for_prompt(job_keywords: dict[str, Any]) -> str:
         sections.append("Additional keywords to weave in naturally:\n- " + "\n- ".join(str(k) for k in keywords))
 
     return "\n\n".join(sections) if sections else "No specific keywords extracted."
+
+
+def _normalize_skill_key(skill: str) -> str:
+    """Normalize a skill for case-insensitive comparison."""
+    return re.sub(r"\s+", " ", skill.strip()).casefold()
+
+
+def _extract_skill_index(items: Any) -> dict[str, str]:
+    """Build a normalized skill index from a string list."""
+    if not isinstance(items, list):
+        return {}
+    index: dict[str, str] = {}
+    for item in items:
+        if not isinstance(item, str):
+            continue
+        skill = item.strip()
+        if skill:
+            index.setdefault(_normalize_skill_key(skill), skill)
+    return index
+
+
+def _skill_mentioned_in_text(skill: str, text: str) -> bool:
+    """Return True when a skill phrase appears as a whole term in text."""
+    escaped = re.escape(skill.strip().lower())
+    if not escaped:
+        return False
+    return bool(re.search(rf"(?<!\w){escaped}(?!\w)", text.lower()))
+
+
+def _build_allowed_skill_target_keys(
+    allowed_skill_targets: list[dict[str, Any] | str] | None,
+) -> set[str]:
+    """Build normalized keys for skills approved by the planning verifier."""
+    keys: set[str] = set()
+    for target in allowed_skill_targets or []:
+        if isinstance(target, str):
+            skill = target
+        elif isinstance(target, dict):
+            skill = str(target.get("skill", ""))
+        else:
+            continue
+        if skill.strip():
+            keys.add(_normalize_skill_key(skill))
+    return keys
+
+
+def _extract_jd_skill_index(
+    job_keywords: dict[str, Any],
+    job_description: str | None = None,
+) -> dict[str, str]:
+    """Build a normalized index of explicit JD skills."""
+    index: dict[str, str] = {}
+    for field in ("required_skills", "preferred_skills"):
+        values = job_keywords.get(field, [])
+        if not isinstance(values, list):
+            continue
+        for value in values:
+            if not isinstance(value, str):
+                continue
+            skill = value.strip()
+            if skill and (
+                job_description is None
+                or _skill_mentioned_in_text(skill, job_description)
+            ):
+                index.setdefault(_normalize_skill_key(skill), skill)
+    return index
+
+
+def _skill_present_in_resume_text(skill: str, resume_data: dict[str, Any]) -> bool:
+    """Return True when a skill phrase already appears in the resume text."""
+    text = json.dumps(resume_data, ensure_ascii=False)
+    return _skill_mentioned_in_text(skill, text)
+
+
+def verify_skill_target_plan(
+    raw_plan: dict[str, Any],
+    original_resume_data: dict[str, Any],
+    job_keywords: dict[str, Any],
+    job_description: str | None = None,
+) -> dict[str, list[dict[str, str]] | str]:
+    """Filter and classify LLM-proposed skill targets before diff generation.
+
+    Existing resume skills are accepted as low-risk targets. Required and
+    preferred JD skills are accepted as explicit JD-added targets for user
+    review. Other skills are accepted only when they already appear in the
+    resume text.
+    """
+    original_skills = _extract_skill_index(
+        original_resume_data.get("additional", {}).get("technicalSkills", [])
+    )
+    jd_skills = _extract_jd_skill_index(job_keywords, job_description)
+    raw_targets = raw_plan.get("target_skills", [])
+    accepted: list[dict[str, str]] = []
+    rejected: list[dict[str, str]] = []
+    seen: set[str] = set()
+
+    if not isinstance(raw_targets, list):
+        raw_targets = []
+
+    for target in raw_targets:
+        if isinstance(target, str):
+            skill = target.strip()
+            reason = ""
+        elif isinstance(target, dict):
+            skill = str(target.get("skill", "")).strip()
+            reason = str(target.get("reason", "")).strip()
+        else:
+            continue
+
+        skill_key = _normalize_skill_key(skill)
+        if not skill or skill_key in seen:
+            continue
+        seen.add(skill_key)
+
+        if skill_key in original_skills:
+            accepted.append(
+                {
+                    "skill": original_skills[skill_key],
+                    "source": "existing",
+                    "reason": reason or "Already present in resume skills",
+                }
+            )
+        elif skill_key in jd_skills:
+            # JD-required/preferred skills are accepted as targets so the résumé
+            # can be tailored to actually pass ATS/recruiter screening — adding
+            # relevant JD skills is the product's purpose. (Truly unsupported
+            # skills — neither in the JD nor the résumé — are still rejected
+            # below.) The user reviews additions in the diff preview before save.
+            accepted.append(
+                {
+                    "skill": jd_skills[skill_key],
+                    "source": "jd_added",
+                    "reason": reason or "Required or preferred by the job description",
+                }
+            )
+        elif _skill_present_in_resume_text(skill, original_resume_data):
+            accepted.append(
+                {
+                    "skill": skill,
+                    "source": "supported_by_resume",
+                    "reason": reason or "Appears in the existing resume content",
+                }
+            )
+        else:
+            rejected.append(
+                {
+                    "skill": skill,
+                    "source": "unsupported",
+                    "reason": reason or "Not found in resume or job keywords",
+                }
+            )
+
+    return {
+        "accepted": accepted,
+        "rejected": rejected,
+        "strategy_notes": str(raw_plan.get("strategy_notes", "")),
+    }
+
+
+async def generate_skill_target_plan(
+    original_resume_data: dict[str, Any],
+    job_description: str,
+    job_keywords: dict[str, Any],
+    language: str = "en",
+) -> dict[str, Any]:
+    """Ask the LLM for a compact skill target plan before editing diffs."""
+    output_language = get_language_name(language)
+    existing_skills = original_resume_data.get("additional", {}).get(
+        "technicalSkills", []
+    )
+    sanitized_jd = _sanitize_user_input(job_description)
+    prompt = SKILL_TARGET_PLAN_PROMPT.format(
+        output_language=output_language,
+        existing_skills=json.dumps(existing_skills, ensure_ascii=False),
+        job_keywords=_prepare_keywords_for_prompt(job_keywords),
+        job_description=sanitized_jd,
+        original_resume=json.dumps(original_resume_data, ensure_ascii=False),
+    )
+
+    result = await complete_json(
+        prompt=prompt,
+        system_prompt=(
+            "You are a resume skill planning agent. Output only valid JSON with "
+            "target_skills and strategy_notes."
+        ),
+        max_tokens=2048,
+        schema_type="diff",
+    )
+
+    raw_targets = result.get("target_skills", [])
+    target_skills: list[dict[str, str]] = []
+    if isinstance(raw_targets, list):
+        for raw in raw_targets:
+            if isinstance(raw, str):
+                skill = raw.strip()
+                reason = ""
+            elif isinstance(raw, dict):
+                skill = str(raw.get("skill", "")).strip()
+                reason = str(raw.get("reason", "")).strip()
+            else:
+                continue
+            if skill:
+                target_skills.append({"skill": skill, "reason": reason})
+    else:
+        logger.warning("Skill target plan returned non-list target_skills")
+
+    return {
+        "target_skills": target_skills,
+        "strategy_notes": str(result.get("strategy_notes", "")),
+    }
+
+
+def _prepare_skill_targets_for_prompt(
+    skill_targets: list[dict[str, Any]] | None,
+) -> str:
+    """Format verified skill targets for the diff prompt."""
+    if not skill_targets:
+        return "No verified skill targets."
+    lines: list[str] = []
+    for target in skill_targets:
+        skill = str(target.get("skill", "")).strip()
+        if not skill:
+            continue
+        source = str(target.get("source", "unknown")).strip() or "unknown"
+        reason = str(target.get("reason", "")).strip()
+        suffix = f": {reason}" if reason else ""
+        lines.append(f"- {skill} ({source}){suffix}")
+    return "\n".join(lines) if lines else "No verified skill targets."
 
 
 async def improve_resume(
@@ -1022,6 +1338,91 @@ def calculate_resume_diff(
             confidence="medium"
         ))
 
+    # 4b. Compare education descriptions (a single string per entry, not a list)
+    original_education = original.get("education", [])
+    improved_education = improved.get("education", [])
+    for idx in range(max(len(original_education), len(improved_education))):
+        orig_entry = original_education[idx] if idx < len(original_education) else None
+        impr_entry = improved_education[idx] if idx < len(improved_education) else None
+        orig_desc = (
+            str(orig_entry.get("description") or "").strip()
+            if isinstance(orig_entry, dict)
+            else ""
+        )
+        impr_desc = (
+            str(impr_entry.get("description") or "").strip()
+            if isinstance(impr_entry, dict)
+            else ""
+        )
+        if orig_desc == impr_desc:
+            continue
+        if orig_desc and not impr_desc:
+            change_type = "removed"
+        elif impr_desc and not orig_desc:
+            change_type = "added"
+        else:
+            change_type = "modified"
+        changes.append(ResumeFieldDiff(
+            field_path=f"education[{idx}].description",
+            field_type="education",
+            change_type=change_type,
+            original_value=orig_desc or None,
+            new_value=impr_desc or None,
+            confidence="medium",
+        ))
+
+    # 4c. Compare languages (order changes are intentionally ignored)
+    orig_langs = _build_string_index(
+        original.get("additional", {}).get("languages", []),
+        "additional.languages",
+    )
+    new_langs = _build_string_index(
+        improved.get("additional", {}).get("languages", []),
+        "additional.languages",
+    )
+    for lang_key in set(new_langs) - set(orig_langs):
+        changes.append(ResumeFieldDiff(
+            field_path="additional.languages",
+            field_type="language",
+            change_type="added",
+            new_value=new_langs[lang_key],
+            confidence="high",
+        ))
+    for lang_key in set(orig_langs) - set(new_langs):
+        changes.append(ResumeFieldDiff(
+            field_path="additional.languages",
+            field_type="language",
+            change_type="removed",
+            original_value=orig_langs[lang_key],
+            confidence="medium",
+        ))
+
+    # 4d. Compare awards (order changes are intentionally ignored)
+    orig_awards = _build_string_index(
+        original.get("additional", {}).get("awards", []),
+        "additional.awards",
+    )
+    new_awards = _build_string_index(
+        improved.get("additional", {}).get("awards", []),
+        "additional.awards",
+    )
+    for award_key in set(new_awards) - set(orig_awards):
+        changes.append(ResumeFieldDiff(
+            field_path="additional.awards",
+            field_type="award",
+            change_type="added",
+            new_value=new_awards[award_key],
+            confidence="high",
+        ))
+    for award_key in set(orig_awards) - set(new_awards):
+        changes.append(ResumeFieldDiff(
+            field_path="additional.awards",
+            field_type="award",
+            change_type="removed",
+            original_value=orig_awards[award_key],
+            confidence="medium",
+        ))
+
     # 5. Compare added/removed/modified entries
     # Descriptions are diffed separately; ignore them when detecting entry-level changes.
     _append_entry_changes(
@@ -1040,6 +1441,7 @@ def calculate_resume_diff(
         original.get("education", []),
         improved.get("education", []),
         _format_education_entry,
+        {"description"},  # diffed separately in step 4b — avoid duplicate entry-level diffs
     )
     _append_entry_changes(
         changes,

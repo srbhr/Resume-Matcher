@@ -1,0 +1,12 @@
+We are looking for a Senior Backend Engineer to join our platform team. You will design and build
+high-throughput Python services using FastAPI and Django REST Framework, owning the full lifecycle
+from schema design to production deployment. Our stack runs on AWS (ECS, RDS, ElastiCache), and
+you will be expected to make sound architectural decisions around microservices decomposition,
+event-driven messaging with Kafka, and relational data modeling in PostgreSQL.
+
+Requirements: 4+ years of professional Python experience; deep knowledge of async programming
+with asyncio; experience with containerization via Docker and orchestration with Kubernetes or
+ECS; strong grasp of SQL query optimization, indexing strategies, and Redis caching patterns;
+familiarity with CI/CD pipelines (GitHub Actions or CircleCI) and observability tooling
+(Datadog, OpenTelemetry). You take ownership of reliability — on-call rotations, runbooks, and
+postmortems are part of the role.

@@ -44,7 +44,8 @@
     "tailor": "Personalizar CV",
     "settings": "Configuración",
     "backToDashboard": "Volver al Panel",
-    "goToSettings": "Ir a Configuración"
+    "goToSettings": "Ir a Configuración",
+    "applicationTracker": "Seguimiento de candidaturas"
   },
   "dashboard": {
     "title": "Panel",
@@ -369,6 +370,18 @@
         "modernTwoColumn": {
           "name": "Moderno de dos columnas",
           "description": "Diseño de dos columnas moderno con acentos coloridos y temas"
+        },
+        "latex": {
+          "name": "LaTeX",
+          "description": "Diseño académico clásico con tipografía serif y encabezados con líneas"
+        },
+        "clean": {
+          "name": "Limpio",
+          "description": "Diseño minimalista sans con encabezados grandes y sobrios"
+        },
+        "vivid": {
+          "name": "Vívido",
+          "description": "Diseño de dos columnas colorido con encabezados de acento y viñetas de flecha"
         }
       },
       "accentColor": "Color de acento",
@@ -546,6 +559,8 @@
       "educationChanges": "Cambios en educación",
       "projectChanges": "Cambios en proyectos",
       "certificationChanges": "Cambios en certificaciones",
+      "languageChanges": "Cambios en idiomas",
+      "awardChanges": "Cambios en premios",
       "rejectButton": "Rechazar y regenerar",
       "confirmButton": "Confirmar y guardar"
     },
@@ -564,6 +579,7 @@
       "apiKeyError": "Tu clave API no funciona. Revísala en Configuración.",
       "rateLimit": "Se alcanzó el límite de tasa. Espera aproximadamente un minuto e inténtalo de nuevo.",
       "failedToGenerate": "No se pudo generar el currículum. Revisa tu clave API en Configuración e inténtalo de nuevo.",
+      "timeout": "La solicitud agotó el tiempo de espera. Inténtalo de nuevo con una descripción del trabajo más corta o comprueba tu conexión.",
       "failedToPreview": "No se pudo previsualizar el currículum. Revisa tu clave API en Configuración e inténtalo de nuevo.",
       "failedToConfirm": "No se pudieron aplicar los cambios. Inténtalo de nuevo."
     }
@@ -637,14 +653,24 @@
       "defaultModel": "PREDETERMINADO: {model}",
       "apiKeyLabel": "Clave API",
       "apiKeyOptionalForOllama": "(Opcional para Ollama)",
+      "apiKeyOptional": "(Opcional)",
       "apiKeyPlaceholder": "sk-...",
       "apiKeyNotRequiredPlaceholder": "No se requiere para modelos locales",
+      "apiKeyOptionalPlaceholder": "Déjalo en blanco si tu servidor no requiere autenticación",
       "leaveBlankToKeepExistingKey": "DEJA EN BLANCO PARA MANTENER LA CLAVE EXISTENTE",
       "baseUrlLabel": "URL base (opcional)",
       "baseUrlPlaceholder": "p. ej. https://api.openai.com/v1",
       "baseUrlDescription": "Sobrescribe la URL base para usar un proxy/agregador. Déjalo en blanco para usar la URL predeterminada del proveedor.",
       "ollamaServerUrl": "URL del servidor Ollama",
       "ollamaServerUrlPlaceholder": "http://localhost:11434",
+      "reasoningEffortLabel": "Esfuerzo de razonamiento",
+      "reasoningEffortAuto": "Automático",
+      "reasoningEffortAutoDesc": "No enviar reasoning_effort — valor por defecto para máxima compatibilidad",
+      "reasoningEffortMinimal": "Mínimo",
+      "reasoningEffortLow": "Bajo",
+      "reasoningEffortMedium": "Medio",
+      "reasoningEffortHigh": "Alto",
+      "reasoningEffortDescription": "Solo afecta a modelos con capacidad de razonamiento (familia gpt-5, Claude 3.7+, DeepSeek R1, OpenAI o1/o3). Los proveedores no compatibles descartan este valor automáticamente.",
       "testConnection": "Probar conexión",
       "errorPrefix": "ERROR: {error}",
       "connectionSuccessful": "CONEXIÓN EXITOSA",
@@ -652,6 +678,7 @@
       "connectionDetails": "Proveedor: {provider} | Modelo: {model}",
       "testPromptLabel": "TEXTO DE PRUEBA",
       "modelOutputLabel": "SALIDA DEL MODELO",
+      "reasoningContentLabel": "RAZONAMIENTO DEL MODELO",
       "errorDetailLabel": "DETALLE DEL ERROR",
       "healthErrors": {
         "api_key_missing": "La clave API no está configurada. Añádela en Configuración.",
@@ -674,7 +701,11 @@
       "outreachMessage": {
         "label": "Mensaje de acercamiento en frío",
         "description": "Genera un mensaje de networking para LinkedIn o correo electrónico"
-      }
+      },
+      "customPromptLabel": "Prompt personalizado (opcional)",
+      "customPromptHelp": "Debe incluir estos marcadores (cada uno entre llaves): job_description, resume_data, output_language. Déjalo en blanco para usar el prompt por defecto.",
+      "customPromptResetButton": "Restablecer al predeterminado",
+      "customPromptErrorMissing": "Faltan marcadores requeridos: {missing}"
     },
     "promptSettings": {
       "title": "Configuración de Prompts",
@@ -696,6 +727,12 @@
       "unableToSaveConfiguration": "No se pudo guardar la configuración",
       "failedToClearApiKeys": "No se pudieron borrar las claves API. Inténtalo de nuevo.",
       "failedToResetDatabase": "No se pudo restablecer la base de datos. Inténtalo de nuevo."
+    },
+    "apiKeys": {
+      "savedTitle": "Claves de API guardadas",
+      "deleteAria": "Eliminar la clave de {provider}",
+      "deleteConfirmTitle": "¿Eliminar clave de API?",
+      "deleteConfirmDescription": "¿Eliminar la clave de API de {provider} guardada? Puedes volver a añadirla más tarde."
     }
   },
   "resumeViewer": {
@@ -845,5 +882,129 @@
     "clearApiKeysDescription": "Tendrás que volver a ingresarlas antes de usar las funciones de IA de nuevo.",
     "resetDatabase": "¿Restablecer todo y empezar de nuevo?",
     "resetDatabaseDescription": "Esto eliminará permanentemente cada currículum, descripción de trabajo y documento generado."
+  },
+  "resumeWizard": {
+    "title": "Asistente de currículum",
+    "answerLabel": "Tu respuesta",
+    "keepAddingPrompt": "¿Qué te gustaría añadir o cambiar?",
+    "readyHint": "Ya tienes suficiente para un currículum sólido: revísalo y termínalo cuando quieras.",
+    "sections": {
+      "intro": "Primeros pasos",
+      "contact": "Datos de contacto",
+      "summary": "Resumen profesional",
+      "workExperience": "Experiencia laboral",
+      "internships": "Prácticas",
+      "education": "Educación",
+      "personalProjects": "Proyectos",
+      "skills": "Habilidades",
+      "review": "Revisión"
+    },
+    "actions": {
+      "continue": "Continuar",
+      "skip": "Omitir",
+      "back": "Atrás",
+      "review": "Revisar y finalizar",
+      "create": "Crear currículum maestro",
+      "keepAdding": "Seguir añadiendo",
+      "backToDashboard": "Volver al panel"
+    },
+    "preview": {
+      "label": "Borrador en vivo",
+      "empty": "Tu currículum aparece aquí a medida que respondes.",
+      "unnamed": "Currículum sin nombre",
+      "experience": "Experiencia",
+      "education": "Educación",
+      "projects": "Proyectos",
+      "skills": "Habilidades"
+    },
+    "errors": {
+      "turnFailed": "El asistente no pudo guardar esa respuesta. Inténtalo de nuevo.",
+      "finalizeFailed": "El asistente no pudo crear tu currículum maestro. Inténtalo de nuevo."
+    },
+    "entry": {
+      "kicker": "Configuración del currículum maestro",
+      "title": "Elige tu punto de partida",
+      "description": "Crea tu currículum maestro a partir de un documento existente o constrúyelo paso a paso con ayuda de IA.",
+      "upload": {
+        "kicker": "Archivo existente",
+        "title": "Subir un currículum",
+        "description": "Empieza con un archivo PDF, DOC o DOCX y deja que Resume Matcher lo convierta en tu perfil maestro.",
+        "action": "Subir currículum"
+      },
+      "wizard": {
+        "kicker": "Guiado por IA",
+        "title": "Construir con el asistente de IA",
+        "description": "Responde preguntas enfocadas y deja que el asistente arme un primer borrador sólido de tu currículum maestro.",
+        "action": "Iniciar asistente"
+      }
+    }
+  },
+  "tracker": {
+    "scroll": {
+      "prev": "Desplazar a la izquierda",
+      "next": "Desplazar a la derecha",
+      "hint": "Desplázate para ver más etapas"
+    },
+    "title": "Seguimiento de candidaturas",
+    "subtitle": "Controla en qué punto está cada currículum adaptado de tu proceso.",
+    "addApplication": "Añadir candidatura",
+    "columns": {
+      "saved": "Guardado",
+      "applied": "Enviado",
+      "no_response": "Sin respuesta",
+      "response": "Respuesta",
+      "interview": "Entrevista",
+      "accepted": "Aceptado",
+      "rejected": "Rechazado",
+      "empty": "Aún no hay nada aquí"
+    },
+    "empty": {
+      "title": "Aún no hay candidaturas",
+      "description": "Adapta un currículum a un empleo o añade uno manualmente para empezar."
+    },
+    "card": {
+      "companyUnknown": "Empresa desconocida",
+      "roleUnknown": "Puesto sin título",
+      "sharedResume": "Currículum compartido",
+      "selectAria": "Seleccionar candidatura",
+      "dragAria": "Arrastra para reordenar"
+    },
+    "modal": {
+      "jobDescription": "Descripción del empleo",
+      "noJobDescription": "No hay descripción del empleo.",
+      "notes": "Notas",
+      "notesPlaceholder": "Añade notas sobre esta candidatura…",
+      "saveNotes": "Guardar notas",
+      "resumeUnavailable": "El currículum enviado ya no está disponible.",
+      "loadFailed": "No se pudo cargar esta candidatura.",
+      "editResume": "Editar currículum"
+    },
+    "bulk": {
+      "selected": "{count} seleccionadas",
+      "moveTo": "Mover a…",
+      "clear": "Limpiar",
+      "deleteConfirmTitle": "¿Eliminar candidaturas?",
+      "deleteConfirmDescription": "¿Eliminar {count} candidatura(s) seleccionada(s)? Esto no se puede deshacer."
+    },
+    "manualAdd": {
+      "title": "Añadir candidatura",
+      "description": "Haz seguimiento de una candidatura pegando su descripción.",
+      "resume": "Currículum",
+      "untitledResume": "Currículum sin título",
+      "jobDescription": "Descripción del empleo",
+      "jobDescriptionPlaceholder": "Pega aquí la descripción del empleo…",
+      "company": "Empresa",
+      "role": "Puesto",
+      "optional": "Opcional",
+      "status": "Estado",
+      "submit": "Añadir",
+      "validation": "Elige un currículum y pega una descripción del empleo.",
+      "failed": "No se pudo crear la candidatura."
+    },
+    "errors": {
+      "loadFailed": "No se pudieron cargar las candidaturas.",
+      "moveFailed": "No se pudo mover la candidatura.",
+      "deleteFailed": "No se pudieron eliminar las candidaturas."
+    }
   }
 }

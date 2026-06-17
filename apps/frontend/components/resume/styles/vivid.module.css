@@ -1,0 +1,155 @@
+@import './_tokens.css';
+
+/*
+  Vivid Template
+  ID: vivid
+
+  Colorful two-column "Awesome-CV" lineage: two-tone accent name, monospace title +
+  circular-icon contact row, accent small-caps section headers, accent arrow bullets.
+  Reads the accent-color control (--resume-accent-primary, default blue).
+*/
+
+.grid {
+  display: grid;
+  grid-template-columns: 63% 37%;
+  gap: calc(var(--section-gap) * 1.25);
+  margin-top: var(--section-gap);
+  align-items: start;
+}
+
+.mainColumn {
+  display: flex;
+  flex-direction: column;
+  gap: var(--section-gap);
+  padding-right: 0.875rem;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.sidebarColumn {
+  display: flex;
+  flex-direction: column;
+  gap: var(--section-gap);
+  padding-left: 0.75rem;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* Two-tone name */
+.nameFirst {
+  font-weight: 800;
+  color: var(--resume-accent-primary);
+}
+
+.nameRest {
+  font-weight: 400;
+  color: var(--resume-accent-primary);
+  opacity: 0.6;
+}
+
+/* Monospace title + contact row */
+.titleLine {
+  font-family: var(--resume-font-mono);
+  font-size: calc(var(--font-size-base) * 1.05);
+  color: var(--resume-text-tertiary);
+  margin-top: 0.15rem;
+  letter-spacing: 0.01em;
+}
+
+.contactRow {
+  font-family: var(--resume-font-mono);
+  font-size: calc(var(--font-size-base) * 0.8);
+  color: var(--resume-text-body);
+}
+
+.contactChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.iconCircle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 1px solid var(--resume-border-primary);
+  border-radius: 9999px;
+  color: var(--resume-text-tertiary);
+  flex-shrink: 0;
+}
+
+/* Accent small-caps section headers */
+.sectionTitle {
+  font-family: var(--header-font);
+  font-size: calc(var(--font-size-base) * var(--section-header-scale) * 1.1);
+  font-weight: 700;
+  font-variant: small-caps;
+  letter-spacing: 0.03em;
+  color: var(--resume-accent-primary);
+  margin-bottom: var(--item-gap);
+  break-after: avoid;
+  page-break-after: avoid;
+  orphans: 3;
+  widows: 3;
+}
+
+.sectionTitleSm {
+  font-family: var(--header-font);
+  font-size: calc(var(--font-size-base) * var(--section-header-scale) * 0.95);
+  font-weight: 700;
+  font-variant: small-caps;
+  letter-spacing: 0.03em;
+  color: var(--resume-accent-primary);
+  margin-bottom: var(--item-gap);
+  break-after: avoid;
+  page-break-after: avoid;
+}
+
+.arrow {
+  color: var(--resume-accent-primary);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.entryCompany {
+  font-weight: 700;
+  color: var(--resume-text-primary);
+}
+
+.entrySep {
+  color: var(--resume-text-tertiary);
+  padding: 0 0.4em;
+}
+
+.entryRole {
+  font-variant: small-caps;
+  letter-spacing: 0.02em;
+  color: var(--resume-text-tertiary);
+}
+
+.entryMeta {
+  font-family: var(--resume-font-mono);
+  font-size: calc(var(--font-size-base) * 0.72);
+  font-weight: 700;
+  color: var(--resume-text-tertiary);
+}
+
+@media print {
+  .nameFirst,
+  .nameRest,
+  .sectionTitle,
+  .sectionTitleSm,
+  .arrow {
+    color: var(--resume-accent-primary) !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .sectionTitle,
+  .sectionTitleSm {
+    break-after: avoid !important;
+    page-break-after: avoid !important;
+  }
+}

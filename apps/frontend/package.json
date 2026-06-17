@@ -21,7 +21,7 @@
     "clsx": "^2.1.1",
     "isomorphic-dompurify": "^3.0.0",
     "lucide-react": "^0.575.0",
-    "next": "^16.2.3",
+    "next": "^16.2.6",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "tailwind-merge": "^3.5.0",
@@ -43,9 +43,10 @@
     "prettier": "^3.8.1",
     "tailwindcss": "^4",
     "typescript": "^5",
-    "vitest": "^4.0.18"
+    "vitest": "^4.1.8"
   },
   "overrides": {
-    "undici": "^7.24.1"
+    "undici": "^7.24.1",
+    "postcss": "^8.5.10"
   }
 }

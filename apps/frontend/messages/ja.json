@@ -44,7 +44,8 @@
     "tailor": "履歴書をカスタマイズ",
     "settings": "設定",
     "backToDashboard": "ダッシュボードに戻る",
-    "goToSettings": "設定へ"
+    "goToSettings": "設定へ",
+    "applicationTracker": "応募トラッカー"
   },
   "dashboard": {
     "title": "ダッシュボード",
@@ -369,6 +370,18 @@
         "modernTwoColumn": {
           "name": "モダン2カラム",
           "description": "モダンな2カラムとカラフルなアクセント"
+        },
+        "latex": {
+          "name": "LaTeX",
+          "description": "罫線付き見出しのクラシックなセリフ体レイアウト"
+        },
+        "clean": {
+          "name": "クリーン",
+          "description": "大きく控えめな見出しのミニマルなサンセリフ体レイアウト"
+        },
+        "vivid": {
+          "name": "ビビッド",
+          "description": "アクセント見出しと矢印箇条書きのカラフルな2カラムレイアウト"
         }
       },
       "accentColor": "アクセントカラー",
@@ -546,6 +559,8 @@
       "educationChanges": "学歴の変更",
       "projectChanges": "プロジェクトの変更",
       "certificationChanges": "資格の変更",
+      "languageChanges": "言語の変更",
+      "awardChanges": "賞の変更",
       "rejectButton": "拒否して再生成",
       "confirmButton": "確認して保存"
     },
@@ -564,6 +579,7 @@
       "apiKeyError": "API キーが機能していません。設定で確認してください。",
       "rateLimit": "レート制限に達しました。約1分待ってから再試行してください。",
       "failedToGenerate": "履歴書を生成できませんでした。設定で API キーを確認してから、もう一度お試しください。",
+      "timeout": "リクエストがタイムアウトしました。より短い求人内容で再試行するか、接続を確認してください。",
       "failedToPreview": "履歴書をプレビューできませんでした。設定で API キーを確認してから、もう一度お試しください。",
       "failedToConfirm": "変更を適用できませんでした。もう一度お試しください。"
     }
@@ -637,14 +653,24 @@
       "defaultModel": "既定: {model}",
       "apiKeyLabel": "API キー",
       "apiKeyOptionalForOllama": "（Ollama は任意）",
+      "apiKeyOptional": "（任意）",
       "apiKeyPlaceholder": "sk-...",
       "apiKeyNotRequiredPlaceholder": "ローカルモデルでは不要",
+      "apiKeyOptionalPlaceholder": "サーバーに認証が必要ない場合は空欄のままでOK",
       "leaveBlankToKeepExistingKey": "空欄のままにすると既存キーを保持します",
       "baseUrlLabel": "ベースURL（任意）",
       "baseUrlPlaceholder": "例: https://api.openai.com/v1",
       "baseUrlDescription": "プロキシ/アグリゲーター等のエンドポイントを使う場合に Base URL を上書きできます。空欄の場合は既定値を使用します。",
       "ollamaServerUrl": "Ollama サーバー URL",
       "ollamaServerUrlPlaceholder": "http://localhost:11434",
+      "reasoningEffortLabel": "推論の深さ",
+      "reasoningEffortAuto": "自動",
+      "reasoningEffortAutoDesc": "reasoning_effort を送信しない（互換性重視の既定値）",
+      "reasoningEffortMinimal": "最小",
+      "reasoningEffortLow": "低",
+      "reasoningEffortMedium": "中",
+      "reasoningEffortHigh": "高",
+      "reasoningEffortDescription": "推論対応モデル（gpt-5 系、Claude 3.7+、DeepSeek R1、OpenAI o1/o3）にのみ影響します。対応していないプロバイダーではこの値は自動的に無視されます。",
       "testConnection": "接続テスト",
       "errorPrefix": "エラー: {error}",
       "connectionSuccessful": "接続成功",
@@ -652,6 +678,7 @@
       "connectionDetails": "プロバイダー: {provider} | モデル: {model}",
       "testPromptLabel": "テスト内容",
       "modelOutputLabel": "モデル出力",
+      "reasoningContentLabel": "モデルの思考",
       "errorDetailLabel": "エラー詳細",
       "healthErrors": {
         "api_key_missing": "APIキーが設定されていません。設定で追加してください。",
@@ -674,7 +701,11 @@
       "outreachMessage": {
         "label": "コールドアウトリーチメッセージ",
         "description": "LinkedIn やメール向けのネットワーキングメッセージを生成します"
-      }
+      },
+      "customPromptLabel": "カスタムプロンプト（任意）",
+      "customPromptHelp": "次のプレースホルダーを中括弧で囲んで含めてください：job_description, resume_data, output_language。空欄の場合は既定のプロンプトを使用します。",
+      "customPromptResetButton": "デフォルトにリセット",
+      "customPromptErrorMissing": "必須のプレースホルダーが不足しています：{missing}"
     },
     "promptSettings": {
       "title": "プロンプト設定",
@@ -696,6 +727,12 @@
       "unableToSaveConfiguration": "設定を保存できません",
       "failedToClearApiKeys": "API キーの消去に失敗しました。もう一度お試しください。",
       "failedToResetDatabase": "データベースのリセットに失敗しました。もう一度お試しください。"
+    },
+    "apiKeys": {
+      "savedTitle": "保存済み API キー",
+      "deleteAria": "{provider} のキーを削除",
+      "deleteConfirmTitle": "API キーを削除しますか？",
+      "deleteConfirmDescription": "保存された {provider} の API キーを削除しますか？後で再度追加できます。"
     }
   },
   "resumeViewer": {
@@ -845,5 +882,129 @@
     "clearApiKeysDescription": "AI機能を再び使うには、もう一度入力が必要になります。",
     "resetDatabase": "すべてリセットして最初からやり直しますか？",
     "resetDatabaseDescription": "すべての履歴書、求人内容、生成されたドキュメントが完全に削除されます。"
+  },
+  "resumeWizard": {
+    "title": "履歴書ウィザード",
+    "answerLabel": "あなたの回答",
+    "keepAddingPrompt": "追加または変更したい内容は何ですか？",
+    "readyHint": "しっかりした履歴書を作るのに十分な情報が集まりました。準備ができたら確認して完成させましょう。",
+    "sections": {
+      "intro": "はじめに",
+      "contact": "連絡先情報",
+      "summary": "職務要約",
+      "workExperience": "職務経験",
+      "internships": "インターンシップ",
+      "education": "学歴",
+      "personalProjects": "プロジェクト",
+      "skills": "スキル",
+      "review": "確認"
+    },
+    "actions": {
+      "continue": "続行",
+      "skip": "スキップ",
+      "back": "戻る",
+      "review": "確認して完了",
+      "create": "マスター履歴書を作成",
+      "keepAdding": "続けて追加",
+      "backToDashboard": "ダッシュボードに戻る"
+    },
+    "preview": {
+      "label": "ライブ下書き",
+      "empty": "回答するにつれて、ここに履歴書が表示されます。",
+      "unnamed": "名前未設定の履歴書",
+      "experience": "職務経験",
+      "education": "学歴",
+      "projects": "プロジェクト",
+      "skills": "スキル"
+    },
+    "errors": {
+      "turnFailed": "ウィザードはその回答を保存できませんでした。もう一度お試しください。",
+      "finalizeFailed": "ウィザードはマスター履歴書を作成できませんでした。もう一度お試しください。"
+    },
+    "entry": {
+      "kicker": "マスター履歴書の設定",
+      "title": "開始方法を選択",
+      "description": "既存の書類からマスター履歴書を作成するか、AI の案内で一歩ずつ作成します。",
+      "upload": {
+        "kicker": "既存ファイル",
+        "title": "履歴書をアップロード",
+        "description": "PDF、DOC、DOCX ファイルから始め、Resume Matcher にマスタープロフィールへ解析させます。",
+        "action": "履歴書をアップロード"
+      },
+      "wizard": {
+        "kicker": "AI ガイド",
+        "title": "AI ウィザードで作成",
+        "description": "焦点を絞った質問に答えると、ウィザードが質の高いマスター履歴書の初稿を組み立てます。",
+        "action": "ウィザードを開始"
+      }
+    }
+  },
+  "tracker": {
+    "scroll": {
+      "prev": "左へスクロール",
+      "next": "右へスクロール",
+      "hint": "スクロールして他のステージを表示"
+    },
+    "title": "応募トラッカー",
+    "subtitle": "各カスタマイズ済み履歴書の選考状況を管理します。",
+    "addApplication": "応募を追加",
+    "columns": {
+      "saved": "保存済み",
+      "applied": "応募済み",
+      "no_response": "返信なし",
+      "response": "返信あり",
+      "interview": "面接",
+      "accepted": "内定",
+      "rejected": "不採用",
+      "empty": "まだ何もありません"
+    },
+    "empty": {
+      "title": "応募はまだありません",
+      "description": "求人に合わせて履歴書を調整するか、手動で追加して追跡を開始しましょう。"
+    },
+    "card": {
+      "companyUnknown": "会社名不明",
+      "roleUnknown": "役職名なし",
+      "sharedResume": "共有された履歴書",
+      "selectAria": "応募を選択",
+      "dragAria": "ドラッグして並べ替え"
+    },
+    "modal": {
+      "jobDescription": "求人内容",
+      "noJobDescription": "求人内容はありません。",
+      "notes": "メモ",
+      "notesPlaceholder": "この応募についてのメモを追加…",
+      "saveNotes": "メモを保存",
+      "resumeUnavailable": "応募した履歴書は利用できなくなりました。",
+      "loadFailed": "この応募を読み込めませんでした。",
+      "editResume": "履歴書を編集"
+    },
+    "bulk": {
+      "selected": "{count} 件選択中",
+      "moveTo": "移動先…",
+      "clear": "クリア",
+      "deleteConfirmTitle": "応募を削除しますか？",
+      "deleteConfirmDescription": "選択した {count} 件の応募を削除しますか？この操作は取り消せません。"
+    },
+    "manualAdd": {
+      "title": "応募を追加",
+      "description": "求人内容を貼り付けて応募を追跡します。",
+      "resume": "履歴書",
+      "untitledResume": "無題の履歴書",
+      "jobDescription": "求人内容",
+      "jobDescriptionPlaceholder": "ここに求人内容を貼り付け…",
+      "company": "会社",
+      "role": "役職",
+      "optional": "任意",
+      "status": "ステータス",
+      "submit": "追加",
+      "validation": "履歴書を選び、求人内容を貼り付けてください。",
+      "failed": "応募を作成できませんでした。"
+    },
+    "errors": {
+      "loadFailed": "応募を読み込めませんでした。",
+      "moveFailed": "応募を移動できませんでした。",
+      "deleteFailed": "応募を削除できませんでした。"
+    }
   }
 }

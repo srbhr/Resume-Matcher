@@ -352,11 +352,11 @@ async def score_resume(resume_id: str, job_id: str) -> dict[str, Any]:
         HTTPException 500: if the LLM scoring call fails.
     """
     # Cache-first: avoid LLM cost on repeated requests
-    cached = db.get_score(resume_id, job_id)
+    cached = await db.get_score(resume_id, job_id)
     if cached:
         return {**cached, "cached": True}
 
-    resume = db.get_resume(resume_id)
+    resume = await db.get_resume(resume_id)
     if not resume:
         raise HTTPException(status_code=404, detail="Resume not found.")
 
@@ -367,7 +367,7 @@ async def score_resume(resume_id: str, job_id: str) -> dict[str, Any]:
             detail="Resume has no processed data. Please re-upload the resume.",
         )
 
-    job = db.get_job(job_id)
+    job = await db.get_job(job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found.")
 
@@ -395,7 +395,7 @@ async def score_resume(resume_id: str, job_id: str) -> dict[str, Any]:
         "color": color,
     }
 
-    saved = db.create_score(resume_id, job_id, result)
+    saved = await db.create_score(resume_id, job_id, result)
 
     return {
         **saved,

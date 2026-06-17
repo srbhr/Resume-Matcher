@@ -5,7 +5,7 @@ import re
 from enum import Enum
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 _TEXT_VALUE_KEYS = (
     "text",
@@ -498,6 +498,8 @@ class ResumeFieldDiff(BaseModel):
         "experience",
         "education",
         "project",
+        "language",
+        "award",
     ]
     change_type: Literal["added", "removed", "modified"]
     original_value: str | None = None
@@ -586,6 +588,9 @@ class ImproveResumeConfirmRequest(BaseModel):
 
 
 # Config Models
+ReasoningEffortLiteral = Literal["minimal", "low", "medium", "high"]
+
+
 class LLMConfigRequest(BaseModel):
     """Request to update LLM configuration."""
 
@@ -593,6 +598,14 @@ class LLMConfigRequest(BaseModel):
     model: str | None = None
     api_key: str | None = None
     api_base: str | None = None
+    # Optional reasoning-effort override.
+    #   - A valid value ("minimal"/"low"/"medium"/"high") updates the setting.
+    #   - Empty string clears the field — the server persists "" rather than
+    #     removing the key, so the gpt-5 auto-migration does not re-fire.
+    #   - None means "don't change this field".
+    # Strictly typed so invalid values are rejected at the boundary (422)
+    # rather than corrupting config.json and crashing later reads.
+    reasoning_effort: Literal["minimal", "low", "medium", "high", ""] | None = None
 
 
 class LLMConfigResponse(BaseModel):
@@ -602,6 +615,7 @@ class LLMConfigResponse(BaseModel):
     model: str
     api_key: str  # Masked
     api_base: str | None = None
+    reasoning_effort: ReasoningEffortLiteral | None = None
 
 
 class FeatureConfigRequest(BaseModel):
@@ -654,6 +668,32 @@ class PromptConfigResponse(BaseModel):
     prompt_options: list[PromptOption]
 
 
+class FeaturePromptsRequest(BaseModel):
+    """Request to update custom feature prompts.
+
+    ``None`` means "don't change this field". An empty string clears the
+    override — the server persists ``""`` so runtime resolution falls back
+    to the built-in default without the key disappearing from config.json.
+    """
+
+    cover_letter_prompt: str | None = None
+    outreach_message_prompt: str | None = None
+
+
+class FeaturePromptsResponse(BaseModel):
+    """Response for custom feature prompts.
+
+    The ``*_default`` fields expose the built-in prompt strings so the UI
+    can render them as placeholder text without duplicating the content
+    across locales.
+    """
+
+    cover_letter_prompt: str
+    outreach_message_prompt: str
+    cover_letter_default: str
+    outreach_message_default: str
+
+
 # API Key Management Models
 class ApiKeyProviderStatus(BaseModel):
     """Status of a single API key provider."""
@@ -677,6 +717,10 @@ class ApiKeysUpdateRequest(BaseModel):
     google: str | None = None
     openrouter: str | None = None
     deepseek: str | None = None
+    groq: str | None = None
+    # Local/self-hosted providers that may sit behind an auth proxy.
+    openai_compatible: str | None = None
+    ollama: str | None = None
 
 
 class ApiKeysUpdateResponse(BaseModel):
@@ -758,12 +802,25 @@ class ResumeChange(BaseModel):
     path: str = Field(
         description="Dot+bracket path, e.g. 'workExperience[0].description[1]'"
     )
-    action: Literal["replace", "append", "reorder"]
-    original: str | None = Field(
-        default=None, description="Current text at path — for verification"
+    action: Literal["replace", "append", "reorder", "add_skill"]
+    original: str | list[str] | None = Field(
+        default=None,
+        description="Current text at path — for verification. May be a list (the "
+        "current items) for the reorder action; only used for text verification of "
+        "replace/append, ignored otherwise.",
     )
     value: str | list[str] = Field(description="New content")
     reason: str = Field(description="Why this change helps match the JD")
+
+    @model_validator(mode="after")
+    def _list_original_only_for_reorder(self) -> "ResumeChange":
+        """A list ``original`` is only meaningful for ``reorder`` (the LLM sends
+        the current items). For the text actions it must stay a string/None — a
+        list there would silently bypass the replace verification gate and crash
+        the invented-metrics check, so reject it at parse time."""
+        if isinstance(self.original, list) and self.action != "reorder":
+            raise ValueError("'original' may be a list only for the reorder action")
+        return self
 
 
 class ImproveDiffResult(BaseModel):

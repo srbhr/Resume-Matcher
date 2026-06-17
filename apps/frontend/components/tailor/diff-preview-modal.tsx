@@ -116,6 +116,8 @@ export function DiffPreviewModal({
   const experienceChanges = detailedChanges.filter((c) => c.field_type === 'experience');
   const educationChanges = detailedChanges.filter((c) => c.field_type === 'education');
   const projectChanges = detailedChanges.filter((c) => c.field_type === 'project');
+  const languageChanges = detailedChanges.filter((c) => c.field_type === 'language');
+  const awardChanges = detailedChanges.filter((c) => c.field_type === 'award');
 
   return (
     <Dialog
@@ -292,6 +294,34 @@ export function DiffPreviewModal({
               onToggle={() => toggleSection('certifications')}
             >
               {certChanges.map((change, idx) => (
+                <ChangeItem key={idx} change={change} />
+              ))}
+            </ChangeSection>
+          )}
+
+          {/* Language changes */}
+          {languageChanges.length > 0 && (
+            <ChangeSection
+              title={t('tailor.diffModal.languageChanges')}
+              count={languageChanges.length}
+              isExpanded={expandedSections.has('languages')}
+              onToggle={() => toggleSection('languages')}
+            >
+              {languageChanges.map((change, idx) => (
+                <ChangeItem key={idx} change={change} />
+              ))}
+            </ChangeSection>
+          )}
+
+          {/* Award changes */}
+          {awardChanges.length > 0 && (
+            <ChangeSection
+              title={t('tailor.diffModal.awardChanges')}
+              count={awardChanges.length}
+              isExpanded={expandedSections.has('awards')}
+              onToggle={() => toggleSection('awards')}
+            >
+              {awardChanges.map((change, idx) => (
                 <ChangeItem key={idx} change={change} />
               ))}
             </ChangeSection>
