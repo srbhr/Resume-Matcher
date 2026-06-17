@@ -18,6 +18,7 @@ from fastapi import HTTPException
 from app.config import settings
 from app.database import db
 from app.llm import complete, complete_json
+from app.schemas.scoring import ScoringPreferences
 
 logger = logging.getLogger(__name__)
 
@@ -219,8 +220,15 @@ async def _score_criterion(
     factors: list[str],
     resume_text: str,
     job_requirements: dict[str, Any],
+    candidate_context: str | None = None,
 ) -> int:
     """Score a single criterion 0-100 using the LLM. Does not log resume content."""
+    context_block = (
+        f"\nCandidate-provided context (treat as authoritative, overrides any"
+        f" inferences from the resume):\n{candidate_context}\n"
+        if candidate_context
+        else ""
+    )
     prompt = f"""Evaluate the candidate's resume for the criterion: "{name}".
 
 The resume is provided as structured JSON — infer information from any field
@@ -231,7 +239,7 @@ Factors to consider: {', '.join(factors)}
 
 Job Requirements:
 {json.dumps(job_requirements, indent=2)}
-
+{context_block}
 Apply negative selection (score 0) only for hard disqualifiers such as an
 explicit location exclusion or a missing mandatory licence. For everything
 else, award partial credit proportional to the match.
@@ -252,6 +260,7 @@ Return only an integer 0-100. Nothing else."""
 async def _compute_ai_match(
     resume_text: str,
     job_desc: str,
+    candidate_context: str | None = None,
 ) -> dict[str, Any]:
     """Score a resume against a job description across 7 weighted criteria.
 
@@ -270,16 +279,21 @@ async def _compute_ai_match(
 
     # Fire all criterion evaluations in parallel
     criterion_tasks = [
-        _score_criterion(name, factors, resume_text, job_requirements)
+        _score_criterion(name, factors, resume_text, job_requirements, candidate_context)
         for name, _key, _wkey, _default, factors in _CRITERIA
     ]
 
+    context_block = (
+        f"\nCandidate-provided context (treat as authoritative):\n{candidate_context}\n"
+        if candidate_context
+        else ""
+    )
     reasons_prompt = f"""List 3-4 key reasons for/against this resume-job match.
 Telegraphic English, max 10 words each, separated by ' | '.
 
 Resume: {resume_text}
 Job Requirements: {json.dumps(job_requirements, indent=2)}
-
+{context_block}
 Output only the reasons string. No intro."""
 
     _, max_tokens_reasons = _get_scoring_tokens()
@@ -336,12 +350,20 @@ Output only the reasons string. No intro."""
 # Public API
 # ---------------------------------------------------------------------------
 
-async def score_resume(resume_id: str, job_id: str) -> dict[str, Any]:
+async def score_resume(
+    resume_id: str,
+    job_id: str,
+    preferences: ScoringPreferences | None = None,
+) -> dict[str, Any]:
     """Score a resume against a job description, using the cache when available.
 
     Args:
-        resume_id: ID of the resume in the database.
-        job_id:    ID of the job description in the database.
+        resume_id:   ID of the resume in the database.
+        job_id:      ID of the job description in the database.
+        preferences: Optional caller-supplied context injected into every
+                     scoring criterion. When provided, cache is bypassed so
+                     the context is always applied (different contexts on the
+                     same pair would otherwise collide on the cache key).
 
     Returns:
         Score result dict matching the ScoreResult schema, with a 'cached' flag.
@@ -351,10 +373,14 @@ async def score_resume(resume_id: str, job_id: str) -> dict[str, Any]:
         HTTPException 400: if resume has no processed data.
         HTTPException 500: if the LLM scoring call fails.
     """
-    # Cache-first: avoid LLM cost on repeated requests
-    cached = await db.get_score(resume_id, job_id)
-    if cached:
-        return {**cached, "cached": True}
+    candidate_context = preferences.context if preferences else None
+
+    # Cache-first: skip when caller supplies context (context isn't part of
+    # the cache key, so different contexts on the same pair would collide).
+    if not candidate_context:
+        cached = await db.get_score(resume_id, job_id)
+        if cached:
+            return {**cached, "cached": True}
 
     resume = await db.get_resume(resume_id)
     if not resume:
@@ -375,7 +401,7 @@ async def score_resume(resume_id: str, job_id: str) -> dict[str, Any]:
     job_desc = job["content"]
 
     try:
-        ai_result = await _compute_ai_match(resume_text, job_desc)
+        ai_result = await _compute_ai_match(resume_text, job_desc, candidate_context)
     except Exception:
         logger.error("Scoring failed for resume_id=%s job_id=%s", resume_id, job_id)
         raise HTTPException(

@@ -20,7 +20,7 @@ async def create_score(request: ScoreRequest) -> ScoreResult:
     Returns a cached result immediately if one exists for this resume-job pair.
     Otherwise runs the LLM scoring pipeline and caches the result.
     """
-    result = await score_resume(request.resume_id, request.job_id)
+    result = await score_resume(request.resume_id, request.job_id, request.preferences)
     return ScoreResult(**result)
 
 
