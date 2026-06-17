@@ -734,7 +734,7 @@ def _supports_json_mode(model_name: str) -> bool:
         return False
 
 
-FALLBACK_MAX_TOKENS = 4096
+FALLBACK_MAX_TOKENS = 8192
 
 def get_safe_max_tokens(model_name: str, requested: int = DEFAULT_JSON_MAX_TOKENS) -> int:
     """Return a token count safe for the given model, clamped to its output limit.
@@ -798,15 +798,14 @@ def _appears_truncated(data: dict, schema_type: str = "resume") -> bool:
         return False
 
     if schema_type == "resume":
-        # Full resume structure: check for empty required arrays
-        suspicious_empty_arrays = ["workExperience", "education", "skills"]
-        for key in suspicious_empty_arrays:
-            if key in data and data[key] == []:
-                # Log warning - these are rarely empty in real resumes
-                logging.warning(
-                    "Possible truncation detected: '%s' is empty",
-                    key,
-                )
+        # Required array sections — missing entirely (early truncation) or empty both flag truncation
+        required_array_keys = ["workExperience", "education"]
+        for key in required_array_keys:
+            if key not in data:
+                logging.warning("Possible truncation detected: '%s' is missing", key)
+                return True
+            if data[key] == []:
+                logging.warning("Possible truncation detected: '%s' is empty", key)
                 return True
         return False
 
@@ -942,6 +941,48 @@ def _strip_thinking_tags(content: str) -> str:
     return stripped.strip()
 
 
+def _try_close_truncated_json(content: str) -> str | None:
+    """Attempt to auto-close a truncated JSON string.
+
+    Walks the string tracking open braces/brackets and appends the missing
+    closing characters. Returns a valid JSON string on success, None if the
+    result still can't be parsed.
+    """
+    stack: list[str] = []
+    in_string = False
+    escape_next = False
+
+    for char in content:
+        if escape_next:
+            escape_next = False
+            continue
+        if char == "\\":
+            escape_next = True
+            continue
+        if char == '"':
+            in_string = not in_string
+            continue
+        if in_string:
+            continue
+        if char in ("{", "["):
+            stack.append(char)
+        elif char == "}" and stack and stack[-1] == "{":
+            stack.pop()
+        elif char == "]" and stack and stack[-1] == "[":
+            stack.pop()
+
+    if not stack:
+        return None  # Already balanced
+
+    closing = "".join("}" if c == "{" else "]" for c in reversed(stack))
+    candidate = content.rstrip().rstrip(",") + closing
+    try:
+        json.loads(candidate)
+        return candidate
+    except (json.JSONDecodeError, ValueError):
+        return None
+
+
 def _extract_json(content: str, _depth: int = 0) -> str:
     """Extract JSON from LLM response, handling various formats.
 
@@ -1007,6 +1048,13 @@ def _extract_json(content: str, _depth: int = 0) -> str:
                 "JSON extraction found unbalanced braces (depth=%d), possible truncation",
                 depth,
             )
+            recovered = _try_close_truncated_json(content)
+            if recovered:
+                logging.warning(
+                    "Recovered partial JSON from truncated response (auto-closed %d level(s))",
+                    depth,
+                )
+                return recovered
 
         if end_idx != -1:
             return content[: end_idx + 1]
