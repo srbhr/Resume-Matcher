@@ -164,7 +164,7 @@ async def parse_resume_to_json(markdown_text: str) -> dict[str, Any]:
     result = await complete_json(
         prompt=prompt,
         system_prompt="You are a JSON extraction engine. Output only valid JSON, no explanations.",
-        max_tokens=get_safe_max_tokens(model_name),
+        max_tokens=get_safe_max_tokens(model_name, fall_back = 8192),
         retries=3,
     )
 

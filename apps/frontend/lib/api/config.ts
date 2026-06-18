@@ -21,6 +21,7 @@ export interface LLMConfig {
   api_key: string;
   api_base: string | null;
   reasoning_effort: ReasoningEffort | null;
+  timeout_seconds: number | null;
 }
 
 export interface LLMConfigUpdate {
@@ -30,6 +31,7 @@ export interface LLMConfigUpdate {
   api_base?: string | null;
   // Pass '' (empty string) to clear; null is ignored by the server.
   reasoning_effort?: ReasoningEffort | '' | null;
+  timeout_seconds?: number | null;
 }
 
 export interface DatabaseStats {
@@ -369,23 +371,7 @@ export async function updateFeaturePrompts(update: FeaturePromptsUpdate): Promis
 }
 
 // API Key Management types
-export type ApiKeyProvider =
-  | 'openai'
-  | 'anthropic'
-  | 'google'
-  | 'openrouter'
-  | 'deepseek'
-  | 'groq'
-  | 'openai_compatible'
-  | 'ollama';
-
-// Map an LLM provider (the active-provider axis) to its key-store provider
-// name. Mirrors the backend `_PROVIDER_KEY_MAP` (gemini → google; the local
-// providers pass through). Keys are persisted under the key-store name.
-export function llmProviderToKeyProvider(provider: LLMProvider): ApiKeyProvider {
-  if (provider === 'gemini') return 'google';
-  return provider as ApiKeyProvider;
-}
+export type ApiKeyProvider = 'openai' | 'anthropic' | 'google' | 'openrouter' | 'deepseek' | 'groq';
 
 export interface ApiKeyProviderStatus {
   provider: ApiKeyProvider;
@@ -404,8 +390,6 @@ export interface ApiKeysUpdateRequest {
   openrouter?: string;
   deepseek?: string;
   groq?: string;
-  openai_compatible?: string;
-  ollama?: string;
 }
 
 export interface ApiKeysUpdateResponse {
@@ -422,8 +406,6 @@ export const API_KEY_PROVIDER_INFO: Record<ApiKeyProvider, { name: string; descr
     openrouter: { name: 'OpenRouter', description: 'Access multiple providers' },
     deepseek: { name: 'DeepSeek', description: 'DeepSeek chat models' },
     groq: { name: 'Groq', description: 'Llama, Mixtral, Gemma on Groq' },
-    openai_compatible: { name: 'OpenAI-Compatible', description: 'Self-hosted / proxy endpoints' },
-    ollama: { name: 'Ollama', description: 'Local Ollama server' },
   };
 
 // Fetch API key status for all providers

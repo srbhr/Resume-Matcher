@@ -5,7 +5,7 @@ import re
 from enum import Enum
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, Field, field_validator
 
 _TEXT_VALUE_KEYS = (
     "text",
@@ -463,8 +463,6 @@ class ResumeFieldDiff(BaseModel):
         "experience",
         "education",
         "project",
-        "language",
-        "award",
     ]
     change_type: Literal["added", "removed", "modified"]
     original_value: str | None = None
@@ -571,6 +569,23 @@ class LLMConfigRequest(BaseModel):
     # Strictly typed so invalid values are rejected at the boundary (422)
     # rather than corrupting config.json and crashing later reads.
     reasoning_effort: Literal["minimal", "low", "medium", "high", ""] | None = None
+    # Optional timeout override (seconds). When set, overrides the default
+    # base timeout used for completion and JSON operations. Health checks
+    # keep their 30s default. Range: 30–600 (5–10 minutes).
+    timeout_seconds: int | None = None
+
+    @field_validator("timeout_seconds", mode="before")
+    @classmethod
+    def _validate_timeout_seconds(cls, value: Any) -> int | None:
+        if value is None:
+            return None
+        try:
+            v = int(value)
+        except (TypeError, ValueError):
+            raise ValueError("timeout_seconds must be an integer")
+        if v < 30 or v > 600:
+            raise ValueError("timeout_seconds must be between 30 and 600")
+        return v
 
 
 class LLMConfigResponse(BaseModel):
@@ -581,6 +596,7 @@ class LLMConfigResponse(BaseModel):
     api_key: str  # Masked
     api_base: str | None = None
     reasoning_effort: ReasoningEffortLiteral | None = None
+    timeout_seconds: int | None = None
 
 
 class FeatureConfigRequest(BaseModel):
@@ -683,9 +699,6 @@ class ApiKeysUpdateRequest(BaseModel):
     openrouter: str | None = None
     deepseek: str | None = None
     groq: str | None = None
-    # Local/self-hosted providers that may sit behind an auth proxy.
-    openai_compatible: str | None = None
-    ollama: str | None = None
 
 
 class ApiKeysUpdateResponse(BaseModel):
@@ -754,24 +767,11 @@ class ResumeChange(BaseModel):
         description="Dot+bracket path, e.g. 'workExperience[0].description[1]'"
     )
     action: Literal["replace", "append", "reorder", "add_skill"]
-    original: str | list[str] | None = Field(
-        default=None,
-        description="Current text at path — for verification. May be a list (the "
-        "current items) for the reorder action; only used for text verification of "
-        "replace/append, ignored otherwise.",
+    original: str | None = Field(
+        default=None, description="Current text at path — for verification"
     )
     value: str | list[str] = Field(description="New content")
     reason: str = Field(description="Why this change helps match the JD")
-
-    @model_validator(mode="after")
-    def _list_original_only_for_reorder(self) -> "ResumeChange":
-        """A list ``original`` is only meaningful for ``reorder`` (the LLM sends
-        the current items). For the text actions it must stay a string/None — a
-        list there would silently bypass the replace verification gate and crash
-        the invented-metrics check, so reject it at parse time."""
-        if isinstance(self.original, list) and self.action != "reorder":
-            raise ValueError("'original' may be a list only for the reorder action")
-        return self
 
 
 class ImproveDiffResult(BaseModel):

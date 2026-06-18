@@ -44,12 +44,12 @@ LLM_TIMEOUT_JSON = 180  # JSON completions may take longer
 MAX_JSON_EXTRACTION_RECURSION = 10
 MAX_JSON_CONTENT_SIZE = 1024 * 1024  # 1MB
 
+
 # Default token budget for structured JSON completions (e.g. resume parsing).
 # Chosen to accommodate large resumes while staying within most providers'
 # output limits. Callers should use get_safe_max_tokens() so this is
 # automatically clamped to the model's actual capacity.
 DEFAULT_JSON_MAX_TOKENS = 8192
-
 
 class LLMConfig(BaseModel):
     """LLM configuration model."""
@@ -59,6 +59,7 @@ class LLMConfig(BaseModel):
     api_key: str
     api_base: str | None = None
     reasoning_effort: Literal["minimal", "low", "medium", "high"] | None = None
+    timeout_seconds: int | None = None
 
 
 def _normalize_api_base(provider: str, api_base: str | None) -> str | None:
@@ -397,6 +398,7 @@ def get_llm_config() -> LLMConfig:
         api_key=api_key,
         api_base=stored.get("api_base", settings.llm_api_base),
         reasoning_effort=reasoning_effort,
+        timeout_seconds=stored.get("timeout_seconds"),
     )
 
 
@@ -672,7 +674,7 @@ async def complete(
             "model": "primary",
             "messages": messages,
             "max_tokens": max_tokens,
-            "timeout": _calculate_timeout("completion", max_tokens, config.provider),
+            "timeout": _calculate_timeout("completion", max_tokens, config.provider, config.timeout_seconds),
         }
         if _supports_temperature(model_name, temperature):
             kwargs["temperature"] = temperature
@@ -730,10 +732,9 @@ def _supports_json_mode(model_name: str) -> bool:
         logging.debug("Model %s not in LiteLLM registry, skipping JSON mode", model_name)
         return False
 
-
 FALLBACK_MAX_TOKENS = 4096
 
-def get_safe_max_tokens(model_name: str, requested: int = DEFAULT_JSON_MAX_TOKENS) -> int:
+def get_safe_max_tokens(model_name: str, requested: int = DEFAULT_JSON_MAX_TOKENS, fall_back: int = FALLBACK_MAX_TOKENS) -> int:
     """Return a token count safe for the given model, clamped to its output limit.
 
     Queries LiteLLM's model registry for ``max_output_tokens`` and returns
@@ -768,7 +769,7 @@ def get_safe_max_tokens(model_name: str, requested: int = DEFAULT_JSON_MAX_TOKEN
     except Exception:
         pass  # Model not in registry, drop down to fallback logic
 
-    safe = min(safe_requested, FALLBACK_MAX_TOKENS)
+    safe = min(safe_requested, fall_back)
     logging.debug(
         "Model %s not in LiteLLM registry, clamping requested max_tokens %d → %d constraint",
         model_name,
@@ -776,6 +777,7 @@ def get_safe_max_tokens(model_name: str, requested: int = DEFAULT_JSON_MAX_TOKEN
         safe,
     )
     return safe
+
 
 
 def _appears_truncated(data: dict, schema_type: str = "resume") -> bool:
@@ -898,8 +900,18 @@ def _calculate_timeout(
     operation: str,
     max_tokens: int = 4096,
     provider: str = "openai",
+    base_timeout_override: int | None = None,
 ) -> int:
-    """LLM-005: Calculate adaptive timeout based on operation and parameters."""
+    """LLM-005: Calculate adaptive timeout based on operation and parameters.
+
+    When ``base_timeout_override`` is provided, it replaces the default base
+    timeout for ``completion`` and ``json`` operations.  The ``token_factor``
+    and ``provider_factor`` multipliers are still applied so that the override
+    scales correctly with token count and provider latency.
+
+    ``health_check`` always uses its hard-coded 30s default regardless of
+    overrides — health checks should remain fast.
+    """
     base_timeouts = {
         "health_check": LLM_TIMEOUT_HEALTH_CHECK,
         "completion": LLM_TIMEOUT_COMPLETION,
@@ -907,6 +919,8 @@ def _calculate_timeout(
     }
 
     base = base_timeouts.get(operation, LLM_TIMEOUT_COMPLETION)
+    if base_timeout_override is not None and operation != "health_check":
+        base = base_timeout_override
 
     # Scale by token count (relative to 4096 baseline)
     token_factor = max(1.0, max_tokens / 4096)
@@ -1064,7 +1078,7 @@ async def complete_json(
                 "model": "primary",
                 "messages": messages,
                 "max_tokens": max_tokens,
-                "timeout": _calculate_timeout("json", max_tokens, config.provider),
+                "timeout": _calculate_timeout("json", max_tokens, config.provider, config.timeout_seconds),
             }
             # LLM-002: Increase temperature on retry for variation
             retry_temp = _get_retry_temperature(model_name, attempt)
