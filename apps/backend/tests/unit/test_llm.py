@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from app.llm import _appears_truncated, _get_retry_temperature, _supports_temperature
+from app.llm import _appears_truncated, _calculate_timeout, _get_retry_temperature, _supports_temperature
 
 
 # ---------------------------------------------------------------------------
@@ -333,12 +333,65 @@ class TestCompleteDynamicTimeout:
         router.acompletion = AsyncMock(return_value=response)
         config = MagicMock()
         config.provider = "deepseek"
+        config.timeout_seconds = None
         mock_get_router.return_value = (router, config)
 
         from app.llm import complete
 
         await complete(prompt="Hi", max_tokens=8192)
 
-        mock_calc_timeout.assert_called_once_with("completion", 8192, "deepseek")
+        mock_calc_timeout.assert_called_once_with("completion", 8192, "deepseek", None)
         router.acompletion.assert_awaited_once()
         assert router.acompletion.call_args.kwargs["timeout"] == 180
+
+
+# ---------------------------------------------------------------------------
+# _calculate_timeout with base_timeout_override
+# ---------------------------------------------------------------------------
+
+
+class TestCalculateTimeoutOverride:
+    """Tests for _calculate_timeout() with user-configured timeout override."""
+
+    def test_override_applies_to_completion(self):
+        """When base_timeout_override is set, completion uses it instead of default."""
+        # Default completion = 120s; with 300s override → 300 * 1.0 * 1.0 = 300
+        assert _calculate_timeout("completion", 4096, "openai", 300) == 300
+
+    def test_override_applies_to_json(self):
+        """When base_timeout_override is set, json uses it instead of default."""
+        # Default json = 180s; with 300s override → 300 * 1.0 * 1.0 = 300
+        assert _calculate_timeout("json", 4096, "openai", 300) == 300
+
+    def test_override_does_not_affect_health_check(self):
+        """Health check always uses its hard-coded 30s regardless of override."""
+        assert _calculate_timeout("health_check", 4096, "openai", 300) == 30
+
+    def test_override_with_token_scaling(self):
+        """Override base is still scaled by token_factor."""
+        # 300s override, 8192 tokens (2x) → 300 * 2.0 = 600
+        assert _calculate_timeout("completion", 8192, "openai", 300) == 600
+
+    def test_override_with_provider_factor(self):
+        """Override base is still scaled by provider_factor."""
+        # 300s override, ollama (2.0x) → 300 * 2.0 = 600
+        assert _calculate_timeout("completion", 4096, "ollama", 300) == 600
+
+    def test_override_with_both_factors(self):
+        """Override base is scaled by both token and provider factors."""
+        # 300s override, 8192 tokens (2.0x), ollama (2.0x) → 300 * 2.0 * 2.0 = 1200
+        assert _calculate_timeout("completion", 8192, "ollama", 300) == 1200
+
+    def test_no_override_uses_default(self):
+        """When override is None, uses hard-coded defaults."""
+        assert _calculate_timeout("completion", 4096, "openai", None) == 120
+        assert _calculate_timeout("json", 4096, "openai", None) == 180
+        assert _calculate_timeout("health_check", 4096, "openai", None) == 30
+
+    def test_override_minimum_value(self):
+        """Override with minimum valid value (30s)."""
+        assert _calculate_timeout("completion", 4096, "openai", 30) == 30
+
+    def test_override_maximum_value(self):
+        """Override with maximum valid value (600s)."""
+        assert _calculate_timeout("completion", 4096, "openai", 600) == 600

@@ -44,8 +44,7 @@
     "tailor": "Personalizar Currículo",
     "settings": "Configurações",
     "backToDashboard": "Voltar ao Painel",
-    "goToSettings": "Ir para Configurações",
-    "applicationTracker": "Acompanhamento de candidaturas"
+    "goToSettings": "Ir para Configurações"
   },
   "dashboard": {
     "title": "Painel",
@@ -368,18 +367,6 @@
         "modernTwoColumn": {
           "name": "Moderno Duas Colunas",
           "description": "Layout de duas colunas com acentos coloridos modernos e temas"
-        },
-        "latex": {
-          "name": "LaTeX",
-          "description": "Layout acadêmico clássico em serifa com cabeçalhos com linhas"
-        },
-        "clean": {
-          "name": "Limpo",
-          "description": "Layout minimalista sem serifa com cabeçalhos grandes e discretos"
-        },
-        "vivid": {
-          "name": "Vívido",
-          "description": "Layout de duas colunas colorido com cabeçalhos de destaque e marcadores em seta"
         }
       },
       "accentColors": {
@@ -559,8 +546,6 @@
       "educationChanges": "Alterações de educação",
       "projectChanges": "Alterações de projetos",
       "certificationChanges": "Alterações de certificações",
-      "languageChanges": "Alterações de idiomas",
-      "awardChanges": "Alterações de prêmios",
       "rejectButton": "Rejeitar e regenerar",
       "confirmButton": "Confirmar e salvar"
     },
@@ -579,7 +564,6 @@
       "apiKeyError": "Sua chave de API não está funcionando. Verifique em Configurações.",
       "rateLimit": "Limite de requisições atingido. Aguarde cerca de um minuto e tente novamente.",
       "failedToGenerate": "Não foi possível gerar o currículo. Verifique sua chave de API em Configurações e tente novamente.",
-      "timeout": "A solicitação expirou. Tente novamente com uma descrição de vaga mais curta ou verifique sua conexão.",
       "failedToPreview": "Não foi possível pré-visualizar o currículo. Verifique sua chave de API em Configurações e tente novamente.",
       "failedToConfirm": "Não foi possível aplicar as alterações. Tente novamente."
     }
@@ -671,6 +655,9 @@
       "reasoningEffortMedium": "Médio",
       "reasoningEffortHigh": "Alto",
       "reasoningEffortDescription": "Afeta apenas modelos com capacidade de raciocínio (família gpt-5, Claude 3.7+, DeepSeek R1, OpenAI o1/o3). Provedores não compatíveis descartam este valor automaticamente.",
+      "timeoutLabel": "Tempo limite (segundos)",
+      "timeoutPlaceholder": "Padrão (120s)",
+      "timeoutDescription": "Substitui o tempo limite padrão para operações de IA. Aumente se estiver usando um modelo local ou lento.",
       "testConnection": "Testar Conexão",
       "errorPrefix": "ERRO: {error}",
       "connectionSuccessful": "CONEXÃO BEM-SUCEDIDA",
@@ -727,12 +714,6 @@
       "unableToSaveConfiguration": "Não foi possível salvar a configuração",
       "failedToClearApiKeys": "Falha ao limpar chaves de API. Por favor, tente novamente.",
       "failedToResetDatabase": "Falha ao redefinir banco de dados. Por favor, tente novamente."
-    },
-    "apiKeys": {
-      "savedTitle": "Chaves de API salvas",
-      "deleteAria": "Excluir a chave de {provider}",
-      "deleteConfirmTitle": "Excluir chave de API?",
-      "deleteConfirmDescription": "Remover a chave de API de {provider} salva? Você pode adicioná-la novamente depois."
     }
   },
   "resumeViewer": {
@@ -882,129 +863,5 @@
     "clearApiKeysDescription": "Você precisará inseri-las novamente antes de usar os recursos de IA.",
     "resetDatabase": "Redefinir tudo e começar de novo?",
     "resetDatabaseDescription": "Isso excluirá permanentemente cada currículo, descrição de vaga e documento gerado."
-  },
-  "resumeWizard": {
-    "title": "Assistente de currículo",
-    "answerLabel": "Sua resposta",
-    "keepAddingPrompt": "O que você gostaria de adicionar ou alterar?",
-    "readyHint": "Você já tem o suficiente para um currículo sólido — revise e finalize quando quiser.",
-    "sections": {
-      "intro": "Primeiros passos",
-      "contact": "Dados de contato",
-      "summary": "Resumo profissional",
-      "workExperience": "Experiência profissional",
-      "internships": "Estágios",
-      "education": "Formação acadêmica",
-      "personalProjects": "Projetos",
-      "skills": "Habilidades",
-      "review": "Revisão"
-    },
-    "actions": {
-      "continue": "Continuar",
-      "skip": "Pular",
-      "back": "Voltar",
-      "review": "Revisar e concluir",
-      "create": "Criar currículo mestre",
-      "keepAdding": "Continuar adicionando",
-      "backToDashboard": "Voltar ao painel"
-    },
-    "preview": {
-      "label": "Rascunho ao vivo",
-      "empty": "Seu currículo aparece aqui conforme você responde.",
-      "unnamed": "Currículo sem nome",
-      "experience": "Experiência",
-      "education": "Formação",
-      "projects": "Projetos",
-      "skills": "Habilidades"
-    },
-    "errors": {
-      "turnFailed": "O assistente não conseguiu salvar essa resposta. Tente novamente.",
-      "finalizeFailed": "O assistente não conseguiu criar seu currículo mestre. Tente novamente."
-    },
-    "entry": {
-      "kicker": "Configuração do currículo mestre",
-      "title": "Escolha seu ponto de partida",
-      "description": "Crie seu currículo mestre a partir de um documento existente ou construa-o passo a passo com orientação de IA.",
-      "upload": {
-        "kicker": "Arquivo existente",
-        "title": "Enviar um currículo",
-        "description": "Comece com um arquivo PDF, DOC ou DOCX e deixe o Resume Matcher convertê-lo no seu perfil mestre.",
-        "action": "Enviar currículo"
-      },
-      "wizard": {
-        "kicker": "Guiado por IA",
-        "title": "Criar com o assistente de IA",
-        "description": "Responda a perguntas objetivas e deixe o assistente montar um primeiro rascunho forte do seu currículo mestre.",
-        "action": "Iniciar assistente"
-      }
-    }
-  },
-  "tracker": {
-    "scroll": {
-      "prev": "Rolar para a esquerda",
-      "next": "Rolar para a direita",
-      "hint": "Role para ver mais etapas"
-    },
-    "title": "Acompanhamento de candidaturas",
-    "subtitle": "Acompanhe em que etapa está cada currículo personalizado.",
-    "addApplication": "Adicionar candidatura",
-    "columns": {
-      "saved": "Salvo",
-      "applied": "Enviado",
-      "no_response": "Sem resposta",
-      "response": "Resposta",
-      "interview": "Entrevista",
-      "accepted": "Aceito",
-      "rejected": "Recusado",
-      "empty": "Nada aqui ainda"
-    },
-    "empty": {
-      "title": "Nenhuma candidatura ainda",
-      "description": "Personalize um currículo para uma vaga ou adicione manualmente para começar."
-    },
-    "card": {
-      "companyUnknown": "Empresa desconhecida",
-      "roleUnknown": "Cargo sem título",
-      "sharedResume": "Currículo compartilhado",
-      "selectAria": "Selecionar candidatura",
-      "dragAria": "Arraste para reordenar"
-    },
-    "modal": {
-      "jobDescription": "Descrição da vaga",
-      "noJobDescription": "Nenhuma descrição de vaga registrada.",
-      "notes": "Notas",
-      "notesPlaceholder": "Adicione notas sobre esta candidatura…",
-      "saveNotes": "Salvar notas",
-      "resumeUnavailable": "O currículo enviado não está mais disponível.",
-      "loadFailed": "Não foi possível carregar esta candidatura.",
-      "editResume": "Editar currículo"
-    },
-    "bulk": {
-      "selected": "{count} selecionada(s)",
-      "moveTo": "Mover para…",
-      "clear": "Limpar",
-      "deleteConfirmTitle": "Excluir candidaturas?",
-      "deleteConfirmDescription": "Excluir {count} candidatura(s) selecionada(s)? Isso não pode ser desfeito."
-    },
-    "manualAdd": {
-      "title": "Adicionar candidatura",
-      "description": "Acompanhe uma candidatura colando a descrição da vaga.",
-      "resume": "Currículo",
-      "untitledResume": "Currículo sem título",
-      "jobDescription": "Descrição da vaga",
-      "jobDescriptionPlaceholder": "Cole a descrição da vaga aqui…",
-      "company": "Empresa",
-      "role": "Cargo",
-      "optional": "Opcional",
-      "status": "Status",
-      "submit": "Adicionar",
-      "validation": "Escolha um currículo e cole uma descrição de vaga.",
-      "failed": "Não foi possível criar a candidatura."
-    },
-    "errors": {
-      "loadFailed": "Não foi possível carregar as candidaturas.",
-      "moveFailed": "Não foi possível mover a candidatura.",
-      "deleteFailed": "Não foi possível excluir a(s) candidatura(s)."
-    }
   }
 }

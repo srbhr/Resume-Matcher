@@ -12,8 +12,9 @@ import {
   uploadJobDescriptions,
   previewImproveResume,
   confirmImproveResume,
+  setImproveTimeoutMs,
 } from '@/lib/api/resume';
-import { fetchPromptConfig, type PromptOption } from '@/lib/api/config';
+import { fetchLlmConfig, fetchPromptConfig, type PromptOption } from '@/lib/api/config';
 import { Dropdown } from '@/components/ui/dropdown';
 import { useStatusCache } from '@/lib/context/status-cache';
 import { Loader2, ArrowLeft, AlertTriangle, Settings } from 'lucide-react';
@@ -109,7 +110,19 @@ export default function TailorPage() {
       }
     };
 
+    const loadTimeoutConfig = async () => {
+      try {
+        const config = await fetchLlmConfig();
+        if (!cancelled && config.timeout_seconds) {
+          setImproveTimeoutMs(config.timeout_seconds * 1000);
+        }
+      } catch (err) {
+        console.error('Failed to load LLM config for timeout', err);
+      }
+    };
+
     loadPromptConfig();
+    loadTimeoutConfig();
     return () => {
       cancelled = true;
     };
