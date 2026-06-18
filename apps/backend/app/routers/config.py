@@ -37,8 +37,6 @@ from app.config import (
     save_api_keys_to_config,
     delete_api_key_from_config,
     clear_all_api_keys,
-    load_config_file,
-    save_config_file,
 )
 from app.config_cache import invalidate_config_cache
 from app.database import db
@@ -52,13 +50,18 @@ def _get_config_path() -> Path:
 
 
 def _load_config() -> dict:
-    """Load config with decrypted API keys injected (so resolve_api_key works)."""
-    return load_config_file()
+    """Load config from file."""
+    path = _get_config_path()
+    if path.exists():
+        return json.loads(path.read_text())
+    return {}
 
 
 def _save_config(config: dict) -> None:
-    """Save non-secret config (keys stripped) and invalidate the shared cache."""
-    save_config_file(config)
+    """Save config to file and invalidate the resume router's cache."""
+    path = _get_config_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(config, indent=2))
     invalidate_config_cache()
 
 
@@ -129,19 +132,10 @@ async def update_llm_config(
         stored["provider"] = request.provider
     if request.model is not None:
         stored["model"] = request.model
-    # NOTE: API keys are NOT written here anymore. They live in the encrypted
-    # per-provider store (PUT /config/api-keys). Writing the legacy single
-    # ``api_key`` slot here is what caused providers to overwrite each other and
-    # shadow the per-provider map in resolve_api_key. request.api_key is ignored
-    # for persistence (kept in the schema only for response masking/back-compat).
-    # api_base: distinguish "omitted" (leave unchanged) from "present but
-    # blank/null" (explicit clear). The frontend sends api_base: null/"" when
-    # the Base URL field is cleared; treating that as "don't change" left a
-    # stale override in config.json (issue #760). Normalize blank → None so an
-    # empty string also never reaches LiteLLM as a bogus endpoint.
-    if "api_base" in request.model_fields_set:
-        cleaned = (request.api_base or "").strip()
-        stored["api_base"] = cleaned or None
+    if request.api_key is not None:
+        stored["api_key"] = request.api_key
+    if request.api_base is not None:
+        stored["api_base"] = request.api_base
     if request.reasoning_effort is not None:
         # Persist empty string on clear so the gpt-5 auto-migration doesn't
         # re-fire on next get_llm_config() call.
@@ -425,19 +419,8 @@ async def update_feature_prompts(
     )
 
 
-# Supported API key providers (key-store names). ``openai_compatible`` and
-# ``ollama`` are included so secured local servers can store a key; they keep
-# their env-fallback skip in resolve_api_key.
-SUPPORTED_PROVIDERS = [
-    "openai",
-    "anthropic",
-    "google",
-    "openrouter",
-    "deepseek",
-    "groq",
-    "openai_compatible",
-    "ollama",
-]
+# Supported API key providers
+SUPPORTED_PROVIDERS = ["openai", "anthropic", "google", "openrouter", "deepseek", "groq"]
 
 
 def _mask_key_short(key: str | None) -> str | None:
@@ -525,20 +508,6 @@ async def update_api_keys(request: ApiKeysUpdateRequest) -> ApiKeysUpdateRespons
             del stored_keys["groq"]
         updated.append("groq")
 
-    if request.openai_compatible is not None:
-        if request.openai_compatible:
-            stored_keys["openai_compatible"] = request.openai_compatible
-        elif "openai_compatible" in stored_keys:
-            del stored_keys["openai_compatible"]
-        updated.append("openai_compatible")
-
-    if request.ollama is not None:
-        if request.ollama:
-            stored_keys["ollama"] = request.ollama
-        elif "ollama" in stored_keys:
-            del stored_keys["ollama"]
-        updated.append("ollama")
-
     save_api_keys_to_config(stored_keys)
     invalidate_config_cache()
 
@@ -621,5 +590,5 @@ async def reset_database_endpoint(request: ResetDatabaseRequest) -> dict:
             status_code=400,
             detail="Confirmation required. Pass confirm=RESET_ALL_DATA in request body.",
         )
-    await db.reset_database()
+    db.reset_database()
     return {"message": "Database and all data have been reset successfully"}

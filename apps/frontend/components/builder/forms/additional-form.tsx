@@ -16,9 +16,7 @@ export const AdditionalForm: React.FC<AdditionalFormProps> = ({ data, onChange }
 
   // Helper to handle array conversions (text -> string[])
   const handleArrayChange = (field: keyof AdditionalInfo, value: string) => {
-    // Split by newlines only. Blank/whitespace lines are preserved while editing
-    // so pressing Enter creates a new line (issue #763); consumers filter empty
-    // entries at render time, and the backend drops them on save.
+    // Split by newlines only (preserving spaces within items)
     const items = value.split('\n');
     onChange({
       ...data,

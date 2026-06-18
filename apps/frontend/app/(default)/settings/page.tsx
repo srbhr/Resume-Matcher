@@ -17,19 +17,12 @@ import {
   fetchFeaturePrompts,
   updateFeaturePrompts,
   FeaturePromptsError,
-  fetchApiKeyStatus,
-  updateApiKeys,
-  deleteApiKey,
-  llmProviderToKeyProvider,
-  API_KEY_PROVIDER_INFO,
   type LLMConfigUpdate,
   type LLMProvider,
   type LLMHealthCheck,
   type PromptOption,
   type ReasoningEffort,
   type FeaturePromptsUpdate,
-  type ApiKeyProviderStatus,
-  type ApiKeyProvider,
 } from '@/lib/api/config';
 import { API_URL } from '@/lib/api/client';
 import { getVersionString } from '@/lib/config/version';
@@ -118,9 +111,6 @@ export default function SettingsPage() {
   const [apiKey, setApiKey] = useState('');
   const [apiBase, setApiBase] = useState('');
   const [hasStoredApiKey, setHasStoredApiKey] = useState(false);
-  // Per-provider encrypted key store status (drives the saved/empty hints and
-  // the provider key list). Keyed by key-store provider name.
-  const [apiKeyStatuses, setApiKeyStatuses] = useState<ApiKeyProviderStatus[]>([]);
   // 'auto' is the UI sentinel for "do not send reasoning_effort". Maps to
   // empty string when persisted to the backend (so gpt-5 auto-migration
   // won't re-fire on next load). Typed tightly so invalid values can't leak
@@ -158,9 +148,6 @@ export default function SettingsPage() {
     field: string;
     missing: string[];
   } | null>(null);
-
-  // Per-provider key deletion confirm target (null = dialog closed).
-  const [keyToDelete, setKeyToDelete] = useState<ApiKeyProvider | null>(null);
 
   // Danger Zone state
   const [showClearApiKeysDialog, setShowClearApiKeysDialog] = useState(false);
@@ -278,19 +265,14 @@ export default function SettingsPage() {
 
     async function loadConfig() {
       try {
-        const [llmConfig, featureConfig, promptConfig, featurePrompts, keyStatus] =
-          await Promise.all([
-            fetchLlmConfig().catch(() => null),
-            fetchFeatureConfig().catch(() => null),
-            fetchPromptConfig().catch(() => null),
-            fetchFeaturePrompts().catch(() => null),
-            fetchApiKeyStatus().catch(() => null),
-          ]);
+        const [llmConfig, featureConfig, promptConfig, featurePrompts] = await Promise.all([
+          fetchLlmConfig().catch(() => null),
+          fetchFeatureConfig().catch(() => null),
+          fetchPromptConfig().catch(() => null),
+          fetchFeaturePrompts().catch(() => null),
+        ]);
 
         if (cancelled) return;
-
-        const statuses = keyStatus?.providers ?? [];
-        setApiKeyStatuses(statuses);
 
         if (llmConfig) {
           const providerFromBackend = llmConfig.provider || 'openai';
@@ -299,11 +281,9 @@ export default function SettingsPage() {
             : 'openai';
           setProvider(safeProvider);
           setModel(llmConfig.model || PROVIDER_INFO[safeProvider].defaultModel);
-          // Whether THIS provider already has an encrypted key (per-provider,
-          // not the legacy shared slot) drives the "leave blank to keep" hint.
-          const keyProvider = llmProviderToKeyProvider(safeProvider);
-          setHasStoredApiKey(statuses.some((s) => s.provider === keyProvider && s.configured));
-          setApiKey('');
+          const isMaskedKey = Boolean(llmConfig.api_key) && llmConfig.api_key.includes('*');
+          setHasStoredApiKey(Boolean(llmConfig.api_key));
+          setApiKey(isMaskedKey ? '' : llmConfig.api_key || '');
           setApiBase(llmConfig.api_base || '');
           setReasoningEffort((llmConfig.reasoning_effort as ReasoningEffort | null) ?? 'auto');
 
@@ -345,38 +325,6 @@ export default function SettingsPage() {
     };
   }, [t]);
 
-  // Whether a given key-store provider currently has a saved key.
-  const providerHasStoredKey = (p: LLMProvider): boolean => {
-    const keyProvider = llmProviderToKeyProvider(p);
-    return apiKeyStatuses.some((s) => s.provider === keyProvider && s.configured);
-  };
-
-  // Re-fetch the per-provider key status (after save/delete/clear).
-  const refreshApiKeyStatus = async (): Promise<ApiKeyProviderStatus[]> => {
-    const status = await fetchApiKeyStatus().catch(() => null);
-    const statuses = status?.providers ?? [];
-    setApiKeyStatuses(statuses);
-    return statuses;
-  };
-
-  // Delete one provider's saved key (per-row action).
-  const handleDeleteApiKey = async (keyProvider: ApiKeyProvider) => {
-    try {
-      await deleteApiKey(keyProvider);
-      const statuses = await refreshApiKeyStatus();
-      if (llmProviderToKeyProvider(provider) === keyProvider) {
-        setHasStoredApiKey(false);
-      }
-      // Keep the local hint in sync even if the active provider differs.
-      void statuses;
-    } catch (err) {
-      console.error('Failed to delete API key', err);
-      setError((err as Error).message || t('settings.errors.unableToSaveConfiguration'));
-    } finally {
-      setKeyToDelete(null);
-    }
-  };
-
   // Handle provider change
   const handleProviderChange = (newProvider: LLMProvider) => {
     setProvider(newProvider);
@@ -390,11 +338,9 @@ export default function SettingsPage() {
       setApiBase('http://localhost:8080/v1');
     }
 
-    // Clear the key input on switch, but drive the "has stored key" hint from
-    // the per-provider store so a saved key for the new provider is recognized
-    // (each provider keeps its own key — switching no longer wipes anything).
+    // Clear API key input when switching providers to avoid accidental cross-provider usage.
     setApiKey('');
-    setHasStoredApiKey(providerHasStoredKey(newProvider));
+    setHasStoredApiKey(false);
   };
 
   // Save configuration
@@ -411,16 +357,6 @@ export default function SettingsPage() {
       }
 
       const trimmedKey = apiKey.trim();
-
-      // (1) Persist the key to the encrypted PER-PROVIDER store (only when the
-      // user typed a new one). This is the bug fix: keys no longer ride on the
-      // shared config slot, so saving one provider never wipes another's key.
-      if (trimmedKey) {
-        const keyProvider = llmProviderToKeyProvider(provider);
-        await updateApiKeys({ [keyProvider]: trimmedKey } as Record<ApiKeyProvider, string>);
-      }
-
-      // (2) Persist non-secret LLM config — WITHOUT api_key.
       const update: LLMConfigUpdate = {
         provider,
         model: model.trim(),
@@ -429,14 +365,21 @@ export default function SettingsPage() {
         // and the gpt-5 auto-migration won't re-fire.
         reasoning_effort: reasoningEffort === 'auto' ? '' : (reasoningEffort as ReasoningEffort),
       };
+      // Key-send policy (applies to BOTH requiresKey=true and false):
+      //   - User typed a new key → send it (overwrite stored).
+      //   - User cleared the field AND has a stored key → omit so stored
+      //     key is preserved (matches existing UX; users rotate explicitly).
+      //   - No new key, no stored key → send '' so the backend clears the
+      //     field (mainly the required path; same shape for consistency).
+      if (trimmedKey) {
+        update.api_key = trimmedKey;
+      } else if (!hasStoredApiKey) {
+        update.api_key = '';
+      }
+
       await updateLlmConfig(update);
 
-      // Refresh the per-provider key status + cached system status after save.
-      const statuses = await refreshApiKeyStatus();
-      setApiKey('');
-      setHasStoredApiKey(
-        statuses.some((s) => s.provider === llmProviderToKeyProvider(provider) && s.configured)
-      );
+      // Refresh cached system status after save
       await refreshStatus();
 
       setStatus('saved');
@@ -550,18 +493,21 @@ export default function SettingsPage() {
     try {
       await clearAllApiKeys();
 
-      // The encrypted store is now empty for every provider.
-      await refreshApiKeyStatus();
       // Refetch full LLM config to ensure local state is synced with backend
       const llmConfig = await fetchLlmConfig().catch(() => null);
       if (llmConfig) {
         setProvider(llmConfig.provider || 'openai');
         setModel(llmConfig.model || PROVIDER_INFO['openai'].defaultModel);
+        const isMaskedKey = Boolean(llmConfig.api_key) && llmConfig.api_key.includes('*');
+        setHasStoredApiKey(Boolean(llmConfig.api_key));
+        setApiKey(isMaskedKey ? '' : llmConfig.api_key || '');
         setApiBase(llmConfig.api_base || '');
         setReasoningEffort(llmConfig.reasoning_effort ?? 'auto');
+      } else {
+        // Fallback if refetch fails
+        setApiKey('');
+        setHasStoredApiKey(false);
       }
-      setApiKey('');
-      setHasStoredApiKey(false);
 
       setHealthCheck(null);
       // Refresh status
@@ -916,46 +862,6 @@ export default function SettingsPage() {
                   </p>
                 )}
               </div>
-
-              {/* Saved per-provider keys — each provider keeps its own encrypted
-                  key, so switching providers never wipes another's. */}
-              {apiKeyStatuses.some((s) => s.configured) && (
-                <div className="space-y-2 border border-black bg-paper-tint p-3 shadow-sw-xs">
-                  <p className="font-mono text-xs uppercase tracking-wide text-ink-soft">
-                    {t('settings.apiKeys.savedTitle')}
-                  </p>
-                  <ul className="space-y-1.5">
-                    {apiKeyStatuses
-                      .filter((s) => s.configured)
-                      .map((s) => (
-                        <li
-                          key={s.provider}
-                          className="flex items-center justify-between gap-2 text-sm"
-                        >
-                          <span className="flex items-center gap-2">
-                            <CheckCircle2 className="h-3.5 w-3.5 text-success" />
-                            <span className="font-medium">
-                              {API_KEY_PROVIDER_INFO[s.provider]?.name ?? s.provider}
-                            </span>
-                            <span className="font-mono text-xs text-steel-grey">
-                              {s.masked_key}
-                            </span>
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => setKeyToDelete(s.provider)}
-                            className="font-mono text-xs uppercase text-destructive hover:underline"
-                            aria-label={t('settings.apiKeys.deleteAria', {
-                              provider: API_KEY_PROVIDER_INFO[s.provider]?.name ?? s.provider,
-                            })}
-                          >
-                            {t('common.delete')}
-                          </button>
-                        </li>
-                      ))}
-                  </ul>
-                </div>
-              )}
 
               {/* API Base URL (optional, for proxies/aggregators/custom endpoints) */}
               <div className="space-y-2">
@@ -1408,22 +1314,6 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
-
-      <ConfirmDialog
-        open={keyToDelete !== null}
-        onOpenChange={(open) => {
-          if (!open) setKeyToDelete(null);
-        }}
-        title={t('settings.apiKeys.deleteConfirmTitle')}
-        description={t('settings.apiKeys.deleteConfirmDescription', {
-          provider: keyToDelete ? (API_KEY_PROVIDER_INFO[keyToDelete]?.name ?? keyToDelete) : '',
-        })}
-        confirmLabel={t('common.delete')}
-        variant="warning"
-        onConfirm={() => {
-          if (keyToDelete) void handleDeleteApiKey(keyToDelete);
-        }}
-      />
 
       <ConfirmDialog
         open={showClearApiKeysDialog}
