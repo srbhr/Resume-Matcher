@@ -34,10 +34,22 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({ value, onCha
       name: t('builder.formatting.templates.modernTwoColumn.name'),
       description: t('builder.formatting.templates.modernTwoColumn.description'),
     },
+    latex: {
+      name: t('builder.formatting.templates.latex.name'),
+      description: t('builder.formatting.templates.latex.description'),
+    },
+    clean: {
+      name: t('builder.formatting.templates.clean.name'),
+      description: t('builder.formatting.templates.clean.description'),
+    },
+    vivid: {
+      name: t('builder.formatting.templates.vivid.name'),
+      description: t('builder.formatting.templates.vivid.description'),
+    },
   };
 
   return (
-    <div className="flex gap-3">
+    <div className="flex flex-wrap gap-3">
       {TEMPLATE_OPTIONS.map((template) => (
         <button
           key={template.id}
@@ -105,6 +117,50 @@ export const TemplateThumbnail: React.FC<TemplateThumbnailProps> = ({ type, isAc
     );
   }
 
+  if (type === 'latex') {
+    // LaTeX thumbnail - centered name + Title-Case ruled section headers (serif feel)
+    return (
+      <div className={`w-14 h-18 border ${borderColor} bg-white p-1.5 flex flex-col gap-1`}>
+        {/* Centered name + contact */}
+        <div className="flex flex-col items-center gap-0.5">
+          <div className={`h-1.5 ${lineColor} w-2/3`}></div>
+          <div className={`h-0.5 ${lineColor} w-1/2 opacity-60`}></div>
+        </div>
+        {/* Sections: each header is a full-width line with a bottom rule */}
+        <div className="flex-1 space-y-1 mt-1">
+          <div className={`h-0.5 ${lineColor} w-2/5 border-b ${borderColor} pb-1`}></div>
+          <div className={`h-0.5 ${lineColor} w-5/6 opacity-50`}></div>
+          <div className={`h-0.5 ${lineColor} w-4/6 opacity-50`}></div>
+          <div className="h-0.5"></div>
+          <div className={`h-0.5 ${lineColor} w-1/3 border-b ${borderColor} pb-1`}></div>
+          <div className={`h-0.5 ${lineColor} w-5/6 opacity-50`}></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (type === 'clean') {
+    // Clean thumbnail - centered light name + large understated gray uppercase headers
+    return (
+      <div className={`w-14 h-18 border ${borderColor} bg-white p-1.5 flex flex-col gap-1`}>
+        {/* Centered light name + contact line */}
+        <div className="flex flex-col items-center gap-0.5">
+          <div className={`h-1.5 ${lineColor} w-1/2 opacity-70`}></div>
+          <div className={`h-0.5 ${lineColor} w-2/3 opacity-40`}></div>
+        </div>
+        {/* Large gray section headers (taller, lower opacity) + thin rule */}
+        <div className="flex-1 space-y-1 mt-1">
+          <div className={`h-1 ${lineColor} w-1/2 opacity-30 border-b ${borderColor}`}></div>
+          <div className={`h-0.5 ${lineColor} w-5/6 opacity-50`}></div>
+          <div className={`h-0.5 ${lineColor} w-4/6 opacity-50`}></div>
+          <div className="h-0.5"></div>
+          <div className={`h-1 ${lineColor} w-2/5 opacity-30 border-b ${borderColor}`}></div>
+          <div className={`h-0.5 ${lineColor} w-5/6 opacity-50`}></div>
+        </div>
+      </div>
+    );
+  }
+
   if (type === 'modern') {
     // Modern template thumbnail - with accent color highlights
     return (
@@ -153,6 +209,45 @@ export const TemplateThumbnail: React.FC<TemplateThumbnailProps> = ({ type, isAc
           <div
             className={`w-1/3 border ${isActive ? 'border-blue-600' : 'border-blue-300'} pl-1 space-y-0.5`}
           >
+            <div className={`h-0.5 ${accentColor} w-full`}></div>
+            <div className={`h-0.5 ${lineColor} w-4/5 opacity-50`}></div>
+            <div className="h-0.5"></div>
+            <div className={`h-0.5 ${accentColor} w-full`}></div>
+            <div className={`h-0.5 ${lineColor} w-3/5 opacity-50`}></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (type === 'vivid') {
+    // Vivid thumbnail - two-tone accent name + accent headers + accent arrow bullets
+    return (
+      <div className={`w-14 h-18 border ${borderColor} bg-white p-1.5 flex flex-col gap-1`}>
+        {/* Two-tone name (left-aligned) */}
+        <div className="flex items-center gap-0.5">
+          <div className={`h-1.5 ${accentColor} w-1/3`}></div>
+          <div className={`h-1.5 ${accentColor} w-1/4 opacity-50`}></div>
+        </div>
+        <div className={`h-0.5 ${lineColor} w-2/3 opacity-40`}></div>
+        {/* Two columns (no divider) */}
+        <div className="flex-1 flex gap-1 mt-0.5">
+          {/* Left column with arrow ticks */}
+          <div className="w-2/3 space-y-0.5">
+            <div className={`h-0.5 ${accentColor} w-1/2`}></div>
+            <div className="flex items-center gap-0.5">
+              <div className={`h-0.5 w-0.5 ${accentColor}`}></div>
+              <div className={`h-0.5 ${lineColor} w-5/6 opacity-50`}></div>
+            </div>
+            <div className="flex items-center gap-0.5">
+              <div className={`h-0.5 w-0.5 ${accentColor}`}></div>
+              <div className={`h-0.5 ${lineColor} w-4/6 opacity-50`}></div>
+            </div>
+            <div className="h-0.5"></div>
+            <div className={`h-0.5 ${accentColor} w-2/5`}></div>
+          </div>
+          {/* Right column (sidebar) */}
+          <div className="w-1/3 space-y-0.5">
             <div className={`h-0.5 ${accentColor} w-full`}></div>
             <div className={`h-0.5 ${lineColor} w-4/5 opacity-50`}></div>
             <div className="h-0.5"></div>

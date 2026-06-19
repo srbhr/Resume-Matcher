@@ -220,3 +220,56 @@ def test_no_changes_returns_empty() -> None:
 
     assert summary.total_changes == 0
     assert len(changes) == 0
+
+
+def test_education_description_change_is_not_duplicated() -> None:
+    """Editing only the education description must yield ONE diff, not an extra
+    spurious entry-level 'education modified' (regression for the dedup fix)."""
+    original = {
+        "education": [
+            {"institution": "MIT", "degree": "B.S. CS", "years": "2014 - 2018",
+             "description": "Graduated with honors"}
+        ]
+    }
+    improved = {
+        "education": [
+            {"institution": "MIT", "degree": "B.S. CS", "years": "2014 - 2018",
+             "description": "Graduated with honors; focus on distributed systems"}
+        ]
+    }
+
+    _summary, changes = calculate_resume_diff(original, improved)
+
+    education_changes = [c for c in changes if c.field_type == "education"]
+    assert len(education_changes) == 1
+    assert education_changes[0].field_path == "education[0].description"
+    assert education_changes[0].change_type == "modified"
+
+
+def test_language_add_remove() -> None:
+    original = {"additional": {"languages": ["English (Native)"]}}
+    improved = {"additional": {"languages": ["English (Native)", "Spanish (Conversational)"]}}
+
+    _summary, changes = calculate_resume_diff(original, improved)
+
+    added = [c for c in changes if c.field_type == "language" and c.change_type == "added"]
+    assert [c.new_value for c in added] == ["Spanish (Conversational)"]
+
+
+def test_language_order_is_ignored() -> None:
+    original = {"additional": {"languages": ["English", "Spanish"]}}
+    improved = {"additional": {"languages": ["Spanish", "English"]}}
+
+    _summary, changes = calculate_resume_diff(original, improved)
+
+    assert [c for c in changes if c.field_type == "language"] == []
+
+
+def test_award_add() -> None:
+    original = {"additional": {"awards": []}}
+    improved = {"additional": {"awards": ["Employee of the Year 2022"]}}
+
+    _summary, changes = calculate_resume_diff(original, improved)
+
+    awards = [c for c in changes if c.field_type == "award" and c.change_type == "added"]
+    assert [c.new_value for c in awards] == ["Employee of the Year 2022"]

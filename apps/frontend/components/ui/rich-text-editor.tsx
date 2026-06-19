@@ -54,6 +54,11 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
         codeBlock: false,
         horizontalRule: false,
         hardBreak: false,
+        // StarterKit v3 bundles link + underline; we register them explicitly
+        // below (Link with custom openOnClick/HTMLAttributes), so disable the
+        // bundled ones to avoid "Duplicate extension names" warnings.
+        link: false,
+        underline: false,
       }),
       Underline,
       Link.configure({
