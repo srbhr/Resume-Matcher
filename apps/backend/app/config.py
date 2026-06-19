@@ -189,6 +189,11 @@ class Settings(BaseSettings):
         "http://localhost:3000",
         "http://127.0.0.1:3000",
     ]
+    # Set EXTENSION_CORS_ORIGIN to your packed extension ID to enable the Chrome
+    # extension. Use the exact origin (e.g. "chrome-extension://abcdef...") for
+    # production, or "chrome-extension://.*" during local development. Disabled
+    # (None) by default so shared/server deployments are unaffected.
+    extension_cors_origin: str | None = None
 
     @property
     def effective_cors_origins(self) -> list[str]:

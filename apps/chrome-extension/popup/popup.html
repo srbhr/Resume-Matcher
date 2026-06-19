@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Resume Matcher</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header>
+      <span class="logo">Resume Matcher</span>
+      <button type="button" id="btn-settings-toggle" aria-label="Settings">&#9881;</button>
+    </header>
+
+    <!-- Settings panel -->
+    <section id="panel-settings" hidden>
+      <h2>Settings</h2>
+
+      <label for="input-backend-url">Backend URL</label>
+      <input id="input-backend-url" type="url" placeholder="http://localhost:8000" />
+
+      <div class="divider"></div>
+
+      <label for="input-resume-file">Resume</label>
+      <p class="hint">Upload your master resume once, or paste an existing Resume ID.</p>
+      <input id="input-resume-file" type="file" accept=".pdf,.docx" />
+      <button type="button" id="btn-upload-resume">Upload Resume</button>
+
+      <div class="or-row"><span>or</span></div>
+
+      <label for="input-resume-id">Resume ID</label>
+      <input id="input-resume-id" type="text" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" />
+      <button type="button" id="btn-save-settings">Save</button>
+
+      <p id="msg-settings" class="msg" hidden></p>
+    </section>
+
+    <!-- Main panel -->
+    <section id="panel-main">
+      <div id="job-info">
+        <p id="job-title" class="job-title"></p>
+        <p id="job-company" class="job-company"></p>
+        <p id="job-desc-preview" class="job-desc"></p>
+        <p id="msg-no-job" class="hint" hidden>
+          No job description detected on this page. Navigate to a job posting on LinkedIn, Indeed,
+          Greenhouse, Lever, Glassdoor, or Workday.
+        </p>
+      </div>
+
+      <div id="resume-badge" hidden>
+        <span class="badge-label">Resume</span>
+        <span id="badge-resume-id" class="mono"></span>
+      </div>
+
+      <button type="button" id="btn-tailor" disabled>Tailor Resume</button>
+      <p id="msg-main" class="msg" hidden></p>
+    </section>
+
+    <!-- Result panel -->
+    <section id="panel-result" hidden>
+      <div class="score-row">
+        <span class="score-label">ATS Score</span>
+        <span id="result-score" class="score-value">—</span>
+      </div>
+
+      <div id="result-keywords" hidden>
+        <p class="field-label">Missing Keywords</p>
+        <div id="keywords-chips" class="chips"></div>
+      </div>
+
+      <div id="result-recs" hidden>
+        <p class="field-label">Recommendations</p>
+        <ul id="recs-list"></ul>
+      </div>
+
+      <button type="button" id="btn-open-app">Open in Resume Matcher</button>
+      <button type="button" id="btn-tailor-again" class="secondary">Tailor Another</button>
+    </section>
+
+    <script src="popup.js"></script>
+  </body>
+</html>
