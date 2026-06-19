@@ -1,0 +1,99 @@
+@import './_tokens.css';
+
+/*
+  Clean Template
+  ID: clean
+
+  Minimal modern sans layout. Single-typeface design: all text inherits --body-font
+  (sans by default), so the Body Font control drives the whole template. Large
+  understated gray UPPERCASE section headers, single-line entries.
+*/
+
+.container {
+  width: 100%;
+}
+
+/*
+  Body text is driven by the Body Font control; the name + section headers are driven
+  by the Header Font control. Both controls are live; selecting Clean seeds sans/sans
+  (see TEMPLATE_FONT_PRESETS) so the default look stays all-sans.
+*/
+.container,
+.container :global(p),
+.container :global(li),
+.container :global(a),
+.container :global(span),
+.container :global(div) {
+  font-family: var(--body-font);
+}
+
+.name {
+  font-family: var(--header-font);
+  font-size: calc(var(--font-size-base) * var(--header-scale));
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  color: var(--resume-text-primary);
+}
+
+.tagline {
+  font-size: calc(var(--font-size-base) * 1.05);
+  color: var(--resume-text-tertiary);
+}
+
+.contactRow {
+  font-size: calc(var(--font-size-base) * 0.85);
+  color: var(--resume-text-body);
+}
+
+.sep {
+  color: var(--resume-text-tertiary);
+  padding: 0 0.4em;
+}
+
+/* Large, understated, gray uppercase header with a thin rule. */
+.sectionTitle {
+  font-family: var(--header-font);
+  font-size: calc(var(--font-size-base) * var(--section-header-scale) * 1.15);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--resume-text-tertiary);
+  border-bottom: 1px solid var(--resume-border-secondary);
+  padding-bottom: 0.15rem;
+  margin-bottom: var(--item-gap);
+  break-after: avoid;
+  page-break-after: avoid;
+  orphans: 3;
+  widows: 3;
+}
+
+.entryCompany {
+  font-weight: 700;
+  color: var(--resume-text-primary);
+}
+
+.entryRole {
+  font-variant: small-caps;
+  letter-spacing: 0.02em;
+  color: var(--resume-text-tertiary);
+}
+
+.entryMeta {
+  font-size: calc(var(--font-size-base) * 0.85);
+  color: var(--resume-text-tertiary);
+  white-space: nowrap;
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.skillLabel {
+  font-weight: 700;
+  color: var(--resume-text-primary);
+}
+
+@media print {
+  .sectionTitle {
+    break-after: avoid !important;
+    page-break-after: avoid !important;
+  }
+}

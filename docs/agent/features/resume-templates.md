@@ -10,6 +10,9 @@
 | `swiss-two-column` | 65%/35% split with experience in main column, skills in sidebar |
 | `modern` | Single-column with colorful accent headers and customizable theme colors |
 | `modern-two-column` | Two-column layout combining modern accents with space-efficient design |
+| `latex` | Classic serif single-column with Title-Case ruled headers and company-first entries (LaTeX-style). Single-typeface — driven by the Header Font control |
+| `clean` | Minimal sans single-column with large understated gray UPPERCASE headers and single-line entries. Single-typeface — driven by the Body Font control |
+| `vivid` | Colorful two-column (Awesome-CV lineage): two-tone accent name, monospace contact with circular icons, accent small-caps headers, accent arrow bullets. Supports the Accent Color control |
 
 ## Formatting Controls
 
@@ -25,7 +28,7 @@
 | Body Font | serif/sans-serif/mono | sans-serif | Font family for body text |
 | Compact Mode | boolean | false | Apply 0.6x spacing multiplier (spacing only; margins unchanged) |
 | Contact Icons | boolean | false | Show icons next to contact info |
-| Accent Color | blue/green/orange/red | blue | Accent color for Modern templates (modern, modern-two-column) |
+| Accent Color | blue/green/orange/red | blue | Accent color for color templates (modern, modern-two-column, vivid) |
 
 ## Key Files
 

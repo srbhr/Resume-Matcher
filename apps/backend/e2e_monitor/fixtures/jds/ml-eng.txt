@@ -1,0 +1,13 @@
+We are seeking a Machine Learning Engineer to join our AI platform team. You will own the
+end-to-end lifecycle of production ML systems: data pipeline construction, model training and
+evaluation, and scalable inference deployment. Day-to-day work involves large-scale tabular and
+unstructured data using Spark or Ray, experiment tracking in MLflow, and training PyTorch models
+for classification and ranking tasks.
+
+Requirements: 3+ years of applied ML engineering experience; strong Python skills with expertise
+in PyTorch, scikit-learn, and Hugging Face Transformers; hands-on experience with feature stores
+(Feast or Tecton), model registries, and A/B testing frameworks; familiarity with deploying
+models via Triton Inference Server or SageMaker endpoints; understanding of ML monitoring
+concepts (data drift, prediction drift, concept drift) using tools such as Evidently or
+WhyLogs; experience with SQL and distributed compute (Spark, Dask). A track record of taking
+models from notebook prototypes to latency-sensitive production services is essential.

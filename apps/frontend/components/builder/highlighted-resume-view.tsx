@@ -18,6 +18,15 @@ interface HighlightedResumeViewProps {
 export function HighlightedResumeView({ resumeData, keywords }: HighlightedResumeViewProps) {
   const { t } = useTranslations();
 
+  // Drop blank/whitespace-only entries so empty lines (e.g. from editing in the
+  // builder) never render in the preview (issue #763).
+  const visibleTechnicalSkills =
+    resumeData.additional?.technicalSkills?.filter((item): item is string => typeof item === 'string' && item.trim() !== '') ?? [];
+  const visibleLanguages =
+    resumeData.additional?.languages?.filter((item): item is string => typeof item === 'string' && item.trim() !== '') ?? [];
+  const visibleCertificationsTraining =
+    resumeData.additional?.certificationsTraining?.filter((item): item is string => typeof item === 'string' && item.trim() !== '') ?? [];
+
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
@@ -127,48 +136,46 @@ export function HighlightedResumeView({ resumeData, keywords }: HighlightedResum
         {/* Skills */}
         {resumeData.additional && (
           <Section title={t('resume.sections.skills')} icon={<Wrench className="w-4 h-4" />}>
-            {resumeData.additional.technicalSkills &&
-              resumeData.additional.technicalSkills.length > 0 && (
-                <div className="mb-3">
-                  <div className="text-xs font-mono uppercase text-steel-grey mb-1">
-                    {t('resume.additional.technicalSkills')}
-                  </div>
-                  <div className="flex flex-wrap gap-1">
-                    {resumeData.additional.technicalSkills.map((skill, i) => (
-                      <SkillTag key={i} text={skill} keywords={keywords} />
-                    ))}
-                  </div>
+            {visibleTechnicalSkills.length > 0 && (
+              <div className="mb-3">
+                <div className="text-xs font-mono uppercase text-steel-grey mb-1">
+                  {t('resume.additional.technicalSkills')}
                 </div>
-              )}
+                <div className="flex flex-wrap gap-1">
+                  {visibleTechnicalSkills.map((skill, i) => (
+                    <SkillTag key={i} text={skill} keywords={keywords} />
+                  ))}
+                </div>
+              </div>
+            )}
 
-            {resumeData.additional.languages && resumeData.additional.languages.length > 0 && (
+            {visibleLanguages.length > 0 && (
               <div className="mb-3">
                 <div className="text-xs font-mono uppercase text-steel-grey mb-1">
                   {t('resume.sections.languages')}
                 </div>
                 <div className="flex flex-wrap gap-1">
-                  {resumeData.additional.languages.map((lang, i) => (
+                  {visibleLanguages.map((lang, i) => (
                     <SkillTag key={i} text={lang} keywords={keywords} />
                   ))}
                 </div>
               </div>
             )}
 
-            {resumeData.additional.certificationsTraining &&
-              resumeData.additional.certificationsTraining.length > 0 && (
-                <div className="mb-3">
-                  <div className="text-xs font-mono uppercase text-steel-grey mb-1">
-                    {t('resume.sections.certifications')}
-                  </div>
-                  <ul className="list-disc list-inside space-y-1 text-sm">
-                    {resumeData.additional.certificationsTraining.map((cert, i) => (
-                      <li key={i} className="text-ink-soft">
-                        <HighlightedText text={cert} keywords={keywords} />
-                      </li>
-                    ))}
-                  </ul>
+            {visibleCertificationsTraining.length > 0 && (
+              <div className="mb-3">
+                <div className="text-xs font-mono uppercase text-steel-grey mb-1">
+                  {t('resume.sections.certifications')}
                 </div>
-              )}
+                <ul className="list-disc list-inside space-y-1 text-sm">
+                  {visibleCertificationsTraining.map((cert, i) => (
+                    <li key={i} className="text-ink-soft">
+                      <HighlightedText text={cert} keywords={keywords} />
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </Section>
         )}
       </div>
