@@ -742,8 +742,19 @@ def _is_response_format_unsupported(error: Exception) -> bool:
     Detecting this lets ``complete_json`` fall back to prompt-only JSON mode
     instead of failing the whole request, while genuine bad requests (e.g.
     context-length errors) still propagate.
+
+    Requires both a mention of ``response_format`` *and* a rejection/validation
+    cue, so that an unrelated 400 which merely names the parameter (e.g. a
+    context-length error) does not trigger a pointless fallback retry. The cue
+    list stays broad enough to catch varied provider wording ("must be ...",
+    "not supported", "unsupported", "not allowed", "invalid") rather than any
+    single provider's exact message.
     """
-    return "response_format" in str(error).lower()
+    msg = str(error).lower()
+    if "response_format" not in msg:
+        return False
+    rejection_cues = ("must be", "not support", "unsupported", "not allowed", "invalid")
+    return any(cue in msg for cue in rejection_cues)
 
 
 FALLBACK_MAX_TOKENS = 4096

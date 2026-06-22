@@ -363,13 +363,60 @@ class TestCompleteJsonFallback:
     @patch("app.llm.get_router")
     @patch("app.llm.get_model_name")
     @patch("app.llm._supports_json_mode")
+    async def test_json_mode_fallback_on_varied_rejection_wording(
+        self, mock_supports_json, mock_get_name, mock_get_router
+    ):
+        """The fallback must trigger across provider wording, not just LM Studio's.
+
+        Guards against narrowing the heuristic so much that a genuine
+        response_format rejection phrased as "not supported" is missed (which
+        would re-introduce issue #857 for that provider).
+        """
+        import litellm
+
+        mock_supports_json.return_value = True
+        mock_get_name.return_value = "openai/some-local-model"
+
+        rejection = litellm.BadRequestError(
+            "OpenAIException - Error code: 400 - "
+            "{'error': 'response_format json_object is not supported by this model'}",
+            model="openai/some-local-model",
+            llm_provider="openai",
+        )
+
+        good_choice = MagicMock()
+        good_choice.message.content = '{"answer": "ok"}'
+        good_response = MagicMock()
+        good_response.choices = [good_choice]
+
+        router = MagicMock()
+        router.acompletion = AsyncMock(side_effect=[rejection, good_response])
+        config = MagicMock()
+        config.provider = "openai_compatible"
+        config.reasoning_effort = None
+        mock_get_router.return_value = (router, config)
+
+        from app.llm import complete_json
+
+        result = await complete_json(
+            prompt="Test prompt", schema_type="resume", retries=2
+        )
+
+        assert result == {"answer": "ok"}
+        assert "response_format" not in router.acompletion.call_args_list[1].kwargs
+
+    @pytest.mark.asyncio
+    @patch("app.llm.get_router")
+    @patch("app.llm.get_model_name")
+    @patch("app.llm._supports_json_mode")
     async def test_unrelated_bad_request_is_not_swallowed(
         self, mock_supports_json, mock_get_name, mock_get_router
     ):
         """A 400 unrelated to response_format must still propagate, not retry.
 
-        Guards against the fix masking genuine bad requests (e.g. context length
-        exceeded) by blindly retrying without JSON mode.
+        Uses a context-length error that *also names* response_format — the
+        false-positive case raised in review (cubic/Kilo). Dropping JSON mode
+        would not help, so the fallback must NOT fire and the error must surface.
         """
         import litellm
 
@@ -377,8 +424,8 @@ class TestCompleteJsonFallback:
         mock_get_name.return_value = "openai/gpt-4o"
 
         rejection = litellm.BadRequestError(
-            "OpenAIException - Error code: 400 - "
-            "{'error': 'maximum context length exceeded'}",
+            "OpenAIException - Error code: 400 - {'error': 'maximum context "
+            "length exceeded while using response_format=json_object'}",
             model="openai/gpt-4o",
             llm_provider="openai",
         )
