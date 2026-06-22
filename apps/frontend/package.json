@@ -34,7 +34,7 @@
     "@types/node": "^25",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@vitejs/plugin-react": "^5.1.4",
+    "@vitejs/plugin-react": "^5.2.0",
     "eslint": "^9.0.0",
     "eslint-config-next": "^16",
     "eslint-config-prettier": "^10.1.8",
@@ -46,7 +46,7 @@
     "vitest": "^4.1.8"
   },
   "overrides": {
-    "undici": "^7.24.1",
+    "undici": "^7.28.0",
     "postcss": "^8.5.10"
   }
 }
