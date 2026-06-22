@@ -480,6 +480,45 @@ export async function clearAllApiKeys(): Promise<void> {
   }
 }
 
+// Scoring token limit configuration types
+export interface ScoringConfig {
+  max_tokens_criterion: number;
+  max_tokens_reasons: number;
+}
+
+export interface ScoringConfigUpdate {
+  max_tokens_criterion?: number;
+  max_tokens_reasons?: number;
+}
+
+// Fetch scoring token limit configuration
+export async function fetchScoringConfig(): Promise<ScoringConfig> {
+  const res = await apiFetch('/config/scoring', { credentials: 'include' });
+
+  if (!res.ok) {
+    throw new Error(`Failed to load scoring config (status ${res.status}).`);
+  }
+
+  return res.json();
+}
+
+// Update scoring token limit configuration
+export async function updateScoringConfig(config: ScoringConfigUpdate): Promise<ScoringConfig> {
+  const res = await apiFetch('/config/scoring', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(config),
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || `Failed to update scoring config (status ${res.status}).`);
+  }
+
+  return res.json();
+}
+
 // Reset database
 export async function resetDatabase(): Promise<void> {
   const res = await apiFetch('/config/reset', {

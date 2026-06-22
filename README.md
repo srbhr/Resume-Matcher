@@ -132,7 +132,34 @@ Generate tailored cover letters based on the job description and your resume.
 
 ### Resume Scoring & Keyword Highlighting
 
-Analyze your resume against the job description with a match score, keyword highlighting, and suggestions for improvement.
+Resume Matcher scores your resume against a job description across 7 weighted criteria using AI, giving you an actionable match percentage and highlighting gaps before you apply.
+
+**How it works:**
+
+1. Upload your resume and a job description
+2. Call `POST /api/v1/scores` with the `resume_id` and `job_id`
+3. Receive a weighted score (0–100), a label (e.g. *Good Fit*, *Strong Contender*), red-flag signals, and 3–4 telegraphic match reasons
+
+**Scoring criteria** (weights are inferred from the job description by the LLM):
+
+| Criterion | Default weight |
+|---|---|
+| Technical Skills | 50 |
+| Years of Experience | 20 |
+| Soft Skills | 9 |
+| Location | 50 |
+| Education Level | 10 |
+| Certifications | 5 |
+| Language Proficiency | 5 |
+
+Results are cached in the database — repeated requests for the same resume/job pair return instantly. Delete a cached score with `DELETE /api/v1/scores/{resume_id}/{job_id}` to force a re-evaluation.
+
+**Token limits** — reasoning models (e.g. `gpt-5.x`) consume tokens on internal chain-of-thought before producing visible output. If you see *Empty response from LLM* errors, raise the token limits on the **Settings → Scoring Token Limits** page, or set the environment variables below:
+
+```env
+SCORING_MAX_TOKENS_CRITERION=1024   # per-criterion call (×7 parallel)
+SCORING_MAX_TOKENS_REASONS=512      # match-reason phrases
+```
 
 ![Resume Scoring and Keyword Highlight](assets/keyword_highlighter.png)
 

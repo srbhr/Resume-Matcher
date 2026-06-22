@@ -16,7 +16,8 @@ import {
 import { fetchPromptConfig, type PromptOption } from '@/lib/api/config';
 import { Dropdown } from '@/components/ui/dropdown';
 import { useStatusCache } from '@/lib/context/status-cache';
-import { Loader2, ArrowLeft, AlertTriangle, Settings } from 'lucide-react';
+import { Loader2, ArrowLeft, AlertTriangle, Settings, ChevronDown } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import { useTranslations } from '@/lib/i18n';
 import { DiffPreviewModal } from '@/components/tailor/diff-preview-modal';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
@@ -24,6 +25,10 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 export default function TailorPage() {
   const { t } = useTranslations();
   const [jobDescription, setJobDescription] = useState('');
+  const [jobCompany, setJobCompany] = useState('');
+  const [jobTitle, setJobTitle] = useState('');
+  const [jobUrl, setJobUrl] = useState('');
+  const [showJobDetails, setShowJobDetails] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [masterResumeId, setMasterResumeId] = useState<string | null>(null);
@@ -173,7 +178,11 @@ export default function TailorPage() {
     try {
       // 1. Upload Job Description
       // The API expects an array of strings
-      const jobId = await uploadJobDescriptions([description], resumeId);
+      const jobId = await uploadJobDescriptions([description], resumeId, {
+        company: jobCompany.trim() || undefined,
+        title: jobTitle.trim() || undefined,
+        url: jobUrl.trim() || undefined,
+      });
       incrementJobs(); // Update cached counter
 
       // 2. Preview Resume
@@ -420,6 +429,61 @@ export default function TailorPage() {
             <div className="absolute bottom-2 right-2 text-xs font-mono text-steel-grey pointer-events-none">
               {t('tailor.charactersCount', { count: jobDescription.length })}
             </div>
+          </div>
+
+          {/* Optional job details expandable */}
+          <div className="border border-black">
+            <button
+              type="button"
+              onClick={() => setShowJobDetails((v) => !v)}
+              className="w-full flex items-center justify-between px-4 py-2 bg-[#F0F0E8] hover:bg-[#e8e8e0] transition-colors"
+              disabled={isLoading}
+            >
+              <span className="font-mono text-xs font-bold uppercase tracking-wider text-gray-600">
+                Job Details (optional)
+              </span>
+              <ChevronDown
+                className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${showJobDetails ? 'rotate-180' : ''}`}
+              />
+            </button>
+            {showJobDetails && (
+              <div className="px-4 py-4 grid grid-cols-1 sm:grid-cols-3 gap-3 bg-white border-t border-black">
+                <div>
+                  <label className="block font-mono text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">
+                    Company
+                  </label>
+                  <Input
+                    placeholder="e.g. Acme Corp"
+                    value={jobCompany}
+                    onChange={(e) => setJobCompany(e.target.value)}
+                    disabled={isLoading}
+                  />
+                </div>
+                <div>
+                  <label className="block font-mono text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">
+                    Job Title
+                  </label>
+                  <Input
+                    placeholder="e.g. Senior Engineer"
+                    value={jobTitle}
+                    onChange={(e) => setJobTitle(e.target.value)}
+                    disabled={isLoading}
+                  />
+                </div>
+                <div>
+                  <label className="block font-mono text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">
+                    Job URL
+                  </label>
+                  <Input
+                    type="url"
+                    placeholder="https://..."
+                    value={jobUrl}
+                    onChange={(e) => setJobUrl(e.target.value)}
+                    disabled={isLoading}
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           {error && (

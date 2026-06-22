@@ -425,6 +425,9 @@ class JobUploadRequest(BaseModel):
 
     job_descriptions: list[str]
     resume_id: str | None = None
+    company: str | None = None
+    title: str | None = None
+    url: str | None = None
 
 
 class JobUploadResponse(BaseModel):
@@ -433,6 +436,38 @@ class JobUploadResponse(BaseModel):
     message: str
     job_id: list[str]
     request: dict[str, Any]
+
+
+class JobSummary(BaseModel):
+    """Job description summary for list responses (description truncated to 200 chars)."""
+
+    job_id: str
+    title: str | None = None
+    company: str | None = None
+    url: str | None = None
+    content_preview: str
+    resume_id: str | None = None
+    created_at: str
+
+
+class JobDetail(BaseModel):
+    """Full job description including complete content."""
+
+    job_id: str
+    title: str | None = None
+    company: str | None = None
+    url: str | None = None
+    content: str
+    resume_id: str | None = None
+    created_at: str
+
+
+class JobUpdateRequest(BaseModel):
+    """Request to update optional metadata on a job description."""
+
+    company: str | None = None
+    title: str | None = None
+    url: str | None = None
 
 
 # Improvement Models
@@ -712,6 +747,20 @@ class UpdateTitleRequest(BaseModel):
     """Request to update resume title."""
 
     title: str
+
+
+class ScoringConfigRequest(BaseModel):
+    """Request to update scoring token limits."""
+
+    max_tokens_criterion: int | None = Field(default=None, ge=64, le=8192)
+    max_tokens_reasons: int | None = Field(default=None, ge=64, le=8192)
+
+
+class ScoringConfigResponse(BaseModel):
+    """Response for scoring token limits."""
+
+    max_tokens_criterion: int
+    max_tokens_reasons: int
 
 
 class ResetDatabaseRequest(BaseModel):

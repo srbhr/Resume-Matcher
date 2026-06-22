@@ -1,0 +1,92 @@
+### Variables
+@baseUrl = http://localhost:8000/api/v1
+@jobId = {{uploadJob.response.body.job_id[0]}}
+
+# =============================================================================
+# POST /v1/jobs/upload — Upload one or more job descriptions
+# =============================================================================
+
+### Upload a single job description (minimal)
+# @name uploadJob
+POST {{baseUrl}}/jobs/upload
+Content-Type: application/json
+
+{
+  "job_descriptions": [
+    "We are looking for a Senior Python Backend Engineer to join our platform team. You will design and build scalable REST APIs using FastAPI, work with PostgreSQL and Redis, and collaborate closely with frontend engineers. Requirements: 5+ years Python, experience with async frameworks, Docker, and CI/CD pipelines. Nice to have: Kubernetes, OpenTelemetry."
+  ]
+}
+
+###
+
+### Upload a single job description linked to a resume
+POST {{baseUrl}}/jobs/upload
+Content-Type: application/json
+
+{
+  "job_descriptions": [
+    "Seeking a Full-Stack Engineer with React and Node.js experience. You will own features end-to-end, from database schema design to pixel-perfect UI. Stack: TypeScript, React 19, Next.js, PostgreSQL, AWS. 3+ years of experience required."
+  ],
+  "resume_id": "your-resume-id-here"
+}
+
+###
+
+### Upload multiple job descriptions in one request
+POST {{baseUrl}}/jobs/upload
+Content-Type: application/json
+
+{
+  "job_descriptions": [
+    "Machine Learning Engineer — build and productionise NLP models. Required: Python, PyTorch or TensorFlow, MLflow, experience with LLMs and RAG pipelines. Remote, full-time.",
+    "Data Engineer — design and maintain ELT pipelines on GCP. Required: SQL, dbt, BigQuery, Airflow or Prefect. 4+ years experience.",
+    "DevOps Engineer — own our Kubernetes platform on AWS EKS. Required: Terraform, Helm, ArgoCD, Prometheus/Grafana. Strong Linux background."
+  ],
+  "resume_id": "your-resume-id-here"
+}
+
+# =============================================================================
+# GET /v1/jobs — List all uploaded job descriptions
+# =============================================================================
+
+### List all jobs
+GET {{baseUrl}}/jobs
+
+# =============================================================================
+# GET /v1/jobs/{job_id} — Retrieve a job description by ID
+# =============================================================================
+
+### Get a job description by ID (chained from the upload above)
+GET {{baseUrl}}/jobs/{{jobId}}
+
+###
+
+### Get a job description by a known ID
+GET {{baseUrl}}/jobs/your-job-id-here
+
+# =============================================================================
+# Error cases
+# =============================================================================
+
+### 400 — empty job_descriptions array
+POST {{baseUrl}}/jobs/upload
+Content-Type: application/json
+
+{
+  "job_descriptions": []
+}
+
+###
+
+### 400 — blank string in job_descriptions
+POST {{baseUrl}}/jobs/upload
+Content-Type: application/json
+
+{
+  "job_descriptions": ["   "]
+}
+
+###
+
+### 404 — job not found
+GET {{baseUrl}}/jobs/nonexistent-job-id

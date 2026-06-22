@@ -236,6 +236,12 @@ class Settings(BaseSettings):
             raise ValueError(f"Invalid LOG_LLM: {value}. Allowed: {ALLOWED_LOG_LEVELS}")
         return value
 
+    # Scoring token limits — overridable per-deployment; fine-tuned via Settings UI
+    # Reasoning models (e.g. gpt-5.x) need higher budgets because thinking tokens
+    # are drawn from the same pool as visible-output tokens.
+    scoring_max_tokens_criterion: int = 1024
+    scoring_max_tokens_reasons: int = 512
+
     # Server Configuration
     host: str = "0.0.0.0"
     port: int = 8000

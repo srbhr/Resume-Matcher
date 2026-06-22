@@ -25,7 +25,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from app.config import settings
 from app.db_engine import init_models_sync, make_async_engine, make_sync_engine
-from app.models import ApiKey, Application, Improvement, Job, Resume
+from app.models import ApiKey, Application, Improvement, Job, Resume, Score
 
 logger = logging.getLogger(__name__)
 
@@ -361,13 +361,27 @@ class Database:
 
     # -- Job operations -----------------------------------------------------
 
-    async def create_job(self, content: str, resume_id: str | None = None) -> dict[str, Any]:
+    async def create_job(
+        self,
+        content: str,
+        resume_id: str | None = None,
+        company: str | None = None,
+        title: str | None = None,
+        url: str | None = None,
+    ) -> dict[str, Any]:
         """Create a new job description entry."""
         job_id = str(uuid4())
         now = _now()
+        metadata: dict[str, Any] = {}
+        if company is not None:
+            metadata["company"] = company
+        if title is not None:
+            metadata["title"] = title
+        if url is not None:
+            metadata["url"] = url
         async with self._session() as session:
             session.add(
-                Job(job_id=job_id, content=content, resume_id=resume_id, created_at=now, metadata_json={})
+                Job(job_id=job_id, content=content, resume_id=resume_id, created_at=now, metadata_json=metadata)
             )
             await session.commit()
         return {
@@ -375,6 +389,7 @@ class Database:
             "content": content,
             "resume_id": resume_id,
             "created_at": now,
+            **metadata,
         }
 
     async def get_job(self, job_id: str) -> dict[str, Any] | None:
@@ -382,6 +397,12 @@ class Database:
         async with self._session() as session:
             row = await session.get(Job, job_id)
             return self._job_to_dict(row) if row else None
+
+    async def list_jobs(self) -> list[dict[str, Any]]:
+        """List all job descriptions."""
+        async with self._session() as session:
+            result = await session.execute(select(Job).order_by(Job.created_at))
+            return [self._job_to_dict(row) for row in result.scalars().all()]
 
     async def update_job(
         self, job_id: str, updates: dict[str, Any]
@@ -726,6 +747,100 @@ class Database:
                     )
             session.commit()
 
+    # -- Score operations (resume-job match cache) -------------------------
+
+    @staticmethod
+    def _score_to_dict(row: Score) -> dict[str, Any]:
+        return {
+            "score_id": row.score_id,
+            "resume_id": row.resume_id,
+            "job_id": row.job_id,
+            "score": row.score,
+            "ai_score": row.ai_score,
+            "match_reasons": row.match_reasons,
+            "red_flags": row.red_flags,
+            "label": row.label,
+            "color": row.color,
+            "created_at": row.created_at,
+        }
+
+    async def create_score(
+        self,
+        resume_id: str,
+        job_id: str,
+        result: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Persist a scoring result for a resume-job pair."""
+        score_id = str(uuid4())
+        now = _now()
+        async with self._session() as session:
+            session.add(
+                Score(
+                    score_id=score_id,
+                    resume_id=resume_id,
+                    job_id=job_id,
+                    score=result.get("score", 0),
+                    ai_score=result.get("ai_score", 0),
+                    match_reasons=result.get("match_reasons", ""),
+                    red_flags=result.get("red_flags", {}),
+                    label=result.get("label", ""),
+                    color=result.get("color", ""),
+                    created_at=now,
+                )
+            )
+            await session.commit()
+        return {
+            "score_id": score_id,
+            "resume_id": resume_id,
+            "job_id": job_id,
+            "score": result.get("score", 0),
+            "ai_score": result.get("ai_score", 0),
+            "match_reasons": result.get("match_reasons", ""),
+            "red_flags": result.get("red_flags", {}),
+            "label": result.get("label", ""),
+            "color": result.get("color", ""),
+            "created_at": now,
+        }
+
+    async def list_scores_by_resume(self, resume_id: str) -> list[dict[str, Any]]:
+        """Return all cached scores for a resume, sorted newest first."""
+        async with self._session() as session:
+            result = await session.execute(
+                select(Score)
+                .where(Score.resume_id == resume_id)
+                .order_by(Score.created_at.desc())
+            )
+            return [self._score_to_dict(row) for row in result.scalars().all()]
+
+    async def get_score(self, resume_id: str, job_id: str) -> dict[str, Any] | None:
+        """Return the cached score for a resume-job pair, or None on miss."""
+        async with self._session() as session:
+            result = await session.execute(
+                select(Score).where(
+                    Score.resume_id == resume_id, Score.job_id == job_id
+                )
+            )
+            row = result.scalars().first()
+            return self._score_to_dict(row) if row else None
+
+    async def delete_score(self, resume_id: str, job_id: str) -> bool:
+        """Delete the cached score for a resume-job pair.
+
+        Returns True if a record was deleted, False if none was found.
+        """
+        async with self._session() as session:
+            result = await session.execute(
+                select(Score).where(
+                    Score.resume_id == resume_id, Score.job_id == job_id
+                )
+            )
+            row = result.scalars().first()
+            if row is None:
+                return False
+            await session.delete(row)
+            await session.commit()
+            return True
+
     # -- Stats / maintenance ------------------------------------------------
 
     async def get_stats(self) -> dict[str, Any]:
@@ -756,6 +871,7 @@ class Database:
         """
         async with self._session() as session:
             await session.execute(delete(Application))
+            await session.execute(delete(Score))
             await session.execute(delete(Improvement))
             await session.execute(delete(Job))
             await session.execute(delete(Resume))

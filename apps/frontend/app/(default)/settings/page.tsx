@@ -11,6 +11,8 @@ import {
   updateFeatureConfig,
   fetchPromptConfig,
   updatePromptConfig,
+  fetchScoringConfig,
+  updateScoringConfig,
   clearAllApiKeys,
   resetDatabase,
   PROVIDER_INFO,
@@ -146,6 +148,12 @@ export default function SettingsPage() {
   const [promptOptions, setPromptOptions] = useState<PromptOption[]>([]);
   const [defaultPromptId, setDefaultPromptId] = useState('keywords');
 
+  // Scoring token limits state
+  const [scoringCriterion, setScoringCriterion] = useState(1024);
+  const [scoringReasons, setScoringReasons] = useState(512);
+  const [scoringStatus, setScoringStatus] = useState<Status>('idle');
+  const [scoringError, setScoringError] = useState<string | null>(null);
+
   // Custom feature prompts (cover letter, cold outreach). Empty string
   // means "use default"; the backend's *_default fields give us the
   // actual default text for placeholder display.
@@ -278,11 +286,12 @@ export default function SettingsPage() {
 
     async function loadConfig() {
       try {
-        const [llmConfig, featureConfig, promptConfig, featurePrompts, keyStatus] =
+        const [llmConfig, featureConfig, promptConfig, scoringConfig, featurePrompts, keyStatus] =
           await Promise.all([
             fetchLlmConfig().catch(() => null),
             fetchFeatureConfig().catch(() => null),
             fetchPromptConfig().catch(() => null),
+            fetchScoringConfig().catch(() => null),
             fetchFeaturePrompts().catch(() => null),
             fetchApiKeyStatus().catch(() => null),
           ]);
@@ -320,6 +329,11 @@ export default function SettingsPage() {
         if (promptConfig) {
           setPromptOptions(promptConfig.prompt_options || []);
           setDefaultPromptId(promptConfig.default_prompt_id || 'keywords');
+        }
+
+        if (scoringConfig) {
+          setScoringCriterion(scoringConfig.max_tokens_criterion);
+          setScoringReasons(scoringConfig.max_tokens_reasons);
         }
 
         if (featurePrompts) {
@@ -541,6 +555,26 @@ export default function SettingsPage() {
       setError((err as Error).message || t('settings.errors.unableToSaveConfiguration'));
     } finally {
       setPromptConfigLoading(false);
+    }
+  };
+
+  // Save scoring token limits
+  const handleScoringConfigSave = async () => {
+    setScoringStatus('saving');
+    setScoringError(null);
+    try {
+      const updated = await updateScoringConfig({
+        max_tokens_criterion: scoringCriterion,
+        max_tokens_reasons: scoringReasons,
+      });
+      setScoringCriterion(updated.max_tokens_criterion);
+      setScoringReasons(updated.max_tokens_reasons);
+      setScoringStatus('saved');
+      setTimeout(() => setScoringStatus('idle'), 2000);
+    } catch (err) {
+      console.error('Failed to save scoring config', err);
+      setScoringError((err as Error).message || t('settings.errors.unableToSaveConfiguration'));
+      setScoringStatus('error');
     }
   };
 
@@ -1311,6 +1345,90 @@ export default function SettingsPage() {
                   ))}
                 </div>
               </div>
+            </div>
+          </section>
+
+          {/* Scoring Token Limits */}
+          <section className="space-y-6">
+            <div className="flex items-center gap-2 border-b border-black/10 pb-2">
+              <Activity className="w-4 h-4" />
+              <h2 className="font-mono text-sm font-bold uppercase tracking-wider">
+                Scoring Token Limits
+              </h2>
+            </div>
+
+            <p className="text-sm text-gray-600">
+              Maximum tokens the LLM may output for each scoring call. Reasoning models (e.g.
+              gpt-5.x) consume tokens on internal thinking before producing visible output — raise
+              these values if you see &quot;Empty response from LLM&quot; errors. Range: 64–8192.
+            </p>
+
+            <div className="grid md:grid-cols-3 gap-6">
+              <div className="space-y-1">
+                <Label htmlFor="scoring-criterion" className="font-mono text-xs uppercase tracking-wider">
+                  Criterion scoring
+                </Label>
+                <p className="text-xs text-gray-500 mb-2">
+                  Per-criterion score (×7 parallel calls)
+                </p>
+                <Input
+                  id="scoring-criterion"
+                  type="number"
+                  min={64}
+                  max={8192}
+                  step={64}
+                  value={scoringCriterion}
+                  onChange={(e) => setScoringCriterion(Math.max(64, Math.min(8192, Number(e.target.value))))}
+                  className="font-mono"
+                  onKeyDown={(e) => { if (e.key === 'Enter') e.stopPropagation(); }}
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Label htmlFor="scoring-reasons" className="font-mono text-xs uppercase tracking-wider">
+                  Match reasons
+                </Label>
+                <p className="text-xs text-gray-500 mb-2">
+                  3–4 telegraphic reason phrases
+                </p>
+                <Input
+                  id="scoring-reasons"
+                  type="number"
+                  min={64}
+                  max={8192}
+                  step={64}
+                  value={scoringReasons}
+                  onChange={(e) => setScoringReasons(Math.max(64, Math.min(8192, Number(e.target.value))))}
+                  className="font-mono"
+                  onKeyDown={(e) => { if (e.key === 'Enter') e.stopPropagation(); }}
+                />
+              </div>
+
+
+            </div>
+
+            <div className="flex items-center gap-3">
+              <Button
+                onClick={handleScoringConfigSave}
+                disabled={scoringStatus === 'saving'}
+                size="sm"
+              >
+                {scoringStatus === 'saving' ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : scoringStatus === 'saved' ? (
+                  <CheckCircle2 className="w-4 h-4 mr-2 text-green-600" />
+                ) : (
+                  <Save className="w-4 h-4 mr-2" />
+                )}
+                {scoringStatus === 'saving'
+                  ? 'Saving…'
+                  : scoringStatus === 'saved'
+                    ? 'Saved'
+                    : 'Save'}
+              </Button>
+              {scoringError && (
+                <p className="font-mono text-xs text-red-600">{scoringError}</p>
+              )}
             </div>
           </section>
 

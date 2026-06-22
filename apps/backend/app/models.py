@@ -134,3 +134,23 @@ class ApiKey(Base):
     provider: Mapped[str] = mapped_column(String, primary_key=True)
     ciphertext: Mapped[str] = mapped_column(Text)
     updated_at: Mapped[str] = mapped_column(String, default=_utcnow_iso)
+
+
+class Score(Base):
+    """Cached LLM scoring result for a resume-job pair."""
+
+    __tablename__ = "scores"
+    __table_args__ = (
+        UniqueConstraint("resume_id", "job_id", name="uq_score_resume_job"),
+    )
+
+    score_id: Mapped[str] = mapped_column(String, primary_key=True)
+    resume_id: Mapped[str] = mapped_column(String, index=True)
+    job_id: Mapped[str] = mapped_column(String, index=True)
+    score: Mapped[int] = mapped_column(Integer, default=0)
+    ai_score: Mapped[int] = mapped_column(Integer, default=0)
+    match_reasons: Mapped[str] = mapped_column(Text, default="")
+    red_flags: Mapped[dict] = mapped_column(JSON, default=dict)
+    label: Mapped[str] = mapped_column(String, default="")
+    color: Mapped[str] = mapped_column(String, default="")
+    created_at: Mapped[str] = mapped_column(String, default=_utcnow_iso)

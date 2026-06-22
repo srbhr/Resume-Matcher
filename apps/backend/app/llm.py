@@ -98,10 +98,9 @@ def _normalize_api_base(provider: str, api_base: str | None) -> str | None:
     if provider == "gemini" and base.endswith("/v1"):
         base = base[: -len("/v1")].rstrip("/")
 
-    # OpenRouter base is https://openrouter.ai/api/v1. LiteLLM appends /v1
-    # internally, so strip it to avoid /v1/v1.
-    if provider == "openrouter" and base.endswith("/v1"):
-        base = base[: -len("/v1")].rstrip("/")
+    # OpenRouter expects /api/v1 for chat/completions requests.
+    # Keep user-provided /v1 intact to avoid routing to HTML endpoints
+    # like /api/chat/completions.
 
     # Ollama doesn't use /v1 paths. Strip common suffixes users might paste:
     # /v1, /api/chat, /api/generate
@@ -520,10 +519,13 @@ def get_router(config: LLMConfig | None = None) -> tuple[Router, LLMConfig]:
         if _router is None or _router_config_key != key:
             _router = _build_router(config)
             _router_config_key = key
-            logging.info("LiteLLM Router rebuilt for %s/%s", config.provider, config.model)
+            logging.info(
+                "LiteLLM Router rebuilt for %s/%s", config.provider, config.model
+            )
         router = _router
 
     return router, config
+
 
 
 async def check_llm_health(
@@ -553,7 +555,7 @@ async def check_llm_health(
     prompt = test_prompt or "Hi"
 
     try:
-        # Make a minimal test call with timeout
+        # Make a minimal test call
         # Pass API key directly to avoid race conditions with global os.environ
         kwargs: dict[str, Any] = {
             "model": model_name,
@@ -692,8 +694,7 @@ async def complete(
         return content
     except Exception as e:
         # Log the actual error server-side for debugging
-        logging.error(f"LLM completion failed: {e}", extra={
-                      "model": model_name})
+        logging.error(f"LLM completion failed: {e}", extra={"model": model_name})
         raise ValueError(
             "LLM completion failed. Please check your API configuration and try again."
         ) from e
@@ -727,11 +728,13 @@ def _supports_json_mode(model_name: str) -> bool:
         # mode (the system prompt already instructs "respond with valid JSON
         # only"). This avoids sending response_format to models that may
         # reject it.
-        logging.debug("Model %s not in LiteLLM registry, skipping JSON mode", model_name)
+        logging.debug(
+            "Model %s not in LiteLLM registry, skipping JSON mode", model_name
+        )
         return False
 
 
-FALLBACK_MAX_TOKENS = 4096
+FALLBACK_MAX_TOKENS = 8192
 
 def get_safe_max_tokens(model_name: str, requested: int = DEFAULT_JSON_MAX_TOKENS) -> int:
     """Return a token count safe for the given model, clamped to its output limit.
@@ -795,15 +798,14 @@ def _appears_truncated(data: dict, schema_type: str = "resume") -> bool:
         return False
 
     if schema_type == "resume":
-        # Full resume structure: check for empty required arrays
-        suspicious_empty_arrays = ["workExperience", "education", "skills"]
-        for key in suspicious_empty_arrays:
-            if key in data and data[key] == []:
-                # Log warning - these are rarely empty in real resumes
-                logging.warning(
-                    "Possible truncation detected: '%s' is empty",
-                    key,
-                )
+        # Required array sections — missing entirely (early truncation) or empty both flag truncation
+        required_array_keys = ["workExperience", "education"]
+        for key in required_array_keys:
+            if key not in data:
+                logging.warning("Possible truncation detected: '%s' is missing", key)
+                return True
+            if data[key] == []:
+                logging.warning("Possible truncation detected: '%s' is empty", key)
                 return True
         return False
 
@@ -924,6 +926,7 @@ def _calculate_timeout(
     return int(base * token_factor * provider_factor)
 
 
+
 def _strip_thinking_tags(content: str) -> str:
     """Strip thinking/reasoning tags from model output.
 
@@ -938,6 +941,48 @@ def _strip_thinking_tags(content: str) -> str:
     return stripped.strip()
 
 
+def _try_close_truncated_json(content: str) -> str | None:
+    """Attempt to auto-close a truncated JSON string.
+
+    Walks the string tracking open braces/brackets and appends the missing
+    closing characters. Returns a valid JSON string on success, None if the
+    result still can't be parsed.
+    """
+    stack: list[str] = []
+    in_string = False
+    escape_next = False
+
+    for char in content:
+        if escape_next:
+            escape_next = False
+            continue
+        if char == "\\":
+            escape_next = True
+            continue
+        if char == '"':
+            in_string = not in_string
+            continue
+        if in_string:
+            continue
+        if char in ("{", "["):
+            stack.append(char)
+        elif char == "}" and stack and stack[-1] == "{":
+            stack.pop()
+        elif char == "]" and stack and stack[-1] == "[":
+            stack.pop()
+
+    if not stack:
+        return None  # Already balanced
+
+    closing = "".join("}" if c == "{" else "]" for c in reversed(stack))
+    candidate = content.rstrip().rstrip(",") + closing
+    try:
+        json.loads(candidate)
+        return candidate
+    except (json.JSONDecodeError, ValueError):
+        return None
+
+
 def _extract_json(content: str, _depth: int = 0) -> str:
     """Extract JSON from LLM response, handling various formats.
 
@@ -947,11 +992,9 @@ def _extract_json(content: str, _depth: int = 0) -> str:
     """
     # JSON-010: Safety limits
     if _depth > MAX_JSON_EXTRACTION_RECURSION:
-        raise ValueError(
-            f"JSON extraction exceeded max recursion depth: {_depth}")
+        raise ValueError(f"JSON extraction exceeded max recursion depth: {_depth}")
     if len(content) > MAX_JSON_CONTENT_SIZE:
-        raise ValueError(
-            f"Content too large for JSON extraction: {len(content)} bytes")
+        raise ValueError(f"Content too large for JSON extraction: {len(content)} bytes")
 
     original = content
 
@@ -1005,6 +1048,13 @@ def _extract_json(content: str, _depth: int = 0) -> str:
                 "JSON extraction found unbalanced braces (depth=%d), possible truncation",
                 depth,
             )
+            recovered = _try_close_truncated_json(content)
+            if recovered:
+                logging.warning(
+                    "Recovered partial JSON from truncated response (auto-closed %d level(s))",
+                    depth,
+                )
+                return recovered
 
         if end_idx != -1:
             return content[: end_idx + 1]
@@ -1064,7 +1114,7 @@ async def complete_json(
                 "model": "primary",
                 "messages": messages,
                 "max_tokens": max_tokens,
-                "timeout": _calculate_timeout("json", max_tokens, config.provider),
+                "timeout": LLM_TIMEOUT_JSON,
             }
             # LLM-002: Increase temperature on retry for variation
             retry_temp = _get_retry_temperature(model_name, attempt)
@@ -1085,8 +1135,7 @@ async def complete_json(
             if not content:
                 raise ValueError("Empty response from LLM")
 
-            logging.debug(
-                f"LLM response (attempt {attempt + 1}): {content[:300]}")
+            logging.debug(f"LLM response (attempt {attempt + 1}): {content[:300]}")
 
             # Extract and parse JSON
             json_str = _extract_json(content)
@@ -1137,8 +1186,7 @@ async def complete_json(
                     + "\n\nIMPORTANT: Output ONLY a valid JSON object. Start with { and end with }."
                 )
                 continue
-            raise ValueError(
-                f"Failed to parse JSON after {retries + 1} attempts: {e}")
+            raise ValueError(f"Failed to parse JSON after {retries + 1} attempts: {e}")
 
         except ValueError as e:
             # Content quality — empty response, JSON extraction failure

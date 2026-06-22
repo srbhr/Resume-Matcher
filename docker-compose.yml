@@ -1,6 +1,6 @@
 services:
   resume-matcher:
-    image: ghcr.io/srbhr/resume-matcher
+    # Build from local source to keep runtime in sync with checked-out code.
     build: .
     container_name: resume-matcher
     ports:
@@ -31,6 +31,9 @@ services:
       - LLM_API_BASE=${LLM_API_BASE:-}
       # CORS origins (JSON array format). FRONTEND_BASE_URL is auto-included.
       #- CORS_ORIGINS=["http://localhost:3000","http://127.0.0.1:3000"]
+      # Override Docker's HOSTNAME (container ID) so Next.js binds to 0.0.0.0
+      # instead of the container's internal IP, allowing Playwright to reach it via localhost.
+      - HOSTNAME=0.0.0.0
     restart: unless-stopped
 
 #secrets:
