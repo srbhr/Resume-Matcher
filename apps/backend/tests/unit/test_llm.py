@@ -302,6 +302,102 @@ class TestCompleteJsonFallback:
         assert calls[0].kwargs.get("response_format") == {"type": "json_object"}
         assert "response_format" not in calls[1].kwargs
 
+    @pytest.mark.asyncio
+    @patch("app.llm.get_router")
+    @patch("app.llm.get_model_name")
+    @patch("app.llm._supports_json_mode")
+    async def test_json_mode_fallback_on_response_format_rejection(
+        self, mock_supports_json, mock_get_name, mock_get_router
+    ):
+        """Issue #857: an OpenAI-compatible server (e.g. LM Studio) rejects
+        ``response_format={"type": "json_object"}`` with a 400.
+
+        First call: JSON mode enabled → server raises ``BadRequestError``
+          ("'response_format.type' must be 'json_schema' or 'text'").
+        Second call: JSON mode disabled → returns valid JSON → success.
+
+        Before the fix the 400 was re-raised immediately (the existing fallback
+        only handled malformed JSON, not rejection of the parameter itself),
+        so the wizard turn failed with a 500.
+        """
+        import litellm
+
+        mock_supports_json.return_value = True
+        mock_get_name.return_value = "openai/gemma-4-e2b"
+
+        # First call raises the exact LM Studio rejection over the wire.
+        rejection = litellm.BadRequestError(
+            "OpenAIException - Error code: 400 - "
+            "{'error': \"'response_format.type' must be 'json_schema' or 'text'\"}",
+            model="openai/gemma-4-e2b",
+            llm_provider="openai",
+        )
+
+        good_choice = MagicMock()
+        good_choice.message.content = '{"answer": "ok"}'
+        good_response = MagicMock()
+        good_response.choices = [good_choice]
+
+        router = MagicMock()
+        router.acompletion = AsyncMock(side_effect=[rejection, good_response])
+        config = MagicMock()
+        config.provider = "openai_compatible"
+        config.reasoning_effort = None
+        mock_get_router.return_value = (router, config)
+
+        from app.llm import complete_json
+
+        result = await complete_json(
+            prompt="Test prompt",
+            schema_type="resume",
+            retries=2,
+        )
+
+        assert result == {"answer": "ok"}
+        # JSON mode was sent on the first (rejected) call, dropped on the retry.
+        calls = router.acompletion.call_args_list
+        assert calls[0].kwargs.get("response_format") == {"type": "json_object"}
+        assert "response_format" not in calls[1].kwargs
+
+    @pytest.mark.asyncio
+    @patch("app.llm.get_router")
+    @patch("app.llm.get_model_name")
+    @patch("app.llm._supports_json_mode")
+    async def test_unrelated_bad_request_is_not_swallowed(
+        self, mock_supports_json, mock_get_name, mock_get_router
+    ):
+        """A 400 unrelated to response_format must still propagate, not retry.
+
+        Guards against the fix masking genuine bad requests (e.g. context length
+        exceeded) by blindly retrying without JSON mode.
+        """
+        import litellm
+
+        mock_supports_json.return_value = True
+        mock_get_name.return_value = "openai/gpt-4o"
+
+        rejection = litellm.BadRequestError(
+            "OpenAIException - Error code: 400 - "
+            "{'error': 'maximum context length exceeded'}",
+            model="openai/gpt-4o",
+            llm_provider="openai",
+        )
+
+        router = MagicMock()
+        router.acompletion = AsyncMock(side_effect=rejection)
+        config = MagicMock()
+        config.provider = "openai"
+        config.reasoning_effort = None
+        mock_get_router.return_value = (router, config)
+
+        from app.llm import complete_json
+
+        with pytest.raises(litellm.BadRequestError):
+            await complete_json(prompt="Test prompt", schema_type="resume", retries=2)
+
+        # No retry: an unrelated 400 fails fast (Router already handles retries).
+        assert router.acompletion.await_count == 1
+
 
 # ---------------------------------------------------------------------------
 # complete() dynamic timeout
