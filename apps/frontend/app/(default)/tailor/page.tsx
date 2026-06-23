@@ -119,6 +119,40 @@ export default function TailorPage() {
     if (e.key === 'Enter') e.stopPropagation();
   };
 
+  const getPreviewErrorMessage = (err: unknown) => {
+    const errorMessage = err instanceof Error ? err.message : String(err ?? '');
+    const normalized = errorMessage.toLowerCase();
+
+    if (
+      normalized.includes('api key') ||
+      normalized.includes('unauthorized') ||
+      normalized.includes('authentication') ||
+      errorMessage.includes('401')
+    ) {
+      return t('tailor.errors.apiKeyError');
+    }
+
+    if (
+      normalized.includes('rate limit') ||
+      normalized.includes('insufficient_quota') ||
+      errorMessage.includes('429')
+    ) {
+      return t('tailor.errors.rateLimit');
+    }
+
+    if (
+      normalized.includes('timed out') ||
+      normalized.includes('timeout') ||
+      normalized.includes('signal is aborted') ||
+      normalized.includes('aborterror') ||
+      errorMessage.includes('504')
+    ) {
+      return t('tailor.errors.timeout');
+    }
+
+    return t('tailor.errors.failedToPreview');
+  };
+
   const buildConfirmPayload = (result: ImprovedResult) => {
     if (!masterResumeId) {
       throw new Error('Master resume ID is missing.');
@@ -197,28 +231,7 @@ export default function TailorPage() {
       setShowDiffModal(true);
     } catch (err) {
       console.error(err);
-      // Check for common error patterns
-      const errorMessage = err instanceof Error ? err.message : '';
-      if (
-        errorMessage.toLowerCase().includes('api key') ||
-        errorMessage.toLowerCase().includes('unauthorized') ||
-        errorMessage.toLowerCase().includes('authentication') ||
-        errorMessage.includes('401')
-      ) {
-        setError(t('tailor.errors.apiKeyError'));
-      } else if (
-        errorMessage.toLowerCase().includes('rate limit') ||
-        errorMessage.includes('429')
-      ) {
-        setError(t('tailor.errors.rateLimit'));
-      } else if (
-        errorMessage.toLowerCase().includes('timed out') ||
-        errorMessage.toLowerCase().includes('timeout')
-      ) {
-        setError(t('tailor.errors.timeout'));
-      } else {
-        setError(t('tailor.errors.failedToPreview'));
-      }
+      setError(getPreviewErrorMessage(err));
     }
   };
 
