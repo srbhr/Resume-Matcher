@@ -513,6 +513,8 @@
     "selectResume": "Select Resume",
     "pasteJobDescription": "Paste Job Description",
     "pasteJobDescriptionBelow": "Paste Job Description Below",
+    "jobTitle": "Job Title",
+    "jobTitlePlaceholder": "Enter job title (optional)",
     "jobDescriptionPlaceholder": "Paste the job description here...",
     "promptLabel": "Tailoring intensity",
     "promptDescription": "Choose how strongly to align your resume to the job description.",
