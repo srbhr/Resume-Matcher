@@ -45,6 +45,20 @@ export interface AdditionalInfo {
   awards: string[];
 }
 
+export interface ATSSubScores {
+  keyword_match: number;
+  skills_coverage: number;
+  section_completeness: number;
+}
+
+export interface ATSScore {
+  overall_score: number;
+  sub_scores: ATSSubScores;
+  missing_keywords: string[];
+  injectable_keywords: string[];
+  recommendations: string[];
+}
+
 export interface ResumeDiffSummary {
   total_changes: number;
   skills_added: number;
@@ -100,6 +114,7 @@ export interface Data {
   outreach_message?: string;
   diff_summary?: ResumeDiffSummary;
   detailed_changes?: ResumeFieldDiff[];
+  ats_score?: ATSScore;
 }
 
 export interface ImprovedResult {
