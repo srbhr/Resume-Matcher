@@ -349,7 +349,8 @@ btnTailor.addEventListener('click', async () => {
       job_descriptions: [description],
       resume_id: state.resumeId,
     });
-    jobId = jobRes.job_id;
+    if (!jobRes.job_id?.length) throw new Error('Backend returned no job ID.');
+    jobId = jobRes.job_id[0];
 
     setLoading(true, 'Tailoring resume…');
     const improveRes = await apiPost('/api/v1/resumes/improve', {
@@ -396,6 +397,7 @@ btnTailorAgain.addEventListener('click', () => {
       })
       .catch((e) => {
         console.warn('[Resume Matcher] Re-extraction failed:', e.message);
+        showMsg(msgMain, 'Could not re-extract job details. Showing previous data.', 'error');
       });
   });
 });
