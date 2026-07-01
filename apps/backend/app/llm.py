@@ -731,6 +731,32 @@ def _supports_json_mode(model_name: str) -> bool:
         return False
 
 
+def _is_response_format_unsupported(error: Exception) -> bool:
+    """Return True if a 400 indicates the server rejected ``response_format``.
+
+    Some OpenAI-compatible servers (e.g. LM Studio, older llama.cpp builds) are
+    reported as supporting ``response_format`` by LiteLLM's registry but reject
+    the ``{"type": "json_object"}`` we send for JSON mode, returning a 400 such
+    as ``'response_format.type' must be 'json_schema' or 'text'`` (issue #857).
+
+    Detecting this lets ``complete_json`` fall back to prompt-only JSON mode
+    instead of failing the whole request, while genuine bad requests (e.g.
+    context-length errors) still propagate.
+
+    Requires both a mention of ``response_format`` *and* a rejection/validation
+    cue, so that an unrelated 400 which merely names the parameter (e.g. a
+    context-length error) does not trigger a pointless fallback retry. The cue
+    list stays broad enough to catch varied provider wording ("must be ...",
+    "not supported", "unsupported", "not allowed", "invalid") rather than any
+    single provider's exact message.
+    """
+    msg = str(error).lower()
+    if "response_format" not in msg:
+        return False
+    rejection_cues = ("must be", "not support", "unsupported", "not allowed", "invalid")
+    return any(cue in msg for cue in rejection_cues)
+
+
 FALLBACK_MAX_TOKENS = 4096
 
 def get_safe_max_tokens(model_name: str, requested: int = DEFAULT_JSON_MAX_TOKENS) -> int:
@@ -1145,6 +1171,29 @@ async def complete_json(
             logging.warning(f"Content extraction failed (attempt {attempt + 1}): {e}")
             if attempt < retries:
                 continue
+            raise
+
+        except litellm.BadRequestError as e:
+            # JSON-012b: some OpenAI-compatible servers (e.g. LM Studio) report
+            # response_format support via the registry but reject
+            # {"type": "json_object"} with a 400 (issue #857). The Router does
+            # not retry bad requests, so recover here by disabling JSON mode and
+            # retrying prompt-only. Unrelated 400s (e.g. context length) still
+            # propagate.
+            if (
+                use_json_mode
+                and not json_mode_failed
+                and _is_response_format_unsupported(e)
+            ):
+                json_mode_failed = True
+                logging.warning(
+                    "Provider rejected response_format for %s; falling back to "
+                    "prompt-only JSON mode (attempt %d)",
+                    model_name,
+                    attempt + 1,
+                )
+                if attempt < retries:
+                    continue
             raise
 
         except Exception:
