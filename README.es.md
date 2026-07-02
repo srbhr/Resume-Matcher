@@ -6,7 +6,7 @@
 
 [English](README.md) | **Español** | [简体中文](README.zh-CN.md) | [日本語](README.ja.md)
 
-[𝙹𝚘𝚒𝚗 𝙳𝚒𝚜𝚌𝚘𝚛𝚍](https://dsc.gg/resume-matcher) ✦ [𝚆𝚎𝚋𝚜𝚒𝚝𝚎](https://resumematcher.fyi) ✦ [𝙷𝚘𝚠 𝚝𝚘 𝙸𝚗𝚜𝚝𝚊𝚕𝚕](https://resumematcher.fyi/docs/installation) ✦ [𝙲𝚘𝚗𝚝𝚛𝚒𝚋𝚞𝚝𝚘𝚛𝚜](#contributors) ✦ [𝚂𝚙𝚘𝚗𝚜𝚘𝚛](#sponsor-resume-matcher) ✦ [𝚃𝚠𝚒𝚝𝚝𝚎𝚛/𝚇](https://twitter.com/srbhrai) ✦ [𝙻𝚒𝚗𝚔𝚎𝚍𝙸𝚗](https://www.linkedin.com/company/resume-matcher/) ✦ [𝙲𝚛𝚎𝚊𝚝𝚘𝚛](https://srbhr.com)
+[𝙹𝚘𝚒𝚗 𝙳𝚒𝚜𝚌𝚘𝚛𝚍](https://dsc.gg/resume-matcher) ✦ [𝚆𝚎𝚋𝚜𝚒𝚝𝚎](https://resumematcher.fyi) ✦ [𝙷𝚘𝚠 𝚝𝚘 𝙸𝚗𝚜𝚝𝚊𝚕𝚕](https://resumematcher.fyi/docs/installation) ✦ [𝙲𝚘𝚗𝚝𝚛𝚒𝚋𝚞𝚝𝚘𝚛𝚜](#contributors) ✦ [𝚂𝚙𝚘𝚗𝚜𝚘𝚛](#sponsors) ✦ [𝚃𝚠𝚒𝚝𝚝𝚎𝚛/𝚇](https://twitter.com/srbhrai) ✦ [𝙻𝚒𝚗𝚔𝚎𝚍𝙸𝚗](https://www.linkedin.com/company/resume-matcher/) ✦ [𝙲𝚛𝚎𝚊𝚝𝚘𝚛](https://srbhr.com)
 
 **Deja de ser rechazado automáticamente por los bots ATS.** Resume Matcher es la plataforma impulsada por IA que aplica ingeniería inversa a los algoritmos de contratación para mostrarte exactamente cómo adaptar tu currículum. Obtén las palabras clave, el formato y los conocimientos que realmente te ayudarán a superar el primer filtro y llegar a manos humanas.
 
@@ -33,7 +33,15 @@ Esperamos convertir esto en **el VS Code para crear currículums**.
 
 > \[!IMPORTANT]
 >
-> Este proyecto está en desarrollo activo. Se están añadiendo nuevas características continuamente y agradecemos las contribuciones de la comunidad. Si tienes alguna sugerencia o solicitud de características, no dudes en abrir un *issue* en GitHub o discutirlo en nuestro servidor de [Discord](https://dsc.gg/resume-matcher).
+> El proyecto necesita tu ayuda y apoyo. Si puedes donar una pequeña cantidad, me ayudarás a seguir desarrollando y mejorando Resume Matcher.
+
+<div align="center">
+
+[![Sponsor on GitHub](https://img.shields.io/github/sponsors/srbhr?style=for-the-badge&label=Sponsor&color=1d4ed8&labelColor=F0F0E8&logo=github&logoColor=black)](https://github.com/sponsors/srbhr) [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&color=1d4ed8&labelColor=F0F0E8&logoColor=black)](https://www.buymeacoffee.com/srbhr)
+
+**¿Patrocinas en nombre de una empresa?** Coloca tu logo ante más de 27k desarrolladores → **[conviértete en patrocinador ↓](#sponsors)**
+
+</div>
 
 ## Primeros pasos
 
@@ -62,11 +70,17 @@ Síguenos en [LinkedIn](https://www.linkedin.com/company/resume-matcher/) para a
 
 Dale una estrella al repositorio para apoyar el desarrollo y recibir notificaciones de nuevas versiones.
 
+<a id="sponsors"></a>
+
 ## Patrocinadores
 
 ![sponsors](assets/sponsors.png)
 
-Estamos agradecidos a nuestros patrocinadores que ayudan a mantener este proyecto. Si Resume Matcher te resulta útil, considera [**apoyarnos**](https://github.com/sponsors/srbhr) para asegurar el desarrollo y las mejoras continuas.
+Resume Matcher es libre y de código abierto, y se mantiene gracias a sus patrocinadores y colaboradores. Si te resulta útil, considera apoyar su desarrollo.
+
+### Empresas que respaldan Resume Matcher
+
+Patrocina con un nivel de empresa y **tu logo + enlace + descripción aparecerán aquí** — ante una comunidad de **más de 27k estrellas y 4.9k forks**, destacada en [Trendshift](https://trendshift.io/repositories/565) y el [Programa Vercel OSS](https://vercel.com/oss).
 
 | Patrocinador | Descripción |
 |---------|-------------|
@@ -74,14 +88,18 @@ Estamos agradecidos a nuestros patrocinadores que ayudan a mantener este proyect
 | [Vercel](https://vercel.com?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) | Resume Matcher es parte del programa Vercel OSS // Summer 2025 🌐 [vercel.com](https://vercel.com?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) |
 | [Cubic.dev](https://cubic.dev?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) | Cubic ofrece revisiones de PR para Resume Matcher 🌐 [cubic.dev](https://cubic.dev?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) |
 | [Kilo Code](https://kilo.ai?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) | Kilo Code proporciona revisiones de código de IA y créditos de codificación a Resume Matcher 🌐 [kilo.ai](https://kilo.ai?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) |
+| [ZanReal](https://zanreal.com/?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) | ZanReal es una empresa de desarrollo impulsada por IA que crea soluciones cloud escalables, desde la estrategia y la UX hasta DevOps, ayudando a los equipos a lanzar más rápido y convertir ideas en producción. 🌐 [zanreal.com](https://zanreal.com/?utm_source=resumematcher&utm_medium=github&utm_campaign=sponsors) |
+| **✦ Tu empresa aquí** | Llega a más de 27k desarrolladores y 4.9k forks. **[Conviértete en patrocinador →](https://github.com/sponsors/srbhr)** |
+
+Por favor lee nuestra [Sponsorship Guide](https://resumematcher.fyi/docs/sponsoring) para detalles de cómo tu patrocinio ayuda al proyecto. Recibirás un agradecimiento especial en el ReadME y en nuestro sitio web.
 
 <a id="support-the-development-by-donating"></a>
 
-## Patrocina Resume Matcher
+### Apoya como particular
 
 ![donate](assets/supporting_resume_matcher.png)
 
-Por favor lee nuestra [Sponsorship Guide](https://resumematcher.fyi/docs/sponsoring) para detalles de cómo tu patrocinio ayuda al proyecto. Recibirás un agradecimiento especial en el ReadME y en nuestro sitio web.
+Cada aporte mantiene Resume Matcher gratis y financia nuevas funciones — y recibirás un agradecimiento en el ReadME y en nuestro sitio web.
 
 | Plataforma  | Enlace |
 |-----------|--------|
