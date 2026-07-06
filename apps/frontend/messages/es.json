@@ -513,6 +513,8 @@
     "selectResume": "Seleccionar Currículum",
     "pasteJobDescription": "Pegar Descripción del Trabajo",
     "pasteJobDescriptionBelow": "Pega la descripción del trabajo abajo",
+    "jobTitle": "Título del Puesto",
+    "jobTitlePlaceholder": "Ingrese el título del puesto (opcional)",
     "jobDescriptionPlaceholder": "Pega la descripción del trabajo aquí...",
     "promptLabel": "Intensidad de ajuste",
     "promptDescription": "Elige qué tanto alinear tu currículum con la descripción del puesto.",

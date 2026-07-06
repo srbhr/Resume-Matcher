@@ -404,10 +404,15 @@ def _protect_custom_sections(
 def _preserve_personal_info(
     original_data: dict[str, Any] | None,
     improved_data: dict[str, Any],
+    job_title_override: str | None = None,
 ) -> tuple[dict[str, Any], list[str]]:
     """Preserve personal info from original, return warnings if unable.
 
     Uses deep copy to prevent mutation of original data.
+    If ``job_title_override`` is provided (from the job upload payload),
+    it replaces the ``title`` field in personalInfo so the tailored
+    resume targets the specified role instead of the master resume's
+    default job title.
     """
     warnings: list[str] = []
 
@@ -425,6 +430,11 @@ def _preserve_personal_info(
     # SVC-001: Use deep copy to prevent any mutation of original data
     result = copy.deepcopy(improved_data)
     result["personalInfo"] = copy.deepcopy(original_info)
+
+    # Override the job title if one was explicitly provided during job upload
+    if job_title_override:
+        result["personalInfo"]["title"] = job_title_override
+
     return result, warnings
 
 
@@ -453,6 +463,7 @@ def _calculate_diff_from_resume(
 def _validate_confirm_payload(
     original_data: dict[str, Any] | None,
     improved_data: dict[str, Any],
+    job_title_override: str | None = None,
 ) -> None:
     if not original_data:
         logger.warning(
@@ -475,6 +486,12 @@ def _validate_confirm_payload(
             f"Improved personalInfo is not a dict: {type(improved_info).__name__}"
         )
     fields = set(original_info.keys()) | set(improved_info.keys())
+    
+    # When a job_title override was provided, the 'title' field is
+    # intentionally different from the original — skip it during validation.
+    if job_title_override:
+        fields.discard("title")
+        
     mismatches = [
         field
         for field in sorted(fields)
@@ -896,6 +913,7 @@ async def _improve_preview_flow(
     improved_data, preserve_warnings = _preserve_personal_info(
         original_resume_data,
         improved_data,
+        job_title_override=job.get("job_title"),
     )
     response_warnings.extend(preserve_warnings)
 
@@ -1049,7 +1067,11 @@ async def improve_resume_confirm_endpoint(
         # NOTE: This endpoint relies on preview-hash validation to ensure the payload matches a prior preview.
         # Stronger guarantees would require server-side preview storage or re-running the improvement.
         try:
-            _validate_confirm_payload(_get_original_resume_data(resume), improved_data)
+            _validate_confirm_payload(
+                _get_original_resume_data(resume), 
+                improved_data,
+                job_title_override=job.get("job_title"),
+            )
         except ValueError as e:
             logger.warning("Resume confirm rejected: %s", e)
             raise HTTPException(
@@ -1112,6 +1134,7 @@ async def improve_resume_confirm_endpoint(
         response_warnings.extend(aux_warnings)
 
         stage = "create_resume"
+        effective_title = job.get("job_title") or title
         tailored_resume = await db.create_resume(
             content=improved_text,
             content_type="json",
@@ -1122,7 +1145,7 @@ async def improve_resume_confirm_endpoint(
             processing_status="ready",
             cover_letter=cover_letter,
             outreach_message=outreach_message,
-            title=title,
+            title=effective_title,
         )
 
         improvements_payload = [imp.model_dump() for imp in request.improvements]
@@ -1254,6 +1277,7 @@ async def improve_resume_endpoint(
         improved_data, preserve_warnings = _preserve_personal_info(
             original_resume_data,
             improved_data,
+            job_title_override=job.get("job_title"),
         )
         response_warnings.extend(preserve_warnings)
 
@@ -1350,6 +1374,7 @@ async def improve_resume_endpoint(
         response_warnings.extend(aux_warnings)
 
         # Store the tailored resume with cover letter, outreach message, and title
+        effective_title = job.get("job_title") or title
         tailored_resume = await db.create_resume(
             content=improved_text,
             content_type="json",
@@ -1360,7 +1385,7 @@ async def improve_resume_endpoint(
             processing_status="ready",
             cover_letter=cover_letter,
             outreach_message=outreach_message,
-            title=title,
+            title=effective_title,
         )
 
         # Store improvement record

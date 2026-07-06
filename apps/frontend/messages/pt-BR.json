@@ -513,6 +513,8 @@
     "selectResume": "Selecionar Currículo",
     "pasteJobDescription": "Colar Descrição da Vaga",
     "pasteJobDescriptionBelow": "Cole a Descrição da Vaga Abaixo",
+    "jobTitle": "Título do Cargo",
+    "jobTitlePlaceholder": "Digite o título do cargo (opcional)",
     "jobDescriptionPlaceholder": "Cole a descrição da vaga aqui...",
     "promptLabel": "Intensidade de personalização",
     "promptDescription": "Escolha o quanto alinhar seu currículo à descrição da vaga.",
