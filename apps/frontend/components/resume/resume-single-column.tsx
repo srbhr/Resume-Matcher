@@ -407,27 +407,43 @@ const AdditionalSection: React.FC<{
       <h3 className={baseStyles['resume-section-title']}>{displayName}</h3>
       <div className={`${baseStyles['resume-stack']} ${baseStyles['resume-text-sm']}`}>
         {technicalSkills.length > 0 && (
-          <div className="flex">
+          <div className="flex items-start">
             <span className="font-bold w-32 shrink-0">{mergedLabels.technicalSkills}</span>
-            <span>{technicalSkills.join(', ')}</span>
+            <div className="flex flex-wrap gap-1">
+              {technicalSkills.map((skill, index) => (
+                <span key={index} className={baseStyles['resume-skill-pill']}>{skill}</span>
+              ))}
+            </div>
           </div>
         )}
         {languages.length > 0 && (
-          <div className="flex">
+          <div className="flex items-start">
             <span className="font-bold w-32 shrink-0">{mergedLabels.languages}</span>
-            <span>{languages.join(', ')}</span>
+            <div className="flex flex-wrap gap-1">
+              {languages.map((lang, index) => (
+                <span key={index} className={baseStyles['resume-skill-pill']}>{lang}</span>
+              ))}
+            </div>
           </div>
         )}
         {certificationsTraining.length > 0 && (
-          <div className="flex">
+          <div className="flex items-start">
             <span className="font-bold w-32 shrink-0">{mergedLabels.certifications}</span>
-            <span>{certificationsTraining.join(', ')}</span>
+            <div className="flex flex-wrap gap-1">
+              {certificationsTraining.map((cert, index) => (
+                <span key={index} className={baseStyles['resume-skill-pill']}>{cert}</span>
+              ))}
+            </div>
           </div>
         )}
         {awards.length > 0 && (
-          <div className="flex">
+          <div className="flex items-start">
             <span className="font-bold w-32 shrink-0">{mergedLabels.awards}</span>
-            <span>{awards.join(', ')}</span>
+            <div className="flex flex-wrap gap-1">
+              {awards.map((award, index) => (
+                <span key={index} className={baseStyles['resume-skill-pill']}>{award}</span>
+              ))}
+            </div>
           </div>
         )}
       </div>
