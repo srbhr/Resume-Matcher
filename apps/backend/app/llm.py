@@ -12,6 +12,7 @@ from litellm.router import RetryPolicy
 from pydantic import BaseModel
 
 from app.config import load_config_file, save_config_file, settings
+from app.claude_cli import claude_acompletion
 
 LITELLM_LOGGER_NAMES = ("LiteLLM", "LiteLLM Router", "LiteLLM Proxy")
 
@@ -129,6 +130,19 @@ def _effective_api_key(provider: str, api_key: str) -> str:
     if provider == "openai_compatible" and not api_key:
         return _OPENAI_COMPATIBLE_SENTINEL
     return api_key
+
+
+async def _route_acompletion(config: LLMConfig, transport: Any, **kwargs: Any) -> Any:
+    """Route a completion to the local Claude Code CLI or to LiteLLM.
+
+    When ``config.provider == "claude_cli"`` the request is served by the
+    machine's installed ``claude`` CLI (no API key, no network provider);
+    otherwise it goes through ``transport`` — the LiteLLM ``Router`` for
+    completions, or the ``litellm`` module for the health check.
+    """
+    if config.provider == "claude_cli":
+        return await claude_acompletion(**kwargs)
+    return await transport.acompletion(**kwargs)
 
 
 def _extract_text_parts(value: Any, depth: int = 0, max_depth: int = 10) -> list[str]:
@@ -316,7 +330,7 @@ _PROVIDER_KEY_MAP: dict[str, str] = {
 # default), because the env var may hold a real paid-API key that would then
 # leak to a local/compatible endpoint the user set up expecting no auth.
 _PROVIDERS_WITHOUT_ENV_KEY_FALLBACK: frozenset[str] = frozenset(
-    {"openai_compatible", "ollama"}
+    {"openai_compatible", "ollama", "claude_cli"}
 )
 
 
@@ -540,7 +554,10 @@ async def check_llm_health(
     # servers often run without auth, so a blank key is acceptable for those
     # providers — a sentinel is passed downstream (see _effective_api_key)
     # to satisfy the OpenAI client's non-empty-string validation.
-    if config.provider not in ("ollama", "openai_compatible") and not config.api_key:
+    if (
+        config.provider not in ("ollama", "openai_compatible", "claude_cli")
+        and not config.api_key
+    ):
         return {
             "healthy": False,
             "provider": config.provider,
@@ -566,7 +583,7 @@ async def check_llm_health(
         if config.reasoning_effort:
             kwargs["reasoning_effort"] = config.reasoning_effort
 
-        response = await litellm.acompletion(**kwargs)
+        response = await _route_acompletion(config, litellm, **kwargs)
         content = _extract_choice_text(response.choices[0])
         if not content:
             # LLM-003: Empty response (even after reasoning_content / thinking
@@ -679,7 +696,7 @@ async def complete(
         if config.reasoning_effort:
             kwargs["reasoning_effort"] = config.reasoning_effort
 
-        response = await router.acompletion(**kwargs)
+        response = await _route_acompletion(config, router, **kwargs)
 
         content = _extract_choice_text(response.choices[0])
         if not content:
@@ -1123,7 +1140,7 @@ async def complete_json(
             if use_json_mode and not json_mode_failed:
                 kwargs["response_format"] = {"type": "json_object"}
 
-            response = await router.acompletion(**kwargs)
+            response = await _route_acompletion(config, router, **kwargs)
             content = _extract_choice_text(response.choices[0])
 
             if not content:
