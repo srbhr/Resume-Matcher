@@ -110,8 +110,16 @@ def _find_chromium_executable() -> Optional[str]:
             Path("/snap/bin/chromium"),
             Path("/var/lib/flatpak/exports/bin/com.google.Chrome"),
             Path("/var/lib/flatpak/exports/bin/org.chromium.Chromium"),
-            Path(os.path.expanduser("~/.local/share/flatpak/exports/bin/com.google.Chrome")),
-            Path(os.path.expanduser("~/.local/share/flatpak/exports/bin/org.chromium.Chromium")),
+            Path(
+                os.path.expanduser(
+                    "~/.local/share/flatpak/exports/bin/com.google.Chrome"
+                )
+            ),
+            Path(
+                os.path.expanduser(
+                    "~/.local/share/flatpak/exports/bin/org.chromium.Chromium"
+                )
+            ),
         ]
 
     for candidate in candidates:
@@ -155,6 +163,21 @@ async def _render_page_to_pdf(
     # font load could otherwise hang the render past _NAV_TIMEOUT_MS.
     await page.wait_for_function(
         "() => document.fonts.ready.then(() => true)", timeout=_NAV_TIMEOUT_MS
+    )
+    # A completed network request does not guarantee Chromium has decoded the
+    # image pixels. Wait for every rendered profile photo to be decode-ready so
+    # the PDF cannot capture an empty frame. An empty query resolves immediately.
+    await page.wait_for_function(
+        """() => Promise.all(
+            [...document.querySelectorAll('.resume-profile-photo img')].map(
+                image => image.complete && image.naturalWidth > 0
+                    ? true
+                    : image.decode()
+                        .then(() => image.naturalWidth > 0)
+                        .catch(() => false)
+            )
+        ).then(results => results.every(Boolean))""",
+        timeout=_NAV_TIMEOUT_MS,
     )
     return await page.pdf(
         format=pdf_format,
@@ -301,7 +324,9 @@ async def render_resume_pdf(
 
     if _browser is not None:
         try:
-            return await _render_with_browser(_browser, url, selector, pdf_format, pdf_margins)
+            return await _render_with_browser(
+                _browser, url, selector, pdf_format, pdf_margins
+            )
         except PlaywrightError as e:
             _raise_playwright_error(e, url)
 
@@ -333,6 +358,8 @@ async def render_resume_pdf(
         raise PDFRenderError("PDF renderer failed to initialize.")
 
     try:
-        return await _render_with_browser(_browser, url, selector, pdf_format, pdf_margins)
+        return await _render_with_browser(
+            _browser, url, selector, pdf_format, pdf_margins
+        )
     except PlaywrightError as e:
         _raise_playwright_error(e, url)

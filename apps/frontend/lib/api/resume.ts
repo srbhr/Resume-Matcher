@@ -2,55 +2,12 @@ import type {
   ImprovedResult,
   InterviewPrepData,
 } from '@/components/common/resume_previewer_context';
-import type { ResumeData } from '@/components/dashboard/resume-component';
+import type { PhotoMutation, ResumeData } from '@/components/dashboard/resume-component';
 import { type TemplateSettings } from '@/lib/types/template-settings';
 import { type Locale } from '@/i18n/config';
 import { API_BASE, DEFAULT_TIMEOUT_MS, apiPost, apiPatch, apiDelete, apiFetch } from './client';
 
-// Matches backend schemas/models.py ResumeData
-interface ProcessedResume {
-  personalInfo?: {
-    name?: string;
-    title?: string;
-    email?: string;
-    phone?: string;
-    location?: string;
-    website?: string | null;
-    linkedin?: string | null;
-    github?: string | null;
-  };
-  summary?: string;
-  workExperience?: Array<{
-    id: number;
-    title?: string;
-    company?: string;
-    location?: string | null;
-    years?: string;
-    description?: string[];
-  }>;
-  education?: Array<{
-    id: number;
-    institution?: string;
-    degree?: string;
-    years?: string;
-    description?: string | null;
-  }>;
-  personalProjects?: Array<{
-    id: number;
-    name?: string;
-    role?: string;
-    years?: string;
-    github?: string | null;
-    website?: string | null;
-    description?: string[];
-  }>;
-  additional?: {
-    technicalSkills?: string[];
-    languages?: string[];
-    certificationsTraining?: string[];
-    awards?: string[];
-  };
-}
+type ProcessedResume = ResumeData;
 
 interface ResumeResponse {
   request_id: string;
@@ -219,6 +176,61 @@ export async function updateResume(
   }
   const payload = (await res.json()) as ResumeResponse;
   return payload.data;
+}
+
+function photoEndpoint(resumeId: string): string {
+  return `/resumes/${encodeURIComponent(normalizeResumeId(resumeId))}/photo`;
+}
+
+async function parsePhotoMutationResponse(response: Response): Promise<ResumeResponse['data']> {
+  if (!response.ok) {
+    const text = await response.text().catch(() => '');
+    throw new Error(`Failed to update resume photo (status ${response.status}): ${text}`);
+  }
+  const payload = (await response.json()) as ResumeResponse;
+  return payload.data;
+}
+
+export function getResumePhotoUrl(resumeId: string, version: number): string {
+  const endpoint = photoEndpoint(resumeId);
+  return `${API_BASE}${endpoint}?v=${encodeURIComponent(String(version))}`;
+}
+
+export function getResumePhotoSourceUrl(resumeId: string, version: number): string {
+  const endpoint = photoEndpoint(resumeId);
+  return `${API_BASE}${endpoint}/source?v=${encodeURIComponent(String(version))}`;
+}
+
+export async function putResumePhoto(
+  resumeId: string,
+  file: File,
+  mutation: PhotoMutation
+): Promise<ResumeResponse['data']> {
+  const body = new FormData();
+  body.set('file', file);
+  body.set('crop_x', String(mutation.cropX));
+  body.set('crop_y', String(mutation.cropY));
+  body.set('crop_width', String(mutation.cropWidth));
+  body.set('crop_height', String(mutation.cropHeight));
+  body.set('size', String(mutation.size));
+  const response = await apiFetch(photoEndpoint(resumeId), {
+    method: 'PUT',
+    body,
+  });
+  return parsePhotoMutationResponse(response);
+}
+
+export async function patchResumePhoto(
+  resumeId: string,
+  mutation: PhotoMutation
+): Promise<ResumeResponse['data']> {
+  const response = await apiPatch(photoEndpoint(resumeId), mutation);
+  return parsePhotoMutationResponse(response);
+}
+
+export async function deleteResumePhoto(resumeId: string): Promise<ResumeResponse['data']> {
+  const response = await apiDelete(photoEndpoint(resumeId));
+  return parsePhotoMutationResponse(response);
 }
 
 export function getResumePdfUrl(

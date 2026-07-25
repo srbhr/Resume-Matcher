@@ -36,6 +36,8 @@ from app.schemas.models import (
     InterviewPrepSkillGap,
     normalize_resume_data,
     PersonalInfo,
+    PhotoMutation,
+    PhotoSettings,
     Project,
     PromptConfigRequest,
     PromptConfigResponse,
@@ -74,6 +76,8 @@ from app.schemas.applications import (
 
 __all__ = [
     "PersonalInfo",
+    "PhotoMutation",
+    "PhotoSettings",
     "Experience",
     "Education",
     "Project",

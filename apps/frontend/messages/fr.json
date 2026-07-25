@@ -794,6 +794,32 @@
     "defaults": {
       "name": "Votre nom"
     },
+    "photo": {
+      "label": "Photo de profil",
+      "add": "Ajouter une photo",
+      "edit": "Modifier",
+      "editAction": "Modifier la photo",
+      "replace": "Remplacer",
+      "remove": "Supprimer",
+      "removeConfirm": "Supprimer cette photo de profil ? L’image d’origine et les réglages de recadrage seront effacés.",
+      "helper": "JPG, PNG ou WebP jusqu’à 8 Mo",
+      "dialogTitle": "Modifier la photo de profil",
+      "dialogDescription": "Faites glisser le cadre pour le déplacer, puis ses bords ou ses coins pour le redimensionner.",
+      "size": "Taille d’affichage",
+      "reset": "Réinitialiser",
+      "applying": "Application…",
+      "alt": "Photo de profil de {name}",
+      "profilePhoto": "photo de profil",
+      "errors": {
+        "format": "Choisissez une image JPG, PNG ou WebP.",
+        "size": "L’image doit faire 8 Mo ou moins.",
+        "corrupt": "L’image n’a pas pu être lue. Choisissez un autre fichier.",
+        "dimensions": "Les dimensions de l’image sont trop grandes.",
+        "upload": "La photo n’a pas pu être téléversée. Réessayez.",
+        "save": "La photo n’a pas pu être enregistrée. Réessayez.",
+        "saveRequired": "Enregistrez le CV avant d’ajouter une photo."
+      }
+    },
     "additional": {
       "technicalSkills": "Compétences techniques"
     },

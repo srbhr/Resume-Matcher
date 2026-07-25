@@ -12,6 +12,7 @@ from app.prompts.templates import (
     OUTREACH_MESSAGE_PROMPT,
 )
 from app.prompts import get_language_name
+from app.services.resume_photo import strip_photo_metadata
 
 
 def _resolve_feature_prompt(
@@ -49,6 +50,7 @@ async def generate_cover_letter(
         Generated cover letter as plain text
     """
     output_language = get_language_name(language)
+    prompt_resume_data = strip_photo_metadata(resume_data)
 
     template, is_custom = _resolve_feature_prompt(
         "cover_letter_prompt", COVER_LETTER_PROMPT
@@ -56,7 +58,7 @@ async def generate_cover_letter(
     try:
         prompt = template.format(
             job_description=job_description,
-            resume_data=json.dumps(resume_data),
+            resume_data=json.dumps(prompt_resume_data),
             output_language=output_language,
         )
     except (KeyError, IndexError, ValueError) as e:
@@ -74,7 +76,7 @@ async def generate_cover_letter(
         )
         prompt = COVER_LETTER_PROMPT.format(
             job_description=job_description,
-            resume_data=json.dumps(resume_data),
+            resume_data=json.dumps(prompt_resume_data),
             output_language=output_language,
         )
 
@@ -103,6 +105,7 @@ async def generate_outreach_message(
         Generated outreach message as plain text
     """
     output_language = get_language_name(language)
+    prompt_resume_data = strip_photo_metadata(resume_data)
 
     template, is_custom = _resolve_feature_prompt(
         "outreach_message_prompt", OUTREACH_MESSAGE_PROMPT
@@ -110,7 +113,7 @@ async def generate_outreach_message(
     try:
         prompt = template.format(
             job_description=job_description,
-            resume_data=json.dumps(resume_data),
+            resume_data=json.dumps(prompt_resume_data),
             output_language=output_language,
         )
     except (KeyError, IndexError, ValueError) as e:
@@ -123,7 +126,7 @@ async def generate_outreach_message(
         )
         prompt = OUTREACH_MESSAGE_PROMPT.format(
             job_description=job_description,
-            resume_data=json.dumps(resume_data),
+            resume_data=json.dumps(prompt_resume_data),
             output_language=output_language,
         )
 

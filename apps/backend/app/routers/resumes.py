@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any, NoReturn
 from uuid import uuid4
 
-from fastapi import APIRouter, File, HTTPException, Query, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, Query, UploadFile
 from fastapi.responses import Response
 from pydantic import ValidationError
 
@@ -31,6 +31,7 @@ from app.schemas import (
     ImproveResumeResponse,
     ImproveResumeData,
     InterviewPrepData,
+    PhotoMutation,
     RefinementStats,
     ResumeDiffSummary,
     ResumeFieldDiff,
@@ -46,7 +47,11 @@ from app.schemas import (
     UpdateTitleRequest,
     normalize_resume_data,
 )
-from app.services.parser import parse_document, parse_resume_to_json, restore_dates_from_markdown
+from app.services.parser import (
+    parse_document,
+    parse_resume_to_json,
+    restore_dates_from_markdown,
+)
 from app.services.improver import (
     MONTH_PATTERN,
     apply_diffs,
@@ -67,6 +72,14 @@ from app.services.cover_letter import (
     generate_resume_title,
 )
 from app.services.interview_prep import generate_interview_prep
+from app.services.resume_photo import (
+    MAX_UPLOAD_BYTES as MAX_PHOTO_UPLOAD_BYTES,
+    PhotoValidationError,
+    process_uploaded_photo,
+    render_photo_derivative,
+    restore_photo_metadata,
+    strip_photo_metadata,
+)
 from app.prompts import DEFAULT_IMPROVE_PROMPT_ID, IMPROVE_PROMPT_OPTIONS
 
 
@@ -149,6 +162,39 @@ def _parse_interview_prep(
             e,
         )
         return None
+
+
+def _build_resume_fetch_response(resume: dict[str, Any]) -> ResumeFetchResponse:
+    """Build the canonical resume response returned after mutations."""
+    raw_resume = RawResume(
+        id=None,
+        content=resume["content"],
+        content_type=resume["content_type"],
+        created_at=resume["created_at"],
+        processing_status=resume.get("processing_status", "pending"),
+    )
+    processed_resume = (
+        ResumeData.model_validate(resume.get("processed_data"))
+        if resume.get("processed_data")
+        else None
+    )
+    resume_id = resume["resume_id"]
+    return ResumeFetchResponse(
+        request_id=str(uuid4()),
+        data=ResumeFetchData(
+            resume_id=resume_id,
+            raw_resume=raw_resume,
+            processed_resume=processed_resume,
+            cover_letter=resume.get("cover_letter"),
+            outreach_message=resume.get("outreach_message"),
+            interview_prep=_parse_interview_prep(
+                resume.get("interview_prep"),
+                resume_id=resume_id,
+            ),
+            parent_id=resume.get("parent_id"),
+            title=resume.get("title"),
+        ),
+    )
 
 
 def _hash_improved_data(data: dict[str, Any]) -> str:
@@ -253,7 +299,9 @@ def _restore_original_dates(
         for idx, orig_entry in enumerate(orig_entries):
             if idx >= len(result_entries):
                 break
-            if not isinstance(orig_entry, dict) or not isinstance(result_entries[idx], dict):
+            if not isinstance(orig_entry, dict) or not isinstance(
+                result_entries[idx], dict
+            ):
                 continue
             orig_years = orig_entry.get("years", "")
             result_years = result_entries[idx].get("years", "")
@@ -291,7 +339,9 @@ def _restore_original_dates(
             for idx, orig_item in enumerate(orig_items):
                 if idx >= len(result_items):
                     break
-                if not isinstance(orig_item, dict) or not isinstance(result_items[idx], dict):
+                if not isinstance(orig_item, dict) or not isinstance(
+                    result_items[idx], dict
+                ):
                     continue
                 orig_years = orig_item.get("years", "")
                 result_years = result_items[idx].get("years", "")
@@ -542,7 +592,7 @@ def _validate_confirm_payload(
         raise ValueError(
             f"Improved personalInfo is not a dict: {type(improved_info).__name__}"
         )
-    fields = set(original_info.keys()) | set(improved_info.keys())
+    fields = (set(original_info.keys()) | set(improved_info.keys())) - {"photo"}
     mismatches = [
         field
         for field in sorted(fields)
@@ -625,6 +675,18 @@ ALLOWED_TYPES = {
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 }
 MAX_FILE_SIZE = 4 * 1024 * 1024  # 4MB
+PHOTO_CHUNK_SIZE = 1024 * 1024
+PHOTO_CONTENT_TYPES = {
+    "image/jpeg": "JPEG",
+    "image/png": "PNG",
+    "image/webp": "WEBP",
+}
+PHOTO_EXTENSIONS = {
+    ".jpg": "JPEG",
+    ".jpeg": "JPEG",
+    ".png": "PNG",
+    ".webp": "WEBP",
+}
 
 
 @router.post("/upload", response_model=ResumeUploadResponse)
@@ -891,7 +953,12 @@ async def _improve_preview_flow(
                 request.job_id,
                 e,
             )
-    original_resume_data = _get_original_resume_data(resume)
+    authoritative_original_data = _get_original_resume_data(resume)
+    original_resume_data = (
+        strip_photo_metadata(authoritative_original_data)
+        if authoritative_original_data
+        else None
+    )
     # Collect warnings throughout the process
     response_warnings: list[str] = []
 
@@ -914,9 +981,7 @@ async def _improve_preview_flow(
             accepted_targets = verified_skill_plan.get("accepted", [])
             if isinstance(accepted_targets, list):
                 skill_targets = [
-                    target
-                    for target in accepted_targets
-                    if isinstance(target, dict)
+                    target for target in accepted_targets if isinstance(target, dict)
                 ]
             rejected_targets = verified_skill_plan.get("rejected", [])
             if isinstance(rejected_targets, list) and rejected_targets:
@@ -975,17 +1040,26 @@ async def _improve_preview_flow(
 
     # Safety nets (defense in depth — should rarely activate with diff-based flow)
     improved_data, preserve_warnings = _preserve_personal_info(
-        original_resume_data,
+        authoritative_original_data,
         improved_data,
     )
     response_warnings.extend(preserve_warnings)
 
-    improved_data = _restore_original_dates(original_resume_data, improved_data)
+    improved_data = _restore_original_dates(
+        authoritative_original_data,
+        improved_data,
+    )
     original_markdown = _get_original_markdown(resume)
     if original_markdown:
         improved_data = restore_dates_from_markdown(improved_data, original_markdown)
-    improved_data = _preserve_original_skills(original_resume_data, improved_data)
-    improved_data = _protect_custom_sections(original_resume_data, improved_data)
+    improved_data = _preserve_original_skills(
+        authoritative_original_data,
+        improved_data,
+    )
+    improved_data = _protect_custom_sections(
+        authoritative_original_data,
+        improved_data,
+    )
 
     # Multi-pass refinement: keyword injection, AI phrase removal, alignment validation
     refinement_stats: RefinementStats | None = None
@@ -1004,13 +1078,16 @@ async def _improve_preview_flow(
             initial_match = calculate_keyword_match(improved_data, job_keywords)
             refinement_attempted = True
             refinement_result = await refine_resume(
-                initial_tailored=improved_data,
-                master_resume=master_data,
+                initial_tailored=strip_photo_metadata(improved_data),
+                master_resume=strip_photo_metadata(master_data),
                 job_description=job["content"],
                 job_keywords=job_keywords,
                 config=RefinementConfig(),
             )
-            improved_data = refinement_result.refined_data
+            improved_data = restore_photo_metadata(
+                authoritative_original_data or {},
+                refinement_result.refined_data,
+            )
             refinement_stats = RefinementStats(
                 passes_completed=refinement_result.passes_completed,
                 keywords_injected=(
@@ -1061,9 +1138,7 @@ async def _improve_preview_flow(
             },
         )
         if not updated_job:
-            logger.warning(
-                "Failed to persist preview hash for job %s.", request.job_id
-            )
+            logger.warning("Failed to persist preview hash for job %s.", request.job_id)
     except Exception as e:
         logger.warning(
             "Failed to persist preview hash for job %s: %s", request.job_id, e
@@ -1204,7 +1279,8 @@ async def improve_resume_confirm_endpoint(
         response_warnings.extend(aux_warnings)
 
         stage = "create_resume"
-        tailored_resume = await db.create_resume(
+        tailored_resume = await db.create_resume_with_cloned_photo(
+            source_resume_id=request.resume_id,
             content=improved_text,
             content_type="json",
             filename=f"tailored_{resume.get('filename', 'resume')}",
@@ -1295,7 +1371,12 @@ async def improve_resume_endpoint(
         # Generate improved resume in the configured language
         prompt_id = request.prompt_id or _get_default_prompt_id()
 
-        original_resume_data = _get_original_resume_data(resume)
+        authoritative_original_data = _get_original_resume_data(resume)
+        original_resume_data = (
+            strip_photo_metadata(authoritative_original_data)
+            if authoritative_original_data
+            else None
+        )
         # Collect warnings throughout the process
         response_warnings: list[str] = []
 
@@ -1347,17 +1428,28 @@ async def improve_resume_endpoint(
 
         # Safety nets (defense in depth)
         improved_data, preserve_warnings = _preserve_personal_info(
-            original_resume_data,
+            authoritative_original_data,
             improved_data,
         )
         response_warnings.extend(preserve_warnings)
 
-        improved_data = _restore_original_dates(original_resume_data, improved_data)
+        improved_data = _restore_original_dates(
+            authoritative_original_data,
+            improved_data,
+        )
         original_markdown = _get_original_markdown(resume)
         if original_markdown:
-            improved_data = restore_dates_from_markdown(improved_data, original_markdown)
-        improved_data = _preserve_original_skills(original_resume_data, improved_data)
-        improved_data = _protect_custom_sections(original_resume_data, improved_data)
+            improved_data = restore_dates_from_markdown(
+                improved_data, original_markdown
+            )
+        improved_data = _preserve_original_skills(
+            authoritative_original_data,
+            improved_data,
+        )
+        improved_data = _protect_custom_sections(
+            authoritative_original_data,
+            improved_data,
+        )
 
         # Multi-pass refinement: keyword injection, AI phrase removal, alignment validation
         refinement_stats: RefinementStats | None = None
@@ -1376,13 +1468,16 @@ async def improve_resume_endpoint(
                 initial_match = calculate_keyword_match(improved_data, job_keywords)
                 refinement_attempted = True
                 refinement_result = await refine_resume(
-                    initial_tailored=improved_data,
-                    master_resume=master_data,
+                    initial_tailored=strip_photo_metadata(improved_data),
+                    master_resume=strip_photo_metadata(master_data),
                     job_description=job["content"],
                     job_keywords=job_keywords,
                     config=RefinementConfig(),
                 )
-                improved_data = refinement_result.refined_data
+                improved_data = restore_photo_metadata(
+                    authoritative_original_data or {},
+                    refinement_result.refined_data,
+                )
                 refinement_stats = RefinementStats(
                     passes_completed=refinement_result.passes_completed,
                     keywords_injected=(
@@ -1448,7 +1543,8 @@ async def improve_resume_endpoint(
         response_warnings.extend(aux_warnings)
 
         # Store the tailored resume with cover letter, outreach message, and title
-        tailored_resume = await db.create_resume(
+        tailored_resume = await db.create_resume_with_cloned_photo(
+            source_resume_id=request.resume_id,
             content=improved_text,
             content_type="json",
             filename=f"tailored_{resume.get('filename', 'resume')}",
@@ -1520,6 +1616,191 @@ async def improve_resume_endpoint(
             status_code=500,
             detail="Failed to improve resume. Please try again.",
         )
+
+
+async def _read_photo_upload(file: UploadFile) -> bytes:
+    """Read multipart photo bytes with a hard streaming size limit."""
+    chunks: list[bytes] = []
+    total = 0
+    try:
+        while chunk := await file.read(PHOTO_CHUNK_SIZE):
+            total += len(chunk)
+            if total > MAX_PHOTO_UPLOAD_BYTES:
+                raise HTTPException(
+                    status_code=413,
+                    detail="Photo must be 8 MB or smaller.",
+                )
+            chunks.append(chunk)
+    finally:
+        await file.close()
+    return b"".join(chunks)
+
+
+def _photo_cache_headers(
+    resume_id: str, version: int, *, source: bool
+) -> dict[str, str]:
+    """Return immutable private caching headers for a versioned photo."""
+    suffix = "-source" if source else ""
+    return {
+        "ETag": f'"resume-photo-{resume_id}-{version}{suffix}"',
+        "Cache-Control": "private, max-age=31536000, immutable",
+    }
+
+
+@router.put("/{resume_id}/photo", response_model=ResumeFetchResponse)
+async def put_resume_photo_endpoint(
+    resume_id: str,
+    file: UploadFile = File(...),
+    crop_x: float = Form(...),
+    crop_y: float = Form(...),
+    crop_width: float = Form(...),
+    crop_height: float = Form(...),
+    size: int = Form(...),
+) -> ResumeFetchResponse:
+    """Upload or atomically replace one resume's profile photo."""
+    if await db.get_resume(resume_id) is None:
+        raise HTTPException(status_code=404, detail="Resume not found")
+
+    declared_format = PHOTO_CONTENT_TYPES.get(file.content_type or "")
+    extension_format = PHOTO_EXTENSIONS.get(Path(file.filename or "").suffix.lower())
+    if declared_format is None or extension_format is None:
+        raise HTTPException(
+            status_code=400,
+            detail="Photo must be a valid JPEG, PNG, or WebP image.",
+        )
+
+    try:
+        mutation = PhotoMutation(
+            cropX=crop_x,
+            cropY=crop_y,
+            cropWidth=crop_width,
+            cropHeight=crop_height,
+            size=size,
+        )
+        content = await _read_photo_upload(file)
+        processed = process_uploaded_photo(content, mutation)
+        if (
+            processed.input_format != declared_format
+            or processed.input_format != extension_format
+        ):
+            raise PhotoValidationError(
+                "Photo file type does not match its decoded image format."
+            )
+        updated = await db.put_resume_photo(
+            resume_id,
+            source_data=processed.source_data,
+            display_data=processed.display_data,
+            source_width=processed.source_width,
+            source_height=processed.source_height,
+            settings=mutation.model_dump(),
+            aspect_ratio=processed.aspect_ratio,
+        )
+        return _build_resume_fetch_response(updated)
+    except HTTPException:
+        raise
+    except (PhotoValidationError, ValidationError) as e:
+        logger.info("Rejected resume photo upload for %s: %s", resume_id, e)
+        raise HTTPException(
+            status_code=400,
+            detail="Photo could not be processed. Check its format, dimensions, and crop.",
+        ) from e
+    except ValueError as e:
+        logger.info("Resume photo upload target missing for %s: %s", resume_id, e)
+        raise HTTPException(status_code=404, detail="Resume not found") from e
+    except Exception as e:
+        logger.error("Resume photo upload failed for %s: %s", resume_id, e)
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to save photo. Please try again.",
+        ) from e
+
+
+@router.patch("/{resume_id}/photo", response_model=ResumeFetchResponse)
+async def patch_resume_photo_endpoint(
+    resume_id: str,
+    mutation: PhotoMutation,
+) -> ResumeFetchResponse:
+    """Regenerate a resume photo derivative with new crop/display settings."""
+    photo = await db.get_resume_photo(resume_id)
+    if photo is None:
+        if await db.get_resume(resume_id) is None:
+            raise HTTPException(status_code=404, detail="Resume not found")
+        raise HTTPException(status_code=404, detail="Resume photo not found")
+
+    try:
+        derivative = render_photo_derivative(photo["source_data"], mutation)
+        updated = await db.update_resume_photo(
+            resume_id,
+            display_data=derivative.data,
+            settings=mutation.model_dump(),
+            aspect_ratio=derivative.aspect_ratio,
+        )
+        return _build_resume_fetch_response(updated)
+    except PhotoValidationError as e:
+        logger.info("Rejected resume photo edit for %s: %s", resume_id, e)
+        raise HTTPException(
+            status_code=400,
+            detail="Photo crop could not be processed.",
+        ) from e
+    except ValueError as e:
+        logger.info("Resume photo edit target missing for %s: %s", resume_id, e)
+        raise HTTPException(status_code=404, detail="Resume photo not found") from e
+    except Exception as e:
+        logger.error("Resume photo edit failed for %s: %s", resume_id, e)
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to save photo. Please try again.",
+        ) from e
+
+
+@router.get("/{resume_id}/photo/source")
+async def get_resume_photo_source_endpoint(resume_id: str) -> Response:
+    """Serve the normalized source used by the local crop editor."""
+    photo = await db.get_resume_photo(resume_id)
+    if photo is None:
+        raise HTTPException(status_code=404, detail="Resume photo not found")
+    return Response(
+        content=photo["source_data"],
+        media_type="image/webp",
+        headers=_photo_cache_headers(
+            resume_id,
+            photo["version"],
+            source=True,
+        ),
+    )
+
+
+@router.get("/{resume_id}/photo")
+async def get_resume_photo_endpoint(resume_id: str) -> Response:
+    """Serve the display-ready resume photo derivative."""
+    photo = await db.get_resume_photo(resume_id)
+    if photo is None:
+        raise HTTPException(status_code=404, detail="Resume photo not found")
+    return Response(
+        content=photo["display_data"],
+        media_type="image/webp",
+        headers=_photo_cache_headers(
+            resume_id,
+            photo["version"],
+            source=False,
+        ),
+    )
+
+
+@router.delete("/{resume_id}/photo", response_model=ResumeFetchResponse)
+async def delete_resume_photo_endpoint(resume_id: str) -> ResumeFetchResponse:
+    """Idempotently remove a resume photo and its embedded metadata."""
+    try:
+        updated = await db.delete_resume_photo(resume_id)
+        return _build_resume_fetch_response(updated)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail="Resume not found") from e
+    except Exception as e:
+        logger.error("Resume photo deletion failed for %s: %s", resume_id, e)
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to remove photo. Please try again.",
+        ) from e
 
 
 @router.patch("/{resume_id}", response_model=ResumeFetchResponse)

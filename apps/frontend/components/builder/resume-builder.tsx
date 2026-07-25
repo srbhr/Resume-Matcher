@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense, useCallback, useMemo } from 'react';
 import Image from 'next/image';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { type ResumeData } from '@/components/dashboard/resume-component';
+import { type PhotoMutation, type ResumeData } from '@/components/dashboard/resume-component';
 import { ResumeForm } from './resume-form';
 import { FormattingControls } from './formatting-controls';
 import { CoverLetterEditor } from './cover-letter-editor';
@@ -44,6 +44,9 @@ import {
   generateOutreachMessage,
   generateInterviewPrep,
   fetchJobDescription,
+  deleteResumePhoto,
+  patchResumePhoto,
+  putResumePhoto,
 } from '@/lib/api/resume';
 import { JDComparisonView } from './jd-comparison-view';
 import { RegenerateWizard } from './regenerate-wizard';
@@ -122,6 +125,7 @@ const ResumeBuilderContent = () => {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [lastSavedData, setLastSavedData] = useState<ResumeData>(() => initialData);
   const [isSaving, setIsSaving] = useState(false);
+  const [photoEditRequestToken, setPhotoEditRequestToken] = useState(0);
   const [isDownloading, setIsDownloading] = useState(false);
   const [, setLoadingState] = useState<'idle' | 'loading' | 'loaded' | 'error'>('idle');
   const [templateSettings, setTemplateSettings] =
@@ -460,6 +464,56 @@ const ResumeBuilderContent = () => {
       setIsSaving(false);
     }
   };
+
+  const runPhotoMutation = useCallback(
+    async (operation: () => ReturnType<typeof putResumePhoto>): Promise<void> => {
+      if (!resumeId) {
+        throw new Error('Resume ID is required to update a photo.');
+      }
+
+      setIsSaving(true);
+      try {
+        if (hasUnsavedChanges) {
+          await updateResume(resumeId, resumeData);
+        }
+
+        const response = await operation();
+        if (!response.processed_resume) {
+          throw new Error('Photo response did not include resume data.');
+        }
+
+        const canonical = response.processed_resume as ResumeData;
+        setResumeData(canonical);
+        setLastSavedData(canonical);
+        setHasUnsavedChanges(false);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(canonical));
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [hasUnsavedChanges, resumeData, resumeId]
+  );
+
+  const handlePhotoUpload = useCallback(
+    async (file: File, mutation: PhotoMutation) => {
+      if (!resumeId) throw new Error('Resume ID is required to upload a photo.');
+      await runPhotoMutation(() => putResumePhoto(resumeId, file, mutation));
+    },
+    [resumeId, runPhotoMutation]
+  );
+
+  const handlePhotoEdit = useCallback(
+    async (mutation: PhotoMutation) => {
+      if (!resumeId) throw new Error('Resume ID is required to edit a photo.');
+      await runPhotoMutation(() => patchResumePhoto(resumeId, mutation));
+    },
+    [resumeId, runPhotoMutation]
+  );
+
+  const handlePhotoRemove = useCallback(async () => {
+    if (!resumeId) throw new Error('Resume ID is required to remove a photo.');
+    await runPhotoMutation(() => deleteResumePhoto(resumeId));
+  }, [resumeId, runPhotoMutation]);
 
   const handleReset = () => {
     setResumeData(lastSavedData);
@@ -880,7 +934,16 @@ const ResumeBuilderContent = () => {
               {activeTab === 'resume' && (
                 <>
                   <FormattingControls settings={templateSettings} onChange={handleSettingsChange} />
-                  <ResumeForm resumeData={resumeData} onUpdate={handleUpdate} />
+                  <ResumeForm
+                    resumeData={resumeData}
+                    onUpdate={handleUpdate}
+                    resumeId={resumeId}
+                    onPhotoUpload={handlePhotoUpload}
+                    onPhotoEdit={handlePhotoEdit}
+                    onPhotoRemove={handlePhotoRemove}
+                    photoEditRequestToken={photoEditRequestToken}
+                    photoActionsDisabled={isSaving}
+                  />
                 </>
               )}
 
@@ -1023,6 +1086,9 @@ const ResumeBuilderContent = () => {
               {/* Resume Preview */}
               {activeTab === 'resume' && (
                 <PaginatedPreview
+                  resumeId={resumeId ?? undefined}
+                  editable={Boolean(resumeId)}
+                  onEditPhoto={() => setPhotoEditRequestToken((token) => token + 1)}
                   resumeData={localizedResumeDataForPreview}
                   settings={templateSettings}
                 />

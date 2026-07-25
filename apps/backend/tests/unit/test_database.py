@@ -10,6 +10,7 @@ import pytest
 
 from app.database import Database
 from app.db_engine import init_models_sync, make_sync_engine
+from app.schemas.models import PhotoMutation
 
 
 @pytest.fixture
@@ -88,11 +89,236 @@ class TestResumeCrud:
             init_models_sync(engine)
 
             with engine.begin() as conn:
-                columns = conn.exec_driver_sql("PRAGMA table_info(resumes)").mappings().all()
+                columns = (
+                    conn.exec_driver_sql("PRAGMA table_info(resumes)").mappings().all()
+                )
             names = [column["name"] for column in columns]
             assert names.count("interview_prep") == 1
         finally:
             engine.dispose()
+
+
+class TestResumePhotoPersistence:
+    @staticmethod
+    def _settings() -> dict:
+        return PhotoMutation(
+            cropX=0,
+            cropY=0,
+            cropWidth=100,
+            cropHeight=100,
+            size=88,
+        ).model_dump()
+
+    async def test_put_photo_updates_asset_and_processed_data_atomically(self, db):
+        resume = await db.create_resume(
+            content="Resume",
+            processed_data={"personalInfo": {"name": "Ada"}},
+            processing_status="ready",
+        )
+
+        updated = await db.put_resume_photo(
+            resume["resume_id"],
+            source_data=b"source",
+            display_data=b"display",
+            source_width=800,
+            source_height=800,
+            settings=self._settings(),
+            aspect_ratio=1.5,
+        )
+
+        assert updated["processed_data"]["personalInfo"]["photo"]["version"] == 1
+        assert updated["processed_data"]["personalInfo"]["photo"]["aspectRatio"] == 1.5
+        assert "zoom" not in updated["processed_data"]["personalInfo"]["photo"]
+        stored = await db.get_resume_photo(resume["resume_id"])
+        assert stored is not None
+        assert stored["display_data"] == b"display"
+        assert stored["mime_type"] == "image/webp"
+
+    async def test_replacing_photo_increments_version(self, db):
+        resume = await db.create_resume(
+            content="Resume",
+            processed_data={"personalInfo": {"name": "Ada"}},
+        )
+        await db.put_resume_photo(
+            resume["resume_id"],
+            source_data=b"source-1",
+            display_data=b"display-1",
+            source_width=800,
+            source_height=800,
+            settings=self._settings(),
+        )
+
+        updated = await db.put_resume_photo(
+            resume["resume_id"],
+            source_data=b"source-2",
+            display_data=b"display-2",
+            source_width=900,
+            source_height=900,
+            settings={**self._settings(), "size": 96},
+        )
+
+        assert updated["processed_data"]["personalInfo"]["photo"]["version"] == 2
+        stored = await db.get_resume_photo(resume["resume_id"])
+        assert stored is not None
+        assert stored["source_data"] == b"source-2"
+        assert stored["version"] == 2
+
+    async def test_update_photo_keeps_normalized_source(self, db):
+        resume = await db.create_resume(
+            content="Resume",
+            processed_data={"personalInfo": {"name": "Ada"}},
+        )
+        await db.put_resume_photo(
+            resume["resume_id"],
+            source_data=b"source",
+            display_data=b"display-1",
+            source_width=800,
+            source_height=800,
+            settings=self._settings(),
+        )
+
+        updated = await db.update_resume_photo(
+            resume["resume_id"],
+            display_data=b"display-2",
+            settings={**self._settings(), "size": 96},
+            aspect_ratio=0.75,
+        )
+
+        stored = await db.get_resume_photo(resume["resume_id"])
+        assert stored is not None
+        assert stored["source_data"] == b"source"
+        assert stored["display_data"] == b"display-2"
+        assert stored["version"] == 2
+        assert updated["processed_data"]["personalInfo"]["photo"]["aspectRatio"] == 0.75
+
+    async def test_generic_update_preserves_server_photo_metadata(self, db):
+        resume = await db.create_resume(
+            content="Resume",
+            processed_data={"personalInfo": {"name": "Ada"}},
+        )
+        await db.put_resume_photo(
+            resume["resume_id"],
+            source_data=b"source",
+            display_data=b"display",
+            source_width=800,
+            source_height=800,
+            settings=self._settings(),
+        )
+
+        updated = await db.update_resume(
+            resume["resume_id"],
+            {"processed_data": {"personalInfo": {"name": "Grace"}}},
+        )
+
+        assert updated["processed_data"]["personalInfo"]["name"] == "Grace"
+        assert updated["processed_data"]["personalInfo"]["photo"]["version"] == 1
+
+    async def test_generic_update_discards_stale_photo_without_asset(self, db):
+        resume = await db.create_resume(
+            content="Resume",
+            processed_data={"personalInfo": {"name": "Ada"}},
+        )
+
+        updated = await db.update_resume(
+            resume["resume_id"],
+            {
+                "processed_data": {
+                    "personalInfo": {
+                        "name": "Grace",
+                        "photo": {**self._settings(), "version": 99},
+                    }
+                }
+            },
+        )
+
+        assert "photo" not in updated["processed_data"]["personalInfo"]
+
+    async def test_delete_photo_is_idempotent_and_removes_metadata(self, db):
+        resume = await db.create_resume(
+            content="Resume",
+            processed_data={"personalInfo": {"name": "Ada"}},
+        )
+        await db.put_resume_photo(
+            resume["resume_id"],
+            source_data=b"source",
+            display_data=b"display",
+            source_width=800,
+            source_height=800,
+            settings=self._settings(),
+        )
+
+        first = await db.delete_resume_photo(resume["resume_id"])
+        second = await db.delete_resume_photo(resume["resume_id"])
+
+        assert "photo" not in first["processed_data"]["personalInfo"]
+        assert second == first
+        assert await db.get_resume_photo(resume["resume_id"]) is None
+
+    async def test_clone_photo_creates_independent_child_row(self, db):
+        parent = await db.create_resume(
+            content="Parent",
+            processed_data={"personalInfo": {"name": "Ada"}},
+        )
+        child = await db.create_resume(
+            content="Child",
+            parent_id=parent["resume_id"],
+            processed_data={"personalInfo": {"name": "Ada"}},
+        )
+        await db.put_resume_photo(
+            parent["resume_id"],
+            source_data=b"source",
+            display_data=b"display",
+            source_width=800,
+            source_height=800,
+            settings=self._settings(),
+        )
+
+        cloned = await db.clone_resume_photo(parent["resume_id"], child["resume_id"])
+        await db.delete_resume_photo(parent["resume_id"])
+
+        child_photo = await db.get_resume_photo(child["resume_id"])
+        assert cloned["processed_data"]["personalInfo"]["photo"]["version"] == 1
+        assert child_photo is not None
+        assert child_photo["source_data"] == b"source"
+
+    async def test_create_resume_with_cloned_photo_is_atomic(self, db):
+        parent = await db.create_resume(
+            content="Parent",
+            processed_data={"personalInfo": {"name": "Ada"}},
+        )
+        await db.put_resume_photo(
+            parent["resume_id"],
+            source_data=b"source",
+            display_data=b"display",
+            source_width=800,
+            source_height=800,
+            settings=self._settings(),
+        )
+
+        child = await db.create_resume_with_cloned_photo(
+            source_resume_id=parent["resume_id"],
+            content="Child",
+            content_type="json",
+            parent_id=parent["resume_id"],
+            processed_data={"personalInfo": {"name": "Ada"}},
+            processing_status="ready",
+        )
+
+        child_photo = await db.get_resume_photo(child["resume_id"])
+        assert child["processed_data"]["personalInfo"]["photo"]["version"] == 1
+        assert child_photo is not None
+        assert child_photo["display_data"] == b"display"
+
+    async def test_photo_mutation_rejects_missing_resume(self, db):
+        with pytest.raises(ValueError, match="Resume not found"):
+            await db.put_resume_photo(
+                "missing",
+                source_data=b"source",
+                display_data=b"display",
+                source_width=800,
+                source_height=800,
+                settings=self._settings(),
+            )
 
 
 class TestMasterResume:
@@ -116,19 +342,27 @@ class TestMasterResume:
         assert await db.set_master_resume("missing") is False
 
     async def test_atomic_first_upload_becomes_master(self, db):
-        created = await db.create_resume_atomic_master(content="first", processing_status="ready")
+        created = await db.create_resume_atomic_master(
+            content="first", processing_status="ready"
+        )
         assert created["is_master"] is True
 
     async def test_atomic_second_upload_not_master(self, db):
         await db.create_resume_atomic_master(content="first", processing_status="ready")
-        second = await db.create_resume_atomic_master(content="second", processing_status="ready")
+        second = await db.create_resume_atomic_master(
+            content="second", processing_status="ready"
+        )
         assert second["is_master"] is False
 
     async def test_atomic_recovers_when_master_stuck(self, db):
         # Master stuck in "failed" → next upload is promoted to master.
-        first = await db.create_resume_atomic_master(content="first", processing_status="failed")
+        first = await db.create_resume_atomic_master(
+            content="first", processing_status="failed"
+        )
         assert first["is_master"] is True
-        second = await db.create_resume_atomic_master(content="second", processing_status="ready")
+        second = await db.create_resume_atomic_master(
+            content="second", processing_status="ready"
+        )
         assert second["is_master"] is True
         assert (await db.get_master_resume())["resume_id"] == second["resume_id"]
 
@@ -230,7 +464,9 @@ class TestApplications:
         a = await db.create_application(job_id="j1", resume_id="r1")
         b = await db.create_application(job_id="j2", resume_id="r2")
         # Move a to the front of "interview".
-        moved = await db.update_application(a["application_id"], {"status": "interview", "position": 0})
+        moved = await db.update_application(
+            a["application_id"], {"status": "interview", "position": 0}
+        )
         assert moved["status"] == "interview"
         assert moved["position"] == 0
         # The "applied" column renumbered: b is now position 0.
@@ -241,7 +477,9 @@ class TestApplications:
     async def test_bulk_update_and_delete(self, db):
         a = await db.create_application(job_id="j1", resume_id="r1")
         b = await db.create_application(job_id="j2", resume_id="r2")
-        moved = await db.bulk_update_applications([a["application_id"], b["application_id"]], "rejected")
+        moved = await db.bulk_update_applications(
+            [a["application_id"], b["application_id"]], "rejected"
+        )
         assert moved == 2
         rejected = await db.list_applications(status="rejected")
         assert {x["position"] for x in rejected} == {0, 1}
@@ -256,7 +494,10 @@ class TestApiKeyStore:
     async def test_set_get_delete_ciphertext(self, db):
         db.set_api_key_ciphertext("openai", "ct-openai")
         db.set_api_key_ciphertext("anthropic", "ct-anthropic")
-        assert db.get_api_key_ciphertexts() == {"openai": "ct-openai", "anthropic": "ct-anthropic"}
+        assert db.get_api_key_ciphertexts() == {
+            "openai": "ct-openai",
+            "anthropic": "ct-anthropic",
+        }
         db.delete_api_key("openai")
         assert db.get_api_key_ciphertexts() == {"anthropic": "ct-anthropic"}
         db.clear_api_keys()

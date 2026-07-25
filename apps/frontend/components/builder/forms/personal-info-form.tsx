@@ -3,15 +3,33 @@
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { PersonalInfo } from '@/components/dashboard/resume-component';
+import { type PersonalInfo, type PhotoMutation } from '@/components/dashboard/resume-component';
 import { useTranslations } from '@/lib/i18n';
+import { ProfilePhotoField } from '@/components/builder/profile-photo-field';
 
 interface PersonalInfoFormProps {
   data: PersonalInfo;
   onChange: (data: PersonalInfo) => void;
+  resumeId?: string | null;
+  onPhotoUpload?: (file: File, mutation: PhotoMutation) => Promise<void>;
+  onPhotoEdit?: (mutation: PhotoMutation) => Promise<void>;
+  onPhotoRemove?: () => Promise<void>;
+  onPhotoEditorOpenChange?: (open: boolean) => void;
+  photoEditRequestToken?: number;
+  photoActionsDisabled?: boolean;
 }
 
-export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ data, onChange }) => {
+export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
+  data,
+  onChange,
+  resumeId,
+  onPhotoUpload,
+  onPhotoEdit,
+  onPhotoRemove,
+  onPhotoEditorOpenChange,
+  photoEditRequestToken,
+  photoActionsDisabled,
+}) => {
   const { t } = useTranslations();
 
   const handleChange = (field: keyof PersonalInfo, value: string) => {
@@ -26,6 +44,19 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ data, onChan
       <h3 className="font-serif text-xl font-bold border-b border-black pb-2 mb-4">
         {t('builder.personalInfo')}
       </h3>
+      {onPhotoUpload && onPhotoEdit && onPhotoRemove && (
+        <ProfilePhotoField
+          resumeId={resumeId}
+          name={data.name}
+          photo={data.photo}
+          onUpload={onPhotoUpload}
+          onEdit={onPhotoEdit}
+          onRemove={onPhotoRemove}
+          onEditorOpenChange={onPhotoEditorOpenChange}
+          editRequestToken={photoEditRequestToken}
+          disabled={photoActionsDisabled}
+        />
+      )}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label

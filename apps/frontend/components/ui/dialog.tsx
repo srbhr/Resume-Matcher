@@ -100,9 +100,10 @@ const DialogClose: React.FC<DialogCloseProps> = ({ asChild, children, className 
 interface DialogContentProps {
   children: React.ReactNode;
   className?: string;
+  motion?: 'scale' | 'fade';
 }
 
-const DialogContent: React.FC<DialogContentProps> = ({ children, className }) => {
+const DialogContent: React.FC<DialogContentProps> = ({ children, className, motion = 'scale' }) => {
   const { open, onOpenChange, titleId } = useDialogContext();
   const { t } = useTranslations();
 
@@ -149,7 +150,8 @@ const DialogContent: React.FC<DialogContentProps> = ({ children, className }) =>
             'relative w-full max-w-lg',
             'border border-black bg-background shadow-sw-lg',
             'rounded-none',
-            'animate-in fade-in-0 zoom-in-95 duration-200',
+            'animate-in fade-in-0 duration-200',
+            motion === 'scale' && 'zoom-in-95',
             className
           )}
           onClick={(e) => e.stopPropagation()}

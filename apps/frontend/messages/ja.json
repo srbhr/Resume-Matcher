@@ -803,6 +803,32 @@
     "defaults": {
       "name": "あなたの名前"
     },
+    "photo": {
+      "label": "プロフィール写真",
+      "add": "写真を追加",
+      "edit": "編集",
+      "editAction": "写真を編集",
+      "replace": "置き換え",
+      "remove": "削除",
+      "removeConfirm": "このプロフィール写真を削除しますか？元画像と切り抜き設定も削除されます。",
+      "helper": "JPG、PNG、WebP（最大 8 MB）",
+      "dialogTitle": "プロフィール写真を編集",
+      "dialogDescription": "切り抜き枠をドラッグして移動し、辺または四隅をドラッグしてサイズを調整します。",
+      "size": "表示サイズ",
+      "reset": "リセット",
+      "applying": "適用中…",
+      "alt": "{name}のプロフィール写真",
+      "profilePhoto": "プロフィール写真",
+      "errors": {
+        "format": "JPG、PNG、WebP画像を選択してください。",
+        "size": "画像は8 MB以下にしてください。",
+        "corrupt": "画像を読み込めませんでした。別のファイルを選択してください。",
+        "dimensions": "画像の寸法が大きすぎます。",
+        "upload": "写真をアップロードできませんでした。もう一度お試しください。",
+        "save": "写真を保存できませんでした。もう一度お試しください。",
+        "saveRequired": "写真を追加する前に履歴書を保存してください。"
+      }
+    },
     "additional": {
       "technicalSkills": "技術スキル"
     },

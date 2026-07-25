@@ -803,6 +803,32 @@
     "defaults": {
       "name": "你的姓名"
     },
+    "photo": {
+      "label": "头像照片",
+      "add": "添加头像",
+      "edit": "编辑",
+      "editAction": "编辑头像",
+      "replace": "替换",
+      "remove": "移除",
+      "removeConfirm": "确定移除此头像吗？原始图片和裁剪设置将被删除。",
+      "helper": "支持 JPG、PNG 或 WebP，最大 8 MB",
+      "dialogTitle": "编辑头像",
+      "dialogDescription": "拖动裁剪框可移动位置，拖动边缘或四角可调整范围。",
+      "size": "显示大小",
+      "reset": "重置",
+      "applying": "正在应用…",
+      "alt": "{name}的头像",
+      "profilePhoto": "头像",
+      "errors": {
+        "format": "请选择 JPG、PNG 或 WebP 图片。",
+        "size": "图片大小不能超过 8 MB。",
+        "corrupt": "无法读取此图片，请选择其他文件。",
+        "dimensions": "图片尺寸过大。",
+        "upload": "头像上传失败，请重试。",
+        "save": "头像保存失败，请重试。",
+        "saveRequired": "请先保存简历，再添加头像。"
+      }
+    },
     "additional": {
       "technicalSkills": "技术技能"
     },

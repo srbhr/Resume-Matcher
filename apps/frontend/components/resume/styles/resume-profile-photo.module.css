@@ -1,0 +1,34 @@
+.wrapper {
+  position: relative;
+}
+
+.photo {
+  position: absolute;
+  top: -8px;
+  right: 0;
+  z-index: 2;
+  overflow: visible;
+  border: 1px solid var(--resume-border-primary);
+  background: white;
+}
+
+.image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+}
+
+.editHitTarget {
+  position: absolute;
+  inset: 0;
+  cursor: pointer;
+  border: 0;
+  background: transparent;
+}
+
+@media print {
+  .editHitTarget {
+    display: none;
+  }
+}

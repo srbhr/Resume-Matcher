@@ -15,6 +15,7 @@ import {
   settingsToCssVars,
 } from '@/lib/types/template-settings';
 import baseStyles from '@/components/resume/styles/_base.module.css';
+import { ResumePhotoLayout } from '@/components/resume/resume-profile-photo';
 
 export interface PersonalInfo {
   name?: string;
@@ -25,6 +26,20 @@ export interface PersonalInfo {
   website?: string;
   linkedin?: string;
   github?: string;
+  photo?: ResumePhotoSettings;
+}
+
+export interface PhotoMutation {
+  cropX: number;
+  cropY: number;
+  cropWidth: number;
+  cropHeight: number;
+  size: number;
+}
+
+export interface ResumePhotoSettings extends PhotoMutation {
+  version: number;
+  aspectRatio: number;
 }
 
 export interface Experience {
@@ -82,6 +97,8 @@ export interface ResumeSectionHeadings {
 
 export interface ResumeFallbackLabels {
   name: string;
+  profilePhoto?: string;
+  editPhoto?: string;
 }
 
 // Section Type for dynamic sections
@@ -128,13 +145,16 @@ export interface ResumeData {
   customSections?: Record<string, CustomSection>;
 }
 
-interface ResumeProps {
+export interface ResumeProps {
   resumeData: ResumeData;
   template?: TemplateType;
   settings?: TemplateSettings;
   additionalSectionLabels?: Partial<AdditionalSectionLabels>;
   sectionHeadings?: Partial<ResumeSectionHeadings>;
   fallbackLabels?: Partial<ResumeFallbackLabels>;
+  resumeId?: string;
+  editable?: boolean;
+  onEditPhoto?: () => void;
 }
 
 /**
@@ -156,6 +176,9 @@ const Resume: React.FC<ResumeProps> = ({
   additionalSectionLabels,
   sectionHeadings,
   fallbackLabels,
+  resumeId,
+  editable = false,
+  onEditPhoto,
 }) => {
   // Merge provided settings with defaults
   const mergedSettings: TemplateSettings = {
@@ -174,11 +197,8 @@ const Resume: React.FC<ResumeProps> = ({
   // Convert settings to CSS variables
   const cssVars = settingsToCssVars(mergedSettings);
 
-  return (
-    <div
-      className={`${baseStyles['resume-body']} bg-white text-black w-full mx-auto resume-template-${mergedSettings.template}`}
-      style={cssVars}
-    >
+  const templateContent = (
+    <>
       {mergedSettings.template === 'swiss-single' && (
         <ResumeSingleColumn
           data={resumeData}
@@ -230,6 +250,25 @@ const Resume: React.FC<ResumeProps> = ({
           fallbackLabels={fallbackLabels}
         />
       )}
+    </>
+  );
+
+  return (
+    <div
+      className={`${baseStyles['resume-body']} bg-white text-black w-full mx-auto resume-template-${mergedSettings.template}`}
+      style={cssVars}
+    >
+      <ResumePhotoLayout
+        resumeId={resumeId}
+        name={resumeData.personalInfo?.name}
+        photo={resumeData.personalInfo?.photo}
+        editable={editable}
+        editLabel={fallbackLabels?.editPhoto}
+        profilePhotoLabel={fallbackLabels?.profilePhoto}
+        onEditPhoto={onEditPhoto}
+      >
+        {templateContent}
+      </ResumePhotoLayout>
     </div>
   );
 };

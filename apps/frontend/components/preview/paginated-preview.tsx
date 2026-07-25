@@ -13,6 +13,9 @@ import { useTranslations } from '@/lib/i18n';
 interface PaginatedPreviewProps {
   resumeData: ResumeData;
   settings: TemplateSettings;
+  resumeId?: string;
+  editable?: boolean;
+  onEditPhoto?: () => void;
 }
 
 const MIN_ZOOM = 0.4;
@@ -23,7 +26,13 @@ const ZOOM_STEP = 0.1;
  * PaginatedPreview shows a WYSIWYG preview of the resume with actual page dimensions,
  * margin guides, and automatic pagination.
  */
-export function PaginatedPreview({ resumeData, settings }: PaginatedPreviewProps) {
+export function PaginatedPreview({
+  resumeData,
+  settings,
+  resumeId,
+  editable = false,
+  onEditPhoto,
+}: PaginatedPreviewProps) {
   const { t } = useTranslations();
   const measurementRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -61,6 +70,8 @@ export function PaginatedPreview({ resumeData, settings }: PaginatedPreviewProps
   const fallbackLabels = React.useMemo(
     () => ({
       name: t('resume.defaults.name'),
+      profilePhoto: t('resume.photo.profilePhoto'),
+      editPhoto: t('resume.photo.editAction'),
     }),
     [t]
   );
@@ -178,6 +189,7 @@ export function PaginatedPreview({ resumeData, settings }: PaginatedPreviewProps
           aria-hidden="true"
         >
           <Resume
+            resumeId={resumeId}
             resumeData={resumeData}
             template={settings.template}
             settings={resumeSettings}
@@ -211,6 +223,9 @@ export function PaginatedPreview({ resumeData, settings }: PaginatedPreviewProps
                 contentEnd={page.contentEnd}
               >
                 <Resume
+                  resumeId={resumeId}
+                  editable={editable}
+                  onEditPhoto={onEditPhoto}
                   resumeData={resumeData}
                   template={settings.template}
                   settings={resumeSettings}

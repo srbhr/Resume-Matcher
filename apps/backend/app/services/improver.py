@@ -22,6 +22,7 @@ from app.prompts import (
 from app.prompts.templates import IMPROVE_SCHEMA_EXAMPLE
 from app.schemas import ResumeData, ResumeFieldDiff, ResumeDiffSummary
 from app.schemas.models import ImproveDiffResult, ResumeChange
+from app.services.resume_photo import strip_photo_metadata
 
 logger = logging.getLogger(__name__)
 
@@ -547,6 +548,7 @@ async def generate_resume_diffs(
 
     # Use structured JSON if available with month precision, else markdown
     if original_resume_data is not None:
+        original_resume_data = strip_photo_metadata(original_resume_data)
         if _has_month_in_dates(original_resume_data):
             resume_input = json.dumps(original_resume_data)
         else:
@@ -843,6 +845,7 @@ async def generate_skill_target_plan(
     language: str = "en",
 ) -> dict[str, Any]:
     """Ask the LLM for a compact skill target plan before editing diffs."""
+    original_resume_data = strip_photo_metadata(original_resume_data)
     output_language = get_language_name(language)
     existing_skills = original_resume_data.get("additional", {}).get(
         "technicalSkills", []
@@ -955,6 +958,7 @@ async def improve_resume(
     # but fall back to raw markdown if the structured data has truncated
     # (year-only) dates — the markdown preserves months from the original PDF.
     if original_resume_data is not None:
+        original_resume_data = strip_photo_metadata(original_resume_data)
         if _has_month_in_dates(original_resume_data):
             resume_input = json.dumps(original_resume_data)
         else:

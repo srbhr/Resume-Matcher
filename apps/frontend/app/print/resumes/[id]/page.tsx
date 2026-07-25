@@ -182,6 +182,8 @@ export default async function PrintResumePage({ params, searchParams }: PageProp
   };
   const fallbackLabels = {
     name: t('resume.defaults.name'),
+    profilePhoto: t('resume.photo.profilePhoto'),
+    editPhoto: t('resume.photo.editAction'),
   };
 
   // Parse template settings from query params
@@ -249,6 +251,7 @@ export default async function PrintResumePage({ params, searchParams }: PageProp
   return (
     <div className="resume-print bg-white">
       <Resume
+        resumeId={resolvedParams.id}
         resumeData={localizedResumeData}
         template={settings.template}
         settings={printSettings}

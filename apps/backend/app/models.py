@@ -9,7 +9,18 @@ never sees ORM objects — preserving the TinyDB-era contracts.
 from datetime import datetime, timezone
 from typing import Any
 
-from sqlalchemy import JSON, Boolean, Index, Integer, String, Text, UniqueConstraint, text
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    ForeignKey,
+    Index,
+    Integer,
+    LargeBinary,
+    String,
+    Text,
+    UniqueConstraint,
+    text,
+)
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -62,6 +73,26 @@ class Resume(Base):
             sqlite_where=text("is_master = 1"),
         ),
     )
+
+
+class ResumePhoto(Base):
+    """Normalized source and display derivative owned by one resume."""
+
+    __tablename__ = "resume_photos"
+
+    resume_id: Mapped[str] = mapped_column(
+        String,
+        ForeignKey("resumes.resume_id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    source_data: Mapped[bytes] = mapped_column(LargeBinary)
+    display_data: Mapped[bytes] = mapped_column(LargeBinary)
+    mime_type: Mapped[str] = mapped_column(String, default="image/webp")
+    source_width: Mapped[int] = mapped_column(Integer)
+    source_height: Mapped[int] = mapped_column(Integer)
+    version: Mapped[int] = mapped_column(Integer)
+    created_at: Mapped[str] = mapped_column(String, default=_utcnow_iso)
+    updated_at: Mapped[str] = mapped_column(String, default=_utcnow_iso)
 
 
 class Job(Base):

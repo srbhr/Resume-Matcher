@@ -25,6 +25,33 @@ class TestApplyDiffsReplace:
         assert len(rejected) == 0
         assert result["summary"] == "Updated summary text."
 
+    def test_photo_metadata_is_immutable(self, sample_resume):
+        photo = {
+            "cropX": 0,
+            "cropY": 0,
+            "cropWidth": 100,
+            "cropHeight": 100,
+            "zoom": 1,
+            "size": 88,
+            "version": 1,
+        }
+        sample_resume["personalInfo"]["photo"] = photo
+        changes = [
+            ResumeChange(
+                path="personalInfo.photo.size",
+                action="replace",
+                original="88",
+                value="112",
+                reason="must be rejected",
+            )
+        ]
+
+        result, applied, rejected = apply_diffs(sample_resume, changes)
+
+        assert applied == []
+        assert rejected == changes
+        assert result["personalInfo"]["photo"] == photo
+
     def test_replace_description_bullet(self, sample_resume):
         original_bullet = sample_resume["workExperience"][0]["description"][1]
         changes = [
