@@ -11,6 +11,7 @@ vi.mock('@/lib/i18n', () => ({
 vi.mock('@/components/builder/adaptive-crop-box', () => ({
   AdaptiveCropBox: ({
     onChange,
+    disabled,
   }: {
     onChange: (crop: {
       cropX: number;
@@ -18,10 +19,12 @@ vi.mock('@/components/builder/adaptive-crop-box', () => ({
       cropWidth: number;
       cropHeight: number;
     }) => void;
+    disabled?: boolean;
   }) => (
     <button
       type="button"
       data-testid="cropper"
+      disabled={disabled}
       onClick={() => onChange({ cropX: 25, cropY: 0, cropWidth: 50, cropHeight: 75 })}
     >
       crop
@@ -99,5 +102,24 @@ describe('ProfilePhotoEditorDialog', () => {
         size: 88,
       })
     );
+  });
+
+  it('cannot close or change the crop while an apply is in progress', () => {
+    const onOpenChange = vi.fn();
+    render(
+      <ProfilePhotoEditorDialog
+        open
+        applying
+        sourceUrl="blob:photo"
+        onOpenChange={onOpenChange}
+        onApply={vi.fn().mockResolvedValue(undefined)}
+      />
+    );
+
+    fireEvent.keyDown(document, { key: 'Escape' });
+    fireEvent.click(screen.getByTestId('cropper'));
+
+    expect(onOpenChange).not.toHaveBeenCalled();
+    expect(screen.getByTestId('cropper')).toBeDisabled();
   });
 });

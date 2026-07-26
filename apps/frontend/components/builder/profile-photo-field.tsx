@@ -100,6 +100,9 @@ export function ProfilePhotoField({
     }
     setError(null);
     setPendingFile(file);
+    if (objectUrlRef.current) {
+      URL.revokeObjectURL(objectUrlRef.current);
+    }
     const objectUrl = URL.createObjectURL(file);
     objectUrlRef.current = objectUrl;
     setSourceUrl(objectUrl);
@@ -278,6 +281,7 @@ export function ProfilePhotoField({
         confirmLabel={t('resume.photo.remove')}
         variant="danger"
         confirmDisabled={applying || disabled}
+        errorMessage={error ?? undefined}
         closeOnConfirm={false}
         onConfirm={handleRemove}
       />

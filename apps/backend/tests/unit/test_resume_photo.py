@@ -48,6 +48,18 @@ def test_photo_mutation_rejects_crop_outside_image_bounds() -> None:
         )
 
 
+def test_photo_mutation_allows_boundary_rounding_noise() -> None:
+    mutation = PhotoMutation(
+        cropX=33.33333333333334,
+        cropY=0,
+        cropWidth=66.66666666666667,
+        cropHeight=100,
+        size=88,
+    )
+
+    assert mutation.cropX + mutation.cropWidth == pytest.approx(100)
+
+
 @pytest.mark.parametrize(
     ("field", "value"),
     (("size", 63), ("size", 113)),

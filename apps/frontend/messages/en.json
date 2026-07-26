@@ -814,6 +814,17 @@
       "helper": "JPG, PNG, or WebP up to 8 MB",
       "dialogTitle": "Edit Profile Photo",
       "dialogDescription": "Drag the crop box to move it. Drag edges or corners to resize it.",
+      "moveCrop": "Move crop area",
+      "cropHandles": {
+        "n": "Resize crop from top",
+        "s": "Resize crop from bottom",
+        "e": "Resize crop from right",
+        "w": "Resize crop from left",
+        "nw": "Resize crop from top left",
+        "ne": "Resize crop from top right",
+        "sw": "Resize crop from bottom left",
+        "se": "Resize crop from bottom right"
+      },
       "size": "Display size",
       "reset": "Reset",
       "applying": "Applying…",

@@ -814,6 +814,17 @@
       "helper": "JPG, PNG o WebP de hasta 8 MB",
       "dialogTitle": "Editar foto de perfil",
       "dialogDescription": "Arrastra el marco para moverlo y sus bordes o esquinas para redimensionarlo.",
+      "moveCrop": "Mover el área de recorte",
+      "cropHandles": {
+        "n": "Redimensionar desde arriba",
+        "s": "Redimensionar desde abajo",
+        "e": "Redimensionar desde la derecha",
+        "w": "Redimensionar desde la izquierda",
+        "nw": "Redimensionar desde la esquina superior izquierda",
+        "ne": "Redimensionar desde la esquina superior derecha",
+        "sw": "Redimensionar desde la esquina inferior izquierda",
+        "se": "Redimensionar desde la esquina inferior derecha"
+      },
       "size": "Tamaño visible",
       "reset": "Restablecer",
       "applying": "Aplicando…",

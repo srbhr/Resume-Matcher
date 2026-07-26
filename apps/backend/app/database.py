@@ -585,64 +585,6 @@ class Database:
 
         return self._resume_to_dict(resume)
 
-    async def clone_resume_photo(
-        self,
-        source_resume_id: str,
-        target_resume_id: str,
-    ) -> dict[str, Any]:
-        """Clone a photo into a child resume as an independently editable row."""
-        now = _now()
-        async with self._session.begin() as session:
-            source_resume = await session.get(Resume, source_resume_id)
-            target_resume = await session.get(Resume, target_resume_id)
-            if source_resume is None:
-                raise ValueError(f"Resume not found: {source_resume_id}")
-            if target_resume is None:
-                raise ValueError(f"Resume not found: {target_resume_id}")
-
-            source_photo = await session.get(ResumePhoto, source_resume_id)
-            existing_target = await session.get(ResumePhoto, target_resume_id)
-            if existing_target is not None:
-                await session.delete(existing_target)
-                await session.flush()
-
-            settings = None
-            if source_photo is not None:
-                source_personal = (
-                    source_resume.processed_data.get("personalInfo", {})
-                    if isinstance(source_resume.processed_data, dict)
-                    else {}
-                )
-                candidate = (
-                    source_personal.get("photo")
-                    if isinstance(source_personal, dict)
-                    else None
-                )
-                settings = (
-                    copy.deepcopy(candidate) if isinstance(candidate, dict) else None
-                )
-                session.add(
-                    ResumePhoto(
-                        resume_id=target_resume_id,
-                        source_data=bytes(source_photo.source_data),
-                        display_data=bytes(source_photo.display_data),
-                        mime_type=source_photo.mime_type,
-                        source_width=source_photo.source_width,
-                        source_height=source_photo.source_height,
-                        version=source_photo.version,
-                        created_at=now,
-                        updated_at=now,
-                    )
-                )
-
-            target_resume.processed_data = self._with_photo_metadata(
-                target_resume.processed_data,
-                settings,
-            )
-            target_resume.updated_at = now
-
-        return self._resume_to_dict(target_resume)
-
     async def delete_resume(self, resume_id: str) -> bool:
         """Delete resume by ID."""
         async with self._session() as session:

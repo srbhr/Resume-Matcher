@@ -254,33 +254,6 @@ class TestResumePhotoPersistence:
         assert second == first
         assert await db.get_resume_photo(resume["resume_id"]) is None
 
-    async def test_clone_photo_creates_independent_child_row(self, db):
-        parent = await db.create_resume(
-            content="Parent",
-            processed_data={"personalInfo": {"name": "Ada"}},
-        )
-        child = await db.create_resume(
-            content="Child",
-            parent_id=parent["resume_id"],
-            processed_data={"personalInfo": {"name": "Ada"}},
-        )
-        await db.put_resume_photo(
-            parent["resume_id"],
-            source_data=b"source",
-            display_data=b"display",
-            source_width=800,
-            source_height=800,
-            settings=self._settings(),
-        )
-
-        cloned = await db.clone_resume_photo(parent["resume_id"], child["resume_id"])
-        await db.delete_resume_photo(parent["resume_id"])
-
-        child_photo = await db.get_resume_photo(child["resume_id"])
-        assert cloned["processed_data"]["personalInfo"]["photo"]["version"] == 1
-        assert child_photo is not None
-        assert child_photo["source_data"] == b"source"
-
     async def test_create_resume_with_cloned_photo_is_atomic(self, db):
         parent = await db.create_resume(
             content="Parent",

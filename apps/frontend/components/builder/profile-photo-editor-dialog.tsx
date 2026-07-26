@@ -74,8 +74,24 @@ export function ProfilePhotoEditorDialog({
     });
   };
 
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (applying && !nextOpen) return;
+    onOpenChange(nextOpen);
+  };
+
+  const handleLabels = {
+    n: t('resume.photo.cropHandles.n'),
+    s: t('resume.photo.cropHandles.s'),
+    e: t('resume.photo.cropHandles.e'),
+    w: t('resume.photo.cropHandles.w'),
+    nw: t('resume.photo.cropHandles.nw'),
+    ne: t('resume.photo.cropHandles.ne'),
+    sw: t('resume.photo.cropHandles.sw'),
+    se: t('resume.photo.cropHandles.se'),
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent motion="fade" className="max-w-2xl p-0">
         <DialogHeader className="border-b border-black p-6">
           <DialogTitle className="text-2xl uppercase">{t('resume.photo.dialogTitle')}</DialogTitle>
@@ -92,6 +108,9 @@ export function ProfilePhotoEditorDialog({
                 value={crop}
                 onChange={setCrop}
                 imageAlt={t('resume.photo.profilePhoto')}
+                disabled={applying}
+                moveLabel={t('resume.photo.moveCrop')}
+                handleLabels={handleLabels}
               />
             )}
           </div>
@@ -122,7 +141,7 @@ export function ProfilePhotoEditorDialog({
         </div>
 
         <DialogFooter className="flex-row justify-end gap-3 border-t border-black bg-secondary p-4">
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={applying}>
+          <Button variant="outline" onClick={() => handleOpenChange(false)} disabled={applying}>
             {t('common.cancel')}
           </Button>
           <Button variant="outline" onClick={handleReset} disabled={applying}>

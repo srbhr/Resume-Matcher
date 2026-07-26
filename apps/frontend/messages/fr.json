@@ -805,6 +805,17 @@
       "helper": "JPG, PNG ou WebP jusqu’à 8 Mo",
       "dialogTitle": "Modifier la photo de profil",
       "dialogDescription": "Faites glisser le cadre pour le déplacer, puis ses bords ou ses coins pour le redimensionner.",
+      "moveCrop": "Déplacer la zone de recadrage",
+      "cropHandles": {
+        "n": "Redimensionner depuis le haut",
+        "s": "Redimensionner depuis le bas",
+        "e": "Redimensionner depuis la droite",
+        "w": "Redimensionner depuis la gauche",
+        "nw": "Redimensionner depuis le coin supérieur gauche",
+        "ne": "Redimensionner depuis le coin supérieur droit",
+        "sw": "Redimensionner depuis le coin inférieur gauche",
+        "se": "Redimensionner depuis le coin inférieur droit"
+      },
       "size": "Taille d’affichage",
       "reset": "Réinitialiser",
       "applying": "Application…",

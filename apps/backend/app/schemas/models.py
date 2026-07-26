@@ -129,7 +129,11 @@ class PhotoMutation(BaseModel):
 
     @model_validator(mode="after")
     def _validate_crop_bounds(self) -> "PhotoMutation":
-        if self.cropX + self.cropWidth > 100 or self.cropY + self.cropHeight > 100:
+        epsilon = 1e-6
+        if (
+            self.cropX + self.cropWidth > 100 + epsilon
+            or self.cropY + self.cropHeight > 100 + epsilon
+        ):
             raise ValueError("crop rectangle exceeds image bounds")
         return self
 

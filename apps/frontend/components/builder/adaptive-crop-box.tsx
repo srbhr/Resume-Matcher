@@ -1,6 +1,10 @@
 'use client';
 
-import { useRef, type PointerEvent as ReactPointerEvent } from 'react';
+import {
+  useRef,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type PointerEvent as ReactPointerEvent,
+} from 'react';
 import styles from './adaptive-crop-box.module.css';
 
 export interface CropRect {
@@ -102,6 +106,9 @@ interface AdaptiveCropBoxProps {
   value: CropRect;
   onChange: (crop: CropRect) => void;
   imageAlt?: string;
+  disabled?: boolean;
+  moveLabel: string;
+  handleLabels: Record<CropHandle, string>;
 }
 
 interface DragState {
@@ -117,11 +124,15 @@ export function AdaptiveCropBox({
   value,
   onChange,
   imageAlt = '',
+  disabled = false,
+  moveLabel,
+  handleLabels,
 }: AdaptiveCropBoxProps) {
   const stageRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<DragState | null>(null);
 
   const startDrag = (mode: DragState['mode']) => (event: ReactPointerEvent<HTMLElement>) => {
+    if (disabled) return;
     event.preventDefault();
     event.stopPropagation();
     const bounds = stageRef.current?.getBoundingClientRect();
@@ -137,6 +148,7 @@ export function AdaptiveCropBox({
   };
 
   const continueDrag = (event: ReactPointerEvent<HTMLElement>) => {
+    if (disabled) return;
     const drag = dragRef.current;
     if (!drag) return;
     const deltaX = ((event.clientX - drag.startX) / drag.bounds.width) * 100;
@@ -155,6 +167,33 @@ export function AdaptiveCropBox({
     dragRef.current = null;
   };
 
+  const keyboardDelta = (event: ReactKeyboardEvent<HTMLElement>) => {
+    const step = event.shiftKey ? 5 : 1;
+    if (event.key === 'ArrowLeft') return { deltaX: -step, deltaY: 0 };
+    if (event.key === 'ArrowRight') return { deltaX: step, deltaY: 0 };
+    if (event.key === 'ArrowUp') return { deltaX: 0, deltaY: -step };
+    if (event.key === 'ArrowDown') return { deltaX: 0, deltaY: step };
+    return null;
+  };
+
+  const moveWithKeyboard = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (disabled || event.currentTarget !== event.target) return;
+    const delta = keyboardDelta(event);
+    if (!delta) return;
+    event.preventDefault();
+    onChange(moveCrop(value, delta.deltaX, delta.deltaY));
+  };
+
+  const resizeWithKeyboard =
+    (handle: CropHandle) => (event: ReactKeyboardEvent<HTMLButtonElement>) => {
+      if (disabled) return;
+      const delta = keyboardDelta(event);
+      if (!delta) return;
+      event.preventDefault();
+      event.stopPropagation();
+      onChange(resizeCrop(value, handle, delta.deltaX, delta.deltaY));
+    };
+
   return (
     <div className={styles.viewport}>
       <div ref={stageRef} className={styles.stage}>
@@ -162,6 +201,10 @@ export function AdaptiveCropBox({
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={imageUrl} alt={imageAlt} className={styles.sourceImage} draggable={false} />
         <div
+          role="button"
+          tabIndex={disabled ? -1 : 0}
+          aria-disabled={disabled}
+          aria-label={moveLabel}
           className={styles.crop}
           style={{
             left: `${value.cropX}%`,
@@ -173,18 +216,21 @@ export function AdaptiveCropBox({
           onPointerMove={continueDrag}
           onPointerUp={stopDrag}
           onPointerCancel={stopDrag}
+          onKeyDown={moveWithKeyboard}
         >
           <div className={styles.grid} aria-hidden="true" />
           {HANDLES.map((handle) => (
             <button
               key={handle}
               type="button"
-              aria-label={`crop-${handle}`}
+              aria-label={handleLabels[handle]}
+              disabled={disabled}
               className={`${styles.handle} ${styles[handle]}`}
               onPointerDown={startDrag(handle)}
               onPointerMove={continueDrag}
               onPointerUp={stopDrag}
               onPointerCancel={stopDrag}
+              onKeyDown={resizeWithKeyboard(handle)}
             />
           ))}
         </div>

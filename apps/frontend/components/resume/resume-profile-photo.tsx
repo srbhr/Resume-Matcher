@@ -77,8 +77,8 @@ export function ResumePhotoLayout({
   name = '',
   photo,
   editable,
-  editLabel = 'Edit photo',
-  profilePhotoLabel = 'profile photo',
+  editLabel,
+  profilePhotoLabel,
   onEditPhoto,
 }: ResumePhotoLayoutProps) {
   const [loadFailed, setLoadFailed] = useState(false);
@@ -99,8 +99,8 @@ export function ResumePhotoLayout({
         name={name}
         photo={photo}
         editable={editable}
-        editLabel={editLabel}
-        profilePhotoLabel={profilePhotoLabel}
+        editLabel={editLabel ?? ''}
+        profilePhotoLabel={profilePhotoLabel ?? ''}
         onEditPhoto={onEditPhoto}
         onLoadError={() => setLoadFailed(true)}
       />
