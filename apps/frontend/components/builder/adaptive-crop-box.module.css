@@ -38,6 +38,18 @@
   inset: 0;
   background: rgb(255 255 255 / 8%);
   content: '';
+  pointer-events: none;
+}
+
+.moveControl {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  border: 0;
+  background: transparent;
+  cursor: move;
+  padding: 0;
+  touch-action: none;
 }
 
 .grid {

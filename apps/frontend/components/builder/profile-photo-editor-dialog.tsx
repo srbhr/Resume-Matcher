@@ -79,16 +79,19 @@ export function ProfilePhotoEditorDialog({
     onOpenChange(nextOpen);
   };
 
-  const handleLabels = {
-    n: t('resume.photo.cropHandles.n'),
-    s: t('resume.photo.cropHandles.s'),
-    e: t('resume.photo.cropHandles.e'),
-    w: t('resume.photo.cropHandles.w'),
-    nw: t('resume.photo.cropHandles.nw'),
-    ne: t('resume.photo.cropHandles.ne'),
-    sw: t('resume.photo.cropHandles.sw'),
-    se: t('resume.photo.cropHandles.se'),
-  };
+  const handleLabels = useMemo(
+    () => ({
+      n: t('resume.photo.cropHandles.n'),
+      s: t('resume.photo.cropHandles.s'),
+      e: t('resume.photo.cropHandles.e'),
+      w: t('resume.photo.cropHandles.w'),
+      nw: t('resume.photo.cropHandles.nw'),
+      ne: t('resume.photo.cropHandles.ne'),
+      sw: t('resume.photo.cropHandles.sw'),
+      se: t('resume.photo.cropHandles.se'),
+    }),
+    [t]
+  );
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>

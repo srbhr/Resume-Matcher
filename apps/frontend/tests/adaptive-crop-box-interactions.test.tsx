@@ -25,7 +25,13 @@ describe('AdaptiveCropBox keyboard interaction', () => {
       />
     );
 
-    fireEvent.keyDown(screen.getByRole('button', { name: 'move-crop' }), {
+    const cropGroup = screen.getByRole('group', { name: 'move-crop' });
+    const moveButton = screen.getByRole('button', { name: 'move-crop' });
+
+    expect(cropGroup).toContainElement(moveButton);
+    expect(cropGroup.querySelectorAll('[role="button"], button')).toHaveLength(9);
+
+    fireEvent.keyDown(moveButton, {
       key: 'ArrowRight',
     });
 

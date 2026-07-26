@@ -176,8 +176,8 @@ export function AdaptiveCropBox({
     return null;
   };
 
-  const moveWithKeyboard = (event: ReactKeyboardEvent<HTMLDivElement>) => {
-    if (disabled || event.currentTarget !== event.target) return;
+  const moveWithKeyboard = (event: ReactKeyboardEvent<HTMLButtonElement>) => {
+    if (disabled) return;
     const delta = keyboardDelta(event);
     if (!delta) return;
     event.preventDefault();
@@ -201,8 +201,7 @@ export function AdaptiveCropBox({
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={imageUrl} alt={imageAlt} className={styles.sourceImage} draggable={false} />
         <div
-          role="button"
-          tabIndex={disabled ? -1 : 0}
+          role="group"
           aria-disabled={disabled}
           aria-label={moveLabel}
           className={styles.crop}
@@ -216,8 +215,14 @@ export function AdaptiveCropBox({
           onPointerMove={continueDrag}
           onPointerUp={stopDrag}
           onPointerCancel={stopDrag}
-          onKeyDown={moveWithKeyboard}
         >
+          <button
+            type="button"
+            aria-label={moveLabel}
+            disabled={disabled}
+            className={styles.moveControl}
+            onKeyDown={moveWithKeyboard}
+          />
           <div className={styles.grid} aria-hidden="true" />
           {HANDLES.map((handle) => (
             <button
