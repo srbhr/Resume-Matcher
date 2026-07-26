@@ -56,6 +56,7 @@ import { type TemplateSettings, DEFAULT_TEMPLATE_SETTINGS } from '@/lib/types/te
 import { withLocalizedDefaultSections } from '@/lib/utils/section-helpers';
 import { useLanguage } from '@/lib/context/language-context';
 import { buildResumeFilename, downloadBlobAsFile, openUrlInNewTab } from '@/lib/utils/download';
+import { savePendingResumeBeforePhoto } from '@/lib/utils/resume-photo-pending-save';
 import type { RegenerateItemInput } from '@/lib/api/enrichment';
 
 type TabId = 'resume' | 'cover-letter' | 'outreach' | 'interview-prep' | 'jd-match';
@@ -473,11 +474,17 @@ const ResumeBuilderContent = () => {
 
       setIsSaving(true);
       try {
-        if (hasUnsavedChanges) {
-          await updateResume(resumeId, resumeData);
-        }
-
-        const response = await operation();
+        const response = await savePendingResumeBeforePhoto({
+          pendingResume: hasUnsavedChanges ? resumeData : null,
+          savePendingResume: () => updateResume(resumeId, resumeData),
+          onSaved: (savedResume) => {
+            setResumeData(savedResume);
+            setLastSavedData(savedResume);
+            setHasUnsavedChanges(false);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(savedResume));
+          },
+          photoOperation: operation,
+        });
         if (!response.processed_resume) {
           throw new Error('Photo response did not include resume data.');
         }
