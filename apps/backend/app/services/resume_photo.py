@@ -79,11 +79,21 @@ def _open_supported_image(data: bytes) -> Image.Image:
         raise PhotoValidationError("Photo must be 8 MB or smaller.")
 
     try:
-        probe = Image.open(BytesIO(data))
-        image_format = probe.format
-        probe.verify()
+        with Image.open(BytesIO(data)) as probe:
+            image_format = probe.format
+            if image_format not in ALLOWED_FORMATS:
+                raise PhotoValidationError(
+                    "Photo must be a valid JPEG, PNG, or WebP image."
+                )
+            if probe.width > MAX_DIMENSION or probe.height > MAX_DIMENSION:
+                raise PhotoValidationError(
+                    f"Photo dimensions must not exceed {MAX_DIMENSION} × {MAX_DIMENSION}."
+                )
+            probe.verify()
         image = Image.open(BytesIO(data))
         image.load()
+    except PhotoValidationError:
+        raise
     except (
         Image.DecompressionBombError,
         Image.DecompressionBombWarning,
@@ -94,16 +104,6 @@ def _open_supported_image(data: bytes) -> Image.Image:
         raise PhotoValidationError(
             "Photo must be a valid JPEG, PNG, or WebP image."
         ) from exc
-
-    if image_format not in ALLOWED_FORMATS:
-        image.close()
-        raise PhotoValidationError("Photo must be a valid JPEG, PNG, or WebP image.")
-
-    if image.width > MAX_DIMENSION or image.height > MAX_DIMENSION:
-        image.close()
-        raise PhotoValidationError(
-            f"Photo dimensions must not exceed {MAX_DIMENSION} × {MAX_DIMENSION}."
-        )
 
     return image
 

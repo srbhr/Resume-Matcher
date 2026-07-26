@@ -1,6 +1,7 @@
 """Integration tests for resume CRUD endpoints."""
 
 import json
+import threading
 from io import BytesIO
 from unittest.mock import patch, AsyncMock, MagicMock
 from uuid import uuid4
@@ -11,7 +12,11 @@ from PIL import Image
 
 from app.main import app
 from app.schemas import InterviewPrepData
-from app.services.resume_photo import MAX_UPLOAD_BYTES
+from app.services.resume_photo import (
+    MAX_UPLOAD_BYTES,
+    process_uploaded_photo as process_uploaded_photo_sync,
+    render_photo_derivative as render_photo_derivative_sync,
+)
 
 
 SAMPLE_INTERVIEW_PREP = {
@@ -280,6 +285,56 @@ class TestResumePhotoApi:
             assert (
                 await client.get(f"/api/v1/resumes/{resume_id}/photo")
             ).status_code == 404
+
+    async def test_photo_processing_runs_off_the_event_loop(
+        self,
+        client,
+        isolated_db,
+        sample_resume,
+    ):
+        resume_id = await self._create_resume(isolated_db, sample_resume)
+        event_loop_thread = threading.get_ident()
+        worker_threads: list[int] = []
+
+        def track_upload(*args, **kwargs):
+            worker_threads.append(threading.get_ident())
+            return process_uploaded_photo_sync(*args, **kwargs)
+
+        def track_edit(*args, **kwargs):
+            worker_threads.append(threading.get_ident())
+            return render_photo_derivative_sync(*args, **kwargs)
+
+        with (
+            patch("app.routers.resumes.process_uploaded_photo", side_effect=track_upload),
+            patch("app.routers.resumes.render_photo_derivative", side_effect=track_edit),
+        ):
+            async with client:
+                upload = await client.put(
+                    f"/api/v1/resumes/{resume_id}/photo",
+                    files={
+                        "file": (
+                            "photo.png",
+                            self._image_bytes(),
+                            "image/png",
+                        )
+                    },
+                    data=self._form(),
+                )
+                edited = await client.patch(
+                    f"/api/v1/resumes/{resume_id}/photo",
+                    json={
+                        "cropX": 0,
+                        "cropY": 0,
+                        "cropWidth": 100,
+                        "cropHeight": 100,
+                        "size": 88,
+                    },
+                )
+
+        assert upload.status_code == 200
+        assert edited.status_code == 200
+        assert len(worker_threads) == 2
+        assert all(thread_id != event_loop_thread for thread_id in worker_threads)
 
     async def test_upload_stream_stops_over_eight_megabytes(
         self,

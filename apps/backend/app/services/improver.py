@@ -57,6 +57,17 @@ def _sanitize_user_input(text: str) -> str:
     return sanitized
 
 
+def _sanitize_raw_resume_fallback(original_resume: str) -> str:
+    """Strip server-managed metadata when a fallback payload is JSON-backed."""
+    try:
+        parsed = json.loads(original_resume)
+    except (json.JSONDecodeError, TypeError):
+        return original_resume
+    if not isinstance(parsed, dict):
+        return original_resume
+    return json.dumps(strip_photo_metadata(parsed), ensure_ascii=False)
+
+
 def _check_for_truncation(data: dict[str, Any]) -> None:
     """LLM-006: Log warnings for obvious truncation signs before Pydantic validation.
 
@@ -552,7 +563,7 @@ async def generate_resume_diffs(
         if _has_month_in_dates(original_resume_data):
             resume_input = json.dumps(original_resume_data)
         else:
-            resume_input = original_resume
+            resume_input = _sanitize_raw_resume_fallback(original_resume)
     else:
         resume_input = original_resume
 
@@ -966,7 +977,7 @@ async def improve_resume(
                 "Structured resume data has year-only dates; using raw markdown "
                 "to preserve month precision."
             )
-            resume_input = original_resume
+            resume_input = _sanitize_raw_resume_fallback(original_resume)
     else:
         resume_input = original_resume
 

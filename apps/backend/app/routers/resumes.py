@@ -1678,7 +1678,7 @@ async def put_resume_photo_endpoint(
             size=size,
         )
         content = await _read_photo_upload(file)
-        processed = process_uploaded_photo(content, mutation)
+        processed = await asyncio.to_thread(process_uploaded_photo, content, mutation)
         if (
             processed.input_format != declared_format
             or processed.input_format != extension_format
@@ -1728,7 +1728,11 @@ async def patch_resume_photo_endpoint(
         raise HTTPException(status_code=404, detail="Resume photo not found")
 
     try:
-        derivative = render_photo_derivative(photo["source_data"], mutation)
+        derivative = await asyncio.to_thread(
+            render_photo_derivative,
+            photo["source_data"],
+            mutation,
+        )
         updated = await db.update_resume_photo(
             resume_id,
             display_data=derivative.data,

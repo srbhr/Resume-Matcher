@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { PaginatedPreview } from '@/components/preview/paginated-preview';
 import { DEFAULT_TEMPLATE_SETTINGS } from '@/lib/types/template-settings';
+import { mmToPx } from '@/lib/constants/page-dimensions';
 import type { ResumeData } from '@/components/dashboard/resume-component';
 
 vi.mock('@/lib/i18n', () => ({
@@ -56,5 +57,25 @@ describe('PaginatedPreview profile photo identity', () => {
     expect(
       screen.getAllByRole('button', { name: 'resume.photo.editAction', hidden: true })
     ).toHaveLength(1);
+  });
+
+  it('exposes the lifted photo above the page content clip without moving resume content', () => {
+    const { container } = render(
+      <PaginatedPreview
+        resumeId="resume 9"
+        resumeData={resumeData}
+        settings={DEFAULT_TEMPLATE_SETTINGS}
+      />
+    );
+
+    const viewport = container.querySelector<HTMLElement>('[data-page-content-viewport]');
+    const content = container.querySelector<HTMLElement>('[data-page-content]');
+
+    expect(viewport).not.toBeNull();
+    expect(content).not.toBeNull();
+    expect(viewport).toHaveStyle({
+      top: `${mmToPx(DEFAULT_TEMPLATE_SETTINGS.margins.top) - 8}px`,
+    });
+    expect(content).toHaveStyle({ top: '8px' });
   });
 });

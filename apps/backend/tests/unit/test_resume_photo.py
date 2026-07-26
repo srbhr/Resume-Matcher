@@ -8,6 +8,7 @@ from pydantic import ValidationError
 
 from app.schemas.models import PhotoMutation, PhotoSettings
 from app.services.resume_photo import (
+    MAX_DIMENSION,
     MAX_UPLOAD_BYTES,
     PhotoValidationError,
     process_uploaded_photo,
@@ -151,6 +152,24 @@ def test_processor_rejects_payload_over_upload_limit() -> None:
             b"x" * (MAX_UPLOAD_BYTES + 1),
             _portrait_crop(),
         )
+
+
+def test_processor_rejects_oversized_dimensions_before_decoding(monkeypatch) -> None:
+    payload = _image_bytes(size=(MAX_DIMENSION + 1, 1))
+    original_load = Image.Image.load
+    decoded = False
+
+    def tracking_load(self, *args, **kwargs):
+        nonlocal decoded
+        decoded = True
+        return original_load(self, *args, **kwargs)
+
+    monkeypatch.setattr(Image.Image, "load", tracking_load)
+
+    with pytest.raises(PhotoValidationError, match="dimensions"):
+        process_uploaded_photo(payload, _portrait_crop())
+
+    assert decoded is False
 
 
 def test_derivative_can_be_regenerated_from_normalized_source() -> None:

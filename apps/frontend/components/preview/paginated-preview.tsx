@@ -21,6 +21,7 @@ interface PaginatedPreviewProps {
 const MIN_ZOOM = 0.4;
 const MAX_ZOOM = 1.5;
 const ZOOM_STEP = 0.1;
+const PROFILE_PHOTO_TOP_OVERFLOW_PX = 8;
 
 /**
  * PaginatedPreview shows a WYSIWYG preview of the resume with actual page dimensions,
@@ -221,6 +222,9 @@ export function PaginatedPreview({
                 showMarginGuides={showMargins}
                 contentOffset={page.contentOffset}
                 contentEnd={page.contentEnd}
+                topOverflowAllowance={
+                  resumeData.personalInfo?.photo ? PROFILE_PHOTO_TOP_OVERFLOW_PX : 0
+                }
               >
                 <Resume
                   resumeId={resumeId}

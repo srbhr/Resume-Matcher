@@ -14,6 +14,7 @@ interface PageContainerProps {
   children: React.ReactNode;
   contentOffset?: number; // Where this page's content starts (in px)
   contentEnd?: number; // Where this page's content ends (in px)
+  topOverflowAllowance?: number; // First-page overlay space above normal content
 }
 
 /**
@@ -32,6 +33,7 @@ export function PageContainer({
   children,
   contentOffset = 0,
   contentEnd,
+  topOverflowAllowance = 0,
 }: PageContainerProps) {
   const pageDims = PAGE_DIMENSIONS[pageSize];
   const pageWidthPx = mmToPx(pageDims.width);
@@ -50,6 +52,7 @@ export function PageContainer({
   const actualContentHeight = contentEnd
     ? Math.min(maxContentHeight, contentEnd - contentOffset)
     : maxContentHeight;
+  const effectiveTopOverflow = contentOffset === 0 ? topOverflowAllowance : 0;
 
   return (
     <div className="relative flex flex-col items-center">
@@ -85,19 +88,21 @@ export function PageContainer({
 
         {/* Content area with clipping - uses actualContentHeight to prevent content overlap */}
         <div
+          data-page-content-viewport
           className="absolute overflow-hidden"
           style={{
-            top: marginTopPx,
+            top: marginTopPx - effectiveTopOverflow,
             left: marginLeftPx,
             width: contentWidth,
-            height: actualContentHeight,
+            height: actualContentHeight + effectiveTopOverflow,
           }}
         >
           {/* Content positioned based on page offset */}
           <div
+            data-page-content
             className="absolute left-0 right-0"
             style={{
-              top: -contentOffset,
+              top: effectiveTopOverflow - contentOffset,
               width: contentWidth,
             }}
           >
