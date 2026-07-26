@@ -73,6 +73,19 @@ describe('resume API', () => {
     );
   });
 
+  it('builds the same relative photo URLs during server rendering', async () => {
+    vi.stubGlobal('window', undefined);
+    vi.resetModules();
+    const serverResumeApi = await import('@/lib/api/resume');
+
+    expect(serverResumeApi.getResumePhotoUrl('res 123', 4)).toBe(
+      '/api/v1/resumes/res%20123/photo?v=4'
+    );
+    expect(serverResumeApi.getResumePhotoSourceUrl('res 123', 4)).toBe(
+      '/api/v1/resumes/res%20123/photo/source?v=4'
+    );
+  });
+
   it('uploads photo settings as multipart data without forcing content type', async () => {
     fetchMock.mockResolvedValue(
       new Response(JSON.stringify({ data: { resume_id: 'res-1', processed_resume: {} } }), {

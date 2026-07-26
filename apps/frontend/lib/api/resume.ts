@@ -5,7 +5,15 @@ import type {
 import type { PhotoMutation, ResumeData } from '@/components/dashboard/resume-component';
 import { type TemplateSettings } from '@/lib/types/template-settings';
 import { type Locale } from '@/i18n/config';
-import { API_BASE, DEFAULT_TIMEOUT_MS, apiPost, apiPatch, apiDelete, apiFetch } from './client';
+import {
+  API_BASE,
+  PUBLIC_API_BASE,
+  DEFAULT_TIMEOUT_MS,
+  apiPost,
+  apiPatch,
+  apiDelete,
+  apiFetch,
+} from './client';
 
 type ProcessedResume = ResumeData;
 
@@ -193,12 +201,12 @@ async function parsePhotoMutationResponse(response: Response): Promise<ResumeRes
 
 export function getResumePhotoUrl(resumeId: string, version: number): string {
   const endpoint = photoEndpoint(resumeId);
-  return `${API_BASE}${endpoint}?v=${encodeURIComponent(String(version))}`;
+  return `${PUBLIC_API_BASE}${endpoint}?v=${encodeURIComponent(String(version))}`;
 }
 
 export function getResumePhotoSourceUrl(resumeId: string, version: number): string {
   const endpoint = photoEndpoint(resumeId);
-  return `${API_BASE}${endpoint}/source?v=${encodeURIComponent(String(version))}`;
+  return `${PUBLIC_API_BASE}${endpoint}/source?v=${encodeURIComponent(String(version))}`;
 }
 
 export async function putResumePhoto(
