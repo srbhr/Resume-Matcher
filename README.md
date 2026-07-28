@@ -225,6 +225,7 @@ Open **<http://localhost:3000>** and configure your AI provider in Settings.
 | Provider | Local/Cloud | Notes |
 |----------|-------------|-------|
 | **Ollama** | Local | Free, runs on your machine |
+| **Claude Code CLI** | Local | Uses your installed `claude` CLI — no API key. Set `LLM_PROVIDER=claude_cli`. Requires [Claude Code](https://claude.com/claude-code) installed and signed in (`claude auth login`). |
 | **OpenAI** | Cloud | GPT-5 Nano, GPT-4o |
 | **Anthropic** | Cloud | Claude Haiku 4.5 |
 | **Google Gemini** | Cloud | Gemini 3 Flash |
