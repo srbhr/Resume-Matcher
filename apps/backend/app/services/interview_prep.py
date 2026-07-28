@@ -11,6 +11,7 @@ from app.llm import (
 )
 from app.prompts import INTERVIEW_PREP_PROMPT, get_language_name
 from app.schemas import InterviewPrepData
+from app.services.resume_photo import strip_photo_metadata
 
 
 _JOB_DESCRIPTION_PROMPT_CHAR_LIMIT = 12_000
@@ -68,6 +69,7 @@ def _truncate_json_value(
 
 
 def _serialize_resume_data_for_prompt(resume_data: dict[str, Any]) -> str:
+    resume_data = strip_photo_metadata(resume_data)
     resume_json = json.dumps(resume_data, ensure_ascii=False)
     if len(resume_json) <= _RESUME_DATA_PROMPT_CHAR_LIMIT:
         return resume_json

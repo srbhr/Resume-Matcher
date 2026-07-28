@@ -803,6 +803,43 @@
     "defaults": {
       "name": "Your Name"
     },
+    "photo": {
+      "label": "Profile Photo",
+      "add": "Add photo",
+      "edit": "Edit",
+      "editAction": "Edit photo",
+      "replace": "Replace",
+      "remove": "Remove",
+      "removeConfirm": "Remove this profile photo? The original image and crop settings will be deleted.",
+      "helper": "JPG, PNG, or WebP up to 8 MB",
+      "dialogTitle": "Edit Profile Photo",
+      "dialogDescription": "Drag the crop box to move it. Drag edges or corners to resize it.",
+      "moveCrop": "Move crop area",
+      "cropHandles": {
+        "n": "Resize crop from top",
+        "s": "Resize crop from bottom",
+        "e": "Resize crop from right",
+        "w": "Resize crop from left",
+        "nw": "Resize crop from top left",
+        "ne": "Resize crop from top right",
+        "sw": "Resize crop from bottom left",
+        "se": "Resize crop from bottom right"
+      },
+      "size": "Display size",
+      "reset": "Reset",
+      "applying": "Applying…",
+      "alt": "{name} profile photo",
+      "profilePhoto": "profile photo",
+      "errors": {
+        "format": "Choose a JPG, PNG, or WebP image.",
+        "size": "The image must be 8 MB or smaller.",
+        "corrupt": "The image could not be read. Choose a different file.",
+        "dimensions": "The image dimensions are too large.",
+        "upload": "The photo could not be uploaded. Please try again.",
+        "save": "The photo could not be saved. Please try again.",
+        "saveRequired": "Save the resume before adding a photo."
+      }
+    },
     "additional": {
       "technicalSkills": "Technical Skills"
     },

@@ -1,0 +1,154 @@
+.viewport {
+  display: flex;
+  height: 360px;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: var(--color-ink);
+}
+
+.stage {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  max-height: 100%;
+  line-height: 0;
+  user-select: none;
+  touch-action: none;
+}
+
+.sourceImage {
+  display: block;
+  max-width: 100%;
+  max-height: 360px;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.crop {
+  position: absolute;
+  cursor: move;
+  border: 2px solid white;
+  box-shadow: 0 0 0 9999px rgb(0 0 0 / 48%);
+  touch-action: none;
+}
+
+.crop::before {
+  position: absolute;
+  inset: 0;
+  background: rgb(255 255 255 / 8%);
+  content: '';
+  pointer-events: none;
+}
+
+.moveControl {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  border: 0;
+  background: transparent;
+  cursor: move;
+  padding: 0;
+  touch-action: none;
+}
+
+.grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(
+      to right,
+      transparent 33.333%,
+      rgb(255 255 255 / 55%) 33.333% 33.7%,
+      transparent 33.7% 66.666%,
+      rgb(255 255 255 / 55%) 66.666% 67%,
+      transparent 67%
+    ),
+    linear-gradient(
+      to bottom,
+      transparent 33.333%,
+      rgb(255 255 255 / 55%) 33.333% 33.7%,
+      transparent 33.7% 66.666%,
+      rgb(255 255 255 / 55%) 66.666% 67%,
+      transparent 67%
+    );
+  pointer-events: none;
+}
+
+.handle {
+  position: absolute;
+  z-index: 2;
+  width: 14px;
+  height: 14px;
+  border: 2px solid black;
+  background: white;
+  padding: 0;
+  touch-action: none;
+}
+
+.n,
+.s {
+  left: 50%;
+  cursor: ns-resize;
+  transform: translate(-50%, -50%);
+}
+
+.n {
+  top: 0;
+}
+
+.s {
+  top: 100%;
+}
+
+.e,
+.w {
+  top: 50%;
+  cursor: ew-resize;
+  transform: translate(-50%, -50%);
+}
+
+.e {
+  left: 100%;
+}
+
+.w {
+  left: 0;
+}
+
+.nw,
+.ne,
+.sw,
+.se {
+  transform: translate(-50%, -50%);
+}
+
+.nw,
+.se {
+  cursor: nwse-resize;
+}
+
+.ne,
+.sw {
+  cursor: nesw-resize;
+}
+
+.nw {
+  top: 0;
+  left: 0;
+}
+
+.ne {
+  top: 0;
+  left: 100%;
+}
+
+.sw {
+  top: 100%;
+  left: 0;
+}
+
+.se {
+  top: 100%;
+  left: 100%;
+}

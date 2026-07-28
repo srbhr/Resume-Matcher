@@ -237,6 +237,22 @@ class TestTailoringPipeline:
         upload_resp = await _upload_resume(isolated_db, sample_resume)
         assert upload_resp.status_code == 200
         resume_id = upload_resp.json()["resume_id"]
+        photo_settings = {
+            "cropX": 0,
+            "cropY": 0,
+            "cropWidth": 100,
+            "cropHeight": 100,
+            "zoom": 1,
+            "size": 88,
+        }
+        await isolated_db.put_resume_photo(
+            resume_id,
+            source_data=b"normalized-source",
+            display_data=b"display-derivative",
+            source_width=800,
+            source_height=800,
+            settings=photo_settings,
+        )
 
         async with _new_client() as client:
             jobs_resp = await client.post(
@@ -287,7 +303,7 @@ class TestTailoringPipeline:
                 "app.routers.resumes.generate_resume_diffs",
                 new_callable=AsyncMock,
                 return_value=diff_result,
-            ),
+            ) as generate_diffs_mock,
             patch(
                 "app.routers.resumes.apply_diffs",
                 return_value=(copy.deepcopy(improved), [], []),
@@ -319,6 +335,11 @@ class TestTailoringPipeline:
             assert preview_data["job_id"] == job_id
             preview_resume = preview_data["resume_preview"]
             assert preview_resume["summary"] == improved["summary"]
+            assert preview_resume["personalInfo"]["photo"]["version"] == 1
+            llm_resume_data = generate_diffs_mock.await_args.kwargs[
+                "original_resume_data"
+            ]
+            assert "photo" not in llm_resume_data["personalInfo"]
             # Preview must NOT have persisted a tailored resume.
             assert (await isolated_db.get_stats())["total_resumes"] == 1
             # The preview_hash was persisted on the job for the confirm handshake.
@@ -352,10 +373,16 @@ class TestTailoringPipeline:
         assert stored_tailored["processing_status"] == "ready"
         assert stored_tailored["processed_data"]["summary"] == improved["summary"]
         # personalInfo preserved from the master (the confirm invariant).
-        assert (
-            stored_tailored["processed_data"]["personalInfo"]
-            == sample_resume["personalInfo"]
-        )
+        tailored_personal = stored_tailored["processed_data"]["personalInfo"]
+        assert {
+            key: value
+            for key, value in tailored_personal.items()
+            if key != "photo"
+        } == sample_resume["personalInfo"]
+        assert tailored_personal["photo"]["version"] == 1
+        tailored_photo = await isolated_db.get_resume_photo(tailored_id)
+        assert tailored_photo is not None
+        assert tailored_photo["source_data"] == b"normalized-source"
 
         # An improvements record links original -> tailored for this job.
         improvement = await isolated_db.get_improvement_by_tailored_resume(tailored_id)
@@ -370,6 +397,9 @@ class TestTailoringPipeline:
         master = await isolated_db.get_master_resume()
         assert master["resume_id"] == resume_id
         assert master["processed_data"]["summary"] == sample_resume["summary"]
+
+        await isolated_db.delete_resume_photo(resume_id)
+        assert await isolated_db.get_resume_photo(tailored_id) is not None
 
     async def test_preview_confirm_succeeds_for_non_canonical_stored_resume(
         self, isolated_db, sample_resume

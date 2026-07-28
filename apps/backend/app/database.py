@@ -11,6 +11,7 @@ Two engines back one SQLite file:
 """
 
 import asyncio
+import copy
 import logging
 import shutil
 from datetime import datetime, timezone
@@ -25,7 +26,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from app.config import settings
 from app.db_engine import init_models_sync, make_async_engine, make_sync_engine
-from app.models import ApiKey, Application, Improvement, Job, Resume
+from app.models import ApiKey, Application, Improvement, Job, Resume, ResumePhoto
 
 logger = logging.getLogger(__name__)
 
@@ -79,7 +80,9 @@ class Database:
         if self._initialized:
             return
         self._sync_engine = make_sync_engine(self.db_path)
-        self._sync_session_factory = sessionmaker(self._sync_engine, expire_on_commit=False)
+        self._sync_session_factory = sessionmaker(
+            self._sync_engine, expire_on_commit=False
+        )
         init_models_sync(self._sync_engine)
         self._async_engine = make_async_engine(self.db_path)
         self._async_session_factory = async_sessionmaker(
@@ -135,6 +138,40 @@ class Database:
         if row.original_markdown is not None:
             doc["original_markdown"] = row.original_markdown
         return doc
+
+    @staticmethod
+    def _resume_photo_to_dict(row: ResumePhoto) -> dict[str, Any]:
+        """Convert one photo ORM row to the public database-facade shape."""
+        return {
+            "resume_id": row.resume_id,
+            "source_data": row.source_data,
+            "display_data": row.display_data,
+            "mime_type": row.mime_type,
+            "source_width": row.source_width,
+            "source_height": row.source_height,
+            "version": row.version,
+            "created_at": row.created_at,
+            "updated_at": row.updated_at,
+        }
+
+    @staticmethod
+    def _with_photo_metadata(
+        processed_data: dict[str, Any] | None,
+        settings: dict[str, Any] | None,
+    ) -> dict[str, Any]:
+        """Return copied resume data with authoritative photo metadata applied."""
+        result = (
+            copy.deepcopy(processed_data) if isinstance(processed_data, dict) else {}
+        )
+        personal_info = result.get("personalInfo")
+        if not isinstance(personal_info, dict):
+            personal_info = {}
+            result["personalInfo"] = personal_info
+        if settings is None:
+            personal_info.pop("photo", None)
+        else:
+            personal_info["photo"] = copy.deepcopy(settings)
+        return result
 
     @staticmethod
     def _job_to_dict(row: Job) -> dict[str, Any]:
@@ -242,6 +279,80 @@ class Database:
             doc["original_markdown"] = original_markdown
         return doc
 
+    async def create_resume_with_cloned_photo(
+        self,
+        *,
+        source_resume_id: str,
+        content: str,
+        content_type: str = "md",
+        filename: str | None = None,
+        is_master: bool = False,
+        parent_id: str | None = None,
+        processed_data: dict[str, Any] | None = None,
+        processing_status: str = "pending",
+        cover_letter: str | None = None,
+        outreach_message: str | None = None,
+        title: str | None = None,
+        original_markdown: str | None = None,
+        interview_prep: str | None = None,
+    ) -> dict[str, Any]:
+        """Create a resume and independently clone its source photo atomically."""
+        resume_id = str(uuid4())
+        now = _now()
+        async with self._session.begin() as session:
+            source_resume = await session.get(Resume, source_resume_id)
+            if source_resume is None:
+                raise ValueError(f"Resume not found: {source_resume_id}")
+            source_photo = await session.get(ResumePhoto, source_resume_id)
+            source_personal = (
+                source_resume.processed_data.get("personalInfo", {})
+                if isinstance(source_resume.processed_data, dict)
+                else {}
+            )
+            source_settings = (
+                source_personal.get("photo")
+                if source_photo is not None and isinstance(source_personal, dict)
+                else None
+            )
+            authoritative_data = self._with_photo_metadata(
+                processed_data,
+                source_settings if isinstance(source_settings, dict) else None,
+            )
+            resume = Resume(
+                resume_id=resume_id,
+                content=content,
+                content_type=content_type,
+                filename=filename,
+                is_master=is_master,
+                parent_id=parent_id,
+                processed_data=authoritative_data,
+                processing_status=processing_status,
+                cover_letter=cover_letter,
+                outreach_message=outreach_message,
+                interview_prep=interview_prep,
+                title=title,
+                original_markdown=original_markdown,
+                created_at=now,
+                updated_at=now,
+            )
+            session.add(resume)
+            if source_photo is not None:
+                session.add(
+                    ResumePhoto(
+                        resume_id=resume_id,
+                        source_data=bytes(source_photo.source_data),
+                        display_data=bytes(source_photo.display_data),
+                        mime_type=source_photo.mime_type,
+                        source_width=source_photo.source_width,
+                        source_height=source_photo.source_height,
+                        version=source_photo.version,
+                        created_at=now,
+                        updated_at=now,
+                    )
+                )
+
+        return self._resume_to_dict(resume)
+
     async def create_resume_atomic_master(
         self,
         content: str,
@@ -306,7 +417,9 @@ class Database:
             row = result.scalars().first()
             return self._resume_to_dict(row) if row else None
 
-    async def update_resume(self, resume_id: str, updates: dict[str, Any]) -> dict[str, Any]:
+    async def update_resume(
+        self, resume_id: str, updates: dict[str, Any]
+    ) -> dict[str, Any]:
         """Update resume by ID.
 
         Raises:
@@ -316,7 +429,24 @@ class Database:
             row = await session.get(Resume, resume_id)
             if row is None:
                 raise ValueError(f"Resume not found: {resume_id}")
-            for key, value in updates.items():
+            safe_updates = copy.deepcopy(updates)
+            if "processed_data" in safe_updates:
+                photo_row = await session.get(ResumePhoto, resume_id)
+                current_personal = (
+                    row.processed_data.get("personalInfo", {})
+                    if isinstance(row.processed_data, dict)
+                    else {}
+                )
+                current_settings = (
+                    current_personal.get("photo")
+                    if photo_row is not None and isinstance(current_personal, dict)
+                    else None
+                )
+                safe_updates["processed_data"] = self._with_photo_metadata(
+                    safe_updates["processed_data"],
+                    current_settings if isinstance(current_settings, dict) else None,
+                )
+            for key, value in safe_updates.items():
                 if hasattr(row, key):
                     setattr(row, key, value)
                 else:
@@ -324,6 +454,136 @@ class Database:
             row.updated_at = _now()
             await session.commit()
             return self._resume_to_dict(row)
+
+    async def get_resume_photo(self, resume_id: str) -> dict[str, Any] | None:
+        """Return one resume's normalized photo asset, if present."""
+        async with self._session() as session:
+            row = await session.get(ResumePhoto, resume_id)
+            return self._resume_photo_to_dict(row) if row else None
+
+    async def put_resume_photo(
+        self,
+        resume_id: str,
+        *,
+        source_data: bytes,
+        display_data: bytes,
+        source_width: int,
+        source_height: int,
+        settings: dict[str, Any],
+        aspect_ratio: float = 1,
+    ) -> dict[str, Any]:
+        """Atomically create or replace a resume photo and its metadata."""
+        now = _now()
+        async with self._session.begin() as session:
+            resume = await session.get(Resume, resume_id)
+            if resume is None:
+                raise ValueError(f"Resume not found: {resume_id}")
+
+            photo = await session.get(ResumePhoto, resume_id)
+            version = (photo.version + 1) if photo is not None else 1
+            if photo is None:
+                photo = ResumePhoto(
+                    resume_id=resume_id,
+                    source_data=source_data,
+                    display_data=display_data,
+                    mime_type="image/webp",
+                    source_width=source_width,
+                    source_height=source_height,
+                    version=version,
+                    created_at=now,
+                    updated_at=now,
+                )
+                session.add(photo)
+            else:
+                photo.source_data = source_data
+                photo.display_data = display_data
+                photo.mime_type = "image/webp"
+                photo.source_width = source_width
+                photo.source_height = source_height
+                photo.version = version
+                photo.updated_at = now
+
+            authoritative_settings = {
+                key: value
+                for key, value in copy.deepcopy(settings).items()
+                if key not in {"zoom", "aspectRatio"}
+            }
+            authoritative_settings.update(
+                version=version,
+                aspectRatio=aspect_ratio,
+            )
+            resume.processed_data = self._with_photo_metadata(
+                resume.processed_data,
+                authoritative_settings,
+            )
+            resume.updated_at = now
+
+        return self._resume_to_dict(resume)
+
+    async def update_resume_photo(
+        self,
+        resume_id: str,
+        *,
+        display_data: bytes,
+        settings: dict[str, Any],
+        aspect_ratio: float = 1,
+    ) -> dict[str, Any]:
+        """Atomically update a photo derivative and embedded settings."""
+        now = _now()
+        async with self._session.begin() as session:
+            resume = await session.get(Resume, resume_id)
+            if resume is None:
+                raise ValueError(f"Resume not found: {resume_id}")
+            photo = await session.get(ResumePhoto, resume_id)
+            if photo is None:
+                raise ValueError(f"Resume photo not found: {resume_id}")
+
+            version = photo.version + 1
+            photo.display_data = display_data
+            photo.version = version
+            photo.updated_at = now
+            authoritative_settings = {
+                key: value
+                for key, value in copy.deepcopy(settings).items()
+                if key not in {"zoom", "aspectRatio"}
+            }
+            authoritative_settings.update(
+                version=version,
+                aspectRatio=aspect_ratio,
+            )
+            resume.processed_data = self._with_photo_metadata(
+                resume.processed_data,
+                authoritative_settings,
+            )
+            resume.updated_at = now
+
+        return self._resume_to_dict(resume)
+
+    async def delete_resume_photo(self, resume_id: str) -> dict[str, Any]:
+        """Idempotently remove a photo row and its embedded metadata."""
+        now = _now()
+        async with self._session.begin() as session:
+            resume = await session.get(Resume, resume_id)
+            if resume is None:
+                raise ValueError(f"Resume not found: {resume_id}")
+            photo = await session.get(ResumePhoto, resume_id)
+            personal_info = (
+                resume.processed_data.get("personalInfo", {})
+                if isinstance(resume.processed_data, dict)
+                else {}
+            )
+            has_metadata = isinstance(personal_info, dict) and "photo" in personal_info
+            if photo is None and not has_metadata:
+                return self._resume_to_dict(resume)
+            if photo is not None:
+                await session.delete(photo)
+            resume.processed_data = self._with_photo_metadata(
+                resume.processed_data,
+                None,
+            )
+            resume.updated_at = now
+
+        return self._resume_to_dict(resume)
 
     async def delete_resume(self, resume_id: str) -> bool:
         """Delete resume by ID."""
@@ -367,13 +627,21 @@ class Database:
 
     # -- Job operations -----------------------------------------------------
 
-    async def create_job(self, content: str, resume_id: str | None = None) -> dict[str, Any]:
+    async def create_job(
+        self, content: str, resume_id: str | None = None
+    ) -> dict[str, Any]:
         """Create a new job description entry."""
         job_id = str(uuid4())
         now = _now()
         async with self._session() as session:
             session.add(
-                Job(job_id=job_id, content=content, resume_id=resume_id, created_at=now, metadata_json={})
+                Job(
+                    job_id=job_id,
+                    content=content,
+                    resume_id=resume_id,
+                    created_at=now,
+                    metadata_json={},
+                )
             )
             await session.commit()
         return {
@@ -559,7 +827,9 @@ class Database:
                 raise
             return self._application_to_dict(row)
 
-    async def list_applications(self, status: str | None = None) -> list[dict[str, Any]]:
+    async def list_applications(
+        self, status: str | None = None
+    ) -> list[dict[str, Any]]:
         """List applications ordered by (status, position)."""
         async with self._session() as session:
             stmt = select(Application)

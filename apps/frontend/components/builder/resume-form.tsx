@@ -18,6 +18,7 @@ import {
 import {
   ResumeData,
   PersonalInfo,
+  PhotoMutation,
   SectionMeta,
   SectionType,
   CustomSection,
@@ -45,9 +46,26 @@ import { useTranslations } from '@/lib/i18n';
 interface ResumeFormProps {
   resumeData: ResumeData;
   onUpdate: (data: ResumeData) => void;
+  resumeId?: string | null;
+  onPhotoUpload?: (file: File, mutation: PhotoMutation) => Promise<void>;
+  onPhotoEdit?: (mutation: PhotoMutation) => Promise<void>;
+  onPhotoRemove?: () => Promise<void>;
+  onPhotoEditorOpenChange?: (open: boolean) => void;
+  photoEditRequestToken?: number;
+  photoActionsDisabled?: boolean;
 }
 
-export const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, onUpdate }) => {
+export const ResumeForm: React.FC<ResumeFormProps> = ({
+  resumeData,
+  onUpdate,
+  resumeId,
+  onPhotoUpload,
+  onPhotoEdit,
+  onPhotoRemove,
+  onPhotoEditorOpenChange,
+  photoEditRequestToken,
+  photoActionsDisabled,
+}) => {
   const { t } = useTranslations();
 
   // Get section metadata, falling back to defaults
@@ -218,6 +236,13 @@ export const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, onUpdate }) 
             <PersonalInfoForm
               data={resumeData.personalInfo || ({} as PersonalInfo)}
               onChange={(data) => onUpdate({ ...resumeData, personalInfo: data })}
+              resumeId={resumeId}
+              onPhotoUpload={onPhotoUpload}
+              onPhotoEdit={onPhotoEdit}
+              onPhotoRemove={onPhotoRemove}
+              onPhotoEditorOpenChange={onPhotoEditorOpenChange}
+              photoEditRequestToken={photoEditRequestToken}
+              photoActionsDisabled={photoActionsDisabled}
             />
           );
 

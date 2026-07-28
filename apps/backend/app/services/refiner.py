@@ -27,6 +27,7 @@ from app.schemas.refinement import (
     RefinementConfig,
     RefinementResult,
 )
+from app.services.resume_photo import strip_photo_metadata
 
 logger = logging.getLogger(__name__)
 
@@ -479,8 +480,8 @@ async def inject_keywords(
 
     prompt = KEYWORD_INJECTION_PROMPT.format(
         keywords_to_inject=json.dumps(keywords_to_inject),
-        current_resume=json.dumps(tailored),
-        master_resume=json.dumps(master),
+        current_resume=json.dumps(strip_photo_metadata(tailored)),
+        master_resume=json.dumps(strip_photo_metadata(master)),
         job_description=truncated_jd,
     )
 

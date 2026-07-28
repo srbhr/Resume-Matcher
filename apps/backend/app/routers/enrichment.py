@@ -19,6 +19,7 @@ from app.prompts.enrichment import (
     REGENERATE_SKILLS_PROMPT,
 )
 from app.prompts.templates import get_language_name
+from app.services.resume_photo import strip_photo_metadata
 from app.schemas.enrichment import (
     AnalysisResponse,
     AnswerInput,
@@ -105,7 +106,7 @@ async def analyze_resume(resume_id: str) -> AnalysisResponse:
         )
 
     # Build prompt with content language
-    resume_json = json.dumps(processed_data)
+    resume_json = json.dumps(strip_photo_metadata(processed_data))
     language = get_content_language()
     output_language = get_language_name(language)
     prompt = ANALYZE_RESUME_PROMPT.format(
@@ -211,7 +212,7 @@ async def generate_enhancements(request: EnhanceRequest) -> EnhancementPreview:
                 )
     else:
         # Legacy path — re-analyze to get question-to-item mapping
-        resume_json = json.dumps(processed_data)
+        resume_json = json.dumps(strip_photo_metadata(processed_data))
         language = get_content_language()
         output_language = get_language_name(language)
         analysis_prompt = ANALYZE_RESUME_PROMPT.format(

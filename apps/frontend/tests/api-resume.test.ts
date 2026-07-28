@@ -1,5 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { generateInterviewPrep } from '@/lib/api/resume';
+import {
+  deleteResumePhoto,
+  generateInterviewPrep,
+  getResumePhotoSourceUrl,
+  getResumePhotoUrl,
+  patchResumePhoto,
+  putResumePhoto,
+} from '@/lib/api/resume';
 
 const interviewPrep = {
   role_fit_analysis: ['Backend API experience fits the role.'],
@@ -57,5 +64,87 @@ describe('resume API', () => {
     await expect(generateInterviewPrep('res-123')).rejects.toThrow(
       'Failed to generate interview preparation'
     );
+  });
+
+  it('builds versioned photo and source URLs', () => {
+    expect(getResumePhotoUrl('res 123', 4)).toBe('/api/v1/resumes/res%20123/photo?v=4');
+    expect(getResumePhotoSourceUrl('res 123', 4)).toBe(
+      '/api/v1/resumes/res%20123/photo/source?v=4'
+    );
+  });
+
+  it('builds the same relative photo URLs during server rendering', async () => {
+    vi.stubGlobal('window', undefined);
+    vi.resetModules();
+    const serverResumeApi = await import('@/lib/api/resume');
+
+    expect(serverResumeApi.getResumePhotoUrl('res 123', 4)).toBe(
+      '/api/v1/resumes/res%20123/photo?v=4'
+    );
+    expect(serverResumeApi.getResumePhotoSourceUrl('res 123', 4)).toBe(
+      '/api/v1/resumes/res%20123/photo/source?v=4'
+    );
+  });
+
+  it('uploads photo settings as multipart data without forcing content type', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ data: { resume_id: 'res-1', processed_resume: {} } }), {
+        status: 200,
+      })
+    );
+    const file = new File(['photo'], 'photo.png', { type: 'image/png' });
+
+    await putResumePhoto('res-1', file, {
+      cropX: 25,
+      cropY: 0,
+      cropWidth: 50,
+      cropHeight: 75,
+      size: 88,
+    });
+
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe('/api/v1/resumes/res-1/photo');
+    expect(init.method).toBe('PUT');
+    expect(init.headers).toBeUndefined();
+    expect(init.body).toBeInstanceOf(FormData);
+    expect(init.body.get('file')).toBe(file);
+    expect(init.body.get('crop_x')).toBe('25');
+    expect(init.body.get('crop_height')).toBe('75');
+    expect(init.body.get('zoom')).toBeNull();
+  });
+
+  it('updates and deletes a photo through dedicated endpoints', async () => {
+    fetchMock
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ data: { resume_id: 'res-1', processed_resume: {} } }), {
+          status: 200,
+        })
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ data: { resume_id: 'res-1', processed_resume: {} } }), {
+          status: 200,
+        })
+      );
+
+    await patchResumePhoto('res-1', {
+      cropX: 0,
+      cropY: 0,
+      cropWidth: 100,
+      cropHeight: 100,
+      size: 96,
+    });
+    await deleteResumePhoto('res-1');
+
+    expect(fetchMock.mock.calls[0][1]).toMatchObject({
+      method: 'PATCH',
+      body: JSON.stringify({
+        cropX: 0,
+        cropY: 0,
+        cropWidth: 100,
+        cropHeight: 100,
+        size: 96,
+      }),
+    });
+    expect(fetchMock.mock.calls[1][1]).toMatchObject({ method: 'DELETE' });
   });
 });

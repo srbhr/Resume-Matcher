@@ -428,6 +428,7 @@ export default function ResumeViewerPage() {
         <div className="flex justify-center pb-4">
           <div className="resume-print w-full max-w-[250mm] shadow-sw-lg border-2 border-black bg-white">
             <Resume
+              resumeId={resumeId}
               resumeData={localizedResumeData || resumeData}
               additionalSectionLabels={{
                 technicalSkills: t('resume.additionalLabels.technicalSkills'),
@@ -446,7 +447,11 @@ export default function ResumeViewerPage() {
                 awards: t('resume.sections.awards'),
                 links: t('resume.sections.links'),
               }}
-              fallbackLabels={{ name: t('resume.defaults.name') }}
+              fallbackLabels={{
+                name: t('resume.defaults.name'),
+                profilePhoto: t('resume.photo.profilePhoto'),
+                editPhoto: t('resume.photo.editAction'),
+              }}
             />
           </div>
         </div>

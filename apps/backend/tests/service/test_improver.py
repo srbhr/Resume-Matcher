@@ -1,6 +1,7 @@
 """Service tests for improver — async functions with mocked LLM."""
 
 import copy
+import json
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -314,6 +315,37 @@ class TestGenerateResumeDiffsEdgeCases:
         prompt = mock_llm.call_args.kwargs.get("prompt") or mock_llm.call_args.args[0]
         # Should use the markdown (which has "Jan 2020") not the JSON (which has "2020 - 2023")
         assert "# Markdown with Jan 2020" in prompt
+
+    @patch("app.services.improver.complete_json", new_callable=AsyncMock)
+    async def test_json_fallback_strips_photo_metadata(self, mock_llm, sample_job_keywords):
+        """A JSON-backed tailored resume must not leak photo metadata to the LLM."""
+        mock_llm.return_value = {"changes": [], "strategy_notes": "test"}
+        year_only_resume = {
+            "personalInfo": {
+                "name": "Test",
+                "photo": {
+                    "cropX": 0,
+                    "cropY": 0,
+                    "cropWidth": 100,
+                    "cropHeight": 100,
+                    "size": 88,
+                    "version": 2,
+                    "aspectRatio": 1,
+                },
+            },
+            "workExperience": [{"years": "2020 - 2023"}],
+        }
+
+        await generate_resume_diffs(
+            original_resume=json.dumps(year_only_resume),
+            job_description="JD",
+            job_keywords=sample_job_keywords,
+            original_resume_data=year_only_resume,
+        )
+
+        prompt = mock_llm.call_args.kwargs.get("prompt") or mock_llm.call_args.args[0]
+        assert '"name": "Test"' in prompt
+        assert '"photo"' not in prompt
 
     @patch("app.services.improver.complete_json", new_callable=AsyncMock)
     async def test_non_list_changes_from_llm(self, mock_llm, sample_resume, sample_job_keywords):

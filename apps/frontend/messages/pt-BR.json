@@ -803,6 +803,43 @@
     "defaults": {
       "name": "Seu Nome"
     },
+    "photo": {
+      "label": "Foto de perfil",
+      "add": "Adicionar foto",
+      "edit": "Editar",
+      "editAction": "Editar foto",
+      "replace": "Substituir",
+      "remove": "Remover",
+      "removeConfirm": "Remover esta foto de perfil? A imagem original e as configurações de corte serão excluídas.",
+      "helper": "JPG, PNG ou WebP de até 8 MB",
+      "dialogTitle": "Editar foto de perfil",
+      "dialogDescription": "Arraste a moldura para movê-la e as bordas ou cantos para redimensioná-la.",
+      "moveCrop": "Mover a área de corte",
+      "cropHandles": {
+        "n": "Redimensionar pela parte superior",
+        "s": "Redimensionar pela parte inferior",
+        "e": "Redimensionar pela direita",
+        "w": "Redimensionar pela esquerda",
+        "nw": "Redimensionar pelo canto superior esquerdo",
+        "ne": "Redimensionar pelo canto superior direito",
+        "sw": "Redimensionar pelo canto inferior esquerdo",
+        "se": "Redimensionar pelo canto inferior direito"
+      },
+      "size": "Tamanho de exibição",
+      "reset": "Redefinir",
+      "applying": "Aplicando…",
+      "alt": "Foto de perfil de {name}",
+      "profilePhoto": "foto de perfil",
+      "errors": {
+        "format": "Escolha uma imagem JPG, PNG ou WebP.",
+        "size": "A imagem deve ter no máximo 8 MB.",
+        "corrupt": "Não foi possível ler a imagem. Escolha outro arquivo.",
+        "dimensions": "As dimensões da imagem são muito grandes.",
+        "upload": "Não foi possível enviar a foto. Tente novamente.",
+        "save": "Não foi possível salvar a foto. Tente novamente.",
+        "saveRequired": "Salve o currículo antes de adicionar uma foto."
+      }
+    },
     "additional": {
       "technicalSkills": "Habilidades Técnicas"
     },
