@@ -983,6 +983,13 @@
     "title": "Application Tracker",
     "subtitle": "Track where each tailored resume stands in your pipeline.",
     "addApplication": "Add Application",
+    "manage": {
+      "button": "Manage",
+      "title": "Manage statuses",
+      "description": "Choose which status columns appear on this board. Changes are saved in this browser.",
+      "done": "Done",
+      "allHidden": "All status columns are hidden. Use Manage to show one."
+    },
     "columns": {
       "saved": "Saved",
       "applied": "Applied",

@@ -983,6 +983,13 @@
     "title": "Suivi des candidatures",
     "subtitle": "Suivez l'avancement de chaque CV personnalisé dans votre pipeline.",
     "addApplication": "Ajouter une candidature",
+    "manage": {
+      "button": "Gérer",
+      "title": "Gérer les statuts",
+      "description": "Choisissez les colonnes de statut affichées sur le tableau. Les modifications sont enregistrées dans ce navigateur.",
+      "done": "Terminé",
+      "allHidden": "Toutes les colonnes de statut sont masquées. Utilisez Gérer pour en afficher une."
+    },
     "columns": {
       "saved": "Enregistré",
       "applied": "Postulé",

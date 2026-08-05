@@ -983,6 +983,13 @@
     "title": "Seguimiento de candidaturas",
     "subtitle": "Controla en qué punto está cada currículum adaptado de tu proceso.",
     "addApplication": "Añadir candidatura",
+    "manage": {
+      "button": "Gestionar",
+      "title": "Gestionar estados",
+      "description": "Elige qué columnas de estado aparecen en el tablero. Los cambios se guardan en este navegador.",
+      "done": "Listo",
+      "allHidden": "Todas las columnas de estado están ocultas. Usa Gestionar para mostrar una."
+    },
     "columns": {
       "saved": "Guardado",
       "applied": "Enviado",
