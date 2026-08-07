@@ -119,15 +119,20 @@ function isSafeUrl(value: string): boolean {
     return false;
   }
 
-  const normalized = trimmed.toLowerCase();
+  // Decode numeric HTML character references (decimal & hex) before checking scheme
+  let decoded = trimmed.replace(
+    /&#(?:x([0-9a-f]+)|(\d+));?/gi,
+    (_, hex, dec) => String.fromCharCode(parseInt(hex ?? dec, hex ? 16 : 10))
+  );
+
+  // Reject URLs that contain control characters which browsers may ignore inside schemes
+  if (/[\x00-\x1f\x7f]/.test(decoded)) {
+    return false;
+  }
+
+  const normalized = decoded.toLowerCase();
   return !['javascript:', 'data:', 'vbscript:'].some((prefix) => normalized.startsWith(prefix));
 }
-
-function normalizeRel(value: string): string {
-  return value
-    .split(/\s+/)
-    .map((item) => item.trim().toLowerCase())
-    .filter((item) => item && SAFE_REL_VALUES.has(item))
     .join(' ');
 }
 
