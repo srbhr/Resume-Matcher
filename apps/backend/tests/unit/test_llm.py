@@ -11,6 +11,7 @@ from app.llm import (
     _get_retry_temperature,
     _normalize_api_base,
     _supports_temperature,
+    get_llm_config,
     get_model_name,
     resolve_api_key,
 )
@@ -704,3 +705,67 @@ class TestScrubSecrets:
         assert "sk-abcd1234efgh5678" not in _scrub_secrets("key sk-abcd1234efgh5678 failed")
         assert "AIzaSyABCDEFGHIJ" not in _scrub_secrets("key AIzaSyABCDEFGHIJ failed")
         assert "tok_secret" not in _scrub_secrets("Authorization: Bearer tok_secret")
+
+
+class TestGetLlmConfigApiBase:
+    """Present-but-null api_base must fall back to the env default (issue #909 #3).
+
+    ``stored.get("api_base", default)`` returns None when the key is present
+    with a null value — which is exactly what an explicit "clear the Base URL"
+    writes. The router's ``_effective_api_base`` already handles this; the
+    runtime path in llm.py must agree so a cleared Base URL falls back to
+    LLM_API_BASE instead of reaching LiteLLM as None.
+    """
+
+    def test_present_null_api_base_falls_back_to_env_default(self, monkeypatch):
+        from app.llm import get_llm_config
+
+        class FakeSettings:
+            llm_provider = "openai"
+            llm_model = "gpt-4o"
+            llm_api_key = "env-key"
+            llm_api_base = "https://env-default.example/v1"
+            reasoning_effort = None
+
+        monkeypatch.setattr("app.llm.load_config_file", lambda: {"api_base": None})
+        monkeypatch.setattr("app.llm.settings", FakeSettings())
+
+        config = get_llm_config()
+
+        assert config.api_base == "https://env-default.example/v1"
+
+    def test_explicit_stored_api_base_wins_over_env_default(self, monkeypatch):
+        from app.llm import get_llm_config
+
+        class FakeSettings:
+            llm_provider = "openai"
+            llm_model = "gpt-4o"
+            llm_api_key = "env-key"
+            llm_api_base = "https://env-default.example/v1"
+            reasoning_effort = None
+
+        monkeypatch.setattr(
+            "app.llm.load_config_file", lambda: {"api_base": "https://stored.example/v1"}
+        )
+        monkeypatch.setattr("app.llm.settings", FakeSettings())
+
+        config = get_llm_config()
+
+        assert config.api_base == "https://stored.example/v1"
+
+    def test_absent_api_base_key_uses_env_default(self, monkeypatch):
+        from app.llm import get_llm_config
+
+        class FakeSettings:
+            llm_provider = "openai"
+            llm_model = "gpt-4o"
+            llm_api_key = "env-key"
+            llm_api_base = "https://env-default.example/v1"
+            reasoning_effort = None
+
+        monkeypatch.setattr("app.llm.load_config_file", lambda: {})
+        monkeypatch.setattr("app.llm.settings", FakeSettings())
+
+        config = get_llm_config()
+
+        assert config.api_base == "https://env-default.example/v1"

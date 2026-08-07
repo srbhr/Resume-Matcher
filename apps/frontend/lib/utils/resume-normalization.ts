@@ -4,6 +4,7 @@ import type {
   Experience,
   Project,
   ResumeData,
+  SectionType,
 } from '@/components/dashboard/resume-component';
 
 type DescribedItem = {
@@ -30,6 +31,25 @@ const normalizeStringList = (items?: unknown): string[] | undefined => {
 
 const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
+
+// Exhaustive map keyed on the frontend `SectionType` union (which mirrors the
+// backend `SectionType` enum in apps/backend/app/schemas/models.py). A Record
+// keyed by SectionType makes TypeScript fail to compile if the union grows and
+// this map is not updated — so a new backend section type can never be silently
+// dropped from the save payload. CustomSection validation fails on any value
+// outside the union, so a persisted entry with a missing or bogus sectionType
+// must still be dropped, not passed through.
+const CUSTOM_SECTION_TYPES: Readonly<Record<SectionType, true>> = {
+  personalInfo: true,
+  text: true,
+  itemList: true,
+  stringList: true,
+};
+
+const isCustomSectionRecord = (value: unknown): value is CustomSection =>
+  isObjectRecord(value) &&
+  typeof value.sectionType === 'string' &&
+  CUSTOM_SECTION_TYPES[value.sectionType as SectionType] === true;
 
 const normalizeDescriptionFields = <T extends DescribedItem>(item: T): T => {
   // A null element inside an otherwise-valid array throws on property access.
@@ -129,10 +149,17 @@ const normalizeCustomSection = (section: CustomSection): CustomSection => {
 export const normalizeResumeForSave = (resume: ResumeData): ResumeData => {
   const customSections = resume.customSections
     ? Object.fromEntries(
-        Object.entries(resume.customSections).map(([key, section]) => [
-          key,
-          normalizeCustomSection(section),
-        ])
+        Object.entries(resume.customSections)
+          .map(([key, section]) => [key, normalizeCustomSection(section)] as const)
+          // normalizeCustomSection returns null/primitive sections unchanged;
+          // dropping them here keeps them out of the PATCH payload, where they
+          // would fail backend CustomSection validation and crash consumers
+          // doing Object.entries(customSections) -> .sectionType. Object-ness
+          // alone is not enough — an entry must also carry a sectionType the
+          // backend schema actually accepts.
+          .filter((entry): entry is readonly [string, CustomSection] =>
+            isCustomSectionRecord(entry[1])
+          )
       )
     : resume.customSections;
 

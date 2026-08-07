@@ -483,7 +483,7 @@ def get_llm_config() -> LLMConfig:
         provider=provider,
         model=model,
         api_key=api_key,
-        api_base=stored.get("api_base", settings.llm_api_base),
+        api_base=stored.get("api_base") or settings.llm_api_base or None,
         api_version=stored.get("api_version"),
         reasoning_effort=reasoning_effort,
     )
