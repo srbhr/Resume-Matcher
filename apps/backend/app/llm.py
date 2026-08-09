@@ -13,6 +13,11 @@ from litellm.router import RetryPolicy
 from pydantic import BaseModel
 
 from app.config import load_config_file, save_config_file, settings
+from app.providers.claude_cli import (
+    ClaudeCLIError,
+    check_claude_cli_health,
+    complete_claude_cli,
+)
 
 LITELLM_LOGGER_NAMES = ("LiteLLM", "LiteLLM Router", "LiteLLM Proxy")
 
@@ -399,13 +404,16 @@ _PROVIDER_KEY_MAP: dict[str, str] = {
 }
 
 
-# Providers where the user commonly runs a local server without auth. For
+# Providers where the user commonly runs a local server / CLI without auth. For
 # these, we MUST NOT fall back to ``settings.llm_api_key`` (the env-level
 # default), because the env var may hold a real paid-API key that would then
 # leak to a local/compatible endpoint the user set up expecting no auth.
+#
+# Also exported as LOCAL_NO_KEY_PROVIDERS for health/status/eval gates.
 _PROVIDERS_WITHOUT_ENV_KEY_FALLBACK: frozenset[str] = frozenset(
-    {"openai_compatible", "ollama"}
+    {"openai_compatible", "ollama", "claude_cli"}
 )
+LOCAL_NO_KEY_PROVIDERS: frozenset[str] = _PROVIDERS_WITHOUT_ENV_KEY_FALLBACK
 
 
 def resolve_api_key(stored: dict, provider: str) -> str:
@@ -413,9 +421,9 @@ def resolve_api_key(stored: dict, provider: str) -> str:
 
     Priority: top-level ``api_key`` > ``api_keys[provider]`` > env/settings
     default — EXCEPT for providers in ``_PROVIDERS_WITHOUT_ENV_KEY_FALLBACK``
-    (``openai_compatible`` / ``ollama``), where the env-level default is
-    skipped so a paid OpenAI key in ``LLM_API_KEY`` cannot leak to a local
-    self-hosted server when the user leaves the provider key blank.
+    (``openai_compatible`` / ``ollama`` / ``claude_cli``), where the env-level
+    default is skipped so a paid OpenAI key in ``LLM_API_KEY`` cannot leak to a
+    local self-hosted server / CLI when the user leaves the provider key blank.
 
     This is the single source of truth for key resolution. Every code path
     that needs an API key (runtime, config display, health check, test
@@ -646,17 +654,40 @@ async def check_llm_health(
     if config is None:
         config = get_llm_config()
 
-    # Check if API key is configured. Ollama and openai_compatible local
-    # servers often run without auth, so a blank key is acceptable for those
-    # providers — a sentinel is passed downstream (see _effective_api_key)
-    # to satisfy the OpenAI client's non-empty-string validation.
-    if config.provider not in ("ollama", "openai_compatible") and not config.api_key:
+    # Check if API key is configured. Local providers (Ollama, openai_compatible,
+    # Claude CLI) run without a paid API key — a blank key is acceptable.
+    # For openai_compatible a sentinel is passed downstream (see
+    # _effective_api_key) to satisfy the OpenAI client's non-empty-string check.
+    if config.provider not in LOCAL_NO_KEY_PROVIDERS and not config.api_key:
         return {
             "healthy": False,
             "provider": config.provider,
             "model": config.model,
             "error_code": "api_key_missing",
         }
+
+    # Claude Code CLI path — Multica-style local ``claude -p``, no LiteLLM.
+    if config.provider == "claude_cli":
+        cli_result = await check_claude_cli_health(
+            model=config.model or "sonnet",
+            test_prompt=test_prompt,
+            timeout=float(LLM_TIMEOUT_HEALTH_CHECK),
+        )
+        result: dict[str, Any] = {
+            "healthy": bool(cli_result.get("healthy")),
+            "provider": "claude_cli",
+            "model": config.model,
+            "response_model": cli_result.get("response_model"),
+        }
+        if not result["healthy"]:
+            result["error_code"] = cli_result.get("error_code", "cli_error")
+            result["message"] = cli_result.get("message", "Claude CLI unhealthy")
+        if include_details:
+            result["test_prompt"] = _to_code_block(test_prompt or "Reply with exactly: OK")
+            result["model_output"] = _to_code_block(cli_result.get("content"))
+            if not result["healthy"] and cli_result.get("message"):
+                result["error_detail"] = _to_code_block(str(cli_result["message"]))
+        return result
 
     model_name = get_model_name(config)
 
@@ -772,6 +803,31 @@ async def complete(
 
     Transport retries (429, 500, timeout) are handled by the Router.
     """
+    if config is None:
+        config = get_llm_config()
+
+    if config.provider == "claude_cli":
+        try:
+            content = await complete_claude_cli(
+                prompt,
+                system_prompt=system_prompt,
+                model=config.model or "sonnet",
+                timeout=float(
+                    _calculate_timeout("completion", max_tokens, config.provider)
+                ),
+            )
+        except ClaudeCLIError as e:
+            logging.error("Claude CLI completion failed: %s", e)
+            raise ValueError(
+                "LLM completion failed. Please check your Claude CLI setup "
+                "(`claude auth login`) and try again."
+            ) from e
+        if "<think>" in content:
+            content = _strip_thinking_tags(content)
+            if not content:
+                raise ValueError("Response contained only thinking content, no output")
+        return content
+
     router, config = get_router(config)
     model_name = get_model_name(config)
 
@@ -1076,6 +1132,7 @@ def _calculate_timeout(
         "openrouter": 1.5,  # More variable latency
         "groq": 1.0,
         "ollama": 2.0,  # Local models can be slower
+        "claude_cli": 2.0,  # Local CLI spawn + subscription latency
     }
     provider_factor = provider_factors.get(provider, 1.0)
 
@@ -1181,6 +1238,112 @@ def _extract_json(content: str, _depth: int = 0) -> str:
     raise ValueError(f"No JSON found in response: {original[:200]}")
 
 
+def _truncation_retry_hint(schema_type: str) -> str:
+    """Prompt suffix used when parsed JSON looks truncated."""
+    if schema_type == "resume":
+        return (
+            "\n\nIMPORTANT: Output the COMPLETE JSON object with ALL sections. "
+            "Do not truncate."
+        )
+    if schema_type == "enrichment":
+        return (
+            "\n\nIMPORTANT: Output the COMPLETE JSON object with ALL keys: "
+            "items_to_enrich, questions, analysis_summary. Do not truncate."
+        )
+    if schema_type == "interview_prep":
+        return (
+            "\n\nIMPORTANT: Output the COMPLETE JSON object with ALL keys: "
+            "role_fit_analysis, resume_questions, project_follow_ups, "
+            "skill_gaps, talking_points. Do not truncate."
+        )
+    return (
+        "\n\nIMPORTANT: Output ONLY a valid JSON object. Start with { and end with }."
+    )
+
+
+async def _complete_json_via_claude_cli(
+    *,
+    prompt: str,
+    json_system: str,
+    config: LLMConfig,
+    max_tokens: int,
+    retries: int,
+    schema_type: str,
+) -> dict[str, Any]:
+    """JSON completion path for the local Claude Code CLI provider."""
+    user_prompt = prompt
+    timeout = float(_calculate_timeout("json", max_tokens, config.provider))
+
+    for attempt in range(retries + 1):
+        try:
+            content = await complete_claude_cli(
+                user_prompt,
+                system_prompt=json_system,
+                model=config.model or "sonnet",
+                timeout=timeout,
+            )
+            if "<think>" in content:
+                content = _strip_thinking_tags(content)
+            if not content:
+                raise ValueError("Empty response from LLM")
+
+            logging.debug(
+                "Claude CLI JSON response (attempt %d): %s",
+                attempt + 1,
+                content[:300],
+            )
+
+            json_str = _extract_json(content)
+            result = json.loads(json_str)
+
+            if isinstance(result, dict) and _appears_truncated(result, schema_type):
+                if attempt < retries:
+                    logging.warning(
+                        "Claude CLI JSON appears truncated (attempt %d/%d), retrying",
+                        attempt + 1,
+                        retries + 1,
+                    )
+                    user_prompt = prompt + _truncation_retry_hint(schema_type)
+                    continue
+                logging.warning(
+                    "Claude CLI JSON appears truncated on final attempt, "
+                    "proceeding with result"
+                )
+            return result
+
+        except json.JSONDecodeError as e:
+            logging.warning("Claude CLI JSON parse failed (attempt %d): %s", attempt + 1, e)
+            if attempt < retries:
+                user_prompt = (
+                    prompt
+                    + "\n\nIMPORTANT: Output ONLY a valid JSON object. "
+                    "Start with { and end with }."
+                )
+                continue
+            raise ValueError(
+                f"Failed to parse JSON after {retries + 1} attempts: {e}"
+            ) from e
+
+        except ClaudeCLIError as e:
+            logging.error("Claude CLI JSON completion failed: %s", e)
+            raise ValueError(
+                "LLM completion failed. Please check your Claude CLI setup "
+                "(`claude auth login`) and try again."
+            ) from e
+
+        except ValueError as e:
+            logging.warning(
+                "Claude CLI content extraction failed (attempt %d): %s",
+                attempt + 1,
+                e,
+            )
+            if attempt < retries:
+                continue
+            raise
+
+    raise ValueError(f"Failed after {retries + 1} attempts")
+
+
 async def complete_json(
     prompt: str,
     system_prompt: str | None = None,
@@ -1200,8 +1363,8 @@ async def complete_json(
             "keywords", or "interview_prep". Passed to _appears_truncated for
             context-aware truncation detection and used to tailor retry hints.
     """
-    router, config = get_router(config)
-    model_name = get_model_name(config)
+    if config is None:
+        config = get_llm_config()
 
     # Build messages
     json_system = (
@@ -1211,6 +1374,20 @@ async def complete_json(
         {"role": "system", "content": json_system},
         {"role": "user", "content": prompt},
     ]
+
+    # Claude Code CLI — no LiteLLM JSON mode; prompt-only + same retry loop.
+    if config.provider == "claude_cli":
+        return await _complete_json_via_claude_cli(
+            prompt=prompt,
+            json_system=json_system,
+            config=config,
+            max_tokens=max_tokens,
+            retries=retries,
+            schema_type=schema_type,
+        )
+
+    router, config = get_router(config)
+    model_name = get_model_name(config)
 
     # Check if we can use JSON mode
     use_json_mode = _supports_json_mode(model_name)

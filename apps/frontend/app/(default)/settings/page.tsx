@@ -78,6 +78,7 @@ const PROVIDERS: LLMProvider[] = [
   'deepseek',
   'groq',
   'ollama',
+  'claude_cli',
 ];
 
 const SEGMENTED_BUTTON_BASE =
@@ -305,7 +306,9 @@ export default function SettingsPage() {
           // Whether THIS provider already has an encrypted key (per-provider,
           // not the legacy shared slot) drives the "leave blank to keep" hint.
           const keyProvider = llmProviderToKeyProvider(safeProvider);
-          setHasStoredApiKey(statuses.some((s) => s.provider === keyProvider && s.configured));
+          setHasStoredApiKey(
+            keyProvider != null && statuses.some((s) => s.provider === keyProvider && s.configured)
+          );
           setApiKey('');
           setApiBase(llmConfig.api_base || '');
           setReasoningEffort((llmConfig.reasoning_effort as ReasoningEffort | null) ?? 'auto');
@@ -352,6 +355,7 @@ export default function SettingsPage() {
   // Whether a given key-store provider currently has a saved key.
   const providerHasStoredKey = (p: LLMProvider): boolean => {
     const keyProvider = llmProviderToKeyProvider(p);
+    if (keyProvider == null) return false;
     return apiKeyStatuses.some((s) => s.provider === keyProvider && s.configured);
   };
 
@@ -433,7 +437,9 @@ export default function SettingsPage() {
       // shared config slot, so saving one provider never wipes another's key.
       if (trimmedKey) {
         const keyProvider = llmProviderToKeyProvider(provider);
-        await updateApiKeys({ [keyProvider]: trimmedKey } as Record<ApiKeyProvider, string>);
+        if (keyProvider != null) {
+          await updateApiKeys({ [keyProvider]: trimmedKey } as Record<ApiKeyProvider, string>);
+        }
       }
 
       // (2) Persist non-secret LLM config — WITHOUT api_key.
@@ -450,8 +456,10 @@ export default function SettingsPage() {
       // Refresh the per-provider key status + cached system status after save.
       const statuses = await refreshApiKeyStatus();
       setApiKey('');
+      const savedKeyProvider = llmProviderToKeyProvider(provider);
       setHasStoredApiKey(
-        statuses.some((s) => s.provider === llmProviderToKeyProvider(provider) && s.configured)
+        savedKeyProvider != null &&
+          statuses.some((s) => s.provider === savedKeyProvider && s.configured)
       );
       await refreshStatus();
 

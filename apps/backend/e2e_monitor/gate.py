@@ -17,12 +17,12 @@ class MonitorDisabled(RuntimeError):
 def _key_is_configured() -> bool:
     """True when a usable key/provider is set (mirrors the eval ``_needs_key``)."""
     try:
-        from app.llm import get_llm_config
+        from app.llm import LOCAL_NO_KEY_PROVIDERS, get_llm_config
 
         cfg = get_llm_config()
     except Exception:
         return False
-    return bool(cfg.api_key) or cfg.provider in ("ollama", "openai_compatible")
+    return bool(cfg.api_key) or cfg.provider in LOCAL_NO_KEY_PROVIDERS
 
 
 def ensure_enabled(*, require_key: bool = True) -> None:

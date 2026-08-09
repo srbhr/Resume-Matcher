@@ -9,12 +9,15 @@ Backend uses LiteLLM to support multiple providers through a unified API:
 | Provider | Type | Notes |
 |----------|------|-------|
 | **Ollama** | Local | Free, runs on your machine |
+| **Claude CLI** | Local | Claude Code CLI (`claude -p`); uses your Claude login — no API key |
 | **OpenAI** | Cloud | GPT-5 Nano, GPT-4o |
+| **OpenAI-Compatible** | Local/self-hosted | llama.cpp, vLLM, LM Studio |
 | **Azure AI Foundry** | Cloud | Azure AI Inference / Foundry model endpoints |
-| **Anthropic** | Cloud | Claude Haiku 4.5 |
+| **Anthropic** | Cloud | Claude Haiku 4.5 (API key) |
 | **Google Gemini** | Cloud | Gemini 3 Flash |
 | **OpenRouter** | Cloud | Access to multiple models |
 | **DeepSeek** | Cloud | DeepSeek Chat |
+| **Groq** | Cloud | Fast inference |
 
 ## API Key Handling
 

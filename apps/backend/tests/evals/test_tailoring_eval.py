@@ -24,7 +24,7 @@ import json
 
 import pytest
 
-from app.llm import complete_json, get_llm_config
+from app.llm import LOCAL_NO_KEY_PROVIDERS, complete_json, get_llm_config
 from tests.evals.golden.cases import GOLDEN_CASES
 
 
@@ -33,14 +33,14 @@ def _needs_key() -> None:
 
     A key is considered "absent" only when there is no api_key AND the provider
     is not one of the local/self-hosted providers that legitimately run without
-    one (``ollama``, ``openai_compatible``). This mirrors the gate used
-    throughout the backend.
+    one (``ollama``, ``openai_compatible``, ``claude_cli``). This mirrors the
+    gate used throughout the backend.
     """
     try:
         cfg = get_llm_config()
     except Exception as exc:  # corrupt/unreadable config.json — skip, don't hard-fail
         pytest.skip(f"could not read LLM config ({exc}); skipping LLM-judge eval")
-    if not cfg.api_key and cfg.provider not in ("ollama", "openai_compatible"):
+    if not cfg.api_key and cfg.provider not in LOCAL_NO_KEY_PROVIDERS:
         pytest.skip("no LLM key configured; set one to run LLM-judge evals")
 
 

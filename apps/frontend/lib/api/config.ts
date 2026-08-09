@@ -10,7 +10,8 @@ export type LLMProvider =
   | 'gemini'
   | 'deepseek'
   | 'groq'
-  | 'ollama';
+  | 'ollama'
+  | 'claude_cli';
 
 // Reasoning-effort levels supported by LiteLLM. `null` (or absent) means
 // "do not send the parameter" — the default for max compatibility.
@@ -202,6 +203,13 @@ export const PROVIDER_INFO: Record<
     defaultModel: 'gemma3:4b',
     requiresKey: false,
     defaultBaseUrl: 'http://localhost:11434',
+  },
+  // Claude Code CLI: Multica-style local `claude -p`. Uses your Claude
+  // Pro/Max login — no Anthropic API key. Requires `claude` on PATH.
+  claude_cli: {
+    name: 'Claude CLI (Local)',
+    defaultModel: 'sonnet',
+    requiresKey: false,
   },
 };
 
@@ -429,7 +437,9 @@ export type ApiKeyProvider =
 // Map an LLM provider (the active-provider axis) to its key-store provider
 // name. Mirrors the backend `_PROVIDER_KEY_MAP` (gemini → google; the local
 // providers pass through). Keys are persisted under the key-store name.
-export function llmProviderToKeyProvider(provider: LLMProvider): ApiKeyProvider {
+export function llmProviderToKeyProvider(provider: LLMProvider): ApiKeyProvider | null {
+  // Claude CLI has no key-store slot (auth is the local `claude` login).
+  if (provider === 'claude_cli') return null;
   if (provider === 'gemini') return 'google';
   return provider as ApiKeyProvider;
 }

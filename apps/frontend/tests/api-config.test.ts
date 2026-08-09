@@ -18,12 +18,14 @@ import {
 const ALL_PROVIDERS: LLMProvider[] = [
   'openai',
   'openai_compatible',
+  'azure_foundry',
   'anthropic',
   'openrouter',
   'gemini',
   'deepseek',
   'groq',
   'ollama',
+  'claude_cli',
 ];
 
 describe('PROVIDER_INFO', () => {
@@ -40,6 +42,7 @@ describe('PROVIDER_INFO', () => {
   it('marks only local providers as not requiring a key', () => {
     expect(PROVIDER_INFO.ollama.requiresKey).toBe(false);
     expect(PROVIDER_INFO.openai_compatible.requiresKey).toBe(false);
+    expect(PROVIDER_INFO.claude_cli.requiresKey).toBe(false);
     expect(PROVIDER_INFO.openai.requiresKey).toBe(true);
     expect(PROVIDER_INFO.anthropic.requiresKey).toBe(true);
   });

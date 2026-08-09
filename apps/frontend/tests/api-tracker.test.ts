@@ -21,6 +21,7 @@ describe('llmProviderToKeyProvider', () => {
     expect(llmProviderToKeyProvider('anthropic')).toBe('anthropic');
     expect(llmProviderToKeyProvider('openai_compatible')).toBe('openai_compatible');
     expect(llmProviderToKeyProvider('ollama')).toBe('ollama');
+    expect(llmProviderToKeyProvider('claude_cli')).toBeNull();
   });
 });
 
