@@ -6,7 +6,7 @@
 
 ## Project Overview
 
-Resume Matcher is an AI-powered application for tailoring resumes to job descriptions, with a Kanban Application Tracker for managing the job-application pipeline.
+Resume Matcher is an AI-powered application for tailoring resumes to job descriptions, with an adaptive Resume Wizard for creating a master resume and a Kanban Application Tracker for managing the job-application pipeline.
 
 | Layer | Stack |
 |-------|-------|
@@ -31,6 +31,8 @@ Before exploring code, read [docs/agent/README.md](../docs/agent/README.md) for 
 4. **Run `npm run format`** (Prettier) before committing
 5. **Log detailed errors server-side**, return generic messages to clients
 6. **Do NOT modify** `.github/workflows/` files without explicit request
+7. **Treat `apps/backend/data/**` as user data**, especially uploads. Never stage, commit, log, copy, paste into prompts, or share its contents; do not inspect it unless the task explicitly requires it. Use synthetic fixtures for tests and examples.
+8. **Never reset stored user data** through the reset endpoint or backend reset helper without the user's direct confirmation after stating the exact data that will be removed.
 
 ---
 
@@ -41,7 +43,7 @@ Before exploring code, read [docs/agent/README.md](../docs/agent/README.md) for 
 cd apps/backend
 uv sync --extra dev                                  # Install Python deps (incl. test deps)
 uv run uvicorn app.main:app --reload --port 8000     # FastAPI on :8000
-uv run pytest                                        # Run backend tests (~444; LLM evals excluded)
+uv run pytest                                        # Run backend tests (LLM evals excluded)
 
 # Frontend (from repo root, in a separate terminal)
 cd apps/frontend
@@ -72,19 +74,19 @@ apps/
 │   │   ├── db_engine.py     # Async + sync SQLite engines (WAL/FK pragmas)
 │   │   ├── crypto.py        # Fernet encrypt/decrypt for API keys at rest
 │   │   ├── llm.py           # LiteLLM wrapper
-│   │   ├── routers/         # API endpoints (incl. applications.py = tracker)
-│   │   ├── services/        # Business logic
-│   │   ├── schemas/         # Pydantic models (incl. applications.py)
-│   │   ├── prompts/         # LLM prompt templates
+│   │   ├── routers/         # API endpoints (incl. tracker + Resume Wizard)
+│   │   ├── services/        # Business logic (incl. adaptive Resume Wizard flow)
+│   │   ├── schemas/         # Pydantic models (incl. tracker + wizard contracts)
+│   │   ├── prompts/         # LLM prompt templates (incl. wizard turn prompt)
 │   │   └── scripts/         # One-time TinyDB→SQLite migration (runs on startup)
 │   └── data/                # resume_matcher.db (SQLite) + encrypted API keys + .secret_key
 │
 └── frontend/                # Next.js + React
-    ├── app/                 # Pages (dashboard, builder, tailor, tracker, print)
-    ├── components/          # UI components (incl. tracker/)
-    ├── lib/                 # Utilities, API client (incl. api/tracker.ts)
+    ├── app/                 # Pages (dashboard, builder, tailor, tracker, resume-wizard, print)
+    ├── components/          # UI components (incl. tracker/, resume-wizard/)
+    ├── lib/                 # Utilities, API client (incl. api/tracker.ts, api/resume-wizard.ts)
     ├── hooks/               # Custom React hooks
-    └── messages/            # i18n translations (en, es, zh, ja, pt)
+    └── messages/            # i18n translations (en, es, zh, ja, pt-BR, fr)
 ```
 
 ---
@@ -99,7 +101,7 @@ apps/
 ### For Frontend Changes
 1. [Frontend workflow](../docs/agent/architecture/frontend-workflow.md) - User flow, components
 2. [Swiss design system pack](../docs/portable/swiss-design-system/README.md) - **REQUIRED** Swiss International Style (portable pack)
-3. [Next.js performance pack](../docs/portable/nextjs-performance/README.md) - **REQUIRED** Next.js 15 perf patterns (portable pack)
+3. [Next.js performance pack](../docs/portable/nextjs-performance/README.md) - **REQUIRED** performance patterns; check version-specific advice against this app's Next.js 16 code
 4. [Coding standards](../docs/agent/coding-standards.md) - Frontend conventions
 
 ### For Testing
@@ -114,38 +116,12 @@ apps/
 | Feature | Documentation |
 |---------|---------------|
 | Application tracker | [application-tracker.md](../docs/agent/features/application-tracker.md) |
+| Resume Wizard | [API contracts](../docs/agent/apis/front-end-apis.md) (Resume Wizard section) |
 | Custom sections | [custom-sections.md](../docs/agent/features/custom-sections.md) |
 | Resume templates | [resume-templates.md](../docs/agent/features/resume-templates.md) |
 | i18n | [i18n.md](../docs/agent/features/i18n.md) |
 | AI enrichment | [enrichment.md](../docs/agent/features/enrichment.md) |
 | JD matching | [jd-match.md](../docs/agent/features/jd-match.md) |
-
----
-
-## Code Patterns
-
-### Backend Error Handling
-```python
-except Exception as e:
-    logger.error(f"Operation failed: {e}")
-    raise HTTPException(status_code=500, detail="Operation failed. Please try again.")
-```
-
-### Frontend Textarea Fix
-All textareas need Enter key handling:
-```tsx
-const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-  if (e.key === 'Enter') e.stopPropagation();
-};
-```
-
-### Mutable Defaults (Python)
-Always use `copy.deepcopy()` for mutable defaults:
-```python
-import copy
-data = copy.deepcopy(DEFAULT_DATA)  # Correct
-# data = DEFAULT_DATA  # Wrong - shared state bug
-```
 
 ---
 
@@ -159,7 +135,7 @@ Both apps have real test suites, and **tests are in scope** (deliberate testing 
 | Frontend | vitest + Testing Library (jsdom) | `cd apps/frontend && npm run test` |
 
 - **Backend layers:** `tests/unit` (pure logic), `tests/service` (mocked LLM), `tests/integration` (real routers via httpx ASGI), `tests/evals` (prompt-quality scorers + a gated LLM-judge — excluded by default; run with `uv run pytest -m eval`).
-- **Local push gate (not CI):** a `pre-push` hook (`.githooks/pre-push`) runs the backend suite + a locale-parity check and **blocks red pushes**. Activate once per clone: `git config core.hooksPath .githooks`. We deliberately avoid a GitHub Actions PR gate (high external-PR volume) — see [`.githooks/README.md`](../.githooks/README.md).
+- **Local push gate (not CI):** a `pre-push` hook (`.githooks/pre-push`) runs the backend suite, Python locale-parity check, and the frontend Vitest suite when Node and the local Vitest binary are available. It blocks red pushes. Activate once per clone: `git config core.hooksPath .githooks`. We deliberately avoid a GitHub Actions PR gate (high external-PR volume) — see [`.githooks/README.md`](../.githooks/README.md).
 - Keep tests **deterministic and anti-theater**: a test must fail when its target breaks, and the default suites make no real network/LLM calls.
 
 ---
@@ -183,15 +159,14 @@ Both apps have real test suites, and **tests are in scope** (deliberate testing 
 
 ## Definition of Done
 
-Before completing a task:
+Before completing a task, run the checks that match the change and state any relevant check not run:
 
-- [ ] Code compiles without errors
-- [ ] Backend tests pass (`uv run pytest`); frontend tests pass (`npm run test`)
-- [ ] `npm run lint` passes
-- [ ] UI changes follow Swiss International Style
-- [ ] Python functions have type hints
-- [ ] Schema/prompt changes documented
-- [ ] New behavior covered by a deterministic test (it must fail if the behavior breaks)
+- [ ] Docs or instruction changes: verify affected links and review the diff.
+- [ ] Frontend behaviour: run `npm run lint` and relevant Vitest specs; run `npm run build` when routes, types, or i18n change.
+- [ ] Backend behaviour: run relevant `uv run pytest` tests; run the broader suite for shared pipeline changes.
+- [ ] Cross-app or API changes: exercise both affected client and server contracts.
+- [ ] UI changes follow Swiss International Style; Python changes include type hints.
+- [ ] New behaviour has deterministic coverage that fails when the behaviour breaks.
 
 ---
 
@@ -201,7 +176,7 @@ Do NOT modify without explicit request:
 - `.github/workflows/` files
 - CI/CD configuration
 - Docker build behavior
-- Existing tests (removal/disabling)
+- Existing tests: do not remove, disable, or weaken them merely to make checks pass. Update them only when intended behaviour changes, with deterministic coverage retained or added.
 
 ---
 

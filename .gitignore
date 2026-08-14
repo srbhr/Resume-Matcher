@@ -39,6 +39,9 @@ uv.lock
 # Encryption secret for API keys at rest - NEVER COMMIT
 **/data/.secret_key
 
+# User-provided resumes and job descriptions
+apps/backend/data/uploads/
+
 # Test artifacts
 .pytest_cache/
 .coverage

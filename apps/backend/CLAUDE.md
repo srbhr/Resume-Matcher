@@ -17,6 +17,7 @@ Stack: FastAPI 0.128 · Python **3.13+** · Pydantic v2 / pydantic-settings · S
 | Config cache | Shared, TTL-cached (5 min) read of `data/config.json`; `get_content_language()` | `app/config_cache.py` |
 | Database | Async SQLAlchemy/SQLite facade; tables `resumes`/`jobs`/`improvements`/`applications`/`api_keys`; returns plain dicts; global `db` singleton | `app/database.py`, `app/models.py`, `app/db_engine.py` |
 | Tracker | Kanban application-tracker endpoints | `app/routers/applications.py`, `app/schemas/applications.py` |
+| Resume Wizard | Adaptive, one-question-at-a-time master-resume creation; a 15-question cap limits LLM calls | `app/routers/resume_wizard.py`, `app/services/resume_wizard.py`, `app/schemas/resume_wizard.py`, `app/prompts/resume_wizard.py` |
 | LLM | LiteLLM wrapper: Router, retries, JSON extraction, timeouts, provider quirks | `app/llm.py` |
 | PDF | Headless Chromium render of frontend `/print/*` pages; lazy browser init | `app/pdf.py` |
 | Routers | HTTP endpoints (see below) | `app/routers/*.py` |
@@ -24,7 +25,9 @@ Stack: FastAPI 0.128 · Python **3.13+** · Pydantic v2 / pydantic-settings · S
 | Prompts | All LLM prompt templates + placeholder validation | `app/prompts/*.py` |
 | Schemas | Pydantic request/response + `ResumeData` models | `app/schemas/*.py` |
 
-`data/` holds `resume_matcher.db` (SQLite; primary store), `config.json` (non-secret config), `.secret_key` (Fernet secret for encrypted API keys), an `uploads/` dir, and possibly a legacy `database.json` (TinyDB — imported into SQLite on first startup, then renamed `database.json.migrated`). `.gitignore` ignores `*.db*`, `data/*.json`, and `data/.secret_key` (DB + config + secret never get committed), but **`uploads/` is NOT git-ignored** — don't commit user uploads. `db.reset_database()` truncates the document tables + `applications` (preserving `api_keys`) and wipes `uploads/`.
+`data/` holds `resume_matcher.db` (SQLite; primary store), `config.json` (non-secret config), `.secret_key` (Fernet secret for encrypted API keys), an `uploads/` dir, and possibly a legacy `database.json` (TinyDB — imported into SQLite on first startup, then renamed `database.json.migrated`). `.gitignore` ignores databases, config, the encryption secret, and `uploads/` because those paths can contain user data. `db.reset_database()` truncates the document tables + `applications` (preserving `api_keys`) and wipes `uploads/`.
+
+Treat all of `data/`, especially `uploads/`, as user data. Never stage, commit, log, copy, paste into prompts, or share its contents; do not inspect it unless the task explicitly requires it. Use synthetic fixtures for tests and examples. Never call `db.reset_database()` or the reset endpoint without the user's direct confirmation after stating the exact data that will be removed.
 
 ### Routers (all prefixed `/api/v1`)
 - `health.py` — `GET /health` (liveness, no LLM call), `GET /status` (LLM health + DB stats).
@@ -32,12 +35,17 @@ Stack: FastAPI 0.128 · Python **3.13+** · Pydantic v2 / pydantic-settings · S
 - `resumes.py` — the biggest router: `/resumes/upload`, `GET /resumes`, `/resumes/list`, `/resumes/improve` + `/improve/preview` + `/improve/confirm`, `PATCH /resumes/{id}`, `/{id}/pdf`, `/{id}/retry-processing`, cover-letter/outreach/title PATCH + on-demand generate, `/{id}/job-description`, `/{id}/cover-letter/pdf`.
 - `jobs.py` — `/jobs/upload` (batch JD text → job_ids), `GET /jobs/{id}`.
 - `enrichment.py` — `/enrichment/analyze/{id}`, `/enhance`, `/apply/{id}`, `/regenerate`, `/apply-regenerated/{id}`.
+- `applications.py` — application-tracker CRUD, grouped board data, status/position/notes updates, and bulk operations.
+- `resume_wizard.py` — adaptive master-resume flow: `POST /resume-wizard/turn` and `POST /resume-wizard/finalize`.
 
 ### Services
 - `parser.py` — `parse_document` (markitdown bytes→Markdown), `parse_resume_to_json` (LLM→`ResumeData`), `restore_dates_from_markdown` (re-inserts months the LLM drops).
 - `improver.py` (largest) — keyword extraction, **diff-based** improvement (`generate_resume_diffs` → `apply_diffs` with path allow/block-lists → `verify_diff_result`), skill-target planning (`generate_skill_target_plan`/`verify_skill_target_plan`), legacy full-output `improve_resume`, `calculate_resume_diff`. Sanitizes prompt-injection patterns in user input.
 - `refiner.py` — multi-pass polish: keyword injection (LLM), AI-phrase removal (local, via `refinement.py` blacklist), master-alignment validation. Driven by `RefinementConfig`.
 - `cover_letter.py` — `generate_cover_letter`, `generate_outreach_message`, `generate_resume_title`; resolves custom-vs-default feature prompts at runtime.
+- `ats.py` — deterministic ATS scoring.
+- `interview_prep.py` — structured interview-preparation generation.
+- `resume_wizard.py` — adapts questions and merges answers into a validated master-resume draft.
 
 ---
 
@@ -61,9 +69,10 @@ Prompts are **plain Python string constants** — no Jinja, no external prompt f
 
 | File | Holds |
 |------|-------|
-| `app/prompts/templates.py` | Resume parse, keyword extraction, the 3 improve variants, diff prompt, skill-target plan, cover-letter / outreach / title, `RESUME_SCHEMA_EXAMPLE`, `CRITICAL_TRUTHFULNESS_RULES`, `LANGUAGE_NAMES` + `get_language_name()` |
+| `app/prompts/templates.py` | Resume parse, keyword extraction, the 3 improve variants, diff prompt, skill-target plan, cover-letter / outreach / title / interview-prep, `RESUME_SCHEMA_EXAMPLE`, `CRITICAL_TRUTHFULNESS_RULES`, `LANGUAGE_NAMES` + `get_language_name()` |
 | `app/prompts/enrichment.py` | `ANALYZE_RESUME_PROMPT`, `ENHANCE_DESCRIPTION_PROMPT`, `REGENERATE_ITEM_PROMPT`, `REGENERATE_SKILLS_PROMPT` |
 | `app/prompts/refinement.py` | `KEYWORD_INJECTION_PROMPT`, `VALIDATION_POLISH_PROMPT`, `AI_PHRASE_BLACKLIST`, `AI_PHRASE_REPLACEMENTS` |
+| `app/prompts/resume_wizard.py` | `RESUME_WIZARD_TURN_PROMPT` for the adaptive wizard turn |
 | `app/prompts/__init__.py` | Re-exports template constants; placeholder validation |
 
 **Loading / parameterization:** services `from app.prompts import ...` then call `PROMPT.format(**vars)`. So `{placeholder}` = a real format key, and any *literal* `{}` (e.g. JSON examples) **must be doubled `{{ }}`** — see `EXTRACT_KEYWORDS_PROMPT`, `DIFF_IMPROVE_PROMPT`, the enrichment prompts. `PARSE_RESUME_PROMPT` is the exception: it embeds the schema via `{schema}` so it does *not* double-brace.
@@ -72,7 +81,7 @@ Prompts are **plain Python string constants** — no Jinja, no external prompt f
 
 **Custom feature prompts (user-editable):** cover-letter & outreach prompts can be overridden in `config.json` (`cover_letter_prompt`, `outreach_message_prompt`). On save (`PUT /config/feature-prompts`) they are validated by `validate_prompt_placeholders()` to contain all of `REQUIRED_FEATURE_PROMPT_PLACEHOLDERS` = `{job_description}`, `{resume_data}`, `{output_language}`; missing → HTTP 422. Empty string = "use default". At runtime `cover_letter.py::_resolve_feature_prompt` picks custom-or-default and falls back to the built-in default (with a warning) if a custom prompt fails `.format()`.
 
-**Language:** every generative prompt takes `{output_language}` (full name from `get_language_name(code)`), so all output is produced in the configured content language (`en`/`es`/`zh`/`ja`/`pt`).
+**Language:** every generative prompt takes `{output_language}` (full name from `get_language_name(code)`), so all output is produced in the configured content language (`en`/`es`/`zh`/`ja`/`pt`/`fr`).
 
 ---
 
@@ -93,10 +102,11 @@ Prompts are **plain Python string constants** — no Jinja, no external prompt f
 
 ```bash
 cd apps/backend
-uv sync                                              # install deps (creates .venv)
+uv sync --extra dev                                  # install deps + test extras (creates .venv)
 uv run uvicorn app.main:app --reload --port 8000     # dev server on :8000
 uv run app                                           # console script (app.main:main, uses HOST/PORT/RELOAD)
 uv run playwright install chromium                   # one-time, required for PDF endpoints
+uv run pytest                                        # default suite; LLM evals excluded
 ```
 Config via `.env` (see `.env.example`). Interactive API docs at `/docs`.
 
@@ -112,7 +122,7 @@ Config via `.env` (see `.env.example`). Interactive API docs at `/docs`.
        raise HTTPException(status_code=500, detail="Operation failed. Please try again.")
    ```
 3. **`copy.deepcopy()` for any mutable default / before mutating shared/cached data** (e.g. `config_cache.load_config` returns a deep copy; the resume safety-net helpers deepcopy before editing).
-4. New endpoints mount under `/api/v1` via `app/routers/__init__.py`.
+4. New endpoints need both router import/export wiring in `app/routers/__init__.py` and `app.include_router(..., prefix="/api/v1")` in `app/main.py`.
 5. Schema/prompt changes must be reflected in the relevant `docs/agent/` doc.
 
 ---
@@ -157,15 +167,15 @@ Layout (`apps/backend/tests/`):
 
 | Dir | What | Notes |
 |-----|------|-------|
-| `unit/` | pure functions | diffs, `llm` provider/key helpers, parser date-restore, real-SQLite CRUD |
+| `unit/` | pure functions | diffs, `llm` provider/key helpers, parser date-restore, real-SQLite CRUD, Resume Wizard state/merge logic |
 | `service/` | service layer, **LLM mocked** | improver diff flow, prompt construction |
-| `integration/` | endpoints via httpx `ASGITransport` | config/health/jobs/resume/upload, plus `test_llm_contract.py` (real `llm.py` over `respx`) and `test_pipeline_e2e.py` (upload→tailor→render, real routers + real temp DB) |
+| `integration/` | endpoints via httpx `ASGITransport` | config/health/jobs/resume/upload/Resume Wizard, plus `test_llm_contract.py` (real `llm.py` over `respx`) and `test_pipeline_e2e.py` (upload→tailor→render, real routers + real temp DB) |
 | `evals/` | prompt quality | pure structural scorers (always run) + a gated LLM-judge (`@pytest.mark.eval`, uses the dev's own key; run with `uv run pytest -m eval`) |
 
 Key fixtures/tools: `conftest.py::isolated_db` swaps the global `db` singleton for a disposable temp-file SQLite database across **all** router modules (for real-DB endpoint/e2e tests); `respx` mocks the HTTP transport so `llm.py`'s real routing runs against a fake Ollama / OpenAI server (gotcha: litellm 1.86 needs `disable_aiohttp_transport=True` for respx to intercept). Keep every test **anti-theater** — it must fail when its target breaks.
 
-**Local push gate:** `.githooks/pre-push` runs this suite + a locale-parity check and blocks red pushes (`git config core.hooksPath .githooks`; see [`.githooks/README.md`](../../.githooks/README.md)). We avoid a GitHub Actions PR gate (high external-PR volume).
+**Local push gate:** `.githooks/pre-push` runs this suite, a Python locale-parity check, and frontend Vitest when Node and the local Vitest binary are available. It blocks red pushes (`git config core.hooksPath .githooks`; see [`.githooks/README.md`](../../.githooks/README.md)). We avoid a GitHub Actions PR gate (high external-PR volume).
 
 ## Out of Scope
 
-Without an explicit request: `.github/workflows/`, CI/CD, Docker behavior, and **removing/disabling existing tests** (adding/fixing tests is encouraged).
+Without an explicit request: `.github/workflows/`, CI/CD, Docker behaviour, and removing, disabling, or weakening existing tests merely to make checks pass. Update tests when intended behaviour changes; adding or fixing deterministic coverage is encouraged.
