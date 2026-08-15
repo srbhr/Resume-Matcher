@@ -86,7 +86,7 @@ apps/
     ├── components/          # UI components (incl. tracker/, resume-wizard/)
     ├── lib/                 # Utilities, API client (incl. api/tracker.ts, api/resume-wizard.ts)
     ├── hooks/               # Custom React hooks
-    └── messages/            # i18n translations (en, es, zh, ja, pt-BR, fr)
+    └── messages/            # i18n translations (en, es, zh, ja, ko, pt-BR, fr)
 ```
 
 ---
@@ -135,7 +135,7 @@ Both apps have real test suites, and **tests are in scope** (deliberate testing 
 | Frontend | vitest + Testing Library (jsdom) | `cd apps/frontend && npm run test` |
 
 - **Backend layers:** `tests/unit` (pure logic), `tests/service` (mocked LLM), `tests/integration` (real routers via httpx ASGI), `tests/evals` (prompt-quality scorers + a gated LLM-judge — excluded by default; run with `uv run pytest -m eval`).
-- **Local push gate (not CI):** a `pre-push` hook (`.githooks/pre-push`) runs the backend suite, Python locale-parity check, and the frontend Vitest suite when Node and the local Vitest binary are available. It blocks red pushes. Activate once per clone: `git config core.hooksPath .githooks`. We deliberately avoid a GitHub Actions PR gate (high external-PR volume) — see [`.githooks/README.md`](../.githooks/README.md).
+- **Local push gate (not CI):** a `pre-push` hook (`.githooks/pre-push`) runs the backend suite, Python locale-parity check, frontend Vitest suite, and a `tsc --noEmit` typecheck when Node and the corresponding local binaries are available. It blocks red pushes. Activate once per clone: `git config core.hooksPath .githooks`. We deliberately avoid a GitHub Actions PR gate (high external-PR volume) — see [`.githooks/README.md`](../.githooks/README.md).
 - Keep tests **deterministic and anti-theater**: a test must fail when its target breaks, and the default suites make no real network/LLM calls.
 
 ---
