@@ -114,7 +114,12 @@ export const EducationForm: React.FC<EducationFormProps> = ({ data, onChange }) 
           </Button>
         </div>
       ) : (
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <DndContext
+          id="education-items"
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
           <SortableContext
             items={data.map((item) => item.id)}
             strategy={verticalListSortingStrategy}

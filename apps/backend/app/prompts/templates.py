@@ -7,6 +7,8 @@ LANGUAGE_NAMES = {
     "zh": "Chinese (Simplified)",
     "ja": "Japanese",
     "pt": "Brazilian Portuguese",
+    "fr": "French",
+    "ko": "Korean",
 }
 
 
@@ -38,7 +40,8 @@ RESUME_SCHEMA_EXAMPLE = """{
       "description": [
         "Led development of microservices architecture",
         "Improved system performance by 40%"
-      ]
+      ],
+      "descriptionStyles": ["bullet", "bullet"]
     }
   ],
   "education": [
@@ -59,7 +62,8 @@ RESUME_SCHEMA_EXAMPLE = """{
       "description": [
         "Built CLI tool with 1000+ GitHub stars",
         "Used by 50+ companies worldwide"
-      ]
+      ],
+      "descriptionStyles": ["bullet", "bullet"]
     }
   ],
   "additional": {
@@ -77,7 +81,8 @@ RESUME_SCHEMA_EXAMPLE = """{
           "title": "Paper Title",
           "subtitle": "Journal Name",
           "years": "Jun 2023",
-          "description": ["Brief description of the publication"]
+          "description": ["Brief description of the publication"],
+          "descriptionStyles": ["bullet"]
         }
       ]
     },
@@ -101,7 +106,8 @@ IMPROVE_SCHEMA_EXAMPLE = """{
       "description": [
         "Led development of microservices architecture",
         "Improved system performance by 40%"
-      ]
+      ],
+      "descriptionStyles": ["bullet", "bullet"]
     }
   ],
   "education": [
@@ -122,7 +128,8 @@ IMPROVE_SCHEMA_EXAMPLE = """{
       "description": [
         "Built CLI tool with 1000+ GitHub stars",
         "Used by 50+ companies worldwide"
-      ]
+      ],
+      "descriptionStyles": ["bullet", "bullet"]
     }
   ],
   "additional": {
@@ -140,7 +147,8 @@ IMPROVE_SCHEMA_EXAMPLE = """{
           "title": "Paper Title",
           "subtitle": "Journal Name",
           "years": "Jun 2023",
-          "description": ["Brief description of the publication"]
+          "description": ["Brief description of the publication"],
+          "descriptionStyles": ["bullet"]
         }
       ]
     },
@@ -166,6 +174,7 @@ Custom section types:
 Rules:
 - Use "" for missing text fields, [] for missing arrays, null for optional fields
 - Number IDs starting from 1
+- For workExperience, personalProjects, and custom itemList items, include descriptionStyles with one value for each description row. Use "bullet" for normal bullet rows and "plain" for rows that should render without a bullet marker (for example subheadings or standalone labels).
 - Format dates preserving the original precision. Keep months when present: "Jan 2020 - Dec 2023", "May 2021 - Present". Use "YYYY - YYYY" only when the source has no months.
 - Use snake_case for custom section keys (e.g., "volunteer_work", "publications")
 - Preserve the original section name as a descriptive key
@@ -243,6 +252,7 @@ Rules:
 - Do NOT introduce new tools, technologies, or certifications not already present
 - Do NOT add new bullet points or sections
 - Preserve original bullet count and ordering within each section
+- Preserve descriptionStyles arrays and keep them aligned one-to-one with description arrays
 - Keep proper nouns (names, company names, locations) unchanged
 - For customSections: preserve exact structure, item count, titles, subtitles, and years. If an item's description is an empty array [] in the original, keep it empty []. Do NOT generate descriptions for items that had none.
 - Copy the "years" field values EXACTLY as they appear in the original resume (including any month prefixes like "Jan 2020 - Present"). Do not shorten, reformat, or drop months.
@@ -273,6 +283,7 @@ Rules:
 - You may rephrase bullet points to include keyword phrasing
 - Do NOT introduce new skills, tools, or certifications not in the resume
 - Do NOT change role, industry, or seniority level
+- Preserve descriptionStyles arrays and keep them aligned one-to-one with description arrays
 - For customSections: preserve exact structure, item count, titles, subtitles, and years. If an item's description is an empty array [] in the original, keep it empty []. Do NOT generate descriptions for items that had none.
 - Copy the "years" field values EXACTLY as they appear in the original resume (including any month prefixes like "Jan 2020 - Present"). Do not shorten, reformat, or drop months.
 - If resume is non-technical, keep language non-technical while still aligning keywords
@@ -303,6 +314,7 @@ Rules:
 - Preserve existing action verbs. Do not invent quantifiable achievements not in the original.
 - Keep proper nouns (names, company names, locations) unchanged
 - Translate job titles, descriptions, and skills to {output_language}
+- Preserve descriptionStyles arrays and keep them aligned one-to-one with description arrays
 - For customSections: preserve exact structure, item count, titles, subtitles, and years. If an item's description is an empty array [] in the original, keep it empty []. Do NOT generate descriptions for items that had none.
 - Improve custom section content the same way as standard sections
 - Copy the "years" field values EXACTLY as they appear in the original resume (including any month prefixes like "Jan 2020 - Present"). Do not shorten, reformat, or drop months.
@@ -395,6 +407,60 @@ Guidelines:
 - Do NOT use em dash ("—") anywhere in the writing/output, even if it exists, remove it
 
 Output plain text only. No JSON, no markdown formatting."""
+
+INTERVIEW_PREP_PROMPT = """Generate structured interview preparation for this tailored resume and job.
+
+IMPORTANT: Write in {output_language}.
+Do NOT translate JSON property names. Keep every JSON key exactly as shown in the schema; translate only string values.
+
+Job Description:
+{job_description}
+
+Candidate Resume (JSON):
+{resume_data}
+
+Truthfulness guardrails:
+- Use only evidence from the resume JSON and job description.
+- Do NOT invent experience, tools, employers, metrics, certifications, skills, responsibilities, education, projects, or claims beyond the provided evidence.
+- Do NOT imply the candidate has a skill or background unless it is present in the resume.
+- Skill gaps are preparation targets only. They are not claimed candidate skills.
+- If a job requirement is not evidenced by the resume, present it as something to prepare for or explain honestly.
+
+Return ONLY a valid JSON object with exactly these top-level keys:
+{{
+  "role_fit_analysis": ["Short evidence-based role-fit observation"],
+  "resume_questions": [
+    {{
+      "question": "Interview question grounded in the resume and job",
+      "focus_area": "Resume evidence or job requirement being tested",
+      "suggested_answer_points": ["Truthful point based on resume evidence"]
+    }}
+  ],
+  "project_follow_ups": [
+    {{
+      "question": "Follow-up question about a real resume project or experience",
+      "focus_area": "Project, impact, tradeoff, or implementation detail",
+      "suggested_answer_points": ["Truthful point based on resume evidence"]
+    }}
+  ],
+  "skill_gaps": [
+    {{
+      "skill": "Job-relevant skill or topic to prepare",
+      "why_it_matters": "Why this topic may come up for this role",
+      "preparation_suggestion": "How to prepare without claiming unsupported experience"
+    }}
+  ],
+  "talking_points": ["Concise role-specific talking point grounded in the resume"]
+}}
+
+Content requirements:
+- role_fit_analysis: 3-5 bullets.
+- resume_questions: 5-8 questions.
+- project_follow_ups: 3-6 questions.
+- skill_gaps: 3-5 preparation targets.
+- talking_points: 5-8 concise points.
+- Keep all suggested answer points factual and resume-grounded.
+- Do NOT use markdown fences or commentary outside the JSON."""
 
 GENERATE_TITLE_PROMPT = """Extract the job title and company name from this job description.
 

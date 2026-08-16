@@ -247,11 +247,14 @@ export default async function PrintResumePage({ params, searchParams }: PageProp
   };
 
   return (
-    <div className="resume-print bg-white">
+    // `lang` also drives Chromium's own font fallback during PDF render, which
+    // matters for the CJK faces (L-08).
+    <div className="resume-print bg-white" lang={locale}>
       <Resume
         resumeData={localizedResumeData}
         template={settings.template}
         settings={printSettings}
+        locale={locale}
         additionalSectionLabels={additionalSectionLabels}
         sectionHeadings={sectionHeadings}
         fallbackLabels={fallbackLabels}

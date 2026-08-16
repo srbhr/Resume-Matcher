@@ -6,7 +6,7 @@ import type {
   CustomSectionItem,
 } from '@/components/dashboard/resume-component';
 import { formatDateRange } from '@/lib/utils';
-import { SafeHtml } from './safe-html';
+import { DescriptionList } from './description-list';
 import baseStyles from './styles/_base.module.css';
 
 interface DynamicResumeSectionProps {
@@ -109,18 +109,7 @@ const ItemListSectionContent: React.FC<{ items: CustomSectionItem[] }> = ({ item
           )}
 
           {/* Description Points */}
-          {item.description && item.description.length > 0 && (
-            <ul className={`ml-4 ${baseStyles['resume-list']} ${baseStyles['resume-text-sm']}`}>
-              {item.description.map((desc, index) => (
-                <li key={index} className="flex">
-                  <span className="mr-1.5 flex-shrink-0">•&nbsp;</span>
-                  <span>
-                    <SafeHtml html={desc} />
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
+          <DescriptionList items={item.description} styles={item.descriptionStyles} />
         </div>
       ))}
     </div>

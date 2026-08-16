@@ -7,7 +7,7 @@ import type {
 } from '@/components/dashboard/resume-component';
 import { getSortedSections } from '@/lib/utils/section-helpers';
 import { formatDateRange } from '@/lib/utils';
-import { SafeHtml } from './safe-html';
+import { DescriptionList } from './description-list';
 import baseStyles from './styles/_base.module.css';
 import styles from './styles/clean.module.css';
 
@@ -124,21 +124,9 @@ export const ResumeClean: React.FC<ResumeCleanProps> = ({
     );
   };
 
-  const renderBullets = (items?: string[]) => {
-    if (!items || items.length === 0) return null;
-    return (
-      <ul className={`ml-4 ${baseStyles['resume-list']} ${baseStyles['resume-text-sm']}`}>
-        {items.map((desc, index) => (
-          <li key={index} className="flex">
-            <span className="mr-1.5 flex-shrink-0">•&nbsp;</span>
-            <span>
-              <SafeHtml html={desc} />
-            </span>
-          </li>
-        ))}
-      </ul>
-    );
-  };
+  const renderBullets = (items?: string[], pointStyles?: ('bullet' | 'plain')[]) => (
+    <DescriptionList items={items} styles={pointStyles} />
+  );
 
   const renderSection = (section: SectionMeta) => {
     switch (section.key) {
@@ -163,7 +151,7 @@ export const ResumeClean: React.FC<ResumeCleanProps> = ({
               {workExperience.map((exp) => (
                 <div key={exp.id} className={baseStyles['resume-item']}>
                   {renderEntryHeader(exp.company, exp.title, exp.location, exp.years)}
-                  {renderBullets(exp.description)}
+                  {renderBullets(exp.description, exp.descriptionStyles)}
                 </div>
               ))}
             </div>
@@ -234,7 +222,7 @@ export const ResumeClean: React.FC<ResumeCleanProps> = ({
                       <span className={styles.entryMeta}>{formatDateRange(project.years)}</span>
                     )}
                   </div>
-                  {renderBullets(project.description)}
+                  <DescriptionList items={project.description} styles={project.descriptionStyles} />
                 </div>
               ))}
             </div>
@@ -376,7 +364,7 @@ const AdditionalSection: React.FC<{
 const DynamicResumeSectionClean: React.FC<{
   sectionMeta: SectionMeta;
   resumeData: ResumeData;
-  renderBullets: (items?: string[]) => React.ReactNode;
+  renderBullets: (items?: string[], pointStyles?: ('bullet' | 'plain')[]) => React.ReactNode;
   renderEntryHeader: (
     primary?: string,
     role?: string,
@@ -413,7 +401,7 @@ const DynamicResumeSectionClean: React.FC<{
           {customSection.items.map((item) => (
             <div key={item.id} className={baseStyles['resume-item']}>
               {renderEntryHeader(item.title, item.subtitle, item.location, item.years)}
-              {renderBullets(item.description)}
+              {renderBullets(item.description, item.descriptionStyles)}
             </div>
           ))}
         </div>

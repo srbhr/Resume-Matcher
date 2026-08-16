@@ -126,6 +126,7 @@ class Database:
             "processing_status": row.processing_status,
             "cover_letter": row.cover_letter,
             "outreach_message": row.outreach_message,
+            "interview_prep": row.interview_prep,
             "title": row.title,
             "created_at": row.created_at,
             "updated_at": row.updated_at,
@@ -191,6 +192,7 @@ class Database:
         outreach_message: str | None = None,
         title: str | None = None,
         original_markdown: str | None = None,
+        interview_prep: str | None = None,
     ) -> dict[str, Any]:
         """Create a new resume entry.
 
@@ -211,6 +213,7 @@ class Database:
                     processing_status=processing_status,
                     cover_letter=cover_letter,
                     outreach_message=outreach_message,
+                    interview_prep=interview_prep,
                     title=title,
                     original_markdown=original_markdown,
                     created_at=now,
@@ -230,6 +233,7 @@ class Database:
             "processing_status": processing_status,
             "cover_letter": cover_letter,
             "outreach_message": outreach_message,
+            "interview_prep": interview_prep,
             "title": title,
             "created_at": now,
             "updated_at": now,
@@ -249,6 +253,7 @@ class Database:
         outreach_message: str | None = None,
         original_markdown: str | None = None,
         title: str | None = None,
+        interview_prep: str | None = None,
     ) -> dict[str, Any]:
         """Create a new resume with atomic master assignment.
 
@@ -281,6 +286,7 @@ class Database:
                 processing_status=processing_status,
                 cover_letter=cover_letter,
                 outreach_message=outreach_message,
+                interview_prep=interview_prep,
                 original_markdown=original_markdown,
                 title=title,
             )

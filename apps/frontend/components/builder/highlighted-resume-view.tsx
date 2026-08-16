@@ -5,6 +5,7 @@ import { type ResumeData } from '@/components/dashboard/resume-component';
 import { segmentTextByKeywords } from '@/lib/utils/keyword-matcher';
 import { FileUser, Briefcase, GraduationCap, FolderKanban, Wrench } from 'lucide-react';
 import { useTranslations } from '@/lib/i18n';
+import { cn } from '@/lib/utils';
 
 interface HighlightedResumeViewProps {
   resumeData: ResumeData;
@@ -21,11 +22,17 @@ export function HighlightedResumeView({ resumeData, keywords }: HighlightedResum
   // Drop blank/whitespace-only entries so empty lines (e.g. from editing in the
   // builder) never render in the preview (issue #763).
   const visibleTechnicalSkills =
-    resumeData.additional?.technicalSkills?.filter((item): item is string => typeof item === 'string' && item.trim() !== '') ?? [];
+    resumeData.additional?.technicalSkills?.filter(
+      (item): item is string => typeof item === 'string' && item.trim() !== ''
+    ) ?? [];
   const visibleLanguages =
-    resumeData.additional?.languages?.filter((item): item is string => typeof item === 'string' && item.trim() !== '') ?? [];
+    resumeData.additional?.languages?.filter(
+      (item): item is string => typeof item === 'string' && item.trim() !== ''
+    ) ?? [];
   const visibleCertificationsTraining =
-    resumeData.additional?.certificationsTraining?.filter((item): item is string => typeof item === 'string' && item.trim() !== '') ?? [];
+    resumeData.additional?.certificationsTraining?.filter(
+      (item): item is string => typeof item === 'string' && item.trim() !== ''
+    ) ?? [];
 
   return (
     <div className="h-full flex flex-col">
@@ -65,12 +72,24 @@ export function HighlightedResumeView({ resumeData, keywords }: HighlightedResum
                 </div>
                 {exp.years && <div className="text-xs text-steel-grey mb-1">{exp.years}</div>}
                 {exp.description && (
-                  <ul className="list-disc list-inside space-y-1 text-sm">
-                    {exp.description.map((bullet, i) => (
-                      <li key={i} className="text-ink-soft">
-                        <HighlightedText text={bullet} keywords={keywords} />
-                      </li>
-                    ))}
+                  <ul className="space-y-1 text-sm">
+                    {exp.description.map((bullet, i) => {
+                      // M-02: honour the per-row bullet/plain setting so this
+                      // preview agrees with the resume preview and the PDF.
+                      const showMarker = exp.descriptionStyles?.[i] !== 'plain';
+                      return (
+                        <li key={i} className={cn('flex text-ink-soft', showMarker && 'ml-4')}>
+                          {showMarker && (
+                            <span className="mr-1.5 flex-shrink-0" aria-hidden="true">
+                              &bull;&nbsp;
+                            </span>
+                          )}
+                          <span>
+                            <HighlightedText text={bullet} keywords={keywords} />
+                          </span>
+                        </li>
+                      );
+                    })}
                   </ul>
                 )}
               </div>
@@ -120,12 +139,22 @@ export function HighlightedResumeView({ resumeData, keywords }: HighlightedResum
                 </div>
                 {proj.years && <div className="text-xs text-steel-grey mb-1">{proj.years}</div>}
                 {proj.description && (
-                  <ul className="list-disc list-inside space-y-1 text-sm">
-                    {proj.description.map((bullet, i) => (
-                      <li key={i} className="text-ink-soft">
-                        <HighlightedText text={bullet} keywords={keywords} />
-                      </li>
-                    ))}
+                  <ul className="space-y-1 text-sm">
+                    {proj.description.map((bullet, i) => {
+                      const showMarker = proj.descriptionStyles?.[i] !== 'plain';
+                      return (
+                        <li key={i} className={cn('flex text-ink-soft', showMarker && 'ml-4')}>
+                          {showMarker && (
+                            <span className="mr-1.5 flex-shrink-0" aria-hidden="true">
+                              &bull;&nbsp;
+                            </span>
+                          )}
+                          <span>
+                            <HighlightedText text={bullet} keywords={keywords} />
+                          </span>
+                        </li>
+                      );
+                    })}
                   </ul>
                 )}
               </div>

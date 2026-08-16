@@ -8,6 +8,8 @@
 #   1. backend test suite        (uv run pytest — LLM/eval tests excluded by default)
 #   2. frontend locale parity     (pure-Python check; guards the i18n build break)
 #   3. frontend test suite        (vitest — runs when Node is available, else skipped)
+#   4. frontend typecheck         (tsc --noEmit — catches test fixtures that
+#                                  `next build` never sees)
 #
 # Activate once per clone:   git config core.hooksPath .githooks
 # Bypass intentionally:      git push --no-verify     (e.g. docs-only / WIP branch)
@@ -16,8 +18,9 @@
 # Notes:
 #  - Both checks always run so you see ALL failures, not just the first.
 #  - The backend suite is ~8s and makes NO network/LLM calls (evals are opt-in).
-#  - The frontend vitest suite runs only when Node is on PATH (git hooks may run
-#    without nvm's node); a full `tsc`/`next build` is intentionally NOT run here.
+#  - The frontend vitest suite and typecheck run only when Node is on PATH (git
+#    hooks may run without nvm's node). A full `next build` is still NOT run
+#    here — it is slow, and `tsc --noEmit` covers the type surface it would.
 
 set -uo pipefail
 
@@ -59,6 +62,21 @@ if command -v node >/dev/null 2>&1 && [ -x "$VITEST" ]; then
   fi
 else
   echo "  ⚠ node or vitest not available — skipping frontend tests" >&2
+fi
+
+# 4) Frontend typecheck (tsc --noEmit) — `next build` only typechecks its own
+#    module graph and .dockerignore excludes tests from the image, so a broken
+#    test fixture goes unnoticed by every other gate. tsconfig includes tests,
+#    so this is the only thing that catches them.
+TSC="$REPO_ROOT/apps/frontend/node_modules/.bin/tsc"
+if command -v node >/dev/null 2>&1 && [ -x "$TSC" ]; then
+  echo "▶ frontend : tsc --noEmit"
+  if ! ( cd "$REPO_ROOT/apps/frontend" && "$TSC" --noEmit ); then
+    echo "  ✗ frontend typecheck failed" >&2
+    status=1
+  fi
+else
+  echo "  ⚠ node or tsc not available — skipping frontend typecheck" >&2
 fi
 
 printf '─────────────────────────────────────────────────────────\n'

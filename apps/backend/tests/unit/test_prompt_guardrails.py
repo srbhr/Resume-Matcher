@@ -9,7 +9,11 @@ Two invariants this locks:
    ONLY guard. If a future edit drops them, this test fails loudly.
 """
 
-from app.prompts.templates import COVER_LETTER_PROMPT, DIFF_IMPROVE_PROMPT
+from app.prompts.templates import (
+    COVER_LETTER_PROMPT,
+    DIFF_IMPROVE_PROMPT,
+    INTERVIEW_PREP_PROMPT,
+)
 from app.prompts.refinement import KEYWORD_INJECTION_PROMPT
 
 
@@ -40,3 +44,11 @@ class TestAntiFabricationClausesPresent:
     def test_cover_letter_keeps_no_invent_clauses(self):
         assert "Do NOT invent information not in the resume" in COVER_LETTER_PROMPT
         assert "proven experience supports it" in COVER_LETTER_PROMPT
+
+    def test_interview_prep_keeps_no_fabrication_guardrails(self):
+        assert "Do NOT invent experience" in INTERVIEW_PREP_PROMPT
+        assert "tools, employers, metrics, certifications, skills" in INTERVIEW_PREP_PROMPT
+        assert "Skill gaps are preparation targets only" in INTERVIEW_PREP_PROMPT
+        assert "Do NOT translate JSON property names" in INTERVIEW_PREP_PROMPT
+        assert "role_fit_analysis" in INTERVIEW_PREP_PROMPT
+        assert "talking_points" in INTERVIEW_PREP_PROMPT

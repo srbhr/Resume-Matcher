@@ -82,6 +82,7 @@ async def migrate(database: Database | None = None) -> dict[str, Any]:
                     processing_status=r.get("processing_status", "pending"),
                     cover_letter=r.get("cover_letter"),
                     outreach_message=r.get("outreach_message"),
+                    interview_prep=r.get("interview_prep"),
                     title=r.get("title"),
                     original_markdown=r.get("original_markdown"),
                     created_at=r.get("created_at") or _utcnow_iso(),

@@ -67,10 +67,9 @@ export default function DashboardPage() {
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return t('common.unknown');
 
-    const dateLocale =
-      locale === 'es' ? 'es-ES' : locale === 'zh' ? 'zh-CN' : locale === 'ja' ? 'ja-JP' : 'en-US';
-
-    return date.toLocaleDateString(dateLocale, {
+    // Intl resolves plain language tags itself; the old ternary silently sent
+    // ko/fr/pt to en-US. Every other call site already passes `locale` directly.
+    return date.toLocaleDateString(locale, {
       month: 'short',
       day: '2-digit',
       year: 'numeric',

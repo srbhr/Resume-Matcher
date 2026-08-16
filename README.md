@@ -50,7 +50,7 @@ Resume Matcher works by creating a master resume that you can use to tailor for 
 1. **Upload** your master resume (PDF or DOCX)
 2. **Paste** a job description you're targeting
 3. **Review** AI-generated improvements and tailored content
-4. **Cover Letter** generator for the job application
+4. **Cover Letter** and optional interview preparation for the job application
 5. **Customize** the layout and sections to fit your style
 6. **Export** as a professional PDF with your preferred template
 
@@ -144,6 +144,10 @@ You can:
 Generate tailored cover letters based on the job description and your resume.
 
 ![Cover Letter](assets/cover_letter.png)
+
+### Interview Preparation
+
+Generate structured, resume-grounded interview prep for saved tailored resumes. Use the Builder's Interview Prep tab on demand, or enable automatic generation in Settings.
 
 ### Resume Scoring & Keyword Highlighting
 

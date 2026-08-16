@@ -154,6 +154,7 @@ def migrate_legacy_keys() -> None:
 _LEGACY_PROVIDER_KEY_MAP: dict[str, str] = {
     "openai": "openai",
     "openai_compatible": "openai_compatible",
+    "azure_foundry": "azure_foundry",
     "anthropic": "anthropic",
     "gemini": "google",
     "openrouter": "openrouter",
@@ -182,6 +183,7 @@ def _get_llm_api_key_with_fallback() -> str:
     # Map provider to config key
     provider_map = {
         "openai": "openai",
+        "azure_foundry": "azure_foundry",
         "anthropic": "anthropic",
         "gemini": "google",
         "openrouter": "openrouter",
@@ -207,6 +209,7 @@ class Settings(BaseSettings):
     llm_provider: Literal[
         "openai",
         "openai_compatible",
+        "azure_foundry",
         "anthropic",
         "openrouter",
         "gemini",

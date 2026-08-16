@@ -2,7 +2,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   FeaturePromptsError,
   PROVIDER_INFO,
+  fetchFeatureConfig,
+  updateFeatureConfig,
   updateFeaturePrompts,
+  updateLlmConfig,
   type LLMProvider,
 } from '@/lib/api/config';
 
@@ -83,7 +86,9 @@ describe('updateFeaturePrompts error mapping', () => {
   });
 
   it('throws a generic Error with the string detail on other failures', async () => {
-    fetchMock.mockResolvedValue(new Response(JSON.stringify({ detail: 'server boom' }), { status: 500 }));
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ detail: 'server boom' }), { status: 500 })
+    );
     await expect(updateFeaturePrompts({ cover_letter_prompt: 'x' })).rejects.toThrow('server boom');
   });
 
@@ -96,5 +101,73 @@ describe('updateFeaturePrompts error mapping', () => {
     };
     fetchMock.mockResolvedValue(new Response(JSON.stringify(prompts), { status: 200 }));
     await expect(updateFeaturePrompts({ cover_letter_prompt: 'a' })).resolves.toEqual(prompts);
+  });
+});
+
+describe('feature config API', () => {
+  let fetchMock: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('parses enable_interview_prep from GET /config/features', async () => {
+    const config = {
+      enable_cover_letter: true,
+      enable_outreach_message: false,
+      enable_interview_prep: true,
+    };
+    fetchMock.mockResolvedValue(new Response(JSON.stringify(config), { status: 200 }));
+
+    await expect(fetchFeatureConfig()).resolves.toEqual(config);
+  });
+
+  it('sends enable_interview_prep in PUT /config/features', async () => {
+    const config = {
+      enable_cover_letter: false,
+      enable_outreach_message: false,
+      enable_interview_prep: true,
+    };
+    fetchMock.mockResolvedValue(new Response(JSON.stringify(config), { status: 200 }));
+
+    await expect(updateFeatureConfig({ enable_interview_prep: true })).resolves.toEqual(config);
+
+    const [, init] = fetchMock.mock.calls[0];
+    expect(JSON.parse(init.body as string)).toEqual({ enable_interview_prep: true });
+  });
+});
+
+describe('updateLlmConfig error surfacing', () => {
+  it('serializes a structured 422 detail instead of rendering [object Object]', async () => {
+    const detail = { code: 'missing_base_url', field: 'api_base', missing: ['api_base'] };
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(JSON.stringify({ detail }), { status: 422 }))
+    );
+
+    await expect(updateLlmConfig({ provider: 'azure_foundry' })).rejects.toThrow(
+      /missing_base_url/
+    );
+    await expect(updateLlmConfig({ provider: 'azure_foundry' })).rejects.not.toThrow(
+      /\[object Object\]/
+    );
+
+    vi.unstubAllGlobals();
+  });
+
+  it('still passes a plain string detail through unchanged', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(JSON.stringify({ detail: 'plain failure' }), { status: 400 }))
+    );
+
+    await expect(updateLlmConfig({ provider: 'openai' })).rejects.toThrow('plain failure');
+
+    vi.unstubAllGlobals();
   });
 });

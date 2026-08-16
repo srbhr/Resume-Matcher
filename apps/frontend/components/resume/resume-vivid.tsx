@@ -8,7 +8,7 @@ import type {
 } from '@/components/dashboard/resume-component';
 import { getSortedSections, getSectionMeta } from '@/lib/utils/section-helpers';
 import { formatDateRange } from '@/lib/utils';
-import { SafeHtml } from './safe-html';
+import { DescriptionList } from './description-list';
 import baseStyles from './styles/_base.module.css';
 import styles from './styles/vivid.module.css';
 
@@ -134,22 +134,17 @@ export const ResumeVivid: React.FC<ResumeVividProps> = ({
 
   const renderArrowBullets = (
     items?: string[],
-    textClass: string = baseStyles['resume-text-xs']
-  ) => {
-    if (!items || items.length === 0) return null;
-    return (
-      <ul className={`ml-4 ${baseStyles['resume-list']} ${textClass}`}>
-        {items.map((desc, index) => (
-          <li key={index} className="flex">
-            <span className={`mr-1.5 ${styles.arrow}`}>➜&nbsp;</span>
-            <span>
-              <SafeHtml html={desc} />
-            </span>
-          </li>
-        ))}
-      </ul>
-    );
-  };
+    textClass: string = baseStyles['resume-text-xs'],
+    itemStyles?: ('bullet' | 'plain')[]
+  ) => (
+    <DescriptionList
+      items={items}
+      styles={itemStyles}
+      textClassName={textClass}
+      marker="➜"
+      markerClassName={`mr-1.5 ${styles.arrow}`}
+    />
+  );
 
   return (
     <>
@@ -209,7 +204,11 @@ export const ResumeVivid: React.FC<ResumeVividProps> = ({
                     <div className={`${baseStyles['resume-row-tight']} ${styles.entryMeta}`}>
                       {[formatDateRange(exp.years), exp.location].filter(Boolean).join(' | ')}
                     </div>
-                    {renderArrowBullets(exp.description)}
+                    {renderArrowBullets(
+                      exp.description,
+                      baseStyles['resume-text-xs'],
+                      exp.descriptionStyles
+                    )}
                   </div>
                 ))}
               </div>
@@ -284,7 +283,11 @@ export const ResumeVivid: React.FC<ResumeVividProps> = ({
                           </span>
                         )}
                       </div>
-                      {renderArrowBullets(project.description)}
+                      {renderArrowBullets(
+                        project.description,
+                        baseStyles['resume-text-xs'],
+                        project.descriptionStyles
+                      )}
                     </div>
                   ))}
                 </div>
@@ -400,7 +403,11 @@ export const ResumeVivid: React.FC<ResumeVividProps> = ({
 const DynamicResumeSectionVivid: React.FC<{
   sectionMeta: SectionMeta;
   resumeData: ResumeData;
-  renderArrowBullets: (items?: string[], textClass?: string) => React.ReactNode;
+  renderArrowBullets: (
+    items?: string[],
+    textClass?: string,
+    itemStyles?: ('bullet' | 'plain')[]
+  ) => React.ReactNode;
 }> = ({ sectionMeta, resumeData, renderArrowBullets }) => {
   const customSection = resumeData.customSections?.[sectionMeta.key];
   if (!customSection) return null;
@@ -448,7 +455,11 @@ const DynamicResumeSectionVivid: React.FC<{
                   </span>
                 )}
               </div>
-              {renderArrowBullets(item.description)}
+              {renderArrowBullets(
+                item.description,
+                baseStyles['resume-text-xs'],
+                item.descriptionStyles
+              )}
             </div>
           ))}
         </div>

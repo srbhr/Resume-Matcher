@@ -42,6 +42,7 @@ class Resume(Base):
     processing_status: Mapped[str] = mapped_column(String, default="pending")
     cover_letter: Mapped[str | None] = mapped_column(Text, nullable=True)
     outreach_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    interview_prep: Mapped[str | None] = mapped_column(Text, nullable=True)
     title: Mapped[str | None] = mapped_column(String, nullable=True)
     # original_markdown has *absence* semantics in the TinyDB era: the key was
     # omitted entirely when None. The facade reproduces that by only emitting

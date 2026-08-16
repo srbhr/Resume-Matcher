@@ -69,3 +69,71 @@ The base stylesheet includes specialized classes for improved subtitle visibilit
 These classes provide **better visibility** than the generic `resume-meta` class (0.82× base, weight 400), making subtitles 13-16% larger and semi-bold.
 
 Formatting controls include an "Effective Output" summary that reflects compact-mode adjustments for spacing/line-height.
+
+---
+
+## Description Styles (`descriptionStyles`)
+
+Each description row can render **with** a bullet marker or as a **plain**
+paragraph — used for sub-headings or continuation lines inside an entry.
+
+### Shape
+
+`descriptionStyles` is a positional array parallel to `description`:
+
+```jsonc
+{
+  "description":       ["Led the platform migration", "Rebuilt the ingest tier"],
+  "descriptionStyles": ["plain",                      "bullet"]
+}
+```
+
+`descriptionStyles[i]` describes `description[i]`. Values: `"bullet"` | `"plain"`.
+
+### The alignment invariant
+
+**The two arrays must stay index-aligned.** Anything that adds, removes, filters
+or reorders `description` rows must apply the identical operation to
+`descriptionStyles`. A desync is silent — it does not error, it just moves every
+later row's marker onto its neighbour.
+
+Enforced in three places:
+
+| Layer | File | Behaviour |
+|---|---|---|
+| Editor | `apps/frontend/components/builder/forms/{experience,projects,generic-item}-form.tsx` | `alignDescriptionStyles()` before every splice |
+| Client normalize | `apps/frontend/lib/utils/resume-normalization.ts` | filters both arrays in lockstep |
+| Server | `apps/backend/app/schemas/models.py` `_align_description_styles` | truncates/pads by index, defaults to `"bullet"` |
+
+The server aligns **by index**, so it cannot detect a desync — it can only
+guarantee length. Correctness has to be preserved upstream.
+
+### Models that carry it
+
+`Experience`, `Project`, `CustomSectionItem` (`apps/backend/app/schemas/models.py`). Rides
+inside the existing `processed_data` JSON column — **no migration needed**.
+
+`Education.description` is a scalar `str | None`, so it has no styles array.
+
+### Prompts that must preserve it
+
+Four prompts instruct the model to keep the arrays aligned:
+
+- `apps/backend/app/prompts/templates.py` — the three improve variants
+- `apps/backend/app/prompts/refinement.py` — `KEYWORD_INJECTION_PROMPT`
+
+A prompt is **not** a guarantee for positional metadata. `inject_keywords` is
+the last writer on the improve path, so `apps/backend/app/services/refiner.py::_preserve_description_styles()`
+restores the field locally after it — matching the defence-in-depth pattern
+already used for dates, skills, `personalInfo` and custom sections.
+
+### Rendering
+
+All seven templates render rows through
+`apps/frontend/components/resume/description-list.tsx`, which omits the marker span when the
+style is `"plain"`. The marker is `aria-hidden="true"`. The JD-match preview
+(`apps/frontend/components/builder/highlighted-resume-view.tsx`) applies the same rule so the
+builder does not contradict the PDF.
+
+Coverage: `apps/frontend/tests/template-description-styles.test.tsx` asserts marker presence
+per template; `apps/frontend/tests/resume-normalization.test.ts` pins the lockstep filter.

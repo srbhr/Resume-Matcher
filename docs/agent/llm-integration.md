@@ -10,6 +10,7 @@ Backend uses LiteLLM to support multiple providers through a unified API:
 |----------|------|-------|
 | **Ollama** | Local | Free, runs on your machine |
 | **OpenAI** | Cloud | GPT-5 Nano, GPT-4o |
+| **Azure AI Foundry** | Cloud | Azure AI Inference / Foundry model endpoints |
 | **Anthropic** | Cloud | Claude Haiku 4.5 |
 | **Google Gemini** | Cloud | Gemini 3 Flash |
 | **OpenRouter** | Cloud | Access to multiple models |
@@ -95,6 +96,8 @@ Users configure their preferred AI provider via:
 
 - Settings page: `/settings`
 - API: `PUT /api/v1/config/llm-api-key`
+
+Azure AI Foundry uses LiteLLM's `azure_ai/` route for generic Azure AI Inference endpoints. Foundry-hosted Azure OpenAI endpoints such as `https://<resource>.services.ai.azure.com/openai/v1/responses` are normalized to the service root and routed through LiteLLM's `azure/` provider automatically. Set `LLM_PROVIDER=azure_foundry`, `LLM_MODEL` to the Foundry model or deployment name, `LLM_API_BASE` to the Azure AI endpoint, and store the Foundry API key in the `azure_foundry` key slot.
 
 ## Health Checks
 

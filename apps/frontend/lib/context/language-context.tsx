@@ -28,6 +28,15 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [uiLanguage, setUiLanguageState] = useState<Locale>(defaultLocale);
   const [isLoading, setIsLoading] = useState(true);
 
+  // L-08: the root layout hardcodes lang="en-US" and, being a server component,
+  // cannot know the user's choice — so every non-English locale was announced
+  // to screen readers as English. Keep the document language in sync here.
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.documentElement.lang = uiLanguage;
+    }
+  }, [uiLanguage]);
+
   // Load languages from localStorage first, then sync content language with backend
   useEffect(() => {
     const loadLanguages = async () => {

@@ -345,3 +345,148 @@ class TestCheckHealthTransport:
         assert leaking_key not in detail
         assert "sk-abcd1234" not in detail
         assert "<redacted>" in detail
+
+
+class TestAzureFoundryTransport:
+    """Wire-level coverage for the azure_foundry provider (T-05).
+
+    The Azure tests added with the provider were pure string-mapping assertions
+    -- they asserted the code does what the code does. Both B-03 (the
+    ``gpt5_series/`` prefix silently degrading every capability lookup) and H-03
+    (api_version and api_base derived from disagreeing predicates, producing a
+    doubled ``/openai/v1/openai/v1/`` path) survived them. These assert the URL
+    litellm actually puts on the wire.
+    """
+
+    @respx.mock
+    async def test_foundry_openai_endpoint_hits_single_v1_path(self):
+        """The service root + api_version=v1 must not double the /openai/v1 segment."""
+        route = respx.post(
+            "https://example.services.ai.azure.com/openai/v1/chat/completions"
+        ).mock(
+            return_value=httpx.Response(
+                200, json=_openai_chat_completion("azure says hi", model="gpt-5-mini")
+            )
+        )
+
+        cfg = LLMConfig(
+            provider="azure_foundry",
+            model="gpt-5-mini",
+            api_key="azure-key",
+            api_base="https://example.services.ai.azure.com/openai/v1/responses",
+        )
+        out = await complete("Hello", config=cfg)
+
+        assert out == "azure says hi"
+        assert route.called
+        url = str(route.calls.last.request.url)
+        # H-03: exactly one /openai/v1 segment.
+        assert url.count("/openai/v1") == 1, url
+
+    async def test_model_name_stays_in_the_litellm_registry(self):
+        """B-03: the routed model string must resolve capabilities correctly.
+
+        With the old ``azure/gpt5_series/`` prefix this fell out of
+        ``litellm.get_model_info``, silently clamping max_tokens to the 4096
+        default and disabling JSON mode -- so long resumes came back truncated.
+        """
+        from app.llm import _supports_json_mode, get_model_name, get_safe_max_tokens
+
+        cfg = LLMConfig(
+            provider="azure_foundry",
+            model="gpt-5-mini",
+            api_key="azure-key",
+            api_base="https://example.services.ai.azure.com/openai/v1/responses",
+        )
+        model_name = get_model_name(cfg)
+
+        assert model_name == "azure/gpt-5-mini"
+        assert "gpt5_series" not in model_name
+        assert _supports_json_mode(model_name) is True
+        assert get_safe_max_tokens(model_name) > 4096
+
+    async def test_api_version_is_not_leaked_to_other_providers(self):
+        """M-01: an explicit api_version must not escape the azure_foundry branch."""
+        from app.llm import _azure_foundry_api_version
+
+        leaked = LLMConfig(
+            provider="ollama",
+            model="gemma3:4b",
+            api_key="",
+            api_base="http://localhost:11434",
+            api_version="2024-10-21",
+        )
+        assert _azure_foundry_api_version(leaked) is None
+
+    async def test_plain_azure_openai_host_gets_no_v1_api_version(self):
+        """H-03: a non-Foundry Azure host must not claim api_version=v1.
+
+        _normalize_api_base leaves this URL untouched (the host check fails), so
+        reporting v1 would make litellm build /openai/v1/openai/v1/ and 404.
+        """
+        from app.llm import _azure_foundry_api_version, _normalize_api_base
+
+        cfg = LLMConfig(
+            provider="azure_foundry",
+            model="gpt-4o",
+            api_key="azure-key",
+            api_base="https://my-resource.openai.azure.com/openai/v1",
+        )
+        assert _azure_foundry_api_version(cfg) is None
+        assert (
+            _normalize_api_base(cfg.provider, cfg.api_base, cfg.model)
+            == "https://my-resource.openai.azure.com/openai/v1"
+        )
+
+    async def test_malformed_port_does_not_raise(self):
+        """`urlsplit().port` raises for a non-numeric or out-of-range port.
+
+        _normalize_api_base runs inside _build_router and check_llm_health, so
+        an unhandled raise here crashes before any LLM error handling. A bad
+        endpoint must fail as a provider connection error instead.
+        """
+        from app.llm import _normalize_api_base
+
+        for bad in (
+            "https://example.services.ai.azure.com:99999/openai/v1",
+            "https://example.services.ai.azure.com:abc/openai/v1",
+        ):
+            out = _normalize_api_base("azure_foundry", bad, "gpt-5-mini")
+            # Rebuilt from the parsed hostname with the bad port dropped. It
+            # must NOT return the raw input: that path preserved userinfo and
+            # reintroduced the credential leak this rebuild exists to prevent.
+            assert out == "https://example.services.ai.azure.com"
+
+    async def test_malformed_port_does_not_leak_credentials(self):
+        """The malformed-port fallback must still strip userinfo."""
+        from app.llm import _normalize_api_base
+
+        out = _normalize_api_base(
+            "azure_foundry",
+            "https://user:secret@example.services.ai.azure.com:99999/openai/v1",
+            "gpt-5-mini",
+        )
+        assert "secret" not in (out or "")
+        assert out == "https://example.services.ai.azure.com"
+
+    async def test_explicit_port_is_preserved(self):
+        from app.llm import _normalize_api_base
+
+        out = _normalize_api_base(
+            "azure_foundry",
+            "https://example.services.ai.azure.com:8443/openai/v1/responses",
+            "gpt-5-mini",
+        )
+        assert out == "https://example.services.ai.azure.com:8443"
+
+    async def test_userinfo_is_stripped_from_normalized_base(self):
+        """L-02: credentials pasted into the URL must not be carried forward."""
+        from app.llm import _normalize_api_base
+
+        out = _normalize_api_base(
+            "azure_foundry",
+            "https://user:secret@example.services.ai.azure.com/openai/v1/responses",
+            "gpt-5-mini",
+        )
+        assert out == "https://example.services.ai.azure.com"
+        assert "secret" not in (out or "")

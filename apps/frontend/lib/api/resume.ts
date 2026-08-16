@@ -1,4 +1,7 @@
-import { ImprovedResult } from '@/components/common/resume_previewer_context';
+import type {
+  ImprovedResult,
+  InterviewPrepData,
+} from '@/components/common/resume_previewer_context';
 import type { ResumeData } from '@/components/dashboard/resume-component';
 import { type TemplateSettings } from '@/lib/types/template-settings';
 import { type Locale } from '@/i18n/config';
@@ -24,6 +27,7 @@ interface ProcessedResume {
     location?: string | null;
     years?: string;
     description?: string[];
+    descriptionStyles?: ('bullet' | 'plain')[];
   }>;
   education?: Array<{
     id: number;
@@ -40,6 +44,7 @@ interface ProcessedResume {
     github?: string | null;
     website?: string | null;
     description?: string[];
+    descriptionStyles?: ('bullet' | 'plain')[];
   }>;
   additional?: {
     technicalSkills?: string[];
@@ -63,6 +68,7 @@ interface ResumeResponse {
     processed_resume: ProcessedResume | null;
     cover_letter?: string | null;
     outreach_message?: string | null;
+    interview_prep?: InterviewPrepData | null;
     parent_id?: string | null; // For determining if resume is tailored
     title?: string | null;
   };
@@ -353,6 +359,17 @@ export async function generateOutreachMessage(resumeId: string): Promise<string>
   }
   const data = await res.json();
   return data.content;
+}
+
+/** Generates interview preparation on-demand for a tailored resume */
+export async function generateInterviewPrep(resumeId: string): Promise<InterviewPrepData> {
+  const res = await apiPost(`/resumes/${encodeURIComponent(resumeId)}/generate-interview-prep`, {});
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Failed to generate interview preparation (status ${res.status}): ${text}`);
+  }
+  const data = (await res.json()) as { interview_prep: InterviewPrepData };
+  return data.interview_prep;
 }
 
 /** Retries AI processing for a failed resume */

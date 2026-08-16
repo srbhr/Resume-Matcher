@@ -107,6 +107,26 @@
     "previewMode": "Modo Vista Previa",
     "createAndPreview": "Crear y previsualizar",
     "unsavedDraft": "Borrador sin guardar",
+    "autoSave": {
+      "saving": "Sincronizando...",
+      "saved": "Todos los cambios guardados",
+      "localDraft": "Borrador guardado localmente",
+      "saveNow": "Guardar ahora",
+      "retrySave": "Reintentar guardado",
+      "savedButton": "Guardado"
+    },
+    "draftRecovery": {
+      "title": "¿Restaurar borrador local?",
+      "description": "Un borrador local del navegador es diferente de la copia guardada en el servidor. Restáuralo para seguir editando o usa la copia del servidor y descarta el borrador local.",
+      "restoreDraft": "Restaurar borrador",
+      "useServer": "Usar copia del servidor"
+    },
+    "leaveWithLocalDraft": {
+      "title": "¿Salir sin sincronizar?",
+      "description": "Los últimos cambios aún no pudieron sincronizarse con el servidor. El borrador local sigue guardado en este navegador, pero puede no estar disponible desde otro navegador o dispositivo.",
+      "leave": "Ir al panel",
+      "stay": "Seguir editando"
+    },
     "personalInfo": "Información Personal",
     "summary": "Resumen",
     "experience": "Experiencia",
@@ -176,7 +196,8 @@
       "resume": "CURRÍCULUM",
       "coverLetter": "CARTA",
       "outreach": "MENSAJE",
-      "jdMatch": "COINCIDENCIA JD"
+      "jdMatch": "COINCIDENCIA JD",
+      "interviewPrep": "PREPARACIÓN"
     },
     "footer": {
       "moduleLabel": "Módulo del constructor",
@@ -195,7 +216,9 @@
       "outreachDescription": "Genera un mensaje de contacto breve para LinkedIn o email según tu currículum y la descripción del puesto.",
       "generateButton": "Generar {title}",
       "coverLetterFooter": "Consejo: adapta primero para mejores resultados.",
-      "outreachFooter": "Consejo: manténlo breve y personalizado."
+      "outreachFooter": "Consejo: manténlo breve y personalizado.",
+      "interviewPrepDescription": "Genera preparación para entrevistas según tu currículum adaptado y la descripción del puesto.",
+      "interviewPrepFooter": "Consejo: úsalo después de adaptar el currículum para preparar respuestas veraces basadas en evidencia."
     },
     "regenerateDialog": {
       "title": "¿Regenerar {title}?",
@@ -289,7 +312,8 @@
         "descriptionPoints": "Puntos de descripción"
       },
       "actions": {
-        "addPoint": "Agregar punto"
+        "addPoint": "Agregar punto",
+        "togglePointStyle": "Alternar viñeta"
       },
       "placeholders": {
         "title": "Título",
@@ -444,11 +468,14 @@
       "editorPanel": "Panel de edición",
       "coverLetterEditor": "Editor de carta",
       "outreachEditor": "Editor de mensaje",
-      "jdMatchAnalysis": "Análisis de coincidencia JD"
+      "jdMatchAnalysis": "Análisis de coincidencia JD",
+      "interviewPrep": "Preparación de entrevista"
     },
     "alerts": {
       "saveNotAvailable": "Guardar solo está disponible al editar un currículum existente.",
       "saveFailed": "No se pudo guardar el currículum. Por favor, inténtalo de nuevo.",
+      "autoSaveFailed": "No se pudo sincronizar. El borrador está seguro localmente.",
+      "loadFailed": "No se pudo cargar este currículum desde el servidor. Actualiza para volver a intentarlo; la edición está desactivada para no sobrescribir tu copia guardada.",
       "coverLetterSaveSuccess": "Carta de presentación guardada",
       "outreachSaveSuccess": "Mensaje de contacto guardado",
       "downloadSuccess": "Currículum descargado",
@@ -461,7 +488,8 @@
       "coverLetterDownloadFailed": "No se pudo descargar la carta de presentación: {error}",
       "outreachSaveFailed": "No se pudo guardar el mensaje de contacto. Por favor, inténtalo de nuevo.",
       "coverLetterGenerateFailed": "No se pudo generar la carta de presentación: {error}",
-      "outreachGenerateFailed": "No se pudo generar el mensaje de contacto: {error}"
+      "outreachGenerateFailed": "No se pudo generar el mensaje de contacto: {error}",
+      "interviewPrepGenerateFailed": "No se pudo generar la preparación de entrevista: {error}"
     }
   },
   "enrichment": {
@@ -578,8 +606,8 @@
       "jobDescriptionTooShort": "La descripción del trabajo es demasiado corta. Añade más detalles e inténtalo de nuevo.",
       "apiKeyError": "Tu clave API no funciona. Revísala en Configuración.",
       "rateLimit": "Se alcanzó el límite de tasa. Espera aproximadamente un minuto e inténtalo de nuevo.",
+      "timeout": "La vista previa del currículum agotó el tiempo de espera tras {minutes} minutos. Inténtalo de nuevo con una descripción del trabajo más corta o un prompt más simple.",
       "failedToGenerate": "No se pudo generar el currículum. Revisa tu clave API en Configuración e inténtalo de nuevo.",
-      "timeout": "La solicitud agotó el tiempo de espera. Inténtalo de nuevo con una descripción del trabajo más corta o comprueba tu conexión.",
       "failedToPreview": "No se pudo previsualizar el currículum. Revisa tu clave API en Configuración e inténtalo de nuevo.",
       "failedToConfirm": "No se pudieron aplicar los cambios. Inténtalo de nuevo."
     }
@@ -661,6 +689,8 @@
       "baseUrlLabel": "URL base (opcional)",
       "baseUrlPlaceholder": "p. ej. https://api.openai.com/v1",
       "baseUrlDescription": "Sobrescribe la URL base para usar un proxy/agregador. Déjalo en blanco para usar la URL predeterminada del proveedor.",
+      "azureBaseUrlLabel": "Endpoint de Azure AI Foundry",
+      "azureBaseUrlDescription": "Pega el endpoint de Foundry. Las implementaciones GPT pueden usar la raíz del servicio o /openai/v1/responses; los modelos de Azure AI Inference pueden usar el endpoint /models.",
       "ollamaServerUrl": "URL del servidor Ollama",
       "ollamaServerUrlPlaceholder": "http://localhost:11434",
       "reasoningEffortLabel": "Esfuerzo de razonamiento",
@@ -705,7 +735,11 @@
       "customPromptLabel": "Prompt personalizado (opcional)",
       "customPromptHelp": "Debe incluir estos marcadores (cada uno entre llaves): job_description, resume_data, output_language. Déjalo en blanco para usar el prompt por defecto.",
       "customPromptResetButton": "Restablecer al predeterminado",
-      "customPromptErrorMissing": "Faltan marcadores requeridos: {missing}"
+      "customPromptErrorMissing": "Faltan marcadores requeridos: {missing}",
+      "interviewPrep": {
+        "label": "Preparación de entrevista",
+        "description": "Genera automáticamente preparación de entrevista junto con los currículums adaptados guardados"
+      }
     },
     "promptSettings": {
       "title": "Configuración de Prompts",
@@ -723,6 +757,7 @@
     "errors": {
       "unableToConnectBackend": "No se puede acceder al servidor. Asegúrate de que esté en ejecución.",
       "apiKeyRequired": "Se requiere una clave API para el proveedor seleccionado.",
+      "baseUrlRequired": "{provider} requiere una URL base.",
       "unknownProvider": "Proveedor desconocido devuelto por el backend: {provider}",
       "unableToSaveConfiguration": "No se pudo guardar la configuración",
       "failedToClearApiKeys": "No se pudieron borrar las claves API. Inténtalo de nuevo.",
@@ -1005,6 +1040,25 @@
       "loadFailed": "No se pudieron cargar las candidaturas.",
       "moveFailed": "No se pudo mover la candidatura.",
       "deleteFailed": "No se pudieron eliminar las candidaturas."
+    }
+  },
+  "interviewPrep": {
+    "title": "Preparación de entrevista",
+    "regenerate": "Regenerar",
+    "unavailableTitle": "Preparación no disponible",
+    "loadingContextDescription": "Comprobando el contexto del puesto para este currículum adaptado antes de generar.",
+    "missingContextDescription": "Este currículum adaptado no tiene el contexto del puesto guardado que se necesita para generar preparación de entrevista. Vuelve a adaptar el currículum con una descripción del puesto.",
+    "saveRequiredDescription": "Guarda este currículum adaptado antes de generar preparación de entrevista.",
+    "focusArea": "Área de enfoque",
+    "suggestedAnswerPoints": "Puntos sugeridos para responder",
+    "whyItMatters": "Por qué importa",
+    "preparationSuggestion": "Sugerencia de preparación",
+    "sections": {
+      "roleFit": "Análisis de encaje",
+      "resumeQuestions": "Preguntas basadas en el currículum",
+      "projectFollowUps": "Seguimiento de proyectos",
+      "skillGaps": "Brechas de habilidades",
+      "talkingPoints": "Puntos clave"
     }
   }
 }

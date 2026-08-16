@@ -1,0 +1,1064 @@
+{
+  "common": {
+    "save": "저장",
+    "saving": "저장 중...",
+    "cancel": "취소",
+    "delete": "삭제",
+    "edit": "편집",
+    "download": "다운로드",
+    "loading": "불러오는 중...",
+    "uploading": "업로드 중...",
+    "checking": "확인 중...",
+    "processing": "처리 중...",
+    "generating": "생성 중...",
+    "error": "오류",
+    "success": "성공",
+    "confirm": "확인",
+    "back": "뒤로",
+    "retry": "다시 시도",
+    "next": "다음",
+    "continue": "계속",
+    "finish": "완료",
+    "optional": "선택 사항",
+    "close": "닫기",
+    "ok": "확인",
+    "search": "검색",
+    "filter": "필터",
+    "reset": "초기화",
+    "apply": "적용",
+    "selectOption": "옵션을 선택하세요...",
+    "unknown": "알 수 없음",
+    "keysCleared": "API 키가 성공적으로 삭제되었습니다",
+    "databaseReset": "데이터베이스가 성공적으로 초기화되었습니다",
+    "popupBlocked": "팝업이 차단되었습니다. 팝업을 허용하거나 다음 URL을 직접 열어주세요: {url}"
+  },
+  "home": {
+    "brandLine1": "Resume",
+    "brandLine2": "Matcher",
+    "docs": "문서",
+    "launchApp": "앱 실행"
+  },
+  "nav": {
+    "dashboard": "대시보드",
+    "builder": "이력서 빌더",
+    "tailor": "이력서 맞춤화",
+    "settings": "설정",
+    "backToDashboard": "대시보드로 돌아가기",
+    "goToSettings": "설정으로 이동",
+    "applicationTracker": "지원 현황 트래커"
+  },
+  "dashboard": {
+    "title": "대시보드",
+    "subtitle": "이력서와 지원 현황을 관리하세요",
+    "myResumes": "내 이력서",
+    "noResumes": "아직 이력서가 없습니다",
+    "noResumesDescription": "첫 이력서를 업로드하여 시작하세요",
+    "uploadResume": "이력서 업로드",
+    "createNew": "새로 만들기",
+    "lastModified": "마지막 수정",
+    "actions": "작업",
+    "preview": "미리보기",
+    "viewResume": "이력서 보기",
+    "editResume": "이력서 편집",
+    "deleteResume": "이력서 삭제",
+    "downloadPdf": "PDF 다운로드",
+    "tailorResume": "채용 공고에 맞춤화",
+    "selectModule": "모듈 선택",
+    "masterResume": "마스터 이력서",
+    "tailoredResume": "맞춤화된 이력서",
+    "initializeMasterResume": "마스터 이력서 초기화",
+    "initializeSequence": "초기화 시퀀스",
+    "refreshStatus": "상태 새로고침",
+    "retryProcessing": "처리 다시 시도",
+    "retryingProcessing": "다시 시도하는 중...",
+    "deleteAndReupload": "삭제 후 재업로드",
+    "processingFailedHint": "이 파일을 읽을 수 없습니다. 다시 시도하거나 다른 파일을 업로드하세요.",
+    "retrySuccess": "처리에 성공했습니다!",
+    "retryFailed": "다시 시도에 실패했습니다. 다른 파일을 업로드해 보세요.",
+    "createResume": "이력서 만들기",
+    "edited": "{date}에 수정됨",
+    "statusLine": "상태: {status}",
+    "status": {
+      "checking": "확인 중...",
+      "processing": "처리 중...",
+      "ready": "준비 완료",
+      "failed": "처리 실패",
+      "pending": "대기 중"
+    },
+    "llmNotConfiguredTitle": "[ LLM 미설정 ]",
+    "llmNotConfiguredMessage": "> API 키가 없습니다. 설정에서 구성하기 전까지 이력서 맞춤화가 비활성화됩니다.",
+    "setupRequiredTitle": "[ 설정 필요 ]",
+    "setupRequiredMessage": "> 이력서 맞춤화를 사용하려면 설정에서 API 키를 구성하세요.",
+    "uploadDialog": {
+      "success": "이력서가 성공적으로 업로드되었습니다.",
+      "successMaster": "이력서가 업로드되어 마스터로 설정되었습니다.",
+      "successMissingId": "업로드는 성공했지만 이력서 ID가 반환되지 않았습니다.",
+      "parsingFailed": "이력서는 업로드되었지만 AI 분석에 실패했습니다. 여전히 수동으로 맞춤화할 수 있습니다.",
+      "failed": "업로드에 실패했습니다.",
+      "dropzoneTitle": "클릭하거나 파일을 드래그하세요",
+      "dropzoneSubtitle": "PDF, DOC, DOCX (최대 4MB)",
+      "tryDifferentFile": "다른 파일 시도",
+      "parsingFailedKeepOpen": "AI 분석에 실패했습니다. 다른 파일을 시도하거나 이 대화상자를 닫으세요."
+    }
+  },
+  "builder": {
+    "title": "이력서 빌더",
+    "editMode": "편집 모드",
+    "previewMode": "미리보기 모드",
+    "createAndPreview": "만들고 미리보기",
+    "unsavedDraft": "저장되지 않은 초안",
+    "personalInfo": "개인 정보",
+    "summary": "요약",
+    "experience": "경력",
+    "education": "학력",
+    "skills": "기술",
+    "projects": "프로젝트",
+    "certifications": "자격증",
+    "languages": "언어",
+    "awards": "수상 내역",
+    "addSection": "섹션 추가",
+    "removeSection": "섹션 제거",
+    "saveChanges": "변경 사항 저장",
+    "discardChanges": "변경 사항 취소",
+    "placeholders": {
+      "summary": "전문 경력을 간략하게 설명해 주세요..."
+    },
+    "contentStats": {
+      "wordsChars": "{wordCount} 단어 / {charCount}자"
+    },
+    "additionalForm": {
+      "instructions": "항목을 줄바꿈으로 구분하여 입력하세요(각 항목마다 Enter를 누르세요).",
+      "placeholders": {
+        "technicalSkills": "React\nTypeScript\nNode.js",
+        "languages": "영어\n스페인어",
+        "certifications": "AWS Solution Architect\nGoogle Analytics",
+        "awards": "이달의 직원\n해커톤 우승"
+      }
+    },
+    "customSections": {
+      "dialogTitle": "사용자 지정 섹션 추가",
+      "dialogDescription": "이름과 유형을 지정하여 이력서에 새 섹션을 만듭니다.",
+      "sectionNameLabel": "섹션 이름",
+      "sectionNamePlaceholder": "예: 논문, 봉사 활동, 자격증",
+      "sectionTypeLabel": "섹션 유형",
+      "addCustomSectionButton": "사용자 지정 섹션 추가",
+      "sectionTypes": {
+        "textBlockLabel": "텍스트 블록",
+        "textBlockDescription": "단일 텍스트 영역(요약과 유사)",
+        "itemListLabel": "항목 목록",
+        "itemListDescription": "세부 정보가 있는 여러 항목(경력과 유사)",
+        "stringListLabel": "기술 목록",
+        "stringListDescription": "간단한 항목 목록(기술과 유사)"
+      },
+      "contentLabel": "내용",
+      "contentPlaceholder": "{name}에 대한 내용을 입력하세요...",
+      "defaultTextPlaceholder": "텍스트 내용을 입력하세요...",
+      "entryLabel": "항목",
+      "addEntryLabel": "항목 추가",
+      "itemsLabel": "항목",
+      "itemsPlaceholder": "항목을 한 줄에 하나씩 입력하세요",
+      "unknownSectionType": "알 수 없는 섹션 유형: {type}",
+      "unknownDefaultSection": "알 수 없는 기본 섹션: {section}"
+    },
+    "sectionHeader": {
+      "renameSection": "섹션 이름 바꾸기",
+      "customTag": "사용자 지정",
+      "hiddenFromPdfTag": "PDF에서 숨김",
+      "hideSection": "섹션 숨기기",
+      "showSection": "섹션 표시",
+      "moveUp": "위로 이동",
+      "moveDown": "아래로 이동",
+      "deleteSection": "섹션 삭제",
+      "deleteTitle": "섹션 삭제",
+      "deleteDescription": "\"{name}\"을(를) 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다."
+    },
+    "previewTabs": {
+      "resume": "이력서",
+      "coverLetter": "자기소개서",
+      "outreach": "아웃리치 메일",
+      "jdMatch": "채용공고 매칭",
+      "interviewPrep": "면접 준비"
+    },
+    "footer": {
+      "moduleLabel": "이력서 빌더 모듈",
+      "singleColumn": "단일 열",
+      "twoColumn": "2단"
+    },
+    "pageSize": {
+      "usLetter": "US 레터"
+    },
+    "generatePrompt": {
+      "notAvailableTitle": "{title}을(를) 사용할 수 없음",
+      "notAvailableDescription": "{title}을(를) 생성하려면 먼저 채용 공고로 이력서를 맞춤화하세요.",
+      "goToDashboard": "대시보드로 이동",
+      "generateTitle": "{title} 생성",
+      "coverLetterDescription": "이력서와 채용 공고를 기반으로 맞춤화된 자기소개서를 생성합니다.",
+      "outreachDescription": "이력서와 채용 공고를 기반으로 링크드인이나 이메일용 간결한 아웃리치 메시지를 생성합니다.",
+      "generateButton": "{title} 생성",
+      "coverLetterFooter": "팁: 최상의 결과를 위해 먼저 맞춤화하세요.",
+      "outreachFooter": "팁: 짧고 개인화된 내용으로 작성하세요.",
+      "interviewPrepDescription": "맞춤화된 이력서와 채용 공고를 기반으로 직무별 면접 준비 자료를 생성합니다.",
+      "interviewPrepFooter": "팁: 맞춤화 후 이 기능을 사용해 이력서에 기반한 진실된 답변을 준비하세요."
+    },
+    "regenerateDialog": {
+      "title": "{title}을(를) 다시 생성하시겠습니까?",
+      "description": "현재 {title}을(를) 새로 생성된 것으로 교체합니다. 지금까지 편집한 내용은 사라집니다."
+    },
+    "regenerate": {
+      "buttonLabel": "AI 재생성",
+      "selectDialog": {
+        "title": "재생성할 항목 선택",
+        "subtitle": "개선하고 싶은 이력서 부분을 선택하세요",
+        "experience": "경력",
+        "projects": "프로젝트",
+        "skills": "기술",
+        "noItemsSelected": "항목을 하나 이상 선택하세요",
+        "noItemsAvailable": "재생성할 수 있는 항목이 없습니다. 먼저 경력, 프로젝트 또는 기술을 추가하세요.",
+        "itemCount": {
+          "one": "{count}개 항목",
+          "other": "{count}개 항목"
+        },
+        "continueButton": "계속"
+      },
+      "instructionDialog": {
+        "title": "무엇을 개선하고 싶으신가요?",
+        "subtitle": "AI를 안내할 구체적인 피드백을 제공하세요",
+        "defaultInstruction": "더 강력한 행동 동사와, 가능한 경우 정량화된 성과를 사용해 내용을 개선하세요.",
+        "selectedItems": "선택한 항목",
+        "placeholder": "예: 정량적 지표 추가, 리더십 역량 강조, 더 많은 행동 동사 사용...",
+        "hint": "만족스럽지 않은 부분을 구체적으로 알려주세요",
+        "backButton": "뒤로",
+        "generateButton": "생성"
+      },
+      "diffPreview": {
+        "title": "변경 사항 미리보기",
+        "subtitle": "적용하기 전에 재생성된 내용을 검토하세요",
+        "expandItem": "{item} 펼치기",
+        "collapseItem": "{item} 접기",
+        "partialFailures": "일부 항목({count}개)을 재생성하지 못했습니다. 성공한 항목은 검토하고 적용할 수 있습니다.",
+        "changesCount": "{count}개 항목 수정됨",
+        "rejectButton": "거부하고 다시 생성",
+        "acceptButton": "변경 사항 적용",
+        "originalLabel": "원본",
+        "newLabel": "새 항목",
+        "noContent": "내용 없음",
+        "applying": "적용 중...",
+        "loading": "개선된 내용을 생성하는 중..."
+      },
+      "errors": {
+        "generationFailed": "콘텐츠 생성에 실패했습니다. 다시 시도해 주세요.",
+        "applyFailed": "변경 사항 적용에 실패했습니다. 다시 시도해 주세요.",
+        "resumeChanged": "재생성 이후 이력서 내용이 변경되었습니다. 다시 생성한 후 시도해 주세요.",
+        "noChangesToApply": "적용할 변경 사항이 없습니다.",
+        "networkError": "네트워크 오류입니다. 연결 상태를 확인해 주세요."
+      }
+    },
+    "jdMatch": {
+      "yourResume": "내 이력서",
+      "matchingKeywordsHighlighted": "(일치하는 키워드가 강조 표시됨)",
+      "jobDescriptionTitle": "채용 공고",
+      "at": "@",
+      "atSeparator": " @ ",
+      "roleSeparator": "-",
+      "aboutTitle": "채용공고 매칭 안내",
+      "aboutDescription": "이 화면은 이력서가 채용 공고와 얼마나 잘 일치하는지 보여줍니다. 채용 공고의 키워드가 이력서에 노란색으로 강조 표시되어, 이미 다루고 있는 기술과 용어를 파악하는 데 도움이 됩니다.",
+      "highlightedKeywordsTitle": "강조된 키워드",
+      "highlightedKeywordsDescriptionTemplate": "__COLOR__(으)로 강조된 단어는 채용 공고와 이력서 양쪽에 모두 나타납니다. 일치율이 높을수록 채용 요건과의 적합도가 높다는 의미입니다.",
+      "highlightedKeywordsDescriptionPrefix": "다음 색으로 강조된 단어는",
+      "highlightColor": "노란색",
+      "highlightedKeywordsDescriptionSuffix": "채용 공고와 이력서 양쪽에 모두 나타납니다. 일치율이 높을수록 채용 요건과의 적합도가 높다는 의미입니다.",
+      "tipsTitle": "팁",
+      "tips": {
+        "items": {
+          "addMissingKeywords": "이력서 탭에서 누락된 키워드를 추가하세요",
+          "focusTechnicalSkills": "채용 공고에 언급된 기술 스킬과 도구에 집중하세요",
+          "matchActionVerbs": "채용 요건의 행동 동사를 맞추세요"
+        }
+      },
+      "stats": {
+        "keywordsExtracted": "{count}개 키워드 추출됨",
+        "matchesFound": "{count}개 일치 항목 발견",
+        "matchRateLabel": "일치율:"
+      }
+    },
+    "genericItemForm": {
+      "itemLabel": "항목",
+      "addItemLabel": "{label} 추가",
+      "fields": {
+        "title": "제목",
+        "organization": "조직",
+        "location": "위치",
+        "years": "연도",
+        "descriptionPoints": "설명 항목"
+      },
+      "actions": {
+        "addPoint": "항목 추가",
+        "togglePointStyle": "글머리 기호 전환"
+      },
+      "placeholders": {
+        "title": "제목",
+        "organization": "조직",
+        "location": "위치",
+        "years": "2020년 1월 - 현재",
+        "description": "기여한 내용을 설명하세요..."
+      },
+      "noEntries": "// {label} 항목 없음",
+      "addFirstItem": "첫 {label} 추가"
+    },
+    "forms": {
+      "experience": {
+        "addJob": "경력 추가",
+        "addFirstJob": "첫 경력 추가",
+        "fields": {
+          "jobTitle": "직함",
+          "company": "회사"
+        },
+        "placeholders": {
+          "jobTitle": "시니어 개발자",
+          "company": "테크 코퍼레이션",
+          "location": "원격 / 도시",
+          "years": "2020년 1월 - 현재",
+          "description": "성과를 설명하세요..."
+        }
+      },
+      "education": {
+        "addSchool": "학교 추가",
+        "addFirstSchool": "첫 학교 추가",
+        "fields": {
+          "institution": "학교명",
+          "degree": "학위",
+          "description": "설명",
+          "descriptionOptional": "설명 (선택 사항)"
+        },
+        "placeholders": {
+          "institution": "학교 이름",
+          "degree": "학사 학위",
+          "years": "2016년 8월 - 2020년 5월",
+          "description": "추가 세부 정보..."
+        }
+      },
+      "projects": {
+        "addProject": "프로젝트 추가",
+        "addFirstProject": "첫 프로젝트 추가",
+        "fields": {
+          "projectName": "프로젝트 이름",
+          "role": "역할",
+          "website": "웹사이트"
+        },
+        "placeholders": {
+          "projectName": "Resume Matcher",
+          "role": "제작자",
+          "years": "2023년 3월",
+          "github": "github.com/username/project",
+          "website": "https://project-demo.com",
+          "description": "프로젝트 세부 내용..."
+        }
+      }
+    },
+    "formatting": {
+      "panelTitle": "템플릿 및 서식",
+      "template": "템플릿",
+      "templates": {
+        "swissSingle": {
+          "name": "단일 열",
+          "description": "콘텐츠 밀도가 높은 전통적인 전체 너비 레이아웃"
+        },
+        "swissTwoColumn": {
+          "name": "2단",
+          "description": "경력 중심 메인 열과 기술용 사이드바"
+        },
+        "modern": {
+          "name": "모던",
+          "description": "사용자 지정 가능한 테마 색상의 화려한 포인트"
+        },
+        "modernTwoColumn": {
+          "name": "모던 2단",
+          "description": "모던하고 화려한 포인트와 테마가 있는 2단 레이아웃"
+        },
+        "latex": {
+          "name": "LaTeX",
+          "description": "괘선 섹션 제목이 있는 클래식 세리프 학술 레이아웃"
+        },
+        "clean": {
+          "name": "클린",
+          "description": "큼직하고 절제된 섹션 제목의 미니멀한 산세리프 레이아웃"
+        },
+        "vivid": {
+          "name": "비비드",
+          "description": "강조 헤더와 화살표 불릿이 있는 화려한 2단 레이아웃"
+        }
+      },
+      "accentColor": "강조 색상",
+      "accentColors": {
+        "blue": "파랑",
+        "green": "초록",
+        "orange": "주황",
+        "red": "빨강"
+      },
+      "pageSize": "용지 크기",
+      "margins": "여백 (mm)",
+      "margin": {
+        "top": "위",
+        "bottom": "아래",
+        "left": "왼쪽",
+        "right": "오른쪽"
+      },
+      "spacing": "간격",
+      "spacingSection": "섹션",
+      "spacingItems": "항목",
+      "spacingLines": "줄",
+      "fontSize": "글꼴 크기",
+      "baseFontSize": "기본",
+      "headerScale": "제목",
+      "headerFontFamily": "제목",
+      "bodyFontFamily": "본문",
+      "fontNames": {
+        "serif": "세리프",
+        "sans": "산세리프",
+        "mono": "모노스페이스"
+      },
+      "options": "옵션",
+      "compactMode": "컴팩트 모드",
+      "contactIcons": "연락처 아이콘",
+      "effectiveOutput": "적용된 출력",
+      "effectiveMargins": "여백 (mm): 위{top} 아래{bottom} 왼{left} 오{right}",
+      "effectiveSectionGap": "섹션 간격",
+      "effectiveItemGap": "항목 간격",
+      "effectiveLineHeight": "줄 간격",
+      "effectiveBaseFont": "기본 글꼴",
+      "effectiveHeaderScale": "제목 배율",
+      "effectiveHeaderFont": "제목 글꼴",
+      "effectiveBodyFont": "본문 글꼴",
+      "compactHint": "컴팩트 모드는 간격과 줄 높이를 좁힙니다. 여백과 기본 글꼴 크기는 그대로 유지됩니다.",
+      "resetDefaults": "기본값으로 재설정"
+    },
+    "personalInfoForm": {
+      "placeholders": {
+        "name": "홍길동",
+        "title": "소프트웨어 엔지니어",
+        "email": "john@example.com",
+        "phone": "+82 10-0000-0000",
+        "location": "도시, 국가",
+        "website": "portfolio.com",
+        "linkedin": "linkedin.com/in/john",
+        "github": "github.com/john"
+      }
+    },
+    "leftPanel": {
+      "editorPanel": "편집 패널",
+      "coverLetterEditor": "자기소개서 편집기",
+      "outreachEditor": "아웃리치 메시지 편집기",
+      "jdMatchAnalysis": "채용공고 매칭 분석",
+      "interviewPrep": "면접 준비"
+    },
+    "alerts": {
+      "saveNotAvailable": "저장은 기존 이력서를 편집할 때만 사용할 수 있습니다.",
+      "saveFailed": "이력서 저장에 실패했습니다. 다시 시도해 주세요.",
+      "coverLetterSaveSuccess": "자기소개서가 저장되었습니다",
+      "outreachSaveSuccess": "아웃리치 메시지가 저장되었습니다",
+      "downloadSuccess": "이력서가 다운로드되었습니다",
+      "reloadFailed": "변경 사항은 적용되었지만 이력서를 다시 불러오지 못했습니다. 페이지를 새로고침해 주세요.",
+      "downloadNotAvailable": "다운로드는 저장된 이력서에서만 사용할 수 있습니다.",
+      "downloadFailed": "이력서 다운로드에 실패했습니다. 다시 시도해 주세요.",
+      "coverLetterSaveFailed": "자기소개서 저장에 실패했습니다. 다시 시도해 주세요.",
+      "coverLetterDownloadRequiresResume": "자기소개서를 다운로드하려면 먼저 이력서를 저장하세요.",
+      "coverLetterMissing": "자기소개서가 없습니다. 설정에서 자기소개서 생성을 활성화하고 이력서를 맞춤화하세요.",
+      "coverLetterDownloadFailed": "자기소개서 다운로드에 실패했습니다: {error}",
+      "outreachSaveFailed": "아웃리치 메시지 저장에 실패했습니다. 다시 시도해 주세요.",
+      "coverLetterGenerateFailed": "자기소개서 생성에 실패했습니다: {error}",
+      "outreachGenerateFailed": "아웃리치 메시지 생성에 실패했습니다: {error}",
+      "interviewPrepGenerateFailed": "면접 준비 자료 생성에 실패했습니다: {error}",
+      "autoSaveFailed": "동기화하지 못했습니다. 초안은 로컬에 안전하게 저장되어 있습니다.",
+      "loadFailed": "서버에서 이 이력서를 불러오지 못했습니다. 새로고침하여 다시 시도해 주세요. 저장된 사본을 덮어쓰지 않도록 편집이 비활성화되었습니다."
+    },
+    "autoSave": {
+      "saving": "동기화 중...",
+      "saved": "모든 변경 사항이 저장되었습니다",
+      "localDraft": "초안이 로컬에 저장되었습니다",
+      "saveNow": "지금 저장",
+      "retrySave": "저장 다시 시도",
+      "savedButton": "저장됨"
+    },
+    "draftRecovery": {
+      "title": "로컬 초안을 복원할까요?",
+      "description": "브라우저에 저장된 로컬 초안이 서버에 저장된 사본과 다릅니다. 초안을 복원해 편집을 계속하거나, 서버 사본을 사용하고 로컬 초안을 삭제할 수 있습니다.",
+      "restoreDraft": "초안 복원",
+      "useServer": "서버 사본 사용"
+    },
+    "leaveWithLocalDraft": {
+      "title": "동기화하지 않고 나갈까요?",
+      "description": "최신 편집 내용을 아직 서버에 동기화하지 못했습니다. 로컬 초안은 이 브라우저에 저장되어 있지만 다른 브라우저나 기기에서는 사용하지 못할 수 있습니다.",
+      "leave": "대시보드로 이동",
+      "stay": "편집 계속하기"
+    }
+  },
+  "enrichment": {
+    "title": "이력서 개선",
+    "loading": {
+      "analyzingTitle": "이력서를 분석하는 중...",
+      "analyzingDescription": "더 구체적인 설명이 필요한 부분을 찾는 중입니다",
+      "generatingTitle": "개선된 설명을 작성하는 중...",
+      "generatingDescription": "답변을 활용해 이력서를 개선하는 중입니다",
+      "applyingTitle": "개선 사항을 적용하는 중...",
+      "applyingDescription": "마스터 이력서를 업데이트하는 중입니다"
+    },
+    "questionProgress": "질문 {current} / {total}",
+    "itemType": {
+      "experience": "경력",
+      "project": "프로젝트"
+    },
+    "shortcutHint": "줄바꿈은 Shift+Enter, 계속하려면 Cmd/Ctrl+Enter를 누르세요",
+    "preview": {
+      "title": "새 내용 검토",
+      "description": "이력서에 추가될 새로운 항목을 검토하세요",
+      "applyButton": "이력서에 추가",
+      "keepingLabel": "유지",
+      "addingLabel": "추가",
+      "existingCount": "(기존 {count}개)",
+      "newCount": "(신규 {count}개)",
+      "noExistingDescription": "기존 설명 없음"
+    },
+    "complete": {
+      "title": "이력서가 개선되었습니다!",
+      "updatedCountSingular": "{count}개 항목이 성공적으로 업데이트되었습니다",
+      "updatedCountPlural": "{count}개 항목이 성공적으로 업데이트되었습니다",
+      "updatedFallback": "이력서가 개선된 설명으로 업데이트되었습니다",
+      "doneButton": "완료"
+    },
+    "noImprovements": {
+      "title": "이력서가 훌륭합니다!",
+      "defaultDescription": "개선이 필요한 항목을 찾지 못했습니다. 경력 및 프로젝트 설명이 이미 충분히 상세합니다."
+    },
+    "error": {
+      "title": "문제가 발생했습니다",
+      "unexpected": "예상치 못한 오류가 발생했습니다"
+    }
+  },
+  "tailor": {
+    "title": "이력서 맞춤화",
+    "subtitle": "특정 채용 공고에 맞게 이력서를 최적화하세요",
+    "heroTitle": "이력서 맞춤화",
+    "selectResume": "이력서 선택",
+    "pasteJobDescription": "채용 공고 붙여넣기",
+    "pasteJobDescriptionBelow": "아래에 채용 공고를 붙여넣으세요",
+    "jobDescriptionPlaceholder": "채용 공고를 여기에 붙여넣으세요...",
+    "promptLabel": "맞춤화 강도",
+    "promptDescription": "이력서를 채용 공고에 얼마나 강하게 맞출지 선택하세요.",
+    "promptOptions": {
+      "nudge": {
+        "label": "약하게 조정",
+        "description": "기존 경력을 더 잘 맞추도록 최소한으로 수정합니다."
+      },
+      "keywords": {
+        "label": "키워드 강화",
+        "description": "역할이나 범위는 바꾸지 않고 관련 키워드를 반영합니다."
+      },
+      "full": {
+        "label": "전체 맞춤화",
+        "description": "채용 공고를 활용해 전면적으로 맞춤화합니다."
+      }
+    },
+    "analyzeJob": "채용 공고 분석",
+    "generateTailored": "맞춤화된 이력서 생성",
+    "setupRequiredTitle": "[ 설정 필요 ]",
+    "noApiKeyMessage": "> API 키가 구성되지 않았습니다. 이력서 맞춤화에는 LLM 제공업체가 필요합니다.",
+    "configureApiKey": "API 키 구성",
+    "configureApiKeyFirst": "먼저 API 키를 구성하세요",
+    "charactersCount": "{count}자",
+    "matchScore": "일치 점수",
+    "suggestions": "제안",
+    "keywords": "포함할 키워드",
+    "footerTagline": "AI 기반 최적화 엔진",
+    "diffModal": {
+      "title": "AI 맞춤화 결과 검토",
+      "subtitle": "허위 정보가 추가되지 않았는지 변경 사항을 꼼꼼히 검토해 주세요",
+      "summary": "변경 요약",
+      "skillsAdded": "추가된 기술",
+      "skillsRemoved": "삭제된 기술",
+      "descriptionsModified": "수정된 설명",
+      "certificationsAdded": "추가된 자격증",
+      "highRiskChanges": "고위험 변경 사항",
+      "warningTitle": "고위험 추가 사항 {count}건 감지됨",
+      "warningMessage": "이 추가 항목들이 원본 이력서에 실제로 존재하거나 설명에 반영되어 있는지 확인해 주세요",
+      "summaryChanges": "요약 변경 사항",
+      "skillChanges": "기술 변경 사항",
+      "descriptionChanges": "경력 설명 변경 사항",
+      "experienceChanges": "경력 항목 변경 사항",
+      "educationChanges": "학력 변경 사항",
+      "projectChanges": "프로젝트 변경 사항",
+      "certificationChanges": "자격증 변경 사항",
+      "languageChanges": "언어 변경 사항",
+      "awardChanges": "수상 내역 변경 사항",
+      "rejectButton": "거부하고 다시 생성",
+      "confirmButton": "확인하고 저장"
+    },
+    "regenerateDialog": {
+      "title": "맞춤화된 이력서를 다시 생성하시겠습니까?",
+      "description": "현재 미리보기를 폐기하고 새로운 AI 맞춤화 결과를 요청합니다.",
+      "confirmLabel": "다시 생성"
+    },
+    "missingDiffDialog": {
+      "title": "변경 사항을 계산할 수 없습니다",
+      "description": "이 이력서의 차이를 계산할 수 없습니다. 구조화된 데이터가 없는 이전 형식의 이력서에서 발생할 수 있습니다. 맞춤화된 이력서를 계속 저장하거나, 취소하여 나중에 다시 검토할 수 있습니다.",
+      "confirmLabel": "차이 없이 계속"
+    },
+    "errors": {
+      "jobDescriptionTooShort": "채용 공고가 너무 짧습니다. 세부 내용을 추가한 후 다시 시도하세요.",
+      "apiKeyError": "API 키가 작동하지 않습니다. 설정에서 확인하세요.",
+      "rateLimit": "요청 한도에 도달했습니다. 약 1분 후 다시 시도해 주세요.",
+      "failedToGenerate": "이력서를 생성할 수 없습니다. 설정에서 API 키를 확인한 후 다시 시도하세요.",
+      "timeout": "이력서 미리보기가 {minutes}분 후에 시간 초과되었습니다. 더 짧은 채용 공고나 더 간단한 프롬프트로 다시 시도해 주세요.",
+      "failedToPreview": "이력서를 미리 볼 수 없습니다. 설정에서 API 키를 확인한 후 다시 시도하세요.",
+      "failedToConfirm": "변경 사항을 적용할 수 없습니다. 다시 시도해 주세요."
+    }
+  },
+  "settings": {
+    "title": "설정",
+    "subtitle": "환경설정을 구성하세요",
+    "aiProvider": "AI 제공업체",
+    "aiProviderDescription": "이력서 분석에 사용할 AI 제공업체를 선택하세요",
+    "apiKey": "API 키",
+    "apiKeyPlaceholder": "API 키를 입력하세요",
+    "saveApiKey": "API 키 저장",
+    "contentLanguage": "콘텐츠 언어",
+    "contentLanguageDescription": "생성되는 콘텐츠(이력서, 자기소개서)의 언어",
+    "uiLanguage": "UI 언어",
+    "uiLanguageDescription": "사용자 인터페이스의 언어",
+    "theme": "테마",
+    "themeDescription": "선호하는 색상 테마를 선택하세요",
+    "lightMode": "라이트",
+    "darkMode": "다크",
+    "systemMode": "시스템",
+    "dangerZone": "위험 구역",
+    "clearApiKeys": "API 키 삭제",
+    "clearApiKeysDescription": "저장된 모든 API 키를 설정에서 제거합니다. 이 작업은 되돌릴 수 없습니다.",
+    "resetDatabase": "데이터베이스 초기화",
+    "resetDatabaseDescription": "이력서, 채용 공고, 생성된 콘텐츠를 포함한 모든 데이터를 삭제합니다. 이 작업은 되돌릴 수 없습니다.",
+    "llmConfigurationTitle": "LLM 구성",
+    "providerLabel": "제공업체",
+    "statusCards": {
+      "llm": "LLM",
+      "database": "데이터베이스",
+      "resumes": "이력서",
+      "jobs": "채용 공고",
+      "improvements": "개선 사항",
+      "masterResume": "마스터 이력서"
+    },
+    "statusValues": {
+      "healthy": "정상",
+      "offline": "오프라인",
+      "connected": "연결됨",
+      "configured": "구성됨",
+      "notSet": "설정되지 않음"
+    },
+    "apiKeyMenu": {
+      "buttonLabel": "LLM API",
+      "title": "OpenAI API 키",
+      "description": "호스팅된 OpenAI 모델을 사용하려면 키를 입력하세요.",
+      "savedMessage": "API 키가 저장되었습니다.",
+      "loadError": "API 키를 불러올 수 없습니다",
+      "updateError": "API 키를 업데이트할 수 없습니다"
+    },
+    "setupRequired": {
+      "title": "[ 설정 필요 ]",
+      "description": "> API 키가 구성되지 않았습니다. 이력서 맞춤화를 사용하려면 아래에 LLM 제공업체의 API 키를 추가하세요."
+    },
+    "systemStatus": {
+      "title": "시스템 상태",
+      "refresh": "새로고침",
+      "unableToConnect": "서버에 연결할 수 없습니다",
+      "expectedAt": "예상 주소: {apiUrl}",
+      "lastFetched": {
+        "never": "없음",
+        "justNow": "방금 전",
+        "minutesAgo": "{minutes}분 전",
+        "hoursAgo": "{hours}시간 전"
+      }
+    },
+    "llmConfiguration": {
+      "selectedProvider": "선택됨: {provider}",
+      "modelLabel": "모델",
+      "defaultModel": "기본값: {model}",
+      "apiKeyLabel": "API 키",
+      "apiKeyOptionalForOllama": "(Ollama에서는 선택 사항)",
+      "apiKeyOptional": "(선택 사항)",
+      "apiKeyPlaceholder": "sk-...",
+      "apiKeyNotRequiredPlaceholder": "로컬 모델에는 필요하지 않습니다",
+      "apiKeyOptionalPlaceholder": "서버에 인증이 없다면 비워두세요",
+      "leaveBlankToKeepExistingKey": "기존 키를 유지하려면 비워두세요",
+      "baseUrlLabel": "기본 URL (선택 사항)",
+      "baseUrlPlaceholder": "예: https://api.openai.com/v1",
+      "baseUrlDescription": "프록시/어그리게이터 엔드포인트를 사용하려면 API 기본 URL을 재정의하세요. 제공업체 기본값을 사용하려면 비워두세요.",
+      "azureBaseUrlLabel": "Azure AI Foundry 엔드포인트",
+      "azureBaseUrlDescription": "Foundry에서 엔드포인트를 붙여넣으세요. GPT 배포는 서비스 루트 또는 /openai/v1/responses를, Azure AI Inference 모델은 /models 엔드포인트를 사용할 수 있습니다.",
+      "ollamaServerUrl": "Ollama 서버 URL",
+      "ollamaServerUrlPlaceholder": "http://localhost:11434",
+      "reasoningEffortLabel": "추론 강도",
+      "reasoningEffortAuto": "자동",
+      "reasoningEffortAutoDesc": "reasoning_effort를 전송하지 않습니다 — 최대 호환성을 위한 기본값",
+      "reasoningEffortMinimal": "최소",
+      "reasoningEffortLow": "낮음",
+      "reasoningEffortMedium": "중간",
+      "reasoningEffortHigh": "높음",
+      "reasoningEffortDescription": "추론 지원 모델(gpt-5 계열, Claude 3.7 이상, DeepSeek R1, OpenAI o1/o3)에만 영향을 줍니다. 지원하지 않는 제공업체에서는 이 값이 자동으로 무시됩니다.",
+      "testConnection": "연결 테스트",
+      "errorPrefix": "오류: {error}",
+      "connectionSuccessful": "연결 성공",
+      "connectionFailed": "연결 실패",
+      "connectionDetails": "제공업체: {provider} | 모델: {model}",
+      "testPromptLabel": "테스트 프롬프트",
+      "modelOutputLabel": "모델 출력",
+      "reasoningContentLabel": "모델 사고 과정",
+      "errorDetailLabel": "오류 세부 정보",
+      "healthErrors": {
+        "api_key_missing": "API 키가 구성되지 않았습니다. 설정에서 키를 추가해 주세요.",
+        "health_check_failed": "상태 확인에 실패했습니다.",
+        "duplicate_v1_path": "상태 확인에 실패했습니다. 기본 URL에 /v1 경로가 중복되어 있을 수 있습니다.",
+        "not_found_404": "상태 확인에 실패했습니다. 404 Not Found - 기본 URL이 제공업체와 일치하는지 확인하세요.",
+        "html_response": "상태 확인에 실패했습니다. 기본 URL이 HTML을 반환했습니다. 콘솔 URL이거나 지원되지 않는 게이트웨이 경로일 수 있습니다."
+      },
+      "healthWarnings": {
+        "empty_content": "상태 확인 시 LLM이 빈 응답을 반환했습니다."
+      }
+    },
+    "contentGeneration": {
+      "title": "콘텐츠 생성",
+      "description": "이력서 맞춤화 시 추가 콘텐츠 생성을 활성화합니다. 활성화하면 맞춤화된 이력서와 함께 이 문서들이 자동으로 생성됩니다.",
+      "coverLetter": {
+        "label": "자기소개서",
+        "description": "이력서와 함께 맞춤화된 자기소개서를 생성합니다"
+      },
+      "outreachMessage": {
+        "label": "콜드 아웃리치 메시지",
+        "description": "링크드인이나 이메일용 네트워킹 메시지를 생성합니다"
+      },
+      "customPromptLabel": "사용자 지정 프롬프트 (선택 사항)",
+      "customPromptHelp": "다음 플레이스홀더(각각 중괄호로 표시)를 포함해야 합니다: job_description, resume_data, output_language. 비워두면 기본 프롬프트를 사용합니다.",
+      "customPromptResetButton": "기본값으로 재설정",
+      "customPromptErrorMissing": "필수 플레이스홀더가 누락되었습니다: {missing}",
+      "interviewPrep": {
+        "label": "면접 준비",
+        "description": "저장된 맞춤화 이력서와 함께 면접 준비 자료를 자동으로 생성합니다"
+      }
+    },
+    "promptSettings": {
+      "title": "프롬프트 설정",
+      "description": "이력서 맞춤화에 사용할 기본 프롬프트를 선택하세요.",
+      "defaultLabel": "기본 맞춤화 프롬프트"
+    },
+    "footer": {
+      "status": {
+        "checking": "확인 중...",
+        "ready": "상태: 준비 완료",
+        "setupRequired": "상태: 설정 필요",
+        "offline": "상태: 오프라인"
+      }
+    },
+    "errors": {
+      "unableToConnectBackend": "서버에 연결할 수 없습니다. 서버가 실행 중인지 확인하세요.",
+      "apiKeyRequired": "선택한 제공업체에는 API 키가 필요합니다.",
+      "baseUrlRequired": "{provider}에는 기본 URL이 필요합니다.",
+      "unknownProvider": "백엔드에서 알 수 없는 제공업체를 반환했습니다: {provider}",
+      "unableToSaveConfiguration": "구성을 저장할 수 없습니다",
+      "failedToClearApiKeys": "API 키 삭제에 실패했습니다. 다시 시도해 주세요.",
+      "failedToResetDatabase": "데이터베이스 초기화에 실패했습니다. 다시 시도해 주세요."
+    },
+    "apiKeys": {
+      "savedTitle": "저장된 API 키",
+      "deleteAria": "{provider} 키 삭제",
+      "deleteConfirmTitle": "API 키를 삭제하시겠습니까?",
+      "deleteConfirmDescription": "저장된 {provider} API 키를 삭제할까요? 나중에 다시 추가할 수 있습니다."
+    }
+  },
+  "resumeViewer": {
+    "resumeNotFound": "이력서를 찾을 수 없습니다",
+    "loading": "이력서를 불러오는 중...",
+    "useTailorFeature": "맞춤화 기능 사용",
+    "retryProcessing": "처리 다시 시도",
+    "deleteAndStartOver": "삭제 후 다시 시작",
+    "returnToDashboard": "대시보드로 돌아가기",
+    "enhanceResume": "이력서 개선",
+    "downloadResume": "이력서 다운로드",
+    "deletedTitle": "이력서가 삭제되었습니다",
+    "deletedDescriptionMaster": "마스터 이력서가 시스템에서 영구적으로 삭제되었습니다.",
+    "deletedDescriptionRegular": "이력서가 시스템에서 영구적으로 삭제되었습니다.",
+    "deleteFailedTitle": "삭제 실패",
+    "errors": {
+      "processingFailed": "이력서를 읽을 수 없습니다. 처리를 다시 시도하거나 삭제 후 다른 파일을 업로드하세요.",
+      "stillProcessing": "이력서를 아직 처리 중입니다. 잠시 기다린 후 페이지를 새로고침하세요.",
+      "notProcessedYet": "이력서가 아직 처리되지 않았습니다. 맞춤화 기능을 사용해 구조화된 이력서를 생성하세요.",
+      "noDataAvailable": "이용 가능한 이력서 데이터가 없습니다.",
+      "failedToLoad": "이력서 데이터를 불러오지 못했습니다.",
+      "failedToDelete": "이력서 삭제에 실패했습니다. 다시 시도해 주세요."
+    },
+    "titlePlaceholder": "이력서 제목을 입력하세요..."
+  },
+  "preview": {
+    "margins": "여백",
+    "calculating": "계산 중...",
+    "pageBreak": "페이지 나누기",
+    "pageCountSingular": "{count}페이지",
+    "pageCountPlural": "{count}페이지",
+    "zoomIn": "확대",
+    "zoomOut": "축소"
+  },
+  "resume": {
+    "personalInfo": {
+      "name": "성명",
+      "title": "직함",
+      "email": "이메일",
+      "phone": "전화번호",
+      "location": "위치",
+      "website": "웹사이트",
+      "linkedin": "LinkedIn",
+      "github": "GitHub"
+    },
+    "sections": {
+      "personalInfo": "개인 정보",
+      "summary": "요약",
+      "experience": "경력",
+      "education": "학력",
+      "projects": "프로젝트",
+      "skills": "기술 및 수상 내역",
+      "skillsOnly": "기술",
+      "certifications": "교육 및 자격증",
+      "languages": "언어",
+      "awards": "수상 내역",
+      "links": "링크"
+    },
+    "defaults": {
+      "name": "이름"
+    },
+    "additional": {
+      "technicalSkills": "기술 스킬"
+    },
+    "additionalLabels": {
+      "technicalSkills": "기술 스킬:",
+      "languages": "언어:",
+      "certifications": "자격증:",
+      "awards": "수상 내역:"
+    }
+  },
+  "coverLetter": {
+    "title": "자기소개서",
+    "generate": "자기소개서 생성",
+    "regenerate": "다시 생성",
+    "copyToClipboard": "클립보드에 복사",
+    "copied": "복사됨!",
+    "editor": {
+      "placeholder": "자기소개서 생성을 활성화한 상태로 이력서를 맞춤화하면 여기에 자기소개서가 표시됩니다...",
+      "tip": "팁: 좋은 자기소개서는 보통 300~400단어입니다. 필요에 따라 편집해 개인화하세요."
+    },
+    "preview": {
+      "defaultName": "이름",
+      "emptyTitle": "아직 자기소개서 내용이 없습니다.",
+      "emptyDescription": "설정에서 자기소개서 생성을 활성화한 후 이력서를 맞춤화하세요."
+    },
+    "print": {
+      "emptyContent": "이용 가능한 자기소개서 내용이 없습니다."
+    }
+  },
+  "outreach": {
+    "title": "아웃리치 메시지",
+    "generate": "아웃리치 메시지 생성",
+    "regenerate": "다시 생성",
+    "copy": "복사",
+    "copyToClipboard": "클립보드에 복사",
+    "copied": "복사됨!",
+    "editor": {
+      "placeholder": "아웃리치 메시지 생성을 활성화한 상태로 이력서를 맞춤화하면 여기에 콜드 아웃리치 메시지가 표시됩니다...",
+      "tip": "팁: 아웃리치 메시지는 간결하게(100~150단어) 유지하세요. 복사해서 링크드인이나 이메일에 붙여넣으세요."
+    },
+    "preview": {
+      "channels": {
+        "linkedin": "LinkedIn",
+        "email": "이메일"
+      },
+      "howToUseTitle": "사용 방법:",
+      "steps": {
+        "step1": "1. 위 버튼으로 메시지를 복사하세요",
+        "step2": "2. 링크드인이나 이메일 클라이언트를 여세요",
+        "step3": "3. 붙여넣고 필요에 따라 개인화하세요",
+        "step4": "4. 채용 담당자나 인사 담당자에게 보내세요"
+      },
+      "emptyTitle": "아직 아웃리치 메시지가 없습니다.",
+      "emptyDescription": "설정에서 아웃리치 메시지 생성을 활성화한 후 이력서를 맞춤화하세요."
+    }
+  },
+  "errors": {
+    "generic": "문제가 발생했습니다. 다시 시도해 주세요.",
+    "networkError": "네트워크 오류입니다. 연결 상태를 확인해 주세요.",
+    "unauthorized": "계속하려면 로그인해 주세요.",
+    "notFound": "요청한 리소스를 찾을 수 없습니다.",
+    "validationError": "일부 필드에 확인이 필요합니다. 강조 표시된 필드를 확인하고 다시 시도하세요.",
+    "boundary": {
+      "title": "문제가 발생했습니다",
+      "description": "예기치 않은 오류가 발생했습니다. 페이지를 새로고침해 보세요. 계속 발생하면 알려주세요.",
+      "tryAgain": "다시 시도",
+      "reloadPage": "페이지 새로고침"
+    }
+  },
+  "a11y": {
+    "removeItem": "항목 제거",
+    "removeDescription": "이 줄 제거",
+    "removeFile": "파일 제거"
+  },
+  "confirmations": {
+    "deleteResume": "이 이력서를 삭제하시겠습니까?",
+    "deleteResumeDescription": "이력서가 영구적으로 제거됩니다.",
+    "deleteMasterResumeTitle": "마스터 이력서 삭제",
+    "deleteMasterResumeDescription": "마스터 이력서가 영구적으로 제거됩니다.",
+    "deleteResumeFromSystemDescription": "이력서가 영구적으로 제거됩니다.",
+    "deleteResumeConfirmLabel": "이력서 삭제",
+    "keepResumeCancelLabel": "이력서 유지",
+    "discardChanges": "저장하지 않은 변경 사항을 취소하시겠습니까?",
+    "discardChangesDescription": "저장하지 않은 작업 내용이 사라집니다.",
+    "clearApiKeys": "모든 API 키를 삭제하시겠습니까?",
+    "clearApiKeysDescription": "AI 기능을 다시 사용하려면 키를 다시 입력해야 합니다.",
+    "resetDatabase": "모든 것을 초기화하고 처음부터 다시 시작하시겠습니까?",
+    "resetDatabaseDescription": "모든 이력서, 채용 공고, 생성된 문서가 영구적으로 삭제됩니다."
+  },
+  "resumeWizard": {
+    "title": "이력서 마법사",
+    "answerLabel": "답변",
+    "keepAddingPrompt": "무엇을 추가하거나 변경하고 싶으신가요?",
+    "readyHint": "탄탄한 이력서를 만들기에 충분한 정보가 모였습니다 — 준비되면 검토하고 완료하세요.",
+    "sections": {
+      "intro": "시작하기",
+      "contact": "연락처 정보",
+      "summary": "전문 요약",
+      "workExperience": "경력",
+      "internships": "인턴십",
+      "education": "학력",
+      "personalProjects": "프로젝트",
+      "skills": "기술",
+      "review": "검토"
+    },
+    "actions": {
+      "continue": "계속",
+      "skip": "건너뛰기",
+      "back": "뒤로",
+      "review": "검토 및 완료",
+      "create": "마스터 이력서 생성",
+      "keepAdding": "계속 추가",
+      "backToDashboard": "대시보드로 돌아가기"
+    },
+    "preview": {
+      "label": "실시간 초안",
+      "empty": "답변할수록 이력서가 여기에 표시됩니다.",
+      "unnamed": "이름 없는 이력서",
+      "experience": "경력",
+      "education": "학력",
+      "projects": "프로젝트",
+      "skills": "기술"
+    },
+    "errors": {
+      "turnFailed": "마법사가 답변을 저장하지 못했습니다. 다시 시도하세요.",
+      "finalizeFailed": "마법사가 마스터 이력서를 생성하지 못했습니다. 다시 시도하세요."
+    },
+    "entry": {
+      "kicker": "마스터 이력서 설정",
+      "title": "시작 방법을 선택하세요",
+      "description": "기존 문서로 마스터 이력서를 만들거나 AI 안내에 따라 단계별로 작성하세요.",
+      "upload": {
+        "kicker": "기존 파일",
+        "title": "이력서 업로드",
+        "description": "PDF, DOC, DOCX 파일로 시작하면 Resume Matcher가 이를 분석해 마스터 프로필로 만들어 줍니다.",
+        "action": "이력서 업로드"
+      },
+      "wizard": {
+        "kicker": "AI 안내",
+        "title": "AI 마법사로 작성",
+        "description": "핵심 질문에 답하면 마법사가 탄탄한 첫 마스터 이력서 초안을 구성해 줍니다.",
+        "action": "마법사 시작"
+      }
+    }
+  },
+  "tracker": {
+    "scroll": {
+      "prev": "왼쪽으로 스크롤",
+      "next": "오른쪽으로 스크롤",
+      "hint": "더 많은 단계를 보려면 스크롤하세요"
+    },
+    "title": "지원 현황 트래커",
+    "subtitle": "각 맞춤화된 이력서가 지원 파이프라인에서 어느 단계에 있는지 추적하세요.",
+    "addApplication": "지원 추가",
+    "columns": {
+      "saved": "저장됨",
+      "applied": "지원 완료",
+      "no_response": "응답 없음",
+      "response": "응답 받음",
+      "interview": "면접",
+      "accepted": "합격",
+      "rejected": "불합격",
+      "empty": "아직 항목이 없습니다"
+    },
+    "empty": {
+      "title": "아직 지원 내역이 없습니다",
+      "description": "채용 공고에 이력서를 맞춤화하거나 수동으로 추가하여 추적을 시작하세요."
+    },
+    "card": {
+      "companyUnknown": "회사명 미상",
+      "roleUnknown": "직무명 없음",
+      "sharedResume": "공유된 이력서",
+      "selectAria": "지원 선택",
+      "dragAria": "드래그하여 순서 변경"
+    },
+    "modal": {
+      "jobDescription": "채용 공고",
+      "noJobDescription": "등록된 채용 공고가 없습니다.",
+      "notes": "메모",
+      "notesPlaceholder": "이 지원에 대한 메모를 추가하세요…",
+      "saveNotes": "메모 저장",
+      "resumeUnavailable": "지원에 사용한 이력서를 더 이상 사용할 수 없습니다.",
+      "loadFailed": "이 지원 정보를 불러올 수 없습니다.",
+      "editResume": "이력서 편집"
+    },
+    "bulk": {
+      "selected": "{count}개 선택됨",
+      "moveTo": "이동할 위치…",
+      "clear": "지우기",
+      "deleteConfirmTitle": "지원 항목을 삭제하시겠습니까?",
+      "deleteConfirmDescription": "선택한 지원 항목 {count}개를 삭제할까요? 이 작업은 되돌릴 수 없습니다."
+    },
+    "manualAdd": {
+      "title": "지원 추가",
+      "description": "채용 공고를 붙여넣어 지원 내역을 추적하세요.",
+      "resume": "이력서",
+      "untitledResume": "제목 없는 이력서",
+      "jobDescription": "채용 공고",
+      "jobDescriptionPlaceholder": "채용 공고를 여기에 붙여넣으세요…",
+      "company": "회사",
+      "role": "직무",
+      "optional": "선택 사항",
+      "status": "상태",
+      "submit": "추가",
+      "validation": "이력서를 선택하고 채용 공고를 붙여넣으세요.",
+      "failed": "지원 항목을 생성할 수 없습니다."
+    },
+    "errors": {
+      "loadFailed": "지원 내역을 불러올 수 없습니다.",
+      "moveFailed": "지원 항목을 이동할 수 없습니다.",
+      "deleteFailed": "지원 항목을 삭제할 수 없습니다."
+    }
+  },
+  "interviewPrep": {
+    "title": "면접 준비",
+    "regenerate": "다시 생성",
+    "unavailableTitle": "면접 준비를 사용할 수 없음",
+    "loadingContextDescription": "생성 전에 이 맞춤화된 이력서의 채용 공고 맥락을 확인하는 중입니다.",
+    "missingContextDescription": "이 맞춤화된 이력서에는 면접 준비 자료를 생성하는 데 필요한 저장된 채용 공고 맥락이 없습니다. 채용 공고와 함께 이력서를 다시 맞춤화한 후 이 기능을 사용하세요.",
+    "saveRequiredDescription": "면접 준비 자료를 생성하기 전에 이 맞춤화된 이력서를 저장하세요.",
+    "focusArea": "중점 영역",
+    "suggestedAnswerPoints": "답변 포인트 제안",
+    "whyItMatters": "중요한 이유",
+    "preparationSuggestion": "준비 제안",
+    "sections": {
+      "roleFit": "직무 적합도 분석",
+      "resumeQuestions": "이력서 기반 질문",
+      "projectFollowUps": "프로젝트 후속 질문",
+      "skillGaps": "역량 격차",
+      "talkingPoints": "핵심 포인트"
+    }
+  }
+}

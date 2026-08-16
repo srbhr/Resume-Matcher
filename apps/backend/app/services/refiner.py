@@ -449,6 +449,78 @@ def _validate_resume_structure(data: dict[str, Any]) -> bool:
     return True
 
 
+def _preserve_description_styles(
+    original: dict[str, Any], improved: dict[str, Any]
+) -> dict[str, Any]:
+    """Restore descriptionStyles the LLM dropped or truncated (H-04).
+
+    ``descriptionStyles`` is positional metadata parallel to ``description``.
+    An LLM cannot be relied on to carry it through a rewrite, and when it is
+    absent ``ResumeData`` silently backfills every row to ``"bullet"`` — so a
+    user's "plain" rows are erased with no warning and no log.
+
+    Rows are matched by index, which is the same contract the frontend and the
+    Pydantic validators use. Where the improved list is longer than the
+    original, the extra rows keep whatever the model returned (defaulting to
+    bullet downstream).
+
+    Args:
+        original: The resume before refinement.
+        improved: The resume returned by the LLM.
+
+    Returns:
+        ``improved``, mutated in place, with descriptionStyles restored.
+    """
+    item_fields = ("workExperience", "personalProjects")
+
+    def _restore(orig_items: Any, new_items: Any) -> None:
+        if not isinstance(orig_items, list) or not isinstance(new_items, list):
+            return
+        for index, new_item in enumerate(new_items):
+            if index >= len(orig_items):
+                continue
+            orig_item = orig_items[index]
+            if not isinstance(orig_item, dict) or not isinstance(new_item, dict):
+                continue
+            orig_styles = orig_item.get("descriptionStyles")
+            if not isinstance(orig_styles, list) or not orig_styles:
+                continue
+            new_styles = new_item.get("descriptionStyles")
+            if isinstance(new_styles, list) and len(new_styles) == len(
+                new_item.get("description") or []
+            ):
+                # The model returned a correctly-aligned list; trust it.
+                continue
+            description = new_item.get("description")
+            if not isinstance(description, list):
+                continue
+            new_item["descriptionStyles"] = [
+                orig_styles[i] if i < len(orig_styles) else "bullet"
+                for i in range(len(description))
+            ]
+            logger.debug(
+                "Restored descriptionStyles dropped by the LLM (index %d)", index
+            )
+
+    for field in item_fields:
+        _restore(original.get(field), improved.get(field))
+
+    # customSections is `dict[str, CustomSection]` keyed by section id (see
+    # ResumeData in app/schemas/models.py) -- NOT a list. Matching by position
+    # would be wrong even if the shape allowed it, since dict ordering is not
+    # part of the contract; match by key.
+    orig_sections = original.get("customSections")
+    new_sections = improved.get("customSections")
+    if isinstance(orig_sections, dict) and isinstance(new_sections, dict):
+        for key, new_section in new_sections.items():
+            orig_section = orig_sections.get(key)
+            if not isinstance(orig_section, dict) or not isinstance(new_section, dict):
+                continue
+            _restore(orig_section.get("items"), new_section.get("items"))
+
+    return improved
+
+
 async def inject_keywords(
     tailored: dict[str, Any],
     keywords_to_inject: list[str],
@@ -505,7 +577,11 @@ async def inject_keywords(
             )
             return tailored
 
-        return result
+        # H-04: the prompt asks the model to preserve descriptionStyles, but a
+        # prompt is not a guarantee for positional metadata. Restore it locally,
+        # matching the defence-in-depth pattern the improve pipeline already
+        # uses for dates, skills, personalInfo and custom sections.
+        return _preserve_description_styles(tailored, result)
 
     except Exception as e:
         logger.warning("Keyword injection failed: %s", e)

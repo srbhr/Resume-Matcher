@@ -1,6 +1,12 @@
 .resume-body {
   /* Typography */
-  --resume-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  /* CJK faces appended so dates, contact lines and pills (which all use this
+     token, not the header/body font maps) stay inside the declared cascade for
+     Chinese/Japanese/Korean text instead of falling through to the browser's
+     last-resort font with different metrics in the same PDF. */
+  --resume-font-mono:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, var(--font-noto-sans-sc),
+    var(--font-noto-sans-jp), var(--font-noto-sans-kr), monospace;
 
   /* Text colors */
   --resume-text-primary: #000000;

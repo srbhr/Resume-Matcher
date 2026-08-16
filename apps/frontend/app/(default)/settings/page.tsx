@@ -62,6 +62,7 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '@/lib/context/language-context';
 import { useTranslations } from '@/lib/i18n';
+import { RESUME_DRAFT_STORAGE_PREFIX, safeStorage } from '@/lib/utils/resume-draft-storage';
 import type { SupportedLanguage } from '@/lib/api/config';
 import type { Locale } from '@/i18n/config';
 
@@ -70,6 +71,7 @@ type Status = 'idle' | 'loading' | 'saving' | 'saved' | 'error' | 'testing';
 const PROVIDERS: LLMProvider[] = [
   'openai',
   'openai_compatible',
+  'azure_foundry',
   'anthropic',
   'openrouter',
   'gemini',
@@ -141,6 +143,7 @@ export default function SettingsPage() {
   // Feature config state
   const [enableCoverLetter, setEnableCoverLetter] = useState(false);
   const [enableOutreach, setEnableOutreach] = useState(false);
+  const [enableInterviewPrep, setEnableInterviewPrep] = useState(false);
   const [featureConfigLoading, setFeatureConfigLoading] = useState(false);
   const [promptConfigLoading, setPromptConfigLoading] = useState(false);
   const [promptOptions, setPromptOptions] = useState<PromptOption[]>([]);
@@ -315,6 +318,7 @@ export default function SettingsPage() {
         if (featureConfig) {
           setEnableCoverLetter(featureConfig.enable_cover_letter);
           setEnableOutreach(featureConfig.enable_outreach_message);
+          setEnableInterviewPrep(featureConfig.enable_interview_prep);
         }
 
         if (promptConfig) {
@@ -379,15 +383,22 @@ export default function SettingsPage() {
 
   // Handle provider change
   const handleProviderChange = (newProvider: LLMProvider) => {
+    const nextInfo = PROVIDER_INFO[newProvider];
     setProvider(newProvider);
-    setModel(PROVIDER_INFO[newProvider].defaultModel);
+    setModel(nextInfo.defaultModel);
 
-    if (newProvider === 'ollama' && !apiBase.trim()) {
-      setApiBase('http://localhost:11434');
-    }
-    if (newProvider === 'openai_compatible' && !apiBase.trim()) {
-      // llama.cpp default; user can override for vLLM / LM Studio / etc.
-      setApiBase('http://localhost:8080/v1');
+    // H-09: the Base URL field is shared across providers, so an endpoint left
+    // over from the previous one used to be persisted against the next —
+    // e.g. Azure -> Anthropic routed every Claude call at the Azure host.
+    //
+    // Reset on EVERY actual switch and seed only the destination's own default.
+    // Keying off the previous provider's flags was not enough: a base URL typed
+    // manually under a provider that declares neither (openai, anthropic, ...)
+    // survived the switch and was saved as Azure's required endpoint.
+    if (newProvider !== provider) {
+      setApiBase(nextInfo.defaultBaseUrl ?? '');
+    } else if (nextInfo.defaultBaseUrl && !apiBase.trim()) {
+      setApiBase(nextInfo.defaultBaseUrl);
     }
 
     // Clear the key input on switch, but drive the "has stored key" hint from
@@ -406,6 +417,11 @@ export default function SettingsPage() {
     try {
       if (requiresApiKey && !apiKey.trim() && !hasStoredApiKey) {
         setError(t('settings.errors.apiKeyRequired'));
+        setStatus('error');
+        return;
+      }
+      if (requiresApiBase && !apiBase.trim()) {
+        setError(t('settings.errors.baseUrlRequired', { provider: providerInfo.name }));
         setStatus('error');
         return;
       }
@@ -455,6 +471,17 @@ export default function SettingsPage() {
     setHealthCheck(null);
 
     try {
+      if (requiresApiBase && !apiBase.trim()) {
+        setHealthCheck({
+          healthy: false,
+          provider,
+          model,
+          error: t('settings.errors.baseUrlRequired', { provider: providerInfo.name }),
+        });
+        setStatus('idle');
+        return;
+      }
+
       // Build config from current form values
       const testConfig: LLMConfigUpdate = {
         provider,
@@ -482,7 +509,7 @@ export default function SettingsPage() {
 
   // Update feature config
   const handleFeatureConfigChange = async (
-    key: 'enable_cover_letter' | 'enable_outreach_message',
+    key: 'enable_cover_letter' | 'enable_outreach_message' | 'enable_interview_prep',
     value: boolean
   ) => {
     setFeatureConfigLoading(true);
@@ -490,13 +517,16 @@ export default function SettingsPage() {
       const updated = await updateFeatureConfig({ [key]: value });
       setEnableCoverLetter(updated.enable_cover_letter);
       setEnableOutreach(updated.enable_outreach_message);
+      setEnableInterviewPrep(updated.enable_interview_prep);
     } catch (err) {
       console.error('Failed to update feature config', err);
       // Revert on error
       if (key === 'enable_cover_letter') {
         setEnableCoverLetter(!value);
-      } else {
+      } else if (key === 'enable_outreach_message') {
         setEnableOutreach(!value);
+      } else {
+        setEnableInterviewPrep(!value);
       }
     } finally {
       setFeatureConfigLoading(false);
@@ -587,12 +617,22 @@ export default function SettingsPage() {
     try {
       await resetDatabase();
 
-      // Clear all related localStorage keys
-      localStorage.removeItem('master_resume_id');
-      localStorage.removeItem('resume_builder_draft');
-      localStorage.removeItem('resume_builder_settings');
-      localStorage.removeItem('resume_matcher_content_language');
-      localStorage.removeItem('resume_matcher_ui_language');
+      // Clear all related localStorage keys. Routed through safeStorage so a
+      // context where storage throws (enterprise policy, iframe) cannot abort
+      // the reset flow *after* the server-side wipe has already succeeded.
+      safeStorage.remove('master_resume_id');
+      safeStorage.remove('resume_builder_draft');
+      try {
+        Object.keys(localStorage)
+          .filter((key) => key.startsWith(RESUME_DRAFT_STORAGE_PREFIX))
+          .forEach((key) => safeStorage.remove(key));
+      } catch {
+        // Enumerating localStorage can throw for the same reasons; the scoped
+        // drafts simply stay until their TTL expires.
+      }
+      safeStorage.remove('resume_builder_settings');
+      safeStorage.remove('resume_matcher_content_language');
+      safeStorage.remove('resume_matcher_ui_language');
 
       // Refresh status to show empty counts
       await refreshStatus();
@@ -625,6 +665,19 @@ export default function SettingsPage() {
   };
 
   const requiresApiKey = providerInfo.requiresKey ?? true;
+  const requiresApiBase = providerInfo.requiresBaseUrl ?? false;
+  // M-04: provider-specific base-URL copy comes from the message catalogs, not
+  // English literals in PROVIDER_INFO — otherwise this whole block reverted to
+  // English inside an otherwise fully-translated settings page.
+  const baseUrlKey = providerInfo.baseUrlI18nKey;
+  const baseUrlLabel = baseUrlKey
+    ? t(`settings.llmConfiguration.${baseUrlKey}BaseUrlLabel`)
+    : t('settings.llmConfiguration.baseUrlLabel');
+  const baseUrlPlaceholder =
+    providerInfo.baseUrlPlaceholder ?? t('settings.llmConfiguration.baseUrlPlaceholder');
+  const baseUrlDescription = baseUrlKey
+    ? t(`settings.llmConfiguration.${baseUrlKey}BaseUrlDescription`)
+    : t('settings.llmConfiguration.baseUrlDescription');
 
   return (
     <div className="flex flex-col items-center justify-start p-6 md:p-12 min-h-screen overflow-y-auto">
@@ -959,17 +1012,17 @@ export default function SettingsPage() {
 
               {/* API Base URL (optional, for proxies/aggregators/custom endpoints) */}
               <div className="space-y-2">
-                <Label htmlFor="apiBase">{t('settings.llmConfiguration.baseUrlLabel')}</Label>
+                <Label htmlFor="apiBase">
+                  {baseUrlLabel} {requiresApiBase && <span className="text-destructive">*</span>}
+                </Label>
                 <Input
                   id="apiBase"
                   value={apiBase}
                   onChange={(e) => setApiBase(e.target.value)}
-                  placeholder={t('settings.llmConfiguration.baseUrlPlaceholder')}
+                  placeholder={baseUrlPlaceholder}
                   className="font-mono"
                 />
-                <p className="text-xs text-steel-grey font-mono">
-                  {t('settings.llmConfiguration.baseUrlDescription')}
-                </p>
+                <p className="text-xs text-steel-grey font-mono">{baseUrlDescription}</p>
               </div>
 
               {/* Reasoning Effort (optional, only applies to reasoning-capable models) */}
@@ -1237,6 +1290,16 @@ export default function SettingsPage() {
                     </div>
                   </div>
                 )}
+                <ToggleSwitch
+                  checked={enableInterviewPrep}
+                  onCheckedChange={(checked) => {
+                    setEnableInterviewPrep(checked);
+                    handleFeatureConfigChange('enable_interview_prep', checked);
+                  }}
+                  label={t('settings.contentGeneration.interviewPrep.label')}
+                  description={t('settings.contentGeneration.interviewPrep.description')}
+                  disabled={featureConfigLoading}
+                />
               </div>
 
               <div className="pt-4 border-t border-paper-tint">

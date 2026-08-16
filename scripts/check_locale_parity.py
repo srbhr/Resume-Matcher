@@ -3,14 +3,14 @@
 
 The frontend declares ``type Messages = typeof en`` and
 ``const allMessages: Record<Locale, Messages>``, so a locale JSON that is
-*missing* a key present in ``en.json`` — or that has a key of a *different shape*
-(an object where ``en`` has a string, or vice versa) — makes ``tsc`` /
+*missing* a key present in ``en.json`` - or that has a key of a *different shape*
+(an object where ``en`` has a string, or vice versa) - makes ``tsc`` /
 ``next build`` fail. That is exactly the break that shipped to ``main`` and only
-surfaced (post-merge) inside the Docker publish job — the incident that
+surfaced (post-merge) inside the Docker publish job - the incident that
 motivated the testing work.
 
-This check reproduces and prevents it with **pure stdlib** — no Node, npm, or
-nvm — so it runs fast inside the local pre-push hook regardless of shell setup.
+This check reproduces and prevents it with **pure stdlib** - no Node, npm, or
+nvm - so it runs fast inside the local pre-push hook regardless of shell setup.
 
 Exit code: 0 = all locales match; 1 = at least one locale is missing keys, has a
 key whose shape (leaf vs. object) differs from ``en``, or is not valid JSON.
@@ -49,9 +49,9 @@ def _node_kind(value: Any) -> str:
 
 
 def key_kinds(obj: Any, prefix: str = "") -> dict[str, str]:
-    """Map every dotted key path to its JSON *kind* (object/array/string/number/…).
+    """Map every dotted key path to its JSON kind.
 
-    Comparing *kinds* — not just key presence — is what catches a locale whose
+    Comparing kinds - not just key presence - is what catches a locale whose
     ``a.b`` is an object (or a number, or an array) where ``en`` has a string:
     the key path is still present, so a presence-only check passes, yet it still
     breaks ``next build`` because the locale is no longer assignable to
@@ -89,7 +89,7 @@ def main(argv: list[str]) -> int:
     try:
         reference_kinds = key_kinds(_load(reference_file))
     except ValueError as exc:
-        print(f"locale-parity: ✗ {exc}", file=sys.stderr)
+        print(f"locale-parity: error: {exc}", file=sys.stderr)
         return 1
 
     reference_paths = set(reference_kinds)
@@ -102,7 +102,7 @@ def main(argv: list[str]) -> int:
             locale_kinds = key_kinds(_load(path))
         except ValueError as exc:
             failed = True
-            print(f"locale-parity: ✗ {exc}", file=sys.stderr)
+            print(f"locale-parity: error: {exc}", file=sys.stderr)
             continue
 
         locale_paths = set(locale_kinds)
@@ -116,14 +116,14 @@ def main(argv: list[str]) -> int:
 
         if missing:
             failed = True
-            print(f"locale-parity: ✗ {path.name} is MISSING keys from {REFERENCE}:", file=sys.stderr)
+            print(f"locale-parity: error: {path.name} is MISSING keys from {REFERENCE}:", file=sys.stderr)
             for key in sorted(missing):
                 print(f"    missing: {key}", file=sys.stderr)
         if mismatched:
             failed = True
             print(
-                f"locale-parity: ✗ {path.name} has keys whose JSON type differs "
-                f"from {REFERENCE} — this breaks `next build`:",
+                f"locale-parity: error: {path.name} has keys whose JSON type differs "
+                f"from {REFERENCE}; this breaks `next build`:",
                 file=sys.stderr,
             )
             for key in sorted(mismatched):
@@ -133,20 +133,23 @@ def main(argv: list[str]) -> int:
                     file=sys.stderr,
                 )
         if extra:
-            print(f"locale-parity: ⚠ {path.name} has extra keys not in {REFERENCE} (non-fatal):", file=sys.stderr)
+            print(
+                f"locale-parity: warning: {path.name} has extra keys not in {REFERENCE} (non-fatal):",
+                file=sys.stderr,
+            )
             for key in sorted(extra):
                 print(f"    extra:   {key}", file=sys.stderr)
 
     if failed:
         print(
-            "locale-parity: locale files are out of sync with en.json — this would "
+            "locale-parity: locale files are out of sync with en.json; this would "
             "break `next build` (type Messages = typeof en). Fix the missing / "
             "mismatched keys.",
             file=sys.stderr,
         )
         return 1
 
-    print("locale-parity: ✓ all locale files match en.json")
+    print("locale-parity: ok all locale files match en.json")
     return 0
 
 

@@ -9,6 +9,7 @@ and stats are verified end-to-end on the storage.
 import pytest
 
 from app.database import Database
+from app.db_engine import init_models_sync, make_sync_engine
 
 
 @pytest.fixture
@@ -60,6 +61,38 @@ class TestResumeCrud:
         with_md = await db.create_resume(content="x", original_markdown="# raw")
         fetched = await db.get_resume(with_md["resume_id"])
         assert fetched["original_markdown"] == "# raw"
+
+    async def test_interview_prep_round_trips_as_text(self, db):
+        created = await db.create_resume(
+            content="x",
+            interview_prep='{"role_fit_analysis":["fit"]}',
+        )
+        fetched = await db.get_resume(created["resume_id"])
+        assert fetched["interview_prep"] == '{"role_fit_analysis":["fit"]}'
+
+    def test_interview_prep_migration_is_idempotent(self, tmp_path):
+        engine = make_sync_engine(tmp_path / "old.db")
+        try:
+            with engine.begin() as conn:
+                conn.exec_driver_sql(
+                    """
+                    CREATE TABLE resumes (
+                        resume_id TEXT PRIMARY KEY,
+                        content TEXT NOT NULL,
+                        content_type TEXT DEFAULT 'md'
+                    )
+                    """
+                )
+
+            init_models_sync(engine)
+            init_models_sync(engine)
+
+            with engine.begin() as conn:
+                columns = conn.exec_driver_sql("PRAGMA table_info(resumes)").mappings().all()
+            names = [column["name"] for column in columns]
+            assert names.count("interview_prep") == 1
+        finally:
+            engine.dispose()
 
 
 class TestMasterResume:

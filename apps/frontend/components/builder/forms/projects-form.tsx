@@ -17,8 +17,9 @@ const RichTextEditor = dynamic(
   }
 );
 import { Project } from '@/components/dashboard/resume-component';
-import { Plus, Trash2, Github, Globe } from 'lucide-react';
+import { AlignLeft, List, Plus, Trash2, Github, Globe } from 'lucide-react';
 import { useTranslations } from '@/lib/i18n';
+import { alignDescriptionStyles, toggleDescriptionStyle } from '@/lib/utils/description-styles';
 
 interface ProjectsFormProps {
   data: Project[];
@@ -40,6 +41,7 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({ data, onChange }) =>
         github: '',
         website: '',
         description: [''],
+        descriptionStyles: ['bullet'],
       },
     ]);
   };
@@ -76,7 +78,29 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({ data, onChange }) =>
     onChange(
       data.map((item) => {
         if (item.id === id) {
-          return { ...item, description: [...(item.description || []), ''] };
+          return {
+            ...item,
+            description: [...(item.description || []), ''],
+            descriptionStyles: [...(item.descriptionStyles || []), 'bullet'],
+          };
+        }
+        return item;
+      })
+    );
+  };
+
+  const handleToggleDescriptionStyle = (id: number, index: number) => {
+    onChange(
+      data.map((item) => {
+        if (item.id === id) {
+          return {
+            ...item,
+            descriptionStyles: toggleDescriptionStyle(
+              item.description,
+              item.descriptionStyles,
+              index
+            ),
+          };
         }
         return item;
       })
@@ -89,7 +113,9 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({ data, onChange }) =>
         if (item.id === id) {
           const newDesc = [...(item.description || [])];
           newDesc.splice(index, 1);
-          return { ...item, description: newDesc };
+          const newStyles = alignDescriptionStyles(item.description, item.descriptionStyles);
+          newStyles.splice(index, 1);
+          return { ...item, description: newDesc, descriptionStyles: newStyles };
         }
         return item;
       })
@@ -209,6 +235,20 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({ data, onChange }) =>
                       minHeight="60px"
                     />
                   </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleToggleDescriptionStyle(item.id, idx)}
+                    className="h-[60px] w-8 text-muted-foreground hover:text-primary self-end"
+                    aria-label={t('builder.genericItemForm.actions.togglePointStyle')}
+                    title={t('builder.genericItemForm.actions.togglePointStyle')}
+                  >
+                    {item.descriptionStyles?.[idx] === 'plain' ? (
+                      <AlignLeft className="w-3 h-3" />
+                    ) : (
+                      <List className="w-3 h-3" />
+                    )}
+                  </Button>
                   <Button
                     variant="ghost"
                     size="icon"

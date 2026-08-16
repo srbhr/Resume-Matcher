@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
     "test": "vitest run"
   },
@@ -19,9 +20,9 @@
     "@tiptap/react": "^3.20.0",
     "@tiptap/starter-kit": "^3.20.0",
     "clsx": "^2.1.1",
-    "isomorphic-dompurify": "^3.0.0",
+    "isomorphic-dompurify": "^3.19.0",
     "lucide-react": "^0.575.0",
-    "next": "^16.2.6",
+    "next": "^16.2.12",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "tailwind-merge": "^3.5.0",
@@ -47,6 +48,7 @@
   },
   "overrides": {
     "undici": "^7.28.0",
-    "postcss": "^8.5.10"
+    "postcss": "^8.5.10",
+    "sharp": "^0.35.3"
   }
 }

@@ -38,6 +38,9 @@ downloadCoverLetterPdf(resumeId: string, pageSize?: string) → Blob
 // Content updates
 updateCoverLetter(resumeId: string, content: string) → void
 updateOutreachMessage(resumeId: string, content: string) → void
+
+// On-demand generated content
+generateInterviewPrep(resumeId: string) → InterviewPrepData
 ```
 
 ## Resume Wizard (`lib/api/resume-wizard.ts`)

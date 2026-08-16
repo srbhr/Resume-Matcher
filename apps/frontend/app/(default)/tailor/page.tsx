@@ -14,11 +14,13 @@ import {
   confirmImproveResume,
 } from '@/lib/api/resume';
 import { fetchPromptConfig, type PromptOption } from '@/lib/api/config';
+import { getPreviewErrorMessage } from '@/lib/utils/preview-error';
 import { Dropdown } from '@/components/ui/dropdown';
 import { useStatusCache } from '@/lib/context/status-cache';
 import { Loader2, ArrowLeft, AlertTriangle, Settings } from 'lucide-react';
 import { useTranslations } from '@/lib/i18n';
 import { DiffPreviewModal } from '@/components/tailor/diff-preview-modal';
+import { ATSScoreCard } from '@/components/tailor/ats-score-card';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 export default function TailorPage() {
@@ -197,28 +199,7 @@ export default function TailorPage() {
       setShowDiffModal(true);
     } catch (err) {
       console.error(err);
-      // Check for common error patterns
-      const errorMessage = err instanceof Error ? err.message : '';
-      if (
-        errorMessage.toLowerCase().includes('api key') ||
-        errorMessage.toLowerCase().includes('unauthorized') ||
-        errorMessage.toLowerCase().includes('authentication') ||
-        errorMessage.includes('401')
-      ) {
-        setError(t('tailor.errors.apiKeyError'));
-      } else if (
-        errorMessage.toLowerCase().includes('rate limit') ||
-        errorMessage.includes('429')
-      ) {
-        setError(t('tailor.errors.rateLimit'));
-      } else if (
-        errorMessage.toLowerCase().includes('timed out') ||
-        errorMessage.toLowerCase().includes('timeout')
-      ) {
-        setError(t('tailor.errors.timeout'));
-      } else {
-        setError(t('tailor.errors.failedToPreview'));
-      }
+      setError(getPreviewErrorMessage(err, t));
     }
   };
 
@@ -455,6 +436,13 @@ export default function TailorPage() {
           </Button>
         </div>
       </div>
+
+      {/* ATS Score Breakdown — shown once a preview result is available */}
+      {pendingResult?.data?.ats_score && (
+        <div className="w-full max-w-4xl mt-6">
+          <ATSScoreCard atsScore={pendingResult.data.ats_score} />
+        </div>
+      )}
 
       {/* Diff preview modal */}
       {showDiffModal && pendingResult && (

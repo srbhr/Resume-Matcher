@@ -2,13 +2,13 @@
 
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
-import { Sparkles, Loader2, FileText, Mail, ArrowRight } from 'lucide-react';
+import { Sparkles, Loader2, FileText, Mail, MessagesSquare, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTranslations } from '@/lib/i18n';
 
 export interface GeneratePromptProps {
   /** Type of content to generate */
-  type: 'cover-letter' | 'outreach';
+  type: 'cover-letter' | 'outreach' | 'interview-prep';
   /** Whether generation is in progress */
   isGenerating: boolean;
   /** Callback to trigger generation */
@@ -28,8 +28,13 @@ export function GeneratePrompt({
 }: GeneratePromptProps) {
   const { t } = useTranslations();
   const isOutreach = type === 'outreach';
-  const Icon = isOutreach ? Mail : FileText;
-  const title = isOutreach ? t('outreach.title') : t('coverLetter.title');
+  const isInterviewPrep = type === 'interview-prep';
+  const Icon = isInterviewPrep ? MessagesSquare : isOutreach ? Mail : FileText;
+  const title = isInterviewPrep
+    ? t('interviewPrep.title')
+    : isOutreach
+      ? t('outreach.title')
+      : t('coverLetter.title');
 
   // Show a different message if resume is not tailored
   if (!isTailoredResume) {
@@ -71,9 +76,11 @@ export function GeneratePrompt({
         {t('builder.generatePrompt.generateTitle', { title })}
       </h3>
       <p className="font-mono text-xs text-ink-soft max-w-md mb-6 leading-relaxed">
-        {isOutreach
-          ? t('builder.generatePrompt.outreachDescription')
-          : t('builder.generatePrompt.coverLetterDescription')}
+        {isInterviewPrep
+          ? t('builder.generatePrompt.interviewPrepDescription')
+          : isOutreach
+            ? t('builder.generatePrompt.outreachDescription')
+            : t('builder.generatePrompt.coverLetterDescription')}
       </p>
       <Button onClick={onGenerate} disabled={isGenerating} className="gap-2">
         {isGenerating ? (
@@ -89,9 +96,11 @@ export function GeneratePrompt({
         )}
       </Button>
       <p className="font-mono text-xs text-steel-grey mt-4">
-        {isOutreach
-          ? t('builder.generatePrompt.outreachFooter')
-          : t('builder.generatePrompt.coverLetterFooter')}
+        {isInterviewPrep
+          ? t('builder.generatePrompt.interviewPrepFooter')
+          : isOutreach
+            ? t('builder.generatePrompt.outreachFooter')
+            : t('builder.generatePrompt.coverLetterFooter')}
       </p>
     </div>
   );

@@ -74,14 +74,15 @@ describe('api client', () => {
     it('aborts after the timeout and reports a timeout error', async () => {
       vi.useFakeTimers();
       try {
-        fetchMock.mockImplementation((_url: string, init: RequestInit) =>
-          new Promise((_resolve, reject) => {
-            init.signal?.addEventListener('abort', () => {
-              const e = new Error('The operation was aborted');
-              e.name = 'AbortError';
-              reject(e);
-            });
-          })
+        fetchMock.mockImplementation(
+          (_url: string, init: RequestInit) =>
+            new Promise((_resolve, reject) => {
+              init.signal?.addEventListener('abort', () => {
+                const e = new Error('The operation was aborted');
+                e.name = 'AbortError';
+                reject(e);
+              });
+            })
         );
         const promise = apiFetch('/slow', undefined, 5000);
         const expectation = expect(promise).rejects.toThrow(/timed out/i);

@@ -34,6 +34,7 @@ export interface Experience {
   location?: string;
   years?: string;
   description?: string[];
+  descriptionStyles?: ('bullet' | 'plain')[];
 }
 
 export interface Education {
@@ -52,6 +53,7 @@ export interface Project {
   github?: string;
   website?: string;
   description?: string[];
+  descriptionStyles?: ('bullet' | 'plain')[];
 }
 
 export interface AdditionalInfo {
@@ -106,6 +108,7 @@ export interface CustomSectionItem {
   location?: string;
   years?: string;
   description?: string[];
+  descriptionStyles?: ('bullet' | 'plain')[];
 }
 
 // Custom section data container
@@ -135,6 +138,11 @@ interface ResumeProps {
   additionalSectionLabels?: Partial<AdditionalSectionLabels>;
   sectionHeadings?: Partial<ResumeSectionHeadings>;
   fallbackLabels?: Partial<ResumeFallbackLabels>;
+  /**
+   * Content locale ("zh" | "ja" | "ko" | ...). Orders the CJK font fallback
+   * stack so a shared codepoint resolves to the right regional face.
+   */
+  locale?: string;
 }
 
 /**
@@ -156,6 +164,7 @@ const Resume: React.FC<ResumeProps> = ({
   additionalSectionLabels,
   sectionHeadings,
   fallbackLabels,
+  locale,
 }) => {
   // Merge provided settings with defaults
   const mergedSettings: TemplateSettings = {
@@ -172,7 +181,7 @@ const Resume: React.FC<ResumeProps> = ({
   }
 
   // Convert settings to CSS variables
-  const cssVars = settingsToCssVars(mergedSettings);
+  const cssVars = settingsToCssVars(mergedSettings, locale);
 
   return (
     <div

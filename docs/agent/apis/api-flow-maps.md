@@ -24,9 +24,23 @@ POST /api/v1/resumes/improve
 ├── improve_resume() → LLM
 ├── [If enabled] generate_cover_letter() → LLM
 ├── [If enabled] generate_outreach_message() → LLM
+├── [If enabled] generate_interview_prep() → LLM
 ├── db.create_resume(improved)
 ├── db.create_improvement()
-└── Return {data, cover_letter, outreach_message}
+└── Return {data, cover_letter, outreach_message, interview_prep}
+```
+
+## Interview Prep Generation
+
+```
+POST /api/v1/resumes/{id}/generate-interview-prep
+├── Require tailored resume (parent_id)
+├── Fetch improvement record and associated job description
+├── Require processed resume data
+├── generate_interview_prep() → LLM JSON
+├── Validate InterviewPrepData
+├── Save resumes.interview_prep as serialized JSON TEXT
+└── Return {interview_prep, message}
 ```
 
 ## PDF Generation

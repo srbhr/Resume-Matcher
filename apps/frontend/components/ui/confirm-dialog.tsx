@@ -113,7 +113,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
         <DialogHeader className="p-6 pb-4">
           <div className="flex items-start gap-4">
             {icon}
-            <div className="flex-1">
+            <div className="min-w-0 flex-1">
               <DialogTitle className="font-serif text-xl font-bold uppercase tracking-tight">
                 {title}
               </DialogTitle>

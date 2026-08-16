@@ -25,14 +25,7 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
    * - `link`: Text only with underline - Inline links
    */
   variant?:
-    | 'default'
-    | 'destructive'
-    | 'success'
-    | 'warning'
-    | 'outline'
-    | 'secondary'
-    | 'ghost'
-    | 'link';
+    'default' | 'destructive' | 'success' | 'warning' | 'outline' | 'secondary' | 'ghost' | 'link';
   /**
    * Button size:
    * - `default`: Standard button (h-10)

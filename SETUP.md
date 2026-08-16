@@ -206,6 +206,7 @@ Resume Matcher supports multiple AI providers. You can configure your provider t
 | Provider | Configuration | Get API Key |
 |----------|--------------|-------------|
 | **OpenAI** | `LLM_PROVIDER=openai`<br>`LLM_MODEL=gpt-5-nano-2025-08-07` | [platform.openai.com](https://platform.openai.com/api-keys) |
+| **Azure AI Foundry** | `LLM_PROVIDER=azure_foundry`<br>`LLM_MODEL=mistral-large-latest`<br>`LLM_API_BASE=https://<resource>.services.ai.azure.com/models`<br>For Foundry-hosted Azure OpenAI GPT deployments, use the service root or the full `/openai/v1/responses` endpoint from Foundry. | Azure AI Foundry endpoint/key |
 | **Anthropic** | `LLM_PROVIDER=anthropic`<br>`LLM_MODEL=claude-haiku-4-5-20251001` | [console.anthropic.com](https://console.anthropic.com/) |
 | **Google Gemini** | `LLM_PROVIDER=gemini`<br>`LLM_MODEL=gemini/gemini-3-flash-preview` | [aistudio.google.com](https://aistudio.google.com/app/apikey) |
 | **OpenRouter** | `LLM_PROVIDER=openrouter`<br>`LLM_MODEL=deepseek/deepseek-chat` | [openrouter.ai](https://openrouter.ai/keys) |
@@ -497,6 +498,32 @@ If frontend runs on port 3001:
 FRONTEND_BASE_URL=http://localhost:3001
 CORS_ORIGINS=["http://localhost:3001", "http://127.0.0.1:3001"]
 ```
+
+### Chinese / Japanese / Korean text renders as boxes (□□□) in the PDF
+
+The PDF is rendered by headless Chromium, which falls back to **system** fonts
+for any glyph the bundled webfonts don't cover. A headless Linux host usually
+ships none for CJK, so the text becomes tofu boxes.
+
+**Docker users:** nothing to do — the image installs `fonts-noto-cjk`.
+
+**Running without Docker:** install system CJK fonts on the machine running the
+backend.
+
+```bash
+# Debian / Ubuntu
+sudo apt-get install -y fonts-noto-cjk
+
+# Fedora / RHEL
+sudo dnf install -y google-noto-sans-cjk-fonts
+
+# Arch
+sudo pacman -S noto-fonts-cjk
+
+# macOS — CJK fonts ship with the OS, no action needed
+```
+
+Restart the backend afterwards so Chromium picks up the new font cache.
 
 ### Ollama connection fails
 

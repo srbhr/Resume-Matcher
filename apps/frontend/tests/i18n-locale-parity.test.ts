@@ -5,6 +5,8 @@ import es from '@/messages/es.json';
 import zh from '@/messages/zh.json';
 import ja from '@/messages/ja.json';
 import pt from '@/messages/pt-BR.json';
+import fr from '@/messages/fr.json';
+import ko from '@/messages/ko.json';
 
 import { getMessages } from '@/lib/i18n/messages';
 import { locales, type Locale } from '@/i18n/config';
@@ -30,7 +32,11 @@ function nodeKind(v: unknown): string {
   return typeof v; // 'string' | 'number' | 'boolean'
 }
 
-function keyKinds(obj: unknown, prefix = '', out: Map<string, string> = new Map()): Map<string, string> {
+function keyKinds(
+  obj: unknown,
+  prefix = '',
+  out: Map<string, string> = new Map()
+): Map<string, string> {
   if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return out;
   for (const [key, val] of Object.entries(obj as Record<string, unknown>)) {
     const path = prefix ? `${prefix}.${key}` : key;
@@ -41,7 +47,7 @@ function keyKinds(obj: unknown, prefix = '', out: Map<string, string> = new Map(
 }
 
 const REFERENCE = keyKinds(en);
-const LOCALES: Record<string, unknown> = { es, zh, ja, pt };
+const LOCALES: Record<string, unknown> = { es, zh, ja, pt, fr, ko };
 
 describe('i18n locale parity (guards the next build break)', () => {
   it.each(Object.keys(LOCALES))('%s.json has every en.json key with a matching shape', (name) => {
@@ -62,7 +68,9 @@ describe('i18n locale parity (guards the next build break)', () => {
     expect(missing, `${name}.json is MISSING keys present in en.json`).toEqual([]);
     expect(mismatched, `${name}.json has keys whose SHAPE differs from en.json`).toEqual([]);
     if (extra.length > 0) {
-      console.warn(`locale-parity: ${name}.json has extra keys not in en.json (non-fatal): ${extra.join(', ')}`);
+      console.warn(
+        `locale-parity: ${name}.json has extra keys not in en.json (non-fatal): ${extra.join(', ')}`
+      );
     }
   });
 

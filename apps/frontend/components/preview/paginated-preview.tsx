@@ -9,6 +9,7 @@ import { PageContainer } from './page-container';
 import { usePagination } from './use-pagination';
 import { PAGE_DIMENSIONS, mmToPx, getContentAreaPx } from '@/lib/constants/page-dimensions';
 import { useTranslations } from '@/lib/i18n';
+import { useLanguage } from '@/lib/context/language-context';
 
 interface PaginatedPreviewProps {
   resumeData: ResumeData;
@@ -25,6 +26,8 @@ const ZOOM_STEP = 0.1;
  */
 export function PaginatedPreview({ resumeData, settings }: PaginatedPreviewProps) {
   const { t } = useTranslations();
+  // Orders the CJK font fallback so the preview matches the generated PDF.
+  const { contentLanguage } = useLanguage();
   const measurementRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(0.6);
@@ -181,6 +184,7 @@ export function PaginatedPreview({ resumeData, settings }: PaginatedPreviewProps
             resumeData={resumeData}
             template={settings.template}
             settings={resumeSettings}
+            locale={contentLanguage}
             additionalSectionLabels={additionalSectionLabels}
             sectionHeadings={sectionHeadings}
             fallbackLabels={fallbackLabels}
@@ -214,6 +218,7 @@ export function PaginatedPreview({ resumeData, settings }: PaginatedPreviewProps
                   resumeData={resumeData}
                   template={settings.template}
                   settings={resumeSettings}
+                  locale={contentLanguage}
                   additionalSectionLabels={additionalSectionLabels}
                   sectionHeadings={sectionHeadings}
                   fallbackLabels={fallbackLabels}

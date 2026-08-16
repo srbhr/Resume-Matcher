@@ -2,10 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { AdditionalForm } from '@/components/builder/forms/additional-form';
 import { ResumeSingleColumn } from '@/components/resume/resume-single-column';
-import type {
-  AdditionalInfo,
-  ResumeData,
-} from '@/components/dashboard/resume-component';
+import type { AdditionalInfo, ResumeData } from '@/components/dashboard/resume-component';
 
 // Components call useTranslations(); return the key so we can match deterministically.
 vi.mock('@/lib/i18n', () => ({
@@ -40,11 +37,7 @@ describe('AdditionalForm newline handling (issue #763)', () => {
     const textarea = screen.getByLabelText('resume.additional.technicalSkills');
     fireEvent.change(textarea, { target: { value: 'React\n\nTypeScript' } });
 
-    expect(onChange.mock.calls[0][0].technicalSkills).toEqual([
-      'React',
-      '',
-      'TypeScript',
-    ]);
+    expect(onChange.mock.calls[0][0].technicalSkills).toEqual(['React', '', 'TypeScript']);
   });
 });
 

@@ -154,6 +154,9 @@ async def parse_resume_to_json(markdown_text: str) -> dict[str, Any]:
     Returns:
         Structured resume data matching ResumeData schema
     """
+    if not markdown_text or not markdown_text.strip():
+        raise ValueError("Resume content is empty after text extraction.")
+
     prompt = PARSE_RESUME_PROMPT.format(
         schema=RESUME_SCHEMA_EXAMPLE,
         resume_text=markdown_text,

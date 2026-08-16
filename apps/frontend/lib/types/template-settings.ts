@@ -128,18 +128,46 @@ export const SECTION_HEADER_SCALE_MAP: Record<SpacingLevel, number> = {
   5: 1.4,
 };
 
-// Header font family mapping
-export const HEADER_FONT_MAP: Record<HeaderFontFamily, string> = {
-  serif: 'ui-serif, Georgia, Cambria, "Times New Roman", Times, serif',
-  'sans-serif': 'ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji"',
-  mono: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace',
+/**
+ * CJK fallback ordering, per content locale.
+ *
+ * Noto Sans SC, KR and JP all cover Han ideographs, and SC additionally covers
+ * ~93% of kana — so whichever face is listed first wins for any shared
+ * codepoint. A single static order cannot be right for every locale:
+ *
+ *   - SC first  → correct Chinese, but Japanese kana renders in SC forms
+ *   - JP first  → correct Japanese, but Chinese Han renders in JP forms
+ *   - Hangul    → only KR covers it meaningfully (SC covers 0.7%, i.e. tofu)
+ *
+ * so the stack is ordered by the locale the document is actually rendered in.
+ */
+const CJK_FONT_STACKS: Record<string, string[]> = {
+  zh: ['--font-noto-sans-sc', '--font-noto-sans-jp', '--font-noto-sans-kr'],
+  ja: ['--font-noto-sans-jp', '--font-noto-sans-kr', '--font-noto-sans-sc'],
+  ko: ['--font-noto-sans-kr', '--font-noto-sans-jp', '--font-noto-sans-sc'],
 };
 
-export const BODY_FONT_MAP: Record<BodyFontFamily, string> = {
-  serif: 'ui-serif, Georgia, Cambria, "Times New Roman", Times, serif',
-  'sans-serif': 'ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji"',
-  mono: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace',
+const DEFAULT_CJK_STACK = CJK_FONT_STACKS.zh;
+
+const cjkVars = (locale?: string): string => {
+  const key = (locale ?? '').toLowerCase().split('-')[0];
+  const stack = CJK_FONT_STACKS[key] ?? DEFAULT_CJK_STACK;
+  return stack.map((v) => `var(${v})`).join(', ');
 };
+
+// Header font family mapping. Exported as functions of the locale; the eager
+// maps below preserve the previous default-ordering API for existing callers.
+export const buildHeaderFontMap = (locale?: string): Record<HeaderFontFamily, string> => ({
+  serif: `ui-serif, Georgia, Cambria, "Times New Roman", ${cjkVars(locale)}, Times, serif`,
+  'sans-serif': `ui-sans-serif, system-ui, ${cjkVars(locale)}, sans-serif, "Apple Color Emoji", "Segoe UI Emoji"`,
+  mono: `ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, ${cjkVars(locale)}, monospace`,
+});
+
+export const buildBodyFontMap = (locale?: string): Record<BodyFontFamily, string> =>
+  buildHeaderFontMap(locale);
+
+export const HEADER_FONT_MAP: Record<HeaderFontFamily, string> = buildHeaderFontMap();
+export const BODY_FONT_MAP: Record<BodyFontFamily, string> = buildBodyFontMap();
 
 /**
  * Accent color mapping for Modern template
@@ -163,7 +191,10 @@ export const COMPACT_LINE_HEIGHT_MULTIPLIER = 0.92;
 /**
  * Convert TemplateSettings to CSS custom properties
  */
-export function settingsToCssVars(settings?: TemplateSettings): React.CSSProperties {
+export function settingsToCssVars(
+  settings?: TemplateSettings,
+  locale?: string
+): React.CSSProperties {
   const s = settings || DEFAULT_TEMPLATE_SETTINGS;
   const compact = s.compactMode ? COMPACT_MULTIPLIER : 1;
 
@@ -190,8 +221,8 @@ export function settingsToCssVars(settings?: TemplateSettings): React.CSSPropert
     '--font-size-base': FONT_SIZE_MAP[s.fontSize.base],
     '--header-scale': HEADER_SCALE_MAP[s.fontSize.headerScale],
     '--section-header-scale': SECTION_HEADER_SCALE_MAP[s.fontSize.headerScale],
-    '--header-font': HEADER_FONT_MAP[s.fontSize.headerFont],
-    '--body-font': BODY_FONT_MAP[s.fontSize.bodyFont],
+    '--header-font': buildHeaderFontMap(locale)[s.fontSize.headerFont],
+    '--body-font': buildBodyFontMap(locale)[s.fontSize.bodyFont],
     '--margin-top': `${marginTop}mm`,
     '--margin-bottom': `${marginBottom}mm`,
     '--margin-left': `${marginLeft}mm`,

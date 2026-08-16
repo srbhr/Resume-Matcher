@@ -62,3 +62,10 @@ def make_sync_engine(path: Path) -> Engine:
 def init_models_sync(engine: Engine) -> None:
     """Create all tables (idempotent) using a sync engine connection."""
     Base.metadata.create_all(engine)
+
+    # ``create_all`` does not ALTER existing SQLite tables. Keep this additive
+    # migration idempotent so older local databases can load resumes safely.
+    with engine.begin() as conn:
+        columns = conn.exec_driver_sql("PRAGMA table_info(resumes)").mappings().all()
+        if columns and "interview_prep" not in {column["name"] for column in columns}:
+            conn.exec_driver_sql("ALTER TABLE resumes ADD COLUMN interview_prep TEXT")

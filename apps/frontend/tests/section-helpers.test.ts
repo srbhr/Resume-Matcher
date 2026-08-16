@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type {
-  ResumeData,
-  SectionMeta,
-} from '@/components/dashboard/resume-component';
+import type { ResumeData, SectionMeta } from '@/components/dashboard/resume-component';
 import {
   DEFAULT_SECTION_META,
   createCustomSection,
@@ -95,17 +92,26 @@ describe('localizeDefaultSectionMeta', () => {
   const t = (key: string) => `t:${key}`;
 
   it('localizes a default section whose name is still the English default', () => {
-    const out = localizeDefaultSectionMeta([meta({ id: 'summary', displayName: 'Summary', isDefault: true })], t);
+    const out = localizeDefaultSectionMeta(
+      [meta({ id: 'summary', displayName: 'Summary', isDefault: true })],
+      t
+    );
     expect(out[0].displayName).toBe('t:resume.sections.summary');
   });
 
   it('leaves a renamed default section untouched', () => {
-    const out = localizeDefaultSectionMeta([meta({ id: 'summary', displayName: 'My Story', isDefault: true })], t);
+    const out = localizeDefaultSectionMeta(
+      [meta({ id: 'summary', displayName: 'My Story', isDefault: true })],
+      t
+    );
     expect(out[0].displayName).toBe('My Story');
   });
 
   it('leaves non-default (custom) sections untouched', () => {
-    const out = localizeDefaultSectionMeta([meta({ id: 'custom_1', displayName: 'Summary', isDefault: false })], t);
+    const out = localizeDefaultSectionMeta(
+      [meta({ id: 'custom_1', displayName: 'Summary', isDefault: false })],
+      t
+    );
     expect(out[0].displayName).toBe('Summary');
   });
 });

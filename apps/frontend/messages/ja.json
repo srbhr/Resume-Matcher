@@ -107,6 +107,26 @@
     "previewMode": "プレビューモード",
     "createAndPreview": "作成＆プレビュー",
     "unsavedDraft": "未保存の下書き",
+    "autoSave": {
+      "saving": "同期中...",
+      "saved": "すべての変更を保存しました",
+      "localDraft": "下書きをローカルに保存しました",
+      "saveNow": "今すぐ保存",
+      "retrySave": "保存を再試行",
+      "savedButton": "保存済み"
+    },
+    "draftRecovery": {
+      "title": "ローカル下書きを復元しますか？",
+      "description": "ブラウザ内のローカル下書きがサーバーに保存された内容と異なります。復元して編集を続けるか、サーバー版を使用してローカル下書きを破棄できます。",
+      "restoreDraft": "下書きを復元",
+      "useServer": "サーバー版を使用"
+    },
+    "leaveWithLocalDraft": {
+      "title": "同期せずに移動しますか？",
+      "description": "最新の変更はまだサーバーに同期できていません。ローカル下書きはこのブラウザに保存されていますが、別のブラウザや端末では利用できない場合があります。",
+      "leave": "ダッシュボードへ移動",
+      "stay": "編集を続ける"
+    },
     "personalInfo": "個人情報",
     "summary": "概要",
     "experience": "職歴",
@@ -176,7 +196,8 @@
       "resume": "履歴書",
       "coverLetter": "カバーレター",
       "outreach": "連絡メール",
-      "jdMatch": "JD一致"
+      "jdMatch": "JD一致",
+      "interviewPrep": "面接準備"
     },
     "footer": {
       "moduleLabel": "履歴書ビルダーモジュール",
@@ -195,7 +216,9 @@
       "outreachDescription": "履歴書と求人内容に基づいて、LinkedIn またはメール向けの外連絡メッセージを生成します。",
       "generateButton": "{title}を生成",
       "coverLetterFooter": "ヒント：先にカスタマイズすると精度が上がります。",
-      "outreachFooter": "ヒント：短く、個別性を入れましょう。"
+      "outreachFooter": "ヒント：短く、個別性を入れましょう。",
+      "interviewPrepDescription": "カスタマイズ済み履歴書と求人内容に基づいて、職種別の面接準備を生成します。",
+      "interviewPrepFooter": "ヒント：カスタマイズ後に、履歴書の根拠に基づく正確な回答を準備しましょう。"
     },
     "regenerateDialog": {
       "title": "{title}を再生成しますか？",
@@ -289,7 +312,8 @@
         "descriptionPoints": "説明ポイント"
       },
       "actions": {
-        "addPoint": "ポイントを追加"
+        "addPoint": "ポイントを追加",
+        "togglePointStyle": "箇条書き記号を切り替え"
       },
       "placeholders": {
         "title": "タイトル",
@@ -444,11 +468,14 @@
       "editorPanel": "編集パネル",
       "coverLetterEditor": "カバーレター編集",
       "outreachEditor": "連絡メール編集",
-      "jdMatchAnalysis": "JD一致分析"
+      "jdMatchAnalysis": "JD一致分析",
+      "interviewPrep": "面接準備"
     },
     "alerts": {
       "saveNotAvailable": "既存の履歴書を編集中のみ保存できます。",
       "saveFailed": "履歴書の保存に失敗しました。もう一度お試しください。",
+      "autoSaveFailed": "同期できませんでした。下書きはローカルに安全に保存されています。",
+      "loadFailed": "サーバーからこの履歴書を読み込めませんでした。ページを更新して再試行してください。保存済みのコピーを上書きしないよう、編集は無効になっています。",
       "coverLetterSaveSuccess": "カバーレターを保存しました",
       "outreachSaveSuccess": "連絡メールを保存しました",
       "downloadSuccess": "履歴書をダウンロードしました",
@@ -461,7 +488,8 @@
       "coverLetterDownloadFailed": "カバーレターのダウンロードに失敗しました: {error}",
       "outreachSaveFailed": "連絡メールの保存に失敗しました。もう一度お試しください。",
       "coverLetterGenerateFailed": "カバーレターの生成に失敗しました: {error}",
-      "outreachGenerateFailed": "連絡メールの生成に失敗しました: {error}"
+      "outreachGenerateFailed": "連絡メールの生成に失敗しました: {error}",
+      "interviewPrepGenerateFailed": "面接準備の生成に失敗しました: {error}"
     }
   },
   "enrichment": {
@@ -578,8 +606,8 @@
       "jobDescriptionTooShort": "求人内容が短すぎます。詳細を追加してから、もう一度お試しください。",
       "apiKeyError": "API キーが機能していません。設定で確認してください。",
       "rateLimit": "レート制限に達しました。約1分待ってから再試行してください。",
+      "timeout": "履歴書プレビューは {minutes} 分でタイムアウトしました。求人内容を短くするか、よりシンプルなプロンプトで再試行してください。",
       "failedToGenerate": "履歴書を生成できませんでした。設定で API キーを確認してから、もう一度お試しください。",
-      "timeout": "リクエストがタイムアウトしました。より短い求人内容で再試行するか、接続を確認してください。",
       "failedToPreview": "履歴書をプレビューできませんでした。設定で API キーを確認してから、もう一度お試しください。",
       "failedToConfirm": "変更を適用できませんでした。もう一度お試しください。"
     }
@@ -661,6 +689,8 @@
       "baseUrlLabel": "ベースURL（任意）",
       "baseUrlPlaceholder": "例: https://api.openai.com/v1",
       "baseUrlDescription": "プロキシ/アグリゲーター等のエンドポイントを使う場合に Base URL を上書きできます。空欄の場合は既定値を使用します。",
+      "azureBaseUrlLabel": "Azure AI Foundry エンドポイント",
+      "azureBaseUrlDescription": "Foundry のエンドポイントを貼り付けてください。GPT デプロイではサービスルートまたは /openai/v1/responses を、Azure AI Inference モデルでは /models エンドポイントを使用できます。",
       "ollamaServerUrl": "Ollama サーバー URL",
       "ollamaServerUrlPlaceholder": "http://localhost:11434",
       "reasoningEffortLabel": "推論の深さ",
@@ -705,7 +735,11 @@
       "customPromptLabel": "カスタムプロンプト（任意）",
       "customPromptHelp": "次のプレースホルダーを中括弧で囲んで含めてください：job_description, resume_data, output_language。空欄の場合は既定のプロンプトを使用します。",
       "customPromptResetButton": "デフォルトにリセット",
-      "customPromptErrorMissing": "必須のプレースホルダーが不足しています：{missing}"
+      "customPromptErrorMissing": "必須のプレースホルダーが不足しています：{missing}",
+      "interviewPrep": {
+        "label": "面接準備",
+        "description": "保存済みのカスタマイズ履歴書と一緒に面接準備を自動生成します"
+      }
     },
     "promptSettings": {
       "title": "プロンプト設定",
@@ -723,6 +757,7 @@
     "errors": {
       "unableToConnectBackend": "サーバーに接続できません。サーバーが起動していることを確認してください。",
       "apiKeyRequired": "選択したプロバイダーには API キーが必要です。",
+      "baseUrlRequired": "{provider} にはベース URL が必要です。",
       "unknownProvider": "バックエンドから未知のプロバイダーが返されました: {provider}",
       "unableToSaveConfiguration": "設定を保存できません",
       "failedToClearApiKeys": "API キーの消去に失敗しました。もう一度お試しください。",
@@ -1005,6 +1040,25 @@
       "loadFailed": "応募を読み込めませんでした。",
       "moveFailed": "応募を移動できませんでした。",
       "deleteFailed": "応募を削除できませんでした。"
+    }
+  },
+  "interviewPrep": {
+    "title": "面接準備",
+    "regenerate": "再生成",
+    "unavailableTitle": "面接準備は利用できません",
+    "loadingContextDescription": "生成前に、このカスタマイズ済み履歴書の求人コンテキストを確認しています。",
+    "missingContextDescription": "このカスタマイズ済み履歴書には、面接準備の生成に必要な保存済み求人コンテキストがありません。求人内容で履歴書を再度カスタマイズしてください。",
+    "saveRequiredDescription": "面接準備を生成する前に、このカスタマイズ済み履歴書を保存してください。",
+    "focusArea": "重点領域",
+    "suggestedAnswerPoints": "回答ポイント",
+    "whyItMatters": "重要な理由",
+    "preparationSuggestion": "準備の提案",
+    "sections": {
+      "roleFit": "職務適合分析",
+      "resumeQuestions": "履歴書ベースの質問",
+      "projectFollowUps": "プロジェクト深掘り質問",
+      "skillGaps": "スキルギャップ",
+      "talkingPoints": "話すべき要点"
     }
   }
 }

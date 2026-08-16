@@ -14,7 +14,16 @@ import {
   renameResume,
 } from '@/lib/api/resume';
 import { useStatusCache } from '@/lib/context/status-cache';
-import { ArrowLeft, Edit, Download, Loader2, AlertCircle, Sparkles, Pencil } from 'lucide-react';
+import {
+  ArrowLeft,
+  Edit,
+  Download,
+  Loader2,
+  AlertCircle,
+  Sparkles,
+  Pencil,
+  MessagesSquare,
+} from 'lucide-react';
 import { EnrichmentModal } from '@/components/enrichment/enrichment-modal';
 import { useTranslations } from '@/lib/i18n';
 import { withLocalizedDefaultSections } from '@/lib/utils/section-helpers';
@@ -44,6 +53,7 @@ export default function ResumeViewerPage() {
   const [resumeTitle, setResumeTitle] = useState<string | null>(null);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editingTitleValue, setEditingTitleValue] = useState('');
+  const [isTailoredResume, setIsTailoredResume] = useState(false);
 
   const resumeId = params?.id as string;
 
@@ -67,6 +77,7 @@ export default function ResumeViewerPage() {
 
         // Capture title for editable display (always set to clear stale state)
         setResumeTitle(data.title ?? null);
+        setIsTailoredResume(Boolean(data.parent_id));
 
         // Prioritize processed_resume if available (structured JSON)
         if (data.processed_resume) {
@@ -120,6 +131,10 @@ export default function ResumeViewerPage() {
 
   const handleEdit = () => {
     router.push(`/builder?id=${resumeId}`);
+  };
+
+  const handleInterviewPrep = () => {
+    router.push(`/builder?id=${resumeId}&tab=interview-prep`);
   };
 
   const handleTitleSave = async () => {
@@ -360,6 +375,12 @@ export default function ResumeViewerPage() {
               <Edit className="w-4 h-4" />
               {t('dashboard.editResume')}
             </Button>
+            {isTailoredResume && (
+              <Button variant="outline" onClick={handleInterviewPrep}>
+                <MessagesSquare className="w-4 h-4" />
+                {t('interviewPrep.title')}
+              </Button>
+            )}
             <Button variant="success" onClick={handleDownload} disabled={isDownloading}>
               <Download className="w-4 h-4" />
               {isDownloading ? t('common.generating') : t('resumeViewer.downloadResume')}

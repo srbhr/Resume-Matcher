@@ -1,6 +1,10 @@
 # Database files (local data)
 data/*.json
 data/config.json
+# TinyDB dump left behind by the SQLite migration — contains real resume PII.
+# `data/*.json` does not match it because the name ends in `.migrated`.
+data/*.migrated
+data/database.json*
 !data/.gitkeep
 
 # Config file with API keys - NEVER COMMIT

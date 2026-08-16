@@ -4,6 +4,7 @@ import { apiFetch } from './client';
 export type LLMProvider =
   | 'openai'
   | 'openai_compatible'
+  | 'azure_foundry'
   | 'anthropic'
   | 'openrouter'
   | 'gemini'
@@ -89,8 +90,20 @@ export async function updateLlmConfig(config: LLMConfigUpdate): Promise<LLMConfi
   });
 
   if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    throw new Error(data.detail || `Failed to update LLM config (status ${res.status}).`);
+    const data = (await res.json().catch(() => ({}))) as { detail?: unknown };
+    // FastAPI returns `detail` as a string OR a structured object (this
+    // endpoint now emits {code, field, missing} for a missing Base URL).
+    // Passing an object straight to `new Error()` renders "[object Object]",
+    // so serialize explicitly — same treatment as updateFeaturePrompts.
+    let message: string;
+    if (typeof data.detail === 'string') {
+      message = data.detail;
+    } else if (data.detail) {
+      message = JSON.stringify(data.detail);
+    } else {
+      message = `Failed to update LLM config (status ${res.status}).`;
+    }
+    throw new Error(message);
   }
 
   return res.json();
@@ -138,7 +151,24 @@ export async function fetchSystemStatus(): Promise<SystemStatus> {
 // Provider display names and default models
 export const PROVIDER_INFO: Record<
   LLMProvider,
-  { name: string; defaultModel: string; requiresKey: boolean }
+  {
+    name: string;
+    defaultModel: string;
+    requiresKey: boolean;
+    requiresBaseUrl?: boolean;
+    /**
+     * Base URL this provider owns. Used both to seed the field on switch-in
+     * and to decide whether to clear it on switch-out, so a previous
+     * provider's endpoint can't be persisted against the next one.
+     */
+    defaultBaseUrl?: string;
+    /**
+     * i18n key suffix under `settings.llmConfiguration.` for provider-specific
+     * base-URL copy. The example URL stays a literal in baseUrlPlaceholder.
+     */
+    baseUrlI18nKey?: string;
+    baseUrlPlaceholder?: string;
+  }
 > = {
   openai: { name: 'OpenAI', defaultModel: 'gpt-5-nano-2025-08-07', requiresKey: true },
   // OpenAI-compatible: llama.cpp, vLLM, LM Studio, and other servers that expose
@@ -148,6 +178,15 @@ export const PROVIDER_INFO: Record<
     name: 'OpenAI-Compatible (Local)',
     defaultModel: 'custom-model',
     requiresKey: false,
+    defaultBaseUrl: 'http://localhost:8080/v1',
+  },
+  azure_foundry: {
+    name: 'Azure AI Foundry',
+    defaultModel: 'mistral-large-latest',
+    requiresKey: true,
+    requiresBaseUrl: true,
+    baseUrlI18nKey: 'azure',
+    baseUrlPlaceholder: 'https://<resource>.services.ai.azure.com/openai/v1/responses',
   },
   anthropic: { name: 'Anthropic', defaultModel: 'claude-haiku-4-5-20251001', requiresKey: true },
   openrouter: {
@@ -158,18 +197,25 @@ export const PROVIDER_INFO: Record<
   gemini: { name: 'Google Gemini', defaultModel: 'gemini-3-flash-preview', requiresKey: true },
   deepseek: { name: 'DeepSeek', defaultModel: 'deepseek-chat', requiresKey: true },
   groq: { name: 'Groq', defaultModel: 'llama-3.3-70b-versatile', requiresKey: true },
-  ollama: { name: 'Ollama (Local)', defaultModel: 'gemma3:4b', requiresKey: false },
+  ollama: {
+    name: 'Ollama (Local)',
+    defaultModel: 'gemma3:4b',
+    requiresKey: false,
+    defaultBaseUrl: 'http://localhost:11434',
+  },
 };
 
 // Feature configuration types
 export interface FeatureConfig {
   enable_cover_letter: boolean;
   enable_outreach_message: boolean;
+  enable_interview_prep: boolean;
 }
 
 export interface FeatureConfigUpdate {
   enable_cover_letter?: boolean;
   enable_outreach_message?: boolean;
+  enable_interview_prep?: boolean;
 }
 
 // Fetch feature configuration
@@ -201,7 +247,7 @@ export async function updateFeatureConfig(config: FeatureConfigUpdate): Promise<
 }
 
 // Language configuration types
-export type SupportedLanguage = 'en' | 'es' | 'zh' | 'ja' | 'pt';
+export type SupportedLanguage = 'en' | 'es' | 'zh' | 'ja' | 'pt' | 'fr' | 'ko';
 
 export interface LanguageConfig {
   ui_language: SupportedLanguage;
@@ -371,6 +417,7 @@ export async function updateFeaturePrompts(update: FeaturePromptsUpdate): Promis
 // API Key Management types
 export type ApiKeyProvider =
   | 'openai'
+  | 'azure_foundry'
   | 'anthropic'
   | 'google'
   | 'openrouter'
@@ -399,6 +446,7 @@ export interface ApiKeyStatusResponse {
 
 export interface ApiKeysUpdateRequest {
   openai?: string;
+  azure_foundry?: string;
   anthropic?: string;
   google?: string;
   openrouter?: string;
@@ -417,6 +465,7 @@ export interface ApiKeysUpdateResponse {
 export const API_KEY_PROVIDER_INFO: Record<ApiKeyProvider, { name: string; description: string }> =
   {
     openai: { name: 'OpenAI', description: 'GPT-4, GPT-4o, etc.' },
+    azure_foundry: { name: 'Azure AI Foundry', description: 'Azure AI Inference models' },
     anthropic: { name: 'Anthropic', description: 'Claude 3.5, Claude 4, etc.' },
     google: { name: 'Google', description: 'Gemini 1.5, Gemini 2, etc.' },
     openrouter: { name: 'OpenRouter', description: 'Access multiple providers' },

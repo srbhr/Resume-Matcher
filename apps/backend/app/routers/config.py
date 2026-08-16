@@ -43,6 +43,24 @@ from app.config import (
 from app.config_cache import invalidate_config_cache
 from app.database import db
 
+# Providers that cannot function without an explicit endpoint. Mirrors
+# `requiresBaseUrl` in apps/frontend/lib/api/config.ts (M-05) — the UI guard
+# alone left the .env-driven setup path able to persist an unusable config.
+PROVIDERS_REQUIRING_BASE_URL: frozenset[str] = frozenset({"azure_foundry"})
+
+
+def _effective_api_base(stored: dict) -> str | None:
+    """Resolve the base URL the LLM layer will actually use.
+
+    ``stored.get("api_base", default)`` returns None when the key is PRESENT
+    with a null value — which is exactly what an explicit "clear the field"
+    writes. That made validation (which fell back to the env var) disagree with
+    config construction (which did not): saving with LLM_API_BASE set passed
+    the required-base-URL check and then handed api_base=None to LiteLLM.
+    Every site resolves through here so they cannot drift again.
+    """
+    return stored.get("api_base") or settings.llm_api_base or None
+
 router = APIRouter(prefix="/config", tags=["Configuration"])
 
 
@@ -103,7 +121,7 @@ async def get_llm_config_endpoint() -> LLMConfigResponse:
         provider=provider,
         model=stored.get("model", settings.llm_model),
         api_key=_mask_api_key(resolve_api_key(stored, provider)),
-        api_base=stored.get("api_base", settings.llm_api_base),
+        api_base=_effective_api_base(stored),
         reasoning_effort=reasoning_effort or None,
     )
 
@@ -149,13 +167,32 @@ async def update_llm_config(
 
     # Build normalized config for response and background health check
     resolved_provider = stored.get("provider", settings.llm_provider)
+
+    # M-05: `requiresBaseUrl` was enforced in the settings UI only, so the
+    # .env-driven path could persist a provider that cannot work without an
+    # endpoint. Fail at save time with a field name instead of surfacing an
+    # opaque LiteLLM error on the user's first generation.
+    if resolved_provider in PROVIDERS_REQUIRING_BASE_URL and not (
+        _effective_api_base(stored)
+    ):
+        # Structured detail using the same {code, field, missing} shape as
+        # update_feature_prompts below, so the UI has one schema to read for
+        # every validation error out of this router.
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "code": "missing_base_url",
+                "field": "api_base",
+                "missing": ["api_base"],
+            },
+        )
     raw_re = stored.get("reasoning_effort", settings.reasoning_effort)
     resolved_reasoning_effort = raw_re if raw_re else None
     test_config = LLMConfig(
         provider=resolved_provider,
         model=stored.get("model", settings.llm_model),
         api_key=resolve_api_key(stored, resolved_provider),
-        api_base=stored.get("api_base", settings.llm_api_base),
+        api_base=_effective_api_base(stored),
         reasoning_effort=resolved_reasoning_effort,
     )
 
@@ -204,7 +241,7 @@ async def test_llm_connection(request: LLMConfigRequest | None = None) -> dict:
         api_base=(
             request.api_base
             if request and request.api_base is not None
-            else stored.get("api_base", settings.llm_api_base)
+            else _effective_api_base(stored)
         ),
         reasoning_effort=(
             (request.reasoning_effort or None)
@@ -225,6 +262,7 @@ async def get_feature_config() -> FeatureConfigResponse:
     return FeatureConfigResponse(
         enable_cover_letter=stored.get("enable_cover_letter", False),
         enable_outreach_message=stored.get("enable_outreach_message", False),
+        enable_interview_prep=stored.get("enable_interview_prep", False),
     )
 
 
@@ -238,6 +276,8 @@ async def update_feature_config(request: FeatureConfigRequest) -> FeatureConfigR
         stored["enable_cover_letter"] = request.enable_cover_letter
     if request.enable_outreach_message is not None:
         stored["enable_outreach_message"] = request.enable_outreach_message
+    if request.enable_interview_prep is not None:
+        stored["enable_interview_prep"] = request.enable_interview_prep
 
     # Save config
     _save_config(stored)
@@ -245,11 +285,12 @@ async def update_feature_config(request: FeatureConfigRequest) -> FeatureConfigR
     return FeatureConfigResponse(
         enable_cover_letter=stored.get("enable_cover_letter", False),
         enable_outreach_message=stored.get("enable_outreach_message", False),
+        enable_interview_prep=stored.get("enable_interview_prep", False),
     )
 
 
 # Supported languages for i18n
-SUPPORTED_LANGUAGES = ["en", "es", "zh", "ja", "pt"]
+SUPPORTED_LANGUAGES = ["en", "es", "zh", "ja", "pt", "fr", "ko"]
 
 
 @router.get("/language", response_model=LanguageConfigResponse)
@@ -430,6 +471,7 @@ async def update_feature_prompts(
 # their env-fallback skip in resolve_api_key.
 SUPPORTED_PROVIDERS = [
     "openai",
+    "azure_foundry",
     "anthropic",
     "google",
     "openrouter",
@@ -489,6 +531,13 @@ async def update_api_keys(request: ApiKeysUpdateRequest) -> ApiKeysUpdateRespons
         elif "openai" in stored_keys:
             del stored_keys["openai"]
         updated.append("openai")
+
+    if request.azure_foundry is not None:
+        if request.azure_foundry:
+            stored_keys["azure_foundry"] = request.azure_foundry
+        elif "azure_foundry" in stored_keys:
+            del stored_keys["azure_foundry"]
+        updated.append("azure_foundry")
 
     if request.anthropic is not None:
         if request.anthropic:

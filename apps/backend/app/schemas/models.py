@@ -107,6 +107,25 @@ def _coerce_string_list(value: Any) -> list[str]:
     return [coerced] if coerced else []
 
 
+def _coerce_description_styles(value: Any) -> list[Literal["bullet", "plain"]]:
+    """Coerce description style values into supported row styles."""
+    if not isinstance(value, list):
+        return []
+
+    return ["plain" if entry == "plain" else "bullet" for entry in value]
+
+
+def _align_description_styles(
+    description: list[str],
+    description_styles: list[Literal["bullet", "plain"]],
+) -> list[Literal["bullet", "plain"]]:
+    """Keep descriptionStyles aligned with description rows."""
+    return [
+        description_styles[index] if index < len(description_styles) else "bullet"
+        for index, _ in enumerate(description)
+    ]
+
+
 # Section Type Enum for dynamic sections
 class SectionType(str, Enum):
     """Types of resume sections."""
@@ -140,11 +159,26 @@ class Experience(BaseModel):
     location: str | None = None
     years: str = ""
     description: list[str] = Field(default_factory=list)
+    descriptionStyles: list[Literal["bullet", "plain"]] = Field(default_factory=list)
 
     @field_validator("description", mode="before")
     @classmethod
     def _normalize_description(cls, value: Any) -> list[str]:
         return _coerce_string_list(value)
+
+    @field_validator("descriptionStyles", mode="before")
+    @classmethod
+    def _normalize_description_styles(
+        cls, value: Any
+    ) -> list[Literal["bullet", "plain"]]:
+        return _coerce_description_styles(value)
+
+    @model_validator(mode="after")
+    def _sync_description_styles(self) -> "Experience":
+        self.descriptionStyles = _align_description_styles(
+            self.description, self.descriptionStyles
+        )
+        return self
 
 
 class Education(BaseModel):
@@ -172,11 +206,26 @@ class Project(BaseModel):
     github: str | None = None
     website: str | None = None
     description: list[str] = Field(default_factory=list)
+    descriptionStyles: list[Literal["bullet", "plain"]] = Field(default_factory=list)
 
     @field_validator("description", mode="before")
     @classmethod
     def _normalize_description(cls, value: Any) -> list[str]:
         return _coerce_string_list(value)
+
+    @field_validator("descriptionStyles", mode="before")
+    @classmethod
+    def _normalize_description_styles(
+        cls, value: Any
+    ) -> list[Literal["bullet", "plain"]]:
+        return _coerce_description_styles(value)
+
+    @model_validator(mode="after")
+    def _sync_description_styles(self) -> "Project":
+        self.descriptionStyles = _align_description_styles(
+            self.description, self.descriptionStyles
+        )
+        return self
 
 
 class AdditionalInfo(BaseModel):
@@ -221,11 +270,26 @@ class CustomSectionItem(BaseModel):
     location: str | None = None
     years: str = ""
     description: list[str] = Field(default_factory=list)
+    descriptionStyles: list[Literal["bullet", "plain"]] = Field(default_factory=list)
 
     @field_validator("description", mode="before")
     @classmethod
     def _normalize_description(cls, value: Any) -> list[str]:
         return _coerce_string_list(value)
+
+    @field_validator("descriptionStyles", mode="before")
+    @classmethod
+    def _normalize_description_styles(
+        cls, value: Any
+    ) -> list[Literal["bullet", "plain"]]:
+        return _coerce_description_styles(value)
+
+    @model_validator(mode="after")
+    def _sync_description_styles(self) -> "CustomSectionItem":
+        self.descriptionStyles = _align_description_styles(
+            self.description, self.descriptionStyles
+        )
+        return self
 
 
 class CustomSection(BaseModel):
@@ -380,6 +444,32 @@ class RawResume(BaseModel):
     processing_status: str = "pending"  # pending, processing, ready, failed
 
 
+class InterviewPrepQuestion(BaseModel):
+    """Interview question grounded in the tailored resume and job context."""
+
+    question: str
+    focus_area: str | None = None
+    suggested_answer_points: list[str] = Field(default_factory=list)
+
+
+class InterviewPrepSkillGap(BaseModel):
+    """A preparation target, not a claimed candidate skill."""
+
+    skill: str
+    why_it_matters: str
+    preparation_suggestion: str
+
+
+class InterviewPrepData(BaseModel):
+    """Structured interview preparation content for a tailored resume."""
+
+    role_fit_analysis: list[str]
+    resume_questions: list[InterviewPrepQuestion]
+    project_follow_ups: list[InterviewPrepQuestion]
+    skill_gaps: list[InterviewPrepSkillGap]
+    talking_points: list[str]
+
+
 class ResumeFetchData(BaseModel):
     """Data payload for resume fetch response."""
 
@@ -388,6 +478,7 @@ class ResumeFetchData(BaseModel):
     processed_resume: ResumeData | None = None
     cover_letter: str | None = None
     outreach_message: str | None = None
+    interview_prep: InterviewPrepData | None = None
     parent_id: str | None = None  # For determining if resume is tailored
     title: str | None = None
 
@@ -483,6 +574,47 @@ class ResumeDiffSummary(BaseModel):
     high_risk_changes: int  # High-risk additions
 
 
+class ATSSubScores(BaseModel):
+    """Individual component scores that make up the ATS overall score."""
+
+    keyword_match: float = Field(
+        default=0.0, ge=0.0, le=100.0, description="Keyword match % (0–100)"
+    )
+    skills_coverage: float = Field(
+        default=0.0, ge=0.0, le=100.0, description="JD skills matched in resume (0–100)"
+    )
+    section_completeness: float = Field(
+        default=0.0,
+        ge=0.0,
+        le=100.0,
+        description="Key resume sections present (0–100)",
+    )
+
+
+class ATSScore(BaseModel):
+    """ATS-style score breakdown for a resume against a job description."""
+
+    overall_score: float = Field(
+        default=0.0,
+        ge=0.0,
+        le=100.0,
+        description="Weighted composite ATS score (0–100)",
+    )
+    sub_scores: ATSSubScores = Field(default_factory=ATSSubScores)
+    missing_keywords: list[str] = Field(
+        default_factory=list,
+        description="Job keywords absent from the tailored resume",
+    )
+    injectable_keywords: list[str] = Field(
+        default_factory=list,
+        description="Missing keywords that exist in the master resume and can be safely added",
+    )
+    recommendations: list[str] = Field(
+        default_factory=list,
+        description="Actionable suggestions to improve the ATS score",
+    )
+
+
 class RefinementStats(BaseModel):
     """Statistics from the multi-pass refinement process."""
 
@@ -522,6 +654,7 @@ class ImproveResumeData(BaseModel):
     markdownImproved: str | None = None
     cover_letter: str | None = None
     outreach_message: str | None = None
+    interview_prep: InterviewPrepData | None = None
 
     # Diff metadata
     diff_summary: ResumeDiffSummary | None = None
@@ -529,6 +662,9 @@ class ImproveResumeData(BaseModel):
 
     # Refinement metadata (multi-pass refinement stats)
     refinement_stats: "RefinementStats | None" = None
+
+    # ATS score breakdown
+    ats_score: "ATSScore | None" = None
 
     # Warning and status fields for transparency
     warnings: list[str] = Field(default_factory=list)
@@ -588,6 +724,7 @@ class FeatureConfigRequest(BaseModel):
 
     enable_cover_letter: bool | None = None
     enable_outreach_message: bool | None = None
+    enable_interview_prep: bool | None = None
 
 
 class FeatureConfigResponse(BaseModel):
@@ -595,6 +732,7 @@ class FeatureConfigResponse(BaseModel):
 
     enable_cover_letter: bool = False
     enable_outreach_message: bool = False
+    enable_interview_prep: bool = False
 
 
 class LanguageConfigRequest(BaseModel):
@@ -609,7 +747,7 @@ class LanguageConfigResponse(BaseModel):
 
     ui_language: str = "en"  # Interface language
     content_language: str = "en"  # Generated content language
-    supported_languages: list[str] = ["en", "es", "zh", "ja"]
+    supported_languages: list[str] = ["en", "es", "zh", "ja", "pt", "fr", "ko"]
 
 
 class PromptOption(BaseModel):
@@ -678,6 +816,7 @@ class ApiKeysUpdateRequest(BaseModel):
     """Request to update API keys."""
 
     openai: str | None = None
+    azure_foundry: str | None = None
     anthropic: str | None = None
     google: str | None = None
     openrouter: str | None = None
@@ -724,6 +863,13 @@ class GenerateContentResponse(BaseModel):
     """Response for on-demand content generation."""
 
     content: str
+    message: str
+
+
+class GenerateInterviewPrepResponse(BaseModel):
+    """Response for on-demand interview preparation generation."""
+
+    interview_prep: InterviewPrepData
     message: str
 
 
