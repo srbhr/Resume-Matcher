@@ -31,7 +31,7 @@ Before exploring code, read [docs/agent/README.md](../docs/agent/README.md) for 
 4. **Run `npm run format`** (Prettier) before committing
 5. **Log detailed errors server-side**, return generic messages to clients
 6. **Do NOT modify** `.github/workflows/` files without explicit request
-7. **Treat `apps/backend/data/**` as user data**, especially uploads. Never stage, commit, log, copy, paste into prompts, or share its contents; do not inspect it unless the task explicitly requires it. Use synthetic fixtures for tests and examples.
+7. **Treat `apps/backend/data/**` as user data**, above all `resume_matcher.db`, where uploaded resumes and job descriptions are actually stored. Never stage, commit, log, copy, paste into prompts, or share its contents; do not inspect it unless the task explicitly requires it. Use synthetic fixtures for tests and examples.
 8. **Never reset stored user data** through the reset endpoint or backend reset helper without the user's direct confirmation after stating the exact data that will be removed.
 
 ---
@@ -135,7 +135,7 @@ Both apps have real test suites, and **tests are in scope** (deliberate testing 
 | Frontend | vitest + Testing Library (jsdom) | `cd apps/frontend && npm run test` |
 
 - **Backend layers:** `tests/unit` (pure logic), `tests/service` (mocked LLM), `tests/integration` (real routers via httpx ASGI), `tests/evals` (prompt-quality scorers + a gated LLM-judge — excluded by default; run with `uv run pytest -m eval`).
-- **Local push gate (not CI):** a `pre-push` hook (`.githooks/pre-push`) runs the backend suite, Python locale-parity check, frontend Vitest suite, and a `tsc --noEmit` typecheck when Node and the corresponding local binaries are available. It blocks red pushes. Activate once per clone: `git config core.hooksPath .githooks`. We deliberately avoid a GitHub Actions PR gate (high external-PR volume) — see [`.githooks/README.md`](../.githooks/README.md).
+- **Local push gate (not CI):** a `pre-push` hook (`.githooks/pre-push`) runs the backend suite and the Python locale-parity check unconditionally (a missing `uv` or Python interpreter fails the gate), plus the frontend Vitest suite and a `tsc --noEmit` typecheck when Node and the local binaries are available. It blocks red pushes. Activate once per clone: `git config core.hooksPath .githooks`. We deliberately avoid a GitHub Actions PR gate (high external-PR volume) — see [`.githooks/README.md`](../.githooks/README.md).
 - Keep tests **deterministic and anti-theater**: a test must fail when its target breaks, and the default suites make no real network/LLM calls.
 
 ---

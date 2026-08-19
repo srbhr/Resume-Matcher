@@ -6,7 +6,8 @@
 #
 # Runs BEFORE every `git push` and BLOCKS the push if anything is red:
 #   1. backend test suite        (uv run pytest — LLM/eval tests excluded by default)
-#   2. frontend locale parity     (pure-Python check; guards the i18n build break)
+#   2. frontend locale parity     (pure-Python check; guards the i18n build break;
+#                                  required — a missing interpreter fails the gate)
 #   3. frontend test suite        (vitest — runs when Node is available, else skipped)
 #   4. frontend typecheck         (tsc --noEmit — catches test fixtures that
 #                                  `next build` never sees)
@@ -42,13 +43,26 @@ else
 fi
 
 # 2) Frontend locale parity (no Node required) -----------------------------
+#    check_locale_parity.py is pure stdlib so this gate can run regardless of
+#    shell setup. A missing interpreter is therefore a hard failure like `uv`
+#    above, not a silent skip: skipping it would let a push that adds an
+#    en.json key missing from another locale through a green gate. Some shells
+#    expose only `python`, so accept either name.
 if command -v python3 >/dev/null 2>&1; then
+  PYTHON_BIN=python3
+elif command -v python >/dev/null 2>&1; then
+  PYTHON_BIN=python
+else
+  PYTHON_BIN=""
+fi
+if [ -n "$PYTHON_BIN" ]; then
   echo "▶ frontend : locale parity (messages/*.json vs en.json)"
-  if ! python3 "$REPO_ROOT/scripts/check_locale_parity.py"; then
+  if ! "$PYTHON_BIN" "$REPO_ROOT/scripts/check_locale_parity.py"; then
     status=1
   fi
 else
-  echo "  ⚠ python3 not found — skipping locale parity check" >&2
+  echo "  ✗ neither 'python3' nor 'python' found — cannot run the locale parity check (install Python, or push with --no-verify)" >&2
+  status=1
 fi
 
 # 3) Frontend test suite (vitest) — only when Node + the local binary are present

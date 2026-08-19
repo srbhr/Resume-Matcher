@@ -25,9 +25,11 @@ Stack: FastAPI 0.128 · Python **3.13+** · Pydantic v2 / pydantic-settings · S
 | Prompts | All LLM prompt templates + placeholder validation | `app/prompts/*.py` |
 | Schemas | Pydantic request/response + `ResumeData` models | `app/schemas/*.py` |
 
-`data/` holds `resume_matcher.db` (SQLite; primary store), `config.json` (non-secret config), `.secret_key` (Fernet secret for encrypted API keys), an `uploads/` dir, and possibly a legacy `database.json` (TinyDB — imported into SQLite on first startup, then renamed `database.json.migrated`). `.gitignore` ignores databases, config, the encryption secret, and `uploads/` because those paths can contain user data. `db.reset_database()` truncates the document tables + `applications` (preserving `api_keys`) and wipes `uploads/`.
+`data/` holds `resume_matcher.db` (SQLite; primary store), `config.json` (non-secret config), `.secret_key` (Fernet secret for encrypted API keys), and possibly a legacy `database.json` (TinyDB — imported into SQLite on first startup, then renamed `database.json.migrated`). `.gitignore` ignores databases, config, the encryption secret, and `data/uploads/`.
 
-Treat all of `data/`, especially `uploads/`, as user data. Never stage, commit, log, copy, paste into prompts, or share its contents; do not inspect it unless the task explicitly requires it. Use synthetic fixtures for tests and examples. Never call `db.reset_database()` or the reset endpoint without the user's direct confirmation after stating the exact data that will be removed.
+**Uploads are not written to `data/uploads/`.** `resumes.py::upload_resume` reads the file into memory, `parser.py::parse_document` converts it through a `tempfile.NamedTemporaryFile` outside the repo, and only the extracted text is persisted, into `resume_matcher.db`. The one code path that touches `data/uploads/` is `db.reset_database()`, which truncates the document tables + `applications` (preserving `api_keys`) and clears that directory when it exists. The directory and its `.gitignore` entry are future-proofing, not the current upload path.
+
+Treat all of `data/`, above all `resume_matcher.db`, as user data. Never stage, commit, log, copy, paste into prompts, or share its contents; do not inspect it unless the task explicitly requires it. Use synthetic fixtures for tests and examples. Never call `db.reset_database()` or the reset endpoint without the user's direct confirmation after stating the exact data that will be removed.
 
 ### Routers (all prefixed `/api/v1`)
 - `health.py` — `GET /health` (liveness, no LLM call), `GET /status` (LLM health + DB stats).
@@ -174,7 +176,7 @@ Layout (`apps/backend/tests/`):
 
 Key fixtures/tools: `conftest.py::isolated_db` swaps the global `db` singleton for a disposable temp-file SQLite database across **all** router modules (for real-DB endpoint/e2e tests); `respx` mocks the HTTP transport so `llm.py`'s real routing runs against a fake Ollama / OpenAI server (gotcha: litellm 1.86 needs `disable_aiohttp_transport=True` for respx to intercept). Keep every test **anti-theater** — it must fail when its target breaks.
 
-**Local push gate:** `.githooks/pre-push` runs this suite, a Python locale-parity check, frontend Vitest, and a `tsc --noEmit` typecheck when Node and the corresponding local binaries are available. It blocks red pushes (`git config core.hooksPath .githooks`; see [`.githooks/README.md`](../../.githooks/README.md)). We avoid a GitHub Actions PR gate (high external-PR volume).
+**Local push gate:** `.githooks/pre-push` runs this suite and the Python locale-parity check unconditionally (a missing `uv` or Python interpreter fails the gate), plus frontend Vitest and a `tsc --noEmit` typecheck when Node and the local binaries are available. It blocks red pushes (`git config core.hooksPath .githooks`; see [`.githooks/README.md`](../../.githooks/README.md)). We avoid a GitHub Actions PR gate (high external-PR volume).
 
 ## Out of Scope
 
