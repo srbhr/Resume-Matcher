@@ -7,6 +7,7 @@ export type LLMProvider =
   | 'azure_foundry'
   | 'anthropic'
   | 'openrouter'
+  | 'orcarouter'
   | 'gemini'
   | 'deepseek'
   | 'groq'
@@ -193,6 +194,12 @@ export const PROVIDER_INFO: Record<
     name: 'OpenRouter',
     defaultModel: 'deepseek/deepseek-chat',
     requiresKey: true,
+  },
+  orcarouter: {
+    name: 'OrcaRouter',
+    defaultModel: 'orcarouter/auto',
+    requiresKey: true,
+    defaultBaseUrl: 'https://api.orcarouter.ai/v1',
   },
   gemini: { name: 'Google Gemini', defaultModel: 'gemini-3-flash-preview', requiresKey: true },
   deepseek: { name: 'DeepSeek', defaultModel: 'deepseek-chat', requiresKey: true },
@@ -421,6 +428,7 @@ export type ApiKeyProvider =
   | 'anthropic'
   | 'google'
   | 'openrouter'
+  | 'orcarouter'
   | 'deepseek'
   | 'groq'
   | 'openai_compatible'
@@ -450,6 +458,7 @@ export interface ApiKeysUpdateRequest {
   anthropic?: string;
   google?: string;
   openrouter?: string;
+  orcarouter?: string;
   deepseek?: string;
   groq?: string;
   openai_compatible?: string;
@@ -469,6 +478,10 @@ export const API_KEY_PROVIDER_INFO: Record<ApiKeyProvider, { name: string; descr
     anthropic: { name: 'Anthropic', description: 'Claude 3.5, Claude 4, etc.' },
     google: { name: 'Google', description: 'Gemini 1.5, Gemini 2, etc.' },
     openrouter: { name: 'OpenRouter', description: 'Access multiple providers' },
+    orcarouter: {
+      name: 'OrcaRouter',
+      description: 'OpenAI-compatible gateway with zero-trust agent security',
+    },
     deepseek: { name: 'DeepSeek', description: 'DeepSeek chat models' },
     groq: { name: 'Groq', description: 'Llama, Mixtral, Gemma on Groq' },
     openai_compatible: { name: 'OpenAI-Compatible', description: 'Self-hosted / proxy endpoints' },

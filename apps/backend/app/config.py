@@ -12,6 +12,13 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 CONFIG_FILE_PATH = Path(__file__).parent.parent / "data" / "config.json"
 ALLOWED_LOG_LEVELS = ("CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG")
 
+# Default OpenAI-compatible gateway endpoint for the OrcaRouter provider.
+# OrcaRouter is routed through LiteLLM's ``openai`` client (see
+# ``get_model_name`` in app/llm.py), which has no built-in provider base URL,
+# so users who leave the Base URL field blank get this gateway by default.
+ORCAROUTER_DEFAULT_BASE_URL = "https://api.orcarouter.ai/v1"
+ORCAROUTER_DEFAULT_MODEL = "orcarouter/auto"
+
 
 def _read_config_json() -> dict[str, Any]:
     """Raw read of config.json (no key injection)."""
@@ -158,6 +165,7 @@ _LEGACY_PROVIDER_KEY_MAP: dict[str, str] = {
     "anthropic": "anthropic",
     "gemini": "google",
     "openrouter": "openrouter",
+    "orcarouter": "orcarouter",
     "deepseek": "deepseek",
     "groq": "groq",
     "ollama": "ollama",
@@ -187,6 +195,7 @@ def _get_llm_api_key_with_fallback() -> str:
         "anthropic": "anthropic",
         "gemini": "google",
         "openrouter": "openrouter",
+        "orcarouter": "orcarouter",
         "deepseek": "deepseek",
         "groq": "groq",
         "ollama": "ollama",
@@ -212,6 +221,7 @@ class Settings(BaseSettings):
         "azure_foundry",
         "anthropic",
         "openrouter",
+        "orcarouter",
         "gemini",
         "deepseek",
         "groq",

@@ -225,6 +225,7 @@ npm run dev
 | **Anthropic** | クラウド | Claude 3.5 Sonnet |
 | **Google Gemini** | クラウド | Gemini 1.5 Flash/Pro |
 | **OpenRouter** | クラウド | 複数モデルへアクセス |
+| **[OrcaRouter](https://www.orcarouter.ai)** | クラウド | OpenAI互換ゲートウェイ、エージェント向けゼロトラストセキュリティ |
 | **DeepSeek** | クラウド | DeepSeek Chat |
 
 ### Docker デプロイ

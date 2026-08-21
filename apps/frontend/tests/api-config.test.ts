@@ -20,6 +20,7 @@ const ALL_PROVIDERS: LLMProvider[] = [
   'openai_compatible',
   'anthropic',
   'openrouter',
+  'orcarouter',
   'gemini',
   'deepseek',
   'groq',

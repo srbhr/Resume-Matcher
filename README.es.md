@@ -227,6 +227,7 @@ Abre **<http://localhost:3000>** y configura tu proveedor de IA en Settings.
 | **Anthropic** | Nube | Claude 3.5 Sonnet |
 | **Google Gemini** | Nube | Gemini 1.5 Flash/Pro |
 | **OpenRouter** | Nube | Acceso a múltiples modelos |
+| **[OrcaRouter](https://www.orcarouter.ai)** | Nube | Gateway compatible con OpenAI con seguridad zero-trust para agentes |
 | **DeepSeek** | Nube | DeepSeek Chat |
 
 ### Despliegue con Docker

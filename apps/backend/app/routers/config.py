@@ -475,6 +475,7 @@ SUPPORTED_PROVIDERS = [
     "anthropic",
     "google",
     "openrouter",
+    "orcarouter",
     "deepseek",
     "groq",
     "openai_compatible",
@@ -560,6 +561,13 @@ async def update_api_keys(request: ApiKeysUpdateRequest) -> ApiKeysUpdateRespons
             del stored_keys["openrouter"]
         updated.append("openrouter")
 
+    if request.orcarouter is not None:
+        if request.orcarouter:
+            stored_keys["orcarouter"] = request.orcarouter
+        elif "orcarouter" in stored_keys:
+            del stored_keys["orcarouter"]
+        updated.append("orcarouter")
+
     if request.deepseek is not None:
         if request.deepseek:
             stored_keys["deepseek"] = request.deepseek
@@ -628,7 +636,7 @@ async def delete_api_key(provider: str) -> dict:
     """Delete API key for a specific provider.
 
     Args:
-        provider: The provider name (openai, anthropic, google, openrouter, deepseek)
+        provider: The provider name (openai, anthropic, google, openrouter, orcarouter, deepseek)
 
     Returns:
         Success message
