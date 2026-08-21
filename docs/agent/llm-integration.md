@@ -14,6 +14,7 @@ Backend uses LiteLLM to support multiple providers through a unified API:
 | **Anthropic** | Cloud | Claude Haiku 4.5 |
 | **Google Gemini** | Cloud | Gemini 3 Flash |
 | **OpenRouter** | Cloud | Access to multiple models |
+| **[OrcaRouter](https://www.orcarouter.ai)** | Cloud | OpenAI-compatible gateway with zero-trust agent security |
 | **DeepSeek** | Cloud | DeepSeek Chat |
 
 ## API Key Handling

@@ -11,6 +11,7 @@ from app.llm import (
     _get_retry_temperature,
     _normalize_api_base,
     _supports_temperature,
+    get_llm_config,
     get_model_name,
     resolve_api_key,
 )
@@ -704,3 +705,47 @@ class TestScrubSecrets:
         assert "sk-abcd1234efgh5678" not in _scrub_secrets("key sk-abcd1234efgh5678 failed")
         assert "AIzaSyABCDEFGHIJ" not in _scrub_secrets("key AIzaSyABCDEFGHIJ failed")
         assert "tok_secret" not in _scrub_secrets("Authorization: Bearer tok_secret")
+
+
+# ---------------------------------------------------------------------------
+# get_llm_config — OrcaRouter default base URL
+# ---------------------------------------------------------------------------
+
+
+class TestOrcaRouterConfig:
+    """OrcaRouter is an OpenAI-compatible gateway routed via LiteLLM's openai
+    client. When the user leaves the Base URL blank, get_llm_config() fills in
+    the public gateway endpoint so a named OrcaRouter config works out of the box.
+    """
+
+    @patch("app.llm.load_config_file")
+    def test_orcarouter_defaults_to_gateway_base_url(self, mock_load):
+        mock_load.return_value = {"provider": "orcarouter", "model": "orcarouter/auto"}
+
+        config = get_llm_config()
+
+        assert config.provider == "orcarouter"
+        assert config.api_base == "https://api.orcarouter.ai/v1"
+
+    @patch("app.llm.load_config_file")
+    def test_orcarouter_explicit_base_url_wins(self, mock_load):
+        mock_load.return_value = {
+            "provider": "orcarouter",
+            "model": "orcarouter/auto",
+            "api_base": "https://gateway.example.com/v1",
+        }
+
+        config = get_llm_config()
+
+        assert config.api_base == "https://gateway.example.com/v1"
+
+    @patch("app.llm.load_config_file")
+    def test_other_providers_unaffected(self, mock_load):
+        # The default-base-url injection is scoped to orcarouter; other
+        # providers keep their None (empty) api_base untouched.
+        mock_load.return_value = {"provider": "openai", "model": "gpt-4o"}
+
+        config = get_llm_config()
+
+        assert config.provider == "openai"
+        assert config.api_base is None

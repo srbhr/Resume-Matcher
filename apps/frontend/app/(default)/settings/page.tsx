@@ -74,6 +74,7 @@ const PROVIDERS: LLMProvider[] = [
   'azure_foundry',
   'anthropic',
   'openrouter',
+  'orcarouter',
   'gemini',
   'deepseek',
   'groq',

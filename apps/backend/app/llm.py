@@ -12,7 +12,12 @@ from litellm import Router
 from litellm.router import RetryPolicy
 from pydantic import BaseModel
 
-from app.config import load_config_file, save_config_file, settings
+from app.config import (
+    ORCAROUTER_DEFAULT_BASE_URL,
+    load_config_file,
+    save_config_file,
+    settings,
+)
 
 LITELLM_LOGGER_NAMES = ("LiteLLM", "LiteLLM Router", "LiteLLM Proxy")
 
@@ -169,7 +174,9 @@ def _normalize_api_base(provider: str, api_base: str | None, model: str | None =
 
     # OpenAI / OpenAI-compatible: preserve the URL as-is. The OpenAI client
     # resolves paths correctly whether the base includes /v1 or not.
-    if provider in ("openai", "openai_compatible"):
+    # OrcaRouter is an OpenAI-compatible gateway routed via LiteLLM's OpenAI
+    # client (see get_model_name), so its base URL must also be preserved.
+    if provider in ("openai", "openai_compatible", "orcarouter"):
         return base or None
 
     # Anthropic handler appends '/v1/messages'. If base already ends with '/v1',
@@ -393,6 +400,7 @@ _PROVIDER_KEY_MAP: dict[str, str] = {
     "anthropic": "anthropic",
     "gemini": "google",
     "openrouter": "openrouter",
+    "orcarouter": "orcarouter",
     "deepseek": "deepseek",
     "groq": "groq",
     "ollama": "ollama",
@@ -479,11 +487,19 @@ def get_llm_config() -> LLMConfig:
     # Normalize empty string to None — user explicitly cleared.
     reasoning_effort = raw_re if raw_re else None
 
+    # OrcaRouter is an OpenAI-compatible gateway routed via LiteLLM's openai
+    # client. It has no built-in provider endpoint, so when the user leaves the
+    # Base URL blank we default to the public gateway endpoint. An explicit
+    # stored/override value always wins.
+    api_base = stored.get("api_base", settings.llm_api_base)
+    if provider == "orcarouter" and not api_base:
+        api_base = ORCAROUTER_DEFAULT_BASE_URL
+
     return LLMConfig(
         provider=provider,
         model=model,
         api_key=api_key,
-        api_base=stored.get("api_base", settings.llm_api_base),
+        api_base=api_base,
         api_version=stored.get("api_version"),
         reasoning_effort=reasoning_effort,
     )
@@ -502,6 +518,10 @@ def get_model_name(config: LLMConfig) -> str:
         # client handles the request; works for llama.cpp, vLLM, LM Studio,
         # and any server exposing the OpenAI Chat Completions API shape.
         "openai_compatible": "openai/",
+        # OrcaRouter is an OpenAI-compatible gateway. Routing via LiteLLM's
+        # openai/ prefix makes the OpenAI client send the gateway alias
+        # (e.g. orcarouter/auto) to https://api.orcarouter.ai/v1.
+        "orcarouter": "openai/",
         "azure_foundry": "azure_ai/",
         "anthropic": "anthropic/",
         "openrouter": "openrouter/",
@@ -534,6 +554,16 @@ def get_model_name(config: LLMConfig) -> str:
         if config.model.startswith("openrouter/"):
             return config.model
         return f"openrouter/{config.model}"
+
+    # OrcaRouter is an OpenAI-compatible gateway. Always route through LiteLLM's
+    # openai client so the model name is forwarded verbatim to the gateway
+    # endpoint — a vendor-qualified id like deepseek/deepseek-v4-pro must NOT be
+    # intercepted by LiteLLM's own deepseek provider. Add openai/ unless already
+    # present (mirrors the OpenRouter special case above).
+    if config.provider == "orcarouter":
+        if config.model.startswith("openai/"):
+            return config.model
+        return f"openai/{config.model}"
 
     # For other providers, don't add prefix if model already has a known prefix
     known_prefixes = [
@@ -1074,6 +1104,7 @@ def _calculate_timeout(
         "anthropic": 1.2,
         "azure_foundry": 1.2,
         "openrouter": 1.5,  # More variable latency
+        "orcarouter": 1.5,  # Gateway: variable latency across upstream models
         "groq": 1.0,
         "ollama": 2.0,  # Local models can be slower
     }

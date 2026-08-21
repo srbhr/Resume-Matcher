@@ -225,6 +225,7 @@ npm run dev
 | **Anthropic** | 云 | Claude 3.5 Sonnet |
 | **Google Gemini** | 云 | Gemini 1.5 Flash/Pro |
 | **OpenRouter** | 云 | 访问多种模型 |
+| **[OrcaRouter](https://www.orcarouter.ai)** | 云 | OpenAI 兼容网关，为 AI 代理提供零信任安全 |
 | **DeepSeek** | 云 | DeepSeek Chat |
 
 ### Docker 部署

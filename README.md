@@ -229,6 +229,7 @@ Open **<http://localhost:3000>** and configure your AI provider in Settings.
 | **Anthropic** | Cloud | Claude Haiku 4.5 |
 | **Google Gemini** | Cloud | Gemini 3 Flash |
 | **OpenRouter** | Cloud | Access to multiple models |
+| **[OrcaRouter](https://www.orcarouter.ai)** | Cloud | OpenAI-compatible gateway with zero-trust agent security |
 | **DeepSeek** | Cloud | DeepSeek Chat |
 
 ### Docker Deployment

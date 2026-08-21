@@ -60,6 +60,19 @@ class TestGetModelName:
             == "openrouter/anthropic/claude-3.5-sonnet"
         )
 
+    def test_orcarouter_routes_via_openai_prefix(self):
+        # OrcaRouter is an OpenAI-compatible gateway; LiteLLM's openai/ prefix
+        # sends the model name verbatim to https://api.orcarouter.ai/v1.
+        assert get_model_name(_cfg("orcarouter", "orcarouter/auto")) == "openai/orcarouter/auto"
+        assert (
+            get_model_name(_cfg("orcarouter", "deepseek/deepseek-v4-pro"))
+            == "openai/deepseek/deepseek-v4-pro"
+        )
+        assert (
+            get_model_name(_cfg("orcarouter", "openai/gpt-4o"))
+            == "openai/gpt-4o"  # no double prefix
+        )
+
     def test_anthropic_prefix(self):
         assert get_model_name(_cfg("anthropic", "claude-3-opus")) == "anthropic/claude-3-opus"
 
@@ -95,6 +108,19 @@ class TestNormalizeApiBase:
         assert (
             _normalize_api_base("openai_compatible", "http://localhost:8080/v1")
             == "http://localhost:8080/v1"
+        )
+
+    def test_orcarouter_preserves_v1_as_is(self):
+        # OrcaRouter is routed through the OpenAI client, which handles /v1
+        # correctly — preserve the pasted base URL so api.orcarouter.ai/v1
+        # round-trips intact (mirrors the openai/openai_compatible rule).
+        assert (
+            _normalize_api_base("orcarouter", "https://api.orcarouter.ai/v1")
+            == "https://api.orcarouter.ai/v1"
+        )
+        assert (
+            _normalize_api_base("orcarouter", "https://api.orcarouter.ai/v1/")
+            == "https://api.orcarouter.ai/v1"
         )
 
     def test_openai_strips_only_trailing_slash(self):
@@ -151,6 +177,11 @@ class TestResolveApiKey:
     def test_cloud_provider_does_inherit_env_key(self, monkeypatch):
         monkeypatch.setattr("app.llm.settings.llm_api_key", "sk-paid-secret")
         assert resolve_api_key({}, "openai") == "sk-paid-secret"
+
+    def test_orcarouter_key_from_provider_store(self):
+        # OrcaRouter keys live in their own encrypted store slot.
+        stored = {"api_keys": {"orcarouter": "sk-orca-1234"}}
+        assert resolve_api_key(stored, "orcarouter") == "sk-orca-1234"
 
 
 # ---------------------------------------------------------------------------

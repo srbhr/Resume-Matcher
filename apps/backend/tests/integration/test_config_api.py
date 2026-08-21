@@ -445,6 +445,18 @@ class TestEncryptedApiKeys:
         # The gemini LLM provider maps to the google key-store slot.
         assert resolve_api_key(stored, "gemini") == "sk-google-key"
 
+    async def test_orcarouter_key_stored_and_resolved(self, keys_env, client):
+        from app.config import load_config_file
+        from app.llm import resolve_api_key
+
+        async with client:
+            await client.post("/api/v1/config/api-keys", json={"orcarouter": "sk-orca-1234"})
+            status = await client.get("/api/v1/config/api-keys")
+        configured = {p["provider"]: p for p in status.json()["providers"]}
+        assert configured["orcarouter"]["configured"] is True
+        stored = load_config_file()
+        assert resolve_api_key(stored, "orcarouter") == "sk-orca-1234"
+
     async def test_delete_single_provider(self, keys_env, client):
         async with client:
             await client.post("/api/v1/config/api-keys", json={"openai": "a", "anthropic": "b"})
@@ -526,6 +538,23 @@ class TestLegacyKeyMigration:
 
 class TestRequiresBaseUrlValidation:
     """M-05: requiresBaseUrl was a UI-only guard until now."""
+
+    async def test_supported_providers_include_orcarouter(self, client):
+        """The API-key provider list must expose orcarouter end to end."""
+        from app.routers.config import SUPPORTED_PROVIDERS
+
+        assert "orcarouter" in SUPPORTED_PROVIDERS
+
+    async def test_orcarouter_requires_key_but_not_base_url(self, client):
+        """OrcaRouter is a cloud gateway: it needs a key but supplies its own
+        default endpoint, so saving with a blank Base URL must not 422."""
+        async with client:
+            resp = await client.put(
+                "/api/v1/config/llm-api-key",
+                json={"provider": "orcarouter", "model": "orcarouter/auto"},
+            )
+
+        assert resp.status_code == 200
 
     async def test_azure_foundry_without_base_url_is_rejected(self, client):
         async with client:
