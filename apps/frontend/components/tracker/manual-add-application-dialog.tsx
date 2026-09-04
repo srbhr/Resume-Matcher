@@ -17,18 +17,20 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dropdown } from '@/components/ui/dropdown';
 import { useTranslations } from '@/lib/i18n';
 import { fetchResumeList, type ResumeListItem } from '@/lib/api/resume';
-import { createApplication, type ApplicationStatus } from '@/lib/api/tracker';
+import { createApplication, type ApplicationStatus, type TrackerColumn } from '@/lib/api/tracker';
 
 interface ManualAddApplicationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onCreated: () => void;
+  columns: TrackerColumn[];
 }
 
 export function ManualAddApplicationDialog({
   open,
   onOpenChange,
   onCreated,
+  columns,
 }: ManualAddApplicationDialogProps) {
   const { t } = useTranslations();
   const [resumes, setResumes] = useState<ResumeListItem[]>([]);
@@ -145,10 +147,10 @@ export function ManualAddApplicationDialog({
           <div className="space-y-1">
             <Label>{t('tracker.manualAdd.status')}</Label>
             <Dropdown
-              options={[
-                { id: 'applied', label: t('tracker.columns.applied') },
-                { id: 'saved', label: t('tracker.columns.saved') },
-              ]}
+              options={columns.map((column) => ({
+                id: column.column_id,
+                label: column.is_system ? t(`tracker.columns.${column.column_id}`) : column.label,
+              }))}
               value={status}
               onChange={(value) => setStatus(value as ApplicationStatus)}
             />

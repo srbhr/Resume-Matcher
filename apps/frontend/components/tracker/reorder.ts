@@ -18,9 +18,10 @@ export interface MovePlan {
 
 function locate(
   columns: ApplicationColumns,
-  cardId: string
+  cardId: string,
+  columnIds: string[]
 ): { status: ApplicationStatus; index: number } | null {
-  for (const status of APPLICATION_STATUS_ORDER) {
+  for (const status of columnIds) {
     const index = columns[status].findIndex((a) => a.application_id === cardId);
     if (index >= 0) return { status, index };
   }
@@ -38,22 +39,23 @@ function locate(
 export function planMove(
   columns: ApplicationColumns,
   activeId: string,
-  overId: string
+  overId: string,
+  columnIds: string[] = APPLICATION_STATUS_ORDER
 ): MovePlan | null {
   if (activeId === overId) return null;
 
-  const source = locate(columns, activeId);
+  const source = locate(columns, activeId, columnIds);
   if (!source) return null;
 
   const overIsColumn = overId.startsWith(COLUMN_PREFIX);
   const targetStatus: ApplicationStatus = overIsColumn
     ? (overId.slice(COLUMN_PREFIX.length) as ApplicationStatus)
-    : (locate(columns, overId)?.status ?? source.status);
+    : (locate(columns, overId, columnIds)?.status ?? source.status);
 
   if (source.status === targetStatus) {
     const overIndex = overIsColumn
       ? columns[targetStatus].length - 1
-      : locate(columns, overId)!.index;
+      : locate(columns, overId, columnIds)!.index;
     if (overIndex === source.index) return null;
     const reordered = arrayMove(columns[targetStatus], source.index, overIndex).map((a, i) => ({
       ...a,
@@ -69,7 +71,7 @@ export function planMove(
   const sourceList = [...columns[source.status]];
   const [moved] = sourceList.splice(source.index, 1);
   const targetList = [...columns[targetStatus]];
-  const insertAt = overIsColumn ? targetList.length : locate(columns, overId)!.index;
+  const insertAt = overIsColumn ? targetList.length : locate(columns, overId, columnIds)!.index;
   targetList.splice(insertAt, 0, { ...moved, status: targetStatus });
 
   return {

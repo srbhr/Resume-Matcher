@@ -16,6 +16,12 @@ description. Cards are drag-and-drop reorderable within and across columns.
 Auto-created cards from the tailor flow land in **`applied`**. Manual cards
 default to `applied` but can be created as `saved`.
 
+Users can add custom columns from **Manage Columns**, rename them, hide them,
+and move them into any board position. Custom column definitions are persisted
+in the SQLite database and are shared by the local installation. Built-in
+columns cannot be renamed or deleted. Deleting a custom column requires a
+destination column; its cards are moved there before deletion.
+
 ## How It Works
 
 1. **Auto-create:** `POST /resumes/improve/confirm` (and the legacy
@@ -52,6 +58,10 @@ dedupes on `(job_id, resume_id)` to survive double-submit.
 | PATCH | `/applications/bulk` | Move many cards to one column |
 | DELETE | `/applications/{id}` | Delete one card |
 | POST | `/applications/bulk-delete` | Delete many cards |
+| GET | `/applications/columns` | List configured columns in board order |
+| POST | `/applications/columns` | Create a custom column |
+| PATCH | `/applications/columns/{id}` | Rename, reorder, or hide a column |
+| DELETE | `/applications/columns/{id}` | Delete a custom column and move its cards |
 
 ## Key Files
 

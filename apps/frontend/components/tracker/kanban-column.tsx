@@ -9,6 +9,7 @@ import { ApplicationCard } from './application-card';
 
 interface KanbanColumnProps {
   status: ApplicationStatus;
+  label: string;
   applications: Application[];
   selectedIds: Set<string>;
   sharedResumeIds: Set<string>;
@@ -18,6 +19,7 @@ interface KanbanColumnProps {
 
 export function KanbanColumn({
   status,
+  label,
   applications,
   selectedIds,
   sharedResumeIds,
@@ -32,9 +34,7 @@ export function KanbanColumn({
   return (
     <div className="flex h-full w-80 shrink-0 flex-col p-3">
       <div className="mb-2 flex items-center justify-between border-b-2 border-black pb-1">
-        <h2 className="font-mono text-xs font-bold uppercase tracking-wide text-ink">
-          {t(`tracker.columns.${status}`)}
-        </h2>
+        <h2 className="font-mono text-xs font-bold uppercase tracking-wide text-ink">{label}</h2>
         <span className="font-mono text-xs text-steel-grey">{applications.length}</span>
       </div>
 

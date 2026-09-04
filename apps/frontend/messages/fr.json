@@ -982,6 +982,15 @@
       "visible": "Visible",
       "hidden": "Masquée",
       "lastVisibleHint": "Au moins une étape doit rester visible.",
+      "newColumn": "Nouvelle colonne",
+      "newColumnPlaceholder": "Nom de la colonne",
+      "add": "Ajouter",
+      "moveUp": "Monter la colonne",
+      "moveDown": "Descendre la colonne",
+      "hide": "Masquer",
+      "show": "Afficher",
+      "moveCardsTo": "Déplacer les cartes vers...",
+      "saveFailed": "Impossible d'enregistrer les changements.",
       "close": "Terminé"
     },
     "scroll": {

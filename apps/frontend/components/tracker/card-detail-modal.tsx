@@ -16,13 +16,20 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useTranslations } from '@/lib/i18n';
-import { getApplicationDetail, updateApplication, type ApplicationDetail } from '@/lib/api/tracker';
+import {
+  APPLICATION_STATUS_ORDER,
+  getApplicationDetail,
+  updateApplication,
+  type ApplicationDetail,
+  type TrackerColumn,
+} from '@/lib/api/tracker';
 
 interface CardDetailModalProps {
   applicationId: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onUpdated: () => void;
+  columns: TrackerColumn[];
 }
 
 export function CardDetailModal({
@@ -30,6 +37,7 @@ export function CardDetailModal({
   open,
   onOpenChange,
   onUpdated,
+  columns,
 }: CardDetailModalProps) {
   const { t } = useTranslations();
   const router = useRouter();
@@ -103,7 +111,10 @@ export function CardDetailModal({
           <div className="space-y-4">
             <div className="flex items-center gap-2 font-mono text-xs uppercase text-ink-soft">
               <span className="border border-black bg-paper-tint px-2 py-0.5">
-                {t(`tracker.columns.${detail.status}`)}
+                {APPLICATION_STATUS_ORDER.includes(detail.status)
+                  ? t(`tracker.columns.${detail.status}`)
+                  : (columns.find((column) => column.column_id === detail.status)?.label ??
+                    detail.status)}
               </span>
               {detail.applied_at && (
                 <span>

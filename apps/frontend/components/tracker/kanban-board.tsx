@@ -21,12 +21,14 @@ import { useTranslations } from '@/lib/i18n';
 import {
   listApplications,
   updateApplication,
+  updateTrackerColumn,
   bulkUpdateStatus,
   bulkDeleteApplications,
   APPLICATION_STATUS_ORDER,
   type Application,
   type ApplicationColumns,
   type ApplicationStatus,
+  type TrackerColumn,
 } from '@/lib/api/tracker';
 import { KanbanColumn } from './kanban-column';
 import { BulkActionBar } from './bulk-action-bar';
@@ -34,11 +36,28 @@ import { CardDetailModal } from './card-detail-modal';
 import { ManualAddApplicationDialog } from './manual-add-application-dialog';
 import { planMove } from './reorder';
 import { ManageColumnsDialog } from './manage-columns-dialog';
-import {
-  readHiddenStatuses,
-  toggleHiddenStatus,
-  writeHiddenStatuses,
-} from '@/lib/utils/tracker-column-visibility';
+
+const SYSTEM_COLUMN_LABELS: Record<string, string> = {
+  saved: 'Saved',
+  applied: 'Applied',
+  no_response: 'No Response',
+  response: 'Response',
+  interview: 'Interview',
+  accepted: 'Accepted',
+  rejected: 'Rejected',
+};
+
+function fallbackColumnDefinitions(): TrackerColumn[] {
+  return APPLICATION_STATUS_ORDER.map((column_id, position) => ({
+    column_id,
+    label: SYSTEM_COLUMN_LABELS[column_id],
+    position,
+    is_system: true,
+    is_hidden: false,
+    created_at: '',
+    updated_at: '',
+  }));
+}
 
 function emptyColumns(): ApplicationColumns {
   return APPLICATION_STATUS_ORDER.reduce((acc, status) => {
@@ -55,24 +74,25 @@ export function KanbanBoard() {
   );
 
   const [columns, setColumns] = useState<ApplicationColumns>(emptyColumns);
+  const [columnDefinitions, setColumnDefinitions] = useState<TrackerColumn[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [openCardId, setOpenCardId] = useState<string | null>(null);
   const [manualAddOpen, setManualAddOpen] = useState(false);
   const [manageOpen, setManageOpen] = useState(false);
-  const [hiddenStatuses, setHiddenStatuses] = useState<Set<ApplicationStatus>>(() =>
-    readHiddenStatuses()
-  );
+  const visibleColumns = columnDefinitions.filter((column) => !column.is_hidden);
 
   // Persist on an actual change only — an effect keyed on the state would also
   // write the just-read value straight back on mount.
-  const handleToggleStatus = (status: ApplicationStatus) => {
-    const next = toggleHiddenStatus(hiddenStatuses, status);
-    // Refused (last visible stage): identical instance, nothing to store.
-    if (next === hiddenStatuses) return;
-    setHiddenStatuses(next);
-    writeHiddenStatuses(next);
+  const handleToggleColumn = async (column: TrackerColumn) => {
+    if (!column.is_hidden && visibleColumns.length <= 1) return;
+    const updated = await updateTrackerColumn(column.column_id, {
+      is_hidden: !column.is_hidden,
+    });
+    setColumnDefinitions((current) =>
+      current.map((item) => (item.column_id === updated.column_id ? updated : item))
+    );
   };
 
   // Horizontal-scroll affordance: the seven stages overflow the canvas, so we
@@ -87,6 +107,7 @@ export function KanbanBoard() {
       const data = await listApplications();
       // Ensure all seven keys exist even if the server omits an empty one.
       setColumns({ ...emptyColumns(), ...data.columns });
+      setColumnDefinitions(data.column_definitions ?? fallbackColumnDefinitions());
       setError(null);
     } catch {
       setError(t('tracker.errors.loadFailed'));
@@ -101,13 +122,8 @@ export function KanbanBoard() {
   }, []);
 
   const allCards: Application[] = useMemo(
-    () => APPLICATION_STATUS_ORDER.flatMap((status) => columns[status]),
-    [columns]
-  );
-
-  const visibleStatuses = useMemo(
-    () => APPLICATION_STATUS_ORDER.filter((status) => !hiddenStatuses.has(status)),
-    [hiddenStatuses]
+    () => columnDefinitions.flatMap((column) => columns[column.column_id] ?? []),
+    [columns, columnDefinitions]
   );
 
   // Master resume ids that back more than one card → "shared resume" badge.
@@ -145,7 +161,7 @@ export function KanbanBoard() {
     scrollRef.current?.scrollBy({ left: direction * 320, behavior: 'smooth' });
   };
 
-  const scrollToColumn = (status: ApplicationStatus) => {
+  const scrollToColumn = (status: string) => {
     scrollRef.current
       ?.querySelector<HTMLElement>(`[data-column="${status}"]`)
       ?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
@@ -154,7 +170,12 @@ export function KanbanBoard() {
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over) return;
-    const plan = planMove(columns, String(active.id), String(over.id));
+    const plan = planMove(
+      columns,
+      String(active.id),
+      String(over.id),
+      columnDefinitions.map((column) => column.column_id)
+    );
     if (!plan) return;
 
     // Optimistic update. If the server rejects the move we re-load authoritative
@@ -268,6 +289,7 @@ export function KanbanBoard() {
             onMove={handleBulkMove}
             onDelete={handleBulkDelete}
             onClear={clearSelection}
+            columns={columnDefinitions}
           />
         </div>
       )}
@@ -291,17 +313,20 @@ export function KanbanBoard() {
             onDragEnd={handleDragEnd}
           >
             <div ref={scrollRef} className="flex min-h-0 flex-1 overflow-x-auto">
-              {visibleStatuses.map((status, index) => (
+              {visibleColumns.map((column, index) => (
                 <div
-                  key={status}
-                  data-column={status}
+                  key={column.column_id}
+                  data-column={column.column_id}
                   className={`flex ${
-                    index < visibleStatuses.length - 1 ? 'border-r border-black' : ''
+                    index < visibleColumns.length - 1 ? 'border-r border-black' : ''
                   }`}
                 >
                   <KanbanColumn
-                    status={status}
-                    applications={columns[status]}
+                    status={column.column_id}
+                    label={
+                      column.is_system ? t(`tracker.columns.${column.column_id}`) : column.label
+                    }
+                    applications={columns[column.column_id] ?? []}
                     selectedIds={selectedIds}
                     sharedResumeIds={sharedResumeIds}
                     onToggleSelect={toggleSelect}
@@ -325,15 +350,15 @@ export function KanbanBoard() {
             </span>
           )}
           <div className="flex items-center gap-2">
-            {visibleStatuses.map((status) => (
+            {visibleColumns.map((column) => (
               <button
-                key={status}
+                key={column.column_id}
                 type="button"
-                onClick={() => scrollToColumn(status)}
+                onClick={() => scrollToColumn(column.column_id)}
                 className="flex shrink-0 items-center gap-1.5 border border-black bg-background px-2 py-1 font-mono text-[11px] uppercase tracking-wide text-ink-soft shadow-sw-xs transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:text-primary hover:shadow-none"
               >
-                {t(`tracker.columns.${status}`)}
-                <span className="text-steel-grey">{columns[status].length}</span>
+                {column.is_system ? t(`tracker.columns.${column.column_id}`) : column.label}
+                <span className="text-steel-grey">{columns[column.column_id]?.length ?? 0}</span>
               </button>
             ))}
           </div>
@@ -347,19 +372,22 @@ export function KanbanBoard() {
           if (!open) setOpenCardId(null);
         }}
         onUpdated={load}
+        columns={columnDefinitions}
       />
 
       <ManualAddApplicationDialog
         open={manualAddOpen}
         onOpenChange={setManualAddOpen}
         onCreated={load}
+        columns={columnDefinitions}
       />
 
       <ManageColumnsDialog
         open={manageOpen}
         onOpenChange={setManageOpen}
-        hiddenStatuses={hiddenStatuses}
-        onToggle={handleToggleStatus}
+        columns={columnDefinitions}
+        onToggle={handleToggleColumn}
+        onChanged={load}
       />
     </div>
   );

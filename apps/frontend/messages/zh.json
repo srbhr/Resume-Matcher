@@ -982,6 +982,15 @@
       "visible": "已显示",
       "hidden": "已隐藏",
       "lastVisibleHint": "至少需要保留一个阶段处于显示状态。",
+      "newColumn": "新列",
+      "newColumnPlaceholder": "列名称",
+      "add": "添加",
+      "moveUp": "向上移动列",
+      "moveDown": "向下移动列",
+      "hide": "隐藏",
+      "show": "显示",
+      "moveCardsTo": "将卡片移动到...",
+      "saveFailed": "无法保存列更改。",
       "close": "完成"
     },
     "scroll": {

@@ -1,8 +1,7 @@
 import { apiFetch, apiPost, apiPatch, apiDelete } from './client';
 
 // The seven stable Kanban columns (keys are decoupled from i18n labels).
-export type ApplicationStatus =
-  'saved' | 'applied' | 'no_response' | 'response' | 'interview' | 'accepted' | 'rejected';
+export type ApplicationStatus = string;
 
 export const APPLICATION_STATUS_ORDER: ApplicationStatus[] = [
   'saved',
@@ -35,10 +34,27 @@ export interface ApplicationDetail extends Application {
   resume: Record<string, unknown> | null;
 }
 
-export type ApplicationColumns = Record<ApplicationStatus, Application[]>;
+export type ApplicationColumns = Record<string, Application[]>;
+
+export interface TrackerColumn {
+  column_id: string;
+  label: string;
+  position: number;
+  is_system: boolean;
+  is_hidden: boolean;
+  created_at: string;
+  updated_at: string;
+}
 
 export interface ApplicationListResponse {
   columns: ApplicationColumns;
+  column_definitions?: TrackerColumn[];
+}
+
+export interface TrackerColumnUpdate {
+  label?: string;
+  position?: number;
+  is_hidden?: boolean;
 }
 
 export interface ManualApplicationCreate {
@@ -103,6 +119,29 @@ async function asJson<T>(res: Response, fallback: string): Promise<T> {
 export async function listApplications(): Promise<ApplicationListResponse> {
   const res = await apiFetch('/applications', { credentials: 'include' });
   return asJson<ApplicationListResponse>(res, 'Failed to load applications');
+}
+
+export async function createTrackerColumn(label: string): Promise<TrackerColumn> {
+  const res = await apiPost('/applications/columns', { label });
+  return asJson<TrackerColumn>(res, 'Failed to create tracker column');
+}
+
+export async function updateTrackerColumn(
+  id: string,
+  payload: TrackerColumnUpdate
+): Promise<TrackerColumn> {
+  const res = await apiPatch(`/applications/columns/${id}`, payload);
+  return asJson<TrackerColumn>(res, 'Failed to update tracker column');
+}
+
+export async function deleteTrackerColumn(id: string, destinationId: string): Promise<void> {
+  const res = await apiFetch(`/applications/columns/${id}`, {
+    method: 'DELETE',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ destination_id: destinationId }),
+  });
+  await asJson<ApplicationActionResponse>(res, 'Failed to delete tracker column');
 }
 
 // Manually add a card from a pasted job description.

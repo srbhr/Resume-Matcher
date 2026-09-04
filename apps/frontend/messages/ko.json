@@ -982,6 +982,15 @@
       "visible": "표시됨",
       "hidden": "숨김",
       "lastVisibleHint": "최소 한 개의 단계는 표시되어 있어야 합니다.",
+      "newColumn": "새 열",
+      "newColumnPlaceholder": "열 이름",
+      "add": "추가",
+      "moveUp": "열 위로 이동",
+      "moveDown": "열 아래로 이동",
+      "hide": "숨기기",
+      "show": "표시",
+      "moveCardsTo": "카드를 이동할 위치...",
+      "saveFailed": "열 변경 사항을 저장할 수 없습니다.",
       "close": "완료"
     },
     "scroll": {

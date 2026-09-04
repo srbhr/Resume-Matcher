@@ -982,6 +982,15 @@
       "visible": "Visible",
       "hidden": "Hidden",
       "lastVisibleHint": "At least one stage must stay visible.",
+      "newColumn": "New column",
+      "newColumnPlaceholder": "Column name",
+      "add": "Add",
+      "moveUp": "Move column up",
+      "moveDown": "Move column down",
+      "hide": "Hide",
+      "show": "Show",
+      "moveCardsTo": "Move cards to...",
+      "saveFailed": "Could not save column changes.",
       "close": "Done"
     },
     "scroll": {

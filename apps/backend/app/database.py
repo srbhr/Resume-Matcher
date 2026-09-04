@@ -18,14 +18,14 @@ from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
-from sqlalchemy import delete, func, select
+from sqlalchemy import delete, func, select, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.config import settings
 from app.db_engine import init_models_sync, make_async_engine, make_sync_engine
-from app.models import ApiKey, Application, Improvement, Job, Resume
+from app.models import ApiKey, Application, Improvement, Job, Resume, TrackerColumn
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +43,16 @@ APPLICATION_STATUSES: tuple[str, ...] = (
     "accepted",
     "rejected",
 )
+
+_SYSTEM_COLUMN_LABELS: dict[str, str] = {
+    "saved": "Saved",
+    "applied": "Applied",
+    "no_response": "No Response",
+    "response": "Response",
+    "interview": "Interview",
+    "accepted": "Accepted",
+    "rejected": "Rejected",
+}
 
 
 class ResumeNotFoundError(ValueError):
@@ -96,6 +106,23 @@ class Database:
         self._sync_engine = make_sync_engine(self.db_path)
         self._sync_session_factory = sessionmaker(self._sync_engine, expire_on_commit=False)
         init_models_sync(self._sync_engine)
+        with self._sync_engine.begin() as connection:
+            now = _now()
+            for position, (column_id, label) in enumerate(_SYSTEM_COLUMN_LABELS.items()):
+                connection.execute(
+                    text(
+                        "INSERT OR IGNORE INTO tracker_columns "
+                        "(column_id, label, position, is_system, is_hidden, created_at, updated_at) "
+                        "VALUES (:column_id, :label, :position, 1, 0, :created_at, :updated_at)"
+                    ),
+                    {
+                        "column_id": column_id,
+                        "label": label,
+                        "position": position,
+                        "created_at": now,
+                        "updated_at": now,
+                    },
+                )
         self._async_engine = make_async_engine(self.db_path)
         self._async_session_factory = async_sessionmaker(
             self._async_engine, expire_on_commit=False
@@ -575,6 +602,109 @@ class Database:
                     return self._application_to_dict(found)
                 raise
             return self._application_to_dict(row)
+
+    @staticmethod
+    def _tracker_column_to_dict(row: TrackerColumn) -> dict[str, Any]:
+        return {
+            "column_id": row.column_id,
+            "label": row.label,
+            "position": row.position,
+            "is_system": row.is_system,
+            "is_hidden": row.is_hidden,
+            "created_at": row.created_at,
+            "updated_at": row.updated_at,
+        }
+
+    async def list_tracker_columns(self) -> list[dict[str, Any]]:
+        """List tracker columns in their persisted board order."""
+        async with self._session() as session:
+            result = await session.execute(
+                select(TrackerColumn).order_by(TrackerColumn.position, TrackerColumn.created_at)
+            )
+            return [self._tracker_column_to_dict(row) for row in result.scalars().all()]
+
+    async def get_tracker_column(self, column_id: str) -> dict[str, Any] | None:
+        """Return one tracker column by its stable key."""
+        async with self._session() as session:
+            row = await session.get(TrackerColumn, column_id)
+            return self._tracker_column_to_dict(row) if row else None
+
+    async def create_tracker_column(self, label: str) -> dict[str, Any]:
+        """Create a custom tracker column at the end of the board."""
+        async with self._session() as session:
+            result = await session.execute(select(func.max(TrackerColumn.position)))
+            max_position = result.scalar_one_or_none()
+            now = _now()
+            row = TrackerColumn(
+                column_id=f"custom_{uuid4().hex}",
+                label=label,
+                position=(max_position or 0) + 1,
+                is_system=False,
+                is_hidden=False,
+                created_at=now,
+                updated_at=now,
+            )
+            session.add(row)
+            await session.commit()
+            return self._tracker_column_to_dict(row)
+
+    async def update_tracker_column(self, column_id: str, updates: dict[str, Any]) -> dict[str, Any] | None:
+        """Update a column label, visibility, or board position."""
+        async with self._session() as session:
+            row = await session.get(TrackerColumn, column_id)
+            if row is None:
+                return None
+            for key in ("label", "is_hidden"):
+                if key in updates:
+                    setattr(row, key, updates[key])
+            if "position" in updates:
+                rows = (
+                    await session.execute(
+                        select(TrackerColumn)
+                        .where(TrackerColumn.column_id != column_id)
+                        .order_by(TrackerColumn.position, TrackerColumn.created_at)
+                    )
+                ).scalars().all()
+                target = max(0, min(updates["position"], len(rows)))
+                rows.insert(target, row)
+                for index, item in enumerate(rows):
+                    item.position = index
+            row.updated_at = _now()
+            await session.commit()
+            return self._tracker_column_to_dict(row)
+
+    async def delete_tracker_column(self, column_id: str, destination_id: str) -> bool:
+        """Delete a custom column after moving its cards to a destination."""
+        async with self._session() as session:
+            row = await session.get(TrackerColumn, column_id)
+            destination = await session.get(TrackerColumn, destination_id)
+            if row is None or destination is None or row.is_system or row.column_id == destination_id:
+                return False
+            applications = (
+                await session.execute(select(Application).where(Application.status == column_id))
+            ).scalars().all()
+            destination_count = (
+                await session.execute(
+                    select(func.count(Application.application_id)).where(
+                        Application.status == destination_id
+                    )
+                )
+            ).scalar_one()
+            for index, application in enumerate(applications):
+                application.status = destination_id
+                application.position = destination_count + index
+                application.updated_at = _now()
+            await session.delete(row)
+            await session.flush()
+            remaining = (
+                await session.execute(
+                    select(TrackerColumn).order_by(TrackerColumn.position, TrackerColumn.created_at)
+                )
+            ).scalars().all()
+            for index, column in enumerate(remaining):
+                column.position = index
+            await session.commit()
+            return True
 
     async def list_applications(self, status: str | None = None) -> list[dict[str, Any]]:
         """List applications ordered by (status, position)."""

@@ -982,6 +982,15 @@
       "visible": "表示中",
       "hidden": "非表示",
       "lastVisibleHint": "少なくとも1つのステージは表示しておく必要があります。",
+      "newColumn": "新しい列",
+      "newColumnPlaceholder": "列名",
+      "add": "追加",
+      "moveUp": "列を上へ移動",
+      "moveDown": "列を下へ移動",
+      "hide": "非表示",
+      "show": "表示",
+      "moveCardsTo": "カードの移動先...",
+      "saveFailed": "列の変更を保存できませんでした。",
       "close": "完了"
     },
     "scroll": {

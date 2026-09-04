@@ -982,6 +982,15 @@
       "visible": "Visible",
       "hidden": "Oculta",
       "lastVisibleHint": "Al menos una etapa debe permanecer visible.",
+      "newColumn": "Nueva columna",
+      "newColumnPlaceholder": "Nombre de columna",
+      "add": "Añadir",
+      "moveUp": "Mover columna arriba",
+      "moveDown": "Mover columna abajo",
+      "hide": "Ocultar",
+      "show": "Mostrar",
+      "moveCardsTo": "Mover tarjetas a...",
+      "saveFailed": "No se pudieron guardar los cambios.",
       "close": "Listo"
     },
     "scroll": {

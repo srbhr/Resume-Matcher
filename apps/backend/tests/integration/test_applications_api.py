@@ -39,6 +39,51 @@ class TestListAndGroup:
         assert len(columns["interview"]) == 1
         assert columns["applied"][0]["resume_id"] == "r1"
 
+    async def test_custom_column_is_listed_and_cards_are_grouped(self, isolated_db):
+        async with _client() as client:
+            created = await client.post("/api/v1/applications/columns", json={"label": "Phone screen"})
+            assert created.status_code == 200
+            column = created.json()
+            assert column["is_system"] is False
+            card = await client.post(
+                "/api/v1/applications",
+                json={
+                    "resume_id": "res-1",
+                    "job_description": "JD",
+                    "status": column["column_id"],
+                    "company": "Acme",
+                    "role": "Engineer",
+                },
+            )
+            assert card.status_code == 200
+            board = await client.get("/api/v1/applications")
+        assert board.json()["columns"][column["column_id"]][0]["status"] == column["column_id"]
+
+    async def test_custom_column_can_be_reordered_and_deleted(self, isolated_db):
+        async with _client() as client:
+            first = (await client.post("/api/v1/applications/columns", json={"label": "First"})).json()
+            second = (await client.post("/api/v1/applications/columns", json={"label": "Second"})).json()
+            moved = await client.patch(
+                f"/api/v1/applications/columns/{second['column_id']}", json={"position": 0}
+            )
+            assert moved.status_code == 200
+            ordered = await client.get("/api/v1/applications/columns")
+            assert ordered.json()[0]["column_id"] == second["column_id"]
+            await _seed_card(
+                isolated_db,
+                job_id="custom-job",
+                resume_id="custom-resume",
+                status=first["column_id"],
+            )
+            deleted = await client.request(
+                "DELETE",
+                f"/api/v1/applications/columns/{first['column_id']}",
+                json={"destination_id": "applied"},
+            )
+            assert deleted.status_code == 200
+            board = await client.get("/api/v1/applications")
+        assert board.json()["columns"]["applied"][0]["job_id"] == "custom-job"
+
 
 class TestManualAdd:
     async def test_manual_add_extracts_company_role(self, isolated_db):

@@ -22,6 +22,38 @@ class ApplicationStatus(str, Enum):
 APPLICATION_STATUS_ORDER: list[str] = [s.value for s in ApplicationStatus]
 
 
+class TrackerColumnResponse(BaseModel):
+    """A configured tracker column."""
+
+    column_id: str
+    label: str
+    position: int
+    is_system: bool
+    is_hidden: bool
+    created_at: str
+    updated_at: str
+
+
+class TrackerColumnCreate(BaseModel):
+    """Create a custom tracker column."""
+
+    label: str = Field(min_length=1, max_length=80)
+
+
+class TrackerColumnUpdate(BaseModel):
+    """Update a tracker column."""
+
+    label: str | None = Field(default=None, min_length=1, max_length=80)
+    position: int | None = Field(default=None, ge=0)
+    is_hidden: bool | None = None
+
+
+class TrackerColumnDelete(BaseModel):
+    """Delete a custom column and move its cards elsewhere."""
+
+    destination_id: str
+
+
 class ApplicationResponse(BaseModel):
     """A single tracker card."""
 
@@ -29,7 +61,7 @@ class ApplicationResponse(BaseModel):
     job_id: str
     resume_id: str
     master_resume_id: str | None = None
-    status: ApplicationStatus
+    status: str
     company: str | None = None
     role: str | None = None
     applied_at: str | None = None
@@ -54,6 +86,7 @@ class ApplicationListResponse(BaseModel):
     """Applications grouped by column. All seven keys are always present."""
 
     columns: dict[str, list[ApplicationResponse]]
+    column_definitions: list[TrackerColumnResponse] = Field(default_factory=list)
 
 
 class ManualApplicationCreate(BaseModel):
@@ -68,14 +101,14 @@ class ManualApplicationCreate(BaseModel):
     job_description: str = Field(min_length=1)
     company: str | None = None
     role: str | None = None
-    status: ApplicationStatus = ApplicationStatus.applied
+    status: str = ApplicationStatus.applied.value
     notes: str | None = None
 
 
 class ApplicationUpdate(BaseModel):
     """Partial update — every field optional."""
 
-    status: ApplicationStatus | None = None
+    status: str | None = None
     position: int | None = None
     notes: str | None = None
     company: str | None = None
@@ -87,7 +120,7 @@ class BulkStatusUpdate(BaseModel):
     """Move many cards to one column."""
 
     application_ids: list[str] = Field(min_length=1)
-    status: ApplicationStatus
+    status: str
 
 
 class BulkDelete(BaseModel):

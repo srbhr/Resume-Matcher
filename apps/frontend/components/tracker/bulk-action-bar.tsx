@@ -7,24 +7,31 @@ import { Button } from '@/components/ui/button';
 import { Dropdown } from '@/components/ui/dropdown';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useTranslations } from '@/lib/i18n';
-import { APPLICATION_STATUS_ORDER, type ApplicationStatus } from '@/lib/api/tracker';
+import { type ApplicationStatus, type TrackerColumn } from '@/lib/api/tracker';
 
 interface BulkActionBarProps {
   selectedCount: number;
   onMove: (status: ApplicationStatus) => void;
   onDelete: () => void;
   onClear: () => void;
+  columns: TrackerColumn[];
 }
 
-export function BulkActionBar({ selectedCount, onMove, onDelete, onClear }: BulkActionBarProps) {
+export function BulkActionBar({
+  selectedCount,
+  onMove,
+  onDelete,
+  onClear,
+  columns,
+}: BulkActionBarProps) {
   const { t } = useTranslations();
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const moveOptions = [
     { id: '', label: t('tracker.bulk.moveTo') },
-    ...APPLICATION_STATUS_ORDER.map((status) => ({
-      id: status,
-      label: t(`tracker.columns.${status}`),
+    ...columns.map((column) => ({
+      id: column.column_id,
+      label: column.is_system ? t(`tracker.columns.${column.column_id}`) : column.label,
     })),
   ];
 
