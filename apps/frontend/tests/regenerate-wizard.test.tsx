@@ -118,6 +118,28 @@ describe('RegenerateDialog', () => {
   });
 });
 
+it('offers refresh retry after saved changes and prevents rejecting an applied result', () => {
+  render(
+    <RegenerateDiffPreview
+      open
+      onOpenChange={vi.fn()}
+      regeneratedItems={[]}
+      error="Refresh failed"
+      onAccept={vi.fn()}
+      onReject={vi.fn()}
+      isApplying={false}
+      needsRefresh
+    />
+  );
+  expect(screen.getByText('builder.regenerate.errors.refreshFailed')).toBeVisible();
+  expect(
+    screen.getByRole('button', { name: 'builder.regenerate.diffPreview.retryRefresh' })
+  ).toBeEnabled();
+  expect(
+    screen.getByRole('button', { name: 'builder.regenerate.diffPreview.rejectButton' })
+  ).toBeDisabled();
+});
+
 describe('RegenerateDiffPreview', () => {
   it('shows human-friendly titles instead of technical IDs', () => {
     const regeneratedItems: RegeneratedItem[] = [

@@ -67,5 +67,13 @@ def init_models_sync(engine: Engine) -> None:
     # migration idempotent so older local databases can load resumes safely.
     with engine.begin() as conn:
         columns = conn.exec_driver_sql("PRAGMA table_info(resumes)").mappings().all()
-        if columns and "interview_prep" not in {column["name"] for column in columns}:
+        existing_columns = {column["name"] for column in columns}
+        if columns and "interview_prep" not in existing_columns:
             conn.exec_driver_sql("ALTER TABLE resumes ADD COLUMN interview_prep TEXT")
+        if columns and "processing_token" not in existing_columns:
+            conn.exec_driver_sql("ALTER TABLE resumes ADD COLUMN processing_token TEXT")
+
+        preview_columns = conn.exec_driver_sql("PRAGMA table_info(tailoring_previews)").mappings().all()
+        if preview_columns and "improvements" not in {column["name"] for column in preview_columns}:
+            conn.exec_driver_sql("ALTER TABLE tailoring_previews ADD COLUMN improvements JSON")
+        conn.exec_driver_sql("CREATE INDEX IF NOT EXISTS ix_preview_compatibility ON tailoring_previews (source_id, job_id, payload_hash, created_at)")

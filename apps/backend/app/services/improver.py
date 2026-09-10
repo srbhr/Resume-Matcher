@@ -22,6 +22,7 @@ from app.prompts import (
 from app.prompts.templates import IMPROVE_SCHEMA_EXAMPLE
 from app.schemas import ResumeData, ResumeFieldDiff, ResumeDiffSummary
 from app.schemas.models import ImproveDiffResult, ResumeChange
+from app.services.parser import has_meaningful_resume_content
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +37,84 @@ _INJECTION_PATTERNS = [
     r"\[\s*INST\s*\]",
     r"\[\s*/\s*INST\s*\]",
 ]
+
+
+def _validate_string_list_field(
+    result: dict[str, Any],
+    field: str,
+) -> list[str]:
+    """Return a normalized required list of non-empty strings."""
+    value = result.get(field)
+    if not isinstance(value, list):
+        raise ValueError(f"LLM response requires a '{field}' list")
+    if any(not isinstance(item, str) or not item.strip() for item in value):
+        raise ValueError(f"LLM response field '{field}' must contain text")
+    return [item.strip() for item in value]
+
+
+def _validate_keyword_result(result: dict[str, Any]) -> dict[str, Any]:
+    """Validate keyword fields consumed by tailoring while allowing sparse output."""
+    validated = dict(result)
+    for field in ("required_skills", "preferred_skills", "keywords"):
+        validated[field] = _validate_string_list_field(result, field)
+    for field in (
+        "experience_requirements",
+        "education_requirements",
+        "key_responsibilities",
+    ):
+        if field in result:
+            validated[field] = _validate_string_list_field(result, field)
+    return validated
+
+
+def _validate_diff_result(result: dict[str, Any]) -> dict[str, Any]:
+    """Validate an explicit diff result, including a legitimate empty list."""
+    if "changes" not in result:
+        raise ValueError("LLM diff response is missing 'changes'")
+    return ImproveDiffResult.model_validate(result).model_dump()
+
+
+def _validate_skill_plan_result(result: dict[str, Any]) -> dict[str, Any]:
+    """Validate an explicit skill-target plan without coercing invalid leaves."""
+    raw_targets = result.get("target_skills")
+    if not isinstance(raw_targets, list):
+        raise ValueError("LLM skill plan requires a 'target_skills' list")
+
+    normalized: list[dict[str, str]] = []
+    for target in raw_targets:
+        if isinstance(target, str):
+            skill = target.strip()
+            reason = ""
+        elif isinstance(target, dict):
+            raw_skill = target.get("skill")
+            raw_reason = target.get("reason", "")
+            if not isinstance(raw_skill, str) or not isinstance(raw_reason, str):
+                raise ValueError("Skill targets require text skill and reason fields")
+            skill = raw_skill.strip()
+            reason = raw_reason.strip()
+        else:
+            raise ValueError("Skill targets must be strings or objects")
+        if not skill:
+            raise ValueError("Skill targets cannot be blank")
+        normalized.append({"skill": skill, "reason": reason})
+
+    raw_notes = result.get("strategy_notes", "")
+    if not isinstance(raw_notes, str):
+        raise ValueError("Skill plan strategy_notes must be text")
+
+    return {
+        **result,
+        "target_skills": normalized,
+        "strategy_notes": raw_notes.strip(),
+    }
+
+
+def _validate_resume_result(result: dict[str, Any]) -> dict[str, Any]:
+    """Validate schema and reject a structurally valid but empty resume."""
+    validated = ResumeData.model_validate(result).model_dump()
+    if not has_meaningful_resume_content(validated):
+        raise ValueError("LLM returned an empty structured resume")
+    return validated
 
 
 @dataclass(frozen=True)
@@ -54,20 +133,6 @@ def _sanitize_user_input(text: str) -> str:
     for pattern in _INJECTION_PATTERNS:
         sanitized = re.sub(pattern, "[REDACTED]", sanitized, flags=re.IGNORECASE)
     return sanitized
-
-
-def _check_for_truncation(data: dict[str, Any]) -> None:
-    """LLM-006: Log warnings for obvious truncation signs before Pydantic validation.
-
-    Note: personalInfo is intentionally excluded — the improve prompts tell the
-    LLM to skip it, and _preserve_personal_info() restores it from the original.
-    """
-
-    # Check for suspiciously empty required arrays
-    if "workExperience" in data and data["workExperience"] == []:
-        logger.warning(
-            "Resume has empty workExperience - possible truncation or unusual resume"
-        )
 
 
 # ---------------------------------------------------------------------------
@@ -568,37 +633,10 @@ async def generate_resume_diffs(
         system_prompt="You are an expert resume editor. Output only valid JSON with targeted changes.",
         max_tokens=4096,
         schema_type="diff",
+        response_validator=_validate_diff_result,
     )
 
-    # Parse result — handle LLM ignoring diff format gracefully
-    raw_changes = result.get("changes", [])
-    if not isinstance(raw_changes, list):
-        logger.warning("LLM returned non-list changes: %s", type(raw_changes))
-        raw_changes = []
-
-    changes: list[ResumeChange] = []
-    for raw in raw_changes:
-        if not isinstance(raw, dict):
-            continue
-        try:
-            changes.append(
-                ResumeChange(
-                    path=str(raw.get("path", "")),
-                    action=raw.get("action", "replace"),
-                    original=raw.get("original"),
-                    value=raw.get("value", ""),
-                    reason=str(raw.get("reason", "")),
-                )
-            )
-        except Exception as e:
-            logger.warning("Skipping malformed change: %s — %s", raw, e)
-
-    strategy_notes = str(result.get("strategy_notes", ""))
-    if not raw_changes and "changes" not in result:
-        strategy_notes = "LLM output had no changes key — returned zero diffs"
-        logger.warning("LLM output missing 'changes' key: %s", list(result.keys()))
-
-    return ImproveDiffResult(changes=changes, strategy_notes=strategy_notes)
+    return ImproveDiffResult.model_validate(_validate_diff_result(result))
 
 
 async def extract_job_keywords(job_description: str) -> dict[str, Any]:
@@ -614,11 +652,13 @@ async def extract_job_keywords(job_description: str) -> dict[str, Any]:
     sanitized_jd = _sanitize_user_input(job_description)
     prompt = EXTRACT_KEYWORDS_PROMPT.format(job_description=sanitized_jd)
 
-    return await complete_json(
+    result = await complete_json(
         prompt=prompt,
         system_prompt="You are an expert job description analyzer.",
         schema_type="keywords",
+        response_validator=_validate_keyword_result,
     )
+    return _validate_keyword_result(result)
 
 
 MONTH_PATTERN = re.compile(
@@ -864,29 +904,9 @@ async def generate_skill_target_plan(
         ),
         max_tokens=2048,
         schema_type="diff",
+        response_validator=_validate_skill_plan_result,
     )
-
-    raw_targets = result.get("target_skills", [])
-    target_skills: list[dict[str, str]] = []
-    if isinstance(raw_targets, list):
-        for raw in raw_targets:
-            if isinstance(raw, str):
-                skill = raw.strip()
-                reason = ""
-            elif isinstance(raw, dict):
-                skill = str(raw.get("skill", "")).strip()
-                reason = str(raw.get("reason", "")).strip()
-            else:
-                continue
-            if skill:
-                target_skills.append({"skill": skill, "reason": reason})
-    else:
-        logger.warning("Skill target plan returned non-list target_skills")
-
-    return {
-        "target_skills": target_skills,
-        "strategy_notes": str(result.get("strategy_notes", "")),
-    }
+    return _validate_skill_plan_result(result)
 
 
 def _prepare_skill_targets_for_prompt(
@@ -929,7 +949,7 @@ async def improve_resume(
     Returns:
         Improved resume data matching ResumeData schema
 
-    LLM-006: Validates for truncation before Pydantic validation.
+    LLM-006: Validates the structured result inside the content-retry budget.
     LLM-011: Sanitizes job description to prevent prompt injection.
     """
     keywords_str = _prepare_keywords_for_prompt(job_keywords)
@@ -979,14 +999,9 @@ async def improve_resume(
         prompt=prompt,
         system_prompt="You are an expert resume editor. Output only valid JSON.",
         max_tokens=8192,
+        response_validator=_validate_resume_result,
     )
-
-    # LLM-006: Pre-validation check for truncation signs
-    _check_for_truncation(result)
-
-    # Validate against schema
-    validated = ResumeData.model_validate(result)
-    return validated.model_dump()
+    return _validate_resume_result(result)
 
 
 def _format_entry_label(parts: list[str], fallback: str) -> str:

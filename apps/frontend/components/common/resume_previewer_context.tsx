@@ -119,6 +119,8 @@ export interface InterviewPrepData {
 
 export interface Data {
   request_id: string;
+  preview_id?: string | null;
+  preview_expires_at?: string | null;
   resume_id: string | null;
   job_id: string;
   resume_preview: ResumePreview;

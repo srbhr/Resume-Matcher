@@ -30,7 +30,8 @@
     "unknown": "Unknown",
     "keysCleared": "API keys cleared successfully",
     "databaseReset": "Database reset successfully",
-    "popupBlocked": "Popup blocked. Please allow popups or open this URL manually: {url}"
+    "popupBlocked": "Popup blocked. Please allow popups or open this URL manually: {url}",
+    "resumeDeleted": "This resume was deleted. Upload or select another resume."
   },
   "home": {
     "brandLine1": "Resume",
@@ -99,6 +100,10 @@
       "dropzoneSubtitle": "PDF, DOC, DOCX (Max 4MB)",
       "tryDifferentFile": "Try Different File",
       "parsingFailedKeepOpen": "AI parsing failed. Try a different file or close this dialog."
+    },
+    "errors": {
+      "loadFailed": "Unable to load resumes. Please try again.",
+      "deleteFailed": "Unable to delete the resume. Your existing resume is still available."
     }
   },
   "builder": {
@@ -113,11 +118,13 @@
       "localDraft": "Draft saved locally",
       "saveNow": "Save now",
       "retrySave": "Retry save",
-      "savedButton": "Saved"
+      "savedButton": "Saved",
+      "localDraftUnavailable": "Local draft unavailable"
     },
     "draftRecovery": {
       "title": "Restore Local Draft?",
       "description": "A local browser draft is different from the saved server copy. Restore it to continue editing, or use the server copy and discard the local draft.",
+      "newDescription": "This browser has an unsaved resume draft. Restore it to continue editing, or discard it and start fresh.",
       "restoreDraft": "Restore Draft",
       "useServer": "Use Server Copy"
     },
@@ -263,14 +270,17 @@
         "newLabel": "New",
         "noContent": "No content",
         "applying": "Applying...",
-        "loading": "Generating improved content..."
+        "loading": "Generating improved content...",
+        "retryRefresh": "Retry refresh",
+        "refreshing": "Refreshing..."
       },
       "errors": {
         "generationFailed": "Failed to generate content. Please try again.",
         "applyFailed": "Failed to apply changes. Please try again.",
         "resumeChanged": "Resume content changed since regeneration. Please regenerate and try again.",
         "noChangesToApply": "No changes to apply.",
-        "networkError": "Network error. Please check your connection."
+        "networkError": "Network error. Please check your connection.",
+        "refreshFailed": "Changes were saved, but the resume could not be refreshed. Retry refresh."
       }
     },
     "jdMatch": {
@@ -490,6 +500,12 @@
       "coverLetterGenerateFailed": "Failed to generate cover letter: {error}",
       "outreachGenerateFailed": "Failed to generate outreach message: {error}",
       "interviewPrepGenerateFailed": "Failed to generate interview preparation: {error}"
+    },
+    "leaveWithoutDraft": {
+      "title": "Leave With Unsaved Changes?",
+      "description": "Your latest edits could not be synced to the server or saved in this browser. Leaving now may lose those edits.",
+      "leave": "Leave Anyway",
+      "stay": "Keep Editing"
     }
   },
   "enrichment": {
@@ -516,14 +532,20 @@
       "addingLabel": "Adding",
       "existingCount": "({count} existing)",
       "newCount": "({count} new)",
-      "noExistingDescription": "No existing description"
+      "noExistingDescription": "No existing description",
+      "partialFailure": "Some items could not be enhanced",
+      "partialFailureDescription": "The listed items will stay unchanged. You can apply the successful enhancements and try the other items again later."
     },
     "complete": {
       "title": "Resume Enhanced!",
       "updatedCountSingular": "{count} item updated successfully",
       "updatedCountPlural": "{count} items updated successfully",
       "updatedFallback": "Your resume has been updated with enhanced descriptions",
-      "doneButton": "Done"
+      "doneButton": "Done",
+      "refreshFailedTitle": "Saved — refresh needed",
+      "refreshFailed": "Your enhancements were saved, but this view could not refresh. Retry to show the latest resume.",
+      "retryRefresh": "Retry refresh",
+      "refreshing": "Refreshing resume..."
     },
     "noImprovements": {
       "title": "Your resume looks great!",
@@ -531,7 +553,8 @@
     },
     "error": {
       "title": "Something went wrong",
-      "unexpected": "An unexpected error occurred"
+      "unexpected": "An unexpected error occurred",
+      "answerRequired": "Answer at least one question before generating improvements."
     }
   },
   "tailor": {
@@ -609,7 +632,8 @@
       "timeout": "Resume preview timed out after {minutes} minutes. Try again with a shorter job description or a simpler prompt.",
       "failedToGenerate": "Couldn't generate the resume. Check your API key in Settings, then try again.",
       "failedToPreview": "Couldn't preview the resume. Check your API key in Settings, then try again.",
-      "failedToConfirm": "Couldn't apply the changes. Please try again."
+      "failedToConfirm": "Couldn't apply the changes. Please try again.",
+      "previewUnavailable": "This preview expired or the source resume changed. Generate a fresh preview before saving."
     }
   },
   "settings": {
@@ -789,9 +813,13 @@
       "notProcessedYet": "Resume has not been processed yet. Please use the Tailor feature to generate a structured resume.",
       "noDataAvailable": "No resume data available.",
       "failedToLoad": "Failed to load resume data.",
-      "failedToDelete": "Failed to delete resume. Please try again."
+      "failedToDelete": "Failed to delete resume. Please try again.",
+      "failedToDownload": "Failed to download resume. Please try again.",
+      "failedToRename": "Failed to rename resume. Please try again."
     },
-    "titlePlaceholder": "Enter resume title..."
+    "titlePlaceholder": "Enter resume title...",
+    "downloadFailedTitle": "Download Failed",
+    "renameFailedTitle": "Rename Failed"
   },
   "preview": {
     "margins": "Margins",
@@ -941,7 +969,11 @@
       "review": "Review & finish",
       "create": "Create master resume",
       "keepAdding": "Keep adding",
-      "backToDashboard": "Back to Dashboard"
+      "backToDashboard": "Back to Dashboard",
+      "openCreated": "Open Created Resume",
+      "retryDraftBackup": "Retry local backup",
+      "stay": "Stay here",
+      "leaveWithoutSaving": "Leave without saving"
     },
     "preview": {
       "label": "Live Draft",
@@ -954,7 +986,16 @@
     },
     "errors": {
       "turnFailed": "The wizard could not save that answer. Try again.",
-      "finalizeFailed": "The wizard could not create your master resume. Try again."
+      "finalizeFailed": "The wizard could not create your master resume. Try again.",
+      "createdNavigationFailed": "Your master resume was created, but this page could not open it automatically. Use the button below to continue."
+    },
+    "draftStorageUnavailable": {
+      "title": "Local draft unavailable",
+      "description": "Your latest wizard progress is only in this tab. Retry the local backup before leaving or reloading."
+    },
+    "leaveWithoutDraft": {
+      "title": "Leave without a local backup?",
+      "description": "Your latest wizard progress will be lost if you leave or reload before the local backup succeeds."
     },
     "entry": {
       "kicker": "Master Resume Setup",
@@ -972,9 +1013,22 @@
         "description": "Answer focused prompts and let the wizard assemble a strong first master resume draft.",
         "action": "Start Wizard"
       }
+    },
+    "created": {
+      "title": "Master Resume Created",
+      "description": "Your master resume was created. Open it to continue editing."
     }
   },
   "tracker": {
+    "manage": "Manage",
+    "manageDialog": {
+      "title": "Manage Columns",
+      "description": "Choose which stages appear on the board.",
+      "visible": "Visible",
+      "hidden": "Hidden",
+      "lastVisibleHint": "At least one stage must stay visible.",
+      "close": "Done"
+    },
     "scroll": {
       "prev": "Scroll left",
       "next": "Scroll right",

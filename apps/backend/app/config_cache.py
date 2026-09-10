@@ -8,9 +8,10 @@ import copy
 import json
 import logging
 import time
+from pathlib import Path
 from typing import Any
 
-from app.config import settings
+from app.config import get_config_path
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +23,7 @@ logger = logging.getLogger(__name__)
 #    require making load_config async and changing every caller.
 _config_cache: dict[str, Any] = {}
 _config_cache_time: float = 0.0
+_config_cache_path: Path | None = None
 _CONFIG_CACHE_TTL: float = 300.0  # 5 minutes
 
 
@@ -30,9 +32,10 @@ def invalidate_config_cache() -> None:
 
     Call this after any write to config.json.
     """
-    global _config_cache, _config_cache_time
+    global _config_cache, _config_cache_time, _config_cache_path
     _config_cache = {}
     _config_cache_time = 0.0
+    _config_cache_path = None
 
 
 def load_config() -> dict[str, Any]:
@@ -40,12 +43,17 @@ def load_config() -> dict[str, Any]:
 
     Returns a deep copy so callers cannot corrupt the cached data.
     """
-    global _config_cache, _config_cache_time
+    global _config_cache, _config_cache_time, _config_cache_path
     now = time.monotonic()
-    if _config_cache and (now - _config_cache_time) < _CONFIG_CACHE_TTL:
+    config_path = get_config_path()
+    if (
+        _config_cache
+        and _config_cache_path == config_path
+        and (now - _config_cache_time) < _CONFIG_CACHE_TTL
+    ):
         return copy.deepcopy(_config_cache)
 
-    config_path = settings.config_path
+    _config_cache_path = config_path
     if not config_path.exists():
         _config_cache = {}
         _config_cache_time = now

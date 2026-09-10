@@ -1,12 +1,8 @@
-"""End-to-end pipeline test through the REAL routers + a REAL (isolated) TinyDB.
+"""End-to-end pipeline tests through real routers and isolated SQLite.
 
-Every existing integration test mocks the database away (``patch("...db")``), so
-nothing proves that the core user journey actually persists through the routers.
-This module fills that gap: it drives the genuine FastAPI app against the
-disposable ``isolated_db`` fixture (a temp-file ``Database`` swapped into every
-router module) and asserts real persisted state via the yielded db — not just
-status codes. Only the LLM boundaries are mocked; the routers, schemas,
-validation, and TinyDB persistence are all real.
+This module drives the FastAPI app against the disposable ``isolated_db``
+fixture and checks persisted state through the yielded Database. AI boundaries
+use synthetic responses; routers, schemas, validation and SQLite are real.
 
 Pipeline stages covered:
     upload  -> POST /api/v1/resumes/upload (parse_document + parse_resume_to_json mocked)
@@ -21,6 +17,8 @@ auxiliary cover-letter/outreach/title generators are all replaced with
 Mock/AsyncMock returning canned data.
 """
 
+from typing import Any
+
 import copy
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
@@ -28,6 +26,7 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from httpx import ASGITransport, AsyncClient
 
+from app.database import Database
 from app.main import app
 from app.schemas.models import ResumeData
 
@@ -82,13 +81,13 @@ class TestPipelineCore:
     """The minimum bar: upload -> store -> jobs -> fetch, end to end."""
 
     async def test_upload_persists_master_resume_through_router(
-        self, isolated_db, sample_resume
-    ):
+        self, isolated_db: Database, sample_resume: dict[str, Any]
+    ) -> None:
         """Upload a fake PDF; assert the resume is the persisted master, marked
-        ``ready``, with ``processed_data`` round-tripped through real TinyDB.
+        ``ready``, with ``processed_data`` round-tripped through real SQLite.
 
         This proves the upload handler actually wires parse_document ->
-        parse_resume_to_json -> create_resume_atomic_master -> update_resume
+        parse_resume_to_json -> create_resume_atomic_master -> token-guarded finish
         against a real database, which the DB-mocking tests cannot.
         """
         resp = await _upload_resume(isolated_db, sample_resume)

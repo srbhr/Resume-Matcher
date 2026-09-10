@@ -2,16 +2,17 @@
 
 import { Button } from '@/components/ui/button';
 import { Check, X, Briefcase, FolderKanban } from 'lucide-react';
-import type { EnhancedDescription } from '@/lib/api/enrichment';
+import type { EnhancedDescription, EnhancementItemError } from '@/lib/api/enrichment';
 import { useTranslations } from '@/lib/i18n';
 
 interface PreviewStepProps {
   enhancements: EnhancedDescription[];
+  errors?: EnhancementItemError[];
   onApply: () => void;
   onCancel: () => void;
 }
 
-export function PreviewStep({ enhancements, onApply, onCancel }: PreviewStepProps) {
+export function PreviewStep({ enhancements, errors = [], onApply, onCancel }: PreviewStepProps) {
   const { t } = useTranslations();
   return (
     <div className="flex flex-col h-full">
@@ -20,6 +21,23 @@ export function PreviewStep({ enhancements, onApply, onCancel }: PreviewStepProp
         <h2 className="text-2xl font-bold mb-2">{t('enrichment.preview.title')}</h2>
         <p className="text-ink-soft font-mono text-sm">{t('enrichment.preview.description')}</p>
       </div>
+
+      {errors.length > 0 && (
+        <div role="alert" className="bg-orange-100 border-2 border-orange-600 p-4 mb-4">
+          <p className="font-mono uppercase text-sm font-bold text-orange-600 mb-1">
+            {t('enrichment.preview.partialFailure')}
+          </p>
+          <p className="text-sm mb-2">{t('enrichment.preview.partialFailureDescription')}</p>
+          <ul className="list-disc pl-5 text-sm">
+            {errors.map((error, index) => (
+              <li key={`${error.item_type}:${error.item_id}:${index}`}>
+                <span className="font-semibold">{error.title}</span>
+                <span className="block font-sans text-sm">{error.message}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {/* Enhancements list */}
       <div className="flex-1 overflow-y-auto space-y-6 pr-2">

@@ -1,11 +1,14 @@
 """Job description management endpoints."""
 
+import logging
+
 from fastapi import APIRouter, HTTPException
 
-from app.database import db
+from app.database import DatabaseBusyError, db
 from app.schemas import JobUploadRequest, JobUploadResponse
 
 router = APIRouter(prefix="/jobs", tags=["Jobs"])
+logger = logging.getLogger(__name__)
 
 
 @router.post("/upload", response_model=JobUploadResponse)
@@ -18,20 +21,26 @@ async def upload_job_descriptions(request: JobUploadRequest) -> JobUploadRespons
     if not request.job_descriptions:
         raise HTTPException(status_code=400, detail="No job descriptions provided")
 
-    job_ids = []
-    for jd in request.job_descriptions:
-        if not jd.strip():
-            raise HTTPException(status_code=400, detail="Empty job description")
-
-        job = await db.create_job(
-            content=jd.strip(),
+    descriptions = [jd.strip() for jd in request.job_descriptions]
+    if any(not jd for jd in descriptions):
+        raise HTTPException(status_code=400, detail="Empty job description")
+    try:
+        jobs = await db.create_jobs(
+            contents=descriptions,
             resume_id=request.resume_id,
         )
-        job_ids.append(job["job_id"])
+    except DatabaseBusyError:
+        raise
+    except Exception as exc:
+        logger.exception("Failed to upload job descriptions")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to upload job descriptions. Please try again.",
+        ) from exc
 
     return JobUploadResponse(
         message="data successfully processed",
-        job_id=job_ids,
+        job_id=[job["job_id"] for job in jobs],
         request={
             "job_descriptions": request.job_descriptions,
             "resume_id": request.resume_id,

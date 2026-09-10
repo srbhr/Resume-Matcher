@@ -2,11 +2,10 @@
 
 Two invariants this locks:
 1. JD-keyword incorporation is the DEFAULT across sections (the maintainer goal).
-2. The anti-fabrication clauses stay present. Per the truthfulness audit,
-   invented bullet *narrative* (e.g. "led 12 engineers") is NOT caught by
-   verify_diff_result (its metric regex misses bare counts) or verify_alignment
-   (which only checks skills/certs/companies) — so these prompt clauses are the
-   ONLY guard. If a future edit drops them, this test fails loudly.
+2. The anti-fabrication clauses stay present. Deterministic final-output
+   preservation handles structural loss and unsupported metrics, while weakly
+   grounded narrative is held for explicit review. These prompt clauses remain
+   the model-facing first layer and should not regress.
 """
 
 from app.prompts.templates import (

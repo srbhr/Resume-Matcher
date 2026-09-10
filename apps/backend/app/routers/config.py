@@ -34,6 +34,7 @@ from app.prompts import (
 from app.prompts.templates import COVER_LETTER_PROMPT, OUTREACH_MESSAGE_PROMPT
 from app.config import (
     get_api_keys_from_config,
+    get_config_path,
     save_api_keys_to_config,
     delete_api_key_from_config,
     clear_all_api_keys,
@@ -66,7 +67,7 @@ router = APIRouter(prefix="/config", tags=["Configuration"])
 
 def _get_config_path() -> Path:
     """Get path to config storage file."""
-    return settings.config_path
+    return get_config_path()
 
 
 def _load_config() -> dict:

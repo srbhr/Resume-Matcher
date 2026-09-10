@@ -18,12 +18,16 @@ class TestJobUpload:
     """POST /api/v1/jobs/upload"""
 
     @patch("app.routers.jobs.db", new_callable=AsyncMock)
-    async def test_upload_single_job(self, mock_db, client):
-        mock_db.create_job.return_value = {
-            "job_id": "job-123",
-            "content": "Senior Engineer at TechCorp",
-            "created_at": "2026-01-01T00:00:00Z",
-        }
+    async def test_upload_single_job(
+        self, mock_db: AsyncMock, client: AsyncClient
+    ) -> None:
+        mock_db.create_jobs.return_value = [
+            {
+                "job_id": "job-123",
+                "content": "Senior Engineer at TechCorp",
+                "created_at": "2026-01-01T00:00:00Z",
+            }
+        ]
         async with client:
             resp = await client.post("/api/v1/jobs/upload", json={
                 "job_descriptions": ["Senior Engineer at TechCorp"],
@@ -35,9 +39,15 @@ class TestJobUpload:
         assert len(data["job_id"]) == 1
 
     @patch("app.routers.jobs.db", new_callable=AsyncMock)
-    async def test_upload_multiple_jobs(self, mock_db, client):
-        mock_db.create_job.side_effect = [
-            {"job_id": f"job-{i}", "content": f"JD {i}", "created_at": "2026-01-01T00:00:00Z"}
+    async def test_upload_multiple_jobs(
+        self, mock_db: AsyncMock, client: AsyncClient
+    ) -> None:
+        mock_db.create_jobs.return_value = [
+            {
+                "job_id": f"job-{i}",
+                "content": f"JD {i}",
+                "created_at": "2026-01-01T00:00:00Z",
+            }
             for i in range(3)
         ]
         async with client:

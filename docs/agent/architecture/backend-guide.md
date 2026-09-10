@@ -4,14 +4,14 @@
 
 ## Tech Stack
 
-| Component | Technology |
-|-----------|------------|
-| Framework | FastAPI |
-| Database | SQLite (SQLAlchemy 2.0 async + aiosqlite) |
-| AI | LiteLLM (100+ providers) |
-| Doc Parsing | markitdown |
-| Validation | Pydantic |
-| Key encryption | Fernet (`cryptography`) |
+| Component      | Technology                                |
+| -------------- | ----------------------------------------- |
+| Framework      | FastAPI                                   |
+| Database       | SQLite (SQLAlchemy 2.0 async + aiosqlite) |
+| AI             | LiteLLM (100+ providers)                  |
+| Doc Parsing    | markitdown                                |
+| Validation     | Pydantic                                  |
+| Key encryption | Fernet (`cryptography`)                   |
 
 ## Directory Structure
 
@@ -44,20 +44,25 @@ await db.list_resumes() → list[dict]
 await db.update_resume(resume_id, updates)
 await db.delete_resume(resume_id) → bool
 await db.set_master_resume(resume_id)            # Exactly one master allowed
+await db.claim_resume_processing(resume_id)      # Rotate private operation token
+await db.finish_resume_processing(...)           # Token-guarded ready/failed commit
 await db.create_job(content, resume_id)
 await db.create_application(...) / list_applications / bulk_update_applications
 get_api_key_ciphertexts() / replace_api_keys(...)  # sync; encrypted api_keys table
 ```
 
-**Tables:** `resumes`, `jobs`, `improvements`, `applications`, `api_keys` (encrypted).
+**Tables:** `resumes`, `jobs`, `improvements`, `applications`, `tailoring_previews`, `api_keys` (encrypted).
 DB file: `data/resume_matcher.db`.
 
 **Two engines, one file:** a module-level **async** engine serves the document tables +
 `applications`; a **sync** engine serves the encrypted `api_keys` table (read on the
 synchronous LLM hot path). Both apply PRAGMAs `journal_mode=WAL`, `foreign_keys=ON`,
-`busy_timeout`. The single-master invariant is held by an `asyncio.Lock` plus a partial
-unique index. Jobs' dynamic pipeline fields (`preview_hash(es)`, `job_keywords`,
-`company`/`role`) live in a `metadata_json` JSON column, flattened on read.
+`busy_timeout`. Master changes reserve SQLite writes with `BEGIN IMMEDIATE`; a partial unique index
+provides the final single-master constraint across connections. Jobs' dynamic fields
+(`job_keywords`, `job_keywords_hash`, `company`/`role`, `preview_hash`,
+`preview_prompt_id`, and `preview_hashes`) live in `metadata_json`, flattened on read. Preview
+identity, fingerprints, claims and replay responses live in `tailoring_previews`.
+See [storage transactions](storage-transactions.md) and [confirmation](../features/preview-confirmation.md).
 
 ### Encrypted API keys & migration
 
@@ -71,14 +76,22 @@ unique index. Jobs' dynamic pipeline fields (`preview_hash(es)`, `job_keywords`,
   `database.json.migrated`. Idempotent. `migrate_legacy_keys()` likewise folds legacy
   plaintext keys into the encrypted store.
 
+## Configuration ownership
+
+`Settings.data_dir` owns `resume_matcher.db`, `config.json` and `.secret_key`.
+JSON settings use a same-directory temporary file and atomic replacement; key
+updates use the encrypted SQLite table. These are separate persistence operations.
+Tests install a temporary DATA_DIR before application imports and deny external
+network by default, so normal test runs do not read or overwrite developer settings.
+
 ## LLM Features
 
-| Feature | Description |
-|---------|-------------|
-| API Key Passing | Direct to litellm (avoids race conditions) |
-| JSON Mode | Auto-enabled for supported providers |
-| Retry Logic | 2 retries, temperature 0.1→0.0 |
-| Timeouts | 30s (health), 120s (completion), 180s (JSON) |
+| Feature         | Description                                                                                                           |
+| --------------- | --------------------------------------------------------------------------------------------------------------------- |
+| API Key Passing | Direct to litellm (avoids race conditions)                                                                            |
+| JSON Mode       | Auto-enabled for supported providers                                                                                  |
+| Retry Logic     | Bounded task-schema content retries plus a separate transport-error policy; [exact policy](../llm-integration.md)     |
+| Timeouts        | 30s health; completion/JSON base 120s/180s scale by tokens/provider and are capped by the remaining operation deadline |
 
 ## Prompt Guidelines
 
@@ -93,7 +106,7 @@ GET  /api/v1/health              # liveness probe (no LLM call)
 GET  /api/v1/status              # Full status (LLM + DB isolated; 200 on partial failure)
 GET/PUT /api/v1/config/llm-api-key            # no longer persists a key
 GET/POST/DELETE /api/v1/config/api-keys       # per-provider encrypted keys
-POST /api/v1/resumes/upload      # PDF/DOCX
+POST /api/v1/resumes/upload      # PDF/DOC/DOCX
 POST /api/v1/resumes/improve     # Tailor (LLM)
 GET  /api/v1/resumes/{id}/pdf
 DELETE /api/v1/resumes/{id}
@@ -102,15 +115,37 @@ GET  /api/v1/applications        # Kanban tracker: grouped list (+ POST/PATCH/DE
 
 ## Data Flow
 
-**Upload:** File → markitdown → Markdown → LLM parse → JSON → SQLite (via `db`)
+**Upload:** Bounded file read → container validation → worker-thread MarkItDown →
+bounded Markdown → LLM parse → token-guarded JSON/status commit → SQLite (via `db`)
 
-**Improve:** Resume + Job → Extract keywords (LLM) → Tailor (LLM) → Store. Routers call
+### Upload validation and resource policy
+
+- Supported filename/MIME pairs are PDF (`.pdf`), legacy Word (`.doc`) and
+  Office Open XML Word (`.docx`). MIME alone does not establish the format:
+  PDF structure, the DOC compound-file header, or the DOCX ZIP/package must validate.
+- Raw input is read in 64 KiB chunks and capped at 4 MiB. DOCX packages permit
+  at most 1,024 members and 16 MiB total expanded bytes, checked from metadata
+  and again while streaming members. Extracted UTF-8 text is capped at 2 MiB
+  before prompt construction.
+- MarkItDown validation/conversion runs outside the event loop with at most two
+  concurrent workers and a 120-second caller deadline. On cancellation or
+  timeout, the caller returns promptly; the worker retains its capacity slot and
+  removes its temporary file in `finally`. Threads cannot be forcibly terminated,
+  so a stuck converter retains its slot until it exits.
+- Each upload/retry claims a private processing token. Only the latest token may
+  commit `ready` or `failed`; superseded requests receive 409. If the row is
+  deleted while parsing, completion receives 404 and does not recreate or update it.
+
+**Preview:** Resume + Job → keywords → targeted differences/refinement → registered preview.
+**Confirm:** validate/claim preview → optional outputs → atomic resume/improvement/response commit.
+Successful retries replay the recorded result. Routers call
 services; services call `app/llm.py`; persistence goes through the async `db` facade.
 `/improve/confirm` also best-effort auto-creates an `applied` card in the tracker.
 
 ## Error Handling
 
 Log details server-side, generic messages to clients:
+
 ```python
 except Exception as e:
     logger.error(f"Failed: {e}")
@@ -130,3 +165,5 @@ uv run uvicorn app.main:app --reload --port 8000
 1. Create router in `app/routers/`
 2. Add Pydantic models to `app/schemas/models.py`
 3. Register router in `app/main.py`
+
+Legacy `.doc` files pass compound-file header validation, but the bundled MarkItDown DOCX converter does not guarantee binary Word conversion. Convert legacy Word documents to PDF or DOCX for reliable upload.

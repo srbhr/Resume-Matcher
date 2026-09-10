@@ -10,7 +10,8 @@
 
 .grid {
   display: grid;
-  grid-template-columns: 65% 35%; /* Main column 65%, Sidebar 35% */
+  /* Preserve 65:35 after subtracting the positive inter-column gap. */
+  grid-template-columns: minmax(0, 65fr) minmax(0, 35fr);
   gap: var(--section-gap);
   margin-top: var(--section-gap);
   align-items: start;
@@ -22,6 +23,7 @@
   gap: var(--section-gap);
   padding-right: 0.875rem;
   border-right: 2px solid var(--resume-accent-primary);
+  min-width: 0;
   /* Prevent content overflow into sidebar */
   overflow: hidden;
 }
@@ -35,6 +37,7 @@
   overflow: hidden;
   /* Ensure minimum width for dates */
   min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 /* Section titles with accent color underline */

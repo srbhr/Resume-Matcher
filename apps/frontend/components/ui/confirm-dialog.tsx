@@ -31,6 +31,7 @@ export interface ConfirmDialogProps {
   confirmLabel?: string;
   cancelLabel?: string;
   confirmDisabled?: boolean;
+  cancelDisabled?: boolean;
   variant?: 'danger' | 'warning' | 'success' | 'default';
   closeOnConfirm?: boolean;
   onConfirm: () => void;
@@ -47,6 +48,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   confirmLabel,
   cancelLabel,
   confirmDisabled = false,
+  cancelDisabled = false,
   variant = 'default',
   closeOnConfirm = true,
   onConfirm,
@@ -66,6 +68,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   };
 
   const handleCancel = () => {
+    if (cancelDisabled) return;
     onCancel?.();
     onOpenChange(false);
   };
@@ -108,7 +111,13 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   const { icon, buttonVariant } = variantStyles[variant];
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen && cancelDisabled) return;
+        onOpenChange(nextOpen);
+      }}
+    >
       <DialogContent className="sm:max-w-[425px] p-0 gap-0">
         <DialogHeader className="p-6 pb-4">
           <div className="flex items-start gap-4">
@@ -132,7 +141,12 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
         )}
         <DialogFooter className="p-4 bg-secondary border-t border-black flex-row justify-end gap-3">
           {showCancelButton && (
-            <Button variant="outline" onClick={handleCancel} className="rounded-none border-black">
+            <Button
+              variant="outline"
+              onClick={handleCancel}
+              disabled={cancelDisabled}
+              className="rounded-none border-black"
+            >
               {finalCancelLabel}
             </Button>
           )}

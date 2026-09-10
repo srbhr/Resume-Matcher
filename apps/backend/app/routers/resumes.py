@@ -11,16 +11,29 @@ from pathlib import Path
 from typing import Any, NoReturn
 from uuid import uuid4
 
-from fastapi import APIRouter, File, HTTPException, Query, UploadFile
+from fastapi import APIRouter, File, HTTPException, Query, Request, UploadFile
 from fastapi.responses import Response
 from pydantic import ValidationError
 
+from app.ai_limits import MAX_JOB_CHARACTERS, PromptSizeError, require_source_size
+from app.ai_budget import (
+    AIOperationDeadlineExceeded,
+    AIOperationRoute,
+    remaining_timeout,
+)
 from app.config_cache import get_content_language, load_config as _load_config
-from app.database import db
+from app.database import DatabaseBusyError, ProcessingFinishOutcome, ResumeNotFoundError, db
 from app.pdf import render_resume_pdf, PDFRenderError
 from app.config import settings
+from app.preview import (
+    PreviewBusyError,
+    PreviewClaim,
+    PreviewConflictError,
+    PreviewValidationError,
+    job_fingerprint,
+    resume_fingerprint,
+)
 
-logger = logging.getLogger(__name__)
 from app.schemas import (
     ATSScore,
     ATSSubScores,
@@ -46,7 +59,15 @@ from app.schemas import (
     UpdateTitleRequest,
     normalize_resume_data,
 )
-from app.services.parser import parse_document, parse_resume_to_json, restore_dates_from_markdown
+from app.services.parser import (
+    DocumentResourceLimitError,
+    MAX_EXTRACTED_TEXT_BYTES,
+    MAX_UNPACKED_DOCUMENT_BYTES,
+    has_meaningful_resume_content,
+    parse_document,
+    parse_resume_to_json,
+    restore_dates_from_markdown,
+)
 from app.services.improver import (
     MONTH_PATTERN,
     apply_diffs,
@@ -58,7 +79,16 @@ from app.services.improver import (
     verify_skill_target_plan,
     verify_diff_result,
 )
-from app.services.refiner import refine_resume, calculate_keyword_match
+from app.services.refiner import (
+    calculate_keyword_match,
+    count_retained_keywords,
+    refine_resume,
+)
+from app.services.resume_preservation import (
+    finalize_ai_resume,
+    grounding_review_warnings,
+    validate_confirmed_resume,
+)
 from app.services.ats import compute_ats_score
 from app.schemas.refinement import RefinementConfig
 from app.services.cover_letter import (
@@ -68,6 +98,16 @@ from app.services.cover_letter import (
 )
 from app.services.interview_prep import generate_interview_prep
 from app.prompts import DEFAULT_IMPROVE_PROMPT_ID, IMPROVE_PROMPT_OPTIONS
+
+logger = logging.getLogger(__name__)
+_PROCESSING_CLEANUP_TIMEOUT_SECONDS = 5.0
+_PROCESSING_RETIREMENT_MAX_ATTEMPTS = 3
+_PROCESSING_RETIREMENT_INITIAL_BACKOFF_SECONDS = 0.1
+_PROCESSING_RETIREMENT_MAX_BACKOFF_SECONDS = 0.5
+_PROCESSING_SHUTDOWN_GRACE_SECONDS = 1.0
+_PROCESSING_CLEANUP_TASKS: set[asyncio.Task[Any]] = set()
+REFINEMENT_FAILED_WARNING = "REFINEMENT_FAILED: Resume refinement was unavailable; the previous result was kept."
+DIFF_UNAVAILABLE_WARNING = "DIFF_UNAVAILABLE: Resume changes could not be calculated."
 
 
 async def _auto_create_tracker_application(
@@ -84,6 +124,9 @@ async def _auto_create_tracker_application(
     tracker failure can never break the tailoring flow.
     """
     try:
+        if title is None:
+            saved_resume = await db.get_resume(tailored_resume_id)
+            title = (saved_resume or {}).get("title")
         company = (job or {}).get("company")
         role = title or (job or {}).get("role")
         await db.create_application(
@@ -200,6 +243,18 @@ def _raise_improve_error(
     raise HTTPException(status_code=500, detail=detail)
 
 
+def _validate_ai_sources(
+    resume: dict[str, Any], job: dict[str, Any] | None = None
+) -> None:
+    """Check all stored inputs before starting expensive AI work."""
+    for field in ("content", "original_markdown", "processed_data"):
+        value = resume.get(field)
+        if value:
+            require_source_size(value)
+    if job is not None:
+        require_source_size(job.get("content", ""), MAX_JOB_CHARACTERS)
+
+
 def _get_original_resume_data(resume: dict[str, Any]) -> dict[str, Any] | None:
     original_data = resume.get("processed_data")
     if not original_data and resume.get("content_type") == "json":
@@ -253,7 +308,9 @@ def _restore_original_dates(
         for idx, orig_entry in enumerate(orig_entries):
             if idx >= len(result_entries):
                 break
-            if not isinstance(orig_entry, dict) or not isinstance(result_entries[idx], dict):
+            if not isinstance(orig_entry, dict) or not isinstance(
+                result_entries[idx], dict
+            ):
                 continue
             orig_years = orig_entry.get("years", "")
             result_years = result_entries[idx].get("years", "")
@@ -291,7 +348,9 @@ def _restore_original_dates(
             for idx, orig_item in enumerate(orig_items):
                 if idx >= len(result_items):
                     break
-                if not isinstance(orig_item, dict) or not isinstance(result_items[idx], dict):
+                if not isinstance(orig_item, dict) or not isinstance(
+                    result_items[idx], dict
+                ):
                     continue
                 orig_years = orig_item.get("years", "")
                 result_years = result_items[idx].get("years", "")
@@ -459,6 +518,25 @@ def _preserve_personal_info(
     return result, warnings
 
 
+def _finalized_refinement_stats(
+    stats: RefinementStats,
+    applied_keywords: list[str],
+    finalized_data: dict[str, Any],
+    job_keywords: dict[str, Any],
+) -> RefinementStats:
+    """Report only keyword changes retained in the finalized resume."""
+    return stats.model_copy(
+        update={
+            "keywords_injected": count_retained_keywords(
+                applied_keywords, finalized_data
+            ),
+            "final_match_percentage": calculate_keyword_match(
+                finalized_data, job_keywords
+            ),
+        }
+    )
+
+
 def _build_ats_score(
     improved_data: dict[str, Any],
     job_keywords: dict[str, Any],
@@ -472,11 +550,7 @@ def _build_ats_score(
             if refinement_successful and refinement_result is not None
             else None
         )
-        final_match = (
-            refinement_result.final_match_percentage
-            if refinement_successful and refinement_result is not None
-            else calculate_keyword_match(improved_data, job_keywords)
-        )
+        final_match = calculate_keyword_match(improved_data, job_keywords)
         ats_raw = compute_ats_score(
             refined_resume=improved_data,
             job_keywords=job_keywords,
@@ -515,12 +589,14 @@ def _calculate_diff_from_resume(
         return summary, changes, None
     except Exception as e:
         logger.warning("Skipping resume diff due to calculation failure: %s", e)
-        return None, None, f"calculation_error: {str(e)}"
+        return None, None, "calculation_error"
 
 
 def _validate_confirm_payload(
     original_data: dict[str, Any] | None,
     improved_data: dict[str, Any],
+    *,
+    allow_appended_rows: bool = False,
 ) -> None:
     if not original_data:
         logger.warning(
@@ -551,6 +627,13 @@ def _validate_confirm_payload(
     ]
     if mismatches:
         raise ValueError(f"personalInfo fields changed: {', '.join(mismatches)}")
+    preservation_violations = validate_confirmed_resume(
+        original_data, improved_data, allow_appended_rows=allow_appended_rows
+    )
+    if preservation_violations:
+        raise ValueError(
+            "source preservation failed: " + ", ".join(preservation_violations)
+        )
 
 
 async def _generate_auxiliary_messages(
@@ -570,6 +653,10 @@ async def _generate_auxiliary_messages(
     title = None
     interview_prep = None
     warnings: list[str] = []
+    # Finish optional work before the operation deadline so successful outputs
+    # can still be persisted if one provider call stalls. The remaining slice is
+    # reserved for the resume/improvement transaction.
+    generation_timeout = max(0.001, remaining_timeout() * 0.8)
     generation_tasks: list[Awaitable[str | InterviewPrepData]] = []
     task_labels: list[str] = []
 
@@ -593,8 +680,18 @@ async def _generate_auxiliary_messages(
         )
         task_labels.append("interview_prep")
 
-    results = await asyncio.gather(*generation_tasks, return_exceptions=True)
+    async def bounded_generation(
+        generation: Awaitable[str | InterviewPrepData],
+    ) -> str | InterviewPrepData:
+        return await asyncio.wait_for(generation, timeout=generation_timeout)
+
+    results = await asyncio.gather(
+        *(bounded_generation(task) for task in generation_tasks),
+        return_exceptions=True,
+    )
     for label, result in zip(task_labels, results):
+        if isinstance(result, (AIOperationDeadlineExceeded, PromptSizeError)):
+            raise result
         if isinstance(result, Exception):
             logger.warning(
                 "%s generation failed: %s",
@@ -602,52 +699,224 @@ async def _generate_auxiliary_messages(
                 result,
                 exc_info=result,
             )
-            if label != "title":
-                warnings.append(f"{label.replace('_', ' ').title()} generation failed")
+            warnings.append(f"{label.replace('_', ' ').title()} generation failed")
         else:
+            if label != "interview_prep" and (
+                not isinstance(result, str) or not result.strip()
+            ):
+                logger.warning("%s generation returned empty output", label)
+                warnings.append(
+                    f"{label.replace('_', ' ').title()} generation failed"
+                )
+                continue
             if label == "title":
-                title = result
+                title = result.strip()
             elif label == "cover_letter":
-                cover_letter = result
+                cover_letter = result.strip()
             elif label == "outreach":
-                outreach_message = result
+                outreach_message = result.strip()
             elif label == "interview_prep":
                 interview_prep = result
 
     return cover_letter, outreach_message, title, interview_prep, warnings
 
 
-router = APIRouter(prefix="/resumes", tags=["Resumes"])
+router = APIRouter(route_class=AIOperationRoute, prefix="/resumes", tags=["Resumes"])
 
 ALLOWED_TYPES = {
     "application/pdf",
     "application/msword",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 }
+DOCUMENT_TYPES_BY_EXTENSION = {
+    ".pdf": "application/pdf",
+    ".doc": "application/msword",
+    ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+}
 MAX_FILE_SIZE = 4 * 1024 * 1024  # 4MB
+UPLOAD_READ_CHUNK_SIZE = 64 * 1024
 
 
-@router.post("/upload", response_model=ResumeUploadResponse)
-async def upload_resume(file: UploadFile = File(...)) -> ResumeUploadResponse:
-    """Upload and process a resume file (PDF/DOCX).
-
-    Converts the file to Markdown and stores it in the database.
-    Optionally parses to structured JSON if LLM is configured.
-    """
-    # Validate file type
+def _validate_upload_type(file: UploadFile) -> None:
+    """Require the declared MIME type to match a supported filename extension."""
     if file.content_type not in ALLOWED_TYPES:
         raise HTTPException(
             status_code=400,
             detail=f"Invalid file type: {file.content_type}. Allowed: PDF, DOC, DOCX",
         )
 
-    # Read and validate size
-    content = await file.read()
-    if len(content) > MAX_FILE_SIZE:
+    suffix = Path(file.filename or "").suffix.lower()
+    if DOCUMENT_TYPES_BY_EXTENSION.get(suffix) != file.content_type:
         raise HTTPException(
-            status_code=413,
-            detail=f"File too large. Maximum size: {MAX_FILE_SIZE // (1024 * 1024)}MB",
+            status_code=400,
+            detail="Upload a valid PDF, DOC, or DOCX file.",
         )
+
+
+async def _read_upload_content(file: UploadFile) -> bytes:
+    """Read at most one byte beyond the raw upload limit in bounded chunks."""
+    content = bytearray()
+    while len(content) <= MAX_FILE_SIZE:
+        read_size = min(UPLOAD_READ_CHUNK_SIZE, MAX_FILE_SIZE - len(content) + 1)
+        chunk = await file.read(read_size)
+        if not chunk:
+            return bytes(content)
+        content.extend(chunk)
+    raise HTTPException(
+        status_code=413,
+        detail=f"File too large. Maximum size: {MAX_FILE_SIZE // (1024 * 1024)}MB",
+    )
+
+
+def _require_processing_commit(
+    outcome: ProcessingFinishOutcome,
+    *,
+    deleted_detail: str,
+) -> None:
+    """Map a compare-and-set miss to an intentional client outcome."""
+    if outcome == "committed":
+        return
+    if outcome == "missing":
+        raise HTTPException(status_code=404, detail=deleted_detail)
+    raise HTTPException(
+        status_code=409,
+        detail="Resume processing was superseded by a newer attempt.",
+    )
+
+
+async def _await_processing_cleanup(task: asyncio.Task[Any]) -> Any:
+    """Bound caller waiting while a tracked task retains database ownership."""
+    _PROCESSING_CLEANUP_TASKS.add(task)
+
+    def finished(cleanup: asyncio.Task[Any]) -> None:
+        _PROCESSING_CLEANUP_TASKS.discard(cleanup)
+        if not cleanup.cancelled():
+            error = cleanup.exception()
+            if error is not None:
+                logger.error(
+                    "Owned processing cleanup failed",
+                    exc_info=(type(error), error, error.__traceback__),
+                )
+
+    task.add_done_callback(finished)
+    deadline = asyncio.get_running_loop().time() + _PROCESSING_CLEANUP_TIMEOUT_SECONDS
+    while not task.done():
+        remaining = deadline - asyncio.get_running_loop().time()
+        if remaining <= 0:
+            raise TimeoutError("Processing cleanup continues in the background")
+        try:
+            # Unlike wait_for, cancellation or timeout of this waiter never
+            # cancels the owned transaction/retirement task.
+            await asyncio.wait({task}, timeout=remaining)
+        except asyncio.CancelledError:
+            continue
+    return task.result()
+
+
+async def _retire_processing_attempt(
+    resume_id: str, processing_token: str | None
+) -> None:
+    """Retire an attempt after bounded contention retries."""
+    retry_delay = _PROCESSING_RETIREMENT_INITIAL_BACKOFF_SECONDS
+    for attempt in range(1, _PROCESSING_RETIREMENT_MAX_ATTEMPTS + 1):
+        try:
+            await db.finish_resume_processing(
+                resume_id, processing_token, processing_status="failed"
+            )
+            return
+        except DatabaseBusyError:
+            if attempt == _PROCESSING_RETIREMENT_MAX_ATTEMPTS:
+                logger.error(
+                    "Processing retirement exhausted %d attempts for resume %s; "
+                    "the processing row remains retryable",
+                    attempt,
+                    resume_id,
+                )
+                raise
+            # Each failed reservation closes its session. Back off without
+            # holding a transaction; the tracked task still owns retirement.
+            await asyncio.sleep(retry_delay)
+            retry_delay = min(
+                retry_delay * 2,
+                _PROCESSING_RETIREMENT_MAX_BACKOFF_SECONDS,
+            )
+
+
+async def drain_processing_cleanup_tasks() -> None:
+    """Settle tracked processing cleanup before the database is disposed."""
+    cleanup_tasks = set(_PROCESSING_CLEANUP_TASKS)
+    if not cleanup_tasks:
+        return
+
+    _, pending = await asyncio.wait(
+        cleanup_tasks,
+        timeout=_PROCESSING_SHUTDOWN_GRACE_SECONDS,
+    )
+    if pending:
+        logger.warning(
+            "Cancelling %d processing cleanup task(s) during shutdown",
+            len(pending),
+        )
+        for task in pending:
+            task.cancel()
+
+    # Do not wrap this gather in wait_for: an in-flight SQLite operation must
+    # finish unwinding and release its connection before db.close() runs.
+    await asyncio.gather(*cleanup_tasks, return_exceptions=True)
+
+
+async def _finish_cancelled_processing(
+    resume_id: str, processing_token: str | None
+) -> None:
+    """Retire only this attempt, deferring a stalled cleanup after a bounded wait."""
+    cleanup = asyncio.create_task(
+        _retire_processing_attempt(resume_id, processing_token)
+    )
+    try:
+        await _await_processing_cleanup(cleanup)
+    except TimeoutError:
+        logger.warning("Processing retirement continues for resume %s", resume_id)
+    except Exception:
+        logger.exception("Failed to retire cancelled processing for %s", resume_id)
+
+
+async def _claim_processing(
+    resume_id: str, *, allow_ready_at: str | None = None
+) -> str | None:
+    """Recover ownership when cancellation arrives during a committed claim."""
+    claim = asyncio.create_task(
+        db.claim_resume_processing(resume_id, allow_ready_at=allow_ready_at)
+    )
+    try:
+        return await asyncio.shield(claim)
+    except asyncio.CancelledError:
+        async def retire_claim() -> None:
+            token = await claim
+            if token is not None:
+                await _retire_processing_attempt(resume_id, token)
+
+        retirement = asyncio.create_task(retire_claim())
+        try:
+            await _await_processing_cleanup(retirement)
+        except TimeoutError:
+            logger.warning("Processing claim retirement continues for resume %s", resume_id)
+        except Exception:
+            logger.exception("Failed to settle cancelled processing claim for %s", resume_id)
+        raise
+
+
+@router.post("/upload", response_model=ResumeUploadResponse)
+async def upload_resume(
+    request: Request, file: UploadFile = File(...)
+) -> ResumeUploadResponse:
+    """Upload and process a resume file (PDF/DOCX).
+
+    Converts the file to Markdown and stores it in the database.
+    Optionally parses to structured JSON if LLM is configured.
+    """
+    _validate_upload_type(file)
+
+    content = await _read_upload_content(file)
 
     if len(content) == 0:
         raise HTTPException(status_code=400, detail="Empty file")
@@ -655,11 +924,29 @@ async def upload_resume(file: UploadFile = File(...)) -> ResumeUploadResponse:
     # Convert to markdown
     try:
         markdown_content = await parse_document(content, file.filename or "resume.pdf")
+    except DocumentResourceLimitError as e:
+        logger.warning("Document resource limit exceeded for %s: %s", file.filename, e)
+        raise HTTPException(
+            status_code=413,
+            detail=(
+                "Document content is too large to process. "
+                f"Maximum expanded size is {MAX_UNPACKED_DOCUMENT_BYTES // (1024 * 1024)}MB "
+                f"and extracted text is {MAX_EXTRACTED_TEXT_BYTES // (1024 * 1024)}MB."
+            ),
+        )
+    except TimeoutError as e:
+        logger.warning("Document conversion exceeded its deadline")
+        raise HTTPException(
+            status_code=504,
+            detail="Document conversion timed out. Please try a simpler document.",
+        ) from e
+    except (DatabaseBusyError, PromptSizeError):
+        raise
     except Exception as e:
-        logger.error(f"Document parsing failed: {e}")
+        logger.exception("Document parsing failed")
         raise HTTPException(
             status_code=422,
-            detail="Failed to parse document. Please ensure it's a valid PDF or DOCX file.",
+            detail="Failed to parse document. Please upload a valid PDF, DOC, or DOCX file.",
         )
 
     # Validate extracted text is not empty (image-based PDFs / scanned documents)
@@ -668,14 +955,15 @@ async def upload_resume(file: UploadFile = File(...)) -> ResumeUploadResponse:
             status_code=422,
             detail=(
                 "Could not extract text from the uploaded file. The document may be "
-                "image-based or scanned. Please upload a text-based PDF/DOCX with "
-                "selectable text, or run OCR first."
+                "image-based or scanned. Please upload a text-based PDF, DOC, or DOCX "
+                "with selectable text, or run OCR first."
             ),
         )
 
     # Store in database first with "processing" status (atomic master assignment)
     # original_markdown is preserved permanently for date reference even after
     # builder saves overwrite `content` with JSON.
+    require_source_size(markdown_content)
     resume = await db.create_resume_atomic_master(
         content=markdown_content,
         content_type="md",
@@ -685,36 +973,80 @@ async def upload_resume(file: UploadFile = File(...)) -> ResumeUploadResponse:
         original_markdown=markdown_content,
     )
 
-    # Try to parse to structured JSON (optional, may fail if LLM not configured)
-    try:
-        processed_data = await parse_resume_to_json(markdown_content)
-        await db.update_resume(
-            resume["resume_id"],
-            {
-                "processed_data": processed_data,
-                "processing_status": "ready",
-            },
-        )
-        resume["processed_data"] = processed_data
-        resume["processing_status"] = "ready"
-    except Exception as e:
-        # LLM parsing failed, update status to failed
-        logger.warning(f"Resume parsing to JSON failed for {file.filename}: {e}")
-        await db.update_resume(resume["resume_id"], {"processing_status": "failed"})
-        resume["processing_status"] = "failed"
+    # Preserve acknowledgement of this request's committed insert even if its
+    # parse fails or the outer operation timer cancels the handler. A status
+    # snapshot would be misleading while retirement/newer work is still pending.
+    request.state.uploaded_resume = (resume["resume_id"], resume.get("is_master", False))
 
-    # Return accurate status to client (API-001 fix)
-    return ResumeUploadResponse(
-        message=(
-            f"File {file.filename} uploaded successfully"
-            if resume["processing_status"] == "ready"
-            else f"File {file.filename} uploaded but parsing failed"
-        ),
-        request_id=str(uuid4()),
-        resume_id=resume["resume_id"],
-        processing_status=resume["processing_status"],
-        is_master=resume.get("is_master", False),
-    )
+    try:
+        processing_token = await _claim_processing(resume["resume_id"])
+    except DatabaseBusyError:
+        # This request created the row, but no claim was installed. Retire it
+        # only while its token is still NULL; a concurrent owner/save wins.
+        await _finish_cancelled_processing(resume["resume_id"], None)
+        raise
+    except ResumeNotFoundError as e:
+        raise HTTPException(
+            status_code=404, detail="Resume was deleted during upload processing."
+        ) from e
+    if processing_token is None:
+        raise HTTPException(
+            status_code=409,
+            detail="Resume processing was superseded by a newer attempt.",
+        )
+
+    try:
+        # Try to parse to structured JSON (optional, may fail if LLM not configured)
+        try:
+            processed_data = await parse_resume_to_json(markdown_content)
+        except (DatabaseBusyError, AIOperationDeadlineExceeded, PromptSizeError):
+            raise
+        except Exception as e:
+            logger.warning(f"Resume parsing to JSON failed for {file.filename}: {e}")
+            outcome = await db.finish_resume_processing(
+                resume["resume_id"],
+                processing_token,
+                processing_status="failed",
+            )
+            _require_processing_commit(
+                outcome,
+                deleted_detail="Resume was deleted during upload processing.",
+            )
+            resume["processing_status"] = "failed"
+        else:
+            outcome = await db.finish_resume_processing(
+                resume["resume_id"],
+                processing_token,
+                processing_status="ready",
+                processed_data=processed_data,
+            )
+            _require_processing_commit(
+                outcome,
+                deleted_detail="Resume was deleted during upload processing.",
+            )
+            resume["processed_data"] = processed_data
+            resume["processing_status"] = "ready"
+
+        # Return accurate status to client (API-001 fix)
+        return ResumeUploadResponse(
+            message=(
+                f"File {file.filename} uploaded successfully"
+                if resume["processing_status"] == "ready"
+                else f"File {file.filename} uploaded but parsing failed"
+            ),
+            request_id=str(uuid4()),
+            resume_id=resume["resume_id"],
+            processing_status=resume["processing_status"],
+            is_master=resume.get("is_master", False),
+        )
+    except (
+        asyncio.CancelledError,
+        AIOperationDeadlineExceeded,
+        PromptSizeError,
+        DatabaseBusyError,
+    ):
+        await _finish_cancelled_processing(resume["resume_id"], processing_token)
+        raise
 
 
 @router.get("", response_model=ResumeFetchResponse)
@@ -813,10 +1145,11 @@ async def improve_resume_preview_endpoint(
     if not job:
         raise HTTPException(status_code=404, detail="Job description not found")
 
+    _validate_ai_sources(resume, job)
     language = get_content_language()
     prompt_id = request.prompt_id or _get_default_prompt_id()
 
-    stage = "load_job_keywords"
+    progress = {"stage": "load_job_keywords"}
     detail = "Failed to preview resume. Please try again."
     try:
         return await asyncio.wait_for(
@@ -826,12 +1159,19 @@ async def improve_resume_preview_endpoint(
                 job=job,
                 language=language,
                 prompt_id=prompt_id,
+                progress=progress,
             ),
-            timeout=settings.request_timeout_seconds,
+            timeout=remaining_timeout(),
         )
+    except PreviewConflictError as e:
+        raise HTTPException(status_code=409, detail=str(e)) from e
+    except asyncio.CancelledError:
+        logger.info("Improve preview cancelled at stage=%s", progress["stage"])
+        raise
     except asyncio.TimeoutError:
         logger.error(
-            "Improve preview timed out after %ss for resume %s / job %s",
+            "Improve preview timed out at stage=%s after %ss for resume %s / job %s",
+            progress["stage"],
             settings.request_timeout_seconds,
             request.resume_id,
             request.job_id,
@@ -845,8 +1185,10 @@ async def improve_resume_preview_endpoint(
                 "job description or a simpler prompt."
             ),
         )
+    except (DatabaseBusyError, PromptSizeError):
+        raise
     except Exception as e:
-        _raise_improve_error("preview", stage, e, detail)
+        _raise_improve_error("preview", progress["stage"], e, detail)
 
 
 async def _improve_preview_flow(
@@ -856,8 +1198,12 @@ async def _improve_preview_flow(
     job: dict[str, Any],
     language: str,
     prompt_id: str,
+    progress: dict[str, str] | None = None,
 ) -> ImproveResumeResponse:
     """Inner flow for improve/preview, extracted so it can be wrapped in wait_for."""
+    if progress is None:
+        progress = {}
+    progress["stage"] = "load_job_keywords"
     job_keywords = job.get("job_keywords")
     job_keywords_hash = job.get("job_keywords_hash")
     content_hash = _hash_job_content(job["content"])
@@ -895,14 +1241,17 @@ async def _improve_preview_flow(
                 request.job_id,
                 e,
             )
+    progress["stage"] = "load_original_resume"
     original_resume_data = _get_original_resume_data(resume)
     # Collect warnings throughout the process
     response_warnings: list[str] = []
+    allow_appended_rows = False
 
     # Diff-based improvement: generate targeted changes, apply with verification
     if original_resume_data:
         skill_targets: list[dict[str, Any]] = []
         try:
+            progress["stage"] = "plan_skill_targets"
             raw_skill_plan = await generate_skill_target_plan(
                 original_resume_data=original_resume_data,
                 job_description=job["content"],
@@ -918,19 +1267,20 @@ async def _improve_preview_flow(
             accepted_targets = verified_skill_plan.get("accepted", [])
             if isinstance(accepted_targets, list):
                 skill_targets = [
-                    target
-                    for target in accepted_targets
-                    if isinstance(target, dict)
+                    target for target in accepted_targets if isinstance(target, dict)
                 ]
             rejected_targets = verified_skill_plan.get("rejected", [])
             if isinstance(rejected_targets, list) and rejected_targets:
                 response_warnings.append(
                     f"{len(rejected_targets)} unsupported skill target(s) rejected"
                 )
+        except (AIOperationDeadlineExceeded, PromptSizeError):
+            raise
         except Exception as e:
             logger.warning("Skill target planning failed, continuing without it: %s", e)
             response_warnings.append("Skill target planning failed")
 
+        progress["stage"] = "generate_resume_diffs"
         diff_result = await generate_resume_diffs(
             original_resume=resume["content"],
             job_description=job["content"],
@@ -941,10 +1291,15 @@ async def _improve_preview_flow(
             skill_targets=skill_targets,
         )
 
+        progress["stage"] = "apply_resume_diffs"
         improved_data, applied_changes, rejected_changes = apply_diffs(
             original=original_resume_data,
             changes=diff_result.changes,
             allowed_skill_targets=skill_targets,
+        )
+        allow_appended_rows = any(
+            change.action == "append"
+            for change in applied_changes
         )
 
         diff_warnings = verify_diff_result(
@@ -968,6 +1323,7 @@ async def _improve_preview_flow(
         )
     else:
         # Fallback to full-output mode when no structured data available
+        progress["stage"] = "generate_resume"
         improved_data = await improve_resume(
             original_resume=resume["content"],
             job_description=job["content"],
@@ -977,6 +1333,7 @@ async def _improve_preview_flow(
             original_resume_data=original_resume_data,
         )
 
+    progress["stage"] = "preserve_source_fields"
     # Safety nets (defense in depth — should rarely activate with diff-based flow)
     improved_data, preserve_warnings = _preserve_personal_info(
         original_resume_data,
@@ -1007,6 +1364,7 @@ async def _improve_preview_flow(
         if master_data:
             initial_match = calculate_keyword_match(improved_data, job_keywords)
             refinement_attempted = True
+            progress["stage"] = "refine_resume"
             refinement_result = await refine_resume(
                 initial_tailored=improved_data,
                 master_resume=master_data,
@@ -1015,77 +1373,72 @@ async def _improve_preview_flow(
                 config=RefinementConfig(),
             )
             improved_data = refinement_result.refined_data
-            refinement_stats = RefinementStats(
-                passes_completed=refinement_result.passes_completed,
-                keywords_injected=(
-                    len(refinement_result.keyword_analysis.injectable_keywords)
-                    if refinement_result.keyword_analysis
-                    else 0
-                ),
-                ai_phrases_removed=refinement_result.ai_phrases_removed,
-                alignment_violations_fixed=(
-                    len(
-                        [
-                            v
-                            for v in refinement_result.alignment_report.violations
-                            if v.severity == "critical"
-                        ]
-                    )
-                    if refinement_result.alignment_report
-                    else 0
-                ),
-                initial_match_percentage=initial_match,
-                final_match_percentage=refinement_result.final_match_percentage,
-            )
+            refinement_stats = refinement_result.to_stats(initial_match)
             refinement_successful = True
             logger.info(
                 "Refinement completed: %d passes, %d AI phrases removed",
                 refinement_result.passes_completed,
                 len(refinement_result.ai_phrases_removed),
             )
+    except (AIOperationDeadlineExceeded, PromptSizeError):
+        raise
     except Exception as e:
         logger.warning("Refinement failed, using unrefined result: %s", e)
         if refinement_attempted:
-            response_warnings.append(f"Refinement failed: {str(e)}")
+            response_warnings.append(REFINEMENT_FAILED_WARNING)
 
+    if original_resume_data:
+        improved_data = finalize_ai_resume(
+            original_resume_data,
+            improved_data,
+            allow_appended_rows=allow_appended_rows,
+        )
+        response_warnings.extend(
+            grounding_review_warnings(original_resume_data, improved_data)
+        )
+        if refinement_stats is not None and refinement_result is not None:
+            refinement_stats = _finalized_refinement_stats(
+                refinement_stats,
+                refinement_result.keywords_applied,
+                improved_data,
+                job_keywords,
+            )
+
+    progress["stage"] = "register_preview"
     improved_text = json.dumps(improved_data, indent=2)
     preview_hash = _hash_improved_data(improved_data)
-    preview_hashes = job.get("preview_hashes")
-    if not isinstance(preview_hashes, dict):
-        preview_hashes = {}
-    preview_hashes[prompt_id] = preview_hash
-    # NOTE: preview_hashes updates are last-write-wins; concurrent previews can race.
-    try:
-        updated_job = await db.update_job(
-            request.job_id,
-            {
-                "preview_hash": preview_hash,
-                "preview_prompt_id": prompt_id,
-                "preview_hashes": preview_hashes,
-            },
-        )
-        if not updated_job:
-            logger.warning(
-                "Failed to persist preview hash for job %s.", request.job_id
-            )
-    except Exception as e:
-        logger.warning(
-            "Failed to persist preview hash for job %s: %s", request.job_id, e
-        )
+    improvements = generate_improvements(job_keywords)
+    registered_preview = await db.register_preview(
+        source_id=request.resume_id,
+        job_id=request.job_id,
+        payload_hash=preview_hash,
+        source_hash=resume_fingerprint(
+            resume["content"],
+            resume.get("processed_data"),
+            resume.get("original_markdown"),
+        ),
+        job_hash=job_fingerprint(job["content"]),
+        prompt_id=prompt_id,
+        ttl_seconds=settings.preview_ttl_seconds,
+        improvements=improvements,
+    )
+    progress["stage"] = "calculate_diff"
     diff_summary, detailed_changes, diff_error = _calculate_diff_from_resume(
         resume,
         improved_data,
     )
     if diff_error:
-        response_warnings.append(f"Could not calculate changes: {diff_error}")
-    improvements = generate_improvements(job_keywords)
+        response_warnings.append(DIFF_UNAVAILABLE_WARNING)
 
     request_id = str(uuid4())
+    progress["stage"] = "serialize_preview"
     return ImproveResumeResponse(
         request_id=request_id,
         data=ImproveResumeData(
             request_id=request_id,
             resume_id=None,
+            preview_id=registered_preview["preview_id"],
+            preview_expires_at=registered_preview["expires_at"],
             job_id=request.job_id,
             resume_preview=ResumeData.model_validate(improved_data),
             improvements=[
@@ -1120,148 +1473,161 @@ async def _improve_preview_flow(
 async def improve_resume_confirm_endpoint(
     request: ImproveResumeConfirmRequest,
 ) -> ImproveResumeResponse:
-    """Confirm and persist a tailored resume."""
+    """Confirm an accepted input snapshot once, with durable replay semantics."""
     resume = await db.get_resume(request.resume_id)
     if not resume:
         raise HTTPException(status_code=404, detail="Resume not found")
-
     job = await db.get_job(request.job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job description not found")
 
-    feature_config = _load_config()
-    enable_cover_letter = feature_config.get("enable_cover_letter", False)
-    enable_outreach = feature_config.get("enable_outreach_message", False)
-    enable_interview_prep = feature_config.get("enable_interview_prep", False)
-    language = get_content_language()
-
-    stage = "serialize_improved_data"
+    _validate_ai_sources(resume, job)
+    stage = "claim_preview"
     detail = "Failed to confirm resume. Please try again."
+    claim: PreviewClaim | None = None
     try:
         improved_data = request.improved_data.model_dump()
-        improved_text = json.dumps(improved_data, indent=2)
-        # NOTE: This endpoint relies on preview-hash validation to ensure the payload matches a prior preview.
-        # Stronger guarantees would require server-side preview storage or re-running the improvement.
+        claim = await db.claim_preview(
+            preview_id=request.preview_id,
+            source_id=request.resume_id,
+            job_id=request.job_id,
+            payload_hash=_hash_improved_data(improved_data),
+            lease_seconds=settings.request_timeout_seconds + 15,
+        )
+        if claim.response is not None:
+            data = ImproveResumeData.model_validate(claim.response)
+            await _auto_create_tracker_application(
+                job_id=request.job_id, tailored_resume_id=data.resume_id,
+                master_resume_id=request.resume_id, job=job, title=None,
+            )
+            return ImproveResumeResponse(request_id=data.request_id, data=data)
+
+        feature_config = _load_config()
+        language = get_content_language()
+
         try:
-            _validate_confirm_payload(_get_original_resume_data(resume), improved_data)
+            original = _get_original_resume_data(resume)
+            if original is None:
+                raise ValueError("Original resume data is unavailable; process the source before preview")
+            canonical = ResumeData.model_validate(
+                finalize_ai_resume(original, improved_data, allow_appended_rows=True)
+            ).model_dump()
+            if canonical != improved_data:
+                raise ValueError("Registered preview no longer satisfies preservation rules")
+            _validate_confirm_payload(original, improved_data, allow_appended_rows=True)
         except ValueError as e:
             logger.warning("Resume confirm rejected: %s", e)
             raise HTTPException(
                 status_code=400,
                 detail="Invalid improved resume data. Please retry preview.",
-            )
-        preview_hashes = job.get("preview_hashes")
-        allowed_hashes: set[str] = set()
-        if isinstance(preview_hashes, dict):
-            allowed_hashes.update(preview_hashes.values())
-        elif isinstance(preview_hashes, list):
-            allowed_hashes.update(
-                [value for value in preview_hashes if isinstance(value, str)]
-            )
-        else:
-            preview_hash = job.get("preview_hash")
-            if isinstance(preview_hash, str):
-                allowed_hashes.add(preview_hash)
-
-        if not allowed_hashes:
-            logger.warning(
-                "Rejecting confirm; preview hash missing for job %s.",
-                request.job_id,
-            )
-            raise HTTPException(
-                status_code=400,
-                detail="Preview required before confirmation. Please retry preview.",
-            )
-
-        request_hash = _hash_improved_data(improved_data)
-        if request_hash not in allowed_hashes:
-            logger.warning("Resume confirm rejected due to preview hash mismatch.")
-            raise HTTPException(
-                status_code=400,
-                detail="Invalid improved resume data. Please retry preview.",
-            )
+            ) from e
 
         stage = "calculate_diff"
         response_warnings: list[str] = []
         diff_summary, detailed_changes, diff_error = _calculate_diff_from_resume(
-            resume,
-            improved_data,
+            resume, improved_data
         )
         if diff_error:
-            response_warnings.append(f"Could not calculate changes: {diff_error}")
+            response_warnings.append(DIFF_UNAVAILABLE_WARNING)
+        original_data = _get_original_resume_data(resume)
+        if original_data:
+            response_warnings.extend(
+                grounding_review_warnings(original_data, improved_data)
+            )
 
+        # The durable claim lasts longer than the bounded external work. Other
+        # workers return a retryable conflict instead of duplicating generation.
         stage = "generate_auxiliary_messages"
-        (
-            cover_letter,
-            outreach_message,
-            title,
-            interview_prep,
-            aux_warnings,
-        ) = await _generate_auxiliary_messages(
-            improved_data,
-            job["content"],
-            language,
-            enable_cover_letter,
-            enable_outreach,
-            enable_interview_prep,
+        cover_letter, outreach_message, title, interview_prep, aux_warnings = (
+            await asyncio.wait_for(
+                _generate_auxiliary_messages(
+                    improved_data,
+                    job["content"],
+                    language,
+                    feature_config.get("enable_cover_letter", False),
+                    feature_config.get("enable_outreach_message", False),
+                    feature_config.get("enable_interview_prep", False),
+                ),
+                timeout=remaining_timeout(),
+            )
         )
         response_warnings.extend(aux_warnings)
-
-        stage = "create_resume"
-        tailored_resume = await db.create_resume(
-            content=improved_text,
-            content_type="json",
-            filename=f"tailored_{resume.get('filename', 'resume')}",
-            is_master=False,
-            parent_id=request.resume_id,
-            processed_data=improved_data,
-            processing_status="ready",
+        improved_text = json.dumps(improved_data, indent=2)
+        request_id = str(uuid4())
+        response = ImproveResumeData(
+            request_id=request_id,
+            resume_id=None,
+            job_id=request.job_id,
+            resume_preview=request.improved_data,
+            improvements=claim.improvements or [],
+            markdownOriginal=resume["content"],
+            markdownImproved=improved_text,
             cover_letter=cover_letter,
             outreach_message=outreach_message,
-            interview_prep=_serialize_interview_prep(interview_prep),
-            title=title,
+            interview_prep=interview_prep,
+            diff_summary=diff_summary,
+            detailed_changes=detailed_changes,
+            warnings=response_warnings,
         )
-
-        improvements_payload = [imp.model_dump() for imp in request.improvements]
-        stage = "create_improvement"
-        request_id = str(uuid4())
-        await db.create_improvement(
-            original_resume_id=request.resume_id,
-            tailored_resume_id=tailored_resume["resume_id"],
-            job_id=request.job_id,
-            improvements=improvements_payload,
+        stage = "commit_confirmation"
+        result = await db.complete_preview(
+            claim=claim,
+            resume_fields={
+                "content": improved_text,
+                "content_type": "json",
+                "filename": f"tailored_{resume.get('filename', 'resume')}",
+                "is_master": False,
+                "parent_id": request.resume_id,
+                "processed_data": improved_data,
+                "processing_status": "ready",
+                "cover_letter": cover_letter,
+                "outreach_message": outreach_message,
+                "interview_prep": _serialize_interview_prep(interview_prep),
+                "title": title,
+            },
+            response_data=response.model_dump(mode="json"),
+            improvements=claim.improvements or [],
         )
-
+        claim = None  # The transaction committed; there is no lease to release.
         await _auto_create_tracker_application(
             job_id=request.job_id,
-            tailored_resume_id=tailored_resume["resume_id"],
+            tailored_resume_id=result["resume_id"],
             master_resume_id=request.resume_id,
             job=job,
             title=title,
         )
-
-        return ImproveResumeResponse(
-            request_id=request_id,
-            data=ImproveResumeData(
-                request_id=request_id,
-                resume_id=tailored_resume["resume_id"],
-                job_id=request.job_id,
-                resume_preview=request.improved_data,
-                improvements=request.improvements,
-                markdownOriginal=resume["content"],
-                markdownImproved=improved_text,
-                cover_letter=cover_letter,
-                outreach_message=outreach_message,
-                interview_prep=interview_prep,
-                diff_summary=diff_summary,
-                detailed_changes=detailed_changes,
-                warnings=response_warnings,
-            ),
+        data = ImproveResumeData.model_validate(result)
+        return ImproveResumeResponse(request_id=data.request_id, data=data)
+    except PreviewBusyError as e:
+        raise HTTPException(
+            status_code=409, detail=str(e), headers={"Retry-After": "1"}
+        ) from e
+    except PreviewConflictError as e:
+        raise HTTPException(status_code=409, detail=str(e)) from e
+    except PreviewValidationError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except asyncio.TimeoutError as e:
+        logger.error(
+            "Confirmation auxiliary generation timed out for preview %s",
+            claim.preview_id if claim else None,
         )
+        raise HTTPException(
+            status_code=504, detail="Confirmation timed out. Please try again."
+        ) from e
     except HTTPException:
+        raise
+    except (DatabaseBusyError, PromptSizeError):
         raise
     except Exception as e:
         _raise_improve_error("confirm", stage, e, detail)
+    finally:
+        if claim is not None and claim.token is not None:
+            try:
+                await asyncio.shield(db.release_preview_claim(claim))
+            except Exception:
+                logger.exception(
+                    "Failed to release confirmation claim for %s", claim.preview_id
+                )
 
 
 @router.post("/improve", response_model=ImproveResumeResponse)
@@ -1290,6 +1656,7 @@ async def improve_resume_endpoint(
     enable_cover_letter = feature_config.get("enable_cover_letter", False)
     enable_outreach = feature_config.get("enable_outreach_message", False)
     enable_interview_prep = feature_config.get("enable_interview_prep", False)
+    _validate_ai_sources(resume, job)
     language = get_content_language()
 
     try:
@@ -1302,6 +1669,7 @@ async def improve_resume_endpoint(
         original_resume_data = _get_original_resume_data(resume)
         # Collect warnings throughout the process
         response_warnings: list[str] = []
+        allow_appended_rows = False
 
         # Diff-based improvement: generate targeted changes, apply with verification
         if original_resume_data:
@@ -1317,6 +1685,10 @@ async def improve_resume_endpoint(
             improved_data, applied_changes, rejected_changes = apply_diffs(
                 original=original_resume_data,
                 changes=diff_result.changes,
+            )
+            allow_appended_rows = any(
+                change.action == "append"
+                for change in applied_changes
             )
 
             diff_warnings = verify_diff_result(
@@ -1359,7 +1731,9 @@ async def improve_resume_endpoint(
         improved_data = _restore_original_dates(original_resume_data, improved_data)
         original_markdown = _get_original_markdown(resume)
         if original_markdown:
-            improved_data = restore_dates_from_markdown(improved_data, original_markdown)
+            improved_data = restore_dates_from_markdown(
+                improved_data, original_markdown
+            )
         improved_data = _preserve_original_skills(original_resume_data, improved_data)
         improved_data = _protect_custom_sections(original_resume_data, improved_data)
 
@@ -1387,38 +1761,37 @@ async def improve_resume_endpoint(
                     config=RefinementConfig(),
                 )
                 improved_data = refinement_result.refined_data
-                refinement_stats = RefinementStats(
-                    passes_completed=refinement_result.passes_completed,
-                    keywords_injected=(
-                        len(refinement_result.keyword_analysis.injectable_keywords)
-                        if refinement_result.keyword_analysis
-                        else 0
-                    ),
-                    ai_phrases_removed=refinement_result.ai_phrases_removed,
-                    alignment_violations_fixed=(
-                        len(
-                            [
-                                v
-                                for v in refinement_result.alignment_report.violations
-                                if v.severity == "critical"
-                            ]
-                        )
-                        if refinement_result.alignment_report
-                        else 0
-                    ),
-                    initial_match_percentage=initial_match,
-                    final_match_percentage=refinement_result.final_match_percentage,
-                )
+                refinement_stats = refinement_result.to_stats(initial_match)
                 refinement_successful = True
                 logger.info(
                     "Refinement completed: %d passes, %d AI phrases removed",
                     refinement_result.passes_completed,
                     len(refinement_result.ai_phrases_removed),
                 )
+        except (DatabaseBusyError, AIOperationDeadlineExceeded, PromptSizeError):
+            raise
         except Exception as e:
             logger.warning("Refinement failed, using unrefined result: %s", e)
             if refinement_attempted:
-                response_warnings.append(f"Refinement failed: {str(e)}")
+                response_warnings.append(REFINEMENT_FAILED_WARNING)
+
+        if original_resume_data:
+            improved_data = finalize_ai_resume(
+                original_resume_data,
+                improved_data,
+                allow_review_claims=False,
+                allow_appended_rows=allow_appended_rows,
+            )
+            response_warnings.extend(
+                grounding_review_warnings(original_resume_data, improved_data)
+            )
+            if refinement_stats is not None and refinement_result is not None:
+                refinement_stats = _finalized_refinement_stats(
+                    refinement_stats,
+                    refinement_result.keywords_applied,
+                    improved_data,
+                    job_keywords,
+                )
 
         # Convert improved data to JSON string for storage
         improved_text = json.dumps(improved_data, indent=2)
@@ -1429,7 +1802,7 @@ async def improve_resume_endpoint(
             improved_data,
         )
         if diff_error:
-            response_warnings.append(f"Could not calculate changes: {diff_error}")
+            response_warnings.append(DIFF_UNAVAILABLE_WARNING)
 
         # Generate improvement suggestions
         improvements = generate_improvements(job_keywords)
@@ -1451,27 +1824,25 @@ async def improve_resume_endpoint(
         )
         response_warnings.extend(aux_warnings)
 
-        # Store the tailored resume with cover letter, outreach message, and title
-        tailored_resume = await db.create_resume(
-            content=improved_text,
-            content_type="json",
-            filename=f"tailored_{resume.get('filename', 'resume')}",
-            is_master=False,
-            parent_id=request.resume_id,
-            processed_data=improved_data,
-            processing_status="ready",
-            cover_letter=cover_letter,
-            outreach_message=outreach_message,
-            interview_prep=_serialize_interview_prep(interview_prep),
-            title=title,
-        )
-
-        # Store improvement record
+        # Cancellation must leave both required records committed or neither.
         request_id = str(uuid4())
-        await db.create_improvement(
+        tailored_resume = await db.create_tailored_resume(
+            request_id=request_id,
             original_resume_id=request.resume_id,
-            tailored_resume_id=tailored_resume["resume_id"],
             job_id=request.job_id,
+            resume_fields={
+                "content": improved_text,
+                "content_type": "json",
+                "filename": f"tailored_{resume.get('filename', 'resume')}",
+                "is_master": False,
+                "parent_id": request.resume_id,
+                "processed_data": improved_data,
+                "processing_status": "ready",
+                "cover_letter": cover_letter,
+                "outreach_message": outreach_message,
+                "interview_prep": _serialize_interview_prep(interview_prep),
+                "title": title,
+            },
             improvements=improvements,
         )
 
@@ -1517,6 +1888,9 @@ async def improve_resume_endpoint(
                 refinement_successful=refinement_successful,
             ),
         )
+
+    except (DatabaseBusyError, AIOperationDeadlineExceeded, PromptSizeError):
+        raise
 
     except Exception as e:
         logger.error(f"Resume improvement failed: {e}")
@@ -1680,16 +2054,22 @@ async def retry_processing(resume_id: str) -> ResumeUploadResponse:
     """Retry AI processing for a failed or stuck resume.
 
     Re-runs parse_resume_to_json() on the stored markdown content.
-    Works for resumes with processing_status == "failed" or "processing".
+    Works for failed/in-progress resumes and legacy ``ready`` records whose
+    structured data is empty due to an earlier parser false positive.
     """
     resume = await db.get_resume(resume_id)
     if not resume:
         raise HTTPException(status_code=404, detail="Resume not found")
 
-    if resume.get("processing_status") not in ("failed", "processing"):
+    status = resume.get("processing_status")
+    can_retry_legacy_empty_ready = (
+        status == "ready"
+        and not has_meaningful_resume_content(resume.get("processed_data") or {})
+    )
+    if status not in ("failed", "processing") and not can_retry_legacy_empty_ready:
         raise HTTPException(
             status_code=400,
-            detail="Only resumes with 'failed' or 'processing' status can be retried.",
+            detail="Only failed, processing, or empty legacy resumes can be retried.",
         )
 
     markdown_content = resume.get("content", "")
@@ -1699,32 +2079,72 @@ async def retry_processing(resume_id: str) -> ResumeUploadResponse:
             detail="Resume has no stored content to re-process.",
         )
 
+    require_source_size(markdown_content)
+    allow_ready_at = resume.get("updated_at") if can_retry_legacy_empty_ready else None
     try:
-        processed_data = await parse_resume_to_json(markdown_content)
-        await db.update_resume(
+        processing_token = await _claim_processing(
             resume_id,
-            {
-                "processed_data": processed_data,
-                "processing_status": "ready",
-            },
+            allow_ready_at=allow_ready_at,
         )
-        return ResumeUploadResponse(
-            message="Resume processing succeeded on retry",
-            request_id=str(uuid4()),
-            resume_id=resume_id,
-            processing_status="ready",
-            is_master=resume.get("is_master", False),
+    except ResumeNotFoundError as e:
+        raise HTTPException(
+            status_code=404, detail="Resume was deleted during retry."
+        ) from e
+    if processing_token is None:
+        raise HTTPException(
+            status_code=409,
+            detail="Resume processing was superseded by a newer attempt.",
         )
-    except Exception as e:
-        logger.warning(f"Retry processing failed for resume {resume_id}: {e}")
-        await db.update_resume(resume_id, {"processing_status": "failed"})
-        return ResumeUploadResponse(
-            message="Retry processing failed",
-            request_id=str(uuid4()),
-            resume_id=resume_id,
-            processing_status="failed",
-            is_master=resume.get("is_master", False),
-        )
+
+    try:
+        try:
+            processed_data = await parse_resume_to_json(markdown_content)
+        except (DatabaseBusyError, AIOperationDeadlineExceeded, PromptSizeError):
+            raise
+        except Exception as e:
+            logger.warning(f"Retry processing failed for resume {resume_id}: {e}")
+            outcome = await db.finish_resume_processing(
+                resume_id,
+                processing_token,
+                processing_status="failed",
+            )
+            _require_processing_commit(
+                outcome,
+                deleted_detail="Resume was deleted during retry.",
+            )
+            return ResumeUploadResponse(
+                message="Retry processing failed",
+                request_id=str(uuid4()),
+                resume_id=resume_id,
+                processing_status="failed",
+                is_master=resume.get("is_master", False),
+            )
+        else:
+            outcome = await db.finish_resume_processing(
+                resume_id,
+                processing_token,
+                processing_status="ready",
+                processed_data=processed_data,
+            )
+            _require_processing_commit(
+                outcome,
+                deleted_detail="Resume was deleted during retry.",
+            )
+            return ResumeUploadResponse(
+                message="Resume processing succeeded on retry",
+                request_id=str(uuid4()),
+                resume_id=resume_id,
+                processing_status="ready",
+                is_master=resume.get("is_master", False),
+            )
+    except (
+        asyncio.CancelledError,
+        AIOperationDeadlineExceeded,
+        PromptSizeError,
+        DatabaseBusyError,
+    ):
+        await _finish_cancelled_processing(resume_id, processing_token)
+        raise
 
 
 @router.patch("/{resume_id}/cover-letter")
@@ -1815,6 +2235,7 @@ async def generate_cover_letter_endpoint(resume_id: str) -> GenerateContentRespo
         )
 
     # Get language setting
+    _validate_ai_sources(resume, job)
     language = get_content_language()
 
     # Generate cover letter
@@ -1822,6 +2243,8 @@ async def generate_cover_letter_endpoint(resume_id: str) -> GenerateContentRespo
         cover_letter_content = await generate_cover_letter(
             resume_data, job["content"], language
         )
+    except (DatabaseBusyError, AIOperationDeadlineExceeded, PromptSizeError):
+        raise
     except Exception as e:
         logger.error(f"Cover letter generation failed: {e}")
         raise HTTPException(
@@ -1886,6 +2309,7 @@ async def generate_outreach_endpoint(resume_id: str) -> GenerateContentResponse:
         )
 
     # Get language setting
+    _validate_ai_sources(resume, job)
     language = get_content_language()
 
     # Generate outreach message
@@ -1893,6 +2317,8 @@ async def generate_outreach_endpoint(resume_id: str) -> GenerateContentResponse:
         outreach_content = await generate_outreach_message(
             resume_data, job["content"], language
         )
+    except (DatabaseBusyError, AIOperationDeadlineExceeded, PromptSizeError):
+        raise
     except Exception as e:
         logger.error(f"Outreach message generation failed: {e}")
         raise HTTPException(
@@ -1950,6 +2376,7 @@ async def generate_interview_prep_endpoint(
             detail="Resume has no processed data. Please re-upload the resume.",
         )
 
+    _validate_ai_sources(resume, job)
     language = get_content_language()
 
     try:
@@ -1958,6 +2385,8 @@ async def generate_interview_prep_endpoint(
             job["content"],
             language,
         )
+    except (DatabaseBusyError, AIOperationDeadlineExceeded, PromptSizeError):
+        raise
     except Exception as e:
         logger.exception("Interview preparation generation failed: %s", e)
         raise HTTPException(

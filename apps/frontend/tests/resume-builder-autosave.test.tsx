@@ -97,6 +97,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  vi.restoreAllMocks();
   vi.useRealTimers();
   vi.resetModules();
 });
@@ -263,5 +264,35 @@ describe('resume builder autosave', () => {
     });
 
     expect(localStorage.getItem('resume_builder_draft')).not.toBeNull();
+  });
+
+  it('reports unavailable browser backup and gives a truthful leave warning', async () => {
+    fetchResume.mockResolvedValue({ processed_resume: REAL_RESUME, parent_id: null, title: 'r' });
+    updateResume.mockRejectedValue(new Error('offline'));
+    const nativeSetItem = Storage.prototype.setItem;
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(function (this: Storage, key, value) {
+      if (key.startsWith('resume_builder_draft:')) {
+        throw new DOMException('quota', 'QuotaExceededError');
+      }
+      return nativeSetItem.call(this, key, value);
+    });
+
+    const ResumeBuilder = await importBuilder();
+    render(<ResumeBuilder />);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+      screen.getByTestId('edit').click();
+    });
+
+    expect(screen.getByText('builder.autoSave.localDraftUnavailable')).toBeInTheDocument();
+    expect(localStorage.getItem('resume_builder_draft:res-1')).toBeNull();
+
+    await act(async () => {
+      screen.getByRole('button', { name: 'nav.backToDashboard' }).click();
+      await vi.advanceTimersByTimeAsync(0);
+      await Promise.resolve();
+    });
+    expect(screen.getByText('builder.leaveWithoutDraft.description')).toBeInTheDocument();
+    expect(screen.queryByText('builder.leaveWithLocalDraft.description')).not.toBeInTheDocument();
   });
 });

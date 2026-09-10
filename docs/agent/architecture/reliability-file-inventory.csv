@@ -1,0 +1,512 @@
+path,role,audit_issues
+.claude/CLAUDE.md,Repository configuration or documentation,
+.claude/settings.json,Repository configuration or documentation,
+.dockerignore,Repository configuration or documentation,
+.githooks/README.md,Repository configuration or documentation,
+.githooks/pre-push,Repository configuration or documentation,
+.github/CODE_OF_CONDUCT.md,Repository automation,
+.github/CONTRIBUTING.md,Repository automation,
+.github/FUNDING.yml,Repository automation,
+.github/ISSUE_TEMPLATE.md,Repository automation,
+.github/ISSUE_TEMPLATE/bug_report.yml,Repository automation,
+.github/ISSUE_TEMPLATE/config.yml,Repository automation,
+.github/ISSUE_TEMPLATE/custom.yml,Repository automation,
+.github/ISSUE_TEMPLATE/feature_request.yml,Repository automation,
+.github/PULL_REQUEST_TEMPLATE.md,Repository automation,
+.github/SECURITY.md,Repository automation,
+.github/workflows/docker-publish.yml,Repository automation,#973;#974
+.gitignore,Repository configuration or documentation,
+.impeccable.md,Repository configuration or documentation,
+Dockerfile,Repository configuration or documentation,
+LICENSE,Repository configuration or documentation,
+README.es.md,Repository configuration or documentation,
+README.ja.md,Repository configuration or documentation,
+README.md,Repository configuration or documentation,
+README.zh-CN.md,Repository configuration or documentation,
+SETUP.es.md,Repository configuration or documentation,
+SETUP.ja.md,Repository configuration or documentation,
+SETUP.md,Repository configuration or documentation,
+SETUP.zh-CN.md,Repository configuration or documentation,
+apps/backend/.env.example,Backend runtime or tooling,
+apps/backend/.env.sample,Backend runtime or tooling,
+apps/backend/.gitignore,Backend runtime or tooling,
+apps/backend/.python-version,Backend runtime or tooling,
+apps/backend/CLAUDE.md,Backend runtime or tooling,
+apps/backend/app/__init__.py,Backend runtime or tooling,
+apps/backend/app/ai_budget.py,Backend runtime or tooling,#942;#973;#974
+apps/backend/app/ai_limits.py,Backend runtime or tooling,#942
+apps/backend/app/config.py,Backend runtime or tooling,#932;#942;#948;#949;#950;#951;#972
+apps/backend/app/config_cache.py,Backend runtime or tooling,#932;#972
+apps/backend/app/crypto.py,Backend runtime or tooling,
+apps/backend/app/database.py,Backend runtime or tooling,#948;#949;#950;#951;#952;#953;#954;#955;#956;#957;#958;#973;#974
+apps/backend/app/db_engine.py,Backend runtime or tooling,#948;#949;#950;#951;#952;#953;#954
+apps/backend/app/llm.py,Backend runtime or tooling,#942;#943;#944;#945;#969;#973;#974;#975
+apps/backend/app/main.py,Backend runtime or tooling,#955;#956;#957;#958;#973;#974
+apps/backend/app/models.py,Backend runtime or tooling,#948;#949;#950;#951;#952;#953;#954;#955;#956;#957;#958
+apps/backend/app/pdf.py,Backend runtime or tooling,#960;#961;#962;#973;#974
+apps/backend/app/preview.py,Backend runtime or tooling,#948;#949;#950;#951
+apps/backend/app/prompts/__init__.py,AI prompt,
+apps/backend/app/prompts/enrichment.py,AI prompt,
+apps/backend/app/prompts/refinement.py,AI prompt,
+apps/backend/app/prompts/resume_wizard.py,AI prompt,#946
+apps/backend/app/prompts/templates.py,AI prompt,
+apps/backend/app/routers/__init__.py,Backend API boundary,
+apps/backend/app/routers/applications.py,Backend API boundary,#955;#956;#957;#958;#973;#974
+apps/backend/app/routers/config.py,Backend API boundary,#932;#972
+apps/backend/app/routers/enrichment.py,Backend API boundary,#942;#943;#944;#945;#969;#973;#974
+apps/backend/app/routers/health.py,Backend API boundary,
+apps/backend/app/routers/jobs.py,Backend API boundary,#955;#956;#957;#958
+apps/backend/app/routers/resume_wizard.py,Backend API boundary,#938;#942;#967;#968
+apps/backend/app/routers/resumes.py,Backend API boundary,#940;#941;#942;#943;#944;#945;#947;#948;#949;#950;#951;#952;#953;#954;#955;#956;#957;#958;#959;#963;#969;#970;#971;#973;#974
+apps/backend/app/schemas/__init__.py,Backend data contract,
+apps/backend/app/schemas/applications.py,Backend data contract,#955;#956;#957;#958
+apps/backend/app/schemas/enrichment.py,Backend data contract,#942;#943;#944;#945;#969
+apps/backend/app/schemas/models.py,Backend data contract,#942;#948;#949;#950;#951;#959;#963;#971;#973;#974
+apps/backend/app/schemas/refinement.py,Backend data contract,#959;#963;#971
+apps/backend/app/schemas/resume_wizard.py,Backend data contract,#942
+apps/backend/app/scripts/__init__.py,Backend runtime or tooling,
+apps/backend/app/scripts/migrate_tinydb_to_sqlite.py,Backend runtime or tooling,
+apps/backend/app/services/__init__.py,Backend business logic,
+apps/backend/app/services/ats.py,Backend business logic,
+apps/backend/app/services/cover_letter.py,Backend business logic,#942;#943;#944;#945;#969
+apps/backend/app/services/improver.py,Backend business logic,#943;#944;#945;#969;#973;#974
+apps/backend/app/services/interview_prep.py,Backend business logic,
+apps/backend/app/services/parser.py,Backend business logic,#940;#941;#942;#943;#944;#945;#947;#952;#953;#954;#969;#970
+apps/backend/app/services/refiner.py,Backend business logic,#940;#941;#947;#959;#963;#970;#971;#973;#974
+apps/backend/app/services/resume_preservation.py,Backend business logic,#940;#941;#947;#970;#973;#974
+apps/backend/app/services/resume_wizard.py,Backend business logic,#938;#946;#967;#968;#973;#974
+apps/backend/app/services/resume_wizard_copy.py,Backend business logic,#938;#967;#968
+apps/backend/data/.gitkeep,Backend runtime or tooling,
+apps/backend/e2e_monitor/AGENT_PLAYBOOK.md,Isolated monitoring and evaluation,#959;#963;#971
+apps/backend/e2e_monitor/README.md,Isolated monitoring and evaluation,#959;#963;#971
+apps/backend/e2e_monitor/__init__.py,Isolated monitoring and evaluation,
+apps/backend/e2e_monitor/__main__.py,Isolated monitoring and evaluation,#959;#963;#971
+apps/backend/e2e_monitor/baseline.py,Isolated monitoring and evaluation,
+apps/backend/e2e_monitor/baseline/baseline.json,Isolated monitoring and evaluation,
+apps/backend/e2e_monitor/bundle.py,Isolated monitoring and evaluation,#959;#963;#971
+apps/backend/e2e_monitor/collect.py,Isolated monitoring and evaluation,
+apps/backend/e2e_monitor/fixtures/jds/backend-eng.txt,Isolated monitoring and evaluation,
+apps/backend/e2e_monitor/fixtures/jds/frontend-eng.txt,Isolated monitoring and evaluation,
+apps/backend/e2e_monitor/fixtures/jds/ml-eng.txt,Isolated monitoring and evaluation,
+apps/backend/e2e_monitor/fixtures/jds/product-manager.txt,Isolated monitoring and evaluation,
+apps/backend/e2e_monitor/fixtures/master.json,Isolated monitoring and evaluation,
+apps/backend/e2e_monitor/flow.py,Isolated monitoring and evaluation,#959;#963;#971
+apps/backend/e2e_monitor/gate.py,Isolated monitoring and evaluation,
+apps/backend/e2e_monitor/install_skill.sh,Isolated monitoring and evaluation,
+apps/backend/e2e_monitor/judge.py,Isolated monitoring and evaluation,#959;#963;#971
+apps/backend/e2e_monitor/manifest.py,Isolated monitoring and evaluation,
+apps/backend/e2e_monitor/render.py,Isolated monitoring and evaluation,#959;#963;#971
+apps/backend/e2e_monitor/scrub.py,Isolated monitoring and evaluation,
+apps/backend/e2e_monitor/servers.py,Isolated monitoring and evaluation,#959;#963;#971
+apps/backend/e2e_monitor/timing.py,Isolated monitoring and evaluation,#959;#963;#971
+apps/backend/pyproject.toml,Backend runtime or tooling,
+apps/backend/requirements.txt,Backend runtime or tooling,
+apps/backend/tests/__init__.py,Backend verification,
+apps/backend/tests/conftest.py,Backend verification,#932;#972
+apps/backend/tests/evals/README.md,Backend verification,#959;#963;#971
+apps/backend/tests/evals/__init__.py,Backend verification,
+apps/backend/tests/evals/conftest.py,Backend verification,#959;#963;#971
+apps/backend/tests/evals/golden/__init__.py,Backend verification,
+apps/backend/tests/evals/golden/cases.py,Backend verification,#959;#963;#971
+apps/backend/tests/evals/scorers.py,Backend verification,#959;#963;#971;#973;#974
+apps/backend/tests/evals/test_scorers.py,Backend verification,#959;#963;#971;#973;#974
+apps/backend/tests/evals/test_tailoring_eval.py,Backend verification,#959;#963;#971
+apps/backend/tests/integration/__init__.py,Backend verification,
+apps/backend/tests/integration/_temperature_request_probe.py,Backend verification,#975
+apps/backend/tests/integration/test_ai_operation_budgets.py,Backend verification,#942;#973;#974
+apps/backend/tests/integration/test_ai_preservation_api.py,Backend verification,#940;#941;#947;#959;#963;#970;#971;#973;#974
+apps/backend/tests/integration/test_ai_result_contracts.py,Backend verification,#943;#944;#945;#969
+apps/backend/tests/integration/test_applications_api.py,Backend verification,#973;#974
+apps/backend/tests/integration/test_backend_isolation.py,Backend verification,#932;#972
+apps/backend/tests/integration/test_config_api.py,Backend verification,#932;#972;#973;#974
+apps/backend/tests/integration/test_config_durability.py,Backend verification,#932;#972
+apps/backend/tests/integration/test_confirmation_transactions.py,Backend verification,#940;#941;#947;#948;#949;#950;#951;#959;#963;#970;#971;#973;#974
+apps/backend/tests/integration/test_direct_improve_transactions.py,Backend verification,#973;#974
+apps/backend/tests/integration/test_enrichment_busy_writes.py,Backend verification,#955;#956;#957;#958;#973;#974
+apps/backend/tests/integration/test_health_api.py,Backend verification,
+apps/backend/tests/integration/test_jobs_api.py,Backend verification,#955;#956;#957;#958
+apps/backend/tests/integration/test_llm_contract.py,Backend verification,
+apps/backend/tests/integration/test_llm_contract_reliability.py,Backend verification,#942;#943;#944;#945;#969;#973;#974
+apps/backend/tests/integration/test_manual_application_transactions.py,Backend verification,#955;#956;#957;#958;#973;#974
+apps/backend/tests/integration/test_pdf_grid_geometry.py,Backend verification,#960;#961;#962
+apps/backend/tests/integration/test_pdf_lifecycle.py,Backend verification,#960;#961;#962
+apps/backend/tests/integration/test_pdf_multilingual_flow.py,Backend verification,#973;#974
+apps/backend/tests/integration/test_pdf_render.py,Backend verification,
+apps/backend/tests/integration/test_pdf_retired_generations.py,Backend verification,#960;#961;#962;#973;#974
+apps/backend/tests/integration/test_pipeline_e2e.py,Backend verification,#952;#953;#954;#973;#974
+apps/backend/tests/integration/test_processing_busy_retirement.py,Backend verification,#952;#954;#955;#956;#957;#958;#973;#974
+apps/backend/tests/integration/test_processing_cleanup_deadlines.py,Backend verification,#973;#974
+apps/backend/tests/integration/test_regenerate_endpoints.py,Backend verification,
+apps/backend/tests/integration/test_resume_api.py,Backend verification,#952;#953;#954;#973;#974
+apps/backend/tests/integration/test_resume_wizard_api.py,Backend verification,#938;#967;#968;#973;#974
+apps/backend/tests/integration/test_storage_atomicity.py,Backend verification,#955;#956;#957;#958;#959;#963;#971;#973;#974
+apps/backend/tests/integration/test_storage_busy_writes.py,Backend verification,#955;#956;#957;#958
+apps/backend/tests/integration/test_temperature_request_contract.py,Backend verification,#975
+apps/backend/tests/integration/test_tracker_autocreate.py,Backend verification,#948;#949;#950;#951
+apps/backend/tests/integration/test_upload_api.py,Backend verification,
+apps/backend/tests/integration/test_upload_enhancement_recovery.py,Backend verification,#942;#952;#969;#973;#974
+apps/backend/tests/integration/test_upload_processing.py,Backend verification,#952;#953;#954
+apps/backend/tests/service/__init__.py,Backend verification,
+apps/backend/tests/service/test_improver.py,Backend verification,#943;#944;#945;#969;#973;#974
+apps/backend/tests/unit/__init__.py,Backend verification,
+apps/backend/tests/unit/test_ai_preservation.py,Backend verification,#940;#941;#947;#959;#963;#970;#971;#973;#974
+apps/backend/tests/unit/test_apply_diffs.py,Backend verification,
+apps/backend/tests/unit/test_check_locale_parity.py,Backend verification,
+apps/backend/tests/unit/test_config_persistence.py,Backend verification,#932;#972
+apps/backend/tests/unit/test_crypto.py,Backend verification,
+apps/backend/tests/unit/test_database.py,Backend verification,
+apps/backend/tests/unit/test_description_styles.py,Backend verification,
+apps/backend/tests/unit/test_document_processing.py,Backend verification,#942;#952;#953;#954
+apps/backend/tests/unit/test_e2e_monitor_baseline.py,Backend verification,
+apps/backend/tests/unit/test_e2e_monitor_collect.py,Backend verification,#959;#963;#971
+apps/backend/tests/unit/test_e2e_monitor_judge.py,Backend verification,
+apps/backend/tests/unit/test_e2e_monitor_manifest.py,Backend verification,
+apps/backend/tests/unit/test_e2e_monitor_render.py,Backend verification,
+apps/backend/tests/unit/test_e2e_monitor_scores.py,Backend verification,
+apps/backend/tests/unit/test_e2e_monitor_scrub.py,Backend verification,
+apps/backend/tests/unit/test_improve_confirm_hash.py,Backend verification,
+apps/backend/tests/unit/test_interview_prep_service.py,Backend verification,
+apps/backend/tests/unit/test_llm.py,Backend verification,#943;#944;#945;#969;#973;#974;#975
+apps/backend/tests/unit/test_llm_providers.py,Backend verification,
+apps/backend/tests/unit/test_monitor_eval_contracts.py,Backend verification,#959;#963;#971
+apps/backend/tests/unit/test_monitor_servers.py,Backend verification,#959;#963;#971
+apps/backend/tests/unit/test_parser.py,Backend verification,
+apps/backend/tests/unit/test_preview_ttl_settings.py,Backend verification,#948;#949;#950;#951
+apps/backend/tests/unit/test_processing_ownership.py,Backend verification,#952;#953;#954
+apps/backend/tests/unit/test_prompt_guardrails.py,Backend verification,#940;#941;#947;#970
+apps/backend/tests/unit/test_refiner.py,Backend verification,#959;#963;#971;#973;#974
+apps/backend/tests/unit/test_resume_diff.py,Backend verification,
+apps/backend/tests/unit/test_resume_wizard_service.py,Backend verification,#938;#946;#967;#968;#973;#974
+apps/backend/tests/unit/test_sampling_capabilities.py,Backend verification,#975
+apps/backend/tests/unit/test_settings_timeout.py,Backend verification,
+apps/backend/tests/unit/test_verify_diffs.py,Backend verification,
+apps/frontend/.env.sample,Frontend asset or tooling,
+apps/frontend/.gitignore,Frontend asset or tooling,
+apps/frontend/.prettierrc,Frontend asset or tooling,
+apps/frontend/CLAUDE.md,Frontend asset or tooling,
+apps/frontend/app/(default)/builder/page.tsx,Frontend route,
+apps/frontend/app/(default)/css/globals.css,Frontend route,
+apps/frontend/app/(default)/dashboard/page.tsx,Frontend route,#935;#936;#937;#952;#953;#954;#966
+apps/frontend/app/(default)/layout.tsx,Frontend route,
+apps/frontend/app/(default)/page.tsx,Frontend route,
+apps/frontend/app/(default)/resume-wizard/page.tsx,Frontend route,
+apps/frontend/app/(default)/resumes/[id]/page.tsx,Frontend route,#935;#936;#937;#952;#953;#954;#973;#974
+apps/frontend/app/(default)/settings/page.tsx,Frontend route,#935;#936;#937
+apps/frontend/app/(default)/tailor/page.tsx,Frontend route,#948;#949;#950;#951;#973;#974
+apps/frontend/app/(default)/tracker/page.tsx,Frontend route,
+apps/frontend/app/layout.tsx,Frontend route,
+apps/frontend/app/print/cover-letter/[id]/page.tsx,Frontend route,
+apps/frontend/app/print/resumes/[id]/page.tsx,Frontend route,
+apps/frontend/components/builder/add-section-dialog.tsx,Frontend component,
+apps/frontend/components/builder/cover-letter-editor.tsx,Frontend component,#935;#936;#937
+apps/frontend/components/builder/cover-letter-preview.tsx,Frontend component,
+apps/frontend/components/builder/draggable-list-item.tsx,Frontend component,
+apps/frontend/components/builder/draggable-section-wrapper.tsx,Frontend component,
+apps/frontend/components/builder/formatting-controls.tsx,Frontend component,
+apps/frontend/components/builder/forms/additional-form.tsx,Frontend component,
+apps/frontend/components/builder/forms/education-form.tsx,Frontend component,
+apps/frontend/components/builder/forms/experience-form.tsx,Frontend component,
+apps/frontend/components/builder/forms/generic-item-form.tsx,Frontend component,
+apps/frontend/components/builder/forms/generic-list-form.tsx,Frontend component,
+apps/frontend/components/builder/forms/generic-text-form.tsx,Frontend component,
+apps/frontend/components/builder/forms/personal-info-form.tsx,Frontend component,
+apps/frontend/components/builder/forms/projects-form.tsx,Frontend component,
+apps/frontend/components/builder/forms/summary-form.tsx,Frontend component,
+apps/frontend/components/builder/generate-prompt.tsx,Frontend component,
+apps/frontend/components/builder/highlighted-resume-view.tsx,Frontend component,
+apps/frontend/components/builder/interview-prep-view.tsx,Frontend component,
+apps/frontend/components/builder/jd-comparison-view.tsx,Frontend component,
+apps/frontend/components/builder/jd-display.tsx,Frontend component,
+apps/frontend/components/builder/outreach-editor.tsx,Frontend component,#935;#936;#937
+apps/frontend/components/builder/outreach-preview.tsx,Frontend component,
+apps/frontend/components/builder/regenerate-dialog.tsx,Frontend component,
+apps/frontend/components/builder/regenerate-diff-preview.tsx,Frontend component,#973;#974
+apps/frontend/components/builder/regenerate-instruction-dialog.tsx,Frontend component,
+apps/frontend/components/builder/regenerate-wizard.tsx,Frontend component,#973;#974
+apps/frontend/components/builder/resume-builder.tsx,Frontend component,#933;#934;#935;#936;#937;#938;#967;#968;#973;#974
+apps/frontend/components/builder/resume-form.tsx,Frontend component,
+apps/frontend/components/builder/section-header.tsx,Frontend component,
+apps/frontend/components/builder/template-selector.tsx,Frontend component,
+apps/frontend/components/common/error-boundary.tsx,Frontend component,
+apps/frontend/components/common/resume_previewer_context.tsx,Frontend component,#948;#949;#950;#951
+apps/frontend/components/dashboard/master-resume-choice-dialog.tsx,Frontend component,
+apps/frontend/components/dashboard/resume-component.tsx,Frontend component,
+apps/frontend/components/dashboard/resume-upload-dialog.tsx,Frontend component,#939;#952;#953;#954;#964;#965;#973;#974
+apps/frontend/components/enrichment/enrichment-modal.tsx,Frontend component,#973;#974
+apps/frontend/components/enrichment/loading-steps.tsx,Frontend component,#973;#974
+apps/frontend/components/enrichment/preview-step.tsx,Frontend component,#973;#974
+apps/frontend/components/enrichment/question-step.tsx,Frontend component,
+apps/frontend/components/home/hero.tsx,Frontend component,
+apps/frontend/components/home/swiss-grid.tsx,Frontend component,
+apps/frontend/components/preview/index.ts,Frontend component,
+apps/frontend/components/preview/page-container.tsx,Frontend component,
+apps/frontend/components/preview/paginated-preview.tsx,Frontend component,
+apps/frontend/components/preview/use-pagination.ts,Frontend component,
+apps/frontend/components/resume-wizard/live-preview.tsx,Frontend component,
+apps/frontend/components/resume-wizard/question-card.tsx,Frontend component,
+apps/frontend/components/resume-wizard/resume-wizard-page.tsx,Frontend component,#938;#967;#968
+apps/frontend/components/resume/description-list.tsx,Frontend component,
+apps/frontend/components/resume/dynamic-resume-section.tsx,Frontend component,
+apps/frontend/components/resume/index.ts,Frontend component,
+apps/frontend/components/resume/resume-clean.tsx,Frontend component,
+apps/frontend/components/resume/resume-latex.tsx,Frontend component,
+apps/frontend/components/resume/resume-modern-two-column.tsx,Frontend component,
+apps/frontend/components/resume/resume-modern.tsx,Frontend component,
+apps/frontend/components/resume/resume-single-column.tsx,Frontend component,
+apps/frontend/components/resume/resume-two-column.tsx,Frontend component,
+apps/frontend/components/resume/resume-vivid.tsx,Frontend component,
+apps/frontend/components/resume/safe-html.tsx,Frontend component,
+apps/frontend/components/resume/styles/_base.module.css,Frontend component,#960;#961;#962
+apps/frontend/components/resume/styles/_tokens.css,Frontend component,
+apps/frontend/components/resume/styles/clean.module.css,Frontend component,
+apps/frontend/components/resume/styles/latex.module.css,Frontend component,
+apps/frontend/components/resume/styles/modern-two-column.module.css,Frontend component,#960;#961;#962
+apps/frontend/components/resume/styles/modern.module.css,Frontend component,
+apps/frontend/components/resume/styles/swiss-single.module.css,Frontend component,
+apps/frontend/components/resume/styles/swiss-two-column.module.css,Frontend component,#960;#961;#962
+apps/frontend/components/resume/styles/vivid.module.css,Frontend component,#960;#961;#962
+apps/frontend/components/settings/api-key-menu.tsx,Frontend component,
+apps/frontend/components/tailor/ats-score-card.tsx,Frontend component,
+apps/frontend/components/tailor/diff-preview-modal.tsx,Frontend component,
+apps/frontend/components/tracker/application-card.tsx,Frontend component,
+apps/frontend/components/tracker/bulk-action-bar.tsx,Frontend component,
+apps/frontend/components/tracker/card-detail-modal.tsx,Frontend component,
+apps/frontend/components/tracker/kanban-board.tsx,Frontend component,
+apps/frontend/components/tracker/kanban-column.tsx,Frontend component,
+apps/frontend/components/tracker/manage-columns-dialog.tsx,Frontend component,
+apps/frontend/components/tracker/manual-add-application-dialog.tsx,Frontend component,
+apps/frontend/components/tracker/reorder.ts,Frontend component,
+apps/frontend/components/ui/button.tsx,Frontend component,
+apps/frontend/components/ui/card.tsx,Frontend component,
+apps/frontend/components/ui/confirm-dialog.tsx,Frontend component,#973;#974
+apps/frontend/components/ui/dialog.tsx,Frontend component,
+apps/frontend/components/ui/dropdown.tsx,Frontend component,
+apps/frontend/components/ui/input.tsx,Frontend component,
+apps/frontend/components/ui/label.tsx,Frontend component,
+apps/frontend/components/ui/link-dialog.tsx,Frontend component,
+apps/frontend/components/ui/retro-tabs.tsx,Frontend component,
+apps/frontend/components/ui/rich-text-editor.tsx,Frontend component,
+apps/frontend/components/ui/rich-text-toolbar.tsx,Frontend component,
+apps/frontend/components/ui/textarea.tsx,Frontend component,
+apps/frontend/components/ui/toggle-switch.tsx,Frontend component,
+apps/frontend/eslint.config.mjs,Frontend asset or tooling,
+apps/frontend/hooks/use-enrichment-wizard.ts,Frontend lifecycle,#973;#974
+apps/frontend/hooks/use-file-upload.ts,Frontend lifecycle,#939;#964;#965;#973;#974
+apps/frontend/hooks/use-operation-owner.ts,Frontend lifecycle,#973;#974
+apps/frontend/hooks/use-regenerate-wizard.ts,Frontend lifecycle,#973;#974
+apps/frontend/i18n/config.ts,Frontend asset or tooling,
+apps/frontend/lib/api/client.ts,Frontend API or utility,#939;#964;#965
+apps/frontend/lib/api/config.ts,Frontend API or utility,
+apps/frontend/lib/api/enrichment.ts,Frontend API or utility,#973;#974
+apps/frontend/lib/api/index.ts,Frontend API or utility,
+apps/frontend/lib/api/resume-wizard.ts,Frontend API or utility,
+apps/frontend/lib/api/resume.ts,Frontend API or utility,#938;#948;#949;#950;#951;#952;#953;#954;#967;#968
+apps/frontend/lib/api/tracker.ts,Frontend API or utility,
+apps/frontend/lib/config/version.ts,Frontend API or utility,
+apps/frontend/lib/constants/page-dimensions.ts,Frontend API or utility,
+apps/frontend/lib/context/language-context.tsx,Frontend API or utility,
+apps/frontend/lib/context/status-cache.tsx,Frontend API or utility,
+apps/frontend/lib/i18n/index.ts,Frontend API or utility,
+apps/frontend/lib/i18n/locale.ts,Frontend API or utility,
+apps/frontend/lib/i18n/messages.ts,Frontend API or utility,
+apps/frontend/lib/i18n/server.ts,Frontend API or utility,
+apps/frontend/lib/i18n/translations.ts,Frontend API or utility,
+apps/frontend/lib/i18n/utils.ts,Frontend API or utility,
+apps/frontend/lib/types/lucide.d.ts,Frontend API or utility,
+apps/frontend/lib/types/template-settings.ts,Frontend API or utility,
+apps/frontend/lib/utils.ts,Frontend API or utility,
+apps/frontend/lib/utils/attachment-draft-storage.ts,Frontend API or utility,#935;#936;#937;#938;#967;#968
+apps/frontend/lib/utils/description-styles.ts,Frontend API or utility,
+apps/frontend/lib/utils/download.ts,Frontend API or utility,
+apps/frontend/lib/utils/html-sanitizer.ts,Frontend API or utility,
+apps/frontend/lib/utils/keyword-matcher.ts,Frontend API or utility,
+apps/frontend/lib/utils/preview-error.ts,Frontend API or utility,
+apps/frontend/lib/utils/resume-content.ts,Frontend API or utility,
+apps/frontend/lib/utils/resume-draft-storage.ts,Frontend API or utility,#933;#934;#935;#936;#937
+apps/frontend/lib/utils/resume-normalization.ts,Frontend API or utility,
+apps/frontend/lib/utils/resume-wizard-storage.ts,Frontend API or utility,#938;#967;#968
+apps/frontend/lib/utils/section-helpers.ts,Frontend API or utility,
+apps/frontend/lib/utils/tracker-column-visibility.ts,Frontend API or utility,
+apps/frontend/messages/en.json,Localized UI copy,#933;#934;#935;#936;#937;#938;#952;#953;#954;#967;#968;#973;#974
+apps/frontend/messages/es.json,Localized UI copy,#933;#934;#935;#936;#937;#938;#952;#953;#954;#967;#968;#973;#974
+apps/frontend/messages/fr.json,Localized UI copy,#933;#934;#935;#936;#937;#938;#952;#953;#954;#967;#968;#973;#974
+apps/frontend/messages/ja.json,Localized UI copy,#933;#934;#935;#936;#937;#938;#952;#953;#954;#967;#968;#973;#974
+apps/frontend/messages/ko.json,Localized UI copy,#933;#934;#935;#936;#937;#938;#952;#953;#954;#967;#968;#973;#974
+apps/frontend/messages/pt-BR.json,Localized UI copy,#933;#934;#935;#936;#937;#938;#952;#953;#954;#967;#968;#973;#974
+apps/frontend/messages/zh.json,Localized UI copy,#933;#934;#935;#936;#937;#938;#952;#953;#954;#967;#968;#973;#974
+apps/frontend/next.config.ts,Frontend asset or tooling,
+apps/frontend/package-lock.json,Frontend asset or tooling,
+apps/frontend/package.json,Frontend asset or tooling,
+apps/frontend/postcss.config.mjs,Frontend asset or tooling,
+apps/frontend/public/logo.svg,Frontend asset or tooling,
+apps/frontend/tests/additional-info-newlines.test.tsx,Frontend verification,
+apps/frontend/tests/api-client.test.ts,Frontend verification,#939;#964;#965
+apps/frontend/tests/api-config.test.ts,Frontend verification,
+apps/frontend/tests/api-resume.test.ts,Frontend verification,
+apps/frontend/tests/api-tracker.test.ts,Frontend verification,
+apps/frontend/tests/browser/reliability_flow.py,Frontend verification,#973;#974
+apps/frontend/tests/confirm-dialog.test.tsx,Frontend verification,
+apps/frontend/tests/dashboard-errors.test.tsx,Frontend verification,#935;#936;#937;#966
+apps/frontend/tests/dashboard-master-choice.test.tsx,Frontend verification,
+apps/frontend/tests/dashboard-refresh.test.tsx,Frontend verification,#952;#953;#954;#966
+apps/frontend/tests/dashboard-upload-lifecycle.test.tsx,Frontend verification,#939;#964;#965
+apps/frontend/tests/description-list.test.tsx,Frontend verification,
+apps/frontend/tests/description-styles.test.ts,Frontend verification,
+apps/frontend/tests/diff-preview-modal.test.tsx,Frontend verification,
+apps/frontend/tests/download-utils.test.ts,Frontend verification,
+apps/frontend/tests/enrichment-preview-errors.test.tsx,Frontend verification,#973;#974
+apps/frontend/tests/html-sanitizer.test.ts,Frontend verification,
+apps/frontend/tests/i18n-locale-parity.test.ts,Frontend verification,
+apps/frontend/tests/i18n-server.test.ts,Frontend verification,
+apps/frontend/tests/i18n-utils.test.ts,Frontend verification,
+apps/frontend/tests/interview-prep-view.test.tsx,Frontend verification,
+apps/frontend/tests/keyword-matcher.test.ts,Frontend verification,
+apps/frontend/tests/manage-columns-dialog.test.tsx,Frontend verification,
+apps/frontend/tests/operation-owner.test.tsx,Frontend verification,#973;#974
+apps/frontend/tests/preview-error.test.ts,Frontend verification,
+apps/frontend/tests/regenerate-wizard.test.tsx,Frontend verification,#973;#974
+apps/frontend/tests/resume-builder-attachments.test.tsx,Frontend verification,#935;#936;#937;#938;#967;#968
+apps/frontend/tests/resume-builder-autosave.test.tsx,Frontend verification,#938;#967;#968
+apps/frontend/tests/resume-builder-identity.test.tsx,Frontend verification,#933;#934;#935;#936;#937;#938;#967;#968
+apps/frontend/tests/resume-clean.test.tsx,Frontend verification,
+apps/frontend/tests/resume-content-parity.test.ts,Frontend verification,
+apps/frontend/tests/resume-content.test.ts,Frontend verification,
+apps/frontend/tests/resume-draft-storage.test.ts,Frontend verification,
+apps/frontend/tests/resume-latex.test.tsx,Frontend verification,
+apps/frontend/tests/resume-normalization.test.ts,Frontend verification,
+apps/frontend/tests/resume-upload-dialog.test.tsx,Frontend verification,#939;#952;#953;#954;#964;#965;#973;#974
+apps/frontend/tests/resume-viewer-delete.test.tsx,Frontend verification,
+apps/frontend/tests/resume-viewer-enrichment-lifecycle.test.tsx,Frontend verification,#973;#974
+apps/frontend/tests/resume-viewer-errors.test.tsx,Frontend verification,#935;#936;#937;#952;#953;#954;#973;#974
+apps/frontend/tests/resume-vivid.test.tsx,Frontend verification,
+apps/frontend/tests/resume-wizard-api.test.ts,Frontend verification,
+apps/frontend/tests/resume-wizard-completion.test.tsx,Frontend verification,#938;#967;#968
+apps/frontend/tests/resume-wizard-live-preview.test.tsx,Frontend verification,
+apps/frontend/tests/resume-wizard-page.test.tsx,Frontend verification,#938;#967;#968
+apps/frontend/tests/resume-wizard-question-card.test.tsx,Frontend verification,
+apps/frontend/tests/resume-wizard-storage.test.ts,Frontend verification,#938;#967;#968
+apps/frontend/tests/retry-processing-recovery.test.ts,Frontend verification,#952;#953;#954
+apps/frontend/tests/rich-text-editor-extensions.test.tsx,Frontend verification,
+apps/frontend/tests/section-helpers.test.ts,Frontend verification,
+apps/frontend/tests/tailor-page-lifecycle.test.tsx,Frontend verification,#973;#974
+apps/frontend/tests/template-description-styles.test.tsx,Frontend verification,
+apps/frontend/tests/template-registration.test.ts,Frontend verification,
+apps/frontend/tests/tracker-column-visibility.test.ts,Frontend verification,
+apps/frontend/tests/tracker-reorder.test.ts,Frontend verification,
+apps/frontend/tests/use-file-upload.test.tsx,Frontend verification,#939;#964;#965;#973;#974
+apps/frontend/tests/wizard-hook-lifecycle.test.tsx,Frontend verification,#973;#974
+apps/frontend/tsconfig.json,Frontend asset or tooling,
+apps/frontend/vitest.config.ts,Frontend asset or tooling,
+apps/frontend/vitest.setup.ts,Frontend asset or tooling,
+assets/Resume_Matcher_Demo.gif,Repository configuration or documentation,
+assets/Resume_Matcher_Demo_2.gif,Repository configuration or documentation,
+assets/Resume_Matcher_Video.mp4,Repository configuration or documentation,
+assets/Star Resume Matcher.png,Repository configuration or documentation,
+assets/contributors.png,Repository configuration or documentation,
+assets/cover_letter.png,Repository configuration or documentation,
+assets/cover_letter_es.png,Repository configuration or documentation,
+assets/cover_letter_ja.png,Repository configuration or documentation,
+assets/cover_letter_zh-CN.png,Repository configuration or documentation,
+assets/creators_note.png,Repository configuration or documentation,
+assets/favicon.ico,Repository configuration or documentation,
+assets/features.png,Repository configuration or documentation,
+assets/header.png,Repository configuration or documentation,
+assets/how_to_contribute.png,Repository configuration or documentation,
+assets/how_to_install_resumematcher.png,Repository configuration or documentation,
+assets/installing_resume_matcher.png,Repository configuration or documentation,
+assets/keyword_highlighter.png,Repository configuration or documentation,
+assets/keyword_highlighter_ja.png,Repository configuration or documentation,
+assets/keyword_highlighter_zh-CN.png,Repository configuration or documentation,
+assets/logo.svg,Repository configuration or documentation,
+assets/master_resume_view.png,Repository configuration or documentation,
+assets/page_2.png,Repository configuration or documentation,
+assets/pdf-templates/modern-single-column.jpg,Repository configuration or documentation,
+assets/pdf-templates/modern-single-column.pdf,Repository configuration or documentation,
+assets/pdf-templates/modern-two-column.jpg,Repository configuration or documentation,
+assets/pdf-templates/modern-two-column.pdf,Repository configuration or documentation,
+assets/pdf-templates/single-column.jpg,Repository configuration or documentation,
+assets/pdf-templates/single-column.pdf,Repository configuration or documentation,
+assets/pdf-templates/two-column.jpg,Repository configuration or documentation,
+assets/pdf-templates/two-column.pdf,Repository configuration or documentation,
+assets/resume_matcher_discord.png,Repository configuration or documentation,
+assets/resume_matcher_features.png,Repository configuration or documentation,
+assets/resume_matcher_linkedin.png,Repository configuration or documentation,
+assets/sponsors.png,Repository configuration or documentation,
+assets/star_resume_matcher.png,Repository configuration or documentation,
+assets/step_1.png,Repository configuration or documentation,
+assets/step_2.png,Repository configuration or documentation,
+assets/step_2_zh-CN.png,Repository configuration or documentation,
+assets/step_3.png,Repository configuration or documentation,
+assets/step_5.png,Repository configuration or documentation,
+assets/step_5_ja.png,Repository configuration or documentation,
+assets/step_5_zh-CN.png,Repository configuration or documentation,
+assets/supporting_resume_matcher.png,Repository configuration or documentation,
+docker-compose.yml,Repository configuration or documentation,
+docker/start.sh,Repository configuration or documentation,
+docs/agent/README.md,Documentation,#948;#949;#950;#951;#973;#974
+docs/agent/apis/api-flow-maps.md,Documentation,
+docs/agent/apis/backend-requirements.md,Documentation,
+docs/agent/apis/front-end-apis.md,Documentation,#938;#946;#948;#949;#950;#951;#952;#953;#954;#955;#956;#957;#958;#959;#963;#967;#968;#971
+docs/agent/architecture/ai-operation-budgets.md,Documentation,#942;#973;#974
+docs/agent/architecture/backend-architecture.md,Documentation,#973;#974
+docs/agent/architecture/backend-guide.md,Documentation,#952;#953;#954;#973;#974
+docs/agent/architecture/frontend-architecture.md,Documentation,
+docs/agent/architecture/frontend-workflow.md,Documentation,#933;#934;#935;#936;#937;#938;#966;#967;#968;#973;#974
+docs/agent/architecture/hosted-review-corrections.md,Documentation,#973;#974
+docs/agent/architecture/hosted-review-dispositions.csv,Documentation,#973;#974
+docs/agent/architecture/prompt-workflow-design.md,Documentation,
+docs/agent/architecture/reliability-file-inventory.csv,Documentation,#973;#974
+docs/agent/architecture/reliability-map.md,Documentation,#973;#974
+docs/agent/architecture/storage-transactions.md,Documentation,#955;#956;#957;#958;#973;#974
+docs/agent/coding-standards.md,Documentation,
+docs/agent/design/pdf-template-guide.md,Documentation,#960;#961;#962;#973;#974
+docs/agent/design/print-pdf-design-spec.md,Documentation,
+docs/agent/design/resume-template-design-spec.md,Documentation,
+docs/agent/design/template-system.md,Documentation,
+docs/agent/design/templates/swiss-single-spec.md,Documentation,
+docs/agent/design/templates/swiss-two-column-spec.md,Documentation,
+docs/agent/features/adding-resume-templates.md,Documentation,
+docs/agent/features/application-tracker.md,Documentation,
+docs/agent/features/custom-sections.md,Documentation,
+docs/agent/features/enrichment.md,Documentation,#973;#974
+docs/agent/features/i18n-preparation.md,Documentation,
+docs/agent/features/i18n.md,Documentation,
+docs/agent/features/jd-match.md,Documentation,
+docs/agent/features/preview-confirmation.md,Documentation,#948;#949;#950;#951;#973;#974
+docs/agent/features/resume-templates.md,Documentation,
+docs/agent/llm-integration.md,Documentation,#940;#941;#943;#944;#945;#947;#969;#970;#973;#974;#975
+docs/agent/quickstart.md,Documentation,
+docs/agent/scope-and-principles.md,Documentation,
+docs/agent/testing-strategy.md,Documentation,#973;#974
+docs/agent/workflow.md,Documentation,#939;#964;#965;#973;#974
+docs/portable/README.md,Documentation,
+docs/portable/nextjs-performance/01-waterfalls.md,Documentation,
+docs/portable/nextjs-performance/02-bundle-size.md,Documentation,
+docs/portable/nextjs-performance/03-server-actions-security.md,Documentation,
+docs/portable/nextjs-performance/04-server-side-perf.md,Documentation,
+docs/portable/nextjs-performance/README.md,Documentation,
+docs/portable/nextjs-performance/checklist.md,Documentation,
+docs/portable/swiss-design-system/README.md,Documentation,
+docs/portable/swiss-design-system/ai-prompt.md,Documentation,
+docs/portable/swiss-design-system/anti-patterns.md,Documentation,
+docs/portable/swiss-design-system/components.md,Documentation,
+docs/portable/swiss-design-system/layouts.md,Documentation,
+docs/portable/swiss-design-system/tokens.md,Documentation,
+docs/superpowers/plans/2026-03-23-diff-based-improvement.md,Documentation,
+docs/superpowers/plans/2026-04-17-dev-issues-754-751-749.md,Documentation,
+docs/superpowers/plans/2026-04-17-litellm-reasoning-hardening.md,Documentation,
+docs/superpowers/plans/2026-05-06-resume-tailor-verifier-loop.md,Documentation,
+docs/superpowers/plans/2026-06-01-agentic-e2e-monitor.md,Documentation,
+docs/superpowers/plans/2026-06-03-resume-templates-latex-clean-vivid.md,Documentation,
+docs/superpowers/plans/2026-06-04-resume-wizard-redesign.md,Documentation,
+docs/superpowers/specs/2026-03-23-diff-based-improvement-design.md,Documentation,
+docs/superpowers/specs/2026-04-10-health-check-fix-design.md,Documentation,
+docs/superpowers/specs/2026-04-17-custom-feature-prompts-design.md,Documentation,
+docs/superpowers/specs/2026-04-17-litellm-reasoning-hardening-design.md,Documentation,
+docs/superpowers/specs/2026-04-17-openai-compatible-provider-design.md,Documentation,
+docs/superpowers/specs/2026-04-17-settings-error-overflow-design.md,Documentation,
+docs/superpowers/specs/2026-06-01-agentic-e2e-monitor-design.md,Documentation,
+docs/superpowers/specs/2026-06-03-resume-templates-latex-clean-vivid-design.md,Documentation,
+docs/superpowers/specs/2026-06-04-resume-wizard-design.md,Documentation,
+docs/superpowers/specs/2026-06-04-resume-wizard-redesign-design.md,Documentation,
+scripts/check_locale_parity.py,Repository configuration or documentation,

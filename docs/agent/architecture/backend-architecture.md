@@ -24,55 +24,60 @@ apps/backend/app/
 ## API Endpoints
 
 ### Health & Status
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/v1/health` | Liveness probe (no LLM call) |
-| GET | `/api/v1/status` | Full system status (LLM probe + DB stats, each isolated → 200 with degraded state on partial failure) |
+
+| Method | Endpoint         | Description                                                                                           |
+| ------ | ---------------- | ----------------------------------------------------------------------------------------------------- |
+| GET    | `/api/v1/health` | Liveness probe (no LLM call)                                                                          |
+| GET    | `/api/v1/status` | Full system status (LLM probe + DB stats, each isolated → 200 with degraded state on partial failure) |
 
 ### Configuration
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET/PUT | `/api/v1/config/llm-api-key` | LLM config (no longer persists a key) |
-| POST | `/api/v1/config/llm-test` | Test connection |
-| GET/POST/DELETE | `/api/v1/config/api-keys` | Per-provider encrypted API keys |
+
+| Method          | Endpoint                     | Description                           |
+| --------------- | ---------------------------- | ------------------------------------- |
+| GET/PUT         | `/api/v1/config/llm-api-key` | LLM config (no longer persists a key) |
+| POST            | `/api/v1/config/llm-test`    | Test connection                       |
+| GET/POST/DELETE | `/api/v1/config/api-keys`    | Per-provider encrypted API keys       |
 
 ### Resumes
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/resumes/upload` | Upload PDF/DOCX |
-| GET | `/resumes?resume_id=` | Fetch resume |
-| GET | `/resumes/list` | List all |
-| POST | `/resumes/improve` | Tailor for job (LLM) |
-| PATCH | `/resumes/{id}` | Update |
-| GET | `/resumes/{id}/pdf` | Download PDF |
-| DELETE | `/resumes/{id}` | Delete |
+
+| Method | Endpoint              | Description          |
+| ------ | --------------------- | -------------------- |
+| POST   | `/resumes/upload`     | Upload PDF/DOC/DOCX  |
+| GET    | `/resumes?resume_id=` | Fetch resume         |
+| GET    | `/resumes/list`       | List all             |
+| POST   | `/resumes/improve`    | Tailor for job (LLM) |
+| PATCH  | `/resumes/{id}`       | Update               |
+| GET    | `/resumes/{id}/pdf`   | Download PDF         |
+| DELETE | `/resumes/{id}`       | Delete               |
 
 ### Jobs
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/jobs/upload` | Store job description |
-| GET | `/jobs/{id}` | Fetch job |
+
+| Method | Endpoint       | Description           |
+| ------ | -------------- | --------------------- |
+| POST   | `/jobs/upload` | Store job description |
+| GET    | `/jobs/{id}`   | Fetch job             |
 
 ### Applications (Kanban tracker)
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/applications` | All cards grouped by column (7 status keys) |
-| POST | `/applications` | Manual add (creates job + card) |
-| GET | `/applications/{id}` | Card + JD + resume (resume null if deleted) |
-| PATCH | `/applications/{id}` | Update status/position/notes/company/role |
-| PATCH | `/applications/bulk` | Move many cards to one column |
-| DELETE | `/applications/{id}` | Delete one card |
-| POST | `/applications/bulk-delete` | Delete many cards |
+
+| Method | Endpoint                    | Description                                 |
+| ------ | --------------------------- | ------------------------------------------- |
+| GET    | `/applications`             | All cards grouped by column (7 status keys) |
+| POST   | `/applications`             | Manual add (creates job + card)             |
+| GET    | `/applications/{id}`        | Card + JD + resume (resume null if deleted) |
+| PATCH  | `/applications/{id}`        | Update status/position/notes/company/role   |
+| PATCH  | `/applications/bulk`        | Move many cards to one column               |
+| DELETE | `/applications/{id}`        | Delete one card                             |
+| POST   | `/applications/bulk-delete` | Delete many cards                           |
 
 ## Database (`database.py`, `models.py`, `db_engine.py`)
 
 **SQLite** via SQLAlchemy 2.0 async (`aiosqlite`). DB file: `data/resume_matcher.db`.
 `database.py` is an async `Database` facade (global `db` singleton) — same method
 names/signatures as before, but it returns **plain dicts**, never ORM rows.
-ORM models live in `models.py` (declarative `Base` + `Resume`/`Job`/`Improvement`/`Application`/`ApiKey`);
+ORM models live in `models.py` (declarative `Base` + `Resume`/`Job`/`Improvement`/`Application`/`TailoringPreview`/`ApiKey`);
 engine/session plumbing lives in `db_engine.py`.
 
-Tables: `resumes`, `jobs`, `improvements`, `applications`, `api_keys` (encrypted).
+Tables: `resumes`, `jobs`, `improvements`, `applications`, `tailoring_previews`, `api_keys` (encrypted).
 
 ```python
 await db.create_resume(content, content_type, filename, is_master, processed_data)
@@ -92,10 +97,14 @@ the document tables + `applications`; a **sync** engine serves the encrypted
 through `llm.py`. Both apply PRAGMAs `journal_mode=WAL`, `foreign_keys=ON`,
 `busy_timeout` on connect.
 
-**Single-master invariant** is preserved by an `asyncio.Lock`
-(`create_resume_atomic_master`) plus a partial unique index on `is_master`.
-**Jobs' dynamic pipeline fields** (`preview_hash`/`preview_hashes`, `job_keywords`,
-`company`/`role`) are stored in a `metadata_json` JSON column and flattened on read.
+**Single-master invariant** is enforced by a partial unique index on `is_master`.
+Master replacement and tracker read-modify-write operations reserve SQLite writes
+with `BEGIN IMMEDIATE`, including across Database instances.
+**Jobs' dynamic fields** (`job_keywords`, `job_keywords_hash`, `company`/`role`,
+`preview_hash`, `preview_hashes`, and `preview_prompt_id`) are stored in
+`metadata_json` and flattened on read; immutable preview identity, fingerprints,
+claims and cached confirmation responses live in `tailoring_previews`.
+See [storage transactions](storage-transactions.md) and [confirmation](../features/preview-confirmation.md).
 `Application` dedupes on `(job_id, resume_id)` via a `UniqueConstraint`.
 
 ### Migration & encrypted keys
@@ -117,31 +126,37 @@ through `llm.py`. Both apply PRAGMAs `journal_mode=WAL`, `foreign_keys=ON`,
 
 ```python
 await check_llm_health(config)     # 30s timeout
-await complete(prompt, ...)        # 120s timeout
-await complete_json(prompt, ...)   # 180s timeout, JSON mode + retries
+await complete(prompt, ...)        # 120s base, adaptive and remaining-budget capped
+await complete_json(prompt, ...)   # 180s base, schema-aware bounded recovery
 ```
 
 **Key Features:**
+
 - API keys passed directly (avoids os.environ race conditions)
 - Auto JSON mode for supported providers
-- 2 retries with lower temperature
+- Default 2 content retries; increasing supported sampling values (0.1→0.3→0.5), with caller-specific retry counts
+- Separate explicit transport policy; cancellation propagates
+- One operation-wide deadline includes preloads, retries and persistence; [limits](ai-operation-budgets.md)
 - Bracket-matching JSON extraction
 
 ## Services
 
 ### Parser (`services/parser.py`)
+
 ```python
-await parse_document(content, filename) → str  # PDF/DOCX → Markdown
+await parse_document(content, filename) → str  # PDF/DOC/DOCX → Markdown
 await parse_resume_to_json(markdown) → dict    # LLM call
 ```
 
 ### Improver (`services/improver.py`)
+
 ```python
 await extract_job_keywords(job_desc) → dict    # LLM call
 await improve_resume(original, job, keywords)  # LLM call
 ```
 
 ### Cover Letter (`services/cover_letter.py`)
+
 ```python
 await generate_cover_letter(resume, job) → str    # LLM call
 await generate_outreach_message(resume, job) → str # LLM call
@@ -156,10 +171,16 @@ await render_resume_pdf(url, page_size, selector=".resume-print")
 ```
 
 **Critical:** CSS must whitelist print classes in `globals.css`:
+
 ```css
 @media print {
-  body * { visibility: hidden !important; }
-  .resume-print, .resume-print * { visibility: visible !important; }
+  body * {
+    visibility: hidden !important;
+  }
+  .resume-print,
+  .resume-print * {
+    visibility: visible !important;
+  }
 }
 ```
 
@@ -181,6 +202,7 @@ longer persists a key.
 ## Error Handling
 
 Log detailed errors server-side, return generic messages to clients:
+
 ```python
 except Exception as e:
     logger.error(f"Failed: {e}")
