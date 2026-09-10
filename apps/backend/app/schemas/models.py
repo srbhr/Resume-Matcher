@@ -7,6 +7,10 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
+from app.ai_limits import validate_source_size
+from app.schemas.refinement import RefinementStats
+
+
 _TEXT_VALUE_KEYS = (
     "text",
     "summary",
@@ -615,34 +619,12 @@ class ATSScore(BaseModel):
     )
 
 
-class RefinementStats(BaseModel):
-    """Statistics from the multi-pass refinement process."""
-
-    passes_completed: int = Field(default=0, ge=0, description="Number of passes run")
-    keywords_injected: int = Field(
-        default=0, ge=0, description="Number of keywords injected"
-    )
-    ai_phrases_removed: list[str] = Field(
-        default_factory=list, description="List of AI phrases that were removed"
-    )
-    alignment_violations_fixed: int = Field(
-        default=0, ge=0, description="Number of alignment violations corrected"
-    )
-    initial_match_percentage: float = Field(
-        default=0.0,
-        ge=0.0,
-        le=100.0,
-        description="Keyword match before refinement",
-    )
-    final_match_percentage: float = Field(
-        default=0.0, ge=0.0, le=100.0, description="Keyword match after refinement"
-    )
-
-
 class ImproveResumeData(BaseModel):
     """Data payload for improve response."""
 
     request_id: str
+    preview_id: str | None = None
+    preview_expires_at: str | None = None
     resume_id: str | None = Field(
         default=None,
         description="Null for preview responses; populated when the tailored resume is persisted.",
@@ -684,8 +666,17 @@ class ImproveResumeConfirmRequest(BaseModel):
 
     resume_id: str
     job_id: str
+    preview_id: str | None = None
     improved_data: ResumeData
     improvements: list[ImprovementSuggestion]
+
+    @model_validator(mode="after")
+    def _validate_source_budget(self) -> "ImproveResumeConfirmRequest":
+        # A preview-sized resume remains confirmable when suggestions/IDs are
+        # added to its envelope. Each independently bounded source stays capped.
+        validate_source_size(self.improved_data.model_dump(mode="json"))
+        validate_source_size(self.model_dump(mode="json", exclude={"improved_data"}))
+        return self
 
 
 # Config Models

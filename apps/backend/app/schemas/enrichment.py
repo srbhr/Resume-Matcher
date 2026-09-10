@@ -1,8 +1,10 @@
 """Pydantic models for AI-powered resume enrichment."""
 
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
+
+from app.ai_limits import validate_source_size
 
 
 class EnrichmentItem(BaseModel):
@@ -37,16 +39,23 @@ class AnswerInput(BaseModel):
     """User's answer to a clarifying question."""
 
     question_id: str
-    answer: str
+    answer: str = Field(max_length=6000)
     item_id: str | None = None  # When provided, skips redundant re-analysis
-    question_text: str | None = None  # Original question for prompt context in fast path
+    question_text: str | None = Field(
+        default=None, max_length=2000
+    )  # Original question for prompt context in fast path
 
 
 class EnhanceRequest(BaseModel):
     """Request to generate enhanced descriptions from answers."""
 
     resume_id: str
-    answers: list[AnswerInput]
+    answers: list[AnswerInput] = Field(max_length=40)
+
+    @model_validator(mode="after")
+    def _validate_source_budget(self) -> "EnhanceRequest":
+        validate_source_size(self.model_dump(mode="json"))
+        return self
 
 
 class EnhancedDescription(BaseModel):
@@ -59,10 +68,21 @@ class EnhancedDescription(BaseModel):
     enhanced_description: list[str] = Field(default_factory=list)
 
 
+class EnhancementItemError(BaseModel):
+    """A safe, non-fatal error for one requested enhancement item."""
+
+    item_id: str
+    item_type: str
+    title: str
+    subtitle: str | None = None
+    message: str
+
+
 class EnhancementPreview(BaseModel):
     """Preview of all enhancements before applying."""
 
     enhancements: list[EnhancedDescription] = Field(default_factory=list)
+    errors: list[EnhancementItemError] = Field(default_factory=list)
 
 
 class ApplyEnhancementsRequest(BaseModel):
@@ -85,16 +105,23 @@ class RegenerateItemInput(BaseModel):
     item_type: RegenerateItemType
     title: str
     subtitle: str | None = None
-    current_content: list[str] = Field(default_factory=list)
+    current_content: list[Annotated[str, Field(max_length=6000)]] = Field(
+        default_factory=list, max_length=100
+    )
 
 
 class RegenerateRequest(BaseModel):
     """Request to regenerate selected resume items."""
 
     resume_id: str
-    items: list[RegenerateItemInput]
+    items: list[RegenerateItemInput] = Field(max_length=20)
     instruction: str = Field(max_length=2000)  # User's feedback/instruction for improvement
     output_language: str = "en"
+
+    @model_validator(mode="after")
+    def _validate_source_budget(self) -> "RegenerateRequest":
+        validate_source_size(self.model_dump(mode="json"))
+        return self
 
 
 class RegeneratedItem(BaseModel):

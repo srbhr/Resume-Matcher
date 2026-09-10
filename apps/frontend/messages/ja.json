@@ -30,7 +30,8 @@
     "unknown": "不明",
     "keysCleared": "APIキーが正常にクリアされました",
     "databaseReset": "データベースが正常にリセットされました",
-    "popupBlocked": "ポップアップがブロックされました。ポップアップを許可するか、次のURLを手動で開いてください: {url}"
+    "popupBlocked": "ポップアップがブロックされました。ポップアップを許可するか、次のURLを手動で開いてください: {url}",
+    "resumeDeleted": "この履歴書は削除されました。別の履歴書をアップロードするか選択してください。"
   },
   "home": {
     "brandLine1": "履歴書",
@@ -99,6 +100,10 @@
       "dropzoneSubtitle": "PDF、DOC、DOCX（最大 4MB）",
       "tryDifferentFile": "別のファイルを試す",
       "parsingFailedKeepOpen": "AI 解析に失敗しました。別のファイルを試すか、このダイアログを閉じてください。"
+    },
+    "errors": {
+      "loadFailed": "履歴書を読み込めませんでした。もう一度お試しください。",
+      "deleteFailed": "履歴書を削除できませんでした。現在の履歴書は引き続き利用できます。"
     }
   },
   "builder": {
@@ -113,11 +118,13 @@
       "localDraft": "下書きをローカルに保存しました",
       "saveNow": "今すぐ保存",
       "retrySave": "保存を再試行",
-      "savedButton": "保存済み"
+      "savedButton": "保存済み",
+      "localDraftUnavailable": "ローカル下書きを保存できません"
     },
     "draftRecovery": {
       "title": "ローカル下書きを復元しますか？",
       "description": "ブラウザ内のローカル下書きがサーバーに保存された内容と異なります。復元して編集を続けるか、サーバー版を使用してローカル下書きを破棄できます。",
+      "newDescription": "このブラウザーには未保存の履歴書の下書きがあります。復元して編集を続けるか、破棄して新しく作成してください。",
       "restoreDraft": "下書きを復元",
       "useServer": "サーバー版を使用"
     },
@@ -263,14 +270,17 @@
         "newLabel": "新しい内容",
         "noContent": "内容なし",
         "applying": "適用中...",
-        "loading": "改善された内容を生成中..."
+        "loading": "改善された内容を生成中...",
+        "retryRefresh": "再読み込み",
+        "refreshing": "再読み込み中..."
       },
       "errors": {
         "generationFailed": "生成に失敗しました。もう一度お試しください。",
         "applyFailed": "変更の適用に失敗しました。もう一度お試しください。",
         "resumeChanged": "再生成後に履歴書の内容が変更されました。再生成してからもう一度お試しください。",
         "noChangesToApply": "適用できる変更がありません。",
-        "networkError": "ネットワークエラー。接続を確認してください。"
+        "networkError": "ネットワークエラー。接続を確認してください。",
+        "refreshFailed": "変更は保存されましたが、履歴書を再読み込みできませんでした。再読み込みをお試しください。"
       }
     },
     "jdMatch": {
@@ -490,6 +500,12 @@
       "coverLetterGenerateFailed": "カバーレターの生成に失敗しました: {error}",
       "outreachGenerateFailed": "連絡メールの生成に失敗しました: {error}",
       "interviewPrepGenerateFailed": "面接準備の生成に失敗しました: {error}"
+    },
+    "leaveWithoutDraft": {
+      "title": "未保存の変更を残して移動しますか？",
+      "description": "最新の変更をサーバーと同期できず、このブラウザーにも保存できませんでした。今移動すると変更が失われる可能性があります。",
+      "leave": "保存せずに移動",
+      "stay": "編集を続ける"
     }
   },
   "enrichment": {
@@ -516,14 +532,20 @@
       "addingLabel": "追加",
       "existingCount": "（既存 {count} 件）",
       "newCount": "（新規 {count} 件）",
-      "noExistingDescription": "既存の説明はありません"
+      "noExistingDescription": "既存の説明はありません",
+      "partialFailure": "一部の項目を改善できませんでした",
+      "partialFailureDescription": "以下の項目は変更されません。成功した改善を適用し、残りの項目は後でもう一度お試しください。"
     },
     "complete": {
       "title": "履歴書を強化しました！",
       "updatedCountSingular": "{count} 件を更新しました",
       "updatedCountPlural": "{count} 件を更新しました",
       "updatedFallback": "強化した記述を履歴書に反映しました",
-      "doneButton": "完了"
+      "doneButton": "完了",
+      "refreshFailedTitle": "保存済み — 再読み込みが必要です",
+      "refreshFailed": "強化内容は保存されましたが、この画面を再読み込みできませんでした。再試行して最新の履歴書を表示してください。",
+      "retryRefresh": "再読み込み",
+      "refreshing": "履歴書を再読み込み中..."
     },
     "noImprovements": {
       "title": "履歴書はとても良い状態です！",
@@ -531,7 +553,8 @@
     },
     "error": {
       "title": "エラーが発生しました",
-      "unexpected": "予期しないエラーが発生しました"
+      "unexpected": "予期しないエラーが発生しました",
+      "answerRequired": "改善内容を生成する前に、少なくとも1つの質問に回答してください。"
     }
   },
   "tailor": {
@@ -609,7 +632,8 @@
       "timeout": "履歴書プレビューは {minutes} 分でタイムアウトしました。求人内容を短くするか、よりシンプルなプロンプトで再試行してください。",
       "failedToGenerate": "履歴書を生成できませんでした。設定で API キーを確認してから、もう一度お試しください。",
       "failedToPreview": "履歴書をプレビューできませんでした。設定で API キーを確認してから、もう一度お試しください。",
-      "failedToConfirm": "変更を適用できませんでした。もう一度お試しください。"
+      "failedToConfirm": "変更を適用できませんでした。もう一度お試しください。",
+      "previewUnavailable": "プレビューの有効期限が切れたか、元の履歴書が変更されました。保存する前に新しいプレビューを生成してください。"
     }
   },
   "settings": {
@@ -789,9 +813,13 @@
       "notProcessedYet": "履歴書はまだ処理されていません。カスタマイズ機能で構造化履歴書を生成してください。",
       "noDataAvailable": "利用可能な履歴書データがありません。",
       "failedToLoad": "履歴書データの読み込みに失敗しました。",
-      "failedToDelete": "履歴書の削除に失敗しました。もう一度お試しください。"
+      "failedToDelete": "履歴書の削除に失敗しました。もう一度お試しください。",
+      "failedToDownload": "履歴書をダウンロードできませんでした。もう一度お試しください。",
+      "failedToRename": "履歴書の名前を変更できませんでした。もう一度お試しください。"
     },
-    "titlePlaceholder": "履歴書のタイトルを入力..."
+    "titlePlaceholder": "履歴書のタイトルを入力...",
+    "downloadFailedTitle": "ダウンロードに失敗しました",
+    "renameFailedTitle": "名前の変更に失敗しました"
   },
   "preview": {
     "margins": "余白",
@@ -941,7 +969,11 @@
       "review": "確認して完了",
       "create": "マスター履歴書を作成",
       "keepAdding": "続けて追加",
-      "backToDashboard": "ダッシュボードに戻る"
+      "backToDashboard": "ダッシュボードに戻る",
+      "openCreated": "作成した履歴書を開く",
+      "retryDraftBackup": "ローカル保存を再試行",
+      "stay": "このページに留まる",
+      "leaveWithoutSaving": "保存せずに移動"
     },
     "preview": {
       "label": "ライブ下書き",
@@ -954,7 +986,16 @@
     },
     "errors": {
       "turnFailed": "ウィザードはその回答を保存できませんでした。もう一度お試しください。",
-      "finalizeFailed": "ウィザードはマスター履歴書を作成できませんでした。もう一度お試しください。"
+      "finalizeFailed": "ウィザードはマスター履歴書を作成できませんでした。もう一度お試しください。",
+      "createdNavigationFailed": "マスター履歴書は作成されましたが、このページから自動的に開けませんでした。下のボタンから続行してください。"
+    },
+    "draftStorageUnavailable": {
+      "title": "ローカル下書きを保存できません",
+      "description": "最新の進行状況はこのタブにのみ残っています。ページを移動または再読み込みする前に、ローカル保存を再試行してください。"
+    },
+    "leaveWithoutDraft": {
+      "title": "ローカル保存なしで移動しますか？",
+      "description": "ローカル保存が完了する前にページを移動または再読み込みすると、最新の進行状況が失われます。"
     },
     "entry": {
       "kicker": "マスター履歴書の設定",
@@ -972,9 +1013,22 @@
         "description": "焦点を絞った質問に答えると、ウィザードが質の高いマスター履歴書の初稿を組み立てます。",
         "action": "ウィザードを開始"
       }
+    },
+    "created": {
+      "title": "マスター履歴書を作成しました",
+      "description": "マスター履歴書を作成しました。開いて編集を続けてください。"
     }
   },
   "tracker": {
+    "manage": "管理",
+    "manageDialog": {
+      "title": "列の管理",
+      "description": "ボードに表示するステージを選択します。",
+      "visible": "表示中",
+      "hidden": "非表示",
+      "lastVisibleHint": "少なくとも1つのステージは表示しておく必要があります。",
+      "close": "完了"
+    },
     "scroll": {
       "prev": "左へスクロール",
       "next": "右へスクロール",

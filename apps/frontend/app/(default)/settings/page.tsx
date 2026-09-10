@@ -62,6 +62,7 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '@/lib/context/language-context';
 import { useTranslations } from '@/lib/i18n';
+import { ATTACHMENT_DRAFT_STORAGE_PREFIX } from '@/lib/utils/attachment-draft-storage';
 import { RESUME_DRAFT_STORAGE_PREFIX, safeStorage } from '@/lib/utils/resume-draft-storage';
 import type { SupportedLanguage } from '@/lib/api/config';
 import type { Locale } from '@/i18n/config';
@@ -624,7 +625,11 @@ export default function SettingsPage() {
       safeStorage.remove('resume_builder_draft');
       try {
         Object.keys(localStorage)
-          .filter((key) => key.startsWith(RESUME_DRAFT_STORAGE_PREFIX))
+          .filter(
+            (key) =>
+              key.startsWith(RESUME_DRAFT_STORAGE_PREFIX) ||
+              key.startsWith(ATTACHMENT_DRAFT_STORAGE_PREFIX)
+          )
           .forEach((key) => safeStorage.remove(key));
       } catch {
         // Enumerating localStorage can throw for the same reasons; the scoped

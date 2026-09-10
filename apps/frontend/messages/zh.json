@@ -30,7 +30,8 @@
     "unknown": "未知",
     "keysCleared": "API密钥已成功清除",
     "databaseReset": "数据库已成功重置",
-    "popupBlocked": "弹窗被阻止。请允许弹窗或手动打开此链接：{url}"
+    "popupBlocked": "弹窗被阻止。请允许弹窗或手动打开此链接：{url}",
+    "resumeDeleted": "此简历已被删除。请上传或选择另一份简历。"
   },
   "home": {
     "brandLine1": "简历",
@@ -99,6 +100,10 @@
       "dropzoneSubtitle": "PDF、DOC、DOCX（最大 4MB）",
       "tryDifferentFile": "尝试其他文件",
       "parsingFailedKeepOpen": "AI 解析失败。请尝试其他文件，或关闭此对话框。"
+    },
+    "errors": {
+      "loadFailed": "无法加载简历，请重试。",
+      "deleteFailed": "无法删除简历。现有简历仍可使用。"
     }
   },
   "builder": {
@@ -113,11 +118,13 @@
       "localDraft": "草稿已在本地保存",
       "saveNow": "立即保存",
       "retrySave": "重试保存",
-      "savedButton": "已保存"
+      "savedButton": "已保存",
+      "localDraftUnavailable": "无法保存本地草稿"
     },
     "draftRecovery": {
       "title": "恢复本地草稿？",
       "description": "浏览器中的本地草稿与服务器已保存版本不同。你可以恢复本地草稿继续编辑，或使用服务器版本并丢弃本地草稿。",
+      "newDescription": "此浏览器中有一份未保存的简历草稿。恢复草稿以继续编辑，或放弃草稿并重新开始。",
       "restoreDraft": "恢复草稿",
       "useServer": "使用服务器版本"
     },
@@ -263,14 +270,17 @@
         "newLabel": "新内容",
         "noContent": "无内容",
         "applying": "正在应用...",
-        "loading": "正在生成改进内容..."
+        "loading": "正在生成改进内容...",
+        "retryRefresh": "重试刷新",
+        "refreshing": "正在刷新..."
       },
       "errors": {
         "generationFailed": "生成内容失败，请重试。",
         "applyFailed": "应用变更失败，请重试。",
         "resumeChanged": "简历内容在重新生成后已发生变化。请重新生成后再试。",
         "noChangesToApply": "没有可应用的变更。",
-        "networkError": "网络错误，请检查您的连接。"
+        "networkError": "网络错误，请检查您的连接。",
+        "refreshFailed": "更改已保存，但无法刷新简历。请重试刷新。"
       }
     },
     "jdMatch": {
@@ -490,6 +500,12 @@
       "coverLetterGenerateFailed": "生成求职信失败：{error}",
       "outreachGenerateFailed": "生成联系邮件失败：{error}",
       "interviewPrepGenerateFailed": "生成面试准备失败：{error}"
+    },
+    "leaveWithoutDraft": {
+      "title": "要带着未保存的更改离开吗？",
+      "description": "最新更改无法同步到服务器，也无法保存在此浏览器中。现在离开可能会丢失这些更改。",
+      "leave": "仍然离开",
+      "stay": "继续编辑"
     }
   },
   "enrichment": {
@@ -516,14 +532,20 @@
       "addingLabel": "新增",
       "existingCount": "（已有 {count} 条）",
       "newCount": "（新增 {count} 条）",
-      "noExistingDescription": "暂无原有描述"
+      "noExistingDescription": "暂无原有描述",
+      "partialFailure": "部分项目未能改进",
+      "partialFailureDescription": "以下项目将保持不变。你可以应用已成功生成的改进，稍后再重试其他项目。"
     },
     "complete": {
       "title": "简历已增强！",
       "updatedCountSingular": "已成功更新 {count} 条内容",
       "updatedCountPlural": "已成功更新 {count} 条内容",
       "updatedFallback": "已将增强描述更新到你的简历中",
-      "doneButton": "完成"
+      "doneButton": "完成",
+      "refreshFailedTitle": "已保存 — 需要刷新",
+      "refreshFailed": "增强内容已保存，但当前页面无法刷新。请重试以查看最新简历。",
+      "retryRefresh": "重试刷新",
+      "refreshing": "正在刷新简历..."
     },
     "noImprovements": {
       "title": "你的简历已经很棒！",
@@ -531,7 +553,8 @@
     },
     "error": {
       "title": "出现错误",
-      "unexpected": "发生了未预期的错误"
+      "unexpected": "发生了未预期的错误",
+      "answerRequired": "请至少回答一个问题后再生成改进内容。"
     }
   },
   "tailor": {
@@ -609,7 +632,8 @@
       "timeout": "简历预览在 {minutes} 分钟后超时。请缩短职位描述，或改用更简单的提示词后重试。",
       "failedToGenerate": "无法生成简历。请在设置中检查 API 密钥后重试。",
       "failedToPreview": "无法预览简历。请在设置中检查 API 密钥后重试。",
-      "failedToConfirm": "无法应用更改。请重试。"
+      "failedToConfirm": "无法应用更改。请重试。",
+      "previewUnavailable": "此预览已过期或原始简历已更改。请先生成新的预览再保存。"
     }
   },
   "settings": {
@@ -789,9 +813,13 @@
       "notProcessedYet": "简历尚未处理。请使用定制功能生成结构化简历。",
       "noDataAvailable": "没有可用的简历数据。",
       "failedToLoad": "加载简历数据失败。",
-      "failedToDelete": "删除简历失败，请重试。"
+      "failedToDelete": "删除简历失败，请重试。",
+      "failedToDownload": "无法下载简历，请重试。",
+      "failedToRename": "无法重命名简历，请重试。"
     },
-    "titlePlaceholder": "输入简历标题..."
+    "titlePlaceholder": "输入简历标题...",
+    "downloadFailedTitle": "下载失败",
+    "renameFailedTitle": "重命名失败"
   },
   "preview": {
     "margins": "页边距",
@@ -941,7 +969,11 @@
       "review": "审查并完成",
       "create": "创建主简历",
       "keepAdding": "继续添加",
-      "backToDashboard": "返回仪表板"
+      "backToDashboard": "返回仪表板",
+      "openCreated": "打开已创建的简历",
+      "retryDraftBackup": "重试本地备份",
+      "stay": "留在此页面",
+      "leaveWithoutSaving": "不保存并离开"
     },
     "preview": {
       "label": "实时草稿",
@@ -954,7 +986,16 @@
     },
     "errors": {
       "turnFailed": "向导无法保存该回答。请重试。",
-      "finalizeFailed": "向导无法创建你的主简历。请重试。"
+      "finalizeFailed": "向导无法创建你的主简历。请重试。",
+      "createdNavigationFailed": "您的主简历已创建，但此页面无法自动打开它。请使用下方按钮继续。"
+    },
+    "draftStorageUnavailable": {
+      "title": "本地草稿不可用",
+      "description": "向导的最新进度仅保留在此标签页中。请在离开或重新加载前重试本地备份。"
+    },
+    "leaveWithoutDraft": {
+      "title": "没有本地备份，仍要离开吗？",
+      "description": "如果在本地备份成功前离开或重新加载，向导的最新进度将会丢失。"
     },
     "entry": {
       "kicker": "主简历设置",
@@ -972,9 +1013,22 @@
         "description": "回答聚焦问题，让向导为你的主简历整理出扎实的初稿。",
         "action": "启动向导"
       }
+    },
+    "created": {
+      "title": "主简历已创建",
+      "description": "您的主简历已创建。打开它以继续编辑。"
     }
   },
   "tracker": {
+    "manage": "管理",
+    "manageDialog": {
+      "title": "管理看板列",
+      "description": "选择在看板上显示的阶段。",
+      "visible": "已显示",
+      "hidden": "已隐藏",
+      "lastVisibleHint": "至少需要保留一个阶段处于显示状态。",
+      "close": "完成"
+    },
     "scroll": {
       "prev": "向左滚动",
       "next": "向右滚动",

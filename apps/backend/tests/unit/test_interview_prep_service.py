@@ -73,6 +73,7 @@ async def test_generate_interview_prep_validates_successful_json():
     mock_get_safe_max_tokens.assert_called_once_with(
         "openai/small-output-model",
         requested=8192,
+        config=mock_get_llm_config.return_value,
     )
     assert mock_complete.await_args.kwargs["max_tokens"] == 4096
     assert mock_complete.await_args.kwargs["schema_type"] == "interview_prep"

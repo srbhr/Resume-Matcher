@@ -1,8 +1,10 @@
 # Testing Strategy & Verification Plan
 
-> **Status:** Living document. Started 2026-05-30 on branch `test/backend-coverage-foundation` (base: `dev`).
+> **Status:** Historical rollout record. Started 2026-05-30 on branch `test/backend-coverage-foundation` (base: `dev`). Assessment counts and completed phases below describe their recorded checkpoints, not the current suite.
 > **Scope:** Backend (`apps/backend`, Phases 1–6) **and** frontend (`apps/frontend`, vitest — §8). Gating is a local `pre-push` hook, not PR CI.
 > **Why this exists:** We shipped a build break that no automation caught, users report "Ollama doesn't work" and "resume won't render," and we had no evidence-based read on whether our tests are real or theater. This doc is the resumable record of the assessment and the plan.
+
+For current flow ownership, recovery behavior, test boundaries, and the complete file inventory, see the [reliability map](architecture/reliability-map.md). For current opt-in provider settings and generated-result evaluation, see the [eval harness](../../apps/backend/tests/evals/README.md). Section 6 below contains the current run commands.
 
 ---
 
@@ -16,7 +18,7 @@
 
 ---
 
-## 2. Current-state assessment (evidence)
+## 2. Initial assessment (historical evidence)
 
 Run command (no `pyproject.toml` change — ephemeral coverage plugin):
 
@@ -129,7 +131,7 @@ Legend: ✅ done · 🚧 in progress · ⬜ planned
 
 **Phase 5 — Eval harness (structural + LLM-as-judge) ✅ COMPLETE** (`tests/evals/`, 31 scorer tests + 1 gated judge)
 - ✅ Pure structural scorers (`sections_preserved`, `no_fabricated_employers`, `jd_keywords_present`, `is_valid_resume`, `personal_info_unchanged`) + golden fixtures, each proven on good AND bad inputs.
-- ✅ LLM-as-judge marked `@pytest.mark.eval`, uses the developer's own configured key, **excluded from the default run** (`addopts -m "not eval"`); run on demand with `uv run pytest -m eval`. Skips cleanly with no key.
+- ✅ At this phase, the LLM-as-judge used the developer's configured key and was **excluded from the default run** (`addopts -m "not eval"`). The current isolated harness additionally requires explicit paid-eval opt-in and provider environment settings; see §6.
 
 **Phase 6 — Local pre-push gate (replaces PR CI) ✅ COMPLETE** (`.githooks/pre-push`)
 - ✅ A version-controlled `pre-push` hook runs the backend suite + a node-free locale-parity check and **blocks the push on red**. Activate per-clone with `git config core.hooksPath .githooks`; bypass with `git push --no-verify`. See `.githooks/README.md`.
@@ -159,9 +161,10 @@ uv run pytest
 # Coverage (ephemeral plugin, no pyproject change)
 uv run --with pytest-cov pytest -q --cov=app --cov-report=term-missing
 
-# Prompt-quality evals on demand — structural scorers always run; the LLM-judge
-# runs only when an LLM key is configured (uses the developer's own key), else skips
-uv run pytest -m eval
+# Generated-result quality evals on demand — explicitly configure provider
+# environment settings as described in tests/evals/README.md before opting in.
+# Test data remains isolated; developer databases/key stores are not imported.
+RM_RUN_PAID_EVAL=1 uv run pytest tests/evals -m eval
 
 # One module
 uv run pytest tests/unit/test_parser.py -q

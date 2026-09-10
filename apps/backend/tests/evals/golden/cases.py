@@ -6,13 +6,13 @@ for one realistic tailoring scenario:
 * ``name``            — a short, human-readable id.
 * ``original``        — the master resume dict (ResumeData-compatible).
 * ``job_description`` — the target JD text.
-* ``jd_keywords``     — keywords the tailored resume is expected to surface
-                        (used by ``jd_keywords_present``).
+* ``jd_keywords``     — all target JD keywords for coverage measurement.
+* ``grounded_keywords`` — source-supported terms expected in a positive fixture.
 * ``tailored_good``   — a faithful, JD-aware tailoring of ``original``. Every
                         section is preserved, no employers are invented, and
-                        the JD keywords appear. Structural scorers should give
-                        this a clean bill of health, and the LLM judge should
-                        score it >= 3.
+                        the source-supported target keywords appear. Structural scorers
+                        should accept it; the paid judge evaluates newly
+                        generated output, not this fixture.
 * ``tailored_bad``    — a deliberately broken tailoring (drops a section,
                         invents an employer, rewrites the candidate's name).
                         Structural scorers MUST flag it. It exists so the
@@ -125,15 +125,14 @@ _CASE1_JD: str = (
     "- Bachelor's degree in CS or equivalent\n"
 )
 
-# A faithful tailoring: same employers, same identity, JD keywords woven in
-# only where they are already true (Kubernetes/CI/CD added to summary + the
-# Acme bullets, which is defensible given the migration work).
+# A faithful tailoring preserves stated evidence. Migration work alone does
+# not establish Kubernetes or CI/CD experience; those target terms stay absent.
 _CASE1_TAILORED_GOOD: dict[str, Any] = {
     "personalInfo": dict(_CASE1_ORIGINAL["personalInfo"]),
     "summary": (
         "Senior backend engineer with 6 years building scalable Python and "
-        "FastAPI APIs and microservices, with hands-on Docker, Kubernetes, "
-        "and AWS experience and a track record of shipping via CI/CD."
+        "FastAPI APIs and microservices, with Docker "
+        "and AWS skills."
     ),
     "workExperience": [
         {
@@ -143,9 +142,9 @@ _CASE1_TAILORED_GOOD: dict[str, Any] = {
             "location": "San Francisco, CA",
             "years": "Jan 2021 - Present",
             "description": [
-                "Built REST APIs serving 50K requests/day using Python, FastAPI, and Docker",
-                "Led migration from a monolith to a microservices architecture deployed on Kubernetes",
-                "Implemented CI/CD pipelines and mentored 3 junior developers on backend best practices",
+                "Built REST APIs serving 50K requests/day using Python and FastAPI",
+                "Led migration from a monolith to a microservices architecture",
+                "Mentored 3 junior developers on backend best practices",
             ],
         },
         {
@@ -155,7 +154,7 @@ _CASE1_TAILORED_GOOD: dict[str, Any] = {
             "location": "New York, NY",
             "years": "Jun 2018 - Dec 2020",
             "description": [
-                "Developed an AWS-hosted payment processing system handling $2M monthly",
+                "Developed a payment processing system handling $2M monthly",
                 "Wrote unit and integration tests improving coverage from 40% to 85%",
             ],
         },
@@ -166,7 +165,6 @@ _CASE1_TAILORED_GOOD: dict[str, Any] = {
         "technicalSkills": [
             "Python",
             "FastAPI",
-            "Kubernetes",
             "Docker",
             "AWS",
             "PostgreSQL",
@@ -287,12 +285,12 @@ _CASE2_JD: str = (
 )
 
 # Faithful tailoring: same employers/identity, reframes the existing SQL/Python
-# and data-quality work toward pipelines/ETL without inventing tools.
+# and data-quality work without inventing tools or assigning them to a role.
 _CASE2_TAILORED_GOOD: dict[str, Any] = {
     "personalInfo": dict(_CASE2_ORIGINAL["personalInfo"]),
     "summary": (
-        "Analytics-minded engineer with 4 years of SQL and Python, building "
-        "ETL workflows, modeling data, and enforcing data quality to power "
+        "Data analyst with 4 years turning datasets into dashboards and reports, using "
+        "SQL, Python and data quality checks to support "
         "reporting and product decisions."
     ),
     "workExperience": [
@@ -303,8 +301,8 @@ _CASE2_TAILORED_GOOD: dict[str, Any] = {
             "location": "Austin, TX",
             "years": "Feb 2022 - Present",
             "description": [
-                "Built weekly KPI dashboards backed by SQL data models for 200+ stakeholders",
-                "Automated recurring ETL reporting in Python, cutting manual effort by 12 hours/week",
+                "Built weekly KPI dashboards in SQL and Tableau for 200+ stakeholders",
+                "Automated recurring reports, cutting manual effort by 12 hours/week",
             ],
         },
         {
@@ -314,7 +312,7 @@ _CASE2_TAILORED_GOOD: dict[str, Any] = {
             "location": "Austin, TX",
             "years": "Aug 2020 - Jan 2022",
             "description": [
-                "Modeled and transformed survey data for 30+ client studies",
+                "Cleaned and modeled survey data for 30+ client studies",
                 "Wrote Python scripts to enforce data quality before analysis",
             ],
         },
@@ -325,7 +323,6 @@ _CASE2_TAILORED_GOOD: dict[str, Any] = {
         "technicalSkills": [
             "SQL",
             "Python",
-            "ETL",
             "data modeling",
             "Tableau",
             "Excel",
@@ -381,6 +378,7 @@ GOLDEN_CASES: list[dict[str, Any]] = [
             "microservices",
             "CI/CD",
         ],
+        "grounded_keywords": ["Python", "FastAPI", "Docker", "AWS", "microservices"],
         "tailored_good": _CASE1_TAILORED_GOOD,
         "tailored_bad": _CASE1_TAILORED_BAD,
     },
@@ -389,6 +387,7 @@ GOLDEN_CASES: list[dict[str, Any]] = [
         "original": _CASE2_ORIGINAL,
         "job_description": _CASE2_JD,
         "jd_keywords": ["SQL", "Python", "ETL", "data quality", "data modeling"],
+        "grounded_keywords": ["SQL", "Python", "data quality", "Tableau"],
         "tailored_good": _CASE2_TAILORED_GOOD,
         "tailored_bad": _CASE2_TAILORED_BAD,
     },

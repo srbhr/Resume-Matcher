@@ -29,12 +29,15 @@ Refactor LLM provider configuration
 ### Frontend Testing
 
 - All contributions must pass `npm run lint`
-- Add Jest or Playwright suites beneath `apps/frontend/__tests__/`
-- Name test files `*.test.tsx`
+- Add Vitest and Testing Library suites beneath `apps/frontend/tests/`
+- Name test files `*.test.ts` or `*.test.tsx`; use Playwright for real-browser checks
 
 ```bash
 # Run linter
 npm run lint
+
+# Run frontend tests
+npm test
 
 # Format code
 npm run format
@@ -53,6 +56,24 @@ uv run pytest
 ```
 
 ## Definition of Done
+
+### Validate the Docker release build before merging
+
+The `Publish Docker Image` workflow builds Linux amd64 and arm64 on pushes to
+`main` and version tags. Its optional `dry_run` input uses the same Dockerfile
+and platform build while skipping registry login and image publication:
+
+```bash
+gh workflow run docker-publish.yml --ref YOUR_BRANCH -f dry_run=true
+```
+
+Inspect that run's result before merging. Pushes to `main`, version tags, and
+manual runs with the default `dry_run=false` retain normal publication behavior.
+Local tests and `npm run build` complement this check; they do not replace the
+Linux multi-platform container build. Registry credentials and service availability
+are still checked by the publishing run after merge.
+
+### Pull request checks
 
 Before marking a PR as ready:
 

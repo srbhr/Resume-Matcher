@@ -1,10 +1,11 @@
 """Schemas for the adaptive one-question-at-a-time AI resume wizard."""
 
-from typing import Literal
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from app.schemas.models import ResumeData
+from app.ai_limits import validate_source_size
 
 ResumeWizardSection = Literal[
     "intro",
@@ -26,7 +27,7 @@ ResumeWizardAction = Literal["start", "answer", "skip", "back", "review"]
 class ResumeWizardQuestion(BaseModel):
     """A single question the wizard asks."""
 
-    text: str = ""
+    text: str = Field(default="", max_length=2000)
     section: ResumeWizardSection = "intro"
 
 
@@ -53,8 +54,8 @@ class ResumeWizardAnswer(BaseModel):
 class ResumeWizardHistoryEntry(BaseModel):
     """One answered question, with a pre-answer draft snapshot for Back."""
 
-    question: str
-    answer: str
+    question: str = Field(max_length=2000)
+    answer: str = Field(max_length=6000)
     section: ResumeWizardSection
     resume_data_before: ResumeData
 
@@ -65,12 +66,23 @@ class ResumeWizardState(BaseModel):
     step: ResumeWizardStep = "intro"
     resume_data: ResumeData = Field(default_factory=ResumeData)
     current_question: ResumeWizardQuestion = Field(default_factory=ResumeWizardQuestion)
-    history: list[ResumeWizardHistoryEntry] = Field(default_factory=list)
+    history: list[ResumeWizardHistoryEntry] = Field(default_factory=list, max_length=15)
     asked_count: int = 0
-    inferred_skills: list[str] = Field(default_factory=list)
+    inferred_skills: list[Annotated[str, Field(max_length=200)]] = Field(
+        default_factory=list, max_length=100
+    )
     is_complete: bool = False
     progress: ResumeWizardProgress = Field(default_factory=ResumeWizardProgress)
-    warnings: list[str] = Field(default_factory=list)
+    warnings: list[Annotated[str, Field(max_length=2000)]] = Field(
+        default_factory=list, max_length=100
+    )
+
+    @model_validator(mode="after")
+    def _validate_source_budget(self) -> "ResumeWizardState":
+        validate_source_size(self.resume_data.model_dump(mode="json"))
+        for entry in self.history:
+            validate_source_size(entry.resume_data_before.model_dump(mode="json"))
+        return self
 
 
 class ResumeWizardTurnRequest(BaseModel):

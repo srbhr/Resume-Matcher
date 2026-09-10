@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { XIcon, Sparkles } from 'lucide-react';
 import { useEnrichmentWizard } from '@/hooks/use-enrichment-wizard';
 import { useTranslations } from '@/lib/i18n';
+import { useOperationOwner } from '@/hooks/use-operation-owner';
 import {
   AnalyzingStep,
   GeneratingStep,
@@ -19,12 +20,15 @@ interface EnrichmentModalProps {
   resumeId: string;
   isOpen: boolean;
   onClose: () => void;
-  onComplete: () => void;
+  onComplete: () => Promise<boolean>;
 }
 
 export function EnrichmentModal({ resumeId, isOpen, onClose, onComplete }: EnrichmentModalProps) {
   const { t } = useTranslations();
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const [refreshFailed, setRefreshFailed] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const { begin, isCurrent, invalidate } = useOperationOwner(resumeId);
 
   const {
     state,
@@ -66,16 +70,41 @@ export function EnrichmentModal({ resumeId, isOpen, onClose, onComplete }: Enric
     };
   }, [isOpen, state.step, startAnalysis]);
 
+  useEffect(() => {
+    if (!isOpen) {
+      invalidate();
+      reset();
+      setRefreshFailed(false);
+      setIsRefreshing(false);
+    }
+  }, [isOpen, invalidate, reset]);
+
   // Handle close
   const handleClose = () => {
+    // Keep the acknowledged apply observable until its refresh settles.
+    if (isRefreshing) return;
+    invalidate();
+    setRefreshFailed(false);
+    setIsRefreshing(false);
     reset();
     onClose();
   };
 
   // Handle complete
-  const handleComplete = () => {
-    reset();
-    onComplete();
+  const handleComplete = async () => {
+    const token = begin();
+    if (token === null) return;
+    setRefreshFailed(false);
+    setIsRefreshing(true);
+    try {
+      const refreshed = await onComplete();
+      if (!isCurrent(token) || !refreshed) return;
+      reset();
+    } catch {
+      if (isCurrent(token)) setRefreshFailed(true);
+    } finally {
+      if (isCurrent(token)) setIsRefreshing(false);
+    }
   };
 
   // Handle backdrop click
@@ -91,7 +120,7 @@ export function EnrichmentModal({ resumeId, isOpen, onClose, onComplete }: Enric
   // Handle ESC key
   const handleCancel = (e: React.SyntheticEvent<HTMLDialogElement, Event>) => {
     // Prevent closing during loading states
-    if (['analyzing', 'generating', 'applying'].includes(state.step)) {
+    if (isRefreshing || ['analyzing', 'generating', 'applying'].includes(state.step)) {
       e.preventDefault();
     } else {
       handleClose();
@@ -128,7 +157,11 @@ export function EnrichmentModal({ resumeId, isOpen, onClose, onComplete }: Enric
             </div>
             {/* Only show close button in non-loading states */}
             {!['analyzing', 'generating', 'applying'].includes(state.step) && (
-              <button onClick={handleClose} className="p-1 hover:bg-paper-tint transition-colors">
+              <button
+                onClick={handleClose}
+                disabled={isRefreshing}
+                className="p-1 hover:bg-paper-tint transition-colors disabled:opacity-50"
+              >
                 <XIcon className="w-5 h-5" />
                 <span className="sr-only">{t('common.close')}</span>
               </button>
@@ -173,14 +206,26 @@ export function EnrichmentModal({ resumeId, isOpen, onClose, onComplete }: Enric
 
       case 'preview':
         return (
-          <PreviewStep enhancements={state.preview} onApply={applyChanges} onCancel={handleClose} />
+          <PreviewStep
+            enhancements={state.preview}
+            errors={state.itemErrors}
+            onApply={applyChanges}
+            onCancel={handleClose}
+          />
         );
 
       case 'applying':
         return <ApplyingStep />;
 
       case 'complete':
-        return <CompleteStep onClose={handleComplete} updatedCount={state.preview.length} />;
+        return (
+          <CompleteStep
+            onClose={handleComplete}
+            updatedCount={state.preview.length}
+            refreshFailed={refreshFailed}
+            isRefreshing={isRefreshing}
+          />
+        );
 
       case 'no-improvements':
         return (

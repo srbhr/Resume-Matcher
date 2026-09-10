@@ -10,6 +10,8 @@ end-to-end checks: the good tailoring must pass every scorer, the bad one must
 trip the relevant scorers.
 """
 
+from typing import Any
+
 import copy
 
 import pytest
@@ -117,22 +119,34 @@ class TestJdKeywordsPresent:
     def test_empty_keyword_list_scores_one(self, sample_resume):
         assert jd_keywords_present(sample_resume, []) == 1.0
 
+    def test_latin_keywords_adjacent_to_cjk_keep_term_boundaries(self) -> None:
+        mixed_script = {"summary": "Pythonによる開発、熟悉Java开发"}
+        javascript_only = {"summary": "负责JavaScript平台开发"}
+
+        assert jd_keywords_present(mixed_script, ["Python", "Java"]) == 1.0
+        assert jd_keywords_present(javascript_only, ["Java", "JavaScript"]) == 0.5
+
     def test_searches_nested_fields(self, sample_resume):
         # "microservices" only appears inside a work-experience bullet.
         assert jd_keywords_present(sample_resume, ["microservices"]) == 1.0
+
+    @pytest.mark.parametrize(
+        "surrounding", [("𠀀", "𰀀"), ("개발", "개발"), ("ᄀ", "ᄂ")]
+    )
+    def test_extended_cjk_boundaries_preserve_latin_terms(
+        self, surrounding: tuple[str, str]
+    ) -> None:
+        before, after = surrounding
+        assert jd_keywords_present({"summary": f"{before}Java{after}"}, ["Java"]) == 1.0
+        assert jd_keywords_present({"summary": f"{before}JavaScript{after}"}, ["Java"]) == 0.0
 
 
 class TestIsValidResume:
     def test_well_formed_resume_is_valid(self, sample_resume):
         assert is_valid_resume(sample_resume) is True
 
-    def test_empty_dict_is_valid_due_to_defaults(self):
-        # Canary: every ResumeData field currently has a default, so {} validates
-        # as an empty resume. If a future schema change makes a field REQUIRED
-        # (no default), is_valid_resume({}) flips to False and this test fails
-        # LOUDLY — by design — flagging that the scorers' "empty is valid"
-        # assumption no longer holds.
-        assert is_valid_resume({}) is True
+    def test_empty_dict_is_not_meaningful_despite_schema_defaults(self) -> None:
+        assert is_valid_resume({}) is False
 
     def test_wrong_type_for_work_experience_is_invalid(self, sample_resume):
         broken = copy.deepcopy(sample_resume)
@@ -181,7 +195,7 @@ class TestGoldenCasesStructural:
     """The golden good/bad tailorings must score exactly as designed."""
 
     @pytest.mark.parametrize("case", GOLDEN_CASES, ids=lambda c: c["name"])
-    def test_good_tailoring_passes_every_scorer(self, case):
+    def test_good_tailoring_passes_every_scorer(self, case: dict[str, Any]) -> None:
         original = case["original"]
         good = case["tailored_good"]
         assert is_valid_resume(original) is True
@@ -189,7 +203,7 @@ class TestGoldenCasesStructural:
         assert sections_preserved(original, good) is True
         assert no_fabricated_employers(original, good) == []
         assert personal_info_unchanged(original, good) is True
-        assert jd_keywords_present(good, case["jd_keywords"]) == 1.0
+        assert jd_keywords_present(good, case["grounded_keywords"]) == 1.0
 
     @pytest.mark.parametrize("case", GOLDEN_CASES, ids=lambda c: c["name"])
     def test_bad_tailoring_is_caught(self, case):

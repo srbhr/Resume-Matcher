@@ -84,6 +84,7 @@ export function OutreachEditor({
         <textarea
           value={content}
           onChange={(e) => onChange(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && e.stopPropagation()}
           placeholder={t('outreach.editor.placeholder')}
           className={cn(
             'w-full h-full min-h-[250px] p-4',

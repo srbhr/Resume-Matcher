@@ -141,8 +141,8 @@
   color: var(--resume-text-body);
   border: 1px solid var(--resume-border-secondary);
   border-radius: 4px;
-  /* Prevent mid-word breaks on skill tags */
-  white-space: nowrap;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 /* Link pill - styled clickable link with icon support */
@@ -232,6 +232,7 @@
 .resume-link {
   color: var(--resume-text-primary);
   text-decoration: none;
+  overflow-wrap: anywhere;
 }
 
 .resume-link:hover {

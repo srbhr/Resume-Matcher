@@ -59,6 +59,7 @@ export function CoverLetterEditor({
         <textarea
           value={content}
           onChange={(e) => onChange(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && e.stopPropagation()}
           placeholder={t('coverLetter.editor.placeholder')}
           className={cn(
             'w-full h-full min-h-[400px] p-4',

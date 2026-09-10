@@ -40,6 +40,7 @@ class Resume(Base):
     parent_id: Mapped[str | None] = mapped_column(String, nullable=True)
     processed_data: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     processing_status: Mapped[str] = mapped_column(String, default="pending")
+    processing_token: Mapped[str | None] = mapped_column(String, nullable=True)
     cover_letter: Mapped[str | None] = mapped_column(Text, nullable=True)
     outreach_message: Mapped[str | None] = mapped_column(Text, nullable=True)
     interview_prep: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -53,8 +54,8 @@ class Resume(Base):
 
     __table_args__ = (
         # At most one master resume. Partial unique index enforces the invariant
-        # at the storage layer; ``_master_resume_lock`` remains the primary
-        # (race-free) mechanism in the facade.
+        # at the storage layer; the facade serializes compound designation
+        # changes with a SQLite writer transaction.
         Index(
             "ux_resumes_single_master",
             "is_master",
@@ -94,6 +95,30 @@ class Improvement(Base):
     job_id: Mapped[str] = mapped_column(String)
     improvements: Mapped[list] = mapped_column(JSON, default=list)
     created_at: Mapped[str] = mapped_column(String, default=_utcnow_iso)
+
+
+class TailoringPreview(Base):
+    """An accepted preview, bounded confirmation claim and immutable result."""
+
+    __tablename__ = "tailoring_previews"
+    __table_args__ = (Index("ix_preview_compatibility", "source_id", "job_id", "payload_hash", "created_at"),)
+
+    improvements: Mapped[list[dict[str, Any]] | None] = mapped_column(JSON, nullable=True)
+
+    preview_id: Mapped[str] = mapped_column(String, primary_key=True)
+    source_id: Mapped[str] = mapped_column(String, index=True)
+    job_id: Mapped[str] = mapped_column(String, index=True)
+    payload_hash: Mapped[str] = mapped_column(String)
+    source_hash: Mapped[str] = mapped_column(String)
+    job_hash: Mapped[str] = mapped_column(String)
+    created_at: Mapped[str] = mapped_column(String)
+    expires_at: Mapped[str] = mapped_column(String, index=True)
+    result_resume_id: Mapped[str | None] = mapped_column(
+        String, nullable=True, index=True
+    )
+    claim_token: Mapped[str | None] = mapped_column(String, nullable=True)
+    claim_expires_at: Mapped[str | None] = mapped_column(String, nullable=True)
+    response_data: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
 
 
 class Application(Base):

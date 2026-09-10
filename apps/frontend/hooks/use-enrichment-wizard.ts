@@ -3,7 +3,9 @@
  * Uses useReducer for clean state transitions.
  */
 
-import { useReducer, useCallback } from 'react';
+import { useReducer, useCallback, useEffect } from 'react';
+import { useTranslations } from '@/lib/i18n';
+import { useOperationOwner } from './use-operation-owner';
 import {
   analyzeResume,
   generateEnhancements,
@@ -11,6 +13,7 @@ import {
   type EnrichmentItem,
   type EnrichmentQuestion,
   type EnhancedDescription,
+  type EnhancementItemError,
   type AnswerInput,
 } from '@/lib/api/enrichment';
 
@@ -34,6 +37,7 @@ export interface WizardState {
   currentQuestionIndex: number;
   answers: Record<string, string>; // question_id -> answer
   preview: EnhancedDescription[];
+  itemErrors: EnhancementItemError[];
   analysisSummary: string | null;
   error: string | null;
 }
@@ -53,7 +57,7 @@ type WizardAction =
   | { type: 'PREV_QUESTION' }
   | { type: 'GO_TO_QUESTION'; index: number }
   | { type: 'START_GENERATION' }
-  | { type: 'GENERATION_COMPLETE'; preview: EnhancedDescription[] }
+  | { type: 'GENERATION_COMPLETE'; preview: EnhancedDescription[]; errors: EnhancementItemError[] }
   | { type: 'START_APPLY' }
   | { type: 'APPLY_COMPLETE' }
   | { type: 'SET_ERROR'; error: string }
@@ -67,6 +71,7 @@ const initialState: WizardState = {
   currentQuestionIndex: 0,
   answers: {},
   preview: [],
+  itemErrors: [],
   analysisSummary: null,
   error: null,
 };
@@ -135,6 +140,7 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
         ...state,
         step: 'preview',
         preview: action.preview,
+        itemErrors: action.errors,
       };
 
     case 'START_APPLY':
@@ -166,14 +172,19 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
 
 // Hook
 export function useEnrichmentWizard(resumeId: string) {
+  const { t } = useTranslations();
   const [state, dispatch] = useReducer(wizardReducer, initialState);
+  const { begin, isCurrent, invalidate } = useOperationOwner(resumeId);
 
   // Start analysis
   const startAnalysis = useCallback(async () => {
+    const token = begin();
+    if (token === null) return;
     dispatch({ type: 'START_ANALYSIS' });
 
     try {
       const result = await analyzeResume(resumeId);
+      if (!isCurrent(token)) return;
 
       // Check if there are any improvements needed
       if (result.items_to_enrich.length === 0 || result.questions.length === 0) {
@@ -191,12 +202,13 @@ export function useEnrichmentWizard(resumeId: string) {
         summary: result.analysis_summary,
       });
     } catch (error) {
+      if (!isCurrent(token)) return;
       dispatch({
         type: 'SET_ERROR',
         error: error instanceof Error ? error.message : 'Failed to analyze resume',
       });
     }
-  }, [resumeId]);
+  }, [resumeId, begin, isCurrent]);
 
   // Set answer for current question
   const setAnswer = useCallback((questionId: string, answer: string) => {
@@ -218,7 +230,8 @@ export function useEnrichmentWizard(resumeId: string) {
 
   // Generate enhancements from answers
   const generateEnhancementsFromAnswers = useCallback(async () => {
-    dispatch({ type: 'START_GENERATION' });
+    const token = begin();
+    if (token === null) return;
 
     try {
       // Convert answers to API format
@@ -229,47 +242,62 @@ export function useEnrichmentWizard(resumeId: string) {
           answer,
         }));
 
+      if (answersArray.length === 0) {
+        dispatch({ type: 'SET_ERROR', error: t('enrichment.error.answerRequired') });
+        return;
+      }
+      dispatch({ type: 'START_GENERATION' });
       const result = await generateEnhancements(resumeId, answersArray);
+      if (!isCurrent(token)) return;
 
       dispatch({
         type: 'GENERATION_COMPLETE',
         preview: result.enhancements,
+        errors: result.errors ?? [],
       });
     } catch (error) {
+      if (!isCurrent(token)) return;
       dispatch({
         type: 'SET_ERROR',
         error: error instanceof Error ? error.message : 'Failed to generate enhancements',
       });
     }
-  }, [resumeId, state.answers]);
+  }, [resumeId, state.answers, begin, isCurrent, t]);
 
   // Apply enhancements to resume
   const applyChanges = useCallback(async () => {
+    const token = begin();
+    if (token === null) return;
     dispatch({ type: 'START_APPLY' });
 
     try {
       await applyEnhancements(resumeId, state.preview);
+      if (!isCurrent(token)) return;
       dispatch({ type: 'APPLY_COMPLETE' });
     } catch (error) {
+      if (!isCurrent(token)) return;
       dispatch({
         type: 'SET_ERROR',
         error: error instanceof Error ? error.message : 'Failed to apply enhancements',
       });
     }
-  }, [resumeId, state.preview]);
+  }, [resumeId, state.preview, begin, isCurrent]);
 
   // Reset wizard
   const reset = useCallback(() => {
+    invalidate();
     dispatch({ type: 'RESET' });
-  }, []);
+  }, [invalidate]);
+
+  useEffect(() => reset(), [resumeId, reset]);
 
   // Retry after error
   const retry = useCallback(() => {
     // Go back to the step before the error based on what we have
     if (state.preview.length > 0) {
       // We had preview, retry apply
-      dispatch({ type: 'GENERATION_COMPLETE', preview: state.preview });
-    } else if (Object.keys(state.answers).length > 0) {
+      dispatch({ type: 'GENERATION_COMPLETE', preview: state.preview, errors: state.itemErrors });
+    } else if (state.questions.length > 0) {
       // We had answers, go back to questions
       dispatch({
         type: 'ANALYSIS_COMPLETE',

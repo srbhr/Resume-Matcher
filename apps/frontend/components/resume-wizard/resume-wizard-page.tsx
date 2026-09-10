@@ -3,8 +3,16 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useStatusCache } from '@/lib/context/status-cache';
 import { useTranslations } from '@/lib/i18n';
+import {
+  clearResumeWizardDraft,
+  readResumeWizardCompletion,
+  writeResumeWizardCompletion,
+  readResumeWizardDraft,
+  writeResumeWizardDraft,
+} from '@/lib/utils/resume-wizard-storage';
 import {
   createInitialResumeWizardState,
   finalizeResumeWizard,
@@ -15,93 +23,7 @@ import {
 import { LivePreview } from './live-preview';
 import { QuestionCard } from './question-card';
 
-const DRAFT_STORAGE_KEY = 'resume_wizard_draft';
 const MASTER_RESUME_KEY = 'master_resume_id';
-const WIZARD_SECTIONS: ResumeWizardSection[] = [
-  'intro',
-  'contact',
-  'summary',
-  'workExperience',
-  'internships',
-  'education',
-  'personalProjects',
-  'skills',
-  'review',
-];
-const WIZARD_STEPS: ResumeWizardState['step'][] = ['intro', 'question', 'review', 'complete'];
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-}
-
-function asArray<T>(value: unknown): T[] {
-  return Array.isArray(value) ? (value as T[]) : [];
-}
-
-function asString(value: unknown, fallback = ''): string {
-  return typeof value === 'string' ? value : fallback;
-}
-
-/** Coerce to an array of objects and give each a unique 1-based `id`, so a
- *  restored draft (incl. pre-fix drafts with id=0 entries) always has the unique
- *  ids the preview's `key={item.id}` and the builder's id logic depend on. */
-function asEntriesWithIds<T>(value: unknown): T[] {
-  return asArray<unknown>(value)
-    .filter(isRecord)
-    .map((item, index) => ({ ...item, id: index + 1 }) as T);
-}
-
-/** Coerce every personalInfo field to a string so a corrupt draft (e.g. a numeric
- *  name) can't make a later `.trim()` throw and trap the user in a reload loop. */
-function normalizeDraftPersonalInfo(
-  value: unknown,
-  fallback: NonNullable<ResumeWizardState['resume_data']['personalInfo']>
-): ResumeWizardState['resume_data']['personalInfo'] {
-  if (!isRecord(value)) return fallback;
-  return {
-    name: asString(value.name, fallback.name ?? ''),
-    title: asString(value.title, fallback.title ?? ''),
-    email: asString(value.email, fallback.email ?? ''),
-    phone: asString(value.phone, fallback.phone ?? ''),
-    location: asString(value.location, fallback.location ?? ''),
-    website: asString(value.website, fallback.website ?? ''),
-    linkedin: asString(value.linkedin, fallback.linkedin ?? ''),
-    github: asString(value.github, fallback.github ?? ''),
-  };
-}
-
-/**
- * Deeply coerce a possibly-corrupt persisted `resume_data` into a safe shape.
- * The list fields are what the preview/cards iterate, so a non-array there
- * (e.g. a hand-edited or shape-drifted draft) would otherwise crash render and
- * trap the user in an unrecoverable reload loop. Coerce them to arrays.
- */
-function normalizeDraftResumeData(
-  value: unknown,
-  fallback: ResumeWizardState['resume_data']
-): ResumeWizardState['resume_data'] {
-  if (!isRecord(value)) return fallback;
-  const additional = isRecord(value.additional) ? value.additional : {};
-  return {
-    ...fallback,
-    personalInfo: normalizeDraftPersonalInfo(value.personalInfo, fallback.personalInfo ?? {}),
-    summary: typeof value.summary === 'string' ? value.summary : fallback.summary,
-    workExperience: asEntriesWithIds(value.workExperience),
-    education: asEntriesWithIds(value.education),
-    personalProjects: asEntriesWithIds(value.personalProjects),
-    additional: {
-      technicalSkills: asArray<string>(additional.technicalSkills),
-      languages: asArray<string>(additional.languages),
-      certificationsTraining: asArray<string>(additional.certificationsTraining),
-      awards: asArray<string>(additional.awards),
-    },
-    sectionMeta: asArray(value.sectionMeta),
-    customSections: isRecord(value.customSections)
-      ? (value.customSections as ResumeWizardState['resume_data']['customSections'])
-      : {},
-  };
-}
-
 /** First section still missing content (matches the backend gap heuristic); falls
  *  back to 'skills' (its additional.* merge is the broadest catch-all). */
 function firstGapSection(data: ResumeWizardState['resume_data']): ResumeWizardSection {
@@ -109,64 +31,6 @@ function firstGapSection(data: ResumeWizardState['resume_data']): ResumeWizardSe
   if (!data.education?.length) return 'education';
   if (!data.personalProjects?.length) return 'personalProjects';
   return 'skills';
-}
-
-/** Validate a saved draft against the current shape; fall back to a fresh state. */
-function readSavedDraft(): ResumeWizardState | null {
-  try {
-    const saved = localStorage.getItem(DRAFT_STORAGE_KEY);
-    if (!saved) return null;
-    const parsed = JSON.parse(saved) as unknown;
-    if (!isRecord(parsed)) return null;
-
-    const initial = createInitialResumeWizardState();
-    const step = WIZARD_STEPS.includes(parsed.step as ResumeWizardState['step'])
-      ? (parsed.step as ResumeWizardState['step'])
-      : initial.step;
-    const question = isRecord(parsed.current_question) ? parsed.current_question : {};
-    const section = WIZARD_SECTIONS.includes(question.section as ResumeWizardSection)
-      ? (question.section as ResumeWizardSection)
-      : initial.current_question.section;
-
-    return {
-      ...initial,
-      ...parsed,
-      step,
-      resume_data: normalizeDraftResumeData(parsed.resume_data, initial.resume_data),
-      current_question: {
-        text:
-          typeof question.text === 'string' && question.text.trim()
-            ? question.text
-            : initial.current_question.text,
-        section,
-      },
-      history: Array.isArray(parsed.history)
-        ? (parsed.history as ResumeWizardState['history'])
-        : [],
-      asked_count: typeof parsed.asked_count === 'number' ? parsed.asked_count : 0,
-      inferred_skills: Array.isArray(parsed.inferred_skills)
-        ? (parsed.inferred_skills as string[]).filter((s) => typeof s === 'string')
-        : [],
-      is_complete: parsed.is_complete === true,
-      progress: isRecord(parsed.progress)
-        ? {
-            current:
-              typeof parsed.progress.current === 'number'
-                ? parsed.progress.current
-                : initial.progress.current,
-            total:
-              typeof parsed.progress.total === 'number'
-                ? parsed.progress.total
-                : initial.progress.total,
-          }
-        : initial.progress,
-      warnings: Array.isArray(parsed.warnings)
-        ? (parsed.warnings as string[]).filter((w) => typeof w === 'string')
-        : [],
-    };
-  } catch {
-    return null;
-  }
 }
 
 export function ResumeWizardPage() {
@@ -178,22 +42,36 @@ export function ResumeWizardPage() {
   const [errorKey, setErrorKey] = useState<string | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
+  const [createdResumeId, setCreatedResumeId] = useState<string | null>(null);
+  const [draftStorageUnavailable, setDraftStorageUnavailable] = useState(false);
+  const [showLeaveWithoutDraftDialog, setShowLeaveWithoutDraftDialog] = useState(false);
 
   useEffect(() => {
-    const saved = readSavedDraft();
-    if (saved) setState(saved);
+    const completedId = readResumeWizardCompletion();
+    if (completedId) {
+      setCreatedResumeId(completedId);
+      setState((current) => ({ ...current, step: 'complete' }));
+    } else {
+      const saved = readResumeWizardDraft();
+      if (saved) setState(saved);
+    }
     setIsLoaded(true);
   }, []);
 
   useEffect(() => {
     if (!isLoaded || state.step === 'complete') return;
-    try {
-      localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(state));
-    } catch {
-      // Draft persistence is a best-effort nicety; never let a quota/serialization
-      // error (e.g. a large history) crash the wizard.
-    }
+    setDraftStorageUnavailable(!writeResumeWizardDraft(state));
   }, [isLoaded, state]);
+
+  useEffect(() => {
+    if (!draftStorageUnavailable) return;
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [draftStorageUnavailable]);
 
   const sectionLabel = t(`resumeWizard.sections.${state.current_question.section}`);
 
@@ -238,24 +116,66 @@ export function ResumeWizardPage() {
       },
     }));
 
+  const handleRetryDraftBackup = () => {
+    setDraftStorageUnavailable(!writeResumeWizardDraft(state));
+  };
+
+  const handleBackToDashboard = () => {
+    if (draftStorageUnavailable) {
+      setShowLeaveWithoutDraftDialog(true);
+      return;
+    }
+    router.push('/dashboard');
+  };
+
   const handleFinalize = async () => {
+    if (createdResumeId || isBusy) return;
     setErrorKey(null);
     setIsBusy(true);
+    let response;
     try {
-      const response = await finalizeResumeWizard(state);
+      response = await finalizeResumeWizard(state);
       if (!response.resume_id) {
         throw new Error('Finalize returned no resume id');
       }
-      localStorage.setItem(MASTER_RESUME_KEY, response.resume_id);
-      localStorage.removeItem(DRAFT_STORAGE_KEY);
-      incrementResumes();
-      setHasMasterResume(true);
-      setState((current) => ({ ...current, step: 'complete' }));
-      router.push(`/builder?id=${response.resume_id}`);
     } catch {
       setErrorKey('resumeWizard.errors.finalizeFailed');
-    } finally {
       setIsBusy(false);
+      return;
+    }
+
+    const resumeId = response.resume_id;
+    setCreatedResumeId(resumeId);
+    setDraftStorageUnavailable(false);
+    setShowLeaveWithoutDraftDialog(false);
+    setState((current) => ({ ...current, step: 'complete' }));
+    try {
+      localStorage.setItem(MASTER_RESUME_KEY, response.resume_id);
+    } catch {
+      // The server commit is authoritative; a blocked browser cache must not
+      // turn an acknowledged creation back into a retryable create action.
+    }
+    if (!clearResumeWizardDraft()) writeResumeWizardCompletion(resumeId);
+    try {
+      incrementResumes();
+      setHasMasterResume(true);
+    } catch {
+      // Status cache is derived UI state. The created resume remains committed.
+    }
+    try {
+      router.push(`/builder?id=${resumeId}`);
+    } catch {
+      setErrorKey('resumeWizard.errors.createdNavigationFailed');
+    }
+    setIsBusy(false);
+  };
+
+  const handleOpenCreated = () => {
+    if (!createdResumeId) return;
+    try {
+      router.push(`/builder?id=${createdResumeId}`);
+    } catch {
+      setErrorKey('resumeWizard.errors.createdNavigationFailed');
     }
   };
 
@@ -267,10 +187,29 @@ export function ResumeWizardPage() {
             <h1 className="font-mono text-xs font-bold uppercase tracking-wider text-steel-grey">
               {t('resumeWizard.title')}
             </h1>
-            <Button type="button" variant="ghost" onClick={() => router.push('/dashboard')}>
+            <Button type="button" variant="ghost" onClick={handleBackToDashboard}>
               {t('resumeWizard.actions.backToDashboard')}
             </Button>
           </div>
+
+          {draftStorageUnavailable && state.step !== 'complete' && (
+            <div className="border-2 border-orange-500 bg-orange-50 p-4" role="alert">
+              <p className="font-mono text-sm font-bold uppercase tracking-wider text-orange-700">
+                {t('resumeWizard.draftStorageUnavailable.title')}
+              </p>
+              <p className="mt-1 font-sans text-sm">
+                {t('resumeWizard.draftStorageUnavailable.description')}
+              </p>
+              <Button
+                type="button"
+                variant="warning"
+                className="mt-3"
+                onClick={handleRetryDraftBackup}
+              >
+                {t('resumeWizard.actions.retryDraftBackup')}
+              </Button>
+            </div>
+          )}
 
           {errorKey && (
             <div className="border-2 border-red-600 bg-red-100 p-4" role="alert">
@@ -281,29 +220,52 @@ export function ResumeWizardPage() {
             </div>
           )}
 
-          <QuestionCard
-            step={state.step === 'complete' ? 'review' : state.step}
-            question={state.current_question.text}
-            sectionLabel={sectionLabel}
-            progress={state.progress}
-            answer={answer}
-            onAnswerChange={setAnswer}
-            canGoBack={state.history.length > 0}
-            isBusy={isBusy}
-            onContinue={handleContinue}
-            onSkip={handleSkip}
-            onBack={handleBack}
-            onReview={handleReview}
-            onFinalize={handleFinalize}
-            onKeepAdding={handleKeepAdding}
-            warnings={state.warnings}
-            isComplete={state.is_complete}
-            canFinalize={Boolean(state.resume_data.personalInfo?.name?.trim())}
-          />
+          {state.step === 'complete' && createdResumeId ? (
+            <section className="border-2 border-green-700 bg-white p-5 shadow-sw-lg md:p-8">
+              <p className="font-mono text-xs font-bold uppercase tracking-wider text-green-700">
+                {t('resumeWizard.created.title')}
+              </p>
+              <p className="mt-3 font-sans text-sm">{t('resumeWizard.created.description')}</p>
+              <Button type="button" className="mt-5" onClick={handleOpenCreated}>
+                {t('resumeWizard.actions.openCreated')}
+              </Button>
+            </section>
+          ) : (
+            <QuestionCard
+              step={state.step === 'complete' ? 'review' : state.step}
+              question={state.current_question.text}
+              sectionLabel={sectionLabel}
+              progress={state.progress}
+              answer={answer}
+              onAnswerChange={setAnswer}
+              canGoBack={state.history.length > 0}
+              isBusy={isBusy}
+              onContinue={handleContinue}
+              onSkip={handleSkip}
+              onBack={handleBack}
+              onReview={handleReview}
+              onFinalize={handleFinalize}
+              onKeepAdding={handleKeepAdding}
+              warnings={state.warnings}
+              isComplete={state.is_complete}
+              canFinalize={Boolean(state.resume_data.personalInfo?.name?.trim())}
+            />
+          )}
         </div>
 
         <LivePreview resumeData={state.resume_data} inferredSkills={state.inferred_skills} />
       </div>
+
+      <ConfirmDialog
+        open={showLeaveWithoutDraftDialog}
+        onOpenChange={setShowLeaveWithoutDraftDialog}
+        title={t('resumeWizard.leaveWithoutDraft.title')}
+        description={t('resumeWizard.leaveWithoutDraft.description')}
+        confirmLabel={t('resumeWizard.actions.leaveWithoutSaving')}
+        cancelLabel={t('resumeWizard.actions.stay')}
+        variant="warning"
+        onConfirm={() => router.push('/dashboard')}
+      />
     </main>
   );
 }

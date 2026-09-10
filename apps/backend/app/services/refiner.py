@@ -14,6 +14,8 @@ import re
 from functools import lru_cache
 from typing import Any
 
+from app.ai_budget import AIOperationDeadlineExceeded
+from app.ai_limits import PromptSizeError
 from app.llm import complete_json
 from app.prompts.refinement import (
     AI_PHRASE_BLACKLIST,
@@ -27,25 +29,49 @@ from app.schemas.refinement import (
     RefinementConfig,
     RefinementResult,
 )
+from app.services.resume_preservation import finalize_ai_resume
 
 logger = logging.getLogger(__name__)
 
 # LLM-012: Job description truncation limits
 MAX_JD_LENGTH = 2000
 MIN_TRUNCATION_WARNING_LENGTH = 1500
+# Han (including supplementary planes), Kana, and Hangul syllables/Jamo.
+_CJK_CHAR_CLASS = (
+    r"[\u1100-\u11ff\u3040-\u30ff\u3130-\u318f\u31f0-\u31ff"
+    r"\u3400-\u9fff\ua960-\ua97f\uac00-\ud7ff\uf900-\ufaff"
+    r"\uff66-\uffdc\U0001b000-\U0001b16f\U00020000-\U0003ffff]"
+)
+_CJK_RE = re.compile(_CJK_CHAR_CLASS)
 
 
 def _keyword_in_text(keyword: str, text: str) -> bool:
-    """Check if keyword exists as a whole term in text.
+    """Check for a CJK substring or a bounded non-CJK term in text.
 
-    SVC-010: Uses term boundaries instead of substring matching to avoid
-    false positives like 'python' matching 'pythonic' or 'go' matching 'going'.
+    Han, Kana, and Hangul characters may adjoin Latin skills without whitespace,
+    so they also form boundaries for adjacent Latin terms. Other word characters
+    retain boundaries so 'python' does not match 'pythonic' and 'java' does not
+    match 'javascript'.
     """
-    escaped = re.escape(keyword.strip().lower())
-    if not escaped:
+    normalized_keyword = keyword.strip().lower()
+    if not normalized_keyword:
         return False
-    pattern = rf"(?<!\w){escaped}(?!\w)"
-    return bool(re.search(pattern, text.lower()))
+    normalized_text = text.lower()
+    if _CJK_RE.search(normalized_keyword):
+        return normalized_keyword in normalized_text
+    escaped = re.escape(normalized_keyword)
+    pattern = (
+        rf"(?:(?<!\w)|(?<={_CJK_CHAR_CLASS}))"
+        rf"{escaped}"
+        rf"(?:(?!\w)|(?={_CJK_CHAR_CLASS}))"
+    )
+    return bool(re.search(pattern, normalized_text))
+
+
+def count_retained_keywords(keywords: list[str], resume: dict[str, Any]) -> int:
+    """Count refinement keywords still present in the finalized resume."""
+    text = _extract_all_text(resume)
+    return sum(_keyword_in_text(keyword, text) for keyword in keywords)
 
 
 def _normalize_skill_key(skill: str) -> str:
@@ -97,6 +123,8 @@ async def refine_resume(
 
     current = _deep_copy(initial_tailored)
     passes = 0
+    attempts = 0
+    alignment_fixed = 0
     ai_phrases_found: list[str] = []
     keyword_analysis: KeywordGapAnalysis | None = None
     alignment: AlignmentReport | None = None
@@ -110,28 +138,43 @@ async def refine_resume(
                 len(keyword_analysis.injectable_keywords),
                 keyword_analysis.injectable_keywords,
             )
+            attempts += 1
+            before = _deep_copy(current)
             try:
-                current = await inject_keywords(
+                candidate = await inject_keywords(
                     current,
                     keyword_analysis.injectable_keywords,
                     master_resume,
                     job_description,
                 )
-                passes += 1
+                current = finalize_ai_resume(initial_tailored, candidate)
+                if current != before:
+                    passes += 1
+            except (AIOperationDeadlineExceeded, PromptSizeError):
+                raise
             except Exception as e:
                 logger.warning("Keyword injection failed: %s", e)
+                current = before
+
+    # The keyword writer is the last whole-resume author. Re-apply the source
+    # contract immediately after it so later deterministic cleanup and
+    # alignment can still remove disallowed content.
+    current = finalize_ai_resume(initial_tailored, current)
 
     # Pass 2: AI phrase removal and polish (local, no LLM call)
     if config.enable_ai_phrase_removal:
+        attempts += 1
+        before = _deep_copy(current)
         current, removed = remove_ai_phrases(current, job_description)
         ai_phrases_found.extend(removed)
-        if removed:
+        if current != before:
             logger.info("Removed %d AI phrases: %s", len(removed), removed)
             passes += 1
 
     # Pass 3: Master alignment validation
     # LLM-008: Alignment validation is MANDATORY - not optional fallback
     if config.enable_master_alignment_check:
+        attempts += 1
         alignment = validate_master_alignment(
             current,
             master_resume,
@@ -151,19 +194,26 @@ async def refine_resume(
                 len(critical_violations),
             )
 
-            if critical_violations:
-                # LLM-008: Remove fabricated content before returning
-                logger.error(
-                    "Alignment violations found - removing fabricated content: %s",
-                    [v.value for v in critical_violations],
-                )
-                # Fix violations before returning
-                current = fix_alignment_violations(current, alignment.violations)
+            before = _deep_copy(current)
+            current = fix_alignment_violations(current, alignment.violations)
+            if current != before:
                 passes += 1
-            else:
-                # Non-critical violations - fix and continue
-                current = fix_alignment_violations(current, alignment.violations)
-                passes += 1
+            after = validate_master_alignment(
+                current,
+                master_resume,
+                allowed_new_skills=_extract_jd_skill_keys(
+                    job_keywords, job_description
+                ),
+            )
+            remaining = {
+                (v.field_path, v.violation_type, v.value)
+                for v in after.violations
+                if v.severity == "critical"
+            }
+            alignment_fixed = sum(
+                (v.field_path, v.violation_type, v.value) not in remaining
+                for v in critical_violations
+            )
 
     # Calculate final match percentage
     final_match = calculate_keyword_match(current, job_keywords)
@@ -171,6 +221,15 @@ async def refine_resume(
     return RefinementResult(
         refined_data=current,
         passes_completed=passes,
+        passes_attempted=attempts,
+        keywords_applied=[
+            keyword
+            for keyword in (
+                keyword_analysis.injectable_keywords if keyword_analysis else []
+            )
+            if _keyword_in_text(keyword, _extract_all_text(current))
+        ],
+        alignment_violations_fixed=alignment_fixed,
         keyword_analysis=keyword_analysis,
         alignment_report=alignment,
         ai_phrases_removed=ai_phrases_found,
@@ -556,6 +615,14 @@ async def inject_keywords(
         job_description=truncated_jd,
     )
 
+    def validate_writer_result(result: dict[str, Any]) -> dict[str, Any]:
+        if not _validate_resume_structure(result):
+            raise ValueError("Keyword injection corrupted resume structure")
+        for field in ("workExperience", "education", "personalProjects"):
+            if tailored.get(field) and not result.get(field):
+                raise ValueError(f"Keyword injection omitted populated {field}")
+        return result
+
     try:
         result = await complete_json(
             prompt=prompt,
@@ -564,6 +631,7 @@ async def inject_keywords(
                 "fabricated content. Return only valid JSON matching the input schema."
             ),
             max_tokens=8192,
+            response_validator=validate_writer_result,
         )
 
         # LLM-014: Validate the result maintains required structure
@@ -583,6 +651,8 @@ async def inject_keywords(
         # uses for dates, skills, personalInfo and custom sections.
         return _preserve_description_styles(tailored, result)
 
+    except (AIOperationDeadlineExceeded, PromptSizeError):
+        raise
     except Exception as e:
         logger.warning("Keyword injection failed: %s", e)
         return tailored

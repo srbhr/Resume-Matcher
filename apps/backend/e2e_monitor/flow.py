@@ -36,19 +36,19 @@ def score_tailoring(
     }
 
 
-def seed_master_db(data_dir: Path, master: dict[str, Any]) -> str:
+async def seed_master_db(data_dir: Path, master: dict[str, Any]) -> str:
     """Pre-seed the isolated DB with a known master BEFORE the server boots.
 
     The upload endpoint only accepts documents (and runs a non-deterministic LLM
     parse), so for a controlled, deterministic master we write it straight into
-    the isolated TinyDB file via app.database.Database — the same file the server
+    the isolated SQLite database via app.database.Database — the same file the server
     opens once booted with DATA_DIR=<data_dir>. Returns the master's resume_id.
     """
     from app.database import Database
 
-    db = Database(db_path=data_dir / "database.json")
+    db = Database(db_path=data_dir / "resume_matcher.db")
     try:
-        doc = db.create_resume(
+        doc = await db.create_resume(
             content="(seeded master resume)",
             content_type="md",
             is_master=True,
@@ -57,15 +57,20 @@ def seed_master_db(data_dir: Path, master: dict[str, Any]) -> str:
         )
         return doc["resume_id"]
     finally:
-        db.close()
+        await db.close()
 
 
 def tailor(
-    resume_id: str, jd_text: str, keywords: list[str], original: dict[str, Any]
+    resume_id: str,
+    jd_text: str,
+    keywords: list[str],
+    original: dict[str, Any],
+    *,
+    api_base: str = API_BASE,
 ) -> dict[str, Any]:
     """jobs/upload -> improve/preview -> improve/confirm; returns tailored + scores."""
     jobs_resp = httpx.post(
-        f"{API_BASE}/jobs/upload",
+        f"{api_base}/jobs/upload",
         json={"job_descriptions": [jd_text], "resume_id": resume_id},
         timeout=120,
     )
@@ -76,7 +81,7 @@ def tailor(
     job_id = job_ids[0]
 
     preview_resp = httpx.post(
-        f"{API_BASE}/resumes/improve/preview",
+        f"{api_base}/resumes/improve/preview",
         json={"resume_id": resume_id, "job_id": job_id},
         timeout=240,
     )
@@ -86,9 +91,14 @@ def tailor(
     improvements = data["improvements"]
 
     confirm_resp = httpx.post(
-        f"{API_BASE}/resumes/improve/confirm",
-        json={"resume_id": resume_id, "job_id": job_id,
-              "improved_data": tailored, "improvements": improvements},
+        f"{api_base}/resumes/improve/confirm",
+        json={
+            "resume_id": resume_id,
+            "job_id": job_id,
+            "improved_data": tailored,
+            "improvements": improvements,
+            "preview_id": data.get("preview_id"),
+        },
         timeout=240,
     )
     confirm_resp.raise_for_status()

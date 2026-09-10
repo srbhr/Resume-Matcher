@@ -22,6 +22,13 @@ CONTENT SHAPE:
 - Project entries: aim for 2 bullets when enough facts exist.
 - Skills come only from facts the user gave or existing draft data.
 
+ENTRY IDENTITY:
+- Entries in workExperience, education, and personalProjects have a stable numeric id.
+- To edit or correct an existing entry, return its same positive id from CURRENT DRAFT,
+  even when company, title, name, institution, degree, or dates change.
+- To add a new entry, set its id to 0. Never invent or reuse a positive id.
+- An omitted existing entry is unchanged; do not copy it with id 0.
+
 ADAPTIVE FLOW:
 - Read the CURRENT DRAFT and the user's ANSWER. Update ONLY the {current_section} part of the resume.
 - Then choose the most useful NEXT question and set "next_question.section" to the section it belongs to.

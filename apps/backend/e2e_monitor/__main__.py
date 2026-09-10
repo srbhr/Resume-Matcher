@@ -26,6 +26,7 @@ from e2e_monitor.judge import judge_variation
 from e2e_monitor.manifest import build_manifest
 from e2e_monitor.render import render_variation
 from e2e_monitor.servers import Servers
+from e2e_monitor.timing import measured_step
 
 _BACKEND = Path(__file__).resolve().parents[1]
 _PKG = Path(__file__).resolve().parent
@@ -71,9 +72,10 @@ def _say(msg: str) -> None:
     print(msg, file=sys.stderr, flush=True)
 
 
-def cmd_sweep(_: argparse.Namespace) -> int:
+def cmd_sweep(args: argparse.Namespace) -> int:
     ensure_enabled()
     from app.config import load_config_file
+    from app.schemas import ResumeData
 
     bundle = Bundle(root=_ARTIFACTS, run_id=_run_id())
     bundle.ensure()
@@ -82,133 +84,128 @@ def cmd_sweep(_: argparse.Namespace) -> int:
         bundle.dir / "manifest.json",
         build_manifest(run_id=bundle.run_id, git_sha=_git_sha(), config=config, started_at=_now_iso()),
     )
-
-    _say("")
-    _say("  e2e-monitor · driving the real app end to end")
-    _say(f"  provider {config.get('provider', '?')}/{config.get('model', '?')}  ·  run {bundle.run_id}")
-    _say("  Captures an evidence bundle for an AI agent to JUDGE — built to run (or via")
-    _say("  the /monitor-e2e skill) while you work on the app as normal.")
-    _say("")
-
-    # Pre-seed the isolated DB with a known master BEFORE booting the server.
-    # Canonicalize to the exact ResumeData round-trip the app stores, so every
-    # optional field is present. Otherwise improve/preview hashes the raw
-    # (field-missing) dict while improve/confirm hashes the schema-defaulted
-    # round-trip — a mismatch the app rejects with 400 (its preview/confirm
-    # hash gate). See _hash_improved_data in app/routers/resumes.py.
-    from app.schemas import ResumeData
-
-    raw_master = json.loads((_FIXTURES / "master.json").read_text(encoding="utf-8"))
-    master = ResumeData.model_validate(raw_master).model_dump()
-    resume_id = seed_master_db(bundle.data_dir, master)
-    bundle.write_json(bundle.master_dir / "processed_data.json", master)
-    _say("  ✓ seed-master   canonical master → isolated DB (your real DB is untouched)")
-
     steps: list[dict[str, Any]] = []
-    # seed-master ran above (BEFORE boot) — record it first so flow-trace.json
-    # ordering matches actual execution.
-    steps.append({"stage": "seed-master", "ok": True, "ms": 0, "detail": {"resume_id": resume_id}})
-    servers = Servers(bundle=bundle)
     variations: list[dict[str, Any]] = []
+    servers = Servers(
+        bundle=bundle, backend_port=args.backend_port, frontend_port=args.frontend_port
+    )
+    _say(f"e2e-monitor: run {bundle.run_id}")
     try:
-        _say("  ▶ boot          spawning backend :8000 + frontend :3000 …")
-        boot = servers.boot()
-        steps.append({"stage": "boot", "ok": True, "ms": 0, "detail": boot})
-        _say("  ✓ boot          backend up" + (" + frontend up" if boot.get("frontend_up") else " (frontend off — renders degrade to header+size)"))
+        with measured_step(
+            steps, "seed-master", on_error=bundle.write_diagnostic
+        ) as step:
+            raw_master = json.loads(
+                (_FIXTURES / "master.json").read_text(encoding="utf-8")
+            )
+            master = ResumeData.model_validate(raw_master).model_dump()
+            resume_id = asyncio.run(seed_master_db(bundle.data_dir, master))
+            bundle.write_json(bundle.master_dir / "processed_data.json", master)
+            step["detail"] = {"resume_id": resume_id}
+        with measured_step(steps, "boot", on_error=bundle.write_diagnostic) as step:
+            step["detail"] = servers.boot(with_frontend=not args.no_frontend)
 
         for jd_key, jd_text in _jds():
             vdir = bundle.variation_dir(jd_key)
             (vdir / "job_description.txt").write_text(jd_text, encoding="utf-8")
             keywords = [
-                kw for kw in (w.strip(":,.();") for w in jd_text.split())
+                kw
+                for kw in (w.strip(":,.();") for w in jd_text.split())
                 if kw.istitle() and kw.lower() not in _STOPWORDS
             ][:8]
-
-            _say(f"  ▶ {jd_key:<16} tailor → judge → render …")
             try:
-                t = tailor(resume_id, jd_text, keywords, master)
-            except Exception as exc:  # noqa: BLE001
-                steps.append({"stage": f"tailor:{jd_key}", "ok": False, "ms": 0, "error": str(exc)})
-                _say(f"  ✗ {jd_key:<16} tailor FAILED: {str(exc)[:90]}")
+                with measured_step(
+                    steps,
+                    f"tailor:{jd_key}",
+                    on_error=bundle.write_diagnostic,
+                ):
+                    result = tailor(
+                        resume_id, jd_text, keywords, master, api_base=servers.api_base
+                    )
+                    bundle.write_json(vdir / "tailored.json", result["tailored"])
+                    bundle.write_json(vdir / "scores.json", result["scores"])
+            except Exception:
+                _say(f"{jd_key}: tailoring failed; see backend log and flow trace")
                 continue
-            bundle.write_json(vdir / "tailored.json", t["tailored"])
-            bundle.write_json(vdir / "scores.json", t["scores"])
-            steps.append({"stage": f"tailor:{jd_key}", "ok": True, "ms": 0})
-
+            failed_judge = {
+                "score": None,
+                "reasons": "Judge failed to return a valid score.",
+            }
+            judge = failed_judge
             try:
-                judge = asyncio.run(judge_variation(jd_text, t["tailored"]))
-            except Exception as exc:  # noqa: BLE001
-                judge = {"score": None, "reasons": f"judge failed: {exc}"}
-                steps.append({"stage": f"judge:{jd_key}", "ok": False, "ms": 0, "error": str(exc)})
-            bundle.write_json(vdir / "judge.json", judge)
-
+                with measured_step(
+                    steps,
+                    f"judge:{jd_key}",
+                    on_error=bundle.write_diagnostic,
+                ):
+                    try:
+                        judge = asyncio.run(
+                            judge_variation(jd_text, result["tailored"], master)
+                        )
+                        if judge.get("score") is None:
+                            raise ValueError("Judge returned no valid score")
+                    finally:
+                        bundle.write_json(vdir / "judge.json", judge)
+            except Exception:
+                judge = failed_judge
             render: dict[str, Any] = {"non_blank": None}
-            render_status = "skipped"  # frontend down or no tailored id
-            if servers.frontend_up and t["tailored_resume_id"]:
-                try:
-                    pdf, render = render_variation(t["tailored_resume_id"])
-                    (vdir / "resume.pdf").write_bytes(pdf)
-                    bundle.write_json(vdir / "render.json", render)
-                    steps.append({"stage": f"render:{jd_key}", "ok": bool(render["non_blank"]), "ms": 0})
-                    render_status = "non-blank" if render["non_blank"] else "BLANK!"
-                except Exception as exc:  # noqa: BLE001
-                    steps.append({"stage": f"render:{jd_key}", "ok": False, "ms": 0, "error": str(exc)})
-                    render_status = "FAILED"
-            variations.append({"jd_key": jd_key, "scores": t["scores"], "judge": judge, "render": render})
-
-            # ✓ only when the judge produced a score AND the render didn't fail/blank;
-            # otherwise ⚠ — the marker must never claim success over a caught failure.
-            variation_ok = (judge or {}).get("score") is not None and render_status in ("non-blank", "skipped")
-            _say(
-                f"  {'✓' if variation_ok else '⚠'} {jd_key:<16} "
-                f"judge={(judge or {}).get('score')}  "
-                f"kw={t['scores']['jd_keyword_coverage']}  "
-                f"render={render_status}  "
-                f"fabricated={len(t['scores']['fabricated_employers'])}"
+            try:
+                with measured_step(
+                    steps,
+                    f"render:{jd_key}",
+                    on_error=bundle.write_diagnostic,
+                ) as step:
+                    if servers.frontend_up and result["tailored_resume_id"]:
+                        pdf, render = render_variation(
+                            result["tailored_resume_id"], api_base=servers.api_base
+                        )
+                        (vdir / "resume.pdf").write_bytes(pdf)
+                        bundle.write_json(vdir / "render.json", render)
+                        if not render["non_blank"]:
+                            raise ValueError("Rendered PDF is blank")
+                    else:
+                        step["skipped"] = True
+                        step["detail"] = {
+                            "reason": "Frontend unavailable or no confirmed result"
+                        }
+            except Exception:
+                render = {**render, "non_blank": False}
+            variations.append(
+                {
+                    "jd_key": jd_key,
+                    "scores": result["scores"],
+                    "judge": judge,
+                    "render": render,
+                }
             )
     finally:
-        servers.teardown()
-
-    flow = build_flow_trace(steps)
-    bundle.write_json(bundle.dir / "flow-trace.json", flow)
-    summary = build_summary(flow=flow, variations=variations, provider=config.get("provider", ""))
-    bundle.write_json(bundle.dir / "summary.json", summary)
-    baseline_line = ""
-    if _BASELINE.exists():
-        current = {
-            v["jd_key"]: {
-                "jd_keyword_coverage": v["scores"]["jd_keyword_coverage"],
-                "judge_score": (v.get("judge") or {}).get("score"),
-                "non_blank": (v.get("render") or {}).get("non_blank"),
-            }
-            for v in variations
-        }
-        diff = diff_against_baseline(current, bundle.read_json(_BASELINE))
-        bundle.write_json(bundle.dir / "baseline-diff.json", diff)
-        baseline_line = (
-            " · no regression vs baseline"
-            if not diff["regressed"]
-            else f" · REGRESSED ({len(diff['regressions'])} — see baseline-diff.json)"
-        )
-
-    _say("")
-    _say("  ──────────────────────────────────────────────────────────────")
+        try:
+            with measured_step(steps, "teardown", on_error=bundle.write_diagnostic):
+                servers.teardown()
+        finally:
+            flow = build_flow_trace(steps)
+            bundle.write_json(bundle.dir / "flow-trace.json", flow)
+            summary = build_summary(
+                flow=flow, variations=variations, provider=config.get("provider", "")
+            )
+            bundle.write_json(bundle.dir / "summary.json", summary)
+            if _BASELINE.exists():
+                current = {
+                    v["jd_key"]: {
+                        "jd_keyword_coverage": v["scores"]["jd_keyword_coverage"],
+                        "judge_score": v["judge"].get("score"),
+                        "non_blank": v["render"].get("non_blank"),
+                    }
+                    for v in variations
+                }
+                bundle.write_json(
+                    bundle.dir / "baseline-diff.json",
+                    diff_against_baseline(current, bundle.read_json(_BASELINE)),
+                )
+            print(f"bundle: {bundle.dir}")
     _say(
-        f"  sweep complete · {summary['variations']} variations · "
-        f"flow {'all passed' if summary['flow_all_passed'] else 'HAD FAILURES'} · "
-        f"renders {summary['renders_non_blank']}/{summary['variations']} non-blank"
-        + baseline_line
+        f"Captured {len(variations)} variations. Review the evidence bundle before drawing quality conclusions."
     )
-    _say("")
-    _say("  ↳ NEXT — this is captured EVIDENCE, not a verdict. Hand it to an AI agent:")
-    _say("      • In Claude Code, invoke the  /monitor-e2e  skill, or just say")
-    _say('        "judge the latest e2e-monitor bundle".')
-    _say("      The agent reads the logs + artifacts, separates real issues from noise,")
-    _say("      and writes report.md. This harness is built to be DRIVEN BY an AI agent")
-    _say("      debugging in the background while you build the app as normal.")
-    _say("")
-    print(f"bundle: {bundle.dir}")
-    return 0
+    return 0 if summary["flow_all_passed"] else 1
 
 
 def cmd_update_baseline(args: argparse.Namespace) -> int:
@@ -228,10 +225,21 @@ def cmd_update_baseline(args: argparse.Namespace) -> int:
     return 0
 
 
+def _port_number(value: str) -> int:
+    port = int(value)
+    if not 1 <= port <= 65535:
+        raise argparse.ArgumentTypeError("Port must be between 1 and 65535")
+    return port
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="e2e_monitor")
     sub = parser.add_subparsers(dest="cmd", required=True)
-    sub.add_parser("sweep").set_defaults(func=cmd_sweep)
+    sweep = sub.add_parser("sweep")
+    sweep.add_argument("--backend-port", type=_port_number, default=8000)
+    sweep.add_argument("--frontend-port", type=_port_number, default=3000)
+    sweep.add_argument("--no-frontend", action="store_true")
+    sweep.set_defaults(func=cmd_sweep)
     ub = sub.add_parser("update-baseline")
     ub.add_argument("run_dir")
     ub.set_defaults(func=cmd_update_baseline)

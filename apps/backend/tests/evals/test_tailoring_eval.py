@@ -1,100 +1,66 @@
-"""LLM-as-judge eval for tailoring quality.
+"""Opt-in generated tailoring evaluation; deterministic contracts live in unit tests.
 
-This is the layer the structural scorers cannot provide: it asks a *real* LLM
-whether a tailored resume is actually good against its job description, scored
-on a rubric (relevance, truthfulness, formatting). It is non-deterministic and
-costs a model call, so:
-
-* it is marked ``@pytest.mark.eval`` (excluded from the default selection in
-  CI / quick runs), and
-* it SKIPS unless the developer has an LLM key configured, using their own
-  key/provider via ``app.llm`` — exactly the policy in
-  ``docs/agent/testing-strategy.md`` §3.1.
-
-CRITICAL: in a keyless environment this test must skip *before* it ever builds
-or sends a request. ``_needs_key()`` is called as the very first statement in
-the test body, so no real LLM call can happen ungated.
-
-Run it on demand with a key configured::
-
-    uv run pytest tests/evals -m eval
+Run with RM_RUN_PAID_EVAL=1 and explicit provider environment settings:
+``uv run pytest tests/evals -m eval``. This executes the actual preview pipeline
+for each original/JD and then a grounded judge. It can make several paid calls;
+no live quality or commercial ATS accuracy is implied by the offline suite.
 """
 
+from __future__ import annotations
+
 import json
+import os
+from typing import Any
 
 import pytest
 
-from app.llm import complete_json, get_llm_config
+from app.llm import get_llm_config
+from e2e_monitor.judge import judge_variation
 from tests.evals.golden.cases import GOLDEN_CASES
 
 
 def _needs_key() -> None:
-    """Skip the calling test unless a usable LLM key/provider is configured.
-
-    A key is considered "absent" only when there is no api_key AND the provider
-    is not one of the local/self-hosted providers that legitimately run without
-    one (``ollama``, ``openai_compatible``). This mirrors the gate used
-    throughout the backend.
-    """
+    if os.environ.get("RM_RUN_PAID_EVAL") != "1":
+        pytest.skip("Set RM_RUN_PAID_EVAL=1 to enable generated paid evaluations")
     try:
-        cfg = get_llm_config()
-    except Exception as exc:  # corrupt/unreadable config.json — skip, don't hard-fail
-        pytest.skip(f"could not read LLM config ({exc}); skipping LLM-judge eval")
-    if not cfg.api_key and cfg.provider not in ("ollama", "openai_compatible"):
-        pytest.skip("no LLM key configured; set one to run LLM-judge evals")
+        config = get_llm_config()
+    except Exception:
+        pytest.skip("No usable explicit evaluation provider configured")
+    if not config.api_key and config.provider not in ("ollama", "openai_compatible"):
+        pytest.skip("No LLM key configured for evaluation")
 
 
-_JUDGE_RUBRIC = (
-    "You are a strict but fair technical recruiter grading how well a resume "
-    "was tailored to a job description. Grade on three axes:\n"
-    "1. RELEVANCE — does the resume emphasize skills/experience the JD asks for?\n"
-    "2. TRUTHFULNESS — does it avoid inventing employers, titles, or facts not "
-    "implied by the candidate's history?\n"
-    "3. FORMATTING — is it coherent, well-structured, and free of obvious "
-    "artifacts?\n\n"
-    "Return ONLY JSON of the form "
-    '{{"score": <integer 1-5>, "reasons": "<one or two sentences>"}}. '
-    "5 = excellent on all axes, 1 = poor. Be honest."
-)
+async def generate_tailoring(case: dict[str, Any]) -> dict[str, Any]:
+    """Drive the real preview endpoint using the test-owned database."""
+    from app.database import db
+    from app.routers.resumes import improve_resume_preview_endpoint
+    from app.schemas import ImproveResumeRequest, ResumeData
 
-
-def _build_judge_prompt(job_description: str, tailored: dict) -> str:
-    """Assemble the judge prompt for one (JD, tailored-resume) pair."""
-    return (
-        f"{_JUDGE_RUBRIC}\n\n"
-        f"=== JOB DESCRIPTION ===\n{job_description}\n\n"
-        f"=== TAILORED RESUME (JSON) ===\n"
-        f"{json.dumps(tailored, ensure_ascii=False, indent=2)}\n"
+    original = ResumeData.model_validate(case["original"]).model_dump()
+    resume = await db.create_resume(
+        content=json.dumps(original),
+        content_type="json",
+        processed_data=original,
+        processing_status="ready",
+        is_master=True,
     )
+    job = await db.create_job(case["job_description"], resume["resume_id"])
+    response = await improve_resume_preview_endpoint(
+        ImproveResumeRequest(resume_id=resume["resume_id"], job_id=job["job_id"])
+    )
+    return response.data.resume_preview.model_dump()
+
+
+async def evaluate_case(case: dict[str, Any]) -> dict[str, Any]:
+    tailored = await generate_tailoring(case)
+    return await judge_variation(case["job_description"], tailored, case["original"])
 
 
 @pytest.mark.eval
-async def test_llm_judge_scores_good_tailoring_highly():
-    """A real LLM judge should rate a faithful, JD-aware tailoring >= 3/5.
-
-    In keyless environments this skips at ``_needs_key()`` before any request
-    is constructed or sent — it must NEVER make an ungated real call.
-    """
-    _needs_key()  # MUST be first — gates every line below behind a real key.
-
-    case = GOLDEN_CASES[0]
-    prompt = _build_judge_prompt(case["job_description"], case["tailored_good"])
-
-    # One cheap call. schema_type="enrichment" keeps truncation heuristics
-    # lenient for this small free-form JSON (not a full resume payload).
-    result = await complete_json(
-        prompt,
-        system_prompt="You are an impartial resume-tailoring evaluator.",
-        max_tokens=512,
-        schema_type="enrichment",
-    )
-
-    assert isinstance(result, dict), f"judge returned non-dict: {result!r}"
-    assert "score" in result, f"judge response missing 'score': {result!r}"
-
-    score = int(result["score"])
-    assert 1 <= score <= 5, f"score out of rubric range: {score}"
-    assert score >= 3, (
-        f"LLM judge scored the good tailoring below threshold: "
-        f"score={score}, reasons={result.get('reasons')!r}"
-    )
+@pytest.mark.parametrize("case", GOLDEN_CASES, ids=lambda case: case["name"])
+async def test_llm_judge_scores_good_tailoring_highly(case: dict[str, Any]) -> None:
+    _needs_key()
+    result = await evaluate_case(case)
+    score = result.get("score")
+    assert isinstance(score, int) and not isinstance(score, bool) and 1 <= score <= 5
+    assert score >= 3, f"Generated tailoring scored below threshold: {result}"

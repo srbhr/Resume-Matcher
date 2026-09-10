@@ -1,6 +1,7 @@
 """Service tests for improver — async functions with mocked LLM."""
 
 import copy
+from typing import Any
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -110,21 +111,30 @@ class TestGenerateResumeDiffs:
         assert len(result.changes) == 0
 
     @patch("app.services.improver.complete_json", new_callable=AsyncMock)
-    async def test_handles_missing_changes_key(self, mock_llm, sample_resume, sample_job_keywords):
-        """LLM ignores diff format entirely."""
+    async def test_handles_missing_changes_key(
+        self,
+        mock_llm: AsyncMock,
+        sample_resume: dict[str, Any],
+        sample_job_keywords: dict[str, Any],
+    ) -> None:
+        """A full-resume payload cannot masquerade as a zero-diff success."""
         mock_llm.return_value = {"summary": "Full resume output instead of diffs"}
-        result = await generate_resume_diffs(
-            original_resume="# Resume",
-            job_description="JD",
-            job_keywords=sample_job_keywords,
-            original_resume_data=sample_resume,
-        )
-        assert len(result.changes) == 0
-        assert result.strategy_notes  # Should have a note about missing key
+        with pytest.raises(ValueError, match="missing 'changes'"):
+            await generate_resume_diffs(
+                original_resume="# Resume",
+                job_description="JD",
+                job_keywords=sample_job_keywords,
+                original_resume_data=sample_resume,
+            )
 
     @patch("app.services.improver.complete_json", new_callable=AsyncMock)
-    async def test_skips_non_dict_changes(self, mock_llm, sample_resume, sample_job_keywords):
-        """Non-dict entries in the changes list are skipped."""
+    async def test_rejects_non_dict_changes(
+        self,
+        mock_llm: AsyncMock,
+        sample_resume: dict[str, Any],
+        sample_job_keywords: dict[str, Any],
+    ) -> None:
+        """Invalid entries reject the response so content retry can replace it."""
         mock_llm.return_value = {
             "changes": [
                 {"path": "summary", "action": "replace", "original": "x", "value": "y", "reason": "good"},
@@ -134,19 +144,22 @@ class TestGenerateResumeDiffs:
             ],
             "strategy_notes": "test",
         }
-        result = await generate_resume_diffs(
-            original_resume="# Resume",
-            job_description="JD",
-            job_keywords=sample_job_keywords,
-            original_resume_data=sample_resume,
-        )
-        # Only the dict entry is parsed; strings/ints/None are skipped
-        assert len(result.changes) == 1
-        assert result.changes[0].path == "summary"
+        with pytest.raises(ValueError):
+            await generate_resume_diffs(
+                original_resume="# Resume",
+                job_description="JD",
+                job_keywords=sample_job_keywords,
+                original_resume_data=sample_resume,
+            )
 
     @patch("app.services.improver.complete_json", new_callable=AsyncMock)
-    async def test_invalid_action_in_change_is_skipped(self, mock_llm, sample_resume, sample_job_keywords):
-        """Changes with invalid action values are skipped (Pydantic rejects them)."""
+    async def test_invalid_action_in_change_is_rejected(
+        self,
+        mock_llm: AsyncMock,
+        sample_resume: dict[str, Any],
+        sample_job_keywords: dict[str, Any],
+    ) -> None:
+        """An invalid action rejects the response instead of hiding a bad leaf."""
         mock_llm.return_value = {
             "changes": [
                 {"path": "summary", "action": "replace", "original": "x", "value": "y", "reason": "good"},
@@ -154,15 +167,13 @@ class TestGenerateResumeDiffs:
             ],
             "strategy_notes": "test",
         }
-        result = await generate_resume_diffs(
-            original_resume="# Resume",
-            job_description="JD",
-            job_keywords=sample_job_keywords,
-            original_resume_data=sample_resume,
-        )
-        # "delete" action fails Pydantic Literal validation → skipped
-        assert len(result.changes) == 1
-        assert result.changes[0].action == "replace"
+        with pytest.raises(ValueError):
+            await generate_resume_diffs(
+                original_resume="# Resume",
+                job_description="JD",
+                job_keywords=sample_job_keywords,
+                original_resume_data=sample_resume,
+            )
 
     @patch("app.services.improver.complete_json", new_callable=AsyncMock)
     async def test_uses_json_resume_when_months_present(self, mock_llm, sample_resume, sample_job_keywords):
@@ -316,16 +327,21 @@ class TestGenerateResumeDiffsEdgeCases:
         assert "# Markdown with Jan 2020" in prompt
 
     @patch("app.services.improver.complete_json", new_callable=AsyncMock)
-    async def test_non_list_changes_from_llm(self, mock_llm, sample_resume, sample_job_keywords):
-        """LLM returns changes as a string instead of list."""
+    async def test_non_list_changes_from_llm(
+        self,
+        mock_llm: AsyncMock,
+        sample_resume: dict[str, Any],
+        sample_job_keywords: dict[str, Any],
+    ) -> None:
+        """LLM changes must remain an explicit list."""
         mock_llm.return_value = {"changes": "not a list", "strategy_notes": "broken"}
-        result = await generate_resume_diffs(
-            original_resume="# Resume",
-            job_description="JD",
-            job_keywords=sample_job_keywords,
-            original_resume_data=sample_resume,
-        )
-        assert len(result.changes) == 0
+        with pytest.raises(ValueError):
+            await generate_resume_diffs(
+                original_resume="# Resume",
+                job_description="JD",
+                job_keywords=sample_job_keywords,
+                original_resume_data=sample_resume,
+            )
 
 
 class TestImproveResume:

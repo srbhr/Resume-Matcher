@@ -56,14 +56,14 @@ def check_pdf_bytes(data: bytes) -> dict[str, Any]:
 
 
 def render_variation(
-    tailored_resume_id: str, *, lang: str | None = None
+    tailored_resume_id: str, *, lang: str | None = None, api_base: str = API_BASE
 ) -> tuple[bytes, dict[str, Any]]:
     """GET the PDF for a tailored resume; return (bytes, non-blank verdict)."""
     params: dict[str, str] = {"template": "swiss-single", "pageSize": "A4"}
     if lang:
         params["lang"] = lang
     resp = httpx.get(
-        f"{API_BASE}/resumes/{tailored_resume_id}/pdf", params=params, timeout=120
+        f"{api_base}/resumes/{tailored_resume_id}/pdf", params=params, timeout=120
     )
     resp.raise_for_status()
     return resp.content, check_pdf_bytes(resp.content)

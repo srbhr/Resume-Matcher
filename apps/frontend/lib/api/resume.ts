@@ -5,6 +5,7 @@ import type {
 import type { ResumeData } from '@/components/dashboard/resume-component';
 import { type TemplateSettings } from '@/lib/types/template-settings';
 import { type Locale } from '@/i18n/config';
+import { clearResumeWizardCompletion } from '@/lib/utils/resume-wizard-storage';
 import { API_BASE, DEFAULT_TIMEOUT_MS, apiPost, apiPatch, apiDelete, apiFetch } from './client';
 
 // Matches backend schemas/models.py ResumeData
@@ -86,6 +87,7 @@ export interface ResumeUploadResponse {
 interface ImproveResumeConfirmRequest {
   resume_id: string;
   job_id: string;
+  preview_id?: string | null;
   improved_data: ResumeData;
   improvements: Array<{
     suggestion: string;
@@ -280,6 +282,7 @@ export async function deleteResume(resumeId: string): Promise<void> {
     const text = await res.text().catch(() => '');
     throw new Error(`Failed to delete resume (status ${res.status}): ${text}`);
   }
+  clearResumeWizardCompletion(resumeId);
 }
 
 /** Updates the cover letter for a resume */
@@ -373,8 +376,15 @@ export async function generateInterviewPrep(resumeId: string): Promise<Interview
 }
 
 /** Retries AI processing for a failed resume */
-export async function retryProcessing(resumeId: string): Promise<ResumeUploadResponse> {
+export async function retryProcessing(
+  resumeId: string
+): Promise<Pick<ResumeUploadResponse, 'resume_id' | 'processing_status'>> {
   const res = await apiPost(`/resumes/${encodeURIComponent(resumeId)}/retry-processing`, {});
+  if (res.status === 409) {
+    // Another attempt owns the row. Observe it instead of labeling it failed.
+    const current = await fetchResume(resumeId);
+    return { resume_id: resumeId, processing_status: current.raw_resume.processing_status };
+  }
   if (!res.ok) {
     const text = await res.text().catch(() => '');
     throw new Error(`Failed to retry processing (status ${res.status}): ${text}`);

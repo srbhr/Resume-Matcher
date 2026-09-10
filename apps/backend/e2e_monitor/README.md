@@ -30,7 +30,7 @@ The harness gate requires **both** `RM_E2E_MONITOR=1` and a configured LLM key (
 
 The sweep:
 1. Seeds an isolated `DATA_DIR` (your real SQLite DB is never touched).
-2. Boots the backend in-process.
+2. Boots an owned backend subprocess using the current Python interpreter.
 3. Tailors the master resume against 3–4 bundled JDs.
 4. Attempts PDF renders (skipped/degraded if `node` or the frontend is absent).
 5. Scores each variation with the structural eval scorers.
@@ -38,7 +38,7 @@ The sweep:
 7. Writes a self-contained evidence bundle to `artifacts/e2e-monitor/<run-id>/`.
 8. Diffs against `baseline/baseline.json` and writes `baseline-diff.json`.
 
-**The sweep only *captures* the bundle — it does not produce the verdict.** It's the deterministic half. The **agent in the loop** — a Claude Code instance, via the `/monitor-e2e` skill below or by just asking any Claude Code session to *"judge the latest e2e-monitor bundle"* — reads the bundle + logs, separates real issues from noise, and writes `report.md`. The sweep's terminal output narrates each move and points you to this handoff.
+**The sweep only *captures* the bundle — it does not produce the verdict.** It includes non-deterministic LLM calls; the evidence supports a later review. The **agent in the loop** — a Claude Code instance, via the `/monitor-e2e` skill below or by just asking any Claude Code session to *"judge the latest e2e-monitor bundle"* — reads the bundle + logs, separates real issues from noise, and writes `report.md`. The sweep's terminal output narrates each move and points you to this handoff.
 
 In practice the front door is **`/monitor-e2e`** (it runs the sweep *and* judges in one step); the bare CLI is the plumbing the agent drives — handy for a quick capture, or a background / cron run that an AI agent later picks up to debug while you work on the app as normal.
 
@@ -80,9 +80,36 @@ This harness is designed so that cloning the repo and running normal workflows i
 |---|---|
 | Optional extra (`--extra e2e-monitor`) | Not pulled in by `uv sync` or `--extra dev` |
 | `RM_E2E_MONITOR=1` opt-in | Every entry point checks the gate; inert without the env var |
-| No import side effects | The package is not imported by `app/`, `tests/`, or any other module |
+| Import safety | Importing the package does not start a sweep; deterministic tests exercise its helpers |
 | Not in the pre-push hook | `.githooks/pre-push` runs `pytest` only — no e2e sweep |
 | Gitignored skill | `.claude/skills/monitor-e2e/` is gitignored; the playbook source is committed but the runnable skill is local-only |
-| Isolated `DATA_DIR` | The sweep never reads or writes the developer's real database |
+| Isolated `DATA_DIR` | Resume/job writes use a fresh SQLite database; the opted-in parent reads only configured settings and selected credentials |
 
 Result: approximately zero random cloners' agents will ever run or even see the monitor.
+
+
+## Isolation and evidence contracts
+
+`seed_master_db` awaits creation and close against `data/resume_matcher.db`. The server reads that exact file. Non-secret run settings are allowlisted; developer JSON, uploads, resumes, database and encryption secret are never copied wholesale. After the opt-in gate, the parent resolves the selected effective key (including encrypted-store-only or environment credentials), re-encrypts only that key with a fresh run secret, and writes it to the isolated key table. Both the run key table and secret are removed at teardown, including handled boot failures and interruption. A hard process kill can bypass cleanup; treat an interrupted run's `data/` directory as private until removed. This harness does not claim secure erasure of filesystem blocks.
+
+Child processes inherit a small environment allowlist and explicit selected settings, not arbitrary provider-key environment variables. Keyless local providers stay keyless. The monitor owns every server it uses: an occupied port fails explicitly rather than reusing or stopping another process. Defaults remain 8000/3000; isolated runs can use:
+
+```bash
+RM_E2E_MONITOR=1 uv run python -m e2e_monitor sweep --backend-port 18000 --frontend-port 13000
+# Exercise seed → job → preview → confirmation → judge without a frontend:
+RM_E2E_MONITOR=1 uv run python -m e2e_monitor sweep --backend-port 18000 --no-frontend
+```
+
+Stage records contain measured monotonic elapsed milliseconds. Success, failure, cancellation and skipped rendering are explicit. Trace/summary files are written during cleanup even after seed/boot aborts. A sweep with a failed stage exits 1; it is still not a CI/push gate. The judge receives original evidence, JD and generated resume, and invalid scores are failures. Scores are heuristic evidence, not commercial ATS measurements or proof that a model is truthful.
+
+`flow-trace.json`, `summary.json`, and failed `judge.json` records expose only stable
+error classes or generic failure text. Full local tracebacks are appended to
+`logs/private-diagnostics.log`, which is forced to owner-only mode (`0600`). That
+file may contain provider response bodies, request context, or other sensitive
+diagnostics embedded in exception messages. Keep it local, do not publish it with a
+report, and redact any excerpt before sharing it. The traceback log is intended for
+maintainer diagnosis after the public artifacts identify a failed stage.
+
+Deterministic tests use synthetic keys/data and owned loopback ports: `tests/unit/test_monitor_servers.py` exercises real child startup/configuration, public seed→tailor→confirm sweep, port conflicts and teardown. Only AI boundaries are replaced; no live provider or paid request occurs. The scorer/accounting tests cover term boundaries, per-key custom sections, meaningful content, and actual versus merely attempted refinement.
+
+Captured `backend.log` and `frontend.log` are owner-only private diagnostics (0600), alongside `private-diagnostics.log`. These raw process logs can contain provider details; exclude them when sharing a public evidence bundle.

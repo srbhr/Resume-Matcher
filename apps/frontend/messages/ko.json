@@ -30,7 +30,8 @@
     "unknown": "알 수 없음",
     "keysCleared": "API 키가 성공적으로 삭제되었습니다",
     "databaseReset": "데이터베이스가 성공적으로 초기화되었습니다",
-    "popupBlocked": "팝업이 차단되었습니다. 팝업을 허용하거나 다음 URL을 직접 열어주세요: {url}"
+    "popupBlocked": "팝업이 차단되었습니다. 팝업을 허용하거나 다음 URL을 직접 열어주세요: {url}",
+    "resumeDeleted": "이 이력서는 삭제되었습니다. 다른 이력서를 업로드하거나 선택하세요."
   },
   "home": {
     "brandLine1": "Resume",
@@ -99,6 +100,10 @@
       "dropzoneSubtitle": "PDF, DOC, DOCX (최대 4MB)",
       "tryDifferentFile": "다른 파일 시도",
       "parsingFailedKeepOpen": "AI 분석에 실패했습니다. 다른 파일을 시도하거나 이 대화상자를 닫으세요."
+    },
+    "errors": {
+      "loadFailed": "이력서를 불러오지 못했습니다. 다시 시도해 주세요.",
+      "deleteFailed": "이력서를 삭제하지 못했습니다. 기존 이력서는 그대로 유지됩니다."
     }
   },
   "builder": {
@@ -243,14 +248,17 @@
         "newLabel": "새 항목",
         "noContent": "내용 없음",
         "applying": "적용 중...",
-        "loading": "개선된 내용을 생성하는 중..."
+        "loading": "개선된 내용을 생성하는 중...",
+        "retryRefresh": "새로 고침 재시도",
+        "refreshing": "새로 고치는 중..."
       },
       "errors": {
         "generationFailed": "콘텐츠 생성에 실패했습니다. 다시 시도해 주세요.",
         "applyFailed": "변경 사항 적용에 실패했습니다. 다시 시도해 주세요.",
         "resumeChanged": "재생성 이후 이력서 내용이 변경되었습니다. 다시 생성한 후 시도해 주세요.",
         "noChangesToApply": "적용할 변경 사항이 없습니다.",
-        "networkError": "네트워크 오류입니다. 연결 상태를 확인해 주세요."
+        "networkError": "네트워크 오류입니다. 연결 상태를 확인해 주세요.",
+        "refreshFailed": "변경 사항은 저장되었지만 이력서를 새로 고치지 못했습니다. 새로 고침을 다시 시도하세요."
       }
     },
     "jdMatch": {
@@ -477,11 +485,13 @@
       "localDraft": "초안이 로컬에 저장되었습니다",
       "saveNow": "지금 저장",
       "retrySave": "저장 다시 시도",
-      "savedButton": "저장됨"
+      "savedButton": "저장됨",
+      "localDraftUnavailable": "로컬 초안을 저장할 수 없음"
     },
     "draftRecovery": {
       "title": "로컬 초안을 복원할까요?",
       "description": "브라우저에 저장된 로컬 초안이 서버에 저장된 사본과 다릅니다. 초안을 복원해 편집을 계속하거나, 서버 사본을 사용하고 로컬 초안을 삭제할 수 있습니다.",
+      "newDescription": "이 브라우저에 저장하지 않은 이력서 초안이 있습니다. 복원하여 계속 편집하거나 삭제하고 새로 시작하세요.",
       "restoreDraft": "초안 복원",
       "useServer": "서버 사본 사용"
     },
@@ -490,6 +500,12 @@
       "description": "최신 편집 내용을 아직 서버에 동기화하지 못했습니다. 로컬 초안은 이 브라우저에 저장되어 있지만 다른 브라우저나 기기에서는 사용하지 못할 수 있습니다.",
       "leave": "대시보드로 이동",
       "stay": "편집 계속하기"
+    },
+    "leaveWithoutDraft": {
+      "title": "저장하지 않은 변경 사항을 두고 나가시겠습니까?",
+      "description": "최신 변경 사항을 서버와 동기화하거나 이 브라우저에 저장하지 못했습니다. 지금 나가면 변경 사항이 사라질 수 있습니다.",
+      "leave": "그래도 나가기",
+      "stay": "계속 편집"
     }
   },
   "enrichment": {
@@ -516,14 +532,20 @@
       "addingLabel": "추가",
       "existingCount": "(기존 {count}개)",
       "newCount": "(신규 {count}개)",
-      "noExistingDescription": "기존 설명 없음"
+      "noExistingDescription": "기존 설명 없음",
+      "partialFailure": "일부 항목을 개선하지 못했습니다",
+      "partialFailureDescription": "아래 항목은 변경되지 않습니다. 성공한 개선 사항을 적용하고 나머지 항목은 나중에 다시 시도할 수 있습니다."
     },
     "complete": {
       "title": "이력서가 개선되었습니다!",
       "updatedCountSingular": "{count}개 항목이 성공적으로 업데이트되었습니다",
       "updatedCountPlural": "{count}개 항목이 성공적으로 업데이트되었습니다",
       "updatedFallback": "이력서가 개선된 설명으로 업데이트되었습니다",
-      "doneButton": "완료"
+      "doneButton": "완료",
+      "refreshFailedTitle": "저장됨 — 새로 고침 필요",
+      "refreshFailed": "개선 내용은 저장되었지만 이 화면을 새로 고치지 못했습니다. 최신 이력서를 보려면 다시 시도하세요.",
+      "retryRefresh": "새로 고침 재시도",
+      "refreshing": "이력서 새로 고치는 중..."
     },
     "noImprovements": {
       "title": "이력서가 훌륭합니다!",
@@ -531,7 +553,8 @@
     },
     "error": {
       "title": "문제가 발생했습니다",
-      "unexpected": "예상치 못한 오류가 발생했습니다"
+      "unexpected": "예상치 못한 오류가 발생했습니다",
+      "answerRequired": "개선 내용을 생성하기 전에 질문 하나 이상에 답변해 주세요."
     }
   },
   "tailor": {
@@ -609,7 +632,8 @@
       "failedToGenerate": "이력서를 생성할 수 없습니다. 설정에서 API 키를 확인한 후 다시 시도하세요.",
       "timeout": "이력서 미리보기가 {minutes}분 후에 시간 초과되었습니다. 더 짧은 채용 공고나 더 간단한 프롬프트로 다시 시도해 주세요.",
       "failedToPreview": "이력서를 미리 볼 수 없습니다. 설정에서 API 키를 확인한 후 다시 시도하세요.",
-      "failedToConfirm": "변경 사항을 적용할 수 없습니다. 다시 시도해 주세요."
+      "failedToConfirm": "변경 사항을 적용할 수 없습니다. 다시 시도해 주세요.",
+      "previewUnavailable": "미리보기가 만료되었거나 원본 이력서가 변경되었습니다. 저장하기 전에 새 미리보기를 생성하세요."
     }
   },
   "settings": {
@@ -789,9 +813,13 @@
       "notProcessedYet": "이력서가 아직 처리되지 않았습니다. 맞춤화 기능을 사용해 구조화된 이력서를 생성하세요.",
       "noDataAvailable": "이용 가능한 이력서 데이터가 없습니다.",
       "failedToLoad": "이력서 데이터를 불러오지 못했습니다.",
-      "failedToDelete": "이력서 삭제에 실패했습니다. 다시 시도해 주세요."
+      "failedToDelete": "이력서 삭제에 실패했습니다. 다시 시도해 주세요.",
+      "failedToDownload": "이력서를 다운로드하지 못했습니다. 다시 시도해 주세요.",
+      "failedToRename": "이력서 이름을 변경하지 못했습니다. 다시 시도해 주세요."
     },
-    "titlePlaceholder": "이력서 제목을 입력하세요..."
+    "titlePlaceholder": "이력서 제목을 입력하세요...",
+    "downloadFailedTitle": "다운로드 실패",
+    "renameFailedTitle": "이름 변경 실패"
   },
   "preview": {
     "margins": "여백",
@@ -941,7 +969,11 @@
       "review": "검토 및 완료",
       "create": "마스터 이력서 생성",
       "keepAdding": "계속 추가",
-      "backToDashboard": "대시보드로 돌아가기"
+      "backToDashboard": "대시보드로 돌아가기",
+      "openCreated": "생성된 이력서 열기",
+      "retryDraftBackup": "로컬 백업 다시 시도",
+      "stay": "이 페이지에 머물기",
+      "leaveWithoutSaving": "저장하지 않고 나가기"
     },
     "preview": {
       "label": "실시간 초안",
@@ -954,7 +986,16 @@
     },
     "errors": {
       "turnFailed": "마법사가 답변을 저장하지 못했습니다. 다시 시도하세요.",
-      "finalizeFailed": "마법사가 마스터 이력서를 생성하지 못했습니다. 다시 시도하세요."
+      "finalizeFailed": "마법사가 마스터 이력서를 생성하지 못했습니다. 다시 시도하세요.",
+      "createdNavigationFailed": "마스터 이력서를 만들었지만 이 페이지에서 자동으로 열지 못했습니다. 아래 버튼을 사용해 계속하세요."
+    },
+    "draftStorageUnavailable": {
+      "title": "로컬 초안을 사용할 수 없음",
+      "description": "마법사의 최신 진행 상황은 이 탭에만 있습니다. 페이지를 나가거나 새로 고치기 전에 로컬 백업을 다시 시도하세요."
+    },
+    "leaveWithoutDraft": {
+      "title": "로컬 백업 없이 나가시겠습니까?",
+      "description": "로컬 백업이 완료되기 전에 페이지를 나가거나 새로 고치면 마법사의 최신 진행 상황이 사라집니다."
     },
     "entry": {
       "kicker": "마스터 이력서 설정",
@@ -972,9 +1013,22 @@
         "description": "핵심 질문에 답하면 마법사가 탄탄한 첫 마스터 이력서 초안을 구성해 줍니다.",
         "action": "마법사 시작"
       }
+    },
+    "created": {
+      "title": "마스터 이력서 생성 완료",
+      "description": "마스터 이력서를 만들었습니다. 이력서를 열어 계속 편집하세요."
     }
   },
   "tracker": {
+    "manage": "관리",
+    "manageDialog": {
+      "title": "열 관리",
+      "description": "보드에 표시할 단계를 선택하세요.",
+      "visible": "표시됨",
+      "hidden": "숨김",
+      "lastVisibleHint": "최소 한 개의 단계는 표시되어 있어야 합니다.",
+      "close": "완료"
+    },
     "scroll": {
       "prev": "왼쪽으로 스크롤",
       "next": "오른쪽으로 스크롤",

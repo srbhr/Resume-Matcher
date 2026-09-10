@@ -5,6 +5,7 @@ from unittest.mock import AsyncMock, patch
 
 from httpx import ASGITransport, AsyncClient
 
+from app.database import Database
 from app.main import app
 from app.schemas.resume_wizard import ResumeWizardHistoryEntry, ResumeWizardQuestion
 from app.services.resume_wizard import (
@@ -91,6 +92,34 @@ async def test_turn_answer_without_answer_is_422(isolated_db) -> None:
     assert response.status_code == 422
 
 
+async def test_turn_malformed_model_envelope_is_recoverable_422(
+    isolated_db: Database,
+) -> None:
+    transport = ASGITransport(app=app)
+    state = build_initial_wizard_state()
+    state.step = "question"
+    state.current_question = ResumeWizardQuestion(text="Experience?", section="workExperience")
+
+    with patch(
+        "app.services.resume_wizard.complete_json",
+        new_callable=AsyncMock,
+        return_value={"is_complete": "false"},
+    ) as mock_complete:
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            response = await client.post(
+                "/api/v1/resume-wizard/turn",
+                json={
+                    "state": state.model_dump(mode="json"),
+                    "action": "answer",
+                    "answer": {"text": "Engineer at Acme"},
+                },
+            )
+
+    assert response.status_code == 422
+    assert response.json() == {"detail": "Could not update the resume draft."}
+    assert mock_complete.await_count == 1
+
+
 async def test_finalize_creates_ready_master_resume(isolated_db) -> None:
     transport = ASGITransport(app=app)
     state = build_initial_wizard_state()
@@ -114,6 +143,48 @@ async def test_finalize_creates_ready_master_resume(isolated_db) -> None:
     assert stored["is_master"] is True
     assert stored["content_type"] == "json"
     assert json.loads(stored["content"])["personalInfo"]["name"] == "James"
+
+
+async def test_finalize_replays_identical_wizard_master_without_duplication(
+    isolated_db: Database,
+) -> None:
+    state = build_initial_wizard_state()
+    state.resume_data.personalInfo.name = "James"
+    request = {"state": state.model_dump(mode="json")}
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        first = await client.post("/api/v1/resume-wizard/finalize", json=request)
+        replay = await client.post("/api/v1/resume-wizard/finalize", json=request)
+
+    assert first.status_code == 200
+    assert replay.status_code == 200
+    assert replay.json()["resume_id"] == first.json()["resume_id"]
+    assert len(await isolated_db.list_resumes()) == 1
+
+
+async def test_finalize_rejects_different_draft_after_wizard_master_exists(
+    isolated_db: Database,
+) -> None:
+    first_state = build_initial_wizard_state()
+    first_state.resume_data.personalInfo.name = "James"
+    changed_state = first_state.model_copy(deep=True)
+    changed_state.resume_data.summary = "A different draft"
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        first = await client.post(
+            "/api/v1/resume-wizard/finalize",
+            json={"state": first_state.model_dump(mode="json")},
+        )
+        collision = await client.post(
+            "/api/v1/resume-wizard/finalize",
+            json={"state": changed_state.model_dump(mode="json")},
+        )
+
+    assert first.status_code == 200
+    assert collision.status_code == 409
+    assert len(await isolated_db.list_resumes()) == 1
 
 
 async def test_finalize_rejects_when_master_exists(isolated_db, sample_resume) -> None:

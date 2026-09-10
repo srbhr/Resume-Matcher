@@ -21,6 +21,49 @@ Backend: GET /resumes/{id}/pdf
 | `/print/resumes/[id]` | `.resume-print` | Resume PDF |
 | `/print/cover-letter/[id]` | `.cover-letter-print` | Cover letter PDF |
 
+## Renderer Limits
+
+| Environment variable | Default | Supported range | Purpose |
+|----------------------|---------|-----------------|---------|
+| `PDF_MAX_CONCURRENCY` | 4 | 1-16 | Maximum active exports; excess requests fail immediately instead of queueing |
+| `PDF_RENDER_TIMEOUT_SECONDS` | 75 | 1-600 | Total export lifetime, including browser/page creation and cleanup |
+| `PDF_CLEANUP_RESERVE_SECONDS` | 5 | 0.1-30 | Portion of the total lifetime reserved for resource cleanup |
+
+The renderer replaces a disconnected cached browser automatically. On Windows
+event loops that require the thread fallback, a cancelled or timed-out request
+continues to occupy its concurrency slot until its bounded worker exits.
+If page cleanup exceeds its reserve, the shared browser is retired and its
+teardown retains a slot; saturated follow-up requests receive the same immediate
+busy outcome until cleanup finishes, after which a healthy browser is created.
+Cancellation during page cleanup also retires the browser and propagates the
+cancellation; capacity remains owned until browser and Playwright teardown finish.
+An ordinary Playwright error while closing the page is logged and retires the
+browser, but does not discard an already-generated PDF or replace an earlier
+render failure. Exceeding the cleanup deadline still makes an otherwise successful
+export time out.
+
+Retirement immediately removes that browser from the cache, so new exports cannot
+join it. Existing exports keep using their own pages until their render and page
+cleanup scopes finish; only then does the retirement owner close the shared
+browser. Concurrent cleanup failures therefore retire that generation only once
+without aborting or replaying healthy exports. The retirement reservation owns
+unclosed resources independently of the existing exports' request slots; it is
+kept while those exports use their existing deadlines to finish.
+
+A successful stop of the owned Playwright driver is a teardown acknowledgement,
+even if its Browser object retains a stale `is_connected()` flag. If driver
+shutdown fails, cleanup quarantines its browser/driver objects and admission slot
+until application restart. Playwright's stop method is one-shot, so retrying a
+failed stop can return without doing any cleanup; such a return is not accepted
+as proof of teardown. Quarantine logs the failure and completes the cleanup task
+instead of leaving an unsignalled waiter. Application shutdown reports any
+quarantined generations and waits for still-active cleanup owners within the
+cleanup reserve; it does not cancel them or release their capacity prematurely.
+If an external shutdown cancels retirement before teardown is acknowledged,
+including before the cleanup task first runs, its browser/driver and reservation
+move into the same terminal quarantine. Cancellation still propagates. This
+retains explicit ownership; it does not claim the browser was physically stopped.
+
 ## Query Parameters
 
 | Param | Default | Range |

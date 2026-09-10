@@ -12,6 +12,7 @@ import {
 } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import Plus from 'lucide-react/dist/esm/icons/plus';
+import Settings from 'lucide-react/dist/esm/icons/settings';
 import Loader2 from 'lucide-react/dist/esm/icons/loader-2';
 import ChevronLeft from 'lucide-react/dist/esm/icons/chevron-left';
 import ChevronRight from 'lucide-react/dist/esm/icons/chevron-right';
@@ -32,6 +33,12 @@ import { BulkActionBar } from './bulk-action-bar';
 import { CardDetailModal } from './card-detail-modal';
 import { ManualAddApplicationDialog } from './manual-add-application-dialog';
 import { planMove } from './reorder';
+import { ManageColumnsDialog } from './manage-columns-dialog';
+import {
+  readHiddenStatuses,
+  toggleHiddenStatus,
+  writeHiddenStatuses,
+} from '@/lib/utils/tracker-column-visibility';
 
 function emptyColumns(): ApplicationColumns {
   return APPLICATION_STATUS_ORDER.reduce((acc, status) => {
@@ -53,6 +60,20 @@ export function KanbanBoard() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [openCardId, setOpenCardId] = useState<string | null>(null);
   const [manualAddOpen, setManualAddOpen] = useState(false);
+  const [manageOpen, setManageOpen] = useState(false);
+  const [hiddenStatuses, setHiddenStatuses] = useState<Set<ApplicationStatus>>(() =>
+    readHiddenStatuses()
+  );
+
+  // Persist on an actual change only — an effect keyed on the state would also
+  // write the just-read value straight back on mount.
+  const handleToggleStatus = (status: ApplicationStatus) => {
+    const next = toggleHiddenStatus(hiddenStatuses, status);
+    // Refused (last visible stage): identical instance, nothing to store.
+    if (next === hiddenStatuses) return;
+    setHiddenStatuses(next);
+    writeHiddenStatuses(next);
+  };
 
   // Horizontal-scroll affordance: the seven stages overflow the canvas, so we
   // track whether more columns sit off-screen and surface controls + a stage
@@ -82,6 +103,11 @@ export function KanbanBoard() {
   const allCards: Application[] = useMemo(
     () => APPLICATION_STATUS_ORDER.flatMap((status) => columns[status]),
     [columns]
+  );
+
+  const visibleStatuses = useMemo(
+    () => APPLICATION_STATUS_ORDER.filter((status) => !hiddenStatuses.has(status)),
+    [hiddenStatuses]
   );
 
   // Master resume ids that back more than one card → "shared resume" badge.
@@ -196,6 +222,10 @@ export function KanbanBoard() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <Button variant="outline" onClick={() => setManageOpen(true)}>
+            <Settings className="h-4 w-4" />
+            {t('tracker.manage')}
+          </Button>
           {showScrollControls && (
             <div className="flex items-center">
               <button
@@ -261,12 +291,12 @@ export function KanbanBoard() {
             onDragEnd={handleDragEnd}
           >
             <div ref={scrollRef} className="flex min-h-0 flex-1 overflow-x-auto">
-              {APPLICATION_STATUS_ORDER.map((status, index) => (
+              {visibleStatuses.map((status, index) => (
                 <div
                   key={status}
                   data-column={status}
                   className={`flex ${
-                    index < APPLICATION_STATUS_ORDER.length - 1 ? 'border-r border-black' : ''
+                    index < visibleStatuses.length - 1 ? 'border-r border-black' : ''
                   }`}
                 >
                   <KanbanColumn
@@ -295,7 +325,7 @@ export function KanbanBoard() {
             </span>
           )}
           <div className="flex items-center gap-2">
-            {APPLICATION_STATUS_ORDER.map((status) => (
+            {visibleStatuses.map((status) => (
               <button
                 key={status}
                 type="button"
@@ -323,6 +353,13 @@ export function KanbanBoard() {
         open={manualAddOpen}
         onOpenChange={setManualAddOpen}
         onCreated={load}
+      />
+
+      <ManageColumnsDialog
+        open={manageOpen}
+        onOpenChange={setManageOpen}
+        hiddenStatuses={hiddenStatuses}
+        onToggle={handleToggleStatus}
       />
     </div>
   );

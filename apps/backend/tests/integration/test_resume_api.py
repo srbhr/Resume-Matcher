@@ -1,5 +1,7 @@
 """Integration tests for resume CRUD endpoints."""
 
+from typing import Any
+
 import json
 from unittest.mock import patch, AsyncMock, MagicMock
 from uuid import uuid4
@@ -7,6 +9,7 @@ from uuid import uuid4
 import pytest
 from httpx import ASGITransport, AsyncClient
 
+from app.database import ResumeNotFoundError
 from app.main import app
 from app.schemas import InterviewPrepData
 
@@ -290,11 +293,19 @@ class TestRetryProcessing:
 
     @patch("app.routers.resumes.parse_resume_to_json", new_callable=AsyncMock)
     @patch("app.routers.resumes.db", new_callable=AsyncMock)
-    async def test_retry_successful(self, mock_db, mock_parse, client, mock_resume_record, sample_resume):
+    async def test_retry_successful(
+        self,
+        mock_db: AsyncMock,
+        mock_parse: AsyncMock,
+        client: AsyncClient,
+        mock_resume_record: dict[str, Any],
+        sample_resume: dict[str, Any],
+    ) -> None:
         failed_record = {**mock_resume_record, "processing_status": "failed"}
         mock_db.get_resume.return_value = failed_record
+        mock_db.claim_resume_processing.return_value = "token-1"
+        mock_db.finish_resume_processing.return_value = "committed"
         mock_parse.return_value = sample_resume
-        mock_db.update_resume.return_value = {**failed_record, "processing_status": "ready", "processed_data": sample_resume}
         async with client:
             resp = await client.post("/api/v1/resumes/res-123/retry-processing")
         assert resp.status_code == 200
@@ -302,12 +313,165 @@ class TestRetryProcessing:
         assert data["processing_status"] == "ready"
 
     @patch("app.routers.resumes.db", new_callable=AsyncMock)
-    async def test_retry_not_failed_returns_400(self, mock_db, client, mock_resume_record):
+    async def test_retry_not_failed_returns_400(
+        self, mock_db: AsyncMock, client: AsyncClient, mock_resume_record: dict[str, Any]
+    ) -> None:
         # processing_status is "ready", not "failed"
         mock_db.get_resume.return_value = mock_resume_record
         async with client:
             resp = await client.post("/api/v1/resumes/res-123/retry-processing")
         assert resp.status_code == 400
+
+    @patch("app.routers.resumes.parse_resume_to_json", new_callable=AsyncMock)
+    @patch("app.routers.resumes.db", new_callable=AsyncMock)
+    async def test_retry_empty_legacy_ready_resume(
+        self,
+        mock_db: AsyncMock,
+        mock_parse: AsyncMock,
+        client: AsyncClient,
+        mock_resume_record: dict[str, Any],
+        sample_resume: dict[str, Any],
+    ) -> None:
+        empty_ready_record = {
+            **mock_resume_record,
+            "processing_status": "ready",
+            "processed_data": {},
+        }
+        mock_db.get_resume.return_value = empty_ready_record
+        mock_db.claim_resume_processing.return_value = "token-1"
+        mock_db.finish_resume_processing.return_value = "committed"
+        mock_parse.return_value = sample_resume
+        async with client:
+            resp = await client.post("/api/v1/resumes/res-123/retry-processing")
+        assert resp.status_code == 200
+        mock_parse.assert_awaited_once_with(empty_ready_record["content"])
+
+    @patch("app.routers.resumes.parse_resume_to_json", new_callable=AsyncMock)
+    @patch("app.routers.resumes.db", new_callable=AsyncMock)
+    async def test_retry_legacy_ready_resume_with_schema_defaults(
+        self,
+        mock_db: AsyncMock,
+        mock_parse: AsyncMock,
+        client: AsyncClient,
+        mock_resume_record: dict[str, Any],
+        sample_resume: dict[str, Any],
+    ) -> None:
+        legacy_default_record = {
+            **mock_resume_record,
+            "processing_status": "ready",
+            "processed_data": {
+                "workExperience": [
+                    {
+                        "id": 0,
+                        "title": "",
+                        "company": "",
+                        "description": [],
+                        "descriptionStyles": [],
+                    }
+                ],
+                "customSections": {
+                    "empty": {
+                        "sectionType": "itemList",
+                        "items": [{"id": 0, "title": "", "description": []}],
+                    }
+                },
+            },
+        }
+        mock_db.get_resume.return_value = legacy_default_record
+        mock_db.claim_resume_processing.return_value = "token-1"
+        mock_db.finish_resume_processing.return_value = "committed"
+        mock_parse.return_value = sample_resume
+
+        async with client:
+            resp = await client.post("/api/v1/resumes/res-123/retry-processing")
+
+        assert resp.status_code == 200
+        assert resp.json()["processing_status"] == "ready"
+        mock_parse.assert_awaited_once_with(legacy_default_record["content"])
+        mock_db.finish_resume_processing.assert_awaited_once_with(
+            "res-123",
+            "token-1",
+            processing_status="ready",
+            processed_data=sample_resume,
+        )
+
+    @patch("app.routers.resumes.parse_resume_to_json", new_callable=AsyncMock)
+    @patch("app.routers.resumes.db", new_callable=AsyncMock)
+    async def test_retry_returns_404_when_resume_deleted_mid_retry(
+        self,
+        mock_db: AsyncMock,
+        mock_parse: AsyncMock,
+        client: AsyncClient,
+        mock_resume_record: dict[str, Any],
+    ) -> None:
+        """A compare-and-set miss for a deleted retry target yields 404."""
+        mock_db.get_resume.return_value = {
+            **mock_resume_record,
+            "processing_status": "failed",
+        }
+        mock_db.claim_resume_processing.return_value = "token-1"
+        mock_parse.side_effect = RuntimeError("llm exploded")
+        mock_db.finish_resume_processing.return_value = "missing"
+
+        async with client:
+            resp = await client.post("/api/v1/resumes/res-123/retry-processing")
+
+        assert resp.status_code == 404
+        assert resp.json()["detail"] == "Resume was deleted during retry."
+
+    @patch("app.routers.resumes.parse_resume_to_json", new_callable=AsyncMock)
+    @patch("app.routers.resumes.db", new_callable=AsyncMock)
+    async def test_retry_does_not_swallow_unrelated_value_errors(
+        self,
+        mock_db: AsyncMock,
+        mock_parse: AsyncMock,
+        client: AsyncClient,
+        mock_resume_record: dict[str, Any],
+    ) -> None:
+        """Only ResumeNotFoundError becomes a 404; other ValueErrors propagate."""
+        mock_db.get_resume.return_value = {
+            **mock_resume_record,
+            "processing_status": "failed",
+        }
+        mock_db.claim_resume_processing.return_value = "token-1"
+        mock_parse.side_effect = RuntimeError("llm exploded")
+        mock_db.finish_resume_processing.side_effect = ValueError("Resume not found: res-123")
+
+        with pytest.raises(ValueError, match="Resume not found"):
+            async with client:
+                await client.post("/api/v1/resumes/res-123/retry-processing")
+
+
+class TestResumeNotFoundError:
+    """app.database.ResumeNotFoundError backward compatibility."""
+
+    def test_is_a_value_error(self):
+        """Subclassing ValueError keeps every pre-existing handler working."""
+        assert issubclass(ResumeNotFoundError, ValueError)
+
+        caught = False
+        try:
+            raise ResumeNotFoundError("res-123")
+        except ValueError as exc:
+            caught = True
+            assert isinstance(exc, ResumeNotFoundError)
+        assert caught
+
+    def test_carries_the_resume_id(self):
+        error = ResumeNotFoundError("res-123")
+        assert error.resume_id == "res-123"
+        assert "res-123" in str(error)
+
+    async def test_real_update_resume_raises_the_typed_error(self, tmp_path):
+        """The real Database.update_resume raises the typed error, not bare ValueError."""
+        from app.database import Database
+
+        database = Database(db_path=tmp_path / "typed_error.db")
+        try:
+            with pytest.raises(ResumeNotFoundError):
+                await database.update_resume("does-not-exist", {"title": "X"})
+        finally:
+            await database.close()
 
 
 class TestUploadResume:

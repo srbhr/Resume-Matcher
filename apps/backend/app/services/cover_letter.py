@@ -4,6 +4,7 @@ import json
 import logging
 from typing import Any
 
+from app.ai_limits import MAX_JOB_CHARACTERS, validate_source_size
 from app.config import load_config_file
 from app.llm import complete
 from app.prompts.templates import (
@@ -48,6 +49,7 @@ async def generate_cover_letter(
     Returns:
         Generated cover letter as plain text
     """
+    validate_source_size(job_description, MAX_JOB_CHARACTERS)
     output_language = get_language_name(language)
 
     template, is_custom = _resolve_feature_prompt(
@@ -102,6 +104,7 @@ async def generate_outreach_message(
     Returns:
         Generated outreach message as plain text
     """
+    validate_source_size(job_description, MAX_JOB_CHARACTERS)
     output_language = get_language_name(language)
 
     template, is_custom = _resolve_feature_prompt(
@@ -149,6 +152,7 @@ async def generate_resume_title(
     Returns:
         Generated title like "Senior Frontend Engineer @ Stripe"
     """
+    validate_source_size(job_description, MAX_JOB_CHARACTERS)
     output_language = get_language_name(language)
 
     prompt = GENERATE_TITLE_PROMPT.format(

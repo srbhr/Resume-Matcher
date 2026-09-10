@@ -30,7 +30,8 @@
     "unknown": "Desconocido",
     "keysCleared": "Claves API borradas con éxito",
     "databaseReset": "Base de datos restablecida con éxito",
-    "popupBlocked": "Se bloqueó la ventana emergente. Permite las ventanas emergentes o abre manualmente esta URL: {url}"
+    "popupBlocked": "Se bloqueó la ventana emergente. Permite las ventanas emergentes o abre manualmente esta URL: {url}",
+    "resumeDeleted": "Este currículum se eliminó. Sube o selecciona otro."
   },
   "home": {
     "brandLine1": "Currículum",
@@ -99,6 +100,10 @@
       "dropzoneSubtitle": "PDF, DOC, DOCX (Máx. 4MB)",
       "tryDifferentFile": "Probar otro archivo",
       "parsingFailedKeepOpen": "El análisis de IA falló. Prueba otro archivo o cierra este diálogo."
+    },
+    "errors": {
+      "loadFailed": "No se pudieron cargar los currículums. Inténtalo de nuevo.",
+      "deleteFailed": "No se pudo eliminar el currículum. Tu currículum actual sigue disponible."
     }
   },
   "builder": {
@@ -113,11 +118,13 @@
       "localDraft": "Borrador guardado localmente",
       "saveNow": "Guardar ahora",
       "retrySave": "Reintentar guardado",
-      "savedButton": "Guardado"
+      "savedButton": "Guardado",
+      "localDraftUnavailable": "Borrador local no disponible"
     },
     "draftRecovery": {
       "title": "¿Restaurar borrador local?",
       "description": "Un borrador local del navegador es diferente de la copia guardada en el servidor. Restáuralo para seguir editando o usa la copia del servidor y descarta el borrador local.",
+      "newDescription": "Este navegador tiene un borrador de currículum sin guardar. Restáuralo para seguir editando o descártalo para empezar de nuevo.",
       "restoreDraft": "Restaurar borrador",
       "useServer": "Usar copia del servidor"
     },
@@ -263,14 +270,17 @@
         "newLabel": "Nuevo",
         "noContent": "Sin contenido",
         "applying": "Aplicando...",
-        "loading": "Generando contenido mejorado..."
+        "loading": "Generando contenido mejorado...",
+        "retryRefresh": "Reintentar actualización",
+        "refreshing": "Actualizando..."
       },
       "errors": {
         "generationFailed": "No se pudo generar el contenido. Inténtalo de nuevo.",
         "applyFailed": "No se pudieron aplicar los cambios. Inténtalo de nuevo.",
         "resumeChanged": "El contenido del currículum cambió desde la regeneración. Vuelve a regenerar e inténtalo de nuevo.",
         "noChangesToApply": "No hay cambios para aplicar.",
-        "networkError": "Error de red. Verifica tu conexión."
+        "networkError": "Error de red. Verifica tu conexión.",
+        "refreshFailed": "Los cambios se guardaron, pero no se pudo actualizar el currículum. Reintenta la actualización."
       }
     },
     "jdMatch": {
@@ -490,6 +500,12 @@
       "coverLetterGenerateFailed": "No se pudo generar la carta de presentación: {error}",
       "outreachGenerateFailed": "No se pudo generar el mensaje de contacto: {error}",
       "interviewPrepGenerateFailed": "No se pudo generar la preparación de entrevista: {error}"
+    },
+    "leaveWithoutDraft": {
+      "title": "¿Salir con cambios sin guardar?",
+      "description": "Los últimos cambios no pudieron sincronizarse con el servidor ni guardarse en este navegador. Si sales ahora, podrías perderlos.",
+      "leave": "Salir de todos modos",
+      "stay": "Seguir editando"
     }
   },
   "enrichment": {
@@ -516,14 +532,20 @@
       "addingLabel": "Agregar",
       "existingCount": "({count} existentes)",
       "newCount": "({count} nuevos)",
-      "noExistingDescription": "Sin descripción existente"
+      "noExistingDescription": "Sin descripción existente",
+      "partialFailure": "No se pudieron mejorar algunos elementos",
+      "partialFailureDescription": "Los elementos indicados no cambiarán. Puedes aplicar las mejoras disponibles e intentar mejorar los demás más tarde."
     },
     "complete": {
       "title": "¡Currículum mejorado!",
       "updatedCountSingular": "{count} elemento actualizado correctamente",
       "updatedCountPlural": "{count} elementos actualizados correctamente",
       "updatedFallback": "Tu currículum se actualizó con descripciones mejoradas",
-      "doneButton": "Listo"
+      "doneButton": "Listo",
+      "refreshFailedTitle": "Guardado — actualización necesaria",
+      "refreshFailed": "Las mejoras se guardaron, pero esta vista no pudo actualizarse. Reintenta para ver el currículum más reciente.",
+      "retryRefresh": "Reintentar actualización",
+      "refreshing": "Actualizando currículum..."
     },
     "noImprovements": {
       "title": "¡Tu currículum se ve genial!",
@@ -531,7 +553,8 @@
     },
     "error": {
       "title": "Algo salió mal",
-      "unexpected": "Ocurrió un error inesperado"
+      "unexpected": "Ocurrió un error inesperado",
+      "answerRequired": "Responde al menos una pregunta antes de generar mejoras."
     }
   },
   "tailor": {
@@ -609,7 +632,8 @@
       "timeout": "La vista previa del currículum agotó el tiempo de espera tras {minutes} minutos. Inténtalo de nuevo con una descripción del trabajo más corta o un prompt más simple.",
       "failedToGenerate": "No se pudo generar el currículum. Revisa tu clave API en Configuración e inténtalo de nuevo.",
       "failedToPreview": "No se pudo previsualizar el currículum. Revisa tu clave API en Configuración e inténtalo de nuevo.",
-      "failedToConfirm": "No se pudieron aplicar los cambios. Inténtalo de nuevo."
+      "failedToConfirm": "No se pudieron aplicar los cambios. Inténtalo de nuevo.",
+      "previewUnavailable": "La vista previa caducó o el currículum original cambió. Genera una nueva vista previa antes de guardar."
     }
   },
   "settings": {
@@ -789,9 +813,13 @@
       "notProcessedYet": "El currículum aún no se ha procesado. Usa la función de personalización para generar un currículum estructurado.",
       "noDataAvailable": "No hay datos de currículum disponibles.",
       "failedToLoad": "No se pudieron cargar los datos del currículum.",
-      "failedToDelete": "No se pudo eliminar el currículum. Inténtalo de nuevo."
+      "failedToDelete": "No se pudo eliminar el currículum. Inténtalo de nuevo.",
+      "failedToDownload": "No se pudo descargar el currículum. Inténtalo de nuevo.",
+      "failedToRename": "No se pudo cambiar el nombre del currículum. Inténtalo de nuevo."
     },
-    "titlePlaceholder": "Ingrese el título del currículum..."
+    "titlePlaceholder": "Ingrese el título del currículum...",
+    "downloadFailedTitle": "Error de descarga",
+    "renameFailedTitle": "Error al cambiar el nombre"
   },
   "preview": {
     "margins": "Márgenes",
@@ -941,7 +969,11 @@
       "review": "Revisar y finalizar",
       "create": "Crear currículum maestro",
       "keepAdding": "Seguir añadiendo",
-      "backToDashboard": "Volver al panel"
+      "backToDashboard": "Volver al panel",
+      "openCreated": "Abrir currículum creado",
+      "retryDraftBackup": "Reintentar copia local",
+      "stay": "Permanecer aquí",
+      "leaveWithoutSaving": "Salir sin guardar"
     },
     "preview": {
       "label": "Borrador en vivo",
@@ -954,7 +986,16 @@
     },
     "errors": {
       "turnFailed": "El asistente no pudo guardar esa respuesta. Inténtalo de nuevo.",
-      "finalizeFailed": "El asistente no pudo crear tu currículum maestro. Inténtalo de nuevo."
+      "finalizeFailed": "El asistente no pudo crear tu currículum maestro. Inténtalo de nuevo.",
+      "createdNavigationFailed": "Tu currículum maestro se creó, pero esta página no pudo abrirlo automáticamente. Usa el botón de abajo para continuar."
+    },
+    "draftStorageUnavailable": {
+      "title": "Borrador local no disponible",
+      "description": "El progreso más reciente del asistente solo está en esta pestaña. Reintenta la copia local antes de salir o recargar."
+    },
+    "leaveWithoutDraft": {
+      "title": "¿Salir sin una copia local?",
+      "description": "El progreso más reciente del asistente se perderá si sales o recargas antes de que la copia local se complete."
     },
     "entry": {
       "kicker": "Configuración del currículum maestro",
@@ -972,9 +1013,22 @@
         "description": "Responde preguntas enfocadas y deja que el asistente arme un primer borrador sólido de tu currículum maestro.",
         "action": "Iniciar asistente"
       }
+    },
+    "created": {
+      "title": "Currículum maestro creado",
+      "description": "Tu currículum maestro se creó. Ábrelo para seguir editando."
     }
   },
   "tracker": {
+    "manage": "Gestionar",
+    "manageDialog": {
+      "title": "Gestionar columnas",
+      "description": "Elige qué etapas aparecen en el tablero.",
+      "visible": "Visible",
+      "hidden": "Oculta",
+      "lastVisibleHint": "Al menos una etapa debe permanecer visible.",
+      "close": "Listo"
+    },
     "scroll": {
       "prev": "Desplazar a la izquierda",
       "next": "Desplazar a la derecha",

@@ -31,6 +31,7 @@ interface RegenerateDiffPreviewProps {
   onAccept: () => void;
   onReject: () => void;
   isApplying: boolean;
+  needsRefresh?: boolean;
 }
 
 /**
@@ -49,6 +50,7 @@ export const RegenerateDiffPreview: React.FC<RegenerateDiffPreviewProps> = ({
   onAccept,
   onReject,
   isApplying,
+  needsRefresh = false,
 }) => {
   const { t } = useTranslations();
   const [expandedItems, setExpandedItems] = React.useState<Set<string>>(
@@ -141,8 +143,18 @@ export const RegenerateDiffPreview: React.FC<RegenerateDiffPreviewProps> = ({
 
         {error ? (
           <div className="px-6 pt-4">
-            <div className="border border-red-600 bg-red-50 px-4 py-3">
-              <p className="font-mono text-xs text-red-700">{resolveErrorMessage(error)}</p>
+            <div
+              className={
+                needsRefresh
+                  ? 'border-2 border-orange-600 bg-orange-100 px-4 py-3'
+                  : 'border-2 border-red-600 bg-red-100 px-4 py-3'
+              }
+            >
+              <p className="font-sans text-sm">
+                {needsRefresh
+                  ? t('builder.regenerate.errors.refreshFailed')
+                  : resolveErrorMessage(error)}
+              </p>
             </div>
           </div>
         ) : null}
@@ -258,7 +270,7 @@ export const RegenerateDiffPreview: React.FC<RegenerateDiffPreviewProps> = ({
           <Button
             variant="outline"
             onClick={onReject}
-            disabled={isApplying}
+            disabled={isApplying || needsRefresh}
             className="rounded-none border-black"
           >
             <RefreshCw className="w-4 h-4 mr-2" />
@@ -275,12 +287,20 @@ export const RegenerateDiffPreview: React.FC<RegenerateDiffPreviewProps> = ({
                 <span className="animate-spin mr-2">
                   <Check className="w-4 h-4" />
                 </span>
-                {t('builder.regenerate.diffPreview.applying')}
+                {t(
+                  needsRefresh
+                    ? 'builder.regenerate.diffPreview.refreshing'
+                    : 'builder.regenerate.diffPreview.applying'
+                )}
               </>
             ) : (
               <>
                 <Check className="w-4 h-4 mr-2" />
-                {t('builder.regenerate.diffPreview.acceptButton')}
+                {t(
+                  needsRefresh
+                    ? 'builder.regenerate.diffPreview.retryRefresh'
+                    : 'builder.regenerate.diffPreview.acceptButton'
+                )}
               </>
             )}
           </Button>
