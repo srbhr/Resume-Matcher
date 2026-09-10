@@ -6,7 +6,7 @@ pydantic-settings==2.14.2
 tinydb==4.8.2
 sqlalchemy[asyncio]==2.0.36
 aiosqlite==0.20.0
-cryptography==48.0.1
+cryptography==50.0.0
 litellm==1.86.2
 markitdown[docx]==0.1.4
 python-docx==1.2.0
