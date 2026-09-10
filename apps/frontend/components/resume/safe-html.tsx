@@ -3,10 +3,10 @@ import { sanitizeHtml } from '@/lib/utils/html-sanitizer';
 import { cn } from '@/lib/utils';
 
 // No 'use client' — this component does no client-only work (no hooks, no
-// event handlers, no browser APIs). Sanitization runs on the server via
-// isomorphic-dompurify. Parent resume templates (resume-single-column,
-// resume-modern, etc.) are also Server Components, so this can render on
-// the server and stays out of the client bundle.
+// event handlers, no browser APIs). Sanitization runs on the server with a
+// strict whitelist parser so the resume templates remain SSR-safe. Parent
+// resume templates (resume-single-column, resume-modern, etc.) are also
+// Server Components, so this stays out of the client bundle.
 
 interface SafeHtmlProps {
   /** HTML content to render (will be sanitized) */
@@ -20,7 +20,7 @@ interface SafeHtmlProps {
 /**
  * Safe HTML Renderer Component
  *
- * Renders HTML content with XSS protection via DOMPurify.
+ * Renders HTML content with XSS protection via a strict whitelist parser.
  * Only allows: <strong>, <em>, <u>, <a> tags.
  *
  * Used in resume templates to render formatted bullet points.

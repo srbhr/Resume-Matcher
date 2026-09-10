@@ -39,6 +39,12 @@ describe('sanitizeHtml', () => {
     expect(out).toContain('plain text');
   });
 
+  it('drops unsafe javascript links', () => {
+    const out = sanitizeHtml('<a href="javascript:alert(1)">click</a>');
+    expect(out).not.toContain('javascript:');
+    expect(out).toContain('click');
+  });
+
   it('drops dangerous tags like <img onerror>', () => {
     const out = sanitizeHtml('<img src=x onerror="alert(1)">');
     expect(out).not.toContain('img');
