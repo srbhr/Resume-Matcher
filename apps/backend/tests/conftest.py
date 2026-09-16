@@ -59,7 +59,38 @@ def deny_external_network(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
     ASGITransport and respx-backed HTTP tests do not open sockets and continue
     to exercise their real in-process transports. Tests requiring an actual
     network connection must explicitly replace this guard at their boundary.
+
+    Windows has no native ``socket.socketpair()``: the stdlib falls back to
+    ``socket._fallback_socketpair()``, which opens a real loopback TCP
+    listener and connects to it to emulate a pair. ``asyncio``'s
+    ProactorEventLoop calls ``socketpair()`` for its self-pipe on
+    construction, so every async test needs that to work. We allow through
+    only the single ``connect()`` call made synchronously from inside
+    ``socket.socketpair()`` itself (the flag below is true for the duration
+    of that one call) -- never loopback connects in general.
     """
+    real_connect = socket.socket.connect
+    real_socketpair = socket.socketpair
+
+    # ponytail: single-process boolean, not thread-safe against concurrent
+    # socketpair() calls from separate threads. Upgrade to threading.local()
+    # if a test ever spawns a thread that also builds an event loop.
+    socketpair_in_progress = False
+
+    def guarded_socketpair(*args: Any, **kwargs: Any) -> Any:
+        nonlocal socketpair_in_progress
+        socketpair_in_progress = True
+        try:
+            return real_socketpair(*args, **kwargs)
+        finally:
+            socketpair_in_progress = False
+
+    def blocked_connect(self: socket.socket, *args: Any, **kwargs: Any) -> Any:
+        if socketpair_in_progress:
+            return real_connect(self, *args, **kwargs)
+        raise UnexpectedNetworkAccess(
+            "External network access blocked in deterministic backend tests"
+        )
 
     def blocked_connection(*args: Any, **kwargs: Any) -> NoReturn:
         del args, kwargs
@@ -67,8 +98,9 @@ def deny_external_network(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
             "External network access blocked in deterministic backend tests"
         )
 
+    monkeypatch.setattr(socket, "socketpair", guarded_socketpair)
     monkeypatch.setattr(socket, "create_connection", blocked_connection)
-    monkeypatch.setattr(socket.socket, "connect", blocked_connection)
+    monkeypatch.setattr(socket.socket, "connect", blocked_connect)
     monkeypatch.setattr(socket.socket, "connect_ex", blocked_connection)
     yield
 
