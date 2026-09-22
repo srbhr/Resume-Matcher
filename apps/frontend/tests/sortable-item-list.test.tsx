@@ -19,20 +19,22 @@ import { ProjectsForm } from '@/components/builder/forms/projects-form';
  * the same payload @dnd-kit dispatches on drop.
  */
 
-let capturedOnDragEnd: ((event: DragEndEvent) => void) | undefined;
+interface CapturedDndProps {
+  id?: string;
+  onDragEnd?: (event: DragEndEvent) => void;
+}
+
+let captured: CapturedDndProps = {};
+const capturedOnDragEnd = () => captured.onDragEnd;
 
 vi.mock('@dnd-kit/core', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@dnd-kit/core')>();
   return {
     ...actual,
-    DndContext: ({
-      children,
-      onDragEnd,
-    }: {
-      children: React.ReactNode;
-      onDragEnd?: (event: DragEndEvent) => void;
-    }) => {
-      capturedOnDragEnd = onDragEnd;
+    // Keep every prop, not just onDragEnd: the `id` is the hydration invariant
+    // from #880 and needs asserting too.
+    DndContext: ({ children, ...props }: CapturedDndProps & { children: React.ReactNode }) => {
+      captured = props;
       return <>{children}</>;
     },
   };
@@ -54,7 +56,7 @@ const dropOn = (activeId: number, overId: number | null) =>
   }) as unknown as DragEndEvent;
 
 afterEach(() => {
-  capturedOnDragEnd = undefined;
+  captured = {};
 });
 
 describe('SortableItemList drag-end wiring', () => {
@@ -75,7 +77,7 @@ describe('SortableItemList drag-end wiring', () => {
     const onReorder = vi.fn();
     renderList(onReorder);
 
-    capturedOnDragEnd?.(dropOn(1, 3));
+    capturedOnDragEnd()?.(dropOn(1, 3));
 
     expect(onReorder).toHaveBeenCalledTimes(1);
     expect(onReorder.mock.calls[0][0].map((i: (typeof rows)[number]) => i.id)).toEqual([2, 3, 1]);
@@ -85,19 +87,29 @@ describe('SortableItemList drag-end wiring', () => {
     const onReorder = vi.fn();
     renderList(onReorder);
 
-    capturedOnDragEnd?.(dropOn(2, 2)); // dropped on itself
-    capturedOnDragEnd?.(dropOn(2, null)); // dropped outside any target
-    capturedOnDragEnd?.(dropOn(99, 1)); // id no longer in the list
+    capturedOnDragEnd()?.(dropOn(2, 2)); // dropped on itself
+    capturedOnDragEnd()?.(dropOn(2, null)); // dropped outside any target
+    capturedOnDragEnd()?.(dropOn(99, 1)); // id no longer in the list
 
     // An aborted drag must not dirty the resume or trigger an autosave.
     expect(onReorder).not.toHaveBeenCalled();
   });
 
+  it('forwards its id to DndContext', () => {
+    renderList(vi.fn());
+
+    // #880: drag-and-drop caused a hydration mismatch until every DndContext
+    // got a stable id. Dropping `id={id}` in a refactor would bring it back,
+    // so pin the forwarding rather than just the prop's existence.
+    expect(captured.id).toBe('test-items');
+  });
+
   it('renders the children it is given for every item', () => {
     renderList(vi.fn());
 
-    expect(screen.getByText('first')).toBeInTheDocument();
-    expect(screen.getByText('third')).toBeInTheDocument();
+    for (const row of rows) {
+      expect(screen.getByText(row.label)).toBeInTheDocument();
+    }
   });
 });
 
@@ -116,7 +128,7 @@ describe('ProjectsForm drag-end wiring', () => {
     );
 
     // Drag the last project to the top — the reorder this PR enables.
-    capturedOnDragEnd?.(dropOn(3, 1));
+    capturedOnDragEnd()?.(dropOn(3, 1));
 
     expect(onChange).toHaveBeenCalledTimes(1);
     expect(onChange.mock.calls[0][0].map((p: { name?: string }) => p.name)).toEqual([
