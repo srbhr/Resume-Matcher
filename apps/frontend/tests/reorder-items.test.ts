@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { arrayMove } from '@dnd-kit/sortable';
 import { reorderById } from '@/lib/utils/reorder-items';
 
 /**
@@ -65,5 +66,19 @@ describe('reorderById', () => {
   it('preserves the full item object, not just its id', () => {
     const reordered = reorderById(rows, 1, 2);
     expect(reordered?.[1]).toEqual({ id: 1, name: 'a' });
+  });
+
+  // reorderById inlines the move so the rules carry no @dnd-kit dependency.
+  // Pin it against the library for every index pair, so the two cannot drift
+  // apart while @dnd-kit still drives the drag.
+  it('matches @dnd-kit arrayMove for every index pair', () => {
+    for (let from = 0; from < rows.length; from++) {
+      for (let to = 0; to < rows.length; to++) {
+        if (from === to) continue;
+        expect(names(reorderById(rows, rows[from].id, rows[to].id))).toEqual(
+          names(arrayMove(rows, from, to))
+        );
+      }
+    }
   });
 });

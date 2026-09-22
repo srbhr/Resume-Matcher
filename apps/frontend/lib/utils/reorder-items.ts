@@ -1,5 +1,3 @@
-import { arrayMove } from '@dnd-kit/sortable';
-
 /** Minimum shape a list item needs to participate in drag-and-drop reordering. */
 export interface ReorderableItem {
   id: number;
@@ -13,8 +11,10 @@ export interface ReorderableItem {
  * is no longer in the list). Callers use that to skip the state update entirely,
  * so an aborted drag cannot mark the resume dirty or trigger an autosave.
  *
- * Kept free of React and @dnd-kit runtime types so the reorder rules are
- * unit-testable without mounting a DndContext.
+ * Deliberately dependency-free: no React, and no @dnd-kit. That keeps the
+ * reorder rules unit-testable without mounting a DndContext, and keeps them
+ * intact if the drag library is swapped or lazy-loaded. The move itself matches
+ * `arrayMove` semantics for the non-negative indices `findIndex` can return.
  */
 export function reorderById<T extends ReorderableItem>(
   items: T[],
@@ -28,5 +28,8 @@ export function reorderById<T extends ReorderableItem>(
   const newIndex = items.findIndex((item) => item.id === overId);
   if (oldIndex === -1 || newIndex === -1) return null;
 
-  return arrayMove(items, oldIndex, newIndex);
+  const reordered = items.slice();
+  const [moved] = reordered.splice(oldIndex, 1);
+  reordered.splice(newIndex, 0, moved);
+  return reordered;
 }
