@@ -1,5 +1,6 @@
 """Pydantic schemas for the Kanban application tracker."""
 
+from datetime import datetime
 from enum import Enum
 from typing import Any
 
@@ -34,6 +35,7 @@ class ApplicationResponse(BaseModel):
     company: str | None = None
     role: str | None = None
     applied_at: str | None = None
+    interview_times: list[str] = Field(default_factory=list)
     notes: str | None = None
     position: int
     created_at: str
@@ -82,6 +84,7 @@ class ApplicationUpdate(BaseModel):
     company: str | None = None
     role: str | None = None
     applied_at: str | None = None
+    interview_times: list[str] | None = None
 
     @field_validator("status")
     @classmethod
@@ -90,6 +93,27 @@ class ApplicationUpdate(BaseModel):
         if value is None:
             raise ValueError("Status cannot be null")
         return value
+
+    @field_validator("interview_times")
+    @classmethod
+    def validate_interview_times(cls, values: list[str] | None) -> list[str] | None:
+        """Validate and normalize wall-clock ``datetime-local`` values."""
+        if values is None:
+            return None
+        normalized: list[str] = []
+        for value in values:
+            if not isinstance(value, str) or "T" not in value:
+                raise ValueError("Interview times must include a local date and time")
+            try:
+                parsed = datetime.fromisoformat(value)
+            except ValueError as exc:
+                raise ValueError("Interview times must be valid local date-times") from exc
+            if parsed.tzinfo is not None:
+                raise ValueError("Interview times must not include a timezone")
+            normalized.append(
+                parsed.replace(second=0, microsecond=0).isoformat(timespec="minutes")
+            )
+        return normalized
 
 
 class BulkStatusUpdate(BaseModel):

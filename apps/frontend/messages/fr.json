@@ -1037,6 +1037,13 @@
     "title": "Suivi des candidatures",
     "subtitle": "Suivez l'avancement de chaque CV personnalisé dans votre pipeline.",
     "addApplication": "Ajouter une candidature",
+    "interview": {
+      "round": "Entretien {count}",
+      "title": "Dates des entretiens",
+      "add": "Ajouter un entretien",
+      "save": "Enregistrer les dates",
+      "validation": "Indiquez une date et une heure pour chaque entretien."
+    },
     "columns": {
       "saved": "Enregistré",
       "applied": "Postulé",

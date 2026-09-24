@@ -1037,6 +1037,13 @@
     "title": "Application Tracker",
     "subtitle": "Track where each tailored resume stands in your pipeline.",
     "addApplication": "Add Application",
+    "interview": {
+      "round": "Interview {count}",
+      "title": "Interview times",
+      "add": "Add interview time",
+      "save": "Save interview times",
+      "validation": "Enter a date and time for every interview round."
+    },
     "columns": {
       "saved": "Saved",
       "applied": "Applied",

@@ -24,7 +24,7 @@ export function ApplicationCard({
   onToggleSelect,
   onOpen,
 }: ApplicationCardProps) {
-  const { t } = useTranslations();
+  const { t, locale } = useTranslations();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: application.application_id,
   });
@@ -37,6 +37,14 @@ export function ApplicationCard({
 
   const company = application.company?.trim();
   const role = application.role?.trim();
+  const interviewTimes = application.interview_times ?? [];
+
+  const formatInterviewTime = (value: string) => {
+    const date = new Date(value);
+    return Number.isNaN(date.getTime())
+      ? value
+      : date.toLocaleString(locale, { dateStyle: 'medium', timeStyle: 'short' });
+  };
 
   return (
     <div ref={setNodeRef} style={style}>
@@ -70,6 +78,20 @@ export function ApplicationCard({
               <p className="mt-1 font-mono text-[10px] uppercase tracking-wide text-steel-grey">
                 {new Date(application.applied_at).toLocaleDateString()}
               </p>
+            )}
+            {interviewTimes.length > 0 && (
+              <div className="mt-2 space-y-1">
+                {interviewTimes.map((value, index) => (
+                  <p
+                    key={`${value}-${index}`}
+                    className="font-mono text-[10px] uppercase tracking-wide text-primary"
+                  >
+                    {t('tracker.interview.round', { count: index + 1 })}
+                    {': '}
+                    <time dateTime={value}>{formatInterviewTime(value)}</time>
+                  </p>
+                ))}
+              </div>
             )}
             {sharedResume && (
               <span className="mt-1 inline-flex items-center gap-1 border border-black bg-paper-tint px-1 font-mono text-[10px] uppercase text-ink-soft">

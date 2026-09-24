@@ -1037,6 +1037,13 @@
     "title": "応募トラッカー",
     "subtitle": "各カスタマイズ済み履歴書の選考状況を管理します。",
     "addApplication": "応募を追加",
+    "interview": {
+      "round": "第 {count} 回面接",
+      "title": "面接日時",
+      "add": "面接を追加",
+      "save": "面接日時を保存",
+      "validation": "各面接の日時を入力してください。"
+    },
     "columns": {
       "saved": "保存済み",
       "applied": "応募済み",
