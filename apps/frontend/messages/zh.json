@@ -323,7 +323,8 @@
       },
       "actions": {
         "addPoint": "添加要点",
-        "togglePointStyle": "切换项目符号"
+        "togglePointStyle": "切换项目符号",
+        "reorderPoint": "拖动以重新排序要点"
       },
       "placeholders": {
         "title": "标题",

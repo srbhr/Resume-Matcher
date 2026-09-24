@@ -29,7 +29,10 @@ interface SortableItemListProps<T extends ReorderableItem> {
   onReorder: (items: T[]) => void;
   /** Spacing wrapper for the list; matches the per-section rhythm. */
   className?: string;
-  children: (item: T) => React.ReactNode;
+  /** Accessible name for each row's drag handle; omitted, DraggableListItem uses "Drag to reorder". */
+  handleLabel?: string;
+  /** Renders one row; `index` is the item's current position in `items`. */
+  children: (item: T, index: number) => React.ReactNode;
 }
 
 /**
@@ -53,6 +56,7 @@ export function SortableItemList<T extends ReorderableItem>({
   items,
   onReorder,
   className = 'space-y-8',
+  handleLabel,
   children,
 }: SortableItemListProps<T>) {
   // PointerSensor covers mouse/touch; KeyboardSensor makes the handle operable
@@ -82,9 +86,9 @@ export function SortableItemList<T extends ReorderableItem>({
     >
       <SortableContext items={items.map((item) => item.id)} strategy={verticalListSortingStrategy}>
         <div className={className}>
-          {items.map((item) => (
-            <DraggableListItem key={item.id} id={item.id}>
-              {children(item)}
+          {items.map((item, index) => (
+            <DraggableListItem key={item.id} id={item.id} handleLabel={handleLabel}>
+              {children(item, index)}
             </DraggableListItem>
           ))}
         </div>

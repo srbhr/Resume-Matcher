@@ -8,6 +8,8 @@ import { GripVertical } from 'lucide-react';
 interface DraggableListItemProps {
   id: number;
   children: React.ReactNode;
+  /** Accessible name for the drag handle. */
+  handleLabel?: string;
 }
 
 /**
@@ -20,7 +22,11 @@ interface DraggableListItemProps {
  * - Keyboard accessibility for drag operations
  * - Swiss International Style aesthetic (square corners, high contrast)
  */
-export const DraggableListItem: React.FC<DraggableListItemProps> = ({ id, children }) => {
+export const DraggableListItem: React.FC<DraggableListItemProps> = ({
+  id,
+  children,
+  handleLabel = 'Drag to reorder',
+}) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id,
   });
@@ -38,7 +44,8 @@ export const DraggableListItem: React.FC<DraggableListItemProps> = ({ id, childr
         {...attributes}
         {...listeners}
         className="absolute left-0 top-0 h-full w-4 flex items-start justify-center cursor-grab active:cursor-grabbing z-10"
-        title="Drag to reorder"
+        title={handleLabel}
+        aria-label={handleLabel}
       >
         <GripVertical className="w-4 h-4 text-steel-grey hover:text-ink-soft transition-colors" />
       </div>

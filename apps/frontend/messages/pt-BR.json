@@ -323,7 +323,8 @@
       },
       "actions": {
         "addPoint": "Adicionar Ponto",
-        "togglePointStyle": "Alternar marcador"
+        "togglePointStyle": "Alternar marcador",
+        "reorderPoint": "Arraste para reordenar o ponto"
       },
       "placeholders": {
         "title": "Título",

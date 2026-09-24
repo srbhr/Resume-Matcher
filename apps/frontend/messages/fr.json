@@ -323,7 +323,8 @@
       },
       "actions": {
         "addPoint": "Ajouter un point",
-        "togglePointStyle": "Basculer la puce"
+        "togglePointStyle": "Basculer la puce",
+        "reorderPoint": "Faites glisser pour réordonner le point"
       },
       "placeholders": {
         "title": "Titre",

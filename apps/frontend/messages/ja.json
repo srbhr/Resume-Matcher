@@ -323,7 +323,8 @@
       },
       "actions": {
         "addPoint": "ポイントを追加",
-        "togglePointStyle": "箇条書き記号を切り替え"
+        "togglePointStyle": "箇条書き記号を切り替え",
+        "reorderPoint": "ドラッグして項目を並べ替え"
       },
       "placeholders": {
         "title": "タイトル",
