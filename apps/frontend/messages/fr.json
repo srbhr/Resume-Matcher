@@ -1041,8 +1041,6 @@
     "columns": {
       "saved": "Enregistré",
       "applied": "Postulé",
-      "no_response": "Sans réponse",
-      "response": "Réponse",
       "interview": "Entretien",
       "accepted": "Accepté",
       "rejected": "Refusé",

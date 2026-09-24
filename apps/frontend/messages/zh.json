@@ -1041,8 +1041,6 @@
     "columns": {
       "saved": "已保存",
       "applied": "已投递",
-      "no_response": "无回复",
-      "response": "有回复",
       "interview": "面试",
       "accepted": "已录用",
       "rejected": "已拒绝",

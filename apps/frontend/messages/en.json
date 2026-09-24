@@ -1041,8 +1041,6 @@
     "columns": {
       "saved": "Saved",
       "applied": "Applied",
-      "no_response": "No Response",
-      "response": "Response",
       "interview": "Interview",
       "accepted": "Accepted",
       "rejected": "Rejected",

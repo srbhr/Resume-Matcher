@@ -1041,8 +1041,6 @@
     "columns": {
       "saved": "保存済み",
       "applied": "応募済み",
-      "no_response": "返信なし",
-      "response": "返信あり",
       "interview": "面接",
       "accepted": "内定",
       "rejected": "不採用",
