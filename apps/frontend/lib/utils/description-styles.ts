@@ -7,6 +7,36 @@ export function alignDescriptionStyles(
   return (descriptions || []).map((_, index) => (styles?.[index] === 'plain' ? 'plain' : 'bullet'));
 }
 
+/** A description point paired with its style, so a reorder moves both together. */
+export interface DescriptionRow {
+  /** Position in the original list; only used as a drag-and-drop id. */
+  id: number;
+  text: string;
+  style: DescriptionStyle;
+}
+
+export function toDescriptionRows(
+  descriptions: string[] | undefined,
+  styles: (DescriptionStyle | null | undefined)[] | undefined
+): DescriptionRow[] {
+  const alignedStyles = alignDescriptionStyles(descriptions, styles);
+  return (descriptions || []).map((text, index) => ({
+    id: index,
+    text,
+    style: alignedStyles[index],
+  }));
+}
+
+export function fromDescriptionRows(rows: DescriptionRow[]): {
+  description: string[];
+  descriptionStyles: DescriptionStyle[];
+} {
+  return {
+    description: rows.map((row) => row.text),
+    descriptionStyles: rows.map((row) => row.style),
+  };
+}
+
 export function toggleDescriptionStyle(
   descriptions: string[] | undefined,
   styles: (DescriptionStyle | null | undefined)[] | undefined,

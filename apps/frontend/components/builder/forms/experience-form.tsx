@@ -20,7 +20,13 @@ const RichTextEditor = dynamic(
 import { Experience } from '@/components/dashboard/resume-component';
 import { AlignLeft, List, Plus, Trash2 } from 'lucide-react';
 import { useTranslations } from '@/lib/i18n';
-import { alignDescriptionStyles, toggleDescriptionStyle } from '@/lib/utils/description-styles';
+import {
+  alignDescriptionStyles,
+  fromDescriptionRows,
+  toDescriptionRows,
+  toggleDescriptionStyle,
+  type DescriptionRow,
+} from '@/lib/utils/description-styles';
 import { SortableItemList } from '../sortable-item-list';
 
 interface ExperienceFormProps {
@@ -105,6 +111,12 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({ data, onChange }
         }
         return item;
       })
+    );
+  };
+
+  const handleReorderDescriptions = (id: number, rows: DescriptionRow[]) => {
+    onChange(
+      data.map((item) => (item.id === id ? { ...item, ...fromDescriptionRows(rows) } : item))
     );
   };
 
@@ -227,42 +239,51 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({ data, onChange }
                     {t('builder.genericItemForm.actions.addPoint')}
                   </Button>
                 </div>
-                {item.description?.map((desc, idx) => (
-                  <div key={idx} className="flex gap-2">
-                    <div className="flex-1">
-                      <RichTextEditor
-                        value={desc}
-                        onChange={(html) => handleDescriptionChange(item.id, idx, html)}
-                        placeholder={t('builder.forms.experience.placeholders.description')}
-                        minHeight="60px"
-                      />
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleToggleDescriptionStyle(item.id, idx)}
-                      className="h-[60px] w-8 text-muted-foreground hover:text-primary self-end"
-                      aria-label={t('builder.genericItemForm.actions.togglePointStyle')}
-                      title={t('builder.genericItemForm.actions.togglePointStyle')}
-                    >
-                      {item.descriptionStyles?.[idx] === 'plain' ? (
-                        <AlignLeft className="w-3 h-3" />
-                      ) : (
-                        <List className="w-3 h-3" />
-                      )}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleRemoveDescription(item.id, idx)}
-                      className="h-[60px] w-8 text-muted-foreground hover:text-destructive self-end"
-                      aria-label={t('a11y.removeDescription')}
-                      title={t('a11y.removeDescription')}
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </Button>
-                  </div>
-                ))}
+                {item.description?.length ? (
+                  <SortableItemList
+                    id={`experience-${item.id}-points`}
+                    items={toDescriptionRows(item.description, item.descriptionStyles)}
+                    onReorder={(rows) => handleReorderDescriptions(item.id, rows)}
+                    className="space-y-3"
+                  >
+                    {({ id: idx, text: desc }) => (
+                      <div className="flex gap-2">
+                        <div className="flex-1">
+                          <RichTextEditor
+                            value={desc}
+                            onChange={(html) => handleDescriptionChange(item.id, idx, html)}
+                            placeholder={t('builder.forms.experience.placeholders.description')}
+                            minHeight="60px"
+                          />
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleToggleDescriptionStyle(item.id, idx)}
+                          className="h-[60px] w-8 text-muted-foreground hover:text-primary self-end"
+                          aria-label={t('builder.genericItemForm.actions.togglePointStyle')}
+                          title={t('builder.genericItemForm.actions.togglePointStyle')}
+                        >
+                          {item.descriptionStyles?.[idx] === 'plain' ? (
+                            <AlignLeft className="w-3 h-3" />
+                          ) : (
+                            <List className="w-3 h-3" />
+                          )}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleRemoveDescription(item.id, idx)}
+                          className="h-[60px] w-8 text-muted-foreground hover:text-destructive self-end"
+                          aria-label={t('a11y.removeDescription')}
+                          title={t('a11y.removeDescription')}
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    )}
+                  </SortableItemList>
+                ) : null}
               </div>
             </div>
           )}
