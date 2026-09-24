@@ -75,7 +75,7 @@ export function KanbanBoard() {
     writeHiddenStatuses(next);
   };
 
-  // Horizontal-scroll affordance: the seven stages overflow the canvas, so we
+  // Horizontal-scroll affordance: the five stages overflow the canvas, so we
   // track whether more columns sit off-screen and surface controls + a stage
   // rail so no section is ever silently lost beyond the edge.
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -85,8 +85,12 @@ export function KanbanBoard() {
   const load = async () => {
     try {
       const data = await listApplications();
-      // Ensure all seven keys exist even if the server omits an empty one.
-      setColumns({ ...emptyColumns(), ...data.columns });
+      // Ignore legacy backend columns that are no longer exposed in the UI.
+      const nextColumns = emptyColumns();
+      for (const status of APPLICATION_STATUS_ORDER) {
+        nextColumns[status] = data.columns[status] ?? [];
+      }
+      setColumns(nextColumns);
       setError(null);
     } catch {
       setError(t('tracker.errors.loadFailed'));
@@ -126,7 +130,7 @@ export function KanbanBoard() {
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
-    // Board width is driven by the seven fixed-width columns, so we only need to
+    // Board width is driven by the five fixed-width columns, so we only need to
     // (re)attach when the board appears — not on every card-list change.
     const sync = () => {
       setCanScrollLeft(el.scrollLeft > 4);
