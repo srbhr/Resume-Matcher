@@ -70,7 +70,7 @@ The wizard is an AI-led, one-question-at-a-time flow that builds a general maste
 
 ## Application Tracker (`lib/api/tracker.ts`)
 
-Tracker patches distinguish omission from explicit null: omitted `status` keeps the current column, while `status: null` returns 422. Nullable text/date fields remain clearable. Each move from `saved` to a non-saved column stamps `applied_at` if it has no date; explicit dates (including an explicitly cleared date in the same patch) are preserved. Bulk moves use the same rule. Moving back to `saved` retains any existing date; applying again fills a missing date. Moves between non-saved columns leave cleared dates empty.
+Tracker patches distinguish omission from explicit null: omitted `status` keeps the current column, while `status: null` returns 422. Nullable text/date fields remain clearable. Each move from `saved` to a non-saved column stamps `applied_at` if it has no date; explicit dates (including an explicitly cleared date in the same patch) are preserved. Bulk moves use the same rule. Moving back to `saved` retains any existing date; applying again fills a missing date. Moves between non-saved columns leave cleared dates empty. `interview_times` is an ordered list of timezone-naive local date-time strings (`YYYY-MM-DDTHH:MM`); it is editable only in the `interview` status but remains visible and preserved in other statuses. An empty list clears all interview rounds. Interview questions are independent child records linked to the application; company/role are resolved live from the parent card.
 
 Create, move, and delete operations reserve the SQLite writer before allocating or renumbering column positions. This keeps positions contiguous across concurrent single/bulk operations and separate database connections; the resume/job pair uniqueness constraint remains independent.
 
@@ -79,8 +79,13 @@ Create, move, and delete operations reserve the SQLite writer before allocating 
 // response | interview | accepted | rejected)
 listApplications() → ApplicationListResponse        // { columns: Record<status, Application[]> }
 createApplication(payload: ManualApplicationCreate) → Application   // manual add from a pasted JD
-getApplicationDetail(id: string) → ApplicationDetail               // embedded JD + applied resume (resume null if deleted)
-updateApplication(id: string, payload: ApplicationUpdate) → Application   // status/position/notes/company/role/applied_at
+getApplicationDetail(id: string) → ApplicationDetail               // embedded JD + resume + interview times + questions
+updateApplication(id: string, payload: ApplicationUpdate) → Application   // status/position/notes/company/role/dates/interview_times
+
+// Interview questions
+listApplicationInterviewQuestions() → ApplicationInterviewQuestionListResponse
+createApplicationInterviewQuestion(applicationId: string, question: string) → ApplicationInterviewQuestion
+deleteApplicationInterviewQuestion(applicationId: string, questionId: string) → ApplicationActionResponse
 
 // Bulk
 bulkUpdateStatus(applicationIds: string[], status: ApplicationStatus) → ApplicationActionResponse

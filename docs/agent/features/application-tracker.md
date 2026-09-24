@@ -32,9 +32,11 @@ default to `applied` but can be created as `saved`.
    extraction call (falls back to blank/editable).
 3. **Drag/drop:** cards reorder within a column or move across columns; the
    board updates optimistically and reverts on a failed `PATCH`.
-4. **Detail modal:** shows the JD + the applied resume; **Edit** opens
-   `/builder?id=<resume_id>`. Also lists and adds manually recorded interview
-   questions. Tolerates a deleted resume (`resume: null`).
+4. **Detail modal:** shows the JD, the applied resume, interview times, and
+   manually recorded interview questions. Interview times can be added, edited,
+   or removed only while the card is in `interview`; other statuses show saved
+   values read-only. **Edit** opens `/builder?id=<resume_id>`. Tolerates a
+   deleted resume (`resume: null`).
 5. **Bulk actions:** multi-select cards to move or delete in one request.
 6. **Interview questions:** the board header opens a global view of every
    recorded question, including questions on applications in hidden columns.
@@ -46,8 +48,10 @@ default to `applied` but can be created as `saved`.
 (optional base — powers the "shared resume" badge), `status` (backend 7-value
 enum; frontend exposes 5),
 `company`, `role`, `applied_at`, `notes`, `position` (per-column order,
-server-renumbered on PATCH), `created_at`, `updated_at`. `create_application`
-dedupes on `(job_id, resume_id)` to survive double-submit.
+server-renumbered on PATCH), and `interview_times` (ordered local
+`YYYY-MM-DDTHH:MM` strings for multiple interview rounds), `created_at`,
+`updated_at`. `create_application` dedupes on `(job_id, resume_id)` to survive
+double-submit. Moving a card out of `interview` preserves its interview times.
 
 `ApplicationInterviewQuestion` is a 1:N child of `Application`. It stores
 `question_id`, `application_id`, `question`, and an internal `created_at` used
@@ -62,9 +66,10 @@ There is intentionally no interview-date field.
 | GET | `/applications` | All cards grouped by column (all 7 keys present) |
 | POST | `/applications` | Manual add (creates job + card; best-effort extraction) |
 | GET | `/applications/{id}` | Card + embedded JD + resume (resume null if deleted) |
-| PATCH | `/applications/{id}` | Update status/position/notes/company/role/applied_at |
 | POST | `/applications/{id}/interview-questions` | Add one manual interview question |
+| DELETE | `/applications/{id}/interview-questions/{question_id}` | Delete one manual interview question |
 | GET | `/applications/interview-questions` | List all questions with live company/role context |
+| PATCH | `/applications/{id}` | Update status/position/notes/company/role/applied_at/interview_times |
 | PATCH | `/applications/bulk` | Move many cards to one column |
 | DELETE | `/applications/{id}` | Delete one card |
 | POST | `/applications/bulk-delete` | Delete many cards |

@@ -243,6 +243,7 @@ class Database:
             "company": row.company,
             "role": row.role,
             "applied_at": row.applied_at,
+            "interview_times": list(row.interview_times or []),
             "notes": row.notes,
             "position": row.position,
             "created_at": row.created_at,
@@ -1101,6 +1102,24 @@ class Database:
                 for row, company, role in result.all()
             ]
 
+    async def delete_interview_question(
+        self, application_id: str, question_id: str
+    ) -> bool:
+        """Delete one question only when it belongs to the supplied application."""
+        async with self._write_session() as session:
+            result = await session.execute(
+                select(ApplicationInterviewQuestion).where(
+                    ApplicationInterviewQuestion.question_id == question_id,
+                    ApplicationInterviewQuestion.application_id == application_id,
+                )
+            )
+            row = result.scalars().first()
+            if row is None:
+                return False
+            await session.delete(row)
+            await session.commit()
+            return True
+
     async def update_application(
         self, application_id: str, updates: dict[str, Any]
     ) -> dict[str, Any] | None:
@@ -1119,7 +1138,7 @@ class Database:
             new_status = updates.get("status", old_status)
             target_position = updates.get("position", None)
 
-            for key in ("company", "role", "applied_at", "notes"):
+            for key in ("company", "role", "applied_at", "interview_times", "notes"):
                 if key in updates:
                     setattr(row, key, updates[key])
 

@@ -170,6 +170,34 @@ async def create_interview_question(
     return ApplicationInterviewQuestionResponse(**question)
 
 
+@router.delete(
+    "/{application_id}/interview-questions/{question_id}",
+    response_model=ApplicationActionResponse,
+)
+async def delete_interview_question(
+    application_id: str, question_id: str
+) -> ApplicationActionResponse:
+    """Delete one interview question from its application."""
+    try:
+        deleted = await db.delete_interview_question(application_id, question_id)
+    except DatabaseBusyError:
+        raise
+    except Exception as e:
+        logger.error(
+            "Failed to delete interview question %s from %s: %s",
+            question_id,
+            application_id,
+            e,
+        )
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to delete interview question. Please try again.",
+        )
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Interview question not found")
+    return ApplicationActionResponse(message="Interview question deleted", affected=1)
+
+
 @router.patch("/bulk", response_model=ApplicationActionResponse)
 async def bulk_update_applications(request: BulkStatusUpdate) -> ApplicationActionResponse:
     """Move many cards to one column."""
@@ -185,7 +213,7 @@ async def bulk_update_applications(request: BulkStatusUpdate) -> ApplicationActi
 
 @router.patch("/{application_id}", response_model=ApplicationResponse)
 async def update_application(application_id: str, request: ApplicationUpdate) -> ApplicationResponse:
-    """Update a card (status/position/notes/company/role/applied_at)."""
+    """Update a card (status/position/notes/company/role/dates/interview times)."""
     updates = request.model_dump(exclude_unset=True)
     # Normalize the enum to its stable string value for the data layer.
     if "status" in updates and updates["status"] is not None:

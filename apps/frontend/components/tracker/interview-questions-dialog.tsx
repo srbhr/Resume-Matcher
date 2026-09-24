@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Loader2 from 'lucide-react/dist/esm/icons/loader-2';
 import Plus from 'lucide-react/dist/esm/icons/plus';
+import Trash2 from 'lucide-react/dist/esm/icons/trash-2';
 import {
   Dialog,
   DialogContent,
@@ -18,6 +19,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useTranslations } from '@/lib/i18n';
 import {
   createApplicationInterviewQuestion,
+  deleteApplicationInterviewQuestion,
   listApplicationInterviewQuestions,
   type Application,
   type ApplicationInterviewQuestion,
@@ -42,6 +44,7 @@ export function InterviewQuestionsDialog({
   const [question, setQuestion] = useState('');
   const [adding, setAdding] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
+  const [deletingQuestionId, setDeletingQuestionId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -82,6 +85,21 @@ export function InterviewQuestionsDialog({
       setAddError(t('common.error'));
     } finally {
       setAdding(false);
+    }
+  };
+
+  const handleDeleteQuestion = async (question: ApplicationInterviewQuestion) => {
+    setDeletingQuestionId(question.question_id);
+    setAddError(null);
+    try {
+      await deleteApplicationInterviewQuestion(question.application_id, question.question_id);
+      setQuestions((current) =>
+        current.filter((item) => item.question_id !== question.question_id)
+      );
+    } catch {
+      setAddError(t('common.error'));
+    } finally {
+      setDeletingQuestionId(null);
     }
   };
 
@@ -151,11 +169,31 @@ export function InterviewQuestionsDialog({
             <ul className="divide-y divide-black border-y border-black">
               {questions.map((question) => (
                 <li key={question.question_id} className="py-4">
-                  <p className="text-sm font-medium text-ink">{question.question}</p>
-                  <p className="mt-2 font-mono text-xs uppercase tracking-wide text-ink-soft">
-                    {question.company || t('tracker.card.companyUnknown')}
-                    {question.role ? ` / ${question.role}` : ''}
-                  </p>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-ink">{question.question}</p>
+                      <p className="mt-2 font-mono text-xs uppercase tracking-wide text-ink-soft">
+                        {question.company || t('tracker.card.companyUnknown')}
+                        {question.role ? ` / ${question.role}` : ''}
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8 shrink-0"
+                      onClick={() => handleDeleteQuestion(question)}
+                      disabled={deletingQuestionId === question.question_id}
+                      aria-label={t('a11y.removeItem')}
+                      title={t('a11y.removeItem')}
+                    >
+                      {deletingQuestionId === question.question_id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
                 </li>
               ))}
             </ul>

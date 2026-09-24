@@ -4,6 +4,7 @@ import {
   bulkDeleteApplications,
   createApplicationInterviewQuestion,
   createApplication,
+  deleteApplicationInterviewQuestion,
   deleteApplication,
   listApplicationInterviewQuestions,
   updateApplication,
@@ -68,6 +69,20 @@ describe('tracker API client', () => {
     expect(JSON.parse(String(options.body))).toEqual({ status: 'rejected', position: 0 });
   });
 
+  it('updateApplication sends multiple interview times', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ application_id: 'x' }), { status: 200 })
+    );
+    const interviewTimes = ['2026-10-02T14:30', '2026-10-08T10:00'];
+    await updateApplication('x', { interview_times: interviewTimes });
+    const { url, options } = lastCall();
+    expect(url).toContain('/applications/x');
+    expect(options.method).toBe('PATCH');
+    expect(JSON.parse(String(options.body))).toEqual({
+      interview_times: interviewTimes,
+    });
+  });
+
   it('createApplication POSTs the manual-add payload', async () => {
     fetchMock.mockResolvedValue(
       new Response(JSON.stringify({ application_id: 'x' }), { status: 200 })
@@ -124,6 +139,17 @@ describe('tracker API client', () => {
     expect(url).toContain('/applications/app%201/interview-questions');
     expect(options.method).toBe('POST');
     expect(JSON.parse(String(options.body))).toEqual({ question: 'Why this role?' });
+  });
+
+  it('deleteApplicationInterviewQuestion DELETEs the nested question endpoint', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ message: 'ok', affected: 1 }), { status: 200 })
+    );
+
+    await deleteApplicationInterviewQuestion('app 1', 'question 1');
+    const { url, options } = lastCall();
+    expect(url).toContain('/applications/app%201/interview-questions/question%201');
+    expect(options.method).toBe('DELETE');
   });
 
   it('deleteApplication DELETEs /applications/{id}', async () => {

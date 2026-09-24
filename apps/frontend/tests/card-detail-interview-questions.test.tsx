@@ -4,6 +4,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { CardDetailModal } from '@/components/tracker/card-detail-modal';
 import {
   createApplicationInterviewQuestion,
+  deleteApplicationInterviewQuestion,
   getApplicationDetail,
   type ApplicationDetail,
 } from '@/lib/api/tracker';
@@ -24,6 +25,7 @@ vi.mock('@/lib/api/tracker', async () => {
     ...actual,
     getApplicationDetail: vi.fn(),
     createApplicationInterviewQuestion: vi.fn(),
+    deleteApplicationInterviewQuestion: vi.fn(),
     updateApplication: vi.fn(),
   };
 });
@@ -37,6 +39,7 @@ const detail: ApplicationDetail = {
   company: 'Acme',
   role: 'Backend Engineer',
   applied_at: '2026-01-01T00:00:00Z',
+  interview_times: [],
   notes: null,
   position: 0,
   created_at: '2026-01-01T00:00:00Z',
@@ -50,6 +53,7 @@ describe('CardDetailModal interview questions', () => {
   beforeEach(() => {
     vi.mocked(getApplicationDetail).mockReset();
     vi.mocked(createApplicationInterviewQuestion).mockReset();
+    vi.mocked(deleteApplicationInterviewQuestion).mockReset();
     vi.mocked(getApplicationDetail).mockResolvedValue(detail);
   });
 
@@ -96,5 +100,36 @@ describe('CardDetailModal interview questions', () => {
     fireEvent.click(screen.getByRole('button', { name: 'tracker.modal.addQuestion' }));
 
     expect(await screen.findByText('common.error')).toBeInTheDocument();
+  });
+
+  it('deletes a saved question from the detail modal', async () => {
+    vi.mocked(getApplicationDetail).mockResolvedValue({
+      ...detail,
+      interview_questions: [
+        {
+          question_id: 'q1',
+          application_id: 'app-1',
+          question: 'Delete me',
+          company: 'Acme',
+          role: 'Backend Engineer',
+        },
+      ],
+    });
+    vi.mocked(deleteApplicationInterviewQuestion).mockResolvedValue({
+      message: 'ok',
+      affected: 1,
+    });
+
+    render(
+      <CardDetailModal applicationId="app-1" open onOpenChange={vi.fn()} onUpdated={vi.fn()} />
+    );
+
+    expect(await screen.findByText('Delete me')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'a11y.removeItem' }));
+
+    await waitFor(() =>
+      expect(deleteApplicationInterviewQuestion).toHaveBeenCalledWith('app-1', 'q1')
+    );
+    expect(screen.queryByText('Delete me')).not.toBeInTheDocument();
   });
 });

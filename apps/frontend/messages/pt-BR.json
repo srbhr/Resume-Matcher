@@ -1046,6 +1046,13 @@
     "title": "Acompanhamento de candidaturas",
     "subtitle": "Acompanhe em que etapa está cada currículo personalizado.",
     "addApplication": "Adicionar candidatura",
+    "interview": {
+      "round": "Entrevista {count}",
+      "title": "Datas das entrevistas",
+      "add": "Adicionar entrevista",
+      "save": "Salvar datas",
+      "validation": "Informe data e hora para cada entrevista."
+    },
     "columns": {
       "saved": "Salvo",
       "applied": "Enviado",

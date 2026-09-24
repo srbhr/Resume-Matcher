@@ -20,6 +20,7 @@ export interface Application {
   company: string | null;
   role: string | null;
   applied_at: string | null;
+  interview_times: string[];
   notes: string | null;
   position: number;
   created_at: string;
@@ -55,6 +56,7 @@ export interface ApplicationUpdate {
   company?: string;
   role?: string;
   applied_at?: string;
+  interview_times?: string[];
 }
 
 export interface ApplicationActionResponse {
@@ -148,7 +150,18 @@ export async function createApplicationInterviewQuestion(
   return asJson<ApplicationInterviewQuestion>(res, 'Failed to add interview question');
 }
 
-// Update one card (status/position/notes/company/role/applied_at).
+// Remove one recorded interview question from a card.
+export async function deleteApplicationInterviewQuestion(
+  applicationId: string,
+  questionId: string
+): Promise<ApplicationActionResponse> {
+  const res = await apiDelete(
+    `/applications/${encodeURIComponent(applicationId)}/interview-questions/${encodeURIComponent(questionId)}`
+  );
+  return asJson<ApplicationActionResponse>(res, 'Failed to delete interview question');
+}
+
+// Update one card (status/position/notes/company/role/applied_at/interview_times).
 export async function updateApplication(
   id: string,
   payload: ApplicationUpdate

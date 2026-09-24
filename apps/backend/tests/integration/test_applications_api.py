@@ -209,6 +209,56 @@ class TestInterviewQuestions:
             )
         assert resp.status_code == 404
 
+    async def test_delete_question_removes_it_from_detail_and_global_list(self, isolated_db):
+        card = await _seed_card(
+            isolated_db,
+            job_id="job-delete-question",
+            resume_id="res-delete-question",
+            company="Acme",
+        )
+        question = await isolated_db.create_interview_question(
+            card["application_id"], "Why this company?"
+        )
+
+        async with _client() as client:
+            deleted = await client.delete(
+                f"/api/v1/applications/{card['application_id']}"
+                f"/interview-questions/{question['question_id']}"
+            )
+            detail = await client.get(
+                f"/api/v1/applications/{card['application_id']}"
+            )
+            global_list = await client.get("/api/v1/applications/interview-questions")
+
+        assert deleted.status_code == 200
+        assert deleted.json()["affected"] == 1
+        assert detail.json()["interview_questions"] == []
+        assert global_list.json()["questions"] == []
+
+    async def test_delete_question_rejects_wrong_application(self, isolated_db):
+        first = await _seed_card(
+            isolated_db,
+            job_id="job-delete-first",
+            resume_id="res-delete-first",
+        )
+        second = await _seed_card(
+            isolated_db,
+            job_id="job-delete-second",
+            resume_id="res-delete-second",
+        )
+        question = await isolated_db.create_interview_question(
+            first["application_id"], "Question?"
+        )
+
+        async with _client() as client:
+            resp = await client.delete(
+                f"/api/v1/applications/{second['application_id']}"
+                f"/interview-questions/{question['question_id']}"
+            )
+
+        assert resp.status_code == 404
+        assert len(await isolated_db.list_interview_questions()) == 1
+
 
 class TestUpdateAndMove:
     async def test_patch_moves_card_across_columns(self, isolated_db):
@@ -238,6 +288,54 @@ class TestUpdateAndMove:
         body = resp.json()
         assert body["notes"] == "Recruiter call Friday"
         assert body["company"] == "NewCo"
+
+    async def test_patch_interview_times_persists_and_survives_status_change(
+        self, isolated_db
+    ):
+        card = await _seed_card(isolated_db, status="interview")
+        async with _client() as client:
+            updated = await client.patch(
+                f"/api/v1/applications/{card['application_id']}",
+                json={
+                    "interview_times": [
+                        "2026-10-02T14:30",
+                        "2026-10-08T10:00:00",
+                    ]
+                },
+            )
+        assert updated.status_code == 200
+        assert updated.json()["interview_times"] == [
+            "2026-10-02T14:30",
+            "2026-10-08T10:00",
+        ]
+
+        async with _client() as client:
+            moved = await client.patch(
+                f"/api/v1/applications/{card['application_id']}",
+                json={"status": "accepted"},
+            )
+            detail = await client.get(
+                f"/api/v1/applications/{card['application_id']}"
+            )
+        assert moved.status_code == 200
+        assert moved.json()["interview_times"] == updated.json()["interview_times"]
+        assert detail.json()["interview_times"] == updated.json()["interview_times"]
+
+    async def test_patch_rejects_invalid_or_timezone_aware_interview_times(
+        self, isolated_db
+    ):
+        card = await _seed_card(isolated_db, status="interview")
+        async with _client() as client:
+            invalid = await client.patch(
+                f"/api/v1/applications/{card['application_id']}",
+                json={"interview_times": ["not-a-date"]},
+            )
+            timezone_aware = await client.patch(
+                f"/api/v1/applications/{card['application_id']}",
+                json={"interview_times": ["2026-10-02T14:30:00+08:00"]},
+            )
+        assert invalid.status_code == 422
+        assert timezone_aware.status_code == 422
 
     async def test_patch_unknown_returns_404(self, isolated_db):
         async with _client() as client:

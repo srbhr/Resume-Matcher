@@ -1046,6 +1046,13 @@
     "title": "지원 현황 트래커",
     "subtitle": "각 맞춤화된 이력서가 지원 파이프라인에서 어느 단계에 있는지 추적하세요.",
     "addApplication": "지원 추가",
+    "interview": {
+      "round": "면접 {count}차",
+      "title": "면접 일시",
+      "add": "면접 일정 추가",
+      "save": "면접 일시 저장",
+      "validation": "각 면접의 날짜와 시간을 입력하세요."
+    },
     "columns": {
       "saved": "저장됨",
       "applied": "지원 완료",
