@@ -1021,6 +1021,15 @@
   },
   "tracker": {
     "manage": "管理",
+    "questions": {
+      "button": "面试题",
+      "title": "面试题",
+      "description": "统一查看所有申请中记录的面试题。",
+      "application": "申请记录",
+      "empty": "还没有记录面试题。",
+      "loadFailed": "无法加载面试题。",
+      "close": "关闭"
+    },
     "manageDialog": {
       "title": "管理看板列",
       "description": "选择在看板上显示的阶段。",
@@ -1062,6 +1071,11 @@
       "notes": "备注",
       "notesPlaceholder": "为此申请添加备注……",
       "saveNotes": "保存备注",
+      "interviewQuestions": "面试题",
+      "noInterviewQuestions": "还没有记录面试题。",
+      "questionPlaceholder": "添加一道被问到的面试题……",
+      "addQuestion": "添加面试题",
+      "questionRequired": "请输入面试题。",
       "resumeUnavailable": "所投递的简历已不可用。",
       "loadFailed": "无法加载此申请。",
       "editResume": "编辑简历"

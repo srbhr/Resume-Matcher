@@ -33,8 +33,11 @@ default to `applied` but can be created as `saved`.
 3. **Drag/drop:** cards reorder within a column or move across columns; the
    board updates optimistically and reverts on a failed `PATCH`.
 4. **Detail modal:** shows the JD + the applied resume; **Edit** opens
-   `/builder?id=<resume_id>`. Tolerates a deleted resume (`resume: null`).
+   `/builder?id=<resume_id>`. Also lists and adds manually recorded interview
+   questions. Tolerates a deleted resume (`resume: null`).
 5. **Bulk actions:** multi-select cards to move or delete in one request.
+6. **Interview questions:** the board header opens a global view of every
+   recorded question, including questions on applications in hidden columns.
 
 ## Data Model
 
@@ -46,6 +49,12 @@ enum; frontend exposes 5),
 server-renumbered on PATCH), `created_at`, `updated_at`. `create_application`
 dedupes on `(job_id, resume_id)` to survive double-submit.
 
+`ApplicationInterviewQuestion` is a 1:N child of `Application`. It stores
+`question_id`, `application_id`, `question`, and an internal `created_at` used
+only for ordering. The foreign key uses `ON DELETE CASCADE`; company and role
+are read live from the parent application rather than copied into the question.
+There is intentionally no interview-date field.
+
 ## API (`prefix=/applications`, mounted under `/api/v1`)
 
 | Method | Path | Purpose |
@@ -54,6 +63,8 @@ dedupes on `(job_id, resume_id)` to survive double-submit.
 | POST | `/applications` | Manual add (creates job + card; best-effort extraction) |
 | GET | `/applications/{id}` | Card + embedded JD + resume (resume null if deleted) |
 | PATCH | `/applications/{id}` | Update status/position/notes/company/role/applied_at |
+| POST | `/applications/{id}/interview-questions` | Add one manual interview question |
+| GET | `/applications/interview-questions` | List all questions with live company/role context |
 | PATCH | `/applications/bulk` | Move many cards to one column |
 | DELETE | `/applications/{id}` | Delete one card |
 | POST | `/applications/bulk-delete` | Delete many cards |
@@ -62,8 +73,8 @@ dedupes on `(job_id, resume_id)` to survive double-submit.
 
 | File | Purpose |
 |------|---------|
-| `apps/backend/app/models.py` | `Application` ORM model |
-| `apps/backend/app/schemas/applications.py` | Pydantic request/response schemas + status enum |
+| `apps/backend/app/models.py` | `Application` + interview-question ORM models |
+| `apps/backend/app/schemas/applications.py` | Pydantic application/question schemas + status enum |
 | `apps/backend/app/routers/applications.py` | The tracker endpoints |
 | `apps/backend/app/database.py` | Facade CRUD/bulk/reorder methods |
 | `apps/backend/app/routers/resumes.py` | `_auto_create_tracker_application` hook (both confirm paths) |
@@ -71,6 +82,7 @@ dedupes on `(job_id, resume_id)` to survive double-submit.
 | `apps/frontend/app/(default)/tracker/page.tsx` | Route |
 | `apps/frontend/components/tracker/*` | Board, column, card, detail modal, bulk bar, manual-add dialog |
 | `apps/frontend/components/tracker/reorder.ts` | Pure drag-end resolution (`planMove`) |
+| `apps/frontend/components/tracker/interview-questions-dialog.tsx` | Global recorded-question view |
 | `apps/frontend/lib/api/tracker.ts` | Typed API client |
 
 ## Tests
@@ -79,4 +91,6 @@ dedupes on `(job_id, resume_id)` to survive double-submit.
   tolerance, bulk), `tests/integration/test_tracker_autocreate.py` (confirm
   auto-creates an `applied` card), `tests/unit/test_database.py::TestApplications`.
 - Frontend: `tests/tracker-reorder.test.ts` (`planMove` within/cross-column +
-  empty-column drop), `tests/api-tracker.test.ts` (client payloads/URLs).
+  empty-column drop), `tests/api-tracker.test.ts` (client payloads/URLs),
+  `tests/card-detail-interview-questions.test.tsx` (manual entry), and
+  `tests/interview-questions-dialog.test.tsx` (global view).

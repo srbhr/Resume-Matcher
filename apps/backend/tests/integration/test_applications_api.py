@@ -113,6 +113,103 @@ class TestDetail:
         assert resp.status_code == 404
 
 
+class TestInterviewQuestions:
+    async def test_create_question_appears_in_detail_and_global_list(self, isolated_db):
+        card = await _seed_card(
+            isolated_db,
+            job_id="job-questions",
+            resume_id="res-questions",
+            company="Acme Corp",
+            role="Backend Engineer",
+        )
+
+        async with _client() as client:
+            created = await client.post(
+                f"/api/v1/applications/{card['application_id']}/interview-questions",
+                json={"question": "  Explain database transaction isolation.  "},
+            )
+        assert created.status_code == 200
+        created_body = created.json()
+        assert created_body["question"] == "Explain database transaction isolation."
+        assert created_body["company"] == "Acme Corp"
+        assert created_body["role"] == "Backend Engineer"
+
+        async with _client() as client:
+            detail = await client.get(
+                f"/api/v1/applications/{card['application_id']}"
+            )
+            global_list = await client.get("/api/v1/applications/interview-questions")
+
+        assert detail.status_code == 200
+        assert [item["question_id"] for item in detail.json()["interview_questions"]] == [
+            created_body["question_id"]
+        ]
+        assert global_list.status_code == 200
+        assert global_list.json()["questions"][0]["question"] == created_body["question"]
+
+    async def test_global_list_uses_live_company_and_role(self, isolated_db):
+        card = await _seed_card(
+            isolated_db,
+            job_id="job-live-context",
+            resume_id="res-live-context",
+            company="Old Co",
+            role="Engineer",
+        )
+        await isolated_db.create_interview_question(card["application_id"], "Why this role?")
+        await isolated_db.update_application(
+            card["application_id"],
+            {"company": "New Co", "role": "Staff Engineer"},
+        )
+
+        async with _client() as client:
+            resp = await client.get("/api/v1/applications/interview-questions")
+
+        assert resp.status_code == 200
+        question = resp.json()["questions"][0]
+        assert question["company"] == "New Co"
+        assert question["role"] == "Staff Engineer"
+
+    async def test_question_survives_status_move(self, isolated_db):
+        card = await _seed_card(
+            isolated_db,
+            job_id="job-move-question",
+            resume_id="res-move-question",
+            company="Acme",
+        )
+        await isolated_db.create_interview_question(card["application_id"], "Tell me about a failure.")
+
+        async with _client() as client:
+            moved = await client.patch(
+                f"/api/v1/applications/{card['application_id']}",
+                json={"status": "interview"},
+            )
+            global_list = await client.get("/api/v1/applications/interview-questions")
+
+        assert moved.status_code == 200
+        assert global_list.json()["questions"][0]["application_id"] == card["application_id"]
+
+    async def test_blank_question_is_rejected(self, isolated_db):
+        card = await _seed_card(
+            isolated_db,
+            job_id="job-blank-question",
+            resume_id="res-blank-question",
+        )
+        async with _client() as client:
+            resp = await client.post(
+                f"/api/v1/applications/{card['application_id']}/interview-questions",
+                json={"question": "   "},
+            )
+        assert resp.status_code == 422
+
+    async def test_unknown_application_returns_404(self, isolated_db):
+        async with _client() as client:
+            resp = await client.post(
+                "/api/v1/applications/does-not-exist/interview-questions",
+                json={"question": "Why this company?"},
+            )
+        assert resp.status_code == 404
+
+
 class TestUpdateAndMove:
     async def test_patch_moves_card_across_columns(self, isolated_db):
         a = await _seed_card(isolated_db, job_id="j1", resume_id="r1", status="applied")

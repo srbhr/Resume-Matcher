@@ -1021,6 +1021,15 @@
   },
   "tracker": {
     "manage": "Gérer",
+    "questions": {
+      "button": "Questions d’entretien",
+      "title": "Questions d’entretien",
+      "description": "Toutes les questions enregistrées pour vos candidatures.",
+      "application": "Candidature",
+      "empty": "Aucune question d’entretien enregistrée.",
+      "loadFailed": "Impossible de charger les questions d’entretien.",
+      "close": "Fermer"
+    },
     "manageDialog": {
       "title": "Gérer les colonnes",
       "description": "Choisissez les étapes affichées sur le tableau.",
@@ -1062,6 +1071,11 @@
       "notes": "Notes",
       "notesPlaceholder": "Ajoutez des notes sur cette candidature…",
       "saveNotes": "Enregistrer les notes",
+      "interviewQuestions": "Questions d’entretien",
+      "noInterviewQuestions": "Aucune question enregistrée.",
+      "questionPlaceholder": "Ajoutez une question qui vous a été posée…",
+      "addQuestion": "Ajouter une question",
+      "questionRequired": "Saisissez une question.",
       "resumeUnavailable": "Le CV soumis n'est plus disponible.",
       "loadFailed": "Impossible de charger cette candidature.",
       "editResume": "Modifier le CV"

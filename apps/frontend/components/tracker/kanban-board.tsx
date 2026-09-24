@@ -13,6 +13,7 @@ import {
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import Plus from 'lucide-react/dist/esm/icons/plus';
 import Settings from 'lucide-react/dist/esm/icons/settings';
+import MessageSquareText from 'lucide-react/dist/esm/icons/message-square-text';
 import Loader2 from 'lucide-react/dist/esm/icons/loader-2';
 import ChevronLeft from 'lucide-react/dist/esm/icons/chevron-left';
 import ChevronRight from 'lucide-react/dist/esm/icons/chevron-right';
@@ -31,6 +32,7 @@ import {
 import { KanbanColumn } from './kanban-column';
 import { BulkActionBar } from './bulk-action-bar';
 import { CardDetailModal } from './card-detail-modal';
+import { InterviewQuestionsDialog } from './interview-questions-dialog';
 import { ManualAddApplicationDialog } from './manual-add-application-dialog';
 import { planMove } from './reorder';
 import { ManageColumnsDialog } from './manage-columns-dialog';
@@ -60,6 +62,7 @@ export function KanbanBoard() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [openCardId, setOpenCardId] = useState<string | null>(null);
   const [manualAddOpen, setManualAddOpen] = useState(false);
+  const [interviewQuestionsOpen, setInterviewQuestionsOpen] = useState(false);
   const [manageOpen, setManageOpen] = useState(false);
   const [hiddenStatuses, setHiddenStatuses] = useState<Set<ApplicationStatus>>(() =>
     readHiddenStatuses()
@@ -226,6 +229,10 @@ export function KanbanBoard() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <Button variant="outline" onClick={() => setInterviewQuestionsOpen(true)}>
+            <MessageSquareText className="h-4 w-4" />
+            {t('tracker.questions.button')}
+          </Button>
           <Button variant="outline" onClick={() => setManageOpen(true)}>
             <Settings className="h-4 w-4" />
             {t('tracker.manage')}
@@ -357,6 +364,12 @@ export function KanbanBoard() {
         open={manualAddOpen}
         onOpenChange={setManualAddOpen}
         onCreated={load}
+      />
+
+      <InterviewQuestionsDialog
+        applications={allCards}
+        open={interviewQuestionsOpen}
+        onOpenChange={setInterviewQuestionsOpen}
       />
 
       <ManageColumnsDialog

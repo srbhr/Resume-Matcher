@@ -1021,6 +1021,15 @@
   },
   "tracker": {
     "manage": "管理",
+    "questions": {
+      "button": "面接質問",
+      "title": "面接質問",
+      "description": "すべての応募で記録した質問をまとめて確認できます。",
+      "application": "応募",
+      "empty": "記録された面接質問はまだありません。",
+      "loadFailed": "面接質問を読み込めませんでした。",
+      "close": "閉じる"
+    },
     "manageDialog": {
       "title": "列の管理",
       "description": "ボードに表示するステージを選択します。",
@@ -1062,6 +1071,11 @@
       "notes": "メモ",
       "notesPlaceholder": "この応募についてのメモを追加…",
       "saveNotes": "メモを保存",
+      "interviewQuestions": "面接質問",
+      "noInterviewQuestions": "記録された質問はまだありません。",
+      "questionPlaceholder": "実際に聞かれた質問を追加…",
+      "addQuestion": "質問を追加",
+      "questionRequired": "質問を入力してください。",
       "resumeUnavailable": "応募した履歴書は利用できなくなりました。",
       "loadFailed": "この応募を読み込めませんでした。",
       "editResume": "履歴書を編集"

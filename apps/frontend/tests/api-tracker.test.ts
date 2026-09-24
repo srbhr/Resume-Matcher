@@ -2,8 +2,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   bulkUpdateStatus,
   bulkDeleteApplications,
+  createApplicationInterviewQuestion,
   createApplication,
   deleteApplication,
+  listApplicationInterviewQuestions,
   updateApplication,
 } from '@/lib/api/tracker';
 import { llmProviderToKeyProvider } from '@/lib/api/config';
@@ -75,6 +77,53 @@ describe('tracker API client', () => {
     expect(url).toContain('/applications');
     expect(options.method).toBe('POST');
     expect(JSON.parse(String(options.body))).toMatchObject({ resume_id: 'r1', status: 'saved' });
+  });
+
+  it('listApplicationInterviewQuestions GETs the global question endpoint', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          questions: [
+            {
+              question_id: 'q1',
+              application_id: 'app 1',
+              question: 'Why this role?',
+              company: 'Acme',
+              role: 'Engineer',
+            },
+          ],
+        }),
+        { status: 200 }
+      )
+    );
+
+    await expect(listApplicationInterviewQuestions()).resolves.toMatchObject({
+      questions: [{ question_id: 'q1' }],
+    });
+    const { url, options } = lastCall();
+    expect(url).toContain('/applications/interview-questions');
+    expect(options.method ?? 'GET').toBe('GET');
+  });
+
+  it('createApplicationInterviewQuestion POSTs the question to its application', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          question_id: 'q1',
+          application_id: 'app 1',
+          question: 'Why this role?',
+          company: 'Acme',
+          role: 'Engineer',
+        }),
+        { status: 200 }
+      )
+    );
+
+    await createApplicationInterviewQuestion('app 1', 'Why this role?');
+    const { url, options } = lastCall();
+    expect(url).toContain('/applications/app%201/interview-questions');
+    expect(options.method).toBe('POST');
+    expect(JSON.parse(String(options.body))).toEqual({ question: 'Why this role?' });
   });
 
   it('deleteApplication DELETEs /applications/{id}', async () => {

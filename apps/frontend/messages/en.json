@@ -1021,6 +1021,15 @@
   },
   "tracker": {
     "manage": "Manage",
+    "questions": {
+      "button": "Interview Questions",
+      "title": "Interview Questions",
+      "description": "All questions recorded across your applications.",
+      "application": "Application",
+      "empty": "No interview questions recorded yet.",
+      "loadFailed": "Could not load interview questions.",
+      "close": "Close"
+    },
     "manageDialog": {
       "title": "Manage Columns",
       "description": "Choose which stages appear on the board.",
@@ -1062,6 +1071,11 @@
       "notes": "Notes",
       "notesPlaceholder": "Add notes about this application…",
       "saveNotes": "Save notes",
+      "interviewQuestions": "Interview Questions",
+      "noInterviewQuestions": "No questions recorded yet.",
+      "questionPlaceholder": "Add a question you were asked…",
+      "addQuestion": "Add question",
+      "questionRequired": "Enter a question.",
       "resumeUnavailable": "The applied resume is no longer available.",
       "loadFailed": "Could not load this application.",
       "editResume": "Edit resume"

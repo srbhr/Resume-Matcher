@@ -49,12 +49,46 @@ class ApplicationDetailResponse(ApplicationResponse):
 
     job_content: str | None = None
     resume: dict[str, Any] | None = None
+    interview_questions: list["ApplicationInterviewQuestionResponse"] = Field(
+        default_factory=list
+    )
 
 
 class ApplicationListResponse(BaseModel):
     """Applications grouped by column. All seven keys are always present."""
 
     columns: dict[str, list[ApplicationResponse]]
+
+
+class ApplicationInterviewQuestionCreate(BaseModel):
+    """A manually entered interview question."""
+
+    question: str = Field(min_length=1)
+
+    @field_validator("question")
+    @classmethod
+    def normalize_question(cls, value: str) -> str:
+        """Reject whitespace-only questions and store the trimmed text."""
+        question = value.strip()
+        if not question:
+            raise ValueError("Question cannot be blank")
+        return question
+
+
+class ApplicationInterviewQuestionResponse(BaseModel):
+    """An interview question plus the live tracker-card context."""
+
+    question_id: str
+    application_id: str
+    question: str
+    company: str | None = None
+    role: str | None = None
+
+
+class ApplicationInterviewQuestionListResponse(BaseModel):
+    """All recorded interview questions across every application."""
+
+    questions: list[ApplicationInterviewQuestionResponse]
 
 
 class ManualApplicationCreate(BaseModel):

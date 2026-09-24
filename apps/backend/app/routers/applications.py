@@ -11,6 +11,9 @@ from app.schemas import (
     APPLICATION_STATUS_ORDER,
     ApplicationActionResponse,
     ApplicationDetailResponse,
+    ApplicationInterviewQuestionCreate,
+    ApplicationInterviewQuestionListResponse,
+    ApplicationInterviewQuestionResponse,
     ApplicationListResponse,
     ApplicationResponse,
     ApplicationUpdate,
@@ -52,6 +55,27 @@ async def list_applications() -> ApplicationListResponse:
         logger.error("Failed to list applications: %s", e)
         raise HTTPException(status_code=500, detail="Failed to load applications. Please try again.")
     return ApplicationListResponse(columns=_group_by_status(applications))
+
+
+@router.get(
+    "/interview-questions",
+    response_model=ApplicationInterviewQuestionListResponse,
+)
+async def list_interview_questions() -> ApplicationInterviewQuestionListResponse:
+    """List every recorded interview question with its live application context."""
+    try:
+        questions = await db.list_interview_questions()
+    except DatabaseBusyError:
+        raise
+    except Exception as e:
+        logger.error("Failed to list interview questions: %s", e)
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to load interview questions. Please try again.",
+        )
+    return ApplicationInterviewQuestionListResponse(
+        questions=[ApplicationInterviewQuestionResponse(**question) for question in questions]
+    )
 
 
 @router.post("", response_model=ApplicationResponse)
@@ -101,18 +125,49 @@ async def get_application_detail(application_id: str) -> ApplicationDetailRespon
 
     job_content: str | None = None
     resume: dict[str, Any] | None = None
+    interview_questions: list[dict[str, Any]] = []
     try:
         job = await db.get_job(application["job_id"])
         if job:
             job_content = job.get("content")
         resume = await db.get_resume(application["resume_id"])
+        interview_questions = await db.list_interview_questions(application_id)
     except DatabaseBusyError:
         raise
     except Exception as e:
         # Detail is best-effort beyond the card itself; never 500 the modal.
         logger.warning("Failed to load detail context for %s: %s", application_id, e)
 
-    return ApplicationDetailResponse(**application, job_content=job_content, resume=resume)
+    return ApplicationDetailResponse(
+        **application,
+        job_content=job_content,
+        resume=resume,
+        interview_questions=interview_questions,
+    )
+
+
+@router.post(
+    "/{application_id}/interview-questions",
+    response_model=ApplicationInterviewQuestionResponse,
+)
+async def create_interview_question(
+    application_id: str,
+    request: ApplicationInterviewQuestionCreate,
+) -> ApplicationInterviewQuestionResponse:
+    """Attach one manually entered question to an application."""
+    try:
+        question = await db.create_interview_question(application_id, request.question)
+    except DatabaseBusyError:
+        raise
+    except Exception as e:
+        logger.error("Failed to create interview question for %s: %s", application_id, e)
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to add interview question. Please try again.",
+        )
+    if question is None:
+        raise HTTPException(status_code=404, detail="Application not found")
+    return ApplicationInterviewQuestionResponse(**question)
 
 
 @router.patch("/bulk", response_model=ApplicationActionResponse)

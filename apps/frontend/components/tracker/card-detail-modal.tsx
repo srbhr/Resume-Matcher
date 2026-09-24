@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Loader2 from 'lucide-react/dist/esm/icons/loader-2';
 import Pencil from 'lucide-react/dist/esm/icons/pencil';
+import Plus from 'lucide-react/dist/esm/icons/plus';
 import {
   Dialog,
   DialogContent,
@@ -16,7 +17,12 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useTranslations } from '@/lib/i18n';
-import { getApplicationDetail, updateApplication, type ApplicationDetail } from '@/lib/api/tracker';
+import {
+  createApplicationInterviewQuestion,
+  getApplicationDetail,
+  updateApplication,
+  type ApplicationDetail,
+} from '@/lib/api/tracker';
 
 interface CardDetailModalProps {
   applicationId: string | null;
@@ -38,10 +44,15 @@ export function CardDetailModal({
   const [notes, setNotes] = useState('');
   const [savingNotes, setSavingNotes] = useState(false);
   const [notesError, setNotesError] = useState<string | null>(null);
+  const [question, setQuestion] = useState('');
+  const [addingQuestion, setAddingQuestion] = useState(false);
+  const [questionError, setQuestionError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open || !applicationId) {
       setDetail(null);
+      setQuestion('');
+      setQuestionError(null);
       return;
     }
     let cancelled = false;
@@ -52,6 +63,8 @@ export function CardDetailModal({
         setDetail(data);
         setNotes(data.notes ?? '');
         setNotesError(null);
+        setQuestion('');
+        setQuestionError(null);
       })
       .catch(() => {
         if (!cancelled) setDetail(null);
@@ -85,11 +98,40 @@ export function CardDetailModal({
     }
   };
 
+  const handleAddQuestion = async () => {
+    if (!applicationId) return;
+    const trimmed = question.trim();
+    if (!trimmed) {
+      setQuestionError(t('tracker.modal.questionRequired'));
+      return;
+    }
+
+    setAddingQuestion(true);
+    setQuestionError(null);
+    try {
+      const created = await createApplicationInterviewQuestion(applicationId, trimmed);
+      setDetail((current) =>
+        current
+          ? {
+              ...current,
+              interview_questions: [created, ...(current.interview_questions ?? [])],
+            }
+          : current
+      );
+      setQuestion('');
+    } catch {
+      setQuestionError(t('common.error'));
+    } finally {
+      setAddingQuestion(false);
+    }
+  };
+
   const resumeAvailable = Boolean(detail?.resume);
+  const interviewQuestions = detail?.interview_questions ?? [];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{detail?.company || t('tracker.card.companyUnknown')}</DialogTitle>
           <DialogDescription>{detail?.role || t('tracker.card.roleUnknown')}</DialogDescription>
@@ -146,6 +188,51 @@ export function CardDetailModal({
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
                     t('tracker.modal.saveNotes')
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="card-question">{t('tracker.modal.interviewQuestions')}</Label>
+              {interviewQuestions.length > 0 ? (
+                <ul className="divide-y divide-black border-y border-black">
+                  {interviewQuestions.map((item) => (
+                    <li key={item.question_id} className="py-2 text-sm text-ink">
+                      {item.question}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="font-mono text-xs text-steel-grey">
+                  {t('tracker.modal.noInterviewQuestions')}
+                </p>
+              )}
+              <Textarea
+                id="card-question"
+                value={question}
+                onChange={(e) => setQuestion(e.target.value)}
+                onKeyDown={handleNotesKeyDown}
+                placeholder={t('tracker.modal.questionPlaceholder')}
+                rows={2}
+              />
+              <div className="flex items-center justify-end gap-3">
+                {questionError && (
+                  <span className="font-mono text-xs text-destructive">{questionError}</span>
+                )}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleAddQuestion}
+                  disabled={addingQuestion || !question.trim()}
+                >
+                  {addingQuestion ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <>
+                      <Plus className="h-4 w-4" />
+                      {t('tracker.modal.addQuestion')}
+                    </>
                   )}
                 </Button>
               </div>

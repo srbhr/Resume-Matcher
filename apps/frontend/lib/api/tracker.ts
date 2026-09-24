@@ -30,6 +30,7 @@ export interface ApplicationDetail extends Application {
   job_content: string | null;
   // The applied/tailored resume record (null when it has been deleted).
   resume: Record<string, unknown> | null;
+  interview_questions: ApplicationInterviewQuestion[];
 }
 
 export type ApplicationColumns = Record<ApplicationStatus, Application[]>;
@@ -59,6 +60,18 @@ export interface ApplicationUpdate {
 export interface ApplicationActionResponse {
   message: string;
   affected: number;
+}
+
+export interface ApplicationInterviewQuestion {
+  question_id: string;
+  application_id: string;
+  question: string;
+  company: string | null;
+  role: string | null;
+}
+
+export interface ApplicationInterviewQuestionListResponse {
+  questions: ApplicationInterviewQuestion[];
 }
 
 // FastAPI returns `detail` as a string for HTTPException but as an array of
@@ -112,6 +125,27 @@ export async function createApplication(payload: ManualApplicationCreate): Promi
 export async function getApplicationDetail(id: string): Promise<ApplicationDetail> {
   const res = await apiFetch(`/applications/${id}`, { credentials: 'include' });
   return asJson<ApplicationDetail>(res, 'Failed to load application');
+}
+
+// List all recorded interview questions across the tracker.
+export async function listApplicationInterviewQuestions(): Promise<ApplicationInterviewQuestionListResponse> {
+  const res = await apiFetch('/applications/interview-questions', { credentials: 'include' });
+  return asJson<ApplicationInterviewQuestionListResponse>(
+    res,
+    'Failed to load interview questions'
+  );
+}
+
+// Attach one manually entered interview question to a card.
+export async function createApplicationInterviewQuestion(
+  applicationId: string,
+  question: string
+): Promise<ApplicationInterviewQuestion> {
+  const res = await apiPost(
+    `/applications/${encodeURIComponent(applicationId)}/interview-questions`,
+    { question }
+  );
+  return asJson<ApplicationInterviewQuestion>(res, 'Failed to add interview question');
 }
 
 // Update one card (status/position/notes/company/role/applied_at).

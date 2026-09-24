@@ -1021,6 +1021,15 @@
   },
   "tracker": {
     "manage": "Gestionar",
+    "questions": {
+      "button": "Preguntas de entrevista",
+      "title": "Preguntas de entrevista",
+      "description": "Todas las preguntas registradas en tus candidaturas.",
+      "application": "Candidatura",
+      "empty": "Aún no hay preguntas de entrevista registradas.",
+      "loadFailed": "No se pudieron cargar las preguntas de entrevista.",
+      "close": "Cerrar"
+    },
     "manageDialog": {
       "title": "Gestionar columnas",
       "description": "Elige qué etapas aparecen en el tablero.",
@@ -1062,6 +1071,11 @@
       "notes": "Notas",
       "notesPlaceholder": "Añade notas sobre esta candidatura…",
       "saveNotes": "Guardar notas",
+      "interviewQuestions": "Preguntas de entrevista",
+      "noInterviewQuestions": "Aún no hay preguntas registradas.",
+      "questionPlaceholder": "Añade una pregunta que te hayan hecho…",
+      "addQuestion": "Añadir pregunta",
+      "questionRequired": "Introduce una pregunta.",
       "resumeUnavailable": "El currículum enviado ya no está disponible.",
       "loadFailed": "No se pudo cargar esta candidatura.",
       "editResume": "Editar currículum"

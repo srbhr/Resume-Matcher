@@ -7,9 +7,11 @@ and stats are verified end-to-end on the storage.
 """
 
 import pytest
+from sqlalchemy import func, select
 
 from app.database import Database
 from app.db_engine import init_models_sync, make_sync_engine
+from app.models import ApplicationInterviewQuestion
 
 
 @pytest.fixture
@@ -252,6 +254,63 @@ class TestApplications:
         assert remaining[0]["position"] == 0  # renumbered after delete
 
 
+class TestApplicationInterviewQuestions:
+    async def _question_count(self, db: Database) -> int:
+        async with db._session() as session:
+            return int(
+                await session.scalar(
+                    select(func.count()).select_from(ApplicationInterviewQuestion)
+                )
+                or 0
+            )
+
+    async def test_create_and_list_with_live_context(self, db):
+        card = await db.create_application(
+            job_id="j1",
+            resume_id="r1",
+            company="Acme",
+            role="Engineer",
+        )
+        created = await db.create_interview_question(
+            card["application_id"],
+            "Explain database isolation.",
+        )
+        assert created is not None
+        await db.update_application(
+            card["application_id"],
+            {"company": "New Co", "role": "Staff Engineer"},
+        )
+
+        questions = await db.list_interview_questions()
+        assert questions == [
+            {
+                "question_id": created["question_id"],
+                "application_id": card["application_id"],
+                "question": "Explain database isolation.",
+                "company": "New Co",
+                "role": "Staff Engineer",
+            }
+        ]
+
+    async def test_single_delete_cascades_questions(self, db):
+        card = await db.create_application(job_id="j1", resume_id="r1")
+        await db.create_interview_question(card["application_id"], "Question?")
+
+        assert await db.delete_application(card["application_id"]) is True
+        assert await self._question_count(db) == 0
+
+    async def test_bulk_delete_cascades_questions(self, db):
+        a = await db.create_application(job_id="j1", resume_id="r1")
+        b = await db.create_application(job_id="j2", resume_id="r2")
+        await db.create_interview_question(a["application_id"], "Question A?")
+        await db.create_interview_question(b["application_id"], "Question B?")
+
+        assert await db.bulk_delete_applications(
+            [a["application_id"], b["application_id"]]
+        ) == 2
+        assert await self._question_count(db) == 0
+
+
 class TestApiKeyStore:
     async def test_set_get_delete_ciphertext(self, db):
         db.set_api_key_ciphertext("openai", "ct-openai")
@@ -278,7 +337,8 @@ class TestStatsAndReset:
         monkeypatch.setattr("app.database.settings.data_dir", tmp_path)
         await db.create_resume(content="a")
         await db.create_job(content="jd")
-        await db.create_application(job_id="j1", resume_id="r1")
+        card = await db.create_application(job_id="j1", resume_id="r1")
+        await db.create_interview_question(card["application_id"], "Question?")
         await db.reset_database()
         stats = await db.get_stats()
         assert stats["total_resumes"] == 0
@@ -286,3 +346,8 @@ class TestStatsAndReset:
         assert stats["has_master_resume"] is False
         # Applications are cleared too (no orphans after a full reset).
         assert await db.list_applications() == []
+        async with db._session() as session:
+            question_count = await session.scalar(
+                select(func.count()).select_from(ApplicationInterviewQuestion)
+            )
+        assert question_count == 0
