@@ -1037,6 +1037,13 @@
     "title": "申请追踪",
     "subtitle": "追踪每份定制简历在求职流程中的进展。",
     "addApplication": "添加申请",
+    "interview": {
+      "round": "第 {count} 轮",
+      "title": "面试时间",
+      "add": "添加一轮面试",
+      "save": "保存面试时间",
+      "validation": "请为每一轮面试填写日期和时间。"
+    },
     "columns": {
       "saved": "已保存",
       "applied": "已投递",

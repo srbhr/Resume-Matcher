@@ -142,6 +142,54 @@ class TestUpdateAndMove:
         assert body["notes"] == "Recruiter call Friday"
         assert body["company"] == "NewCo"
 
+    async def test_patch_interview_times_persists_and_survives_status_change(
+        self, isolated_db
+    ):
+        card = await _seed_card(isolated_db, status="interview")
+        async with _client() as client:
+            updated = await client.patch(
+                f"/api/v1/applications/{card['application_id']}",
+                json={
+                    "interview_times": [
+                        "2026-10-02T14:30",
+                        "2026-10-08T10:00:00",
+                    ]
+                },
+            )
+        assert updated.status_code == 200
+        assert updated.json()["interview_times"] == [
+            "2026-10-02T14:30",
+            "2026-10-08T10:00",
+        ]
+
+        async with _client() as client:
+            moved = await client.patch(
+                f"/api/v1/applications/{card['application_id']}",
+                json={"status": "accepted"},
+            )
+            detail = await client.get(
+                f"/api/v1/applications/{card['application_id']}"
+            )
+        assert moved.status_code == 200
+        assert moved.json()["interview_times"] == updated.json()["interview_times"]
+        assert detail.json()["interview_times"] == updated.json()["interview_times"]
+
+    async def test_patch_rejects_invalid_or_timezone_aware_interview_times(
+        self, isolated_db
+    ):
+        card = await _seed_card(isolated_db, status="interview")
+        async with _client() as client:
+            invalid = await client.patch(
+                f"/api/v1/applications/{card['application_id']}",
+                json={"interview_times": ["not-a-date"]},
+            )
+            timezone_aware = await client.patch(
+                f"/api/v1/applications/{card['application_id']}",
+                json={"interview_times": ["2026-10-02T14:30:00+08:00"]},
+            )
+        assert invalid.status_code == 422
+        assert timezone_aware.status_code == 422
+
     async def test_patch_unknown_returns_404(self, isolated_db):
         async with _client() as client:
             resp = await client.patch("/api/v1/applications/nope", json={"notes": "x"})

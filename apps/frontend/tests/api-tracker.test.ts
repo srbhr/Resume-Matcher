@@ -66,6 +66,20 @@ describe('tracker API client', () => {
     expect(JSON.parse(String(options.body))).toEqual({ status: 'rejected', position: 0 });
   });
 
+  it('updateApplication sends multiple interview times', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ application_id: 'x' }), { status: 200 })
+    );
+    const interviewTimes = ['2026-10-02T14:30', '2026-10-08T10:00'];
+    await updateApplication('x', { interview_times: interviewTimes });
+    const { url, options } = lastCall();
+    expect(url).toContain('/applications/x');
+    expect(options.method).toBe('PATCH');
+    expect(JSON.parse(String(options.body))).toEqual({
+      interview_times: interviewTimes,
+    });
+  });
+
   it('createApplication POSTs the manual-add payload', async () => {
     fetchMock.mockResolvedValue(
       new Response(JSON.stringify({ application_id: 'x' }), { status: 200 })

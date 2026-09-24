@@ -94,6 +94,32 @@ class TestResumeCrud:
         finally:
             engine.dispose()
 
+    def test_interview_times_migration_is_idempotent(self, tmp_path):
+        engine = make_sync_engine(tmp_path / "old.db")
+        try:
+            with engine.begin() as conn:
+                conn.exec_driver_sql(
+                    """
+                    CREATE TABLE applications (
+                        application_id TEXT PRIMARY KEY
+                    )
+                    """
+                )
+
+            init_models_sync(engine)
+            init_models_sync(engine)
+
+            with engine.begin() as conn:
+                columns = (
+                    conn.exec_driver_sql("PRAGMA table_info(applications)")
+                    .mappings()
+                    .all()
+                )
+            names = [column["name"] for column in columns]
+            assert names.count("interview_times") == 1
+        finally:
+            engine.dispose()
+
 
 class TestMasterResume:
     async def test_no_master_initially(self, db):
@@ -219,6 +245,32 @@ class TestApplications:
     async def test_saved_status_has_no_applied_at(self, db):
         a = await db.create_application(job_id="j1", resume_id="r1", status="saved")
         assert a["applied_at"] is None
+
+    async def test_interview_times_round_trip_and_clear(self, db):
+        a = await db.create_application(job_id="j1", resume_id="r1")
+        assert a["interview_times"] == []
+
+        updated = await db.update_application(
+            a["application_id"],
+            {"interview_times": ["2026-10-02T14:30", "2026-10-08T10:00"]},
+        )
+        assert updated is not None
+        assert updated["interview_times"] == [
+            "2026-10-02T14:30",
+            "2026-10-08T10:00",
+        ]
+
+        await db.update_application(a["application_id"], {"status": "accepted"})
+        stored = await db.get_application(a["application_id"])
+        assert stored is not None
+        assert stored["interview_times"] == [
+            "2026-10-02T14:30",
+            "2026-10-08T10:00",
+        ]
+
+        cleared = await db.update_application(a["application_id"], {"interview_times": []})
+        assert cleared is not None
+        assert cleared["interview_times"] == []
 
     async def test_create_dedupes_on_job_and_resume(self, db):
         a = await db.create_application(job_id="j1", resume_id="r1")

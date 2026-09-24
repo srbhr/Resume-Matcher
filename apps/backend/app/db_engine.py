@@ -73,6 +73,16 @@ def init_models_sync(engine: Engine) -> None:
         if columns and "processing_token" not in existing_columns:
             conn.exec_driver_sql("ALTER TABLE resumes ADD COLUMN processing_token TEXT")
 
+        application_columns = (
+            conn.exec_driver_sql("PRAGMA table_info(applications)").mappings().all()
+        )
+        if application_columns and "interview_times" not in {
+            column["name"] for column in application_columns
+        }:
+            conn.exec_driver_sql(
+                "ALTER TABLE applications ADD COLUMN interview_times JSON"
+            )
+
         preview_columns = conn.exec_driver_sql("PRAGMA table_info(tailoring_previews)").mappings().all()
         if preview_columns and "improvements" not in {column["name"] for column in preview_columns}:
             conn.exec_driver_sql("ALTER TABLE tailoring_previews ADD COLUMN improvements JSON")

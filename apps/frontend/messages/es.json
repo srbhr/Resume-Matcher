@@ -1037,6 +1037,13 @@
     "title": "Seguimiento de candidaturas",
     "subtitle": "Controla en qué punto está cada currículum adaptado de tu proceso.",
     "addApplication": "Añadir candidatura",
+    "interview": {
+      "round": "Entrevista {count}",
+      "title": "Horarios de entrevista",
+      "add": "Añadir entrevista",
+      "save": "Guardar horarios",
+      "validation": "Introduce fecha y hora en cada ronda de entrevista."
+    },
     "columns": {
       "saved": "Guardado",
       "applied": "Enviado",
