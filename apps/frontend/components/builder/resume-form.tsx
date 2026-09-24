@@ -332,6 +332,10 @@ export const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, onUpdate }) 
         case 'itemList':
           return (
             <GenericItemForm
+              // Scopes the item-level DndContext id to this section. Several
+              // custom item-list sections can be on the page at once and each
+              // needs its own id.
+              sectionKey={section.key}
               items={customSection?.items || []}
               onChange={(items) => updateCustomSection({ items })}
               itemLabel={t('builder.customSections.entryLabel')}
