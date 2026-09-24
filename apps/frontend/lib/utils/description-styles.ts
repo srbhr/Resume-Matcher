@@ -9,7 +9,7 @@ export function alignDescriptionStyles(
 
 /** A description point paired with its style, so a reorder moves both together. */
 export interface DescriptionRow {
-  /** Position in the original list; only used as a drag-and-drop id. */
+  /** Drag-and-drop id (the point's position when the rows were built). */
   id: number;
   text: string;
   style: DescriptionStyle;

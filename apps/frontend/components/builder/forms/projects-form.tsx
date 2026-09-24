@@ -260,8 +260,9 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({ data, onChange }) =>
                     items={toDescriptionRows(item.description, item.descriptionStyles)}
                     onReorder={(rows) => handleReorderDescriptions(item.id, rows)}
                     className="space-y-3"
+                    handleLabel={t('builder.genericItemForm.actions.reorderPoint')}
                   >
-                    {({ id: idx, text: desc }) => (
+                    {({ text: desc, style }, idx) => (
                       <div className="flex gap-2">
                         <div className="flex-1">
                           <RichTextEditor
@@ -279,7 +280,7 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({ data, onChange }) =>
                           aria-label={t('builder.genericItemForm.actions.togglePointStyle')}
                           title={t('builder.genericItemForm.actions.togglePointStyle')}
                         >
-                          {item.descriptionStyles?.[idx] === 'plain' ? (
+                          {style === 'plain' ? (
                             <AlignLeft className="w-3 h-3" />
                           ) : (
                             <List className="w-3 h-3" />

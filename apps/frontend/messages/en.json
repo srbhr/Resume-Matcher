@@ -323,7 +323,8 @@
       },
       "actions": {
         "addPoint": "Add Point",
-        "togglePointStyle": "Toggle bullet marker"
+        "togglePointStyle": "Toggle bullet marker",
+        "reorderPoint": "Drag to reorder point"
       },
       "placeholders": {
         "title": "Title",

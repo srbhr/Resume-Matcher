@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { DragEndEvent } from '@dnd-kit/core';
 import { ExperienceForm } from '@/components/builder/forms/experience-form';
@@ -108,6 +108,16 @@ describe('description point reordering', () => {
       'experience-2-points',
       'experience-items',
     ]);
+  });
+
+  it('labels point handles distinctly from entry handles', () => {
+    render(<ExperienceForm data={jobs} onChange={vi.fn()} />);
+
+    // 2 entries, 5 points across them. The i18n mock returns the key itself.
+    expect(screen.getAllByRole('button', { name: 'Drag to reorder' })).toHaveLength(2);
+    expect(
+      screen.getAllByRole('button', { name: 'builder.genericItemForm.actions.reorderPoint' })
+    ).toHaveLength(5);
   });
 
   it('renders no points context for an entry without points', () => {

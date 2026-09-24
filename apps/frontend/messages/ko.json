@@ -301,7 +301,8 @@
       },
       "actions": {
         "addPoint": "항목 추가",
-        "togglePointStyle": "글머리 기호 전환"
+        "togglePointStyle": "글머리 기호 전환",
+        "reorderPoint": "드래그하여 항목 순서 변경"
       },
       "placeholders": {
         "title": "제목",
