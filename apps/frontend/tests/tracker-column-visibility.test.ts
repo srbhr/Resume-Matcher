@@ -68,6 +68,18 @@ describe('tracker column visibility storage', () => {
   });
 });
 
+describe('tracker status set', () => {
+  it('excludes the removed response statuses', () => {
+    expect(APPLICATION_STATUS_ORDER).toEqual([
+      'saved',
+      'applied',
+      'interview',
+      'accepted',
+      'rejected',
+    ]);
+  });
+});
+
 describe('isLastVisibleStatus', () => {
   it('is false while another stage is still visible', () => {
     const hidden = new Set<ApplicationStatus>(ALL_BUT_SAVED.slice(1));

@@ -1040,8 +1040,6 @@
     "columns": {
       "saved": "저장됨",
       "applied": "지원 완료",
-      "no_response": "응답 없음",
-      "response": "응답 받음",
       "interview": "면접",
       "accepted": "합격",
       "rejected": "불합격",
