@@ -29,7 +29,7 @@ interface SortableItemListProps<T extends ReorderableItem> {
   onReorder: (items: T[]) => void;
   /** Spacing wrapper for the list; matches the per-section rhythm. */
   className?: string;
-  /** Accessible name for each row's drag handle; defaults to the entry label. */
+  /** Accessible name for each row's drag handle; omitted, DraggableListItem uses "Drag to reorder". */
   handleLabel?: string;
   /** Renders one row; `index` is the item's current position in `items`. */
   children: (item: T, index: number) => React.ReactNode;
