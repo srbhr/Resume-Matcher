@@ -125,3 +125,4 @@ class ResumeWizardFinalizeResponse(BaseModel):
     resume_id: str
     processing_status: Literal["ready"] = "ready"
     is_master: bool
+    is_default_master: bool = False

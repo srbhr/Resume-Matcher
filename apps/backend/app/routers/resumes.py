@@ -22,7 +22,13 @@ from app.ai_budget import (
     remaining_timeout,
 )
 from app.config_cache import get_content_language, load_config as _load_config
-from app.database import DatabaseBusyError, ProcessingFinishOutcome, ResumeNotFoundError, db
+from app.database import (
+    DatabaseBusyError,
+    MasterResumeLimitError,
+    ProcessingFinishOutcome,
+    ResumeNotFoundError,
+    db,
+)
 from app.pdf import render_resume_pdf, PDFRenderError
 from app.config import settings
 from app.preview import (
@@ -37,6 +43,7 @@ from app.preview import (
 from app.schemas import (
     ATSScore,
     ATSSubScores,
+    DuplicateResumeResponse,
     GenerateContentResponse,
     GenerateInterviewPrepResponse,
     ImproveResumeConfirmRequest,
@@ -54,6 +61,7 @@ from app.schemas import (
     ResumeSummary,
     ResumeUploadResponse,
     RawResume,
+    SetDefaultMasterResponse,
     UpdateCoverLetterRequest,
     UpdateOutreachMessageRequest,
     UpdateTitleRequest,
@@ -76,6 +84,7 @@ from app.services.improver import (
     generate_skill_target_plan,
     generate_resume_diffs,
     improve_resume,
+    is_fixed_row_append,
     verify_skill_target_plan,
     verify_diff_result,
 )
@@ -90,6 +99,13 @@ from app.services.resume_preservation import (
     validate_confirmed_resume,
 )
 from app.services.ats import compute_ats_score
+from app.services.bullet_selector import SELECTABLE_SECTIONS
+from app.services.page_fit import render_drafts
+from app.services.tailor_selection import (
+    PAGE_FIT_FINAL_OVER_WARNING,
+    final_page_check,
+    run_bullet_selection,
+)
 from app.schemas.refinement import RefinementConfig
 from app.services.cover_letter import (
     generate_cover_letter,
@@ -263,6 +279,16 @@ def _get_original_resume_data(resume: dict[str, Any]) -> dict[str, Any] | None:
         except json.JSONDecodeError as e:
             logger.warning("Skipping resume diff due to JSON parse failure: %s", e)
     return original_data
+
+
+async def _grounding_master_data(resume: dict[str, Any]) -> dict[str, Any] | None:
+    """Truth source for refinement: the source master itself, else the default master."""
+    if resume.get("is_master", False):
+        return _get_original_resume_data(resume)
+    master_resume = await db.get_master_resume()
+    if master_resume:
+        return _get_original_resume_data(master_resume)
+    return _get_original_resume_data(resume)
 
 
 def _get_original_markdown(resume: dict[str, Any]) -> str | None:
@@ -573,13 +599,16 @@ def _build_ats_score(
 def _calculate_diff_from_resume(
     resume: dict[str, Any],
     improved_data: dict[str, Any],
+    original_data: dict[str, Any] | None = None,
 ) -> tuple[ResumeDiffSummary | None, list[ResumeFieldDiff] | None, str | None]:
     """Calculate resume diffs when structured data is available.
 
-    Returns (summary, changes, error_reason). Error reason is None on success,
-    or a string describing why diff calculation failed.
+    ``original_data`` overrides the stored resume as the diff baseline (used when
+    tailoring from a condensed source). Returns (summary, changes, error_reason).
+    Error reason is None on success, or a string describing why diff calculation
+    failed.
     """
-    original_data = _get_original_resume_data(resume)
+    original_data = original_data or _get_original_resume_data(resume)
     if not original_data:
         return None, None, "original_data_missing"
     from app.services.improver import calculate_resume_diff
@@ -735,6 +764,9 @@ DOCUMENT_TYPES_BY_EXTENSION = {
 }
 MAX_FILE_SIZE = 4 * 1024 * 1024  # 4MB
 UPLOAD_READ_CHUNK_SIZE = 64 * 1024
+MASTER_LIMIT_DETAIL = (
+    "You can keep up to 5 master resumes. Delete one before adding another."
+)
 
 
 def _validate_upload_type(file: UploadFile) -> None:
@@ -964,14 +996,18 @@ async def upload_resume(
     # original_markdown is preserved permanently for date reference even after
     # builder saves overwrite `content` with JSON.
     require_source_size(markdown_content)
-    resume = await db.create_resume_atomic_master(
-        content=markdown_content,
-        content_type="md",
-        filename=file.filename,
-        processed_data=None,
-        processing_status="processing",
-        original_markdown=markdown_content,
-    )
+    try:
+        resume = await db.create_resume_atomic_master(
+            content=markdown_content,
+            content_type="md",
+            filename=file.filename,
+            processed_data=None,
+            processing_status="processing",
+            original_markdown=markdown_content,
+        )
+    except MasterResumeLimitError as e:
+        logger.info("Upload rejected: %s", e)
+        raise HTTPException(status_code=409, detail=MASTER_LIMIT_DETAIL) from e
 
     # Preserve acknowledgement of this request's committed insert even if its
     # parse fails or the outer operation timer cancels the handler. A status
@@ -1038,6 +1074,7 @@ async def upload_resume(
             resume_id=resume["resume_id"],
             processing_status=resume["processing_status"],
             is_master=resume.get("is_master", False),
+            is_default_master=resume.get("is_default_master", False),
         )
     except (
         asyncio.CancelledError,
@@ -1099,6 +1136,8 @@ async def get_resume(resume_id: str = Query(...)) -> ResumeFetchResponse:
             ),
             parent_id=resume.get("parent_id"),
             title=resume.get("title"),
+            is_master=resume.get("is_master", False),
+            is_default_master=resume.get("is_default_master", False),
         ),
     )
 
@@ -1117,6 +1156,7 @@ async def list_resumes(include_master: bool = Query(False)) -> ResumeListRespons
             resume_id=resume["resume_id"],
             filename=resume.get("filename"),
             is_master=resume.get("is_master", False),
+            is_default_master=resume.get("is_default_master", False),
             parent_id=resume.get("parent_id"),
             processing_status=resume.get("processing_status", "pending"),
             created_at=resume.get("created_at", ""),
@@ -1127,6 +1167,15 @@ async def list_resumes(include_master: bool = Query(False)) -> ResumeListRespons
     ]
 
     return ResumeListResponse(request_id=str(uuid4()), data=summaries)
+
+
+@router.get("/render-drafts/{token}")
+async def get_render_draft(token: str) -> dict[str, Any]:
+    """Serve a short-lived unsaved draft to the print route for page measurement."""
+    data = render_drafts.get(token)
+    if data is None:
+        raise HTTPException(status_code=404, detail="Draft not found")
+    return {"data": {"processed_resume": data}}
 
 
 @router.post("/improve/preview", response_model=ImproveResumeResponse)
@@ -1247,6 +1296,26 @@ async def _improve_preview_flow(
     response_warnings: list[str] = []
     allow_appended_rows = False
 
+    source_content = resume["content"]
+    bullet_selection = None
+    if original_resume_data and request.max_bullets_per_entry:
+        progress["stage"] = "select_bullets"
+        selection = await run_bullet_selection(
+            source_data=original_resume_data,
+            job_description=job["content"],
+            job_keywords=job_keywords,
+            max_per_entry=request.max_bullets_per_entry,
+            page_fit=request.page_fit,
+        )
+        # The condensed, fitted source replaces the full master for every
+        # downstream step so preservation contracts hold at confirm time.
+        original_resume_data = selection.data
+        source_content = json.dumps(original_resume_data, ensure_ascii=False)
+        bullet_selection = selection.summary
+        response_warnings.extend(selection.warnings)
+    # Rewriting must not add bullets to the entries whose bullet set was chosen.
+    fixed_row_sections = SELECTABLE_SECTIONS if bullet_selection is not None else ()
+
     # Diff-based improvement: generate targeted changes, apply with verification
     if original_resume_data:
         skill_targets: list[dict[str, Any]] = []
@@ -1282,13 +1351,14 @@ async def _improve_preview_flow(
 
         progress["stage"] = "generate_resume_diffs"
         diff_result = await generate_resume_diffs(
-            original_resume=resume["content"],
+            original_resume=source_content,
             job_description=job["content"],
             job_keywords=job_keywords,
             language=language,
             prompt_id=prompt_id,
             original_resume_data=original_resume_data,
             skill_targets=skill_targets,
+            fixed_row_sections=fixed_row_sections,
         )
 
         progress["stage"] = "apply_resume_diffs"
@@ -1296,6 +1366,7 @@ async def _improve_preview_flow(
             original=original_resume_data,
             changes=diff_result.changes,
             allowed_skill_targets=skill_targets,
+            fixed_row_sections=fixed_row_sections,
         )
         allow_appended_rows = any(
             change.action == "append"
@@ -1310,9 +1381,16 @@ async def _improve_preview_flow(
         )
         response_warnings.extend(diff_warnings)
 
-        if rejected_changes:
+        # An append refused on a harness-chosen bullet set is expected (and logged by
+        # apply_diffs); only other rejections are worth a user-facing warning.
+        unexpected_rejections = [
+            change
+            for change in rejected_changes
+            if not is_fixed_row_append(change, fixed_row_sections)
+        ]
+        if unexpected_rejections:
             response_warnings.append(
-                f"{len(rejected_changes)} change(s) rejected during verification"
+                f"{len(unexpected_rejections)} change(s) rejected during verification"
             )
 
         logger.info(
@@ -1355,12 +1433,7 @@ async def _improve_preview_flow(
     refinement_successful = False
     try:
         # Get master resume for alignment validation
-        master_resume = await db.get_master_resume()
-        master_data = (
-            _get_original_resume_data(master_resume)
-            if master_resume
-            else _get_original_resume_data(resume)
-        )
+        master_data = await _grounding_master_data(resume)
         if master_data:
             initial_match = calculate_keyword_match(improved_data, job_keywords)
             refinement_attempted = True
@@ -1371,6 +1444,7 @@ async def _improve_preview_flow(
                 job_description=job["content"],
                 job_keywords=job_keywords,
                 config=RefinementConfig(),
+                fixed_row_sections=fixed_row_sections,
             )
             improved_data = refinement_result.refined_data
             refinement_stats = refinement_result.to_stats(initial_match)
@@ -1392,6 +1466,7 @@ async def _improve_preview_flow(
             original_resume_data,
             improved_data,
             allow_appended_rows=allow_appended_rows,
+            fixed_row_sections=fixed_row_sections,
         )
         response_warnings.extend(
             grounding_review_warnings(original_resume_data, improved_data)
@@ -1403,6 +1478,19 @@ async def _improve_preview_flow(
                 improved_data,
                 job_keywords,
             )
+
+    if (
+        bullet_selection is not None
+        and request.page_fit is not None
+        and bullet_selection.page_fit in ("fits", "trimmed")
+    ):
+        progress["stage"] = "final_page_check"
+        final_pages = await final_page_check(improved_data, request.page_fit)
+        bullet_selection.final_check = "skipped" if final_pages is None else "ok"
+        if final_pages is not None:
+            bullet_selection.final_pages = final_pages
+            if final_pages > 1:
+                response_warnings.append(PAGE_FIT_FINAL_OVER_WARNING)
 
     progress["stage"] = "register_preview"
     improved_text = json.dumps(improved_data, indent=2)
@@ -1421,11 +1509,13 @@ async def _improve_preview_flow(
         prompt_id=prompt_id,
         ttl_seconds=settings.preview_ttl_seconds,
         improvements=improvements,
+        source_data=original_resume_data if bullet_selection is not None else None,
     )
     progress["stage"] = "calculate_diff"
     diff_summary, detailed_changes, diff_error = _calculate_diff_from_resume(
         resume,
         improved_data,
+        original_resume_data,
     )
     if diff_error:
         response_warnings.append(DIFF_UNAVAILABLE_WARNING)
@@ -1462,6 +1552,7 @@ async def _improve_preview_flow(
                 refinement_result,
                 refinement_successful,
             ),
+            bullet_selection=bullet_selection,
             warnings=response_warnings,
             refinement_attempted=refinement_attempted,
             refinement_successful=refinement_successful,
@@ -1506,7 +1597,7 @@ async def improve_resume_confirm_endpoint(
         language = get_content_language()
 
         try:
-            original = _get_original_resume_data(resume)
+            original = claim.source_data or _get_original_resume_data(resume)
             if original is None:
                 raise ValueError("Original resume data is unavailable; process the source before preview")
             canonical = ResumeData.model_validate(
@@ -1525,15 +1616,12 @@ async def improve_resume_confirm_endpoint(
         stage = "calculate_diff"
         response_warnings: list[str] = []
         diff_summary, detailed_changes, diff_error = _calculate_diff_from_resume(
-            resume, improved_data
+            resume, improved_data, original
         )
         if diff_error:
             response_warnings.append(DIFF_UNAVAILABLE_WARNING)
-        original_data = _get_original_resume_data(resume)
-        if original_data:
-            response_warnings.extend(
-                grounding_review_warnings(original_data, improved_data)
-            )
+        if original:
+            response_warnings.extend(grounding_review_warnings(original, improved_data))
 
         # The durable claim lasts longer than the bounded external work. Other
         # workers return a retryable conflict instead of duplicating generation.
@@ -1744,12 +1832,7 @@ async def improve_resume_endpoint(
         refinement_successful = False
         try:
             # Get master resume for alignment validation
-            master_resume = await db.get_master_resume()
-            master_data = (
-                _get_original_resume_data(master_resume)
-                if master_resume
-                else _get_original_resume_data(resume)
-            )
+            master_data = await _grounding_master_data(resume)
             if master_data:
                 initial_match = calculate_keyword_match(improved_data, job_keywords)
                 refinement_attempted = True
@@ -1953,6 +2036,8 @@ async def update_resume_endpoint(
             ),
             parent_id=updated.get("parent_id"),
             title=updated.get("title"),
+            is_master=updated.get("is_master", False),
+            is_default_master=updated.get("is_default_master", False),
         ),
     )
 
@@ -2118,6 +2203,7 @@ async def retry_processing(resume_id: str) -> ResumeUploadResponse:
                 resume_id=resume_id,
                 processing_status="failed",
                 is_master=resume.get("is_master", False),
+                is_default_master=resume.get("is_default_master", False),
             )
         else:
             outcome = await db.finish_resume_processing(
@@ -2136,6 +2222,7 @@ async def retry_processing(resume_id: str) -> ResumeUploadResponse:
                 resume_id=resume_id,
                 processing_status="ready",
                 is_master=resume.get("is_master", False),
+                is_default_master=resume.get("is_default_master", False),
             )
     except (
         asyncio.CancelledError,
@@ -2183,6 +2270,98 @@ async def update_title(resume_id: str, request: UpdateTitleRequest) -> dict:
     title = request.title.strip()[:80]
     await db.update_resume(resume_id, {"title": title})
     return {"message": "Title updated successfully"}
+
+
+@router.post("/{resume_id}/default", response_model=SetDefaultMasterResponse)
+async def set_default_master_resume(resume_id: str) -> SetDefaultMasterResponse:
+    """Make a master resume the default tailoring source."""
+    resume = await db.get_resume(resume_id)
+    if not resume:
+        raise HTTPException(status_code=404, detail="Resume not found")
+    if not resume.get("is_master", False):
+        raise HTTPException(
+            status_code=400, detail="Only master resumes can be set as default."
+        )
+    if not await db.set_default_master_resume(resume_id):
+        raise HTTPException(
+            status_code=500, detail="Failed to set default resume. Please try again."
+        )
+    return SetDefaultMasterResponse(resume_id=resume_id, is_default_master=True)
+
+
+_MAX_TITLE_LENGTH = 80
+_COPY_SUFFIX = " (Copy)"
+
+
+def _copy_title(resume: dict[str, Any]) -> str:
+    """Title for a duplicated resume, capped at the 80 chars the title endpoint allows."""
+    base = (resume.get("title") or resume.get("filename") or "Resume").strip()
+    base = base[: _MAX_TITLE_LENGTH - len(_COPY_SUFFIX)].rstrip()
+    return f"{base}{_COPY_SUFFIX}"
+
+
+@router.post(
+    "/{resume_id}/duplicate", response_model=DuplicateResumeResponse, status_code=201
+)
+async def duplicate_resume(resume_id: str) -> DuplicateResumeResponse:
+    """Copy a ready resume. A master copy becomes a non-default master."""
+    source = await db.get_resume(resume_id)
+    if not source:
+        raise HTTPException(status_code=404, detail="Resume not found")
+    if source.get("processing_status") != "ready":
+        raise HTTPException(
+            status_code=409, detail="Only ready resumes can be duplicated."
+        )
+
+    fields: dict[str, Any] = {
+        "content": source["content"],
+        "content_type": source.get("content_type", "md"),
+        "filename": source.get("filename"),
+        "processed_data": copy.deepcopy(source.get("processed_data")),
+        "original_markdown": source.get("original_markdown"),
+        "cover_letter": source.get("cover_letter"),
+        "outreach_message": source.get("outreach_message"),
+        "interview_prep": source.get("interview_prep"),
+        "processing_status": "ready",
+        "title": _copy_title(source),
+    }
+    try:
+        if source.get("is_master", False):
+            duplicate = await db.create_resume_atomic_master(
+                **fields, take_over_stuck_default=False
+            )
+        else:
+            fields.update(is_master=False, parent_id=source.get("parent_id"))
+            # A tailored copy keeps the original's job link so JD features work on it.
+            link = await db.get_improvement_by_tailored_resume(resume_id)
+            if link is None:
+                duplicate = await db.create_resume(**fields)
+            else:
+                duplicate = await db.create_tailored_resume(
+                    request_id=str(uuid4()),
+                    original_resume_id=link["original_resume_id"],
+                    job_id=link["job_id"],
+                    resume_fields=fields,
+                    improvements=link["improvements"],
+                )
+    except MasterResumeLimitError as e:
+        logger.info("Duplicate rejected: %s", e)
+        raise HTTPException(status_code=409, detail=MASTER_LIMIT_DETAIL) from e
+    except DatabaseBusyError:
+        raise
+    except Exception as e:
+        logger.error("Failed to duplicate resume %s: %s", resume_id, e)
+        raise HTTPException(
+            status_code=500, detail="Failed to duplicate resume. Please try again."
+        ) from e
+
+    return DuplicateResumeResponse(
+        resume_id=duplicate["resume_id"],
+        title=duplicate["title"],
+        is_master=duplicate.get("is_master", False),
+        is_default_master=duplicate.get("is_default_master", False),
+        parent_id=duplicate.get("parent_id"),
+    )
 
 
 @router.post(

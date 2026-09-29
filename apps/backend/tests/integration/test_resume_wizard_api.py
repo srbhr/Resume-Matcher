@@ -1,11 +1,14 @@
 """Integration tests for the adaptive resume wizard endpoints."""
 
+import asyncio
 import json
+from typing import Any
 from unittest.mock import AsyncMock, patch
 
+import pytest
 from httpx import ASGITransport, AsyncClient
 
-from app.database import Database
+from app.database import MAX_MASTER_RESUMES, Database
 from app.main import app
 from app.schemas.resume_wizard import ResumeWizardHistoryEntry, ResumeWizardQuestion
 from app.services.resume_wizard import (
@@ -163,7 +166,70 @@ async def test_finalize_replays_identical_wizard_master_without_duplication(
     assert len(await isolated_db.list_resumes()) == 1
 
 
-async def test_finalize_rejects_different_draft_after_wizard_master_exists(
+async def test_concurrent_identical_finalizes_create_one_master(
+    isolated_db: Database, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A double-submit must replay, not consume two master slots (spec §4.2)."""
+    state = build_initial_wizard_state()
+    state.resume_data.personalInfo.name = "James"
+    request = {"state": state.model_dump(mode="json")}
+    list_masters = isolated_db.list_master_resumes
+    readers = 0
+    both_read = asyncio.Event()
+
+    async def list_after_both_requests_read() -> list[dict[str, Any]]:
+        # Force the overlap a double-submit produces: any replay lookup made
+        # outside the create transaction sees the state before either insert.
+        nonlocal readers
+        readers += 1
+        if readers == 2:
+            both_read.set()
+        try:
+            await asyncio.wait_for(both_read.wait(), timeout=1)
+        except TimeoutError:
+            pass
+        return await list_masters()
+
+    monkeypatch.setattr(isolated_db, "list_master_resumes", list_after_both_requests_read)
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        first, second = await asyncio.gather(
+            client.post("/api/v1/resume-wizard/finalize", json=request),
+            client.post("/api/v1/resume-wizard/finalize", json=request),
+        )
+
+    assert first.status_code == 200, first.text
+    assert second.status_code == 200, second.text
+    assert first.json()["resume_id"] == second.json()["resume_id"]
+    masters = await list_masters()
+    assert [m["resume_id"] for m in masters] == [first.json()["resume_id"]]
+
+
+async def test_identical_finalize_replays_even_at_the_master_limit(
+    isolated_db: Database, sample_resume: dict[str, Any]
+) -> None:
+    state = build_initial_wizard_state()
+    state.resume_data.personalInfo.name = "James"
+    request = {"state": state.model_dump(mode="json")}
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        first = await client.post("/api/v1/resume-wizard/finalize", json=request)
+        for i in range(MAX_MASTER_RESUMES - 1):
+            await isolated_db.create_resume_atomic_master(
+                content=json.dumps(sample_resume),
+                content_type="json",
+                filename=f"existing-{i}.json",
+                processed_data=sample_resume,
+                processing_status="ready",
+            )
+        replay = await client.post("/api/v1/resume-wizard/finalize", json=request)
+
+    assert replay.status_code == 200, replay.text
+    assert replay.json()["resume_id"] == first.json()["resume_id"]
+    assert len(await isolated_db.list_master_resumes()) == MAX_MASTER_RESUMES
+
+
+async def test_finalize_different_draft_creates_second_master(
     isolated_db: Database,
 ) -> None:
     first_state = build_initial_wizard_state()
@@ -177,22 +243,24 @@ async def test_finalize_rejects_different_draft_after_wizard_master_exists(
             "/api/v1/resume-wizard/finalize",
             json={"state": first_state.model_dump(mode="json")},
         )
-        collision = await client.post(
+        second = await client.post(
             "/api/v1/resume-wizard/finalize",
             json={"state": changed_state.model_dump(mode="json")},
         )
 
     assert first.status_code == 200
-    assert collision.status_code == 409
-    assert len(await isolated_db.list_resumes()) == 1
+    assert second.status_code == 200
+    assert second.json()["resume_id"] != first.json()["resume_id"]
+    assert len(await isolated_db.list_master_resumes()) == 2
 
 
-async def test_finalize_rejects_when_master_exists(isolated_db, sample_resume) -> None:
-    await isolated_db.create_resume(
+async def test_finalize_creates_additional_master_when_one_exists(
+    isolated_db: Database, sample_resume: dict[str, Any]
+) -> None:
+    existing = await isolated_db.create_resume_atomic_master(
         content=json.dumps(sample_resume),
         content_type="json",
         filename="existing.json",
-        is_master=True,
         processed_data=sample_resume,
         processing_status="ready",
     )
@@ -206,8 +274,38 @@ async def test_finalize_rejects_when_master_exists(isolated_db, sample_resume) -
             json={"state": state.model_dump(mode="json")},
         )
 
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["is_master"] is True
+    assert payload["is_default_master"] is False
+    assert payload["resume_id"] != existing["resume_id"]
+    assert (await isolated_db.get_master_resume())["resume_id"] == existing["resume_id"]
+
+
+async def test_finalize_rejects_at_master_limit(
+    isolated_db: Database, sample_resume: dict[str, Any]
+) -> None:
+    for i in range(MAX_MASTER_RESUMES):
+        await isolated_db.create_resume_atomic_master(
+            content=json.dumps(sample_resume),
+            content_type="json",
+            filename=f"existing-{i}.json",
+            processed_data=sample_resume,
+            processing_status="ready",
+        )
+    state = build_initial_wizard_state()
+    state.resume_data.personalInfo.name = "James"
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        response = await client.post(
+            "/api/v1/resume-wizard/finalize",
+            json={"state": state.model_dump(mode="json")},
+        )
+
     assert response.status_code == 409
-    assert "already exists" in response.json()["detail"].lower()
+    assert "up to 5 master resumes" in response.json()["detail"]
+    assert len(await isolated_db.list_master_resumes()) == MAX_MASTER_RESUMES
 
 
 async def test_turn_start_returns_initial_state(isolated_db) -> None:
