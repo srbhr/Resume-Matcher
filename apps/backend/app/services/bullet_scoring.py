@@ -57,14 +57,14 @@ def _make_validator(
                 continue
             path = item.get("path")
             score = item.get("score")
-            if (
-                isinstance(path, str)
-                and path in paths
-                and isinstance(score, (int, float))
-                and not isinstance(score, bool)
-                and math.isfinite(score)
-            ):
-                cleaned.append({"path": path, "score": max(0.0, min(100.0, float(score)))})
+            if not isinstance(path, str) or path not in paths or isinstance(score, bool):
+                continue
+            if isinstance(score, int):
+                # JSON ints are unbounded and float() raises OverflowError past ~1e308, so
+                # clamp first: a huge int becomes 100 (or 0), like any out-of-range score.
+                cleaned.append({"path": path, "score": float(max(0, min(100, score)))})
+            elif isinstance(score, float) and math.isfinite(score):
+                cleaned.append({"path": path, "score": max(0.0, min(100.0, score))})
         if not cleaned:
             raise ValueError("no known bullet paths were scored")
         return {"scores": cleaned}

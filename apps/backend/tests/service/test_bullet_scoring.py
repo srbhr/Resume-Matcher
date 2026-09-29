@@ -82,6 +82,31 @@ async def test_non_finite_llm_scores_are_dropped_not_clamped(mock_llm: AsyncMock
 
 
 @patch("app.services.bullet_scoring.complete_json", new_callable=AsyncMock)
+async def test_huge_int_scores_are_clamped_without_discarding_valid_scores(
+    mock_llm: AsyncMock,
+) -> None:
+    # json.loads accepts integers of any size, and float() on one raises OverflowError
+    # (not ValueError), which used to escape the validator and force the keyword fallback.
+    huge = "9" * 400
+
+    async def run(**kwargs: Any) -> Any:
+        return kwargs["response_validator"](json.loads(
+            '{"scores": ['
+            f'{{"path": "workExperience[0].description[0]", "score": {huge}}},'
+            f'{{"path": "workExperience[0].description[1]", "score": -{huge}}},'
+            '{"path": "personalProjects[0].description[0]", "score": 60}]}'
+        ))
+    mock_llm.side_effect = run
+    scores, source = await score_bullets(DATA, "JD", KEYWORDS)
+    assert source == "llm"
+    assert scores == {
+        ("workExperience", 0, 0): 100.0,
+        ("workExperience", 0, 1): 0.0,
+        ("personalProjects", 0, 0): 60.0,
+    }
+
+
+@patch("app.services.bullet_scoring.complete_json", new_callable=AsyncMock)
 async def test_llm_failure_falls_back_to_keyword_scores(mock_llm: AsyncMock) -> None:
     mock_llm.side_effect = RuntimeError("provider down")
     scores, source = await score_bullets(DATA, "JD", KEYWORDS)
