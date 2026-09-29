@@ -206,6 +206,16 @@ describe('entry action buttons clear each other and the form fields', () => {
     const fieldsRight = utilityPx(card, 'p') + utilityPx(fields, 'pr');
     expect(fieldsRight).toBeGreaterThanOrEqual(copyRight + size + hit);
   });
+
+  // Both buttons are transparent until hover, and `opacity: 0` also hides the
+  // button's focus ring, so keyboard focus must reveal them. jsdom computes no
+  // Tailwind styles, so this pins the class token.
+  it.each(cases)('%s: copy and remove become visible on keyboard focus', (_name, form) => {
+    render(form);
+    for (const button of [duplicateButtons()[0], removeButtons()[0]]) {
+      expect(button.className.split(/\s+/)).toContain('focus-visible:opacity-100');
+    }
+  });
 });
 
 describe('section duplicate button (ResumeForm)', () => {

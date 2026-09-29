@@ -215,7 +215,7 @@ export const GenericItemForm: React.FC<GenericItemFormProps> = ({
               <Button
                 variant="ghost"
                 size="icon"
-                className="absolute top-2 right-16 opacity-0 group-hover:opacity-100 transition-opacity text-steel-grey hover:text-ink-soft"
+                className="absolute top-2 right-16 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity text-steel-grey hover:text-ink-soft"
                 onClick={() => onChange(duplicateById(items, item.id))}
                 aria-label={t('a11y.duplicateItem')}
                 title={t('a11y.duplicateItem')}
@@ -226,7 +226,7 @@ export const GenericItemForm: React.FC<GenericItemFormProps> = ({
               <Button
                 variant="ghost"
                 size="icon"
-                className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
+                className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
                 onClick={() => handleRemove(item.id)}
                 aria-label={t('a11y.removeItem')}
                 title={t('a11y.removeItem')}
