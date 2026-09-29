@@ -16,6 +16,7 @@ Real-render tests skip cleanly (never hard-fail) when no Chromium binary can
 be launched.
 """
 
+import asyncio
 import socket
 from unittest.mock import AsyncMock
 
@@ -175,6 +176,23 @@ class TestRenderPageWaitStrategy:
         selector_arg = page.wait_for_selector.call_args.args[0]
         assert selector_arg == ".resume-print"
 
+    async def test_print_error_marker_fails_fast_without_a_pdf(self) -> None:
+        """A print page that reports it could not load its data is not a resume."""
+        page = AsyncMock()
+        marker = AsyncMock()
+        marker.get_attribute.return_value = "draft-unavailable"
+        page.wait_for_selector.return_value = marker
+        with pytest.raises(PDFRenderError):
+            await _render_page_to_pdf(
+                page,
+                "http://f/print/resumes/draft?draft=x",
+                ".resume-print, [data-print-error]",
+                "A4",
+                {"top": "10mm"},
+            )
+        marker.get_attribute.assert_awaited_with("data-print-error")
+        page.pdf.assert_not_awaited()
+
     async def test_still_waits_for_fonts_bounded(self):
         """Fonts must be loaded before snapshot (else text renders unstyled), and
         the wait must be bounded by the nav timeout — not Playwright's default."""
@@ -283,3 +301,17 @@ class TestRenderResumePdfErrors:
         if "executable" in message:
             pytest.skip(f"chromium unavailable: {exc_info.value}")
         assert "cannot connect to frontend" in message
+
+    async def test_print_error_marker_fails_fast_in_a_real_browser(self) -> None:
+        """The draft print page's error marker ends the wait at once (no 60 s timeout)."""
+        url = (
+            "data:text/html,"
+            "<html><body><div data-print-error='draft-unavailable'>Draft unavailable</div>"
+            "</body></html>"
+        )
+        loop = asyncio.get_running_loop()
+        started = loop.time()
+        with pytest.raises(PDFRenderError) as exc_info:
+            await _render_or_skip(url, selector=".resume-print, [data-print-error]")
+        assert loop.time() - started < 15
+        assert "executable" not in str(exc_info.value).lower()
