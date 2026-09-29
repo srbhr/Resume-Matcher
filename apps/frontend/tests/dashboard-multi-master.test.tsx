@@ -522,6 +522,67 @@ describe('dashboard with several master resumes', () => {
       expect(api.list).toHaveBeenCalledTimes(2);
     });
 
+    it('resumes polling when the newer refresh that superseded it fails', async () => {
+      vi.useFakeTimers();
+      const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+      onTestFinished(() => consoleError.mockRestore());
+      api.list.mockResolvedValue(processing);
+      render(<DashboardPage />);
+      await act(async () => {});
+      await act(async () => vi.advanceTimersByTimeAsync(2_900));
+      let failFocusRefresh!: (error: Error) => void;
+      api.list.mockReturnValueOnce(
+        new Promise((_, reject) => {
+          failFocusRefresh = reject;
+        })
+      );
+      await act(async () => {
+        window.dispatchEvent(new Event('focus'));
+      });
+      // The poll comes due while the focus refresh is in flight and stands down.
+      await act(async () => vi.advanceTimersByTimeAsync(200));
+      expect(api.list).toHaveBeenCalledTimes(2);
+
+      await act(async () => failFocusRefresh(new Error('offline')));
+      expect(screen.getByRole('alert')).toHaveTextContent('dashboard.errors.loadFailed');
+
+      // Polling picks up again on the normal backoff instead of waiting for a focus.
+      await act(async () => vi.advanceTimersByTimeAsync(2_999));
+      expect(api.list).toHaveBeenCalledTimes(2);
+      await act(async () => vi.advanceTimersByTimeAsync(1));
+      expect(api.list).toHaveBeenCalledTimes(3);
+    });
+
+    it('resumes polling when a failed delete-and-reupload superseded it', async () => {
+      vi.useFakeTimers();
+      const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+      onTestFinished(() => consoleError.mockRestore());
+      api.get.mockResolvedValue(status('failed'));
+      api.list.mockResolvedValue([
+        { ...row('m1', true), is_default_master: true, processing_status: 'failed' as const },
+        { ...row('m2', true), processing_status: 'processing' as const },
+      ]);
+      api.remove.mockRejectedValue(new Error('delete failed'));
+      render(<DashboardPage />);
+      await act(async () => {});
+      expect(api.list).toHaveBeenCalledTimes(1);
+
+      fireEvent.click(screen.getByRole('button', { name: 'dashboard.deleteAndReupload' }));
+      await act(async () =>
+        fireEvent.click(
+          within(screen.getByRole('dialog')).getByRole('button', {
+            name: 'dashboard.deleteAndReupload',
+          })
+        )
+      );
+      expect(api.remove).toHaveBeenCalledWith('m1');
+      expect(screen.getByText('dashboard.errors.deleteFailed')).toBeInTheDocument();
+
+      // No reload follows a failed delete, so the poll it superseded must be rescheduled.
+      await act(async () => vi.advanceTimersByTimeAsync(3_000));
+      expect(api.list).toHaveBeenCalledTimes(2);
+    });
+
     it('stops polling on unmount', async () => {
       vi.useFakeTimers();
       api.list.mockResolvedValue(processing);

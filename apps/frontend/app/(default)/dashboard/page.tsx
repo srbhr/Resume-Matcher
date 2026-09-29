@@ -76,6 +76,9 @@ export default function DashboardPage() {
   const pollAttemptsRef = useRef(0);
   const otherMastersPollAttemptsRef = useRef(0);
   const [statusRevision, setStatusRevision] = useState(0);
+  // Bumped when the latest list load ends without new data, so the extra-master poll it
+  // superseded is rescheduled (a successful load re-arms it through `otherMasters`).
+  const [listRevision, setListRevision] = useState(0);
   const activeMasterIdRef = useRef<string | null>(null);
   const mountedRef = useRef(true);
   // Lightweight in-memory cache for job snippets to avoid N+1 refetches
@@ -265,6 +268,7 @@ export default function DashboardPage() {
         if (!isCurrent()) return;
         console.error('Failed to load tailored resumes:', err);
         setListError(true);
+        setListRevision((version) => version + 1);
       }
     },
     [adoptMasterResume, checkResumeStatus]
@@ -282,7 +286,7 @@ export default function DashboardPage() {
     }
     if (otherMastersPollAttemptsRef.current >= 12) return;
     // A reload started after scheduling (focus, upload, an action) supersedes this
-    // poll; the list it loads re-runs this effect.
+    // poll; the list it loads, or `listRevision` when it fails, re-runs this effect.
     const requestId = loadRequestIdRef.current;
     const delay = Math.min(30_000, 3_000 * 2 ** otherMastersPollAttemptsRef.current);
     const timer = window.setTimeout(() => {
@@ -291,7 +295,7 @@ export default function DashboardPage() {
       void loadTailoredResumes(true);
     }, delay);
     return () => window.clearTimeout(timer);
-  }, [otherMasters, loadTailoredResumes]);
+  }, [otherMasters, listRevision, loadTailoredResumes]);
 
   useEffect(() => {
     loadTailoredResumes();
@@ -336,6 +340,9 @@ export default function DashboardPage() {
       localStorage.setItem('master_resume_id', resumeId);
     } catch (err) {
       console.error('Failed to set the re-uploaded resume as default:', err);
+      // Close the upload dialog (still showing success until its 1.5 s auto-close) in the
+      // same render, so the error never stacks on it or loses the scroll lock when it closes.
+      setIsUploadDialogOpen(false);
       setActionError(t('resumeViewer.setDefaultError'));
     }
     await loadTailoredResumes();
@@ -447,7 +454,7 @@ export default function DashboardPage() {
   const confirmDeleteAndReupload = async () => {
     if (!masterResumeId) return;
     const resumeId = masterResumeId;
-    loadRequestIdRef.current += 1;
+    const invalidationId = ++loadRequestIdRef.current;
     try {
       setDeleteError(false);
       await deleteResume(resumeId);
@@ -466,6 +473,11 @@ export default function DashboardPage() {
       console.error('Failed to delete resume:', err);
       setShowDeleteDialog(false);
       setDeleteError(true);
+    } finally {
+      // No reload followed (the delete failed or the master changed): re-arm the poll.
+      if (mountedRef.current && invalidationId === loadRequestIdRef.current) {
+        setListRevision((version) => version + 1);
+      }
     }
   };
 

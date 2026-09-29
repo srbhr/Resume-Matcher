@@ -1,10 +1,15 @@
 import React from 'react';
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 import DashboardPage from '@/app/(default)/dashboard/page';
 import { StatusCacheProvider, useStatusCache } from '@/lib/context/status-cache';
 import { fetchSystemStatus } from '@/lib/api/config';
-import { fetchResume, fetchResumeList, type ResumeListItem } from '@/lib/api/resume';
+import {
+  fetchResume,
+  fetchResumeList,
+  setDefaultMasterResume,
+  type ResumeListItem,
+} from '@/lib/api/resume';
 
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }));
 vi.mock('@/lib/i18n', () => ({
@@ -18,6 +23,7 @@ vi.mock('@/lib/api/resume', () => ({
   deleteResume: vi.fn(),
   retryProcessing: vi.fn(),
   fetchJobDescription: vi.fn(),
+  setDefaultMasterResume: vi.fn(),
 }));
 
 /** The list row the server returns for the uploaded resume. */
@@ -231,4 +237,86 @@ describe('dashboard master flag reconcile', () => {
       expect(screen.getByTestId('counters')).toHaveTextContent(`0:${expected}`);
     }
   );
+});
+
+// "Delete and re-upload" makes the re-upload the default explicitly. The upload dialog
+// closes itself 1.5 s after reporting success, so a failure to set the default must not
+// open its error on top of it (and then lose the page scroll lock when it closes).
+describe('dashboard re-upload default failure', () => {
+  const flush = () =>
+    act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
+
+  it('shows the error alone, never stacked on the upload dialog', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    onTestFinished(() => consoleError.mockRestore());
+    const readyResume = await fetchResume('any');
+    vi.mocked(fetchResume).mockImplementation(async (id: string) => ({
+      ...readyResume,
+      resume_id: id,
+      raw_resume: {
+        ...readyResume.raw_resume,
+        processing_status: id === 'old' ? 'failed' : 'ready',
+      },
+    }));
+    const other: ResumeListItem = { ...master, resume_id: 'other', title: 'Other track' };
+    vi.mocked(fetchResumeList).mockResolvedValue([
+      { ...master, resume_id: 'old', processing_status: 'failed' },
+      { ...other, is_default_master: false },
+    ]);
+    vi.mocked(setDefaultMasterResume).mockRejectedValue(new Error('offline'));
+    render(
+      <StatusCacheProvider>
+        <DashboardPage />
+      </StatusCacheProvider>
+    );
+    await flush();
+
+    fireEvent.click(screen.getByRole('button', { name: 'dashboard.deleteAndReupload' }));
+    vi.mocked(fetchResumeList).mockResolvedValue([other]);
+    fireEvent.click(
+      within(screen.getByRole('dialog')).getByRole('button', {
+        name: 'dashboard.deleteAndReupload',
+      })
+    );
+    await flush();
+    const input = document.querySelector<HTMLInputElement>('input[type="file"]');
+    expect(input).not.toBeNull();
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          resume_id: 'uploaded',
+          processing_status: 'ready',
+          is_master: true,
+          is_default_master: false,
+        }),
+        { status: 200, headers: { 'content-type': 'application/json' } }
+      )
+    );
+    fireEvent.change(input!, {
+      target: {
+        files: [new File(['synthetic resume'], 'resume.pdf', { type: 'application/pdf' })],
+      },
+    });
+    await flush();
+
+    expect(setDefaultMasterResume).toHaveBeenCalledExactlyOnceWith('uploaded');
+    const [dialog] = screen.getAllByRole('dialog');
+    expect(screen.getAllByRole('dialog')).toHaveLength(1);
+    expect(dialog).toHaveTextContent('resumeViewer.setDefaultError');
+    expect(document.body.style.overflow).toBe('hidden');
+
+    // The upload dialog's own close delay passes; the error stays and keeps the lock.
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1500);
+    });
+    expect(screen.getAllByRole('dialog')).toHaveLength(1);
+    expect(screen.getByRole('dialog')).toHaveTextContent('resumeViewer.setDefaultError');
+    expect(document.body.style.overflow).toBe('hidden');
+
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'common.ok' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(document.body.style.overflow).toBe('');
+  });
 });
