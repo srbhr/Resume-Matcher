@@ -14,7 +14,7 @@ import copy
 import logging
 import shutil
 import sqlite3
-from collections.abc import AsyncIterator, Iterator
+from collections.abc import AsyncIterator, Callable, Iterator
 from contextlib import asynccontextmanager, contextmanager
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -56,9 +56,16 @@ APPLICATION_STATUSES: tuple[str, ...] = (
 )
 ProcessingFinishOutcome = Literal["committed", "stale", "missing"]
 
+# A user keeps at most this many master resumes (career tracks).
+MAX_MASTER_RESUMES = 5
+
 
 class DatabaseBusyError(RuntimeError):
     """A write reservation could not be obtained; retry the unchanged request."""
+
+
+class MasterResumeLimitError(Exception):
+    """Raised when creating a master would exceed MAX_MASTER_RESUMES."""
 
 
 @contextmanager
@@ -185,6 +192,7 @@ class Database:
             "content_type": row.content_type,
             "filename": row.filename,
             "is_master": row.is_master,
+            "is_default_master": row.is_default_master,
             "parent_id": row.parent_id,
             "processed_data": row.processed_data,
             "processing_status": row.processing_status,
@@ -257,6 +265,7 @@ class Database:
         title: str | None = None,
         original_markdown: str | None = None,
         interview_prep: str | None = None,
+        is_default_master: bool = False,
     ) -> dict[str, Any]:
         """Create a new resume entry.
 
@@ -267,6 +276,7 @@ class Database:
             content_type=content_type,
             filename=filename,
             is_master=is_master,
+            is_default_master=is_default_master,
             parent_id=parent_id,
             processed_data=processed_data,
             processing_status=processing_status,
@@ -299,27 +309,56 @@ class Database:
         original_markdown: str | None = None,
         title: str | None = None,
         interview_prep: str | None = None,
+        *,
+        take_over_stuck_default: bool = True,
+        replay_if: Callable[[dict[str, Any]], bool] | None = None,
     ) -> dict[str, Any]:
-        """Create a resume and replace a failed master in one transaction."""
+        """Create a new master track in one transaction.
+
+        The first master becomes the default. A default stuck in failed/processing
+        hands the default to the new upload (it stays a master) unless
+        take_over_stuck_default is False, in which case the new row is default only
+        when no default exists at all. Raises MasterResumeLimitError when
+        MAX_MASTER_RESUMES masters already exist. When ``replay_if`` accepts an
+        existing master (oldest first), that master is returned and nothing is
+        written; the check runs inside the write transaction, so concurrent
+        identical requests cannot both insert.
+        """
         async with self._write_session() as session:
-            current_master = (
-                await session.execute(select(Resume).where(Resume.is_master.is_(True)))
-            ).scalar_one_or_none()
-            is_master = current_master is None
-            if current_master and current_master.processing_status in (
-                "failed",
-                "processing",
+            masters = (
+                await session.execute(
+                    select(Resume)
+                    .where(Resume.is_master.is_(True))
+                    .order_by(Resume.created_at)
+                )
+            ).scalars().all()
+            if replay_if is not None:
+                for master in masters:
+                    existing = self._resume_to_dict(master)
+                    if replay_if(existing):
+                        return existing
+            if len(masters) >= MAX_MASTER_RESUMES:
+                raise MasterResumeLimitError(
+                    f"Master resume limit reached ({MAX_MASTER_RESUMES})"
+                )
+            current_default = next((m for m in masters if m.is_default_master), None)
+            is_default = current_default is None
+            if (
+                take_over_stuck_default
+                and current_default is not None
+                and current_default.processing_status in ("failed", "processing")
             ):
-                current_master.is_master = False
+                current_default.is_default_master = False
                 # Release the partial unique-index slot within this transaction.
                 # An insertion failure still rolls this demotion back.
                 await session.flush()
-                is_master = True
+                is_default = True
             row = self._new_resume(
                 content=content,
                 content_type=content_type,
                 filename=filename,
-                is_master=is_master,
+                is_master=True,
+                is_default_master=is_default,
                 processed_data=processed_data,
                 processing_status=processing_status,
                 cover_letter=cover_letter,
@@ -339,13 +378,23 @@ class Database:
             return self._resume_to_dict(row) if row else None
 
     async def get_master_resume(self) -> dict[str, Any] | None:
-        """Get the master resume if exists."""
+        """Get the default master resume (earliest master as a fallback)."""
         async with self._session() as session:
             result = await session.execute(
-                select(Resume).where(Resume.is_master.is_(True))
+                select(Resume)
+                .where(Resume.is_master.is_(True))
+                .order_by(Resume.is_default_master.desc(), Resume.created_at)
             )
             row = result.scalars().first()
             return self._resume_to_dict(row) if row else None
+
+    async def list_master_resumes(self) -> list[dict[str, Any]]:
+        """List every master track, oldest first."""
+        async with self._session() as session:
+            result = await session.execute(
+                select(Resume).where(Resume.is_master.is_(True)).order_by(Resume.created_at)
+            )
+            return [self._resume_to_dict(row) for row in result.scalars().all()]
 
     async def update_resume(
         self, resume_id: str, updates: dict[str, Any]
@@ -469,10 +518,24 @@ class Database:
             )
             for preview in previews.scalars():
                 preview.response_data = None
+                preview.source_data = None
             await session.execute(
                 delete(TailoringPreview).where(TailoringPreview.source_id == resume_id)
             )
+            was_default = row.is_default_master
             await session.delete(row)
+            if was_default:
+                await session.flush()
+                successor = (
+                    await session.execute(
+                        select(Resume)
+                        .where(Resume.is_master.is_(True))
+                        .order_by(Resume.created_at)
+                        .limit(1)
+                    )
+                ).scalar_one_or_none()
+                if successor is not None:
+                    successor.is_default_master = True
             await session.commit()
             return True
 
@@ -482,27 +545,22 @@ class Database:
             result = await session.execute(select(Resume).order_by(Resume.created_at))
             return [self._resume_to_dict(row) for row in result.scalars().all()]
 
-    async def set_master_resume(self, resume_id: str) -> bool:
-        """Set a resume as the master, unsetting any existing master.
-
-        Returns False if the resume doesn't exist. Demote-then-promote happens
-        in a single transaction so the partial unique index is never violated.
-        """
+    async def set_default_master_resume(self, resume_id: str) -> bool:
+        """Make an existing master the default; False if missing or not a master."""
         async with self._write_session() as session:
             target = await session.get(Resume, resume_id)
-            if target is None:
-                logger.warning("Cannot set master: resume %s not found", resume_id)
+            if target is None or not target.is_master:
+                logger.warning("Cannot set default master: %s is not a master", resume_id)
                 return False
-
             current = await session.execute(
-                select(Resume).where(Resume.is_master.is_(True))
+                select(Resume).where(Resume.is_default_master.is_(True))
             )
             for row in current.scalars().all():
                 if row.resume_id != resume_id:
-                    row.is_master = False
-            # Flush the demotions before promoting to satisfy the unique index.
+                    row.is_default_master = False
+            # Flush the demotion before promoting to satisfy the unique index.
             await session.flush()
-            target.is_master = True
+            target.is_default_master = True
             await session.commit()
             return True
 
@@ -608,12 +666,14 @@ class Database:
         prompt_id: str,
         ttl_seconds: int,
         improvements: list[dict[str, Any]] | None = None,
+        source_data: dict[str, Any] | None = None,
     ) -> dict[str, str]:
         """Register the exact input/output snapshot before acknowledging preview."""
         now = _now()
         row = TailoringPreview(
             preview_id=str(uuid4()),
             improvements=copy.deepcopy(improvements or []),
+            source_data=copy.deepcopy(source_data),
             source_id=source_id,
             job_id=job_id,
             payload_hash=payload_hash,
@@ -716,7 +776,12 @@ class Database:
                 datetime.fromisoformat(now) + timedelta(seconds=lease_seconds)
             ).isoformat()
             await session.commit()
-            return PreviewClaim(row.preview_id, token=row.claim_token, improvements=copy.deepcopy(row.improvements or []))
+            return PreviewClaim(
+                row.preview_id,
+                token=row.claim_token,
+                improvements=copy.deepcopy(row.improvements or []),
+                source_data=copy.deepcopy(row.source_data),
+            )
 
     async def release_preview_claim(self, claim: PreviewClaim) -> None:
         """Release only this request's uncommitted claim, including on cancellation."""
@@ -772,6 +837,8 @@ class Database:
                 )
             )
             preview.response_data = result
+            # Replays read response_data only; drop the condensed master copy (personal data).
+            preview.source_data = None
             preview.result_resume_id = row.resume_id
             preview.claim_token = None
             preview.claim_expires_at = None
