@@ -73,7 +73,29 @@ def init_models_sync(engine: Engine) -> None:
         if columns and "processing_token" not in existing_columns:
             conn.exec_driver_sql("ALTER TABLE resumes ADD COLUMN processing_token TEXT")
 
+        if columns and "is_master" in existing_columns:
+            if "is_default_master" not in existing_columns:
+                conn.exec_driver_sql(
+                    "ALTER TABLE resumes ADD COLUMN is_default_master BOOLEAN NOT NULL DEFAULT 0"
+                )
+            # Multi-track masters: the single-master slot is replaced by a
+            # single-default slot. create_all never drops indexes on existing tables.
+            conn.exec_driver_sql("DROP INDEX IF EXISTS ux_resumes_single_master")
+            if "created_at" in existing_columns:
+                conn.exec_driver_sql(
+                    "UPDATE resumes SET is_default_master = 1 WHERE resume_id = ("
+                    "SELECT resume_id FROM resumes WHERE is_master = 1 "
+                    "ORDER BY created_at, resume_id LIMIT 1) "
+                    "AND NOT EXISTS (SELECT 1 FROM resumes WHERE is_default_master = 1)"
+                )
+            conn.exec_driver_sql(
+                "CREATE UNIQUE INDEX IF NOT EXISTS ux_resumes_single_default_master "
+                "ON resumes (is_default_master) WHERE is_default_master = 1"
+            )
+
         preview_columns = conn.exec_driver_sql("PRAGMA table_info(tailoring_previews)").mappings().all()
         if preview_columns and "improvements" not in {column["name"] for column in preview_columns}:
             conn.exec_driver_sql("ALTER TABLE tailoring_previews ADD COLUMN improvements JSON")
+        if preview_columns and "source_data" not in {column["name"] for column in preview_columns}:
+            conn.exec_driver_sql("ALTER TABLE tailoring_previews ADD COLUMN source_data JSON")
         conn.exec_driver_sql("CREATE INDEX IF NOT EXISTS ix_preview_compatibility ON tailoring_previews (source_id, job_id, payload_hash, created_at)")

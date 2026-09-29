@@ -77,6 +77,7 @@ async def migrate(database: Database | None = None) -> dict[str, Any]:
                     content_type=r.get("content_type", "md"),
                     filename=r.get("filename"),
                     is_master=bool(r.get("is_master", False)),
+                    is_default_master=bool(r.get("is_master", False)),
                     parent_id=r.get("parent_id"),
                     processed_data=r.get("processed_data"),
                     processing_status=r.get("processing_status", "pending"),
