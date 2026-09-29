@@ -7,6 +7,7 @@ const api = vi.hoisted(() => ({
   upload: vi.fn(),
   preview: vi.fn(),
   confirm: vi.fn(),
+  list: vi.fn(),
   push: vi.fn(),
   back: vi.fn(),
   setPreview: vi.fn(),
@@ -22,6 +23,8 @@ vi.mock('@/lib/api/resume', () => ({
   uploadJobDescriptions: api.upload,
   previewImproveResume: api.preview,
   confirmImproveResume: api.confirm,
+  fetchResumeList: api.list,
+  toPageFitSettings: () => ({}),
 }));
 vi.mock('@/lib/api/config', () => ({
   fetchPromptConfig: async () => ({ prompt_options: [], default_prompt_id: 'keywords' }),
@@ -92,6 +95,19 @@ beforeEach(() => {
   vi.resetAllMocks();
   localStorage.clear();
   localStorage.setItem('master_resume_id', 'master');
+  api.list.mockResolvedValue([
+    {
+      resume_id: 'master',
+      is_master: true,
+      is_default_master: true,
+      processing_status: 'ready',
+      title: 'M',
+      filename: null,
+      parent_id: null,
+      created_at: '',
+      updated_at: '',
+    },
+  ]);
   api.upload.mockResolvedValue('job');
   api.preview.mockResolvedValue(preview);
   api.confirm.mockResolvedValue(confirmed);

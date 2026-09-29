@@ -31,6 +31,9 @@ _T = TypeVar("_T")
 # modest hardware) still completes, while a genuinely stuck page still fails
 # in finite time rather than hanging.
 _NAV_TIMEOUT_MS = 60_000
+# Rendered by a print page that could not load its data (e.g. an expired draft).
+PRINT_ERROR_ATTRIBUTE = "data-print-error"
+PRINT_ERROR_SELECTOR = f"[{PRINT_ERROR_ATTRIBUTE}]"
 
 
 def _bounded_env_int(name: str, default: int, minimum: int, maximum: int) -> int:
@@ -382,7 +385,7 @@ async def _render_page_to_pdf(
         work_deadline,
         "navigation",
     )
-    await _await_before_deadline(
+    ready = await _await_before_deadline(
         page.wait_for_selector(
             selector,
             timeout=_stage_timeout_ms(work_deadline),
@@ -390,6 +393,17 @@ async def _render_page_to_pdf(
         work_deadline,
         "resume readiness",
     )
+    # A print page that could not load its data says so instead of hanging;
+    # only callers whose selector includes PRINT_ERROR_SELECTOR can match it.
+    if ready is not None:
+        print_error = await _await_before_deadline(
+            ready.get_attribute(PRINT_ERROR_ATTRIBUTE),
+            work_deadline,
+            "resume readiness",
+        )
+        if isinstance(print_error, str):
+            logger.warning("Print page reported %r for %s", print_error, url)
+            raise PDFRenderError("The print page could not load the resume.")
     # Bound the fonts wait too — plain page.evaluate has no timeout, so a stuck
     # font load could otherwise hang the render past _NAV_TIMEOUT_MS.
     await _await_before_deadline(

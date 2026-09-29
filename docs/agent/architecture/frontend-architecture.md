@@ -30,10 +30,10 @@ apps/frontend/
 ## Pages
 
 ### Dashboard (`/dashboard`)
-- Master resume card + tailored resume tiles
+- Default master card, up to 4 other master-track tiles (5 masters total) + tailored resume tiles
 - States: `loading | pending | processing | ready | failed`
 - Auto-refreshes on window focus
-- localStorage: `master_resume_id`
+- localStorage: `master_resume_id` (the default master's id)
 
 ### Builder (`/builder`)
 - Left: Editor Panel (forms + formatting controls)
@@ -96,7 +96,7 @@ fetchLlmConfig, updateLlmConfig, testLlmConnection, fetchSystemStatus
 
 | Key | Purpose |
 |-----|---------|
-| `master_resume_id` | Master resume UUID |
+| `master_resume_id` | Default master resume UUID |
 | `resume_builder_draft` | Auto-saved form data |
 | `resume_builder_settings` | Template preferences |
 

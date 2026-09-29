@@ -93,6 +93,7 @@
     "uploadDialog": {
       "success": "Currículo enviado com sucesso.",
       "successMaster": "Currículo enviado e definido como principal.",
+      "successMasterTrack": "Currículo enviado como uma nova trilha principal.",
       "successMissingId": "Upload concluído, mas sem ID retornado.",
       "parsingFailed": "Currículo enviado, mas a análise de IA falhou. Você ainda pode personalizá-lo manualmente.",
       "failed": "Falha no upload.",
@@ -104,10 +105,17 @@
     "errors": {
       "loadFailed": "Não foi possível carregar os currículos. Tente novamente.",
       "deleteFailed": "Não foi possível excluir o currículo. Seu currículo atual continua disponível."
-    }
+    },
+    "defaultBadge": "Padrão",
+    "masterTrack": "Trilha principal",
+    "setDefault": "Definir como padrão",
+    "duplicate": "Duplicar",
+    "addMasterTrack": "Adicionar trilha principal",
+    "masterLimitReached": "Até {max} currículos principais"
   },
   "builder": {
     "title": "Criar Currículo",
+    "copySuffix": "(Cópia)",
     "editMode": "Modo Edição",
     "previewMode": "Modo Visualização",
     "createAndPreview": "Criar e Visualizar",
@@ -196,6 +204,7 @@
       "moveUp": "Mover para cima",
       "moveDown": "Mover para baixo",
       "deleteSection": "Excluir seção",
+      "duplicateSection": "Duplicar seção",
       "deleteTitle": "Excluir Seção",
       "deleteDescription": "Tem certeza que deseja excluir \"{name}\"? Esta ação não pode ser desfeita."
     },
@@ -635,6 +644,16 @@
       "failedToPreview": "Não foi possível pré-visualizar o currículo. Verifique sua chave de API em Configurações e tente novamente.",
       "failedToConfirm": "Não foi possível aplicar as alterações. Tente novamente.",
       "previewUnavailable": "Esta prévia expirou ou o currículo original mudou. Gere uma nova prévia antes de salvar."
+    },
+    "selectResumeDescription": "Os marcadores são extraídos deste currículo principal.",
+    "selectionSummary": "{kept} de {total} marcadores mantidos (até {max} por cargo ou projeto)",
+    "pageFit": {
+      "fits": "Cabe em uma página",
+      "trimmed": "Marcadores extras removidos para caber em uma página: {count}",
+      "over": "Ainda excede uma página",
+      "unavailable": "Ajuste de página indisponível",
+      "finalOver": "Pode passar de uma página após a reescrita",
+      "notRechecked": "Ajuste a uma página não verificado após a reescrita"
     }
   },
   "settings": {
@@ -820,7 +839,13 @@
     },
     "titlePlaceholder": "Digite o título do currículo...",
     "downloadFailedTitle": "Falha no download",
-    "renameFailedTitle": "Falha ao renomear"
+    "renameFailedTitle": "Falha ao renomear",
+    "defaultBadge": "Principal padrão",
+    "setDefault": "Definir como principal padrão",
+    "setDefaultSuccess": "Este currículo principal agora é o padrão para personalização.",
+    "setDefaultError": "Não foi possível definir este currículo como principal padrão. Tente novamente.",
+    "duplicate": "Duplicar",
+    "duplicateError": "Não foi possível duplicar este currículo. Tente novamente."
   },
   "preview": {
     "margins": "Margens",
@@ -929,6 +954,7 @@
   },
   "a11y": {
     "removeItem": "Remover item",
+    "duplicateItem": "Duplicar item",
     "removeDescription": "Remover esta linha",
     "removeFile": "Remover arquivo"
   },

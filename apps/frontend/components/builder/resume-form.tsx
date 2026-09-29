@@ -38,6 +38,7 @@ import {
   getSectionMeta,
   getAllSections,
   createCustomSection,
+  duplicateCustomSection,
   DEFAULT_SECTION_META,
 } from '@/lib/utils/section-helpers';
 import { useTranslations } from '@/lib/i18n';
@@ -370,6 +371,11 @@ export const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, onUpdate }) 
         onMoveUp={() => handleMoveUp(section.id)}
         onMoveDown={() => handleMoveDown(section.id)}
         onToggleVisibility={() => handleToggleVisibility(section.id)}
+        // Only custom sections are duplicated whole; built-in sections keep
+        // no Copy button (their entries can still be duplicated one by one).
+        onDuplicate={() =>
+          onUpdate(duplicateCustomSection(resumeData, section.id, t('builder.copySuffix')))
+        }
         isFirst={isFirst}
         isLast={isLast}
         canDelete={true}

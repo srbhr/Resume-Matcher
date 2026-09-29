@@ -40,15 +40,17 @@ apps/backend/app/
 
 ### Resumes
 
-| Method | Endpoint              | Description          |
-| ------ | --------------------- | -------------------- |
-| POST   | `/resumes/upload`     | Upload PDF/DOC/DOCX  |
-| GET    | `/resumes?resume_id=` | Fetch resume         |
-| GET    | `/resumes/list`       | List all             |
-| POST   | `/resumes/improve`    | Tailor for job (LLM) |
-| PATCH  | `/resumes/{id}`       | Update               |
-| GET    | `/resumes/{id}/pdf`   | Download PDF         |
-| DELETE | `/resumes/{id}`       | Delete               |
+| Method | Endpoint                  | Description            |
+| ------ | ------------------------- | ---------------------- |
+| POST   | `/resumes/upload`         | Upload PDF/DOC/DOCX    |
+| GET    | `/resumes?resume_id=`     | Fetch resume           |
+| GET    | `/resumes/list`           | List all               |
+| POST   | `/resumes/improve`        | Tailor for job (LLM)   |
+| PATCH  | `/resumes/{id}`           | Update                 |
+| GET    | `/resumes/{id}/pdf`       | Download PDF           |
+| POST   | `/resumes/{id}/default`   | Set the default master |
+| POST   | `/resumes/{id}/duplicate` | Copy a ready resume    |
+| DELETE | `/resumes/{id}`           | Delete                 |
 
 ### Jobs
 
@@ -84,7 +86,8 @@ await db.create_resume(content, content_type, filename, is_master, processed_dat
 await db.get_resume(resume_id) → dict | None
 await db.update_resume(resume_id, updates) → dict
 await db.delete_resume(resume_id) → bool
-await db.set_master_resume(resume_id)            # Exactly one master allowed
+await db.set_default_master_resume(resume_id)   # Up to 5 master resumes (career tracks); exactly one is the default (`is_default_master`)
+await db.list_master_resumes() → list[dict]      # All masters, oldest first (get_master_resume() returns the default)
 await db.create_application(...) / list_applications / update_application / bulk_*
 await db.get_stats() → {total_resumes, total_jobs, total_improvements, total_applications}
 get_api_key_ciphertexts() / replace_api_keys(...)  # sync; encrypted api_keys table
@@ -97,8 +100,12 @@ the document tables + `applications`; a **sync** engine serves the encrypted
 through `llm.py`. Both apply PRAGMAs `journal_mode=WAL`, `foreign_keys=ON`,
 `busy_timeout` on connect.
 
-**Single-master invariant** is enforced by a partial unique index on `is_master`.
-Master replacement and tracker read-modify-write operations reserve SQLite writes
+**Master invariant:** up to `MAX_MASTER_RESUMES` (5) rows have `is_master`; at most one is
+`is_default_master` (guaranteed by a partial unique index on that column). Application logic
+keeps exactly one default while any master exists: a new master becomes the default when none
+exists, deleting the default promotes the earliest remaining master, and the startup migration
+(`db_engine.py`) promotes the earliest master when none is default. Master creation and
+default changes, and tracker read-modify-write operations, reserve SQLite writes
 with `BEGIN IMMEDIATE`, including across Database instances.
 **Jobs' dynamic fields** (`job_keywords`, `job_keywords_hash`, `company`/`role`,
 `preview_hash`, `preview_hashes`, and `preview_prompt_id`) are stored in

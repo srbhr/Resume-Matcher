@@ -24,6 +24,7 @@ class PreviewClaim:
     token: str | None = None
     response: dict[str, Any] | None = None
     improvements: list[dict[str, Any]] | None = None
+    source_data: dict[str, Any] | None = None
 
 
 def resume_fingerprint(

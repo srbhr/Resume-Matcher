@@ -93,6 +93,7 @@
     "uploadDialog": {
       "success": "이력서가 성공적으로 업로드되었습니다.",
       "successMaster": "이력서가 업로드되어 마스터로 설정되었습니다.",
+      "successMasterTrack": "이력서가 새 마스터 트랙으로 업로드되었습니다.",
       "successMissingId": "업로드는 성공했지만 이력서 ID가 반환되지 않았습니다.",
       "parsingFailed": "이력서는 업로드되었지만 AI 분석에 실패했습니다. 여전히 수동으로 맞춤화할 수 있습니다.",
       "failed": "업로드에 실패했습니다.",
@@ -104,10 +105,17 @@
     "errors": {
       "loadFailed": "이력서를 불러오지 못했습니다. 다시 시도해 주세요.",
       "deleteFailed": "이력서를 삭제하지 못했습니다. 기존 이력서는 그대로 유지됩니다."
-    }
+    },
+    "defaultBadge": "기본",
+    "masterTrack": "마스터 트랙",
+    "setDefault": "기본으로 설정",
+    "duplicate": "복제",
+    "addMasterTrack": "마스터 트랙 추가",
+    "masterLimitReached": "마스터 이력서는 최대 {max}개까지"
   },
   "builder": {
     "title": "이력서 빌더",
+    "copySuffix": "(사본)",
     "editMode": "편집 모드",
     "previewMode": "미리보기 모드",
     "createAndPreview": "만들고 미리보기",
@@ -174,6 +182,7 @@
       "moveUp": "위로 이동",
       "moveDown": "아래로 이동",
       "deleteSection": "섹션 삭제",
+      "duplicateSection": "섹션 복제",
       "deleteTitle": "섹션 삭제",
       "deleteDescription": "\"{name}\"을(를) 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다."
     },
@@ -635,6 +644,16 @@
       "failedToPreview": "이력서를 미리 볼 수 없습니다. 설정에서 API 키를 확인한 후 다시 시도하세요.",
       "failedToConfirm": "변경 사항을 적용할 수 없습니다. 다시 시도해 주세요.",
       "previewUnavailable": "미리보기가 만료되었거나 원본 이력서가 변경되었습니다. 저장하기 전에 새 미리보기를 생성하세요."
+    },
+    "selectResumeDescription": "글머리 기호는 이 마스터 이력서에서 가져옵니다.",
+    "selectionSummary": "글머리 기호 {total}개 중 {kept}개 유지 (직무 또는 프로젝트당 최대 {max}개)",
+    "pageFit": {
+      "fits": "한 페이지에 맞습니다",
+      "trimmed": "한 페이지에 맞추기 위해 {count}개를 추가로 줄였습니다",
+      "over": "여전히 한 페이지를 초과합니다",
+      "unavailable": "페이지 맞춤을 사용할 수 없습니다",
+      "finalOver": "다시 작성한 후 한 페이지를 넘을 수 있습니다",
+      "notRechecked": "다시 작성한 후 한 페이지 맞춤을 다시 확인하지 못했습니다"
     }
   },
   "settings": {
@@ -820,7 +839,13 @@
     },
     "titlePlaceholder": "이력서 제목을 입력하세요...",
     "downloadFailedTitle": "다운로드 실패",
-    "renameFailedTitle": "이름 변경 실패"
+    "renameFailedTitle": "이름 변경 실패",
+    "defaultBadge": "기본 마스터",
+    "setDefault": "기본 마스터로 설정",
+    "setDefaultSuccess": "이 마스터가 이제 맞춤화의 기본 마스터입니다.",
+    "setDefaultError": "이 이력서를 기본 마스터로 설정하지 못했습니다. 다시 시도해 주세요.",
+    "duplicate": "복제",
+    "duplicateError": "이 이력서를 복제하지 못했습니다. 다시 시도해 주세요."
   },
   "preview": {
     "margins": "여백",
@@ -929,6 +954,7 @@
   },
   "a11y": {
     "removeItem": "항목 제거",
+    "duplicateItem": "항목 복제",
     "removeDescription": "이 줄 제거",
     "removeFile": "파일 제거"
   },

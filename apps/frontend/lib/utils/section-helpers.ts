@@ -180,3 +180,46 @@ export function createCustomSection(
     order: maxOrder + 1,
   };
 }
+
+/**
+ * Duplicate a custom section, placing the copy directly below the source.
+ *
+ * Only custom sections can be duplicated whole. A built-in or unknown section
+ * returns `resumeData` itself, so callers can tell nothing happened by
+ * reference. The copy is deep-cloned, and later sections shift down by one so
+ * `order` stays unique. The input is never mutated.
+ */
+export function duplicateCustomSection(
+  resumeData: ResumeData,
+  sectionId: string,
+  copySuffix: string
+): ResumeData {
+  const sections = getSectionMeta(resumeData);
+  const source = sections.find((s) => s.id === sectionId);
+  if (!source || source.isDefault) return resumeData;
+
+  const id = generateCustomSectionId(sections);
+  const copy: SectionMeta = {
+    ...source,
+    id,
+    key: id,
+    displayName: `${source.displayName} ${copySuffix}`,
+    isDefault: false,
+    order: source.order + 1,
+  };
+
+  const shifted = sections.map((s) => (s.order > source.order ? { ...s, order: s.order + 1 } : s));
+  const sourceIndex = shifted.findIndex((s) => s.id === source.id);
+  const sectionMeta = [
+    ...shifted.slice(0, sourceIndex + 1),
+    copy,
+    ...shifted.slice(sourceIndex + 1),
+  ];
+
+  const sourceData = resumeData.customSections?.[source.key];
+  const customSections = sourceData
+    ? { ...resumeData.customSections, [id]: structuredClone(sourceData) }
+    : resumeData.customSections;
+
+  return { ...resumeData, sectionMeta, customSections };
+}

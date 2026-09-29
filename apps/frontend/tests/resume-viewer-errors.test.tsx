@@ -201,6 +201,11 @@ it('keeps a replacement master cached when an old delete completes after unmount
       })
   );
   localStorage.setItem('master_resume_id', 'resume-123');
+  mockedFetch.mockResolvedValue({
+    ...(await mockedFetch('resume-123')),
+    is_master: true,
+    is_default_master: true,
+  });
   const view = render(<ResumeViewerPage />);
   fireEvent.click(
     await screen.findByRole('button', { name: 'confirmations.deleteMasterResumeTitle' })

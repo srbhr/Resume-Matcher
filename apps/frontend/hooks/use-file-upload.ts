@@ -10,7 +10,7 @@ import {
   type DragEvent,
   type InputHTMLAttributes,
 } from 'react';
-import { apiFetch } from '@/lib/api/client';
+import { apiFetch, parseErrorDetail } from '@/lib/api/client';
 
 type UploadOperation = { controller: AbortController };
 
@@ -334,8 +334,11 @@ export const useFileUpload = (
 
         if (!response.ok) {
           let errorDetail = `Upload failed for ${fileToUpload.file.name}. Status: ${response.status} ${response.statusText}`;
+          let conflictDetail: string | null = null;
           try {
             const errorText = await response.text();
+            // A 409 (e.g. the master limit) carries a user-facing reason in `detail`.
+            if (response.status === 409) conflictDetail = parseErrorDetail(errorText);
             if (contentType?.includes('application/json')) {
               try {
                 const errorData: unknown = JSON.parse(errorText);
@@ -348,7 +351,7 @@ export const useFileUpload = (
           } catch (textError: unknown) {
             console.warn('Could not read error response text:', textError);
           }
-          throw new Error(errorDetail);
+          throw new Error(conflictDetail ?? errorDetail);
         }
 
         if (contentType && contentType.includes('application/json')) {

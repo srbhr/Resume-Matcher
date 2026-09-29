@@ -195,6 +195,27 @@ class TestGenerateResumeDiffs:
         assert "# Markdown resume" not in prompt  # Should NOT use the markdown input
 
     @patch("app.services.improver.complete_json", new_callable=AsyncMock)
+    async def test_json_resume_keeps_cjk_verbatim(
+        self,
+        mock_llm: AsyncMock,
+        sample_resume: dict[str, Any],
+        sample_job_keywords: dict[str, Any],
+    ) -> None:
+        """The diff contract copies ``original`` text exactly; escaped CJK breaks that."""
+        mock_llm.return_value = {"changes": [], "strategy_notes": "test"}
+        data = copy.deepcopy(sample_resume)
+        data["workExperience"][0]["description"] = ["负责设计并实现高并发的分布式支付系统"]
+        await generate_resume_diffs(
+            original_resume="# Markdown resume",
+            job_description="JD",
+            job_keywords=sample_job_keywords,
+            original_resume_data=data,
+        )
+        prompt = mock_llm.call_args.kwargs.get("prompt") or mock_llm.call_args.args[0]
+        assert "Jan 2021 - Present" in prompt  # the JSON (month) input path
+        assert "负责设计并实现高并发的分布式支付系统" in prompt
+
+    @patch("app.services.improver.complete_json", new_callable=AsyncMock)
     async def test_strategy_selection_nudge(self, mock_llm, sample_resume, sample_job_keywords):
         """Nudge strategy should include 'minimal' instruction in prompt."""
         mock_llm.return_value = {"changes": [], "strategy_notes": "test"}
@@ -222,6 +243,72 @@ class TestGenerateResumeDiffs:
         prompt = mock_llm.call_args.kwargs.get("prompt") or mock_llm.call_args.args[0]
         assert "targeted adjustments" in prompt.lower()
 
+
+    @pytest.mark.parametrize(
+        ("prompt_id", "strategy"),
+        [
+            (
+                "nudge",
+                "Make minimal edits. Only rephrase where there is a clear match. "
+                "Do not add new bullet points.",
+            ),
+            (
+                "full",
+                "Make targeted adjustments. You may rephrase bullets, add verified JD skills, "
+                "and add new bullets that elaborate on existing work, but do not invent new "
+                "responsibilities.",
+            ),
+        ],
+    )
+    @patch("app.services.improver.complete_json", new_callable=AsyncMock)
+    async def test_fixed_row_sections_forbid_bullet_appends(
+        self,
+        mock_llm: AsyncMock,
+        prompt_id: str,
+        strategy: str,
+        sample_resume: dict[str, Any],
+        sample_job_keywords: dict[str, Any],
+    ) -> None:
+        """Under harness selection the diff LLM is told not to append bullets."""
+        mock_llm.return_value = {"changes": [], "strategy_notes": "test"}
+        await generate_resume_diffs(
+            original_resume="# Resume",
+            job_description="JD",
+            job_keywords=sample_job_keywords,
+            prompt_id=prompt_id,
+            original_resume_data=sample_resume,
+            fixed_row_sections=("workExperience", "personalProjects"),
+        )
+        prompt = mock_llm.call_args.kwargs.get("prompt") or mock_llm.call_args.args[0]
+        rule_4 = next(line for line in prompt.splitlines() if line.startswith("4. "))
+        assert rule_4 == (
+            f"4. {strategy} The bullets of every workExperience and personalProjects entry "
+            'are already chosen: do not use action "append" on their description paths; '
+            "only rewrite the existing bullets."
+        )
+
+    @patch("app.services.improver.complete_json", new_callable=AsyncMock)
+    async def test_without_fixed_row_sections_the_strategy_rule_is_unchanged(
+        self,
+        mock_llm: AsyncMock,
+        sample_resume: dict[str, Any],
+        sample_job_keywords: dict[str, Any],
+    ) -> None:
+        mock_llm.return_value = {"changes": [], "strategy_notes": "test"}
+        await generate_resume_diffs(
+            original_resume="# Resume",
+            job_description="JD",
+            job_keywords=sample_job_keywords,
+            prompt_id="full",
+            original_resume_data=sample_resume,
+        )
+        prompt = mock_llm.call_args.kwargs.get("prompt") or mock_llm.call_args.args[0]
+        assert (
+            "4. Make targeted adjustments. You may rephrase bullets, add verified JD skills, "
+            "and add new bullets that elaborate on existing work, but do not invent new "
+            "responsibilities.\n5. Each change MUST include"
+        ) in prompt
+        assert "already chosen" not in prompt
 
 class TestSkillTargetPlanning:
     """Tests for skill target planning and verification."""

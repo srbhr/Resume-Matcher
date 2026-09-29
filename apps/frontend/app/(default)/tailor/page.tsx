@@ -12,7 +12,11 @@ import {
   uploadJobDescriptions,
   previewImproveResume,
   confirmImproveResume,
+  fetchResumeList,
+  toPageFitSettings,
+  type ResumeListItem,
 } from '@/lib/api/resume';
+import { readStoredTemplateSettings } from '@/lib/utils/stored-template-settings';
 import { fetchPromptConfig, type PromptOption } from '@/lib/api/config';
 import { getPreviewErrorMessage } from '@/lib/utils/preview-error';
 import { Dropdown } from '@/components/ui/dropdown';
@@ -25,7 +29,7 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useOperationOwner } from '@/hooks/use-operation-owner';
 
 export default function TailorPage() {
-  const { t } = useTranslations();
+  const { t, locale } = useTranslations();
   const { begin, isCurrent, invalidate } = useOperationOwner('tailor');
   const confirmedResponses = useRef(new WeakMap<ImprovedResult, ImprovedResult>());
   const countedResumes = useRef(new Set<string>());
@@ -34,6 +38,9 @@ export default function TailorPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [masterResumeId, setMasterResumeId] = useState<string | null>(null);
+  const [masters, setMasters] = useState<ResumeListItem[]>([]);
+  // The master a preview was built from; confirm must send this, not the picker's current value.
+  const previewSourceIdRef = useRef<string | null>(null);
   const [promptOptions, setPromptOptions] = useState<PromptOption[]>([]);
   const [selectedPromptId, setSelectedPromptId] = useState('keywords');
   const [promptLoading, setPromptLoading] = useState(false);
@@ -86,12 +93,35 @@ export default function TailorPage() {
   const isLlmConfigured = !statusLoading && systemStatus?.llm_configured;
 
   useEffect(() => {
-    const storedId = localStorage.getItem('master_resume_id');
-    if (!storedId) {
-      router.push('/dashboard');
-    } else {
-      setMasterResumeId(storedId);
-    }
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const rows = await fetchResumeList(true);
+        if (cancelled) return;
+        const ready = rows.filter((r) => r.is_master && r.processing_status === 'ready');
+        const storedId = localStorage.getItem('master_resume_id');
+        const initial =
+          ready.find((r) => r.is_default_master) ??
+          ready.find((r) => r.resume_id === storedId) ??
+          ready[0];
+        if (!initial) {
+          router.push('/dashboard');
+          return;
+        }
+        setMasters(ready);
+        setMasterResumeId(initial.resume_id);
+      } catch {
+        if (cancelled) return;
+        const storedId = localStorage.getItem('master_resume_id');
+        if (storedId) setMasterResumeId(storedId);
+        else router.push('/dashboard');
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [router]);
 
   useEffect(() => {
@@ -127,7 +157,8 @@ export default function TailorPage() {
   };
 
   const buildConfirmPayload = (result: ImprovedResult) => {
-    if (!masterResumeId) {
+    const sourceId = previewSourceIdRef.current ?? masterResumeId;
+    if (!sourceId) {
       throw new Error('Master resume ID is missing.');
     }
     const resumePreview = result.data.resume_preview;
@@ -143,7 +174,7 @@ export default function TailorPage() {
       throw new Error('Resume preview data is invalid.');
     }
     return {
-      resume_id: masterResumeId,
+      resume_id: sourceId,
       job_id: result.data.job_id,
       preview_id: result.data.preview_id ?? null,
       improved_data: resumePreview as ResumeData,
@@ -208,12 +239,16 @@ export default function TailorPage() {
     try {
       // 1. Upload Job Description
       // The API expects an array of strings
+      previewSourceIdRef.current = resumeId;
       const jobId = await uploadJobDescriptions([description], resumeId);
       if (!isCurrent(token)) return;
       incrementJobs(); // Update cached counter
 
       // 2. Preview Resume
-      const result = await previewImproveResume(resumeId, jobId, selectedPromptId);
+      const result = await previewImproveResume(resumeId, jobId, selectedPromptId, {
+        maxBulletsPerEntry: 3,
+        pageFit: toPageFitSettings(readStoredTemplateSettings(), locale),
+      });
       if (!isCurrent(token)) return;
 
       if (!result?.data?.diff_summary || !result?.data?.detailed_changes) {
@@ -423,6 +458,20 @@ export default function TailorPage() {
         )}
 
         <div className="space-y-6">
+          {masters.length > 1 && (
+            <Dropdown
+              label={t('tailor.selectResume')}
+              description={t('tailor.selectResumeDescription')}
+              options={masters.map((m) => ({
+                id: m.resume_id,
+                label: m.title || m.filename || m.resume_id,
+              }))}
+              value={masterResumeId ?? ''}
+              onChange={setMasterResumeId}
+              disabled={isLoading || promptLoading || showDiffModal}
+            />
+          )}
+
           <Dropdown
             options={
               promptOptions.length > 0
@@ -482,7 +531,13 @@ export default function TailorPage() {
           <Button
             size="lg"
             onClick={handleGenerate}
-            disabled={isLoading || statusLoading || !jobDescription.trim() || !isLlmConfigured}
+            disabled={
+              isLoading ||
+              statusLoading ||
+              !jobDescription.trim() ||
+              !isLlmConfigured ||
+              !masterResumeId
+            }
             className="w-full"
           >
             {isLoading ? (
@@ -525,6 +580,7 @@ export default function TailorPage() {
           diffSummary={pendingResult?.data?.diff_summary}
           detailedChanges={pendingResult?.data?.detailed_changes}
           errorMessage={diffConfirmError ?? undefined}
+          selectionSummary={pendingResult?.data?.bullet_selection}
         />
       )}
 

@@ -211,18 +211,29 @@ def _novel_numbers(source: str, candidate: str) -> bool:
     )
 
 
-def _normalized_candidate_rows(value: Any) -> list[str]:
-    """Mirror ResumeData's newline and bullet cleanup before preservation."""
+def _normalized_candidate_rows(
+    value: Any, *, one_row_per_item: bool = False
+) -> list[str]:
+    """Mirror ResumeData's newline and bullet cleanup before preservation.
+
+    With ``one_row_per_item`` a multi-line item is collapsed into a single row,
+    so a rewrite of one harness-chosen bullet can never displace another.
+    """
     if not isinstance(value, list):
         return []
     rows: list[str] = []
     for item in value:
         if not isinstance(item, str):
             continue
+        lines: list[str] = []
         for raw_line in re.split(r"\r?\n+", item):
             line = re.sub(r"^\s*(?:[-*•‣◦▪▫]+|\d+[.)])\s*", "", raw_line).strip()
             if line:
-                rows.append(line)
+                lines.append(line)
+        if one_row_per_item and lines:
+            rows.append(" ".join(lines))
+        else:
+            rows.extend(lines)
     return rows
 
 
@@ -246,13 +257,16 @@ def _merge_description_rows(
     *,
     allow_review_claims: bool,
     allow_appended_rows: bool,
+    fixed_rows: bool = False,
 ) -> tuple[list[str], list[str]]:
     source_rows = source_entry.get("description")
     candidate_rows = candidate_entry.get("description")
     if not isinstance(source_rows, list):
         return [], []
     source_text = " ".join(str(row) for row in source_rows)
-    candidate_list = _normalized_candidate_rows(candidate_rows)
+    candidate_list = _normalized_candidate_rows(
+        candidate_rows, one_row_per_item=fixed_rows
+    )
     source_styles = source_entry.get("descriptionStyles")
     styles = source_styles if isinstance(source_styles, list) else []
     available = set(range(len(source_rows)))
@@ -359,6 +373,7 @@ def _merge_entries(
     *,
     allow_review_claims: bool,
     allow_appended_rows: bool,
+    fixed_rows: bool = False,
 ) -> list[dict[str, Any]]:
     if not isinstance(source_entries, list):
         return []
@@ -396,6 +411,7 @@ def _merge_entries(
                 merged,
                 allow_review_claims=allow_review_claims,
                 allow_appended_rows=allow_appended_rows,
+                fixed_rows=fixed_rows,
             )
             merged["description"] = rows
             if has_style_metadata:
@@ -503,12 +519,15 @@ def finalize_ai_resume(
     *,
     allow_review_claims: bool = True,
     allow_appended_rows: bool = False,
+    fixed_row_sections: tuple[str, ...] = (),
 ) -> dict[str, Any]:
     """Return a non-mutating AI result that preserves the source contract.
 
     Weakly grounded rewrites remain when ``allow_review_claims`` is true so a
     preview can present them for explicit confirmation. Definite new metrics,
     extra rows, missing sections and identity drift are always repaired.
+    Entries in ``fixed_row_sections`` never keep appended rows, and a multi-line
+    rewrite of one of their rows stays one row.
     """
     result = copy.deepcopy(candidate) if isinstance(candidate, dict) else {}
     result["personalInfo"] = copy.deepcopy(source.get("personalInfo", {}))
@@ -530,7 +549,9 @@ def finalize_ai_resume(
             result.get(section),
             section,
             allow_review_claims=allow_review_claims,
-            allow_appended_rows=allow_appended_rows,
+            allow_appended_rows=allow_appended_rows
+            and section not in fixed_row_sections,
+            fixed_rows=section in fixed_row_sections,
         )
     result["additional"] = _merge_additional(
         source.get("additional"), result.get("additional")

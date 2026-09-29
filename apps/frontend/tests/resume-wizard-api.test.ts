@@ -3,7 +3,10 @@ import {
   createInitialResumeWizardState,
   finalizeResumeWizard,
   postResumeWizardTurn,
+  ResumeWizardConflictError,
 } from '@/lib/api/resume-wizard';
+
+const MASTER_LIMIT = 'You can keep up to 5 master resumes. Delete one before adding another.';
 
 describe('resume wizard api', () => {
   let fetchMock: ReturnType<typeof vi.fn>;
@@ -52,6 +55,34 @@ describe('resume wizard api', () => {
     expect(body.action).toBe('answer');
     expect(body.answer.text).toBe("I'm James.");
     expect(body.state.step).toBe('intro');
+  });
+
+  it('throws the server reason as a conflict when finalize is refused at the master limit', async () => {
+    fetchMock.mockResolvedValueOnce(
+      new Response(JSON.stringify({ detail: MASTER_LIMIT }), {
+        status: 409,
+        headers: { 'content-type': 'application/json' },
+      })
+    );
+    const error = await finalizeResumeWizard(createInitialResumeWizardState()).catch(
+      (e: unknown) => e
+    );
+    expect(error).toBeInstanceOf(ResumeWizardConflictError);
+    expect((error as Error).message).toBe(MASTER_LIMIT);
+  });
+
+  it('does not report a non-409 failure as a conflict', async () => {
+    fetchMock.mockResolvedValueOnce(
+      new Response(JSON.stringify({ detail: 'Could not create master resume.' }), {
+        status: 500,
+        headers: { 'content-type': 'application/json' },
+      })
+    );
+    const error = await finalizeResumeWizard(createInitialResumeWizardState()).catch(
+      (e: unknown) => e
+    );
+    expect(error).toBeInstanceOf(Error);
+    expect(error).not.toBeInstanceOf(ResumeWizardConflictError);
   });
 
   it('throws endpoint text when finalize fails', async () => {

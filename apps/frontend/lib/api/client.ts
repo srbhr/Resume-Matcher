@@ -204,3 +204,13 @@ export async function apiDelete(endpoint: string): Promise<Response> {
 export function getUploadUrl(): string {
   return `${API_BASE}/resumes/upload`;
 }
+
+/** The FastAPI `detail` string of an error body, or null when there is none. */
+export function parseErrorDetail(body: string): string | null {
+  try {
+    const detail = (JSON.parse(body) as { detail?: unknown }).detail;
+    return typeof detail === 'string' && detail ? detail : null;
+  } catch {
+    return null;
+  }
+}

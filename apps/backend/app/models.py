@@ -37,6 +37,9 @@ class Resume(Base):
     content_type: Mapped[str] = mapped_column(String, default="md")
     filename: Mapped[str | None] = mapped_column(String, nullable=True)
     is_master: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Exactly one master is the default tailoring source (enforced by the partial
+    # unique index below plus Database invariants: default implies is_master).
+    is_default_master: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     parent_id: Mapped[str | None] = mapped_column(String, nullable=True)
     processed_data: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     processing_status: Mapped[str] = mapped_column(String, default="pending")
@@ -53,14 +56,12 @@ class Resume(Base):
     updated_at: Mapped[str] = mapped_column(String, default=_utcnow_iso)
 
     __table_args__ = (
-        # At most one master resume. Partial unique index enforces the invariant
-        # at the storage layer; the facade serializes compound designation
-        # changes with a SQLite writer transaction.
+        # Many masters (career tracks) may exist; at most one is the default.
         Index(
-            "ux_resumes_single_master",
-            "is_master",
+            "ux_resumes_single_default_master",
+            "is_default_master",
             unique=True,
-            sqlite_where=text("is_master = 1"),
+            sqlite_where=text("is_default_master = 1"),
         ),
     )
 
@@ -104,6 +105,8 @@ class TailoringPreview(Base):
     __table_args__ = (Index("ix_preview_compatibility", "source_id", "job_id", "payload_hash", "created_at"),)
 
     improvements: Mapped[list[dict[str, Any]] | None] = mapped_column(JSON, nullable=True)
+    # Condensed source used by harness bullet selection; NULL = full source.
+    source_data: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
 
     preview_id: Mapped[str] = mapped_column(String, primary_key=True)
     source_id: Mapped[str] = mapped_column(String, index=True)

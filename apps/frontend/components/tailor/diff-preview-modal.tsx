@@ -9,6 +9,7 @@ import type {
   ResumeDiffSummary,
   ResumeFieldDiff,
 } from '@/components/common/resume_previewer_context';
+import type { BulletSelectionSummary } from '@/lib/api/resume';
 
 interface DiffPreviewModalProps {
   isOpen: boolean;
@@ -19,6 +20,7 @@ interface DiffPreviewModalProps {
   diffSummary?: ResumeDiffSummary;
   detailedChanges?: ResumeFieldDiff[];
   errorMessage?: string;
+  selectionSummary?: BulletSelectionSummary | null;
 }
 
 export function DiffPreviewModal({
@@ -30,6 +32,7 @@ export function DiffPreviewModal({
   diffSummary,
   detailedChanges,
   errorMessage,
+  selectionSummary,
 }: DiffPreviewModalProps) {
   const { t } = useTranslations();
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
@@ -108,6 +111,8 @@ export function DiffPreviewModal({
     setExpandedSections(newExpanded);
   };
 
+  const selectionLine = selectionSummary ? formatSelectionSummary(selectionSummary, t) : null;
+
   // Group changes by type
   const summaryChanges = detailedChanges.filter((c) => c.field_type === 'summary');
   const skillChanges = detailedChanges.filter((c) => c.field_type === 'skill');
@@ -175,6 +180,12 @@ export function DiffPreviewModal({
               variant={diffSummary.high_risk_changes > 0 ? 'danger' : 'success'}
             />
           </div>
+
+          {selectionLine && (
+            <p className="mt-4 font-mono text-xs uppercase tracking-wider text-ink-soft">
+              {selectionLine}
+            </p>
+          )}
 
           {diffSummary.high_risk_changes > 0 && (
             <div className="mt-4 border-2 border-warning bg-[#FFF7ED] p-3 flex items-start gap-3">
@@ -360,6 +371,32 @@ export function DiffPreviewModal({
       </DialogContent>
     </Dialog>
   );
+}
+
+// Helper: one-line "kept X of Y bullets" summary with the page-fit outcome
+function formatSelectionSummary(
+  summary: BulletSelectionSummary,
+  t: (key: string, params?: Record<string, string | number>) => string
+): string {
+  const kept = t('tailor.selectionSummary', {
+    kept: summary.bullets_after,
+    total: summary.bullets_before,
+    max: summary.max_per_entry,
+  });
+  if (summary.page_fit === 'skipped') return kept;
+  const fitBeforeRewrite = summary.page_fit === 'fits' || summary.page_fit === 'trimmed';
+  // Without the final re-render, the one-page fit of the rewritten result is unverified.
+  if (fitBeforeRewrite && summary.final_check === 'skipped') {
+    return `${kept} · ${t('tailor.pageFit.notRechecked')}`;
+  }
+  // A draft that fit before rewriting can still spill over; the final check reports it.
+  const finalOver = fitBeforeRewrite && summary.final_pages != null && summary.final_pages > 1;
+  const fit = finalOver
+    ? t('tailor.pageFit.finalOver')
+    : summary.page_fit === 'trimmed'
+      ? t('tailor.pageFit.trimmed', { count: summary.trimmed_for_fit })
+      : t(`tailor.pageFit.${summary.page_fit}`);
+  return `${kept} · ${fit}`;
 }
 
 // Helper component: stat card

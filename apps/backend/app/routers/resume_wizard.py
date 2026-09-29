@@ -9,7 +9,7 @@ from fastapi import APIRouter, HTTPException
 
 from app.ai_budget import AIOperationDeadlineExceeded, AIOperationRoute
 from app.ai_limits import PromptSizeError
-from app.database import db
+from app.database import MasterResumeLimitError, db
 from app.schemas.models import ResumeData, normalize_resume_data
 from app.schemas.resume_wizard import (
     ResumeWizardFinalizeRequest,
@@ -58,6 +58,7 @@ def _finalize_response(resume: dict[str, Any]) -> ResumeWizardFinalizeResponse:
         resume_id=resume["resume_id"],
         processing_status="ready",
         is_master=resume.get("is_master", False),
+        is_default_master=resume.get("is_default_master", False),
     )
 
 
@@ -115,51 +116,30 @@ async def finalize_resume_wizard(
         filename = f"AI Resume Wizard - {name}.json"
         title = f"{name} Master Resume"
 
-        current_master = await db.get_master_resume()
-        if current_master and current_master.get("processing_status") == "ready":
-            if _is_identical_wizard_master(
-                current_master,
-                content=content,
-                filename=filename,
-                title=title,
-            ):
-                return _finalize_response(current_master)
-            raise HTTPException(
-                status_code=409,
-                detail="A master resume already exists. Delete it before creating a new one.",
-            )
-
         # Set the title in the atomic create so a separate update can't fail and
-        # leave a committed-but-untitled master behind (which would 409 on retry).
-        resume = await db.create_resume_atomic_master(
-            content=content,
-            content_type="json",
-            filename=filename,
-            processed_data=data,
-            processing_status="ready",
-            title=title,
-        )
-        if not resume.get("is_master", False):
-            try:
-                await db.delete_resume(resume["resume_id"])
-            except Exception as e:
-                logger.error(
-                    "Failed to clean up non-master wizard resume %s: %s",
-                    resume.get("resume_id"),
-                    e,
-                )
-            current_master = await db.get_master_resume()
-            if current_master and _is_identical_wizard_master(
-                current_master,
+        # leave a committed-but-untitled master behind. The identical-draft replay
+        # check runs in the same write transaction, so a double-submit replays.
+        try:
+            resume = await db.create_resume_atomic_master(
                 content=content,
+                content_type="json",
                 filename=filename,
+                processed_data=data,
+                processing_status="ready",
                 title=title,
-            ):
-                return _finalize_response(current_master)
+                replay_if=lambda existing: _is_identical_wizard_master(
+                    existing,
+                    content=content,
+                    filename=filename,
+                    title=title,
+                ),
+            )
+        except MasterResumeLimitError as e:
+            logger.info("Wizard finalize rejected: %s", e)
             raise HTTPException(
                 status_code=409,
-                detail="A master resume already exists. Delete it before creating a new one.",
-            )
+                detail="You can keep up to 5 master resumes. Delete one before adding another.",
+            ) from e
         return _finalize_response(resume)
     except HTTPException:
         raise

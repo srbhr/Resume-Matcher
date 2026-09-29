@@ -1,5 +1,5 @@
 import type { ResumeData } from '@/components/dashboard/resume-component';
-import { apiPost } from './client';
+import { apiPost, parseErrorDetail } from './client';
 
 export type ResumeWizardSection =
   | 'intro'
@@ -60,6 +60,7 @@ export interface ResumeWizardFinalizeResponse {
   resume_id: string;
   processing_status: 'ready';
   is_master: boolean;
+  is_default_master?: boolean;
 }
 
 export const INTRO_QUESTION =
@@ -112,12 +113,22 @@ export async function postResumeWizardTurn(
   return response.json();
 }
 
+/** A finalize the server refused with a user-facing reason (a 409, e.g. the master limit). */
+export class ResumeWizardConflictError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ResumeWizardConflictError';
+  }
+}
+
 export async function finalizeResumeWizard(
   state: ResumeWizardState
 ): Promise<ResumeWizardFinalizeResponse> {
   const response = await apiPost('/resume-wizard/finalize', { state });
   if (!response.ok) {
     const text = await response.text().catch(() => '');
+    const detail = response.status === 409 ? parseErrorDetail(text) : null;
+    if (detail) throw new ResumeWizardConflictError(detail);
     throw new Error(text || `Resume wizard finalize failed with status ${response.status}`);
   }
   return response.json();

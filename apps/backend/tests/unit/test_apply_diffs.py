@@ -1,6 +1,7 @@
 """Unit tests for apply_diffs() — path resolution, verification gates, and actions."""
 
 import copy
+from typing import Any
 import pytest
 
 from app.schemas.models import ResumeChange
@@ -103,6 +104,38 @@ class TestApplyDiffsAppend:
         result, applied, rejected = apply_diffs(sample_resume, changes)
         assert len(applied) == 1
         assert len(result["personalProjects"][0]["description"]) == original_count + 1
+
+    def test_append_rejected_on_fixed_row_sections(
+        self, sample_resume: dict[str, Any]
+    ) -> None:
+        """Harness-selected bullet sets never grow; other lists still accept appends."""
+        changes = [
+            ResumeChange(
+                path=f"{section}[0].description",
+                action="append",
+                original=None,
+                value="Implemented CI/CD pipelines with GitHub Actions",
+                reason="test",
+            )
+            for section in ("workExperience", "personalProjects")
+        ] + [
+            ResumeChange(
+                path="additional.technicalSkills",
+                action="append",
+                original=None,
+                value="Terraform",
+                reason="test",
+            )
+        ]
+        result, applied, rejected = apply_diffs(
+            sample_resume,
+            changes,
+            fixed_row_sections=("workExperience", "personalProjects"),
+        )
+        assert rejected == changes[:2]
+        assert applied == changes[2:]
+        for section in ("workExperience", "personalProjects"):
+            assert result[section][0]["description"] == sample_resume[section][0]["description"]
 
 
 class TestApplyDiffsAddSkill:

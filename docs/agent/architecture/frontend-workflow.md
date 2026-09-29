@@ -13,8 +13,11 @@ Dashboard → Upload Master Resume → Tailor for Job → View/Edit → Download
 ### 1. Dashboard (`/dashboard`)
 
 - **No master:** "Initialize Master Resume" card
-- **Has master:** "Master Resume" card + tailored tiles
-- **Create:** "+" card opens `/tailor`
+- **Has master(s):** the default master card (title, DEFAULT badge) + a tile per other master track (title, status, "Set as default", Duplicate) + tailored tiles
+- **Up to 5 masters:** an "Add master track" tile opens the upload/wizard choice. It shows only when a default master exists, the LLM is configured (system status loaded with `llm_configured`), and there are fewer than 5 masters. Duplicate on a master tile is also hidden at the limit.
+- An upload only adopts the new id as the local default when no master existed; otherwise the list reloads and the server decides the default. The exception is "Delete and re-upload" on the default: the completed re-upload is made the default with `setDefaultMasterResume` (closing that dialog without uploading ends the replacement).
+- The upload dialog confirms "set as master" only for the default master: `is_default_master`, or `becomesDefault` from the dashboard during "Delete and re-upload". An extra track gets "uploaded as a new master track". A `409` (master limit) shows the server's `detail`; other failures keep the status message.
+- **Create:** "+" card opens `/tailor`; enabled when any master is ready and the LLM is configured (a failed default does not block ready tracks)
 - Auto-refreshes on window focus
 - List and status results are applied only while their request and master identity are current. Late responses cannot replace newer cards or clear a different master.
 - Pending/processing master status is polled serially with a 3–30 second backoff, for at most 12 polls. Hidden tabs skip polling. Polling stops on ready/failed, missing master, or unmount; focus refresh and Retry provide recovery after a failure.
@@ -22,13 +25,17 @@ Dashboard → Upload Master Resume → Tailor for Job → View/Edit → Download
 ### 2. Resume Viewer (`/resumes/[id]`)
 
 - Read-only display at 250mm width
-- Actions: Back, Edit, Download PDF, Delete
+- Actions: Back, Edit, Download PDF, Duplicate, Delete
+- Master status (`is_master`, `is_default_master`) comes from the server. Masters can be renamed (the title is the track name) and show a DEFAULT badge, or a "Set as default" button when not default
+- Duplicate calls `POST /resumes/{id}/duplicate` and opens the copy; a 409 (not ready, master limit) shows the server's message
 - Delete shows confirmation + success dialogs
 
 ### 3. Tailor (`/tailor`)
 
 - Job description textarea (min 50 chars)
+- Source picker (`tailor.selectResume`) appears when more than one master is ready; the default master is preselected, then the stored `master_resume_id`, then the first ready master. The source id is pinned when a preview starts and confirm uses the pinned id
 - Process: Upload JD → Improve → Redirect to viewer
+- Preview sends `max_bullets_per_entry: 3` and `page_fit` built from the stored template settings (`readStoredTemplateSettings()` + `toPageFitSettings()`); the diff modal shows a one-line selection summary. See [bullet selection](../features/preview-confirmation.md#bullet-selection-harness-steered)
 
 ### 4. Builder (`/builder`)
 
@@ -66,7 +73,7 @@ Dashboard → Upload Master Resume → Tailor for Job → View/Edit → Download
 
 | Key | Purpose |
 | --- | --- |
-| `master_resume_id` | Master resume UUID |
+| `master_resume_id` | Default master resume UUID (a cache; the server decides the default) |
 | `resume_builder_draft:<resumeId>` / `resume_builder_draft:new` | Resume-scoped recovery draft; a failed write is shown as unavailable and never described as saved |
 | `resume_builder_settings` | Template prefs |
 | `resume_wizard_draft` | Versioned wizard state; nested resume/history values are normalized before restoration |
@@ -86,13 +93,14 @@ Dashboard → Upload Master Resume → Tailor for Job → View/Edit → Download
 
 ## Section Management
 
-| Action  | Result                                    |
-| ------- | ----------------------------------------- |
-| Rename  | Click pencil icon                         |
-| Reorder | Up/down arrows                            |
-| Hide    | Eye icon (hidden sections still editable) |
-| Delete  | Hides default, removes custom             |
-| Add     | "Add Section" button                      |
+| Action    | Result                                                                                              |
+| --------- | --------------------------------------------------------------------------------------------------- |
+| Rename    | Click pencil icon                                                                                   |
+| Reorder   | Up/down arrows                                                                                      |
+| Hide      | Eye icon (hidden sections still editable)                                                           |
+| Delete    | Hides default, removes custom                                                                       |
+| Add       | "Add Section" button                                                                                |
+| Duplicate | Copy icon (custom sections only), see [custom sections](../features/custom-sections.md#duplicating) |
 
 ## API Client
 

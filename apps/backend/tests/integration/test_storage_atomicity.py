@@ -76,8 +76,8 @@ async def test_concurrent_replacements_and_late_completion_preserve_master_ident
     start.set()
     try:
         created = await asyncio.gather(*tasks)
-        assert sum(row["is_master"] for row in created) == 1
-        master_id = next(row["resume_id"] for row in created if row["is_master"])
+        assert sum(row["is_default_master"] for row in created) == 1
+        master_id = next(row["resume_id"] for row in created if row["is_default_master"])
         # Processing completion writes its original ID, never a cached master flag.
         completed = await other.update_resume(
             old["resume_id"],
@@ -86,11 +86,12 @@ async def test_concurrent_replacements_and_late_completion_preserve_master_ident
                 "processing_status": "ready",
             },
         )
-        assert completed["is_master"] is False
+        # Losing the default must not cost the old row its master-track membership.
+        assert completed["is_master"] is True and completed["is_default_master"] is False
         master = await isolated_db.get_master_resume()
         assert master is not None and master["resume_id"] == master_id
         with pytest.raises(IntegrityError):
-            await other.create_resume(content="duplicate", is_master=True)
+            await other.create_resume(content="duplicate", is_master=True, is_default_master=True)
         assert len(await isolated_db.list_resumes()) == 3
     finally:
         await other.close()
