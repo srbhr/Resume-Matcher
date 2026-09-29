@@ -93,6 +93,7 @@
     "uploadDialog": {
       "success": "简历上传成功。",
       "successMaster": "简历已上传并设为主简历。",
+      "successMasterTrack": "简历已上传为新的主简历方向。",
       "successMissingId": "上传成功但未返回简历 ID。",
       "parsingFailed": "简历已上传但AI解析失败。您仍可手动定制。",
       "failed": "上传失败。",
@@ -104,10 +105,17 @@
     "errors": {
       "loadFailed": "无法加载简历，请重试。",
       "deleteFailed": "无法删除简历。现有简历仍可使用。"
-    }
+    },
+    "defaultBadge": "默认",
+    "masterTrack": "主简历方向",
+    "setDefault": "设为默认",
+    "duplicate": "复制",
+    "addMasterTrack": "添加主简历方向",
+    "masterLimitReached": "最多 {max} 份主简历"
   },
   "builder": {
     "title": "简历生成器",
+    "copySuffix": "(副本)",
     "editMode": "编辑模式",
     "previewMode": "预览模式",
     "createAndPreview": "创建与预览",
@@ -196,6 +204,7 @@
       "moveUp": "上移",
       "moveDown": "下移",
       "deleteSection": "删除板块",
+      "duplicateSection": "复制板块",
       "deleteTitle": "删除板块",
       "deleteDescription": "确定要删除“{name}”吗？此操作无法撤销。"
     },
@@ -635,6 +644,16 @@
       "failedToPreview": "无法预览简历。请在设置中检查 API 密钥后重试。",
       "failedToConfirm": "无法应用更改。请重试。",
       "previewUnavailable": "此预览已过期或原始简历已更改。请先生成新的预览再保存。"
+    },
+    "selectResumeDescription": "要点将从这份主简历中选取。",
+    "selectionSummary": "已保留 {total} 条要点中的 {kept} 条（每个职位最多 {max} 条）",
+    "pageFit": {
+      "fits": "可放入一页",
+      "trimmed": "为适应一页，又精简了 {count} 条",
+      "over": "仍超过一页",
+      "unavailable": "无法进行页面适配",
+      "finalOver": "改写后可能超过一页",
+      "notRechecked": "改写后未重新检查是否可放入一页"
     }
   },
   "settings": {
@@ -820,7 +839,12 @@
     },
     "titlePlaceholder": "输入简历标题...",
     "downloadFailedTitle": "下载失败",
-    "renameFailedTitle": "重命名失败"
+    "renameFailedTitle": "重命名失败",
+    "defaultBadge": "默认主简历",
+    "setDefault": "设为默认主简历",
+    "setDefaultSuccess": "此主简历现已成为定制时的默认主简历。",
+    "duplicate": "复制",
+    "duplicateError": "无法复制此简历。请重试。"
   },
   "preview": {
     "margins": "页边距",
@@ -929,6 +953,7 @@
   },
   "a11y": {
     "removeItem": "移除项目",
+    "duplicateItem": "复制项目",
     "removeDescription": "移除此行",
     "removeFile": "移除文件"
   },

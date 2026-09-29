@@ -93,6 +93,7 @@
     "uploadDialog": {
       "success": "履歴書のアップロードに成功しました。",
       "successMaster": "履歴書がアップロードされ、マスターとして設定されました。",
+      "successMasterTrack": "履歴書が新しいマスタートラックとしてアップロードされました。",
       "successMissingId": "アップロードは成功しましたが、履歴書 ID が返されませんでした。",
       "parsingFailed": "履歴書はアップロードされましたが、AI解析に失敗しました。手動でカスタマイズすることは可能です。",
       "failed": "アップロードに失敗しました。",
@@ -104,10 +105,17 @@
     "errors": {
       "loadFailed": "履歴書を読み込めませんでした。もう一度お試しください。",
       "deleteFailed": "履歴書を削除できませんでした。現在の履歴書は引き続き利用できます。"
-    }
+    },
+    "defaultBadge": "デフォルト",
+    "masterTrack": "マスタートラック",
+    "setDefault": "デフォルトに設定",
+    "duplicate": "複製",
+    "addMasterTrack": "マスタートラックを追加",
+    "masterLimitReached": "マスター履歴書は最大{max}件まで"
   },
   "builder": {
     "title": "履歴書ビルダー",
+    "copySuffix": "(コピー)",
     "editMode": "編集モード",
     "previewMode": "プレビューモード",
     "createAndPreview": "作成＆プレビュー",
@@ -196,6 +204,7 @@
       "moveUp": "上へ移動",
       "moveDown": "下へ移動",
       "deleteSection": "セクションを削除",
+      "duplicateSection": "セクションを複製",
       "deleteTitle": "セクションを削除",
       "deleteDescription": "「{name}」を削除しますか？この操作は元に戻せません。"
     },
@@ -635,6 +644,16 @@
       "failedToPreview": "履歴書をプレビューできませんでした。設定で API キーを確認してから、もう一度お試しください。",
       "failedToConfirm": "変更を適用できませんでした。もう一度お試しください。",
       "previewUnavailable": "プレビューの有効期限が切れたか、元の履歴書が変更されました。保存する前に新しいプレビューを生成してください。"
+    },
+    "selectResumeDescription": "箇条書きはこのマスター履歴書から選ばれます。",
+    "selectionSummary": "{total}件中{kept}件の箇条書きを採用（1職務あたり最大{max}件）",
+    "pageFit": {
+      "fits": "1ページに収まります",
+      "trimmed": "1ページに収めるため、さらに{count}件を削減しました",
+      "over": "まだ1ページを超えています",
+      "unavailable": "ページ調整は利用できません",
+      "finalOver": "書き換え後に1ページを超える可能性があります",
+      "notRechecked": "書き換え後の1ページ収まりは再確認されていません"
     }
   },
   "settings": {
@@ -820,7 +839,12 @@
     },
     "titlePlaceholder": "履歴書のタイトルを入力...",
     "downloadFailedTitle": "ダウンロードに失敗しました",
-    "renameFailedTitle": "名前の変更に失敗しました"
+    "renameFailedTitle": "名前の変更に失敗しました",
+    "defaultBadge": "デフォルトのマスター",
+    "setDefault": "デフォルトのマスターに設定",
+    "setDefaultSuccess": "このマスターがカスタマイズのデフォルトになりました。",
+    "duplicate": "複製",
+    "duplicateError": "この履歴書を複製できませんでした。もう一度お試しください。"
   },
   "preview": {
     "margins": "余白",
@@ -929,6 +953,7 @@
   },
   "a11y": {
     "removeItem": "項目を削除",
+    "duplicateItem": "項目を複製",
     "removeDescription": "この行を削除",
     "removeFile": "ファイルを削除"
   },

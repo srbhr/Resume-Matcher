@@ -93,6 +93,7 @@
     "uploadDialog": {
       "success": "CV téléversé avec succès.",
       "successMaster": "CV téléversé et défini comme principal.",
+      "successMasterTrack": "CV téléversé comme nouveau parcours principal.",
       "successMissingId": "Téléversement réussi mais aucun identifiant de CV retourné.",
       "parsingFailed": "CV téléversé mais l'analyse par IA a échoué. Vous pouvez toujours le personnaliser manuellement.",
       "failed": "Échec du téléversement.",
@@ -104,10 +105,17 @@
     "errors": {
       "loadFailed": "Impossible de charger les CV. Veuillez réessayer.",
       "deleteFailed": "Impossible de supprimer le CV. Votre CV actuel reste disponible."
-    }
+    },
+    "defaultBadge": "Par défaut",
+    "masterTrack": "Parcours principal",
+    "setDefault": "Définir par défaut",
+    "duplicate": "Dupliquer",
+    "addMasterTrack": "Ajouter un parcours principal",
+    "masterLimitReached": "Jusqu'à {max} CV principaux"
   },
   "builder": {
     "title": "Créateur de CV",
+    "copySuffix": "(Copie)",
     "editMode": "Mode édition",
     "previewMode": "Mode aperçu",
     "createAndPreview": "Créer et prévisualiser",
@@ -196,6 +204,7 @@
       "moveUp": "Déplacer vers le haut",
       "moveDown": "Déplacer vers le bas",
       "deleteSection": "Supprimer la section",
+      "duplicateSection": "Dupliquer la section",
       "deleteTitle": "Supprimer la section",
       "deleteDescription": "Êtes-vous sûr de vouloir supprimer \"{name}\" ? Cette action est irréversible."
     },
@@ -635,6 +644,16 @@
       "failedToPreview": "Impossible de prévisualiser le CV. Vérifiez votre clé API dans les paramètres, puis réessayez.",
       "failedToConfirm": "Impossible d'appliquer les modifications. Veuillez réessayer.",
       "previewUnavailable": "Cet aperçu a expiré ou le CV source a changé. Générez un nouvel aperçu avant de sauvegarder."
+    },
+    "selectResumeDescription": "Les puces sont tirées de ce CV principal.",
+    "selectionSummary": "{kept} puces conservées sur {total} ({max} par poste)",
+    "pageFit": {
+      "fits": "Tient sur une page",
+      "trimmed": "{count} de plus supprimées pour tenir sur une page",
+      "over": "Dépasse encore une page",
+      "unavailable": "Ajustement à la page indisponible",
+      "finalOver": "Peut dépasser une page après la réécriture",
+      "notRechecked": "Ajustement à une page non revérifié après la réécriture"
     }
   },
   "settings": {
@@ -820,7 +839,12 @@
     },
     "titlePlaceholder": "Saisissez le titre du CV...",
     "downloadFailedTitle": "Échec du téléchargement",
-    "renameFailedTitle": "Échec du renommage"
+    "renameFailedTitle": "Échec du renommage",
+    "defaultBadge": "CV principal par défaut",
+    "setDefault": "Définir comme CV principal par défaut",
+    "setDefaultSuccess": "Ce CV principal est désormais celui utilisé par défaut pour la personnalisation.",
+    "duplicate": "Dupliquer",
+    "duplicateError": "Impossible de dupliquer ce CV. Veuillez réessayer."
   },
   "preview": {
     "margins": "Marges",
@@ -929,6 +953,7 @@
   },
   "a11y": {
     "removeItem": "Supprimer l'élément",
+    "duplicateItem": "Dupliquer l'élément",
     "removeDescription": "Supprimer cette ligne",
     "removeFile": "Supprimer le fichier"
   },

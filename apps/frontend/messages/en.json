@@ -93,6 +93,7 @@
     "uploadDialog": {
       "success": "Resume uploaded successfully.",
       "successMaster": "Resume uploaded and set as master.",
+      "successMasterTrack": "Resume uploaded as a new master track.",
       "successMissingId": "Upload succeeded but no Resume ID returned.",
       "parsingFailed": "Resume uploaded but AI parsing failed. You can still tailor it manually.",
       "failed": "Upload failed.",
@@ -104,10 +105,17 @@
     "errors": {
       "loadFailed": "Unable to load resumes. Please try again.",
       "deleteFailed": "Unable to delete the resume. Your existing resume is still available."
-    }
+    },
+    "defaultBadge": "Default",
+    "masterTrack": "Master Track",
+    "setDefault": "Set as default",
+    "duplicate": "Duplicate",
+    "addMasterTrack": "Add master track",
+    "masterLimitReached": "Up to {max} master resumes"
   },
   "builder": {
     "title": "Resume Builder",
+    "copySuffix": "(Copy)",
     "editMode": "Edit Mode",
     "previewMode": "Preview Mode",
     "createAndPreview": "Create & Preview",
@@ -196,6 +204,7 @@
       "moveUp": "Move up",
       "moveDown": "Move down",
       "deleteSection": "Delete section",
+      "duplicateSection": "Duplicate section",
       "deleteTitle": "Delete Section",
       "deleteDescription": "Are you sure you want to delete \"{name}\"? This action cannot be undone."
     },
@@ -635,6 +644,16 @@
       "failedToPreview": "Couldn't preview the resume. Check your API key in Settings, then try again.",
       "failedToConfirm": "Couldn't apply the changes. Please try again.",
       "previewUnavailable": "This preview expired or the source resume changed. Generate a fresh preview before saving."
+    },
+    "selectResumeDescription": "Bullets are drawn from this master resume.",
+    "selectionSummary": "Kept {kept} of {total} bullets ({max} per role)",
+    "pageFit": {
+      "fits": "Fits on one page",
+      "trimmed": "Trimmed {count} more to fit one page",
+      "over": "Still over one page",
+      "unavailable": "Page fit unavailable",
+      "finalOver": "May run over one page after rewriting",
+      "notRechecked": "Page fit not re-checked after rewriting"
     }
   },
   "settings": {
@@ -820,7 +839,12 @@
     },
     "titlePlaceholder": "Enter resume title...",
     "downloadFailedTitle": "Download Failed",
-    "renameFailedTitle": "Rename Failed"
+    "renameFailedTitle": "Rename Failed",
+    "defaultBadge": "Default master",
+    "setDefault": "Set as default master",
+    "setDefaultSuccess": "This master is now the default for tailoring.",
+    "duplicate": "Duplicate",
+    "duplicateError": "Could not duplicate this resume. Please try again."
   },
   "preview": {
     "margins": "Margins",
@@ -929,6 +953,7 @@
   },
   "a11y": {
     "removeItem": "Remove item",
+    "duplicateItem": "Duplicate item",
     "removeDescription": "Remove this line",
     "removeFile": "Remove file"
   },

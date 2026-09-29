@@ -49,7 +49,11 @@ import { JDComparisonView } from './jd-comparison-view';
 import { RegenerateWizard } from './regenerate-wizard';
 import { useRegenerateWizard } from '@/hooks/use-regenerate-wizard';
 import { useTranslations } from '@/lib/i18n';
-import { type TemplateSettings, DEFAULT_TEMPLATE_SETTINGS } from '@/lib/types/template-settings';
+import { type TemplateSettings } from '@/lib/types/template-settings';
+import {
+  TEMPLATE_SETTINGS_STORAGE_KEY,
+  readStoredTemplateSettings,
+} from '@/lib/utils/stored-template-settings';
 import { withLocalizedDefaultSections } from '@/lib/utils/section-helpers';
 import { useLanguage } from '@/lib/context/language-context';
 import { buildResumeFilename, downloadBlobAsFile, openUrlInNewTab } from '@/lib/utils/download';
@@ -76,7 +80,6 @@ import {
 type TabId = 'resume' | 'cover-letter' | 'outreach' | 'interview-prep' | 'jd-match';
 type JobContextStatus = 'idle' | 'loading' | 'available' | 'missing';
 
-const SETTINGS_STORAGE_KEY = 'resume_builder_settings';
 const TAB_IDS: TabId[] = ['resume', 'cover-letter', 'outreach', 'interview-prep', 'jd-match'];
 const RESUME_AUTOSAVE_DEBOUNCE_MS = 2500;
 const RESUME_AUTOSAVE_MAX_WAIT_MS = 12000;
@@ -210,25 +213,9 @@ const ResumeBuilderContent = () => {
   const [hasCurrentLocalDraft, setHasCurrentLocalDraft] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [loadingState, setLoadingState] = useState<'idle' | 'loading' | 'loaded' | 'error'>('idle');
-  const [templateSettings, setTemplateSettings] = useState<TemplateSettings>(() => {
-    if (typeof window === 'undefined') return DEFAULT_TEMPLATE_SETTINGS;
-    try {
-      const saved = safeStorage.get(SETTINGS_STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        return {
-          ...DEFAULT_TEMPLATE_SETTINGS,
-          ...parsed,
-          margins: { ...DEFAULT_TEMPLATE_SETTINGS.margins, ...parsed.margins },
-          spacing: { ...DEFAULT_TEMPLATE_SETTINGS.spacing, ...parsed.spacing },
-          fontSize: { ...DEFAULT_TEMPLATE_SETTINGS.fontSize, ...parsed.fontSize },
-        };
-      }
-    } catch {
-      // fall through to defaults
-    }
-    return DEFAULT_TEMPLATE_SETTINGS;
-  });
+  const [templateSettings, setTemplateSettings] = useState<TemplateSettings>(
+    readStoredTemplateSettings
+  );
   const { improvedData } = useResumePreview();
   const improvedPreview = improvedData?.data?.resume_preview;
   const improvedCoverLetter = improvedData?.data?.cover_letter;
@@ -407,7 +394,7 @@ const ResumeBuilderContent = () => {
 
   // Save template settings to localStorage when they change
   useEffect(() => {
-    safeStorage.set(SETTINGS_STORAGE_KEY, JSON.stringify(templateSettings));
+    safeStorage.set(TEMPLATE_SETTINGS_STORAGE_KEY, JSON.stringify(templateSettings));
   }, [templateSettings]);
 
   // Warn user before leaving with unsaved changes

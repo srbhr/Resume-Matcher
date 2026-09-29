@@ -93,6 +93,7 @@
     "uploadDialog": {
       "success": "Currículum subido con éxito.",
       "successMaster": "Currículum subido y establecido como maestro.",
+      "successMasterTrack": "Currículum subido como un nuevo perfil maestro.",
       "successMissingId": "La subida fue exitosa pero no se devolvió el ID del currículum.",
       "parsingFailed": "Currículum subido pero el análisis de IA falló. Aún puedes personalizarlo manualmente.",
       "failed": "La subida falló.",
@@ -104,10 +105,17 @@
     "errors": {
       "loadFailed": "No se pudieron cargar los currículums. Inténtalo de nuevo.",
       "deleteFailed": "No se pudo eliminar el currículum. Tu currículum actual sigue disponible."
-    }
+    },
+    "defaultBadge": "Predeterminado",
+    "masterTrack": "Perfil maestro",
+    "setDefault": "Establecer como predeterminado",
+    "duplicate": "Duplicar",
+    "addMasterTrack": "Añadir perfil maestro",
+    "masterLimitReached": "Hasta {max} currículums maestros"
   },
   "builder": {
     "title": "Constructor de CV",
+    "copySuffix": "(Copia)",
     "editMode": "Modo Edición",
     "previewMode": "Modo Vista Previa",
     "createAndPreview": "Crear y previsualizar",
@@ -196,6 +204,7 @@
       "moveUp": "Mover arriba",
       "moveDown": "Mover abajo",
       "deleteSection": "Eliminar sección",
+      "duplicateSection": "Duplicar sección",
       "deleteTitle": "Eliminar sección",
       "deleteDescription": "¿Seguro que quieres eliminar \"{name}\"? Esta acción no se puede deshacer."
     },
@@ -635,6 +644,16 @@
       "failedToPreview": "No se pudo previsualizar el currículum. Revisa tu clave API en Configuración e inténtalo de nuevo.",
       "failedToConfirm": "No se pudieron aplicar los cambios. Inténtalo de nuevo.",
       "previewUnavailable": "La vista previa caducó o el currículum original cambió. Genera una nueva vista previa antes de guardar."
+    },
+    "selectResumeDescription": "Las viñetas se toman de este currículum maestro.",
+    "selectionSummary": "Se conservaron {kept} de {total} viñetas ({max} por puesto)",
+    "pageFit": {
+      "fits": "Cabe en una página",
+      "trimmed": "Se recortaron {count} más para que quepa en una página",
+      "over": "Sigue superando una página",
+      "unavailable": "Ajuste de página no disponible",
+      "finalOver": "Puede superar una página tras la reescritura",
+      "notRechecked": "Ajuste a una página no verificado tras la reescritura"
     }
   },
   "settings": {
@@ -820,7 +839,12 @@
     },
     "titlePlaceholder": "Ingrese el título del currículum...",
     "downloadFailedTitle": "Error de descarga",
-    "renameFailedTitle": "Error al cambiar el nombre"
+    "renameFailedTitle": "Error al cambiar el nombre",
+    "defaultBadge": "Maestro predeterminado",
+    "setDefault": "Establecer como maestro predeterminado",
+    "setDefaultSuccess": "Este maestro ahora es el predeterminado para la personalización.",
+    "duplicate": "Duplicar",
+    "duplicateError": "No se pudo duplicar este currículum. Inténtalo de nuevo."
   },
   "preview": {
     "margins": "Márgenes",
@@ -929,6 +953,7 @@
   },
   "a11y": {
     "removeItem": "Eliminar elemento",
+    "duplicateItem": "Duplicar elemento",
     "removeDescription": "Eliminar esta línea",
     "removeFile": "Eliminar archivo"
   },
