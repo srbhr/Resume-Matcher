@@ -12,6 +12,7 @@ vi.mock('@/lib/i18n', () => ({
 }));
 vi.mock('@/lib/api/config', () => ({ fetchSystemStatus: vi.fn() }));
 vi.mock('@/lib/api/resume', () => ({
+  MAX_MASTER_RESUMES: 5,
   fetchResume: vi.fn(),
   fetchResumeList: vi.fn(),
   deleteResume: vi.fn(),
@@ -111,6 +112,10 @@ describe.each(['normal', 'StrictMode'] as const)('dashboard upload propagation (
     expect(fetch).toHaveBeenCalledTimes(1);
     expect(screen.getByTestId('counters')).toHaveTextContent('1:true');
     expect(localStorage.getItem('master_resume_id')).toBe('resume-1');
+    // The upload dialog now stays mounted, so it closes itself after its success delay.
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1500);
+    });
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(screen.getByTestId('counters')).toHaveTextContent('1:true');
   });

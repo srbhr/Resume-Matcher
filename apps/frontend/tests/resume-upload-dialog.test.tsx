@@ -367,6 +367,58 @@ describe('saved uploads with failed HTTP responses', () => {
   });
 });
 
+it.each([
+  [{ is_master: true, is_default_master: true }, 'dashboard.uploadDialog.successMaster'],
+  [{ is_master: true, is_default_master: false }, 'dashboard.uploadDialog.successMasterTrack'],
+  [{ is_master: false, is_default_master: false }, 'dashboard.uploadDialog.success'],
+])('confirms an upload of %j with %s', async (flags, message) => {
+  vi.mocked(fetch).mockResolvedValueOnce(
+    new Response(JSON.stringify({ resume_id: 'resume-1', processing_status: 'ready', ...flags }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    })
+  );
+  render(<ControlledDialog onUploadComplete={vi.fn()} />);
+  chooseResume();
+  expect(await screen.findByText(message)).toBeVisible();
+});
+
+it('confirms a non-default upload as the master when the dashboard will make it the default', async () => {
+  vi.mocked(fetch).mockResolvedValueOnce(
+    new Response(
+      JSON.stringify({
+        resume_id: 'resume-1',
+        processing_status: 'ready',
+        is_master: true,
+        is_default_master: false,
+      }),
+      { status: 200, headers: { 'content-type': 'application/json' } }
+    )
+  );
+  render(<ResumeUploadDialog open becomesDefault onUploadComplete={vi.fn()} />);
+  chooseResume();
+  expect(await screen.findByText('dashboard.uploadDialog.successMaster')).toBeVisible();
+  expect(screen.queryByText('dashboard.uploadDialog.successMasterTrack')).toBeNull();
+});
+
+it('shows the server reason when the master limit refuses the upload', async () => {
+  const limit = 'You can keep up to 5 master resumes. Delete one before adding another.';
+  vi.mocked(fetch).mockResolvedValueOnce(
+    new Response(JSON.stringify({ detail: limit }), {
+      status: 409,
+      statusText: 'Conflict',
+      headers: { 'content-type': 'application/json' },
+    })
+  );
+  const onComplete = vi.fn();
+  render(<ControlledDialog onUploadComplete={onComplete} />);
+  chooseResume();
+  expect(await screen.findByText(limit)).toBeVisible();
+  expect(screen.queryByText(/Status: 409/)).toBeNull();
+  expect(screen.queryByRole('button', { name: 'dashboard.retryProcessing' })).toBeNull();
+  expect(onComplete).not.toHaveBeenCalled();
+});
+
 it('recovers from an already deleted saved upload without retrying creation', async () => {
   vi.mocked(fetch).mockResolvedValueOnce(uploadFailure());
   vi.mocked(deleteResume).mockRejectedValueOnce(new Error('Failed to delete resume (status 404)'));

@@ -29,6 +29,8 @@ interface ResumeUploadDialogProps {
   onUploadComplete?: (resumeId: string) => void;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  /** The caller makes this upload the default master (e.g. it replaces a deleted default). */
+  becomesDefault?: boolean;
 }
 
 const ACCEPTED_FILE_TYPES = [
@@ -43,6 +45,7 @@ export function ResumeUploadDialog({
   onUploadComplete,
   open: controlledOpen,
   onOpenChange,
+  becomesDefault = false,
 }: ResumeUploadDialogProps) {
   const { t } = useTranslations();
   const [internalOpen, setInternalOpen] = useState(false);
@@ -133,12 +136,16 @@ export function ResumeUploadDialog({
         resume_id?: string;
         processing_status?: 'pending' | 'processing' | 'ready' | 'failed';
         is_master?: boolean;
+        is_default_master?: boolean;
       };
       if (data.resume_id) {
         const processingFailed = data.processing_status === 'failed';
-        const successMessage = data.is_master
-          ? t('dashboard.uploadDialog.successMaster')
-          : t('dashboard.uploadDialog.success');
+        // Every upload is now a master; only the default one "becomes the master".
+        const successMessage = !data.is_master
+          ? t('dashboard.uploadDialog.success')
+          : data.is_default_master === false && !becomesDefault
+            ? t('dashboard.uploadDialog.successMasterTrack')
+            : t('dashboard.uploadDialog.successMaster');
         if (processingFailed) {
           // Keep dialog open on failure so users can retry processing.
           setUploadFeedback({

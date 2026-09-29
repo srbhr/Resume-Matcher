@@ -261,6 +261,35 @@ it('serializes batched add/remove callbacks and enforces capacity before rerende
   expect(changes.mock.lastCall?.[0]).toEqual([]);
 });
 
+describe('upload failure messages', () => {
+  it.each([
+    [422, JSON.stringify({ detail: 'Failed to parse document.' }), 'application/json'],
+    [409, 'conflict without a detail', 'text/plain'],
+    [409, JSON.stringify({ detail: '' }), 'application/json'],
+  ])(
+    'keeps the status message for HTTP %s without a conflict reason',
+    async (status, body, contentType) => {
+      const onUploadError = vi.fn();
+      vi.stubGlobal(
+        'fetch',
+        vi
+          .fn()
+          .mockResolvedValue(
+            new Response(body, { status, headers: { 'content-type': contentType } })
+          )
+      );
+      const { result } = renderHook(() =>
+        useFileUpload({ uploadUrl: '/api/v1/resumes/upload', onUploadError })
+      );
+      act(() => result.current[1].addFiles([resumeFile()]));
+      await waitFor(() => expect(onUploadError).toHaveBeenCalledTimes(1));
+      expect(onUploadError.mock.calls[0][1]).toBe(
+        `Upload failed for resume.pdf. Status: ${status}  - Server response: ${body}`
+      );
+    }
+  );
+});
+
 describe('saved upload error metadata', () => {
   it.each([422, 503, 504])(
     'retains validated recovery identity from an HTTP %s failure',

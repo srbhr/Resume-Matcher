@@ -22,6 +22,7 @@ vi.mock('@/lib/context/status-cache', () => ({
   }),
 }));
 vi.mock('@/lib/api/resume', () => ({
+  MAX_MASTER_RESUMES: 5,
   fetchResumeList: (...args: unknown[]) => api.list(...args),
   fetchResume: (...args: unknown[]) => api.get(...args),
   deleteResume: vi.fn(),
