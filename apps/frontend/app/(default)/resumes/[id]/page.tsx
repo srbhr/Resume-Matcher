@@ -62,6 +62,7 @@ export default function ResumeViewerPage() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [downloadError, setDownloadError] = useState<string | null>(null);
   const [renameError, setRenameError] = useState<string | null>(null);
+  const [setDefaultError, setSetDefaultError] = useState<string | null>(null);
   const [showEnrichmentModal, setShowEnrichmentModal] = useState(false);
   const [isRetrying, setIsRetrying] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -105,6 +106,7 @@ export default function ResumeViewerPage() {
     setShowDownloadSuccessDialog(false);
     setShowSetDefaultSuccessDialog(false);
     setIsSettingDefault(false);
+    setSetDefaultError(null);
     setIsDuplicating(false);
     setDuplicateError(null);
     setIsMasterResume(false);
@@ -204,6 +206,7 @@ export default function ResumeViewerPage() {
     const token = beginSetDefault();
     if (token === null) return;
     setIsSettingDefault(true);
+    setSetDefaultError(null);
     try {
       await setDefaultMasterResume(resumeId);
       try {
@@ -218,6 +221,7 @@ export default function ResumeViewerPage() {
     } catch (err) {
       if (!isCurrentSetDefault(token)) return;
       console.error('Failed to set default master resume:', err);
+      setSetDefaultError(t('resumeViewer.setDefaultError'));
     } finally {
       if (isCurrentSetDefault(token)) setIsSettingDefault(false);
     }
@@ -652,6 +656,18 @@ export default function ResumeViewerPage() {
         cancelLabel={t('common.cancel')}
         onConfirm={handleTitleSave}
         onCancel={() => setRenameError(null)}
+        variant="danger"
+      />
+
+      <ConfirmDialog
+        open={setDefaultError !== null}
+        onOpenChange={(open) => !open && setSetDefaultError(null)}
+        title={t('common.error')}
+        description={setDefaultError ?? ''}
+        confirmLabel={t('common.retry')}
+        cancelLabel={t('common.cancel')}
+        onConfirm={handleSetDefault}
+        onCancel={() => setSetDefaultError(null)}
         variant="danger"
       />
 

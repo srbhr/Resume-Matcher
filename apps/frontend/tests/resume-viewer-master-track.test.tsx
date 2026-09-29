@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import ResumeViewerPage from '@/app/(default)/resumes/[id]/page';
 import { fetchResume, renameResume, setDefaultMasterResume } from '@/lib/api/resume';
@@ -95,6 +95,32 @@ describe('resume viewer master tracks', () => {
     expect(screen.queryByText('resumeViewer.defaultBadge')).not.toBeInTheDocument();
     expect(screen.queryByText('resumeViewer.setDefaultSuccess')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'resumeViewer.setDefault' })).toBeEnabled();
+  });
+
+  it('shows a localized error when setting the default fails, and retries from it', async () => {
+    mockResume({ title: 'SWE track', is_master: true, is_default_master: false });
+    mockedSetDefault
+      .mockRejectedValueOnce(
+        new Error('Failed to set default master resume (status 500): {"detail":"db locked"}')
+      )
+      .mockResolvedValueOnce({ resume_id: 'r1', is_default_master: true });
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    render(<ResumeViewerPage />);
+
+    const button = await screen.findByRole('button', { name: 'resumeViewer.setDefault' });
+    await act(async () => fireEvent.click(button));
+
+    const dialog = await screen.findByRole('dialog');
+    expect(dialog).toHaveTextContent('resumeViewer.setDefaultError');
+    // The raw server response never reaches the user.
+    expect(dialog).not.toHaveTextContent(/status 500|db locked/);
+
+    await act(async () =>
+      fireEvent.click(within(dialog).getByRole('button', { name: 'common.retry' }))
+    );
+    expect(mockedSetDefault).toHaveBeenCalledTimes(2);
+    expect(await screen.findByText('resumeViewer.setDefaultSuccess')).toBeInTheDocument();
+    expect(screen.queryByText('resumeViewer.setDefaultError')).not.toBeInTheDocument();
   });
 
   it('derives the master flag from the server, not from localStorage', async () => {
