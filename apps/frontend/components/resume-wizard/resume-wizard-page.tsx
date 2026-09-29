@@ -17,6 +17,7 @@ import {
   createInitialResumeWizardState,
   finalizeResumeWizard,
   postResumeWizardTurn,
+  ResumeWizardConflictError,
   type ResumeWizardSection,
   type ResumeWizardState,
 } from '@/lib/api';
@@ -40,6 +41,8 @@ export function ResumeWizardPage() {
   const [state, setState] = useState<ResumeWizardState>(() => createInitialResumeWizardState());
   const [answer, setAnswer] = useState('');
   const [errorKey, setErrorKey] = useState<string | null>(null);
+  // The server's own reason for a refused finalize (e.g. the master limit), shown verbatim.
+  const [errorDetail, setErrorDetail] = useState<string | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
   const [createdResumeId, setCreatedResumeId] = useState<string | null>(null);
@@ -74,6 +77,7 @@ export function ResumeWizardPage() {
   }, [draftStorageUnavailable]);
 
   const sectionLabel = t(`resumeWizard.sections.${state.current_question.section}`);
+  const errorMessage = errorDetail ?? (errorKey ? t(errorKey) : null);
 
   const runTurn = async (
     action: 'answer' | 'skip' | 'back' | 'review',
@@ -81,6 +85,7 @@ export function ResumeWizardPage() {
     withAnswer: boolean
   ) => {
     setErrorKey(null);
+    setErrorDetail(null);
     setIsBusy(true);
     try {
       const response = await postResumeWizardTurn({
@@ -131,6 +136,7 @@ export function ResumeWizardPage() {
   const handleFinalize = async () => {
     if (createdResumeId || isBusy) return;
     setErrorKey(null);
+    setErrorDetail(null);
     setIsBusy(true);
     let response;
     try {
@@ -138,8 +144,9 @@ export function ResumeWizardPage() {
       if (!response.resume_id) {
         throw new Error('Finalize returned no resume id');
       }
-    } catch {
-      setErrorKey('resumeWizard.errors.finalizeFailed');
+    } catch (err) {
+      if (err instanceof ResumeWizardConflictError) setErrorDetail(err.message);
+      else setErrorKey('resumeWizard.errors.finalizeFailed');
       setIsBusy(false);
       return;
     }
@@ -150,7 +157,7 @@ export function ResumeWizardPage() {
     setShowLeaveWithoutDraftDialog(false);
     setState((current) => ({ ...current, step: 'complete' }));
     try {
-      localStorage.setItem(MASTER_RESUME_KEY, response.resume_id);
+      if (response.is_default_master) localStorage.setItem(MASTER_RESUME_KEY, response.resume_id);
     } catch {
       // The server commit is authoritative; a blocked browser cache must not
       // turn an acknowledged creation back into a retryable create action.
@@ -211,12 +218,12 @@ export function ResumeWizardPage() {
             </div>
           )}
 
-          {errorKey && (
+          {errorMessage && (
             <div className="border-2 border-red-600 bg-red-100 p-4" role="alert">
               <p className="font-mono text-sm font-bold uppercase tracking-wider text-red-600">
                 {t('common.error')}
               </p>
-              <p className="mt-1 font-sans text-sm">{t(errorKey)}</p>
+              <p className="mt-1 font-sans text-sm">{errorMessage}</p>
             </div>
           )}
 

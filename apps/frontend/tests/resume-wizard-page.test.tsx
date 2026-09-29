@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { ResumeWizardPage } from '@/components/resume-wizard/resume-wizard-page';
 import {
@@ -133,6 +133,7 @@ describe('ResumeWizardPage', () => {
       resume_id: 'resume_123',
       processing_status: 'ready',
       is_master: true,
+      is_default_master: true,
     });
 
     render(<ResumeWizardPage />);
@@ -145,6 +146,115 @@ describe('ResumeWizardPage', () => {
       expect(incrementResumes).toHaveBeenCalledTimes(1);
       expect(setHasMasterResume).toHaveBeenCalledWith(true);
       expect(push).toHaveBeenCalledWith('/builder?id=resume_123');
+    });
+  });
+
+  it('does not overwrite the stored default when finalize creates a non-default master', async () => {
+    localStorage.setItem('master_resume_id', 'old');
+    localStorage.setItem(
+      'resume_wizard_draft',
+      JSON.stringify(
+        makeState({
+          step: 'review',
+          current_question: { text: 'Review', section: 'review' },
+          resume_data: {
+            ...createInitialResumeWizardState().resume_data,
+            personalInfo: { name: 'James' },
+          },
+        })
+      )
+    );
+    mockedFinalize.mockResolvedValueOnce({
+      message: 'Created',
+      request_id: 'req_1',
+      resume_id: 'resume_456',
+      processing_status: 'ready',
+      is_master: true,
+      is_default_master: false,
+    });
+
+    render(<ResumeWizardPage />);
+    fireEvent.click(await screen.findByRole('button', { name: 'resumeWizard.actions.create' }));
+
+    await waitFor(() => {
+      expect(push).toHaveBeenCalledWith('/builder?id=resume_456');
+      expect(setHasMasterResume).toHaveBeenCalledWith(true);
+    });
+    expect(localStorage.getItem('master_resume_id')).toBe('old');
+  });
+
+  describe('finalize failures', () => {
+    const MASTER_LIMIT = 'You can keep up to 5 master resumes. Delete one before adding another.';
+
+    // Runs the real finalize request against a stubbed server response.
+    async function finalizeAgainst(response: Response): Promise<void> {
+      const actualApi = await vi.importActual<typeof import('@/lib/api')>('@/lib/api');
+      mockedFinalize.mockImplementationOnce(actualApi.finalizeResumeWizard);
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response));
+      onTestFinished(() => {
+        vi.unstubAllGlobals();
+      });
+      localStorage.setItem(
+        'resume_wizard_draft',
+        JSON.stringify(
+          makeState({
+            step: 'review',
+            current_question: { text: 'Review', section: 'review' },
+            resume_data: {
+              ...createInitialResumeWizardState().resume_data,
+              personalInfo: { name: 'James' },
+            },
+          })
+        )
+      );
+      render(<ResumeWizardPage />);
+      fireEvent.click(await screen.findByRole('button', { name: 'resumeWizard.actions.create' }));
+    }
+
+    it('shows the server reason when the master limit refuses the resume', async () => {
+      await finalizeAgainst(
+        new Response(JSON.stringify({ detail: MASTER_LIMIT }), {
+          status: 409,
+          headers: { 'content-type': 'application/json' },
+        })
+      );
+
+      expect(await screen.findByRole('alert')).toHaveTextContent(MASTER_LIMIT);
+      expect(screen.queryByText('resumeWizard.errors.finalizeFailed')).toBeNull();
+      expect(push).not.toHaveBeenCalled();
+      expect(incrementResumes).not.toHaveBeenCalled();
+      expect(localStorage.getItem('resume_wizard_draft')).not.toBeNull();
+    });
+
+    it('keeps the retry prompt for other finalize failures', async () => {
+      await finalizeAgainst(
+        new Response(JSON.stringify({ detail: 'Could not create master resume.' }), {
+          status: 500,
+          headers: { 'content-type': 'application/json' },
+        })
+      );
+
+      expect(await screen.findByRole('alert')).toHaveTextContent(
+        'resumeWizard.errors.finalizeFailed'
+      );
+      expect(screen.queryByText('Could not create master resume.')).toBeNull();
+    });
+
+    it('clears the server reason when the next action starts', async () => {
+      await finalizeAgainst(
+        new Response(JSON.stringify({ detail: MASTER_LIMIT }), {
+          status: 409,
+          headers: { 'content-type': 'application/json' },
+        })
+      );
+      expect(await screen.findByRole('alert')).toHaveTextContent(MASTER_LIMIT);
+      mockedPostTurn.mockReturnValueOnce(new Promise(() => undefined));
+
+      fireEvent.click(screen.getByRole('button', { name: 'resumeWizard.actions.keepAdding' }));
+      fireEvent.change(await screen.findByRole('textbox'), { target: { value: 'Python' } });
+      fireEvent.click(screen.getByRole('button', { name: 'resumeWizard.actions.continue' }));
+
+      await waitFor(() => expect(screen.queryByRole('alert')).toBeNull());
     });
   });
 

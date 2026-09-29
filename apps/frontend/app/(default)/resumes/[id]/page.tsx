@@ -12,6 +12,8 @@ import {
   deleteResume,
   retryProcessing,
   renameResume,
+  setDefaultMasterResume,
+  duplicateResume,
 } from '@/lib/api/resume';
 import { useStatusCache } from '@/lib/context/status-cache';
 import {
@@ -23,6 +25,7 @@ import {
   Sparkles,
   Pencil,
   MessagesSquare,
+  Copy,
 } from 'lucide-react';
 import { EnrichmentModal } from '@/components/enrichment/enrichment-modal';
 import { useTranslations } from '@/lib/i18n';
@@ -42,12 +45,17 @@ export default function ResumeViewerPage() {
   const { uiLanguage } = useLanguage();
   const params = useParams();
   const router = useRouter();
-  const { decrementResumes, setHasMasterResume } = useStatusCache();
+  const { incrementResumes, decrementResumes, setHasMasterResume } = useStatusCache();
   const [resumeData, setResumeData] = useState<ResumeData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [processingStatus, setProcessingStatus] = useState<ProcessingStatus | null>(null);
   const [isMasterResume, setIsMasterResume] = useState(false);
+  const [isDefaultMaster, setIsDefaultMaster] = useState(false);
+  const [isSettingDefault, setIsSettingDefault] = useState(false);
+  const [isDuplicating, setIsDuplicating] = useState(false);
+  const [duplicateError, setDuplicateError] = useState<string | null>(null);
+  const [showSetDefaultSuccessDialog, setShowSetDefaultSuccessDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showDeleteSuccessDialog, setShowDeleteSuccessDialog] = useState(false);
   const [showDownloadSuccessDialog, setShowDownloadSuccessDialog] = useState(false);
@@ -73,6 +81,8 @@ export default function ResumeViewerPage() {
   const { begin: beginRename, isCurrent: isCurrentRename } = useOperationOwner(resumeId);
   const { begin: beginDownload, isCurrent: isCurrentDownload } = useOperationOwner(resumeId);
   const { begin: beginDelete, isCurrent: isCurrentDelete } = useOperationOwner(resumeId);
+  const { begin: beginSetDefault, isCurrent: isCurrentSetDefault } = useOperationOwner(resumeId);
+  const { begin: beginDuplicate, isCurrent: isCurrentDuplicate } = useOperationOwner(resumeId);
 
   const localizedResumeData = useMemo(() => {
     if (!resumeData) return null;
@@ -93,6 +103,12 @@ export default function ResumeViewerPage() {
     setShowDeleteDialog(false);
     setShowDeleteSuccessDialog(false);
     setShowDownloadSuccessDialog(false);
+    setShowSetDefaultSuccessDialog(false);
+    setIsSettingDefault(false);
+    setIsDuplicating(false);
+    setDuplicateError(null);
+    setIsMasterResume(false);
+    setIsDefaultMaster(false);
     const token = beginResumeLoad();
     if (token === null) return;
 
@@ -110,6 +126,8 @@ export default function ResumeViewerPage() {
         // Capture title for editable display (always set to clear stale state)
         setResumeTitle(data.title ?? null);
         setIsTailoredResume(Boolean(data.parent_id));
+        setIsMasterResume(Boolean(data.is_master));
+        setIsDefaultMaster(Boolean(data.is_default_master));
 
         // Prioritize processed_resume if available (structured JSON)
         if (data.processed_resume) {
@@ -140,7 +158,6 @@ export default function ResumeViewerPage() {
     };
 
     loadResume();
-    setIsMasterResume(localStorage.getItem('master_resume_id') === resumeId);
   }, [resumeId, beginResumeLoad, isCurrentResumeLoad]);
 
   const handleRetryProcessing = async () => {
@@ -180,6 +197,54 @@ export default function ResumeViewerPage() {
       }
     } finally {
       if (isCurrentRetry(token)) setIsRetrying(false);
+    }
+  };
+
+  const handleSetDefault = async () => {
+    const token = beginSetDefault();
+    if (token === null) return;
+    setIsSettingDefault(true);
+    try {
+      await setDefaultMasterResume(resumeId);
+      try {
+        localStorage.setItem('master_resume_id', resumeId);
+      } catch {
+        // The server commit is authoritative; a blocked browser cache must not
+        // report a completed default change as failed.
+      }
+      if (!isCurrentSetDefault(token)) return;
+      setIsDefaultMaster(true);
+      setShowSetDefaultSuccessDialog(true);
+    } catch (err) {
+      if (!isCurrentSetDefault(token)) return;
+      console.error('Failed to set default master resume:', err);
+    } finally {
+      if (isCurrentSetDefault(token)) setIsSettingDefault(false);
+    }
+  };
+
+  const handleDuplicate = async () => {
+    const token = beginDuplicate();
+    if (token === null) return;
+    setIsDuplicating(true);
+    setDuplicateError(null);
+    try {
+      const copy = await duplicateResume(resumeId);
+      // The copy exists on the server even if the user has navigated away, so the
+      // cached counter is bumped regardless of the operation still being current.
+      incrementResumes();
+      if (!isCurrentDuplicate(token)) return;
+      // Stay disabled through the navigation so a second click cannot make another copy.
+      router.push(`/resumes/${copy.resume_id}`);
+    } catch (err) {
+      if (!isCurrentDuplicate(token)) return;
+      console.error('Failed to duplicate resume:', err);
+      // A 409 (master limit, not ready) carries a message written for the user.
+      const isConflict = (err as { status?: number } | null)?.status === 409;
+      setDuplicateError(
+        isConflict && err instanceof Error ? err.message : t('resumeViewer.duplicateError')
+      );
+      setIsDuplicating(false);
     }
   };
 
@@ -462,6 +527,10 @@ export default function ResumeViewerPage() {
               <Edit className="w-4 h-4" />
               {t('dashboard.editResume')}
             </Button>
+            <Button variant="outline" onClick={handleDuplicate} disabled={isDuplicating}>
+              <Copy className="w-4 h-4" />
+              {t('resumeViewer.duplicate')}
+            </Button>
             {isTailoredResume && (
               <Button variant="outline" onClick={handleInterviewPrep}>
                 <MessagesSquare className="w-4 h-4" />
@@ -475,41 +544,54 @@ export default function ResumeViewerPage() {
           </div>
         </div>
 
-        {/* Editable Title (tailored resumes only) */}
-        {!isMasterResume && (
-          <div className="mb-6 no-print">
-            {isEditingTitle ? (
-              <input
-                type="text"
-                value={editingTitleValue}
-                onChange={(e) => setEditingTitleValue(e.target.value)}
-                onBlur={handleTitleSave}
-                onKeyDown={handleTitleKeyDown}
-                autoFocus
-                maxLength={80}
-                placeholder={t('resumeViewer.titlePlaceholder')}
-                className="font-serif text-2xl font-bold border-b-2 border-black bg-transparent outline-none w-full max-w-xl px-0 py-1"
-              />
-            ) : (
-              <button
-                onClick={() => {
-                  setEditingTitleValue(resumeTitle || '');
-                  setIsEditingTitle(true);
-                }}
-                className="group flex items-center gap-2 cursor-pointer bg-transparent border-none p-0"
+        {/* Editable Title (the track name for a master) */}
+        <div className="mb-6 no-print flex flex-wrap items-center gap-4">
+          {isEditingTitle ? (
+            <input
+              type="text"
+              value={editingTitleValue}
+              onChange={(e) => setEditingTitleValue(e.target.value)}
+              onBlur={handleTitleSave}
+              onKeyDown={handleTitleKeyDown}
+              autoFocus
+              maxLength={80}
+              placeholder={t('resumeViewer.titlePlaceholder')}
+              className="font-serif text-2xl font-bold border-b-2 border-black bg-transparent outline-none w-full max-w-xl px-0 py-1"
+            />
+          ) : (
+            <button
+              onClick={() => {
+                setEditingTitleValue(resumeTitle || '');
+                setIsEditingTitle(true);
+              }}
+              className="group flex items-center gap-2 cursor-pointer bg-transparent border-none p-0"
+            >
+              <h2
+                className={`font-serif text-2xl font-bold border-b-2 border-transparent group-hover:border-black transition-colors ${!resumeTitle ? 'text-steel-grey' : ''}`}
               >
-                <h2
-                  className={`font-serif text-2xl font-bold border-b-2 border-transparent group-hover:border-black transition-colors ${!resumeTitle ? 'text-steel-grey' : ''}`}
-                >
-                  {resumeTitle || t('resumeViewer.titlePlaceholder')}
-                </h2>
-                <Pencil
-                  className={`w-4 h-4 transition-opacity ${resumeTitle ? 'opacity-0 group-hover:opacity-60' : 'opacity-40 group-hover:opacity-60'}`}
-                />
-              </button>
-            )}
-          </div>
-        )}
+                {resumeTitle || t('resumeViewer.titlePlaceholder')}
+              </h2>
+              <Pencil
+                className={`w-4 h-4 transition-opacity ${resumeTitle ? 'opacity-0 group-hover:opacity-60' : 'opacity-40 group-hover:opacity-60'}`}
+              />
+            </button>
+          )}
+          {isDefaultMaster && (
+            <span className="shrink-0 font-mono text-xs uppercase border border-black px-1 rounded-none">
+              {t('resumeViewer.defaultBadge')}
+            </span>
+          )}
+          {isMasterResume && !isDefaultMaster && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSetDefault}
+              disabled={isSettingDefault}
+            >
+              {t('resumeViewer.setDefault')}
+            </Button>
+          )}
+        </div>
 
         {/* Resume Viewer */}
         <div className="flex justify-center pb-4">
@@ -571,6 +653,28 @@ export default function ResumeViewerPage() {
         onConfirm={handleTitleSave}
         onCancel={() => setRenameError(null)}
         variant="danger"
+      />
+
+      <ConfirmDialog
+        open={duplicateError !== null}
+        onOpenChange={(open) => !open && setDuplicateError(null)}
+        title={t('common.error')}
+        description={duplicateError ?? ''}
+        confirmLabel={t('common.ok')}
+        onConfirm={() => setDuplicateError(null)}
+        variant="danger"
+        showCancelButton={false}
+      />
+
+      <ConfirmDialog
+        open={showSetDefaultSuccessDialog}
+        onOpenChange={setShowSetDefaultSuccessDialog}
+        title={t('common.success')}
+        description={t('resumeViewer.setDefaultSuccess')}
+        confirmLabel={t('common.ok')}
+        onConfirm={() => setShowSetDefaultSuccessDialog(false)}
+        variant="success"
+        showCancelButton={false}
       />
 
       <ConfirmDialog
