@@ -86,7 +86,8 @@ async def test_concurrent_replacements_and_late_completion_preserve_master_ident
                 "processing_status": "ready",
             },
         )
-        assert completed["is_default_master"] is False
+        # Losing the default must not cost the old row its master-track membership.
+        assert completed["is_master"] is True and completed["is_default_master"] is False
         master = await isolated_db.get_master_resume()
         assert master is not None and master["resume_id"] == master_id
         with pytest.raises(IntegrityError):

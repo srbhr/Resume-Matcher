@@ -173,24 +173,27 @@ async def test_concurrent_identical_finalizes_create_one_master(
     state = build_initial_wizard_state()
     state.resume_data.personalInfo.name = "James"
     request = {"state": state.model_dump(mode="json")}
-    list_masters = isolated_db.list_master_resumes
-    readers = 0
-    both_read = asyncio.Event()
+    create_master = isolated_db.create_resume_atomic_master
+    arrived = 0
+    both_arrived = asyncio.Event()
 
-    async def list_after_both_requests_read() -> list[dict[str, Any]]:
-        # Force the overlap a double-submit produces: any replay lookup made
-        # outside the create transaction sees the state before either insert.
-        nonlocal readers
-        readers += 1
-        if readers == 2:
-            both_read.set()
+    async def create_after_both_requests_arrive(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        # Force the overlap a double-submit produces: hold each finalize at the
+        # write boundary until both reach it, so any replay lookup made before
+        # (outside) the create transaction sees the state before either insert.
+        nonlocal arrived
+        arrived += 1
+        if arrived == 2:
+            both_arrived.set()
         try:
-            await asyncio.wait_for(both_read.wait(), timeout=1)
+            await asyncio.wait_for(both_arrived.wait(), timeout=5)
         except TimeoutError:
             pass
-        return await list_masters()
+        return await create_master(*args, **kwargs)
 
-    monkeypatch.setattr(isolated_db, "list_master_resumes", list_after_both_requests_read)
+    monkeypatch.setattr(
+        isolated_db, "create_resume_atomic_master", create_after_both_requests_arrive
+    )
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         first, second = await asyncio.gather(
@@ -198,10 +201,11 @@ async def test_concurrent_identical_finalizes_create_one_master(
             client.post("/api/v1/resume-wizard/finalize", json=request),
         )
 
+    assert arrived == 2  # the barrier really held both requests
     assert first.status_code == 200, first.text
     assert second.status_code == 200, second.text
     assert first.json()["resume_id"] == second.json()["resume_id"]
-    masters = await list_masters()
+    masters = await isolated_db.list_master_resumes()
     assert [m["resume_id"] for m in masters] == [first.json()["resume_id"]]
 
 

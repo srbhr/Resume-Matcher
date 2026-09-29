@@ -16,7 +16,6 @@ Real-render tests skip cleanly (never hard-fail) when no Chromium binary can
 be launched.
 """
 
-import asyncio
 import socket
 from unittest.mock import AsyncMock
 
@@ -303,15 +302,19 @@ class TestRenderResumePdfErrors:
         assert "cannot connect to frontend" in message
 
     async def test_print_error_marker_fails_fast_in_a_real_browser(self) -> None:
-        """The draft print page's error marker ends the wait at once (no 60 s timeout)."""
+        """The draft print page's error marker ends the wait at once (no 60 s timeout).
+
+        Only the marker path raises a plain PDFRenderError; a wait that ignored the
+        marker would hit the render deadline and raise PDFRenderTimeoutError instead.
+        Asserting the exact type catches that without a flaky wall-clock bound.
+        """
         url = (
             "data:text/html,"
             "<html><body><div data-print-error='draft-unavailable'>Draft unavailable</div>"
             "</body></html>"
         )
-        loop = asyncio.get_running_loop()
-        started = loop.time()
         with pytest.raises(PDFRenderError) as exc_info:
             await _render_or_skip(url, selector=".resume-print, [data-print-error]")
-        assert loop.time() - started < 15
+        assert type(exc_info.value) is PDFRenderError
+        assert "could not load the resume" in str(exc_info.value)
         assert "executable" not in str(exc_info.value).lower()
