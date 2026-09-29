@@ -105,6 +105,8 @@ async def refine_resume(
     job_description: str,
     job_keywords: dict[str, Any],
     config: RefinementConfig | None = None,
+    *,
+    fixed_row_sections: tuple[str, ...] = (),
 ) -> RefinementResult:
     """Multi-pass refinement of an initially tailored resume.
 
@@ -114,6 +116,8 @@ async def refine_resume(
         job_description: Raw job description text
         job_keywords: Extracted job keywords
         config: Refinement configuration
+        fixed_row_sections: Sections whose bullet set the harness already chose;
+            the refiner's preservation keeps one row per chosen bullet there
 
     Returns:
         RefinementResult with refined data and analysis
@@ -147,7 +151,11 @@ async def refine_resume(
                     master_resume,
                     job_description,
                 )
-                current = finalize_ai_resume(initial_tailored, candidate)
+                current = finalize_ai_resume(
+                    initial_tailored,
+                    candidate,
+                    fixed_row_sections=fixed_row_sections,
+                )
                 if current != before:
                     passes += 1
             except (AIOperationDeadlineExceeded, PromptSizeError):
@@ -159,7 +167,9 @@ async def refine_resume(
     # The keyword writer is the last whole-resume author. Re-apply the source
     # contract immediately after it so later deterministic cleanup and
     # alignment can still remove disallowed content.
-    current = finalize_ai_resume(initial_tailored, current)
+    current = finalize_ai_resume(
+        initial_tailored, current, fixed_row_sections=fixed_row_sections
+    )
 
     # Pass 2: AI phrase removal and polish (local, no LLM call)
     if config.enable_ai_phrase_removal:

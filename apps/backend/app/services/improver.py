@@ -12,6 +12,7 @@ from app.llm import complete_json
 from app.prompts import (
     CRITICAL_TRUTHFULNESS_RULES,
     DEFAULT_IMPROVE_PROMPT_ID,
+    DIFF_FIXED_ROWS_INSTRUCTION,
     DIFF_IMPROVE_PROMPT,
     DIFF_STRATEGY_INSTRUCTIONS,
     EXTRACT_KEYWORDS_PROMPT,
@@ -288,10 +289,20 @@ def _verify_original_matches(actual: Any, expected: str | list[str] | None) -> b
     return actual.strip().casefold() == expected.strip().casefold()
 
 
+def is_fixed_row_append(
+    change: ResumeChange, fixed_row_sections: tuple[str, ...]
+) -> bool:
+    """Whether ``change`` appends a row to a section whose bullet set is fixed."""
+    section = change.path.split("[", 1)[0]
+    return change.action == "append" and section in fixed_row_sections
+
+
 def apply_diffs(
     original: dict[str, Any],
     changes: list[ResumeChange],
     allowed_skill_targets: list[dict[str, Any] | str] | None = None,
+    *,
+    fixed_row_sections: tuple[str, ...] = (),
 ) -> tuple[dict[str, Any], list[ResumeChange], list[ResumeChange]]:
     """Apply verified diffs to original resume.
 
@@ -307,6 +318,8 @@ def apply_diffs(
         original: The original resume data (ResumeData-compatible dict)
         changes: List of changes from the LLM
         allowed_skill_targets: Verified skill targets allowed for add_skill actions
+        fixed_row_sections: Sections whose bullet set the harness already chose;
+            appends to them are rejected so rewriting never adds bullets
 
     Returns:
         (result_dict, applied_changes, rejected_changes)
@@ -363,6 +376,10 @@ def apply_diffs(
             applied.append(change)
 
         elif action == "append":
+            if is_fixed_row_append(change, fixed_row_sections):
+                logger.info("Diff rejected (append to a fixed bullet set): %s", path)
+                rejected.append(change)
+                continue
             if not isinstance(actual_value, list):
                 logger.info("Diff rejected (append to non-list): %s", path)
                 rejected.append(change)
@@ -576,6 +593,8 @@ async def generate_resume_diffs(
     prompt_id: str | None = None,
     original_resume_data: dict[str, Any] | None = None,
     skill_targets: list[dict[str, Any]] | None = None,
+    *,
+    fixed_row_sections: tuple[str, ...] = (),
 ) -> ImproveDiffResult:
     """Generate targeted resume diffs via LLM.
 
@@ -590,6 +609,8 @@ async def generate_resume_diffs(
         prompt_id: Strategy id (nudge/keywords/full)
         original_resume_data: Structured resume JSON
         skill_targets: Verified skill targets from the planning pass
+        fixed_row_sections: Sections whose bullet set the harness already chose;
+            the prompt tells the LLM not to append bullets to them
 
     Returns:
         ImproveDiffResult with list of changes and strategy notes
@@ -606,6 +627,10 @@ async def generate_resume_diffs(
     strategy_instruction = DIFF_STRATEGY_INSTRUCTIONS.get(
         selected_id, DIFF_STRATEGY_INSTRUCTIONS[DEFAULT_IMPROVE_PROMPT_ID]
     )
+    if fixed_row_sections:
+        strategy_instruction += " " + DIFF_FIXED_ROWS_INSTRUCTION.format(
+            sections=" and ".join(fixed_row_sections)
+        )
 
     # LLM-011: Sanitize job description
     sanitized_jd = _sanitize_user_input(job_description)
@@ -613,7 +638,7 @@ async def generate_resume_diffs(
     # Use structured JSON if available with month precision, else markdown
     if original_resume_data is not None:
         if _has_month_in_dates(original_resume_data):
-            resume_input = json.dumps(original_resume_data)
+            resume_input = json.dumps(original_resume_data, ensure_ascii=False)
         else:
             resume_input = original_resume
     else:

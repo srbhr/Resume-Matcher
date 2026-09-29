@@ -506,6 +506,48 @@ def test_candidate_rows_are_normalized_before_the_confirmation_contract() -> Non
     assert validate_confirmed_resume(source, round_tripped) == []
 
 
+def test_fixed_rows_keep_every_source_bullet_when_a_rewrite_splits() -> None:
+    """Harness-chosen bullets: a multi-line rewrite stays one row and displaces nothing."""
+    source = _source_resume()
+    candidate = copy.deepcopy(source)
+    candidate["workExperience"][0]["description"] = [
+        "Built Python APIs\nDeployed to AWS",
+        "Documented releases",
+    ]
+
+    finalized = finalize_ai_resume(
+        source,
+        candidate,
+        allow_appended_rows=True,
+        fixed_row_sections=("workExperience", "personalProjects"),
+    )
+    round_tripped = ResumeData.model_validate(finalized).model_dump(mode="json")
+
+    assert round_tripped["workExperience"][0]["description"] == [
+        "Built Python APIs Deployed to AWS",
+        "Documented releases",
+    ]
+    assert round_tripped["workExperience"][0]["descriptionStyles"] == ["plain", "bullet"]
+    assert validate_confirmed_resume(source, round_tripped) == []
+
+
+def test_split_rewrite_without_fixed_rows_keeps_its_legacy_rows() -> None:
+    source = _source_resume()
+    candidate = copy.deepcopy(source)
+    candidate["workExperience"][0]["description"] = [
+        "Built Python APIs\nDeployed to AWS",
+        "Documented releases",
+    ]
+
+    finalized = finalize_ai_resume(source, candidate, allow_appended_rows=True)
+
+    assert finalized["workExperience"][0]["description"] == [
+        "Built Python APIs",
+        "Deployed to AWS",
+        "Documented releases",
+    ]
+
+
 def test_verified_append_can_survive_finalization() -> None:
     source = _source_resume()
     candidate = copy.deepcopy(source)

@@ -97,6 +97,101 @@ def test_cjk_boundaries_do_not_split_latin_terms(summary: str) -> None:
     assert count_retained_keywords(["Java"], {"summary": summary}) == 0
 
 
+def _resume_with_split_bullet() -> dict[str, Any]:
+    return {
+        "personalInfo": {"name": "Ada Lovelace"},
+        "summary": "Backend engineer.",
+        "workExperience": [
+            {
+                "id": 1,
+                "title": "Engineer",
+                "company": "Alpha",
+                "years": "Jan 2020 - Mar 2021",
+                "description": [
+                    "Built Python APIs\nDeployed them to AWS",
+                    "Documented releases",
+                    "Mentored two junior engineers",
+                ],
+            }
+        ],
+        "education": [],
+        "personalProjects": [],
+        "additional": {"technicalSkills": ["Python"]},
+    }
+
+
+_NO_LLM_CONFIG = RefinementConfig(
+    enable_keyword_injection=False,
+    enable_ai_phrase_removal=False,
+    enable_master_alignment_check=False,
+)
+
+
+async def test_refiner_keeps_fixed_rows_when_a_row_spans_lines() -> None:
+    """Under bullet selection the refiner's finalize must not split a row and drop another."""
+    tailored = _resume_with_split_bullet()
+    result = await refine_resume(
+        initial_tailored=tailored,
+        master_resume=copy.deepcopy(tailored),
+        job_description="Python engineer",
+        job_keywords={},
+        config=_NO_LLM_CONFIG,
+        fixed_row_sections=("workExperience", "personalProjects"),
+    )
+    assert result.refined_data["workExperience"][0]["description"] == [
+        "Built Python APIs Deployed them to AWS",
+        "Documented releases",
+        "Mentored two junior engineers",
+    ]
+
+
+async def test_refiner_keeps_fixed_rows_after_keyword_injection(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The keyword writer's result is finalized with the same fixed-row contract."""
+    tailored = _resume_with_split_bullet()
+    master = copy.deepcopy(tailored)
+    master["additional"]["technicalSkills"].append("Kubernetes")
+    writer = AsyncMock(return_value=copy.deepcopy(tailored))
+    monkeypatch.setattr("app.services.refiner.complete_json", writer)
+
+    result = await refine_resume(
+        initial_tailored=tailored,
+        master_resume=master,
+        job_description="Python and Kubernetes engineer",
+        job_keywords={"required_skills": ["Kubernetes"]},
+        config=RefinementConfig(
+            enable_keyword_injection=True,
+            enable_ai_phrase_removal=False,
+            enable_master_alignment_check=False,
+        ),
+        fixed_row_sections=("workExperience", "personalProjects"),
+    )
+
+    assert writer.await_count == 1
+    assert result.refined_data["workExperience"][0]["description"] == [
+        "Built Python APIs Deployed them to AWS",
+        "Documented releases",
+        "Mentored two junior engineers",
+    ]
+
+
+async def test_refiner_without_fixed_rows_keeps_its_legacy_split() -> None:
+    tailored = _resume_with_split_bullet()
+    result = await refine_resume(
+        initial_tailored=tailored,
+        master_resume=copy.deepcopy(tailored),
+        job_description="Python engineer",
+        job_keywords={},
+        config=_NO_LLM_CONFIG,
+    )
+    assert result.refined_data["workExperience"][0]["description"] == [
+        "Built Python APIs",
+        "Deployed them to AWS",
+        "Documented releases",
+    ]
+
+
 class TestRemoveAiPhrases:
     """Tests for remove_ai_phrases() — local regex replacement."""
 
