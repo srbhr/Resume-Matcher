@@ -187,6 +187,12 @@ Confirmation validates section and entry preservation again before persistence.
 Warnings expose stable codes and field paths; provider and calculation exception
 details stay in server logs.
 
+## Bullet relevance scoring
+
+`BULLET_RELEVANCE_PROMPT` (`app/prompts/templates.py`, exported from `app.prompts`) drives the only LLM call in harness-steered bullet selection ([details](features/preview-confirmation.md#bullet-selection-harness-steered)). It is filled with `{job_description}`, `{job_keywords}` (JSON) and `{bullets}` (one `path | role | text` line per work-experience and project bullet) and returns `{"scores": [{"path": "workExperience[0].description[0]", "score": 87}]}`. The model scores; it never rewrites, merges, reorders or invents bullets, and code makes every keep/drop decision.
+
+`score_bullets` (`app/services/bullet_scoring.py`) calls `complete_json(schema_type="bullet_scores", max_tokens=4096)` with a `response_validator`. The validator requires a `scores` list, ignores unknown paths and non-numeric scores, clamps scores to 0–100, and raises when no known path was scored, so the content retry budget applies. Bullets the model omits score 0. Any other failure falls back to `min(100, 20 × distinct JD terms found)` per bullet (`scoring: "keyword_fallback"` plus a warning); operation-deadline and prompt-size errors still propagate.
+
 ## Adding Prompts
 
 Add new prompt templates to `apps/backend/app/prompts/templates.py`.

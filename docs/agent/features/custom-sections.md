@@ -17,6 +17,7 @@
 - **Reorder sections**: Up/down buttons to change section order
 - **Hide sections**: Toggle visibility (hidden sections still editable, just not in PDF)
 - **Delete sections**: Remove custom sections entirely
+- **Duplicate sections**: Copy a custom section (custom sections only)
 - **Add custom sections**: Create new sections with any name and type
 
 ## Section Controls (UI)
@@ -30,6 +31,13 @@ Each section (except Personal Info) has these controls in the header:
 | Move Down | ⬇ ChevronDown | Move section later in order |
 | Rename | ✏️ Pencil | Edit section display name |
 | Delete | 🗑 Trash | Hide (default) or delete (custom) |
+| Duplicate | ⧉ Copy | Copy the whole section (custom sections only) |
+
+## Duplicating
+
+- **Entries:** the experience, education, projects and custom item-list forms each have a per-entry Duplicate button. The copy is deep-cloned and inserted directly below the original with the next free id (`max + 1`, the same rule as the "add" buttons). Helper: `duplicateById` in `lib/utils/reorder-items.ts`.
+- **Whole sections (custom only):** the header Copy button clones the section's data and metadata as `"<name> (Copy)"` (suffix from the `builder.copySuffix` i18n key), placed directly below the original. Later sections shift down by one so `order` stays unique. Built-in sections have no Copy button; their entries can still be duplicated one by one. Helper: `duplicateCustomSection` in `lib/utils/section-helpers.ts`.
+- Both only edit builder state; nothing is saved until the normal save/autosave. To copy a whole resume, see `POST /resumes/{id}/duplicate` in the [API doc](../apis/front-end-apis.md#master-resumes-career-tracks).
 
 ## Hidden Section Behavior
 
@@ -45,7 +53,8 @@ Each section (except Personal Info) has these controls in the header:
 | File | Purpose |
 |------|---------|
 | `apps/backend/app/schemas/models.py` | `SectionType`, `SectionMeta`, `CustomSection` models |
-| `apps/frontend/lib/utils/section-helpers.ts` | Section management utilities |
+| `apps/frontend/lib/utils/section-helpers.ts` | Section management utilities (incl. `duplicateCustomSection`) |
+| `apps/frontend/lib/utils/reorder-items.ts` | Item reorder/duplicate helpers (`duplicateById`) |
 | `apps/frontend/components/builder/section-header.tsx` | Section controls UI |
 | `apps/frontend/components/builder/add-section-dialog.tsx` | Add custom section dialog |
 | `apps/frontend/components/builder/resume-form.tsx` | Dynamic form rendering |

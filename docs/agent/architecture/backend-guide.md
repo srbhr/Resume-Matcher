@@ -43,7 +43,8 @@ await db.get_resume(resume_id) → dict | None
 await db.list_resumes() → list[dict]
 await db.update_resume(resume_id, updates)
 await db.delete_resume(resume_id) → bool
-await db.set_master_resume(resume_id)            # Exactly one master allowed
+await db.set_default_master_resume(resume_id)   # Up to 5 master resumes (career tracks); exactly one is the default (`is_default_master`)
+await db.list_master_resumes() → list[dict]      # All masters, oldest first (get_master_resume() returns the default)
 await db.claim_resume_processing(resume_id)      # Rotate private operation token
 await db.finish_resume_processing(...)           # Token-guarded ready/failed commit
 await db.create_job(content, resume_id)
@@ -58,7 +59,8 @@ DB file: `data/resume_matcher.db`.
 `applications`; a **sync** engine serves the encrypted `api_keys` table (read on the
 synchronous LLM hot path). Both apply PRAGMAs `journal_mode=WAL`, `foreign_keys=ON`,
 `busy_timeout`. Master changes reserve SQLite writes with `BEGIN IMMEDIATE`; a partial unique index
-provides the final single-master constraint across connections. Jobs' dynamic fields
+on `is_default_master` provides the final single-default constraint across connections (the 5-master
+limit is enforced in code by `MAX_MASTER_RESUMES`). Jobs' dynamic fields
 (`job_keywords`, `job_keywords_hash`, `company`/`role`, `preview_hash`,
 `preview_prompt_id`, and `preview_hashes`) live in `metadata_json`, flattened on read. Preview
 identity, fingerprints, claims and replay responses live in `tailoring_previews`.
@@ -108,6 +110,8 @@ GET/PUT /api/v1/config/llm-api-key            # no longer persists a key
 GET/POST/DELETE /api/v1/config/api-keys       # per-provider encrypted keys
 POST /api/v1/resumes/upload      # PDF/DOC/DOCX
 POST /api/v1/resumes/improve     # Tailor (LLM)
+POST /api/v1/resumes/{id}/default    # Make a master the default tailoring source
+POST /api/v1/resumes/{id}/duplicate  # Copy a ready resume
 GET  /api/v1/resumes/{id}/pdf
 DELETE /api/v1/resumes/{id}
 GET  /api/v1/applications        # Kanban tracker: grouped list (+ POST/PATCH/DELETE/bulk)
