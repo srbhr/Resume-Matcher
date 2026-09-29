@@ -489,6 +489,12 @@ DIFF_STRATEGY_INSTRUCTIONS = {
     "full": "Make targeted adjustments. You may rephrase bullets, add verified JD skills, and add new bullets that elaborate on existing work, but do not invent new responsibilities.",
 }
 
+# Appended to the strategy rule when the harness already chose the bullets (bullet selection).
+DIFF_FIXED_ROWS_INSTRUCTION = (
+    "The bullets of every {sections} entry are already chosen: do not use action "
+    '"append" on their description paths; only rewrite the existing bullets.'
+)
+
 SKILL_TARGET_PLAN_PROMPT = """Build a concise skill target plan for tailoring this resume to the job.
 
 Return ONLY a JSON object. Do not rewrite the resume.
@@ -523,6 +529,33 @@ Output this exact JSON format:
   ],
   "strategy_notes": "brief notes for the next editing pass"
 }}"""
+
+BULLET_RELEVANCE_PROMPT = """Score how relevant each resume bullet is to this job.
+
+Return ONLY a JSON object. Do not rewrite, merge, reorder, or invent bullets.
+
+Rules:
+1. Score every listed bullet from 0 (irrelevant) to 100 (directly proves a core requirement).
+2. Reward concrete evidence of required skills, key responsibilities, and measurable impact.
+3. Copy each bullet's path string exactly.
+4. Never score bullets that are not listed.
+
+Job description:
+{job_description}
+
+Extracted job keywords:
+{job_keywords}
+
+Bullets (path | role | text):
+{bullets}
+
+Output this exact JSON format:
+{{
+  "scores": [
+    {{"path": "workExperience[0].description[0]", "score": 87}}
+  ]
+}}
+"""
 
 DIFF_IMPROVE_PROMPT = """Given this resume and job description, output a JSON object with targeted changes to better align the resume with the job.
 
