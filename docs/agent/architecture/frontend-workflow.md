@@ -14,7 +14,7 @@ Dashboard → Upload Master Resume → Tailor for Job → View/Edit → Download
 
 - **No master:** "Initialize Master Resume" card
 - **Has master(s):** the default master card (title, DEFAULT badge) + a tile per other master track (title, status, "Set as default", Duplicate) + tailored tiles
-- **Up to 5 masters:** an "Add master track" tile opens the upload/wizard choice and is hidden at the limit. Duplicate on a master tile is also hidden at the limit.
+- **Up to 5 masters:** an "Add master track" tile opens the upload/wizard choice. It shows only when a default master exists, the LLM is configured (system status loaded with `llm_configured`), and there are fewer than 5 masters. Duplicate on a master tile is also hidden at the limit.
 - An upload only adopts the new id as the local default when no master existed; otherwise the list reloads and the server decides the default. The exception is "Delete and re-upload" on the default: the completed re-upload is made the default with `setDefaultMasterResume` (closing that dialog without uploading ends the replacement).
 - The upload dialog confirms "set as master" only for the default master: `is_default_master`, or `becomesDefault` from the dashboard during "Delete and re-upload". An extra track gets "uploaded as a new master track". A `409` (master limit) shows the server's `detail`; other failures keep the status message.
 - **Create:** "+" card opens `/tailor`; enabled when any master is ready and the LLM is configured (a failed default does not block ready tracks)

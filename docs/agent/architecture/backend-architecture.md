@@ -100,8 +100,11 @@ the document tables + `applications`; a **sync** engine serves the encrypted
 through `llm.py`. Both apply PRAGMAs `journal_mode=WAL`, `foreign_keys=ON`,
 `busy_timeout` on connect.
 
-**Master invariant:** up to `MAX_MASTER_RESUMES` (5) rows have `is_master`; exactly one is
-`is_default_master` (enforced by a partial unique index on that column). Master creation and
+**Master invariant:** up to `MAX_MASTER_RESUMES` (5) rows have `is_master`; at most one is
+`is_default_master` (guaranteed by a partial unique index on that column). Application logic
+keeps exactly one default while any master exists: a new master becomes the default when none
+exists, deleting the default promotes the earliest remaining master, and the startup migration
+(`db_engine.py`) promotes the earliest master when none is default. Master creation and
 default changes, and tracker read-modify-write operations, reserve SQLite writes
 with `BEGIN IMMEDIATE`, including across Database instances.
 **Jobs' dynamic fields** (`job_keywords`, `job_keywords_hash`, `company`/`role`,

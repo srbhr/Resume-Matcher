@@ -30,7 +30,7 @@ apps/frontend/
 ## Pages
 
 ### Dashboard (`/dashboard`)
-- Default master card, other master-track tiles (up to 5) + tailored resume tiles
+- Default master card, up to 4 other master-track tiles (5 masters total) + tailored resume tiles
 - States: `loading | pending | processing | ready | failed`
 - Auto-refreshes on window focus
 - localStorage: `master_resume_id` (the default master's id)

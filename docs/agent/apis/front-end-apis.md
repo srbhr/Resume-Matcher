@@ -24,7 +24,7 @@ uploadJobDescriptions(descriptions: string[], resumeId: string) → job_id
 
 // Resume improvement
 improveResume(resumeId: string, jobId: string) → ImprovedResult
-previewImproveResume(resumeId, jobId, promptId?, { maxBulletsPerEntry?, pageFit? }) → ImprovedResult
+previewImproveResume(resumeId, jobId, promptId?, options?: { maxBulletsPerEntry?, pageFit? }) → ImprovedResult
 toPageFitSettings(settings: TemplateSettings, locale?: string) → PageFitSettings
 
 // CRUD
