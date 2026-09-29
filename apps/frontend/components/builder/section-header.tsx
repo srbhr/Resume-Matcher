@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
-import { ChevronUp, ChevronDown, Trash2, Eye, EyeOff, Pencil, Check, X } from 'lucide-react';
+import { ChevronUp, ChevronDown, Trash2, Eye, EyeOff, Pencil, Check, X, Copy } from 'lucide-react';
 import type { SectionMeta } from '@/components/dashboard/resume-component';
 import { useTranslations } from '@/lib/i18n';
 
@@ -15,6 +15,8 @@ interface SectionHeaderProps {
   onMoveUp: () => void;
   onMoveDown: () => void;
   onToggleVisibility: () => void;
+  /** Custom sections only: renders a Copy button that duplicates the whole section. */
+  onDuplicate?: () => void;
   isFirst: boolean;
   isLast: boolean;
   canDelete: boolean;
@@ -29,6 +31,7 @@ interface SectionHeaderProps {
  * - Move up/down buttons for reordering
  * - Delete button with confirmation
  * - Visibility toggle
+ * - Optional duplicate button (custom sections)
  */
 export const SectionHeader: React.FC<SectionHeaderProps> = ({
   section,
@@ -37,6 +40,7 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
   onMoveUp,
   onMoveDown,
   onToggleVisibility,
+  onDuplicate,
   isFirst,
   isLast,
   canDelete,
@@ -214,6 +218,20 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
               title={t('builder.sectionHeader.moveDown')}
             >
               <ChevronDown className="w-4 h-4" />
+            </Button>
+          )}
+
+          {/* Duplicate (custom sections only) */}
+          {onDuplicate && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-steel-grey hover:text-ink-soft"
+              onClick={onDuplicate}
+              aria-label={t('builder.sectionHeader.duplicateSection')}
+              title={t('builder.sectionHeader.duplicateSection')}
+            >
+              <Copy className="w-4 h-4" />
             </Button>
           )}
 

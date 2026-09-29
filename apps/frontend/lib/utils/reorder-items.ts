@@ -33,3 +33,23 @@ export function reorderById<T extends ReorderableItem>(
   reordered.splice(newIndex, 0, moved);
   return reordered;
 }
+
+/**
+ * Insert a deep copy of the item identified by `id` directly below it.
+ *
+ * The copy gets the next free id (`max + 1`, the same rule the "add" buttons
+ * use). An unknown id returns `items` itself, so callers can tell nothing
+ * happened by reference and skip the update.
+ */
+export function duplicateById<T extends ReorderableItem>(items: T[], id: number): T[] {
+  const index = items.findIndex((item) => item.id === id);
+  if (index === -1) return items;
+
+  const copy: T = {
+    ...structuredClone(items[index]),
+    id: Math.max(...items.map((item) => item.id), 0) + 1,
+  };
+  const duplicated = items.slice();
+  duplicated.splice(index + 1, 0, copy);
+  return duplicated;
+}

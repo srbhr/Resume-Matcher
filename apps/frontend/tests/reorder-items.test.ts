@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { arrayMove } from '@dnd-kit/sortable';
-import { reorderById } from '@/lib/utils/reorder-items';
+import { duplicateById, reorderById } from '@/lib/utils/reorder-items';
 
 /**
  * Item-level reorder rules for the builder's list sections (experience,
@@ -80,5 +80,57 @@ describe('reorderById', () => {
         );
       }
     }
+  });
+});
+
+describe('duplicateById', () => {
+  interface Entry {
+    id: number;
+    title: string;
+    description: string[];
+  }
+
+  const entries: Entry[] = [
+    { id: 1, title: 'a', description: ['one'] },
+    { id: 3, title: 'c', description: ['three'] },
+    { id: 2, title: 'b', description: ['two'] },
+  ];
+
+  it('inserts the copy directly after the source with id max + 1', () => {
+    const result = duplicateById(entries, 3);
+
+    expect(result.map((e) => e.id)).toEqual([1, 3, 4, 2]);
+    expect(result[2].title).toBe('c');
+  });
+
+  it('places the copy at the end when the last item is duplicated', () => {
+    expect(duplicateById(entries, 2).map((e) => e.id)).toEqual([1, 3, 2, 4]);
+  });
+
+  it('deep-copies the item so editing the copy leaves the source untouched', () => {
+    const result = duplicateById(entries, 1);
+    const clone = result[1];
+
+    clone.description[0] = 'changed';
+
+    expect(entries[0].description[0]).toBe('one');
+    expect(result[0].description[0]).toBe('one');
+  });
+
+  it('does not mutate the input array', () => {
+    const snapshot = JSON.parse(JSON.stringify(entries));
+
+    duplicateById(entries, 1);
+
+    expect(entries).toEqual(snapshot);
+  });
+
+  it('returns the same reference when the id is unknown', () => {
+    expect(duplicateById(entries, 99)).toBe(entries);
+  });
+
+  it('returns the same reference for an empty list', () => {
+    const empty: Entry[] = [];
+    expect(duplicateById(empty, 1)).toBe(empty);
   });
 });

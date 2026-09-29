@@ -17,7 +17,7 @@ const RichTextEditor = dynamic(
   }
 );
 import { Project } from '@/components/dashboard/resume-component';
-import { AlignLeft, List, Plus, Trash2, Github, Globe } from 'lucide-react';
+import { AlignLeft, Copy, List, Plus, Trash2, Github, Globe } from 'lucide-react';
 import { useTranslations } from '@/lib/i18n';
 import {
   alignDescriptionStyles,
@@ -27,6 +27,7 @@ import {
   type DescriptionRow,
 } from '@/lib/utils/description-styles';
 import { SortableItemList } from '../sortable-item-list';
+import { duplicateById } from '@/lib/utils/reorder-items';
 
 interface ProjectsFormProps {
   data: Project[];
@@ -169,6 +170,17 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({ data, onChange }) =>
               <Button
                 variant="ghost"
                 size="icon"
+                className="absolute top-2 right-16 opacity-0 group-hover:opacity-100 transition-opacity text-steel-grey hover:text-ink-soft"
+                onClick={() => onChange(duplicateById(data, item.id))}
+                aria-label={t('a11y.duplicateItem')}
+                title={t('a11y.duplicateItem')}
+              >
+                <Copy className="w-4 h-4" />
+              </Button>
+
+              <Button
+                variant="ghost"
+                size="icon"
                 className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
                 onClick={() => handleRemove(item.id)}
                 aria-label={t('a11y.removeItem')}
@@ -177,7 +189,7 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({ data, onChange }) =>
                 <Trash2 className="w-4 h-4" />
               </Button>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 pr-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 pr-24">
                 <div className="space-y-2">
                   <Label className="font-mono text-xs uppercase tracking-wider text-steel-grey">
                     {t('builder.forms.projects.fields.projectName')}
