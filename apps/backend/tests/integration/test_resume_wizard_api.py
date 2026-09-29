@@ -179,8 +179,10 @@ async def test_concurrent_identical_finalizes_create_one_master(
 
     async def create_after_both_requests_arrive(*args: Any, **kwargs: Any) -> dict[str, Any]:
         # Force the overlap a double-submit produces: hold each finalize at the
-        # write boundary until both reach it, so any replay lookup made before
-        # (outside) the create transaction sees the state before either insert.
+        # create_resume_atomic_master call until both reach it, so both creates run
+        # at once. replay_if runs inside that call's BEGIN IMMEDIATE transaction, so
+        # the request that gets the writer second waits (busy_timeout) and its
+        # replay check sees the first one's committed row instead of inserting.
         nonlocal arrived
         arrived += 1
         if arrived == 2:

@@ -2287,7 +2287,8 @@ async def set_default_master_resume(resume_id: str) -> SetDefaultMasterResponse:
             status_code=400, detail="Only master resumes can be set as default."
         )
     if not await db.set_default_master_resume(resume_id):
-        # Only a master deleted (or demoted) since the pre-check gets here.
+        # Only a master deleted since the pre-check gets here: no code path clears
+        # is_master on an existing row, so 404 is the right answer.
         raise HTTPException(status_code=404, detail="Resume not found")
     return SetDefaultMasterResponse(resume_id=resume_id, is_default_master=True)
 
