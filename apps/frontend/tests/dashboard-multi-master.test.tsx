@@ -9,6 +9,7 @@ const api = vi.hoisted(() => ({
   setDefault: vi.fn(),
   remove: vi.fn(),
   push: vi.fn(),
+  setHasMaster: vi.fn(),
   llmConfigured: true,
 }));
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: api.push }) }));
@@ -25,7 +26,7 @@ vi.mock('@/lib/context/status-cache', () => ({
     isLoading: false,
     incrementResumes: vi.fn(),
     decrementResumes: vi.fn(),
-    setHasMasterResume: vi.fn(),
+    setHasMasterResume: api.setHasMaster,
   }),
 }));
 vi.mock('@/lib/api/resume', () => ({
@@ -39,10 +40,12 @@ vi.mock('@/lib/api/resume', () => ({
 }));
 vi.mock('@/components/dashboard/resume-upload-dialog', () => ({
   ResumeUploadDialog: ({
+    open,
     onUploadComplete,
     onOpenChange,
     becomesDefault,
   }: {
+    open: boolean;
     onUploadComplete: (id: string) => void;
     onOpenChange: (open: boolean) => void;
     becomesDefault?: boolean;
@@ -50,6 +53,7 @@ vi.mock('@/components/dashboard/resume-upload-dialog', () => ({
     <>
       <button onClick={() => onUploadComplete('uploaded')}>finish upload</button>
       <button onClick={() => onOpenChange(false)}>close upload</button>
+      <output data-testid="upload-open">{String(open)}</output>
       <output data-testid="upload-becomes-default">{String(Boolean(becomesDefault))}</output>
     </>
   ),
@@ -130,6 +134,29 @@ describe('dashboard with several master resumes', () => {
     );
     // The button lives inside a clickable card; it must not also navigate.
     expect(api.push).not.toHaveBeenCalled();
+  });
+
+  it('shows a localized error when switching the default fails', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    onTestFinished(() => consoleError.mockRestore());
+    api.list.mockResolvedValue([
+      { ...row('m1', true), is_default_master: true, title: 'DevRel' },
+      { ...row('m2', true), title: 'Solutions Eng' },
+    ]);
+    api.setDefault.mockRejectedValue(
+      new Error('Failed to set default master resume (status 500): {"detail":"db locked"}')
+    );
+    render(<DashboardPage />);
+    fireEvent.click(await screen.findByRole('button', { name: 'dashboard.setDefault' }));
+
+    const dialog = await screen.findByRole('dialog');
+    expect(dialog).toHaveTextContent('resumeViewer.setDefaultError');
+    // The raw server response never reaches the user.
+    expect(dialog).not.toHaveTextContent(/status 500|db locked/);
+    expect(screen.getByText('dashboard.defaultBadge').parentElement).toHaveTextContent('DevRel');
+
+    fireEvent.click(within(dialog).getByRole('button', { name: 'common.ok' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
   it('opens the master when its card is clicked', async () => {
@@ -275,6 +302,72 @@ describe('dashboard with several master resumes', () => {
       expect(localStorage.getItem('master_resume_id')).toBe('other');
     });
 
+    it('keeps the master flag set while another master remains', async () => {
+      await deleteFailedDefault();
+      // "other" survived the delete, so Settings must not report that no master exists.
+      expect(api.setHasMaster).not.toHaveBeenCalledWith(false);
+    });
+
+    it('clears the master flag when the deleted default was the last master', async () => {
+      api.get.mockResolvedValue(status('failed'));
+      api.list.mockResolvedValue([
+        { ...row('old', true), is_default_master: true, processing_status: 'failed' as const },
+      ]);
+      render(<DashboardPage />);
+      fireEvent.click(await screen.findByRole('button', { name: 'dashboard.deleteAndReupload' }));
+      api.list.mockResolvedValue([]);
+      await act(async () =>
+        fireEvent.click(
+          within(screen.getByRole('dialog')).getByRole('button', {
+            name: 'dashboard.deleteAndReupload',
+          })
+        )
+      );
+      expect(api.remove).toHaveBeenCalledWith('old');
+      expect(api.setHasMaster).toHaveBeenLastCalledWith(false);
+    });
+
+    it('keeps the other masters and the open re-upload dialog when the refresh fails', async () => {
+      const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+      onTestFinished(() => consoleError.mockRestore());
+      api.get.mockImplementation(async (id: string) => status(id === 'old' ? 'failed' : 'ready'));
+      api.list.mockResolvedValue([
+        { ...row('old', true), is_default_master: true, processing_status: 'failed' as const },
+        { ...row('other', true), title: 'Other Track' },
+      ]);
+      render(<DashboardPage />);
+      fireEvent.click(await screen.findByRole('button', { name: 'dashboard.deleteAndReupload' }));
+      api.list.mockRejectedValue(new Error('offline'));
+      await act(async () =>
+        fireEvent.click(
+          within(screen.getByRole('dialog')).getByRole('button', {
+            name: 'dashboard.deleteAndReupload',
+          })
+        )
+      );
+
+      expect(await screen.findByRole('alert')).toHaveTextContent('dashboard.errors.loadFailed');
+      expect(screen.getByText('Other Track')).toBeInTheDocument();
+      expect(screen.getByTestId('upload-open')).toHaveTextContent('true');
+      expect(screen.getByTestId('upload-becomes-default')).toHaveTextContent('true');
+    });
+
+    it('tells the user when the re-upload could not be made the default', async () => {
+      const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+      onTestFinished(() => consoleError.mockRestore());
+      api.setDefault.mockRejectedValue(
+        new Error('Failed to set default master resume (status 500): {"detail":"db locked"}')
+      );
+      await deleteFailedDefault();
+
+      fireEvent.click(screen.getByRole('button', { name: 'finish upload' }));
+
+      const dialog = await screen.findByRole('dialog');
+      expect(dialog).toHaveTextContent('resumeViewer.setDefaultError');
+      expect(dialog).not.toHaveTextContent(/status 500|db locked/);
+      expect(await screen.findByText('uploaded')).toBeInTheDocument();
+    });
+
     it('treats a later upload as an ordinary track once the re-upload dialog is closed', async () => {
       await deleteFailedDefault();
       fireEvent.click(screen.getByRole('button', { name: 'close upload' }));
@@ -376,10 +469,14 @@ describe('dashboard with several master resumes', () => {
 
     it('backs off, refreshes the list until the extra master is ready, then stops', async () => {
       vi.useFakeTimers();
-      api.list.mockResolvedValueOnce(processing).mockResolvedValue([
-        { ...row('m1', true), is_default_master: true },
-        { ...row('m2', true), processing_status: 'ready' as const },
-      ]);
+      // Still processing after the first poll, so a second, longer wait follows.
+      api.list
+        .mockResolvedValueOnce(processing)
+        .mockResolvedValueOnce(processing)
+        .mockResolvedValue([
+          { ...row('m1', true), is_default_master: true },
+          { ...row('m2', true), processing_status: 'ready' as const },
+        ]);
       render(<DashboardPage />);
       await act(async () => {});
       expect(api.list).toHaveBeenCalledTimes(1);
@@ -387,8 +484,13 @@ describe('dashboard with several master resumes', () => {
       expect(api.list).toHaveBeenCalledTimes(1);
       await act(async () => vi.advanceTimersByTimeAsync(1));
       expect(api.list).toHaveBeenCalledTimes(2);
-      await act(async () => vi.advanceTimersByTimeAsync(120_000));
+      // The delay doubles: nothing at the first interval, the refresh at 6 s.
+      await act(async () => vi.advanceTimersByTimeAsync(5999));
       expect(api.list).toHaveBeenCalledTimes(2);
+      await act(async () => vi.advanceTimersByTimeAsync(1));
+      expect(api.list).toHaveBeenCalledTimes(3);
+      await act(async () => vi.advanceTimersByTimeAsync(120_000));
+      expect(api.list).toHaveBeenCalledTimes(3);
     });
 
     it('gives up after the same attempt cap as the default master', async () => {
@@ -401,6 +503,23 @@ describe('dashboard with several master resumes', () => {
       expect(api.list).toHaveBeenCalledTimes(13);
       await act(async () => vi.advanceTimersByTimeAsync(300_000));
       expect(api.list).toHaveBeenCalledTimes(13);
+    });
+
+    it('does not poll over a newer refresh that is still in flight', async () => {
+      vi.useFakeTimers();
+      api.list.mockResolvedValue(processing);
+      render(<DashboardPage />);
+      await act(async () => {});
+      expect(api.list).toHaveBeenCalledTimes(1);
+      await act(async () => vi.advanceTimersByTimeAsync(2_900));
+      // A focus refresh starts just before the poll is due and has not answered yet.
+      api.list.mockReturnValue(new Promise(() => {}));
+      await act(async () => {
+        window.dispatchEvent(new Event('focus'));
+      });
+      expect(api.list).toHaveBeenCalledTimes(2);
+      await act(async () => vi.advanceTimersByTimeAsync(200));
+      expect(api.list).toHaveBeenCalledTimes(2);
     });
 
     it('stops polling on unmount', async () => {

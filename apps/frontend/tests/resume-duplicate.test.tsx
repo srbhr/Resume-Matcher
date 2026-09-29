@@ -266,4 +266,31 @@ describe('dashboard duplicate', () => {
     expect(api.incrementResumes).not.toHaveBeenCalled();
     expect(api.list).toHaveBeenCalledTimes(listCallsBefore);
   });
+
+  it('shows the generic error when duplicating fails', async () => {
+    api.list.mockResolvedValue(masters(2));
+    api.duplicate.mockRejectedValue(
+      Object.assign(new Error('Failed to duplicate resume (status 503): busy'), { status: 503 })
+    );
+    render(<DashboardPage />);
+
+    fireEvent.click(await screen.findByRole('button', { name: 'dashboard.duplicate' }));
+
+    const dialog = await screen.findByRole('dialog');
+    expect(dialog).toHaveTextContent('resumeViewer.duplicateError');
+    expect(dialog).not.toHaveTextContent(/status 503|busy/);
+  });
+
+  it('shows the server detail when the master limit blocks the copy', async () => {
+    const detail = 'You can keep up to 5 master resumes. Delete one before adding another.';
+    api.list.mockResolvedValue(masters(2));
+    api.duplicate.mockRejectedValue(Object.assign(new Error(detail), { status: 409 }));
+    render(<DashboardPage />);
+
+    fireEvent.click(await screen.findByRole('button', { name: 'dashboard.duplicate' }));
+
+    const dialog = await screen.findByRole('dialog');
+    expect(dialog).toHaveTextContent(detail);
+    expect(dialog).not.toHaveTextContent('resumeViewer.duplicateError');
+  });
 });

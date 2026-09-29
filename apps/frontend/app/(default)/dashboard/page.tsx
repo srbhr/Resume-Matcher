@@ -42,6 +42,8 @@ export default function DashboardPage() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [listError, setListError] = useState(false);
   const [deleteError, setDeleteError] = useState(false);
+  // One dialog for failed tile actions (set default, duplicate, re-upload default).
+  const [actionError, setActionError] = useState<string | null>(null);
   const [tailoredResumes, setTailoredResumes] = useState<ResumeListItem[]>([]);
   const [otherMasters, setOtherMasters] = useState<ResumeListItem[]>([]);
   const [defaultMasterTitle, setDefaultMasterTitle] = useState<string | null>(null);
@@ -61,6 +63,11 @@ export default function DashboardPage() {
     decrementResumes,
     setHasMasterResume,
   } = useStatusCache();
+  // Read through a ref so the list reconcile keeps a stable identity (it drives the load effects).
+  const setHasMasterResumeRef = useRef(setHasMasterResume);
+  useEffect(() => {
+    setHasMasterResumeRef.current = setHasMasterResume;
+  }, [setHasMasterResume]);
 
   // Request id guard for concurrent loadTailoredResumes invocations
   const loadRequestIdRef = useRef(0);
@@ -199,6 +206,8 @@ export default function DashboardPage() {
         const data = await fetchResumeList(true);
         if (!isCurrent()) return;
         const masters = data.filter((r) => r.is_master);
+        // Server truth for the shared flag Settings reads; other pages can leave it stale.
+        setHasMasterResumeRef.current(masters.length > 0);
         const masterFromList = masters.find((r) => r.is_default_master) ?? masters[0];
         const storedId = localStorage.getItem('master_resume_id');
         const resolvedMasterId = masterFromList?.resume_id || storedId;
@@ -272,9 +281,12 @@ export default function DashboardPage() {
       return;
     }
     if (otherMastersPollAttemptsRef.current >= 12) return;
+    // A reload started after scheduling (focus, upload, an action) supersedes this
+    // poll; the list it loads re-runs this effect.
+    const requestId = loadRequestIdRef.current;
     const delay = Math.min(30_000, 3_000 * 2 ** otherMastersPollAttemptsRef.current);
     const timer = window.setTimeout(() => {
-      if (document.hidden) return;
+      if (requestId !== loadRequestIdRef.current || document.hidden) return;
       otherMastersPollAttemptsRef.current += 1;
       void loadTailoredResumes(true);
     }, delay);
@@ -324,6 +336,7 @@ export default function DashboardPage() {
       localStorage.setItem('master_resume_id', resumeId);
     } catch (err) {
       console.error('Failed to set the re-uploaded resume as default:', err);
+      setActionError(t('resumeViewer.setDefaultError'));
     }
     await loadTailoredResumes();
   };
@@ -342,6 +355,7 @@ export default function DashboardPage() {
       await loadTailoredResumes();
     } catch (err) {
       console.error('Failed to set default master resume:', err);
+      setActionError(t('resumeViewer.setDefaultError'));
     }
   };
 
@@ -354,6 +368,11 @@ export default function DashboardPage() {
       await loadTailoredResumes();
     } catch (err) {
       console.error('Failed to duplicate resume:', err);
+      // A 409 (master limit, not ready) carries a message written for the user.
+      const isConflict = (err as { status?: number } | null)?.status === 409;
+      setActionError(
+        isConflict && err instanceof Error ? err.message : t('resumeViewer.duplicateError')
+      );
     } finally {
       setIsDuplicating(false);
     }
@@ -434,7 +453,8 @@ export default function DashboardPage() {
       await deleteResume(resumeId);
       if (!mountedRef.current || activeMasterIdRef.current !== resumeId) return;
       decrementResumes();
-      setHasMasterResume(false);
+      // The server promotes a remaining master, so the flag only clears with the last one.
+      setHasMasterResume(otherMasters.length > 0);
       localStorage.removeItem('master_resume_id');
       adoptMasterResume(null);
       setProcessingStatus('loading');
@@ -534,7 +554,8 @@ export default function DashboardPage() {
       </div>
     </div>
   ) : null;
-  if (listError && !masterResumeId && tailoredResumes.length === 0) return listErrorAlert;
+  if (listError && !masterResumeId && otherMasters.length === 0 && tailoredResumes.length === 0)
+    return listErrorAlert;
 
   return (
     <div className="space-y-6">
@@ -879,6 +900,17 @@ export default function DashboardPage() {
           onConfirm={confirmDeleteAndReupload}
           onCancel={() => setDeleteError(false)}
           variant="danger"
+        />
+
+        <ConfirmDialog
+          open={actionError !== null}
+          onOpenChange={(open) => !open && setActionError(null)}
+          title={t('common.error')}
+          description={actionError ?? ''}
+          confirmLabel={t('common.ok')}
+          onConfirm={() => setActionError(null)}
+          variant="danger"
+          showCancelButton={false}
         />
       </SwissGrid>
     </div>
