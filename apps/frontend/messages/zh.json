@@ -646,7 +646,7 @@
       "previewUnavailable": "此预览已过期或原始简历已更改。请先生成新的预览再保存。"
     },
     "selectResumeDescription": "要点将从这份主简历中选取。",
-    "selectionSummary": "已保留 {total} 条要点中的 {kept} 条（每个职位最多 {max} 条）",
+    "selectionSummary": "已保留 {total} 条要点中的 {kept} 条（每个职位或项目最多 {max} 条）",
     "pageFit": {
       "fits": "可放入一页",
       "trimmed": "为适应一页，又精简了 {count} 条",
@@ -843,6 +843,7 @@
     "defaultBadge": "默认主简历",
     "setDefault": "设为默认主简历",
     "setDefaultSuccess": "此主简历现已成为定制时的默认主简历。",
+    "setDefaultError": "无法将此简历设为默认主简历。请重试。",
     "duplicate": "复制",
     "duplicateError": "无法复制此简历。请重试。"
   },

@@ -646,10 +646,10 @@
       "previewUnavailable": "La vista previa caducó o el currículum original cambió. Genera una nueva vista previa antes de guardar."
     },
     "selectResumeDescription": "Las viñetas se toman de este currículum maestro.",
-    "selectionSummary": "Se conservaron {kept} de {total} viñetas ({max} por puesto)",
+    "selectionSummary": "Viñetas conservadas: {kept} de {total} (hasta {max} por puesto o proyecto)",
     "pageFit": {
       "fits": "Cabe en una página",
-      "trimmed": "Se recortaron {count} más para que quepa en una página",
+      "trimmed": "Viñetas adicionales eliminadas para que quepa en una página: {count}",
       "over": "Sigue superando una página",
       "unavailable": "Ajuste de página no disponible",
       "finalOver": "Puede superar una página tras la reescritura",
@@ -843,6 +843,7 @@
     "defaultBadge": "Maestro predeterminado",
     "setDefault": "Establecer como maestro predeterminado",
     "setDefaultSuccess": "Este maestro ahora es el predeterminado para la personalización.",
+    "setDefaultError": "No se pudo establecer este currículum como maestro predeterminado. Inténtalo de nuevo.",
     "duplicate": "Duplicar",
     "duplicateError": "No se pudo duplicar este currículum. Inténtalo de nuevo."
   },

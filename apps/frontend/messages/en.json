@@ -646,7 +646,7 @@
       "previewUnavailable": "This preview expired or the source resume changed. Generate a fresh preview before saving."
     },
     "selectResumeDescription": "Bullets are drawn from this master resume.",
-    "selectionSummary": "Kept {kept} of {total} bullets ({max} per role)",
+    "selectionSummary": "Kept {kept} of {total} bullets (up to {max} per job or project)",
     "pageFit": {
       "fits": "Fits on one page",
       "trimmed": "Trimmed {count} more to fit one page",
@@ -843,6 +843,7 @@
     "defaultBadge": "Default master",
     "setDefault": "Set as default master",
     "setDefaultSuccess": "This master is now the default for tailoring.",
+    "setDefaultError": "Could not make this resume the default master. Please try again.",
     "duplicate": "Duplicate",
     "duplicateError": "Could not duplicate this resume. Please try again."
   },

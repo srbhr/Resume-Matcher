@@ -646,10 +646,10 @@
       "previewUnavailable": "Cet aperçu a expiré ou le CV source a changé. Générez un nouvel aperçu avant de sauvegarder."
     },
     "selectResumeDescription": "Les puces sont tirées de ce CV principal.",
-    "selectionSummary": "{kept} puces conservées sur {total} ({max} par poste)",
+    "selectionSummary": "Puces conservées : {kept} sur {total} (jusqu'à {max} par poste ou projet)",
     "pageFit": {
       "fits": "Tient sur une page",
-      "trimmed": "{count} de plus supprimées pour tenir sur une page",
+      "trimmed": "Puces supplémentaires retirées pour tenir sur une page : {count}",
       "over": "Dépasse encore une page",
       "unavailable": "Ajustement à la page indisponible",
       "finalOver": "Peut dépasser une page après la réécriture",
@@ -843,6 +843,7 @@
     "defaultBadge": "CV principal par défaut",
     "setDefault": "Définir comme CV principal par défaut",
     "setDefaultSuccess": "Ce CV principal est désormais celui utilisé par défaut pour la personnalisation.",
+    "setDefaultError": "Impossible de définir ce CV comme CV principal par défaut. Veuillez réessayer.",
     "duplicate": "Dupliquer",
     "duplicateError": "Impossible de dupliquer ce CV. Veuillez réessayer."
   },

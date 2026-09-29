@@ -646,7 +646,7 @@
       "previewUnavailable": "プレビューの有効期限が切れたか、元の履歴書が変更されました。保存する前に新しいプレビューを生成してください。"
     },
     "selectResumeDescription": "箇条書きはこのマスター履歴書から選ばれます。",
-    "selectionSummary": "{total}件中{kept}件の箇条書きを採用（1職務あたり最大{max}件）",
+    "selectionSummary": "{total}件中{kept}件の箇条書きを採用（職務・プロジェクトごとに最大{max}件）",
     "pageFit": {
       "fits": "1ページに収まります",
       "trimmed": "1ページに収めるため、さらに{count}件を削減しました",
@@ -843,6 +843,7 @@
     "defaultBadge": "デフォルトのマスター",
     "setDefault": "デフォルトのマスターに設定",
     "setDefaultSuccess": "このマスターがカスタマイズのデフォルトになりました。",
+    "setDefaultError": "この履歴書をデフォルトのマスターに設定できませんでした。もう一度お試しください。",
     "duplicate": "複製",
     "duplicateError": "この履歴書を複製できませんでした。もう一度お試しください。"
   },
