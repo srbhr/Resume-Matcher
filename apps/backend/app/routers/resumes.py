@@ -282,9 +282,13 @@ def _get_original_resume_data(resume: dict[str, Any]) -> dict[str, Any] | None:
 
 
 async def _grounding_master_data(resume: dict[str, Any]) -> dict[str, Any] | None:
-    """Truth source for refinement: the source master itself, else the default master."""
+    """Truth source for refinement: the source master, its parent master, else the default."""
     if resume.get("is_master", False):
         return _get_original_resume_data(resume)
+    parent_id = resume.get("parent_id")
+    parent = await db.get_resume(parent_id) if parent_id else None
+    if parent and parent.get("is_master", False):
+        return _get_original_resume_data(parent)
     master_resume = await db.get_master_resume()
     if master_resume:
         return _get_original_resume_data(master_resume)
@@ -2283,9 +2287,8 @@ async def set_default_master_resume(resume_id: str) -> SetDefaultMasterResponse:
             status_code=400, detail="Only master resumes can be set as default."
         )
     if not await db.set_default_master_resume(resume_id):
-        raise HTTPException(
-            status_code=500, detail="Failed to set default resume. Please try again."
-        )
+        # Only a master deleted (or demoted) since the pre-check gets here.
+        raise HTTPException(status_code=404, detail="Resume not found")
     return SetDefaultMasterResponse(resume_id=resume_id, is_default_master=True)
 
 

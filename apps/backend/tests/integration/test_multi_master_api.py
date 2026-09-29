@@ -62,6 +62,19 @@ async def test_set_default_rejects_missing_and_non_master(
     ).status_code == 400
 
 
+async def test_set_default_lost_race_after_precheck_is_404(
+    client: AsyncClient, isolated_db: Database, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    master = await _master(isolated_db, "devrel")
+    # The pre-check saw a master; it vanished (or stopped being one) before the write.
+    monkeypatch.setattr(
+        isolated_db, "set_default_master_resume", AsyncMock(return_value=False)
+    )
+    res = await client.post(f"/api/v1/resumes/{master['resume_id']}/default")
+    assert res.status_code == 404
+    assert res.json() == {"detail": "Resume not found"}
+
+
 async def test_fetch_exposes_master_flags(
     client: AsyncClient, isolated_db: Database
 ) -> None:
@@ -136,6 +149,85 @@ async def test_preview_grounds_refiner_on_source_master(
     )
     assert res.status_code == 200, res.text
     assert seen["master"]["summary"] == "source-track"
+
+
+async def _tailored(db: Database, parent_id: str | None, name: str) -> dict[str, Any]:
+    return await db.create_resume(
+        content=name,
+        parent_id=parent_id,
+        processing_status="ready",
+        processed_data={"personalInfo": {"name": "A"}, "summary": name},
+    )
+
+
+@pytest.mark.parametrize("endpoint", ["/improve/preview", "/improve"])
+async def test_tailored_source_grounds_refiner_on_its_own_track(
+    client: AsyncClient,
+    isolated_db: Database,
+    monkeypatch: pytest.MonkeyPatch,
+    endpoint: str,
+) -> None:
+    from app.routers import resumes as resumes_router
+    from app.schemas.models import ImproveDiffResult
+
+    await _master(isolated_db, "default-track")
+    track_b = await _master(isolated_db, "track-b")
+    child = await _tailored(isolated_db, track_b["resume_id"], "tailored-from-b")
+    job = await isolated_db.create_job(content="Need Python", resume_id=child["resume_id"])
+    seen: dict[str, Any] = {}
+
+    async def fake_refine(**kwargs: Any) -> Any:
+        seen["master"] = kwargs["master_resume"]
+        raise RuntimeError("stop after capture")
+
+    monkeypatch.setattr(resumes_router, "_load_config", lambda: {})
+    monkeypatch.setattr(resumes_router, "get_content_language", lambda: "en")
+    monkeypatch.setattr(resumes_router, "_get_default_prompt_id", lambda: "nudge")
+    monkeypatch.setattr(
+        resumes_router,
+        "extract_job_keywords",
+        AsyncMock(return_value={"required_skills": ["Python"]}),
+    )
+    monkeypatch.setattr(
+        resumes_router, "generate_skill_target_plan", AsyncMock(return_value={})
+    )
+    monkeypatch.setattr(
+        resumes_router,
+        "generate_resume_diffs",
+        AsyncMock(return_value=ImproveDiffResult(changes=[])),
+    )
+    monkeypatch.setattr(resumes_router, "refine_resume", fake_refine)
+    monkeypatch.setattr(
+        resumes_router, "generate_resume_title", AsyncMock(return_value="Engineer")
+    )
+    res = await client.post(
+        f"/api/v1/resumes{endpoint}",
+        json={"resume_id": child["resume_id"], "job_id": job["job_id"]},
+    )
+    assert res.status_code == 200, res.text
+    assert seen["master"]["summary"] == "track-b"
+
+
+@pytest.mark.parametrize(
+    ("parent", "expected"),
+    [("missing", "default-track"), ("tailored", "default-track"), ("none", "source")],
+)
+async def test_grounding_falls_back_to_default_master_then_source(
+    isolated_db: Database, parent: str, expected: str
+) -> None:
+    from app.routers.resumes import _grounding_master_data
+
+    if parent == "none":
+        source = await _tailored(isolated_db, None, "source")
+    else:
+        await _master(isolated_db, "default-track")
+        await _master(isolated_db, "track-b")
+        parent_id = "missing-resume-id"
+        if parent == "tailored":
+            parent_id = (await _tailored(isolated_db, None, "other-tailored"))["resume_id"]
+        source = await _tailored(isolated_db, parent_id, "source")
+    grounding = await _grounding_master_data(source)
+    assert grounding is not None and grounding["summary"] == expected
 
 
 async def test_render_draft_endpoint_serves_and_404s(client: AsyncClient) -> None:
