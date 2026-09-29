@@ -2,6 +2,7 @@
 
 import json
 import logging
+import math
 from typing import Any, Callable, Literal
 
 from app.ai_budget import AIOperationDeadlineExceeded
@@ -10,6 +11,7 @@ from app.llm import complete_json
 from app.prompts import BULLET_RELEVANCE_PROMPT
 from app.services.bullet_selector import BulletKey, bullet_path, iter_bullet_rows
 from app.services.improver import _sanitize_user_input
+from app.services.refiner import _keyword_in_text
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +45,8 @@ def _bullet_lines(data: dict[str, Any]) -> tuple[list[str], dict[str, BulletKey]
 def _make_validator(
     paths: dict[str, BulletKey],
 ) -> Callable[[dict[str, Any]], dict[str, Any]]:
-    """Create a response validator that clamps scores to [0, 100] and filters unknown paths."""
+    """Create a response validator: clamps scores to [0, 100], drops unknown paths and
+    non-finite scores (NaN/Infinity would otherwise clamp to 100)."""
     def validate(response: dict[str, Any]) -> dict[str, Any]:
         items = response.get("scores")
         if not isinstance(items, list):
@@ -59,6 +62,7 @@ def _make_validator(
                 and path in paths
                 and isinstance(score, (int, float))
                 and not isinstance(score, bool)
+                and math.isfinite(score)
             ):
                 cleaned.append({"path": path, "score": max(0.0, min(100.0, float(score)))})
         if not cleaned:
@@ -81,8 +85,9 @@ def _job_terms(job_keywords: dict[str, Any]) -> set[str]:
 def keyword_scores(data: dict[str, Any], job_keywords: dict[str, Any]) -> dict[BulletKey, float]:
     """Deterministic fallback: 20 points per distinct JD term found, capped at 100.
 
-    Counts how many distinct job keywords appear in each bullet (case-insensitive)
-    and scores it as 20 points per keyword, maxed at 100.
+    Counts how many distinct job keywords appear in each bullet (case-insensitive,
+    via the refiner's ``_keyword_in_text``: whole terms, substrings for CJK) and
+    scores it as 20 points per keyword, maxed at 100.
 
     Args:
         data: Resume data with selectable sections
@@ -94,8 +99,7 @@ def keyword_scores(data: dict[str, Any], job_keywords: dict[str, Any]) -> dict[B
     terms = _job_terms(job_keywords)
     scores: dict[BulletKey, float] = {}
     for key, text, _entry in iter_bullet_rows(data):
-        lowered = text.lower()
-        hits = sum(1 for term in terms if term in lowered)
+        hits = sum(1 for term in terms if _keyword_in_text(term, text))
         scores[key] = float(min(100, 20 * hits))
     return scores
 
