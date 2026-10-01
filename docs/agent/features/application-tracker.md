@@ -5,13 +5,17 @@
 ## Overview
 
 The Application Tracker (`/tracker`) gives each tailored resume a place in a
-seven-column Kanban pipeline. Tailoring a resume to a job auto-creates an
+five-column Kanban pipeline. Tailoring a resume to a job auto-creates an
 `applied` card; users can also add cards manually from a pasted job
 description. Cards are drag-and-drop reorderable within and across columns.
 
-## Columns (stable keys, decoupled from i18n labels)
+## User-Facing Columns (stable keys, decoupled from i18n labels)
 
-`saved` · `applied` · `no_response` · `response` · `interview` · `accepted` · `rejected`
+`saved` · `applied` · `interview` · `accepted` · `rejected`
+
+The backend retains `no_response` and `response` in its status enum for API and
+stored-data compatibility, but the current frontend does not render or offer
+them for moves.
 
 Auto-created cards from the tailor flow land in **`applied`**. Manual cards
 default to `applied` but can be created as `saved`.
@@ -36,7 +40,8 @@ default to `applied` but can be created as `saved`.
 
 `Application` (SQLite, `apps/backend/app/models.py`): `application_id` (PK),
 `job_id`, `resume_id` (the applied/tailored resume), `master_resume_id`
-(optional base — powers the "shared resume" badge), `status` (7-key enum),
+(optional base — powers the "shared resume" badge), `status` (backend 7-value
+enum; frontend exposes 5),
 `company`, `role`, `applied_at`, `notes`, `position` (per-column order,
 server-renumbered on PATCH), `created_at`, `updated_at`. `create_application`
 dedupes on `(job_id, resume_id)` to survive double-submit.
