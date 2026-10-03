@@ -248,7 +248,7 @@ export function KanbanBoard() {
               </button>
             </div>
           )}
-          <Button onClick={() => setManualAddOpen(true)}>
+          <Button variant="destructive" onClick={() => setManualAddOpen(true)}>
             <Plus className="h-4 w-4" />
             {t('tracker.addApplication')}
           </Button>
