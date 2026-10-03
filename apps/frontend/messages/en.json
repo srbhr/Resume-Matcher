@@ -658,6 +658,8 @@
   },
   "settings": {
     "chatgpt": {
+      "restartBackend": "Restart the backend to enable the ChatGPT connection endpoints.",
+      "connectionFailed": "ChatGPT connection failed.",
       "description": "Use your ChatGPT subscription for resume requests. Usage counts toward your plan's limits.",
       "sharedAccount": "This connection is shared by this Resume Matcher installation.",
       "connected": "Connected to ChatGPT",

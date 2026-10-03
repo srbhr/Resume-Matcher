@@ -91,11 +91,12 @@ app = FastAPI(
 
 @app.middleware("http")
 async def protect_chatgpt_connection(request: Request, call_next):
+    from app.chatgpt import has_active_session
+
     # Guard the whole API while subscription credentials or a pending login
     # exist, including generation/test routes outside the ChatGPT router.
     if request.url.path.startswith("/api/") and (
-        request.url.path.startswith("/api/v1/config/chatgpt/")
-        or (settings.data_dir / "chatgpt-session.enc").exists()
+        request.url.path.startswith("/api/v1/config/chatgpt/") or has_active_session()
     ):
         try:
             require_local_request(request)

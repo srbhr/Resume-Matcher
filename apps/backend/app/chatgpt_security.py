@@ -64,12 +64,15 @@ def require_local_request(request: Request) -> None:
     forwarded_host = request.headers.get("x-forwarded-host")
     if forwarded_host and not _local_authority(forwarded_host):
         raise HTTPException(403, "Remote proxy access to ChatGPT is disabled.")
-    # Browser-origin checks complement the listener restriction against CSRF.
-    if request.headers.get("sec-fetch-site") == "cross-site":
-        raise HTTPException(403, "Cross-site ChatGPT requests are not allowed.")
+    # A trusted localhost Origin can be cross-site when frontend and backend
+    # use different loopback hostnames. Validate it before considering fetch metadata.
     origin = request.headers.get("origin")
     if origin:
-        parsed = urlsplit(origin)
+        try:
+            parsed = urlsplit(origin)
+            _ = parsed.port
+        except ValueError as error:
+            raise HTTPException(403, "Request origin is not allowed.") from error
         allowed = set(settings.effective_cors_origins)
         allowed.add(str(request.base_url).rstrip("/"))
         if (
@@ -78,3 +81,12 @@ def require_local_request(request: Request) -> None:
             or origin not in allowed
         ):
             raise HTTPException(403, "Request origin is not allowed.")
+    elif request.headers.get("sec-fetch-site") == "cross-site":
+        # Missing provenance never authorizes an explicitly cross-site request.
+        raise HTTPException(403, "Cross-site ChatGPT requests are not allowed.")
+    # Every protected mutation needs a non-simple header, including generation
+    # and config routes. HTML forms cannot supply it; scripts require CORS.
+    if request.method in {"POST", "PUT", "PATCH", "DELETE"} and (
+        request.headers.get("x-chatgpt-request") != "1"
+    ):
+        raise HTTPException(403, "Missing ChatGPT request header.")

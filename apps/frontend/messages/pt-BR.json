@@ -658,6 +658,8 @@
   },
   "settings": {
     "chatgpt": {
+      "restartBackend": "Reinicie o backend para habilitar a conexão com o ChatGPT.",
+      "connectionFailed": "A conexão com o ChatGPT falhou.",
       "description": "Use sua assinatura do ChatGPT para processar currículos. O uso conta para os limites do seu plano.",
       "sharedAccount": "Esta conexão é compartilhada por esta instalação do Resume Matcher.",
       "connected": "Conectado ao ChatGPT",

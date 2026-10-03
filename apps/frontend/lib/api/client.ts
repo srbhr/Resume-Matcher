@@ -137,7 +137,18 @@ export async function apiFetch(
   }, timeout);
 
   try {
-    const request = fetch(url, { ...options, signal: controller.signal }).then(bufferResponse);
+    // Every API mutation uses a non-simple header so browser requests require
+    // CORS approval before they can spend a connected subscription or change state.
+    const requestOptions = { ...options, signal: controller.signal };
+    if (
+      !['GET', 'HEAD', 'OPTIONS'].includes((options?.method ?? 'GET').toUpperCase()) &&
+      !isAbsoluteUrl
+    ) {
+      const headers = new Headers(options?.headers);
+      headers.set('X-ChatGPT-Request', '1');
+      requestOptions.headers = Object.fromEntries(headers.entries());
+    }
+    const request = fetch(url, requestOptions).then(bufferResponse);
     return await Promise.race([request, cancellation]);
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') {

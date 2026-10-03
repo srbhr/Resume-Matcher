@@ -658,6 +658,8 @@
   },
   "settings": {
     "chatgpt": {
+      "restartBackend": "ChatGPT 연결을 활성화하려면 백엔드를 다시 시작하세요.",
+      "connectionFailed": "ChatGPT 연결에 실패했습니다.",
       "description": "ChatGPT 구독으로 이력서 요청을 처리합니다. 사용량은 요금제 한도에 포함됩니다.",
       "sharedAccount": "이 연결은 이 Resume Matcher 설치에서 공유됩니다.",
       "connected": "ChatGPT 연결됨",

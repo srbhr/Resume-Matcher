@@ -658,6 +658,8 @@
   },
   "settings": {
     "chatgpt": {
+      "restartBackend": "Redémarrez le backend pour activer la connexion à ChatGPT.",
+      "connectionFailed": "La connexion à ChatGPT a échoué.",
       "description": "Utilisez votre abonnement ChatGPT pour traiter les CV. L'utilisation compte dans les limites de votre forfait.",
       "sharedAccount": "Cette connexion est partagée par cette installation de Resume Matcher.",
       "connected": "Connecté à ChatGPT",

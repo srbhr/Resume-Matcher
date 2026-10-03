@@ -431,9 +431,11 @@ export type ApiKeyProvider =
 // Map an LLM provider (the active-provider axis) to its key-store provider
 // name. Mirrors the backend `_PROVIDER_KEY_MAP` (gemini → google; the local
 // providers pass through). Keys are persisted under the key-store name.
-export function llmProviderToKeyProvider(provider: LLMProvider): ApiKeyProvider {
+export function llmProviderToKeyProvider(provider: LLMProvider): ApiKeyProvider | null {
+  // Subscription credentials live outside the API-key store.
+  if (provider === 'chatgpt') return null;
   if (provider === 'gemini') return 'google';
-  return provider as ApiKeyProvider;
+  return provider;
 }
 
 export interface ApiKeyProviderStatus {

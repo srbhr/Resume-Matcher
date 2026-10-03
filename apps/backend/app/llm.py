@@ -1,5 +1,6 @@
 """LiteLLM wrapper for multi-provider AI support."""
 
+import asyncio
 import json
 import logging
 import re
@@ -670,7 +671,12 @@ def get_llm_config() -> LLMConfig:
         provider=provider,
         model=model,
         api_key=api_key,
-        api_base=stored.get("api_base", settings.llm_api_base),
+        # Subscription requests never inherit a different provider's endpoint.
+        api_base=(
+            None
+            if provider == "chatgpt"
+            else stored.get("api_base", settings.llm_api_base)
+        ),
         api_version=stored.get("api_version"),
         reasoning_effort=reasoning_effort,
     )
@@ -869,6 +875,17 @@ async def check_llm_health(
         # LiteLLM's API-key transport while retaining safe health-check output.
         result: dict[str, Any] = {"provider": config.provider, "model": config.model}
         try:
+            # Dashboard refreshes and background saves check entitlement without
+            # generating text or spending the account's inference allowance.
+            if not include_details and test_prompt is None:
+                async with asyncio.timeout(LLM_TIMEOUT_HEALTH_CHECK):
+                    available = await chatgpt.models()
+                if config.model not in {item["id"] for item in available}:
+                    raise chatgpt.ChatGPTError("Select an available ChatGPT model.")
+                result["healthy"] = True
+                return result
+
+            # Only an explicit connection test runs an actual completion.
             output = await chatgpt.complete(
                 test_prompt or "Hi",
                 None,
@@ -1021,13 +1038,19 @@ async def complete(
         # Keep caller prompt limits/timeouts while delegating OAuth transport.
         from app import chatgpt
 
-        return await chatgpt.complete(
-            prompt,
-            system_prompt,
-            config.model,
-            config.reasoning_effort,
-            timeout=_calculate_timeout("completion", max_tokens, config.provider),
-        )
+        try:
+            return await chatgpt.complete(
+                prompt,
+                system_prompt,
+                config.model,
+                config.reasoning_effort,
+                timeout=_calculate_timeout("completion", max_tokens, config.provider),
+            )
+        except chatgpt.ChatGPTError:
+            # Do not log tokens, upstream bodies or prompts, and retain the
+            # transport exception type so JSON validation cannot retry it.
+            logging.warning("ChatGPT completion failed")
+            raise
     router, config = get_router(config)
     model_name = get_model_name(config)
 

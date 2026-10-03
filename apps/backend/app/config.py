@@ -312,8 +312,8 @@ class Settings(BaseSettings):
         return value
 
     # Server Configuration
-    # Personal subscription credentials require local frontend/backend listeners.
-    host: str = "127.0.0.1"
+    # Preserve existing deployments; subscription locality is enforced per request.
+    host: str = "0.0.0.0"
     port: int = 8000
     reload: bool = False
     log_level: Literal["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"] = "INFO"

@@ -658,6 +658,8 @@
   },
   "settings": {
     "chatgpt": {
+      "restartBackend": "ChatGPT 接続を有効にするにはバックエンドを再起動してください。",
+      "connectionFailed": "ChatGPT への接続に失敗しました。",
       "description": "ChatGPT のサブスクリプションで履歴書の処理を行います。使用量はプランの上限に計上されます。",
       "sharedAccount": "この接続はこの Resume Matcher インスタンスで共有されます。",
       "connected": "ChatGPT に接続済み",

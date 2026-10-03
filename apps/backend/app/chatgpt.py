@@ -7,6 +7,7 @@ The connection belongs to this single-user Resume Matcher installation.
 
 import asyncio
 import json
+import math
 import os
 import tempfile
 import time
@@ -32,6 +33,11 @@ _jwks_cache: tuple[list[dict], float] = ([], 0)
 
 class ChatGPTError(RuntimeError):
     """Safe error text; never includes provider bodies or bearer credentials."""
+
+    def __init__(self, message: str, *, status_code: int = 400):
+        """Carry a safe HTTP category without exposing upstream response bodies."""
+        super().__init__(message)
+        self.status_code = status_code
 
 
 def _path() -> Path:
@@ -66,6 +72,10 @@ def _load() -> dict[str, Any]:
 
 def _save(session: dict[str, Any]) -> None:
     """Encrypt before writing, then atomically replace the credential record."""
+    # Clearing the final token or device code must also end the local-only gate.
+    if not session:
+        _path().unlink(missing_ok=True)
+        return
     settings.data_dir.mkdir(parents=True, exist_ok=True)
     ciphertext = encrypt(json.dumps(session))
     descriptor, name = tempfile.mkstemp(dir=settings.data_dir, prefix=".chatgpt-")
@@ -183,9 +193,19 @@ def _tokens(
     identity = raw.get("id_token") or previous.get("id_token", "")
     claims = claims or {}
     auth = claims.get(AUTH_CLAIM) or {}
+    if not isinstance(auth, dict):
+        raise ChatGPTError("ChatGPT returned invalid account details.", status_code=503)
     account_id = auth.get("chatgpt_account_id") or previous.get("account_id")
     if not isinstance(account_id, str) or not account_id:
         raise ChatGPTError("ChatGPT did not return an account ID. Sign in again.")
+    # Provider format changes must not strand an already-consumed login code.
+    # Non-finite values would also persist unusable expiry timestamps forever.
+    try:
+        lifetime = float(raw.get("expires_in", 3600))
+        if not math.isfinite(lifetime) or lifetime <= 0:
+            lifetime = 3600
+    except (ValueError, TypeError, OverflowError):
+        lifetime = 3600
     return {
         "access_token": access,
         "refresh_token": raw.get("refresh_token") or previous.get("refresh_token"),
@@ -194,7 +214,7 @@ def _tokens(
         "email": claims.get("email") or previous.get("email"),
         "plan": auth.get("chatgpt_plan_type") or previous.get("plan"),
         "subject": claims.get("sub") or previous.get("subject"),
-        "expires_at": time.time() + float(raw.get("expires_in", 3600)),
+        "expires_at": time.time() + lifetime,
     }
 
 
@@ -226,12 +246,60 @@ async def _post(path: str, **kwargs) -> httpx.Response:
         async with httpx.AsyncClient(timeout=remaining_timeout(30)) as client:
             return await client.post(ISSUER + path, **kwargs)
     except httpx.HTTPError as error:
-        raise ChatGPTError("Could not reach ChatGPT. Please try again.") from error
+        raise ChatGPTError(
+            "Could not reach ChatGPT. Please try again.", status_code=503
+        ) from error
+
+
+def _response_object(response: httpx.Response) -> dict:
+    """Reject malformed provider JSON as a transport failure, not user content."""
+    try:
+        result = response.json()
+        if not isinstance(result, dict):
+            raise ValueError("Expected object")
+        return result
+    except (ValueError, TypeError) as error:
+        raise ChatGPTError(
+            "ChatGPT returned an invalid response. Please try again.", status_code=503
+        ) from error
+
+
+def _valid_device(device: Any) -> bool:
+    """Reject incomplete legacy device records before accessing their fields."""
+    try:
+        return (
+            isinstance(device, dict)
+            and isinstance(device["device_auth_id"], str)
+            and bool(device["device_auth_id"])
+            and isinstance(device["user_code"], str)
+            and bool(device["user_code"])
+            and math.isfinite(device["expires_at"])
+            and 5 <= device["interval"] <= 60
+            and math.isfinite(device["last_polled_at"])
+        )
+    except (KeyError, TypeError, ValueError, OverflowError):
+        return False
 
 
 def connected() -> bool:
     """Report saved credential availability without sending tokens to the UI."""
     return bool(_load().get("tokens"))
+
+
+def has_active_session() -> bool:
+    """Gate API access on credentials or a live login; fail closed on corruption."""
+    try:
+        session = _load()
+        if session.get("tokens"):
+            return True
+        device = session.get("device")
+        if not device:
+            return False
+        expiry = float(device["expires_at"])
+        return not math.isfinite(expiry) or expiry > time.time()
+    except (ChatGPTError, KeyError, ValueError, TypeError, OverflowError):
+        # An unreadable session may still contain subscription credentials.
+        return True
 
 
 async def start_login() -> dict:
@@ -242,8 +310,12 @@ async def start_login() -> dict:
         except ChatGPTError:
             session = {}  # Explicit sign-in can replace a corrupt connection.
         device = session.get("device")
-        if device and device["expires_at"] > time.time():
+        if _valid_device(device) and device["expires_at"] > time.time():
             return _public_device(device)
+        if device:
+            # An expired or incomplete code cannot be resumed safely.
+            session.pop("device", None)
+            _save(session)
         response = await _post(
             "/api/accounts/deviceauth/usercode", json={"client_id": CLIENT_ID}
         )
@@ -251,16 +323,21 @@ async def start_login() -> dict:
             raise ChatGPTError(
                 "Could not start ChatGPT sign-in. Enable device-code login in your ChatGPT security settings and try again."
             )
-        raw = response.json()
+        raw = _response_object(response)
         code = raw.get("user_code") or raw.get("usercode")
-        if not raw.get("device_auth_id") or not code:
+        if (
+            not isinstance(raw.get("device_auth_id"), str)
+            or not raw["device_auth_id"]
+            or not isinstance(code, str)
+            or not code
+        ):
             raise ChatGPTError(
                 "ChatGPT returned an invalid sign-in code. Please try again."
             )
         try:
             # Clamp polling intervals to prevent malformed or abusive responses.
             interval = max(5, min(60, int(raw.get("interval", 5))))
-        except (ValueError, TypeError):
+        except (ValueError, TypeError, OverflowError):
             interval = 5
         device = {
             "device_auth_id": raw["device_auth_id"],
@@ -291,7 +368,9 @@ async def status(*, advance: bool = False) -> dict:
         session = _load()
         device = session.get("device")
         expired = False
-        if device and device["expires_at"] <= time.time():
+        if device and (
+            not _valid_device(device) or device["expires_at"] <= time.time()
+        ):
             # Expiry ends the pending attempt without destroying a prior login.
             session.pop("device", None)
             _save(session)
@@ -314,30 +393,47 @@ async def status(*, advance: bool = False) -> dict:
             )
             if response.status_code not in (403, 404, 429):
                 if not response.is_success:
+                    if response.status_code >= 500:
+                        raise _upstream_error(response.status_code)
+                    # Terminal rejection invalidates the code; the next login
+                    # must request a new code instead of resuming this one.
+                    session.pop("device", None)
+                    _save(session)
                     raise ChatGPTError(
                         "ChatGPT sign-in failed. Please start a new sign-in."
                     )
-                raw = response.json()
+                raw = _response_object(response)
+                if any(
+                    not isinstance(raw.get(field), str) or not raw[field]
+                    for field in ("authorization_code", "code_verifier")
+                ):
+                    raise ChatGPTError(
+                        "ChatGPT returned an invalid sign-in response. Please try again.",
+                        status_code=503,
+                    )
                 if raw.get("authorization_code") and raw.get("code_verifier"):
                     # Exchange the server-issued PKCE verifier; never return it.
-                    exchanged = await _post(
-                        "/oauth/token",
-                        data={
-                            "grant_type": "authorization_code",
-                            "client_id": CLIENT_ID,
-                            "code": raw["authorization_code"],
-                            "code_verifier": raw["code_verifier"],
-                            "redirect_uri": ISSUER + "/deviceauth/callback",
-                        },
-                    )
-                    if not exchanged.is_success:
-                        session.pop("device", None)
-                        _save(session)
-                        raise ChatGPTError(
-                            "ChatGPT sign-in expired. Please sign in again."
-                        )
                     try:
-                        verified = await _verified_tokens(exchanged.json())
+                        exchanged = await _post(
+                            "/oauth/token",
+                            data={
+                                "grant_type": "authorization_code",
+                                "client_id": CLIENT_ID,
+                                "code": raw["authorization_code"],
+                                "code_verifier": raw["code_verifier"],
+                                "redirect_uri": ISSUER + "/deviceauth/callback",
+                            },
+                        )
+                        if not exchanged.is_success:
+                            if (
+                                exchanged.status_code == 429
+                                or exchanged.status_code >= 500
+                            ):
+                                raise _upstream_error(exchanged.status_code)
+                            raise ChatGPTError(
+                                "ChatGPT sign-in expired. Please sign in again."
+                            )
+                        verified = await _verified_tokens(_response_object(exchanged))
                     except ChatGPTError:
                         # A consumed authorization code cannot be retried safely.
                         session.pop("device", None)
@@ -384,7 +480,7 @@ async def fresh_tokens(*, rejected_token: str | None = None) -> dict:
             raise ChatGPTError("ChatGPT login expired. Sign in again in Settings.")
         response = await _post(
             "/oauth/token",
-            json={
+            data={
                 "grant_type": "refresh_token",
                 "client_id": CLIENT_ID,
                 "refresh_token": tokens["refresh_token"],
@@ -399,8 +495,8 @@ async def fresh_tokens(*, rejected_token: str | None = None) -> dict:
                 raise ChatGPTError(
                     "ChatGPT login expired or was revoked. Sign in again in Settings."
                 )
-            raise ChatGPTError("Could not refresh ChatGPT login. Please try again.")
-        tokens = await _verified_tokens(response.json(), tokens)
+            raise _upstream_error(response.status_code)
+        tokens = await _verified_tokens(_response_object(response), tokens)
         session["tokens"] = tokens
         _save(session)
         return tokens
@@ -420,14 +516,16 @@ def _upstream_error(status_code: int) -> ChatGPTError:
     """Translate provider failures without exposing tokens, bodies, or prompts."""
     if status_code == 429:
         return ChatGPTError(
-            "ChatGPT usage limit reached. Wait for your plan limit to reset or choose another provider."
+            "ChatGPT usage limit reached. Wait for your plan limit to reset or choose another provider.",
+            status_code=429,
         )
     if status_code in (401, 403):
         return ChatGPTError(
             "ChatGPT access was denied. Reconnect your account in Settings."
         )
     return ChatGPTError(
-        f"ChatGPT request failed (HTTP {status_code}). Please try again or choose another model."
+        f"ChatGPT request failed (HTTP {status_code}). Please try again or choose another model.",
+        status_code=503 if status_code >= 500 else 400,
     )
 
 
@@ -473,7 +571,7 @@ async def models() -> list[dict[str, str]]:
             return list(result.values())
     except (httpx.HTTPError, ValueError, AttributeError, TypeError) as error:
         raise ChatGPTError(
-            "Could not load ChatGPT models. Reconnect and try again."
+            "Could not load ChatGPT models. Please try again.", status_code=503
         ) from error
     return []
 
@@ -531,11 +629,26 @@ async def complete(
                         data = line[5:].strip()
                         if data == "[DONE]":
                             break
-                        event = json.loads(data)
+                        # Malformed stream envelopes are provider failures and
+                        # must never trigger JSON-content retries or leak bodies.
+                        try:
+                            event = json.loads(data)
+                            if not isinstance(event, dict):
+                                raise ValueError("Expected event object")
+                        except (ValueError, TypeError) as error:
+                            raise ChatGPTError(
+                                "ChatGPT returned an invalid stream event. Please try again.",
+                                status_code=503,
+                            ) from error
                         kind = event.get("type")
                         if kind == "response.output_text.delta":
                             # Bound memory use while collecting visible output.
                             delta = event.get("delta", "")
+                            if not isinstance(delta, str):
+                                raise ChatGPTError(
+                                    "ChatGPT returned invalid response text. Please try again.",
+                                    status_code=503,
+                                )
                             size += len(delta)
                             if size > 1024 * 1024:
                                 raise ChatGPTError(
@@ -544,10 +657,13 @@ async def complete(
                             chunks.append(delta)
                         elif kind == "response.completed":
                             # Partial text is not evidence of a successful turn.
-                            if (
-                                event.get("response", {}).get("status", "completed")
-                                != "completed"
-                            ):
+                            terminal = event.get("response", {})
+                            if not isinstance(terminal, dict):
+                                raise ChatGPTError(
+                                    "ChatGPT returned an invalid completion event. Please try again.",
+                                    status_code=503,
+                                )
+                            if terminal.get("status", "completed") != "completed":
                                 raise ChatGPTError(
                                     "ChatGPT returned an incomplete response. Please try again."
                                 )
@@ -560,11 +676,23 @@ async def complete(
                             "response.failed",
                             "response.incomplete",
                         ):
-                            code = (
-                                event.get("response", {}).get("error")
+                            terminal = event.get("response", {})
+                            failure = (
+                                (
+                                    terminal.get("error")
+                                    if isinstance(terminal, dict)
+                                    else None
+                                )
                                 or event.get("error")
                                 or {}
-                            ).get("code", "")
+                            )
+                            code = (
+                                failure.get("code", "")
+                                if isinstance(failure, dict)
+                                else ""
+                            )
+                            if not isinstance(code, str):
+                                code = ""
                             if "limit" in code or "quota" in code:
                                 raise _upstream_error(429)
                             raise ChatGPTError(
@@ -576,7 +704,9 @@ async def complete(
     except httpx.TimeoutException as error:
         raise TimeoutError("ChatGPT request timed out.") from error
     except httpx.HTTPError as error:
-        raise ChatGPTError("Could not reach ChatGPT. Please try again.") from error
+        raise ChatGPTError(
+            "Could not reach ChatGPT. Please try again.", status_code=503
+        ) from error
     raise ChatGPTError("ChatGPT access was denied. Reconnect in Settings.")
 
 
@@ -587,7 +717,9 @@ async def disconnect() -> dict:
             tokens = _load().get("tokens", {})
         except ChatGPTError:
             tokens = {}
-        confirmed = not bool(tokens.get("refresh_token"))
+        # Saved credentials require a confirmed revocation attempt, even when
+        # the provider omitted a refresh token and only an access token exists.
+        confirmed = not bool(tokens)
         if tokens.get("refresh_token"):
             # Use OpenAI's published revocation endpoint; no token appears in URLs.
             try:

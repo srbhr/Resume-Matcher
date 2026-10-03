@@ -27,7 +27,20 @@ interface ModelOption {
   name: string;
 }
 
-async function request<T>(path: string, method = 'GET', signal?: AbortSignal): Promise<T> {
+class ConnectionRequestError extends Error {
+  constructor(
+    public status: number,
+    public detail: string | null
+  ) {
+    super(detail ?? '');
+  }
+}
+
+async function connectionRequest<T>(
+  path: string,
+  method = 'GET',
+  signal?: AbortSignal
+): Promise<T> {
   // The custom header makes mutations require a CORS preflight across origins.
   const response = await apiFetch(`/config/chatgpt/${path}`, {
     method,
@@ -35,16 +48,15 @@ async function request<T>(path: string, method = 'GET', signal?: AbortSignal): P
     headers: { 'X-ChatGPT-Request': '1' },
     signal,
   });
-  const result = await response.json();
+  // Proxies can return HTML or an empty error body; never expose parser errors.
+  const result = await response.json().catch(() => null);
   if (!response.ok) {
-    throw new Error(
-      response.status === 404
-        ? 'Restart the backend to enable the ChatGPT connection endpoints.'
-        : typeof result.detail === 'string'
-          ? result.detail
-          : 'ChatGPT connection failed.'
+    throw new ConnectionRequestError(
+      response.status,
+      typeof result?.detail === 'string' ? result.detail : null
     );
   }
+  if (result === null) throw new ConnectionRequestError(response.status, null);
   return result as T;
 }
 
@@ -52,23 +64,40 @@ export function ChatGPTConnection({
   model,
   onModelChange,
   onConnectionChange,
+  onCatalogReadyChange,
 }: {
   model: string;
   onModelChange: (value: string) => void;
   onConnectionChange?: () => Promise<void>;
+  onCatalogReadyChange?: (ready: boolean) => void;
 }) {
   const { t } = useTranslations();
   const [connection, setConnection] = useState<Connection | null>(null);
+  const [modelsLoading, setModelsLoading] = useState(false);
+  const catalogController = useRef<AbortController | null>(null);
   const [models, setModels] = useState<ModelOption[]>([]);
   const [working, setWorking] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
-  const loadModels = useCallback(async (signal?: AbortSignal) => {
-    // Keep the catalog account-driven and discard responses after unmounting.
-    const result = await request<{ models: ModelOption[] }>('models', 'GET', signal);
-    if (!signal?.aborted) setModels(result.models);
-  }, []);
+  // Translate local fallback errors while preserving safe backend error details.
+  const request = useCallback(
+    async <T,>(path: string, method = 'GET', signal?: AbortSignal): Promise<T> => {
+      try {
+        return await connectionRequest<T>(path, method, signal);
+      } catch (reason) {
+        if (reason instanceof ConnectionRequestError) {
+          reason.message =
+            reason.status === 404
+              ? t('settings.chatgpt.restartBackend')
+              : reason.detail || t('settings.chatgpt.connectionFailed');
+          throw reason;
+        }
+        throw reason;
+      }
+    },
+    [t]
+  );
 
   useEffect(() => {
     // Resume an existing login on mount without initiating a new authorization.
@@ -79,12 +108,15 @@ export function ChatGPTConnection({
         if (controller.signal.aborted) return;
         setConnection(result);
       } catch (reason) {
-        if (!controller.signal.aborted) setError((reason as Error).message);
+        if (!controller.signal.aborted) {
+          setError((reason as Error).message);
+          setConnection({ connected: false, pending: false, expired: false });
+        }
       }
     }
     void load();
     return () => controller.abort();
-  }, []);
+  }, [request]);
 
   const connected = Boolean(connection?.connected);
   const pending = Boolean(connection?.pending);
@@ -100,17 +132,47 @@ export function ChatGPTConnection({
     if (connected || previous !== null) void onConnectionChange?.();
   }, [hasConnectionStatus, connected, onConnectionChange]);
 
-  useEffect(() => {
-    // Model loading has its own cancellation scope. Completing login tears
-    // down polling, which must not abort the subsequent catalog request.
+  const loadModels = useCallback(async () => {
     if (!connected || pending) return;
+    // Automatic and manual refreshes share cancellation, including disconnect.
+    catalogController.current?.abort();
     const controller = new AbortController();
+    catalogController.current = controller;
+    setModelsLoading(true);
     setError(null);
-    void loadModels(controller.signal).catch((reason: Error) => {
-      if (!controller.signal.aborted) setError(reason.message);
-    });
-    return () => controller.abort();
+    try {
+      const result = await request<{ models: ModelOption[] }>('models', 'GET', controller.signal);
+      if (!controller.signal.aborted) setModels(result.models);
+    } catch (reason) {
+      if (!controller.signal.aborted) setError((reason as Error).message);
+    } finally {
+      if (!controller.signal.aborted) setModelsLoading(false);
+    }
+  }, [connected, pending, request]);
+
+  useEffect(() => {
+    // Catalog requests have their own scope; completing login only retires polling.
+    if (!connected || pending) {
+      setModels([]);
+      setModelsLoading(false);
+    } else {
+      void loadModels();
+    }
+    return () => {
+      catalogController.current?.abort();
+    };
   }, [connected, pending, accountEmail, loadModels]);
+
+  const catalogReady =
+    connected &&
+    !pending &&
+    !working &&
+    !modelsLoading &&
+    models.some((option) => option.id === model);
+  useEffect(() => {
+    // A saved model must be verified against this account before Save is enabled.
+    onCatalogReadyChange?.(catalogReady);
+  }, [catalogReady, onCatalogReadyChange]);
 
   const device = connection?.device;
   useEffect(() => {
@@ -138,6 +200,17 @@ export function ChatGPTConnection({
       } catch (reason) {
         if (controller.signal.aborted) return;
         setError((reason as Error).message);
+        // A terminal authorization failure retires the code while retaining an
+        // existing connection. Transient outages keep polling until code expiry.
+        if (
+          reason instanceof ConnectionRequestError &&
+          [400, 401, 403, 404].includes(reason.status)
+        ) {
+          setConnection((current) =>
+            current ? { ...current, pending: false, device: null } : null
+          );
+          return;
+        }
       }
       timer = setTimeout(() => void poll(), Math.max(5, device!.interval) * 1000);
     }
@@ -146,14 +219,14 @@ export function ChatGPTConnection({
       clearTimeout(timer);
       controller.abort();
     };
-  }, [device, t]);
+  }, [device, t, request]);
 
   // Use the account's catalog rather than a fixed model default.
   useEffect(() => {
-    if (models.length && !models.some((option) => option.id === model)) {
+    if (connected && !pending && models.length && !models.some((option) => option.id === model)) {
       onModelChange(models[0].id);
     }
-  }, [models, model, onModelChange]);
+  }, [connected, pending, models, model, onModelChange]);
 
   async function connect() {
     // Start sign-in from an explicit click; tokens never enter browser storage.
@@ -177,6 +250,9 @@ export function ChatGPTConnection({
   }
 
   async function disconnect() {
+    // Retire any catalog request before logout so late responses cannot reselect a model.
+    catalogController.current?.abort();
+    setModelsLoading(false);
     // Clear local UI state even when the server cannot confirm remote revocation.
     setWorking(true);
     setError(null);
@@ -205,7 +281,11 @@ export function ChatGPTConnection({
         </p>
       )}
       <div className="flex flex-wrap gap-2">
-        <Button type="button" onClick={connect} disabled={working || Boolean(device)}>
+        <Button
+          type="button"
+          onClick={connect}
+          disabled={!hasConnectionStatus || working || Boolean(device)}
+        >
           {t('settings.chatgpt.signIn')}
         </Button>
         {(connection?.connected || device) && (
@@ -216,11 +296,8 @@ export function ChatGPTConnection({
         {connection?.connected && (
           <Button
             type="button"
-            disabled={working}
-            onClick={() => {
-              setError(null);
-              void loadModels().catch((reason: Error) => setError(reason.message));
-            }}
+            disabled={working || pending || modelsLoading}
+            onClick={() => void loadModels()}
           >
             {t('settings.chatgpt.refreshModels')}
           </Button>
@@ -241,7 +318,7 @@ export function ChatGPTConnection({
           <p className="text-xs text-steel-grey">{t('settings.chatgpt.waiting')}</p>
         </div>
       )}
-      {models.length > 0 && (
+      {connected && !pending && models.length > 0 && (
         // Present the server's display labels while saving its exact model IDs.
         <Dropdown
           label={t('settings.llmConfiguration.modelLabel')}

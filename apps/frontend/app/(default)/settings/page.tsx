@@ -120,6 +120,7 @@ export default function SettingsPage() {
   // LLM Config state
   const [provider, setProvider] = useState<LLMProvider>('openai');
   const [model, setModel] = useState('');
+  const [chatgptCatalogReady, setChatgptCatalogReady] = useState(false);
   const [apiKey, setApiKey] = useState('');
   const [apiBase, setApiBase] = useState('');
   const [hasStoredApiKey, setHasStoredApiKey] = useState(false);
@@ -309,7 +310,9 @@ export default function SettingsPage() {
           // Whether THIS provider already has an encrypted key (per-provider,
           // not the legacy shared slot) drives the "leave blank to keep" hint.
           const keyProvider = llmProviderToKeyProvider(safeProvider);
-          setHasStoredApiKey(statuses.some((s) => s.provider === keyProvider && s.configured));
+          setHasStoredApiKey(
+            keyProvider !== null && statuses.some((s) => s.provider === keyProvider && s.configured)
+          );
           setApiKey('');
           setApiBase(llmConfig.api_base || '');
           setReasoningEffort((llmConfig.reasoning_effort as ReasoningEffort | null) ?? 'auto');
@@ -356,7 +359,9 @@ export default function SettingsPage() {
   // Whether a given key-store provider currently has a saved key.
   const providerHasStoredKey = (p: LLMProvider): boolean => {
     const keyProvider = llmProviderToKeyProvider(p);
-    return apiKeyStatuses.some((s) => s.provider === keyProvider && s.configured);
+    return (
+      keyProvider !== null && apiKeyStatuses.some((s) => s.provider === keyProvider && s.configured)
+    );
   };
 
   // Re-fetch the per-provider key status (after save/delete/clear).
@@ -387,6 +392,7 @@ export default function SettingsPage() {
 
   // Handle provider change
   const handleProviderChange = (newProvider: LLMProvider) => {
+    setChatgptCatalogReady(false);
     const nextInfo = PROVIDER_INFO[newProvider];
     setProvider(newProvider);
     setModel(nextInfo.defaultModel);
@@ -414,6 +420,7 @@ export default function SettingsPage() {
 
   // Save configuration
   const handleSave = async () => {
+    if (provider === 'chatgpt' && !chatgptCatalogReady) return;
     setStatus('saving');
     setError(null);
     setHealthCheck(null);
@@ -435,8 +442,8 @@ export default function SettingsPage() {
       // (1) Persist the key to the encrypted PER-PROVIDER store (only when the
       // user typed a new one). This is the bug fix: keys no longer ride on the
       // shared config slot, so saving one provider never wipes another's key.
-      if (trimmedKey && provider !== 'chatgpt') {
-        const keyProvider = llmProviderToKeyProvider(provider);
+      const keyProvider = llmProviderToKeyProvider(provider);
+      if (trimmedKey && keyProvider !== null) {
         await updateApiKeys({ [keyProvider]: trimmedKey } as Record<ApiKeyProvider, string>);
       }
 
@@ -444,7 +451,8 @@ export default function SettingsPage() {
       const update: LLMConfigUpdate = {
         provider,
         model: model.trim(),
-        api_base: apiBase.trim() || null,
+        // Omit the endpoint for subscription saves to preserve other providers' URLs.
+        ...(provider !== 'chatgpt' ? { api_base: apiBase.trim() || null } : {}),
         // Map UI sentinel 'auto' → '' so the server persists an empty string
         // and the gpt-5 auto-migration won't re-fire.
         reasoning_effort: reasoningEffort === 'auto' ? '' : (reasoningEffort as ReasoningEffort),
@@ -490,7 +498,8 @@ export default function SettingsPage() {
       const testConfig: LLMConfigUpdate = {
         provider,
         model: model.trim() || providerInfo.defaultModel,
-        api_base: apiBase.trim() || null,
+        // Subscription requests resolve their own endpoint on the backend.
+        ...(provider !== 'chatgpt' ? { api_base: apiBase.trim() || null } : {}),
         reasoning_effort: reasoningEffort === 'auto' ? '' : (reasoningEffort as ReasoningEffort),
       };
 
@@ -934,6 +943,7 @@ export default function SettingsPage() {
                     model={model}
                     onModelChange={setModel}
                     onConnectionChange={refreshLlmHealth}
+                    onCatalogReadyChange={setChatgptCatalogReady}
                   />
                 ) : (
                   <>
@@ -1074,7 +1084,11 @@ export default function SettingsPage() {
               <div className="flex gap-4">
                 <Button
                   onClick={handleSave}
-                  disabled={status === 'saving' || status === 'loading'}
+                  disabled={
+                    status === 'saving' ||
+                    status === 'loading' ||
+                    (provider === 'chatgpt' && !chatgptCatalogReady)
+                  }
                   className="flex-1"
                 >
                   {status === 'saving' ? (
@@ -1094,7 +1108,11 @@ export default function SettingsPage() {
                 <Button
                   variant="outline"
                   onClick={handleTestConnection}
-                  disabled={status === 'testing' || status === 'saving'}
+                  disabled={
+                    status === 'testing' ||
+                    status === 'saving' ||
+                    (provider === 'chatgpt' && !chatgptCatalogReady)
+                  }
                 >
                   {status === 'testing' ? (
                     <Loader2 className="w-4 h-4 animate-spin" />

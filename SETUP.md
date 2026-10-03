@@ -165,7 +165,7 @@ RELOAD=true uv run app
 You should see output like:
 
 ```
-INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
 INFO:     Started reloader process
 ```
 
@@ -246,7 +246,7 @@ If device-code sign-in is unavailable, enable it in your ChatGPT security settin
 
 This connection uses Codex's hosted service and may require updates when OpenAI changes it.
 
-Use this option on your own computer through `localhost`, with both servers bound to `127.0.0.1`. The connection is shared by this installation; LAN and public access are unsupported.
+Use this option on your own computer through `localhost`. Set `HOST=127.0.0.1` in the backend `.env` and run the frontend with `npm run dev:local` (or `npm run start:local` after building). While signing in or connected, the whole installation is restricted to this computer; disconnect before enabling remote access.
 
 Your saved login is encrypted on the backend. Keep the backend data directory private and preserve it to stay signed in across restarts.
 

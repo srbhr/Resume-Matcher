@@ -11,7 +11,9 @@ def _check_origin(request: Request) -> None:
     require_local_request(request)
     # Requiring a custom header prevents cross-site form submissions, including
     # requests without an Origin header. Cross-origin scripts require CORS.
-    if request.method == "POST" and request.headers.get("x-chatgpt-request") != "1":
+    # Catalog reads may refresh expired OAuth credentials, so apply the header
+    # requirement consistently to every connection endpoint, including GET.
+    if request.headers.get("x-chatgpt-request") != "1":
         raise HTTPException(403, "Missing ChatGPT request header.")
 
 
@@ -27,7 +29,7 @@ async def _call(operation):
     try:
         return await operation
     except chatgpt.ChatGPTError as error:
-        raise HTTPException(400, str(error)) from error
+        raise HTTPException(error.status_code, str(error)) from error
 
 
 @router.post("/login")

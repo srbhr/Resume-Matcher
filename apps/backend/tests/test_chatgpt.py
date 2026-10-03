@@ -379,6 +379,7 @@ def test_local_boundary_rejects_remote_and_rebinding_requests(peer, host, header
             "type": "http",
             "scheme": "http",
             "path": "/",
+            "method": "GET",
             "server": ("localhost", 8000),
             "client": (peer, 1234),
             "headers": [
@@ -400,6 +401,7 @@ def test_local_boundary_allows_loopback(peer, host):
             "type": "http",
             "scheme": "http",
             "path": "/",
+            "method": "GET",
             "server": ("localhost", 8000),
             "client": (peer, 1234),
             "headers": [(b"host", host.encode())],

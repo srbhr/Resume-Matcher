@@ -658,6 +658,8 @@
   },
   "settings": {
     "chatgpt": {
+      "restartBackend": "请重启后端以启用 ChatGPT 连接。",
+      "connectionFailed": "ChatGPT 连接失败。",
       "description": "使用您的 ChatGPT 订阅处理简历请求。使用量计入您的套餐限额。",
       "sharedAccount": "此连接由这个 Resume Matcher 实例共享。",
       "connected": "已连接 ChatGPT",

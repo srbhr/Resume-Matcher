@@ -50,7 +50,7 @@ from app.database import db
 PROVIDERS_REQUIRING_BASE_URL: frozenset[str] = frozenset({"azure_foundry"})
 
 
-def _effective_api_base(stored: dict) -> str | None:
+def _effective_api_base(stored: dict, provider: str | None = None) -> str | None:
     """Resolve the base URL the LLM layer will actually use.
 
     ``stored.get("api_base", default)`` returns None when the key is PRESENT
@@ -60,6 +60,10 @@ def _effective_api_base(stored: dict) -> str | None:
     the required-base-URL check and then handed api_base=None to LiteLLM.
     Every site resolves through here so they cannot drift again.
     """
+    # Subscription requests use a fixed endpoint. Keep other providers' saved
+    # endpoints intact so switching back does not require entering them again.
+    if (provider or stored.get("provider", settings.llm_provider)) == "chatgpt":
+        return None
     return stored.get("api_base") or settings.llm_api_base or None
 
 
@@ -143,6 +147,8 @@ async def update_llm_config(
     `/config/llm-test` and the System Status panel.
     """
     stored = _load_config()
+    previous_provider = stored.get("provider", settings.llm_provider)
+    previous_model = stored.get("model", settings.llm_model)
 
     # Update only provided fields
     if request.provider is not None:
@@ -169,20 +175,33 @@ async def update_llm_config(
 
     # Build normalized config for response and background health check
     resolved_provider = stored.get("provider", settings.llm_provider)
-    if resolved_provider == "chatgpt":
+    if (
+        resolved_provider == "chatgpt"
+        and previous_provider != "chatgpt"
+        and (request.model is None or not request.model.strip())
+    ):
+        # Other providers' default models cannot establish account entitlement.
+        raise HTTPException(
+            status_code=422,
+            detail={"code": "model_required", "field": "model", "missing": ["model"]},
+        )
+    if resolved_provider == "chatgpt" and (
+        previous_provider != "chatgpt"
+        or stored.get("model", settings.llm_model) != previous_model
+    ):
         # Validate account entitlement before persisting a model; OAuth tokens
         # and provider endpoints never belong in the shared config response.
+        # Unchanged models do not need network access to save other settings.
         from app.chatgpt import ChatGPTError, models
 
         try:
             available = await models()
         except ChatGPTError as error:
-            raise HTTPException(400, str(error)) from error
+            raise HTTPException(error.status_code, str(error)) from error
         if stored.get("model", settings.llm_model) not in {
             item["id"] for item in available
         }:
             raise HTTPException(422, "Select an available ChatGPT model.")
-        stored["api_base"] = None
 
     # M-05: `requiresBaseUrl` was enforced in the settings UI only, so the
     # .env-driven path could persist a provider that cannot work without an
@@ -255,9 +274,13 @@ async def test_llm_connection(request: LLMConfigRequest | None = None) -> dict:
             else resolve_api_key(stored, test_provider)
         ),
         api_base=(
-            request.api_base
-            if request and request.api_base is not None
-            else _effective_api_base(stored)
+            None
+            if test_provider == "chatgpt"
+            else (
+                request.api_base
+                if request and request.api_base is not None
+                else _effective_api_base(stored, test_provider)
+            )
         ),
         reasoning_effort=(
             (request.reasoning_effort or None)
