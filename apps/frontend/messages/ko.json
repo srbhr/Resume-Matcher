@@ -657,6 +657,20 @@
     }
   },
   "settings": {
+    "chatgpt": {
+      "description": "ChatGPT 구독으로 이력서 요청을 처리합니다. 사용량은 요금제 한도에 포함됩니다.",
+      "sharedAccount": "이 연결은 이 Resume Matcher 설치에서 공유됩니다.",
+      "connected": "ChatGPT 연결됨",
+      "signIn": "ChatGPT로 로그인",
+      "disconnect": "연결 해제",
+      "refreshModels": "모델 새로고침",
+      "enterCode": "로그인 페이지를 열고 이 코드를 입력하세요:",
+      "openLogin": "ChatGPT 로그인 열기",
+      "waiting": "로그인을 기다리는 중입니다. 이 페이지는 자동으로 업데이트됩니다.",
+      "expired": "로그인 코드가 만료되었습니다. 다시 로그인하세요.",
+      "disconnected": "ChatGPT 연결을 해제했습니다.",
+      "manageAccount": "ChatGPT에서 계정 관리"
+    },
     "title": "설정",
     "subtitle": "환경설정을 구성하세요",
     "aiProvider": "AI 제공업체",

@@ -657,6 +657,20 @@
     }
   },
   "settings": {
+    "chatgpt": {
+      "description": "Use your ChatGPT subscription for resume requests. Usage counts toward your plan's limits.",
+      "sharedAccount": "This connection is shared by this Resume Matcher installation.",
+      "connected": "Connected to ChatGPT",
+      "signIn": "Sign in with ChatGPT",
+      "disconnect": "Disconnect",
+      "refreshModels": "Refresh models",
+      "enterCode": "Open the login page and enter this code:",
+      "openLogin": "Open ChatGPT login",
+      "waiting": "Waiting for sign-in. This page will update automatically.",
+      "expired": "The sign-in code expired. Please sign in again.",
+      "disconnected": "Disconnected from ChatGPT.",
+      "manageAccount": "Manage account in ChatGPT"
+    },
     "title": "Settings",
     "subtitle": "Configure your preferences",
     "aiProvider": "AI Provider",

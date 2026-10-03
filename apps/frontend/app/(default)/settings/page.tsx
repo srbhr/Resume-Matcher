@@ -32,6 +32,7 @@ import {
   type ApiKeyProvider,
 } from '@/lib/api/config';
 import { API_URL } from '@/lib/api/client';
+import { ChatGPTConnection } from '@/components/settings/chatgpt-connection';
 import { getVersionString } from '@/lib/config/version';
 import { ToggleSwitch } from '@/components/ui/toggle-switch';
 import { useStatusCache } from '@/lib/context/status-cache';
@@ -71,6 +72,7 @@ type Status = 'idle' | 'loading' | 'saving' | 'saved' | 'error' | 'testing';
 
 const PROVIDERS: LLMProvider[] = [
   'openai',
+  'chatgpt',
   'openai_compatible',
   'azure_foundry',
   'anthropic',
@@ -136,6 +138,7 @@ export default function SettingsPage() {
     isLoading: statusLoading,
     lastFetched,
     refreshStatus,
+    refreshLlmHealth,
   } = useStatusCache();
 
   // Health check result from manual test
@@ -432,7 +435,7 @@ export default function SettingsPage() {
       // (1) Persist the key to the encrypted PER-PROVIDER store (only when the
       // user typed a new one). This is the bug fix: keys no longer ride on the
       // shared config slot, so saving one provider never wipes another's key.
-      if (trimmedKey) {
+      if (trimmedKey && provider !== 'chatgpt') {
         const keyProvider = llmProviderToKeyProvider(provider);
         await updateApiKeys({ [keyProvider]: trimmedKey } as Record<ApiKeyProvider, string>);
       }
@@ -926,19 +929,29 @@ export default function SettingsPage() {
 
               {/* Model Input */}
               <div className="space-y-2">
-                <Label htmlFor="model">{t('settings.llmConfiguration.modelLabel')}</Label>
-                <Input
-                  id="model"
-                  value={model}
-                  onChange={(e) => setModel(e.target.value)}
-                  placeholder={providerInfo.defaultModel}
-                  className="font-mono"
-                />
-                <p className="text-xs text-steel-grey font-mono">
-                  {t('settings.llmConfiguration.defaultModel', {
-                    model: providerInfo.defaultModel,
-                  })}
-                </p>
+                {provider === 'chatgpt' ? (
+                  <ChatGPTConnection
+                    model={model}
+                    onModelChange={setModel}
+                    onConnectionChange={refreshLlmHealth}
+                  />
+                ) : (
+                  <>
+                    <Label htmlFor="model">{t('settings.llmConfiguration.modelLabel')}</Label>
+                    <Input
+                      id="model"
+                      value={model}
+                      onChange={(e) => setModel(e.target.value)}
+                      placeholder={providerInfo.defaultModel}
+                      className="font-mono"
+                    />
+                    <p className="text-xs text-steel-grey font-mono">
+                      {t('settings.llmConfiguration.defaultModel', {
+                        model: providerInfo.defaultModel,
+                      })}
+                    </p>
+                  </>
+                )}
               </div>
 
               {/* API Key Input — always enabled. For providers that don't
@@ -947,33 +960,35 @@ export default function SettingsPage() {
                   their deployment needs auth (e.g., a secured LM Studio or a
                   hosted OpenAI-compatible proxy). Save-time validation only
                   fails when `requiresApiKey` is true. */}
-              <div className="space-y-2">
-                <Label htmlFor="apiKey">
-                  {t('settings.llmConfiguration.apiKeyLabel')}{' '}
-                  {!requiresApiKey && (
-                    <span className="text-steel-grey">
-                      {t('settings.llmConfiguration.apiKeyOptional')}
-                    </span>
+              {provider !== 'chatgpt' && (
+                <div className="space-y-2">
+                  <Label htmlFor="apiKey">
+                    {t('settings.llmConfiguration.apiKeyLabel')}{' '}
+                    {!requiresApiKey && (
+                      <span className="text-steel-grey">
+                        {t('settings.llmConfiguration.apiKeyOptional')}
+                      </span>
+                    )}
+                  </Label>
+                  <Input
+                    id="apiKey"
+                    type="password"
+                    value={apiKey}
+                    onChange={(e) => setApiKey(e.target.value)}
+                    placeholder={
+                      requiresApiKey
+                        ? t('settings.llmConfiguration.apiKeyPlaceholder')
+                        : t('settings.llmConfiguration.apiKeyOptionalPlaceholder')
+                    }
+                    className="font-mono"
+                  />
+                  {hasStoredApiKey && !apiKey && (
+                    <p className="text-xs text-steel-grey font-mono">
+                      {t('settings.llmConfiguration.leaveBlankToKeepExistingKey')}
+                    </p>
                   )}
-                </Label>
-                <Input
-                  id="apiKey"
-                  type="password"
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                  placeholder={
-                    requiresApiKey
-                      ? t('settings.llmConfiguration.apiKeyPlaceholder')
-                      : t('settings.llmConfiguration.apiKeyOptionalPlaceholder')
-                  }
-                  className="font-mono"
-                />
-                {hasStoredApiKey && !apiKey && (
-                  <p className="text-xs text-steel-grey font-mono">
-                    {t('settings.llmConfiguration.leaveBlankToKeepExistingKey')}
-                  </p>
-                )}
-              </div>
+                </div>
+              )}
 
               {/* Saved per-provider keys — each provider keeps its own encrypted
                   key, so switching providers never wipes another's. */}
@@ -1016,19 +1031,21 @@ export default function SettingsPage() {
               )}
 
               {/* API Base URL (optional, for proxies/aggregators/custom endpoints) */}
-              <div className="space-y-2">
-                <Label htmlFor="apiBase">
-                  {baseUrlLabel} {requiresApiBase && <span className="text-destructive">*</span>}
-                </Label>
-                <Input
-                  id="apiBase"
-                  value={apiBase}
-                  onChange={(e) => setApiBase(e.target.value)}
-                  placeholder={baseUrlPlaceholder}
-                  className="font-mono"
-                />
-                <p className="text-xs text-steel-grey font-mono">{baseUrlDescription}</p>
-              </div>
+              {provider !== 'chatgpt' && (
+                <div className="space-y-2">
+                  <Label htmlFor="apiBase">
+                    {baseUrlLabel} {requiresApiBase && <span className="text-destructive">*</span>}
+                  </Label>
+                  <Input
+                    id="apiBase"
+                    value={apiBase}
+                    onChange={(e) => setApiBase(e.target.value)}
+                    placeholder={baseUrlPlaceholder}
+                    className="font-mono"
+                  />
+                  <p className="text-xs text-steel-grey font-mono">{baseUrlDescription}</p>
+                </div>
+              )}
 
               {/* Reasoning Effort (optional, only applies to reasoning-capable models) */}
               <div className="space-y-2">

@@ -6,11 +6,11 @@ import socket
 import sys
 import tempfile
 from collections.abc import AsyncIterator, Iterator
+from contextvars import ContextVar
 from pathlib import Path
 from typing import Any, NoReturn
 
 import pytest
-
 
 # Set DATA_DIR before pytest imports any test module. Several integration tests
 # import app.main at module scope, which constructs Settings and the global
@@ -21,13 +21,20 @@ _TEST_DATA_DIR_CONTEXT = tempfile.TemporaryDirectory(prefix="resume-matcher-test
 _TEST_DATA_DIR = Path(_TEST_DATA_DIR_CONTEXT.name)
 os.environ["DATA_DIR"] = str(_TEST_DATA_DIR)
 
-import app.config as _config_module  # noqa: E402 - DATA_DIR must be set first
+import app.config as _config_module
 
 _IMPORTED_CONFIG_FILE_PATH = _config_module.CONFIG_FILE_PATH
 
 
 class UnexpectedNetworkAccess(RuntimeError):
     """Raised when a deterministic backend test attempts a real connection."""
+
+
+# Windows creates asyncio's wakeup pipe with a loopback socket pair. Permit
+# only that synchronous construction while retaining the external-network guard.
+_building_socketpair: ContextVar[bool] = ContextVar(
+    "building_socketpair", default=False
+)
 
 
 def pytest_unconfigure(config: pytest.Config) -> None:
@@ -67,8 +74,30 @@ def deny_external_network(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
             "External network access blocked in deterministic backend tests"
         )
 
+    original_connect = socket.socket.connect
+    original_socketpair = socket.socketpair
+
+    def guarded_connect(sock: socket.socket, address: Any) -> Any:
+        # The Windows socketpair fallback connects to its own temporary listener.
+        # Ordinary loopback and provider requests still fail outside this scope.
+        if (
+            _building_socketpair.get()
+            and isinstance(address, tuple)
+            and address[0] in ("127.0.0.1", "::1")
+        ):
+            return original_connect(sock, address)
+        return blocked_connection(sock, address)
+
+    def guarded_socketpair(*args: Any, **kwargs: Any) -> Any:
+        token = _building_socketpair.set(True)
+        try:
+            return original_socketpair(*args, **kwargs)
+        finally:
+            _building_socketpair.reset(token)
+
+    monkeypatch.setattr(socket, "socketpair", guarded_socketpair)
     monkeypatch.setattr(socket, "create_connection", blocked_connection)
-    monkeypatch.setattr(socket.socket, "connect", blocked_connection)
+    monkeypatch.setattr(socket.socket, "connect", guarded_connect)
     monkeypatch.setattr(socket.socket, "connect_ex", blocked_connection)
     yield
 
@@ -91,7 +120,9 @@ async def isolated_backend_state(
     monkeypatch.setattr(config_module.settings, "data_dir", test_data_dir)
     # Preserve compatibility with code/tests that still monkeypatch the legacy
     # name while guaranteeing old config implementations are safe during RED.
-    monkeypatch.setattr(config_module, "CONFIG_FILE_PATH", test_data_dir / "config.json")
+    monkeypatch.setattr(
+        config_module, "CONFIG_FILE_PATH", test_data_dir / "config.json"
+    )
     monkeypatch.setattr(database_module, "db", test_db)
 
     # Modules such as routers and app.main import ``db`` by value. Patch every
@@ -116,6 +147,7 @@ async def isolated_backend_state(
 # ---------------------------------------------------------------------------
 # Sample resume data — full ResumeData-compatible dict
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def sample_resume() -> dict:
@@ -179,7 +211,14 @@ def sample_resume() -> dict:
             }
         ],
         "additional": {
-            "technicalSkills": ["Python", "FastAPI", "Docker", "AWS", "PostgreSQL", "Redis"],
+            "technicalSkills": [
+                "Python",
+                "FastAPI",
+                "Docker",
+                "AWS",
+                "PostgreSQL",
+                "Redis",
+            ],
             "languages": ["English (Native)", "Spanish (Conversational)"],
             "certificationsTraining": ["AWS Solutions Architect Associate"],
             "awards": ["Employee of the Year 2022"],
@@ -198,6 +237,7 @@ def sample_resume_copy(sample_resume) -> dict:
 # ---------------------------------------------------------------------------
 # Job-related fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def sample_job_keywords() -> dict:
@@ -239,6 +279,7 @@ def sample_job_description() -> str:
 # Master resume — used for alignment validation
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture
 def master_resume(sample_resume) -> dict:
     """Master resume (source of truth) — same as sample_resume by default."""
@@ -248,6 +289,7 @@ def master_resume(sample_resume) -> dict:
 # ---------------------------------------------------------------------------
 # ResumeChange fixtures for diff-based tests
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def sample_changes():
@@ -289,6 +331,7 @@ def sample_changes():
 # ---------------------------------------------------------------------------
 # Isolated database — swap the global TinyDB singleton for a temp-file DB
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def isolated_db(isolated_backend_state: Any) -> Any:

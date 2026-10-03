@@ -657,6 +657,20 @@
     }
   },
   "settings": {
+    "chatgpt": {
+      "description": "Utilisez votre abonnement ChatGPT pour traiter les CV. L'utilisation compte dans les limites de votre forfait.",
+      "sharedAccount": "Cette connexion est partagée par cette installation de Resume Matcher.",
+      "connected": "Connecté à ChatGPT",
+      "signIn": "Se connecter avec ChatGPT",
+      "disconnect": "Déconnecter",
+      "refreshModels": "Actualiser les modèles",
+      "enterCode": "Ouvrez la page de connexion et saisissez ce code :",
+      "openLogin": "Ouvrir la connexion ChatGPT",
+      "waiting": "En attente de connexion. Cette page sera mise à jour automatiquement.",
+      "expired": "Le code a expiré. Veuillez vous reconnecter.",
+      "disconnected": "Déconnecté de ChatGPT.",
+      "manageAccount": "Gérer le compte dans ChatGPT"
+    },
     "title": "Paramètres",
     "subtitle": "Configurez vos préférences",
     "aiProvider": "Fournisseur d'IA",

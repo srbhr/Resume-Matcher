@@ -6,7 +6,7 @@ import sys
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 
 # Fix for Windows: Use ProactorEventLoop for subprocess support (Playwright)
@@ -31,6 +31,8 @@ from app.routers import (
     resumes_router,
 )
 from app.routers.resumes import drain_processing_cleanup_tasks
+from app.routers.chatgpt import router as chatgpt_router
+from app.chatgpt_security import require_local_request
 
 
 def _configure_application_logging() -> None:
@@ -86,12 +88,32 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+
+@app.middleware("http")
+async def protect_chatgpt_connection(request: Request, call_next):
+    # Guard the whole API while subscription credentials or a pending login
+    # exist, including generation/test routes outside the ChatGPT router.
+    if request.url.path.startswith("/api/") and (
+        request.url.path.startswith("/api/v1/config/chatgpt/")
+        or (settings.data_dir / "chatgpt-session.enc").exists()
+    ):
+        try:
+            require_local_request(request)
+        except HTTPException as error:
+            return JSONResponse({"detail": error.detail}, status_code=error.status_code)
+    return await call_next(request)
+
+
 @app.exception_handler(DatabaseBusyError)
-async def database_busy_handler(request: Request, error: DatabaseBusyError) -> JSONResponse:
+async def database_busy_handler(
+    request: Request, error: DatabaseBusyError
+) -> JSONResponse:
     logger.warning("Database write contention for %s", request.url.path, exc_info=error)
     return JSONResponse(
         status_code=503,
-        content=operation_error_content(request, "Database is busy. Please retry shortly."),
+        content=operation_error_content(
+            request, "Database is busy. Please retry shortly."
+        ),
         headers={"Retry-After": "1"},
     )
 
@@ -108,6 +130,7 @@ app.add_middleware(
 # Include routers
 app.include_router(health_router, prefix="/api/v1")
 app.include_router(config_router, prefix="/api/v1")
+app.include_router(chatgpt_router, prefix="/api/v1")
 app.include_router(resumes_router, prefix="/api/v1")
 app.include_router(jobs_router, prefix="/api/v1")
 app.include_router(enrichment_router, prefix="/api/v1")

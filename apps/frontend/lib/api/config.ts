@@ -3,6 +3,7 @@ import { apiFetch } from './client';
 // Supported LLM providers
 export type LLMProvider =
   | 'openai'
+  | 'chatgpt'
   | 'openai_compatible'
   | 'azure_foundry'
   | 'anthropic'
@@ -171,6 +172,7 @@ export const PROVIDER_INFO: Record<
   }
 > = {
   openai: { name: 'OpenAI', defaultModel: 'gpt-5-nano-2025-08-07', requiresKey: true },
+  chatgpt: { name: 'ChatGPT subscription', defaultModel: '', requiresKey: false },
   // OpenAI-compatible: llama.cpp, vLLM, LM Studio, and other servers that expose
   // the OpenAI Chat Completions API. Key is optional (most local servers don't
   // require auth); backend passes a sentinel when blank.

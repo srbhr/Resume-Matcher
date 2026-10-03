@@ -12,7 +12,6 @@ from typing import Any, Literal
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-
 ALLOWED_LOG_LEVELS = ("CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG")
 logger = logging.getLogger(__name__)
 _CONFIG_WRITE_LOCK = threading.Lock()
@@ -278,6 +277,7 @@ class Settings(BaseSettings):
     # LLM Configuration
     llm_provider: Literal[
         "openai",
+        "chatgpt",
         "openai_compatible",
         "azure_foundry",
         "anthropic",
@@ -287,6 +287,8 @@ class Settings(BaseSettings):
         "groq",
         "ollama",
     ] = "openai"
+    # Client compatibility version sent to the hosted model discovery endpoint.
+    chatgpt_client_version: str = "0.160.0"
     llm_model: str = "gpt-5-nano-2025-08-07"
     llm_api_key: str = ""
     llm_api_base: str | None = None  # For Ollama or custom endpoints
@@ -310,7 +312,8 @@ class Settings(BaseSettings):
         return value
 
     # Server Configuration
-    host: str = "0.0.0.0"
+    # Personal subscription credentials require local frontend/backend listeners.
+    host: str = "127.0.0.1"
     port: int = 8000
     reload: bool = False
     log_level: Literal["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"] = "INFO"
@@ -371,7 +374,9 @@ class Settings(BaseSettings):
         """Normalize application log level from environment values."""
         value = "INFO" if not v else str(v).strip().upper()
         if value not in ALLOWED_LOG_LEVELS:
-            raise ValueError(f"Invalid LOG_LEVEL: {value}. Allowed: {ALLOWED_LOG_LEVELS}")
+            raise ValueError(
+                f"Invalid LOG_LEVEL: {value}. Allowed: {ALLOWED_LOG_LEVELS}"
+            )
         return value
 
     # CORS Configuration

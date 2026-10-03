@@ -62,6 +62,7 @@ def _effective_api_base(stored: dict) -> str | None:
     """
     return stored.get("api_base") or settings.llm_api_base or None
 
+
 router = APIRouter(prefix="/config", tags=["Configuration"])
 
 
@@ -168,6 +169,20 @@ async def update_llm_config(
 
     # Build normalized config for response and background health check
     resolved_provider = stored.get("provider", settings.llm_provider)
+    if resolved_provider == "chatgpt":
+        # Validate account entitlement before persisting a model; OAuth tokens
+        # and provider endpoints never belong in the shared config response.
+        from app.chatgpt import ChatGPTError, models
+
+        try:
+            available = await models()
+        except ChatGPTError as error:
+            raise HTTPException(400, str(error)) from error
+        if stored.get("model", settings.llm_model) not in {
+            item["id"] for item in available
+        }:
+            raise HTTPException(422, "Select an available ChatGPT model.")
+        stored["api_base"] = None
 
     # M-05: `requiresBaseUrl` was enforced in the settings UI only, so the
     # .env-driven path could persist a provider that cannot work without an

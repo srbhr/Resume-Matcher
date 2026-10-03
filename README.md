@@ -210,6 +210,7 @@ cd Resume-Matcher
 cd apps/backend
 cp .env.example .env        # Configure your AI provider
 uv sync                      # Install dependencies
+uv run python -m playwright install chromium  # Required for PDF generation
 uv run app
 
 # Frontend (Terminal 2)
@@ -226,6 +227,7 @@ Open **<http://localhost:3000>** and configure your AI provider in Settings.
 |----------|-------------|-------|
 | **Ollama** | Local | Free, runs on your machine |
 | **OpenAI** | Cloud | GPT-5 Nano, GPT-4o |
+| **ChatGPT subscription** | Cloud | Browser sign-in; uses your plan's available models and limits |
 | **Anthropic** | Cloud | Claude Haiku 4.5 |
 | **Google Gemini** | Cloud | Gemini 3 Flash |
 | **OpenRouter** | Cloud | Access to multiple models |
