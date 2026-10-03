@@ -657,6 +657,22 @@
     }
   },
   "settings": {
+    "chatgpt": {
+      "restartBackend": "请重启后端以启用 ChatGPT 连接。",
+      "connectionFailed": "ChatGPT 连接失败。",
+      "description": "使用您的 ChatGPT 订阅处理简历请求。使用量计入您的套餐限额。",
+      "sharedAccount": "此连接由这个 Resume Matcher 实例共享。",
+      "connected": "已连接 ChatGPT",
+      "signIn": "使用 ChatGPT 登录",
+      "disconnect": "断开连接",
+      "refreshModels": "刷新模型",
+      "enterCode": "打开登录页面并输入此代码：",
+      "openLogin": "打开 ChatGPT 登录页面",
+      "waiting": "正在等待登录。此页面将自动更新。",
+      "expired": "登录代码已过期。请重新登录。",
+      "disconnected": "已断开与 ChatGPT 的连接。",
+      "manageAccount": "在 ChatGPT 中管理账户"
+    },
     "title": "设置",
     "subtitle": "配置您的偏好",
     "aiProvider": "AI 供应商",

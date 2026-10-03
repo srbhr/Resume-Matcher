@@ -3,6 +3,7 @@ import { apiFetch } from './client';
 // Supported LLM providers
 export type LLMProvider =
   | 'openai'
+  | 'chatgpt'
   | 'openai_compatible'
   | 'azure_foundry'
   | 'anthropic'
@@ -171,6 +172,7 @@ export const PROVIDER_INFO: Record<
   }
 > = {
   openai: { name: 'OpenAI', defaultModel: 'gpt-5-nano-2025-08-07', requiresKey: true },
+  chatgpt: { name: 'ChatGPT subscription', defaultModel: '', requiresKey: false },
   // OpenAI-compatible: llama.cpp, vLLM, LM Studio, and other servers that expose
   // the OpenAI Chat Completions API. Key is optional (most local servers don't
   // require auth); backend passes a sentinel when blank.
@@ -429,9 +431,11 @@ export type ApiKeyProvider =
 // Map an LLM provider (the active-provider axis) to its key-store provider
 // name. Mirrors the backend `_PROVIDER_KEY_MAP` (gemini → google; the local
 // providers pass through). Keys are persisted under the key-store name.
-export function llmProviderToKeyProvider(provider: LLMProvider): ApiKeyProvider {
+export function llmProviderToKeyProvider(provider: LLMProvider): ApiKeyProvider | null {
+  // Subscription credentials live outside the API-key store.
+  if (provider === 'chatgpt') return null;
   if (provider === 'gemini') return 'google';
-  return provider as ApiKeyProvider;
+  return provider;
 }
 
 export interface ApiKeyProviderStatus {

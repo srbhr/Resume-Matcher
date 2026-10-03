@@ -657,6 +657,22 @@
     }
   },
   "settings": {
+    "chatgpt": {
+      "restartBackend": "Reinicie o backend para habilitar a conexão com o ChatGPT.",
+      "connectionFailed": "A conexão com o ChatGPT falhou.",
+      "description": "Use sua assinatura do ChatGPT para processar currículos. O uso conta para os limites do seu plano.",
+      "sharedAccount": "Esta conexão é compartilhada por esta instalação do Resume Matcher.",
+      "connected": "Conectado ao ChatGPT",
+      "signIn": "Entrar com ChatGPT",
+      "disconnect": "Desconectar",
+      "refreshModels": "Atualizar modelos",
+      "enterCode": "Abra a página de login e insira este código:",
+      "openLogin": "Abrir login do ChatGPT",
+      "waiting": "Aguardando login. Esta página será atualizada automaticamente.",
+      "expired": "O código expirou. Entre novamente.",
+      "disconnected": "Desconectado do ChatGPT.",
+      "manageAccount": "Gerenciar conta no ChatGPT"
+    },
     "title": "Configurações",
     "subtitle": "Configure suas preferências",
     "aiProvider": "Provedor de IA",

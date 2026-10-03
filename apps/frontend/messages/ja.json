@@ -657,6 +657,22 @@
     }
   },
   "settings": {
+    "chatgpt": {
+      "restartBackend": "ChatGPT 接続を有効にするにはバックエンドを再起動してください。",
+      "connectionFailed": "ChatGPT への接続に失敗しました。",
+      "description": "ChatGPT のサブスクリプションで履歴書の処理を行います。使用量はプランの上限に計上されます。",
+      "sharedAccount": "この接続はこの Resume Matcher インスタンスで共有されます。",
+      "connected": "ChatGPT に接続済み",
+      "signIn": "ChatGPT でログイン",
+      "disconnect": "接続を解除",
+      "refreshModels": "モデルを更新",
+      "enterCode": "ログインページを開いて、このコードを入力してください：",
+      "openLogin": "ChatGPT のログインページを開く",
+      "waiting": "ログインを待っています。このページは自動的に更新されます。",
+      "expired": "ログインコードの有効期限が切れました。再度ログインしてください。",
+      "disconnected": "ChatGPT との接続を解除しました。",
+      "manageAccount": "ChatGPT でアカウントを管理"
+    },
     "title": "設定",
     "subtitle": "設定をカスタマイズ",
     "aiProvider": "AIプロバイダー",

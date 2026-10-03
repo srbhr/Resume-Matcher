@@ -48,6 +48,24 @@ describe('api client', () => {
     });
   });
 
+  it.each(['POST', 'PUT', 'PATCH', 'DELETE'])(
+    'adds the subscription CSRF header to %s API requests',
+    async (method) => {
+      await apiFetch('/config/features', {
+        method,
+        headers: new Headers({ 'Content-Type': 'application/json' }),
+      });
+      const headers = new Headers(fetchMock.mock.calls[0][1].headers);
+      expect(headers.get('X-ChatGPT-Request')).toBe('1');
+      expect(headers.get('Content-Type')).toBe('application/json');
+    }
+  );
+
+  it('does not add the subscription header to external URLs', async () => {
+    await apiFetch('https://example.com/external', { method: 'POST' });
+    expect(new Headers(fetchMock.mock.calls[0][1].headers).has('X-ChatGPT-Request')).toBe(false);
+  });
+
   it('preserves response origin metadata through body buffering', async () => {
     const original = new Response('done');
     Object.defineProperties(original, {
@@ -79,7 +97,7 @@ describe('api client', () => {
       const [url, init] = fetchMock.mock.calls[0];
       expect(url).toBe('/api/v1/jobs/upload');
       expect(init.method).toBe('POST');
-      expect((init.headers as Record<string, string>)['Content-Type']).toBe('application/json');
+      expect(new Headers(init.headers).get('Content-Type')).toBe('application/json');
       expect(init.body).toBe(JSON.stringify({ job_descriptions: ['x'] }));
     });
   });

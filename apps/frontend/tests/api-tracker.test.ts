@@ -16,6 +16,7 @@ import { llmProviderToKeyProvider } from '@/lib/api/config';
 
 describe('llmProviderToKeyProvider', () => {
   it('maps gemini to the google key-store slot and passes others through', () => {
+    expect(llmProviderToKeyProvider('chatgpt')).toBeNull();
     expect(llmProviderToKeyProvider('gemini')).toBe('google');
     expect(llmProviderToKeyProvider('openai')).toBe('openai');
     expect(llmProviderToKeyProvider('anthropic')).toBe('anthropic');

@@ -32,6 +32,7 @@ import {
   type ApiKeyProvider,
 } from '@/lib/api/config';
 import { API_URL } from '@/lib/api/client';
+import { ChatGPTConnection } from '@/components/settings/chatgpt-connection';
 import { getVersionString } from '@/lib/config/version';
 import { ToggleSwitch } from '@/components/ui/toggle-switch';
 import { useStatusCache } from '@/lib/context/status-cache';
@@ -71,6 +72,7 @@ type Status = 'idle' | 'loading' | 'saving' | 'saved' | 'error' | 'testing';
 
 const PROVIDERS: LLMProvider[] = [
   'openai',
+  'chatgpt',
   'openai_compatible',
   'azure_foundry',
   'anthropic',
@@ -118,6 +120,7 @@ export default function SettingsPage() {
   // LLM Config state
   const [provider, setProvider] = useState<LLMProvider>('openai');
   const [model, setModel] = useState('');
+  const [chatgptCatalogReady, setChatgptCatalogReady] = useState(false);
   const [apiKey, setApiKey] = useState('');
   const [apiBase, setApiBase] = useState('');
   const [hasStoredApiKey, setHasStoredApiKey] = useState(false);
@@ -136,6 +139,7 @@ export default function SettingsPage() {
     isLoading: statusLoading,
     lastFetched,
     refreshStatus,
+    refreshLlmHealth,
   } = useStatusCache();
 
   // Health check result from manual test
@@ -306,7 +310,9 @@ export default function SettingsPage() {
           // Whether THIS provider already has an encrypted key (per-provider,
           // not the legacy shared slot) drives the "leave blank to keep" hint.
           const keyProvider = llmProviderToKeyProvider(safeProvider);
-          setHasStoredApiKey(statuses.some((s) => s.provider === keyProvider && s.configured));
+          setHasStoredApiKey(
+            keyProvider !== null && statuses.some((s) => s.provider === keyProvider && s.configured)
+          );
           setApiKey('');
           setApiBase(llmConfig.api_base || '');
           setReasoningEffort((llmConfig.reasoning_effort as ReasoningEffort | null) ?? 'auto');
@@ -353,7 +359,9 @@ export default function SettingsPage() {
   // Whether a given key-store provider currently has a saved key.
   const providerHasStoredKey = (p: LLMProvider): boolean => {
     const keyProvider = llmProviderToKeyProvider(p);
-    return apiKeyStatuses.some((s) => s.provider === keyProvider && s.configured);
+    return (
+      keyProvider !== null && apiKeyStatuses.some((s) => s.provider === keyProvider && s.configured)
+    );
   };
 
   // Re-fetch the per-provider key status (after save/delete/clear).
@@ -384,6 +392,7 @@ export default function SettingsPage() {
 
   // Handle provider change
   const handleProviderChange = (newProvider: LLMProvider) => {
+    setChatgptCatalogReady(false);
     const nextInfo = PROVIDER_INFO[newProvider];
     setProvider(newProvider);
     setModel(nextInfo.defaultModel);
@@ -411,6 +420,7 @@ export default function SettingsPage() {
 
   // Save configuration
   const handleSave = async () => {
+    if (provider === 'chatgpt' && !chatgptCatalogReady) return;
     setStatus('saving');
     setError(null);
     setHealthCheck(null);
@@ -432,8 +442,8 @@ export default function SettingsPage() {
       // (1) Persist the key to the encrypted PER-PROVIDER store (only when the
       // user typed a new one). This is the bug fix: keys no longer ride on the
       // shared config slot, so saving one provider never wipes another's key.
-      if (trimmedKey) {
-        const keyProvider = llmProviderToKeyProvider(provider);
+      const keyProvider = llmProviderToKeyProvider(provider);
+      if (trimmedKey && keyProvider !== null) {
         await updateApiKeys({ [keyProvider]: trimmedKey } as Record<ApiKeyProvider, string>);
       }
 
@@ -441,7 +451,8 @@ export default function SettingsPage() {
       const update: LLMConfigUpdate = {
         provider,
         model: model.trim(),
-        api_base: apiBase.trim() || null,
+        // Omit the endpoint for subscription saves to preserve other providers' URLs.
+        ...(provider !== 'chatgpt' ? { api_base: apiBase.trim() || null } : {}),
         // Map UI sentinel 'auto' → '' so the server persists an empty string
         // and the gpt-5 auto-migration won't re-fire.
         reasoning_effort: reasoningEffort === 'auto' ? '' : (reasoningEffort as ReasoningEffort),
@@ -487,7 +498,8 @@ export default function SettingsPage() {
       const testConfig: LLMConfigUpdate = {
         provider,
         model: model.trim() || providerInfo.defaultModel,
-        api_base: apiBase.trim() || null,
+        // Subscription requests resolve their own endpoint on the backend.
+        ...(provider !== 'chatgpt' ? { api_base: apiBase.trim() || null } : {}),
         reasoning_effort: reasoningEffort === 'auto' ? '' : (reasoningEffort as ReasoningEffort),
       };
 
@@ -926,19 +938,30 @@ export default function SettingsPage() {
 
               {/* Model Input */}
               <div className="space-y-2">
-                <Label htmlFor="model">{t('settings.llmConfiguration.modelLabel')}</Label>
-                <Input
-                  id="model"
-                  value={model}
-                  onChange={(e) => setModel(e.target.value)}
-                  placeholder={providerInfo.defaultModel}
-                  className="font-mono"
-                />
-                <p className="text-xs text-steel-grey font-mono">
-                  {t('settings.llmConfiguration.defaultModel', {
-                    model: providerInfo.defaultModel,
-                  })}
-                </p>
+                {provider === 'chatgpt' ? (
+                  <ChatGPTConnection
+                    model={model}
+                    onModelChange={setModel}
+                    onConnectionChange={refreshLlmHealth}
+                    onCatalogReadyChange={setChatgptCatalogReady}
+                  />
+                ) : (
+                  <>
+                    <Label htmlFor="model">{t('settings.llmConfiguration.modelLabel')}</Label>
+                    <Input
+                      id="model"
+                      value={model}
+                      onChange={(e) => setModel(e.target.value)}
+                      placeholder={providerInfo.defaultModel}
+                      className="font-mono"
+                    />
+                    <p className="text-xs text-steel-grey font-mono">
+                      {t('settings.llmConfiguration.defaultModel', {
+                        model: providerInfo.defaultModel,
+                      })}
+                    </p>
+                  </>
+                )}
               </div>
 
               {/* API Key Input — always enabled. For providers that don't
@@ -947,33 +970,35 @@ export default function SettingsPage() {
                   their deployment needs auth (e.g., a secured LM Studio or a
                   hosted OpenAI-compatible proxy). Save-time validation only
                   fails when `requiresApiKey` is true. */}
-              <div className="space-y-2">
-                <Label htmlFor="apiKey">
-                  {t('settings.llmConfiguration.apiKeyLabel')}{' '}
-                  {!requiresApiKey && (
-                    <span className="text-steel-grey">
-                      {t('settings.llmConfiguration.apiKeyOptional')}
-                    </span>
+              {provider !== 'chatgpt' && (
+                <div className="space-y-2">
+                  <Label htmlFor="apiKey">
+                    {t('settings.llmConfiguration.apiKeyLabel')}{' '}
+                    {!requiresApiKey && (
+                      <span className="text-steel-grey">
+                        {t('settings.llmConfiguration.apiKeyOptional')}
+                      </span>
+                    )}
+                  </Label>
+                  <Input
+                    id="apiKey"
+                    type="password"
+                    value={apiKey}
+                    onChange={(e) => setApiKey(e.target.value)}
+                    placeholder={
+                      requiresApiKey
+                        ? t('settings.llmConfiguration.apiKeyPlaceholder')
+                        : t('settings.llmConfiguration.apiKeyOptionalPlaceholder')
+                    }
+                    className="font-mono"
+                  />
+                  {hasStoredApiKey && !apiKey && (
+                    <p className="text-xs text-steel-grey font-mono">
+                      {t('settings.llmConfiguration.leaveBlankToKeepExistingKey')}
+                    </p>
                   )}
-                </Label>
-                <Input
-                  id="apiKey"
-                  type="password"
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                  placeholder={
-                    requiresApiKey
-                      ? t('settings.llmConfiguration.apiKeyPlaceholder')
-                      : t('settings.llmConfiguration.apiKeyOptionalPlaceholder')
-                  }
-                  className="font-mono"
-                />
-                {hasStoredApiKey && !apiKey && (
-                  <p className="text-xs text-steel-grey font-mono">
-                    {t('settings.llmConfiguration.leaveBlankToKeepExistingKey')}
-                  </p>
-                )}
-              </div>
+                </div>
+              )}
 
               {/* Saved per-provider keys — each provider keeps its own encrypted
                   key, so switching providers never wipes another's. */}
@@ -1016,19 +1041,21 @@ export default function SettingsPage() {
               )}
 
               {/* API Base URL (optional, for proxies/aggregators/custom endpoints) */}
-              <div className="space-y-2">
-                <Label htmlFor="apiBase">
-                  {baseUrlLabel} {requiresApiBase && <span className="text-destructive">*</span>}
-                </Label>
-                <Input
-                  id="apiBase"
-                  value={apiBase}
-                  onChange={(e) => setApiBase(e.target.value)}
-                  placeholder={baseUrlPlaceholder}
-                  className="font-mono"
-                />
-                <p className="text-xs text-steel-grey font-mono">{baseUrlDescription}</p>
-              </div>
+              {provider !== 'chatgpt' && (
+                <div className="space-y-2">
+                  <Label htmlFor="apiBase">
+                    {baseUrlLabel} {requiresApiBase && <span className="text-destructive">*</span>}
+                  </Label>
+                  <Input
+                    id="apiBase"
+                    value={apiBase}
+                    onChange={(e) => setApiBase(e.target.value)}
+                    placeholder={baseUrlPlaceholder}
+                    className="font-mono"
+                  />
+                  <p className="text-xs text-steel-grey font-mono">{baseUrlDescription}</p>
+                </div>
+              )}
 
               {/* Reasoning Effort (optional, only applies to reasoning-capable models) */}
               <div className="space-y-2">
@@ -1057,7 +1084,11 @@ export default function SettingsPage() {
               <div className="flex gap-4">
                 <Button
                   onClick={handleSave}
-                  disabled={status === 'saving' || status === 'loading'}
+                  disabled={
+                    status === 'saving' ||
+                    status === 'loading' ||
+                    (provider === 'chatgpt' && !chatgptCatalogReady)
+                  }
                   className="flex-1"
                 >
                   {status === 'saving' ? (
@@ -1077,7 +1108,11 @@ export default function SettingsPage() {
                 <Button
                   variant="outline"
                   onClick={handleTestConnection}
-                  disabled={status === 'testing' || status === 'saving'}
+                  disabled={
+                    status === 'testing' ||
+                    status === 'saving' ||
+                    (provider === 'chatgpt' && !chatgptCatalogReady)
+                  }
                 >
                   {status === 'testing' ? (
                     <Loader2 className="w-4 h-4 animate-spin" />

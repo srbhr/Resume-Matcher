@@ -17,6 +17,7 @@ import {
 
 const ALL_PROVIDERS: LLMProvider[] = [
   'openai',
+  'chatgpt',
   'openai_compatible',
   'anthropic',
   'openrouter',
@@ -32,12 +33,13 @@ describe('PROVIDER_INFO', () => {
       const info = PROVIDER_INFO[provider];
       expect(info, `missing PROVIDER_INFO for ${provider}`).toBeDefined();
       expect(info.name.length).toBeGreaterThan(0);
-      expect(info.defaultModel.length).toBeGreaterThan(0);
+      if (provider !== 'chatgpt') expect(info.defaultModel.length).toBeGreaterThan(0);
       expect(typeof info.requiresKey).toBe('boolean');
     }
   });
 
-  it('marks only local providers as not requiring a key', () => {
+  it('allows local providers and ChatGPT subscription without an API key', () => {
+    expect(PROVIDER_INFO.chatgpt.requiresKey).toBe(false);
     expect(PROVIDER_INFO.ollama.requiresKey).toBe(false);
     expect(PROVIDER_INFO.openai_compatible.requiresKey).toBe(false);
     expect(PROVIDER_INFO.openai.requiresKey).toBe(true);

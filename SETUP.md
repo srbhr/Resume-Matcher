@@ -68,6 +68,7 @@ cd Resume-Matcher
 cd apps/backend
 cp .env.example .env        # Create config from template
 uv sync                      # Install Python dependencies
+uv run python -m playwright install chromium  # Required for PDF generation
 uv run app
 
 # 3. Start the frontend (Terminal 2)
@@ -127,7 +128,7 @@ LLM_MODEL=gpt-5-nano-2025-08-07
 LLM_API_KEY=sk-your-api-key-here
 
 # Keep these as default for local development
-HOST=0.0.0.0
+HOST=127.0.0.1
 PORT=8000
 FRONTEND_BASE_URL=http://localhost:3000
 CORS_ORIGINS=["http://localhost:3000", "http://127.0.0.1:3000"]
@@ -141,6 +142,20 @@ uv sync
 
 This creates a virtual environment and installs all required packages.
 
+#### Install Chromium for PDF generation
+
+From `apps/backend`, install Playwright's browser after running `uv sync`:
+
+```bash
+uv run python -m playwright install chromium
+```
+
+On Windows PowerShell, you can also use the virtual environment's Python directly:
+
+```powershell
+.\.venv\Scripts\python.exe -m playwright install chromium
+```
+
 #### Start the backend server
 
 ```bash
@@ -150,7 +165,7 @@ RELOAD=true uv run app
 You should see output like:
 
 ```
-INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
 INFO:     Started reloader process
 ```
 
@@ -222,6 +237,20 @@ LLM_PROVIDER=anthropic
 LLM_MODEL=claude-haiku-4-5-20251001
 LLM_API_KEY=sk-ant-your-key-here
 ```
+
+### ChatGPT subscription (browser sign-in)
+
+To use your ChatGPT subscription, open **Settings**, select **ChatGPT subscription**, and click **Sign in with ChatGPT**. Open the displayed login link and enter the one-time code. Keep Settings open while sign-in completes, select an available model, then click **Save Configuration**. No OpenAI API key or local Codex installation is required.
+
+If device-code sign-in is unavailable, enable it in your ChatGPT security settings. Models load automatically after sign-in and come from the account's hosted model catalog. Use **Refresh models** after a change to your account's model access. Usage counts toward your subscription limits; select another provider if you reach them.
+
+This connection uses Codex's hosted service and may require updates when OpenAI changes it.
+
+Use this option on your own computer through `localhost`. Set `HOST=127.0.0.1` in the backend `.env` and run the frontend with `npm run dev:local` (or `npm run start:local` after building). While signing in or connected, the whole installation is restricted to this computer; disconnect before enabling remote access.
+
+Your saved login is encrypted on the backend. Keep the backend data directory private and preserve it to stay signed in across restarts.
+
+**Disconnect** removes the saved login and attempts to revoke access. Follow any warning shown, then select and save another provider before generating again.
 
 ### Option B: Local AI with Ollama (Free)
 
@@ -462,6 +491,25 @@ uv run uvicorn app.main:app --reload
 **Error:** `LLM_API_KEY not configured`
 
 Check your `.env` file has a valid API key for your chosen provider.
+
+### Playwright installation fails on Windows
+
+**Error:** `No module named playwright` when running `py -m playwright install chromium`
+
+The `py` launcher can select a global Python installation instead of the backend's virtual environment. Playwright is installed in `apps/backend/.venv` by `uv sync`.
+
+Run these commands from `apps/backend` to install the dependencies and Chromium using the project's Python environment:
+
+```powershell
+uv sync
+uv run python -m playwright install chromium
+```
+
+If dependencies are already installed, you can run the virtual environment's Python directly:
+
+```powershell
+.\.venv\Scripts\python.exe -m playwright install chromium
+```
 
 ### Frontend won't start
 

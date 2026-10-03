@@ -135,3 +135,8 @@ config.json
 
 # Superpowers brainstorming visual-companion scratch (local only)
 /.superpowers/
+
+# ChatGPT credentials are local-only.
+**/chatgpt-session.enc
+**/chatgpt-session.lock
+**/.chatgpt-*
