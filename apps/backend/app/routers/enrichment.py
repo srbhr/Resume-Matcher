@@ -6,16 +6,15 @@ import json
 import logging
 import re
 from typing import Any
-from uuid import uuid4
 
 from fastapi import APIRouter, HTTPException
 
-from app.ai_limits import MAX_ITEM_WORKERS, PromptSizeError, require_source_size
 from app.ai_budget import (
     AIOperationDeadlineExceeded,
     AIOperationRoute,
     remaining_timeout,
 )
+from app.ai_limits import MAX_ITEM_WORKERS, PromptSizeError, require_source_size
 from app.config_cache import get_content_language
 from app.database import DatabaseBusyError, db
 from app.llm import complete_json
@@ -31,16 +30,16 @@ from app.schemas.enrichment import (
     AnswerInput,
     ApplyEnhancementsRequest,
     EnhancedDescription,
-    EnhanceRequest,
     EnhancementItemError,
     EnhancementPreview,
+    EnhanceRequest,
     EnrichmentItem,
     EnrichmentQuestion,
+    RegeneratedItem,
     RegenerateItemError,
     RegenerateItemInput,
     RegenerateRequest,
     RegenerateResponse,
-    RegeneratedItem,
 )
 
 logger = logging.getLogger(__name__)
@@ -60,8 +59,10 @@ def _validate_text_replacements(
         raise ValueError(f"LLM response is missing '{field_names[0]}'")
     for field in present_fields:
         replacements = result[field]
-        if isinstance(replacements, list) and replacements and all(
-            isinstance(item, str) and item.strip() for item in replacements
+        if (
+            isinstance(replacements, list)
+            and replacements
+            and all(isinstance(item, str) and item.strip() for item in replacements)
         ):
             return {
                 **result,
@@ -123,7 +124,11 @@ def _extract_item_from_resume(processed_data: dict, item_id: str) -> dict:
             "item_type": "experience",
             "title": entry.get("title", ""),
             "subtitle": entry.get("company", ""),
-            "current_description": desc if isinstance(desc, list) else [desc] if isinstance(desc, str) and desc else [],
+            "current_description": desc
+            if isinstance(desc, list)
+            else [desc]
+            if isinstance(desc, str) and desc
+            else [],
         }
     elif prefix == "proj":
         entries = processed_data.get("personalProjects", [])
@@ -136,7 +141,11 @@ def _extract_item_from_resume(processed_data: dict, item_id: str) -> dict:
             "item_type": "project",
             "title": entry.get("name", ""),
             "subtitle": entry.get("role", ""),
-            "current_description": desc if isinstance(desc, list) else [desc] if isinstance(desc, str) and desc else [],
+            "current_description": desc
+            if isinstance(desc, list)
+            else [desc]
+            if isinstance(desc, str) and desc
+            else [],
         }
     return {}
 
@@ -168,8 +177,7 @@ async def analyze_resume(resume_id: str) -> AnalysisResponse:
     language = get_content_language()
     output_language = get_language_name(language)
     prompt = ANALYZE_RESUME_PROMPT.format(
-        resume_json=resume_json,
-        output_language=output_language
+        resume_json=resume_json, output_language=output_language
     )
 
     try:
@@ -302,7 +310,9 @@ async def generate_enhancements(request: EnhanceRequest) -> EnhancementPreview:
         except PromptSizeError:
             raise
         except asyncio.TimeoutError:
-            logger.error("Resume re-analysis timed out for resume %s", request.resume_id)
+            logger.error(
+                "Resume re-analysis timed out for resume %s", request.resume_id
+            )
             raise HTTPException(
                 status_code=504,
                 detail="Resume analysis timed out. Please try again with a shorter resume or a faster model.",
@@ -362,7 +372,11 @@ async def generate_enhancements(request: EnhanceRequest) -> EnhancementPreview:
 
         # Build enhancement prompt with content language
         current_desc = item.get("current_description", [])
-        current_desc_text = "\n".join(f"- {d}" for d in current_desc) if current_desc else "(No description)"
+        current_desc_text = (
+            "\n".join(f"- {d}" for d in current_desc)
+            if current_desc
+            else "(No description)"
+        )
 
         language = get_content_language()
         output_language = get_language_name(language)
@@ -427,9 +441,7 @@ async def generate_enhancements(request: EnhanceRequest) -> EnhancementPreview:
 
 
 @router.post("/apply/{resume_id}")
-async def apply_enhancements(
-    resume_id: str, request: ApplyEnhancementsRequest
-) -> dict:
+async def apply_enhancements(resume_id: str, request: ApplyEnhancementsRequest) -> dict:
     """Apply enhancements to the master resume.
 
     Updates the resume's Experience and Projects sections with
@@ -454,37 +466,63 @@ async def apply_enhancements(
     for enhancement in request.enhancements:
         item_id = enhancement.item_id
         item_type = enhancement.item_type
-        additional_bullets = enhancement.enhanced_description  # These are NEW bullets to add
+        additional_bullets = (
+            enhancement.enhanced_description
+        )  # These are NEW bullets to add
 
         if item_type == "experience":
             # Parse item_id like "exp_0" to get index
             try:
                 index = int(item_id.split("_")[1])
-                if "workExperience" in updated_data and index < len(updated_data["workExperience"]):
+                if "workExperience" in updated_data and index < len(
+                    updated_data["workExperience"]
+                ):
                     # Get existing description and ADD new bullets
-                    existing_desc = updated_data["workExperience"][index].get("description", [])
+                    existing_desc = updated_data["workExperience"][index].get(
+                        "description", []
+                    )
                     if isinstance(existing_desc, list):
-                        updated_data["workExperience"][index]["description"] = existing_desc + additional_bullets
+                        updated_data["workExperience"][index]["description"] = (
+                            existing_desc + additional_bullets
+                        )
                     else:
                         # Handle edge case where description might be a string
-                        updated_data["workExperience"][index]["description"] = [existing_desc] + additional_bullets if existing_desc else additional_bullets
+                        updated_data["workExperience"][index]["description"] = (
+                            [existing_desc] + additional_bullets
+                            if existing_desc
+                            else additional_bullets
+                        )
             except (ValueError, IndexError) as e:
-                logger.warning(f"Could not apply experience enhancement for {item_id}: {e}")
+                logger.warning(
+                    f"Could not apply experience enhancement for {item_id}: {e}"
+                )
 
         elif item_type == "project":
             # Parse item_id like "proj_0" to get index
             try:
                 index = int(item_id.split("_")[1])
-                if "personalProjects" in updated_data and index < len(updated_data["personalProjects"]):
+                if "personalProjects" in updated_data and index < len(
+                    updated_data["personalProjects"]
+                ):
                     # Get existing description and ADD new bullets
-                    existing_desc = updated_data["personalProjects"][index].get("description", [])
+                    existing_desc = updated_data["personalProjects"][index].get(
+                        "description", []
+                    )
                     if isinstance(existing_desc, list):
-                        updated_data["personalProjects"][index]["description"] = existing_desc + additional_bullets
+                        updated_data["personalProjects"][index]["description"] = (
+                            existing_desc + additional_bullets
+                        )
                     else:
                         # Handle edge case where description might be a string
-                        updated_data["personalProjects"][index]["description"] = [existing_desc] + additional_bullets if existing_desc else additional_bullets
+                        updated_data["personalProjects"][index]["description"] = (
+                            [existing_desc] + additional_bullets
+                            if existing_desc
+                            else additional_bullets
+                        )
             except (ValueError, IndexError) as e:
-                logger.warning(f"Could not apply project enhancement for {item_id}: {e}")
+                logger.warning(
+                    f"Could not apply project enhancement for {item_id}: {e}"
+                )
 
     # Update the resume in database
     updated_content = json.dumps(updated_data, indent=2)
@@ -563,7 +601,9 @@ async def _regenerate_skills(
     output_language: str,
 ) -> RegeneratedItem:
     """Regenerate the skills section."""
-    current_skills_text = ", ".join(item.current_content) if item.current_content else "(No skills)"
+    current_skills_text = (
+        ", ".join(item.current_content) if item.current_content else "(No skills)"
+    )
 
     prompt = REGENERATE_SKILLS_PROMPT.format(
         output_language=output_language,
@@ -604,7 +644,9 @@ async def regenerate_items(request: RegenerateRequest) -> RegenerateResponse:
         raise HTTPException(status_code=404, detail="Resume not found")
 
     if not request.items:
-        raise HTTPException(status_code=400, detail="No items selected for regeneration")
+        raise HTTPException(
+            status_code=400, detail="No items selected for regeneration"
+        )
 
     # Get language name for LLM
     output_language = get_language_name(request.output_language)
@@ -742,7 +784,9 @@ async def apply_regenerated_items(
 
         # If metadata is ambiguous, try to disambiguate using the original content.
         matches_by_content = [
-            i for i in matches if _lines_equal(entries[i].get(content_key), expected_original_content)
+            i
+            for i in matches
+            if _lines_equal(entries[i].get(content_key), expected_original_content)
         ]
         if len(matches_by_content) == 1:
             return matches_by_content[0]
@@ -780,13 +824,21 @@ async def apply_regenerated_items(
 
             resolved_index: int | None = None
             if 0 <= index < len(experiences):
-                entry = experiences[index] if isinstance(experiences[index], dict) else {}
+                entry = (
+                    experiences[index] if isinstance(experiences[index], dict) else {}
+                )
                 entry_title = _normalize_match_value(str(entry.get("title", "")))
                 entry_company = _normalize_match_value(str(entry.get("company", "")))
-                if entry_title == _normalize_match_value(expected_title) and (
-                    not _normalize_match_value(expected_company)
-                    or entry_company == _normalize_match_value(expected_company)
-                ) and _lines_equal(entry.get("description"), expected_original_content):
+                if (
+                    entry_title == _normalize_match_value(expected_title)
+                    and (
+                        not _normalize_match_value(expected_company)
+                        or entry_company == _normalize_match_value(expected_company)
+                    )
+                    and _lines_equal(
+                        entry.get("description"), expected_original_content
+                    )
+                ):
                     resolved_index = index
 
             if resolved_index is None:
@@ -811,7 +863,9 @@ async def apply_regenerated_items(
 
             entry = experiences[resolved_index]
             if isinstance(entry, dict):
-                if not _lines_equal(entry.get("description"), expected_original_content):
+                if not _lines_equal(
+                    entry.get("description"), expected_original_content
+                ):
                     apply_failures.append(item_id)
                     continue
                 entry["description"] = new_content
@@ -838,10 +892,16 @@ async def apply_regenerated_items(
                 entry = projects[index] if isinstance(projects[index], dict) else {}
                 entry_name = _normalize_match_value(str(entry.get("name", "")))
                 entry_role = _normalize_match_value(str(entry.get("role", "")))
-                if entry_name == _normalize_match_value(expected_name) and (
-                    not _normalize_match_value(expected_role)
-                    or entry_role == _normalize_match_value(expected_role)
-                ) and _lines_equal(entry.get("description"), expected_original_content):
+                if (
+                    entry_name == _normalize_match_value(expected_name)
+                    and (
+                        not _normalize_match_value(expected_role)
+                        or entry_role == _normalize_match_value(expected_role)
+                    )
+                    and _lines_equal(
+                        entry.get("description"), expected_original_content
+                    )
+                ):
                     resolved_index = index
 
             if resolved_index is None:
@@ -866,7 +926,9 @@ async def apply_regenerated_items(
 
             entry = projects[resolved_index]
             if isinstance(entry, dict):
-                if not _lines_equal(entry.get("description"), expected_original_content):
+                if not _lines_equal(
+                    entry.get("description"), expected_original_content
+                ):
                     apply_failures.append(item_id)
                     continue
                 entry["description"] = new_content
@@ -879,13 +941,17 @@ async def apply_regenerated_items(
 
             additional = updated_data.get("additional")
             if isinstance(additional, dict) and "technicalSkills" in additional:
-                if not _lines_equal(additional.get("technicalSkills"), expected_original_content):
+                if not _lines_equal(
+                    additional.get("technicalSkills"), expected_original_content
+                ):
                     apply_failures.append(item_id)
                     continue
                 additional["technicalSkills"] = new_content
             elif "technicalSkills" in updated_data:
                 # Fallback for legacy data structure
-                if not _lines_equal(updated_data.get("technicalSkills"), expected_original_content):
+                if not _lines_equal(
+                    updated_data.get("technicalSkills"), expected_original_content
+                ):
                     apply_failures.append(item_id)
                     continue
                 updated_data["technicalSkills"] = new_content

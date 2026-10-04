@@ -4,8 +4,8 @@ import copy
 import json
 import logging
 import re
-from difflib import SequenceMatcher
 from dataclasses import dataclass
+from difflib import SequenceMatcher
 from typing import Any, Callable
 
 from app.llm import complete_json
@@ -21,7 +21,7 @@ from app.prompts import (
     get_language_name,
 )
 from app.prompts.templates import IMPROVE_SCHEMA_EXAMPLE
-from app.schemas import ResumeData, ResumeFieldDiff, ResumeDiffSummary
+from app.schemas import ResumeData, ResumeDiffSummary, ResumeFieldDiff
 from app.schemas.models import ImproveDiffResult, ResumeChange
 from app.services.parser import has_meaningful_resume_content
 
@@ -157,26 +157,30 @@ _ALLOWED_PATH_PATTERNS = [
 ]
 
 # Blocked path prefixes — always rejected
-_BLOCKED_PATH_PREFIXES = frozenset({
-    "personalInfo",
-    "customSections",
-    "sectionMeta",
-})
+_BLOCKED_PATH_PREFIXES = frozenset(
+    {
+        "personalInfo",
+        "customSections",
+        "sectionMeta",
+    }
+)
 
 # Blocked field names — rejected when they appear as the leaf of a path
-_BLOCKED_FIELD_NAMES = frozenset({
-    "years",
-    "company",
-    "institution",
-    "title",
-    "degree",
-    "name",
-    "role",
-    "github",
-    "website",
-    "location",
-    "id",
-})
+_BLOCKED_FIELD_NAMES = frozenset(
+    {
+        "years",
+        "company",
+        "institution",
+        "title",
+        "degree",
+        "name",
+        "role",
+        "github",
+        "website",
+        "location",
+        "id",
+    }
+)
 
 _METRIC_RE = re.compile(r"\d+%|\d+x|\$\d+")
 
@@ -189,7 +193,11 @@ def _is_path_allowed(path: str) -> bool:
 def _is_path_blocked(path: str) -> bool:
     """Check if a path matches any blocked pattern."""
     for prefix in _BLOCKED_PATH_PREFIXES:
-        if path == prefix or path.startswith(prefix + ".") or path.startswith(prefix + "["):
+        if (
+            path == prefix
+            or path.startswith(prefix + ".")
+            or path.startswith(prefix + "[")
+        ):
             return True
 
     # Check if the leaf field is blocked
@@ -386,7 +394,9 @@ def apply_diffs(
                 continue
             # Append must use a non-empty string (not list, to avoid nested lists)
             if not isinstance(change.value, str) or not change.value.strip():
-                logger.info("Diff rejected (append non-string or empty value): %s", path)
+                logger.info(
+                    "Diff rejected (append non-string or empty value): %s", path
+                )
                 rejected.append(change)
                 continue
             actual_value.append(change.value)
@@ -404,7 +414,9 @@ def apply_diffs(
                 casefold_to_originals: dict[str, list[str]] = {}
                 for item in actual_value:
                     if isinstance(item, str):
-                        casefold_to_originals.setdefault(item.casefold(), []).append(item)
+                        casefold_to_originals.setdefault(item.casefold(), []).append(
+                            item
+                        )
                 for item in change.value:
                     if isinstance(item, str):
                         originals = casefold_to_originals.get(item.casefold(), [])
@@ -423,7 +435,9 @@ def apply_diffs(
                 casefold_to_originals: dict[str, list[str]] = {}
                 for item in actual_value:
                     if isinstance(item, str):
-                        casefold_to_originals.setdefault(item.casefold(), []).append(item)
+                        casefold_to_originals.setdefault(item.casefold(), []).append(
+                            item
+                        )
                 original_cfs = set(casefold_to_originals)
                 is_skills = path == "additional.technicalSkills"
                 added_new: set[str] = set()
@@ -433,16 +447,22 @@ def apply_diffs(
                     cf = item.casefold()
                     if cf in original_cfs:
                         bucket = casefold_to_originals[cf]
-                        if bucket:  # place original in requested position (dupes preserved)
+                        if (
+                            bucket
+                        ):  # place original in requested position (dupes preserved)
                             reordered.append(bucket.pop(0))
                         # else: a duplicate of an already-placed original — skip
                     elif is_skills and cf not in added_new:
                         skill = item.strip()
                         if skill and _normalize_skill_key(skill) in allowed_skill_keys:
-                            reordered.append(skill)  # verified new skill, requested position
+                            reordered.append(
+                                skill
+                            )  # verified new skill, requested position
                             added_new.add(cf)
                         else:
-                            logger.info("Reorder salvage dropped unverified skill: %s", skill)
+                            logger.info(
+                                "Reorder salvage dropped unverified skill: %s", skill
+                            )
                     # else: non-skills new item → dropped (no verifier to ground it)
                 for item in actual_value:  # append any originals the model omitted
                     if isinstance(item, str):
@@ -470,16 +490,16 @@ def apply_diffs(
                 continue
             new_skill = change.value.strip()
             existing = {
-                item.casefold()
-                for item in actual_value
-                if isinstance(item, str)
+                item.casefold() for item in actual_value if isinstance(item, str)
             }
             if new_skill.casefold() in existing:
                 logger.info("Diff rejected (duplicate skill): %s", new_skill)
                 rejected.append(change)
                 continue
             if _normalize_skill_key(new_skill) not in allowed_skill_keys:
-                logger.info("Diff rejected (skill not in verified targets): %s", new_skill)
+                logger.info(
+                    "Diff rejected (skill not in verified targets): %s", new_skill
+                )
                 rejected.append(change)
                 continue
             actual_value.append(new_skill)
@@ -728,7 +748,9 @@ def _prepare_keywords_for_prompt(job_keywords: dict[str, Any]) -> str:
 
     required = job_keywords.get("required_skills", [])
     if required:
-        sections.append("Required skills to emphasize:\n- " + "\n- ".join(str(s) for s in required))
+        sections.append(
+            "Required skills to emphasize:\n- " + "\n- ".join(str(s) for s in required)
+        )
 
     preferred = job_keywords.get("preferred_skills", [])
     if preferred:
@@ -739,7 +761,10 @@ def _prepare_keywords_for_prompt(job_keywords: dict[str, Any]) -> str:
 
     keywords = job_keywords.get("keywords", [])
     if keywords:
-        sections.append("Additional keywords to weave in naturally:\n- " + "\n- ".join(str(k) for k in keywords))
+        sections.append(
+            "Additional keywords to weave in naturally:\n- "
+            + "\n- ".join(str(k) for k in keywords)
+        )
 
     return "\n\n".join(sections) if sections else "No specific keywords extracted."
 
@@ -1162,7 +1187,9 @@ def _normalize_string_list(value: Any, field_name: str) -> list[str]:
             continue
         invalid_count += 1
     if invalid_count:
-        logger.warning("Skipped non-string entries in %s: %d", field_name, invalid_count)
+        logger.warning(
+            "Skipped non-string entries in %s: %d", field_name, invalid_count
+        )
     return normalized
 
 
@@ -1180,7 +1207,9 @@ def _build_string_index(value: Any, field_name: str) -> dict[str, str]:
 def _extract_description_list(entry: Any) -> list[str]:
     if not isinstance(entry, dict):
         return []
-    return _normalize_string_list(entry.get("description", []), "workExperience.description")
+    return _normalize_string_list(
+        entry.get("description", []), "workExperience.description"
+    )
 
 
 def _append_list_changes(
@@ -1309,22 +1338,26 @@ def calculate_resume_diff(
     orig_skill_keys = set(orig_skills)
     new_skill_keys = set(new_skills)
     for skill_key in new_skill_keys - orig_skill_keys:
-        changes.append(ResumeFieldDiff(
-            field_path="additional.technicalSkills",
-            field_type="skill",
-            change_type="added",
-            new_value=new_skills[skill_key],
-            confidence="high"  # Newly added skills are high risk
-        ))
+        changes.append(
+            ResumeFieldDiff(
+                field_path="additional.technicalSkills",
+                field_type="skill",
+                change_type="added",
+                new_value=new_skills[skill_key],
+                confidence="high",  # Newly added skills are high risk
+            )
+        )
 
     for skill_key in orig_skill_keys - new_skill_keys:
-        changes.append(ResumeFieldDiff(
-            field_path="additional.technicalSkills",
-            field_type="skill",
-            change_type="removed",
-            original_value=orig_skills[skill_key],
-            confidence="medium"
-        ))
+        changes.append(
+            ResumeFieldDiff(
+                field_path="additional.technicalSkills",
+                field_type="skill",
+                change_type="removed",
+                original_value=orig_skills[skill_key],
+                confidence="medium",
+            )
+        )
 
     # 3. Compare work experience descriptions
     original_experiences = original.get("workExperience", [])
@@ -1361,22 +1394,26 @@ def calculate_resume_diff(
     orig_cert_keys = set(orig_certs)
     new_cert_keys = set(new_certs)
     for cert_key in new_cert_keys - orig_cert_keys:
-        changes.append(ResumeFieldDiff(
-            field_path="additional.certificationsTraining",
-            field_type="certification",
-            change_type="added",
-            new_value=new_certs[cert_key],
-            confidence="high"
-        ))
+        changes.append(
+            ResumeFieldDiff(
+                field_path="additional.certificationsTraining",
+                field_type="certification",
+                change_type="added",
+                new_value=new_certs[cert_key],
+                confidence="high",
+            )
+        )
 
     for cert_key in orig_cert_keys - new_cert_keys:
-        changes.append(ResumeFieldDiff(
-            field_path="additional.certificationsTraining",
-            field_type="certification",
-            change_type="removed",
-            original_value=orig_certs[cert_key],
-            confidence="medium"
-        ))
+        changes.append(
+            ResumeFieldDiff(
+                field_path="additional.certificationsTraining",
+                field_type="certification",
+                change_type="removed",
+                original_value=orig_certs[cert_key],
+                confidence="medium",
+            )
+        )
 
     # 4b. Compare education descriptions (a single string per entry, not a list)
     original_education = original.get("education", [])
@@ -1402,14 +1439,16 @@ def calculate_resume_diff(
             change_type = "added"
         else:
             change_type = "modified"
-        changes.append(ResumeFieldDiff(
-            field_path=f"education[{idx}].description",
-            field_type="education",
-            change_type=change_type,
-            original_value=orig_desc or None,
-            new_value=impr_desc or None,
-            confidence="medium",
-        ))
+        changes.append(
+            ResumeFieldDiff(
+                field_path=f"education[{idx}].description",
+                field_type="education",
+                change_type=change_type,
+                original_value=orig_desc or None,
+                new_value=impr_desc or None,
+                confidence="medium",
+            )
+        )
 
     # 4c. Compare languages (order changes are intentionally ignored)
     orig_langs = _build_string_index(
@@ -1421,21 +1460,25 @@ def calculate_resume_diff(
         "additional.languages",
     )
     for lang_key in set(new_langs) - set(orig_langs):
-        changes.append(ResumeFieldDiff(
-            field_path="additional.languages",
-            field_type="language",
-            change_type="added",
-            new_value=new_langs[lang_key],
-            confidence="high",
-        ))
+        changes.append(
+            ResumeFieldDiff(
+                field_path="additional.languages",
+                field_type="language",
+                change_type="added",
+                new_value=new_langs[lang_key],
+                confidence="high",
+            )
+        )
     for lang_key in set(orig_langs) - set(new_langs):
-        changes.append(ResumeFieldDiff(
-            field_path="additional.languages",
-            field_type="language",
-            change_type="removed",
-            original_value=orig_langs[lang_key],
-            confidence="medium",
-        ))
+        changes.append(
+            ResumeFieldDiff(
+                field_path="additional.languages",
+                field_type="language",
+                change_type="removed",
+                original_value=orig_langs[lang_key],
+                confidence="medium",
+            )
+        )
 
     # 4d. Compare awards (order changes are intentionally ignored)
     orig_awards = _build_string_index(
@@ -1447,21 +1490,25 @@ def calculate_resume_diff(
         "additional.awards",
     )
     for award_key in set(new_awards) - set(orig_awards):
-        changes.append(ResumeFieldDiff(
-            field_path="additional.awards",
-            field_type="award",
-            change_type="added",
-            new_value=new_awards[award_key],
-            confidence="high",
-        ))
+        changes.append(
+            ResumeFieldDiff(
+                field_path="additional.awards",
+                field_type="award",
+                change_type="added",
+                new_value=new_awards[award_key],
+                confidence="high",
+            )
+        )
     for award_key in set(orig_awards) - set(new_awards):
-        changes.append(ResumeFieldDiff(
-            field_path="additional.awards",
-            field_type="award",
-            change_type="removed",
-            original_value=orig_awards[award_key],
-            confidence="medium",
-        ))
+        changes.append(
+            ResumeFieldDiff(
+                field_path="additional.awards",
+                field_type="award",
+                change_type="removed",
+                original_value=orig_awards[award_key],
+                confidence="medium",
+            )
+        )
 
     # 5. Compare added/removed/modified entries
     # Descriptions are diffed separately; ignore them when detecting entry-level changes.
@@ -1481,7 +1528,9 @@ def calculate_resume_diff(
         original.get("education", []),
         improved.get("education", []),
         _format_education_entry,
-        {"description"},  # diffed separately in step 4b — avoid duplicate entry-level diffs
+        {
+            "description"
+        },  # diffed separately in step 4b — avoid duplicate entry-level diffs
     )
     _append_entry_changes(
         changes,
@@ -1495,8 +1544,16 @@ def calculate_resume_diff(
     # 6. Build summary
     summary = ResumeDiffSummary(
         total_changes=len(changes),
-        skills_added=len([c for c in changes if c.field_type == "skill" and c.change_type == "added"]),
-        skills_removed=len([c for c in changes if c.field_type == "skill" and c.change_type == "removed"]),
+        skills_added=len(
+            [c for c in changes if c.field_type == "skill" and c.change_type == "added"]
+        ),
+        skills_removed=len(
+            [
+                c
+                for c in changes
+                if c.field_type == "skill" and c.change_type == "removed"
+            ]
+        ),
         descriptions_modified=len(
             [
                 c
@@ -1504,8 +1561,14 @@ def calculate_resume_diff(
                 if c.field_type == "description" and c.change_type == "modified"
             ]
         ),
-        certifications_added=len([c for c in changes if c.field_type == "certification" and c.change_type == "added"]),
-        high_risk_changes=len([c for c in changes if c.confidence == "high"])
+        certifications_added=len(
+            [
+                c
+                for c in changes
+                if c.field_type == "certification" and c.change_type == "added"
+            ]
+        ),
+        high_risk_changes=len([c for c in changes if c.confidence == "high"]),
     )
 
     return summary, changes

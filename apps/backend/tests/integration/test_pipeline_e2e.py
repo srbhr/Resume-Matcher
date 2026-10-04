@@ -17,10 +17,9 @@ auxiliary cover-letter/outreach/title generators are all replaced with
 Mock/AsyncMock returning canned data.
 """
 
-from typing import Any
-
 import copy
 from types import SimpleNamespace
+from typing import Any
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -108,15 +107,11 @@ class TestPipelineCore:
         # processed_data round-tripped through TinyDB JSON storage.
         assert master["processed_data"] is not None
         assert master["processed_data"]["personalInfo"]["name"] == "Jane Doe"
-        assert (
-            master["processed_data"]["summary"] == sample_resume["summary"]
-        )
+        assert master["processed_data"]["summary"] == sample_resume["summary"]
         # Exactly one resume exists, and it is the master.
         assert len(await isolated_db.list_resumes()) == 1
 
-    async def test_jobs_upload_persists_job_through_router(
-        self, isolated_db, client
-    ):
+    async def test_jobs_upload_persists_job_through_router(self, isolated_db, client):
         """POST /jobs/upload stores the JD text and returns a job_id that is
         actually retrievable from the real db; stats reflect one job.
 
@@ -391,7 +386,9 @@ class TestTailoringPipeline:
         async with _new_client() as client:
             jobs_resp = await client.post(
                 "/api/v1/jobs/upload",
-                json={"job_descriptions": ["Senior Backend Engineer: Python, FastAPI."]},
+                json={
+                    "job_descriptions": ["Senior Backend Engineer: Python, FastAPI."]
+                },
             )
         assert jobs_resp.status_code == 200
         job_id = jobs_resp.json()["job_id"][0]
@@ -492,7 +489,9 @@ class TestConfigurableImproveTimeout:
         from app.config import settings
 
         # Seed a master resume + a job through the real routers.
-        resume_id = (await _upload_resume(isolated_db, sample_resume)).json()["resume_id"]
+        resume_id = (await _upload_resume(isolated_db, sample_resume)).json()[
+            "resume_id"
+        ]
         async with _new_client() as client:
             jr = await client.post(
                 "/api/v1/jobs/upload",

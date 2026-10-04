@@ -163,8 +163,7 @@ def test_concurrent_snapshot_replacements_are_serialized(
 
     monkeypatch.setattr(os, "replace", observed_replace)
     snapshots: list[dict[str, Any]] = [
-        {"writer": index, "payload": str(index) * 4096}
-        for index in range(writers)
+        {"writer": index, "payload": str(index) * 4096} for index in range(writers)
     ]
 
     def save_after_barrier(snapshot: dict[str, Any]) -> None:

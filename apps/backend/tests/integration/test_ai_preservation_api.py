@@ -9,8 +9,7 @@ from unittest.mock import AsyncMock, patch
 from httpx import ASGITransport, AsyncClient
 
 from app.main import app
-from app.schemas.models import ResumeData
-from app.schemas.models import RefinementStats
+from app.schemas.models import RefinementStats, ResumeData
 from tests.integration.test_pipeline_e2e import _upload_resume
 
 
@@ -195,9 +194,9 @@ async def test_schema_round_trip_preview_preserves_rows_styles_and_list_multipli
     source = ResumeData.model_validate(source).model_dump()
     destructive_writer_result = copy.deepcopy(source)
     destructive_writer_result["workExperience"][0]["description"] = ["   "]
-    destructive_writer_result["customSections"]["talks"]["items"][0][
-        "description"
-    ] = ["\t"]
+    destructive_writer_result["customSections"]["talks"]["items"][0]["description"] = [
+        "\t"
+    ]
     destructive_writer_result["additional"] = {}
     destructive_writer_result["customSections"]["topics"]["strings"] = []
     resume_id, job_id = await _seed(isolated_db, source)
@@ -226,12 +225,14 @@ async def test_schema_round_trip_preview_preserves_rows_styles_and_list_multipli
             )
 
     assert confirm.status_code == 200, confirm.text
-    assert preview_resume["workExperience"][0]["description"] == source[
-        "workExperience"
-    ][0]["description"]
-    assert preview_resume["workExperience"][0]["descriptionStyles"] == source[
-        "workExperience"
-    ][0]["descriptionStyles"]
+    assert (
+        preview_resume["workExperience"][0]["description"]
+        == source["workExperience"][0]["description"]
+    )
+    assert (
+        preview_resume["workExperience"][0]["descriptionStyles"]
+        == source["workExperience"][0]["descriptionStyles"]
+    )
     assert preview_resume["additional"]["technicalSkills"] == ["Python", "Python"]
     assert preview_resume["customSections"] == source["customSections"]
     tailored_id = confirm.json()["data"]["resume_id"]
@@ -260,9 +261,7 @@ async def test_duplicate_identity_reorder_preview_confirms_without_false_drift(
     resume_id, job_id = await _seed(isolated_db, source)
 
     with ExitStack() as stack:
-        for pipeline_patch in _pipeline_patches(
-            source, _refinement_result(candidate)
-        ):
+        for pipeline_patch in _pipeline_patches(source, _refinement_result(candidate)):
             stack.enter_context(pipeline_patch)
         async with _client() as client:
             preview = await client.post(

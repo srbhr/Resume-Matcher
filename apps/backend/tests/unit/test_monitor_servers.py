@@ -6,16 +6,16 @@ import asyncio
 import hashlib
 import json
 import os
-from pathlib import Path
 import socket
 import subprocess
 import sys
+from pathlib import Path
 from typing import Any
 
 import httpx
 import pytest
 
-from app.config import save_config_file, save_api_keys_to_config, settings
+from app.config import save_api_keys_to_config, save_config_file, settings
 from e2e_monitor.bundle import Bundle
 from e2e_monitor.flow import seed_master_db
 from e2e_monitor.servers import Servers
@@ -137,9 +137,11 @@ def test_public_sweep_runs_real_http_flow_with_owned_backend(
     loopback_only: None,
 ) -> None:
     del loopback_only
-    from e2e_monitor import __main__ as cli, servers as server_module
-    from app import llm
     from unittest.mock import AsyncMock
+
+    from app import llm
+    from e2e_monitor import __main__ as cli
+    from e2e_monitor import servers as server_module
 
     save_config_file(
         {
@@ -245,8 +247,9 @@ def test_public_sweep_persists_stage_failure_and_teardown_on_abort(
     monkeypatch: pytest.MonkeyPatch,
     failure: BaseException,
 ) -> None:
-    from e2e_monitor import __main__ as cli
     from unittest.mock import Mock
+
+    from e2e_monitor import __main__ as cli
 
     save_config_file({"provider": "ollama", "model": "synthetic-local-model"})
     monkeypatch.setenv("RM_E2E_MONITOR", "1")
@@ -280,8 +283,9 @@ def test_public_sweep_persists_stage_failure_and_teardown_on_abort(
 def test_frontend_proxy_targets_the_owned_backend(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    from e2e_monitor import servers as server_module
     from unittest.mock import Mock
+
+    from e2e_monitor import servers as server_module
 
     save_config_file({"provider": "ollama", "model": "synthetic-local-model"})
     bundle = Bundle(tmp_path, "frontend-env")
@@ -313,12 +317,15 @@ def test_frontend_proxy_targets_the_owned_backend(
 @pytest.mark.parametrize("port", ["0", "-1", "65536"])
 def test_cli_rejects_invalid_ports_before_boot(port: str) -> None:
     from e2e_monitor.__main__ import main
+
     with pytest.raises(SystemExit) as error:
         main(["sweep", "--backend-port", port])
     assert error.value.code == 2
 
 
-def test_server_environment_preserves_connectivity_not_ambient_keys(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_server_environment_preserves_connectivity_not_ambient_keys(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     save_config_file({"provider": "ollama", "model": "synthetic-model"})
     bundle = Bundle(tmp_path, "connectivity")
     bundle.ensure()
@@ -335,8 +342,11 @@ def test_server_environment_preserves_connectivity_not_ambient_keys(tmp_path: Pa
         servers.teardown()
 
 
-def test_artifact_write_failure_marks_tailor_stage_failed(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_artifact_write_failure_marks_tailor_stage_failed(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     from e2e_monitor import __main__ as cli
+
     save_config_file({"provider": "ollama", "model": "synthetic-model"})
     monkeypatch.setenv("RM_E2E_MONITOR", "1")
     monkeypatch.setattr(cli, "_ARTIFACTS", tmp_path / "bundles")
@@ -344,7 +354,9 @@ def test_artifact_write_failure_marks_tailor_stage_failed(tmp_path: Path, monkey
     monkeypatch.setattr(cli, "_jds", lambda: [("synthetic", "Python engineer")])
     monkeypatch.setattr(Servers, "boot", lambda *args, **kwargs: {"frontend_up": False})
     monkeypatch.setattr(Servers, "teardown", lambda *args: None)
-    monkeypatch.setattr(cli, "tailor", lambda *args, **kwargs: {"tailored": {}, "scores": {}})
+    monkeypatch.setattr(
+        cli, "tailor", lambda *args, **kwargs: {"tailored": {}, "scores": {}}
+    )
     real_write = Bundle.write_json
 
     def write(path: Path, payload: Any) -> None:
@@ -356,12 +368,21 @@ def test_artifact_write_failure_marks_tailor_stage_failed(tmp_path: Path, monkey
     assert cli.main(["sweep", "--no-frontend"]) == 1
     run = next((tmp_path / "bundles").iterdir())
     trace = json.loads((run / "flow-trace.json").read_text())
-    assert next(item for item in trace["stages"] if item["stage"] == "tailor:synthetic")["ok"] is False
+    assert (
+        next(item for item in trace["stages"] if item["stage"] == "tailor:synthetic")[
+            "ok"
+        ]
+        is False
+    )
 
 
-def test_judge_artifact_write_failure_marks_run_failed(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    from e2e_monitor import __main__ as cli
+def test_judge_artifact_write_failure_marks_run_failed(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     from unittest.mock import AsyncMock
+
+    from e2e_monitor import __main__ as cli
+
     save_config_file({"provider": "ollama", "model": "synthetic-model"})
     monkeypatch.setenv("RM_E2E_MONITOR", "1")
     monkeypatch.setattr(cli, "_ARTIFACTS", tmp_path / "bundles")
@@ -369,8 +390,20 @@ def test_judge_artifact_write_failure_marks_run_failed(tmp_path: Path, monkeypat
     monkeypatch.setattr(cli, "_jds", lambda: [("synthetic", "Python engineer")])
     monkeypatch.setattr(Servers, "boot", lambda *args, **kwargs: {"frontend_up": False})
     monkeypatch.setattr(Servers, "teardown", lambda *args: None)
-    monkeypatch.setattr(cli, "tailor", lambda *args, **kwargs: {"tailored": {}, "scores": {}, "tailored_resume_id": None})
-    monkeypatch.setattr(cli, "judge_variation", AsyncMock(return_value={"score": 5, "reasons": "Synthetic valid result"}))
+    monkeypatch.setattr(
+        cli,
+        "tailor",
+        lambda *args, **kwargs: {
+            "tailored": {},
+            "scores": {},
+            "tailored_resume_id": None,
+        },
+    )
+    monkeypatch.setattr(
+        cli,
+        "judge_variation",
+        AsyncMock(return_value={"score": 5, "reasons": "Synthetic valid result"}),
+    )
     real_write = Bundle.write_json
 
     def write(path: Path, payload: Any) -> None:
@@ -382,25 +415,44 @@ def test_judge_artifact_write_failure_marks_run_failed(tmp_path: Path, monkeypat
     assert cli.main(["sweep", "--no-frontend"]) == 1
     run = next((tmp_path / "bundles").iterdir())
     trace = json.loads((run / "flow-trace.json").read_text())
-    assert next(item for item in trace["stages"] if item["stage"] == "judge:synthetic")["ok"] is False
+    assert (
+        next(item for item in trace["stages"] if item["stage"] == "judge:synthetic")[
+            "ok"
+        ]
+        is False
+    )
     assert trace["all_passed"] is False
     assert json.loads((run / "summary.json").read_text())["flow_all_passed"] is False
 
 
 @pytest.mark.skipif(os.name == "nt", reason="POSIX process-group regression")
-def test_teardown_stops_descendant_listener_even_when_parent_exits(tmp_path: Path) -> None:
+def test_teardown_stops_descendant_listener_even_when_parent_exits(
+    tmp_path: Path,
+) -> None:
     import signal
     import time
+
     from e2e_monitor.servers import _port_is_free
+
     bundle = Bundle(tmp_path, "descendants")
     bundle.ensure()
     port = free_port()
-    child = "import signal,socket,time; signal.signal(signal.SIGTERM, signal.SIG_IGN); s=socket.socket(); s.bind(('127.0.0.1', %d)); s.listen(); print('ready', flush=True); time.sleep(30)" % port
-    parent = "import subprocess,sys,time; subprocess.Popen([sys.executable, '-c', %r]); time.sleep(30)" % child
-    process = subprocess.Popen([sys.executable, "-c", parent], start_new_session=True, stdout=subprocess.PIPE)
+    child = (
+        "import signal,socket,time; signal.signal(signal.SIGTERM, signal.SIG_IGN); s=socket.socket(); s.bind(('127.0.0.1', %d)); s.listen(); print('ready', flush=True); time.sleep(30)"
+        % port
+    )
+    parent = (
+        "import subprocess,sys,time; subprocess.Popen([sys.executable, '-c', %r]); time.sleep(30)"
+        % child
+    )
+    process = subprocess.Popen(
+        [sys.executable, "-c", parent], start_new_session=True, stdout=subprocess.PIPE
+    )
     servers = Servers(bundle, procs=[process])
     try:
-        assert process.stdout is not None and process.stdout.readline().strip() == b"ready"
+        assert (
+            process.stdout is not None and process.stdout.readline().strip() == b"ready"
+        )
         assert not _port_is_free(port)
         servers.teardown()
         deadline = time.monotonic() + 2

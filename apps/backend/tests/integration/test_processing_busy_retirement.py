@@ -52,11 +52,15 @@ async def test_sustained_contention_exhausts_retirement_and_allows_later_retry(
         resumes, "_PROCESSING_RETIREMENT_MAX_ATTEMPTS", 2, raising=False
     )
     monkeypatch.setattr(
-        resumes, "_PROCESSING_RETIREMENT_INITIAL_BACKOFF_SECONDS", 0.001,
+        resumes,
+        "_PROCESSING_RETIREMENT_INITIAL_BACKOFF_SECONDS",
+        0.001,
         raising=False,
     )
     monkeypatch.setattr(
-        resumes, "_PROCESSING_RETIREMENT_MAX_BACKOFF_SECONDS", 0.001,
+        resumes,
+        "_PROCESSING_RETIREMENT_MAX_BACKOFF_SECONDS",
+        0.001,
         raising=False,
     )
     caplog.set_level(logging.ERROR, logger=resumes.__name__)
@@ -110,11 +114,15 @@ async def test_lifespan_reaps_contended_retirement_before_database_close(
         resumes, "_PROCESSING_RETIREMENT_MAX_ATTEMPTS", 100, raising=False
     )
     monkeypatch.setattr(
-        resumes, "_PROCESSING_RETIREMENT_INITIAL_BACKOFF_SECONDS", 1.0,
+        resumes,
+        "_PROCESSING_RETIREMENT_INITIAL_BACKOFF_SECONDS",
+        1.0,
         raising=False,
     )
     monkeypatch.setattr(
-        resumes, "_PROCESSING_RETIREMENT_MAX_BACKOFF_SECONDS", 1.0,
+        resumes,
+        "_PROCESSING_RETIREMENT_MAX_BACKOFF_SECONDS",
+        1.0,
         raising=False,
     )
     monkeypatch.setattr(
@@ -135,8 +143,7 @@ async def test_lifespan_reaps_contended_retirement_before_database_close(
 
     async def observed_close() -> None:
         close_observations.append(
-            attempt_settled.is_set()
-            and all(task.done() for task in background)
+            attempt_settled.is_set() and all(task.done() for task in background)
         )
         await original_close()
 
@@ -251,12 +258,15 @@ async def test_busy_claim_preserves_the_existing_processing_owner(
             )
     assert response.status_code == 503
     assert response.headers["retry-after"] == "1"
-    assert await database.finish_resume_processing(
-        row["resume_id"],
-        token,
-        processing_status="ready",
-        processed_data={"summary": "original owner"},
-    ) == "committed"
+    assert (
+        await database.finish_resume_processing(
+            row["resume_id"],
+            token,
+            processing_status="ready",
+            processed_data={"summary": "original owner"},
+        )
+        == "committed"
+    )
 
 
 @pytest.mark.parametrize("replacement", ["none", "claim", "save"])

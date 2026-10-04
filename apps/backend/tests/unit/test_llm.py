@@ -17,11 +17,10 @@ from app.llm import (
     _openai_compatible_supports_json_mode,
     _supports_temperature,
     _uses_opencode_zen_hy3,
-    get_safe_max_tokens,
     get_model_name,
+    get_safe_max_tokens,
     resolve_api_key,
 )
-
 
 # ---------------------------------------------------------------------------
 # Provider configuration helpers
@@ -209,9 +208,7 @@ class TestSupportsTemperature:
     @patch("app.llm.litellm.get_model_info")
     def test_model_without_temperature_param(self, mock_get_model_info):
         """Model registry omits temperature → not supported."""
-        mock_get_model_info.return_value = {
-            "supported_openai_params": ["max_tokens"]
-        }
+        mock_get_model_info.return_value = {"supported_openai_params": ["max_tokens"]}
         assert _supports_temperature("some-model", 0.7) is False
 
     @patch("app.llm.litellm.get_model_info")
@@ -234,9 +231,7 @@ class TestSupportsTemperature:
         assert _supports_temperature("openai/kimi-k2.6", 1.0) is True
 
     @patch("app.llm.litellm.get_model_info")
-    def test_gpt5_only_allows_default(
-        self, mock_get_model_info: MagicMock
-    ) -> None:
+    def test_gpt5_only_allows_default(self, mock_get_model_info: MagicMock) -> None:
         """Reasoning models without a none mode accept only default temperature."""
         mock_get_model_info.return_value = {
             "supported_openai_params": ["temperature", "max_tokens"],
@@ -305,9 +300,7 @@ class TestSupportsTemperature:
         assert _supports_temperature("unknown-vendor/model", 0.7) is False
 
     @patch("app.llm.litellm.get_model_info")
-    def test_case_insensitive_model_name(
-        self, mock_get_model_info: MagicMock
-    ) -> None:
+    def test_case_insensitive_model_name(self, mock_get_model_info: MagicMock) -> None:
         """Provider-specific checks are case-insensitive."""
         mock_get_model_info.return_value = {
             "supported_openai_params": ["temperature", "max_tokens"],
@@ -374,9 +367,7 @@ class TestGetRetryTemperature:
         assert _get_retry_temperature("openai/gpt-5.1", 0) == 0.1
         assert _get_retry_temperature("openai/gpt-5.1", 1) == 0.3
         assert (
-            _get_retry_temperature(
-                "openai/gpt-5.1", 0, reasoning_effort="medium"
-            )
+            _get_retry_temperature("openai/gpt-5.1", 0, reasoning_effort="medium")
             is None
         )
 
@@ -554,7 +545,9 @@ class TestCompleteJsonFallback:
         result = await complete_json(prompt="Extract keywords", schema_type="keywords")
 
         assert result == {"required_skills": ["Python"]}
-        assert router.acompletion.call_args.kwargs["response_format"] == {"type": "json_object"}
+        assert router.acompletion.call_args.kwargs["response_format"] == {
+            "type": "json_object"
+        }
 
     @pytest.mark.asyncio
     @patch("app.llm.get_router")
@@ -586,7 +579,9 @@ class TestCompleteJsonFallback:
 
         from app.llm import complete_json
 
-        result = await complete_json("Extract keywords", retries=1, schema_type="keywords")
+        result = await complete_json(
+            "Extract keywords", retries=1, schema_type="keywords"
+        )
 
         assert result == {"required_skills": ["Python"]}
         assert router.acompletion.await_count == 2
@@ -674,7 +669,9 @@ class TestCompleteJsonFallback:
 
         # Second response: valid JSON without JSON mode
         good_choice = MagicMock()
-        good_choice.message.content = '{"items_to_enrich": [], "questions": [], "analysis_summary": "ok"}'
+        good_choice.message.content = (
+            '{"items_to_enrich": [], "questions": [], "analysis_summary": "ok"}'
+        )
         good_response = MagicMock()
         good_response.choices = [good_choice]
 
@@ -724,7 +721,9 @@ class TestCompleteJsonFallback:
         empty_response.choices = [empty_choice]
 
         good_choice = MagicMock()
-        good_choice.message.content = '{"required_skills": [], "preferred_skills": [], "keywords": []}'
+        good_choice.message.content = (
+            '{"required_skills": [], "preferred_skills": [], "keywords": []}'
+        )
         good_response = MagicMock()
         good_response.choices = [good_choice]
 
@@ -737,7 +736,9 @@ class TestCompleteJsonFallback:
 
         from app.llm import complete_json
 
-        result = await complete_json(prompt="Extract keywords", schema_type="keywords", retries=2)
+        result = await complete_json(
+            prompt="Extract keywords", schema_type="keywords", retries=2
+        )
 
         assert result == {"required_skills": [], "preferred_skills": [], "keywords": []}
         calls = router.acompletion.call_args_list
@@ -992,7 +993,9 @@ class TestScrubSecrets:
     def test_still_redacts_the_existing_patterns(self):
         from app.llm import _scrub_secrets
 
-        assert "sk-abcd1234efgh5678" not in _scrub_secrets("key sk-abcd1234efgh5678 failed")
+        assert "sk-abcd1234efgh5678" not in _scrub_secrets(
+            "key sk-abcd1234efgh5678 failed"
+        )
         assert "AIzaSyABCDEFGHIJ" not in _scrub_secrets("key AIzaSyABCDEFGHIJ failed")
         assert "tok_secret" not in _scrub_secrets("Authorization: Bearer tok_secret")
 
@@ -1002,7 +1005,9 @@ class TestScrubSecrets:
 # ---------------------------------------------------------------------------
 
 
-def _compatible(model: str = "hy3-free", api_base: str | None = "https://opencode.ai/zen/v1"):
+def _compatible(
+    model: str = "hy3-free", api_base: str | None = "https://opencode.ai/zen/v1"
+):
     """Build an ``openai_compatible`` config for allowlist assertions."""
     return LLMConfig(
         provider="openai_compatible",

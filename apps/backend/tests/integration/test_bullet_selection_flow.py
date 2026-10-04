@@ -40,7 +40,10 @@ PROJECT_BULLETS = [
 ]
 # Highest scores: work bullets 1, 3, 5 and project bullets 0, 2, 3.
 SCORES = {
-    **{("workExperience", 0, i): float(s) for i, s in enumerate([10, 90, 20, 80, 30, 70])},
+    **{
+        ("workExperience", 0, i): float(s)
+        for i, s in enumerate([10, 90, 20, 80, 30, 70])
+    },
     **{("personalProjects", 0, i): float(s) for i, s in enumerate([60, 10, 50, 40])},
 }
 CONDENSED_WORK = [WORK_BULLETS[i] for i in (1, 3, 5)]
@@ -100,7 +103,9 @@ async def job(isolated_db: Any, master: dict[str, Any]) -> dict[str, Any]:
 
 @pytest.fixture
 async def client(isolated_db: Any) -> AsyncIterator[AsyncClient]:
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as c:
         yield c
 
 
@@ -159,7 +164,10 @@ def pipeline(monkeypatch: pytest.MonkeyPatch) -> Any:
 
 
 async def _confirm(
-    client: AsyncClient, master: dict[str, Any], job: dict[str, Any], data: dict[str, Any]
+    client: AsyncClient,
+    master: dict[str, Any],
+    job: dict[str, Any],
+    data: dict[str, Any],
 ) -> Any:
     return await client.post(
         "/api/v1/resumes/improve/confirm",
@@ -192,7 +200,9 @@ async def test_preview_condenses_to_three_per_entry_and_confirm_accepts(
     assert data["bullet_selection"]["bullets_before"] == 10
     assert data["bullet_selection"]["bullets_after"] == 6
     assert data["bullet_selection"]["page_fit"] == "skipped"
-    removed = [c for c in (data["detailed_changes"] or []) if c.get("change_type") == "removed"]
+    removed = [
+        c for c in (data["detailed_changes"] or []) if c.get("change_type") == "removed"
+    ]
     assert removed == []  # diff is against the condensed source
 
     confirm = await _confirm(client, master, job, data)
@@ -202,18 +212,27 @@ async def test_preview_condenses_to_three_per_entry_and_confirm_accepts(
     assert saved["parent_id"] == master["resume_id"]
     # The master itself is untouched.
     stored_master = await isolated_db.get_resume(master["resume_id"])
-    assert stored_master["processed_data"]["workExperience"][0]["description"] == WORK_BULLETS
+    assert (
+        stored_master["processed_data"]["workExperience"][0]["description"]
+        == WORK_BULLETS
+    )
 
 
 async def test_preview_without_max_bullets_keeps_full_source(
-    client: AsyncClient, master: dict[str, Any], job: dict[str, Any], pipeline: AsyncMock
+    client: AsyncClient,
+    master: dict[str, Any],
+    job: dict[str, Any],
+    pipeline: AsyncMock,
 ) -> None:
     res = await client.post(
         "/api/v1/resumes/improve/preview",
         json={"resume_id": master["resume_id"], "job_id": job["job_id"]},
     )
     assert res.status_code == 200, res.text
-    assert len(res.json()["data"]["resume_preview"]["workExperience"][0]["description"]) == 6
+    assert (
+        len(res.json()["data"]["resume_preview"]["workExperience"][0]["description"])
+        == 6
+    )
     assert res.json()["data"]["bullet_selection"] is None
     pipeline.assert_not_called()
 
@@ -233,7 +252,10 @@ async def test_preview_confirm_round_trip_when_under_cap(
     assert res.status_code == 200, res.text
     data = res.json()["data"]
     assert len(data["resume_preview"]["workExperience"][0]["description"]) == 6
-    assert data["bullet_selection"]["bullets_after"] == data["bullet_selection"]["bullets_before"]
+    assert (
+        data["bullet_selection"]["bullets_after"]
+        == data["bullet_selection"]["bullets_before"]
+    )
     confirm = await _confirm(client, master, job, data)
     assert confirm.status_code == 200, confirm.text
 
@@ -245,7 +267,10 @@ async def test_preview_page_fit_trims_and_reports(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     async def measure(data: dict[str, Any], fit: Any) -> int:
-        total = sum(len(e["description"]) for e in data["workExperience"] + data["personalProjects"])
+        total = sum(
+            len(e["description"])
+            for e in data["workExperience"] + data["personalProjects"]
+        )
         return 1 if total <= 4 else 2
 
     monkeypatch.setattr(tailor_selection, "measure_page_count", measure)
@@ -261,13 +286,20 @@ async def test_preview_page_fit_trims_and_reports(
     assert res.status_code == 200, res.text
     data = res.json()["data"]
     sel = data["bullet_selection"]
-    assert sel["page_fit"] == "trimmed" and sel["trimmed_for_fit"] == 2 and sel["final_pages"] == 1
+    assert (
+        sel["page_fit"] == "trimmed"
+        and sel["trimmed_for_fit"] == 2
+        and sel["final_pages"] == 1
+    )
     total = sum(
         len(e["description"])
-        for e in data["resume_preview"]["workExperience"] + data["resume_preview"]["personalProjects"]
+        for e in data["resume_preview"]["workExperience"]
+        + data["resume_preview"]["personalProjects"]
     )
     assert total == 4
-    assert not any(w == tailor_selection.PAGE_FIT_FINAL_OVER_WARNING for w in data["warnings"])
+    assert not any(
+        w == tailor_selection.PAGE_FIT_FINAL_OVER_WARNING for w in data["warnings"]
+    )
 
     confirm = await _confirm(client, master, job, data)
     assert confirm.status_code == 200, confirm.text
@@ -370,7 +402,9 @@ async def test_slow_final_render_never_fails_the_preview(
     def remaining_budget() -> float:
         # Ample budget while fitting; only 50 ms past the reserve for the final
         # check. Independent of how long the other stages take on this machine.
-        return 100.0 if not calls else tailor_selection.FINAL_CHECK_RESERVE_SECONDS + 0.05
+        return (
+            100.0 if not calls else tailor_selection.FINAL_CHECK_RESERVE_SECONDS + 0.05
+        )
 
     monkeypatch.setattr(tailor_selection, "measure_page_count", measure)
     monkeypatch.setattr(tailor_selection, "remaining_timeout", remaining_budget)
@@ -403,7 +437,10 @@ def _preview_bullet_count(preview: dict[str, Any]) -> int:
 
 
 async def _selection_preview(
-    client: AsyncClient, master: dict[str, Any], job: dict[str, Any], diff: ImproveDiffResult
+    client: AsyncClient,
+    master: dict[str, Any],
+    job: dict[str, Any],
+    diff: ImproveDiffResult,
 ) -> dict[str, Any]:
     with patch(
         "app.routers.resumes.generate_resume_diffs",
@@ -443,7 +480,9 @@ async def test_llm_append_cannot_push_a_role_past_the_cap(
     assert preview["workExperience"][0]["description"] == CONDENSED_WORK
     # An expected harness refusal is logged server-side, not shown as a rejection.
     assert not any("rejected during verification" in w for w in data["warnings"])
-    assert data["bullet_selection"]["bullets_after"] == _preview_bullet_count(preview) == 6
+    assert (
+        data["bullet_selection"]["bullets_after"] == _preview_bullet_count(preview) == 6
+    )
 
     confirm = await _confirm(client, master, job, data)
     assert confirm.status_code == 200, confirm.text
@@ -498,7 +537,10 @@ async def test_selection_tells_the_diff_llm_the_bullet_set_is_fixed(
         )
     assert res.status_code == 200, res.text
     assert diffs.await_args is not None
-    assert diffs.await_args.kwargs["fixed_row_sections"] == ("workExperience", "personalProjects")
+    assert diffs.await_args.kwargs["fixed_row_sections"] == (
+        "workExperience",
+        "personalProjects",
+    )
 
 
 async def test_legacy_preview_keeps_bullet_appends_and_rejection_warnings(
@@ -575,7 +617,9 @@ async def test_rewrite_that_splits_a_bullet_cannot_grow_a_condensed_role(
     # Every harness-chosen bullet keeps its own row; the split rewrite stays one row.
     assert work[1:] == CONDENSED_WORK[1:]
     assert "Designed the Python event pipeline" in work[0] and "\n" not in work[0]
-    assert data["bullet_selection"]["bullets_after"] == _preview_bullet_count(preview) == 6
+    assert (
+        data["bullet_selection"]["bullets_after"] == _preview_bullet_count(preview) == 6
+    )
 
     confirm = await _confirm(client, master, job, data)
     assert confirm.status_code == 200, confirm.text
@@ -639,8 +683,12 @@ async def test_refiner_grounds_on_the_full_master_while_tailoring_the_condensed_
     assert refine.await_args is not None
     kwargs = refine.await_args.kwargs
     assert kwargs["master_resume"]["workExperience"][0]["description"] == WORK_BULLETS
-    assert kwargs["master_resume"]["personalProjects"][0]["description"] == PROJECT_BULLETS
-    assert kwargs["initial_tailored"]["workExperience"][0]["description"] == CONDENSED_WORK
+    assert (
+        kwargs["master_resume"]["personalProjects"][0]["description"] == PROJECT_BULLETS
+    )
+    assert (
+        kwargs["initial_tailored"]["workExperience"][0]["description"] == CONDENSED_WORK
+    )
 
 
 async def test_diff_llm_sees_only_the_condensed_source(
@@ -745,7 +793,9 @@ async def test_condensed_cjk_source_reaches_the_diff_llm_verbatim(
         )
     assert res.status_code == 200, res.text
     original_resume = diffs.await_args.kwargs["original_resume"]
-    kept = [CJK_BULLETS[i] for i in (1, 2, 3)]  # SCORES rank work bullets 1, 3, 2 highest
+    kept = [
+        CJK_BULLETS[i] for i in (1, 2, 3)
+    ]  # SCORES rank work bullets 1, 3, 2 highest
     assert json.loads(original_resume)["workExperience"][0]["description"] == kept
     assert kept[0] in original_resume and "王伟" in original_resume
     assert "\\u" not in original_resume
@@ -846,8 +896,13 @@ async def test_confirm_scrubs_the_condensed_source_and_still_replays(
     replay = await _confirm(client, master, job, data)
     assert replay.status_code == 200, replay.text
     assert replay.json()["data"]["resume_id"] == tailored_id
-    assert replay.json()["data"]["resume_preview"] == confirm.json()["data"]["resume_preview"]
-    assert len(await isolated_db.list_resumes()) == 2  # master + one tailored, no second copy
+    assert (
+        replay.json()["data"]["resume_preview"]
+        == confirm.json()["data"]["resume_preview"]
+    )
+    assert (
+        len(await isolated_db.list_resumes()) == 2
+    )  # master + one tailored, no second copy
 
 
 async def test_legacy_preview_registers_no_source_snapshot(

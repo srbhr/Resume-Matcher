@@ -62,7 +62,10 @@ async def test_turn_answer_runs_ai_and_returns_next_question(isolated_db) -> Non
     assert response.status_code == 200
     payload = response.json()["state"]
     assert payload["current_question"]["text"] == "What tools do you use most?"
-    assert payload["resume_data"]["additional"]["technicalSkills"] == ["Python", "FastAPI"]
+    assert payload["resume_data"]["additional"]["technicalSkills"] == [
+        "Python",
+        "FastAPI",
+    ]
     assert payload["asked_count"] == 1
 
 
@@ -101,7 +104,9 @@ async def test_turn_malformed_model_envelope_is_recoverable_422(
     transport = ASGITransport(app=app)
     state = build_initial_wizard_state()
     state.step = "question"
-    state.current_question = ResumeWizardQuestion(text="Experience?", section="workExperience")
+    state.current_question = ResumeWizardQuestion(
+        text="Experience?", section="workExperience"
+    )
 
     with patch(
         "app.services.resume_wizard.complete_json",
@@ -177,7 +182,9 @@ async def test_concurrent_identical_finalizes_create_one_master(
     arrived = 0
     both_arrived = asyncio.Event()
 
-    async def create_after_both_requests_arrive(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    async def create_after_both_requests_arrive(
+        *args: Any, **kwargs: Any
+    ) -> dict[str, Any]:
         # Force the overlap a double-submit produces: hold each finalize at the
         # create_resume_atomic_master call until both reach it, so both creates run
         # at once. replay_if runs inside that call's BEGIN IMMEDIATE transaction, so
@@ -364,7 +371,9 @@ async def test_turn_skip_advances_without_modifying_resume_data(isolated_db) -> 
     transport = ASGITransport(app=app)
     state = build_initial_wizard_state()
     state.step = "question"
-    state.current_question = ResumeWizardQuestion(text="Education?", section="education")
+    state.current_question = ResumeWizardQuestion(
+        text="Education?", section="education"
+    )
 
     skip_result = {
         "resume_data": {"education": [{"id": 1, "institution": "MIT"}]},
@@ -386,7 +395,9 @@ async def test_turn_skip_advances_without_modifying_resume_data(isolated_db) -> 
     assert response.status_code == 200
     payload = response.json()["state"]
     assert payload["current_question"]["section"] == "skills"
-    assert payload["resume_data"]["education"] == []  # skip must not apply the model's data
+    assert (
+        payload["resume_data"]["education"] == []
+    )  # skip must not apply the model's data
     assert payload["asked_count"] == 1
 
 

@@ -9,7 +9,16 @@ never sees ORM objects — preserving the TinyDB-era contracts.
 from datetime import datetime, timezone
 from typing import Any
 
-from sqlalchemy import JSON, Boolean, Index, Integer, String, Text, UniqueConstraint, text
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    Index,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+    text,
+)
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -39,7 +48,9 @@ class Resume(Base):
     is_master: Mapped[bool] = mapped_column(Boolean, default=False)
     # Exactly one master is the default tailoring source (enforced by the partial
     # unique index below plus Database invariants: default implies is_master).
-    is_default_master: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    is_default_master: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False
+    )
     parent_id: Mapped[str | None] = mapped_column(String, nullable=True)
     processed_data: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     processing_status: Mapped[str] = mapped_column(String, default="pending")
@@ -102,9 +113,19 @@ class TailoringPreview(Base):
     """An accepted preview, bounded confirmation claim and immutable result."""
 
     __tablename__ = "tailoring_previews"
-    __table_args__ = (Index("ix_preview_compatibility", "source_id", "job_id", "payload_hash", "created_at"),)
+    __table_args__ = (
+        Index(
+            "ix_preview_compatibility",
+            "source_id",
+            "job_id",
+            "payload_hash",
+            "created_at",
+        ),
+    )
 
-    improvements: Mapped[list[dict[str, Any]] | None] = mapped_column(JSON, nullable=True)
+    improvements: Mapped[list[dict[str, Any]] | None] = mapped_column(
+        JSON, nullable=True
+    )
     # Condensed source used by harness bullet selection; NULL = full source.
     source_data: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
 

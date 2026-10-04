@@ -4,8 +4,8 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
-from app.schemas.models import ResumeData
 from app.ai_limits import validate_source_size
+from app.schemas.models import ResumeData
 
 ResumeWizardSection = Literal[
     "intro",

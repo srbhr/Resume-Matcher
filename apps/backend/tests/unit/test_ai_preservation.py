@@ -1,13 +1,15 @@
 """Final AI-output preservation and grounding policy controls."""
 
 import copy
+from types import SimpleNamespace
 from typing import Any
 from unittest.mock import AsyncMock, patch
-from types import SimpleNamespace
 
 import pytest
 
+from app.routers import resumes
 from app.schemas.models import ResumeData
+from app.schemas.refinement import RefinementConfig
 from app.services.parser import restore_dates_from_markdown
 from app.services.refiner import refine_resume
 from app.services.resume_preservation import (
@@ -16,8 +18,6 @@ from app.services.resume_preservation import (
     grounding_review_warnings,
     validate_confirmed_resume,
 )
-from app.schemas.refinement import RefinementConfig
-from app.routers import resumes
 
 
 def _source_resume() -> dict[str, Any]:
@@ -352,13 +352,13 @@ def test_new_metrics_require_source_evidence_but_legitimate_rephrasing_remains()
 
 def test_equivalent_metric_notation_remains_editable() -> None:
     source = _source_resume()
-    source["workExperience"][0]["description"][
-        0
-    ] = "Handled 50K requests with 40% fewer errors"
+    source["workExperience"][0]["description"][0] = (
+        "Handled 50K requests with 40% fewer errors"
+    )
     candidate = copy.deepcopy(source)
-    candidate["workExperience"][0]["description"][
-        0
-    ] = "Handled 50 thousand requests with 40 percent fewer errors"
+    candidate["workExperience"][0]["description"][0] = (
+        "Handled 50 thousand requests with 40 percent fewer errors"
+    )
 
     finalized = finalize_ai_resume(source, candidate)
 
@@ -527,7 +527,10 @@ def test_fixed_rows_keep_every_source_bullet_when_a_rewrite_splits() -> None:
         "Built Python APIs Deployed to AWS",
         "Documented releases",
     ]
-    assert round_tripped["workExperience"][0]["descriptionStyles"] == ["plain", "bullet"]
+    assert round_tripped["workExperience"][0]["descriptionStyles"] == [
+        "plain",
+        "bullet",
+    ]
     assert validate_confirmed_resume(source, round_tripped) == []
 
 
@@ -593,9 +596,10 @@ def test_direct_flow_drops_unreviewed_ungrounded_append() -> None:
         allow_appended_rows=True,
     )
 
-    assert finalized["workExperience"][0]["description"] == source["workExperience"][0][
-        "description"
-    ]
+    assert (
+        finalized["workExperience"][0]["description"]
+        == source["workExperience"][0]["description"]
+    )
 
 
 def test_education_without_source_narrative_rejects_candidate_narrative() -> None:
@@ -710,7 +714,9 @@ def test_ats_score_uses_post_preservation_resume_match() -> None:
     }
     with (
         patch("app.routers.resumes.calculate_keyword_match", return_value=25.0),
-        patch("app.routers.resumes.compute_ats_score", return_value=ats_payload) as score,
+        patch(
+            "app.routers.resumes.compute_ats_score", return_value=ats_payload
+        ) as score,
     ):
         resumes._build_ats_score(
             {"summary": "Finalized"},
@@ -740,9 +746,9 @@ def test_weakly_grounded_narrative_gets_stable_review_warning() -> None:
 def test_custom_item_claims_use_the_same_grounding_policy() -> None:
     source = _source_resume()
     candidate = copy.deepcopy(source)
-    candidate["customSections"]["talks"]["items"][0]["description"][
-        0
-    ] = "Commanded lunar expeditions"
+    candidate["customSections"]["talks"]["items"][0]["description"][0] = (
+        "Commanded lunar expeditions"
+    )
 
     warnings = grounding_review_warnings(source, candidate)
 

@@ -13,8 +13,8 @@ from litellm import Router
 from litellm.router import RetryPolicy
 from pydantic import BaseModel
 
-from app.ai_limits import validate_prompt_size
 from app.ai_budget import remaining_timeout
+from app.ai_limits import validate_prompt_size
 from app.config import load_config_file, save_config_file, settings
 
 LITELLM_LOGGER_NAMES = ("LiteLLM", "LiteLLM Router", "LiteLLM Proxy")
@@ -102,7 +102,9 @@ class LLMConfig(BaseModel):
     reasoning_effort: Literal["minimal", "low", "medium", "high"] | None = None
 
 
-def _is_azure_openai_foundry_endpoint(api_base: str | None, model: str | None = None) -> bool:
+def _is_azure_openai_foundry_endpoint(
+    api_base: str | None, model: str | None = None
+) -> bool:
     """Return True for Azure AI Foundry endpoints exposing Azure OpenAI APIs."""
     if not api_base:
         return False
@@ -146,12 +148,16 @@ def _azure_foundry_api_version(config: LLMConfig) -> str | None:
         return None
     parsed = urlsplit(config.api_base.strip())
     path = parsed.path.rstrip("/")
-    if "/openai/v1" in path or (not path and _is_azure_foundry_gpt5_model(config.model)):
+    if "/openai/v1" in path or (
+        not path and _is_azure_foundry_gpt5_model(config.model)
+    ):
         return "v1"
     return None
 
 
-def _normalize_api_base(provider: str, api_base: str | None, model: str | None = None) -> str | None:
+def _normalize_api_base(
+    provider: str, api_base: str | None, model: str | None = None
+) -> str | None:
     """Normalize api_base for LiteLLM provider-specific expectations.
 
     When using proxies/aggregators, users often paste a base URL that already
@@ -201,7 +207,9 @@ def _normalize_api_base(provider: str, api_base: str | None, model: str | None =
             # exists to prevent. Rebuild from the parsed hostname and drop the
             # bad port; the endpoint then fails as a provider connection error
             # rather than as a ValueError, and with no secret attached.
-            logging.warning("Invalid port in api_base; dropping it during normalization")
+            logging.warning(
+                "Invalid port in api_base; dropping it during normalization"
+            )
             port = None
         netloc = f"{host}:{port}" if port else host
         return f"{parsed.scheme}://{netloc}"
@@ -406,7 +414,9 @@ def _extract_text_parts(
     return []
 
 
-_REASONING_BLOCK_TYPES = frozenset({"analysis", "reasoning", "reasoning_content", "thinking"})
+_REASONING_BLOCK_TYPES = frozenset(
+    {"analysis", "reasoning", "reasoning_content", "thinking"}
+)
 
 
 def _join_text_parts(parts: list[str]) -> str | None:
@@ -832,7 +842,9 @@ def get_router(config: LLMConfig | None = None) -> tuple[Router, LLMConfig]:
         if _router is None or _router_config_key != key:
             _router = _build_router(config)
             _router_config_key = key
-            logging.info("LiteLLM Router rebuilt for %s/%s", config.provider, config.model)
+            logging.info(
+                "LiteLLM Router rebuilt for %s/%s", config.provider, config.model
+            )
         router = _router
 
     return router, config
@@ -872,7 +884,9 @@ async def check_llm_health(
             "messages": [{"role": "user", "content": prompt}],
             "max_tokens": 64,
             "api_key": _effective_api_key(config.provider, config.api_key),
-            "api_base": _normalize_api_base(config.provider, config.api_base, config.model),
+            "api_base": _normalize_api_base(
+                config.provider, config.api_base, config.model
+            ),
             "timeout": LLM_TIMEOUT_HEALTH_CHECK,
         }
         api_version = _azure_foundry_api_version(config)
@@ -923,10 +937,9 @@ async def check_llm_health(
             )
             reasoning_text = None
             if primary_content:
-                reasoning_text = (
-                    _join_text_parts(_extract_text_parts(_safe_get(msg, "reasoning_content")))
-                    or _join_text_parts(_extract_text_parts(_safe_get(msg, "thinking")))
-                )
+                reasoning_text = _join_text_parts(
+                    _extract_text_parts(_safe_get(msg, "reasoning_content"))
+                ) or _join_text_parts(_extract_text_parts(_safe_get(msg, "thinking")))
             result["reasoning_content"] = (
                 _to_code_block(reasoning_text) if reasoning_text else None
             )
@@ -1015,8 +1028,7 @@ async def complete(
         raise
     except Exception as e:
         # Log the actual error server-side for debugging
-        logging.error(f"LLM completion failed: {e}", extra={
-                      "model": model_name})
+        logging.error(f"LLM completion failed: {e}", extra={"model": model_name})
         raise ValueError(
             "LLM completion failed. Please check your API configuration and try again."
         ) from e
@@ -1050,7 +1062,9 @@ def _supports_json_mode(model_name: str) -> bool:
         # mode (the system prompt already instructs "respond with valid JSON
         # only"). This avoids sending response_format to models that may
         # reject it.
-        logging.debug("Model %s not in LiteLLM registry, skipping JSON mode", model_name)
+        logging.debug(
+            "Model %s not in LiteLLM registry, skipping JSON mode", model_name
+        )
         return False
 
 
@@ -1081,6 +1095,7 @@ def _is_response_format_unsupported(error: Exception) -> bool:
 
 
 FALLBACK_MAX_TOKENS = 4096
+
 
 def get_safe_max_tokens(
     model_name: str,
@@ -1261,10 +1276,9 @@ def _supports_temperature(
     # OpenAI, Azure, and registered compatible aliases receive the same
     # capability decision. Unknown compatible aliases returned False above.
     normalized_model = model_name.rsplit("/", 1)[-1].lower()
-    is_reasoning_gpt5 = (
-        normalized_model.startswith("gpt-5")
-        and not normalized_model.startswith("gpt-5-chat")
-    )
+    is_reasoning_gpt5 = normalized_model.startswith(
+        "gpt-5"
+    ) and not normalized_model.startswith("gpt-5-chat")
     reasoning_capability = info.get("supports_reasoning")
     if (
         is_reasoning_gpt5
@@ -1276,19 +1290,13 @@ def _supports_temperature(
             model_name,
         )
         return False
-    if (
-        is_reasoning_gpt5
-        and reasoning_capability is True
-        and temperature != 1.0
-    ):
+    if is_reasoning_gpt5 and reasoning_capability is True and temperature != 1.0:
         if not isinstance(info.get("supports_none_reasoning_effort"), bool):
             logging.warning(
                 "Missing or invalid no-reasoning capability for %s; omitting temperature",
                 model_name,
             )
-        supports_no_reasoning = (
-            info.get("supports_none_reasoning_effort") is True
-        )
+        supports_no_reasoning = info.get("supports_none_reasoning_effort") is True
         if not supports_no_reasoning or reasoning_effort is not None:
             return False
 
@@ -1389,11 +1397,7 @@ def _object_starts_inside_array(content: str, object_start: int) -> bool:
     if not array_starts:
         return False
 
-    candidate = (
-        content[array_starts[0] : object_start]
-        + "{}"
-        + "]" * len(array_starts)
-    )
+    candidate = content[array_starts[0] : object_start] + "{}" + "]" * len(array_starts)
     try:
         value, end = json.JSONDecoder().raw_decode(candidate)
     except RecursionError:
@@ -1416,11 +1420,9 @@ def _extract_json(content: str, _depth: int = 0) -> str:
     """
     # JSON-010: Safety limits
     if _depth > MAX_JSON_EXTRACTION_RECURSION:
-        raise ValueError(
-            f"JSON extraction exceeded max recursion depth: {_depth}")
+        raise ValueError(f"JSON extraction exceeded max recursion depth: {_depth}")
     if len(content) > MAX_JSON_CONTENT_SIZE:
-        raise ValueError(
-            f"Content too large for JSON extraction: {len(content)} bytes")
+        raise ValueError(f"Content too large for JSON extraction: {len(content)} bytes")
 
     original = content
 
@@ -1541,7 +1543,9 @@ async def complete_json(
     # Unknown compatible servers may reject response_format. Use JSON mode
     # when LiteLLM advertises it or when the endpoint is explicitly known to
     # support it; prompt-only JSON remains the portable default.
-    use_json_mode = _supports_json_mode(model_name) or _openai_compatible_supports_json_mode(config)
+    use_json_mode = _supports_json_mode(
+        model_name
+    ) or _openai_compatible_supports_json_mode(config)
     json_mode_failed = False
 
     for attempt in range(retries + 1):
@@ -1632,21 +1636,13 @@ async def complete_json(
                         retries + 1,
                     )
                     if schema_type == "resume":
-                        hint = (
-                            "\n\nIMPORTANT: Output the COMPLETE JSON object with ALL sections. Do not truncate."
-                        )
+                        hint = "\n\nIMPORTANT: Output the COMPLETE JSON object with ALL sections. Do not truncate."
                     elif schema_type == "enrichment":
-                        hint = (
-                            "\n\nIMPORTANT: Output the COMPLETE JSON object with ALL keys: items_to_enrich, questions, analysis_summary. Do not truncate."
-                        )
+                        hint = "\n\nIMPORTANT: Output the COMPLETE JSON object with ALL keys: items_to_enrich, questions, analysis_summary. Do not truncate."
                     elif schema_type == "interview_prep":
-                        hint = (
-                            "\n\nIMPORTANT: Output the COMPLETE JSON object with ALL keys: role_fit_analysis, resume_questions, project_follow_ups, skill_gaps, talking_points. Do not truncate."
-                        )
+                        hint = "\n\nIMPORTANT: Output the COMPLETE JSON object with ALL keys: role_fit_analysis, resume_questions, project_follow_ups, skill_gaps, talking_points. Do not truncate."
                     else:
-                        hint = (
-                            "\n\nIMPORTANT: Output ONLY a valid JSON object. Start with { and end with }."
-                        )
+                        hint = "\n\nIMPORTANT: Output ONLY a valid JSON object. Start with { and end with }."
                     messages[-1]["content"] = prompt + hint
                     continue
                 logging.warning(
@@ -1664,7 +1660,8 @@ async def complete_json(
                 json_mode_failed = True
                 logging.warning(
                     "JSON mode failed for %s, falling back to prompt-only (attempt %d)",
-                    model_name, attempt + 1,
+                    model_name,
+                    attempt + 1,
                 )
             if attempt < retries:
                 messages[-1]["content"] = (
@@ -1672,8 +1669,7 @@ async def complete_json(
                     + "\n\nIMPORTANT: Output ONLY a valid JSON object. Start with { and end with }."
                 )
                 continue
-            raise ValueError(
-                f"Failed to parse JSON after {retries + 1} attempts: {e}")
+            raise ValueError(f"Failed to parse JSON after {retries + 1} attempts: {e}")
 
         except ValueError as e:
             # Content quality — empty response, JSON extraction failure

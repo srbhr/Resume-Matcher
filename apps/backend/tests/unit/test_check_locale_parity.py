@@ -82,5 +82,7 @@ def test_fails_on_malformed_json(messages_dir: Path) -> None:
 
 
 def test_extra_keys_are_non_fatal(messages_dir: Path) -> None:
-    _write(messages_dir, "es.json", {"a": {"b": "hola", "c": "ya"}, "d": "z", "x": "ok"})
+    _write(
+        messages_dir, "es.json", {"a": {"b": "hola", "c": "ya"}, "d": "z", "x": "ok"}
+    )
     assert clp.main(["prog", str(messages_dir)]) == 0

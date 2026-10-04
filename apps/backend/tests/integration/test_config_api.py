@@ -1,10 +1,9 @@
 """Integration tests for configuration endpoints."""
 
-from collections.abc import Iterator
-
 import json
+from collections.abc import Iterator
 from pathlib import Path
-from unittest.mock import patch, AsyncMock
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from httpx import ASGITransport, AsyncClient
@@ -43,10 +42,13 @@ class TestLlmConfig:
     async def test_put_llm_config(self, mock_load, mock_save, client):
         mock_load.return_value = {}
         async with client:
-            resp = await client.put("/api/v1/config/llm-api-key", json={
-                "provider": "anthropic",
-                "model": "claude-3-sonnet",
-            })
+            resp = await client.put(
+                "/api/v1/config/llm-api-key",
+                json={
+                    "provider": "anthropic",
+                    "model": "claude-3-sonnet",
+                },
+            )
         assert resp.status_code == 200
         data = resp.json()
         assert data["provider"] == "anthropic"
@@ -63,12 +65,15 @@ class TestLlmConfig:
         # made providers overwrite each other, so it must not happen.
         mock_load.return_value = {}
         async with client:
-            resp = await client.put("/api/v1/config/llm-api-key", json={
-                "provider": "openai_compatible",
-                "model": "llama-3.1-8b",
-                "api_key": "local-secret-key",
-                "api_base": "http://localhost:8080/v1",
-            })
+            resp = await client.put(
+                "/api/v1/config/llm-api-key",
+                json={
+                    "provider": "openai_compatible",
+                    "model": "llama-3.1-8b",
+                    "api_key": "local-secret-key",
+                    "api_base": "http://localhost:8080/v1",
+                },
+            )
 
         assert resp.status_code == 200
         saved_config = mock_save.call_args.args[0]
@@ -113,7 +118,10 @@ class TestLlmConfig:
     async def test_put_blank_api_base_is_normalized_to_none(
         self, mock_load, mock_save, mock_log_health, client
     ):
-        mock_load.return_value = {"provider": "openrouter", "api_base": "http://stale/v1"}
+        mock_load.return_value = {
+            "provider": "openrouter",
+            "api_base": "http://stale/v1",
+        }
         async with client:
             resp = await client.put(
                 "/api/v1/config/llm-api-key",
@@ -128,7 +136,10 @@ class TestLlmConfig:
     async def test_put_omitting_api_base_leaves_it_unchanged(
         self, mock_load, mock_save, mock_log_health, client
     ):
-        mock_load.return_value = {"provider": "openrouter", "api_base": "http://keep/v1"}
+        mock_load.return_value = {
+            "provider": "openrouter",
+            "api_base": "http://keep/v1",
+        }
         async with client:
             resp = await client.put(
                 "/api/v1/config/llm-api-key",
@@ -145,7 +156,11 @@ class TestLlmTest:
     @patch("app.routers.config.check_llm_health", new_callable=AsyncMock)
     @patch("app.routers.config._load_config")
     async def test_connection_test_success(self, mock_load, mock_health, client):
-        mock_load.return_value = {"provider": "openai", "model": "gpt-4", "api_key": "sk-test"}
+        mock_load.return_value = {
+            "provider": "openai",
+            "model": "gpt-4",
+            "api_key": "sk-test",
+        }
         mock_health.return_value = {
             "healthy": True,
             "provider": "openai",
@@ -190,12 +205,15 @@ class TestLlmTest:
             "model_output": "Hello!",
         }
         async with client:
-            resp = await client.post("/api/v1/config/llm-test", json={
-                "provider": "openai_compatible",
-                "model": "llama-3.1-8b",
-                "api_key": "typed-local-key",
-                "api_base": "http://localhost:1234/v1",
-            })
+            resp = await client.post(
+                "/api/v1/config/llm-test",
+                json={
+                    "provider": "openai_compatible",
+                    "model": "llama-3.1-8b",
+                    "api_key": "typed-local-key",
+                    "api_base": "http://localhost:1234/v1",
+                },
+            )
 
         assert resp.status_code == 200
         config = mock_health.await_args.args[0]
@@ -223,11 +241,14 @@ class TestLlmTest:
             "model_output": "Hello!",
         }
         async with client:
-            resp = await client.post("/api/v1/config/llm-test", json={
-                "provider": "openai_compatible",
-                "model": "llama-3.1-8b",
-                "api_base": "http://localhost:8080/v1",
-            })
+            resp = await client.post(
+                "/api/v1/config/llm-test",
+                json={
+                    "provider": "openai_compatible",
+                    "model": "llama-3.1-8b",
+                    "api_base": "http://localhost:8080/v1",
+                },
+            )
 
         assert resp.status_code == 200
         config = mock_health.await_args.args[0]
@@ -260,10 +281,13 @@ class TestFeatureConfig:
     async def test_put_features(self, mock_load, mock_save, client):
         mock_load.return_value = {}
         async with client:
-            resp = await client.put("/api/v1/config/features", json={
-                "enable_cover_letter": True,
-                "enable_interview_prep": True,
-            })
+            resp = await client.put(
+                "/api/v1/config/features",
+                json={
+                    "enable_cover_letter": True,
+                    "enable_interview_prep": True,
+                },
+            )
         assert resp.status_code == 200
         data = resp.json()
         assert data["enable_cover_letter"] is True
@@ -297,12 +321,17 @@ class TestFeaturePrompts:
         assert "{output_language}" in data["outreach_message_default"]
 
     @patch("app.routers.config._load_config")
-    async def test_put_feature_prompts_rejects_missing_placeholders(self, mock_load, client):
+    async def test_put_feature_prompts_rejects_missing_placeholders(
+        self, mock_load, client
+    ):
         mock_load.return_value = {}
         async with client:
-            resp = await client.put("/api/v1/config/feature-prompts", json={
-                "cover_letter_prompt": "Use {job_description} only",
-            })
+            resp = await client.put(
+                "/api/v1/config/feature-prompts",
+                json={
+                    "cover_letter_prompt": "Use {job_description} only",
+                },
+            )
 
         assert resp.status_code == 422
         assert resp.json()["detail"] == {
@@ -321,10 +350,13 @@ class TestFeaturePrompts:
             "outreach_message_prompt": "Old outreach prompt",
         }
         async with client:
-            resp = await client.put("/api/v1/config/feature-prompts", json={
-                "cover_letter_prompt": "  {job_description}\n{resume_data}\n{output_language}\n  ",
-                "outreach_message_prompt": "   ",
-            })
+            resp = await client.put(
+                "/api/v1/config/feature-prompts",
+                json={
+                    "cover_letter_prompt": "  {job_description}\n{resume_data}\n{output_language}\n  ",
+                    "outreach_message_prompt": "   ",
+                },
+            )
 
         assert resp.status_code == 200
         saved_config = mock_save.call_args.args[0]
@@ -358,9 +390,12 @@ class TestLanguageConfig:
     async def test_put_invalid_language_returns_400(self, mock_load, mock_save, client):
         mock_load.return_value = {}
         async with client:
-            resp = await client.put("/api/v1/config/language", json={
-                "ui_language": "invalid_lang",
-            })
+            resp = await client.put(
+                "/api/v1/config/language",
+                json={
+                    "ui_language": "invalid_lang",
+                },
+            )
         assert resp.status_code == 400
 
 
@@ -370,17 +405,23 @@ class TestResetDatabase:
     @patch("app.routers.config.db", new_callable=AsyncMock)
     async def test_reset_with_correct_token(self, mock_db, client):
         async with client:
-            resp = await client.post("/api/v1/config/reset", json={
-                "confirm": "RESET_ALL_DATA",
-            })
+            resp = await client.post(
+                "/api/v1/config/reset",
+                json={
+                    "confirm": "RESET_ALL_DATA",
+                },
+            )
         assert resp.status_code == 200
         mock_db.reset_database.assert_called_once()
 
     async def test_reset_without_token_returns_400(self, client):
         async with client:
-            resp = await client.post("/api/v1/config/reset", json={
-                "confirm": "wrong_token",
-            })
+            resp = await client.post(
+                "/api/v1/config/reset",
+                json={
+                    "confirm": "wrong_token",
+                },
+            )
         assert resp.status_code == 400
 
     async def test_reset_missing_body_returns_422(self, client):
@@ -393,6 +434,7 @@ class TestResetDatabase:
 # Encrypted multi-provider API key store (Workstream B)
 # ---------------------------------------------------------------------------
 
+
 class TestEncryptedApiKeys:
     """Per-provider keys are encrypted at rest, independent, and never leak."""
 
@@ -401,9 +443,9 @@ class TestEncryptedApiKeys:
         self, isolated_db: Database, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> Iterator[Database]:
         """Isolate the key store (temp DB), config.json, and crypto secret."""
+        import app.config as config_module
         from app import crypto
         from app.config import settings
-        import app.config as config_module
 
         monkeypatch.setattr(settings, "data_dir", tmp_path)
         monkeypatch.setattr(config_module, "CONFIG_FILE_PATH", tmp_path / "config.json")
@@ -413,9 +455,13 @@ class TestEncryptedApiKeys:
 
     async def test_saving_provider_b_does_not_erase_provider_a(self, keys_env, client):
         async with client:
-            r1 = await client.post("/api/v1/config/api-keys", json={"openai": "sk-openai-key"})
+            r1 = await client.post(
+                "/api/v1/config/api-keys", json={"openai": "sk-openai-key"}
+            )
             assert r1.status_code == 200
-            r2 = await client.post("/api/v1/config/api-keys", json={"anthropic": "sk-anthropic-key"})
+            r2 = await client.post(
+                "/api/v1/config/api-keys", json={"anthropic": "sk-anthropic-key"}
+            )
             assert r2.status_code == 200
             status = await client.get("/api/v1/config/api-keys")
         configured = {p["provider"]: p for p in status.json()["providers"]}
@@ -424,17 +470,22 @@ class TestEncryptedApiKeys:
 
     async def test_keys_encrypted_at_rest(self, keys_env, client):
         async with client:
-            await client.post("/api/v1/config/api-keys", json={"openai": "sk-plaintext-123"})
+            await client.post(
+                "/api/v1/config/api-keys", json={"openai": "sk-plaintext-123"}
+            )
         ciphertexts = keys_env.get_api_key_ciphertexts()
         assert "openai" in ciphertexts
         # Stored value is ciphertext, not the plaintext key.
         assert "sk-plaintext-123" not in ciphertexts["openai"]
         from app import crypto
+
         assert crypto.decrypt(ciphertexts["openai"]) == "sk-plaintext-123"
 
     async def test_responses_never_contain_raw_key(self, keys_env, client):
         async with client:
-            await client.post("/api/v1/config/api-keys", json={"openai": "sk-rawsecret-9999"})
+            await client.post(
+                "/api/v1/config/api-keys", json={"openai": "sk-rawsecret-9999"}
+            )
             status = await client.get("/api/v1/config/api-keys")
         body = status.text
         assert "sk-rawsecret-9999" not in body
@@ -447,17 +498,23 @@ class TestEncryptedApiKeys:
         from app.llm import resolve_api_key
 
         async with client:
-            await client.post("/api/v1/config/api-keys", json={"google": "sk-google-key"})
+            await client.post(
+                "/api/v1/config/api-keys", json={"google": "sk-google-key"}
+            )
         stored = load_config_file()
         # The gemini LLM provider maps to the google key-store slot.
         assert resolve_api_key(stored, "gemini") == "sk-google-key"
 
     async def test_delete_single_provider(self, keys_env, client):
         async with client:
-            await client.post("/api/v1/config/api-keys", json={"openai": "a", "anthropic": "b"})
+            await client.post(
+                "/api/v1/config/api-keys", json={"openai": "a", "anthropic": "b"}
+            )
             await client.delete("/api/v1/config/api-keys/openai")
             status = await client.get("/api/v1/config/api-keys")
-        configured = {p["provider"]: p["configured"] for p in status.json()["providers"]}
+        configured = {
+            p["provider"]: p["configured"] for p in status.json()["providers"]
+        }
         assert configured["openai"] is False
         assert configured["anthropic"] is True
 
@@ -467,9 +524,9 @@ class TestLegacyKeyMigration:
 
     @pytest.fixture
     def keys_env(self, isolated_db, tmp_path, monkeypatch):
+        import app.config as config_module
         from app import crypto
         from app.config import settings
-        import app.config as config_module
 
         monkeypatch.setattr(settings, "data_dir", tmp_path)
         monkeypatch.setattr(config_module, "CONFIG_FILE_PATH", tmp_path / "config.json")
@@ -477,10 +534,13 @@ class TestLegacyKeyMigration:
         yield isolated_db
         crypto.reset_cache()
 
-    async def test_migration_folds_and_clears_legacy_slots(self, keys_env, monkeypatch, tmp_path):
+    async def test_migration_folds_and_clears_legacy_slots(
+        self, keys_env, monkeypatch, tmp_path
+    ):
         import json
+
         import app.config as config_module
-        from app.config import migrate_legacy_keys, get_api_keys_from_config
+        from app.config import get_api_keys_from_config, migrate_legacy_keys
 
         # Legacy config.json: a plural map AND a single legacy api_key.
         config = {
@@ -503,17 +563,23 @@ class TestLegacyKeyMigration:
         assert "api_key" not in on_disk
         assert on_disk["model"] == "claude"  # non-secret config preserved
 
-    async def test_migration_is_idempotent_and_non_clobbering(self, keys_env, monkeypatch):
+    async def test_migration_is_idempotent_and_non_clobbering(
+        self, keys_env, monkeypatch
+    ):
         import json
+
         import app.config as config_module
-        from app.config import migrate_legacy_keys, get_api_keys_from_config
 
         # Pre-existing encrypted key for openai must NOT be clobbered.
         from app import crypto
+        from app.config import get_api_keys_from_config, migrate_legacy_keys
+
         keys_env.set_api_key_ciphertext("openai", crypto.encrypt("already-stored"))
 
         config_module.CONFIG_FILE_PATH.write_text(
-            json.dumps({"provider": "openai", "api_keys": {"openai": "legacy-should-not-win"}})
+            json.dumps(
+                {"provider": "openai", "api_keys": {"openai": "legacy-should-not-win"}}
+            )
         )
         migrate_legacy_keys()
         migrate_legacy_keys()  # idempotent second run
@@ -538,7 +604,11 @@ class TestRequiresBaseUrlValidation:
         async with client:
             resp = await client.put(
                 "/api/v1/config/llm-api-key",
-                json={"provider": "azure_foundry", "model": "gpt-5-mini", "api_base": ""},
+                json={
+                    "provider": "azure_foundry",
+                    "model": "gpt-5-mini",
+                    "api_base": "",
+                },
             )
 
         assert resp.status_code == 422

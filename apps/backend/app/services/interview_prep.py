@@ -12,7 +12,6 @@ from app.llm import (
 from app.prompts import INTERVIEW_PREP_PROMPT, get_language_name
 from app.schemas import InterviewPrepData
 
-
 _JOB_DESCRIPTION_PROMPT_CHAR_LIMIT = 12_000
 _RESUME_DATA_PROMPT_CHAR_LIMIT = 30_000
 _TRUNCATION_NOTICE = (

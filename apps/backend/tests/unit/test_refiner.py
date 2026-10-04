@@ -6,6 +6,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
+from app.schemas.refinement import AlignmentViolation, RefinementConfig
 from app.services.refiner import (
     analyze_keyword_gaps,
     calculate_keyword_match,
@@ -15,20 +16,20 @@ from app.services.refiner import (
     remove_ai_phrases,
     validate_master_alignment,
 )
-from app.schemas.refinement import AlignmentViolation, RefinementConfig
 
 
 def test_retained_keywords_use_cjk_substrings_and_latin_term_boundaries() -> None:
-    resume = {
-        "summary": "负责数据分析与Pythonによる開発，熟悉Java开发与JavaScript平台"
-    }
+    resume = {"summary": "负责数据分析与Pythonによる開発，熟悉Java开发与JavaScript平台"}
 
-    assert count_retained_keywords(
-        ["数据", "Python", "Java", "JavaScript"], resume
-    ) == 4
-    assert count_retained_keywords(
-        ["Java", "JavaScript"], {"summary": "负责JavaScript平台开发"}
-    ) == 1
+    assert (
+        count_retained_keywords(["数据", "Python", "Java", "JavaScript"], resume) == 4
+    )
+    assert (
+        count_retained_keywords(
+            ["Java", "JavaScript"], {"summary": "负责JavaScript平台开发"}
+        )
+        == 1
+    )
 
 
 async def test_refinement_stats_count_retained_cjk_keyword(
@@ -200,11 +201,15 @@ class TestRemoveAiPhrases:
         data["workExperience"][0]["description"][0] = "Spearheaded REST API development"
         cleaned, removed = remove_ai_phrases(data)
         assert "spearheaded" in [r.lower() for r in removed]
-        assert "spearheaded" not in cleaned["workExperience"][0]["description"][0].lower()
+        assert (
+            "spearheaded" not in cleaned["workExperience"][0]["description"][0].lower()
+        )
 
     def test_removes_buzzwords(self, sample_resume):
         data = copy.deepcopy(sample_resume)
-        data["summary"] = "Leveraged cutting-edge technologies to build robust solutions"
+        data["summary"] = (
+            "Leveraged cutting-edge technologies to build robust solutions"
+        )
         cleaned, removed = remove_ai_phrases(data)
         removed_lower = [r.lower() for r in removed]
         assert "leveraged" in removed_lower
@@ -214,12 +219,16 @@ class TestRemoveAiPhrases:
         data = copy.deepcopy(sample_resume)
         data["summary"] = "Built robust microservices"
         # "robust" is in the blacklist, but if it's in JD, it should be protected
-        cleaned, removed = remove_ai_phrases(data, job_description="We need robust solutions")
+        cleaned, removed = remove_ai_phrases(
+            data, job_description="We need robust solutions"
+        )
         assert "robust" not in [r.lower() for r in removed]
 
     def test_replaces_with_alternatives(self, sample_resume):
         data = copy.deepcopy(sample_resume)
-        data["workExperience"][0]["description"][0] = "Utilized Python for API development"
+        data["workExperience"][0]["description"][0] = (
+            "Utilized Python for API development"
+        )
         cleaned, removed = remove_ai_phrases(data)
         # "utilized" → "used"
         assert "used" in cleaned["workExperience"][0]["description"][0].lower()
@@ -264,7 +273,9 @@ class TestValidateMasterAlignment:
         assert len(skill_violations) >= 1
         assert any("kubernetes" in v.value.lower() for v in skill_violations)
 
-    def test_allows_jd_added_skill_when_explicitly_allowed(self, sample_resume, master_resume):
+    def test_allows_jd_added_skill_when_explicitly_allowed(
+        self, sample_resume, master_resume
+    ):
         tailored = copy.deepcopy(sample_resume)
         tailored["additional"]["technicalSkills"].append("Kubernetes")
         report = validate_master_alignment(
@@ -362,22 +373,30 @@ class TestValidateMasterAlignment:
 
     def test_detects_fabricated_certification(self, sample_resume, master_resume):
         tailored = copy.deepcopy(sample_resume)
-        tailored["additional"]["certificationsTraining"].append("Google Cloud Professional")
+        tailored["additional"]["certificationsTraining"].append(
+            "Google Cloud Professional"
+        )
         report = validate_master_alignment(tailored, master_resume)
-        cert_violations = [v for v in report.violations if v.violation_type == "fabricated_cert"]
+        cert_violations = [
+            v for v in report.violations if v.violation_type == "fabricated_cert"
+        ]
         assert len(cert_violations) >= 1
 
     def test_detects_fabricated_company(self, sample_resume, master_resume):
         tailored = copy.deepcopy(sample_resume)
-        tailored["workExperience"].append({
-            "id": 3,
-            "title": "Engineer",
-            "company": "FakeCompany Inc",
-            "years": "2015 - 2017",
-            "description": ["Did things"],
-        })
+        tailored["workExperience"].append(
+            {
+                "id": 3,
+                "title": "Engineer",
+                "company": "FakeCompany Inc",
+                "years": "2015 - 2017",
+                "description": ["Did things"],
+            }
+        )
         report = validate_master_alignment(tailored, master_resume)
-        company_violations = [v for v in report.violations if v.violation_type == "fabricated_company"]
+        company_violations = [
+            v for v in report.violations if v.violation_type == "fabricated_company"
+        ]
         assert len(company_violations) >= 1
 
     def test_allows_skill_variants_as_non_critical(self, sample_resume, master_resume):
@@ -387,8 +406,7 @@ class TestValidateMasterAlignment:
         tailored["additional"]["technicalSkills"].append("Python 3")
         report = validate_master_alignment(tailored, master_resume)
         python3_violations = [
-            v for v in report.violations
-            if "python 3" in v.value.lower()
+            v for v in report.violations if "python 3" in v.value.lower()
         ]
         # Should be info/variant, NOT critical fabricated_skill
         for v in python3_violations:
@@ -450,15 +468,27 @@ class TestFixAlignmentViolations:
 class TestAnalyzeKeywordGaps:
     """Tests for analyze_keyword_gaps() — keyword matching analysis."""
 
-    def test_finds_missing_keywords(self, sample_resume, master_resume, sample_job_keywords):
-        analysis = analyze_keyword_gaps(sample_job_keywords, sample_resume, master_resume)
+    def test_finds_missing_keywords(
+        self, sample_resume, master_resume, sample_job_keywords
+    ):
+        analysis = analyze_keyword_gaps(
+            sample_job_keywords, sample_resume, master_resume
+        )
         # "Kubernetes" is in required_skills but not in the resume
         assert "Kubernetes" in analysis.missing_keywords
 
-    def test_identifies_injectable_vs_non_injectable(self, sample_resume, master_resume, sample_job_keywords):
-        analysis = analyze_keyword_gaps(sample_job_keywords, sample_resume, master_resume)
+    def test_identifies_injectable_vs_non_injectable(
+        self, sample_resume, master_resume, sample_job_keywords
+    ):
+        analysis = analyze_keyword_gaps(
+            sample_job_keywords, sample_resume, master_resume
+        )
         # Every keyword lands in exactly one bucket
-        all_jd = set(sample_job_keywords["required_skills"] + sample_job_keywords["preferred_skills"] + sample_job_keywords["keywords"])
+        all_jd = set(
+            sample_job_keywords["required_skills"]
+            + sample_job_keywords["preferred_skills"]
+            + sample_job_keywords["keywords"]
+        )
         present = all_jd - set(analysis.missing_keywords)
         injectable = set(analysis.injectable_keywords)
         non_injectable = set(analysis.non_injectable_keywords)
@@ -468,13 +498,21 @@ class TestAnalyzeKeywordGaps:
         # Present + missing = all keywords
         assert present | set(analysis.missing_keywords) == all_jd
 
-    def test_calculates_match_percentage(self, sample_resume, master_resume, sample_job_keywords):
-        analysis = analyze_keyword_gaps(sample_job_keywords, sample_resume, master_resume)
+    def test_calculates_match_percentage(
+        self, sample_resume, master_resume, sample_job_keywords
+    ):
+        analysis = analyze_keyword_gaps(
+            sample_job_keywords, sample_resume, master_resume
+        )
         assert 0.0 <= analysis.current_match_percentage <= 100.0
         assert analysis.potential_match_percentage >= analysis.current_match_percentage
 
     def test_keyword_already_present(self, sample_resume, master_resume):
-        keywords = {"required_skills": ["Python"], "preferred_skills": [], "keywords": []}
+        keywords = {
+            "required_skills": ["Python"],
+            "preferred_skills": [],
+            "keywords": [],
+        }
         analysis = analyze_keyword_gaps(keywords, sample_resume, master_resume)
         assert "Python" not in analysis.missing_keywords
         assert analysis.current_match_percentage == 100.0
@@ -488,12 +526,19 @@ class TestCalculateKeywordMatch:
         assert 0.0 <= pct <= 100.0
 
     def test_returns_zero_for_no_keywords(self, sample_resume):
-        pct = calculate_keyword_match(sample_resume, {"required_skills": [], "preferred_skills": [], "keywords": []})
+        pct = calculate_keyword_match(
+            sample_resume,
+            {"required_skills": [], "preferred_skills": [], "keywords": []},
+        )
         assert pct == 0.0
 
     def test_returns_100_when_all_present(self, sample_resume):
         # Use keywords that are definitely in the resume
-        keywords = {"required_skills": ["Python", "FastAPI"], "preferred_skills": [], "keywords": []}
+        keywords = {
+            "required_skills": ["Python", "FastAPI"],
+            "preferred_skills": [],
+            "keywords": [],
+        }
         pct = calculate_keyword_match(sample_resume, keywords)
         assert pct == 100.0
 
@@ -540,9 +585,7 @@ class TestPreserveDescriptionStyles:
         from app.services.refiner import _preserve_description_styles
 
         original = {
-            "workExperience": [
-                {"description": ["A"], "descriptionStyles": ["plain"]}
-            ]
+            "workExperience": [{"description": ["A"], "descriptionStyles": ["plain"]}]
         }
         improved = {"workExperience": [{"description": ["A improved", "B new"]}]}
 
@@ -585,9 +628,7 @@ class TestPreserveDescriptionStyles:
             "customSections": {
                 "custom_1": {
                     "sectionType": "itemList",
-                    "items": [
-                        {"description": ["C1"], "descriptionStyles": ["plain"]}
-                    ],
+                    "items": [{"description": ["C1"], "descriptionStyles": ["plain"]}],
                 }
             },
         }
@@ -614,8 +655,12 @@ class TestPreserveDescriptionStyles:
 
         original = {
             "customSections": {
-                "alpha": {"items": [{"description": ["A"], "descriptionStyles": ["plain"]}]},
-                "beta": {"items": [{"description": ["B"], "descriptionStyles": ["bullet"]}]},
+                "alpha": {
+                    "items": [{"description": ["A"], "descriptionStyles": ["plain"]}]
+                },
+                "beta": {
+                    "items": [{"description": ["B"], "descriptionStyles": ["bullet"]}]
+                },
             }
         }
         # Same sections, reversed insertion order.
@@ -628,8 +673,12 @@ class TestPreserveDescriptionStyles:
 
         out = _preserve_description_styles(original, improved)
 
-        assert out["customSections"]["alpha"]["items"][0]["descriptionStyles"] == ["plain"]
-        assert out["customSections"]["beta"]["items"][0]["descriptionStyles"] == ["bullet"]
+        assert out["customSections"]["alpha"]["items"][0]["descriptionStyles"] == [
+            "plain"
+        ]
+        assert out["customSections"]["beta"]["items"][0]["descriptionStyles"] == [
+            "bullet"
+        ]
 
     def test_keyword_injection_prompt_carries_the_preserve_rule(self):
         """The local net is defence-in-depth; the prompt should still ask."""

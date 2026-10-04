@@ -135,9 +135,9 @@ async def test_long_multilingual_resume_preserves_text_and_column_bounds(
             extracted = extract_text(io.BytesIO(pdf))
             compact = "".join(extracted.split())
             required_glyphs = set("履歴書の経験简历技能")
-            assert required_glyphs <= _embedded_glyph_characters(
-                pdf
-            ), "CJK text has no embedded glyphs; install CJK fonts such as fonts-noto-cjk"
+            assert required_glyphs <= _embedded_glyph_characters(pdf), (
+                "CJK text has no embedded glyphs; install CJK fonts such as fonts-noto-cjk"
+            )
             for text in (
                 "Développement",
                 "Información",

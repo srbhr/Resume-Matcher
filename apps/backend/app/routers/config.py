@@ -1,48 +1,47 @@
 """LLM configuration endpoints."""
 
-import json
 import logging
 from pathlib import Path
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException
 
-from app.config import settings
-from app.llm import check_llm_health, LLMConfig, resolve_api_key
-from app.schemas import (
-    LLMConfigRequest,
-    LLMConfigResponse,
-    FeatureConfigRequest,
-    FeatureConfigResponse,
-    FeaturePromptsRequest,
-    FeaturePromptsResponse,
-    LanguageConfigRequest,
-    LanguageConfigResponse,
-    PromptConfigRequest,
-    PromptConfigResponse,
-    PromptOption,
-    ApiKeyProviderStatus,
-    ApiKeyStatusResponse,
-    ApiKeysUpdateRequest,
-    ApiKeysUpdateResponse,
-    ResetDatabaseRequest,
+from app.config import (
+    clear_all_api_keys,
+    delete_api_key_from_config,
+    get_api_keys_from_config,
+    get_config_path,
+    load_config_file,
+    save_api_keys_to_config,
+    save_config_file,
+    settings,
 )
+from app.config_cache import invalidate_config_cache
+from app.database import db
+from app.llm import LLMConfig, check_llm_health, resolve_api_key
 from app.prompts import (
     DEFAULT_IMPROVE_PROMPT_ID,
     IMPROVE_PROMPT_OPTIONS,
     validate_prompt_placeholders,
 )
 from app.prompts.templates import COVER_LETTER_PROMPT, OUTREACH_MESSAGE_PROMPT
-from app.config import (
-    get_api_keys_from_config,
-    get_config_path,
-    save_api_keys_to_config,
-    delete_api_key_from_config,
-    clear_all_api_keys,
-    load_config_file,
-    save_config_file,
+from app.schemas import (
+    ApiKeyProviderStatus,
+    ApiKeyStatusResponse,
+    ApiKeysUpdateRequest,
+    ApiKeysUpdateResponse,
+    FeatureConfigRequest,
+    FeatureConfigResponse,
+    FeaturePromptsRequest,
+    FeaturePromptsResponse,
+    LanguageConfigRequest,
+    LanguageConfigResponse,
+    LLMConfigRequest,
+    LLMConfigResponse,
+    PromptConfigRequest,
+    PromptConfigResponse,
+    PromptOption,
+    ResetDatabaseRequest,
 )
-from app.config_cache import invalidate_config_cache
-from app.database import db
 
 # Providers that cannot function without an explicit endpoint. Mirrors
 # `requiresBaseUrl` in apps/frontend/lib/api/config.ts (M-05) — the UI guard
@@ -61,6 +60,7 @@ def _effective_api_base(stored: dict) -> str | None:
     Every site resolves through here so they cannot drift again.
     """
     return stored.get("api_base") or settings.llm_api_base or None
+
 
 router = APIRouter(prefix="/config", tags=["Configuration"])
 

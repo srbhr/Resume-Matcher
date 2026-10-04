@@ -126,9 +126,11 @@ class TestOpenAICompatibleTransport:
         ``{api_base}/chat/completions`` with the pasted ``/v1`` preserved
         exactly once (no ``/v1/v1`` duplication, no stripped ``/v1``).
         """
-        route = respx.post(
-            "http://local-llm.test/v1/chat/completions"
-        ).mock(return_value=httpx.Response(200, json=_openai_chat_completion("hello world")))
+        route = respx.post("http://local-llm.test/v1/chat/completions").mock(
+            return_value=httpx.Response(
+                200, json=_openai_chat_completion("hello world")
+            )
+        )
 
         cfg = LLMConfig(
             provider="openai_compatible",
@@ -154,7 +156,10 @@ class TestOpenAICompatibleTransport:
         """
         respx.post("http://local-llm.test/v1/chat/completions").mock(
             return_value=httpx.Response(
-                200, json=_openai_chat_completion("<think>reasoning here</think>actual answer")
+                200,
+                json=_openai_chat_completion(
+                    "<think>reasoning here</think>actual answer"
+                ),
             )
         )
 
@@ -175,7 +180,9 @@ class TestOpenAICompatibleTransport:
         The model returns JSON wrapped in a ```json code fence (a common LLM
         habit). complete_json must strip the fence and return the parsed dict.
         """
-        fenced = '```json\n{"required_skills": ["Python"], "keywords": ["fastapi"]}\n```'
+        fenced = (
+            '```json\n{"required_skills": ["Python"], "keywords": ["fastapi"]}\n```'
+        )
         route = respx.post("http://local-llm.test/v1/chat/completions").mock(
             return_value=httpx.Response(200, json=_openai_chat_completion(fenced))
         )
@@ -186,7 +193,9 @@ class TestOpenAICompatibleTransport:
             api_key="",
             api_base="http://local-llm.test/v1",
         )
-        out = await complete_json("Extract keywords", config=cfg, schema_type="keywords")
+        out = await complete_json(
+            "Extract keywords", config=cfg, schema_type="keywords"
+        )
 
         assert out == {"required_skills": ["Python"], "keywords": ["fastapi"]}
         assert route.called
@@ -213,7 +222,9 @@ class TestOllamaTransport:
             return_value=httpx.Response(200, json=_ollama_show_response())
         )
         chat_route = respx.post("http://ollama.test:11434/api/chat").mock(
-            return_value=httpx.Response(200, json=_ollama_chat_response("ollama says hi"))
+            return_value=httpx.Response(
+                200, json=_ollama_chat_response("ollama says hi")
+            )
         )
 
         cfg = LLMConfig(

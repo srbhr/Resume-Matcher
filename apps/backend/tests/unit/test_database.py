@@ -92,7 +92,9 @@ class TestResumeCrud:
             init_models_sync(engine)
 
             with engine.begin() as conn:
-                columns = conn.exec_driver_sql("PRAGMA table_info(resumes)").mappings().all()
+                columns = (
+                    conn.exec_driver_sql("PRAGMA table_info(resumes)").mappings().all()
+                )
             names = [column["name"] for column in columns]
             assert names.count("interview_prep") == 1
         finally:
@@ -104,8 +106,12 @@ class TestMasterResume:
         assert await db.get_master_resume() is None
 
     async def test_set_default_unsets_previous_default(self, db: Database) -> None:
-        r1 = await db.create_resume_atomic_master(content="1", processing_status="ready")
-        r2 = await db.create_resume_atomic_master(content="2", processing_status="ready")
+        r1 = await db.create_resume_atomic_master(
+            content="1", processing_status="ready"
+        )
+        r2 = await db.create_resume_atomic_master(
+            content="2", processing_status="ready"
+        )
         assert (await db.get_master_resume())["resume_id"] == r1["resume_id"]
 
         assert await db.set_default_master_resume(r2["resume_id"]) is True
@@ -114,32 +120,50 @@ class TestMasterResume:
         assert sum(1 for r in rows if r["is_default_master"]) == 1
         assert sum(1 for r in rows if r["is_master"]) == 2
 
-    async def test_set_default_missing_or_non_master_returns_false(self, db: Database) -> None:
+    async def test_set_default_missing_or_non_master_returns_false(
+        self, db: Database
+    ) -> None:
         plain = await db.create_resume(content="plain")
         assert await db.set_default_master_resume("missing") is False
         assert await db.set_default_master_resume(plain["resume_id"]) is False
 
-    async def test_atomic_first_upload_becomes_default_master(self, db: Database) -> None:
-        created = await db.create_resume_atomic_master(content="first", processing_status="ready")
+    async def test_atomic_first_upload_becomes_default_master(
+        self, db: Database
+    ) -> None:
+        created = await db.create_resume_atomic_master(
+            content="first", processing_status="ready"
+        )
         assert created["is_master"] is True
         assert created["is_default_master"] is True
 
-    async def test_atomic_second_upload_is_additional_non_default_master(self, db: Database) -> None:
+    async def test_atomic_second_upload_is_additional_non_default_master(
+        self, db: Database
+    ) -> None:
         await db.create_resume_atomic_master(content="first", processing_status="ready")
-        second = await db.create_resume_atomic_master(content="second", processing_status="ready")
+        second = await db.create_resume_atomic_master(
+            content="second", processing_status="ready"
+        )
         assert second["is_master"] is True
         assert second["is_default_master"] is False
 
     async def test_atomic_moves_default_when_default_stuck(self, db: Database) -> None:
-        first = await db.create_resume_atomic_master(content="first", processing_status="failed")
-        second = await db.create_resume_atomic_master(content="second", processing_status="ready")
+        first = await db.create_resume_atomic_master(
+            content="first", processing_status="failed"
+        )
+        second = await db.create_resume_atomic_master(
+            content="second", processing_status="ready"
+        )
         assert second["is_default_master"] is True
         assert (await db.get_master_resume())["resume_id"] == second["resume_id"]
         old = await db.get_resume(first["resume_id"])
         assert old["is_master"] is True and old["is_default_master"] is False
 
-    async def test_atomic_keeps_stuck_default_when_takeover_disabled(self, db: Database) -> None:
-        first = await db.create_resume_atomic_master(content="first", processing_status="failed")
+    async def test_atomic_keeps_stuck_default_when_takeover_disabled(
+        self, db: Database
+    ) -> None:
+        first = await db.create_resume_atomic_master(
+            content="first", processing_status="failed"
+        )
         second = await db.create_resume_atomic_master(
             content="second", processing_status="ready", take_over_stuck_default=False
         )
@@ -148,22 +172,37 @@ class TestMasterResume:
 
     async def test_atomic_rejects_sixth_master(self, db: Database) -> None:
         from app.database import MAX_MASTER_RESUMES, MasterResumeLimitError
+
         for i in range(MAX_MASTER_RESUMES):
-            await db.create_resume_atomic_master(content=f"m{i}", processing_status="ready")
+            await db.create_resume_atomic_master(
+                content=f"m{i}", processing_status="ready"
+            )
         with pytest.raises(MasterResumeLimitError):
-            await db.create_resume_atomic_master(content="too-many", processing_status="ready")
+            await db.create_resume_atomic_master(
+                content="too-many", processing_status="ready"
+            )
         assert len(await db.list_master_resumes()) == MAX_MASTER_RESUMES
 
-    async def test_delete_default_promotes_earliest_remaining_master(self, db: Database) -> None:
-        first = await db.create_resume_atomic_master(content="a", processing_status="ready")
-        second = await db.create_resume_atomic_master(content="b", processing_status="ready")
-        third = await db.create_resume_atomic_master(content="c", processing_status="ready")
+    async def test_delete_default_promotes_earliest_remaining_master(
+        self, db: Database
+    ) -> None:
+        first = await db.create_resume_atomic_master(
+            content="a", processing_status="ready"
+        )
+        second = await db.create_resume_atomic_master(
+            content="b", processing_status="ready"
+        )
+        third = await db.create_resume_atomic_master(
+            content="c", processing_status="ready"
+        )
         assert await db.delete_resume(first["resume_id"]) is True
         assert (await db.get_master_resume())["resume_id"] == second["resume_id"]
         assert (await db.get_resume(third["resume_id"]))["is_default_master"] is False
 
     async def test_delete_last_master_leaves_no_default(self, db: Database) -> None:
-        only = await db.create_resume_atomic_master(content="a", processing_status="ready")
+        only = await db.create_resume_atomic_master(
+            content="a", processing_status="ready"
+        )
         await db.delete_resume(only["resume_id"])
         assert await db.get_master_resume() is None
 
@@ -171,21 +210,36 @@ class TestMasterResume:
         a = await db.create_resume_atomic_master(content="a", processing_status="ready")
         await db.create_resume(content="child")
         b = await db.create_resume_atomic_master(content="b", processing_status="ready")
-        assert [r["resume_id"] for r in await db.list_master_resumes()] == [a["resume_id"], b["resume_id"]]
+        assert [r["resume_id"] for r in await db.list_master_resumes()] == [
+            a["resume_id"],
+            b["resume_id"],
+        ]
 
     async def test_preview_source_data_round_trips_on_claim(self, db: Database) -> None:
-        master = await db.create_resume_atomic_master(content="m", processing_status="ready")
+        master = await db.create_resume_atomic_master(
+            content="m", processing_status="ready"
+        )
         job = await db.create_job(content="jd", resume_id=master["resume_id"])
         from app.preview import job_fingerprint, resume_fingerprint
+
         registered = await db.register_preview(
-            source_id=master["resume_id"], job_id=job["job_id"], payload_hash="h",
-            source_hash=resume_fingerprint(master["content"], master.get("processed_data"), None),
-            job_hash=job_fingerprint(job["content"]), prompt_id="keywords", ttl_seconds=60,
+            source_id=master["resume_id"],
+            job_id=job["job_id"],
+            payload_hash="h",
+            source_hash=resume_fingerprint(
+                master["content"], master.get("processed_data"), None
+            ),
+            job_hash=job_fingerprint(job["content"]),
+            prompt_id="keywords",
+            ttl_seconds=60,
             source_data={"summary": "condensed"},
         )
         claim = await db.claim_preview(
-            preview_id=registered["preview_id"], source_id=master["resume_id"],
-            job_id=job["job_id"], payload_hash="h", lease_seconds=30,
+            preview_id=registered["preview_id"],
+            source_id=master["resume_id"],
+            job_id=job["job_id"],
+            payload_hash="h",
+            lease_seconds=30,
         )
         assert claim.source_data == {"summary": "condensed"}
 
@@ -287,7 +341,9 @@ class TestApplications:
         a = await db.create_application(job_id="j1", resume_id="r1")
         b = await db.create_application(job_id="j2", resume_id="r2")
         # Move a to the front of "interview".
-        moved = await db.update_application(a["application_id"], {"status": "interview", "position": 0})
+        moved = await db.update_application(
+            a["application_id"], {"status": "interview", "position": 0}
+        )
         assert moved["status"] == "interview"
         assert moved["position"] == 0
         # The "applied" column renumbered: b is now position 0.
@@ -298,7 +354,9 @@ class TestApplications:
     async def test_bulk_update_and_delete(self, db):
         a = await db.create_application(job_id="j1", resume_id="r1")
         b = await db.create_application(job_id="j2", resume_id="r2")
-        moved = await db.bulk_update_applications([a["application_id"], b["application_id"]], "rejected")
+        moved = await db.bulk_update_applications(
+            [a["application_id"], b["application_id"]], "rejected"
+        )
         assert moved == 2
         rejected = await db.list_applications(status="rejected")
         assert {x["position"] for x in rejected} == {0, 1}
@@ -313,7 +371,10 @@ class TestApiKeyStore:
     async def test_set_get_delete_ciphertext(self, db):
         db.set_api_key_ciphertext("openai", "ct-openai")
         db.set_api_key_ciphertext("anthropic", "ct-anthropic")
-        assert db.get_api_key_ciphertexts() == {"openai": "ct-openai", "anthropic": "ct-anthropic"}
+        assert db.get_api_key_ciphertexts() == {
+            "openai": "ct-openai",
+            "anthropic": "ct-anthropic",
+        }
         db.delete_api_key("openai")
         assert db.get_api_key_ciphertexts() == {"anthropic": "ct-anthropic"}
         db.clear_api_keys()
@@ -368,16 +429,37 @@ class TestDefaultMasterMigration:
             )
         return engine
 
-    def test_default_master_migration_backfills_and_swaps_index(self, tmp_path: Path) -> None:
+    def test_default_master_migration_backfills_and_swaps_index(
+        self, tmp_path: Path
+    ) -> None:
         engine = self._legacy_engine(tmp_path)
         try:
             init_models_sync(engine)
             init_models_sync(engine)  # idempotent
             with engine.begin() as conn:
-                names = [c["name"] for c in conn.exec_driver_sql("PRAGMA table_info(resumes)").mappings()]
-                indexes = {r["name"] for r in conn.exec_driver_sql("PRAGMA index_list(resumes)").mappings()}
-                rows = dict(conn.exec_driver_sql("SELECT resume_id, is_default_master FROM resumes").all())
-                preview_cols = [c["name"] for c in conn.exec_driver_sql("PRAGMA table_info(tailoring_previews)").mappings()]
+                names = [
+                    c["name"]
+                    for c in conn.exec_driver_sql(
+                        "PRAGMA table_info(resumes)"
+                    ).mappings()
+                ]
+                indexes = {
+                    r["name"]
+                    for r in conn.exec_driver_sql(
+                        "PRAGMA index_list(resumes)"
+                    ).mappings()
+                }
+                rows = dict(
+                    conn.exec_driver_sql(
+                        "SELECT resume_id, is_default_master FROM resumes"
+                    ).all()
+                )
+                preview_cols = [
+                    c["name"]
+                    for c in conn.exec_driver_sql(
+                        "PRAGMA table_info(tailoring_previews)"
+                    ).mappings()
+                ]
             assert names.count("is_default_master") == 1
             assert "ux_resumes_single_master" not in indexes
             assert "ux_resumes_single_default_master" in indexes

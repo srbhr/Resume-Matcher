@@ -117,9 +117,7 @@ async def test_cancellation_before_commit_rolls_back_flushed_required_rows(
         await original_commit(session)
 
     monkeypatch.setattr(AsyncSession, "commit", pause_before_resume_commit)
-    request = asyncio.create_task(
-        client.post("/api/v1/resumes/improve", json=payload)
-    )
+    request = asyncio.create_task(client.post("/api/v1/resumes/improve", json=payload))
     try:
         await asyncio.wait_for(flushed.wait(), 1)
         request.cancel()
@@ -180,7 +178,9 @@ async def test_direct_success_links_required_records_and_keeps_tracker_best_effo
         result["data"]["resume_id"]
     )
     assert relation is not None
-    assert relation["request_id"] == result["request_id"] == result["data"]["request_id"]
+    assert (
+        relation["request_id"] == result["request_id"] == result["data"]["request_id"]
+    )
     assert relation["improvements"] == result["data"]["improvements"]
     saved = await isolated_db.get_resume(result["data"]["resume_id"])
     assert saved is not None and saved["title"] == "Synthetic engineer"

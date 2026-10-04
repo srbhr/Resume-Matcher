@@ -125,5 +125,7 @@ def decrypt(ciphertext: str) -> str:
     try:
         return _load_fernet().decrypt(ciphertext.encode("utf-8")).decode("utf-8")
     except (InvalidToken, ValueError) as e:
-        logger.warning("Failed to decrypt a stored API key (secret rotated/lost?): %s", e)
+        logger.warning(
+            "Failed to decrypt a stored API key (secret rotated/lost?): %s", e
+        )
         return ""

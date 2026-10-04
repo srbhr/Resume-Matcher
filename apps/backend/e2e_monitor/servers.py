@@ -78,6 +78,7 @@ class Servers:
 
     def _prepare_environment(self) -> dict[str, str]:
         from cryptography.fernet import Fernet
+
         from app.config import load_config_file
         from app.crypto import _write_secret
         from app.database import Database
@@ -114,10 +115,17 @@ class Servers:
             for key in (
                 "PATH",
                 "HOME",
-                "HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY",
-                "http_proxy", "https_proxy", "all_proxy",
-                "SSL_CERT_FILE", "SSL_CERT_DIR", "REQUESTS_CA_BUNDLE",
-                "CURL_CA_BUNDLE", "NODE_EXTRA_CA_CERTS",
+                "HTTP_PROXY",
+                "HTTPS_PROXY",
+                "ALL_PROXY",
+                "http_proxy",
+                "https_proxy",
+                "all_proxy",
+                "SSL_CERT_FILE",
+                "SSL_CERT_DIR",
+                "REQUESTS_CA_BUNDLE",
+                "CURL_CA_BUNDLE",
+                "NODE_EXTRA_CA_CERTS",
                 "SYSTEMROOT",
                 "TMPDIR",
                 "LANG",
@@ -134,7 +142,16 @@ class Servers:
                 "LLM_API_BASE": selected.api_base or "",
                 "REASONING_EFFORT": selected.reasoning_effort or "",
                 "FRONTEND_BASE_URL": self.frontend_url,
-                "NO_PROXY": ",".join(filter(None, [os.environ.get("NO_PROXY", os.environ.get("no_proxy", "")), "127.0.0.1", "localhost"])),
+                "NO_PROXY": ",".join(
+                    filter(
+                        None,
+                        [
+                            os.environ.get("NO_PROXY", os.environ.get("no_proxy", "")),
+                            "127.0.0.1",
+                            "localhost",
+                        ],
+                    )
+                ),
             }
         )
         return env
@@ -218,7 +235,11 @@ class Servers:
                 except ProcessLookupError:
                     pass
             elif os.name == "nt" and isinstance(proc.pid, int):
-                subprocess.run(["taskkill", "/PID", str(proc.pid), "/T", "/F"], capture_output=True, check=False)
+                subprocess.run(
+                    ["taskkill", "/PID", str(proc.pid), "/T", "/F"],
+                    capture_output=True,
+                    check=False,
+                )
             elif proc.poll() is None:
                 proc.terminate()
         for proc in reversed(self.procs):

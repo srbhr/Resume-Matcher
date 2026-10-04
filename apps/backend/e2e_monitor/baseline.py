@@ -25,27 +25,42 @@ def diff_against_baseline(
         non_blank = cur.get("non_blank")
 
         if cov is not None and cov < floor.get("min_keyword_coverage", 0.0):
-            regressions.append({"jd_key": jd_key, "kind": "keyword_floor", "value": cov})
+            regressions.append(
+                {"jd_key": jd_key, "kind": "keyword_floor", "value": cov}
+            )
         if judge is None and base.get("judge_score") is not None:
             # The judge produced a score for this variation at baseline but nothing
             # now (e.g. it errored) — worse than any low score, so flag it.
-            regressions.append({
-                "jd_key": jd_key,
-                "kind": "judge_missing",
-                "baseline_value": base.get("judge_score"),
-            })
+            regressions.append(
+                {
+                    "jd_key": jd_key,
+                    "kind": "judge_missing",
+                    "baseline_value": base.get("judge_score"),
+                }
+            )
         elif judge is not None and judge < floor.get("min_judge_score", 0):
-            regressions.append({"jd_key": jd_key, "kind": "judge_floor", "value": judge})
+            regressions.append(
+                {"jd_key": jd_key, "kind": "judge_floor", "value": judge}
+            )
         if non_blank is False:
-            regressions.append({"jd_key": jd_key, "kind": "blank_render", "value": False})
+            regressions.append(
+                {"jd_key": jd_key, "kind": "blank_render", "value": False}
+            )
         base_judge = base.get("judge_score")
         if (
-            isinstance(judge, int) and not isinstance(judge, bool)
-            and isinstance(base_judge, int) and not isinstance(base_judge, bool)
+            isinstance(judge, int)
+            and not isinstance(judge, bool)
+            and isinstance(base_judge, int)
+            and not isinstance(base_judge, bool)
             and (base_judge - judge) > tol
         ):
             regressions.append(
-                {"jd_key": jd_key, "kind": "judge_drop", "from": base_judge, "to": judge}
+                {
+                    "jd_key": jd_key,
+                    "kind": "judge_drop",
+                    "from": base_judge,
+                    "to": judge,
+                }
             )
 
     for jd_key in base_vars:

@@ -1,8 +1,11 @@
 """Tests for the adaptive resume wizard schemas and service."""
 
+from unittest.mock import AsyncMock, patch
+
 import pytest
 from pydantic import ValidationError
 
+from app.schemas.models import ResumeData
 from app.schemas.resume_wizard import (
     ResumeWizardAnswer,
     ResumeWizardFinalizeRequest,
@@ -10,6 +13,18 @@ from app.schemas.resume_wizard import (
     ResumeWizardQuestion,
     ResumeWizardState,
     ResumeWizardTurnRequest,
+)
+from app.services.resume_wizard import (
+    RESUME_WIZARD_MAX_QUESTIONS,
+    apply_back,
+    apply_review,
+    build_initial_wizard_state,
+    build_review_warnings,
+    compute_progress,
+    extract_intro_name,
+    merge_unique_skills,
+    run_ai_turn,
+    section_prompt,
 )
 
 
@@ -57,18 +72,6 @@ def test_answer_rejects_text_over_6000_chars() -> None:
 def test_answer_rejects_whitespace_only_text() -> None:
     with pytest.raises(ValidationError):
         ResumeWizardAnswer(text="   \n\t ")
-
-
-from app.schemas.models import ResumeData
-from app.services.resume_wizard import (
-    RESUME_WIZARD_MAX_QUESTIONS,
-    build_initial_wizard_state,
-    build_review_warnings,
-    compute_progress,
-    extract_intro_name,
-    merge_unique_skills,
-    section_prompt,
-)
 
 
 def test_build_initial_state_has_intro_question() -> None:
@@ -126,14 +129,6 @@ def test_review_warnings_flag_missing_name() -> None:
     assert any("name" in w.lower() for w in warnings)
 
 
-from unittest.mock import AsyncMock, patch
-
-from app.services.resume_wizard import (
-    apply_back,
-    apply_review,
-    run_ai_turn,
-)
-
 _AI_EXPERIENCE_RESULT = {
     "resume_data": {
         "personalInfo": {"name": "James"},
@@ -158,7 +153,10 @@ _AI_EXPERIENCE_RESULT = {
         "sectionMeta": [],
         "customSections": {},
     },
-    "next_question": {"text": "What did you build at Acme?", "section": "workExperience"},
+    "next_question": {
+        "text": "What did you build at Acme?",
+        "section": "workExperience",
+    },
     "inferred_skills": ["Python"],
     "is_complete": False,
 }
@@ -268,7 +266,10 @@ async def test_ai_turn_intro_uses_deterministic_name_fallback() -> None:
     state = build_initial_wizard_state()  # section intro
     result_without_name = {
         "resume_data": {"personalInfo": {"title": "Engineer"}},
-        "next_question": {"text": "Where have you worked?", "section": "workExperience"},
+        "next_question": {
+            "text": "Where have you worked?",
+            "section": "workExperience",
+        },
         "inferred_skills": [],
         "is_complete": False,
     }
@@ -277,7 +278,9 @@ async def test_ai_turn_intro_uses_deterministic_name_fallback() -> None:
         new_callable=AsyncMock,
         return_value=result_without_name,
     ):
-        result = await run_ai_turn(state, "Hi, I'm Priya, after backend roles", skip=False)
+        result = await run_ai_turn(
+            state, "Hi, I'm Priya, after backend roles", skip=False
+        )
 
     assert result.resume_data.personalInfo.name == "Priya"
 
@@ -370,7 +373,9 @@ async def test_ai_turn_rejects_malformed_complete_envelope_without_advancing(
     assert state.model_dump() == before
 
 
-async def test_ai_turn_localizes_missing_question_fallback_to_content_language() -> None:
+async def test_ai_turn_localizes_missing_question_fallback_to_content_language() -> (
+    None
+):
     state = _state_on_section("workExperience")
     result_without_question = {
         "resume_data": _AI_EXPERIENCE_RESULT["resume_data"],
@@ -390,7 +395,10 @@ async def test_ai_turn_localizes_missing_question_fallback_to_content_language()
         result = await run_ai_turn(state, "Acmeでエンジニアをしていました", skip=False)
 
     assert result.current_question.section == "education"
-    assert result.current_question.text == "学歴について、学校名、学位、在籍期間、表彰や主な履修内容を教えてください。"
+    assert (
+        result.current_question.text
+        == "学歴について、学校名、学位、在籍期間、表彰や主な履修内容を教えてください。"
+    )
 
 
 def test_apply_review_localizes_deterministic_review_copy() -> None:
@@ -400,7 +408,10 @@ def test_apply_review_localizes_deterministic_review_copy() -> None:
     with patch("app.services.resume_wizard.get_content_language", return_value="ja"):
         result = apply_review(state)
 
-    assert result.current_question.text == "マスター履歴書を作成する前に、内容を確認しましょう。"
+    assert (
+        result.current_question.text
+        == "マスター履歴書を作成する前に、内容を確認しましょう。"
+    )
     assert result.warnings
     assert all("Add" not in warning for warning in result.warnings)
 
@@ -535,9 +546,7 @@ async def test_ai_turn_updates_experience_by_stable_id_without_duplication(
     )
     correction = {
         "resume_data": {
-            "workExperience": [
-                {**_GLOBEX_ROLE, "id": 7, field: corrected_value}
-            ]
+            "workExperience": [{**_GLOBEX_ROLE, "id": 7, field: corrected_value}]
         },
         "next_question": {"text": "Anything else?", "section": "workExperience"},
         "inferred_skills": [],
@@ -609,7 +618,9 @@ async def test_ai_turn_updates_other_entry_sections_by_stable_id(
     assert getattr(entries[0], changed_field) == changed_value
 
 
-async def test_ai_turn_appends_explicit_new_entry_without_reassigning_existing_id() -> None:
+async def test_ai_turn_appends_explicit_new_entry_without_reassigning_existing_id() -> (
+    None
+):
     state = _state_on_section("workExperience")
     state.resume_data = ResumeData.model_validate(
         {"workExperience": [{**_GLOBEX_ROLE, "id": 7}]}
@@ -628,7 +639,9 @@ async def test_ai_turn_appends_explicit_new_entry_without_reassigning_existing_i
     ):
         result = await run_ai_turn(state, "I also worked at Acme", skip=False)
 
-    assert [(entry.id, entry.company) for entry in result.resume_data.workExperience] == [
+    assert [
+        (entry.id, entry.company) for entry in result.resume_data.workExperience
+    ] == [
         (7, "Globex"),
         (8, "Acme"),
     ]
@@ -827,9 +840,7 @@ async def test_ai_turn_new_entry_legacy_echo_merges_within_same_response() -> No
     legacy_echo = {key: value for key, value in _ACME_ROLE.items() if key != "id"}
     legacy_echo["description"] = ["More precise new assignment"]
     response = {
-        "resume_data": {
-            "workExperience": [{**_ACME_ROLE, "id": 0}, legacy_echo]
-        }
+        "resume_data": {"workExperience": [{**_ACME_ROLE, "id": 0}, legacy_echo]}
     }
 
     with patch(
@@ -839,7 +850,9 @@ async def test_ai_turn_new_entry_legacy_echo_merges_within_same_response() -> No
     ):
         result = await run_ai_turn(state, "Add my Acme assignment", skip=False)
 
-    assert [(entry.id, entry.company) for entry in result.resume_data.workExperience] == [
+    assert [
+        (entry.id, entry.company) for entry in result.resume_data.workExperience
+    ] == [
         (7, "Globex"),
         (8, "Acme"),
     ]
@@ -899,9 +912,7 @@ async def test_ai_turn_ambiguous_legacy_signature_preserves_existing_rows() -> N
     legacy_echo = {key: value for key, value in _GLOBEX_ROLE.items() if key != "id"}
     response = {
         "resume_data": {
-            "workExperience": [
-                {**legacy_echo, "description": ["Ambiguous assignment"]}
-            ]
+            "workExperience": [{**legacy_echo, "description": ["Ambiguous assignment"]}]
         }
     }
 
@@ -941,7 +952,9 @@ async def test_ai_turn_duplicate_known_id_preserves_both_updates() -> None:
     ):
         result = await run_ai_turn(state, "Correct Globex and add Acme", skip=False)
 
-    assert [(entry.id, entry.company) for entry in result.resume_data.workExperience] == [
+    assert [
+        (entry.id, entry.company) for entry in result.resume_data.workExperience
+    ] == [
         (7, "Globex"),
         (8, "Acme"),
     ]
@@ -969,13 +982,17 @@ async def test_ai_turn_legacy_echo_does_not_revert_id_based_update() -> None:
     ):
         result = await run_ai_turn(state, "That company was Acme", skip=False)
 
-    assert [(entry.id, entry.company) for entry in result.resume_data.workExperience] == [
+    assert [
+        (entry.id, entry.company) for entry in result.resume_data.workExperience
+    ] == [
         (7, "Acme"),
         (8, "Globex"),
     ]
 
 
-async def test_ai_turn_tells_provider_how_entry_ids_encode_edit_and_add_intent() -> None:
+async def test_ai_turn_tells_provider_how_entry_ids_encode_edit_and_add_intent() -> (
+    None
+):
     state = _state_on_section("workExperience")
     state.resume_data = ResumeData.model_validate(
         {"workExperience": [{**_GLOBEX_ROLE, "id": 37}]}
@@ -1020,7 +1037,9 @@ async def test_ai_turn_sanitizes_user_answer_before_prompting() -> None:
     assert "Ignore previous instructions" not in sent_prompt
 
 
-def test_assign_entry_ids_preserves_stable_ids_and_allocates_missing_or_duplicate_ids() -> None:
+def test_assign_entry_ids_preserves_stable_ids_and_allocates_missing_or_duplicate_ids() -> (
+    None
+):
     from app.services.resume_wizard import _assign_entry_ids
 
     data = ResumeData.model_validate(
@@ -1054,8 +1073,18 @@ async def test_ai_turn_assigns_unique_entry_ids() -> None:
     result_no_ids = {
         "resume_data": {
             "workExperience": [
-                {"title": "Eng", "company": "Acme", "years": "2021", "description": ["a"]},
-                {"title": "Dev", "company": "Globex", "years": "2019", "description": ["b"]},
+                {
+                    "title": "Eng",
+                    "company": "Acme",
+                    "years": "2021",
+                    "description": ["a"],
+                },
+                {
+                    "title": "Dev",
+                    "company": "Globex",
+                    "years": "2019",
+                    "description": ["b"],
+                },
             ],
         },
         "next_question": {"text": "More?", "section": "workExperience"},

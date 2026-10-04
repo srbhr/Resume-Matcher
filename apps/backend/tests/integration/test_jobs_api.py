@@ -1,6 +1,6 @@
 """Integration tests for job description endpoints."""
 
-from unittest.mock import AsyncMock, patch, MagicMock
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from httpx import ASGITransport, AsyncClient
@@ -29,10 +29,13 @@ class TestJobUpload:
             }
         ]
         async with client:
-            resp = await client.post("/api/v1/jobs/upload", json={
-                "job_descriptions": ["Senior Engineer at TechCorp"],
-                "resume_id": None,
-            })
+            resp = await client.post(
+                "/api/v1/jobs/upload",
+                json={
+                    "job_descriptions": ["Senior Engineer at TechCorp"],
+                    "resume_id": None,
+                },
+            )
         assert resp.status_code == 200
         data = resp.json()
         assert data["message"] == "data successfully processed"
@@ -51,24 +54,33 @@ class TestJobUpload:
             for i in range(3)
         ]
         async with client:
-            resp = await client.post("/api/v1/jobs/upload", json={
-                "job_descriptions": ["JD 1", "JD 2", "JD 3"],
-            })
+            resp = await client.post(
+                "/api/v1/jobs/upload",
+                json={
+                    "job_descriptions": ["JD 1", "JD 2", "JD 3"],
+                },
+            )
         assert resp.status_code == 200
         assert len(resp.json()["job_id"]) == 3
 
     async def test_upload_empty_list_returns_400(self, client):
         async with client:
-            resp = await client.post("/api/v1/jobs/upload", json={
-                "job_descriptions": [],
-            })
+            resp = await client.post(
+                "/api/v1/jobs/upload",
+                json={
+                    "job_descriptions": [],
+                },
+            )
         assert resp.status_code == 400
 
     async def test_upload_empty_string_returns_400(self, client):
         async with client:
-            resp = await client.post("/api/v1/jobs/upload", json={
-                "job_descriptions": ["  "],
-            })
+            resp = await client.post(
+                "/api/v1/jobs/upload",
+                json={
+                    "job_descriptions": ["  "],
+                },
+            )
         assert resp.status_code == 400
 
 

@@ -13,8 +13,8 @@ from unittest.mock import AsyncMock, patch
 
 from httpx import ASGITransport, AsyncClient
 
-from app.main import app
 from app.database import Database
+from app.main import app
 from app.schemas.models import ResumeData
 from tests.integration.test_pipeline_e2e import _upload_resume
 

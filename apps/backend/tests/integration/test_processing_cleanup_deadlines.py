@@ -1,4 +1,5 @@
 """Bound caller cleanup without abandoning SQLite attempt ownership."""
+
 import asyncio
 from typing import Any
 
@@ -32,10 +33,16 @@ async def test_cpython_caught_cancellation_does_not_repeat_without_new_cancel() 
 
 @pytest.mark.parametrize("newer_attempt", [False, True])
 async def test_stalled_finish_returns_bounded_and_keeps_owned_background_cleanup(
-    isolated_db: Any, monkeypatch: pytest.MonkeyPatch, newer_attempt: bool,
+    isolated_db: Any,
+    monkeypatch: pytest.MonkeyPatch,
+    newer_attempt: bool,
 ) -> None:
-    monkeypatch.setattr(resumes, "_PROCESSING_CLEANUP_TIMEOUT_SECONDS", 0.02, raising=False)
-    record = await isolated_db.create_resume_atomic_master(content="Synthetic resume", processing_status="processing")
+    monkeypatch.setattr(
+        resumes, "_PROCESSING_CLEANUP_TIMEOUT_SECONDS", 0.02, raising=False
+    )
+    record = await isolated_db.create_resume_atomic_master(
+        content="Synthetic resume", processing_status="processing"
+    )
     resume_id = record["resume_id"]
     token = await isolated_db.claim_resume_processing(resume_id)
     assert token is not None
@@ -56,7 +63,9 @@ async def test_stalled_finish_returns_bounded_and_keeps_owned_background_cleanup
     completed, _ = await asyncio.wait({caller}, timeout=0.15)
     background: list[asyncio.Task[Any]] = []
     try:
-        assert caller in completed, "cleanup pinned the caller past its secondary deadline"
+        assert caller in completed, (
+            "cleanup pinned the caller past its secondary deadline"
+        )
         background = list(resumes._PROCESSING_CLEANUP_TASKS)
         assert background and any(not task.done() for task in background)
         if newer_attempt:
@@ -74,10 +83,16 @@ async def test_stalled_finish_returns_bounded_and_keeps_owned_background_cleanup
 
 @pytest.mark.parametrize("newer_attempt", [False, True])
 async def test_late_claim_is_retired_after_cancelled_caller_returns(
-    isolated_db: Any, monkeypatch: pytest.MonkeyPatch, newer_attempt: bool,
+    isolated_db: Any,
+    monkeypatch: pytest.MonkeyPatch,
+    newer_attempt: bool,
 ) -> None:
-    monkeypatch.setattr(resumes, "_PROCESSING_CLEANUP_TIMEOUT_SECONDS", 0.02, raising=False)
-    record = await isolated_db.create_resume_atomic_master(content="Synthetic resume", processing_status="processing")
+    monkeypatch.setattr(
+        resumes, "_PROCESSING_CLEANUP_TIMEOUT_SECONDS", 0.02, raising=False
+    )
+    record = await isolated_db.create_resume_atomic_master(
+        content="Synthetic resume", processing_status="processing"
+    )
     resume_id = record["resume_id"]
     entered, release = asyncio.Event(), asyncio.Event()
     claim = isolated_db.claim_resume_processing

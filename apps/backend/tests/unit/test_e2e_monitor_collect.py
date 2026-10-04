@@ -30,10 +30,16 @@ def test_build_flow_trace_counts_and_orders() -> None:
 
 def test_build_summary_rolls_up_scores_and_flow() -> None:
     variations = [
-        {"jd_key": "backend-eng", "scores": {"jd_keyword_coverage": 1.0, "personal_info_unchanged": True},
-         "judge": {"score": 4}, "render": {"non_blank": False}},
+        {
+            "jd_key": "backend-eng",
+            "scores": {"jd_keyword_coverage": 1.0, "personal_info_unchanged": True},
+            "judge": {"score": 4},
+            "render": {"non_blank": False},
+        },
     ]
-    s = build_summary(flow=build_flow_trace(_STEPS), variations=variations, provider="ollama")
+    s = build_summary(
+        flow=build_flow_trace(_STEPS), variations=variations, provider="ollama"
+    )
     assert s["provider"] == "ollama"
     assert s["variations"] == 1
     assert s["flow_all_passed"] is False

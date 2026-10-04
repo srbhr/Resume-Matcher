@@ -9,7 +9,8 @@ from collections.abc import AsyncIterator, Awaitable, Callable
 from typing import Any
 
 import pytest
-from playwright.async_api import Browser, Error as PlaywrightError, Page
+from playwright.async_api import Browser, Page
+from playwright.async_api import Error as PlaywrightError
 
 from app import pdf
 from tests.integration.test_pdf_lifecycle import RESUME_PRINT_DATA_URL
@@ -87,9 +88,9 @@ async def test_page_cleanup_failure_does_not_replay_a_healthy_export(
             return await original_wait()
 
         monkeypatch.setattr(pdf._browser_users[browser].drained, "wait", wait_for_users)
-        unhealthy_results = await asyncio.gather(*(
-            pdf.render_resume_pdf(unhealthy_url) for _ in range(failed_exports)
-        ))
+        unhealthy_results = await asyncio.gather(
+            *(pdf.render_resume_pdf(unhealthy_url) for _ in range(failed_exports))
+        )
         assert all(result.startswith(b"%PDF") for result in unhealthy_results)
         assert pdf._browser is None
         await asyncio.wait_for(drain_entered.wait(), 2)
@@ -98,7 +99,9 @@ async def test_page_cleanup_failure_does_not_replay_a_healthy_export(
         continue_healthy.set()
         healthy_result = await healthy
         assert healthy_result.startswith(b"%PDF")
-        assert len(rendered_pages) == 1, "A different export's cleanup replayed this page"
+        assert len(rendered_pages) == 1, (
+            "A different export's cleanup replayed this page"
+        )
     finally:
         continue_healthy.set()
         await asyncio.gather(healthy, return_exceptions=True)
@@ -109,7 +112,9 @@ async def test_page_cleanup_failure_does_not_replay_a_healthy_export(
     assert pdf._active_renders == 0
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="Read-only PID probe uses POSIX signal zero")
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="Read-only PID probe uses POSIX signal zero"
+)
 async def test_real_driver_stop_settles_retirement_after_browser_close_error(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -118,7 +123,9 @@ async def test_real_driver_stop_settles_retirement_after_browser_close_error(
     assert driver is not None
     session = await browser.new_browser_cdp_session()
     processes = await session.send("SystemInfo.getProcessInfo")
-    browser_pid = next(int(p["id"]) for p in processes["processInfo"] if p["type"] == "browser")
+    browser_pid = next(
+        int(p["id"]) for p in processes["processInfo"] if p["type"] == "browser"
+    )
     await session.detach()
     original_close = Browser.close
     stopped = asyncio.Event()

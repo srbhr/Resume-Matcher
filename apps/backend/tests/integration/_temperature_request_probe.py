@@ -80,9 +80,7 @@ async def _serialize_request(
             },
         )
 
-    async with httpx.AsyncClient(
-        transport=httpx.MockTransport(handle)
-    ) as http_client:
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handle)) as http_client:
         client = AsyncOpenAI(
             api_key="synthetic-contract-key",
             base_url="https://synthetic.invalid/v1",
@@ -114,9 +112,7 @@ async def _probe_case(
         model=model,
         api_key="synthetic-contract-key",
         api_base=(
-            "https://synthetic.invalid/v1"
-            if provider == "openai_compatible"
-            else None
+            "https://synthetic.invalid/v1" if provider == "openai_compatible" else None
         ),
         reasoning_effort=reasoning_effort,
     )

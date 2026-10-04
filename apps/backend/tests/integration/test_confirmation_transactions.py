@@ -518,7 +518,8 @@ async def test_new_explicit_preview_recovers_after_deleted_tokenless_result(
     assert new_id != deleted_id
     assert await isolated_db.get_resume(deleted_id) is None
     assert {row["resume_id"] for row in await isolated_db.list_resumes()} == {
-        payload["resume_id"], new_id,
+        payload["resume_id"],
+        new_id,
     }
     repeated = await confirmation_client.post(
         "/api/v1/resumes/improve/confirm", json=fresh_payload
@@ -664,22 +665,41 @@ async def test_full_data_reset_removes_confirmation_replay_content(
     assert await isolated_db.list_resumes() == []
 
 
-async def test_confirmation_uses_registered_suggestions(isolated_db: Database, confirmation_client: AsyncClient, sample_resume: dict[str, Any]) -> None:
+async def test_confirmation_uses_registered_suggestions(
+    isolated_db: Database,
+    confirmation_client: AsyncClient,
+    sample_resume: dict[str, Any],
+) -> None:
     payload = await preview_payload(isolated_db, confirmation_client, sample_resume)
     expected = copy.deepcopy(payload["improvements"])
-    payload["improvements"] = [{"suggestion": "Injected unregistered suggestion", "lineNumber": None}]
-    result = await confirmation_client.post("/api/v1/resumes/improve/confirm", json=payload)
+    payload["improvements"] = [
+        {"suggestion": "Injected unregistered suggestion", "lineNumber": None}
+    ]
+    result = await confirmation_client.post(
+        "/api/v1/resumes/improve/confirm", json=payload
+    )
     assert result.status_code == 200, result.text
     assert result.json()["data"]["improvements"] == expected
 
 
-async def test_replay_repairs_tracker_card_after_lost_followup(isolated_db: Database, confirmation_client: AsyncClient, sample_resume: dict[str, Any], monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_replay_repairs_tracker_card_after_lost_followup(
+    isolated_db: Database,
+    confirmation_client: AsyncClient,
+    sample_resume: dict[str, Any],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     payload = await preview_payload(isolated_db, confirmation_client, sample_resume)
     with monkeypatch.context() as stage:
-        stage.setattr(resumes, "_auto_create_tracker_application", AsyncMock(return_value=None))
-        first = await confirmation_client.post("/api/v1/resumes/improve/confirm", json=payload)
+        stage.setattr(
+            resumes, "_auto_create_tracker_application", AsyncMock(return_value=None)
+        )
+        first = await confirmation_client.post(
+            "/api/v1/resumes/improve/confirm", json=payload
+        )
     assert first.status_code == 200 and await isolated_db.list_applications() == []
-    second = await confirmation_client.post("/api/v1/resumes/improve/confirm", json=payload)
+    second = await confirmation_client.post(
+        "/api/v1/resumes/improve/confirm", json=payload
+    )
     assert second.json() == first.json()
     cards = await isolated_db.list_applications()
     assert len(cards) == 1
@@ -688,39 +708,83 @@ async def test_replay_repairs_tracker_card_after_lost_followup(isolated_db: Data
     assert cards[0]["role"] == saved["title"]
 
 
-async def test_tokenless_replay_prefers_confirmed_over_new_identical_preview(isolated_db: Database, confirmation_client: AsyncClient, sample_resume: dict[str, Any]) -> None:
+async def test_tokenless_replay_prefers_confirmed_over_new_identical_preview(
+    isolated_db: Database,
+    confirmation_client: AsyncClient,
+    sample_resume: dict[str, Any],
+) -> None:
     payload = await preview_payload(isolated_db, confirmation_client, sample_resume)
-    first = await confirmation_client.post("/api/v1/resumes/improve/confirm", json=payload)
+    first = await confirmation_client.post(
+        "/api/v1/resumes/improve/confirm", json=payload
+    )
     assert first.status_code == 200
-    new_preview = await confirmation_client.post("/api/v1/resumes/improve/preview", json={"resume_id": payload["resume_id"], "job_id": payload["job_id"]})
+    new_preview = await confirmation_client.post(
+        "/api/v1/resumes/improve/preview",
+        json={"resume_id": payload["resume_id"], "job_id": payload["job_id"]},
+    )
     assert new_preview.status_code == 200
     payload.pop("preview_id")
-    replay = await confirmation_client.post("/api/v1/resumes/improve/confirm", json=payload)
+    replay = await confirmation_client.post(
+        "/api/v1/resumes/improve/confirm", json=payload
+    )
     assert replay.json() == first.json()
     assert len(await isolated_db.list_resumes()) == 2
 
 
 @pytest.mark.parametrize("section", ["languages", "certificationsTraining", "awards"])
-async def test_legacy_registered_preview_cannot_persist_unsupported_additions(isolated_db: Database, confirmation_client: AsyncClient, sample_resume: dict[str, Any], section: str) -> None:
+async def test_legacy_registered_preview_cannot_persist_unsupported_additions(
+    isolated_db: Database,
+    confirmation_client: AsyncClient,
+    sample_resume: dict[str, Any],
+    section: str,
+) -> None:
     payload = await preview_payload(isolated_db, confirmation_client, sample_resume)
-    payload["improved_data"]["additional"][section].append("Unsupported synthetic qualification")
+    payload["improved_data"]["additional"][section].append(
+        "Unsupported synthetic qualification"
+    )
     async with isolated_db._session() as session:
         row = await session.get(TailoringPreview, payload["preview_id"])
         assert row is not None
         row.payload_hash = resumes._hash_improved_data(payload["improved_data"])
         await session.commit()
-    response = await confirmation_client.post("/api/v1/resumes/improve/confirm", json=payload)
+    response = await confirmation_client.post(
+        "/api/v1/resumes/improve/confirm", json=payload
+    )
     assert response.status_code == 400, response.text
     assert len(await isolated_db.list_resumes()) == 1
 
 
-async def test_legacy_preview_without_structured_source_requires_reprocessing(isolated_db: Database, confirmation_client: AsyncClient, sample_resume: dict[str, Any]) -> None:
+async def test_legacy_preview_without_structured_source_requires_reprocessing(
+    isolated_db: Database,
+    confirmation_client: AsyncClient,
+    sample_resume: dict[str, Any],
+) -> None:
     from app.preview import job_fingerprint, resume_fingerprint
-    source = await isolated_db.create_resume(content="# Original unprocessed resume", processing_status="failed")
+
+    source = await isolated_db.create_resume(
+        content="# Original unprocessed resume", processing_status="failed"
+    )
     job = await isolated_db.create_job("Synthetic engineer")
     candidate = ResumeData.model_validate(sample_resume).model_dump()
-    preview = await isolated_db.register_preview(source_id=source["resume_id"], job_id=job["job_id"], payload_hash=resumes._hash_improved_data(candidate), source_hash=resume_fingerprint(source["content"], None, None), job_hash=job_fingerprint(job["content"]), prompt_id="nudge", ttl_seconds=60)
-    response = await confirmation_client.post("/api/v1/resumes/improve/confirm", json={"resume_id": source["resume_id"], "job_id": job["job_id"], "preview_id": preview["preview_id"], "improved_data": candidate, "improvements": []})
+    preview = await isolated_db.register_preview(
+        source_id=source["resume_id"],
+        job_id=job["job_id"],
+        payload_hash=resumes._hash_improved_data(candidate),
+        source_hash=resume_fingerprint(source["content"], None, None),
+        job_hash=job_fingerprint(job["content"]),
+        prompt_id="nudge",
+        ttl_seconds=60,
+    )
+    response = await confirmation_client.post(
+        "/api/v1/resumes/improve/confirm",
+        json={
+            "resume_id": source["resume_id"],
+            "job_id": job["job_id"],
+            "preview_id": preview["preview_id"],
+            "improved_data": candidate,
+            "improvements": [],
+        },
+    )
     assert response.status_code == 400, response.text
     assert len(await isolated_db.list_resumes()) == 1
 
@@ -743,12 +807,18 @@ async def test_verified_description_append_survives_preview_and_confirmation(
     monkeypatch.setattr(
         resumes,
         "generate_resume_diffs",
-        AsyncMock(return_value=ImproveDiffResult(changes=[ResumeChange(
-            path="workExperience[0].description",
-            action="append",
-            value=appended_text,
-            reason="Summarize relevant source experience",
-        )])),
+        AsyncMock(
+            return_value=ImproveDiffResult(
+                changes=[
+                    ResumeChange(
+                        path="workExperience[0].description",
+                        action="append",
+                        value=appended_text,
+                        reason="Summarize relevant source experience",
+                    )
+                ]
+            )
+        ),
     )
     payload = await preview_payload(isolated_db, confirmation_client, sample_resume)
     descriptions = payload["improved_data"]["workExperience"][0]["description"]

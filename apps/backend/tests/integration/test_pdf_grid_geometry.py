@@ -15,7 +15,6 @@ from playwright.async_api import async_playwright
 
 from app.pdf import _launch_browser
 
-
 REPO_ROOT = Path(__file__).resolve().parents[4]
 STYLE_ROOT = REPO_ROOT / "apps/frontend/components/resume/styles"
 TEMPLATE_STYLES = (
@@ -70,8 +69,8 @@ async def test_two_column_css_fits_real_pdf_widths_and_preserves_long_text(
                 ("Letter", 25, 4),
             ):
                 printable_width_px = (
-                    PAGE_WIDTH_MM[pdf_format] - (2 * margin_mm)
-                ) * 96 / 25.4
+                    (PAGE_WIDTH_MM[pdf_format] - (2 * margin_mm)) * 96 / 25.4
+                )
                 html = f"""
                     <style>
                       * {{ box-sizing: border-box; }}
@@ -140,8 +139,7 @@ async def test_two_column_css_fits_real_pdf_widths_and_preserves_long_text(
                 assert abs(geometry["occupiedWidth"] - geometry["gridWidth"]) < 1
                 assert geometry["gridScrollWidth"] <= geometry["gridClientWidth"] + 1
                 assert (
-                    geometry["sidebarScrollWidth"]
-                    <= geometry["sidebarClientWidth"] + 1
+                    geometry["sidebarScrollWidth"] <= geometry["sidebarClientWidth"] + 1
                 )
                 assert geometry["probesInside"] is True
 
@@ -170,7 +168,13 @@ async def test_two_column_css_fits_real_pdf_widths_and_preserves_long_text(
                     png_prefix = tmp_path / case_name
                     pdf_path.write_bytes(pdf)
                     subprocess.run(
-                        [rasterizer, "-png", "-singlefile", str(pdf_path), str(png_prefix)],
+                        [
+                            rasterizer,
+                            "-png",
+                            "-singlefile",
+                            str(pdf_path),
+                            str(png_prefix),
+                        ],
                         check=True,
                         capture_output=True,
                     )

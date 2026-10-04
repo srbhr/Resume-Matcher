@@ -10,9 +10,8 @@ import pytest
 
 from app import llm
 from app.llm import LLMConfig
-from app.services import improver
 from app.routers import enrichment
-
+from app.services import improver
 
 CONFIG = LLMConfig(provider="openai", model="gpt-4o", api_key="synthetic")
 
@@ -194,10 +193,7 @@ def test_enrichment_uses_valid_legacy_field_when_canonical_field_is_empty() -> N
         'Here is the result: [null, {"changes": []}',
         'Result: ["note, {"changes": [1]}, {"changes": [2]}',
         'Result: [null, "note, {"changes": []}, {"changes": [2]}',
-        "Here is the result: "
-        + "[" * 10_000
-        + '{"changes": []}'
-        + "]" * 10_000,
+        "Here is the result: " + "[" * 10_000 + '{"changes": []}' + "]" * 10_000,
     ],
     ids=[
         "prose-prefixed",
@@ -260,7 +256,9 @@ async def test_validator_must_return_an_object(
     monkeypatch.setattr(llm, "get_router", lambda _config=None: (router, CONFIG))
     monkeypatch.setattr(llm, "_supports_json_mode", lambda _model: False)
 
-    with pytest.raises(ValueError, match="Response validator must return a JSON object"):
+    with pytest.raises(
+        ValueError, match="Response validator must return a JSON object"
+    ):
         await llm.complete_json(
             "synthetic",
             retries=1,

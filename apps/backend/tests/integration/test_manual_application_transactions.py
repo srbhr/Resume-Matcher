@@ -16,7 +16,6 @@ from app.main import app
 from app.models import Application
 from tests.integration.test_storage_busy_writes import fast_busy_database  # noqa: F401
 
-
 MANUAL_CARD = {
     "resume_id": "synthetic-resume",
     "job_description": "Synthetic engineer job",

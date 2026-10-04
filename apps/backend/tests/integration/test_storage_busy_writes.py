@@ -69,13 +69,17 @@ async def test_contended_public_write_returns_503_and_can_be_retried(
     resume_url = f"/api/v1/resumes/{row['resume_id']}"
     requests: dict[str, tuple[str, str, dict[str, Any] | None]] = {
         "jobs_upload": (
-            "POST", "/api/v1/jobs/upload", {"job_descriptions": ["Synthetic engineer"]}
+            "POST",
+            "/api/v1/jobs/upload",
+            {"job_descriptions": ["Synthetic engineer"]},
         ),
         "resume_title": ("PATCH", f"{resume_url}/title", {"title": "Changed"}),
         "resume_delete": ("DELETE", resume_url, None),
         "resume_retry": ("POST", f"{resume_url}/retry-processing", None),
         "key_save": (
-            "POST", "/api/v1/config/api-keys", {"openai": "synthetic-new-key"}
+            "POST",
+            "/api/v1/config/api-keys",
+            {"openai": "synthetic-new-key"},
         ),
         "key_delete": ("DELETE", "/api/v1/config/api-keys/openai", None),
         "key_clear": ("DELETE", "/api/v1/config/api-keys?confirm=CLEAR_ALL_KEYS", None),
@@ -165,9 +169,12 @@ async def test_non_endpoint_writers_translate_busy_without_partial_changes(
     assert (await database.get_job(job["job_id"])) == job
     assert database.get_api_key_ciphertexts() == {"openai": "original-ciphertext"}
     # A failed finish does not consume ownership; the unchanged token can retry.
-    assert await database.finish_resume_processing(
-        row["resume_id"], token, processing_status="failed"
-    ) == "committed"
+    assert (
+        await database.finish_resume_processing(
+            row["resume_id"], token, processing_status="failed"
+        )
+        == "committed"
+    )
 
 
 async def test_non_busy_sqlite_write_error_is_not_marked_retryable(

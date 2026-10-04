@@ -18,7 +18,6 @@ from app.config import (
 from app.config_cache import load_config
 from app.main import app
 
-
 DirectoryOperation = Literal["open", "fsync", "close"]
 
 

@@ -17,10 +17,14 @@ def test_verdict_true_for_real_pdf_signals() -> None:
 
 
 def test_verdict_false_for_blank_or_broken() -> None:
-    assert _verdict(is_pdf=False, size=5000, pages=None, has_text=None) is False  # not a pdf
-    assert _verdict(is_pdf=True, size=100, pages=1, has_text=True) is False        # too small
-    assert _verdict(is_pdf=True, size=5000, pages=1, has_text=False) is False      # no text
-    assert _verdict(is_pdf=True, size=5000, pages=0, has_text=None) is False       # zero pages
+    assert (
+        _verdict(is_pdf=False, size=5000, pages=None, has_text=None) is False
+    )  # not a pdf
+    assert _verdict(is_pdf=True, size=100, pages=1, has_text=True) is False  # too small
+    assert _verdict(is_pdf=True, size=5000, pages=1, has_text=False) is False  # no text
+    assert (
+        _verdict(is_pdf=True, size=5000, pages=0, has_text=None) is False
+    )  # zero pages
 
 
 def test_check_pdf_bytes_rejects_empty() -> None:

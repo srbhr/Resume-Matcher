@@ -11,16 +11,28 @@ from app.schemas.models import PageFitSettings
 from app.services import tailor_selection
 from app.services.bullet_selector import PageMeasureError
 
-DATA = {"workExperience": [{"title": "E", "company": "X", "description": ["a", "b", "c", "d", "e"]}]}
-SCORES = {("workExperience", 0, i): float(s) for i, s in enumerate([10, 50, 40, 90, 20])}
+DATA = {
+    "workExperience": [
+        {"title": "E", "company": "X", "description": ["a", "b", "c", "d", "e"]}
+    ]
+}
+SCORES = {
+    ("workExperience", 0, i): float(s) for i, s in enumerate([10, 50, 40, 90, 20])
+}
 
 
 async def test_selection_without_page_fit(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(tailor_selection, "score_bullets", AsyncMock(return_value=(SCORES, "llm")))
+    monkeypatch.setattr(
+        tailor_selection, "score_bullets", AsyncMock(return_value=(SCORES, "llm"))
+    )
     measure = AsyncMock()
     monkeypatch.setattr(tailor_selection, "measure_page_count", measure)
     out = await tailor_selection.run_bullet_selection(
-        source_data=DATA, job_description="JD", job_keywords={}, max_per_entry=3, page_fit=None
+        source_data=DATA,
+        job_description="JD",
+        job_keywords={},
+        max_per_entry=3,
+        page_fit=None,
     )
     assert out.data["workExperience"][0]["description"] == ["b", "c", "d"]
     assert out.summary.page_fit == "skipped" and out.summary.bullets_before == 5
@@ -32,7 +44,9 @@ async def test_selection_with_page_fit_trims_and_warns_on_fallback(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(
-        tailor_selection, "score_bullets", AsyncMock(return_value=(SCORES, "keyword_fallback"))
+        tailor_selection,
+        "score_bullets",
+        AsyncMock(return_value=(SCORES, "keyword_fallback")),
     )
 
     async def measure(data: dict[str, Any], fit: PageFitSettings) -> int:
@@ -40,16 +54,24 @@ async def test_selection_with_page_fit_trims_and_warns_on_fallback(
 
     monkeypatch.setattr(tailor_selection, "measure_page_count", measure)
     out = await tailor_selection.run_bullet_selection(
-        source_data=DATA, job_description="JD", job_keywords={}, max_per_entry=3, page_fit=PageFitSettings()
+        source_data=DATA,
+        job_description="JD",
+        job_keywords={},
+        max_per_entry=3,
+        page_fit=PageFitSettings(),
     )
     assert out.data["workExperience"][0]["description"] == ["b", "d"]  # dropped c (40)
     assert out.summary.page_fit == "trimmed" and out.summary.trimmed_for_fit == 1
     assert tailor_selection.BULLET_SCORING_FALLBACK_WARNING in out.warnings
 
 
-async def test_final_page_check_swallows_render_failure(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_final_page_check_swallows_render_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setattr(
-        tailor_selection, "measure_page_count", AsyncMock(side_effect=PageMeasureError("x"))
+        tailor_selection,
+        "measure_page_count",
+        AsyncMock(side_effect=PageMeasureError("x")),
     )
     assert await tailor_selection.final_page_check(DATA, PageFitSettings()) is None
 
@@ -92,11 +114,15 @@ async def test_operation_deadline_during_a_render_is_not_a_slow_render(
     monkeypatch: pytest.MonkeyPatch, stage: Any
 ) -> None:
     """AIOperationDeadlineExceeded subclasses TimeoutError but must end the operation."""
-    monkeypatch.setattr(tailor_selection, "score_bullets", AsyncMock(return_value=(SCORES, "llm")))
+    monkeypatch.setattr(
+        tailor_selection, "score_bullets", AsyncMock(return_value=(SCORES, "llm"))
+    )
     monkeypatch.setattr(
         tailor_selection,
         "measure_page_count",
-        AsyncMock(side_effect=AIOperationDeadlineExceeded("AI operation deadline exceeded")),
+        AsyncMock(
+            side_effect=AIOperationDeadlineExceeded("AI operation deadline exceeded")
+        ),
     )
     with pytest.raises(AIOperationDeadlineExceeded):
         await stage(DATA)
@@ -119,7 +145,9 @@ async def test_page_fit_stops_rendering_once_its_time_cap_is_spent(
     expected_status: str,
 ) -> None:
     """R13: fitting renders for at most min(60 s, 25% of the remaining budget)."""
-    monkeypatch.setattr(tailor_selection, "score_bullets", AsyncMock(return_value=(SCORES, "llm")))
+    monkeypatch.setattr(
+        tailor_selection, "score_bullets", AsyncMock(return_value=(SCORES, "llm"))
+    )
     now = [1000.0]
     monkeypatch.setattr(tailor_selection, "monotonic", lambda: now[0], raising=False)
     monkeypatch.setattr(tailor_selection, "remaining_timeout", lambda: remaining)
@@ -133,7 +161,11 @@ async def test_page_fit_stops_rendering_once_its_time_cap_is_spent(
 
     monkeypatch.setattr(tailor_selection, "measure_page_count", measure)
     out = await tailor_selection.run_bullet_selection(
-        source_data=DATA, job_description="JD", job_keywords={}, max_per_entry=3, page_fit=PageFitSettings()
+        source_data=DATA,
+        job_description="JD",
+        job_keywords={},
+        max_per_entry=3,
+        page_fit=PageFitSettings(),
     )
     assert renders == expected_renders
     assert out.summary.page_fit == expected_status
@@ -164,7 +196,9 @@ async def test_final_page_check_gives_up_when_render_outlives_budget(
 async def test_page_fit_degrades_when_render_outlives_budget(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr(tailor_selection, "score_bullets", AsyncMock(return_value=(SCORES, "llm")))
+    monkeypatch.setattr(
+        tailor_selection, "score_bullets", AsyncMock(return_value=(SCORES, "llm"))
+    )
     monkeypatch.setattr(tailor_selection, "measure_page_count", _slow_render)
     async with operation_budget(tailor_selection.FINAL_CHECK_RESERVE_SECONDS + 0.05):
         out = await tailor_selection.run_bullet_selection(

@@ -29,19 +29,23 @@ def _apply_request(
     }
     if operation == "apply":
         payload: dict[str, Any] | list[dict[str, Any]] = {
-            "enhancements": [{
-                **item,
-                "original_description": experience["description"],
-                "enhanced_description": ["Built a reliable service"],
-            }],
+            "enhancements": [
+                {
+                    **item,
+                    "original_description": experience["description"],
+                    "enhanced_description": ["Built a reliable service"],
+                }
+            ],
         }
     else:
-        payload = [{
-            **item,
-            "original_content": experience["description"],
-            "new_content": ["Built a reliable service"],
-            "diff_summary": "Synthetic regeneration",
-        }]
+        payload = [
+            {
+                **item,
+                "original_content": experience["description"],
+                "new_content": ["Built a reliable service"],
+                "diff_summary": "Synthetic regeneration",
+            }
+        ]
     return f"/api/v1/enrichment/{operation}/{resume_id}", payload
 
 
@@ -81,7 +85,8 @@ async def test_enrichment_write_contention_returns_503_and_retry_commits(
     descriptions = expected["workExperience"][0]["description"]
     expected["workExperience"][0]["description"] = (
         descriptions + ["Built a reliable service"]
-        if operation == "apply" else ["Built a reliable service"]
+        if operation == "apply"
+        else ["Built a reliable service"]
     )
     stored = await database.get_resume(source["resume_id"])
     assert stored is not None and stored["processed_data"] == expected
@@ -112,10 +117,13 @@ async def test_other_enrichment_write_failure_remains_generic_500(
         response = await client.post(url, json=payload)
     assert response.status_code == 500
     assert "retry-after" not in response.headers
-    assert response.json() == {"detail": (
-        "Failed to save enhancements. Please try again."
-        if operation == "apply" else "Failed to save changes. Please try again."
-    )}
+    assert response.json() == {
+        "detail": (
+            "Failed to save enhancements. Please try again."
+            if operation == "apply"
+            else "Failed to save changes. Please try again."
+        )
+    }
     stored = await isolated_db.get_resume(source["resume_id"])
     assert stored is not None and stored["processed_data"] == sample_resume
 
@@ -142,14 +150,19 @@ async def test_enhance_preview_does_not_write_under_sqlite_contention(
     ) as client:
         async with database._session() as writer:
             await writer.execute(text("BEGIN IMMEDIATE"))
-            response = await client.post("/api/v1/enrichment/enhance", json={
-                "resume_id": source["resume_id"],
-                "answers": [{
-                    "item_id": "exp_0",
-                    "question_id": "q-exp",
-                    "answer": "Built a reliable service",
-                }],
-            })
+            response = await client.post(
+                "/api/v1/enrichment/enhance",
+                json={
+                    "resume_id": source["resume_id"],
+                    "answers": [
+                        {
+                            "item_id": "exp_0",
+                            "question_id": "q-exp",
+                            "answer": "Built a reliable service",
+                        }
+                    ],
+                },
+            )
     assert response.status_code == 200, response.text
     assert response.json()["enhancements"][0]["enhanced_description"] == [
         "Built a reliable service",

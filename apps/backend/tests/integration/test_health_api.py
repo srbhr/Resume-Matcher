@@ -49,7 +49,9 @@ class TestStatusEndpoint:
     @patch("app.routers.health.check_llm_health", new_callable=AsyncMock)
     @patch("app.routers.health.get_llm_config")
     async def test_status_ready(self, mock_config, mock_health, mock_db, client):
-        mock_config.return_value = type("C", (), {"api_key": "sk-test", "provider": "openai"})()
+        mock_config.return_value = type(
+            "C", (), {"api_key": "sk-test", "provider": "openai"}
+        )()
         mock_health.return_value = {"healthy": True}
         mock_db.get_stats.return_value = {
             "total_resumes": 1,
@@ -68,8 +70,12 @@ class TestStatusEndpoint:
     @patch("app.routers.health.db", new_callable=AsyncMock)
     @patch("app.routers.health.check_llm_health", new_callable=AsyncMock)
     @patch("app.routers.health.get_llm_config")
-    async def test_status_setup_required(self, mock_config, mock_health, mock_db, client):
-        mock_config.return_value = type("C", (), {"api_key": "", "provider": "openai"})()
+    async def test_status_setup_required(
+        self, mock_config, mock_health, mock_db, client
+    ):
+        mock_config.return_value = type(
+            "C", (), {"api_key": "", "provider": "openai"}
+        )()
         mock_health.return_value = {"healthy": False}
         mock_db.get_stats.return_value = {
             "total_resumes": 0,
@@ -91,7 +97,9 @@ class TestStatusEndpoint:
     ):
         """A failing LLM health probe degrades llm_healthy, not the endpoint:
         /status still returns 200 and the DB check still runs."""
-        mock_config.return_value = type("C", (), {"api_key": "sk-test", "provider": "openai"})()
+        mock_config.return_value = type(
+            "C", (), {"api_key": "sk-test", "provider": "openai"}
+        )()
         mock_health.side_effect = RuntimeError("llm boom")
         mock_db.get_stats.return_value = {
             "total_resumes": 2,
@@ -115,7 +123,9 @@ class TestStatusEndpoint:
     ):
         """A failing DB stats query degrades its fields, not the endpoint:
         /status still returns 200 and the LLM check still runs."""
-        mock_config.return_value = type("C", (), {"api_key": "sk-test", "provider": "openai"})()
+        mock_config.return_value = type(
+            "C", (), {"api_key": "sk-test", "provider": "openai"}
+        )()
         mock_health.return_value = {"healthy": True}
         mock_db.get_stats.side_effect = RuntimeError("db boom")
         async with client:
