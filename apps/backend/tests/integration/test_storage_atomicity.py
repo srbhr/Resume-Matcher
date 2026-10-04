@@ -77,7 +77,9 @@ async def test_concurrent_replacements_and_late_completion_preserve_master_ident
     try:
         created = await asyncio.gather(*tasks)
         assert sum(row["is_default_master"] for row in created) == 1
-        master_id = next(row["resume_id"] for row in created if row["is_default_master"])
+        master_id = next(
+            row["resume_id"] for row in created if row["is_default_master"]
+        )
         # Processing completion writes its original ID, never a cached master flag.
         completed = await other.update_resume(
             old["resume_id"],
@@ -87,11 +89,15 @@ async def test_concurrent_replacements_and_late_completion_preserve_master_ident
             },
         )
         # Losing the default must not cost the old row its master-track membership.
-        assert completed["is_master"] is True and completed["is_default_master"] is False
+        assert (
+            completed["is_master"] is True and completed["is_default_master"] is False
+        )
         master = await isolated_db.get_master_resume()
         assert master is not None and master["resume_id"] == master_id
         with pytest.raises(IntegrityError):
-            await other.create_resume(content="duplicate", is_master=True, is_default_master=True)
+            await other.create_resume(
+                content="duplicate", is_master=True, is_default_master=True
+            )
         assert len(await isolated_db.list_resumes()) == 3
     finally:
         await other.close()
@@ -298,6 +304,7 @@ async def test_cleared_dates_remain_empty_until_a_new_saved_to_applied_transitio
 
 def test_status_openapi_excludes_null_but_allows_omission() -> None:
     from app.schemas.applications import ApplicationUpdate
+
     schema = ApplicationUpdate.model_json_schema()
     assert {"type": "null"} not in schema["properties"]["status"].get("anyOf", [])
     assert "status" not in schema.get("required", [])
@@ -307,26 +314,44 @@ def test_status_openapi_excludes_null_but_allows_omission() -> None:
 async def test_sqlite_contention_is_retryable_503(isolated_db: Database) -> None:
     card = await isolated_db.create_application(job_id="job", resume_id="resume")
     async with isolated_db._write_session():
-        async with AsyncClient(transport=ASGITransport(app=app, raise_app_exceptions=False), base_url="http://test") as client:
-            response = await client.patch(f"/api/v1/applications/{card['application_id']}", json={"notes": "changed"})
+        async with AsyncClient(
+            transport=ASGITransport(app=app, raise_app_exceptions=False),
+            base_url="http://test",
+        ) as client:
+            response = await client.patch(
+                f"/api/v1/applications/{card['application_id']}",
+                json={"notes": "changed"},
+            )
     assert response.status_code == 503
     assert response.headers["retry-after"] == "1"
     stored = await isolated_db.get_application(card["application_id"])
     assert stored is not None and stored["notes"] is None
 
 
-async def test_existing_tracker_card_does_not_wait_for_writer(isolated_db: Database) -> None:
+async def test_existing_tracker_card_does_not_wait_for_writer(
+    isolated_db: Database,
+) -> None:
     card = await isolated_db.create_application(job_id="job", resume_id="resume")
     async with isolated_db._write_session():
-        duplicate = await asyncio.wait_for(isolated_db.create_application(job_id="job", resume_id="resume"), 0.2)
+        duplicate = await asyncio.wait_for(
+            isolated_db.create_application(job_id="job", resume_id="resume"), 0.2
+        )
     assert duplicate == card
 
 
-async def test_job_upload_contention_is_retryable_without_partial_batch(isolated_db: Database) -> None:
+async def test_job_upload_contention_is_retryable_without_partial_batch(
+    isolated_db: Database,
+) -> None:
     seed = await isolated_db.create_job("existing job")
     async with isolated_db._write_session():
-        async with AsyncClient(transport=ASGITransport(app=app, raise_app_exceptions=False), base_url="http://test") as client:
-            response = await client.post("/api/v1/jobs/upload", json={"job_descriptions": ["Python engineer", "Data engineer"]})
+        async with AsyncClient(
+            transport=ASGITransport(app=app, raise_app_exceptions=False),
+            base_url="http://test",
+        ) as client:
+            response = await client.post(
+                "/api/v1/jobs/upload",
+                json={"job_descriptions": ["Python engineer", "Data engineer"]},
+            )
     assert response.status_code == 503
     assert response.headers["retry-after"] == "1"
     async with isolated_db._session() as session:
@@ -334,12 +359,31 @@ async def test_job_upload_contention_is_retryable_without_partial_batch(isolated
     assert saved_ids == [seed["job_id"]]
 
 
-async def test_busy_manual_card_creation_cleans_up_its_job(isolated_db: Database, monkeypatch: pytest.MonkeyPatch) -> None:
-    from app.database import DatabaseBusyError
+async def test_busy_manual_card_creation_cleans_up_its_job(
+    isolated_db: Database, monkeypatch: pytest.MonkeyPatch
+) -> None:
     from unittest.mock import AsyncMock
-    monkeypatch.setattr(isolated_db, "_insert_application", AsyncMock(side_effect=DatabaseBusyError("synthetic contention")))
-    async with AsyncClient(transport=ASGITransport(app=app, raise_app_exceptions=False), base_url="http://test") as client:
-        response = await client.post("/api/v1/applications", json={"resume_id": "synthetic", "job_description": "Engineer", "company": "Acme", "role": "Engineer"})
+
+    from app.database import DatabaseBusyError
+
+    monkeypatch.setattr(
+        isolated_db,
+        "_insert_application",
+        AsyncMock(side_effect=DatabaseBusyError("synthetic contention")),
+    )
+    async with AsyncClient(
+        transport=ASGITransport(app=app, raise_app_exceptions=False),
+        base_url="http://test",
+    ) as client:
+        response = await client.post(
+            "/api/v1/applications",
+            json={
+                "resume_id": "synthetic",
+                "job_description": "Engineer",
+                "company": "Acme",
+                "role": "Engineer",
+            },
+        )
     assert response.status_code == 503
     async with isolated_db._session() as session:
         assert list((await session.execute(select(Job))).scalars()) == []

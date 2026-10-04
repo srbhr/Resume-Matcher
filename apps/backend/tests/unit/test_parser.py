@@ -6,8 +6,9 @@ markdown. This is pure, deterministic logic — the parser module was at ~20%
 coverage with none of it exercised.
 """
 
-import pytest
 from unittest.mock import AsyncMock, patch
+
+import pytest
 
 from app.services.parser import (
     _MAX_RESUME_CONTENT_RECURSION,
@@ -31,7 +32,9 @@ def _wrap(value: object, levels: int) -> object:
 
 class TestExtractMarkdownDates:
     def test_finds_full_range(self):
-        assert _extract_markdown_dates("Worked Jun 2020 - Aug 2021 there") == ["Jun 2020 - Aug 2021"]
+        assert _extract_markdown_dates("Worked Jun 2020 - Aug 2021 there") == [
+            "Jun 2020 - Aug 2021"
+        ]
 
     def test_finds_present_range(self):
         assert _extract_markdown_dates("May 2021 - Present") == ["May 2021 - Present"]
@@ -86,7 +89,10 @@ class TestRestoreDatesFromMarkdown:
         }
         markdown = "Mentor, Jun 2020 - Aug 2021"
         result = restore_dates_from_markdown(parsed, markdown)
-        assert result["customSections"]["volunteering"]["items"][0]["years"] == "Jun 2020 - Aug 2021"
+        assert (
+            result["customSections"]["volunteering"]["items"][0]["years"]
+            == "Jun 2020 - Aug 2021"
+        )
 
     def test_tolerates_missing_sections(self):
         # Should not raise on a minimal/odd structure.
@@ -102,57 +108,79 @@ class TestRestoreDatesFromMarkdown:
 
 class TestMeaningfulResumeContent:
     def test_rejects_schema_defaults_only(self):
-        assert has_meaningful_resume_content(
-            {
-                "personalInfo": {},
-                "summary": "",
-                "workExperience": [],
-                "education": [],
-                "personalProjects": [],
-                "additional": {"technicalSkills": []},
-                "customSections": {},
-            }
-        ) is False
+        assert (
+            has_meaningful_resume_content(
+                {
+                    "personalInfo": {},
+                    "summary": "",
+                    "workExperience": [],
+                    "education": [],
+                    "personalProjects": [],
+                    "additional": {"technicalSkills": []},
+                    "customSections": {},
+                }
+            )
+            is False
+        )
 
     def test_accepts_experience_without_contact_details(self):
-        assert has_meaningful_resume_content(
-            {"personalInfo": {}, "workExperience": [{"title": "Engineer"}]}
-        ) is True
+        assert (
+            has_meaningful_resume_content(
+                {"personalInfo": {}, "workExperience": [{"title": "Engineer"}]}
+            )
+            is True
+        )
 
     def test_rejects_default_only_section_entries(self):
-        assert has_meaningful_resume_content(
-            {
-                "workExperience": [
-                    {
-                        "id": 0,
-                        "title": "",
-                        "company": "",
-                        "years": "",
-                        "description": [],
-                        "descriptionStyles": [],
-                    }
-                ],
-                "customSections": {
-                    "empty": {
-                        "sectionType": "itemList",
-                        "items": [{"id": 0, "title": "", "description": []}],
-                    }
-                },
-            }
-        ) is False
+        assert (
+            has_meaningful_resume_content(
+                {
+                    "workExperience": [
+                        {
+                            "id": 0,
+                            "title": "",
+                            "company": "",
+                            "years": "",
+                            "description": [],
+                            "descriptionStyles": [],
+                        }
+                    ],
+                    "customSections": {
+                        "empty": {
+                            "sectionType": "itemList",
+                            "items": [{"id": 0, "title": "", "description": []}],
+                        }
+                    },
+                }
+            )
+            is False
+        )
 
     def test_accepts_additional_and_custom_section_text(self):
-        assert has_meaningful_resume_content(
-            {"additional": {"technicalSkills": ["Python"]}}
-        ) is True
-        assert has_meaningful_resume_content(
-            {"customSections": {"publications": {"sectionType": "text", "text": "Paper"}}}
-        ) is True
+        assert (
+            has_meaningful_resume_content(
+                {"additional": {"technicalSkills": ["Python"]}}
+            )
+            is True
+        )
+        assert (
+            has_meaningful_resume_content(
+                {
+                    "customSections": {
+                        "publications": {"sectionType": "text", "text": "Paper"}
+                    }
+                }
+            )
+            is True
+        )
 
     def test_accepts_custom_section_with_a_reserved_identifier(self):
-        assert has_meaningful_resume_content(
-            {"customSections": {"key": {"sectionType": "text", "text": "Paper"}}}
-        ) is True
+        assert (
+            has_meaningful_resume_content(
+                {"customSections": {"key": {"sectionType": "text", "text": "Paper"}}}
+            )
+            is True
+        )
 
     def test_rejects_content_beyond_the_recursion_limit(self):
         deeply_nested: object = "Resume content"
@@ -184,25 +212,28 @@ class TestMeaningfulResumeContent:
         customSections(0) -> CustomSection(1) -> items(2) -> item(3)
         -> description(4) -> bullet(5).
         """
-        assert has_meaningful_resume_content(
-            {
-                "customSections": {
-                    "publications": {
-                        "sectionType": "itemList",
-                        "items": [
-                            {
-                                "id": 0,
-                                "title": "",
-                                "subtitle": None,
-                                "years": "",
-                                "description": ["A paper nobody should lose"],
-                                "descriptionStyles": [],
-                            }
-                        ],
+        assert (
+            has_meaningful_resume_content(
+                {
+                    "customSections": {
+                        "publications": {
+                            "sectionType": "itemList",
+                            "items": [
+                                {
+                                    "id": 0,
+                                    "title": "",
+                                    "subtitle": None,
+                                    "years": "",
+                                    "description": ["A paper nobody should lose"],
+                                    "descriptionStyles": [],
+                                }
+                            ],
+                        }
                     }
                 }
-            }
-        ) is True
+            )
+            is True
+        )
 
     @pytest.mark.asyncio
     @patch("app.services.parser.complete_json", new_callable=AsyncMock)

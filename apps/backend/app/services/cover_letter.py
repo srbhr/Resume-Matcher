@@ -7,12 +7,12 @@ from typing import Any
 from app.ai_limits import MAX_JOB_CHARACTERS, validate_source_size
 from app.config import load_config_file
 from app.llm import complete
+from app.prompts import get_language_name
 from app.prompts.templates import (
     COVER_LETTER_PROMPT,
     GENERATE_TITLE_PROMPT,
     OUTREACH_MESSAGE_PROMPT,
 )
-from app.prompts import get_language_name
 
 
 def _resolve_feature_prompt(

@@ -105,8 +105,7 @@ def _matching_source_index(
         key=lambda index: (
             _similarity(
                 " ".join(
-                    str(row)
-                    for row in source_entries[index].get("description", [])
+                    str(row) for row in source_entries[index].get("description", [])
                 )
                 if isinstance(source_entries[index].get("description"), list)
                 else str(source_entries[index].get("description") or ""),
@@ -155,9 +154,7 @@ def _is_date_like_number(text: str, match: re.Match[str]) -> bool:
     return bool(
         re.search(rf"\b{month}\s*$", prefix)
         or (
-            re.search(
-                r"\b(?:in|since|during|from|until|through|between)\s*$", prefix
-            )
+            re.search(r"\b(?:in|since|during|from|until|through|between)\s*$", prefix)
             and re.match(r"^\s*(?:$|[,.;:)])", suffix)
         )
         or re.search(r"\b\d{4}\s*[-–—/]\s*$", prefix)
@@ -806,9 +803,10 @@ def _entry_grounding_warnings(
                     )
                 continue
             source_index, score = assignment
-            if _normalized(row) != _normalized(
-                source_description[source_index]
-            ) and score < _GROUNDING_REVIEW_THRESHOLD:
+            if (
+                _normalized(row) != _normalized(source_description[source_index])
+                and score < _GROUNDING_REVIEW_THRESHOLD
+            ):
                 warnings.append(_grounding_warning(f"{description_path}[{row_index}]"))
     return warnings
 

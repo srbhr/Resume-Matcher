@@ -16,12 +16,13 @@ from markitdown import MarkItDown
 from pdfminer.ascii85 import ascii85decode, asciihexdecode
 from pdfminer.ccitt import CCITTFaxDecoder
 from pdfminer.lzw import LZWDecoder
-from pdfminer.pdfdocument import PDFDocument
 from pdfminer.pdfdevice import PDFDevice
+from pdfminer.pdfdocument import PDFDocument
 from pdfminer.pdfinterp import PDFPageInterpreter, PDFResourceManager
 from pdfminer.pdfpage import PDFPage
 from pdfminer.pdfparser import PDFParser
 from pdfminer.pdftypes import (
+    LITERAL_CRYPT,
     LITERALS_ASCII85_DECODE,
     LITERALS_ASCIIHEX_DECODE,
     LITERALS_CCITTFAX_DECODE,
@@ -31,7 +32,6 @@ from pdfminer.pdftypes import (
     LITERALS_JPX_DECODE,
     LITERALS_LZW_DECODE,
     LITERALS_RUNLENGTH_DECODE,
-    LITERAL_CRYPT,
     PDFStream,
     apply_png_predictor,
     apply_tiff_predictor,
@@ -594,8 +594,10 @@ def restore_dates_from_markdown(
         best_score = max(score for score, _ in scored)
         best = [index for score, index in scored if score == best_score]
         selected: int | None = None
-        if best_score[0] > 0 and len(best) == 1 and (
-            entry_count == 1 or best_score[0] == len(terms)
+        if (
+            best_score[0] > 0
+            and len(best) == 1
+            and (entry_count == 1 or best_score[0] == len(terms))
         ):
             selected = best[0]
         elif len(candidates) == 1 and entry_count == 1:

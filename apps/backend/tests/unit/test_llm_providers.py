@@ -41,12 +41,17 @@ class TestGetModelName:
         assert get_model_name(_cfg("ollama", "llama3")) == "ollama_chat/llama3"
 
     def test_ollama_does_not_double_prefix(self):
-        assert get_model_name(_cfg("ollama", "ollama_chat/llama3")) == "ollama_chat/llama3"
+        assert (
+            get_model_name(_cfg("ollama", "ollama_chat/llama3")) == "ollama_chat/llama3"
+        )
         assert get_model_name(_cfg("ollama", "ollama/llama3")) == "ollama/llama3"
 
     def test_openai_compatible_uses_openai_prefix(self):
         # llama.cpp / vLLM / LM Studio served via the OpenAI client.
-        assert get_model_name(_cfg("openai_compatible", "llama-3.1-8b")) == "openai/llama-3.1-8b"
+        assert (
+            get_model_name(_cfg("openai_compatible", "llama-3.1-8b"))
+            == "openai/llama-3.1-8b"
+        )
 
     def test_openrouter_nested_prefix(self):
         assert (
@@ -61,20 +66,31 @@ class TestGetModelName:
         )
 
     def test_anthropic_prefix(self):
-        assert get_model_name(_cfg("anthropic", "claude-3-opus")) == "anthropic/claude-3-opus"
+        assert (
+            get_model_name(_cfg("anthropic", "claude-3-opus"))
+            == "anthropic/claude-3-opus"
+        )
 
     def test_gemini_prefix(self):
-        assert get_model_name(_cfg("gemini", "gemini-1.5-pro")) == "gemini/gemini-1.5-pro"
+        assert (
+            get_model_name(_cfg("gemini", "gemini-1.5-pro")) == "gemini/gemini-1.5-pro"
+        )
 
     def test_deepseek_prefix(self):
-        assert get_model_name(_cfg("deepseek", "deepseek-chat")) == "deepseek/deepseek-chat"
+        assert (
+            get_model_name(_cfg("deepseek", "deepseek-chat"))
+            == "deepseek/deepseek-chat"
+        )
 
     def test_groq_prefix(self):
         assert get_model_name(_cfg("groq", "llama-3.1-70b")) == "groq/llama-3.1-70b"
 
     def test_existing_known_prefix_is_preserved(self):
         # Model already carries a known prefix → don't add the provider's.
-        assert get_model_name(_cfg("anthropic", "anthropic/claude-3-opus")) == "anthropic/claude-3-opus"
+        assert (
+            get_model_name(_cfg("anthropic", "anthropic/claude-3-opus"))
+            == "anthropic/claude-3-opus"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -91,24 +107,36 @@ class TestNormalizeApiBase:
     def test_openai_preserves_v1_as_is(self):
         # #751: the OpenAI client resolves /v1 correctly; local llama.cpp etc.
         # MUST keep the /v1 the user pasted, otherwise requests 404.
-        assert _normalize_api_base("openai", "http://localhost:8080/v1") == "http://localhost:8080/v1"
+        assert (
+            _normalize_api_base("openai", "http://localhost:8080/v1")
+            == "http://localhost:8080/v1"
+        )
         assert (
             _normalize_api_base("openai_compatible", "http://localhost:8080/v1")
             == "http://localhost:8080/v1"
         )
 
     def test_openai_strips_only_trailing_slash(self):
-        assert _normalize_api_base("openai_compatible", "http://localhost:8080/v1/") == "http://localhost:8080/v1"
+        assert (
+            _normalize_api_base("openai_compatible", "http://localhost:8080/v1/")
+            == "http://localhost:8080/v1"
+        )
 
     def test_anthropic_strips_v1(self):
         # Anthropic handler appends /v1/messages → avoid /v1/v1/messages.
-        assert _normalize_api_base("anthropic", "https://api.anthropic.com/v1") == "https://api.anthropic.com"
+        assert (
+            _normalize_api_base("anthropic", "https://api.anthropic.com/v1")
+            == "https://api.anthropic.com"
+        )
 
     def test_gemini_strips_v1(self):
         assert _normalize_api_base("gemini", "https://host/v1") == "https://host"
 
     def test_openrouter_strips_v1(self):
-        assert _normalize_api_base("openrouter", "https://openrouter.ai/api/v1") == "https://openrouter.ai/api"
+        assert (
+            _normalize_api_base("openrouter", "https://openrouter.ai/api/v1")
+            == "https://openrouter.ai/api"
+        )
 
     @pytest.mark.parametrize(
         "pasted",
@@ -123,7 +151,10 @@ class TestNormalizeApiBase:
         assert _normalize_api_base("ollama", pasted) == "http://localhost:11434"
 
     def test_ollama_bare_host_unchanged(self):
-        assert _normalize_api_base("ollama", "http://localhost:11434") == "http://localhost:11434"
+        assert (
+            _normalize_api_base("ollama", "http://localhost:11434")
+            == "http://localhost:11434"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -181,7 +212,10 @@ class TestEffectiveApiKey:
 
 class TestStripThinkingTags:
     def test_strips_closed_block(self):
-        assert _strip_thinking_tags("<think>weighing options</think>final answer") == "final answer"
+        assert (
+            _strip_thinking_tags("<think>weighing options</think>final answer")
+            == "final answer"
+        )
 
     def test_strips_multiline_block(self):
         content = "<think>\nline 1\nline 2\n</think>\nthe answer"

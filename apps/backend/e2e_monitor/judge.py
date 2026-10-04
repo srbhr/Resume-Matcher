@@ -31,12 +31,16 @@ def build_judge_prompt(
             return {key: sanitize(item) for key, item in value.items()}
         return value
 
-    return json.dumps(sanitize({
-        "original_resume": original,
-        "job_description": job_description,
-        "tailored_resume": tailored,
-    }), ensure_ascii=False)
-
+    return json.dumps(
+        sanitize(
+            {
+                "original_resume": original,
+                "job_description": job_description,
+                "tailored_resume": tailored,
+            }
+        ),
+        ensure_ascii=False,
+    )
 
 
 def _normalize_score(raw: Any) -> int | None:

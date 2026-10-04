@@ -7,7 +7,14 @@ from collections import Counter, deque
 from collections.abc import Callable
 from typing import Any, Protocol
 
-from pydantic import BaseModel, ConfigDict, Field, StrictBool, ValidationError, field_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    StrictBool,
+    ValidationError,
+    field_validator,
+)
 
 from app.config_cache import get_content_language
 from app.llm import _scrub_secrets, complete_json
@@ -70,6 +77,7 @@ class _ResumeWizardAIEnvelope(BaseModel):
     @classmethod
     def _default_null_completion(cls, value: Any) -> Any:
         return False if value is None else value
+
 
 # The keyword ("my name", "name") may be lower- or upper-cased, but the captured
 # name must start uppercase — so we case the keyword explicitly with [Mm]/[Nn]
@@ -388,7 +396,9 @@ def _next_question(
         text = candidate.get("text")
         section = candidate.get("section")
         if isinstance(text, str) and text.strip() and isinstance(section, str):
-            return ResumeWizardQuestion(text=text.strip(), section=valid_section(section))
+            return ResumeWizardQuestion(
+                text=text.strip(), section=valid_section(section)
+            )
     gap = _next_gap_section(data)
     return ResumeWizardQuestion(text=section_prompt(gap, language), section=gap)
 
@@ -402,7 +412,9 @@ async def run_ai_turn(
     """Run one adaptive AI turn (answer or skip) and validate the result."""
     section = state.current_question.section
     language = get_content_language()
-    resume_json = json.dumps(state.resume_data.model_dump(mode="json"), ensure_ascii=False)
+    resume_json = json.dumps(
+        state.resume_data.model_dump(mode="json"), ensure_ascii=False
+    )
     prompt_answer = (
         "(The user skipped this question. Do NOT modify resume_data. "
         "Ask the next most useful question for a different section.)"

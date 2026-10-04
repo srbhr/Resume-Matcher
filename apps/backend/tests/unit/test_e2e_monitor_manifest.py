@@ -18,8 +18,17 @@ def test_bundle_creates_layout(tmp_path: Path) -> None:
 
 
 def test_build_manifest_records_provider_and_scrubs_secrets() -> None:
-    config = {"provider": "anthropic", "model": "claude-haiku-4-5", "api_key": "sk-secret-123456789"}
-    m = build_manifest(run_id="rid", git_sha="abc1234", config=config, started_at="2026-06-01T12:00:00Z")
+    config = {
+        "provider": "anthropic",
+        "model": "claude-haiku-4-5",
+        "api_key": "sk-secret-123456789",
+    }
+    m = build_manifest(
+        run_id="rid",
+        git_sha="abc1234",
+        config=config,
+        started_at="2026-06-01T12:00:00Z",
+    )
     assert m["run_id"] == "rid"
     assert m["provider"] == "anthropic"
     assert m["model"] == "claude-haiku-4-5"

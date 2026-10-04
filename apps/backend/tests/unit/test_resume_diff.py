@@ -38,7 +38,9 @@ def test_description_modified_count_is_strict() -> None:
     summary, changes = calculate_resume_diff(original, improved)
 
     description_changes = [
-        c for c in changes if c.field_type == "description" and c.change_type == "modified"
+        c
+        for c in changes
+        if c.field_type == "description" and c.change_type == "modified"
     ]
     assert len(description_changes) == 1
     assert summary.descriptions_modified == 1
@@ -82,7 +84,11 @@ def test_certification_added() -> None:
 
     summary, changes = calculate_resume_diff(original, improved)
 
-    cert_added = [c for c in changes if c.field_type == "certification" and c.change_type == "added"]
+    cert_added = [
+        c
+        for c in changes
+        if c.field_type == "certification" and c.change_type == "added"
+    ]
     assert len(cert_added) == 1
     assert cert_added[0].new_value == "CKA"
     assert summary.certifications_added == 1
@@ -94,7 +100,11 @@ def test_certification_removed() -> None:
 
     summary, changes = calculate_resume_diff(original, improved)
 
-    cert_removed = [c for c in changes if c.field_type == "certification" and c.change_type == "removed"]
+    cert_removed = [
+        c
+        for c in changes
+        if c.field_type == "certification" and c.change_type == "removed"
+    ]
     assert len(cert_removed) == 1
     assert cert_removed[0].original_value == "CKA"
 
@@ -149,7 +159,11 @@ def test_summary_unchanged() -> None:
 
 
 def test_experience_entry_added() -> None:
-    original = {"workExperience": [{"title": "Dev", "company": "A", "years": "2020", "description": []}]}
+    original = {
+        "workExperience": [
+            {"title": "Dev", "company": "A", "years": "2020", "description": []}
+        ]
+    }
     improved = {
         "workExperience": [
             {"title": "Dev", "company": "A", "years": "2020", "description": []},
@@ -159,7 +173,9 @@ def test_experience_entry_added() -> None:
 
     summary, changes = calculate_resume_diff(original, improved)
 
-    exp_added = [c for c in changes if c.field_type == "experience" and c.change_type == "added"]
+    exp_added = [
+        c for c in changes if c.field_type == "experience" and c.change_type == "added"
+    ]
     assert len(exp_added) == 1
 
 
@@ -170,48 +186,99 @@ def test_experience_entry_removed() -> None:
             {"title": "Senior", "company": "B", "years": "2022", "description": []},
         ]
     }
-    improved = {"workExperience": [{"title": "Dev", "company": "A", "years": "2020", "description": []}]}
+    improved = {
+        "workExperience": [
+            {"title": "Dev", "company": "A", "years": "2020", "description": []}
+        ]
+    }
 
     summary, changes = calculate_resume_diff(original, improved)
 
-    exp_removed = [c for c in changes if c.field_type == "experience" and c.change_type == "removed"]
+    exp_removed = [
+        c
+        for c in changes
+        if c.field_type == "experience" and c.change_type == "removed"
+    ]
     assert len(exp_removed) == 1
 
 
 def test_experience_entry_modified() -> None:
-    original = {"workExperience": [{"title": "Dev", "company": "A", "location": "NY", "years": "2020", "description": []}]}
-    improved = {"workExperience": [{"title": "Dev", "company": "A", "location": "Remote", "years": "2020", "description": []}]}
+    original = {
+        "workExperience": [
+            {
+                "title": "Dev",
+                "company": "A",
+                "location": "NY",
+                "years": "2020",
+                "description": [],
+            }
+        ]
+    }
+    improved = {
+        "workExperience": [
+            {
+                "title": "Dev",
+                "company": "A",
+                "location": "Remote",
+                "years": "2020",
+                "description": [],
+            }
+        ]
+    }
 
     summary, changes = calculate_resume_diff(original, improved)
 
-    exp_modified = [c for c in changes if c.field_type == "experience" and c.change_type == "modified"]
+    exp_modified = [
+        c
+        for c in changes
+        if c.field_type == "experience" and c.change_type == "modified"
+    ]
     assert len(exp_modified) == 1
 
 
 def test_project_entry_added() -> None:
     original = {"personalProjects": []}
-    improved = {"personalProjects": [{"name": "Tool", "role": "Creator", "years": "2021", "description": []}]}
+    improved = {
+        "personalProjects": [
+            {"name": "Tool", "role": "Creator", "years": "2021", "description": []}
+        ]
+    }
 
     summary, changes = calculate_resume_diff(original, improved)
 
-    proj_added = [c for c in changes if c.field_type == "project" and c.change_type == "added"]
+    proj_added = [
+        c for c in changes if c.field_type == "project" and c.change_type == "added"
+    ]
     assert len(proj_added) == 1
 
 
 def test_education_entry_added() -> None:
     original = {"education": []}
-    improved = {"education": [{"institution": "MIT", "degree": "BS", "years": "2020", "description": None}]}
+    improved = {
+        "education": [
+            {"institution": "MIT", "degree": "BS", "years": "2020", "description": None}
+        ]
+    }
 
     summary, changes = calculate_resume_diff(original, improved)
 
-    edu_added = [c for c in changes if c.field_type == "education" and c.change_type == "added"]
+    edu_added = [
+        c for c in changes if c.field_type == "education" and c.change_type == "added"
+    ]
     assert len(edu_added) == 1
 
 
 def test_no_changes_returns_empty() -> None:
     original = {
         "summary": "Same.",
-        "workExperience": [{"title": "Dev", "company": "A", "years": "2020", "description": ["Built stuff"]}],
+        "workExperience": [
+            {
+                "title": "Dev",
+                "company": "A",
+                "years": "2020",
+                "description": ["Built stuff"],
+            }
+        ],
         "additional": {"technicalSkills": ["Python"], "certificationsTraining": []},
     }
     improved = original.copy()
@@ -227,14 +294,22 @@ def test_education_description_change_is_not_duplicated() -> None:
     spurious entry-level 'education modified' (regression for the dedup fix)."""
     original = {
         "education": [
-            {"institution": "MIT", "degree": "B.S. CS", "years": "2014 - 2018",
-             "description": "Graduated with honors"}
+            {
+                "institution": "MIT",
+                "degree": "B.S. CS",
+                "years": "2014 - 2018",
+                "description": "Graduated with honors",
+            }
         ]
     }
     improved = {
         "education": [
-            {"institution": "MIT", "degree": "B.S. CS", "years": "2014 - 2018",
-             "description": "Graduated with honors; focus on distributed systems"}
+            {
+                "institution": "MIT",
+                "degree": "B.S. CS",
+                "years": "2014 - 2018",
+                "description": "Graduated with honors; focus on distributed systems",
+            }
         ]
     }
 
@@ -248,11 +323,15 @@ def test_education_description_change_is_not_duplicated() -> None:
 
 def test_language_add_remove() -> None:
     original = {"additional": {"languages": ["English (Native)"]}}
-    improved = {"additional": {"languages": ["English (Native)", "Spanish (Conversational)"]}}
+    improved = {
+        "additional": {"languages": ["English (Native)", "Spanish (Conversational)"]}
+    }
 
     _summary, changes = calculate_resume_diff(original, improved)
 
-    added = [c for c in changes if c.field_type == "language" and c.change_type == "added"]
+    added = [
+        c for c in changes if c.field_type == "language" and c.change_type == "added"
+    ]
     assert [c.new_value for c in added] == ["Spanish (Conversational)"]
 
 
@@ -271,5 +350,7 @@ def test_award_add() -> None:
 
     _summary, changes = calculate_resume_diff(original, improved)
 
-    awards = [c for c in changes if c.field_type == "award" and c.change_type == "added"]
+    awards = [
+        c for c in changes if c.field_type == "award" and c.change_type == "added"
+    ]
     assert [c.new_value for c in awards] == ["Employee of the Year 2022"]

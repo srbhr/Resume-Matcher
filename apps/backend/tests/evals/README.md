@@ -72,12 +72,12 @@ Golden fixtures live in [`golden/cases.py`](./golden/cases.py) as the
 ```python
 {
     "name": "short_id",
-    "original": { ... },          # master resume (ResumeData-compatible)
-    "job_description": "…",        # the target JD text
-    "jd_keywords": ["…", "…"],     # all target keywords
+    "original": {...},  # master resume (ResumeData-compatible)
+    "job_description": "…",  # the target JD text
+    "jd_keywords": ["…", "…"],  # all target keywords
     "grounded_keywords": ["…"],  # source-supported positive-fixture targets
-    "tailored_good": { ... },      # faithful tailoring — passes every scorer
-    "tailored_bad": { ... },       # broken tailoring — must trip the scorers
+    "tailored_good": {...},  # faithful tailoring — passes every scorer
+    "tailored_bad": {...},  # broken tailoring — must trip the scorers
 }
 ```
 

@@ -93,9 +93,23 @@ def init_models_sync(engine: Engine) -> None:
                 "ON resumes (is_default_master) WHERE is_default_master = 1"
             )
 
-        preview_columns = conn.exec_driver_sql("PRAGMA table_info(tailoring_previews)").mappings().all()
-        if preview_columns and "improvements" not in {column["name"] for column in preview_columns}:
-            conn.exec_driver_sql("ALTER TABLE tailoring_previews ADD COLUMN improvements JSON")
-        if preview_columns and "source_data" not in {column["name"] for column in preview_columns}:
-            conn.exec_driver_sql("ALTER TABLE tailoring_previews ADD COLUMN source_data JSON")
-        conn.exec_driver_sql("CREATE INDEX IF NOT EXISTS ix_preview_compatibility ON tailoring_previews (source_id, job_id, payload_hash, created_at)")
+        preview_columns = (
+            conn.exec_driver_sql("PRAGMA table_info(tailoring_previews)")
+            .mappings()
+            .all()
+        )
+        if preview_columns and "improvements" not in {
+            column["name"] for column in preview_columns
+        }:
+            conn.exec_driver_sql(
+                "ALTER TABLE tailoring_previews ADD COLUMN improvements JSON"
+            )
+        if preview_columns and "source_data" not in {
+            column["name"] for column in preview_columns
+        }:
+            conn.exec_driver_sql(
+                "ALTER TABLE tailoring_previews ADD COLUMN source_data JSON"
+            )
+        conn.exec_driver_sql(
+            "CREATE INDEX IF NOT EXISTS ix_preview_compatibility ON tailoring_previews (source_id, job_id, payload_hash, created_at)"
+        )

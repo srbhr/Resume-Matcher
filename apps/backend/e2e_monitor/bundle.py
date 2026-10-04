@@ -14,7 +14,7 @@ from typing import Any
 class Bundle:
     """One run's evidence bundle under ``artifacts/e2e-monitor/<run-id>/``."""
 
-    root: Path        # artifacts/e2e-monitor
+    root: Path  # artifacts/e2e-monitor
     run_id: str
 
     @property

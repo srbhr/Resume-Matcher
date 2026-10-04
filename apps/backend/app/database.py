@@ -326,12 +326,16 @@ class Database:
         """
         async with self._write_session() as session:
             masters = (
-                await session.execute(
-                    select(Resume)
-                    .where(Resume.is_master.is_(True))
-                    .order_by(Resume.created_at)
+                (
+                    await session.execute(
+                        select(Resume)
+                        .where(Resume.is_master.is_(True))
+                        .order_by(Resume.created_at)
+                    )
                 )
-            ).scalars().all()
+                .scalars()
+                .all()
+            )
             if replay_if is not None:
                 for master in masters:
                     existing = self._resume_to_dict(master)
@@ -392,7 +396,9 @@ class Database:
         """List every master track, oldest first."""
         async with self._session() as session:
             result = await session.execute(
-                select(Resume).where(Resume.is_master.is_(True)).order_by(Resume.created_at)
+                select(Resume)
+                .where(Resume.is_master.is_(True))
+                .order_by(Resume.created_at)
             )
             return [self._resume_to_dict(row) for row in result.scalars().all()]
 
@@ -550,7 +556,9 @@ class Database:
         async with self._write_session() as session:
             target = await session.get(Resume, resume_id)
             if target is None or not target.is_master:
-                logger.warning("Cannot set default master: %s is not a master", resume_id)
+                logger.warning(
+                    "Cannot set default master: %s is not a master", resume_id
+                )
                 return False
             current = await session.execute(
                 select(Resume).where(Resume.is_default_master.is_(True))
@@ -566,7 +574,9 @@ class Database:
 
     # -- Job operations -----------------------------------------------------
 
-    async def create_job(self, content: str, resume_id: str | None = None) -> dict[str, Any]:
+    async def create_job(
+        self, content: str, resume_id: str | None = None
+    ) -> dict[str, Any]:
         """Create one job description using the atomic batch writer."""
         return (await self.create_jobs([content], resume_id))[0]
 
@@ -734,9 +744,15 @@ class Database:
                             TailoringPreview.source_id == source_id,
                             TailoringPreview.job_id == job_id,
                             TailoringPreview.payload_hash == payload_hash,
-                            or_(TailoringPreview.result_resume_id.is_not(None), TailoringPreview.expires_at > _now()),
+                            or_(
+                                TailoringPreview.result_resume_id.is_not(None),
+                                TailoringPreview.expires_at > _now(),
+                            ),
                         )
-                        .order_by(TailoringPreview.result_resume_id.is_not(None).desc(), TailoringPreview.created_at.desc())
+                        .order_by(
+                            TailoringPreview.result_resume_id.is_not(None).desc(),
+                            TailoringPreview.created_at.desc(),
+                        )
                         .limit(1)
                     )
                 ).scalar_one_or_none()
@@ -1028,9 +1044,11 @@ class Database:
         # A replay needs only a read. Recheck under the reservation before an
         # insert so concurrent new cards still share the position allocation.
         async with self._session() as session:
-            found = await session.scalar(select(Application).where(
-                Application.job_id == job_id, Application.resume_id == resume_id
-            ))
+            found = await session.scalar(
+                select(Application).where(
+                    Application.job_id == job_id, Application.resume_id == resume_id
+                )
+            )
             if found is not None:
                 return self._application_to_dict(found)
         async with self._write_session() as session:

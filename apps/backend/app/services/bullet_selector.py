@@ -45,7 +45,9 @@ def bullet_path(section: str, entry_index: int, bullet_index: int) -> str:
     return f"{section}[{entry_index}].description[{bullet_index}]"
 
 
-def _entries(data: dict[str, Any], section: str) -> list[tuple[int, dict[str, Any], list[Any]]]:
+def _entries(
+    data: dict[str, Any], section: str
+) -> list[tuple[int, dict[str, Any], list[Any]]]:
     entries = data.get(section)
     if not isinstance(entries, list):
         return []
@@ -56,7 +58,9 @@ def _entries(data: dict[str, Any], section: str) -> list[tuple[int, dict[str, An
     return found
 
 
-def iter_bullet_rows(data: dict[str, Any]) -> list[tuple[BulletKey, str, dict[str, Any]]]:
+def iter_bullet_rows(
+    data: dict[str, Any],
+) -> list[tuple[BulletKey, str, dict[str, Any]]]:
     """Every bullet in the selectable sections with its key, text and entry."""
     rows: list[tuple[BulletKey, str, dict[str, Any]]] = []
     for section in SELECTABLE_SECTIONS:
@@ -119,7 +123,8 @@ def trim_order(data: dict[str, Any], scores: dict[BulletKey, float]) -> list[Bul
                 continue
             counts[(section, entry_index)] = len(description)
             entry_scores[(section, entry_index)] = [
-                scores.get((section, entry_index, i), 0.0) for i in range(len(description))
+                scores.get((section, entry_index, i), 0.0)
+                for i in range(len(description))
             ]
             candidates.extend(
                 (section_rank, section, entry_index, i) for i in range(len(description))
@@ -129,7 +134,13 @@ def trim_order(data: dict[str, Any], scores: dict[BulletKey, float]) -> list[Bul
         section_rank, section, entry_index, bullet_index = candidate
         values = entry_scores[(section, entry_index)]
         relevance = sum(values) / len(values)
-        return (relevance, values[bullet_index], -section_rank, -entry_index, -bullet_index)
+        return (
+            relevance,
+            values[bullet_index],
+            -section_rank,
+            -entry_index,
+            -bullet_index,
+        )
 
     order: list[BulletKey] = []
     for _rank, section, entry_index, bullet_index in sorted(candidates, key=key):
@@ -191,8 +202,12 @@ async def fit_to_one_page(
                     low = mid
         except PageMeasureError as e:
             # A fitting trim is already known; keep the smallest one measured.
-            logger.warning("Page fit search stopped early; keeping trim %d: %s", high, e)
-        return FitResult(drop_bullets(data, order[:high]), "trimmed", high, high_pages, renders)
+            logger.warning(
+                "Page fit search stopped early; keeping trim %d: %s", high, e
+            )
+        return FitResult(
+            drop_bullets(data, order[:high]), "trimmed", high, high_pages, renders
+        )
     except PageMeasureError as e:
         logger.warning("Page fit skipped; draft could not be measured: %s", e)
         return FitResult(copy.deepcopy(data), "unavailable", 0, None, renders)

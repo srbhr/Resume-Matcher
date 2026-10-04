@@ -12,7 +12,6 @@ from typing import Any, Literal
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-
 ALLOWED_LOG_LEVELS = ("CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG")
 logger = logging.getLogger(__name__)
 _CONFIG_WRITE_LOCK = threading.Lock()
@@ -371,7 +370,9 @@ class Settings(BaseSettings):
         """Normalize application log level from environment values."""
         value = "INFO" if not v else str(v).strip().upper()
         if value not in ALLOWED_LOG_LEVELS:
-            raise ValueError(f"Invalid LOG_LEVEL: {value}. Allowed: {ALLOWED_LOG_LEVELS}")
+            raise ValueError(
+                f"Invalid LOG_LEVEL: {value}. Allowed: {ALLOWED_LOG_LEVELS}"
+            )
         return value
 
     # CORS Configuration

@@ -32,7 +32,9 @@ async def _source_resume(
     )
 
 
-def _enhance_request(resume_id: str, *, include_project: bool = False) -> dict[str, Any]:
+def _enhance_request(
+    resume_id: str, *, include_project: bool = False
+) -> dict[str, Any]:
     answers = [
         {
             "question_id": "q-exp",
@@ -304,9 +306,7 @@ async def test_parser_schema_error_retries_then_accepts_sparse_resume(
         {"personalInfo": {"name": "Sparse Candidate"}, "summary": "Engineer"}
     ).model_dump()
     responses = [
-        llm.litellm.ModelResponse(
-            choices=[{"message": {"content": "{}"}, "index": 0}]
-        ),
+        llm.litellm.ModelResponse(choices=[{"message": {"content": "{}"}, "index": 0}]),
         llm.litellm.ModelResponse(
             choices=[
                 {
@@ -413,11 +413,14 @@ async def test_skill_plan_service_accepts_explicit_empty_plan(
     empty = {"target_skills": [], "strategy_notes": "No grounded additions"}
     monkeypatch.setattr(improver, "complete_json", AsyncMock(return_value=empty))
 
-    assert await improver.generate_skill_target_plan(
-        {"additional": {"technicalSkills": []}},
-        "General role",
-        {"required_skills": [], "preferred_skills": [], "keywords": []},
-    ) == empty
+    assert (
+        await improver.generate_skill_target_plan(
+            {"additional": {"technicalSkills": []}},
+            "General role",
+            {"required_skills": [], "preferred_skills": [], "keywords": []},
+        )
+        == empty
+    )
 
 
 @pytest.mark.parametrize("provider_result", [{}, {"changes": "none"}])
@@ -507,8 +510,7 @@ async def test_optional_generators_accept_valid_text_within_limit(
 
     assert await cover_letter.generate_cover_letter({}, "Short JD") == "Cover letter"
     assert (
-        await cover_letter.generate_outreach_message({}, "Short JD")
-        == "Outreach note"
+        await cover_letter.generate_outreach_message({}, "Short JD") == "Outreach note"
     )
     assert await cover_letter.generate_resume_title("J" * 100_000) == "Engineer @ Acme"
     assert completion.await_count == 3
@@ -545,12 +547,8 @@ async def test_auxiliary_blank_and_failed_outputs_become_durable_warnings(
         lambda: {"enable_cover_letter": True, "enable_outreach_message": True},
     )
     monkeypatch.setattr(resumes, "get_content_language", lambda: "en")
-    monkeypatch.setattr(
-        resumes, "generate_resume_title", AsyncMock(return_value="   ")
-    )
-    monkeypatch.setattr(
-        resumes, "generate_cover_letter", AsyncMock(return_value="\n")
-    )
+    monkeypatch.setattr(resumes, "generate_resume_title", AsyncMock(return_value="   "))
+    monkeypatch.setattr(resumes, "generate_cover_letter", AsyncMock(return_value="\n"))
     monkeypatch.setattr(
         resumes,
         "generate_outreach_message",

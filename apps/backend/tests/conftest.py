@@ -11,7 +11,6 @@ from typing import Any, NoReturn
 
 import pytest
 
-
 # Set DATA_DIR before pytest imports any test module. Several integration tests
 # import app.main at module scope, which constructs Settings and the global
 # Database during collection; a function fixture would be too late to protect
@@ -91,7 +90,9 @@ async def isolated_backend_state(
     monkeypatch.setattr(config_module.settings, "data_dir", test_data_dir)
     # Preserve compatibility with code/tests that still monkeypatch the legacy
     # name while guaranteeing old config implementations are safe during RED.
-    monkeypatch.setattr(config_module, "CONFIG_FILE_PATH", test_data_dir / "config.json")
+    monkeypatch.setattr(
+        config_module, "CONFIG_FILE_PATH", test_data_dir / "config.json"
+    )
     monkeypatch.setattr(database_module, "db", test_db)
 
     # Modules such as routers and app.main import ``db`` by value. Patch every
@@ -116,6 +117,7 @@ async def isolated_backend_state(
 # ---------------------------------------------------------------------------
 # Sample resume data — full ResumeData-compatible dict
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def sample_resume() -> dict:
@@ -179,7 +181,14 @@ def sample_resume() -> dict:
             }
         ],
         "additional": {
-            "technicalSkills": ["Python", "FastAPI", "Docker", "AWS", "PostgreSQL", "Redis"],
+            "technicalSkills": [
+                "Python",
+                "FastAPI",
+                "Docker",
+                "AWS",
+                "PostgreSQL",
+                "Redis",
+            ],
             "languages": ["English (Native)", "Spanish (Conversational)"],
             "certificationsTraining": ["AWS Solutions Architect Associate"],
             "awards": ["Employee of the Year 2022"],
@@ -198,6 +207,7 @@ def sample_resume_copy(sample_resume) -> dict:
 # ---------------------------------------------------------------------------
 # Job-related fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def sample_job_keywords() -> dict:
@@ -239,6 +249,7 @@ def sample_job_description() -> str:
 # Master resume — used for alignment validation
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture
 def master_resume(sample_resume) -> dict:
     """Master resume (source of truth) — same as sample_resume by default."""
@@ -248,6 +259,7 @@ def master_resume(sample_resume) -> dict:
 # ---------------------------------------------------------------------------
 # ResumeChange fixtures for diff-based tests
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def sample_changes():
@@ -289,6 +301,7 @@ def sample_changes():
 # ---------------------------------------------------------------------------
 # Isolated database — swap the global TinyDB singleton for a temp-file DB
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def isolated_db(isolated_backend_state: Any) -> Any:

@@ -75,3 +75,8 @@ data = DEFAULT_DATA
 ### New Service Pattern
 
 Mirror patterns in `app/services/improver.py` for new services.
+
+### Before Committing
+
+1. Run formatter: `uv run ruff format`
+2. Run linter: `uv run ruff check`

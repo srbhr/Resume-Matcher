@@ -3,7 +3,6 @@
 import pytest
 
 from app.services.bullet_selector import (
-    FitResult,
     PageMeasureError,
     count_bullets,
     drop_bullets,
@@ -17,9 +16,18 @@ def _resume() -> dict:
     return {
         "personalInfo": {"name": "A"},
         "workExperience": [
-            {"title": "DevRel", "company": "X", "description": [f"x{i}" for i in range(6)],
-             "descriptionStyles": ["bullet"] * 6},
-            {"title": "SWE", "company": "Y", "description": ["y0", "y1"], "descriptionStyles": ["bullet", "plain"]},
+            {
+                "title": "DevRel",
+                "company": "X",
+                "description": [f"x{i}" for i in range(6)],
+                "descriptionStyles": ["bullet"] * 6,
+            },
+            {
+                "title": "SWE",
+                "company": "Y",
+                "description": ["y0", "y1"],
+                "descriptionStyles": ["bullet", "plain"],
+            },
         ],
         "personalProjects": [{"name": "P", "description": ["p0", "p1", "p2", "p3"]}],
         "education": [{"institution": "U", "description": "kept as is"}],
@@ -27,11 +35,18 @@ def _resume() -> dict:
 
 
 SCORES = {
-    ("workExperience", 0, 0): 10, ("workExperience", 0, 1): 90, ("workExperience", 0, 2): 50,
-    ("workExperience", 0, 3): 90, ("workExperience", 0, 4): 5, ("workExperience", 0, 5): 70,
-    ("workExperience", 1, 0): 40, ("workExperience", 1, 1): 30,
-    ("personalProjects", 0, 0): 1, ("personalProjects", 0, 1): 2,
-    ("personalProjects", 0, 2): 3, ("personalProjects", 0, 3): 4,
+    ("workExperience", 0, 0): 10,
+    ("workExperience", 0, 1): 90,
+    ("workExperience", 0, 2): 50,
+    ("workExperience", 0, 3): 90,
+    ("workExperience", 0, 4): 5,
+    ("workExperience", 0, 5): 70,
+    ("workExperience", 1, 0): 40,
+    ("workExperience", 1, 1): 30,
+    ("personalProjects", 0, 0): 1,
+    ("personalProjects", 0, 1): 2,
+    ("personalProjects", 0, 2): 3,
+    ("personalProjects", 0, 3): 4,
 }
 
 
@@ -60,12 +75,16 @@ def test_select_is_noop_under_cap() -> None:
 
 
 def test_select_handles_misaligned_styles_and_empty_rows() -> None:
-    data = {"workExperience": [
-        {"description": ["a", "", "c", "d"], "descriptionStyles": ["plain"]},
-        {"description": []},
-        {"title": "no description key"},
-    ]}
-    sel = select_bullets(data, {("workExperience", 0, 3): 99, ("workExperience", 0, 0): 50}, 2)
+    data = {
+        "workExperience": [
+            {"description": ["a", "", "c", "d"], "descriptionStyles": ["plain"]},
+            {"description": []},
+            {"title": "no description key"},
+        ]
+    }
+    sel = select_bullets(
+        data, {("workExperience", 0, 3): 99, ("workExperience", 0, 0): 50}, 2
+    )
     entry = sel.data["workExperience"][0]
     assert entry["description"] == ["a", "d"]
     assert entry["descriptionStyles"] == ["plain", "bullet"]

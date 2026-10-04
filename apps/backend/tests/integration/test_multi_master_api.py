@@ -117,7 +117,9 @@ async def test_preview_grounds_refiner_on_source_master(
 
     await _master(isolated_db, "default-track")
     source = await _master(isolated_db, "source-track")
-    job = await isolated_db.create_job(content="Need Python", resume_id=source["resume_id"])
+    job = await isolated_db.create_job(
+        content="Need Python", resume_id=source["resume_id"]
+    )
     seen: dict[str, Any] = {}
 
     async def fake_refine(**kwargs: Any) -> Any:
@@ -173,7 +175,9 @@ async def test_tailored_source_grounds_refiner_on_its_own_track(
     await _master(isolated_db, "default-track")
     track_b = await _master(isolated_db, "track-b")
     child = await _tailored(isolated_db, track_b["resume_id"], "tailored-from-b")
-    job = await isolated_db.create_job(content="Need Python", resume_id=child["resume_id"])
+    job = await isolated_db.create_job(
+        content="Need Python", resume_id=child["resume_id"]
+    )
     seen: dict[str, Any] = {}
 
     async def fake_refine(**kwargs: Any) -> Any:
@@ -224,7 +228,9 @@ async def test_grounding_falls_back_to_default_master_then_source(
         await _master(isolated_db, "track-b")
         parent_id = "missing-resume-id"
         if parent == "tailored":
-            parent_id = (await _tailored(isolated_db, None, "other-tailored"))["resume_id"]
+            parent_id = (await _tailored(isolated_db, None, "other-tailored"))[
+                "resume_id"
+            ]
         source = await _tailored(isolated_db, parent_id, "source")
     grounding = await _grounding_master_data(source)
     assert grounding is not None and grounding["summary"] == expected
@@ -237,4 +243,6 @@ async def test_render_draft_endpoint_serves_and_404s(client: AsyncClient) -> Non
     res = await client.get(f"/api/v1/resumes/render-drafts/{token}")
     assert res.status_code == 200
     assert res.json()["data"]["processed_resume"]["personalInfo"]["name"] == "Draft"
-    assert (await client.get("/api/v1/resumes/render-drafts/" + "0" * 32)).status_code == 404
+    assert (
+        await client.get("/api/v1/resumes/render-drafts/" + "0" * 32)
+    ).status_code == 404

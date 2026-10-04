@@ -55,9 +55,10 @@ async def test_real_startup_migrates_only_temporary_storage(
         assert migrated is not None
         assert migrated["content"] == "# Synthetic resume"
         assert get_api_keys_from_config() == {"openai": "synthetic-legacy-key"}
-        assert crypto.decrypt(
-            isolated_backend_state.get_api_key_ciphertexts()["openai"]
-        ) == "synthetic-legacy-key"
+        assert (
+            crypto.decrypt(isolated_backend_state.get_api_key_ciphertexts()["openai"])
+            == "synthetic-legacy-key"
+        )
 
     assert not legacy_db_path.exists()
     assert legacy_db_path.with_suffix(".json.migrated").exists()

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from e2e_monitor.scrub import scrub_text, scrub_config
+from e2e_monitor.scrub import scrub_config, scrub_text
 
 
 def test_scrub_text_redacts_sk_keys() -> None:
@@ -12,13 +12,17 @@ def test_scrub_text_redacts_sk_keys() -> None:
 
 
 def test_scrub_text_redacts_long_hex_and_jwt() -> None:
-    out = scrub_text("token=eyJhbGciOi.JOIN.payloadsig key=0123456789abcdef0123456789abcdef")
+    out = scrub_text(
+        "token=eyJhbGciOi.JOIN.payloadsig key=0123456789abcdef0123456789abcdef"
+    )
     assert "eyJhbGciOi" not in out
     assert "0123456789abcdef0123456789abcdef" not in out
 
 
 def test_scrub_text_redacts_google_and_bearer() -> None:
-    out = scrub_text("key=AIzaSyA1234567890abcdefghijklmnopqrstuv0 auth: Bearer abc.def-123_xyz")
+    out = scrub_text(
+        "key=AIzaSyA1234567890abcdefghijklmnopqrstuv0 auth: Bearer abc.def-123_xyz"
+    )
     assert "AIzaSyA1234567890abcdefghijklmnopqrstuv0" not in out
     assert "Bearer abc.def-123_xyz" not in out
     assert "[REDACTED]" in out

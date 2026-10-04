@@ -1,7 +1,6 @@
 """Unit tests for verify_diff_result() — local quality checks."""
 
 import copy
-import pytest
 
 from app.schemas.models import ResumeChange
 from app.services.improver import verify_diff_result
@@ -22,7 +21,9 @@ class TestVerifyNoWarnings:
                 reason="test",
             )
         ]
-        warnings = verify_diff_result(sample_resume, result, applied, sample_job_keywords)
+        warnings = verify_diff_result(
+            sample_resume, result, applied, sample_job_keywords
+        )
         assert len(warnings) == 0
 
 
@@ -30,13 +31,17 @@ class TestVerifyEmptyChanges:
     """Check 1: No changes applied."""
 
     def test_warns_on_empty_applied_changes(self, sample_resume, sample_job_keywords):
-        warnings = verify_diff_result(sample_resume, sample_resume, [], sample_job_keywords)
+        warnings = verify_diff_result(
+            sample_resume, sample_resume, [], sample_job_keywords
+        )
         assert len(warnings) == 1
         assert "no changes" in warnings[0].lower()
 
     def test_returns_early_on_empty(self, sample_resume, sample_job_keywords):
         """When no changes applied, skip other checks."""
-        warnings = verify_diff_result(sample_resume, sample_resume, [], sample_job_keywords)
+        warnings = verify_diff_result(
+            sample_resume, sample_resume, [], sample_job_keywords
+        )
         # Should only have the "no changes" warning, not section count etc.
         assert len(warnings) == 1
 
@@ -47,29 +52,57 @@ class TestVerifySectionCounts:
     def test_warns_on_dropped_work_experience(self, sample_resume, sample_job_keywords):
         result = copy.deepcopy(sample_resume)
         result["workExperience"] = result["workExperience"][:1]  # Drop one
-        applied = [ResumeChange(path="summary", action="replace", original="x", value="y", reason="z")]
-        warnings = verify_diff_result(sample_resume, result, applied, sample_job_keywords)
+        applied = [
+            ResumeChange(
+                path="summary", action="replace", original="x", value="y", reason="z"
+            )
+        ]
+        warnings = verify_diff_result(
+            sample_resume, result, applied, sample_job_keywords
+        )
         assert any("work experience" in w.lower() for w in warnings)
 
     def test_warns_on_dropped_education(self, sample_resume, sample_job_keywords):
         result = copy.deepcopy(sample_resume)
         result["education"] = []
-        applied = [ResumeChange(path="summary", action="replace", original="x", value="y", reason="z")]
-        warnings = verify_diff_result(sample_resume, result, applied, sample_job_keywords)
+        applied = [
+            ResumeChange(
+                path="summary", action="replace", original="x", value="y", reason="z"
+            )
+        ]
+        warnings = verify_diff_result(
+            sample_resume, result, applied, sample_job_keywords
+        )
         assert any("education" in w.lower() for w in warnings)
 
     def test_warns_on_dropped_projects(self, sample_resume, sample_job_keywords):
         result = copy.deepcopy(sample_resume)
         result["personalProjects"] = []
-        applied = [ResumeChange(path="summary", action="replace", original="x", value="y", reason="z")]
-        warnings = verify_diff_result(sample_resume, result, applied, sample_job_keywords)
+        applied = [
+            ResumeChange(
+                path="summary", action="replace", original="x", value="y", reason="z"
+            )
+        ]
+        warnings = verify_diff_result(
+            sample_resume, result, applied, sample_job_keywords
+        )
         assert any("project" in w.lower() for w in warnings)
 
     def test_no_warning_when_counts_match(self, sample_resume, sample_job_keywords):
         result = copy.deepcopy(sample_resume)
         result["summary"] = "Changed."
-        applied = [ResumeChange(path="summary", action="replace", original="x", value="Changed.", reason="z")]
-        warnings = verify_diff_result(sample_resume, result, applied, sample_job_keywords)
+        applied = [
+            ResumeChange(
+                path="summary",
+                action="replace",
+                original="x",
+                value="Changed.",
+                reason="z",
+            )
+        ]
+        warnings = verify_diff_result(
+            sample_resume, result, applied, sample_job_keywords
+        )
         section_warnings = [w for w in warnings if "section count" in w.lower()]
         assert len(section_warnings) == 0
 
@@ -80,23 +113,43 @@ class TestVerifyIdentityFields:
     def test_warns_on_company_change(self, sample_resume, sample_job_keywords):
         result = copy.deepcopy(sample_resume)
         result["workExperience"][0]["company"] = "Different Corp"
-        applied = [ResumeChange(path="summary", action="replace", original="x", value="y", reason="z")]
-        warnings = verify_diff_result(sample_resume, result, applied, sample_job_keywords)
+        applied = [
+            ResumeChange(
+                path="summary", action="replace", original="x", value="y", reason="z"
+            )
+        ]
+        warnings = verify_diff_result(
+            sample_resume, result, applied, sample_job_keywords
+        )
         assert any("company" in w.lower() or "identity" in w.lower() for w in warnings)
 
     def test_warns_on_title_change(self, sample_resume, sample_job_keywords):
         result = copy.deepcopy(sample_resume)
         result["workExperience"][0]["title"] = "VP of Engineering"
-        applied = [ResumeChange(path="summary", action="replace", original="x", value="y", reason="z")]
-        warnings = verify_diff_result(sample_resume, result, applied, sample_job_keywords)
+        applied = [
+            ResumeChange(
+                path="summary", action="replace", original="x", value="y", reason="z"
+            )
+        ]
+        warnings = verify_diff_result(
+            sample_resume, result, applied, sample_job_keywords
+        )
         assert any("title" in w.lower() or "identity" in w.lower() for w in warnings)
 
     def test_warns_on_institution_change(self, sample_resume, sample_job_keywords):
         result = copy.deepcopy(sample_resume)
         result["education"][0]["institution"] = "Stanford"
-        applied = [ResumeChange(path="summary", action="replace", original="x", value="y", reason="z")]
-        warnings = verify_diff_result(sample_resume, result, applied, sample_job_keywords)
-        assert any("institution" in w.lower() or "identity" in w.lower() for w in warnings)
+        applied = [
+            ResumeChange(
+                path="summary", action="replace", original="x", value="y", reason="z"
+            )
+        ]
+        warnings = verify_diff_result(
+            sample_resume, result, applied, sample_job_keywords
+        )
+        assert any(
+            "institution" in w.lower() or "identity" in w.lower() for w in warnings
+        )
 
 
 class TestVerifyWordCount:
@@ -108,8 +161,14 @@ class TestVerifyWordCount:
         long_text = "word " * 200
         result["workExperience"][0]["description"] = [long_text] * 5
         result["workExperience"][1]["description"] = [long_text] * 5
-        applied = [ResumeChange(path="summary", action="replace", original="x", value="y", reason="z")]
-        warnings = verify_diff_result(sample_resume, result, applied, sample_job_keywords)
+        applied = [
+            ResumeChange(
+                path="summary", action="replace", original="x", value="y", reason="z"
+            )
+        ]
+        warnings = verify_diff_result(
+            sample_resume, result, applied, sample_job_keywords
+        )
         assert any("word count" in w.lower() for w in warnings)
 
     def test_no_warning_on_normal_growth(self, sample_resume, sample_job_keywords):
@@ -125,7 +184,9 @@ class TestVerifyWordCount:
                 reason="z",
             )
         ]
-        warnings = verify_diff_result(sample_resume, result, applied, sample_job_keywords)
+        warnings = verify_diff_result(
+            sample_resume, result, applied, sample_job_keywords
+        )
         word_warnings = [w for w in warnings if "word count" in w.lower()]
         assert len(word_warnings) == 0
 
@@ -144,8 +205,12 @@ class TestVerifyInventedMetrics:
             )
         ]
         result = copy.deepcopy(sample_resume)
-        result["workExperience"][0]["description"][0] = "Built REST APIs improving throughput by 40%"
-        warnings = verify_diff_result(sample_resume, result, applied, sample_job_keywords)
+        result["workExperience"][0]["description"][0] = (
+            "Built REST APIs improving throughput by 40%"
+        )
+        warnings = verify_diff_result(
+            sample_resume, result, applied, sample_job_keywords
+        )
         assert any("metric" in w.lower() or "40%" in w for w in warnings)
 
     def test_no_warning_on_preserved_metric(self, sample_resume, sample_job_keywords):
@@ -161,7 +226,9 @@ class TestVerifyInventedMetrics:
         ]
         result = copy.deepcopy(sample_resume)
         result["workExperience"][0]["description"][0] = applied[0].value
-        warnings = verify_diff_result(sample_resume, result, applied, sample_job_keywords)
+        warnings = verify_diff_result(
+            sample_resume, result, applied, sample_job_keywords
+        )
         metric_warnings = [w for w in warnings if "metric" in w.lower()]
         assert len(metric_warnings) == 0
 
@@ -177,7 +244,9 @@ class TestVerifyInventedMetrics:
         ]
         result = copy.deepcopy(sample_resume)
         result["workExperience"][1]["description"][0] = applied[0].value
-        warnings = verify_diff_result(sample_resume, result, applied, sample_job_keywords)
+        warnings = verify_diff_result(
+            sample_resume, result, applied, sample_job_keywords
+        )
         assert any("$5M" in w or "metric" in w.lower() for w in warnings)
 
 
@@ -192,16 +261,28 @@ class TestVerifyMultipleWarnings:
         # Trigger identity field warning: change company name on remaining entry
         result["workExperience"][0]["company"] = "Different Corp"
         applied = [
-            ResumeChange(path="summary", action="replace", original="x", value="y", reason="z")
+            ResumeChange(
+                path="summary", action="replace", original="x", value="y", reason="z"
+            )
         ]
-        warnings = verify_diff_result(sample_resume, result, applied, sample_job_keywords)
-        section_warnings = [w for w in warnings if "section count" in w.lower() or "work experience" in w.lower()]
-        identity_warnings = [w for w in warnings if "identity" in w.lower() or "company" in w.lower()]
+        warnings = verify_diff_result(
+            sample_resume, result, applied, sample_job_keywords
+        )
+        section_warnings = [
+            w
+            for w in warnings
+            if "section count" in w.lower() or "work experience" in w.lower()
+        ]
+        identity_warnings = [
+            w for w in warnings if "identity" in w.lower() or "company" in w.lower()
+        ]
         assert len(section_warnings) >= 1
         assert len(identity_warnings) >= 1
         assert len(warnings) >= 2
 
-    def test_metric_warning_plus_word_count_warning(self, sample_resume, sample_job_keywords):
+    def test_metric_warning_plus_word_count_warning(
+        self, sample_resume, sample_job_keywords
+    ):
         """Invented metric and word count explosion in the same result."""
         result = copy.deepcopy(sample_resume)
         long_text = "Improved revenue by 99% " + ("extra words " * 200)
@@ -216,7 +297,9 @@ class TestVerifyMultipleWarnings:
                 reason="over-elaborate",
             )
         ]
-        warnings = verify_diff_result(sample_resume, result, applied, sample_job_keywords)
+        warnings = verify_diff_result(
+            sample_resume, result, applied, sample_job_keywords
+        )
         has_metric = any("metric" in w.lower() or "99%" in w for w in warnings)
         has_word_count = any("word count" in w.lower() for w in warnings)
         assert has_metric

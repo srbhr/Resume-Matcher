@@ -32,12 +32,10 @@ from app.pdf import (
     render_resume_pdf,
 )
 
-
 # A self-contained page that satisfies wait_for_selector(".resume-print")
 # without needing the real frontend running.
 RESUME_PRINT_DATA_URL = (
-    "data:text/html,"
-    "<html><body><div class='resume-print'>Hello PDF</div></body></html>"
+    "data:text/html,<html><body><div class='resume-print'>Hello PDF</div></body></html>"
 )
 
 
@@ -127,9 +125,7 @@ class TestResolvePdfMargins:
         }
 
     def test_custom_values_are_formatted_as_mm(self):
-        result = _resolve_pdf_margins(
-            {"top": 20, "right": 15, "bottom": 25, "left": 5}
-        )
+        result = _resolve_pdf_margins({"top": 20, "right": 15, "bottom": 25, "left": 5})
         assert result == {
             "top": "20mm",
             "right": "15mm",
@@ -159,7 +155,9 @@ class TestRenderPageWaitStrategy:
     async def test_goto_uses_load_with_bounded_timeout(self):
         page = AsyncMock()
         page.pdf.return_value = b"%PDF-1.4 fake"
-        await _render_page_to_pdf(page, "http://f/print/r", ".resume-print", "A4", {"top": "10mm"})
+        await _render_page_to_pdf(
+            page, "http://f/print/r", ".resume-print", "A4", {"top": "10mm"}
+        )
         _, goto_kwargs = page.goto.call_args
         assert goto_kwargs.get("wait_until") == "load"
         # An explicit, positive, bounded navigation timeout (not the fragile default).
@@ -170,7 +168,9 @@ class TestRenderPageWaitStrategy:
         """The real readiness signal — the resume content must be present."""
         page = AsyncMock()
         page.pdf.return_value = b"%PDF-1.4 fake"
-        await _render_page_to_pdf(page, "http://f/print/r", ".resume-print", "A4", {"top": "10mm"})
+        await _render_page_to_pdf(
+            page, "http://f/print/r", ".resume-print", "A4", {"top": "10mm"}
+        )
         page.wait_for_selector.assert_awaited()
         selector_arg = page.wait_for_selector.call_args.args[0]
         assert selector_arg == ".resume-print"
@@ -197,7 +197,9 @@ class TestRenderPageWaitStrategy:
         the wait must be bounded by the nav timeout — not Playwright's default."""
         page = AsyncMock()
         page.pdf.return_value = b"%PDF-1.4 fake"
-        await _render_page_to_pdf(page, "http://f/print/r", ".resume-print", "A4", {"top": "10mm"})
+        await _render_page_to_pdf(
+            page, "http://f/print/r", ".resume-print", "A4", {"top": "10mm"}
+        )
         page.wait_for_function.assert_awaited()
         assert "fonts" in page.wait_for_function.call_args.args[0]
         assert page.wait_for_function.call_args.kwargs.get("timeout")
@@ -216,7 +218,10 @@ class TestPlaywrightErrorMapping:
             '  - navigating to "http://localhost:3000/print/resumes/SECRET-RESUME-ID"'
         )
         with pytest.raises(PDFRenderError) as exc_info:
-            _raise_playwright_error(PlaywrightError(raw), "http://localhost:3000/print/resumes/SECRET-RESUME-ID")
+            _raise_playwright_error(
+                PlaywrightError(raw),
+                "http://localhost:3000/print/resumes/SECRET-RESUME-ID",
+            )
         msg = str(exc_info.value)
         assert "Call log" not in msg
         assert "SECRET-RESUME-ID" not in msg

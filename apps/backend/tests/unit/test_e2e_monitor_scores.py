@@ -7,7 +7,9 @@ from e2e_monitor.flow import score_tailoring
 _ORIGINAL = {
     "personalInfo": {"name": "Jane Doe", "email": "jane@x.dev"},
     "summary": "Backend engineer.",
-    "workExperience": [{"company": "Acme", "title": "Engineer", "description": ["Built APIs"]}],
+    "workExperience": [
+        {"company": "Acme", "title": "Engineer", "description": ["Built APIs"]}
+    ],
 }
 
 
@@ -15,7 +17,13 @@ def test_score_tailoring_clean_pass() -> None:
     tailored = {
         "personalInfo": {"name": "Jane Doe", "email": "jane@x.dev"},
         "summary": "Backend engineer who builds Python APIs.",
-        "workExperience": [{"company": "Acme", "title": "Engineer", "description": ["Built Python APIs"]}],
+        "workExperience": [
+            {
+                "company": "Acme",
+                "title": "Engineer",
+                "description": ["Built Python APIs"],
+            }
+        ],
     }
     s = score_tailoring(_ORIGINAL, tailored, keywords=["python"])
     assert s["sections_preserved"] is True
@@ -29,7 +37,9 @@ def test_score_tailoring_flags_fabrication_and_identity_change() -> None:
     tailored = {
         "personalInfo": {"name": "CHANGED", "email": "jane@x.dev"},
         "summary": "Backend engineer.",
-        "workExperience": [{"company": "FakeCorp", "title": "Engineer", "description": ["x"]}],
+        "workExperience": [
+            {"company": "FakeCorp", "title": "Engineer", "description": ["x"]}
+        ],
     }
     s = score_tailoring(_ORIGINAL, tailored, keywords=["python"])
     assert "FakeCorp" in s["fabricated_employers"]

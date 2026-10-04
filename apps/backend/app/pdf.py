@@ -15,11 +15,15 @@ from typing import Any, Awaitable, NoReturn, Optional, TypeVar
 
 from playwright.async_api import (
     Browser,
-    Error as PlaywrightError,
     Page,
     Playwright,
-    TimeoutError as PlaywrightTimeoutError,
     async_playwright,
+)
+from playwright.async_api import (
+    Error as PlaywrightError,
+)
+from playwright.async_api import (
+    TimeoutError as PlaywrightTimeoutError,
 )
 
 logger = logging.getLogger(__name__)
@@ -192,9 +196,7 @@ async def _await_before_deadline(
 
 def _stage_timeout_ms(deadline: float) -> int:
     """Return Playwright's per-call timeout clipped to the shared deadline."""
-    remaining_ms = int(
-        max(0.0, deadline - asyncio.get_running_loop().time()) * 1000
-    )
+    remaining_ms = int(max(0.0, deadline - asyncio.get_running_loop().time()) * 1000)
     return max(1, min(_NAV_TIMEOUT_MS, remaining_ms))
 
 
@@ -245,14 +247,18 @@ async def _replace_disconnected_browser(
             owner = _retire_shared_browser(stale_browser, retain_slot=False)
             if owner is not None:
                 try:
-                    await _await_before_deadline(asyncio.shield(owner), work_deadline, "stale browser retirement")
+                    await _await_before_deadline(
+                        asyncio.shield(owner), work_deadline, "stale browser retirement"
+                    )
                 except BaseException:
                     if not owner.done():
                         _retain_render_slot_for_cleanup()
                         owner.add_done_callback(lambda _done: _release_render_slot())
                     raise
         elif stale_playwright is not None:
-            await _close_before_deadline(stale_playwright.stop(), work_deadline, "stale Playwright")
+            await _close_before_deadline(
+                stale_playwright.stop(), work_deadline, "stale Playwright"
+            )
             _playwright = None
 
         new_playwright = await _await_before_deadline(
@@ -331,8 +337,16 @@ def _find_chromium_executable() -> Optional[str]:
             Path("/snap/bin/chromium"),
             Path("/var/lib/flatpak/exports/bin/com.google.Chrome"),
             Path("/var/lib/flatpak/exports/bin/org.chromium.Chromium"),
-            Path(os.path.expanduser("~/.local/share/flatpak/exports/bin/com.google.Chrome")),
-            Path(os.path.expanduser("~/.local/share/flatpak/exports/bin/org.chromium.Chromium")),
+            Path(
+                os.path.expanduser(
+                    "~/.local/share/flatpak/exports/bin/com.google.Chrome"
+                )
+            ),
+            Path(
+                os.path.expanduser(
+                    "~/.local/share/flatpak/exports/bin/org.chromium.Chromium"
+                )
+            ),
         ]
 
     for candidate in candidates:
@@ -372,9 +386,7 @@ async def _render_page_to_pdf(
     # resume content selector, and fonts — all bounded by an explicit timeout
     # so the outcome is deterministic.
     if work_deadline is None:
-        work_deadline = (
-            asyncio.get_running_loop().time() + (_NAV_TIMEOUT_MS / 1000)
-        )
+        work_deadline = asyncio.get_running_loop().time() + (_NAV_TIMEOUT_MS / 1000)
 
     await _await_before_deadline(
         page.goto(
@@ -552,7 +564,9 @@ async def _render_resume_pdf_in_thread(
     total_deadline: float,
 ) -> asyncio.Task[bytes]:
     """Start a fallback worker whose lifetime can outlast its awaiting request."""
-    monotonic_deadline = time.monotonic() + max(0.0, total_deadline - asyncio.get_running_loop().time())
+    monotonic_deadline = time.monotonic() + max(
+        0.0, total_deadline - asyncio.get_running_loop().time()
+    )
     return asyncio.create_task(
         asyncio.to_thread(
             _render_resume_pdf_sync,
@@ -623,9 +637,7 @@ async def close_pdf_renderer() -> None:
 
     owners = set(_background_owners)
     if owners:
-        _, pending = await asyncio.wait(
-            owners, timeout=_PDF_CLEANUP_RESERVE_SECONDS
-        )
+        _, pending = await asyncio.wait(owners, timeout=_PDF_CLEANUP_RESERVE_SECONDS)
         if pending:
             logger.warning(
                 "PDF shutdown cleanup continues for %d owned resources", len(pending)
@@ -753,7 +765,9 @@ def _retired_browser_finished(
             )
 
 
-def _retire_shared_browser(browser: Browser, *, retain_slot: bool = True) -> asyncio.Task[None] | None:
+def _retire_shared_browser(
+    browser: Browser, *, retain_slot: bool = True
+) -> asyncio.Task[None] | None:
     """Detach a browser with an unclosed page and retain capacity for teardown."""
     global _browser, _playwright
     if _browser is not browser:

@@ -10,9 +10,8 @@ end-to-end checks: the good tailoring must pass every scorer, the bad one must
 trip the relevant scorers.
 """
 
-from typing import Any
-
 import copy
+from typing import Any
 
 import pytest
 
@@ -138,7 +137,10 @@ class TestJdKeywordsPresent:
     ) -> None:
         before, after = surrounding
         assert jd_keywords_present({"summary": f"{before}Java{after}"}, ["Java"]) == 1.0
-        assert jd_keywords_present({"summary": f"{before}JavaScript{after}"}, ["Java"]) == 0.0
+        assert (
+            jd_keywords_present({"summary": f"{before}JavaScript{after}"}, ["Java"])
+            == 0.0
+        )
 
 
 class TestIsValidResume:

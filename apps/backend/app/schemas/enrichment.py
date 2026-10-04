@@ -115,7 +115,9 @@ class RegenerateRequest(BaseModel):
 
     resume_id: str
     items: list[RegenerateItemInput] = Field(max_length=20)
-    instruction: str = Field(max_length=2000)  # User's feedback/instruction for improvement
+    instruction: str = Field(
+        max_length=2000
+    )  # User's feedback/instruction for improvement
     output_language: str = "en"
 
     @model_validator(mode="after")

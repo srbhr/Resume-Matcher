@@ -1,11 +1,15 @@
 import unittest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 from fastapi import HTTPException
 from pydantic import ValidationError
 
 from app.routers import enrichment as enrichment_router
-from app.schemas.enrichment import RegenerateItemInput, RegenerateRequest, RegeneratedItem
+from app.schemas.enrichment import (
+    RegeneratedItem,
+    RegenerateItemInput,
+    RegenerateRequest,
+)
 
 
 class TestRegenerateSchemas(unittest.TestCase):
@@ -58,7 +62,9 @@ class TestRegenerateEndpoints(unittest.IsolatedAsyncioTestCase):
         )
 
         mock_db = AsyncMock()
-        mock_db.get_resume.return_value = {"processed_data": {"workExperience": [], "additional": {}}}
+        mock_db.get_resume.return_value = {
+            "processed_data": {"workExperience": [], "additional": {}}
+        }
 
         exp_item = RegeneratedItem(
             item_id="exp_0",
@@ -124,7 +130,9 @@ class TestRegenerateEndpoints(unittest.IsolatedAsyncioTestCase):
         )
 
         mock_db = AsyncMock()
-        mock_db.get_resume.return_value = {"processed_data": {"workExperience": [], "additional": {}}}
+        mock_db.get_resume.return_value = {
+            "processed_data": {"workExperience": [], "additional": {}}
+        }
 
         skills_item = RegeneratedItem(
             item_id="skills",
@@ -150,7 +158,9 @@ class TestRegenerateEndpoints(unittest.IsolatedAsyncioTestCase):
         ):
             response = await enrichment_router.regenerate_items(request)
 
-        self.assertEqual([item.item_id for item in response.regenerated_items], ["skills"])
+        self.assertEqual(
+            [item.item_id for item in response.regenerated_items], ["skills"]
+        )
         self.assertEqual([err.item_id for err in response.errors], ["exp_0"])
 
     async def test_apply_regenerated_falls_back_to_metadata_matching(self) -> None:
@@ -189,7 +199,9 @@ class TestRegenerateEndpoints(unittest.IsolatedAsyncioTestCase):
         ]
 
         with patch.object(enrichment_router, "db", mock_db):
-            result = await enrichment_router.apply_regenerated_items(resume_id, regenerated_items)
+            result = await enrichment_router.apply_regenerated_items(
+                resume_id, regenerated_items
+            )
 
         self.assertEqual(result["updated_items"], 1)
 
@@ -199,7 +211,9 @@ class TestRegenerateEndpoints(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(updated["workExperience"][0]["description"], ["Keep me"])
         self.assertEqual(updated["workExperience"][1]["description"], ["New bullet"])
 
-    async def test_apply_regenerated_disambiguates_duplicates_by_original_content(self) -> None:
+    async def test_apply_regenerated_disambiguates_duplicates_by_original_content(
+        self,
+    ) -> None:
         resume_id = "resume_1"
         processed_data = {
             "workExperience": [
@@ -227,13 +241,17 @@ class TestRegenerateEndpoints(unittest.IsolatedAsyncioTestCase):
         ]
 
         with patch.object(enrichment_router, "db", mock_db):
-            result = await enrichment_router.apply_regenerated_items(resume_id, regenerated_items)
+            result = await enrichment_router.apply_regenerated_items(
+                resume_id, regenerated_items
+            )
 
         self.assertEqual(result["updated_items"], 1)
 
         updated = mock_db.update_resume.call_args.args[1]["processed_data"]
         self.assertEqual(updated["workExperience"][0]["description"], ["Bullet A"])
-        self.assertEqual(updated["workExperience"][1]["description"], ["Bullet B (rewritten)"])
+        self.assertEqual(
+            updated["workExperience"][1]["description"], ["Bullet B (rewritten)"]
+        )
 
     async def test_apply_regenerated_refuses_when_items_do_not_match(self) -> None:
         resume_id = "resume_1"
@@ -262,12 +280,16 @@ class TestRegenerateEndpoints(unittest.IsolatedAsyncioTestCase):
 
         with patch.object(enrichment_router, "db", mock_db):
             with self.assertRaises(HTTPException) as ctx:
-                await enrichment_router.apply_regenerated_items(resume_id, regenerated_items)
+                await enrichment_router.apply_regenerated_items(
+                    resume_id, regenerated_items
+                )
 
         self.assertEqual(ctx.exception.status_code, 409)
         mock_db.update_resume.assert_not_called()
 
-    async def test_apply_regenerated_updates_skills_for_additional_and_legacy_paths(self) -> None:
+    async def test_apply_regenerated_updates_skills_for_additional_and_legacy_paths(
+        self,
+    ) -> None:
         resume_id = "resume_1"
 
         base_item = RegeneratedItem(
@@ -287,25 +309,35 @@ class TestRegenerateEndpoints(unittest.IsolatedAsyncioTestCase):
         mock_db_additional.update_resume.return_value = None
 
         with patch.object(enrichment_router, "db", mock_db_additional):
-            result = await enrichment_router.apply_regenerated_items(resume_id, [base_item])
+            result = await enrichment_router.apply_regenerated_items(
+                resume_id, [base_item]
+            )
 
         self.assertEqual(result["updated_items"], 1)
         updated = mock_db_additional.update_resume.call_args.args[1]["processed_data"]
-        self.assertEqual(updated["additional"]["technicalSkills"], ["Python", "TypeScript"])
+        self.assertEqual(
+            updated["additional"]["technicalSkills"], ["Python", "TypeScript"]
+        )
 
         # legacy technicalSkills path
         mock_db_legacy = AsyncMock()
-        mock_db_legacy.get_resume.return_value = {"processed_data": {"technicalSkills": ["Python"]}}
+        mock_db_legacy.get_resume.return_value = {
+            "processed_data": {"technicalSkills": ["Python"]}
+        }
         mock_db_legacy.update_resume.return_value = None
 
         with patch.object(enrichment_router, "db", mock_db_legacy):
-            result = await enrichment_router.apply_regenerated_items(resume_id, [base_item])
+            result = await enrichment_router.apply_regenerated_items(
+                resume_id, [base_item]
+            )
 
         self.assertEqual(result["updated_items"], 1)
         updated = mock_db_legacy.update_resume.call_args.args[1]["processed_data"]
         self.assertEqual(updated["technicalSkills"], ["Python", "TypeScript"])
 
-    async def test_apply_regenerated_skills_fails_when_no_supported_path_exists(self) -> None:
+    async def test_apply_regenerated_skills_fails_when_no_supported_path_exists(
+        self,
+    ) -> None:
         resume_id = "resume_1"
 
         mock_db = AsyncMock()
@@ -324,7 +356,9 @@ class TestRegenerateEndpoints(unittest.IsolatedAsyncioTestCase):
 
         with patch.object(enrichment_router, "db", mock_db):
             with self.assertRaises(HTTPException) as ctx:
-                await enrichment_router.apply_regenerated_items(resume_id, regenerated_items)
+                await enrichment_router.apply_regenerated_items(
+                    resume_id, regenerated_items
+                )
 
         self.assertEqual(ctx.exception.status_code, 409)
         mock_db.update_resume.assert_not_called()

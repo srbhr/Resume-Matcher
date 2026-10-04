@@ -6,7 +6,6 @@ from pydantic import ValidationError
 
 from app.services.interview_prep import generate_interview_prep
 
-
 SAMPLE_RESUME = {
     "personalInfo": {"name": "Jane Doe"},
     "summary": "Backend engineer",
@@ -42,25 +41,32 @@ def _valid_payload():
 @contextmanager
 def _patched_llm_token_helpers(max_tokens: int = 4096):
     config = object()
-    with patch(
-        "app.services.interview_prep.get_llm_config",
-        return_value=config,
-    ) as mock_get_llm_config, patch(
-        "app.services.interview_prep.get_model_name",
-        return_value="openai/small-output-model",
-    ) as mock_get_model_name, patch(
-        "app.services.interview_prep.get_safe_max_tokens",
-        return_value=max_tokens,
-    ) as mock_get_safe_max_tokens:
+    with (
+        patch(
+            "app.services.interview_prep.get_llm_config",
+            return_value=config,
+        ) as mock_get_llm_config,
+        patch(
+            "app.services.interview_prep.get_model_name",
+            return_value="openai/small-output-model",
+        ) as mock_get_model_name,
+        patch(
+            "app.services.interview_prep.get_safe_max_tokens",
+            return_value=max_tokens,
+        ) as mock_get_safe_max_tokens,
+    ):
         yield mock_get_llm_config, mock_get_model_name, mock_get_safe_max_tokens
 
 
 @pytest.mark.asyncio
 async def test_generate_interview_prep_validates_successful_json():
-    with patch(
-        "app.services.interview_prep.complete_json",
-        new_callable=AsyncMock,
-    ) as mock_complete, _patched_llm_token_helpers() as token_helpers:
+    with (
+        patch(
+            "app.services.interview_prep.complete_json",
+            new_callable=AsyncMock,
+        ) as mock_complete,
+        _patched_llm_token_helpers() as token_helpers,
+    ):
         mock_complete.return_value = _valid_payload()
 
         result = await generate_interview_prep(SAMPLE_RESUME, "Need FastAPI", "en")
@@ -81,10 +87,13 @@ async def test_generate_interview_prep_validates_successful_json():
 
 @pytest.mark.asyncio
 async def test_generate_interview_prep_bounds_prompt_inputs():
-    with patch(
-        "app.services.interview_prep.complete_json",
-        new_callable=AsyncMock,
-    ) as mock_complete, _patched_llm_token_helpers():
+    with (
+        patch(
+            "app.services.interview_prep.complete_json",
+            new_callable=AsyncMock,
+        ) as mock_complete,
+        _patched_llm_token_helpers(),
+    ):
         mock_complete.return_value = _valid_payload()
 
         large_resume = {
@@ -105,10 +114,13 @@ async def test_generate_interview_prep_bounds_prompt_inputs():
 
 @pytest.mark.asyncio
 async def test_generate_interview_prep_rejects_malformed_llm_json():
-    with patch(
-        "app.services.interview_prep.complete_json",
-        new_callable=AsyncMock,
-    ) as mock_complete, _patched_llm_token_helpers():
+    with (
+        patch(
+            "app.services.interview_prep.complete_json",
+            new_callable=AsyncMock,
+        ) as mock_complete,
+        _patched_llm_token_helpers(),
+    ):
         mock_complete.return_value = {
             "role_fit_analysis": ["Only one required key is present."]
         }

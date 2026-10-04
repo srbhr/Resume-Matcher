@@ -499,13 +499,18 @@ async def test_unused_image_filter_does_not_reject_text_pdf() -> None:
 
 async def test_image_subtype_cannot_hide_page_content_expansion() -> None:
     encoded = zlib.compress(b"A" * (17 * 1024 * 1024))
-    document = _pdf_with_content_streams([encoded], filter_name=b"FlateDecode", stream_attributes=b" /Subtype /Image")
+    document = _pdf_with_content_streams(
+        [encoded], filter_name=b"FlateDecode", stream_attributes=b" /Subtype /Image"
+    )
     with pytest.raises(DocumentResourceLimitError):
         await parse_document(document, "forged-image.pdf")
 
 
-async def test_cancelled_queued_conversion_never_starts_later(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_cancelled_queued_conversion_never_starts_later(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     from app.services import parser
+
     entered = threading.Event()
     release = threading.Event()
     lock = threading.Lock()
@@ -521,7 +526,9 @@ async def test_cancelled_queued_conversion_never_starts_later(monkeypatch: pytes
         return "synthetic"
 
     monkeypatch.setattr(parser, "_parse_document_sync", convert)
-    owners = [asyncio.create_task(parser.parse_document(b"x", "one.pdf")) for _ in range(2)]
+    owners = [
+        asyncio.create_task(parser.parse_document(b"x", "one.pdf")) for _ in range(2)
+    ]
     assert await asyncio.to_thread(entered.wait, 1)
     queued = asyncio.create_task(parser.parse_document(b"x", "queued.pdf"))
     await asyncio.sleep(0.01)

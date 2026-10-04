@@ -195,11 +195,7 @@ def jd_keywords_present(tailored: dict, keywords: list[str]) -> float:
             )
         )
 
-    hits = sum(
-        1
-        for kw in keywords
-        if keyword_present(kw)
-    )
+    hits = sum(1 for kw in keywords if keyword_present(kw))
     return hits / len(keywords)
 
 

@@ -20,10 +20,14 @@ from app.services.page_fit import measure_page_count
 
 logger = logging.getLogger(__name__)
 
-BULLET_SCORING_FALLBACK_WARNING = "Bullet relevance scoring fell back to keyword matching"
+BULLET_SCORING_FALLBACK_WARNING = (
+    "Bullet relevance scoring fell back to keyword matching"
+)
 PAGE_FIT_OVER_WARNING = "Resume still exceeds one page at one bullet per role"
 PAGE_FIT_UNAVAILABLE_WARNING = "Page fit skipped: the resume could not be rendered"
-PAGE_FIT_FINAL_OVER_WARNING = "Tailored resume may run slightly over one page after rewriting"
+PAGE_FIT_FINAL_OVER_WARNING = (
+    "Tailored resume may run slightly over one page after rewriting"
+)
 # Operation budget held back from every page render for the stages that follow it.
 FINAL_CHECK_RESERVE_SECONDS = 10
 # Page fit may spend at most min(ceiling, share of the remaining budget) rendering,
@@ -60,7 +64,9 @@ async def run_bullet_selection(
         fit_deadline = _page_fit_deadline()
 
         async def measure(draft: dict[str, Any]) -> int:
-            return await _measure_within_budget(draft, page_fit, fit_deadline=fit_deadline)
+            return await _measure_within_budget(
+                draft, page_fit, fit_deadline=fit_deadline
+            )
 
         fit = await fit_to_one_page(selection.data, selection.scores, measure)
         data, status, trimmed, pages = fit.data, fit.status, fit.trimmed, fit.pages
@@ -120,7 +126,9 @@ async def _measure_within_budget(
         raise PageMeasureError("Draft render exceeded the operation budget") from e
 
 
-async def final_page_check(data: dict[str, Any], page_fit: PageFitSettings) -> int | None:
+async def final_page_check(
+    data: dict[str, Any], page_fit: PageFitSettings
+) -> int | None:
     """Page count of the rewritten result; None when it cannot be rendered in budget."""
     try:
         return await _measure_within_budget(data, page_fit)

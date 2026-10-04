@@ -6,7 +6,6 @@ import asyncio
 import logging
 import threading
 from collections.abc import AsyncIterator, Callable
-from pathlib import Path
 from typing import Any
 
 import pytest
@@ -14,7 +13,6 @@ from playwright.async_api import Error as PlaywrightError
 from playwright.async_api import TimeoutError as PlaywrightTimeoutError
 
 import app.pdf as pdf_module
-
 
 RESUME_PRINT_DATA_URL = (
     "data:text/html,"
@@ -318,7 +316,9 @@ async def test_cancellation_survives_bounded_cleanup_failure(
     monkeypatch.setattr(pdf_module, "_browser", browser)
     monkeypatch.setattr(pdf_module, "_PDF_MAX_CONCURRENCY", 1, raising=False)
     monkeypatch.setattr(pdf_module, "_PDF_CLEANUP_RESERVE_SECONDS", 0.02, raising=False)
-    task = asyncio.create_task(pdf_module.render_resume_pdf("data:text/html,cancel-close"))
+    task = asyncio.create_task(
+        pdf_module.render_resume_pdf("data:text/html,cancel-close")
+    )
     await browser.entered.wait()
 
     task.cancel()
@@ -521,7 +521,9 @@ async def test_cancellation_during_page_close_keeps_browser_cleanup_owned(
     monkeypatch.setattr(pdf_module, "_browser", browser)
     monkeypatch.setattr(pdf_module, "_playwright", SlowPlaywright())
     monkeypatch.setattr(pdf_module, "_PDF_MAX_CONCURRENCY", 1)
-    task = asyncio.create_task(pdf_module.render_resume_pdf("data:text/html,cancel-close"))
+    task = asyncio.create_task(
+        pdf_module.render_resume_pdf("data:text/html,cancel-close")
+    )
     try:
         await asyncio.wait_for(page_closing.wait(), timeout=1)
         task.cancel()
@@ -555,7 +557,9 @@ async def test_cancellation_during_page_close_keeps_browser_cleanup_owned(
     assert driver_stopped.is_set() and pdf_module._active_renders == 0
 
 
-async def test_cancelled_stale_browser_cleanup_keeps_owner(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_cancelled_stale_browser_cleanup_keeps_owner(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     release = asyncio.Event()
     entered = asyncio.Event()
     stopped = asyncio.Event()
@@ -587,8 +591,11 @@ async def test_cancelled_stale_browser_cleanup_keeps_owner(monkeypatch: pytest.M
     assert stopped.is_set() and pdf_module._active_renders == 0
 
 
-async def test_thread_fallback_inherits_remaining_deadline(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_thread_fallback_inherits_remaining_deadline(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     import time
+
     deadlines: list[float] = []
     started = time.monotonic()
     monkeypatch.setattr(pdf_module, "_PDF_RENDER_TIMEOUT_SECONDS", 0.3)
@@ -597,7 +604,13 @@ async def test_thread_fallback_inherits_remaining_deadline(monkeypatch: pytest.M
         await asyncio.sleep(0.1)
         raise NotImplementedError
 
-    def worker(url: str, selector: str, pdf_format: str, margins: dict[str, Any], deadline: float) -> bytes:
+    def worker(
+        url: str,
+        selector: str,
+        pdf_format: str,
+        margins: dict[str, Any],
+        deadline: float,
+    ) -> bytes:
         deadlines.append(deadline)
         return b"%PDF"
 

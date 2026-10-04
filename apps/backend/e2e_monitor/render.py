@@ -17,7 +17,9 @@ from e2e_monitor import API_BASE
 _MIN_BYTES = 1000  # a real one-page resume PDF is comfortably larger than this
 
 
-def _verdict(*, is_pdf: bool, size: int, pages: int | None, has_text: bool | None) -> bool:
+def _verdict(
+    *, is_pdf: bool, size: int, pages: int | None, has_text: bool | None
+) -> bool:
     """Pure non-blank decision. ``pages``/``has_text`` may be ``None`` when the
     optional probe is unavailable — ``None`` must not veto an otherwise-real PDF."""
     return bool(is_pdf and size >= _MIN_BYTES and has_text is not False and pages != 0)

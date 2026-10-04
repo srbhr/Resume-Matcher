@@ -8,12 +8,12 @@ Two invariants this locks:
    the model-facing first layer and should not regress.
 """
 
+from app.prompts.refinement import KEYWORD_INJECTION_PROMPT
 from app.prompts.templates import (
     COVER_LETTER_PROMPT,
     DIFF_IMPROVE_PROMPT,
     INTERVIEW_PREP_PROMPT,
 )
-from app.prompts.refinement import KEYWORD_INJECTION_PROMPT
 
 
 class TestJdIncorporationIsDefault:
@@ -32,13 +32,24 @@ class TestJdIncorporationIsDefault:
 class TestAntiFabricationClausesPresent:
     def test_diff_prompt_keeps_no_invented_work_clauses(self):
         # rule 11's reframe permission must ship WITH its anti-fabrication clause
-        assert "Do NOT add new work, metrics, or responsibilities" in DIFF_IMPROVE_PROMPT
+        assert (
+            "Do NOT add new work, metrics, or responsibilities" in DIFF_IMPROVE_PROMPT
+        )
         # rule 2 must remain
-        assert "Do not invent metrics or achievements not supported by the original resume" in DIFF_IMPROVE_PROMPT
+        assert (
+            "Do not invent metrics or achievements not supported by the original resume"
+            in DIFF_IMPROVE_PROMPT
+        )
 
     def test_keyword_injection_keeps_no_invent_clauses(self):
-        assert "do not invent new content, metrics, or work history" in KEYWORD_INJECTION_PROMPT
-        assert "Do NOT add skills, technologies, or certifications not in the master resume" in KEYWORD_INJECTION_PROMPT
+        assert (
+            "do not invent new content, metrics, or work history"
+            in KEYWORD_INJECTION_PROMPT
+        )
+        assert (
+            "Do NOT add skills, technologies, or certifications not in the master resume"
+            in KEYWORD_INJECTION_PROMPT
+        )
 
     def test_cover_letter_keeps_no_invent_clauses(self):
         assert "Do NOT invent information not in the resume" in COVER_LETTER_PROMPT
@@ -46,7 +57,9 @@ class TestAntiFabricationClausesPresent:
 
     def test_interview_prep_keeps_no_fabrication_guardrails(self):
         assert "Do NOT invent experience" in INTERVIEW_PREP_PROMPT
-        assert "tools, employers, metrics, certifications, skills" in INTERVIEW_PREP_PROMPT
+        assert (
+            "tools, employers, metrics, certifications, skills" in INTERVIEW_PREP_PROMPT
+        )
         assert "Skill gaps are preparation targets only" in INTERVIEW_PREP_PROMPT
         assert "Do NOT translate JSON property names" in INTERVIEW_PREP_PROMPT
         assert "role_fit_analysis" in INTERVIEW_PREP_PROMPT

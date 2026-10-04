@@ -92,7 +92,9 @@ async def resume_wizard_turn(
         raise
     except ValueError as e:
         logger.error("Resume wizard turn validation failed: %s", e)
-        raise HTTPException(status_code=422, detail="Could not update the resume draft.")
+        raise HTTPException(
+            status_code=422, detail="Could not update the resume draft."
+        )
     except Exception as e:
         logger.error("Resume wizard turn failed: %s", e)
         raise HTTPException(

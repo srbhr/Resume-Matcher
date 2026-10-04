@@ -29,15 +29,20 @@ status=0
 
 printf '\n── pre-push gate ────────────────────────────────────────\n'
 
-# 1) Backend test suite ----------------------------------------------------
+# 1) Backend checks (pytest + ruff) ----------------------------------------
 if command -v uv >/dev/null 2>&1; then
+  echo "▶ backend  : uv run ruff check && uv run ruff format --check"
+  if ! ( cd "$REPO_ROOT/apps/backend" && uv run ruff check && uv run ruff format --check ); then
+    echo "  ✗ backend ruff check failed" >&2
+    status=1
+  fi
   echo "▶ backend  : uv run pytest"
   if ! ( cd "$REPO_ROOT/apps/backend" && uv run pytest -q -p no:cacheprovider ); then
     echo "  ✗ backend tests failed" >&2
     status=1
   fi
 else
-  echo "  ✗ 'uv' not found — cannot run backend tests (install uv, or push with --no-verify)" >&2
+  echo "  ✗ 'uv' not found — cannot run backend checks (install uv, or push with --no-verify)" >&2
   status=1
 fi
 

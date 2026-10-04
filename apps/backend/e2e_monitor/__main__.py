@@ -34,10 +34,33 @@ _ARTIFACTS = _BACKEND.parents[1] / "artifacts" / "e2e-monitor"
 _FIXTURES = _PKG / "fixtures"
 _BASELINE = _PKG / "baseline" / "baseline.json"
 
-_STOPWORDS = frozenset({
-    "we", "you", "our", "your", "the", "a", "an", "and", "or", "for", "with",
-    "to", "of", "in", "on", "is", "are", "as", "at", "be", "by", "this", "that",
-})
+_STOPWORDS = frozenset(
+    {
+        "we",
+        "you",
+        "our",
+        "your",
+        "the",
+        "a",
+        "an",
+        "and",
+        "or",
+        "for",
+        "with",
+        "to",
+        "of",
+        "in",
+        "on",
+        "is",
+        "are",
+        "as",
+        "at",
+        "be",
+        "by",
+        "this",
+        "that",
+    }
+)
 
 
 def _git_sha() -> str:
@@ -59,7 +82,8 @@ def _run_id() -> str:
 
 def _jds() -> list[tuple[str, str]]:
     return sorted(
-        (p.stem, p.read_text(encoding="utf-8")) for p in (_FIXTURES / "jds").glob("*.txt")
+        (p.stem, p.read_text(encoding="utf-8"))
+        for p in (_FIXTURES / "jds").glob("*.txt")
     )
 
 
@@ -82,7 +106,12 @@ def cmd_sweep(args: argparse.Namespace) -> int:
     config = load_config_file()
     bundle.write_json(
         bundle.dir / "manifest.json",
-        build_manifest(run_id=bundle.run_id, git_sha=_git_sha(), config=config, started_at=_now_iso()),
+        build_manifest(
+            run_id=bundle.run_id,
+            git_sha=_git_sha(),
+            config=config,
+            started_at=_now_iso(),
+        ),
     )
     steps: list[dict[str, Any]] = []
     variations: list[dict[str, Any]] = []
@@ -213,12 +242,18 @@ def cmd_update_baseline(args: argparse.Namespace) -> int:
     run_dir = Path(args.run_dir)
     variations: list[dict[str, Any]] = []
     for vdir in sorted((run_dir / "variations").glob("*")):
-        variations.append({
-            "jd_key": vdir.name,
-            "scores": Bundle.read_json(vdir / "scores.json"),
-            "judge": Bundle.read_json(vdir / "judge.json") if (vdir / "judge.json").exists() else {},
-            "render": Bundle.read_json(vdir / "render.json") if (vdir / "render.json").exists() else {},
-        })
+        variations.append(
+            {
+                "jd_key": vdir.name,
+                "scores": Bundle.read_json(vdir / "scores.json"),
+                "judge": Bundle.read_json(vdir / "judge.json")
+                if (vdir / "judge.json").exists()
+                else {},
+                "render": Bundle.read_json(vdir / "render.json")
+                if (vdir / "render.json").exists()
+                else {},
+            }
+        )
     _BASELINE.parent.mkdir(parents=True, exist_ok=True)
     Bundle.write_json(_BASELINE, summary_to_baseline(variations))
     print(f"baseline updated from {run_dir} -> {_BASELINE} (review + commit it)")

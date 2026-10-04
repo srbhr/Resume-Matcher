@@ -58,7 +58,13 @@ class TestUploadGuards:
             async with client:
                 resp = await client.post(
                     "/api/v1/resumes/upload",
-                    files={"file": ("scanned.pdf", b"%PDF-1.4 image-only", "application/pdf")},
+                    files={
+                        "file": (
+                            "scanned.pdf",
+                            b"%PDF-1.4 image-only",
+                            "application/pdf",
+                        )
+                    },
                 )
         assert resp.status_code == 422
         assert "extract text" in resp.json()["detail"].lower()

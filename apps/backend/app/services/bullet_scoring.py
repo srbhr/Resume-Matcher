@@ -16,7 +16,12 @@ from app.services.refiner import _keyword_in_text
 logger = logging.getLogger(__name__)
 
 ScoringSource = Literal["llm", "keyword_fallback"]
-_JOB_TERM_KEYS = ("required_skills", "preferred_skills", "keywords", "key_responsibilities")
+_JOB_TERM_KEYS = (
+    "required_skills",
+    "preferred_skills",
+    "keywords",
+    "key_responsibilities",
+)
 
 
 def _entry_label(section: str, entry: dict[str, Any]) -> str:
@@ -47,6 +52,7 @@ def _make_validator(
 ) -> Callable[[dict[str, Any]], dict[str, Any]]:
     """Create a response validator: clamps scores to [0, 100], drops unknown paths and
     non-finite scores (NaN/Infinity would otherwise clamp to 100)."""
+
     def validate(response: dict[str, Any]) -> dict[str, Any]:
         items = response.get("scores")
         if not isinstance(items, list):
@@ -57,7 +63,11 @@ def _make_validator(
                 continue
             path = item.get("path")
             score = item.get("score")
-            if not isinstance(path, str) or path not in paths or isinstance(score, bool):
+            if (
+                not isinstance(path, str)
+                or path not in paths
+                or isinstance(score, bool)
+            ):
                 continue
             if isinstance(score, int):
                 # JSON ints are unbounded and float() raises OverflowError past ~1e308, so
@@ -78,11 +88,15 @@ def _job_terms(job_keywords: dict[str, Any]) -> set[str]:
     for key in _JOB_TERM_KEYS:
         values = job_keywords.get(key)
         if isinstance(values, list):
-            terms.update(v.strip().lower() for v in values if isinstance(v, str) and v.strip())
+            terms.update(
+                v.strip().lower() for v in values if isinstance(v, str) and v.strip()
+            )
     return terms
 
 
-def keyword_scores(data: dict[str, Any], job_keywords: dict[str, Any]) -> dict[BulletKey, float]:
+def keyword_scores(
+    data: dict[str, Any], job_keywords: dict[str, Any]
+) -> dict[BulletKey, float]:
     """Deterministic fallback: 20 points per distinct JD term found, capped at 100.
 
     Counts how many distinct job keywords appear in each bullet (case-insensitive,

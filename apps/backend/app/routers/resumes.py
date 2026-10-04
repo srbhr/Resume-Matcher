@@ -15,13 +15,15 @@ from fastapi import APIRouter, File, HTTPException, Query, Request, UploadFile
 from fastapi.responses import Response
 from pydantic import ValidationError
 
-from app.ai_limits import MAX_JOB_CHARACTERS, PromptSizeError, require_source_size
 from app.ai_budget import (
     AIOperationDeadlineExceeded,
     AIOperationRoute,
     remaining_timeout,
 )
-from app.config_cache import get_content_language, load_config as _load_config
+from app.ai_limits import MAX_JOB_CHARACTERS, PromptSizeError, require_source_size
+from app.config import settings
+from app.config_cache import get_content_language
+from app.config_cache import load_config as _load_config
 from app.database import (
     DatabaseBusyError,
     MasterResumeLimitError,
@@ -29,8 +31,7 @@ from app.database import (
     ResumeNotFoundError,
     db,
 )
-from app.pdf import render_resume_pdf, PDFRenderError
-from app.config import settings
+from app.pdf import PDFRenderError, render_resume_pdf
 from app.preview import (
     PreviewBusyError,
     PreviewClaim,
@@ -39,7 +40,7 @@ from app.preview import (
     job_fingerprint,
     resume_fingerprint,
 )
-
+from app.prompts import DEFAULT_IMPROVE_PROMPT_ID, IMPROVE_PROMPT_OPTIONS
 from app.schemas import (
     ATSScore,
     ATSSubScores,
@@ -47,46 +48,56 @@ from app.schemas import (
     GenerateContentResponse,
     GenerateInterviewPrepResponse,
     ImproveResumeConfirmRequest,
+    ImproveResumeData,
     ImproveResumeRequest,
     ImproveResumeResponse,
-    ImproveResumeData,
     InterviewPrepData,
+    RawResume,
     RefinementStats,
-    ResumeDiffSummary,
-    ResumeFieldDiff,
     ResumeData,
+    ResumeDiffSummary,
     ResumeFetchData,
     ResumeFetchResponse,
+    ResumeFieldDiff,
     ResumeListResponse,
     ResumeSummary,
     ResumeUploadResponse,
-    RawResume,
     SetDefaultMasterResponse,
     UpdateCoverLetterRequest,
     UpdateOutreachMessageRequest,
     UpdateTitleRequest,
     normalize_resume_data,
 )
-from app.services.parser import (
-    DocumentResourceLimitError,
-    MAX_EXTRACTED_TEXT_BYTES,
-    MAX_UNPACKED_DOCUMENT_BYTES,
-    has_meaningful_resume_content,
-    parse_document,
-    parse_resume_to_json,
-    restore_dates_from_markdown,
+from app.schemas.refinement import RefinementConfig
+from app.services.ats import compute_ats_score
+from app.services.bullet_selector import SELECTABLE_SECTIONS
+from app.services.cover_letter import (
+    generate_cover_letter,
+    generate_outreach_message,
+    generate_resume_title,
 )
 from app.services.improver import (
     MONTH_PATTERN,
     apply_diffs,
     extract_job_keywords,
     generate_improvements,
-    generate_skill_target_plan,
     generate_resume_diffs,
+    generate_skill_target_plan,
     improve_resume,
     is_fixed_row_append,
-    verify_skill_target_plan,
     verify_diff_result,
+    verify_skill_target_plan,
+)
+from app.services.interview_prep import generate_interview_prep
+from app.services.page_fit import render_drafts
+from app.services.parser import (
+    MAX_EXTRACTED_TEXT_BYTES,
+    MAX_UNPACKED_DOCUMENT_BYTES,
+    DocumentResourceLimitError,
+    has_meaningful_resume_content,
+    parse_document,
+    parse_resume_to_json,
+    restore_dates_from_markdown,
 )
 from app.services.refiner import (
     calculate_keyword_match,
@@ -98,22 +109,11 @@ from app.services.resume_preservation import (
     grounding_review_warnings,
     validate_confirmed_resume,
 )
-from app.services.ats import compute_ats_score
-from app.services.bullet_selector import SELECTABLE_SECTIONS
-from app.services.page_fit import render_drafts
 from app.services.tailor_selection import (
     PAGE_FIT_FINAL_OVER_WARNING,
     final_page_check,
     run_bullet_selection,
 )
-from app.schemas.refinement import RefinementConfig
-from app.services.cover_letter import (
-    generate_cover_letter,
-    generate_outreach_message,
-    generate_resume_title,
-)
-from app.services.interview_prep import generate_interview_prep
-from app.prompts import DEFAULT_IMPROVE_PROMPT_ID, IMPROVE_PROMPT_OPTIONS
 
 logger = logging.getLogger(__name__)
 _PROCESSING_CLEANUP_TIMEOUT_SECONDS = 5.0
@@ -595,7 +595,7 @@ def _build_ats_score(
             injectable_keywords=ats_raw["injectable_keywords"],
             recommendations=ats_raw["recommendations"],
         )
-    except Exception as e:
+    except Exception:
         logger.warning("ATS score computation failed", exc_info=True)
         return None
 
@@ -738,9 +738,7 @@ async def _generate_auxiliary_messages(
                 not isinstance(result, str) or not result.strip()
             ):
                 logger.warning("%s generation returned empty output", label)
-                warnings.append(
-                    f"{label.replace('_', ' ').title()} generation failed"
-                )
+                warnings.append(f"{label.replace('_', ' ').title()} generation failed")
                 continue
             if label == "title":
                 title = result.strip()
@@ -926,6 +924,7 @@ async def _claim_processing(
     try:
         return await asyncio.shield(claim)
     except asyncio.CancelledError:
+
         async def retire_claim() -> None:
             token = await claim
             if token is not None:
@@ -935,9 +934,13 @@ async def _claim_processing(
         try:
             await _await_processing_cleanup(retirement)
         except TimeoutError:
-            logger.warning("Processing claim retirement continues for resume %s", resume_id)
+            logger.warning(
+                "Processing claim retirement continues for resume %s", resume_id
+            )
         except Exception:
-            logger.exception("Failed to settle cancelled processing claim for %s", resume_id)
+            logger.exception(
+                "Failed to settle cancelled processing claim for %s", resume_id
+            )
         raise
 
 
@@ -978,7 +981,7 @@ async def upload_resume(
         ) from e
     except (DatabaseBusyError, PromptSizeError):
         raise
-    except Exception as e:
+    except Exception:
         logger.exception("Document parsing failed")
         raise HTTPException(
             status_code=422,
@@ -1016,7 +1019,10 @@ async def upload_resume(
     # Preserve acknowledgement of this request's committed insert even if its
     # parse fails or the outer operation timer cancels the handler. A status
     # snapshot would be misleading while retirement/newer work is still pending.
-    request.state.uploaded_resume = (resume["resume_id"], resume.get("is_master", False))
+    request.state.uploaded_resume = (
+        resume["resume_id"],
+        resume.get("is_master", False),
+    )
 
     try:
         processing_token = await _claim_processing(resume["resume_id"])
@@ -1373,8 +1379,7 @@ async def _improve_preview_flow(
             fixed_row_sections=fixed_row_sections,
         )
         allow_appended_rows = any(
-            change.action == "append"
-            for change in applied_changes
+            change.action == "append" for change in applied_changes
         )
 
         diff_warnings = verify_diff_result(
@@ -1592,8 +1597,11 @@ async def improve_resume_confirm_endpoint(
         if claim.response is not None:
             data = ImproveResumeData.model_validate(claim.response)
             await _auto_create_tracker_application(
-                job_id=request.job_id, tailored_resume_id=data.resume_id,
-                master_resume_id=request.resume_id, job=job, title=None,
+                job_id=request.job_id,
+                tailored_resume_id=data.resume_id,
+                master_resume_id=request.resume_id,
+                job=job,
+                title=None,
             )
             return ImproveResumeResponse(request_id=data.request_id, data=data)
 
@@ -1603,12 +1611,16 @@ async def improve_resume_confirm_endpoint(
         try:
             original = claim.source_data or _get_original_resume_data(resume)
             if original is None:
-                raise ValueError("Original resume data is unavailable; process the source before preview")
+                raise ValueError(
+                    "Original resume data is unavailable; process the source before preview"
+                )
             canonical = ResumeData.model_validate(
                 finalize_ai_resume(original, improved_data, allow_appended_rows=True)
             ).model_dump()
             if canonical != improved_data:
-                raise ValueError("Registered preview no longer satisfies preservation rules")
+                raise ValueError(
+                    "Registered preview no longer satisfies preservation rules"
+                )
             _validate_confirm_payload(original, improved_data, allow_appended_rows=True)
         except ValueError as e:
             logger.warning("Resume confirm rejected: %s", e)
@@ -1630,18 +1642,22 @@ async def improve_resume_confirm_endpoint(
         # The durable claim lasts longer than the bounded external work. Other
         # workers return a retryable conflict instead of duplicating generation.
         stage = "generate_auxiliary_messages"
-        cover_letter, outreach_message, title, interview_prep, aux_warnings = (
-            await asyncio.wait_for(
-                _generate_auxiliary_messages(
-                    improved_data,
-                    job["content"],
-                    language,
-                    feature_config.get("enable_cover_letter", False),
-                    feature_config.get("enable_outreach_message", False),
-                    feature_config.get("enable_interview_prep", False),
-                ),
-                timeout=remaining_timeout(),
-            )
+        (
+            cover_letter,
+            outreach_message,
+            title,
+            interview_prep,
+            aux_warnings,
+        ) = await asyncio.wait_for(
+            _generate_auxiliary_messages(
+                improved_data,
+                job["content"],
+                language,
+                feature_config.get("enable_cover_letter", False),
+                feature_config.get("enable_outreach_message", False),
+                feature_config.get("enable_interview_prep", False),
+            ),
+            timeout=remaining_timeout(),
         )
         response_warnings.extend(aux_warnings)
         improved_text = json.dumps(improved_data, indent=2)
@@ -1779,8 +1795,7 @@ async def improve_resume_endpoint(
                 changes=diff_result.changes,
             )
             allow_appended_rows = any(
-                change.action == "append"
-                for change in applied_changes
+                change.action == "append" for change in applied_changes
             )
 
             diff_warnings = verify_diff_result(

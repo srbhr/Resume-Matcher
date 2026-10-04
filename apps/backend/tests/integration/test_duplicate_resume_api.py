@@ -142,7 +142,9 @@ async def test_duplicate_tailored_carries_its_job_context(
         },
         improvements=[{"suggestion": "Lead with Kubernetes", "lineNumber": None}],
     )
-    source_jd = await client.get(f"/api/v1/resumes/{tailored['resume_id']}/job-description")
+    source_jd = await client.get(
+        f"/api/v1/resumes/{tailored['resume_id']}/job-description"
+    )
     assert source_jd.status_code == 200
 
     res = await client.post(f"/api/v1/resumes/{tailored['resume_id']}/duplicate")
@@ -156,10 +158,14 @@ async def test_duplicate_tailored_carries_its_job_context(
     assert link is not None
     assert link["job_id"] == job["job_id"]
     assert link["original_resume_id"] == master["resume_id"]
-    assert link["improvements"] == [{"suggestion": "Lead with Kubernetes", "lineNumber": None}]
+    assert link["improvements"] == [
+        {"suggestion": "Lead with Kubernetes", "lineNumber": None}
+    ]
     assert link["request_id"] != "req-original"
     # The original keeps its own link.
-    original_link = await isolated_db.get_improvement_by_tailored_resume(tailored["resume_id"])
+    original_link = await isolated_db.get_improvement_by_tailored_resume(
+        tailored["resume_id"]
+    )
     assert original_link is not None and original_link["request_id"] == "req-original"
 
 
