@@ -96,6 +96,8 @@ cd apps/backend
 uv sync                                              # install deps (creates .venv)
 uv run uvicorn app.main:app --reload --port 8000     # dev server on :8000
 uv run app                                           # console script (app.main:main, uses HOST/PORT/RELOAD)
+uv run ruff check                                    # lint backend
+uv run ruff format                                   # format backend
 uv run playwright install chromium                   # one-time, required for PDF endpoints
 ```
 Config via `.env` (see `.env.example`). Interactive API docs at `/docs`.
