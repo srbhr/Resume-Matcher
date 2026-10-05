@@ -11,8 +11,9 @@ NC='\033[0m' # No Color
 BOLD='\033[1m'
 
 # Internal port configuration for single-port deployment.
-FRONTEND_PORT="3000"
-BACKEND_PORT="8000"
+# Override via environment variables (e.g. docker run -e FRONTEND_PORT=4000).
+FRONTEND_PORT="${FRONTEND_PORT:-3000}"
+BACKEND_PORT="${BACKEND_PORT:-8000}"
 
 # Print banner
 print_banner() {
