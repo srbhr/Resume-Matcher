@@ -50,7 +50,7 @@ import { AtsCheckView } from './ats-check-view';
 import { RegenerateWizard } from './regenerate-wizard';
 import { useRegenerateWizard } from '@/hooks/use-regenerate-wizard';
 import { useTranslations } from '@/lib/i18n';
-import { type TemplateSettings } from '@/lib/types/template-settings';
+import { DEFAULT_TEMPLATE_SETTINGS, type TemplateSettings } from '@/lib/types/template-settings';
 import {
   TEMPLATE_SETTINGS_STORAGE_KEY,
   readStoredTemplateSettings,
@@ -221,9 +221,15 @@ const ResumeBuilderContent = () => {
   const [hasCurrentLocalDraft, setHasCurrentLocalDraft] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [loadingState, setLoadingState] = useState<'idle' | 'loading' | 'loaded' | 'error'>('idle');
-  const [templateSettings, setTemplateSettings] = useState<TemplateSettings>(
-    readStoredTemplateSettings
-  );
+  // Start from defaults so server and client render the same markup; stored
+  // settings load after hydration.
+  const [templateSettings, setTemplateSettings] =
+    useState<TemplateSettings>(DEFAULT_TEMPLATE_SETTINGS);
+  const [templateSettingsLoaded, setTemplateSettingsLoaded] = useState(false);
+  useEffect(() => {
+    setTemplateSettings(readStoredTemplateSettings());
+    setTemplateSettingsLoaded(true);
+  }, []);
   const { improvedData } = useResumePreview();
   const improvedPreview = improvedData?.data?.resume_preview;
   const improvedCoverLetter = improvedData?.data?.cover_letter;
@@ -402,8 +408,9 @@ const ResumeBuilderContent = () => {
 
   // Save template settings to localStorage when they change
   useEffect(() => {
+    if (!templateSettingsLoaded) return;
     safeStorage.set(TEMPLATE_SETTINGS_STORAGE_KEY, JSON.stringify(templateSettings));
-  }, [templateSettings]);
+  }, [templateSettings, templateSettingsLoaded]);
 
   // Warn user before leaving with unsaved changes
   useEffect(() => {
