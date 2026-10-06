@@ -710,6 +710,13 @@ def get_model_name(config: LLMConfig) -> str:
             return config.model
         return f"openrouter/{config.model}"
 
+    # Groq models can have publisher namespaces (e.g., openai/gpt-oss-120b, meta-llama/...)
+    # Always ensure groq/ prefix so LiteLLM doesn't mistake publisher prefixes for the target provider.
+    if config.provider == "groq":
+        if config.model.startswith("groq/"):
+            return config.model
+        return f"groq/{config.model}"
+
     # For other providers, don't add prefix if model already has a known prefix
     known_prefixes = [
         "openrouter/",

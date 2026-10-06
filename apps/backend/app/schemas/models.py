@@ -988,3 +988,98 @@ class ImproveDiffResult(BaseModel):
 
     changes: list[ResumeChange] = Field(default_factory=list)
     strategy_notes: str = Field(default="")
+
+
+# Batch Tailoring Models
+class BatchTailorRequest(BaseModel):
+    """Request to batch tailor resumes for multiple job descriptions."""
+
+    resume_id: str
+    job_descriptions: list[str]
+    rate_limit_seconds: float = 5.0
+    prompt_id: str | None = None
+
+
+class BatchItemResponse(BaseModel):
+    """Status of an individual job in a batch."""
+
+    item_id: str
+    index: int
+    job_description_snippet: str
+    status: str
+    tailored_resume_id: str | None = None
+    job_id: str | None = None
+    error: str | None = None
+    created_at: str
+    updated_at: str
+
+
+class BatchTailorResponse(BaseModel):
+    """Initial response when a batch is queued."""
+
+    batch_id: str
+    total_jobs: int
+    message: str
+    status: str
+
+
+class BatchStatusResponse(BaseModel):
+    """Status response for a batch tailoring task."""
+
+    batch_id: str
+    resume_id: str
+    total_jobs: int
+    completed_jobs: int
+    failed_jobs: int
+    status: str
+    rate_limit_seconds: float
+    created_at: str
+    updated_at: str
+    items: list[BatchItemResponse]
+
+
+# Single Queue Models
+class JobQueueAddRequest(BaseModel):
+    """Request to queue a single job description for background tailoring."""
+
+    resume_id: str
+    job_description: str
+    role: str | None = None
+    company: str | None = None
+    job_req_id: str | None = None
+    rate_limit_seconds: float = 5.0
+    prompt_id: str | None = None
+
+
+class JobQueueItemResponse(BaseModel):
+    """Item in the tailoring queue."""
+
+    item_id: str
+    resume_id: str
+    job_description_snippet: str
+    role: str
+    company: str
+    job_req_id: str
+    status: str
+    tailored_resume_id: str | None = None
+    title: str | None = None
+    job_id: str | None = None
+    error: str | None = None
+    rate_limit_seconds: float
+    created_at: str
+    updated_at: str
+
+
+class JobMetadataParseRequest(BaseModel):
+    """Request to parse metadata (role, company, id) from job description."""
+
+    job_description: str
+
+
+class JobMetadataParseResponse(BaseModel):
+    """Extracted metadata from a job description."""
+
+    role: str
+    company: str
+    job_req_id: str
+

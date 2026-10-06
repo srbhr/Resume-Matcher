@@ -21,7 +21,7 @@ import { fetchPromptConfig, type PromptOption } from '@/lib/api/config';
 import { getPreviewErrorMessage } from '@/lib/utils/preview-error';
 import { Dropdown } from '@/components/ui/dropdown';
 import { useStatusCache } from '@/lib/context/status-cache';
-import { Loader2, ArrowLeft, AlertTriangle, Settings } from 'lucide-react';
+import { Loader2, ArrowLeft, AlertTriangle, Settings, ListOrdered } from 'lucide-react';
 import { useTranslations } from '@/lib/i18n';
 import { DiffPreviewModal } from '@/components/tailor/diff-preview-modal';
 import { ATSScoreCard } from '@/components/tailor/ats-score-card';
@@ -415,11 +415,21 @@ export default function TailorPage() {
   return (
     <div className="min-h-screen w-full bg-[#F6F5EE] flex flex-col items-center justify-center p-4 md:p-8 font-sans">
       <div className="w-full max-w-4xl bg-white border border-black shadow-sw-lg p-8 md:p-12 lg:p-14 relative">
-        {/* Back Button */}
+        {/* Top Actions */}
         <Button variant="link" className="absolute top-4 left-4" onClick={() => router.back()}>
           <ArrowLeft className="w-4 h-4" />
           {t('common.back')}
         </Button>
+        <Link href="/queue" className="absolute top-4 right-4">
+          <Button
+            variant="outline"
+            size="sm"
+            className="border-2 border-black text-xs font-mono font-bold rounded-none"
+          >
+            <ListOrdered className="w-3.5 h-3.5 mr-1 text-blue-700" />
+            Tailoring Queue
+          </Button>
+        </Link>
 
         <div className="mb-8 mt-4 text-center">
           <h1 className="font-serif text-4xl font-bold uppercase tracking-tight mb-2">

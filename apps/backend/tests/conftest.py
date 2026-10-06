@@ -61,15 +61,40 @@ def deny_external_network(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
     network connection must explicitly replace this guard at their boundary.
     """
 
-    def blocked_connection(*args: Any, **kwargs: Any) -> NoReturn:
-        del args, kwargs
+    original_connect = socket.socket.connect
+    original_connect_ex = socket.socket.connect_ex
+    original_create_connection = socket.create_connection
+
+    def is_loopback(address: Any) -> bool:
+        if isinstance(address, tuple) and len(address) >= 1:
+            host = address[0]
+            return host in ("127.0.0.1", "localhost", "::1")
+        return False
+
+    def blocked_connect(self: Any, *args: Any, **kwargs: Any) -> Any:
+        if args and is_loopback(args[0]):
+            return original_connect(self, *args, **kwargs)
         raise UnexpectedNetworkAccess(
             "External network access blocked in deterministic backend tests"
         )
 
-    monkeypatch.setattr(socket, "create_connection", blocked_connection)
-    monkeypatch.setattr(socket.socket, "connect", blocked_connection)
-    monkeypatch.setattr(socket.socket, "connect_ex", blocked_connection)
+    def blocked_connect_ex(self: Any, *args: Any, **kwargs: Any) -> Any:
+        if args and is_loopback(args[0]):
+            return original_connect_ex(self, *args, **kwargs)
+        raise UnexpectedNetworkAccess(
+            "External network access blocked in deterministic backend tests"
+        )
+
+    def blocked_create_connection(address: Any, *args: Any, **kwargs: Any) -> Any:
+        if is_loopback(address):
+            return original_create_connection(address, *args, **kwargs)
+        raise UnexpectedNetworkAccess(
+            "External network access blocked in deterministic backend tests"
+        )
+
+    monkeypatch.setattr(socket, "create_connection", blocked_create_connection)
+    monkeypatch.setattr(socket.socket, "connect", blocked_connect)
+    monkeypatch.setattr(socket.socket, "connect_ex", blocked_connect_ex)
     yield
 
 

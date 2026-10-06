@@ -11,7 +11,12 @@ import type {
 } from '@/lib/api/enrichment';
 
 export type RegenerateWizardStep =
-  'idle' | 'selecting' | 'instructing' | 'generating' | 'previewing' | 'complete';
+  | 'idle'
+  | 'selecting'
+  | 'instructing'
+  | 'generating'
+  | 'previewing'
+  | 'complete';
 
 interface RegenerateWizardProps {
   // Step state
