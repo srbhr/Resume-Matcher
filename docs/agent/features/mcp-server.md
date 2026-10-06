@@ -42,6 +42,6 @@ Any client works the same way: run the command `uv` with args `run --directory <
 | File | Purpose |
 |------|---------|
 | `apps/backend/app/mcp_server/server.py` | `MCPServer`, agent instructions, lifespan, `main()` |
-| `apps/backend/app/mcp_server/tools.py` | Tool functions and annotations |
+| `apps/backend/app/mcp_server/tools/` | One module per tool; `_shared.py` holds common helpers, `__init__.py` registers the read-only and write tool lists |
 | `apps/backend/app/services/page_fit.py` | `resume_print_url`, `print_margins`, `count_pdf_pages` |
 | `apps/backend/tests/integration/test_mcp_server.py` | In-memory client tests, route/PDF URL parity, stdio hygiene |

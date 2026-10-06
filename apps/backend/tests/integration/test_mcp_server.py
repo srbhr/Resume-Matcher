@@ -1,6 +1,7 @@
 """MCP server: deterministic tools over an in-memory client, plus stdio hygiene."""
 
 import copy
+import importlib
 import json
 import os
 import subprocess
@@ -27,6 +28,8 @@ from app.routers.resumes import _hash_job_content
 from tests.unit.test_page_fit import _pdf
 
 pytestmark = pytest.mark.integration
+
+export_module = importlib.import_module("app.mcp_server.tools.export_resume_pdf")
 
 EXPECTED_TOOLS = {
     "get_status",
@@ -278,7 +281,7 @@ async def test_export_pdf_writes_file_with_the_route_print_url(
         master = await _master(mcp, sample_resume)
         mcp_render = AsyncMock(return_value=_pdf(2))
         route_render = AsyncMock(return_value=_pdf(2))
-        monkeypatch.setattr(tools, "render_resume_pdf", mcp_render)
+        monkeypatch.setattr(export_module, "render_resume_pdf", mcp_render)
         monkeypatch.setattr(resumes_router, "render_resume_pdf", route_render)
         options = {
             "template": "modern",
@@ -324,7 +327,9 @@ async def test_export_pdf_render_failure_points_at_frontend(
     async with connect() as mcp:
         master = await _master(mcp, sample_resume)
         monkeypatch.setattr(
-            tools, "render_resume_pdf", AsyncMock(side_effect=PDFRenderError("boom"))
+            export_module,
+            "render_resume_pdf",
+            AsyncMock(side_effect=PDFRenderError("boom")),
         )
         message = await call_error(
             mcp, "export_resume_pdf", {"resume_id": master["resume_id"]}
