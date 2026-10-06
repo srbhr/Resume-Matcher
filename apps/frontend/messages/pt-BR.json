@@ -218,7 +218,8 @@
       "coverLetter": "CARTA DE APRESENTAÇÃO",
       "outreach": "MENSAGEM DE CONTATO",
       "jdMatch": "ANÁLISE DE VAGA",
-      "interviewPrep": "PREPARAÇÃO"
+      "interviewPrep": "PREPARAÇÃO",
+      "atsCheck": "VERIFICAÇÃO ATS"
     },
     "footer": {
       "moduleLabel": "Módulo de Criação de Currículo",
@@ -494,7 +495,8 @@
       "coverLetterEditor": "Editor de Carta de Apresentação",
       "outreachEditor": "Editor de Mensagem de Contato",
       "jdMatchAnalysis": "Análise de Correspondência de Vaga",
-      "interviewPrep": "Preparação para entrevista"
+      "interviewPrep": "Preparação para entrevista",
+      "atsCheck": "Verificação de leitura ATS"
     },
     "alerts": {
       "saveNotAvailable": "Salvar só está disponível ao editar um currículo existente.",
@@ -521,6 +523,125 @@
       "description": "Não foi possível sincronizar as alterações mais recentes com o servidor nem salvá-las neste navegador. Sair agora pode perder essas alterações.",
       "leave": "Sair mesmo assim",
       "stay": "Continuar editando"
+    },
+    "atsCheck": {
+      "aboutTitle": "O que é verificado",
+      "aboutDescription": "Geramos seu currículo com o modelo e as configurações atuais e depois o lemos como um extrator de texto de ATS simples faria. Nenhuma IA é usada.",
+      "roundTripTitle": "Ida e volta",
+      "roundTripDescription": "Compara o texto extraído com os dados do seu currículo. Mede a fidelidade de leitura desta versão, não a precisão de um ATS específico.",
+      "tipsTitle": "Dicas",
+      "tips": {
+        "items": {
+          "singleColumn": "Modelos de uma coluna são lidos na ordem certa.",
+          "standardHeadings": "Use nomes de seção padrão como Experiência, Formação e Habilidades.",
+          "contactInBody": "Mantenha seus dados de contato no texto principal."
+        }
+      },
+      "templateLabel": "Modelo: {template}",
+      "runButton": "VERIFICAR",
+      "rerunButton": "VERIFICAR NOVAMENTE",
+      "running": "VERIFICANDO...",
+      "emptyState": "Execute uma verificação para ver como um ATS lê este currículo com o modelo atual.",
+      "saveFirst": "Salve o currículo antes de executar uma verificação.",
+      "unsavedNotice": "Alterações não salvas não são incluídas. A verificação usa a última versão salva.",
+      "error": "A verificação falhou. Confira se o backend e o frontend estão rodando e tente de novo.",
+      "parseability": "Legibilidade",
+      "content": "Conteúdo",
+      "extractability": {
+        "full": "Extração de texto: completa",
+        "partial": "Extração de texto: parcial",
+        "none": "Extração de texto: nenhuma"
+      },
+      "status": {
+        "pass": "OK",
+        "warn": "ALERTA",
+        "fail": "FALHA"
+      },
+      "checksTitle": "Verificações",
+      "contentRecall": "Conteúdo recuperado",
+      "orderFidelity": "Ordem de leitura",
+      "allFieldsFound": "Todos os campos aparecem no texto extraído.",
+      "fieldStatus": {
+        "found": "Encontrado",
+        "garbled": "Embaralhado",
+        "missing": "Ausente",
+        "hidden": "Oculto"
+      },
+      "previewTitle": "Texto extraído",
+      "sectionKinds": {
+        "experience": "Experiência",
+        "education": "Formação",
+        "skills": "Habilidades"
+      },
+      "checks": {
+        "text_layer": {
+          "title": "Texto selecionável",
+          "pass": "{characters} caracteres de texto foram extraídos.",
+          "fail": "Não há texto selecionável. O arquivo parece digitalizado ou só imagem, então um ATS não lê nada."
+        },
+        "garbled_glyphs": {
+          "title": "Codificação de caracteres",
+          "pass": "Nenhum caractere ilegível.",
+          "warn": "{count} caracteres não puderam ser decodificados.",
+          "fail": "{count} caracteres não puderam ser decodificados, então o texto fica corrompido para um ATS."
+        },
+        "text_coverage": {
+          "title": "Texto ou imagens",
+          "pass": "Todas as páginas têm texto real.",
+          "warn": "As páginas {pages} são quase só imagens.",
+          "fail": "Todas as páginas são quase só imagens."
+        },
+        "multi_column": {
+          "title": "Ordem de leitura única",
+          "pass": "O texto é lido em uma coluna.",
+          "fail": "Duas colunas detectadas na página {pages}. Muitos ATS misturam as colunas.",
+          "templateHint": "Este modelo usa duas colunas por design. Escolha um modelo de uma coluna para candidaturas com ATS."
+        },
+        "tables": {
+          "title": "Tabelas",
+          "pass": "Nenhuma tabela.",
+          "warn": "{count} tabelas encontradas. Alguns ATS achatam ou ignoram as células."
+        },
+        "text_boxes": {
+          "title": "Caixas de texto",
+          "pass": "Nenhuma caixa de texto.",
+          "warn": "Há caixas de texto. Alguns ATS as ignoram.",
+          "fail": "{characters} caracteres estão em caixas de texto que muitos ATS ignoram."
+        },
+        "header_footer_content": {
+          "title": "Cabeçalhos e rodapés",
+          "pass": "Nada importante em cabeçalhos ou rodapés.",
+          "warn": "Há conteúdo em cabeçalhos ou rodapés, que alguns ATS ignoram.",
+          "fail": "Seus dados de contato aparecem só no cabeçalho ou rodapé, que muitos ATS ignoram."
+        },
+        "images": {
+          "title": "Imagens",
+          "pass": "Nenhuma imagem.",
+          "warn": "{count} imagens encontradas. O texto dentro de imagens é invisível para um ATS."
+        },
+        "page_count": {
+          "title": "Tamanho",
+          "pass": "{pages} página(s).",
+          "warn": "{pages} páginas. Considere reduzir para duas páginas ou menos."
+        },
+        "contact_info": {
+          "title": "Dados de contato",
+          "pass": "E-mail e telefone encontrados no topo.",
+          "warn": "Os dados de contato estão incompletos ou aparecem tarde no texto.",
+          "fail": "Nenhum e-mail encontrado no texto extraído."
+        },
+        "section_headings": {
+          "title": "Títulos de seção",
+          "pass": "Títulos padrão encontrados: {found}.",
+          "warn": "Falta o título padrão: {missing}.",
+          "fail": "Faltam títulos padrão: {missing}. Use nomes como Experiência, Formação e Habilidades."
+        },
+        "dates": {
+          "title": "Datas",
+          "pass": "{years} anos encontrados nas datas.",
+          "warn": "Nenhuma data reconhecível."
+        }
+      }
     }
   },
   "enrichment": {

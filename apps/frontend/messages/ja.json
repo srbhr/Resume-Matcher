@@ -218,7 +218,8 @@
       "coverLetter": "カバーレター",
       "outreach": "連絡メール",
       "jdMatch": "JD一致",
-      "interviewPrep": "面接準備"
+      "interviewPrep": "面接準備",
+      "atsCheck": "ATSチェック"
     },
     "footer": {
       "moduleLabel": "履歴書ビルダーモジュール",
@@ -494,7 +495,8 @@
       "coverLetterEditor": "カバーレター編集",
       "outreachEditor": "連絡メール編集",
       "jdMatchAnalysis": "JD一致分析",
-      "interviewPrep": "面接準備"
+      "interviewPrep": "面接準備",
+      "atsCheck": "ATS読み取りチェック"
     },
     "alerts": {
       "saveNotAvailable": "既存の履歴書を編集中のみ保存できます。",
@@ -521,6 +523,125 @@
       "description": "最新の変更をサーバーと同期できず、このブラウザーにも保存できませんでした。今移動すると変更が失われる可能性があります。",
       "leave": "保存せずに移動",
       "stay": "編集を続ける"
+    },
+    "atsCheck": {
+      "aboutTitle": "チェック内容",
+      "aboutDescription": "現在のテンプレートと設定で履歴書を生成し、シンプルなATSのテキスト抽出と同じ方法で読み取ります。AIは使用しません。",
+      "roundTripTitle": "往復チェック",
+      "roundTripDescription": "抽出したテキストを履歴書データと比較します。この出力がどれだけ忠実に読み取れるかの指標であり、特定のATSの精度ではありません。",
+      "tipsTitle": "ヒント",
+      "tips": {
+        "items": {
+          "singleColumn": "1カラムのテンプレートは正しい順序で読み取られます。",
+          "standardHeadings": "職歴、学歴、スキルなど標準的なセクション名を使いましょう。",
+          "contactInBody": "連絡先は本文に記載しましょう。"
+        }
+      },
+      "templateLabel": "テンプレート: {template}",
+      "runButton": "チェック実行",
+      "rerunButton": "再チェック",
+      "running": "チェック中...",
+      "emptyState": "チェックを実行すると、現在のテンプレートでATSがこの履歴書をどう読むか確認できます。",
+      "saveFirst": "チェックを実行する前に履歴書を保存してください。",
+      "unsavedNotice": "未保存の編集は含まれません。最後に保存した版をチェックします。",
+      "error": "チェックに失敗しました。バックエンドとフロントエンドが起動しているか確認して、もう一度お試しください。",
+      "parseability": "読み取りやすさ",
+      "content": "内容",
+      "extractability": {
+        "full": "テキスト抽出: 完全",
+        "partial": "テキスト抽出: 一部",
+        "none": "テキスト抽出: なし"
+      },
+      "status": {
+        "pass": "合格",
+        "warn": "注意",
+        "fail": "不合格"
+      },
+      "checksTitle": "チェック項目",
+      "contentRecall": "内容の再現率",
+      "orderFidelity": "読み取り順序",
+      "allFieldsFound": "すべての項目が抽出テキストに含まれています。",
+      "fieldStatus": {
+        "found": "検出",
+        "garbled": "乱れ",
+        "missing": "欠落",
+        "hidden": "非表示"
+      },
+      "previewTitle": "抽出テキスト",
+      "sectionKinds": {
+        "experience": "職歴",
+        "education": "学歴",
+        "skills": "スキル"
+      },
+      "checks": {
+        "text_layer": {
+          "title": "選択可能なテキスト",
+          "pass": "{characters}文字のテキストを抽出しました。",
+          "fail": "選択可能なテキストがありません。スキャンまたは画像のみのファイルのようで、ATSは何も読み取れません。"
+        },
+        "garbled_glyphs": {
+          "title": "文字エンコーディング",
+          "pass": "読み取れない文字はありません。",
+          "warn": "{count}文字をデコードできませんでした。",
+          "fail": "{count}文字をデコードできず、ATSには文字化けして見えます。"
+        },
+        "text_coverage": {
+          "title": "テキストと画像",
+          "pass": "すべてのページに実際のテキストがあります。",
+          "warn": "{pages}ページはほぼ画像です。",
+          "fail": "すべてのページがほぼ画像です。"
+        },
+        "multi_column": {
+          "title": "単一の読み取り順序",
+          "pass": "テキストは1カラムで読み取られます。",
+          "fail": "{pages}ページで2カラムを検出しました。多くのATSはカラムを混ぜて読み取ります。",
+          "templateHint": "このテンプレートは2カラム構成です。ATSを使う応募には1カラムのテンプレートを選びましょう。"
+        },
+        "tables": {
+          "title": "表",
+          "pass": "表はありません。",
+          "warn": "{count}個の表があります。一部のATSは表のセルを平坦化または無視します。"
+        },
+        "text_boxes": {
+          "title": "テキストボックス",
+          "pass": "テキストボックスはありません。",
+          "warn": "テキストボックスがあります。一部のATSは無視します。",
+          "fail": "{characters}文字が、多くのATSが無視するテキストボックス内にあります。"
+        },
+        "header_footer_content": {
+          "title": "ヘッダーとフッター",
+          "pass": "ヘッダーやフッターに重要な内容はありません。",
+          "warn": "ヘッダーまたはフッターに内容があり、一部のATSは無視します。",
+          "fail": "連絡先がヘッダーまたはフッターにしかなく、多くのATSは無視します。"
+        },
+        "images": {
+          "title": "画像",
+          "pass": "画像はありません。",
+          "warn": "{count}個の画像があります。画像内のテキストはATSから見えません。"
+        },
+        "page_count": {
+          "title": "長さ",
+          "pass": "{pages}ページ。",
+          "warn": "{pages}ページです。2ページ以内に収めることを検討してください。"
+        },
+        "contact_info": {
+          "title": "連絡先",
+          "pass": "メールと電話番号が冒頭で見つかりました。",
+          "warn": "連絡先が不完全か、テキストの後半にあります。",
+          "fail": "抽出テキストにメールアドレスが見つかりません。"
+        },
+        "section_headings": {
+          "title": "セクション見出し",
+          "pass": "標準的な見出しが見つかりました: {found}。",
+          "warn": "標準的な見出しがありません: {missing}。",
+          "fail": "標準的な見出しがありません: {missing}。職歴、学歴、スキルなどの名前を使いましょう。"
+        },
+        "dates": {
+          "title": "日付",
+          "pass": "日付に{years}個の年が見つかりました。",
+          "warn": "認識できる日付が見つかりません。"
+        }
+      }
     }
   },
   "enrichment": {

@@ -120,6 +120,7 @@ apps/
 | AI enrichment | [enrichment.md](../docs/agent/features/enrichment.md) |
 | JD matching | [jd-match.md](../docs/agent/features/jd-match.md) |
 | MCP server | [mcp-server.md](../docs/agent/features/mcp-server.md) |
+| ATS parse-check | [ats-parse-check.md](../docs/agent/features/ats-parse-check.md) |
 
 ---
 

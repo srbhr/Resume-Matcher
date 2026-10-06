@@ -25,6 +25,8 @@ from app.mcp_server.server import build_server
 from app.pdf import PDFRenderError
 from app.routers import resumes as resumes_router
 from app.routers.resumes import _hash_job_content
+from app.services import ats_parse
+from tests.ats_fixtures import john_doe, render
 from tests.unit.test_page_fit import _pdf
 
 pytestmark = pytest.mark.integration
@@ -41,6 +43,8 @@ EXPECTED_TOOLS = {
     "extract_document_text",
     "validate_tailored_resume",
     "score_resume",
+    "parse_check_file",
+    "parse_check_resume",
     "list_applications",
     "create_master_resume",
     "update_resume",
@@ -375,3 +379,37 @@ def test_stdio_stdout_carries_only_protocol_messages(tmp_path: Path) -> None:
     for line in lines:
         assert json.loads(line)["jsonrpc"] == "2.0"
     assert json.loads(lines[0])["result"]["serverInfo"]["name"] == "resume-matcher"
+
+
+async def test_parse_check_resume_renders_in_memory(
+    monkeypatch: pytest.MonkeyPatch, isolated_db: Database
+) -> None:
+    async with connect() as mcp:
+        created = await call(mcp, "create_master_resume", {"resume_data": john_doe()})
+        rendered = AsyncMock(return_value=render("single-column"))
+        monkeypatch.setattr(ats_parse, "render_resume_pdf", rendered)
+        report = await call(
+            mcp,
+            "parse_check_resume",
+            {
+                "resume_id": created["resume_id"],
+                "print_settings": {"template": "clean"},
+            },
+        )
+    assert report["source"] == "render" and report["template"] == "clean"
+    assert report["roundtrip"]["content_recall"] == 1.0
+    assert "template=clean" in rendered.await_args.args[0]
+    assert not (isolated_db.db_path.parent / "exports").exists()
+
+
+async def test_parse_check_file(tmp_path: Path) -> None:
+    path = tmp_path / "cv.pdf"
+    path.write_bytes(render("two-column"))
+    async with connect() as mcp:
+        report = await call(mcp, "parse_check_file", {"file_path": str(path)})
+        rejected = await call_error(
+            mcp, "parse_check_file", {"file_path": str(tmp_path / "cv.doc")}
+        )
+    statuses = {c["id"]: c["status"] for c in report["checks"]}
+    assert statuses["multi_column"] == "fail"
+    assert "Unsupported" in rejected
