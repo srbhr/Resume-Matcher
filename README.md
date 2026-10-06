@@ -220,6 +220,8 @@ npm run dev
 
 Open **<http://localhost:3000>** and configure your AI provider in Settings.
 
+**Windows 11:** see [Windows 11 Setup](SETUP.md#windows-11-setup) for PowerShell commands.
+
 ### Supported AI Providers
 
 | Provider | Local/Cloud | Notes |
