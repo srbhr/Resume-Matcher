@@ -46,6 +46,7 @@ import {
   fetchJobDescription,
 } from '@/lib/api/resume';
 import { JDComparisonView } from './jd-comparison-view';
+import { AtsCheckView } from './ats-check-view';
 import { RegenerateWizard } from './regenerate-wizard';
 import { useRegenerateWizard } from '@/hooks/use-regenerate-wizard';
 import { useTranslations } from '@/lib/i18n';
@@ -77,10 +78,17 @@ import {
   type AttachmentDraftEnvelope,
 } from '@/lib/utils/attachment-draft-storage';
 
-type TabId = 'resume' | 'cover-letter' | 'outreach' | 'interview-prep' | 'jd-match';
+type TabId = 'resume' | 'cover-letter' | 'outreach' | 'interview-prep' | 'jd-match' | 'ats-check';
 type JobContextStatus = 'idle' | 'loading' | 'available' | 'missing';
 
-const TAB_IDS: TabId[] = ['resume', 'cover-letter', 'outreach', 'interview-prep', 'jd-match'];
+const TAB_IDS: TabId[] = [
+  'resume',
+  'cover-letter',
+  'outreach',
+  'interview-prep',
+  'jd-match',
+  'ats-check',
+];
 const RESUME_AUTOSAVE_DEBOUNCE_MS = 2500;
 const RESUME_AUTOSAVE_MAX_WAIT_MS = 12000;
 // Floor for the computed delay. Without it, once an unsynced streak exceeds the
@@ -1537,6 +1545,7 @@ const ResumeBuilderContent = () => {
                   {activeTab === 'outreach' && t('builder.leftPanel.outreachEditor')}
                   {activeTab === 'interview-prep' && t('builder.leftPanel.interviewPrep')}
                   {activeTab === 'jd-match' && t('builder.leftPanel.jdMatchAnalysis')}
+                  {activeTab === 'ats-check' && t('builder.leftPanel.atsCheck')}
                 </h2>
               </div>
 
@@ -1657,6 +1666,38 @@ const ResumeBuilderContent = () => {
                   </div>
                 </div>
               )}
+
+              {/* ATS Check Info Panel */}
+              {activeTab === 'ats-check' && (
+                <div className="space-y-4">
+                  <div className="border-2 border-black bg-white p-4">
+                    <h3 className="font-mono text-sm font-bold uppercase mb-2">
+                      {t('builder.atsCheck.aboutTitle')}
+                    </h3>
+                    <p className="text-sm text-ink-soft leading-relaxed">
+                      {t('builder.atsCheck.aboutDescription')}
+                    </p>
+                  </div>
+                  <div className="border-2 border-black bg-background p-4">
+                    <h3 className="font-mono text-sm font-bold uppercase mb-2">
+                      {t('builder.atsCheck.roundTripTitle')}
+                    </h3>
+                    <p className="text-sm text-ink-soft leading-relaxed">
+                      {t('builder.atsCheck.roundTripDescription')}
+                    </p>
+                  </div>
+                  <div className="border-2 border-black bg-white p-4">
+                    <h3 className="font-mono text-sm font-bold uppercase mb-2">
+                      {t('builder.atsCheck.tipsTitle')}
+                    </h3>
+                    <ul className="text-sm text-ink-soft space-y-1 list-disc list-inside">
+                      <li>{t('builder.atsCheck.tips.items.singleColumn')}</li>
+                      <li>{t('builder.atsCheck.tips.items.standardHeadings')}</li>
+                      <li>{t('builder.atsCheck.tips.items.contactInBody')}</li>
+                    </ul>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -1686,6 +1727,11 @@ const ResumeBuilderContent = () => {
                     id: 'jd-match',
                     label: t('builder.previewTabs.jdMatch'),
                     disabled: !jobDescription,
+                  },
+                  {
+                    id: 'ats-check',
+                    label: t('builder.previewTabs.atsCheck'),
+                    disabled: !resumeId,
                   },
                 ]}
                 activeTab={activeTab}
@@ -1753,6 +1799,16 @@ const ResumeBuilderContent = () => {
               {/* JD Match Comparison */}
               {activeTab === 'jd-match' && jobDescription && (
                 <JDComparisonView jobDescription={jobDescription} resumeData={resumeData} />
+              )}
+
+              {/* ATS Parse Check */}
+              {activeTab === 'ats-check' && (
+                <AtsCheckView
+                  resumeId={resumeId}
+                  settings={templateSettings}
+                  locale={uiLanguage}
+                  hasUnsavedChanges={hasUnsavedChanges}
+                />
               )}
             </div>
           </div>

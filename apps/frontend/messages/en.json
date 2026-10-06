@@ -213,7 +213,8 @@
       "coverLetter": "COVER LETTER",
       "outreach": "OUTREACH MAIL",
       "jdMatch": "JD MATCH",
-      "interviewPrep": "INTERVIEW PREP"
+      "interviewPrep": "INTERVIEW PREP",
+      "atsCheck": "ATS CHECK"
     },
     "footer": {
       "moduleLabel": "Resume Builder Module",
@@ -489,7 +490,8 @@
       "coverLetterEditor": "Cover Letter Editor",
       "outreachEditor": "Outreach Message Editor",
       "jdMatchAnalysis": "JD Match Analysis",
-      "interviewPrep": "Interview Prep"
+      "interviewPrep": "Interview Prep",
+      "atsCheck": "ATS Parse Check"
     },
     "alerts": {
       "saveNotAvailable": "Save is only available when editing an existing resume.",
@@ -516,6 +518,125 @@
       "description": "Your latest edits could not be synced to the server or saved in this browser. Leaving now may lose those edits.",
       "leave": "Leave Anyway",
       "stay": "Keep Editing"
+    },
+    "atsCheck": {
+      "aboutTitle": "What this checks",
+      "aboutDescription": "We render your resume with the current template and settings, then read it back the way a plain ATS text extractor does. No AI is involved.",
+      "roundTripTitle": "Round trip",
+      "roundTripDescription": "Compares the extracted text with your resume data. It measures how faithfully this render reads back, not the accuracy of any specific ATS.",
+      "tipsTitle": "Tips",
+      "tips": {
+        "items": {
+          "singleColumn": "Single-column templates read in the right order.",
+          "standardHeadings": "Keep standard section names like Experience, Education and Skills.",
+          "contactInBody": "Keep your contact details in the main text."
+        }
+      },
+      "templateLabel": "Template: {template}",
+      "runButton": "RUN CHECK",
+      "rerunButton": "RUN AGAIN",
+      "running": "CHECKING...",
+      "emptyState": "Run a check to see how an ATS reads this resume with the current template.",
+      "saveFirst": "Save the resume first to run a check.",
+      "unsavedNotice": "Unsaved edits are not included. The check uses the last saved version.",
+      "error": "The check failed. Make sure the backend and frontend are running, then try again.",
+      "parseability": "Parseability",
+      "content": "Content",
+      "extractability": {
+        "full": "Text extraction: full",
+        "partial": "Text extraction: partial",
+        "none": "Text extraction: none"
+      },
+      "status": {
+        "pass": "PASS",
+        "warn": "WARN",
+        "fail": "FAIL"
+      },
+      "checksTitle": "Checks",
+      "contentRecall": "Content recall",
+      "orderFidelity": "Reading order",
+      "allFieldsFound": "Every field was found in the extracted text.",
+      "fieldStatus": {
+        "found": "Found",
+        "garbled": "Garbled",
+        "missing": "Missing",
+        "hidden": "Hidden"
+      },
+      "previewTitle": "Extracted text",
+      "sectionKinds": {
+        "experience": "Experience",
+        "education": "Education",
+        "skills": "Skills"
+      },
+      "checks": {
+        "text_layer": {
+          "title": "Selectable text",
+          "pass": "{characters} characters of text were extracted.",
+          "fail": "No selectable text. The file looks scanned or image-only, so an ATS reads nothing."
+        },
+        "garbled_glyphs": {
+          "title": "Character encoding",
+          "pass": "No unreadable characters.",
+          "warn": "{count} characters could not be decoded.",
+          "fail": "{count} characters could not be decoded, so the text looks garbled to an ATS."
+        },
+        "text_coverage": {
+          "title": "Text vs. images",
+          "pass": "Every page has real text.",
+          "warn": "Pages {pages} are mostly images.",
+          "fail": "Every page is mostly images."
+        },
+        "multi_column": {
+          "title": "Single reading order",
+          "pass": "Text reads in one column.",
+          "fail": "Two columns detected on page {pages}. Many ATS readers mix the columns together.",
+          "templateHint": "This template uses two columns by design. Pick a single-column template for ATS-heavy applications."
+        },
+        "tables": {
+          "title": "Tables",
+          "pass": "No tables.",
+          "warn": "{count} tables found. Some ATS readers flatten or skip table cells."
+        },
+        "text_boxes": {
+          "title": "Text boxes",
+          "pass": "No text boxes.",
+          "warn": "Text boxes found. Some ATS readers skip them.",
+          "fail": "{characters} characters sit in text boxes that many ATS readers skip."
+        },
+        "header_footer_content": {
+          "title": "Headers and footers",
+          "pass": "Nothing important in page headers or footers.",
+          "warn": "Content found in headers or footers, which some ATS readers ignore.",
+          "fail": "Your contact details appear only in the header or footer, which many ATS readers ignore."
+        },
+        "images": {
+          "title": "Images",
+          "pass": "No images.",
+          "warn": "{count} images found. Text inside images is invisible to an ATS."
+        },
+        "page_count": {
+          "title": "Length",
+          "pass": "{pages} page(s).",
+          "warn": "{pages} pages. Consider trimming to two pages or fewer."
+        },
+        "contact_info": {
+          "title": "Contact details",
+          "pass": "Email and phone found near the top.",
+          "warn": "Contact details are incomplete or appear late in the text.",
+          "fail": "No email address found in the extracted text."
+        },
+        "section_headings": {
+          "title": "Section headings",
+          "pass": "Standard headings found: {found}.",
+          "warn": "Missing standard heading: {missing}.",
+          "fail": "Missing standard headings: {missing}. Use names like Experience, Education and Skills."
+        },
+        "dates": {
+          "title": "Dates",
+          "pass": "{years} years found in dates.",
+          "warn": "No recognizable dates found."
+        }
+      }
     }
   },
   "enrichment": {

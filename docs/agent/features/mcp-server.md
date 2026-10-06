@@ -26,6 +26,7 @@ Any client works the same way: run the command `uv` with args `run --directory <
 | Read | `get_status`, `get_resume_schema`, `list_resumes`, `get_resume`, `get_job`, `get_resume_job`, `list_applications` |
 | Ingest / edit | `extract_document_text` (local PDF/DOCX/DOC/MD/TXT → markdown), `create_master_resume`, `update_resume`, `set_resume_title`, `set_cover_letter`, `set_outreach_message`, `set_default_master` |
 | Tailoring | `add_job`, `set_job_keywords`, `validate_tailored_resume`, `save_tailored_resume`, `score_resume` |
+| Parse-check | `parse_check_file`, `parse_check_resume` (read-only, see [ats-parse-check.md](ats-parse-check.md)) |
 | Render | `export_resume_pdf` → `{path, page_count}` (default `data/exports/<id>-<template>.pdf`) |
 | Tracker | `create_application`, `update_application` |
 

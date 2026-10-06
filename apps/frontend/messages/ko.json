@@ -191,7 +191,8 @@
       "coverLetter": "자기소개서",
       "outreach": "아웃리치 메일",
       "jdMatch": "채용공고 매칭",
-      "interviewPrep": "면접 준비"
+      "interviewPrep": "면접 준비",
+      "atsCheck": "ATS 검사"
     },
     "footer": {
       "moduleLabel": "이력서 빌더 모듈",
@@ -467,7 +468,8 @@
       "coverLetterEditor": "자기소개서 편집기",
       "outreachEditor": "아웃리치 메시지 편집기",
       "jdMatchAnalysis": "채용공고 매칭 분석",
-      "interviewPrep": "면접 준비"
+      "interviewPrep": "면접 준비",
+      "atsCheck": "ATS 판독 검사"
     },
     "alerts": {
       "saveNotAvailable": "저장은 기존 이력서를 편집할 때만 사용할 수 있습니다.",
@@ -516,6 +518,125 @@
       "description": "최신 변경 사항을 서버와 동기화하거나 이 브라우저에 저장하지 못했습니다. 지금 나가면 변경 사항이 사라질 수 있습니다.",
       "leave": "그래도 나가기",
       "stay": "계속 편집"
+    },
+    "atsCheck": {
+      "aboutTitle": "검사 내용",
+      "aboutDescription": "현재 템플릿과 설정으로 이력서를 생성한 뒤, 단순한 ATS 텍스트 추출기와 같은 방식으로 다시 읽습니다. AI는 사용하지 않습니다.",
+      "roundTripTitle": "왕복 검사",
+      "roundTripDescription": "추출한 텍스트를 이력서 데이터와 비교합니다. 이 출력물이 얼마나 충실하게 읽히는지를 측정하며, 특정 ATS의 정확도는 아닙니다.",
+      "tipsTitle": "팁",
+      "tips": {
+        "items": {
+          "singleColumn": "1단 템플릿은 올바른 순서로 읽힙니다.",
+          "standardHeadings": "경력, 학력, 기술 같은 표준 섹션 이름을 사용하세요.",
+          "contactInBody": "연락처는 본문에 두세요."
+        }
+      },
+      "templateLabel": "템플릿: {template}",
+      "runButton": "검사 실행",
+      "rerunButton": "다시 검사",
+      "running": "검사 중...",
+      "emptyState": "검사를 실행하면 현재 템플릿에서 ATS가 이 이력서를 어떻게 읽는지 볼 수 있습니다.",
+      "saveFirst": "검사를 실행하려면 먼저 이력서를 저장하세요.",
+      "unsavedNotice": "저장하지 않은 수정은 포함되지 않습니다. 마지막으로 저장한 버전을 검사합니다.",
+      "error": "검사에 실패했습니다. 백엔드와 프런트엔드가 실행 중인지 확인한 뒤 다시 시도하세요.",
+      "parseability": "판독성",
+      "content": "내용",
+      "extractability": {
+        "full": "텍스트 추출: 전체",
+        "partial": "텍스트 추출: 일부",
+        "none": "텍스트 추출: 없음"
+      },
+      "status": {
+        "pass": "통과",
+        "warn": "주의",
+        "fail": "실패"
+      },
+      "checksTitle": "검사 항목",
+      "contentRecall": "내용 재현율",
+      "orderFidelity": "읽기 순서",
+      "allFieldsFound": "모든 항목이 추출된 텍스트에 있습니다.",
+      "fieldStatus": {
+        "found": "발견",
+        "garbled": "뒤섞임",
+        "missing": "누락",
+        "hidden": "숨김"
+      },
+      "previewTitle": "추출된 텍스트",
+      "sectionKinds": {
+        "experience": "경력",
+        "education": "학력",
+        "skills": "기술"
+      },
+      "checks": {
+        "text_layer": {
+          "title": "선택 가능한 텍스트",
+          "pass": "텍스트 {characters}자를 추출했습니다.",
+          "fail": "선택 가능한 텍스트가 없습니다. 스캔본이나 이미지 전용 파일로 보여 ATS가 아무것도 읽지 못합니다."
+        },
+        "garbled_glyphs": {
+          "title": "문자 인코딩",
+          "pass": "읽을 수 없는 문자가 없습니다.",
+          "warn": "{count}자를 디코딩하지 못했습니다.",
+          "fail": "{count}자를 디코딩하지 못해 ATS에는 텍스트가 깨져 보입니다."
+        },
+        "text_coverage": {
+          "title": "텍스트와 이미지",
+          "pass": "모든 페이지에 실제 텍스트가 있습니다.",
+          "warn": "{pages} 페이지는 대부분 이미지입니다.",
+          "fail": "모든 페이지가 대부분 이미지입니다."
+        },
+        "multi_column": {
+          "title": "단일 읽기 순서",
+          "pass": "텍스트가 한 단으로 읽힙니다.",
+          "fail": "{pages} 페이지에서 2단을 감지했습니다. 많은 ATS가 단을 섞어서 읽습니다.",
+          "templateHint": "이 템플릿은 의도적으로 2단을 사용합니다. ATS 지원에는 1단 템플릿을 선택하세요."
+        },
+        "tables": {
+          "title": "표",
+          "pass": "표가 없습니다.",
+          "warn": "표 {count}개가 있습니다. 일부 ATS는 표 셀을 평탄화하거나 건너뜁니다."
+        },
+        "text_boxes": {
+          "title": "텍스트 상자",
+          "pass": "텍스트 상자가 없습니다.",
+          "warn": "텍스트 상자가 있습니다. 일부 ATS는 이를 건너뜁니다.",
+          "fail": "{characters}자가 많은 ATS가 건너뛰는 텍스트 상자에 있습니다."
+        },
+        "header_footer_content": {
+          "title": "머리글과 바닥글",
+          "pass": "머리글이나 바닥글에 중요한 내용이 없습니다.",
+          "warn": "머리글이나 바닥글에 내용이 있으며, 일부 ATS는 이를 무시합니다.",
+          "fail": "연락처가 머리글이나 바닥글에만 있어 많은 ATS가 무시합니다."
+        },
+        "images": {
+          "title": "이미지",
+          "pass": "이미지가 없습니다.",
+          "warn": "이미지 {count}개가 있습니다. 이미지 속 텍스트는 ATS에 보이지 않습니다."
+        },
+        "page_count": {
+          "title": "분량",
+          "pass": "{pages}페이지.",
+          "warn": "{pages}페이지입니다. 두 페이지 이하로 줄이는 것을 고려하세요."
+        },
+        "contact_info": {
+          "title": "연락처",
+          "pass": "이메일과 전화번호가 상단에 있습니다.",
+          "warn": "연락처가 불완전하거나 텍스트 뒤쪽에 있습니다.",
+          "fail": "추출된 텍스트에서 이메일 주소를 찾지 못했습니다."
+        },
+        "section_headings": {
+          "title": "섹션 제목",
+          "pass": "표준 제목을 찾았습니다: {found}.",
+          "warn": "표준 제목이 없습니다: {missing}.",
+          "fail": "표준 제목이 없습니다: {missing}. 경력, 학력, 기술 같은 이름을 사용하세요."
+        },
+        "dates": {
+          "title": "날짜",
+          "pass": "날짜에서 연도 {years}개를 찾았습니다.",
+          "warn": "인식할 수 있는 날짜가 없습니다."
+        }
+      }
     }
   },
   "enrichment": {

@@ -31,6 +31,8 @@ employers, dates and entry counts; never invent metrics or skills.
 5. score_resume to check keyword coverage; update_resume to iterate.
 6. export_resume_pdf; if page_count is too high, tighten text, update_resume, \
 export again. PDF export needs the web frontend running.
+7. parse_check_resume with the same print_settings. If multi_column fails or \
+order_fidelity is low, suggest a single-column template.
 """
 
 

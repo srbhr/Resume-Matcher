@@ -17,6 +17,8 @@ from app.mcp_server.tools.get_resume_schema import get_resume_schema
 from app.mcp_server.tools.get_status import get_status
 from app.mcp_server.tools.list_applications import list_applications
 from app.mcp_server.tools.list_resumes import list_resumes
+from app.mcp_server.tools.parse_check_file import parse_check_file
+from app.mcp_server.tools.parse_check_resume import parse_check_resume
 from app.mcp_server.tools.save_tailored_resume import save_tailored_resume
 from app.mcp_server.tools.score_resume import score_resume
 from app.mcp_server.tools.set_cover_letter import set_cover_letter
@@ -40,6 +42,8 @@ READ_ONLY_TOOLS: list[Tool] = [
     extract_document_text,
     validate_tailored_resume,
     score_resume,
+    parse_check_file,
+    parse_check_resume,
     list_applications,
 ]
 
