@@ -119,6 +119,7 @@ apps/
 | i18n | [i18n.md](../docs/agent/features/i18n.md) |
 | AI enrichment | [enrichment.md](../docs/agent/features/enrichment.md) |
 | JD matching | [jd-match.md](../docs/agent/features/jd-match.md) |
+| MCP server | [mcp-server.md](../docs/agent/features/mcp-server.md) |
 
 ---
 

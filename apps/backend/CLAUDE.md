@@ -23,6 +23,7 @@ Stack: FastAPI 0.128 · Python **3.13+** · Pydantic v2 / pydantic-settings · S
 | Services | Business logic (parse, improve/diff, refine, cover-letter) | `app/services/*.py` |
 | Prompts | All LLM prompt templates + placeholder validation | `app/prompts/*.py` |
 | Schemas | Pydantic request/response + `ResumeData` models | `app/schemas/*.py` |
+| MCP server | stdio MCP tools; the agent is the LLM, no LLM calls here | `app/mcp_server/*.py` · [mcp-server.md](../../docs/agent/features/mcp-server.md) |
 
 `data/` holds `resume_matcher.db` (SQLite; primary store), `config.json` (non-secret config), `.secret_key` (Fernet secret for encrypted API keys), an `uploads/` dir, and possibly a legacy `database.json` (TinyDB — imported into SQLite on first startup, then renamed `database.json.migrated`). `.gitignore` ignores `*.db*`, `data/*.json`, and `data/.secret_key` (DB + config + secret never get committed), but **`uploads/` is NOT git-ignored** — don't commit user uploads. `db.reset_database()` truncates the document tables + `applications` (preserving `api_keys`) and wipes `uploads/`.
 
@@ -96,6 +97,7 @@ cd apps/backend
 uv sync                                              # install deps (creates .venv)
 uv run uvicorn app.main:app --reload --port 8000     # dev server on :8000
 uv run app                                           # console script (app.main:main, uses HOST/PORT/RELOAD)
+uv run resume-matcher-mcp                            # MCP server over stdio (see features/mcp-server.md)
 uv run ruff check                                    # lint backend
 uv run ruff format                                   # format backend
 uv run playwright install chromium                   # one-time, required for PDF endpoints
@@ -145,6 +147,7 @@ Config via `.env` (see `.env.example`). Interactive API docs at `/docs`.
 | Scope / principles | [`scope-and-principles.md`](../../docs/agent/scope-and-principles.md) · [`workflow.md`](../../docs/agent/workflow.md) |
 | AI enrichment | [`features/enrichment.md`](../../docs/agent/features/enrichment.md) |
 | JD matching | [`features/jd-match.md`](../../docs/agent/features/jd-match.md) |
+| MCP server | [`features/mcp-server.md`](../../docs/agent/features/mcp-server.md) |
 | Custom sections | [`features/custom-sections.md`](../../docs/agent/features/custom-sections.md) |
 | i18n | [`features/i18n.md`](../../docs/agent/features/i18n.md) |
 | PDF / templates | [`design/pdf-template-guide.md`](../../docs/agent/design/pdf-template-guide.md) · [`design/template-system.md`](../../docs/agent/design/template-system.md) |
