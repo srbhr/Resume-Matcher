@@ -85,7 +85,7 @@ Open your browser to **<http://localhost:3000>** and you're ready to go!
 
 ## Windows 11 Setup
 
-The commands above use macOS/Linux shell syntax. On Windows 11, use **PowerShell** (or Windows Terminal) instead.
+The commands above and in the rest of this guide use macOS/Linux shell syntax. On Windows 11, use the **PowerShell** (or Windows Terminal) commands in this section instead.
 
 ### 1. Install the prerequisites
 
@@ -116,16 +116,19 @@ Or, without Git, open the [repository page](https://github.com/srbhr/Resume-Matc
 ```powershell
 cd apps\backend
 Copy-Item .env.example .env   # Create config from template
-notepad .env                  # Optional: set your AI provider
+notepad .env                  # Edit the config (see below)
 uv sync                       # Install Python dependencies
 uv run app
 ```
 
-To enable auto-reload during development, set the variable first: `$env:RELOAD="true"; uv run app`.
+In `.env`, change `HOST=0.0.0.0` to `HOST=127.0.0.1` so the backend is only reachable from your own machine. The default listens on every network interface, and the API has no authentication, so other devices on your network could use your configured AI provider. Optionally set your AI provider here, and set `RELOAD=true` to auto-reload on code changes.
 
 ### 4. Start the frontend (PowerShell window 2)
 
+A new PowerShell window opens in your home folder, so first change to the folder where you cloned or extracted Resume Matcher (replace the path with your own):
+
 ```powershell
+cd C:\path\to\Resume-Matcher
 cd apps\frontend
 npm install
 npm run dev
