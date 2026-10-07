@@ -14,6 +14,7 @@ from sqlalchemy.orm import Mapper
 from app.database import Database
 from app.main import app
 from app.models import Job, Resume
+from tests.db_helpers import same_database
 
 
 @pytest.fixture
@@ -59,7 +60,7 @@ async def test_concurrent_replacements_and_late_completion_preserve_master_ident
     old = await isolated_db.create_resume_atomic_master(
         content="old", processing_status="processing"
     )
-    other = Database(db_path=isolated_db.db_path)
+    other = same_database(isolated_db)
     await other.list_resumes()
     start = asyncio.Event()
 
@@ -199,7 +200,7 @@ async def test_create_move_and_bulk_delete_share_column_ordering(
         await isolated_db.create_application(
             job_id=f"s{i}", resume_id=f"s{i}", status="saved"
         )
-    other = Database(db_path=isolated_db.db_path)
+    other = same_database(isolated_db)
     await other.list_applications()  # Initialize both instances before contention.
     counted = asyncio.Event()
     release = asyncio.Event()

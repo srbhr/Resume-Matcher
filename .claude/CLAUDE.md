@@ -121,6 +121,7 @@ apps/
 | JD matching | [jd-match.md](../docs/agent/features/jd-match.md) |
 | MCP server | [mcp-server.md](../docs/agent/features/mcp-server.md) |
 | ATS parse-check | [ats-parse-check.md](../docs/agent/features/ats-parse-check.md) |
+| PostgreSQL backend | [postgres-backend.md](../docs/agent/features/postgres-backend.md) |
 
 ---
 

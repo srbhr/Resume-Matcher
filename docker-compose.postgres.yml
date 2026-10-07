@@ -1,0 +1,31 @@
+# Optional PostgreSQL backend. SQLite stays the default without this file.
+#   POSTGRES_PASSWORD=change-me docker compose -f docker-compose.yml -f docker-compose.postgres.yml up
+# data/.secret_key still lives in the resume-data volume; keep it with the database.
+services:
+  resume-matcher:
+    environment:
+      - DATABASE_URL=postgresql://resume:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@postgres:5432/resume_matcher
+      - DATABASE_SCHEMA=${DATABASE_SCHEMA:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:17-alpine
+    container_name: resume-matcher-postgres
+    environment:
+      - POSTGRES_USER=resume
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      - POSTGRES_DB=resume_matcher
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U resume -d resume_matcher"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+    driver: local

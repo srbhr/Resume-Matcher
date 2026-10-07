@@ -62,6 +62,7 @@ See the [hosted review corrections](architecture/hosted-review-corrections.md) f
 | [jd-match](features/jd-match.md)                               | Job description matching                                 |
 | [mcp-server](features/mcp-server.md)                           | MCP server: agent-as-LLM tools over stdio                |
 | [ats-parse-check](features/ats-parse-check.md)                 | Deterministic ATS parseability check + round trip        |
+| [postgres-backend](features/postgres-backend.md)               | Optional PostgreSQL via DATABASE_URL                     |
 | [preview-confirmation](features/preview-confirmation.md)       | Durable preview identity, confirmation, bullet selection |
 | [i18n](features/i18n.md)                                       | Internationalization                                     |
 | [i18n-preparation](features/i18n-preparation.md)               | i18n setup notes                                         |
