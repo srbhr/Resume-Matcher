@@ -51,7 +51,7 @@ Rendered resumes report `multi_column.params.expected_by_template` for swiss-two
 | POST | `/api/v1/ats/parse-check` | multipart `file` (PDF/DOCX, 4MB) | 400 for bad type or empty file, 413 when too large, 422 when unreadable, 504 on timeout |
 | POST | `/api/v1/resumes/{id}/parse-check` | `PageFitSettings` (optional) | 404 if not found, 422 without structured data, 503 when render fails; needs the frontend running |
 
-MCP: `parse_check_file` and `parse_check_resume`, both read-only and writing nothing (see [mcp-server.md](mcp-server.md)).
+MCP: `parse_check_file` and `parse_check_resume`, both read-only and writing nothing. `verify_resume` and `tailor_and_verify` include the same report (see [mcp-server.md](mcp-server.md)).
 
 UI: the builder's **ATS CHECK** tab posts the current template settings through `checkResumeParse` (`lib/api/ats.ts`), the same mapping the PDF download uses.
 
