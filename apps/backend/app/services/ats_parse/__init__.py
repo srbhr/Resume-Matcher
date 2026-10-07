@@ -68,6 +68,13 @@ async def parse_check_render(
     pdf_bytes = await render_resume_pdf(
         resume_print_url(resume_id, fit), fit.pageSize, margins=print_margins(fit)
     )
+    return await parse_check_pdf(pdf_bytes, resume_data, fit)
+
+
+async def parse_check_pdf(
+    pdf_bytes: bytes, resume_data: dict[str, Any], fit: PageFitSettings
+) -> ParseCheckReport:
+    """Parse-check an already rendered resume PDF and round-trip it against its data."""
     return await parse_check_bytes(
         pdf_bytes,
         "resume.pdf",

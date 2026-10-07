@@ -3,8 +3,11 @@ from typing import Any
 
 from mcp.server.mcpserver.exceptions import ToolError
 
-from app.config import settings
-from app.mcp_server.tools._shared import require_resume, require_structured
+from app.mcp_server.tools._shared import (
+    render_failed_message,
+    require_resume,
+    require_structured,
+)
 from app.pdf import PDFRenderError
 from app.schemas.models import PageFitSettings
 from app.services import ats_parse
@@ -24,8 +27,5 @@ async def parse_check_resume(
         )
     except PDFRenderError as e:
         logger.error("Parse check render failed for %s: %s", resume_id, e)
-        raise ToolError(
-            "PDF rendering failed. Make sure the Resume Matcher frontend is running "
-            f"at {settings.frontend_base_url} and can reach the backend."
-        ) from e
+        raise ToolError(render_failed_message()) from e
     return report.model_dump()

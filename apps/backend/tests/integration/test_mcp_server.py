@@ -32,6 +32,7 @@ from tests.unit.test_page_fit import _pdf
 pytestmark = pytest.mark.integration
 
 export_module = importlib.import_module("app.mcp_server.tools.export_resume_pdf")
+shared_module = importlib.import_module("app.mcp_server.tools._shared")
 
 EXPECTED_TOOLS = {
     "get_status",
@@ -45,6 +46,7 @@ EXPECTED_TOOLS = {
     "score_resume",
     "parse_check_file",
     "parse_check_resume",
+    "verify_resume",
     "list_applications",
     "create_master_resume",
     "update_resume",
@@ -55,6 +57,7 @@ EXPECTED_TOOLS = {
     "add_job",
     "set_job_keywords",
     "save_tailored_resume",
+    "tailor_and_verify",
     "export_resume_pdf",
     "create_application",
     "update_application",
@@ -413,3 +416,146 @@ async def test_parse_check_file(tmp_path: Path) -> None:
     statuses = {c["id"]: c["status"] for c in report["checks"]}
     assert statuses["multi_column"] == "fail"
     assert "Unsupported" in rejected
+
+
+async def _john_doe_job(mcp: Client) -> tuple[dict[str, Any], str]:
+    master = await _master(mcp, john_doe())
+    job_id = await _job(
+        mcp,
+        "Senior Python engineer: FastAPI, PostgreSQL, Kubernetes.",
+        {"required_skills": ["Python", "FastAPI", "Kubernetes"]},
+    )
+    return master, job_id
+
+
+async def test_tailor_and_verify_rejects_without_writing(
+    isolated_db: Database, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    rendered = AsyncMock(return_value=render("single-column"))
+    monkeypatch.setattr(shared_module, "render_resume_pdf", rendered)
+    async with connect() as mcp:
+        master, job_id = await _john_doe_job(mcp)
+        dropped = copy.deepcopy(master["resume_data"])
+        dropped["workExperience"].pop()
+        result = await call(
+            mcp,
+            "tailor_and_verify",
+            {
+                "source_resume_id": master["resume_id"],
+                "job_id": job_id,
+                "resume_data": dropped,
+            },
+        )
+    assert result["saved"] is False and not result["validation"]["valid"]
+    assert any("workExperience" in v for v in result["validation"]["violations"])
+    assert len(await isolated_db.list_resumes()) == 1
+    assert await isolated_db.list_applications() == []
+    rendered.assert_not_awaited()
+
+
+async def test_tailor_and_verify_saves_renders_once_and_reports_issues(
+    isolated_db: Database, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    rendered = AsyncMock(return_value=render("two-column"))
+    monkeypatch.setattr(shared_module, "render_resume_pdf", rendered)
+    async with connect() as mcp:
+        master, job_id = await _john_doe_job(mcp)
+        result = await call(
+            mcp,
+            "tailor_and_verify",
+            {
+                "source_resume_id": master["resume_id"],
+                "job_id": job_id,
+                "resume_data": master["resume_data"],
+                "print_settings": {"template": "swiss-two-column"},
+            },
+        )
+        linked = await call(
+            mcp, "get_resume_job", {"resume_id": result["resume"]["resume_id"]}
+        )
+    assert result["saved"] is True and result["validation"]["valid"]
+    assert linked["job_id"] == job_id
+    assert result["resume"]["application_id"]
+    assert len(await isolated_db.list_applications()) == 1
+    assert result["score"]["keyword_match_percentage"] > 0
+    assert result["page_count"] == 1
+    assert result["parse_check"]["template"] == "swiss-two-column"
+    assert {"multi_column", "low_order_fidelity"} <= set(result["issues"])
+    rendered.assert_awaited_once()
+    assert "template=swiss-two-column" in rendered.await_args.args[0]
+
+
+async def test_verify_resume_flags_page_limit_and_writes_nothing(
+    isolated_db: Database, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(
+        shared_module, "render_resume_pdf", AsyncMock(return_value=_pdf(3))
+    )
+    async with connect() as mcp:
+        master = await _master(mcp, john_doe())
+        result = await call(
+            mcp, "verify_resume", {"resume_id": master["resume_id"], "max_pages": 1}
+        )
+    assert result["page_count"] == 3 and "over_page_limit" in result["issues"]
+    assert result["job_id"] is None and result["score"] is None
+    assert len(await isolated_db.list_resumes()) == 1
+    assert not (isolated_db.db_path.parent / "exports").exists()
+
+
+async def test_verify_resume_render_failure_still_scores(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        shared_module,
+        "render_resume_pdf",
+        AsyncMock(side_effect=PDFRenderError("chromium detail")),
+    )
+    async with connect() as mcp:
+        master, job_id = await _john_doe_job(mcp)
+        result = await call(
+            mcp,
+            "tailor_and_verify",
+            {
+                "source_resume_id": master["resume_id"],
+                "job_id": job_id,
+                "resume_data": master["resume_data"],
+            },
+        )
+    assert result["saved"] is True and result["issues"][0] == "render_failed"
+    assert "frontend is running" in result["render_error"]
+    assert "chromium detail" not in json.dumps(result)
+    assert result["score"] is not None and result["parse_check"] is None
+
+
+async def test_verify_resume_uses_the_pdf_route_print_url(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    mcp_render = AsyncMock(return_value=render("single-column"))
+    route_render = AsyncMock(return_value=render("single-column"))
+    monkeypatch.setattr(shared_module, "render_resume_pdf", mcp_render)
+    monkeypatch.setattr(resumes_router, "render_resume_pdf", route_render)
+    options = {
+        "template": "modern",
+        "pageSize": "LETTER",
+        "marginTop": 15,
+        "lang": "en",
+    }
+    async with connect() as mcp:
+        master = await _master(mcp, john_doe())
+        await call(
+            mcp,
+            "verify_resume",
+            {"resume_id": master["resume_id"], "print_settings": options},
+        )
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://t"
+        ) as c:
+            res = await c.get(
+                f"/api/v1/resumes/{master['resume_id']}/pdf", params=options
+            )
+    assert res.status_code == 200
+    mcp_url = urlsplit(mcp_render.await_args.args[0])
+    route_url = urlsplit(route_render.await_args.args[0])
+    assert mcp_url.path == route_url.path
+    assert parse_qs(mcp_url.query) == parse_qs(route_url.query)
+    assert mcp_render.await_args.kwargs == route_render.await_args.kwargs

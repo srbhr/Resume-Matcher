@@ -27,12 +27,15 @@ extract_document_text -> get_resume_schema -> create_master_resume.
 2. add_job with the job description and the keywords you extracted from it.
 3. Write tailored resume_data from the source resume. Keep personalInfo, \
 employers, dates and entry counts; never invent metrics or skills.
-4. validate_tailored_resume, fix any violations, then save_tailored_resume.
-5. score_resume to check keyword coverage; update_resume to iterate.
-6. export_resume_pdf; if page_count is too high, tighten text, update_resume, \
-export again. PDF export needs the web frontend running.
-7. parse_check_resume with the same print_settings. If multi_column fails or \
-order_fidelity is low, suggest a single-column template.
+4. tailor_and_verify with the source, job, resume_data and print_settings. It \
+validates, saves, renders once, parse-checks and scores. If saved is false, fix \
+the violations and call it again.
+5. For each code in issues, edit with update_resume, then verify_resume. On \
+multi_column or low_order_fidelity, suggest a single-column template. PDF \
+rendering needs the web frontend running.
+6. export_resume_pdf to write the final file.
+The single-step tools (validate_tailored_resume, save_tailored_resume, \
+score_resume, parse_check_resume) remain available.
 """
 
 

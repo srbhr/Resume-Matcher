@@ -2,14 +2,18 @@
 
 import functools
 import json
+import logging
 from collections.abc import Awaitable, Callable
 from typing import Any, ParamSpec, TypeVar, get_args
+from uuid import uuid4
 
 from mcp.server.mcpserver.exceptions import ToolError
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.ai_limits import MAX_SOURCE_CHARACTERS
+from app.config import settings
 from app.database import DatabaseBusyError, ResumeNotFoundError, db
+from app.pdf import render_resume_pdf
 from app.routers.resumes import (
     _get_original_resume_data,
     _hash_job_content,
@@ -17,10 +21,16 @@ from app.routers.resumes import (
 )
 from app.schemas import ResumeData, normalize_resume_data
 from app.schemas.models import PageFitSettings
+from app.services.ats import compute_ats_score
+from app.services.improver import generate_improvements
+from app.services.page_fit import print_margins, resume_print_url
+from app.services.refiner import analyze_keyword_gaps, calculate_keyword_match
 from app.services.resume_preservation import (
     finalize_ai_resume,
     grounding_review_warnings,
 )
+
+logger = logging.getLogger(__name__)
 
 P = ParamSpec("P")
 R = TypeVar("R")
@@ -191,3 +201,75 @@ def tailoring_report(
         "changed_field_count": len(changed),
         **report,
     }
+
+
+def render_failed_message() -> str:
+    return (
+        "PDF rendering failed. Make sure the Resume Matcher frontend is running "
+        f"at {settings.frontend_base_url} and can reach the backend."
+    )
+
+
+async def render_pdf(resume_id: str, fit: PageFitSettings) -> bytes:
+    """The exact bytes GET /resumes/{id}/pdf returns for these settings."""
+    return await render_resume_pdf(
+        resume_print_url(resume_id, fit), fit.pageSize, margins=print_margins(fit)
+    )
+
+
+def keyword_score(
+    data: dict[str, Any], job_keywords: dict[str, Any], master: dict[str, Any]
+) -> dict[str, Any]:
+    match = calculate_keyword_match(data, job_keywords)
+    gaps = analyze_keyword_gaps(job_keywords, data, master)
+    ats = compute_ats_score(
+        refined_resume=data,
+        job_keywords=job_keywords,
+        keyword_match_percentage=match,
+        missing_keywords=gaps.non_injectable_keywords,
+        injectable_keywords=gaps.injectable_keywords,
+    )
+    return {"keyword_match_percentage": round(match, 1), **ats}
+
+
+async def store_tailored_resume(
+    source: dict[str, Any],
+    job: dict[str, Any],
+    candidate: dict[str, Any],
+    title: str | None,
+    track_application: bool,
+) -> dict[str, Any]:
+    """Save a validated tailored resume, link it to the job and add a tracker card."""
+    source_id = source["resume_id"]
+    title = clean_title(title) or clean_title(job.get("role"))
+    tailored = await db.create_tailored_resume(
+        request_id=str(uuid4()),
+        original_resume_id=source_id,
+        job_id=job["job_id"],
+        resume_fields={
+            "content": json.dumps(candidate, indent=2),
+            "content_type": "json",
+            "filename": f"tailored_{source.get('filename') or 'resume'}",
+            "is_master": False,
+            "parent_id": source_id,
+            "processed_data": candidate,
+            "processing_status": "ready",
+            "title": title,
+        },
+        improvements=generate_improvements(job.get("job_keywords") or {}),
+    )
+    result = summary(tailored)
+    if track_application:
+        try:
+            application = await db.create_application(
+                job_id=job["job_id"],
+                resume_id=tailored["resume_id"],
+                master_resume_id=source_id,
+                status="applied",
+                company=job.get("company"),
+                role=title or job.get("role"),
+            )
+            result["application_id"] = application["application_id"]
+        except Exception as e:  # noqa: BLE001 - tracker is non-critical
+            logger.warning("Failed to create tracker application: %s", e)
+    return result
