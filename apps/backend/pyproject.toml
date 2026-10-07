@@ -12,6 +12,7 @@ dependencies = [
     "tinydb==4.8.2",
     "sqlalchemy[asyncio]==2.0.36",
     "aiosqlite==0.20.0",
+    "psycopg[binary]==3.3.6",
     "cryptography==50.0.0",
     "litellm==1.86.2",
     "markitdown[docx]==0.1.4",
@@ -92,4 +93,6 @@ markers = [
     "service: service layer tests with mocked LLM",
     "integration: API endpoint tests with httpx AsyncClient",
     "eval: prompt-quality evaluations; may call a real LLM, skipped without a configured key",
+    "postgres: needs a PostgreSQL server; skipped without TEST_DATABASE_URL",
+    "sqlite_only: exercises SQLite internals; skipped when TEST_DATABASE_URL is set",
 ]

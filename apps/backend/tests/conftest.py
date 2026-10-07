@@ -8,6 +8,7 @@ import tempfile
 from collections.abc import AsyncIterator, Iterator
 from pathlib import Path
 from typing import Any, NoReturn
+from uuid import uuid4
 
 import pytest
 
@@ -19,6 +20,13 @@ _ORIGINAL_DATA_DIR = os.environ.get("DATA_DIR")
 _TEST_DATA_DIR_CONTEXT = tempfile.TemporaryDirectory(prefix="resume-matcher-tests-")
 _TEST_DATA_DIR = Path(_TEST_DATA_DIR_CONTEXT.name)
 os.environ["DATA_DIR"] = str(_TEST_DATA_DIR)
+# A developer DATABASE_URL must never reach the suite; TEST_DATABASE_URL opts in.
+_ORIGINAL_DATABASE_ENV = {
+    key: os.environ.get(key) for key in ("DATABASE_URL", "DATABASE_SCHEMA")
+}
+os.environ["DATABASE_URL"] = ""
+os.environ["DATABASE_SCHEMA"] = ""
+TEST_DATABASE_URL = os.environ.get("TEST_DATABASE_URL") or None
 
 import app.config as _config_module  # noqa: E402 - DATA_DIR must be set first
 
@@ -36,7 +44,42 @@ def pytest_unconfigure(config: pytest.Config) -> None:
         os.environ.pop("DATA_DIR", None)
     else:
         os.environ["DATA_DIR"] = _ORIGINAL_DATA_DIR
+    for key, value in _ORIGINAL_DATABASE_ENV.items():
+        if value is None:
+            os.environ.pop(key, None)
+        else:
+            os.environ[key] = value
     _TEST_DATA_DIR_CONTEXT.cleanup()
+
+
+def pytest_collection_modifyitems(
+    config: pytest.Config, items: list[pytest.Item]
+) -> None:
+    """``postgres`` tests need TEST_DATABASE_URL; ``sqlite_only`` tests skip under it."""
+    del config
+    for item in items:
+        if TEST_DATABASE_URL and "sqlite_only" in item.keywords:
+            item.add_marker(pytest.mark.skip(reason="SQLite-specific"))
+        if not TEST_DATABASE_URL and "postgres" in item.keywords:
+            item.add_marker(pytest.mark.skip(reason="TEST_DATABASE_URL not set"))
+
+
+def postgres_test_url() -> str:
+    from app.db_url import normalize_database_url
+
+    assert TEST_DATABASE_URL
+    return normalize_database_url(TEST_DATABASE_URL)
+
+
+def drop_postgres_schema(schema: str) -> None:
+    from sqlalchemy import create_engine
+
+    engine = create_engine(postgres_test_url())
+    try:
+        with engine.begin() as conn:
+            conn.exec_driver_sql(f'DROP SCHEMA IF EXISTS "{schema}" CASCADE')
+    finally:
+        engine.dispose()
 
 
 @pytest.fixture(scope="session")
@@ -85,7 +128,11 @@ async def isolated_backend_state(
     from app.database import Database
 
     test_data_dir = tmp_path / "data"
-    test_db = Database(db_path=test_data_dir / "resume_matcher.db")
+    if TEST_DATABASE_URL:
+        test_data_dir.mkdir(parents=True)
+        test_db = Database(url=postgres_test_url(), schema=f"t_{uuid4().hex[:20]}")
+    else:
+        test_db = Database(db_path=test_data_dir / "resume_matcher.db")
 
     monkeypatch.setattr(config_module.settings, "data_dir", test_data_dir)
     # Preserve compatibility with code/tests that still monkeypatch the legacy
@@ -112,6 +159,8 @@ async def isolated_backend_state(
         invalidate_config_cache()
         crypto.reset_cache()
         await test_db.close()
+        if test_db.schema:
+            drop_postgres_schema(test_db.schema)
 
 
 # ---------------------------------------------------------------------------
@@ -305,5 +354,5 @@ def sample_changes():
 
 @pytest.fixture
 def isolated_db(isolated_backend_state: Any) -> Any:
-    """Expose the default per-test real SQLite database to tests that need it."""
+    """Expose the per-test real database (SQLite, or a Postgres schema) to tests that need it."""
     return isolated_backend_state

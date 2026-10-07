@@ -349,6 +349,16 @@ LOG_LEVEL=INFO LOG_LLM=DEBUG docker compose up -d
 > allow a message for it to appear. If you set `LITELLM_LOG` from LiteLLM docs,
 > make sure `LOG_LLM` is set to an equal or lower level.
 
+### Optional: PostgreSQL
+
+SQLite is the default and needs no setup. For backups or remote/shared hosting you can use PostgreSQL instead:
+
+```bash
+POSTGRES_PASSWORD=change-me docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d
+```
+
+Outside Docker, set `DATABASE_URL=postgresql://user:password@host:5432/dbname` (and optionally `DATABASE_SCHEMA`) in `apps/backend/.env`. Tables are created on startup. To move existing data, run `uv run python -m app.scripts.copy_sqlite_to_postgres` from `apps/backend` with `DATABASE_URL` set; it refuses to write into a non-empty database. Keep `data/.secret_key`: it decrypts your stored API keys. Details: [docs/agent/features/postgres-backend.md](docs/agent/features/postgres-backend.md).
+
 ### Important Notes
 
 - **API keys are best configured through the UI** at `http://localhost:3000/settings`

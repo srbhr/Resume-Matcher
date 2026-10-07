@@ -7,16 +7,21 @@ from unittest.mock import AsyncMock
 import pytest
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import event, text
-from sqlalchemy.exc import OperationalError
+from sqlalchemy.exc import DBAPIError
 
 from app.config import get_api_keys_from_config, save_api_keys_to_config
 from app.database import Database, DatabaseBusyError
 from app.main import app
+from tests.db_helpers import hold_writer
 
 
 @pytest.fixture
 def fast_busy_database(isolated_db: Database) -> Iterator[Database]:
-    """Keep real SQLite locks, shortening only the busy wait on test connections."""
+    """Keep real database locks, shortening only the busy wait on test connections."""
+    if isolated_db.backend == "postgresql":
+        isolated_db.lock_timeout_ms = 10
+        yield isolated_db
+        return
     isolated_db._ensure_initialized()
     assert isolated_db._async_engine is not None
     assert isolated_db._sync_engine is not None
@@ -90,7 +95,7 @@ async def test_contended_public_write_returns_503_and_can_be_retried(
         base_url="http://test",
     ) as client:
         async with database._session() as writer:
-            await writer.execute(text("BEGIN IMMEDIATE"))
+            await hold_writer(writer)
             response = await client.request(method, url, json=payload)
             # WAL readers remain available; read behavior is not redesigned.
             assert (await client.get("/api/v1/resumes/list")).status_code == 200
@@ -157,7 +162,7 @@ async def test_non_endpoint_writers_translate_busy_without_partial_changes(
             await database.reset_database()
 
     async with database._session() as writer:
-        await writer.execute(text("BEGIN IMMEDIATE"))
+        await hold_writer(writer)
         with pytest.raises(DatabaseBusyError):
             await mutate()
 
@@ -177,10 +182,10 @@ async def test_non_endpoint_writers_translate_busy_without_partial_changes(
     )
 
 
-async def test_non_busy_sqlite_write_error_is_not_marked_retryable(
+async def test_non_busy_write_error_is_not_marked_retryable(
     fast_busy_database: Database,
 ) -> None:
-    with pytest.raises(OperationalError):
+    with pytest.raises(DBAPIError):
         async with fast_busy_database._write_session() as session:
             await session.execute(
                 text("INSERT INTO synthetic_missing_table VALUES (1)")

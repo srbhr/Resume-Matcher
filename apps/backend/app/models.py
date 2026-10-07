@@ -73,6 +73,7 @@ class Resume(Base):
             "is_default_master",
             unique=True,
             sqlite_where=text("is_default_master = 1"),
+            postgresql_where=text("is_default_master"),
         ),
     )
 

@@ -18,6 +18,7 @@ from docx import Document
 from httpx import ASGITransport, AsyncClient
 from mcp import Client
 
+from app.config import settings
 from app.database import MAX_MASTER_RESUMES, Database
 from app.main import app
 from app.mcp_server import tools
@@ -402,7 +403,7 @@ async def test_parse_check_resume_renders_in_memory(
     assert report["source"] == "render" and report["template"] == "clean"
     assert report["roundtrip"]["content_recall"] == 1.0
     assert "template=clean" in rendered.await_args.args[0]
-    assert not (isolated_db.db_path.parent / "exports").exists()
+    assert not (settings.data_dir / "exports").exists()
 
 
 async def test_parse_check_file(tmp_path: Path) -> None:
@@ -499,7 +500,7 @@ async def test_verify_resume_flags_page_limit_and_writes_nothing(
     assert result["page_count"] == 3 and "over_page_limit" in result["issues"]
     assert result["job_id"] is None and result["score"] is None
     assert len(await isolated_db.list_resumes()) == 1
-    assert not (isolated_db.db_path.parent / "exports").exists()
+    assert not (settings.data_dir / "exports").exists()
 
 
 async def test_verify_resume_render_failure_still_scores(
