@@ -159,10 +159,13 @@ Resume Matcher 是免费且开源的，依靠赞助商与支持者维持运转�
 
 | 模板名称 | 预览 | 说明 |
 |---------|------|------|
-| **经典单栏** | ![Classic Template](assets/pdf-templates/single-column.jpg) | 传统且干净的排版，适用于大多数行业。[查看 PDF](assets/pdf-templates/single-column.pdf) |
-| **现代单栏** | ![Modern Template](assets/pdf-templates/modern-single-column.jpg) | 更强调可读性与审美的现代风格。[查看 PDF](assets/pdf-templates/modern-single-column.pdf) |
-| **经典双栏** | ![Classic Two Column Template](assets/pdf-templates/two-column.jpg) | 将内容分区展示，更清晰易扫读。[查看 PDF](assets/pdf-templates/two-column.pdf) |
-| **现代双栏** | ![Modern Two Column Template](assets/pdf-templates/modern-two-column.jpg) | 利用双栏结构做更强的信息组织。[查看 PDF](assets/pdf-templates/modern-two-column.pdf) |
+| **单栏** | ![单栏](assets/pdf-templates/single-column.jpg) | 传统全宽布局，内容密度最高。[查看 PDF](assets/pdf-templates/single-column.pdf) |
+| **双栏** | ![双栏](assets/pdf-templates/two-column.jpg) | 以经历为主的主栏布局，侧栏展示技能。[查看 PDF](assets/pdf-templates/two-column.pdf) |
+| **现代** | ![现代](assets/pdf-templates/modern-single-column.jpg) | 彩色点缀，支持自定义主题色。[查看 PDF](assets/pdf-templates/modern-single-column.pdf) |
+| **现代双栏** | ![现代双栏](assets/pdf-templates/modern-two-column.jpg) | 现代双栏布局，带彩色点缀与主题色。[查看 PDF](assets/pdf-templates/modern-two-column.pdf) |
+| **LaTeX** | ![LaTeX](assets/pdf-templates/latex.jpg) | 经典衬线学术版式，带分隔线的栏目标题。[查看 PDF](assets/pdf-templates/latex.pdf) |
+| **简洁** | ![简洁](assets/pdf-templates/clean.jpg) | 极简无衬线版式，栏目标题大而低调。[查看 PDF](assets/pdf-templates/clean.pdf) |
+| **鲜明** | ![鲜明](assets/pdf-templates/vivid.jpg) | 彩色双栏布局，强调色标题与箭头项目符号。[查看 PDF](assets/pdf-templates/vivid.pdf) |
 
 ### 国际化
 

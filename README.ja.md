@@ -159,10 +159,13 @@ Resume Matcher をご覧いただきありがとうございます。つなが�
 
 | テンプレート名 | プレビュー | 説明 |
 |---------------|-----------|------|
-| **クラシック（1 カラム）** | ![Classic Template](assets/pdf-templates/single-column.jpg) | 伝統的でクリーンなレイアウト。多くの業種に適しています。[PDF を見る](assets/pdf-templates/single-column.pdf) |
-| **モダン（1 カラム）** | ![Modern Template](assets/pdf-templates/modern-single-column.jpg) | 可読性と美しさを重視した現代的なデザイン。[PDF を見る](assets/pdf-templates/modern-single-column.pdf) |
-| **クラシック（2 カラム）** | ![Classic Two Column Template](assets/pdf-templates/two-column.jpg) | セクションを分けて見やすく整理します。[PDF を見る](assets/pdf-templates/two-column.pdf) |
-| **モダン（2 カラム）** | ![Modern Two Column Template](assets/pdf-templates/modern-two-column.jpg) | 2 カラムを活用して情報をより整理します。[PDF を見る](assets/pdf-templates/modern-two-column.pdf) |
+| **1カラム** | ![1カラム](assets/pdf-templates/single-column.jpg) | 内容密度が高い伝統的な全幅レイアウト。[PDF を見る](assets/pdf-templates/single-column.pdf) |
+| **2カラム** | ![2カラム](assets/pdf-templates/two-column.jpg) | 経験中心のメイン列とスキル用サイドバー。[PDF を見る](assets/pdf-templates/two-column.pdf) |
+| **モダン** | ![モダン](assets/pdf-templates/modern-single-column.jpg) | カラフルなアクセントとテーマ色のカスタマイズ。[PDF を見る](assets/pdf-templates/modern-single-column.pdf) |
+| **モダン2カラム** | ![モダン2カラム](assets/pdf-templates/modern-two-column.jpg) | モダンな2カラムとカラフルなアクセント。[PDF を見る](assets/pdf-templates/modern-two-column.pdf) |
+| **LaTeX** | ![LaTeX](assets/pdf-templates/latex.jpg) | 罫線付き見出しのクラシックなセリフ体レイアウト。[PDF を見る](assets/pdf-templates/latex.pdf) |
+| **クリーン** | ![クリーン](assets/pdf-templates/clean.jpg) | 大きく控えめな見出しのミニマルなサンセリフ体レイアウト。[PDF を見る](assets/pdf-templates/clean.pdf) |
+| **ビビッド** | ![ビビッド](assets/pdf-templates/vivid.jpg) | アクセント見出しと矢印箇条書きのカラフルな2カラムレイアウト。[PDF を見る](assets/pdf-templates/vivid.pdf) |
 
 ### 国際化
 
