@@ -6,7 +6,7 @@
 
 [English](README.md) | **Español** | [简体中文](README.zh-CN.md) | [日本語](README.ja.md)
 
-[𝙹𝚘𝚒𝚗 𝙳𝚒𝚜𝚌𝚘𝚛𝚍](https://dsc.gg/resume-matcher) ✦ [𝚆𝚎𝚋𝚜𝚒𝚝𝚎](https://resumematcher.fyi) ✦ [𝙷𝚘𝚠 𝚝𝚘 𝙸𝚗𝚜𝚝𝚊𝚕𝚕](https://resumematcher.fyi/docs/installation) ✦ [𝙲𝚘𝚗𝚝𝚛𝚒𝚋𝚞𝚝𝚘𝚛𝚜](#contributors) ✦ [𝚂𝚙𝚘𝚗𝚜𝚘𝚛](#sponsors) ✦ [𝚃𝚠𝚒𝚝𝚝𝚎𝚛/𝚇](https://twitter.com/srbhrai) ✦ [𝙻𝚒𝚗𝚔𝚎𝚍𝙸𝚗](https://www.linkedin.com/company/resume-matcher/) ✦ [𝙲𝚛𝚎𝚊𝚝𝚘𝚛](https://srbhr.com)
+[𝙹𝚘𝚒𝚗 𝙳𝚒𝚜𝚌𝚘𝚛𝚍](https://dsc.gg/resume-matcher) ✦ [𝚆𝚎𝚋𝚜𝚒𝚝𝚎](https://resumematcher.fyi) ✦ [𝙷𝚘𝚠 𝚝𝚘 𝙸𝚗𝚜𝚝𝚊𝚕𝚕](https://resumematcher.fyi/docs/installation) ✦ [𝙲𝚘𝚗𝚝𝚛𝚒𝚋𝚞𝚝𝚘𝚛𝚜](#contributors) ✦ [𝚂𝚙𝚘𝚗𝚜𝚘𝚛](#sponsors) ✦ [𝚃𝚠𝚒𝚝𝚝𝚎𝚛/𝚇](https://twitter.com/srbhr_r) ✦ [𝙻𝚒𝚗𝚔𝚎𝚍𝙸𝚗](https://www.linkedin.com/company/resume-matcher/) ✦ [𝙲𝚛𝚎𝚊𝚝𝚘𝚛](https://srbhr.com)
 
 **Deja de ser rechazado automáticamente por los bots ATS.** Resume Matcher es la plataforma impulsada por IA que aplica ingeniería inversa a los algoritmos de contratación para mostrarte exactamente cómo adaptar tu currículum. Obtén las palabras clave, el formato y los conocimientos que realmente te ayudarán a superar el primer filtro y llegar a manos humanas.
 
@@ -115,7 +115,7 @@ Puedes seguirme en:
 
 - Website: [https://srbhr.com](https://srbhr.com)
 - Linkedin: [https://www.linkedin.com/in/srbhr/](https://www.linkedin.com/in/srbhr/)
-- Twitter: [https://twitter.com/srbhrai](https://twitter.com/srbhrai)
+- Twitter: [https://twitter.com/srbhr_r](https://twitter.com/srbhr_r)
 - GitHub: [https://github.com/srbhr](https://github.com/srbhr)
 
 ## Funciones clave
@@ -161,10 +161,13 @@ Exporta tu currículum adaptado y tu carta de presentación en PDF.
 
 | Nombre de plantilla | Vista previa | Descripción |
 |---------------------|-------------|-------------|
-| **Clásica (una columna)** | ![Classic Template](assets/pdf-templates/single-column.jpg) | Diseño tradicional y limpio, adecuado para la mayoría de industrias. [Ver PDF](assets/pdf-templates/single-column.pdf) |
-| **Moderna (una columna)** | ![Modern Template](assets/pdf-templates/modern-single-column.jpg) | Diseño contemporáneo enfocado en legibilidad y estética. [Ver PDF](assets/pdf-templates/modern-single-column.pdf) |
-| **Clásica (dos columnas)** | ![Classic Two Column Template](assets/pdf-templates/two-column.jpg) | Estructura que separa secciones para mayor claridad. [Ver PDF](assets/pdf-templates/two-column.pdf) |
-| **Moderna (dos columnas)** | ![Modern Two Column Template](assets/pdf-templates/modern-two-column.jpg) | Diseño elegante que usa dos columnas para mejor organización. [Ver PDF](assets/pdf-templates/modern-two-column.pdf) |
+| **Una columna** | ![Una columna](assets/pdf-templates/single-column.jpg) | Diseño tradicional de ancho completo con máxima densidad de contenido. [Ver PDF](assets/pdf-templates/single-column.pdf) |
+| **Dos columnas** | ![Dos columnas](assets/pdf-templates/two-column.jpg) | Columna principal centrada en experiencia con barra lateral para habilidades. [Ver PDF](assets/pdf-templates/two-column.pdf) |
+| **Moderno** | ![Moderno](assets/pdf-templates/modern-single-column.jpg) | Acentos coloridos con colores de tema personalizables. [Ver PDF](assets/pdf-templates/modern-single-column.pdf) |
+| **Moderno de dos columnas** | ![Moderno de dos columnas](assets/pdf-templates/modern-two-column.jpg) | Diseño de dos columnas moderno con acentos coloridos y temas. [Ver PDF](assets/pdf-templates/modern-two-column.pdf) |
+| **LaTeX** | ![LaTeX](assets/pdf-templates/latex.jpg) | Diseño académico clásico con tipografía serif y encabezados con líneas. [Ver PDF](assets/pdf-templates/latex.pdf) |
+| **Limpio** | ![Limpio](assets/pdf-templates/clean.jpg) | Diseño minimalista sans con encabezados grandes y sobrios. [Ver PDF](assets/pdf-templates/clean.pdf) |
+| **Vívido** | ![Vívido](assets/pdf-templates/vivid.jpg) | Diseño de dos columnas colorido con encabezados de acento y viñetas de flecha. [Ver PDF](assets/pdf-templates/vivid.pdf) |
 
 ### Internacionalización
 
