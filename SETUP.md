@@ -10,6 +10,7 @@ Welcome! This guide will walk you through setting up Resume Matcher on your loca
 
 - [Prerequisites](#prerequisites)
 - [Quick Start](#quick-start)
+- [Windows 11 Setup](#windows-11-setup)
 - [Step-by-Step Setup](#step-by-step-setup)
   - [1. Clone the Repository](#1-clone-the-repository)
   - [2. Backend Setup](#2-backend-setup)
@@ -79,6 +80,65 @@ npm run dev                  # Start the dev server
 Open your browser to **<http://localhost:3000>** and you're ready to go!
 
 > **Note:** You'll need to configure an AI provider before using the app. See [Configuring Your AI Provider](#configuring-your-ai-provider) below.
+
+---
+
+## Windows 11 Setup
+
+The commands above and in the rest of this guide use macOS/Linux shell syntax. On Windows 11, use the **PowerShell** (or Windows Terminal) commands in this section instead.
+
+### 1. Install the prerequisites
+
+Install the tools from [Prerequisites](#prerequisites) with `winget` (built into Windows 11), then **close and reopen PowerShell** so they are on your `PATH`:
+
+```powershell
+winget install --id Git.Git -e
+winget install --id Python.Python.3.13 -e
+winget install --id OpenJS.NodeJS.LTS -e
+winget install --id astral-sh.uv -e
+```
+
+You can also use the installers from the links in the [Prerequisites](#prerequisites) table.
+
+### 2. Download the code
+
+Either clone with Git:
+
+```powershell
+git clone https://github.com/srbhr/Resume-Matcher.git
+cd Resume-Matcher
+```
+
+Or, without Git, open the [repository page](https://github.com/srbhr/Resume-Matcher), click **Code → Download ZIP**, extract the ZIP, and `cd` into the extracted folder in PowerShell.
+
+### 3. Start the backend (PowerShell window 1)
+
+```powershell
+cd apps\backend
+Copy-Item .env.example .env   # Create config from template
+notepad .env                  # Edit the config (see below)
+uv sync                       # Install Python dependencies
+uv run app
+```
+
+In `.env`, change `HOST=0.0.0.0` to `HOST=127.0.0.1` so the backend is only reachable from your own machine. The default listens on every network interface, and the API has no authentication, so other devices on your network could use your configured AI provider. Optionally set your AI provider here, and set `RELOAD=true` to auto-reload on code changes.
+
+### 4. Start the frontend (PowerShell window 2)
+
+A new PowerShell window opens in your home folder, so first change to the folder where you cloned or extracted Resume Matcher (replace the path with your own):
+
+```powershell
+cd C:\path\to\Resume-Matcher
+cd apps\frontend
+npm install
+npm run dev
+```
+
+Open **<http://localhost:3000>** in your browser.
+
+> **PDF export:** Resume Matcher renders PDFs with headless Chromium. If Playwright's browser is not installed, the backend falls back to an installed Microsoft Edge or Google Chrome (Edge ships with Windows 11). You can also install Playwright's Chromium from `apps\backend` with `uv run playwright install chromium`.
+
+> **Prefer Docker?** Install [Docker Desktop for Windows](https://docs.docker.com/desktop/setup/install/windows-install/) and follow [Docker Deployment](#docker-deployment). To set variables like `PORT` in PowerShell, use `$env:PORT="4000"; docker compose up -d`.
 
 ---
 
