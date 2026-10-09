@@ -163,6 +163,9 @@ Resume Matcher 是免费且开源的，依靠赞助商与支持者维持运转�
 | **现代单栏** | ![Modern Template](assets/pdf-templates/modern-single-column.jpg) | 更强调可读性与审美的现代风格。[查看 PDF](assets/pdf-templates/modern-single-column.pdf) |
 | **经典双栏** | ![Classic Two Column Template](assets/pdf-templates/two-column.jpg) | 将内容分区展示，更清晰易扫读。[查看 PDF](assets/pdf-templates/two-column.pdf) |
 | **现代双栏** | ![Modern Two Column Template](assets/pdf-templates/modern-two-column.jpg) | 利用双栏结构做更强的信息组织。[查看 PDF](assets/pdf-templates/modern-two-column.pdf) |
+| **LaTeX** | ![LaTeX Template](assets/pdf-templates/latex.jpg) | 经典衬线学术版式，带分隔线的栏目标题。[查看 PDF](assets/pdf-templates/latex.pdf) |
+| **简洁** | ![Clean Template](assets/pdf-templates/clean.jpg) | 极简无衬线版式，栏目标题大而低调。[查看 PDF](assets/pdf-templates/clean.pdf) |
+| **鲜明** | ![Vivid Template](assets/pdf-templates/vivid.jpg) | 彩色双栏布局，强调色标题与箭头项目符号。[查看 PDF](assets/pdf-templates/vivid.pdf) |
 
 ### 国际化
 
