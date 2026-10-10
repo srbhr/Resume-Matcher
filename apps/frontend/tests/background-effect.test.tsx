@@ -20,20 +20,17 @@ beforeEach(() => localStorage.clear());
 afterEach(() => vi.restoreAllMocks());
 
 describe('BackgroundEffect', () => {
-  it('renders the field behind the page when effects are on', () => {
+  it('renders the field behind the page, fixed to the viewport, when effects are on', () => {
     render(
       <EffectsProvider>
         <BackgroundEffect />
       </EffectsProvider>
     );
-    expect(screen.getByTestId('field')).toHaveClass(
-      'absolute',
-      'inset-0',
-      '-z-10',
-      'h-full',
-      'w-full',
-      'text-steel'
-    );
+    // Fixed + inset-0: one screen of dots however long the page is. Not `absolute`, which would
+    // fill the whole (possibly very tall) parent.
+    const field = screen.getByTestId('field');
+    expect(field).toHaveClass('fixed', 'inset-0', '-z-10', 'h-full', 'w-full', 'text-steel');
+    expect(field).not.toHaveClass('absolute');
   });
 
   it('renders no canvas at all when the stored choice is off', () => {

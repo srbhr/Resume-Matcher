@@ -2,6 +2,14 @@ import { act, render } from '@testing-library/react';
 import { useReducedMotion } from 'motion/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DitherField } from '@/components/effects/dither-field';
+import { PageFrame } from '@/components/ui/page-frame';
+import { EffectsProvider } from '@/lib/context/effects-context';
+
+// The lazy boundary around the field is not under test here: load the real field synchronously.
+vi.mock('next/dynamic', async () => {
+  const { DitherField: Field } = await import('@/components/effects/dither-field');
+  return { default: () => Field };
+});
 
 // jsdom has no canvas, no observers and no animation frames: stand in for all of them, and drive
 // the loop by hand so frame counts are exact.
@@ -215,5 +223,66 @@ describe('DitherField', () => {
     const { container } = render(<DitherField />);
     expect(container.querySelector('canvas')).not.toBeNull();
     expect(requestFrame).not.toHaveBeenCalled();
+  });
+});
+
+describe('DitherField in the page background', () => {
+  // jsdom has no layout. Model the one CSS fact that matters here: a `fixed` box is the viewport,
+  // any other box fills its (tall) page. The model is checked against a real browser in the report.
+  const PAGE_HEIGHT = 6000;
+  function setViewport(width: number, height: number) {
+    vi.stubGlobal('innerWidth', width);
+    vi.stubGlobal('innerHeight', height);
+  }
+  beforeEach(() => {
+    localStorage.clear();
+    setViewport(1440, 900);
+    Object.defineProperty(document.documentElement, 'scrollHeight', {
+      value: PAGE_HEIGHT,
+      configurable: true,
+    });
+    vi.spyOn(HTMLCanvasElement.prototype, 'getBoundingClientRect').mockImplementation(function (
+      this: HTMLCanvasElement
+    ) {
+      const height = this.classList.contains('fixed') ? window.innerHeight : PAGE_HEIGHT;
+      return { width: window.innerWidth, height } as DOMRect;
+    });
+  });
+  afterEach(() => {
+    delete (document.documentElement as { scrollHeight?: number }).scrollHeight;
+  });
+
+  function renderPage() {
+    return render(
+      <EffectsProvider>
+        <PageFrame>
+          <p>a very long page</p>
+        </PageFrame>
+      </EffectsProvider>
+    );
+  }
+
+  it('backs the canvas with one screen, not the page height', () => {
+    const { container } = renderPage();
+    const canvas = container.querySelector('canvas')!;
+    expect(canvas).toHaveClass('fixed', 'inset-0');
+    expect([canvas.width, canvas.height]).toEqual([1440, 900]);
+  });
+
+  it('keeps one screen at DPR 2, so a long page never nears the canvas size limit', () => {
+    vi.stubGlobal('devicePixelRatio', 2);
+    const { container } = renderPage();
+    const canvas = container.querySelector('canvas')!;
+    expect([canvas.width, canvas.height]).toEqual([2880, 1800]);
+    expect(canvas.height).toBeLessThan(PAGE_HEIGHT);
+  });
+
+  it('follows the window when it is resized', () => {
+    const { container } = renderPage();
+    const canvas = container.querySelector('canvas')!;
+    setViewport(800, 600);
+    resizeObserved();
+    expect([canvas.width, canvas.height]).toEqual([800, 600]);
+    expect(ctx.fill).toHaveBeenCalledTimes(2);
   });
 });
