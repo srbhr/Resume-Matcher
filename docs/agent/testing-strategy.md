@@ -121,7 +121,7 @@ Legend: ✅ done · 🚧 in progress · ⬜ planned
 - ✅ Verify: **192 → 265 tests, 1 silent failure → 0, coverage 54% → 58%** (database 34→96%, parser 20→72%, llm 47→55%, health now meaningful). Anti-theater mutation check passed.
 
 **Phase 2 — Transport contract tests (LLM/Ollama) ✅ COMPLETE** (`tests/integration/test_llm_contract.py`, 8 tests)
-- ✅ `respx`-backed tests: real `complete` / `complete_json` / `check_llm_health` against a fake Ollama + OpenAI-compatible HTTP server (base-URL handling #751, JSON extraction over the wire, thinking-tag stripping, health error-code mapping + secret scrubbing). Findings: litellm 1.86 defaults to an aiohttp transport respx can't see → tests set `disable_aiohttp_transport`; Ollama makes two calls (`/api/show` probe + `/api/chat`). **`llm.py` 55% → 74%.**
+- ✅ `respx`-backed tests: real `complete` / `complete_json` / `check_llm_health` against a fake Ollama + OpenAI-compatible HTTP server (base-URL handling #751, JSON extraction over the wire, thinking-tag stripping, health error-code mapping + secret scrubbing). Findings: litellm defaults to an aiohttp transport respx can't see → tests set `disable_aiohttp_transport`; Ollama makes two calls (`/api/show` probe + `/api/chat`). **`llm.py` 55% → 74%.**
 
 **Phase 3 — Render safety net ✅ COMPLETE** (`tests/integration/test_pdf_render.py`, 11 tests)
 - ✅ Real headless-Chromium render of a self-contained `data:` URL → asserts genuine `%PDF` bytes; pure-helper tests (format/margins); connection-refused → `PDFRenderError` mapping. Render tests skip cleanly without Chromium. **`pdf.py` 20% → 54%.**

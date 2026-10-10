@@ -756,6 +756,8 @@ class _PolicyRouter(Router):
     ``InternalServerError`` even though ``RetryPolicy`` exposes the matching
     field. Its ``None`` result falls back to the Router-wide retry count.
     Keep that compatibility correction confined to the omitted exception.
+    LiteLLM 1.103+ dispatches it natively with the same count of 2, so the
+    override is now a version-independent guard rather than a correction.
     """
 
     async def make_call(
@@ -1221,8 +1223,8 @@ def _supports_temperature(
     narrowly scoped fallbacks for known restrictions:
       - Anthropic claude-opus-4.*: temperature is deprecated
       - Moonshot kimi-k2.6: only temperature=1 allowed
-      - Reasoning GPT-5 models: non-default values require both registry
-        support for no-reasoning mode and an omitted reasoning effort
+      - Reasoning GPT-5 models: non-default values require registry
+        support for no-reasoning mode and an effective effort of "none"
 
     Queries LiteLLM's model info for every provider so that capability is
     determined from the registry rather than a provider-wide exemption.
@@ -1268,7 +1270,10 @@ def _supports_temperature(
         return False
 
     # GPT-5 reasoning models allow flexible sampling only when the model map
-    # advertises a no-reasoning mode and the application omits reasoning_effort.
+    # advertises a no-reasoning mode and the effective effort is "none": the
+    # configured reasoning_effort, or the model's default_reasoning_effort when
+    # the request omits it. Supporting "none" is not defaulting to it (gpt-5.5
+    # supports it but defaults to reasoning); this mirrors LiteLLM's own gate.
     # LiteLLM routes the exact gpt-5-chat* family through its regular chat
     # transform (versioned names such as gpt-5.1-chat remain reasoning models),
     # so preserve sampling for that family even though its current registry
@@ -1291,13 +1296,13 @@ def _supports_temperature(
         )
         return False
     if is_reasoning_gpt5 and reasoning_capability is True and temperature != 1.0:
-        if not isinstance(info.get("supports_none_reasoning_effort"), bool):
-            logging.warning(
-                "Missing or invalid no-reasoning capability for %s; omitting temperature",
-                model_name,
-            )
+        effective_effort = (
+            reasoning_effort
+            if reasoning_effort is not None
+            else info.get("default_reasoning_effort")
+        )
         supports_no_reasoning = info.get("supports_none_reasoning_effort") is True
-        if not supports_no_reasoning or reasoning_effort is not None:
+        if not supports_no_reasoning or effective_effort != "none":
             return False
 
     return True

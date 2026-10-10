@@ -13,7 +13,7 @@ dependencies = [
     "sqlalchemy[asyncio]==2.1.4",
     "aiosqlite==0.22.1",
     "cryptography==50.0.2",
-    "litellm==1.103.4",
+    "litellm==1.104.2",
     "markitdown[docx]==0.1.4",
     "pdfminer.six==20260107",
     "playwright==1.63.0",

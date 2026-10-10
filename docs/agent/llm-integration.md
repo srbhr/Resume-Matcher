@@ -44,8 +44,8 @@ The `complete_json()` function automatically enables `response_format={"type": "
 
 ## Retry Logic
 
-LiteLLM's Router owns transport retries. The effective policy on the installed
-LiteLLM 1.86.2 stack is:
+LiteLLM's Router owns transport retries. The effective policy on the pinned
+LiteLLM stack (asserted by `tests/integration/test_llm_contract_reliability.py`) is:
 
 | Error class                                       | Transport retries | Maximum provider calls |
 | ------------------------------------------------- | ----------------- | ---------------------- |
@@ -54,9 +54,10 @@ LiteLLM 1.86.2 stack is:
 | Internal server                                   | 2                 | 3                      |
 | Rate limit or generic retryable transport failure | 3                 | 4                      |
 
-The internal-server rule uses the Router's exception-local retry override
-because LiteLLM 1.86.2 exposes the setting but omits that class from its policy
-dispatcher. These counts describe bounded attempts; they do not measure
+The internal-server rule is also set by the Router's exception-local retry
+override: LiteLLM 1.86.2 exposed the setting but omitted that class from its
+policy dispatcher. LiteLLM 1.103+ dispatches it natively with the same count, so
+the override now only guards against version drift. These counts describe bounded attempts; they do not measure
 provider backoff, latency, or cost. Caller cancellation is propagated.
 
 After a transport request returns, JSON completions include up to 2 automatic
@@ -77,21 +78,42 @@ model supports sampling:
 Capability comes from LiteLLM's model registry, with narrow overrides for
 restrictions the registry's supported-parameter list does not fully describe.
 
-Reasoning GPT-5 models that do not offer a no-reasoning mode, including GPT-5
-Nano, accept only the default temperature of `1`. Models whose registry entry
-advertises `supports_none_reasoning_effort`, including GPT-5.1 and GPT-5.2,
-also accept non-default temperatures when reasoning is omitted. In application
-configuration, cleared reasoning is represented by `reasoning_effort=None`,
-which omits the parameter; the schema does not accept the literal string
-`"none"`. If an explicit reasoning mode such as `minimal` or `medium` is set,
-non-default temperature is omitted. The regular `gpt-5-chat*` family stays on
-LiteLLM's normal chat path and keeps registry-supported sampling.
+Temperature is optional: it is sent only when the model accepts the requested
+value, and otherwise omitted so the provider applies its default. Reasoning
+GPT-5 models accept a non-default temperature only when the **effective**
+reasoning effort is `none` — the same rule LiteLLM (1.104+) applies in its own
+GPT-5 transform. The effective effort is the configured `reasoning_effort`, or,
+when the request omits it, the registry's `default_reasoning_effort`. The model
+must also advertise `supports_none_reasoning_effort`.
+
+- GPT-5.1, GPT-5.2 and GPT-5.4 declare `default_reasoning_effort: "none"`, so
+  they keep non-default sampling while reasoning is cleared.
+- GPT-5.5 supports `none` but does not default to it, so omitting reasoning
+  still means reasoning is active and non-default temperature is omitted.
+  Supporting `none` is not the same as defaulting to it.
+- GPT-5 Nano and other models without a no-reasoning mode accept only the
+  default temperature of `1`.
+- Versioned chat aliases (`gpt-5.1-chat-latest`, `gpt-5.2-chat-latest`) declare
+  no reasoning-effort levels in LiteLLM's OpenAI-sourced entries, so they are
+  restricted to `1`.
+
+In application configuration, cleared reasoning is represented by
+`reasoning_effort=None`, which omits the parameter; the schema does not accept
+the literal string `"none"`. If an explicit reasoning mode such as `minimal` or
+`medium` is set, non-default temperature is omitted. The regular `gpt-5-chat*`
+family stays on LiteLLM's normal chat path and keeps registry-supported sampling.
 
 OpenAI documents `none` as the default reasoning level for GPT-5.1 and GPT-5.2
 in its [model guidance](https://developers.openai.com/api/docs/guides/latest-model?model=gpt-5.2).
 Versioned chat aliases follow their own registered capabilities rather than a
-blanket `-chat` name exemption. Missing or malformed reasoning capability fields
-produce a warning and omit non-default sampling, so registry drift fails conservatively.
+blanket `-chat` name exemption. A missing or malformed `supports_reasoning`
+field produces a warning and omits non-default sampling; a missing no-reasoning
+mode or default is a normal "not supported" answer, so registry drift fails
+conservatively.
+
+LiteLLM downloads its model registry from GitHub at import time unless
+`LITELLM_LOCAL_MODEL_COST_MAP=True` is set, so these capability answers can
+change without a version bump. The contract tests pin the bundled map.
 
 The same registry/model/reasoning decision applies to OpenAI, Azure, and
 registered `openai_compatible` aliases. This avoids a blanket
@@ -120,7 +142,8 @@ completion and JSON retry paths are covered by
 `tests/integration/test_temperature_request_contract.py`: real LiteLLM and
 OpenAI SDK serialization into an in-memory HTTP transport, using synthetic
 credentials and no provider network traffic. Those tests also retain Nano,
-explicit reasoning, explicit `1.0`, versioned chat aliases, both automatic retry
+explicit reasoning, explicit `1.0`, versioned chat aliases, a none-capable model
+that defaults to reasoning (GPT-5.5), both automatic retry
 temperatures, and compatible-alias controls. No live
 provider acceptance or output-quality claim is made by these tests.
 

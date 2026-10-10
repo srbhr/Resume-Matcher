@@ -116,9 +116,17 @@ def test_explicit_default_temperature_survives_reasoning_mode(
 def test_versioned_chat_aliases_follow_the_installed_transport_capabilities(
     serialized_cases: dict[str, Any],
 ) -> None:
-    supported = serialized_cases["openai|gpt-5.1-chat-latest|None|0.7"]
-    restricted = serialized_cases["openai|gpt-5.2-chat-latest|None|0.7"]
-    assert supported["complete"]["temperature"] == 0.7
-    assert [body["temperature"] for body in supported["json"]] == [0.1, 0.3, 0.5]
-    assert "temperature" not in restricted["complete"]
-    assert all("temperature" not in body for body in restricted["json"])
+    """Versioned chat aliases declare no none mode, so sampling is omitted."""
+    for model in ("gpt-5.1-chat-latest", "gpt-5.2-chat-latest"):
+        restricted = serialized_cases[f"openai|{model}|None|0.7"]
+        assert "temperature" not in restricted["complete"]
+        assert all("temperature" not in body for body in restricted["json"])
+
+
+def test_none_capable_model_defaulting_to_reasoning_omits_serialized_sampling(
+    serialized_cases: dict[str, Any],
+) -> None:
+    """gpt-5.5 supports a none mode but defaults to reasoning when omitted."""
+    case = serialized_cases["openai|gpt-5.5|None|0.7"]
+    assert "temperature" not in case["complete"]
+    assert all("temperature" not in body for body in case["json"])

@@ -247,11 +247,12 @@ class TestSupportsTemperature:
     def test_gpt51_and_gpt52_allow_sampling_with_reasoning_omitted(
         self, mock_get_model_info: MagicMock
     ) -> None:
-        """Models with a no-reasoning mode preserve non-default sampling."""
+        """Models defaulting to no reasoning preserve non-default sampling."""
         mock_get_model_info.return_value = {
             "supported_openai_params": ["temperature", "max_tokens"],
             "supports_reasoning": True,
             "supports_none_reasoning_effort": True,
+            "default_reasoning_effort": "none",
         }
 
         assert _supports_temperature("gpt-5.1", 0.7) is True
@@ -266,11 +267,40 @@ class TestSupportsTemperature:
             "supported_openai_params": ["temperature", "max_tokens"],
             "supports_reasoning": True,
             "supports_none_reasoning_effort": True,
+            "default_reasoning_effort": "none",
         }
 
         assert _supports_temperature("gpt-5.1", 0.7, "medium") is False
         assert _supports_temperature("openai/gpt-5.2", 0.1, "minimal") is False
         assert _supports_temperature("gpt-5.1", 1.0, "medium") is True
+
+    @patch("app.llm.litellm.get_model_info")
+    def test_gpt5_supporting_none_but_defaulting_to_reasoning_omits_sampling(
+        self, mock_get_model_info: MagicMock
+    ) -> None:
+        """Supporting a none mode is not defaulting to it (gpt-5.5 shape)."""
+        mock_get_model_info.return_value = {
+            "supported_openai_params": ["temperature", "max_tokens"],
+            "supports_reasoning": True,
+            "supports_none_reasoning_effort": True,
+        }
+        assert _supports_temperature("openai/gpt-5.5", 0.7) is False
+        assert _supports_temperature("openai/gpt-5.5", 1.0) is True
+
+        mock_get_model_info.return_value["default_reasoning_effort"] = "medium"
+        assert _supports_temperature("openai/gpt-5.5", 0.7) is False
+
+    @patch("app.llm.litellm.get_model_info")
+    def test_gpt5_chat_latest_without_none_mode_omits_sampling(
+        self, mock_get_model_info: MagicMock
+    ) -> None:
+        """Versioned chat aliases that declare no none mode stay restricted."""
+        mock_get_model_info.return_value = {
+            "supported_openai_params": ["temperature", "max_tokens"],
+            "supports_reasoning": True,
+        }
+        assert _supports_temperature("openai/gpt-5.1-chat-latest", 0.7) is False
+        assert _supports_temperature("openai/gpt-5.1-chat-latest", 1.0) is True
 
     def test_ollama_gpt5_name_unaffected(self) -> None:
         """An Ollama model merely named gpt-5-* is local, not real gpt-5.
@@ -362,6 +392,7 @@ class TestGetRetryTemperature:
             "supported_openai_params": ["temperature", "max_tokens"],
             "supports_reasoning": True,
             "supports_none_reasoning_effort": True,
+            "default_reasoning_effort": "none",
         }
 
         assert _get_retry_temperature("openai/gpt-5.1", 0) == 0.1
