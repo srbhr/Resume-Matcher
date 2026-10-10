@@ -191,7 +191,7 @@ export function ResumeWizardPage() {
   };
 
   return (
-    <PageFrame effect={isBusy ? 'bitrate' : 'beams'} effectIntensity={isBusy ? 'active' : 'idle'}>
+    <PageFrame effect="bitrate" effectIntensity={isBusy ? 'active' : 'idle'}>
       <PageHeader>
         {/* Not PageHeader.Back: leaving must pass the local-backup guard, and Back is a bare Link. */}
         <Button

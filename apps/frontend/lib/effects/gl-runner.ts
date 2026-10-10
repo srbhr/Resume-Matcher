@@ -26,6 +26,8 @@ export interface GlRunnerOptions {
   fps: number;
   /** Draw one frame and never loop. */
   still?: boolean;
+  /** Device pixel ratio cap, at most 2 (default 2): an effect of big blocks gains nothing from more. */
+  maxDpr?: number;
   /** Effect uniforms, read on every draw: a number is a float, an array a vec2, vec3 or vec4. */
   uniforms: () => Record<string, UniformValue>;
   /** Time scale, read on every frame. `u_time` accumulates `dt * speed`, so changing it never jumps. */
@@ -115,7 +117,7 @@ export function createGlRunner(canvas: HTMLCanvasElement, opts: GlRunnerOptions)
   let t = 0;
 
   const resize = () => {
-    dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
+    dpr = Math.min(window.devicePixelRatio || 1, opts.maxDpr ?? MAX_DPR, MAX_DPR);
     const { width, height } = canvas.getBoundingClientRect();
     canvas.width = Math.max(1, Math.round(width * dpr));
     canvas.height = Math.max(1, Math.round(height * dpr));

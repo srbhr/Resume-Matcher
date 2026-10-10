@@ -65,13 +65,13 @@ beforeEach(() => {
 });
 
 describe('Resume wizard background effect', () => {
-  it('shows the quiet beams while the wizard waits for the user', () => {
+  it('asks for Retro Bitrate, idle, while the wizard waits for the user', () => {
     render(<ResumeWizardPage />);
-    expect(frame()).toHaveAttribute('data-effect', 'beams');
+    expect(frame()).toHaveAttribute('data-effect', 'bitrate');
     expect(frame()).toHaveAttribute('data-intensity', 'idle');
   });
 
-  it('shows Retro Bitrate, active, while a turn is generating, and the beams again after', async () => {
+  it('keeps Retro Bitrate and only raises its intensity while a turn is generating', async () => {
     const pending = deferred<{ state: ResumeWizardState }>();
     mockedPostTurn.mockReturnValue(pending.promise);
     render(<ResumeWizardPage />);
@@ -84,11 +84,11 @@ describe('Resume wizard background effect', () => {
     expect(frame()).toHaveAttribute('data-intensity', 'active');
 
     await act(async () => pending.resolve({ state: reviewState() }));
-    expect(frame()).toHaveAttribute('data-effect', 'beams');
+    expect(frame()).toHaveAttribute('data-effect', 'bitrate');
     expect(frame()).toHaveAttribute('data-intensity', 'idle');
   });
 
-  it('shows Retro Bitrate, active, while the resume is being created', async () => {
+  it('keeps Retro Bitrate, active, while the resume is being created', async () => {
     localStorage.setItem('resume_wizard_draft', JSON.stringify(reviewState()));
     const pending = deferred<Awaited<ReturnType<typeof finalizeResumeWizard>>>();
     mockedFinalize.mockReturnValue(pending.promise);
@@ -106,10 +106,10 @@ describe('Resume wizard background effect', () => {
         ReturnType<typeof finalizeResumeWizard>
       >)
     );
-    expect(frame()).toHaveAttribute('data-effect', 'beams');
+    expect(frame()).toHaveAttribute('data-effect', 'bitrate');
   });
 
-  it('goes back to the beams when the finalize fails', async () => {
+  it('settles back to idle Retro Bitrate when the finalize fails', async () => {
     localStorage.setItem('resume_wizard_draft', JSON.stringify(reviewState()));
     mockedFinalize.mockRejectedValue(new Error('boom'));
     render(<ResumeWizardPage />);
@@ -117,7 +117,7 @@ describe('Resume wizard background effect', () => {
     await act(async () =>
       (await screen.findByRole('button', { name: 'resumeWizard.actions.create' })).click()
     );
-    expect(frame()).toHaveAttribute('data-effect', 'beams');
+    expect(frame()).toHaveAttribute('data-effect', 'bitrate');
     expect(frame()).toHaveAttribute('data-intensity', 'idle');
     expect(screen.getByRole('alert')).toBeInTheDocument();
   });

@@ -73,6 +73,13 @@ describe('createGlRunner: set-up', () => {
     expect(fake.lastUniform('u_dpr')).toEqual([2]);
   });
 
+  it('caps the device pixel ratio lower when asked to', () => {
+    vi.stubGlobal('devicePixelRatio', 2);
+    start({ maxDpr: 1 });
+    expect(canvas.width).toBe(120);
+    expect(fake.lastUniform('u_dpr')).toEqual([1]);
+  });
+
   it('reports failure with null when WebGL is unavailable', () => {
     fake.getContext.mockReturnValue(null);
     expect(start()).toBeNull();

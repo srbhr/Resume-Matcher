@@ -20,6 +20,8 @@ interface GlCanvasProps {
   source: string;
   /** Frame-rate cap. */
   fps: number;
+  /** Device pixel ratio cap (see `GlRunnerOptions.maxDpr`). */
+  maxDpr?: number;
   /** Shader colour uniform -> `--sw-*` token. */
   tokens: Record<string, string>;
   profiles: Record<EffectIntensity, IntensityProfile>;
@@ -44,6 +46,7 @@ export function GlCanvas({
   className,
   source,
   fps,
+  maxDpr,
   tokens,
   profiles,
   intensity,
@@ -78,6 +81,7 @@ export function GlCanvas({
       source,
       fps,
       still: reduced,
+      maxDpr,
       uniforms: () => {
         const to = profiles[intensityRef.current];
         level = reduced ? to.level : level + (to.level - level) * EASE;
@@ -103,7 +107,7 @@ export function GlCanvas({
       runner.dispose();
       canvas.remove();
     };
-  }, [reduced, source, fps, tokens, profiles]);
+  }, [reduced, source, fps, maxDpr, tokens, profiles]);
 
   // A still frame has no loop to pick up a new intensity, so repaint it.
   useEffect(() => {
