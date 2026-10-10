@@ -219,6 +219,18 @@ describe.each(EFFECTS)('$name', ({ Effect, source, fps }) => {
   });
 });
 
+describe('device pixel ratio', () => {
+  it('draws Retro Bitrate at 1x on a 2x screen (its blocks are 41px, so more pixels buy nothing) and Pixel Beams at 2x', () => {
+    vi.stubGlobal('devicePixelRatio', 2);
+    const { container } = render(on(<RetroBitrate />));
+    expect(container.querySelector('canvas')!.width).toBe(120);
+    expect(fake.lastUniform('u_dpr')).toEqual([1]);
+    render(on(<PixelBeams />));
+    expect(fake.requested[1].width).toBe(240);
+    expect(fake.lastUniform('u_dpr')).toEqual([2]);
+  });
+});
+
 describe('PixelBeams without WebGL', () => {
   it('falls back to the existing DitherField, keeping the call site classes and Steel dots', () => {
     fake.getContext.mockReturnValue(null);

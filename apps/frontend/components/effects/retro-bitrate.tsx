@@ -10,6 +10,8 @@ import { useEffectsEnabled } from '@/lib/context/effects-context';
 import { RETRO_BITRATE_FRAGMENT, RETRO_BITRATE_TOKENS } from '@/lib/effects/shaders/retro-bitrate';
 
 const FPS = 30;
+// Its blocks are 41 px of pixelation, so 2x device pixels would only cost GPU time.
+const MAX_DPR = 1;
 
 // `level` dims the field toward Ink: idle is a subdued backdrop, active full brightness.
 const PROFILES: Record<EffectIntensity, IntensityProfile> = {
@@ -38,6 +40,7 @@ export function RetroBitrate({
       className={className}
       source={RETRO_BITRATE_FRAGMENT}
       fps={FPS}
+      maxDpr={MAX_DPR}
       tokens={RETRO_BITRATE_TOKENS}
       profiles={PROFILES}
       intensity={intensity}
