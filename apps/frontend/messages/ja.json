@@ -591,6 +591,23 @@
         "description": "求人情報を使って全面的に調整。"
       }
     },
+    "length": {
+      "pageLimitLabel": "ページ数の上限",
+      "pageLimitDescription": "関連性の低い箇条書きから削除し、指定ページ数に収めます。「上限なし」ではすべて残します。",
+      "pageLimitOptions": {
+        "1": "1ページ",
+        "2": "2ページ",
+        "3": "3ページ",
+        "none": "上限なし"
+      },
+      "bulletsLabel": "職歴ごとの箇条書き数",
+      "bulletsDescription": "職歴・プロジェクトごとに残す関連性の高い箇条書きの数。",
+      "bulletOptions": {
+        "3": "最大3",
+        "5": "最大5",
+        "all": "すべて"
+      }
+    },
     "analyzeJob": "求人を分析",
     "generateTailored": "カスタマイズ履歴書を生成",
     "setupRequiredTitle": "[ 設定が必要 ]",
@@ -647,13 +664,14 @@
     },
     "selectResumeDescription": "箇条書きはこのマスター履歴書から選ばれます。",
     "selectionSummary": "{total}件中{kept}件の箇条書きを採用（職務・プロジェクトごとに最大{max}件）",
+    "selectionSummaryAll": "{total}件中{kept}件の箇条書きを保持",
     "pageFit": {
-      "fits": "1ページに収まります",
-      "trimmed": "1ページに収めるため、さらに{count}件を削減しました",
-      "over": "まだ1ページを超えています",
+      "fits": "ページ数の上限内に収まります",
+      "trimmed": "上限内に収めるためさらに{count}件削除",
+      "over": "ページ数の上限を超えています。選択した箇条書きはすべて保持しました",
       "unavailable": "ページ調整は利用できません",
-      "finalOver": "書き換え後に1ページを超える可能性があります",
-      "notRechecked": "書き換え後の1ページ収まりは再確認されていません"
+      "finalOver": "書き換え後にページ数の上限を超える可能性があります",
+      "notRechecked": "書き換え後のページ数上限への収まりは再確認されていません"
     }
   },
   "settings": {

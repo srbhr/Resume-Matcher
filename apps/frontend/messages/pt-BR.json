@@ -591,6 +591,23 @@
         "description": "Personalização abrangente usando a descrição da vaga."
       }
     },
+    "length": {
+      "pageLimitLabel": "Limite de páginas",
+      "pageLimitDescription": "Os tópicos menos relevantes são removidos até o currículo adaptado caber. Sem limite mantém tudo.",
+      "pageLimitOptions": {
+        "1": "1 página",
+        "2": "2 páginas",
+        "3": "3 páginas",
+        "none": "Sem limite"
+      },
+      "bulletsLabel": "Tópicos por cargo",
+      "bulletsDescription": "Tópicos mais relevantes mantidos para cada cargo ou projeto.",
+      "bulletOptions": {
+        "3": "Até 3",
+        "5": "Até 5",
+        "all": "Todos"
+      }
+    },
     "analyzeJob": "Analisar Vaga",
     "generateTailored": "Gerar Currículo Personalizado",
     "setupRequiredTitle": "[ CONFIGURAÇÃO NECESSÁRIA ]",
@@ -647,13 +664,14 @@
     },
     "selectResumeDescription": "Os marcadores são extraídos deste currículo principal.",
     "selectionSummary": "{kept} de {total} marcadores mantidos (até {max} por cargo ou projeto)",
+    "selectionSummaryAll": "{kept} de {total} tópicos mantidos",
     "pageFit": {
-      "fits": "Cabe em uma página",
-      "trimmed": "Marcadores extras removidos para caber em uma página: {count}",
-      "over": "Ainda excede uma página",
+      "fits": "Cabe no limite de páginas",
+      "trimmed": "Mais {count} removidos para caber no limite de páginas",
+      "over": "Acima do limite de páginas; todos os tópicos selecionados foram mantidos",
       "unavailable": "Ajuste de página indisponível",
-      "finalOver": "Pode passar de uma página após a reescrita",
-      "notRechecked": "Ajuste a uma página não verificado após a reescrita"
+      "finalOver": "Pode passar do limite de páginas após a reescrita",
+      "notRechecked": "Ajuste ao limite de páginas não verificado após a reescrita"
     }
   },
   "settings": {

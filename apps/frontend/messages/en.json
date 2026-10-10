@@ -591,6 +591,23 @@
         "description": "Comprehensive tailoring using the job description."
       }
     },
+    "length": {
+      "pageLimitLabel": "Page limit",
+      "pageLimitDescription": "Least relevant bullets are trimmed until the tailored resume fits. No limit keeps everything.",
+      "pageLimitOptions": {
+        "1": "1 page",
+        "2": "2 pages",
+        "3": "3 pages",
+        "none": "No limit"
+      },
+      "bulletsLabel": "Bullets per role",
+      "bulletsDescription": "Most relevant bullets kept for each job or project.",
+      "bulletOptions": {
+        "3": "Up to 3",
+        "5": "Up to 5",
+        "all": "All"
+      }
+    },
     "analyzeJob": "Analyze Job",
     "generateTailored": "Generate Tailored Resume",
     "setupRequiredTitle": "[ SETUP REQUIRED ]",
@@ -647,12 +664,13 @@
     },
     "selectResumeDescription": "Bullets are drawn from this master resume.",
     "selectionSummary": "Kept {kept} of {total} bullets (up to {max} per job or project)",
+    "selectionSummaryAll": "Kept {kept} of {total} bullets",
     "pageFit": {
-      "fits": "Fits on one page",
-      "trimmed": "Trimmed {count} more to fit one page",
-      "over": "Still over one page",
+      "fits": "Fits the page limit",
+      "trimmed": "Trimmed {count} more to fit the page limit",
+      "over": "Over the page limit; all selected bullets kept",
       "unavailable": "Page fit unavailable",
-      "finalOver": "May run over one page after rewriting",
+      "finalOver": "May run over the page limit after rewriting",
       "notRechecked": "Page fit not re-checked after rewriting"
     }
   },

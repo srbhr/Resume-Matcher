@@ -916,3 +916,116 @@ async def test_legacy_preview_registers_no_source_snapshot(
     async with isolated_db._session() as session:
         row = await session.get(TailoringPreview, res.json()["data"]["preview_id"])
     assert row is not None and row.source_data is None
+
+
+def _bullet_total(resume: dict[str, Any]) -> int:
+    return sum(
+        len(e["description"])
+        for e in resume["workExperience"] + resume["personalProjects"]
+    )
+
+
+async def test_preview_with_two_page_limit_keeps_a_two_page_master_whole(
+    client: AsyncClient,
+    master: dict[str, Any],
+    job: dict[str, Any],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def measure(data: dict[str, Any], fit: Any) -> int:
+        return 2  # the full master renders on two pages
+
+    monkeypatch.setattr(tailor_selection, "measure_page_count", measure)
+    res = await client.post(
+        "/api/v1/resumes/improve/preview",
+        json={
+            "resume_id": master["resume_id"],
+            "job_id": job["job_id"],
+            "max_pages": 2,
+            "page_fit": {},
+        },
+    )
+    assert res.status_code == 200, res.text
+    data = res.json()["data"]
+    sel = data["bullet_selection"]
+    assert sel["page_fit"] == "fits"
+    assert sel["max_pages"] == 2
+    assert sel["max_per_entry"] is None
+    assert sel["bullets_before"] == sel["bullets_after"] == 10
+    assert _bullet_total(data["resume_preview"]) == 10
+    assert tailor_selection.PAGE_FIT_FINAL_OVER_WARNING not in data["warnings"]
+
+    confirm = await _confirm(client, master, job, data)
+    assert confirm.status_code == 200, confirm.text
+
+
+async def test_preview_over_the_limit_keeps_selected_bullets(
+    client: AsyncClient,
+    master: dict[str, Any],
+    job: dict[str, Any],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def measure(data: dict[str, Any], fit: Any) -> int:
+        return 3  # never fits two pages, whatever is dropped
+
+    monkeypatch.setattr(tailor_selection, "measure_page_count", measure)
+    res = await client.post(
+        "/api/v1/resumes/improve/preview",
+        json={
+            "resume_id": master["resume_id"],
+            "job_id": job["job_id"],
+            "max_bullets_per_entry": 3,
+            "max_pages": 2,
+            "page_fit": {},
+        },
+    )
+    assert res.status_code == 200, res.text
+    data = res.json()["data"]
+    sel = data["bullet_selection"]
+    assert (sel["page_fit"], sel["trimmed_for_fit"]) == ("over", 0)
+    assert sel["bullets_after"] == 6
+    assert data["resume_preview"]["workExperience"][0]["description"] == CONDENSED_WORK
+    assert tailor_selection.PAGE_FIT_OVER_WARNING in data["warnings"]
+
+
+async def test_final_check_compares_against_the_page_limit(
+    client: AsyncClient,
+    master: dict[str, Any],
+    job: dict[str, Any],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[int] = []
+
+    async def measure(data: dict[str, Any], fit: Any) -> int:
+        calls.append(1)
+        return 2 if len(calls) == 1 else 3  # fits two pages, rewrite spills to three
+
+    monkeypatch.setattr(tailor_selection, "measure_page_count", measure)
+    res = await client.post(
+        "/api/v1/resumes/improve/preview",
+        json={
+            "resume_id": master["resume_id"],
+            "job_id": job["job_id"],
+            "max_pages": 2,
+            "page_fit": {},
+        },
+    )
+    assert res.status_code == 200, res.text
+    data = res.json()["data"]
+    assert data["bullet_selection"]["final_pages"] == 3
+    assert tailor_selection.PAGE_FIT_FINAL_OVER_WARNING in data["warnings"]
+
+
+@pytest.mark.parametrize("max_pages", [0, 6])
+async def test_preview_rejects_out_of_range_page_limit(
+    client: AsyncClient, master: dict[str, Any], job: dict[str, Any], max_pages: int
+) -> None:
+    res = await client.post(
+        "/api/v1/resumes/improve/preview",
+        json={
+            "resume_id": master["resume_id"],
+            "job_id": job["job_id"],
+            "max_pages": max_pages,
+            "page_fit": {},
+        },
+    )
+    assert res.status_code == 422

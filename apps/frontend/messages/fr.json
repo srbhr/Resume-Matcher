@@ -591,6 +591,23 @@
         "description": "Personnalisation complète en utilisant la fiche de poste."
       }
     },
+    "length": {
+      "pageLimitLabel": "Limite de pages",
+      "pageLimitDescription": "Les puces les moins pertinentes sont supprimées jusqu'à ce que le CV adapté tienne. Sans limite conserve tout.",
+      "pageLimitOptions": {
+        "1": "1 page",
+        "2": "2 pages",
+        "3": "3 pages",
+        "none": "Sans limite"
+      },
+      "bulletsLabel": "Puces par poste",
+      "bulletsDescription": "Puces les plus pertinentes conservées pour chaque poste ou projet.",
+      "bulletOptions": {
+        "3": "Jusqu'à 3",
+        "5": "Jusqu'à 5",
+        "all": "Toutes"
+      }
+    },
     "analyzeJob": "Analyser le poste",
     "generateTailored": "Générer le CV personnalisé",
     "setupRequiredTitle": "[ CONFIGURATION REQUISE ]",
@@ -647,13 +664,14 @@
     },
     "selectResumeDescription": "Les puces sont tirées de ce CV principal.",
     "selectionSummary": "Puces conservées : {kept} sur {total} (jusqu'à {max} par poste ou projet)",
+    "selectionSummaryAll": "{kept} puces conservées sur {total}",
     "pageFit": {
-      "fits": "Tient sur une page",
-      "trimmed": "Puces supplémentaires retirées pour tenir sur une page : {count}",
-      "over": "Dépasse encore une page",
+      "fits": "Respecte la limite de pages",
+      "trimmed": "{count} de plus supprimées pour respecter la limite de pages",
+      "over": "Dépasse la limite de pages ; toutes les puces sélectionnées sont conservées",
       "unavailable": "Ajustement à la page indisponible",
-      "finalOver": "Peut dépasser une page après la réécriture",
-      "notRechecked": "Ajustement à une page non revérifié après la réécriture"
+      "finalOver": "Pourrait dépasser la limite de pages après réécriture",
+      "notRechecked": "Respect de la limite de pages non revérifié après la réécriture"
     }
   },
   "settings": {
