@@ -111,9 +111,13 @@ field produces a warning and omits non-default sampling; a missing no-reasoning
 mode or default is a normal "not supported" answer, so registry drift fails
 conservatively.
 
-LiteLLM downloads its model registry from GitHub at import time unless
-`LITELLM_LOCAL_MODEL_COST_MAP=True` is set, so these capability answers can
-change without a version bump. The contract tests pin the bundled map.
+These answers come from the model registry bundled with the pinned LiteLLM:
+`app/__init__.py` defaults `LITELLM_LOCAL_MODEL_COST_MAP=True` before anything
+imports LiteLLM, which otherwise downloads the registry from GitHub's `main`
+branch at import. Capabilities therefore change only with a LiteLLM version
+bump, and behaviour is the same with or without network egress. Set the
+environment variable `LITELLM_LOCAL_MODEL_COST_MAP=False` to opt into the live
+registry (`tests/integration/test_litellm_model_map.py` covers both).
 
 The same registry/model/reasoning decision applies to OpenAI, Azure, and
 registered `openai_compatible` aliases. This avoids a blanket
