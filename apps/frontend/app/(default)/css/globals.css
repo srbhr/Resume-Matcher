@@ -1,60 +1,91 @@
 @import 'tailwindcss';
-@import 'tw-animate-css';
+@import 'tw-animate-css'; /* removed in Task 18 once Dialog animates with Motion */
 
 @source "../../../{app,components,hooks,lib,messages}/**/*.{js,ts,jsx,tsx,mdx}";
 
+/* Swiss palette — the single source of colour (spec §4.1). Hex values (oklch in
+   comments). tests/swiss-contrast.test.ts asserts WCAG 2.2 AA for every pairing
+   the UI uses; run it after any change. */
+:root {
+  --sw-canvas: #f0f0e8;
+  --sw-white: #ffffff;
+  --sw-ink: #000000;
+  --sw-ink-soft: #3d424c; /* oklch(37.8% 0.018 264) body text (house) */
+  --sw-steel: #696d75; /* oklch(53.4% 0.013 264) secondary text, placeholders, hairlines. Never on panel. */
+  --sw-paper: #f5f5f0; /* sub-panel and header tint */
+  --sw-panel: #e5e5e0; /* secondary fills, dialog footer */
+  --sw-panel-hover: #d8d8d2;
+  --sw-primary: #1d4ed8; /* Hyper Blue */
+  --sw-primary-hover: #193cb8;
+  --sw-success: #127e3b;
+  --sw-success-hover: #016630;
+  --sw-destructive: #d61e21;
+  --sw-destructive-hover: #be0010;
+  --sw-warning: #f97316; /* fill, squares and borders only, always with ink text */
+  --sw-warning-hover: #eb5601;
+  --sw-warning-text: #b44f02;
+  --sw-info-tint: #eff6ff;
+  --sw-success-tint: #f0fdf4;
+  --sw-warning-tint: #fff7ed;
+  --sw-destructive-tint: #fef2f2;
+  --sw-highlight: #fff085; /* keyword <mark> only */
+  --sw-overlay: rgb(0 0 0 / 0.5); /* dialog backdrop */
+}
+
 @theme inline {
-  /* No --radius-* tokens — Swiss style commits to rounded-none everywhere.
-     Dead tokens removed. */
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
+  --color-canvas: var(--sw-canvas);
+  --color-ink: var(--sw-ink);
+  --color-ink-soft: var(--sw-ink-soft);
+  --color-steel: var(--sw-steel);
+  --color-paper: var(--sw-paper);
+  --color-panel: var(--sw-panel);
+  --color-panel-hover: var(--sw-panel-hover);
+  --color-primary: var(--sw-primary);
+  --color-primary-hover: var(--sw-primary-hover);
+  --color-success: var(--sw-success);
+  --color-success-hover: var(--sw-success-hover);
+  --color-destructive: var(--sw-destructive);
+  --color-destructive-hover: var(--sw-destructive-hover);
+  --color-warning: var(--sw-warning);
+  --color-warning-hover: var(--sw-warning-hover);
+  --color-warning-text: var(--sw-warning-text);
+  --color-info-tint: var(--sw-info-tint);
+  --color-success-tint: var(--sw-success-tint);
+  --color-warning-tint: var(--sw-warning-tint);
+  --color-destructive-tint: var(--sw-destructive-tint);
+  --color-highlight: var(--sw-highlight);
+  --color-overlay: var(--sw-overlay);
 
-  /* Swiss Style brand tokens. --color-primary, --color-destructive,
-     --color-secondary, --color-background already exist above via the
-     legacy var(--xxx) chain — these are only the additional brand
-     semantics that didn't exist as @theme tokens before. */
-  --color-canvas: #f0f0e8;
-  --color-ink: #000000;
-  --color-success: #15803d;
-  --color-warning: #f97316;
+  /* Legacy names still used at call sites. The phase-5 sweeps rename them;
+     Task 25 deletes these aliases (the guard's legacy-token rule tracks the rest). */
+  --color-background: var(--sw-canvas);
+  --color-foreground: var(--sw-ink);
+  --color-card: var(--sw-canvas);
+  --color-secondary: var(--sw-panel);
+  --color-muted: var(--sw-panel);
+  --color-muted-foreground: var(--sw-steel);
+  --color-accent: var(--sw-panel);
+  --color-border: var(--sw-ink);
+  --color-ring: var(--sw-primary);
+  --color-steel-grey: var(--sw-steel);
+  --color-paper-tint: var(--sw-paper);
 
-  /* Brand-tinted neutrals (OKLCH, chroma tinted ~0.005-0.018 toward
-     Hyper Blue hue 264) — replace ad-hoc Tailwind grays. */
-  --color-paper-tint: oklch(96% 0.005 264); /* replaces gray-50/100/200 */
-  --color-steel-grey: oklch(64% 0.012 264); /* replaces gray-300/400/500 */
-  --color-ink-soft: oklch(38% 0.018 264); /* replaces gray-600/700/800/900 */
+  /* Brand unification (spec §4.6). Tailwind v4 renders blue-700 as #1447e6,
+     red-600 as #e30117 and so on, so the app shipped two of each brand colour.
+     Point the shades in use at the brand values until the sweeps rename them;
+     Task 25 deletes this block. */
+  --color-blue-700: var(--sw-primary);
+  --color-blue-800: var(--sw-primary-hover);
+  --color-green-700: var(--sw-success);
+  --color-green-800: var(--sw-success-hover);
+  --color-red-600: var(--sw-destructive);
+  --color-red-700: var(--sw-destructive-hover);
+  --color-orange-500: var(--sw-warning);
+  --color-orange-600: var(--sw-warning-hover);
 
-  /* Hard offset shadows in solid ink — Swiss style commits to no blur.
-     Sized small (1px) through xl (12px) for Hero/featured surfaces. */
+  /* Hard offset shadows in solid ink — never blurred. Roles (spec §4.3):
+     sm = controls, default = cards and menus, lg = dialogs and page frame,
+     xl = home hero, card = resume sheet. xs is folded into sm by the sweeps. */
   --shadow-sw-xs: 1px 1px 0px 0px #000000;
   --shadow-sw-sm: 2px 2px 0px 0px #000000;
   --shadow-sw-default: 4px 4px 0px 0px #000000;
@@ -62,72 +93,17 @@
   --shadow-sw-lg: 8px 8px 0px 0px #000000;
   --shadow-sw-xl: 12px 12px 0px 0px #000000;
 
-  /* Fonts */
-  --font-sans: 'Geist Sans', sans-serif;
-  --font-mono: 'Space Grotesk', monospace;
+  /* Fonts: exactly what rendered before the realignment (spec D3). */
+  --font-sans: Helvetica, Arial, sans-serif;
+  --font-mono: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
 
-  /* Animations */
-  --animate-gradient: gradient 8s linear infinite;
-
-  @keyframes gradient {
-    to {
-      background-position: 200% center;
-    }
-  }
+  /* Motion (spec §7): one curve; the 100ms press tier is the default transition. */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --default-transition-duration: 100ms;
+  --default-transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-:root {
-  --font-mono: 'Geist Mono', monospace;
-  --font-sans: 'Geist', sans-serif;
-
-  /* Swiss International Style Palette */
-  --background: #f0f0e8; /* Canvas */
-  --foreground: #000000; /* Ink */
-
-  --card: #f0f0e8;
-  --card-foreground: #000000;
-
-  --popover: #f0f0e8;
-  --popover-foreground: #000000;
-
-  --primary: #1d4ed8; /* Hyper Blue */
-  --primary-foreground: #ffffff;
-
-  --secondary: #e5e5e0; /* Panel Grey */
-  --secondary-foreground: #000000;
-
-  --muted: #e5e5e0;
-  --muted-foreground: #6b7280;
-
-  --accent: #e5e5e0;
-  --accent-foreground: #000000;
-
-  --destructive: #dc2626; /* Alert Red */
-  --destructive-foreground: #ffffff;
-
-  --border: #000000;
-  --input: #f0f0e8;
-  --ring: #1d4ed8;
-
-  --chart-1: #1d4ed8;
-  --chart-2: #15803d;
-  --chart-3: #f97316;
-  --chart-4: #dc2626;
-  --chart-5: #000000;
-
-  --sidebar: #e5e5e0;
-  --sidebar-foreground: #000000;
-  --sidebar-primary: #1d4ed8;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #d8d8d2;
-  --sidebar-accent-foreground: #000000;
-  --sidebar-border: #000000;
-  --sidebar-ring: #1d4ed8;
-}
-
-/* Light theme only — Swiss/Brutalist works on the warm Canvas background.
-   The half-finished dark mode mapping was removed; .impeccable.md commits
-   to light only. */
+/* Light theme only. */
 
 @layer base {
   * {
@@ -136,9 +112,15 @@
   body {
     @apply bg-background text-foreground;
   }
-  /* The global `button { font-family: var(--font-mono) }` rule was removed.
-     The Button component applies font-mono via its Tailwind classes, and the
-     global rule was leaking into nested text inside <button> elements. */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    transition-duration: 0ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 @media print {
