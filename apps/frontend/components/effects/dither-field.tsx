@@ -12,8 +12,8 @@ const MAX_DPR = 2;
 
 /**
  * Pixel Beams: square dots in diagonal beams, switched on by a Bayer matrix (`lib/effects/beams`).
- * Fills its positioned parent; the dot colour is `currentColor`, so set it with a token class
- * such as `text-steel`. Draws every dot as one path, at 12 fps, only while on screen and while
+ * Fills the box its classes give it (the background effect makes it `fixed inset-0`, one screen);
+ * the dot colour is `currentColor`, so set it with a token class such as `text-steel`. Draws every dot as one path, at 12 fps, only while on screen and while
  * the tab is visible. Reduced motion draws one still frame and no loop.
  */
 export function DitherField({ className }: { className?: string }) {

@@ -432,6 +432,15 @@ describe('settings page (accessibility)', () => {
     expect(await screen.findByRole('button', { name: 'common.checking' })).toBeDisabled();
   });
 
+  it('leads every section heading, Display included, with a 16px icon', async () => {
+    await renderLoaded();
+    for (const heading of screen.getAllByRole('heading', { level: 2 })) {
+      const icon = heading.previousElementSibling;
+      expect(icon?.tagName.toLowerCase(), heading.textContent ?? '').toBe('svg');
+      expect(icon).toHaveClass('w-4', 'h-4');
+    }
+  });
+
   it('switches background effects on and off, and remembers the choice', async () => {
     localStorage.removeItem('resume_matcher_effects');
     function Seen() {
