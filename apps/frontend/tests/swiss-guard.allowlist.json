@@ -309,10 +309,6 @@
     "palette": 1,
     "transition": 1
   },
-  "components/ui/input.tsx": {
-    "legacy-token": 1,
-    "palette": 1
-  },
   "components/ui/link-dialog.tsx": {
     "ink-tint": 1
   },
@@ -330,10 +326,6 @@
   "components/ui/rich-text-toolbar.tsx": {
     "legacy-token": 1,
     "palette": 2
-  },
-  "components/ui/textarea.tsx": {
-    "legacy-token": 1,
-    "palette": 1
   },
   "components/ui/toggle-switch.tsx": {
     "legacy-token": 2,
