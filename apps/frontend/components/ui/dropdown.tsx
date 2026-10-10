@@ -231,7 +231,7 @@ export function Dropdown({
                     onClick={() => choose(option.id)}
                     onKeyDown={(event) => onOptionKeyDown(event, index)}
                     className={cn(
-                      'flex w-full items-start justify-between gap-2 px-3 py-2 text-left font-mono text-sm transition-colors focus-visible:bg-panel focus-visible:outline-none',
+                      'flex w-full items-start justify-between gap-2 px-3 py-2 text-left font-mono text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary',
                       isSelected
                         ? 'bg-panel font-bold text-ink'
                         : 'bg-white text-ink hover:bg-panel'

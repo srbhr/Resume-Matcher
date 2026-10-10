@@ -17,6 +17,7 @@ import { Button } from './button';
 interface DialogContextValue {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  dismissible: boolean;
   titleId: string;
 }
 
@@ -33,14 +34,19 @@ const useDialogContext = () => {
 interface DialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /**
+   * Set to false for a forced choice: no Close button, and Escape and a backdrop click do
+   * nothing. `onOpenChange` still drives the dialog's own buttons.
+   */
+  dismissible?: boolean;
   children: React.ReactNode;
 }
 
-const Dialog: React.FC<DialogProps> = ({ open, onOpenChange, children }) => {
+const Dialog: React.FC<DialogProps> = ({ open, onOpenChange, dismissible = true, children }) => {
   // Stable id per dialog instance for aria-labelledby wiring to DialogTitle.
   const titleId = React.useId();
   return (
-    <DialogContext.Provider value={{ open, onOpenChange, titleId }}>
+    <DialogContext.Provider value={{ open, onOpenChange, dismissible, titleId }}>
       {children}
     </DialogContext.Provider>
   );
@@ -130,6 +136,14 @@ const DialogLayer: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   );
 };
 
+// Open dialogs, bottom to top. Escape closes only the top one, and the body scroll lock
+// is released only when the last one closes.
+const openDialogs: symbol[] = [];
+let bodyLocks = 0;
+// One keypress closes one dialog. A browser can flush React between two keydown listeners,
+// which would make the dialog underneath the new top before its own listener runs.
+const handledEscapes = new WeakSet<Event>();
+
 interface DialogContentProps {
   children: React.ReactNode;
   className?: string;
@@ -144,27 +158,45 @@ const DialogContent: React.FC<DialogContentProps> = ({
   size = 'md',
   initialFocusRef,
 }) => {
-  const { open, onOpenChange, titleId } = useDialogContext();
+  const { open, onOpenChange, dismissible, titleId } = useDialogContext();
   const { t } = useTranslations();
   const panelRef = React.useRef<HTMLDivElement>(null);
+  const idRef = React.useRef(Symbol('dialog'));
   // Reduced motion: the panel only fades, it does not scale (spec §7).
   const reducedMotion = useReducedMotion();
   const panelScale = reducedMotion ? 1 : 0.95;
 
+  // Registration depends only on `open`, so a parent re-render never reorders the stack.
+  React.useEffect(() => {
+    if (!open) return;
+    const id = idRef.current;
+    openDialogs.push(id);
+    bodyLocks += 1;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      const i = openDialogs.indexOf(id);
+      if (i >= 0) openDialogs.splice(i, 1);
+      bodyLocks -= 1;
+      if (bodyLocks === 0) document.body.style.overflow = '';
+    };
+  }, [open]);
+
   React.useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && open) onOpenChange(false);
+      if (
+        e.key === 'Escape' &&
+        open &&
+        dismissible &&
+        openDialogs[openDialogs.length - 1] === idRef.current &&
+        !handledEscapes.has(e)
+      ) {
+        handledEscapes.add(e);
+        onOpenChange(false);
+      }
     };
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
-  }, [open, onOpenChange]);
-
-  React.useEffect(() => {
-    document.body.style.overflow = open ? 'hidden' : '';
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [open]);
+  }, [open, dismissible, onOpenChange]);
 
   // Focus contract: move focus in on open, give it back to the opener on close.
   // Don't use autoFocus inside a dialog: React applies it before this effect runs,
@@ -213,7 +245,9 @@ const DialogContent: React.FC<DialogContentProps> = ({
           <m.div
             className="fixed inset-0 bg-overlay"
             aria-hidden="true"
-            onClick={() => onOpenChange(false)}
+            onClick={() => {
+              if (dismissible) onOpenChange(false);
+            }}
             initial={{ opacity: 0 }}
             animate={{
               opacity: 1,
@@ -252,16 +286,18 @@ const DialogContent: React.FC<DialogContentProps> = ({
               )}
             >
               {children}
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                className="absolute right-4 top-5"
-                onClick={() => onOpenChange(false)}
-                aria-label={t('common.close')}
-                title={t('common.close')}
-              >
-                <X aria-hidden="true" />
-              </Button>
+              {dismissible && (
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  className="absolute right-4 top-5"
+                  onClick={() => onOpenChange(false)}
+                  aria-label={t('common.close')}
+                  title={t('common.close')}
+                >
+                  <X aria-hidden="true" />
+                </Button>
+              )}
             </m.div>
           </div>
         </DialogLayer>

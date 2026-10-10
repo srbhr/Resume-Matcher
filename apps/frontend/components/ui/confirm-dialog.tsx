@@ -34,6 +34,8 @@ export interface ConfirmDialogProps {
   cancelLabel?: string;
   confirmDisabled?: boolean;
   cancelDisabled?: boolean;
+  /** False makes it a forced choice: no Close button, Escape and backdrop click do nothing. */
+  dismissible?: boolean;
   variant?: 'danger' | 'warning' | 'success' | 'default';
   closeOnConfirm?: boolean;
   onConfirm: () => void;
@@ -51,6 +53,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   cancelLabel,
   confirmDisabled = false,
   cancelDisabled = false,
+  dismissible = true,
   variant = 'default',
   closeOnConfirm = true,
   onConfirm,
@@ -82,6 +85,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   return (
     <Dialog
       open={open}
+      dismissible={dismissible && !cancelDisabled}
       onOpenChange={(nextOpen) => {
         if (!nextOpen && cancelDisabled) return;
         onOpenChange(nextOpen);
