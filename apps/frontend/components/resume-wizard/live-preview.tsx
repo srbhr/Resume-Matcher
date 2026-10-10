@@ -2,7 +2,7 @@
 
 import { Check } from 'lucide-react';
 import type { ResumeData } from '@/components/dashboard/resume-component';
-import { StatusIndicator } from '@/components/ui/status-indicator';
+import { EmptyState } from '@/components/ui/empty-state';
 import { useTranslations } from '@/lib/i18n';
 
 interface LivePreviewProps {
@@ -52,9 +52,7 @@ export function LivePreview({ resumeData, inferredSkills }: LivePreviewProps) {
       </p>
 
       {!hasAnyContent ? (
-        <StatusIndicator tone="active" className="mt-6">
-          {t('resumeWizard.preview.empty')}
-        </StatusIndicator>
+        <EmptyState title={t('resumeWizard.preview.empty')} />
       ) : (
         <div className="mt-3 space-y-4">
           <div>

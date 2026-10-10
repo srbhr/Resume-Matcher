@@ -119,6 +119,7 @@ describe('resume viewer layout', () => {
 
     const frame = container.firstChild as HTMLElement;
     expect(frame).toHaveClass('bg-blueprint');
+    expect(frame.querySelector('svg.animate-spin')).not.toBeNull();
     const label = within(frame).getByText('resumeViewer.loading');
     expect(label).toHaveClass('font-mono', 'text-primary');
     expect(label.closest('.justify-center')).toBe(frame);

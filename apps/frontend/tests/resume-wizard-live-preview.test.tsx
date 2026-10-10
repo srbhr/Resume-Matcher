@@ -12,7 +12,12 @@ describe('LivePreview', () => {
     render(
       <LivePreview resumeData={createInitialResumeWizardState().resume_data} inferredSkills={[]} />
     );
-    expect(screen.getByText('resumeWizard.preview.empty')).toBeInTheDocument();
+    const empty = screen.getByText('resumeWizard.preview.empty');
+    // An empty state (EmptyState plain), not a live "active" status.
+    expect(empty).toHaveClass('text-ink');
+    expect(empty).not.toHaveClass('text-primary');
+    expect(empty.parentElement).toHaveClass('py-6', 'items-start');
+    expect(screen.getByRole('complementary').querySelector('.bg-primary')).toBeNull();
   });
 
   it('renders name, experience and skills as content (not counts)', () => {
