@@ -593,7 +593,7 @@
     },
     "length": {
       "pageLimitLabel": "页数上限",
-      "pageLimitDescription": "从相关性最低的要点开始删减，直到定制简历符合页数。",
+      "pageLimitDescription": "从相关性最低的要点开始删减，直到定制简历符合页数。选择“不限”则全部保留。",
       "pageLimitOptions": {
         "1": "1 页",
         "2": "2 页",
@@ -671,7 +671,7 @@
       "over": "超出页数上限；已保留所有选中的要点",
       "unavailable": "无法进行页面适配",
       "finalOver": "改写后可能超出页数上限",
-      "notRechecked": "改写后未重新检查是否可放入一页"
+      "notRechecked": "改写后未重新检查是否符合页数上限"
     }
   },
   "settings": {
