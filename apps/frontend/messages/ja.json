@@ -681,6 +681,11 @@
     "uiLanguage": "UI言語",
     "uiLanguageDescription": "ユーザーインターフェースの言語",
     "languageTitle": "言語",
+    "display": {
+      "title": "表示",
+      "backgroundEffects": "背景エフェクト",
+      "backgroundEffectsDescription": "ページの背景と、AIの処理中に表示されるアニメーション背景です。オフにすると無地の背景になります。"
+    },
     "theme": "テーマ",
     "themeDescription": "お好みのカラーテーマを選択",
     "lightMode": "ライト",

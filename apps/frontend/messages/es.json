@@ -681,6 +681,11 @@
     "uiLanguage": "Idioma de la Interfaz",
     "uiLanguageDescription": "Idioma para la interfaz de usuario",
     "languageTitle": "Idioma",
+    "display": {
+      "title": "Visualización",
+      "backgroundEffects": "Efectos de fondo",
+      "backgroundEffectsDescription": "Fondos animados detrás de las páginas y mientras la IA trabaja. Desactívalos para tener un fondo liso."
+    },
     "theme": "Tema",
     "themeDescription": "Elige tu tema de color preferido",
     "lightMode": "Claro",

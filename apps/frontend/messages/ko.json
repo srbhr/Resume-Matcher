@@ -681,6 +681,11 @@
     "uiLanguage": "UI 언어",
     "uiLanguageDescription": "사용자 인터페이스의 언어",
     "languageTitle": "언어",
+    "display": {
+      "title": "화면",
+      "backgroundEffects": "배경 효과",
+      "backgroundEffectsDescription": "페이지 배경과 AI 작업 중에 표시되는 애니메이션 배경입니다. 끄면 단색 배경이 됩니다."
+    },
     "theme": "테마",
     "themeDescription": "선호하는 색상 테마를 선택하세요",
     "lightMode": "라이트",

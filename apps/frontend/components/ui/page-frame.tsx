@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { BackgroundEffect } from '@/components/effects/background-effect';
 import { cn } from '@/lib/utils';
 
 export type PageFrameWidth = 'narrow' | 'default' | 'wide';
@@ -10,7 +11,7 @@ const WIDTH: Record<PageFrameWidth, string> = {
   wide: 'max-w-[104rem]',
 };
 
-/** The house page frame: blueprint grid on canvas, 1px ink frame, 8px hard shadow. Server-safe. */
+/** The house page frame: pixel-beams background on canvas, 1px ink frame, 8px hard shadow. Server-safe. */
 export function PageFrame({
   width = 'default',
   height = 'auto',
@@ -25,10 +26,11 @@ export function PageFrame({
   return (
     <div
       className={cn(
-        'bg-blueprint flex w-full items-start justify-center bg-canvas px-4 py-12 md:px-8',
+        'relative isolate flex w-full items-start justify-center bg-canvas px-4 py-12 md:px-8',
         height === 'screen' ? 'h-dvh overflow-hidden' : 'min-h-screen'
       )}
     >
+      <BackgroundEffect />
       <div
         className={cn(
           'flex w-full flex-col border border-ink bg-canvas shadow-sw-lg',

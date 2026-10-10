@@ -681,6 +681,11 @@
     "uiLanguage": "UI Language",
     "uiLanguageDescription": "Language for the user interface",
     "languageTitle": "Language",
+    "display": {
+      "title": "Display",
+      "backgroundEffects": "Background effects",
+      "backgroundEffectsDescription": "Animated backgrounds behind pages and while AI is working. Turn off for a plain background."
+    },
     "theme": "Theme",
     "themeDescription": "Choose your preferred color theme",
     "lightMode": "Light",

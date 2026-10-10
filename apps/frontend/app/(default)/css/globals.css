@@ -96,14 +96,6 @@
   }
 }
 
-/* House signature: the blueprint grid behind framed pages (one definition). */
-@utility bg-blueprint {
-  background-image:
-    linear-gradient(rgb(29 78 216 / 0.1) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(29 78 216 / 0.1) 1px, transparent 1px);
-  background-size: 40px 40px;
-}
-
 @media print {
   html,
   body {
