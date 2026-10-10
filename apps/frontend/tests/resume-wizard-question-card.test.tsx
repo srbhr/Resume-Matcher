@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
+import { StrictMode } from 'react';
 import { QuestionCard } from '@/components/resume-wizard/question-card';
 
 vi.mock('@/lib/i18n', () => ({
@@ -87,6 +88,71 @@ describe('QuestionCard', () => {
 
     rerender(<QuestionCard step="question" {...baseProps} isComplete />);
     expect(screen.getByText('resumeWizard.readyHint')).toBeInTheDocument();
+  });
+
+  it('names the progress bar after the section and reports its position as text', () => {
+    render(<QuestionCard step="question" {...baseProps} />);
+    const bar = screen.getByRole('progressbar', { name: 'resumeWizard.sections.workExperience' });
+    expect(bar).toHaveAttribute('aria-valuenow', '2');
+    expect(bar).toHaveAttribute('aria-valuetext', '2/8');
+  });
+
+  it('ties the answer field to the question it answers', () => {
+    render(<QuestionCard step="question" {...baseProps} />);
+    expect(screen.getByRole('textbox')).toHaveAccessibleDescription(
+      'What is your most recent role?'
+    );
+  });
+
+  describe('focus management', () => {
+    it('does not take focus on first paint, even under StrictMode', () => {
+      render(
+        <StrictMode>
+          <QuestionCard step="question" {...baseProps} />
+        </StrictMode>
+      );
+      expect(document.body).toHaveFocus();
+    });
+
+    it('moves focus to the answer field when the next question arrives', () => {
+      const { rerender } = render(<QuestionCard step="question" {...baseProps} isBusy />);
+      expect(document.body).toHaveFocus();
+      rerender(
+        <QuestionCard
+          step="question"
+          {...baseProps}
+          isBusy={false}
+          question="Where did you study?"
+        />
+      );
+      expect(screen.getByRole('textbox')).toHaveFocus();
+    });
+
+    it('moves focus when the question changes without a busy phase, but not while busy', () => {
+      const { rerender } = render(<QuestionCard step="question" {...baseProps} />);
+      rerender(<QuestionCard step="question" {...baseProps} isBusy question="Next?" />);
+      expect(document.body).toHaveFocus();
+      rerender(<QuestionCard step="question" {...baseProps} question="Next?" />);
+      expect(screen.getByRole('textbox')).toHaveFocus();
+    });
+
+    it('leaves focus alone while the user types in an unchanged question', () => {
+      const { rerender } = render(<QuestionCard step="question" {...baseProps} />);
+      const field = screen.getByRole('textbox');
+      const outside = document.createElement('button');
+      document.body.appendChild(outside);
+      outside.focus();
+      rerender(<QuestionCard step="question" {...baseProps} answer="typing" />);
+      expect(outside).toHaveFocus();
+      expect(field).not.toHaveFocus();
+      outside.remove();
+    });
+
+    it('focuses the heading on the review step, which has no field', () => {
+      const { rerender } = render(<QuestionCard step="question" {...baseProps} />);
+      rerender(<QuestionCard step="review" {...baseProps} question="All set?" />);
+      expect(screen.getByRole('heading', { name: 'All set?' })).toHaveFocus();
+    });
   });
 
   it('disables Create on the review step when the draft cannot be finalized', () => {

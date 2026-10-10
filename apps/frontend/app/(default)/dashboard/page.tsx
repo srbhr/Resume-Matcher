@@ -54,6 +54,12 @@ const TILE_LIFT =
   'hover:bg-white has-[:focus-visible]:z-20 has-[:focus-visible]:border-ink has-[:focus-visible]:bg-white has-[:focus-visible]:translate-x-px has-[:focus-visible]:translate-y-px';
 const TILE_ACCENT = 'group-hover:text-primary group-has-[:focus-visible]:text-primary';
 // Monogram fills: brand tokens only, each AA with white text (lowest: steel, 5.19:1).
+const STATUS_TONE: Record<ResumeListItem['processing_status'], StatusTone> = {
+  ready: 'ready',
+  processing: 'active',
+  pending: 'neutral',
+  failed: 'error',
+};
 const MONOGRAM_FILLS = ['bg-primary', 'bg-ink', 'bg-success', 'bg-steel', 'bg-destructive'];
 const FILLER_FILLS = ['bg-panel', 'bg-panel-hover', 'bg-panel-hover', 'bg-panel'];
 
@@ -640,22 +646,24 @@ export default function DashboardPage() {
                     <span className="font-mono font-bold text-lg">M</span>
                   </div>
                   {(processingStatus === 'failed' || processingStatus === 'processing') && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      className="z-10"
-                      onClick={handleRetryProcessing}
-                      disabled={isRetrying}
-                      aria-label={t('dashboard.retryProcessing')}
-                      title={t('dashboard.retryProcessing')}
-                    >
-                      {isRetrying ? (
-                        <Loader2 aria-hidden="true" className="animate-spin" />
-                      ) : (
-                        <RefreshCw aria-hidden="true" />
-                      )}
-                    </Button>
+                    <span className="relative z-10 inline-flex">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        className="z-10"
+                        onClick={handleRetryProcessing}
+                        disabled={isRetrying}
+                        aria-label={t('dashboard.retryProcessing')}
+                        title={t('dashboard.retryProcessing')}
+                      >
+                        {isRetrying ? (
+                          <Loader2 aria-hidden="true" className="animate-spin" />
+                        ) : (
+                          <RefreshCw aria-hidden="true" />
+                        )}
+                      </Button>
+                    </span>
                   )}
                 </div>
 
@@ -684,7 +692,7 @@ export default function DashboardPage() {
                     </StatusIndicator>
                   </div>
                   {(processingStatus === 'failed' || processingStatus === 'processing') && (
-                    <div className="flex flex-wrap gap-2">
+                    <div className="relative z-10 flex w-fit max-w-full flex-wrap gap-2">
                       <Button
                         type="button"
                         variant="outline"
@@ -727,9 +735,9 @@ export default function DashboardPage() {
                     <div className="size-12 border-2 border-ink bg-primary text-white flex items-center justify-center">
                       <span className="font-mono font-bold">M</span>
                     </div>
-                    <span className="font-mono text-xs text-steel uppercase">
-                      {resume.processing_status}
-                    </span>
+                    <StatusIndicator tone={STATUS_TONE[resume.processing_status]}>
+                      {t(`dashboard.status.${resume.processing_status}`)}
+                    </StatusIndicator>
                   </div>
                   <CardTitle className={cn('text-lg', TILE_ACCENT)}>
                     <Link
@@ -742,7 +750,7 @@ export default function DashboardPage() {
                       {title}
                     </Link>
                   </CardTitle>
-                  <div className="mt-auto pt-4 flex flex-wrap gap-2">
+                  <div className="relative z-10 mt-auto flex w-fit max-w-full flex-wrap gap-2 pt-4">
                     <Button
                       type="button"
                       variant="outline"
@@ -818,9 +826,9 @@ export default function DashboardPage() {
                     >
                       <span className="font-mono font-bold">{getMonogram(title)}</span>
                     </div>
-                    <span className="font-mono text-xs text-steel uppercase">
-                      {resume.processing_status}
-                    </span>
+                    <StatusIndicator tone={STATUS_TONE[resume.processing_status]}>
+                      {t(`dashboard.status.${resume.processing_status}`)}
+                    </StatusIndicator>
                   </div>
                   <CardTitle className={cn('text-lg', TILE_ACCENT)}>
                     <Link

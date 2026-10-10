@@ -29,6 +29,12 @@ describe('KanbanBoard header', () => {
     vi.restoreAllMocks();
   });
 
+  it('announces loading with a status region instead of a silent spinner', () => {
+    vi.mocked(listApplications).mockReturnValue(new Promise(() => {}));
+    render(<KanbanBoard />);
+    expect(screen.getByRole('status')).toHaveTextContent('common.loading');
+  });
+
   it('is a compact single-row toolbar: one short H1, an inline back link, a mono caption', async () => {
     vi.mocked(listApplications).mockResolvedValue({ columns: columnsWith([]) });
     render(<KanbanBoard />);

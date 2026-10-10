@@ -1,6 +1,6 @@
 'use client';
 
-import type { KeyboardEvent } from 'react';
+import { useEffect, useId, useRef, type KeyboardEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { StatusIndicator } from '@/components/ui/status-indicator';
@@ -54,6 +54,24 @@ export function QuestionCard({
   const isQuestion = step === 'question';
   const canContinue = answer.trim().length > 0 && !isBusy;
   const totalSegments = Math.max(progress.total, 1);
+  const sectionId = useId();
+  const questionId = useId();
+  const answerRef = useRef<HTMLTextAreaElement>(null);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const previous = useRef({ question, step, isBusy });
+
+  // Continue/Skip disable the focused control while the next question loads, which would drop
+  // keyboard and screen-reader users back to the top of the page. Once the card has actually
+  // advanced (new question or step) or a busy action finished, move focus to the new question's
+  // field (the heading on review). Comparing against the previous values, not a "mounted" flag,
+  // keeps first paint and StrictMode's double effect from stealing focus.
+  useEffect(() => {
+    const was = previous.current;
+    previous.current = { question, step, isBusy };
+    if (isBusy) return;
+    if (was.question === question && was.step === step && was.isBusy === isBusy) return;
+    (isReview ? headingRef : answerRef).current?.focus();
+  }, [question, step, isBusy, isReview]);
 
   const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
     // Repo pattern: never let Enter bubble to a parent form/dialog.
@@ -67,31 +85,43 @@ export function QuestionCard({
   };
 
   return (
-    <section className="border-2 border-black bg-white shadow-sw-default">
+    <section className="border-2 border-ink bg-white shadow-sw-default">
       <div
-        className="flex gap-1 border-b-2 border-black p-2"
+        className="flex gap-1 border-b-2 border-ink p-2"
         role="progressbar"
         aria-valuemin={0}
         aria-valuemax={totalSegments}
         aria-valuenow={progress.current}
+        aria-valuetext={`${progress.current}/${totalSegments}`}
+        aria-labelledby={sectionId}
       >
         {Array.from({ length: totalSegments }).map((_, index) => (
           <span
             key={index}
             className={
               index < progress.current
-                ? 'h-2 flex-1 border border-black bg-black'
-                : 'h-2 flex-1 border border-black bg-white'
+                ? 'h-2 flex-1 border border-ink bg-ink'
+                : 'h-2 flex-1 border border-ink bg-white'
             }
           />
         ))}
       </div>
 
       <div className="grid gap-6 p-6 md:p-8">
-        <p className="font-mono text-xs font-bold uppercase tracking-wider text-steel">
+        <p
+          id={sectionId}
+          className="font-mono text-xs font-bold uppercase tracking-wider text-steel"
+        >
           {sectionLabel}
         </p>
-        <h2 className="font-serif text-3xl font-bold leading-tight md:text-4xl">{question}</h2>
+        <h2
+          id={questionId}
+          ref={headingRef}
+          tabIndex={-1}
+          className="font-serif text-3xl font-bold leading-tight focus-visible:outline-none md:text-4xl"
+        >
+          {question}
+        </h2>
 
         {isReview ? (
           warnings.length > 0 && (
@@ -111,6 +141,8 @@ export function QuestionCard({
             <Label htmlFor="resume-wizard-answer">{t('resumeWizard.answerLabel')}</Label>
             <Textarea
               id="resume-wizard-answer"
+              ref={answerRef}
+              aria-describedby={questionId}
               value={answer}
               onChange={(event) => onAnswerChange(event.target.value)}
               onKeyDown={handleKeyDown}
@@ -124,7 +156,7 @@ export function QuestionCard({
           <StatusIndicator tone="ready">{t('resumeWizard.readyHint')}</StatusIndicator>
         )}
 
-        <div className="flex flex-wrap gap-3 border-t-2 border-black pt-6">
+        <div className="flex flex-wrap gap-3 border-t-2 border-ink pt-6">
           {isReview ? (
             <>
               <Button

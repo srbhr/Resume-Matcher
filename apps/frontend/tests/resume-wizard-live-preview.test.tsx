@@ -59,4 +59,18 @@ describe('LivePreview', () => {
     expect(chip.textContent).not.toContain('✓');
     expect(chip.querySelector('svg')).toHaveAttribute('aria-hidden', 'true');
   });
+
+  it('names inferred skills in text so colour and an icon are not the only cue', () => {
+    const data = createInitialResumeWizardState().resume_data;
+    data.personalInfo = { name: 'Priya' };
+    data.additional = { technicalSkills: ['SQL'] };
+
+    render(<LivePreview resumeData={data} inferredSkills={['Node.js']} />);
+
+    const inferred = screen.getByText('Node.js');
+    expect(inferred).toHaveTextContent('resumeWizard.preview.inferredSkill');
+    expect(within(inferred).getByText('resumeWizard.preview.inferredSkill')).toHaveClass('sr-only');
+    expect(screen.getAllByText('resumeWizard.preview.inferredSkill')).toHaveLength(1);
+    expect(screen.getByText('SQL')).not.toHaveTextContent('resumeWizard.preview.inferredSkill');
+  });
 });

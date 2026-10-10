@@ -2,6 +2,7 @@ import React from 'react';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import SettingsPage from '@/app/(default)/settings/page';
+import { FeaturePromptsError } from '@/lib/api/config';
 
 const api = vi.hoisted(() => ({
   fetchLlmConfig: vi.fn(),
@@ -9,6 +10,7 @@ const api = vi.hoisted(() => ({
   fetchApiKeyStatus: vi.fn(),
   fetchFeatureConfig: vi.fn(),
   testLlmConnection: vi.fn(),
+  updateFeaturePrompts: vi.fn(),
   refreshStatus: vi.fn(),
   setUiLanguage: vi.fn(),
   setContentLanguage: vi.fn(),
@@ -16,6 +18,7 @@ const api = vi.hoisted(() => ({
 }));
 // Module-level so the page's load effect (deps: [t]) runs once.
 const t = (key: string) => key;
+let currentStatus: typeof systemStatus | null = null;
 const systemStatus = {
   status: 'setup_required' as const,
   llm_configured: false,
@@ -32,7 +35,7 @@ const systemStatus = {
 vi.mock('@/lib/i18n', () => ({ useTranslations: () => ({ t, locale: 'en' }) }));
 vi.mock('@/lib/context/status-cache', () => ({
   useStatusCache: () => ({
-    status: systemStatus,
+    status: currentStatus,
     isLoading: false,
     lastFetched: null,
     refreshStatus: api.refreshStatus,
@@ -59,6 +62,7 @@ vi.mock('@/lib/api/config', async (importOriginal) => {
     updateApiKeys: api.unavailable,
     testLlmConnection: api.testLlmConnection,
     fetchFeatureConfig: api.fetchFeatureConfig,
+    updateFeaturePrompts: api.updateFeaturePrompts,
     fetchPromptConfig: api.unavailable,
     fetchFeaturePrompts: api.unavailable,
   };
@@ -66,6 +70,7 @@ vi.mock('@/lib/api/config', async (importOriginal) => {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  currentStatus = systemStatus;
   api.fetchLlmConfig.mockResolvedValue({
     provider: 'openai',
     model: 'gpt-5-nano',
@@ -264,5 +269,103 @@ describe('settings page (Swiss sweep)', () => {
       expect(block.tagName).toBe('PRE');
       expect(block).toHaveClass('font-mono');
     }
+  });
+});
+
+describe('settings page (accessibility)', () => {
+  it('guards the credential and endpoint fields against autofill and spellcheck', async () => {
+    await renderLoaded();
+
+    const key = document.getElementById('apiKey') as HTMLInputElement;
+    expect(key).toHaveAttribute('type', 'password');
+    expect(key).toHaveAttribute('name', 'llm-api-key');
+    expect(key).toHaveAttribute('autocomplete', 'off');
+    expect(key).toHaveAttribute('spellcheck', 'false');
+
+    const model = screen.getByLabelText('settings.llmConfiguration.modelLabel');
+    expect(model).toHaveAttribute('autocomplete', 'off');
+    expect(model).toHaveAttribute('spellcheck', 'false');
+
+    const base = document.getElementById('apiBase') as HTMLInputElement;
+    expect(base).toHaveAttribute('type', 'url');
+    expect(base).toHaveAttribute('inputmode', 'url');
+    expect(base).toHaveAttribute('autocomplete', 'off');
+    expect(base).toHaveAttribute('spellcheck', 'false');
+    expect(base).toHaveAttribute('aria-required', 'false');
+  });
+
+  it('marks the base URL required for providers that need one', async () => {
+    await renderLoaded();
+    const providers = screen.getByRole('radiogroup', { name: 'settings.providerLabel' });
+    fireEvent.click(within(providers).getByRole('radio', { name: 'Azure' }));
+    expect(document.getElementById('apiBase')).toHaveAttribute('aria-required', 'true');
+  });
+
+  it('announces a rejected feature prompt and ties it to its textarea', async () => {
+    api.fetchFeatureConfig.mockResolvedValue({
+      enable_cover_letter: true,
+      enable_outreach_message: true,
+      enable_interview_prep: false,
+    });
+    api.updateFeaturePrompts.mockRejectedValue(
+      new FeaturePromptsError({
+        code: 'missing_placeholders',
+        field: 'cover_letter_prompt',
+        missing: ['{job_description}'],
+      })
+    );
+    await renderLoaded();
+    const cover = document.getElementById('coverLetterPrompt') as HTMLTextAreaElement;
+    const outreach = document.getElementById('outreachPrompt') as HTMLTextAreaElement;
+    expect(cover).not.toHaveAttribute('aria-invalid', 'true');
+
+    await act(async () => {
+      fireEvent.click(
+        within(cover.closest('.pl-6') as HTMLElement).getByRole('button', { name: 'common.save' })
+      );
+    });
+
+    const message = (await screen.findByText(
+      'settings.contentGeneration.customPromptErrorMissing'
+    )) as HTMLElement;
+    expect(message).toHaveAttribute('id', 'coverLetterPrompt-error');
+    expect(message).toHaveAttribute('role', 'alert');
+    expect(cover).toHaveAttribute('aria-invalid', 'true');
+    expect(cover).toHaveAttribute('aria-describedby', 'coverLetterPrompt-error');
+    // The other field is untouched.
+    expect(outreach).not.toHaveAttribute('aria-invalid', 'true');
+    expect(outreach).not.toHaveAttribute('aria-describedby');
+  });
+
+  it('shows an unreachable backend as an error Alert with a retry, not a dashed box', async () => {
+    currentStatus = null;
+    render(<SettingsPage />);
+    const alert = (await screen.findByText('settings.systemStatus.unableToConnect')).closest(
+      '[role="alert"]'
+    ) as HTMLElement;
+    expect(alert).toHaveClass('border-2', 'border-destructive', 'bg-destructive-tint');
+    expect(alert).not.toHaveClass('border-dashed');
+    expect(alert).toHaveTextContent('settings.systemStatus.expectedAt');
+
+    fireEvent.click(within(alert).getByRole('button', { name: 'common.retry' }));
+    expect(api.refreshStatus).toHaveBeenCalled();
+  });
+
+  it('keeps the Save button named while it is saving', async () => {
+    api.updateLlmConfig.mockReturnValue(new Promise(() => {}));
+    await renderLoaded();
+
+    fireEvent.click(screen.getByRole('button', { name: 'common.save' }));
+    expect(await screen.findByRole('button', { name: 'common.saving' })).toBeDisabled();
+  });
+
+  it('names the Test connection button while the check runs', async () => {
+    api.testLlmConnection.mockReturnValue(new Promise(() => {}));
+    await renderLoaded();
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'settings.llmConfiguration.testConnection' })
+    );
+    expect(await screen.findByRole('button', { name: 'common.checking' })).toBeDisabled();
   });
 });

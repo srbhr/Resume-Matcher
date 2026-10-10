@@ -1016,7 +1016,8 @@
       "experience": "经历",
       "education": "教育",
       "projects": "项目",
-      "skills": "技能"
+      "skills": "技能",
+      "inferredSkill": "推断"
     },
     "errors": {
       "turnFailed": "向导无法保存该回答。请重试。",

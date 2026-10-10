@@ -81,13 +81,7 @@ export function DiffPreviewModal({
           </DialogHeader>
 
           <DialogBody className="space-y-3">
-            <div className="border-2 border-ink bg-white p-4 text-sm text-ink-soft">
-              {t('tailor.missingDiffDialog.description')}
-            </div>
-            <div className="flex items-center gap-2 font-mono text-xs text-warning-text">
-              <AlertTriangle className="size-4" />
-              <span>{t('tailor.missingDiffDialog.confirmLabel')}</span>
-            </div>
+            <Alert tone="warning">{t('tailor.missingDiffDialog.description')}</Alert>
           </DialogBody>
 
           <DialogFooter>
@@ -191,19 +185,15 @@ export function DiffPreviewModal({
             )}
 
             {diffSummary.high_risk_changes > 0 && (
-              <div className="mt-4 flex items-start gap-3 border-2 border-warning bg-warning-tint p-3">
-                <AlertTriangle className="size-5 shrink-0 text-warning-text" />
-                <div>
-                  <p className="font-mono text-xs font-bold uppercase tracking-wider text-warning-text">
-                    {t('tailor.diffModal.warningTitle', {
-                      count: diffSummary.high_risk_changes,
-                    })}
-                  </p>
-                  <p className="mt-1 text-sm text-ink-soft">
-                    {t('tailor.diffModal.warningMessage')}
-                  </p>
-                </div>
-              </div>
+              <Alert
+                tone="warning"
+                className="mt-4"
+                title={t('tailor.diffModal.warningTitle', {
+                  count: diffSummary.high_risk_changes,
+                })}
+              >
+                {t('tailor.diffModal.warningMessage')}
+              </Alert>
             )}
           </div>
 
@@ -457,6 +447,7 @@ interface ChangeItemProps {
 }
 
 function ChangeItem({ change }: ChangeItemProps) {
+  const { t } = useTranslations();
   // Background tint + leading glyph instead of left-stripe borders.
   // Side-stripe borders are an impeccable absolute_ban (BAN 1) — the most
   // overused dashboard "design touch". The leading +/-/~ glyph carries the
@@ -490,14 +481,20 @@ function ChangeItem({ change }: ChangeItemProps) {
         </span>
         <div className="flex-1">
           {change.original_value && (
-            <div className="mb-1 text-sm text-destructive line-through">
+            <del className="mb-1 block text-sm text-destructive line-through">
               {change.original_value}
-            </div>
+            </del>
           )}
-          {change.new_value && <div className="text-sm text-ink-soft">{change.new_value}</div>}
+          {change.new_value && (
+            <ins className="block text-sm text-ink-soft no-underline">{change.new_value}</ins>
+          )}
         </div>
         {change.change_type === 'added' && change.confidence === 'high' && (
-          <AlertTriangle className="size-4 shrink-0 text-warning-text" />
+          <AlertTriangle
+            role="img"
+            aria-label={t('tailor.diffModal.highRiskChanges')}
+            className="size-4 shrink-0 text-warning-text"
+          />
         )}
       </div>
     </div>

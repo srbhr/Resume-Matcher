@@ -50,7 +50,17 @@ describe('DiffPreviewModal', () => {
     expect(onConfirm).toHaveBeenCalledTimes(1);
   });
 
-  it('shows warning banner and renders high-risk icon only for added high changes', () => {
+  it('uses the warning Alert for the missing-diff notice without repeating the confirm label', () => {
+    render(<DiffPreviewModal isOpen onClose={vi.fn()} onReject={vi.fn()} onConfirm={vi.fn()} />);
+
+    const alert = screen.getByRole('alert');
+    expect(alert).toHaveTextContent('tailor.missingDiffDialog.description');
+    expect(alert.className).toMatch(/border-warning/);
+    // The confirm button already carries this text; no second copy as an icon line.
+    expect(screen.getAllByText('tailor.missingDiffDialog.confirmLabel')).toHaveLength(1);
+  });
+
+  it('shows the high-risk Alert and a named risk icon only for added high changes', () => {
     render(
       <DiffPreviewModal
         isOpen
@@ -62,12 +72,36 @@ describe('DiffPreviewModal', () => {
       />
     );
 
-    expect(screen.getByText('tailor.diffModal.warningTitle', { exact: false })).toBeInTheDocument();
+    const banner = screen.getByRole('alert');
+    expect(banner).toHaveTextContent('tailor.diffModal.warningTitle');
+    expect(banner).toHaveTextContent('tailor.diffModal.warningMessage');
+    expect(banner.className).toMatch(/border-warning/);
     // Dialog uses createPortal to document.body, so the test's `container`
     // wrapper does not contain the rendered dialog content. Query
     // document.body directly to find the icons rendered inside the portal.
     const alertIcons = document.body.querySelectorAll('.lucide-triangle-alert');
-    expect(alertIcons.length).toBe(2);
+    expect(alertIcons.length).toBe(1);
+    // The risk marker has a name, so it is not colour- or glyph-only.
+    expect(screen.getByRole('img', { name: 'tailor.diffModal.highRiskChanges' })).toBe(
+      alertIcons[0]
+    );
+  });
+
+  it('marks removed and added text with native del and ins semantics', () => {
+    render(
+      <DiffPreviewModal
+        isOpen
+        onClose={vi.fn()}
+        onReject={vi.fn()}
+        onConfirm={vi.fn()}
+        diffSummary={diffSummary}
+        detailedChanges={detailedChanges}
+      />
+    );
+
+    expect(document.body.querySelector('del')).toHaveTextContent('old summary');
+    const inserted = [...document.body.querySelectorAll('ins')].map((el) => el.textContent);
+    expect(inserted).toEqual(['new summary', 'Go']);
   });
 
   it('toggles section visibility on header click', () => {

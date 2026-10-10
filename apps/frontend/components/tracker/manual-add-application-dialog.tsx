@@ -118,6 +118,8 @@ export function ManualAddApplicationDialog({
               onKeyDown={handleNotesKeyDown}
               placeholder={t('tracker.manualAdd.jobDescriptionPlaceholder')}
               rows={5}
+              aria-invalid={Boolean(error) && !jobDescription.trim()}
+              aria-describedby={error ? 'manual-add-error' : undefined}
             />
           </div>
 
@@ -152,13 +154,20 @@ export function ManualAddApplicationDialog({
             onChange={(value) => setStatus(value as ApplicationStatus)}
           />
 
-          {error && <Alert tone="error">{error}</Alert>}
+          {error && (
+            <Alert id="manual-add-error" tone="error">
+              {error}
+            </Alert>
+          )}
         </DialogBody>
 
         <DialogFooter>
           <Button type="button" onClick={handleSubmit} disabled={submitting}>
             {submitting ? (
-              <Loader2 aria-hidden="true" className="animate-spin" />
+              <>
+                <Loader2 aria-hidden="true" className="animate-spin" />
+                {t('common.saving')}
+              </>
             ) : (
               t('tracker.manualAdd.submit')
             )}

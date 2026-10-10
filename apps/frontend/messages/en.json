@@ -1016,7 +1016,8 @@
       "experience": "Experience",
       "education": "Education",
       "projects": "Projects",
-      "skills": "Skills"
+      "skills": "Skills",
+      "inferredSkill": "inferred"
     },
     "errors": {
       "turnFailed": "The wizard could not save that answer. Try again.",

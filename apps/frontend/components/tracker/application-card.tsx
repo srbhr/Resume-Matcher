@@ -48,7 +48,7 @@ export function ApplicationCard({
 
   return (
     <div ref={setNodeRef} style={style} className="transition-opacity">
-      <Card variant="raised" noPadding className={`p-3 ${selected ? 'ring-2 ring-primary' : ''}`}>
+      <Card variant="raised" noPadding className={`p-3 ${selected ? 'ring-2 ring-ink' : ''}`}>
         <div className="flex items-start gap-2">
           <input
             type="checkbox"
@@ -77,7 +77,7 @@ export function ApplicationCard({
             )}
             {sharedResume && (
               <span className="mt-1 inline-flex items-center gap-1 border border-ink bg-paper px-1 font-mono text-xs uppercase text-ink-soft">
-                <Layers aria-hidden="true" className="size-3" />
+                <Layers aria-hidden="true" className="size-4" />
                 {t('tracker.card.sharedResume')}
               </span>
             )}

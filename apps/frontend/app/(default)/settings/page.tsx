@@ -740,24 +740,19 @@ export default function SettingsPage() {
                 <Loader2 className="w-6 h-6 animate-spin text-steel" />
               </div>
             ) : !systemStatus ? (
-              <div className="flex flex-col items-center justify-center p-8 gap-3 border border-dashed border-destructive bg-destructive-tint">
-                <p className="font-mono text-xs text-destructive uppercase">
-                  {t('settings.systemStatus.unableToConnect')}
-                </p>
-                <p className="font-mono text-xs text-ink-soft">
-                  {t('settings.systemStatus.expectedAt', { apiUrl: API_URL })}
-                </p>
+              <Alert tone="error" title={t('settings.systemStatus.unableToConnect')}>
+                <p>{t('settings.systemStatus.expectedAt', { apiUrl: API_URL })}</p>
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   onClick={refreshStatus}
-                  className="gap-1 text-xs"
+                  className="mt-3"
                 >
-                  <RefreshCw />
+                  <RefreshCw aria-hidden="true" />
                   {t('common.retry')}
                 </Button>
-              </div>
+              </Alert>
             ) : (
               // @container so the status cards adapt to the section width
               // rather than the viewport — useful when the settings page is
@@ -765,7 +760,7 @@ export default function SettingsPage() {
               <div className="@container">
                 <div className="grid grid-cols-2 @3xl:grid-cols-4 gap-4">
                   {/* LLM Status */}
-                  <div className="border border-black bg-white p-4 shadow-sw-sm">
+                  <div className="border border-ink bg-white p-4 shadow-sw-sm">
                     <div className="flex items-center gap-2 mb-2">
                       <Server className="w-4 h-4 text-steel" />
                       <span className="font-mono text-xs uppercase text-steel">
@@ -780,7 +775,7 @@ export default function SettingsPage() {
                   </div>
 
                   {/* Database Status */}
-                  <div className="border border-black bg-white p-4 shadow-sw-sm">
+                  <div className="border border-ink bg-white p-4 shadow-sw-sm">
                     <div className="flex items-center gap-2 mb-2">
                       <Database className="w-4 h-4 text-steel" />
                       <span className="font-mono text-xs uppercase text-steel">
@@ -793,7 +788,7 @@ export default function SettingsPage() {
                   </div>
 
                   {/* Resumes Count */}
-                  <div className="border border-black bg-white p-4 shadow-sw-sm">
+                  <div className="border border-ink bg-white p-4 shadow-sw-sm">
                     <div className="flex items-center gap-2 mb-2">
                       <FileText className="w-4 h-4 text-steel" />
                       <span className="font-mono text-xs uppercase text-steel">
@@ -806,7 +801,7 @@ export default function SettingsPage() {
                   </div>
 
                   {/* Jobs Count */}
-                  <div className="border border-black bg-white p-4 shadow-sw-sm">
+                  <div className="border border-ink bg-white p-4 shadow-sw-sm">
                     <div className="flex items-center gap-2 mb-2">
                       <Briefcase className="w-4 h-4 text-steel" />
                       <span className="font-mono text-xs uppercase text-steel">
@@ -824,7 +819,7 @@ export default function SettingsPage() {
             {/* Additional Stats Row */}
             {systemStatus && (
               <div className="grid grid-cols-2 gap-4">
-                <div className="border border-black bg-white p-4 shadow-sw-sm">
+                <div className="border border-ink bg-white p-4 shadow-sw-sm">
                   <div className="flex items-center gap-2 mb-2">
                     <span className="font-mono text-xs uppercase text-steel">
                       {t('settings.statusCards.improvements')}
@@ -834,7 +829,7 @@ export default function SettingsPage() {
                     {systemStatus.database_stats.total_improvements}
                   </span>
                 </div>
-                <div className="border border-black bg-white p-4 shadow-sw-sm">
+                <div className="border border-ink bg-white p-4 shadow-sw-sm">
                   <div className="flex items-center gap-2 mb-2">
                     <FileText className="w-4 h-4 text-steel" />
                     <span className="font-mono text-xs uppercase text-steel">
@@ -894,6 +889,8 @@ export default function SettingsPage() {
                   value={model}
                   onChange={(e) => setModel(e.target.value)}
                   placeholder={providerInfo.defaultModel}
+                  autoComplete="off"
+                  spellCheck={false}
                   className="font-mono"
                 />
                 <p className="text-xs text-steel font-mono">
@@ -920,7 +917,10 @@ export default function SettingsPage() {
                 </Label>
                 <Input
                   id="apiKey"
+                  name="llm-api-key"
                   type="password"
+                  autoComplete="off"
+                  spellCheck={false}
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
                   placeholder={
@@ -940,7 +940,7 @@ export default function SettingsPage() {
               {/* Saved per-provider keys — each provider keeps its own encrypted
                   key, so switching providers never wipes another's. */}
               {apiKeyStatuses.some((s) => s.configured) && (
-                <div className="space-y-2 border border-black bg-paper p-3 shadow-sw-sm">
+                <div className="space-y-2 border border-ink bg-paper p-3 shadow-sw-sm">
                   <p className="font-mono text-xs uppercase tracking-wider text-ink-soft">
                     {t('settings.apiKeys.savedTitle')}
                   </p>
@@ -982,6 +982,11 @@ export default function SettingsPage() {
                 </Label>
                 <Input
                   id="apiBase"
+                  type="url"
+                  inputMode="url"
+                  autoComplete="off"
+                  spellCheck={false}
+                  aria-required={requiresApiBase}
                   value={apiBase}
                   onChange={(e) => setApiBase(e.target.value)}
                   placeholder={baseUrlPlaceholder}
@@ -1030,7 +1035,10 @@ export default function SettingsPage() {
                       exit={{ opacity: 0, transition: { duration: DURATION.swap } }}
                     >
                       {saveState === 'saving' ? (
-                        <Loader2 className="animate-spin" />
+                        <>
+                          <Loader2 aria-hidden="true" className="animate-spin" />
+                          {t('common.saving')}
+                        </>
                       ) : saveState === 'saved' ? (
                         <>
                           <Check />
@@ -1052,7 +1060,10 @@ export default function SettingsPage() {
                   disabled={status === 'testing' || status === 'saving'}
                 >
                   {status === 'testing' ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <>
+                      <Loader2 aria-hidden="true" className="animate-spin" />
+                      {t('common.checking')}
+                    </>
                   ) : (
                     <>
                       <Activity className="w-4 h-4" />
@@ -1103,7 +1114,7 @@ export default function SettingsPage() {
                             <summary className="cursor-pointer font-mono text-xs uppercase tracking-wider text-ink-soft hover:text-ink">
                               {item.label}
                             </summary>
-                            <pre className="mt-1 whitespace-pre-wrap break-words rounded-none border border-black bg-white p-3 font-mono text-xs text-ink-soft shadow-sw-sm">
+                            <pre className="mt-1 whitespace-pre-wrap break-words rounded-none border border-ink bg-white p-3 font-mono text-xs text-ink-soft shadow-sw-sm">
                               {item.value}
                             </pre>
                           </details>
@@ -1112,7 +1123,7 @@ export default function SettingsPage() {
                             <p className="font-mono text-xs uppercase tracking-wider text-ink-soft">
                               {item.label}
                             </p>
-                            <pre className="mt-1 whitespace-pre-wrap break-words rounded-none border border-black bg-white p-3 font-mono text-xs text-ink-soft shadow-sw-sm">
+                            <pre className="mt-1 whitespace-pre-wrap break-words rounded-none border border-ink bg-white p-3 font-mono text-xs text-ink-soft shadow-sw-sm">
                               {item.value}
                             </pre>
                           </div>
@@ -1158,6 +1169,12 @@ export default function SettingsPage() {
                     <Textarea
                       id="coverLetterPrompt"
                       rows={8}
+                      aria-invalid={featurePromptError?.field === 'cover_letter_prompt'}
+                      aria-describedby={
+                        featurePromptError?.field === 'cover_letter_prompt'
+                          ? 'coverLetterPrompt-error'
+                          : undefined
+                      }
                       value={coverLetterPrompt}
                       onChange={(e) => setCoverLetterPrompt(e.target.value)}
                       placeholder={coverLetterDefault}
@@ -1167,7 +1184,11 @@ export default function SettingsPage() {
                       {t('settings.contentGeneration.customPromptHelp')}
                     </p>
                     {featurePromptError?.field === 'cover_letter_prompt' && (
-                      <p className="text-xs text-destructive font-mono break-words">
+                      <p
+                        id="coverLetterPrompt-error"
+                        role="alert"
+                        className="text-xs text-destructive font-mono break-words"
+                      >
                         {t('settings.contentGeneration.customPromptErrorMissing', {
                           missing: featurePromptError.missing.join(', '),
                         })}
@@ -1183,7 +1204,10 @@ export default function SettingsPage() {
                         disabled={featurePromptSaving === 'cover_letter_prompt'}
                       >
                         {featurePromptSaving === 'cover_letter_prompt' ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <>
+                            <Loader2 aria-hidden="true" className="animate-spin" />
+                            {t('common.saving')}
+                          </>
                         ) : (
                           t('common.save')
                         )}
@@ -1217,6 +1241,12 @@ export default function SettingsPage() {
                     <Textarea
                       id="outreachPrompt"
                       rows={8}
+                      aria-invalid={featurePromptError?.field === 'outreach_message_prompt'}
+                      aria-describedby={
+                        featurePromptError?.field === 'outreach_message_prompt'
+                          ? 'outreachPrompt-error'
+                          : undefined
+                      }
                       value={outreachPrompt}
                       onChange={(e) => setOutreachPrompt(e.target.value)}
                       placeholder={outreachDefault}
@@ -1226,7 +1256,11 @@ export default function SettingsPage() {
                       {t('settings.contentGeneration.customPromptHelp')}
                     </p>
                     {featurePromptError?.field === 'outreach_message_prompt' && (
-                      <p className="text-xs text-destructive font-mono break-words">
+                      <p
+                        id="outreachPrompt-error"
+                        role="alert"
+                        className="text-xs text-destructive font-mono break-words"
+                      >
                         {t('settings.contentGeneration.customPromptErrorMissing', {
                           missing: featurePromptError.missing.join(', '),
                         })}
@@ -1242,7 +1276,10 @@ export default function SettingsPage() {
                         disabled={featurePromptSaving === 'outreach_message_prompt'}
                       >
                         {featurePromptSaving === 'outreach_message_prompt' ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <>
+                            <Loader2 aria-hidden="true" className="animate-spin" />
+                            {t('common.saving')}
+                          </>
                         ) : (
                           t('common.save')
                         )}
@@ -1403,7 +1440,7 @@ export default function SettingsPage() {
         </div>
 
         {/* Footer */}
-        <div className="bg-canvas p-4 border-t border-black flex justify-between items-center">
+        <div className="bg-canvas p-4 border-t border-ink flex justify-between items-center">
           <div className="flex items-center gap-2">
             <Image
               src="/logo.svg"

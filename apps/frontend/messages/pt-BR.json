@@ -1016,7 +1016,8 @@
       "experience": "Experiência",
       "education": "Formação",
       "projects": "Projetos",
-      "skills": "Habilidades"
+      "skills": "Habilidades",
+      "inferredSkill": "inferida"
     },
     "errors": {
       "turnFailed": "O assistente não conseguiu salvar essa resposta. Tente novamente.",
