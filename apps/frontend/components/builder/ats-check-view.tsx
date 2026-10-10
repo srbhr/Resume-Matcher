@@ -1,7 +1,9 @@
 'use client';
 
 import * as React from 'react';
+import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { StatusIndicator, type StatusTone } from '@/components/ui/status-indicator';
 import {
   checkResumeParse,
   type ParseCheck,
@@ -10,7 +12,6 @@ import {
 } from '@/lib/api/ats';
 import { useTranslations } from '@/lib/i18n';
 import { type TemplateSettings } from '@/lib/types/template-settings';
-import { cn } from '@/lib/utils';
 
 interface AtsCheckViewProps {
   resumeId: string | null;
@@ -19,33 +20,22 @@ interface AtsCheckViewProps {
   hasUnsavedChanges?: boolean;
 }
 
-const STATUS_STYLES: Record<ParseCheckStatus, { square: string; text: string }> = {
-  pass: { square: 'bg-green-700', text: 'text-green-700' },
-  warn: { square: 'bg-orange-500', text: 'text-orange-500' },
-  fail: { square: 'bg-red-600', text: 'text-red-600' },
+const STATUS_TONE: Record<ParseCheckStatus, StatusTone> = {
+  pass: 'ready',
+  warn: 'warning',
+  fail: 'error',
 };
 
 const SECTION_KIND_PARAMS = new Set(['found', 'missing']);
 
 function Box({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="border-2 border-black bg-white p-4 space-y-3">
-      <h3 className="font-mono text-sm font-bold uppercase tracking-wider border-b border-black/10 pb-2">
-        {title}
-      </h3>
+    <section className="border-2 border-ink bg-white p-4 space-y-3">
+      <div className="border-b border-panel-hover pb-2">
+        <h3 className="font-mono text-sm font-bold uppercase tracking-wider">{title}</h3>
+      </div>
       {children}
     </section>
-  );
-}
-
-function StatusLabel({ status, label }: { status: ParseCheckStatus; label: string }) {
-  return (
-    <span className="flex items-center gap-2 shrink-0">
-      <span className={cn('w-3 h-3', STATUS_STYLES[status].square)} />
-      <span className={cn('font-mono text-xs font-bold uppercase', STATUS_STYLES[status].text)}>
-        {label}
-      </span>
-    </span>
   );
 }
 
@@ -96,8 +86,8 @@ export function AtsCheckView({
 
   return (
     <div className="p-6 space-y-4">
-      <div className="flex items-center justify-between gap-4 border-2 border-black bg-white p-4">
-        <p className="font-mono text-xs uppercase text-steel-grey">
+      <div className="flex items-center justify-between gap-4 border-2 border-ink bg-white p-4">
+        <p className="font-mono text-xs uppercase text-steel">
           {t('builder.atsCheck.templateLabel', { template: settings.template })}
         </p>
         <Button onClick={run} disabled={!resumeId || running} size="sm">
@@ -109,21 +99,13 @@ export function AtsCheckView({
         </Button>
       </div>
 
-      {!resumeId && (
-        <p className="border-2 border-orange-500 bg-orange-50 p-4 text-sm" role="alert">
-          {t('builder.atsCheck.saveFirst')}
-        </p>
-      )}
+      {!resumeId && <Alert tone="warning">{t('builder.atsCheck.saveFirst')}</Alert>}
       {resumeId && hasUnsavedChanges && (
-        <p className="border-2 border-orange-500 bg-orange-50 p-4 text-sm">
+        <Alert tone="warning" role="status">
           {t('builder.atsCheck.unsavedNotice')}
-        </p>
+        </Alert>
       )}
-      {error && (
-        <p className="border-2 border-red-600 bg-red-50 p-4 text-sm text-red-600" role="alert">
-          {t('builder.atsCheck.error')}
-        </p>
-      )}
+      {error && <Alert tone="error">{t('builder.atsCheck.error')}</Alert>}
 
       {!report && !error && resumeId && (
         <p className="text-sm text-ink-soft">{t('builder.atsCheck.emptyState')}</p>
@@ -138,13 +120,13 @@ export function AtsCheckView({
                 ['content', report.content_score],
               ] as const
             ).map(([key, value]) => (
-              <div key={key} className="border-2 border-black bg-white p-4">
-                <p className="font-mono text-xs font-bold uppercase text-steel-grey">
+              <div key={key} className="border-2 border-ink bg-white p-4">
+                <p className="font-mono text-xs font-bold uppercase text-steel">
                   {t(`builder.atsCheck.${key}`)}
                 </p>
                 <p className="font-serif text-4xl font-bold">
                   {value}
-                  <span className="text-lg text-steel-grey">/100</span>
+                  <span className="text-lg text-steel">/100</span>
                 </p>
               </div>
             ))}
@@ -154,13 +136,12 @@ export function AtsCheckView({
           </p>
 
           <Box title={t('builder.atsCheck.checksTitle')}>
-            <ul className="divide-y divide-black/10">
+            <ul className="divide-y divide-panel-hover">
               {report.checks.map((check) => (
                 <li key={check.id} className="flex gap-4 py-3" data-check={check.id}>
-                  <StatusLabel
-                    status={check.status}
-                    label={t(`builder.atsCheck.status.${check.status}`)}
-                  />
+                  <StatusIndicator tone={STATUS_TONE[check.status]} className="shrink-0 self-start">
+                    {t(`builder.atsCheck.status.${check.status}`)}
+                  </StatusIndicator>
                   <div className="space-y-1">
                     <p className="font-bold text-sm">
                       {t(`builder.atsCheck.checks.${check.id}.title`)}
