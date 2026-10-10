@@ -34,9 +34,9 @@ describe('paper sheets', () => {
     expectSheet(container.firstChild as HTMLElement);
   });
 
-  it('draws the outreach page with the sheet shadow', () => {
+  it('treats the outreach preview as an in-page card, not a paper sheet', () => {
     const { container } = render(<OutreachPreview content="Hello" />);
-    expectSheet(container.firstChild as HTMLElement);
+    expectNested(container.firstChild as HTMLElement);
   });
 
   it('keeps the resume sheet on the sheet shadow', () => {
