@@ -47,6 +47,12 @@ const TILE_LINK =
 // Action tiles (initialize, add track) are one native button filling the Card.
 const TILE_BUTTON =
   'flex flex-1 flex-col justify-between p-6 text-left md:p-8 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary';
+// Tile highlight (owner ruling): hover or keyboard focus inside a tile lifts it to white with
+// Card's 2px ink frame and 1px press-in. Only the title and the + mark turn primary
+// (TILE_ACCENT); everything else keeps its colour. Never a full blue fill.
+const TILE_LIFT =
+  'hover:bg-white has-[:focus-visible]:z-20 has-[:focus-visible]:border-ink has-[:focus-visible]:bg-white has-[:focus-visible]:translate-x-px has-[:focus-visible]:translate-y-px';
+const TILE_ACCENT = 'group-hover:text-primary group-has-[:focus-visible]:text-primary';
 // Monogram fills: brand tokens only, each AA with white text (lowest: steel, 5.19:1).
 const MONOGRAM_FILLS = ['bg-primary', 'bg-ink', 'bg-success', 'bg-steel', 'bg-destructive'];
 const FILLER_FILLS = ['bg-panel', 'bg-panel-hover', 'bg-panel-hover', 'bg-panel'];
@@ -567,12 +573,12 @@ export default function DashboardPage() {
               >
                 <Card
                   variant="interactive"
-                  className="aspect-square h-full border-dashed border-warning bg-warning-tint group-focus-visible/setup:ring-2 group-focus-visible/setup:ring-inset group-focus-visible/setup:ring-primary"
+                  className="aspect-square h-full border-dashed border-warning bg-warning-tint hover:bg-white group-focus-visible/setup:z-20 group-focus-visible/setup:border-ink group-focus-visible/setup:bg-white group-focus-visible/setup:translate-x-px group-focus-visible/setup:translate-y-px group-focus-visible/setup:ring-2 group-focus-visible/setup:ring-inset group-focus-visible/setup:ring-primary"
                 >
                   <div className="flex-1 flex flex-col justify-between">
                     <AlertTriangle aria-hidden="true" className="size-6 text-warning-text" />
                     <div>
-                      <CardTitle className="text-lg uppercase text-warning-text mb-2">
+                      <CardTitle className="text-lg uppercase text-warning-text mb-2 group-hover:text-primary group-focus-visible/setup:text-primary">
                         {t('dashboard.setupRequiredTitle')}
                       </CardTitle>
                       <CardDescription className="text-warning-text text-xs">
@@ -592,7 +598,7 @@ export default function DashboardPage() {
               <Card
                 variant="interactive"
                 noPadding
-                className="aspect-square h-full hover:bg-primary hover:text-canvas"
+                className={cn('aspect-square h-full', TILE_LIFT)}
               >
                 <button
                   type="button"
@@ -600,14 +606,24 @@ export default function DashboardPage() {
                   aria-label={t('dashboard.initializeMasterResume')}
                   onClick={() => setIsMasterChoiceDialogOpen(true)}
                 >
-                  <span className="size-12 border-2 border-current flex items-center justify-center mb-4">
+                  <span
+                    className={cn(
+                      'size-12 border-2 border-ink flex items-center justify-center mb-4 group-hover:border-primary group-has-[:focus-visible]:border-primary',
+                      TILE_ACCENT
+                    )}
+                  >
                     <Plus aria-hidden="true" className="size-6" />
                   </span>
                   <span className="block">
-                    <span className="block font-serif text-xl font-bold uppercase leading-none tracking-tight">
+                    <span
+                      className={cn(
+                        'block font-serif text-xl font-bold uppercase leading-none tracking-tight',
+                        TILE_ACCENT
+                      )}
+                    >
                       {t('dashboard.initializeMasterResume')}
                     </span>
-                    <span className="mt-2 block font-mono text-sm text-steel group-hover:text-canvas">
+                    <span className="mt-2 block font-mono text-sm text-steel">
                       {'// '}
                       {t('dashboard.initializeSequence')}
                     </span>
@@ -617,7 +633,7 @@ export default function DashboardPage() {
             )
           ) : (
             // Master Resume Exists
-            <Card variant="interactive" className="aspect-square h-full">
+            <Card variant="interactive" className={cn('aspect-square h-full', TILE_LIFT)}>
               <div className="flex-1 flex flex-col h-full">
                 <div className="flex justify-between items-start mb-6">
                   <div className="size-12 border-2 border-ink bg-primary text-white flex items-center justify-center">
@@ -644,7 +660,7 @@ export default function DashboardPage() {
                 </div>
 
                 <div className="flex items-start gap-2">
-                  <CardTitle className="min-w-0 text-lg line-clamp-2 group-hover:text-primary">
+                  <CardTitle className={cn('min-w-0 text-lg line-clamp-2', TILE_ACCENT)}>
                     <Link href={`/resumes/${masterResumeId}`} className={TILE_LINK}>
                       {defaultMasterTitle || t('dashboard.masterResume')}
                     </Link>
@@ -704,7 +720,7 @@ export default function DashboardPage() {
               <Card
                 key={resume.resume_id}
                 variant="interactive"
-                className="aspect-square h-full bg-canvas"
+                className={cn('aspect-square h-full', TILE_LIFT)}
               >
                 <div className="flex-1 flex flex-col">
                   <div className="flex justify-between items-start mb-6">
@@ -715,7 +731,7 @@ export default function DashboardPage() {
                       {resume.processing_status}
                     </span>
                   </div>
-                  <CardTitle className="text-lg">
+                  <CardTitle className={cn('text-lg', TILE_ACCENT)}>
                     <Link
                       href={`/resumes/${resume.resume_id}`}
                       className={cn(
@@ -758,22 +774,23 @@ export default function DashboardPage() {
 
           {/* 3. Add Master Track */}
           {showAddTrackTile && (
-            <Card
-              variant="interactive"
-              noPadding
-              className="aspect-square h-full hover:bg-primary hover:text-canvas"
-            >
+            <Card variant="interactive" noPadding className={cn('aspect-square h-full', TILE_LIFT)}>
               <button
                 type="button"
                 className={TILE_BUTTON}
                 aria-label={t('dashboard.addMasterTrack')}
                 onClick={() => setIsMasterChoiceDialogOpen(true)}
               >
-                <span className="flex items-center gap-2 font-serif text-lg font-bold uppercase leading-none tracking-tight">
+                <span
+                  className={cn(
+                    'flex items-center gap-2 font-serif text-lg font-bold uppercase leading-none tracking-tight',
+                    TILE_ACCENT
+                  )}
+                >
                   <Plus aria-hidden="true" className="size-4 shrink-0" />
                   {t('dashboard.addMasterTrack')}
                 </span>
-                <span className="block font-mono text-sm uppercase text-steel group-hover:text-canvas">
+                <span className="block font-mono text-sm uppercase text-steel">
                   {t('dashboard.masterLimitReached', { max: MAX_MASTER_RESUMES })}
                 </span>
               </button>
@@ -789,7 +806,7 @@ export default function DashboardPage() {
               <Card
                 key={resume.resume_id}
                 variant="interactive"
-                className="aspect-square h-full bg-canvas"
+                className={cn('aspect-square h-full', TILE_LIFT)}
               >
                 <div className="flex-1 flex flex-col">
                   <div className="flex justify-between items-start mb-6">
@@ -805,7 +822,7 @@ export default function DashboardPage() {
                       {resume.processing_status}
                     </span>
                   </div>
-                  <CardTitle className="text-lg">
+                  <CardTitle className={cn('text-lg', TILE_ACCENT)}>
                     <Link
                       href={`/resumes/${resume.resume_id}`}
                       className={cn(
@@ -831,7 +848,6 @@ export default function DashboardPage() {
             <div className="flex-1 flex flex-col items-center justify-center text-center h-full">
               <Button
                 type="button"
-                variant="outline"
                 className="size-20"
                 onClick={() => router.push('/tailor')}
                 disabled={!isTailorEnabled}

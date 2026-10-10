@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import {
   Dialog,
   DialogBody,
@@ -218,6 +218,8 @@ export function ResumeUploadDialog({
     e.stopPropagation();
   };
   const canBrowse = !currentFile && !isRecovering;
+  const dropzoneTitleId = useId();
+  const dropzoneHintId = useId();
   const handleDropzoneKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
@@ -323,7 +325,8 @@ export function ResumeUploadDialog({
             // The empty drop zone is the file picker's keyboard entry point too.
             role={canBrowse ? 'button' : undefined}
             tabIndex={canBrowse ? 0 : undefined}
-            aria-label={canBrowse ? t('dashboard.uploadDialog.dropzoneTitle') : undefined}
+            aria-labelledby={canBrowse ? dropzoneTitleId : undefined}
+            aria-describedby={canBrowse ? dropzoneHintId : undefined}
             onKeyDown={canBrowse ? handleDropzoneKeyDown : undefined}
             onClick={canBrowse ? openFileDialog : undefined}
             onDragEnter={isRecovering ? preventDropzoneInteraction : handleDragEnter}
@@ -379,10 +382,10 @@ export function ResumeUploadDialog({
                 <div className="w-12 h-12 border border-black bg-white shadow-sw-default flex items-center justify-center mb-4">
                   <UploadIcon aria-hidden="true" className="w-6 h-6 text-black" />
                 </div>
-                <p className="font-bold text-lg mb-1">
+                <p id={dropzoneTitleId} className="font-bold text-lg mb-1">
                   {t('dashboard.uploadDialog.dropzoneTitle')}
                 </p>
-                <p className="font-mono text-xs text-steel uppercase">
+                <p id={dropzoneHintId} className="font-mono text-xs text-steel uppercase">
                   {t('dashboard.uploadDialog.dropzoneSubtitle')}
                 </p>
               </div>
