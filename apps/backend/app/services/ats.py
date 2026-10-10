@@ -55,7 +55,7 @@ _TITLE_STOPWORDS = frozenset(
 _YEAR = r"(?:19|20)\d{2}"
 _DATE_PATTERN = re.compile(
     rf"(?P<iso>\b{_YEAR}[-/]\d{{1,2}}\b)"
-    rf"|(?P<numeric>\b\d{{1,2}}[/.]{_YEAR}\b)"
+    rf"|(?P<numeric>\b\d{{1,2}}[/.-]{_YEAR}\b)"
     rf"|(?P<name_year>\b[^\W\d_]{{3,}}\.?,?\s+{_YEAR}\b)"
     rf"|(?P<name_short_year>\b[^\W\d_]{{3,}}\.?\s+'\d{{2}}\b)"
     rf"|(?P<year>\b{_YEAR}\b)"
@@ -161,7 +161,11 @@ def compute_title_match(
 
     personal_info = resume.get("personalInfo") or {}
     headline = str(personal_info.get("title") or "")
-    summary = str(resume.get("summary") or "")
+    summary = (
+        str(resume.get("summary") or "")
+        if _is_section_visible(resume, "summary")
+        else ""
+    )
 
     if _keyword_in_text(role, headline.lower()):
         return _TITLE_IN_HEADLINE
@@ -176,12 +180,13 @@ def compute_title_match(
 
 
 def _collect_date_strings(resume: dict[str, Any]) -> list[str]:
-    """Gather the ``years`` field of every dated entry in the resume."""
+    """Gather the ``years`` field of every dated entry in a visible section."""
     entries: list[Any] = []
     for key in ("workExperience", "education", "personalProjects"):
-        entries.extend(resume.get(key) or [])
-    for section in (resume.get("customSections") or {}).values():
-        if isinstance(section, dict):
+        if _is_section_visible(resume, key):
+            entries.extend(resume.get(key) or [])
+    for key, section in (resume.get("customSections") or {}).items():
+        if isinstance(section, dict) and _is_section_visible(resume, key):
             entries.extend(section.get("items") or [])
     return [
         entry["years"]
@@ -218,30 +223,43 @@ def compute_section_completeness(resume: dict[str, Any]) -> float:
     text for common section heading keywords.
     """
     personal_info = resume.get("personalInfo") or {}
-    checks = [
-        bool(personal_info.get("email") or personal_info.get("phone")),
-        bool(resume.get("summary")) and _is_section_visible(resume, "summary"),
-        bool(resume.get("workExperience"))
-        and _is_section_visible(resume, "workExperience"),
-        bool(resume.get("education")) and _is_section_visible(resume, "education"),
-        bool((resume.get("additional") or {}).get("technicalSkills"))
-        and _is_section_visible(resume, "additional"),
-    ]
-    found = sum(checks)
-    total = len(checks)
+    has_contact = bool(personal_info.get("email") or personal_info.get("phone"))
+    sections_found = sum(
+        [
+            bool(resume.get("summary")) and _is_section_visible(resume, "summary"),
+            bool(resume.get("workExperience"))
+            and _is_section_visible(resume, "workExperience"),
+            bool(resume.get("education")) and _is_section_visible(resume, "education"),
+            bool((resume.get("additional") or {}).get("technicalSkills"))
+            and _is_section_visible(resume, "additional"),
+        ]
+    )
+    if sections_found:
+        return (sections_found + has_contact) / (len(_SECTION_PATTERNS) + 1) * 100
 
-    # Legacy/unstructured data: fall back to section-heading text scanning.
-    # Contact info can't be detected from free text, so score the headings alone.
-    if found == 0:
-        text = _extract_all_text(resume).lower()
-        found = sum(
-            1
-            for patterns in _SECTION_PATTERNS.values()
-            if any(p in text for p in patterns)
-        )
-        total = len(_SECTION_PATTERNS)
+    # Legacy/unstructured data: scan the text for section headings. Contact info
+    # only counts when it is structured; it can't be detected from free text.
+    text = _extract_all_text(resume).lower()
+    headings_found = sum(
+        1 for patterns in _SECTION_PATTERNS.values() if any(p in text for p in patterns)
+    )
+    if has_contact:
+        return (headings_found + 1) / (len(_SECTION_PATTERNS) + 1) * 100
+    return headings_found / len(_SECTION_PATTERNS) * 100
 
-    return (found / total) * 100
+
+def _in_posting_order(keywords: list[str], job_keywords: dict[str, Any]) -> list[str]:
+    """Order keywords as the job posting lists them; unknown ones last, A–Z.
+
+    Callers build these lists from sets, so without this the top-N shown and
+    used in recommendations could change between runs.
+    """
+    rank: dict[str, int] = {}
+    for field in ("required_skills", "preferred_skills", "keywords"):
+        for keyword in job_keywords.get(field) or []:
+            if isinstance(keyword, str):
+                rank.setdefault(keyword.lower(), len(rank))
+    return sorted(keywords, key=lambda k: (rank.get(k.lower(), len(rank)), k.lower()))
 
 
 def _generate_recommendations(
@@ -322,6 +340,8 @@ def compute_ats_score(
         Dict with overall_score, sub_scores (unscorable components are None),
         missing_keywords, injectable_keywords, and recommendations.
     """
+    missing_keywords = _in_posting_order(missing_keywords, job_keywords)
+    injectable_keywords = _in_posting_order(injectable_keywords, job_keywords)
     sub_scores: dict[str, float | None] = {
         "keyword_match": min(100.0, max(0.0, keyword_match_percentage)),
         "skills_coverage": _compute_skills_coverage(refined_resume, job_keywords),

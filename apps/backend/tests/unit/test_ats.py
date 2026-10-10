@@ -93,6 +93,15 @@ class TestTitleMatch:
         )
         assert compute_title_match(resume, job) == 0.0
 
+    def test_hidden_summary_does_not_count(self) -> None:
+        resume = _resume(
+            personalInfo={**BASE_RESUME["personalInfo"], "title": "Product Lead"},
+            summary="Senior Product Manager with 8 years in SaaS.",
+            sectionMeta=[{"id": "summary", "key": "summary", "isVisible": False}],
+        )
+        score = compute_title_match(resume, JOB)
+        assert score is not None and score < 75.0
+
     @pytest.mark.parametrize("role", [None, "", "   "])
     def test_missing_job_title_is_not_scored(self, role: str | None) -> None:
         assert compute_title_match(_resume(), {**JOB, "role": role}) is None
@@ -146,6 +155,37 @@ class TestDateConsistency:
         score = compute_date_consistency(resume)
         assert score is not None and score < 100.0
 
+    def test_hidden_section_dates_are_ignored(self) -> None:
+        resume = _resume(
+            education=[{"degree": "BSc", "years": "2012 - 2016"}],
+            sectionMeta=[{"id": "education", "key": "education", "isVisible": False}],
+        )
+        assert compute_date_consistency(resume) == 100.0
+
+    def test_hidden_custom_section_dates_are_ignored(self) -> None:
+        resume = _resume(
+            customSections={
+                "volunteering": {
+                    "sectionType": "itemList",
+                    "items": [{"title": "Mentor", "years": "2022"}],
+                }
+            },
+            sectionMeta=[{"id": "v", "key": "volunteering", "isVisible": False}],
+        )
+        assert compute_date_consistency(resume) == 100.0
+
+    def test_month_first_dashed_dates_are_their_own_style(self) -> None:
+        only_dashed = _resume(
+            workExperience=[{"title": "PM", "years": "09-2021 - 03-2023"}],
+            education=[{"degree": "BSc", "years": "09-2015 - 06-2019"}],
+        )
+        assert compute_date_consistency(only_dashed) == 100.0
+        mixed = _resume(
+            workExperience=[{"title": "PM", "years": "09-2021 - 03-2023"}],
+            education=[{"degree": "BSc", "years": "2015 - 2019"}],
+        )
+        assert compute_date_consistency(mixed) == 50.0
+
     def test_fewer_than_two_dates_is_not_scored(self) -> None:
         resume = _resume(
             workExperience=[{"title": "PM", "years": "Jan 2020 - Present"}],
@@ -175,6 +215,13 @@ class TestSectionCompleteness:
     def test_unstructured_resume_with_all_headings_scores_full(self) -> None:
         legacy = {
             "content": "Summary ... Work Experience ... Education ... Technical Skills ..."
+        }
+        assert compute_section_completeness(legacy) == 100.0
+
+    def test_unstructured_resume_with_contact_still_scans_headings(self) -> None:
+        legacy = {
+            "personalInfo": {"email": "a@x.io"},
+            "content": "Summary ... Work Experience ... Education ... Technical Skills ...",
         }
         assert compute_section_completeness(legacy) == 100.0
 
@@ -236,3 +283,16 @@ class TestComputeAtsScore:
         )
         result = compute_ats_score(resume, JOB, 100.0, [], [])
         assert any("date" in tip.lower() for tip in result["recommendations"])
+
+
+def test_keyword_lists_follow_job_posting_order() -> None:
+    job = {
+        **JOB,
+        "required_skills": ["Kubernetes", "Terraform"],
+        "preferred_skills": ["Go"],
+        "keywords": ["gRPC"],
+    }
+    result = compute_ats_score(
+        _resume(), job, 50.0, ["gRPC", "Go", "Terraform"], ["Kubernetes"]
+    )
+    assert result["missing_keywords"] == ["Terraform", "Go", "gRPC"]
