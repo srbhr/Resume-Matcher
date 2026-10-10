@@ -3,7 +3,7 @@
 > FastAPI backend for Resume Matcher. This file goes **deeper on the backend**.
 > For project-wide context see the root [`.claude/CLAUDE.md`](../../.claude/CLAUDE.md) and [`docs/agent/README.md`](../../docs/agent/README.md).
 
-Stack: FastAPI 0.128 · Python **3.13+** · Pydantic v2 / pydantic-settings · SQLAlchemy 2 (async) + SQLite (`aiosqlite`) · LiteLLM (multi-provider AI) · markitdown (DOCX/PDF→Markdown) · Playwright/Chromium (PDF). Managed with **uv** (`pyproject.toml`, version `1.3.0`).
+Stack: FastAPI 0.143 · Python **3.13+** · Pydantic v2 / pydantic-settings · SQLAlchemy 2 (async) + SQLite (`aiosqlite`) · LiteLLM (multi-provider AI) · markitdown (DOCX/PDF→Markdown) · Playwright/Chromium (PDF). Managed with **uv** (`pyproject.toml`, version `1.3.0`).
 
 ---
 
@@ -122,7 +122,9 @@ Config via `.env` (see `.env.example`). Interactive API docs at `/docs`.
 ## Key Gotchas
 
 - **uv.lock is gitignored** (`.gitignore`), so dependency resolution isn't reproducible from VCS — rely on the exact pins in `pyproject.toml` / `requirements.txt`.
-- **litellm ↔ python-dotenv trap:** litellm `<1.84.0` hard-pinned `python-dotenv==1.0.1`, which used to fight other pins. Resolved at the current pins (`litellm==1.86.2`, `python-dotenv==1.2.2`); do **not** downgrade litellm below 1.84 without re-checking dotenv.
+- **litellm ↔ python-dotenv trap:** litellm `<1.84.0` hard-pinned `python-dotenv==1.0.1`, which used to fight other pins. Resolved at the current pins (`litellm==1.103.4`, `python-dotenv==1.2.4`); do **not** downgrade litellm below 1.84 without re-checking dotenv.
+- **litellm ≥1.104 registry change:** 1.104.0 dropped `supports_none_reasoning_effort` from every `gpt-5*-chat-latest` model-map entry, so `_supports_temperature` conservatively omits temperature for `gpt-5.1-chat-latest` (fails `test_temperature_request_contract.py`). litellm is held at 1.103.4 (still ≥1.88.6, the SSRF fix) — revisit that capability decision before bumping past it.
+- **markitdown ≥0.1.5 needs `pdfplumber`:** its PDF converter requires the `[pdf]` extra (`pdfplumber` + Pillow + pypdfium2) and switches to pdfplumber-first extraction; with only `[docx]` + our direct `pdfminer.six` pin, PDF uploads fail. Held at 0.1.4.
 - **Keys vs non-secret config:** API **keys** live ONLY in the encrypted `api_keys` SQLite table (per-provider, via `_PROVIDER_KEY_MAP`); `load_config_file()` injects the decrypted keys into the returned dict and `save_config_file()` strips them, so secrets never round-trip to `config.json`. Non-secret provider/model/base/features stay in `config.json`. `PUT /config/llm-api-key` no longer writes any key; keys go through `PUT /config/api-keys`. `migrate_legacy_keys()` folds any legacy plaintext keys into the encrypted store (idempotent, non-clobbering). After any write to `config.json`, call `invalidate_config_cache()`.
 - **Master resume invariant:** up to `MAX_MASTER_RESUMES` (5) resumes have `is_master=True`; `is_default_master` implies `is_master`. The partial unique index on `is_default_master` guarantees at most one default; application logic keeps exactly one whenever any master exists: a new master becomes the default when none exists, deleting the default promotes the earliest remaining master, and the startup migration (`db_engine.py`) promotes the earliest master when none is default. `set_default_master_resume` (replaces `set_master_resume`) switches it. `create_resume_atomic_master` counts and inserts in one `BEGIN IMMEDIATE` write transaction (raises `MasterResumeLimitError` at the limit) and, with `take_over_stuck_default=True`, hands the default to the new upload when the current default is stuck `failed`/`processing`; duplicates pass `False`.
 - **Dates lose months:** LLMs drop month precision; `restore_dates_from_markdown` + `_restore_original_dates` re-insert them. Preserve this when editing the parse/improve flow.
