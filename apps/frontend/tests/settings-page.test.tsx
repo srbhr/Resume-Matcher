@@ -194,24 +194,82 @@ describe('settings page (Swiss sweep)', () => {
     for (const heading of dangerCards) expect(heading).toHaveClass('font-serif', 'text-ink');
   });
 
-  it('keeps form columns at a readable width inside the full-width frame', async () => {
+  it('sits in the narrow frame and lets its form columns fill it', async () => {
     api.fetchFeatureConfig.mockResolvedValue({
       enable_cover_letter: true,
       enable_outreach_message: true,
       enable_interview_prep: false,
     });
-    await renderLoaded();
+    const { container } = render(<SettingsPage />);
+    await screen.findByRole('button', { name: 'settings.apiKeys.deleteAria' });
 
+    const frame = screen.getByRole('heading', { level: 1 }).closest('.shadow-sw-lg') as HTMLElement;
+    expect(frame).toHaveClass('max-w-4xl');
+    expect(frame).not.toHaveClass('max-w-[86rem]');
+
+    // No inner column cap: fields and prompts fill the frame instead of leaving a gap.
+    expect(container.querySelector('.max-w-3xl')).toBeNull();
     const llmFields = screen
       .getByLabelText('settings.llmConfiguration.modelLabel')
-      .closest('.grid');
-    expect(llmFields).toHaveClass('max-w-3xl');
-
-    const promptBody = screen.getByText('settings.contentGeneration.description').parentElement;
-    expect(promptBody).toHaveClass('max-w-3xl');
+      .closest('.grid') as HTMLElement;
+    expect(llmFields).toHaveClass('gap-6');
+    const promptBody = screen.getByText('settings.contentGeneration.description')
+      .parentElement as HTMLElement;
     for (const id of ['coverLetterPrompt', 'outreachPrompt']) {
       expect(promptBody).toContainElement(document.getElementById(id));
     }
+  });
+
+  it('keeps the compact vertical rhythm: tight body padding, 8-unit section gaps', async () => {
+    await renderLoaded();
+    const body = screen.getByText('settings.systemStatus.title').closest('section')
+      ?.parentElement as HTMLElement;
+    expect(body).toHaveClass('py-8', 'space-y-8');
+    for (const old of ['py-12', 'md:py-12', 'space-y-12']) expect(body).not.toHaveClass(old);
+    // The horizontal gutter matches the shared page header (md:p-12) so edges align.
+    expect(body).toHaveClass('px-8', 'md:px-12');
+  });
+
+  it('gives nested boxes the nested shadow and keeps solid ink for controls', async () => {
+    api.testLlmConnection.mockResolvedValue({
+      healthy: true,
+      provider: 'openai',
+      model: 'gpt-5-nano',
+      test_prompt: 'ping prompt',
+      model_output: 'pong output',
+      reasoning_content: 'thinking trace',
+    });
+    const { container } = render(<SettingsPage />);
+    await screen.findByRole('button', { name: 'settings.apiKeys.deleteAria' });
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole('button', { name: 'settings.llmConfiguration.testConnection' })
+      );
+    });
+    await screen.findByRole('status');
+
+    const statBoxes = [
+      'settings.statusCards.llm',
+      'settings.statusCards.database',
+      'settings.statusCards.resumes',
+      'settings.statusCards.jobs',
+      'settings.statusCards.improvements',
+      'settings.statusCards.masterResume',
+    ].map((label) => screen.getByText(label).closest('.border') as HTMLElement);
+    const savedKeys = screen.getByText('settings.apiKeys.savedTitle').parentElement as HTMLElement;
+    const detailBlocks = ['ping prompt', 'pong output', 'thinking trace'].map((text) =>
+      screen.getByText(text)
+    );
+    for (const box of [...statBoxes, savedKeys, ...detailBlocks]) {
+      expect(box).toHaveClass('border-ink', 'shadow-sw-nested');
+      expect(box).not.toHaveClass('shadow-sw-sm');
+    }
+
+    // Solid `sm` shadow is for pressable controls only.
+    const solid = Array.from(container.querySelectorAll('.shadow-sw-sm'));
+    expect(solid.length).toBeGreaterThan(0);
+    // The Back link is a link styled with buttonClass.
+    for (const el of solid) expect(['BUTTON', 'A']).toContain(el.tagName);
   });
 
   it('gives every action button type="button"', async () => {
