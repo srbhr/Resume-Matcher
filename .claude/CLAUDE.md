@@ -84,7 +84,7 @@ apps/
     ├── components/          # UI components (incl. tracker/)
     ├── lib/                 # Utilities, API client (incl. api/tracker.ts)
     ├── hooks/               # Custom React hooks
-    └── messages/            # i18n translations (en, es, zh, ja, pt)
+    └── messages/            # i18n translations (en, es, fr, ja, ko, pt-BR, zh)
 ```
 
 ---
@@ -168,16 +168,27 @@ Both apps have real test suites, and **tests are in scope** (deliberate testing 
 
 | Element | Value |
 |---------|-------|
-| Canvas background | `#F0F0E8` |
-| Ink (text) | `#000000` |
-| Hyper Blue (links) | `#1D4ED8` |
-| Signal Green (success) | `#15803D` |
-| Alert Orange (warning) | `#F97316` |
-| Alert Red (error) | `#DC2626` |
-| Headers font | `font-serif` |
-| Body font | `font-sans` |
-| Metadata font | `font-mono` |
-| Borders | `rounded-none`, 1px black, hard shadows |
+| Canvas background (`canvas`) | `#F0F0E8` |
+| White (cards, inputs, dialogs) | `#FFFFFF` |
+| Ink (headings, borders) | `#000000` |
+| Body text (`ink-soft`) | `#3D424C` |
+| Steel (secondary text; never on `panel`) | `#696D75` |
+| `paper` / `panel` / `panel-hover` | `#F5F5F0` / `#E5E5E0` / `#D8D8D2` |
+| Hyper Blue (`primary`, links) | `#1D4ED8` |
+| Signal Green (`success`) | `#127E3B` |
+| Alert Orange (`warning` fill, ink text only) | `#F97316` |
+| `warning-text` (orange labels and icons) | `#B44F02` |
+| Alert Red (`destructive`) | `#D61E21` |
+| Alert tints (`info`/`success`/`warning`/`destructive`-tint) | `#EFF6FF` / `#F0FDF4` / `#FFF7ED` / `#FEF2F2` |
+| Headers font | `font-serif` (Tailwind default stack) |
+| Body font | `font-sans` (Helvetica, Arial) |
+| Label / metadata font | `font-mono` (resolves to Space Grotesk) |
+| Borders | `rounded-none`; 1px ink controls, 2px alerts |
+| Shadows | Hard, by role: `shadow-sw-sm` controls, `-default` cards and menus, `-lg` dialogs |
+| Motion | `import { m } from 'motion/react'` only; feedback only |
+| Drift guard | `cd apps/frontend && npm run guard -- <path>` |
+
+Full token set and rules: [Swiss design system pack](../docs/portable/swiss-design-system/README.md); frontend specifics in [`apps/frontend/CLAUDE.md`](../apps/frontend/CLAUDE.md).
 
 ---
 

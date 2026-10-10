@@ -200,6 +200,25 @@ Added (`apps/frontend/tests/`):
 
 Net: **65 → 117 frontend tests**, all green. The `pre-push` gate runs this suite when Node is available; a full `tsc`/`next build` gate remains future work (nvm-in-hook fragility).
 
+### 8.1 Swiss design guard and contrast test (added 2026-10-10)
+
+The Swiss realignment (spec: `docs/superpowers/specs/2026-10-10-swiss-realignment-design.md`) added two design-system tests to the vitest suite, so style drift fails a test instead of waiting for a visual review. Both run inside `npm run test`, and therefore in the `pre-push` gate.
+
+**Swiss guard** (`apps/frontend/scripts/swiss-guard.mjs`, tested by `tests/swiss-guard.test.ts` and `tests/swiss-guard-rules.test.ts`)
+- Scans `app/**/*.tsx` and `components/**/*.tsx` for patterns the Swiss pack bans, after stripping comments. `components/resume/**` (printed templates), `app/print/**` and tests are out of scope; `globals.css`, where the tokens are defined, is not scanned.
+- Rules: `radius`, `soft-shadow`, `gradient`, `palette` (Tailwind palette-scale colours), `raw-colour` (hex and `rgba(`), `ink-tint` (`text-black/60`), `dark`, `type-size` (`text-[10px]`), `spacing` (off-scale units, skipped inside `components/ui/`), `transition` (`transition-all`), `keyframes` (`animate-bounce/pulse/ping`), `legacy-token` (shadcn-era names), `glyph` (text characters used as icons), `decorative-icon` (Sparkles, Wand, Star, Heart, Zap, Rocket) and `motion-import` (`motion` or `framer-motion` instead of `m`).
+- **Two-way count ratchet.** `tests/swiss-guard.allowlist.json` stores `{ file: { rule: count } }`. The test fails when a count **rises** (new drift; the failure prints `file:line`, the snippet, the rule and a fix hint) and also when a count **falls** without the allowlist being lowered, so each cleanup deletes its own entries. Counting rather than matching lines means unrelated edits don't trip it. The allowlist is meant to shrink toward empty; the two dead files that nothing imports (`components/settings/api-key-menu.tsx` and `components/builder/template-selector.tsx`) stay allowlisted on purpose.
+- Scripts (from `apps/frontend`): `npm run guard` prints every hit with a fix hint, and `npm run guard -- <path-prefix>` filters; `npm run guard:update` rewrites the allowlist to today's counts and **refuses to raise any count**. Raising the allowlist is never the fix.
+- Anti-theater: `swiss-guard-rules.test.ts` pins each rule with samples it must flag and samples it must allow (comments, `rounded-none`, hard shadow tokens, `m` imports). The ratchet test compares the report to an empty string, so a raised count and a lowered count both fail it.
+
+**Contrast test** (`tests/swiss-contrast.test.ts`)
+- Parses the `--sw-*` hex tokens out of `app/(default)/css/globals.css` (a token that isn't a 6-digit hex fails loudly), computes WCAG relative-luminance contrast and asserts **4.5:1** (WCAG 2.2 AA) for every text and text-on-fill pairing the UI uses, and **3:1** (SC 1.4.11) for the meaningful graphics: the `primary`, `success` and `destructive` squares and borders, and ink borders.
+- The `warning` fill (`#F97316`, 2.45:1 on Canvas) is deliberately exempt from the 3:1 check and its value is pinned: the orange never carries meaning alone (squares always have a label, warning alerts pair the border with a `warning-text` label, warning buttons have an ink border and ink text).
+- Also asserts that `steel` on `panel` stays below 4.5:1 (documenting the never-on-panel rule) and that `THEME_COLOR` (`lib/theme-color.ts`, the `<meta name="theme-color">`) equals Canvas.
+- Changing a token so that a pairing falls below its threshold fails the test; re-run it after any palette edit.
+
+**Behaviour tests for the primitives** live beside them (`dialog`, `dropdown`, `segmented-control`, `toggle-tabs`, `button`, `card`, `alert-status`, `panel-empty`, `page-frame`, `presence`, `reduced-motion`): focus moves in, is trapped and returns; the dropdown announces its value and never shows a placeholder as selected; arrow-key navigation; roles per alert tone. `vitest.setup.ts` mocks `motion/react` globally (`m.*` renders as plain DOM, `AnimatePresence` and `LazyMotion` are passthroughs), so animated components show their final state in jsdom and exit animations never leave nodes behind. Existing tests that asserted old markup were updated, never deleted or skipped.
+
 ---
 
 ## 9. Open questions / future
