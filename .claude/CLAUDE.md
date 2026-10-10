@@ -184,7 +184,7 @@ Both apps have real test suites, and **tests are in scope** (deliberate testing 
 | Body font | `font-sans` (Helvetica, Arial) |
 | Label / metadata font | `font-mono` (resolves to Space Grotesk) |
 | Borders | `rounded-none`; 1px ink controls, 2px alerts |
-| Shadows | Hard, by role: `shadow-sw-sm` controls, `-default` cards and menus, `-lg` dialogs |
+| Shadows | Hard, by role. Solid ink: `shadow-sw-sm` controls, `-default` menus and popovers, `-lg` dialogs and `PageFrame`. Translucent ink: `shadow-sw-nested` for every card or box inside a frame or dialog |
 | Motion | `import { m } from 'motion/react'` only; feedback only |
 | Drift guard | `cd apps/frontend && npm run guard -- <path>` |
 

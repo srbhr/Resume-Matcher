@@ -140,7 +140,7 @@ A real select, not a styled button.
 
 ### Switch
 
-`role="switch"` with `aria-checked`. A square thumb on a 24px-tall track: `bg-ink` when on, `bg-panel` when off. Clicking the row label toggles it. Two layouts: `card` (the row is a bordered white tile with `shadow-sw-sm`) and `inline`.
+`role="switch"` with `aria-checked`. A square thumb on a 24px-tall track: `bg-ink` when on, `bg-panel` when off. Clicking the row label toggles it. Two layouts: `card` (the row is a bordered white box with the nested shadow, `shadow-sw-nested`) and `inline`.
 
 ### Tabs
 
@@ -168,7 +168,7 @@ A thumbnail variant (image or preview pickers) marks the selection with a 2px in
   rounded-none
   bg-white
   border border-ink
-  shadow-sw-default
+  shadow-sw-nested
   p-6
 ">
   <h2 className="font-serif text-2xl font-bold mb-4">Card Title</h2>
@@ -177,10 +177,11 @@ A thumbnail variant (image or preview pickers) marks the selection with a 2px in
 ```
 
 - 1px ink border, same as every other surface
-- 4px shadow (heavier than buttons because cards are stationary)
-- White background to lift off the canvas
+- The nested shadow: a 4px hard offset in translucent ink (15%), no blur. A card sits inside a page frame or a dialog, which already carry the solid shadow, so a card takes the quiet one
+- White background to set it apart from the canvas
 - A plain grouping with no frame at all is allowed: canvas fill, no border, no shadow
-- `shadow-sw-default` is the role of a static card. A clickable `raised` card uses the smaller `shadow-sw-sm` instead, because it presses into that shadow like a button
+- `shadow-sw-nested` is the one card shadow, static or clickable. A card never carries a solid shadow; solid ink is for what floats (menus, dialogs, the page frame) or presses (buttons)
+- Siblings match: if one card in a row has the nested shadow, every card beside it does
 
 ### Variants
 
@@ -188,21 +189,31 @@ A thumbnail variant (image or preview pickers) marks the selection with a 2px in
 |---------|------|------|
 | `default` | Canvas, no border, no shadow | A plain container |
 | `outline` | Canvas, `border-2` ink | An emphasized region without a shadow |
-| `raised` | White, 1px ink, `shadow-sw-sm`, presses in on hover | A small tile that sits directly on the canvas (cards on a board) |
-| `interactive` | Canvas, transparent 2px border that turns ink on hover, presses in | A clickable tile; it needs a visible focus ring and must be reachable by keyboard |
+| `raised` | White, 1px ink, `shadow-sw-nested`, presses in on hover | A clickable white card inside a frame (cards on a board) |
+| `interactive` | Canvas, transparent 2px border, presses in on hover | A clickable tile; it takes the [tile highlight](#clickable-tile-highlight) below, needs a visible focus state and must be reachable by keyboard |
 | `ghost` | Transparent | Layout only |
 
 A clickable card presses in on hover like a button; it never lifts. Make the whole tile a link (or give it a real button and keyboard handling), never a bare `onClick` on a `div`.
+
+### Clickable tile highlight
+
+A grid of clickable tiles (navigation or action tiles) highlights with a full blue fill:
+
+- **Hover, and keyboard focus inside the tile:** the tile becomes `bg-primary` and the text, marks and icons on it turn white (white on `primary` is 6.70:1). The fill is the whole highlight.
+- **No ink outline.** Don't add an ink border or a 2px frame to the highlighted tile: a second edge next to the fill reads as a mistake.
+- **Keyboard focus** uses the same fill plus a 2px inset white ring (`focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white`), because a blue focus ring would vanish into a blue fill.
+- Blue still means "you can press this": the whole tile is the action. This is hover and focus feedback, not selection, and a selected thing stays an ink fill.
+- A tile also presses in 1px, like any other clickable card. Nothing lifts, and nothing but the fill changes colour.
 
 ### Emphasized cards
 
 For the one or two most important cards on a page:
 
 ```jsx
-<div className="bg-white border-2 border-ink shadow-sw-default p-8">
+<div className="bg-white border-2 border-ink shadow-sw-nested p-8">
 ```
 
-The 2px border signals "this is the headline element". Use sparingly. A shadow size is a role, not an emphasis dial: don't step a bigger card up to `shadow-sw-lg`, which belongs to dialogs and the page frame.
+The 2px border signals "this is the headline element". Use sparingly. A shadow size is a role, not an emphasis dial: don't step a bigger card up to `shadow-sw-default` or `shadow-sw-lg`, which belong to menus, dialogs and the page frame; an emphasized card keeps the nested shadow.
 
 ---
 
@@ -231,7 +242,7 @@ White panel, 1px ink border, 8px hard shadow. The panel is built from three band
 | Panel | `bg-white border border-ink shadow-sw-lg`, no padding of its own; `max-h-[90vh]`, flex column |
 | Backdrop | `bg-overlay` (ink at 50%), never blurred. A click on it closes the dialog |
 | Header | `px-6 pt-6 pb-4`, `border-b border-ink`, left-aligned. Title is serif `text-2xl` bold **uppercase**, `text-balance`; description is sans `ink-soft` |
-| Body | `p-6`, scrolls on its own (`overflow-y-auto overscroll-contain`) |
+| Body | `p-6`, scrolls on its own (`overflow-y-auto overscroll-contain`). A box inside it (choice cards, option groups) takes the nested shadow, never a solid one |
 | Footer | `px-6 py-4`, `border-t border-ink`, `bg-panel`, right-aligned, primary action last |
 | Close | A ghost `icon-sm` button with an `aria-label`, top right |
 
@@ -354,7 +365,7 @@ An empty *slot* inside a list may use a framed variant: `border border-dashed bo
 <button className="rounded-none border border-ink bg-primary text-white px-6 py-2 font-mono uppercase text-sm font-medium shadow-sw-sm hover:translate-x-px hover:translate-y-px hover:shadow-none">
 
 // Swiss card
-<div className="bg-white border border-ink rounded-none shadow-sw-default p-6">
+<div className="bg-white border border-ink rounded-none shadow-sw-nested p-6">
 
 // Swiss label
 <label className="font-mono text-xs font-medium uppercase tracking-wider text-steel">

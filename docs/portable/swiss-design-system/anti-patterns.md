@@ -12,7 +12,8 @@ What NOT to do, and how to catch it before code ships. Read this before opening 
 |--------------|-------------------------|-------------|
 | `rounded-*` (any value) | Rounds soften the binary geometry | `rounded-none` |
 | Gradients (`bg-gradient-*`, `linear-gradient(`) | Decorative, not structural | Solid color from the palette. The one allowance is the 1px hairline blueprint grid, defined once as `bg-blueprint` |
-| Blurred or soft shadows (`shadow`, `shadow-md`, `shadow-lg`, `shadow-[…]`, rgba shadows) | Implies depth illusion | The hard role tokens: `shadow-sw-sm` (controls), `shadow-sw-default` (cards, menus), `shadow-sw-lg` (dialogs, page frame) |
+| Blurred or soft shadows (`shadow`, `shadow-md`, `shadow-lg`, `shadow-[…]`, ad-hoc rgba shadows) | Implies depth illusion | The hard role tokens: `shadow-sw-sm` (controls), `shadow-sw-default` (menus, popovers), `shadow-sw-lg` (dialogs, page frame), `shadow-sw-nested` (cards and boxes inside a frame or dialog) |
+| A solid shadow on a card, panel or box inside a page frame or dialog | The frame already carries the solid shadow; a second one inside competes with it | The nested shadow, `shadow-sw-nested` (translucent ink, hard 4px offset), on every sibling |
 | Decorative icons (heart, star, sparkles, wand, zap, rocket) | Ornamental | Functional icons only, mono color |
 | Glyphs as icons (`✓ ✨ ⭐ 🚀 •`) | Text characters pretending to be icons | A functional icon with `aria-hidden`, or nothing |
 | Pastel colors | Off-palette | Hyper Blue, Signal Green, Alert Orange/Red. The `*-tint` tokens are for alert fills only |
@@ -122,7 +123,8 @@ Before merging UI changes, walk through this list:
 ### Components
 - [ ] Buttons have `border border-ink` (1px) and `shadow-sw-sm`, and use the shared button
 - [ ] Inputs have `border border-ink` (1px), a white fill and `rounded-none`
-- [ ] Cards have `border border-ink` (or `border-2` when emphasized) and `shadow-sw-default`
+- [ ] Cards and boxes inside a frame or dialog have `border border-ink` (or `border-2` when emphasized) and `shadow-sw-nested`; siblings match; solid shadows are only on controls, menus, dialogs and the frame
+- [ ] A clickable tile highlights with the full `primary` fill and white text, no ink outline, and a 2px inset white focus ring
 - [ ] Alerts are the shared alert: 2px status border on a tint
 - [ ] Dialogs are the shared dialog: white, 1px ink border, banded header and footer, focus trapped and returned
 - [ ] Status indicators are 12px squares with a label, not circles, dots or bare spinners

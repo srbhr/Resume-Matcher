@@ -57,9 +57,13 @@ TYPOGRAPHY (three font roles only):
 SPACING: 4px scale only — p/m/gap 1, 2, 3, 4, 6, 8, 12, 16. No 5, 7, 9, 10,
 11, 14 and no half-steps.
 
-SHADOWS BY ROLE: shadow-sw-sm (2px) buttons and controls; shadow-sw-default
-(4px) cards and menus; shadow-sw-lg (8px) dialogs and the page frame.
-Hover: hover:translate-x-px hover:translate-y-px hover:shadow-none.
+SHADOWS BY ROLE: solid ink for what floats or presses: shadow-sw-sm (2px)
+buttons and controls; shadow-sw-default (4px) menus, listboxes, popovers and
+toasts; shadow-sw-lg (8px) dialogs and the page frame. Translucent ink for
+what is nested: shadow-sw-nested (4px, 15% ink, no blur) on every card, panel
+or box inside a page frame or dialog; nothing nested gets a solid shadow, and
+sibling boxes match. Hover: hover:translate-x-px hover:translate-y-px
+hover:shadow-none.
 
 BUTTONS:
 - rounded-none, border border-ink, shadow-sw-sm, press-in hover
@@ -82,8 +86,11 @@ SELECTION CONTROLS:
 - Switch: role="switch", bg-ink when on
 
 CARDS:
-- rounded-none, bg-white, border border-ink, shadow-sw-default, p-6
+- rounded-none, bg-white, border border-ink, shadow-sw-nested, p-6
 - Emphasized card: border-2. Clickable card: presses in, never lifts
+- Clickable tile highlight: on hover and keyboard focus the tile fills
+  bg-primary with white text and NO ink outline; keyboard focus adds
+  focus-visible:ring-2 ring-inset ring-white
 
 DIALOGS:
 - bg-white, border border-ink, shadow-sw-lg, backdrop bg-overlay (never blurred)
@@ -103,7 +110,8 @@ STATUS INDICATORS:
 
 LAYOUT:
 - Page: canvas with the blueprint grid, a 1px ink frame with shadow-sw-lg,
-  centered in the viewport, content left-aligned inside
+  centered in the viewport, content left-aligned inside. Frame width:
+  narrow (max-w-4xl) for single-column form pages, default, or wide
 - Page header: Back link (outline, sm), H1, optional "// subtitle" in steel,
   at most one primary action. Full-height editors and boards use a compact
   single-row header instead
@@ -153,7 +161,7 @@ Generate a Swiss-style settings page with:
 - Page header "Settings" (serif, bold, uppercase, text-4xl md:text-5xl)
 - Two columns (1/3 nav sidebar, 2/3 form)
 - Form sections: Profile, Notifications, Danger Zone
-- Each section is a card with a 1px ink border and a 4px hard shadow
+- Each section is a card with a 1px ink border and the nested shadow
 - Save button at bottom (primary, blue)
 - Delete account button at bottom of Danger Zone (red, destructive)
 ```

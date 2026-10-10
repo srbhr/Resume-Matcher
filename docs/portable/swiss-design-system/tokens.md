@@ -66,7 +66,7 @@ Canvas (`#F0F0E8`) is the default surface. Pure white is jarring against the har
 ### Color rules
 
 - One primary action per screen region (Hyper Blue)
-- **Blue means action.** Links, primary buttons and focus rings are blue; a *selected* segment, tab or switch is an ink fill with white text, never blue
+- **Blue means action.** Links, primary buttons and focus rings are blue; a *selected* segment, tab or switch is an ink fill with white text, never blue. The one other blue fill is the hover and keyboard-focus highlight of a clickable tile, because the whole tile is the action (see [Cards](components.md#clickable-tile-highlight)); that is feedback, not selection
 - Status colors are loud — they stop you, so use them sparingly
 - **Orange fills take ink text, never white** (white on `warning` is 2.80:1). Orange used as text or an icon is `warning-text`
 - The neutrals are `canvas`, `paper`, `panel`, `panel-hover`, `steel` and `ink-soft`. That is the whole grey scale; never invent additional greys
@@ -108,6 +108,7 @@ The class names in this pack (`bg-canvas`, `text-ink-soft`, `border-ink`, `shado
   --shadow-sw-card: 6px 6px 0px 0px #000000;
   --shadow-sw-lg: 8px 8px 0px 0px #000000;
   --shadow-sw-xl: 12px 12px 0px 0px #000000;
+  --shadow-sw-nested: 4px 4px 0px 0px rgb(0 0 0 / 0.15);
 
   --font-sans: Helvetica, Arial, sans-serif;
   --font-mono: 'Space Grotesk', sans-serif; /* the label face, see Typography */
@@ -201,17 +202,26 @@ xl:  32px   (p-8)
 
 ## Shadows
 
-Hard shadows only. Never blurred. Never soft. The shadow is a graphic element, not a depth illusion. Each token has one job:
+Hard shadows only. Never blurred, never arbitrary. The shadow is a graphic element, not a depth illusion. Each token has one job, and the job is a role, not an emphasis dial:
 
-| Token | Offset | Role |
-|-------|--------|------|
-| `shadow-sw-sm` | 2px | Buttons and controls |
-| `shadow-sw-default` | 4px | Cards and menus |
-| `shadow-sw-lg` | 8px | Dialogs and the page frame |
-| `shadow-sw-xl` | 12px | A landing/hero frame only |
-| `shadow-sw-card` | 6px | A single document or sheet surface only |
+| Token | Offset | Ink | Role |
+|-------|--------|-----|------|
+| `shadow-sw-sm` | 2px | solid | Buttons and controls |
+| `shadow-sw-default` | 4px | solid | Surfaces that float over the page: dropdown menus, listboxes, popovers, toasts |
+| `shadow-sw-lg` | 8px | solid | Dialogs and the page frame |
+| `shadow-sw-xl` | 12px | solid | A landing/hero frame only |
+| `shadow-sw-card` | 6px | solid | A single document or sheet surface only |
+| `shadow-sw-nested` | 4px | translucent (15% ink) | Every card, panel, box or section that sits inside a page frame or a dialog |
 
-Arbitrary shadow values (`shadow-[…]`) and every soft or rgba shadow are banned.
+**Solid ink is for what floats or presses.** Buttons press into theirs; menus, dialogs and the page frame hover above what is behind them.
+
+**Translucent ink is for what is nested.** A box inside a page frame or a dialog already has that frame's solid shadow around it, and a second solid shadow inside it competes with the first. The nested shadow keeps the hard 4px offset with no blur, so it is still a graphic edge, just quieter. Rules:
+
+- Nothing nested keeps a solid shadow. Choice cards, stat boxes, form section boxes, list boxes, toggle cards and clickable cards inside a frame or dialog all take `shadow-sw-nested`.
+- Siblings match. If one box in a row or a column has the nested shadow, give every box beside it the same shadow, even one that had none.
+- Pair it with a 1px ink border (2px only where a whole group deliberately uses 2px for emphasis; siblings still match).
+
+Arbitrary shadow values (`shadow-[…]`), blurred shadows, and ad-hoc rgba shadows are banned. `shadow-sw-nested` is the one translucent shadow, and it is defined once in the theme block.
 
 ### Hover behavior
 
@@ -222,7 +232,7 @@ hover:translate-x-px hover:translate-y-px hover:shadow-none
 active:translate-x-[2px] active:translate-y-[2px]
 ```
 
-This is the only hover motion. Things never lift, grow or gain a shadow when you point at them. See [Motion](#motion).
+This is the only hover motion. Things never lift, grow or gain a shadow when you point at them. See [Motion](#motion). A clickable card with the nested shadow presses in the same way.
 
 ---
 
@@ -248,6 +258,8 @@ focus-visible:outline-none focus-visible:border-primary focus-visible:ring-1 foc
 ```
 
 Never a bare `focus:` variant, and never `outline-none` without one of the replacements above.
+
+One exception: a clickable tile that fills with `primary` on hover and focus would swallow a blue ring. Its keyboard focus keeps the same fill and adds a 2px inset white ring (`focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white`). See [Clickable tile highlight](components.md#clickable-tile-highlight).
 
 ---
 
