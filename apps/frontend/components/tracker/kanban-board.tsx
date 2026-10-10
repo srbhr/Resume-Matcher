@@ -230,7 +230,9 @@ export function KanbanBoard() {
           <ArrowLeft aria-hidden="true" />
           {t('nav.backToDashboard')}
         </Link>
-        <div className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-3 gap-y-1">
+        {/* min-w keeps the title readable: with a 0 basis the actions would
+            never wrap and would squeeze the title to nothing. */}
+        <div className="flex min-w-[14rem] flex-1 flex-wrap items-baseline gap-x-3 gap-y-1">
           <h1 className="font-serif text-2xl font-bold uppercase leading-tight tracking-tight text-ink md:text-3xl">
             {t('tracker.title')}
           </h1>
@@ -239,8 +241,8 @@ export function KanbanBoard() {
             {t('tracker.subtitle')}
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <Button type="button" variant="outline" onClick={() => setManageOpen(true)}>
+        <div className="ml-auto flex flex-wrap items-center gap-3">
+          <Button type="button" variant="outline" size="sm" onClick={() => setManageOpen(true)}>
             <Settings aria-hidden="true" />
             {t('tracker.manage')}
           </Button>
@@ -249,7 +251,7 @@ export function KanbanBoard() {
               <Button
                 type="button"
                 variant="outline"
-                size="icon"
+                size="icon-sm"
                 aria-label={t('tracker.scroll.prev')}
                 onClick={() => scrollByColumn(-1)}
                 disabled={!canScrollLeft}
@@ -259,7 +261,7 @@ export function KanbanBoard() {
               <Button
                 type="button"
                 variant="outline"
-                size="icon"
+                size="icon-sm"
                 aria-label={t('tracker.scroll.next')}
                 onClick={() => scrollByColumn(1)}
                 disabled={!canScrollRight}
@@ -268,7 +270,7 @@ export function KanbanBoard() {
               </Button>
             </div>
           )}
-          <Button type="button" onClick={() => setManualAddOpen(true)}>
+          <Button type="button" size="sm" onClick={() => setManualAddOpen(true)}>
             <Plus aria-hidden="true" />
             {t('tracker.addApplication')}
           </Button>
