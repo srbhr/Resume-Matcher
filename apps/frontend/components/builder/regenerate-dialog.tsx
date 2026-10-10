@@ -3,6 +3,7 @@
 import React from 'react';
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -74,17 +75,15 @@ export const RegenerateDialog: React.FC<RegenerateDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] p-0 gap-0 rounded-none">
-        <DialogHeader className="p-6 pb-4 border-b border-black">
-          <DialogTitle className="font-serif text-xl font-bold uppercase tracking-tight">
-            {t('builder.regenerate.selectDialog.title')}
-          </DialogTitle>
+      <DialogContent size="lg">
+        <DialogHeader>
+          <DialogTitle>{t('builder.regenerate.selectDialog.title')}</DialogTitle>
           <DialogDescription className="font-mono text-xs text-ink-soft mt-2">
             {t('builder.regenerate.selectDialog.subtitle')}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="p-6 space-y-4 max-h-[50vh] overflow-y-auto">
+        <DialogBody className="space-y-4">
           {!hasItems && (
             <div className="text-center py-8 text-steel-grey font-mono text-sm">
               {t('builder.regenerate.selectDialog.noItemsAvailable')}
@@ -199,9 +198,9 @@ export const RegenerateDialog: React.FC<RegenerateDialogProps> = ({
               )}
             </div>
           )}
-        </div>
+        </DialogBody>
 
-        <DialogFooter className="p-4 bg-secondary border-t border-black flex-row justify-end gap-3">
+        <DialogFooter>
           <DialogClose asChild>
             <Button variant="outline" className="rounded-none border-black">
               {t('common.cancel')}

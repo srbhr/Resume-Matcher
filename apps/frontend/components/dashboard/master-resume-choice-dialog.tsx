@@ -2,6 +2,7 @@
 
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -29,20 +30,18 @@ export function MasterResumeChoiceDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl bg-background border-2 border-black shadow-[4px_4px_0px_0px_#000000] p-0 gap-0 rounded-none">
-        <DialogHeader className="border-b-2 border-black bg-white p-6 text-left">
+      <DialogContent size="lg">
+        <DialogHeader>
           <p className="font-mono text-xs font-bold uppercase tracking-wider text-blue-700">
             {t('resumeWizard.entry.kicker')}
           </p>
-          <DialogTitle className="font-serif text-3xl font-bold uppercase tracking-normal">
-            {t('resumeWizard.entry.title')}
-          </DialogTitle>
+          <DialogTitle>{t('resumeWizard.entry.title')}</DialogTitle>
           <DialogDescription className="font-sans text-sm text-steel-grey">
             {t('resumeWizard.entry.description')}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-4 bg-background p-6 md:grid-cols-2">
+        <DialogBody className="grid gap-4 md:grid-cols-2">
           <section className="flex min-h-64 flex-col border-2 border-black bg-white p-5">
             <div className="mb-6 flex h-12 w-12 items-center justify-center border-2 border-black bg-background">
               <Upload className="h-6 w-6 text-black" aria-hidden="true" />
@@ -78,7 +77,7 @@ export function MasterResumeChoiceDialog({
               {t('resumeWizard.entry.wizard.action')}
             </Button>
           </section>
-        </div>
+        </DialogBody>
       </DialogContent>
     </Dialog>
   );

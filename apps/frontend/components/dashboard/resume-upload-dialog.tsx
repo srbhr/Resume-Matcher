@@ -3,7 +3,9 @@
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {
   Dialog,
+  DialogBody,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -301,14 +303,12 @@ export function ResumeUploadDialog({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md bg-background border border-black shadow-sw-lg p-0 gap-0 rounded-none">
-        <DialogHeader className="p-6 border-b border-black bg-white">
-          <DialogTitle className="font-serif text-2xl font-bold uppercase tracking-tight">
-            {t('dashboard.uploadResume')}
-          </DialogTitle>
+      <DialogContent size="sm">
+        <DialogHeader>
+          <DialogTitle>{t('dashboard.uploadResume')}</DialogTitle>
         </DialogHeader>
 
-        <div className="p-6 bg-background">
+        <DialogBody>
           <div
             className={`
                             relative border-2 border-dashed p-8 text-center transition-all duration-200
@@ -401,9 +401,9 @@ export function ResumeUploadDialog({
               <p>{uploadFeedback.message}</p>
             </div>
           )}
-        </div>
+        </DialogBody>
 
-        <div className="p-4 border-t border-black bg-white flex flex-wrap justify-end gap-2">
+        <DialogFooter className="flex-wrap">
           {failedResumeId && uploadFeedback?.type !== 'success' && (
             <Button
               variant="outline"
@@ -444,7 +444,7 @@ export function ResumeUploadDialog({
               {t('common.cancel')}
             </Button>
           </DialogClose>
-        </div>
+        </DialogFooter>
       </DialogContent>
       <ConfirmDialog
         open={isOpen && showDeleteDialog}

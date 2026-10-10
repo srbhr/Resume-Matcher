@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -83,17 +84,15 @@ export const AddSectionDialog: React.FC<AddSectionDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] p-0 gap-0 rounded-none">
-        <DialogHeader className="p-6 pb-4 border-b border-black">
-          <DialogTitle className="font-serif text-xl font-bold uppercase tracking-tight">
-            {t('builder.customSections.dialogTitle')}
-          </DialogTitle>
+      <DialogContent size="md">
+        <DialogHeader>
+          <DialogTitle>{t('builder.customSections.dialogTitle')}</DialogTitle>
           <DialogDescription className="font-mono text-xs text-ink-soft mt-2">
             {t('builder.customSections.dialogDescription')}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="p-6 space-y-6">
+        <DialogBody className="space-y-6">
           {/* Section Name */}
           <div className="space-y-2">
             <Label className="font-mono text-xs uppercase tracking-wider text-steel-grey">
@@ -105,7 +104,6 @@ export const AddSectionDialog: React.FC<AddSectionDialogProps> = ({
               onKeyDown={handleKeyDown}
               placeholder={t('builder.customSections.sectionNamePlaceholder')}
               className="rounded-none border-black"
-              autoFocus
             />
           </div>
 
@@ -150,9 +148,9 @@ export const AddSectionDialog: React.FC<AddSectionDialogProps> = ({
               ))}
             </div>
           </div>
-        </div>
+        </DialogBody>
 
-        <DialogFooter className="p-4 bg-background border-t border-black flex-row justify-end gap-3">
+        <DialogFooter>
           <DialogClose asChild>
             <Button variant="outline" className="rounded-none border-black">
               {t('common.cancel')}

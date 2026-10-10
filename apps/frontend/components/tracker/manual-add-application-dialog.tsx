@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Loader2 from 'lucide-react/dist/esm/icons/loader-2';
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -93,13 +94,13 @@ export function ManualAddApplicationDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl space-y-4 p-6">
+      <DialogContent size="lg">
         <DialogHeader>
           <DialogTitle>{t('tracker.manualAdd.title')}</DialogTitle>
           <DialogDescription>{t('tracker.manualAdd.description')}</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <DialogBody className="space-y-4">
           <div className="space-y-1">
             <Label>{t('tracker.manualAdd.resume')}</Label>
             <Dropdown
@@ -155,7 +156,7 @@ export function ManualAddApplicationDialog({
           </div>
 
           {error && <p className="font-mono text-xs text-destructive">{error}</p>}
-        </div>
+        </DialogBody>
 
         <DialogFooter>
           <Button onClick={handleSubmit} disabled={submitting}>

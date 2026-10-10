@@ -3,6 +3,7 @@
 import React from 'react';
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -81,17 +82,15 @@ export const RegenerateInstructionDialog: React.FC<RegenerateInstructionDialogPr
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] p-0 gap-0 rounded-none">
-        <DialogHeader className="p-6 pb-4 border-b border-black">
-          <DialogTitle className="font-serif text-xl font-bold uppercase tracking-tight">
-            {t('builder.regenerate.instructionDialog.title')}
-          </DialogTitle>
+      <DialogContent size="lg">
+        <DialogHeader>
+          <DialogTitle>{t('builder.regenerate.instructionDialog.title')}</DialogTitle>
           <DialogDescription className="font-mono text-xs text-ink-soft mt-2">
             {t('builder.regenerate.instructionDialog.subtitle')}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="p-6 space-y-6">
+        <DialogBody className="space-y-6">
           {error ? (
             <div className="border border-red-600 bg-red-50 px-4 py-3">
               <p className="font-mono text-xs text-red-700">{resolveErrorMessage(error)}</p>
@@ -134,9 +133,9 @@ export const RegenerateInstructionDialog: React.FC<RegenerateInstructionDialogPr
               disabled={isGenerating}
             />
           </div>
-        </div>
+        </DialogBody>
 
-        <DialogFooter className="p-4 bg-secondary border-t border-black flex-row justify-between gap-3">
+        <DialogFooter className="justify-between">
           <Button
             variant="outline"
             onClick={onBack}

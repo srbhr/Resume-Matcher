@@ -36,7 +36,7 @@
     "legacy-token": 1
   },
   "components/builder/add-section-dialog.tsx": {
-    "legacy-token": 10,
+    "legacy-token": 9,
     "spacing": 1,
     "transition": 1
   },
@@ -131,17 +131,17 @@
     "raw-colour": 3
   },
   "components/builder/regenerate-dialog.tsx": {
-    "legacy-token": 13,
+    "legacy-token": 12,
     "palette": 3
   },
   "components/builder/regenerate-diff-preview.tsx": {
-    "legacy-token": 7,
+    "legacy-token": 6,
     "palette": 12,
     "raw-colour": 1
   },
   "components/builder/regenerate-instruction-dialog.tsx": {
     "decorative-icon": 1,
-    "legacy-token": 7,
+    "legacy-token": 6,
     "palette": 3
   },
   "components/builder/resume-builder.tsx": {
@@ -174,14 +174,14 @@
     "transition": 2
   },
   "components/dashboard/master-resume-choice-dialog.tsx": {
-    "legacy-token": 7,
+    "legacy-token": 5,
     "palette": 3,
-    "raw-colour": 2,
-    "soft-shadow": 2,
+    "raw-colour": 1,
+    "soft-shadow": 1,
     "spacing": 2
   },
   "components/dashboard/resume-upload-dialog.tsx": {
-    "legacy-token": 9,
+    "legacy-token": 7,
     "palette": 12,
     "transition": 2
   },
@@ -262,7 +262,7 @@
     "transition": 2
   },
   "components/tailor/diff-preview-modal.tsx": {
-    "legacy-token": 4,
+    "legacy-token": 2,
     "palette": 5,
     "raw-colour": 10,
     "spacing": 1
@@ -298,19 +298,11 @@
     "legacy-token": 1,
     "palette": 15
   },
-  "components/ui/dialog.tsx": {
-    "ink-tint": 1,
-    "legacy-token": 1,
-    "palette": 1
-  },
   "components/ui/dropdown.tsx": {
     "glyph": 1,
     "legacy-token": 4,
     "palette": 1,
     "transition": 1
-  },
-  "components/ui/link-dialog.tsx": {
-    "ink-tint": 1
   },
   "components/ui/retro-tabs.tsx": {
     "legacy-token": 3,

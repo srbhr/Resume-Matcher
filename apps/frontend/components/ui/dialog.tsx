@@ -5,15 +5,11 @@ import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTranslations } from '@/lib/i18n';
+import { Button } from './button';
 
 /**
- * Swiss International Style Dialog Component
- *
- * Native implementation without external dependencies.
- * - Square corners (rounded-none) - Brutalist aesthetic
- * - Black borders and hard shadows
- * - Canvas background (#F0F0E8)
- * - WCAG 2.2 AA: role="dialog", aria-modal, aria-labelledby wired to title
+ * Swiss dialog: white panel, 1px ink border, 8px hard shadow, banded header and
+ * footer, focus moved in, trapped, and returned on close.
  */
 
 interface DialogContextValue {
@@ -97,71 +93,126 @@ const DialogClose: React.FC<DialogCloseProps> = ({ asChild, children, className 
   );
 };
 
+export type DialogSize = 'sm' | 'md' | 'lg' | 'xl';
+
+const SIZE_CLASS: Record<DialogSize, string> = {
+  sm: 'max-w-md',
+  md: 'max-w-lg',
+  lg: 'max-w-2xl',
+  xl: 'max-w-5xl',
+};
+
+const FOCUSABLE =
+  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"]), [contenteditable="true"]';
+
+// display:none elements (e.g. the hidden file input in the upload dialog) can't take focus.
+const focusableIn = (root: HTMLElement): HTMLElement[] =>
+  Array.from(root.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(
+    (el) => getComputedStyle(el).display !== 'none'
+  );
+
 interface DialogContentProps {
   children: React.ReactNode;
   className?: string;
+  size?: DialogSize;
+  /** Element to focus on open. Defaults to the first focusable element. */
+  initialFocusRef?: React.RefObject<HTMLElement | null>;
 }
 
-const DialogContent: React.FC<DialogContentProps> = ({ children, className }) => {
+const DialogContent: React.FC<DialogContentProps> = ({
+  children,
+  className,
+  size = 'md',
+  initialFocusRef,
+}) => {
   const { open, onOpenChange, titleId } = useDialogContext();
   const { t } = useTranslations();
+  const panelRef = React.useRef<HTMLDivElement>(null);
 
-  // Handle escape key
   React.useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && open) {
-        onOpenChange(false);
-      }
+      if (e.key === 'Escape' && open) onOpenChange(false);
     };
-
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
   }, [open, onOpenChange]);
 
-  // Prevent body scroll when dialog is open
   React.useEffect(() => {
-    if (open) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
+    document.body.style.overflow = open ? 'hidden' : '';
     return () => {
       document.body.style.overflow = '';
     };
   }, [open]);
 
+  // Focus contract: move focus in on open, give it back to the opener on close.
+  // Don't use autoFocus inside a dialog: React applies it before this effect runs,
+  // so the opener is never recorded. The first focusable element gets focus anyway.
+  React.useEffect(() => {
+    if (!open) return;
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const panel = panelRef.current;
+    if (panel && !panel.contains(document.activeElement)) {
+      (initialFocusRef?.current ?? focusableIn(panel)[0] ?? panel).focus();
+    }
+    return () => opener?.focus();
+  }, [open, initialFocusRef]);
+
+  const trapTab = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== 'Tab' || !panelRef.current) return;
+    const items = focusableIn(panelRef.current);
+    if (items.length === 0) {
+      e.preventDefault();
+      panelRef.current.focus();
+      return;
+    }
+    const first = items[0];
+    const last = items[items.length - 1];
+    const active = document.activeElement;
+    if (e.shiftKey && (active === first || active === panelRef.current)) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && active === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  };
+
   if (!open || typeof document === 'undefined') return null;
 
   return createPortal(
     <div className="fixed inset-0 z-50">
-      {/* Overlay */}
       <div
-        className="fixed inset-0 bg-black/50 animate-in fade-in-0"
+        className="fixed inset-0 bg-overlay"
+        aria-hidden="true"
         onClick={() => onOpenChange(false)}
       />
-      {/* Content */}
       <div className="fixed inset-0 flex items-center justify-center p-4">
         <div
+          ref={panelRef}
           role="dialog"
           aria-modal="true"
           aria-labelledby={titleId}
+          tabIndex={-1}
+          onKeyDown={trapTab}
+          onClick={(e) => e.stopPropagation()}
           className={cn(
-            'relative w-full max-w-lg',
-            'border border-black bg-background shadow-sw-lg',
-            'rounded-none',
-            'animate-in fade-in-0 zoom-in-95 duration-200',
+            'relative flex max-h-[90vh] w-full flex-col overflow-hidden overscroll-contain',
+            'rounded-none border border-ink bg-white shadow-sw-lg outline-none',
+            SIZE_CLASS[size],
             className
           )}
-          onClick={(e) => e.stopPropagation()}
         >
           {children}
-          <button
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            className="absolute right-4 top-5"
             onClick={() => onOpenChange(false)}
-            className="absolute right-4 top-4 opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-blue-700 focus:ring-offset-2"
+            aria-label={t('common.close')}
+            title={t('common.close')}
           >
-            <X className="h-5 w-5" />
-            <span className="sr-only">{t('common.close')}</span>
-          </button>
+            <X aria-hidden="true" />
+          </Button>
         </div>
       </div>
     </div>,
@@ -169,58 +220,54 @@ const DialogContent: React.FC<DialogContentProps> = ({ children, className }) =>
   );
 };
 
-interface DialogHeaderProps {
+interface DialogPartProps {
   children: React.ReactNode;
   className?: string;
 }
 
-const DialogHeader: React.FC<DialogHeaderProps> = ({ className, children, ...props }) => (
-  <div className={cn('flex flex-col space-y-1.5 text-center sm:text-left', className)} {...props}>
-    {children}
-  </div>
-);
-
-interface DialogFooterProps {
-  children: React.ReactNode;
-  className?: string;
-}
-
-const DialogFooter: React.FC<DialogFooterProps> = ({ className, children, ...props }) => (
+const DialogHeader: React.FC<DialogPartProps> = ({ className, children }) => (
   <div
-    className={cn('flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2', className)}
-    {...props}
+    className={cn(
+      'flex shrink-0 flex-col gap-2 border-b border-ink px-6 pt-6 pb-4 pr-14 text-left',
+      className
+    )}
   >
     {children}
   </div>
 );
 
-interface DialogTitleProps {
-  children: React.ReactNode;
-  className?: string;
-}
+const DialogBody: React.FC<DialogPartProps> = ({ className, children }) => (
+  <div className={cn('min-h-0 flex-1 overflow-y-auto p-6', className)}>{children}</div>
+);
 
-const DialogTitle: React.FC<DialogTitleProps> = ({ className, children, ...props }) => {
+const DialogFooter: React.FC<DialogPartProps> = ({ className, children }) => (
+  <div
+    className={cn(
+      'flex shrink-0 flex-row items-center justify-end gap-3 border-t border-ink bg-panel px-6 py-4',
+      className
+    )}
+  >
+    {children}
+  </div>
+);
+
+const DialogTitle: React.FC<DialogPartProps> = ({ className, children }) => {
   const { titleId } = useDialogContext();
   return (
     <h2
       id={titleId}
-      className={cn('font-serif text-lg font-bold leading-none tracking-tight', className)}
-      {...props}
+      className={cn(
+        'font-serif text-2xl font-bold uppercase leading-none tracking-tight text-balance text-ink',
+        className
+      )}
     >
       {children}
     </h2>
   );
 };
 
-interface DialogDescriptionProps {
-  children: React.ReactNode;
-  className?: string;
-}
-
-const DialogDescription: React.FC<DialogDescriptionProps> = ({ className, children, ...props }) => (
-  <p className={cn('text-sm text-ink-soft', className)} {...props}>
-    {children}
-  </p>
+const DialogDescription: React.FC<DialogPartProps> = ({ className, children }) => (
+  <p className={cn('text-sm text-ink-soft text-pretty', className)}>{children}</p>
 );
 
 export {
@@ -229,6 +276,7 @@ export {
   DialogClose,
   DialogContent,
   DialogHeader,
+  DialogBody,
   DialogFooter,
   DialogTitle,
   DialogDescription,
