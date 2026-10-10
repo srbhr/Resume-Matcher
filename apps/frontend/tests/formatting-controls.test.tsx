@@ -71,7 +71,8 @@ describe('FormattingControls', () => {
       .getByRole('button', { name: 'builder.formatting.resetDefaults' })
       .querySelector('svg');
     expect(icon).not.toBeNull();
-    expect(icon?.getAttribute('class')).not.toMatch(/\bsize-/);
+    // Phosphor draws no class of its own, so a bare icon has no class attribute.
+    expect(icon?.getAttribute('class') ?? '').not.toMatch(/\bsize-/);
   });
 
   it('toggles compact mode with a switch', () => {

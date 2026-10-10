@@ -4,7 +4,17 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
-import { ChevronUp, ChevronDown, Trash2, Eye, EyeOff, Pencil, Check, X, Copy } from 'lucide-react';
+import {
+  CaretUp,
+  CaretDown,
+  Trash,
+  Eye,
+  EyeSlash,
+  PencilSimple,
+  Check,
+  X,
+  Copy,
+} from '@phosphor-icons/react';
 import type { SectionMeta } from '@/components/dashboard/resume-component';
 import { useTranslations } from '@/lib/i18n';
 
@@ -134,7 +144,7 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
                   aria-label={t('builder.sectionHeader.renameSection')}
                   title={t('builder.sectionHeader.renameSection')}
                 >
-                  <Pencil aria-hidden="true" size={16} />
+                  <PencilSimple aria-hidden="true" size={16} />
                 </Button>
               )}
               {!section.isDefault && (
@@ -171,7 +181,7 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
                   : t('builder.sectionHeader.showSection')
               }
             >
-              {section.isVisible ? <Eye aria-hidden="true" /> : <EyeOff aria-hidden="true" />}
+              {section.isVisible ? <Eye aria-hidden="true" /> : <EyeSlash aria-hidden="true" />}
             </Button>
           )}
 
@@ -187,7 +197,7 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
                 disabled={isFirst}
                 aria-label={t('builder.sectionHeader.moveUp')}
               >
-                <ChevronUp aria-hidden="true" />
+                <CaretUp aria-hidden="true" />
               </Button>
             </span>
           )}
@@ -203,7 +213,7 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
                 disabled={isLast}
                 aria-label={t('builder.sectionHeader.moveDown')}
               >
-                <ChevronDown aria-hidden="true" />
+                <CaretDown aria-hidden="true" />
               </Button>
             </span>
           )}
@@ -233,7 +243,7 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
               aria-label={t('builder.sectionHeader.deleteSection')}
               title={t('builder.sectionHeader.deleteSection')}
             >
-              <Trash2 aria-hidden="true" />
+              <Trash aria-hidden="true" />
             </Button>
           )}
         </div>

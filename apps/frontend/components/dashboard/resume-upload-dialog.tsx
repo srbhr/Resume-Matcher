@@ -14,7 +14,7 @@ import {
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { StatusIndicator } from '@/components/ui/status-indicator';
-import { UploadIcon, Loader2Icon, FileIcon, XIcon } from 'lucide-react';
+import { UploadSimple, SpinnerGap, FileIcon, X } from '@phosphor-icons/react';
 import { useFileUpload, formatBytes } from '@/hooks/use-file-upload';
 import { getUploadUrl } from '@/lib/api/client';
 import { useTranslations } from '@/lib/i18n';
@@ -302,7 +302,7 @@ export function ResumeUploadDialog({
       <DialogTrigger asChild>
         {trigger || (
           <Button type="button">
-            <UploadIcon aria-hidden="true" />
+            <UploadSimple aria-hidden="true" />
             {t('dashboard.uploadResume')}
           </Button>
         )}
@@ -338,7 +338,7 @@ export function ResumeUploadDialog({
 
             {isUploadingGlobal ? (
               <div className="flex flex-col items-center py-4">
-                <Loader2Icon
+                <SpinnerGap
                   aria-hidden="true"
                   className="w-10 h-10 animate-spin text-primary mb-4"
                 />
@@ -374,13 +374,13 @@ export function ResumeUploadDialog({
                   aria-label={t('a11y.removeFile')}
                   title={t('a11y.removeFile')}
                 >
-                  <XIcon aria-hidden="true" className="w-5 h-5" />
+                  <X aria-hidden="true" className="w-5 h-5" />
                 </Button>
               </div>
             ) : (
               <div className="flex flex-col items-center py-4">
                 <div className="w-12 h-12 border border-ink bg-white shadow-sw-nested flex items-center justify-center mb-4">
-                  <UploadIcon aria-hidden="true" className="w-6 h-6 text-ink" />
+                  <UploadSimple aria-hidden="true" className="w-6 h-6 text-ink" />
                 </div>
                 <p id={dropzoneTitleId} className="font-bold text-lg mb-1">
                   {t('dashboard.uploadDialog.dropzoneTitle')}

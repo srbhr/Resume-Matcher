@@ -26,6 +26,7 @@ const nextConfig: NextConfig = {
     // Tree-shake barrel imports — saves ~200-800ms cold start per route
     optimizePackageImports: [
       'lucide-react',
+      '@phosphor-icons/react',
       '@tiptap/react',
       '@tiptap/starter-kit',
       '@tiptap/extension-link',

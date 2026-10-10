@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useId, useRef, useState } from 'react';
-import { XIcon } from 'lucide-react';
+import { X } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
 import { useEnrichmentWizard } from '@/hooks/use-enrichment-wizard';
 import { useTranslations } from '@/lib/i18n';
@@ -168,7 +168,7 @@ export function EnrichmentModal({ resumeId, isOpen, onClose, onComplete }: Enric
                 aria-label={t('common.close')}
                 title={t('common.close')}
               >
-                <XIcon aria-hidden="true" />
+                <X aria-hidden="true" />
               </Button>
             )}
           </div>

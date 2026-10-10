@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
-import { Loader2 } from 'lucide-react';
+import { SpinnerGap } from '@phosphor-icons/react';
 import { useTranslations } from '@/lib/i18n';
 
 export interface GeneratePromptProps {
@@ -65,7 +65,7 @@ export function GeneratePrompt({
       action={
         <div className="flex flex-col items-start gap-3">
           <Button onClick={onGenerate} disabled={isGenerating}>
-            {isGenerating && <Loader2 aria-hidden="true" className="animate-spin" />}
+            {isGenerating && <SpinnerGap aria-hidden="true" className="animate-spin" />}
             {isGenerating
               ? t('common.generating')
               : t('builder.generatePrompt.generateButton', { title })}

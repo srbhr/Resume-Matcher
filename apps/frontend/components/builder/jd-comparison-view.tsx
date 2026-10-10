@@ -5,7 +5,7 @@ import { type ResumeData } from '@/components/dashboard/resume-component';
 import { extractKeywords, calculateMatchStats } from '@/lib/utils/keyword-matcher';
 import { JDDisplay } from './jd-display';
 import { HighlightedResumeView } from './highlighted-resume-view';
-import { CheckCircle, Target } from 'lucide-react';
+import { CheckCircle, Target } from '@phosphor-icons/react';
 import { useTranslations } from '@/lib/i18n';
 
 interface JDComparisonViewProps {

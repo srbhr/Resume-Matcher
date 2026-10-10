@@ -1,7 +1,7 @@
 'use client';
 
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { AlertTriangle, RefreshCw } from 'lucide-react';
+import { Warning, ArrowsClockwise } from '@phosphor-icons/react';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { useTranslations } from '@/lib/i18n';
@@ -70,7 +70,7 @@ export class ErrorBoundary extends Component<Props, State> {
         <div className="min-h-[400px] bg-canvas p-8">
           <div className="w-full max-w-md border border-ink bg-white p-8 shadow-sw-lg">
             <div className="mb-4 flex items-center gap-3">
-              <AlertTriangle aria-hidden="true" className="size-8 text-destructive" />
+              <Warning aria-hidden="true" className="size-8 text-destructive" />
               <h2 className="font-serif text-2xl font-bold uppercase">{strings.title}</h2>
             </div>
 
@@ -87,7 +87,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 {strings.tryAgain}
               </Button>
               <Button type="button" className="flex-1" onClick={this.handleReload}>
-                <RefreshCw aria-hidden="true" />
+                <ArrowsClockwise aria-hidden="true" />
                 {strings.reloadPage}
               </Button>
             </div>

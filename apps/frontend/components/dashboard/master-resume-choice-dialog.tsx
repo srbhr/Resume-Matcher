@@ -10,8 +10,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useTranslations } from '@/lib/i18n';
-import Upload from 'lucide-react/dist/esm/icons/upload';
-import Bot from 'lucide-react/dist/esm/icons/bot';
+import { UploadSimple, Robot } from '@phosphor-icons/react';
 
 interface MasterResumeChoiceDialogProps {
   open: boolean;
@@ -42,7 +41,7 @@ export function MasterResumeChoiceDialog({
         <DialogBody className="grid gap-4 md:grid-cols-2">
           <section className="flex min-h-64 flex-col border border-ink bg-white p-6 shadow-sw-nested">
             <div className="mb-6 flex h-12 w-12 items-center justify-center border-2 border-ink bg-canvas">
-              <Upload className="h-6 w-6 text-ink" aria-hidden="true" />
+              <UploadSimple className="h-6 w-6 text-ink" aria-hidden="true" />
             </div>
             <p className="font-mono text-xs font-bold uppercase tracking-wider text-steel">
               {t('resumeWizard.entry.upload.kicker')}
@@ -65,7 +64,7 @@ export function MasterResumeChoiceDialog({
 
           <section className="flex min-h-64 flex-col border border-ink bg-white p-6 shadow-sw-nested">
             <div className="mb-6 flex h-12 w-12 items-center justify-center border-2 border-ink bg-primary text-white">
-              <Bot className="h-6 w-6" aria-hidden="true" />
+              <Robot className="h-6 w-6" aria-hidden="true" />
             </div>
             <p className="font-mono text-xs font-bold uppercase tracking-wider text-steel">
               {t('resumeWizard.entry.wizard.kicker')}

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { fetchLlmApiKey, updateLlmApiKey } from '@/lib/api/config';
-import { ChevronDown } from 'lucide-react';
+import { CaretDown } from '@phosphor-icons/react';
 import { useTranslations } from '@/lib/i18n';
 
 type Status = 'idle' | 'loading' | 'saving' | 'saved' | 'error';
@@ -89,7 +89,7 @@ export default function ApiKeyMenu(): React.ReactElement {
       >
         <span className="font-semibold">{t('settings.apiKeyMenu.buttonLabel')}</span>
         <span className="font-mono text-xs text-ink-soft">{maskedKey}</span>
-        <ChevronDown className="h-4 w-4" />
+        <CaretDown className="h-4 w-4" />
       </button>
       {isOpen ? (
         <>

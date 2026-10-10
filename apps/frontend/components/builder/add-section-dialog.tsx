@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { SegmentedControl } from '@/components/ui/segmented-control';
-import { Plus } from 'lucide-react';
+import { Plus } from '@phosphor-icons/react';
 import type { SectionType } from '@/components/dashboard/resume-component';
 import { useTranslations } from '@/lib/i18n';
 

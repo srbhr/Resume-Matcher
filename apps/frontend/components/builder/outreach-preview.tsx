@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { cn } from '@/lib/utils';
 import { EmptyState } from '@/components/ui/empty-state';
-import { Linkedin, Mail } from 'lucide-react';
+import { LinkedinLogo, Envelope } from '@phosphor-icons/react';
 import { useTranslations } from '@/lib/i18n';
 
 export interface OutreachPreviewProps {
@@ -28,13 +28,13 @@ export function OutreachPreview({ content, className }: OutreachPreviewProps) {
       <div className="p-4 border-b-2 border-ink bg-paper">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <Linkedin aria-hidden="true" className="size-4 text-ink" />
+            <LinkedinLogo aria-hidden="true" className="size-4 text-ink" />
             <span className="font-mono text-xs uppercase">
               {t('outreach.preview.channels.linkedin')}
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <Mail aria-hidden="true" className="size-4 text-ink-soft" />
+            <Envelope aria-hidden="true" className="size-4 text-ink-soft" />
             <span className="font-mono text-xs uppercase">
               {t('outreach.preview.channels.email')}
             </span>

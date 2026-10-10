@@ -18,7 +18,15 @@ const RichTextEditor = dynamic(
   }
 );
 import { Project } from '@/components/dashboard/resume-component';
-import { AlignLeft, Copy, List, Plus, Trash2, Github, Globe } from 'lucide-react';
+import {
+  TextAlignLeft,
+  Copy,
+  ListBullets,
+  Plus,
+  Trash,
+  GithubLogo,
+  Globe,
+} from '@phosphor-icons/react';
 import { useTranslations } from '@/lib/i18n';
 import {
   alignDescriptionStyles,
@@ -181,7 +189,7 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({ data, onChange }) =>
                 aria-label={t('a11y.removeItem')}
                 title={t('a11y.removeItem')}
               >
-                <Trash2 aria-hidden="true" />
+                <Trash aria-hidden="true" />
               </Button>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 pr-24">
@@ -221,7 +229,7 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({ data, onChange }) =>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor={`${fieldId}-${item.id}-github`}>
-                    <Github aria-hidden="true" className="size-4 inline mr-1" />
+                    <GithubLogo aria-hidden="true" className="size-4 inline mr-1" />
                     GitHub <span className="text-steel">({t('common.optional')})</span>
                   </Label>
                   <Input
@@ -288,9 +296,9 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({ data, onChange }) =>
                           title={t('builder.genericItemForm.actions.togglePointStyle')}
                         >
                           {style === 'plain' ? (
-                            <AlignLeft aria-hidden="true" />
+                            <TextAlignLeft aria-hidden="true" />
                           ) : (
-                            <List aria-hidden="true" />
+                            <ListBullets aria-hidden="true" />
                           )}
                         </Button>
                         <Button
@@ -301,7 +309,7 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({ data, onChange }) =>
                           aria-label={t('a11y.removeDescription')}
                           title={t('a11y.removeDescription')}
                         >
-                          <Trash2 aria-hidden="true" />
+                          <Trash aria-hidden="true" />
                         </Button>
                       </div>
                     )}

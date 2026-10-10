@@ -4,7 +4,7 @@ import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useReducedMotion } from 'motion/react';
-import { GripVertical } from 'lucide-react';
+import { DotsSixVertical } from '@phosphor-icons/react';
 
 interface DraggableListItemProps {
   id: number;
@@ -50,7 +50,7 @@ export const DraggableListItem: React.FC<DraggableListItemProps> = ({
         title={handleLabel}
         aria-label={handleLabel}
       >
-        <GripVertical
+        <DotsSixVertical
           aria-hidden="true"
           className="size-4 text-steel hover:text-ink-soft transition-colors"
         />

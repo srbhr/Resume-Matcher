@@ -1,7 +1,13 @@
 'use client';
 
 import React, { useRef, useState, useCallback, useEffect } from 'react';
-import { ZoomIn, ZoomOut, Eye, EyeOff, FileText } from 'lucide-react';
+import {
+  MagnifyingGlassPlus,
+  MagnifyingGlassMinus,
+  Eye,
+  EyeSlash,
+  FileText,
+} from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
 import Resume, { type ResumeData } from '@/components/dashboard/resume-component';
 import { type TemplateSettings } from '@/lib/types/template-settings';
@@ -126,7 +132,7 @@ export function PaginatedPreview({ resumeData, settings }: PaginatedPreviewProps
             aria-label={t('preview.zoomOut')}
             title={t('preview.zoomOut')}
           >
-            <ZoomOut aria-hidden="true" />
+            <MagnifyingGlassMinus aria-hidden="true" />
           </Button>
           <span className="font-mono text-xs w-12 text-center text-ink-soft tabular-nums">
             {Math.round(zoom * 100)}%
@@ -140,7 +146,7 @@ export function PaginatedPreview({ resumeData, settings }: PaginatedPreviewProps
             aria-label={t('preview.zoomIn')}
             title={t('preview.zoomIn')}
           >
-            <ZoomIn aria-hidden="true" />
+            <MagnifyingGlassPlus aria-hidden="true" />
           </Button>
 
           <div aria-hidden="true" className="w-px h-4 bg-steel mx-2" />
@@ -153,7 +159,7 @@ export function PaginatedPreview({ resumeData, settings }: PaginatedPreviewProps
             aria-pressed={showMargins}
             className="hover:bg-panel-hover"
           >
-            {showMargins ? <Eye aria-hidden="true" /> : <EyeOff aria-hidden="true" />}
+            {showMargins ? <Eye aria-hidden="true" /> : <EyeSlash aria-hidden="true" />}
             <span className="font-mono text-xs uppercase">{t('preview.margins')}</span>
           </Button>
         </div>

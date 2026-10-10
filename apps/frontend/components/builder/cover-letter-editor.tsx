@@ -4,7 +4,7 @@ import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { PanelHeader } from '@/components/ui/panel-header';
 import { Textarea } from '@/components/ui/textarea';
-import { Save, Loader2 } from 'lucide-react';
+import { FloppyDisk, SpinnerGap } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 import { useTranslations } from '@/lib/i18n';
 
@@ -49,9 +49,9 @@ export function CoverLetterEditor({
         </span>
         <Button size="sm" onClick={onSave} disabled={isSaving}>
           {isSaving ? (
-            <Loader2 aria-hidden="true" className="animate-spin" />
+            <SpinnerGap aria-hidden="true" className="animate-spin" />
           ) : (
-            <Save aria-hidden="true" />
+            <FloppyDisk aria-hidden="true" />
           )}
           {isSaving ? t('common.saving') : t('common.save')}
         </Button>

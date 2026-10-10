@@ -4,7 +4,7 @@ import React, { useId, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import { ToggleSwitch } from '@/components/ui/toggle-switch';
-import { ChevronDown, ChevronUp, RotateCcw } from 'lucide-react';
+import { CaretDown, CaretUp, ArrowCounterClockwise } from '@phosphor-icons/react';
 import {
   type TemplateSettings,
   type TemplateType,
@@ -180,9 +180,9 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
           </span>
         </span>
         {isExpanded ? (
-          <ChevronUp aria-hidden="true" className="size-4 text-steel" />
+          <CaretUp aria-hidden="true" className="size-4 text-steel" />
         ) : (
-          <ChevronDown aria-hidden="true" className="size-4 text-steel" />
+          <CaretDown aria-hidden="true" className="size-4 text-steel" />
         )}
       </button>
 
@@ -472,7 +472,7 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
               )}
             </div>
             <Button variant="outline" size="sm" onClick={handleReset} className="w-full">
-              <RotateCcw aria-hidden="true" />
+              <ArrowCounterClockwise aria-hidden="true" />
               {t('builder.formatting.resetDefaults')}
             </Button>
           </div>

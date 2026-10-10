@@ -47,22 +47,22 @@ import { PageHeader } from '@/components/ui/page-header';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Dropdown } from '@/components/ui/dropdown';
 import {
-  Save,
+  FloppyDisk,
   Key,
   Database,
-  Activity,
-  Loader2,
+  Pulse,
+  SpinnerGap,
   Check,
-  RefreshCw,
-  Server,
+  ArrowsClockwise,
+  HardDrives,
   FileText,
   Briefcase,
   Clock,
-  Settings2,
+  SlidersHorizontal,
   Globe,
-  Trash2,
-  AlertTriangle,
-} from 'lucide-react';
+  Trash,
+  Warning,
+} from '@phosphor-icons/react';
 import { useLanguage } from '@/lib/context/language-context';
 import { useTranslations } from '@/lib/i18n';
 import { DURATION } from '@/lib/motion';
@@ -710,7 +710,7 @@ export default function SettingsPage() {
             <div className="flex items-center justify-between border-b border-panel-hover pb-2">
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2">
-                  <Activity className="w-4 h-4" />
+                  <Pulse className="w-4 h-4" />
                   <h2 className="font-serif text-xl font-bold text-ink text-balance">
                     {t('settings.systemStatus.title')}
                   </h2>
@@ -730,14 +730,14 @@ export default function SettingsPage() {
                 disabled={statusLoading}
                 className="gap-1 text-xs"
               >
-                <RefreshCw className={statusLoading ? 'animate-spin' : undefined} />
+                <ArrowsClockwise className={statusLoading ? 'animate-spin' : undefined} />
                 {t('settings.systemStatus.refresh')}
               </Button>
             </div>
 
             {statusLoading ? (
               <div className="flex items-center justify-center p-8">
-                <Loader2 className="w-6 h-6 animate-spin text-steel" />
+                <SpinnerGap className="w-6 h-6 animate-spin text-steel" />
               </div>
             ) : !systemStatus ? (
               <Alert tone="error" title={t('settings.systemStatus.unableToConnect')}>
@@ -749,7 +749,7 @@ export default function SettingsPage() {
                   onClick={refreshStatus}
                   className="mt-3"
                 >
-                  <RefreshCw aria-hidden="true" />
+                  <ArrowsClockwise aria-hidden="true" />
                   {t('common.retry')}
                 </Button>
               </Alert>
@@ -762,7 +762,7 @@ export default function SettingsPage() {
                   {/* LLM Status */}
                   <div className="border border-ink bg-white p-4 shadow-sw-nested">
                     <div className="flex items-center gap-2 mb-2">
-                      <Server className="w-4 h-4 text-steel" />
+                      <HardDrives className="w-4 h-4 text-steel" />
                       <span className="font-mono text-xs uppercase text-steel">
                         {t('settings.statusCards.llm')}
                       </span>
@@ -1036,7 +1036,7 @@ export default function SettingsPage() {
                     >
                       {saveState === 'saving' ? (
                         <>
-                          <Loader2 aria-hidden="true" className="animate-spin" />
+                          <SpinnerGap aria-hidden="true" className="animate-spin" />
                           {t('common.saving')}
                         </>
                       ) : saveState === 'saved' ? (
@@ -1046,7 +1046,7 @@ export default function SettingsPage() {
                         </>
                       ) : (
                         <>
-                          <Save />
+                          <FloppyDisk />
                           {t('common.save')}
                         </>
                       )}
@@ -1061,12 +1061,12 @@ export default function SettingsPage() {
                 >
                   {status === 'testing' ? (
                     <>
-                      <Loader2 aria-hidden="true" className="animate-spin" />
+                      <SpinnerGap aria-hidden="true" className="animate-spin" />
                       {t('common.checking')}
                     </>
                   ) : (
                     <>
-                      <Activity className="w-4 h-4" />
+                      <Pulse className="w-4 h-4" />
                       {t('settings.llmConfiguration.testConnection')}
                     </>
                   )}
@@ -1139,7 +1139,7 @@ export default function SettingsPage() {
           {/* Content Generation Section */}
           <section className="space-y-6">
             <div className="flex items-center gap-2 border-b border-panel-hover pb-2">
-              <Settings2 className="w-4 h-4" />
+              <SlidersHorizontal className="w-4 h-4" />
               <h2 className="font-serif text-xl font-bold text-ink text-balance">
                 {t('settings.contentGeneration.title')}
               </h2>
@@ -1205,7 +1205,7 @@ export default function SettingsPage() {
                       >
                         {featurePromptSaving === 'cover_letter_prompt' ? (
                           <>
-                            <Loader2 aria-hidden="true" className="animate-spin" />
+                            <SpinnerGap aria-hidden="true" className="animate-spin" />
                             {t('common.saving')}
                           </>
                         ) : (
@@ -1277,7 +1277,7 @@ export default function SettingsPage() {
                       >
                         {featurePromptSaving === 'outreach_message_prompt' ? (
                           <>
-                            <Loader2 aria-hidden="true" className="animate-spin" />
+                            <SpinnerGap aria-hidden="true" className="animate-spin" />
                             {t('common.saving')}
                           </>
                         ) : (
@@ -1385,7 +1385,7 @@ export default function SettingsPage() {
           {/* Danger Zone */}
           <section className="space-y-6">
             <div className="flex items-center gap-2 border-b border-destructive pb-2">
-              <AlertTriangle className="w-4 h-4 text-destructive" />
+              <Warning className="w-4 h-4 text-destructive" />
               <h2 className="font-serif text-xl font-bold text-ink text-balance">
                 {t('settings.dangerZone')}
               </h2>
@@ -1431,7 +1431,7 @@ export default function SettingsPage() {
                   onClick={() => setShowResetDatabaseDialog(true)}
                   disabled={isResetting}
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <Trash className="w-4 h-4" />
                   {t('settings.resetDatabase')}
                 </Button>
               </div>
@@ -1454,7 +1454,7 @@ export default function SettingsPage() {
           <div className="flex items-center gap-2">
             {statusLoading ? (
               <>
-                <Loader2 className="size-4 animate-spin text-steel" />
+                <SpinnerGap className="size-4 animate-spin text-steel" />
                 <span className="font-mono text-xs text-steel">
                   {t('settings.footer.status.checking')}
                 </span>

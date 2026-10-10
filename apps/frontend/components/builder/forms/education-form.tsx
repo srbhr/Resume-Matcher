@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Textarea } from '@/components/ui/textarea';
 import { Education } from '@/components/dashboard/resume-component';
-import { Copy, Plus, Trash2 } from 'lucide-react';
+import { Copy, Plus, Trash } from '@phosphor-icons/react';
 import { useTranslations } from '@/lib/i18n';
 import { SortableItemList } from '../sortable-item-list';
 import { duplicateById } from '@/lib/utils/reorder-items';
@@ -93,7 +93,7 @@ export const EducationForm: React.FC<EducationFormProps> = ({ data, onChange }) 
                 aria-label={t('a11y.removeItem')}
                 title={t('a11y.removeItem')}
               >
-                <Trash2 aria-hidden="true" />
+                <Trash aria-hidden="true" />
               </Button>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 pr-24">

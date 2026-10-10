@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import Loader2 from 'lucide-react/dist/esm/icons/loader-2';
+import { SpinnerGap } from '@phosphor-icons/react';
 import {
   Dialog,
   DialogBody,
@@ -165,7 +165,7 @@ export function ManualAddApplicationDialog({
           <Button type="button" onClick={handleSubmit} disabled={submitting}>
             {submitting ? (
               <>
-                <Loader2 aria-hidden="true" className="animate-spin" />
+                <SpinnerGap aria-hidden="true" className="animate-spin" />
                 {t('common.saving')}
               </>
             ) : (

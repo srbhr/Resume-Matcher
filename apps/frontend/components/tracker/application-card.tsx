@@ -4,8 +4,7 @@ import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useReducedMotion } from 'motion/react';
-import GripVertical from 'lucide-react/dist/esm/icons/grip-vertical';
-import Layers from 'lucide-react/dist/esm/icons/layers';
+import { DotsSixVertical, Stack } from '@phosphor-icons/react';
 import { Card } from '@/components/ui/card';
 import { useTranslations } from '@/lib/i18n';
 import { formatDate } from '@/lib/format-date';
@@ -77,7 +76,7 @@ export function ApplicationCard({
             )}
             {sharedResume && (
               <span className="mt-1 inline-flex items-center gap-1 border border-ink bg-paper px-1 font-mono text-xs uppercase text-ink-soft">
-                <Layers aria-hidden="true" className="size-4" />
+                <Stack aria-hidden="true" className="size-4" />
                 {t('tracker.card.sharedResume')}
               </span>
             )}
@@ -90,7 +89,7 @@ export function ApplicationCard({
             {...attributes}
             {...listeners}
           >
-            <GripVertical aria-hidden="true" className="size-4" />
+            <DotsSixVertical aria-hidden="true" className="size-4" />
           </button>
         </div>
       </Card>

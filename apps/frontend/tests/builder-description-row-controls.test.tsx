@@ -63,7 +63,8 @@ describe.each(Object.entries(forms))('%s form description row', (_name, renderFo
     ]) {
       const icon = screen.getByRole('button', { name }).querySelector('svg');
       expect(icon).not.toBeNull();
-      expect(icon?.getAttribute('class')).not.toMatch(/\bsize-/);
+      // Phosphor draws no class of its own, so a bare icon has no class attribute.
+      expect(icon?.getAttribute('class') ?? '').not.toMatch(/\bsize-/);
     }
   });
 });

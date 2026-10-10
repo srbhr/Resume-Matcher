@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useId, useRef, useState } from 'react';
-import { Check, ChevronDown } from 'lucide-react';
+import { Check, CaretDown } from '@phosphor-icons/react';
 import { AnimatePresence, m, useIsPresent, useReducedMotion } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { labelClass } from '@/components/ui/label';
@@ -183,7 +183,7 @@ export function Dropdown({
           >
             {selected ? selected.label : (placeholder ?? t('common.selectOption'))}
           </span>
-          <ChevronDown
+          <CaretDown
             aria-hidden="true"
             className={cn('size-4 shrink-0 transition-transform', isOpen && 'rotate-180')}
           />

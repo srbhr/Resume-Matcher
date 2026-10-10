@@ -1,6 +1,6 @@
 'use client';
 
-import { Check } from 'lucide-react';
+import { Check } from '@phosphor-icons/react';
 import type { ResumeData } from '@/components/dashboard/resume-component';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useTranslations } from '@/lib/i18n';
