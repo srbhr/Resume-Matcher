@@ -1615,6 +1615,7 @@ const ResumeBuilderContent = () => {
                 <div className="space-y-4">
                   {resumeId && jobContextStatus === 'available' && (
                     <AtsScorePanel
+                      key={resumeId}
                       resumeId={resumeId}
                       hasUnsavedChanges={hasUnsavedChanges}
                       template={templateSettings.template}

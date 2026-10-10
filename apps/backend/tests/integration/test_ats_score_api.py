@@ -7,7 +7,7 @@ from typing import Any
 import pytest
 from httpx import ASGITransport, AsyncClient
 
-from app.database import Database
+from app.database import Database, DatabaseBusyError
 from app.main import app
 
 JOB_CONTENT = "Senior Backend Engineer at Acme: Python, Kubernetes, Terraform"
@@ -147,12 +147,15 @@ async def test_last_score_stays_until_recalculated_after_edits(
     assert (await client.get(_url(tailored))).json() == again.json()
 
 
-async def test_not_yet_calculated_is_404(
+async def test_not_yet_calculated_is_null_not_404(
     client: AsyncClient, isolated_db: Database
 ) -> None:
+    # 404 is reserved for a missing resume or job link, so the UI can tell
+    # "never calculated" apart from an error.
     _, _, tailored = await _tailored(isolated_db)
     res = await client.get(_url(tailored))
-    assert res.status_code == 404
+    assert res.status_code == 200
+    assert res.json() is None
 
 
 @pytest.mark.parametrize("method", ["GET", "POST"])
@@ -187,3 +190,16 @@ async def test_stale_job_keywords_are_not_used(
     await isolated_db.update_job(job["job_id"], {"content": JOB_CONTENT + " and Go"})
     res = await client.post(_url(tailored))
     assert res.status_code == 409
+
+
+async def test_busy_database_on_recalculate_is_retryable_503(
+    client: AsyncClient, isolated_db: Database, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _, _, tailored = await _tailored(isolated_db)
+
+    async def busy(*_args: Any, **_kwargs: Any) -> bool:
+        raise DatabaseBusyError("database is locked")
+
+    monkeypatch.setattr(isolated_db, "set_ats_score", busy)
+    res = await client.post(_url(tailored))
+    assert res.status_code == 503

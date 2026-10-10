@@ -938,3 +938,25 @@ async def test_confirm_saves_the_ats_score_as_last_calculated(
     record = res.json()
     assert record["calculated_at"]
     assert 0 <= record["score"]["overall_score"] <= 100
+
+
+async def test_confirmed_score_matches_the_preview_score(
+    client: AsyncClient,
+    master: dict[str, Any],
+    job: dict[str, Any],
+) -> None:
+    preview = await client.post(
+        "/api/v1/resumes/improve/preview",
+        json={"resume_id": master["resume_id"], "job_id": job["job_id"]},
+    )
+    assert preview.status_code == 200, preview.text
+    previewed = preview.json()["data"]["ats_score"]
+    confirm = await _confirm(client, master, job, preview.json()["data"])
+    assert confirm.status_code == 200, confirm.text
+
+    saved = await client.get(
+        f"/api/v1/resumes/{confirm.json()['data']['resume_id']}/ats-score"
+    )
+
+    assert saved.json()["score"]["overall_score"] == previewed["overall_score"]
+    assert saved.json()["score"]["sub_scores"] == previewed["sub_scores"]

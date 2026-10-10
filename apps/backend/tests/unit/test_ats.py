@@ -172,6 +172,12 @@ class TestSectionCompleteness:
         )
         assert compute_section_completeness(resume) == 80.0
 
+    def test_unstructured_resume_with_all_headings_scores_full(self) -> None:
+        legacy = {
+            "content": "Summary ... Work Experience ... Education ... Technical Skills ..."
+        }
+        assert compute_section_completeness(legacy) == 100.0
+
     def test_visible_section_meta_still_counts(self) -> None:
         resume = _resume(
             sectionMeta=[

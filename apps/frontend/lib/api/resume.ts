@@ -519,7 +519,6 @@ export async function retryProcessing(
   return res.json();
 }
 
-/** Fetches the job description used to tailor a resume */
 /** Last calculated ATS score of a saved tailored resume. */
 export interface ATSScoreRecord {
   score: ATSScore;
@@ -530,7 +529,6 @@ export interface ATSScoreRecord {
 /** Last calculated ATS score, or null when it was never calculated. */
 export async function fetchLastAtsScore(resumeId: string): Promise<ATSScoreRecord | null> {
   const res = await apiFetch(`/resumes/${encodeURIComponent(resumeId)}/ats-score`);
-  if (res.status === 404) return null;
   if (!res.ok) {
     const text = await res.text().catch(() => '');
     throw new Error(`Failed to fetch ATS score (status ${res.status}): ${text}`);
@@ -548,6 +546,7 @@ export async function recalculateAtsScore(resumeId: string): Promise<ATSScoreRec
   return res.json();
 }
 
+/** Fetches the job description used to tailor a resume */
 export async function fetchJobDescription(
   resumeId: string
 ): Promise<{ job_id: string; content: string }> {

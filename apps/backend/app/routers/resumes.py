@@ -2675,16 +2675,12 @@ async def _tailored_resume_job_link(
     return resume, improvement
 
 
-@router.get("/{resume_id}/ats-score", response_model=ATSScoreRecord)
-async def get_ats_score_for_resume(resume_id: str) -> ATSScoreRecord:
-    """Last calculated ATS score of a tailored resume (404 if never calculated)."""
+@router.get("/{resume_id}/ats-score", response_model=ATSScoreRecord | None)
+async def get_ats_score_for_resume(resume_id: str) -> ATSScoreRecord | None:
+    """Last calculated ATS score of a tailored resume, or null if never calculated."""
     _, improvement = await _tailored_resume_job_link(resume_id)
     record = improvement.get("ats_score")
-    if not record:
-        raise HTTPException(
-            status_code=404, detail="ATS score has not been calculated yet."
-        )
-    return ATSScoreRecord.model_validate(record)
+    return ATSScoreRecord.model_validate(record) if record else None
 
 
 @router.post("/{resume_id}/ats-score", response_model=ATSScoreRecord)
@@ -2716,6 +2712,8 @@ async def recalculate_ats_score_for_resume(resume_id: str) -> ATSScoreRecord:
     try:
         record = _score_tailored_data(tailored_data, job_keywords, master_data)
         await db.set_ats_score(resume_id, record)
+    except DatabaseBusyError:
+        raise  # mapped to a retryable 503 by the app-level handler
     except Exception as e:
         logger.error("ATS score calculation failed for %s: %s", resume_id, e)
         raise HTTPException(

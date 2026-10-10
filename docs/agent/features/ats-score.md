@@ -12,7 +12,7 @@ When a preview is **confirmed**, the score of the confirmed resume is calculated
 
 | Endpoint | Returns |
 |----------|---------|
-| `GET /api/v1/resumes/{id}/ats-score` | `ATSScoreRecord` `{score, calculated_at}`: the stored last score. `404` when it was never calculated (e.g. resumes tailored before this feature). |
+| `GET /api/v1/resumes/{id}/ats-score` | `ATSScoreRecord` `{score, calculated_at}`: the stored last score, or `null` when it was never calculated (e.g. resumes tailored before this feature). |
 | `POST /api/v1/resumes/{id}/ats-score` | Recalculates from the resume's **current saved** `processed_data`, stores the result as the new last score, and returns it. |
 
 Both endpoints return `400` when the resume is not tailored (no `parent_id`), and `404` for an unknown resume or a resume with no linked job.
@@ -22,7 +22,7 @@ Recalculation makes no LLM call. It uses:
 - the job keywords cached on the job (`job_keywords`, valid only while `job_keywords_hash` matches the job content);
 - the master, found by `_grounding_master_data`, for the missing vs injectable split (`analyze_keyword_gaps`).
 
-It returns `409` when the keywords are missing or stale, or the resume has no structured data. Confirmation uses the same helper (`_score_tailored_data`) and skips scoring silently when the keywords aren't cached. The preview's score is calculated before keyword injection (`refine_resume`), so the stored score can differ slightly from the one shown in the review dialog.
+It returns `409` when the keywords are missing or stale, or the resume has no structured data. Confirmation uses the same helper (`_score_tailored_data`) and skips scoring silently when the keywords aren't cached. Both the preview and the confirmation score the resume after refinement, so for one tailoring run the stored numbers match the review dialog's. Only the keyword lists can differ: the preview takes `missing_keywords`/`injectable_keywords` from the gap analysis that `refine_resume` runs *before* injecting keywords, while confirmation and recalculation analyze the final resume. A `DatabaseBusyError` while storing a recalculated score surfaces as the app's retryable `503`. Unstructured legacy resumes fall back to scanning for section headings; that fallback scores the four headings only, since contact info can't be detected from free text.
 
 The Builder's **JD Match** tab shows the last score in the left panel (`components/builder/ats-score-panel.tsx`), with its calculation time and a **Recalculate** button. The button is disabled while the builder has unsaved changes, because recalculation scores the saved version. A failed recalculation keeps the last score on screen. Duplicating a tailored resume does not copy its score; recalculate on the copy.
 

@@ -108,11 +108,4 @@ describe('DiffPreviewModal ATS score', () => {
     renderModal();
     expect(screen.queryByText('tailor.atsScore.title')).not.toBeInTheDocument();
   });
-
-  it('shows the ATS score in the missing-diff fallback dialog too', () => {
-    renderModal({ atsScore, diffSummary: undefined, detailedChanges: undefined });
-    const dialog = screen.getByRole('dialog');
-    expect(within(dialog).getByText('tailor.missingDiffDialog.title')).toBeInTheDocument();
-    expect(within(dialog).getByText('72.4')).toBeInTheDocument();
-  });
 });

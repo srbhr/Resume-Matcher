@@ -22,7 +22,7 @@ type LoadState =
 
 /** Last calculated ATS score of a tailored resume, with on-demand recalculation. */
 export function AtsScorePanel({ resumeId, hasUnsavedChanges, template }: AtsScorePanelProps) {
-  const { t } = useTranslations();
+  const { t, locale } = useTranslations();
   const [state, setState] = useState<LoadState>({ status: 'loading' });
   const [recalculating, setRecalculating] = useState(false);
   const [recalculateFailed, setRecalculateFailed] = useState(false);
@@ -82,7 +82,9 @@ export function AtsScorePanel({ resumeId, hasUnsavedChanges, template }: AtsScor
         <ATSScoreCard atsScore={record.score} template={template} />
       ) : (
         <div className="border-2 border-black bg-white p-4 font-mono text-xs text-ink-soft">
-          {t('builder.jdMatch.atsScore.notCalculated')}
+          {state.status === 'failed'
+            ? t('builder.jdMatch.atsScore.loadFailed')
+            : t('builder.jdMatch.atsScore.notCalculated')}
         </div>
       )}
 
@@ -90,7 +92,7 @@ export function AtsScorePanel({ resumeId, hasUnsavedChanges, template }: AtsScor
         <span className="font-mono text-xs text-ink-soft">
           {record &&
             t('builder.jdMatch.atsScore.lastCalculated', {
-              date: new Date(record.calculated_at).toLocaleString(),
+              date: new Date(record.calculated_at).toLocaleString(locale),
             })}
         </span>
         <Button

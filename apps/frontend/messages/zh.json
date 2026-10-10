@@ -322,11 +322,12 @@
       "atsScore": {
         "loading": "正在加载 ATS 评分…",
         "notCalculated": "此简历尚未计算 ATS 评分。",
+        "loadFailed": "无法加载已保存的 ATS 评分。请尝试重新计算，或刷新页面。",
         "lastCalculated": "上次计算：{date}",
         "recalculate": "重新计算",
         "recalculating": "计算中…",
         "saveFirst": "请先保存修改，然后重新计算。",
-        "recalculateFailed": "无法计算 ATS 评分。如果此简历是在保存评分功能之前定制的，请在定制页面重新定制。"
+        "recalculateFailed": "无法计算 ATS 评分。如果此简历是在保存评分功能之前定制的，请在“定制简历”页面重新定制。"
       }
     },
     "genericItemForm": {

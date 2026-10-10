@@ -322,11 +322,12 @@
       "atsScore": {
         "loading": "Cargando la puntuación ATS…",
         "notCalculated": "Aún no se ha calculado la puntuación ATS de este currículum.",
+        "loadFailed": "No se pudo cargar la puntuación ATS guardada. Prueba Recalcular o recarga la página.",
         "lastCalculated": "Último cálculo: {date}",
         "recalculate": "Recalcular",
         "recalculating": "Calculando…",
         "saveFirst": "Guarda tus cambios y luego recalcula.",
-        "recalculateFailed": "No se pudo calcular la puntuación ATS. Si este currículum se adaptó antes de que se guardaran las puntuaciones, vuelve a adaptarlo desde la página Adaptar."
+        "recalculateFailed": "No se pudo calcular la puntuación ATS. Si este currículum se adaptó antes de que se guardaran las puntuaciones, vuelve a adaptarlo desde la página Personalizar CV."
       }
     },
     "genericItemForm": {
@@ -639,7 +640,7 @@
       "keywordMatch": "Coincidencia de palabras clave",
       "skillsCoverage": "Cobertura de habilidades",
       "titleMatch": "Coincidencia de título",
-      "sectionCompleteness": "Secciones completas",
+      "sectionCompleteness": "Completitud de secciones",
       "dateConsistency": "Consistencia de fechas",
       "missingKeywords": "Palabras clave faltantes",
       "injectableKeywords": "Seguras de añadir (en tu currículum maestro)",

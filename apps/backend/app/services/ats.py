@@ -230,7 +230,8 @@ def compute_section_completeness(resume: dict[str, Any]) -> float:
     found = sum(checks)
     total = len(checks)
 
-    # Legacy/unstructured data: fall back to section-heading text scanning
+    # Legacy/unstructured data: fall back to section-heading text scanning.
+    # Contact info can't be detected from free text, so score the headings alone.
     if found == 0:
         text = _extract_all_text(resume).lower()
         found = sum(
@@ -238,6 +239,7 @@ def compute_section_completeness(resume: dict[str, Any]) -> float:
             for patterns in _SECTION_PATTERNS.values()
             if any(p in text for p in patterns)
         )
+        total = len(_SECTION_PATTERNS)
 
     return (found / total) * 100
 

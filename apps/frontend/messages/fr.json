@@ -322,11 +322,12 @@
       "atsScore": {
         "loading": "Chargement du score ATS…",
         "notCalculated": "Le score ATS de ce CV n'a pas encore été calculé.",
+        "loadFailed": "Impossible de charger le score ATS enregistré. Essayez Recalculer ou rechargez la page.",
         "lastCalculated": "Dernier calcul : {date}",
         "recalculate": "Recalculer",
         "recalculating": "Calcul en cours…",
         "saveFirst": "Enregistrez vos modifications, puis recalculez.",
-        "recalculateFailed": "Impossible de calculer le score ATS. Si ce CV a été adapté avant l'enregistrement des scores, adaptez-le à nouveau depuis la page Adapter."
+        "recalculateFailed": "Impossible de calculer le score ATS. Si ce CV a été adapté avant l'enregistrement des scores, adaptez-le à nouveau depuis la page Personnaliser le CV."
       }
     },
     "genericItemForm": {

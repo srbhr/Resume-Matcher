@@ -322,11 +322,12 @@
       "atsScore": {
         "loading": "Loading ATS score…",
         "notCalculated": "ATS score not calculated yet for this resume.",
+        "loadFailed": "Couldn't load the saved ATS score. Try Recalculate, or reload the page.",
         "lastCalculated": "Last calculated {date}",
         "recalculate": "Recalculate",
         "recalculating": "Calculating…",
         "saveFirst": "Save your changes, then recalculate.",
-        "recalculateFailed": "Couldn't calculate an ATS score. If this resume was tailored before scores were saved, tailor it again from the Tailor page."
+        "recalculateFailed": "Couldn't calculate an ATS score. If this resume was tailored before scores were saved, tailor it again from the Tailor Resume page."
       }
     },
     "genericItemForm": {

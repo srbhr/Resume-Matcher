@@ -93,6 +93,13 @@ describe('AtsScorePanel', () => {
     expect(screen.getByText('builder.jdMatch.atsScore.recalculateFailed')).toBeInTheDocument();
   });
 
+  it('reports a failed load instead of claiming no score exists', async () => {
+    api.last.mockImplementation(() => Promise.reject(new Error('status 500')));
+    await renderPanel();
+    expect(screen.getByText('builder.jdMatch.atsScore.loadFailed')).toBeInTheDocument();
+    expect(screen.queryByText('builder.jdMatch.atsScore.notCalculated')).not.toBeInTheDocument();
+  });
+
   it('asks to save first while there are unsaved edits', async () => {
     api.last.mockResolvedValue(record(70));
     await renderPanel(true);
