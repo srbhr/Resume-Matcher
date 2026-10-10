@@ -1,11 +1,4 @@
 {
-  "app/(default)/dashboard/page.tsx": {
-    "legacy-token": 5,
-    "palette": 26,
-    "raw-colour": 19,
-    "spacing": 2,
-    "transition": 1
-  },
   "app/(default)/resumes/[id]/page.tsx": {
     "decorative-icon": 1,
     "legacy-token": 4,
@@ -173,18 +166,6 @@
     "palette": 6,
     "transition": 2
   },
-  "components/dashboard/master-resume-choice-dialog.tsx": {
-    "legacy-token": 5,
-    "palette": 3,
-    "raw-colour": 1,
-    "soft-shadow": 1,
-    "spacing": 2
-  },
-  "components/dashboard/resume-upload-dialog.tsx": {
-    "legacy-token": 7,
-    "palette": 12,
-    "transition": 2
-  },
   "components/enrichment/enrichment-modal.tsx": {
     "decorative-icon": 1,
     "ink-tint": 1,
@@ -204,19 +185,6 @@
   "components/enrichment/question-step.tsx": {
     "legacy-token": 7,
     "spacing": 1
-  },
-  "components/home/hero.tsx": {
-    "gradient": 2,
-    "legacy-token": 3,
-    "palette": 4,
-    "raw-colour": 2
-  },
-  "components/home/swiss-grid.tsx": {
-    "gradient": 2,
-    "legacy-token": 5,
-    "palette": 2,
-    "raw-colour": 2,
-    "transition": 2
   },
   "components/preview/page-container.tsx": {
     "legacy-token": 1,

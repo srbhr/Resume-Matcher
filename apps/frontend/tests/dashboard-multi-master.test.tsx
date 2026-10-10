@@ -122,7 +122,10 @@ describe('dashboard with several master resumes', () => {
     expect(localStorage.getItem('master_resume_id')).toBe('m1');
 
     const listCallsBefore = api.list.mock.calls.length;
-    fireEvent.click(screen.getByRole('button', { name: 'dashboard.setDefault' }));
+    const setDefault = screen.getByRole('button', { name: 'dashboard.setDefault' });
+    // The button sits on a card that navigates; it must not be part of the card's link.
+    expect(setDefault.closest('a')).toBeNull();
+    fireEvent.click(setDefault);
 
     await waitFor(() => expect(api.setDefault).toHaveBeenCalledWith('m2'));
     await waitFor(() => expect(localStorage.getItem('master_resume_id')).toBe('m2'));
@@ -132,7 +135,7 @@ describe('dashboard with several master resumes', () => {
         'Solutions Eng'
       )
     );
-    // The button lives inside a clickable card; it must not also navigate.
+    // The button lives on a clickable card; it must not also navigate.
     expect(api.push).not.toHaveBeenCalled();
   });
 
@@ -159,14 +162,17 @@ describe('dashboard with several master resumes', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
-  it('opens the master when its card is clicked', async () => {
+  it('opens the master from its card', async () => {
     api.list.mockResolvedValue([
       { ...row('m1', true), is_default_master: true },
       { ...row('m2', true), title: 'Solutions Eng' },
     ]);
     render(<DashboardPage />);
-    fireEvent.click(await screen.findByText('Solutions Eng'));
-    expect(api.push).toHaveBeenCalledWith('/resumes/m2');
+    // The card navigates through a stretched link to the viewer (keyboard-reachable).
+    expect(await screen.findByRole('link', { name: 'Solutions Eng' })).toHaveAttribute(
+      'href',
+      '/resumes/m2'
+    );
   });
 
   it('falls back to the first master when none is flagged default', async () => {
