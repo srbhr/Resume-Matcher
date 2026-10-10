@@ -8,8 +8,8 @@ import { cn } from '@/lib/utils';
  *
  * Design Principles:
  * - Square corners (rounded-none) - Brutalist aesthetic
- * - Hard shadows on active tab
- * - Black borders for high contrast
+ * - Active tab joins its panel (white fill, no bottom border)
+ * - Ink borders for high contrast
  * - Monospace uppercase text
  */
 
@@ -23,6 +23,8 @@ export interface RetroTabsProps {
   tabs: Tab[];
   activeTab: string;
   onTabChange: (tabId: string) => void;
+  /** When set, tabs get ids `${idPrefix}-tab-${id}` and aria-controls `${idPrefix}-panel-${id}`. */
+  idPrefix?: string;
   className?: string;
 }
 
@@ -30,31 +32,56 @@ export const RetroTabs: React.FC<RetroTabsProps> = ({
   tabs,
   activeTab,
   onTabChange,
+  idPrefix,
   className,
 }) => {
-  return (
-    <div className={cn('flex gap-0 border-b border-black', className)}>
-      {tabs.map((tab) => {
-        const isActive = activeTab === tab.id;
-        const isDisabled = tab.disabled;
+  const refs = React.useRef<(HTMLButtonElement | null)[]>([]);
+  const enabled = tabs.map((tab, i) => ({ tab, i })).filter(({ tab }) => !tab.disabled);
 
+  const focusTab = (from: number, delta: number) => {
+    const pos = enabled.findIndex(({ i }) => i === from);
+    const next = enabled[(pos + delta + enabled.length) % enabled.length];
+    if (!next) return;
+    onTabChange(next.tab.id);
+    refs.current[next.i]?.focus();
+  };
+
+  return (
+    <div role="tablist" className={cn('flex gap-0 border-b border-ink', className)}>
+      {tabs.map((tab, i) => {
+        const isActive = activeTab === tab.id;
         return (
           <button
             key={tab.id}
-            onClick={() => !isDisabled && onTabChange(tab.id)}
-            disabled={isDisabled}
+            ref={(el) => {
+              refs.current[i] = el;
+            }}
+            type="button"
+            role="tab"
+            id={idPrefix ? `${idPrefix}-tab-${tab.id}` : undefined}
+            aria-controls={idPrefix ? `${idPrefix}-panel-${tab.id}` : undefined}
+            aria-selected={isActive}
+            tabIndex={isActive ? 0 : -1}
+            disabled={tab.disabled}
+            onClick={() => !tab.disabled && onTabChange(tab.id)}
+            onKeyDown={(e) => {
+              if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                focusTab(i, 1);
+              }
+              if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                focusTab(i, -1);
+              }
+            }}
             className={cn(
-              'px-4 py-2 font-mono text-xs uppercase tracking-wider transition-all',
-              'border border-b-0 border-black -mb-px',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2',
-              isActive && [
-                'bg-white text-black font-bold',
-                'shadow-[2px_-2px_0px_0px_rgba(0,0,0,0.1)]',
-                'border-b-white',
-              ],
+              '-mb-px border border-b-0 border-ink px-4 py-2 font-mono text-xs uppercase tracking-wider transition-colors',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-canvas',
+              isActive && 'border-b-white bg-white font-bold text-ink',
               !isActive &&
-                !isDisabled && ['bg-secondary text-ink-soft hover:bg-[#D8D8D2] hover:text-black'],
-              isDisabled && ['bg-paper-tint text-steel-grey cursor-not-allowed opacity-50']
+                !tab.disabled &&
+                'bg-panel text-ink-soft hover:bg-panel-hover hover:text-ink',
+              tab.disabled && 'cursor-not-allowed bg-paper text-steel opacity-50'
             )}
           >
             {tab.label}

@@ -298,29 +298,8 @@
     "legacy-token": 1,
     "palette": 15
   },
-  "components/ui/dropdown.tsx": {
-    "glyph": 1,
-    "legacy-token": 4,
-    "palette": 1,
-    "transition": 1
-  },
-  "components/ui/retro-tabs.tsx": {
-    "legacy-token": 3,
-    "palette": 1,
-    "raw-colour": 2,
-    "soft-shadow": 1,
-    "transition": 1
-  },
   "components/ui/rich-text-editor.tsx": {
     "legacy-token": 2,
     "palette": 3
-  },
-  "components/ui/rich-text-toolbar.tsx": {
-    "legacy-token": 1,
-    "palette": 2
-  },
-  "components/ui/toggle-switch.tsx": {
-    "legacy-token": 2,
-    "palette": 2
   }
 }
