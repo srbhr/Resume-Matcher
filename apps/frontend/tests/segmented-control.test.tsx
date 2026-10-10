@@ -29,6 +29,30 @@ describe('SegmentedControl', () => {
     expect(screen.getByRole('radio', { name: 'Letter' })).toHaveAttribute('tabindex', '-1');
   });
 
+  it('keeps the outline variant selection outline when the selected item has keyboard focus', () => {
+    render(
+      <SegmentedControl
+        aria-label="Template"
+        variant="outline"
+        value="a"
+        onChange={() => {}}
+        items={[
+          { value: 'a', label: 'Single' },
+          { value: 'b', label: 'Two column' },
+        ]}
+      />
+    );
+    const selected = screen.getByRole('radio', { name: 'Single' });
+    expect(selected).toHaveClass('outline-2', 'outline-ink');
+    // focus-visible:outline-none would set outline-style: none and erase the selection outline.
+    expect(selected).not.toHaveClass('focus-visible:outline-none');
+    // The focus ring moves out past the 2px outline so both stay visible.
+    expect(selected).toHaveClass('focus-visible:ring-offset-4');
+    expect(screen.getByRole('radio', { name: 'Two column' })).toHaveClass(
+      'focus-visible:outline-none'
+    );
+  });
+
   it('moves with arrow keys, skipping disabled options and wrapping', () => {
     render(<Harness />);
     fireEvent.keyDown(screen.getByRole('radio', { name: 'A4' }), { key: 'ArrowRight' });

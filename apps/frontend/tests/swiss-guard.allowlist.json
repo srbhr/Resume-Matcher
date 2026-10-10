@@ -54,15 +54,6 @@
   "components/builder/draggable-section-wrapper.tsx": {
     "legacy-token": 1
   },
-  "components/builder/formatting-controls.tsx": {
-    "legacy-token": 17,
-    "palette": 20,
-    "raw-colour": 3,
-    "soft-shadow": 3,
-    "spacing": 1,
-    "transition": 10,
-    "type-size": 5
-  },
   "components/builder/forms/additional-form.tsx": {
     "legacy-token": 4,
     "palette": 5
@@ -152,15 +143,6 @@
     "palette": 5,
     "spacing": 4,
     "type-size": 2
-  },
-  "components/builder/template-selector.tsx": {
-    "legacy-token": 4,
-    "palette": 8,
-    "raw-colour": 1,
-    "soft-shadow": 1,
-    "spacing": 22,
-    "transition": 1,
-    "type-size": 1
   },
   "components/common/error-boundary.tsx": {
     "legacy-token": 1,
