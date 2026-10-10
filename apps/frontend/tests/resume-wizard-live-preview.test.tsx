@@ -20,6 +20,15 @@ describe('LivePreview', () => {
     expect(screen.getByRole('complementary').querySelector('.bg-primary')).toBeNull();
   });
 
+  it('is a nested card: nested shadow, never a solid one', () => {
+    render(
+      <LivePreview resumeData={createInitialResumeWizardState().resume_data} inferredSkills={[]} />
+    );
+    const card = screen.getByRole('complementary');
+    expect(card).toHaveClass('border-2', 'border-ink', 'shadow-sw-nested');
+    expect(card).not.toHaveClass('shadow-sw-default');
+  });
+
   it('renders name, experience and skills as content (not counts)', () => {
     const data = createInitialResumeWizardState().resume_data;
     data.personalInfo = { name: 'Priya Shah' };

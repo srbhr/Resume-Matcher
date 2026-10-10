@@ -528,6 +528,11 @@ describe('ResumeWizardPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'resumeWizard.actions.openCreated' }));
     expect(push).toHaveBeenLastCalledWith('/builder?id=resume_committed');
     expect(mockedFinalize).toHaveBeenCalledTimes(1);
+
+    // The created card sits inside the page frame: nested shadow, success frame kept at 2px.
+    const created = screen.getByText('resumeWizard.created.title').parentElement!;
+    expect(created).toHaveClass('border-2', 'border-success', 'shadow-sw-nested');
+    expect(created).not.toHaveClass('shadow-sw-default');
   });
 
   it('protects updated wizard state when its local backup fails and can retry the backup', async () => {

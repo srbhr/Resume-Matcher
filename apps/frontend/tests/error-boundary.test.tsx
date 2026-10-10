@@ -44,6 +44,18 @@ describe('ErrorBoundary fallback', () => {
     expect(reload.querySelector('svg')).not.toHaveClass('mr-2');
   });
 
+  it('is the only surface on the page, so it takes the frame shadow, not the menu one', () => {
+    const { container } = render(
+      <ErrorBoundary>
+        <Boom />
+      </ErrorBoundary>
+    );
+
+    const card = (container.firstChild as HTMLElement).firstElementChild as HTMLElement;
+    expect(card).toHaveClass('border', 'border-ink', 'shadow-sw-lg');
+    expect(card).not.toHaveClass('shadow-sw-default');
+  });
+
   it('shows the development error detail in an error Alert', () => {
     vi.stubEnv('NODE_ENV', 'development');
     render(

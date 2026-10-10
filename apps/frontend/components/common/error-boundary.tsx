@@ -68,7 +68,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
       return (
         <div className="min-h-[400px] bg-canvas p-8">
-          <div className="w-full max-w-md border border-ink bg-white p-8 shadow-sw-default">
+          <div className="w-full max-w-md border border-ink bg-white p-8 shadow-sw-lg">
             <div className="mb-4 flex items-center gap-3">
               <AlertTriangle aria-hidden="true" className="size-8 text-destructive" />
               <h2 className="font-serif text-2xl font-bold uppercase">{strings.title}</h2>

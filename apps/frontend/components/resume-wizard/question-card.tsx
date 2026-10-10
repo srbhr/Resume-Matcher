@@ -85,7 +85,7 @@ export function QuestionCard({
   };
 
   return (
-    <section className="border-2 border-ink bg-white shadow-sw-default">
+    <section className="border-2 border-ink bg-white shadow-sw-nested">
       <div
         className="flex gap-1 border-b-2 border-ink p-2"
         role="progressbar"

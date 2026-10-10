@@ -40,6 +40,13 @@ describe('QuestionCard', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('is a nested card: nested shadow, never a solid one', () => {
+    const { container } = render(<QuestionCard step="question" {...baseProps} />);
+    const card = container.firstChild as HTMLElement;
+    expect(card).toHaveClass('border-2', 'border-ink', 'shadow-sw-nested');
+    expect(card).not.toHaveClass('shadow-sw-default');
+  });
+
   it('on the intro step hides skip, review, and back', () => {
     render(<QuestionCard step="intro" {...baseProps} canGoBack={false} />);
     expect(

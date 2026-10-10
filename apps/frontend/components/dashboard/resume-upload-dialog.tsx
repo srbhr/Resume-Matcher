@@ -379,7 +379,7 @@ export function ResumeUploadDialog({
               </div>
             ) : (
               <div className="flex flex-col items-center py-4">
-                <div className="w-12 h-12 border border-ink bg-white shadow-sw-default flex items-center justify-center mb-4">
+                <div className="w-12 h-12 border border-ink bg-white shadow-sw-nested flex items-center justify-center mb-4">
                   <UploadIcon aria-hidden="true" className="w-6 h-6 text-ink" />
                 </div>
                 <p id={dropzoneTitleId} className="font-bold text-lg mb-1">

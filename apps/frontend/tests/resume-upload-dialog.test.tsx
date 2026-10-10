@@ -458,6 +458,16 @@ it('serializes saved deletion against retry and ignores completion after unmount
 });
 
 describe('drop zone keyboard access', () => {
+  it('draws its upload mark with the nested shadow, since it sits inside a dialog', () => {
+    render(<ResumeUploadDialog open onOpenChange={vi.fn()} />);
+
+    const mark = screen
+      .getByRole('button', { name: 'dashboard.uploadDialog.dropzoneTitle' })
+      .querySelector('svg')!.parentElement!;
+    expect(mark).toHaveClass('border', 'border-ink', 'shadow-sw-nested');
+    expect(mark).not.toHaveClass('shadow-sw-default');
+  });
+
   it('opens the file picker on Enter and Space, and stops being a button once a file is chosen', () => {
     // The upload never answers, so the chosen file stays in the zone.
     vi.mocked(fetch).mockReturnValue(new Promise<Response>(() => {}));
