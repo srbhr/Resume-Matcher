@@ -2,7 +2,7 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 
 interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
-  variant?: 'default' | 'interactive' | 'outline' | 'ghost';
+  variant?: 'default' | 'interactive' | 'raised' | 'outline' | 'ghost';
   noPadding?: boolean;
 }
 
@@ -13,19 +13,18 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
     const variants = {
       default: 'bg-canvas',
       interactive: cn(
-        'bg-canvas border-2 border-transparent', // Initial state
-        'transition-all duration-200 ease-in-out',
-        'cursor-pointer group',
-        'hover:z-20 hover:border-ink hover:shadow-sw-default hover:-translate-y-[2px] hover:-translate-x-[2px]'
+        'bg-canvas border-2 border-transparent cursor-pointer group',
+        'transition-[transform,box-shadow,border-color]',
+        'hover:z-20 hover:border-ink hover:translate-x-px hover:translate-y-px',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-canvas'
+      ),
+      raised: cn(
+        'bg-white border border-ink shadow-sw-sm transition-[transform,box-shadow]',
+        'hover:translate-x-px hover:translate-y-px hover:shadow-none'
       ),
       outline: 'bg-canvas border-2 border-ink',
       ghost: 'bg-transparent border-none shadow-none',
     };
-
-    // Dashboard specific style that was common:
-    // border-2 border-dashed border-amber-500 bg-amber-50
-    // We can handle specific overrides via className, but the base interactive card
-    // in dashboard had: bg-background (canvas)
 
     return (
       <div
@@ -49,7 +48,7 @@ const CardTitle = React.forwardRef<HTMLHeadingElement, React.HTMLAttributes<HTML
   ({ className, ...props }, ref) => (
     <h3
       ref={ref}
-      className={cn('font-serif text-2xl font-semibold leading-none tracking-tight', className)}
+      className={cn('font-serif text-2xl font-bold leading-none tracking-tight', className)}
       {...props}
     />
   )

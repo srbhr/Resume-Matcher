@@ -292,8 +292,7 @@
     "type-size": 1
   },
   "components/ui/card.tsx": {
-    "legacy-token": 1,
-    "transition": 1
+    "legacy-token": 1
   },
   "components/ui/confirm-dialog.tsx": {
     "legacy-token": 1,
