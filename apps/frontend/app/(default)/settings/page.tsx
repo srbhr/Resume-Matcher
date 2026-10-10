@@ -689,14 +689,14 @@ export default function SettingsPage() {
 
   return (
     <>
-      <PageFrame>
+      <PageFrame width="narrow">
         <PageHeader>
           <PageHeader.Back href="/dashboard">{t('common.back')}</PageHeader.Back>
           <PageHeader.Title>{t('settings.title')}</PageHeader.Title>
           <PageHeader.Subtitle>{t('settings.subtitle')}</PageHeader.Subtitle>
         </PageHeader>
 
-        <div className="p-8 md:p-12 space-y-12">
+        <div className="px-8 py-8 md:px-12 space-y-8">
           {/* API Key Not Configured Warning */}
           {!statusLoading && systemStatus && !systemStatus.llm_configured && (
             <Alert tone="warning">
@@ -760,7 +760,7 @@ export default function SettingsPage() {
               <div className="@container">
                 <div className="grid grid-cols-2 @3xl:grid-cols-4 gap-4">
                   {/* LLM Status */}
-                  <div className="border border-ink bg-white p-4 shadow-sw-sm">
+                  <div className="border border-ink bg-white p-4 shadow-sw-nested">
                     <div className="flex items-center gap-2 mb-2">
                       <Server className="w-4 h-4 text-steel" />
                       <span className="font-mono text-xs uppercase text-steel">
@@ -775,7 +775,7 @@ export default function SettingsPage() {
                   </div>
 
                   {/* Database Status */}
-                  <div className="border border-ink bg-white p-4 shadow-sw-sm">
+                  <div className="border border-ink bg-white p-4 shadow-sw-nested">
                     <div className="flex items-center gap-2 mb-2">
                       <Database className="w-4 h-4 text-steel" />
                       <span className="font-mono text-xs uppercase text-steel">
@@ -788,7 +788,7 @@ export default function SettingsPage() {
                   </div>
 
                   {/* Resumes Count */}
-                  <div className="border border-ink bg-white p-4 shadow-sw-sm">
+                  <div className="border border-ink bg-white p-4 shadow-sw-nested">
                     <div className="flex items-center gap-2 mb-2">
                       <FileText className="w-4 h-4 text-steel" />
                       <span className="font-mono text-xs uppercase text-steel">
@@ -801,7 +801,7 @@ export default function SettingsPage() {
                   </div>
 
                   {/* Jobs Count */}
-                  <div className="border border-ink bg-white p-4 shadow-sw-sm">
+                  <div className="border border-ink bg-white p-4 shadow-sw-nested">
                     <div className="flex items-center gap-2 mb-2">
                       <Briefcase className="w-4 h-4 text-steel" />
                       <span className="font-mono text-xs uppercase text-steel">
@@ -819,7 +819,7 @@ export default function SettingsPage() {
             {/* Additional Stats Row */}
             {systemStatus && (
               <div className="grid grid-cols-2 gap-4">
-                <div className="border border-ink bg-white p-4 shadow-sw-sm">
+                <div className="border border-ink bg-white p-4 shadow-sw-nested">
                   <div className="flex items-center gap-2 mb-2">
                     <span className="font-mono text-xs uppercase text-steel">
                       {t('settings.statusCards.improvements')}
@@ -829,7 +829,7 @@ export default function SettingsPage() {
                     {systemStatus.database_stats.total_improvements}
                   </span>
                 </div>
-                <div className="border border-ink bg-white p-4 shadow-sw-sm">
+                <div className="border border-ink bg-white p-4 shadow-sw-nested">
                   <div className="flex items-center gap-2 mb-2">
                     <FileText className="w-4 h-4 text-steel" />
                     <span className="font-mono text-xs uppercase text-steel">
@@ -859,7 +859,7 @@ export default function SettingsPage() {
               </h2>
             </div>
 
-            <div className="grid max-w-3xl gap-6">
+            <div className="grid gap-6">
               {/* Provider Selection */}
               <div className="space-y-2">
                 <Label id="provider-label">{t('settings.providerLabel')}</Label>
@@ -940,7 +940,7 @@ export default function SettingsPage() {
               {/* Saved per-provider keys — each provider keeps its own encrypted
                   key, so switching providers never wipes another's. */}
               {apiKeyStatuses.some((s) => s.configured) && (
-                <div className="space-y-2 border border-ink bg-paper p-3 shadow-sw-sm">
+                <div className="space-y-2 border border-ink bg-paper p-3 shadow-sw-nested">
                   <p className="font-mono text-xs uppercase tracking-wider text-ink-soft">
                     {t('settings.apiKeys.savedTitle')}
                   </p>
@@ -1114,7 +1114,7 @@ export default function SettingsPage() {
                             <summary className="cursor-pointer font-mono text-xs uppercase tracking-wider text-ink-soft hover:text-ink">
                               {item.label}
                             </summary>
-                            <pre className="mt-1 whitespace-pre-wrap break-words rounded-none border border-ink bg-white p-3 font-mono text-xs text-ink-soft shadow-sw-sm">
+                            <pre className="mt-1 whitespace-pre-wrap break-words rounded-none border border-ink bg-white p-3 font-mono text-xs text-ink-soft shadow-sw-nested">
                               {item.value}
                             </pre>
                           </details>
@@ -1123,7 +1123,7 @@ export default function SettingsPage() {
                             <p className="font-mono text-xs uppercase tracking-wider text-ink-soft">
                               {item.label}
                             </p>
-                            <pre className="mt-1 whitespace-pre-wrap break-words rounded-none border border-ink bg-white p-3 font-mono text-xs text-ink-soft shadow-sw-sm">
+                            <pre className="mt-1 whitespace-pre-wrap break-words rounded-none border border-ink bg-white p-3 font-mono text-xs text-ink-soft shadow-sw-nested">
                               {item.value}
                             </pre>
                           </div>
@@ -1145,7 +1145,7 @@ export default function SettingsPage() {
               </h2>
             </div>
 
-            <div className="max-w-3xl space-y-2">
+            <div className="space-y-2">
               <p className="text-sm text-ink-soft mb-4">
                 {t('settings.contentGeneration.description')}
               </p>
