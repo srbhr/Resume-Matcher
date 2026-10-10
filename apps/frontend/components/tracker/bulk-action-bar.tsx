@@ -20,17 +20,14 @@ export function BulkActionBar({ selectedCount, onMove, onDelete, onClear }: Bulk
   const { t } = useTranslations();
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  const moveOptions = [
-    { id: '', label: t('tracker.bulk.moveTo') },
-    ...APPLICATION_STATUS_ORDER.map((status) => ({
-      id: status,
-      label: t(`tracker.columns.${status}`),
-    })),
-  ];
+  const moveOptions = APPLICATION_STATUS_ORDER.map((status) => ({
+    id: status,
+    label: t(`tracker.columns.${status}`),
+  }));
 
   return (
-    <div className="flex flex-wrap items-center gap-3 border border-black bg-background p-3 shadow-sw-sm">
-      <span className="font-mono text-sm font-bold text-ink">
+    <div className="flex flex-wrap items-center gap-3">
+      <span className="font-mono text-sm font-bold text-ink tabular-nums">
         {t('tracker.bulk.selected', { count: String(selectedCount) })}
       </span>
 
@@ -38,19 +35,18 @@ export function BulkActionBar({ selectedCount, onMove, onDelete, onClear }: Bulk
         <Dropdown
           options={moveOptions}
           value=""
-          onChange={(value) => {
-            if (value) onMove(value as ApplicationStatus);
-          }}
+          placeholder={t('tracker.bulk.moveTo')}
+          onChange={(value) => onMove(value as ApplicationStatus)}
         />
       </div>
 
-      <Button variant="destructive" size="sm" onClick={() => setConfirmDelete(true)}>
-        <Trash2 className="h-4 w-4" />
+      <Button type="button" variant="destructive" size="sm" onClick={() => setConfirmDelete(true)}>
+        <Trash2 aria-hidden="true" />
         {t('common.delete')}
       </Button>
 
-      <Button variant="ghost" size="sm" onClick={onClear}>
-        <X className="h-4 w-4" />
+      <Button type="button" variant="ghost" size="sm" onClick={onClear}>
+        <X aria-hidden="true" />
         {t('tracker.bulk.clear')}
       </Button>
 

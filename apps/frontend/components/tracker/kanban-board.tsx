@@ -17,7 +17,10 @@ import Settings from 'lucide-react/dist/esm/icons/settings';
 import Loader2 from 'lucide-react/dist/esm/icons/loader-2';
 import ChevronLeft from 'lucide-react/dist/esm/icons/chevron-left';
 import ChevronRight from 'lucide-react/dist/esm/icons/chevron-right';
-import { Button } from '@/components/ui/button';
+import { Button, buttonClass } from '@/components/ui/button';
+import { Alert } from '@/components/ui/alert';
+import { EmptyState } from '@/components/ui/empty-state';
+import { PageHeader } from '@/components/ui/page-header';
 import { useTranslations } from '@/lib/i18n';
 import {
   listApplications,
@@ -218,53 +221,54 @@ export function KanbanBoard() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      {/* Header — mirrors the dashboard canvas header */}
-      <div className="flex shrink-0 flex-col gap-4 border-b border-black p-6 md:flex-row md:items-center md:justify-between md:p-8">
-        <div>
-          <h1 className="font-serif text-3xl font-bold uppercase tracking-tight text-ink md:text-4xl">
-            {t('tracker.title')}
-          </h1>
-          <p className="mt-2 font-mono text-xs uppercase tracking-wide text-ink-soft">
-            {t('tracker.subtitle')}
-          </p>
+      {/* Header — the shared page-header recipe, with the board actions on the right */}
+      <PageHeader>
+        <PageHeader.Back href="/dashboard">{t('nav.backToDashboard')}</PageHeader.Back>
+        <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+          <div>
+            <PageHeader.Title>{t('tracker.title')}</PageHeader.Title>
+            <PageHeader.Subtitle>{t('tracker.subtitle')}</PageHeader.Subtitle>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <Button type="button" variant="outline" onClick={() => setManageOpen(true)}>
+              <Settings aria-hidden="true" />
+              {t('tracker.manage')}
+            </Button>
+            {showScrollControls && (
+              <div className="flex items-center gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  aria-label={t('tracker.scroll.prev')}
+                  onClick={() => scrollByColumn(-1)}
+                  disabled={!canScrollLeft}
+                >
+                  <ChevronLeft aria-hidden="true" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  aria-label={t('tracker.scroll.next')}
+                  onClick={() => scrollByColumn(1)}
+                  disabled={!canScrollRight}
+                >
+                  <ChevronRight aria-hidden="true" />
+                </Button>
+              </div>
+            )}
+            <Button type="button" onClick={() => setManualAddOpen(true)}>
+              <Plus aria-hidden="true" />
+              {t('tracker.addApplication')}
+            </Button>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
-          <Button variant="outline" onClick={() => setManageOpen(true)}>
-            <Settings className="h-4 w-4" />
-            {t('tracker.manage')}
-          </Button>
-          {showScrollControls && (
-            <div className="flex items-center">
-              <button
-                type="button"
-                aria-label={t('tracker.scroll.prev')}
-                onClick={() => scrollByColumn(-1)}
-                disabled={!canScrollLeft}
-                className="flex h-10 w-10 items-center justify-center border border-black bg-background text-ink shadow-sw-xs transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none disabled:pointer-events-none disabled:opacity-30"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-              <button
-                type="button"
-                aria-label={t('tracker.scroll.next')}
-                onClick={() => scrollByColumn(1)}
-                disabled={!canScrollRight}
-                className="-ml-px flex h-10 w-10 items-center justify-center border border-black bg-background text-ink shadow-sw-xs transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none disabled:pointer-events-none disabled:opacity-30"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </button>
-            </div>
-          )}
-          <Button onClick={() => setManualAddOpen(true)}>
-            <Plus className="h-4 w-4" />
-            {t('tracker.addApplication')}
-          </Button>
-        </div>
-      </div>
+      </PageHeader>
 
       {error && (
-        <div className="shrink-0 border-b border-black bg-background px-6 py-3 font-mono text-xs text-destructive md:px-8">
-          {error}
+        <div className="shrink-0 border-b border-ink px-6 py-3 md:px-8">
+          <Alert tone="error">{error}</Alert>
         </div>
       )}
 
@@ -284,13 +288,14 @@ export function KanbanBoard() {
       <div className="flex min-h-0 flex-1 flex-col">
         {loading ? (
           <div className="flex flex-1 items-center justify-center">
-            <Loader2 className="h-6 w-6 animate-spin text-steel-grey" />
+            <Loader2 aria-hidden="true" className="size-6 animate-spin text-steel" />
           </div>
         ) : isEmpty ? (
-          <div className="flex flex-1 flex-col items-center justify-center p-10 text-center">
-            <p className="font-serif text-lg text-ink">{t('tracker.empty.title')}</p>
-            <p className="mt-1 font-mono text-xs text-ink-soft">{t('tracker.empty.description')}</p>
-          </div>
+          <EmptyState
+            title={t('tracker.empty.title')}
+            description={t('tracker.empty.description')}
+            className="p-6 md:p-8"
+          />
         ) : (
           <DndContext
             sensors={sensors}
@@ -324,11 +329,11 @@ export function KanbanBoard() {
       {/* Stage rail — an always-visible map of every stage (with counts) so
           off-screen sections are never lost; click a stage to jump to it. */}
       {!isEmpty && (
-        <div className="flex shrink-0 items-center gap-3 overflow-x-auto border-t border-black bg-paper-tint px-6 py-2 md:px-8">
+        <div className="flex shrink-0 items-center gap-3 overflow-x-auto border-t border-ink bg-paper px-6 py-2 md:px-8">
           {canScrollRight && (
-            <span className="flex shrink-0 items-center gap-1 font-mono text-[11px] font-bold uppercase tracking-wide text-primary">
+            <span className="flex shrink-0 items-center gap-1 font-mono text-xs font-bold uppercase tracking-wide text-primary">
               {t('tracker.scroll.hint')}
-              <ChevronRight className="h-3.5 w-3.5" />
+              <ChevronRight aria-hidden="true" className="size-4" />
             </span>
           )}
           <div className="flex items-center gap-2">
@@ -337,10 +342,10 @@ export function KanbanBoard() {
                 key={status}
                 type="button"
                 onClick={() => scrollToColumn(status)}
-                className="flex shrink-0 items-center gap-1.5 border border-black bg-background px-2 py-1 font-mono text-[11px] uppercase tracking-wide text-ink-soft shadow-sw-xs transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:text-primary hover:shadow-none"
+                className={buttonClass({ variant: 'outline', size: 'sm', className: 'shrink-0' })}
               >
                 {t(`tracker.columns.${status}`)}
-                <span className="text-steel-grey">{columns[status].length}</span>
+                <span className="text-ink-soft tabular-nums">{columns[status].length}</span>
               </button>
             ))}
           </div>
