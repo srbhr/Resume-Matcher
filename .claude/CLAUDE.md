@@ -84,7 +84,7 @@ apps/
     ├── components/          # UI components (incl. tracker/)
     ├── lib/                 # Utilities, API client (incl. api/tracker.ts)
     ├── hooks/               # Custom React hooks
-    └── messages/            # i18n translations (en, es, zh, ja, pt)
+    └── messages/            # i18n translations (en, es, fr, ja, ko, pt-BR, zh)
 ```
 
 ---
