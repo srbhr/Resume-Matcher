@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
 import {
   DndContext,
   DragEndEvent,
@@ -12,6 +13,7 @@ import {
 } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { useReducedMotion } from 'motion/react';
+import ArrowLeft from 'lucide-react/dist/esm/icons/arrow-left';
 import Plus from 'lucide-react/dist/esm/icons/plus';
 import Settings from 'lucide-react/dist/esm/icons/settings';
 import Loader2 from 'lucide-react/dist/esm/icons/loader-2';
@@ -20,7 +22,6 @@ import ChevronRight from 'lucide-react/dist/esm/icons/chevron-right';
 import { Button, buttonClass } from '@/components/ui/button';
 import { Alert } from '@/components/ui/alert';
 import { EmptyState } from '@/components/ui/empty-state';
-import { PageHeader } from '@/components/ui/page-header';
 import { useTranslations } from '@/lib/i18n';
 import {
   listApplications,
@@ -221,50 +222,58 @@ export function KanbanBoard() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      {/* Header — the shared page-header recipe, with the board actions on the right */}
-      <PageHeader>
-        <PageHeader.Back href="/dashboard">{t('nav.backToDashboard')}</PageHeader.Back>
-        <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-          <div>
-            <PageHeader.Title>{t('tracker.title')}</PageHeader.Title>
-            <PageHeader.Subtitle>{t('tracker.subtitle')}</PageHeader.Subtitle>
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <Button type="button" variant="outline" onClick={() => setManageOpen(true)}>
-              <Settings aria-hidden="true" />
-              {t('tracker.manage')}
-            </Button>
-            {showScrollControls && (
-              <div className="flex items-center gap-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  aria-label={t('tracker.scroll.prev')}
-                  onClick={() => scrollByColumn(-1)}
-                  disabled={!canScrollLeft}
-                >
-                  <ChevronLeft aria-hidden="true" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  aria-label={t('tracker.scroll.next')}
-                  onClick={() => scrollByColumn(1)}
-                  disabled={!canScrollRight}
-                >
-                  <ChevronRight aria-hidden="true" />
-                </Button>
-              </div>
-            )}
-            <Button type="button" onClick={() => setManualAddOpen(true)}>
-              <Plus aria-hidden="true" />
-              {t('tracker.addApplication')}
-            </Button>
-          </div>
+      {/* Header — a compact single-row toolbar (not the default PageHeader):
+          this is a full-height working view, so the band stays short and the
+          board keeps the height. Wraps onto more rows on narrow screens. */}
+      <header className="flex shrink-0 flex-wrap items-center gap-x-6 gap-y-3 border-b border-ink px-6 py-3">
+        <Link href="/dashboard" className={buttonClass({ variant: 'outline', size: 'sm' })}>
+          <ArrowLeft aria-hidden="true" />
+          {t('nav.backToDashboard')}
+        </Link>
+        <div className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h1 className="font-serif text-2xl font-bold uppercase leading-tight tracking-tight text-ink md:text-3xl">
+            {t('tracker.title')}
+          </h1>
+          <p className="font-mono text-xs uppercase tracking-wide text-steel">
+            {'// '}
+            {t('tracker.subtitle')}
+          </p>
         </div>
-      </PageHeader>
+        <div className="flex flex-wrap items-center gap-3">
+          <Button type="button" variant="outline" onClick={() => setManageOpen(true)}>
+            <Settings aria-hidden="true" />
+            {t('tracker.manage')}
+          </Button>
+          {showScrollControls && (
+            <div className="flex items-center gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                aria-label={t('tracker.scroll.prev')}
+                onClick={() => scrollByColumn(-1)}
+                disabled={!canScrollLeft}
+              >
+                <ChevronLeft aria-hidden="true" />
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                aria-label={t('tracker.scroll.next')}
+                onClick={() => scrollByColumn(1)}
+                disabled={!canScrollRight}
+              >
+                <ChevronRight aria-hidden="true" />
+              </Button>
+            </div>
+          )}
+          <Button type="button" onClick={() => setManualAddOpen(true)}>
+            <Plus aria-hidden="true" />
+            {t('tracker.addApplication')}
+          </Button>
+        </div>
+      </header>
 
       {error && (
         <div className="shrink-0 border-b border-ink px-6 py-3 md:px-8">
@@ -273,7 +282,7 @@ export function KanbanBoard() {
       )}
 
       {selectedIds.size > 0 && (
-        <div className="shrink-0 border-b border-black px-6 py-3 md:px-8">
+        <div className="shrink-0 border-b border-ink px-6 py-3 md:px-8">
           <BulkActionBar
             selectedCount={selectedIds.size}
             onMove={handleBulkMove}
@@ -308,7 +317,7 @@ export function KanbanBoard() {
                   key={status}
                   data-column={status}
                   className={`flex ${
-                    index < visibleStatuses.length - 1 ? 'border-r border-black' : ''
+                    index < visibleStatuses.length - 1 ? 'border-r border-ink' : ''
                   }`}
                 >
                   <KanbanColumn
