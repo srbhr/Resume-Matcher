@@ -18,7 +18,8 @@ const RANGE: Record<DissolvePhase, readonly [number, number]> = {
 /**
  * Block Dissolve: a fixed, full-screen canvas of square ink blocks that fill in, and later vanish,
  * in random order (`lib/effects/block-dissolve`). It paints one phase of the Home to Dashboard
- * route transition; the provider owns the sequence and when the overlay is mounted. Ink and Canvas
+ * route transition (the cover over Home, a hold, then the reveal of the Dashboard); the provider
+ * owns the sequence and when the overlay is mounted. Ink and Canvas
  * come from the `--sw-*` tokens, and the grey steps in between mix the two. Draws only while a
  * phase is animating, and never takes a click. `since` is when the phase began, on the
  * `performance.now()` clock.
@@ -66,7 +67,8 @@ export function BlockDissolve({ phase, since }: { phase: DissolvePhase; since: n
     // mount joins part-way. The first frame is drawn here, before the browser paints, not on the
     // next animation frame.
     const [from, to] = RANGE[phase];
-    const duration = DURATION.routeTransition * 1000;
+    // The cover is quicker than the reveal: the navigation waits for it, the reveal waits for nothing.
+    const duration = (phase === 'cover' ? DURATION.routeCover : DURATION.routeTransition) * 1000;
     let frame = 0;
     const step = (now: number) => {
       const t = Math.min(Math.max((now - since) / duration, 0), 1);

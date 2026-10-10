@@ -102,18 +102,34 @@ describe('BlockDissolve overlay', () => {
     expect(fills).toHaveLength(0); // progress 1: nothing yet, the page shows
     runFrame(0);
 
-    // Part-way through the 250 ms cover, using the ease-out curve.
+    // Part-way through the 200 ms cover, using the ease-out curve.
     runFrame(60);
     const mid = styles();
     expect(mid.has('rgb(0, 0, 0)')).toBe(true); // ink, from the tokens
     expect(mid.size).toBeGreaterThan(2); // plus grey steps
     for (const s of mid) expect(s).toMatch(/^rgb\(\d+, \d+, \d+\)$/);
 
-    runFrame(250);
+    runFrame(200);
     // Every block, all ink. 1000 px wide: 80 px blocks, 13 columns by 8 rows.
     expect(fills).toHaveLength(13 * 8);
     expect(styles()).toEqual(new Set(['rgb(0, 0, 0)']));
     expect(frames.size).toBe(0); // the loop stops by itself
+  });
+
+  it('covers in 200 ms but reveals over 250 ms', () => {
+    const { unmount } = render(<BlockDissolve phase="cover" since={0} />);
+    runFrame(199); // the cover is nearly done, not yet all ink
+    expect(frames.size).toBe(1);
+    runFrame(200);
+    expect(frames.size).toBe(0);
+    unmount();
+
+    render(<BlockDissolve phase="reveal" since={0} />);
+    runFrame(200); // 200 ms into a 250 ms reveal: still running
+    expect(frames.size).toBe(1);
+    runFrame(250);
+    expect(frames.size).toBe(0);
+    expect(fills).toHaveLength(0);
   });
 
   it('draws tiles with no gaps or overlaps, clipped to the canvas', () => {

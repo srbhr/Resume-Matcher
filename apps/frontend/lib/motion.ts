@@ -9,6 +9,9 @@ export const DURATION = {
   menuOut: 0.08,
   list: 0.15,
   swap: 0.1,
+  /** Block Dissolve: the cover over Home (it delays the navigation by this much, once). */
+  routeCover: 0.2,
+  /** Block Dissolve: the reveal of the Dashboard. */
   routeTransition: 0.25,
 } as const;
 

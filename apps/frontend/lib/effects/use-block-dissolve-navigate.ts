@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useCallback, useContext } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef } from 'react';
 import type { MouseEvent } from 'react';
 import { useReducedMotion } from 'motion/react';
 import { useEffectsEnabled } from '@/lib/context/effects-context';
@@ -9,7 +9,7 @@ import { useEffectsEnabled } from '@/lib/context/effects-context';
 export const DASHBOARD_HREF = '/dashboard';
 
 interface BlockDissolveControls {
-  /** Begin the transition and navigate to the dashboard, at once. */
+  /** Begin the transition: cover Home, then navigate to the dashboard. */
   start: () => void;
   /** Warm the dashboard route and the overlay code, so the click has nothing left to load. */
   prepare: () => void;
@@ -18,11 +18,15 @@ interface BlockDissolveControls {
 /** Set by `BlockDissolveProvider`. Without one (print routes, isolated tests) there is no effect. */
 export const BlockDissolveContext = createContext<BlockDissolveControls | null>(null);
 
+/** The chunk and the route are warmed once the browser is idle, so a touch tap (no hover) is ready. */
+const IDLE_FALLBACK_MS = 200;
+
 /**
  * Props for the one link that runs the Block Dissolve: Home to Dashboard. A plain left click runs
- * the transition (and navigates immediately); anything else, and every case where effects are off
- * or motion is reduced, is left to the link's own behaviour. Enter on a focused link arrives as a
- * click, so the keyboard gets the same effect.
+ * the transition (the provider covers Home, then navigates); anything else, and every case where
+ * effects are off or motion is reduced, is left to the link's own behaviour, a plain and immediate
+ * navigation. Enter on a focused link arrives as a click, so the keyboard gets the same effect.
+ * While the effect is live, the route and the overlay chunk are also warmed once on first idle.
  */
 export function useBlockDissolveNavigate() {
   const controls = useContext(BlockDissolveContext);
@@ -44,6 +48,22 @@ export function useBlockDissolveNavigate() {
   const prepare = useCallback(() => {
     if (live) controls.prepare();
   }, [live, controls]);
+
+  // Once per mount, not once per render: the controls change identity as the phases run.
+  const prepareRef = useRef(prepare);
+  useEffect(() => {
+    prepareRef.current = prepare;
+  }, [prepare]);
+  useEffect(() => {
+    if (!live) return;
+    const run = () => prepareRef.current();
+    if (typeof window.requestIdleCallback === 'function') {
+      const id = window.requestIdleCallback(run);
+      return () => window.cancelIdleCallback(id);
+    }
+    const id = setTimeout(run, IDLE_FALLBACK_MS);
+    return () => clearTimeout(id);
+  }, [live]);
 
   return { onClick, prepare };
 }

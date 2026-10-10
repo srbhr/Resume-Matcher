@@ -1,11 +1,14 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { useReducedMotion } from 'motion/react';
 import Link from 'next/link';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { BlockDissolveProvider } from '@/components/effects/block-dissolve-provider';
 import Hero from '@/components/home/hero';
 import { EffectsProvider } from '@/lib/context/effects-context';
-import { useBlockDissolveNavigate } from '@/lib/effects/use-block-dissolve-navigate';
+import {
+  BlockDissolveContext,
+  useBlockDissolveNavigate,
+} from '@/lib/effects/use-block-dissolve-navigate';
 
 const push = vi.fn();
 const prefetch = vi.fn();
@@ -110,15 +113,14 @@ afterEach(() => {
 });
 
 describe('click: the effect is on', () => {
-  it('takes over a plain left click, navigates at once and mounts the overlay', () => {
+  it('takes over a plain left click, covers Home first and mounts the overlay', () => {
     renderCta();
     expect(overlay()).toBeNull();
 
     const takenOver = click(link());
 
     expect(takenOver).toBe(true); // preventDefault was called: Link does not navigate twice
-    expect(push).toHaveBeenCalledTimes(1);
-    expect(push).toHaveBeenCalledWith('/dashboard'); // before any timer has run
+    expect(push).not.toHaveBeenCalled(); // Home is covered before the route changes
     expect(phase()).toBe('cover');
     expect(overlay()).toHaveAttribute('aria-hidden', 'true');
   });
@@ -128,8 +130,10 @@ describe('click: the effect is on', () => {
     link().focus();
     // The browser turns Enter on a focused anchor into a click with no pointer button.
     click(link(), { detail: 0, button: 0 });
-    expect(push).toHaveBeenCalledWith('/dashboard');
     expect(phase()).toBe('cover');
+    expect(push).not.toHaveBeenCalled();
+    advance(200);
+    expect(push).toHaveBeenCalledWith('/dashboard');
   });
 
   it('prefetches the dashboard on hover and on focus', () => {
@@ -146,13 +150,19 @@ describe('click: the effect is on', () => {
     click(link());
     const second = click(link());
     expect(second).toBe(true);
+    advance(200);
     expect(push).toHaveBeenCalledTimes(1);
   });
 });
 
 describe('click: the effect is skipped and the link behaves normally', () => {
+  // A plain, immediate navigation: the app does not take the click over, so the browser follows
+  // the link at once (no cover, no delay, no push of our own).
   function expectDefaultNavigation(takenOver: boolean) {
     expect(takenOver).toBe(false);
+    expect(push).not.toHaveBeenCalled();
+    expect(overlay()).toBeNull();
+    advance(5000);
     expect(push).not.toHaveBeenCalled();
     expect(overlay()).toBeNull();
   }
@@ -200,15 +210,16 @@ describe('click: the effect is skipped and the link behaves normally', () => {
 });
 
 describe('sequence', () => {
-  it('covers for 250 ms, holds while the route is not /dashboard, reveals once it is, then unmounts', () => {
+  it('covers Home for 200 ms, pushes, holds until the route is /dashboard, reveals for 250 ms, then unmounts', () => {
     const { navigateTo } = renderCta();
     click(link());
     expect(phase()).toBe('cover');
 
-    advance(249);
+    advance(199);
     expect(phase()).toBe('cover');
     advance(1);
-    expect(phase()).toBe('covered'); // covered, but the route has not arrived
+    expect(phase()).toBe('covered'); // covered, and the route has been asked for
+    expect(push).toHaveBeenCalledWith('/dashboard');
 
     advance(600);
     expect(phase()).toBe('covered'); // a slow route never starts the reveal by itself
@@ -221,16 +232,44 @@ describe('sequence', () => {
     expect(overlay()).toBeNull(); // and it is out of the DOM: the page is interactive
   });
 
-  it('waits for the cover to finish even when the route is already there', () => {
+  it('pushes only after the cover completes, and only once', () => {
+    renderCta();
+    click(link());
+    expect(push).not.toHaveBeenCalled();
+    advance(100);
+    expect(push).not.toHaveBeenCalled();
+    advance(99);
+    expect(push).not.toHaveBeenCalled();
+    advance(1);
+    expect(push).toHaveBeenCalledTimes(1);
+    expect(push).toHaveBeenCalledWith('/dashboard');
+    advance(2000);
+    expect(push).toHaveBeenCalledTimes(1);
+  });
+
+  it('starts the reveal only after the pathname changes', () => {
+    const { navigateTo } = renderCta();
+    click(link());
+    advance(200);
+    expect(phase()).toBe('covered');
+
+    advance(1000);
+    expect(phase()).toBe('covered'); // pushed, but the route has not committed yet
+
+    navigateTo('/dashboard');
+    expect(phase()).toBe('reveal');
+  });
+
+  it('never reveals during the cover, even if the route is already /dashboard', () => {
     const { navigateTo } = renderCta();
     click(link());
     advance(100);
-    navigateTo('/dashboard');
-    expect(phase()).toBe('cover'); // the cover plays out in full first
-    advance(150);
-    expect(phase()).toBe('reveal');
-    advance(250);
-    expect(overlay()).toBeNull();
+    navigateTo('/dashboard'); // someone else got there first: the cover still plays out in full
+    expect(phase()).toBe('cover');
+
+    advance(100);
+    expect(push).toHaveBeenCalledTimes(1);
+    expect(phase()).toBe('reveal'); // covered at 200, and the route is there: reveal at once
   });
 
   it("runs the overlay on the provider's clock: the cover starts clear, the reveal starts covered", () => {
@@ -238,7 +277,7 @@ describe('sequence', () => {
     click(link());
     expect(ctx.fillRect).not.toHaveBeenCalled(); // 1000 x 600 is 13 x 8 blocks; none yet
 
-    advance(250);
+    advance(200);
     expect(phase()).toBe('covered');
     expect(ctx.fillRect).toHaveBeenCalledTimes(13 * 8);
 
@@ -248,16 +287,16 @@ describe('sequence', () => {
     expect(ctx.fillRect).toHaveBeenCalledTimes(13 * 8); // the reveal begins with every block
   });
 
-  it('does not restart a reveal that is already running when the safety timeout fires', () => {
+  it('does not restart a reveal that is already running when the safety timeout would have fired', () => {
     const { navigateTo } = renderCta();
     click(link());
-    advance(1400);
+    advance(200 + 1400); // the push was at 200: the safety timeout is due at 1700
     navigateTo('/dashboard'); // a late route: the reveal begins
     expect(phase()).toBe('reveal');
 
     ctx.fillRect.mockClear();
     vi.mocked(performance.now).mockReturnValue(5100); // time passes
-    advance(100); // the safety timeout fires at 1500
+    advance(100); // 1700
     expect(phase()).toBe('reveal');
     expect(ctx.fillRect).not.toHaveBeenCalled(); // the phase clock was not reset
   });
@@ -270,21 +309,37 @@ describe('sequence', () => {
     expect(phase()).toBe('covered');
   });
 
-  it('always reveals and unmounts after the safety timeout, even if the route never changes', () => {
+  it('measures the safety timeout from the push, and still always reveals and unmounts', () => {
     renderCta();
     click(link());
+    advance(200); // the push
     advance(1499);
     expect(phase()).toBe('covered');
     advance(1);
     expect(phase()).toBe('reveal');
-    advance(250);
+    advance(249);
+    expect(overlay()).not.toBeNull();
+    advance(1);
     expect(overlay()).toBeNull();
   });
 
-  it('unmounts the overlay even if it never draws a frame (the reveal ends on a timer)', () => {
+  it('does not start the safety clock at the click', () => {
+    renderCta();
+    click(link());
+    advance(200); // the push
+    advance(1300); // 1500 after the click: a clock from the click would have fired by now
+    expect(phase()).toBe('covered');
+    advance(199);
+    expect(phase()).toBe('covered');
+    advance(1);
+    expect(phase()).toBe('reveal');
+  });
+
+  it('unmounts the overlay even if it never draws a frame (every phase ends on a timer)', () => {
     // rAF is stubbed to never fire, as in a hidden tab: the sequence must not depend on it.
     renderCta();
     click(link());
+    advance(200);
     advance(1500);
     advance(250);
     expect(overlay()).toBeNull();
@@ -300,15 +355,117 @@ describe('sequence', () => {
 
     navigateTo('/');
     click(link());
-    expect(push).toHaveBeenCalledTimes(2);
     expect(phase()).toBe('cover');
+    advance(200);
+    expect(push).toHaveBeenCalledTimes(2);
   });
 
-  it('clears its timers when the tree unmounts mid-transition', () => {
+  it('clears its timers when the tree unmounts mid-transition, and never pushes late', () => {
     const { unmount } = renderCta();
     click(link());
+    advance(100);
     unmount();
     expect(vi.getTimerCount()).toBe(0);
+    advance(5000);
+    expect(push).not.toHaveBeenCalled();
+  });
+});
+
+describe('idle preload', () => {
+  const idle = vi.fn<(cb: () => void) => number>();
+  const cancelIdle = vi.fn();
+
+  beforeEach(() => {
+    idle.mockReset().mockReturnValue(7);
+    cancelIdle.mockReset();
+    vi.stubGlobal('requestIdleCallback', idle);
+    vi.stubGlobal('cancelIdleCallback', cancelIdle);
+  });
+
+  // Unmount while the idle stubs are still in place: the cleanup cancels through them.
+  afterEach(cleanup);
+
+  it('warms the route and the overlay once, on first idle, with no hover or focus', () => {
+    renderCta();
+    expect(idle).toHaveBeenCalledTimes(1);
+    expect(prefetch).not.toHaveBeenCalled(); // not before the browser is idle
+
+    act(() => idle.mock.calls[0][0]());
+    expect(prefetch).toHaveBeenCalledTimes(1);
+    expect(prefetch).toHaveBeenCalledWith('/dashboard');
+  });
+
+  it('is scheduled once, even though the provider re-renders as the phases run', () => {
+    const { navigateTo } = renderCta();
+    act(() => idle.mock.calls[0][0]());
+    click(link());
+    advance(200);
+    navigateTo('/dashboard');
+    advance(250);
+    expect(idle).toHaveBeenCalledTimes(1);
+    expect(prefetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('falls back to a timer where requestIdleCallback does not exist', () => {
+    vi.stubGlobal('requestIdleCallback', undefined);
+    renderCta();
+    expect(prefetch).not.toHaveBeenCalled();
+    advance(200);
+    expect(prefetch).toHaveBeenCalledTimes(1);
+    expect(prefetch).toHaveBeenCalledWith('/dashboard');
+    advance(5000);
+    expect(prefetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('is cancelled on unmount, so a late idle callback never runs', () => {
+    const { unmount } = renderCta();
+    unmount();
+    expect(cancelIdle).toHaveBeenCalledWith(7);
+  });
+
+  it('calls the controls prepare exactly once, however often the controls change identity', () => {
+    const prepareSpy = vi.fn();
+    const ui = () => (
+      <EffectsProvider>
+        <BlockDissolveContext.Provider value={{ start: vi.fn(), prepare: prepareSpy }}>
+          <Cta />
+        </BlockDissolveContext.Provider>
+      </EffectsProvider>
+    );
+    const { rerender } = render(ui());
+    rerender(ui());
+    rerender(ui());
+    expect(idle).toHaveBeenCalledTimes(1);
+    act(() => idle.mock.calls[0][0]());
+    expect(prepareSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('warms nothing when effects are off (the pending idle callback is cancelled)', () => {
+    localStorage.setItem('resume_matcher_effects', 'false');
+    renderCta();
+    expect(cancelIdle).toHaveBeenCalledWith(7);
+    for (const [run] of idle.mock.calls) run(); // even a stale callback does nothing
+    advance(5000);
+    expect(prefetch).not.toHaveBeenCalled();
+  });
+
+  it('warms nothing for reduced motion', () => {
+    vi.mocked(useReducedMotion).mockReturnValue(true);
+    renderCta();
+    advance(5000);
+    expect(idle).not.toHaveBeenCalled();
+    expect(prefetch).not.toHaveBeenCalled();
+  });
+
+  it('warms nothing with no provider above the link', () => {
+    render(
+      <EffectsProvider>
+        <Cta />
+      </EffectsProvider>
+    );
+    advance(5000);
+    expect(idle).not.toHaveBeenCalled();
+    expect(prefetch).not.toHaveBeenCalled();
   });
 });
 
@@ -334,8 +491,10 @@ describe('Hero', () => {
     expect(overlay()).toBeNull();
 
     expect(click(launch)).toBe(true);
-    expect(push).toHaveBeenCalledWith('/dashboard');
+    expect(push).not.toHaveBeenCalled(); // Home is covered first
     expect(phase()).toBe('cover');
+    advance(200);
+    expect(push).toHaveBeenCalledWith('/dashboard');
   });
 
   it('still navigates normally when effects are off', () => {
