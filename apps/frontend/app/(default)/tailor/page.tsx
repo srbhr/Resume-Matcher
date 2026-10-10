@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { Alert } from '@/components/ui/alert';
 import { PageFrame } from '@/components/ui/page-frame';
 import { PageHeader } from '@/components/ui/page-header';
@@ -489,18 +490,21 @@ export default function TailorPage() {
             disabled={isLoading || promptLoading}
           />
 
-          <div className="relative">
-            <Textarea
-              aria-label={t('tailor.pasteJobDescription')}
-              placeholder={t('tailor.jobDescriptionPlaceholder')}
-              className="min-h-[300px] resize-none p-4"
-              value={jobDescription}
-              onChange={(e) => setJobDescription(e.target.value)}
-              onKeyDown={handleTextareaKeyDown}
-              disabled={isLoading}
-            />
-            <div className="absolute bottom-2 right-2 font-mono text-xs tabular-nums text-steel pointer-events-none">
-              {t('tailor.charactersCount', { count: jobDescription.length })}
+          <div className="space-y-2">
+            <Label htmlFor="job-description">{t('tailor.pasteJobDescription')}</Label>
+            <div className="relative">
+              <Textarea
+                id="job-description"
+                placeholder={t('tailor.jobDescriptionPlaceholder')}
+                className="min-h-[300px] resize-none p-4 pb-8"
+                value={jobDescription}
+                onChange={(e) => setJobDescription(e.target.value)}
+                onKeyDown={handleTextareaKeyDown}
+                disabled={isLoading}
+              />
+              <div className="absolute bottom-2 right-2 font-mono text-xs tabular-nums text-steel pointer-events-none">
+                {t('tailor.charactersCount', { count: jobDescription.length })}
+              </div>
             </div>
           </div>
 

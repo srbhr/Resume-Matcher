@@ -90,9 +90,14 @@ export function ATSScoreCard({ atsScore }: ATSScoreCardProps) {
   const { overall_score, sub_scores, missing_keywords, injectable_keywords, recommendations } =
     atsScore;
   return (
-    <section className="space-y-6 border border-ink bg-white p-6 shadow-sw-default">
+    <section
+      aria-labelledby="ats-score-heading"
+      className="space-y-6 border border-ink bg-white p-6 shadow-sw-default"
+    >
       <div className="flex items-end justify-between gap-4">
-        <h3 className="font-serif text-xl font-bold text-ink">ATS Score Breakdown</h3>
+        <h2 id="ats-score-heading" className="font-serif text-xl font-bold text-ink">
+          ATS Score Breakdown
+        </h2>
         <p className="flex items-end gap-1">
           <span
             className={cn(

@@ -265,6 +265,11 @@ it('clears the previous ATS score card when a new tailoring run starts', async (
   await generate();
   fireEvent.click(screen.getByRole('button', { name: 'Close preview' }));
   expect(screen.getByRole('heading', { name: 'ATS Score Breakdown' })).toBeInTheDocument();
+  // h2 under the page h1, and the card is a named region (no skipped heading level).
+  expect(
+    screen.getByRole('heading', { name: 'ATS Score Breakdown', level: 2 })
+  ).toBeInTheDocument();
+  expect(screen.getByRole('region', { name: 'ATS Score Breakdown' })).toBeInTheDocument();
   await generate();
   expect(screen.queryByRole('heading', { name: 'ATS Score Breakdown' })).toBeNull();
   await act(async () => next.resolve(preview));
@@ -317,3 +322,16 @@ it.each(['expired locally', 'rejected by server'])(
     expect(screen.getByRole('button', { name: 'Confirm preview' })).toBeEnabled();
   }
 );
+
+it('names the job description field with a visible label and keeps the counter off the text', async () => {
+  render(<TailorPage />);
+  await act(async () => {});
+  const field = screen.getByRole('textbox', { name: 'tailor.pasteJobDescription' });
+  const label = document.querySelector(`label[for="${field.id}"]`);
+  expect(field.id).not.toBe('');
+  expect(label).toHaveTextContent('tailor.pasteJobDescription');
+  // A visible label, not a hidden aria-label.
+  expect(field).not.toHaveAttribute('aria-label');
+  // Room under the last line for the absolutely positioned character counter.
+  expect(field.className).toMatch(/(^|\s)pb-8(\s|$)/);
+});
