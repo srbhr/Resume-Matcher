@@ -34,7 +34,7 @@
 | ツール | 最低バージョン | 確認方法 | インストール |
 |------|----------------|----------|--------------|
 | **Python** | 3.13+ | `python --version` | [python.org](https://python.org) |
-| **Node.js** | 22+ | `node --version` | [nodejs.org](https://nodejs.org) |
+| **Node.js** | 24+ | `node --version` | [nodejs.org](https://nodejs.org) |
 | **npm** | 10+ | `npm --version` | Node.js に同梱 |
 | **uv** | 最新 | `uv --version` | [astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/) |
 | **Git** | 任意 | `git --version` | [git-scm.com](https://git-scm.com) |

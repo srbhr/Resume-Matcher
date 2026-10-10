@@ -193,7 +193,7 @@ Resume Matcher をご覧いただきありがとうございます。つなが�
 | ツール | バージョン | インストール |
 |--------|------------|--------------|
 | Python | 3.13+ | [python.org](https://python.org) |
-| Node.js | 22+ | [nodejs.org](https://nodejs.org) |
+| Node.js | 24+ | [nodejs.org](https://nodejs.org) |
 | uv | 最新 | [astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/) |
 
 ### クイックスタート

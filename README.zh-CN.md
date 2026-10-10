@@ -193,7 +193,7 @@ Resume Matcher 是免费且开源的，依靠赞助商与支持者维持运转�
 | 工具 | 版本 | 安装 |
 |------|------|------|
 | Python | 3.13+ | [python.org](https://python.org) |
-| Node.js | 22+ | [nodejs.org](https://nodejs.org) |
+| Node.js | 24+ | [nodejs.org](https://nodejs.org) |
 | uv | 最新版 | [astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/) |
 
 ### 快速开始

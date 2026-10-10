@@ -33,7 +33,7 @@ Before you begin, make sure you have the following installed on your system:
 | Tool | Minimum Version | How to Check | Installation |
 |------|-----------------|--------------|--------------|
 | **Python** | 3.13+ | `python --version` | [python.org](https://python.org) |
-| **Node.js** | 22+ | `node --version` | [nodejs.org](https://nodejs.org) |
+| **Node.js** | 24+ | `node --version` | [nodejs.org](https://nodejs.org) |
 | **npm** | 10+ | `npm --version` | Comes with Node.js |
 | **uv** | Latest | `uv --version` | [astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/) |
 | **Git** | Any | `git --version` | [git-scm.com](https://git-scm.com) |

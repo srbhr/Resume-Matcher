@@ -197,7 +197,7 @@ For detailed setup instructions, see **[SETUP.md](SETUP.md)** (English) or: [Esp
 | Tool | Version | Installation |
 |------|---------|--------------|
 | Python | 3.13+ | [python.org](https://python.org) |
-| Node.js | 22+ | [nodejs.org](https://nodejs.org) |
+| Node.js | 24+ | [nodejs.org](https://nodejs.org) |
 | uv | Latest | [astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/) |
 
 ### Quick Start

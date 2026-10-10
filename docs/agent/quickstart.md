@@ -4,7 +4,7 @@
 
 ## Prerequisites
 
-- Node.js 22+
+- Node.js 24+
 - Python 3.13+
 - [uv](https://docs.astral.sh/uv/) (Python package manager)
 
