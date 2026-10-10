@@ -10,6 +10,7 @@ POST /api/v1/resumes/upload
 ├── parse_document() → Markdown
 ├── db.create_resume(status="processing")
 ├── parse_resume_to_json() → LLM
+│   ├── restore_dates_from_markdown / restore_skills_from_markdown
 │   ├── Success: status="ready"
 │   └── Failure: status="failed"
 └── Return {resume_id}

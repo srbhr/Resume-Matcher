@@ -155,6 +155,11 @@ await parse_document(content, filename) → str  # PDF/DOC/DOCX → Markdown
 await parse_resume_to_json(markdown) → dict    # LLM call
 ```
 
+After the LLM call, two deterministic safety nets patch the result from the source markdown:
+
+- `restore_dates_from_markdown` puts back months the LLM dropped.
+- `restore_skills_from_markdown` puts back skills the LLM summarized away. A source line counts as a skill list when it has at least 3 short comma/pipe-separated items and one of them is already in `additional.technicalSkills`; the line's missing items are appended in source order. Lines with no parsed skill in them (spoken languages, locations, prose bullets) are left alone. `PARSE_RESUME_PROMPT` also tells the model to copy every listed skill, which covers lines the safety net can't anchor.
+
 ### Improver (`services/improver.py`)
 
 ```python

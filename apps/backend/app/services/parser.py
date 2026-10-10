@@ -2,6 +2,7 @@
 
 import array
 import asyncio
+import copy
 import io
 import logging
 import re
@@ -634,6 +635,82 @@ def restore_dates_from_markdown(
     return parsed_data
 
 
+# A source line counts as a skill list when it has at least this many short items
+# and at least one of them is already a parsed skill.
+_MIN_SKILL_LINE_ITEMS = 3
+_MAX_SKILL_ITEM_WORDS = 5
+_MAX_SKILL_ITEM_CHARS = 40
+_SKILL_SEPARATOR_RE = re.compile(r"\s*(?:,|\||;|•|·)\s*")
+_LIST_MARKER_RE = re.compile(r"^\s*(?:[-*+●▪◦‣]|\d+[.)])\s+")
+_LINE_LABEL_RE = re.compile(r"^[^:,]{1,80}:\s*")
+# PDF text extraction renders a visual gap (e.g. after a bold label) as 2+ spaces.
+_EXTRACTION_GAP_RE = re.compile(r"\s{2,}")
+
+
+def _skill_line_items(line: str) -> list[str]:
+    """Items of a comma/pipe separated list line, or [] if it isn't a short-item list."""
+    text = _LIST_MARKER_RE.sub("", line).strip()
+    text = _LINE_LABEL_RE.sub("", text)  # "Languages: Python, Rust" -> "Python, Rust"
+    items = [item.strip(" .") for item in _SKILL_SEPARATOR_RE.split(text)]
+    items = [item for item in items if item]
+    if items:
+        # "Stack  TypeScript": keep what follows a gap-separated label.
+        items[0] = _EXTRACTION_GAP_RE.split(items[0])[-1]
+    if len(items) < _MIN_SKILL_LINE_ITEMS:
+        return []
+    for item in items:
+        # Prose ("Built ingestion services with Python") and contact or location
+        # details are not skill lists.
+        if (
+            len(item) > _MAX_SKILL_ITEM_CHARS
+            or len(item.split()) > _MAX_SKILL_ITEM_WORDS
+            or "@" in item
+            or "://" in item
+            or item.casefold().startswith(("and ", "or "))
+        ):
+            return []
+    return items
+
+
+def restore_skills_from_markdown(
+    parsed_data: dict[str, Any],
+    markdown: str,
+) -> dict[str, Any]:
+    """Restore technical skills the LLM dropped from skill-list lines of the source.
+
+    The parse LLM tends to summarize long skill blocks, keeping a handful of
+    items. A source line is treated as a skill list when it is a list of at
+    least three short items and one of them already made it into
+    ``additional.technicalSkills``; its missing items are appended in source
+    order. Lines with no parsed skill in them (languages, locations, prose) are
+    left alone.
+    """
+    additional = parsed_data.get("additional")
+    if not isinstance(additional, dict):
+        return parsed_data
+    skills = additional.get("technicalSkills")
+    if not isinstance(skills, list) or not skills:
+        return parsed_data
+
+    known = {skill.casefold() for skill in skills if isinstance(skill, str)}
+    restored: list[str] = []
+    for line in markdown.splitlines():
+        items = _skill_line_items(line)
+        if not items or not any(item.casefold() in known for item in items):
+            continue
+        for item in items:
+            if item.casefold() not in known:
+                known.add(item.casefold())
+                restored.append(item)
+
+    if not restored:
+        return parsed_data
+    result = copy.deepcopy(parsed_data)
+    result["additional"]["technicalSkills"] = [*skills, *restored]
+    logger.info("Restored %d skills dropped while parsing", len(restored))
+    return result
+
+
 _NON_CONTENT_RESUME_KEYS = frozenset(
     {
         "id",
@@ -817,8 +894,9 @@ async def parse_resume_to_json(markdown_text: str) -> dict[str, Any]:
     """Parse resume markdown to structured JSON using LLM.
 
     After LLM parsing, patches any year-only dates with month-inclusive
-    dates extracted from the raw markdown. This ensures months are never
-    lost regardless of LLM behavior.
+    dates extracted from the raw markdown, and restores skills the LLM
+    dropped from skill-list lines, so neither is lost regardless of LLM
+    behavior.
 
     Args:
         markdown_text: Resume content in markdown format
@@ -846,6 +924,8 @@ async def parse_resume_to_json(markdown_text: str) -> dict[str, Any]:
 
     # Patch dates: restore months the LLM may have dropped
     result = restore_dates_from_markdown(result, markdown_text)
+    # Restore skills the LLM summarized away from long skill lists
+    result = restore_skills_from_markdown(result, markdown_text)
 
     # Validate against schema
     return _validate_parsed_resume(result)
