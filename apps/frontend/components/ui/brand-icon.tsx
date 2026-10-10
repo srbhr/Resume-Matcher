@@ -1,6 +1,6 @@
 /**
- * Monochrome brand marks for the AI-provider picker (LinkedIn and GitHub are for the
- * outreach preview and projects form, wired in a follow-up).
+ * Monochrome brand marks: the AI-provider picker, plus LinkedIn in the outreach preview and
+ * GitHub in the project form.
  *
  * The path data comes from the owner-supplied brand files, converted to a single colour:
  * every hard-coded fill, gradient, filter, mask and background shape is dropped, each mark
