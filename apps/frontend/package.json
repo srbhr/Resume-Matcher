@@ -11,7 +11,8 @@
     "format": "prettier --write .",
     "test": "vitest run",
     "guard": "node scripts/swiss-guard.mjs",
-    "guard:update": "node scripts/swiss-guard.mjs --update"
+    "guard:update": "node scripts/swiss-guard.mjs --update",
+    "report:first-load": "node scripts/first-load-report.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
