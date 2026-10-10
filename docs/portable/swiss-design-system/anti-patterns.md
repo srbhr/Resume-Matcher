@@ -89,10 +89,10 @@ Older code carries shadcn-era token names and framework palette shades. They all
 | `ring-ring` | `ring-primary` |
 | `bg-black/NN` (overlays) | `bg-overlay` |
 | `blue-700` / `blue-800` | `primary` / `primary-hover` |
-| `green-500/600/700` | `success` |
-| `red-500/600/700` | `destructive` |
+| `green-500/600/700` / `green-800` | `success` / `success-hover` |
+| `red-500/600` / `red-700` | `destructive` / `destructive-hover` |
+| `orange-500`, `amber-500` as a fill / `orange-600` | `warning` / `warning-hover` |
 | `orange-*`, `amber-*`, `yellow-600` as text or icon | `warning-text` |
-| `orange-500`, `amber-500` as a fill | `warning` |
 | `red-900`, `amber-900` body copy | `ink-soft` |
 | `*-50`, `*-100` tints | `info-tint`, `success-tint`, `warning-tint`, `destructive-tint` |
 | `bg-yellow-200` keyword marks | `highlight` |
@@ -143,7 +143,7 @@ Before merging UI changes, walk through this list:
 - [ ] Reduced motion is respected
 
 ### Final pass
-- [ ] Run the drift guard (in Resume Matcher: `npm run guard -- <path>`); it reports no new hits
+- [ ] If your project ships a drift guard (a test that counts the banned patterns above), run it; it reports no new hits
 - [ ] Squint at the design — does it look distinctly Swiss, or could it be any SaaS app?
 - [ ] If you removed all colors except black and one accent, would the layout still read?
 

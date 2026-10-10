@@ -46,6 +46,8 @@ Every token below ships as a **hex** value. Contrast figures are WCAG relative-l
 | | `warning-hover` | `#EB5601` | Hover fill | — | ink 5.86 |
 | | `warning-text` | `#B44F02` | Warning labels and icons | 4.52 | — |
 
+`warning` (2.45:1 on Canvas) is the one fill below the 3:1 non-text threshold (WCAG 1.4.11). That is acceptable because the orange never carries meaning alone: a status square always has a label, a warning alert pairs its border with a `warning-text` label on a tint, and a warning button has an ink border and ink text.
+
 ### Tints and utility
 
 | Token | Hex | Role |
@@ -145,7 +147,7 @@ font-mono    /* Labels, metadata, buttons — the label face (Space Grotesk) */
 | Captions and status text | label face | xs | bold, **uppercase**, tracked | Panel headers, status indicators, empty-state labels |
 | Metadata | label face | xs | normal | Timestamps, IDs, `// subtitles` in `steel` |
 
-Marketing surfaces may set a poster-scale headline (the landing hero does); app pages do not.
+Marketing surfaces may set a poster-scale headline (a landing hero does); app pages do not.
 
 ### Type Scale
 
@@ -206,8 +208,8 @@ Hard shadows only. Never blurred. Never soft. The shadow is a graphic element, n
 | `shadow-sw-sm` | 2px | Buttons and controls |
 | `shadow-sw-default` | 4px | Cards and menus |
 | `shadow-sw-lg` | 8px | Dialogs and the page frame |
-| `shadow-sw-xl` | 12px | The landing hero frame only |
-| `shadow-sw-card` | 6px | The resume page sheet only |
+| `shadow-sw-xl` | 12px | A landing/hero frame only |
+| `shadow-sw-card` | 6px | A single document or sheet surface only |
 
 Arbitrary shadow values (`shadow-[…]`) and every soft or rgba shadow are banned.
 
@@ -255,7 +257,7 @@ Motion is feedback, not decoration. It tells you a press landed, which state you
 
 1. **Feedback only.** Press, state legibility, drag affordance, and the presence of overlays and alerts. Nothing else moves.
 2. **One curve and one spring.** The curve is `cubic-bezier(0.16, 1, 0.3, 1)` (exponential decel, no overshoot). The spring is `{ type: 'spring', visualDuration: 0.2, bounce: 0 }`: critically damped, so it never bounces. No bounce or elastic easing anywhere.
-3. **Durations.** Press tier 100ms. Surface tier 200ms in, 120ms out. Nothing longer in product UI. The one allowance is the landing hero's 300ms one-shot entrance.
+3. **Durations.** Press tier 100ms. Surface tier 200ms in, 120ms out. Nothing longer in product UI. The one allowance is a landing hero's 300ms one-shot entrance.
 4. **Properties.** `transform` and `opacity`. Color and `box-shadow` are allowed in the press tier only. Banned: `transition-all`, animating layout properties (width, height, top, left, margin), and the animation library's `layout` feature.
 5. **Press-in is the only hover/press motion.** No negative translate (no lift), no shadow gain, no scale on press.
 6. **Surfaces snap.** Panels, accordions, tabs and route content change instantly. The exceptions are the presence items in the table below.
@@ -269,7 +271,7 @@ Motion is feedback, not decoration. It tells you a press landed, which state you
 | Dialog (and Confirm, Link dialogs through it) | Overlay opacity 0→1 over 200ms, back over 120ms. Panel fades in with a scale from 0.95 to 1 on the spring; exit mirrors at 120ms. While it exits the dialog is inert, so a second click cannot re-fire a handler |
 | Select / dropdown menu | Opacity plus a scale from 0.98, `transform-origin` at the edge it opens from. 120ms in, 80ms out |
 | Alerts and banners | Opacity only, 200ms in, 120ms out; no animation on first render |
-| List add/remove (kanban cards, builder entries) | The outer wrapper fades 150ms in, 120ms out. The inner node stays with the drag library, which owns `transform`. Siblings snap |
+| List add/remove (cards on a board, entries in an editor) | The outer wrapper fades 150ms in, 120ms out. The inner node stays with the drag library, which owns `transform`. Siblings snap |
 | State-label swap ("Save" to "Saved") | Opacity crossfade, 100ms |
 | Buttons, chips, toggles, tabs, chevrons | CSS transition at the theme default: 100ms on the expo curve. Name the properties, for example `transition-[transform,box-shadow,background-color]` |
 | Drag and sort | The drag library's own transition: 200ms on the expo curve; off under reduced motion |

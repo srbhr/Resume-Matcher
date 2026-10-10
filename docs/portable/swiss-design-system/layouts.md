@@ -43,8 +43,8 @@ Every app page sits in the same shell: a framed sheet on a blueprint grid, with 
 <PageFrame>
   <PageHeader>
     <PageHeader.Back href="/dashboard">Back</PageHeader.Back>
-    <PageHeader.Title>Tailor resume</PageHeader.Title>
-    <PageHeader.Subtitle>Paste a job description below</PageHeader.Subtitle>
+    <PageHeader.Title>Settings</PageHeader.Title>
+    <PageHeader.Subtitle>Manage your account</PageHeader.Subtitle>
     <PageHeader.Actions>{/* at most one primary */}</PageHeader.Actions>
   </PageHeader>
 
@@ -70,7 +70,7 @@ Every app page sits in the same shell: a framed sheet on a blueprint grid, with 
 | `Subtitle` | A `//` line in the label face, bold, uppercase, `steel`, `max-w-[60ch]` |
 | `Actions` | A wrapping row with `gap-3`. At most one primary button |
 
-**Heading scale** (one size per level, no per-page exceptions): page H1 `text-4xl md:text-5xl` serif bold uppercase · dialog title `text-2xl` serif bold uppercase · section header `text-xl`–`text-2xl` serif bold sentence case · caption `text-xs` label face uppercase. The landing hero is a poster, not an app page, and keeps its own display size.
+**Heading scale** (one size per level, no per-page exceptions): page H1 `text-4xl md:text-5xl` serif bold uppercase · dialog title `text-2xl` serif bold uppercase · section header `text-xl`–`text-2xl` serif bold sentence case · caption `text-xs` label face uppercase. A landing hero is a poster, not an app page, and keeps its own display size.
 
 **The blueprint grid** is the house signature. Define it once, as a utility, and never repeat it inline:
 
@@ -85,7 +85,7 @@ Every app page sits in the same shell: a framed sheet on a blueprint grid, with 
 
 It is a field of 1px Hyper Blue hairlines at 10% opacity, not a tonal gradient; that is the one use of a gradient function the pack allows.
 
-**Exception: full-height working views.** An editor or a board needs every pixel of height for the work. Those views (the resume builder, the application tracker) use a **compact single-row header** (title and actions on one line) in place of the stacked back-link / title / subtitle block. Usability beats style where the work area needs the height; everything else about the shell (canvas, ink borders, hard shadows, tokens) still applies.
+**Exception: full-height working views.** An editor or a board needs every pixel of height for the work. Those views (full-height editors or boards) use a **compact single-row header** (title and actions on one line) in place of the stacked back-link / title / subtitle block. Usability beats style where the work area needs the height; everything else about the shell (canvas, ink borders, hard shadows, tokens) still applies.
 
 ---
 

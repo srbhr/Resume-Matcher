@@ -21,7 +21,8 @@ ABSOLUTE RULES — never violate these:
 5. Hard shadows, chosen by role (below), that press in on hover. Never lift,
    never glow, never blur
 6. Grid-based layouts with mathematical precision
-7. Asymmetric balance — left-aligned by default, never centered
+7. Asymmetric balance — content is left-aligned; only the page frame
+   itself centres in the viewport
 8. Semantic tokens only. Never raw hex, rgba(), or framework palette scales
    (no blue-700, gray-500, amber-100)
 9. Motion is feedback, never decoration (see MOTION)

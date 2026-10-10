@@ -24,7 +24,7 @@ Square corners, 1px ink border, 2px hard shadow, press-in hover.
   transition-[transform,box-shadow,background-color,color]
   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary
   focus-visible:ring-offset-2 focus-visible:ring-offset-canvas
-  disabled:opacity-50
+  disabled:pointer-events-none disabled:opacity-50
 ">
   Submit
 </button>
@@ -44,7 +44,7 @@ Square corners, 1px ink border, 2px hard shadow, press-in hover.
 | `ghost` | transparent | ink | none | Toolbar and icon buttons |
 | `link` | transparent | `text-primary` | none | Inline actions that read as links |
 
-Hover darkens the fill through the matching `-hover` token (`outline` and `ghost` hover to `panel`). **Warning buttons take ink text, never white.**
+Hover darkens the fill through the matching `-hover` token. `outline` and `ghost` hover to `panel`, `secondary` to `panel-hover`, and `outline-destructive` to `destructive-tint`. Disabled buttons use `disabled:pointer-events-none disabled:opacity-50`. **Warning buttons take ink text, never white.**
 
 **Rule**: only one Primary button per logical screen region. If you find yourself adding a second, demote it to Outline.
 
@@ -157,7 +157,7 @@ Single-select: `role="radiogroup"` with `role="radio"` and `aria-checked`, rovin
 <button role="radio" aria-checked="false" className="min-h-10 rounded-none border border-ink bg-white px-4 font-mono text-sm uppercase tracking-wider text-ink hover:bg-panel">
 ```
 
-A thumbnail variant (template pickers) marks the selection with a 2px ink outline and offset instead of a fill. Independent on/off toggles (bold, italic) are not a radio group: use `aria-pressed`, with the same ink fill for "on".
+A thumbnail variant (image or preview pickers) marks the selection with a 2px ink outline and offset instead of a fill. Independent on/off toggles (bold, italic) are not a radio group: use `aria-pressed`, with the same ink fill for "on".
 
 ---
 
@@ -180,6 +180,7 @@ A thumbnail variant (template pickers) marks the selection with a 2px ink outlin
 - 4px shadow (heavier than buttons because cards are stationary)
 - White background to lift off the canvas
 - A plain grouping with no frame at all is allowed: canvas fill, no border, no shadow
+- `shadow-sw-default` is the role of a static card. A clickable `raised` card uses the smaller `shadow-sw-sm` instead, because it presses into that shadow like a button
 
 ### Variants
 
@@ -187,7 +188,7 @@ A thumbnail variant (template pickers) marks the selection with a 2px ink outlin
 |---------|------|------|
 | `default` | Canvas, no border, no shadow | A plain container |
 | `outline` | Canvas, `border-2` ink | An emphasized region without a shadow |
-| `raised` | White, 1px ink, `shadow-sw-sm`, presses in on hover | A small tile that sits directly on the canvas (kanban cards) |
+| `raised` | White, 1px ink, `shadow-sw-sm`, presses in on hover | A small tile that sits directly on the canvas (cards on a board) |
 | `interactive` | Canvas, transparent 2px border that turns ink on hover, presses in | A clickable tile; it needs a visible focus ring and must be reachable by keyboard |
 | `ghost` | Transparent | Layout only |
 
@@ -213,7 +214,7 @@ White panel, 1px ink border, 8px hard shadow. The panel is built from three band
 <Dialog open={open} onOpenChange={setOpen}>
   <DialogContent size="md">
     <DialogHeader>
-      <DialogTitle>Delete resume</DialogTitle>
+      <DialogTitle>Delete project</DialogTitle>
       <DialogDescription>This cannot be undone.</DialogDescription>
     </DialogHeader>
     <DialogBody>{/* content */}</DialogBody>
@@ -336,9 +337,9 @@ Left-aligned. An uppercase label, one line of sans `ink-soft` copy (`max-w-[60ch
 
 ```jsx
 <div className="flex flex-col items-start gap-2 py-6 text-left">
-  <p className="font-mono text-xs font-bold uppercase tracking-wider text-ink">No applications yet</p>
-  <p className="max-w-[60ch] text-sm text-ink-soft">Tailor a resume and it will appear here.</p>
-  <Button variant="outline" size="sm">Tailor a resume</Button>
+  <p className="font-mono text-xs font-bold uppercase tracking-wider text-ink">No projects yet</p>
+  <p className="max-w-[60ch] text-sm text-ink-soft">Create a project and it will appear here.</p>
+  <Button variant="outline" size="sm">Create project</Button>
 </div>
 ```
 
