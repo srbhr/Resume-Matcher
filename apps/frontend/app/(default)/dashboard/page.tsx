@@ -59,10 +59,6 @@ const TILE_STATUS =
   'group-hover:[&>span:first-child]:bg-white group-hover:[&>span:last-child]:text-white group-has-[:focus-visible]:[&>span:first-child]:bg-white group-has-[:focus-visible]:[&>span:last-child]:text-white';
 // The ghost retry icon is ink: white on blue, and a darker blue (not panel) under the pointer.
 const TILE_GHOST_ICON = `${TILE_WHITE} group-hover:hover:bg-primary-hover group-hover:active:bg-primary-hover focus-visible:ring-white`;
-// The Create button is the one blue primary at rest. On its own blue tile it inverts to a white
-// square, and it stretches over the tile so the whole highlighted tile is the click target.
-const TILE_CREATE =
-  'static after:absolute after:inset-0 hover:bg-white hover:text-primary focus-visible:ring-white group-has-[:focus-visible]:bg-white group-has-[:focus-visible]:text-primary';
 // Tile action buttons (Set as default, Duplicate, Retry, Delete) float above the stretched link.
 // Focusing one fills its tile blue, where the Button primitive's primary ring would vanish.
 const TILE_ACTION = 'z-10 focus-visible:ring-white';
@@ -879,15 +875,13 @@ export default function DashboardPage() {
             );
           })}
 
-          {/* 5. Create Tailored Resume */}
-          <Card
-            className={cn('aspect-square h-full', isTailorEnabled && TILE_FILL)}
-            variant={isTailorEnabled ? 'interactive' : 'default'}
-          >
+          {/* 5. Create Tailored Resume: not a highlight target and no stretched click area. The
+              blue + button is the only control, with the Button primitive's own press-in and ring. */}
+          <Card className="aspect-square h-full">
             <div className="flex-1 flex flex-col items-center justify-center text-center h-full">
               <Button
                 type="button"
-                className={cn('size-20', isTailorEnabled && TILE_CREATE)}
+                className="size-20"
                 onClick={() => router.push('/tailor')}
                 disabled={!isTailorEnabled}
                 aria-label={t('dashboard.createResume')}
@@ -895,7 +889,7 @@ export default function DashboardPage() {
               >
                 <Plus aria-hidden="true" className="size-8" />
               </Button>
-              <p className={cn('text-xs font-mono mt-4 uppercase text-steel', TILE_WHITE)}>
+              <p className="text-xs font-mono mt-4 uppercase text-steel">
                 {t('dashboard.createResume')}
               </p>
             </div>
