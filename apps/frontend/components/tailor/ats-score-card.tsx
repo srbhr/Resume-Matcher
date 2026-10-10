@@ -39,7 +39,7 @@ function SubScoreRow({ label, value }: { label: string; value: number }) {
       </div>
       <div className="w-full bg-gray-700 rounded-full h-1.5">
         <div
-          className={`h-1.5 rounded-full transition-all duration-500 ${barColor(value)}`}
+          className={`h-1.5 rounded-full ${barColor(value)}`}
           style={{ width: `${clampWidth(value)}%` }}
         />
       </div>
@@ -67,7 +67,7 @@ export function ATSScoreCard({ atsScore }: ATSScoreCardProps) {
       {/* Overall bar */}
       <div className="w-full bg-gray-700 rounded-full h-2">
         <div
-          className={`h-2 rounded-full transition-all duration-500 ${barColor(overall_score)}`}
+          className={`h-2 rounded-full ${barColor(overall_score)}`}
           style={{ width: `${clampWidth(overall_score)}%` }}
         />
       </div>

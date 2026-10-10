@@ -3,6 +3,7 @@
 import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { useReducedMotion } from 'motion/react';
 import { GripVertical } from 'lucide-react';
 
 interface DraggableListItemProps {
@@ -27,8 +28,10 @@ export const DraggableListItem: React.FC<DraggableListItemProps> = ({
   children,
   handleLabel = 'Drag to reorder',
 }) => {
+  const reducedMotion = useReducedMotion();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id,
+    transition: reducedMotion ? null : { duration: 200, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' },
   });
 
   const style = {

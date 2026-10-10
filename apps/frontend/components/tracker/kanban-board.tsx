@@ -11,6 +11,7 @@ import {
   useSensors,
 } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
+import { useReducedMotion } from 'motion/react';
 import Plus from 'lucide-react/dist/esm/icons/plus';
 import Settings from 'lucide-react/dist/esm/icons/settings';
 import Loader2 from 'lucide-react/dist/esm/icons/loader-2';
@@ -49,6 +50,7 @@ function emptyColumns(): ApplicationColumns {
 
 export function KanbanBoard() {
   const { t } = useTranslations();
+  const reducedMotion = useReducedMotion();
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
@@ -142,13 +144,18 @@ export function KanbanBoard() {
   }, [loading, isEmpty]);
 
   const scrollByColumn = (direction: 1 | -1) => {
-    scrollRef.current?.scrollBy({ left: direction * 320, behavior: 'smooth' });
+    scrollRef.current?.scrollBy({
+      left: direction * 320,
+      behavior: reducedMotion ? 'auto' : 'smooth',
+    });
   };
 
   const scrollToColumn = (status: ApplicationStatus) => {
-    scrollRef.current
-      ?.querySelector<HTMLElement>(`[data-column="${status}"]`)
-      ?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    scrollRef.current?.querySelector<HTMLElement>(`[data-column="${status}"]`)?.scrollIntoView({
+      behavior: reducedMotion ? 'auto' : 'smooth',
+      inline: 'center',
+      block: 'nearest',
+    });
   };
 
   const handleDragEnd = (event: DragEndEvent) => {

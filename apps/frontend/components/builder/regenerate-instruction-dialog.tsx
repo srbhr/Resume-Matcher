@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, Sparkles, Briefcase, FolderKanban, Lightbulb } from 'lucide-react';
+import { ArrowLeft, Sparkles, Briefcase, FolderKanban, Lightbulb, Loader2 } from 'lucide-react';
 import { useTranslations } from '@/lib/i18n';
 import type { RegenerateItemInput } from '@/lib/api/enrichment';
 
@@ -148,7 +148,7 @@ export const RegenerateInstructionDialog: React.FC<RegenerateInstructionDialogPr
           <Button onClick={onGenerate} disabled={isGenerating} className="rounded-none">
             {isGenerating ? (
               <>
-                <Sparkles className="w-4 h-4 animate-spin" />
+                <Loader2 className="size-4 animate-spin" aria-hidden="true" />
                 {t('builder.regenerate.diffPreview.loading')}
               </>
             ) : (

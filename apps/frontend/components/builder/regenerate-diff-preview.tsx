@@ -19,6 +19,7 @@ import {
   Briefcase,
   FolderKanban,
   Lightbulb,
+  Loader2,
 } from 'lucide-react';
 import { useTranslations } from '@/lib/i18n';
 import type { RegenerateItemError, RegeneratedItem } from '@/lib/api/enrichment';
@@ -288,9 +289,7 @@ export const RegenerateDiffPreview: React.FC<RegenerateDiffPreviewProps> = ({
           >
             {isApplying ? (
               <>
-                <span className="animate-spin mr-2">
-                  <Check className="w-4 h-4" />
-                </span>
+                <Loader2 className="size-4 animate-spin" aria-hidden="true" />
                 {t(
                   needsRefresh
                     ? 'builder.regenerate.diffPreview.refreshing'

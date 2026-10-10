@@ -3,6 +3,7 @@
 import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { useReducedMotion } from 'motion/react';
 import GripVertical from 'lucide-react/dist/esm/icons/grip-vertical';
 import Layers from 'lucide-react/dist/esm/icons/layers';
 import { Card } from '@/components/ui/card';
@@ -25,8 +26,10 @@ export function ApplicationCard({
   onOpen,
 }: ApplicationCardProps) {
   const { t } = useTranslations();
+  const reducedMotion = useReducedMotion();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: application.application_id,
+    transition: reducedMotion ? null : { duration: 200, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' },
   });
 
   const style: React.CSSProperties = {

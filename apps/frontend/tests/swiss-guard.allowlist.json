@@ -258,8 +258,7 @@
     "glyph": 1,
     "palette": 23,
     "radius": 7,
-    "spacing": 9,
-    "transition": 2
+    "spacing": 9
   },
   "components/tailor/diff-preview-modal.tsx": {
     "legacy-token": 2,

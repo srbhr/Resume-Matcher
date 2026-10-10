@@ -62,7 +62,7 @@ vi.mock('motion/react', async () => {
         { 'data-reduced-motion': reducedMotion, style: { display: 'contents' } },
         children
       ),
-    useReducedMotion: () => false,
+    useReducedMotion: vi.fn(() => false),
     domAnimation: {},
   };
 });
