@@ -651,6 +651,14 @@
       "previewUnavailable": "Cet aperçu a expiré ou le CV source a changé. Générez un nouvel aperçu avant de sauvegarder."
     },
     "selectResumeDescription": "Les puces sont tirées de ce CV principal.",
+    "tailoringLabel": "CV à personnaliser :",
+    "jobDescriptionHint": "Collez la fiche de poste complète, avec les missions et les exigences (50 caractères minimum).",
+    "steps": {
+      "label": "Étapes de la personnalisation",
+      "paste": "Collez la fiche de poste",
+      "generate": "Générez un aperçu",
+      "review": "Vérifiez et enregistrez"
+    },
     "selectionSummary": "Puces conservées : {kept} sur {total} (jusqu'à {max} par poste ou projet)",
     "pageFit": {
       "fits": "Tient sur une page",

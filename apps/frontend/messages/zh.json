@@ -651,6 +651,14 @@
       "previewUnavailable": "此预览已过期或原始简历已更改。请先生成新的预览再保存。"
     },
     "selectResumeDescription": "要点将从这份主简历中选取。",
+    "tailoringLabel": "定制对象：",
+    "jobDescriptionHint": "请粘贴完整的职位信息，包括岗位职责和任职要求（至少 50 个字符）。",
+    "steps": {
+      "label": "定制流程",
+      "paste": "粘贴职位描述",
+      "generate": "生成预览",
+      "review": "查看更改并保存"
+    },
     "selectionSummary": "已保留 {total} 条要点中的 {kept} 条（每个职位或项目最多 {max} 条）",
     "pageFit": {
       "fits": "可放入一页",

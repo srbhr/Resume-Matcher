@@ -651,6 +651,14 @@
       "previewUnavailable": "This preview expired or the source resume changed. Generate a fresh preview before saving."
     },
     "selectResumeDescription": "Bullets are drawn from this master resume.",
+    "tailoringLabel": "Tailoring:",
+    "jobDescriptionHint": "Paste the full job posting, including responsibilities and requirements (at least 50 characters).",
+    "steps": {
+      "label": "How tailoring works",
+      "paste": "Paste the job description",
+      "generate": "Generate a preview",
+      "review": "Review the changes and save"
+    },
     "selectionSummary": "Kept {kept} of {total} bullets (up to {max} per job or project)",
     "pageFit": {
       "fits": "Fits on one page",
