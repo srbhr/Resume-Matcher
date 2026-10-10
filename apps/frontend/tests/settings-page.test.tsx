@@ -225,7 +225,7 @@ describe('settings page (Swiss sweep)', () => {
     const body = screen.getByText('settings.systemStatus.title').closest('section')
       ?.parentElement as HTMLElement;
     expect(body).toHaveClass('py-8', 'space-y-8');
-    expect(body).not.toHaveClass('py-12', 'md:py-12', 'space-y-12');
+    for (const old of ['py-12', 'md:py-12', 'space-y-12']) expect(body).not.toHaveClass(old);
     // The horizontal gutter matches the shared page header (md:p-12) so edges align.
     expect(body).toHaveClass('px-8', 'md:px-12');
   });
