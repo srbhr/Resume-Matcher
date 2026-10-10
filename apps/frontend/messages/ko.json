@@ -625,6 +625,18 @@
       "rejectButton": "거부하고 다시 생성",
       "confirmButton": "확인하고 저장"
     },
+    "atsScore": {
+      "title": "ATS 점수 상세",
+      "keywordMatch": "키워드 일치",
+      "skillsCoverage": "기술 커버리지",
+      "titleMatch": "직함 일치",
+      "sectionCompleteness": "섹션 완성도",
+      "dateConsistency": "날짜 형식 일관성",
+      "missingKeywords": "누락된 키워드",
+      "injectableKeywords": "추가 가능 (마스터 이력서에 있음)",
+      "recommendations": "추천 사항",
+      "twoColumnWarning": "2단 레이아웃: 많은 ATS가 열을 잘못된 순서로 읽습니다. 지원하기 전에 빌더에서 1단 템플릿으로 변경하세요."
+    },
     "regenerateDialog": {
       "title": "맞춤화된 이력서를 다시 생성하시겠습니까?",
       "description": "현재 미리보기를 폐기하고 새로운 AI 맞춤화 결과를 요청합니다.",

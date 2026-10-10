@@ -661,11 +661,25 @@ class ATSSubScores(BaseModel):
     skills_coverage: float = Field(
         default=0.0, ge=0.0, le=100.0, description="JD skills matched in resume (0–100)"
     )
+    title_match: float | None = Field(
+        default=None,
+        ge=0.0,
+        le=100.0,
+        description="Posting's exact job title in headline/summary (0–100); "
+        "None when the posting has no title",
+    )
     section_completeness: float = Field(
         default=0.0,
         ge=0.0,
         le=100.0,
-        description="Key resume sections present (0–100)",
+        description="Contact info + visible key resume sections present (0–100)",
+    )
+    date_consistency: float | None = Field(
+        default=None,
+        ge=0.0,
+        le=100.0,
+        description="Share of dates in the dominant format (0–100); "
+        "None when the resume has fewer than two dates",
     )
 
 

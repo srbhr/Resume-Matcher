@@ -625,6 +625,18 @@
       "rejectButton": "Rejeitar e regenerar",
       "confirmButton": "Confirmar e salvar"
     },
+    "atsScore": {
+      "title": "Detalhamento da pontuação ATS",
+      "keywordMatch": "Correspondência de palavras-chave",
+      "skillsCoverage": "Cobertura de habilidades",
+      "titleMatch": "Correspondência de cargo",
+      "sectionCompleteness": "Completude das seções",
+      "dateConsistency": "Consistência de datas",
+      "missingKeywords": "Palavras-chave ausentes",
+      "injectableKeywords": "Seguras para adicionar (no seu currículo principal)",
+      "recommendations": "Recomendações",
+      "twoColumnWarning": "Layout em duas colunas: muitos ATS leem as colunas fora de ordem. Mude para um modelo de uma coluna no editor antes de se candidatar."
+    },
     "regenerateDialog": {
       "title": "Regenerar o currículo personalizado?",
       "description": "Isso descartará a prévia atual e solicitará um novo resultado de personalização por IA.",

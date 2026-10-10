@@ -625,6 +625,18 @@
       "rejectButton": "Reject & Regenerate",
       "confirmButton": "Confirm & Save"
     },
+    "atsScore": {
+      "title": "ATS Score Breakdown",
+      "keywordMatch": "Keyword Match",
+      "skillsCoverage": "Skills Coverage",
+      "titleMatch": "Title Match",
+      "sectionCompleteness": "Section Completeness",
+      "dateConsistency": "Date Consistency",
+      "missingKeywords": "Missing Keywords",
+      "injectableKeywords": "Safe to Add (in your master resume)",
+      "recommendations": "Recommendations",
+      "twoColumnWarning": "Two-column layout: many ATS parsers read columns out of order. Switch to a single-column template in the Builder before applying."
+    },
     "regenerateDialog": {
       "title": "Regenerate tailored resume?",
       "description": "This will discard the current preview and request a new AI tailoring result.",

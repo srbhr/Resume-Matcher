@@ -625,6 +625,18 @@
       "rejectButton": "Rejeter et régénérer",
       "confirmButton": "Confirmer et enregistrer"
     },
+    "atsScore": {
+      "title": "Détail du score ATS",
+      "keywordMatch": "Correspondance des mots-clés",
+      "skillsCoverage": "Couverture des compétences",
+      "titleMatch": "Correspondance du titre",
+      "sectionCompleteness": "Complétude des sections",
+      "dateConsistency": "Cohérence des dates",
+      "missingKeywords": "Mots-clés manquants",
+      "injectableKeywords": "Ajout sûr (présents dans votre CV principal)",
+      "recommendations": "Recommandations",
+      "twoColumnWarning": "Mise en page sur deux colonnes : de nombreux ATS lisent les colonnes dans le désordre. Passez à un modèle à une colonne dans l'éditeur avant de postuler."
+    },
     "regenerateDialog": {
       "title": "Régénérer le CV personnalisé ?",
       "description": "Cela supprimera l'aperçu actuel et demandera un nouveau résultat de personnalisation IA.",

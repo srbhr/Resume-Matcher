@@ -625,6 +625,18 @@
       "rejectButton": "拒否して再生成",
       "confirmButton": "確認して保存"
     },
+    "atsScore": {
+      "title": "ATSスコアの内訳",
+      "keywordMatch": "キーワード一致",
+      "skillsCoverage": "スキルの網羅性",
+      "titleMatch": "職種名の一致",
+      "sectionCompleteness": "セクションの充実度",
+      "dateConsistency": "日付表記の一貫性",
+      "missingKeywords": "不足しているキーワード",
+      "injectableKeywords": "追加可能（マスター履歴書に記載あり）",
+      "recommendations": "推奨事項",
+      "twoColumnWarning": "2カラムのレイアウト：多くのATSは列を正しい順序で読み取れません。応募前にビルダーで1カラムのテンプレートに切り替えてください。"
+    },
     "regenerateDialog": {
       "title": "カスタマイズ済み履歴書を再生成しますか？",
       "description": "現在のプレビューを破棄し、新しい AI 調整結果を取得します。",
