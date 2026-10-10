@@ -356,7 +356,7 @@ export const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, onUpdate }) 
 
         default:
           return (
-            <div className="text-steel-grey">
+            <div className="text-steel">
               {t('builder.customSections.unknownSectionType', { type: section.sectionType })}
             </div>
           );

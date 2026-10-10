@@ -50,7 +50,10 @@ export const DraggableListItem: React.FC<DraggableListItemProps> = ({
         title={handleLabel}
         aria-label={handleLabel}
       >
-        <GripVertical className="w-4 h-4 text-steel-grey hover:text-ink-soft transition-colors" />
+        <GripVertical
+          aria-hidden="true"
+          className="size-4 text-steel hover:text-ink-soft transition-colors"
+        />
       </div>
 
       {/* List Item Content - add left padding to make room for drag handle */}

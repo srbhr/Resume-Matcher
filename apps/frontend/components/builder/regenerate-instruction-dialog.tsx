@@ -12,7 +12,9 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, Sparkles, Briefcase, FolderKanban, Lightbulb, Loader2 } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import { Alert } from '@/components/ui/alert';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 import { useTranslations } from '@/lib/i18n';
 import type { RegenerateItemInput } from '@/lib/api/enrichment';
 
@@ -67,19 +69,6 @@ export const RegenerateInstructionDialog: React.FC<RegenerateInstructionDialogPr
     }
   };
 
-  const getItemIcon = (itemType: string) => {
-    switch (itemType) {
-      case 'experience':
-        return <Briefcase className="w-4 h-4" />;
-      case 'project':
-        return <FolderKanban className="w-4 h-4" />;
-      case 'skills':
-        return <Lightbulb className="w-4 h-4" />;
-      default:
-        return null;
-    }
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent size="lg">
@@ -91,37 +80,32 @@ export const RegenerateInstructionDialog: React.FC<RegenerateInstructionDialogPr
         </DialogHeader>
 
         <DialogBody className="space-y-6">
-          {error ? (
-            <div className="border border-red-600 bg-red-50 px-4 py-3">
-              <p className="font-mono text-xs text-red-700">{resolveErrorMessage(error)}</p>
-            </div>
-          ) : null}
+          {error ? <Alert tone="error">{resolveErrorMessage(error)}</Alert> : null}
           {/* Selected Items Summary */}
           <div className="space-y-2">
-            <label className="font-mono text-xs uppercase tracking-wider text-steel-grey">
+            <Label id="regenerate-selected-items" className="block">
               {t('builder.regenerate.instructionDialog.selectedItems')}
-            </label>
-            <div className="bg-paper-tint border border-steel-grey p-3 space-y-2 max-h-32 overflow-y-auto">
+            </Label>
+            <ul
+              aria-labelledby="regenerate-selected-items"
+              className="bg-paper border border-steel p-3 space-y-2 max-h-32 overflow-y-auto"
+            >
               {selectedItems.map((item) => (
-                <div key={item.item_id} className="flex items-center gap-2 text-sm">
-                  <span className="text-steel-grey">{getItemIcon(item.item_type)}</span>
+                <li key={item.item_id} className="flex items-center gap-2 text-sm">
                   <span className="font-medium truncate">{item.title}</span>
                   {item.subtitle && (
-                    <span className="text-steel-grey text-xs truncate">| {item.subtitle}</span>
+                    <span className="text-steel text-xs truncate">| {item.subtitle}</span>
                   )}
-                </div>
+                </li>
               ))}
-            </div>
+            </ul>
           </div>
 
           {/* Instruction Input */}
           <div className="space-y-2">
-            <label
-              htmlFor="regenerate-instruction"
-              className="font-mono text-xs uppercase tracking-wider text-steel-grey"
-            >
+            <Label htmlFor="regenerate-instruction" className="block">
               {t('builder.regenerate.instructionDialog.hint')}
-            </label>
+            </Label>
             <Textarea
               id="regenerate-instruction"
               value={instruction}
@@ -129,34 +113,22 @@ export const RegenerateInstructionDialog: React.FC<RegenerateInstructionDialogPr
               onKeyDown={handleKeyDown}
               maxLength={2000}
               placeholder={t('builder.regenerate.instructionDialog.placeholder')}
-              className="min-h-[120px] border-black"
+              className="min-h-[120px]"
               disabled={isGenerating}
             />
           </div>
         </DialogBody>
 
         <DialogFooter className="justify-between">
-          <Button
-            variant="outline"
-            onClick={onBack}
-            disabled={isGenerating}
-            className="rounded-none border-black"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
+          <Button variant="outline" onClick={onBack} disabled={isGenerating}>
+            <ArrowLeft aria-hidden="true" />
             {t('builder.regenerate.instructionDialog.backButton')}
           </Button>
-          <Button onClick={onGenerate} disabled={isGenerating} className="rounded-none">
-            {isGenerating ? (
-              <>
-                <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-                {t('builder.regenerate.diffPreview.loading')}
-              </>
-            ) : (
-              <>
-                <Sparkles className="w-4 h-4" />
-                {t('builder.regenerate.instructionDialog.generateButton')}
-              </>
-            )}
+          <Button onClick={onGenerate} disabled={isGenerating}>
+            {isGenerating && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
+            {isGenerating
+              ? t('builder.regenerate.diffPreview.loading')
+              : t('builder.regenerate.instructionDialog.generateButton')}
           </Button>
         </DialogFooter>
       </DialogContent>

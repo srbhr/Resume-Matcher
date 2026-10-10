@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useId, useState } from 'react';
 import {
   Dialog,
   DialogBody,
@@ -14,7 +14,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Plus, FileText, List, ListOrdered } from 'lucide-react';
+import { SegmentedControl } from '@/components/ui/segmented-control';
+import { Plus } from 'lucide-react';
 import type { SectionType } from '@/components/dashboard/resume-component';
 import { useTranslations } from '@/lib/i18n';
 
@@ -40,6 +41,7 @@ export const AddSectionDialog: React.FC<AddSectionDialogProps> = ({
   const { t } = useTranslations();
   const [displayName, setDisplayName] = useState('');
   const [sectionType, setSectionType] = useState<SelectableSectionType>('text');
+  const fieldId = useId();
 
   const handleSubmit = () => {
     if (displayName.trim()) {
@@ -59,25 +61,21 @@ export const AddSectionDialog: React.FC<AddSectionDialogProps> = ({
   const sectionTypes: {
     type: SelectableSectionType;
     label: string;
-    icon: React.ReactNode;
     description: string;
   }[] = [
     {
       type: 'text',
       label: t('builder.customSections.sectionTypes.textBlockLabel'),
-      icon: <FileText className="w-5 h-5" />,
       description: t('builder.customSections.sectionTypes.textBlockDescription'),
     },
     {
       type: 'itemList',
       label: t('builder.customSections.sectionTypes.itemListLabel'),
-      icon: <ListOrdered className="w-5 h-5" />,
       description: t('builder.customSections.sectionTypes.itemListDescription'),
     },
     {
       type: 'stringList',
       label: t('builder.customSections.sectionTypes.stringListLabel'),
-      icon: <List className="w-5 h-5" />,
       description: t('builder.customSections.sectionTypes.stringListDescription'),
     },
   ];
@@ -95,69 +93,48 @@ export const AddSectionDialog: React.FC<AddSectionDialogProps> = ({
         <DialogBody className="space-y-6">
           {/* Section Name */}
           <div className="space-y-2">
-            <Label className="font-mono text-xs uppercase tracking-wider text-steel-grey">
+            <Label htmlFor={`${fieldId}-name`} className="block">
               {t('builder.customSections.sectionNameLabel')}
             </Label>
             <Input
+              id={`${fieldId}-name`}
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder={t('builder.customSections.sectionNamePlaceholder')}
-              className="rounded-none border-black"
             />
           </div>
 
           {/* Section Type */}
           <div className="space-y-3">
-            <Label className="font-mono text-xs uppercase tracking-wider text-steel-grey">
+            <Label id={`${fieldId}-type`} className="block">
               {t('builder.customSections.sectionTypeLabel')}
             </Label>
-            <div className="space-y-2">
-              {sectionTypes.map((item) => (
-                <button
-                  key={item.type}
-                  type="button"
-                  onClick={() => setSectionType(item.type)}
-                  className={`w-full p-4 border text-left transition-colors ${
-                    sectionType === item.type
-                      ? 'border-black bg-paper-tint shadow-sw-sm'
-                      : 'border-steel-grey hover:border-steel-grey'
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div
-                      className={`p-2 border ${
-                        sectionType === item.type
-                          ? 'border-black bg-white'
-                          : 'border-steel-grey bg-paper-tint'
-                      }`}
-                    >
-                      {item.icon}
-                    </div>
-                    <div className="flex-1">
-                      <div className="font-sans font-medium text-sm">{item.label}</div>
-                      <div className="font-mono text-xs text-steel-grey mt-0.5">
-                        {item.description}
-                      </div>
-                    </div>
-                    {sectionType === item.type && (
-                      <div className="w-4 h-4 border-2 border-black bg-black" />
-                    )}
-                  </div>
-                </button>
-              ))}
-            </div>
+            <SegmentedControl
+              variant="outline"
+              aria-labelledby={`${fieldId}-type`}
+              className="grid grid-cols-1 gap-2"
+              value={sectionType}
+              onChange={setSectionType}
+              items={sectionTypes.map((item) => ({
+                value: item.type,
+                label: (
+                  <span className="flex flex-col items-start gap-1 text-left normal-case tracking-normal">
+                    <span className="font-sans text-sm font-medium">{item.label}</span>
+                    <span className="font-mono text-xs text-ink-soft">{item.description}</span>
+                  </span>
+                ),
+              }))}
+            />
           </div>
         </DialogBody>
 
         <DialogFooter>
           <DialogClose asChild>
-            <Button variant="outline" className="rounded-none border-black">
-              {t('common.cancel')}
-            </Button>
+            <Button variant="outline">{t('common.cancel')}</Button>
           </DialogClose>
-          <Button onClick={handleSubmit} disabled={!displayName.trim()} className="rounded-none">
-            <Plus className="w-4 h-4 mr-2" />
+          <Button onClick={handleSubmit} disabled={!displayName.trim()}>
+            <Plus aria-hidden="true" />
             {t('builder.addSection')}
           </Button>
         </DialogFooter>
@@ -181,12 +158,8 @@ export const AddSectionButton: React.FC<AddSectionButtonProps> = ({ onAdd }) => 
 
   return (
     <>
-      <Button
-        variant="outline"
-        onClick={() => setOpen(true)}
-        className="w-full rounded-none border-dashed border-2 border-black py-6 hover:bg-paper-tint hover:border-solid transition-all"
-      >
-        <Plus className="w-5 h-5 mr-2" />
+      <Button variant="outline" onClick={() => setOpen(true)} className="w-full border-2 py-6">
+        <Plus aria-hidden="true" className="size-5" />
         {t('builder.customSections.addCustomSectionButton')}
       </Button>
       <AddSectionDialog open={open} onOpenChange={setOpen} onAdd={onAdd} />

@@ -2,7 +2,9 @@
 
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
-import { Save, Loader2, Copy, Check, Mail } from 'lucide-react';
+import { PanelHeader } from '@/components/ui/panel-header';
+import { Textarea } from '@/components/ui/textarea';
+import { Save, Loader2, Copy, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTranslations } from '@/lib/i18n';
 
@@ -48,58 +50,43 @@ export function OutreachEditor({
   return (
     <div className={cn('flex flex-col h-full', className)}>
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b-2 border-black bg-[#F5F5F0]">
-        <div className="flex items-center gap-2">
-          <Mail className="w-4 h-4" />
-          <h2 className="font-mono text-sm font-bold uppercase tracking-wider">
-            {t('outreach.title')}
-          </h2>
-        </div>
-        <div className="flex items-center gap-3">
-          <span className="font-mono text-xs text-steel-grey">
-            {t('builder.contentStats.wordsChars', { wordCount, charCount })}
-          </span>
-          <Button size="sm" variant="outline" onClick={onSave} disabled={isSaving}>
-            {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            {isSaving ? t('common.saving') : t('common.save')}
-          </Button>
-          <Button size="sm" onClick={handleCopy} disabled={!content}>
-            {isCopied ? (
-              <>
-                <Check className="w-4 h-4" />
-                {t('outreach.copied')}
-              </>
-            ) : (
-              <>
-                <Copy className="w-4 h-4" />
-                {t('outreach.copy')}
-              </>
-            )}
-          </Button>
-        </div>
-      </div>
+      <PanelHeader
+        tone="input"
+        level="h3"
+        title={t('outreach.title')}
+        className="mb-0 bg-paper p-4"
+      >
+        <span className="font-mono text-xs text-steel tabular-nums">
+          {t('builder.contentStats.wordsChars', { wordCount, charCount })}
+        </span>
+        <Button size="sm" onClick={onSave} disabled={isSaving}>
+          {isSaving ? (
+            <Loader2 aria-hidden="true" className="animate-spin" />
+          ) : (
+            <Save aria-hidden="true" />
+          )}
+          {isSaving ? t('common.saving') : t('common.save')}
+        </Button>
+        <Button size="sm" variant="outline" onClick={handleCopy} disabled={!content}>
+          {isCopied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
+          {isCopied ? t('outreach.copied') : t('outreach.copy')}
+        </Button>
+      </PanelHeader>
 
       {/* Editor Area */}
       <div className="flex-1 p-4 overflow-hidden">
-        <textarea
+        <Textarea
           value={content}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && e.stopPropagation()}
           placeholder={t('outreach.editor.placeholder')}
-          className={cn(
-            'w-full h-full min-h-[250px] p-4',
-            'font-mono text-sm leading-relaxed',
-            'border-2 border-black bg-white',
-            'resize-none',
-            'focus:outline-none focus:ring-2 focus:ring-blue-700 focus:ring-offset-2',
-            'placeholder:text-steel-grey'
-          )}
+          className="h-full min-h-[250px] p-4 leading-relaxed resize-none"
         />
       </div>
 
       {/* Footer Tips */}
-      <div className="p-4 border-t border-paper-tint bg-[#F5F5F0]">
-        <p className="font-mono text-xs text-steel-grey">{t('outreach.editor.tip')}</p>
+      <div className="p-4 border-t border-paper bg-paper">
+        <p className="font-mono text-xs text-steel">{t('outreach.editor.tip')}</p>
       </div>
     </div>
   );
