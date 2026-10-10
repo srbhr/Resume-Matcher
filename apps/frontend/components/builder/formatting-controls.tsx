@@ -164,7 +164,7 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
   };
 
   return (
-    <div className="border border-ink bg-white shadow-sw-default">
+    <div className="border border-ink bg-white shadow-sw-nested">
       {/* Header - Always Visible */}
       <button
         type="button"

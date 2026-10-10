@@ -1708,28 +1708,11 @@ const ResumeBuilderContent = () => {
         </div>
 
         {/* Footer */}
-        <div className="px-4 py-2 bg-canvas flex justify-between items-center font-mono text-xs text-steel border-t border-ink no-print">
+        <div className="px-4 py-2 bg-canvas flex items-center font-mono text-xs text-steel border-t border-ink no-print">
           <span className="uppercase font-bold flex items-center gap-2">
             <Image src="/logo.svg" alt="Resume Matcher" width={20} height={20} className="size-5" />
             {t('builder.footer.moduleLabel')}
           </span>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <span aria-hidden="true" className="size-3 bg-success" />
-              <span className="uppercase">
-                {templateSettings.template === 'swiss-single' ||
-                templateSettings.template === 'modern' ||
-                templateSettings.template === 'latex' ||
-                templateSettings.template === 'clean'
-                  ? t('builder.footer.singleColumn')
-                  : t('builder.footer.twoColumn')}
-              </span>
-            </div>
-            <span aria-hidden="true">|</span>
-            <span className="uppercase">
-              {templateSettings.pageSize === 'A4' ? 'A4' : t('builder.pageSize.usLetter')}
-            </span>
-          </div>
         </div>
       </div>
 

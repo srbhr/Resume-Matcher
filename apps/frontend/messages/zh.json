@@ -221,9 +221,7 @@
       "interviewPrep": "面试准备"
     },
     "footer": {
-      "moduleLabel": "简历编辑模块",
-      "singleColumn": "单栏",
-      "twoColumn": "双栏"
+      "moduleLabel": "简历编辑模块"
     },
     "pageSize": {
       "usLetter": "美式信纸"

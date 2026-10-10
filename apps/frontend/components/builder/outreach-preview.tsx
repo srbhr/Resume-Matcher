@@ -17,12 +17,7 @@ export function OutreachPreview({ content, className }: OutreachPreviewProps) {
   const { t } = useTranslations();
   return (
     <div
-      className={cn(
-        'bg-white border-2 border-ink',
-        'shadow-sw-default',
-        'overflow-hidden',
-        className
-      )}
+      className={cn('bg-white border-2 border-ink', 'shadow-sw-card', 'overflow-hidden', className)}
     >
       {/* Preview Header */}
       <div className="p-4 border-b-2 border-ink bg-paper">

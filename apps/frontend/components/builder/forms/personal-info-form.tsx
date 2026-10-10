@@ -22,7 +22,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ data, onChan
   };
 
   return (
-    <div className="ml-4 space-y-4 border border-ink p-6 bg-white shadow-sw-default">
+    <div className="ml-4 space-y-4 border border-ink p-6 bg-white shadow-sw-nested">
       <h3 className="font-serif text-xl font-bold border-b border-ink pb-2 mb-4">
         {t('builder.personalInfo')}
       </h3>

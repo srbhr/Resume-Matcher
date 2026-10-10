@@ -248,6 +248,27 @@ describe('builder panels', () => {
   );
 });
 
+describe('builder footer', () => {
+  it('shows only the module label, with no template or page-size readout', async () => {
+    fetchResume.mockResolvedValue(response());
+    const Builder = await importBuilder();
+    render(<Builder />);
+    await act(async () => {
+      await fetchResume.mock.results[0].value;
+    });
+
+    const footer = screen.getByText('builder.footer.moduleLabel').closest('.border-t');
+    expect(footer).not.toBeNull();
+    // The label is the whole footer: no column count, divider or page size beside it.
+    expect(footer?.textContent).toBe('builder.footer.moduleLabel');
+    expect(footer?.querySelector('.bg-success')).toBeNull();
+    expect(screen.queryByText('builder.footer.singleColumn')).not.toBeInTheDocument();
+    expect(screen.queryByText('builder.footer.twoColumn')).not.toBeInTheDocument();
+    // The footer closes the page frame, which keeps its dialog-weight shadow.
+    expect(footer?.parentElement).toHaveClass('shadow-sw-lg');
+  });
+});
+
 describe('builder attachment persistence', () => {
   it('ignores a late save completion after changing documents', async () => {
     const save = deferred<void>();
