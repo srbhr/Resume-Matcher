@@ -4,10 +4,12 @@ import React from 'react';
 import Link from 'next/link';
 import { BackgroundEffect } from '@/components/effects/background-effect';
 import { buttonClass } from '@/components/ui/button';
+import { useBlockDissolveNavigate } from '@/lib/effects/use-block-dissolve-navigate';
 import { useTranslations } from '@/lib/i18n';
 
 export default function Hero() {
   const { t } = useTranslations();
+  const dashboardLink = useBlockDissolveNavigate();
 
   return (
     <section className="relative isolate h-screen w-full bg-canvas p-4 md:p-12 lg:p-24">
@@ -36,7 +38,13 @@ export default function Hero() {
           >
             {t('home.docs')}
           </a>
-          <Link href="/dashboard" className={buttonClass({ size: 'lg' })}>
+          <Link
+            href="/dashboard"
+            className={buttonClass({ size: 'lg' })}
+            onClick={dashboardLink.onClick}
+            onMouseEnter={dashboardLink.prepare}
+            onFocus={dashboardLink.prepare}
+          >
             {t('home.launchApp')}
           </Link>
         </div>
