@@ -37,7 +37,7 @@ export const LINE_RULES = [
   {
     id: 'gradient',
     re: /\bbg-(?:gradient|linear|radial|conic)-|(?:linear|radial|conic)-gradient\(/g,
-    hint: 'No gradients. The blueprint grid is the bg-blueprint utility.',
+    hint: 'No gradients.',
   },
   {
     id: 'palette',
