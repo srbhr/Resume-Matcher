@@ -638,8 +638,9 @@ def restore_dates_from_markdown(
 # A source line counts as a skill list when it has at least this many short items
 # and at least one of them is already a parsed skill.
 # A source line counts as a skill list when it has at least this many short items
-# and at least one of them was parsed as a skill.
+# and at least _MIN_LINE_ANCHORS of them were parsed as skills.
 _MIN_SKILL_LINE_ITEMS = 3
+_MIN_LINE_ANCHORS = 2
 _MAX_SKILL_ITEM_WORDS = 5
 _MAX_SKILL_ITEM_CHARS = 40
 _SKILL_SEPARATOR_RE = re.compile(r"\s*(?:,|\||;|•|·)\s*")
@@ -657,6 +658,8 @@ _SKILL_HEADING_RE = re.compile(
 _PROSE_WORDS = frozenset(
     {"with", "for", "to", "the", "of", "in", "on", "using", "by", "from", "at", "into"}
 )
+# Function words that also appear inside names ("Ruby on Rails", "Internet of Things").
+_NAME_CONNECTORS = frozenset({"on", "of", "the", "in", "for"})
 
 
 def _skill_line_items(line: str, anchors: set[str]) -> list[str]:
@@ -667,13 +670,7 @@ def _skill_line_items(line: str, anchors: set[str]) -> list[str]:
     such as "Stack").
     """
     text = _LIST_MARKER_RE.sub("", line).strip()
-    label = _LINE_LABEL_RE.match(text)
-    if label:
-        # "Languages: English, Hindi" lists spoken languages, not skills.
-        label_text = label.group(0).casefold()
-        if "language" in label_text and "programming" not in label_text:
-            return []
-        text = text[label.end() :]
+    text = _LINE_LABEL_RE.sub("", text)  # "Tools: Python, Rust" -> "Python, Rust"
 
     items: list[str] = []
     for index, chunk in enumerate(_SKILL_SEPARATOR_RE.split(text)):
@@ -705,10 +702,28 @@ def _skill_line_items(line: str, anchors: set[str]) -> list[str]:
             or len(words) > _MAX_SKILL_ITEM_WORDS
             or "@" in item
             or "://" in item
-            or any(word.casefold() in _PROSE_WORDS for word in words)
+            or _is_prose(words)
         ):
             return []
     return items
+
+
+def _is_prose(words: list[str]) -> bool:
+    """A phrase with a function word is prose unless it reads like a name.
+
+    "Built services with Python" is prose; "Ruby on Rails" is a skill because
+    every other word is capitalized (or starts with a digit or symbol).
+    """
+    function_words = {w.casefold() for w in words} & _PROSE_WORDS
+    if not function_words:
+        return False
+    if function_words - _NAME_CONNECTORS:
+        return True  # "with", "using", "by", ... join clauses, not names
+    return not all(
+        not word[0].isalpha() or word[0].isupper()
+        for word in words
+        if word.casefold() not in _PROSE_WORDS
+    )
 
 
 def restore_skills_from_markdown(
@@ -719,11 +734,12 @@ def restore_skills_from_markdown(
 
     The parse LLM tends to summarize long skill blocks, keeping a handful of
     items. A source line is treated as a skill list when it is a list of at
-    least three short items and one of them was parsed into
+    least three short items and at least two of them were parsed into
     ``additional.technicalSkills``; its missing items are appended in source
     order. Only the originally parsed skills anchor a line, so a restored item
-    can't pull in an unrelated line. Spoken-language lines, locations and prose
-    are left alone.
+    can't pull in an unrelated line, and a single match ("Developer, Java, Acme
+    Corp") isn't enough. Spoken-language lines, locations and prose are left
+    alone.
     """
     additional = parsed_data.get("additional")
     if not isinstance(additional, dict):
@@ -737,7 +753,7 @@ def restore_skills_from_markdown(
     restored: list[str] = []
     for line in markdown.splitlines():
         items = _skill_line_items(line, anchors)
-        if not any(item.casefold() in anchors for item in items):
+        if sum(item.casefold() in anchors for item in items) < _MIN_LINE_ANCHORS:
             continue
         for item in items:
             if item.casefold() not in known:

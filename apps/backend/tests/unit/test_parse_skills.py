@@ -45,7 +45,9 @@ def _skills(data: dict[str, Any]) -> list[str]:
 
 class TestRestoreSkillsFromMarkdown:
     def test_restores_items_dropped_from_skill_lines(self) -> None:
-        parsed = _parsed(["PostgreSQL", "Redis", "Kubernetes", "Docker", "Python"])
+        parsed = _parsed(
+            ["PostgreSQL", "Redis", "Kubernetes", "Docker", "Python", "TypeScript"]
+        )
 
         result = _skills(restore_skills_from_markdown(parsed, SOURCE))
 
@@ -61,11 +63,20 @@ class TestRestoreSkillsFromMarkdown:
         ]:
             assert skill in result
         # Existing order is kept; restored items follow in source order.
-        assert result[:5] == ["PostgreSQL", "Redis", "Kubernetes", "Docker", "Python"]
+        assert result[:6] == [
+            "PostgreSQL",
+            "Redis",
+            "Kubernetes",
+            "Docker",
+            "Python",
+            "TypeScript",
+        ]
         assert result.index("MongoDB") < result.index("CI/CD") < result.index("Rust")
 
     def test_does_not_duplicate_case_insensitively(self) -> None:
-        parsed = _parsed(["postgresql", "redis", "KUBERNETES", "docker", "python"])
+        parsed = _parsed(
+            ["postgresql", "redis", "KUBERNETES", "docker", "python", "typescript"]
+        )
 
         result = _skills(restore_skills_from_markdown(parsed, SOURCE))
 
@@ -95,17 +106,17 @@ class TestRestoreSkillsFromMarkdown:
             "Application development and integration stack: TypeScript, Node.js, Vite\n"
             "Stack  Python, FastAPI, Celery\n"
         )
-        parsed = _parsed(["TypeScript", "Python"])
+        parsed = _parsed(["TypeScript", "Vite", "Python", "Celery"])
 
         result = _skills(restore_skills_from_markdown(parsed, source))
 
         assert result == [
             "TypeScript",
-            "Python",
-            "Node.js",
             "Vite",
-            "FastAPI",
+            "Python",
             "Celery",
+            "Node.js",
+            "FastAPI",
         ]
 
     def test_lines_with_fewer_than_three_items_are_skipped(self) -> None:
@@ -136,33 +147,58 @@ class TestSkillLineEdgeCases:
         )
         assert result == ["Python", "English"]
 
-    def test_programming_language_label_is_still_a_skill_line(self) -> None:
-        parsed = _parsed(["Python"])
-        source = "Programming languages: Python, Rust, Go\n"
-        assert _skills(restore_skills_from_markdown(parsed, source)) == [
-            "Python",
-            "Rust",
-            "Go",
-        ]
-
-    def test_gap_after_a_known_skill_is_not_a_label(self) -> None:
-        parsed = _parsed(["Python"])
-        source = "Python  Java, Go, Rust\n"
+    def test_languages_label_with_programming_languages_is_restored(self) -> None:
+        parsed = _parsed(["Python", "Java"])
+        source = "Languages: Python, Java, C++, Go\n"
         assert _skills(restore_skills_from_markdown(parsed, source)) == [
             "Python",
             "Java",
+            "C++",
             "Go",
+        ]
+
+    def test_a_single_parsed_item_does_not_anchor_a_line(self) -> None:
+        # "Java" was really parsed, but one match isn't enough evidence that
+        # "Developer, Java, Acme Corp, Berlin" is a skill list.
+        parsed = _parsed(["Java"])
+        source = "Developer, Java, Acme Corp, Berlin\n"
+        assert _skills(restore_skills_from_markdown(parsed, source)) == ["Java"]
+
+    def test_wrapped_sentence_with_capitalized_words_is_prose(self) -> None:
+        # A summary sentence wrapped across lines: "using" joins a clause.
+        parsed = _parsed(["Node.js", "React", "PostgreSQL"])
+        source = "Generation (RAG) using Python, Node.js, React, and PostgreSQL.\n"
+        result = _skills(restore_skills_from_markdown(parsed, source))
+        assert result == ["Node.js", "React", "PostgreSQL"]
+
+    def test_capitalized_multi_word_skills_are_not_prose(self) -> None:
+        parsed = _parsed(["Python", "Django"])
+        source = "Python, Django, Ruby on Rails, Flask\n"
+        assert _skills(restore_skills_from_markdown(parsed, source)) == [
+            "Python",
+            "Django",
+            "Ruby on Rails",
+            "Flask",
+        ]
+
+    def test_gap_after_a_known_skill_is_not_a_label(self) -> None:
+        parsed = _parsed(["Python", "Go"])
+        source = "Python  Java, Go, Rust\n"
+        assert _skills(restore_skills_from_markdown(parsed, source)) == [
+            "Python",
+            "Go",
+            "Java",
             "Rust",
         ]
 
     def test_every_wide_gap_separates_items(self) -> None:
-        parsed = _parsed(["Redis"])
+        parsed = _parsed(["Redis", "Docker"])
         source = "Stack  PostgreSQL  MongoDB, Redis, Docker\n"
         result = _skills(restore_skills_from_markdown(parsed, source))
-        assert result == ["Redis", "PostgreSQL", "MongoDB", "Docker"]
+        assert result == ["Redis", "Docker", "PostgreSQL", "MongoDB"]
 
     def test_final_conjunction_is_a_separator(self) -> None:
-        parsed = _parsed(["Python"])
+        parsed = _parsed(["Python", "Rust"])
         source = "Python, Rust, and Go\n"
         assert _skills(restore_skills_from_markdown(parsed, source)) == [
             "Python",
@@ -181,22 +217,23 @@ class TestSkillLineEdgeCases:
         assert result == ["PostgreSQL", "Next.js"]
 
     def test_leading_dot_is_kept(self) -> None:
-        parsed = _parsed(["C#"])
+        parsed = _parsed(["C#", "F#"])
         source = ".NET, C#, F#.\n"
         assert _skills(restore_skills_from_markdown(parsed, source)) == [
             "C#",
-            ".NET",
             "F#",
+            ".NET",
         ]
 
     def test_restored_skills_do_not_anchor_later_lines(self) -> None:
-        parsed = _parsed(["Python"])
+        parsed = _parsed(["Python", "Go", "Acme Corp"])
         source = "Python, Java, Go\nDeveloper, Java, Acme Corp\n"
         result = _skills(restore_skills_from_markdown(parsed, source))
-        assert result == ["Python", "Java", "Go"]
+        # Restored "Java" must not count as the second anchor of the second line.
+        assert result == ["Python", "Go", "Acme Corp", "Java"]
 
     def test_pipe_separated_heading_is_not_a_skill(self) -> None:
-        parsed = _parsed(["Python"])
+        parsed = _parsed(["Python", "React"])
         source = "Technical Skills | Python | React | Node.js\n"
         assert _skills(restore_skills_from_markdown(parsed, source)) == [
             "Python",
@@ -217,7 +254,9 @@ def test_parse_prompt_requires_every_skill() -> None:
 async def test_parse_restores_skills_the_llm_dropped(
     mock_complete_json: AsyncMock,
 ) -> None:
-    mock_complete_json.return_value = _parsed(["PostgreSQL", "Kubernetes", "Python"])
+    mock_complete_json.return_value = _parsed(
+        ["PostgreSQL", "Redis", "Kubernetes", "Docker", "Python"]
+    )
 
     result = await parse_resume_to_json(SOURCE)
 
