@@ -1,18 +1,8 @@
 {
-  "app/layout.tsx": {
-    "legacy-token": 1
-  },
   "components/settings/api-key-menu.tsx": {
     "ink-tint": 1,
     "legacy-token": 3,
     "palette": 5,
     "transition": 2
-  },
-  "components/ui/card.tsx": {
-    "legacy-token": 1
-  },
-  "components/ui/rich-text-editor.tsx": {
-    "legacy-token": 2,
-    "palette": 3
   }
 }

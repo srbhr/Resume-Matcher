@@ -55,37 +55,9 @@
   --color-highlight: var(--sw-highlight);
   --color-overlay: var(--sw-overlay);
 
-  /* Legacy names still used at call sites. The phase-5 sweeps rename them;
-     Task 25 deletes these aliases (the guard's legacy-token rule tracks the rest). */
-  --color-background: var(--sw-canvas);
-  --color-foreground: var(--sw-ink);
-  --color-card: var(--sw-canvas);
-  --color-secondary: var(--sw-panel);
-  --color-muted: var(--sw-panel);
-  --color-muted-foreground: var(--sw-steel);
-  --color-accent: var(--sw-panel);
-  --color-border: var(--sw-ink);
-  --color-ring: var(--sw-primary);
-  --color-steel-grey: var(--sw-steel);
-  --color-paper-tint: var(--sw-paper);
-
-  /* Brand unification (spec §4.6). Tailwind v4 renders blue-700 as #1447e6,
-     red-600 as #e30117 and so on, so the app shipped two of each brand colour.
-     Point the shades in use at the brand values until the sweeps rename them;
-     Task 25 deletes this block. */
-  --color-blue-700: var(--sw-primary);
-  --color-blue-800: var(--sw-primary-hover);
-  --color-green-700: var(--sw-success);
-  --color-green-800: var(--sw-success-hover);
-  --color-red-600: var(--sw-destructive);
-  --color-red-700: var(--sw-destructive-hover);
-  --color-orange-500: var(--sw-warning);
-  --color-orange-600: var(--sw-warning-hover);
-
   /* Hard offset shadows in solid ink — never blurred. Roles (spec §4.3):
      sm = controls, default = cards and menus, lg = dialogs and page frame,
-     xl = home hero, card = resume sheet. xs is folded into sm by the sweeps. */
-  --shadow-sw-xs: 1px 1px 0px 0px #000000;
+     xl = home hero, card = resume sheet. */
   --shadow-sw-sm: 2px 2px 0px 0px #000000;
   --shadow-sw-default: 4px 4px 0px 0px #000000;
   --shadow-sw-card: 6px 6px 0px 0px #000000;
@@ -106,10 +78,10 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-ink outline-primary/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-canvas text-ink;
   }
 }
 
