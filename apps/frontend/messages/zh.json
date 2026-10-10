@@ -323,6 +323,16 @@
         "keywordsExtracted": "已提取 {count} 个关键词",
         "matchesFound": "已匹配 {count} 处",
         "matchRateLabel": "匹配率："
+      },
+      "atsScore": {
+        "loading": "正在加载 ATS 评分…",
+        "notCalculated": "此简历尚未计算 ATS 评分。",
+        "loadFailed": "无法加载已保存的 ATS 评分。请尝试重新计算，或刷新页面。",
+        "lastCalculated": "上次计算：{date}",
+        "recalculate": "重新计算",
+        "recalculating": "计算中…",
+        "saveFirst": "请先保存修改，然后重新计算。",
+        "recalculateFailed": "无法计算 ATS 评分。如果此简历是在保存评分功能之前定制的，请在“定制简历”页面重新定制。"
       }
     },
     "genericItemForm": {
@@ -629,6 +639,18 @@
       "awardChanges": "奖项变更",
       "rejectButton": "拒绝并重新生成",
       "confirmButton": "确认并保存"
+    },
+    "atsScore": {
+      "title": "ATS 评分明细",
+      "keywordMatch": "关键词匹配",
+      "skillsCoverage": "技能覆盖",
+      "titleMatch": "职位名称匹配",
+      "sectionCompleteness": "板块完整度",
+      "dateConsistency": "日期格式一致性",
+      "missingKeywords": "缺失关键词",
+      "injectableKeywords": "可安全添加（主简历中已有）",
+      "recommendations": "建议",
+      "twoColumnWarning": "双栏布局：许多 ATS 会错乱读取各栏内容。投递前请在编辑器中切换为单栏模板。"
     },
     "regenerateDialog": {
       "title": "重新生成定制简历？",

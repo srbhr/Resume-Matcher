@@ -236,10 +236,10 @@ it.each(['Close preview', 'Reject preview'])(
     render(<TailorPage />);
     await act(async () => {});
     await generate();
-    expect(screen.getByRole('heading', { name: 'ATS Score Breakdown' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'tailor.atsScore.title' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: dismiss }));
     expect(screen.queryByRole('button', { name: 'Confirm preview' })).toBeNull();
-    expect(screen.getByRole('heading', { name: 'ATS Score Breakdown' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'tailor.atsScore.title' })).toBeInTheDocument();
   }
 );
 
@@ -264,9 +264,9 @@ it('clears the previous ATS score card when a new tailoring run starts', async (
   await act(async () => {});
   await generate();
   fireEvent.click(screen.getByRole('button', { name: 'Close preview' }));
-  expect(screen.getByRole('heading', { name: 'ATS Score Breakdown' })).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: 'tailor.atsScore.title' })).toBeInTheDocument();
   await generate();
-  expect(screen.queryByRole('heading', { name: 'ATS Score Breakdown' })).toBeNull();
+  expect(screen.queryByRole('heading', { name: 'tailor.atsScore.title' })).toBeNull();
   await act(async () => next.resolve(preview));
 });
 

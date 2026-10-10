@@ -1,16 +1,24 @@
 'use client';
 
-import type { ATSScore } from '@/components/common/resume_previewer_context';
+import type { ATSScore, ATSSubScores } from '@/components/common/resume_previewer_context';
+import { Alert } from '@/components/ui/alert';
+import { useTranslations } from '@/lib/i18n';
+import { isTwoColumnTemplate, type TemplateType } from '@/lib/types/template-settings';
 import { cn } from '@/lib/utils';
 
 interface ATSScoreCardProps {
   atsScore: ATSScore;
+  /** Template the resume will be exported with; drives the layout warning. */
+  template?: TemplateType;
 }
 
-const SUB_SCORE_LABELS: Record<string, string> = {
-  keyword_match: 'Keyword Match',
-  skills_coverage: 'Skills Coverage',
-  section_completeness: 'Section Completeness',
+// Display order; title_match and date_consistency are null when they couldn't be scored.
+const SUB_SCORE_LABEL_KEYS: Record<keyof ATSSubScores, string> = {
+  keyword_match: 'tailor.atsScore.keywordMatch',
+  skills_coverage: 'tailor.atsScore.skillsCoverage',
+  title_match: 'tailor.atsScore.titleMatch',
+  section_completeness: 'tailor.atsScore.sectionCompleteness',
+  date_consistency: 'tailor.atsScore.dateConsistency',
 };
 
 type Band = 'high' | 'mid' | 'low';
@@ -86,13 +94,14 @@ function KeywordList({
   );
 }
 
-export function ATSScoreCard({ atsScore }: ATSScoreCardProps) {
+export function ATSScoreCard({ atsScore, template }: ATSScoreCardProps) {
+  const { t } = useTranslations();
   const { overall_score, sub_scores, missing_keywords, injectable_keywords, recommendations } =
     atsScore;
   return (
     <section className="space-y-6 border border-ink bg-white p-6 shadow-sw-default">
       <div className="flex items-end justify-between gap-4">
-        <h3 className="font-serif text-xl font-bold text-ink">ATS Score Breakdown</h3>
+        <h3 className="font-serif text-xl font-bold text-ink">{t('tailor.atsScore.title')}</h3>
         <p className="flex items-end gap-1">
           <span
             className={cn(
@@ -107,16 +116,25 @@ export function ATSScoreCard({ atsScore }: ATSScoreCardProps) {
       </div>
       <ScoreBar value={overall_score} />
       <div className="space-y-3">
-        {Object.entries(sub_scores).map(([key, value]) => (
-          <SubScoreRow key={key} label={SUB_SCORE_LABELS[key] ?? key} value={value} />
-        ))}
+        {(Object.keys(SUB_SCORE_LABEL_KEYS) as (keyof ATSSubScores)[]).map((key) => {
+          const value = sub_scores[key];
+          if (value == null) return null;
+          return <SubScoreRow key={key} label={t(SUB_SCORE_LABEL_KEYS[key])} value={value} />;
+        })}
       </div>
+      {template && isTwoColumnTemplate(template) && (
+        <Alert tone="warning">{t('tailor.atsScore.twoColumnWarning')}</Alert>
+      )}
       {missing_keywords.length > 0 && (
-        <KeywordList title="Missing Keywords" keywords={missing_keywords} tone="missing" />
+        <KeywordList
+          title={t('tailor.atsScore.missingKeywords')}
+          keywords={missing_keywords}
+          tone="missing"
+        />
       )}
       {injectable_keywords.length > 0 && (
         <KeywordList
-          title="Safe to Add (in your master resume)"
+          title={t('tailor.atsScore.injectableKeywords')}
           keywords={injectable_keywords}
           tone="injectable"
         />
@@ -124,7 +142,7 @@ export function ATSScoreCard({ atsScore }: ATSScoreCardProps) {
       {recommendations.length > 0 && (
         <div>
           <p className="mb-2 font-mono text-xs font-bold uppercase tracking-wider text-steel">
-            Recommendations
+            {t('tailor.atsScore.recommendations')}
           </p>
           <ul className="list-disc space-y-2 pl-4 text-sm text-ink-soft marker:text-primary">
             {recommendations.map((tip, i) => (

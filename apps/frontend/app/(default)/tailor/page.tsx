@@ -21,6 +21,7 @@ import {
   type ResumeListItem,
 } from '@/lib/api/resume';
 import { readStoredTemplateSettings } from '@/lib/utils/stored-template-settings';
+import type { TemplateType } from '@/lib/types/template-settings';
 import { fetchPromptConfig, type PromptOption } from '@/lib/api/config';
 import { getPreviewErrorMessage } from '@/lib/utils/preview-error';
 import { Dropdown } from '@/components/ui/dropdown';
@@ -56,6 +57,8 @@ export default function TailorPage() {
   const [pendingResult, setPendingResult] = useState<ImprovedResult | null>(null);
   // The last ATS result stays visible after the diff modal closes; cleared when a new run starts.
   const [atsResult, setAtsResult] = useState<ATSScore | null>(null);
+  // Template the preview was fitted with; the ATS card warns on two-column layouts.
+  const [atsTemplate, setAtsTemplate] = useState<TemplateType | undefined>(undefined);
   const [diffConfirmError, setDiffConfirmError] = useState<string | null>(null);
   const [isConfirming, setIsConfirming] = useState(false);
   const [showRegenerateDialog, setShowRegenerateDialog] = useState(false);
@@ -252,9 +255,10 @@ export default function TailorPage() {
       incrementJobs(); // Update cached counter
 
       // 2. Preview Resume
+      const templateSettings = readStoredTemplateSettings();
       const result = await previewImproveResume(resumeId, jobId, selectedPromptId, {
         maxBulletsPerEntry: 3,
-        pageFit: toPageFitSettings(readStoredTemplateSettings(), locale),
+        pageFit: toPageFitSettings(templateSettings, locale),
       });
       if (!isCurrent(token)) return;
 
@@ -274,6 +278,7 @@ export default function TailorPage() {
       setMissingDiffError(null);
       setPendingResult(result);
       setAtsResult(result.data.ats_score ?? null);
+      setAtsTemplate(templateSettings.template);
       setShowDiffModal(true);
     } catch (err) {
       if (!isCurrent(token)) return;
@@ -539,7 +544,7 @@ export default function TailorPage() {
           </Button>
 
           {/* ATS Score Breakdown: the last preview's score, kept after the diff modal closes */}
-          {atsResult && <ATSScoreCard atsScore={atsResult} />}
+          {atsResult && <ATSScoreCard atsScore={atsResult} template={atsTemplate} />}
         </div>
       </div>
 

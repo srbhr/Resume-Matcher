@@ -323,6 +323,16 @@
         "keywordsExtracted": "{count} palabras clave extraídas",
         "matchesFound": "{count} coincidencias encontradas",
         "matchRateLabel": "Tasa de coincidencia:"
+      },
+      "atsScore": {
+        "loading": "Cargando la puntuación ATS…",
+        "notCalculated": "Aún no se ha calculado la puntuación ATS de este currículum.",
+        "loadFailed": "No se pudo cargar la puntuación ATS guardada. Prueba Recalcular o recarga la página.",
+        "lastCalculated": "Último cálculo: {date}",
+        "recalculate": "Recalcular",
+        "recalculating": "Calculando…",
+        "saveFirst": "Guarda tus cambios y luego recalcula.",
+        "recalculateFailed": "No se pudo calcular la puntuación ATS. Si este currículum se adaptó antes de que se guardaran las puntuaciones, vuelve a adaptarlo desde la página Personalizar CV."
       }
     },
     "genericItemForm": {
@@ -629,6 +639,18 @@
       "awardChanges": "Cambios en premios",
       "rejectButton": "Rechazar y regenerar",
       "confirmButton": "Confirmar y guardar"
+    },
+    "atsScore": {
+      "title": "Desglose de puntuación ATS",
+      "keywordMatch": "Coincidencia de palabras clave",
+      "skillsCoverage": "Cobertura de habilidades",
+      "titleMatch": "Coincidencia de título",
+      "sectionCompleteness": "Completitud de secciones",
+      "dateConsistency": "Consistencia de fechas",
+      "missingKeywords": "Palabras clave faltantes",
+      "injectableKeywords": "Seguras de añadir (en tu currículum maestro)",
+      "recommendations": "Recomendaciones",
+      "twoColumnWarning": "Diseño a dos columnas: muchos ATS leen las columnas fuera de orden. Cambia a una plantilla de una columna en el editor antes de postular."
     },
     "regenerateDialog": {
       "title": "¿Regenerar el currículum personalizado?",
