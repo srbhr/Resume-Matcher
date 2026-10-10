@@ -19,7 +19,7 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-canvas'
       ),
       raised: cn(
-        'bg-white border border-ink shadow-sw-sm transition-[transform,box-shadow]',
+        'bg-white border border-ink shadow-sw-nested transition-[transform,box-shadow]',
         'hover:translate-x-px hover:translate-y-px hover:shadow-none'
       ),
       outline: 'bg-canvas border-2 border-ink',

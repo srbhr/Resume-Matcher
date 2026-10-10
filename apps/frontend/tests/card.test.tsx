@@ -20,7 +20,12 @@ describe('Card', () => {
 
   it('offers a raised resting frame for cards on bare canvas', () => {
     render(<Card variant="raised" data-testid="c" />);
-    expect(screen.getByTestId('c')).toHaveClass('bg-white', 'border', 'border-ink', 'shadow-sw-sm');
+    expect(screen.getByTestId('c')).toHaveClass(
+      'bg-white',
+      'border',
+      'border-ink',
+      'shadow-sw-nested'
+    );
   });
 
   it('sets card titles in bold serif', () => {

@@ -32,7 +32,7 @@ export const LINE_RULES = [
   {
     id: 'soft-shadow',
     re: /(?<![\w-])shadow(?:-(?:sm|md|lg|xl|2xl|inner))?(?![\w-])|(?<![\w-])shadow-\[/g,
-    hint: 'Use a hard shadow token: shadow-sw-sm (controls), shadow-sw-default (cards), shadow-sw-lg (dialogs).',
+    hint: 'Use a hard shadow token: shadow-sw-sm (controls), shadow-sw-default (menus), shadow-sw-lg (dialogs, page frame), shadow-sw-nested (cards inside a page or dialog).',
   },
   {
     id: 'gradient',

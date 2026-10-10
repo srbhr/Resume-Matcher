@@ -36,7 +36,7 @@ export const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
     <div
       className={cn(
         'flex items-center justify-between gap-4',
-        variant === 'card' && 'border border-ink bg-white p-4 shadow-sw-sm',
+        variant === 'card' && 'border border-ink bg-white p-4 shadow-sw-nested',
         disabled && 'cursor-not-allowed opacity-50',
         className
       )}

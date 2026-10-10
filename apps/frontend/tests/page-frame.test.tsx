@@ -33,6 +33,17 @@ describe('PageFrame + PageHeader', () => {
     expect(frame).not.toHaveClass('h-full');
   });
 
+  it('offers a narrow frame for single-column form pages', () => {
+    render(
+      <PageFrame width="narrow">
+        <p>content</p>
+      </PageFrame>
+    );
+    const frame = screen.getByText('content').parentElement;
+    expect(frame).toHaveClass('max-w-4xl');
+    expect(frame).not.toHaveClass('max-w-[86rem]');
+  });
+
   it('keeps min-h-screen in auto mode', () => {
     const { container } = render(
       <PageFrame>

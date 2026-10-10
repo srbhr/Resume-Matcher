@@ -1,10 +1,14 @@
 import * as React from 'react';
 import { cn } from '@/lib/utils';
 
-export type PageFrameWidth = 'default' | 'wide';
+export type PageFrameWidth = 'narrow' | 'default' | 'wide';
 export type PageFrameHeight = 'auto' | 'screen';
 
-const WIDTH: Record<PageFrameWidth, string> = { default: 'max-w-[86rem]', wide: 'max-w-[104rem]' };
+const WIDTH: Record<PageFrameWidth, string> = {
+  narrow: 'max-w-4xl',
+  default: 'max-w-[86rem]',
+  wide: 'max-w-[104rem]',
+};
 
 /** The house page frame: blueprint grid on canvas, 1px ink frame, 8px hard shadow. Server-safe. */
 export function PageFrame({

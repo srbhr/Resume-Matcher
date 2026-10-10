@@ -11,6 +11,14 @@ describe('ToggleSwitch', () => {
     expect(onChange).toHaveBeenCalledWith(true);
   });
 
+  it('gives the card variant the nested (translucent) shadow, not a solid one', () => {
+    const { container } = render(
+      <ToggleSwitch checked={false} onCheckedChange={() => {}} label="Beta" />
+    );
+    expect(container.firstChild).toHaveClass('shadow-sw-nested');
+    expect(container.firstChild).not.toHaveClass('shadow-sw-sm');
+  });
+
   it('has an inline variant without the card frame', () => {
     const { container } = render(
       <ToggleSwitch variant="inline" checked onCheckedChange={vi.fn()} label="Inline" />
