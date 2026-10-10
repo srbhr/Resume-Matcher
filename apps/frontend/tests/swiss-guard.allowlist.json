@@ -309,12 +309,6 @@
     "legacy-token": 1,
     "palette": 1
   },
-  "components/ui/dropdown.tsx": {
-    "glyph": 1,
-    "legacy-token": 4,
-    "palette": 1,
-    "transition": 1
-  },
   "components/ui/input.tsx": {
     "legacy-token": 1,
     "palette": 1
