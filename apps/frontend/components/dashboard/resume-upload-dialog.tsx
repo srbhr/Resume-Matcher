@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import {
   Dialog,
   DialogBody,
@@ -11,15 +11,10 @@ import {
   DialogTrigger,
   DialogClose,
 } from '@/components/ui/dialog';
+import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import {
-  UploadIcon,
-  Loader2Icon,
-  AlertCircleIcon,
-  FileIcon,
-  XIcon,
-  CheckCircle2Icon,
-} from 'lucide-react';
+import { StatusIndicator } from '@/components/ui/status-indicator';
+import { UploadIcon, Loader2Icon, FileIcon, XIcon } from 'lucide-react';
 import { useFileUpload, formatBytes } from '@/hooks/use-file-upload';
 import { getUploadUrl } from '@/lib/api/client';
 import { useTranslations } from '@/lib/i18n';
@@ -222,6 +217,15 @@ export function ResumeUploadDialog({
     e.preventDefault();
     e.stopPropagation();
   };
+  const canBrowse = !currentFile && !isRecovering;
+  const dropzoneTitleId = useId();
+  const dropzoneHintId = useId();
+  const handleDropzoneKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      openFileDialog();
+    }
+  };
 
   const handleRetryProcessing = async () => {
     if (!failedResumeId || recoveryBusyRef.current) return;
@@ -297,8 +301,8 @@ export function ResumeUploadDialog({
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         {trigger || (
-          <Button className="rounded-none border border-black shadow-sw-default hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none transition-all">
-            <UploadIcon className="w-4 h-4 mr-2" />
+          <Button type="button">
+            <UploadIcon aria-hidden="true" />
             {t('dashboard.uploadResume')}
           </Button>
         )}
@@ -311,13 +315,20 @@ export function ResumeUploadDialog({
         <DialogBody>
           <div
             className={`
-                            relative border-2 border-dashed p-8 text-center transition-all duration-200
-                            ${isDragging ? 'border-blue-700 bg-blue-50' : 'border-steel-grey hover:border-black hover:bg-white'}
+                            relative border-2 border-dashed p-8 text-center transition-colors
+                            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-white
+                            ${isDragging ? 'border-primary bg-info-tint' : 'border-steel hover:border-black hover:bg-white'}
                             ${currentFile ? 'bg-white border-solid border-black' : ''}
-                            ${!currentFile && !isRecovering ? 'cursor-pointer' : 'cursor-default'}
+                            ${canBrowse ? 'cursor-pointer' : 'cursor-default'}
                             ${isRecovering ? 'opacity-70' : ''}
                         `}
-            onClick={!currentFile && !isRecovering ? openFileDialog : undefined}
+            // The empty drop zone is the file picker's keyboard entry point too.
+            role={canBrowse ? 'button' : undefined}
+            tabIndex={canBrowse ? 0 : undefined}
+            aria-labelledby={canBrowse ? dropzoneTitleId : undefined}
+            aria-describedby={canBrowse ? dropzoneHintId : undefined}
+            onKeyDown={canBrowse ? handleDropzoneKeyDown : undefined}
+            onClick={canBrowse ? openFileDialog : undefined}
             onDragEnter={isRecovering ? preventDropzoneInteraction : handleDragEnter}
             onDragLeave={isRecovering ? preventDropzoneInteraction : handleDragLeave}
             onDragOver={isRecovering ? preventDropzoneInteraction : handleDragOver}
@@ -327,27 +338,31 @@ export function ResumeUploadDialog({
 
             {isUploadingGlobal ? (
               <div className="flex flex-col items-center py-4">
-                <Loader2Icon className="w-10 h-10 animate-spin text-blue-700 mb-4" />
-                <p className="font-mono text-sm font-bold uppercase text-blue-700">
+                <Loader2Icon
+                  aria-hidden="true"
+                  className="w-10 h-10 animate-spin text-primary mb-4"
+                />
+                <p className="font-mono text-sm font-bold uppercase text-primary">
                   {t('common.uploading')}
                 </p>
               </div>
             ) : currentFile ? (
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3 text-left overflow-hidden">
-                  <div className="w-10 h-10 border border-black bg-paper-tint flex items-center justify-center shrink-0">
-                    <FileIcon className="w-5 h-5 text-black" />
+                  <div className="w-10 h-10 border border-black bg-paper flex items-center justify-center shrink-0">
+                    <FileIcon aria-hidden="true" className="w-5 h-5 text-black" />
                   </div>
                   <div className="min-w-0">
                     <p className="font-bold text-sm truncate max-w-[200px]">
                       {currentFile.file.name}
                     </p>
-                    <p className="font-mono text-xs text-steel-grey">
+                    <p className="font-mono text-xs text-steel tabular-nums">
                       {formatBytes(currentFile.file.size)}
                     </p>
                   </div>
                 </div>
                 <Button
+                  type="button"
                   variant="ghost"
                   size="icon"
                   disabled={isRecovering}
@@ -355,22 +370,22 @@ export function ResumeUploadDialog({
                     e.stopPropagation();
                     removeFile(currentFile.id);
                   }}
-                  className="hover:bg-red-100 text-red-600 rounded-none"
+                  className="text-destructive hover:bg-destructive-tint"
                   aria-label={t('a11y.removeFile')}
                   title={t('a11y.removeFile')}
                 >
-                  <XIcon className="w-5 h-5" />
+                  <XIcon aria-hidden="true" className="w-5 h-5" />
                 </Button>
               </div>
             ) : (
               <div className="flex flex-col items-center py-4">
                 <div className="w-12 h-12 border border-black bg-white shadow-sw-default flex items-center justify-center mb-4">
-                  <UploadIcon className="w-6 h-6 text-black" />
+                  <UploadIcon aria-hidden="true" className="w-6 h-6 text-black" />
                 </div>
-                <p className="font-bold text-lg mb-1">
+                <p id={dropzoneTitleId} className="font-bold text-lg mb-1">
                   {t('dashboard.uploadDialog.dropzoneTitle')}
                 </p>
-                <p className="font-mono text-xs text-steel-grey uppercase">
+                <p id={dropzoneHintId} className="font-mono text-xs text-steel uppercase">
                   {t('dashboard.uploadDialog.dropzoneSubtitle')}
                 </p>
               </div>
@@ -379,14 +394,11 @@ export function ResumeUploadDialog({
 
           {/* Feedback Messages */}
           {displayErrors.length > 0 && (
-            <div className="mt-4 p-3 bg-red-50 border border-red-200 flex items-start gap-2 text-red-700 text-sm">
-              <AlertCircleIcon className="w-5 h-5 shrink-0" />
-              <div>
-                {displayErrors.map((err, i) => (
-                  <p key={i}>{err}</p>
-                ))}
-              </div>
-            </div>
+            <Alert tone="error" className="mt-4">
+              {displayErrors.map((err, i) => (
+                <p key={i}>{err}</p>
+              ))}
+            </Alert>
           )}
 
           {uploadFeedback?.type === 'pending' && (
@@ -396,18 +408,17 @@ export function ResumeUploadDialog({
           )}
 
           {uploadFeedback?.type === 'success' && (
-            <div className="mt-4 p-3 bg-green-50 border border-green-200 flex items-center gap-2 text-green-700 text-sm font-bold">
-              <CheckCircle2Icon className="w-5 h-5 shrink-0" />
-              <p>{uploadFeedback.message}</p>
-            </div>
+            <Alert tone="success" className="mt-4">
+              <StatusIndicator tone="ready">{uploadFeedback.message}</StatusIndicator>
+            </Alert>
           )}
         </DialogBody>
 
         <DialogFooter className="flex-wrap">
           {failedResumeId && uploadFeedback?.type !== 'success' && (
             <Button
+              type="button"
               variant="outline"
-              className="rounded-none border-black hover:bg-paper-tint"
               onClick={handleRetryProcessing}
               disabled={isRecovering}
             >
@@ -418,6 +429,7 @@ export function ResumeUploadDialog({
           )}
           {failedResumeId && uploadFeedback?.type !== 'success' && (
             <Button
+              type="button"
               variant="destructive"
               disabled={isRecovering}
               onClick={() => setShowDeleteDialog(true)}
@@ -427,8 +439,8 @@ export function ResumeUploadDialog({
           )}
           {uploadFeedback?.type === 'error' && files.length > 0 && (
             <Button
+              type="button"
               variant="outline"
-              className="rounded-none border-black hover:bg-paper-tint"
               disabled={isRecovering}
               onClick={() => {
                 if (files[0]) removeFile(files[0].id);
@@ -440,7 +452,7 @@ export function ResumeUploadDialog({
             </Button>
           )}
           <DialogClose asChild>
-            <Button variant="outline" className="rounded-none border-black hover:bg-paper-tint">
+            <Button type="button" variant="outline">
               {t('common.cancel')}
             </Button>
           </DialogClose>

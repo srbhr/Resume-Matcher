@@ -452,3 +452,34 @@ it('serializes saved deletion against retry and ignores completion after unmount
   await act(async () => pending.resolve());
   expect(onComplete).not.toHaveBeenCalled();
 });
+
+describe('drop zone keyboard access', () => {
+  it('opens the file picker on Enter and Space, and stops being a button once a file is chosen', () => {
+    // The upload never answers, so the chosen file stays in the zone.
+    vi.mocked(fetch).mockReturnValue(new Promise<Response>(() => {}));
+    const pickerClick = vi.spyOn(HTMLInputElement.prototype, 'click').mockImplementation(() => {});
+    render(<ResumeUploadDialog open onOpenChange={vi.fn()} />);
+
+    const zone = screen.getByRole('button', { name: 'dashboard.uploadDialog.dropzoneTitle' });
+    expect(zone).toHaveAttribute('tabindex', '0');
+    // Named and described by its visible copy, so the accepted formats are still announced.
+    expect(zone).toHaveAccessibleDescription('dashboard.uploadDialog.dropzoneSubtitle');
+    expect(zone).not.toHaveAttribute('aria-label');
+
+    fireEvent.keyDown(zone, { key: 'Enter' });
+    expect(pickerClick).toHaveBeenCalledTimes(1);
+    fireEvent.keyDown(zone, { key: ' ' });
+    expect(pickerClick).toHaveBeenCalledTimes(2);
+    fireEvent.keyDown(zone, { key: 'a' });
+    expect(pickerClick).toHaveBeenCalledTimes(2);
+
+    chooseResume();
+    expect(
+      screen.queryByRole('button', { name: 'dashboard.uploadDialog.dropzoneTitle' })
+    ).toBeNull();
+    expect(zone).not.toHaveAttribute('role');
+    expect(zone).not.toHaveAttribute('tabindex');
+    fireEvent.keyDown(zone, { key: 'Enter' });
+    expect(pickerClick).toHaveBeenCalledTimes(2);
+  });
+});

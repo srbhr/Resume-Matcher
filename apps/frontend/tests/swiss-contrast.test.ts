@@ -51,6 +51,7 @@ const TEXT_PAIRS: Array<[string, string]> = [
   ['white', 'destructive'],
   ['white', 'destructive-hover'],
   ['white', 'ink'],
+  ['white', 'steel'], // dashboard monogram fills
   ['ink', 'warning'],
   ['ink', 'warning-hover'],
   ['ink', 'panel'],
