@@ -1,25 +1,17 @@
 'use client';
 
-import dynamic from 'next/dynamic';
 import { usePathname, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { BlockDissolve as BlockDissolveOverlay } from '@/components/effects/block-dissolve';
 import { BlockDissolveContext, DASHBOARD_HREF } from '@/lib/effects/use-block-dissolve-navigate';
 import { DURATION } from '@/lib/motion';
 
-// The overlay is its own lazy chunk: it is not in any route's first-load JS. One loader serves
-// both the render and `prepare`, so hovering or focusing the link warms exactly the chunk the click
-// renders (two separate `import()` sites become two chunks in a Turbopack build). A failed load
-// (a stale chunk after a deploy) only skips the effect, never the page.
+// The overlay is its own lazy chunk: it is not in any route's first-load JS. It is loaded here, by
+// hand, and rendered only once it is in hand: `next/dynamic` (React.lazy) suspends on its first
+// render, and React holds a revealed Suspense boundary back for up to 300 ms, which is longer than
+// the whole cover. A failed load (a stale chunk after a deploy) only skips the effect, never the
+// page: the sequence runs on timers and the navigation still happens.
 const loadOverlay = () => import('@/components/effects/block-dissolve');
-const BlockDissolve = dynamic(
-  () =>
-    loadOverlay()
-      .then((mod) => mod.BlockDissolve)
-      .catch(() => () => null),
-  {
-    ssr: false,
-  }
-);
 
 type Phase = 'idle' | 'cover' | 'covered' | 'reveal';
 
@@ -57,14 +49,23 @@ export function BlockDissolveProvider({ children }: { children: React.ReactNode 
     []
   );
 
+  const [Overlay, setOverlay] = useState<typeof BlockDissolveOverlay | null>(null);
+  const warm = useCallback(() => {
+    loadOverlay()
+      .then((mod) => setOverlay(() => mod.BlockDissolve))
+      .catch(() => {});
+  }, []);
+
   const start = useCallback(() => {
-    if (phase === 'idle') enter('cover');
-  }, [phase, enter]);
+    if (phase !== 'idle') return;
+    if (!Overlay) warm(); // a cold chunk: the overlay joins part-way once it arrives
+    enter('cover');
+  }, [phase, Overlay, warm, enter]);
 
   const prepare = useCallback(() => {
     router.prefetch(DASHBOARD_HREF);
-    loadOverlay().catch(() => {});
-  }, [router]);
+    warm();
+  }, [router, warm]);
 
   // Home is covered: now navigate. The phase clock for the safety timeout starts here.
   useEffect(() => {
@@ -98,7 +99,7 @@ export function BlockDissolveProvider({ children }: { children: React.ReactNode 
   return (
     <BlockDissolveContext.Provider value={controls}>
       {children}
-      {phase !== 'idle' && <BlockDissolve phase={phase} since={since} />}
+      {phase !== 'idle' && Overlay && <Overlay phase={phase} since={since} />}
     </BlockDissolveContext.Provider>
   );
 }
