@@ -101,8 +101,9 @@ export function CardDetailModal({
 
         <DialogBody className="space-y-4">
           {loading ? (
-            <div className="py-8">
+            <div role="status" className="py-8">
               <Loader2 aria-hidden="true" className="size-5 animate-spin text-steel" />
+              <span className="sr-only">{t('common.loading')}</span>
             </div>
           ) : detail ? (
             <div className="space-y-4">
@@ -144,7 +145,10 @@ export function CardDetailModal({
                     disabled={savingNotes}
                   >
                     {savingNotes ? (
-                      <Loader2 aria-hidden="true" className="animate-spin" />
+                      <>
+                        <Loader2 aria-hidden="true" className="animate-spin" />
+                        {t('common.saving')}
+                      </>
                     ) : (
                       t('tracker.modal.saveNotes')
                     )}

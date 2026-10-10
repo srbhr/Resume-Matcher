@@ -298,8 +298,9 @@ export function KanbanBoard() {
           horizontally as a group and vertically within each stage. */}
       <div className="flex min-h-0 flex-1 flex-col">
         {loading ? (
-          <div className="flex flex-1 items-center justify-center">
+          <div role="status" className="flex flex-1 items-center justify-center">
             <Loader2 aria-hidden="true" className="size-6 animate-spin text-steel" />
+            <span className="sr-only">{t('common.loading')}</span>
           </div>
         ) : isEmpty ? (
           <EmptyState
