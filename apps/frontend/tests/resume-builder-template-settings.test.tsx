@@ -39,6 +39,8 @@ vi.mock('@/components/builder/formatting-controls', () => ({
   ),
 }));
 vi.mock('@/components/builder/regenerate-wizard', () => ({ RegenerateWizard: () => null }));
+// Dialogs portal into document.body, which renderToString can't do under jsdom.
+vi.mock('@/components/ui/confirm-dialog', () => ({ ConfirmDialog: () => null }));
 vi.mock('@/hooks/use-regenerate-wizard', () => ({
   useRegenerateWizard: () => ({ step: 'idle', reset: vi.fn(), startRegenerate: vi.fn() }),
 }));
