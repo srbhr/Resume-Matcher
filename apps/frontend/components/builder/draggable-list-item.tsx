@@ -46,7 +46,7 @@ export const DraggableListItem: React.FC<DraggableListItemProps> = ({
       <div
         {...attributes}
         {...listeners}
-        className="absolute left-0 top-0 h-full w-4 flex items-start justify-center cursor-grab active:cursor-grabbing z-10"
+        className="absolute left-0 top-0 h-full w-4 flex items-start justify-center cursor-grab active:cursor-grabbing z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary before:absolute before:inset-y-0 before:-inset-x-1 before:content-['']"
         title={handleLabel}
         aria-label={handleLabel}
       >

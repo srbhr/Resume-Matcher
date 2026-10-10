@@ -86,11 +86,11 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
       }`}
     >
       {/* Section Header */}
-      <div className="flex justify-between items-center border-b border-ink pb-2 mb-4">
+      <div className="flex flex-wrap justify-between items-center gap-y-2 border-b border-ink pb-2 mb-4">
         {/* Section Name (editable) */}
         <div className="flex items-center gap-2">
           {isEditing ? (
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-3">
               <Input
                 value={editedName}
                 onChange={(e) => setEditedName(e.target.value)}
@@ -152,7 +152,7 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
         </div>
 
         {/* Section Controls */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-3">
           {/* Visibility Toggle. The parent container already applies
               opacity-60 when hidden, which carries the visual "faded" cue for
               the hidden state. The name stays static; aria-pressed carries the

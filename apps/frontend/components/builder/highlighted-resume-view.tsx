@@ -80,9 +80,7 @@ export function HighlightedResumeView({ resumeData, keywords }: HighlightedResum
                       return (
                         <li key={i} className={cn('flex text-ink-soft', showMarker && 'ml-4')}>
                           {showMarker && (
-                            <span className="mr-2 flex-shrink-0" aria-hidden="true">
-                              &bull;&nbsp;
-                            </span>
+                            <span aria-hidden="true" className="mr-2 mt-2 size-1 shrink-0 bg-ink" />
                           )}
                           <span>
                             <HighlightedText text={bullet} keywords={keywords} />
@@ -141,9 +139,7 @@ export function HighlightedResumeView({ resumeData, keywords }: HighlightedResum
                       return (
                         <li key={i} className={cn('flex text-ink-soft', showMarker && 'ml-4')}>
                           {showMarker && (
-                            <span className="mr-2 flex-shrink-0" aria-hidden="true">
-                              &bull;&nbsp;
-                            </span>
+                            <span aria-hidden="true" className="mr-2 mt-2 size-1 shrink-0 bg-ink" />
                           )}
                           <span>
                             <HighlightedText text={bullet} keywords={keywords} />

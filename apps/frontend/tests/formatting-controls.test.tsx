@@ -65,6 +65,15 @@ describe('FormattingControls', () => {
     expect(onChange).toHaveBeenLastCalledWith(expect.objectContaining({ pageSize: 'LETTER' }));
   });
 
+  it('draws the reset icon at the Button primitive’s 16px, not a sub-16px override', () => {
+    renderControls();
+    const icon = screen
+      .getByRole('button', { name: 'builder.formatting.resetDefaults' })
+      .querySelector('svg');
+    expect(icon).not.toBeNull();
+    expect(icon?.getAttribute('class')).not.toMatch(/\bsize-/);
+  });
+
   it('toggles compact mode with a switch', () => {
     const onChange = renderControls();
     const compact = screen.getByRole('switch', { name: 'builder.formatting.compactMode' });

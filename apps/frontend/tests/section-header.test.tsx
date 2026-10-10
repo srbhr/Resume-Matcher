@@ -61,3 +61,25 @@ describe('SectionHeader visibility controls', () => {
     expect(screen.getByText('builder.sectionHeader.deleteTitle')).toBeInTheDocument();
   });
 });
+
+describe('SectionHeader control spacing', () => {
+  it('keeps a gap-3 between the icon controls so 44px hit areas never overlap', () => {
+    renderHeader(
+      section({ id: 'custom_1', key: 'custom_1', displayName: 'Talks', isDefault: false })
+    );
+
+    const strip = screen.getByRole('button', { name: 'builder.sectionHeader.deleteSection' })
+      .parentElement as HTMLElement;
+    expect(strip).toHaveClass('gap-3');
+    // Five controls plus gaps must wrap on narrow widths instead of overflowing.
+    expect(strip.parentElement).toHaveClass('flex-wrap', 'gap-y-2');
+  });
+
+  it('spaces the rename Save and Cancel controls the same way', () => {
+    renderHeader(section({}));
+
+    fireEvent.click(screen.getByRole('button', { name: 'builder.sectionHeader.renameSection' }));
+    const save = screen.getByRole('button', { name: 'common.save' });
+    expect(save.parentElement).toHaveClass('gap-3');
+  });
+});

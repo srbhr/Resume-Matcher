@@ -221,7 +221,7 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({ data, onChange }) =>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor={`${fieldId}-${item.id}-github`}>
-                    <Github aria-hidden="true" className="size-3 inline mr-1" />
+                    <Github aria-hidden="true" className="size-4 inline mr-1" />
                     GitHub <span className="text-steel">({t('common.optional')})</span>
                   </Label>
                   <Input
@@ -233,7 +233,7 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({ data, onChange }) =>
                 </div>
                 <div className="space-y-2 md:col-span-2">
                   <Label htmlFor={`${fieldId}-${item.id}-website`}>
-                    <Globe aria-hidden="true" className="size-3 inline mr-1" />
+                    <Globe aria-hidden="true" className="size-4 inline mr-1" />
                     {t('builder.forms.projects.fields.website')}{' '}
                     <span className="text-steel">({t('common.optional')})</span>
                   </Label>
@@ -257,7 +257,7 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({ data, onChange }) =>
                     onClick={() => handleAddDescription(item.id)}
                     className="h-6 text-xs text-primary hover:text-primary-hover hover:bg-info-tint"
                   >
-                    <Plus aria-hidden="true" className="size-3" />
+                    <Plus aria-hidden="true" />
                     {t('builder.genericItemForm.actions.addPoint')}
                   </Button>
                 </div>
@@ -270,7 +270,7 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({ data, onChange }) =>
                     handleLabel={t('builder.genericItemForm.actions.reorderPoint')}
                   >
                     {({ text: desc, style }, idx) => (
-                      <div className="flex gap-2">
+                      <div className="flex gap-3">
                         <div className="flex-1">
                           <RichTextEditor
                             value={desc}
@@ -281,27 +281,27 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({ data, onChange }) =>
                         </div>
                         <Button
                           variant="ghost"
-                          size="icon"
+                          size="icon-sm"
                           onClick={() => handleToggleDescriptionStyle(item.id, idx)}
-                          className="h-[60px] w-8 text-steel hover:text-primary self-end"
+                          className="text-steel hover:text-primary self-end"
                           aria-label={t('builder.genericItemForm.actions.togglePointStyle')}
                           title={t('builder.genericItemForm.actions.togglePointStyle')}
                         >
                           {style === 'plain' ? (
-                            <AlignLeft aria-hidden="true" className="size-3" />
+                            <AlignLeft aria-hidden="true" />
                           ) : (
-                            <List aria-hidden="true" className="size-3" />
+                            <List aria-hidden="true" />
                           )}
                         </Button>
                         <Button
                           variant="ghost"
-                          size="icon"
+                          size="icon-sm"
                           onClick={() => handleRemoveDescription(item.id, idx)}
-                          className="h-[60px] w-8 text-steel hover:text-destructive self-end"
+                          className="text-steel hover:text-destructive self-end"
                           aria-label={t('a11y.removeDescription')}
                           title={t('a11y.removeDescription')}
                         >
-                          <Trash2 aria-hidden="true" className="size-3" />
+                          <Trash2 aria-hidden="true" />
                         </Button>
                       </div>
                     )}
