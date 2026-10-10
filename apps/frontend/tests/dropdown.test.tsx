@@ -83,6 +83,19 @@ describe('Dropdown', () => {
     expect(trigger).toHaveFocus();
   });
 
+  it('gives a focused option a ring so it differs from the selected fill', () => {
+    render(<Harness />);
+    fireEvent.click(screen.getByRole('button', { name: 'Stage Alpha' }));
+    for (const option of screen.getAllByRole('option')) {
+      expect(option).toHaveClass(
+        'focus-visible:ring-2',
+        'focus-visible:ring-inset',
+        'focus-visible:ring-primary'
+      );
+      expect(option).not.toHaveClass('focus-visible:bg-panel');
+    }
+  });
+
   it('marks the selected option without the success colour or a glyph', () => {
     render(<Harness />);
     fireEvent.click(screen.getByRole('button', { name: 'Stage Alpha' }));

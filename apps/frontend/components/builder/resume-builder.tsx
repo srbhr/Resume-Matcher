@@ -1753,6 +1753,7 @@ const ResumeBuilderContent = () => {
       <ConfirmDialog
         open={pendingDraftRestore !== null || pendingAttachmentDraftRestore !== null}
         onOpenChange={() => undefined}
+        dismissible={false}
         title={t('builder.draftRecovery.title')}
         description={t(
           resumeId ? 'builder.draftRecovery.description' : 'builder.draftRecovery.newDescription'
