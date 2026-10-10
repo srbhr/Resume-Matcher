@@ -1,6 +1,6 @@
 <div align="center">
 
-[![Resume Matcher](assets/header.png)](https://www.resumematcher.fyi)
+[![Resume Matcher](assets/header.jpg)](https://www.resumematcher.fyi)
 
 # Resume Matcher
 
