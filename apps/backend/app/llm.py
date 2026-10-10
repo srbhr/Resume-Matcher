@@ -1258,6 +1258,12 @@ def _supports_temperature(
         )
         return False
 
+    # LiteLLM's model map flags models that removed sampling parameters (e.g.
+    # Claude Opus 5.5), even where get_model_info() still lists temperature.
+    registry_entry = litellm.model_cost.get(info.get("key"), {})
+    if registry_entry.get("supports_sampling_params") is False:
+        return False
+
     # Provider-specific restrictions not captured by the registry.
     # Anthropic Opus 4.x deprecated temperature entirely.
     if "claude-opus-4" in model_name.lower():
