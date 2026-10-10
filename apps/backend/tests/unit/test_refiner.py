@@ -290,6 +290,13 @@ class TestRemoveAiPhrasesKeepsOwnWords:
         cleaned, _ = remove_ai_phrases({"summary": "Worked with stakeholders daily."})
         assert cleaned["summary"] == "Worked with team members daily."
 
+    def test_plural_of_a_removed_phrase_leaves_no_stray_s(self):
+        cleaned, _ = remove_ai_phrases(
+            {"summary": "Worked with disruptors in fintech."}
+        )
+        assert "disruptor" not in cleaned["summary"].lower()
+        assert " s " not in f" {cleaned['summary']} "
+
     def test_article_follows_the_replacement(self):
         cleaned, _ = remove_ai_phrases({"summary": "Built a scalable API."})
         assert cleaned["summary"] == "Built an expandable API."

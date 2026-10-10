@@ -314,7 +314,7 @@ def _phrase_pattern(phrase: str) -> re.Pattern[str]:
     ends_word = phrase[-1:].isalnum()
     article = r"(?:(?<!\w)(?P<article>an?)\s+)?" if starts_word else ""
     start = r"(?<!\w)" if starts_word else ""
-    end = r"(?=s?(?!\w))" if ends_word else ""
+    end = r"(?P<plural>s?)(?!\w)" if ends_word else ""
     return re.compile(
         f"{article}{start}(?P<phrase>{re.escape(phrase)}){end}", re.IGNORECASE
     )
@@ -378,6 +378,10 @@ def remove_ai_phrases(
                 # Keep sentence case: "Spearheaded" -> "Led", not "led".
                 if replacement and match.group("phrase")[0].isupper():
                     replacement = replacement[0].upper() + replacement[1:]
+                # The plural "s" belongs to the phrase: "stakeholders" -> "team
+                # members", and a removed "disruptors" leaves nothing behind.
+                if replacement:
+                    replacement += match.groupdict().get("plural") or ""
                 article = match.groupdict().get("article")
                 if not article:
                     return replacement

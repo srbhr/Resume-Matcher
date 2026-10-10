@@ -168,7 +168,7 @@ await improve_resume(original, job, keywords)  # LLM call
 await refine_resume(tailored, master, job_desc, keywords) → RefinementResult
 ```
 
-Keyword injection (LLM), then `remove_ai_phrases` (local), then master-alignment validation. `remove_ai_phrases` replaces buzzwords from `AI_PHRASE_BLACKLIST` using `AI_PHRASE_REPLACEMENTS`. It matches whole words (a trailing plural "s" is allowed), fixes "a"/"an" in front of the replacement and keeps sentence case. Phrases that appear in the job description or in the candidate's master resume are left alone, so only wording the AI introduced is replaced, and a resume tailored twice doesn't have its own words rewritten each time.
+Keyword injection (LLM), then `remove_ai_phrases` (local), then master-alignment validation. `remove_ai_phrases` replaces buzzwords from `AI_PHRASE_BLACKLIST` using `AI_PHRASE_REPLACEMENTS`. Word-like phrases match as whole words, including a plural "s" that carries over to the replacement; punctuation entries (em dash, `--`, `---`) match anywhere. It also fixes "a"/"an" in front of the replacement and keeps sentence case. Phrases that appear in the job description or in the candidate's master resume are left alone, so only wording the AI introduced is replaced, and a resume tailored twice doesn't have its own words rewritten each time.
 
 ### Cover Letter (`services/cover_letter.py`)
 
