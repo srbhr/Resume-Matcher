@@ -681,6 +681,11 @@
     "uiLanguage": "界面语言",
     "uiLanguageDescription": "用户界面的语言",
     "languageTitle": "语言",
+    "display": {
+      "title": "显示",
+      "backgroundEffects": "背景效果",
+      "backgroundEffectsDescription": "页面背后以及 AI 工作时显示的动画背景。关闭后将使用纯色背景。"
+    },
     "theme": "主题",
     "themeDescription": "选择您喜欢的颜色主题",
     "lightMode": "浅色",

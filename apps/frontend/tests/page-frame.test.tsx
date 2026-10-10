@@ -2,16 +2,16 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { PageFrame } from '@/components/ui/page-frame';
 import { PageHeader } from '@/components/ui/page-header';
-import { cn } from '@/lib/utils';
 
 describe('PageFrame + PageHeader', () => {
-  it('frames the page on the blueprint grid', () => {
+  it('frames the page on a plain Canvas base, ready for the background effect', () => {
     const { container } = render(
       <PageFrame width="wide">
         <p>content</p>
       </PageFrame>
     );
-    expect(container.firstChild).toHaveClass('bg-blueprint', 'bg-canvas');
+    expect(container.firstChild).toHaveClass('relative', 'isolate', 'bg-canvas');
+    expect(container.firstChild).not.toHaveClass('bg-blueprint');
     expect(screen.getByText('content').parentElement).toHaveClass(
       'border',
       'border-ink',
@@ -52,11 +52,6 @@ describe('PageFrame + PageHeader', () => {
     );
     expect(container.firstChild).toHaveClass('min-h-screen');
     expect(container.firstChild).not.toHaveClass('h-dvh');
-  });
-
-  it('keeps bg-blueprint next to a background colour in either order (cn)', () => {
-    expect(cn('bg-blueprint', 'bg-canvas')).toBe('bg-blueprint bg-canvas');
-    expect(cn('bg-canvas', 'bg-blueprint')).toBe('bg-canvas bg-blueprint');
   });
 
   it('renders one header recipe: back link, bold serif H1, steel subtitle', () => {

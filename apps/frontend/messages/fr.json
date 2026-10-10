@@ -681,6 +681,11 @@
     "uiLanguage": "Langue de l'interface",
     "uiLanguageDescription": "Langue pour l'interface utilisateur",
     "languageTitle": "Langue",
+    "display": {
+      "title": "Affichage",
+      "backgroundEffects": "Effets d'arrière-plan",
+      "backgroundEffectsDescription": "Arrière-plans animés derrière les pages et pendant que l'IA travaille. Désactivez-les pour un arrière-plan uni."
+    },
     "theme": "Thème",
     "themeDescription": "Choisissez votre thème de couleur préféré",
     "lightMode": "Clair",

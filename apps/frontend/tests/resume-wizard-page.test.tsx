@@ -48,7 +48,7 @@ describe('ResumeWizardPage', () => {
   it('renders inside the page frame with one PageHeader h1 and no nested main', () => {
     const { container } = render(<ResumeWizardPage />);
     expect(container.querySelector('main')).toBeNull();
-    expect(container.firstChild as HTMLElement).toHaveClass('bg-blueprint');
+    expect(container.firstChild as HTMLElement).toHaveClass('relative', 'isolate', 'bg-canvas');
     const headings = screen.getAllByRole('heading', { level: 1 });
     expect(headings).toHaveLength(1);
     expect(headings[0]).toHaveTextContent('resumeWizard.title');

@@ -3,6 +3,7 @@ import { StatusCacheProvider } from '@/lib/context/status-cache';
 import { LanguageProvider } from '@/lib/context/language-context';
 import { LocalizedErrorBoundary } from '@/components/common/error-boundary';
 import { MotionProvider } from '@/components/common/motion-provider';
+import { EffectsProvider } from '@/lib/context/effects-context';
 
 export default function DefaultLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -11,7 +12,9 @@ export default function DefaultLayout({ children }: { children: React.ReactNode 
         <ResumePreviewProvider>
           <LocalizedErrorBoundary>
             <MotionProvider>
-              <main className="min-h-screen flex flex-col">{children}</main>
+              <EffectsProvider>
+                <main className="min-h-screen flex flex-col">{children}</main>
+              </EffectsProvider>
             </MotionProvider>
           </LocalizedErrorBoundary>
         </ResumePreviewProvider>

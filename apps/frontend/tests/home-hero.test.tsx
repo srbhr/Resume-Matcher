@@ -21,6 +21,13 @@ describe('Hero entrance', () => {
     for (const link of links) expect(link.className).not.toContain('hero-enter');
   });
 
+  it('sits on plain Canvas, ready for the background effect behind its frame', () => {
+    const { container } = render(<Hero />);
+    expect(container.firstChild).toHaveClass('relative', 'isolate', 'bg-canvas');
+    expect(container.firstChild).not.toHaveClass('bg-blueprint');
+    expect(container.querySelector('canvas')).toBeNull();
+  });
+
   it('keeps the xl shadow, which only the home hero frame carries', () => {
     const { container } = render(<Hero />);
     const frame = container.querySelector('.shadow-sw-xl');

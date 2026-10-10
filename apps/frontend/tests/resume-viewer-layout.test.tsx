@@ -53,7 +53,7 @@ describe('resume viewer layout', () => {
     const title = await screen.findByRole('heading', { level: 1, name: 'SWE track' });
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
     expect(title).toHaveClass('font-serif', 'uppercase', 'text-4xl');
-    expect(container.firstChild as HTMLElement).toHaveClass('bg-blueprint');
+    expect(container.firstChild as HTMLElement).toHaveClass('relative', 'isolate', 'bg-canvas');
     expect(screen.getByRole('link', { name: 'nav.backToDashboard' })).toHaveAttribute(
       'href',
       '/dashboard'
@@ -104,7 +104,7 @@ describe('resume viewer layout', () => {
     const alert = await screen.findByRole('alert');
     expect(alert).toHaveClass('border-warning', 'bg-warning-tint');
     expect(alert).toHaveTextContent('resumeViewer.errors.processingFailed');
-    expect(container.firstChild as HTMLElement).toHaveClass('bg-blueprint');
+    expect(container.firstChild as HTMLElement).toHaveClass('relative', 'isolate', 'bg-canvas');
     expect(screen.getByRole('button', { name: 'resumeViewer.retryProcessing' })).toHaveClass(
       'bg-primary'
     );
@@ -118,7 +118,7 @@ describe('resume viewer layout', () => {
     const { container } = render(<ResumeViewerPage />);
 
     const frame = container.firstChild as HTMLElement;
-    expect(frame).toHaveClass('bg-blueprint');
+    expect(frame).toHaveClass('relative', 'isolate', 'bg-canvas');
     expect(frame.querySelector('svg.animate-spin')).not.toBeNull();
     const label = within(frame).getByText('resumeViewer.loading');
     expect(label).toHaveClass('font-mono', 'text-primary');
