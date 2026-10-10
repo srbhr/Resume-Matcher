@@ -8,7 +8,12 @@ from dataclasses import dataclass
 from difflib import SequenceMatcher
 from typing import Any, Callable
 
-from app.llm import complete_json
+from app.llm import (
+    complete_json,
+    get_llm_config,
+    get_model_name,
+    get_safe_max_tokens,
+)
 from app.prompts import (
     CRITICAL_TRUTHFULNESS_RULES,
     DEFAULT_IMPROVE_PROMPT_ID,
@@ -673,10 +678,12 @@ async def generate_resume_diffs(
         original_resume=resume_input,
     )
 
+    config = get_llm_config()
+    model_name = get_model_name(config)
     result = await complete_json(
         prompt=prompt,
         system_prompt="You are an expert resume editor. Output only valid JSON with targeted changes.",
-        max_tokens=8192,
+        max_tokens=get_safe_max_tokens(model_name, config=config),
         schema_type="diff",
         response_validator=_validate_diff_result,
     )
