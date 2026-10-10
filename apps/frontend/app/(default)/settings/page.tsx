@@ -42,6 +42,7 @@ import { Label } from '@/components/ui/label';
 import { Alert } from '@/components/ui/alert';
 import { StatusIndicator } from '@/components/ui/status-indicator';
 import { SegmentedControl } from '@/components/ui/segmented-control';
+import { BrandIcon, hasBrandIcon } from '@/components/ui/brand-icon';
 import { PageFrame } from '@/components/ui/page-frame';
 import { PageHeader } from '@/components/ui/page-header';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
@@ -866,10 +867,15 @@ export default function SettingsPage() {
                 <SegmentedControl
                   aria-labelledby="provider-label"
                   size="sm"
-                  className="grid grid-cols-3 md:grid-cols-6"
+                  className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6"
                   items={PROVIDERS.map((p) => ({
                     value: p,
-                    label: PROVIDER_INFO[p].name.split(' ')[0],
+                    label: (
+                      <span className="inline-flex items-center gap-2">
+                        {hasBrandIcon(p) && <BrandIcon name={p} className="size-4 shrink-0" />}
+                        {PROVIDER_INFO[p].name.split(' ')[0]}
+                      </span>
+                    ),
                   }))}
                   value={provider}
                   onChange={handleProviderChange}

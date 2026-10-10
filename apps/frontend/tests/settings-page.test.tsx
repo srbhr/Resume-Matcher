@@ -164,6 +164,40 @@ describe('settings page (Swiss sweep)', () => {
     expect(api.setContentLanguage).toHaveBeenCalledWith('es');
   });
 
+  it('shows a monochrome brand mark on each provider segment except OpenAI-compatible', async () => {
+    await renderLoaded();
+    const providers = screen.getByRole('radiogroup', { name: 'settings.providerLabel' });
+
+    for (const name of [
+      'OpenAI',
+      'Azure',
+      'Anthropic',
+      'OpenRouter',
+      'Google',
+      'DeepSeek',
+      'Groq',
+      'Ollama',
+    ]) {
+      const mark = within(providers).getByRole('radio', { name }).querySelector('svg');
+      expect(mark, `${name} mark`).not.toBeNull();
+      // Decorative beside the visible name; sized by the caller; paints with the segment's text colour.
+      expect(mark).toHaveAttribute('aria-hidden', 'true');
+      expect(mark).toHaveClass('size-4');
+      for (const shape of Array.from(mark!.children)) {
+        expect(shape).toHaveAttribute('fill', 'currentColor');
+      }
+    }
+    expect(
+      within(providers).getByRole('radio', { name: 'OpenAI-Compatible' }).querySelector('svg')
+    ).toBeNull();
+
+    // The selected segment is ink with white text; the mark sits inside it and inherits that colour.
+    expect(within(providers).getByRole('radio', { name: 'OpenAI' })).toHaveClass(
+      'bg-ink',
+      'text-white'
+    );
+  });
+
   it('swaps the Save label for Saved after a successful save', async () => {
     await renderLoaded();
     await act(async () => {
