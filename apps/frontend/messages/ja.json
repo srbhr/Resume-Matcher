@@ -598,7 +598,7 @@
     },
     "length": {
       "pageLimitLabel": "ページ数の上限",
-      "pageLimitDescription": "関連性の低い箇条書きから削除し、指定ページ数に収めます。「上限なし」ではすべて残します。",
+      "pageLimitDescription": "可能な範囲で、関連性の低い箇条書きから削除してページ数に収めます。「上限なし」ではページ調整を行いません。",
       "pageLimitOptions": {
         "1": "1ページ",
         "2": "2ページ",

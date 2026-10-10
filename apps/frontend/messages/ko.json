@@ -598,7 +598,7 @@
     },
     "length": {
       "pageLimitLabel": "페이지 제한",
-      "pageLimitDescription": "맞춤 이력서가 제한에 맞을 때까지 관련성이 낮은 항목을 줄입니다. 제한 없음은 모두 유지합니다.",
+      "pageLimitDescription": "가능한 경우 관련성이 낮은 항목부터 줄여 페이지 수에 맞춥니다. 제한 없음을 선택하면 페이지 맞춤을 하지 않습니다.",
       "pageLimitOptions": {
         "1": "1페이지",
         "2": "2페이지",

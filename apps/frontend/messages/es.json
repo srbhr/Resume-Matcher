@@ -598,7 +598,7 @@
     },
     "length": {
       "pageLimitLabel": "Límite de páginas",
-      "pageLimitDescription": "Se recortan los puntos menos relevantes hasta que el currículum adaptado quepa. Sin límite lo conserva todo.",
+      "pageLimitDescription": "Recorta los puntos menos relevantes para ajustarse cuando es posible. Sin límite desactiva el ajuste de páginas.",
       "pageLimitOptions": {
         "1": "1 página",
         "2": "2 páginas",

@@ -598,7 +598,7 @@
     },
     "length": {
       "pageLimitLabel": "Limite de pages",
-      "pageLimitDescription": "Les puces les moins pertinentes sont supprimées jusqu'à ce que le CV adapté tienne. Sans limite conserve tout.",
+      "pageLimitDescription": "Supprime les puces les moins pertinentes pour tenir dans la limite quand c'est possible. Avec « Sans limite », l'ajustement des pages est désactivé.",
       "pageLimitOptions": {
         "1": "1 page",
         "2": "2 pages",

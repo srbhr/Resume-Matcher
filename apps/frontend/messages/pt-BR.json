@@ -598,7 +598,7 @@
     },
     "length": {
       "pageLimitLabel": "Limite de páginas",
-      "pageLimitDescription": "Os tópicos menos relevantes são removidos até o currículo adaptado caber. Sem limite mantém tudo.",
+      "pageLimitDescription": "Remove os tópicos menos relevantes para caber quando possível. Sem limite desativa o ajuste de páginas.",
       "pageLimitOptions": {
         "1": "1 página",
         "2": "2 páginas",
