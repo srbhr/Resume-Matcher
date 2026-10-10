@@ -676,7 +676,7 @@ async def generate_resume_diffs(
     result = await complete_json(
         prompt=prompt,
         system_prompt="You are an expert resume editor. Output only valid JSON with targeted changes.",
-        max_tokens=4096,
+        max_tokens=8192,
         schema_type="diff",
         response_validator=_validate_diff_result,
     )
