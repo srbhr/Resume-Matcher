@@ -31,6 +31,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ data, onChan
           <Label htmlFor="name">{t('resume.personalInfo.name')}</Label>
           <Input
             id="name"
+            autoComplete="name"
             value={data.name || ''}
             onChange={(e) => handleChange('name', e.target.value)}
             placeholder={t('builder.personalInfoForm.placeholders.name')}
@@ -40,6 +41,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ data, onChan
           <Label htmlFor="title">{t('resume.personalInfo.title')}</Label>
           <Input
             id="title"
+            autoComplete="organization-title"
             value={data.title || ''}
             onChange={(e) => handleChange('title', e.target.value)}
             placeholder={t('builder.personalInfoForm.placeholders.title')}
@@ -49,6 +51,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ data, onChan
           <Label htmlFor="email">{t('resume.personalInfo.email')}</Label>
           <Input
             id="email"
+            autoComplete="email"
             type="email"
             value={data.email || ''}
             onChange={(e) => handleChange('email', e.target.value)}
@@ -59,6 +62,7 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ data, onChan
           <Label htmlFor="phone">{t('resume.personalInfo.phone')}</Label>
           <Input
             id="phone"
+            autoComplete="tel"
             type="tel"
             value={data.phone || ''}
             onChange={(e) => handleChange('phone', e.target.value)}
@@ -78,6 +82,8 @@ export const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({ data, onChan
           <Label htmlFor="website">{t('resume.personalInfo.website')}</Label>
           <Input
             id="website"
+            autoComplete="url"
+            inputMode="url"
             value={data.website || ''}
             onChange={(e) => handleChange('website', e.target.value)}
             placeholder={t('builder.personalInfoForm.placeholders.website')}

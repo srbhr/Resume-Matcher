@@ -116,6 +116,51 @@ describe('RegenerateDialog', () => {
     fireEvent.click(screen.getByRole('button', { name: /Senior Software Engineer/i }));
     expect(continueButton).toBeEnabled();
   });
+
+  it('marks a selected row with ink, not blue (selection is ink, blue is action)', () => {
+    const experienceItems: RegenerateItemInput[] = [
+      {
+        item_id: 'exp_0',
+        item_type: 'experience',
+        title: 'Senior Software Engineer',
+        subtitle: 'Google',
+        current_content: ['Did thing'],
+      },
+    ];
+
+    const Wrapper = () => {
+      const [selectedItems, setSelectedItems] = React.useState<RegenerateItemInput[]>([]);
+      return (
+        <RegenerateDialog
+          open
+          onOpenChange={vi.fn()}
+          experienceItems={experienceItems}
+          projectItems={[]}
+          skillsItem={null}
+          selectedItems={selectedItems}
+          onSelectionChange={setSelectedItems}
+          onContinue={vi.fn()}
+        />
+      );
+    };
+
+    render(<Wrapper />);
+
+    const row = screen.getByRole('button', { name: /Senior Software Engineer/i });
+    const box = row.querySelector('span[aria-hidden="true"]') as HTMLElement;
+    expect(row).toHaveAttribute('aria-pressed', 'false');
+    expect(box).toHaveClass('size-6', 'border', 'border-ink', 'bg-white');
+
+    fireEvent.click(row);
+
+    expect(row).toHaveAttribute('aria-pressed', 'true');
+    expect(row).toHaveClass('bg-panel');
+    expect(row).not.toHaveClass('bg-info-tint');
+    expect(box).toHaveClass('border-ink', 'bg-ink');
+    expect(box).not.toHaveClass('bg-primary', 'border-primary');
+    // 16px check glyph: nothing below the icon floor.
+    expect(box.querySelector('svg')).toHaveClass('size-4', 'text-white');
+  });
 });
 
 it('offers refresh retry after saved changes and prevents rejecting an applied result', () => {
@@ -164,6 +209,24 @@ describe('RegenerateDiffPreview', () => {
     expect(
       screen.getByText('builder.regenerate.diffPreview.changesCount').closest('.overflow-y-auto')
     ).not.toBeNull();
+  });
+
+  it('draws the changes-count check at the 16px icon floor', () => {
+    render(
+      <RegenerateDiffPreview
+        open
+        onOpenChange={vi.fn()}
+        regeneratedItems={[]}
+        error={null}
+        onAccept={vi.fn()}
+        onReject={vi.fn()}
+        isApplying={false}
+      />
+    );
+
+    const chip = screen.getByText('builder.regenerate.diffPreview.changesCount');
+    expect(chip.querySelector('svg')).toHaveClass('size-4');
+    expect(chip.querySelector('svg')).not.toHaveClass('size-3');
   });
 
   it('shows human-friendly titles instead of technical IDs', () => {

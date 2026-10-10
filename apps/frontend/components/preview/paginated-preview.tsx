@@ -180,6 +180,9 @@ export function PaginatedPreview({ resumeData, settings }: PaginatedPreviewProps
             top: 0,
           }}
           aria-hidden="true"
+          // aria-hidden alone leaves the template's links tabbable; inert removes
+          // them from the tab order without changing layout, so measuring is unaffected.
+          inert
         >
           <Resume
             resumeData={resumeData}

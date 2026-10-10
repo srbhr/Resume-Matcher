@@ -113,7 +113,7 @@ export const RegenerateDiffPreview: React.FC<RegenerateDiffPreviewProps> = ({
           {/* Stats Card */}
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-success-tint border border-success text-success font-mono text-xs tabular-nums">
-              <Check aria-hidden="true" className="size-3" />
+              <Check aria-hidden="true" className="size-4" />
               {t('builder.regenerate.diffPreview.changesCount').replace(
                 '{count}',
                 String(regeneratedItems.length)

@@ -40,7 +40,7 @@ function StringList({ items }: { items: string[] }) {
     <ul className="space-y-2">
       {items.map((item, index) => (
         <li key={`${item}-${index}`} className="flex gap-2 text-sm leading-relaxed text-ink-soft">
-          <span aria-hidden="true" className="mt-2 size-1.5 shrink-0 bg-primary" />
+          <span aria-hidden="true" className="mt-2 size-1 shrink-0 bg-ink" />
           <span>{item}</span>
         </li>
       ))}

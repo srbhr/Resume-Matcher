@@ -236,17 +236,17 @@ const ItemRow: React.FC<ItemRowProps> = ({ item, isSelected, onToggle }) => {
       onClick={onToggle}
       aria-pressed={isSelected}
       className={`w-full p-4 flex items-center gap-4 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary ${
-        isSelected ? 'bg-info-tint' : 'bg-white hover:bg-panel'
+        isSelected ? 'bg-panel' : 'bg-white hover:bg-panel'
       }`}
     >
       {/* Checkbox */}
       <span
         aria-hidden="true"
-        className={`size-5 shrink-0 border-2 flex items-center justify-center transition-colors ${
-          isSelected ? 'border-primary bg-primary' : 'border-ink bg-white'
+        className={`size-6 shrink-0 border border-ink flex items-center justify-center transition-colors ${
+          isSelected ? 'bg-ink' : 'bg-white'
         }`}
       >
-        {isSelected && <Check aria-hidden="true" strokeWidth={3} className="size-3 text-white" />}
+        {isSelected && <Check aria-hidden="true" className="size-4 text-white" />}
       </span>
 
       {/* Item Info */}
