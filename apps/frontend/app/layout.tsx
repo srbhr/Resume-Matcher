@@ -1,15 +1,10 @@
-import type { Metadata } from 'next';
-import { Geist, Noto_Sans_JP, Noto_Sans_KR, Noto_Sans_SC, Space_Grotesk } from 'next/font/google';
+import type { Metadata, Viewport } from 'next';
+import { Noto_Sans_JP, Noto_Sans_KR, Noto_Sans_SC, Space_Grotesk } from 'next/font/google';
+import { THEME_COLOR } from '@/lib/theme-color';
 import './(default)/css/globals.css';
 
 const spaceGrotesk = Space_Grotesk({
   variable: '--font-space-grotesk',
-  subsets: ['latin'],
-  display: 'swap',
-});
-
-const geist = Geist({
-  variable: '--font-geist',
   subsets: ['latin'],
   display: 'swap',
 });
@@ -55,11 +50,13 @@ export const metadata: Metadata = {
   keywords: ['resume', 'matcher', 'job', 'application'],
 };
 
+export const viewport: Viewport = { themeColor: THEME_COLOR };
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en-US" className="h-full" suppressHydrationWarning>
       <body
-        className={`${geist.variable} ${spaceGrotesk.variable} ${notoSansSC.variable} ${notoSansKR.variable} ${notoSansJP.variable} antialiased bg-background text-ink-soft min-h-full`}
+        className={`${spaceGrotesk.variable} ${notoSansSC.variable} ${notoSansKR.variable} ${notoSansJP.variable} antialiased bg-background text-ink-soft min-h-full`}
       >
         {children}
       </body>
