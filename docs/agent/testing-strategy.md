@@ -202,7 +202,7 @@ Net: **65 → 117 frontend tests**, all green. The `pre-push` gate runs this sui
 
 ### 8.1 Swiss design guard and contrast test (added 2026-10-10)
 
-The Swiss realignment (spec: `docs/superpowers/specs/2026-10-10-swiss-realignment-design.md`) added two design-system tests to the vitest suite, so style drift fails a test instead of waiting for a visual review. Both run inside `npm run test`, and therefore in the `pre-push` gate.
+The Swiss realignment (spec: `docs/superpowers/specs/2026-10-10-swiss-realignment-design.md`) added three design-system tests to the vitest suite, so style drift fails a test instead of waiting for a visual review. All three run inside `npm run test`, and therefore in the `pre-push` gate.
 
 **Swiss guard** (`apps/frontend/scripts/swiss-guard.mjs`, tested by `tests/swiss-guard.test.ts` and `tests/swiss-guard-rules.test.ts`)
 - Scans `app/**/*.tsx` and `components/**/*.tsx` for patterns the Swiss pack bans, after stripping comments. `components/resume/**` (printed templates), `app/print/**` and tests are out of scope; `globals.css`, where the tokens are defined, is not scanned.
@@ -216,6 +216,9 @@ The Swiss realignment (spec: `docs/superpowers/specs/2026-10-10-swiss-realignmen
 - The `warning` fill (`#F97316`, 2.45:1 on Canvas) is deliberately exempt from the 3:1 check and its value is pinned: the orange never carries meaning alone (squares always have a label, warning alerts pair the border with a `warning-text` label, warning buttons have an ink border and ink text).
 - Also asserts that `steel` on `panel` stays below 4.5:1 (documenting the never-on-panel rule) and that `THEME_COLOR` (`lib/theme-color.ts`, the `<meta name="theme-color">`) equals Canvas.
 - Changing a token so that a pairing falls below its threshold fails the test; re-run it after any palette edit.
+
+**Shadow test** (`tests/swiss-shadows.test.ts`)
+- Parses the `--shadow-sw-*` tokens out of `globals.css` and asserts there are exactly six, none blurred or spread, the five floating and pressing roles (`sm`, `default`, `lg`, `xl`, `card`) are solid `#000000`, and `nested` is the translucent `4px 4px 0px 0px rgb(0 0 0 / 0.15)`.
 
 **Behaviour tests for the primitives** live beside them (`dialog`, `dropdown`, `segmented-control`, `toggle-tabs`, `button`, `card`, `alert-status`, `panel-empty`, `page-frame`, `presence`, `reduced-motion`): focus moves in, is trapped and returns; the dropdown announces its value and never shows a placeholder as selected; arrow-key navigation; roles per alert tone. `vitest.setup.ts` mocks `motion/react` globally (`m.*` renders as plain DOM, `AnimatePresence` and `LazyMotion` are passthroughs), so animated components show their final state in jsdom and exit animations never leave nodes behind. Existing tests that asserted old markup were updated, never deleted or skipped.
 
