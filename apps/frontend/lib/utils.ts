@@ -1,5 +1,11 @@
 import { type ClassValue, clsx } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+import { extendTailwindMerge } from 'tailwind-merge';
+
+// Teach tailwind-merge the house `bg-blueprint` utility (globals.css) is a background
+// *image*; unknown, it is read as a background colour and dropped next to bg-canvas.
+const twMerge = extendTailwindMerge({
+  extend: { classGroups: { 'bg-image': ['bg-blueprint'] } },
+});
 
 /**
  * Combines multiple class names or class name objects into a single string.
