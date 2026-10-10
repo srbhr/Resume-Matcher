@@ -62,18 +62,21 @@ const TILE_WHITE_BORDER = 'group-hover:border-white group-has-[:focus-visible]:b
 const TILE_STATUS =
   'group-hover:[&>span:first-child]:bg-white group-hover:[&>span:last-child]:text-white group-has-[:focus-visible]:[&>span:first-child]:bg-white group-has-[:focus-visible]:[&>span:last-child]:text-white';
 // The ghost retry icon is ink: white on blue, and a darker blue (not panel) under the pointer.
-const TILE_GHOST_ICON = `${TILE_WHITE} group-hover:hover:bg-primary-hover group-hover:active:bg-primary-hover`;
+const TILE_GHOST_ICON = `${TILE_WHITE} group-hover:hover:bg-primary-hover group-hover:active:bg-primary-hover focus-visible:ring-white`;
 // The Create button is the one blue primary at rest. On its own blue tile it inverts to a white
 // square, and it stretches over the tile so the whole highlighted tile is the click target.
 const TILE_CREATE =
   'static after:absolute after:inset-0 hover:bg-white hover:text-primary focus-visible:ring-white group-has-[:focus-visible]:bg-white group-has-[:focus-visible]:text-primary';
-// Monogram fills: brand tokens only, each AA with white text (lowest: steel, 5.19:1).
+// Tile action buttons (Set as default, Duplicate, Retry, Delete) float above the stretched link.
+// Focusing one fills its tile blue, where the Button primitive's primary ring would vanish.
+const TILE_ACTION = 'z-10 focus-visible:ring-white';
 const STATUS_TONE: Record<ResumeListItem['processing_status'], StatusTone> = {
   ready: 'ready',
   processing: 'active',
   pending: 'neutral',
   failed: 'error',
 };
+// Monogram fills: brand tokens only, each AA with white text (lowest: steel, 5.19:1).
 const MONOGRAM_FILLS = ['bg-primary', 'bg-ink', 'bg-success', 'bg-steel', 'bg-destructive'];
 const FILLER_FILLS = ['bg-panel', 'bg-panel-hover', 'bg-panel-hover', 'bg-panel'];
 
@@ -717,7 +720,7 @@ export default function DashboardPage() {
                         type="button"
                         variant="outline"
                         size="sm"
-                        className="z-10"
+                        className={TILE_ACTION}
                         onClick={handleRetryProcessing}
                         disabled={isRetrying}
                       >
@@ -729,7 +732,7 @@ export default function DashboardPage() {
                         type="button"
                         variant="outline-destructive"
                         size="sm"
-                        className="z-10"
+                        className={TILE_ACTION}
                         onClick={handleDeleteAndReupload}
                       >
                         {t('dashboard.deleteAndReupload')}
@@ -783,7 +786,7 @@ export default function DashboardPage() {
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="z-10"
+                      className={TILE_ACTION}
                       aria-label={t('dashboard.setDefault')}
                       onClick={(e) => handleSetDefault(e, resume.resume_id)}
                     >
@@ -794,7 +797,7 @@ export default function DashboardPage() {
                         type="button"
                         variant="outline"
                         size="sm"
-                        className="z-10"
+                        className={TILE_ACTION}
                         aria-label={t('dashboard.duplicate')}
                         disabled={isDuplicating || resume.processing_status !== 'ready'}
                         onClick={(e) => handleDuplicate(e, resume.resume_id)}

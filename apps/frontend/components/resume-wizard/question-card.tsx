@@ -59,19 +59,29 @@ export function QuestionCard({
   const answerRef = useRef<HTMLTextAreaElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const previous = useRef({ question, step, isBusy });
+  const userActed = useRef(false);
 
   // Continue/Skip disable the focused control while the next question loads, which would drop
-  // keyboard and screen-reader users back to the top of the page. Once the card has actually
-  // advanced (new question or step) or a busy action finished, move focus to the new question's
-  // field (the heading on review). Comparing against the previous values, not a "mounted" flag,
-  // keeps first paint and StrictMode's double effect from stealing focus.
+  // keyboard and screen-reader users back to the top of the page. After a user-driven action,
+  // once the card has actually advanced (new question or step) or the busy action finished,
+  // move focus to the new question's field (the heading on review). Comparing against the
+  // previous values, not a "mounted" flag, keeps first paint and StrictMode's double effect from
+  // stealing focus; gating on `userActed` keeps a restored draft (which also changes question
+  // and step) from stealing it on page load.
   useEffect(() => {
     const was = previous.current;
     previous.current = { question, step, isBusy };
     if (isBusy) return;
     if (was.question === question && was.step === step && was.isBusy === isBusy) return;
+    if (!userActed.current) return;
+    userActed.current = false;
     (isReview ? headingRef : answerRef).current?.focus();
   }, [question, step, isBusy, isReview]);
+
+  const acting = (action: () => void) => () => {
+    userActed.current = true;
+    action();
+  };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
     // Repo pattern: never let Enter bubble to a parent form/dialog.
@@ -80,7 +90,7 @@ export function QuestionCard({
     // Enter submits, Shift+Enter inserts a newline.
     if (!event.shiftKey) {
       event.preventDefault();
-      if (canContinue) onContinue();
+      if (canContinue) acting(onContinue)();
     }
   };
 
@@ -162,32 +172,42 @@ export function QuestionCard({
               <Button
                 type="button"
                 variant="success"
-                onClick={onFinalize}
+                onClick={acting(onFinalize)}
                 disabled={isBusy || !canFinalize}
               >
                 {isBusy ? t('common.saving') : t('resumeWizard.actions.create')}
               </Button>
-              <Button type="button" variant="outline" onClick={onKeepAdding} disabled={isBusy}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={acting(onKeepAdding)}
+                disabled={isBusy}
+              >
                 {t('resumeWizard.actions.keepAdding')}
               </Button>
             </>
           ) : (
             <>
-              <Button type="button" onClick={onContinue} disabled={!canContinue}>
+              <Button type="button" onClick={acting(onContinue)} disabled={!canContinue}>
                 {isBusy ? t('common.loading') : t('resumeWizard.actions.continue')}
               </Button>
               {isQuestion && (
-                <Button type="button" variant="outline" onClick={onSkip} disabled={isBusy}>
+                <Button type="button" variant="outline" onClick={acting(onSkip)} disabled={isBusy}>
                   {t('resumeWizard.actions.skip')}
                 </Button>
               )}
               {isQuestion && (
-                <Button type="button" variant="outline" onClick={onReview} disabled={isBusy}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={acting(onReview)}
+                  disabled={isBusy}
+                >
                   {t('resumeWizard.actions.review')}
                 </Button>
               )}
               {isQuestion && canGoBack && (
-                <Button type="button" variant="ghost" onClick={onBack} disabled={isBusy}>
+                <Button type="button" variant="ghost" onClick={acting(onBack)} disabled={isBusy}>
                   {t('resumeWizard.actions.back')}
                 </Button>
               )}

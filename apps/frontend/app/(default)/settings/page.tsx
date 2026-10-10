@@ -919,7 +919,7 @@ export default function SettingsPage() {
                   id="apiKey"
                   name="llm-api-key"
                   type="password"
-                  autoComplete="off"
+                  autoComplete="new-password"
                   spellCheck={false}
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}

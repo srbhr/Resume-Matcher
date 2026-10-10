@@ -121,26 +121,61 @@ describe('QuestionCard', () => {
       expect(document.body).toHaveFocus();
     });
 
-    it('moves focus to the answer field when the next question arrives', () => {
-      const { rerender } = render(<QuestionCard step="question" {...baseProps} isBusy />);
-      expect(document.body).toHaveFocus();
-      rerender(
-        <QuestionCard
-          step="question"
-          {...baseProps}
-          isBusy={false}
-          question="Where did you study?"
-        />
-      );
+    it.each([
+      ['Continue', 'resumeWizard.actions.continue'],
+      ['Skip', 'resumeWizard.actions.skip'],
+      ['Back', 'resumeWizard.actions.back'],
+    ])(
+      'moves focus to the answer field when the next question arrives after %s',
+      (_label, buttonName) => {
+        const { rerender } = render(<QuestionCard step="question" {...baseProps} answer="Acme" />);
+        fireEvent.click(screen.getByRole('button', { name: buttonName }));
+        rerender(<QuestionCard step="question" {...baseProps} answer="Acme" isBusy />);
+        expect(document.body).toHaveFocus();
+        rerender(
+          <QuestionCard
+            step="question"
+            {...baseProps}
+            answer=""
+            isBusy={false}
+            question="Where did you study?"
+          />
+        );
+        expect(screen.getByRole('textbox')).toHaveFocus();
+      }
+    );
+
+    it('moves focus to the answer field after Enter submits the answer', () => {
+      const { rerender } = render(<QuestionCard step="question" {...baseProps} answer="Acme" />);
+      fireEvent.keyDown(screen.getByRole('textbox'), { key: 'Enter' });
+      rerender(<QuestionCard step="question" {...baseProps} answer="Acme" isBusy />);
+      rerender(<QuestionCard step="question" {...baseProps} question="Where did you study?" />);
       expect(screen.getByRole('textbox')).toHaveFocus();
     });
 
-    it('moves focus when the question changes without a busy phase, but not while busy', () => {
-      const { rerender } = render(<QuestionCard step="question" {...baseProps} />);
-      rerender(<QuestionCard step="question" {...baseProps} isBusy question="Next?" />);
-      expect(document.body).toHaveFocus();
-      rerender(<QuestionCard step="question" {...baseProps} question="Next?" />);
+    it('moves focus to the answer field after Keep adding, which has no busy phase', () => {
+      const { rerender } = render(<QuestionCard step="review" {...baseProps} />);
+      fireEvent.click(screen.getByRole('button', { name: 'resumeWizard.actions.keepAdding' }));
+      rerender(<QuestionCard step="question" {...baseProps} question="Anything else?" />);
       expect(screen.getByRole('textbox')).toHaveFocus();
+    });
+
+    it('does not take focus when the card changes without a user action, like a restored draft', () => {
+      const { rerender } = render(<QuestionCard step="intro" {...baseProps} />);
+      rerender(<QuestionCard step="question" {...baseProps} question="Skills?" />);
+      expect(document.body).toHaveFocus();
+      rerender(<QuestionCard step="review" {...baseProps} question="All set?" />);
+      expect(document.body).toHaveFocus();
+    });
+
+    it('does not move focus while busy, then focuses the heading once a review action finishes', () => {
+      const { rerender } = render(<QuestionCard step="review" {...baseProps} />);
+      fireEvent.click(screen.getByRole('button', { name: 'resumeWizard.actions.create' }));
+      // The review heading is always focusable, so only the busy guard keeps focus off it here.
+      rerender(<QuestionCard step="review" {...baseProps} isBusy question="Next?" />);
+      expect(document.body).toHaveFocus();
+      rerender(<QuestionCard step="review" {...baseProps} isBusy={false} question="Next?" />);
+      expect(screen.getByRole('heading', { name: 'Next?' })).toHaveFocus();
     });
 
     it('leaves focus alone while the user types in an unchanged question', () => {
@@ -157,6 +192,7 @@ describe('QuestionCard', () => {
 
     it('focuses the heading on the review step, which has no field', () => {
       const { rerender } = render(<QuestionCard step="question" {...baseProps} />);
+      fireEvent.click(screen.getByRole('button', { name: 'resumeWizard.actions.review' }));
       rerender(<QuestionCard step="review" {...baseProps} question="All set?" />);
       expect(screen.getByRole('heading', { name: 'All set?' })).toHaveFocus();
     });
