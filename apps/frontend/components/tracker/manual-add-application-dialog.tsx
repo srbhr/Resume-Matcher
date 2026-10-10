@@ -93,7 +93,7 @@ export function ManualAddApplicationDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl">
+      <DialogContent className="max-w-xl space-y-4 p-6">
         <DialogHeader>
           <DialogTitle>{t('tracker.manualAdd.title')}</DialogTitle>
           <DialogDescription>{t('tracker.manualAdd.description')}</DialogDescription>
