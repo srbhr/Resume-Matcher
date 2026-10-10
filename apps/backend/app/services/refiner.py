@@ -175,7 +175,9 @@ async def refine_resume(
     if config.enable_ai_phrase_removal:
         attempts += 1
         before = _deep_copy(current)
-        current, removed = remove_ai_phrases(current, job_description)
+        current, removed = remove_ai_phrases(
+            current, job_description, protected_text=_extract_all_text(master_resume)
+        )
         ai_phrases_found.extend(removed)
         if current != before:
             logger.info("Removed %d AI phrases: %s", len(removed), removed)
@@ -299,19 +301,42 @@ def analyze_keyword_gaps(
     )
 
 
+def _phrase_pattern(phrase: str) -> re.Pattern[str]:
+    """Case-insensitive pattern for a blacklisted phrase, matching whole words.
+
+    Word-like phrases must start at a word boundary and may be followed by a
+    plural "s" ("stakeholder" also matches "stakeholders"), but not by other
+    letters ("robust" does not match "robustness"). An "a"/"an" right before
+    the phrase is captured so it can agree with the replacement. Punctuation
+    entries such as dashes match anywhere.
+    """
+    starts_word = phrase[:1].isalnum()
+    ends_word = phrase[-1:].isalnum()
+    article = r"(?:(?<!\w)(?P<article>an?)\s+)?" if starts_word else ""
+    start = r"(?<!\w)" if starts_word else ""
+    end = r"(?P<plural>s?)(?!\w)" if ends_word else ""
+    return re.compile(
+        f"{article}{start}(?P<phrase>{re.escape(phrase)}){end}", re.IGNORECASE
+    )
+
+
 def remove_ai_phrases(
     data: dict[str, Any],
     job_description: str = "",
+    protected_text: str = "",
 ) -> tuple[dict[str, Any], list[str]]:
     """Remove AI-generated phrases from resume content.
 
     This is a local operation that doesn't require an LLM call.
-    It performs case-insensitive replacement of blacklisted phrases.
-    Phrases that appear in the job description are protected from removal.
+    It performs case-insensitive, whole-word replacement of blacklisted phrases.
+    Phrases that appear in the job description are protected from removal, and
+    so are phrases in ``protected_text`` (the candidate's own master resume), so
+    only wording the AI introduced is replaced.
 
     Args:
         data: Resume data dictionary
         job_description: Job description text; phrases found here are skipped
+        protected_text: Candidate-written text; phrases found here are skipped
 
     Returns:
         Tuple of (cleaned data, list of removed phrases)
@@ -326,21 +351,56 @@ def remove_ai_phrases(
     if jd_protected:
         logger.info("JD-protected phrases (skipping removal): %s", jd_protected)
 
+    # Protection is per phrase, not per sentence: a word the candidate uses in
+    # their own resume is their vocabulary, so it isn't scrubbed anywhere.
+    # Sentence-level tracking wouldn't survive the LLM rewording around it.
+    patterns = {phrase: _phrase_pattern(phrase) for phrase in AI_PHRASE_BLACKLIST}
+    own_words = {
+        phrase.lower()
+        for phrase, pattern in patterns.items()
+        if protected_text and pattern.search(protected_text)
+    }
+    if own_words:
+        logger.info("Phrases from the master resume (skipping removal): %s", own_words)
+
     # Use a set to avoid duplicate tracking
     removed: set[str] = set()
 
     def clean_text(text: str) -> str:
         cleaned = text
-        for phrase in AI_PHRASE_BLACKLIST:
-            # Skip phrases that appear in the job description
-            if phrase.lower() in jd_protected:
+        for phrase, pattern in patterns.items():
+            # Skip phrases from the job description or the candidate's own resume
+            if phrase.lower() in jd_protected or phrase.lower() in own_words:
                 continue
-            if phrase.lower() in cleaned.lower():
-                removed.add(phrase)
-                replacement = AI_PHRASE_REPLACEMENTS.get(phrase.lower(), "")
-                # Case-insensitive replacement
-                pattern = re.compile(re.escape(phrase), re.IGNORECASE)
-                cleaned = pattern.sub(replacement, cleaned)
+            if not pattern.search(cleaned):
+                continue
+            removed.add(phrase)
+            replacement = AI_PHRASE_REPLACEMENTS.get(phrase.lower(), "")
+
+            def substitute(match: re.Match[str], replacement: str = replacement) -> str:
+                # Keep sentence case: "Spearheaded" -> "Led", not "led".
+                if replacement and match.group("phrase")[0].isupper():
+                    replacement = replacement[0].upper() + replacement[1:]
+                # The plural "s" belongs to the phrase: "stakeholders" -> "team
+                # members", and a removed "disruptors" leaves nothing behind.
+                if replacement:
+                    replacement += match.groupdict().get("plural") or ""
+                article = match.groupdict().get("article")
+                if not article:
+                    return replacement
+                if not replacement:
+                    return ""  # "a disruptor" goes entirely, not leaving "a "
+                wanted = "an" if replacement[0].lower() in "aeiou" else "a"
+                if article[0].isupper():
+                    wanted = wanted.capitalize()
+                return f"{wanted} {replacement}"
+
+            cleaned = pattern.sub(substitute, cleaned)
+            if not replacement:
+                # Removing a phrase outright leaves a double space ("Joined  in")
+                # or a space before punctuation ("Joined ."); tidy just that.
+                cleaned = re.sub(r"(?<=\S)[ \t]{2,}(?=\S)", " ", cleaned)
+                cleaned = re.sub(r"[ \t]+([.,;:!?])", r"\1", cleaned)
         return cleaned
 
     def clean_recursive(obj: Any) -> Any:

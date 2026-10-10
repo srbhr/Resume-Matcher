@@ -257,6 +257,78 @@ class TestRemoveAiPhrases:
         assert data == data_before
 
 
+class TestRemoveAiPhrasesKeepsOwnWords:
+    """The scrub targets phrases the AI introduced, not the candidate's own wording."""
+
+    def test_phrases_in_the_master_are_kept(self):
+        data = {"summary": "Built a scalable gateway with stakeholders."}
+        master_text = "Built a scalable gateway, collaborating with stakeholders."
+
+        cleaned, removed = remove_ai_phrases(data, protected_text=master_text)
+
+        assert cleaned == data
+        assert removed == []
+
+    def test_phrases_the_ai_added_are_still_scrubbed(self):
+        data = {"summary": "Spearheaded a scalable gateway."}
+        master_text = "Built a scalable gateway."
+
+        cleaned, removed = remove_ai_phrases(data, protected_text=master_text)
+
+        assert cleaned["summary"] == "Led a scalable gateway."
+        assert [r.lower() for r in removed] == ["spearheaded"]
+
+    def test_matches_whole_words_only(self):
+        data = {"summary": "Improved robustness of the pipeline."}
+
+        cleaned, removed = remove_ai_phrases(data)
+
+        assert cleaned == data
+        assert removed == []
+
+    def test_plural_of_a_phrase_is_still_matched(self):
+        cleaned, _ = remove_ai_phrases({"summary": "Worked with stakeholders daily."})
+        assert cleaned["summary"] == "Worked with team members daily."
+
+    def test_plural_of_a_removed_phrase_leaves_no_stray_s(self):
+        cleaned, _ = remove_ai_phrases(
+            {"summary": "Worked with disruptors in fintech."}
+        )
+        assert "disruptor" not in cleaned["summary"].lower()
+        assert " s " not in f" {cleaned['summary']} "
+
+    def test_removed_phrase_takes_its_article_with_it(self):
+        cleaned, _ = remove_ai_phrases({"summary": "Joined a disruptor in fintech."})
+        assert cleaned["summary"] == "Joined in fintech."
+        cleaned, _ = remove_ai_phrases({"summary": "Backed a disruptor."})
+        assert cleaned["summary"] == "Backed."
+
+    def test_article_follows_the_replacement(self):
+        cleaned, _ = remove_ai_phrases({"summary": "Built a scalable API."})
+        assert cleaned["summary"] == "Built an expandable API."
+
+    def test_dashes_are_still_replaced(self):
+        cleaned, _ = remove_ai_phrases({"summary": "APIs\u2014fast ones"})
+        assert "\u2014" not in cleaned["summary"]
+
+    @pytest.mark.asyncio
+    async def test_refine_resume_protects_the_masters_wording(self):
+        master = {"summary": "Built a scalable gateway with stakeholders."}
+        tailored = {"summary": "Built a scalable gateway with stakeholders."}
+
+        result = await refine_resume(
+            initial_tailored=tailored,
+            master_resume=master,
+            job_description="Backend engineer",
+            job_keywords={},
+            config=RefinementConfig(
+                enable_keyword_injection=False, enable_master_alignment_check=False
+            ),
+        )
+
+        assert result.refined_data["summary"] == tailored["summary"]
+
+
 class TestValidateMasterAlignment:
     """Tests for validate_master_alignment() — fabrication detection."""
 
