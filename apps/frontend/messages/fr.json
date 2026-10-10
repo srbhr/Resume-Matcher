@@ -221,9 +221,6 @@
       "jdMatch": "CORRESPONDANCE FP",
       "interviewPrep": "PRÉPARATION ENTRETIEN"
     },
-    "footer": {
-      "moduleLabel": "Module Créateur de CV"
-    },
     "pageSize": {
       "usLetter": "Lettre US"
     },

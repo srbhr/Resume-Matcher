@@ -221,9 +221,6 @@
       "jdMatch": "JD一致",
       "interviewPrep": "面接準備"
     },
-    "footer": {
-      "moduleLabel": "履歴書ビルダーモジュール"
-    },
     "pageSize": {
       "usLetter": "USレター"
     },
