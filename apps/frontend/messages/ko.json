@@ -840,6 +840,7 @@
     "titlePlaceholder": "이력서 제목을 입력하세요...",
     "downloadFailedTitle": "다운로드 실패",
     "renameFailedTitle": "이름 변경 실패",
+    "renameTitle": "이력서 이름 변경",
     "defaultBadge": "기본 마스터",
     "setDefault": "기본 마스터로 설정",
     "setDefaultSuccess": "이 마스터가 이제 맞춤화의 기본 마스터입니다.",

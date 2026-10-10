@@ -45,6 +45,21 @@ describe('ResumeWizardPage', () => {
     expect(screen.getByRole('textbox')).toBeInTheDocument();
   });
 
+  it('renders inside the page frame with one PageHeader h1 and no nested main', () => {
+    const { container } = render(<ResumeWizardPage />);
+    expect(container.querySelector('main')).toBeNull();
+    expect(container.firstChild as HTMLElement).toHaveClass('bg-blueprint');
+    const headings = screen.getAllByRole('heading', { level: 1 });
+    expect(headings).toHaveLength(1);
+    expect(headings[0]).toHaveTextContent('resumeWizard.title');
+    expect(headings[0]).toHaveClass('font-serif', 'uppercase', 'text-4xl');
+    // The question stays the card's own h2.
+    expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent(/Hi — I'll help you/);
+    expect(
+      screen.getByRole('button', { name: 'resumeWizard.actions.backToDashboard' })
+    ).toHaveClass('border-ink', 'h-8');
+  });
+
   it('submits the intro answer and shows the next question', async () => {
     mockedPostTurn.mockResolvedValueOnce({
       state: makeState({
