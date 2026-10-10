@@ -9,7 +9,9 @@
     "lint": "oxlint && prettier --check \"**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts}\"",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
-    "test": "vitest run"
+    "test": "vitest run",
+    "guard": "node scripts/swiss-guard.mjs",
+    "guard:update": "node scripts/swiss-guard.mjs --update"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

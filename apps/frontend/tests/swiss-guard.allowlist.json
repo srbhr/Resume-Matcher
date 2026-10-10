@@ -1,0 +1,348 @@
+{
+  "app/(default)/dashboard/page.tsx": {
+    "legacy-token": 5,
+    "palette": 26,
+    "raw-colour": 19,
+    "spacing": 2,
+    "transition": 1
+  },
+  "app/(default)/resumes/[id]/page.tsx": {
+    "decorative-icon": 1,
+    "legacy-token": 4,
+    "palette": 14
+  },
+  "app/(default)/settings/page.tsx": {
+    "decorative-icon": 1,
+    "ink-tint": 4,
+    "legacy-token": 34,
+    "palette": 48,
+    "soft-shadow": 2,
+    "spacing": 2,
+    "transition": 1,
+    "type-size": 2
+  },
+  "app/(default)/tailor/page.tsx": {
+    "legacy-token": 2,
+    "palette": 12,
+    "raw-colour": 1,
+    "spacing": 2
+  },
+  "app/(default)/tracker/page.tsx": {
+    "gradient": 2,
+    "legacy-token": 2,
+    "raw-colour": 2
+  },
+  "app/layout.tsx": {
+    "legacy-token": 1
+  },
+  "components/builder/add-section-dialog.tsx": {
+    "legacy-token": 10,
+    "spacing": 1,
+    "transition": 1
+  },
+  "components/builder/cover-letter-editor.tsx": {
+    "legacy-token": 4,
+    "palette": 1,
+    "raw-colour": 2
+  },
+  "components/builder/cover-letter-preview.tsx": {
+    "legacy-token": 1
+  },
+  "components/builder/draggable-list-item.tsx": {
+    "legacy-token": 1
+  },
+  "components/builder/draggable-section-wrapper.tsx": {
+    "legacy-token": 1
+  },
+  "components/builder/formatting-controls.tsx": {
+    "legacy-token": 17,
+    "palette": 20,
+    "raw-colour": 3,
+    "soft-shadow": 3,
+    "spacing": 1,
+    "transition": 10,
+    "type-size": 5
+  },
+  "components/builder/forms/additional-form.tsx": {
+    "legacy-token": 4,
+    "palette": 5
+  },
+  "components/builder/forms/education-form.tsx": {
+    "legacy-token": 8
+  },
+  "components/builder/forms/experience-form.tsx": {
+    "legacy-token": 11,
+    "palette": 3
+  },
+  "components/builder/forms/generic-item-form.tsx": {
+    "legacy-token": 11,
+    "palette": 3
+  },
+  "components/builder/forms/generic-list-form.tsx": {
+    "legacy-token": 1,
+    "palette": 2
+  },
+  "components/builder/forms/generic-text-form.tsx": {
+    "legacy-token": 1,
+    "palette": 1
+  },
+  "components/builder/forms/personal-info-form.tsx": {
+    "legacy-token": 8,
+    "palette": 8
+  },
+  "components/builder/forms/projects-form.tsx": {
+    "legacy-token": 15,
+    "palette": 3
+  },
+  "components/builder/forms/summary-form.tsx": {
+    "legacy-token": 1,
+    "palette": 1
+  },
+  "components/builder/generate-prompt.tsx": {
+    "decorative-icon": 1,
+    "legacy-token": 5,
+    "palette": 4
+  },
+  "components/builder/highlighted-resume-view.tsx": {
+    "legacy-token": 13,
+    "palette": 2,
+    "spacing": 4
+  },
+  "components/builder/interview-prep-view.tsx": {
+    "ink-tint": 1,
+    "legacy-token": 6,
+    "palette": 15,
+    "spacing": 3
+  },
+  "components/builder/jd-comparison-view.tsx": {
+    "legacy-token": 2,
+    "palette": 5
+  },
+  "components/builder/jd-display.tsx": {
+    "legacy-token": 2
+  },
+  "components/builder/outreach-editor.tsx": {
+    "legacy-token": 4,
+    "palette": 1,
+    "raw-colour": 2
+  },
+  "components/builder/outreach-preview.tsx": {
+    "legacy-token": 4,
+    "raw-colour": 3
+  },
+  "components/builder/regenerate-dialog.tsx": {
+    "legacy-token": 13,
+    "palette": 3
+  },
+  "components/builder/regenerate-diff-preview.tsx": {
+    "legacy-token": 7,
+    "palette": 12,
+    "raw-colour": 1
+  },
+  "components/builder/regenerate-instruction-dialog.tsx": {
+    "decorative-icon": 1,
+    "legacy-token": 7,
+    "palette": 3
+  },
+  "components/builder/resume-builder.tsx": {
+    "decorative-icon": 1,
+    "legacy-token": 9,
+    "palette": 5,
+    "raw-colour": 5
+  },
+  "components/builder/resume-form.tsx": {
+    "legacy-token": 1
+  },
+  "components/builder/section-header.tsx": {
+    "legacy-token": 11,
+    "palette": 5,
+    "spacing": 4,
+    "type-size": 2
+  },
+  "components/builder/template-selector.tsx": {
+    "legacy-token": 4,
+    "palette": 8,
+    "raw-colour": 1,
+    "soft-shadow": 1,
+    "spacing": 22,
+    "transition": 1,
+    "type-size": 1
+  },
+  "components/common/error-boundary.tsx": {
+    "legacy-token": 1,
+    "palette": 6,
+    "transition": 2
+  },
+  "components/dashboard/master-resume-choice-dialog.tsx": {
+    "legacy-token": 7,
+    "palette": 3,
+    "raw-colour": 2,
+    "soft-shadow": 2,
+    "spacing": 2
+  },
+  "components/dashboard/resume-upload-dialog.tsx": {
+    "legacy-token": 9,
+    "palette": 12,
+    "transition": 2
+  },
+  "components/enrichment/enrichment-modal.tsx": {
+    "decorative-icon": 1,
+    "ink-tint": 1,
+    "legacy-token": 2,
+    "spacing": 2
+  },
+  "components/enrichment/loading-steps.tsx": {
+    "decorative-icon": 1,
+    "legacy-token": 3,
+    "palette": 9
+  },
+  "components/enrichment/preview-step.tsx": {
+    "legacy-token": 4,
+    "palette": 7,
+    "spacing": 1
+  },
+  "components/enrichment/question-step.tsx": {
+    "legacy-token": 7,
+    "spacing": 1
+  },
+  "components/home/hero.tsx": {
+    "gradient": 2,
+    "legacy-token": 3,
+    "palette": 4,
+    "raw-colour": 2
+  },
+  "components/home/swiss-grid.tsx": {
+    "gradient": 2,
+    "legacy-token": 5,
+    "palette": 2,
+    "raw-colour": 2,
+    "transition": 2
+  },
+  "components/preview/page-container.tsx": {
+    "legacy-token": 1,
+    "palette": 4,
+    "raw-colour": 1,
+    "type-size": 1
+  },
+  "components/preview/paginated-preview.tsx": {
+    "legacy-token": 6,
+    "raw-colour": 1,
+    "spacing": 1,
+    "type-size": 1
+  },
+  "components/resume-wizard/live-preview.tsx": {
+    "glyph": 1,
+    "legacy-token": 5,
+    "palette": 3,
+    "raw-colour": 1,
+    "soft-shadow": 1,
+    "spacing": 2
+  },
+  "components/resume-wizard/question-card.tsx": {
+    "legacy-token": 3,
+    "palette": 3,
+    "spacing": 2
+  },
+  "components/resume-wizard/resume-wizard-page.tsx": {
+    "legacy-token": 2,
+    "palette": 8,
+    "spacing": 3
+  },
+  "components/settings/api-key-menu.tsx": {
+    "ink-tint": 1,
+    "legacy-token": 3,
+    "palette": 5,
+    "transition": 2
+  },
+  "components/tailor/ats-score-card.tsx": {
+    "glyph": 1,
+    "palette": 23,
+    "radius": 7,
+    "spacing": 9,
+    "transition": 2
+  },
+  "components/tailor/diff-preview-modal.tsx": {
+    "legacy-token": 4,
+    "palette": 5,
+    "raw-colour": 10,
+    "spacing": 1
+  },
+  "components/tracker/application-card.tsx": {
+    "legacy-token": 3,
+    "spacing": 1,
+    "type-size": 2
+  },
+  "components/tracker/bulk-action-bar.tsx": {
+    "legacy-token": 1
+  },
+  "components/tracker/card-detail-modal.tsx": {
+    "legacy-token": 4,
+    "spacing": 2
+  },
+  "components/tracker/kanban-board.tsx": {
+    "legacy-token": 7,
+    "spacing": 2,
+    "transition": 3,
+    "type-size": 2
+  },
+  "components/tracker/kanban-column.tsx": {
+    "legacy-token": 3
+  },
+  "components/tracker/manage-columns-dialog.tsx": {
+    "type-size": 1
+  },
+  "components/ui/button.tsx": {
+    "legacy-token": 5,
+    "palette": 10,
+    "raw-colour": 1
+  },
+  "components/ui/card.tsx": {
+    "legacy-token": 1,
+    "transition": 1
+  },
+  "components/ui/confirm-dialog.tsx": {
+    "legacy-token": 1,
+    "palette": 15
+  },
+  "components/ui/dialog.tsx": {
+    "ink-tint": 1,
+    "legacy-token": 1,
+    "palette": 1
+  },
+  "components/ui/dropdown.tsx": {
+    "glyph": 1,
+    "legacy-token": 4,
+    "palette": 1,
+    "transition": 1
+  },
+  "components/ui/input.tsx": {
+    "legacy-token": 1,
+    "palette": 1
+  },
+  "components/ui/link-dialog.tsx": {
+    "ink-tint": 1
+  },
+  "components/ui/retro-tabs.tsx": {
+    "legacy-token": 3,
+    "palette": 1,
+    "raw-colour": 2,
+    "soft-shadow": 1,
+    "transition": 1
+  },
+  "components/ui/rich-text-editor.tsx": {
+    "legacy-token": 2,
+    "palette": 3
+  },
+  "components/ui/rich-text-toolbar.tsx": {
+    "legacy-token": 1,
+    "palette": 2
+  },
+  "components/ui/textarea.tsx": {
+    "legacy-token": 1,
+    "palette": 1
+  },
+  "components/ui/toggle-switch.tsx": {
+    "legacy-token": 2,
+    "palette": 2
+  }
+}
