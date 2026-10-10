@@ -6,11 +6,6 @@
     "spacing": 2,
     "transition": 1
   },
-  "app/(default)/tracker/page.tsx": {
-    "gradient": 2,
-    "legacy-token": 2,
-    "raw-colour": 2
-  },
   "app/layout.tsx": {
     "legacy-token": 1
   },
@@ -209,30 +204,6 @@
     "legacy-token": 3,
     "palette": 5,
     "transition": 2
-  },
-  "components/tracker/application-card.tsx": {
-    "legacy-token": 3,
-    "spacing": 1,
-    "type-size": 2
-  },
-  "components/tracker/bulk-action-bar.tsx": {
-    "legacy-token": 1
-  },
-  "components/tracker/card-detail-modal.tsx": {
-    "legacy-token": 4,
-    "spacing": 2
-  },
-  "components/tracker/kanban-board.tsx": {
-    "legacy-token": 7,
-    "spacing": 2,
-    "transition": 3,
-    "type-size": 2
-  },
-  "components/tracker/kanban-column.tsx": {
-    "legacy-token": 3
-  },
-  "components/tracker/manage-columns-dialog.tsx": {
-    "type-size": 1
   },
   "components/ui/card.tsx": {
     "legacy-token": 1

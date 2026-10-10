@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
 import {
   DndContext,
   DragEndEvent,
@@ -12,12 +13,15 @@ import {
 } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { useReducedMotion } from 'motion/react';
+import ArrowLeft from 'lucide-react/dist/esm/icons/arrow-left';
 import Plus from 'lucide-react/dist/esm/icons/plus';
 import Settings from 'lucide-react/dist/esm/icons/settings';
 import Loader2 from 'lucide-react/dist/esm/icons/loader-2';
 import ChevronLeft from 'lucide-react/dist/esm/icons/chevron-left';
 import ChevronRight from 'lucide-react/dist/esm/icons/chevron-right';
-import { Button } from '@/components/ui/button';
+import { Button, buttonClass } from '@/components/ui/button';
+import { Alert } from '@/components/ui/alert';
+import { EmptyState } from '@/components/ui/empty-state';
 import { useTranslations } from '@/lib/i18n';
 import {
   listApplications,
@@ -218,58 +222,69 @@ export function KanbanBoard() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      {/* Header — mirrors the dashboard canvas header */}
-      <div className="flex shrink-0 flex-col gap-4 border-b border-black p-6 md:flex-row md:items-center md:justify-between md:p-8">
-        <div>
-          <h1 className="font-serif text-3xl font-bold uppercase tracking-tight text-ink md:text-4xl">
+      {/* Header — a compact single-row toolbar (not the default PageHeader):
+          this is a full-height working view, so the band stays short and the
+          board keeps the height. Wraps onto more rows on narrow screens. */}
+      <header className="flex shrink-0 flex-wrap items-center gap-x-6 gap-y-3 border-b border-ink px-6 py-3">
+        <Link href="/dashboard" className={buttonClass({ variant: 'outline', size: 'sm' })}>
+          <ArrowLeft aria-hidden="true" />
+          {t('nav.backToDashboard')}
+        </Link>
+        {/* min-w keeps the title readable: with a 0 basis the actions would
+            never wrap and would squeeze the title to nothing. */}
+        <div className="flex min-w-[14rem] flex-1 flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h1 className="font-serif text-2xl font-bold uppercase leading-tight tracking-tight text-ink md:text-3xl">
             {t('tracker.title')}
           </h1>
-          <p className="mt-2 font-mono text-xs uppercase tracking-wide text-ink-soft">
+          <p className="font-mono text-xs uppercase tracking-wide text-steel">
+            {'// '}
             {t('tracker.subtitle')}
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <Button variant="outline" onClick={() => setManageOpen(true)}>
-            <Settings className="h-4 w-4" />
+        <div className="ml-auto flex flex-wrap items-center gap-3">
+          <Button type="button" variant="outline" size="sm" onClick={() => setManageOpen(true)}>
+            <Settings aria-hidden="true" />
             {t('tracker.manage')}
           </Button>
           {showScrollControls && (
-            <div className="flex items-center">
-              <button
+            <div className="flex items-center gap-3">
+              <Button
                 type="button"
+                variant="outline"
+                size="icon-sm"
                 aria-label={t('tracker.scroll.prev')}
                 onClick={() => scrollByColumn(-1)}
                 disabled={!canScrollLeft}
-                className="flex h-10 w-10 items-center justify-center border border-black bg-background text-ink shadow-sw-xs transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none disabled:pointer-events-none disabled:opacity-30"
               >
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-              <button
+                <ChevronLeft aria-hidden="true" />
+              </Button>
+              <Button
                 type="button"
+                variant="outline"
+                size="icon-sm"
                 aria-label={t('tracker.scroll.next')}
                 onClick={() => scrollByColumn(1)}
                 disabled={!canScrollRight}
-                className="-ml-px flex h-10 w-10 items-center justify-center border border-black bg-background text-ink shadow-sw-xs transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none disabled:pointer-events-none disabled:opacity-30"
               >
-                <ChevronRight className="h-4 w-4" />
-              </button>
+                <ChevronRight aria-hidden="true" />
+              </Button>
             </div>
           )}
-          <Button onClick={() => setManualAddOpen(true)}>
-            <Plus className="h-4 w-4" />
+          <Button type="button" size="sm" onClick={() => setManualAddOpen(true)}>
+            <Plus aria-hidden="true" />
             {t('tracker.addApplication')}
           </Button>
         </div>
-      </div>
+      </header>
 
       {error && (
-        <div className="shrink-0 border-b border-black bg-background px-6 py-3 font-mono text-xs text-destructive md:px-8">
-          {error}
+        <div className="shrink-0 border-b border-ink px-6 py-3 md:px-8">
+          <Alert tone="error">{error}</Alert>
         </div>
       )}
 
       {selectedIds.size > 0 && (
-        <div className="shrink-0 border-b border-black px-6 py-3 md:px-8">
+        <div className="shrink-0 border-b border-ink px-6 py-3 md:px-8">
           <BulkActionBar
             selectedCount={selectedIds.size}
             onMove={handleBulkMove}
@@ -284,13 +299,14 @@ export function KanbanBoard() {
       <div className="flex min-h-0 flex-1 flex-col">
         {loading ? (
           <div className="flex flex-1 items-center justify-center">
-            <Loader2 className="h-6 w-6 animate-spin text-steel-grey" />
+            <Loader2 aria-hidden="true" className="size-6 animate-spin text-steel" />
           </div>
         ) : isEmpty ? (
-          <div className="flex flex-1 flex-col items-center justify-center p-10 text-center">
-            <p className="font-serif text-lg text-ink">{t('tracker.empty.title')}</p>
-            <p className="mt-1 font-mono text-xs text-ink-soft">{t('tracker.empty.description')}</p>
-          </div>
+          <EmptyState
+            title={t('tracker.empty.title')}
+            description={t('tracker.empty.description')}
+            className="p-6 md:p-8"
+          />
         ) : (
           <DndContext
             sensors={sensors}
@@ -303,7 +319,7 @@ export function KanbanBoard() {
                   key={status}
                   data-column={status}
                   className={`flex ${
-                    index < visibleStatuses.length - 1 ? 'border-r border-black' : ''
+                    index < visibleStatuses.length - 1 ? 'border-r border-ink' : ''
                   }`}
                 >
                   <KanbanColumn
@@ -324,11 +340,11 @@ export function KanbanBoard() {
       {/* Stage rail — an always-visible map of every stage (with counts) so
           off-screen sections are never lost; click a stage to jump to it. */}
       {!isEmpty && (
-        <div className="flex shrink-0 items-center gap-3 overflow-x-auto border-t border-black bg-paper-tint px-6 py-2 md:px-8">
+        <div className="flex shrink-0 items-center gap-3 overflow-x-auto border-t border-ink bg-paper px-6 py-2 md:px-8">
           {canScrollRight && (
-            <span className="flex shrink-0 items-center gap-1 font-mono text-[11px] font-bold uppercase tracking-wide text-primary">
+            <span className="flex shrink-0 items-center gap-1 font-mono text-xs font-bold uppercase tracking-wide text-primary">
               {t('tracker.scroll.hint')}
-              <ChevronRight className="h-3.5 w-3.5" />
+              <ChevronRight aria-hidden="true" className="size-4" />
             </span>
           )}
           <div className="flex items-center gap-2">
@@ -337,10 +353,10 @@ export function KanbanBoard() {
                 key={status}
                 type="button"
                 onClick={() => scrollToColumn(status)}
-                className="flex shrink-0 items-center gap-1.5 border border-black bg-background px-2 py-1 font-mono text-[11px] uppercase tracking-wide text-ink-soft shadow-sw-xs transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:text-primary hover:shadow-none"
+                className={buttonClass({ variant: 'outline', size: 'sm', className: 'shrink-0' })}
               >
                 {t(`tracker.columns.${status}`)}
-                <span className="text-steel-grey">{columns[status].length}</span>
+                <span className="text-ink-soft tabular-nums">{columns[status].length}</span>
               </button>
             ))}
           </div>
