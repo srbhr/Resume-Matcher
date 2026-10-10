@@ -596,6 +596,23 @@
         "description": "基于职位描述进行全面定制。"
       }
     },
+    "length": {
+      "pageLimitLabel": "页数上限",
+      "pageLimitDescription": "从相关性最低的要点开始删减，直到定制简历符合页数。",
+      "pageLimitOptions": {
+        "1": "1 页",
+        "2": "2 页",
+        "3": "3 页",
+        "none": "不限"
+      },
+      "bulletsLabel": "每段经历的要点数",
+      "bulletsDescription": "每份工作或项目保留的最相关要点数量。",
+      "bulletOptions": {
+        "3": "最多 3 条",
+        "5": "最多 5 条",
+        "all": "全部"
+      }
+    },
     "analyzeJob": "分析职位",
     "generateTailored": "生成定制简历",
     "setupRequiredTitle": "[ 需要配置 ]",
@@ -652,12 +669,13 @@
     },
     "selectResumeDescription": "要点将从这份主简历中选取。",
     "selectionSummary": "已保留 {total} 条要点中的 {kept} 条（每个职位或项目最多 {max} 条）",
+    "selectionSummaryAll": "保留了 {total} 条要点中的 {kept} 条",
     "pageFit": {
-      "fits": "可放入一页",
-      "trimmed": "为适应一页，又精简了 {count} 条",
-      "over": "仍超过一页",
+      "fits": "符合页数上限",
+      "trimmed": "为符合页数上限又删减了 {count} 条",
+      "over": "超出页数上限；已保留所有选中的要点",
       "unavailable": "无法进行页面适配",
-      "finalOver": "改写后可能超过一页",
+      "finalOver": "改写后可能超出页数上限",
       "notRechecked": "改写后未重新检查是否可放入一页"
     }
   },

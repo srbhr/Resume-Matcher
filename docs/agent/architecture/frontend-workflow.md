@@ -35,7 +35,7 @@ Dashboard → Upload Master Resume → Tailor for Job → View/Edit → Download
 - Job description textarea (min 50 chars)
 - Source picker (`tailor.selectResume`) appears when more than one master is ready; the default master is preselected, then the stored `master_resume_id`, then the first ready master. The source id is pinned when a preview starts and confirm uses the pinned id
 - Process: Upload JD → Improve → Redirect to viewer
-- Preview sends `max_bullets_per_entry: 3` and `page_fit` built from the stored template settings (`readStoredTemplateSettings()` + `toPageFitSettings()`); the diff modal shows a one-line selection summary. See [bullet selection](../features/preview-confirmation.md#bullet-selection-harness-steered)
+- **Page limit** and **Bullets per role** dropdowns (`lib/utils/tailor-length-settings.ts`, persisted per browser; defaults 2 pages / all bullets). Preview sends `max_pages` with `page_fit` built from the stored template settings (`readStoredTemplateSettings()` + `toPageFitSettings()`), and `max_bullets_per_entry` when a cap is chosen; the diff modal shows a one-line selection summary. See [bullet selection](../features/preview-confirmation.md#bullet-selection-harness-steered)
 
 ### 4. Builder (`/builder`)
 

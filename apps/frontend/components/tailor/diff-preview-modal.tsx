@@ -376,19 +376,27 @@ function formatSelectionSummary(
   summary: BulletSelectionSummary,
   t: (key: string, params?: Record<string, string | number>) => string
 ): string {
-  const kept = t('tailor.selectionSummary', {
-    kept: summary.bullets_after,
-    total: summary.bullets_before,
-    max: summary.max_per_entry,
-  });
+  const kept =
+    summary.max_per_entry == null
+      ? t('tailor.selectionSummaryAll', {
+          kept: summary.bullets_after,
+          total: summary.bullets_before,
+        })
+      : t('tailor.selectionSummary', {
+          kept: summary.bullets_after,
+          total: summary.bullets_before,
+          max: summary.max_per_entry,
+        });
   if (summary.page_fit === 'skipped') return kept;
   const fitBeforeRewrite = summary.page_fit === 'fits' || summary.page_fit === 'trimmed';
-  // Without the final re-render, the one-page fit of the rewritten result is unverified.
+  // Without the final re-render, the page fit of the rewritten result is unverified.
   if (fitBeforeRewrite && summary.final_check === 'skipped') {
     return `${kept} · ${t('tailor.pageFit.notRechecked')}`;
   }
   // A draft that fit before rewriting can still spill over; the final check reports it.
-  const finalOver = fitBeforeRewrite && summary.final_pages != null && summary.final_pages > 1;
+  const maxPages = summary.max_pages ?? 1;
+  const finalOver =
+    fitBeforeRewrite && summary.final_pages != null && summary.final_pages > maxPages;
   const fit = finalOver
     ? t('tailor.pageFit.finalOver')
     : summary.page_fit === 'trimmed'

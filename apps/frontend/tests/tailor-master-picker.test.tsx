@@ -127,7 +127,11 @@ async function confirmDiff() {
 }
 
 describe('tailor page master picker', () => {
-  it('preselects the default master and sends the bullet cap', async () => {
+  it('preselects the default master and sends the stored bullet cap', async () => {
+    localStorage.setItem(
+      'tailor_length_settings',
+      JSON.stringify({ maxPages: 2, maxBulletsPerEntry: 3 })
+    );
     api.list.mockResolvedValue([
       master('m1', false, 'DevRel'),
       master('m2', true, 'Solutions Eng'),
@@ -148,9 +152,30 @@ describe('tailor page master picker', () => {
     api.list.mockResolvedValue([master('m1', true, 'DevRel')]);
     await renderPage();
     await fillJobDescriptionAndGenerate();
+    // Default length settings: two-page limit, no per-role bullet cap.
     expect(api.preview).toHaveBeenCalledWith('m1', 'job', PROMPT_ID, {
-      maxBulletsPerEntry: 3,
       pageFit: { template: 'modern', lang: 'es' },
+      maxPages: 2,
+    });
+  });
+
+  it('sends and remembers the chosen page limit and bullet cap', async () => {
+    api.list.mockResolvedValue([master('m1', true, 'DevRel')]);
+    await renderPage();
+    fireEvent.click(screen.getByRole('button', { name: /tailor\.length\.pageLimitLabel/ }));
+    fireEvent.click(
+      screen.getByRole('menuitemradio', { name: /tailor\.length\.pageLimitOptions\.none/ })
+    );
+    fireEvent.click(screen.getByRole('button', { name: /tailor\.length\.bulletsLabel/ }));
+    fireEvent.click(
+      screen.getByRole('menuitemradio', { name: /tailor\.length\.bulletOptions\.5/ })
+    );
+    await fillJobDescriptionAndGenerate();
+    // No page limit: no page fit is requested, only the per-role cap.
+    expect(api.preview).toHaveBeenCalledWith('m1', 'job', PROMPT_ID, { maxBulletsPerEntry: 5 });
+    expect(JSON.parse(localStorage.getItem('tailor_length_settings') ?? '{}')).toEqual({
+      maxPages: null,
+      maxBulletsPerEntry: 5,
     });
   });
 
