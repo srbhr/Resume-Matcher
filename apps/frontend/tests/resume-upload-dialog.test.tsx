@@ -261,7 +261,11 @@ describe('saved uploads with failed HTTP responses', () => {
     render(<ControlledDialog onUploadComplete={onComplete} />);
     chooseResume();
     fireEvent.click(await screen.findByRole('button', { name: 'dashboard.retryProcessing' }));
-    expect(await screen.findByRole('status')).toHaveTextContent('dashboard.status.processing');
+    const pending = await screen.findByRole('status');
+    expect(pending).toHaveTextContent('dashboard.status.processing');
+    // The pending message is the shared info Alert, not a hand-rolled bordered paragraph.
+    expect(pending.className).toMatch(/border-2/);
+    expect(pending.className).toMatch(/bg-info-tint/);
     expect(onComplete).not.toHaveBeenCalled();
     expect(screen.getByRole('button', { name: 'dashboard.deleteResume' })).toBeEnabled();
     fireEvent.click(screen.getByRole('button', { name: 'dashboard.retryProcessing' }));

@@ -317,8 +317,8 @@ export function ResumeUploadDialog({
             className={`
                             relative border-2 border-dashed p-8 text-center transition-colors
                             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-white
-                            ${isDragging ? 'border-primary bg-info-tint' : 'border-steel hover:border-black hover:bg-white'}
-                            ${currentFile ? 'bg-white border-solid border-black' : ''}
+                            ${isDragging ? 'border-primary bg-info-tint' : 'border-steel hover:border-ink hover:bg-white'}
+                            ${currentFile ? 'bg-white border-solid border-ink' : ''}
                             ${canBrowse ? 'cursor-pointer' : 'cursor-default'}
                             ${isRecovering ? 'opacity-70' : ''}
                         `}
@@ -349,8 +349,8 @@ export function ResumeUploadDialog({
             ) : currentFile ? (
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3 text-left overflow-hidden">
-                  <div className="w-10 h-10 border border-black bg-paper flex items-center justify-center shrink-0">
-                    <FileIcon aria-hidden="true" className="w-5 h-5 text-black" />
+                  <div className="w-10 h-10 border border-ink bg-paper flex items-center justify-center shrink-0">
+                    <FileIcon aria-hidden="true" className="w-5 h-5 text-ink" />
                   </div>
                   <div className="min-w-0">
                     <p className="font-bold text-sm truncate max-w-[200px]">
@@ -379,8 +379,8 @@ export function ResumeUploadDialog({
               </div>
             ) : (
               <div className="flex flex-col items-center py-4">
-                <div className="w-12 h-12 border border-black bg-white shadow-sw-default flex items-center justify-center mb-4">
-                  <UploadIcon aria-hidden="true" className="w-6 h-6 text-black" />
+                <div className="w-12 h-12 border border-ink bg-white shadow-sw-default flex items-center justify-center mb-4">
+                  <UploadIcon aria-hidden="true" className="w-6 h-6 text-ink" />
                 </div>
                 <p id={dropzoneTitleId} className="font-bold text-lg mb-1">
                   {t('dashboard.uploadDialog.dropzoneTitle')}
@@ -402,9 +402,9 @@ export function ResumeUploadDialog({
           )}
 
           {uploadFeedback?.type === 'pending' && (
-            <p role="status" className="mt-4 border border-black p-3 font-mono text-sm">
+            <Alert tone="info" className="mt-4">
               {uploadFeedback.message}
-            </p>
+            </Alert>
           )}
 
           {uploadFeedback?.type === 'success' && (
