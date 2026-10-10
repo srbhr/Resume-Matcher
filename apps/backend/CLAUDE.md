@@ -15,7 +15,7 @@ Stack: FastAPI 0.143 · Python **3.13+** · Pydantic v2 / pydantic-settings · S
 | Settings | Env vars via `pydantic-settings`; `settings` singleton; API keys read from the encrypted SQLite store | `app/config.py` |
 | Crypto | Fernet encrypt/decrypt for API keys at rest (`data/.secret_key`, `chmod 600`, gitignored) | `app/crypto.py` |
 | Config cache | Shared, TTL-cached (5 min) read of `data/config.json`; `get_content_language()` | `app/config_cache.py` |
-| Database | Async SQLAlchemy/SQLite facade; tables `resumes`/`jobs`/`improvements`/`applications`/`api_keys`; returns plain dicts; global `db` singleton | `app/database.py`, `app/models.py`, `app/db_engine.py` |
+| Database | Async SQLAlchemy facade (SQLite default, PostgreSQL via `DATABASE_URL`); tables `resumes`/`jobs`/`improvements`/`applications`/`api_keys`; returns plain dicts; global `db` singleton | `app/database.py`, `app/models.py`, `app/db_engine.py`, `app/db_url.py` · [postgres-backend.md](../../docs/agent/features/postgres-backend.md) |
 | Tracker | Kanban application-tracker endpoints | `app/routers/applications.py`, `app/schemas/applications.py` |
 | LLM | LiteLLM wrapper: Router, retries, JSON extraction, timeouts, provider quirks | `app/llm.py` |
 | PDF | Headless Chromium render of frontend `/print/*` pages; lazy browser init | `app/pdf.py` |
@@ -23,6 +23,8 @@ Stack: FastAPI 0.143 · Python **3.13+** · Pydantic v2 / pydantic-settings · S
 | Services | Business logic (parse, improve/diff, refine, cover-letter) | `app/services/*.py` |
 | Prompts | All LLM prompt templates + placeholder validation | `app/prompts/*.py` |
 | Schemas | Pydantic request/response + `ResumeData` models | `app/schemas/*.py` |
+| MCP server | stdio MCP tools; the agent is the LLM, no LLM calls here | `app/mcp_server/*.py` · [mcp-server.md](../../docs/agent/features/mcp-server.md) |
+| ATS parse-check | Deterministic parseability checks + round trip (no LLM) | `app/services/ats_parse/`, `app/routers/ats.py` · [ats-parse-check.md](../../docs/agent/features/ats-parse-check.md) |
 
 `data/` holds `resume_matcher.db` (SQLite; primary store), `config.json` (non-secret config), `.secret_key` (Fernet secret for encrypted API keys), an `uploads/` dir, and possibly a legacy `database.json` (TinyDB — imported into SQLite on first startup, then renamed `database.json.migrated`). `.gitignore` ignores `*.db*`, `data/*.json`, and `data/.secret_key` (DB + config + secret never get committed), but **`uploads/` is NOT git-ignored** — don't commit user uploads. `db.reset_database()` truncates the document tables + `applications` (preserving `api_keys`) and wipes `uploads/`.
 
@@ -31,6 +33,7 @@ Stack: FastAPI 0.143 · Python **3.13+** · Pydantic v2 / pydantic-settings · S
 - `config.py` — `/config/llm-api-key` (GET/PUT), `/config/llm-test` (POST live health check), `/config/features`, `/config/language`, `/config/prompts`, `/config/feature-prompts`, `/config/api-keys` (per-provider CRUD), `/config/reset` (POST; confirmation token `{"confirm": "RESET_ALL_DATA"}` in the JSON **body**, not a query param).
 - `resumes.py` — the biggest router: `/resumes/upload`, `GET /resumes`, `/resumes/list`, `/resumes/improve` + `/improve/preview` + `/improve/confirm`, `PATCH /resumes/{id}`, `/{id}/pdf`, `/{id}/retry-processing`, cover-letter/outreach/title PATCH + on-demand generate, `/{id}/job-description`, `/{id}/cover-letter/pdf`.
 - `jobs.py` — `/jobs/upload` (batch JD text → job_ids), `GET /jobs/{id}`.
+- `ats.py` — `POST /ats/parse-check` (upload), `POST /resumes/{id}/parse-check` (own render + round trip).
 - `enrichment.py` — `/enrichment/analyze/{id}`, `/enhance`, `/apply/{id}`, `/regenerate`, `/apply-regenerated/{id}`.
 
 ### Services
@@ -96,6 +99,7 @@ cd apps/backend
 uv sync                                              # install deps (creates .venv)
 uv run uvicorn app.main:app --reload --port 8000     # dev server on :8000
 uv run app                                           # console script (app.main:main, uses HOST/PORT/RELOAD)
+uv run resume-matcher-mcp                            # MCP server over stdio (see features/mcp-server.md)
 uv run ruff check                                    # lint backend
 uv run ruff format                                   # format backend
 uv run playwright install chromium                   # one-time, required for PDF endpoints
@@ -126,7 +130,7 @@ Config via `.env` (see `.env.example`). Interactive API docs at `/docs`.
 - **litellm model map is pinned to the bundled copy:** LiteLLM downloads its model registry from GitHub at import unless `LITELLM_LOCAL_MODEL_COST_MAP=True`; `app/__init__.py` defaults it to `True` (via `setdefault`, before any litellm import), so capability answers (`_supports_temperature`, JSON mode, max tokens) only change with a version bump. Set the env var to `False` to use the live registry. Don't import litellm from code that can run before `app` is imported. GPT-5 temperature follows LiteLLM's rule: non-default only when the effective effort (configured, else `default_reasoning_effort`) is `none` — see [`llm-integration.md`](../../docs/agent/llm-integration.md#temperature-support).
 - **markitdown needs the `[pdf]` extra:** since 0.1.5 its PDF converter requires `pdfplumber` (+ Pillow, pypdfium2); with only `[docx]` PDF uploads fail with `MissingDependencyException`. Keep `pdfminer.six` pinned directly too — `parser.py` and `page_fit.py` import it.
 - **Keys vs non-secret config:** API **keys** live ONLY in the encrypted `api_keys` SQLite table (per-provider, via `_PROVIDER_KEY_MAP`); `load_config_file()` injects the decrypted keys into the returned dict and `save_config_file()` strips them, so secrets never round-trip to `config.json`. Non-secret provider/model/base/features stay in `config.json`. `PUT /config/llm-api-key` no longer writes any key; keys go through `PUT /config/api-keys`. `migrate_legacy_keys()` folds any legacy plaintext keys into the encrypted store (idempotent, non-clobbering). After any write to `config.json`, call `invalidate_config_cache()`.
-- **Master resume invariant:** up to `MAX_MASTER_RESUMES` (5) resumes have `is_master=True`; `is_default_master` implies `is_master`. The partial unique index on `is_default_master` guarantees at most one default; application logic keeps exactly one whenever any master exists: a new master becomes the default when none exists, deleting the default promotes the earliest remaining master, and the startup migration (`db_engine.py`) promotes the earliest master when none is default. `set_default_master_resume` (replaces `set_master_resume`) switches it. `create_resume_atomic_master` counts and inserts in one `BEGIN IMMEDIATE` write transaction (raises `MasterResumeLimitError` at the limit) and, with `take_over_stuck_default=True`, hands the default to the new upload when the current default is stuck `failed`/`processing`; duplicates pass `False`.
+- **Master resume invariant:** up to `MAX_MASTER_RESUMES` (5) resumes have `is_master=True`; `is_default_master` implies `is_master`. The partial unique index on `is_default_master` guarantees at most one default; application logic keeps exactly one whenever any master exists: a new master becomes the default when none exists, deleting the default promotes the earliest remaining master, and the startup migration (`db_engine.py`) promotes the earliest master when none is default. `set_default_master_resume` (replaces `set_master_resume`) switches it. `create_resume_atomic_master` counts and inserts in one reserved write transaction (`BEGIN IMMEDIATE`, or the Postgres advisory lock) (raises `MasterResumeLimitError` at the limit) and, with `take_over_stuck_default=True`, hands the default to the new upload when the current default is stuck `failed`/`processing`; duplicates pass `False`.
 - **Dates lose months:** LLMs drop month precision; `restore_dates_from_markdown` + `_restore_original_dates` re-insert them. Preserve this when editing the parse/improve flow.
 - **Single-worker assumption:** caches and locks assume one uvicorn worker / cooperative async. Don't add cross-worker shared mutable state without revisiting `config_cache` and the master lock.
 - **PDF needs the frontend running** (`FRONTEND_BASE_URL`, default `http://localhost:3000`) — Chromium renders `/print/*` pages. Browser is lazily initialized on first PDF request.
@@ -147,6 +151,9 @@ Config via `.env` (see `.env.example`). Interactive API docs at `/docs`.
 | Scope / principles | [`scope-and-principles.md`](../../docs/agent/scope-and-principles.md) · [`workflow.md`](../../docs/agent/workflow.md) |
 | AI enrichment | [`features/enrichment.md`](../../docs/agent/features/enrichment.md) |
 | JD matching | [`features/jd-match.md`](../../docs/agent/features/jd-match.md) |
+| MCP server | [`features/mcp-server.md`](../../docs/agent/features/mcp-server.md) |
+| ATS parse-check | [`features/ats-parse-check.md`](../../docs/agent/features/ats-parse-check.md) |
+| PostgreSQL backend | [`features/postgres-backend.md`](../../docs/agent/features/postgres-backend.md) |
 | Custom sections | [`features/custom-sections.md`](../../docs/agent/features/custom-sections.md) |
 | i18n | [`features/i18n.md`](../../docs/agent/features/i18n.md) |
 | PDF / templates | [`design/pdf-template-guide.md`](../../docs/agent/design/pdf-template-guide.md) · [`design/template-system.md`](../../docs/agent/design/template-system.md) |

@@ -23,6 +23,7 @@ from app.database import DatabaseBusyError, db
 from app.pdf import close_pdf_renderer
 from app.routers import (
     applications_router,
+    ats_router,
     config_router,
     enrichment_router,
     health_router,
@@ -47,6 +48,10 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Application lifespan manager."""
     # Startup
     settings.data_dir.mkdir(parents=True, exist_ok=True)
+    if settings.database_url:
+        from app.db_url import redact
+
+        logger.info("Using PostgreSQL at %s", redact(settings.database_url))
     # Import a legacy TinyDB database into SQLite if present (idempotent).
     # Fail-fast on error: starting with an empty DB would look like data loss.
     from app.scripts.migrate_tinydb_to_sqlite import migrate as migrate_tinydb
@@ -118,6 +123,7 @@ app.include_router(jobs_router, prefix="/api/v1")
 app.include_router(enrichment_router, prefix="/api/v1")
 app.include_router(applications_router, prefix="/api/v1")
 app.include_router(resume_wizard_router, prefix="/api/v1")
+app.include_router(ats_router, prefix="/api/v1")
 
 
 @app.get("/")

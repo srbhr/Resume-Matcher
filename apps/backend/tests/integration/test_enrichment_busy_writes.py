@@ -6,11 +6,11 @@ from unittest.mock import AsyncMock
 
 import pytest
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy import text
 
 from app.database import Database
 from app.main import app
 from app.routers import enrichment
+from tests.db_helpers import hold_writer
 from tests.integration.test_storage_busy_writes import fast_busy_database  # noqa: F401
 
 
@@ -67,7 +67,7 @@ async def test_enrichment_write_contention_returns_503_and_retry_commits(
         base_url="http://test",
     ) as client:
         async with database._session() as writer:
-            await writer.execute(text("BEGIN IMMEDIATE"))
+            await hold_writer(writer)
             response = await client.post(url, json=payload)
             unchanged = await database.get_resume(source["resume_id"])
             assert unchanged is not None
@@ -149,7 +149,7 @@ async def test_enhance_preview_does_not_write_under_sqlite_contention(
         base_url="http://test",
     ) as client:
         async with database._session() as writer:
-            await writer.execute(text("BEGIN IMMEDIATE"))
+            await hold_writer(writer)
             response = await client.post(
                 "/api/v1/enrichment/enhance",
                 json={

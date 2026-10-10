@@ -21,6 +21,7 @@ from app.models import Improvement, Job, Resume, TailoringPreview
 from app.preview import PreviewBusyError, PreviewConflictError
 from app.routers import resumes
 from app.schemas.models import ImproveDiffResult, ResumeChange, ResumeData
+from tests.db_helpers import same_database
 
 
 @pytest.fixture
@@ -145,7 +146,7 @@ async def test_concurrent_confirmation_does_not_repeat_optional_generation(
         assert second.status_code == 409
         assert second.headers.get("Retry-After")
         assert calls == 1
-        other = Database(db_path=isolated_db.db_path)
+        other = same_database(isolated_db)
         try:
             with pytest.raises(PreviewBusyError):
                 await other.claim_preview(

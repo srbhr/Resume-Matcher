@@ -218,7 +218,8 @@
       "coverLetter": "求职信",
       "outreach": "联系邮件",
       "jdMatch": "JD 匹配",
-      "interviewPrep": "面试准备"
+      "interviewPrep": "面试准备",
+      "atsCheck": "ATS 检查"
     },
     "footer": {
       "moduleLabel": "简历编辑模块",
@@ -494,7 +495,8 @@
       "coverLetterEditor": "求职信编辑",
       "outreachEditor": "联系邮件编辑",
       "jdMatchAnalysis": "JD 匹配分析",
-      "interviewPrep": "面试准备"
+      "interviewPrep": "面试准备",
+      "atsCheck": "ATS 解析检查"
     },
     "alerts": {
       "saveNotAvailable": "仅在编辑现有简历时可保存。",
@@ -521,6 +523,125 @@
       "description": "最新更改无法同步到服务器，也无法保存在此浏览器中。现在离开可能会丢失这些更改。",
       "leave": "仍然离开",
       "stay": "继续编辑"
+    },
+    "atsCheck": {
+      "aboutTitle": "检查内容",
+      "aboutDescription": "我们用当前模板和设置生成你的简历，再像普通 ATS 文本提取器那样读取它。整个过程不使用 AI。",
+      "roundTripTitle": "往返对比",
+      "roundTripDescription": "将提取的文本与你的简历数据对比。它衡量的是这份输出能被多忠实地读回，而不是某个具体 ATS 的准确度。",
+      "tipsTitle": "建议",
+      "tips": {
+        "items": {
+          "singleColumn": "单栏模板能按正确顺序读取。",
+          "standardHeadings": "使用工作经历、教育背景、技能等标准板块名称。",
+          "contactInBody": "把联系方式放在正文中。"
+        }
+      },
+      "templateLabel": "模板：{template}",
+      "runButton": "开始检查",
+      "rerunButton": "重新检查",
+      "running": "检查中...",
+      "emptyState": "运行检查，查看 ATS 如何用当前模板读取这份简历。",
+      "saveFirst": "请先保存简历再运行检查。",
+      "unsavedNotice": "未保存的修改不会包含在内，检查使用最近一次保存的版本。",
+      "error": "检查失败。请确认后端和前端正在运行，然后重试。",
+      "parseability": "可解析性",
+      "content": "内容",
+      "extractability": {
+        "full": "文本提取：完整",
+        "partial": "文本提取：部分",
+        "none": "文本提取：无"
+      },
+      "status": {
+        "pass": "通过",
+        "warn": "警告",
+        "fail": "失败"
+      },
+      "checksTitle": "检查项",
+      "contentRecall": "内容召回率",
+      "orderFidelity": "阅读顺序",
+      "allFieldsFound": "所有字段都出现在提取的文本中。",
+      "fieldStatus": {
+        "found": "已找到",
+        "garbled": "错乱",
+        "missing": "缺失",
+        "hidden": "已隐藏"
+      },
+      "previewTitle": "提取的文本",
+      "sectionKinds": {
+        "experience": "工作经历",
+        "education": "教育背景",
+        "skills": "技能"
+      },
+      "checks": {
+        "text_layer": {
+          "title": "可选中文本",
+          "pass": "已提取 {characters} 个字符。",
+          "fail": "没有可选中的文本。文件看起来是扫描件或纯图片，ATS 读不到任何内容。"
+        },
+        "garbled_glyphs": {
+          "title": "字符编码",
+          "pass": "没有无法识别的字符。",
+          "warn": "有 {count} 个字符无法解码。",
+          "fail": "有 {count} 个字符无法解码，ATS 看到的文本会是乱码。"
+        },
+        "text_coverage": {
+          "title": "文本与图片",
+          "pass": "每一页都有真实文本。",
+          "warn": "第 {pages} 页主要是图片。",
+          "fail": "所有页面主要都是图片。"
+        },
+        "multi_column": {
+          "title": "单一阅读顺序",
+          "pass": "文本按单栏读取。",
+          "fail": "在第 {pages} 页检测到两栏。很多 ATS 会把两栏内容混在一起。",
+          "templateHint": "此模板本身就是双栏设计。投递依赖 ATS 的职位时，请选择单栏模板。"
+        },
+        "tables": {
+          "title": "表格",
+          "pass": "没有表格。",
+          "warn": "发现 {count} 个表格。部分 ATS 会打散或跳过表格单元格。"
+        },
+        "text_boxes": {
+          "title": "文本框",
+          "pass": "没有文本框。",
+          "warn": "发现文本框。部分 ATS 会跳过它们。",
+          "fail": "有 {characters} 个字符位于很多 ATS 会跳过的文本框中。"
+        },
+        "header_footer_content": {
+          "title": "页眉和页脚",
+          "pass": "页眉或页脚中没有重要内容。",
+          "warn": "页眉或页脚中有内容，部分 ATS 会忽略。",
+          "fail": "你的联系方式只出现在页眉或页脚中，很多 ATS 会忽略。"
+        },
+        "images": {
+          "title": "图片",
+          "pass": "没有图片。",
+          "warn": "发现 {count} 张图片。图片中的文字对 ATS 不可见。"
+        },
+        "page_count": {
+          "title": "篇幅",
+          "pass": "{pages} 页。",
+          "warn": "共 {pages} 页。建议压缩到两页以内。"
+        },
+        "contact_info": {
+          "title": "联系方式",
+          "pass": "在开头找到了邮箱和电话。",
+          "warn": "联系方式不完整，或出现在文本靠后的位置。",
+          "fail": "提取的文本中没有找到邮箱地址。"
+        },
+        "section_headings": {
+          "title": "板块标题",
+          "pass": "找到标准标题：{found}。",
+          "warn": "缺少标准标题：{missing}。",
+          "fail": "缺少标准标题：{missing}。请使用工作经历、教育背景、技能等名称。"
+        },
+        "dates": {
+          "title": "日期",
+          "pass": "在日期中找到 {years} 个年份。",
+          "warn": "没有找到可识别的日期。"
+        }
+      }
     }
   },
   "enrichment": {
