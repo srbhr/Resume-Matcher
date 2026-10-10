@@ -58,7 +58,7 @@ Every app page sits in the same shell: a framed sheet on a blueprint grid, with 
 
 - The page is canvas with the **blueprint grid** behind it (below), `min-h-screen`, with `px-4 py-12 md:px-8` around the frame
 - The frame is `border border-ink bg-canvas shadow-sw-lg`, centred in the viewport. Content inside it is left-aligned
-- `width`: `default` (`max-w-[86rem]`) or `wide` (`max-w-[104rem]`)
+- `width`: `narrow` (`max-w-4xl`) for a single-column page of forms or settings, where a wider frame would leave an empty right side; `default` (`max-w-[86rem]`); or `wide` (`max-w-[104rem]`)
 - `height="screen"` fills the dynamic viewport (`h-dvh`, frame `max-h-full overflow-hidden`) for views that scroll inside their panels instead of the page
 
 **PageHeader** (`<header class="border-b border-ink p-8 md:p-12">`)

@@ -174,6 +174,13 @@ All six `shadow-sw-*` tokens stay, each tied to one role:
 
 Arbitrary `shadow-[…]` and every soft or rgba shadow are banned.
 
+**Owner amendments (round 2, 2026-10-10).** Decided on the second screenshot pass. Where they differ from §4.3, §5 and §6 above, they win; the text above stays as the record of what was first ratified.
+
+- **Nested shadow.** A new role joins the table: `sw-nested` (4px, `rgb(0 0 0 / 0.15)`, hard offset, no blur) is the shadow of every card, panel, box or section that sits inside a page frame or a dialog (choice cards, stat boxes, form section boxes, toggle cards, tracker cards; `Card variant="raised"` and `ToggleSwitch variant="card"`). Solid ink is for what floats or presses: `sw-sm` controls, `sw-default` dropdown menus, listboxes, popovers and toasts (no longer "cards"), `sw-lg` dialogs and the page frame, `sw-xl` home hero only, `sw-card` resume sheet only. Nothing nested keeps a solid shadow, and sibling boxes match. The "every soft or rgba shadow" ban stands for ad-hoc values; the `sw-nested` token is the one translucent shadow. With `sw-xs` deleted, the set is `sm`, `default`, `lg`, `xl`, `card`, `nested`, pinned by `tests/swiss-shadows.test.ts`. The tracker-card resting frame in §5 is therefore `sw-nested`, not `sw-sm`.
+- **Narrow page frame.** `PageFrame` gains `width: 'narrow'` (`max-w-4xl`), so §6's `'default' | 'wide'` becomes `'narrow' | 'default' | 'wide'`. It is for single-column form pages: the owner flagged the empty right side the 86rem frame left on settings and tailor.
+- **Tile highlight.** Clickable dashboard tiles highlight on hover and keyboard focus with a full `bg-primary` fill and white text, and no ink outline. Keyboard focus keeps the fill and adds a 2px inset white ring. This supersedes the earlier "white lift + blue accent" ruling (white background, 2px ink frame, only the title and mark turning blue, "never a full blue fill") and the "keep `hover:border-ink`" note for dashboard tiles in §5's Card row.
+- The Swiss pack (`docs/portable/swiss-design-system/`), `apps/frontend/CLAUDE.md`, `.claude/CLAUDE.md`, `.impeccable.md` and `docs/agent/coding-standards.md` carry the same rules.
+
 ### 4.4 Motion tokens
 
 ```css

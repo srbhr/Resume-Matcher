@@ -10,7 +10,7 @@ All UI changes MUST follow the **Swiss International Style**. The full design sy
 
 - Use `font-serif` for headers, `font-mono` (the label face, rendered as Space Grotesk) for labels and metadata, `font-sans` for body text
 - Use the semantic color tokens, never raw hex or Tailwind palette scales. The full table, with contrast figures, is in [`tokens.md`](../portable/swiss-design-system/tokens.md). Key values: Canvas `#F0F0E8`, Ink `#000000`, body text `ink-soft` `#3D424C`, Steel `#696D75` (never on a `panel` fill), `primary` `#1D4ED8`, `success` `#127E3B`, `destructive` `#D61E21`, `warning` fill `#F97316` (ink text only) with `warning-text` `#B44F02` for orange labels and icons
-- Components: `rounded-none` with 1px ink borders on controls, fields, cards and dialogs (2px on alerts), hard shadows by role (`shadow-sw-sm` controls, `shadow-sw-default` cards and menus, `shadow-sw-lg` dialogs), and the shared primitives in `components/ui/`
+- Components: `rounded-none` with 1px ink borders on controls, fields, cards and dialogs (2px on alerts), hard shadows by role (solid ink: `shadow-sw-sm` controls, `shadow-sw-default` menus and popovers, `shadow-sw-lg` dialogs and the page frame; translucent ink: `shadow-sw-nested` for every card or box inside a frame or dialog), and the shared primitives in `components/ui/`
 - Motion is feedback only: `import { m } from 'motion/react'`, never `motion.*`
 - See [`tokens.md`](../portable/swiss-design-system/tokens.md), [`components.md`](../portable/swiss-design-system/components.md), and [`anti-patterns.md`](../portable/swiss-design-system/anti-patterns.md) for the full rules
 
