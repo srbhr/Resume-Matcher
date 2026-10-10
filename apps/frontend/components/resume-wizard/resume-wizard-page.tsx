@@ -230,7 +230,7 @@ export function ResumeWizardPage() {
           )}
 
           {state.step === 'complete' && createdResumeId ? (
-            <section className="border-2 border-success bg-white p-6 shadow-sw-default md:p-8">
+            <section className="border-2 border-success bg-white p-6 shadow-sw-nested md:p-8">
               <p className="font-mono text-xs font-bold uppercase tracking-wider text-success">
                 {t('resumeWizard.created.title')}
               </p>

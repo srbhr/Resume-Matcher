@@ -45,7 +45,7 @@ export function LivePreview({ resumeData, inferredSkills }: LivePreviewProps) {
   return (
     <aside
       aria-label={t('resumeWizard.preview.label')}
-      className="border-2 border-ink bg-white p-6 shadow-sw-default"
+      className="border-2 border-ink bg-white p-6 shadow-sw-nested"
     >
       <p className="font-mono text-xs font-bold uppercase tracking-wider text-steel">
         {t('resumeWizard.preview.label')}

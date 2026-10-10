@@ -102,6 +102,7 @@ function expectKeyboardLink(name: string, href: string): HTMLElement {
   expect(link).toHaveFocus();
   // outline-none alone would leave the tile with no focus indicator (spec §8.1).
   expect(link.className).toMatch(/focus-visible:\S*ring-2/);
+  expectWhiteRing(link, 'focus-visible:after:');
   // Stretched link: the ::after overlay covers the whole tile, so the tile itself navigates.
   expect(link.className).toMatch(/(^|\s)after:absolute(\s|$)/);
   expect(link.className).toMatch(/(^|\s)after:inset-0(\s|$)/);
@@ -115,27 +116,62 @@ function expectActionAboveLink(action: HTMLElement, link: HTMLElement): void {
   expect(action.className).toMatch(/(^|\s)z-10(\s|$)/);
 }
 
-const classes = (el: Element) => el.className.split(/\s+/);
+// getAttribute, not className: an SVG's className is an SVGAnimatedString.
+const classAttr = (el: Element) => el.getAttribute('class') ?? '';
+const classes = (el: Element) => classAttr(el).split(/\s+/);
 
-/** Owner ruling: hover or keyboard focus lifts a tile to white with an ink frame; no blue fill. */
-function expectWhiteLiftTile(card: HTMLElement): void {
+/**
+ * Owner ruling (round 2): hover or keyboard focus inside a tile fills it Hyper Blue and turns its
+ * text white. There is no ink outline (Card interactive's hover:border-ink is overridden, so the
+ * border stays transparent) and no 1px press-in.
+ */
+function expectBlueFillTile(card: HTMLElement): void {
   expect(classes(card)).toEqual(
-    expect.arrayContaining(['hover:bg-white', 'has-[:focus-visible]:bg-white'])
-  );
-  expect(classes(card)).toContain('has-[:focus-visible]:border-ink');
-  expect(card.className).not.toMatch(/bg-primary/);
-  expect(card.querySelector('[class*="hover:bg-primary"]')).toBeNull();
-}
-
-/** Only through the tile's hover/focus state does an element turn primary; it rests in ink. */
-function expectAccentOnly(el: Element, property: 'text' | 'border' = 'text'): void {
-  expect(classes(el)).toEqual(
     expect.arrayContaining([
-      `group-hover:${property}-primary`,
-      `group-has-[:focus-visible]:${property}-primary`,
+      'hover:bg-primary',
+      'has-[:focus-visible]:bg-primary',
+      'hover:text-white',
+      'has-[:focus-visible]:text-white',
+      'hover:border-transparent',
+      'hover:translate-x-0',
+      'hover:translate-y-0',
     ])
   );
-  expect(classes(el)).not.toContain(`${property}-primary`);
+  expect(card.className).not.toMatch(/border-ink/);
+  expect(card.className).not.toMatch(/translate-[xy]-px/);
+  expect(card.className).not.toMatch(/bg-white/);
+}
+
+/** An element with its own colour flips to white through the tile's hover and focus state. */
+function expectTurnsWhite(el: Element, property: 'text' | 'border' = 'text'): void {
+  expect(classes(el)).toEqual(
+    expect.arrayContaining([
+      `group-hover:${property}-white`,
+      `group-has-[:focus-visible]:${property}-white`,
+    ])
+  );
+  // The element may rest in primary, but the tile must never turn it primary.
+  expect(classAttr(el)).not.toContain(`group-hover:${property}-primary`);
+}
+
+/** StatusIndicator keeps its colours on its two spans, so the tile recolours them from outside. */
+function expectStatusTurnsWhite(label: HTMLElement): void {
+  expect(classes(label.parentElement as HTMLElement)).toEqual(
+    expect.arrayContaining([
+      'group-hover:[&>span:first-child]:bg-white',
+      'group-hover:[&>span:last-child]:text-white',
+      'group-has-[:focus-visible]:[&>span:first-child]:bg-white',
+      'group-has-[:focus-visible]:[&>span:last-child]:text-white',
+    ])
+  );
+}
+
+/** The focus ring is white: a primary ring would vanish on the blue fill. */
+function expectWhiteRing(el: HTMLElement, prefix = ''): void {
+  expect(classes(el)).toEqual(
+    expect.arrayContaining([`${prefix}ring-2`, `${prefix}ring-inset`, `${prefix}ring-white`])
+  );
+  expect(classes(el)).not.toContain(`${prefix}ring-primary`);
 }
 
 describe('dashboard tiles are keyboard-reachable', () => {
@@ -280,42 +316,72 @@ describe('dashboard tile highlight and the one blue action', () => {
     api.get.mockResolvedValue(status());
   });
 
-  it('lifts resume and add-track tiles to white, with only the title and + mark in primary', async () => {
+  it('fills resume tiles Hyper Blue and turns their text, status and marks white', async () => {
     api.list.mockResolvedValue([
       { ...row('m1', true), is_default_master: true, title: 'DevRel' },
       { ...row('m2', true), title: 'Solutions Eng' },
       { ...row('child'), parent_id: 'm1', title: 'Tailored for Acme' },
     ]);
     render(<DashboardPage />);
-    const addTrack = await screen.findByRole('button', { name: 'dashboard.addMasterTrack' });
+    await screen.findByText('Solutions Eng');
 
-    for (const name of ['DevRel', 'Solutions Eng', 'Tailored for Acme']) {
+    for (const [name, status] of [
+      ['DevRel', /dashboard\.statusLine/],
+      ['Solutions Eng', /dashboard\.status\.ready/],
+      ['Tailored for Acme', /dashboard\.status\.ready/],
+    ] as const) {
       const link = screen.getByRole('link', { name });
-      expectWhiteLiftTile(link.closest('.group') as HTMLElement);
-      expectAccentOnly(link.closest('h3')!);
+      const tile = link.closest('.group') as HTMLElement;
+      expectBlueFillTile(tile);
+      // The title inherits the tile's white, so it must not carry a colour of its own.
+      expect(link.closest('h3')!.className).not.toMatch(/text-(?:primary|steel|ink|white)/);
+      expectStatusTurnsWhite(within(tile).getByText(status));
+      // The monogram square rests in an ink frame and turns white so primary fills do not vanish.
+      expectTurnsWhite(tile.querySelector('.size-12')!, 'border');
     }
 
-    expectWhiteLiftTile(addTrack.closest('.group') as HTMLElement);
-    expectAccentOnly(screen.getByText('dashboard.addMasterTrack'));
-    expect(screen.getByText('dashboard.masterLimitReached').className).not.toMatch(/primary/);
+    const defaultTile = screen.getByRole('link', { name: 'DevRel' }).closest('.group')!;
+    expectTurnsWhite(
+      within(defaultTile as HTMLElement).getByText('dashboard.defaultBadge'),
+      'border'
+    );
+    const tailored = screen.getByRole('link', { name: 'Tailored for Acme' }).closest('.group')!;
+    expectTurnsWhite(within(tailored as HTMLElement).getByText(/dashboard\.edited/));
   });
 
-  it('lifts the initialize tile to white and accents only its title and + square', async () => {
+  it('keeps the add-track limit, spinner and retry icon readable on the blue fill', async () => {
+    api.get.mockResolvedValue(status('processing'));
+    api.list.mockResolvedValue([
+      { ...row('m1', true), is_default_master: true, processing_status: 'processing' as const },
+    ]);
+    render(<DashboardPage />);
+    const addTrack = await screen.findByRole('button', { name: 'dashboard.addMasterTrack' });
+
+    expectBlueFillTile(addTrack.closest('.group') as HTMLElement);
+    expectTurnsWhite(screen.getByText('dashboard.masterLimitReached'));
+    expectWhiteRing(addTrack, 'focus-visible:');
+
+    // Steel/primary spinner and the ink icon-only retry button would fall below AA on blue.
+    const defaultTile = screen.getByRole('link', { name: 'm1' }).closest('.group') as HTMLElement;
+    expectTurnsWhite(defaultTile.querySelector('svg.animate-spin')!);
+    const retry = screen.getAllByRole('button', { name: 'dashboard.retryProcessing' })[0];
+    expectTurnsWhite(retry);
+    // Its ghost hover fill is panel, which white would vanish on: the hover fill turns blue instead.
+    expect(classes(retry)).toContain('group-hover:hover:bg-primary-hover');
+  });
+
+  it('fills the initialize tile Hyper Blue, with its + square and caption turning white', async () => {
     api.list.mockResolvedValue([]);
     render(<DashboardPage />);
     const tile = await screen.findByRole('button', { name: 'dashboard.initializeMasterResume' });
 
-    expectWhiteLiftTile(tile.closest('.group') as HTMLElement);
-    expectAccentOnly(screen.getByText('dashboard.initializeMasterResume'));
-    const plusSquare = tile.querySelector('svg')!.parentElement!;
-    expectAccentOnly(plusSquare);
-    expectAccentOnly(plusSquare, 'border');
-    expect(screen.getByText(/dashboard\.initializeSequence/).className).not.toMatch(
-      /primary|canvas/
-    );
+    expectBlueFillTile(tile.closest('.group') as HTMLElement);
+    expectWhiteRing(tile, 'focus-visible:');
+    expectTurnsWhite(tile.querySelector('svg')!.parentElement!, 'border');
+    expectTurnsWhite(screen.getByText(/dashboard\.initializeSequence/));
   });
 
-  it('lifts the setup tile to white on hover and keyboard focus', async () => {
+  it('fills the setup tile Hyper Blue on hover and keyboard focus, with no outline', async () => {
     api.llmConfigured = false;
     api.list.mockResolvedValue([]);
     render(<DashboardPage />);
@@ -325,25 +391,65 @@ describe('dashboard tile highlight and the one blue action', () => {
 
     expect(classes(card)).toEqual(
       expect.arrayContaining([
-        'hover:bg-white',
-        'group-focus-visible/setup:bg-white',
-        'group-focus-visible/setup:border-ink',
+        'hover:bg-primary',
+        'group-focus-visible/setup:bg-primary',
+        'hover:text-white',
+        'group-focus-visible/setup:text-white',
+        'hover:border-transparent',
+        'group-focus-visible/setup:border-transparent',
+        'hover:translate-x-0',
+        'group-focus-visible/setup:translate-x-0',
       ])
     );
-    expect(card.className).not.toMatch(/bg-primary/);
-    const title = screen.getByText('dashboard.setupRequiredTitle');
-    expect(classes(title)).toEqual(
-      expect.arrayContaining(['group-hover:text-primary', 'group-focus-visible/setup:text-primary'])
+    expect(card.className).not.toMatch(/border-ink|translate-[xy]-px|bg-white/);
+    expectWhiteRing(card, 'group-focus-visible/setup:');
+    for (const text of [
+      screen.getByText('dashboard.setupRequiredTitle'),
+      screen.getByText('dashboard.setupRequiredMessage'),
+      screen.getByText('nav.goToSettings').parentElement!,
+      card.querySelector('svg')!,
+    ]) {
+      expect(text.getAttribute('class')).toMatch(/group-hover:text-white/);
+      expect(text.getAttribute('class')).toMatch(/group-focus-visible\/setup:text-white/);
+    }
+  });
+
+  it('makes Create tailored resume the one blue primary at rest, inverted on the blue tile', async () => {
+    api.list.mockResolvedValue([{ ...row('m1', true), is_default_master: true }]);
+    render(<DashboardPage />);
+    const label = await screen.findByText('dashboard.createResume');
+    const create = within(label.parentElement!).getByRole('button');
+    expect(classes(create)).toContain('bg-primary');
+    expect(document.querySelectorAll('button.bg-primary, a.bg-primary')).toHaveLength(1);
+
+    // Hover or focus fills the tile blue, so the primary button inverts to a white square.
+    const tile = create.closest('.group') as HTMLElement;
+    expectBlueFillTile(tile);
+    expect(classes(create)).toEqual(
+      expect.arrayContaining([
+        'hover:bg-white',
+        'hover:text-primary',
+        'group-has-[:focus-visible]:bg-white',
+        'group-has-[:focus-visible]:text-primary',
+        'focus-visible:ring-white',
+      ])
+    );
+    expect(classes(create)).not.toContain('hover:bg-primary-hover');
+    expect(classes(create)).not.toContain('focus-visible:ring-primary');
+    expectTurnsWhite(label);
+    // The tile is a hover target, so the whole tile must also be the click target.
+    expect(classes(create)).toEqual(
+      expect.arrayContaining(['static', 'after:absolute', 'after:inset-0'])
     );
   });
 
-  it('makes Create tailored resume the one blue primary', async () => {
-    api.list.mockResolvedValue([{ ...row('m1', true), is_default_master: true }]);
+  it('does not light up the Create tile while tailoring is unavailable', async () => {
+    api.list.mockResolvedValue([]);
     render(<DashboardPage />);
-    const create = within(
-      (await screen.findByText('dashboard.createResume')).parentElement!
-    ).getByRole('button');
-    expect(classes(create)).toContain('bg-primary');
-    expect(document.querySelectorAll('button.bg-primary, a.bg-primary')).toHaveLength(1);
+    const label = await screen.findByText('dashboard.createResume');
+    const create = within(label.parentElement!).getByRole('button');
+    expect(create).toBeDisabled();
+    expect(create.closest('.group')).toBeNull();
+    expect(create.parentElement!.parentElement!.className).not.toMatch(/hover:bg-primary/);
   });
 });

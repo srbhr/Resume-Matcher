@@ -7,6 +7,7 @@ import LayoutGrid from 'lucide-react/dist/esm/icons/layout-grid';
 import { buttonClass } from '@/components/ui/button';
 import { PageFrame } from '@/components/ui/page-frame';
 import { PageHeader } from '@/components/ui/page-header';
+import { APP_VERSION } from '@/lib/config/version';
 import { useTranslations } from '@/lib/i18n';
 
 export const SwissGrid = ({
@@ -31,7 +32,7 @@ export const SwissGrid = ({
           width, not the viewport. The Swiss frame is max-w-86rem so on
           ultra-wide screens the cards no longer over-stretch. */}
       <div className="@container flex-1 overflow-y-auto overflow-x-hidden relative z-10">
-        <h2 className="sr-only">{t('dashboard.selectModule')}</h2>
+        <h2 className="sr-only">{t('dashboard.modulesHeading')}</h2>
         {banner && <div className="space-y-4 p-6">{banner}</div>}
         <div className="p-[1.5px]">
           <div className="grid grid-cols-1 @2xl:grid-cols-2 @3xl:grid-cols-3 @5xl:grid-cols-5 bg-ink gap-[1px] border-b border-ink">
@@ -45,6 +46,7 @@ export const SwissGrid = ({
         <div className="flex items-center gap-2">
           <Image src="/logo.svg" alt="" width={20} height={20} className="w-5 h-5" />
           <span className="uppercase font-bold">Resume Matcher</span>
+          <span className="text-steel">v{APP_VERSION}</span>
         </div>
         <div className="flex items-center gap-4">
           <Link

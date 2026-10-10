@@ -21,6 +21,13 @@ describe('Hero entrance', () => {
     for (const link of links) expect(link.className).not.toContain('hero-enter');
   });
 
+  it('keeps the xl shadow, which only the home hero frame carries', () => {
+    const { container } = render(<Hero />);
+    const frame = container.querySelector('.shadow-sw-xl');
+    expect(frame).not.toBeNull();
+    expect(frame!.className).not.toMatch(/shadow-sw-(?:nested|default|lg)/);
+  });
+
   it('defines the one-shot expo keyframes in CSS and switches them off for reduced motion', () => {
     expect(css).toMatch(
       /\.hero-enter\s*\{\s*animation:\s*hero-enter 300ms cubic-bezier\(0\.16, 1, 0\.3, 1\) both;/
