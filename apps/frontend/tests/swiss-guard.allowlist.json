@@ -52,26 +52,6 @@
     "palette": 12,
     "transition": 2
   },
-  "components/enrichment/enrichment-modal.tsx": {
-    "decorative-icon": 1,
-    "ink-tint": 1,
-    "legacy-token": 2,
-    "spacing": 2
-  },
-  "components/enrichment/loading-steps.tsx": {
-    "decorative-icon": 1,
-    "legacy-token": 3,
-    "palette": 9
-  },
-  "components/enrichment/preview-step.tsx": {
-    "legacy-token": 4,
-    "palette": 7,
-    "spacing": 1
-  },
-  "components/enrichment/question-step.tsx": {
-    "legacy-token": 7,
-    "spacing": 1
-  },
   "components/home/hero.tsx": {
     "gradient": 2,
     "legacy-token": 3,
@@ -84,18 +64,6 @@
     "palette": 2,
     "raw-colour": 2,
     "transition": 2
-  },
-  "components/preview/page-container.tsx": {
-    "legacy-token": 1,
-    "palette": 4,
-    "raw-colour": 1,
-    "type-size": 1
-  },
-  "components/preview/paginated-preview.tsx": {
-    "legacy-token": 6,
-    "raw-colour": 1,
-    "spacing": 1,
-    "type-size": 1
   },
   "components/resume-wizard/live-preview.tsx": {
     "glyph": 1,

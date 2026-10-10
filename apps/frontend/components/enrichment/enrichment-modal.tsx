@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { XIcon, Sparkles } from 'lucide-react';
+import { XIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { useEnrichmentWizard } from '@/hooks/use-enrichment-wizard';
 import { useTranslations } from '@/lib/i18n';
 import { useOperationOwner } from '@/hooks/use-operation-owner';
@@ -142,29 +143,28 @@ export function EnrichmentModal({ resumeId, isOpen, onClose, onComplete }: Enric
       onCancel={handleCancel}
     >
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/40" />
+      <div className="absolute inset-0 bg-overlay" />
 
       {/* Modal container - 80% viewport with padding */}
-      <div className="absolute inset-0 flex items-center justify-center p-5 sm:p-10">
-        <div className="relative w-full h-full max-w-[1200px] bg-white border-2 border-black shadow-sw-lg flex flex-col overflow-hidden">
+      <div className="absolute inset-0 flex items-center justify-center p-4 sm:p-8">
+        <div className="relative w-full h-full max-w-[1200px] bg-white border border-ink shadow-sw-lg flex flex-col overflow-hidden">
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b-2 border-black bg-paper-tint">
-            <div className="flex items-center gap-3">
-              <Sparkles className="w-5 h-5" />
-              <h1 className="font-mono text-lg font-bold uppercase tracking-wider">
-                {t('enrichment.title')}
-              </h1>
-            </div>
+          <div className="flex items-center justify-between px-6 py-4 border-b border-ink bg-paper">
+            <h1 className="font-serif text-2xl font-bold uppercase leading-tight tracking-tight text-balance text-ink">
+              {t('enrichment.title')}
+            </h1>
             {/* Only show close button in non-loading states */}
             {!['analyzing', 'generating', 'applying'].includes(state.step) && (
-              <button
+              <Button
+                variant="ghost"
+                size="icon-sm"
                 onClick={handleClose}
                 disabled={isRefreshing}
-                className="p-1 hover:bg-paper-tint transition-colors disabled:opacity-50"
+                aria-label={t('common.close')}
+                title={t('common.close')}
               >
-                <XIcon className="w-5 h-5" />
-                <span className="sr-only">{t('common.close')}</span>
-              </button>
+                <XIcon aria-hidden="true" />
+              </Button>
             )}
           </div>
 
