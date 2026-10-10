@@ -218,6 +218,30 @@ describe('dashboard tiles are keyboard-reachable', () => {
     for (const action of actions) expectActionAboveLink(action, link);
   });
 
+  it('keeps a white focus ring on every tile action button, which sits on the blue fill', async () => {
+    api.get.mockResolvedValue(status('failed'));
+    api.list.mockResolvedValue([
+      { ...row('m1', true), is_default_master: true, processing_status: 'failed' as const },
+      { ...row('m2', true), title: 'Solutions Eng' },
+    ]);
+    render(<DashboardPage />);
+    await screen.findByRole('button', { name: 'dashboard.deleteAndReupload' });
+
+    // The Button primitive rings in primary with a canvas offset, which vanishes on the blue
+    // fill a focused tile takes; tailwind-merge swaps it for white at each call site.
+    const actions = [
+      screen.getByRole('button', { name: 'dashboard.setDefault' }),
+      screen.getByRole('button', { name: 'dashboard.duplicate' }),
+      ...screen.getAllByRole('button', { name: 'dashboard.retryProcessing' }),
+      screen.getByRole('button', { name: 'dashboard.deleteAndReupload' }),
+    ];
+    expect(actions).toHaveLength(5);
+    for (const action of actions) {
+      expect(classes(action)).toContain('focus-visible:ring-white');
+      expect(classes(action)).not.toContain('focus-visible:ring-primary');
+    }
+  });
+
   it('lifts every tile action row above the link overlay so disabled clicks cannot fall through', async () => {
     api.get.mockResolvedValue(status('failed'));
     api.list.mockResolvedValue([
@@ -253,6 +277,13 @@ describe('dashboard tiles are keyboard-reachable', () => {
         title: 'Tailored for Acme',
         processing_status: 'pending' as const,
       },
+      { ...row('m3', true), title: 'Product Eng' },
+      {
+        ...row('child2'),
+        parent_id: 'm1',
+        title: 'Tailored for Beta',
+        processing_status: 'processing' as const,
+      },
     ]);
     render(<DashboardPage />);
     await screen.findByText('Solutions Eng');
@@ -260,6 +291,8 @@ describe('dashboard tiles are keyboard-reachable', () => {
     for (const [title, label, square] of [
       ['Solutions Eng', 'dashboard.status.failed', 'bg-destructive'],
       ['Tailored for Acme', 'dashboard.status.pending', 'bg-steel'],
+      ['Product Eng', 'dashboard.status.ready', 'bg-success'],
+      ['Tailored for Beta', 'dashboard.status.processing', 'bg-primary'],
     ]) {
       const tile = screen.getByRole('link', { name: title }).closest('.group') as HTMLElement;
       const text = within(tile).getByText(label);

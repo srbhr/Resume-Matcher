@@ -337,7 +337,8 @@ describe('settings page (accessibility)', () => {
     const key = document.getElementById('apiKey') as HTMLInputElement;
     expect(key).toHaveAttribute('type', 'password');
     expect(key).toHaveAttribute('name', 'llm-api-key');
-    expect(key).toHaveAttribute('autocomplete', 'off');
+    // Browsers ignore autocomplete="off" on a password field; new-password stops the suggest popup.
+    expect(key).toHaveAttribute('autocomplete', 'new-password');
     expect(key).toHaveAttribute('spellcheck', 'false');
 
     const model = screen.getByLabelText('settings.llmConfiguration.modelLabel');

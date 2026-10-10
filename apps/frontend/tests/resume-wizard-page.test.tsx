@@ -460,6 +460,57 @@ describe('ResumeWizardPage', () => {
     });
   });
 
+  describe('focus', () => {
+    it.each([
+      [
+        'a question draft',
+        { step: 'question', current_question: { text: 'Skills?', section: 'skills' } },
+      ],
+      [
+        'a review draft',
+        { step: 'review', current_question: { text: 'All set?', section: 'review' } },
+      ],
+    ] as const)('does not take focus when %s is restored on page load', async (_name, draft) => {
+      localStorage.setItem(
+        'resume_wizard_draft',
+        JSON.stringify(makeState({ ...draft, asked_count: 2 }))
+      );
+
+      render(<ResumeWizardPage />);
+
+      expect(
+        await screen.findByRole('heading', { level: 2, name: draft.current_question.text })
+      ).toBeInTheDocument();
+      expect(document.body).toHaveFocus();
+    });
+
+    it('still focuses the next question field after Skip', async () => {
+      localStorage.setItem(
+        'resume_wizard_draft',
+        JSON.stringify(
+          makeState({
+            step: 'question',
+            current_question: { text: 'Skills?', section: 'skills' },
+            asked_count: 1,
+          })
+        )
+      );
+      mockedPostTurn.mockResolvedValueOnce({
+        state: makeState({
+          step: 'question',
+          current_question: { text: 'Next?', section: 'education' },
+          asked_count: 2,
+        }),
+      });
+
+      render(<ResumeWizardPage />);
+      fireEvent.click(await screen.findByRole('button', { name: 'resumeWizard.actions.skip' }));
+
+      expect(await screen.findByRole('heading', { level: 2, name: 'Next?' })).toBeInTheDocument();
+      await waitFor(() => expect(screen.getByRole('textbox')).toHaveFocus());
+    });
+  });
+
   it('keep-adding returns to a question step locally without an API call', async () => {
     localStorage.setItem(
       'resume_wizard_draft',
