@@ -126,27 +126,38 @@ describe('Retro Bitrate parameters (from the shaders.com composition)', () => {
   it.each([
     ['NOISE_SCALE', 'float', '4.3'],
     ['NOISE_SPEED', 'float', '0.1'],
-    ['CIRCLE_RADIUS', 'float', '1.55'],
     ['PIXELATE', 'float', '41.0'],
     ['DITHER_PIXEL', 'float', '3.0'],
     ['GRADIENT_START', 'vec2', 'vec2(0.67, 0.48)'],
     ['GRADIENT_END', 'vec2', 'vec2(0.89, 0.39)'],
-    ['CIRCLE_CENTER', 'vec2', 'vec2(0.5, 0.0)'],
+    ['BLUE_MIN', 'float', '0.15'],
+    ['BLUE_MAX', 'float', '0.3'],
   ])('%s is %s', (name, type, value) => {
     expect(RETRO_BITRATE_FRAGMENT).toContain(`const ${type} ${name} = ${value};`);
   });
 
-  it('maps noise luminance to an angle over the full turn, and blends the dither with screen', () => {
+  it('maps noise luminance to an angle over the full turn', () => {
     expect(RETRO_BITRATE_FRAGMENT).toContain('n * 2.0 * PI');
-    expect(RETRO_BITRATE_FRAGMENT).toContain('1.0 - (1.0 - a) * (1.0 - b)');
-    expect(RETRO_BITRATE_FRAGMENT).toContain('mixHsl(u_primary, u_ink, t)');
   });
 
-  it('runs Hyper Blue to Ink with a Hyper Blue and Signal Green dither', () => {
+  it('is light: Canvas, grey Panel steps and faded Hyper Blue, with a plain-alpha dither', () => {
     expect(RETRO_BITRATE_TOKENS).toEqual({
+      u_canvas: '--sw-canvas',
+      u_panel: '--sw-panel',
+      u_panel_hover: '--sw-panel-hover',
+      u_steel: '--sw-steel',
       u_primary: '--sw-primary',
-      u_ink: '--sw-ink',
-      u_success: '--sw-success',
     });
+    // The faded blue is computed from the tokens, never hard-coded.
+    expect(RETRO_BITRATE_FRAGMENT).toContain('mix(u_canvas, u_primary, k)');
+    // Nothing is dark: no Ink uniform, no screen blend (it washes out on a light ground), and no
+    // dome mask cutting a shape out of the field.
+    expect(RETRO_BITRATE_FRAGMENT).not.toContain('u_ink');
+    expect(RETRO_BITRATE_FRAGMENT).not.toContain('1.0 - (1.0 - a) * (1.0 - b)');
+    expect(RETRO_BITRATE_FRAGMENT).not.toContain('CIRCLE');
+  });
+
+  it('uses u_level as the share of blue blocks, not as a dim toward black', () => {
+    expect(RETRO_BITRATE_FRAGMENT).toMatch(/isBlue = step\([^;]*u_level[^;]*, b\);/);
   });
 });

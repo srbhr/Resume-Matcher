@@ -219,6 +219,16 @@ describe.each(EFFECTS)('$name', ({ Effect, source, fps }) => {
   });
 });
 
+describe('image rendering', () => {
+  it('keeps Retro Bitrate pixelated (it draws at 1x and the browser upscales it) and leaves Pixel Beams smooth', () => {
+    const bitrate = render(on(<RetroBitrate className="-z-10" />));
+    const layer = bitrate.container.firstElementChild as HTMLElement;
+    expect(layer).toHaveClass('[image-rendering:pixelated]', '-z-10');
+    const beams = render(on(<PixelBeams />));
+    expect(beams.container.firstElementChild).not.toHaveClass('[image-rendering:pixelated]');
+  });
+});
+
 describe('device pixel ratio', () => {
   it('draws Retro Bitrate at 1x on a 2x screen (its blocks are 41px, so more pixels buy nothing) and Pixel Beams at 2x', () => {
     vi.stubGlobal('devicePixelRatio', 2);
