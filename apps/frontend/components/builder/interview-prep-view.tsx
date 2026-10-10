@@ -58,7 +58,7 @@ function QuestionList({ items }: { items: InterviewPrepQuestion[] }) {
         <div key={`${item.question}-${index}`} className="border border-ink bg-paper p-3">
           <p className="font-sans text-sm font-bold leading-relaxed">{item.question}</p>
           {item.focus_area && (
-            <p className="mt-2 text-xs font-mono uppercase tracking-wide text-primary">
+            <p className="mt-2 text-xs font-mono uppercase tracking-wide text-ink">
               {t('interviewPrep.focusArea')}: {item.focus_area}
             </p>
           )}

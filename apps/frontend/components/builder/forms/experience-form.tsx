@@ -3,7 +3,7 @@
 import React, { useId } from 'react';
 import dynamic from 'next/dynamic';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Label, labelClass } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 
@@ -233,7 +233,9 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({ data, onChange }
 
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <Label>{t('builder.genericItemForm.fields.descriptionPoints')}</Label>
+                  <span className={labelClass}>
+                    {t('builder.genericItemForm.fields.descriptionPoints')}
+                  </span>
                   <Button
                     variant="ghost"
                     size="sm"

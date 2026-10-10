@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { XIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useEnrichmentWizard } from '@/hooks/use-enrichment-wizard';
@@ -27,6 +27,7 @@ interface EnrichmentModalProps {
 export function EnrichmentModal({ resumeId, isOpen, onClose, onComplete }: EnrichmentModalProps) {
   const { t } = useTranslations();
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const titleId = useId();
   const [refreshFailed, setRefreshFailed] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { begin, isCurrent, invalidate } = useOperationOwner(resumeId);
@@ -138,6 +139,7 @@ export function EnrichmentModal({ resumeId, isOpen, onClose, onComplete }: Enric
   return (
     <dialog
       ref={dialogRef}
+      aria-labelledby={titleId}
       className="fixed inset-0 z-50 w-full h-full p-0 m-0 max-w-none max-h-none bg-transparent border-none"
       onClick={handleBackdropClick}
       onCancel={handleCancel}
@@ -150,9 +152,12 @@ export function EnrichmentModal({ resumeId, isOpen, onClose, onComplete }: Enric
         <div className="relative w-full h-full max-w-[1200px] bg-white border border-ink shadow-sw-lg flex flex-col overflow-hidden">
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-ink bg-paper">
-            <h1 className="font-serif text-2xl font-bold uppercase leading-tight tracking-tight text-balance text-ink">
+            <h2
+              id={titleId}
+              className="font-serif text-2xl font-bold uppercase leading-tight tracking-tight text-balance text-ink"
+            >
               {t('enrichment.title')}
-            </h1>
+            </h2>
             {/* Only show close button in non-loading states */}
             {!['analyzing', 'generating', 'applying'].includes(state.step) && (
               <Button

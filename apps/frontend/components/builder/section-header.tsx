@@ -76,16 +76,6 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
     }
   };
 
-  const handleDeleteClick = () => {
-    if (section.isDefault) {
-      // For default sections, just toggle visibility
-      onToggleVisibility();
-    } else {
-      // For custom sections, show confirmation
-      setShowDeleteConfirm(true);
-    }
-  };
-
   const isPersonalInfo = section.id === 'personalInfo';
   const isHidden = !section.isVisible;
 
@@ -232,41 +222,18 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
             </Button>
           )}
 
-          {/* Delete (custom) / Hide (default sections are only ever hidden) */}
-          {canDelete && (
+          {/* Delete: custom sections only. Default sections are hidden, never deleted,
+              and the visibility toggle above is their one control for that. */}
+          {canDelete && !section.isDefault && (
             <Button
               variant="ghost"
               size="icon-sm"
-              className={
-                section.isDefault
-                  ? 'text-steel hover:text-ink-soft'
-                  : 'text-destructive hover:text-destructive hover:bg-destructive-tint'
-              }
-              onClick={handleDeleteClick}
-              aria-label={
-                section.isDefault
-                  ? section.isVisible
-                    ? t('builder.sectionHeader.hideSection')
-                    : t('builder.sectionHeader.showSection')
-                  : t('builder.sectionHeader.deleteSection')
-              }
-              title={
-                section.isDefault
-                  ? section.isVisible
-                    ? t('builder.sectionHeader.hideSection')
-                    : t('builder.sectionHeader.showSection')
-                  : t('builder.sectionHeader.deleteSection')
-              }
+              className="text-destructive hover:text-destructive hover:bg-destructive-tint"
+              onClick={() => setShowDeleteConfirm(true)}
+              aria-label={t('builder.sectionHeader.deleteSection')}
+              title={t('builder.sectionHeader.deleteSection')}
             >
-              {section.isDefault ? (
-                section.isVisible ? (
-                  <EyeOff aria-hidden="true" />
-                ) : (
-                  <Eye aria-hidden="true" />
-                )
-              ) : (
-                <Trash2 aria-hidden="true" />
-              )}
+              <Trash2 aria-hidden="true" />
             </Button>
           )}
         </div>

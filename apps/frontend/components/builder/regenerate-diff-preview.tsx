@@ -155,7 +155,7 @@ export const RegenerateDiffPreview: React.FC<RegenerateDiffPreviewProps> = ({
                     {/* Change Summary */}
                     {item.diff_summary && (
                       <div className="p-3 border-b border-ink">
-                        <p className="font-mono text-xs text-primary">{item.diff_summary}</p>
+                        <p className="font-mono text-xs text-ink">{item.diff_summary}</p>
                       </div>
                     )}
 
@@ -231,7 +231,7 @@ export const RegenerateDiffPreview: React.FC<RegenerateDiffPreviewProps> = ({
                   count: regenerateErrors.length,
                 })}
               >
-                <ul className="list-disc pl-4 marker:text-primary space-y-1">
+                <ul className="list-disc pl-4 marker:text-warning-text space-y-1">
                   {regenerateErrors.map((failed) => (
                     <li key={failed.item_id}>{getItemLabel(failed)}</li>
                   ))}

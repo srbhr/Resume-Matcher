@@ -89,7 +89,7 @@ export function QuestionStep({
           {Array.from({ length: totalQuestions }).map((_, i) => (
             <div
               key={i}
-              className={`h-1.5 w-6 transition-colors ${
+              className={`h-2 w-6 transition-colors ${
                 i < questionNumber ? 'bg-ink' : i === questionNumber - 1 ? 'bg-ink' : 'bg-panel'
               }`}
             />

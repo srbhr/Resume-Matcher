@@ -234,7 +234,16 @@ describe('builder panels', () => {
       });
 
       expect(screen.getAllByRole('button', { name: `generate-${tab}` })).toHaveLength(1);
-      expect(screen.getByText('builder.panels.nothingYet')).toBeInTheDocument();
+      const generate = screen.getByRole('button', { name: `generate-${tab}` });
+      const output = screen.getByRole('tabpanel');
+      // The generate control lives in the editor column (left, before the tab strip)…
+      expect(output).not.toContainElement(generate);
+      expect(
+        screen.getByRole('tablist').compareDocumentPosition(generate) &
+          Node.DOCUMENT_POSITION_PRECEDING
+      ).toBeTruthy();
+      // …and the output panel only says nothing has been generated yet.
+      expect(within(output).getByText('builder.panels.nothingYet')).toBeInTheDocument();
     }
   );
 });

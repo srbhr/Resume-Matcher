@@ -1,129 +1,12 @@
 {
-  "app/(default)/dashboard/page.tsx": {
-    "legacy-token": 5,
-    "palette": 26,
-    "raw-colour": 19,
-    "spacing": 2,
-    "transition": 1
-  },
-  "app/(default)/resumes/[id]/page.tsx": {
-    "decorative-icon": 1,
-    "legacy-token": 4,
-    "palette": 14
-  },
-  "app/(default)/settings/page.tsx": {
-    "decorative-icon": 1,
-    "ink-tint": 4,
-    "legacy-token": 34,
-    "palette": 48,
-    "soft-shadow": 2,
-    "spacing": 2,
-    "transition": 1,
-    "type-size": 2
-  },
-  "app/(default)/tailor/page.tsx": {
-    "legacy-token": 2,
-    "palette": 12,
-    "raw-colour": 1,
-    "spacing": 2
-  },
-  "app/(default)/tracker/page.tsx": {
-    "gradient": 2,
-    "legacy-token": 2,
-    "raw-colour": 2
-  },
   "app/layout.tsx": {
     "legacy-token": 1
-  },
-  "components/common/error-boundary.tsx": {
-    "legacy-token": 1,
-    "palette": 6,
-    "transition": 2
-  },
-  "components/dashboard/master-resume-choice-dialog.tsx": {
-    "legacy-token": 5,
-    "palette": 3,
-    "raw-colour": 1,
-    "soft-shadow": 1,
-    "spacing": 2
-  },
-  "components/dashboard/resume-upload-dialog.tsx": {
-    "legacy-token": 7,
-    "palette": 12,
-    "transition": 2
-  },
-  "components/home/hero.tsx": {
-    "gradient": 2,
-    "legacy-token": 3,
-    "palette": 4,
-    "raw-colour": 2
-  },
-  "components/home/swiss-grid.tsx": {
-    "gradient": 2,
-    "legacy-token": 5,
-    "palette": 2,
-    "raw-colour": 2,
-    "transition": 2
-  },
-  "components/resume-wizard/live-preview.tsx": {
-    "glyph": 1,
-    "legacy-token": 5,
-    "palette": 3,
-    "raw-colour": 1,
-    "soft-shadow": 1,
-    "spacing": 2
-  },
-  "components/resume-wizard/question-card.tsx": {
-    "legacy-token": 3,
-    "palette": 3,
-    "spacing": 2
-  },
-  "components/resume-wizard/resume-wizard-page.tsx": {
-    "legacy-token": 2,
-    "palette": 8,
-    "spacing": 3
   },
   "components/settings/api-key-menu.tsx": {
     "ink-tint": 1,
     "legacy-token": 3,
     "palette": 5,
     "transition": 2
-  },
-  "components/tailor/ats-score-card.tsx": {
-    "glyph": 1,
-    "palette": 23,
-    "radius": 7,
-    "spacing": 9
-  },
-  "components/tailor/diff-preview-modal.tsx": {
-    "legacy-token": 2,
-    "palette": 5,
-    "raw-colour": 10,
-    "spacing": 1
-  },
-  "components/tracker/application-card.tsx": {
-    "legacy-token": 3,
-    "spacing": 1,
-    "type-size": 2
-  },
-  "components/tracker/bulk-action-bar.tsx": {
-    "legacy-token": 1
-  },
-  "components/tracker/card-detail-modal.tsx": {
-    "legacy-token": 4,
-    "spacing": 2
-  },
-  "components/tracker/kanban-board.tsx": {
-    "legacy-token": 7,
-    "spacing": 2,
-    "transition": 3,
-    "type-size": 2
-  },
-  "components/tracker/kanban-column.tsx": {
-    "legacy-token": 3
-  },
-  "components/tracker/manage-columns-dialog.tsx": {
-    "type-size": 1
   },
   "components/ui/card.tsx": {
     "legacy-token": 1
