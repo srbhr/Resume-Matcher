@@ -121,6 +121,8 @@ Tokens ship as **hex** with oklch in comments, because browser gamut-mapping of 
 | `overlay` | `rgb(0 0 0 / 0.5)` | Dialog backdrop | — | — | — |
 
 **Rules.**
+- **The contrast test (§9.2) is the source of truth.** Four tokens sit right at the threshold: `success` 4.50, `destructive` 4.51, `warning-text` 4.52, `steel` 4.53. Phase 1 may nudge any of them by one hex step so it clears 4.5:1 under the test's math, without re-ratification.
+- **`steel` is never placed on `panel`** (4.08–4.11:1). Known sites: the settings footer (below), and the page-break label at `paginated-preview.tsx:201` on the builder's `bg-secondary` right panel, which moves to `ink-soft`.
 - App code uses semantic tokens only. Tailwind palette scales, raw hex and `rgba()` are banned outside `globals.css` (§9).
 - Legacy shadcn-era tokens (`chart-*`, `sidebar-*`, `popover`, `accent`, `muted`, `--muted-foreground: #6b7280`) are deleted where unused and aliased to the table above where used.
 - **Settings footer.** `settings/page.tsx:1438-1478` puts steel and green text on `panel`, which measures 4.08–4.11. The footer moves to `bg-canvas`.
@@ -250,7 +252,7 @@ These cross-cutting craft rules apply to every primitive (full list in §8):
 
 ## 6. New primitives and the page frame
 
-Every presentational primitive here is **server-safe** (no `'use client'`), so sub-project 2 can turn them into a static shell. Presence animation is added by a separate client wrapper (§7).
+**Server-safe (no `'use client'`):** PageFrame, PageHeader, Alert, StatusIndicator, EmptyState and PanelHeader. Sub-project 2 can turn these into a static shell. Presence animation is added by a separate client wrapper (§7). SegmentedControl needs event handlers, so it is a client component.
 
 | New | Spec | Replaces |
 |---|---|---|
@@ -313,7 +315,11 @@ const loadFeatures = () => import('./motion-features').then((r) => r.default);
 - `--animate-gradient` goes.
 - `tw-animate-css` goes.
 
-**Tests.** `vitest.setup.ts` sets `MotionGlobalConfig.skipAnimations = true`, so exit animations finish instantly and existing assertions stay deterministic in jsdom.
+**Tests.** `vitest.setup.ts` sets `MotionGlobalConfig.skipAnimations = true`, so exit animations finish instantly and existing assertions stay deterministic in jsdom. Both are verified against `motion` 14.1.0:
+- `MotionGlobalConfig` comes from `motion-utils` with `skipAnimations?: boolean`, and is re-exported by `framer-motion`/`motion`.
+- Motion only reads `window.matchMedia` behind an `if (window.matchMedia)` guard, so jsdom needs no stub.
+
+App code reads reduced motion through Motion's `useReducedMotion()` (for example the kanban scroll behaviour), never through raw `matchMedia`. Re-check both if the pinned version differs.
 
 ## 8. Craft checklist (applies to every touched component)
 
@@ -367,7 +373,7 @@ It scans `app/**/*.tsx` and `components/**/*.tsx`. It excludes `components/resum
 | soft-shadow | `shadow`, `shadow-(sm\|md\|lg\|xl\|2xl\|inner)`, arbitrary `shadow-[…]` |
 | gradient | `bg-gradient-*`, `bg-linear-*`, `bg-radial-*`, `linear-gradient(` |
 | palette | `(bg\|text\|border\|ring\|fill\|stroke\|outline\|divide\|placeholder\|from\|to\|via\|accent\|caret\|decoration)-(slate\|gray\|zinc\|neutral\|stone\|red\|orange\|amber\|yellow\|lime\|green\|emerald\|teal\|cyan\|sky\|blue\|indigo\|violet\|purple\|fuchsia\|pink\|rose)-\d+` |
-| raw-colour | `[#hex]` in classes; `#hex` or `rgba?(` in TSX |
+| raw-colour | `[#hex]` in classes; `#hex` or `rgba?(` inside string literals, `className` values and `style` objects. Comments are stripped before matching, so the hex values in primitive doc-comments don't count. |
 | ink-tint | `(text\|border)-black/\d+` |
 | dark | `dark:` |
 | type-size | `text-\[\d+px\]` |
@@ -376,7 +382,7 @@ It scans `app/**/*.tsx` and `components/**/*.tsx`. It excludes `components/resum
 | keyframes | `animate-(bounce\|pulse\|ping)` |
 | motion-import | `import { motion` from `motion/react` (use `m`) |
 | decorative-icon | importing `Sparkles`, `Wand*`, `Star*`, `Heart`, `Zap`, `Rocket`, `PartyPopper` |
-| glyph | `✨ ✓ ✔ ⭐ 🚀 •` in JSX text |
+| glyph | `✨ ✓ ✔ ⭐ 🚀 •` in JSX text nodes only, not in string props or user content |
 
 **How the ratchet works.**
 - `tests/swiss-guard.allowlist.json` stores `{ file: { rule: count } }`. Counting rather than matching lines means unrelated edits don't trip it.
@@ -392,7 +398,14 @@ It scans `app/**/*.tsx` and `components/**/*.tsx`. It excludes `components/resum
 
 ### 9.2 Contrast test (`apps/frontend/tests/swiss-contrast.test.ts`)
 
-It parses the token hex values from `globals.css` and asserts WCAG AA, 4.5:1, for every text-on-surface and text-on-fill pair in §4.1. It also asserts 3:1 for borders and squares where the pack requires them. Changing a token so that any pair falls below its threshold fails the test.
+It parses the token hex values from `globals.css` and asserts WCAG AA, 4.5:1, for every text-on-surface and text-on-fill pair in §4.1. It also asserts 3:1 (SC 1.4.11) for non-text graphics that carry meaning on their own: the `primary`, `success` and `destructive` squares and alert borders, and the 1px ink control borders. Changing a token so that any pair falls below its threshold fails the test.
+
+**Exemption:** `warning` (#F97316, 2.45:1 on Canvas) is exempt from the 3:1 non-text check, which keeps the orange unchanged ("same look"). This holds because the orange never carries meaning alone:
+- every StatusIndicator square is paired with its label;
+- every warning Alert border sits beside a `warning-text` label on a tint;
+- warning buttons are identified by their 1px ink border and ink text.
+
+The test encodes the exemption explicitly, with that justification in a comment. The alternative, deepening the fill to `#E26502` (3.01:1, ink text 6.10:1, a visible 5-point darkening), stays available if the owner prefers strict 1.4.11 compliance.
 
 ### 9.3 Behaviour tests
 
