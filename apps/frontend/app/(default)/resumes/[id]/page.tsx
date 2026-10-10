@@ -2,8 +2,14 @@
 
 import React, { useEffect, useMemo, useState, useRef, useLayoutEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { Input } from '@/components/ui/input';
+import { PageFrame } from '@/components/ui/page-frame';
+import { PageHeader } from '@/components/ui/page-header';
+import { StatusIndicator } from '@/components/ui/status-indicator';
+import { DefaultBadge } from '@/components/common/default-badge';
 import Resume, { ResumeData } from '@/components/dashboard/resume-component';
 import {
   fetchResume,
@@ -16,17 +22,7 @@ import {
   duplicateResume,
 } from '@/lib/api/resume';
 import { useStatusCache } from '@/lib/context/status-cache';
-import {
-  ArrowLeft,
-  Edit,
-  Download,
-  Loader2,
-  AlertCircle,
-  Sparkles,
-  Pencil,
-  MessagesSquare,
-  Copy,
-} from 'lucide-react';
+import { Edit, Download, Loader2, Pencil, MessagesSquare, Copy } from 'lucide-react';
 import { EnrichmentModal } from '@/components/enrichment/enrichment-modal';
 import { useTranslations } from '@/lib/i18n';
 import { withLocalizedDefaultSections } from '@/lib/utils/section-helpers';
@@ -440,12 +436,12 @@ export default function ResumeViewerPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background">
-        <Loader2 className="w-10 h-10 animate-spin text-blue-700 mb-4" />
-        <p className="font-mono text-sm font-bold uppercase text-blue-700">
-          {t('resumeViewer.loading')}
-        </p>
-      </div>
+      <PageFrame>
+        <div className="flex items-center gap-3 p-8 md:p-12">
+          <Loader2 aria-hidden="true" className="size-6 animate-spin text-primary" />
+          <StatusIndicator tone="active">{t('resumeViewer.loading')}</StatusIndicator>
+        </div>
+      </PageFrame>
     );
   }
 
@@ -455,104 +451,55 @@ export default function ResumeViewerPage() {
 
     return (
       <>
-        <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
-          <div
-            className={`border p-6 text-center max-w-md shadow-sw-default ${
-              isProcessing
-                ? 'bg-blue-50 border-blue-200'
-                : isFailed
-                  ? 'bg-orange-50 border-orange-200'
-                  : 'bg-red-50 border-red-200'
-            }`}
-          >
-            <div className="flex justify-center mb-4">
-              {isProcessing ? (
-                <Loader2 className="w-8 h-8 animate-spin text-blue-700" />
-              ) : isFailed ? (
-                <AlertCircle className="w-8 h-8 text-orange-600" />
-              ) : (
-                <AlertCircle className="w-8 h-8 text-red-600" />
-              )}
-            </div>
-            <p
-              className={`font-bold mb-4 ${
-                isProcessing ? 'text-blue-700' : isFailed ? 'text-orange-700' : 'text-red-700'
-              }`}
-            >
+        <PageFrame>
+          <div className="flex max-w-2xl flex-col gap-6 p-8 md:p-12">
+            <Alert tone={isProcessing ? 'info' : isFailed ? 'warning' : 'error'}>
               {error || t('resumeViewer.resumeNotFound')}
-            </p>
-            <div className="flex flex-col gap-2">
+            </Alert>
+            <div className="flex flex-wrap gap-3">
               {isFailed && (
                 <>
-                  <Button onClick={handleRetryProcessing} disabled={isRetrying}>
+                  <Button type="button" onClick={handleRetryProcessing} disabled={isRetrying}>
                     {isRetrying ? (
                       <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        <Loader2 aria-hidden="true" className="animate-spin" />
                         {t('common.processing')}
                       </>
                     ) : (
                       t('resumeViewer.retryProcessing')
                     )}
                   </Button>
-                  <Button variant="destructive" onClick={() => setShowDeleteDialog(true)}>
+                  <Button
+                    type="button"
+                    variant="outline-destructive"
+                    onClick={() => setShowDeleteDialog(true)}
+                  >
                     {t('resumeViewer.deleteAndStartOver')}
                   </Button>
                 </>
               )}
-              <Button variant="outline" onClick={() => router.push('/dashboard')}>
+              <Button type="button" variant="outline" onClick={() => router.push('/dashboard')}>
                 {t('resumeViewer.returnToDashboard')}
               </Button>
             </div>
           </div>
-        </div>
+        </PageFrame>
         {deleteDialogs}
       </>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background py-12 px-4 md:px-8 overflow-y-auto">
-      <div className="max-w-7xl mx-auto">
-        {/* Header Actions */}
-        <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 no-print">
-          <Button variant="outline" onClick={() => router.push('/dashboard')}>
-            <ArrowLeft className="w-4 h-4" />
-            {t('nav.backToDashboard')}
-          </Button>
+    <PageFrame>
+      <PageHeader className="no-print">
+        <PageHeader.Back href="/dashboard">{t('nav.backToDashboard')}</PageHeader.Back>
 
-          <div className="flex gap-3">
-            {isMasterResume && (
-              <Button onClick={() => setShowEnrichmentModal(true)} className="gap-2">
-                <Sparkles className="w-4 h-4" />
-                {t('resumeViewer.enhanceResume')}
-              </Button>
-            )}
-            <Button variant="outline" onClick={handleEdit}>
-              <Edit className="w-4 h-4" />
-              {t('dashboard.editResume')}
-            </Button>
-            <Button variant="outline" onClick={handleDuplicate} disabled={isDuplicating}>
-              <Copy className="w-4 h-4" />
-              {t('resumeViewer.duplicate')}
-            </Button>
-            {isTailoredResume && (
-              <Button variant="outline" onClick={handleInterviewPrep}>
-                <MessagesSquare className="w-4 h-4" />
-                {t('interviewPrep.title')}
-              </Button>
-            )}
-            <Button variant="success" onClick={handleDownload} disabled={isDownloading}>
-              <Download className="w-4 h-4" />
-              {isDownloading ? t('common.generating') : t('resumeViewer.downloadResume')}
-            </Button>
-          </div>
-        </div>
-
-        {/* Editable Title (the track name for a master) */}
-        <div className="mb-6 no-print flex flex-wrap items-center gap-4">
+        {/* Editable title (the track name for a master) */}
+        <div className="flex flex-wrap items-center gap-4">
           {isEditingTitle ? (
-            <input
+            <Input
               type="text"
+              aria-label={t('resumeViewer.renameTitle')}
               value={editingTitleValue}
               onChange={(e) => setEditingTitleValue(e.target.value)}
               onBlur={handleTitleSave}
@@ -560,33 +507,32 @@ export default function ResumeViewerPage() {
               autoFocus
               maxLength={80}
               placeholder={t('resumeViewer.titlePlaceholder')}
-              className="font-serif text-2xl font-bold border-b-2 border-black bg-transparent outline-none w-full max-w-xl px-0 py-1"
+              className="h-12 max-w-xl font-serif text-2xl font-bold"
             />
           ) : (
-            <button
-              onClick={() => {
-                setEditingTitleValue(resumeTitle || '');
-                setIsEditingTitle(true);
-              }}
-              className="group flex items-center gap-2 cursor-pointer bg-transparent border-none p-0"
-            >
-              <h2
-                className={`font-serif text-2xl font-bold border-b-2 border-transparent group-hover:border-black transition-colors ${!resumeTitle ? 'text-steel-grey' : ''}`}
-              >
+            <>
+              <PageHeader.Title className={resumeTitle ? undefined : 'text-steel'}>
                 {resumeTitle || t('resumeViewer.titlePlaceholder')}
-              </h2>
-              <Pencil
-                className={`w-4 h-4 transition-opacity ${resumeTitle ? 'opacity-0 group-hover:opacity-60' : 'opacity-40 group-hover:opacity-60'}`}
-              />
-            </button>
+              </PageHeader.Title>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                aria-label={t('resumeViewer.renameTitle')}
+                className="text-steel hover:text-ink"
+                onClick={() => {
+                  setEditingTitleValue(resumeTitle || '');
+                  setIsEditingTitle(true);
+                }}
+              >
+                <Pencil aria-hidden="true" />
+              </Button>
+            </>
           )}
-          {isDefaultMaster && (
-            <span className="shrink-0 font-mono text-xs uppercase border border-black px-1 rounded-none">
-              {t('resumeViewer.defaultBadge')}
-            </span>
-          )}
+          {isDefaultMaster && <DefaultBadge>{t('resumeViewer.defaultBadge')}</DefaultBadge>}
           {isMasterResume && !isDefaultMaster && (
             <Button
+              type="button"
               variant="outline"
               size="sm"
               onClick={handleSetDefault}
@@ -597,9 +543,42 @@ export default function ResumeViewerPage() {
           )}
         </div>
 
+        <PageHeader.Actions>
+          {isMasterResume && (
+            <Button type="button" onClick={() => setShowEnrichmentModal(true)}>
+              {t('resumeViewer.enhanceResume')}
+            </Button>
+          )}
+          <Button type="button" variant="outline" onClick={handleEdit}>
+            <Edit aria-hidden="true" />
+            {t('dashboard.editResume')}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleDuplicate}
+            disabled={isDuplicating}
+          >
+            <Copy aria-hidden="true" />
+            {t('resumeViewer.duplicate')}
+          </Button>
+          {isTailoredResume && (
+            <Button type="button" variant="outline" onClick={handleInterviewPrep}>
+              <MessagesSquare aria-hidden="true" />
+              {t('interviewPrep.title')}
+            </Button>
+          )}
+          <Button type="button" variant="outline" onClick={handleDownload} disabled={isDownloading}>
+            <Download aria-hidden="true" />
+            {isDownloading ? t('common.generating') : t('resumeViewer.downloadResume')}
+          </Button>
+        </PageHeader.Actions>
+      </PageHeader>
+
+      <div className="px-8 py-6 md:px-12 md:py-8">
         {/* Resume Viewer */}
         <div className="flex justify-center pb-4">
-          <div className="resume-print w-full max-w-[250mm] shadow-sw-lg border-2 border-black bg-white">
+          <div className="resume-print w-full max-w-[250mm] shadow-sw-card border-2 border-ink bg-white">
             <Resume
               resumeData={localizedResumeData || resumeData}
               additionalSectionLabels={{
@@ -624,8 +603,8 @@ export default function ResumeViewerPage() {
           </div>
         </div>
 
-        <div className="flex justify-end pt-4 no-print">
-          <Button variant="destructive" onClick={() => setShowDeleteDialog(true)}>
+        <div className="flex pt-4 no-print">
+          <Button type="button" variant="destructive" onClick={() => setShowDeleteDialog(true)}>
             {isMasterResume
               ? t('confirmations.deleteMasterResumeTitle')
               : t('dashboard.deleteResume')}
@@ -713,6 +692,6 @@ export default function ResumeViewerPage() {
           onComplete={handleEnrichmentComplete}
         />
       )}
-    </div>
+    </PageFrame>
   );
 }

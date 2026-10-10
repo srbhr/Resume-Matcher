@@ -840,6 +840,7 @@
     "titlePlaceholder": "Saisissez le titre du CV...",
     "downloadFailedTitle": "Échec du téléchargement",
     "renameFailedTitle": "Échec du renommage",
+    "renameTitle": "Renommer le CV",
     "defaultBadge": "CV principal par défaut",
     "setDefault": "Définir comme CV principal par défaut",
     "setDefaultSuccess": "Ce CV principal est désormais celui utilisé par défaut pour la personnalisation.",

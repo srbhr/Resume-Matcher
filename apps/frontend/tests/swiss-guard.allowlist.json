@@ -6,11 +6,6 @@
     "spacing": 2,
     "transition": 1
   },
-  "app/(default)/resumes/[id]/page.tsx": {
-    "decorative-icon": 1,
-    "legacy-token": 4,
-    "palette": 14
-  },
   "app/(default)/settings/page.tsx": {
     "decorative-icon": 1,
     "ink-tint": 4,
@@ -168,11 +163,6 @@
     "transition": 1,
     "type-size": 1
   },
-  "components/common/error-boundary.tsx": {
-    "legacy-token": 1,
-    "palette": 6,
-    "transition": 2
-  },
   "components/dashboard/master-resume-choice-dialog.tsx": {
     "legacy-token": 5,
     "palette": 3,
@@ -229,24 +219,6 @@
     "raw-colour": 1,
     "spacing": 1,
     "type-size": 1
-  },
-  "components/resume-wizard/live-preview.tsx": {
-    "glyph": 1,
-    "legacy-token": 5,
-    "palette": 3,
-    "raw-colour": 1,
-    "soft-shadow": 1,
-    "spacing": 2
-  },
-  "components/resume-wizard/question-card.tsx": {
-    "legacy-token": 3,
-    "palette": 3,
-    "spacing": 2
-  },
-  "components/resume-wizard/resume-wizard-page.tsx": {
-    "legacy-token": 2,
-    "palette": 8,
-    "spacing": 3
   },
   "components/settings/api-key-menu.tsx": {
     "ink-tint": 1,

@@ -840,6 +840,7 @@
     "titlePlaceholder": "输入简历标题...",
     "downloadFailedTitle": "下载失败",
     "renameFailedTitle": "重命名失败",
+    "renameTitle": "重命名简历",
     "defaultBadge": "默认主简历",
     "setDefault": "设为默认主简历",
     "setDefaultSuccess": "此主简历现已成为定制时的默认主简历。",

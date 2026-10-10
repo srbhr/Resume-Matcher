@@ -2,6 +2,8 @@
 
 import type { KeyboardEvent } from 'react';
 import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { StatusIndicator } from '@/components/ui/status-indicator';
 import { Textarea } from '@/components/ui/textarea';
 import { useTranslations } from '@/lib/i18n';
 import type { ResumeWizardProgress, ResumeWizardStep } from '@/lib/api/resume-wizard';
@@ -65,7 +67,7 @@ export function QuestionCard({
   };
 
   return (
-    <section className="border-2 border-black bg-white shadow-sw-lg">
+    <section className="border-2 border-black bg-white shadow-sw-default">
       <div
         className="flex gap-1 border-b-2 border-black p-2"
         role="progressbar"
@@ -78,15 +80,15 @@ export function QuestionCard({
             key={index}
             className={
               index < progress.current
-                ? 'h-1.5 flex-1 border border-black bg-black'
-                : 'h-1.5 flex-1 border border-black bg-white'
+                ? 'h-2 flex-1 border border-black bg-black'
+                : 'h-2 flex-1 border border-black bg-white'
             }
           />
         ))}
       </div>
 
-      <div className="grid gap-6 p-5 md:p-8">
-        <p className="font-mono text-xs font-bold uppercase tracking-wider text-blue-700">
+      <div className="grid gap-6 p-6 md:p-8">
+        <p className="font-mono text-xs font-bold uppercase tracking-wider text-steel">
           {sectionLabel}
         </p>
         <h2 className="font-serif text-3xl font-bold leading-tight md:text-4xl">{question}</h2>
@@ -97,7 +99,7 @@ export function QuestionCard({
               {warnings.map((warning, index) => (
                 <li
                   key={index}
-                  className="border border-steel-grey bg-white px-3 py-2 font-sans text-sm text-steel-grey"
+                  className="border border-steel bg-white px-3 py-2 font-sans text-sm text-steel"
                 >
                   {warning}
                 </li>
@@ -106,31 +108,23 @@ export function QuestionCard({
           )
         ) : (
           <div className="grid gap-2">
-            <label
-              htmlFor="resume-wizard-answer"
-              className="font-mono text-xs font-bold uppercase tracking-wider text-steel-grey"
-            >
-              {t('resumeWizard.answerLabel')}
-            </label>
+            <Label htmlFor="resume-wizard-answer">{t('resumeWizard.answerLabel')}</Label>
             <Textarea
               id="resume-wizard-answer"
               value={answer}
               onChange={(event) => onAnswerChange(event.target.value)}
               onKeyDown={handleKeyDown}
               disabled={isBusy}
-              className="min-h-40 bg-white font-sans text-base"
+              className="min-h-40 font-sans text-base"
             />
           </div>
         )}
 
         {isQuestion && isComplete && (
-          <p className="flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-wider text-green-700">
-            <span aria-hidden="true" className="inline-block h-3 w-3 bg-green-700" />
-            {t('resumeWizard.readyHint')}
-          </p>
+          <StatusIndicator tone="ready">{t('resumeWizard.readyHint')}</StatusIndicator>
         )}
 
-        <div className="flex flex-wrap gap-3 border-t-2 border-black pt-5">
+        <div className="flex flex-wrap gap-3 border-t-2 border-black pt-6">
           {isReview ? (
             <>
               <Button

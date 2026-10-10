@@ -840,6 +840,7 @@
     "titlePlaceholder": "Digite o título do currículo...",
     "downloadFailedTitle": "Falha no download",
     "renameFailedTitle": "Falha ao renomear",
+    "renameTitle": "Renomear currículo",
     "defaultBadge": "Principal padrão",
     "setDefault": "Definir como principal padrão",
     "setDefaultSuccess": "Este currículo principal agora é o padrão para personalização.",

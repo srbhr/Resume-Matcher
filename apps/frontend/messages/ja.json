@@ -840,6 +840,7 @@
     "titlePlaceholder": "履歴書のタイトルを入力...",
     "downloadFailedTitle": "ダウンロードに失敗しました",
     "renameFailedTitle": "名前の変更に失敗しました",
+    "renameTitle": "履歴書の名前を変更",
     "defaultBadge": "デフォルトのマスター",
     "setDefault": "デフォルトのマスターに設定",
     "setDefaultSuccess": "このマスターがカスタマイズのデフォルトになりました。",

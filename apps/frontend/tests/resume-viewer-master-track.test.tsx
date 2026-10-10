@@ -54,7 +54,8 @@ describe('resume viewer master tracks', () => {
     render(<ResumeViewerPage />);
 
     // The title is the track name and stays editable for a master.
-    fireEvent.click(await screen.findByRole('button', { name: 'SWE track' }));
+    expect(await screen.findByRole('heading', { level: 1, name: 'SWE track' })).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'resumeViewer.renameTitle' }));
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Data track' } });
     await act(async () => fireEvent.keyDown(screen.getByRole('textbox'), { key: 'Enter' }));
     expect(mockedRename).toHaveBeenCalledWith('r1', 'Data track');
@@ -77,7 +78,8 @@ describe('resume viewer master tracks', () => {
 
     expect(await screen.findByText('resumeViewer.defaultBadge')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'resumeViewer.setDefault' })).toBeNull();
-    expect(screen.getByRole('button', { name: 'Main track' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Main track' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'resumeViewer.renameTitle' })).toBeInTheDocument();
   });
 
   it('keeps the button and the stored default when setting the default fails', async () => {
@@ -128,7 +130,7 @@ describe('resume viewer master tracks', () => {
     mockResume({ title: 'Tailored', is_master: false, is_default_master: false, parent_id: 'm1' });
     render(<ResumeViewerPage />);
 
-    await screen.findByRole('button', { name: 'Tailored' });
+    await screen.findByRole('heading', { level: 1, name: 'Tailored' });
     expect(screen.queryByRole('button', { name: 'resumeViewer.enhanceResume' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'resumeViewer.setDefault' })).toBeNull();
     expect(screen.queryByText('resumeViewer.defaultBadge')).not.toBeInTheDocument();

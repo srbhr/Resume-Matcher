@@ -1,6 +1,8 @@
 'use client';
 
+import { Check } from 'lucide-react';
 import type { ResumeData } from '@/components/dashboard/resume-component';
+import { StatusIndicator } from '@/components/ui/status-indicator';
 import { useTranslations } from '@/lib/i18n';
 
 interface LivePreviewProps {
@@ -43,22 +45,24 @@ export function LivePreview({ resumeData, inferredSkills }: LivePreviewProps) {
   return (
     <aside
       aria-label={t('resumeWizard.preview.label')}
-      className="border-2 border-black bg-white p-5 shadow-[4px_4px_0px_0px_#000000]"
+      className="border-2 border-black bg-white p-6 shadow-sw-default"
     >
-      <p className="font-mono text-xs font-bold uppercase tracking-wider text-blue-700">
+      <p className="font-mono text-xs font-bold uppercase tracking-wider text-steel">
         {t('resumeWizard.preview.label')}
       </p>
 
       {!hasAnyContent ? (
-        <p className="mt-6 font-sans text-sm text-steel-grey">{t('resumeWizard.preview.empty')}</p>
+        <StatusIndicator tone="active" className="mt-6">
+          {t('resumeWizard.preview.empty')}
+        </StatusIndicator>
       ) : (
-        <div className="mt-3 space-y-5">
+        <div className="mt-3 space-y-4">
           <div>
             <h2 className="font-serif text-2xl font-bold leading-tight">
               {personalInfo.name?.trim() || t('resumeWizard.preview.unnamed')}
             </h2>
             {personalInfo.title?.trim() && (
-              <p className="font-sans text-sm text-steel-grey">{personalInfo.title}</p>
+              <p className="font-sans text-sm text-steel">{personalInfo.title}</p>
             )}
           </div>
 
@@ -73,7 +77,7 @@ export function LivePreview({ resumeData, inferredSkills }: LivePreviewProps) {
                     {[item.title, item.company].filter(Boolean).join(' · ')}
                   </p>
                   {item.years?.trim() && (
-                    <p className="font-mono text-xs text-steel-grey">{item.years}</p>
+                    <p className="font-mono text-xs tabular-nums text-steel">{item.years}</p>
                   )}
                   <ul className="mt-1 list-none space-y-1">
                     {(item.description ?? []).map((line, index) => (
@@ -126,12 +130,12 @@ export function LivePreview({ resumeData, inferredSkills }: LivePreviewProps) {
                       key={skill}
                       className={
                         isNew
-                          ? 'border border-green-700 bg-background px-2 py-1 font-mono text-xs text-green-700'
-                          : 'border border-black bg-background px-2 py-1 font-mono text-xs'
+                          ? 'inline-flex items-center gap-1 border border-success bg-canvas px-2 py-1 font-mono text-xs text-success'
+                          : 'border border-black bg-canvas px-2 py-1 font-mono text-xs'
                       }
                     >
                       {skill}
-                      {isNew && <span aria-hidden="true"> ✓</span>}
+                      {isNew && <Check aria-hidden="true" className="size-4" />}
                     </span>
                   );
                 })}

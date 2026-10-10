@@ -840,6 +840,7 @@
     "titlePlaceholder": "Ingrese el título del currículum...",
     "downloadFailedTitle": "Error de descarga",
     "renameFailedTitle": "Error al cambiar el nombre",
+    "renameTitle": "Renombrar currículum",
     "defaultBadge": "Maestro predeterminado",
     "setDefault": "Establecer como maestro predeterminado",
     "setDefaultSuccess": "Este maestro ahora es el predeterminado para la personalización.",

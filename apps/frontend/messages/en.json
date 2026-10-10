@@ -840,6 +840,7 @@
     "titlePlaceholder": "Enter resume title...",
     "downloadFailedTitle": "Download Failed",
     "renameFailedTitle": "Rename Failed",
+    "renameTitle": "Rename resume",
     "defaultBadge": "Default master",
     "setDefault": "Set as default master",
     "setDefaultSuccess": "This master is now the default for tailoring.",

@@ -42,4 +42,16 @@ describe('LivePreview', () => {
     expect(screen.getAllByText(/^react$/i)).toHaveLength(1);
     expect(screen.getByText('Node.js')).toBeInTheDocument();
   });
+
+  it('marks inferred skills with a hidden icon, not a text glyph', () => {
+    const data = createInitialResumeWizardState().resume_data;
+    data.personalInfo = { name: 'Priya' };
+
+    render(<LivePreview resumeData={data} inferredSkills={['Node.js']} />);
+
+    const chip = screen.getByText('Node.js');
+    expect(chip).toHaveClass('border-success', 'text-success');
+    expect(chip.textContent).not.toContain('✓');
+    expect(chip.querySelector('svg')).toHaveAttribute('aria-hidden', 'true');
+  });
 });
