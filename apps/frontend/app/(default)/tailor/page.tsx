@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
+import { Label, labelClass } from '@/components/ui/label';
 import { Alert } from '@/components/ui/alert';
 import { PageFrame } from '@/components/ui/page-frame';
 import { PageHeader } from '@/components/ui/page-header';
@@ -32,6 +32,12 @@ import { DiffPreviewModal } from '@/components/tailor/diff-preview-modal';
 import { ATSScoreCard } from '@/components/tailor/ats-score-card';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useOperationOwner } from '@/hooks/use-operation-owner';
+import { cn } from '@/lib/utils';
+
+// The page is step 1; Generate opens the diff modal, where the user reviews and saves.
+const STEP_KEYS = ['tailor.steps.paste', 'tailor.steps.generate', 'tailor.steps.review'] as const;
+
+const masterLabel = (m: ResumeListItem) => m.title || m.filename || m.resume_id;
 
 export default function TailorPage() {
   const { t, locale } = useTranslations();
@@ -422,15 +428,48 @@ export default function TailorPage() {
   };
 
   return (
-    <PageFrame>
-      <PageHeader>
+    <PageFrame width="narrow" className="my-auto">
+      <PageHeader className="p-6 md:p-6">
         <PageHeader.Back href="/dashboard">{t('common.back')}</PageHeader.Back>
         <PageHeader.Title>{t('tailor.heroTitle')}</PageHeader.Title>
-        <PageHeader.Subtitle>{t('tailor.pasteJobDescriptionBelow')}</PageHeader.Subtitle>
+        <PageHeader.Subtitle>{t('tailor.subtitle')}</PageHeader.Subtitle>
       </PageHeader>
 
-      <div className="p-8 md:p-12">
-        <div className="max-w-4xl space-y-6">
+      <ol
+        aria-label={t('tailor.steps.label')}
+        className="grid grid-cols-1 divide-y divide-ink border-b border-ink px-6 sm:grid-cols-3 sm:divide-x sm:divide-y-0"
+      >
+        {STEP_KEYS.map((key, index) => {
+          const current = index === 0;
+          return (
+            <li
+              key={key}
+              aria-current={current ? 'step' : undefined}
+              className="flex items-center gap-3 py-2 sm:px-4 sm:first:pl-0 sm:last:pr-0"
+            >
+              <span
+                className={cn(
+                  'flex size-6 shrink-0 items-center justify-center border border-ink font-mono text-xs font-bold tabular-nums',
+                  current ? 'bg-ink text-white' : 'text-ink'
+                )}
+              >
+                {index + 1}
+              </span>
+              <span
+                className={cn(
+                  'font-mono text-xs uppercase tracking-wider',
+                  current ? 'font-bold text-ink' : 'text-steel'
+                )}
+              >
+                {t(key)}
+              </span>
+            </li>
+          );
+        })}
+      </ol>
+
+      <div className="p-6">
+        <div className="space-y-3">
           {/* LLM Not Configured Warning */}
           {!statusLoading && !isLlmConfigured && (
             <LlmSetupAlert
@@ -440,63 +479,73 @@ export default function TailorPage() {
             />
           )}
 
-          {masters.length > 1 && (
-            <Dropdown
-              label={t('tailor.selectResume')}
-              description={t('tailor.selectResumeDescription')}
-              options={masters.map((m) => ({
-                id: m.resume_id,
-                label: m.title || m.filename || m.resume_id,
-              }))}
-              value={masterResumeId ?? ''}
-              onChange={setMasterResumeId}
-              disabled={isLoading || promptLoading || showDiffModal}
-            />
-          )}
+          <div className="grid gap-4 sm:grid-cols-2">
+            {masters.length > 1 ? (
+              <Dropdown
+                label={t('tailor.selectResume')}
+                description={t('tailor.selectResumeDescription')}
+                options={masters.map((m) => ({ id: m.resume_id, label: masterLabel(m) }))}
+                value={masterResumeId ?? ''}
+                onChange={setMasterResumeId}
+                disabled={isLoading || promptLoading || showDiffModal}
+              />
+            ) : (
+              (masters.length === 1 || !masterResumeId) && (
+                <div className="space-y-1">
+                  <span className={cn('block', labelClass)}>{t('tailor.tailoringLabel')}</span>
+                  <p className="text-sm text-ink-soft">{t('tailor.selectResumeDescription')}</p>
+                  <p className="flex min-h-10 items-center font-mono text-sm font-bold break-words text-ink">
+                    {masters.length === 1 ? masterLabel(masters[0]) : t('common.loading')}
+                  </p>
+                </div>
+              )
+            )}
 
-          <Dropdown
-            options={
-              promptOptions.length > 0
-                ? promptOptions.map((opt) => ({
-                    id: opt.id,
-                    label: t(`tailor.promptOptions.${opt.id}.label`),
-                    description: t(`tailor.promptOptions.${opt.id}.description`),
-                  }))
-                : [
-                    {
-                      id: 'nudge',
-                      label: t('tailor.promptOptions.nudge.label'),
-                      description: t('tailor.promptOptions.nudge.description'),
-                    },
-                    {
-                      id: 'keywords',
-                      label: t('tailor.promptOptions.keywords.label'),
-                      description: t('tailor.promptOptions.keywords.description'),
-                    },
-                    {
-                      id: 'full',
-                      label: t('tailor.promptOptions.full.label'),
-                      description: t('tailor.promptOptions.full.description'),
-                    },
-                  ]
-            }
-            value={selectedPromptId}
-            onChange={(value) => {
-              hasUserSelectedPrompt.current = true;
-              setSelectedPromptId(value);
-            }}
-            label={t('tailor.promptLabel')}
-            description={t('tailor.promptDescription')}
-            disabled={isLoading || promptLoading}
-          />
+            <Dropdown
+              options={
+                promptOptions.length > 0
+                  ? promptOptions.map((opt) => ({
+                      id: opt.id,
+                      label: t(`tailor.promptOptions.${opt.id}.label`),
+                      description: t(`tailor.promptOptions.${opt.id}.description`),
+                    }))
+                  : [
+                      {
+                        id: 'nudge',
+                        label: t('tailor.promptOptions.nudge.label'),
+                        description: t('tailor.promptOptions.nudge.description'),
+                      },
+                      {
+                        id: 'keywords',
+                        label: t('tailor.promptOptions.keywords.label'),
+                        description: t('tailor.promptOptions.keywords.description'),
+                      },
+                      {
+                        id: 'full',
+                        label: t('tailor.promptOptions.full.label'),
+                        description: t('tailor.promptOptions.full.description'),
+                      },
+                    ]
+              }
+              value={selectedPromptId}
+              onChange={(value) => {
+                hasUserSelectedPrompt.current = true;
+                setSelectedPromptId(value);
+              }}
+              label={t('tailor.promptLabel')}
+              description={t('tailor.promptDescription')}
+              disabled={isLoading || promptLoading}
+            />
+          </div>
 
           <div className="space-y-2">
             <Label htmlFor="job-description">{t('tailor.pasteJobDescription')}</Label>
             <div className="relative">
               <Textarea
                 id="job-description"
+                aria-describedby="job-description-hint"
                 placeholder={t('tailor.jobDescriptionPlaceholder')}
-                className="min-h-[300px] resize-none p-4 pb-8"
+                className="min-h-48 resize-none p-4 pb-8"
                 value={jobDescription}
                 onChange={(e) => setJobDescription(e.target.value)}
                 onKeyDown={handleTextareaKeyDown}
@@ -506,6 +555,9 @@ export default function TailorPage() {
                 {t('tailor.charactersCount', { count: jobDescription.length })}
               </div>
             </div>
+            <p id="job-description-hint" className="text-sm text-ink-soft">
+              {t('tailor.jobDescriptionHint')}
+            </p>
           </div>
 
           <FadePresence show={!!error}>

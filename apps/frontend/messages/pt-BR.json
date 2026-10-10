@@ -650,6 +650,14 @@
       "previewUnavailable": "Esta prévia expirou ou o currículo original mudou. Gere uma nova prévia antes de salvar."
     },
     "selectResumeDescription": "Os marcadores são extraídos deste currículo principal.",
+    "tailoringLabel": "Personalizando:",
+    "jobDescriptionHint": "Cole o anúncio completo da vaga, com responsabilidades e requisitos (mínimo de 50 caracteres).",
+    "steps": {
+      "label": "Como funciona a personalização",
+      "paste": "Cole a descrição da vaga",
+      "generate": "Gere uma prévia",
+      "review": "Revise as alterações e salve"
+    },
     "selectionSummary": "{kept} de {total} marcadores mantidos (até {max} por cargo ou projeto)",
     "pageFit": {
       "fits": "Cabe em uma página",

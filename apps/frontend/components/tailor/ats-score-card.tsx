@@ -92,7 +92,7 @@ export function ATSScoreCard({ atsScore }: ATSScoreCardProps) {
   return (
     <section
       aria-labelledby="ats-score-heading"
-      className="space-y-6 border border-ink bg-white p-6 shadow-sw-default"
+      className="space-y-6 border border-ink bg-white p-6 shadow-sw-nested"
     >
       <div className="flex items-end justify-between gap-4">
         <h2 id="ats-score-heading" className="font-serif text-xl font-bold text-ink">

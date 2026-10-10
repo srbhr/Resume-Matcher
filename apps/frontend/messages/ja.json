@@ -650,6 +650,14 @@
       "previewUnavailable": "プレビューの有効期限が切れたか、元の履歴書が変更されました。保存する前に新しいプレビューを生成してください。"
     },
     "selectResumeDescription": "箇条書きはこのマスター履歴書から選ばれます。",
+    "tailoringLabel": "カスタマイズ対象：",
+    "jobDescriptionHint": "職務内容と応募要件を含む求人情報の全文を貼り付けてください（50文字以上）。",
+    "steps": {
+      "label": "カスタマイズの流れ",
+      "paste": "求人内容を貼り付け",
+      "generate": "プレビューを生成",
+      "review": "変更を確認して保存"
+    },
     "selectionSummary": "{total}件中{kept}件の箇条書きを採用（職務・プロジェクトごとに最大{max}件）",
     "pageFit": {
       "fits": "1ページに収まります",

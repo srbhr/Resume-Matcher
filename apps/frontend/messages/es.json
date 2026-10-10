@@ -650,6 +650,14 @@
       "previewUnavailable": "La vista previa caducó o el currículum original cambió. Genera una nueva vista previa antes de guardar."
     },
     "selectResumeDescription": "Las viñetas se toman de este currículum maestro.",
+    "tailoringLabel": "Personalizando:",
+    "jobDescriptionHint": "Pega la oferta completa, con responsabilidades y requisitos (mínimo 50 caracteres).",
+    "steps": {
+      "label": "Cómo funciona la personalización",
+      "paste": "Pega la descripción del trabajo",
+      "generate": "Genera una vista previa",
+      "review": "Revisa los cambios y guarda"
+    },
     "selectionSummary": "Viñetas conservadas: {kept} de {total} (hasta {max} por puesto o proyecto)",
     "pageFit": {
       "fits": "Cabe en una página",
