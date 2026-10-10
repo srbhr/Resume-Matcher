@@ -2,6 +2,7 @@
   "common": {
     "save": "保存",
     "saving": "保存中...",
+    "saved": "保存済み",
     "cancel": "キャンセル",
     "delete": "削除",
     "edit": "編集",
@@ -668,6 +669,7 @@
     "contentLanguageDescription": "生成コンテンツの言語（履歴書、カバーレター）",
     "uiLanguage": "UI言語",
     "uiLanguageDescription": "ユーザーインターフェースの言語",
+    "languageTitle": "言語",
     "theme": "テーマ",
     "themeDescription": "お好みのカラーテーマを選択",
     "lightMode": "ライト",

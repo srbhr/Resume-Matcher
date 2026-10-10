@@ -11,16 +11,6 @@
     "legacy-token": 4,
     "palette": 14
   },
-  "app/(default)/settings/page.tsx": {
-    "decorative-icon": 1,
-    "ink-tint": 4,
-    "legacy-token": 34,
-    "palette": 48,
-    "soft-shadow": 2,
-    "spacing": 2,
-    "transition": 1,
-    "type-size": 2
-  },
   "app/(default)/tailor/page.tsx": {
     "legacy-token": 2,
     "palette": 12,

@@ -2,6 +2,7 @@
   "common": {
     "save": "Save",
     "saving": "Saving...",
+    "saved": "Saved",
     "cancel": "Cancel",
     "delete": "Delete",
     "edit": "Edit",
@@ -668,17 +669,18 @@
     "contentLanguageDescription": "Language for generated content (resumes, cover letters)",
     "uiLanguage": "UI Language",
     "uiLanguageDescription": "Language for the user interface",
+    "languageTitle": "Language",
     "theme": "Theme",
     "themeDescription": "Choose your preferred color theme",
     "lightMode": "Light",
     "darkMode": "Dark",
     "systemMode": "System",
-    "dangerZone": "Danger Zone",
-    "clearApiKeys": "Clear API Keys",
+    "dangerZone": "Danger zone",
+    "clearApiKeys": "Clear API keys",
     "clearApiKeysDescription": "Removes all stored API keys from the configuration. This action cannot be undone.",
-    "resetDatabase": "Reset Database",
+    "resetDatabase": "Reset database",
     "resetDatabaseDescription": "Deletes ALL data including resumes, jobs, and generated content. This action cannot be undone.",
-    "llmConfigurationTitle": "LLM Configuration",
+    "llmConfigurationTitle": "LLM configuration",
     "providerLabel": "Provider",
     "statusCards": {
       "llm": "LLM",
@@ -708,7 +710,7 @@
       "description": "> No API key configured. Add your LLM provider API key below to enable resume tailoring."
     },
     "systemStatus": {
-      "title": "System Status",
+      "title": "System status",
       "refresh": "Refresh",
       "unableToConnect": "Can't reach the server",
       "expectedAt": "Expected at: {apiUrl}",
@@ -766,7 +768,7 @@
       }
     },
     "contentGeneration": {
-      "title": "Content Generation",
+      "title": "Content generation",
       "description": "Enable additional content generation during resume tailoring. When enabled, these documents will be automatically generated alongside your tailored resume.",
       "coverLetter": {
         "label": "Cover Letter",
