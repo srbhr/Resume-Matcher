@@ -591,6 +591,23 @@
         "description": "Ajuste integral usando la descripción del puesto."
       }
     },
+    "length": {
+      "pageLimitLabel": "Límite de páginas",
+      "pageLimitDescription": "Recorta los puntos menos relevantes hasta que el currículum adaptado quepa.",
+      "pageLimitOptions": {
+        "1": "1 página",
+        "2": "2 páginas",
+        "3": "3 páginas",
+        "none": "Sin límite"
+      },
+      "bulletsLabel": "Puntos por puesto",
+      "bulletsDescription": "Puntos más relevantes que se conservan por empleo o proyecto.",
+      "bulletOptions": {
+        "3": "Hasta 3",
+        "5": "Hasta 5",
+        "all": "Todos"
+      }
+    },
     "analyzeJob": "Analizar Trabajo",
     "generateTailored": "Generar CV Personalizado",
     "matchScore": "Puntuación de Coincidencia",
@@ -647,12 +664,13 @@
     },
     "selectResumeDescription": "Las viñetas se toman de este currículum maestro.",
     "selectionSummary": "Viñetas conservadas: {kept} de {total} (hasta {max} por puesto o proyecto)",
+    "selectionSummaryAll": "Se conservaron {kept} de {total} puntos",
     "pageFit": {
-      "fits": "Cabe en una página",
-      "trimmed": "Viñetas adicionales eliminadas para que quepa en una página: {count}",
-      "over": "Sigue superando una página",
+      "fits": "Cabe en el límite de páginas",
+      "trimmed": "Se recortaron {count} más para caber en el límite de páginas",
+      "over": "Supera el límite de páginas; se conservaron todos los puntos seleccionados",
       "unavailable": "Ajuste de página no disponible",
-      "finalOver": "Puede superar una página tras la reescritura",
+      "finalOver": "Podría superar el límite de páginas tras la reescritura",
       "notRechecked": "Ajuste a una página no verificado tras la reescritura"
     }
   },

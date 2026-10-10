@@ -591,6 +591,23 @@
         "description": "채용 공고를 활용해 전면적으로 맞춤화합니다."
       }
     },
+    "length": {
+      "pageLimitLabel": "페이지 제한",
+      "pageLimitDescription": "맞춤 이력서가 제한에 맞을 때까지 관련성이 낮은 항목을 줄입니다.",
+      "pageLimitOptions": {
+        "1": "1페이지",
+        "2": "2페이지",
+        "3": "3페이지",
+        "none": "제한 없음"
+      },
+      "bulletsLabel": "직무별 항목 수",
+      "bulletsDescription": "직무 또는 프로젝트마다 유지할 가장 관련성 높은 항목 수.",
+      "bulletOptions": {
+        "3": "최대 3개",
+        "5": "최대 5개",
+        "all": "전체"
+      }
+    },
     "analyzeJob": "채용 공고 분석",
     "generateTailored": "맞춤화된 이력서 생성",
     "setupRequiredTitle": "[ 설정 필요 ]",
@@ -647,12 +664,13 @@
     },
     "selectResumeDescription": "글머리 기호는 이 마스터 이력서에서 가져옵니다.",
     "selectionSummary": "글머리 기호 {total}개 중 {kept}개 유지 (직무 또는 프로젝트당 최대 {max}개)",
+    "selectionSummaryAll": "{total}개 중 {kept}개 항목 유지",
     "pageFit": {
-      "fits": "한 페이지에 맞습니다",
-      "trimmed": "한 페이지에 맞추기 위해 {count}개를 추가로 줄였습니다",
-      "over": "여전히 한 페이지를 초과합니다",
+      "fits": "페이지 제한에 맞습니다",
+      "trimmed": "페이지 제한에 맞추기 위해 {count}개를 더 줄였습니다",
+      "over": "페이지 제한을 초과합니다. 선택한 항목은 모두 유지했습니다",
       "unavailable": "페이지 맞춤을 사용할 수 없습니다",
-      "finalOver": "다시 작성한 후 한 페이지를 넘을 수 있습니다",
+      "finalOver": "다시 작성한 후 페이지 제한을 초과할 수 있습니다",
       "notRechecked": "다시 작성한 후 한 페이지 맞춤을 다시 확인하지 못했습니다"
     }
   },
