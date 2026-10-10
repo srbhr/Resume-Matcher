@@ -1016,7 +1016,8 @@
       "experience": "경력",
       "education": "학력",
       "projects": "프로젝트",
-      "skills": "기술"
+      "skills": "기술",
+      "inferredSkill": "추론됨"
     },
     "errors": {
       "turnFailed": "마법사가 답변을 저장하지 못했습니다. 다시 시도하세요.",

@@ -45,7 +45,7 @@ export function LivePreview({ resumeData, inferredSkills }: LivePreviewProps) {
   return (
     <aside
       aria-label={t('resumeWizard.preview.label')}
-      className="border-2 border-black bg-white p-6 shadow-sw-default"
+      className="border-2 border-ink bg-white p-6 shadow-sw-default"
     >
       <p className="font-mono text-xs font-bold uppercase tracking-wider text-steel">
         {t('resumeWizard.preview.label')}
@@ -66,7 +66,7 @@ export function LivePreview({ resumeData, inferredSkills }: LivePreviewProps) {
 
           {experience.length > 0 && (
             <section>
-              <p className="border-b border-black pb-1 font-mono text-xs font-bold uppercase tracking-wider">
+              <p className="border-b border-ink pb-1 font-mono text-xs font-bold uppercase tracking-wider">
                 {t('resumeWizard.preview.experience')}
               </p>
               {experience.map((item) => (
@@ -91,7 +91,7 @@ export function LivePreview({ resumeData, inferredSkills }: LivePreviewProps) {
 
           {projects.length > 0 && (
             <section>
-              <p className="border-b border-black pb-1 font-mono text-xs font-bold uppercase tracking-wider">
+              <p className="border-b border-ink pb-1 font-mono text-xs font-bold uppercase tracking-wider">
                 {t('resumeWizard.preview.projects')}
               </p>
               {projects.map((item) => (
@@ -104,7 +104,7 @@ export function LivePreview({ resumeData, inferredSkills }: LivePreviewProps) {
 
           {education.length > 0 && (
             <section>
-              <p className="border-b border-black pb-1 font-mono text-xs font-bold uppercase tracking-wider">
+              <p className="border-b border-ink pb-1 font-mono text-xs font-bold uppercase tracking-wider">
                 {t('resumeWizard.preview.education')}
               </p>
               {education.map((item) => (
@@ -117,7 +117,7 @@ export function LivePreview({ resumeData, inferredSkills }: LivePreviewProps) {
 
           {skills.length > 0 && (
             <section>
-              <p className="border-b border-black pb-1 font-mono text-xs font-bold uppercase tracking-wider">
+              <p className="border-b border-ink pb-1 font-mono text-xs font-bold uppercase tracking-wider">
                 {t('resumeWizard.preview.skills')}
               </p>
               <div className="mt-2 flex flex-wrap gap-2">
@@ -129,11 +129,14 @@ export function LivePreview({ resumeData, inferredSkills }: LivePreviewProps) {
                       className={
                         isNew
                           ? 'inline-flex items-center gap-1 border border-success bg-canvas px-2 py-1 font-mono text-xs text-success'
-                          : 'border border-black bg-canvas px-2 py-1 font-mono text-xs'
+                          : 'border border-ink bg-canvas px-2 py-1 font-mono text-xs'
                       }
                     >
                       {skill}
                       {isNew && <Check aria-hidden="true" className="size-4" />}
+                      {isNew && (
+                        <span className="sr-only">{t('resumeWizard.preview.inferredSkill')}</span>
+                      )}
                     </span>
                   );
                 })}

@@ -1016,7 +1016,8 @@
       "experience": "職務経験",
       "education": "学歴",
       "projects": "プロジェクト",
-      "skills": "スキル"
+      "skills": "スキル",
+      "inferredSkill": "推測"
     },
     "errors": {
       "turnFailed": "ウィザードはその回答を保存できませんでした。もう一度お試しください。",

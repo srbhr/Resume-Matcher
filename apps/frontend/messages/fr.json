@@ -1016,7 +1016,8 @@
       "experience": "Expérience",
       "education": "Formation",
       "projects": "Projets",
-      "skills": "Compétences"
+      "skills": "Compétences",
+      "inferredSkill": "déduite"
     },
     "errors": {
       "turnFailed": "L'assistant n'a pas pu enregistrer cette réponse. Veuillez réessayer.",
