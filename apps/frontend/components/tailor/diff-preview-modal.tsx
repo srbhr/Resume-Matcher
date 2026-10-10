@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { AlertTriangle, CheckCircle, X, ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
+import { AlertTriangle, X, ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Alert } from '@/components/ui/alert';
+import { PanelHeader } from '@/components/ui/panel-header';
 import {
   Dialog,
   DialogBody,
@@ -79,20 +81,20 @@ export function DiffPreviewModal({
           </DialogHeader>
 
           <DialogBody className="space-y-3">
-            <div className="border-2 border-black bg-white p-4 font-mono text-xs text-ink-soft">
+            <div className="border-2 border-ink bg-white p-4 text-sm text-ink-soft">
               {t('tailor.missingDiffDialog.description')}
             </div>
-            <div className="flex items-center gap-2 font-mono text-xs text-amber-700">
-              <AlertTriangle className="w-4 h-4" />
+            <div className="flex items-center gap-2 font-mono text-xs text-warning-text">
+              <AlertTriangle className="size-4" />
               <span>{t('tailor.missingDiffDialog.confirmLabel')}</span>
             </div>
           </DialogBody>
 
           <DialogFooter>
-            <Button variant="outline" onClick={onClose} disabled={isConfirming} className="gap-2">
+            <Button variant="outline" onClick={onClose} disabled={isConfirming}>
               {t('common.cancel')}
             </Button>
-            <Button variant="warning" onClick={onConfirm} disabled={isConfirming} className="gap-2">
+            <Button variant="warning" onClick={onConfirm} disabled={isConfirming}>
               {isConfirming ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -151,13 +153,8 @@ export function DiffPreviewModal({
 
         <DialogBody className="space-y-4">
           {/* Summary cards */}
-          <div className="border-2 border-black bg-white p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-3 h-3 bg-primary"></div>
-              <h3 className="font-mono text-sm font-bold uppercase tracking-wider">
-                {t('tailor.diffModal.summary')}
-              </h3>
-            </div>
+          <div className="border-2 border-ink bg-white p-4">
+            <PanelHeader level="h3" title={t('tailor.diffModal.summary')} />
 
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
               <StatCard
@@ -194,15 +191,15 @@ export function DiffPreviewModal({
             )}
 
             {diffSummary.high_risk_changes > 0 && (
-              <div className="mt-4 border-2 border-warning bg-[#FFF7ED] p-3 flex items-start gap-3">
-                <AlertTriangle className="w-5 h-5 text-warning shrink-0 mt-0.5" />
+              <div className="mt-4 flex items-start gap-3 border-2 border-warning bg-warning-tint p-3">
+                <AlertTriangle className="size-5 shrink-0 text-warning-text" />
                 <div>
-                  <p className="font-mono text-xs font-bold uppercase text-[#C2410C]">
+                  <p className="font-mono text-xs font-bold uppercase tracking-wider text-warning-text">
                     {t('tailor.diffModal.warningTitle', {
                       count: diffSummary.high_risk_changes,
                     })}
                   </p>
-                  <p className="font-mono text-xs text-[#C2410C] mt-1">
+                  <p className="mt-1 text-sm text-ink-soft">
                     {t('tailor.diffModal.warningMessage')}
                   </p>
                 </div>
@@ -343,37 +340,28 @@ export function DiffPreviewModal({
         {/* Pinned status: stays visible while the changes list scrolls */}
         {errorMessage && (
           <div className="shrink-0 space-y-2 border-t border-ink px-6 py-3">
-            <div className="border-2 border-red-600 bg-red-50 p-3 font-mono text-xs text-red-700">
-              {errorMessage}
-            </div>
+            <Alert tone="error">{errorMessage}</Alert>
           </div>
         )}
 
         {/* Action buttons */}
         <DialogFooter className="justify-between">
-          <Button variant="outline" onClick={onReject} disabled={isConfirming} className="gap-2">
+          <Button variant="outline" onClick={onReject} disabled={isConfirming}>
             <X className="w-4 h-4" />
             {t('tailor.diffModal.rejectButton')}
           </Button>
           <div className="flex items-center gap-3">
             {isConfirming && elapsed > 0 && (
-              <span className="font-mono text-xs text-steel-grey">{elapsed}s</span>
+              <span className="font-mono text-xs tabular-nums text-ink-soft">{elapsed}s</span>
             )}
-            <Button
-              onClick={onConfirm}
-              disabled={isConfirming}
-              className="gap-2 bg-success hover:bg-green-800"
-            >
+            <Button variant="success" onClick={onConfirm} disabled={isConfirming}>
               {isConfirming ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
                   {t('common.saving')}
                 </>
               ) : (
-                <>
-                  <CheckCircle className="w-4 h-4" />
-                  {t('tailor.diffModal.confirmButton')}
-                </>
+                t('tailor.diffModal.confirmButton')
               )}
             </Button>
           </div>
@@ -418,15 +406,15 @@ interface StatCardProps {
 
 function StatCard({ label, value, variant }: StatCardProps) {
   const colors = {
-    success: 'border-success bg-[#F0FDF4] text-success',
-    warning: 'border-warning bg-[#FFF7ED] text-warning',
-    danger: 'border-destructive bg-[#FEF2F2] text-destructive',
-    info: 'border-primary bg-[#EFF6FF] text-primary',
+    success: 'border-success bg-success-tint text-success',
+    warning: 'border-warning bg-warning-tint text-warning-text',
+    danger: 'border-destructive bg-destructive-tint text-destructive',
+    info: 'border-primary bg-info-tint text-primary',
   };
 
   return (
     <div className={`border-2 p-3 ${colors[variant]}`}>
-      <div className="font-mono text-2xl font-bold">{value}</div>
+      <div className="font-mono text-2xl font-bold tabular-nums">{value}</div>
       <div className="font-mono text-xs uppercase tracking-wider mt-1">{label}</div>
     </div>
   );
@@ -443,20 +431,22 @@ interface ChangeSectionProps {
 
 function ChangeSection({ title, count, isExpanded, onToggle, children }: ChangeSectionProps) {
   return (
-    <div className="border-2 border-black bg-white">
+    <div className="border-2 border-ink bg-white">
       <button
+        type="button"
         onClick={onToggle}
-        className="w-full flex items-center justify-between p-3 hover:bg-paper-tint"
+        aria-expanded={isExpanded}
+        className="flex w-full items-center justify-between p-3 transition-colors hover:bg-panel focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
       >
         <div className="flex items-center gap-2">
-          {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-          <span className="font-mono text-sm font-bold uppercase tracking-wider">
+          {isExpanded ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" />}
+          <span className="font-mono text-sm font-bold uppercase tracking-wider tabular-nums">
             {title} ({count})
           </span>
         </div>
       </button>
 
-      {isExpanded && <div className="border-t-2 border-black p-4 space-y-3">{children}</div>}
+      {isExpanded && <div className="space-y-3 border-t-2 border-ink p-4">{children}</div>}
     </div>
   );
 }
@@ -472,9 +462,9 @@ function ChangeItem({ change }: ChangeItemProps) {
   // overused dashboard "design touch". The leading +/-/~ glyph carries the
   // semantic load and the bg tint reinforces it.
   const typeBackgrounds = {
-    added: 'bg-[#F0FDF4]',
-    removed: 'bg-[#FEF2F2]',
-    modified: 'bg-[#EFF6FF]',
+    added: 'bg-success-tint',
+    removed: 'bg-destructive-tint',
+    modified: 'bg-info-tint',
   };
 
   const typeGlyphColors = {
@@ -490,7 +480,7 @@ function ChangeItem({ change }: ChangeItemProps) {
   };
 
   return (
-    <div className={`p-3 border border-black ${typeBackgrounds[change.change_type]}`}>
+    <div className={`border border-ink p-3 ${typeBackgrounds[change.change_type]}`}>
       <div className="flex items-start gap-2">
         <span
           className={`font-mono text-base font-bold uppercase tracking-wider ${typeGlyphColors[change.change_type]}`}
@@ -500,16 +490,14 @@ function ChangeItem({ change }: ChangeItemProps) {
         </span>
         <div className="flex-1">
           {change.original_value && (
-            <div className="line-through text-destructive font-mono text-sm mb-1">
+            <div className="mb-1 text-sm text-destructive line-through">
               {change.original_value}
             </div>
           )}
-          {change.new_value && (
-            <div className="text-ink-soft font-mono text-sm">{change.new_value}</div>
-          )}
+          {change.new_value && <div className="text-sm text-ink-soft">{change.new_value}</div>}
         </div>
         {change.change_type === 'added' && change.confidence === 'high' && (
-          <AlertTriangle className="w-4 h-4 text-warning shrink-0" />
+          <AlertTriangle className="size-4 shrink-0 text-warning-text" />
         )}
       </div>
     </div>

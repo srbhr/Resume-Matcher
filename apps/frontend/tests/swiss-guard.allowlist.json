@@ -21,12 +21,6 @@
     "transition": 1,
     "type-size": 2
   },
-  "app/(default)/tailor/page.tsx": {
-    "legacy-token": 2,
-    "palette": 12,
-    "raw-colour": 1,
-    "spacing": 2
-  },
   "app/(default)/tracker/page.tsx": {
     "gradient": 2,
     "legacy-token": 2,
@@ -253,18 +247,6 @@
     "legacy-token": 3,
     "palette": 5,
     "transition": 2
-  },
-  "components/tailor/ats-score-card.tsx": {
-    "glyph": 1,
-    "palette": 23,
-    "radius": 7,
-    "spacing": 9
-  },
-  "components/tailor/diff-preview-modal.tsx": {
-    "legacy-token": 2,
-    "palette": 5,
-    "raw-colour": 10,
-    "spacing": 1
   },
   "components/tracker/application-card.tsx": {
     "legacy-token": 3,
