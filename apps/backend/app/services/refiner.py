@@ -351,6 +351,9 @@ def remove_ai_phrases(
     if jd_protected:
         logger.info("JD-protected phrases (skipping removal): %s", jd_protected)
 
+    # Protection is per phrase, not per sentence: a word the candidate uses in
+    # their own resume is their vocabulary, so it isn't scrubbed anywhere.
+    # Sentence-level tracking wouldn't survive the LLM rewording around it.
     patterns = {phrase: _phrase_pattern(phrase) for phrase in AI_PHRASE_BLACKLIST}
     own_words = {
         phrase.lower()
@@ -386,13 +389,18 @@ def remove_ai_phrases(
                 if not article:
                     return replacement
                 if not replacement:
-                    return f"{article} "
+                    return ""  # "a disruptor" goes entirely, not leaving "a "
                 wanted = "an" if replacement[0].lower() in "aeiou" else "a"
                 if article[0].isupper():
                     wanted = wanted.capitalize()
                 return f"{wanted} {replacement}"
 
             cleaned = pattern.sub(substitute, cleaned)
+            if not replacement:
+                # Removing a phrase outright leaves a double space ("Joined  in")
+                # or a space before punctuation ("Joined ."); tidy just that.
+                cleaned = re.sub(r"(?<=\S)[ \t]{2,}(?=\S)", " ", cleaned)
+                cleaned = re.sub(r"[ \t]+([.,;:!?])", r"\1", cleaned)
         return cleaned
 
     def clean_recursive(obj: Any) -> Any:

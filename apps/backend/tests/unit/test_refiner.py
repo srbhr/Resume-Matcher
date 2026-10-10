@@ -297,6 +297,12 @@ class TestRemoveAiPhrasesKeepsOwnWords:
         assert "disruptor" not in cleaned["summary"].lower()
         assert " s " not in f" {cleaned['summary']} "
 
+    def test_removed_phrase_takes_its_article_with_it(self):
+        cleaned, _ = remove_ai_phrases({"summary": "Joined a disruptor in fintech."})
+        assert cleaned["summary"] == "Joined in fintech."
+        cleaned, _ = remove_ai_phrases({"summary": "Backed a disruptor."})
+        assert cleaned["summary"] == "Backed."
+
     def test_article_follows_the_replacement(self):
         cleaned, _ = remove_ai_phrases({"summary": "Built a scalable API."})
         assert cleaned["summary"] == "Built an expandable API."
