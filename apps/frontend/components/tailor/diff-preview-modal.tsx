@@ -6,10 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useTranslations } from '@/lib/i18n';
 import type {
+  ATSScore,
   ResumeDiffSummary,
   ResumeFieldDiff,
 } from '@/components/common/resume_previewer_context';
 import type { BulletSelectionSummary } from '@/lib/api/resume';
+import { ATSScoreCard } from '@/components/tailor/ats-score-card';
+import type { TemplateType } from '@/lib/types/template-settings';
 
 interface DiffPreviewModalProps {
   isOpen: boolean;
@@ -21,6 +24,8 @@ interface DiffPreviewModalProps {
   detailedChanges?: ResumeFieldDiff[];
   errorMessage?: string;
   selectionSummary?: BulletSelectionSummary | null;
+  atsScore?: ATSScore;
+  layoutTemplate?: TemplateType;
 }
 
 export function DiffPreviewModal({
@@ -33,6 +38,8 @@ export function DiffPreviewModal({
   detailedChanges,
   errorMessage,
   selectionSummary,
+  atsScore,
+  layoutTemplate,
 }: DiffPreviewModalProps) {
   const { t } = useTranslations();
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
@@ -212,6 +219,9 @@ export function DiffPreviewModal({
 
         {/* Detailed changes list */}
         <div className="flex-1 min-h-0 overflow-y-auto mt-4 space-y-4">
+          {/* ATS score breakdown for the tailored preview */}
+          {atsScore && <ATSScoreCard atsScore={atsScore} template={layoutTemplate} />}
+
           {/* Summary changes */}
           {summaryChanges.length > 0 && (
             <ChangeSection

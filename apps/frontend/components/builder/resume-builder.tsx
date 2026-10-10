@@ -46,6 +46,7 @@ import {
   fetchJobDescription,
 } from '@/lib/api/resume';
 import { JDComparisonView } from './jd-comparison-view';
+import { AtsScorePanel } from './ats-score-panel';
 import { RegenerateWizard } from './regenerate-wizard';
 import { useRegenerateWizard } from '@/hooks/use-regenerate-wizard';
 import { useTranslations } from '@/lib/i18n';
@@ -1612,6 +1613,15 @@ const ResumeBuilderContent = () => {
               {/* JD Match Info Panel */}
               {activeTab === 'jd-match' && (
                 <div className="space-y-4">
+                  {resumeId && jobContextStatus === 'available' && (
+                    <AtsScorePanel
+                      key={resumeId}
+                      resumeId={resumeId}
+                      hasUnsavedChanges={hasUnsavedChanges}
+                      template={templateSettings.template}
+                    />
+                  )}
+
                   <div className="border-2 border-black bg-white p-4">
                     <h3 className="font-mono text-sm font-bold uppercase mb-2">
                       {t('builder.jdMatch.aboutTitle')}

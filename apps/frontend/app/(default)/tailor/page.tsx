@@ -17,6 +17,7 @@ import {
   type ResumeListItem,
 } from '@/lib/api/resume';
 import { readStoredTemplateSettings } from '@/lib/utils/stored-template-settings';
+import type { TemplateType } from '@/lib/types/template-settings';
 import { fetchPromptConfig, type PromptOption } from '@/lib/api/config';
 import { getPreviewErrorMessage } from '@/lib/utils/preview-error';
 import { Dropdown } from '@/components/ui/dropdown';
@@ -24,7 +25,6 @@ import { useStatusCache } from '@/lib/context/status-cache';
 import { Loader2, ArrowLeft, AlertTriangle, Settings } from 'lucide-react';
 import { useTranslations } from '@/lib/i18n';
 import { DiffPreviewModal } from '@/components/tailor/diff-preview-modal';
-import { ATSScoreCard } from '@/components/tailor/ats-score-card';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useOperationOwner } from '@/hooks/use-operation-owner';
 
@@ -55,6 +55,8 @@ export default function TailorPage() {
   const [showRegenerateDialog, setShowRegenerateDialog] = useState(false);
   const [showMissingDiffDialog, setShowMissingDiffDialog] = useState(false);
   const [missingDiffResult, setMissingDiffResult] = useState<ImprovedResult | null>(null);
+  // Template the preview was fitted with; the ATS card warns on two-column layouts.
+  const [previewTemplate, setPreviewTemplate] = useState<TemplateType | undefined>(undefined);
   const [missingDiffError, setMissingDiffError] = useState<string | null>(null);
 
   // Elapsed timer for long operations
@@ -245,11 +247,13 @@ export default function TailorPage() {
       incrementJobs(); // Update cached counter
 
       // 2. Preview Resume
+      const templateSettings = readStoredTemplateSettings();
       const result = await previewImproveResume(resumeId, jobId, selectedPromptId, {
         maxBulletsPerEntry: 3,
-        pageFit: toPageFitSettings(readStoredTemplateSettings(), locale),
+        pageFit: toPageFitSettings(templateSettings, locale),
       });
       if (!isCurrent(token)) return;
+      setPreviewTemplate(templateSettings.template);
 
       if (!result?.data?.diff_summary || !result?.data?.detailed_changes) {
         console.warn('Diff data missing for tailor preview; requesting user confirmation.');
@@ -562,13 +566,6 @@ export default function TailorPage() {
         </div>
       </div>
 
-      {/* ATS Score Breakdown — shown once a preview result is available */}
-      {pendingResult?.data?.ats_score && (
-        <div className="w-full max-w-4xl mt-6">
-          <ATSScoreCard atsScore={pendingResult.data.ats_score} />
-        </div>
-      )}
-
       {/* Diff preview modal */}
       {showDiffModal && pendingResult && (
         <DiffPreviewModal
@@ -581,6 +578,8 @@ export default function TailorPage() {
           detailedChanges={pendingResult?.data?.detailed_changes}
           errorMessage={diffConfirmError ?? undefined}
           selectionSummary={pendingResult?.data?.bullet_selection}
+          atsScore={pendingResult?.data?.ats_score}
+          layoutTemplate={previewTemplate}
         />
       )}
 

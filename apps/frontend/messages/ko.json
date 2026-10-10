@@ -296,6 +296,16 @@
         "keywordsExtracted": "{count}개 키워드 추출됨",
         "matchesFound": "{count}개 일치 항목 발견",
         "matchRateLabel": "일치율:"
+      },
+      "atsScore": {
+        "loading": "ATS 점수 불러오는 중…",
+        "notCalculated": "이 이력서의 ATS 점수가 아직 계산되지 않았습니다.",
+        "loadFailed": "저장된 ATS 점수를 불러올 수 없습니다. 다시 계산하거나 페이지를 새로 고치세요.",
+        "lastCalculated": "마지막 계산: {date}",
+        "recalculate": "다시 계산",
+        "recalculating": "계산 중…",
+        "saveFirst": "변경 사항을 저장한 후 다시 계산하세요.",
+        "recalculateFailed": "ATS 점수를 계산할 수 없습니다. 점수 저장 기능 이전에 맞춤 작업한 이력서라면 '이력서 맞춤화' 페이지에서 다시 맞춤 작업을 하세요."
       }
     },
     "genericItemForm": {
@@ -624,6 +634,18 @@
       "awardChanges": "수상 내역 변경 사항",
       "rejectButton": "거부하고 다시 생성",
       "confirmButton": "확인하고 저장"
+    },
+    "atsScore": {
+      "title": "ATS 점수 상세",
+      "keywordMatch": "키워드 일치",
+      "skillsCoverage": "기술 커버리지",
+      "titleMatch": "직함 일치",
+      "sectionCompleteness": "섹션 완성도",
+      "dateConsistency": "날짜 형식 일관성",
+      "missingKeywords": "누락된 키워드",
+      "injectableKeywords": "추가 가능 (마스터 이력서에 있음)",
+      "recommendations": "추천 사항",
+      "twoColumnWarning": "2단 레이아웃: 많은 ATS가 열을 잘못된 순서로 읽습니다. 지원하기 전에 빌더에서 1단 템플릿으로 변경하세요."
     },
     "regenerateDialog": {
       "title": "맞춤화된 이력서를 다시 생성하시겠습니까?",

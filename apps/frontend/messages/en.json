@@ -318,6 +318,16 @@
         "keywordsExtracted": "{count} keywords extracted",
         "matchesFound": "{count} matches found",
         "matchRateLabel": "Match Rate:"
+      },
+      "atsScore": {
+        "loading": "Loading ATS score…",
+        "notCalculated": "ATS score not calculated yet for this resume.",
+        "loadFailed": "Couldn't load the saved ATS score. Try Recalculate, or reload the page.",
+        "lastCalculated": "Last calculated {date}",
+        "recalculate": "Recalculate",
+        "recalculating": "Calculating…",
+        "saveFirst": "Save your changes, then recalculate.",
+        "recalculateFailed": "Couldn't calculate an ATS score. If this resume was tailored before scores were saved, tailor it again from the Tailor Resume page."
       }
     },
     "genericItemForm": {
@@ -624,6 +634,18 @@
       "awardChanges": "Award Changes",
       "rejectButton": "Reject & Regenerate",
       "confirmButton": "Confirm & Save"
+    },
+    "atsScore": {
+      "title": "ATS Score Breakdown",
+      "keywordMatch": "Keyword Match",
+      "skillsCoverage": "Skills Coverage",
+      "titleMatch": "Title Match",
+      "sectionCompleteness": "Section Completeness",
+      "dateConsistency": "Date Consistency",
+      "missingKeywords": "Missing Keywords",
+      "injectableKeywords": "Safe to Add (in your master resume)",
+      "recommendations": "Recommendations",
+      "twoColumnWarning": "Two-column layout: many ATS parsers read columns out of order. Switch to a single-column template in the Builder before applying."
     },
     "regenerateDialog": {
       "title": "Regenerate tailored resume?",

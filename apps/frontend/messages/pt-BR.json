@@ -318,6 +318,16 @@
         "keywordsExtracted": "{count} palavras-chave extraídas",
         "matchesFound": "{count} correspondências encontradas",
         "matchRateLabel": "Taxa de Correspondência:"
+      },
+      "atsScore": {
+        "loading": "Carregando a pontuação ATS…",
+        "notCalculated": "A pontuação ATS deste currículo ainda não foi calculada.",
+        "loadFailed": "Não foi possível carregar a pontuação ATS salva. Tente Recalcular ou recarregue a página.",
+        "lastCalculated": "Último cálculo: {date}",
+        "recalculate": "Recalcular",
+        "recalculating": "Calculando…",
+        "saveFirst": "Salve suas alterações e depois recalcule.",
+        "recalculateFailed": "Não foi possível calcular a pontuação ATS. Se este currículo foi adaptado antes de as pontuações serem salvas, adapte-o novamente na página Personalizar Currículo."
       }
     },
     "genericItemForm": {
@@ -624,6 +634,18 @@
       "awardChanges": "Alterações de prêmios",
       "rejectButton": "Rejeitar e regenerar",
       "confirmButton": "Confirmar e salvar"
+    },
+    "atsScore": {
+      "title": "Detalhamento da pontuação ATS",
+      "keywordMatch": "Correspondência de palavras-chave",
+      "skillsCoverage": "Cobertura de habilidades",
+      "titleMatch": "Correspondência de cargo",
+      "sectionCompleteness": "Completude das seções",
+      "dateConsistency": "Consistência de datas",
+      "missingKeywords": "Palavras-chave ausentes",
+      "injectableKeywords": "Seguras para adicionar (no seu currículo principal)",
+      "recommendations": "Recomendações",
+      "twoColumnWarning": "Layout em duas colunas: muitos ATS leem as colunas fora de ordem. Mude para um modelo de uma coluna no editor antes de se candidatar."
     },
     "regenerateDialog": {
       "title": "Regenerar o currículo personalizado?",

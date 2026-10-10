@@ -1,4 +1,5 @@
 import type {
+  ATSScore,
   ImprovedResult,
   InterviewPrepData,
 } from '@/components/common/resume_previewer_context';
@@ -514,6 +515,33 @@ export async function retryProcessing(
   if (!res.ok) {
     const text = await res.text().catch(() => '');
     throw new Error(`Failed to retry processing (status ${res.status}): ${text}`);
+  }
+  return res.json();
+}
+
+/** Last calculated ATS score of a saved tailored resume. */
+export interface ATSScoreRecord {
+  score: ATSScore;
+  /** UTC ISO-8601 time of the calculation. */
+  calculated_at: string;
+}
+
+/** Last calculated ATS score, or null when it was never calculated. */
+export async function fetchLastAtsScore(resumeId: string): Promise<ATSScoreRecord | null> {
+  const res = await apiFetch(`/resumes/${encodeURIComponent(resumeId)}/ats-score`);
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Failed to fetch ATS score (status ${res.status}): ${text}`);
+  }
+  return res.json();
+}
+
+/** Recalculates the ATS score from the saved resume and stores it as the last score. */
+export async function recalculateAtsScore(resumeId: string): Promise<ATSScoreRecord> {
+  const res = await apiPost(`/resumes/${encodeURIComponent(resumeId)}/ats-score`, {});
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Failed to recalculate ATS score (status ${res.status}): ${text}`);
   }
   return res.json();
 }

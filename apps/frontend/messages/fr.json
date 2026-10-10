@@ -318,6 +318,16 @@
         "keywordsExtracted": "{count} mots-clés extraits",
         "matchesFound": "{count} correspondances trouvées",
         "matchRateLabel": "Taux de correspondance :"
+      },
+      "atsScore": {
+        "loading": "Chargement du score ATS…",
+        "notCalculated": "Le score ATS de ce CV n'a pas encore été calculé.",
+        "loadFailed": "Impossible de charger le score ATS enregistré. Essayez Recalculer ou rechargez la page.",
+        "lastCalculated": "Dernier calcul : {date}",
+        "recalculate": "Recalculer",
+        "recalculating": "Calcul en cours…",
+        "saveFirst": "Enregistrez vos modifications, puis recalculez.",
+        "recalculateFailed": "Impossible de calculer le score ATS. Si ce CV a été adapté avant l'enregistrement des scores, adaptez-le à nouveau depuis la page Personnaliser le CV."
       }
     },
     "genericItemForm": {
@@ -624,6 +634,18 @@
       "awardChanges": "Modifications des récompenses",
       "rejectButton": "Rejeter et régénérer",
       "confirmButton": "Confirmer et enregistrer"
+    },
+    "atsScore": {
+      "title": "Détail du score ATS",
+      "keywordMatch": "Correspondance des mots-clés",
+      "skillsCoverage": "Couverture des compétences",
+      "titleMatch": "Correspondance du titre",
+      "sectionCompleteness": "Complétude des sections",
+      "dateConsistency": "Cohérence des dates",
+      "missingKeywords": "Mots-clés manquants",
+      "injectableKeywords": "Ajout sûr (présents dans votre CV principal)",
+      "recommendations": "Recommandations",
+      "twoColumnWarning": "Mise en page sur deux colonnes : de nombreux ATS lisent les colonnes dans le désordre. Passez à un modèle à une colonne dans l'éditeur avant de postuler."
     },
     "regenerateDialog": {
       "title": "Régénérer le CV personnalisé ?",
