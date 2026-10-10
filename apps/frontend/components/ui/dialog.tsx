@@ -3,7 +3,9 @@
 import * as React from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
+import { AnimatePresence, m } from 'motion/react';
 import { cn } from '@/lib/utils';
+import { DURATION, EASE_OUT_EXPO, SPRING } from '@/lib/motion';
 import { useTranslations } from '@/lib/i18n';
 import { Button } from './button';
 
@@ -182,45 +184,69 @@ const DialogContent: React.FC<DialogContentProps> = ({
     }
   };
 
-  if (!open || typeof document === 'undefined') return null;
+  if (typeof document === 'undefined') return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-50">
-      <div
-        className="fixed inset-0 bg-overlay"
-        aria-hidden="true"
-        onClick={() => onOpenChange(false)}
-      />
-      <div className="fixed inset-0 flex items-center justify-center p-4">
-        <div
-          ref={panelRef}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby={titleId}
-          tabIndex={-1}
-          onKeyDown={trapTab}
-          onClick={(e) => e.stopPropagation()}
-          className={cn(
-            'relative flex max-h-[90vh] w-full flex-col overflow-hidden',
-            'rounded-none border border-ink bg-white shadow-sw-lg outline-none',
-            SIZE_CLASS[size],
-            className
-          )}
-        >
-          {children}
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            className="absolute right-4 top-5"
+    <AnimatePresence>
+      {open && (
+        <div key="dialog" className="fixed inset-0 z-50">
+          <m.div
+            className="fixed inset-0 bg-overlay"
+            aria-hidden="true"
             onClick={() => onOpenChange(false)}
-            aria-label={t('common.close')}
-            title={t('common.close')}
-          >
-            <X aria-hidden="true" />
-          </Button>
+            initial={{ opacity: 0 }}
+            animate={{
+              opacity: 1,
+              transition: { duration: DURATION.surface, ease: EASE_OUT_EXPO },
+            }}
+            exit={{ opacity: 0, transition: { duration: DURATION.exit, ease: EASE_OUT_EXPO } }}
+          />
+          <div className="fixed inset-0 flex items-center justify-center p-4">
+            <m.div
+              ref={panelRef}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby={titleId}
+              tabIndex={-1}
+              onKeyDown={trapTab}
+              onClick={(e) => e.stopPropagation()}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{
+                opacity: 1,
+                scale: 1,
+                transition: {
+                  opacity: { duration: DURATION.surface, ease: EASE_OUT_EXPO },
+                  scale: SPRING,
+                },
+              }}
+              exit={{
+                opacity: 0,
+                scale: 0.95,
+                transition: { duration: DURATION.exit, ease: EASE_OUT_EXPO },
+              }}
+              className={cn(
+                'relative flex max-h-[90vh] w-full flex-col overflow-hidden overscroll-contain',
+                'rounded-none border border-ink bg-white shadow-sw-lg outline-none',
+                SIZE_CLASS[size],
+                className
+              )}
+            >
+              {children}
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="absolute right-4 top-5"
+                onClick={() => onOpenChange(false)}
+                aria-label={t('common.close')}
+                title={t('common.close')}
+              >
+                <X aria-hidden="true" />
+              </Button>
+            </m.div>
+          </div>
         </div>
-      </div>
-    </div>,
+      )}
+    </AnimatePresence>,
     document.body
   );
 };

@@ -2,7 +2,9 @@
 
 import React, { useEffect, useId, useRef, useState } from 'react';
 import { Check, ChevronDown } from 'lucide-react';
+import { AnimatePresence, m } from 'motion/react';
 import { cn } from '@/lib/utils';
+import { DURATION, EASE_OUT_EXPO, SPRING } from '@/lib/motion';
 import { useTranslations } from '@/lib/i18n';
 
 export interface DropdownOption {
@@ -171,49 +173,69 @@ export function Dropdown({
           />
         </button>
 
-        {isOpen && (
-          <div
-            id={listId}
-            role="listbox"
-            aria-labelledby={label ? labelId : undefined}
-            className={cn(
-              'absolute left-0 right-0 z-50 max-h-64 divide-y divide-ink overflow-y-auto rounded-none border border-ink bg-white shadow-sw-default',
-              flipUp ? 'bottom-full mb-1' : 'top-full mt-1'
-            )}
-          >
-            {options.map((option, index) => {
-              const isSelected = option.id === value;
-              return (
-                <button
-                  key={option.id}
-                  ref={(el) => {
-                    optionRefs.current[index] = el;
-                  }}
-                  type="button"
-                  role="option"
-                  aria-selected={isSelected}
-                  tabIndex={index === activeIndex ? 0 : -1}
-                  onClick={() => choose(option.id)}
-                  onKeyDown={(event) => onOptionKeyDown(event, index)}
-                  className={cn(
-                    'flex w-full items-start justify-between gap-2 px-3 py-2 text-left font-mono text-sm transition-colors focus-visible:bg-panel focus-visible:outline-none',
-                    isSelected ? 'bg-panel font-bold text-ink' : 'bg-white text-ink hover:bg-panel'
-                  )}
-                >
-                  <span className="min-w-0 flex-1">
-                    <span className="block">{option.label}</span>
-                    {option.description && (
-                      <span className="mt-1 block text-xs font-normal text-ink-soft">
-                        {option.description}
-                      </span>
+        <AnimatePresence>
+          {isOpen && (
+            <m.div
+              key="listbox"
+              id={listId}
+              role="listbox"
+              aria-labelledby={label ? labelId : undefined}
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{
+                opacity: 1,
+                scale: 1,
+                transition: {
+                  opacity: { duration: DURATION.menuIn, ease: EASE_OUT_EXPO },
+                  scale: SPRING,
+                },
+              }}
+              exit={{
+                opacity: 0,
+                scale: 0.98,
+                transition: { duration: DURATION.menuOut, ease: EASE_OUT_EXPO },
+              }}
+              style={{ transformOrigin: flipUp ? 'bottom' : 'top' }}
+              className={cn(
+                'absolute left-0 right-0 z-50 max-h-64 divide-y divide-ink overflow-y-auto rounded-none border border-ink bg-white shadow-sw-default',
+                flipUp ? 'bottom-full mb-1' : 'top-full mt-1'
+              )}
+            >
+              {options.map((option, index) => {
+                const isSelected = option.id === value;
+                return (
+                  <button
+                    key={option.id}
+                    ref={(el) => {
+                      optionRefs.current[index] = el;
+                    }}
+                    type="button"
+                    role="option"
+                    aria-selected={isSelected}
+                    tabIndex={index === activeIndex ? 0 : -1}
+                    onClick={() => choose(option.id)}
+                    onKeyDown={(event) => onOptionKeyDown(event, index)}
+                    className={cn(
+                      'flex w-full items-start justify-between gap-2 px-3 py-2 text-left font-mono text-sm transition-colors focus-visible:bg-panel focus-visible:outline-none',
+                      isSelected
+                        ? 'bg-panel font-bold text-ink'
+                        : 'bg-white text-ink hover:bg-panel'
                     )}
-                  </span>
-                  {isSelected && <Check aria-hidden="true" className="mt-0.5 size-4 shrink-0" />}
-                </button>
-              );
-            })}
-          </div>
-        )}
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span className="block">{option.label}</span>
+                      {option.description && (
+                        <span className="mt-1 block text-xs font-normal text-ink-soft">
+                          {option.description}
+                        </span>
+                      )}
+                    </span>
+                    {isSelected && <Check aria-hidden="true" className="mt-0.5 size-4 shrink-0" />}
+                  </button>
+                );
+              })}
+            </m.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

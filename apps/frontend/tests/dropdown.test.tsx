@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { Dropdown } from '@/components/ui/dropdown';
@@ -150,6 +150,14 @@ describe('Dropdown', () => {
     it('stays down when there is even less room above than below', () => {
       const listbox = openInScroller(rect(20, 60), rect(0, 200));
       expect(listbox).toHaveClass('top-full');
+    });
+
+    it('scales from the top edge when opening down and from the bottom edge when flipped up', () => {
+      const down = openInScroller(rect(40, 80), rect(0, 600));
+      expect(down.style.transformOrigin).toBe('top');
+      cleanup();
+      const up = openInScroller(rect(380, 420), rect(0, 450));
+      expect(up.style.transformOrigin).toBe('bottom');
     });
   });
 });
