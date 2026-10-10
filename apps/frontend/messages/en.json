@@ -598,7 +598,7 @@
     },
     "length": {
       "pageLimitLabel": "Page limit",
-      "pageLimitDescription": "Trim the least relevant bullets until the tailored resume fits.",
+      "pageLimitDescription": "Least relevant bullets are trimmed until the tailored resume fits. No limit keeps everything.",
       "pageLimitOptions": {
         "1": "1 page",
         "2": "2 pages",

@@ -1309,7 +1309,7 @@ async def _improve_preview_flow(
     source_content = resume["content"]
     bullet_selection = None
     if original_resume_data and (
-        request.max_bullets_per_entry or request.page_fit is not None
+        request.max_bullets_per_entry is not None or request.page_fit is not None
     ):
         progress["stage"] = "select_bullets"
         selection = await run_bullet_selection(

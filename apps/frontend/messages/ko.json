@@ -598,7 +598,7 @@
     },
     "length": {
       "pageLimitLabel": "페이지 제한",
-      "pageLimitDescription": "맞춤 이력서가 제한에 맞을 때까지 관련성이 낮은 항목을 줄입니다.",
+      "pageLimitDescription": "맞춤 이력서가 제한에 맞을 때까지 관련성이 낮은 항목을 줄입니다. 제한 없음은 모두 유지합니다.",
       "pageLimitOptions": {
         "1": "1페이지",
         "2": "2페이지",
@@ -676,7 +676,7 @@
       "over": "페이지 제한을 초과합니다. 선택한 항목은 모두 유지했습니다",
       "unavailable": "페이지 맞춤을 사용할 수 없습니다",
       "finalOver": "다시 작성한 후 페이지 제한을 초과할 수 있습니다",
-      "notRechecked": "다시 작성한 후 한 페이지 맞춤을 다시 확인하지 못했습니다"
+      "notRechecked": "다시 작성한 후 페이지 제한 맞춤을 다시 확인하지 못했습니다"
     }
   },
   "settings": {

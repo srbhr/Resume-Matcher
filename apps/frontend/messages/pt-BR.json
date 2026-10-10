@@ -598,7 +598,7 @@
     },
     "length": {
       "pageLimitLabel": "Limite de páginas",
-      "pageLimitDescription": "Remove os tópicos menos relevantes até o currículo adaptado caber.",
+      "pageLimitDescription": "Os tópicos menos relevantes são removidos até o currículo adaptado caber. Sem limite mantém tudo.",
       "pageLimitOptions": {
         "1": "1 página",
         "2": "2 páginas",
@@ -676,7 +676,7 @@
       "over": "Acima do limite de páginas; todos os tópicos selecionados foram mantidos",
       "unavailable": "Ajuste de página indisponível",
       "finalOver": "Pode passar do limite de páginas após a reescrita",
-      "notRechecked": "Ajuste a uma página não verificado após a reescrita"
+      "notRechecked": "Ajuste ao limite de páginas não verificado após a reescrita"
     }
   },
   "settings": {

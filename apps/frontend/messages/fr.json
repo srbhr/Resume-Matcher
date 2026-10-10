@@ -598,7 +598,7 @@
     },
     "length": {
       "pageLimitLabel": "Limite de pages",
-      "pageLimitDescription": "Supprime les puces les moins pertinentes jusqu'à ce que le CV adapté tienne.",
+      "pageLimitDescription": "Les puces les moins pertinentes sont supprimées jusqu'à ce que le CV adapté tienne. Sans limite conserve tout.",
       "pageLimitOptions": {
         "1": "1 page",
         "2": "2 pages",
@@ -676,7 +676,7 @@
       "over": "Dépasse la limite de pages ; toutes les puces sélectionnées sont conservées",
       "unavailable": "Ajustement à la page indisponible",
       "finalOver": "Pourrait dépasser la limite de pages après réécriture",
-      "notRechecked": "Ajustement à une page non revérifié après la réécriture"
+      "notRechecked": "Respect de la limite de pages non revérifié après la réécriture"
     }
   },
   "settings": {

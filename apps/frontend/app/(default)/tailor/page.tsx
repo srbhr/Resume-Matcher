@@ -80,11 +80,9 @@ export default function TailorPage() {
   }, []);
 
   const updateTailorLength = (patch: Partial<TailorLengthSettings>) => {
-    setTailorLength((current) => {
-      const next = { ...current, ...patch };
-      writeTailorLength(next);
-      return next;
-    });
+    const next = { ...tailorLength, ...patch };
+    setTailorLength(next);
+    writeTailorLength(next);
   };
   const [missingDiffError, setMissingDiffError] = useState<string | null>(null);
 
