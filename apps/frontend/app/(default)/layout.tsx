@@ -4,6 +4,7 @@ import { LanguageProvider } from '@/lib/context/language-context';
 import { LocalizedErrorBoundary } from '@/components/common/error-boundary';
 import { MotionProvider } from '@/components/common/motion-provider';
 import { EffectsProvider } from '@/lib/context/effects-context';
+import { BlockDissolveProvider } from '@/components/effects/block-dissolve-provider';
 
 export default function DefaultLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -13,7 +14,9 @@ export default function DefaultLayout({ children }: { children: React.ReactNode 
           <LocalizedErrorBoundary>
             <MotionProvider>
               <EffectsProvider>
-                <main className="min-h-screen flex flex-col">{children}</main>
+                <BlockDissolveProvider>
+                  <main className="min-h-screen flex flex-col">{children}</main>
+                </BlockDissolveProvider>
               </EffectsProvider>
             </MotionProvider>
           </LocalizedErrorBoundary>

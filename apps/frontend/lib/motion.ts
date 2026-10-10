@@ -9,6 +9,7 @@ export const DURATION = {
   menuOut: 0.08,
   list: 0.15,
   swap: 0.1,
+  routeTransition: 0.25,
 } as const;
 
 /** Critically damped: velocity carries through interruptions, never bounces. */
