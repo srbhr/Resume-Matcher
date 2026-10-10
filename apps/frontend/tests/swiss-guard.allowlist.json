@@ -291,11 +291,6 @@
   "components/tracker/manage-columns-dialog.tsx": {
     "type-size": 1
   },
-  "components/ui/button.tsx": {
-    "legacy-token": 5,
-    "palette": 10,
-    "raw-colour": 1
-  },
   "components/ui/card.tsx": {
     "legacy-token": 1,
     "transition": 1
