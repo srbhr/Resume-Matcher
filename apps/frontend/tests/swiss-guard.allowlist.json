@@ -35,41 +35,6 @@
   "app/layout.tsx": {
     "legacy-token": 1
   },
-  "components/builder/forms/additional-form.tsx": {
-    "legacy-token": 4,
-    "palette": 5
-  },
-  "components/builder/forms/education-form.tsx": {
-    "legacy-token": 8
-  },
-  "components/builder/forms/experience-form.tsx": {
-    "legacy-token": 11,
-    "palette": 3
-  },
-  "components/builder/forms/generic-item-form.tsx": {
-    "legacy-token": 11,
-    "palette": 3
-  },
-  "components/builder/forms/generic-list-form.tsx": {
-    "legacy-token": 1,
-    "palette": 2
-  },
-  "components/builder/forms/generic-text-form.tsx": {
-    "legacy-token": 1,
-    "palette": 1
-  },
-  "components/builder/forms/personal-info-form.tsx": {
-    "legacy-token": 8,
-    "palette": 8
-  },
-  "components/builder/forms/projects-form.tsx": {
-    "legacy-token": 15,
-    "palette": 3
-  },
-  "components/builder/forms/summary-form.tsx": {
-    "legacy-token": 1,
-    "palette": 1
-  },
   "components/common/error-boundary.tsx": {
     "legacy-token": 1,
     "palette": 6,

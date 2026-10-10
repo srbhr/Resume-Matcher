@@ -16,6 +16,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { DraggableListItem } from './draggable-list-item';
+import { AnimatePresence, FadeItem } from '@/components/common/presence';
 import { reorderById, type ReorderableItem } from '@/lib/utils/reorder-items';
 
 interface SortableItemListProps<T extends ReorderableItem> {
@@ -31,6 +32,11 @@ interface SortableItemListProps<T extends ReorderableItem> {
   className?: string;
   /** Accessible name for each row's drag handle; omitted, DraggableListItem uses "Drag to reorder". */
   handleLabel?: string;
+  /**
+   * Fade rows in and out as they are added or removed. Only for lists keyed by a
+   * stable item id: index-keyed rows (description points) would fade the wrong row.
+   */
+  animateItems?: boolean;
   /** Renders one row; `index` is the item's current position in `items`. */
   children: (item: T, index: number) => React.ReactNode;
 }
@@ -57,6 +63,7 @@ export function SortableItemList<T extends ReorderableItem>({
   onReorder,
   className = 'space-y-8',
   handleLabel,
+  animateItems = false,
   children,
 }: SortableItemListProps<T>) {
   // PointerSensor covers mouse/touch; KeyboardSensor makes the handle operable
@@ -86,11 +93,24 @@ export function SortableItemList<T extends ReorderableItem>({
     >
       <SortableContext items={items.map((item) => item.id)} strategy={verticalListSortingStrategy}>
         <div className={className}>
-          {items.map((item, index) => (
-            <DraggableListItem key={item.id} id={item.id} handleLabel={handleLabel}>
-              {children(item, index)}
-            </DraggableListItem>
-          ))}
+          {animateItems ? (
+            <AnimatePresence initial={false}>
+              {items.map((item, index) => (
+                // The dnd-kit node sits inside FadeItem: dnd-kit owns its transform.
+                <FadeItem key={item.id}>
+                  <DraggableListItem id={item.id} handleLabel={handleLabel}>
+                    {children(item, index)}
+                  </DraggableListItem>
+                </FadeItem>
+              ))}
+            </AnimatePresence>
+          ) : (
+            items.map((item, index) => (
+              <DraggableListItem key={item.id} id={item.id} handleLabel={handleLabel}>
+                {children(item, index)}
+              </DraggableListItem>
+            ))
+          )}
         </div>
       </SortableContext>
     </DndContext>

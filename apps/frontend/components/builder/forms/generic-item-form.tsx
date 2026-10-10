@@ -1,10 +1,11 @@
 'use client';
 
-import React from 'react';
+import React, { useId } from 'react';
 import dynamic from 'next/dynamic';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/empty-state';
 
 // Lazy-load TipTap-based editor — keeps it out of the initial bundle.
 const RichTextEditor = dynamic(
@@ -12,7 +13,7 @@ const RichTextEditor = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="min-h-[100px] border border-black bg-transparent" aria-busy="true" />
+      <div className="min-h-[100px] border border-ink bg-transparent" aria-busy="true" />
     ),
   }
 );
@@ -68,6 +69,7 @@ export const GenericItemForm: React.FC<GenericItemFormProps> = ({
   descriptionPlaceholder,
 }) => {
   const { t } = useTranslations();
+  const fieldId = useId();
 
   const finalItemLabel = itemLabel ?? t('builder.genericItemForm.itemLabel');
   const finalAddLabel =
@@ -181,107 +183,104 @@ export const GenericItemForm: React.FC<GenericItemFormProps> = ({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="flex justify-end">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleAdd}
-          className="rounded-none border-black hover:bg-black hover:text-white transition-colors"
-        >
-          <Plus className="w-4 h-4 mr-2" /> {finalAddLabel}
+        <Button variant="outline" size="sm" onClick={handleAdd}>
+          <Plus aria-hidden="true" />
+          {finalAddLabel}
         </Button>
       </div>
 
       {items.length === 0 ? (
-        <div className="text-center py-12 bg-paper-tint border border-dashed border-black">
-          <p className="font-mono text-sm text-steel-grey mb-4">
-            {t('builder.genericItemForm.noEntries', { label: finalItemLabel })}
-          </p>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleAdd}
-            className="rounded-none border-black"
-          >
-            <Plus className="w-4 h-4 mr-2" />{' '}
-            {t('builder.genericItemForm.addFirstItem', { label: finalItemLabel })}
-          </Button>
-        </div>
+        <EmptyState
+          variant="framed"
+          title={t('builder.genericItemForm.noEntries', { label: finalItemLabel })}
+          action={
+            <Button variant="outline" size="sm" onClick={handleAdd}>
+              <Plus aria-hidden="true" />
+              {t('builder.genericItemForm.addFirstItem', { label: finalItemLabel })}
+            </Button>
+          }
+        />
       ) : (
-        <SortableItemList id={`custom-${sectionKey}-items`} items={items} onReorder={onChange}>
+        <SortableItemList
+          id={`custom-${sectionKey}-items`}
+          items={items}
+          onReorder={onChange}
+          animateItems
+        >
           {(item) => (
-            <div className="p-6 border border-black bg-paper-tint relative group">
+            <div className="p-6 border border-ink bg-paper relative group">
               <Button
                 variant="ghost"
                 size="icon"
-                className="absolute top-2 right-16 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity text-steel-grey hover:text-ink-soft"
+                className="absolute top-2 right-16 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity text-steel hover:text-ink-soft"
                 onClick={() => onChange(duplicateById(items, item.id))}
                 aria-label={t('a11y.duplicateItem')}
                 title={t('a11y.duplicateItem')}
               >
-                <Copy className="w-4 h-4" />
+                <Copy aria-hidden="true" />
               </Button>
 
               <Button
                 variant="ghost"
                 size="icon"
-                className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
+                className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive-tint"
                 onClick={() => handleRemove(item.id)}
                 aria-label={t('a11y.removeItem')}
                 title={t('a11y.removeItem')}
               >
-                <Trash2 className="w-4 h-4" />
+                <Trash2 aria-hidden="true" />
               </Button>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 pr-24">
                 <div className="space-y-2">
-                  <Label className="font-mono text-xs uppercase tracking-wider text-steel-grey">
+                  <Label htmlFor={`${fieldId}-${item.id}-title`}>
                     {t('builder.genericItemForm.fields.title')}
                   </Label>
                   <Input
+                    id={`${fieldId}-${item.id}-title`}
                     value={item.title || ''}
                     onChange={(e) => handleChange(item.id, 'title', e.target.value)}
                     placeholder={finalTitlePlaceholder}
-                    className="rounded-none border-black bg-white"
                   />
                 </div>
                 {showSubtitle && (
                   <div className="space-y-2">
-                    <Label className="font-mono text-xs uppercase tracking-wider text-steel-grey">
+                    <Label htmlFor={`${fieldId}-${item.id}-subtitle`}>
                       {t('builder.genericItemForm.fields.organization')}
                     </Label>
                     <Input
+                      id={`${fieldId}-${item.id}-subtitle`}
                       value={item.subtitle || ''}
                       onChange={(e) => handleChange(item.id, 'subtitle', e.target.value)}
                       placeholder={finalSubtitlePlaceholder}
-                      className="rounded-none border-black bg-white"
                     />
                   </div>
                 )}
                 {showLocation && (
                   <div className="space-y-2">
-                    <Label className="font-mono text-xs uppercase tracking-wider text-steel-grey">
+                    <Label htmlFor={`${fieldId}-${item.id}-location`}>
                       {t('builder.genericItemForm.fields.location')}
                     </Label>
                     <Input
+                      id={`${fieldId}-${item.id}-location`}
                       value={item.location || ''}
                       onChange={(e) => handleChange(item.id, 'location', e.target.value)}
                       placeholder={finalLocationPlaceholder}
-                      className="rounded-none border-black bg-white"
                     />
                   </div>
                 )}
                 {showYears && (
                   <div className="space-y-2">
-                    <Label className="font-mono text-xs uppercase tracking-wider text-steel-grey">
+                    <Label htmlFor={`${fieldId}-${item.id}-years`}>
                       {t('builder.genericItemForm.fields.years')}
                     </Label>
                     <Input
+                      id={`${fieldId}-${item.id}-years`}
                       value={item.years || ''}
                       onChange={(e) => handleChange(item.id, 'years', e.target.value)}
                       placeholder={finalYearsPlaceholder}
-                      className="rounded-none border-black bg-white"
                     />
                   </div>
                 )}
@@ -289,16 +288,14 @@ export const GenericItemForm: React.FC<GenericItemFormProps> = ({
 
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <Label className="font-mono text-xs uppercase tracking-wider text-steel-grey">
-                    {t('builder.genericItemForm.fields.descriptionPoints')}
-                  </Label>
+                  <Label>{t('builder.genericItemForm.fields.descriptionPoints')}</Label>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => handleAddDescription(item.id)}
-                    className="h-6 text-xs text-blue-700 hover:text-blue-800 hover:bg-blue-50"
+                    className="h-6 text-xs text-primary hover:text-primary-hover hover:bg-info-tint"
                   >
-                    <Plus className="w-3 h-3 mr-1" />{' '}
+                    <Plus aria-hidden="true" className="size-3" />
                     {t('builder.genericItemForm.actions.addPoint')}
                   </Button>
                 </div>
@@ -324,25 +321,25 @@ export const GenericItemForm: React.FC<GenericItemFormProps> = ({
                           variant="ghost"
                           size="icon"
                           onClick={() => handleToggleDescriptionStyle(item.id, idx)}
-                          className="h-[60px] w-8 text-muted-foreground hover:text-primary self-end"
+                          className="h-[60px] w-8 text-steel hover:text-primary self-end"
                           aria-label={t('builder.genericItemForm.actions.togglePointStyle')}
                           title={t('builder.genericItemForm.actions.togglePointStyle')}
                         >
                           {style === 'plain' ? (
-                            <AlignLeft className="w-3 h-3" />
+                            <AlignLeft aria-hidden="true" className="size-3" />
                           ) : (
-                            <List className="w-3 h-3" />
+                            <List aria-hidden="true" className="size-3" />
                           )}
                         </Button>
                         <Button
                           variant="ghost"
                           size="icon"
                           onClick={() => handleRemoveDescription(item.id, idx)}
-                          className="h-[60px] w-8 text-muted-foreground hover:text-destructive self-end"
+                          className="h-[60px] w-8 text-steel hover:text-destructive self-end"
                           aria-label={t('a11y.removeDescription')}
                           title={t('a11y.removeDescription')}
                         >
-                          <Trash2 className="w-3 h-3" />
+                          <Trash2 aria-hidden="true" className="size-3" />
                         </Button>
                       </div>
                     )}
