@@ -221,9 +221,7 @@
       "interviewPrep": "PRÉPARATION ENTRETIEN"
     },
     "footer": {
-      "moduleLabel": "Module Créateur de CV",
-      "singleColumn": "Une colonne",
-      "twoColumn": "Deux colonnes"
+      "moduleLabel": "Module Créateur de CV"
     },
     "pageSize": {
       "usLetter": "Lettre US"

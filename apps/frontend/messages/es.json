@@ -221,9 +221,7 @@
       "interviewPrep": "PREPARACIÓN"
     },
     "footer": {
-      "moduleLabel": "Módulo del constructor",
-      "singleColumn": "Una columna",
-      "twoColumn": "Dos columnas"
+      "moduleLabel": "Módulo del constructor"
     },
     "pageSize": {
       "usLetter": "Carta (EE. UU.)"

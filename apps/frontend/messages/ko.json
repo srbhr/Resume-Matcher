@@ -199,9 +199,7 @@
       "interviewPrep": "면접 준비"
     },
     "footer": {
-      "moduleLabel": "이력서 빌더 모듈",
-      "singleColumn": "단일 열",
-      "twoColumn": "2단"
+      "moduleLabel": "이력서 빌더 모듈"
     },
     "pageSize": {
       "usLetter": "US 레터"

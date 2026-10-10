@@ -18,6 +18,8 @@ interface PaginatedPreviewProps {
 
 const MIN_ZOOM = 0.4;
 const MAX_ZOOM = 1.5;
+// Opening zoom, and the ceiling for fit-to-width: a panel with room for at least 85% of the page opens here.
+const DEFAULT_ZOOM = 0.85;
 const ZOOM_STEP = 0.1;
 
 /**
@@ -30,7 +32,7 @@ export function PaginatedPreview({ resumeData, settings }: PaginatedPreviewProps
   const { contentLanguage } = useLanguage();
   const measurementRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [zoom, setZoom] = useState(0.6);
+  const [zoom, setZoom] = useState(DEFAULT_ZOOM);
   const [showMargins, setShowMargins] = useState(false);
   const [autoZoom, setAutoZoom] = useState(true);
   const resumeSettings: TemplateSettings = {
@@ -81,7 +83,8 @@ export function PaginatedPreview({ resumeData, settings }: PaginatedPreviewProps
     const containerWidth = containerRef.current.clientWidth - 48; // Padding
     const pageWidthPx = mmToPx(PAGE_DIMENSIONS[settings.pageSize].width);
     const optimalZoom = Math.min(containerWidth / pageWidthPx, MAX_ZOOM);
-    setZoom(Math.max(MIN_ZOOM, Math.min(optimalZoom, 0.75))); // Cap at 75% for usability
+    // Fit to the panel, but never open larger than the default zoom.
+    setZoom(Math.max(MIN_ZOOM, Math.min(optimalZoom, DEFAULT_ZOOM)));
   }, [settings.pageSize, autoZoom]);
 
   // Auto-zoom on mount and when page size changes

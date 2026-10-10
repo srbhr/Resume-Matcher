@@ -47,12 +47,7 @@ export function CoverLetterPreview({
 
   return (
     <div
-      className={cn(
-        'bg-white border-2 border-ink',
-        'shadow-sw-default',
-        'overflow-hidden',
-        className
-      )}
+      className={cn('bg-white border-2 border-ink', 'shadow-sw-card', 'overflow-hidden', className)}
     >
       {/* Letter Content */}
       <div

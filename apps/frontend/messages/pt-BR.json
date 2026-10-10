@@ -221,9 +221,7 @@
       "interviewPrep": "PREPARAÇÃO"
     },
     "footer": {
-      "moduleLabel": "Módulo de Criação de Currículo",
-      "singleColumn": "Coluna Única",
-      "twoColumn": "Duas Colunas"
+      "moduleLabel": "Módulo de Criação de Currículo"
     },
     "pageSize": {
       "usLetter": "Carta US"

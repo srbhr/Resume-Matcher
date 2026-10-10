@@ -221,9 +221,7 @@
       "interviewPrep": "面接準備"
     },
     "footer": {
-      "moduleLabel": "履歴書ビルダーモジュール",
-      "singleColumn": "1カラム",
-      "twoColumn": "2カラム"
+      "moduleLabel": "履歴書ビルダーモジュール"
     },
     "pageSize": {
       "usLetter": "USレター"
