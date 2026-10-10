@@ -115,6 +115,10 @@
     "masterLimitReached": "Hasta {max} currículums maestros"
   },
   "builder": {
+    "panels": {
+      "nothingYet": "Aún no se ha generado nada",
+      "preview": "Vista previa"
+    },
     "title": "Constructor de CV",
     "copySuffix": "(Copia)",
     "editMode": "Modo Edición",

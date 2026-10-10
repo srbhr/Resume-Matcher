@@ -115,6 +115,10 @@
     "masterLimitReached": "最多 {max} 份主简历"
   },
   "builder": {
+    "panels": {
+      "nothingYet": "尚未生成任何内容",
+      "preview": "预览"
+    },
     "title": "简历生成器",
     "copySuffix": "(副本)",
     "editMode": "编辑模式",

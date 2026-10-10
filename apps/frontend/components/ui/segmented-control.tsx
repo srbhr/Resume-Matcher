@@ -70,6 +70,10 @@ export function SegmentedControl<T extends string>({
     <div role="radiogroup" {...aria} className={cn('flex flex-wrap gap-2', className)}>
       {items.map((item, index) => {
         const selected = item.value === value;
+        // outline-none sets outline-style: none, which would erase the 2px selection
+        // outline under focus, so a selected outline item keeps its outline and the
+        // focus ring moves out past it instead.
+        const keepsOutline = variant === 'outline' && selected;
         return (
           <button
             key={item.value}
@@ -86,7 +90,8 @@ export function SegmentedControl<T extends string>({
             onKeyDown={(event) => onKeyDown(event, index)}
             className={cn(
               'rounded-none border border-ink font-mono uppercase tracking-wider transition-colors',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-canvas',
+              'focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-canvas',
+              keepsOutline ? 'focus-visible:ring-offset-4' : 'focus-visible:outline-none',
               'disabled:cursor-not-allowed disabled:opacity-50',
               size === 'sm' ? 'min-h-8 px-3 text-xs' : 'min-h-10 px-4 text-sm',
               variant === 'fill' &&

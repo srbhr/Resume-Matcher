@@ -115,6 +115,10 @@
     "masterLimitReached": "Up to {max} master resumes"
   },
   "builder": {
+    "panels": {
+      "nothingYet": "Nothing generated yet",
+      "preview": "Preview"
+    },
     "title": "Resume Builder",
     "copySuffix": "(Copy)",
     "editMode": "Edit Mode",

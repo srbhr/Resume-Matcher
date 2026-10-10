@@ -1,9 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { ChevronLeft, ChevronRight, Briefcase, FolderKanban } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { EnrichmentQuestion, EnrichmentItem } from '@/lib/api/enrichment';
 import { useTranslations } from '@/lib/i18n';
 
@@ -36,6 +36,7 @@ export function QuestionStep({
 }: QuestionStepProps) {
   const { t } = useTranslations();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const questionId = useId();
   const [localAnswer, setLocalAnswer] = useState(answer);
 
   // Sync local answer with prop
@@ -80,7 +81,7 @@ export function QuestionStep({
       {/* Progress indicator */}
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-2">
-          <span className="font-mono text-sm text-steel-grey">
+          <span className="font-mono text-sm text-steel tabular-nums">
             {t('enrichment.questionProgress', { current: questionNumber, total: totalQuestions })}
           </span>
         </div>
@@ -88,12 +89,8 @@ export function QuestionStep({
           {Array.from({ length: totalQuestions }).map((_, i) => (
             <div
               key={i}
-              className={`h-1.5 w-6 transition-colors ${
-                i < questionNumber
-                  ? 'bg-black'
-                  : i === questionNumber - 1
-                    ? 'bg-black'
-                    : 'bg-paper-tint'
+              className={`h-2 w-6 transition-colors ${
+                i < questionNumber ? 'bg-ink' : i === questionNumber - 1 ? 'bg-ink' : 'bg-panel'
               }`}
             />
           ))}
@@ -103,12 +100,7 @@ export function QuestionStep({
       {/* Item context badge */}
       {item && (
         <div className="mb-6">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-paper-tint border border-paper-tint text-sm font-mono">
-            {item.item_type === 'experience' ? (
-              <Briefcase className="w-4 h-4 text-ink-soft" />
-            ) : (
-              <FolderKanban className="w-4 h-4 text-ink-soft" />
-            )}
+          <div className="inline-flex items-center gap-2 px-3 py-2 bg-paper border border-paper text-sm font-mono">
             <span className="text-ink-soft">
               {item.item_type === 'experience'
                 ? t('enrichment.itemType.experience')
@@ -116,45 +108,39 @@ export function QuestionStep({
               :
             </span>
             <span className="font-semibold text-ink-soft">{item.title}</span>
-            {item.subtitle && <span className="text-steel-grey">@ {item.subtitle}</span>}
+            {item.subtitle && <span className="text-steel">@ {item.subtitle}</span>}
           </div>
         </div>
       )}
 
       {/* Question */}
       <div className="flex-1">
-        <h2 className="text-2xl font-bold mb-6 leading-tight">{question.question}</h2>
+        <h2 id={questionId} className="font-serif text-xl font-bold mb-6 leading-tight">
+          {question.question}
+        </h2>
 
         <Textarea
           ref={textareaRef}
           value={localAnswer}
           onChange={(e) => handleChange(e.target.value)}
           placeholder={question.placeholder}
-          className="min-h-[180px] text-base resize-none font-mono"
+          aria-labelledby={questionId}
+          className="min-h-[180px] text-base resize-none"
         />
 
-        <p className="text-xs text-steel-grey mt-2 font-mono">{t('enrichment.shortcutHint')}</p>
+        <p className="text-xs text-steel mt-2 font-mono">{t('enrichment.shortcutHint')}</p>
       </div>
 
       {/* Navigation */}
-      <div className="flex items-center justify-between pt-6 border-t border-paper-tint mt-6">
-        <Button variant="outline" onClick={onPrev} disabled={isFirst} className="gap-2">
-          <ChevronLeft className="w-4 h-4" />
+      <div className="flex items-center justify-between pt-6 border-t border-paper mt-6">
+        <Button variant="outline" onClick={onPrev} disabled={isFirst}>
+          <ChevronLeft aria-hidden="true" />
           {t('common.back')}
         </Button>
 
-        <Button onClick={handleContinue} className="gap-2">
-          {isLast ? (
-            <>
-              {t('common.finish')}
-              <ChevronRight className="w-4 h-4" />
-            </>
-          ) : (
-            <>
-              {t('common.continue')}
-              <ChevronRight className="w-4 h-4" />
-            </>
-          )}
+        <Button onClick={handleContinue}>
+          {isLast ? t('common.finish') : t('common.continue')}
+          <ChevronRight aria-hidden="true" />
         </Button>
       </div>
     </div>

@@ -1,7 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useId, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { SegmentedControl } from '@/components/ui/segmented-control';
+import { ToggleSwitch } from '@/components/ui/toggle-switch';
 import { ChevronDown, ChevronUp, RotateCcw } from 'lucide-react';
 import {
   type TemplateSettings,
@@ -48,6 +50,7 @@ interface FormattingControlsProps {
 export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings, onChange }) => {
   const { t } = useTranslations();
   const [isExpanded, setIsExpanded] = useState(true);
+  const contentId = useId();
   const compactMultiplier = settings.compactMode ? COMPACT_MULTIPLIER : 1;
   const sectionGapRem =
     parseFloat(SECTION_SPACING_MAP[settings.spacing.section]) * compactMultiplier;
@@ -104,12 +107,12 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
     });
   };
 
-  const handleCompactModeToggle = () => {
-    onChange({ ...settings, compactMode: !settings.compactMode });
+  const handleCompactModeToggle = (compactMode: boolean) => {
+    onChange({ ...settings, compactMode });
   };
 
-  const handleShowContactIconsToggle = () => {
-    onChange({ ...settings, showContactIcons: !settings.showContactIcons });
+  const handleShowContactIconsToggle = (showContactIcons: boolean) => {
+    onChange({ ...settings, showContactIcons });
   };
 
   const handleAccentColorChange = (accentColor: AccentColor) => {
@@ -161,61 +164,64 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
   };
 
   return (
-    <div className="border border-black bg-white shadow-sw-default">
+    <div className="border border-ink bg-white shadow-sw-default">
       {/* Header - Always Visible */}
       <button
+        type="button"
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between p-3 hover:bg-paper-tint transition-colors"
+        aria-expanded={isExpanded}
+        aria-controls={contentId}
+        className="w-full flex items-center justify-between p-3 hover:bg-panel transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
       >
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 bg-blue-700"></div>
+        <span className="flex items-center gap-2">
+          <span aria-hidden="true" className="size-3 bg-primary" />
           <span className="font-mono text-xs font-bold uppercase tracking-wider">
             {t('builder.formatting.panelTitle')}
           </span>
-        </div>
+        </span>
         {isExpanded ? (
-          <ChevronUp className="w-4 h-4 text-steel-grey" />
+          <ChevronUp aria-hidden="true" className="size-4 text-steel" />
         ) : (
-          <ChevronDown className="w-4 h-4 text-steel-grey" />
+          <ChevronDown aria-hidden="true" className="size-4 text-steel" />
         )}
       </button>
 
       {/* Expandable Content */}
       {isExpanded && (
-        <div className="border-t border-black p-4 space-y-6">
+        <div id={contentId} className="border-t border-ink p-4 space-y-6">
           {/* Template Selection */}
           <div>
-            <h4 className="font-mono text-xs font-bold uppercase tracking-wider mb-3 text-ink-soft">
+            <h4
+              id={`${contentId}-template`}
+              className="font-mono text-xs font-bold uppercase tracking-wider mb-3 text-ink-soft"
+            >
               {t('builder.formatting.template')}
             </h4>
-            <div className="flex flex-wrap gap-3">
-              {TEMPLATE_OPTIONS.map((template) => (
-                <button
-                  key={template.id}
-                  onClick={() => handleTemplateChange(template.id)}
-                  className={`group flex flex-col items-center p-2 border transition-all ${
-                    settings.template === template.id
-                      ? 'border-blue-700 bg-white shadow-[2px_2px_0px_0px_#1D4ED8]'
-                      : 'border-black bg-white hover:bg-paper-tint hover:shadow-sw-xs'
-                  }`}
-                  title={templateLabels[template.id].description}
-                >
-                  <div className="w-12 h-16 mb-1.5 flex items-center justify-center">
+            <SegmentedControl
+              variant="outline"
+              size="sm"
+              aria-labelledby={`${contentId}-template`}
+              className="gap-3"
+              value={settings.template}
+              onChange={handleTemplateChange}
+              items={TEMPLATE_OPTIONS.map((template) => ({
+                value: template.id,
+                title: templateLabels[template.id].description,
+                label: (
+                  // Fixed-width tile (owner F3): every tile matches the thumbnail and
+                  // the name wraps onto at most two balanced lines.
+                  <span className="flex w-24 flex-col items-center gap-2">
                     <TemplateThumbnail
                       type={template.id}
                       isActive={settings.template === template.id}
                     />
-                  </div>
-                  <span
-                    className={`font-mono text-[9px] uppercase tracking-wider font-bold ${
-                      settings.template === template.id ? 'text-blue-700' : 'text-ink-soft'
-                    }`}
-                  >
-                    {templateLabels[template.id].name}
+                    <span className="flex min-h-8 items-center justify-center whitespace-normal text-balance text-center font-bold leading-tight">
+                      {templateLabels[template.id].name}
+                    </span>
                   </span>
-                </button>
-              ))}
-            </div>
+                ),
+              }))}
+            />
           </div>
 
           {/* Accent Color Selection - Visible for Modern templates */}
@@ -223,56 +229,62 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
             settings.template === 'modern-two-column' ||
             settings.template === 'vivid') && (
             <div>
-              <h4 className="font-mono text-xs font-bold uppercase tracking-wider mb-3 text-ink-soft">
+              <h4
+                id={`${contentId}-accent`}
+                className="font-mono text-xs font-bold uppercase tracking-wider mb-3 text-ink-soft"
+              >
                 {t('builder.formatting.accentColor')}
               </h4>
-              <div className="flex gap-2">
-                {(Object.keys(ACCENT_COLOR_MAP) as AccentColor[]).map((color) => (
-                  <button
-                    key={color}
-                    onClick={() => handleAccentColorChange(color)}
-                    className={`flex items-center gap-2 px-3 py-2 border font-mono text-xs transition-all ${
-                      settings.accentColor === color
-                        ? 'border-blue-700 bg-white shadow-[2px_2px_0px_0px_#1D4ED8]'
-                        : 'border-black bg-white hover:bg-paper-tint'
-                    }`}
-                    title={t(`builder.formatting.accentColors.${color}`)}
-                  >
-                    <span
-                      className="w-4 h-4 border border-steel-grey"
-                      style={{ backgroundColor: ACCENT_COLOR_MAP[color].primary }}
-                    />
-                    <span>{t(`builder.formatting.accentColors.${color}`)}</span>
-                  </button>
-                ))}
-              </div>
+              <SegmentedControl
+                size="sm"
+                aria-labelledby={`${contentId}-accent`}
+                value={settings.accentColor}
+                onChange={handleAccentColorChange}
+                items={(Object.keys(ACCENT_COLOR_MAP) as AccentColor[]).map((color) => ({
+                  value: color,
+                  label: (
+                    <span className="flex items-center gap-2">
+                      <span
+                        aria-hidden="true"
+                        className="size-4 border border-steel"
+                        style={{ backgroundColor: ACCENT_COLOR_MAP[color].primary }}
+                      />
+                      {t(`builder.formatting.accentColors.${color}`)}
+                    </span>
+                  ),
+                }))}
+              />
             </div>
           )}
 
           {/* Page Size Selection */}
           <div>
-            <h4 className="font-mono text-xs font-bold uppercase tracking-wider mb-3 text-ink-soft">
+            <h4
+              id={`${contentId}-page-size`}
+              className="font-mono text-xs font-bold uppercase tracking-wider mb-3 text-ink-soft"
+            >
               {t('builder.formatting.pageSize')}
             </h4>
-            <div className="flex gap-2">
-              {(Object.keys(PAGE_SIZE_INFO) as PageSize[]).map((size) => (
-                <button
-                  key={size}
-                  onClick={() => handlePageSizeChange(size)}
-                  className={`flex-1 px-3 py-2 border font-mono text-xs transition-all ${
-                    settings.pageSize === size
-                      ? 'border-blue-700 bg-white text-blue-700 shadow-[2px_2px_0px_0px_#1D4ED8]'
-                      : 'border-black bg-white text-ink-soft hover:bg-paper-tint'
-                  }`}
-                  title={PAGE_SIZE_INFO[size].dimensions}
-                >
-                  <div className="font-bold">
-                    {size === 'A4' ? 'A4' : t('builder.pageSize.usLetter')}
-                  </div>
-                  <div className="text-[9px] opacity-70">{PAGE_SIZE_INFO[size].dimensions}</div>
-                </button>
-              ))}
-            </div>
+            <SegmentedControl
+              size="sm"
+              aria-labelledby={`${contentId}-page-size`}
+              className="grid grid-cols-2"
+              value={settings.pageSize}
+              onChange={handlePageSizeChange}
+              items={(Object.keys(PAGE_SIZE_INFO) as PageSize[]).map((size) => ({
+                value: size,
+                label: (
+                  <span className="flex flex-col items-center py-1">
+                    <span className="font-bold">
+                      {size === 'A4' ? 'A4' : t('builder.pageSize.usLetter')}
+                    </span>
+                    <span className="normal-case tracking-normal tabular-nums">
+                      {PAGE_SIZE_INFO[size].dimensions}
+                    </span>
+                  </span>
+                ),
+              }))}
+            />
           </div>
 
           {/* Margins Section */}
@@ -346,61 +358,47 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
               />
               {/* Header Font Family */}
               <div className="flex items-center gap-2">
-                <span className="font-mono text-xs w-16 text-ink-soft">
+                <span
+                  id={`${contentId}-header-font`}
+                  className="font-mono text-xs w-16 text-ink-soft"
+                >
                   {t('builder.formatting.headerFontFamily')}:
                 </span>
-                <div className="flex gap-1">
-                  {(['serif', 'sans-serif', 'mono'] as HeaderFontFamily[]).map((font) => (
-                    <button
-                      key={font}
-                      onClick={() => handleHeaderFontChange(font)}
-                      className={`px-2 py-1 font-mono text-xs border transition-all ${
-                        settings.fontSize.headerFont === font
-                          ? 'bg-blue-700 text-white border-blue-700 shadow-sw-xs'
-                          : 'bg-white text-ink-soft border-steel-grey hover:border-black'
-                      }`}
-                      style={{
-                        fontFamily:
-                          font === 'serif'
-                            ? 'Georgia, serif'
-                            : font === 'mono'
-                              ? 'monospace'
-                              : 'system-ui, sans-serif',
-                      }}
-                    >
-                      {getFontLabel(font)}
-                    </button>
-                  ))}
-                </div>
+                <SegmentedControl
+                  size="sm"
+                  className="gap-1"
+                  aria-labelledby={`${contentId}-header-font`}
+                  value={settings.fontSize.headerFont}
+                  onChange={handleHeaderFontChange}
+                  items={(['serif', 'sans-serif', 'mono'] as HeaderFontFamily[]).map((font) => ({
+                    value: font,
+                    label: (
+                      <span style={{ fontFamily: FONT_PREVIEW[font] }}>{getFontLabel(font)}</span>
+                    ),
+                  }))}
+                />
               </div>
               {/* Body Font Family */}
               <div className="flex items-center gap-2">
-                <span className="font-mono text-xs w-16 text-ink-soft">
+                <span
+                  id={`${contentId}-body-font`}
+                  className="font-mono text-xs w-16 text-ink-soft"
+                >
                   {t('builder.formatting.bodyFontFamily')}:
                 </span>
-                <div className="flex gap-1">
-                  {(['serif', 'sans-serif', 'mono'] as BodyFontFamily[]).map((font) => (
-                    <button
-                      key={font}
-                      onClick={() => handleBodyFontChange(font)}
-                      className={`px-2 py-1 font-mono text-xs border transition-all ${
-                        settings.fontSize.bodyFont === font
-                          ? 'bg-blue-700 text-white border-blue-700 shadow-sw-xs'
-                          : 'bg-white text-ink-soft border-steel-grey hover:border-black'
-                      }`}
-                      style={{
-                        fontFamily:
-                          font === 'serif'
-                            ? 'Georgia, serif'
-                            : font === 'mono'
-                              ? 'monospace'
-                              : 'system-ui, sans-serif',
-                      }}
-                    >
-                      {getFontLabel(font)}
-                    </button>
-                  ))}
-                </div>
+                <SegmentedControl
+                  size="sm"
+                  className="gap-1"
+                  aria-labelledby={`${contentId}-body-font`}
+                  value={settings.fontSize.bodyFont}
+                  onChange={handleBodyFontChange}
+                  items={(['serif', 'sans-serif', 'mono'] as BodyFontFamily[]).map((font) => ({
+                    value: font,
+                    label: (
+                      <span style={{ fontFamily: FONT_PREVIEW[font] }}>{getFontLabel(font)}</span>
+                    ),
+                  }))}
+                />
               </div>
             </div>
           </div>
@@ -411,59 +409,28 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
               {t('builder.formatting.options')}
             </h4>
             <div className="space-y-3">
-              {/* Compact Mode Toggle */}
-              <label className="flex items-center gap-3 cursor-pointer">
-                <button
-                  onClick={handleCompactModeToggle}
-                  className={`relative w-10 h-5 border-2 transition-all ${
-                    settings.compactMode
-                      ? 'bg-blue-700 border-blue-700'
-                      : 'bg-white border-steel-grey'
-                  }`}
-                >
-                  <span
-                    className={`absolute top-0.5 w-3.5 h-3.5 bg-white border transition-all ${
-                      settings.compactMode ? 'left-5 border-blue-700' : 'left-0.5 border-steel-grey'
-                    }`}
-                  />
-                </button>
-                <span className="font-mono text-xs text-ink-soft">
-                  {t('builder.formatting.compactMode')}
-                </span>
-              </label>
-
-              {/* Show Contact Icons Toggle */}
-              <label className="flex items-center gap-3 cursor-pointer">
-                <button
-                  onClick={handleShowContactIconsToggle}
-                  className={`relative w-10 h-5 border-2 transition-all ${
-                    settings.showContactIcons
-                      ? 'bg-blue-700 border-blue-700'
-                      : 'bg-white border-steel-grey'
-                  }`}
-                >
-                  <span
-                    className={`absolute top-0.5 w-3.5 h-3.5 bg-white border transition-all ${
-                      settings.showContactIcons
-                        ? 'left-5 border-blue-700'
-                        : 'left-0.5 border-steel-grey'
-                    }`}
-                  />
-                </button>
-                <span className="font-mono text-xs text-ink-soft">
-                  {t('builder.formatting.contactIcons')}
-                </span>
-              </label>
+              <ToggleSwitch
+                variant="inline"
+                label={t('builder.formatting.compactMode')}
+                checked={settings.compactMode}
+                onCheckedChange={handleCompactModeToggle}
+              />
+              <ToggleSwitch
+                variant="inline"
+                label={t('builder.formatting.contactIcons')}
+                checked={settings.showContactIcons}
+                onCheckedChange={handleShowContactIconsToggle}
+              />
             </div>
           </div>
 
           {/* Reset Button */}
-          <div className="pt-2 border-t border-paper-tint space-y-3">
+          <div className="pt-2 border-t border-paper space-y-3">
             <div>
-              <h4 className="font-mono text-[10px] font-bold uppercase tracking-wider text-ink-soft mb-2">
+              <h4 className="font-mono text-xs font-bold uppercase tracking-wider text-ink-soft mb-2">
                 {t('builder.formatting.effectiveOutput')}
               </h4>
-              <div className="font-mono text-[10px] text-ink-soft space-y-1">
+              <div className="font-mono text-xs text-ink-soft space-y-1 tabular-nums">
                 <div title={t('builder.formatting.margins')}>
                   {t('builder.formatting.effectiveMargins', {
                     top: settings.margins.top,
@@ -499,13 +466,13 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
                 </div>
               </div>
               {settings.compactMode && (
-                <div className="font-mono text-[10px] text-steel-grey mt-2">
+                <div className="font-mono text-xs text-steel mt-2">
                   {t('builder.formatting.compactHint')}
                 </div>
               )}
             </div>
             <Button variant="outline" size="sm" onClick={handleReset} className="w-full">
-              <RotateCcw className="w-3 h-3" />
+              <RotateCcw aria-hidden="true" className="size-3" />
               {t('builder.formatting.resetDefaults')}
             </Button>
           </div>
@@ -513,6 +480,13 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
       )}
     </div>
   );
+};
+
+/** Font stacks for the font-family option labels, so each option previews its face. */
+const FONT_PREVIEW: Record<HeaderFontFamily, string> = {
+  serif: 'Georgia, serif',
+  'sans-serif': 'system-ui, sans-serif',
+  mono: 'monospace',
 };
 
 /**
@@ -527,29 +501,22 @@ interface MarginSliderProps {
 }
 
 const MarginSlider: React.FC<MarginSliderProps> = ({ label, value, onChange }) => {
+  const inputId = useId();
   return (
     <div className="flex items-center gap-2">
-      <span className="font-mono text-xs w-12 text-ink-soft">{label}:</span>
+      <label htmlFor={inputId} className="font-mono text-xs w-12 text-ink-soft">
+        {label}:
+      </label>
       <input
+        id={inputId}
         type="range"
         min={5}
         max={25}
         value={value}
         onChange={(e) => onChange(parseInt(e.target.value, 10))}
-        className="flex-1 h-1 bg-paper-tint rounded-none appearance-none cursor-pointer
-                   [&::-webkit-slider-thumb]:appearance-none
-                   [&::-webkit-slider-thumb]:w-3
-                   [&::-webkit-slider-thumb]:h-3
-                   [&::-webkit-slider-thumb]:bg-blue-700
-                   [&::-webkit-slider-thumb]:border-none
-                   [&::-webkit-slider-thumb]:cursor-pointer
-                   [&::-moz-range-thumb]:w-3
-                   [&::-moz-range-thumb]:h-3
-                   [&::-moz-range-thumb]:bg-blue-700
-                   [&::-moz-range-thumb]:border-none
-                   [&::-moz-range-thumb]:cursor-pointer"
+        className="w-full accent-ink"
       />
-      <span className="font-mono text-xs w-6 text-right text-ink-soft">{value}</span>
+      <span className="font-mono text-xs w-6 text-right text-ink-soft tabular-nums">{value}</span>
     </div>
   );
 };
@@ -557,7 +524,7 @@ const MarginSlider: React.FC<MarginSliderProps> = ({ label, value, onChange }) =
 /**
  * Spacing Selector Component
  *
- * Button group for selecting spacing levels (1-5)
+ * Segmented control for selecting spacing levels (1-5)
  */
 interface SpacingSelectorProps {
   label: string;
@@ -565,27 +532,26 @@ interface SpacingSelectorProps {
   onChange: (value: SpacingLevel) => void;
 }
 
-const SpacingSelector: React.FC<SpacingSelectorProps> = ({ label, value, onChange }) => {
-  const levels: SpacingLevel[] = [1, 2, 3, 4, 5];
+const SPACING_LEVELS: SpacingLevel[] = [1, 2, 3, 4, 5];
 
+const SpacingSelector: React.FC<SpacingSelectorProps> = ({ label, value, onChange }) => {
+  const labelId = useId();
   return (
     <div className="flex items-center gap-2">
-      <span className="font-mono text-xs w-16 text-ink-soft">{label}:</span>
-      <div className="flex gap-1">
-        {levels.map((level) => (
-          <button
-            key={level}
-            onClick={() => onChange(level)}
-            className={`w-6 h-6 font-mono text-xs border transition-all ${
-              value === level
-                ? 'bg-blue-700 text-white border-blue-700 shadow-sw-xs'
-                : 'bg-white text-ink-soft border-steel-grey hover:border-black'
-            }`}
-          >
-            {level}
-          </button>
-        ))}
-      </div>
+      <span id={labelId} className="font-mono text-xs w-16 text-ink-soft">
+        {label}:
+      </span>
+      <SegmentedControl
+        size="sm"
+        className="gap-1"
+        aria-labelledby={labelId}
+        value={String(value)}
+        onChange={(level) => onChange(Number(level) as SpacingLevel)}
+        items={SPACING_LEVELS.map((level) => ({
+          value: String(level),
+          label: <span className="tabular-nums">{level}</span>,
+        }))}
+      />
     </div>
   );
 };

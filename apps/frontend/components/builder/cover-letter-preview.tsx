@@ -2,6 +2,8 @@
 
 import * as React from 'react';
 import { cn } from '@/lib/utils';
+import { EmptyState } from '@/components/ui/empty-state';
+import { formatDate } from '@/lib/format-date';
 import { useTranslations } from '@/lib/i18n';
 
 export interface CoverLetterPersonalInfo {
@@ -33,12 +35,12 @@ export function CoverLetterPreview({
   className,
 }: CoverLetterPreviewProps) {
   const { t, locale } = useTranslations();
-  const today = new Intl.DateTimeFormat(locale, {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
+  const today = formatDate(
     // oxlint-disable-next-line react/purity -- the letter shows today's date by design
-  }).format(new Date());
+    new Date(),
+    locale,
+    { year: 'numeric', month: 'long', day: 'numeric' }
+  );
 
   // Parse content into paragraphs
   const paragraphs = content.split('\n\n').filter((p) => p.trim().length > 0);
@@ -46,7 +48,7 @@ export function CoverLetterPreview({
   return (
     <div
       className={cn(
-        'bg-white border-2 border-black',
+        'bg-white border-2 border-ink',
         'shadow-sw-default',
         'overflow-hidden',
         className
@@ -60,7 +62,7 @@ export function CoverLetterPreview({
         }}
       >
         {/* Header - Personal Info */}
-        <header className="mb-8 border-b-2 border-black pb-4">
+        <header className="mb-8 border-b-2 border-ink pb-4">
           <h1 className="font-serif text-2xl font-bold tracking-tight">
             {personalInfo.name || t('coverLetter.preview.defaultName')}
           </h1>
@@ -86,10 +88,10 @@ export function CoverLetterPreview({
               </p>
             ))
           ) : (
-            <div className="text-center py-12 text-steel-grey">
-              <p className="font-mono text-sm">{t('coverLetter.preview.emptyTitle')}</p>
-              <p className="font-mono text-xs mt-2">{t('coverLetter.preview.emptyDescription')}</p>
-            </div>
+            <EmptyState
+              title={t('coverLetter.preview.emptyTitle')}
+              description={t('coverLetter.preview.emptyDescription')}
+            />
           )}
         </div>
       </div>

@@ -115,6 +115,10 @@
     "masterLimitReached": "マスター履歴書は最大{max}件まで"
   },
   "builder": {
+    "panels": {
+      "nothingYet": "まだ何も生成されていません",
+      "preview": "プレビュー"
+    },
     "title": "履歴書ビルダー",
     "copySuffix": "(コピー)",
     "editMode": "編集モード",

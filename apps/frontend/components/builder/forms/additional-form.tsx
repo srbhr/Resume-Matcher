@@ -40,73 +40,53 @@ export const AdditionalForm: React.FC<AdditionalFormProps> = ({ data, onChange }
 
   return (
     <div className="space-y-6">
-      <p className="font-mono text-xs uppercase tracking-wider text-blue-700">
+      <p className="font-mono text-xs uppercase tracking-wider text-ink">
         {t('builder.additionalForm.instructions')}
       </p>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
-          <Label
-            htmlFor="technicalSkills"
-            className="font-mono text-xs uppercase tracking-wider text-steel-grey"
-          >
-            {t('resume.additional.technicalSkills')}
-          </Label>
+          <Label htmlFor="technicalSkills">{t('resume.additional.technicalSkills')}</Label>
           <Textarea
             id="technicalSkills"
             value={formatArray(data.technicalSkills)}
             onChange={(e) => handleArrayChange('technicalSkills', e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={t('builder.additionalForm.placeholders.technicalSkills')}
-            className="min-h-[120px] text-black rounded-none border-black bg-white focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-blue-700"
+            className="min-h-[120px]"
           />
         </div>
         <div className="space-y-2">
-          <Label
-            htmlFor="languages"
-            className="font-mono text-xs uppercase tracking-wider text-steel-grey"
-          >
-            {t('resume.sections.languages')}
-          </Label>
+          <Label htmlFor="languages">{t('resume.sections.languages')}</Label>
           <Textarea
             id="languages"
             value={formatArray(data.languages)}
             onChange={(e) => handleArrayChange('languages', e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={t('builder.additionalForm.placeholders.languages')}
-            className="min-h-[120px] text-black rounded-none border-black bg-white focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-blue-700"
+            className="min-h-[120px]"
           />
         </div>
         <div className="space-y-2">
-          <Label
-            htmlFor="certifications"
-            className="font-mono text-xs uppercase tracking-wider text-steel-grey"
-          >
-            {t('resume.sections.certifications')}
-          </Label>
+          <Label htmlFor="certifications">{t('resume.sections.certifications')}</Label>
           <Textarea
             id="certifications"
             value={formatArray(data.certificationsTraining)}
             onChange={(e) => handleArrayChange('certificationsTraining', e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={t('builder.additionalForm.placeholders.certifications')}
-            className="min-h-[120px] text-black rounded-none border-black bg-white focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-blue-700"
+            className="min-h-[120px]"
           />
         </div>
         <div className="space-y-2">
-          <Label
-            htmlFor="awards"
-            className="font-mono text-xs uppercase tracking-wider text-steel-grey"
-          >
-            {t('resume.sections.awards')}
-          </Label>
+          <Label htmlFor="awards">{t('resume.sections.awards')}</Label>
           <Textarea
             id="awards"
             value={formatArray(data.awards)}
             onChange={(e) => handleArrayChange('awards', e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={t('builder.additionalForm.placeholders.awards')}
-            className="min-h-[120px] text-black rounded-none border-black bg-white focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-blue-700"
+            className="min-h-[120px]"
           />
         </div>
       </div>

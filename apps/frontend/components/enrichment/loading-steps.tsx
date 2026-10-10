@@ -1,7 +1,9 @@
 'use client';
 
-import { Loader2, CheckCircle2, Sparkles, AlertCircle } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
+import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { StatusIndicator } from '@/components/ui/status-indicator';
 import { useTranslations } from '@/lib/i18n';
 
 interface LoadingStepProps {
@@ -11,14 +13,12 @@ interface LoadingStepProps {
 
 function LoadingStep({ message, submessage }: LoadingStepProps) {
   return (
-    <div className="flex flex-col items-center justify-center h-full min-h-[400px] gap-6">
-      <div className="relative">
-        <Loader2 className="w-12 h-12 animate-spin text-black" />
-      </div>
-      <div className="text-center">
-        <p className="text-xl font-mono font-bold">{message}</p>
-        {submessage && <p className="text-sm text-steel-grey mt-2 font-mono">{submessage}</p>}
-      </div>
+    <div role="status" className="flex flex-col items-start gap-2 py-6">
+      <p className="flex items-center gap-3 font-mono text-sm font-bold uppercase tracking-wider text-ink">
+        <Loader2 aria-hidden="true" className="size-5 shrink-0 animate-spin" />
+        {message}
+      </p>
+      {submessage && <p className="max-w-[60ch] text-sm text-ink-soft text-pretty">{submessage}</p>}
     </div>
   );
 }
@@ -69,34 +69,26 @@ export function CompleteStep({
   const { t } = useTranslations();
   const hasUpdatedCount = updatedCount !== undefined;
   return (
-    <div className="flex flex-col items-center justify-center h-full min-h-[400px] gap-6">
-      <div className="relative">
-        <CheckCircle2 className="w-16 h-16 text-green-600" />
-      </div>
-      <div className="text-center">
-        <p className="text-2xl font-mono font-bold">{t('enrichment.complete.title')}</p>
-        <p className="text-sm text-steel-grey mt-2 font-mono">
-          {hasUpdatedCount
-            ? updatedCount === 1
-              ? t('enrichment.complete.updatedCountSingular', { count: updatedCount })
-              : t('enrichment.complete.updatedCountPlural', { count: updatedCount })
-            : t('enrichment.complete.updatedFallback')}
-        </p>
-      </div>
+    <div className="flex flex-col items-start gap-4 py-6">
+      <StatusIndicator tone="ready">{t('enrichment.complete.title')}</StatusIndicator>
+      <p className="max-w-[60ch] text-sm text-ink-soft text-pretty">
+        {hasUpdatedCount
+          ? updatedCount === 1
+            ? t('enrichment.complete.updatedCountSingular', { count: updatedCount })
+            : t('enrichment.complete.updatedCountPlural', { count: updatedCount })
+          : t('enrichment.complete.updatedFallback')}
+      </p>
       {refreshFailed && (
-        <div role="alert" className="max-w-md border-2 border-orange-600 bg-orange-100 p-4">
-          <p className="font-mono text-sm font-bold uppercase text-orange-600">
-            {t('enrichment.complete.refreshFailedTitle')}
-          </p>
-          <p className="mt-1 font-sans text-sm">{t('enrichment.complete.refreshFailed')}</p>
-        </div>
+        <Alert
+          tone="warning"
+          className="max-w-md"
+          title={t('enrichment.complete.refreshFailedTitle')}
+        >
+          {t('enrichment.complete.refreshFailed')}
+        </Alert>
       )}
-      <Button onClick={onClose} disabled={isRefreshing} className="mt-4 gap-2">
-        {isRefreshing ? (
-          <Loader2 className="w-4 h-4 animate-spin" />
-        ) : (
-          <Sparkles className="w-4 h-4" />
-        )}
+      <Button onClick={onClose} disabled={isRefreshing}>
+        {isRefreshing && <Loader2 aria-hidden="true" className="animate-spin" />}
         {isRefreshing
           ? t('enrichment.complete.refreshing')
           : refreshFailed
@@ -115,20 +107,12 @@ interface NoImprovementsStepProps {
 export function NoImprovementsStep({ onClose, summary }: NoImprovementsStepProps) {
   const { t } = useTranslations();
   return (
-    <div className="flex flex-col items-center justify-center h-full min-h-[400px] gap-6">
-      <div className="relative">
-        <CheckCircle2 className="w-16 h-16 text-green-600" />
-      </div>
-      <div className="text-center max-w-md">
-        <p className="text-2xl font-mono font-bold">{t('enrichment.noImprovements.title')}</p>
-        <p className="text-sm text-steel-grey mt-2 font-mono">
-          {summary || t('enrichment.noImprovements.defaultDescription')}
-        </p>
-      </div>
-      <Button onClick={onClose} className="mt-4 gap-2">
-        <Sparkles className="w-4 h-4" />
-        {t('common.close')}
-      </Button>
+    <div className="flex flex-col items-start gap-4 py-6">
+      <StatusIndicator tone="ready">{t('enrichment.noImprovements.title')}</StatusIndicator>
+      <p className="max-w-[60ch] text-sm text-ink-soft text-pretty">
+        {summary || t('enrichment.noImprovements.defaultDescription')}
+      </p>
+      <Button onClick={onClose}>{t('common.close')}</Button>
     </div>
   );
 }
@@ -142,17 +126,12 @@ interface ErrorStepProps {
 export function ErrorStep({ error, onRetry, onClose }: ErrorStepProps) {
   const { t } = useTranslations();
   return (
-    <div className="flex flex-col items-center justify-center h-full min-h-[400px] gap-6">
-      <div className="relative">
-        <AlertCircle className="w-16 h-16 text-red-500" />
-      </div>
-      <div className="text-center max-w-md">
-        <p className="text-xl font-mono font-bold">{t('enrichment.error.title')}</p>
-        <p className="text-sm text-red-600 mt-2 font-mono bg-red-50 p-3 border border-red-200">
-          {error}
-        </p>
-      </div>
-      <div className="flex gap-3 mt-4">
+    <div className="flex flex-col items-start gap-4 py-6">
+      <StatusIndicator tone="error">{t('enrichment.error.title')}</StatusIndicator>
+      <Alert tone="error" className="max-w-md">
+        {error}
+      </Alert>
+      <div className="flex gap-3">
         <Button variant="outline" onClick={onClose}>
           {t('common.cancel')}
         </Button>

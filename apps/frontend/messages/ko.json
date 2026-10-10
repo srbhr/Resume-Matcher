@@ -115,6 +115,10 @@
     "masterLimitReached": "마스터 이력서는 최대 {max}개까지"
   },
   "builder": {
+    "panels": {
+      "nothingYet": "아직 생성된 항목이 없습니다",
+      "preview": "미리보기"
+    },
     "title": "이력서 빌더",
     "copySuffix": "(사본)",
     "editMode": "편집 모드",

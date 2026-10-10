@@ -221,6 +221,33 @@ describe('builder attachment ownership', () => {
   });
 });
 
+describe('builder panels', () => {
+  it.each(['cover-letter', 'outreach', 'interview-prep'] as const)(
+    'renders the %s generate controls in one panel and keeps the output panel empty',
+    async (tab) => {
+      fetchResume.mockResolvedValue(response());
+      currentSearch = `id=a&tab=${tab}`;
+      const Builder = await importBuilder();
+      render(<Builder />);
+      await act(async () => {
+        await fetchResume.mock.results[0].value;
+      });
+
+      expect(screen.getAllByRole('button', { name: `generate-${tab}` })).toHaveLength(1);
+      const generate = screen.getByRole('button', { name: `generate-${tab}` });
+      const output = screen.getByRole('tabpanel');
+      // The generate control lives in the editor column (left, before the tab strip)…
+      expect(output).not.toContainElement(generate);
+      expect(
+        screen.getByRole('tablist').compareDocumentPosition(generate) &
+          Node.DOCUMENT_POSITION_PRECEDING
+      ).toBeTruthy();
+      // …and the output panel only says nothing has been generated yet.
+      expect(within(output).getByText('builder.panels.nothingYet')).toBeInTheDocument();
+    }
+  );
+});
+
 describe('builder attachment persistence', () => {
   it('ignores a late save completion after changing documents', async () => {
     const save = deferred<void>();

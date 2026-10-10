@@ -12,7 +12,8 @@ import {
   DialogClose,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Briefcase, FolderKanban, Lightbulb, ChevronDown, ChevronRight } from 'lucide-react';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Check, ChevronDown, ChevronRight } from 'lucide-react';
 import { useTranslations } from '@/lib/i18n';
 import type { RegenerateItemInput } from '@/lib/api/enrichment';
 
@@ -85,37 +86,34 @@ export const RegenerateDialog: React.FC<RegenerateDialogProps> = ({
 
         <DialogBody className="space-y-4">
           {!hasItems && (
-            <div className="text-center py-8 text-steel-grey font-mono text-sm">
-              {t('builder.regenerate.selectDialog.noItemsAvailable')}
-            </div>
+            <EmptyState title={t('builder.regenerate.selectDialog.noItemsAvailable')} />
           )}
 
           {/* Experience Section */}
           {experienceItems.length > 0 && (
-            <div className="border border-black">
+            <div className="border border-ink">
               <button
                 type="button"
                 onClick={() => toggleSection('experience')}
                 aria-expanded={expandedSections.has('experience')}
-                className="w-full p-4 flex items-center justify-between bg-background hover:bg-secondary transition-colors"
+                className="w-full p-4 flex items-center justify-between bg-canvas hover:bg-panel transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
               >
                 <div className="flex items-center gap-3">
-                  <Briefcase className="w-5 h-5" />
                   <span className="font-mono text-sm uppercase tracking-wider font-medium">
                     {t('builder.regenerate.selectDialog.experience')}
                   </span>
-                  <span className="font-mono text-xs text-steel-grey">
+                  <span className="font-mono text-xs text-ink-soft tabular-nums">
                     ({experienceItems.length})
                   </span>
                 </div>
                 {expandedSections.has('experience') ? (
-                  <ChevronDown className="w-4 h-4" />
+                  <ChevronDown aria-hidden="true" className="size-4" />
                 ) : (
-                  <ChevronRight className="w-4 h-4" />
+                  <ChevronRight aria-hidden="true" className="size-4" />
                 )}
               </button>
               {expandedSections.has('experience') && (
-                <div className="border-t border-black">
+                <div className="border-t border-ink">
                   {experienceItems.map((item) => (
                     <ItemRow
                       key={item.item_id}
@@ -131,28 +129,29 @@ export const RegenerateDialog: React.FC<RegenerateDialogProps> = ({
 
           {/* Projects Section */}
           {projectItems.length > 0 && (
-            <div className="border border-black">
+            <div className="border border-ink">
               <button
                 type="button"
                 onClick={() => toggleSection('projects')}
                 aria-expanded={expandedSections.has('projects')}
-                className="w-full p-4 flex items-center justify-between bg-background hover:bg-secondary transition-colors"
+                className="w-full p-4 flex items-center justify-between bg-canvas hover:bg-panel transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
               >
                 <div className="flex items-center gap-3">
-                  <FolderKanban className="w-5 h-5" />
                   <span className="font-mono text-sm uppercase tracking-wider font-medium">
                     {t('builder.regenerate.selectDialog.projects')}
                   </span>
-                  <span className="font-mono text-xs text-steel-grey">({projectItems.length})</span>
+                  <span className="font-mono text-xs text-ink-soft tabular-nums">
+                    ({projectItems.length})
+                  </span>
                 </div>
                 {expandedSections.has('projects') ? (
-                  <ChevronDown className="w-4 h-4" />
+                  <ChevronDown aria-hidden="true" className="size-4" />
                 ) : (
-                  <ChevronRight className="w-4 h-4" />
+                  <ChevronRight aria-hidden="true" className="size-4" />
                 )}
               </button>
               {expandedSections.has('projects') && (
-                <div className="border-t border-black">
+                <div className="border-t border-ink">
                   {projectItems.map((item) => (
                     <ItemRow
                       key={item.item_id}
@@ -168,27 +167,26 @@ export const RegenerateDialog: React.FC<RegenerateDialogProps> = ({
 
           {/* Skills Section */}
           {skillsItem && (
-            <div className="border border-black">
+            <div className="border border-ink">
               <button
                 type="button"
                 onClick={() => toggleSection('skills')}
                 aria-expanded={expandedSections.has('skills')}
-                className="w-full p-4 flex items-center justify-between bg-background hover:bg-secondary transition-colors"
+                className="w-full p-4 flex items-center justify-between bg-canvas hover:bg-panel transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
               >
                 <div className="flex items-center gap-3">
-                  <Lightbulb className="w-5 h-5" />
                   <span className="font-mono text-sm uppercase tracking-wider font-medium">
                     {t('builder.regenerate.selectDialog.skills')}
                   </span>
                 </div>
                 {expandedSections.has('skills') ? (
-                  <ChevronDown className="w-4 h-4" />
+                  <ChevronDown aria-hidden="true" className="size-4" />
                 ) : (
-                  <ChevronRight className="w-4 h-4" />
+                  <ChevronRight aria-hidden="true" className="size-4" />
                 )}
               </button>
               {expandedSections.has('skills') && (
-                <div className="border-t border-black">
+                <div className="border-t border-ink">
                   <ItemRow
                     item={skillsItem}
                     isSelected={isSelected(skillsItem)}
@@ -202,15 +200,9 @@ export const RegenerateDialog: React.FC<RegenerateDialogProps> = ({
 
         <DialogFooter>
           <DialogClose asChild>
-            <Button variant="outline" className="rounded-none border-black">
-              {t('common.cancel')}
-            </Button>
+            <Button variant="outline">{t('common.cancel')}</Button>
           </DialogClose>
-          <Button
-            onClick={onContinue}
-            disabled={selectedItems.length === 0}
-            className="rounded-none"
-          >
+          <Button onClick={onContinue} disabled={selectedItems.length === 0}>
             {t('builder.regenerate.selectDialog.continueButton')}
           </Button>
         </DialogFooter>
@@ -242,33 +234,31 @@ const ItemRow: React.FC<ItemRowProps> = ({ item, isSelected, onToggle }) => {
     <button
       type="button"
       onClick={onToggle}
-      className={`w-full p-4 flex items-center gap-4 text-left transition-colors ${
-        isSelected ? 'bg-blue-50' : 'bg-white hover:bg-paper-tint'
+      aria-pressed={isSelected}
+      className={`w-full p-4 flex items-center gap-4 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary ${
+        isSelected ? 'bg-info-tint' : 'bg-white hover:bg-panel'
       }`}
     >
       {/* Checkbox */}
-      <div
-        className={`w-5 h-5 border-2 flex items-center justify-center transition-colors ${
-          isSelected ? 'border-blue-700 bg-blue-700' : 'border-black bg-white'
+      <span
+        aria-hidden="true"
+        className={`size-5 shrink-0 border-2 flex items-center justify-center transition-colors ${
+          isSelected ? 'border-primary bg-primary' : 'border-ink bg-white'
         }`}
       >
-        {isSelected && (
-          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-          </svg>
-        )}
-      </div>
+        {isSelected && <Check aria-hidden="true" strokeWidth={3} className="size-3 text-white" />}
+      </span>
 
       {/* Item Info */}
       <div className="flex-1 min-w-0">
         <div className="font-sans font-medium text-sm truncate">{item.title}</div>
         {item.subtitle && (
-          <div className="font-mono text-xs text-steel-grey truncate">{item.subtitle}</div>
+          <div className="font-mono text-xs text-ink-soft truncate">{item.subtitle}</div>
         )}
       </div>
 
       {/* Content preview */}
-      <div className="font-mono text-xs text-steel-grey">{itemCountLabel}</div>
+      <div className="font-mono text-xs text-ink-soft tabular-nums">{itemCountLabel}</div>
     </button>
   );
 };

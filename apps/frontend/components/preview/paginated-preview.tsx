@@ -111,53 +111,54 @@ export function PaginatedPreview({ resumeData, settings }: PaginatedPreviewProps
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Controls bar */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-steel-grey bg-secondary shrink-0">
+      <div className="flex items-center justify-between px-4 py-2 border-b border-steel bg-panel shrink-0">
         <div className="flex items-center gap-2">
           {/* Zoom controls */}
           <Button
             variant="ghost"
-            size="icon"
+            size="icon-sm"
             onClick={handleZoomOut}
             disabled={zoom <= MIN_ZOOM}
-            className="h-8 w-8"
+            className="hover:bg-panel-hover"
             aria-label={t('preview.zoomOut')}
             title={t('preview.zoomOut')}
           >
-            <ZoomOut className="w-4 h-4" />
+            <ZoomOut aria-hidden="true" />
           </Button>
-          <span className="font-mono text-xs w-12 text-center text-ink-soft">
+          <span className="font-mono text-xs w-12 text-center text-ink-soft tabular-nums">
             {Math.round(zoom * 100)}%
           </span>
           <Button
             variant="ghost"
-            size="icon"
+            size="icon-sm"
             onClick={handleZoomIn}
             disabled={zoom >= MAX_ZOOM}
-            className="h-8 w-8"
+            className="hover:bg-panel-hover"
             aria-label={t('preview.zoomIn')}
             title={t('preview.zoomIn')}
           >
-            <ZoomIn className="w-4 h-4" />
+            <ZoomIn aria-hidden="true" />
           </Button>
 
-          <div className="w-px h-5 bg-steel-grey mx-2" />
+          <div aria-hidden="true" className="w-px h-4 bg-steel mx-2" />
 
           {/* Margin toggle */}
           <Button
             variant={showMargins ? 'secondary' : 'ghost'}
             size="sm"
             onClick={toggleMargins}
-            className="h-8 gap-1.5"
+            aria-pressed={showMargins}
+            className="hover:bg-panel-hover"
           >
-            {showMargins ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+            {showMargins ? <Eye aria-hidden="true" /> : <EyeOff aria-hidden="true" />}
             <span className="font-mono text-xs uppercase">{t('preview.margins')}</span>
           </Button>
         </div>
 
         {/* Page count */}
         <div className="flex items-center gap-2 text-ink-soft">
-          <FileText className="w-4 h-4" />
-          <span className="font-mono text-xs uppercase">
+          <FileText aria-hidden="true" className="size-4" />
+          <span className="font-mono text-xs uppercase tabular-nums">
             {isCalculating
               ? t('preview.calculating')
               : pages.length === 1
@@ -168,7 +169,7 @@ export function PaginatedPreview({ resumeData, settings }: PaginatedPreviewProps
       </div>
 
       {/* Scrollable preview area */}
-      <div ref={containerRef} className="flex-1 overflow-auto bg-[#D5D5D0] p-6">
+      <div ref={containerRef} className="flex-1 overflow-auto bg-panel-hover p-6">
         {/* Hidden measurement container - renders content at actual size */}
         <div
           ref={measurementRef}
@@ -197,11 +198,11 @@ export function PaginatedPreview({ resumeData, settings }: PaginatedPreviewProps
             <React.Fragment key={page.pageNumber}>
               {index > 0 && (
                 <div className="flex items-center gap-2 py-2">
-                  <div className="h-px w-8 bg-steel-grey" />
-                  <span className="font-mono text-[10px] text-steel-grey uppercase tracking-wider">
+                  <div aria-hidden="true" className="h-px w-8 bg-steel" />
+                  <span className="font-mono text-xs text-ink-soft uppercase tracking-wider">
                     {t('preview.pageBreak')}
                   </span>
-                  <div className="h-px w-8 bg-steel-grey" />
+                  <div aria-hidden="true" className="h-px w-8 bg-steel" />
                 </div>
               )}
               <PageContainer

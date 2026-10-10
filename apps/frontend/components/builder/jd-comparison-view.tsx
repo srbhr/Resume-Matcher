@@ -62,17 +62,17 @@ export function JDComparisonView({ jobDescription, resumeData }: JDComparisonVie
   return (
     <div className="h-full flex flex-col">
       {/* Stats Bar */}
-      <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-paper-tint">
+      <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-paper">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <Target className="w-4 h-4 text-blue-600" />
-            <span className="text-sm font-mono">
+            <Target aria-hidden="true" className="size-4 text-primary" />
+            <span className="text-sm font-mono tabular-nums">
               {t('builder.jdMatch.stats.keywordsExtracted', { count: keywords.size })}
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <CheckCircle className="w-4 h-4 text-green-600" />
-            <span className="text-sm font-mono">
+            <CheckCircle aria-hidden="true" className="size-4 text-success" />
+            <span className="text-sm font-mono tabular-nums">
               {t('builder.jdMatch.stats.matchesFound', { count: stats.matchCount })}
             </span>
           </div>
@@ -82,12 +82,12 @@ export function JDComparisonView({ jobDescription, resumeData }: JDComparisonVie
             {t('builder.jdMatch.stats.matchRateLabel')}
           </span>
           <span
-            className={`text-lg font-bold ${
+            className={`text-lg font-bold tabular-nums ${
               stats.matchPercentage >= 50
-                ? 'text-green-600'
+                ? 'text-success'
                 : stats.matchPercentage >= 30
-                  ? 'text-yellow-600'
-                  : 'text-red-600'
+                  ? 'text-warning-text'
+                  : 'text-destructive'
             }`}
           >
             {stats.matchPercentage}%
@@ -98,7 +98,7 @@ export function JDComparisonView({ jobDescription, resumeData }: JDComparisonVie
       {/* Split View */}
       <div className="flex-1 grid grid-cols-2 min-h-0">
         {/* Left: JD */}
-        <div className="border-r border-paper-tint overflow-hidden">
+        <div className="border-r border-paper overflow-hidden">
           <JDDisplay content={jobDescription} />
         </div>
 
