@@ -14,6 +14,13 @@ const REQUEST_TIMEOUT_MS = Number.isFinite(parsedTimeoutMs)
 
 const nextConfig: NextConfig = {
   output: 'standalone',
+  turbopack: {
+    // The `motion/react` entry (`import * as fm`) makes Turbopack keep all of framer-motion
+    // whenever `m` is imported, which also defeats LazyMotion's lazy features chunk (+43 KB gzip
+    // on product routes). The same API straight from `framer-motion` tree-shakes. See
+    // docs/agent/architecture/first-load-js.md.
+    resolveAlias: { 'motion/react': 'framer-motion' },
+  },
   experimental: {
     proxyTimeout: REQUEST_TIMEOUT_MS,
     // Tree-shake barrel imports — saves ~200-800ms cold start per route

@@ -63,6 +63,7 @@ vi.mock('motion/react', async () => {
         children
       ),
     useReducedMotion: vi.fn(() => false),
+    useIsPresent: vi.fn(() => true),
     domAnimation: {},
   };
 });

@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import { useIsPresent } from 'motion/react';
 import { useState } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   Dialog,
   DialogBody,
@@ -133,5 +134,31 @@ describe('Dialog', () => {
       'border-t',
       'border-ink'
     );
+  });
+
+  it('leaves overscroll containment to the body, not the panel', () => {
+    openDialog();
+    expect(screen.getByRole('dialog')).not.toHaveClass('overscroll-contain');
+  });
+
+  describe('while AnimatePresence keeps it mounted to exit', () => {
+    afterEach(() => {
+      vi.mocked(useIsPresent).mockReturnValue(true);
+    });
+
+    // The exiting subtree keeps live handlers (a second click on Delete would fire
+    // onConfirm again), so the whole layer must be inert and click-through.
+    it('makes the overlay and the panel inert and click-through', () => {
+      vi.mocked(useIsPresent).mockReturnValue(false);
+      openDialog();
+      const layer = screen.getByRole('dialog').closest('[inert]');
+      expect(layer).not.toBeNull();
+      expect(layer).toHaveClass('pointer-events-none');
+    });
+
+    it('stays interactive while present', () => {
+      openDialog();
+      expect(screen.getByRole('dialog').closest('[inert]')).toBeNull();
+    });
   });
 });

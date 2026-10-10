@@ -2,7 +2,7 @@
 
 import React, { useEffect, useId, useRef, useState } from 'react';
 import { Check, ChevronDown } from 'lucide-react';
-import { AnimatePresence, m } from 'motion/react';
+import { AnimatePresence, m, useIsPresent, useReducedMotion } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { DURATION, EASE_OUT_EXPO, SPRING } from '@/lib/motion';
 import { useTranslations } from '@/lib/i18n';
@@ -47,6 +47,21 @@ const shouldFlipUp = (trigger: HTMLElement): boolean => {
   return below < MENU_MAX_HEIGHT && above > below;
 };
 
+/**
+ * The listbox AnimatePresence keeps mounted while the menu exits. Its options still have
+ * live handlers, so once it is no longer present it is inert and click-through.
+ */
+function Listbox({ className, ...props }: React.ComponentProps<typeof m.div>) {
+  const isPresent = useIsPresent();
+  return (
+    <m.div
+      {...props}
+      inert={!isPresent}
+      className={cn(className, !isPresent && 'pointer-events-none')}
+    />
+  );
+}
+
 /** Swiss select: a field-style trigger and a listbox with full keyboard support. */
 export function Dropdown({
   options,
@@ -62,6 +77,9 @@ export function Dropdown({
   const [isOpen, setIsOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const [flipUp, setFlipUp] = useState(false);
+  // Reduced motion: the menu only fades, it does not scale (spec §7).
+  const reducedMotion = useReducedMotion();
+  const menuScale = reducedMotion ? 1 : 0.98;
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const optionRefs = useRef<(HTMLButtonElement | null)[]>([]);
@@ -175,12 +193,12 @@ export function Dropdown({
 
         <AnimatePresence>
           {isOpen && (
-            <m.div
+            <Listbox
               key="listbox"
               id={listId}
               role="listbox"
               aria-labelledby={label ? labelId : undefined}
-              initial={{ opacity: 0, scale: 0.98 }}
+              initial={{ opacity: 0, scale: menuScale }}
               animate={{
                 opacity: 1,
                 scale: 1,
@@ -191,7 +209,7 @@ export function Dropdown({
               }}
               exit={{
                 opacity: 0,
-                scale: 0.98,
+                scale: menuScale,
                 transition: { duration: DURATION.menuOut, ease: EASE_OUT_EXPO },
               }}
               style={{ transformOrigin: flipUp ? 'bottom' : 'top' }}
@@ -233,7 +251,7 @@ export function Dropdown({
                   </button>
                 );
               })}
-            </m.div>
+            </Listbox>
           )}
         </AnimatePresence>
       </div>

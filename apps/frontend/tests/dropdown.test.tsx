@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { useIsPresent } from 'motion/react';
 import { useState } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Dropdown } from '@/components/ui/dropdown';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 
@@ -106,6 +107,29 @@ describe('Dropdown', () => {
     const description = screen.getByText('First stage');
     expect(description).toHaveClass('text-ink-soft');
     expect(description).not.toHaveClass('text-steel');
+  });
+
+  describe('while AnimatePresence keeps the menu mounted to exit', () => {
+    afterEach(() => {
+      vi.mocked(useIsPresent).mockReturnValue(true);
+    });
+
+    it('makes the listbox inert and click-through so an option cannot be chosen twice', () => {
+      vi.mocked(useIsPresent).mockReturnValue(false);
+      render(<Harness />);
+      fireEvent.click(screen.getByRole('button', { name: 'Stage Alpha' }));
+      const listbox = screen.getByRole('listbox');
+      expect(listbox).toHaveAttribute('inert');
+      expect(listbox).toHaveClass('pointer-events-none');
+    });
+
+    it('stays interactive while present', () => {
+      render(<Harness />);
+      fireEvent.click(screen.getByRole('button', { name: 'Stage Alpha' }));
+      const listbox = screen.getByRole('listbox');
+      expect(listbox).not.toHaveAttribute('inert');
+      expect(listbox).not.toHaveClass('pointer-events-none');
+    });
   });
 
   describe('placement', () => {

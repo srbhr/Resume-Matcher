@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
-import { AnimatePresence, m } from 'motion/react';
+import { AnimatePresence, m, useIsPresent, useReducedMotion } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { DURATION, EASE_OUT_EXPO, SPRING } from '@/lib/motion';
 import { useTranslations } from '@/lib/i18n';
@@ -113,6 +113,23 @@ const focusableIn = (root: HTMLElement): HTMLElement[] =>
     (el) => getComputedStyle(el).display !== 'none'
   );
 
+/**
+ * The layer AnimatePresence keeps mounted while the dialog exits. The exiting
+ * subtree still has live handlers (a second click on a confirm button would
+ * fire it again), so once it is no longer present it is inert and click-through.
+ */
+const DialogLayer: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const isPresent = useIsPresent();
+  return (
+    <div
+      className={cn('fixed inset-0 z-50', !isPresent && 'pointer-events-none')}
+      inert={!isPresent}
+    >
+      {children}
+    </div>
+  );
+};
+
 interface DialogContentProps {
   children: React.ReactNode;
   className?: string;
@@ -130,6 +147,9 @@ const DialogContent: React.FC<DialogContentProps> = ({
   const { open, onOpenChange, titleId } = useDialogContext();
   const { t } = useTranslations();
   const panelRef = React.useRef<HTMLDivElement>(null);
+  // Reduced motion: the panel only fades, it does not scale (spec §7).
+  const reducedMotion = useReducedMotion();
+  const panelScale = reducedMotion ? 1 : 0.95;
 
   React.useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -189,7 +209,7 @@ const DialogContent: React.FC<DialogContentProps> = ({
   return createPortal(
     <AnimatePresence>
       {open && (
-        <div key="dialog" className="fixed inset-0 z-50">
+        <DialogLayer key="dialog">
           <m.div
             className="fixed inset-0 bg-overlay"
             aria-hidden="true"
@@ -210,7 +230,7 @@ const DialogContent: React.FC<DialogContentProps> = ({
               tabIndex={-1}
               onKeyDown={trapTab}
               onClick={(e) => e.stopPropagation()}
-              initial={{ opacity: 0, scale: 0.95 }}
+              initial={{ opacity: 0, scale: panelScale }}
               animate={{
                 opacity: 1,
                 scale: 1,
@@ -221,11 +241,11 @@ const DialogContent: React.FC<DialogContentProps> = ({
               }}
               exit={{
                 opacity: 0,
-                scale: 0.95,
+                scale: panelScale,
                 transition: { duration: DURATION.exit, ease: EASE_OUT_EXPO },
               }}
               className={cn(
-                'relative flex max-h-[90vh] w-full flex-col overflow-hidden overscroll-contain',
+                'relative flex max-h-[90vh] w-full flex-col overflow-hidden',
                 'rounded-none border border-ink bg-white shadow-sw-lg outline-none',
                 SIZE_CLASS[size],
                 className
@@ -244,7 +264,7 @@ const DialogContent: React.FC<DialogContentProps> = ({
               </Button>
             </m.div>
           </div>
-        </div>
+        </DialogLayer>
       )}
     </AnimatePresence>,
     document.body

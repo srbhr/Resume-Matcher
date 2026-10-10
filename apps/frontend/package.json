@@ -23,6 +23,7 @@
     "@tiptap/react": "^3.31.4",
     "@tiptap/starter-kit": "^3.31.4",
     "clsx": "^2.1.1",
+    "framer-motion": "13.4.4",
     "isomorphic-dompurify": "^4.5.0",
     "lucide-react": "^0.577.0",
     "motion": "13.4.4",
@@ -49,6 +50,8 @@
   "overrides": {
     "undici": "^7.28.0",
     "postcss": "^8.5.10",
-    "sharp": "^0.35.4"
+    "sharp": "^0.35.4",
+    "motion-dom": "13.4.4",
+    "motion-utils": "13.3.0"
   }
 }
