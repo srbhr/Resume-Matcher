@@ -294,10 +294,6 @@
   "components/ui/card.tsx": {
     "legacy-token": 1
   },
-  "components/ui/confirm-dialog.tsx": {
-    "legacy-token": 1,
-    "palette": 15
-  },
   "components/ui/rich-text-editor.tsx": {
     "legacy-token": 2,
     "palette": 3

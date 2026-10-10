@@ -5,10 +5,12 @@ import {
   Dialog,
   DialogContent,
   DialogHeader,
+  DialogBody,
   DialogTitle,
   DialogDescription,
   DialogFooter,
 } from './dialog';
+import { Alert } from './alert';
 import { Button } from './button';
 import { useTranslations } from '@/lib/i18n';
 
@@ -73,42 +75,9 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
     onOpenChange(false);
   };
 
-  const variantStyles = {
-    danger: {
-      icon: (
-        <div className="w-12 h-12 border-2 border-red-600 bg-red-50 flex items-center justify-center">
-          <span className="text-red-600 text-2xl font-bold">!</span>
-        </div>
-      ),
-      buttonVariant: 'destructive' as const,
-    },
-    warning: {
-      icon: (
-        <div className="w-12 h-12 border-2 border-orange-500 bg-orange-50 flex items-center justify-center">
-          <span className="text-orange-500 text-2xl font-bold">!</span>
-        </div>
-      ),
-      buttonVariant: 'warning' as const,
-    },
-    success: {
-      icon: (
-        <div className="w-12 h-12 border-2 border-green-700 bg-green-50 flex items-center justify-center">
-          <span className="text-green-700 text-2xl font-bold">&#10003;</span>
-        </div>
-      ),
-      buttonVariant: 'success' as const,
-    },
-    default: {
-      icon: (
-        <div className="w-12 h-12 border-2 border-blue-700 bg-blue-50 flex items-center justify-center">
-          <span className="text-blue-700 text-2xl font-bold">?</span>
-        </div>
-      ),
-      buttonVariant: 'default' as const,
-    },
-  };
-
-  const { icon, buttonVariant } = variantStyles[variant];
+  const buttonVariant = (
+    { danger: 'destructive', warning: 'warning', success: 'success', default: 'default' } as const
+  )[variant];
 
   return (
     <Dialog
@@ -118,44 +87,32 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
         onOpenChange(nextOpen);
       }}
     >
-      <DialogContent className="sm:max-w-[425px] p-0 gap-0">
-        <DialogHeader className="p-6 pb-4">
-          <div className="flex items-start gap-4">
-            {icon}
-            <div className="min-w-0 flex-1">
-              <DialogTitle className="font-serif text-xl font-bold uppercase tracking-tight">
-                {title}
-              </DialogTitle>
-              <DialogDescription className="font-mono text-xs text-ink-soft mt-2 max-h-60 overflow-y-auto whitespace-pre-wrap [overflow-wrap:anywhere]">
-                {description}
-              </DialogDescription>
-            </div>
-          </div>
+      <DialogContent size="sm">
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
-        {errorMessage && (
-          <div className="px-6 pb-4">
-            <div className="border-2 border-red-600 bg-red-50 p-3 font-mono text-xs text-red-700 max-h-60 overflow-y-auto whitespace-pre-wrap [overflow-wrap:anywhere]">
-              {errorMessage}
-            </div>
+        <DialogBody className="space-y-4">
+          <div className="min-w-0 flex-1">
+            <DialogDescription className="max-h-60 overflow-y-auto whitespace-pre-wrap [overflow-wrap:anywhere]">
+              {description}
+            </DialogDescription>
           </div>
-        )}
-        <DialogFooter className="p-4 bg-secondary border-t border-black flex-row justify-end gap-3">
-          {showCancelButton && (
-            <Button
-              variant="outline"
-              onClick={handleCancel}
-              disabled={cancelDisabled}
-              className="rounded-none border-black"
+          {errorMessage && (
+            <Alert
+              tone="error"
+              className="max-h-60 overflow-y-auto whitespace-pre-wrap [overflow-wrap:anywhere]"
             >
+              {errorMessage}
+            </Alert>
+          )}
+        </DialogBody>
+        <DialogFooter>
+          {showCancelButton && (
+            <Button variant="outline" onClick={handleCancel} disabled={cancelDisabled}>
               {finalCancelLabel}
             </Button>
           )}
-          <Button
-            variant={buttonVariant}
-            onClick={handleConfirm}
-            className="rounded-none"
-            disabled={confirmDisabled}
-          >
+          <Button variant={buttonVariant} onClick={handleConfirm} disabled={confirmDisabled}>
             {finalConfirmLabel}
           </Button>
         </DialogFooter>

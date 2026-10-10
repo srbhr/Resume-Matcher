@@ -60,7 +60,7 @@ export function BulkActionBar({ selectedCount, onMove, onDelete, onClear }: Bulk
         title={t('tracker.bulk.deleteConfirmTitle')}
         description={t('tracker.bulk.deleteConfirmDescription', { count: String(selectedCount) })}
         confirmLabel={t('common.delete')}
-        variant="warning"
+        variant="danger"
         onConfirm={() => {
           setConfirmDelete(false);
           onDelete();

@@ -1488,7 +1488,7 @@ export default function SettingsPage() {
           provider: keyToDelete ? (API_KEY_PROVIDER_INFO[keyToDelete]?.name ?? keyToDelete) : '',
         })}
         confirmLabel={t('common.delete')}
-        variant="warning"
+        variant="danger"
         onConfirm={() => {
           if (keyToDelete) void handleDeleteApiKey(keyToDelete);
         }}
@@ -1500,7 +1500,7 @@ export default function SettingsPage() {
         title={t('confirmations.clearApiKeys')}
         description={t('confirmations.clearApiKeysDescription')}
         confirmLabel={t('common.delete')}
-        variant="warning"
+        variant="danger"
         onConfirm={handleClearApiKeys}
       />
 
