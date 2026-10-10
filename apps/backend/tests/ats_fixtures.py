@@ -1,14 +1,14 @@
-"""Real Chromium renders from assets/pdf-templates and the resume data they show."""
+"""Real Chromium renders of john_doe() and the resume data they show."""
 
 from pathlib import Path
 from typing import Any
 
 from app.schemas import normalize_resume_data
 
-RENDERS = Path(__file__).resolve().parents[3] / "assets" / "pdf-templates"
-
-
 FIXTURES = Path(__file__).resolve().parent / "fixtures" / "ats"
+
+# Kept here, not read from assets/pdf-templates: README previews change freely.
+RENDERS = FIXTURES / "renders"
 
 
 def render(name: str) -> bytes:

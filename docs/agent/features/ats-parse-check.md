@@ -63,4 +63,4 @@ UI: the builder's **ATS CHECK** tab posts the current template settings through 
 | `apps/backend/app/routers/ats.py` | Both endpoints |
 | `apps/backend/app/mcp_server/tools/parse_check_*.py` | MCP tools |
 | `apps/frontend/components/builder/ats-check-view.tsx` | ATS CHECK tab |
-| `apps/backend/tests/unit/test_ats_parse.py` | Engine tests on real Chromium renders (`assets/pdf-templates`, `tests/fixtures/ats`) |
+| `apps/backend/tests/unit/test_ats_parse.py` | Engine tests on real Chromium renders (`tests/fixtures/ats`, `tests/fixtures/ats/renders`) |
