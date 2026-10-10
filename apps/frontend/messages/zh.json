@@ -2,6 +2,7 @@
   "common": {
     "save": "保存",
     "saving": "保存中...",
+    "saved": "已保存",
     "cancel": "取消",
     "delete": "删除",
     "edit": "编辑",
@@ -668,6 +669,7 @@
     "contentLanguageDescription": "生成内容的语言（简历、求职信）",
     "uiLanguage": "界面语言",
     "uiLanguageDescription": "用户界面的语言",
+    "languageTitle": "语言",
     "theme": "主题",
     "themeDescription": "选择您喜欢的颜色主题",
     "lightMode": "浅色",
