@@ -2,6 +2,7 @@
 
 import array
 import asyncio
+import copy
 import io
 import logging
 import re
@@ -634,6 +635,139 @@ def restore_dates_from_markdown(
     return parsed_data
 
 
+# A source line counts as a skill list when it has at least this many short items
+# and at least one of them is already a parsed skill.
+# A source line counts as a skill list when it has at least this many short items
+# and at least _MIN_LINE_ANCHORS of them were parsed as skills.
+_MIN_SKILL_LINE_ITEMS = 3
+_MIN_LINE_ANCHORS = 2
+_MAX_SKILL_ITEM_WORDS = 5
+_MAX_SKILL_ITEM_CHARS = 40
+_SKILL_SEPARATOR_RE = re.compile(r"\s*(?:,|\||;|•|·)\s*")
+_LIST_MARKER_RE = re.compile(r"^\s*(?:[-*+●▪◦‣]|\d+[.)])\s+")
+_LINE_LABEL_RE = re.compile(r"^[^:,]{1,80}:\s*")
+# PDF text extraction renders a visual gap (e.g. after a bold label) as 2+ spaces.
+_EXTRACTION_GAP_RE = re.compile(r"\s{2,}")
+_FINAL_CONJUNCTION_RE = re.compile(r"^(?:and|or|&)\s+", re.IGNORECASE)
+_SKILL_HEADING_RE = re.compile(
+    r"^(?:(?:technical|core|key|other)\s+)?"
+    r"(?:skills?|technologies|tools|frameworks?|platforms?|tech(?:nology)?\s+stack|stack)$",
+    re.IGNORECASE,
+)
+# Function words that mark a phrase as prose ("Built services with Python").
+_PROSE_WORDS = frozenset(
+    {"with", "for", "to", "the", "of", "in", "on", "using", "by", "from", "at", "into"}
+)
+# Function words that also appear inside names ("Ruby on Rails", "Internet of Things").
+_NAME_CONNECTORS = frozenset({"on", "of", "the", "in", "for"})
+
+
+def _skill_line_items(line: str, anchors: set[str]) -> list[str]:
+    """Items of a skill-list line, or [] if the line isn't a list of short items.
+
+    ``anchors`` are the casefolded skills the parser found; a gap-separated
+    first segment is kept only when it is one of them (otherwise it is a label
+    such as "Stack").
+    """
+    text = _LIST_MARKER_RE.sub("", line).strip()
+    text = _LINE_LABEL_RE.sub("", text)  # "Tools: Python, Rust" -> "Python, Rust"
+
+    items: list[str] = []
+    for index, chunk in enumerate(_SKILL_SEPARATOR_RE.split(text)):
+        segments = [seg for seg in _EXTRACTION_GAP_RE.split(chunk) if seg]
+        if index == 0 and len(segments) > 1 and segments[0].casefold() not in anchors:
+            segments = segments[1:]  # "Stack  TypeScript": drop the label
+        items.extend(segments)
+    # Keep a leading dot (".NET"); drop trailing sentence punctuation.
+    items = [item.strip().rstrip(".").strip() for item in items]
+    items = [item for item in items if item]
+    if items and _SKILL_HEADING_RE.match(items[0]):
+        items = items[1:]  # "Technical Skills | Python | React"
+    # A conjunction opening an item mid-line, or left dangling at the end, means a
+    # sentence wrapped across lines ("..., and Redis, ..., and search and").
+    if any(_FINAL_CONJUNCTION_RE.match(item) for item in items[:-1]) or any(
+        item.split()[-1].casefold() in {"and", "or", "&"} for item in items
+    ):
+        return []
+    if items:
+        items[-1] = _FINAL_CONJUNCTION_RE.sub("", items[-1])  # "Python, Rust, and Go"
+
+    if len(items) < _MIN_SKILL_LINE_ITEMS:
+        return []
+    for item in items:
+        words = item.split()
+        # Prose and contact or location details are not skill lists.
+        if (
+            len(item) > _MAX_SKILL_ITEM_CHARS
+            or len(words) > _MAX_SKILL_ITEM_WORDS
+            or "@" in item
+            or "://" in item
+            or _is_prose(words)
+        ):
+            return []
+    return items
+
+
+def _is_prose(words: list[str]) -> bool:
+    """A phrase with a function word is prose unless it reads like a name.
+
+    "Built services with Python" is prose; "Ruby on Rails" is a skill because
+    every other word is capitalized (or starts with a digit or symbol).
+    """
+    function_words = {w.casefold() for w in words} & _PROSE_WORDS
+    if not function_words:
+        return False
+    if function_words - _NAME_CONNECTORS:
+        return True  # "with", "using", "by", ... join clauses, not names
+    return not all(
+        not word[0].isalpha() or word[0].isupper()
+        for word in words
+        if word.casefold() not in _PROSE_WORDS
+    )
+
+
+def restore_skills_from_markdown(
+    parsed_data: dict[str, Any],
+    markdown: str,
+) -> dict[str, Any]:
+    """Restore technical skills the LLM dropped from skill-list lines of the source.
+
+    The parse LLM tends to summarize long skill blocks, keeping a handful of
+    items. A source line is treated as a skill list when it is a list of at
+    least three short items and at least two of them were parsed into
+    ``additional.technicalSkills``; its missing items are appended in source
+    order. Only the originally parsed skills anchor a line, so a restored item
+    can't pull in an unrelated line, and a single match ("Developer, Java, Acme
+    Corp") isn't enough. Spoken-language lines, locations and prose are left
+    alone.
+    """
+    additional = parsed_data.get("additional")
+    if not isinstance(additional, dict):
+        return parsed_data
+    skills = additional.get("technicalSkills")
+    if not isinstance(skills, list) or not skills:
+        return parsed_data
+
+    anchors = {skill.casefold() for skill in skills if isinstance(skill, str)}
+    known = set(anchors)
+    restored: list[str] = []
+    for line in markdown.splitlines():
+        items = _skill_line_items(line, anchors)
+        if sum(item.casefold() in anchors for item in items) < _MIN_LINE_ANCHORS:
+            continue
+        for item in items:
+            if item.casefold() not in known:
+                known.add(item.casefold())
+                restored.append(item)
+
+    if not restored:
+        return parsed_data
+    result = copy.deepcopy(parsed_data)
+    result["additional"]["technicalSkills"] = [*skills, *restored]
+    logger.info("Restored %d skills dropped while parsing", len(restored))
+    return result
+
+
 _NON_CONTENT_RESUME_KEYS = frozenset(
     {
         "id",
@@ -817,8 +951,9 @@ async def parse_resume_to_json(markdown_text: str) -> dict[str, Any]:
     """Parse resume markdown to structured JSON using LLM.
 
     After LLM parsing, patches any year-only dates with month-inclusive
-    dates extracted from the raw markdown. This ensures months are never
-    lost regardless of LLM behavior.
+    dates extracted from the raw markdown, and restores skills the LLM
+    dropped from skill-list lines, so neither is lost regardless of LLM
+    behavior.
 
     Args:
         markdown_text: Resume content in markdown format
@@ -846,6 +981,8 @@ async def parse_resume_to_json(markdown_text: str) -> dict[str, Any]:
 
     # Patch dates: restore months the LLM may have dropped
     result = restore_dates_from_markdown(result, markdown_text)
+    # Restore skills the LLM summarized away from long skill lists
+    result = restore_skills_from_markdown(result, markdown_text)
 
     # Validate against schema
     return _validate_parsed_resume(result)
