@@ -14,7 +14,7 @@ dependencies = [
     "aiosqlite==0.22.1",
     "cryptography==50.0.2",
     "litellm==1.104.2",
-    "markitdown[docx]==0.1.4",
+    "markitdown[docx,pdf]==0.1.8",
     "pdfminer.six==20260107",
     "playwright==1.63.0",
     "python-docx==1.2.0",
