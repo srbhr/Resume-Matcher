@@ -126,10 +126,90 @@ class TestRestoreSkillsFromMarkdown:
         assert parsed == before
 
 
+class TestSkillLineEdgeCases:
+    """Review-driven cases: real-world list formats and false positives."""
+
+    def test_spoken_language_lines_are_skipped_even_if_one_was_parsed(self) -> None:
+        parsed = _parsed(["Python", "English"])
+        result = _skills(
+            restore_skills_from_markdown(parsed, "Languages: English, Hindi, German\n")
+        )
+        assert result == ["Python", "English"]
+
+    def test_programming_language_label_is_still_a_skill_line(self) -> None:
+        parsed = _parsed(["Python"])
+        source = "Programming languages: Python, Rust, Go\n"
+        assert _skills(restore_skills_from_markdown(parsed, source)) == [
+            "Python",
+            "Rust",
+            "Go",
+        ]
+
+    def test_gap_after_a_known_skill_is_not_a_label(self) -> None:
+        parsed = _parsed(["Python"])
+        source = "Python  Java, Go, Rust\n"
+        assert _skills(restore_skills_from_markdown(parsed, source)) == [
+            "Python",
+            "Java",
+            "Go",
+            "Rust",
+        ]
+
+    def test_every_wide_gap_separates_items(self) -> None:
+        parsed = _parsed(["Redis"])
+        source = "Stack  PostgreSQL  MongoDB, Redis, Docker\n"
+        result = _skills(restore_skills_from_markdown(parsed, source))
+        assert result == ["Redis", "PostgreSQL", "MongoDB", "Docker"]
+
+    def test_final_conjunction_is_a_separator(self) -> None:
+        parsed = _parsed(["Python"])
+        source = "Python, Rust, and Go\n"
+        assert _skills(restore_skills_from_markdown(parsed, source)) == [
+            "Python",
+            "Rust",
+            "Go",
+        ]
+
+    def test_wrapped_prose_line_is_not_a_skill_list(self) -> None:
+        # A sentence that wrapped across lines in PDF extraction.
+        parsed = _parsed(["PostgreSQL", "Next.js"])
+        source = (
+            "database, PostgreSQL, Next.js, and Redis, adding OCR pipelines,"
+            " clause and figure extraction, and search and\n"
+        )
+        result = _skills(restore_skills_from_markdown(parsed, source))
+        assert result == ["PostgreSQL", "Next.js"]
+
+    def test_leading_dot_is_kept(self) -> None:
+        parsed = _parsed(["C#"])
+        source = ".NET, C#, F#.\n"
+        assert _skills(restore_skills_from_markdown(parsed, source)) == [
+            "C#",
+            ".NET",
+            "F#",
+        ]
+
+    def test_restored_skills_do_not_anchor_later_lines(self) -> None:
+        parsed = _parsed(["Python"])
+        source = "Python, Java, Go\nDeveloper, Java, Acme Corp\n"
+        result = _skills(restore_skills_from_markdown(parsed, source))
+        assert result == ["Python", "Java", "Go"]
+
+    def test_pipe_separated_heading_is_not_a_skill(self) -> None:
+        parsed = _parsed(["Python"])
+        source = "Technical Skills | Python | React | Node.js\n"
+        assert _skills(restore_skills_from_markdown(parsed, source)) == [
+            "Python",
+            "React",
+            "Node.js",
+        ]
+
+
 def test_parse_prompt_requires_every_skill() -> None:
     rule = PARSE_RESUME_PROMPT.lower()
     assert "every" in rule and "technicalskills" in rule
     assert "never summarize" in rule
+    assert "spoken languages" in rule and "additional.languages" in rule
 
 
 @pytest.mark.asyncio

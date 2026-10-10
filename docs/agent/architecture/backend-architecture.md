@@ -158,7 +158,10 @@ await parse_resume_to_json(markdown) → dict    # LLM call
 After the LLM call, two deterministic safety nets patch the result from the source markdown:
 
 - `restore_dates_from_markdown` puts back months the LLM dropped.
-- `restore_skills_from_markdown` puts back skills the LLM summarized away. A source line counts as a skill list when it has at least 3 short comma/pipe-separated items and one of them is already in `additional.technicalSkills`; the line's missing items are appended in source order. Lines with no parsed skill in them (spoken languages, locations, prose bullets) are left alone. `PARSE_RESUME_PROMPT` also tells the model to copy every listed skill, which covers lines the safety net can't anchor.
+- `restore_skills_from_markdown` puts back skills the LLM summarized away. A source line counts as a skill list when it has at least 3 short items and one of them was parsed into `additional.technicalSkills`; the line's missing items are appended in source order. Items are separated by `,`, `|`, `;`, `•`, `·`, a wide PDF-extraction gap, or a final "and"/"or". A leading label is dropped, whether it's before a colon (`Tools: ...`), before a gap (`Stack  Python, ...`, unless that word is itself a parsed skill) or a heading item (`Technical Skills | Python | ...`).
+  - It skips lines labelled as (spoken) languages, items with prose function words (`with`, `for`, `using`, ...), and sentences wrapped across lines (an item opening with "and" mid-line, or a dangling "and" at the end).
+  - Only the originally parsed skills anchor a line, so a restored item can't pull in an unrelated line.
+  - `PARSE_RESUME_PROMPT` also tells the model to copy every listed skill (spoken languages go to `additional.languages`), which covers lines the safety net can't anchor.
 
 ### Improver (`services/improver.py`)
 

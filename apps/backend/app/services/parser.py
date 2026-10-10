@@ -637,6 +637,8 @@ def restore_dates_from_markdown(
 
 # A source line counts as a skill list when it has at least this many short items
 # and at least one of them is already a parsed skill.
+# A source line counts as a skill list when it has at least this many short items
+# and at least one of them was parsed as a skill.
 _MIN_SKILL_LINE_ITEMS = 3
 _MAX_SKILL_ITEM_WORDS = 5
 _MAX_SKILL_ITEM_CHARS = 40
@@ -645,28 +647,65 @@ _LIST_MARKER_RE = re.compile(r"^\s*(?:[-*+●▪◦‣]|\d+[.)])\s+")
 _LINE_LABEL_RE = re.compile(r"^[^:,]{1,80}:\s*")
 # PDF text extraction renders a visual gap (e.g. after a bold label) as 2+ spaces.
 _EXTRACTION_GAP_RE = re.compile(r"\s{2,}")
+_FINAL_CONJUNCTION_RE = re.compile(r"^(?:and|or|&)\s+", re.IGNORECASE)
+_SKILL_HEADING_RE = re.compile(
+    r"^(?:(?:technical|core|key|other)\s+)?"
+    r"(?:skills?|technologies|tools|frameworks?|platforms?|tech(?:nology)?\s+stack|stack)$",
+    re.IGNORECASE,
+)
+# Function words that mark a phrase as prose ("Built services with Python").
+_PROSE_WORDS = frozenset(
+    {"with", "for", "to", "the", "of", "in", "on", "using", "by", "from", "at", "into"}
+)
 
 
-def _skill_line_items(line: str) -> list[str]:
-    """Items of a comma/pipe separated list line, or [] if it isn't a short-item list."""
+def _skill_line_items(line: str, anchors: set[str]) -> list[str]:
+    """Items of a skill-list line, or [] if the line isn't a list of short items.
+
+    ``anchors`` are the casefolded skills the parser found; a gap-separated
+    first segment is kept only when it is one of them (otherwise it is a label
+    such as "Stack").
+    """
     text = _LIST_MARKER_RE.sub("", line).strip()
-    text = _LINE_LABEL_RE.sub("", text)  # "Languages: Python, Rust" -> "Python, Rust"
-    items = [item.strip(" .") for item in _SKILL_SEPARATOR_RE.split(text)]
+    label = _LINE_LABEL_RE.match(text)
+    if label:
+        # "Languages: English, Hindi" lists spoken languages, not skills.
+        label_text = label.group(0).casefold()
+        if "language" in label_text and "programming" not in label_text:
+            return []
+        text = text[label.end() :]
+
+    items: list[str] = []
+    for index, chunk in enumerate(_SKILL_SEPARATOR_RE.split(text)):
+        segments = [seg for seg in _EXTRACTION_GAP_RE.split(chunk) if seg]
+        if index == 0 and len(segments) > 1 and segments[0].casefold() not in anchors:
+            segments = segments[1:]  # "Stack  TypeScript": drop the label
+        items.extend(segments)
+    # Keep a leading dot (".NET"); drop trailing sentence punctuation.
+    items = [item.strip().rstrip(".").strip() for item in items]
     items = [item for item in items if item]
+    if items and _SKILL_HEADING_RE.match(items[0]):
+        items = items[1:]  # "Technical Skills | Python | React"
+    # A conjunction opening an item mid-line, or left dangling at the end, means a
+    # sentence wrapped across lines ("..., and Redis, ..., and search and").
+    if any(_FINAL_CONJUNCTION_RE.match(item) for item in items[:-1]) or any(
+        item.split()[-1].casefold() in {"and", "or", "&"} for item in items
+    ):
+        return []
     if items:
-        # "Stack  TypeScript": keep what follows a gap-separated label.
-        items[0] = _EXTRACTION_GAP_RE.split(items[0])[-1]
+        items[-1] = _FINAL_CONJUNCTION_RE.sub("", items[-1])  # "Python, Rust, and Go"
+
     if len(items) < _MIN_SKILL_LINE_ITEMS:
         return []
     for item in items:
-        # Prose ("Built ingestion services with Python") and contact or location
-        # details are not skill lists.
+        words = item.split()
+        # Prose and contact or location details are not skill lists.
         if (
             len(item) > _MAX_SKILL_ITEM_CHARS
-            or len(item.split()) > _MAX_SKILL_ITEM_WORDS
+            or len(words) > _MAX_SKILL_ITEM_WORDS
             or "@" in item
             or "://" in item
-            or item.casefold().startswith(("and ", "or "))
+            or any(word.casefold() in _PROSE_WORDS for word in words)
         ):
             return []
     return items
@@ -680,10 +719,11 @@ def restore_skills_from_markdown(
 
     The parse LLM tends to summarize long skill blocks, keeping a handful of
     items. A source line is treated as a skill list when it is a list of at
-    least three short items and one of them already made it into
+    least three short items and one of them was parsed into
     ``additional.technicalSkills``; its missing items are appended in source
-    order. Lines with no parsed skill in them (languages, locations, prose) are
-    left alone.
+    order. Only the originally parsed skills anchor a line, so a restored item
+    can't pull in an unrelated line. Spoken-language lines, locations and prose
+    are left alone.
     """
     additional = parsed_data.get("additional")
     if not isinstance(additional, dict):
@@ -692,11 +732,12 @@ def restore_skills_from_markdown(
     if not isinstance(skills, list) or not skills:
         return parsed_data
 
-    known = {skill.casefold() for skill in skills if isinstance(skill, str)}
+    anchors = {skill.casefold() for skill in skills if isinstance(skill, str)}
+    known = set(anchors)
     restored: list[str] = []
     for line in markdown.splitlines():
-        items = _skill_line_items(line)
-        if not items or not any(item.casefold() in known for item in items):
+        items = _skill_line_items(line, anchors)
+        if not any(item.casefold() in anchors for item in items):
             continue
         for item in items:
             if item.casefold() not in known:

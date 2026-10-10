@@ -181,7 +181,7 @@ Rules:
 - Normalize date separators: "2020-2021" → "2020 - 2021", "Current"/"Ongoing" → "Present". Do NOT discard months.
 - For ambiguous dates like "3 years experience", infer approximate years from context or use "~YYYY"
 - Flag overlapping dates (concurrent roles) by preserving both, don't merge
-- Copy every skill, tool, language and technology the resume lists into additional.technicalSkills, one item each, keeping the original wording. Split comma-separated lists into separate items. Never summarize, merge, shorten or drop skills, however long the list is.
+- Copy every skill, tool, framework, programming language and technology the resume lists into additional.technicalSkills, one item each, keeping the original wording. Split comma-separated lists into separate items. Never summarize, merge, shorten or drop skills, however long the list is. Spoken languages (English, Hindi, ...) go in additional.languages, not technicalSkills.
 
 Resume to parse:
 {resume_text}"""
