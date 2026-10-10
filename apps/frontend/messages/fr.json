@@ -114,6 +114,10 @@
     "masterLimitReached": "Jusqu'à {max} CV principaux"
   },
   "builder": {
+    "panels": {
+      "nothingYet": "Rien n'a encore été généré",
+      "preview": "Aperçu"
+    },
     "title": "Créateur de CV",
     "copySuffix": "(Copie)",
     "editMode": "Mode édition",

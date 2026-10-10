@@ -144,12 +144,6 @@
     "legacy-token": 6,
     "palette": 3
   },
-  "components/builder/resume-builder.tsx": {
-    "decorative-icon": 1,
-    "legacy-token": 9,
-    "palette": 5,
-    "raw-colour": 5
-  },
   "components/builder/resume-form.tsx": {
     "legacy-token": 1
   },

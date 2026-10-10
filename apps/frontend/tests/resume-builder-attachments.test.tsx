@@ -221,6 +221,24 @@ describe('builder attachment ownership', () => {
   });
 });
 
+describe('builder panels', () => {
+  it.each(['cover-letter', 'outreach', 'interview-prep'] as const)(
+    'renders the %s generate controls in one panel and keeps the output panel empty',
+    async (tab) => {
+      fetchResume.mockResolvedValue(response());
+      currentSearch = `id=a&tab=${tab}`;
+      const Builder = await importBuilder();
+      render(<Builder />);
+      await act(async () => {
+        await fetchResume.mock.results[0].value;
+      });
+
+      expect(screen.getAllByRole('button', { name: `generate-${tab}` })).toHaveLength(1);
+      expect(screen.getByText('builder.panels.nothingYet')).toBeInTheDocument();
+    }
+  );
+});
+
 describe('builder attachment persistence', () => {
   it('ignores a late save completion after changing documents', async () => {
     const save = deferred<void>();

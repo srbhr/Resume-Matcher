@@ -114,6 +114,10 @@
     "masterLimitReached": "Até {max} currículos principais"
   },
   "builder": {
+    "panels": {
+      "nothingYet": "Nada foi gerado ainda",
+      "preview": "Pré-visualização"
+    },
     "title": "Criar Currículo",
     "copySuffix": "(Cópia)",
     "editMode": "Modo Edição",
