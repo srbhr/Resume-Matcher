@@ -11,7 +11,7 @@ What NOT to do, and how to catch it before code ships. Read this before opening 
 | Anti-pattern | Why it breaks the style | Use instead |
 |--------------|-------------------------|-------------|
 | `rounded-*` (any value) | Rounds soften the binary geometry | `rounded-none` |
-| Gradients (`bg-gradient-*`, `linear-gradient(`) | Decorative, not structural | Solid color from the palette. The one allowance is the 1px hairline blueprint grid, defined once as `bg-blueprint` |
+| Gradients (`bg-gradient-*`, `linear-gradient(`) | Decorative, not structural | Solid color from the palette. No exceptions |
 | Blurred or soft shadows (`shadow`, `shadow-md`, `shadow-lg`, `shadow-[…]`, ad-hoc rgba shadows) | Implies depth illusion | The hard role tokens: `shadow-sw-sm` (controls), `shadow-sw-default` (menus, popovers), `shadow-sw-lg` (dialogs, page frame), `shadow-sw-nested` (cards and boxes inside a frame or dialog) |
 | A solid shadow on a card, panel or box inside a page frame or dialog | The frame already carries the solid shadow; a second one inside competes with it | The nested shadow, `shadow-sw-nested` (translucent ink, hard 4px offset), on every sibling |
 | Decorative icons (heart, star, sparkles, wand, zap, rocket) | Ornamental | Functional icons only, mono color |
@@ -27,7 +27,7 @@ What NOT to do, and how to catch it before code ships. Read this before opening 
 | Card carousels | Hides content | Show the grid |
 | Soft grey dividers | Weakens structure | 1–2px solid ink |
 | Circle status dots | Decorative | 12px squares, always with a label |
-| Spinner as a persistent status | Motion that never resolves | A status square. `Loader2` is only for work in flight |
+| Spinner as a persistent status | Motion that never resolves | A status square. A spinner is only for work in flight |
 | Multiple primary buttons per region | No focal point | One primary, rest outline |
 | Blue for "selected" | Blue means "press this" | Ink fill with white text |
 | White text on an orange fill | 2.80:1, fails AA | Ink text on `warning` |
@@ -66,7 +66,7 @@ There's exactly one secondary text color: Steel `#696D75`. Don't introduce tints
 
 ### Importing decorative icon sets
 
-`lucide-react`, `heroicons`, etc. ship with thousands of decorative glyphs. Use them only for functional icons (close, expand, navigate). Never for emotional decoration (sparkles, hearts, lightning bolts).
+`lucide-react`, `heroicons`, etc. ship with thousands of decorative glyphs. Use them only for functional icons (close, expand, navigate). Never for emotional decoration (sparkles, hearts, lightning bolts). Pick one icon family per project and enforce it with a guard rule.
 
 ### Hand-rolling a modal, alert or select
 
@@ -108,7 +108,7 @@ Before merging UI changes, walk through this list:
 ### Tokens
 - [ ] All colors are semantic tokens from [tokens.md](tokens.md) — no raw hex, `rgba()` or palette-scale classes
 - [ ] No `rounded-*` classes anywhere
-- [ ] No `bg-gradient-*` anywhere (the `bg-blueprint` utility is the only grid)
+- [ ] No `bg-gradient-*` or `linear-gradient(` anywhere
 - [ ] No `shadow`, `shadow-sm`, `shadow-md`, `shadow-lg`, `shadow-[…]` (only the `shadow-sw-*` role tokens)
 - [ ] All paddings are on the 4px scale (`p-1`, `p-2`, `p-3`, `p-4`, `p-6`, `p-8`, `p-12`, `p-16`)
 - [ ] Orange fills carry ink text; `steel` never sits on `panel`; if you touched a token, the contrast check still passes

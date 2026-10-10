@@ -316,7 +316,7 @@ A 12px square + a label-face uppercase label. The label is **always rendered**, 
 | `active` | `bg-primary` | `text-primary` |
 | `neutral` | `bg-steel` | `text-steel` |
 
-No circle icons, no dots, no emoji. A **persistent** state is a square. A spinner (`Loader2`) is only for work that is in flight right now; it is never a resting status.
+No circle icons, no dots, no emoji. A **persistent** state is a square. A spinner is only for work that is in flight right now; it is never a resting status.
 
 ### Why squares, not circles?
 

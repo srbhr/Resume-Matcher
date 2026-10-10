@@ -37,7 +37,7 @@ The hard ink divider is what makes this Swiss instead of generic. Don't use a th
 
 ### Page shell: PageFrame + PageHeader
 
-Every app page sits in the same shell: a framed sheet on a blueprint grid, with one standard header. Build it once and every page inherits it.
+Every app page sits in the same shell: a framed sheet on the canvas, with one standard header. Build it once and every page inherits it.
 
 ```jsx
 <PageFrame>
@@ -56,7 +56,7 @@ Every app page sits in the same shell: a framed sheet on a blueprint grid, with 
 
 **PageFrame**
 
-- The page is canvas with the **blueprint grid** behind it (below), `min-h-screen`, with `px-4 py-12 md:px-8` around the frame
+- The page is canvas (optionally with an animated dot-field behind the frame, below), `min-h-screen`, with `px-4 py-12 md:px-8` around the frame
 - The frame is `border border-ink bg-canvas shadow-sw-lg`, centred in the viewport. Content inside it is left-aligned
 - `width`: `narrow` (`max-w-4xl`) for a single-column page of forms or settings, where a wider frame would leave an empty right side; `default` (`max-w-[86rem]`); or `wide` (`max-w-[104rem]`)
 - `height="screen"` fills the dynamic viewport (`h-dvh`, frame `max-h-full overflow-hidden`) for views that scroll inside their panels instead of the page
@@ -72,18 +72,12 @@ Every app page sits in the same shell: a framed sheet on a blueprint grid, with 
 
 **Heading scale** (one size per level, no per-page exceptions): page H1 `text-4xl md:text-5xl` serif bold uppercase · dialog title `text-2xl` serif bold uppercase · section header `text-xl`–`text-2xl` serif bold sentence case · caption `text-xs` label face uppercase. A landing hero is a poster, not an app page, and keeps its own display size.
 
-**The blueprint grid** is the house signature. Define it once, as a utility, and never repeat it inline:
+**An optional animated dot-field background** is the one ornament the shell may carry; plain canvas is the default. If a project adds one:
 
-```css
-@utility bg-blueprint {
-  background-image:
-    linear-gradient(rgb(29 78 216 / 0.1) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(29 78 216 / 0.1) 1px, transparent 1px);
-  background-size: 40px 40px;
-}
-```
-
-It is a field of 1px Hyper Blue hairlines at 10% opacity, not a tonal gradient; that is the one use of a gradient function the pack allows.
+- Paint it on a single `<canvas>` in a lazily loaded client component, `aria-hidden` and `pointer-events-none`, absolutely positioned behind the frame (`relative isolate` on the page, `-z-10` on the effect).
+- Take the dot colour from a token through `currentColor` and set its opacity with `globalAlpha`; no raw colours and no gradient function. The pack allows none.
+- Draw only while it is on screen and the tab is visible, and draw one still frame under `prefers-reduced-motion`.
+- Keep the frame an opaque canvas fill so content never sits on the effect, and let the user switch the effect off.
 
 **Exception: full-height working views.** An editor or a board needs every pixel of height for the work. Those views (full-height editors or boards) use a **compact single-row header** (title and actions on one line) in place of the stacked back-link / title / subtitle block. Usability beats style where the work area needs the height; everything else about the shell (canvas, ink borders, hard shadows, tokens) still applies.
 

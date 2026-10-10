@@ -18,15 +18,8 @@ const RichTextEditor = dynamic(
   }
 );
 import { Project } from '@/components/dashboard/resume-component';
-import {
-  TextAlignLeft,
-  Copy,
-  ListBullets,
-  Plus,
-  Trash,
-  GithubLogo,
-  Globe,
-} from '@phosphor-icons/react';
+import { TextAlignLeft, Copy, ListBullets, Plus, Trash, Globe } from '@phosphor-icons/react';
+import { BrandIcon } from '@/components/ui/brand-icon';
 import { useTranslations } from '@/lib/i18n';
 import {
   alignDescriptionStyles,
@@ -229,7 +222,7 @@ export const ProjectsForm: React.FC<ProjectsFormProps> = ({ data, onChange }) =>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor={`${fieldId}-${item.id}-github`}>
-                    <GithubLogo aria-hidden="true" className="size-4 inline mr-1" />
+                    <BrandIcon name="github" className="size-4 inline mr-1" />
                     GitHub <span className="text-steel">({t('common.optional')})</span>
                   </Label>
                   <Input
