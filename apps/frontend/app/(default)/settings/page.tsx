@@ -61,6 +61,7 @@ import {
   Clock,
   SlidersHorizontal,
   Globe,
+  Monitor,
   Trash,
   Warning,
 } from '@phosphor-icons/react';
@@ -1396,6 +1397,7 @@ export default function SettingsPage() {
           {/* Display Settings Section */}
           <section className="space-y-6">
             <div className="flex items-center gap-2 border-b border-panel-hover pb-2">
+              <Monitor className="w-4 h-4" />
               <h2 className="font-serif text-xl font-bold text-ink text-balance">
                 {t('settings.display.title')}
               </h2>
