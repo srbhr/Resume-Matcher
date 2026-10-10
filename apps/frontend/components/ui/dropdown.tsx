@@ -100,6 +100,8 @@ export function Dropdown({
       setActiveIndex(moves[event.key]);
     } else if (event.key === 'Escape') {
       event.preventDefault();
+      // A parent Dialog closes on document-level Escape; this one belongs to the listbox.
+      event.stopPropagation();
       close(true);
     } else if (event.key === 'Tab') {
       close(false);
@@ -174,7 +176,7 @@ export function Dropdown({
                   <span className="min-w-0 flex-1">
                     <span className="block">{option.label}</span>
                     {option.description && (
-                      <span className="mt-1 block text-xs font-normal text-steel">
+                      <span className="mt-1 block text-xs font-normal text-ink-soft">
                         {option.description}
                       </span>
                     )}

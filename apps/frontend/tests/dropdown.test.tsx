@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { Dropdown } from '@/components/ui/dropdown';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 
 vi.mock('@/lib/i18n', () => ({ useTranslations: () => ({ t: (key: string) => key }) }));
 
@@ -72,5 +73,38 @@ describe('Dropdown', () => {
     expect(alpha).toHaveAttribute('aria-selected', 'true');
     expect(alpha).toHaveClass('bg-panel');
     expect(alpha.textContent).not.toContain('✓');
+  });
+
+  it('keeps Escape inside the listbox when the dropdown sits in a dialog', () => {
+    const onOpenChange = vi.fn();
+    render(
+      <Dialog open onOpenChange={onOpenChange}>
+        <DialogContent>
+          <Harness />
+        </DialogContent>
+      </Dialog>
+    );
+    const trigger = screen.getByRole('button', { name: 'Stage Alpha' });
+    trigger.focus();
+    fireEvent.keyDown(trigger, { key: 'ArrowDown' });
+    fireEvent.keyDown(screen.getAllByRole('option')[0], { key: 'Escape' });
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
+    expect(onOpenChange).not.toHaveBeenCalled();
+  });
+
+  it('renders option descriptions in ink-soft so they stay AA on the panel fill', () => {
+    render(
+      <Dropdown
+        label="Stage"
+        options={[{ id: 'a', label: 'Alpha', description: 'First stage' }]}
+        value="a"
+        onChange={vi.fn()}
+      />
+    );
+    fireEvent.click(screen.getByRole('button', { name: /Stage/ }));
+    const description = screen.getByText('First stage');
+    expect(description).toHaveClass('text-ink-soft');
+    expect(description).not.toHaveClass('text-steel');
   });
 });

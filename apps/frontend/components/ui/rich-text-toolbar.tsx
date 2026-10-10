@@ -56,7 +56,7 @@ export const RichTextToolbar: React.FC<RichTextToolbarProps> = ({ editor, onLink
           key={tool.label}
           type="button"
           variant="ghost"
-          size="icon"
+          size="icon-sm"
           onClick={(e) => {
             e.preventDefault();
             tool.action();
@@ -64,7 +64,11 @@ export const RichTextToolbar: React.FC<RichTextToolbarProps> = ({ editor, onLink
           aria-label={tool.label}
           aria-pressed={tool.isActive}
           title={`${tool.label} (${tool.shortcut})`}
-          className={cn(tool.isActive && 'bg-ink text-white hover:bg-ink hover:text-white')}
+          className={cn(
+            tool.isActive
+              ? 'bg-ink text-white hover:bg-ink hover:text-white active:bg-ink active:text-white'
+              : 'hover:bg-panel-hover'
+          )}
         >
           <tool.icon className="w-4 h-4" />
         </Button>

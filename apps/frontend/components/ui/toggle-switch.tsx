@@ -60,7 +60,7 @@ export const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
           'relative inline-flex h-6 w-12 shrink-0 items-center border-2 border-ink transition-colors',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-canvas',
           'disabled:cursor-not-allowed',
-          checked ? 'bg-primary' : 'bg-panel'
+          checked ? 'bg-ink' : 'bg-panel'
         )}
       >
         <span

@@ -18,6 +18,18 @@ describe('ToggleSwitch', () => {
     expect(container.firstChild).not.toHaveClass('shadow-sw-sm');
     expect(screen.getByRole('switch', { name: 'Inline' })).toHaveAttribute('aria-checked', 'true');
   });
+
+  it('fills the track with ink when on and the panel tone when off', () => {
+    const { rerender } = render(
+      <ToggleSwitch checked onCheckedChange={vi.fn()} label="Show photo" />
+    );
+    const toggle = screen.getByRole('switch');
+    expect(toggle).toHaveClass('bg-ink');
+    expect(toggle).not.toHaveClass('bg-primary');
+    rerender(<ToggleSwitch checked={false} onCheckedChange={vi.fn()} label="Show photo" />);
+    expect(screen.getByRole('switch')).toHaveClass('bg-panel');
+    expect(screen.getByRole('switch')).not.toHaveClass('bg-ink');
+  });
 });
 
 describe('RetroTabs', () => {
