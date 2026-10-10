@@ -7,6 +7,8 @@ const api = vi.hoisted(() => ({
   fetchLlmConfig: vi.fn(),
   updateLlmConfig: vi.fn(),
   fetchApiKeyStatus: vi.fn(),
+  fetchFeatureConfig: vi.fn(),
+  testLlmConnection: vi.fn(),
   refreshStatus: vi.fn(),
   setUiLanguage: vi.fn(),
   setContentLanguage: vi.fn(),
@@ -55,8 +57,8 @@ vi.mock('@/lib/api/config', async (importOriginal) => {
     updateLlmConfig: api.updateLlmConfig,
     fetchApiKeyStatus: api.fetchApiKeyStatus,
     updateApiKeys: api.unavailable,
-    testLlmConnection: api.unavailable,
-    fetchFeatureConfig: api.unavailable,
+    testLlmConnection: api.testLlmConnection,
+    fetchFeatureConfig: api.fetchFeatureConfig,
     fetchPromptConfig: api.unavailable,
     fetchFeaturePrompts: api.unavailable,
   };
@@ -75,6 +77,9 @@ beforeEach(() => {
   });
   api.updateLlmConfig.mockResolvedValue({});
   api.refreshStatus.mockResolvedValue(undefined);
+  // Per-test overrides must not leak: reset to "unavailable" every time.
+  api.fetchFeatureConfig.mockImplementation(api.unavailable);
+  api.testLlmConnection.mockImplementation(api.unavailable);
 });
 
 async function renderLoaded() {
@@ -182,5 +187,82 @@ describe('settings page (Swiss sweep)', () => {
       );
     expect(dangerCards).toHaveLength(2);
     for (const heading of dangerCards) expect(heading).toHaveClass('font-serif', 'text-ink');
+  });
+
+  it('keeps form columns at a readable width inside the full-width frame', async () => {
+    api.fetchFeatureConfig.mockResolvedValue({
+      enable_cover_letter: true,
+      enable_outreach_message: true,
+      enable_interview_prep: false,
+    });
+    await renderLoaded();
+
+    const llmFields = screen
+      .getByLabelText('settings.llmConfiguration.modelLabel')
+      .closest('.grid');
+    expect(llmFields).toHaveClass('max-w-3xl');
+
+    const promptBody = screen.getByText('settings.contentGeneration.description').parentElement;
+    expect(promptBody).toHaveClass('max-w-3xl');
+    for (const id of ['coverLetterPrompt', 'outreachPrompt']) {
+      expect(promptBody).toContainElement(document.getElementById(id));
+    }
+  });
+
+  it('gives every action button type="button"', async () => {
+    api.fetchFeatureConfig.mockResolvedValue({
+      enable_cover_letter: true,
+      enable_outreach_message: true,
+      enable_interview_prep: false,
+    });
+    await renderLoaded();
+    // Includes Test connection and both prompt Save / Reset pairs.
+    expect(
+      screen.getByRole('button', { name: 'settings.llmConfiguration.testConnection' })
+    ).toHaveAttribute('type', 'button');
+    expect(
+      screen.getAllByRole('button', { name: 'settings.contentGeneration.customPromptResetButton' })
+    ).toHaveLength(2);
+    for (const button of screen.getAllByRole('button')) {
+      expect(button).toHaveAttribute('type', 'button');
+    }
+  });
+
+  it('sets the footer on canvas, not panel', async () => {
+    await renderLoaded();
+    const footer = screen
+      .getByText('settings.footer.status.setupRequired')
+      .closest('.justify-between');
+    expect(footer).toHaveClass('bg-canvas', 'border-t');
+    expect(footer).not.toHaveClass('bg-panel');
+    expect(footer).not.toHaveClass('bg-secondary');
+  });
+
+  it('renders health-check detail blocks in the mono face', async () => {
+    api.testLlmConnection.mockResolvedValue({
+      healthy: true,
+      provider: 'openai',
+      model: 'gpt-5-nano',
+      test_prompt: 'ping prompt',
+      model_output: 'pong output',
+      reasoning_content: 'thinking trace',
+    });
+    await renderLoaded();
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole('button', { name: 'settings.llmConfiguration.testConnection' })
+      );
+    });
+
+    const result = await screen.findByRole('status');
+    expectStatusSquare(
+      within(result).getByText('settings.llmConfiguration.connectionSuccessful'),
+      'bg-success'
+    );
+    for (const text of ['ping prompt', 'pong output', 'thinking trace']) {
+      const block = within(result).getByText(text);
+      expect(block.tagName).toBe('PRE');
+      expect(block).toHaveClass('font-mono');
+    }
   });
 });

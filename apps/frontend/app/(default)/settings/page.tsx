@@ -864,7 +864,7 @@ export default function SettingsPage() {
               </h2>
             </div>
 
-            <div className="grid gap-6">
+            <div className="grid max-w-3xl gap-6">
               {/* Provider Selection */}
               <div className="space-y-2">
                 <Label id="provider-label">{t('settings.providerLabel')}</Label>
@@ -1046,6 +1046,7 @@ export default function SettingsPage() {
                   </AnimatePresence>
                 </Button>
                 <Button
+                  type="button"
                   variant="outline"
                   onClick={handleTestConnection}
                   disabled={status === 'testing' || status === 'saving'}
@@ -1133,7 +1134,7 @@ export default function SettingsPage() {
               </h2>
             </div>
 
-            <div className="space-y-2">
+            <div className="max-w-3xl space-y-2">
               <p className="text-sm text-ink-soft mb-4">
                 {t('settings.contentGeneration.description')}
               </p>
@@ -1174,6 +1175,7 @@ export default function SettingsPage() {
                     )}
                     <div className="flex gap-2">
                       <Button
+                        type="button"
                         variant="outline"
                         onClick={() =>
                           handleFeaturePromptSave('cover_letter_prompt', coverLetterPrompt)
@@ -1187,6 +1189,7 @@ export default function SettingsPage() {
                         )}
                       </Button>
                       <Button
+                        type="button"
                         variant="outline"
                         onClick={() => handleFeaturePromptSave('cover_letter_prompt', '')}
                         disabled={featurePromptSaving === 'cover_letter_prompt'}
@@ -1231,6 +1234,7 @@ export default function SettingsPage() {
                     )}
                     <div className="flex gap-2">
                       <Button
+                        type="button"
                         variant="outline"
                         onClick={() =>
                           handleFeaturePromptSave('outreach_message_prompt', outreachPrompt)
@@ -1244,6 +1248,7 @@ export default function SettingsPage() {
                         )}
                       </Button>
                       <Button
+                        type="button"
                         variant="outline"
                         onClick={() => handleFeaturePromptSave('outreach_message_prompt', '')}
                         disabled={featurePromptSaving === 'outreach_message_prompt'}
