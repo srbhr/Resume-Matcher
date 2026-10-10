@@ -28,6 +28,15 @@ describe('Swiss guard rules', () => {
     ['legacy-token', '<p className="bg-secondary" />'],
     ['decorative-icon', "import { X, Sparkles } from 'lucide-react';"],
     ['decorative-icon', "import {\n  X,\n  Zap,\n} from 'lucide-react';"],
+    ['decorative-icon', "import { X, Sparkle } from '@phosphor-icons/react';"],
+    ['decorative-icon', "import { SparkleIcon } from '@phosphor-icons/react';"],
+    ['decorative-icon', "import { MagicWand } from '@phosphor-icons/react/dist/ssr';"],
+    ['decorative-icon', "import {\n  X,\n  Lightning,\n} from '@phosphor-icons/react';"],
+    ['decorative-icon', "import { Star, Heart, Rocket } from '@phosphor-icons/react';"],
+    ['decorative-icon', "import { RocketLaunch, Confetti } from '@phosphor-icons/react';"],
+    ['lucide-import', "import { Check } from 'lucide-react';"],
+    ['lucide-import', "import {\n  Check,\n  Plus,\n} from 'lucide-react';"],
+    ['lucide-import', "import Loader2 from 'lucide-react/dist/esm/icons/loader-2';"],
     ['motion-import', "import { motion } from 'motion/react';"],
     ['motion-import', "import { motion } from 'framer-motion';"],
     ['glyph', '<span>✓</span>'],
@@ -45,9 +54,16 @@ describe('Swiss guard rules', () => {
     "import { m, AnimatePresence } from 'motion/react';",
     "<p>{'// '}subtitle</p>",
     '<div className="transition-colors animate-spin top-5 w-2.5" />',
-    "import { Check, Plus } from 'lucide-react';",
+    "import { Check, Plus, Gear } from '@phosphor-icons/react';",
+    "import { ArrowLeft } from '@phosphor-icons/react/dist/ssr';",
   ])('allows %s', (src) => {
     expect(rulesIn(src)).toEqual([]);
+  });
+
+  it('lets the printed resume templates keep lucide-react', () => {
+    const src = "import { Mail, Phone } from 'lucide-react';";
+    expect(rulesIn(src, 'components/resume/resume-modern.tsx')).toEqual([]);
+    expect(rulesIn(src, 'components/builder/resume-builder.tsx')).toEqual(['lucide-import']);
   });
 
   it('lets primitives use half-step spacing for optical padding', () => {

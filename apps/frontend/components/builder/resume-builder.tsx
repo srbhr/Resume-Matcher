@@ -20,7 +20,13 @@ import { StatusIndicator } from '@/components/ui/status-indicator';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Alert } from '@/components/ui/alert';
 import { ConfirmDialog, type ConfirmDialogProps } from '@/components/ui/confirm-dialog';
-import { Download, Save, ArrowLeft, RotateCcw, Loader2 } from 'lucide-react';
+import {
+  DownloadSimple,
+  FloppyDisk,
+  ArrowLeft,
+  ArrowCounterClockwise,
+  SpinnerGap,
+} from '@phosphor-icons/react';
 import {
   useResumePreview,
   type InterviewPrepData,
@@ -1385,7 +1391,7 @@ const ResumeBuilderContent = () => {
                   onClick={handleReset}
                   disabled={!hasUnsavedChanges}
                 >
-                  <RotateCcw aria-hidden="true" />
+                  <ArrowCounterClockwise aria-hidden="true" />
                   {t('common.reset')}
                 </Button>
                 <Button
@@ -1393,7 +1399,7 @@ const ResumeBuilderContent = () => {
                   onClick={handleSave}
                   disabled={!resumeId || isSaving || loadingState !== 'loaded'}
                 >
-                  <Save aria-hidden="true" />
+                  <FloppyDisk aria-hidden="true" />
                   {isSaving
                     ? t('common.saving')
                     : autoSaveError
@@ -1408,7 +1414,7 @@ const ResumeBuilderContent = () => {
                   onClick={handleDownload}
                   disabled={!resumeId || isDownloading}
                 >
-                  <Download aria-hidden="true" />
+                  <DownloadSimple aria-hidden="true" />
                   {isDownloading ? t('common.generating') : t('common.download')}
                 </Button>
               </>
@@ -1424,7 +1430,7 @@ const ResumeBuilderContent = () => {
                   disabled={isGeneratingCoverLetter}
                 >
                   {isGeneratingCoverLetter && (
-                    <Loader2 aria-hidden="true" className="animate-spin" />
+                    <SpinnerGap aria-hidden="true" className="animate-spin" />
                   )}
                   {t('coverLetter.regenerate')}
                 </Button>
@@ -1434,7 +1440,7 @@ const ResumeBuilderContent = () => {
                   onClick={handleDownloadCoverLetter}
                   disabled={!resumeId || isDownloading}
                 >
-                  <Download aria-hidden="true" />
+                  <DownloadSimple aria-hidden="true" />
                   {isDownloading ? t('common.generating') : t('common.download')}
                 </Button>
               </>
@@ -1448,7 +1454,7 @@ const ResumeBuilderContent = () => {
                 onClick={handleGenerateOutreach}
                 disabled={isGeneratingOutreach}
               >
-                {isGeneratingOutreach && <Loader2 aria-hidden="true" className="animate-spin" />}
+                {isGeneratingOutreach && <SpinnerGap aria-hidden="true" className="animate-spin" />}
                 {t('outreach.regenerate')}
               </Button>
             )}
@@ -1462,7 +1468,7 @@ const ResumeBuilderContent = () => {
                 disabled={!canGenerateInterviewPrep || isGeneratingInterviewPrep}
               >
                 {isGeneratingInterviewPrep && (
-                  <Loader2 aria-hidden="true" className="animate-spin" />
+                  <SpinnerGap aria-hidden="true" className="animate-spin" />
                 )}
                 {t('interviewPrep.regenerate')}
               </Button>

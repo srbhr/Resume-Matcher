@@ -13,12 +13,7 @@ import {
 } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { useReducedMotion } from 'motion/react';
-import ArrowLeft from 'lucide-react/dist/esm/icons/arrow-left';
-import Plus from 'lucide-react/dist/esm/icons/plus';
-import Settings from 'lucide-react/dist/esm/icons/settings';
-import Loader2 from 'lucide-react/dist/esm/icons/loader-2';
-import ChevronLeft from 'lucide-react/dist/esm/icons/chevron-left';
-import ChevronRight from 'lucide-react/dist/esm/icons/chevron-right';
+import { ArrowLeft, Plus, Gear, SpinnerGap, CaretLeft, CaretRight } from '@phosphor-icons/react';
 import { Button, buttonClass } from '@/components/ui/button';
 import { Alert } from '@/components/ui/alert';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -243,7 +238,7 @@ export function KanbanBoard() {
         </div>
         <div className="ml-auto flex flex-wrap items-center gap-3">
           <Button type="button" variant="outline" size="sm" onClick={() => setManageOpen(true)}>
-            <Settings aria-hidden="true" />
+            <Gear aria-hidden="true" />
             {t('tracker.manage')}
           </Button>
           {showScrollControls && (
@@ -256,7 +251,7 @@ export function KanbanBoard() {
                 onClick={() => scrollByColumn(-1)}
                 disabled={!canScrollLeft}
               >
-                <ChevronLeft aria-hidden="true" />
+                <CaretLeft aria-hidden="true" />
               </Button>
               <Button
                 type="button"
@@ -266,7 +261,7 @@ export function KanbanBoard() {
                 onClick={() => scrollByColumn(1)}
                 disabled={!canScrollRight}
               >
-                <ChevronRight aria-hidden="true" />
+                <CaretRight aria-hidden="true" />
               </Button>
             </div>
           )}
@@ -299,7 +294,7 @@ export function KanbanBoard() {
       <div className="flex min-h-0 flex-1 flex-col">
         {loading ? (
           <div role="status" className="flex flex-1 items-center justify-center">
-            <Loader2 aria-hidden="true" className="size-6 animate-spin text-steel" />
+            <SpinnerGap aria-hidden="true" className="size-6 animate-spin text-steel" />
             <span className="sr-only">{t('common.loading')}</span>
           </div>
         ) : isEmpty ? (
@@ -345,7 +340,7 @@ export function KanbanBoard() {
           {canScrollRight && (
             <span className="flex shrink-0 items-center gap-1 font-mono text-xs font-bold uppercase tracking-wide text-primary">
               {t('tracker.scroll.hint')}
-              <ChevronRight aria-hidden="true" className="size-4" />
+              <CaretRight aria-hidden="true" className="size-4" />
             </span>
           )}
           <div className="flex items-center gap-2">

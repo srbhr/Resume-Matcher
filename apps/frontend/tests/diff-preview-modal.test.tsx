@@ -79,12 +79,15 @@ describe('DiffPreviewModal', () => {
     // Dialog uses createPortal to document.body, so the test's `container`
     // wrapper does not contain the rendered dialog content. Query
     // document.body directly to find the icons rendered inside the portal.
-    const alertIcons = document.body.querySelectorAll('.lucide-triangle-alert');
-    expect(alertIcons.length).toBe(1);
-    // The risk marker has a name, so it is not colour- or glyph-only.
-    expect(screen.getByRole('img', { name: 'tailor.diffModal.highRiskChanges' })).toBe(
-      alertIcons[0]
+    // The decorative icons are aria-hidden, so the only icon exposed to the
+    // accessibility tree is the risk marker, and it carries a name: it is not
+    // colour- or glyph-only.
+    const riskIcons = screen.getAllByRole('img');
+    expect(riskIcons).toHaveLength(1);
+    expect(riskIcons[0]).toBe(
+      screen.getByRole('img', { name: 'tailor.diffModal.highRiskChanges' })
     );
+    expect(riskIcons[0].tagName.toLowerCase()).toBe('svg');
   });
 
   it('marks removed and added text with native del and ins semantics', () => {

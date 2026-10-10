@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
-import { Check, ChevronDown, ChevronRight } from 'lucide-react';
+import { Check, CaretDown, CaretRight } from '@phosphor-icons/react';
 import { useTranslations } from '@/lib/i18n';
 import type { RegenerateItemInput } from '@/lib/api/enrichment';
 
@@ -107,9 +107,9 @@ export const RegenerateDialog: React.FC<RegenerateDialogProps> = ({
                   </span>
                 </div>
                 {expandedSections.has('experience') ? (
-                  <ChevronDown aria-hidden="true" className="size-4" />
+                  <CaretDown aria-hidden="true" className="size-4" />
                 ) : (
-                  <ChevronRight aria-hidden="true" className="size-4" />
+                  <CaretRight aria-hidden="true" className="size-4" />
                 )}
               </button>
               {expandedSections.has('experience') && (
@@ -145,9 +145,9 @@ export const RegenerateDialog: React.FC<RegenerateDialogProps> = ({
                   </span>
                 </div>
                 {expandedSections.has('projects') ? (
-                  <ChevronDown aria-hidden="true" className="size-4" />
+                  <CaretDown aria-hidden="true" className="size-4" />
                 ) : (
-                  <ChevronRight aria-hidden="true" className="size-4" />
+                  <CaretRight aria-hidden="true" className="size-4" />
                 )}
               </button>
               {expandedSections.has('projects') && (
@@ -180,9 +180,9 @@ export const RegenerateDialog: React.FC<RegenerateDialogProps> = ({
                   </span>
                 </div>
                 {expandedSections.has('skills') ? (
-                  <ChevronDown aria-hidden="true" className="size-4" />
+                  <CaretDown aria-hidden="true" className="size-4" />
                 ) : (
-                  <ChevronRight aria-hidden="true" className="size-4" />
+                  <CaretRight aria-hidden="true" className="size-4" />
                 )}
               </button>
               {expandedSections.has('skills') && (

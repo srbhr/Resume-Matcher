@@ -18,11 +18,7 @@ import { formatDate } from '@/lib/format-date';
 import { cn } from '@/lib/utils';
 
 // Optimized Imports for Performance (No Barrel Imports)
-import Loader2 from 'lucide-react/dist/esm/icons/loader-2';
-import RefreshCw from 'lucide-react/dist/esm/icons/refresh-cw';
-import Plus from 'lucide-react/dist/esm/icons/plus';
-import Settings from 'lucide-react/dist/esm/icons/settings';
-import AlertTriangle from 'lucide-react/dist/esm/icons/alert-triangle';
+import { SpinnerGap, ArrowsClockwise, Plus, Gear, Warning } from '@phosphor-icons/react';
 
 import {
   fetchResume,
@@ -509,7 +505,7 @@ export default function DashboardPage() {
     }
   };
 
-  // Persistent state is a StatusIndicator square; Loader2 marks in-flight work only.
+  // Persistent state is a StatusIndicator square; SpinnerGap marks in-flight work only.
   const getStatusDisplay = (): { text: string; tone: StatusTone; busy: boolean } => {
     switch (processingStatus) {
       case 'loading':
@@ -568,7 +564,7 @@ export default function DashboardPage() {
                   className="mt-3"
                   onClick={() => void loadTailoredResumes()}
                 >
-                  <RefreshCw aria-hidden="true" />
+                  <ArrowsClockwise aria-hidden="true" />
                   {t('common.retry')}
                 </Button>
               </Alert>
@@ -599,7 +595,7 @@ export default function DashboardPage() {
                   className="aspect-square h-full border-dashed border-warning bg-warning-tint hover:border-transparent hover:translate-x-0 hover:translate-y-0 hover:bg-primary hover:text-white group-focus-visible/setup:z-20 group-focus-visible/setup:border-transparent group-focus-visible/setup:translate-x-0 group-focus-visible/setup:translate-y-0 group-focus-visible/setup:bg-primary group-focus-visible/setup:text-white group-focus-visible/setup:ring-2 group-focus-visible/setup:ring-inset group-focus-visible/setup:ring-white"
                 >
                   <div className="flex-1 flex flex-col justify-between">
-                    <AlertTriangle
+                    <Warning
                       aria-hidden="true"
                       className="size-6 text-warning-text group-hover:text-white group-focus-visible/setup:text-white"
                     />
@@ -611,7 +607,7 @@ export default function DashboardPage() {
                         {t('dashboard.setupRequiredMessage')}
                       </CardDescription>
                       <div className="flex items-center gap-2 mt-4 text-warning-text group-hover:text-white group-focus-visible/setup:text-white">
-                        <Settings aria-hidden="true" className="size-4" />
+                        <Gear aria-hidden="true" className="size-4" />
                         <span className="font-mono text-xs font-bold uppercase">
                           {t('nav.goToSettings')}
                         </span>
@@ -678,9 +674,9 @@ export default function DashboardPage() {
                         title={t('dashboard.retryProcessing')}
                       >
                         {isRetrying ? (
-                          <Loader2 aria-hidden="true" className="animate-spin" />
+                          <SpinnerGap aria-hidden="true" className="animate-spin" />
                         ) : (
-                          <RefreshCw aria-hidden="true" />
+                          <ArrowsClockwise aria-hidden="true" />
                         )}
                       </Button>
                     </span>
@@ -701,7 +697,7 @@ export default function DashboardPage() {
                 <div className="mt-auto pt-4 flex flex-col gap-2">
                   <div className="flex items-center gap-2">
                     {statusDisplay.busy && (
-                      <Loader2
+                      <SpinnerGap
                         aria-hidden="true"
                         className={cn(
                           'size-4 animate-spin',

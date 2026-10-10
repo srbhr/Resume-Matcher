@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Editor } from '@tiptap/react';
-import { Bold, Italic, Underline, Link } from 'lucide-react';
+import { TextB, TextItalic, TextUnderline, Link } from '@phosphor-icons/react';
 import { Button } from './button';
 import { cn } from '@/lib/utils';
 
@@ -20,21 +20,21 @@ interface RichTextToolbarProps {
 export const RichTextToolbar: React.FC<RichTextToolbarProps> = ({ editor, onLinkClick }) => {
   const tools = [
     {
-      icon: Bold,
+      icon: TextB,
       label: 'Bold',
       action: () => editor.chain().focus().toggleBold().run(),
       isActive: editor.isActive('bold'),
       shortcut: 'Ctrl+B',
     },
     {
-      icon: Italic,
+      icon: TextItalic,
       label: 'Italic',
       action: () => editor.chain().focus().toggleItalic().run(),
       isActive: editor.isActive('italic'),
       shortcut: 'Ctrl+I',
     },
     {
-      icon: Underline,
+      icon: TextUnderline,
       label: 'Underline',
       action: () => editor.chain().focus().toggleUnderline().run(),
       isActive: editor.isActive('underline'),

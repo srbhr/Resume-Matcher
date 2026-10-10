@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { CaretLeft, CaretRight } from '@phosphor-icons/react';
 import type { EnrichmentQuestion, EnrichmentItem } from '@/lib/api/enrichment';
 import { useTranslations } from '@/lib/i18n';
 
@@ -134,13 +134,13 @@ export function QuestionStep({
       {/* Navigation */}
       <div className="flex items-center justify-between pt-6 border-t border-paper mt-6">
         <Button variant="outline" onClick={onPrev} disabled={isFirst}>
-          <ChevronLeft aria-hidden="true" />
+          <CaretLeft aria-hidden="true" />
           {t('common.back')}
         </Button>
 
         <Button onClick={handleContinue}>
           {isLast ? t('common.finish') : t('common.continue')}
-          <ChevronRight aria-hidden="true" />
+          <CaretRight aria-hidden="true" />
         </Button>
       </div>
     </div>

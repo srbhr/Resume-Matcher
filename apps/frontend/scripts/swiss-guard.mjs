@@ -21,7 +21,7 @@ const PALETTE =
 const COLOR_PREFIX =
   '(?:bg|text|border(?:-[trblxyse])?|ring(?:-offset)?|fill|stroke|outline|divide|placeholder|from|to|via|accent|caret|decoration|shadow)';
 const DECORATIVE_ICONS =
-  /\b(?:Sparkles?|WandSparkles|Wand2?|Stars?|Heart|Zap|Rocket|PartyPopper)\b/g;
+  /\b(?:Sparkles?|WandSparkles|Wand2?|Stars?|Heart|Zap|Rocket|PartyPopper|MagicWand|StarFour|HeartStraight|Lightning|RocketLaunch|Confetti)(?:Icon)?\b/g;
 
 export const LINE_RULES = [
   {
@@ -74,7 +74,7 @@ export const LINE_RULES = [
   {
     id: 'keyframes',
     re: /(?<![\w-])animate-(?:bounce|pulse|ping)(?![\w-])/g,
-    hint: 'No decorative loops — use StatusIndicator, or Loader2 for in-flight work.',
+    hint: 'No decorative loops — use StatusIndicator, or SpinnerGap for in-flight work.',
   },
   {
     id: 'legacy-token',
@@ -84,17 +84,25 @@ export const LINE_RULES = [
   {
     id: 'glyph',
     re: /[✨✓✔⭐🚀]|>[^<{}\n]*•[^<{}\n]*</g,
-    hint: 'No text glyphs as icons — use a lucide icon with aria-hidden, or nothing.',
+    hint: 'No text glyphs as icons — use a Phosphor icon with aria-hidden, or nothing.',
+  },
+  {
+    id: 'lucide-import',
+    re: /from\s*['"]lucide-react/g,
+    skip: (file) => file.startsWith('components/resume/'),
+    hint: 'Use @phosphor-icons/react (@phosphor-icons/react/dist/ssr in server components). lucide-react stays only in the printed resume templates.',
   },
 ];
 
 export const FILE_RULES = [
   {
     id: 'decorative-icon',
-    hint: 'Functional icons only — drop Sparkles/Wand/Star/Heart/Zap/Rocket.',
+    hint: 'Functional icons only — drop Sparkle/MagicWand/Star/Heart/Lightning/Rocket.',
     find(text) {
       const found = [];
-      for (const imp of text.matchAll(/import\s*\{([^}]*)\}\s*from\s*['"]lucide-react['"]/g)) {
+      for (const imp of text.matchAll(
+        /import\s*\{([^}]*)\}\s*from\s*['"](?:lucide-react|@phosphor-icons\/react(?:\/dist\/(?:ssr|csr))?)['"]/g
+      )) {
         const start = imp.index + imp[0].indexOf(imp[1]);
         for (const name of imp[1].matchAll(DECORATIVE_ICONS)) {
           found.push({ index: start + name.index, match: name[0] });

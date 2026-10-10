@@ -3,7 +3,7 @@
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import LayoutGrid from 'lucide-react/dist/esm/icons/layout-grid';
+import { SquaresFour } from '@phosphor-icons/react';
 import { buttonClass } from '@/components/ui/button';
 import { PageFrame } from '@/components/ui/page-frame';
 import { PageHeader } from '@/components/ui/page-header';
@@ -53,7 +53,7 @@ export const SwissGrid = ({
             href="/tracker"
             className={buttonClass({ variant: 'outline', className: 'min-w-36' })}
           >
-            <LayoutGrid aria-hidden="true" />
+            <SquaresFour aria-hidden="true" />
             {t('nav.applicationTracker')}
           </Link>
           <Link

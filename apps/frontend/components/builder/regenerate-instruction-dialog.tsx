@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Alert } from '@/components/ui/alert';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, SpinnerGap } from '@phosphor-icons/react';
 import { useTranslations } from '@/lib/i18n';
 import type { RegenerateItemInput } from '@/lib/api/enrichment';
 
@@ -125,7 +125,7 @@ export const RegenerateInstructionDialog: React.FC<RegenerateInstructionDialogPr
             {t('builder.regenerate.instructionDialog.backButton')}
           </Button>
           <Button onClick={onGenerate} disabled={isGenerating}>
-            {isGenerating && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
+            {isGenerating && <SpinnerGap className="size-4 animate-spin" aria-hidden="true" />}
             {isGenerating
               ? t('builder.regenerate.diffPreview.loading')
               : t('builder.regenerate.instructionDialog.generateButton')}

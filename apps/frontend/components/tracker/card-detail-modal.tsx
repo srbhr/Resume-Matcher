@@ -2,8 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Loader2 from 'lucide-react/dist/esm/icons/loader-2';
-import Pencil from 'lucide-react/dist/esm/icons/pencil';
+import { SpinnerGap, PencilSimple } from '@phosphor-icons/react';
 import {
   Dialog,
   DialogBody,
@@ -102,7 +101,7 @@ export function CardDetailModal({
         <DialogBody className="space-y-4">
           {loading ? (
             <div role="status" className="py-8">
-              <Loader2 aria-hidden="true" className="size-5 animate-spin text-steel" />
+              <SpinnerGap aria-hidden="true" className="size-5 animate-spin text-steel" />
               <span className="sr-only">{t('common.loading')}</span>
             </div>
           ) : detail ? (
@@ -146,7 +145,7 @@ export function CardDetailModal({
                   >
                     {savingNotes ? (
                       <>
-                        <Loader2 aria-hidden="true" className="animate-spin" />
+                        <SpinnerGap aria-hidden="true" className="animate-spin" />
                         {t('common.saving')}
                       </>
                     ) : (
@@ -173,7 +172,7 @@ export function CardDetailModal({
             }}
             disabled={!resumeAvailable}
           >
-            <Pencil aria-hidden="true" />
+            <PencilSimple aria-hidden="true" />
             {t('tracker.modal.editResume')}
           </Button>
         </DialogFooter>

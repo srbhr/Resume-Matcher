@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { createPortal } from 'react-dom';
-import { X } from 'lucide-react';
+import { X } from '@phosphor-icons/react';
 import { AnimatePresence, m, useIsPresent, useReducedMotion } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { DURATION, EASE_OUT_EXPO, SPRING } from '@/lib/motion';

@@ -2,7 +2,7 @@
 
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Check, X } from 'lucide-react';
+import { Check, X } from '@phosphor-icons/react';
 import type { EnhancedDescription, EnhancementItemError } from '@/lib/api/enrichment';
 import { useTranslations } from '@/lib/i18n';
 

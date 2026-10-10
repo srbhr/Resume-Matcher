@@ -17,7 +17,7 @@ const RichTextEditor = dynamic(
     ),
   }
 );
-import { AlignLeft, Copy, List, Plus, Trash2 } from 'lucide-react';
+import { TextAlignLeft, Copy, ListBullets, Plus, Trash } from '@phosphor-icons/react';
 import type { CustomSectionItem } from '@/components/dashboard/resume-component';
 import { useTranslations } from '@/lib/i18n';
 import {
@@ -230,7 +230,7 @@ export const GenericItemForm: React.FC<GenericItemFormProps> = ({
                 aria-label={t('a11y.removeItem')}
                 title={t('a11y.removeItem')}
               >
-                <Trash2 aria-hidden="true" />
+                <Trash aria-hidden="true" />
               </Button>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 pr-24">
@@ -328,9 +328,9 @@ export const GenericItemForm: React.FC<GenericItemFormProps> = ({
                           title={t('builder.genericItemForm.actions.togglePointStyle')}
                         >
                           {style === 'plain' ? (
-                            <AlignLeft aria-hidden="true" />
+                            <TextAlignLeft aria-hidden="true" />
                           ) : (
-                            <List aria-hidden="true" />
+                            <ListBullets aria-hidden="true" />
                           )}
                         </Button>
                         <Button
@@ -341,7 +341,7 @@ export const GenericItemForm: React.FC<GenericItemFormProps> = ({
                           aria-label={t('a11y.removeDescription')}
                           title={t('a11y.removeDescription')}
                         >
-                          <Trash2 aria-hidden="true" />
+                          <Trash aria-hidden="true" />
                         </Button>
                       </div>
                     )}

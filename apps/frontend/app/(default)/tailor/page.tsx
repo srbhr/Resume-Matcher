@@ -26,7 +26,7 @@ import { fetchPromptConfig, type PromptOption } from '@/lib/api/config';
 import { getPreviewErrorMessage } from '@/lib/utils/preview-error';
 import { Dropdown } from '@/components/ui/dropdown';
 import { useStatusCache } from '@/lib/context/status-cache';
-import { Loader2 } from 'lucide-react';
+import { SpinnerGap } from '@phosphor-icons/react';
 import { useTranslations } from '@/lib/i18n';
 import { DiffPreviewModal } from '@/components/tailor/diff-preview-modal';
 import { ATSScoreCard } from '@/components/tailor/ats-score-card';
@@ -578,13 +578,13 @@ export default function TailorPage() {
           >
             {isLoading ? (
               <>
-                <Loader2 className="w-5 h-5 animate-spin" />
+                <SpinnerGap className="w-5 h-5 animate-spin" />
                 {t('common.processing')}
                 {elapsed > 0 && <span className="text-xs tabular-nums">{elapsed}s</span>}
               </>
             ) : statusLoading ? (
               <>
-                <Loader2 className="w-5 h-5 animate-spin" />
+                <SpinnerGap className="w-5 h-5 animate-spin" />
                 {t('common.checking')}
               </>
             ) : !isLlmConfigured ? (

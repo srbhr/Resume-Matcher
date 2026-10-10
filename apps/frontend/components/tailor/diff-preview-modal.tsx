@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { AlertTriangle, X, ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
+import { Warning, X, CaretDown, CaretRight, SpinnerGap } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
 import { Alert } from '@/components/ui/alert';
 import { PanelHeader } from '@/components/ui/panel-header';
@@ -91,7 +91,7 @@ export function DiffPreviewModal({
             <Button variant="warning" onClick={onConfirm} disabled={isConfirming}>
               {isConfirming ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <SpinnerGap className="w-4 h-4 animate-spin" />
                   {t('common.saving')}
                 </>
               ) : (
@@ -347,7 +347,7 @@ export function DiffPreviewModal({
             <Button variant="success" onClick={onConfirm} disabled={isConfirming}>
               {isConfirming ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <SpinnerGap className="w-4 h-4 animate-spin" />
                   {t('common.saving')}
                 </>
               ) : (
@@ -429,7 +429,7 @@ function ChangeSection({ title, count, isExpanded, onToggle, children }: ChangeS
         className="flex w-full items-center justify-between p-3 transition-colors hover:bg-panel focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
       >
         <div className="flex items-center gap-2">
-          {isExpanded ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" />}
+          {isExpanded ? <CaretDown className="size-4" /> : <CaretRight className="size-4" />}
           <span className="font-mono text-sm font-bold uppercase tracking-wider tabular-nums">
             {title} ({count})
           </span>
@@ -490,7 +490,7 @@ function ChangeItem({ change }: ChangeItemProps) {
           )}
         </div>
         {change.change_type === 'added' && change.confidence === 'high' && (
-          <AlertTriangle
+          <Warning
             role="img"
             aria-label={t('tailor.diffModal.highRiskChanges')}
             className="size-4 shrink-0 text-warning-text"

@@ -22,7 +22,14 @@ import {
   duplicateResume,
 } from '@/lib/api/resume';
 import { useStatusCache } from '@/lib/context/status-cache';
-import { Edit, Download, Loader2, Pencil, MessagesSquare, Copy } from 'lucide-react';
+import {
+  NotePencil,
+  DownloadSimple,
+  SpinnerGap,
+  PencilSimple,
+  Chats,
+  Copy,
+} from '@phosphor-icons/react';
 import { EnrichmentModal } from '@/components/enrichment/enrichment-modal';
 import { useTranslations } from '@/lib/i18n';
 import { withLocalizedDefaultSections } from '@/lib/utils/section-helpers';
@@ -438,7 +445,7 @@ export default function ResumeViewerPage() {
     return (
       <PageFrame>
         <div className="flex items-center gap-3 p-8 md:p-12">
-          <Loader2 aria-hidden="true" className="size-6 animate-spin text-primary" />
+          <SpinnerGap aria-hidden="true" className="size-6 animate-spin text-primary" />
           <StatusIndicator tone="active">{t('resumeViewer.loading')}</StatusIndicator>
         </div>
       </PageFrame>
@@ -462,7 +469,7 @@ export default function ResumeViewerPage() {
                   <Button type="button" onClick={handleRetryProcessing} disabled={isRetrying}>
                     {isRetrying ? (
                       <>
-                        <Loader2 aria-hidden="true" className="animate-spin" />
+                        <SpinnerGap aria-hidden="true" className="animate-spin" />
                         {t('common.processing')}
                       </>
                     ) : (
@@ -525,7 +532,7 @@ export default function ResumeViewerPage() {
                   setIsEditingTitle(true);
                 }}
               >
-                <Pencil aria-hidden="true" />
+                <PencilSimple aria-hidden="true" />
               </Button>
             </>
           )}
@@ -550,7 +557,7 @@ export default function ResumeViewerPage() {
             </Button>
           )}
           <Button type="button" variant="outline" onClick={handleEdit}>
-            <Edit aria-hidden="true" />
+            <NotePencil aria-hidden="true" />
             {t('dashboard.editResume')}
           </Button>
           <Button
@@ -564,12 +571,12 @@ export default function ResumeViewerPage() {
           </Button>
           {isTailoredResume && (
             <Button type="button" variant="outline" onClick={handleInterviewPrep}>
-              <MessagesSquare aria-hidden="true" />
+              <Chats aria-hidden="true" />
               {t('interviewPrep.title')}
             </Button>
           )}
           <Button type="button" variant="outline" onClick={handleDownload} disabled={isDownloading}>
-            <Download aria-hidden="true" />
+            <DownloadSimple aria-hidden="true" />
             {isDownloading ? t('common.generating') : t('resumeViewer.downloadResume')}
           </Button>
         </PageHeader.Actions>

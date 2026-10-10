@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Alert } from '@/components/ui/alert';
-import { Check, RefreshCw, ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
+import { Check, ArrowsClockwise, CaretDown, CaretRight, SpinnerGap } from '@phosphor-icons/react';
 import { useTranslations } from '@/lib/i18n';
 import type { RegenerateItemError, RegeneratedItem } from '@/lib/api/enrichment';
 
@@ -143,9 +143,9 @@ export const RegenerateDiffPreview: React.FC<RegenerateDiffPreviewProps> = ({
                     {getItemLabel(item)}
                   </span>
                   {expandedItems.has(item.item_id) ? (
-                    <ChevronDown aria-hidden="true" className="size-4" />
+                    <CaretDown aria-hidden="true" className="size-4" />
                   ) : (
-                    <ChevronRight aria-hidden="true" className="size-4" />
+                    <CaretRight aria-hidden="true" className="size-4" />
                   )}
                 </button>
 
@@ -243,13 +243,13 @@ export const RegenerateDiffPreview: React.FC<RegenerateDiffPreviewProps> = ({
 
         <DialogFooter className="justify-between">
           <Button variant="outline" onClick={onReject} disabled={isApplying || needsRefresh}>
-            <RefreshCw aria-hidden="true" />
+            <ArrowsClockwise aria-hidden="true" />
             {t('builder.regenerate.diffPreview.rejectButton')}
           </Button>
           <Button variant="success" onClick={onAccept} disabled={isApplying}>
             {isApplying ? (
               <>
-                <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+                <SpinnerGap className="size-4 animate-spin" aria-hidden="true" />
                 {t(
                   needsRefresh
                     ? 'builder.regenerate.diffPreview.refreshing'

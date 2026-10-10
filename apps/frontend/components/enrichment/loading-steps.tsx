@@ -1,6 +1,6 @@
 'use client';
 
-import { Loader2 } from 'lucide-react';
+import { SpinnerGap } from '@phosphor-icons/react';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { StatusIndicator } from '@/components/ui/status-indicator';
@@ -15,7 +15,7 @@ function LoadingStep({ message, submessage }: LoadingStepProps) {
   return (
     <div role="status" className="flex flex-col items-start gap-2 py-6">
       <p className="flex items-center gap-3 font-mono text-sm font-bold uppercase tracking-wider text-ink">
-        <Loader2 aria-hidden="true" className="size-5 shrink-0 animate-spin" />
+        <SpinnerGap aria-hidden="true" className="size-5 shrink-0 animate-spin" />
         {message}
       </p>
       {submessage && <p className="max-w-[60ch] text-sm text-ink-soft text-pretty">{submessage}</p>}
@@ -88,7 +88,7 @@ export function CompleteStep({
         </Alert>
       )}
       <Button onClick={onClose} disabled={isRefreshing}>
-        {isRefreshing && <Loader2 aria-hidden="true" className="animate-spin" />}
+        {isRefreshing && <SpinnerGap aria-hidden="true" className="animate-spin" />}
         {isRefreshing
           ? t('enrichment.complete.refreshing')
           : refreshFailed

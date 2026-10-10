@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import X from 'lucide-react/dist/esm/icons/x';
-import Trash2 from 'lucide-react/dist/esm/icons/trash-2';
+import { X, Trash } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
 import { Dropdown } from '@/components/ui/dropdown';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
@@ -41,7 +40,7 @@ export function BulkActionBar({ selectedCount, onMove, onDelete, onClear }: Bulk
       </div>
 
       <Button type="button" variant="destructive" size="sm" onClick={() => setConfirmDelete(true)}>
-        <Trash2 aria-hidden="true" />
+        <Trash aria-hidden="true" />
         {t('common.delete')}
       </Button>
 
