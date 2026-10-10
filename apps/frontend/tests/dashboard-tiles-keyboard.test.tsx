@@ -447,7 +447,7 @@ describe('dashboard tile highlight and the one blue action', () => {
     }
   });
 
-  it('makes Create tailored resume the one blue primary at rest, inverted on the blue tile', async () => {
+  it('keeps Create tailored resume the one blue primary at rest, with its own press-in and ring', async () => {
     api.list.mockResolvedValue([{ ...row('m1', true), is_default_master: true }]);
     render(<DashboardPage />);
     const label = await screen.findByText('dashboard.createResume');
@@ -455,25 +455,72 @@ describe('dashboard tile highlight and the one blue action', () => {
     expect(classes(create)).toContain('bg-primary');
     expect(document.querySelectorAll('button.bg-primary, a.bg-primary')).toHaveLength(1);
 
-    // Hover or focus fills the tile blue, so the primary button inverts to a white square.
-    const tile = create.closest('.group') as HTMLElement;
-    expectBlueFillTile(tile);
+    // The tile is not highlighted: only the + button reacts to the pointer, through the Button
+    // primitive's own hover (darker blue, 1px press-in) and its primary focus ring.
     expect(classes(create)).toEqual(
       expect.arrayContaining([
-        'hover:bg-white',
-        'hover:text-primary',
-        'group-has-[:focus-visible]:bg-white',
-        'group-has-[:focus-visible]:text-primary',
-        'focus-visible:ring-white',
+        'hover:bg-primary-hover',
+        'hover:translate-x-px',
+        'hover:translate-y-px',
+        'focus-visible:ring-primary',
       ])
     );
-    expect(classes(create)).not.toContain('hover:bg-primary-hover');
-    expect(classes(create)).not.toContain('focus-visible:ring-primary');
-    expectTurnsWhite(label);
-    // The tile is a hover target, so the whole tile must also be the click target.
-    expect(classes(create)).toEqual(
-      expect.arrayContaining(['static', 'after:absolute', 'after:inset-0'])
+    expect(classes(create)).not.toContain('hover:bg-white');
+    expect(classes(create)).not.toContain('focus-visible:ring-white');
+    // No stretched click area: the button is not made static and has no ::after overlay.
+    expect(classes(create)).not.toContain('static');
+    expect(classAttr(create)).not.toMatch(/after:/);
+    // The label under it is plain steel text that never turns white.
+    expect(classes(label)).toContain('text-steel');
+    expect(classAttr(label)).not.toMatch(/group-/);
+  });
+
+  it('keeps the Create tile plain: no blue highlight and the + button is its only control', async () => {
+    api.list.mockResolvedValue([{ ...row('m1', true), is_default_master: true }]);
+    render(<DashboardPage />);
+    const label = await screen.findByText('dashboard.createResume');
+    const create = within(label.parentElement!).getByRole('button');
+    const tile = create.closest('.aspect-square') as HTMLElement;
+
+    // Not a TILE_FILL tile: nothing on it fills blue or turns text white on hover or focus.
+    expect(classAttr(tile)).not.toMatch(
+      /hover:bg-primary|has-\[:focus-visible\]|hover:text-white|hover:border-transparent/
     );
+    // Not an interactive Card either: no group (so no group-hover recolouring) and no hand
+    // cursor over the parts of the tile that do nothing.
+    expect(classes(tile)).not.toContain('group');
+    expect(classes(tile)).not.toContain('cursor-pointer');
+    expect(tile.closest('.group')).toBeNull();
+
+    const controls = tile.querySelectorAll(
+      'a, button, input, select, textarea, [role="button"], [role="link"], [tabindex]'
+    );
+    expect(Array.from(controls)).toEqual([create]);
+  });
+
+  it('never stretches a ::after over a tile on an element that also moves on hover', async () => {
+    // A transform makes its element the containing block of its own ::after, so a stretched
+    // overlay on a hover-translated element shrinks to it, ends the hover, and flickers the
+    // cursor. Render every tile kind (failed default for the action buttons) and check classes.
+    api.get.mockResolvedValue(status('failed'));
+    api.list.mockResolvedValue([
+      { ...row('m1', true), is_default_master: true, processing_status: 'failed' as const },
+      { ...row('m2', true), title: 'Solutions Eng' },
+      { ...row('child'), parent_id: 'm1', title: 'Tailored for Acme' },
+    ]);
+    render(<DashboardPage />);
+    await screen.findByRole('button', { name: 'dashboard.deleteAndReupload' });
+    expect(screen.getByRole('button', { name: 'dashboard.createResume' })).toBeInTheDocument();
+
+    const stretched = Array.from(document.querySelectorAll('*')).filter((el) =>
+      /(^|\s)(?:[\w-]+:)*after:inset-0(\s|$)/.test(classAttr(el))
+    );
+    // The tile links are the stretched elements, so the guard below is not vacuous.
+    expect(stretched.length).toBeGreaterThanOrEqual(3);
+    for (const el of stretched) {
+      expect(el.tagName).toBe('A');
+      expect(classAttr(el)).not.toMatch(/(^|[\s:])(?:hover|active|group-hover):(?:-?)translate-/);
+    }
   });
 
   it('does not light up the Create tile while tailoring is unavailable', async () => {

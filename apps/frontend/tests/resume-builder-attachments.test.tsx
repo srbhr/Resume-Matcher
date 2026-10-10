@@ -249,23 +249,25 @@ describe('builder panels', () => {
 });
 
 describe('builder footer', () => {
-  it('shows only the module label, with no template or page-size readout', async () => {
+  it('has no footer bar: the page frame ends with the panel grid', async () => {
     fetchResume.mockResolvedValue(response());
     const Builder = await importBuilder();
-    render(<Builder />);
+    const { container } = render(<Builder />);
     await act(async () => {
       await fetchResume.mock.results[0].value;
     });
 
-    const footer = screen.getByText('builder.footer.moduleLabel').closest('.border-t');
-    expect(footer).not.toBeNull();
-    // The label is the whole footer: no column count, divider or page size beside it.
-    expect(footer?.textContent).toBe('builder.footer.moduleLabel');
-    expect(footer?.querySelector('.bg-success')).toBeNull();
-    expect(screen.queryByText('builder.footer.singleColumn')).not.toBeInTheDocument();
-    expect(screen.queryByText('builder.footer.twoColumn')).not.toBeInTheDocument();
-    // The footer closes the page frame, which keeps its dialog-weight shadow.
-    expect(footer?.parentElement).toHaveClass('shadow-sw-lg');
+    // The module label and its logo are gone with the bar.
+    expect(screen.queryByText('builder.footer.moduleLabel')).not.toBeInTheDocument();
+    expect(screen.queryByAltText('Resume Matcher')).not.toBeInTheDocument();
+
+    // The frame's last child is the content grid, which takes the freed height (flex-1) so the
+    // panels fill the frame down to its border with no gap left behind.
+    const frame = container.querySelector('.shadow-sw-lg') as HTMLElement;
+    expect(frame).toHaveClass('flex', 'flex-col', 'h-full');
+    const grid = frame.lastElementChild as HTMLElement;
+    expect(grid).toHaveClass('grid', 'flex-1', 'min-h-0');
+    expect(frame.querySelector(':scope > .border-t')).toBeNull();
   });
 });
 
