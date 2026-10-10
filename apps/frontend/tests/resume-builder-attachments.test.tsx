@@ -173,6 +173,11 @@ describe('builder attachment ownership', () => {
       currentSearch = `id=a&tab=${kind}`;
       const Builder = await importBuilder();
       const view = render(<Builder />);
+      // Generate handlers ignore clicks until the resume load settles.
+      expect(fetchResume).toHaveBeenCalledWith('a');
+      await act(async () => {
+        await fetchResume.mock.results[0].value;
+      });
       const buttons = await screen.findAllByRole('button', { name: `generate-${kind}` });
       if (kind === 'interview-prep') {
         await waitFor(() => expect(fetchJobDescription).toHaveBeenCalledWith('a'));
