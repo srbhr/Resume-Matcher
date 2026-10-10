@@ -83,8 +83,12 @@ describe('DiffPreviewModal', () => {
     );
 
     expect(screen.getByText('new summary')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /tailor\.diffModal\.summaryChanges/i }));
+    const toggle = screen.getByRole('button', { name: /tailor\.diffModal\.summaryChanges/i });
+    expect(toggle).toHaveAttribute('type', 'button');
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    fireEvent.click(toggle);
     expect(screen.queryByText('new summary')).not.toBeInTheDocument();
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
   });
 
   it('fires confirm and reject handlers', () => {

@@ -3,6 +3,9 @@
 import React from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { AnimatePresence, FadeItem } from '@/components/common/presence';
+import { EmptyState } from '@/components/ui/empty-state';
+import { PanelHeader } from '@/components/ui/panel-header';
 import { useTranslations } from '@/lib/i18n';
 import type { Application, ApplicationStatus } from '@/lib/api/tracker';
 import { ApplicationCard } from './application-card';
@@ -31,12 +34,9 @@ export function KanbanColumn({
 
   return (
     <div className="flex h-full w-80 shrink-0 flex-col p-3">
-      <div className="mb-2 flex items-center justify-between border-b-2 border-black pb-1">
-        <h2 className="font-mono text-xs font-bold uppercase tracking-wide text-ink">
-          {t(`tracker.columns.${status}`)}
-        </h2>
-        <span className="font-mono text-xs text-steel-grey">{applications.length}</span>
-      </div>
+      <PanelHeader tone="neutral" level="h2" title={t(`tracker.columns.${status}`)}>
+        <span className="font-mono text-xs text-steel tabular-nums">{applications.length}</span>
+      </PanelHeader>
 
       <SortableContext
         items={applications.map((a) => a.application_id)}
@@ -44,27 +44,29 @@ export function KanbanColumn({
       >
         <div
           ref={setNodeRef}
-          className={`flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-1 ${isOver ? 'bg-paper-tint' : ''}`}
+          className={`flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-1 transition-colors ${isOver ? 'bg-paper' : ''}`}
         >
-          {applications.length === 0 ? (
-            <p className="px-2 py-6 text-center font-mono text-xs text-steel-grey">
-              {t('tracker.columns.empty')}
-            </p>
-          ) : (
-            applications.map((application) => (
-              <ApplicationCard
-                key={application.application_id}
-                application={application}
-                selected={selectedIds.has(application.application_id)}
-                sharedResume={
-                  application.master_resume_id !== null &&
-                  sharedResumeIds.has(application.master_resume_id)
-                }
-                onToggleSelect={onToggleSelect}
-                onOpen={onOpen}
-              />
-            ))
+          {applications.length === 0 && (
+            <EmptyState variant="framed" title={t('tracker.columns.empty')} />
           )}
+          {/* Cards fade in and out; the dnd-kit node stays inside FadeItem
+              because dnd-kit owns `transform` on its own element. */}
+          <AnimatePresence initial={false}>
+            {applications.map((application) => (
+              <FadeItem key={application.application_id}>
+                <ApplicationCard
+                  application={application}
+                  selected={selectedIds.has(application.application_id)}
+                  sharedResume={
+                    application.master_resume_id !== null &&
+                    sharedResumeIds.has(application.master_resume_id)
+                  }
+                  onToggleSelect={onToggleSelect}
+                  onOpen={onOpen}
+                />
+              </FadeItem>
+            ))}
+          </AnimatePresence>
         </div>
       </SortableContext>
     </div>

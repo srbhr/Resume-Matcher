@@ -2,6 +2,7 @@
   "common": {
     "save": "Salvar",
     "saving": "Salvando...",
+    "saved": "Salvo",
     "cancel": "Cancelar",
     "delete": "Excluir",
     "edit": "Editar",
@@ -672,15 +673,16 @@
     "contentLanguageDescription": "Idioma para conteúdo gerado (currículos, cartas de apresentação)",
     "uiLanguage": "Idioma da Interface",
     "uiLanguageDescription": "Idioma da interface do usuário",
+    "languageTitle": "Idioma",
     "theme": "Tema",
     "themeDescription": "Escolha seu tema de cores preferido",
     "lightMode": "Claro",
     "darkMode": "Escuro",
     "systemMode": "Sistema",
-    "dangerZone": "Zona de Perigo",
-    "clearApiKeys": "Limpar Chaves de API",
+    "dangerZone": "Zona de perigo",
+    "clearApiKeys": "Limpar chaves de API",
     "clearApiKeysDescription": "Remove todas as chaves de API armazenadas da configuração. Esta ação não pode ser desfeita.",
-    "resetDatabase": "Redefinir Banco de Dados",
+    "resetDatabase": "Redefinir banco de dados",
     "resetDatabaseDescription": "Exclui TODOS os dados incluindo currículos, vagas e conteúdo gerado. Esta ação não pode ser desfeita.",
     "llmConfigurationTitle": "Configuração de LLM",
     "providerLabel": "Provedor",
@@ -712,7 +714,7 @@
       "description": "> Nenhuma chave de API configurada. Adicione a chave de API do seu provedor de LLM abaixo para habilitar a personalização de currículo."
     },
     "systemStatus": {
-      "title": "Status do Sistema",
+      "title": "Status do sistema",
       "refresh": "Atualizar",
       "unableToConnect": "Não foi possível alcançar o servidor",
       "expectedAt": "Esperado em: {apiUrl}",
@@ -770,7 +772,7 @@
       }
     },
     "contentGeneration": {
-      "title": "Geração de Conteúdo",
+      "title": "Geração de conteúdo",
       "description": "Habilite geração de conteúdo adicional durante a personalização de currículo. Quando habilitado, estes documentos serão gerados automaticamente junto com seu currículo personalizado.",
       "coverLetter": {
         "label": "Carta de Apresentação",
@@ -844,6 +846,7 @@
     "titlePlaceholder": "Digite o título do currículo...",
     "downloadFailedTitle": "Falha no download",
     "renameFailedTitle": "Falha ao renomear",
+    "renameTitle": "Renomear currículo",
     "defaultBadge": "Principal padrão",
     "setDefault": "Definir como principal padrão",
     "setDefaultSuccess": "Este currículo principal agora é o padrão para personalização.",

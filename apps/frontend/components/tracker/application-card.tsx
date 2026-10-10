@@ -8,7 +8,12 @@ import GripVertical from 'lucide-react/dist/esm/icons/grip-vertical';
 import Layers from 'lucide-react/dist/esm/icons/layers';
 import { Card } from '@/components/ui/card';
 import { useTranslations } from '@/lib/i18n';
+import { formatDate } from '@/lib/format-date';
 import type { Application } from '@/lib/api/tracker';
+
+/** The house control focus ring, offset against the white card. */
+const FOCUS_RING =
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-white';
 
 interface ApplicationCardProps {
   application: Application;
@@ -25,7 +30,7 @@ export function ApplicationCard({
   onToggleSelect,
   onOpen,
 }: ApplicationCardProps) {
-  const { t } = useTranslations();
+  const { t, locale } = useTranslations();
   const reducedMotion = useReducedMotion();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: application.application_id,
@@ -42,12 +47,8 @@ export function ApplicationCard({
   const role = application.role?.trim();
 
   return (
-    <div ref={setNodeRef} style={style}>
-      <Card
-        variant="interactive"
-        noPadding
-        className={`p-3 ${selected ? 'ring-2 ring-primary' : ''}`}
-      >
+    <div ref={setNodeRef} style={style} className="transition-opacity">
+      <Card variant="raised" noPadding className={`p-3 ${selected ? 'ring-2 ring-primary' : ''}`}>
         <div className="flex items-start gap-2">
           <input
             type="checkbox"
@@ -55,13 +56,13 @@ export function ApplicationCard({
             onChange={() => onToggleSelect(application.application_id)}
             onClick={(e) => e.stopPropagation()}
             aria-label={t('tracker.card.selectAria')}
-            className="mt-1 h-4 w-4 shrink-0 rounded-none border-black accent-primary"
+            className={`mt-1 size-4 shrink-0 accent-ink ${FOCUS_RING}`}
           />
 
           <button
             type="button"
             onClick={() => onOpen(application.application_id)}
-            className="min-w-0 flex-1 text-left"
+            className={`min-w-0 flex-1 text-left ${FOCUS_RING}`}
           >
             <p className="truncate text-sm font-semibold text-ink">
               {company || t('tracker.card.companyUnknown')}
@@ -70,13 +71,13 @@ export function ApplicationCard({
               {role || t('tracker.card.roleUnknown')}
             </p>
             {application.applied_at && (
-              <p className="mt-1 font-mono text-[10px] uppercase tracking-wide text-steel-grey">
-                {new Date(application.applied_at).toLocaleDateString()}
+              <p className="mt-1 font-mono text-xs uppercase tracking-wide text-steel tabular-nums">
+                {formatDate(application.applied_at, locale)}
               </p>
             )}
             {sharedResume && (
-              <span className="mt-1 inline-flex items-center gap-1 border border-black bg-paper-tint px-1 font-mono text-[10px] uppercase text-ink-soft">
-                <Layers className="h-3 w-3" />
+              <span className="mt-1 inline-flex items-center gap-1 border border-ink bg-paper px-1 font-mono text-xs uppercase text-ink-soft">
+                <Layers aria-hidden="true" className="size-3" />
                 {t('tracker.card.sharedResume')}
               </span>
             )}
@@ -84,12 +85,12 @@ export function ApplicationCard({
 
           <button
             type="button"
-            className="mt-0.5 shrink-0 cursor-grab text-steel-grey hover:text-ink active:cursor-grabbing"
+            className={`mt-1 shrink-0 cursor-grab text-steel transition-colors hover:text-ink active:cursor-grabbing ${FOCUS_RING}`}
             aria-label={t('tracker.card.dragAria')}
             {...attributes}
             {...listeners}
           >
-            <GripVertical className="h-4 w-4" />
+            <GripVertical aria-hidden="true" className="size-4" />
           </button>
         </div>
       </Card>

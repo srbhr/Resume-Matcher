@@ -2,6 +2,7 @@
   "common": {
     "save": "저장",
     "saving": "저장 중...",
+    "saved": "저장됨",
     "cancel": "취소",
     "delete": "삭제",
     "edit": "편집",
@@ -672,6 +673,7 @@
     "contentLanguageDescription": "생성되는 콘텐츠(이력서, 자기소개서)의 언어",
     "uiLanguage": "UI 언어",
     "uiLanguageDescription": "사용자 인터페이스의 언어",
+    "languageTitle": "언어",
     "theme": "테마",
     "themeDescription": "선호하는 색상 테마를 선택하세요",
     "lightMode": "라이트",
@@ -844,6 +846,7 @@
     "titlePlaceholder": "이력서 제목을 입력하세요...",
     "downloadFailedTitle": "다운로드 실패",
     "renameFailedTitle": "이름 변경 실패",
+    "renameTitle": "이력서 이름 변경",
     "defaultBadge": "기본 마스터",
     "setDefault": "기본 마스터로 설정",
     "setDefaultSuccess": "이 마스터가 이제 맞춤화의 기본 마스터입니다.",

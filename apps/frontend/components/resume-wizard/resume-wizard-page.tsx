@@ -2,8 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { ArrowLeft } from 'lucide-react';
+import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { PageFrame } from '@/components/ui/page-frame';
+import { PageHeader } from '@/components/ui/page-header';
 import { useStatusCache } from '@/lib/context/status-cache';
 import { useTranslations } from '@/lib/i18n';
 import {
@@ -187,26 +191,27 @@ export function ResumeWizardPage() {
   };
 
   return (
-    <main className="min-h-screen bg-background px-4 py-6 text-black md:px-8 md:py-10">
-      <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
-        <div className="grid gap-4">
-          <div className="flex items-center justify-between">
-            <h1 className="font-mono text-xs font-bold uppercase tracking-wider text-steel-grey">
-              {t('resumeWizard.title')}
-            </h1>
-            <Button type="button" variant="ghost" onClick={handleBackToDashboard}>
-              {t('resumeWizard.actions.backToDashboard')}
-            </Button>
-          </div>
+    <PageFrame>
+      <PageHeader>
+        {/* Not PageHeader.Back: leaving must pass the local-backup guard, and Back is a bare Link. */}
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="mb-8"
+          onClick={handleBackToDashboard}
+        >
+          <ArrowLeft aria-hidden="true" />
+          {t('resumeWizard.actions.backToDashboard')}
+        </Button>
+        <PageHeader.Title>{t('resumeWizard.title')}</PageHeader.Title>
+      </PageHeader>
 
+      <div className="grid gap-6 px-8 py-6 md:px-12 md:py-8 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="grid content-start gap-4">
           {draftStorageUnavailable && state.step !== 'complete' && (
-            <div className="border-2 border-orange-500 bg-orange-50 p-4" role="alert">
-              <p className="font-mono text-sm font-bold uppercase tracking-wider text-orange-700">
-                {t('resumeWizard.draftStorageUnavailable.title')}
-              </p>
-              <p className="mt-1 font-sans text-sm">
-                {t('resumeWizard.draftStorageUnavailable.description')}
-              </p>
+            <Alert tone="warning" title={t('resumeWizard.draftStorageUnavailable.title')}>
+              <p>{t('resumeWizard.draftStorageUnavailable.description')}</p>
               <Button
                 type="button"
                 variant="warning"
@@ -215,25 +220,22 @@ export function ResumeWizardPage() {
               >
                 {t('resumeWizard.actions.retryDraftBackup')}
               </Button>
-            </div>
+            </Alert>
           )}
 
           {errorMessage && (
-            <div className="border-2 border-red-600 bg-red-100 p-4" role="alert">
-              <p className="font-mono text-sm font-bold uppercase tracking-wider text-red-600">
-                {t('common.error')}
-              </p>
-              <p className="mt-1 font-sans text-sm">{errorMessage}</p>
-            </div>
+            <Alert tone="error" title={t('common.error')}>
+              {errorMessage}
+            </Alert>
           )}
 
           {state.step === 'complete' && createdResumeId ? (
-            <section className="border-2 border-green-700 bg-white p-5 shadow-sw-lg md:p-8">
-              <p className="font-mono text-xs font-bold uppercase tracking-wider text-green-700">
+            <section className="border-2 border-success bg-white p-6 shadow-sw-default md:p-8">
+              <p className="font-mono text-xs font-bold uppercase tracking-wider text-success">
                 {t('resumeWizard.created.title')}
               </p>
               <p className="mt-3 font-sans text-sm">{t('resumeWizard.created.description')}</p>
-              <Button type="button" className="mt-5" onClick={handleOpenCreated}>
+              <Button type="button" className="mt-6" onClick={handleOpenCreated}>
                 {t('resumeWizard.actions.openCreated')}
               </Button>
             </section>
@@ -273,6 +275,6 @@ export function ResumeWizardPage() {
         variant="warning"
         onConfirm={() => router.push('/dashboard')}
       />
-    </main>
+    </PageFrame>
   );
 }

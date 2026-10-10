@@ -217,6 +217,59 @@ describe('actual tailor page transaction boundaries', () => {
   });
 });
 
+it.each(['Close preview', 'Reject preview'])(
+  'keeps the ATS score card visible after the diff modal is dismissed (%s)',
+  async (dismiss) => {
+    api.preview.mockResolvedValue({
+      ...preview,
+      data: {
+        ...preview.data,
+        ats_score: {
+          overall_score: 72.5,
+          sub_scores: { keyword_match: 70, skills_coverage: 80, section_completeness: 65 },
+          missing_keywords: ['Kubernetes'],
+          injectable_keywords: ['SQL'],
+          recommendations: ['Mention SQL in your summary.'],
+        },
+      },
+    });
+    render(<TailorPage />);
+    await act(async () => {});
+    await generate();
+    expect(screen.getByRole('heading', { name: 'ATS Score Breakdown' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: dismiss }));
+    expect(screen.queryByRole('button', { name: 'Confirm preview' })).toBeNull();
+    expect(screen.getByRole('heading', { name: 'ATS Score Breakdown' })).toBeInTheDocument();
+  }
+);
+
+it('clears the previous ATS score card when a new tailoring run starts', async () => {
+  const next = deferred<typeof preview>();
+  api.preview
+    .mockResolvedValueOnce({
+      ...preview,
+      data: {
+        ...preview.data,
+        ats_score: {
+          overall_score: 72.5,
+          sub_scores: { keyword_match: 70, skills_coverage: 80, section_completeness: 65 },
+          missing_keywords: [],
+          injectable_keywords: [],
+          recommendations: [],
+        },
+      },
+    })
+    .mockReturnValueOnce(next.promise);
+  render(<TailorPage />);
+  await act(async () => {});
+  await generate();
+  fireEvent.click(screen.getByRole('button', { name: 'Close preview' }));
+  expect(screen.getByRole('heading', { name: 'ATS Score Breakdown' })).toBeInTheDocument();
+  await generate();
+  expect(screen.queryByRole('heading', { name: 'ATS Score Breakdown' })).toBeNull();
+  await act(async () => next.resolve(preview));
+});
+
 it('keeps missing-diff confirmation open while its durable request is pending', async () => {
   const pending = deferred<typeof confirmed>();
   api.confirm.mockReturnValueOnce(pending.promise);

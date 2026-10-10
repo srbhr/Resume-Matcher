@@ -2,6 +2,7 @@
   "common": {
     "save": "保存",
     "saving": "保存中...",
+    "saved": "保存済み",
     "cancel": "キャンセル",
     "delete": "削除",
     "edit": "編集",
@@ -672,6 +673,7 @@
     "contentLanguageDescription": "生成コンテンツの言語（履歴書、カバーレター）",
     "uiLanguage": "UI言語",
     "uiLanguageDescription": "ユーザーインターフェースの言語",
+    "languageTitle": "言語",
     "theme": "テーマ",
     "themeDescription": "お好みのカラーテーマを選択",
     "lightMode": "ライト",
@@ -844,6 +846,7 @@
     "titlePlaceholder": "履歴書のタイトルを入力...",
     "downloadFailedTitle": "ダウンロードに失敗しました",
     "renameFailedTitle": "名前の変更に失敗しました",
+    "renameTitle": "履歴書の名前を変更",
     "defaultBadge": "デフォルトのマスター",
     "setDefault": "デフォルトのマスターに設定",
     "setDefaultSuccess": "このマスターがカスタマイズのデフォルトになりました。",

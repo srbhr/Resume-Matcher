@@ -2,6 +2,7 @@
   "common": {
     "save": "Enregistrer",
     "saving": "Enregistrement...",
+    "saved": "Enregistré",
     "cancel": "Annuler",
     "delete": "Supprimer",
     "edit": "Modifier",
@@ -672,6 +673,7 @@
     "contentLanguageDescription": "Langue pour le contenu généré (CV, lettres de motivation)",
     "uiLanguage": "Langue de l'interface",
     "uiLanguageDescription": "Langue pour l'interface utilisateur",
+    "languageTitle": "Langue",
     "theme": "Thème",
     "themeDescription": "Choisissez votre thème de couleur préféré",
     "lightMode": "Clair",
@@ -844,6 +846,7 @@
     "titlePlaceholder": "Saisissez le titre du CV...",
     "downloadFailedTitle": "Échec du téléchargement",
     "renameFailedTitle": "Échec du renommage",
+    "renameTitle": "Renommer le CV",
     "defaultBadge": "CV principal par défaut",
     "setDefault": "Définir comme CV principal par défaut",
     "setDefaultSuccess": "Ce CV principal est désormais celui utilisé par défaut pour la personnalisation.",

@@ -22,7 +22,7 @@ export function PageFrame({
     <div
       className={cn(
         'bg-blueprint flex w-full items-start justify-center bg-canvas px-4 py-12 md:px-8',
-        height === 'screen' ? 'h-screen overflow-hidden' : 'min-h-screen'
+        height === 'screen' ? 'h-dvh overflow-hidden' : 'min-h-screen'
       )}
     >
       <div

@@ -4,6 +4,7 @@ import React, { useEffect, useId, useRef, useState } from 'react';
 import { Check, ChevronDown } from 'lucide-react';
 import { AnimatePresence, m, useIsPresent, useReducedMotion } from 'motion/react';
 import { cn } from '@/lib/utils';
+import { labelClass } from '@/components/ui/label';
 import { DURATION, EASE_OUT_EXPO, SPRING } from '@/lib/motion';
 import { useTranslations } from '@/lib/i18n';
 
@@ -155,10 +156,7 @@ export function Dropdown({
   return (
     <div ref={containerRef} className={cn('space-y-1', className)}>
       {label && (
-        <span
-          id={labelId}
-          className="block font-mono text-xs font-bold uppercase tracking-wider text-ink-soft"
-        >
+        <span id={labelId} className={cn('block', labelClass)}>
           {label}
         </span>
       )}

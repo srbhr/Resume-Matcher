@@ -16,6 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dropdown } from '@/components/ui/dropdown';
+import { Alert } from '@/components/ui/alert';
 import { useTranslations } from '@/lib/i18n';
 import { fetchResumeList, type ResumeListItem } from '@/lib/api/resume';
 import { createApplication, type ApplicationStatus } from '@/lib/api/tracker';
@@ -101,14 +102,12 @@ export function ManualAddApplicationDialog({
         </DialogHeader>
 
         <DialogBody className="space-y-4">
-          <div className="space-y-1">
-            <Label>{t('tracker.manualAdd.resume')}</Label>
-            <Dropdown
-              options={resumes.map((r) => ({ id: r.resume_id, label: resumeLabel(r) }))}
-              value={resumeId}
-              onChange={setResumeId}
-            />
-          </div>
+          <Dropdown
+            label={t('tracker.manualAdd.resume')}
+            options={resumes.map((r) => ({ id: r.resume_id, label: resumeLabel(r) }))}
+            value={resumeId}
+            onChange={setResumeId}
+          />
 
           <div className="space-y-1">
             <Label htmlFor="manual-jd">{t('tracker.manualAdd.jobDescription')}</Label>
@@ -143,25 +142,23 @@ export function ManualAddApplicationDialog({
             </div>
           </div>
 
-          <div className="space-y-1">
-            <Label>{t('tracker.manualAdd.status')}</Label>
-            <Dropdown
-              options={[
-                { id: 'applied', label: t('tracker.columns.applied') },
-                { id: 'saved', label: t('tracker.columns.saved') },
-              ]}
-              value={status}
-              onChange={(value) => setStatus(value as ApplicationStatus)}
-            />
-          </div>
+          <Dropdown
+            label={t('tracker.manualAdd.status')}
+            options={[
+              { id: 'applied', label: t('tracker.columns.applied') },
+              { id: 'saved', label: t('tracker.columns.saved') },
+            ]}
+            value={status}
+            onChange={(value) => setStatus(value as ApplicationStatus)}
+          />
 
-          {error && <p className="font-mono text-xs text-destructive">{error}</p>}
+          {error && <Alert tone="error">{error}</Alert>}
         </DialogBody>
 
         <DialogFooter>
-          <Button onClick={handleSubmit} disabled={submitting}>
+          <Button type="button" onClick={handleSubmit} disabled={submitting}>
             {submitting ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 aria-hidden="true" className="animate-spin" />
             ) : (
               t('tracker.manualAdd.submit')
             )}

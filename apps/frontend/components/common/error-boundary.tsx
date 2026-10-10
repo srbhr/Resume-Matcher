@@ -2,6 +2,7 @@
 
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
+import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { useTranslations } from '@/lib/i18n';
 
@@ -66,36 +67,27 @@ export class ErrorBoundary extends Component<Props, State> {
       }
 
       return (
-        <div className="min-h-[400px] flex flex-col items-center justify-center p-8 bg-background">
-          <div className="max-w-md w-full bg-white border border-black shadow-sw-default p-8">
-            <div className="flex items-center gap-3 mb-4">
-              <AlertTriangle className="w-8 h-8 text-red-600" />
+        <div className="min-h-[400px] bg-canvas p-8">
+          <div className="w-full max-w-md border border-ink bg-white p-8 shadow-sw-default">
+            <div className="mb-4 flex items-center gap-3">
+              <AlertTriangle aria-hidden="true" className="size-8 text-destructive" />
               <h2 className="font-serif text-2xl font-bold uppercase">{strings.title}</h2>
             </div>
 
-            <p className="text-ink-soft mb-4 font-mono text-sm">{strings.description}</p>
+            <p className="mb-4 font-sans text-sm text-ink-soft">{strings.description}</p>
 
             {process.env.NODE_ENV === 'development' && this.state.error && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-none">
-                <p className="font-mono text-xs text-red-700 break-all">
-                  {this.state.error.message}
-                </p>
-              </div>
+              <Alert tone="error" className="mb-4">
+                <p className="break-all font-mono text-xs">{this.state.error.message}</p>
+              </Alert>
             )}
 
             <div className="flex gap-3">
-              <Button
-                onClick={this.handleReset}
-                variant="outline"
-                className="flex-1 border-black rounded-none shadow-sw-sm hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none transition-all"
-              >
+              <Button type="button" variant="outline" className="flex-1" onClick={this.handleReset}>
                 {strings.tryAgain}
               </Button>
-              <Button
-                onClick={this.handleReload}
-                className="flex-1 bg-blue-700 hover:bg-blue-800 text-white rounded-none border border-black shadow-sw-sm hover:translate-y-[1px] hover:translate-x-[1px] hover:shadow-none transition-all"
-              >
-                <RefreshCw className="w-4 h-4 mr-2" />
+              <Button type="button" className="flex-1" onClick={this.handleReload}>
+                <RefreshCw aria-hidden="true" />
                 {strings.reloadPage}
               </Button>
             </div>

@@ -59,7 +59,7 @@ export function ManageColumnsDialog({
                   disabled={lastVisible}
                 />
                 {lastVisible && (
-                  <p className="mt-1 font-mono text-[11px] uppercase tracking-wide text-ink-soft">
+                  <p className="mt-1 font-mono text-xs uppercase tracking-wide text-ink-soft">
                     {t('tracker.manageDialog.lastVisibleHint')}
                   </p>
                 )}
@@ -69,7 +69,9 @@ export function ManageColumnsDialog({
         </DialogBody>
 
         <DialogFooter>
-          <Button onClick={() => onOpenChange(false)}>{t('tracker.manageDialog.close')}</Button>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            {t('tracker.manageDialog.close')}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
