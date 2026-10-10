@@ -428,7 +428,12 @@ export default function TailorPage() {
   };
 
   return (
-    <PageFrame width="narrow" className="my-auto">
+    <PageFrame
+      width="narrow"
+      effect="bitrate"
+      effectIntensity={isLoading ? 'active' : 'idle'}
+      className="my-auto"
+    >
       <PageHeader className="p-6 md:p-6">
         <PageHeader.Back href="/dashboard">{t('common.back')}</PageHeader.Back>
         <PageHeader.Title>{t('tailor.heroTitle')}</PageHeader.Title>
