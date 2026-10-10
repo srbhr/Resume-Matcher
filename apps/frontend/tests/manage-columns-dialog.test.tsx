@@ -75,7 +75,7 @@ describe('ManageColumnsDialog', () => {
       />
     );
 
-    expect(screen.getAllByRole('switch')).toHaveLength(7);
+    expect(screen.getAllByRole('switch')).toHaveLength(5);
   });
 
   it('reports toggles with the status key', () => {
@@ -111,7 +111,7 @@ describe('ManageColumnsDialog', () => {
     ).toBeInTheDocument();
     expect(within(rowFor('applied')).getByText('tracker.manageDialog.visible')).toBeInTheDocument();
     expect(screen.getAllByText('tracker.manageDialog.hidden')).toHaveLength(1);
-    expect(screen.getAllByText('tracker.manageDialog.visible')).toHaveLength(6);
+    expect(screen.getAllByText('tracker.manageDialog.visible')).toHaveLength(4);
   });
 
   it('locks the last visible stage and explains why', () => {

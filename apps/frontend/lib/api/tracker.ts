@@ -1,14 +1,11 @@
 import { apiFetch, apiPost, apiPatch, apiDelete } from './client';
 
-// The seven stable Kanban columns (keys are decoupled from i18n labels).
-export type ApplicationStatus =
-  'saved' | 'applied' | 'no_response' | 'response' | 'interview' | 'accepted' | 'rejected';
+// The five user-facing Kanban columns (keys are decoupled from i18n labels).
+export type ApplicationStatus = 'saved' | 'applied' | 'interview' | 'accepted' | 'rejected';
 
 export const APPLICATION_STATUS_ORDER: ApplicationStatus[] = [
   'saved',
   'applied',
-  'no_response',
-  'response',
   'interview',
   'accepted',
   'rejected',

@@ -1067,8 +1067,6 @@
     "columns": {
       "saved": "Salvo",
       "applied": "Enviado",
-      "no_response": "Sem resposta",
-      "response": "Resposta",
       "interview": "Entrevista",
       "accepted": "Aceito",
       "rejected": "Recusado",
