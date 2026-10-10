@@ -148,7 +148,7 @@ npm install
 npm run dev       # next dev --turbopack (:3000)
 npm run build     # next build  (runs tsc — i18n shape drift fails HERE)
 npm run start
-npm run lint      # eslint .
+npm run lint      # oxlint + prettier --check (JS/TS files)
 npm run format    # prettier --write .
 npm run test      # vitest run
 ```
@@ -180,7 +180,7 @@ Backend must run separately on :8000 (see root CLAUDE.md). Frontend proxies `/ap
 - **240s timeout** on AI calls (`apiFetch` default) — matches backend; don't shorten for improve/regenerate flows.
 - **`print/*` pages are server components** that read template settings from `searchParams` and call the backend via internal origin — keep them server-side.
 - Two i18n locations exist: `i18n/` (config) and `lib/i18n/` (engine). Don't confuse them.
-- ESLint disables `react-hooks/set-state-in-effect` (existing effects sync props/DOM measurements). Prettier rules run via ESLint (`prettier/prettier: error`).
+- **Linting is Oxlint** (`.oxlintrc.json`, migrated from the old `eslint-config-next` setup: Next.js core-web-vitals, React/React Compiler hooks rules, jsx-a11y subset, TypeScript recommended). Only listed rules run (`correctness` category off). `react/set-state-in-effect` stays off (existing effects sync props/DOM measurements). Formatting is enforced by the `prettier --check` half of `npm run lint`. Oxlint honours `eslint-disable` comments; new ones use `oxlint-disable-next-line <rule> -- <reason>` (three intentional `new Date()` render reads carry `react/purity` disables).
 
 ---
 

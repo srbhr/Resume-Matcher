@@ -37,6 +37,7 @@ export function CoverLetterPreview({
     year: 'numeric',
     month: 'long',
     day: 'numeric',
+    // oxlint-disable-next-line react/purity -- the letter shows today's date by design
   }).format(new Date());
 
   // Parse content into paragraphs

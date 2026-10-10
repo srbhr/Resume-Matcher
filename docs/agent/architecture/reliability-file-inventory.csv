@@ -289,7 +289,7 @@ apps/frontend/components/ui/rich-text-editor.tsx,Frontend component,
 apps/frontend/components/ui/rich-text-toolbar.tsx,Frontend component,
 apps/frontend/components/ui/textarea.tsx,Frontend component,
 apps/frontend/components/ui/toggle-switch.tsx,Frontend component,
-apps/frontend/eslint.config.mjs,Frontend asset or tooling,
+apps/frontend/.oxlintrc.json,Frontend asset or tooling,
 apps/frontend/hooks/use-enrichment-wizard.ts,Frontend lifecycle,#973;#974
 apps/frontend/hooks/use-file-upload.ts,Frontend lifecycle,#939;#964;#965;#973;#974
 apps/frontend/hooks/use-operation-owner.ts,Frontend lifecycle,#973;#974

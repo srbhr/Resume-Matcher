@@ -661,6 +661,7 @@ export default function SettingsPage() {
   // Format last fetched time for display
   const formatLastFetched = () => {
     if (!lastFetched) return t('settings.systemStatus.lastFetched.never');
+    // oxlint-disable-next-line react/purity -- relative "last fetched" label must read the clock
     const now = new Date();
     const diff = Math.floor((now.getTime() - lastFetched.getTime()) / 1000);
     if (diff < 60) return t('settings.systemStatus.lastFetched.justNow');
