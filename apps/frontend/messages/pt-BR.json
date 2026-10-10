@@ -318,6 +318,15 @@
         "keywordsExtracted": "{count} palavras-chave extraídas",
         "matchesFound": "{count} correspondências encontradas",
         "matchRateLabel": "Taxa de Correspondência:"
+      },
+      "atsScore": {
+        "loading": "Carregando a pontuação ATS…",
+        "notCalculated": "A pontuação ATS deste currículo ainda não foi calculada.",
+        "lastCalculated": "Último cálculo: {date}",
+        "recalculate": "Recalcular",
+        "recalculating": "Calculando…",
+        "saveFirst": "Salve suas alterações e depois recalcule.",
+        "recalculateFailed": "Não foi possível calcular a pontuação ATS. Se este currículo foi adaptado antes de as pontuações serem salvas, adapte-o novamente na página Adaptar."
       }
     },
     "genericItemForm": {

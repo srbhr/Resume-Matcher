@@ -707,6 +707,13 @@ class ATSScore(BaseModel):
     )
 
 
+class ATSScoreRecord(BaseModel):
+    """Last calculated ATS score of a saved tailored resume."""
+
+    score: ATSScore
+    calculated_at: str = Field(description="UTC ISO-8601 time of the calculation")
+
+
 class ImproveResumeData(BaseModel):
     """Data payload for improve response."""
 

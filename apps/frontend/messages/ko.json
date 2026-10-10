@@ -296,6 +296,15 @@
         "keywordsExtracted": "{count}개 키워드 추출됨",
         "matchesFound": "{count}개 일치 항목 발견",
         "matchRateLabel": "일치율:"
+      },
+      "atsScore": {
+        "loading": "ATS 점수 불러오는 중…",
+        "notCalculated": "이 이력서의 ATS 점수가 아직 계산되지 않았습니다.",
+        "lastCalculated": "마지막 계산: {date}",
+        "recalculate": "다시 계산",
+        "recalculating": "계산 중…",
+        "saveFirst": "변경 사항을 저장한 후 다시 계산하세요.",
+        "recalculateFailed": "ATS 점수를 계산할 수 없습니다. 점수 저장 기능 이전에 맞춤 작업한 이력서라면 맞춤 페이지에서 다시 맞춤 작업을 하세요."
       }
     },
     "genericItemForm": {

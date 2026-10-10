@@ -318,6 +318,15 @@
         "keywordsExtracted": "已提取 {count} 个关键词",
         "matchesFound": "已匹配 {count} 处",
         "matchRateLabel": "匹配率："
+      },
+      "atsScore": {
+        "loading": "正在加载 ATS 评分…",
+        "notCalculated": "此简历尚未计算 ATS 评分。",
+        "lastCalculated": "上次计算：{date}",
+        "recalculate": "重新计算",
+        "recalculating": "计算中…",
+        "saveFirst": "请先保存修改，然后重新计算。",
+        "recalculateFailed": "无法计算 ATS 评分。如果此简历是在保存评分功能之前定制的，请在定制页面重新定制。"
       }
     },
     "genericItemForm": {

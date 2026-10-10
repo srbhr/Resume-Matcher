@@ -106,6 +106,8 @@ class Improvement(Base):
     tailored_resume_id: Mapped[str] = mapped_column(String, index=True)
     job_id: Mapped[str] = mapped_column(String)
     improvements: Mapped[list] = mapped_column(JSON, default=list)
+    # Last calculated ATS score against this job: {"score": {...}, "calculated_at": iso}.
+    ats_score: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     created_at: Mapped[str] = mapped_column(String, default=_utcnow_iso)
 
 

@@ -318,6 +318,15 @@
         "keywordsExtracted": "抽出キーワード数: {count}",
         "matchesFound": "一致数: {count}",
         "matchRateLabel": "一致率:"
+      },
+      "atsScore": {
+        "loading": "ATSスコアを読み込み中…",
+        "notCalculated": "この履歴書のATSスコアはまだ計算されていません。",
+        "lastCalculated": "最終計算：{date}",
+        "recalculate": "再計算",
+        "recalculating": "計算中…",
+        "saveFirst": "変更を保存してから再計算してください。",
+        "recalculateFailed": "ATSスコアを計算できませんでした。スコア保存機能の前に調整した履歴書の場合は、調整ページでもう一度調整してください。"
       }
     },
     "genericItemForm": {

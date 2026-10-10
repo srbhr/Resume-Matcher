@@ -1,14 +1,30 @@
 # ATS Score
 
-> **A deterministic ATS-readiness breakdown for a tailored resume, shown in the Tailor review dialog.**
+> **A deterministic ATS-readiness breakdown for a tailored resume, shown in the Tailor review dialog and kept as the last calculated score in the Builder.**
 
 ## Overview
 
 `POST /resumes/improve/preview` (and the legacy `POST /resumes/improve`) return an `ats_score` object computed from the tailored resume and the job's extracted keywords. The frontend renders it with `ATSScoreCard` at the top of the scrollable body in `DiffPreviewModal` (both the normal diff view and the missing-diff fallback), so the user sees it before confirming.
 
-The score is **not persisted**: `/improve/confirm` does not return it and it is not stored on the tailored resume.
+When a preview is **confirmed**, the score of the confirmed resume is calculated again and stored as its *last calculated* score. It is stored on the tailored resume's job link (`improvements.ats_score`, JSON `{score, calculated_at}`), not on the resume row, so the resume's `updated_at` doesn't change.
 
-No LLM calls are made — every component is a pure function in `apps/backend/app/services/ats.py`.
+## Last calculated score and recalculation
+
+| Endpoint | Returns |
+|----------|---------|
+| `GET /api/v1/resumes/{id}/ats-score` | `ATSScoreRecord` `{score, calculated_at}`: the stored last score. `404` when it was never calculated (e.g. resumes tailored before this feature). |
+| `POST /api/v1/resumes/{id}/ats-score` | Recalculates from the resume's **current saved** `processed_data`, stores the result as the new last score, and returns it. |
+
+Both endpoints return `400` when the resume is not tailored (no `parent_id`), and `404` for an unknown resume or a resume with no linked job.
+
+Recalculation makes no LLM call. It uses:
+
+- the job keywords cached on the job (`job_keywords`, valid only while `job_keywords_hash` matches the job content);
+- the master, found by `_grounding_master_data`, for the missing vs injectable split (`analyze_keyword_gaps`).
+
+It returns `409` when the keywords are missing or stale, or the resume has no structured data. Confirmation uses the same helper (`_score_tailored_data`) and skips scoring silently when the keywords aren't cached. The preview's score is calculated before keyword injection (`refine_resume`), so the stored score can differ slightly from the one shown in the review dialog.
+
+The Builder's **JD Match** tab shows the last score in the left panel (`components/builder/ats-score-panel.tsx`), with its calculation time and a **Recalculate** button. The button is disabled while the builder has unsaved changes, because recalculation scores the saved version. A failed recalculation keeps the last score on screen. Duplicating a tailored resume does not copy its score; recalculate on the copy.
 
 ## Sub-scores
 
@@ -41,6 +57,9 @@ The backend doesn't know which template will be exported. The Tailor page captur
 | Scoring | `apps/backend/app/services/ats.py` |
 | Wiring | `apps/backend/app/routers/resumes.py` (`_build_ats_score`) |
 | Schema | `apps/backend/app/schemas/models.py` (`ATSSubScores`, `ATSScore`) |
-| UI | `apps/frontend/components/tailor/ats-score-card.tsx`, `components/tailor/diff-preview-modal.tsx` |
+| Endpoints | `apps/backend/app/routers/resumes.py` (`get_ats_score_for_resume`, `recalculate_ats_score_for_resume`, `_score_tailored_data`) |
+| Storage | `Improvement.ats_score` (`apps/backend/app/models.py`), migration in `db_engine.py`, `Database.set_ats_score` |
+| UI | `apps/frontend/components/tailor/ats-score-card.tsx`, `components/tailor/diff-preview-modal.tsx`, `components/builder/ats-score-panel.tsx` |
+| API client | `fetchLastAtsScore`, `recalculateAtsScore` in `apps/frontend/lib/api/resume.ts` |
 | i18n | `tailor.atsScore.*` in every `apps/frontend/messages/*.json` |
-| Tests | `apps/backend/tests/unit/test_ats.py`, `apps/frontend/tests/diff-preview-modal-ats.test.tsx` |
+| Tests | `apps/backend/tests/unit/test_ats.py`, `apps/backend/tests/integration/test_ats_score_api.py`, `apps/backend/tests/unit/test_ats_score_migration.py`, `test_bullet_selection_flow.py::test_confirm_saves_the_ats_score_as_last_calculated`, `apps/frontend/tests/diff-preview-modal-ats.test.tsx`, `apps/frontend/tests/ats-score-panel.test.tsx` |

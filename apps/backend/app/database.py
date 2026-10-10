@@ -229,6 +229,7 @@ class Database:
             "tailored_resume_id": row.tailored_resume_id,
             "job_id": row.job_id,
             "improvements": row.improvements,
+            "ats_score": row.ats_score,
             "created_at": row.created_at,
         }
 
@@ -817,6 +818,7 @@ class Database:
         resume_fields: dict[str, Any],
         response_data: dict[str, Any],
         improvements: list[dict[str, Any]],
+        ats_score: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Commit resume, required relation and replay snapshot atomically."""
         async with self._write_session() as session:
@@ -849,6 +851,7 @@ class Database:
                     tailored_resume_id=row.resume_id,
                     job_id=preview.job_id,
                     improvements=improvements,
+                    ats_score=copy.deepcopy(ats_score),
                     created_at=now,
                 )
             )
@@ -933,6 +936,26 @@ class Database:
             )
             row = result.scalars().first()
             return self._improvement_to_dict(row) if row else None
+
+    async def set_ats_score(
+        self, tailored_resume_id: str, ats_score: dict[str, Any]
+    ) -> bool:
+        """Store the last calculated ATS score on a tailored resume's job link.
+
+        Returns False when the resume has no improvement (job) link.
+        """
+        async with self._write_session() as session:
+            result = await session.execute(
+                select(Improvement).where(
+                    Improvement.tailored_resume_id == tailored_resume_id
+                )
+            )
+            row = result.scalars().first()
+            if row is None:
+                return False
+            row.ats_score = copy.deepcopy(ats_score)
+            await session.commit()
+            return True
 
     # -- Application (tracker) operations -----------------------------------
 

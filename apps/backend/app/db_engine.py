@@ -93,6 +93,14 @@ def init_models_sync(engine: Engine) -> None:
                 "ON resumes (is_default_master) WHERE is_default_master = 1"
             )
 
+        improvement_columns = (
+            conn.exec_driver_sql("PRAGMA table_info(improvements)").mappings().all()
+        )
+        if improvement_columns and "ats_score" not in {
+            column["name"] for column in improvement_columns
+        }:
+            conn.exec_driver_sql("ALTER TABLE improvements ADD COLUMN ats_score JSON")
+
         preview_columns = (
             conn.exec_driver_sql("PRAGMA table_info(tailoring_previews)")
             .mappings()

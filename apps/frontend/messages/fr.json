@@ -318,6 +318,15 @@
         "keywordsExtracted": "{count} mots-clés extraits",
         "matchesFound": "{count} correspondances trouvées",
         "matchRateLabel": "Taux de correspondance :"
+      },
+      "atsScore": {
+        "loading": "Chargement du score ATS…",
+        "notCalculated": "Le score ATS de ce CV n'a pas encore été calculé.",
+        "lastCalculated": "Dernier calcul : {date}",
+        "recalculate": "Recalculer",
+        "recalculating": "Calcul en cours…",
+        "saveFirst": "Enregistrez vos modifications, puis recalculez.",
+        "recalculateFailed": "Impossible de calculer le score ATS. Si ce CV a été adapté avant l'enregistrement des scores, adaptez-le à nouveau depuis la page Adapter."
       }
     },
     "genericItemForm": {

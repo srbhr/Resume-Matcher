@@ -318,6 +318,15 @@
         "keywordsExtracted": "{count} palabras clave extraídas",
         "matchesFound": "{count} coincidencias encontradas",
         "matchRateLabel": "Tasa de coincidencia:"
+      },
+      "atsScore": {
+        "loading": "Cargando la puntuación ATS…",
+        "notCalculated": "Aún no se ha calculado la puntuación ATS de este currículum.",
+        "lastCalculated": "Último cálculo: {date}",
+        "recalculate": "Recalcular",
+        "recalculating": "Calculando…",
+        "saveFirst": "Guarda tus cambios y luego recalcula.",
+        "recalculateFailed": "No se pudo calcular la puntuación ATS. Si este currículum se adaptó antes de que se guardaran las puntuaciones, vuelve a adaptarlo desde la página Adaptar."
       }
     },
     "genericItemForm": {

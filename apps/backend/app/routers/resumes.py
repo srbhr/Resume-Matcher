@@ -7,6 +7,7 @@ import json
 import logging
 import unicodedata
 from collections.abc import Awaitable
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, NoReturn
 from uuid import uuid4
@@ -43,6 +44,7 @@ from app.preview import (
 from app.prompts import DEFAULT_IMPROVE_PROMPT_ID, IMPROVE_PROMPT_OPTIONS
 from app.schemas import (
     ATSScore,
+    ATSScoreRecord,
     ATSSubScores,
     DuplicateResumeResponse,
     GenerateContentResponse,
@@ -100,6 +102,7 @@ from app.services.parser import (
     restore_dates_from_markdown,
 )
 from app.services.refiner import (
+    analyze_keyword_gaps,
     calculate_keyword_match,
     count_retained_keywords,
     refine_resume,
@@ -1677,6 +1680,17 @@ async def improve_resume_confirm_endpoint(
             detailed_changes=detailed_changes,
             warnings=response_warnings,
         )
+        ats_record: dict[str, Any] | None = None
+        job_keywords = _cached_job_keywords(job)
+        if job_keywords is not None:
+            try:
+                ats_record = _score_tailored_data(
+                    improved_data,
+                    job_keywords,
+                    await _grounding_master_data(resume) or improved_data,
+                )
+            except Exception:
+                logger.warning("ATS score at confirmation failed", exc_info=True)
         stage = "commit_confirmation"
         result = await db.complete_preview(
             claim=claim,
@@ -1695,6 +1709,7 @@ async def improve_resume_confirm_endpoint(
             },
             response_data=response.model_dump(mode="json"),
             improvements=claim.improvements or [],
+            ats_score=ats_record,
         )
         claim = None  # The transaction committed; there is no lease to release.
         await _auto_create_tracker_application(
@@ -2601,6 +2616,112 @@ async def generate_interview_prep_endpoint(
         interview_prep=interview_prep,
         message="Interview preparation generated successfully",
     )
+
+
+def _cached_job_keywords(job: dict[str, Any]) -> dict[str, Any] | None:
+    """Job keywords cached at tailoring time, or None when missing or stale."""
+    keywords = job.get("job_keywords")
+    if not keywords or job.get("job_keywords_hash") != _hash_job_content(
+        job.get("content", "")
+    ):
+        return None
+    return keywords
+
+
+def _score_tailored_data(
+    tailored_data: dict[str, Any],
+    job_keywords: dict[str, Any],
+    master_data: dict[str, Any],
+) -> dict[str, Any]:
+    """Deterministic ATS score record ({score, calculated_at}) for tailored data."""
+    gaps = analyze_keyword_gaps(job_keywords, tailored_data, master_data)
+    raw = compute_ats_score(
+        refined_resume=tailored_data,
+        job_keywords=job_keywords,
+        keyword_match_percentage=calculate_keyword_match(tailored_data, job_keywords),
+        missing_keywords=gaps.non_injectable_keywords,
+        injectable_keywords=gaps.injectable_keywords,
+    )
+    score = ATSScore(
+        overall_score=raw["overall_score"],
+        sub_scores=ATSSubScores(**raw["sub_scores"]),
+        missing_keywords=raw["missing_keywords"],
+        injectable_keywords=raw["injectable_keywords"],
+        recommendations=raw["recommendations"],
+    )
+    return ATSScoreRecord(
+        score=score, calculated_at=datetime.now(timezone.utc).isoformat()
+    ).model_dump(mode="json")
+
+
+async def _tailored_resume_job_link(
+    resume_id: str,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """The tailored resume and its improvement (job) link, or the HTTP error."""
+    resume = await db.get_resume(resume_id)
+    if not resume:
+        raise HTTPException(status_code=404, detail="Resume not found")
+    if not resume.get("parent_id"):
+        raise HTTPException(
+            status_code=400,
+            detail="ATS score is only available for tailored resumes.",
+        )
+    improvement = await db.get_improvement_by_tailored_resume(resume_id)
+    if not improvement:
+        raise HTTPException(
+            status_code=404,
+            detail="No job description is linked to this resume.",
+        )
+    return resume, improvement
+
+
+@router.get("/{resume_id}/ats-score", response_model=ATSScoreRecord)
+async def get_ats_score_for_resume(resume_id: str) -> ATSScoreRecord:
+    """Last calculated ATS score of a tailored resume (404 if never calculated)."""
+    _, improvement = await _tailored_resume_job_link(resume_id)
+    record = improvement.get("ats_score")
+    if not record:
+        raise HTTPException(
+            status_code=404, detail="ATS score has not been calculated yet."
+        )
+    return ATSScoreRecord.model_validate(record)
+
+
+@router.post("/{resume_id}/ats-score", response_model=ATSScoreRecord)
+async def recalculate_ats_score_for_resume(resume_id: str) -> ATSScoreRecord:
+    """Recalculate a tailored resume's ATS score from its saved data and store it.
+
+    Deterministic (no LLM call): uses the job keywords cached when the resume
+    was tailored, so edits saved since then are reflected.
+    """
+    resume, improvement = await _tailored_resume_job_link(resume_id)
+    job = await db.get_job(improvement["job_id"])
+    if not job:
+        raise HTTPException(
+            status_code=404,
+            detail="No job description is linked to this resume.",
+        )
+    job_keywords = _cached_job_keywords(job)
+    if job_keywords is None:
+        raise HTTPException(
+            status_code=409,
+            detail="The job description has not been analyzed. Tailor the resume again to score it.",
+        )
+    tailored_data = _get_original_resume_data(resume)
+    if not tailored_data:
+        raise HTTPException(
+            status_code=409, detail="This resume has no structured data to score."
+        )
+    master_data = await _grounding_master_data(resume) or tailored_data
+    try:
+        record = _score_tailored_data(tailored_data, job_keywords, master_data)
+        await db.set_ats_score(resume_id, record)
+    except Exception as e:
+        logger.error("ATS score calculation failed for %s: %s", resume_id, e)
+        raise HTTPException(
+            status_code=500, detail="Failed to calculate ATS score. Please try again."
+        ) from e
+    return ATSScoreRecord.model_validate(record)
 
 
 @router.get("/{resume_id}/job-description")

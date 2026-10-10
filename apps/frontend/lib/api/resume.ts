@@ -1,4 +1,5 @@
 import type {
+  ATSScore,
   ImprovedResult,
   InterviewPrepData,
 } from '@/components/common/resume_previewer_context';
@@ -519,6 +520,34 @@ export async function retryProcessing(
 }
 
 /** Fetches the job description used to tailor a resume */
+/** Last calculated ATS score of a saved tailored resume. */
+export interface ATSScoreRecord {
+  score: ATSScore;
+  /** UTC ISO-8601 time of the calculation. */
+  calculated_at: string;
+}
+
+/** Last calculated ATS score, or null when it was never calculated. */
+export async function fetchLastAtsScore(resumeId: string): Promise<ATSScoreRecord | null> {
+  const res = await apiFetch(`/resumes/${encodeURIComponent(resumeId)}/ats-score`);
+  if (res.status === 404) return null;
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Failed to fetch ATS score (status ${res.status}): ${text}`);
+  }
+  return res.json();
+}
+
+/** Recalculates the ATS score from the saved resume and stores it as the last score. */
+export async function recalculateAtsScore(resumeId: string): Promise<ATSScoreRecord> {
+  const res = await apiPost(`/resumes/${encodeURIComponent(resumeId)}/ats-score`, {});
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Failed to recalculate ATS score (status ${res.status}): ${text}`);
+  }
+  return res.json();
+}
+
 export async function fetchJobDescription(
   resumeId: string
 ): Promise<{ job_id: string; content: string }> {
