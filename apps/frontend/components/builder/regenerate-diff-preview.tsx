@@ -124,7 +124,7 @@ export const RegenerateDiffPreview: React.FC<RegenerateDiffPreviewProps> = ({
       <DialogContent size="xl">
         <DialogHeader>
           <DialogTitle>{t('builder.regenerate.diffPreview.title')}</DialogTitle>
-          <DialogDescription className="font-mono text-xs text-ink-soft mt-2">
+          <DialogDescription className="font-mono text-xs text-ink-soft">
             {t('builder.regenerate.diffPreview.subtitle')}
           </DialogDescription>
         </DialogHeader>
@@ -140,43 +140,6 @@ export const RegenerateDiffPreview: React.FC<RegenerateDiffPreviewProps> = ({
               )}
             </div>
           </div>
-
-          {error ? (
-            <div>
-              <div
-                className={
-                  needsRefresh
-                    ? 'border-2 border-orange-600 bg-orange-100 px-4 py-3'
-                    : 'border-2 border-red-600 bg-red-100 px-4 py-3'
-                }
-              >
-                <p className="font-sans text-sm">
-                  {needsRefresh
-                    ? t('builder.regenerate.errors.refreshFailed')
-                    : resolveErrorMessage(error)}
-                </p>
-              </div>
-            </div>
-          ) : null}
-
-          {regenerateErrors.length > 0 ? (
-            <div>
-              <div className="border border-black bg-[#FFF9DB] px-4 py-3">
-                <p className="font-mono text-xs text-ink-soft">
-                  {t('builder.regenerate.diffPreview.partialFailures', {
-                    count: regenerateErrors.length,
-                  })}
-                </p>
-                <ul className="mt-2 space-y-1">
-                  {regenerateErrors.map((failed) => (
-                    <li key={failed.item_id} className="font-mono text-xs text-ink-soft">
-                      • {getItemLabel(failed)}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          ) : null}
 
           {/* Diff Content */}
           <div className="space-y-4">
@@ -268,6 +231,44 @@ export const RegenerateDiffPreview: React.FC<RegenerateDiffPreviewProps> = ({
             ))}
           </div>
         </DialogBody>
+
+        {/* Pinned status: stays visible while the diff list scrolls */}
+        {error || regenerateErrors.length > 0 ? (
+          <div className="shrink-0 space-y-2 border-t border-ink px-6 py-3">
+            {error ? (
+              <div
+                className={
+                  needsRefresh
+                    ? 'border-2 border-orange-600 bg-orange-100 px-4 py-3'
+                    : 'border-2 border-red-600 bg-red-100 px-4 py-3'
+                }
+              >
+                <p className="font-sans text-sm">
+                  {needsRefresh
+                    ? t('builder.regenerate.errors.refreshFailed')
+                    : resolveErrorMessage(error)}
+                </p>
+              </div>
+            ) : null}
+
+            {regenerateErrors.length > 0 ? (
+              <div className="border border-black bg-[#FFF9DB] px-4 py-3">
+                <p className="font-mono text-xs text-ink-soft">
+                  {t('builder.regenerate.diffPreview.partialFailures', {
+                    count: regenerateErrors.length,
+                  })}
+                </p>
+                <ul className="mt-2 space-y-1">
+                  {regenerateErrors.map((failed) => (
+                    <li key={failed.item_id} className="font-mono text-xs text-ink-soft">
+                      • {getItemLabel(failed)}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
 
         <DialogFooter className="justify-between">
           <Button

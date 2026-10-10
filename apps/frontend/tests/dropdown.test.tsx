@@ -107,4 +107,49 @@ describe('Dropdown', () => {
     expect(description).toHaveClass('text-ink-soft');
     expect(description).not.toHaveClass('text-steel');
   });
+
+  describe('placement', () => {
+    const rect = (top: number, bottom: number) =>
+      ({ top, bottom, left: 0, right: 100, width: 100, height: bottom - top }) as DOMRect;
+
+    function openInScroller(triggerRect: DOMRect, scrollerRect: DOMRect) {
+      render(
+        <div data-testid="scroller" style={{ overflowY: 'auto' }}>
+          <Harness />
+        </div>
+      );
+      const trigger = screen.getByRole('button', { name: 'Stage Alpha' });
+      vi.spyOn(trigger, 'getBoundingClientRect').mockReturnValue(triggerRect);
+      vi.spyOn(screen.getByTestId('scroller'), 'getBoundingClientRect').mockReturnValue(
+        scrollerRect
+      );
+      fireEvent.click(trigger);
+      return screen.getByRole('listbox');
+    }
+
+    it('opens downward by default (no layout, zero rects)', () => {
+      render(<Harness />);
+      fireEvent.click(screen.getByRole('button', { name: 'Stage Alpha' }));
+      const listbox = screen.getByRole('listbox');
+      expect(listbox).toHaveClass('top-full', 'mt-1');
+      expect(listbox).not.toHaveClass('bottom-full');
+    });
+
+    it('flips up when the trigger sits near the bottom of its scroll container', () => {
+      const listbox = openInScroller(rect(380, 420), rect(0, 450));
+      expect(listbox).toHaveClass('bottom-full', 'mb-1');
+      expect(listbox).not.toHaveClass('top-full');
+    });
+
+    it('stays down when the scroll container leaves room for the menu', () => {
+      const listbox = openInScroller(rect(40, 80), rect(0, 600));
+      expect(listbox).toHaveClass('top-full');
+      expect(listbox).not.toHaveClass('bottom-full');
+    });
+
+    it('stays down when there is even less room above than below', () => {
+      const listbox = openInScroller(rect(20, 60), rect(0, 200));
+      expect(listbox).toHaveClass('top-full');
+    });
+  });
 });

@@ -141,6 +141,31 @@ it('offers refresh retry after saved changes and prevents rejecting an applied r
 });
 
 describe('RegenerateDiffPreview', () => {
+  it('pins apply errors and partial failures outside the scrolling body', () => {
+    render(
+      <RegenerateDiffPreview
+        open
+        onOpenChange={vi.fn()}
+        regeneratedItems={[]}
+        regenerateErrors={[
+          { item_id: 'exp_1', item_type: 'experience', title: 'Staff Engineer', message: 'x' },
+        ]}
+        error="Failed to fetch"
+        onAccept={vi.fn()}
+        onReject={vi.fn()}
+        isApplying={false}
+      />
+    );
+
+    const applyError = screen.getByText('builder.regenerate.errors.networkError');
+    const partial = screen.getByText('builder.regenerate.diffPreview.partialFailures');
+    expect(applyError.closest('.overflow-y-auto')).toBeNull();
+    expect(partial.closest('.overflow-y-auto')).toBeNull();
+    expect(
+      screen.getByText('builder.regenerate.diffPreview.changesCount').closest('.overflow-y-auto')
+    ).not.toBeNull();
+  });
+
   it('shows human-friendly titles instead of technical IDs', () => {
     const regeneratedItems: RegeneratedItem[] = [
       {

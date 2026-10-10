@@ -85,7 +85,7 @@ export const RegenerateInstructionDialog: React.FC<RegenerateInstructionDialogPr
       <DialogContent size="lg">
         <DialogHeader>
           <DialogTitle>{t('builder.regenerate.instructionDialog.title')}</DialogTitle>
-          <DialogDescription className="font-mono text-xs text-ink-soft mt-2">
+          <DialogDescription className="font-mono text-xs text-ink-soft">
             {t('builder.regenerate.instructionDialog.subtitle')}
           </DialogDescription>
         </DialogHeader>

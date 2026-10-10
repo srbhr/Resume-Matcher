@@ -143,7 +143,7 @@ export function DiffPreviewModal({
       <DialogContent size="xl">
         <DialogHeader>
           <DialogTitle>{t('tailor.diffModal.title')}</DialogTitle>
-          <p className="font-mono text-xs text-ink-soft mt-2">
+          <p className="font-mono text-xs text-ink-soft">
             {'// '}
             {t('tailor.diffModal.subtitle')}
           </p>
@@ -209,12 +209,6 @@ export function DiffPreviewModal({
               </div>
             )}
           </div>
-
-          {errorMessage && (
-            <div className="border-2 border-red-600 bg-red-50 p-3 font-mono text-xs text-red-700">
-              {errorMessage}
-            </div>
-          )}
 
           {/* Detailed changes list */}
           <div className="space-y-4">
@@ -345,6 +339,15 @@ export function DiffPreviewModal({
             )}
           </div>
         </DialogBody>
+
+        {/* Pinned status: stays visible while the changes list scrolls */}
+        {errorMessage && (
+          <div className="shrink-0 space-y-2 border-t border-ink px-6 py-3">
+            <div className="border-2 border-red-600 bg-red-50 p-3 font-mono text-xs text-red-700">
+              {errorMessage}
+            </div>
+          </div>
+        )}
 
         {/* Action buttons */}
         <DialogFooter className="justify-between">

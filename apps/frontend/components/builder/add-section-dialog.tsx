@@ -87,7 +87,7 @@ export const AddSectionDialog: React.FC<AddSectionDialogProps> = ({
       <DialogContent size="md">
         <DialogHeader>
           <DialogTitle>{t('builder.customSections.dialogTitle')}</DialogTitle>
-          <DialogDescription className="font-mono text-xs text-ink-soft mt-2">
+          <DialogDescription className="font-mono text-xs text-ink-soft">
             {t('builder.customSections.dialogDescription')}
           </DialogDescription>
         </DialogHeader>

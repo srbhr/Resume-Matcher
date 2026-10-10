@@ -147,6 +147,8 @@ const DialogContent: React.FC<DialogContentProps> = ({
   // Focus contract: move focus in on open, give it back to the opener on close.
   // Don't use autoFocus inside a dialog: React applies it before this effect runs,
   // so the opener is never recorded. The first focusable element gets focus anyway.
+  // On close, the opener only gets focus back if nothing else claimed it (a close
+  // handler may have focused something on purpose, e.g. the editor behind a link dialog).
   React.useEffect(() => {
     if (!open) return;
     const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -154,7 +156,10 @@ const DialogContent: React.FC<DialogContentProps> = ({
     if (panel && !panel.contains(document.activeElement)) {
       (initialFocusRef?.current ?? focusableIn(panel)[0] ?? panel).focus();
     }
-    return () => opener?.focus();
+    return () => {
+      const active = document.activeElement;
+      if (!active || active === document.body || panel?.contains(active)) opener?.focus();
+    };
   }, [open, initialFocusRef]);
 
   const trapTab = (e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -196,7 +201,7 @@ const DialogContent: React.FC<DialogContentProps> = ({
           onKeyDown={trapTab}
           onClick={(e) => e.stopPropagation()}
           className={cn(
-            'relative flex max-h-[90vh] w-full flex-col overflow-hidden overscroll-contain',
+            'relative flex max-h-[90vh] w-full flex-col overflow-hidden',
             'rounded-none border border-ink bg-white shadow-sw-lg outline-none',
             SIZE_CLASS[size],
             className
@@ -237,7 +242,9 @@ const DialogHeader: React.FC<DialogPartProps> = ({ className, children }) => (
 );
 
 const DialogBody: React.FC<DialogPartProps> = ({ className, children }) => (
-  <div className={cn('min-h-0 flex-1 overflow-y-auto p-6', className)}>{children}</div>
+  <div className={cn('min-h-0 flex-1 overflow-y-auto overscroll-contain p-6', className)}>
+    {children}
+  </div>
 );
 
 const DialogFooter: React.FC<DialogPartProps> = ({ className, children }) => (
@@ -257,7 +264,7 @@ const DialogTitle: React.FC<DialogPartProps> = ({ className, children }) => {
     <h2
       id={titleId}
       className={cn(
-        'font-serif text-2xl font-bold uppercase leading-none tracking-tight text-balance text-ink',
+        'font-serif text-2xl font-bold uppercase leading-tight tracking-tight text-balance text-ink',
         className
       )}
     >

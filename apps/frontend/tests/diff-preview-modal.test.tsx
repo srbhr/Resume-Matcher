@@ -108,4 +108,24 @@ describe('DiffPreviewModal', () => {
     expect(onConfirm).toHaveBeenCalledTimes(1);
     expect(onReject).toHaveBeenCalledTimes(1);
   });
+
+  it('pins the confirm error outside the scrolling body', () => {
+    render(
+      <DiffPreviewModal
+        isOpen
+        onClose={vi.fn()}
+        onReject={vi.fn()}
+        onConfirm={vi.fn()}
+        diffSummary={diffSummary}
+        detailedChanges={detailedChanges}
+        errorMessage="Could not save the tailored resume"
+      />
+    );
+
+    const error = screen.getByText('Could not save the tailored resume');
+    expect(error).toBeVisible();
+    expect(error.closest('.overflow-y-auto')).toBeNull();
+    // The summary card is content and still scrolls with the body.
+    expect(screen.getByText('tailor.diffModal.summary').closest('.overflow-y-auto')).not.toBeNull();
+  });
 });

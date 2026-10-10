@@ -78,7 +78,7 @@ export const RegenerateDialog: React.FC<RegenerateDialogProps> = ({
       <DialogContent size="lg">
         <DialogHeader>
           <DialogTitle>{t('builder.regenerate.selectDialog.title')}</DialogTitle>
-          <DialogDescription className="font-mono text-xs text-ink-soft mt-2">
+          <DialogDescription className="font-mono text-xs text-ink-soft">
             {t('builder.regenerate.selectDialog.subtitle')}
           </DialogDescription>
         </DialogHeader>

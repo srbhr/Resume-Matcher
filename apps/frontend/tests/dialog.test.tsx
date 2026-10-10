@@ -43,6 +43,33 @@ function openDialog() {
   return opener;
 }
 
+// Mirrors RichTextEditor: the close handler focuses the editor, not the toolbar button.
+function ClaimingHarness() {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button onClick={() => setOpen(true)}>open</button>
+      <div tabIndex={0} data-testid="editor" />
+      <Dialog
+        open={open}
+        onOpenChange={(next) => {
+          if (!next) screen.getByTestId('editor').focus();
+          setOpen(next);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit link</DialogTitle>
+          </DialogHeader>
+          <DialogBody>
+            <input aria-label="first" />
+          </DialogBody>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
 describe('Dialog', () => {
   it('moves focus into the dialog on open', () => {
     openDialog();
@@ -54,6 +81,18 @@ describe('Dialog', () => {
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(opener).toHaveFocus();
+  });
+
+  it('does not steal focus back when the close handler moved it elsewhere', () => {
+    render(<ClaimingHarness />);
+    const opener = screen.getByText('open');
+    opener.focus();
+    fireEvent.click(opener);
+    expect(screen.getByLabelText('first')).toHaveFocus();
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByTestId('editor')).toHaveFocus();
+    expect(opener).not.toHaveFocus();
   });
 
   it('traps Tab inside the dialog', () => {

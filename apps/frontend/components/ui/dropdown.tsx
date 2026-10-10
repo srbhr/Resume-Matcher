@@ -23,6 +23,28 @@ interface DropdownProps {
   className?: string;
 }
 
+/** The listbox's `max-h-64`. */
+const MENU_MAX_HEIGHT = 256;
+
+const scrollParent = (el: HTMLElement): HTMLElement | null => {
+  for (let node = el.parentElement; node; node = node.parentElement) {
+    const { overflowY } = getComputedStyle(node);
+    if (overflowY === 'auto' || overflowY === 'scroll' || overflowY === 'hidden') return node;
+  }
+  return null;
+};
+
+/** Open upward when the menu would be clipped below but there is more room above. */
+const shouldFlipUp = (trigger: HTMLElement): boolean => {
+  const rect = trigger.getBoundingClientRect();
+  const bounds = scrollParent(trigger)?.getBoundingClientRect();
+  const top = Math.max(bounds?.top ?? 0, 0);
+  const bottom = Math.min(bounds?.bottom ?? window.innerHeight, window.innerHeight);
+  const below = bottom - rect.bottom;
+  const above = rect.top - top;
+  return below < MENU_MAX_HEIGHT && above > below;
+};
+
 /** Swiss select: a field-style trigger and a listbox with full keyboard support. */
 export function Dropdown({
   options,
@@ -37,6 +59,7 @@ export function Dropdown({
   const { t } = useTranslations();
   const [isOpen, setIsOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
+  const [flipUp, setFlipUp] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const optionRefs = useRef<(HTMLButtonElement | null)[]>([]);
@@ -64,6 +87,7 @@ export function Dropdown({
 
   const openAt = (index: number) => {
     if (disabled || options.length === 0) return;
+    if (triggerRef.current) setFlipUp(shouldFlipUp(triggerRef.current));
     setActiveIndex(index);
     setIsOpen(true);
   };
@@ -152,7 +176,10 @@ export function Dropdown({
             id={listId}
             role="listbox"
             aria-labelledby={label ? labelId : undefined}
-            className="absolute left-0 right-0 top-full z-50 mt-1 max-h-64 divide-y divide-ink overflow-y-auto rounded-none border border-ink bg-white shadow-sw-default"
+            className={cn(
+              'absolute left-0 right-0 z-50 max-h-64 divide-y divide-ink overflow-y-auto rounded-none border border-ink bg-white shadow-sw-default',
+              flipUp ? 'bottom-full mb-1' : 'top-full mt-1'
+            )}
           >
             {options.map((option, index) => {
               const isSelected = option.id === value;
