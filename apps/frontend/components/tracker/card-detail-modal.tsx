@@ -89,7 +89,7 @@ export function CardDetailModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl space-y-4 p-6">
         <DialogHeader>
           <DialogTitle>{detail?.company || t('tracker.card.companyUnknown')}</DialogTitle>
           <DialogDescription>{detail?.role || t('tracker.card.roleUnknown')}</DialogDescription>
