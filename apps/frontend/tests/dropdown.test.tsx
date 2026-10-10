@@ -35,6 +35,22 @@ describe('Dropdown', () => {
     );
   });
 
+  it('styles its label like the Label primitive (steel mono, medium weight)', () => {
+    render(<Harness />);
+    const label = screen.getByText('Stage');
+    expect(label).toHaveClass(
+      'block',
+      'font-mono',
+      'text-xs',
+      'font-medium',
+      'uppercase',
+      'tracking-wider',
+      'text-steel'
+    );
+    expect(label).not.toHaveClass('font-bold');
+    expect(label).not.toHaveClass('text-ink-soft');
+  });
+
   it('shows the placeholder and selects nothing when the value matches no option', () => {
     render(<Harness initial="" placeholder="Move to…" />);
     fireEvent.click(screen.getByRole('button', { name: 'Stage Move to…' }));

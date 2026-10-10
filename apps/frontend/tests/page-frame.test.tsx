@@ -20,6 +20,29 @@ describe('PageFrame + PageHeader', () => {
     );
   });
 
+  it('fills the dynamic viewport in screen mode and leaves the inner frame content-sized', () => {
+    const { container } = render(
+      <PageFrame height="screen">
+        <p>content</p>
+      </PageFrame>
+    );
+    expect(container.firstChild).toHaveClass('h-dvh', 'overflow-hidden');
+    expect(container.firstChild).not.toHaveClass('h-screen');
+    const frame = screen.getByText('content').parentElement;
+    expect(frame).toHaveClass('max-h-full', 'overflow-hidden');
+    expect(frame).not.toHaveClass('h-full');
+  });
+
+  it('keeps min-h-screen in auto mode', () => {
+    const { container } = render(
+      <PageFrame>
+        <p>content</p>
+      </PageFrame>
+    );
+    expect(container.firstChild).toHaveClass('min-h-screen');
+    expect(container.firstChild).not.toHaveClass('h-dvh');
+  });
+
   it('keeps bg-blueprint next to a background colour in either order (cn)', () => {
     expect(cn('bg-blueprint', 'bg-canvas')).toBe('bg-blueprint bg-canvas');
     expect(cn('bg-canvas', 'bg-blueprint')).toBe('bg-canvas bg-blueprint');
