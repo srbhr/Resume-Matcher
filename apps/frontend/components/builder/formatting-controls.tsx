@@ -215,7 +215,7 @@ export const FormattingControls: React.FC<FormattingControlsProps> = ({ settings
                       type={template.id}
                       isActive={settings.template === template.id}
                     />
-                    <span className="whitespace-normal text-balance text-center font-bold leading-tight">
+                    <span className="flex min-h-8 items-center justify-center whitespace-normal text-balance text-center font-bold leading-tight">
                       {templateLabels[template.id].name}
                     </span>
                   </span>
