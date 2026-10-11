@@ -10,7 +10,7 @@ import {
 } from '@/lib/types/template-settings';
 
 describe('template registration', () => {
-  it('includes all nine templates with non-empty metadata', () => {
+  it('includes all ten templates with non-empty metadata', () => {
     const ids = TEMPLATE_OPTIONS.map((t) => t.id);
     expect(ids).toEqual(
       expect.arrayContaining<TemplateType>([
@@ -23,9 +23,10 @@ describe('template registration', () => {
         'vivid',
         'vivid-single',
         'modern-deedy',
+        'deedy',
       ])
     );
-    expect(ids).toHaveLength(9);
+    expect(ids).toHaveLength(10);
 
     for (const opt of TEMPLATE_OPTIONS) {
       expect(opt.name.length).toBeGreaterThan(0);

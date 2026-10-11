@@ -397,6 +397,7 @@ def test_roundtrip_links_follow_template_display_and_order() -> None:
         "vivid": ["website", "linkedin", "github", "email", "phone", "location"],
         "vivid-single": ["website", "linkedin", "github", "email", "phone", "location"],
         "modern-deedy": ["email", "phone", "location", "website", "linkedin", "github"],
+        "deedy": ["website", "linkedin", "github", "email", "phone", "location"],
     }
     for template, order in expected.items():
         fields = expected_fields(data, template)[0][2:8]
@@ -428,6 +429,8 @@ TEMPLATE_ENTRY_TEXT = {
     "Trinity College | BSC PHYSICS\n2016",
     "modern-deedy": "Acme Corp | Staff Engineer\nDublin | 2020 - 2023\n"
     "BSc Physics\nTrinity College\n2016",
+    "deedy": "ACME CORP | STAFF ENGINEER\n2020 - 2023 | Dublin\n"
+    "TRINITY COLLEGE\nBSC PHYSICS\n2016",
     "swiss-two-column": "Staff Engineer\nAcme Corp • Dublin\n2020 - 2023\n"
     "Trinity College | 2016\nBSc Physics",
 }
@@ -712,6 +715,13 @@ def test_score_halves_warnings() -> None:
 def test_multi_column_reports_whether_template_expects_it() -> None:
     doc = ExtractedDocument(kind="pdf", text="x", page_count=1, pages=[])
     report = build_report(doc, source="render", template="swiss-two-column")
+    check = next(c for c in report.checks if c.id == "multi_column")
+    assert check.params["expected_by_template"] is True
+
+
+def test_deedy_columns_are_expected_by_the_template() -> None:
+    doc = ExtractedDocument(kind="pdf", text="x", page_count=1, pages=[])
+    report = build_report(doc, source="render", template="deedy")
     check = next(c for c in report.checks if c.id == "multi_column")
     assert check.params["expected_by_template"] is True
 

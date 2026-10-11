@@ -461,6 +461,10 @@
         "modernDeedy": {
           "name": "Modern Deedy",
           "description": "Diseño denso de una página en Lato con encabezados de sección en mayúsculas de gris claro"
+        },
+        "deedy": {
+          "name": "Deedy",
+          "description": "Diseño de dos columnas con nombre en trazo fino, columna izquierda estrecha y encabezados en gris claro"
         }
       },
       "accentColor": "Color de acento",

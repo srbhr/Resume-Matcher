@@ -461,6 +461,10 @@
         "modernDeedy": {
           "name": "Modern Deedy",
           "description": "Dense one-page layout in Lato with light grey uppercase section headings"
+        },
+        "deedy": {
+          "name": "Deedy",
+          "description": "Two-column layout with a hairline name, a narrow left column and light gray headings"
         }
       },
       "accentColor": "Accent Color",

@@ -14,12 +14,14 @@ export type TemplateType =
   | 'clean'
   | 'vivid'
   | 'vivid-single'
-  | 'modern-deedy';
+  | 'modern-deedy'
+  | 'deedy';
 
 const TWO_COLUMN_TEMPLATES: ReadonlySet<TemplateType> = new Set([
   'swiss-two-column',
   'modern-two-column',
   'vivid',
+  'deedy',
 ]);
 
 /** Two-column layouts can be read out of order by ATS parsers. */
@@ -307,6 +309,12 @@ export const TEMPLATE_OPTIONS: TemplateInfo[] = [
     id: 'modern-deedy',
     name: 'Modern Deedy',
     description: 'Dense one-page layout in Lato with light grey uppercase section headings',
+  },
+  {
+    id: 'deedy',
+    name: 'Deedy',
+    description:
+      'Two-column layout with a hairline name, a narrow left column and light gray headings',
   },
 ];
 

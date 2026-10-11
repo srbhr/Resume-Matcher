@@ -461,6 +461,10 @@
         "modernDeedy": {
           "name": "Modern Deedy",
           "description": "Lato 字体的单页紧凑版式，栏目标题为浅灰色大写"
+        },
+        "deedy": {
+          "name": "Deedy",
+          "description": "双栏布局，细体姓名、窄左栏与浅灰色标题"
         }
       },
       "accentColor": "强调色",

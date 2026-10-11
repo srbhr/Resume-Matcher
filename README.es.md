@@ -170,6 +170,7 @@ Exporta tu currículum adaptado y tu carta de presentación en PDF.
 | **Vívido** | ![Vívido](assets/pdf-templates/vivid.webp) | Diseño de dos columnas colorido con encabezados de acento y viñetas de flecha. [Ver PDF](assets/pdf-templates/vivid.pdf) |
 | **Vívido de una columna** | ![Vívido de una columna](assets/pdf-templates/vivid-single.webp) | Diseño de una columna colorido con encabezados de acento y viñetas de flecha. [Ver PDF](assets/pdf-templates/vivid-single.pdf) |
 | **Modern Deedy** | ![Modern Deedy](assets/pdf-templates/modern-deedy.webp) | Diseño denso de una página en Lato con encabezados de sección en mayúsculas de gris claro. [Ver PDF](assets/pdf-templates/modern-deedy.pdf) |
+| **Deedy** | ![Deedy](assets/pdf-templates/deedy.webp) | Diseño de dos columnas con nombre en trazo fino, columna izquierda estrecha y encabezados en gris claro. [Ver PDF](assets/pdf-templates/deedy.pdf) |
 
 ### Internacionalización
 

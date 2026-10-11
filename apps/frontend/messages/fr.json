@@ -461,6 +461,10 @@
         "modernDeedy": {
           "name": "Modern Deedy",
           "description": "Mise en page dense d'une page en Lato avec des en-têtes de section en majuscules gris clair"
+        },
+        "deedy": {
+          "name": "Deedy",
+          "description": "Mise en page deux colonnes avec nom en trait fin, colonne gauche étroite et titres gris clair"
         }
       },
       "accentColor": "Couleur d'accentuation",

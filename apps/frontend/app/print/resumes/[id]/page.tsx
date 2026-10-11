@@ -143,7 +143,8 @@ function parseTemplate(value: string | undefined): TemplateType {
     value === 'clean' ||
     value === 'vivid' ||
     value === 'vivid-single' ||
-    value === 'modern-deedy'
+    value === 'modern-deedy' ||
+    value === 'deedy'
   ) {
     return value;
   }

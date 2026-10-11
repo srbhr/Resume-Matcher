@@ -9,6 +9,7 @@ import {
   ResumeVivid,
   ResumeVividSingle,
   ResumeModernDeedy,
+  ResumeDeedy,
 } from '@/components/resume';
 import {
   type TemplateSettings,
@@ -254,6 +255,14 @@ const Resume: React.FC<ResumeProps> = ({
           data={resumeData}
           showContactIcons={mergedSettings.showContactIcons}
           additionalSectionLabels={additionalSectionLabels}
+        />
+      )}
+      {mergedSettings.template === 'deedy' && (
+        <ResumeDeedy
+          data={resumeData}
+          sectionHeadings={sectionHeadings}
+          additionalSectionLabels={additionalSectionLabels}
+          fallbackLabels={fallbackLabels}
         />
       )}
     </div>

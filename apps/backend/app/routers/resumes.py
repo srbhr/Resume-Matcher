@@ -2167,7 +2167,7 @@ async def download_resume_pdf(
 
     Accepts template settings for customization:
     - template: swiss-single, swiss-two-column, modern, modern-two-column, latex, clean, vivid,
-      vivid-single, or modern-deedy
+      vivid-single, modern-deedy, or deedy
     - pageSize: A4 or LETTER
     - marginTop/Bottom/Left/Right: page margins in mm (5-25)
     - sectionSpacing: gap between sections (1-5)

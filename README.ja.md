@@ -168,6 +168,7 @@ Resume Matcher をご覧いただきありがとうございます。つなが�
 | **ビビッド** | ![ビビッド](assets/pdf-templates/vivid.webp) | アクセント見出しと矢印箇条書きのカラフルな2カラムレイアウト。[PDF を見る](assets/pdf-templates/vivid.pdf) |
 | **ビビッド1カラム** | ![ビビッド1カラム](assets/pdf-templates/vivid-single.webp) | アクセント見出しと矢印箇条書きのカラフルな1カラムレイアウト。[PDF を見る](assets/pdf-templates/vivid-single.pdf) |
 | **Modern Deedy** | ![Modern Deedy](assets/pdf-templates/modern-deedy.webp) | Lato書体の1ページ向け高密度レイアウト。見出しは淡いグレーの大文字。[PDF を見る](assets/pdf-templates/modern-deedy.pdf) |
+| **Deedy** | ![Deedy](assets/pdf-templates/deedy.webp) | 細字の名前、狭い左カラム、薄いグレーの見出しを備えた2カラムレイアウト。[PDF を見る](assets/pdf-templates/deedy.pdf) |
 
 ### 国際化
 

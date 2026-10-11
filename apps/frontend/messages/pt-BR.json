@@ -459,6 +459,10 @@
         "modernDeedy": {
           "name": "Modern Deedy",
           "description": "Layout denso de uma página em Lato com títulos de seção em maiúsculas cinza-claro"
+        },
+        "deedy": {
+          "name": "Deedy",
+          "description": "Layout de duas colunas com nome em traço fino, coluna esquerda estreita e títulos em cinza-claro"
         }
       },
       "accentColors": {

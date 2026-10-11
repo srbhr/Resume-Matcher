@@ -439,6 +439,10 @@
         "modernDeedy": {
           "name": "Modern Deedy",
           "description": "Lato 글꼴의 1페이지 고밀도 레이아웃, 연한 회색 대문자 섹션 제목"
+        },
+        "deedy": {
+          "name": "Deedy",
+          "description": "가는 글씨의 이름, 좁은 왼쪽 열, 연한 회색 제목이 있는 2단 레이아웃"
         }
       },
       "accentColor": "강조 색상",

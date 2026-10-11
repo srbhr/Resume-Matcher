@@ -461,6 +461,10 @@
         "modernDeedy": {
           "name": "Modern Deedy",
           "description": "Lato書体の1ページ向け高密度レイアウト。見出しは淡いグレーの大文字"
+        },
+        "deedy": {
+          "name": "Deedy",
+          "description": "細字の名前、狭い左カラム、薄いグレーの見出しを備えた2カラムレイアウト"
         }
       },
       "accentColor": "アクセントカラー",

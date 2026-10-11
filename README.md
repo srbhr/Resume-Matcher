@@ -176,6 +176,7 @@ Export your tailored resume and cover letter in PDF.
 | **Vivid** | ![Vivid](assets/pdf-templates/vivid.webp) | Colorful two-column layout with accent headers and arrow bullets. [𝐕𝐢𝐞𝐰 𝐏𝐃𝐅](assets/pdf-templates/vivid.pdf) |
 | **Vivid Single Column** | ![Vivid Single Column](assets/pdf-templates/vivid-single.webp) | Colorful single-column layout with accent headers and arrow bullets. [𝐕𝐢𝐞𝐰 𝐏𝐃𝐅](assets/pdf-templates/vivid-single.pdf) |
 | **Modern Deedy** | ![Modern Deedy](assets/pdf-templates/modern-deedy.webp) | Dense one-page layout in Lato with light grey uppercase section headings. [𝐕𝐢𝐞𝐰 𝐏𝐃𝐅](assets/pdf-templates/modern-deedy.pdf) |
+| **Deedy** | ![Deedy](assets/pdf-templates/deedy.webp) | Two-column layout with a hairline name, a narrow left column and light gray headings. [𝐕𝐢𝐞𝐰 𝐏𝐃𝐅](assets/pdf-templates/deedy.pdf) |
 
 ### Internationalization
 

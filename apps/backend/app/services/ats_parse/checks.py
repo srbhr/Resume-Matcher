@@ -10,7 +10,9 @@ from app.services.ats_parse.models import Check, Severity, Status
 from app.services.ats_parse.normalize import normalize
 from app.services.parser import _MD_DATE_RE
 
-TWO_COLUMN_TEMPLATES = frozenset({"swiss-two-column", "modern-two-column", "vivid"})
+TWO_COLUMN_TEMPLATES = frozenset(
+    {"swiss-two-column", "modern-two-column", "vivid", "deedy"}
+)
 MIN_TEXT_CHARACTERS = 50
 SPARSE_PAGE_CHARACTERS = 200
 COLUMN_MIN_COVERAGE = 0.05
