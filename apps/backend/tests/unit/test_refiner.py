@@ -303,6 +303,12 @@ class TestRemoveAiPhrasesKeepsOwnWords:
         cleaned, _ = remove_ai_phrases({"summary": "Backed a disruptor."})
         assert cleaned["summary"] == "Backed."
 
+    def test_removed_phrase_at_a_string_boundary_leaves_no_stray_space(self):
+        cleaned, _ = remove_ai_phrases({"summary": "A disruptor joins fintech"})
+        assert cleaned["summary"] == "joins fintech"
+        cleaned, _ = remove_ai_phrases({"summary": "Backed a disruptor"})
+        assert cleaned["summary"] == "Backed"
+
     def test_article_follows_the_replacement(self):
         cleaned, _ = remove_ai_phrases({"summary": "Built a scalable API."})
         assert cleaned["summary"] == "Built an expandable API."

@@ -398,9 +398,11 @@ def remove_ai_phrases(
             cleaned = pattern.sub(substitute, cleaned)
             if not replacement:
                 # Removing a phrase outright leaves a double space ("Joined  in")
-                # or a space before punctuation ("Joined ."); tidy just that.
+                # or a space before punctuation ("Joined ."), and at either end of
+                # the string a lone leading/trailing space; tidy just that.
                 cleaned = re.sub(r"(?<=\S)[ \t]{2,}(?=\S)", " ", cleaned)
                 cleaned = re.sub(r"[ \t]+([.,;:!?])", r"\1", cleaned)
+                cleaned = cleaned.strip(" \t")
         return cleaned
 
     def clean_recursive(obj: Any) -> Any:
