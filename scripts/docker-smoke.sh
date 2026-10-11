@@ -135,7 +135,7 @@ docker run -d --name "$CONTAINER" \
     -v "${VOLUME}:/app/backend/data" \
     "$TAG" > /dev/null
 
-# --- Checks -----------------------------------------------------------------
+# --- 3. Checks --------------------------------------------------------------
 PASSED=0
 FAILED=0
 
@@ -211,7 +211,7 @@ container_user() {
     echo "$user (uid $(docker exec "$CONTAINER" id -u))"
 }
 
-# --- 3. Wait for health ------------------------------------------------------
+# --- 4. Wait for health ------------------------------------------------------
 echo "==> Waiting up to ${HEALTH_TIMEOUT}s for /api/v1/health"
 HEALTHY=0
 WAIT_START=$SECONDS
@@ -243,7 +243,7 @@ if [ "$HEALTHY" = 1 ]; then
     check "container runs as appuser" container_user
 fi
 
-# --- 7. Summary ---------------------------------------------------------------
+# --- 5. Summary ---------------------------------------------------------------
 SIZE_BYTES="$(docker image inspect -f '{{.Size}}' "$TAG" 2> /dev/null || echo 0)"
 SIZE_MB="$(awk -v b="$SIZE_BYTES" 'BEGIN { printf "%.0f", b / 1000000 }')"
 
