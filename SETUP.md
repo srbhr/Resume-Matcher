@@ -525,7 +525,6 @@ Cursor, Codex and other clients use the same command (`uv`) and args (`run --dir
 - **Same checkout, same data.** Run the web app from the same checkout so both use the same database. `DATA_DIR` moves the SQLite file; `DATABASE_URL` selects [PostgreSQL](#optional-postgresql) instead.
 - **Frontend for PDF and verify.** PDF export, `verify_resume`, `tailor_and_verify` and `parse_check_resume` need the frontend running (default <http://localhost:3000>, set with `FRONTEND_BASE_URL`). The other tools work without it.
 - **Docker is not supported yet.** The app's database lives inside the Docker volume, so a server started on the host would see an empty database.
-- **ATS score (temporary).** Resumes saved through MCP do not get an ATS score yet. Open the resume in the builder and click **Recalculate**.
 
 Tool list and internals: [docs/agent/features/mcp-server.md](docs/agent/features/mcp-server.md).
 
