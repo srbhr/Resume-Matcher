@@ -857,6 +857,7 @@
     },
     "llmConfiguration": {
       "selectedProvider": "已选择：{provider}",
+      "claudeCliNote": "运行本机已安装并已登录的 Claude Code CLI，因此这里无需 API 密钥。Claude Code 仍会通过你的账户将提示词发送给 Anthropic，并使用其自带的默认模型。",
       "modelLabel": "模型",
       "defaultModel": "默认：{model}",
       "apiKeyLabel": "API 密钥",
@@ -895,7 +896,8 @@
         "health_check_failed": "健康检查失败。",
         "duplicate_v1_path": "健康检查失败。Base URL 可能包含重复的 /v1 路径。",
         "not_found_404": "健康检查失败。404 未找到，请检查 Base URL 是否与提供方匹配。",
-        "html_response": "健康检查失败。Base URL 返回了 HTML，可能是控制台地址或网关不支持该路径。"
+        "html_response": "健康检查失败。Base URL 返回了 HTML，可能是控制台地址或网关不支持该路径。",
+        "claude_cli_not_found": "未找到 Claude Code CLI。请安装 Claude Code 并运行 `claude auth login`。"
       },
       "healthWarnings": {
         "empty_content": "健康检查返回了空内容。"

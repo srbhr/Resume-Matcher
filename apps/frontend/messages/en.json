@@ -857,6 +857,7 @@
     },
     "llmConfiguration": {
       "selectedProvider": "SELECTED: {provider}",
+      "claudeCliNote": "Runs the Claude Code CLI installed and signed in on this machine, so no API key is needed here. Claude Code still sends your prompts to Anthropic through your account, and it uses its own default model.",
       "modelLabel": "Model",
       "defaultModel": "DEFAULT: {model}",
       "apiKeyLabel": "API Key",
@@ -895,7 +896,8 @@
         "health_check_failed": "Health check failed.",
         "duplicate_v1_path": "Health check failed. The Base URL may contain a duplicate /v1 path.",
         "not_found_404": "Health check failed. 404 Not Found - check that the Base URL matches the provider.",
-        "html_response": "Health check failed. The Base URL returned HTML; it may be a console URL or an unsupported gateway path."
+        "html_response": "Health check failed. The Base URL returned HTML; it may be a console URL or an unsupported gateway path.",
+        "claude_cli_not_found": "Claude Code CLI not found. Install Claude Code and run `claude auth login`."
       },
       "healthWarnings": {
         "empty_content": "LLM returned empty content for the health check."

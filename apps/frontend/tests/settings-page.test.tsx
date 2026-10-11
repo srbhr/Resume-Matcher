@@ -168,6 +168,57 @@ describe('settings page (Swiss sweep)', () => {
     expect(api.setContentLanguage).toHaveBeenCalledWith('es');
   });
 
+  it('offers the Claude Code CLI provider in the picker', async () => {
+    await renderLoaded();
+    const providers = screen.getByRole('radiogroup', { name: 'settings.providerLabel' });
+
+    fireEvent.click(within(providers).getByRole('radio', { name: 'Claude' }));
+
+    expect(within(providers).getByRole('radio', { name: 'Claude' })).toHaveAttribute(
+      'aria-checked',
+      'true'
+    );
+  });
+
+  it('replaces the key, model, endpoint and effort fields with a note for the Claude Code CLI', async () => {
+    await renderLoaded();
+    const providers = screen.getByRole('radiogroup', { name: 'settings.providerLabel' });
+    expect(document.getElementById('apiKey')).not.toBeNull();
+
+    fireEvent.click(within(providers).getByRole('radio', { name: 'Claude' }));
+
+    expect(document.getElementById('apiKey')).toBeNull();
+    expect(document.getElementById('apiBase')).toBeNull();
+    expect(screen.queryByLabelText('settings.llmConfiguration.modelLabel')).toBeNull();
+    expect(screen.queryByText('settings.llmConfiguration.reasoningEffortLabel')).toBeNull();
+    expect(screen.getByRole('status')).toHaveTextContent('settings.llmConfiguration.claudeCliNote');
+
+    // Switching back restores the full form and drops the note.
+    fireEvent.click(within(providers).getByRole('radio', { name: 'OpenAI' }));
+    expect(document.getElementById('apiKey')).not.toBeNull();
+    expect(screen.queryByText('settings.llmConfiguration.claudeCliNote')).toBeNull();
+  });
+
+  it('keeps a stored claude_cli provider instead of falling back to OpenAI', async () => {
+    api.fetchLlmConfig.mockResolvedValue({
+      provider: 'claude_cli',
+      model: 'claude_cli',
+      api_base: null,
+      reasoning_effort: null,
+    });
+    render(<SettingsPage />);
+
+    const providers = await screen.findByRole('radiogroup', { name: 'settings.providerLabel' });
+    expect(await within(providers).findByRole('radio', { name: 'Claude' })).toHaveAttribute(
+      'aria-checked',
+      'true'
+    );
+    expect(within(providers).getByRole('radio', { name: 'OpenAI' })).toHaveAttribute(
+      'aria-checked',
+      'false'
+    );
+  });
+
   it('shows a monochrome brand mark on each provider segment except OpenAI-compatible', async () => {
     await renderLoaded();
     const providers = screen.getByRole('radiogroup', { name: 'settings.providerLabel' });
@@ -181,6 +232,7 @@ describe('settings page (Swiss sweep)', () => {
       'DeepSeek',
       'Groq',
       'Ollama',
+      'Claude',
     ]) {
       const mark = within(providers).getByRole('radio', { name }).querySelector('svg');
       expect(mark, `${name} mark`).not.toBeNull();

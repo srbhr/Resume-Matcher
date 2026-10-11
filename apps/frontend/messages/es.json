@@ -857,6 +857,7 @@
     },
     "llmConfiguration": {
       "selectedProvider": "SELECCIONADO: {provider}",
+      "claudeCliNote": "Ejecuta la CLI de Claude Code instalada y con sesión iniciada en este equipo, por lo que no se necesita clave de API aquí. Claude Code sigue enviando tus prompts a Anthropic a través de tu cuenta y usa su propio modelo predeterminado.",
       "modelLabel": "Modelo",
       "defaultModel": "PREDETERMINADO: {model}",
       "apiKeyLabel": "Clave API",
@@ -895,7 +896,8 @@
         "health_check_failed": "La verificación falló.",
         "duplicate_v1_path": "La verificación falló. La URL base puede contener un /v1 duplicado.",
         "not_found_404": "La verificación falló. 404 No encontrado: comprueba que la URL base coincide con el proveedor.",
-        "html_response": "La verificación falló. La URL base devolvió HTML; puede ser la URL de consola o una ruta de puerta de enlace no compatible."
+        "html_response": "La verificación falló. La URL base devolvió HTML; puede ser la URL de consola o una ruta de puerta de enlace no compatible.",
+        "claude_cli_not_found": "No se encontró la CLI de Claude Code. Instala Claude Code y ejecuta `claude auth login`."
       },
       "healthWarnings": {
         "empty_content": "El LLM devolvió contenido vacío en la verificación de salud."

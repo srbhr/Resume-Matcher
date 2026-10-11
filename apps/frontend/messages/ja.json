@@ -857,6 +857,7 @@
     },
     "llmConfiguration": {
       "selectedProvider": "選択中: {provider}",
+      "claudeCliNote": "このマシンにインストール済みでサインイン済みの Claude Code CLI を実行するため、ここで API キーは不要です。Claude Code はあなたのアカウント経由でプロンプトを Anthropic に送信し、独自の既定モデルを使用します。",
       "modelLabel": "モデル",
       "defaultModel": "既定: {model}",
       "apiKeyLabel": "API キー",
@@ -895,7 +896,8 @@
         "health_check_failed": "ヘルスチェックに失敗しました。",
         "duplicate_v1_path": "ヘルスチェックに失敗しました。Base URL に /v1 が重複している可能性があります。",
         "not_found_404": "ヘルスチェックに失敗しました。404 Not Found。Base URL が提供元と一致しているか確認してください。",
-        "html_response": "ヘルスチェックに失敗しました。Base URL が HTML を返しました。コンソールURLや未対応のゲートウェイの可能性があります。"
+        "html_response": "ヘルスチェックに失敗しました。Base URL が HTML を返しました。コンソールURLや未対応のゲートウェイの可能性があります。",
+        "claude_cli_not_found": "Claude Code CLI が見つかりません。Claude Code をインストールし、`claude auth login` を実行してください。"
       },
       "healthWarnings": {
         "empty_content": "ヘルスチェックで空の内容が返されました。"
