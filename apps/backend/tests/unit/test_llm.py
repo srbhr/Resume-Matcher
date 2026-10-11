@@ -1427,6 +1427,194 @@ class TestOutputTokenParameter:
             assert "max_tokens" not in params, model
 
 
+class TestReasoningEffortThinkingBudget:
+    """A stored reasoning_effort outlives the model it was set for (the gpt-5
+    migration persists ``minimal``). On Anthropic LiteLLM turns it into a
+    thinking budget of at least 1024 tokens, and Anthropic rejects any call
+    whose ``max_tokens`` does not exceed it. The 64-token health probe always
+    did, so /status reported llm_healthy:false.
+    """
+
+    @pytest.mark.asyncio
+    async def test_health_probe_omits_reasoning_effort_on_anthropic(self):
+        from app.llm import check_llm_health
+
+        config = LLMConfig(
+            provider="anthropic",
+            model="claude-haiku-4-5-20251001",
+            api_key="sk-ant-test",
+            reasoning_effort="minimal",
+        )
+        acompletion = AsyncMock(return_value=_text_response())
+
+        with patch("app.llm.litellm.acompletion", acompletion):
+            result = await check_llm_health(config)
+
+        assert result["healthy"] is True
+        kwargs = acompletion.call_args.kwargs
+        assert kwargs["max_tokens"] == 64
+        assert "reasoning_effort" not in kwargs
+
+    @pytest.mark.asyncio
+    async def test_health_probe_still_sends_reasoning_effort_to_openai(self):
+        """gpt-5 needs ``minimal`` or its 64 tokens go to hidden reasoning."""
+        from app.llm import check_llm_health
+
+        config = LLMConfig(
+            provider="openai",
+            model="gpt-5-nano-2025-08-07",
+            api_key="sk-test",
+            reasoning_effort="minimal",
+        )
+        acompletion = AsyncMock(return_value=_text_response())
+
+        with patch("app.llm.litellm.acompletion", acompletion):
+            await check_llm_health(config)
+
+        assert acompletion.call_args.kwargs["reasoning_effort"] == "minimal"
+
+    @pytest.mark.parametrize(
+        ("effort", "max_tokens", "sent"),
+        [
+            ("minimal", 64, False),
+            ("minimal", 1024, False),
+            ("minimal", 1025, True),
+            ("low", 500, False),
+            ("medium", 2048, False),
+            ("medium", 4096, True),
+            ("high", 4096, False),
+            ("high", 8192, True),
+        ],
+    )
+    def test_anthropic_sends_effort_only_above_the_thinking_budget(
+        self, effort, max_tokens, sent
+    ):
+        from app.llm import _reasoning_effort_kwarg
+
+        config = LLMConfig(provider="anthropic", model="claude-sonnet-4-5", api_key="k")
+
+        result = _reasoning_effort_kwarg(config, effort, max_tokens)
+
+        assert result == ({"reasoning_effort": effort} if sent else {})
+
+    def test_effort_is_omitted_when_unset_and_passed_through_elsewhere(self):
+        from app.llm import _reasoning_effort_kwarg
+
+        anthropic = LLMConfig(provider="anthropic", model="m", api_key="k")
+        openai = LLMConfig(provider="openai", model="gpt-5-mini", api_key="k")
+
+        assert _reasoning_effort_kwarg(anthropic, None, 4096) == {}
+        assert _reasoning_effort_kwarg(openai, "minimal", 64) == {
+            "reasoning_effort": "minimal"
+        }
+
+    @pytest.mark.asyncio
+    @patch("app.llm._supports_temperature", return_value=True)
+    @patch("app.llm.get_router")
+    async def test_complete_omits_effort_when_max_tokens_is_below_the_budget(
+        self, mock_get_router, _mock_supports_temp
+    ):
+        from app.llm import complete
+
+        config = LLMConfig(
+            provider="anthropic",
+            model="claude-haiku-4-5-20251001",
+            api_key="k",
+            reasoning_effort="medium",
+        )
+        router = MagicMock()
+        router.acompletion = AsyncMock(return_value=_text_response("Hello"))
+        mock_get_router.return_value = (router, config)
+
+        await complete(prompt="Hi", max_tokens=500)
+        assert "reasoning_effort" not in router.acompletion.call_args.kwargs
+
+        await complete(prompt="Hi", max_tokens=4096)
+        assert router.acompletion.call_args.kwargs["reasoning_effort"] == "medium"
+
+
+class TestThinkingDropsTemperature:
+    """Anthropic rejects extended thinking with a temperature other than 1, so
+    a request that carries ``reasoning_effort`` must go out without it.
+    """
+
+    @pytest.mark.asyncio
+    @patch("app.llm._supports_temperature", return_value=True)
+    @patch("app.llm.get_router")
+    async def test_complete_drops_temperature_when_thinking_is_sent(
+        self, mock_get_router, _mock_supports_temp
+    ):
+        from app.llm import complete
+
+        config = LLMConfig(
+            provider="anthropic",
+            model="claude-haiku-4-5-20251001",
+            api_key="k",
+            reasoning_effort="minimal",
+        )
+        router = MagicMock()
+        router.acompletion = AsyncMock(return_value=_text_response("Hello"))
+        mock_get_router.return_value = (router, config)
+
+        await complete(prompt="Hi", max_tokens=4096, temperature=0.1)
+
+        kwargs = router.acompletion.call_args.kwargs
+        assert kwargs["reasoning_effort"] == "minimal"
+        assert "temperature" not in kwargs
+
+    @pytest.mark.asyncio
+    @patch("app.llm._supports_json_mode", return_value=False)
+    @patch("app.llm._supports_temperature", return_value=True)
+    @patch("app.llm.get_router")
+    async def test_complete_json_drops_temperature_when_thinking_is_sent(
+        self, mock_get_router, _mock_supports_temp, _mock_supports_json
+    ):
+        from app.llm import complete_json
+
+        config = LLMConfig(
+            provider="anthropic",
+            model="claude-haiku-4-5-20251001",
+            api_key="k",
+            reasoning_effort="minimal",
+        )
+        router = MagicMock()
+        router.acompletion = AsyncMock(return_value=_text_response('{"ok": true}'))
+        mock_get_router.return_value = (router, config)
+
+        await complete_json(prompt="Extract", max_tokens=4096, schema_type="keywords")
+
+        kwargs = router.acompletion.call_args.kwargs
+        assert kwargs["reasoning_effort"] == "minimal"
+        assert "temperature" not in kwargs
+
+    @pytest.mark.asyncio
+    @patch("app.llm._supports_temperature", return_value=True)
+    @patch("app.llm.get_router")
+    async def test_temperature_is_kept_when_thinking_is_not_sent(
+        self, mock_get_router, _mock_supports_temp
+    ):
+        """Below the thinking budget the effort is omitted, so temperature stays;
+        other providers keep both."""
+        from app.llm import complete
+
+        for provider, max_tokens in (("anthropic", 500), ("openai", 4096)):
+            config = LLMConfig(
+                provider=provider,
+                model="some-model",
+                api_key="k",
+                reasoning_effort="minimal",
+            )
+            router = MagicMock()
+            router.acompletion = AsyncMock(return_value=_text_response("Hello"))
+            mock_get_router.return_value = (router, config)
+
+            await complete(prompt="Hi", max_tokens=max_tokens, temperature=0.1)
+
+            kwargs = router.acompletion.call_args.kwargs
+            assert kwargs["temperature"] == 0.1
+            assert ("reasoning_effort" in kwargs) is (provider == "openai")
+
+
 class TestMaxTokensRejectionFallback:
     """Azure, OpenRouter and compatible servers that front a reasoning model
     reject ``max_tokens`` with a 400 that names ``max_completion_tokens``. The

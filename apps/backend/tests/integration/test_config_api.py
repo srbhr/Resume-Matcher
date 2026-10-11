@@ -56,6 +56,22 @@ class TestLlmConfig:
     @patch("app.routers.config._log_llm_health_check", new_callable=AsyncMock)
     @patch("app.routers.config._save_config")
     @patch("app.routers.config._load_config")
+    async def test_put_llm_config_lowercases_the_provider(
+        self, mock_load, mock_save, mock_log_health, client
+    ):
+        mock_load.return_value = {}
+        async with client:
+            resp = await client.put(
+                "/api/v1/config/llm-api-key",
+                json={"provider": "Anthropic", "model": "claude-haiku-4-5-20251001"},
+            )
+        assert resp.status_code == 200
+        assert resp.json()["provider"] == "anthropic"
+        assert mock_save.call_args.args[0]["provider"] == "anthropic"
+
+    @patch("app.routers.config._log_llm_health_check", new_callable=AsyncMock)
+    @patch("app.routers.config._save_config")
+    @patch("app.routers.config._load_config")
     async def test_put_llm_config_does_not_persist_api_key(
         self, mock_load, mock_save, mock_log_health, client
     ):

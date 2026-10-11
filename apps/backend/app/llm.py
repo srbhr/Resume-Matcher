@@ -11,7 +11,7 @@ from urllib.parse import urlsplit
 import litellm
 from litellm import Router
 from litellm.router import RetryPolicy
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 from app.ai_budget import remaining_timeout
 from app.ai_limits import validate_prompt_size
@@ -19,7 +19,12 @@ from app.chatgpt_auth import ChatGPTNotConnectedError
 from app.chatgpt_auth import is_connected as chatgpt_is_connected
 from app.chatgpt_inference import ChatGPTPlanError, chatgpt_acompletion
 from app.claude_cli import ClaudeCliNotFoundError, claude_acompletion
-from app.config import load_config_file, save_config_file, settings
+from app.config import (
+    load_config_file,
+    normalize_provider,
+    save_config_file,
+    settings,
+)
 
 LITELLM_LOGGER_NAMES = ("LiteLLM", "LiteLLM Router", "LiteLLM Proxy")
 
@@ -104,6 +109,11 @@ class LLMConfig(BaseModel):
     api_base: str | None = None
     api_version: str | None = None
     reasoning_effort: Literal["minimal", "low", "medium", "high"] | None = None
+
+    @field_validator("provider", mode="before")
+    @classmethod
+    def _normalize_provider(cls, value: Any) -> Any:
+        return normalize_provider(value)
 
 
 def _is_azure_openai_foundry_endpoint(
@@ -344,6 +354,62 @@ def _output_token_kwarg(config: LLMConfig, max_tokens: int) -> dict[str, int]:
     if _is_native_openai(config):
         return {"max_completion_tokens": max_tokens}
     return {"max_tokens": max_tokens}
+
+
+#: Thinking budget (tokens) LiteLLM maps each ``reasoning_effort`` to on
+#: Anthropic's extended-thinking API. Anthropic rejects a request unless
+#: ``max_tokens`` exceeds the budget, and LiteLLM only raises ``max_tokens``
+#: itself when the caller sends none.
+_ANTHROPIC_THINKING_BUDGETS: dict[str, int] = {
+    "minimal": 1024,
+    "low": 1024,
+    "medium": 2048,
+    "high": 4096,
+}
+
+
+def _reasoning_effort_kwarg(
+    config: LLMConfig, reasoning_effort: str | None, max_tokens: int
+) -> dict[str, str]:
+    """Build the ``reasoning_effort`` kwarg, or nothing when it would 400.
+
+    A stored effort can outlive the model it was set for (the gpt-5 migration
+    persists ``minimal``). On Anthropic it becomes a thinking budget of at least
+    1024 tokens, so a call capped at or below that budget (the 64-token health
+    probe, short cover-letter calls) is rejected with "`max_tokens` must be
+    greater than `thinking.budget_tokens`". Such a call cannot hold the thinking
+    anyway, so it runs without it. Other providers pass the effort through.
+    """
+    if not reasoning_effort:
+        return {}
+    if config.provider == "anthropic" and max_tokens <= (
+        _ANTHROPIC_THINKING_BUDGETS.get(reasoning_effort, 0)
+    ):
+        logging.info(
+            "Omitting reasoning_effort=%s: max_tokens=%d is not above the "
+            "Anthropic thinking budget",
+            reasoning_effort,
+            max_tokens,
+        )
+        return {}
+    return {"reasoning_effort": reasoning_effort}
+
+
+def _apply_reasoning_effort(
+    config: LLMConfig,
+    kwargs: dict[str, Any],
+    reasoning_effort: str | None,
+    max_tokens: int,
+) -> None:
+    """Add ``reasoning_effort`` to ``kwargs`` and drop what it conflicts with.
+
+    Anthropic rejects extended thinking alongside a temperature other than 1,
+    so a request that carries the effort there goes out without ``temperature``.
+    """
+    effort_kwarg = _reasoning_effort_kwarg(config, reasoning_effort, max_tokens)
+    kwargs.update(effort_kwarg)
+    if effort_kwarg and config.provider == "anthropic":
+        kwargs.pop("temperature", None)
 
 
 _MAX_TOKENS_REJECTED_RE = re.compile(
@@ -1020,8 +1086,7 @@ async def check_llm_health(
         api_version = _azure_foundry_api_version(config)
         if api_version:
             kwargs["api_version"] = api_version
-        if config.reasoning_effort:
-            kwargs["reasoning_effort"] = config.reasoning_effort
+        _apply_reasoning_effort(config, kwargs, config.reasoning_effort, 64)
 
         response = await _route_acompletion(config, litellm, **kwargs)
         content = _extract_choice_text(response.choices[0])
@@ -1143,8 +1208,7 @@ async def complete(
             model_name, temperature, reasoning_effort=config.reasoning_effort
         ):
             kwargs["temperature"] = temperature
-        if config.reasoning_effort:
-            kwargs["reasoning_effort"] = config.reasoning_effort
+        _apply_reasoning_effort(config, kwargs, config.reasoning_effort, max_tokens)
 
         response = await _route_acompletion(config, router, **kwargs)
 
@@ -1731,8 +1795,8 @@ async def complete_json(
             # no_think setting. Scope it to structured-output requests only.
             if _uses_opencode_zen_hy3(config):
                 kwargs["extra_body"] = {"reasoning_effort": "no_think"}
-            elif reasoning_effort:
-                kwargs["reasoning_effort"] = reasoning_effort
+            else:
+                _apply_reasoning_effort(config, kwargs, reasoning_effort, max_tokens)
 
             # JSON-012: Fallback to prompt-only JSON mode after JSON-mode failure.
             # LiteLLM registry may report support for models that the upstream
