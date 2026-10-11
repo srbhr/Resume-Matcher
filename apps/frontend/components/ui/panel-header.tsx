@@ -42,7 +42,9 @@ export function PanelHeader({
           {title}
         </Heading>
       </div>
-      {children && <div className="flex shrink-0 items-center gap-2">{children}</div>}
+      {children != null && children !== false && (
+        <div className="flex shrink-0 items-center gap-2">{children}</div>
+      )}
     </div>
   );
 }
