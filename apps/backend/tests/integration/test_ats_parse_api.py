@@ -1,6 +1,7 @@
 """ATS parse-check endpoints: uploads, rendered resumes and error mapping."""
 
 import io
+import logging
 from collections.abc import AsyncIterator
 from typing import Any
 from unittest.mock import AsyncMock
@@ -86,6 +87,21 @@ async def test_upload_rejections(
         "/api/v1/ats/parse-check", files={"file": (name, content, mime)}
     )
     assert res.status_code == status
+
+
+async def test_upload_failure_log_escapes_filename(
+    client: AsyncClient, caplog: pytest.LogCaptureFixture
+) -> None:
+    name = "cv\x1b[31m.pdf"
+    with caplog.at_level(logging.ERROR, logger="app.routers.ats"):
+        res = await client.post(
+            "/api/v1/ats/parse-check",
+            files={"file": (name, b"%PDF-1.4 broken", PDF)},
+        )
+    assert res.status_code == 422
+    message = next(r.getMessage() for r in caplog.records if "failed for" in r.msg)
+    assert "\x1b" not in message
+    assert repr(name) in message
 
 
 async def test_rendered_resume_matches_pdf_route_and_round_trips(

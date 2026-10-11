@@ -46,7 +46,7 @@ async def parse_check_upload(file: UploadFile = File(...)) -> ParseCheckReport:
     try:
         return await parse_check_bytes(content, file.filename or "resume.pdf")
     except DocumentResourceLimitError as e:
-        logger.warning("Parse check resource limit for %s: %s", file.filename, e)
+        logger.warning("Parse check resource limit for %r: %s", file.filename, e)
         raise HTTPException(status_code=413, detail=TOO_LARGE_DETAIL) from e
     except AIOperationDeadlineExceeded:
         raise
@@ -57,7 +57,7 @@ async def parse_check_upload(file: UploadFile = File(...)) -> ParseCheckReport:
             detail="Parse check timed out. Please try a simpler document.",
         ) from e
     except Exception as e:
-        logger.error("Parse check failed for %s: %s", file.filename, e)
+        logger.error("Parse check failed for %r: %s", file.filename, e)
         raise HTTPException(
             status_code=422,
             detail="Could not read this document. Please upload a valid PDF or DOCX file.",
