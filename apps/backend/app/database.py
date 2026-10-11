@@ -69,6 +69,7 @@ APPLICATION_STATUSES: tuple[str, ...] = (
     "rejected",
 )
 ProcessingFinishOutcome = Literal["committed", "stale", "missing"]
+QueueDeleteOutcome = Literal["deleted", "missing", "in_progress"]
 
 # A user keeps at most this many master resumes (career tracks).
 MAX_MASTER_RESUMES = 5
@@ -1483,15 +1484,17 @@ class Database:
             await session.commit()
             return self._queue_item_to_dict(row)
 
-    async def delete_queue_item(self, item_id: str) -> bool:
-        """Delete one queue item; False when it does not exist."""
+    async def delete_queue_item(self, item_id: str) -> QueueDeleteOutcome:
+        """Delete one queue item, unless the worker is tailoring it right now."""
         async with self._write_session() as session:
             row = await session.get(QueueItem, item_id)
             if row is None:
-                return False
+                return "missing"
+            if row.status == "processing":
+                return "in_progress"
             await session.delete(row)
             await session.commit()
-            return True
+            return "deleted"
 
     async def claim_next_queue_item(self) -> dict[str, Any] | None:
         """Mark the oldest pending item ``processing`` and return it; None when idle."""
@@ -1522,8 +1525,11 @@ class Database:
             return int(result.rowcount or 0)
 
     async def clear_queue(self, status: str | None = None) -> int:
-        """Delete queue items, optionally only those in one status. Returns count."""
-        stmt = delete(QueueItem)
+        """Delete queue items, optionally only those in one status. Returns count.
+
+        The item the worker is tailoring is never cleared; it finishes first.
+        """
+        stmt = delete(QueueItem).where(QueueItem.status != "processing")
         if status:
             stmt = stmt.where(QueueItem.status == status)
         async with self._write_session() as session:

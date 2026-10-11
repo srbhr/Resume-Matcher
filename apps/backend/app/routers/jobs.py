@@ -137,9 +137,14 @@ async def list_queue(resume_id: str | None = None) -> list[JobQueueItemResponse]
 @router.delete("/queue/{item_id}")
 async def delete_queue_item(item_id: str) -> dict:
     """Remove a specific item from the queue."""
-    deleted = await db.delete_queue_item(item_id)
-    if not deleted:
+    outcome = await db.delete_queue_item(item_id)
+    if outcome == "missing":
         raise HTTPException(status_code=404, detail="Queue item not found")
+    if outcome == "in_progress":
+        raise HTTPException(
+            status_code=409,
+            detail="This item is being tailored. Try again when it finishes.",
+        )
     return {"deleted": True, "item_id": item_id}
 
 

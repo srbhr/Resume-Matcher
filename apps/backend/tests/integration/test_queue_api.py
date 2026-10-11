@@ -278,3 +278,17 @@ async def test_add_rejects_an_oversized_job_description_before_queueing(
     assert resp.status_code == 422
     assert await isolated_db.get_queue() == []
     enqueue.assert_not_called()
+
+
+async def test_the_item_being_tailored_is_neither_deleted_nor_cleared(
+    isolated_db: Database, client: AsyncClient
+) -> None:
+    await isolated_db.create_queue_item("busy", "r1", "JD one")
+    await isolated_db.update_queue_item("busy", {"status": "processing"})
+    await isolated_db.create_queue_item("waiting", "r1", "JD two")
+    async with client:
+        refused = await client.delete("/api/v1/jobs/queue/busy")
+        cleared = await client.delete("/api/v1/jobs/queue")
+    assert refused.status_code == 409
+    assert cleared.json() == {"cleared_count": 1}
+    assert [item["item_id"] for item in await isolated_db.get_queue()] == ["busy"]
