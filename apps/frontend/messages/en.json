@@ -557,6 +557,7 @@
       "contentRecall": "Content recall",
       "orderFidelity": "Reading order",
       "allFieldsFound": "Every field was found in the extracted text.",
+      "fieldsTruncated": "This resume has more fields than the check covers, so only the first ones were checked. Fields beyond the limit are not reflected here.",
       "fieldStatus": {
         "found": "Found",
         "garbled": "Garbled",

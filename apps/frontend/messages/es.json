@@ -557,9 +557,10 @@
       "contentRecall": "Contenido recuperado",
       "orderFidelity": "Orden de lectura",
       "allFieldsFound": "Todos los campos aparecen en el texto extraído.",
+      "fieldsTruncated": "Este currículum tiene más campos de los que cubre la comprobación, así que solo se revisaron los primeros. Los campos que superan el límite no se reflejan aquí.",
       "fieldStatus": {
         "found": "Encontrado",
-        "garbled": "Desordenado",
+        "garbled": "Ilegible",
         "missing": "Falta",
         "hidden": "Oculto"
       },

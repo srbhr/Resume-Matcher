@@ -106,4 +106,67 @@ describe('AtsCheckView', () => {
     );
     expect(screen.queryByText('boom')).not.toBeInTheDocument();
   });
+
+  it('clears the previous report when a re-run fails', async () => {
+    checkResumeParse.mockResolvedValueOnce(report).mockRejectedValueOnce(new Error('boom'));
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    render(<AtsCheckView resumeId="r1" settings={DEFAULT_TEMPLATE_SETTINGS} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'builder.atsCheck.runButton' }));
+    await screen.findByText('88');
+
+    fireEvent.click(screen.getByRole('button', { name: 'builder.atsCheck.rerunButton' }));
+    await waitFor(() =>
+      expect(screen.getByRole('alert')).toHaveTextContent('builder.atsCheck.error')
+    );
+    expect(screen.queryByText('88')).not.toBeInTheDocument();
+    expect(screen.queryByText('builder.atsCheck.checksTitle')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'builder.atsCheck.runButton' })).toBeEnabled();
+  });
+
+  it('shows the truncation notice instead of "all fields found" when the field list was capped', async () => {
+    checkResumeParse.mockResolvedValue({
+      ...report,
+      roundtrip: {
+        ...report.roundtrip!,
+        truncated: true,
+        fields: [{ field: 'summary', status: 'found', score: 1 }],
+      },
+    });
+    render(<AtsCheckView resumeId="r1" settings={DEFAULT_TEMPLATE_SETTINGS} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'builder.atsCheck.runButton' }));
+    await screen.findByText('builder.atsCheck.fieldsTruncated');
+
+    expect(screen.queryByText('builder.atsCheck.allFieldsFound')).not.toBeInTheDocument();
+  });
+
+  it('keeps the truncation notice next to the problem fields when the list was capped', async () => {
+    checkResumeParse.mockResolvedValue({
+      ...report,
+      roundtrip: { ...report.roundtrip!, truncated: true },
+    });
+    render(<AtsCheckView resumeId="r1" settings={DEFAULT_TEMPLATE_SETTINGS} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'builder.atsCheck.runButton' }));
+    await screen.findByText('builder.atsCheck.fieldsTruncated');
+
+    expect(screen.getByText('workExperience[0].description[1]')).toBeInTheDocument();
+  });
+
+  it('says every field was found only when nothing was capped or flagged', async () => {
+    checkResumeParse.mockResolvedValue({
+      ...report,
+      roundtrip: {
+        ...report.roundtrip!,
+        fields: [{ field: 'summary', status: 'found', score: 1 }],
+      },
+    });
+    render(<AtsCheckView resumeId="r1" settings={DEFAULT_TEMPLATE_SETTINGS} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'builder.atsCheck.runButton' }));
+    await screen.findByText('builder.atsCheck.allFieldsFound');
+
+    expect(screen.queryByText('builder.atsCheck.fieldsTruncated')).not.toBeInTheDocument();
+  });
 });

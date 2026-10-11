@@ -557,9 +557,10 @@
       "contentRecall": "内容の再現率",
       "orderFidelity": "読み取り順序",
       "allFieldsFound": "すべての項目が抽出テキストに含まれています。",
+      "fieldsTruncated": "この履歴書には検査の上限を超える項目があるため、先頭の項目のみ確認しました。上限を超えた項目はここに反映されません。",
       "fieldStatus": {
         "found": "検出",
-        "garbled": "乱れ",
+        "garbled": "文字化け",
         "missing": "欠落",
         "hidden": "非表示"
       },
