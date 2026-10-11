@@ -176,12 +176,13 @@ def _hash_job_content(content: str) -> str:
 
 async def _cache_job_keywords(
     job_id: str, content_hash: str, job_keywords: dict[str, Any]
-) -> None:
+) -> dict[str, Any] | None:
     """Best-effort: cache extracted keywords on the job with its content hash.
 
     The hash gives basic invalidation, and ATS recalculation reads this cache.
     Company/role are also surfaced to the job's top level so the tracker's
     auto-create-on-confirm path can read them without an extra LLM call.
+    Returns the updated job, or None when it could not be persisted.
     """
     cache_updates: dict[str, Any] = {
         "job_keywords": job_keywords,
@@ -200,8 +201,10 @@ async def _cache_job_keywords(
         updated_job = await db.update_job(job_id, cache_updates)
         if not updated_job:
             logger.warning("Failed to persist job keywords for job %s.", job_id)
+        return updated_job
     except Exception as e:
         logger.warning("Failed to persist job keywords for job %s: %s", job_id, e)
+        return None
 
 
 def _normalize_payload(value: Any) -> Any:
@@ -1794,7 +1797,13 @@ async def execute_tailoring_pipeline(
     # Extract keywords from job description; the cache lets the ATS score be
     # recalculated from the builder later.
     job_keywords = await extract_job_keywords(job["content"])
-    await _cache_job_keywords(job_id, _hash_job_content(job["content"]), job_keywords)
+    # The refreshed job carries the extracted company/role for the tracker card.
+    job = (
+        await _cache_job_keywords(
+            job_id, _hash_job_content(job["content"]), job_keywords
+        )
+        or job
+    )
 
     effective_prompt_id = prompt_id or _get_default_prompt_id()
     original_resume_data = _get_original_resume_data(resume)

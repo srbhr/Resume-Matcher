@@ -1,5 +1,7 @@
 """Unit tests for the queue's metadata extraction and failure codes."""
 
+import time
+
 import pytest
 from fastapi import HTTPException
 
@@ -55,6 +57,55 @@ Datadog is the monitoring and security platform for cloud applications...
 
         whitespace_details = extract_job_details("   \n\n   ")
         assert whitespace_details["role"] == ""
+
+    @pytest.mark.parametrize(
+        ("first_line", "role", "company"),
+        [
+            ("Frontend Developer @ Google", "Frontend Developer", "Google"),
+            ("Senior   Engineer at Stripe", "Senior Engineer", "Stripe"),
+            # An earlier "at" whose tail is not a company name stays in the role.
+            ("Engineer at Google, Inc at Foo", "Engineer at Google, Inc", "Foo"),
+        ],
+    )
+    def test_extract_at_pattern_variants(self, first_line, role, company):
+        details = extract_job_details(first_line)
+        assert (details["role"], details["company"]) == (role, company)
+
+    @pytest.mark.parametrize(
+        ("text", "role", "company"),
+        [
+            # A header first line is skipped; the title is on line two.
+            (
+                "About Us\nSenior Platform Engineer\nWe build things.",
+                "Senior Platform Engineer",
+                "",
+            ),
+            # The "Role at Company" pattern is found on a later line too.
+            ("Welcome!\nStaff Engineer at Acme\nRemote", "Staff Engineer", "Acme"),
+            # The company name as a header is not the role.
+            (
+                "Stripe\nPayments Engineer\nCompany: Stripe",
+                "Payments Engineer",
+                "Stripe",
+            ),
+            # Only the first three non-empty lines are considered.
+            ("About Us\n\nOverview\nWelcome\nBackend Engineer", "", ""),
+        ],
+    )
+    def test_role_fallback_checks_the_first_three_nonempty_lines(
+        self, text, role, company
+    ):
+        details = extract_job_details(text)
+        assert (details["role"], details["company"]) == (role, company)
+
+    @pytest.mark.parametrize(
+        "prefix", ["role-", "client-", "job id", "req #", "a", "x at"]
+    )
+    def test_long_whitespace_runs_are_parsed_in_linear_time(self, prefix):
+        """CodeQL py/polynomial-redos: ~100 KB used to take about a minute."""
+        started = time.perf_counter()
+        extract_job_details(prefix + " " * 100_000 + "!")
+        assert time.perf_counter() - started < 1.0
 
 
 @pytest.mark.parametrize(

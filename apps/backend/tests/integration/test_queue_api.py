@@ -55,6 +55,27 @@ async def test_parse_metadata_endpoint(client: AsyncClient) -> None:
     }
 
 
+async def test_parse_metadata_rejects_an_oversized_description_unparsed(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from app.ai_limits import MAX_JOB_CHARACTERS
+
+    parse = MagicMock(return_value={})
+    monkeypatch.setattr("app.routers.jobs.extract_job_details", parse)
+    async with client:
+        too_big = await client.post(
+            "/api/v1/jobs/parse-metadata",
+            json={"job_description": "x" * (MAX_JOB_CHARACTERS + 1)},
+        )
+        at_limit = await client.post(
+            "/api/v1/jobs/parse-metadata",
+            json={"job_description": "x" * MAX_JOB_CHARACTERS},
+        )
+    assert too_big.status_code == 422
+    assert at_limit.status_code == 200
+    parse.assert_called_once()
+
+
 async def test_add_persists_detected_metadata_and_wakes_worker(
     isolated_db: Database, enqueue: MagicMock, client: AsyncClient
 ) -> None:

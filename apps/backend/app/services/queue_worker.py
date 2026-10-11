@@ -3,6 +3,8 @@
 import asyncio
 import logging
 import re
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from typing import Any
 
 from fastapi import HTTPException
@@ -13,6 +15,25 @@ from app.config import settings
 from app.database import DatabaseBusyError, db
 
 logger = logging.getLogger(__name__)
+
+# A company name after "at" / "@" is 2-40 characters of this set.
+_COMPANY_AFTER_AT_RE = re.compile(r"[A-Za-z0-9&.\s]{2,40}")
+
+
+def _split_role_at_company(line: str) -> tuple[str, str] | None:
+    """Split "Role at Company" / "Role @ Company" in linear time.
+
+    A single backtracking regex over a user-pasted line is quadratic on long
+    whitespace runs. The company is at most 40 characters, so "at" must be one
+    of the last 21 whitespace-separated tokens; only those are tried.
+    """
+    tokens = line.split()
+    for i in range(max(1, len(tokens) - 21), len(tokens) - 1):
+        if tokens[i].lower() in ("at", "@"):
+            company = " ".join(tokens[i + 1 :])
+            if _COMPANY_AFTER_AT_RE.fullmatch(company):
+                return " ".join(tokens[:i]), company
+    return None
 
 
 def extract_job_details(text: str) -> dict[str, str]:
@@ -37,7 +58,7 @@ def extract_job_details(text: str) -> dict[str, str]:
         # Role / Position / Title
         if not details["role"]:
             m_role = re.search(
-                r"^(?:job\s+title|role|position|title)\s*[:\-]\s*(.+)$",
+                r"^(?:job\s+title|role|position|title)\s*[:\-]\s*(\S.*)$",
                 line,
                 re.IGNORECASE,
             )
@@ -47,7 +68,7 @@ def extract_job_details(text: str) -> dict[str, str]:
         # Company / Organization / Client
         if not details["company"]:
             m_comp = re.search(
-                r"^(?:company|organization|employer|client)\s*[:\-]\s*(.+)$",
+                r"^(?:company|organization|employer|client)\s*[:\-]\s*(\S.*)$",
                 line,
                 re.IGNORECASE,
             )
@@ -57,7 +78,7 @@ def extract_job_details(text: str) -> dict[str, str]:
         # Job ID / Requisition ID / Req #
         if not details["job_req_id"]:
             m_id = re.search(
-                r"(?:job\s*id|req(?:uisition)?\s*id|req\s*#|job\s*#|requisition)\s*[:\-#]?\s*([a-zA-Z0-9_\-]+)",
+                r"(?:job\s*id|req(?:uisition)?\s*id|req\s*#|job\s*#|requisition)\s*(?:[:\-#]\s*)?([a-zA-Z0-9_\-]+)",
                 line,
                 re.IGNORECASE,
             )
@@ -65,23 +86,26 @@ def extract_job_details(text: str) -> dict[str, str]:
                 details["job_req_id"] = m_id.group(1).strip()
 
     # 2. If role is still empty, look at first 3 non-empty lines
-    if not details["role"] and lines:
-        first_line = lines[0]
-        # Pattern like "Senior Software Engineer at Stripe" or "Frontend Developer @ Google"
-        m_at = re.search(
-            r"^(.+?)\s+(?:at|@)\s+([A-Za-z0-9&.\s]{2,40})$",
-            first_line,
-            re.IGNORECASE,
-        )
-        if m_at:
-            details["role"] = m_at.group(1).strip()
-            if not details["company"]:
-                details["company"] = m_at.group(2).strip()
-        elif len(first_line) < 70 and not any(
-            w in first_line.lower()
-            for w in ["about us", "overview", "description", "welcome"]
-        ):
-            details["role"] = first_line
+    if not details["role"]:
+        for line in lines[:3]:
+            # Pattern like "Senior Software Engineer at Stripe" or "Frontend Developer @ Google"
+            at_split = _split_role_at_company(line)
+            if at_split:
+                details["role"] = at_split[0]
+                if not details["company"]:
+                    details["company"] = at_split[1]
+                break
+            # A short title-like line; skip section headers and the company name itself.
+            if (
+                len(line) < 70
+                and not any(
+                    w in line.lower()
+                    for w in ["about us", "overview", "description", "welcome"]
+                )
+                and line.casefold() != details["company"].casefold()
+            ):
+                details["role"] = line
+                break
 
     # 3. If company is still empty, check for "About <Company>" or "<Company> is looking for"
     if not details["company"]:
@@ -153,6 +177,22 @@ class QueueManager:
         except asyncio.CancelledError:
             pass
         logger.info("Tailoring queue worker stopped.")
+
+    @asynccontextmanager
+    async def paused(self) -> AsyncIterator[None]:
+        """Stop the worker for the block, handing its in-flight item back.
+
+        A database reset runs inside it. Without this a tailoring that is
+        mid-LLM would save its job and resume after the tables were cleared.
+        The worker is restarted afterwards if it was running.
+        """
+        was_running = self._task is not None
+        await self.stop()
+        try:
+            yield
+        finally:
+            if was_running:
+                await self.start()
 
     def notify(self) -> None:
         """Wake the worker after a new item was committed."""

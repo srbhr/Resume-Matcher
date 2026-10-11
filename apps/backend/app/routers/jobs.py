@@ -84,6 +84,8 @@ async def parse_job_metadata(
     request: JobMetadataParseRequest,
 ) -> JobMetadataParseResponse:
     """Instantly parse role, company, and job req ID using heuristics with 0 LLM calls."""
+    # The same cap as /jobs/queue, before the text is parsed.
+    require_source_size(request.job_description.strip(), MAX_JOB_CHARACTERS)
     extracted = extract_job_details(request.job_description)
     return JobMetadataParseResponse(
         role=extracted.get("role", ""),
