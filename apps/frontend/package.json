@@ -49,7 +49,7 @@
     "vitest": "^5.0.3"
   },
   "overrides": {
-    "undici": "^7.28.0",
+    "undici": "^8.11.2",
     "postcss": "^8.5.10",
     "sharp": "^0.35.4",
     "motion-dom": "13.4.4",

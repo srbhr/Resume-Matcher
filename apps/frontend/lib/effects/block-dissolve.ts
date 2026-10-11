@@ -32,20 +32,51 @@ export function blockRank(i: number, j: number, invert = false): number {
   return invert ? 1 - rank : rank;
 }
 
-/** Every block of a `width` x `height` frame at `progress`, row by row. */
+/** What a canvas size and options fix for good: the grid, and the order its blocks dissolve in. */
+interface Layout {
+  size: number;
+  cols: number;
+  rows: number;
+  /** `blockRank` of each block, row by row. */
+  ranks: number[];
+}
+
+/** A few layouts at once (a window resize makes a new one), oldest out first. */
+const MAX_LAYOUTS = 4;
+const layouts = new Map<string, Layout>();
+
+function layoutFor(width: number, height: number, blockSize: number, invert: boolean): Layout {
+  const key = `${width}x${height}|${blockSize}|${invert}`;
+  let layout = layouts.get(key);
+  if (!layout) {
+    const size = blockSize * width;
+    const cols = Math.ceil(width / size);
+    const rows = Math.ceil(height / size);
+    const ranks: number[] = [];
+    for (let j = 0; j < rows; j++)
+      for (let i = 0; i < cols; i++) ranks.push(blockRank(i, j, invert));
+    layout = { size, cols, rows, ranks };
+    if (layouts.size >= MAX_LAYOUTS) layouts.delete(layouts.keys().next().value as string);
+    layouts.set(key, layout);
+  }
+  return layout;
+}
+
+/**
+ * Every block of a `width` x `height` frame at `progress`, row by row. The grid and the ranks are
+ * cached per size and options, so a frame only works out the coverage, which is what moves.
+ */
 export function blocks(
   width: number,
   height: number,
   progress: number,
   { blockSize = BLOCK_SIZE, softness = SOFTNESS, invert = false } = {}
 ): Block[] {
-  const size = blockSize * width;
-  const cols = Math.ceil(width / size);
-  const rows = Math.ceil(height / size);
+  const { size, cols, rows, ranks } = layoutFor(width, height, blockSize, invert);
   const grid: Block[] = [];
   for (let j = 0; j < rows; j++) {
     for (let i = 0; i < cols; i++) {
-      const rank = blockRank(i, j, invert);
+      const rank = ranks[j * cols + i];
       const gone =
         softness > 0
           ? Math.min(1, Math.max(0, (progress - rank * (1 - softness)) / softness))
