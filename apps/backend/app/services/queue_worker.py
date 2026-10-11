@@ -5,7 +5,10 @@ import logging
 import re
 from typing import Any
 
+from fastapi import HTTPException
+
 from app.ai_budget import operation_budget
+from app.ai_limits import PromptSizeError
 from app.config import settings
 from app.database import db
 
@@ -103,6 +106,20 @@ def extract_job_details(text: str) -> dict[str, str]:
     return details
 
 
+def failure_code(error: Exception) -> str:
+    """Map a failure to a stable code the client translates; details stay in the log."""
+    if isinstance(error, HTTPException):
+        if error.status_code == 404:
+            return "not_found"
+        if error.status_code == 422:
+            return "too_large"
+    if isinstance(error, PromptSizeError):
+        return "too_large"
+    if isinstance(error, TimeoutError):
+        return "timeout"
+    return "failed"
+
+
 class QueueManager:
     """Tailor queued job descriptions one at a time, oldest first, in the API process.
 
@@ -181,7 +198,7 @@ class QueueManager:
         except Exception as error:
             logger.exception("Tailoring queue item %s failed.", item_id)
             await db.update_queue_item(
-                item_id, {"status": "failed", "error": str(error)}
+                item_id, {"status": "failed", "error": failure_code(error)}
             )
             return
 

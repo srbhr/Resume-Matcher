@@ -1,6 +1,11 @@
-"""Unit tests for the queue's heuristic job metadata extraction."""
+"""Unit tests for the queue's metadata extraction and failure codes."""
 
-from app.services.queue_worker import extract_job_details
+import pytest
+from fastapi import HTTPException
+
+from app.ai_budget import AIOperationDeadlineExceeded
+from app.ai_limits import PromptSizeError
+from app.services.queue_worker import extract_job_details, failure_code
 
 
 class TestExtractJobDetails:
@@ -50,3 +55,18 @@ Datadog is the monitoring and security platform for cloud applications...
 
         whitespace_details = extract_job_details("   \n\n   ")
         assert whitespace_details["role"] == ""
+
+
+@pytest.mark.parametrize(
+    ("error", "code"),
+    [
+        (HTTPException(status_code=404, detail="Resume not found"), "not_found"),
+        (HTTPException(status_code=422, detail="Too large: 123 chars"), "too_large"),
+        (PromptSizeError("prompt has 999999 characters"), "too_large"),
+        (AIOperationDeadlineExceeded("deadline"), "timeout"),
+        (TimeoutError(), "timeout"),
+        (RuntimeError("401 from provider: key sk-secret rejected"), "failed"),
+    ],
+)
+def test_failure_code_never_exposes_error_text(error: Exception, code: str) -> None:
+    assert failure_code(error) == code

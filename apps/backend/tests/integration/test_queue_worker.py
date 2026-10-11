@@ -110,7 +110,7 @@ async def test_failed_item_is_recorded_and_the_queue_moves_on(
     failed = await isolated_db.get_queue_item("q1")
     done = await isolated_db.get_queue_item("q2")
     assert failed is not None and failed["status"] == "failed"
-    assert failed["error"]
+    assert failed["error"] == "failed"
     assert done is not None and done["status"] == "completed"
     assert cooldowns == [5.0, 5.0]
 
@@ -272,4 +272,5 @@ async def test_each_item_runs_under_the_ai_operation_deadline(
 
     assert budgets and budgets[0] <= 0.2
     item = await isolated_db.get_queue_item("q1")
-    assert item is not None and item["status"] == "failed"
+    assert item is not None
+    assert (item["status"], item["error"]) == ("failed", "timeout")
