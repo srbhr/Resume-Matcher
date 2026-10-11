@@ -1,0 +1,178 @@
+@import './_tokens.css';
+
+/*
+  Modern Deedy Template
+  ID: modern-deedy
+
+  Dense one-page, single-column layout set in Lato (self-hosted, see app/layout.tsx).
+  The Header/Body Font controls stay live: their "sans-serif" choice resolves to Lato for
+  this template (settingsToCssVars), and Serif / Mono swap the face for the whole page.
+  Sizes are relative to --font-size-base so the Font Size control scales everything.
+*/
+
+.container {
+  width: 100%;
+  /* The original sets 11pt text on tight leading: a touch tighter than the shared default. */
+  line-height: calc(var(--line-height) * 0.92);
+  --deedy-heading: #9a9fa6;
+  --deedy-meta: #4b5563;
+}
+
+.container,
+.container :global(p),
+.container :global(li),
+.container :global(a),
+.container :global(span),
+.container :global(div) {
+  font-family: var(--body-font);
+}
+
+.header {
+  text-align: center;
+  margin-bottom: var(--section-gap);
+}
+
+.name {
+  font-family: var(--header-font);
+  font-size: calc(var(--font-size-base) * var(--header-scale));
+  font-weight: 400;
+  line-height: 1.15;
+  color: var(--resume-text-primary);
+}
+
+.tagline {
+  font-size: calc(var(--font-size-base) * 0.9);
+  color: var(--deedy-meta);
+}
+
+.contactRow {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  font-size: calc(var(--font-size-base) * 0.85);
+  color: var(--deedy-meta);
+}
+
+.pipe {
+  white-space: pre;
+}
+
+/* Links are always underlined, like the original. */
+.link {
+  color: inherit;
+  text-decoration: underline;
+  overflow-wrap: anywhere;
+}
+
+.linkIcon {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 0.35em;
+  color: var(--resume-text-primary);
+  align-self: center;
+}
+
+/* Light grey uppercase heading, no rule. */
+.sectionTitle {
+  font-family: var(--header-font);
+  font-size: calc(var(--font-size-base) * var(--section-header-scale) * 1.25);
+  font-weight: 300;
+  line-height: 1.2;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  color: var(--deedy-heading);
+  margin-bottom: var(--item-gap);
+  break-after: avoid;
+  page-break-after: avoid;
+  orphans: 3;
+  widows: 3;
+}
+
+.bodyText {
+  font-size: var(--font-size-base);
+  color: var(--resume-text-body);
+}
+
+/* One header line: lead on the left, meta right-aligned. */
+.entryRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+}
+
+.entryLead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  min-width: 0;
+  font-size: var(--font-size-base);
+  color: var(--resume-text-primary);
+}
+
+.entryName {
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--resume-text-primary);
+}
+
+.degree {
+  font-weight: 700;
+  color: var(--resume-text-primary);
+}
+
+.smallCaps {
+  font-variant: small-caps;
+  color: var(--resume-text-primary);
+}
+
+.entryMeta {
+  flex-shrink: 0;
+  white-space: nowrap;
+  text-align: right;
+  font-size: calc(var(--font-size-base) * 0.92);
+  color: var(--deedy-meta);
+}
+
+/* The project tech stack reads as dark as the role, unlike the grey place and dates. */
+.entryMeta .smallCaps {
+  color: var(--resume-text-body);
+}
+
+/* Compact round bullets (selectors doubled to beat the shared list and margin utilities). */
+.bullets.bullets {
+  font-size: var(--font-size-base);
+  color: var(--resume-text-body);
+  margin-top: calc(var(--item-gap) * 0.5);
+}
+
+.marker {
+  margin-right: 0;
+  padding-left: 0.7em;
+  flex-shrink: 0;
+  align-self: baseline;
+  font-size: 0.85em;
+  /* Lato's bullet sits above the x-height centre; drop it so it reads as a round dot. */
+  position: relative;
+  top: 0.13em;
+}
+
+.skills {
+  display: flex;
+  flex-direction: column;
+  font-size: calc(var(--font-size-base) * 0.88);
+  color: var(--resume-text-body);
+}
+
+.skillLabel {
+  font-weight: 700;
+  color: var(--resume-text-primary);
+}
+
+@media print {
+  .sectionTitle {
+    break-after: avoid !important;
+    page-break-after: avoid !important;
+  }
+}
