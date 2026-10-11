@@ -87,6 +87,9 @@ async def parse_check_resume(
         raise HTTPException(
             status_code=503, detail="Could not render the resume. Please try again."
         ) from e
+    except DocumentResourceLimitError as e:
+        logger.warning("Parse check resource limit for %s: %s", resume_id, e)
+        raise HTTPException(status_code=413, detail=TOO_LARGE_DETAIL) from e
     except AIOperationDeadlineExceeded:
         raise
     except TimeoutError as e:

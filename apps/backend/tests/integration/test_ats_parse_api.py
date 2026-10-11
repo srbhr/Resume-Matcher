@@ -15,7 +15,9 @@ from app.database import Database
 from app.main import app
 from app.pdf import PDFRenderError, PDFRenderTimeoutError
 from app.routers import resumes as resumes_router
+from app.routers.ats import TOO_LARGE_DETAIL
 from app.routers.resumes import MAX_FILE_SIZE
+from app.services.parser import DocumentResourceLimitError
 from tests.ats_fixtures import john_doe, render
 
 pytestmark = pytest.mark.integration
@@ -145,3 +147,22 @@ async def test_rendered_resume_render_timeout_is_504(
     res = await client.post(f"/api/v1/resumes/{ready}/parse-check")
     assert res.status_code == 504
     assert "deadline detail" not in res.text
+
+
+async def test_rendered_resume_over_resource_limit_is_413(
+    client: AsyncClient, isolated_db: Database, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    ready = await _resume(isolated_db, john_doe())
+    monkeypatch.setattr(
+        services.ats_parse,
+        "render_resume_pdf",
+        AsyncMock(return_value=render("single-column")),
+    )
+    monkeypatch.setattr(
+        services.ats_parse,
+        "extract_document",
+        AsyncMock(side_effect=DocumentResourceLimitError("budget detail")),
+    )
+    res = await client.post(f"/api/v1/resumes/{ready}/parse-check")
+    assert res.status_code == 413
+    assert res.json()["detail"] == TOO_LARGE_DETAIL
